@@ -508,6 +508,13 @@ function openSequence(volume = 0.3, { book = true, clasp = true, link = true } =
  * Sons des vues rapprochées du Relto : ruisseau du bassin ; ronronnement et miaulements du chat. Synthétisés (aucun fichier), démarrés par le clic
  * qui entre dans la vue et arrêtés à la sortie. Un seul son de vue à la fois, sur le contexte audio partagé.
  */
+/** Gain qui ramène un enregistrement fourni par l'utilisateur à un volume raisonnable (niveau efficace visé ~0,1). */
+function bufferGain(buf) {
+  if (buf.__gain != null) return buf.__gain;
+  const d = buf.getChannelData(0), step = Math.max(1, Math.floor(d.length / 20000)); let sum = 0, n = 0;
+  for (let i = 0; i < d.length; i += step) { sum += d[i] * d[i]; n++; }
+  const rms = Math.sqrt(sum / Math.max(1, n)) || 0.1; buf.__gain = Math.max(0.2, Math.min(4, 0.1 / rms)); return buf.__gain;
+}
 const room = { kind: null, out: null, nodes: [], timers: [] };
 function roomStop() {
   for (const t of room.timers) clearTimeout(t); room.timers = [];
@@ -518,7 +525,10 @@ function roomStop() {
 }
 function noiseBuf(c, secs) { const b = c.createBuffer(1, Math.floor(c.sampleRate * secs), c.sampleRate), d = b.getChannelData(0); let y = 0; for (let i = 0; i < d.length; i++) { y = 0.97 * y + (Math.random() * 2 - 1) * 0.3; d[i] = y + (Math.random() * 2 - 1) * 0.15; } return b; }
 /** Un miaulement : voix de gorge en dents de scie dont la hauteur monte puis redescend, formants qui glissent de « i » vers « a » puis « ou » ; parfois un court « mrrp ». */
-function meow(volume = 0.3) {
+function meow(volume = 0.3, buf = null) {
+  if (buf) { // enregistrement de l'utilisateur : joué une fois, à une vitesse légèrement variable
+    return oneShot(buf.duration / 0.9 + 0.3, (c, out) => { const s = c.createBufferSource(); s.buffer = buf; s.playbackRate.value = 0.92 + Math.random() * 0.16; out.gain.value = volume * bufferGain(buf) * 2; s.connect(out); s.start(); });
+  }
   const short = Math.random() < 0.3;
   return oneShot(1.6, (c, out, noise) => {
     const t = c.currentTime, dur = short ? 0.28 + Math.random() * 0.1 : 0.75 + Math.random() * 0.3, f0 = 560 + Math.random() * 90, pk = f0 * (short ? 1.25 : 1.55 + Math.random() * 0.15), end = f0 * (short ? 1.1 : 0.82);
@@ -550,15 +560,16 @@ function squeak(volume = 0.3) {
     e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(0.5, t + 0.01); e.gain.exponentialRampToValueAtTime(0.001, t + 0.2); o.connect(e); e.connect(out); o.start(t); o.stop(t + 0.25);
   });
 }
-function roomStart(kind, volume = 0.3) {
+function roomStart(kind, volume = 0.3, bufs = {}) {
   roomStop();
   let c; try { c = sfxCtx(); } catch (e) { return false; } if (!c) return false;
   try {
     const out = c.createGain(); out.gain.value = 0; out.connect(c.destination); out.gain.setTargetAtTime(volume, c.currentTime, 0.4);
     room.out = out; room.kind = kind;
     const keep = (n) => { room.nodes.push(n); return n; };
+    const fileLoop = (buf) => { const s = keep(c.createBufferSource()), g = keep(c.createGain()); s.buffer = buf; s.loop = true; g.gain.value = bufferGain(buf); s.connect(g); g.connect(out); s.start(0, Math.random() * buf.duration * 0.5); };
     const loop = (f) => { const s = keep(c.createBufferSource()); s.buffer = noiseBuf(c, 3); s.loop = true; f(s); s.start(); return s; };
-    if (kind === "water") {
+    if (kind === "water" && bufs.main) { fileLoop(bufs.main); } else if (kind === "water") {
       // clapotis très léger : un souffle d'eau à peine audible dans les aigus, et de petites gouttes irrégulières (« plic »)
       loop((s) => { const hp = keep(c.createBiquadFilter()), g = keep(c.createGain()); hp.type = "highpass"; hp.frequency.value = 3800; g.gain.value = 0.025; s.connect(hp); hp.connect(g); g.connect(out); });
       const drip = () => {
@@ -570,17 +581,17 @@ function roomStart(kind, volume = 0.3) {
       drip(); room.timers.push(setTimeout(drip, 420));
     } else if (kind === "cat") {
       // ronronnement doux : bruit grave filtré dont le volume pulse de façon irrégulière (~25 Hz qui dérive) et respire lentement ; miaulements espacés
-      loop((s) => {
+      if (bufs.main) fileLoop(bufs.main); else loop((s) => {
         const bp = keep(c.createBiquadFilter()), lp = keep(c.createBiquadFilter()), g = keep(c.createGain()), lfo = keep(c.createOscillator()), lg = keep(c.createGain()), br = keep(c.createOscillator()), bg = keep(c.createGain());
         bp.type = "bandpass"; bp.frequency.value = 130; bp.Q.value = 0.9; lp.type = "lowpass"; lp.frequency.value = 320; g.gain.value = 0.55; lfo.frequency.value = 24; lg.gain.value = 0.22; lfo.connect(lg); lg.connect(g.gain); br.frequency.value = 0.4; bg.gain.value = 0.2; br.connect(bg); bg.connect(g.gain);
         s.connect(bp); bp.connect(lp); lp.connect(g); g.connect(out); lfo.start(); br.start();
         const drift = () => { if (room.kind !== "cat" || room.out !== out) return; lfo.frequency.setTargetAtTime(21 + Math.random() * 7, c.currentTime, 0.3); room.timers.push(setTimeout(drift, 500 + Math.random() * 700)); }; drift();
       });
-      const next = (first) => { room.timers.push(setTimeout(() => { if (room.kind !== "cat" || room.out !== out) return; meow(volume * 1.4); next(false); }, first ? 3000 + Math.random() * 2000 : 9000 + Math.random() * 10000)); };
+      const next = (first) => { room.timers.push(setTimeout(() => { if (room.kind !== "cat" || room.out !== out) return; meow(volume * 1.4, bufs.meow); next(false); }, first ? 3000 + Math.random() * 2000 : 9000 + Math.random() * 10000)); };
       next(true);
     }
     return true;
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { roomStart, roomStop, meow, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { audioContext: sfxCtx, roomStart, roomStop, meow, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

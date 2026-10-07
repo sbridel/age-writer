@@ -214,12 +214,33 @@ async function renderRelto(plugin, source, el, ctx) {
   }
   const roomSoundOn = () => !!plugin.ext.sound && plugin.ext.soundRooms !== false;
   const roomVol = () => (plugin.ext.volume == null ? 0.35 : plugin.ext.volume) * 0.7;
-  const roomAudio = (v) => { try { if (roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat") && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages") sound.roomStart(v === "cat" ? "cat" : "water", roomVol()); else sound.roomStop(); } catch (e) { /* ignore */ } };
+  // enregistrements facultatifs de l'utilisateur (réglages > Son > Relto) : lus dans le coffre, décodés une fois
+  const roomBufs = (plugin.__roomBufs = plugin.__roomBufs || new Map());
+  const roomBuf = async (key) => {
+    try {
+      const n = String(plugin.ext[key] || "").trim().replace(/^\[\[|\]\]$/g, ""); if (!n) return null;
+      const f = app.metadataCache.getFirstLinkpathDest(n, ctx.sourcePath) || app.vault.getAbstractFileByPath(n);
+      if (!f || !AUDIO_EXT.includes(String(f.extension).toLowerCase())) return null;
+      const id = f.path + ":" + (f.stat ? f.stat.mtime : 0); if (roomBufs.has(id)) return roomBufs.get(id);
+      const c = sound.audioContext(); if (!c) return null;
+      const buf = await c.decodeAudioData((await app.vault.readBinary(f)).slice(0)); roomBufs.set(id, buf); return buf;
+    } catch (e) { console.warn("[Age Writer ext] fichier son", e); return null; }
+  };
+  let roomSeq = 0;
+  const roomAudio = async (v) => {
+    const my = ++roomSeq;
+    try {
+      if (!(roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat") && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages")) { sound.roomStop(); return; }
+      const bufs = v === "cat" ? { main: await roomBuf("roomPurrFile"), meow: await roomBuf("roomMeowFile") } : { main: await roomBuf("roomWaterFile") };
+      if (my !== roomSeq) return; // on a changé de vue pendant le chargement
+      sound.roomStart(v === "cat" ? "cat" : "water", roomVol(), bufs);
+    } catch (e) { /* ignore */ }
+  };
   const syncView = (v) => { for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-active", id === (v || "island")); roomAudio(v); };
   const syncNav = (sc) => { const av = renderer.available(); for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-hidden", !av[id]); syncView(renderer.view); void sc; };
   syncView("island");
   const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) sound.meow(roomVol()); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
+  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;
 
   const fmt = (h) => `${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
