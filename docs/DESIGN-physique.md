@@ -80,6 +80,7 @@ Fichiers :
 | `src/physics/text.js` | la **fiche** (lignes, causes, tensions) en français ou en anglais |
 | `src/physics/index.js` | l'API : `physicsOf(analyse, src, graine)`, `applyPhysics(analyse, phys, mode)`, `sheet(phys, langue)` |
 | `tools/physics-report.js` | la galerie `docs/physique-exemples.md` (`node tools/physics-report.js [en]`) |
+| `tools/physics-bench.js` | le **banc physique** : une page autonome qui fait tourner ce code dans le navigateur (écrire un bloc, voir la fiche, cliquer une piste) → `test/visual/out/banc-physique.html` ; modèle `tools/physics-bench.template.html` |
 
 ### Le tirage sous contraintes
 
@@ -243,12 +244,12 @@ Tout passe par les crochets existants du moteur (`src/engine/hooks.js`), sans to
 
 | Où | Quoi |
 |---|---|
-| `src/entry.js`, `AGEX.skip` | reconnaître `PHYS_RE` (sinon `mass: 2` serait un symbole inconnu, une tache d'encre) |
+| `src/entry.js`, `AGEX.skip` | reconnaître `PHYS_RE` (sinon `mass: 2` serait un symbole inconnu, une tache d'encre, qui coûte 10 points cosmologiques : la galerie et le banc simulent déjà ce crochet) |
 | `src/entry.js`, `AGEX.adjust` | après la loi du changement : `applyPhysics(out, physicsOf(out, src, graine), this.ext.physics)` |
 | `src/settings-ui.js` | réglage `physics` : off / easy / strict (défaut à décider, voir §13) ; libellés `i18n.js` |
 | `src/ui-extras.js` | onglet ou section « Physique » : `sheet(analysis.physics, langue)` |
 | `src/engine/analysis.js`, `frontmatterFor` | clés `age_gravity`… (via le crochet `adjust`, l'analyse porte `physics`) |
-| `build.js` | retirer `"physics"` de `NOT_SHIPPED` |
+| `build.js` | retirer `"physics"` de `NOT_SHIPPED` ; requérir `./physics/index` (le mini-bundler ne résout pas un dossier seul) |
 | `src/guide.js` | une rubrique « Physique » dans le guide et la référence |
 
 Coût mesuré : 0,8 ms par Âge en moyenne (48 essais au plus, plus la recherche des pistes, ≈ 65 essais par paramètre et par tension). À garder en cache par (texte du bloc, graine), comme l'analyse.

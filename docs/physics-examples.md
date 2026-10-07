@@ -90,7 +90,7 @@ What does not hold :
 - **medium** · geological — The interior is too cold to feed volcanoes (internal heat 0.090; at least 0.50 is needed).
   - Ways out : a younger world (age: 3.50) ; a more massive planet (mass: 2.60) ; a nearby giant kneading it by tides (planet_rings)
 
-Stability : 60 (unstable) → strict 60 (unstable) · chosen world n° 1/48, cost 0.20
+Stability : 92 (stable) → strict 72 (unstable) · chosen world n° 1/48, cost 0.20
 
 ## Crépuscule
 
@@ -338,7 +338,7 @@ Why this world is so :
 
 Nothing grinds.
 
-Stability : 58 (unstable) → strict 58 (unstable) · chosen world n° 2/48, cost 0.00
+Stability : 68 (unstable) → strict 68 (unstable) · chosen world n° 2/48, cost 0.00
 
 ## Aurores mortes
 
@@ -370,7 +370,7 @@ What does not hold :
 - **light** · cosmological — The core has frozen (internal heat 0.072): no dynamo, so auroras stay faint and patchy, as on Mars.
   - Ways out : a younger world (age: 2.80) ; a more massive planet (mass: 1.30) ; more iron at the core (iron)
 
-Stability : 55 (unstable) → strict 45 (unstable) · chosen world n° 1/48, cost 0.10
+Stability : 75 (stable) → strict 65 (unstable) · chosen world n° 1/48, cost 0.10
 
 ## Ciel vert
 

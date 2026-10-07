@@ -1,0 +1,238 @@
+<title>Banc physique des Âges</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout : un carnet d'observation à deux pages — à gauche le bloc écrit, à droite ce que le monde en fait. */
+:root {
+  --paper: #eef1ed;
+  --sheet: #f8faf7;
+  --ink: #1d2726;
+  --muted: #5d6b68;
+  --rule: #cdd6d2;
+  --verdigris: #2c7a6a;
+  --verdigris-soft: #d8ebe5;
+  --ok: #2f7a4a;
+  --light: #9a7420;
+  --medium: #b4561f;
+  --strong: #a3243a;
+  --sev-bg: #f3ece0;
+  --f-display: "IM Fell English", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --f-body: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #111716; --sheet: #172020; --ink: #dbe4e0; --muted: #93a39e; --rule: #2b3836;
+  --verdigris: #5fbfa8; --verdigris-soft: #1d3530; --ok: #6cc28a; --light: #d6ad4f; --medium: #e48a52; --strong: #ef6f83; --sev-bg: #241f17; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #111716; --sheet: #172020; --ink: #dbe4e0; --muted: #93a39e; --rule: #2b3836;
+  --verdigris: #5fbfa8; --verdigris-soft: #1d3530; --ok: #6cc28a; --light: #d6ad4f; --medium: #e48a52; --strong: #ef6f83; --sev-bg: #241f17; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 16px/1.55 var(--f-body); margin: 0; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 48px; }
+header { display: grid; gap: 6px; margin-bottom: 22px; }
+.eyebrow { font: 600 12px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--verdigris); }
+h1 { font: 400 clamp(2rem, 4.5vw, 3rem)/1.05 var(--f-display); margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 68ch; margin: 0; }
+.lede em { font-style: italic; }
+
+.desk { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 22px; align-items: start; }
+@media (max-width: 860px) { .desk { grid-template-columns: 1fr; } }
+.page { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 20px; min-width: 0; }
+h2 { font: 400 1.45rem/1.2 var(--f-display); margin: 0 0 12px; }
+h3 { font: 600 .78rem/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 22px 0 10px; }
+
+label { font: 600 .78rem/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
+textarea, input[type="text"] { width: 100%; font: 15px/1.6 var(--f-mono); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 3px; padding: 10px 12px; }
+textarea { min-height: 220px; resize: vertical; }
+textarea:focus, input:focus, button:focus-visible { outline: 2px solid var(--verdigris); outline-offset: 1px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin-top: 14px; }
+.row > div { flex: 1 1 160px; min-width: 0; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
+.seg button { font: 600 13px/1 var(--f-mono); padding: 9px 12px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--verdigris); color: var(--sheet); }
+.check { display: flex; gap: 8px; align-items: center; font: 14px/1.4 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--muted); margin: 12px 0 0; }
+.check input { accent-color: var(--verdigris); }
+
+.gallery { display: flex; flex-wrap: wrap; gap: 6px; }
+.gallery button { font: 14px/1 var(--f-body); padding: 7px 10px; background: transparent; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink); cursor: pointer; }
+.gallery button:hover { border-color: var(--verdigris); color: var(--verdigris); }
+.gallery button[aria-current="true"] { background: var(--verdigris-soft); border-color: var(--verdigris); }
+.note { font-style: italic; color: var(--muted); margin: 10px 0 0; min-height: 1.5em; }
+.blocks { font: 12px/1.7 var(--f-mono); color: var(--muted); margin-top: 14px; max-height: 120px; overflow: auto; border-top: 1px dashed var(--rule); padding-top: 10px; }
+
+.verdict { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: baseline; padding-bottom: 14px; border-bottom: 1px solid var(--rule); }
+.stab { font: 400 2.6rem/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.stab small { font: 600 12px/1 var(--f-mono); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-left: 6px; }
+.stab .arrow { color: var(--muted); font-size: 1.6rem; margin: 0 6px; }
+.v-stable { color: var(--ok); } .v-unstable { color: var(--light); } .v-dying { color: var(--strong); }
+.meta { font: 13px/1.4 var(--f-mono); color: var(--muted); }
+
+.chain { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
+.node { font: 600 12px/1 var(--f-mono); padding: 7px 9px; border-radius: 3px; border: 1px solid var(--rule); background: var(--paper); white-space: nowrap; }
+.node b { font-weight: 400; color: var(--muted); margin-left: 4px; }
+.node.ok { border-color: var(--ok); } .node.warn { border-color: var(--light); } .node.bad { border-color: var(--strong); color: var(--strong); }
+.chain .to { color: var(--muted); font-family: var(--f-mono); }
+
+dl.sheet { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; margin: 0; }
+dl.sheet dt { font: 600 12px/1.6 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--verdigris); }
+dl.sheet dd { margin: 0; font-variant-numeric: tabular-nums; min-width: 0; }
+@media (max-width: 520px) { dl.sheet { grid-template-columns: 1fr; gap: 2px; } dl.sheet dd { margin-bottom: 8px; } }
+
+ul.facts { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
+.tension { border-left: 3px solid var(--light); background: var(--sev-bg); padding: 10px 12px; border-radius: 0 3px 3px 0; display: grid; gap: 6px; }
+.tension.medium { border-left-color: var(--medium); } .tension.strong { border-left-color: var(--strong); }
+.tensions { display: grid; gap: 10px; }
+.tag { font: 600 11px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tag .sev { color: var(--light); } .medium .tag .sev { color: var(--medium); } .strong .tag .sev { color: var(--strong); }
+.fixes { display: flex; flex-wrap: wrap; gap: 6px; }
+.fixes button, .fixes span { font: 13px/1.3 var(--f-body); padding: 5px 9px; border-radius: 3px; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); text-align: left; }
+.fixes button { cursor: pointer; border-color: var(--verdigris); }
+.fixes button code { font: 600 12px var(--f-mono); color: var(--verdigris); }
+.fixes button:hover { background: var(--verdigris-soft); }
+.calm { color: var(--ok); font-style: italic; margin: 0; }
+.err { color: var(--strong); font-family: var(--f-mono); font-size: 13px; }
+footer { margin-top: 26px; color: var(--muted); font-size: 14px; max-width: 75ch; }
+footer code { font-family: var(--f-mono); font-size: 13px; }
+@media (prefers-reduced-motion: no-preference) { .tension, .sheet dd { transition: background .2s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Age Writer · prototype de la couche physique</span>
+    <h1>Banc physique des Âges</h1>
+    <p class="lede">Écris un bloc <code>age</code> : le prototype cherche une physique qui tient ce que tu as écrit, explique le monde obtenu et dit ce qui ne tient pas, avec des lignes à écrire pour s'en sortir. <em>C'est le vrai code de la branche <code>physique</code>, pas une maquette.</em></p>
+  </header>
+
+  <div class="desk">
+    <section class="page" aria-labelledby="h-write">
+      <h2 id="h-write">Le livre</h2>
+      <label>Exemples</label>
+      <div class="gallery" id="gallery"></div>
+      <p class="note" id="note"></p>
+      <div style="margin-top:14px">
+        <label for="src">Bloc age</label>
+        <textarea id="src" spellcheck="false" autocomplete="off"></textarea>
+      </div>
+      <div class="row">
+        <div><label for="seed">Graine (nom de la note)</label><input type="text" id="seed" autocomplete="off"></div>
+        <div style="flex:0 0 auto"><label id="lbl-mode">Mode</label>
+          <div class="seg" role="group" aria-labelledby="lbl-mode">
+            <button type="button" id="m-easy" aria-pressed="true">facile</button>
+            <button type="button" id="m-strict" aria-pressed="false">strict</button>
+          </div>
+        </div>
+      </div>
+      <label class="check" for="draw"><input type="checkbox" id="draw"> tirer aussi les pages laissées ouvertes (comme le plugin)</label>
+      <div class="blocks" id="blocks"></div>
+    </section>
+
+    <section class="page" aria-labelledby="h-world" aria-live="polite">
+      <h2 id="h-world">Le monde</h2>
+      <div class="verdict" id="verdict"></div>
+      <h3>Chaîne des causes</h3>
+      <div class="chain" id="chain"></div>
+      <h3>Fiche</h3>
+      <dl class="sheet" id="sheet"></dl>
+      <h3>Pourquoi ce monde est ainsi</h3>
+      <ul class="facts" id="facts"></ul>
+      <h3>Ce qui ne tient pas</h3>
+      <div class="tensions" id="tensions"></div>
+    </section>
+  </div>
+
+  <footer>
+    Modèle simplifié, calé sur la Terre, Mars, Vénus et la Lune : un monde crédible et explicable, pas une simulation. Lignes de valeurs reconnues : <code>mass</code>, <code>age</code>, <code>orbit</code>, <code>insolation</code>, <code>star_mass</code>, <code>rotation</code>, <code>core</code>, <code>atmosphere</code>, <code>water</code>, <code>volatiles</code>, <code>albedo</code>, <code>tides</code> (et leurs alias français). Un clic sur une piste en vert l'écrit dans le bloc. Document de conception : <code>docs/DESIGN-physique.md</code>.
+  </footer>
+</div>
+
+<script>/*AW_BUNDLE*/</script>
+<script>
+(function () {
+  const AW = window.AW, P = AW.P;
+  const GALLERY = [
+    ["Terre-mère", "single_sun\nwater\nstone\nrain\nfern\ngrazer", "Le témoin : un monde tempéré, rien ne grince."],
+    ["Braise lente", "lava\nash\nmass: 0.2\nage: 9", "Un petit monde très vieux à qui l'on demande des volcans. Essaie les pistes."],
+    ["Forge", "lava\nwater\nstone\nash", "La lave seule : le tirage choisit un monde jeune ou massif."],
+    ["Crépuscule", "red_sun\nfrozen_cycle\nwater\nspore\nfern\nwind", "Autour d'une naine rouge, la marée fige la rotation."],
+    ["Midi figé", "single_sun\nfrozen_cycle\nwater", "La même face figée, mais autour d'un soleil jaune."],
+    ["Io", "planet_rings\nlava\nsteam\nwater", "La lune d'une géante, chauffée par ses marées."],
+    ["Errante", "starless\nwater\nspore\npale_fungus\ngreat_tree", "Sans étoile : glace, champignons, et des arbres qui n'ont rien à manger."],
+    ["Bleue", "blue_sun\ngreat_tree\ngrazer", "Une étoile bleue vit trop peu pour l'évolution. Ajoute tablet."],
+    ["Aurores mortes", "auroras\nmass: 0.1\nage: 8", "Des aurores sans champ magnétique."],
+    ["Poussière", "desert_world\nsand\nwind\nmass: 0.3", "Un petit désert : assez d'air pour le vent ?"],
+    ["Ciel vert", "green_sun\nwater\nfern", "Pas une faute de physique : un coût d'Art."],
+  ];
+  const $ = (id) => document.getElementById(id);
+  const src = $("src"), seed = $("seed"), draw = $("draw");
+  let mode = "easy", current = null;
+  const f = P.fmt("fr");
+  const AXIS = { geological: "géologique", cosmological: "cosmologique", weather: "météo", ecological: "écologique", metaphysical: "métaphysique" };
+  const SEV = { light: "légère", medium: "moyenne", strong: "forte" };
+  const VERD = { stable: "stable", unstable: "instable", dying: "mourant" };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function load(i) {
+    const [name, text, note] = GALLERY[i];
+    current = i; src.value = text; seed.value = name; $("note").textContent = note;
+    [...$("gallery").children].forEach((b, k) => b.setAttribute("aria-current", String(k === i)));
+    run();
+  }
+  GALLERY.forEach(([name], i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = name; b.onclick = () => load(i); $("gallery").appendChild(b); });
+
+  function setMode(m) { mode = m; $("m-easy").setAttribute("aria-pressed", String(m === "easy")); $("m-strict").setAttribute("aria-pressed", String(m === "strict")); run(); }
+  $("m-easy").onclick = () => setMode("easy"); $("m-strict").onclick = () => setMode("strict");
+
+  /** Écrit (ou remplace) une ligne `clé: valeur` dans le bloc. */
+  function writeLine(key, value) {
+    const v = Number(value.toPrecision(3)).toString();
+    const lines = src.value.split("\n"), re = new RegExp("^\\s*" + key + "\\s*[:=]", "i");
+    const k = lines.findIndex((l) => re.test(l));
+    if (k >= 0) lines[k] = `${key}: ${v}`; else lines.push(`${key}: ${v}`);
+    src.value = lines.join("\n"); markCustom(); run();
+  }
+  function markCustom() { $("note").textContent = ""; [...$("gallery").children].forEach((b) => b.setAttribute("aria-current", "false")); }
+
+  function chain(w) {
+    const n = (label, val, cls) => `<span class="node ${cls}">${label}<b>${esc(val)}</b></span>`, to = '<span class="to">→</span>';
+    const temp = w.Ts >= 255 && w.Ts <= 325 ? "ok" : w.Ts >= 200 && w.Ts <= 360 ? "warn" : "bad";
+    const water = { liquid: ["liquide", "ok"], ice: ["glace", "warn"], vapor: ["vapeur", "bad"], none: ["aucune", "warn"] }[w.water];
+    const star = w.stars === 0 ? n("Étoile", "aucune", "warn") : n(w.stars > 1 ? "Étoiles" : "Étoile", f(w.starTemp, 0) + " K", w.starLife < 1 ? "warn" : "ok");
+    return star + to + n("Flux", f(w.S) + "×", w.S > 0 ? "ok" : "warn") + to + n("Surface", f(w.Ts - 273.15, 0) + " °C", temp) + to + n("Eau", water[0], water[1]) + to + n("Lumière", f(w.light) + "×", w.light >= 0.01 ? "ok" : "bad") +
+      '<span style="flex-basis:100%;height:0"></span>' +
+      n("Chaleur", f(w.heat) + "×", w.volcanism ? "ok" : "warn") + to + n("Noyau", w.liquidCore ? "liquide" : "figé", w.liquidCore ? "ok" : "warn") + to + n("Champ", w.field > 0.2 ? f(w.field) + "×" : "aucun", w.field > 0.2 ? "ok" : "warn") + to + n("Air", f(w.P) + " bar", w.P >= 0.05 ? "ok" : w.P >= 0.005 ? "warn" : "bad");
+  }
+
+  function run() {
+    try {
+      const text = src.value, name = seed.value || "Sans nom";
+      const a = AW.analyseAgeBase(text, { seed: name, draw: draw.checked });
+      const ph = P.physicsOf(a, text, name), out = P.applyPhysics(a, ph, mode), sh = P.sheet(ph, "fr");
+      const strictA = P.applyPhysics(a, ph, "strict");
+      const counted = new Map(strictA.physics.tensions.map((t) => [t.id, t.counted]));
+      $("verdict").innerHTML =
+        `<span class="stab v-${a.verdict}">${a.stability}<small>moteur</small></span>` +
+        (mode === "strict" ? `<span class="stab"><span class="arrow">→</span><span class="v-${out.verdict}">${out.stability}</span><small>strict · ${VERD[out.verdict]}</small></span>` : `<span class="meta">${VERD[a.verdict]} · en mode facile, la physique explique sans changer la stabilité</span>`) +
+        `<span class="meta">monde n° ${ph.candidate + 1} sur 48 essayés</span>`;
+      $("chain").innerHTML = chain(ph.w);
+      $("sheet").innerHTML = sh.rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+      $("facts").innerHTML = sh.facts.length ? sh.facts.map((x) => `<li>${esc(x)}</li>`).join("") : "<li>Un monde sans histoire particulière.</li>";
+      $("tensions").innerHTML = sh.tensions.length ? sh.tensions.map((t, i) => {
+        const hints = (ph.tensions[i].hints || []);
+        const fixes = t.fix.map((txt, k) => k < hints.length ? `<button type="button" data-k="${hints[k].key}" data-v="${hints[k].value}">${esc(txt.replace(/\s*\(.*\)$/, ""))} <code>${esc(hints[k].key)}: ${esc(f(hints[k].value))}</code></button>` : `<span>${esc(txt)}</span>`).join("");
+        const note = counted.get(t.id) === false ? " · déjà compté par le moteur" : "";
+        return `<div class="tension ${t.severity}"><span class="tag"><span class="sev">${SEV[t.severity]}</span> · ${AXIS[t.axis] || t.axis} · loi ${t.law}${note}</span><div>${esc(t.why)}</div>${fixes ? `<div class="fixes">${fixes}</div>` : ""}</div>`;
+      }).join("") : '<p class="calm">Rien ne grince : la physique tient tout ce qui est écrit.</p>';
+      $("tensions").querySelectorAll("button[data-k]").forEach((b) => (b.onclick = () => writeLine(b.dataset.k, Number(b.dataset.v))));
+      const ids = [...P.idsOfAnalysis(a)];
+      const unknown = a.resolved.lines.filter((l) => l.unknown).map((l) => l.raw);
+      $("blocks").innerHTML = `Symboles lus : ${ids.length ? ids.map(esc).join(", ") : "aucun"}` + (unknown.length ? `<br><span class="err">Inconnus (tache d'encre) : ${unknown.map(esc).join(", ")}</span>` : "");
+    } catch (e) { $("tensions").innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+  }
+  let t = 0; src.addEventListener("input", () => { markCustom(); clearTimeout(t); t = setTimeout(run, 150); });
+  seed.addEventListener("input", () => { clearTimeout(t); t = setTimeout(run, 150); });
+  draw.addEventListener("change", run);
+  load(1);
+})();
+</script>

@@ -9,6 +9,9 @@
 const fs = require("fs"), path = require("path");
 const { analyseAgeBase } = require("../src/engine/analysis");
 const P = require("../src/physics");
+const { hooks } = require("../src/engine/hooks");
+// comme une fois branché : les lignes de valeurs (mass:, age:…) ne sont pas des symboles inconnus pour le moteur
+hooks.skip = (line) => P.PHYS_RE.test(line);
 
 const lang = process.argv[2] === "en" ? "en" : "fr";
 const AGES = [

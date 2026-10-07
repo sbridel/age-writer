@@ -90,7 +90,7 @@ Ce qui ne tient pas :
 - **medium** · geological — L'intérieur est trop froid pour nourrir des volcans (chaleur interne 0,090 ; il faut au moins 0,50).
   - Pistes : un monde plus jeune (age: 3,50) ; une planète plus massive (mass: 2,60) ; une géante toute proche qui la pétrit par marée (planet_rings)
 
-Stabilité : 60 (unstable) → strict 60 (unstable) · monde retenu n° 1/48, coût 0,20
+Stabilité : 92 (stable) → strict 72 (unstable) · monde retenu n° 1/48, coût 0,20
 
 ## Crépuscule
 
@@ -338,7 +338,7 @@ Pourquoi ce monde est ainsi :
 
 Rien ne grince.
 
-Stabilité : 58 (unstable) → strict 58 (unstable) · monde retenu n° 2/48, coût 0,00
+Stabilité : 68 (unstable) → strict 68 (unstable) · monde retenu n° 2/48, coût 0,00
 
 ## Aurores mortes
 
@@ -370,7 +370,7 @@ Ce qui ne tient pas :
 - **light** · cosmological — Le noyau s'est figé (chaleur interne 0,072) : pas de dynamo, donc des aurores faibles et diffuses, comme sur Mars.
   - Pistes : un monde plus jeune (age: 2,80) ; une planète plus massive (mass: 1,30) ; plus de fer au cœur (iron)
 
-Stabilité : 55 (unstable) → strict 45 (unstable) · monde retenu n° 1/48, coût 0,10
+Stabilité : 75 (stable) → strict 65 (unstable) · monde retenu n° 1/48, coût 0,10
 
 ## Ciel vert
 
