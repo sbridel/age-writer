@@ -605,7 +605,7 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
       const d = bufs.d == null ? 0.7 : bufs.d, nb = noiseBuf(c, 1);
       loop((s) => { const lp = keep(c.createBiquadFilter()), g = keep(c.createGain()), lfo = keep(c.createOscillator()), lg = keep(c.createGain()); lp.type = "lowpass"; lp.frequency.value = 200; g.gain.value = 0.05 + 0.04 * d; lfo.frequency.value = 0.23; lg.gain.value = 0.02; lfo.connect(lg); lg.connect(g.gain); lfo.start(); s.connect(lp); lp.connect(g); g.connect(out); });
       const click = (t, amp, lo, hi) => { const s = c.createBufferSource(), bp = c.createBiquadFilter(), e = c.createGain(), len = 0.004 + Math.random() * 0.012; s.buffer = nb; bp.type = "bandpass"; bp.frequency.value = lo + Math.random() * (hi - lo); bp.Q.value = 1 + Math.random() * 2.5; e.gain.setValueAtTime(amp, t); e.gain.exponentialRampToValueAtTime(0.0005, t + len); s.connect(bp); bp.connect(e); e.connect(out); s.start(t, Math.random() * 0.8, len + 0.01); };
-      const pop = (t) => { const o = c.createOscillator(), e = c.createGain(), f = 140 + Math.random() * 260; o.frequency.setValueAtTime(f * 1.6, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.05); e.gain.setValueAtTime(0.22 + Math.random() * 0.2, t); e.gain.exponentialRampToValueAtTime(0.0005, t + 0.09); o.connect(e); e.connect(out); o.start(t); o.stop(t + 0.12); click(t, 0.5, 900, 2200); };
+      const pop = (t) => { for (let i = 0; i < 3; i++) click(t + i * 0.006, 0.45 - i * 0.1, 700 + i * 500, 1800 + i * 1500); }; // gros craquement : quelques claquements de bruit rapprochés (pas de note : un son tonal faisait « ploc »)
       const crackle = () => {
         if (room.kind !== "fire" || room.out !== out) return;
         const t = c.currentTime, r = Math.random();
