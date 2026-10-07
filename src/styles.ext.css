@@ -338,3 +338,12 @@
 .age-reltoview:fullscreen .age-relto[data-tab="pages"] .age-relto__pane--view, .age-reltoview:fullscreen .age-relto[data-tab="settings"] .age-relto__pane--view,
 .age-reltoview:fullscreen .age-relto[data-tab="view"] .age-relto__pane--pages, .age-reltoview:fullscreen .age-relto[data-tab="view"] .age-relto__pane--settings,
 .age-reltoview:fullscreen .age-relto[data-tab="pages"] .age-relto__pane--settings, .age-reltoview:fullscreen .age-relto[data-tab="settings"] .age-relto__pane--pages { display: none; }
+
+/* ---- livre des glyphes ---- */
+.age-glyphbook-modal { width: min(760px, 92vw); }
+.age-glyphbook__title { margin: 0 0 4px; letter-spacing: 0.06em; }
+.age-glyphbook { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; margin-top: 10px; max-height: 60vh; overflow-y: auto; }
+.age-glyphbook__card { background: rgba(0, 0, 0, 0.18); border: 1px solid var(--background-modifier-border); border-radius: 6px; padding: 8px; text-align: center; }
+.age-glyphbook__art svg { width: 64px; height: 64px; }
+.age-glyphbook__name { margin-top: 4px; font-variant: small-caps; letter-spacing: 0.04em; }
+.age-glyphbook__where { margin-top: 4px; font-size: 0.8em; display: flex; flex-wrap: wrap; gap: 2px 8px; justify-content: center; }

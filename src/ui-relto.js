@@ -5,6 +5,7 @@ const { ReltoRenderer } = require("./relto-render");
 const sound = require("./sound");
 const X = require("./ui-extras");
 const DT = require("./dnitime");
+const B = require("./relto-books");
 
 const AUDIO_EXT = ["mp3", "ogg", "wav", "m4a", "flac"];
 
@@ -200,7 +201,7 @@ async function renderRelto(plugin, source, el, ctx) {
     pick(defs.some((d) => d[0] === ui0.reltoTab) ? ui0.reltoTab : "view");
   } else { root.setAttr("data-tab", "all"); }
   const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
+  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;
 
   const fmt = (h) => `${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
@@ -280,6 +281,9 @@ async function renderRelto(plugin, source, el, ctx) {
     const shown = new Set((scene.ages || []).map((a) => a.path));
     // null : tout afficher (la propriété disparaît) ; [] : aucun livre ; [noms] : ceux-là
     const setList = async (names) => { await app.fileManager.processFrontMatter(file, (fm) => { if (names) fm.relto_books = names; else delete fm.relto_books; }); plugin.refreshLive(); };
+    const special = body.createDiv({ cls: "age-relto__booktools" });
+    special.createEl("button", { text: t("books.glyphs") }).addEventListener("click", () => B.openGlyphBook(plugin, scene ? scene.ages : []));
+    special.createEl("button", { text: t("books.library") }).addEventListener("click", () => B.openLibraryBook(plugin));
     const tools = body.createDiv({ cls: "age-relto__booktools" });
     tools.createEl("button", { text: t("relto.booksall") }).addEventListener("click", () => setList(null));
     tools.createEl("button", { text: t("relto.booksnone") }).addEventListener("click", () => setList([]));

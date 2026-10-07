@@ -21,6 +21,7 @@ const { makeT } = require("./i18n");
 const { AgeIndex } = require("./index");
 const X = require("./ui-extras");
 const R = require("./ui-relto");
+const RB = require("./relto-books");
 const G = require("./guide");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
 
@@ -334,6 +335,8 @@ module.exports = function build(Base, core, AGEX) {
       this.addCommand({ id: "open-reference", name: "Open the Age Writer full reference", callback: () => G.openGuide(this, null, "full") });
       this.addCommand({ id: "open-relto-view", name: "Open the Relto view (large)", callback: () => R.openReltoView(this) });
       if (typeof this.registerView === "function") this.registerView(R.RELTO_VIEW, (leaf) => new R.ReltoView(leaf, this));
+      this.addCommand({ id: "open-glyph-book", name: "Open the book of glyphs", callback: async () => { const ages = (await this.index.list()).filter((a) => a.glyphs && a.glyphs.length); RB.openGlyphBook(this, ages); } });
+      this.addCommand({ id: "open-library-book", name: "Open a library note (Age blocks / Relto pages)", callback: () => RB.openLibraryBook(this) });
       this.addCommand({ id: "create-relto-page", name: "Create a Relto page", callback: () => R.createReltoPage(this) });
       this.addCommand({
         id: "create-exploration-journal", name: "Create the exploration journal for this Age",

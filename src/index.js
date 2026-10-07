@@ -16,7 +16,7 @@ class AgeIndex {
         if (src !== null) try {
           const a = core.analyse(src, { seed: core.base(f.path) });
           const back = a.returnTo ? app.metadataCache.getFirstLinkpathDest(a.returnTo, f.path) : null;
-          hit.info = { name: f.basename, path: f.path, verdict: a.verdict, stability: a.stability, returnTo: back ? back.basename : a.returnTo || null, links: a.links };
+          hit.info = { name: f.basename, path: f.path, verdict: a.verdict, stability: a.stability, returnTo: back ? back.basename : a.returnTo || null, links: a.links, glyphs: [...new Set(core.glyphs(a).filter((g) => g.written && !g.blot).map((g) => g.id))] };
         } catch (e) { console.warn("[Age Writer ext] index " + f.path, e); } // un Âge illisible ne vide pas l'étagère
         this.cache.set(f.path, hit);
       }

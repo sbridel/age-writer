@@ -95,7 +95,7 @@ function parseReltoLibrary(text) {
   const pages = [], problems = [];
   String(text).split("\n").forEach((raw, i) => {
     const l = raw.trim(); if (!l || l.startsWith("#")) return;
-    const m = l.match(/^page\s+([a-z][a-z0-9_]*)\s*:\s*(.+)$/i);
+    const m = l.match(/^page[\s_]+([a-z][a-z0-9_]*)\s*:\s*(.+)$/i);
     if (!m) { problems.push({ line: i + 1, text: l, message: "expected:  page id: Label | effect 0.5, effect asset | audio=preset | unlock=Age:60" }); return; }
     // découpe sur « | » mais pas à l'intérieur d'un lien [[Nom|alias]]
     const parts = m[2].split(/\|(?![^[]*\]\])/).map((x) => x.trim()), eff = []; let audio = [], unlock = null;

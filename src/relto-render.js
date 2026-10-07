@@ -28,7 +28,7 @@ class ReltoRenderer {
   /** @param {HTMLCanvasElement} canvas  @param {import('./dni').Dni} dni */
   constructor(canvas, dni, opts = {}) {
     this.canvas = canvas; this.dni = dni;
-    this.opts = { onOpen: null, onHover: null, reducedMotion: false, ...opts };
+    this.opts = { onOpen: null, onSpecial: null, onHover: null, reducedMotion: false, ...opts };
     this.ctx = canvas.getContext("2d");
     // résolution : assez fine pour un écran HiDPI, sans dépasser 1280×720 (redessiné 30 fois par seconde)
     this.scale = Math.min(2, ((typeof devicePixelRatio === "number" ? devicePixelRatio : 1) || 1) * 1.25);
@@ -362,6 +362,25 @@ class ReltoRenderer {
     if (this.scene.ages.length > 30) { ctx.fillStyle = rgba(230, 220, 190, 0.7); ctx.font = "7px serif"; ctx.fillText(`+${this.scene.ages.length - 30}`, x0 + w - 16, y0 + 12); }
     if (night > 0.4) { ctx.fillStyle = rgba(255, 210, 140, 0.5 * night); ctx.beginPath(); ctx.arc(x0 + w + 6, y0 + 4, 2, 0, 6.283); ctx.fill(); }
     ctx.restore();
+    this.drawSpecialBooks(ctx, amb, K, w);
+  }
+
+  /** deux livres à part, debout au pied de l'étagère (taille réelle, hors de son échelle réduite) : glyphes et bibliothèque */
+  drawSpecialBooks(ctx, amb, K, shelfW) {
+    const col = (c) => mix("#05060c", c, amb), bw = 7, gap = 3, x1 = SHELF_X + (shelfW / 2) * K + 8;
+    const defs = [
+      { kind: "glyphs", x: x1, h: 17, body: "#27555a", band: "#d8c07a", tip: "Book of glyphs" },
+      { kind: "library", x: x1 + bw + gap, h: 15, body: "#5b2b2b", band: "#c9a24e", tip: "Library book (blocks and Relto pages)" },
+    ];
+    for (const b of defs) {
+      const y = GY - b.h;
+      ctx.fillStyle = col(b.body); ctx.fillRect(b.x, y, bw, b.h);
+      ctx.fillStyle = col(b.band); ctx.fillRect(b.x, y + 2, bw, 1.4); ctx.fillRect(b.x, y + b.h - 3.4, bw, 1.4);
+      ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(b.x + bw - 1.6, y, 1.6, b.h);
+      if (b.kind === "glyphs") { ctx.fillStyle = col(b.band); ctx.beginPath(); ctx.moveTo(b.x + bw / 2, y + 5.5); ctx.lineTo(b.x + bw / 2 + 2, y + 8.5); ctx.lineTo(b.x + bw / 2, y + 11.5); ctx.lineTo(b.x + bw / 2 - 2, y + 8.5); ctx.closePath(); ctx.fill(); }
+      else { ctx.fillStyle = col(b.band); ctx.fillRect(b.x + bw / 2 - 1.2, y + 5.5, 2.4, 3.6); ctx.fillStyle = col(b.body); ctx.fillRect(b.x + bw / 2 - 0.5, y + 6.4, 1, 1.6); }
+      this.hot.push({ x: b.x - 1, y: y - 1, w: bw + 2, h: b.h + 2, tip: b.tip, special: b.kind });
+    }
   }
 
   drawPlate(ctx, amb) {
@@ -521,10 +540,10 @@ class ReltoRenderer {
   }
   hit(x, y) { for (let i = this.hot.length - 1; i >= 0; i--) { const h = this.hot[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h; } return null; }
   onMove(e) {
-    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && this.hover.book ? "pointer" : "";
+    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && (this.hover.book || this.hover.special) ? "pointer" : "";
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
-  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (h && h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); }
+  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };

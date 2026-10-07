@@ -6,7 +6,7 @@ Idée de départ : dans Mystcraft, on ne **crée** pas un monde, on se **lie** �
 
 > Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part. Aucune ressource de Myst (police, image, son) n'est fournie.
 
-**Version 1.8.0** : le moteur (issu du 1.3.0, en sources lisibles dans `src/engine/`, variables locales renommées) + la couche d'extension. Nouveau : le réglage **« How much the book draws »** (Tirage & bibliothèque) — *Little* / *Normal* / *A lot*. *Normal* = tirage d'avant, *Little* laisse la plupart des cases ouvertes (≈ 0,9 page tirée pour un Âge de 9 pages au lieu de 2,2), *A lot* en ajoute (≈ 3,4). Même note, même résultat. Le `manifest.json` annonce `1.8.0`.
+**Version 1.9.0** : deux **livres à part** sur le Relto (livre des glyphes, livre de la bibliothèque, voir §6), et le réglage « How much the book draws » de la 1.8 (*Little* / *Normal* / *A lot*, Normal = tirage d'avant). Le moteur (issu du 1.3.0) est en sources lisibles dans `src/engine/`. Le `manifest.json` annonce `1.9.0`.
 
 ---
 
@@ -127,13 +127,22 @@ Une fine rangée d'icônes discrètes au-dessus de l'image :
 
 Dans la vue Relto, une icône **plein écran** met l'image sur tout l'écran ; la barre d'icônes et l'heure flottent par-dessus et s'effacent. Échap pour quitter. Le son du Relto continue quand on change d'onglet.
 
+### Les deux livres du Relto
+
+Au pied de l'étagère, deux livres d'aspect différent des Âges (aussi dans l'onglet **Pages**, et par commandes) :
+
+- **Livre des glyphes** (turquoise, losange) : un clic ouvre la liste des glyphes *utilisés* dans les Âges de l'étagère, avec leur dessin et les Âges où ils apparaissent (clic = ouvre l'Âge). Pour l'instant « connu » = écrit dans un Âge ; la future boucle de jeu pourra le limiter aux glyphes découverts. Commande : *Open the book of glyphs*.
+- **Livre de la bibliothèque** (rouge, fermoir) : un clic propose *Blocs, réactions et variantes d'Âges* (`age-library`) ou *Pages du Relto* (`relto-library`). Le plugin ouvre la note de bibliothèque existante, ou la crée avec un exemple commenté (`Age Library.md`, `Relto Library.md`, dans le dossier de bibliothèque s'il est défini). Tu n'as plus qu'à écrire. Commande : *Open a library note*.
+
+La syntaxe d'une page du Relto accepte `page lagon: …` ou `page_lagon: …` (le second n'était pas reconnu avant, alors que les exemples le montraient).
+
 ### Pages intégrées
 
 Pins, bouleaux, palmes, fougères, cascade, lucioles, lanternes, neige, aurore, feux d'artifice, montagne, menhirs, cheminée, brume, et sous l'île : **gemmes, or, argent** (filons et cristaux dans la roche, scintillants). « Nouvelle page » crée une page ; on peut aussi les écrire à la main (une note par page) ou dans un bloc `relto-library` :
 
 ````
 ```relto-library
-page_lagon: Lagon | vegetation 0.5 palm, gold 0.6 | audio=river | unlock=[[Marais de verre]]:60
+page lagon: Lagon | vegetation 0.5 palm, gold 0.6 | audio=river | unlock=[[Marais de verre]]:60
 ```
 ````
 

@@ -27,7 +27,7 @@ const GUIDE = {
       { ul: ["**Vue** (œil) : l'image, avec l'heure et l'heure D'ni dessous. Cliquer la zone de l'heure la cache ; elle s'efface seule après quelques secondes, sauf si la souris passe dessus", "**Pages** (feuille) : les pages actives, disponibles, verrouillées ; les livres affichés sur l'étagère", "**Réglages** (engrenage) : heure du ciel, ambiance sonore, niveau et volume", "**Agrandir** : ouvre la **vue Relto** dans un onglet principal, image grande"] },
       { h: "Pages du Relto" },
       { p: "Chaque page ajoute un élément et une ambiance : pins, bouleaux, palmes, fougères, cascade, lucioles, lanternes, neige, aurore, feux d'artifice, montagne, menhirs, cheminée, brume, et, sous l'île : **gemmes, or, argent** (filons et cristaux dans la roche). « Nouvelle page » (onglet Pages) en crée une ; on peut aussi écrire ses propres pages dans un bloc `relto-library`." },
-      { code: "```relto-library\npage_lagon: Lagon | vegetation 0.5 palm, gold 0.6 | audio=river\n```" },
+      { code: "```relto-library\npage lagon: Lagon | vegetation 0.5 palm, gold 0.6 | audio=river\n```" },
       { p: "Choisir les livres affichés : lignes `folders:`, `exclude:`, `books:` du bloc, ou cases à cocher de l'onglet Pages." },
     ] },
     { id: "sound", icon: "volume-2", title: "Les sons", body: [
@@ -70,7 +70,7 @@ const GUIDE = {
       { ul: ["**View** (eye): the image, with the time and the D'ni time below. Clicking the time hides it; it also fades by itself after a few seconds unless the mouse is over it", "**Pages** (sheet): active, available and locked pages; the books on the shelf", "**Settings** (cog): sky time, soundscape, level and volume", "**Expand**: opens the dedicated **Relto view** in a main tab, with a large image"] },
       { h: "Relto pages" },
       { p: "Each page adds an element and an ambience: pines, birches, palms, ferns, waterfall, fireflies, lanterns, snow, aurora, fireworks, mountain, pillars, chimney, mist and, under the island: **gems, gold, silver** (veins and crystals in the rock). “New page” (Pages tab) creates one; you can also write your own in a `relto-library` block." },
-      { code: "```relto-library\npage_lagoon: Lagoon | vegetation 0.5 palm, gold 0.6 | audio=river\n```" },
+      { code: "```relto-library\npage lagoon: Lagoon | vegetation 0.5 palm, gold 0.6 | audio=river\n```" },
       { p: "Choose the books shown: `folders:`, `exclude:`, `books:` lines, or the checkboxes in the Pages tab." },
     ] },
     { id: "sound", icon: "volume-2", title: "Sounds", body: [
@@ -169,7 +169,7 @@ const REF_FR = [
     { p: "Types d'effets : vegetation, waterfall, fireflies, lanterns, snow, aurora, mist, fireworks, mountain, pillars, chimney, gems, gold, silver. Ambiances : wind, wind_in_pines, waterfall, river, soft_rain, night_crickets, deep_hum, fire_crackle, hearth, stone_choir, mountain_air, fireworks, metal_chimes, thunder." },
     { h: "Une page = une note" },
     { code: "---\nrelto_page_id: page_pine_trees\ntarget_age: Relto\nenabled: true\neffects:\n  canvas_additions:\n    - { type: vegetation, density: 0.7, asset: conifer }\n  ambiance_audio: wind_in_pines\nunlock:\n  age: \"[[Marais de verre]]\"\n  min_stability: 60\n  ages_count: 3\n---" },
-    { p: "États : *active*, *disponible* (bouton Attacher), *verrouillée* (raison affichée), *désactivée*, *manquante*. Bloc `relto-library` : une page par ligne, `page_lagon: Lagon | vegetation 0.5 palm, gold 0.6 | audio=river | unlock=[[Marais de verre]]:60`." },
+    { p: "États : *active*, *disponible* (bouton Attacher), *verrouillée* (raison affichée), *désactivée*, *manquante*. Bloc `relto-library` : une page par ligne, `page lagon: Lagon | vegetation 0.5 palm, gold 0.6 | audio=river | unlock=[[Marais de verre]]:60`." },
     { h: "Heure D'ni" },
     { p: "Calculée d'après l'horloge de l'ordinateur : année (hahr), mois (vailee), jour (yahr), puis gahrtahvo : tahvo : gorahn : prorahn, en chiffres D'ni. Un prorahn dure environ 1,39 s." },
   ] },
