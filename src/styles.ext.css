@@ -353,7 +353,12 @@
 .age-relto__viewbtn:hover, .age-relto__viewbtn.is-global { opacity: 1; background: rgba(14, 12, 10, 0.8); }
 .age-relto__viewbtn svg { width: 16px; height: 16px; }
 
-/* bouton de vue (île / vue globale) : dans la bande du haut, à gauche, hors de l'image */
-.age-relto__viewbtn--bar { position: static; margin-right: auto; width: 26px; height: 26px; border: none; background: none; opacity: 0.55; border-radius: 10px; color: #a89a78; }
-.age-relto__viewbtn--bar:hover, .age-relto__viewbtn--bar.is-global { opacity: 1; background: rgba(205, 189, 148, 0.18); color: #e0d2a8; }
-.age-relto[data-tab]:not([data-tab="view"]) .age-relto__viewbtn--bar { display: none; }
+/* navigation entre les vues (île, globale, sous-vues) : dans la bande du haut, à gauche, hors de l'image */
+.age-relto__nav--bar { position: static; display: flex; gap: 2px; margin-right: auto; align-items: center; }
+.age-relto__nav--bar .age-relto__viewbtn { position: static; width: 26px; height: 26px; border: none; background: none; opacity: 0.55; border-radius: 10px; color: #a89a78; }
+.age-relto__nav--bar .age-relto__viewbtn:hover, .age-relto__nav--bar .age-relto__viewbtn.is-active { opacity: 1; background: rgba(205, 189, 148, 0.18); color: #e0d2a8; }
+.age-relto__nav:not(.age-relto__nav--bar) { position: absolute; top: 8px; left: 8px; z-index: 3; display: flex; gap: 4px; }
+.age-relto__nav:not(.age-relto__nav--bar) .age-relto__viewbtn { position: static; }
+.age-relto__nav .age-relto__viewbtn.is-active { opacity: 1; background: rgba(14, 12, 10, 0.8); }
+.age-relto__nav .age-relto__viewbtn.is-hidden { display: none; }
+.age-relto[data-tab]:not([data-tab="view"]) .age-relto__nav--bar { display: none; }

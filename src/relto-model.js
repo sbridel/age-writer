@@ -12,7 +12,7 @@ const TERRAINS = ["volcanic_plateau", "mossy_plateau", "sand_island", "glacier",
 const SURROUNDINGS = ["cloud_sea", "fog_sea", "ocean", "void", "lava_sea"];
 const SKY_CYCLES = ["system_time", "frozen_dawn", "frozen_day", "frozen_dusk", "frozen_night"];
 const STRUCTURES = ["hut", "bookshelves", "linking_pillars"];
-const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "islets", "calendar", "flowers", "grass"];
+const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "islets", "calendar", "flowers", "grass"];
 /** Options propres à certains effets (texte court) : couleur et nom du chat, variété du koï rare. */
 const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
 const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern", "ponderosa", "maple", "crystal"], flowers: ["blue", "red", "yellow", "white", "pink"] };
@@ -26,6 +26,57 @@ const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern", "ponderosa", "
  * @returns {{x:number,row:number,h:number,sw:number,kind:string,page?:string}[]} triés par rangée puis abscisse
  */
 const TALL_H = { ponderosa: [62, 18], maple: [44, 16], crystal: [46, 16] };
+
+/**
+ * Plan de l'île : place les gros éléments (cabane, bassin, piliers de liaison, chat, pierres dressées, banc, étagère sans cabane)
+ * côte à côte, sans chevauchement, avec des espaces réguliers. Si tout ne tient pas (écart minimum), les éléments les moins importants
+ * ne sont pas posés sur l'île (liste `dropped`) : ils restent visibles dans les sous-vues. Déterministe, ne dépend que de la scène.
+ */
+const ISLAND_X0 = 146, ISLAND_X1 = 466, GAP_MIN = 5, GAP_MAX = 30;
+const ISLAND_ORDER = ["stonesA", "stalk", "cat", "hut", "koi", "bench", "shelf", "stonesB", "pillars"]; // de gauche à droite
+function layoutIsland(scene) {
+  const st = new Set(scene.structures || []), has = (t) => (scene.additions || []).find((a) => a.type === t);
+  const stones = has("pillars"), nStones = stones ? 3 + Math.round((stones.density == null ? 0.5 : clamp01(stones.density)) * 3) : 0, items = [];
+  const add = (id, w, pri, extra) => items.push({ id, w, pri, ...extra });
+  if (st.has("hut")) add("hut", 72, 0);
+  if (has("koi")) add("koi", 58, 1);
+  if (st.has("linking_pillars")) add("pillars", 52, 2);
+  if (st.has("bookshelves") && !st.has("hut")) add("shelf", 68, 2.5);
+  if (has("cat")) add("cat", 30, 3);
+  if (has("stalktree")) add("stalk", 28, 3.5);
+  if (nStones) { const a = Math.ceil(nStones / 2); add("stonesA", 12 * a + 6, 4, { n: a, from: 0 }); if (nStones - a > 0) add("stonesB", 12 * (nStones - a) + 6, 6, { n: nStones - a, from: a }); }
+  if (has("bench")) add("bench", 30, 5);
+  const L = ISLAND_X1 - ISLAND_X0, sum = (a) => a.reduce((t, i) => t + i.w, 0), kept = items.slice().sort((a, b) => a.pri - b.pri), dropped = [];
+  while (kept.length > 1 && (L - sum(kept)) / (kept.length + 1) < GAP_MIN) dropped.push(kept.pop().id);
+  const seq = ISLAND_ORDER.map((id) => kept.find((i) => i.id === id)).filter(Boolean), n = seq.length;
+  const g = n ? Math.min(GAP_MAX, (L - sum(seq)) / (n + 1)) : 0;
+  let x = ISLAND_X0 + (L - (sum(seq) + g * (n + 1))) / 2 + g;
+  const lay = { dropped, gap: g, items: {}, stones: [], x0: ISLAND_X0, x1: ISLAND_X1 };
+  for (const it of seq) { const x0 = x, cx = x + it.w / 2; x += it.w + g; lay.items[it.id] = { x0, x1: x0 + it.w, cx, w: it.w }; }
+  const I = lay.items;
+  if (I.hut) lay.hut = { x: I.hut.cx };
+  if (I.koi) lay.koi = { x0: I.koi.x0 + 3, x1: I.koi.x0 + 55 };
+  if (I.cat) lay.cat = { x: I.cat.cx };
+  if (I.stalk) lay.stalk = { x: I.stalk.cx };
+  if (I.bench) lay.bench = { x0: I.bench.x0 + 2 };
+  if (I.shelf) lay.shelf = { x: I.shelf.x0 + 21 };
+  if (I.pillars) lay.pillars = { x: [I.pillars.cx - 18.5, I.pillars.cx + 18.5] };
+  for (const id of ["stonesA", "stonesB"]) if (I[id]) { const it = seq.find((q) => q.id === id); lay.stones.push({ x: I[id].cx, n: it.n, from: it.from }); }
+  // le mont s'appuie derrière la cabane (ou au centre) ; son pied reste sur l'île
+  const md = has("mountain"), d = md ? clamp01(md.density == null ? 0.6 : md.density) : 0, hw = 100 + 24 * d, h = 76 + 44 * d;
+  lay.mount = { x: Math.min(ISLAND_X1 - hw * 0.9, Math.max(ISLAND_X0 - 8 + hw, lay.hut ? lay.hut.x : 306)), hw, h };
+  // zones occupées (le sol devant lequel on ne plante ni arbre ni fleur) : cabane, bassin, chat, piliers de liaison
+  lay.solid = [];
+  if (lay.hut) lay.solid.push([lay.hut.x - 34, lay.hut.x + 34]);
+  if (lay.koi) lay.solid.push([lay.koi.x0 - 4, lay.koi.x1 + 4]);
+  if (lay.cat) lay.solid.push([lay.cat.x - 14, lay.cat.x + 14]);
+  if (lay.stalk) lay.solid.push([lay.stalk.x - 14, lay.stalk.x + 14]);
+  if (lay.pillars) lay.solid.push([lay.pillars.x[0] - 10, lay.pillars.x[1] + 10]);
+  if (lay.shelf) lay.solid.push([lay.shelf.x - 24, lay.shelf.x + 52]);
+  return lay;
+}
+function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
 function placePlants(additions, seed, blocked, cap = 14) {
   const veg = additions.filter((a) => a.type === "vegetation"), kindOf = (a) => a.asset || "conifer";
   const trees = veg.filter((a) => kindOf(a) !== "fern"), ferns = veg.filter((a) => kindOf(a) === "fern"), out = [];
@@ -83,6 +134,7 @@ const PAGE_PRESETS = {
   page_grass: { label: "Grass", effects: { canvas_additions: [{ type: "grass", density: 0.6 }], ambiance_audio: "wind" } },
   page_ponderosa: { label: "Ponderosa pines", effects: { canvas_additions: [{ type: "vegetation", density: 0.4, asset: "ponderosa" }], ambiance_audio: "wind_in_pines" } },
   page_maples: { label: "Maples", effects: { canvas_additions: [{ type: "vegetation", density: 0.5, asset: "maple" }], ambiance_audio: "wind" } },
+  page_stalk_tree: { label: "Stalk tree", effects: { canvas_additions: [{ type: "stalktree", density: 0.5 }], ambiance_audio: "wind" } },
   page_crystal_tree: { label: "Crystal tree", effects: { canvas_additions: [{ type: "vegetation", density: 0.2, asset: "crystal" }], ambiance_audio: "deep_hum" } },
   page_mist: { label: "Mist", effects: { canvas_additions: [{ type: "mist", density: 0.6 }], ambiance_audio: "wind" } },
 };
@@ -320,5 +372,5 @@ function hourFor(skyCycle, now = new Date()) {
 
 module.exports = {
   parseList, filterAges, TERRAINS, SURROUNDINGS, SKY_CYCLES, STRUCTURES, EFFECT_TYPES, ASSETS, PAGE_PRESETS,
-  placePlants, optsOf, stripLink, parseReltoLibrary, libraryPage, parseRelto, parsePage, checkUnlock, buildScene, pageFrontmatter, defaultReltoFrontmatter, skyAt, hourFor,
+  layoutIsland, placePlants, optsOf, stripLink, parseReltoLibrary, libraryPage, parseRelto, parsePage, checkUnlock, buildScene, pageFrontmatter, defaultReltoFrontmatter, skyAt, hourFor,
 };

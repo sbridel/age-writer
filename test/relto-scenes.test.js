@@ -28,7 +28,7 @@ const mkScene = (pages, extra = {}) => {
   return M.buildScene(relto, defs, [{ name: "A", path: "A.md", verdict: "stable", stability: 90, returnTo: "Relto" }]);
 };
 const r = new ReltoRenderer(dom.window.document.createElement("canvas"), dni);
-for (const view of ["island", "global"]) {
+for (const view of ["island", "global", "cabin", "pillars", "pond", "cat", "grove"]) {
   r.view = view;
   for (const hour of [3, 7, 13, 19.5, 23]) {
     for (const set of [[], ids.slice(0, 11), ids.slice(11, 22), ids.slice(22), ids]) {
@@ -49,6 +49,29 @@ r.setView("global"); ok(r.view === "global" && seen === "global", "setView globa
 ok(r.hot.some((h) => h.go === "island") && r.hot.some((h) => /^Calendar pinnacle/.test(h.tip)), "vue globale : l'île ramène à la vue de l'île, pinacle du calendrier présent");
 const target = r.hot.find((h) => h.go === "island"); r.toLogical = () => [target.x + 3, target.y + 3]; r.onClick({}); ok(r.view === "island" && seen === "island", "clic sur l'île = retour à la vue de l'île");
 r.setView("nimporte"); ok(r.view === "island", "vue inconnue = île");
+// sous-vues : cabane et piliers
+r.setScene(mkScene(["page_chimney"])); r.setHour(21); r.setView("cabin");
+ok(r.view === "cabin" && r.hot.some((h) => h.go === "island") && r.hot.some((h) => h.tip === "Fireplace") && r.hot.some((h) => h.book) && r.hot.some((h) => h.special === "glyphs") && r.hot.some((h) => h.special === "library"), "cabane : porte, cheminée, livres des Âges et deux livres à part");
+r.setScene(mkScene([])); r.draw(1); ok(r.hot.some((h) => /^Cold hearth/.test(h.tip)), "cabane : âtre froid sans la page cheminée");
+r.setView("island"); r.draw(1);
+ok(r.hot.some((h) => h.go === "cabin") && !r.hot.some((h) => h.special) && !r.hot.some((h) => h.book), "île : la cabane est cliquable, étagère et gros livres sont à l'intérieur");
+const hut = r.hot.find((h) => h.go === "cabin"); r.toLogical = () => [hut.x + 3, hut.y + 3]; r.onClick({}); ok(r.view === "cabin", "clic sur la cabane = intérieur");
+const door = r.hot.find((h) => h.go === "island"); r.toLogical = () => [door.x + 3, door.y + 3]; r.onClick({}); ok(r.view === "island", "clic sur la porte = retour à l'île");
+r.draw(1); const pil = r.hot.find((h) => h.go === "pillars"); r.toLogical = () => [pil.x + 2, pil.y + 2]; r.onClick({}); ok(r.view === "pillars" && r.hot.some((h) => /link back/.test(h.tip)), "clic sur les piliers = vue des piliers");
+r.setView("island");
+// sans cabane : l'étagère et les livres à part restent dehors
+r.setScene(mkScene([], { structures: ["bookshelves"] })); r.draw(1); ok(r.hot.some((h) => h.book) && r.hot.some((h) => h.special), "sans cabane : étagère dehors comme avant");
+// plan de l'île : aucun chevauchement entre gros éléments, tout posé dans l'île ; vues rapprochées
+const FULL = ["page_chimney", "page_koi", "page_cat", "page_stalk_tree", "page_bench", "page_pillars", "page_mountain", "page_waterfall", "page_lanterns", "page_pine_trees", "page_flowers"];
+const sceneFull = mkScene(FULL.filter((id) => M.PAGE_PRESETS[id])), lay = M.layoutIsland(sceneFull);
+const boxes = Object.entries(lay.items).map(([id, b]) => [id, b.x0, b.x1]).sort((a, b) => a[1] - b[1]);
+ok(boxes.every((b, i) => b[1] >= lay.x0 - 1 && b[2] <= lay.x1 + 1 && (!i || b[1] >= boxes[i - 1][2])), "plan : gros éléments dans l'île, sans chevauchement");
+ok(M.layoutIsland(sceneFull).dropped.join() === lay.dropped.join() && JSON.stringify(M.layoutIsland(sceneFull)) === JSON.stringify(lay), "plan : déterministe");
+const sceneBig = mkScene(["page_koi", "page_cat", "page_stalk_tree", "page_bench", "page_pillars"].filter((id) => M.PAGE_PRESETS[id]), { structures: ["hut", "bookshelves", "linking_pillars"] });
+ok(M.layoutIsland(sceneBig).items.hut && M.layoutIsland(sceneBig).items.koi && M.layoutIsland(sceneBig).items.pillars, "plan : cabane, bassin et piliers jamais écartés");
+for (const v of ["pond", "cat", "grove"]) { r.setScene(sceneFull); r.setView("island"); r.setView(v); ok(r.view === v, `vue ${v} disponible`); r.draw(1.3); }
+r.setView("pond"); ok(r.hot.some((h) => h.flash), "bassin : la koï rare est cliquable"); r.setView("cat"); ok(r.hot.some((h) => h.flash), "chat : cliquable pour son nom");
+r.setScene(mkScene([])); r.setView("pond"); ok(r.view === "island", "sans page de koï, pas de vue du bassin");
 // pages en bibliothèque
 const lib = M.parseReltoLibrary("page pluie: Pluie | rain 0.9, birds 0.4 | audio=soft_rain\npage fleurs: Fleurs | flowers 0.8 red");
 ok(!lib.problems.length && M.libraryPage(lib.pages[1]).additions[0].asset === "red", "bibliothèque : effets rain/birds/flowers et asset de fleur");

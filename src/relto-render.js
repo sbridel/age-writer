@@ -4,9 +4,11 @@
  * Tout est procédural et déterministe (graine = seed du Relto), animé par le temps.
  */
 const { rng, clamp, lerp, frac, mix, rgba, hexa, fnv } = require("./util");
-const { skyAt, hourFor, placePlants } = require("./relto-model");
+const { skyAt, hourFor, placePlants, layoutIsland } = require("./relto-model");
 const SC = require("./relto-scenery");
 const GL = require("./relto-global");
+const RM = require("./relto-rooms");
+const ROOMS = { cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom };
 
 const W = 640, H = 360, GY = 208; // largeur, hauteur logiques ; ligne de sol
 
@@ -44,7 +46,7 @@ function catLook(color) {
 const VERDICT = { stable: "#8fae6a", unstable: "#d9a24a", dying: "#c0553f", unknown: "#7a7a8a" };
 const BOOKS = ["#7a3b2a", "#2f4a3a", "#3a3f6a", "#6a5a2a", "#5a2f4a", "#2f5a5a"];
 const CAM = 1.2, CAM_X = 320, CAM_Y = 214, CAM_OY = 196; // zoom sur l'île
-const HUT_X = 245, SHELF_X = 352, PILLAR_X = [425, 462], PLATE_X = 318, SHELF_SCALE = 0.68;
+const HUT_X = 245, SHELF_X = 352, PILLAR_X = [425, 462], PLATE_X = 318, SHELF_SCALE = 0.68; // valeurs par défaut ; le plan de l'île (layoutIsland) place chaque élément
 
 function makeCanvas(w, h) {
   const c = document.createElement("canvas"); c.width = w; c.height = h; return c;
@@ -93,10 +95,12 @@ class ReltoRenderer {
     g.outline = [...top, ...right.slice(1).map(([x, y]) => [x + (r() - 0.5) * 6, y]), ...left.slice(0, -1).map(([x, y]) => [x + (r() - 0.5) * 6, y])];
     for (let i = 0; i < 26; i++) { const y = GY + 8 + r() * 120, w = 30 + r() * 120; g.strata.push([320 - w / 2 - (y - GY) * 0.1 + r() * 20, y, w * (1 - (y - GY) / 220)]); }
     for (let x = 132; x < 470; x += 6 + r() * 6) g.tufts.push([x, 2 + r() * 4]);
-    // végétation : on laisse libres le chat, le bassin et les deux livres à part (rien ne doit les cacher)
-    const clear = [[374, 404]]; if (scene.additions.some((a) => a.type === "cat")) clear.push([190, 216]); if (scene.additions.some((a) => a.type === "koi")) clear.push([276, 340]);
-    g.clear = clear;
-    g.plants = placePlants(scene.additions, scene.seed, (x) => clear.some(([c0, c1]) => x > c0 && x < c1) || Math.abs(x - HUT_X) < 30 || Math.abs(x - SHELF_X) < 24 || (x > PILLAR_X[0] - 12 && x < PILLAR_X[1] + 12));
+    // plan de l'île : chaque gros élément a sa place (voir layoutIsland) ; on ne plante pas là où il y a cabane, bassin, chat, piliers
+    const lay = (this.lay = layoutIsland(scene)); this.hutX = lay.hut ? lay.hut.x : HUT_X; this.pillX = lay.pillars ? lay.pillars.x : PILLAR_X; this.shelfX = lay.shelf ? lay.shelf.x : SHELF_X;
+    const solid = (x) => lay.solid.some(([c0, c1]) => x > c0 && x < c1);
+    g.clear = [lay.koi && [lay.koi.x0 - 3, lay.koi.x1 + 3], lay.cat && [lay.cat.x - 14, lay.cat.x + 14], lay.stalk && [lay.stalk.x - 8, lay.stalk.x + 8]].filter(Boolean);
+    g.plants = placePlants(scene.additions, scene.seed, solid);
+    g.grove = placePlants(scene.additions, scene.seed, () => false, 20); // le bosquet (vue rapprochée) montre tous les arbres, sans cabane ni bassin
     // livres de l'étagère
     scene.ages.slice(0, 30).forEach((age, i) => {
       const h = fnv(age.name);
@@ -135,7 +139,9 @@ class ReltoRenderer {
     const sky = skyAt(this.hour());
     const has = (type) => sc.additions.find((a) => a.type === type);
     this.hot = [];
-    if (this.view === "global") return this.drawGlobalView(ctx, sc, sky, t, has);
+    if (this.view && this.view !== "island" && this.view !== "global" && !this.available()[this.view]) this.view = "island"; // la page de cette vue a été retirée
+    if (this.view === "global") return this.drawFullView(ctx, sky, () => GL.drawGlobal(this, ctx, sc, sky, t, has));
+    if (ROOMS[this.view]) return this.drawFullView(ctx, sky, () => ROOMS[this.view](this, ctx, sc, sky, t));
     ctx.save(); ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0);
     ctx.clearRect(0, 0, W, H);
     ctx.save(); ctx.translate(CAM_X, CAM_OY); ctx.scale(CAM, CAM); ctx.translate(-CAM_X, -CAM_Y);
@@ -155,8 +161,9 @@ class ReltoRenderer {
     const kp = has("koi"); if (kp) this.drawKoi(ctx, kp, sky, t); // après les arbres du fond : le bassin n'est jamais recouvert
     const wf = has("waterfall"); if (wf) this.drawWaterfall(ctx, t);
     this.drawStructures(ctx, sky, t);
-    const bn = has("bench"); if (bn) SC.bench(ctx, this, sky);
+    const bn = has("bench"); if (bn) SC.bench(ctx, this, sky, this.lay.bench ? this.lay.bench.x0 : 289);
     const ct = has("cat"); if (ct) this.drawCat(ctx, ct, sky, t);
+    const sk = has("stalktree"); if (sk) this.drawStalk(ctx, sk, sky, t);
     const pl = has("pillars"); if (pl) this.drawPillars(ctx, pl.density, sky, t);
     const ch = has("chimney"); if (ch) this.drawChimney(ctx, ch.density, sky, t);
     this.drawPlants(ctx, 1, t);
@@ -314,9 +321,9 @@ class ReltoRenderer {
     ctx.restore();
   }
 
-  drawPlants(ctx, row, t) {
+  drawPlants(ctx, row, t, list) {
     const sky = skyAt(this.hour()), amb = 0.4 + 0.6 * sky.ambient;
-    for (const p of this.geo.plants) {
+    for (const p of list || this.geo.plants) {
       if (p.row !== row) continue;
       const y = GY + (row ? 6 : 2), sw = Math.sin(t * 0.9 + p.sw) * (1.2 + p.h / 20), h = p.h;
       const col = (c) => mix("#05060c", c, amb);
@@ -351,20 +358,59 @@ class ReltoRenderer {
     }
   }
 
+  /** Ruisseau : naît sur le flanc du mont, descend jusqu'au bassin (ou jusqu'au bord), puis tombe de l'île dans la brume. */
   drawWaterfall(ctx, t) {
-    const x = 178, w = 9;
-    const g = ctx.createLinearGradient(0, GY, 0, 330);
-    g.addColorStop(0, "rgba(220,240,255,0.85)"); g.addColorStop(1, "rgba(220,240,255,0.15)");
-    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - w / 2, GY + 6); ctx.lineTo(x + w / 2, GY + 6); ctx.lineTo(x + w / 2 + 4, 330); ctx.lineTo(x - w / 2 - 4, 330); ctx.closePath(); ctx.fill();
+    const L = this.lay, M = L.mount, koi = L.koi, mt = this.scene.additions.some((a) => a.type === "mountain");
+    const fx = koi ? koi.x0 + 16 : M.x + M.hw * 0.5, sx = mt ? M.x + 16 : fx - 22, sy = mt ? GY - M.h * 0.86 : GY - 7, N = 24, pts = [];
+    for (let i = 0; i <= N; i++) { const p = i / N; pts.push([sx + (fx - sx) * Math.pow(p, 1.15) + Math.sin(p * 7 + t * 0.4) * 0.8 * (1 - p), sy + (GY - sy) * p, 1.6 + 2.6 * p]); }
+    ctx.fillStyle = "rgba(200,228,248,0.85)"; ctx.beginPath();
+    pts.forEach(([x, y, w], i) => (i ? ctx.lineTo(x - w / 2, y) : ctx.moveTo(x - w / 2, y))); for (let i = N; i >= 0; i--) ctx.lineTo(pts[i][0] + pts[i][2] / 2, pts[i][1]); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.75)"; ctx.lineWidth = 0.9;
+    for (let k = 0; k < 7; k++) { const q = frac(t * 0.4 + k / 7), i = Math.min(N - 1, Math.floor(q * N)), [x, y] = pts[i], [x2, y2] = pts[i + 1]; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x2, y2); ctx.stroke(); }
+    ctx.fillStyle = "rgba(190,220,238,0.7)"; ctx.beginPath(); ctx.ellipse(sx, sy, 5, 1.6, 0, 0, 6.283); ctx.fill(); // la source
+    for (let i = 0; i < 3; i++) { const p = frac(t * 0.5 + i / 3); ctx.strokeStyle = rgba(235, 245, 255, 0.4 * (1 - p)); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.ellipse(fx, GY + 0.6, 2 + p * 7, 0.6 + p * 1.3, 0, 0, 6.283); ctx.stroke(); } // éclaboussures à l'arrivée
+    // la chute : du fond du bassin (ou du bord de l'île) jusque dans la brume
+    const ex = koi ? koi.x1 - 7 : fx, ey = koi ? GY + 17 : GY + 9, w = 8;
+    const g = ctx.createLinearGradient(0, ey, 0, 350); g.addColorStop(0, "rgba(220,240,255,0.85)"); g.addColorStop(1, "rgba(220,240,255,0.08)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(ex - w / 2, ey); ctx.lineTo(ex + w / 2, ey); ctx.lineTo(ex + w / 2 + 4, 350); ctx.lineTo(ex - w / 2 - 4, 350); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineWidth = 1;
-    for (let i = 0; i < 9; i++) { const p = frac(t * 0.8 + i / 9), y = GY + 6 + p * 120, xx = x - w / 2 + 1 + (i % 4) * 2.2; ctx.beginPath(); ctx.moveTo(xx, y); ctx.lineTo(xx, y + 8); ctx.stroke(); }
-    for (let i = 0; i < 7; i++) { const p = frac(t * 0.3 + i / 7), r = 6 + p * 16; ctx.fillStyle = rgba(235, 245, 255, 0.18 * (1 - p)); ctx.beginPath(); ctx.arc(x + Math.sin(i * 2 + t) * 6, 322 - p * 20, r, 0, 6.283); ctx.fill(); }
-    ctx.fillStyle = "rgba(180,215,235,0.6)"; ctx.fillRect(x - 12, GY + 4, 24, 2.5);
+    for (let i = 0; i < 9; i++) { const p = frac(t * 0.8 + i / 9), y = ey + p * (330 - ey), xx = ex - w / 2 + 1 + (i % 4) * 2.2; ctx.beginPath(); ctx.moveTo(xx, y); ctx.lineTo(xx, y + 8); ctx.stroke(); }
+    for (let i = 0; i < 6; i++) { const p = frac(t * 0.3 + i / 6), r = 6 + p * 14; ctx.fillStyle = rgba(235, 245, 255, 0.16 * (1 - p)); ctx.beginPath(); ctx.arc(ex + Math.sin(i * 2 + t) * 6, 346 - p * 18, r, 0, 6.283); ctx.fill(); }
+  }
+
+  /** Arbre à tiges (page « stalktree ») : deux grandes tiges sombres à bulbes, ailes de feuilles pâles et poussières lumineuses autour. Un seul exemplaire. */
+  drawStalk(ctx, a, sky, t) {
+    const x = this.lay.stalk ? this.lay.stalk.x : 250, amb = 0.35 + 0.65 * sky.ambient, c = (h) => mix("#05060c", h, amb), night = sky.night || 0, k = 0.8 + 0.4 * clamp(a.density == null ? 0.5 : a.density);
+    const stems = [{ dx: -4, h: 96 * k, bend: -5, w: 2.6, pod: 4.6 }, { dx: 3, h: 78 * k, bend: 7, w: 2.2, pod: 4 }, { dx: 9, h: 44 * k, bend: 10, w: 1.5, pod: 3 }];
+    ctx.fillStyle = c("#3a3a2a"); ctx.beginPath(); ctx.ellipse(x + 2, GY + 1, 13, 3, 0, 0, 6.283); ctx.fill();
+    const curve = (st, sw) => ({ x0: x + st.dx, y0: GY, cx: x + st.dx + st.bend * 0.2, cy: GY - st.h * 0.5, x1: x + st.dx + st.bend + sw, y1: GY - st.h });
+    const at = (q, u) => [(1 - u) * (1 - u) * q.x0 + 2 * (1 - u) * u * q.cx + u * u * q.x1, (1 - u) * (1 - u) * q.y0 + 2 * (1 - u) * u * q.cy + u * u * q.y1];
+    const qs = stems.map((st, i) => curve(st, Math.sin(t * 0.7 + i * 1.7) * 1.4));
+    stems.forEach((st, i) => {
+      const q = qs[i]; ctx.lineCap = "round";
+      ctx.strokeStyle = c("#1f2b1d"); ctx.lineWidth = st.w; ctx.beginPath(); ctx.moveTo(q.x0, q.y0); ctx.quadraticCurveTo(q.cx, q.cy, q.x1, q.y1); ctx.stroke();
+      ctx.strokeStyle = c("#3b4f33"); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(q.x0 + 0.8, q.y0); ctx.quadraticCurveTo(q.cx + 0.8, q.cy, q.x1 + 0.6, q.y1 + 2); ctx.stroke();
+      ctx.fillStyle = c("#14170f"); ctx.beginPath(); ctx.ellipse(q.x1, q.y1 - st.pod * 0.6, st.pod * 0.8, st.pod, 0, 0, 6.283); ctx.fill();
+      ctx.fillStyle = rgba(255, 255, 255, 0.12); ctx.beginPath(); ctx.ellipse(q.x1 - 1, q.y1 - st.pod * 0.9, st.pod * 0.25, st.pod * 0.4, 0, 0, 6.283); ctx.fill();
+    });
+    // bulbes latéraux avec leurs ailes de feuilles
+    [[0, 0.56, 4.6, 1], [1, 0.42, 3.6, 1]].forEach(([si, u, r, wings], j) => {
+      const [bx, by] = at(qs[si], u); ctx.fillStyle = c("#1c211b"); ctx.beginPath(); ctx.ellipse(bx, by, r, r * 1.15, 0, 0, 6.283); ctx.fill();
+      for (let w = 0; w < (wings ? 2 : 0); w++) { const sg = w ? 1 : -1, fl = Math.sin(t * 1.1 + j + w) * 0.08; ctx.fillStyle = c("#a9b890"); ctx.beginPath(); ctx.moveTo(bx, by + 1); ctx.quadraticCurveTo(bx + sg * r * 2.4, by - r * (1.1 + fl * 4), bx + sg * r * 3.6, by + r * 0.3); ctx.quadraticCurveTo(bx + sg * r * 1.6, by + r * 0.2, bx, by + 1); ctx.fill(); }
+    });
+    // poussières lumineuses autour de la cime
+    const rr = rng((this.scene.seed ^ 0x57a1) >>> 0), top = stems[0].h;
+    for (let i = 0; i < 26; i++) {
+      const px = x + (rr() - 0.5) * 78 + Math.sin(t * 0.4 + i) * 4, py = GY - top * (0.35 + rr() * 0.8) + Math.sin(t * 0.6 + i * 1.3) * 3, tw = 0.35 + 0.65 * Math.abs(Math.sin(t * (0.6 + rr()) + i));
+      ctx.fillStyle = rgba(240, 238, 150, tw * (0.5 + 0.5 * night + 0.2)); ctx.fillRect(px, py, 1.2, 1.2);
+    }
+    if (night > 0.35) { const [px, py] = [qs[0].x1, qs[0].y1 - 3], g = ctx.createRadialGradient(px, py, 0, px, py, 16); g.addColorStop(0, rgba(240, 235, 150, 0.22 * night)); g.addColorStop(1, rgba(240, 235, 150, 0)); ctx.fillStyle = g; ctx.fillRect(px - 16, py - 16, 32, 32); }
+    this.hot.push({ x: x - 12, y: GY - top - 8, w: 34, h: top + 8, tip: "Stalk tree" });
   }
 
   /** Bassin de carpes koï : coupe de profil dans la roche, à droite de la cabane. Une koï rare (ogon, platine ou fantôme) nage avec les autres. */
   drawKoi(ctx, a, sky, t) {
-    const X0 = 282, PW = 52, Y0 = GY + 2, PH = 15, amb = 0.35 + 0.65 * sky.ambient, shade = (c) => mix("#05060c", c, amb);
+    const X0 = this.lay.koi ? this.lay.koi.x0 : 282, PW = 52, Y0 = GY + 2, PH = 15, amb = 0.35 + 0.65 * sky.ambient, shade = (c) => mix("#05060c", c, amb);
     const r = rng((this.scene.seed ^ 0x6b01) >>> 0), RARE = ["ogon", "platinum", "ghost"];
     const rare = KOI_RARE[String(a.rare || a.asset || "").toLowerCase()] ? String(a.rare || a.asset).toLowerCase() : RARE[Math.floor(r() * RARE.length)];
     const water = ctx.createLinearGradient(0, Y0, 0, Y0 + PH); water.addColorStop(0, shade("#3f7f96")); water.addColorStop(1, shade("#143550"));
@@ -399,7 +445,7 @@ class ReltoRenderer {
 
   /** Un chat assis près de la cabane : couleur et nom viennent de la page (`color=`, `name=`). Clignement, queue qui bat, yeux clos la nuit. */
   drawCat(ctx, a, sky, t) {
-    const cat = catLook(a.color), amb = 0.4 + 0.6 * sky.ambient, shade = (c) => mix("#05060c", c, amb), CX = 203, K = 1.3;
+    const cat = catLook(a.color), amb = 0.4 + 0.6 * sky.ambient, shade = (c) => mix("#05060c", c, amb), CX = this.lay.cat ? this.lay.cat.x : 203, K = 1.3;
     const blink = frac(t * 0.21 + (this.scene.seed % 7) / 7) > 0.965 || sky.night > 0.75, sway = Math.sin(t * 1.6) * 0.45;
     ctx.save(); ctx.translate(CX, GY); ctx.scale(K, K);
     // queue
@@ -425,49 +471,50 @@ class ReltoRenderer {
 
   /** étiquette brève (nom du chat, de la koï) affichée après un clic */
   /** partie visible du monde (x0, x1, y0) : la caméra de l'île recadre les bords, la vue globale montre tout */
-  visible_() { return this.view === "global" ? [0, W, 0] : [CAM_X - CAM_X / CAM, CAM_X + (W - CAM_X) / CAM, CAM_Y - CAM_OY / CAM]; }
+  visible_() { return this.view && this.view !== "island" ? [0, W, 0] : [CAM_X - CAM_X / CAM, CAM_X + (W - CAM_X) / CAM, CAM_Y - CAM_OY / CAM]; }
   drawFlash(ctx) {
     const f = this.flash; if (!f) return;
     if (Date.now() > f.until) { this.flash = null; return; }
-    ctx.save(); const [vx0, vx1, vy0] = this.visible_(); ctx.font = "8px serif"; const tw = ctx.measureText(f.text).width, w = tw + 10, x = clamp(f.x - w / 2, vx0 + 4, Math.max(vx0 + 4, vx1 - w - 4)), y = Math.max(vy0 + 2, f.y - 12);
-    ctx.fillStyle = "rgba(14,12,10,0.82)"; ctx.fillRect(x, y, w, 12); ctx.strokeStyle = "rgba(205,189,148,0.7)"; ctx.lineWidth = 0.7; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, 11);
-    ctx.fillStyle = "#eadfb8"; ctx.textBaseline = "middle"; ctx.fillText(f.text, x + 5, y + 6.4); ctx.restore();
+    ctx.save(); const [vx0, vx1, vy0] = this.visible_(); const big = this.view && this.view !== "island", fs = big ? 14 : 8, fh = fs + 4; ctx.font = `${fs}px serif`; const tw = ctx.measureText(f.text).width, w = tw + 10, x = clamp(f.x - w / 2, vx0 + 4, Math.max(vx0 + 4, vx1 - w - 4)), y = Math.max(vy0 + 2, f.y - fh);
+    ctx.fillStyle = "rgba(14,12,10,0.82)"; ctx.fillRect(x, y, w, fh); ctx.strokeStyle = "rgba(205,189,148,0.7)"; ctx.lineWidth = 0.7; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, fh - 1);
+    ctx.fillStyle = "#eadfb8"; ctx.textBaseline = "middle"; ctx.fillText(f.text, x + 5, y + fh / 2 + 0.4); ctx.restore();
   }
 
   drawStructures(ctx, sky, t) {
     const sc = this.scene, st = new Set(sc.structures), night = sky.night, amb = 0.4 + 0.6 * sky.ambient;
     const col = (c) => mix("#05060c", c, amb);
     if (st.has("hut")) {
-      const w = 56, h = 30, x0 = HUT_X - w / 2, y0 = GY - h;
+      const w = 56, h = 30, x0 = this.hutX - w / 2, y0 = GY - h;
+      this.hot.push({ x: x0 - 8, y: y0 - 24, w: w + 16, h: h + 24, tip: "Cabin — click to go inside", go: "cabin" });
       ctx.fillStyle = col("#5a4330"); ctx.fillRect(x0, y0, w, h);
       ctx.strokeStyle = rgba(0, 0, 0, 0.3); ctx.lineWidth = 1; for (let i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(x0, y0 + i * 5); ctx.lineTo(x0 + w, y0 + i * 5); ctx.stroke(); }
       ctx.fillStyle = col("#2f2a2a"); ctx.fillRect(x0 + 8, y0 - 22, 7, 18); // cheminée
-      ctx.fillStyle = col("#3a2a22"); ctx.beginPath(); ctx.moveTo(x0 - 8, y0); ctx.lineTo(HUT_X, y0 - 24); ctx.lineTo(x0 + w + 8, y0); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = col("#2a1c14"); ctx.fillRect(HUT_X - 17, GY - 18, 12, 18);
+      ctx.fillStyle = col("#3a2a22"); ctx.beginPath(); ctx.moveTo(x0 - 8, y0); ctx.lineTo(this.hutX, y0 - 24); ctx.lineTo(x0 + w + 8, y0); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = col("#2a1c14"); ctx.fillRect(this.hutX - 17, GY - 18, 12, 18);
       const fl = 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1);
       ctx.fillStyle = mix("#2a3a4a", "#ffd58a", clamp(night * fl * 1.1)); ctx.fillRect(x0 + w - 20, y0 + 8, 11, 10);
       if (night > 0.3) { const gl = ctx.createRadialGradient(x0 + w - 14, y0 + 13, 2, x0 + w - 14, y0 + 13, 38); gl.addColorStop(0, rgba(255, 200, 120, 0.35 * night * fl)); gl.addColorStop(1, rgba(255, 200, 120, 0)); ctx.fillStyle = gl; ctx.fillRect(x0 - 30, y0 - 30, w + 80, 90); }
       for (let i = 0; i < 6; i++) { const p = frac(t * 0.12 + i / 6); ctx.fillStyle = rgba(190, 190, 200, 0.22 * (1 - p)); ctx.beginPath(); ctx.arc(x0 + 11.5 + Math.sin(p * 6 + i) * 5 + p * 16, y0 - 24 - p * 44, 2.5 + p * 6, 0, 6.283); ctx.fill(); }
     }
-    if (st.has("bookshelves")) this.drawShelf(ctx, amb, night);
+    if (st.has("bookshelves") && !st.has("hut")) this.drawShelf(ctx, amb, night); // avec une cabane, l'étagère est à l'intérieur
     if (st.has("linking_pillars")) {
       const lit = sc.returning > 0, pulse = 0.55 + 0.45 * Math.sin(t * 2.2);
-      for (const px of PILLAR_X) {
+      for (const px of this.pillX) {
         ctx.fillStyle = col("#5a5a66"); ctx.beginPath(); ctx.moveTo(px - 5, GY); ctx.lineTo(px - 5, GY - 32); ctx.lineTo(px - 2, GY - 36); ctx.lineTo(px + 2, GY - 36); ctx.lineTo(px + 5, GY - 32); ctx.lineTo(px + 5, GY); ctx.closePath(); ctx.fill();
         ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(px + 1, GY - 34, 4, 34);
         ctx.fillStyle = lit ? rgba(150, 215, 255, 0.5 + 0.4 * pulse) : rgba(120, 120, 140, 0.4); ctx.fillRect(px - 1, GY - 28, 2, 7); ctx.fillRect(px - 1, GY - 17, 2, 4);
       }
-      const cx = (PILLAR_X[0] + PILLAR_X[1]) / 2;
+      const cx = (this.pillX[0] + this.pillX[1]) / 2;
       if (lit) { const gl = ctx.createRadialGradient(cx, GY - 22, 1, cx, GY - 22, 26); gl.addColorStop(0, rgba(160, 220, 255, 0.55 * pulse)); gl.addColorStop(1, rgba(160, 220, 255, 0)); ctx.fillStyle = gl; ctx.fillRect(cx - 30, GY - 52, 60, 60); }
       ctx.strokeStyle = lit ? rgba(190, 235, 255, 0.5 + 0.4 * pulse) : rgba(120, 120, 140, 0.35); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, GY - 22, 8, 0, 6.283); ctx.stroke();
-      this.hot.push({ x: PILLAR_X[0] - 6, y: GY - 38, w: PILLAR_X[1] - PILLAR_X[0] + 12, h: 38, tip: sc.returning ? `${sc.returning} Age${sc.returning === 1 ? "" : "s"} link back here` : "No Age links back here yet" });
+      this.hot.push({ x: this.pillX[0] - 6, y: GY - 38, w: this.pillX[1] - this.pillX[0] + 12, h: 38, tip: (sc.returning ? `${sc.returning} Age${sc.returning === 1 ? "" : "s"} link back here` : "No Age links back here yet") + " — click to look closer", go: "pillars" });
     }
   }
 
   drawShelf(ctx, amb, night) {
-    const col = (c) => mix("#05060c", c, amb), w = 62, h = 46, x0 = SHELF_X - w / 2, y0 = GY - h, K = SHELF_SCALE;
-    const hp = this.hot.push.bind(this.hot), hot = { push: (r) => hp({ ...r, x: SHELF_X + (r.x - SHELF_X) * K, y: GY + (r.y - GY) * K, w: r.w * K, h: r.h * K }) };
-    ctx.save(); ctx.translate(SHELF_X, GY); ctx.scale(K, K); ctx.translate(-SHELF_X, -GY); // l'étagère reste plus petite que la cabane
+    const col = (c) => mix("#05060c", c, amb), w = 62, h = 46, x0 = this.shelfX - w / 2, y0 = GY - h, K = SHELF_SCALE;
+    const hp = this.hot.push.bind(this.hot), hot = { push: (r) => hp({ ...r, x: this.shelfX + (r.x - this.shelfX) * K, y: GY + (r.y - GY) * K, w: r.w * K, h: r.h * K }) };
+    ctx.save(); ctx.translate(this.shelfX, GY); ctx.scale(K, K); ctx.translate(-this.shelfX, -GY); // l'étagère reste plus petite que la cabane
     ctx.fillStyle = col("#241a12"); ctx.fillRect(x0, y0, w, h);
     ctx.fillStyle = col("#4b3626"); ctx.fillRect(x0 - 2, y0 - 2, 4, h + 2); ctx.fillRect(x0 + w - 2, y0 - 2, 4, h + 2); ctx.fillRect(x0 - 2, y0 - 4, w + 4, 4);
     for (let r = 0; r < 3; r++) ctx.fillRect(x0, y0 + 14 + r * 14 - 2, w, 2.5);
@@ -485,7 +532,7 @@ class ReltoRenderer {
 
   /** deux livres à part, debout au pied de l'étagère (taille réelle, hors de son échelle réduite) : glyphes et bibliothèque */
   drawSpecialBooks(ctx, amb, K, shelfW) {
-    const col = (c) => mix("#05060c", c, amb), bw = 7, gap = 3, x1 = SHELF_X + (shelfW / 2) * K + 8;
+    const col = (c) => mix("#05060c", c, amb), bw = 7, gap = 3, x1 = this.shelfX + (shelfW / 2) * K + 8;
     const defs = [
       { kind: "glyphs", x: x1, h: 17, body: "#27555a", band: "#d8c07a", tip: "Book of glyphs" },
       { kind: "library", x: x1 + bw + gap, h: 15, body: "#5b2b2b", band: "#c9a24e", tip: "Library book (blocks and Relto pages)" },
@@ -513,7 +560,7 @@ class ReltoRenderer {
   /** un petit mont rocheux derrière la cabane, posé sur l'île (pas une chaîne à l'horizon) */
   drawMount(ctx, d, sky, t) {
     const T = TERRAIN[this.scene.terrain], amb = 0.35 + 0.65 * sky.ambient, shade = (c) => mix("#05060c", c, amb);
-    const cx = HUT_X + 14, hw = 78 + 14 * d, h = 52 + 30 * d;
+    const { x: cx, hw, h } = this.lay.mount; // le mont, derrière la cabane, grand : il porte la source du ruisseau
     const path = () => { ctx.beginPath(); ctx.moveTo(cx - hw, GY + 2); ctx.bezierCurveTo(cx - hw * 0.55, GY - h * 0.35, cx - hw * 0.3, GY - h * 0.95, cx - 6, GY - h); ctx.bezierCurveTo(cx + 14, GY - h * 1.02, cx + hw * 0.35, GY - h * 0.7, cx + hw * 0.62, GY - h * 0.32); ctx.bezierCurveTo(cx + hw * 0.85, GY - h * 0.1, cx + hw * 0.95, GY - 2, cx + hw, GY + 2); ctx.closePath(); };
     ctx.save(); path();
     const g = ctx.createLinearGradient(0, GY - h, 0, GY); g.addColorStop(0, shade(T.rock2)); g.addColorStop(1, shade(T.rock)); ctx.fillStyle = g; ctx.fill();
@@ -561,7 +608,7 @@ class ReltoRenderer {
   /** menhirs et colonnes brisées : ils s'allument de runes la nuit */
   /** cheminée allumée : fumée chaude et dense, lueur vacillante, étincelles, fenêtre éclairée */
   drawChimney(ctx, d, sky, t) {
-    const x0 = HUT_X - 28, y0 = GY - 30, cx = x0 + 11.5, cy = y0 - 24, night = clamp(sky.night == null ? 0.3 : sky.night);
+    const x0 = this.hutX - 28, y0 = GY - 30, cx = x0 + 11.5, cy = y0 - 24, night = clamp(sky.night == null ? 0.3 : sky.night);
     const fl = 0.75 + 0.25 * Math.sin(t * 9.1) * Math.sin(t * 5.3 + 1) + 0.1 * Math.sin(t * 17);
     // fenêtre et lueur de l'âtre
     const wx = x0 + 56 - 14, wy = y0 + 13;
@@ -584,8 +631,8 @@ class ReltoRenderer {
     }
   }
   drawPillars(ctx, d, sky, t) {
-    const night = sky.night, amb = 0.4 + 0.6 * sky.ambient, n = 3 + Math.round(d * 3);
-    const spots = [[184, 31, 1], [198, 22, 0], [388, 38, 1], [401, 27, 0], [413, 34, 1], [296, 19, 0]].slice(0, n);
+    const night = sky.night, amb = 0.4 + 0.6 * sky.ambient, HS = [31, 22, 38, 27, 34, 19], WH = [1, 0, 1, 0, 1, 0], spots = [];
+    for (const c of this.lay.stones) for (let k = 0; k < c.n; k++) { const i = c.from + k; spots.push([c.x + (k - (c.n - 1) / 2) * 12, HS[i % 6], WH[i % 6]]); } // pierres dressées : groupes posés dans les espaces libres du plan
     const rr = rng((this.scene.seed ^ 0x51ed27) >>> 0);
     spots.forEach(([x, h, whole], i) => {
       const w = 5.5 + rr() * 2, top = GY - h, lean = (rr() - 0.5) * 2;
@@ -611,14 +658,16 @@ class ReltoRenderer {
     }
   }
 
+  /** lanternes volantes : papier chaud qui s'élève lentement de l'île, dérive avec le vent et s'éteint en altitude */
   drawLanterns(ctx, d, sky, t) {
-    const n = Math.round(3 + d * 5), a = 0.35 + 0.65 * sky.night;
-    ctx.strokeStyle = rgba(30, 24, 20, 0.7); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(HUT_X + 26, GY - 36); ctx.quadraticCurveTo((HUT_X + SHELF_X) / 2, GY - 24, SHELF_X - 22, GY - 36); ctx.stroke();
+    const n = Math.round(4 + d * 7), glow = 0.35 + 0.65 * sky.night, r = rng((this.scene.seed ^ 0x1a47) >>> 0);
     for (let i = 0; i < n; i++) {
-      const p = (i + 0.5) / n, x = lerp(HUT_X + 26, SHELF_X - 22, p), y = lerp(GY - 36, GY - 36, p) + Math.sin(p * Math.PI) * 10 + 2;
-      const fl = 0.8 + 0.2 * Math.sin(t * 5 + i * 2);
-      const g = ctx.createRadialGradient(x, y, 0, x, y, 14); g.addColorStop(0, rgba(255, 190, 100, 0.8 * a * fl)); g.addColorStop(1, rgba(255, 190, 100, 0)); ctx.fillStyle = g; ctx.fillRect(x - 14, y - 14, 28, 28);
-      ctx.fillStyle = rgba(255, 215, 150, 0.95); ctx.fillRect(x - 1.5, y - 2, 3, 4);
+      const T = 24 + r() * 14, p = frac(t / T + i / n + r()), x0 = 150 + r() * 320, s = 4 + r() * 3, ph = r() * 6.283;
+      const x = x0 + Math.sin(p * 5 + ph) * 12 + p * 34, y = GY - 22 - p * 200, a = Math.sin(Math.PI * Math.min(1, p * 1.05)) ** 0.6, fl = 0.85 + 0.15 * Math.sin(t * 4.5 + i * 2);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, s * 4); g.addColorStop(0, rgba(255, 190, 100, 0.7 * glow * fl * a)); g.addColorStop(1, rgba(255, 170, 80, 0)); ctx.fillStyle = g; ctx.fillRect(x - s * 4, y - s * 4, s * 8, s * 8);
+      ctx.fillStyle = rgba(255, 150, 70, 0.95 * a); ctx.beginPath(); ctx.moveTo(x - s * 0.6, y + s); ctx.lineTo(x - s * 0.95, y - s * 0.3); ctx.quadraticCurveTo(x, y - s * 1.5, x + s * 0.95, y - s * 0.3); ctx.lineTo(x + s * 0.6, y + s); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = rgba(255, 225, 160, (0.55 + 0.4 * glow) * a * fl); ctx.beginPath(); ctx.ellipse(x, y, s * 0.55, s * 0.8, 0, 0, 6.283); ctx.fill();
+      ctx.fillStyle = rgba(60, 36, 24, 0.85 * a); ctx.fillRect(x - s * 0.55, y + s, s * 1.1, s * 0.28);
     }
   }
 
@@ -655,15 +704,27 @@ class ReltoRenderer {
   // ---- vues ----------------------------------------------------------------------------
   /** « island » (vue de l'île, par défaut) ou « global » (le Relto vu de loin) ; un fondu léger marque le passage. */
   setView(view) {
-    if (view !== "global") view = "island";
+    if (view !== "global" && !(ROOMS[view] && this.available()[view])) view = "island";
     if (view === (this.view || "island")) return;
     this.view = view; this.hover = null; this.flash = null; this.fadeAt = Date.now();
     if (this.opts.onView) this.opts.onView(view);
     if (!this.running) this.draw(0);
   }
-  drawGlobalView(ctx, sc, sky, t, has) {
+  /** vues possibles selon les pages et structures de ce Relto (l'île et la vue globale existent toujours) */
+  available() {
+    const sc = this.scene, a = (t) => sc.additions.some((x) => x.type === t);
+    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies") };
+  }
+  /** dessine `fn` (en coordonnées de l'île) agrandi dans une vue rapprochée et reporte les zones cliquables qu'il crée à l'écran */
+  withView(ctx, { S, ox, oy, fx, fy }, fn) {
+    const n0 = this.hot.length; ctx.save(); ctx.translate(ox, oy); ctx.scale(S, S); ctx.translate(-fx, -fy); fn(); ctx.restore();
+    for (let i = n0; i < this.hot.length; i++) { const h = this.hot[i]; this.hot[i] = { ...h, x: ox + (h.x - fx) * S, y: oy + (h.y - fy) * S, w: h.w * S, h: h.h * S }; }
+  }
+  terrain() { return TERRAIN[this.scene.terrain] || TERRAIN.mossy_plateau; }
+  /** vues plein cadre (globale, cabane, piliers, bassin, chat, bosquet) : pas de caméra ; `fn` dessine la scène */
+  drawFullView(ctx, sky, fn) {
     ctx.save(); ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0); ctx.clearRect(0, 0, W, H);
-    GL.drawGlobal(this, ctx, sc, sky, t, has);
+    fn();
     this.drawGrade(ctx, sky); this.drawHover(ctx); this.drawFlash(ctx); this.drawFade(ctx, sky);
     ctx.restore();
   }
@@ -676,7 +737,7 @@ class ReltoRenderer {
   // ---- souris --------------------------------------------------------------------------
   toLogical(e) {
     const r = this.canvas.getBoundingClientRect(), px = ((e.clientX - r.left) / r.width) * W, py = ((e.clientY - r.top) / r.height) * H;
-    if (this.view === "global") return [px, py]; // la vue globale n'a pas de zoom
+    if (this.view && this.view !== "island") return [px, py]; // les vues plein cadre n'ont pas de zoom
     return [(px - CAM_X) / CAM + CAM_X, (py - CAM_OY) / CAM + CAM_Y]; // inverse de la caméra
   }
   hit(x, y) { for (let i = this.hot.length - 1; i >= 0; i--) { const h = this.hot[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h; } return null; }

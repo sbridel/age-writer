@@ -203,12 +203,20 @@ async function renderRelto(plugin, source, el, ctx) {
     pick(defs.some((d) => d[0] === ui0.reltoTab) ? ui0.reltoTab : "view");
   } else { root.setAttr("data-tab", "all"); }
   // bascule vue de l'île ⇄ vue globale (petit bouton en coin de l'image) ; l'ouverture reste la vue de l'île
-  const viewBtn = (tabBar || stage).createEl("button", { cls: "age-relto__viewbtn" + (tabBar ? " age-relto__viewbtn--bar" : "") }); if (tabBar) tabBar.insertBefore(viewBtn, tabBar.firstChild);
-  const syncView = (v) => { viewBtn.empty(); try { obsidian.setIcon(viewBtn, v === "global" ? "home" : "globe"); } catch (e) { /* ignore */ } const l = t(v === "global" ? "relto.islandview" : "relto.globalview"); viewBtn.setAttr("aria-label", l); viewBtn.toggleClass("is-global", v === "global"); };
+  // navigation entre les vues : île, vue globale et sous-vues (cabane, piliers, bosquet, bassin, chat) ; les boutons des vues sans page correspondante sont masqués
+  const NAV = [["island", "mountain", "relto.v.island"], ["global", "globe", "relto.v.global"], ["cabin", "home", "relto.v.cabin"], ["pillars", "landmark", "relto.v.pillars"], ["grove", "trees", "relto.v.grove"], ["pond", "fish", "relto.v.pond"], ["cat", "cat", "relto.v.cat"]];
+  const nav = (tabBar || stage).createDiv({ cls: "age-relto__nav" + (tabBar ? " age-relto__nav--bar" : "") }); if (tabBar) tabBar.insertBefore(nav, tabBar.firstChild);
+  const navBtns = {};
+  for (const [v, ic, key] of NAV) {
+    const b = nav.createEl("button", { cls: "age-relto__viewbtn" }); navBtns[v] = b;
+    try { obsidian.setIcon(b, ic); } catch (e) { /* ignore */ }
+    b.setAttr("aria-label", t(key)); b.addEventListener("click", () => renderer.setView(v));
+  }
+  const syncView = (v) => { for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-active", id === (v || "island")); };
+  const syncNav = (sc) => { const av = renderer.available(); for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-hidden", !av[id]); syncView(renderer.view); void sc; };
   syncView("island");
   const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, onView: syncView, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
-  viewBtn.addEventListener("click", () => renderer.setView(renderer.view === "global" ? "island" : "global"));
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;
 
   const fmt = (h) => `${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
@@ -309,7 +317,7 @@ async function renderRelto(plugin, source, el, ctx) {
   async function refresh() {
     const built = await buildScene(plugin, file, opt); scene = built.scene;
     scene.pagesActive = built.relto.pagesActive;
-    renderer.setScene(scene); renderer.setHour(scene.skyCycle === "system_time" ? fixed : null);
+    renderer.setScene(scene); renderer.setHour(scene.skyCycle === "system_time" ? fixed : null); syncNav(scene);
     slider.disabled = scene.skyCycle !== "system_time"; nowBtn.disabled = slider.disabled;
     title.setText(scene.name); if (dniName) dniName.setText(plugin.dni.textFor(scene.name)); if (dniName2) dniName2.setText(plugin.dni.textFor(scene.name));
     plate.innerHTML = plugin.dni.numberSvg(scene.seed, { size: 16 }); plate.setAttr("title", t("num.seed"));

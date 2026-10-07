@@ -7,6 +7,15 @@ function renderMany(host, ages) {
   host = host || document.body;
   const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
   const variants = [
+    { h: 15, t: 3.1, env: {}, pages: ["page_chimney", "page_mountain", "page_waterfall", "page_koi", "page_cat", "page_stalk_tree", "page_bench", "page_pillars", "page_pine_trees", "page_flowers", "page_lanterns"], label: "ISLAND day / everything" },
+    { h: 21.5, t: 3.1, env: {}, pages: ["page_chimney", "page_mountain", "page_waterfall", "page_koi", "page_cat", "page_stalk_tree", "page_bench", "page_pillars", "page_pine_trees", "page_flowers", "page_lanterns"], label: "ISLAND dusk / everything" },
+    { h: 21, t: 3.3, env: {}, pages: ["page_mountain", "page_waterfall", "page_koi", "page_cat", "page_flowers"], view: "pond", label: "POND dusk" },
+    { h: 14, t: 3.3, env: {}, pages: ["page_koi", "page_cat", "page_flowers"], tune: { color: "black", name: "Petit Loup" }, view: "cat", label: "CAT day" },
+    { h: 15, t: 3.3, env: {}, pages: ["page_pine_trees", "page_maples", "page_ponderosa", "page_crystal_tree", "page_birches", "page_stalk_tree", "page_flowers", "page_butterflies", "page_grass"], view: "grove", label: "GROVE day" },
+    { h: 20.5, t: 3.3, env: {}, pages: ["page_chimney", "page_koi", "page_cat"], view: "cabin", label: "CABIN dusk / chimney" },
+    { h: 13, t: 2.1, env: {}, pages: [], view: "cabin", label: "CABIN day / cold hearth" },
+    { h: 22, t: 2.6, env: {}, pages: [], view: "pillars", label: "PILLARS night" },
+    { h: 14, t: 2.6, env: {}, pages: ["page_pine_trees", "page_koi", "page_cat", "page_flowers"], label: "ISLAND day / shelf moved inside" },
     { h: 15, t: 3.1, env: {}, pages: ["page_pine_trees", "page_birches", "page_ponderosa", "page_maples", "page_crystal_tree", "page_islets", "page_calendar", "page_dock"], hover: [548, 150], label: "ISLAND day / 5 essences + pont du calendrier" },
     { h: 15, t: 3.1, env: {}, pages: ["page_islets", "page_calendar", "page_dock", "page_bench", "page_pine_trees"], label: "ISLAND day / islets+calendar+dock+bench" },
     { h: 15, t: 3.1, env: {}, pages: ["page_islets", "page_calendar", "page_dock", "page_bench", "page_pine_trees", "page_koi", "page_cat"], view: "global", label: "GLOBAL day / islets+calendar" },

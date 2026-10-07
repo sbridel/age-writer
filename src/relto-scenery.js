@@ -89,8 +89,8 @@ function dock(ctx, r, sky, t, toPinnacle) {
 }
 
 /** Banc de bois sur l'île, entre la cabane et l'étagère. */
-function bench(ctx, r, sky) {
-  const a = 0.4 + 0.6 * sky.ambient, c = (h) => mix("#05060c", h, a), x0 = 289, y = GY;
+function bench(ctx, r, sky, bx) {
+  const a = 0.4 + 0.6 * sky.ambient, c = (h) => mix("#05060c", h, a), x0 = bx != null ? bx : 289, y = GY;
   ctx.fillStyle = c("#6b4a30"); ctx.fillRect(x0, y - 9, 26, 2); ctx.fillRect(x0, y - 13, 26, 1.6); ctx.fillRect(x0 + 1, y - 13, 1.6, 6); ctx.fillRect(x0 + 23.4, y - 13, 1.6, 6);
   ctx.fillStyle = c("#4a3220"); ctx.fillRect(x0 + 2, y - 7, 2, 7); ctx.fillRect(x0 + 22, y - 7, 2, 7);
   r.hot.push({ x: x0 - 1, y: y - 15, w: 28, h: 15, tip: "Bench" });
