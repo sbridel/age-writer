@@ -92,15 +92,16 @@ class ReltoRenderer {
     for (let i = 0; i < 26; i++) { const y = GY + 8 + r() * 120, w = 30 + r() * 120; g.strata.push([320 - w / 2 - (y - GY) * 0.1 + r() * 20, y, w * (1 - (y - GY) / 220)]); }
     for (let x = 172; x < 470; x += 6 + r() * 6) g.tufts.push([x, 2 + r() * 4]);
     // végétation : on laisse libres le chat, le bassin et les deux livres à part (rien ne doit les cacher)
-    const clear = [[372, 402]]; if (scene.additions.some((a) => a.type === "cat")) clear.push([188, 220]); if (scene.additions.some((a) => a.type === "koi")) clear.push([274, 342]);
+    const clear = [[374, 404]]; if (scene.additions.some((a) => a.type === "cat")) clear.push([190, 216]); if (scene.additions.some((a) => a.type === "koi")) clear.push([276, 340]);
     for (const a of scene.additions.filter((a) => a.type === "vegetation")) {
       const n = Math.round(4 + a.density * 14), pr = rng(scene.seed ^ fnv(a.pageId || a.asset || "v"));
       let guard = 0;
       while (g.plants.filter((p) => p.page === a.pageId).length < n && guard++ < 200) {
         const x = 184 + pr() * 272;
-        if (clear.some(([c0, c1]) => x > c0 && x < c1) || Math.abs(x - HUT_X) < 38 || Math.abs(x - SHELF_X) < 34 || x > PILLAR_X[0] - 12 && x < PILLAR_X[1] + 12) continue;
-        const row = pr() < 0.45 ? 0 : 1;
-        g.plants.push({ x, row, h: (row ? 26 : 16) + pr() * 12, sw: pr() * 6.28, kind: a.asset || "conifer", page: a.pageId });
+        if (clear.some(([c0, c1]) => x > c0 && x < c1) || Math.abs(x - HUT_X) < 30 || Math.abs(x - SHELF_X) < 24 || x > PILLAR_X[0] - 12 && x < PILLAR_X[1] + 12) continue;
+        // les arbres sont grands et toujours à l'arrière-plan (derrière cabane, étagère, bassin, chat) ; seules les fougères basses peuvent passer devant
+        const low = (a.asset || "conifer") === "fern", row = low ? (pr() < 0.5 ? 0 : 1) : 0;
+        g.plants.push({ x, row, h: low ? 12 + pr() * 8 : 40 + pr() * 18, sw: pr() * 6.28, kind: a.asset || "conifer", page: a.pageId });
       }
     }
     g.plants.sort((a, b) => a.row - b.row || a.x - b.x);
@@ -151,9 +152,9 @@ class ReltoRenderer {
     if (sc.surrounding === "ocean") this.drawOcean(ctx, sky, t);
     this.drawIsland(ctx, sky, t);
     for (const k of ["gold", "silver", "gems"]) { const o = has(k); if (o) this.drawOre(ctx, k, o.density, sky, t); }
-    const kp = has("koi"); if (kp) this.drawKoi(ctx, kp, sky, t);
     const mt = has("mountain"); if (mt) this.drawMount(ctx, mt.density, sky, t);
     this.drawPlants(ctx, 0, t);
+    const kp = has("koi"); if (kp) this.drawKoi(ctx, kp, sky, t); // après les arbres du fond : le bassin n'est jamais recouvert
     const wf = has("waterfall"); if (wf) this.drawWaterfall(ctx, t);
     this.drawStructures(ctx, sky, t);
     const ct = has("cat"); if (ct) this.drawCat(ctx, ct, sky, t);
