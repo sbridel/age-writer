@@ -1,0 +1,485 @@
+.age-panel {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  background:
+    repeating-linear-gradient(45deg, rgba(205, 189, 148, 0.05) 0px, rgba(205, 189, 148, 0.05) 1px, transparent 1px, transparent 6px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.18) 0px, rgba(0, 0, 0, 0.18) 1px, transparent 1px, transparent 6px),
+    #16140f;
+  border-radius: 4px;
+  padding: 16px;
+  margin: 8px 0;
+  clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%);
+}
+
+/* A pale hairline along the "broken" corner, as if the edge caught the light. */
+.age-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, rgba(233, 220, 184, 0.35), transparent 70%);
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+  pointer-events: none;
+}
+
+.age-panel__journal {
+  flex: 1 1 240px;
+  font-family: var(--font-text, Georgia, serif);
+  font-style: italic;
+  font-size: 0.92em;
+  line-height: 1.6;
+  color: #b9ac8a;
+  align-self: center;
+}
+
+.age-panel__visual {
+  flex: 1 1 200px;
+  max-width: 320px;
+  color: #cdbd94;
+}
+
+.age-panel__visual svg {
+  display: block;
+}
+
+.age-panel__linkrect {
+  fill: #050505;
+  stroke: #cdbd94;
+  stroke-width: 0.5;
+  opacity: 0.9;
+}
+
+.age-panel__linkrect--lit {
+  fill: #1a1710;
+  stroke: #e9dcb8;
+  stroke-width: 1;
+  filter: drop-shadow(0 0 4px rgba(233, 220, 184, 0.6));
+}
+
+.age-panel__debug {
+  flex-basis: 100%;
+  font-size: 0.75em;
+  color: #6c6250;
+  font-family: var(--font-monospace, monospace);
+}
+
+/* Nested group so the tremble rotates/translates around the glyph's own
+ * center, independent of the outer translate(...) scale(...) placement. */
+.age-glyph {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+
+.age-glyph--tremble-light {
+  animation: age-tremble-light 2.6s ease-in-out infinite;
+}
+
+.age-glyph--tremble-medium {
+  animation: age-tremble-medium 1.4s ease-in-out infinite;
+}
+
+.age-glyph--tremble-strong {
+  animation: age-tremble-strong 0.6s ease-in-out infinite;
+}
+
+@keyframes age-tremble-light {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(0.4px, -0.3px); }
+}
+
+@keyframes age-tremble-medium {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(0.8px, -0.6px) rotate(0.3deg); }
+  50% { transform: translate(-0.6px, 0.5px) rotate(-0.3deg); }
+  75% { transform: translate(0.5px, 0.7px) rotate(0.2deg); }
+}
+
+@keyframes age-tremble-strong {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(1.4px, -1px) rotate(0.8deg); }
+  40% { transform: translate(-1.2px, 1.1px) rotate(-0.7deg); }
+  60% { transform: translate(1px, 1.3px) rotate(0.6deg); }
+  80% { transform: translate(-1.3px, -0.9px) rotate(-0.9deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .age-glyph--tremble-light,
+  .age-glyph--tremble-medium,
+  .age-glyph--tremble-strong {
+    animation: none;
+  }
+}
+
+/* A block the world produced by itself, not one you wrote. */
+.age-panel__born {
+  fill: none;
+  stroke: #cdbd94;
+  stroke-width: 0.6;
+  stroke-dasharray: 3 3;
+  opacity: 0.6;
+}
+
+/* ---- verdict, books, and a dying Age ---- */
+.age-panel__foot {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+  font-size: 0.8em;
+  color: #9d9078;
+}
+
+.age-panel__verdict {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.85em;
+}
+.age-panel__verdict--stable { color: #8fae6a; }
+.age-panel__verdict--unstable { color: #d9a24a; }
+.age-panel__verdict--dying { color: #c0553f; }
+
+.age-panel__foot a.internal-link { color: #cdbd94; }
+
+.age-panel--unstable .age-panel__visual { opacity: 0.88; }
+.age-panel--dying .age-panel__visual { opacity: 0.55; filter: grayscale(0.6); }
+.age-panel--dying .age-panel__journal { animation: age-fade 4s ease-in-out infinite; }
+
+@keyframes age-fade {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.age-panel__linkrect--broken {
+  fill: none;
+  stroke: #6c3a2e;
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .age-panel--dying .age-panel__journal { animation: none; opacity: 0.75; }
+}
+
+/* ---- the linking panel as an image / GIF ---- */
+.age-panel__window {
+  position: relative;
+  width: 55%;
+  min-width: 110px;
+  max-width: 220px;
+  margin: 8px 0 0 auto;
+  background: #050505;
+  border: 1px solid #cdbd94;
+  overflow: hidden;
+}
+
+.age-panel__window img,
+.age-panel__window canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.age-panel__window--stable {
+  box-shadow: 0 0 10px rgba(233, 220, 184, 0.55);
+}
+
+.age-panel__window--unstable img,
+.age-panel__window--unstable canvas {
+  filter: saturate(0.7) brightness(0.85);
+}
+
+.age-panel__window--dying {
+  border-style: dashed;
+  border-color: #6c3a2e;
+  box-shadow: none;
+}
+
+.age-panel__window--dying canvas {
+  filter: grayscale(1) brightness(0.45);
+}
+
+/* a crack across the glass */
+.age-panel__window--dying::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(115deg, transparent 46%, rgba(0, 0, 0, 0.85) 47%, rgba(0, 0, 0, 0.85) 48%, transparent 49%),
+    linear-gradient(35deg, transparent 58%, rgba(0, 0, 0, 0.7) 59%, rgba(0, 0, 0, 0.7) 60%, transparent 61%);
+  pointer-events: none;
+}
+
+/* ======================= the Age as a book (side view) ======================= */
+.age-book {
+  padding: 12px;
+  color: #3a2f22;
+}
+
+.age-book__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  margin-bottom: 10px;
+  color: var(--text-normal);
+}
+
+.age-book__title { font-size: 1.1em; font-weight: 600; }
+
+.age-book__tabs { margin-left: auto; display: flex; gap: 4px; }
+.age-book__tabs button { font-size: 0.8em; padding: 2px 10px; }
+.age-book__tabs button.is-active { background: var(--interactive-accent); color: var(--text-on-accent); }
+
+.age-book__empty { color: var(--text-muted); font-style: italic; padding: 24px 8px; }
+
+.age-book__spread {
+  display: flex;
+  background: #2e2015;
+  border-radius: 6px;
+  padding: 12px;
+  min-height: 320px;
+}
+
+.age-book__page {
+  flex: 1;
+  min-width: 0;
+  background: #ece0c3;
+  padding: 18px 16px;
+  color: #3a2f22;
+}
+.age-book__page--left { border-radius: 4px 0 0 4px; }
+.age-book__page--right { border-radius: 0 4px 4px 0; }
+
+.age-book__gutter {
+  width: 14px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.05) 40%, rgba(0, 0, 0, 0.05) 60%, rgba(0, 0, 0, 0.28));
+}
+
+/* symbol pages, slipped into the binding */
+.age-book__chips {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 10px;
+  padding-left: 12px;
+}
+
+.age-book__chip {
+  position: relative;
+  aspect-ratio: 78 / 96;
+  max-width: 96px;
+  background: #f4ecd6;
+  border: 0.5px solid #8a7250;
+  box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.25);
+  color: #5a4a30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.age-book__chip.is-born { outline: 1px dashed #8a7250; outline-offset: 3px; }
+.age-book__chip.is-blot { color: #2a2118; }
+
+.age-book__tab {
+  position: absolute;
+  left: -10px;
+  top: 28%;
+  width: 10px;
+  height: 24px;
+}
+
+.age-book__chip-art { width: 60%; }
+.age-book__chip-art svg { display: block; width: 100%; height: auto; }
+
+.age-book__nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  font-size: 0.75em;
+  color: #6c5a40;
+}
+.age-book__nav button { padding: 0 8px; }
+
+.age-book__prose {
+  font-family: var(--font-text, Georgia, serif);
+  font-style: italic;
+  line-height: 1.7;
+}
+
+.age-book__colophon {
+  margin-top: 18px;
+  font-size: 0.72em;
+  letter-spacing: 0.05em;
+  color: #8a7a5c;
+}
+
+/* linking book */
+.age-book__window { max-width: 260px; margin: 10px auto 0; }
+.age-book__window .age-panel__window { width: 100%; max-width: none; margin: 0; }
+.age-book__window svg { display: block; width: 100%; }
+.age-book__window .age-panel__linkrect { fill: #0a0805; }
+.age-book__window .age-panel__linkrect--lit { fill: #1a1710; }
+
+.age-book__caption {
+  margin-top: 12px;
+  text-align: center;
+  font-style: italic;
+  font-size: 0.85em;
+  color: #6c5a40;
+}
+
+.age-book__heading {
+  font-size: 0.8em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a7a5c;
+  margin-bottom: 10px;
+}
+
+.age-book__book {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  padding: 6px 0;
+  border-bottom: 0.5px solid #cdbf9b;
+}
+.age-book__role { font-size: 0.7em; letter-spacing: 0.08em; text-transform: uppercase; color: #8a7a5c; min-width: 4.5em; }
+.age-book__destnote { font-size: 0.75em; color: #6c5a40; }
+.age-book__destnote.is-missing { color: #a04a3a; }
+.age-book__destnote.age-panel__verdict--stable { color: #5a7a3a; }
+.age-book__destnote.age-panel__verdict--unstable { color: #a87a20; }
+.age-book__destnote.age-panel__verdict--dying { color: #a04a3a; }
+.age-book__none { margin-top: 12px; font-size: 0.85em; font-style: italic; color: #8a7a5c; }
+
+/* ---- writing from the book ---- */
+.age-book__pull {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  line-height: 16px;
+  font-size: 13px;
+  background: #3a2f22;
+  color: #ece0c3;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.age-book__chip:hover .age-book__pull,
+.age-book__pull:focus { opacity: 1; }
+
+.age-book__palette {
+  margin-top: 12px;
+  padding: 8px 10px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+}
+.age-book__palette summary { cursor: pointer; font-size: 0.85em; color: var(--text-muted); }
+
+.age-book__palette-heading {
+  margin: 12px 0 6px;
+  font-size: 0.7em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.age-book__palette-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.age-book__swatch {
+  width: 40px;
+  height: 46px;
+  padding: 4px;
+  background: #f4ecd6;
+  color: #5a4a30;
+  border: 0.5px solid #8a7250;
+  border-bottom: 4px solid #b8934a;
+  border-radius: 0;
+  box-shadow: none;
+  cursor: pointer;
+}
+.age-book__swatch svg { display: block; width: 100%; height: 100%; }
+.age-book__swatch:hover { background: #fffaf0; }
+.age-book__swatch.is-written { background: #cdbf9b; box-shadow: inset 0 0 0 1px #5a4a30; }
+
+/* ---- linking book: the glass shows the other side ---- */
+.age-book__book { cursor: pointer; }
+.age-book__book.is-selected { background: rgba(138, 114, 80, 0.16); }
+.age-book__bookname { color: #3a2f22; }
+.age-book__open { margin-left: auto; font-size: 0.75em; color: #6c5a40; text-decoration: underline; text-decoration-style: dotted; }
+
+.age-book__strip { max-width: 260px; margin: 12px auto 0; color: #5a4a30; }
+.age-book__strip svg { display: block; }
+
+.age-book__glimpse {
+  margin: 12px auto 0;
+  max-width: 260px;
+  text-align: center;
+  font-family: var(--font-text, Georgia, serif);
+  font-style: italic;
+  font-size: 0.85em;
+  line-height: 1.5;
+  color: #4a3d2c;
+}
+
+/* ---- what an age-library block shows ---- */
+.age-library {
+  margin: 8px 0;
+  padding: 10px 12px;
+  background: #16140f;
+  border-radius: 4px;
+  color: #b9ac8a;
+  font-size: 0.85em;
+}
+.age-library__summary { letter-spacing: 0.04em; color: #cdbd94; }
+.age-library__ok { margin-top: 4px; color: #8fae6a; font-style: italic; }
+.age-library__problems { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.age-library__problem { display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: baseline; }
+.age-library__where { font-family: var(--font-monospace, monospace); font-size: 0.8em; color: #8a7a5c; min-width: 4.5em; }
+.age-library__problem--error .age-library__message { color: #d98a6a; }
+.age-library__problem--warning .age-library__message { color: #d9b25a; }
+.age-library__problem code { flex-basis: 100%; padding-left: 5.2em; color: #8a7a5c; background: none; font-size: 0.8em; white-space: pre-wrap; }
+.age-library__more { color: #8a7a5c; font-style: italic; }
+
+/* ---- pages the book drew ---- */
+.age-book__keep {
+  position: absolute;
+  top: -7px;
+  left: -7px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  line-height: 16px;
+  font-size: 11px;
+  background: #5a7a3a;
+  color: #ece0c3;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.age-book__chip:hover .age-book__keep,
+.age-book__keep:focus { opacity: 1; }
+
+.age-book__drawn {
+  margin-top: 8px;
+  font-size: 0.78em;
+  font-style: italic;
+  color: #8a7a5c;
+}
+.age-book__drawn button { font-style: normal; font-size: 0.95em; padding: 0 8px; margin-left: 4px; }
+
+/* ---- no way home ---- */
+.age-panel__trapped { color: #d98a6a; }
+.age-book__none.is-trapped { color: #a04a3a; font-style: normal; }
