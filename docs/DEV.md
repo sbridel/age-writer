@@ -1,4 +1,4 @@
-# Guide du développeur — Age Writer 1.7
+# Guide du développeur — Age Writer
 
 ## Le principe
 
