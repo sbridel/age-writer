@@ -103,7 +103,7 @@ async function createReltoPage(plugin) {
     let n = 0, path;
     do { path = `${folder}/${id}${n ? " " + (n + 1) : ""}.md`; n++; } while (app.vault.getAbstractFileByPath(path));
     const preset = presets[id];
-    const f = await app.vault.create(path, `---\n${obsidian.stringifyYaml(M.pageFrontmatter(id, preset))}---\n# ${preset.label}\n\n${t("relto.pagenote")}\n`);
+    const f = await app.vault.create(path, `---\n${obsidian.stringifyYaml(M.pageFrontmatter(id, preset))}---\n# ${preset.label}\n\n${t("relto.pagenote")}\n${id === "page_cat" ? "\n" + t("relto.catnote") + "\n" : id === "page_koi" ? "\n" + t("relto.koinote") + "\n" : ""}`);
     await app.fileManager.processFrontMatter(hub, (fm) => { const a = Array.isArray(fm.relto_pages_active) ? fm.relto_pages_active : []; if (!a.includes(id)) a.push(id); fm.relto_pages_active = a; });
     new obsidian.Notice(t("relto.pagecreated", { name: preset.label }));
     plugin.refreshLive();
@@ -141,7 +141,7 @@ async function renderRelto(plugin, source, el, ctx) {
     const tickDni = () => {
       const d = DT.fromDate(), n = (v) => plugin.dni.numberSvg(v, { size: tabsOn ? 24 : 13 });
       dniClock.innerHTML = `${n(d.hahr)}<i>${d.name}</i>${n(d.yahr)}<b>${n(d.gahrtahvo)}${n(d.tahvo)}${n(d.gorahn)}${n(d.prorahn)}</b>`;
-      dniClock.setAttr("title", t("relto.dnitime") + " : " + DT.format(d)); dniClock.setAttr("aria-label", DT.format(d));
+      dniClock.setAttr("aria-label", DT.format(d)); // l'infobulle d'Obsidian (aria-label) seule : `title` en ajoutait une seconde, grise
     };
     // la mise à jour reconstruit les chiffres toutes les ~1,4 s, ce qui fermait l'infobulle avant qu'elle n'apparaisse : on suspend tant que la souris est dessus
     let over = false; dniClock.addEventListener("mouseenter", () => { over = true; }); dniClock.addEventListener("mouseleave", () => { over = false; tickDni(); });
@@ -192,12 +192,12 @@ async function renderRelto(plugin, source, el, ctx) {
     for (const [k, key, ic] of defs) {
       const b = tabBar.createEl("button", { cls: "age-relto__tab" }); btns[k] = b;
       try { obsidian.setIcon(b.createSpan({ cls: "age-relto__tabicon" }), ic); } catch (e) { /* ignore */ }
-      b.setAttr("title", t(key)); b.setAttr("aria-label", t(key)); b.addEventListener("click", () => { pick(k); plugin.saveExt(); if (k === "view") { try { renderer.draw(0); } catch (e) { /* ignore */ } if (root.__fadeArm) root.__fadeArm(); } });
+      b.setAttr("aria-label", t(key)); b.addEventListener("click", () => { pick(k); plugin.saveExt(); if (k === "view") { try { renderer.draw(0); } catch (e) { /* ignore */ } if (root.__fadeArm) root.__fadeArm(); } });
     }
-    if (!ctx.big) { const x = tabBar.createEl("button", { cls: "age-relto__tab age-relto__tab--expand" }); try { obsidian.setIcon(x.createSpan({ cls: "age-relto__tabicon" }), "maximize-2"); } catch (e) { /* ignore */ } x.setAttr("title", t("tab.expand")); x.setAttr("aria-label", t("tab.expand")); x.addEventListener("click", () => openReltoView(plugin)); }
+    if (!ctx.big) { const x = tabBar.createEl("button", { cls: "age-relto__tab age-relto__tab--expand" }); try { obsidian.setIcon(x.createSpan({ cls: "age-relto__tabicon" }), "maximize-2"); } catch (e) { /* ignore */ } x.setAttr("aria-label", t("tab.expand")); x.addEventListener("click", () => openReltoView(plugin)); }
     if (ctx.big) {
       const fs = tabBar.createEl("button", { cls: "age-relto__tab age-relto__tab--full" }); try { obsidian.setIcon(fs.createSpan({ cls: "age-relto__tabicon" }), "expand"); } catch (e) { /* ignore */ }
-      fs.setAttr("title", t("tab.fullscreen")); fs.setAttr("aria-label", t("tab.fullscreen"));
+      fs.setAttr("aria-label", t("tab.fullscreen"));
       fs.addEventListener("click", () => { const host = root.closest(".age-reltoview") || root, d = host.ownerDocument; try { if (d.fullscreenElement) d.exitFullscreen(); else host.requestFullscreen(); } catch (e) { /* ignore */ } });
     }
     pick(defs.some((d) => d[0] === ui0.reltoTab) ? ui0.reltoTab : "view");

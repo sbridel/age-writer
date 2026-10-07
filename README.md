@@ -6,7 +6,7 @@ Idée de départ : dans Mystcraft, on ne **crée** pas un monde, on se **lie** �
 
 > Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part. Aucune ressource de Myst (police, image, son) n'est fournie.
 
-**Version 1.9.1** : deux **livres à part** sur le Relto (livre des glyphes, livre de la bibliothèque, voir §6), et le réglage « How much the book draws » de la 1.8 (*Little* / *Normal* / *A lot*, Normal = tirage d'avant). Le moteur (issu du 1.3.0) est en sources lisibles dans `src/engine/`. Le `manifest.json` annonce `1.9.1` (1.9.1 : l'infobulle de l'heure D'ni ne se fermait plus toute seule, la mise à jour est suspendue pendant le survol).
+**Version 1.10.0** : deux nouvelles pages du Relto, un **bassin de koï** (avec une koï rare : *ogon* doré, *platinum* ou *fantôme*) et un **chat** dont tu choisis la couleur et le nom (voir §6) ; les infobulles du Relto n'apparaissent plus en double (seule celle d'Obsidian reste) ; deux livres à part sur le Relto (1.9) ; réglage « How much the book draws » (1.8). Le moteur (issu du 1.3.0) est en sources lisibles dans `src/engine/`. Le `manifest.json` annonce `1.10.0`.
 
 ---
 
@@ -135,6 +135,12 @@ Au pied de l'étagère, deux livres d'aspect différent des Âges (aussi dans l'
 - **Livre de la bibliothèque** (rouge, fermoir) : un clic propose *Blocs, réactions et variantes d'Âges* (`age-library`) ou *Pages du Relto* (`relto-library`). Le plugin ouvre la note de bibliothèque existante, ou la crée avec un exemple commenté (`Age Library.md`, `Relto Library.md`, dans le dossier de bibliothèque s'il est défini). Tu n'as plus qu'à écrire. Commande : *Open a library note*.
 
 La syntaxe d'une page du Relto accepte `page lagon: …` ou `page_lagon: …` (le second n'était pas reconnu avant, alors que les exemples le montraient).
+
+### Le bassin de koï et le chat
+
+- **Bassin de koï** (page *Koi pond*) : un bassin vu en coupe, à droite de la cabane, avec des carpes qui nagent. Une **koï rare** les accompagne : `koi_rare` dans les propriétés de la note de la page vaut `ogon` (doré), `platinum` ou `ghost` (fantôme). Sans valeur, la variété est tirée d'après la graine du Relto.
+- **Chat** (page *Cat*) : assis à gauche de la cabane, il cligne des yeux, bat de la queue et dort la nuit. Dans la note de la page, `cat_name` donne son nom (affiché au survol) et `cat_color` sa robe : `black`, `white`, `orange`, `grey`, `cream`, `tabby`, `calico`, `tuxedo`, `siamese`, ou un code `#rrggbb`.
+- Dans un bloc `relto-library` : `page chat: Chat | cat color=black name="Petit Loup"` et `page bassin: Bassin | koi 0.8 rare=platinum` (la densité de `koi` règle le nombre de carpes).
 
 ### Pages intégrées
 

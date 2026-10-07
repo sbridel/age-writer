@@ -1,0 +1,23 @@
+"use strict";
+// Pages « koi » et « cat » : options (couleur, nom, variété rare) en note, en bibliothèque et dans la scène.
+const assert = require("assert");
+const M = require("../src/relto-model");
+let n = 0; const ok = (c, m) => { assert(c, m); n++; };
+const lib = M.parseReltoLibrary('page chat: Chat | cat color=black name="Petit Loup" | audio=hearth\npage bassin: Bassin | koi 0.8 rare=platinum');
+ok(!lib.problems.length && lib.pages.length === 2, "lignes de bibliothèque valides");
+const cat = M.libraryPage(lib.pages[0]).additions[0], koi = M.libraryPage(lib.pages[1]).additions[0];
+ok(cat.type === "cat" && cat.color === "black" && cat.name === "Petit Loup", "chat : couleur et nom (nom entre guillemets)");
+ok(koi.type === "koi" && koi.rare === "platinum" && koi.density === 0.8, "koï : densité et variété rare");
+const fm = M.pageFrontmatter("page_cat", M.PAGE_PRESETS.page_cat);
+const page = M.parsePage({ relto_page_id: fm.relto_page_id, effects: { canvas_additions: [{ type: "cat", color: "calico", name: "Pixel" }] } }, "p.md");
+ok(page.additions[0].color === "calico" && page.additions[0].name === "Pixel" && page.unknown === 0, "page en note : couleur et nom lus");
+const edited = { ...M.pageFrontmatter("page_cat", M.PAGE_PRESETS.page_cat), cat_name: "Biscotte", cat_color: "grey" };
+ok(M.parsePage(edited, "c.md").additions[0].name === "Biscotte" && M.parsePage(edited, "c.md").additions[0].color === "grey", "propriétés cat_name / cat_color de la note prioritaires");
+ok(M.pageFrontmatter("page_koi", M.PAGE_PRESETS.page_koi).koi_rare === "ogon", "la page koï expose koi_rare");
+ok(M.parsePage(M.pageFrontmatter("page_koi", M.PAGE_PRESETS.page_koi), "k.md").additions[0].rare === "ogon", "préréglage koï : ogon");
+const relto = M.parseRelto({ relto_pages_active: ["a", "b"] });
+const mk = (id, name) => ({ id, additions: [{ type: "cat", density: 0.5, name }], audio: [], enabled: true, unlock: null, label: id });
+const sc = M.buildScene(relto, [mk("a", "Mochi"), mk("b", "Luna")], [], []);
+ok(sc.additions.filter((a) => a.type === "cat").length === 2, "deux chats de noms différents ne fusionnent pas");
+ok(M.optsOf({ name: "x".repeat(100) }).name.length === 40, "nom borné à 40 caractères");
+console.log(`✓ relto-pages.test.js (${n} contrôles)`);

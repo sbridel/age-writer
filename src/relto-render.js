@@ -15,6 +15,30 @@ const TERRAIN = {
   glacier: { rock: "#516b80", rock2: "#6f8ea3", top: "#c9dfec", tuft: "#e4f1f8", glow: null },
   obsidian_plateau: { rock: "#120f16", rock2: "#201a2a", top: "#2a2236", tuft: "#3b2f4a", glow: "#8a5cff" },
 };
+/** Koï rares du bassin (page « koi », option `rare=`). */
+const KOI_RARE = {
+  ogon: { label: "ogon (gold)", body: "#e0b040", spot: "#fff0a8", glow: "rgba(255,215,110,0.55)" },
+  platinum: { label: "platinum", body: "#fbfcff", spot: "#b8c6d8", glow: "rgba(235,245,255,0.8)" },
+  ghost: { label: "ghost", body: "#cfe0ee", spot: "#aac4dc", glow: "rgba(190,215,255,0.45)", alpha: 0.6 },
+};
+/** Robes du chat (page « cat », option `color=`) ; un code #rrggbb est aussi accepté. */
+const CATS = {
+  black: { label: "black", fur: "#1d1b20", tail: "#1d1b20", eyes: "#e6c64a" },
+  white: { label: "white", fur: "#efeae0", tail: "#efeae0", eyes: "#6fa8d8", ears: "#e8c5c0" },
+  orange: { label: "orange", fur: "#d9822b", tail: "#d9822b", eyes: "#7fb04a", belly: "#f0c08a", stripes: "#b5611a", muzzle: "#f0c08a" },
+  grey: { label: "grey", fur: "#7d8590", tail: "#7d8590", eyes: "#d8c050", belly: "#a9b0b8" },
+  cream: { label: "cream", fur: "#e8cfa0", tail: "#e8cfa0", eyes: "#6fa8d8", belly: "#f4e6c8" },
+  tabby: { label: "tabby", fur: "#8d6b45", tail: "#6a4e30", eyes: "#7fb04a", belly: "#c9ae86", stripes: "#4a3420" },
+  calico: { label: "calico", fur: "#efeae0", tail: "#d9822b", eyes: "#7fb04a", patch: "#d9822b", ears: "#2a2420" },
+  tuxedo: { label: "tuxedo", fur: "#1d1b20", tail: "#1d1b20", eyes: "#7fb04a", belly: "#efeae0", paws: "#efeae0", muzzle: "#efeae0" },
+  siamese: { label: "siamese", fur: "#ecd9b8", tail: "#4a3a30", eyes: "#6fa8d8", ears: "#4a3a30", face: "#d8c4a0", paws: "#4a3a30", muzzle: "#4a3a30" },
+};
+function catLook(color) {
+  const key = String(color || "").trim().toLowerCase();
+  if (CATS[key]) return CATS[key];
+  if (/^#?[0-9a-f]{6}$/.test(key)) { const c = key.startsWith("#") ? key : "#" + key; return { label: c, fur: c, tail: c, eyes: "#7fb04a" }; }
+  return CATS.orange;
+}
 const VERDICT = { stable: "#8fae6a", unstable: "#d9a24a", dying: "#c0553f", unknown: "#7a7a8a" };
 const BOOKS = ["#7a3b2a", "#2f4a3a", "#3a3f6a", "#6a5a2a", "#5a2f4a", "#2f5a5a"];
 const CAM = 1.2, CAM_X = 320, CAM_Y = 214, CAM_OY = 196; // zoom sur l'île
@@ -126,10 +150,12 @@ class ReltoRenderer {
     if (sc.surrounding === "ocean") this.drawOcean(ctx, sky, t);
     this.drawIsland(ctx, sky, t);
     for (const k of ["gold", "silver", "gems"]) { const o = has(k); if (o) this.drawOre(ctx, k, o.density, sky, t); }
+    const kp = has("koi"); if (kp) this.drawKoi(ctx, kp, sky, t);
     const mt = has("mountain"); if (mt) this.drawMount(ctx, mt.density, sky, t);
     this.drawPlants(ctx, 0, t);
     const wf = has("waterfall"); if (wf) this.drawWaterfall(ctx, t);
     this.drawStructures(ctx, sky, t);
+    const ct = has("cat"); if (ct) this.drawCat(ctx, ct, sky, t);
     const pl = has("pillars"); if (pl) this.drawPillars(ctx, pl.density, sky, t);
     const ch = has("chimney"); if (ch) this.drawChimney(ctx, ch.density, sky, t);
     this.drawPlants(ctx, 1, t);
@@ -314,6 +340,63 @@ class ReltoRenderer {
     for (let i = 0; i < 9; i++) { const p = frac(t * 0.8 + i / 9), y = GY + 6 + p * 120, xx = x - w / 2 + 1 + (i % 4) * 2.2; ctx.beginPath(); ctx.moveTo(xx, y); ctx.lineTo(xx, y + 8); ctx.stroke(); }
     for (let i = 0; i < 7; i++) { const p = frac(t * 0.3 + i / 7), r = 6 + p * 16; ctx.fillStyle = rgba(235, 245, 255, 0.18 * (1 - p)); ctx.beginPath(); ctx.arc(x + Math.sin(i * 2 + t) * 6, 322 - p * 20, r, 0, 6.283); ctx.fill(); }
     ctx.fillStyle = "rgba(180,215,235,0.6)"; ctx.fillRect(x - 12, GY + 4, 24, 2.5);
+  }
+
+  /** Bassin de carpes koï : coupe de profil dans la roche, à droite de la cabane. Une koï rare (ogon, platine ou fantôme) nage avec les autres. */
+  drawKoi(ctx, a, sky, t) {
+    const X0 = 282, PW = 52, Y0 = GY + 2, PH = 15, amb = 0.35 + 0.65 * sky.ambient, shade = (c) => mix("#05060c", c, amb);
+    const r = rng((this.scene.seed ^ 0x6b01) >>> 0), RARE = ["ogon", "platinum", "ghost"];
+    const rare = KOI_RARE[String(a.rare || a.asset || "").toLowerCase()] ? String(a.rare || a.asset).toLowerCase() : RARE[Math.floor(r() * RARE.length)];
+    const water = ctx.createLinearGradient(0, Y0, 0, Y0 + PH); water.addColorStop(0, shade("#3f7f96")); water.addColorStop(1, shade("#143550"));
+    ctx.save(); ctx.beginPath(); ctx.rect(X0, Y0, PW, PH); ctx.clip();
+    ctx.fillStyle = water; ctx.fillRect(X0, Y0, PW, PH);
+    ctx.strokeStyle = rgba(230, 245, 255, 0.35); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(X0, Y0 + 0.6); ctx.lineTo(X0 + PW, Y0 + 0.6); ctx.stroke();
+    const n = Math.round(2 + a.density * 5), COMMON = [["#efe2cc", "#d8452a"], ["#e8dcc6", "#d8452a"], ["#e0762a", "#f6b870"], ["#d94a2a", "#f2c9a0"], ["#efe2cc", "#1d1d24"]];
+    const fish = (i, body, spot, size, rareKind) => {
+      const ph = i * 2.1 + r() * 6, sp = 0.18 + r() * 0.16, lane = Y0 + 4.5 + (i % 3) * 3.6, s = Math.sin(t * sp + ph), dir = Math.cos(t * sp + ph) >= 0 ? 1 : -1;
+      const x = X0 + 6 + (PW - 12) * (0.5 + 0.5 * s), y = lane + Math.sin(t * 0.9 + ph) * 0.7, wag = Math.sin(t * 6 + ph) * 1.2;
+      ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+      if (rareKind) { const gl = ctx.createRadialGradient(0, 0, 1, 0, 0, size * 1.6); gl.addColorStop(0, rareKind.glow); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = gl; ctx.fillRect(-size * 1.8, -size * 1.8, size * 3.6, size * 3.6); }
+      ctx.globalAlpha = rareKind && rareKind.alpha ? rareKind.alpha : 1;
+      ctx.fillStyle = shade(body); ctx.beginPath(); ctx.ellipse(0, 0, size * 0.5, size * 0.2, 0, 0, 6.283); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-size * 0.45, 0); ctx.lineTo(-size * 0.8, -size * 0.2 + wag * 0.4); ctx.lineTo(-size * 0.8, size * 0.2 + wag * 0.4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = shade(spot); ctx.beginPath(); ctx.ellipse(size * 0.05, -size * 0.04, size * 0.24, size * 0.13, 0, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(-size * 0.28, size * 0.02, size * 0.12, size * 0.09, 0, 0, 6.283); ctx.fill();
+      ctx.fillStyle = rgba(10, 10, 14, 0.8); ctx.fillRect(size * 0.34, -size * 0.07, 0.9, 0.9);
+      ctx.restore();
+    };
+    for (let i = 1; i < n; i++) { const c = COMMON[Math.floor(r() * COMMON.length)]; fish(i, c[0], c[1], 8.5 + r() * 2, null); }
+    fish(0, KOI_RARE[rare].body, KOI_RARE[rare].spot, 12.5, KOI_RARE[rare]);
+    if (rare !== "ghost") for (let k = 0; k < 4; k++) { const p = frac(t * 0.3 + k / 4 + r()); ctx.fillStyle = rgba(255, 245, 200, 0.7 * Math.sin(p * 3.14)); ctx.fillRect(X0 + 8 + r() * (PW - 16), Y0 + 2 + p * (PH - 4), 0.9, 0.9); }
+    ctx.restore();
+    ctx.fillStyle = shade("#6d6a64"); for (const [sx, sw] of [[X0 - 4, 5], [X0 + PW - 1, 5]]) { ctx.beginPath(); ctx.ellipse(sx + sw / 2, GY + 1, sw / 2 + 0.5, 3.4, 0, 0, 6.283); ctx.fill(); }
+    ctx.strokeStyle = rgba(230, 245, 255, 0.25); ctx.lineWidth = 0.7; const rp = frac(t * 0.25); ctx.beginPath(); ctx.ellipse(X0 + PW * 0.5, GY + 0.8, 6 + rp * 14, 0.9 + rp * 1.2, 0, 0, 6.283); ctx.stroke();
+    this.hot.push({ x: X0 - 3, y: GY - 2, w: PW + 6, h: PH + 5, tip: `Koi pond — a rare ${KOI_RARE[rare].label} koi swims here` });
+  }
+
+  /** Un chat assis près de la cabane : couleur et nom viennent de la page (`color=`, `name=`). Clignement, queue qui bat, yeux clos la nuit. */
+  drawCat(ctx, a, sky, t) {
+    const cat = catLook(a.color), amb = 0.4 + 0.6 * sky.ambient, shade = (c) => mix("#05060c", c, amb), CX = 203, K = 1.3;
+    const blink = frac(t * 0.21 + (this.scene.seed % 7) / 7) > 0.965 || sky.night > 0.75, sway = Math.sin(t * 1.6) * 0.45;
+    ctx.save(); ctx.translate(CX, GY); ctx.scale(K, K);
+    // queue
+    ctx.strokeStyle = shade(cat.tail); ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(4.2, -2.4); ctx.bezierCurveTo(10 + sway * 2, -1, 11 + sway * 3, -8, 7 + sway * 4, -11); ctx.stroke();
+    // corps, poitrail, pattes
+    ctx.fillStyle = shade(cat.fur); ctx.beginPath(); ctx.ellipse(0, -5.6, 5, 6, 0, 0, 6.283); ctx.fill();
+    if (cat.belly) { ctx.fillStyle = shade(cat.belly); ctx.beginPath(); ctx.ellipse(0, -4.4, 2.6, 4, 0, 0, 6.283); ctx.fill(); }
+    ctx.fillStyle = shade(cat.paws || cat.fur); ctx.fillRect(-3.4, -1.5, 2.4, 1.5); ctx.fillRect(1, -1.5, 2.4, 1.5);
+    if (cat.patch) { ctx.fillStyle = shade(cat.patch); ctx.beginPath(); ctx.ellipse(-2.6, -7.5, 2.1, 2.6, 0.4, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(3, -3.5, 1.6, 2, 0, 0, 6.283); ctx.fill(); }
+    if (cat.stripes) { ctx.strokeStyle = shade(cat.stripes); ctx.lineWidth = 0.7; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(-4.4, -8 + i * 2.4); ctx.lineTo(-2.2, -7.4 + i * 2.4); ctx.stroke(); ctx.beginPath(); ctx.moveTo(4.4, -8 + i * 2.4); ctx.lineTo(2.2, -7.4 + i * 2.4); ctx.stroke(); } }
+    // tête et oreilles
+    ctx.fillStyle = shade(cat.ears || cat.fur); ctx.beginPath(); ctx.moveTo(-4, -14.2); ctx.lineTo(-3.6, -19.2); ctx.lineTo(-0.9, -16.6); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(4, -14.2); ctx.lineTo(3.6, -19.2); ctx.lineTo(0.9, -16.6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = shade(cat.face || cat.fur); ctx.beginPath(); ctx.arc(0, -13.2, 4.4, 0, 6.283); ctx.fill();
+    if (cat.muzzle) { ctx.fillStyle = shade(cat.muzzle); ctx.beginPath(); ctx.ellipse(0, -11.6, 2.2, 1.7, 0, 0, 6.283); ctx.fill(); }
+    // yeux, nez
+    if (blink) { ctx.strokeStyle = shade("#1a1410"); ctx.lineWidth = 0.6; for (const ex of [-1.8, 1.8]) { ctx.beginPath(); ctx.moveTo(ex - 0.9, -13.4); ctx.lineTo(ex + 0.9, -13.4); ctx.stroke(); } }
+    else { for (const ex of [-1.8, 1.8]) { ctx.fillStyle = sky.night > 0.4 ? rgba(255, 240, 150, 0.9) : shade(cat.eyes); ctx.beginPath(); ctx.ellipse(ex, -13.4, 0.9, 1.1, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = "#101010"; ctx.fillRect(ex - 0.2, -14.1, 0.4, 1.5); } }
+    ctx.fillStyle = shade("#d98a8a"); ctx.fillRect(-0.4, -12.2, 0.8, 0.6);
+    ctx.restore();
+    const nm = String(a.name || "").trim();
+    this.hot.push({ x: CX - 9, y: GY - 26, w: 18, h: 26, tip: nm ? `${nm} — ${cat.label} cat` : `A ${cat.label} cat` });
   }
 
   drawStructures(ctx, sky, t) {

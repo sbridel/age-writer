@@ -12,7 +12,9 @@ const TERRAINS = ["volcanic_plateau", "mossy_plateau", "sand_island", "glacier",
 const SURROUNDINGS = ["cloud_sea", "fog_sea", "ocean", "void", "lava_sea"];
 const SKY_CYCLES = ["system_time", "frozen_dawn", "frozen_day", "frozen_dusk", "frozen_night"];
 const STRUCTURES = ["hut", "bookshelves", "linking_pillars"];
-const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver"];
+const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat"];
+/** Options propres à certains effets (texte court) : couleur et nom du chat, variété du koï rare. */
+const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
 const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern"] };
 
 /** Pages proposées à la création (id -> modèle). */
@@ -33,6 +35,8 @@ const PAGE_PRESETS = {
   page_gems: { label: "Gemstones", effects: { canvas_additions: [{ type: "gems", density: 0.6 }], ambiance_audio: "deep_hum" } },
   page_gold: { label: "Gold", effects: { canvas_additions: [{ type: "gold", density: 0.6 }], ambiance_audio: "stone_choir" } },
   page_silver: { label: "Silver", effects: { canvas_additions: [{ type: "silver", density: 0.6 }], ambiance_audio: "deep_hum" } },
+  page_koi: { label: "Koi pond", effects: { canvas_additions: [{ type: "koi", density: 0.5, rare: "ogon" }], ambiance_audio: "river" } },
+  page_cat: { label: "Cat", effects: { canvas_additions: [{ type: "cat", color: "orange", name: "Mochi" }], ambiance_audio: "hearth" } },
   page_mist: { label: "Mist", effects: { canvas_additions: [{ type: "mist", density: 0.6 }], ambiance_audio: "wind" } },
 };
 
@@ -67,6 +71,7 @@ function parsePage(fm = {}, path = "") {
     type: String(a && a.type || ""),
     density: clamp(Number(a && a.density != null ? a.density : 0.5), 0, 1),
     asset: a && a.asset ? String(a.asset) : undefined,
+    ...optsOf({ ...a, ...(a && a.type === "cat" ? { color: fm.cat_color ?? (a && a.color), name: fm.cat_name ?? (a && a.name) } : {}), ...(a && a.type === "koi" ? { rare: fm.koi_rare ?? (a && a.rare) } : {}) }),
   })).filter((a) => EFFECT_TYPES.includes(a.type));
   const audio = eff.ambiance_audio == null ? [] : asList(eff.ambiance_audio).map(String);
   const un = fm.unlock || null;
@@ -103,9 +108,9 @@ function parseReltoLibrary(text) {
       const a = part.match(/^audio\s*=\s*(.+)$/i); if (a) { audio = a[1].split(",").map((x) => x.trim()).filter(Boolean); continue; }
       const u = part.match(/^unlock\s*=\s*(.+?)(?:\s*:\s*(\d+))?$/i); if (u) { unlock = { age: stripLink(u[1]), minStability: u[2] ? Number(u[2]) : 40 }; continue; }
       for (const item of part.split(",")) {
-        const w = item.trim().split(/\s+/).filter(Boolean); if (!w.length) continue;
+        const w = item.trim().match(/\w+=(?:"[^"]*"|\S+)|\S+/g) || []; if (!w.length) continue;
         if (!EFFECT_TYPES.includes(w[0])) { problems.push({ line: i + 1, text: l, message: `unknown effect “${w[0]}” — use one of: ${EFFECT_TYPES.join(", ")}` }); continue; }
-        const e = { type: w[0] }; for (const x of w.slice(1)) { if (/^\d*\.?\d+$/.test(x)) e.density = Number(x); else e.asset = x; } eff.push(e);
+        const e = { type: w[0] }; for (const x of w.slice(1)) { if (/^\d*\.?\d+$/.test(x)) e.density = Number(x); else if (/^(color|colour|name|rare)=/i.test(x)) { const kv = x.match(/^(\w+)=(.*)$/); e[kv[1].toLowerCase() === "colour" ? "color" : kv[1].toLowerCase()] = kv[2].replace(/^"|"$/g, ""); } else e.asset = x; } eff.push(e);
       }
     }
     pages.push({ id: m[1], label: parts[0] || m[1], effects: { canvas_additions: eff, ...(audio.length ? { ambiance_audio: audio.length === 1 ? audio[0] : audio } : {}) }, unlock });
@@ -118,7 +123,7 @@ function libraryPage(lp) {
   const eff = lp.effects || {};
   return {
     id: lp.id, path: null, library: true, label: lp.label, target: "Relto", enabled: true, unknown: 0,
-    additions: (eff.canvas_additions || []).map((a) => ({ type: a.type, density: clamp(a.density != null ? a.density : 0.5, 0, 1), asset: a.asset })),
+    additions: (eff.canvas_additions || []).map((a) => ({ type: a.type, density: clamp(a.density != null ? a.density : 0.5, 0, 1), asset: a.asset, ...optsOf(a) })),
     audio: eff.ambiance_audio == null ? [] : asList(eff.ambiance_audio).map(String),
     unlock: lp.unlock ? { age: lp.unlock.age, minStability: lp.unlock.minStability, agesCount: null } : null,
   };
@@ -158,7 +163,7 @@ function buildScene(relto, pages, ages, shown) {
   for (const s of states) {
     if (s.state !== "active") continue;
     for (const a of s.additions) {
-      const prev = additions.find((x) => x.type === a.type && x.asset === a.asset);
+      const prev = additions.find((x) => x.type === a.type && x.asset === a.asset && x.name === a.name && x.color === a.color);
       if (prev) prev.density = clamp(prev.density + a.density * 0.5, 0, 1);
       else additions.push({ ...a, pageId: s.id });
     }
@@ -203,6 +208,11 @@ function pageFrontmatter(id, preset) {
     enabled: true,
     effects: JSON.parse(JSON.stringify(preset.effects)),
   };
+  // propriétés simples à modifier dans la note (Obsidian n'édite pas bien les listes imbriquées)
+  for (const a of (preset.effects && preset.effects.canvas_additions) || []) {
+    if (a.type === "cat") { fm.cat_name = a.name || ""; fm.cat_color = a.color || "orange"; }
+    if (a.type === "koi") fm.koi_rare = a.rare || "ogon";
+  }
   if (preset.unlock) fm.unlock = { age: `[[${preset.unlock.age}]]`, min_stability: preset.unlock.minStability };
   return fm;
 }
@@ -263,5 +273,5 @@ function hourFor(skyCycle, now = new Date()) {
 
 module.exports = {
   parseList, filterAges, TERRAINS, SURROUNDINGS, SKY_CYCLES, STRUCTURES, EFFECT_TYPES, ASSETS, PAGE_PRESETS,
-  stripLink, parseReltoLibrary, libraryPage, parseRelto, parsePage, checkUnlock, buildScene, pageFrontmatter, defaultReltoFrontmatter, skyAt, hourFor,
+  optsOf, stripLink, parseReltoLibrary, libraryPage, parseRelto, parsePage, checkUnlock, buildScene, pageFrontmatter, defaultReltoFrontmatter, skyAt, hourFor,
 };

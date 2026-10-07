@@ -7,6 +7,12 @@ function renderMany(host, ages) {
   host = host || document.body;
   const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
   const variants = [
+    { h: 14, t: 2.2, env: {}, pages: ["page_koi", "page_cat"], label: "day / koi + cat (orange)" },
+    { h: 22, t: 5.1, env: {}, pages: ["page_koi", "page_cat"], tune: { color: "black", name: "Nuit" }, label: "night / koi + black cat" },
+    { h: 11, t: 3.3, env: {}, pages: ["page_cat"], tune: { color: "calico", name: "Pixel" }, label: "day / calico cat" },
+    { h: 11, t: 3.3, env: {}, pages: ["page_cat"], tune: { color: "siamese", name: "Lune" }, label: "day / siamese cat" },
+    { h: 11, t: 3.3, env: {}, pages: ["page_koi"], tuneKoi: "platinum", label: "day / platinum koi" },
+    { h: 11, t: 3.3, env: {}, pages: ["page_koi"], tuneKoi: "ghost", label: "day / ghost koi" },
     { h: 14, t: 2.2, env: {}, pages: ["page_gold", "page_silver", "page_gems"], label: "day / gold+silver+gems" },
     { h: 23, t: 4.4, env: {}, pages: ["page_gold", "page_silver", "page_gems"], label: "night / gold+silver+gems" },
     { h: 22, t: 3.1, env: {}, pages: ["page_chimney", "page_fireflies"], label: "night / chimney" },
@@ -25,6 +31,8 @@ function renderMany(host, ages) {
   variants.forEach((v, i) => {
     const relto = M.parseRelto({ seed: 19991118, environment: v.env, structures: ["hut", "bookshelves", "linking_pillars"], relto_pages_active: v.pages });
     const pages = v.pages.map((id) => M.parsePage(M.pageFrontmatter(id, M.PAGE_PRESETS[id]), id + ".md"));
+    if (v.tune) for (const pg of pages) for (const a of pg.additions) if (a.type === "cat") Object.assign(a, v.tune);
+    if (v.tuneKoi) for (const pg of pages) for (const a of pg.additions) if (a.type === "koi") a.rare = v.tuneKoi;
     const scene = M.buildScene(relto, pages, ages);
     const c = document.createElement("canvas"); const d = document.createElement("div"); d.textContent = v.label; host.appendChild(d); host.appendChild(c);
     c.style.width = "640px"; document.body.appendChild(host);
