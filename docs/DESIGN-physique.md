@@ -319,7 +319,7 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 
 | Étape | Contenu | Critère de fin |
 |---|---|---|
-| **0. Prototype** ✅ | `src/physics/`, tests (256 vérifications), galerie | fait (8 oct. 2026) |
+| **0. Prototype** ✅ | `src/physics/`, tests (257 vérifications), galerie | fait (8 oct. 2026) |
 | 1. Décisions | réponses au §13 | l'auteur a tranché |
 | 2. Branchement facile | crochets `skip` / `adjust`, réglage, onglet « Physique », i18n | les 600 Âges de `equiv` inchangés ; fiche lisible dans Obsidian |
 | 3. Strict | barème, déduplication avec le moteur, frontmatter | tests de stabilité ; galerie relue par l'auteur |
