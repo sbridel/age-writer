@@ -11,8 +11,11 @@ const fs = require("fs"), path = require("path"), vm = require("vm");
 const { bundle } = require("./tools/bundle");
 const here = __dirname;
 
+/** Prototypes présents dans src/ mais pas encore branchés : hors du plugin livré (voir docs/DESIGN-physique.md). */
+const NOT_SHIPPED = ["physics"];
+
 function assemble(srcDir = here) {
-  const code = bundle(path.join(srcDir, "src"), "main");
+  const code = bundle(path.join(srcDir, "src"), "main", { exclude: NOT_SHIPPED });
   return `"use strict";\n/* Age Writer — moteur (src/engine) + extension (src/*), assemblés par build.js. */\nmodule.exports = ${code};\n`;
 }
 

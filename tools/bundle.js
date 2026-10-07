@@ -3,20 +3,21 @@
 // require("./x") / require("../x") sont résolus dans le paquet, relativement au module qui les appelle ;
 // tout le reste (ex. "obsidian") passe au require extérieur.
 // `extra` : modules supplémentaires { nom: chemin } (ex. points d'entrée des tests visuels, hors de src/).
+// `exclude` : sous-dossiers de src/ laissés hors du paquet (prototypes pas encore branchés, ex. "physics").
 const fs = require("fs"), path = require("path");
 
-function walk(dir, rel = "") {
+function walk(dir, rel = "", exclude = []) {
   const out = [];
   for (const f of fs.readdirSync(path.join(dir, rel), { withFileTypes: true })) {
     const r = rel ? rel + "/" + f.name : f.name;
-    if (f.isDirectory()) out.push(...walk(dir, r));
+    if (f.isDirectory()) { if (!exclude.includes(r)) out.push(...walk(dir, r, exclude)); }
     else if (f.name.endsWith(".js")) out.push([r.replace(/\.js$/, ""), path.join(dir, r)]);
   }
   return out;
 }
 
-function bundle(srcDir, entry, { outerRequire = "require", extra = {} } = {}) {
-  const files = walk(srcDir);
+function bundle(srcDir, entry, { outerRequire = "require", extra = {}, exclude = [] } = {}) {
+  const files = walk(srcDir, "", exclude);
   for (const [name, p] of Object.entries(extra)) files.push([name, p]);
   const mods = files.map(([name, p]) => `${JSON.stringify(name)}:function(module,exports,require){\n${fs.readFileSync(p, "utf8")}\n}`);
   return `(function(outer){\nvar defs={${mods.join(",\n")}},cache={};\n` +
