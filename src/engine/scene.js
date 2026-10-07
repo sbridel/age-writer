@@ -235,7 +235,8 @@ function paintWindow(ctx, scene, time, width, height) {
       ctx.arc(moonPos.x + moonRadius * 0.45, moonPos.y - moonRadius * 0.2, moonRadius * 0.9, 0, TAU),
       ctx.fill());
   }
-  if (scene.auroras) {
+  const auroraK = Math.max(0, Math.min(1, (1 - Math.min(1, daylight * 1.4) - 0.3) / 0.45)); // aurores : visibles la nuit seulement
+  if (scene.auroras && auroraK > 0.01) {
     (ctx.save(), (ctx.globalCompositeOperation = "lighter"));
     let auroraColors = [
       [80, 220, 160],
@@ -246,7 +247,7 @@ function paintWindow(ctx, scene, time, width, height) {
       let baseY = height * (0.16 + 0.08 * band),
         amplitude = height * 0.05,
         waves = 2 + band;
-      ((ctx.strokeStyle = rgba(...auroraColors[band], 0.32)),
+      ((ctx.strokeStyle = rgba(...auroraColors[band], 0.32 * auroraK)),
         (ctx.lineWidth = height * 0.045),
         (ctx.lineCap = "round"),
         ctx.beginPath());

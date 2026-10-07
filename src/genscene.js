@@ -170,10 +170,11 @@ function paint(g, m, t, o = {}) {
   const sv = (S.storm ? 0.25 : 1) * (S.veil ? 0.5 : 1) * (1 - Math.min(1, d * 1.4));
   if (sv > 0.02) for (const s of m.stars) { g.fillStyle = css([230, 230, 245], (0.25 + 0.55 * (0.5 + 0.5 * Math.sin(TAU * t * s.k + s.p))) * sv); g.fillRect(s.x, s.y, s.s, s.s); }
   // aurores
-  if (S.auroras) {
+  const ak = Math.max(0, Math.min(1, (night - 0.3) / 0.45)); // aurores : nuit seulement
+  if (S.auroras && ak > 0.01) {
     g.save(); g.globalCompositeOperation = "lighter";
     [[80, 220, 160], [150, 120, 230], [90, 190, 220]].forEach((c, y) => {
-      const b = H * (0.14 + 0.08 * y), v = H * 0.05; g.strokeStyle = css(c, 0.3 * (0.4 + night)); g.lineWidth = H * 0.045; g.lineCap = "round"; g.beginPath();
+      const b = H * (0.14 + 0.08 * y), v = H * 0.05; g.strokeStyle = css(c, 0.32 * ak); g.lineWidth = H * 0.045; g.lineCap = "round"; g.beginPath();
       for (let x = 0; x <= W; x += 6) { const yy = b + v * Math.sin(x / W * TAU * ((2 + y) / 2) + TAU * t * (y % 2 ? -1 : 1)) + v * 0.4 * Math.sin(x / W * TAU * 3 + TAU * t * 2); x === 0 ? g.moveTo(x, yy) : g.lineTo(x, yy); }
       g.stroke();
     });

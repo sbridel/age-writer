@@ -240,11 +240,12 @@ class ReltoRenderer {
       ctx.fillStyle = rgba(216, 223, 236, 0.35 + 0.6 * sky.night); ctx.beginPath(); ctx.arc(x, y, 8, 0, 6.283); ctx.arc(x + 4, y - 1.5, 7.4, 0, 6.283); ctx.fill("evenodd");
       ctx.restore();
     }
-    if (aurora) {
+    const ak = clamp(((sky.night == null ? 0 : sky.night) - 0.3) / 0.45); // les aurores ne se voient que la nuit (invisibles de jour, elles se lèvent au crépuscule)
+    if (aurora && ak > 0.01) {
       ctx.save(); ctx.globalCompositeOperation = "lighter";
       const cols = [[80, 220, 160], [150, 120, 230], [90, 190, 220]];
       cols.forEach((c, i) => {
-        ctx.strokeStyle = rgba(c[0], c[1], c[2], 0.22 * (0.4 + 0.6 * sky.night)); ctx.lineWidth = 16; ctx.lineCap = "round"; ctx.beginPath();
+        ctx.strokeStyle = rgba(c[0], c[1], c[2], 0.26 * ak); ctx.lineWidth = 16; ctx.lineCap = "round"; ctx.beginPath();
         for (let x = 0; x <= W; x += 8) { const y = 44 + i * 26 + 14 * Math.sin(x / W * 6.28 * (1 + i * 0.4) + t * (i % 2 ? -0.5 : 0.4)) + 5 * Math.sin(x / 40 + t); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
         ctx.stroke();
       });
