@@ -2,7 +2,7 @@
 const fs = require("fs"), path = require("path"), Module = require("module");
 // jsdom : `npm install` (devDependency) ; sinon JSDOM_DIR=…/node_modules
 const { JSDOM } = process.env.JSDOM_DIR ? require(process.env.JSDOM_DIR + "/jsdom") : require("jsdom");
-const { assemble } = require("../build");
+const { assemble, minify } = require("../build");
 
 const dom = new JSDOM("<!doctype html><body></body>", { pretendToBeVisual: true, url: "http://localhost/" });
 const { window } = dom; global.window = window; global.document = window.document; global.navigator = window.navigator;
@@ -47,13 +47,14 @@ const obsidian = { Plugin, ItemView: class { constructor(leaf) { this.app = leaf
   Notice: class { constructor(m) { notices.push(String(m)); } }, TFile, MarkdownRenderChild: class { constructor(e) { this.containerEl = e; } register() {} registerDomEvent() {} registerInterval() {} }, FuzzySuggestModal: class { constructor(a) { this.app = a; } open() {} }, stringifyYaml: (o) => Object.entries(o).map(([k, v]) => `${k}: ${JSON.stringify(v)}\n`).join("") };
 
 // build + chargement
-// MAINJS=base/main.js : le vrai moteur (npm run test:real) ; sinon une maquette fidèle des ancres
-const built = assemble(fs.readFileSync(process.env.MAINJS || path.join(__dirname, "fixture-main.js"), "utf8"), path.join(__dirname, ".."));
+// Le moteur est désormais dans src/engine : on teste le vrai code. MINIFIED=1 teste la version minifiée (release/).
+const built0 = assemble(path.join(__dirname, ".."));
+const built = process.env.MINIFIED ? minify(built0) : built0;
 const m = new Module("main.js"); m.paths = []; const origReq = Module.prototype.require;
 m.require = (n) => (n === "obsidian" ? obsidian : origReq.call(m, n));
 m._compile(built, "main.js");
 const Plug = m.exports.default;
-let fail = 0; const REAL = !!process.env.MAINJS; const ok = (c, msg) => { if (!REAL && /analyseur \(pas|hook adjust/.test(msg)) return console.log("  --  (réservé au vrai main.js) " + msg); console.log((c ? "  ok  " : "  KO  ") + msg); if (!c) fail++; };
+let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseur \(pas|hook adjust/.test(msg)) return console.log("  --  (réservé au vrai main.js) " + msg); console.log((c ? "  ok  " : "  KO  ") + msg); if (!c) fail++; };
 
 (async () => {
   const A = (c) => "# note\n```age\n" + c + "\n```\n";

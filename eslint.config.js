@@ -2,7 +2,7 @@
 // Vérifications utiles seulement (variables non définies / inutilisées, code mort) : pas de style.
 const globals = require("globals");
 module.exports = [
-  { ignores: ["dist/**", "base/**", "node_modules/**", "test/fixture-main.js", "test/visual/out/**"] },
+  { ignores: ["dist/**", "release/**", "legacy/**", "src/engine/vendor/**", "node_modules/**", "test/fixture-main.js", "test/visual/out/**"] },
   {
     files: ["**/*.js"],
     languageOptions: { ecmaVersion: 2022, sourceType: "commonjs", globals: { ...globals.node, ...globals.browser } },

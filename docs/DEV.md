@@ -1,41 +1,59 @@
-# Guide du développeur — Age Writer 1.4 (couche d'extension)
+# Guide du développeur — Age Writer 1.7
 
 ## Le principe
 
-Le plugin d'origine (Age Writer 1.3.0) n'existe plus qu'en `main.js` minifié, rangé dans `base/`.
-On ne le modifie pas à la main : `build.js` y pose quelques **points d'ancrage** (des remplacements de
-texte vérifiés, chacun doit trouver exactement une correspondance), puis colle à la fin la couche
-d'extension, assemblée depuis `src/` par `tools/bundle.js`.
+Depuis la 1.7.0 il n'y a plus de patch sur du code minifié. Le moteur d'origine (Age Writer 1.3.0) a été
+dé-minifié une fois pour toutes : ses sources lisibles sont dans `src/engine/`, avec des noms explicites.
+`src/main.js` assemble le moteur et la couche d'extension ; `build.js` empaquette le tout (`tools/bundle.js`).
 
 ```
-base/main.js ──build.js──► ancrages (__AGEX.adjust / w / skip, export) ─┐
-src/*.js ──tools/bundle.js──────────────────────────────────────────────┴──► dist/main.js
-base/styles.css + src/styles.ext.css ─────────────────────────────────────► dist/styles.css
-base/manifest.json + version de package.json ─────────────────────────────► dist/manifest.json
+src/**/*.js ──tools/bundle.js──► main.js unique ──┬─► dist/main.js     (lisible)
+src/styles.css + src/styles.ext.css ──────────────┼─► dist/styles.css
+manifest.json + version de package.json ──────────┴─► dist/manifest.json
+                                  esbuild (minify) ──► release/main.js (+ les deux autres fichiers)
 ```
 
-Si une ancre ne trouve rien (autre version de la base), la construction s'arrête avec son nom :
-c'est l'expression régulière correspondante de `build.js` qu'il faut adapter.
+`legacy/main-1.3.0.min.js` : le `main.js` minifié d'origine, gardé pour mémoire (jamais utilisé par le build).
 
-### Points d'ancrage (build.js)
+### Le moteur (`src/engine/`)
 
-| Ancre | Effet | Utilisé par |
+| Module | Rôle |
+|---|---|
+| `data/sky.js`, `data/matter.js` | contenu du moteur : blocs de ciel ; blocs, réactions et variantes de matière (géologie, flore, faune, ruines, météo, fissures) |
+| `registry.js` | registre des blocs/réactions (intégrés + bibliothèque de l'utilisateur), `reactMatter` |
+| `library.js` | lecture/écriture des blocs `age-library` |
+| `rules.js` | contradictions ciel ↔ vivant ↔ matière |
+| `draw.js` | tirage des pages laissées ouvertes (poids, pénalité de conflit) |
+| `resolve.js` | lecture d'un bloc `age` ligne par ligne (`resolveAge`) |
+| `analysis.js` | verdict et stabilité par axe (`analyseAge`), liste des pages, données du frontmatter |
+| `prose.js` | texte de description (Tracery) |
+| `glyphs.js` | les glyphes SVG et leurs tremblements |
+| `scene.js`, `gif.js` | fenêtre de liaison d'origine et export GIF |
+| `age-text.js` | édition du texte d'un bloc `age` (ajouter/retirer une ligne, `seed:`, `panel:`) |
+| `age-map.js` | génération de la carte (canvas) |
+| `book-view.js`, `settings-tab.js`, `plugin.js` | la vue livre, l'onglet de réglages d'origine, la classe du plugin |
+| `hooks.js` | **les points d'accroche** de l'extension (voir ci-dessous) |
+| `vendor/` | gifenc (MIT) et Tracery, repris tels quels |
+
+### Les points d'accroche (`src/engine/hooks.js`)
+
+| Hook | Appelé par | Utilisé pour |
 |---|---|---|
-| `analyse()` | toute analyse d'un Âge passe par `__AGEX.adjust(résultat, options, texte)` | loi du changement, `trap book`, `damaged_pages` |
-| tirage « one » / « each » | les poids du tirage passent par `__AGEX.w(slot, option)` | solitude |
-| analyseur / écrivain de pages | une ligne pour laquelle `__AGEX.skip(ligne)` est vrai est ignorée | `mechanism:`, `fx:`, `trap book`, `damaged_pages` |
-| export par défaut | le plugin exporté devient la classe étendue | tout |
-| blocs de ciel / règles / phrases | `__AGEX.sky`, `__AGEX.rules`, `__AGEX.prose` (données de `src/sky.js`) ajoutées aux listes `Q`, `gt` et à la banque `Si` du moteur | ciel étendu |
-| blocs de matière | `__AGEX.matter` (données de `src/wealth.js`) ajoutées à la liste `ot` des blocs de matière du moteur | richesses, cicatrices |
-| identifiants (`grab`) | fonctions internes exposées dans `core` | voir ci-dessous |
+| `hooks.adjust(résultat, options, texte)` | `analyseAge` | loi du changement, `trap book`, `damaged_pages`, quantités |
+| `hooks.w(slot, option)` | `draw.js` | solitude (poids des options du tirage) |
+| `hooks.written(ensemble)` | `resolve.js` | livre-piège : la fissure est « répondue » avant le tirage |
+| `hooks.skip(ligne)` | `resolve.js`, `age-text.js` | lignes de l'extension (`mechanism:`, `fx:`, `trap book`…) : ni symbole inconnu, ni page |
 
-`core` = `{ analyse, extract, base, glyphSvg, prose, glyphs, blocks, BookView, SettingsTab }`.
+Les valeurs par défaut rendent le moteur identique à la 1.3.0 ; `src/entry.js` les remplace au démarrage.
+L'extension reçoit en plus `core` (`src/main.js`) = `{ analyse, extract, base, glyphSvg, prose, glyphs, blocks, BookView, SettingsTab }`.
+Le ciel étendu (`src/sky.js`) et les richesses (`src/wealth.js`) sont lus directement par `data/sky.js`, `rules.js`,
+`prose.js` et `registry.js`.
 
 **Ajouter une clé au bloc `age`** (comme `fx:`) : une expression régulière dans `src/mech.js`, ajoutée à
-`AGEX.skip` dans `entry.js` (sinon le moteur la prend pour un symbole inconnu), et lue là où elle sert
-(`AGEX.adjust` si elle change l'analyse).
+`hooks.skip` (assigné dans `entry.js`) (sinon le moteur la prend pour un symbole inconnu), et lue là où elle sert
+(`hooks.adjust` si elle change l'analyse).
 
-## Les modules (`src/`)
+## Les modules de la couche d'extension (`src/`)
 
 | Fichier | Rôle |
 |---|---|
@@ -48,8 +66,8 @@ c'est l'expression régulière correspondante de `build.js` qu'il faut adapter.
 | `relto-render.js` | rendu canvas du Relto (île, cabane, étagère, effets de pages) |
 | `linkfx.js` | effets de la fenêtre de liaison (ondulation, statique, télé, coupures), tirage d'une liaison incertaine |
 | `genscene.js` | fenêtre génératrice : `sceneOf` (descripteur, blocs inconnus compris), `traits` (adjectifs → teinte, taille, mouvement), `build` (géométrie tirée de la graine), `paint` (une image à la phase t) |
-| `wealth.js` / `amounts.js` | richesses et cicatrices (blocs de matière, `__AGEX.matter`), quantités many/few/normal et compensation (`applyAmounts`, appelé par `adjust`) |
-| `sky.js` | ciel étendu : blocs de cosmologie et mondes-types (`WORLD_CLASH`, `WORLD_LIFE`), règles ciel↔vivant, phrases (données injectées dans le moteur à la construction), lignes `day_length` / `year_length`, horloge |
+| `wealth.js` / `amounts.js` | richesses et cicatrices (blocs de matière), quantités many/few/normal et compensation (`applyAmounts`, appelé par `adjust`) |
+| `sky.js` | ciel étendu : blocs de cosmologie et mondes-types (`WORLD_CLASH`, `WORLD_LIFE`), règles ciel↔vivant, phrases, lignes `day_length` / `year_length`, horloge |
 | `damagefx.js` | dégâts procéduraux : `plan` (zones et trous), `branchCracks` / `drawCracks`, `drawDamage` |
 | `sound.js` | synthèse Web Audio : couches d'ambiance, préréglages, niveaux zen/minimal, effets ponctuels (livre, liaison, parasites) |
 | `dni.js` | chiffres D'ni en base 25 (police installée → fichier de glyphes → tracé), texte D'ni |
@@ -92,12 +110,12 @@ et dans la liste du réglage (`settings-ui.js`).
 
 | Commande | Ce qui est vérifié |
 |---|---|
-| `npm test` | `law`, `i18n`, `zen` (sons, effets, clés du bloc age, livres), `gen` (paysage génératif, dégâts procéduraux), `sound` (cycle de vie avec un faux AudioContext), `integration` (build + exécution dans jsdom avec un faux `obsidian`, sur une maquette du moteur) |
-| `npm run test:real` | idem + intégration sur le vrai `base/main.js` |
+| `npm test` (lisible, puis minifié) | `law`, `i18n`, `zen` (sons, effets, clés du bloc age, livres), `gen` (paysage génératif, dégâts procéduraux), `sound` (cycle de vie avec un faux AudioContext), `integration` (build + exécution dans jsdom avec un faux `obsidian`, sur une maquette du moteur) |
+| `npm run equiv -- <ancien main.js>` | non-régression : 600 Âges au hasard, ancien build contre nouveau |
 | `npm run lint` | eslint : variables non définies ou inutilisées, code mort |
 | `npm run visual` | pages HTML de rendu (Relto, fenêtres, couverture) à ouvrir ou capturer |
 
-Rien ne remplace un essai dans Obsidian : copier `dist/` (ou décompresser `release/age-writer-<v>.zip`)
+Rien ne remplace un essai dans Obsidian : copier `release/` (ou décompresser `release/age-writer-<v>.zip`)
 dans `.obsidian/plugins/age-writer/` du coffre de test, puis recharger le plugin.
 
 ## Pièges connus
@@ -116,6 +134,6 @@ dans `.obsidian/plugins/age-writer/` du coffre de test, puis recharger le plugin
 ## Publier une version
 
 1. `version` dans `package.json`.
-2. `npm run lint && npm run test:real`.
+2. `npm run lint && npm test`.
 3. `npm run zip` → `release/age-writer-<v>.zip` (plugin) et `release/age-writer-<v>-src.zip` (sources).
 4. Mettre à jour `docs/NOTES-historique.md`.

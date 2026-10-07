@@ -6,7 +6,7 @@ Idée de départ : dans Mystcraft, on ne **crée** pas un monde, on se **lie** �
 
 > Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part. Aucune ressource de Myst (police, image, son) n'est fournie.
 
-**Version 1.6.3** : le moteur 1.3.0 d'origine + une couche d'extension (`age-writer-ext`). Les deux ne font qu'un à l'installation. Le `manifest.json` annonce `1.6.3`.
+**Version 1.7.0** : le moteur (issu du 1.3.0, désormais en sources lisibles dans `src/engine/`) + la couche d'extension. Les deux ne font qu'un à l'installation. Le `manifest.json` annonce `1.7.0`. Aucun changement visible par rapport à la 1.6.3 : c'est le chantier « sources lisibles » (voir §15).
 
 ---
 
@@ -245,18 +245,23 @@ Deux niveaux, dans une fenêtre à rubriques (et exportables en notes) :
 
 ## 15. Développement
 
-Les sources TypeScript du moteur 1.3 ne sont plus disponibles : le moteur est un `main.js` minifié rangé dans `base/`, jamais modifié à la main. `build.js` y pose des retouches ancrées (chaque ancre doit trouver exactement une correspondance, sinon la construction s'arrête) et colle à la fin la couche d'extension assemblée depuis `src/`.
+Depuis la 1.7.0, **tout le code est lisible** : le moteur d'origine (1.3.0, dont les sources TypeScript étaient perdues) a été dé-minifié, renommé et découpé en modules dans `src/engine/` (`registry`, `rules`, `draw`, `resolve`, `prose`, `glyphs`, `analysis`, `book-view`, `settings-tab`, `plugin`…). Les anciennes retouches par expressions régulières sur du code minifié ont disparu : les points de contact avec l'extension sont de vrais appels à `src/engine/hooks.js`. Le `main.js` 1.3.0 d'origine est conservé tel quel dans `legacy/` (provenance).
+
+Le build produit **deux versions du même code** :
+- `dist/` : **lisible** (non minifiée) — pour lire, déboguer, suivre une erreur ;
+- `release/` : **minifiée** — celle qu'on installe ou publie.
 
 ```sh
-npm install          # une fois
-node build.js        # base/main.js + src/ → dist/ (main.js, styles.css, manifest.json)
-npm test             # tous les tests (maquette du moteur)
-npm run test:real    # + intégration sur le vrai main.js
-npx eslint src test build.js tools
-node test/visual/make.js   # pages de rendu dans test/visual/out/
+npm install          # une fois (jsdom, eslint, esbuild — développement seulement)
+npm run build        # src/ → dist/ (lisible) + release/ (minifié)
+npm test             # tous les tests, sur la version lisible puis sur la minifiée
+npm run lint
+npm run equiv -- <ancien main.js>   # non-régression : 600 Âges au hasard, ancien build contre nouveau
+node test/visual/make.js            # pages de rendu dans test/visual/out/
+npm run zip          # release/age-writer-<v>.zip (plugin) + -src.zip (sources)
 ```
 
-Fichiers principaux de `src/` : `entry.js` (point d'entrée, patchs du livre et des blocs), `ui-extras.js` (panneau et onglets), `ui-relto.js` (Relto, vue dédiée), `relto-render.js` (canvas), `cover.js` (couvertures), `sound.js` (sons), `linkfx.js` et `genscene.js` (fenêtre), `law.js` (loi du changement), `mech.js` (lignes spéciales), `settings-ui.js` (réglages), `guide.js` (guide), `i18n.js`.
+Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine/` (le moteur), puis la couche d'extension : `entry.js` (patchs du livre et des blocs), `ui-extras.js` (panneau et onglets), `ui-relto.js` (Relto, vue dédiée), `relto-render.js` (canvas), `cover.js` (couvertures), `sound.js` (sons), `linkfx.js` et `genscene.js` (fenêtre), `law.js` (loi du changement), `mech.js` (lignes spéciales), `settings-ui.js` (réglages), `guide.js` (guide), `i18n.js`. Détails : `docs/DEV.md`.
 
 ---
 
