@@ -525,9 +525,40 @@ function roomStop() {
 }
 function noiseBuf(c, secs) { const b = c.createBuffer(1, Math.floor(c.sampleRate * secs), c.sampleRate), d = b.getChannelData(0); let y = 0; for (let i = 0; i < d.length; i++) { y = 0.97 * y + (Math.random() * 2 - 1) * 0.3; d[i] = y + (Math.random() * 2 - 1) * 0.15; } return b; }
 /** Un miaulement : voix de gorge en dents de scie dont la hauteur monte puis redescend, formants qui glissent de « i » vers « a » puis « ou » ; parfois un court « mrrp ». */
+/**
+ * Découpe un enregistrement qui contient plusieurs sons (plusieurs miaulements) aux silences : enveloppe en fenêtres de 10 ms, seuil relatif
+ * au niveau du fichier, silences de moins de 150 ms ignorés, segments de moins de 120 ms écartés. Renvoie [{ start, dur, peak }] en secondes.
+ */
+function segmentsOf(d, sr) {
+  const win = Math.max(1, Math.floor(sr * 0.01)), n = Math.floor(d.length / win), env = new Float32Array(n);
+  for (let i = 0; i < n; i++) { let m = 0; for (let k = i * win; k < (i + 1) * win; k++) { const v = Math.abs(d[k]); if (v > m) m = v; } env[i] = m; }
+  const sorted = Array.from(env).sort((a, b) => a - b), ref = sorted[Math.floor(sorted.length * 0.95)] || 0, thr = Math.max(0.01, ref * 0.12);
+  const raw = []; let cur = null, quiet = 0;
+  for (let i = 0; i < n; i++) {
+    if (env[i] > thr) { if (!cur) cur = { a: i, b: i }; cur.b = i; quiet = 0; }
+    else if (cur && ++quiet > 15) { raw.push(cur); cur = null; quiet = 0; } // 150 ms de silence : le son est fini
+  }
+  if (cur) raw.push(cur);
+  const out = [];
+  for (const g of raw) {
+    if (g.b - g.a < 12) continue; // trop court : un clic, pas un miaulement
+    const a = Math.max(0, g.a - 4), b = Math.min(n - 1, g.b + 8); let peak = 0; for (let i = a; i <= b; i++) if (env[i] > peak) peak = env[i];
+    out.push({ start: (a * win) / sr, dur: Math.min(4, ((b - a + 1) * win) / sr), peak: peak || 0.1 });
+  }
+  return out.length ? out : [{ start: 0, dur: Math.min(4, d.length / sr), peak: Math.max(0.1, ref) }];
+}
+let lastMeowSeg = -1;
 function meow(volume = 0.3, buf = null) {
-  if (buf) { // enregistrement de l'utilisateur : joué une fois, à une vitesse légèrement variable
-    return oneShot(buf.duration / 0.9 + 0.3, (c, out) => { const s = c.createBufferSource(); s.buffer = buf; s.playbackRate.value = 0.92 + Math.random() * 0.16; out.gain.value = volume * bufferGain(buf) * 2; s.connect(out); s.start(); });
+  if (buf) { // enregistrement de l'utilisateur : un seul des sons du fichier est joué à chaque fois (jamais deux fois de suite le même), à vitesse légèrement variable
+    if (!buf.__segs) buf.__segs = segmentsOf(buf.getChannelData(0), buf.sampleRate);
+    const segs = buf.__segs; let k = Math.floor(Math.random() * segs.length);
+    if (segs.length > 1 && k === lastMeowSeg) k = (k + 1 + Math.floor(Math.random() * (segs.length - 1))) % segs.length;
+    lastMeowSeg = k; const sg = segs[k], rate = 0.94 + Math.random() * 0.12;
+    return oneShot(sg.dur / rate + 0.5, (c, out) => {
+      const t = c.currentTime, s = c.createBufferSource(), e = c.createGain(), len = sg.dur / rate; s.buffer = buf; s.playbackRate.value = rate;
+      e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(1, t + 0.012); e.gain.setValueAtTime(1, t + Math.max(0.02, len - 0.06)); e.gain.linearRampToValueAtTime(0, t + len);
+      out.gain.value = Math.min(4, (volume * 0.6) / sg.peak); s.connect(e); e.connect(out); s.start(t, sg.start, sg.dur);
+    });
   }
   const short = Math.random() < 0.3;
   return oneShot(1.6, (c, out, noise) => {
@@ -594,4 +625,4 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { audioContext: sfxCtx, roomStart, roomStop, meow, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { segmentsOf, audioContext: sfxCtx, roomStart, roomStop, meow, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
