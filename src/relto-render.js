@@ -5,6 +5,8 @@
  */
 const { rng, clamp, lerp, frac, mix, rgba, hexa, fnv } = require("./util");
 const { skyAt, hourFor } = require("./relto-model");
+const SC = require("./relto-scenery");
+const GL = require("./relto-global");
 
 const W = 640, H = 360, GY = 208; // largeur, hauteur logiques ; ligne de sol
 
@@ -52,7 +54,7 @@ class ReltoRenderer {
   /** @param {HTMLCanvasElement} canvas  @param {import('./dni').Dni} dni */
   constructor(canvas, dni, opts = {}) {
     this.canvas = canvas; this.dni = dni;
-    this.opts = { onOpen: null, onSpecial: null, onHover: null, reducedMotion: false, ...opts };
+    this.opts = { onOpen: null, onView: null, onSpecial: null, onHover: null, reducedMotion: false, ...opts };
     this.ctx = canvas.getContext("2d");
     // résolution : assez fine pour un écran HiDPI, sans dépasser 1280×720 (redessiné 30 fois par seconde)
     this.scale = Math.min(2, ((typeof devicePixelRatio === "number" ? devicePixelRatio : 1) || 1) * 1.25);
@@ -93,6 +95,8 @@ class ReltoRenderer {
     for (let x = 172; x < 470; x += 6 + r() * 6) g.tufts.push([x, 2 + r() * 4]);
     // végétation : on laisse libres le chat, le bassin et les deux livres à part (rien ne doit les cacher)
     const clear = [[374, 404]]; if (scene.additions.some((a) => a.type === "cat")) clear.push([190, 216]); if (scene.additions.some((a) => a.type === "koi")) clear.push([276, 340]);
+    g.clear = clear;
+    const TALL = { ponderosa: [62, 18], maple: [44, 16], crystal: [46, 16] };
     for (const a of scene.additions.filter((a) => a.type === "vegetation")) {
       const n = Math.round(4 + a.density * 14), pr = rng(scene.seed ^ fnv(a.pageId || a.asset || "v"));
       let guard = 0;
@@ -101,7 +105,7 @@ class ReltoRenderer {
         if (clear.some(([c0, c1]) => x > c0 && x < c1) || Math.abs(x - HUT_X) < 30 || Math.abs(x - SHELF_X) < 24 || x > PILLAR_X[0] - 12 && x < PILLAR_X[1] + 12) continue;
         // les arbres sont grands et toujours à l'arrière-plan (derrière cabane, étagère, bassin, chat) ; seules les fougères basses peuvent passer devant
         const low = (a.asset || "conifer") === "fern", row = low ? (pr() < 0.5 ? 0 : 1) : 0;
-        g.plants.push({ x, row, h: low ? 12 + pr() * 8 : 40 + pr() * 18, sw: pr() * 6.28, kind: a.asset || "conifer", page: a.pageId });
+        g.plants.push({ x, row, h: low ? 12 + pr() * 8 : (TALL[a.asset] || [40, 18])[0] + pr() * (TALL[a.asset] || [40, 18])[1], sw: pr() * 6.28, kind: a.asset || "conifer", page: a.pageId });
       }
     }
     g.plants.sort((a, b) => a.row - b.row || a.x - b.x);
@@ -143,36 +147,49 @@ class ReltoRenderer {
     const sky = skyAt(this.hour());
     const has = (type) => sc.additions.find((a) => a.type === type);
     this.hot = [];
+    if (this.view === "global") return this.drawGlobalView(ctx, sc, sky, t, has);
     ctx.save(); ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0);
     ctx.clearRect(0, 0, W, H);
     ctx.save(); ctx.translate(CAM_X, CAM_OY); ctx.scale(CAM, CAM); ctx.translate(-CAM_X, -CAM_Y);
     this.drawSky(ctx, sky, t, has("aurora"));
+    const mo = has("moons"); if (mo) SC.moons(ctx, sky);
     this.drawClouds(ctx, 0, sky, t);
+    const bd = has("birds"); if (bd) SC.birds(ctx, bd.density, sky, t);
     const fw = has("fireworks"); if (fw) this.drawFireworks(ctx, fw.density, sky, t);
     if (sc.surrounding === "ocean") this.drawOcean(ctx, sky, t);
+    const is = has("islets"); if (is) SC.islets(ctx, this, is.density, sky, t);
+    const cal = has("calendar"); if (cal) SC.calendar(ctx, this, sky, t);
     this.drawIsland(ctx, sky, t);
+    const dk = has("dock"); if (dk) SC.dock(ctx, this, sky, t);
     for (const k of ["gold", "silver", "gems"]) { const o = has(k); if (o) this.drawOre(ctx, k, o.density, sky, t); }
     const mt = has("mountain"); if (mt) this.drawMount(ctx, mt.density, sky, t);
     this.drawPlants(ctx, 0, t);
     const kp = has("koi"); if (kp) this.drawKoi(ctx, kp, sky, t); // après les arbres du fond : le bassin n'est jamais recouvert
     const wf = has("waterfall"); if (wf) this.drawWaterfall(ctx, t);
     this.drawStructures(ctx, sky, t);
+    const bn = has("bench"); if (bn) SC.bench(ctx, this, sky);
     const ct = has("cat"); if (ct) this.drawCat(ctx, ct, sky, t);
     const pl = has("pillars"); if (pl) this.drawPillars(ctx, pl.density, sky, t);
     const ch = has("chimney"); if (ch) this.drawChimney(ctx, ch.density, sky, t);
     this.drawPlants(ctx, 1, t);
+    const gr = has("grass"); if (gr) SC.grass(ctx, gr.density, sky, t, this.geo.clear);
+    for (const fl of sc.additions.filter((a) => a.type === "flowers")) SC.flowers(ctx, fl, sky, t, this.geo.clear);
+    const bf = has("butterflies"); if (bf) SC.butterflies(ctx, bf.density, sky, t);
     const ff = has("fireflies"); if (ff) this.drawFireflies(ctx, ff.density, sky, t);
     const ln = has("lanterns"); if (ln) this.drawLanterns(ctx, ln.density, sky, t);
     const ms = has("mist"); if (ms) this.drawMist(ctx, ms.density, sky, t);
     this.drawClouds(ctx, 1, sky, t);
     this.drawClouds(ctx, 2, sky, t);
     const sn = has("snow"); if (sn) this.drawSnow(ctx, sn.density, t);
+    const rn = has("rain"); if (rn) SC.rain(ctx, rn.density, sky, t, false);
+    const st = has("storm"); if (st) SC.storm(ctx, st.density, sky, t);
     ctx.restore();
     this.drawGrade(ctx, sky);
     ctx.save(); ctx.translate(CAM_X, CAM_OY); ctx.scale(CAM, CAM); ctx.translate(-CAM_X, -CAM_Y);
     this.drawHover(ctx);
     this.drawFlash(ctx);
     ctx.restore();
+    this.drawFade(ctx, sky);
     ctx.restore();
   }
 
@@ -327,6 +344,18 @@ class ReltoRenderer {
         ctx.strokeStyle = col("#6a5438"); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, y); ctx.quadraticCurveTo(p.x + 4, y - h * 0.5, p.x + 2 + sw * 0.4, y - h * 0.9); ctx.stroke();
         ctx.strokeStyle = col("#3d7a3a"); ctx.lineWidth = 1.6;
         for (let i = 0; i < 6; i++) { const a = -2.6 + i * 0.5 + sw * 0.02; ctx.beginPath(); ctx.moveTo(p.x + 2 + sw * 0.4, y - h * 0.9); ctx.quadraticCurveTo(p.x + 2 + Math.cos(a) * 9, y - h * 0.9 + Math.sin(a) * 9 - 4, p.x + 2 + Math.cos(a) * 15, y - h * 0.9 + Math.sin(a) * 9 + 6); ctx.stroke(); }
+      } else if (p.kind === "ponderosa") {
+        ctx.strokeStyle = col("#6b3f26"); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(p.x, y); ctx.lineTo(p.x + sw * 0.3, y - h * 0.9); ctx.stroke();
+        ctx.fillStyle = col("#264a2c");
+        for (let i = 0; i < 5; i++) { const yy = y - h * (0.5 + i * 0.11), w = 12 - i * 1.6, o = (i % 2 ? 1 : -1) * 3; ctx.beginPath(); ctx.ellipse(p.x + o + sw * (0.2 + i * 0.1), yy, w, 3.4, 0, 0, 6.283); ctx.fill(); }
+      } else if (p.kind === "maple") {
+        ctx.strokeStyle = col("#5a4030"); ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(p.x, y); ctx.lineTo(p.x + sw * 0.3, y - h * 0.6); ctx.stroke();
+        const LEAF = ["#c4552a", "#d98a2b", "#b83a2a"], base = LEAF[Math.floor(p.x) % 3];
+        for (let i = 0; i < 6; i++) { ctx.fillStyle = col(i % 2 ? base : LEAF[(Math.floor(p.x) + 1) % 3]); ctx.beginPath(); ctx.arc(p.x + Math.cos(i * 1.05) * 8 + sw * 0.4, y - h * 0.72 + Math.sin(i * 1.6) * 6, 8 + (i % 3), 0, 6.283); ctx.fill(); }
+      } else if (p.kind === "crystal") {
+        const gl = 0.5 + 0.5 * sky.night; ctx.fillStyle = col("#5fc7b5"); ctx.beginPath(); ctx.moveTo(p.x - 3, y); ctx.lineTo(p.x - 1.4, y - h * 0.8); ctx.lineTo(p.x + 1.4, y - h * 0.8); ctx.lineTo(p.x + 3, y); ctx.closePath(); ctx.fill();
+        for (let i = 0; i < 7; i++) { const yy = y - h * (0.38 + i * 0.09), s = i % 2 ? 1 : -1, len = 11 - i * 0.9; ctx.fillStyle = col(i % 2 ? "#8ff0d8" : "#6fd6e8"); ctx.beginPath(); ctx.moveTo(p.x, yy); ctx.lineTo(p.x + s * len, yy - 7 - i); ctx.lineTo(p.x + s * (len - 3.5), yy + 1.5); ctx.closePath(); ctx.fill(); }
+        if (gl > 0.55) { const g2 = ctx.createRadialGradient(p.x, y - h * 0.7, 2, p.x, y - h * 0.7, 26); g2.addColorStop(0, rgba(140, 240, 215, 0.35 * (gl - 0.5))); g2.addColorStop(1, rgba(140, 240, 215, 0)); ctx.fillStyle = g2; ctx.fillRect(p.x - 26, y - h * 0.7 - 26, 52, 52); }
       } else { // fern
         ctx.strokeStyle = col("#4f8a45"); ctx.lineWidth = 1.2;
         for (let i = 0; i < 7; i++) { const a = -Math.PI / 2 + (i - 3) * 0.32 + sw * 0.01; ctx.beginPath(); ctx.moveTo(p.x, y); ctx.quadraticCurveTo(p.x + Math.cos(a) * h * 0.3, y + Math.sin(a) * h * 0.4, p.x + Math.cos(a) * h * 0.42 + 3 * Math.sign(Math.cos(a)), y + Math.sin(a) * h * 0.38 + 5); ctx.stroke(); }
@@ -632,17 +661,39 @@ class ReltoRenderer {
     ctx.fillStyle = "#e9dcb8"; ctx.fillText(h.tip, bx + 6, by + 13);
   }
 
+  // ---- vues ----------------------------------------------------------------------------
+  /** « island » (vue de l'île, par défaut) ou « global » (le Relto vu de loin) ; un fondu léger marque le passage. */
+  setView(view) {
+    if (view !== "global") view = "island";
+    if (view === (this.view || "island")) return;
+    this.view = view; this.hover = null; this.flash = null; this.fadeAt = Date.now();
+    if (this.opts.onView) this.opts.onView(view);
+    if (!this.running) this.draw(0);
+  }
+  drawGlobalView(ctx, sc, sky, t, has) {
+    ctx.save(); ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0); ctx.clearRect(0, 0, W, H);
+    GL.drawGlobal(this, ctx, sc, sky, t, has);
+    this.drawGrade(ctx, sky); this.drawHover(ctx); this.drawFlash(ctx); this.drawFade(ctx, sky);
+    ctx.restore();
+  }
+  drawFade(ctx, sky) {
+    if (!this.fadeAt || this.opts.reducedMotion) return;
+    const p = (Date.now() - this.fadeAt) / 520; if (p >= 1) { this.fadeAt = 0; return; }
+    ctx.fillStyle = rgba(...(sky.night > 0.5 ? [14, 16, 34] : [230, 234, 244]), 0.9 * (1 - p)); ctx.fillRect(0, 0, W, H);
+  }
+
   // ---- souris --------------------------------------------------------------------------
   toLogical(e) {
     const r = this.canvas.getBoundingClientRect(), px = ((e.clientX - r.left) / r.width) * W, py = ((e.clientY - r.top) / r.height) * H;
+    if (this.view === "global") return [px, py]; // la vue globale n'a pas de zoom
     return [(px - CAM_X) / CAM + CAM_X, (py - CAM_OY) / CAM + CAM_Y]; // inverse de la caméra
   }
   hit(x, y) { for (let i = this.hot.length - 1; i >= 0; i--) { const h = this.hot[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h; } return null; }
   onMove(e) {
-    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && (this.hover.book || this.hover.special || this.hover.flash) ? "pointer" : "";
+    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go) ? "pointer" : "";
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
-  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.flash) { this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
+  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.go) this.setView(h.go); else if (h.flash) { this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };

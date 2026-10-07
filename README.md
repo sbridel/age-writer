@@ -6,7 +6,7 @@ Idée de départ : dans Mystcraft, on ne **crée** pas un monde, on se **lie** �
 
 > Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part. Aucune ressource de Myst (police, image, son) n'est fournie.
 
-**Version 1.10.2** (les arbres sont plus grands et toujours à l'arrière-plan, derrière la cabane, l'étagère, le chat et le bassin ; seules les fougères basses restent devant) — **1.10.1** (la koï rare est plus grosse, avec halo et étincelles ; un clic sur la koï ou sur le chat affiche son nom ; les arbres et fougères ne cachent plus le chat, le bassin ni les deux livres à part) — **1.10.0** : deux nouvelles pages du Relto, un **bassin de koï** (avec une koï rare : *ogon* doré, *platinum* ou *fantôme*) et un **chat** dont tu choisis la couleur et le nom (voir §6) ; les infobulles du Relto n'apparaissent plus en double (seule celle d'Obsidian reste) ; deux livres à part sur le Relto (1.9) ; réglage « How much the book draws » (1.8). Le moteur (issu du 1.3.0) est en sources lisibles dans `src/engine/`. Le `manifest.json` annonce `1.10.2`.
+**Version 1.11.0** : une **vue globale** du Relto (bouton en coin de l'image : le Relto vu de loin, au milieu de la mer de brume, avec ses pinacles, ses îlots et un pont ; un clic sur l'île ramène à la vue de l'île, qui reste l'ouverture par défaut) et **14 nouvelles pages** : pluie, orage, oiseaux, papillons, lune et soleil, ponton, banc, îlots, pinacle du calendrier, fleurs bleues, herbe, pins ponderosa, érables, arbre de cristal. (1.10 : bassin de koï et chat ; 1.9 : deux livres à part ; 1.8 : quantité de hasard.) Le moteur (issu du 1.3.0) est en sources lisibles dans `src/engine/`. Le `manifest.json` annonce `1.11.0`.
 
 ---
 
@@ -135,6 +135,27 @@ Au pied de l'étagère, deux livres d'aspect différent des Âges (aussi dans l'
 - **Livre de la bibliothèque** (rouge, fermoir) : un clic propose *Blocs, réactions et variantes d'Âges* (`age-library`) ou *Pages du Relto* (`relto-library`). Le plugin ouvre la note de bibliothèque existante, ou la crée avec un exemple commenté (`Age Library.md`, `Relto Library.md`, dans le dossier de bibliothèque s'il est défini). Tu n'as plus qu'à écrire. Commande : *Open a library note*.
 
 La syntaxe d'une page du Relto accepte `page lagon: …` ou `page_lagon: …` (le second n'était pas reconnu avant, alors que les exemples le montraient).
+
+### La vue globale
+
+Un petit bouton (globe) en haut à gauche de l'image bascule entre la **vue de l'île** (celle d'ouverture) et la **vue globale** : le Relto vu de loin, l'île au centre dans la mer de brume, des pinacles de roche qui en émergent. Les pages y ajoutent leurs éléments : les **îlots** (page *Islets*), le **pont** de cordes qui les relie, le **pinacle du calendrier** (page *Calendar pinnacle*, qui porte le jour D'ni), le ciel (lune, pluie, orage, oiseaux, aurore, neige). Un clic sur l'île (« Your Relto ») ramène à la vue de l'île ; le même bouton (maison) fait aussi le retour.
+
+### Pages du décor, du ciel et de la faune (1.11)
+
+| Page | Ce qu'elle ajoute |
+|---|---|
+| *Rain*, *Storm* | pluie ; orage avec éclairs espacés et ciel assombri (`rain`, `storm`, densité 0 à 1) |
+| *Birds*, *Butterflies* | oiseaux qui traversent le ciel (le jour surtout) ; papillons qui voltigent autour de l'île |
+| *Moon & sun* | une grande lune et sa petite compagne, visibles aussi de jour |
+| *Dock* | un ponton dans la brume, à droite de l'île, avec une barque et une lanterne la nuit |
+| *Bench* | un banc de bois entre la cabane et l'étagère |
+| *Islets* | des îlots flottants derrière l'île (densité = nombre) |
+| *Calendar pinnacle* | une pierre dressée sur un îlot, qui affiche le jour D'ni |
+| *Blue flowers* | fleurs basses le long du sol (`asset` : blue, red, yellow, white, pink) |
+| *Grass* | herbe haute le long du sol |
+| *Ponderosa pines*, *Maples*, *Crystal tree* | arbres de fond (`vegetation` avec `asset` ponderosa, maple, crystal) |
+
+Chaque page est un préréglage (« Nouvelle page »), et tous ces effets s'écrivent aussi dans un bloc `relto-library`, par exemple `page pluie: Pluie | rain 0.9, birds 0.4 | audio=soft_rain`.
 
 ### Le bassin de koï et le chat
 

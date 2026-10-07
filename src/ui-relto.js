@@ -202,8 +202,13 @@ async function renderRelto(plugin, source, el, ctx) {
     }
     pick(defs.some((d) => d[0] === ui0.reltoTab) ? ui0.reltoTab : "view");
   } else { root.setAttr("data-tab", "all"); }
+  // bascule vue de l'île ⇄ vue globale (petit bouton en coin de l'image) ; l'ouverture reste la vue de l'île
+  const viewBtn = stage.createEl("button", { cls: "age-relto__viewbtn" });
+  const syncView = (v) => { viewBtn.empty(); try { obsidian.setIcon(viewBtn, v === "global" ? "home" : "globe"); } catch (e) { /* ignore */ } const l = t(v === "global" ? "relto.islandview" : "relto.globalview"); viewBtn.setAttr("aria-label", l); viewBtn.toggleClass("is-global", v === "global"); };
+  syncView("island");
   const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
+  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, onView: syncView, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
+  viewBtn.addEventListener("click", () => renderer.setView(renderer.view === "global" ? "island" : "global"));
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;
 
   const fmt = (h) => `${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;

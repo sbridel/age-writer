@@ -7,6 +7,12 @@ function renderMany(host, ages) {
   host = host || document.body;
   const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
   const variants = [
+    { h: 15, t: 3.1, env: {}, pages: ["page_islets", "page_calendar", "page_dock", "page_bench", "page_pine_trees"], label: "ISLAND day / islets+calendar+dock+bench" },
+    { h: 15, t: 3.1, env: {}, pages: ["page_islets", "page_calendar", "page_dock", "page_bench", "page_pine_trees", "page_koi", "page_cat"], view: "global", label: "GLOBAL day / islets+calendar" },
+    { h: 21.5, t: 4.1, env: {}, pages: ["page_islets", "page_calendar", "page_moons", "page_ponderosa", "page_maples", "page_crystal_tree"], label: "ISLAND dusk / moons + trees" },
+    { h: 21.5, t: 4.1, env: {}, pages: ["page_islets", "page_calendar", "page_moons", "page_storm"], view: "global", label: "GLOBAL dusk / storm" },
+    { h: 13, t: 2.7, env: {}, pages: ["page_rain", "page_birds", "page_butterflies", "page_flowers", "page_grass"], label: "ISLAND day / rain birds butterflies flowers grass" },
+    { h: 13, t: 2.7, env: {}, pages: [], view: "global", label: "GLOBAL base (aucune page)" },
     { h: 14, t: 3.7, env: {}, pages: ["page_pine_trees", "page_ferns", "page_koi", "page_cat"], label: "day / trees + koi + cat (rien ne masque)" },
     { h: 21, t: 6.2, env: {}, pages: ["page_pine_trees", "page_koi", "page_cat", "page_lanterns"], label: "dusk / trees + koi + cat" },
     { h: 14, t: 2.2, env: {}, pages: ["page_koi", "page_cat"], label: "day / koi + cat (orange)" },
@@ -38,7 +44,7 @@ function renderMany(host, ages) {
     const scene = M.buildScene(relto, pages, ages);
     const c = document.createElement("canvas"); const d = document.createElement("div"); d.textContent = v.label; host.appendChild(d); host.appendChild(c);
     c.style.width = "640px"; document.body.appendChild(host);
-    const r = new ReltoRenderer(c, dni); r.setScene(scene); r.setHour(v.h); r.draw(v.t || 3.7);
+    const r = new ReltoRenderer(c, dni); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view; r.draw(v.t || 3.7);
   });
 }
 module.exports = { renderMany };

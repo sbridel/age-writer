@@ -347,3 +347,8 @@
 .age-glyphbook__art svg { width: 64px; height: 64px; }
 .age-glyphbook__name { margin-top: 4px; font-variant: small-caps; letter-spacing: 0.04em; }
 .age-glyphbook__where { margin-top: 4px; font-size: 0.8em; display: flex; flex-wrap: wrap; gap: 2px 8px; justify-content: center; }
+
+/* ---- bascule vue de l'île / vue globale ---- */
+.age-relto__viewbtn { position: absolute; top: 8px; left: 8px; z-index: 3; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid rgba(205, 189, 148, 0.45); background: rgba(14, 12, 10, 0.55); color: #e9dcb8; cursor: pointer; opacity: 0.75; box-shadow: none; }
+.age-relto__viewbtn:hover, .age-relto__viewbtn.is-global { opacity: 1; background: rgba(14, 12, 10, 0.8); }
+.age-relto__viewbtn svg { width: 16px; height: 16px; }
