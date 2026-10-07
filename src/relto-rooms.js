@@ -219,13 +219,106 @@ function drawPondRoom(r, ctx, sc, sky, t) {
   meadow(r, ctx, sc, sky, t, y0 - 2, 70, 0x9e1, 14);
 }
 
+/** Jouets du chat (page « cattoys ») : posés dans l'herbe de la vue du chat, cliquables (la balle à grelot et la souris font du bruit). */
+function catToys(r, ctx, sc, sky, t, gy, d, back) {
+  const k = 0.45 + 0.55 * sky.ambient, c = (h) => mix("#05060c", h, k), n = 2 + Math.round(d * 3), now = Date.now(), since = (id) => (r.toyAt && r.toyAt[id] ? (now - r.toyAt[id]) / 1000 : 9);
+  const hot = (x, y, w, h, tip, toy) => r.hot.push({ x, y, w, h, tip, toy, flash: tip });
+  if (back) { // la boîte en carton, derrière le chat
+    if (n >= 5) { const x = 56, y = gy - 58, w = 118, h = 62; ctx.fillStyle = c("#a67c52"); ctx.fillRect(x, y, w, h); ctx.fillStyle = c("#8d6742"); ctx.fillRect(x, y, w, 8); ctx.fillStyle = c("#2f2218"); ctx.fillRect(x + 12, y + 14, w - 24, h - 14); ctx.strokeStyle = c("#caa070"); ctx.lineWidth = 2; ctx.strokeRect(x + 12, y + 14, w - 24, h - 14); hot(x, y, w, h + 2, "Cardboard box", "box"); }
+    return;
+  }
+  const yarn = since("yarn") < 1.4 ? Math.sin(Math.min(1, since("yarn") / 1.4) * Math.PI) * 38 : 0, yx = 452 + yarn, yy = gy + 30, rot = yarn * 0.12;
+  if (n >= 2) { // pelote de laine
+    ctx.strokeStyle = c("#c0392b"); ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(yx + 20, yy + 14); ctx.bezierCurveTo(yx + 60, yy + 22, yx + 80, yy + 4 + Math.sin(t) * 2, yx + 120, yy + 16); ctx.stroke();
+    ctx.fillStyle = c("#c0392b"); ctx.beginPath(); ctx.arc(yx, yy, 22, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#e8685a"); ctx.lineWidth = 1.4;
+    for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse(yx, yy, 22 - i * 3, 9 + i * 3, rot + i * 0.8, 0, 6.283); ctx.stroke(); }
+    hot(yx - 22, yy - 22, 44, 44, "Ball of yarn", "yarn");
+  }
+  if (n >= 3) { // souris en peluche
+    const mx = 548, my = gy + 38 + Math.sin(since("mouse") * 18) * (since("mouse") < 0.3 ? 3 : 0);
+    ctx.strokeStyle = c("#d8a0a0"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(mx - 24, my); ctx.bezierCurveTo(mx - 50, my + 10, mx - 56, my - 8, mx - 76, my + 4); ctx.stroke();
+    ctx.fillStyle = c("#8f8f98"); ctx.beginPath(); ctx.ellipse(mx, my, 26, 15, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#d8a0a0"); ctx.beginPath(); ctx.arc(mx + 10, my - 13, 6, 0, 6.283); ctx.arc(mx + 22, my - 10, 6, 0, 6.283); ctx.fill();
+    ctx.fillStyle = c("#1a1410"); ctx.beginPath(); ctx.arc(mx + 18, my - 2, 2.2, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#d8a0a0"); ctx.beginPath(); ctx.arc(mx + 26, my + 3, 2.4, 0, 6.283); ctx.fill();
+    hot(mx - 28, my - 20, 56, 38, "Toy mouse", "mouse");
+  }
+  if (n >= 4) { // balle à grelot
+    const bx = 392, by = gy + 40, hop = since("bell") < 0.5 ? Math.abs(Math.sin(since("bell") * 12)) * 8 : 0;
+    ctx.fillStyle = c("#d9ae45"); ctx.beginPath(); ctx.arc(bx, by - hop, 14, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 245, 200, 0.5); ctx.beginPath(); ctx.arc(bx - 5, by - 5 - hop, 4, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = c("#7a5a1c"); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(bx - 13, by - hop); ctx.lineTo(bx + 13, by - hop); ctx.stroke();
+    hot(bx - 14, by - hop - 14, 28, 28, "Jingle ball", "bell");
+  }
+  if (n >= 5) { // canne à plumes
+    const sx = 596, sy = gy + 52, ex = 626, ey = gy + 14, sw = Math.sin(t * 2) * 4;
+    ctx.strokeStyle = c("#7a5a3a"); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx - 70, sy + 4); ctx.lineTo(sx, sy); ctx.stroke();
+    ctx.strokeStyle = c("#caa070"); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx + 14, sy - 30, ex + sw, ey); ctx.stroke();
+    [["#d85a4a", -0.5], ["#e8c45a", 0], ["#5aa8d8", 0.5]].forEach(([col, a]) => { ctx.fillStyle = c(col); ctx.beginPath(); ctx.ellipse(ex + sw + Math.sin(a) * 6, ey - 8, 4, 14, a + sw * 0.05, 0, 6.283); ctx.fill(); });
+    hot(sx - 70, ey - 22, 110, 80, "Feather wand", "wand");
+  }
+}
+
+/** Le bassin de près : le bassin occupe presque tout le cadre, avec ses décorations (nénuphars, lanterne de pierre, tuyau de bambou, roseaux, libellules). */
+function drawPondPlusRoom(r, ctx, sc, sky, t) {
+  const T = r.terrain(), k = 0.6 + 0.4 * sky.ambient, kk = 0.45 + 0.55 * sky.ambient, c = (h) => mix("#05060c", h, k), cc = (h) => mix("#05060c", h, kk), night = sky.night || 0;
+  const koi = sc.additions.find((a) => a.type === "koi"), dc = sc.additions.find((a) => a.type === "ponddecor"), d = dc && dc.density != null ? dc.density : 0.6, K = r.lay.koi;
+  const S = 8, fx = K.x0 + 26, fy = GY + 9.5, ox = 320, oy = 222, yg = oy + (GY - fy) * S, y0 = oy + (GY + 2 - fy) * S, y1 = oy + (GY + 17 - fy) * S, xl = ox + (K.x0 - fx) * S, xr = ox + (K.x1 - fx) * S;
+  outdoorBackdrop(r, ctx, sky, t, yg);
+  const g = ctx.createLinearGradient(0, yg, 0, H); g.addColorStop(0, c(T.rock2)); g.addColorStop(1, c(T.rock)); ctx.fillStyle = g; ctx.fillRect(0, yg - 6, W, H - yg + 6);
+  ctx.fillStyle = c(T.top); ctx.fillRect(0, yg - 12, W, y0 - yg + 12); ctx.fillStyle = rgba(0, 0, 0, 0.18); ctx.fillRect(0, y0 - 4, W, 4);
+  const q = rng(0xbada); ctx.strokeStyle = rgba(0, 0, 0, 0.25); ctx.lineWidth = 1.2; for (let i = 0; i < 6; i++) { const y = y1 + 8 + i * 12, x = q() * 500; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 80 + q() * 80, y + 3); ctx.stroke(); }
+  // lanterne de pierre sur la rive gauche
+  const lx = xl - 44, lb = y0 - 4;
+  ctx.fillStyle = cc("#8a867c"); ctx.fillRect(lx - 22, lb - 8, 44, 8); ctx.fillRect(lx - 7, lb - 46, 14, 38); ctx.fillRect(lx - 18, lb - 58, 36, 12);
+  ctx.fillStyle = night > 0.2 ? rgba(255, 200, 110, 0.35 + 0.5 * night) : cc("#4a463e"); ctx.fillRect(lx - 11, lb - 56, 22, 8); ctx.fillStyle = cc("#716d64"); ctx.beginPath(); ctx.moveTo(lx - 28, lb - 58); ctx.lineTo(lx, lb - 80); ctx.lineTo(lx + 28, lb - 58); ctx.closePath(); ctx.fill(); ctx.fillRect(lx - 3, lb - 86, 6, 8);
+  if (night > 0.2) { const gl = ctx.createRadialGradient(lx, lb - 52, 2, lx, lb - 52, 70); gl.addColorStop(0, rgba(255, 190, 100, 0.4 * night)); gl.addColorStop(1, rgba(255, 190, 100, 0)); ctx.fillStyle = gl; ctx.fillRect(lx - 70, lb - 122, 140, 140); }
+  r.hot.push({ x: lx - 28, y: lb - 88, w: 56, h: 90, tip: "Stone lantern" });
+  // tuyau de bambou sur la rive droite : une goutte tombe dans l'eau
+  const bx = xr + 34, tipx = xr - 40, tipy = y0 - 58;
+  ctx.strokeStyle = cc("#7d9a4e"); ctx.lineCap = "round"; ctx.lineWidth = 11; ctx.beginPath(); ctx.moveTo(bx + 20, y0 - 6); ctx.lineTo(bx, y0 - 70); ctx.lineTo(tipx, tipy); ctx.stroke();
+  ctx.strokeStyle = cc("#56702f"); ctx.lineWidth = 2; for (const [x, y] of [[bx + 12, y0 - 34], [bx - 4, y0 - 66], [tipx + 30, tipy + 3]]) { ctx.beginPath(); ctx.moveTo(x - 5, y - 4); ctx.lineTo(x + 5, y + 4); ctx.stroke(); }
+  const drop = (t * 0.6) % 1, dropY = tipy + 8 + drop * (y0 - tipy - 8); ctx.fillStyle = "rgba(205,232,250,0.9)"; ctx.beginPath(); ctx.ellipse(tipx - 2, dropY, 2.6, 4, 0, 0, 6.283); ctx.fill();
+  for (let i = 0; i < 2; i++) { const p = (t * 0.6 + i * 0.5) % 1; ctx.strokeStyle = rgba(235, 245, 255, 0.55 * (1 - p)); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(tipx - 2, y0 + 4, 6 + p * 36, 1.5 + p * 5, 0, 0, 6.283); ctx.stroke(); }
+  r.hot.push({ x: tipx - 14, y: tipy - 10, w: bx - tipx + 36, h: y0 - tipy + 6, tip: "Bamboo spout" });
+  // le bassin : décor sous l'eau (galets, algues) puis les poissons
+  const under = (cx2, B, shade) => {
+    const u = rng(0x9eb5), n = 8 + Math.round(d * 12);
+    for (let i = 0; i < n; i++) { cx2.fillStyle = shade(i % 2 ? "#6d6a64" : "#857f73"); cx2.beginPath(); cx2.ellipse(B.X0 + 2 + u() * (B.PW - 4), B.Y0 + B.PH - 0.8, 1 + u() * 1.6, 0.5 + u() * 0.5, 0, 0, 6.283); cx2.fill(); }
+    for (let i = 0, m = 3 + Math.round(d * 4); i < m; i++) { const x = B.X0 + 5 + u() * (B.PW - 10), h = 5 + u() * 4, ph = u() * 6; cx2.strokeStyle = shade("#3f7a4a"); cx2.lineWidth = 0.8; cx2.beginPath(); cx2.moveTo(x, B.Y0 + B.PH); cx2.bezierCurveTo(x + Math.sin(t * 0.9 + ph) * 1.4, B.Y0 + B.PH - h * 0.4, x - Math.sin(t * 0.9 + ph) * 1.4, B.Y0 + B.PH - h * 0.7, x + Math.sin(t * 0.9 + ph) * 1.8, B.Y0 + B.PH - h); cx2.stroke(); }
+  };
+  r.koiUnder = under; r.withView(ctx, { S, ox, oy, fx, fy }, () => r.drawKoi(ctx, koi, sky, t)); r.koiUnder = null;
+  // nénuphars et fleurs sur l'eau
+  const lp = rng(0x1117), nl = 3 + Math.round(d * 4);
+  for (let i = 0; i < nl; i++) {
+    const x = xl + 40 + lp() * (xr - xl - 80), y = y0 + 2 + (i % 2) * 3 + Math.sin(t * 0.7 + i) * 0.8, w = 24 + lp() * 14;
+    ctx.fillStyle = cc("#3f8a4a"); ctx.beginPath(); ctx.ellipse(x, y, w, w * 0.18, 0, 0.18, 6.1); ctx.lineTo(x, y); ctx.closePath(); ctx.fill(); ctx.strokeStyle = cc("#2e6a38"); ctx.lineWidth = 1; ctx.stroke();
+    if (i % 2 === 0) { const col = i % 4 === 0 ? "#f08ab8" : "#f4f1e8"; ctx.fillStyle = cc(col); for (let a = -2; a <= 2; a++) { ctx.beginPath(); ctx.ellipse(x + a * 4, y - 7 + Math.abs(a), 3, 8 - Math.abs(a), a * 0.35, 0, 6.283); ctx.fill(); } if (night > 0.3) { const gl = ctx.createRadialGradient(x, y - 6, 0, x, y - 6, 22); gl.addColorStop(0, rgba(255, 220, 240, 0.3 * night)); gl.addColorStop(1, rgba(255, 220, 240, 0)); ctx.fillStyle = gl; ctx.fillRect(x - 22, y - 28, 44, 44); } }
+  }
+  r.hot.push({ x: xl + 20, y: y0 - 14, w: xr - xl - 40, h: 14, tip: "Water lilies" });
+  // roseaux sur les deux rives
+  const rp = rng(0x44aa);
+  for (const [a, b] of [[xl - 90, xl - 6], [xr + 6, xr + 70]]) for (let i = 0, m = 4 + Math.round(d * 5); i < m; i++) {
+    const x = a + rp() * (b - a), h = 50 + rp() * 56, sw = Math.sin(t * 0.9 + i * 1.3) * 5;
+    ctx.strokeStyle = cc("#5d7a3a"); ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x, y0 - 4); ctx.quadraticCurveTo(x + sw * 0.4, y0 - h * 0.5, x + sw, y0 - h); ctx.stroke();
+    if (i % 2) { ctx.fillStyle = cc("#5a3a22"); ctx.beginPath(); ctx.ellipse(x + sw, y0 - h - 6, 3, 9, 0, 0, 6.283); ctx.fill(); }
+  }
+  meadow(r, ctx, sc, sky, t, y0 - 2, 40, 0x5b3, 12);
+  // libellules (de jour), lucioles (le soir)
+  if (night < 0.5) for (let i = 0, m = 1 + Math.round(d * 2); i < m; i++) {
+    const x = ((t * 22 + i * 190) % (W + 80)) - 40, y = y0 - 90 - i * 24 + Math.sin(t * 1.7 + i * 2) * 16, w = Math.sin(t * 40 + i) * 5;
+    ctx.fillStyle = cc(i % 2 ? "#3a8fc8" : "#c8483a"); ctx.fillRect(x - 12, y - 1.5, 24, 3); ctx.fillStyle = rgba(225, 240, 255, 0.55); ctx.beginPath(); ctx.ellipse(x - 2, y - 4, 9, 2.4 + Math.abs(w) * 0.3, -0.3, 0, 6.283); ctx.ellipse(x + 3, y + 4, 9, 2.4 + Math.abs(w) * 0.3, 0.3, 0, 6.283); ctx.fill();
+  }
+  if (night > 0.3) { const fq = rng(0xf1f2); for (let i = 0; i < 18; i++) { const x = fq() * W + Math.sin(t * 0.5 + i) * 14, y = 40 + fq() * (y0 - 60) + Math.sin(t * 0.8 + i * 1.3) * 8; ctx.fillStyle = rgba(240, 238, 150, night * (0.4 + 0.6 * Math.abs(Math.sin(t + i)))); ctx.beginPath(); ctx.arc(x, y, 2, 0, 6.283); ctx.fill(); } }
+}
+
 /** Le chat en gros plan, dans l'herbe : un clic affiche son nom. */
 function drawCatRoom(r, ctx, sc, sky, t) {
   const T = r.terrain(), k = 0.35 + 0.65 * sky.ambient, cat = sc.additions.find((a) => a.type === "cat"), gy = 276;
   outdoorBackdrop(r, ctx, sky, t, gy - 10);
   const g = ctx.createLinearGradient(0, gy, 0, H); g.addColorStop(0, mix("#05060c", T.top, k)); g.addColorStop(1, mix("#05060c", T.rock, k)); ctx.fillStyle = g; ctx.fillRect(0, gy, W, H - gy);
   meadow(r, ctx, sc, sky, t, gy + 4, 120, 0x3c47, 22);
+const tz = sc.additions.find((a) => a.type === "cattoys"), td = tz ? (tz.density == null ? 0.6 : tz.density) : 0;
+  if (tz) catToys(r, ctx, sc, sky, t, gy, td, true);
   r.withView(ctx, { S: 8, ox: 320, oy: gy + 12, fx: r.lay.cat.x, fy: GY }, () => r.drawCat(ctx, cat, sky, t));
+  if (tz) catToys(r, ctx, sc, sky, t, gy, td, false);
   meadow(r, ctx, sc, sky, t, gy + 30, 50, 0x77e, 26); // brins au premier plan, devant les pattes
   if (sky.night > 0.3) { const q = rng(0xf1f1); for (let i = 0; i < 16; i++) { const x = q() * W + Math.sin(t * 0.5 + i) * 12, y = 120 + q() * 150 + Math.sin(t * 0.8 + i * 1.4) * 8; ctx.fillStyle = rgba(240, 238, 150, sky.night * (0.4 + 0.6 * Math.abs(Math.sin(t + i)))); ctx.beginPath(); ctx.arc(x, y, 1.8, 0, 6.283); ctx.fill(); } }
   const nm = String(cat.name || "").trim();
@@ -250,4 +343,4 @@ function drawGroveRoom(r, ctx, sc, sky, t) {
   });
 }
 
-module.exports = { drawCabin, drawPillarsRoom, drawPondRoom, drawCatRoom, drawGroveRoom };
+module.exports = { drawCabin, drawPillarsRoom, drawPondRoom, drawPondPlusRoom, drawCatRoom, drawGroveRoom };

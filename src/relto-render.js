@@ -8,7 +8,7 @@ const { skyAt, hourFor, placePlants, layoutIsland } = require("./relto-model");
 const SC = require("./relto-scenery");
 const GL = require("./relto-global");
 const RM = require("./relto-rooms");
-const ROOMS = { cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom };
+const ROOMS = { cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom };
 
 const W = 640, H = 360, GY = 208; // largeur, hauteur logiques ; ligne de sol
 
@@ -444,6 +444,7 @@ class ReltoRenderer {
     const water = ctx.createLinearGradient(0, Y0, 0, Y0 + PH); water.addColorStop(0, shade("#3f7f96")); water.addColorStop(1, shade("#143550"));
     ctx.save(); ctx.beginPath(); ctx.rect(X0, Y0, PW, PH); ctx.clip();
     ctx.fillStyle = water; ctx.fillRect(X0, Y0, PW, PH);
+    if (this.koiUnder) this.koiUnder(ctx, { X0, Y0, PW, PH }, shade); // décor sous l'eau (vue du bassin agrandi)
     ctx.strokeStyle = rgba(230, 245, 255, 0.35); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(X0, Y0 + 0.6); ctx.lineTo(X0 + PW, Y0 + 0.6); ctx.stroke();
     const n = Math.round(2 + a.density * 5), genomes = [koiGenome(r, KOI_RARE[rare])]; for (let i = 1; i < n; i++) genomes.push(koiGenome(r, null));
     const fish = (i, gn, size, rareKind) => {
@@ -744,7 +745,7 @@ class ReltoRenderer {
   /** vues possibles selon les pages et structures de ce Relto (l'île et la vue globale existent toujours) */
   available() {
     const sc = this.scene, a = (t) => sc.additions.some((x) => x.type === t);
-    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies") };
+    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies") };
   }
   /** dessine `fn` (en coordonnées de l'île) agrandi dans une vue rapprochée et reporte les zones cliquables qu'il crée à l'écran */
   withView(ctx, { S, ox, oy, fx, fy }, fn) {
@@ -776,7 +777,7 @@ class ReltoRenderer {
     const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go) ? "pointer" : "";
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
-  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
+  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };

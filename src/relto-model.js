@@ -12,7 +12,7 @@ const TERRAINS = ["volcanic_plateau", "mossy_plateau", "sand_island", "glacier",
 const SURROUNDINGS = ["cloud_sea", "fog_sea", "ocean", "void", "lava_sea"];
 const SKY_CYCLES = ["system_time", "frozen_dawn", "frozen_day", "frozen_dusk", "frozen_night"];
 const STRUCTURES = ["hut", "bookshelves", "linking_pillars"];
-const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "islets", "calendar", "flowers", "grass"];
+const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass"];
 /** Options propres à certains effets (texte court) : couleur et nom du chat, variété du koï rare. */
 const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
 const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern", "ponderosa", "maple", "crystal"], flowers: ["blue", "red", "yellow", "white", "pink"] };
@@ -120,6 +120,8 @@ const PAGE_PRESETS = {
   page_gold: { label: "Gold", effects: { canvas_additions: [{ type: "gold", density: 0.6 }], ambiance_audio: "stone_choir" } },
   page_silver: { label: "Silver", effects: { canvas_additions: [{ type: "silver", density: 0.6 }], ambiance_audio: "deep_hum" } },
   page_koi: { label: "Koi pond", effects: { canvas_additions: [{ type: "koi", density: 0.5, rare: "ogon" }], ambiance_audio: "river" } },
+  page_cat_toys: { label: "Cat toys", effects: { canvas_additions: [{ type: "cattoys", density: 0.6 }], ambiance_audio: "hearth" } },
+  page_pond_decor: { label: "Pond decor", effects: { canvas_additions: [{ type: "ponddecor", density: 0.6 }], ambiance_audio: "river" } },
   page_cat: { label: "Cat", effects: { canvas_additions: [{ type: "cat", color: "orange", name: "Mochi" }], ambiance_audio: "hearth" } },
   page_rain: { label: "Rain", effects: { canvas_additions: [{ type: "rain", density: 0.6 }], ambiance_audio: "soft_rain" } },
   page_storm: { label: "Storm", effects: { canvas_additions: [{ type: "storm", density: 0.7 }], ambiance_audio: "thunder" } },

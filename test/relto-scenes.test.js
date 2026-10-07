@@ -28,7 +28,7 @@ const mkScene = (pages, extra = {}) => {
   return M.buildScene(relto, defs, [{ name: "A", path: "A.md", verdict: "stable", stability: 90, returnTo: "Relto" }]);
 };
 const r = new ReltoRenderer(dom.window.document.createElement("canvas"), dni);
-for (const view of ["island", "global", "cabin", "pillars", "pond", "cat", "grove"]) {
+for (const view of ["island", "global", "cabin", "pillars", "pond", "pondplus", "cat", "grove"]) {
   r.view = view;
   for (const hour of [3, 7, 13, 19.5, 23]) {
     for (const set of [[], ids.slice(0, 11), ids.slice(11, 22), ids.slice(22), ids]) {
@@ -69,8 +69,11 @@ ok(boxes.every((b, i) => b[1] >= lay.x0 - 1 && b[2] <= lay.x1 + 1 && (!i || b[1]
 ok(M.layoutIsland(sceneFull).dropped.join() === lay.dropped.join() && JSON.stringify(M.layoutIsland(sceneFull)) === JSON.stringify(lay), "plan : déterministe");
 const sceneBig = mkScene(["page_koi", "page_cat", "page_stalk_tree", "page_bench", "page_pillars"].filter((id) => M.PAGE_PRESETS[id]), { structures: ["hut", "bookshelves", "linking_pillars"] });
 ok(M.layoutIsland(sceneBig).items.hut && M.layoutIsland(sceneBig).items.koi && M.layoutIsland(sceneBig).items.pillars, "plan : cabane, bassin et piliers jamais écartés");
-for (const v of ["pond", "cat", "grove"]) { r.setScene(sceneFull); r.setView("island"); r.setView(v); ok(r.view === v, `vue ${v} disponible`); r.draw(1.3); }
-r.setView("pond"); ok(r.hot.some((h) => h.flash), "bassin : la koï rare est cliquable"); r.setView("cat"); ok(r.hot.some((h) => h.flash), "chat : cliquable pour son nom");
+const sceneDec = mkScene(["page_koi", "page_cat", "page_cat_toys", "page_pond_decor", "page_flowers"]);
+for (const v of ["pond", "pondplus", "cat", "grove"]) { r.setScene(v === "pondplus" || v === "cat" ? sceneDec : sceneFull); r.setView("island"); r.setView(v); ok(r.view === v, `vue ${v} disponible`); r.draw(1.3); }
+r.setScene(sceneDec); r.setView("cat"); r.draw(1); ok(["yarn", "mouse", "bell"].every((k) => r.hot.some((h) => h.toy === k)), "chat : jouets cliquables"); let toyed = null; r.opts.onToy = (k) => { toyed = k; }; const yz = r.hot.find((h) => h.toy === "bell"); r.toLogical = () => [yz.x + 3, yz.y + 3]; r.onClick({}); ok(toyed === "bell", "jouet : clic = son"); r.setView("pondplus"); r.draw(1); ok(r.hot.some((h) => h.tip === "Stone lantern") && r.hot.some((h) => h.flash), "bassin de près : décor et koï rare");
+r.setScene(sceneFull); r.setView("pond"); ok(r.hot.some((h) => h.flash), "bassin : la koï rare est cliquable"); r.setView("cat"); ok(r.hot.some((h) => h.flash), "chat : cliquable pour son nom");
+r.setScene(mkScene(["page_koi"])); r.setView("pondplus"); ok(r.view === "island", "sans la page de décor, pas de bassin de près");
 r.setScene(mkScene([])); r.setView("pond"); ok(r.view === "island", "sans page de koï, pas de vue du bassin");
 // pages en bibliothèque
 const lib = M.parseReltoLibrary("page pluie: Pluie | rain 0.9, birds 0.4 | audio=soft_rain\npage fleurs: Fleurs | flowers 0.8 red");

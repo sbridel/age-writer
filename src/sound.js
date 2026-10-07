@@ -531,6 +531,22 @@ function meow(volume = 0.3) {
     o.start(t); vib.start(t); o.stop(t + dur + 0.6); vib.stop(t + dur + 0.6);
   });
 }
+
+/** Grelot de la balle du chat : trois petites notes aiguës qui s'éteignent vite. */
+function jingle(volume = 0.3) {
+  return oneShot(0.9, (c, out) => {
+    const t = c.currentTime; out.gain.value = volume * 0.3;
+    [2637, 3136, 2349].forEach((f, i) => { const o = c.createOscillator(), e = c.createGain(), t0 = t + i * 0.07; o.type = "sine"; o.frequency.value = f; e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(1, t0 + 0.005); e.gain.exponentialRampToValueAtTime(0.001, t0 + 0.4); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + 0.45); });
+  });
+}
+/** Couinement du jouet-souris. */
+function squeak(volume = 0.3) {
+  return oneShot(0.4, (c, out) => {
+    const t = c.currentTime, o = c.createOscillator(), e = c.createGain(); out.gain.value = volume * 0.3;
+    o.type = "square"; o.frequency.setValueAtTime(1500, t); o.frequency.exponentialRampToValueAtTime(2600, t + 0.07); o.frequency.exponentialRampToValueAtTime(1900, t + 0.16);
+    e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(0.5, t + 0.01); e.gain.exponentialRampToValueAtTime(0.001, t + 0.2); o.connect(e); e.connect(out); o.start(t); o.stop(t + 0.25);
+  });
+}
 function roomStart(kind, volume = 0.3) {
   roomStop();
   let c; try { c = sfxCtx(); } catch (e) { return false; } if (!c) return false;
@@ -559,4 +575,4 @@ function roomStart(kind, volume = 0.3) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { roomStart, roomStop, meow, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { roomStart, roomStop, meow, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

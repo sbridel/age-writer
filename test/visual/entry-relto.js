@@ -7,6 +7,9 @@ function renderMany(host, ages) {
   host = host || document.body;
   const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
   const variants = [
+    { h: 15, t: 3.3, env: {}, pages: ["page_koi", "page_cat", "page_pond_decor", "page_flowers"], view: "pondplus", label: "POND+ day" },
+    { h: 21.5, t: 3.3, env: {}, pages: ["page_koi", "page_cat", "page_pond_decor", "page_flowers"], view: "pondplus", label: "POND+ dusk" },
+    { h: 14, t: 3.3, env: {}, pages: ["page_koi", "page_cat", "page_cat_toys", "page_flowers"], tune: { color: "tabby", name: "Mochi" }, view: "cat", label: "CAT toys" },
     { h: 15, t: 3.1, env: {}, pages: ["page_chimney", "page_mountain", "page_waterfall", "page_koi", "page_cat", "page_stalk_tree", "page_bench", "page_pillars", "page_pine_trees", "page_flowers", "page_lanterns"], label: "ISLAND day / everything" },
     { h: 21.5, t: 3.1, env: {}, pages: ["page_chimney", "page_mountain", "page_waterfall", "page_koi", "page_cat", "page_stalk_tree", "page_bench", "page_pillars", "page_pine_trees", "page_flowers", "page_lanterns"], label: "ISLAND dusk / everything" },
     { h: 21, t: 3.3, env: {}, pages: ["page_mountain", "page_waterfall", "page_koi", "page_cat", "page_flowers"], view: "pond", label: "POND dusk" },

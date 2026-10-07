@@ -204,7 +204,7 @@ async function renderRelto(plugin, source, el, ctx) {
   } else { root.setAttr("data-tab", "all"); }
   // bascule vue de l'île ⇄ vue globale (petit bouton en coin de l'image) ; l'ouverture reste la vue de l'île
   // navigation entre les vues : île, vue globale et sous-vues (cabane, piliers, bosquet, bassin, chat) ; les boutons des vues sans page correspondante sont masqués
-  const NAV = [["island", "mountain", "relto.v.island"], ["global", "globe", "relto.v.global"], ["cabin", "home", "relto.v.cabin"], ["pillars", "landmark", "relto.v.pillars"], ["grove", "trees", "relto.v.grove"], ["pond", "fish", "relto.v.pond"], ["cat", "cat", "relto.v.cat"]];
+  const NAV = [["island", "mountain", "relto.v.island"], ["global", "globe", "relto.v.global"], ["cabin", "home", "relto.v.cabin"], ["pillars", "landmark", "relto.v.pillars"], ["grove", "trees", "relto.v.grove"], ["pond", "fish", "relto.v.pond"], ["pondplus", "droplets", "relto.v.pondplus"], ["cat", "cat", "relto.v.cat"]];
   const nav = (tabBar || stage).createDiv({ cls: "age-relto__nav" + (tabBar ? " age-relto__nav--bar" : "") }); if (tabBar) tabBar.insertBefore(nav, tabBar.firstChild);
   const navBtns = {};
   for (const [v, ic, key] of NAV) {
@@ -214,12 +214,12 @@ async function renderRelto(plugin, source, el, ctx) {
   }
   const roomSoundOn = () => !!plugin.ext.sound && plugin.ext.soundRooms !== false;
   const roomVol = () => (plugin.ext.volume == null ? 0.35 : plugin.ext.volume) * 0.7;
-  const roomAudio = (v) => { try { if (roomSoundOn() && (v === "pond" || v === "cat") && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages") sound.roomStart(v === "pond" ? "water" : "cat", roomVol()); else sound.roomStop(); } catch (e) { /* ignore */ } };
+  const roomAudio = (v) => { try { if (roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat") && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages") sound.roomStart(v === "cat" ? "cat" : "water", roomVol()); else sound.roomStop(); } catch (e) { /* ignore */ } };
   const syncView = (v) => { for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-active", id === (v || "island")); roomAudio(v); };
   const syncNav = (sc) => { const av = renderer.available(); for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-hidden", !av[id]); syncView(renderer.view); void sc; };
   syncView("island");
   const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) sound.meow(roomVol()); }, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
+  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) sound.meow(roomVol()); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;
 
   const fmt = (h) => `${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
