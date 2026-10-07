@@ -143,7 +143,9 @@ async function renderRelto(plugin, source, el, ctx) {
       dniClock.innerHTML = `${n(d.hahr)}<i>${d.name}</i>${n(d.yahr)}<b>${n(d.gahrtahvo)}${n(d.tahvo)}${n(d.gorahn)}${n(d.prorahn)}</b>`;
       dniClock.setAttr("title", t("relto.dnitime") + " : " + DT.format(d)); dniClock.setAttr("aria-label", DT.format(d));
     };
-    tickDni(); dniClock.tick = tickDni;
+    // la mise à jour reconstruit les chiffres toutes les ~1,4 s, ce qui fermait l'infobulle avant qu'elle n'apparaisse : on suspend tant que la souris est dessus
+    let over = false; dniClock.addEventListener("mouseenter", () => { over = true; }); dniClock.addEventListener("mouseleave", () => { over = false; tickDni(); });
+    tickDni(); dniClock.tick = () => { if (!over) tickDni(); };
   }
   const lbl = (k) => { if (tabsOn) controls.createDiv({ cls: "age-relto__lbl", text: t(k) }); };
   lbl("relto.lbl.time");

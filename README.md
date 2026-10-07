@@ -6,7 +6,7 @@ Idée de départ : dans Mystcraft, on ne **crée** pas un monde, on se **lie** �
 
 > Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part. Aucune ressource de Myst (police, image, son) n'est fournie.
 
-**Version 1.9.0** : deux **livres à part** sur le Relto (livre des glyphes, livre de la bibliothèque, voir §6), et le réglage « How much the book draws » de la 1.8 (*Little* / *Normal* / *A lot*, Normal = tirage d'avant). Le moteur (issu du 1.3.0) est en sources lisibles dans `src/engine/`. Le `manifest.json` annonce `1.9.0`.
+**Version 1.9.1** : deux **livres à part** sur le Relto (livre des glyphes, livre de la bibliothèque, voir §6), et le réglage « How much the book draws » de la 1.8 (*Little* / *Normal* / *A lot*, Normal = tirage d'avant). Le moteur (issu du 1.3.0) est en sources lisibles dans `src/engine/`. Le `manifest.json` annonce `1.9.1` (1.9.1 : l'infobulle de l'heure D'ni ne se fermait plus toute seule, la mise à jour est suspendue pendant le survol).
 
 ---
 
