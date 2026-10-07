@@ -226,14 +226,15 @@ async function renderRelto(plugin, source, el, ctx) {
       const buf = await c.decodeAudioData((await app.vault.readBinary(f)).slice(0)); roomBufs.set(id, buf); return buf;
     } catch (e) { console.warn("[Age Writer ext] fichier son", e); return null; }
   };
+  const fireLit = () => (renderer.scene ? renderer.scene.additions.find((x) => x.type === "chimney") : null) || null; // le feu ne crépite que si la page cheminée est active
   let roomSeq = 0;
   const roomAudio = async (v) => {
     const my = ++roomSeq;
     try {
-      if (!(roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat") && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages")) { sound.roomStop(); return; }
-      const bufs = v === "cat" ? { main: await roomBuf("roomPurrFile"), meow: await roomBuf("roomMeowFile") } : { main: await roomBuf("roomWaterFile") };
+      if (!(roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat" || (v === "cabin" && fireLit())) && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages")) { sound.roomStop(); return; }
+      const bufs = v === "cat" ? { main: await roomBuf("roomPurrFile"), meow: await roomBuf("roomMeowFile") } : v === "cabin" ? { main: await roomBuf("roomFireFile"), d: fireLit().density } : { main: await roomBuf("roomWaterFile") };
       if (my !== roomSeq) return; // on a changé de vue pendant le chargement
-      sound.roomStart(v === "cat" ? "cat" : "water", roomVol(), bufs);
+      sound.roomStart(v === "cat" ? "cat" : v === "cabin" ? "fire" : "water", roomVol(), bufs);
     } catch (e) { /* ignore */ }
   };
   const syncView = (v) => { for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-active", id === (v || "island")); roomAudio(v); };
