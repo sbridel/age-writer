@@ -3,103 +3,109 @@ const { hooks } = require("./hooks");
 
 const AGE_BLOCK_RE = /```age[ \t]*\r?\n([\s\S]*?)```/g;
 
-function writtenLines(e) {
-  let o = new Set();
-  for (let t of e.matchAll(AGE_BLOCK_RE))
-    for (let i of t[1].split(`
+function writtenLines(text) {
+  let written = new Set();
+  for (let match of text.matchAll(AGE_BLOCK_RE))
+    for (let rawLine of match[1].split(`
 `)) {
-      let r = i.trim();
-      r && !r.startsWith("#") && !/^(link|return|panel|seed)\s*:/i.test(r) && !hooks.skip(r) && o.add(r);
+      let line = rawLine.trim();
+      line &&
+        !line.startsWith("#") &&
+        !/^(link|return|panel|seed)\s*:/i.test(line) &&
+        !hooks.skip(line) &&
+        written.add(line);
     }
-  return o;
+  return written;
 }
 
-function addLine(e, o) {
-  let t = [...e.matchAll(AGE_BLOCK_RE)];
-  if (t.length === 0) return null;
-  if (writtenLines(e).has(o)) return e;
-  let i = t[t.length - 1],
-    r = i.index + i[0].length - 3,
-    s =
-      e[r - 1] !==
+function addLine(text, line) {
+  let blocks = [...text.matchAll(AGE_BLOCK_RE)];
+  if (blocks.length === 0) return null;
+  if (writtenLines(text).has(line)) return text;
+  let lastBlock = blocks[blocks.length - 1],
+    insertAt = lastBlock.index + lastBlock[0].length - 3,
+    needsNewline =
+      text[insertAt - 1] !==
       `
 `;
   return (
-    e.slice(0, r) +
-    (s
+    text.slice(0, insertAt) +
+    (needsNewline
       ? `
 `
       : "") +
-    o +
+    line +
     `
 ` +
-    e.slice(r)
+    text.slice(insertAt)
   );
 }
 
-function removeLine(e, o) {
-  let t = !1,
-    i = e.replace(AGE_BLOCK_RE, (r, s) => {
-      if (t) return r;
-      let n = s.split(`
+function removeLine(text, line) {
+  let removed = !1,
+    result = text.replace(AGE_BLOCK_RE, (block, body) => {
+      if (removed) return block;
+      let bodyLines = body.split(`
 `),
-        a = n.findIndex((c) => c.trim() === o);
-      return a === -1
-        ? r
-        : ((t = !0),
-          n.splice(a, 1),
-          r.slice(0, r.length - s.length - 3) +
-            n.join(`
+        index = bodyLines.findIndex((bodyLine) => bodyLine.trim() === line);
+      return index === -1
+        ? block
+        : ((removed = !0),
+          bodyLines.splice(index, 1),
+          block.slice(0, block.length - body.length - 3) +
+            bodyLines.join(`
 `) +
             "```");
     });
-  return t ? i : null;
+  return removed ? result : null;
 }
 
-function setPanelLine(e, o) {
-  let t = [...e.matchAll(AGE_BLOCK_RE)];
-  if (t.length === 0 || t.some((n) => /^\s*panel\s*:/im.test(n[1]))) return null;
-  let i = t[t.length - 1],
-    r = i.index + i[0].length - 3,
-    s =
-      e[r - 1] !==
+function setPanelLine(text, target) {
+  let blocks = [...text.matchAll(AGE_BLOCK_RE)];
+  if (blocks.length === 0 || blocks.some((block) => /^\s*panel\s*:/im.test(block[1]))) return null;
+  let lastBlock = blocks[blocks.length - 1],
+    insertAt = lastBlock.index + lastBlock[0].length - 3,
+    needsNewline =
+      text[insertAt - 1] !==
       `
 `;
   return (
-    e.slice(0, r) +
-    (s
+    text.slice(0, insertAt) +
+    (needsNewline
       ? `
 `
       : "") +
-    `panel: [[${o}]]
+    `panel: [[${target}]]
 ` +
-    e.slice(r)
+    text.slice(insertAt)
   );
 }
 
-function setSeedLine(e, o) {
-  let t = [...e.matchAll(AGE_BLOCK_RE)];
-  if (t.length === 0) return null;
-  let i = !1,
-    r = e.replace(AGE_BLOCK_RE, (c, g) =>
-      i || !/^\s*seed\s*:/im.test(g) ? c : ((i = !0), c.replace(/^(\s*)seed\s*:.*$/im, `$1seed: ${o}`)),
+function setSeedLine(text, seed) {
+  let blocks = [...text.matchAll(AGE_BLOCK_RE)];
+  if (blocks.length === 0) return null;
+  let replaced = !1,
+    replacedText = text.replace(AGE_BLOCK_RE, (block, body) =>
+      replaced || !/^\s*seed\s*:/im.test(body)
+        ? block
+        : ((replaced = !0), block.replace(/^(\s*)seed\s*:.*$/im, `$1seed: ${seed}`)),
     );
-  if (i) return r;
-  let s = t[t.length - 1],
-    n = s.index + s[0].length - 3,
-    a =
-      e[n - 1] !==
+  if (replaced) return replacedText;
+  let lastBlock = blocks[blocks.length - 1],
+    insertAt = lastBlock.index + lastBlock[0].length - 3,
+    needsNewline =
+      text[insertAt - 1] !==
       `
 `;
   return (
-    e.slice(0, n) +
-    (a
+    text.slice(0, insertAt) +
+    (needsNewline
       ? `
 `
       : "") +
-    `seed: ${o}
+    `seed: ${seed}
 ` +
-    e.slice(n)
+    text.slice(insertAt)
   );
 }
 

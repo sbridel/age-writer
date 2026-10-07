@@ -71,34 +71,37 @@ const blockById = new Map();
 
 const writableIds = new Set();
 
-const pairKey = (e, o) => [e, o].sort().join("+");
+const pairKey = (a, b) => [a, b].sort().join("+");
 
 function rebuildRegistry() {
-  let e = activeLibrary,
-    o = new Map(e.blocks.map((s) => [s.id, s])),
-    t = new Set(BUILTIN_BLOCKS.map((s) => s.id));
+  let library = activeLibrary,
+    customBlocks = new Map(library.blocks.map((block) => [block.id, block])),
+    builtinIds = new Set(BUILTIN_BLOCKS.map((block) => block.id));
   allBlocks.length = 0;
-  for (let s of BUILTIN_BLOCKS) allBlocks.push(o.get(s.id) ?? s);
-  for (let s of o.values()) t.has(s.id) || allBlocks.push(s);
-  let i = new Set(e.reactions.map((s) => pairKey(s.a, s.b)));
+  for (let block of BUILTIN_BLOCKS) allBlocks.push(customBlocks.get(block.id) ?? block);
+  for (let block of customBlocks.values()) builtinIds.has(block.id) || allBlocks.push(block);
+  let customPairs = new Set(library.reactions.map((reaction) => pairKey(reaction.a, reaction.b)));
   allReactions.length = 0;
-  for (let s of BUILTIN_REACTIONS) i.has(pairKey(s.a, s.b)) || allReactions.push(s);
-  allReactions.push(...e.reactions);
-  let r = new Map();
-  for (let s of [...BUILTIN_VARIANTS, ...e.variants]) r.set(`${s.catalyst}|${s.base}`, s);
+  for (let reaction of BUILTIN_REACTIONS)
+    customPairs.has(pairKey(reaction.a, reaction.b)) || allReactions.push(reaction);
+  allReactions.push(...library.reactions);
+  let variantMap = new Map();
+  for (let variant of [...BUILTIN_VARIANTS, ...library.variants])
+    variantMap.set(`${variant.catalyst}|${variant.base}`, variant);
   (variantsByCatalyst.clear(), baseOfVariant.clear());
-  for (let s of r.values())
-    (variantsByCatalyst.has(s.catalyst) || variantsByCatalyst.set(s.catalyst, {}),
-      (variantsByCatalyst.get(s.catalyst)[s.base] = s.variant),
-      baseOfVariant.set(s.variant, s.base));
+  for (let variant of variantMap.values())
+    (variantsByCatalyst.has(variant.catalyst) || variantsByCatalyst.set(variant.catalyst, {}),
+      (variantsByCatalyst.get(variant.catalyst)[variant.base] = variant.variant),
+      baseOfVariant.set(variant.variant, variant.base));
   recipeOf.clear();
-  for (let s of allReactions) recipeOf.has(s.result) || recipeOf.set(s.result, [s.a, s.b]);
+  for (let reaction of allReactions)
+    recipeOf.has(reaction.result) || recipeOf.set(reaction.result, [reaction.a, reaction.b]);
   (blockById.clear(), writableIds.clear());
-  for (let s of allBlocks) (blockById.set(s.id, s), s.writable && writableIds.add(s.id));
+  for (let block of allBlocks) (blockById.set(block.id, block), block.writable && writableIds.add(block.id));
 }
 
-function setLibrary(e) {
-  ((activeLibrary = e ?? EMPTY_LIBRARY), rebuildRegistry());
+function setLibrary(library) {
+  ((activeLibrary = library ?? EMPTY_LIBRARY), rebuildRegistry());
 }
 
 function getLibrary() {
@@ -107,49 +110,50 @@ function getLibrary() {
 
 rebuildRegistry();
 
-function reactMatter(e) {
-  let o = [...new Set(e)],
-    t = new Set(o),
-    i = [],
-    r = (a) => {
-      for (let c of o) {
-        let g = variantsByCatalyst.get(c)?.[a];
-        if (g) return g;
+function reactMatter(ids) {
+  let written = [...new Set(ids)],
+    present = new Set(written),
+    reactions = [],
+    findVariant = (base) => {
+      for (let catalyst of written) {
+        let variant = variantsByCatalyst.get(catalyst)?.[base];
+        if (variant) return variant;
       }
     };
-  for (let a = 0; a < 10; a++) {
-    let c = !1;
-    for (let g of allReactions)
-      if (t.has(g.a) && t.has(g.b) && !t.has(g.result)) {
-        t.add(g.result);
-        let h = r(g.result);
-        (i.push({
-          a: g.a,
-          b: g.b,
-          result: g.result,
-          shown: h ?? g.result,
-          type: g.type,
-          verbs: g.verbs,
-          cost: g.cost,
-          catalyzed: h !== void 0,
+  for (let pass = 0; pass < 10; pass++) {
+    let changed = !1;
+    for (let reaction of allReactions)
+      if (present.has(reaction.a) && present.has(reaction.b) && !present.has(reaction.result)) {
+        present.add(reaction.result);
+        let shownVariant = findVariant(reaction.result);
+        (reactions.push({
+          a: reaction.a,
+          b: reaction.b,
+          result: reaction.result,
+          shown: shownVariant ?? reaction.result,
+          type: reaction.type,
+          verbs: reaction.verbs,
+          cost: reaction.cost,
+          catalyzed: shownVariant !== void 0,
         }),
-          (c = !0));
+          (changed = !0));
       }
-    if (!c) break;
+    if (!changed) break;
   }
-  let s = {},
-    n = (a, c) => {
-      s[a] = (s[a] ?? 0) + c;
+  let costByAxis = {},
+    addCost = (axis, amount) => {
+      costByAxis[axis] = (costByAxis[axis] ?? 0) + amount;
     };
-  for (let a of o) {
-    let c = blockById.get(a);
-    c && n(c.axis, c.weight);
+  for (let id of written) {
+    let block = blockById.get(id);
+    block && addCost(block.axis, block.weight);
   }
-  for (let a of i) {
-    let c = blockById.get(a.result);
-    c && n(c.axis, (a.cost ?? REACTION_COST[a.type]) + (c.stabilityBonus ?? 0));
+  for (let reaction of reactions) {
+    let block = blockById.get(reaction.result);
+    block &&
+      addCost(block.axis, (reaction.cost ?? REACTION_COST[reaction.type]) + (block.stabilityBonus ?? 0));
   }
-  return { written: o, reactions: i, costByAxis: s };
+  return { written: written, reactions: reactions, costByAxis: costByAxis };
 }
 
 const AXES = ["cosmological", "geological", "metaphysical", "weather", "ecological"];

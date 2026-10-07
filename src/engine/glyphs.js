@@ -1,44 +1,49 @@
 "use strict";
 const { baseOfVariant, blockById, recipeOf } = require("./registry");
 
-function hexagon(e, o, t) {
-  let i = [];
-  for (let r = 0; r < 6; r++) {
-    let s = (-90 + r * 60) * (Math.PI / 180),
-      n = r % 2 === 0 ? t : t * 0.85;
-    i.push([e + n * Math.cos(s), o + n * Math.sin(s)]);
+function hexagon(cx, cy, radius) {
+  let points = [];
+  for (let k = 0; k < 6; k++) {
+    let angle = (-90 + k * 60) * (Math.PI / 180),
+      pointRadius = k % 2 === 0 ? radius : radius * 0.85;
+    points.push([cx + pointRadius * Math.cos(angle), cy + pointRadius * Math.sin(angle)]);
   }
-  return i;
+  return points;
 }
 
-const diamond = (e, o, t, i = t) => [
-  [e, o - i],
-  [e + t, o],
-  [e, o + i],
-  [e - t, o],
+const diamond = (cx, cy, halfW, halfH = halfW) => [
+  [cx, cy - halfH],
+  [cx + halfW, cy],
+  [cx, cy + halfH],
+  [cx - halfW, cy],
 ];
 
-const kite = (e, o, t, i) => [
-  [e, o],
-  [e + i, (o + t) / 2],
-  [e, t],
-  [e - i, (o + t) / 2],
+const kite = (cx, top, bottom, halfW) => [
+  [cx, top],
+  [cx + halfW, (top + bottom) / 2],
+  [cx, bottom],
+  [cx - halfW, (top + bottom) / 2],
 ];
 
-const lens = (e, o, t, i) => [
-  [e, t],
-  [(e + o) / 2, t - i],
-  [o, t],
-  [(e + o) / 2, t + i],
+const lens = (x1, x2, y, bulge) => [
+  [x1, y],
+  [(x1 + x2) / 2, y - bulge],
+  [x2, y],
+  [(x1 + x2) / 2, y + bulge],
 ];
 
-const fill = (e, o) => ({ kind: "polygon", pts: e, opacity: o });
+const fill = (pts, opacity) => ({ kind: "polygon", pts: pts, opacity: opacity });
 
-const outline = (e, o = 2) => ({ kind: "polygon", pts: e, stroke: !0, strokeWidth: o });
+const outline = (pts, strokeWidth = 2) => ({
+  kind: "polygon",
+  pts: pts,
+  stroke: !0,
+  strokeWidth: strokeWidth,
+});
 
-const polyline = (e, o = 3) => ({ kind: "polyline", pts: e, strokeWidth: o });
+const polyline = (pts, strokeWidth = 3) => ({ kind: "polyline", pts: pts, strokeWidth: strokeWidth });
 
-const line = (e, o, t = 2) => ({ kind: "line", a: e, b: o, strokeWidth: t });
+const line = (from, to, strokeWidth = 2) => ({ kind: "line", a: from, b: to, strokeWidth: strokeWidth });
 
 const EXTRA_GLYPHS = {
   shifting_orbit: [
@@ -791,28 +796,43 @@ const GLYPHS = {
 
 Object.assign(GLYPHS, EXTRA_GLYPHS);
 
-function shrinkShapes(e, o, t, i) {
-  let r = ([n, a]) => [n * o + t, a * o + i],
-    s = (n) => n * Math.max(o * 1.3, 0.8);
-  return e.map((n) => {
-    switch (n.kind) {
+function shrinkShapes(shapes, scale, offsetX, offsetY) {
+  let mapPoint = ([x, y]) => [x * scale + offsetX, y * scale + offsetY],
+    scaleStroke = (width) => width * Math.max(scale * 1.3, 0.8);
+  return shapes.map((shape) => {
+    switch (shape.kind) {
       case "polygon":
-        return { ...n, pts: n.pts.map(r), strokeWidth: n.strokeWidth ? s(n.strokeWidth) : void 0 };
+        return {
+          ...shape,
+          pts: shape.pts.map(mapPoint),
+          strokeWidth: shape.strokeWidth ? scaleStroke(shape.strokeWidth) : void 0,
+        };
       case "polyline":
-        return { ...n, pts: n.pts.map(r), strokeWidth: s(n.strokeWidth) };
+        return { ...shape, pts: shape.pts.map(mapPoint), strokeWidth: scaleStroke(shape.strokeWidth) };
       case "line":
-        return { ...n, a: r(n.a), b: r(n.b), strokeWidth: s(n.strokeWidth) };
+        return {
+          ...shape,
+          a: mapPoint(shape.a),
+          b: mapPoint(shape.b),
+          strokeWidth: scaleStroke(shape.strokeWidth),
+        };
       case "rect":
-        return { ...n, x: n.x * o + t, y: n.y * o + i, w: n.w * o, h: n.h * o };
+        return {
+          ...shape,
+          x: shape.x * scale + offsetX,
+          y: shape.y * scale + offsetY,
+          w: shape.w * scale,
+          h: shape.h * scale,
+        };
     }
   });
 }
 
-function glyphShapes(e, o = 0) {
-  if (GLYPHS[e]) return GLYPHS[e];
-  let t = baseOfVariant.get(e);
-  if (t && o < 6) {
-    let r = [
+function glyphShapes(id, depth = 0) {
+  if (GLYPHS[id]) return GLYPHS[id];
+  let base = baseOfVariant.get(id);
+  if (base && depth < 6) {
+    let marker = [
       {
         kind: "polygon",
         pts: [
@@ -824,208 +844,226 @@ function glyphShapes(e, o = 0) {
       },
       { kind: "line", a: [88, 22], b: [88, 34], strokeWidth: 2 },
     ];
-    return [...glyphShapes(t, o + 1), ...r];
+    return [...glyphShapes(base, depth + 1), ...marker];
   }
-  let i = recipeOf.get(e);
-  return i && o < 6
+  let recipe = recipeOf.get(id);
+  return recipe && depth < 6
     ? [
-        ...shrinkShapes(glyphShapes(i[0], o + 1), 0.62, 0, -2),
-        ...shrinkShapes(glyphShapes(i[1], o + 1), 0.62, 38, 40),
+        ...shrinkShapes(glyphShapes(recipe[0], depth + 1), 0.62, 0, -2),
+        ...shrinkShapes(glyphShapes(recipe[1], depth + 1), 0.62, 38, 40),
       ]
-    : proceduralGlyph(e);
+    : proceduralGlyph(id);
 }
 
-function stringHash(e) {
-  let o = 0;
-  for (let t = 0; t < e.length; t++) o = (o * 31 + e.charCodeAt(t)) | 0;
-  return Math.abs(o);
+function stringHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) | 0;
+  return Math.abs(hash);
 }
 
-function seededRng(e) {
-  let o = e;
+function seededRng(seed) {
+  let state = seed;
   return function () {
-    ((o |= 0), (o = (o + 1831565813) | 0));
-    let t = Math.imul(o ^ (o >>> 15), 1 | o);
-    return ((t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t), ((t ^ (t >>> 14)) >>> 0) / 4294967296);
+    ((state |= 0), (state = (state + 1831565813) | 0));
+    let mixed = Math.imul(state ^ (state >>> 15), 1 | state);
+    return (
+      (mixed = (mixed + Math.imul(mixed ^ (mixed >>> 7), 61 | mixed)) ^ mixed),
+      ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296
+    );
   };
 }
 
-function proceduralGlyph(e) {
-  let o = stringHash(e),
-    t = seededRng(o ^ 2654435769),
-    i = (s, n) => s + (n - s) * t(),
-    r = (s, n, a, c = a) => [
-      [s, n - c],
-      [s + a, n],
-      [s, n + c],
-      [s - a, n],
+function proceduralGlyph(blockId) {
+  let hash = stringHash(blockId),
+    rng = seededRng(hash ^ 2654435769),
+    randRange = (lo, hi) => lo + (hi - lo) * rng(),
+    diamondPoints = (cx, cy, halfW, halfH = halfW) => [
+      [cx, cy - halfH],
+      [cx + halfW, cy],
+      [cx, cy + halfH],
+      [cx - halfW, cy],
     ];
-  switch (blockById.get(e)?.axis) {
+  switch (blockById.get(blockId)?.axis) {
     case "geological": {
-      let s = 6 + Math.floor(t() * 3),
-        n = [];
-      for (let g = 0; g < s; g++) {
-        let h = ((g + i(-0.25, 0.25)) / s) * Math.PI * 2 - Math.PI / 2,
-          u = i(22, 36);
-        n.push([50 + u * Math.cos(h), 52 + u * 0.9 * Math.sin(h)]);
+      let sides = 6 + Math.floor(rng() * 3),
+        points = [];
+      for (let k = 0; k < sides; k++) {
+        let angle = ((k + randRange(-0.25, 0.25)) / sides) * Math.PI * 2 - Math.PI / 2,
+          radius = randRange(22, 36);
+        points.push([50 + radius * Math.cos(angle), 52 + radius * 0.9 * Math.sin(angle)]);
       }
-      let a = [{ kind: "polygon", pts: n, stroke: !0, strokeWidth: 2.5 }],
-        c = [50 + i(-8, 8), 52 + i(-8, 8)];
-      for (let g of [0, Math.floor(s / 3), Math.floor((2 * s) / 3)].slice(0, 2 + Math.floor(t() * 2)))
-        a.push({ kind: "line", a: n[g], b: c, strokeWidth: 1.5 });
-      return (t() < 0.5 && a.push({ kind: "polygon", pts: r(c[0], c[1], 6) }), a);
+      let shapes = [{ kind: "polygon", pts: points, stroke: !0, strokeWidth: 2.5 }],
+        center = [50 + randRange(-8, 8), 52 + randRange(-8, 8)];
+      for (let vertexIndex of [0, Math.floor(sides / 3), Math.floor((2 * sides) / 3)].slice(
+        0,
+        2 + Math.floor(rng() * 2),
+      ))
+        shapes.push({ kind: "line", a: points[vertexIndex], b: center, strokeWidth: 1.5 });
+      return (
+        rng() < 0.5 && shapes.push({ kind: "polygon", pts: diamondPoints(center[0], center[1], 6) }),
+        shapes
+      );
     }
     case "weather": {
-      let s = [];
-      for (let n = 0; n < 3; n++) {
-        let a = [];
-        for (let c = 0; c < 5; c++) a.push([8 + c * 21, 28 + n * 22 + i(-9, 9)]);
-        s.push({ kind: "polyline", pts: a, strokeWidth: 3 });
+      let shapes = [];
+      for (let row = 0; row < 3; row++) {
+        let pts = [];
+        for (let col = 0; col < 5; col++) pts.push([8 + col * 21, 28 + row * 22 + randRange(-9, 9)]);
+        shapes.push({ kind: "polyline", pts: pts, strokeWidth: 3 });
       }
-      for (let n = 0; n < 1 + Math.floor(t() * 3); n++)
-        s.push({ kind: "polygon", pts: r(i(14, 86), i(14, 90), 4) });
-      return s;
+      for (let k = 0; k < 1 + Math.floor(rng() * 3); k++)
+        shapes.push({ kind: "polygon", pts: diamondPoints(randRange(14, 86), randRange(14, 90), 4) });
+      return shapes;
     }
     case "ecological": {
-      let s = i(-10, 10),
-        n = [
+      let lean = randRange(-10, 10),
+        shapes = [
           {
             kind: "polyline",
             pts: [
               [50, 94],
-              [50 + s * 0.5, 60],
-              [50 + s, 18],
+              [50 + lean * 0.5, 60],
+              [50 + lean, 18],
             ],
             strokeWidth: 3.2,
           },
         ],
-        a = 2 + Math.floor(t() * 3);
-      for (let c = 0; c < a; c++) {
-        let g = 0.22 + (0.62 * c) / a + i(-0.04, 0.04),
-          h = 94 - g * 76,
-          u = 50 + s * g,
-          l = c % 2 ? 1 : -1,
-          d = [u + l * i(14, 26), h - i(8, 16)];
-        (n.push({ kind: "line", a: [u, h], b: d, strokeWidth: 2.5 }),
-          t() < 0.65 && n.push({ kind: "polygon", pts: r(d[0], d[1], 4.5) }));
+        branchCount = 2 + Math.floor(rng() * 3);
+      for (let k = 0; k < branchCount; k++) {
+        let along = 0.22 + (0.62 * k) / branchCount + randRange(-0.04, 0.04),
+          y = 94 - along * 76,
+          x = 50 + lean * along,
+          side = k % 2 ? 1 : -1,
+          tip = [x + side * randRange(14, 26), y - randRange(8, 16)];
+        (shapes.push({ kind: "line", a: [x, y], b: tip, strokeWidth: 2.5 }),
+          rng() < 0.65 && shapes.push({ kind: "polygon", pts: diamondPoints(tip[0], tip[1], 4.5) }));
       }
-      return n;
+      return shapes;
     }
     case "metaphysical": {
-      let s = i(20, 30),
-        a = [
+      let halfWidth = randRange(20, 30),
+        shapes = [
           {
             kind: "polygon",
             pts:
-              o % 3 === 0
+              hash % 3 === 0
                 ? [
-                    [50 - s, 92],
-                    [50 - s, 42],
+                    [50 - halfWidth, 92],
+                    [50 - halfWidth, 42],
                     [50, 12],
-                    [50 + s, 42],
-                    [50 + s, 92],
+                    [50 + halfWidth, 42],
+                    [50 + halfWidth, 92],
                   ]
-                : o % 3 === 1
+                : hash % 3 === 1
                   ? [
-                      [50 - s, 10],
-                      [50 + s, 10],
-                      [50 + s, 92],
-                      [50 - s, 92],
+                      [50 - halfWidth, 10],
+                      [50 + halfWidth, 10],
+                      [50 + halfWidth, 92],
+                      [50 - halfWidth, 92],
                     ]
-                  : r(50, 52, s, i(34, 44)),
+                  : diamondPoints(50, 52, halfWidth, randRange(34, 44)),
             stroke: !0,
             strokeWidth: 3,
           },
         ];
-      for (let c = 0; c < 1 + Math.floor(t() * 3); c++) {
-        let g = i(32, 74);
-        t() < 0.5
-          ? a.push({ kind: "line", a: [50 - i(6, 14), g], b: [50 + i(6, 14), g], strokeWidth: 2.5 })
-          : a.push({ kind: "polygon", pts: r(50 + i(-8, 8), g, 4) });
+      for (let k = 0; k < 1 + Math.floor(rng() * 3); k++) {
+        let y = randRange(32, 74);
+        rng() < 0.5
+          ? shapes.push({
+              kind: "line",
+              a: [50 - randRange(6, 14), y],
+              b: [50 + randRange(6, 14), y],
+              strokeWidth: 2.5,
+            })
+          : shapes.push({ kind: "polygon", pts: diamondPoints(50 + randRange(-8, 8), y, 4) });
       }
-      return a;
+      return shapes;
     }
     default: {
-      let s = i(24, 34),
-        n = s - 4,
-        a = i(0, 40),
-        c = [];
-      for (let h = 0; h < 6; h++) {
-        let u = (-90 + h * 60 + a) * (Math.PI / 180),
-          l = h % 2 === 0 ? s : n;
-        c.push([50 + l * Math.cos(u), 50 + l * Math.sin(u)]);
+      let outerRadius = randRange(24, 34),
+        innerRadius = outerRadius - 4,
+        rotation = randRange(0, 40),
+        pts = [];
+      for (let k = 0; k < 6; k++) {
+        let angle = (-90 + k * 60 + rotation) * (Math.PI / 180),
+          radius = k % 2 === 0 ? outerRadius : innerRadius;
+        pts.push([50 + radius * Math.cos(angle), 50 + radius * Math.sin(angle)]);
       }
-      let g = [{ kind: "polygon", pts: c, stroke: !0, strokeWidth: 1.5 }];
-      if (t() < 0.5) g.push({ kind: "polygon", pts: r(50, 50, 6) });
-      else for (let h = 0; h < 2; h++) g.push({ kind: "polygon", pts: r(i(40, 60), i(40, 60), 3) });
-      for (let h = 0; h < 1 + Math.floor(t() * 3); h++) {
-        let u = t() * Math.PI * 2;
-        g.push({
+      let shapes = [{ kind: "polygon", pts: pts, stroke: !0, strokeWidth: 1.5 }];
+      if (rng() < 0.5) shapes.push({ kind: "polygon", pts: diamondPoints(50, 50, 6) });
+      else
+        for (let k = 0; k < 2; k++)
+          shapes.push({ kind: "polygon", pts: diamondPoints(randRange(40, 60), randRange(40, 60), 3) });
+      for (let k = 0; k < 1 + Math.floor(rng() * 3); k++) {
+        let angle = rng() * Math.PI * 2;
+        shapes.push({
           kind: "line",
-          a: [50 + (s + 4) * Math.cos(u), 50 + (s + 4) * Math.sin(u)],
-          b: [50 + (s + 12) * Math.cos(u), 50 + (s + 12) * Math.sin(u)],
+          a: [50 + (outerRadius + 4) * Math.cos(angle), 50 + (outerRadius + 4) * Math.sin(angle)],
+          b: [50 + (outerRadius + 12) * Math.cos(angle), 50 + (outerRadius + 12) * Math.sin(angle)],
           strokeWidth: 2,
         });
       }
-      return g;
+      return shapes;
     }
   }
 }
 
 const TREMBLE = { none: 0, light: 0.3, medium: 0.6, strong: 1 };
 
-function jitterPoint([e, o], t, i) {
-  return t === 0 ? [e, o] : [e + (i() * 2 - 1) * t, o + (i() * 2 - 1) * t];
+function jitterPoint([x, y], amount, rng) {
+  return amount === 0 ? [x, y] : [x + (rng() * 2 - 1) * amount, y + (rng() * 2 - 1) * amount];
 }
 
-function fixed1(e) {
-  return e.toFixed(1);
+function fixed1(value) {
+  return value.toFixed(1);
 }
 
-function shapeSvg(e, o, t, i) {
-  switch (e.kind) {
+function shapeSvg(shape, jitter, strokeScale, rng) {
+  switch (shape.kind) {
     case "polygon": {
-      let s = e.pts
-          .map((g) => jitterPoint(g, o, i))
-          .map(([g, h]) => `${fixed1(g)},${fixed1(h)}`)
+      let points = shape.pts
+          .map((point) => jitterPoint(point, jitter, rng))
+          .map(([x, y]) => `${fixed1(x)},${fixed1(y)}`)
           .join(" "),
-        n = e.stroke ? "none" : "currentColor",
-        a = e.stroke ? ` stroke="currentColor" stroke-width="${fixed1((e.strokeWidth ?? 1.5) * t)}"` : "",
-        c = e.opacity !== void 0 ? ` opacity="${e.opacity}"` : "";
-      return `<polygon points="${s}" fill="${n}"${a}${c}/>`;
+        fillColor = shape.stroke ? "none" : "currentColor",
+        strokeAttr = shape.stroke
+          ? ` stroke="currentColor" stroke-width="${fixed1((shape.strokeWidth ?? 1.5) * strokeScale)}"`
+          : "",
+        opacityAttr = shape.opacity !== void 0 ? ` opacity="${shape.opacity}"` : "";
+      return `<polygon points="${points}" fill="${fillColor}"${strokeAttr}${opacityAttr}/>`;
     }
     case "polyline":
-      return `<polyline points="${e.pts
-        .map((n) => jitterPoint(n, o, i))
-        .map(([n, a]) => `${fixed1(n)},${fixed1(a)}`)
+      return `<polyline points="${shape.pts
+        .map((point) => jitterPoint(point, jitter, rng))
+        .map(([x, y]) => `${fixed1(x)},${fixed1(y)}`)
         .join(
           " ",
-        )}" fill="none" stroke="currentColor" stroke-width="${fixed1(e.strokeWidth * t)}" stroke-linejoin="miter" stroke-linecap="square"/>`;
+        )}" fill="none" stroke="currentColor" stroke-width="${fixed1(shape.strokeWidth * strokeScale)}" stroke-linejoin="miter" stroke-linecap="square"/>`;
     case "line": {
-      let [r, s] = jitterPoint(e.a, o, i),
-        [n, a] = jitterPoint(e.b, o, i);
-      return `<line x1="${fixed1(r)}" y1="${fixed1(s)}" x2="${fixed1(n)}" y2="${fixed1(a)}" stroke="currentColor" stroke-width="${fixed1(e.strokeWidth * t)}" stroke-linecap="square"/>`;
+      let [x1, y1] = jitterPoint(shape.a, jitter, rng),
+        [x2, y2] = jitterPoint(shape.b, jitter, rng);
+      return `<line x1="${fixed1(x1)}" y1="${fixed1(y1)}" x2="${fixed1(x2)}" y2="${fixed1(y2)}" stroke="currentColor" stroke-width="${fixed1(shape.strokeWidth * strokeScale)}" stroke-linecap="square"/>`;
     }
     case "rect": {
-      let [r, s] = jitterPoint([e.x, e.y], o * 0.5, i);
-      return `<rect x="${fixed1(r)}" y="${fixed1(s)}" width="${e.w}" height="${e.h}" fill="currentColor"/>`;
+      let [x, y] = jitterPoint([shape.x, shape.y], jitter * 0.5, rng);
+      return `<rect x="${fixed1(x)}" y="${fixed1(y)}" width="${shape.w}" height="${shape.h}" fill="currentColor"/>`;
     }
   }
 }
 
-function glyphInner(e, o = "none") {
-  let t = glyphShapes(e),
-    i = TREMBLE[o],
-    r = i * 3,
-    s = 1 + i * 0.6,
-    n = seededRng(stringHash(e));
-  return t.map((a) => shapeSvg(a, r, s, n)).join("");
+function glyphInner(id, tremble = "none") {
+  let shapes = glyphShapes(id),
+    amount = TREMBLE[tremble],
+    jitter = amount * 3,
+    strokeScale = 1 + amount * 0.6,
+    rng = seededRng(stringHash(id));
+  return shapes.map((shape) => shapeSvg(shape, jitter, strokeScale, rng)).join("");
 }
 
-function glyphSvg(e, o, t, i, r = "none") {
-  let s = i / 100,
-    n = r === "none" ? "" : ` age-glyph--tremble-${r}`;
-  return `<g transform="translate(${o},${t}) scale(${s})"><g class="age-glyph${n}">${glyphInner(e, r)}</g></g>`;
+function glyphSvg(id, x, y, size, tremble = "none") {
+  let scale = size / 100,
+    trembleClass = tremble === "none" ? "" : ` age-glyph--tremble-${tremble}`;
+  return `<g transform="translate(${x},${y}) scale(${scale})"><g class="age-glyph${trembleClass}">${glyphInner(id, tremble)}</g></g>`;
 }
 
 module.exports = {

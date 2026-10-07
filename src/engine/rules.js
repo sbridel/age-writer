@@ -110,63 +110,76 @@ const SEVERITY_ORDER = ["light", "medium", "strong"];
 
 const skyById = new Map(SKY_ENTRIES.map((e) => [e.id, e]));
 
-function starCount(e) {
-  return e.has("twin_suns") ? 2 : e.has("starless") ? 0 : 1;
+function starCount(skyIds) {
+  return skyIds.has("twin_suns") ? 2 : skyIds.has("starless") ? 0 : 1;
 }
 
-function conditionHolds(e, o) {
-  let t = starCount(o);
-  return e
+function conditionHolds(condition, skyIds) {
+  let stars = starCount(skyIds);
+  return condition
     .split("&&")
-    .map((i) => i.trim())
-    .every((i) => {
-      let r = i.match(/^!has\((\w+)\)$/);
-      if (r) return !o.has(r[1]);
-      let s = i.match(/^has\((\w+)\)$/);
-      if (s) return o.has(s[1]);
-      let n = i.match(/^stars(==|<|>|<=|>=)(\d+)$/);
-      if (n) {
-        let a = Number(n[2]);
-        switch (n[1]) {
+    .map((clause) => clause.trim())
+    .every((clause) => {
+      let notMatch = clause.match(/^!has\((\w+)\)$/);
+      if (notMatch) return !skyIds.has(notMatch[1]);
+      let hasMatch = clause.match(/^has\((\w+)\)$/);
+      if (hasMatch) return skyIds.has(hasMatch[1]);
+      let starsMatch = clause.match(/^stars(==|<|>|<=|>=)(\d+)$/);
+      if (starsMatch) {
+        let limit = Number(starsMatch[2]);
+        switch (starsMatch[1]) {
           case "==":
-            return t === a;
+            return stars === limit;
           case "<":
-            return t < a;
+            return stars < limit;
           case ">":
-            return t > a;
+            return stars > limit;
           case "<=":
-            return t <= a;
+            return stars <= limit;
           case ">=":
-            return t >= a;
+            return stars >= limit;
         }
       }
       return !1;
     });
 }
 
-function findContradictions(e, o) {
-  let t = [],
-    i = new Set();
-  for (let s of e) {
-    let n = skyById.get(s);
-    if (n?.contradictions)
-      for (let a of n.contradictions) {
-        if (!e.has(a.with) || (a.condition && !conditionHolds(a.condition, e))) continue;
-        let c = [s, a.with].sort().join("|");
-        i.has(c) || (i.add(c), t.push({ a: s, b: a.with, severity: a.severity }));
+function findContradictions(skyIds, matterIds) {
+  let found = [],
+    seenPairs = new Set();
+  for (let skyId of skyIds) {
+    let entry = skyById.get(skyId);
+    if (entry?.contradictions)
+      for (let contradiction of entry.contradictions) {
+        if (
+          !skyIds.has(contradiction.with) ||
+          (contradiction.condition && !conditionHolds(contradiction.condition, skyIds))
+        )
+          continue;
+        let pairKey = [skyId, contradiction.with].sort().join("|");
+        seenPairs.has(pairKey) ||
+          (seenPairs.add(pairKey),
+          found.push({ a: skyId, b: contradiction.with, severity: contradiction.severity }));
       }
   }
-  let r = new Set();
-  for (let s of SKY_LIFE_RULES)
-    if (e.has(s.sky) && o.has(s.with)) {
-      if (r.has(s.note)) continue;
-      (r.add(s.note), t.push({ a: s.sky, b: s.with, severity: s.severity, axis: s.axis, note: s.note }));
+  let seenNotes = new Set();
+  for (let rule of SKY_LIFE_RULES)
+    if (skyIds.has(rule.sky) && matterIds.has(rule.with)) {
+      if (seenNotes.has(rule.note)) continue;
+      (seenNotes.add(rule.note),
+        found.push({ a: rule.sky, b: rule.with, severity: rule.severity, axis: rule.axis, note: rule.note }));
     }
-  for (let s of FISSURE_RULES)
-    o.has(s.id) &&
-      !s.requiresAny.some((n) => o.has(n)) &&
-      t.push({ a: s.id, b: s.requiresAny[0], severity: s.severity, axis: s.axis, note: s.note });
-  return t;
+  for (let fissureRule of FISSURE_RULES)
+    matterIds.has(fissureRule.id) &&
+      !fissureRule.requiresAny.some((matterId) => matterIds.has(matterId)) &&
+      found.push({
+        a: fissureRule.id,
+        b: fissureRule.requiresAny[0],
+        severity: fissureRule.severity,
+        axis: fissureRule.axis,
+        note: fissureRule.note,
+      });
+  return found;
 }
 
 module.exports = {

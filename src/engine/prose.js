@@ -148,79 +148,87 @@ const MATTER_PROSE_GRAMMAR = {
   verb_awakening: ["stirs, and becomes", "wakes as", "opens into"],
 };
 
-function capitalize(e) {
-  return e.length ? e[0].toUpperCase() + e.slice(1) : e;
+function capitalize(text) {
+  return text.length ? text[0].toUpperCase() + text.slice(1) : text;
 }
 
 const PROSE_GRAMMAR = { ...SKY_PROSE_GRAMMAR, ...MATTER_PROSE_GRAMMAR };
 
-function spaced(e) {
-  return e.replace(/_/g, " ");
+function spaced(text) {
+  return text.replace(/_/g, " ");
 }
 
-function descriptorsFor(e) {
-  let o = [...(blockById.get(e)?.descriptors ?? [])],
-    t = [];
-  for (; t.length < 2 && o.length;) t.push(o.splice(Math.floor(Math.random() * o.length), 1)[0]);
-  return t.join(", ");
+function descriptorsFor(blockId) {
+  let pool = [...(blockById.get(blockId)?.descriptors ?? [])],
+    picked = [];
+  for (; picked.length < 2 && pool.length;)
+    picked.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  return picked.join(", ");
 }
 
-function describeAge(e) {
-  let o = tracery.createGrammar(PROSE_GRAMMAR);
-  o.addModifiers(tracery.baseEngModifiers);
-  let t = [],
-    i = !1;
-  for (let g of e.lines) {
-    if (g.unknown) {
-      t.push(o.flatten("#ink_blot#"));
+function describeAge(resolved) {
+  let grammar = tracery.createGrammar(PROSE_GRAMMAR);
+  grammar.addModifiers(tracery.baseEngModifiers);
+  let sentences = [],
+    drawLeadDone = !1;
+  for (let line of resolved.lines) {
+    if (line.unknown) {
+      sentences.push(grammar.flatten("#ink_blot#"));
       continue;
     }
-    let h = g.entry;
-    if (g.autoFilled && g.slot !== void 0) {
-      let u = o.flatten(h.proseTag);
-      (t.push(i ? u : o.flatten("#drawn_lead#") + u), (i = !0));
-    } else if (g.autoFilled) {
-      let u = h.category === "stars" ? "default_stars" : "default_cycle";
-      t.push(o.flatten(`#${u}#`));
-    } else t.push(o.flatten(h.proseTag));
+    let entry = line.entry;
+    if (line.autoFilled && line.slot !== void 0) {
+      let text = grammar.flatten(entry.proseTag);
+      (sentences.push(drawLeadDone ? text : grammar.flatten("#drawn_lead#") + text), (drawLeadDone = !0));
+    } else if (line.autoFilled) {
+      let defaultTag = entry.category === "stars" ? "default_stars" : "default_cycle";
+      sentences.push(grammar.flatten(`#${defaultTag}#`));
+    } else sentences.push(grammar.flatten(entry.proseTag));
   }
-  if (t.length === 0) {
-    let g = matterSentences(e, o);
-    return g.length ? g.join(" ") : "The page holds no readable symbol yet.";
+  if (sentences.length === 0) {
+    let matterOnly = matterSentences(resolved, grammar);
+    return matterOnly.length ? matterOnly.join(" ") : "The page holds no readable symbol yet.";
   }
-  let r = t.map((g, h) => (h === 0 ? capitalize(g) : o.flatten("#link#") + g)).join(". ") + ".",
-    s = [...e.triggered]
-      .sort((g, h) => SEVERITY_ORDER.indexOf(g.severity) - SEVERITY_ORDER.indexOf(h.severity))
-      .map((g) =>
-        g.note
-          ? capitalize(g.note[Math.floor(Math.random() * g.note.length)]) + "."
-          : capitalize(o.flatten(`#${g.severity}_contradiction#`)) + ".",
+  let mainText =
+      sentences
+        .map((sentence, index) => (index === 0 ? capitalize(sentence) : grammar.flatten("#link#") + sentence))
+        .join(". ") + ".",
+    contradictionSentences = [...resolved.triggered]
+      .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity))
+      .map((contradiction) =>
+        contradiction.note
+          ? capitalize(contradiction.note[Math.floor(Math.random() * contradiction.note.length)]) + "."
+          : capitalize(grammar.flatten(`#${contradiction.severity}_contradiction#`)) + ".",
       ),
-    n = matterSentences(e, o),
-    c = e.drawn.some((g) => blockById.has(g.id)) ? [capitalize(o.flatten("#drawn_matter_note#"))] : [];
-  return [r, ...s, ...n, ...c].join(" ");
+    matterLines = matterSentences(resolved, grammar),
+    drawnNote = resolved.drawn.some((pick) => blockById.has(pick.id))
+      ? [capitalize(grammar.flatten("#drawn_matter_note#"))]
+      : [];
+  return [mainText, ...contradictionSentences, ...matterLines, ...drawnNote].join(" ");
 }
 
-function matterSentences(e, o) {
-  let t = [],
-    i = new Set();
-  for (let r of e.matter.reactions) {
-    (i.add(r.a), i.add(r.b));
-    let s = r.verbs ? r.verbs[Math.floor(Math.random() * r.verbs.length)] : o.flatten(`#verb_${r.type}#`);
-    t.push(
+function matterSentences(resolved, grammar) {
+  let sentences = [],
+    used = new Set();
+  for (let reaction of resolved.matter.reactions) {
+    (used.add(reaction.a), used.add(reaction.b));
+    let verb = reaction.verbs
+      ? reaction.verbs[Math.floor(Math.random() * reaction.verbs.length)]
+      : grammar.flatten(`#verb_${reaction.type}#`);
+    sentences.push(
       capitalize(
-        `${descriptorsFor(r.a)} ${spaced(r.a)} ${o.flatten("#meets#")} ${descriptorsFor(r.b)} ${spaced(r.b)} and ${s} ${spaced(r.shown)}.`,
+        `${descriptorsFor(reaction.a)} ${spaced(reaction.a)} ${grammar.flatten("#meets#")} ${descriptorsFor(reaction.b)} ${spaced(reaction.b)} and ${verb} ${spaced(reaction.shown)}.`,
       ),
     );
   }
-  for (let r of e.matter.written) {
-    if (i.has(r)) continue;
-    let n =
-      blockById.get(r)?.presence ??
-      o.flatten("#nearby#").replace("{d}", descriptorsFor(r)).replace("{n}", spaced(r));
-    t.push(capitalize(n) + ".");
+  for (let id of resolved.matter.written) {
+    if (used.has(id)) continue;
+    let text =
+      blockById.get(id)?.presence ??
+      grammar.flatten("#nearby#").replace("{d}", descriptorsFor(id)).replace("{n}", spaced(id));
+    sentences.push(capitalize(text) + ".");
   }
-  return t;
+  return sentences;
 }
 
 module.exports = {

@@ -5,16 +5,22 @@ const { COHERENCE_BONUS, SKY_DEFAULTS, SKY_ENTRIES, UNKNOWN_LINE_COST } = requir
 const { reactMatter, writableIds } = require("./registry");
 const { CONTRADICTION_COST, findContradictions } = require("./rules");
 
-let drawSettings = { draw: !0, pull: PULL_STRENGTH.moderate };
+let drawSettings = { draw: !0, pull: PULL_STRENGTH.moderate, amount: 1 };
 
-function setDrawSettings(e) {
-  drawSettings = { ...drawSettings, ...e };
+function setDrawSettings(settings) {
+  drawSettings = { ...drawSettings, ...settings };
 }
 
-function linkTarget(e) {
+function linkTarget(text) {
   return (
-    e.trim().replace(/^!/, "").replace(/^\[\[/, "").replace(/\]\]$/, "").split("|")[0].split("#")[0].trim() ||
-    void 0
+    text
+      .trim()
+      .replace(/^!/, "")
+      .replace(/^\[\[/, "")
+      .replace(/\]\]$/, "")
+      .split("|")[0]
+      .split("#")[0]
+      .trim() || void 0
   );
 }
 
@@ -24,97 +30,122 @@ function emptyAxes() {
   return { cosmological: 0, geological: 0, metaphysical: 0, weather: 0, ecological: 0 };
 }
 
-function resolveAge(e, o = {}) {
-  let t = o.draw ?? drawSettings.draw,
-    i = o.pull ?? drawSettings.pull,
-    r = [],
-    s = new Set(),
-    n = [],
-    a = [],
-    c,
-    g,
-    h;
-  for (let M of e.split(`
+function resolveAge(source, options = {}) {
+  let drawEnabled = options.draw ?? drawSettings.draw,
+    pull = options.pull ?? drawSettings.pull,
+    amount = options.amount ?? drawSettings.amount,
+    lines = [],
+    categories = new Set(),
+    writtenIds = [],
+    links = [],
+    returnTo,
+    panel,
+    seedLine;
+  for (let rawLine of source.split(`
 `)) {
-    let T = M.trim();
-    if (T === "" || T.startsWith("#") || hooks.skip(T)) continue;
-    let p = T.match(/^seed\s*:\s*(.*)$/i);
-    if (p) {
-      p[1].trim() && (h = p[1].trim());
+    let line = rawLine.trim();
+    if (line === "" || line.startsWith("#") || hooks.skip(line)) continue;
+    let seedMatch = line.match(/^seed\s*:\s*(.*)$/i);
+    if (seedMatch) {
+      seedMatch[1].trim() && (seedLine = seedMatch[1].trim());
       continue;
     }
-    let y = T.match(/^(link|return|panel)\s*:\s*(.*)$/i);
-    if (y) {
-      let v = linkTarget(y[2]);
-      if (v) {
-        let _ = y[1].toLowerCase();
-        _ === "return" ? (c = v) : _ === "panel" ? (g = v) : a.includes(v) || a.push(v);
+    let linkMatch = line.match(/^(link|return|panel)\s*:\s*(.*)$/i);
+    if (linkMatch) {
+      let target = linkTarget(linkMatch[2]);
+      if (target) {
+        let kind = linkMatch[1].toLowerCase();
+        kind === "return"
+          ? (returnTo = target)
+          : kind === "panel"
+            ? (panel = target)
+            : links.includes(target) || links.push(target);
       }
       continue;
     }
-    let b = skyEntryById.get(T);
-    b
-      ? (r.push({ raw: T, entry: b, unknown: !1, autoFilled: !1 }), s.add(b.category))
-      : writableIds.has(T)
-        ? n.push(T)
-        : r.push({ raw: T, unknown: !0, autoFilled: !1 });
+    let entry = skyEntryById.get(line);
+    entry
+      ? (lines.push({ raw: line, entry, unknown: !1, autoFilled: !1 }), categories.add(entry.category))
+      : writableIds.has(line)
+        ? writtenIds.push(line)
+        : lines.push({ raw: line, unknown: !0, autoFilled: !1 });
   }
-  let u = [],
-    l = [];
-  if (t) {
-    let M = new Set([...r.filter((p) => p.entry).map((p) => p.entry.id), ...n]),
-      T = drawOpenSlots({ written: hooks.written(M), seed: `${o.seed ?? ""}#${h ?? ""}`, pull: i });
-    for (let p of T) {
-      let y = skyEntryById.get(p.id);
-      (y
-        ? r.push({ raw: p.id, entry: y, unknown: !1, autoFilled: !0, chance: p.chance, slot: p.slot })
-        : l.push(p.id),
-        u.push(p));
+  let drawn = [],
+    drawnMatterIds = [];
+  if (drawEnabled) {
+    let presentIds = new Set([
+        ...lines.filter((line) => line.entry).map((line) => line.entry.id),
+        ...writtenIds,
+      ]),
+      picks = drawOpenSlots({
+        written: hooks.written(presentIds),
+        seed: `${options.seed ?? ""}#${seedLine ?? ""}`,
+        pull,
+        amount,
+      });
+    for (let pick of picks) {
+      let pickEntry = skyEntryById.get(pick.id);
+      (pickEntry
+        ? lines.push({
+            raw: pick.id,
+            entry: pickEntry,
+            unknown: !1,
+            autoFilled: !0,
+            chance: pick.chance,
+            slot: pick.slot,
+          })
+        : drawnMatterIds.push(pick.id),
+        drawn.push(pick));
     }
   } else {
-    let M = r.length === 0 && n.length > 0;
-    for (let [T, p] of Object.entries(SKY_DEFAULTS))
-      if (!M && !s.has(T)) {
-        let y = skyEntryById.get(p);
-        y && r.push({ raw: p, entry: y, unknown: !1, autoFilled: !0 });
+    let onlyMatter = lines.length === 0 && writtenIds.length > 0;
+    for (let [category, defaultId] of Object.entries(SKY_DEFAULTS))
+      if (!onlyMatter && !categories.has(category)) {
+        let defaultEntry = skyEntryById.get(defaultId);
+        defaultEntry && lines.push({ raw: defaultId, entry: defaultEntry, unknown: !1, autoFilled: !0 });
       }
   }
-  let d = reactMatter([...n, ...l]),
-    f = new Set(d.written);
-  for (let M of d.reactions) f.add(M.result);
-  let m = new Set(r.filter((M) => M.entry).map((M) => M.entry.id)),
-    k = findContradictions(m, f),
-    w = emptyAxes(),
-    x = 0,
-    A = 0,
-    $ = 0;
-  for (let M of r) {
-    if (M.unknown) {
-      (x++, (w.cosmological += UNKNOWN_LINE_COST));
+  let matter = reactMatter([...writtenIds, ...drawnMatterIds]),
+    matterIds = new Set(matter.written);
+  for (let reaction of matter.reactions) matterIds.add(reaction.result);
+  let skyIds = new Set(lines.filter((line) => line.entry).map((line) => line.entry.id)),
+    triggered = findContradictions(skyIds, matterIds),
+    costByAxis = emptyAxes(),
+    unknownCount = 0,
+    defaultedCount = 0,
+    nonDefaultCount = 0;
+  for (let line of lines) {
+    if (line.unknown) {
+      (unknownCount++, (costByAxis.cosmological += UNKNOWN_LINE_COST));
       continue;
     }
-    let T = M.entry;
-    ((w[T.axis] += T.weight),
-      M.autoFilled && M.slot === void 0 && (A++, (w[T.axis] += DEFAULTED_SLOT_COST)),
-      (T.category === "stars" && T.id === "single_sun") ||
-        (T.category === "cycle" && T.id === "steady_cycle") ||
-        $++);
+    let entry = line.entry;
+    ((costByAxis[entry.axis] += entry.weight),
+      line.autoFilled &&
+        line.slot === void 0 &&
+        (defaultedCount++, (costByAxis[entry.axis] += DEFAULTED_SLOT_COST)),
+      (entry.category === "stars" && entry.id === "single_sun") ||
+        (entry.category === "cycle" && entry.id === "steady_cycle") ||
+        nonDefaultCount++);
   }
-  for (let M of k) w[M.axis ?? "cosmological"] += CONTRADICTION_COST[M.severity];
-  let F = x === 0 && A === 0 && $ === 0 && k.length === 0;
-  F && (w.cosmological = Math.max(0, w.cosmological - COHERENCE_BONUS));
-  for (let [M, T] of Object.entries(d.costByAxis)) w[M] = Math.max(0, w[M] + T);
+  for (let contradiction of triggered)
+    costByAxis[contradiction.axis ?? "cosmological"] += CONTRADICTION_COST[contradiction.severity];
+  let coherent =
+    unknownCount === 0 && defaultedCount === 0 && nonDefaultCount === 0 && triggered.length === 0;
+  coherent && (costByAxis.cosmological = Math.max(0, costByAxis.cosmological - COHERENCE_BONUS));
+  for (let [axis, delta] of Object.entries(matter.costByAxis))
+    costByAxis[axis] = Math.max(0, costByAxis[axis] + delta);
   return {
-    lines: r,
-    triggered: k,
-    costByAxis: w,
-    coherenceBonusApplied: F,
-    matter: d,
-    links: a,
-    returnTo: c,
-    panel: g,
-    seed: h,
-    drawn: u,
+    lines: lines,
+    triggered: triggered,
+    costByAxis: costByAxis,
+    coherenceBonusApplied: coherent,
+    matter: matter,
+    links: links,
+    returnTo: returnTo,
+    panel: panel,
+    seed: seedLine,
+    drawn: drawn,
   };
 }
 

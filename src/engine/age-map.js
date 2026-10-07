@@ -10,77 +10,80 @@ const COL_GAP = 520;
 
 const ROW_GAP = 300;
 
-const nodeId = (e) => "n" + djb2(e);
+const nodeId = (path) => "n" + djb2(path);
 
-function djb2(e) {
-  let o = 5381;
-  for (let t = 0; t < e.length; t++) o = ((o << 5) + o + e.charCodeAt(t)) | 0;
-  return (o >>> 0).toString(16).padStart(8, "0");
+function djb2(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0;
+  return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
-function buildCanvas(e, o) {
-  let t = new Set(e.map((d) => d.path)),
-    i = o.filter((d) => t.has(d.from) && t.has(d.to) && d.from !== d.to),
-    r = new Map();
-  for (let d of e) r.set(d.path, new Set());
-  for (let d of i) (r.get(d.from).add(d.to), r.get(d.to).add(d.from));
-  let s = new Map(),
-    n = [...e.filter((d) => d.root), ...e.filter((d) => !d.root)];
-  for (let d of n) {
-    if (s.has(d.path)) continue;
-    s.set(d.path, 0);
-    let f = [d.path];
-    for (; f.length;) {
-      let m = f.shift();
-      for (let k of r.get(m)) s.has(k) || (s.set(k, s.get(m) + 1), f.push(k));
+function buildCanvas(files, links) {
+  let knownPaths = new Set(files.map((file) => file.path)),
+    validLinks = links.filter(
+      (link) => knownPaths.has(link.from) && knownPaths.has(link.to) && link.from !== link.to,
+    ),
+    neighbors = new Map();
+  for (let file of files) neighbors.set(file.path, new Set());
+  for (let link of validLinks) (neighbors.get(link.from).add(link.to), neighbors.get(link.to).add(link.from));
+  let depth = new Map(),
+    ordered = [...files.filter((file) => file.root), ...files.filter((file) => !file.root)];
+  for (let file of ordered) {
+    if (depth.has(file.path)) continue;
+    depth.set(file.path, 0);
+    let queue = [file.path];
+    for (; queue.length;) {
+      let current = queue.shift();
+      for (let neighbor of neighbors.get(current))
+        depth.has(neighbor) || (depth.set(neighbor, depth.get(current) + 1), queue.push(neighbor));
     }
   }
-  let a = new Map(),
-    c = new Map();
-  for (let d of n) {
-    let f = s.get(d.path),
-      m = a.get(f) ?? 0;
-    (a.set(f, m + 1), c.set(d.path, { x: f * COL_GAP, y: m * ROW_GAP }));
+  let rowCounts = new Map(),
+    positions = new Map();
+  for (let file of ordered) {
+    let level = depth.get(file.path),
+      row = rowCounts.get(level) ?? 0;
+    (rowCounts.set(level, row + 1), positions.set(file.path, { x: level * COL_GAP, y: row * ROW_GAP }));
   }
-  let g = e.map((d) => ({
-      id: nodeId(d.path),
+  let nodes = files.map((file) => ({
+      id: nodeId(file.path),
       type: "file",
-      file: d.path,
-      x: c.get(d.path).x,
-      y: c.get(d.path).y,
+      file: file.path,
+      x: positions.get(file.path).x,
+      y: positions.get(file.path).y,
       width: NODE_W,
       height: NODE_H,
-      ...(d.verdict ? { color: CANVAS_COLOR[d.verdict] } : {}),
+      ...(file.verdict ? { color: CANVAS_COLOR[file.verdict] } : {}),
     })),
-    h = new Set(i.map((d) => `${d.from}\0${d.to}`)),
-    u = new Set(),
-    l = [];
-  for (let d of i) {
-    let f = [d.from, d.to].sort().join("\0");
-    if (u.has(f)) continue;
-    u.add(f);
-    let m = h.has(`${d.to}\0${d.from}`),
-      k = c.get(d.from),
-      w = c.get(d.to),
-      [x, A] =
-        w.x > k.x
+    linkKeys = new Set(validLinks.map((link) => `${link.from}\0${link.to}`)),
+    seenPairs = new Set(),
+    edges = [];
+  for (let link of validLinks) {
+    let pairKey = [link.from, link.to].sort().join("\0");
+    if (seenPairs.has(pairKey)) continue;
+    seenPairs.add(pairKey);
+    let bidirectional = linkKeys.has(`${link.to}\0${link.from}`),
+      fromPos = positions.get(link.from),
+      toPos = positions.get(link.to),
+      [fromSide, toSide] =
+        toPos.x > fromPos.x
           ? ["right", "left"]
-          : w.x < k.x
+          : toPos.x < fromPos.x
             ? ["left", "right"]
-            : w.y > k.y
+            : toPos.y > fromPos.y
               ? ["bottom", "top"]
               : ["top", "bottom"];
-    l.push({
-      id: "e" + djb2(f),
-      fromNode: nodeId(d.from),
-      fromSide: x,
-      toNode: nodeId(d.to),
-      toSide: A,
+    edges.push({
+      id: "e" + djb2(pairKey),
+      fromNode: nodeId(link.from),
+      fromSide: fromSide,
+      toNode: nodeId(link.to),
+      toSide: toSide,
       toEnd: "arrow",
-      ...(m ? { fromEnd: "arrow", color: "5" } : { color: "2", label: "one-way" }),
+      ...(bidirectional ? { fromEnd: "arrow", color: "5" } : { color: "2", label: "one-way" }),
     });
   }
-  return { nodes: g, edges: l };
+  return { nodes: nodes, edges: edges };
 }
 
 module.exports = { CANVAS_COLOR, COL_GAP, NODE_H, NODE_W, ROW_GAP, buildCanvas, djb2, nodeId };

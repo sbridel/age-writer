@@ -1,40 +1,40 @@
 "use strict";
 
-function hashString(e) {
-  let o = 2166136261;
-  for (let t = 0; t < e.length; t++) o = Math.imul(o ^ e.charCodeAt(t), 16777619);
-  return o >>> 0;
+function hashString(str) {
+  let hash = 2166136261;
+  for (let i = 0; i < str.length; i++) hash = Math.imul(hash ^ str.charCodeAt(i), 16777619);
+  return hash >>> 0;
 }
 
-function windowScene(e, o = "") {
-  let t = e.resolved,
-    i = new Set();
-  for (let n of t.lines) n.entry && i.add(n.entry.id);
-  for (let n of t.matter.written) i.add(n);
-  for (let n of t.matter.reactions) i.add(n.result);
-  let r = (...n) => n.some((a) => i.has(a)),
-    s = [];
+function windowScene(age, salt = "") {
+  let resolved = age.resolved,
+    ids = new Set();
+  for (let line of resolved.lines) line.entry && ids.add(line.entry.id);
+  for (let id of resolved.matter.written) ids.add(id);
+  for (let reaction of resolved.matter.reactions) ids.add(reaction.result);
+  let has = (...names) => names.some((name) => ids.has(name)),
+    ruins = [];
   return (
-    r("door", "sealed_door") && s.push("door"),
-    r("bridge", "fallen_bridge") && s.push("bridge"),
-    r("tablet", "worn_tablet", "speaking_tablet") && s.push("tablet"),
-    r("lamp", "lit_lamp") && s.push("lamp"),
+    has("door", "sealed_door") && ruins.push("door"),
+    has("bridge", "fallen_bridge") && ruins.push("bridge"),
+    has("tablet", "worn_tablet", "speaking_tablet") && ruins.push("tablet"),
+    has("lamp", "lit_lamp") && ruins.push("lamp"),
     {
-      seed: hashString(o + "|" + [...i].sort().join(",")),
-      verdict: e.verdict,
-      unrest: Math.max(0, Math.min(1, 1 - e.stability / 100)),
-      suns: r("twin_suns") ? 2 : r("single_sun") ? 1 : 0,
-      skyStated: r("twin_suns", "single_sun", "starless"),
-      moon: r("companion_moon"),
-      cycle: r("frozen_cycle") ? "frozen" : r("erratic_cycle") ? "erratic" : "steady",
-      chaos: r("chaotic_orbit"),
-      veil: r("permanent_veil"),
-      auroras: r("auroras"),
-      eclipses: r("recurring_eclipses"),
-      starfall: r("starfall"),
-      rain: r("rain", "storm", "thunderstorm", "whispering_storm", "waiting_thunder"),
-      storm: r("storm", "thunderstorm", "whispering_storm", "waiting_thunder"),
-      wind: r(
+      seed: hashString(salt + "|" + [...ids].sort().join(",")),
+      verdict: age.verdict,
+      unrest: Math.max(0, Math.min(1, 1 - age.stability / 100)),
+      suns: has("twin_suns") ? 2 : has("single_sun") ? 1 : 0,
+      skyStated: has("twin_suns", "single_sun", "starless"),
+      moon: has("companion_moon"),
+      cycle: has("frozen_cycle") ? "frozen" : has("erratic_cycle") ? "erratic" : "steady",
+      chaos: has("chaotic_orbit"),
+      veil: has("permanent_veil"),
+      auroras: has("auroras"),
+      eclipses: has("recurring_eclipses"),
+      starfall: has("starfall"),
+      rain: has("rain", "storm", "thunderstorm", "whispering_storm", "waiting_thunder"),
+      storm: has("storm", "thunderstorm", "whispering_storm", "waiting_thunder"),
+      wind: has(
         "wind",
         "storm",
         "thunderstorm",
@@ -44,32 +44,32 @@ function windowScene(e, o = "") {
         "whispering_storm",
         "waiting_thunder",
       ),
-      fog: r("fog", "marsh_mist", "rime", "watching_mist"),
-      lightning: r("lightning", "thunderstorm", "waiting_thunder"),
-      heat: r("heat"),
-      hail: r("hail", "black_hail"),
-      steam: r("steam"),
-      dust: r("dust_storm"),
-      ash: r("ash_cloud"),
-      lava: r("lava", "obsidian", "whispering_obsidian"),
-      water: r("water", "marsh_mist", "brine", "meltwater", "crying_obsidian"),
-      ice: r("ice", "black_ice", "deep_cold", "hail", "rime"),
-      sand: r("sand", "dust_storm", "glass", "singing_glass", "fulgurite"),
-      trees: r("grove") ? 5 : r("great_tree", "ironwood", "charred_grove") ? 3 : 0,
-      burnt: r("charred_grove", "wildfire"),
-      fire: r("wildfire"),
-      moths: r("moth", "lantern_moths", "whispering_moths"),
-      glow: r("glowvine", "wrong_glowvine"),
-      eyes: r("hunter", "stalking_pack"),
-      ruins: s,
-      lampLit: r("lit_lamp"),
-      tabletAwake: r("speaking_tablet"),
-      fissure: r("no_fissure")
+      fog: has("fog", "marsh_mist", "rime", "watching_mist"),
+      lightning: has("lightning", "thunderstorm", "waiting_thunder"),
+      heat: has("heat"),
+      hail: has("hail", "black_hail"),
+      steam: has("steam"),
+      dust: has("dust_storm"),
+      ash: has("ash_cloud"),
+      lava: has("lava", "obsidian", "whispering_obsidian"),
+      water: has("water", "marsh_mist", "brine", "meltwater", "crying_obsidian"),
+      ice: has("ice", "black_ice", "deep_cold", "hail", "rime"),
+      sand: has("sand", "dust_storm", "glass", "singing_glass", "fulgurite"),
+      trees: has("grove") ? 5 : has("great_tree", "ironwood", "charred_grove") ? 3 : 0,
+      burnt: has("charred_grove", "wildfire"),
+      fire: has("wildfire"),
+      moths: has("moth", "lantern_moths", "whispering_moths"),
+      glow: has("glowvine", "wrong_glowvine"),
+      eyes: has("hunter", "stalking_pack"),
+      ruins: ruins,
+      lampLit: has("lit_lamp"),
+      tabletAwake: has("speaking_tablet"),
+      fissure: has("no_fissure")
         ? null
-        : r("cave_fissure")
+        : has("cave_fissure")
           ? "cave"
-          : r("submarine_fissure", "fissure")
-            ? r("water")
+          : has("submarine_fissure", "fissure")
+            ? has("water")
               ? "submarine"
               : "open"
             : null,
@@ -79,519 +79,626 @@ function windowScene(e, o = "") {
 
 const TAU = Math.PI * 2;
 
-function mulberry32(e) {
-  let o = e >>> 0;
+function mulberry32(seed) {
+  let state = seed >>> 0;
   return () => {
-    o = (o + 1831565813) | 0;
-    let t = Math.imul(o ^ (o >>> 15), 1 | o);
-    return ((t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t), ((t ^ (t >>> 14)) >>> 0) / 4294967296);
+    state = (state + 1831565813) | 0;
+    let mixed = Math.imul(state ^ (state >>> 15), 1 | state);
+    return (
+      (mixed = (mixed + Math.imul(mixed ^ (mixed >>> 7), 61 | mixed)) ^ mixed),
+      ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296
+    );
   };
 }
 
-const smoothstep = (e) => {
-  let o = Math.max(0, Math.min(1, e));
-  return o * o * (3 - 2 * o);
+const smoothstep = (x) => {
+  let clamped = Math.max(0, Math.min(1, x));
+  return clamped * clamped * (3 - 2 * clamped);
 };
 
-function mixHex(e, o, t) {
-  let i = (u) => [1, 3, 5].map((l) => parseInt(u.slice(l, l + 2), 16)),
-    [r, s, n] = i(e),
-    [a, c, g] = i(o),
-    h = (u) => Math.round(u).toString(16).padStart(2, "0");
-  return `#${h(r + (a - r) * t)}${h(s + (c - s) * t)}${h(n + (g - n) * t)}`;
+function mixHex(from, to, amount) {
+  let parse = (hex) => [1, 3, 5].map((offset) => parseInt(hex.slice(offset, offset + 2), 16)),
+    [fromR, fromG, fromB] = parse(from),
+    [toR, toG, toB] = parse(to),
+    toHex = (value) => Math.round(value).toString(16).padStart(2, "0");
+  return `#${toHex(fromR + (toR - fromR) * amount)}${toHex(fromG + (toG - fromG) * amount)}${toHex(fromB + (toB - fromB) * amount)}`;
 }
 
-const rgba = (e, o, t, i) => `rgba(${e},${o},${t},${Math.max(0, Math.min(1, i)).toFixed(3)})`;
+const rgba = (r, g, b, alpha) => `rgba(${r},${g},${b},${Math.max(0, Math.min(1, alpha)).toFixed(3)})`;
 
-const frac = (e) => e - Math.floor(e);
+const frac = (x) => x - Math.floor(x);
 
-function paintWindow(e, o, t, i, r) {
-  t = frac(t);
-  let s = mulberry32(o.seed),
-    n = r * 0.72;
-  (e.save(), e.clearRect(0, 0, i, r));
-  let a = [0, 1, 2, 3, 4, 5, 6].map(() => s()),
-    c = Math.floor(t * 6),
-    g = 0.7,
-    h = (p) => n + p * 1.4,
-    u = (p, y, b) => {
-      let v = Math.sin(Math.PI * p);
-      return { x: i * (0.06 + 0.88 * p), y: h(b) - v * (h(b) - r * y), e: v };
+function paintWindow(ctx, scene, time, width, height) {
+  time = frac(time);
+  let rng = mulberry32(scene.seed),
+    horizon = height * 0.72;
+  (ctx.save(), ctx.clearRect(0, 0, width, height));
+  let rolls = [0, 1, 2, 3, 4, 5, 6].map(() => rng()),
+    phase = Math.floor(time * 6),
+    dayShare = 0.7,
+    riseBase = (fraction) => horizon + fraction * 1.4,
+    arcPoint = (progress, peakY, baseOffset) => {
+      let lift = Math.sin(Math.PI * progress);
+      return {
+        x: width * (0.06 + 0.88 * progress),
+        y: riseBase(baseOffset) - lift * (riseBase(baseOffset) - height * peakY),
+        e: lift,
+      };
     },
-    l = [];
-  for (let p = 0; p < o.suns; p++) {
-    let y = r * (p === 0 ? 0.085 : 0.055),
-      b = null;
-    if (o.cycle === "frozen") b = { x: i * (0.7 - 0.25 * p), y: n - r * 0.1, e: 0.12 };
-    else if (o.cycle === "erratic") {
-      let _ = r * (0.22 + 0.34 * a[(c + p + 2) % 7]);
-      b = { x: i * (0.2 + 0.6 * a[(c + p) % 7]), y: _, e: Math.max(0, Math.min(1, (n - _) / (n * 0.8))) };
+    bodies = [];
+  for (let index = 0; index < scene.suns; index++) {
+    let radius = height * (index === 0 ? 0.085 : 0.055),
+      pos = null;
+    if (scene.cycle === "frozen")
+      pos = { x: width * (0.7 - 0.25 * index), y: horizon - height * 0.1, e: 0.12 };
+    else if (scene.cycle === "erratic") {
+      let y = height * (0.22 + 0.34 * rolls[(phase + index + 2) % 7]);
+      pos = {
+        x: width * (0.2 + 0.6 * rolls[(phase + index) % 7]),
+        y: y,
+        e: Math.max(0, Math.min(1, (horizon - y) / (horizon * 0.8))),
+      };
     } else {
-      let _ = frac(t - p * 0.1);
-      _ <= g && (b = u(_ / g, 0.14, y));
+      let progress = frac(time - index * 0.1);
+      progress <= dayShare && (pos = arcPoint(progress / dayShare, 0.14, radius));
     }
-    if (!b) continue;
-    let v = o.chaos
-      ? { x: i * 0.05 * Math.sin(TAU * t * 5 + p * 2), y: r * 0.04 * Math.sin(TAU * t * 7 + p) }
+    if (!pos) continue;
+    let wobble = scene.chaos
+      ? {
+          x: width * 0.05 * Math.sin(TAU * time * 5 + index * 2),
+          y: height * 0.04 * Math.sin(TAU * time * 7 + index),
+        }
       : { x: 0, y: 0 };
-    l.push({ idx: p, x: b.x + v.x, y: b.y + v.y, r: y, e: b.e });
+    bodies.push({ idx: index, x: pos.x + wobble.x, y: pos.y + wobble.y, r: radius, e: pos.e });
   }
-  let d =
-      o.suns === 0
+  let daylight =
+      scene.suns === 0
         ? 0
-        : o.cycle === "frozen"
+        : scene.cycle === "frozen"
           ? 0.2
-          : o.cycle === "erratic"
-            ? 0.2 + 0.6 * a[c]
-            : Math.max(0, ...l.map((p) => p.e)),
-    f = smoothstep(d * 3),
-    m = smoothstep((d - 0.25) / 0.75),
-    k = e.createLinearGradient(0, 0, 0, n);
-  (k.addColorStop(0, o.skyStated ? mixHex(mixHex("#04050b", "#241d3d", f), "#2f4d7a", m) : "#161a26"),
-    k.addColorStop(1, o.skyStated ? mixHex(mixHex("#12141f", "#b05a36", f), "#c2a98c", m) : "#2e3040"),
-    (e.fillStyle = k),
-    e.fillRect(0, 0, i, r),
-    o.storm && ((e.fillStyle = rgba(14, 17, 24, 0.5)), e.fillRect(0, 0, i, r)),
-    o.veil && ((e.fillStyle = rgba(190, 190, 202, 0.2)), e.fillRect(0, 0, i, r)));
-  let w = o.skyStated ? (o.suns === 0 ? 70 : 36) : 26,
-    x = (o.storm ? 0.25 : 1) * (o.veil ? 0.5 : 1) * (1 - Math.min(1, d * 1.4));
-  for (let p = 0; p < w; p++) {
-    let y = s() * i,
-      b = s() * n * 0.9,
-      v = 3 * (1 + (p % 3)),
-      _ = s(),
-      P =
-        (0.25 + 0.55 * (0.5 + 0.5 * Math.sin(TAU * (t * v + _)))) *
-        x *
-        (o.skyStated ? (o.suns === 0 ? 1 : 0.55) : 0.7);
-    ((e.fillStyle = rgba(230, 230, 245, P)), e.fillRect(y, b, 1.2, 1.2));
+          : scene.cycle === "erratic"
+            ? 0.2 + 0.6 * rolls[phase]
+            : Math.max(0, ...bodies.map((body) => body.e)),
+    skyLow = smoothstep(daylight * 3),
+    skyHigh = smoothstep((daylight - 0.25) / 0.75),
+    skyGradient = ctx.createLinearGradient(0, 0, 0, horizon);
+  (skyGradient.addColorStop(
+    0,
+    scene.skyStated ? mixHex(mixHex("#04050b", "#241d3d", skyLow), "#2f4d7a", skyHigh) : "#161a26",
+  ),
+    skyGradient.addColorStop(
+      1,
+      scene.skyStated ? mixHex(mixHex("#12141f", "#b05a36", skyLow), "#c2a98c", skyHigh) : "#2e3040",
+    ),
+    (ctx.fillStyle = skyGradient),
+    ctx.fillRect(0, 0, width, height),
+    scene.storm && ((ctx.fillStyle = rgba(14, 17, 24, 0.5)), ctx.fillRect(0, 0, width, height)),
+    scene.veil && ((ctx.fillStyle = rgba(190, 190, 202, 0.2)), ctx.fillRect(0, 0, width, height)));
+  let starCount = scene.skyStated ? (scene.suns === 0 ? 70 : 36) : 26,
+    starVisibility = (scene.storm ? 0.25 : 1) * (scene.veil ? 0.5 : 1) * (1 - Math.min(1, daylight * 1.4));
+  for (let i = 0; i < starCount; i++) {
+    let sx = rng() * width,
+      sy = rng() * horizon * 0.9,
+      speed = 3 * (1 + (i % 3)),
+      twinklePhase = rng(),
+      alpha =
+        (0.25 + 0.55 * (0.5 + 0.5 * Math.sin(TAU * (time * speed + twinklePhase)))) *
+        starVisibility *
+        (scene.skyStated ? (scene.suns === 0 ? 1 : 0.55) : 0.7);
+    ((ctx.fillStyle = rgba(230, 230, 245, alpha)), ctx.fillRect(sx, sy, 1.2, 1.2));
   }
-  for (let p of l) {
-    let y = e.createRadialGradient(p.x, p.y, p.r * 0.5, p.x, p.y, p.r * 5),
-      b = 0.5 * Math.max(Math.pow(Math.max(0, p.e), 0.6), o.cycle === "frozen" ? 0.7 : 0);
-    (y.addColorStop(0, p.idx === 0 ? rgba(255, 214, 150, b) : rgba(190, 215, 255, b * 0.8)),
-      y.addColorStop(1, rgba(255, 214, 150, 0)),
-      (e.fillStyle = y),
-      e.fillRect(0, 0, i, r),
-      (e.fillStyle = p.idx === 0 ? "#f6e0a8" : "#cfe0f4"),
-      e.beginPath(),
-      e.arc(p.x, p.y, p.r, 0, TAU),
-      e.fill());
+  for (let body of bodies) {
+    let glow = ctx.createRadialGradient(body.x, body.y, body.r * 0.5, body.x, body.y, body.r * 5),
+      intensity = 0.5 * Math.max(Math.pow(Math.max(0, body.e), 0.6), scene.cycle === "frozen" ? 0.7 : 0);
+    (glow.addColorStop(
+      0,
+      body.idx === 0 ? rgba(255, 214, 150, intensity) : rgba(190, 215, 255, intensity * 0.8),
+    ),
+      glow.addColorStop(1, rgba(255, 214, 150, 0)),
+      (ctx.fillStyle = glow),
+      ctx.fillRect(0, 0, width, height),
+      (ctx.fillStyle = body.idx === 0 ? "#f6e0a8" : "#cfe0f4"),
+      ctx.beginPath(),
+      ctx.arc(body.x, body.y, body.r, 0, TAU),
+      ctx.fill());
   }
-  let A = l.find((p) => p.idx === 0);
+  let mainSun = bodies.find((body) => body.idx === 0);
   if (
-    (o.eclipses &&
-      A &&
-      ((e.fillStyle = "#05060a"),
-      e.beginPath(),
-      e.arc(A.x + A.r * 2.4 * Math.cos(TAU * t), A.y + A.r * 0.15 * Math.sin(TAU * t), A.r * 1.02, 0, TAU),
-      e.fill()),
-    o.moon)
+    (scene.eclipses &&
+      mainSun &&
+      ((ctx.fillStyle = "#05060a"),
+      ctx.beginPath(),
+      ctx.arc(
+        mainSun.x + mainSun.r * 2.4 * Math.cos(TAU * time),
+        mainSun.y + mainSun.r * 0.15 * Math.sin(TAU * time),
+        mainSun.r * 1.02,
+        0,
+        TAU,
+      ),
+      ctx.fill()),
+    scene.moon)
   ) {
-    let p = r * 0.045,
-      y = null;
-    if (o.cycle === "frozen") y = { x: i * 0.3, y: r * 0.3 };
+    let moonRadius = height * 0.045,
+      moonPos = null;
+    if (scene.cycle === "frozen") moonPos = { x: width * 0.3, y: height * 0.3 };
     else {
-      let b = frac(t - 0.6);
-      b <= g && (y = u(b / g, 0.2, p));
+      let moonProgress = frac(time - 0.6);
+      moonProgress <= dayShare && (moonPos = arcPoint(moonProgress / dayShare, 0.2, moonRadius));
     }
-    y &&
-      ((e.fillStyle = "#cfd6e2"),
-      e.beginPath(),
-      e.arc(y.x, y.y, p, 0, TAU),
-      e.fill(),
-      (e.fillStyle = rgba(10, 12, 20, 0.5)),
-      e.beginPath(),
-      e.arc(y.x + p * 0.45, y.y - p * 0.2, p * 0.9, 0, TAU),
-      e.fill());
+    moonPos &&
+      ((ctx.fillStyle = "#cfd6e2"),
+      ctx.beginPath(),
+      ctx.arc(moonPos.x, moonPos.y, moonRadius, 0, TAU),
+      ctx.fill(),
+      (ctx.fillStyle = rgba(10, 12, 20, 0.5)),
+      ctx.beginPath(),
+      ctx.arc(moonPos.x + moonRadius * 0.45, moonPos.y - moonRadius * 0.2, moonRadius * 0.9, 0, TAU),
+      ctx.fill());
   }
-  if (o.auroras) {
-    (e.save(), (e.globalCompositeOperation = "lighter"));
-    let p = [
+  if (scene.auroras) {
+    (ctx.save(), (ctx.globalCompositeOperation = "lighter"));
+    let auroraColors = [
       [80, 220, 160],
       [150, 120, 230],
       [90, 190, 220],
     ];
-    for (let y = 0; y < 3; y++) {
-      let b = r * (0.16 + 0.08 * y),
-        v = r * 0.05,
-        _ = 2 + y;
-      ((e.strokeStyle = rgba(...p[y], 0.32)),
-        (e.lineWidth = r * 0.045),
-        (e.lineCap = "round"),
-        e.beginPath());
-      for (let P = 0; P <= i; P += 6) {
-        let R =
-          b +
-          v * Math.sin((P / i) * TAU * (_ / 2) + TAU * t * (y % 2 ? -1 : 1)) +
-          v * 0.4 * Math.sin((P / i) * TAU * 3 + TAU * t * 2);
-        P === 0 ? e.moveTo(P, R) : e.lineTo(P, R);
+    for (let band = 0; band < 3; band++) {
+      let baseY = height * (0.16 + 0.08 * band),
+        amplitude = height * 0.05,
+        waves = 2 + band;
+      ((ctx.strokeStyle = rgba(...auroraColors[band], 0.32)),
+        (ctx.lineWidth = height * 0.045),
+        (ctx.lineCap = "round"),
+        ctx.beginPath());
+      for (let px = 0; px <= width; px += 6) {
+        let py =
+          baseY +
+          amplitude * Math.sin((px / width) * TAU * (waves / 2) + TAU * time * (band % 2 ? -1 : 1)) +
+          amplitude * 0.4 * Math.sin((px / width) * TAU * 3 + TAU * time * 2);
+        px === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
       }
-      e.stroke();
+      ctx.stroke();
     }
-    e.restore();
+    ctx.restore();
   }
-  if (o.starfall)
-    for (let p = 0; p < 3; p++) {
-      let y = s() * i * 0.7,
-        b = s() * n * 0.4,
-        v = frac(t + p / 3);
-      if (v > 0.3) continue;
-      let _ = v / 0.3,
-        P = r * 0.22;
-      ((e.strokeStyle = rgba(255, 255, 255, 0.8 * (1 - _))),
-        (e.lineWidth = 1.3),
-        e.beginPath(),
-        e.moveTo(y + _ * i * 0.28, b + _ * r * 0.24),
-        e.lineTo(y + _ * i * 0.28 - P * 0.8, b + _ * r * 0.24 - P * 0.6),
-        e.stroke());
+  if (scene.starfall)
+    for (let index = 0; index < 3; index++) {
+      let startX = rng() * width * 0.7,
+        startY = rng() * horizon * 0.4,
+        cyclePos = frac(time + index / 3);
+      if (cyclePos > 0.3) continue;
+      let progress = cyclePos / 0.3,
+        tailLength = height * 0.22;
+      ((ctx.strokeStyle = rgba(255, 255, 255, 0.8 * (1 - progress))),
+        (ctx.lineWidth = 1.3),
+        ctx.beginPath(),
+        ctx.moveTo(startX + progress * width * 0.28, startY + progress * height * 0.24),
+        ctx.lineTo(
+          startX + progress * width * 0.28 - tailLength * 0.8,
+          startY + progress * height * 0.24 - tailLength * 0.6,
+        ),
+        ctx.stroke());
     }
-  let $ = o.ice ? "#1a2430" : "#0c0d14";
-  ((e.fillStyle = $), e.beginPath(), e.moveTo(0, n));
-  let F = 8;
-  for (let p = 0; p <= F; p++) e.lineTo((p / F) * i, n - r * (0.04 + 0.12 * s()) * (p % 2 ? 1 : 0.5));
-  (e.lineTo(i, n), e.closePath(), e.fill());
-  let M = o.lava ? "#26120e" : o.ice ? "#27333f" : o.sand ? "#3d3022" : o.water ? "#14201f" : "#15130f";
-  if (((e.fillStyle = M), e.fillRect(0, n, i, r - n), o.sand)) {
-    e.fillStyle = "#4f3e2b";
-    for (let p = 0; p < 3; p++) {
-      (e.beginPath(), e.moveTo(0, r));
-      for (let y = 0; y <= i; y += 8)
-        e.lineTo(y, n + r * (0.07 + 0.06 * p) + r * 0.025 * Math.sin((y / i) * TAU * (1 + p) + p * 2));
-      (e.lineTo(i, r), e.closePath(), e.fill());
+  let ridgeColor = scene.ice ? "#1a2430" : "#0c0d14";
+  ((ctx.fillStyle = ridgeColor), ctx.beginPath(), ctx.moveTo(0, horizon));
+  let ridgeSteps = 8;
+  for (let i = 0; i <= ridgeSteps; i++)
+    ctx.lineTo((i / ridgeSteps) * width, horizon - height * (0.04 + 0.12 * rng()) * (i % 2 ? 1 : 0.5));
+  (ctx.lineTo(width, horizon), ctx.closePath(), ctx.fill());
+  let groundColor = scene.lava
+    ? "#26120e"
+    : scene.ice
+      ? "#27333f"
+      : scene.sand
+        ? "#3d3022"
+        : scene.water
+          ? "#14201f"
+          : "#15130f";
+  if (((ctx.fillStyle = groundColor), ctx.fillRect(0, horizon, width, height - horizon), scene.sand)) {
+    ctx.fillStyle = "#4f3e2b";
+    for (let dune = 0; dune < 3; dune++) {
+      (ctx.beginPath(), ctx.moveTo(0, height));
+      for (let x = 0; x <= width; x += 8)
+        ctx.lineTo(
+          x,
+          horizon +
+            height * (0.07 + 0.06 * dune) +
+            height * 0.025 * Math.sin((x / width) * TAU * (1 + dune) + dune * 2),
+        );
+      (ctx.lineTo(width, height), ctx.closePath(), ctx.fill());
     }
   }
-  if (o.water) {
-    let p = e.createLinearGradient(0, n + r * 0.03, 0, r);
-    (p.addColorStop(0, "#1f3f48"),
-      p.addColorStop(1, "#0b181c"),
-      (e.fillStyle = p),
-      e.fillRect(0, n + r * 0.03, i, r));
-    for (let b = 0; b < 9; b++) {
-      let v = n + r * (0.05 + 0.2 * s()),
-        _ = i * (0.08 + 0.1 * s()),
-        P = s(),
-        R = frac(P + t) * (i + _) - _;
-      ((e.fillStyle = rgba(200, 225, 235, 0.22)), e.fillRect(R, v, _, 1.2));
+  if (scene.water) {
+    let waterGradient = ctx.createLinearGradient(0, horizon + height * 0.03, 0, height);
+    (waterGradient.addColorStop(0, "#1f3f48"),
+      waterGradient.addColorStop(1, "#0b181c"),
+      (ctx.fillStyle = waterGradient),
+      ctx.fillRect(0, horizon + height * 0.03, width, height));
+    for (let i = 0; i < 9; i++) {
+      let y = horizon + height * (0.05 + 0.2 * rng()),
+        length = width * (0.08 + 0.1 * rng()),
+        offset = rng(),
+        x = frac(offset + time) * (width + length) - length;
+      ((ctx.fillStyle = rgba(200, 225, 235, 0.22)), ctx.fillRect(x, y, length, 1.2));
     }
-    let y = l.find((b) => b.e > 0.15);
-    if (y)
-      for (let b = 0; b < 6; b++)
-        ((e.fillStyle = rgba(255, 220, 160, (0.28 - b * 0.03) * Math.min(1, y.e * 2))),
-          e.fillRect(
-            y.x - (14 - b * 2) * 0.5 + 3 * Math.sin(TAU * (t * 2 + b * 0.2)),
-            n + r * (0.05 + 0.045 * b),
-            14 - b * 2,
+    let sunBody = bodies.find((body) => body.e > 0.15);
+    if (sunBody)
+      for (let i = 0; i < 6; i++)
+        ((ctx.fillStyle = rgba(255, 220, 160, (0.28 - i * 0.03) * Math.min(1, sunBody.e * 2))),
+          ctx.fillRect(
+            sunBody.x - (14 - i * 2) * 0.5 + 3 * Math.sin(TAU * (time * 2 + i * 0.2)),
+            horizon + height * (0.05 + 0.045 * i),
+            14 - i * 2,
             1.5,
           ));
   }
-  if (o.lava) {
-    for (let p = 0; p < 5; p++) {
-      let y = n + r * (0.06 + 0.05 * p);
-      ((e.strokeStyle = rgba(255, 122, 48, 0.55 + 0.4 * Math.sin(TAU * (t * 2 + p * 0.37)))),
-        (e.lineWidth = 1.6),
-        e.beginPath(),
-        e.moveTo(s() * i * 0.2, y));
-      for (let b = 1; b <= 6; b++) e.lineTo((b / 6) * i * (0.7 + 0.3 * s()), y + (s() - 0.5) * r * 0.04);
-      e.stroke();
+  if (scene.lava) {
+    for (let i = 0; i < 5; i++) {
+      let y = horizon + height * (0.06 + 0.05 * i);
+      ((ctx.strokeStyle = rgba(255, 122, 48, 0.55 + 0.4 * Math.sin(TAU * (time * 2 + i * 0.37)))),
+        (ctx.lineWidth = 1.6),
+        ctx.beginPath(),
+        ctx.moveTo(rng() * width * 0.2, y));
+      for (let j = 1; j <= 6; j++)
+        ctx.lineTo((j / 6) * width * (0.7 + 0.3 * rng()), y + (rng() - 0.5) * height * 0.04);
+      ctx.stroke();
     }
-    for (let p = 0; p < 14; p++) {
-      let y = s() * i,
-        b = s(),
-        v = frac(t * 3 + b);
-      ((e.fillStyle = rgba(255, 150, 70, 1 - v)),
-        e.fillRect(y + 6 * Math.sin(TAU * (v + b)), n + r * 0.1 - v * r * 0.45, 1.5, 1.5));
+    for (let i = 0; i < 14; i++) {
+      let x = rng() * width,
+        offset = rng(),
+        rise = frac(time * 3 + offset);
+      ((ctx.fillStyle = rgba(255, 150, 70, 1 - rise)),
+        ctx.fillRect(
+          x + 6 * Math.sin(TAU * (rise + offset)),
+          horizon + height * 0.1 - rise * height * 0.45,
+          1.5,
+          1.5,
+        ));
     }
   }
-  if (o.ice)
-    for (let p = 0; p < 16; p++) {
-      let y = s() * i,
-        b = n + s() * (r - n),
-        v = s();
-      ((e.fillStyle = rgba(225, 240, 255, 0.15 + 0.6 * Math.max(0, Math.sin(TAU * (t * 2 + v))) ** 3)),
-        e.fillRect(y, b, 1.4, 1.4));
+  if (scene.ice)
+    for (let i = 0; i < 16; i++) {
+      let x = rng() * width,
+        y = horizon + rng() * (height - horizon),
+        phase = rng();
+      ((ctx.fillStyle = rgba(
+        225,
+        240,
+        255,
+        0.15 + 0.6 * Math.max(0, Math.sin(TAU * (time * 2 + phase))) ** 3,
+      )),
+        ctx.fillRect(x, y, 1.4, 1.4));
     }
-  if (o.fissure === "submarine") {
-    let p = i * (0.22 + 0.56 * s()),
-      y = n + (r - n) * 0.3,
-      b = 0.5 + 0.5 * Math.sin(TAU * t * 3),
-      v = [];
-    for (let P = 0; P <= 5; P++) v.push([p + (s() - 0.5) * i * 0.05 + P * 1.2, y + (r - y - 2) * (P / 5)]);
-    let _ = () => {
-      (e.beginPath(),
-        v.forEach(([P, R], E) => {
-          let z = 1.6 * Math.sin(TAU * (t * 2 + E * 0.45));
-          E === 0 ? e.moveTo(P + z, R) : e.lineTo(P + z, R);
+  if (scene.fissure === "submarine") {
+    let fissureX = width * (0.22 + 0.56 * rng()),
+      topY = horizon + (height - horizon) * 0.3,
+      pulse = 0.5 + 0.5 * Math.sin(TAU * time * 3),
+      points = [];
+    for (let i = 0; i <= 5; i++)
+      points.push([fissureX + (rng() - 0.5) * width * 0.05 + i * 1.2, topY + (height - topY - 2) * (i / 5)]);
+    let strokeCrack = () => {
+      (ctx.beginPath(),
+        points.forEach(([x, y], pointIndex) => {
+          let wobble = 1.6 * Math.sin(TAU * (time * 2 + pointIndex * 0.45));
+          pointIndex === 0 ? ctx.moveTo(x + wobble, y) : ctx.lineTo(x + wobble, y);
         }),
-        e.stroke());
+        ctx.stroke());
     };
-    ((e.lineJoin = "miter"),
-      (e.strokeStyle = rgba(110, 190, 225, 0.12 + 0.08 * b)),
-      (e.lineWidth = 9),
-      _(),
-      (e.strokeStyle = rgba(170, 225, 245, 0.4 + 0.3 * b)),
-      (e.lineWidth = 1.6),
-      _());
-    for (let P = 0; P < 7; P++) {
-      let R = s(),
-        E = (s() - 0.5) * 9,
-        z = frac(t * 2 + R);
-      ((e.strokeStyle = rgba(205, 235, 248, 0.5 * (1 - z))),
-        (e.lineWidth = 0.9),
-        e.beginPath(),
-        e.arc(p + E + 2 * Math.sin(TAU * (z * 2 + R)), r - 4 - z * (r - y - 8), 1 + 1.4 * R, 0, TAU),
-        e.stroke());
+    ((ctx.lineJoin = "miter"),
+      (ctx.strokeStyle = rgba(110, 190, 225, 0.12 + 0.08 * pulse)),
+      (ctx.lineWidth = 9),
+      strokeCrack(),
+      (ctx.strokeStyle = rgba(170, 225, 245, 0.4 + 0.3 * pulse)),
+      (ctx.lineWidth = 1.6),
+      strokeCrack());
+    for (let i = 0; i < 7; i++) {
+      let phase = rng(),
+        dx = (rng() - 0.5) * 9,
+        progress = frac(time * 2 + phase);
+      ((ctx.strokeStyle = rgba(205, 235, 248, 0.5 * (1 - progress))),
+        (ctx.lineWidth = 0.9),
+        ctx.beginPath(),
+        ctx.arc(
+          fissureX + dx + 2 * Math.sin(TAU * (progress * 2 + phase)),
+          height - 4 - progress * (height - topY - 8),
+          1 + 1.4 * phase,
+          0,
+          TAU,
+        ),
+        ctx.stroke());
     }
-  } else if (o.fissure === "open") {
-    let p = i * (0.2 + 0.6 * s()),
-      y = 0.5 + 0.5 * Math.sin(TAU * t * 3),
-      b = [];
-    for (let _ = 0; _ <= 6; _++)
-      b.push([p + (s() - 0.5) * i * 0.07 + _ * 1.5, n + 2 + (r - n - 2) * (_ / 6)]);
-    let v = () => {
-      (e.beginPath(), b.forEach(([_, P], R) => (R === 0 ? e.moveTo(_, P) : e.lineTo(_, P))), e.stroke());
+  } else if (scene.fissure === "open") {
+    let fissureX = width * (0.2 + 0.6 * rng()),
+      pulse = 0.5 + 0.5 * Math.sin(TAU * time * 3),
+      points = [];
+    for (let i = 0; i <= 6; i++)
+      points.push([
+        fissureX + (rng() - 0.5) * width * 0.07 + i * 1.5,
+        horizon + 2 + (height - horizon - 2) * (i / 6),
+      ]);
+    let strokeCrack = () => {
+      (ctx.beginPath(),
+        points.forEach(([x, y], pointIndex) => (pointIndex === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y))),
+        ctx.stroke());
     };
-    ((e.lineJoin = "miter"),
-      (e.strokeStyle = rgba(150, 215, 255, 0.1 + 0.08 * y)),
-      (e.lineWidth = 7),
-      v(),
-      (e.strokeStyle = rgba(205, 238, 255, 0.55 + 0.4 * y)),
-      (e.lineWidth = 1.8),
-      v());
+    ((ctx.lineJoin = "miter"),
+      (ctx.strokeStyle = rgba(150, 215, 255, 0.1 + 0.08 * pulse)),
+      (ctx.lineWidth = 7),
+      strokeCrack(),
+      (ctx.strokeStyle = rgba(205, 238, 255, 0.55 + 0.4 * pulse)),
+      (ctx.lineWidth = 1.8),
+      strokeCrack());
   }
-  if (o.fissure === "cave") {
-    let p = i * (0.18 + 0.64 * s()),
-      y = r * 0.17,
-      b = r * 0.22,
-      v = 0.5 + 0.5 * Math.sin(TAU * t * 3);
-    ((e.fillStyle = "#040406"),
-      (e.strokeStyle = "#2c2a36"),
-      (e.lineWidth = 1),
-      e.beginPath(),
-      e.moveTo(p - y, n + 4),
-      e.lineTo(p - y, n - b * 0.55),
-      e.quadraticCurveTo(p, n - b * 1.25, p + y, n - b * 0.55),
-      e.lineTo(p + y, n + 4),
-      e.closePath(),
-      e.fill(),
-      e.stroke(),
-      (e.strokeStyle = rgba(190, 230, 255, 0.5 + 0.4 * v)),
-      (e.lineWidth = 1.6),
-      e.beginPath(),
-      e.moveTo(p, n - b * 0.7),
-      e.lineTo(p - 2, n - b * 0.4),
-      e.lineTo(p + 2, n - b * 0.15),
-      e.lineTo(p, n + 2),
-      e.stroke());
+  if (scene.fissure === "cave") {
+    let caveX = width * (0.18 + 0.64 * rng()),
+      halfWidth = height * 0.17,
+      caveHeight = height * 0.22,
+      pulse = 0.5 + 0.5 * Math.sin(TAU * time * 3);
+    ((ctx.fillStyle = "#040406"),
+      (ctx.strokeStyle = "#2c2a36"),
+      (ctx.lineWidth = 1),
+      ctx.beginPath(),
+      ctx.moveTo(caveX - halfWidth, horizon + 4),
+      ctx.lineTo(caveX - halfWidth, horizon - caveHeight * 0.55),
+      ctx.quadraticCurveTo(
+        caveX,
+        horizon - caveHeight * 1.25,
+        caveX + halfWidth,
+        horizon - caveHeight * 0.55,
+      ),
+      ctx.lineTo(caveX + halfWidth, horizon + 4),
+      ctx.closePath(),
+      ctx.fill(),
+      ctx.stroke(),
+      (ctx.strokeStyle = rgba(190, 230, 255, 0.5 + 0.4 * pulse)),
+      (ctx.lineWidth = 1.6),
+      ctx.beginPath(),
+      ctx.moveTo(caveX, horizon - caveHeight * 0.7),
+      ctx.lineTo(caveX - 2, horizon - caveHeight * 0.4),
+      ctx.lineTo(caveX + 2, horizon - caveHeight * 0.15),
+      ctx.lineTo(caveX, horizon + 2),
+      ctx.stroke());
   }
-  for (let p = 0; p < o.trees; p++) {
-    let y = i * (0.08 + (0.84 * (p + s() * 0.6)) / Math.max(1, o.trees)),
-      b = r * (0.2 + 0.1 * s()),
-      v = 1.6 * Math.sin(TAU * t + p);
+  for (let i = 0; i < scene.trees; i++) {
+    let x = width * (0.08 + (0.84 * (i + rng() * 0.6)) / Math.max(1, scene.trees)),
+      treeHeight = height * (0.2 + 0.1 * rng()),
+      sway = 1.6 * Math.sin(TAU * time + i);
     if (
-      ((e.fillStyle = o.burnt ? "#0a0909" : "#070b08"),
-      e.beginPath(),
-      e.moveTo(y - 2.5, n + 3),
-      e.lineTo(y + v * 0.4, n - b),
-      e.lineTo(y + 2.5, n + 3),
-      e.fill(),
-      o.burnt)
+      ((ctx.fillStyle = scene.burnt ? "#0a0909" : "#070b08"),
+      ctx.beginPath(),
+      ctx.moveTo(x - 2.5, horizon + 3),
+      ctx.lineTo(x + sway * 0.4, horizon - treeHeight),
+      ctx.lineTo(x + 2.5, horizon + 3),
+      ctx.fill(),
+      scene.burnt)
     ) {
-      ((e.strokeStyle = "#0a0909"), (e.lineWidth = 1.4));
-      for (let _ of [-1, 1])
-        (e.beginPath(),
-          e.moveTo(y + v * 0.3, n - b * 0.7),
-          e.lineTo(y + _ * b * 0.3 + v, n - b * 0.95),
-          e.stroke());
+      ((ctx.strokeStyle = "#0a0909"), (ctx.lineWidth = 1.4));
+      for (let side of [-1, 1])
+        (ctx.beginPath(),
+          ctx.moveTo(x + sway * 0.3, horizon - treeHeight * 0.7),
+          ctx.lineTo(x + side * treeHeight * 0.3 + sway, horizon - treeHeight * 0.95),
+          ctx.stroke());
     } else
-      (e.beginPath(),
-        e.moveTo(y - b * 0.42 + v, n - b * 0.5),
-        e.lineTo(y + v * 1.2, n - b * 1.15),
-        e.lineTo(y + b * 0.42 + v, n - b * 0.5),
-        e.fill());
-    if (o.fire)
-      for (let _ = 0; _ < 3; _++) {
-        let P = 0.5 + 0.5 * Math.sin(TAU * (t * 3 + _ * 0.31 + p * 0.2));
-        ((e.fillStyle = rgba(255, 140 + 60 * P, 40, 0.8)), e.beginPath());
-        let R = y + (_ - 1) * 4 + v;
-        (e.moveTo(R - 2, n - b * 0.7),
-          e.lineTo(R, n - b * (0.9 + 0.25 * P)),
-          e.lineTo(R + 2, n - b * 0.7),
-          e.fill());
+      (ctx.beginPath(),
+        ctx.moveTo(x - treeHeight * 0.42 + sway, horizon - treeHeight * 0.5),
+        ctx.lineTo(x + sway * 1.2, horizon - treeHeight * 1.15),
+        ctx.lineTo(x + treeHeight * 0.42 + sway, horizon - treeHeight * 0.5),
+        ctx.fill());
+    if (scene.fire)
+      for (let j = 0; j < 3; j++) {
+        let flicker = 0.5 + 0.5 * Math.sin(TAU * (time * 3 + j * 0.31 + i * 0.2));
+        ((ctx.fillStyle = rgba(255, 140 + 60 * flicker, 40, 0.8)), ctx.beginPath());
+        let flameX = x + (j - 1) * 4 + sway;
+        (ctx.moveTo(flameX - 2, horizon - treeHeight * 0.7),
+          ctx.lineTo(flameX, horizon - treeHeight * (0.9 + 0.25 * flicker)),
+          ctx.lineTo(flameX + 2, horizon - treeHeight * 0.7),
+          ctx.fill());
       }
   }
   if (
-    (o.ruins.forEach((p, y) => {
-      let b = i * (0.2 + 0.6 * ((y + s()) / Math.max(1, o.ruins.length)));
-      if (((e.fillStyle = "#08080d"), (e.strokeStyle = "#2c2a36"), (e.lineWidth = 1), p === "door")) {
-        let v = r * 0.1,
-          _ = r * 0.24;
-        (e.beginPath(),
-          e.moveTo(b - v, n + 2),
-          e.lineTo(b - v, n - _ * 0.7),
-          e.lineTo(b, n - _),
-          e.lineTo(b + v, n - _ * 0.7),
-          e.lineTo(b + v, n + 2),
-          e.closePath(),
-          e.fill(),
-          e.stroke());
-      } else if (p === "bridge") {
-        let v = i * 0.2;
-        (e.beginPath(),
-          e.moveTo(b - v, n + 2),
-          e.quadraticCurveTo(b, n - r * 0.22, b + v, n + 2),
-          e.lineTo(b + v, n + 6),
-          e.lineTo(b - v, n + 6),
-          e.closePath(),
-          e.fill(),
-          e.stroke());
-      } else if (p === "tablet") {
-        let v = r * 0.07,
-          _ = r * 0.2;
-        (e.fillRect(b - v, n - _, v * 2, _ + 2),
-          e.strokeRect(b - v, n - _, v * 2, _ + 2),
-          o.tabletAwake &&
-            ((e.fillStyle = rgba(255, 190, 110, 0.35 + 0.3 * Math.sin(TAU * t * 2))),
-            e.fillRect(b - v + 3, n - _ + 6, v * 2 - 6, 1.4),
-            e.fillRect(b - v + 3, n - _ + 12, v * 2 - 10, 1.4)));
-      } else if ((e.fillRect(b - 1.2, n - r * 0.16, 2.4, r * 0.16 + 2), o.lampLit)) {
-        let v = e.createRadialGradient(b, n - r * 0.17, 1, b, n - r * 0.17, r * 0.2);
-        (v.addColorStop(0, rgba(140, 190, 255, 0.55 + 0.15 * Math.sin(TAU * t * 3))),
-          v.addColorStop(1, rgba(140, 190, 255, 0)),
-          (e.fillStyle = v),
-          e.fillRect(0, 0, i, r),
-          (e.fillStyle = "#cfe3ff"),
-          e.beginPath(),
-          e.arc(b, n - r * 0.17, 2.4, 0, TAU),
-          e.fill());
-      } else ((e.fillStyle = "#2c2a36"), e.beginPath(), e.arc(b, n - r * 0.17, 2.2, 0, TAU), e.fill());
+    (scene.ruins.forEach((kind, index) => {
+      let x = width * (0.2 + 0.6 * ((index + rng()) / Math.max(1, scene.ruins.length)));
+      if (
+        ((ctx.fillStyle = "#08080d"), (ctx.strokeStyle = "#2c2a36"), (ctx.lineWidth = 1), kind === "door")
+      ) {
+        let halfWidth = height * 0.1,
+          doorHeight = height * 0.24;
+        (ctx.beginPath(),
+          ctx.moveTo(x - halfWidth, horizon + 2),
+          ctx.lineTo(x - halfWidth, horizon - doorHeight * 0.7),
+          ctx.lineTo(x, horizon - doorHeight),
+          ctx.lineTo(x + halfWidth, horizon - doorHeight * 0.7),
+          ctx.lineTo(x + halfWidth, horizon + 2),
+          ctx.closePath(),
+          ctx.fill(),
+          ctx.stroke());
+      } else if (kind === "bridge") {
+        let halfSpan = width * 0.2;
+        (ctx.beginPath(),
+          ctx.moveTo(x - halfSpan, horizon + 2),
+          ctx.quadraticCurveTo(x, horizon - height * 0.22, x + halfSpan, horizon + 2),
+          ctx.lineTo(x + halfSpan, horizon + 6),
+          ctx.lineTo(x - halfSpan, horizon + 6),
+          ctx.closePath(),
+          ctx.fill(),
+          ctx.stroke());
+      } else if (kind === "tablet") {
+        let tabletHalfWidth = height * 0.07,
+          tabletHeight = height * 0.2;
+        (ctx.fillRect(x - tabletHalfWidth, horizon - tabletHeight, tabletHalfWidth * 2, tabletHeight + 2),
+          ctx.strokeRect(x - tabletHalfWidth, horizon - tabletHeight, tabletHalfWidth * 2, tabletHeight + 2),
+          scene.tabletAwake &&
+            ((ctx.fillStyle = rgba(255, 190, 110, 0.35 + 0.3 * Math.sin(TAU * time * 2))),
+            ctx.fillRect(x - tabletHalfWidth + 3, horizon - tabletHeight + 6, tabletHalfWidth * 2 - 6, 1.4),
+            ctx.fillRect(
+              x - tabletHalfWidth + 3,
+              horizon - tabletHeight + 12,
+              tabletHalfWidth * 2 - 10,
+              1.4,
+            )));
+      } else if ((ctx.fillRect(x - 1.2, horizon - height * 0.16, 2.4, height * 0.16 + 2), scene.lampLit)) {
+        let lampGlow = ctx.createRadialGradient(
+          x,
+          horizon - height * 0.17,
+          1,
+          x,
+          horizon - height * 0.17,
+          height * 0.2,
+        );
+        (lampGlow.addColorStop(0, rgba(140, 190, 255, 0.55 + 0.15 * Math.sin(TAU * time * 3))),
+          lampGlow.addColorStop(1, rgba(140, 190, 255, 0)),
+          (ctx.fillStyle = lampGlow),
+          ctx.fillRect(0, 0, width, height),
+          (ctx.fillStyle = "#cfe3ff"),
+          ctx.beginPath(),
+          ctx.arc(x, horizon - height * 0.17, 2.4, 0, TAU),
+          ctx.fill());
+      } else
+        ((ctx.fillStyle = "#2c2a36"),
+          ctx.beginPath(),
+          ctx.arc(x, horizon - height * 0.17, 2.2, 0, TAU),
+          ctx.fill());
     }),
-    o.glow)
+    scene.glow)
   )
-    for (let p = 0; p < 7; p++) {
-      let y = i * (0.1 + 0.12 * p),
-        b = n - r * (0.03 + 0.07 * Math.abs(Math.sin(p * 1.7))),
-        v = 0.35 + 0.5 * (0.5 + 0.5 * Math.sin(TAU * (t * 2 + p * 0.17))),
-        _ = e.createRadialGradient(y, b, 0, y, b, 9);
-      (_.addColorStop(0, rgba(170, 240, 210, v)),
-        _.addColorStop(1, rgba(170, 240, 210, 0)),
-        (e.fillStyle = _),
-        e.fillRect(y - 10, b - 10, 20, 20));
+    for (let i = 0; i < 7; i++) {
+      let x = width * (0.1 + 0.12 * i),
+        y = horizon - height * (0.03 + 0.07 * Math.abs(Math.sin(i * 1.7))),
+        alpha = 0.35 + 0.5 * (0.5 + 0.5 * Math.sin(TAU * (time * 2 + i * 0.17))),
+        gradient = ctx.createRadialGradient(x, y, 0, x, y, 9);
+      (gradient.addColorStop(0, rgba(170, 240, 210, alpha)),
+        gradient.addColorStop(1, rgba(170, 240, 210, 0)),
+        (ctx.fillStyle = gradient),
+        ctx.fillRect(x - 10, y - 10, 20, 20));
     }
-  if (o.eyes) {
-    let p = i * (0.25 + 0.5 * s());
-    frac(t * 2) < 0.82 &&
-      ((e.fillStyle = "#ffd070"), e.fillRect(p, n - 1, 2, 2), e.fillRect(p + 6, n - 1, 2, 2));
+  if (scene.eyes) {
+    let x = width * (0.25 + 0.5 * rng());
+    frac(time * 2) < 0.82 &&
+      ((ctx.fillStyle = "#ffd070"),
+      ctx.fillRect(x, horizon - 1, 2, 2),
+      ctx.fillRect(x + 6, horizon - 1, 2, 2));
   }
-  if (o.moths) {
-    let p = i * (0.3 + 0.4 * s()),
-      y = n - r * 0.22;
-    for (let b = 0; b < 6; b++) {
-      let v = 1 + (b % 3),
-        _ = b / 6,
-        P = p + i * 0.1 * Math.cos(TAU * (t * v + _)),
-        R = y + r * 0.07 * Math.sin(TAU * (t * v + _ * 1.3)),
-        E = e.createRadialGradient(P, R, 0, P, R, 6);
-      (E.addColorStop(0, rgba(246, 230, 168, 0.9)),
-        E.addColorStop(1, rgba(246, 230, 168, 0)),
-        (e.fillStyle = E),
-        e.fillRect(P - 6, R - 6, 12, 12));
+  if (scene.moths) {
+    let centerX = width * (0.3 + 0.4 * rng()),
+      centerY = horizon - height * 0.22;
+    for (let i = 0; i < 6; i++) {
+      let speed = 1 + (i % 3),
+        phase = i / 6,
+        x = centerX + width * 0.1 * Math.cos(TAU * (time * speed + phase)),
+        y = centerY + height * 0.07 * Math.sin(TAU * (time * speed + phase * 1.3)),
+        gradient = ctx.createRadialGradient(x, y, 0, x, y, 6);
+      (gradient.addColorStop(0, rgba(246, 230, 168, 0.9)),
+        gradient.addColorStop(1, rgba(246, 230, 168, 0)),
+        (ctx.fillStyle = gradient),
+        ctx.fillRect(x - 6, y - 6, 12, 12));
     }
   }
-  if (o.fog)
-    for (let p = 0; p < 4; p++) {
-      let y = n - r * (0.18 - 0.07 * p),
-        b = 22 * Math.sin(TAU * t + p);
-      ((e.fillStyle = rgba(214, 218, 226, 0.13)), e.fillRect(b - 20, y, i + 40, r * 0.1));
+  if (scene.fog)
+    for (let i = 0; i < 4; i++) {
+      let y = horizon - height * (0.18 - 0.07 * i),
+        drift = 22 * Math.sin(TAU * time + i);
+      ((ctx.fillStyle = rgba(214, 218, 226, 0.13)), ctx.fillRect(drift - 20, y, width + 40, height * 0.1));
     }
-  if (o.heat) {
-    ((e.strokeStyle = rgba(255, 190, 120, 0.13)), (e.lineWidth = 1.4));
-    for (let p = 0; p < 8; p++) {
-      let y = i * (0.08 + 0.12 * p);
-      e.beginPath();
-      for (let b = n; b > n - r * 0.3; b -= 3) {
-        let v = (n - b) / (r * 0.3),
-          _ = y + 3 * Math.sin(v * 9 - TAU * t * 2 + p);
-        b === n ? e.moveTo(_, b) : e.lineTo(_, b);
+  if (scene.heat) {
+    ((ctx.strokeStyle = rgba(255, 190, 120, 0.13)), (ctx.lineWidth = 1.4));
+    for (let i = 0; i < 8; i++) {
+      let x = width * (0.08 + 0.12 * i);
+      ctx.beginPath();
+      for (let y = horizon; y > horizon - height * 0.3; y -= 3) {
+        let progress = (horizon - y) / (height * 0.3),
+          sx = x + 3 * Math.sin(progress * 9 - TAU * time * 2 + i);
+        y === horizon ? ctx.moveTo(sx, y) : ctx.lineTo(sx, y);
       }
-      e.stroke();
+      ctx.stroke();
     }
   }
-  if (o.steam || o.ash || o.dust) {
-    let [p, y, b] = o.ash ? [70, 70, 76] : o.dust ? [160, 120, 80] : [235, 235, 240];
-    for (let v = 0; v < 6; v++) {
-      let _ = s(),
-        P = s(),
-        R = o.steam ? frac(t + P) : 0,
-        E = o.steam ? i * _ + 8 * Math.sin(TAU * (t + _)) : frac(_ + t) * (i + 80) - 40,
-        z = o.steam ? n - R * r * 0.55 : r * (0.1 + 0.4 * P),
-        U = r * (o.steam ? 0.06 + 0.07 * R : 0.12),
-        ee = e.createRadialGradient(E, z, 0, E, z, U);
-      (ee.addColorStop(0, rgba(p, y, b, o.steam ? 0.28 * (1 - R) : 0.3)),
-        ee.addColorStop(1, rgba(p, y, b, 0)),
-        (e.fillStyle = ee),
-        e.fillRect(E - U, z - U, U * 2, U * 2));
+  if (scene.steam || scene.ash || scene.dust) {
+    let [red, green, blue] = scene.ash ? [70, 70, 76] : scene.dust ? [160, 120, 80] : [235, 235, 240];
+    for (let i = 0; i < 6; i++) {
+      let rx = rng(),
+        ry = rng(),
+        rise = scene.steam ? frac(time + ry) : 0,
+        x = scene.steam ? width * rx + 8 * Math.sin(TAU * (time + rx)) : frac(rx + time) * (width + 80) - 40,
+        y = scene.steam ? horizon - rise * height * 0.55 : height * (0.1 + 0.4 * ry),
+        radius = height * (scene.steam ? 0.06 + 0.07 * rise : 0.12),
+        gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      (gradient.addColorStop(0, rgba(red, green, blue, scene.steam ? 0.28 * (1 - rise) : 0.3)),
+        gradient.addColorStop(1, rgba(red, green, blue, 0)),
+        (ctx.fillStyle = gradient),
+        ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2));
     }
   }
-  if (o.rain) {
-    let p = o.storm ? 120 : 64;
-    ((e.strokeStyle = rgba(190, 205, 225, o.storm ? 0.4 : 0.3)), (e.lineWidth = 1), e.beginPath());
-    for (let y = 0; y < p; y++) {
-      let b = s() * i,
-        v = s(),
-        _ = frac(v + t * 4) * (r + 20) - 10,
-        P = o.wind ? 0.35 : 0.1,
-        R = b + _ * P;
-      (e.moveTo(R, _), e.lineTo(R + (o.wind ? 4 : 1.5), _ + 7));
+  if (scene.rain) {
+    let dropCount = scene.storm ? 120 : 64;
+    ((ctx.strokeStyle = rgba(190, 205, 225, scene.storm ? 0.4 : 0.3)), (ctx.lineWidth = 1), ctx.beginPath());
+    for (let i = 0; i < dropCount; i++) {
+      let x0 = rng() * width,
+        phase = rng(),
+        y = frac(phase + time * 4) * (height + 20) - 10,
+        slant = scene.wind ? 0.35 : 0.1,
+        x = x0 + y * slant;
+      (ctx.moveTo(x, y), ctx.lineTo(x + (scene.wind ? 4 : 1.5), y + 7));
     }
-    e.stroke();
+    ctx.stroke();
   }
-  if (o.hail) {
-    e.fillStyle = rgba(240, 245, 255, 0.75);
-    for (let p = 0; p < 26; p++) {
-      let y = s() * i,
-        b = s();
-      e.fillRect(y, frac(b + t * 5) * (r + 10) - 5, 1.8, 1.8);
-    }
-  }
-  if (o.wind) {
-    ((e.strokeStyle = rgba(210, 220, 235, 0.22)), (e.lineWidth = 1));
-    for (let p = 0; p < 12; p++) {
-      let y = s() * n,
-        b = s(),
-        v = i * (0.08 + 0.14 * s()),
-        _ = frac(b + t * 3) * (i + v) - v;
-      (e.beginPath(), e.moveTo(_, y), e.lineTo(_ + v, y), e.stroke());
+  if (scene.hail) {
+    ctx.fillStyle = rgba(240, 245, 255, 0.75);
+    for (let i = 0; i < 26; i++) {
+      let x = rng() * width,
+        phase = rng();
+      ctx.fillRect(x, frac(phase + time * 5) * (height + 10) - 5, 1.8, 1.8);
     }
   }
-  if (o.lightning) {
-    let p = 0;
-    ([0.15, 0.2, 0.62].forEach((b, v) => {
-      let _ = i * (0.2 + 0.6 * s()),
-        P = Math.min(Math.abs(t - b), 1 - Math.abs(t - b)),
-        R = Math.max(0, 1 - P / 0.025) ** 2;
-      if (((p = Math.max(p, R)), R > 0.25)) {
-        ((e.strokeStyle = rgba(255, 255, 255, 0.9 * R)), (e.lineWidth = 2), e.beginPath(), e.moveTo(_, 0));
-        let E = mulberry32(o.seed + v * 977),
-          z = _;
-        for (let U = 0; U < n; U += n / 7) ((z += (E() - 0.5) * 22), e.lineTo(z, U + n / 7));
-        e.stroke();
+  if (scene.wind) {
+    ((ctx.strokeStyle = rgba(210, 220, 235, 0.22)), (ctx.lineWidth = 1));
+    for (let i = 0; i < 12; i++) {
+      let y = rng() * horizon,
+        phase = rng(),
+        length = width * (0.08 + 0.14 * rng()),
+        x = frac(phase + time * 3) * (width + length) - length;
+      (ctx.beginPath(), ctx.moveTo(x, y), ctx.lineTo(x + length, y), ctx.stroke());
+    }
+  }
+  if (scene.lightning) {
+    let flash = 0;
+    ([0.15, 0.2, 0.62].forEach((flashTime, index) => {
+      let x = width * (0.2 + 0.6 * rng()),
+        distance = Math.min(Math.abs(time - flashTime), 1 - Math.abs(time - flashTime)),
+        strength = Math.max(0, 1 - distance / 0.025) ** 2;
+      if (((flash = Math.max(flash, strength)), strength > 0.25)) {
+        ((ctx.strokeStyle = rgba(255, 255, 255, 0.9 * strength)),
+          (ctx.lineWidth = 2),
+          ctx.beginPath(),
+          ctx.moveTo(x, 0));
+        let boltRng = mulberry32(scene.seed + index * 977),
+          boltX = x;
+        for (let y = 0; y < horizon; y += horizon / 7)
+          ((boltX += (boltRng() - 0.5) * 22), ctx.lineTo(boltX, y + horizon / 7));
+        ctx.stroke();
       }
     }),
-      p > 0 && ((e.fillStyle = rgba(235, 240, 255, 0.34 * p)), e.fillRect(0, 0, i, r)));
+      flash > 0 && ((ctx.fillStyle = rgba(235, 240, 255, 0.34 * flash)), ctx.fillRect(0, 0, width, height)));
   }
-  if (o.unrest > 0.25 && o.verdict !== "stable") {
-    ((e.fillStyle = rgba(0, 0, 0, 0.12 * o.unrest * (0.5 + 0.5 * Math.sin(TAU * t * 9)))),
-      e.fillRect(0, 0, i, r));
-    for (let p = 0; p < 28; p++)
-      ((e.fillStyle = rgba(200, 200, 200, 0.16 * o.unrest)), e.fillRect(s() * i, s() * r, 1.2, 1.2));
+  if (scene.unrest > 0.25 && scene.verdict !== "stable") {
+    ((ctx.fillStyle = rgba(0, 0, 0, 0.12 * scene.unrest * (0.5 + 0.5 * Math.sin(TAU * time * 9)))),
+      ctx.fillRect(0, 0, width, height));
+    for (let i = 0; i < 28; i++)
+      ((ctx.fillStyle = rgba(200, 200, 200, 0.16 * scene.unrest)),
+        ctx.fillRect(rng() * width, rng() * height, 1.2, 1.2));
   }
-  let T = e.createRadialGradient(i / 2, r / 2, r * 0.35, i / 2, r / 2, i * 0.62);
-  (T.addColorStop(0, rgba(0, 0, 0, 0)),
-    T.addColorStop(1, rgba(0, 0, 0, 0.7)),
-    (e.fillStyle = T),
-    e.fillRect(0, 0, i, r),
-    e.restore());
+  let vignette = ctx.createRadialGradient(
+    width / 2,
+    height / 2,
+    height * 0.35,
+    width / 2,
+    height / 2,
+    width * 0.62,
+  );
+  (vignette.addColorStop(0, rgba(0, 0, 0, 0)),
+    vignette.addColorStop(1, rgba(0, 0, 0, 0.7)),
+    (ctx.fillStyle = vignette),
+    ctx.fillRect(0, 0, width, height),
+    ctx.restore());
 }
 
 const WINDOW_W = 240;

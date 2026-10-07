@@ -2,8 +2,8 @@
 const { AXES, DEFAULT_CATALYST, DEFAULT_WEIGHT, REACTION_TYPES, builtinLibrary } = require("./registry");
 const { SKY_ENTRIES } = require("./data/sky");
 
-function libraryBlocksIn(e) {
-  return [...e.matchAll(/```age-library[ \t]*\r?\n([\s\S]*?)```/g)].map((o) => o[1]);
+function libraryBlocksIn(text) {
+  return [...text.matchAll(/```age-library[ \t]*\r?\n([\s\S]*?)```/g)].map((match) => match[1]);
 }
 
 const ID_RE = /^[a-z][a-z0-9_]*$/;
@@ -18,244 +18,291 @@ const REACTION_LINE_RE =
 const VARIANT_LINE_RE =
   /^variant\s+([A-Za-z][A-Za-z0-9_]*)\s*->\s*([A-Za-z][A-Za-z0-9_]*)(?:\s+with\s+([A-Za-z][A-Za-z0-9_]*))?$/i;
 
-function parseLibrary(e, o) {
-  let t = { blocks: [], reactions: [], variants: [], problems: [] },
-    i = (s, n, a) => t.problems.push({ level: "error", file: o, line: s, text: n, message: a }),
-    r = (s, n, a) => t.problems.push({ level: "warning", file: o, line: s, text: n, message: a });
+function parseLibrary(source, file) {
+  let result = { blocks: [], reactions: [], variants: [], problems: [] },
+    addError = (line, text, message) =>
+      result.problems.push({ level: "error", file: file, line: line, text: text, message: message }),
+    addWarning = (line, text, message) =>
+      result.problems.push({ level: "warning", file: file, line: line, text: text, message: message });
   return (
-    e
+    source
       .split(
         `
 `,
       )
-      .forEach((s, n) => {
-        let a = n + 1,
-          c = s.trim();
-        if (c === "" || c.startsWith("#")) return;
-        let g = c.match(BLOCK_LINE_RE);
-        if (g) {
-          let u = g[1].toLowerCase(),
-            l = g[2].toLowerCase(),
-            d = g[3]
+      .forEach((rawLine, index) => {
+        let lineNo = index + 1,
+          line = rawLine.trim();
+        if (line === "" || line.startsWith("#")) return;
+        let match = line.match(BLOCK_LINE_RE);
+        if (match) {
+          let kind = match[1].toLowerCase(),
+            id = match[2].toLowerCase(),
+            descriptors = match[3]
               .split(",")
-              .map((x) => x.trim())
+              .map((part) => part.trim())
               .filter(Boolean),
-            f = g[4].match(BLOCK_TAIL_RE);
-          if (!ID_RE.test(l))
-            return i(
-              a,
-              c,
-              `\u201C${g[2]}\u201D isn't a usable id (lowercase letters, digits and _, starting with a letter)`,
+            tail = match[4].match(BLOCK_TAIL_RE);
+          if (!ID_RE.test(id))
+            return addError(
+              lineNo,
+              line,
+              `\u201C${match[2]}\u201D isn't a usable id (lowercase letters, digits and _, starting with a letter)`,
             );
-          if (d.length === 0) return i(a, c, "needs at least one descriptor, e.g.  heavy, bitter, pale");
-          if (!f)
-            return i(
-              a,
-              c,
+          if (descriptors.length === 0)
+            return addError(lineNo, line, "needs at least one descriptor, e.g.  heavy, bitter, pale");
+          if (!tail)
+            return addError(
+              lineNo,
+              line,
               `after the | put an axis (${AXES.join(", ")}), optionally weight=0.03 bonus=-0.1 and a "phrase"`,
             );
-          let m = f[1].toLowerCase();
-          if (!AXES.includes(m))
-            return i(a, c, `unknown axis \u201C${f[1]}\u201D \u2014 use one of: ${AXES.join(", ")}`);
-          let k = {};
-          for (let x of f[2].matchAll(/(weight|bonus)\s*=\s*(-?\d*\.?\d+)/g)) k[x[1]] = Number(x[2]);
-          let w = u === "block";
-          (d.length < 2 && r(a, c, "only one descriptor \u2014 two or three read better"),
-            !w &&
-              "weight" in k &&
-              r(a, c, "a product has no weight (it costs nothing; only writing a block does)"),
-            w &&
-              "bonus" in k &&
-              r(a, c, "bonus only applies to what a reaction produces; a block you write has none"),
-            t.blocks.push({
-              line: a,
-              text: c,
+          let axis = tail[1].toLowerCase();
+          if (!AXES.includes(axis))
+            return addError(
+              lineNo,
+              line,
+              `unknown axis \u201C${tail[1]}\u201D \u2014 use one of: ${AXES.join(", ")}`,
+            );
+          let mods = {};
+          for (let mod of tail[2].matchAll(/(weight|bonus)\s*=\s*(-?\d*\.?\d+)/g))
+            mods[mod[1]] = Number(mod[2]);
+          let writable = kind === "block";
+          (descriptors.length < 2 &&
+            addWarning(lineNo, line, "only one descriptor \u2014 two or three read better"),
+            !writable &&
+              "weight" in mods &&
+              addWarning(
+                lineNo,
+                line,
+                "a product has no weight (it costs nothing; only writing a block does)",
+              ),
+            writable &&
+              "bonus" in mods &&
+              addWarning(
+                lineNo,
+                line,
+                "bonus only applies to what a reaction produces; a block you write has none",
+              ),
+            result.blocks.push({
+              line: lineNo,
+              text: line,
               def: {
-                id: l,
-                descriptors: d,
-                axis: m,
-                writable: w,
-                weight: w ? (k.weight ?? DEFAULT_WEIGHT) : 0,
-                ...(f[3] !== void 0 ? { presence: f[3] } : {}),
-                ...(k.bonus !== void 0 ? { stabilityBonus: k.bonus } : {}),
+                id: id,
+                descriptors: descriptors,
+                axis: axis,
+                writable: writable,
+                weight: writable ? (mods.weight ?? DEFAULT_WEIGHT) : 0,
+                ...(tail[3] !== void 0 ? { presence: tail[3] } : {}),
+                ...(mods.bonus !== void 0 ? { stabilityBonus: mods.bonus } : {}),
               },
             }));
           return;
         }
-        if (((g = c.match(REACTION_LINE_RE)), g)) {
-          let [u, l, d] = [g[1], g[2], g[3]].map((k) => k.toLowerCase()),
-            f = g[4].toLowerCase();
-          if (!REACTION_TYPES.includes(f))
-            return i(
-              a,
-              c,
-              `unknown reaction type \u201C${g[4]}\u201D \u2014 use one of: ${REACTION_TYPES.join(", ")}`,
+        if (((match = line.match(REACTION_LINE_RE)), match)) {
+          let [ingredientA, ingredientB, resultId] = [match[1], match[2], match[3]].map((part) =>
+              part.toLowerCase(),
+            ),
+            type = match[4].toLowerCase();
+          if (!REACTION_TYPES.includes(type))
+            return addError(
+              lineNo,
+              line,
+              `unknown reaction type \u201C${match[4]}\u201D \u2014 use one of: ${REACTION_TYPES.join(", ")}`,
             );
-          if (u === l) return i(a, c, "a reaction needs two different ingredients");
-          let m = g[6]
-            ? g[6]
+          if (ingredientA === ingredientB)
+            return addError(lineNo, line, "a reaction needs two different ingredients");
+          let verbs = match[6]
+            ? match[6]
                 .split("|")
-                .map((k) => k.trim())
+                .map((part) => part.trim())
                 .filter(Boolean)
             : void 0;
-          t.reactions.push({
-            line: a,
-            text: c,
+          result.reactions.push({
+            line: lineNo,
+            text: line,
             def: {
-              a: u,
-              b: l,
-              result: d,
-              type: f,
-              ...(g[5] !== void 0 ? { cost: Number(g[5]) } : {}),
-              ...(m && m.length ? { verbs: m } : {}),
+              a: ingredientA,
+              b: ingredientB,
+              result: resultId,
+              type: type,
+              ...(match[5] !== void 0 ? { cost: Number(match[5]) } : {}),
+              ...(verbs && verbs.length ? { verbs: verbs } : {}),
             },
           });
           return;
         }
-        if (((g = c.match(VARIANT_LINE_RE)), g)) {
-          t.variants.push({
-            line: a,
-            text: c,
+        if (((match = line.match(VARIANT_LINE_RE)), match)) {
+          result.variants.push({
+            line: lineNo,
+            text: line,
             def: {
-              base: g[1].toLowerCase(),
-              variant: g[2].toLowerCase(),
-              catalyst: (g[3] ?? DEFAULT_CATALYST).toLowerCase(),
+              base: match[1].toLowerCase(),
+              variant: match[2].toLowerCase(),
+              catalyst: (match[3] ?? DEFAULT_CATALYST).toLowerCase(),
             },
           });
           return;
         }
-        let h = c.split(/\s+/)[0].toLowerCase();
-        i(
-          a,
-          c,
-          h === "block" || h === "product"
+        let firstWord = line.split(/\s+/)[0].toLowerCase();
+        addError(
+          lineNo,
+          line,
+          firstWord === "block" || firstWord === "product"
             ? "expected   block id: descriptor, descriptor | axis"
-            : h === "reaction"
+            : firstWord === "reaction"
               ? "expected   reaction a + b -> result (type)"
-              : h === "variant"
+              : firstWord === "variant"
                 ? "expected   variant base -> variant   (optionally  with catalyst)"
                 : "not a line I know \u2014 start with block, product, reaction or variant (or # for a comment)",
         );
       }),
-    t
+    result
   );
 }
 
-function mergeLibraries(e, o) {
-  let t = e.flatMap((m) => m.parsed.problems),
-    i = builtinLibrary(),
-    r = new Set(SKY_ENTRIES.map((m) => m.id)),
-    s = new Map(i.blocks.map((m) => [m.id, m])),
-    n = (m, k, w) => t.push({ level: "error", file: m, line: k.line, text: k.text, message: w }),
-    a = (m, k, w) => t.push({ level: "warning", file: m, line: k.line, text: k.text, message: w }),
-    c = new Map(),
-    g = new Map();
-  for (let { file: m, parsed: k } of e)
-    for (let w of k.blocks) {
-      let x = w.def.id;
-      if (r.has(x)) {
-        n(m, w, `\u201C${x}\u201D is already a sky symbol \u2014 pick another id`);
+function mergeLibraries(sources, extra) {
+  let problems = sources.flatMap((source) => source.parsed.problems),
+    builtin = builtinLibrary(),
+    skyIds = new Set(SKY_ENTRIES.map((entry) => entry.id)),
+    builtinById = new Map(builtin.blocks.map((block) => [block.id, block])),
+    addError = (file, item, message) =>
+      problems.push({ level: "error", file: file, line: item.line, text: item.text, message: message }),
+    addWarning = (file, item, message) =>
+      problems.push({ level: "warning", file: file, line: item.line, text: item.text, message: message }),
+    customBlocks = new Map(),
+    definedIn = new Map();
+  for (let { file, parsed } of sources)
+    for (let block of parsed.blocks) {
+      let id = block.def.id;
+      if (skyIds.has(id)) {
+        addError(file, block, `\u201C${id}\u201D is already a sky symbol \u2014 pick another id`);
         continue;
       }
-      let A = s.get(x);
-      if (A && A.writable !== w.def.writable) {
-        n(
-          m,
-          w,
-          `\u201C${x}\u201D is a built-in ${A.writable ? "block" : "product"}; it can't become a ${w.def.writable ? "block" : "product"}`,
+      let builtinBlock = builtinById.get(id);
+      if (builtinBlock && builtinBlock.writable !== block.def.writable) {
+        addError(
+          file,
+          block,
+          `\u201C${id}\u201D is a built-in ${builtinBlock.writable ? "block" : "product"}; it can't become a ${block.def.writable ? "block" : "product"}`,
         );
         continue;
       }
-      (g.has(x) && a(m, w, `\u201C${x}\u201D is defined again (this one wins over ${g.get(x)})`),
-        g.set(x, m ?? "this note"),
-        c.set(x, w.def));
+      (definedIn.has(id) &&
+        addWarning(
+          file,
+          block,
+          `\u201C${id}\u201D is defined again (this one wins over ${definedIn.get(id)})`,
+        ),
+        definedIn.set(id, file ?? "this note"),
+        customBlocks.set(id, block.def));
     }
-  let h = new Map();
-  for (let m of i.blocks) h.set(m.id, m);
-  for (let m of o?.blocks ?? []) h.set(m.id, m);
-  for (let m of c.values()) h.set(m.id, m);
-  let u = [];
-  for (let { file: m, parsed: k } of e)
-    for (let w of k.reactions) {
-      let x = [w.def.a, w.def.b, w.def.result].find((A) => !h.has(A));
-      if (x) {
-        n(m, w, `\u201C${x}\u201D isn't a block or product \u2014 define it first (block / product line)`);
+  let allBlocks = new Map();
+  for (let block of builtin.blocks) allBlocks.set(block.id, block);
+  for (let block of extra?.blocks ?? []) allBlocks.set(block.id, block);
+  for (let block of customBlocks.values()) allBlocks.set(block.id, block);
+  let reactions = [];
+  for (let { file, parsed } of sources)
+    for (let reaction of parsed.reactions) {
+      let missing = [reaction.def.a, reaction.def.b, reaction.def.result].find(
+        (candidate) => !allBlocks.has(candidate),
+      );
+      if (missing) {
+        addError(
+          file,
+          reaction,
+          `\u201C${missing}\u201D isn't a block or product \u2014 define it first (block / product line)`,
+        );
         continue;
       }
-      (h.get(w.def.result).writable &&
-        a(m, w, `\u201C${w.def.result}\u201D can also be written, so this reaction won't show when it is`),
-        u.push(w.def));
+      (allBlocks.get(reaction.def.result).writable &&
+        addWarning(
+          file,
+          reaction,
+          `\u201C${reaction.def.result}\u201D can also be written, so this reaction won't show when it is`,
+        ),
+        reactions.push(reaction.def));
     }
-  let l = [];
-  for (let { file: m, parsed: k } of e)
-    for (let w of k.variants) {
-      let { base: x, variant: A, catalyst: $ } = w.def;
-      if (!h.has(x)) {
-        n(m, w, `\u201C${x}\u201D isn't a block or product`);
+  let variants = [];
+  for (let { file, parsed } of sources)
+    for (let variant of parsed.variants) {
+      let { base: baseId, variant: variantId, catalyst: catalystId } = variant.def;
+      if (!allBlocks.has(baseId)) {
+        addError(file, variant, `\u201C${baseId}\u201D isn't a block or product`);
         continue;
       }
-      let F = h.get($);
-      if (!F || !F.writable) {
-        n(m, w, `the catalyst \u201C${$}\u201D must be a block you can write`);
+      let catalystBlock = allBlocks.get(catalystId);
+      if (!catalystBlock || !catalystBlock.writable) {
+        addError(file, variant, `the catalyst \u201C${catalystId}\u201D must be a block you can write`);
         continue;
       }
-      (h.has(A) || a(m, w, `\u201C${A}\u201D has no product line, so it will have no descriptors`),
-        l.push(w.def));
+      (allBlocks.has(variantId) ||
+        addWarning(
+          file,
+          variant,
+          `\u201C${variantId}\u201D has no product line, so it will have no descriptors`,
+        ),
+        variants.push(variant.def));
     }
-  let d = new Set([...i.reactions, ...(o?.reactions ?? []), ...u].map((m) => m.result));
-  for (let m of [...i.variants, ...(o?.variants ?? []), ...l]) d.add(m.variant);
-  for (let { file: m, parsed: k } of e)
-    for (let w of k.blocks)
-      !w.def.writable &&
-        c.get(w.def.id) === w.def &&
-        !d.has(w.def.id) &&
-        a(m, w, `no reaction produces \u201C${w.def.id}\u201D, so it can never appear`);
-  let f = [...c.values()];
+  let produced = new Set(
+    [...builtin.reactions, ...(extra?.reactions ?? []), ...reactions].map((reaction) => reaction.result),
+  );
+  for (let variant of [...builtin.variants, ...(extra?.variants ?? []), ...variants])
+    produced.add(variant.variant);
+  for (let { file, parsed } of sources)
+    for (let block of parsed.blocks)
+      !block.def.writable &&
+        customBlocks.get(block.def.id) === block.def &&
+        !produced.has(block.def.id) &&
+        addWarning(file, block, `no reaction produces \u201C${block.def.id}\u201D, so it can never appear`);
+  let customList = [...customBlocks.values()];
   return {
-    library: { blocks: f, reactions: u, variants: l },
-    problems: t,
+    library: { blocks: customList, reactions: reactions, variants: variants },
+    problems: problems,
     counts: {
-      blocks: f.filter((m) => m.writable).length,
-      products: f.filter((m) => !m.writable).length,
-      reactions: u.length,
-      variants: l.length,
+      blocks: customList.filter((block) => block.writable).length,
+      products: customList.filter((block) => !block.writable).length,
+      reactions: reactions.length,
+      variants: variants.length,
     },
   };
 }
 
-const str = (e) => String(e);
+const str = (value) => String(value);
 
-function serializeLibrary(e) {
-  let o = [],
-    t = (i) => {
-      let r = [];
-      (i.writable && i.weight !== DEFAULT_WEIGHT && r.push(`weight=${str(i.weight)}`),
-        i.stabilityBonus !== void 0 && r.push(`bonus=${str(i.stabilityBonus)}`));
-      let s = [i.axis, ...r].join(" ") + (i.presence !== void 0 ? ` "${i.presence}"` : "");
-      return `${i.writable ? "block" : "product"} ${i.id}: ${i.descriptors.join(", ")} | ${s}`;
+function serializeLibrary(library) {
+  let lines = [],
+    blockLine = (block) => {
+      let flags = [];
+      (block.writable && block.weight !== DEFAULT_WEIGHT && flags.push(`weight=${str(block.weight)}`),
+        block.stabilityBonus !== void 0 && flags.push(`bonus=${str(block.stabilityBonus)}`));
+      let spec = [block.axis, ...flags].join(" ") + (block.presence !== void 0 ? ` "${block.presence}"` : "");
+      return `${block.writable ? "block" : "product"} ${block.id}: ${block.descriptors.join(", ")} | ${spec}`;
     };
-  for (let i of AXES) {
-    let r = e.blocks.filter((s) => s.axis === i);
-    if (r.length !== 0) {
-      o.push(`# --- ${i} ---`);
-      for (let s of r.filter((n) => n.writable)) o.push(t(s));
-      for (let s of r.filter((n) => !n.writable)) o.push(t(s));
-      o.push("");
+  for (let axis of AXES) {
+    let axisBlocks = library.blocks.filter((block) => block.axis === axis);
+    if (axisBlocks.length !== 0) {
+      lines.push(`# --- ${axis} ---`);
+      for (let block of axisBlocks.filter((item) => item.writable)) lines.push(blockLine(block));
+      for (let block of axisBlocks.filter((item) => !item.writable)) lines.push(blockLine(block));
+      lines.push("");
     }
   }
-  o.push("# --- reactions ---");
-  for (let i of e.reactions) {
-    let r = [i.type, ...(i.cost !== void 0 ? [`cost=${str(i.cost)}`] : [])].join(", ");
-    o.push(
-      `reaction ${i.a} + ${i.b} -> ${i.result} (${r})${i.verbs && i.verbs.length ? ` : ${i.verbs.join(" | ")}` : ""}`,
+  lines.push("# --- reactions ---");
+  for (let reaction of library.reactions) {
+    let parts = [reaction.type, ...(reaction.cost !== void 0 ? [`cost=${str(reaction.cost)}`] : [])].join(
+      ", ",
+    );
+    lines.push(
+      `reaction ${reaction.a} + ${reaction.b} -> ${reaction.result} (${parts})${reaction.verbs && reaction.verbs.length ? ` : ${reaction.verbs.join(" | ")}` : ""}`,
     );
   }
-  o.push("", "# --- variants (shown instead of the plain product when the catalyst is written) ---");
-  for (let i of e.variants)
-    o.push(
-      `variant ${i.base} -> ${i.variant}${i.catalyst !== DEFAULT_CATALYST ? ` with ${i.catalyst}` : ""}`,
+  lines.push("", "# --- variants (shown instead of the plain product when the catalyst is written) ---");
+  for (let variant of library.variants)
+    lines.push(
+      `variant ${variant.base} -> ${variant.variant}${variant.catalyst !== DEFAULT_CATALYST ? ` with ${variant.catalyst}` : ""}`,
     );
-  return o.join(`
+  return lines.join(`
 `);
 }
 

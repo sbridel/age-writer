@@ -7,122 +7,125 @@ const SEVERITY_RANK = { light: 1, medium: 2, strong: 3 };
 
 const SEVERITY_NAME = { 0: "none", 1: "light", 2: "medium", 3: "strong" };
 
-function pageList(e, o = !1) {
-  let t = e.resolved,
-    i = new Map();
-  for (let n of t.triggered)
-    for (let a of [n.a, n.b]) i.set(a, Math.max(i.get(a) ?? 0, SEVERITY_RANK[n.severity]));
-  let r = new Map(t.drawn.map((n) => [n.id, n])),
-    s = [];
-  for (let n of t.lines)
-    n.entry &&
-      s.push({
-        id: n.entry.id,
+function pageList(analysis, includeBlots = !1) {
+  let resolved = analysis.resolved,
+    severityById = new Map();
+  for (let contradiction of resolved.triggered)
+    for (let id of [contradiction.a, contradiction.b])
+      severityById.set(id, Math.max(severityById.get(id) ?? 0, SEVERITY_RANK[contradiction.severity]));
+  let drawnById = new Map(resolved.drawn.map((pick) => [pick.id, pick])),
+    pages = [];
+  for (let line of resolved.lines)
+    line.entry &&
+      pages.push({
+        id: line.entry.id,
         born: !1,
-        written: !n.autoFilled,
-        drawn: n.autoFilled && n.slot !== void 0,
-        chance: n.chance,
-        severity: SEVERITY_NAME[i.get(n.entry.id) ?? 0],
-        axis: n.entry.axis,
+        written: !line.autoFilled,
+        drawn: line.autoFilled && line.slot !== void 0,
+        chance: line.chance,
+        severity: SEVERITY_NAME[severityById.get(line.entry.id) ?? 0],
+        axis: line.entry.axis,
       });
-  for (let n of t.matter.written) {
-    let a = r.get(n);
-    s.push({
-      id: n,
+  for (let id of resolved.matter.written) {
+    let pick = drawnById.get(id);
+    pages.push({
+      id: id,
       born: !1,
-      written: !a,
-      drawn: !!a,
-      chance: a?.chance,
-      severity: SEVERITY_NAME[i.get(n) ?? 0],
-      axis: blockById.get(n)?.axis,
+      written: !pick,
+      drawn: !!pick,
+      chance: pick?.chance,
+      severity: SEVERITY_NAME[severityById.get(id) ?? 0],
+      axis: blockById.get(id)?.axis,
     });
   }
-  for (let n of t.matter.reactions) {
-    let a = n.type === "violent" ? 2 : n.type === "corrosive" || n.type === "decaying" ? 1 : 0;
-    s.push({
-      id: n.shown,
+  for (let reaction of resolved.matter.reactions) {
+    let baseSeverity =
+      reaction.type === "violent" ? 2 : reaction.type === "corrosive" || reaction.type === "decaying" ? 1 : 0;
+    pages.push({
+      id: reaction.shown,
       born: !0,
       written: !1,
       drawn: !1,
-      severity: SEVERITY_NAME[Math.max(a, i.get(n.result) ?? 0)],
-      axis: blockById.get(n.shown)?.axis,
+      severity: SEVERITY_NAME[Math.max(baseSeverity, severityById.get(reaction.result) ?? 0)],
+      axis: blockById.get(reaction.shown)?.axis,
     });
   }
-  if (o)
-    for (let n of t.lines)
-      n.unknown && s.push({ id: "ink_blot", born: !1, written: !1, drawn: !1, severity: "none", blot: !0 });
-  return s;
+  if (includeBlots)
+    for (let line of resolved.lines)
+      line.unknown &&
+        pages.push({ id: "ink_blot", born: !1, written: !1, drawn: !1, severity: "none", blot: !0 });
+  return pages;
 }
 
-function noteName(e) {
-  return e.replace(/^.*\//, "").replace(/\.md$/i, "");
+function noteName(path) {
+  return path.replace(/^.*\//, "").replace(/\.md$/i, "");
 }
 
 const STABLE_AT = 75;
 
 const UNSTABLE_AT = 40;
 
-function extractAge(e) {
-  let o = [...e.matchAll(/```age[ \t]*\r?\n([\s\S]*?)```/g)].map((t) => t[1]);
-  return o.length
-    ? o.join(`
+function extractAge(text) {
+  let blocks = [...text.matchAll(/```age[ \t]*\r?\n([\s\S]*?)```/g)].map((match) => match[1]);
+  return blocks.length
+    ? blocks.join(`
 `)
     : null;
 }
 
-function verdictOf(e) {
-  return e >= STABLE_AT ? "stable" : e >= UNSTABLE_AT ? "unstable" : "dying";
+function verdictOf(stability) {
+  return stability >= STABLE_AT ? "stable" : stability >= UNSTABLE_AT ? "unstable" : "dying";
 }
 
 /** Analyse d'un bloc `age` : le moteur d'origine, puis le retraitement de l'extension (hooks.adjust). */
-function analyseAge(e, o) {
-  hooks.src = e;
+function analyseAge(source, options) {
+  hooks.src = source;
   try {
-    return hooks.adjust(analyseAgeBase(e, o), o, e);
+    return hooks.adjust(analyseAgeBase(source, options), options, source);
   } finally {
     hooks.src = null;
   }
 }
 
-function analyseAgeBase(e, o) {
-  let t = resolveAge(e, o),
-    i = {};
-  for (let [g, h] of Object.entries(t.costByAxis))
-    h > 0 && (i[g] = Math.max(0, Math.min(100, Math.round(100 - h * 100))));
-  let r = new Set(t.matter.written),
-    s = r.has("water"),
-    n = r.has("no_fissure")
+function analyseAgeBase(source, options) {
+  let resolved = resolveAge(source, options),
+    axisStability = {};
+  for (let [axis, cost] of Object.entries(resolved.costByAxis))
+    cost > 0 && (axisStability[axis] = Math.max(0, Math.min(100, Math.round(100 - cost * 100))));
+  let matterIds = new Set(resolved.matter.written),
+    hasWater = matterIds.has("water"),
+    fissure = matterIds.has("no_fissure")
       ? null
-      : r.has("cave_fissure")
+      : matterIds.has("cave_fissure")
         ? "cave"
-        : r.has("submarine_fissure") || (r.has("fissure") && s)
+        : matterIds.has("submarine_fissure") || (matterIds.has("fissure") && hasWater)
           ? "submarine"
-          : r.has("fissure")
+          : matterIds.has("fissure")
             ? "open"
             : null,
-    a = Object.values(i),
-    c = a.length ? Math.min(...a) : 100;
+    values = Object.values(axisStability),
+    stability = values.length ? Math.min(...values) : 100;
   return {
-    resolved: t,
-    verdict: verdictOf(c),
-    stability: c,
-    axisStability: i,
-    links: t.links,
-    returnTo: t.returnTo,
-    stranded: !t.returnTo,
-    fissure: n,
-    trapped: !t.returnTo && n === null,
-    home: t.returnTo
+    resolved: resolved,
+    verdict: verdictOf(stability),
+    stability: stability,
+    axisStability: axisStability,
+    links: resolved.links,
+    returnTo: resolved.returnTo,
+    stranded: !resolved.returnTo,
+    fissure: fissure,
+    trapped: !resolved.returnTo && fissure === null,
+    home: resolved.returnTo
       ? "book"
-      : n === "cave"
+      : fissure === "cave"
         ? "cavern"
-        : n === "submarine"
+        : fissure === "submarine"
           ? "submarine"
-          : n === "open"
+          : fissure === "open"
             ? "fissure"
             : "none",
-    discovered: [...new Set(t.matter.reactions.map((g) => g.shown))],
-    drawn: t.drawn,
+    discovered: [...new Set(resolved.matter.reactions.map((reaction) => reaction.shown))],
+    drawn: resolved.drawn,
   };
 }
 
@@ -137,33 +140,33 @@ const FRONTMATTER_KEYS = [
   "age_home",
 ];
 
-function frontmatterFor(e) {
-  let o = (t) => `[[${t}]]`;
+function frontmatterFor(analysis) {
+  let wikilink = (name) => `[[${name}]]`;
   return {
-    age_verdict: e.verdict,
-    age_stability: e.stability,
-    age_axes: Object.keys(e.axisStability).length ? e.axisStability : void 0,
-    age_return: e.returnTo ? o(e.returnTo) : void 0,
-    age_links: e.links.length ? e.links.map(o) : void 0,
-    age_discovered: e.discovered.length ? e.discovered : void 0,
-    age_drawn: e.drawn.length ? e.drawn.map((t) => t.id) : void 0,
-    age_home: e.home,
+    age_verdict: analysis.verdict,
+    age_stability: analysis.stability,
+    age_axes: Object.keys(analysis.axisStability).length ? analysis.axisStability : void 0,
+    age_return: analysis.returnTo ? wikilink(analysis.returnTo) : void 0,
+    age_links: analysis.links.length ? analysis.links.map(wikilink) : void 0,
+    age_discovered: analysis.discovered.length ? analysis.discovered : void 0,
+    age_drawn: analysis.drawn.length ? analysis.drawn.map((pick) => pick.id) : void 0,
+    age_home: analysis.home,
   };
 }
 
-function homeMessage(e) {
-  let o =
-    e.fissure === "cave"
+function homeMessage(analysis) {
+  let fissureText =
+    analysis.fissure === "cave"
       ? "a fissure deep in a cavern"
-      : e.fissure === "submarine"
+      : analysis.fissure === "submarine"
         ? "a fissure beneath the water"
         : "a fissure in the open";
-  return e.trapped
+  return analysis.trapped
     ? "No return book, and no fissure: nothing here leads home."
-    : e.stranded
-      ? `No return book is written, but ${o} leads home.`
-      : e.fissure
-        ? `${o.charAt(0).toUpperCase() + o.slice(1)} leads home too.`
+    : analysis.stranded
+      ? `No return book is written, but ${fissureText} leads home.`
+      : analysis.fissure
+        ? `${fissureText.charAt(0).toUpperCase() + fissureText.slice(1)} leads home too.`
         : null;
 }
 

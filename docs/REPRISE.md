@@ -3,11 +3,11 @@
 > Remplace toutes les reprises précédentes (1.4 à 1.6).
 > Reste valable pour le moteur d'origine : `age-writer-reprise-de-contexte.md` (symboles, tirage, réactions, bibliothèque 1.3).
 > Détail des fonctions : `v1.7/README.md` (à jour) et `v1.4/NOTES-v1.4.md` (historique des fonctions et corrections).
-> Guide technique : `v1.4/DEV.md` (à jour en 1.7 : moteur, hooks, modules, recettes, tests, pièges).
+> Guide technique : `v1.7/DEV.md` (à jour en 1.7 : moteur, hooks, modules, recettes, tests, pièges).
 
 ## 0. Prompt de démarrage
 > Je reprends Age Writer (plugin Obsidian, JS pur, Projet « ObsidianCraft »). Lis `REPRISE-v1.7.md`, puis `v1.7/RESTORE.md`
-> (comment reconstruire les sources depuis le Projet) et `v1.4/DEV.md`. Je parle français ; réponds en français.
+> (comment reconstruire les sources depuis le Projet) et `v1.7/DEV.md`. Je parle français ; réponds en français.
 
 ## 1. Qui, quoi
 - **Auteur** : Alucard, poète francophone, plugins Obsidian en JS pur. Réponses toujours en français.
@@ -64,4 +64,4 @@
 - Conseil donné : une à deux semaines d'usage réel sans nouvelle fonction.
 
 ## 7. Contenu du Projet claude.ai (après nettoyage)
-`REPRISE-v1.7.md` (ce fichier) · `age-writer-reprise-de-contexte.md` (moteur 1.3) · `v1.4/DEV.md` · `v1.4/NOTES-v1.4.md` · `v1.7/` (README, RESTORE, sources, legacy).
+`REPRISE-v1.7.md` (ce fichier) · `age-writer-reprise-de-contexte.md` (moteur 1.3) · `v1.7/DEV.md` · `v1.4/NOTES-v1.4.md` · `v1.7/` (README, RESTORE, sources, legacy).

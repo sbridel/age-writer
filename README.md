@@ -6,7 +6,7 @@ Idée de départ : dans Mystcraft, on ne **crée** pas un monde, on se **lie** �
 
 > Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part. Aucune ressource de Myst (police, image, son) n'est fournie.
 
-**Version 1.7.0** : le moteur (issu du 1.3.0, désormais en sources lisibles dans `src/engine/`) + la couche d'extension. Les deux ne font qu'un à l'installation. Le `manifest.json` annonce `1.7.0`. Aucun changement visible par rapport à la 1.6.3 : c'est le chantier « sources lisibles » (voir §15).
+**Version 1.8.0** : le moteur (issu du 1.3.0, en sources lisibles dans `src/engine/`, variables locales renommées) + la couche d'extension. Nouveau : le réglage **« How much the book draws »** (Tirage & bibliothèque) — *Little* / *Normal* / *A lot*. *Normal* = tirage d'avant, *Little* laisse la plupart des cases ouvertes (≈ 0,9 page tirée pour un Âge de 9 pages au lieu de 2,2), *A lot* en ajoute (≈ 3,4). Même note, même résultat. Le `manifest.json` annonce `1.8.0`.
 
 ---
 
