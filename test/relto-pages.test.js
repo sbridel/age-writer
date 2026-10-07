@@ -1,0 +1,37 @@
+"use strict";
+// Pages « koi » et « cat » : options (couleur, nom, variété rare) en note, en bibliothèque et dans la scène.
+const assert = require("assert");
+const M = require("../src/relto-model");
+let n = 0; const ok = (c, m) => { assert(c, m); n++; };
+const lib = M.parseReltoLibrary('page chat: Chat | cat color=black name="Petit Loup" | audio=hearth\npage bassin: Bassin | koi 0.8 rare=platinum');
+ok(!lib.problems.length && lib.pages.length === 2, "lignes de bibliothèque valides");
+const cat = M.libraryPage(lib.pages[0]).additions[0], koi = M.libraryPage(lib.pages[1]).additions[0];
+ok(cat.type === "cat" && cat.color === "black" && cat.name === "Petit Loup", "chat : couleur et nom (nom entre guillemets)");
+ok(koi.type === "koi" && koi.rare === "platinum" && koi.density === 0.8, "koï : densité et variété rare");
+const fm = M.pageFrontmatter("page_cat", M.PAGE_PRESETS.page_cat);
+const page = M.parsePage({ relto_page_id: fm.relto_page_id, effects: { canvas_additions: [{ type: "cat", color: "calico", name: "Pixel" }] } }, "p.md");
+ok(page.additions[0].color === "calico" && page.additions[0].name === "Pixel" && page.unknown === 0, "page en note : couleur et nom lus");
+const edited = { ...M.pageFrontmatter("page_cat", M.PAGE_PRESETS.page_cat), cat_name: "Biscotte", cat_color: "grey" };
+ok(M.parsePage(edited, "c.md").additions[0].name === "Biscotte" && M.parsePage(edited, "c.md").additions[0].color === "grey", "propriétés cat_name / cat_color de la note prioritaires");
+ok(M.pageFrontmatter("page_koi", M.PAGE_PRESETS.page_koi).koi_rare === "ogon", "la page koï expose koi_rare");
+ok(M.parsePage(M.pageFrontmatter("page_koi", M.PAGE_PRESETS.page_koi), "k.md").additions[0].rare === "ogon", "préréglage koï : ogon");
+const relto = M.parseRelto({ relto_pages_active: ["a", "b"] });
+const mk = (id, name) => ({ id, additions: [{ type: "cat", density: 0.5, name }], audio: [], enabled: true, unlock: null, label: id });
+const sc = M.buildScene(relto, [mk("a", "Mochi"), mk("b", "Luna")], [], []);
+ok(sc.additions.filter((a) => a.type === "cat").length === 2, "deux chats de noms différents ne fusionnent pas");
+ok(M.optsOf({ name: "x".repeat(100) }).name.length === 40, "nom borné à 40 caractères");
+ok(M.pageFrontmatter("page_koi", M.PAGE_PRESETS.page_koi).koi_name === "" && M.parsePage({ ...M.pageFrontmatter("page_koi", M.PAGE_PRESETS.page_koi), koi_name: "Soleil" }, "k.md").additions[0].name === "Soleil", "koi_name nomme la koï");
+// arbres : budget partagé, essences intercalées, jamais dans une zone interdite
+const blocked = (x) => (x > 190 && x < 216) || (x > 276 && x < 340);
+const adds = ["conifer", "birch", "ponderosa", "maple", "crystal"].map((asset, i) => ({ type: "vegetation", asset, density: 1, pageId: "p" + i }));
+const pl = M.placePlants(adds, 7, blocked);
+ok(pl.filter((p) => p.kind !== "fern").length <= 14, "au plus 14 arbres au total, même avec cinq essences");
+ok(new Set(pl.map((p) => p.kind)).size === 5, "chaque essence choisie est représentée");
+ok(pl.every((p) => !blocked(p.x)), "aucun arbre dans une zone interdite");
+const xs = pl.map((p) => p.x).sort((a, b) => a - b), gaps = xs.slice(1).map((v, i) => v - xs[i]);
+ok(Math.min(...gaps) >= 3 && Math.max(...gaps) < 100, `répartis sur l'île (écarts ${Math.min(...gaps)}–${Math.max(...gaps)})`);
+const adj = pl.slice().sort((a, b) => a.x - b.x).filter((p, i, a) => i && a[i - 1].kind === p.kind).length;
+ok(adj < pl.length * 0.6, "les essences s'intercalent");
+ok(JSON.stringify(M.placePlants(adds, 7, blocked)) === JSON.stringify(pl), "placement déterministe");
+ok(M.placePlants([{ type: "vegetation", asset: "fern", density: 0.5, pageId: "f" }], 3, blocked).every((p) => p.kind === "fern" && p.h < 22), "fougères basses");
+console.log(`✓ relto-pages.test.js (${n} contrôles)`);

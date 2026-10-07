@@ -1,0 +1,364 @@
+/* ======================= extension : chiffres, mécanismes, loi du changement ======================= */
+.age-ext { flex-basis: 100%; display: flex; flex-direction: column; gap: 8px; font-size: 0.82em; color: #b9ac8a; }
+.age-ext--compact { margin-top: 14px; padding-top: 10px; border-top: 0.5px solid #cdbf9b; color: #5a4a30; }
+.age-ext__plate { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 6px 10px; border: 1px solid #8a7250; border-radius: 2px; background: rgba(0, 0, 0, 0.18); color: #cdbd94; }
+.age-ext--compact .age-ext__plate { background: rgba(138, 114, 80, 0.1); color: #5a4a30; }
+.age-ext__plate svg, .age-ext__nums svg, .age-dniblock svg { display: inline-block; vertical-align: middle; }
+.age-ext__lbl { font-size: 0.7em; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; margin-left: 6px; }
+.age-ext__lbl:first-child { margin-left: 0; }
+.age-ext__dot { opacity: 0.5; }
+.age-ext__mechs { display: flex; flex-direction: column; gap: 6px; }
+.age-ext__mech { display: flex; gap: 10px; align-items: flex-start; }
+.age-ext__icon { width: 30px; flex: 0 0 30px; color: #cdbd94; opacity: 0.85; }
+.age-ext--compact .age-ext__icon { color: #5a4a30; }
+.age-ext__icon svg { display: block; width: 100%; height: auto; }
+.age-ext__mech:not(.is-written) .age-ext__icon { opacity: 0.55; }
+.age-ext__mechbody { flex: 1; min-width: 0; }
+.age-ext__desc { font-style: italic; opacity: 0.85; }
+.age-ext__puzzle { margin-top: 2px; }
+.age-ext__puzzle summary { cursor: pointer; opacity: 0.8; font-size: 0.9em; }
+.age-ext__nums { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
+.age-ext__hz { font-family: var(--font-monospace, monospace); font-size: 0.8em; opacity: 0.8; }
+.age-ext__warn { color: #d9b25a; font-style: italic; }
+.age-ext__law { padding: 6px 10px; border-left: 3px solid #c0553f; background: rgba(192, 85, 63, 0.1); }
+.age-ext__lawhead { font-weight: 600; color: #d98a6a; }
+.age-ext--compact .age-ext__lawhead { color: #a04a3a; }
+.age-ext__lawline, .age-ext__lawmeter { opacity: 0.85; }
+.age-ext__fissure { padding: 4px 10px; border: 1px dashed #c0553f; color: #d98a6a; text-decoration: line-through wavy rgba(192, 85, 63, 0.5); text-underline-offset: 3px; }
+.age-ext--compact .age-ext__fissure { color: #a04a3a; }
+.age-ext__trace { font-style: italic; opacity: 0.7; }
+.age-ext__sound { align-self: flex-start; font-size: 0.9em; padding: 2px 12px; }
+.age-ext__sound.is-on { background: var(--interactive-accent); color: var(--text-on-accent); }
+
+/* fenêtre de liaison : l'effet est dessiné par-dessus, le filtre CSS d'origine est neutralisé */
+.age-panel__window { position: relative; }
+.age-panel__window .age-linkfx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; filter: none !important; }
+.age-panel__window--dying canvas.age-linkfx { filter: none !important; }
+/* taille de la fenêtre dans le bloc age (réglage « Taille de la fenêtre ») */
+.age-panel__visual.age-ext-vis-large { flex: 1 1 300px; max-width: 460px; }
+.age-panel__visual.age-ext-vis-large .age-panel__window { width: 100%; max-width: 440px; margin-left: 0; }
+.age-panel__visual.age-ext-vis-xl { flex: 1 1 360px; max-width: 600px; }
+.age-panel__visual.age-ext-vis-xl .age-panel__window { width: 100%; max-width: 580px; margin-left: 0; }
+.age-panel__visual.age-ext-vis-custom { flex: 1 1 300px; max-width: calc(var(--age-win-w, 440px) + 20px); }
+.age-panel__visual.age-ext-vis-custom .age-panel__window { width: 100%; max-width: var(--age-win-w, 440px); margin-left: 0; }
+
+/* ======================= Relto ======================= */
+.age-relto { margin: 8px 0; padding: 10px; border-radius: 4px; background: #16140f; color: #b9ac8a; }
+.age-relto__head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 8px; }
+.age-relto__title { font-size: 1.05em; letter-spacing: 0.06em; color: #cdbd94; }
+.age-relto__plate { color: #cdbd94; }
+.age-relto__controls { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.age-relto__clock { font-family: var(--font-monospace, monospace); font-size: 0.8em; min-width: 3.2em; }
+.age-relto__dnitime { display: inline-flex; align-items: center; gap: 6px; color: #cdbd94; font-size: 0.75em; }
+.age-relto__dnitime i { font-style: italic; opacity: 0.75; }
+.age-relto__dnitime b { display: inline-flex; gap: 3px; font-weight: normal; }
+.age-relto__dnitime svg { display: block; }
+.age-relto__controls input[type="range"] { width: 120px; }
+.age-relto__canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 1px solid #8a7250; background: #050505; cursor: default; }
+.age-relto__pages { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.age-relto__pageshead { font-size: 0.72em; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; }
+.age-relto__page { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 4px 0; border-bottom: 0.5px solid rgba(205, 189, 148, 0.2); }
+.age-relto__chip { font-size: 0.7em; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 6px; border: 1px solid currentColor; border-radius: 2px; }
+.age-relto__chip { color: #8a7a5c; }
+.age-relto__page.is-active .age-relto__chip { color: #8fae6a; }
+.age-relto__page.is-available .age-relto__chip { color: #cdbd94; }
+.age-relto__page.is-locked .age-relto__chip, .age-relto__page.is-missing .age-relto__chip { color: #c0553f; }
+.age-relto__reason, .age-relto__hint, .age-relto__empty { font-size: 0.8em; font-style: italic; opacity: 0.75; }
+.age-relto__page button, .age-relto__newpage { font-size: 0.8em; padding: 0 10px; }
+.age-relto__newpage { align-self: flex-start; }
+.age-relto__fx { font-size: 0.75em; opacity: 0.7; }
+@media (prefers-reduced-motion: reduce) { .age-relto__canvas { animation: none; } }
+
+/* ======================= journal d'exploration ======================= */
+.age-journal { margin: 10px 0; padding: 16px 18px; background: #ece0c3; color: #3a2f22; border-radius: 3px; box-shadow: inset 0 0 22px rgba(90, 70, 40, 0.25), 1px 2px 4px rgba(0, 0, 0, 0.3); font-family: var(--font-text, Georgia, serif); }
+.age-journal__head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; margin-bottom: 12px; border-bottom: 1px solid #b8a37a; padding-bottom: 6px; }
+.age-journal__title { font-size: 1.05em; font-weight: 600; letter-spacing: 0.04em; }
+.age-journal__voice { font-style: italic; color: #6c5a40; }
+.age-journal__empty { font-style: italic; color: #8a7a5c; }
+.age-journal__entry { display: grid; grid-template-columns: 54px 1fr 40px; gap: 10px; padding: 8px 0; border-bottom: 0.5px dashed #cdbf9b; align-items: start; }
+.age-journal__margin { color: #6c5a40; opacity: 0.85; transform: rotate(-4deg); }
+.age-journal__margin svg { display: block; width: 100%; height: auto; }
+.age-journal__entry:nth-child(even) .age-journal__margin { transform: rotate(3deg); }
+.age-journal__text { line-height: 1.6; font-style: italic; }
+.age-journal__excerpt { margin-top: 4px; padding-left: 8px; border-left: 2px solid #b8a37a; font-style: normal; font-size: 0.88em; color: #6c5a40; }
+.age-journal__page { text-align: right; color: #8a7a5c; }
+.age-journal__entry--alter .age-journal__text { color: #a04a3a; text-decoration: line-through wavy rgba(160, 74, 58, 0.45); text-underline-offset: 3px; }
+.age-journal__entry--warn .age-journal__text { color: #a04a3a; }
+
+/* ======================= bloc `dni` ======================= */
+.age-dniblock { margin: 8px 0; padding: 8px 12px; background: #16140f; color: #cdbd94; border: 1px solid #8a7250; border-radius: 3px; }
+.age-dniblock__row { display: flex; align-items: center; gap: 12px; padding: 3px 0; }
+.age-dniblock__arabic { font-family: var(--font-monospace, monospace); font-size: 0.8em; opacity: 0.6; }
+.age-dniblock__note { margin-top: 4px; font-size: 0.72em; font-style: italic; opacity: 0.6; }
+
+/* ======================= réglages ======================= */
+.age-ext-settings { margin-top: 18px; }
+
+/* ======================= livre : thème « cuir » ======================= */
+.age-book--leather .age-book__spread {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.05), transparent 70%),
+    repeating-linear-gradient(37deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(-53deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 7px),
+    #24170f;
+  border: 1px solid #0d0804;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6), 0 3px 10px rgba(0, 0, 0, 0.45);
+  padding: 20px 18px;
+}
+.age-book--leather .age-book__page {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 250, 230, 0.35), transparent 60%),
+    repeating-linear-gradient(8deg, rgba(120, 90, 50, 0.05) 0 2px, transparent 2px 6px),
+    #e4d4ab;
+  box-shadow: inset 0 0 26px rgba(110, 80, 40, 0.35);
+}
+.age-book--leather .age-book__gutter { background: linear-gradient(90deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.08) 45%, rgba(0, 0, 0, 0.08) 55%, rgba(0, 0, 0, 0.5)); }
+.age-book__corner { position: absolute; width: 28px; height: 28px; pointer-events: none; z-index: 1;
+  background: linear-gradient(135deg, #e0c070 0%, #9a7a30 45%, #5a4416 100%); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
+.age-book__corner::after { content: ""; position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #2a1d08; box-shadow: inset 0 0 1px rgba(255, 230, 160, 0.6); }
+.age-book__corner--tl { top: 0; left: 0; clip-path: polygon(0 0, 100% 0, 0 100%); }
+.age-book__corner--tl::after { top: 5px; left: 5px; }
+.age-book__corner--tr { top: 0; right: 0; clip-path: polygon(0 0, 100% 0, 100% 100%); }
+.age-book__corner--tr::after { top: 5px; right: 5px; }
+.age-book__corner--bl { bottom: 0; left: 0; clip-path: polygon(0 0, 0 100%, 100% 100%); }
+.age-book__corner--bl::after { bottom: 5px; left: 5px; }
+.age-book__corner--br { bottom: 0; right: 0; clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+.age-book__corner--br::after { bottom: 5px; right: 5px; }
+
+/* couverture */
+.age-book__spread.is-cover { justify-content: center; align-items: center; }
+.age-book__covercontainer { width: min(100%, clamp(300px, calc((100vh - 270px) * 0.75), 640px)); color: #d8b968; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)); }
+.age-book__covercontainer svg { display: block; width: 100%; height: auto; }
+.age-book__coveractions { display: flex; justify-content: center; margin-top: 10px; }
+.age-book__coveractions button { font-size: 0.8em; }
+
+/* ======================= pages repliables, texte D'ni ======================= */
+.age-relto__toggle { background: none; border: none; box-shadow: none; padding: 2px 0; cursor: pointer; color: inherit; text-align: left; }
+.age-relto__toggle:hover { color: #cdbd94; }
+.age-relto__pagesbody { display: flex; flex-direction: column; gap: 6px; }
+.age-relto__pagesbody.is-hidden { display: none; }
+.age-dni { letter-spacing: 0.06em; line-height: 1.2; }
+.age-relto__dniname { font-size: 1.5em; color: #cdbd94; }
+.age-ext__dniname { font-size: 1.3em; margin-right: 8px; }
+.age-journal__dniname { font-size: 1.4em; margin-right: 6px; }
+.age-relto__inscription { margin-top: 8px; text-align: center; font-size: 1.6em; color: #cdbd94; letter-spacing: 0.08em; }
+.age-relto__inscription.is-latin { font-size: 0.9em; font-style: italic; opacity: 0.75; }
+.age-dni--inline { font-size: 1.15em; }
+.age-dni--inline.is-latin { font-size: 1em; font-style: italic; border-bottom: 1px dotted currentColor; }
+
+/* liaison incertaine / livre-piège */
+.age-book__book.is-flicker { animation: age-flicker 0.7s steps(2, end); }
+@keyframes age-flicker { 0% { opacity: 1; filter: none; } 20% { opacity: .2; filter: grayscale(1) contrast(2); transform: translateX(-3px); } 40% { opacity: .9; transform: translateX(3px); } 60% { opacity: .3; filter: grayscale(1) contrast(2); } 100% { opacity: 1; filter: none; transform: none; } }
+.age-ext__sound--static { margin-top: 6px; }
+
+/* refuge : son par page, niveau, livres */
+.age-relto__mode { font-size: .8em; }
+.age-relto__vol, .age-relto__pagevol { width: 70px; vertical-align: middle; }
+.age-relto__pagesound { padding: 0 6px; }
+.age-relto__pagesound.is-muted { opacity: .55; }
+.age-relto__books { margin-top: 4px; }
+.age-relto__booktools { display: flex; gap: 6px; margin-bottom: 4px; }
+.age-relto__book { display: flex; gap: 8px; align-items: center; padding: 1px 0; cursor: pointer; }
+.age-book__window.is-clickable { cursor: pointer; }
+.age-book__window.is-clickable:hover { filter: brightness(1.12) drop-shadow(0 0 6px rgba(205,189,148,.5)); }
+
+/* ======================= onglets du bloc Âge ======================= */
+.age-tabs { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 2px 4px; margin: -6px 0 0; padding-right: 30px; border-bottom: 1px solid rgba(205, 189, 148, 0.22); }
+.age-tabs__btn { background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; box-shadow: none; margin-bottom: -1px; padding: 4px 10px; height: auto; font-size: 0.74em; letter-spacing: 0.12em; text-transform: uppercase; color: #8f8368; cursor: pointer; }
+.age-tabs__btn:hover { color: #cdbd94; background: transparent; }
+.age-tabs__btn.is-active { color: #e9dcb8; border-bottom-color: #cdbd94; }
+.age-tabs__win { flex: 0 0 100%; display: flex; justify-content: center; }
+.age-tabs__win .age-panel__window { margin: 0; }
+.age-panel[data-tab="text"] .age-tabs__win .age-panel__window { width: 230px; max-width: 100%; }
+.age-panel[data-tab="link"] .age-tabs__win .age-panel__window { width: 100%; max-width: 720px; }
+.age-panel[data-tab="text"] .age-panel__foot, .age-panel[data-tab="text"] .age-panel__debug, .age-panel[data-tab="text"] .age-ext { display: none; }
+.age-panel[data-tab="link"] .age-panel__journal, .age-panel[data-tab="link"] .age-panel__visual, .age-panel[data-tab="link"] .age-panel__debug, .age-panel[data-tab="link"] .age-ext { display: none; }
+.age-panel[data-tab="details"] .age-panel__journal, .age-panel[data-tab="details"] .age-panel__visual, .age-panel[data-tab="details"] .age-panel__foot, .age-panel[data-tab="details"] .age-tabs__win { display: none; }
+.age-panel__window.is-touch { cursor: pointer; }
+.age-panel__window.is-linking { animation: age-link-flash 0.8s ease-out; }
+@keyframes age-link-flash { 0% { filter: brightness(2.2) saturate(1.4); } 100% { filter: none; } }
+@media (prefers-reduced-motion: reduce) { .age-panel__window.is-linking { animation: none; } }
+.age-panel .age-ext__sound { font-size: 0.78em; padding: 1px 10px; height: auto; }
+
+/* livre ouvert dans l'espace principal ou une fenêtre : on garde la proportion d'un livre au lieu de l'étirer */
+.workspace-leaf-content[data-type="age-writer-book"] .age-book { max-width: 1000px; margin: 0 auto; padding: 18px 20px; }
+.workspace-leaf-content[data-type="age-writer-book"] .age-book__spread { min-height: 460px; }
+
+/* livre de liaison : vitre, glyphes et phrase plus grands (la page est large, la vitre ne l'était pas) */
+.age-book__window { max-width: min(100%, 520px); }
+.age-book__strip { max-width: min(100%, 440px); }
+.age-book__glimpse { max-width: min(100%, 480px); font-size: 1em; }
+.age-book__caption { font-size: 1.05em; }
+
+/* livre de liaison : un livre plus haut, la vitre et ses glyphes centrés sur la page de gauche */
+[data-age-mode="linking"] .age-book__spread { min-height: 600px; }
+[data-age-mode="linking"] .age-book__page--left { display: flex; flex-direction: column; justify-content: center; }
+[data-age-mode="linking"] .age-book__page--left > .age-book__window, [data-age-mode="linking"] .age-book__page--left > .age-book__strip, [data-age-mode="linking"] .age-book__page--left > .age-book__glimpse { width: 100%; }
+[data-age-mode="linking"] .age-book__page--left > .age-book__caption { align-self: stretch; }
+
+/* Livre de liaison : format portrait « vrai livre », jamais étalé sur toute la largeur (quelle que soit la vue) */
+.age-book[data-age-mode="linking"] { max-width: 960px; margin-left: auto; margin-right: auto; }
+.age-book[data-age-mode="linking"] .age-book__spread { min-height: 620px; align-items: stretch; }
+.age-book[data-age-mode="linking"] .age-book__page { padding-top: 26px; }
+.age-book[data-age-mode="linking"] .age-book__window { max-width: 100%; }
+.age-book[data-age-mode="linking"] .age-book__strip, .age-book[data-age-mode="linking"] .age-book__glimpse { max-width: 100%; }
+
+/* Réglages : sections à tiroirs avec icônes */
+.age-ext-settings .is-hidden { display: none; }
+.age-set__row { display: flex; align-items: center; gap: 12px; padding: 12px 8px; border-bottom: 1px solid var(--background-modifier-border); cursor: pointer; border-radius: 6px; }
+.age-set__row:hover { background: var(--background-modifier-hover); }
+.age-set__icon { display: flex; color: var(--text-accent); }
+.age-set__icon svg, .age-set__chev svg { width: 20px; height: 20px; }
+.age-set__txt { flex: 1; }
+.age-set__name { font-weight: 600; }
+.age-set__desc { font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.age-set__chev { display: flex; color: var(--text-faint); }
+.age-set__back { display: flex; align-items: center; gap: 4px; cursor: pointer; color: var(--text-accent); padding: 6px 0 10px; font-weight: 600; }
+.age-set__back svg { width: 18px; height: 18px; }
+
+/* Livre de liaison : double page, on n'écrit que sur les pages de droite (3 pages à tourner) */
+.age-book[data-age-mode="linking"] .is-leaves { min-height: 700px; }
+.is-leaves .age-book__page--left.is-blank { background-image: none; }
+.is-leaves .age-book__page--left.is-blank > * { display: none; }
+.is-leaves .age-book__page--right { display: flex; flex-direction: column; }
+.age-book__leaf { display: none; flex: 1 1 auto; flex-direction: column; justify-content: center; gap: 14px; }
+.age-book__leaf.is-shown { display: flex; animation: age-leaf-in 0.35s ease-out; }
+@keyframes age-leaf-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+.is-leaves .age-book__leaf > .age-book__window, .is-leaves .age-book__leaf > .age-book__strip, .is-leaves .age-book__leaf > .age-book__glimpse { width: 100%; max-width: 100%; }
+.age-book__leaf--links { justify-content: flex-start; }
+.age-book__leafnav { display: flex; align-items: center; justify-content: center; gap: 14px; padding-top: 10px; color: #5a4a30; }
+.age-book__leafnav button { min-width: 36px; }
+.age-book__leaflabel { font-size: 0.85em; letter-spacing: 0.06em; text-transform: uppercase; min-width: 190px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .age-book__leaf.is-shown { animation: none; } }
+
+.is-leaves .age-book__page--left.can-prev { cursor: w-resize; }
+.is-leaves .age-book__page--right.can-next { cursor: e-resize; }
+.age-book__leafnav { gap: 10px; }
+.age-book__dot { width: 7px; height: 7px; border-radius: 50%; background: #5a4a30; opacity: 0.25; transition: opacity .2s; }
+.age-book__dot.is-on { opacity: 0.8; }
+
+/* Relto en onglets : Vue (image + date/heure en grand), Pages, Réglages */
+.age-relto__tabs { display: flex; gap: 6px; margin: 4px 0 10px; border-bottom: 1px solid rgba(205, 189, 148, 0.25); }
+.age-relto__tab { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; box-shadow: none; color: #8a7a5c; padding: 6px 12px; border-bottom: 2px solid transparent; border-radius: 0; cursor: pointer; }
+.age-relto__tab:hover { color: #cdbd94; }
+.age-relto__tab.is-active { color: #cdbd94; }
+.age-relto__tabicon { display: inline-flex; } .age-relto__tabicon svg { width: 15px; height: 15px; }
+.age-relto[data-tab="view"] .age-relto__pane--pages, .age-relto[data-tab="view"] .age-relto__pane--settings,
+.age-relto[data-tab="pages"] .age-relto__pane--view, .age-relto[data-tab="pages"] .age-relto__pane--settings,
+.age-relto[data-tab="settings"] .age-relto__pane--view, .age-relto[data-tab="settings"] .age-relto__pane--pages { display: none; }
+.age-relto__when { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 28px; margin-top: 12px; }
+.age-relto[data-tab] .age-relto__when .age-relto__clock { font-size: 2em; min-width: 0; letter-spacing: 0.06em; color: #cdbd94; }
+.age-relto[data-tab] .age-relto__when .age-relto__dnitime { font-size: 1.2em; gap: 10px; }
+.age-relto[data-tab] .age-relto__controls { margin-left: 0; flex-direction: column; align-items: stretch; gap: 8px; max-width: 420px; }
+.age-relto__lbl { font-size: 0.72em; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; margin-top: 6px; }
+.age-relto[data-tab] .age-relto__controls input[type="range"] { width: 100%; }
+.age-relto[data-tab] .age-relto__controls button, .age-relto[data-tab] .age-relto__controls select { align-self: flex-start; }
+.age-relto[data-tab] .age-relto__pageshead { font-size: 0.8em; margin: 4px 0; }
+.age-relto[data-tab] .age-relto__pagesbody.is-hidden { display: flex; }
+
+/* Relto en onglets : discrets, hors de l'image — fine rangée d'icônes pâles au-dessus ; le titre n'apparaît que dans Pages et Réglages */
+.age-relto[data-tab="view"] .age-relto__head { display: none; }
+.age-relto[data-tab] .age-relto__tabs { position: static; justify-content: flex-end; margin: 0 0 4px; gap: 2px; border: none; padding: 0; background: none; opacity: 0.4; transition: opacity 0.2s; }
+.age-relto[data-tab] .age-relto__tabs:hover, .age-relto[data-tab] .age-relto__tabs:focus-within { opacity: 0.95; }
+.age-relto[data-tab] .age-relto__tab { padding: 2px 6px; background: none; border: none; box-shadow: none; border-radius: 10px; color: #a89a78; min-height: 0; height: auto; line-height: 1; }
+.age-relto[data-tab] .age-relto__tab:hover { background: rgba(205, 189, 148, 0.15); color: #e0d2a8; }
+.age-relto[data-tab] .age-relto__tab.is-active { color: #e0d2a8; background: rgba(205, 189, 148, 0.18); }
+.age-relto[data-tab] .age-relto__tabicon svg { width: 13px; height: 13px; }
+
+/* Vue Relto dédiée (onglet principal) : l'image prend la place disponible */
+.age-reltoview { padding: 10px 24px 24px; overflow: auto; }
+.age-reltoview .age-relto { margin: 0 auto; max-width: 1500px; }
+.age-reltoview .age-relto__canvas { width: min(100%, calc((100vh - 190px) * 1.7778)); margin-left: auto; margin-right: auto; }
+.age-reltoview .age-relto__inscription { font-size: 2em; }
+.age-reltoview .age-relto[data-tab] .age-relto__when .age-relto__clock { font-size: 2.6em; }
+
+/* Guide intégré */
+.age-guide-modal { width: min(920px, 92vw); max-width: 92vw; }
+.age-guide { display: flex; gap: 18px; min-height: 420px; max-height: 70vh; }
+.age-guide__nav { flex: 0 0 210px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid var(--background-modifier-border); padding-right: 10px; overflow: auto; }
+.age-guide__item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; cursor: pointer; color: var(--text-muted); }
+.age-guide__item:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.age-guide__item.is-active { background: var(--background-modifier-hover); color: var(--text-normal); font-weight: 600; }
+.age-guide__icon { display: flex; color: var(--text-accent); } .age-guide__icon svg { width: 16px; height: 16px; }
+.age-guide__main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.age-guide__body { flex: 1; overflow: auto; padding-right: 8px; }
+.age-guide__body h2 { margin-top: 0; } .age-guide__body h4 { margin: 14px 0 4px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8em; }
+.age-guide__code { background: var(--background-secondary); border-radius: 6px; padding: 8px 12px; overflow: auto; }
+.age-guide__foot { display: flex; justify-content: flex-end; padding-top: 10px; }
+@media (max-width: 640px) { .age-guide { flex-direction: column; } .age-guide__nav { flex: none; flex-direction: row; flex-wrap: wrap; border-right: none; } }
+
+/* Réglages : cartes arrondies, pastilles d'icônes, valeur courante à droite (dans l'esprit de Cursor-Smith) */
+.age-set__guide, .age-set__nav { border: 1px solid var(--background-modifier-border); border-radius: 10px; background: var(--background-secondary); margin: 10px 0; overflow: hidden; }
+.age-set__guide { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.age-set__nav .age-set__row { border-radius: 0; padding: 12px 14px; }
+.age-set__nav .age-set__row:last-child { border-bottom: none; }
+.age-ext-settings .age-set__icon { width: 30px; height: 30px; flex: 0 0 30px; align-items: center; justify-content: center; border-radius: 8px; background: var(--background-modifier-hover); }
+.age-set__val { color: var(--text-muted); font-size: var(--font-ui-small); margin-right: 4px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.age-set__footer { text-align: center; color: var(--text-faint); font-size: var(--font-ui-smaller); margin-top: 16px; }
+
+/* Relto : nom D'ni discret en haut au centre de l'image ; il s'efface avec l'heure */
+.age-relto__stage { position: relative; }
+.age-relto__dnioverlay { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: 1.15em; color: #e0d2a8; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); opacity: 0.85; pointer-events: none; transition: opacity 0.6s; }
+.age-relto__when { transition: opacity 0.6s; }
+.age-relto__when.is-faded, .age-relto__dnioverlay.is-faded { opacity: 0; }
+.age-relto__when { cursor: pointer; }
+
+/* nom D'ni dans la bande noire, au-dessus de l'image ; bande plus haute, icônes à gauche du bouton « code » */
+.age-relto[data-tab] .age-relto__tabs { position: relative; min-height: 38px; padding-right: 48px; margin-bottom: 6px; align-items: center; opacity: 1; }
+.age-relto[data-tab] .age-relto__tab { opacity: 0.4; transition: opacity 0.2s; }
+.age-relto[data-tab] .age-relto__tabs:hover .age-relto__tab, .age-relto[data-tab] .age-relto__tabs:focus-within .age-relto__tab { opacity: 0.95; }
+.age-relto__tabs .age-relto__dnioverlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.2em; text-shadow: none; }
+
+/* Vue Relto : marges réduites au minimum ; plein écran réel (bouton « expand ») */
+.age-reltoview { padding: 0; }
+.age-reltoview .age-relto { margin: 0; max-width: none; border-radius: 0; padding: 6px 8px 10px; min-height: 100%; }
+.age-reltoview .age-relto__canvas { width: min(100%, calc((100vh - 150px) * 1.7778)); }
+.age-reltoview:fullscreen { background: #16140f; overflow: hidden; display: flex; }
+.age-reltoview:fullscreen .age-relto { width: 100%; display: flex; flex-direction: column; justify-content: center; }
+.age-reltoview:fullscreen .age-relto__canvas { width: min(100%, calc((100vh - 130px) * 1.7778)); }
+.age-guide__levels { display: flex; gap: 6px; margin: 0 0 12px; }
+.age-guide__level { border-radius: 14px; padding: 4px 14px; }
+.age-guide__level.is-active { background: var(--interactive-accent); color: var(--text-on-accent); }
+.age-guide__body code { font-size: 0.9em; }
+
+/* Relto : le nom D'ni en surimpression n'existe que dans l'onglet Vue (les autres onglets ont leur en-tête) */
+.age-relto[data-tab]:not([data-tab="view"]) .age-relto__dnioverlay { display: none; }
+
+/* Plein écran : l'image prend tout l'écran ; barre d'icônes et heure flottent par-dessus et s'effacent seules */
+.age-reltoview:fullscreen { padding: 0; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.age-reltoview:fullscreen > div { flex: 1; min-width: 0; height: 100%; display: flex; }
+.age-reltoview:fullscreen .age-relto { position: relative; flex: 1; width: 100%; height: 100%; margin: 0; padding: 0; border-radius: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.age-reltoview:fullscreen .age-relto[data-tab="view"] .age-relto__pane--view { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.age-reltoview:fullscreen .age-relto__stage { width: min(100vw, calc(100vh * 1.7778)); }
+.age-reltoview:fullscreen .age-relto__canvas { width: 100%; border: none; }
+.age-reltoview:fullscreen .age-relto__tabs { position: absolute; top: 0; left: 0; right: 0; z-index: 5; margin: 0; padding: 6px 14px; min-height: 34px; background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0)); }
+.age-reltoview:fullscreen .age-relto__when { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; margin: 0; padding: 22px 0 12px; background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.6)); }
+.age-reltoview:fullscreen .age-relto[data-tab="pages"] .age-relto__pane--pages, .age-reltoview:fullscreen .age-relto[data-tab="settings"] .age-relto__pane--settings { display: block; width: min(900px, 94vw); max-height: 88vh; overflow: auto; padding-top: 46px; }
+.age-reltoview:fullscreen .age-relto[data-tab="pages"] .age-relto__pane--view, .age-reltoview:fullscreen .age-relto[data-tab="settings"] .age-relto__pane--view,
+.age-reltoview:fullscreen .age-relto[data-tab="view"] .age-relto__pane--pages, .age-reltoview:fullscreen .age-relto[data-tab="view"] .age-relto__pane--settings,
+.age-reltoview:fullscreen .age-relto[data-tab="pages"] .age-relto__pane--settings, .age-reltoview:fullscreen .age-relto[data-tab="settings"] .age-relto__pane--pages { display: none; }
+
+/* ---- livre des glyphes ---- */
+.age-glyphbook-modal { width: min(760px, 92vw); }
+.age-glyphbook__title { margin: 0 0 4px; letter-spacing: 0.06em; }
+.age-glyphbook { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; margin-top: 10px; max-height: 60vh; overflow-y: auto; }
+.age-glyphbook__card { background: rgba(0, 0, 0, 0.18); border: 1px solid var(--background-modifier-border); border-radius: 6px; padding: 8px; text-align: center; }
+.age-glyphbook__art svg { width: 64px; height: 64px; }
+.age-glyphbook__name { margin-top: 4px; font-variant: small-caps; letter-spacing: 0.04em; }
+.age-glyphbook__where { margin-top: 4px; font-size: 0.8em; display: flex; flex-wrap: wrap; gap: 2px 8px; justify-content: center; }
+
+/* ---- bascule vue de l'île / vue globale ---- */
+.age-relto__viewbtn { position: absolute; top: 8px; left: 8px; z-index: 3; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: 1px solid rgba(205, 189, 148, 0.45); background: rgba(14, 12, 10, 0.55); color: #e9dcb8; cursor: pointer; opacity: 0.75; box-shadow: none; }
+.age-relto__viewbtn:hover, .age-relto__viewbtn.is-global { opacity: 1; background: rgba(14, 12, 10, 0.8); }
+.age-relto__viewbtn svg { width: 16px; height: 16px; }
+
+/* navigation entre les vues (île, globale, sous-vues) : dans la bande du haut, à gauche, hors de l'image */
+.age-relto__nav--bar { position: static; display: flex; gap: 2px; margin-right: auto; align-items: center; }
+.age-relto__nav--bar .age-relto__viewbtn { position: static; width: 26px; height: 26px; border: none; background: none; opacity: 0.55; border-radius: 10px; color: #a89a78; }
+.age-relto__nav--bar .age-relto__viewbtn:hover, .age-relto__nav--bar .age-relto__viewbtn.is-active { opacity: 1; background: rgba(205, 189, 148, 0.18); color: #e0d2a8; }
+.age-relto__nav:not(.age-relto__nav--bar) { position: absolute; top: 8px; left: 8px; z-index: 3; display: flex; gap: 4px; }
+.age-relto__nav:not(.age-relto__nav--bar) .age-relto__viewbtn { position: static; }
+.age-relto__nav .age-relto__viewbtn.is-active { opacity: 1; background: rgba(14, 12, 10, 0.8); }
+.age-relto__nav .age-relto__viewbtn.is-hidden { display: none; }
+.age-relto[data-tab]:not([data-tab="view"]) .age-relto__nav--bar { display: none; }

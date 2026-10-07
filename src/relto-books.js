@@ -1,0 +1,98 @@
+"use strict";
+// Les deux livres à part du Relto : le livre des glyphes (lecture) et le livre de la bibliothèque (ouvre la note où l'on écrit).
+const obsidian = require("obsidian");
+
+/**
+ * Glyphes utilisés dans les Âges donnés (chacun a `glyphs: [id…]`) — pur, sans Obsidian.
+ * « Connu » = écrit dans au moins un Âge ; la boucle de jeu pourra plus tard restreindre à « découvert ».
+ * @returns {{id:string, name:string, ages:string[]}[]} du plus partagé au moins partagé, puis par nom
+ */
+function glyphBook(ages) {
+  const by = new Map();
+  for (const a of ages || []) for (const id of a.glyphs || []) { if (!by.has(id)) by.set(id, []); by.get(id).push(a); }
+  return [...by.entries()]
+    .map(([id, list]) => ({ id, name: id.replace(/_/g, " "), ages: list.map((x) => x.name), paths: list.map((x) => x.path) }))
+    .sort((p, q) => q.ages.length - p.ages.length || p.name.localeCompare(q.name));
+}
+
+const RELTO_LIBRARY_TEMPLATE = `# Relto library
+
+Pages written here are added to the Relto's pages (Pages tab), no rebuild. One page per line
+in the block below; lines starting with # are comments.
+
+- \`page id: Label | effect density [asset], effect … | audio=preset,preset | unlock=Age:60\`
+- effects: vegetation (asset: pine, birch, palm, fern, cactus…), waterfall, fireflies, lanterns, snow, aurora,
+  fireworks, mountain, pillars, chimney, mist, gems, gold, silver. Density is 0 to 1.
+- \`unlock=[[Some Age]]:60\` makes the page available once that Age reaches 60 % stability.
+
+\`\`\`relto-library
+# page lagon: Lagoon | vegetation 0.5 palm, gold 0.6 | audio=river | unlock=[[Some Age]]:60
+\`\`\`
+`;
+
+const LIB_BLOCK = { ages: "```age-library", relto: "```relto-library" };
+
+/** Ouvre la note de bibliothèque (la crée avec un exemple si elle n'existe pas). kind : "ages" | "relto". */
+async function openLibraryNote(plugin, kind) {
+  const { app } = plugin, t = plugin.t;
+  let file = null;
+  if (kind === "ages" && plugin.libraryPaths && plugin.libraryPaths.size) {
+    const first = [...plugin.libraryPaths].sort()[0], f = app.vault.getAbstractFileByPath(first);
+    if (f) file = f;
+  }
+  if (!file && kind === "relto") {
+    for (const f of app.vault.getMarkdownFiles()) {
+      const c = app.metadataCache.getFileCache(f);
+      if (c && !(c.sections || []).some((s) => s.type === "code")) continue;
+      let text = ""; try { text = await app.vault.cachedRead(f); } catch (e) { continue; }
+      if (text.includes(LIB_BLOCK.relto)) { file = f; break; }
+    }
+  }
+  if (file) { await app.workspace.getLeaf(false).openFile(file); return file; }
+  const name = kind === "ages" ? "Age Library.md" : "Relto Library.md", body = kind === "ages" ? plugin.core.libraryTemplate : RELTO_LIBRARY_TEMPLATE;
+  const folder = String((plugin.settings && plugin.settings.libraryFolder) || "").trim().replace(/^\/+|\/+$/g, "");
+  if (folder && !app.vault.getAbstractFileByPath(folder)) await app.vault.createFolder(folder);
+  const path = folder ? `${folder}/${name}` : name, ex = app.vault.getAbstractFileByPath(path);
+  const f = ex instanceof obsidian.TFile ? ex : await app.vault.create(path, body);
+  new obsidian.Notice(t("books.created", { name: path }));
+  await app.workspace.getLeaf(false).openFile(f);
+  return f;
+}
+
+class LibraryChoice extends obsidian.FuzzySuggestModal {
+  constructor(plugin) { super(plugin.app); this.plugin = plugin; this.setPlaceholder(plugin.t("books.library")); }
+  getItems() { return ["ages", "relto"]; }
+  getItemText(k) { return this.plugin.t(k === "ages" ? "books.lib.ages" : "books.lib.relto"); }
+  onChooseItem(k) { openLibraryNote(this.plugin, k); }
+}
+
+function openLibraryBook(plugin) { new LibraryChoice(plugin).open(); }
+
+/** Fenêtre du livre des glyphes : un glyphe par carte, avec les Âges où il apparaît. */
+function openGlyphBook(plugin, ages) {
+  const t = plugin.t, list = glyphBook(ages);
+  class GlyphBook extends obsidian.Modal {
+    onOpen() {
+      const { contentEl, modalEl } = this; contentEl.empty(); modalEl.addClass("age-glyphbook-modal");
+      contentEl.createEl("h2", { text: t("books.glyphs"), cls: "age-glyphbook__title" });
+      if (!list.length) { contentEl.createDiv({ cls: "age-relto__hint", text: t("books.noglyphs") }); return; }
+      contentEl.createDiv({ cls: "age-relto__hint", text: t("books.glyphcount", { n: list.length, m: (ages || []).length }) });
+      const grid = contentEl.createDiv({ cls: "age-glyphbook" });
+      for (const g of list) {
+        const card = grid.createDiv({ cls: "age-glyphbook__card" });
+        const art = card.createDiv({ cls: "age-glyphbook__art" });
+        try { art.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${plugin.core.glyphSvg(g.id, 0, 0, 100, "light")}</svg>`; } catch (e) { /* glyphe sans dessin */ }
+        card.createDiv({ cls: "age-glyphbook__name", text: g.name });
+        const where = card.createDiv({ cls: "age-glyphbook__where" });
+        g.ages.forEach((name, i) => {
+          const a = where.createEl("a", { cls: "internal-link", text: name });
+          a.addEventListener("click", (e) => { e.preventDefault(); this.close(); plugin.app.workspace.openLinkText(g.paths[i], "", false); });
+        });
+      }
+    }
+    onClose() { this.contentEl.empty(); }
+  }
+  new GlyphBook(plugin.app).open();
+}
+
+module.exports = { glyphBook, openGlyphBook, openLibraryBook, openLibraryNote, RELTO_LIBRARY_TEMPLATE };
