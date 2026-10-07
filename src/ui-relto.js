@@ -188,7 +188,7 @@ async function renderRelto(plugin, source, el, ctx) {
   const booksEl = panePages.createDiv({ cls: "age-relto__books" });
   if (tabBar) {
     const defs = [["view", "tab.view", "eye"], ["pages", "tab.pages", "file-text"], ["settings", "tab.settings", "settings"]], btns = {};
-    const pick = (k) => { root.setAttr("data-tab", k); ui0.reltoTab = k; for (const [id, b] of Object.entries(btns)) b.toggleClass("is-active", id === k); };
+    const pick = (k) => { root.setAttr("data-tab", k); try { if (k !== "view") sound.roomStop(); else roomAudio(renderer.view); } catch (e) { /* ignore */ } ui0.reltoTab = k; for (const [id, b] of Object.entries(btns)) b.toggleClass("is-active", id === k); };
     for (const [k, key, ic] of defs) {
       const b = tabBar.createEl("button", { cls: "age-relto__tab" }); btns[k] = b;
       try { obsidian.setIcon(b.createSpan({ cls: "age-relto__tabicon" }), ic); } catch (e) { /* ignore */ }
@@ -212,11 +212,14 @@ async function renderRelto(plugin, source, el, ctx) {
     try { obsidian.setIcon(b, ic); } catch (e) { /* ignore */ }
     b.setAttr("aria-label", t(key)); b.addEventListener("click", () => renderer.setView(v));
   }
-  const syncView = (v) => { for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-active", id === (v || "island")); };
+  const roomSoundOn = () => !!plugin.ext.sound && plugin.ext.soundRooms !== false;
+  const roomVol = () => (plugin.ext.volume == null ? 0.35 : plugin.ext.volume) * 0.7;
+  const roomAudio = (v) => { try { if (roomSoundOn() && (v === "pond" || v === "cat") && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages") sound.roomStart(v === "pond" ? "water" : "cat", roomVol()); else sound.roomStop(); } catch (e) { /* ignore */ } };
+  const syncView = (v) => { for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-active", id === (v || "island")); roomAudio(v); };
   const syncNav = (sc) => { const av = renderer.available(); for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-hidden", !av[id]); syncView(renderer.view); void sc; };
   syncView("island");
   const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, onView: syncView, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
+  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) sound.meow(roomVol()); }, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;
 
   const fmt = (h) => `${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
@@ -344,7 +347,7 @@ async function renderRelto(plugin, source, el, ctx) {
     const cur = plugin.soundBtn;
     if (cur && cur !== soundBtn && !cur.isConnected && cur.dataset && cur.dataset.key === soundBtn.dataset.key && plugin.sound.playing) { plugin.soundBtn = soundBtn; soundBtn.addClass("is-on"); }
   }
-  const child = new obsidian.MarkdownRenderChild(el); child.onunload = () => { renderer.stop(); plugin.live.delete(inst); }; ctx.addChild(child);
+  const child = new obsidian.MarkdownRenderChild(el); child.onunload = () => { try { sound.roomStop(); } catch (e) { /* ignore */ } renderer.stop(); plugin.live.delete(inst); }; ctx.addChild(child);
   await refresh();
   const clockTimer = window.setInterval(() => { if (!root.isConnected) return window.clearInterval(clockTimer); if (fixed == null) syncClock(); }, 15000);
   child.register(() => window.clearInterval(clockTimer));

@@ -190,16 +190,24 @@ function drawPondRoom(r, ctx, sc, sky, t) {
   for (let i = 0; i < 9; i++) { const y = y1 + 10 + i * 14 + q() * 6, x = q() * 500; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 60 + q() * 90, y + 3); ctx.lineTo(x + 150 + q() * 80, y - 2); ctx.stroke(); }
   ctx.fillStyle = c(T.top); ctx.fillRect(0, yg - 12, W, y0 - yg + 12);
   ctx.fillStyle = rgba(0, 0, 0, 0.18); ctx.fillRect(0, y0 - 4, W, 4);
-  // le mont et le ruisseau qui descend jusqu'au bassin
+  // le mont (falaise à gauche) : le ruisseau naît d'une encoche dans la roche, longe la paroi, coule sur le sol jusqu'au bassin et s'y jette
   if (wf) {
-    ctx.fillStyle = c(T.rock2); ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(262, -10); ctx.lineTo(236, 70); ctx.lineTo(200, 96); ctx.lineTo(176, yg - 10); ctx.lineTo(-10, yg - 10); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.beginPath(); ctx.moveTo(176, yg - 10); ctx.lineTo(200, 96); ctx.lineTo(236, 70); ctx.lineTo(262, -10); ctx.lineTo(300, -10); ctx.lineTo(236, 150); ctx.lineTo(214, yg - 10); ctx.closePath(); ctx.fill();
-    const sx = 212, sy = 94, ex = ox + (K.x0 + 16 - fx) * S; // la chute arrive dans l'eau du bassin
-    const gr = ctx.createLinearGradient(0, sy, 0, y0); gr.addColorStop(0, "rgba(205,232,250,0.9)"); gr.addColorStop(1, "rgba(225,242,255,0.8)"); ctx.fillStyle = gr;
-    ctx.beginPath(); ctx.moveTo(sx - 4, sy); ctx.bezierCurveTo(sx - 2, sy + 40, ex - 12, yg - 30, ex - 11, y0); ctx.lineTo(ex + 11, y0); ctx.bezierCurveTo(ex + 12, yg - 30, sx + 8, sy + 40, sx + 8, sy); ctx.closePath(); ctx.fill();
+    const ED = [[-10, 282], [40, 264], [90, 238], [150, 218], [yg - 8, 202]], edge = (y) => { for (let i = 1; i < ED.length; i++) if (y <= ED[i][0]) { const [ya, xa] = ED[i - 1], [yb, xb] = ED[i]; return xa + ((xb - xa) * (y - ya)) / (yb - ya); } return ED[ED.length - 1][1]; };
+    ctx.fillStyle = c(T.rock2); ctx.beginPath(); ctx.moveTo(-10, -10); for (const [y, x] of ED) ctx.lineTo(x, y); ctx.lineTo(-10, yg - 8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.beginPath(); ctx.moveTo(282, -10); for (const [y, x] of ED) ctx.lineTo(x, y); ctx.lineTo(160, yg - 8); ctx.lineTo(190, 150); ctx.lineTo(214, 90); ctx.lineTo(238, 40); ctx.lineTo(250, -10); ctx.closePath(); ctx.fill();
+    const q2 = rng(0x4c1); ctx.strokeStyle = rgba(0, 0, 0, 0.25); ctx.lineWidth = 1.2; for (let i = 0; i < 7; i++) { const y = 20 + i * 24 + q2() * 8, x = q2() * 120; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 70 + q2() * 60, y + 4); ctx.stroke(); }
+    const y0s = 34, ex = ox + (K.x0 + 16 - fx) * S, N = 30, pts = [];
+    for (let i = 0; i <= N; i++) { const p = i / N, y = y0s + (yg - 8 - y0s) * p; pts.push([edge(y) - 7 - 3 * p + Math.sin(p * 9 + t * 0.5) * 0.9, y, 9 + 9 * p]); }
+    ctx.fillStyle = "rgba(205,232,250,0.92)"; ctx.beginPath(); pts.forEach(([x, y, w], i) => (i ? ctx.lineTo(x - w / 2, y) : ctx.moveTo(x - w / 2, y))); for (let i = N; i >= 0; i--) ctx.lineTo(pts[i][0] + pts[i][2] / 2, pts[i][1]); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = c("#2a2622"); ctx.beginPath(); ctx.ellipse(pts[0][0] + 1, y0s - 1, 14, 5, -0.15, 0, 6.283); ctx.fill(); // l'encoche d'où l'eau sort
     ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1.6;
-    for (let i = 0; i < 9; i++) { const p = (t * 0.7 + i / 9) % 1, y = sy + p * (y0 - sy), x = sx + (ex - sx) * Math.pow(p, 1.4) + (i % 3 - 1) * 3; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 10); ctx.stroke(); }
-    for (let i = 0; i < 4; i++) { const p = (t * 0.5 + i / 4) % 1; ctx.strokeStyle = rgba(235, 245, 255, 0.5 * (1 - p)); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(ex, y0 + 2, 10 + p * 34, 2 + p * 5, 0, 0, 6.283); ctx.stroke(); }
+    for (let k = 0; k < 8; k++) { const q = (t * 0.45 + k / 8) % 1, i = Math.min(N - 1, Math.floor(q * N)), [x, y, w] = pts[i], [x2, y2] = pts[i + 1]; ctx.beginPath(); ctx.moveTo(x + ((k % 3) - 1) * w * 0.25, y); ctx.lineTo(x2 + ((k % 3) - 1) * w * 0.25, y2 + 6); ctx.stroke(); }
+    // au pied de la paroi : un filet d'eau sur le sol jusqu'au bord du bassin, où il se jette dans l'eau
+    const cy = y0 - 7, bx = pts[N][0];
+    const cg = ctx.createLinearGradient(bx - 10, 0, ex, 0); cg.addColorStop(0, "rgba(205,232,250,0.9)"); cg.addColorStop(1, "rgba(190,224,246,0.8)"); ctx.fillStyle = cg;
+    ctx.beginPath(); ctx.moveTo(bx - 10, yg - 14); ctx.quadraticCurveTo(bx + 6, cy - 4, bx + 40, cy - 2); ctx.lineTo(ex - 6, cy - 2); ctx.lineTo(ex + 8, y0 + 2); ctx.lineTo(ex - 8, y0 + 2); ctx.lineTo(ex - 8, cy + 6); ctx.lineTo(bx + 40, cy + 5); ctx.quadraticCurveTo(bx + 10, cy + 6, bx + 8, yg - 10); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineWidth = 1.2; for (let i = 0; i < 6; i++) { const p = (t * 0.6 + i / 6) % 1, x = bx + 6 + p * (ex - bx - 10); ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + 7, cy + 1); ctx.stroke(); }
+    for (let i = 0; i < 4; i++) { const p = (t * 0.5 + i / 4) % 1; ctx.strokeStyle = rgba(235, 245, 255, 0.5 * (1 - p)); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(ex, y0 + 3, 8 + p * 30, 2 + p * 4, 0, 0, 6.283); ctx.stroke(); }
   }
   // le bassin (le même dessin que sur l'île, agrandi) ; ses zones cliquables suivent
   r.withView(ctx, { S, ox, oy, fx, fy }, () => r.drawKoi(ctx, koi, sky, t));

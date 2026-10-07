@@ -504,4 +504,59 @@ function openSequence(volume = 0.3, { book = true, clasp = true, link = true } =
   return ok || link;
 }
 
-module.exports = { LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+/**
+ * Sons des vues rapprochées du Relto : ruisseau du bassin ; ronronnement et miaulements du chat. Synthétisés (aucun fichier), démarrés par le clic
+ * qui entre dans la vue et arrêtés à la sortie. Un seul son de vue à la fois, sur le contexte audio partagé.
+ */
+const room = { kind: null, out: null, nodes: [], timers: [] };
+function roomStop() {
+  for (const t of room.timers) clearTimeout(t); room.timers = [];
+  const out = room.out, nodes = room.nodes; room.out = null; room.nodes = []; room.kind = null;
+  if (!out) return;
+  try { const c = out.context; out.gain.cancelScheduledValues(c.currentTime); out.gain.setTargetAtTime(0, c.currentTime, 0.12); } catch (e) { /* ignore */ }
+  setTimeout(() => { for (const n of nodes) { try { n.stop && n.stop(); } catch (e) { /* ignore */ } try { n.disconnect(); } catch (e) { /* ignore */ } } try { out.disconnect(); } catch (e) { /* ignore */ } }, 700);
+}
+function noiseBuf(c, secs) { const b = c.createBuffer(1, Math.floor(c.sampleRate * secs), c.sampleRate), d = b.getChannelData(0); let y = 0; for (let i = 0; i < d.length; i++) { y = 0.97 * y + (Math.random() * 2 - 1) * 0.3; d[i] = y + (Math.random() * 2 - 1) * 0.15; } return b; }
+/** Un miaulement : voix en dents de scie qui monte puis redescend, passée dans deux formants. */
+function meow(volume = 0.3) {
+  return oneShot(1.2, (c, out) => {
+    const t = c.currentTime, dur = 0.55 + Math.random() * 0.3, f0 = 420 + Math.random() * 120, pk = f0 * (1.45 + Math.random() * 0.25);
+    const o = c.createOscillator(), vib = c.createOscillator(), vg = c.createGain(), env = c.createGain(), f1 = c.createBiquadFilter(), f2 = c.createBiquadFilter(), mix = c.createGain();
+    o.type = "sawtooth"; o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(pk, t + dur * 0.35); o.frequency.linearRampToValueAtTime(f0 * 0.85, t + dur);
+    vib.frequency.value = 6.5; vg.gain.value = 9; vib.connect(vg); vg.connect(o.frequency);
+    f1.type = "bandpass"; f1.frequency.setValueAtTime(650, t); f1.frequency.linearRampToValueAtTime(1100, t + dur * 0.4); f1.frequency.linearRampToValueAtTime(800, t + dur); f1.Q.value = 4;
+    f2.type = "bandpass"; f2.frequency.value = 2300; f2.Q.value = 5; mix.gain.value = 1;
+    env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(volume * 0.5, t + 0.06); env.gain.setTargetAtTime(0, t + dur * 0.7, 0.09);
+    o.connect(f1); o.connect(f2); f1.connect(mix); f2.connect(mix); mix.connect(env); env.connect(out); out.gain.value = 1;
+    o.start(t); vib.start(t); o.stop(t + dur + 0.6); vib.stop(t + dur + 0.6);
+  });
+}
+function roomStart(kind, volume = 0.3) {
+  roomStop();
+  let c; try { c = sfxCtx(); } catch (e) { return false; } if (!c) return false;
+  try {
+    const out = c.createGain(); out.gain.value = 0; out.connect(c.destination); out.gain.setTargetAtTime(volume, c.currentTime, 0.4);
+    room.out = out; room.kind = kind;
+    const keep = (n) => { room.nodes.push(n); return n; };
+    const loop = (f) => { const s = keep(c.createBufferSource()); s.buffer = noiseBuf(c, 3); s.loop = true; f(s); s.start(); return s; };
+    if (kind === "water") {
+      // ruisseau : souffle d'eau filtré qui ondule, rumeur basse de la chute et petites bulles
+      loop((s) => { const bp = keep(c.createBiquadFilter()), g = keep(c.createGain()), lfo = keep(c.createOscillator()), lg = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 900; bp.Q.value = 0.5; g.gain.value = 0.55; lfo.frequency.value = 0.31; lg.gain.value = 0.18; lfo.connect(lg); lg.connect(g.gain); lfo.start(); s.connect(bp); bp.connect(g); g.connect(out); });
+      loop((s) => { const bp = keep(c.createBiquadFilter()), g = keep(c.createGain()), lfo = keep(c.createOscillator()), lg = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 0.8; g.gain.value = 0.16; lfo.frequency.value = 0.57; lg.gain.value = 0.08; lfo.connect(lg); lg.connect(g.gain); lfo.start(); s.connect(bp); bp.connect(g); g.connect(out); });
+      loop((s) => { const lp = keep(c.createBiquadFilter()), g = keep(c.createGain()); lp.type = "lowpass"; lp.frequency.value = 240; g.gain.value = 0.5; s.connect(lp); lp.connect(g); g.connect(out); });
+      const bubble = () => { if (room.kind !== "water" || room.out !== out) return; const t = c.currentTime, o = c.createOscillator(), e = c.createGain(), f = 500 + Math.random() * 900; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 1.9, t + 0.09); e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(0.05, t + 0.01); e.gain.exponentialRampToValueAtTime(0.0008, t + 0.12); o.connect(e); e.connect(out); o.start(t); o.stop(t + 0.15); room.timers.push(setTimeout(bubble, 250 + Math.random() * 1100)); };
+      bubble();
+    } else if (kind === "cat") {
+      // ronronnement : grave dents de scie + souffle, modulés à ~25 Hz, qui respirent lentement ; miaulements espacés
+      const sa = keep(c.createOscillator()), lp = keep(c.createBiquadFilter()), g = keep(c.createGain()), lfo = keep(c.createOscillator()), lg = keep(c.createGain()), br = keep(c.createOscillator()), bg = keep(c.createGain());
+      sa.type = "sawtooth"; sa.frequency.value = 58; lp.type = "lowpass"; lp.frequency.value = 380; g.gain.value = 0.32; lfo.frequency.value = 25; lg.gain.value = 0.3; lfo.connect(lg); lg.connect(g.gain); br.frequency.value = 0.33; bg.gain.value = 0.12; br.connect(bg); bg.connect(g.gain);
+      sa.connect(lp); lp.connect(g); g.connect(out); sa.start(); lfo.start(); br.start();
+      loop((s) => { const lp2 = keep(c.createBiquadFilter()), g2 = keep(c.createGain()), l2 = keep(c.createOscillator()), lg2 = keep(c.createGain()); lp2.type = "bandpass"; lp2.frequency.value = 220; lp2.Q.value = 0.7; g2.gain.value = 0.18; l2.frequency.value = 25; lg2.gain.value = 0.16; l2.connect(lg2); lg2.connect(g2.gain); l2.start(); s.connect(lp2); lp2.connect(g2); g2.connect(out); });
+      const next = (first) => { room.timers.push(setTimeout(() => { if (room.kind !== "cat" || room.out !== out) return; meow(volume * 1.3); next(false); }, first ? 2500 + Math.random() * 1500 : 7000 + Math.random() * 9000)); };
+      next(true);
+    }
+    return true;
+  } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
+}
+
+module.exports = { roomStart, roomStop, meow, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

@@ -37,6 +37,34 @@ const CATS = {
   tuxedo: { label: "tuxedo", fur: "#1d1b20", tail: "#1d1b20", eyes: "#7fb04a", belly: "#efeae0", paws: "#efeae0", muzzle: "#efeae0" },
   siamese: { label: "siamese", fur: "#ecd9b8", tail: "#4a3a30", eyes: "#6fa8d8", ears: "#4a3a30", face: "#d8c4a0", paws: "#4a3a30", muzzle: "#4a3a30" },
 };
+/**
+ * Motifs de koï générés au hasard (déterministes avec la graine) : une variété (kohaku, sanke, showa, tancho, asagi, orange, yamabuki)
+ * donne la couleur de fond et celles des taches ; le nombre, la place, la taille et la forme des taches sont tirés, jamais deux poissons pareils.
+ */
+const KOI_COL = { white: "#efe2cc", cream: "#f1e4c6", red: "#d8452a", orange: "#e0762a", black: "#1d1d24", slate: "#6f8fae", yellow: "#e8c65a" };
+const KOI_STYLES = [
+  { id: "kohaku", base: "white", patch: ["red"], n: [2, 4], w: 3 },
+  { id: "sanke", base: "white", patch: ["red"], dark: ["black"], n: [2, 3], nd: [1, 3], w: 2 },
+  { id: "showa", base: "black", patch: ["red", "white"], n: [3, 5], w: 2 },
+  { id: "tancho", base: "white", dot: "red", n: [0, 0], w: 1 },
+  { id: "asagi", base: "slate", patch: ["orange"], n: [1, 2], w: 1 },
+  { id: "orange", base: "orange", patch: ["white", "cream"], n: [0, 2], w: 2 },
+  { id: "yamabuki", base: "yellow", patch: ["cream"], n: [0, 2], w: 1 },
+];
+function koiGenome(r, rareKind) {
+  const span = (a) => a[0] + Math.floor(r() * (a[1] - a[0] + 1)), pick = (a) => a[Math.floor(r() * a.length)];
+  const patch = (col, lo, hi, small) => ({ u: lo + r() * (hi - lo), v: (r() - 0.5) * 1.1, rx: small ? 0.1 + r() * 0.14 : 0.2 + r() * 0.26, ry: small ? 0.3 + r() * 0.3 : 0.5 + r() * 0.5, rot: (r() - 0.5) * 0.7, col, a: 0.9 + r() * 0.1, blobs: [[(r() - 0.5) * 0.3, (r() - 0.5) * 0.5, 0.6 + r() * 0.3], [(r() - 0.5) * 0.4, (r() - 0.5) * 0.5, 0.5 + r() * 0.3]] });
+  if (rareKind) { // koï rare : couleur métal ou perle, avec des plages plus claires/foncées tirées au hasard
+    const out = []; for (let i = 0, n = 2 + Math.floor(r() * 3); i < n; i++) out.push(patch(rareKind.spot, -0.8 + i * 0.4 + r() * 0.2, -0.5 + i * 0.4 + r() * 0.2, false));
+    return { base: rareKind.body, tail: rareKind.body, patches: out, dot: null };
+  }
+  let tot = 0; for (const st of KOI_STYLES) tot += st.w; let q = r() * tot, st = KOI_STYLES[0]; for (const x of KOI_STYLES) { q -= x.w; if (q <= 0) { st = x; break; } }
+  const patches = [], n = span(st.n);
+  for (let i = 0; i < n; i++) patches.push(patch(KOI_COL[pick(st.patch)], -0.85 + (1.5 * i) / Math.max(1, n) + r() * 0.15, -0.85 + (1.5 * (i + 1)) / Math.max(1, n), false));
+  if (st.dark) for (let i = 0, nd = span(st.nd); i < nd; i++) patches.push(patch(KOI_COL[st.dark[0]], -0.75 + r() * 1.5, -0.75 + r() * 1.5, true));
+  const tail = KOI_COL[st.base] && (st.id === "showa" || st.id === "asagi") ? KOI_COL[st.base] : r() < 0.35 && patches.length ? patches[0].col : KOI_COL[st.base];
+  return { base: KOI_COL[st.base], tail, patches, dot: st.dot ? { col: KOI_COL[st.dot], u: 0.52 } : null, id: st.id };
+}
 function catLook(color) {
   const key = String(color || "").trim().toLowerCase();
   if (CATS[key]) return CATS[key];
@@ -417,23 +445,26 @@ class ReltoRenderer {
     ctx.save(); ctx.beginPath(); ctx.rect(X0, Y0, PW, PH); ctx.clip();
     ctx.fillStyle = water; ctx.fillRect(X0, Y0, PW, PH);
     ctx.strokeStyle = rgba(230, 245, 255, 0.35); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(X0, Y0 + 0.6); ctx.lineTo(X0 + PW, Y0 + 0.6); ctx.stroke();
-    const n = Math.round(2 + a.density * 5), COMMON = [["#efe2cc", "#d8452a"], ["#e8dcc6", "#d8452a"], ["#e0762a", "#f6b870"], ["#d94a2a", "#f2c9a0"], ["#efe2cc", "#1d1d24"]];
-    const fish = (i, body, spot, size, rareKind) => {
+    const n = Math.round(2 + a.density * 5), genomes = [koiGenome(r, KOI_RARE[rare])]; for (let i = 1; i < n; i++) genomes.push(koiGenome(r, null));
+    const fish = (i, gn, size, rareKind) => {
       const ph = i * 2.1 + r() * 6, sp = 0.18 + r() * 0.16, lane = Y0 + 4.5 + (i % 3) * 3.6, s = Math.sin(t * sp + ph), dir = Math.cos(t * sp + ph) >= 0 ? 1 : -1;
       const x = X0 + 6 + (PW - 12) * (0.5 + 0.5 * s), y = lane + Math.sin(t * 0.9 + ph) * 0.7, wag = Math.sin(t * 6 + ph) * 1.2;
       ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
       if (rareKind) { const pulse = 0.8 + 0.2 * Math.sin(t * 2.4 + ph), gl = ctx.createRadialGradient(0, 0, 1, 0, 0, size * 2); gl.addColorStop(0, rareKind.glow); gl.addColorStop(0.45, rareKind.glow2); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.globalAlpha = pulse; ctx.fillStyle = gl; ctx.fillRect(-size * 2.2, -size * 2.2, size * 4.4, size * 4.4); ctx.globalAlpha = 1; }
-      ctx.globalAlpha = rareKind && rareKind.alpha ? rareKind.alpha : 1;
-      ctx.fillStyle = shade(body); ctx.beginPath(); ctx.ellipse(0, 0, size * 0.5, size * 0.2, 0, 0, 6.283); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(-size * 0.45, 0); ctx.lineTo(-size * 0.8, -size * 0.2 + wag * 0.4); ctx.lineTo(-size * 0.8, size * 0.2 + wag * 0.4); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = shade(spot); ctx.beginPath(); ctx.ellipse(size * 0.05, -size * 0.04, size * 0.24, size * 0.13, 0, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(-size * 0.28, size * 0.02, size * 0.12, size * 0.09, 0, 0, 6.283); ctx.fill();
+      const al = rareKind && rareKind.alpha ? rareKind.alpha : 1; ctx.globalAlpha = al;
+      ctx.fillStyle = shade(gn.tail); ctx.beginPath(); ctx.moveTo(-size * 0.45, 0); ctx.lineTo(-size * 0.8, -size * 0.2 + wag * 0.4); ctx.lineTo(-size * 0.8, size * 0.2 + wag * 0.4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = shade(gn.base); ctx.beginPath(); ctx.ellipse(0, 0, size * 0.5, size * 0.2, 0, 0, 6.283); ctx.fill();
+      ctx.save(); ctx.beginPath(); ctx.ellipse(0, 0, size * 0.5, size * 0.2, 0, 0, 6.283); ctx.clip(); // les taches restent dans le corps
+      for (const p of gn.patches) { ctx.fillStyle = shade(p.col); ctx.globalAlpha = al * p.a; const cx = p.u * size * 0.46, cy = p.v * size * 0.1; ctx.beginPath(); ctx.ellipse(cx, cy, p.rx * size * 0.5, p.ry * size * 0.2, p.rot, 0, 6.283); ctx.fill(); for (const [du, dv, k] of p.blobs) { ctx.beginPath(); ctx.ellipse(cx + du * size * 0.4, cy + dv * size * 0.2, p.rx * size * 0.5 * k, p.ry * size * 0.2 * k, p.rot, 0, 6.283); ctx.fill(); } }
+      ctx.restore(); ctx.globalAlpha = al;
+      if (gn.dot) { ctx.fillStyle = shade(gn.dot.col); ctx.beginPath(); ctx.arc(gn.dot.u * size * 0.46, 0, size * 0.085, 0, 6.283); ctx.fill(); }
       ctx.fillStyle = rgba(10, 10, 14, 0.8); ctx.fillRect(size * 0.34, -size * 0.07, 0.9, 0.9);
-      if (rareKind) for (let k = 1; k <= 6; k++) { const ox = -dir * k * 2.6, oy = Math.sin(t * 7 + k * 1.7) * 1.4, a = (1 - k / 7) * 0.8 * (0.6 + 0.4 * Math.sin(t * 9 + k)); ctx.fillStyle = rareKind.spark.replace("A", a.toFixed(2)); ctx.fillRect(ox * dir - 0.5 + (dir < 0 ? 0 : 0), oy - 0.5, 1.1, 1.1); }
+      if (rareKind) for (let k = 1; k <= 6; k++) { const ox = -dir * k * 2.6, oy = Math.sin(t * 7 + k * 1.7) * 1.4, a = (1 - k / 7) * 0.8 * (0.6 + 0.4 * Math.sin(t * 9 + k)); ctx.fillStyle = rareKind.spark.replace("A", a.toFixed(2)); ctx.fillRect(ox * dir - 0.5, oy - 0.5, 1.1, 1.1); }
       ctx.restore();
       return [x, y];
     };
-    for (let i = 1; i < n; i++) { const c = COMMON[Math.floor(r() * COMMON.length)]; fish(i, c[0], c[1], 8.5 + r() * 2, null); }
-    const [rx, ry] = fish(0, KOI_RARE[rare].body, KOI_RARE[rare].spot, 15.5, KOI_RARE[rare]);
+    for (let i = 1; i < n; i++) fish(i, genomes[i], 8.5 + r() * 2, null);
+    const [rx, ry] = fish(0, genomes[0], 15.5, KOI_RARE[rare]);
     if (rare !== "ghost") for (let k = 0; k < 4; k++) { const p = frac(t * 0.3 + k / 4 + r()); ctx.fillStyle = rgba(255, 245, 200, 0.7 * Math.sin(p * 3.14)); ctx.fillRect(X0 + 8 + r() * (PW - 16), Y0 + 2 + p * (PH - 4), 0.9, 0.9); }
     ctx.restore();
     ctx.fillStyle = shade("#6d6a64"); for (const [sx, sw] of [[X0 - 4, 5], [X0 + PW - 1, 5]]) { ctx.beginPath(); ctx.ellipse(sx + sw / 2, GY + 1, sw / 2 + 0.5, 3.4, 0, 0, 6.283); ctx.fill(); }
@@ -745,7 +776,7 @@ class ReltoRenderer {
     const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go) ? "pointer" : "";
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
-  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.go) this.setView(h.go); else if (h.flash) { this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
+  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };
