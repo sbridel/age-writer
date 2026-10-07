@@ -17,9 +17,9 @@ const TERRAIN = {
 };
 /** Koï rares du bassin (page « koi », option `rare=`). */
 const KOI_RARE = {
-  ogon: { label: "ogon (gold)", body: "#e0b040", spot: "#fff0a8", glow: "rgba(255,215,110,0.55)" },
-  platinum: { label: "platinum", body: "#fbfcff", spot: "#b8c6d8", glow: "rgba(235,245,255,0.8)" },
-  ghost: { label: "ghost", body: "#cfe0ee", spot: "#aac4dc", glow: "rgba(190,215,255,0.45)", alpha: 0.6 },
+  ogon: { label: "ogon (gold)", title: "Ogon", body: "#e8b838", spot: "#fff3b0", glow: "rgba(255,214,90,0.85)", glow2: "rgba(255,190,60,0.3)", spark: "rgba(255,236,150,A)" },
+  platinum: { label: "platinum", title: "Platinum", body: "#fbfcff", spot: "#b8c6d8", glow: "rgba(235,245,255,0.9)", glow2: "rgba(200,225,255,0.3)", spark: "rgba(235,245,255,A)" },
+  ghost: { label: "ghost", title: "Ghost", body: "#cfe0ee", spot: "#aac4dc", glow: "rgba(190,215,255,0.6)", glow2: "rgba(160,190,255,0.22)", spark: "rgba(190,215,255,A)", alpha: 0.6 },
 };
 /** Robes du chat (page « cat », option `color=`) ; un code #rrggbb est aussi accepté. */
 const CATS = {
@@ -91,13 +91,14 @@ class ReltoRenderer {
     g.outline = [...top, ...right.slice(1).map(([x, y]) => [x + (r() - 0.5) * 6, y]), ...left.slice(0, -1).map(([x, y]) => [x + (r() - 0.5) * 6, y])];
     for (let i = 0; i < 26; i++) { const y = GY + 8 + r() * 120, w = 30 + r() * 120; g.strata.push([320 - w / 2 - (y - GY) * 0.1 + r() * 20, y, w * (1 - (y - GY) / 220)]); }
     for (let x = 172; x < 470; x += 6 + r() * 6) g.tufts.push([x, 2 + r() * 4]);
-    // végétation
+    // végétation : on laisse libres le chat, le bassin et les deux livres à part (rien ne doit les cacher)
+    const clear = [[372, 402]]; if (scene.additions.some((a) => a.type === "cat")) clear.push([188, 220]); if (scene.additions.some((a) => a.type === "koi")) clear.push([274, 342]);
     for (const a of scene.additions.filter((a) => a.type === "vegetation")) {
       const n = Math.round(4 + a.density * 14), pr = rng(scene.seed ^ fnv(a.pageId || a.asset || "v"));
       let guard = 0;
       while (g.plants.filter((p) => p.page === a.pageId).length < n && guard++ < 200) {
         const x = 184 + pr() * 272;
-        if (Math.abs(x - HUT_X) < 38 || Math.abs(x - SHELF_X) < 34 || x > PILLAR_X[0] - 12 && x < PILLAR_X[1] + 12) continue;
+        if (clear.some(([c0, c1]) => x > c0 && x < c1) || Math.abs(x - HUT_X) < 38 || Math.abs(x - SHELF_X) < 34 || x > PILLAR_X[0] - 12 && x < PILLAR_X[1] + 12) continue;
         const row = pr() < 0.45 ? 0 : 1;
         g.plants.push({ x, row, h: (row ? 26 : 16) + pr() * 12, sw: pr() * 6.28, kind: a.asset || "conifer", page: a.pageId });
       }
@@ -169,6 +170,7 @@ class ReltoRenderer {
     this.drawGrade(ctx, sky);
     ctx.save(); ctx.translate(CAM_X, CAM_OY); ctx.scale(CAM, CAM); ctx.translate(-CAM_X, -CAM_Y);
     this.drawHover(ctx);
+    this.drawFlash(ctx);
     ctx.restore();
     ctx.restore();
   }
@@ -356,21 +358,25 @@ class ReltoRenderer {
       const ph = i * 2.1 + r() * 6, sp = 0.18 + r() * 0.16, lane = Y0 + 4.5 + (i % 3) * 3.6, s = Math.sin(t * sp + ph), dir = Math.cos(t * sp + ph) >= 0 ? 1 : -1;
       const x = X0 + 6 + (PW - 12) * (0.5 + 0.5 * s), y = lane + Math.sin(t * 0.9 + ph) * 0.7, wag = Math.sin(t * 6 + ph) * 1.2;
       ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
-      if (rareKind) { const gl = ctx.createRadialGradient(0, 0, 1, 0, 0, size * 1.6); gl.addColorStop(0, rareKind.glow); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = gl; ctx.fillRect(-size * 1.8, -size * 1.8, size * 3.6, size * 3.6); }
+      if (rareKind) { const pulse = 0.8 + 0.2 * Math.sin(t * 2.4 + ph), gl = ctx.createRadialGradient(0, 0, 1, 0, 0, size * 2); gl.addColorStop(0, rareKind.glow); gl.addColorStop(0.45, rareKind.glow2); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.globalAlpha = pulse; ctx.fillStyle = gl; ctx.fillRect(-size * 2.2, -size * 2.2, size * 4.4, size * 4.4); ctx.globalAlpha = 1; }
       ctx.globalAlpha = rareKind && rareKind.alpha ? rareKind.alpha : 1;
       ctx.fillStyle = shade(body); ctx.beginPath(); ctx.ellipse(0, 0, size * 0.5, size * 0.2, 0, 0, 6.283); ctx.fill();
       ctx.beginPath(); ctx.moveTo(-size * 0.45, 0); ctx.lineTo(-size * 0.8, -size * 0.2 + wag * 0.4); ctx.lineTo(-size * 0.8, size * 0.2 + wag * 0.4); ctx.closePath(); ctx.fill();
       ctx.fillStyle = shade(spot); ctx.beginPath(); ctx.ellipse(size * 0.05, -size * 0.04, size * 0.24, size * 0.13, 0, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(-size * 0.28, size * 0.02, size * 0.12, size * 0.09, 0, 0, 6.283); ctx.fill();
       ctx.fillStyle = rgba(10, 10, 14, 0.8); ctx.fillRect(size * 0.34, -size * 0.07, 0.9, 0.9);
+      if (rareKind) for (let k = 1; k <= 6; k++) { const ox = -dir * k * 2.6, oy = Math.sin(t * 7 + k * 1.7) * 1.4, a = (1 - k / 7) * 0.8 * (0.6 + 0.4 * Math.sin(t * 9 + k)); ctx.fillStyle = rareKind.spark.replace("A", a.toFixed(2)); ctx.fillRect(ox * dir - 0.5 + (dir < 0 ? 0 : 0), oy - 0.5, 1.1, 1.1); }
       ctx.restore();
+      return [x, y];
     };
     for (let i = 1; i < n; i++) { const c = COMMON[Math.floor(r() * COMMON.length)]; fish(i, c[0], c[1], 8.5 + r() * 2, null); }
-    fish(0, KOI_RARE[rare].body, KOI_RARE[rare].spot, 12.5, KOI_RARE[rare]);
+    const [rx, ry] = fish(0, KOI_RARE[rare].body, KOI_RARE[rare].spot, 15.5, KOI_RARE[rare]);
     if (rare !== "ghost") for (let k = 0; k < 4; k++) { const p = frac(t * 0.3 + k / 4 + r()); ctx.fillStyle = rgba(255, 245, 200, 0.7 * Math.sin(p * 3.14)); ctx.fillRect(X0 + 8 + r() * (PW - 16), Y0 + 2 + p * (PH - 4), 0.9, 0.9); }
     ctx.restore();
     ctx.fillStyle = shade("#6d6a64"); for (const [sx, sw] of [[X0 - 4, 5], [X0 + PW - 1, 5]]) { ctx.beginPath(); ctx.ellipse(sx + sw / 2, GY + 1, sw / 2 + 0.5, 3.4, 0, 0, 6.283); ctx.fill(); }
     ctx.strokeStyle = rgba(230, 245, 255, 0.25); ctx.lineWidth = 0.7; const rp = frac(t * 0.25); ctx.beginPath(); ctx.ellipse(X0 + PW * 0.5, GY + 0.8, 6 + rp * 14, 0.9 + rp * 1.2, 0, 0, 6.283); ctx.stroke();
     this.hot.push({ x: X0 - 3, y: GY - 2, w: PW + 6, h: PH + 5, tip: `Koi pond — a rare ${KOI_RARE[rare].label} koi swims here` });
+    const nm = String(a.name || "").trim() || KOI_RARE[rare].title;
+    this.hot.push({ x: rx - 9, y: ry - 6, w: 18, h: 12, tip: `${nm} — a rare ${KOI_RARE[rare].label} koi`, flash: nm });
   }
 
   /** Un chat assis près de la cabane : couleur et nom viennent de la page (`color=`, `name=`). Clignement, queue qui bat, yeux clos la nuit. */
@@ -396,7 +402,16 @@ class ReltoRenderer {
     ctx.fillStyle = shade("#d98a8a"); ctx.fillRect(-0.4, -12.2, 0.8, 0.6);
     ctx.restore();
     const nm = String(a.name || "").trim();
-    this.hot.push({ x: CX - 9, y: GY - 26, w: 18, h: 26, tip: nm ? `${nm} — ${cat.label} cat` : `A ${cat.label} cat` });
+    this.hot.push({ x: CX - 9, y: GY - 26, w: 18, h: 26, tip: nm ? `${nm} — ${cat.label} cat` : `A ${cat.label} cat`, flash: nm || `a ${cat.label} cat` });
+  }
+
+  /** étiquette brève (nom du chat, de la koï) affichée après un clic */
+  drawFlash(ctx) {
+    const f = this.flash; if (!f) return;
+    if (Date.now() > f.until) { this.flash = null; return; }
+    ctx.save(); ctx.font = "8px serif"; const tw = ctx.measureText(f.text).width, w = tw + 10, x = clamp(f.x - w / 2, 4, W - w - 4), y = f.y - 12;
+    ctx.fillStyle = "rgba(14,12,10,0.82)"; ctx.fillRect(x, y, w, 12); ctx.strokeStyle = "rgba(205,189,148,0.7)"; ctx.lineWidth = 0.7; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, 11);
+    ctx.fillStyle = "#eadfb8"; ctx.textBaseline = "middle"; ctx.fillText(f.text, x + 5, y + 6.4); ctx.restore();
   }
 
   drawStructures(ctx, sky, t) {
@@ -623,10 +638,10 @@ class ReltoRenderer {
   }
   hit(x, y) { for (let i = this.hot.length - 1; i >= 0; i--) { const h = this.hot[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h; } return null; }
   onMove(e) {
-    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && (this.hover.book || this.hover.special) ? "pointer" : "";
+    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && (this.hover.book || this.hover.special || this.hover.flash) ? "pointer" : "";
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
-  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); }
+  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.flash) { this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };

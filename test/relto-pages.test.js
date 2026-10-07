@@ -20,4 +20,5 @@ const mk = (id, name) => ({ id, additions: [{ type: "cat", density: 0.5, name }]
 const sc = M.buildScene(relto, [mk("a", "Mochi"), mk("b", "Luna")], [], []);
 ok(sc.additions.filter((a) => a.type === "cat").length === 2, "deux chats de noms différents ne fusionnent pas");
 ok(M.optsOf({ name: "x".repeat(100) }).name.length === 40, "nom borné à 40 caractères");
+ok(M.pageFrontmatter("page_koi", M.PAGE_PRESETS.page_koi).koi_name === "" && M.parsePage({ ...M.pageFrontmatter("page_koi", M.PAGE_PRESETS.page_koi), koi_name: "Soleil" }, "k.md").additions[0].name === "Soleil", "koi_name nomme la koï");
 console.log(`✓ relto-pages.test.js (${n} contrôles)`);

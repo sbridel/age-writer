@@ -6,7 +6,7 @@ Idée de départ : dans Mystcraft, on ne **crée** pas un monde, on se **lie** �
 
 > Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part. Aucune ressource de Myst (police, image, son) n'est fournie.
 
-**Version 1.10.0** : deux nouvelles pages du Relto, un **bassin de koï** (avec une koï rare : *ogon* doré, *platinum* ou *fantôme*) et un **chat** dont tu choisis la couleur et le nom (voir §6) ; les infobulles du Relto n'apparaissent plus en double (seule celle d'Obsidian reste) ; deux livres à part sur le Relto (1.9) ; réglage « How much the book draws » (1.8). Le moteur (issu du 1.3.0) est en sources lisibles dans `src/engine/`. Le `manifest.json` annonce `1.10.0`.
+**Version 1.10.1** (la koï rare est plus grosse, avec halo et étincelles ; un clic sur la koï ou sur le chat affiche son nom ; les arbres et fougères ne cachent plus le chat, le bassin ni les deux livres à part) — **1.10.0** : deux nouvelles pages du Relto, un **bassin de koï** (avec une koï rare : *ogon* doré, *platinum* ou *fantôme*) et un **chat** dont tu choisis la couleur et le nom (voir §6) ; les infobulles du Relto n'apparaissent plus en double (seule celle d'Obsidian reste) ; deux livres à part sur le Relto (1.9) ; réglage « How much the book draws » (1.8). Le moteur (issu du 1.3.0) est en sources lisibles dans `src/engine/`. Le `manifest.json` annonce `1.10.1`.
 
 ---
 
@@ -138,9 +138,11 @@ La syntaxe d'une page du Relto accepte `page lagon: …` ou `page_lagon: …` (l
 
 ### Le bassin de koï et le chat
 
-- **Bassin de koï** (page *Koi pond*) : un bassin vu en coupe, à droite de la cabane, avec des carpes qui nagent. Une **koï rare** les accompagne : `koi_rare` dans les propriétés de la note de la page vaut `ogon` (doré), `platinum` ou `ghost` (fantôme). Sans valeur, la variété est tirée d'après la graine du Relto.
+- **Bassin de koï** (page *Koi pond*) : un bassin vu en coupe, à droite de la cabane, avec des carpes qui nagent. Une **koï rare** les accompagne : `koi_rare` dans les propriétés de la note de la page vaut `ogon` (doré), `platinum` ou `ghost` (fantôme). Sans valeur, la variété est tirée d'après la graine du Relto. `koi_name` donne un nom à la koï rare (par défaut « Ogon », « Platinum » ou « Ghost »). Un clic sur la koï (ou sur le chat) affiche son nom un instant.
 - **Chat** (page *Cat*) : assis à gauche de la cabane, il cligne des yeux, bat de la queue et dort la nuit. Dans la note de la page, `cat_name` donne son nom (affiché au survol) et `cat_color` sa robe : `black`, `white`, `orange`, `grey`, `cream`, `tabby`, `calico`, `tuxedo`, `siamese`, ou un code `#rrggbb`.
 - Dans un bloc `relto-library` : `page chat: Chat | cat color=black name="Petit Loup"` et `page bassin: Bassin | koi 0.8 rare=platinum` (la densité de `koi` règle le nombre de carpes).
+
+La végétation (pins, bouleaux, palmes, fougères) laisse libres la place du chat, du bassin et des deux livres à part : rien ne les cache.
 
 ### Pages intégrées
 

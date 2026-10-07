@@ -71,7 +71,7 @@ function parsePage(fm = {}, path = "") {
     type: String(a && a.type || ""),
     density: clamp(Number(a && a.density != null ? a.density : 0.5), 0, 1),
     asset: a && a.asset ? String(a.asset) : undefined,
-    ...optsOf({ ...a, ...(a && a.type === "cat" ? { color: fm.cat_color ?? (a && a.color), name: fm.cat_name ?? (a && a.name) } : {}), ...(a && a.type === "koi" ? { rare: fm.koi_rare ?? (a && a.rare) } : {}) }),
+    ...optsOf({ ...a, ...(a && a.type === "cat" ? { color: fm.cat_color ?? (a && a.color), name: fm.cat_name ?? (a && a.name) } : {}), ...(a && a.type === "koi" ? { rare: fm.koi_rare ?? (a && a.rare), name: fm.koi_name ?? (a && a.name) } : {}) }),
   })).filter((a) => EFFECT_TYPES.includes(a.type));
   const audio = eff.ambiance_audio == null ? [] : asList(eff.ambiance_audio).map(String);
   const un = fm.unlock || null;
@@ -211,7 +211,7 @@ function pageFrontmatter(id, preset) {
   // propriétés simples à modifier dans la note (Obsidian n'édite pas bien les listes imbriquées)
   for (const a of (preset.effects && preset.effects.canvas_additions) || []) {
     if (a.type === "cat") { fm.cat_name = a.name || ""; fm.cat_color = a.color || "orange"; }
-    if (a.type === "koi") fm.koi_rare = a.rare || "ogon";
+    if (a.type === "koi") { fm.koi_rare = a.rare || "ogon"; fm.koi_name = a.name || ""; }
   }
   if (preset.unlock) fm.unlock = { age: `[[${preset.unlock.age}]]`, min_stability: preset.unlock.minStability };
   return fm;

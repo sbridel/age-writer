@@ -7,6 +7,8 @@ function renderMany(host, ages) {
   host = host || document.body;
   const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
   const variants = [
+    { h: 14, t: 3.7, env: {}, pages: ["page_pine_trees", "page_ferns", "page_koi", "page_cat"], label: "day / trees + koi + cat (rien ne masque)" },
+    { h: 21, t: 6.2, env: {}, pages: ["page_pine_trees", "page_koi", "page_cat", "page_lanterns"], label: "dusk / trees + koi + cat" },
     { h: 14, t: 2.2, env: {}, pages: ["page_koi", "page_cat"], label: "day / koi + cat (orange)" },
     { h: 22, t: 5.1, env: {}, pages: ["page_koi", "page_cat"], tune: { color: "black", name: "Nuit" }, label: "night / koi + black cat" },
     { h: 11, t: 3.3, env: {}, pages: ["page_cat"], tune: { color: "calico", name: "Pixel" }, label: "day / calico cat" },
