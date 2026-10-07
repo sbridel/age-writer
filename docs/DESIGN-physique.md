@@ -99,11 +99,11 @@ Les paramètres libres ont des **lois a priori** (des plages plausibles) :
 | eau | 0,3 par défaut ; 1 avec `water` ; 3 `ocean_world` ; 0,02 `desert_world` | `water:` |
 | marée | 0 ; +0,03 avec une lune ; 0,1–5 autour d'une géante (`planet_rings`) ; +0,1 si figé près d'une naine | `tides:` |
 
-48 mondes sont tirés (graine `nom de la note|physics`, dés distincts pour chaque essai). On garde **le premier** qui ne laisse aucune tension, sinon celui dont le coût total est le plus bas. Comme le premier essai est un tirage a priori ordinaire, un Âge sans exigence particulière reçoit simplement un monde plausible au hasard.
+48 mondes sont tirés (graine `nom de la note|physics`, dés distincts pour chaque essai). Tous les dés sont **toujours** jetés dans le même ordre, puis les valeurs écrites remplacent les valeurs tirées : écrire `insolation: 1` ne déplace pas le tirage de la masse ou de l'âge. On garde **le premier** monde qui ne laisse aucune tension, sinon celui dont le coût total est le plus bas. Comme le premier essai est un tirage a priori ordinaire, un Âge sans exigence particulière reçoit simplement un monde plausible au hasard.
 
 ### Les pistes chiffrées
 
-Pour chaque tension restante, `solve.js` fait varier **un seul** paramètre à la fois (ceux que l'exigence déclare dans `search`), sur une grille logarithmique de 65 valeurs, et retient la valeur **la plus proche de l'actuelle** qui lève la tension, arrondie à deux chiffres si l'arrondi marche encore. La fiche la propose comme une ligne à écrire : « un monde plus jeune (`age: 3,5`) ». Au plus deux pistes chiffrées, suivies des pistes en blocs (« `planet_rings` »).
+Pour chaque tension restante, `solve.js` fait varier **un seul** paramètre à la fois (ceux que l'exigence déclare dans `search`), sur une grille logarithmique de 65 valeurs, et retient la valeur **la plus proche de l'actuelle** qui lève la tension **sans alourdir le total des tensions** (une piste qui échange un problème contre un pire n'en est pas une), arrondie à deux chiffres si l'arrondi marche encore. Si l'auteur a écrit `orbit:`, la piste de flux est rendue en `orbit:`. Les nombres proposés s'écrivent sans séparateur de milliers, pour que le bloc les relise. Vérifié : chaque piste, réécrite dans le bloc et relue, allège le monde. La fiche la propose comme une ligne à écrire : « un monde plus jeune (`age: 3,5`) ». Au plus deux pistes chiffrées, suivies des pistes en blocs (« `planet_rings` »).
 
 ---
 
@@ -114,11 +114,11 @@ Unités : Terre = 1 (masse, rayon, gravité, chaleur interne, flux reçu), Solei
 | Loi | Relation simplifiée | D'après |
 |---|---|---|
 | **L1 Étoiles** | luminosité L = 0,23·M^2,3 (M < 0,43), M⁴ (< 2), 1,4·M^3,5 ; rayon ∝ M^0,8 / M^0,57 ; température par L = 4πR²σT⁴ ; durée de vie = 10 Ga · M / L | relation masse-luminosité de la séquence principale |
-| **L2 Orbite** | flux S = L / a² ; période = 365,25 j · √(a³ / M★) ; verrouillage par marée en ≈ 5·10⁴ Ga · a⁶ / M★² ; zone habitable 0,36 < S < 1,1 | Kepler ; temps de verrouillage ∝ a⁶ |
+| **L2 Orbite** | flux S = L / a² ; période = 365,25 j · √(a³ / M★) ; verrouillage par marée en ≈ 2·10⁴ Ga · a⁶ / M★² (Terre : jamais ; monde tempéré autour d'une naine de 0,3 M☉ : < 1 Ga ; de 0,5 M☉ : ~20 Ga) ; zone habitable 0,36 < S < 1,1 | Kepler ; temps de verrouillage ∝ a⁶ ; Kopparapu et al. 2013 |
 | **L3 Planète** | rayon R = (1,07 − 0,21·CMF) · M^(1/3,7) ; gravité g = M / R² ; libération v = √(M / R) ; densité M / R³ | Zeng et al. 2016 (planètes rocheuses) |
-| **L4 Intérieur** | chaleur h = √M · e^(−(âge − 4,5)/3,5) · e^(−âge·0,066·(1/R − 1)) + marée ; seuils : volcanisme 0,5, tectonique 0,7 (et M ≥ 0,5), noyau liquide 0,4, océan de magma 3 ; **dynamo** si noyau liquide et rotation < 240 h | décroissance radioactive ; petits corps refroidis plus vite |
-| **L5 Atmosphère** | T_eq = 278,6 K · (S·(1 − A))^¼ (+ chaleur interne seule si pas d'étoile, ≈ 35 K pour la Terre) ; rétention = e^(−(x/2)²), x = vent stellaire (√S, ×0,3 avec champ magnétique) / (v²·255/T_eq) ; pression = volatils × √chaleur × rétention × régime ; serre grise : T_s⁴ = T_eq⁴ · (1 + ¾τ), τ = 0,836 · P^1,2 | équilibre radiatif ; échappement de Jeans + vent stellaire (très simplifiés) |
-| **L6 Eau** | régimes : **liquide** (les océans enfouissent le CO₂ : rien de plus), **glace** (plus de pluie pour l'enfouir : ×3, et l'albédo monte de 0,2), **sec** (effet Vénus : jusqu'à ×150 si volcanique) ; on garde le premier régime qui se confirme ; ébullition par Clausius-Clapeyron ; sous 0,006 bar (point triple), l'eau ne coule pas | cycle carbonates-silicates ; point triple de l'eau |
+| **L4 Intérieur** | chaleur h = √M · e^(−(âge − 4,5)/3,5) · e^(−âge·0,066·(1/R − 1)) + marée ; seuils : volcanisme 0,5, tectonique 0,7 (et M ≥ 0,5 **et de l'eau liquide**, qui lubrifie la croûte : Vénus n'a pas de plaques), noyau liquide 0,4, océan de magma 3 ; **dynamo** si noyau liquide, intensité ∝ √(24 h / rotation) × fer × chaleur — une rotation lente l'affaiblit (Mercure, 1 % du champ terrestre) ; bouclier réel au-delà de 0,2 | décroissance radioactive ; petits corps refroidis plus vite |
+| **L5 Atmosphère** | T_eq = 278,6 K · (S·(1 − A))^¼ (+ chaleur interne seule si pas d'étoile, ≈ 35 K pour la Terre) ; rétention = e^(−(x/2)²), x = vent stellaire (√S, ×0,3 avec champ magnétique) / (v²·255/T_eq) ; pression = volatils × √chaleur × rétention × régime, et sous ~60 K l'air gèle (il tombe en neige) ; serre grise : T_s⁴ = T_eq⁴ · (1 + ¾τ), τ = 0,836 · P^1,2 | équilibre radiatif ; échappement de Jeans + vent stellaire (très simplifiés) |
+| **L6 Eau** | régimes : **liquide** (les océans enfouissent le CO₂ : rien de plus), **glace** (plus de pluie pour l'enfouir : ×3, et l'albédo monte de 0,2), **sec** (effet Vénus : jusqu'à ×150 si volcanique) ; on garde le premier régime qui se confirme ; ébullition par Clausius-Clapeyron (jamais sous 273,16 K) ; sous 0,00612 bar (point triple, 611,7 Pa), l'eau ne coule pas | cycle carbonates-silicates ; point triple de l'eau |
 | **L7 Vivant** | lumière au sol = S × voiles (`permanent_veil` 0,3, `ash_cloud` 0,6, air > 10 bar 0,5) ; vie verte entre −18 et +52 °C ; vie rude (spores, lichens) entre −73 et +87 °C ou près d'une source chaude ; vie simple ≥ 0,3 Ga, arbres et bêtes ≥ 1 Ga (sauf bâtisseurs) | ordres de grandeur terrestres |
 | **L8 Chaîne alimentaire** | brouteurs → flore ; chasseurs → proies ; fouisseurs → sol meuble | bon sens écologique |
 
@@ -128,10 +128,10 @@ Unités : Terre = 1 (masse, rayon, gravité, chaleur interne, flux reçu), Solei
 |---|---|---|
 | Terre | 1 bar, 287 K, eau liquide, champ 1, volcans | 1 bar, 288 K |
 | Mars | 0,07 bar, 211 K, glace, pas de champ, volcans éteints | 0,006 bar, 210 K |
-| Vénus (rotation 243 j, sans eau) | 50 bar, 655 K, pas de champ | 92 bar, 737 K |
+| Vénus (rotation 243 j, sans eau) | 50 bar, 655 K, champ 0,05 (pas de bouclier), pas de plaques | 92 bar, 737 K, pas de champ ni de plaques |
 | Lune | pas d'air, intérieur froid (0,06) | idem |
 
-Mars garde un peu trop d'air et Vénus un peu trop peu : c'est le prix de lois simples. Les tests vérifient des **fourchettes**, pas des valeurs exactes.
+Mars garde un peu trop d'air et Vénus un peu trop peu : c'est le prix de lois simples. Les tests vérifient des **fourchettes**, pas des valeurs exactes. L'absence de champ de Vénus sort du modèle par sa rotation lente ; dans la réalité, la cause est débattue (l'état de son noyau, plutôt) : c'est une simplification, et les messages ne prétendent pas l'expliquer.
 
 ---
 
@@ -154,6 +154,8 @@ Mars garde un peu trop d'air et Vénus un peu trop peu : c'est le prix de lois s
 | `volatiles:` | de quoi faire de l'air | Terre = 1 |
 | `albedo:` (`albédo:`) | part de lumière renvoyée | 0–1 |
 | `tides:` (`marées:`) | chaleur de marée | Terre = 1 |
+
+Bornes : masse 0,01–20, rayon 0,05–4, âge ≤ 13,8 Ga, orbite 0,005–1 000 UA, flux ≤ 5 000, étoile 0,08–60 M☉ ; une valeur hors plage est ramenée dedans et la fiche le signale ; une valeur nulle est ignorée là où elle n'a pas de sens (masse, rayon, orbite, flux, rotation).
 
 **En mots**, `core: liquid` ou `atmosphere: thin` ne fixent rien : ce sont des **affirmations** que la physique vérifie (et qui guident le tirage). **En nombres**, ils fixent la valeur.
 
@@ -200,6 +202,10 @@ Ces lignes ne se confondent avec aucune autre ligne existante (`day_length:`, `s
 | `soil` | L8 | écologique | légère | sable, limon, pierre, cendre ou sel | — |
 
 Le bloc peut changer la gravité (« la lave exige du volcanisme, gravité moyenne ; la cendre, gravité légère »). Si plusieurs blocs demandent la même chose, une seule tension est levée, avec la gravité la plus forte.
+
+Une exigence vaut pour **tout** monde, quels que soient les blocs : `starAlive` (L1, cosmologique, moyenne) — un monde ne peut pas être plus vieux que son étoile (`blue_sun` + `age: 5`).
+
+En strict, une tension n'est pas comptée deux fois quand **tous** les blocs qui la portent sont déjà dans une contradiction du moteur sur le même axe ; le verdict suit les seuils du moteur (`verdictOf`).
 
 ---
 
@@ -290,7 +296,7 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 ## 12. Ce que le prototype ne fait pas encore
 
 - Une `atmosphere:` écrite en nombre n'est pas confrontée à ce que la planète peut retenir (on pourrait signaler « 3 bar sur un monde de 0,02 M⊕, l'air fuit »).
-- Les pistes chiffrées ne regardent qu'une exigence à la fois : une piste peut en casser une autre (la fiche pourrait l'indiquer).
+- Les pistes chiffrées ne font varier qu'un paramètre à la fois (elles n'aggravent jamais le total, mais n'explorent pas les combinaisons).
 - Les réactions du moteur (eau + lave → obsidienne) ne sont pas encore pesées par la physique (l'obsidienne exige du volcanisme, c'est tout).
 - Pas de saisons, pas de climat par latitude : une seule température moyenne (sauf l'estimation jour / nuit d'un monde figé).
 - Les textes sont en français et en anglais dans le code (`rules.js`, `text.js`), pas encore dans `i18n.js`.
@@ -320,7 +326,7 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 
 | Étape | Contenu | Critère de fin |
 |---|---|---|
-| **0. Prototype** ✅ | `src/physics/`, tests (257 vérifications), galerie | fait (8 oct. 2026) |
+| **0. Prototype** ✅ | `src/physics/`, tests (279 vérifications), galerie, banc d'essai, relecture indépendante des lois et du code (corrigée) | fait (8 oct. 2026) |
 | 1. Décisions | réponses au §13 | l'auteur a tranché |
 | 2. Branchement facile | crochets `skip` / `adjust`, réglage, onglet « Physique », i18n | les 600 Âges de `equiv` inchangés ; fiche lisible dans Obsidian |
 | 3. Strict | barème, déduplication avec le moteur, frontmatter | tests de stabilité ; galerie relue par l'auteur |

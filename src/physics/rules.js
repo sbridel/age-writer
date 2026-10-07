@@ -15,7 +15,7 @@
  *
  * Les textes existent en français et en anglais.
  */
-const { HEAT, WATER_TRIPLE_BAR, boilingPoint } = require("./model");
+const { HEAT, WATER_TRIPLE_BAR, FIELD_SHIELD, boilingPoint } = require("./model");
 const { FLORA, PREY, SOIL, BUILDERS } = require("./blocks");
 
 const has = (w, list) => list.some((id) => w.ids.has(id));
@@ -51,20 +51,20 @@ const REQUIREMENTS = {
   // ---- L4 : champ magnétique ----------------------------------------------------------------------
   magneticField: {
     law: "L4", axis: "cosmological", sev: "light", search: ["rotation", "age", "mass"],
-    test: (w) => w.field > 0.2 && w.stars > 0,
+    test: (w) => w.field > FIELD_SHIELD && w.stars > 0,
     why: {
       fr: (w, f) => (w.stars === 0
         ? "Sans étoile, il n'y a pas de vent stellaire pour allumer des aurores."
         : w.heat < HEAT.liquidCore
           ? `Le noyau s'est figé (chaleur interne ${f(w.heat)}) : pas de dynamo, donc des aurores faibles et diffuses, comme sur Mars.`
-          : `La rotation est trop lente (${f(w.rotation, 0)} h) pour entretenir une dynamo : les aurores restent faibles, comme sur Vénus.`),
+          : `La rotation est lente (${f(w.rotation, 0)} h) : la dynamo reste trop faible pour un vrai bouclier, et les aurores restent pâles.`),
       en: (w, f) => (w.stars === 0
         ? "Without a star there is no stellar wind to light auroras."
         : w.heat < HEAT.liquidCore
           ? `The core has frozen (internal heat ${f(w.heat)}): no dynamo, so auroras stay faint and patchy, as on Mars.`
-          : `Rotation is too slow (${f(w.rotation, 0)} h) to drive a dynamo: auroras stay faint, as on Venus.`),
+          : `Rotation is slow (${f(w.rotation, 0)} h): the dynamo stays too weak for a real shield, and auroras stay pale.`),
     },
-    fix: (w) => (w.heat < HEAT.liquidCore ? [tip("plus de fer au cœur (iron)", "more iron at the core (iron)")] : []),
+    fix: (w) => (w.stars === 0 ? [tip("une étoile (single_sun)", "a star (single_sun)")] : w.heat < HEAT.liquidCore ? [tip("plus de fer au cœur (iron)", "more iron at the core (iron)")] : []),
   },
 
   // ---- L2 : orbite et rotation --------------------------------------------------------------------
@@ -76,7 +76,7 @@ const REQUIREMENTS = {
       en: (w, f) => `At ${f(w.a)} AU from a ${f(w.starMass)} M☉ star, a world takes about ${f(w.lockTime, 0)} Gyr to stop spinning; it is only ${f(w.age)} Gyr old.`,
     },
     fix: () => [
-      tip("un soleil rouge : on s'en tient tout près, et la marée fige vite la rotation (red_sun)", "a red sun: worlds huddle close and tides freeze their spin fast (red_sun)"),
+      tip("un petit soleil rouge et une orbite serrée : la marée y fige vite la rotation (red_sun)", "a small red sun and a tight orbit: tides freeze the spin fast there (red_sun)"),
       tip("faire de ce monde la lune d'une géante, qui lui montre toujours la même face (planet_rings)", "make this world a giant's moon, always showing it the same face (planet_rings)"),
     ],
   },
@@ -130,8 +130,7 @@ const REQUIREMENTS = {
   frozenSurface: {
     law: "L5", axis: "cosmological", sev: "medium", search: ["insolation", "atmosphere"],
     test: (w) => w.Ts < 255,
-    why: { fr: (w, f) => `Un monde gelé à ${f(w.Ts, 0)} K ? La glace fond au-dessus de 273 K.`, en: (w, f) => `A frozen world at ${f(w.Ts, 0)} K? Ice melts above 273 K.` },
-    fix: () => [tip("un soleil rouge (red_sun)", "a red sun (red_sun)")],
+    why: { fr: (w, f) => `Un monde gelé à ${f(w.Ts - 273.15, 0)} °C en moyenne ? Pour que tout reste pris, il faut rester sous −18 °C (255 K).`, en: (w, f) => `A frozen world averaging ${f(w.Ts - 273.15, 0)} °C? For everything to stay locked, it must stay below −18 °C (255 K).` },
   },
   warmClimate: {
     law: "L5", axis: "ecological", sev: "medium", search: ["insolation", "atmosphere"],
@@ -146,7 +145,10 @@ const REQUIREMENTS = {
   notFurnace: {
     law: "L5", axis: "geological", sev: "medium", search: ["insolation", "age"],
     test: (w) => w.Ts <= 340,
-    why: { fr: (w, f) => `Un désert, pas une fournaise : ici ${f(w.Ts - 273.15, 0)} °C sous ${f(w.P)} bar, comme sur Vénus.`, en: (w, f) => `A desert, not a furnace: here ${f(w.Ts - 273.15, 0)} °C under ${f(w.P)} bar, as on Venus.` },
+    why: {
+      fr: (w, f) => `Un désert, pas une fournaise : ici ${f(w.Ts - 273.15, 0)} °C sous ${f(w.P)} bar${w.P > 10 ? ", comme sur Vénus" : ""}.`,
+      en: (w, f) => `A desert, not a furnace: here ${f(w.Ts - 273.15, 0)} °C under ${f(w.P)} bar${w.P > 10 ? ", as on Venus" : ""}.`,
+    },
     fix: () => [tip("ou l'assumer : lava_world, heat, scorched_surface", "or embrace it: lava_world, heat, scorched_surface")],
   },
   coldSomewhere: {
@@ -235,10 +237,10 @@ const REQUIREMENTS = {
     test: (w) => w.age >= 1 || has(w, BUILDERS),
     why: {
       fr: (w, f) => (w.starLife < 1
-        ? `Une étoile de ${f(w.starMass)} M☉ s'éteint en ${f(w.starLife * 1000, 0)} millions d'années ; il en faut environ mille pour des arbres et des bêtes.`
+        ? `Une étoile de ${f(w.starMass)} M☉ s'éteint en ${f(w.starLife * 1000)} millions d'années ; il en faut environ mille pour des arbres et des bêtes.`
         : `Arbres et bêtes demandent environ un milliard d'années d'évolution ; ce monde a ${f(w.age)} Ga.`),
       en: (w, f) => (w.starLife < 1
-        ? `A ${f(w.starMass)} M☉ star burns out in ${f(w.starLife * 1000, 0)} million years; trees and beasts need about a thousand.`
+        ? `A ${f(w.starMass)} M☉ star burns out in ${f(w.starLife * 1000)} million years; trees and beasts need about a thousand.`
         : `Trees and beasts need about a billion years of evolution; this world is ${f(w.age)} Gyr old.`),
     },
     fix: (w) => [...(w.starLife < 1 ? [tip("un soleil moins ardent (orange_sun, single_sun)", "a gentler sun (orange_sun, single_sun)")] : []),
@@ -275,6 +277,19 @@ const REQUIREMENTS = {
   },
 };
 
+/** Exigences qui valent pour tout monde, quels que soient les blocs (`applies` : quand les vérifier). */
+const GLOBAL = {
+  starAlive: {
+    law: "L1", axis: "cosmological", sev: "medium", search: ["age"], applies: (w) => w.stars > 0,
+    test: (w) => w.age <= w.starLife,
+    why: {
+      fr: (w, f) => `Une étoile de ${f(w.starMass)} M☉ ne vit que ${f(w.starLife)} Ga : ce monde ne peut pas en avoir ${f(w.age)}.`,
+      en: (w, f) => `A ${f(w.starMass)} M☉ star lives only ${f(w.starLife)} Gyr: this world cannot be ${f(w.age)} Gyr old.`,
+    },
+    fix: () => [tip("ou un soleil plus calme (orange_sun, red_sun)", "or a calmer sun (orange_sun, red_sun)")],
+  },
+};
+
 /** Exigences écrites en toutes lettres par l'auteur (`core: liquid`, `atmosphere: thin`…). */
 const ASSERTIONS = {
   core_liquid: { law: "L4", axis: "geological", sev: "medium", search: ["age", "mass"], test: (w) => w.heat >= HEAT.liquidCore,
@@ -293,6 +308,7 @@ const ASSERTIONS = {
 /** Comment dire une ligne proposée par la recherche (clé → libellé, sens). */
 const HINTS = {
   insolation: { up: tip("plus près de l'étoile", "closer to the star"), down: tip("plus loin de l'étoile", "further from the star") },
+  orbit: { up: tip("plus loin de l'étoile", "further from the star"), down: tip("plus près de l'étoile", "closer to the star") },
   age: { up: tip("un monde plus vieux", "an older world"), down: tip("un monde plus jeune", "a younger world") },
   mass: { up: tip("une planète plus massive", "a more massive planet"), down: tip("une planète plus légère", "a lighter planet") },
   atmosphere: { up: tip("un air plus épais", "thicker air"), down: tip("un air plus mince", "thinner air") },
@@ -300,4 +316,4 @@ const HINTS = {
   rotation: { up: tip("une rotation plus lente", "a slower spin"), down: tip("une rotation plus rapide", "a faster spin") },
 };
 
-module.exports = { REQUIREMENTS, ASSERTIONS, HINTS };
+module.exports = { REQUIREMENTS, ASSERTIONS, GLOBAL, HINTS };

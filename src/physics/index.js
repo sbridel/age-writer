@@ -14,8 +14,7 @@
  */
 const { solve, parsePhysics, PHYS_RE, SEV_COST } = require("./solve");
 const { sheet, fmt } = require("./text");
-
-const STABLE_AT = 75, UNSTABLE_AT = 40;
+const { verdictOf } = require("../engine/analysis");
 /** Plafond du coût physique par axe : la physique éclaire, elle n'écrase pas un monde à elle seule. */
 const AXIS_CAP = 0.45;
 
@@ -33,10 +32,13 @@ function physicsOf(analysis, src, seed) {
   return solve({ ids: idsOfAnalysis(analysis), src, seed });
 }
 
-/** Tensions déjà comptées par le moteur (même bloc, même axe) : on ne les fait pas payer deux fois. */
+/**
+ * Tension déjà comptée par le moteur : TOUS les blocs qui la portent sont déjà dans une contradiction
+ * du moteur sur le même axe (sinon, un bloc nouveau la rend neuve). On ne la fait pas payer deux fois.
+ */
 function alreadyCounted(analysis, t) {
   const trig = (analysis && analysis.resolved && analysis.resolved.triggered) || [];
-  return t.ids.some((id) => trig.some((c) => (c.a === id || c.b === id) && (c.axis || "cosmological") === t.axis));
+  return t.ids.length > 0 && t.ids.every((id) => trig.some((c) => (c.a === id || c.b === id) && (c.axis || "cosmological") === t.axis));
 }
 
 function applyPhysics(analysis, phys, mode = "easy") {
@@ -51,7 +53,7 @@ function applyPhysics(analysis, phys, mode = "easy") {
   const axisStability = { ...analysis.axisStability };
   for (const [axis, c] of Object.entries(cost)) axisStability[axis] = Math.max(0, (axisStability[axis] != null ? axisStability[axis] : 100) - Math.round(c * 100));
   const values = Object.values(axisStability), stability = values.length ? Math.min(...values) : 100;
-  const verdict = stability >= STABLE_AT ? "stable" : stability >= UNSTABLE_AT ? "unstable" : "dying";
+  const verdict = verdictOf(stability);
   return { ...analysis, axisStability, stability, verdict, physics: { ...phys, tensions: counted, axisCost: cost } };
 }
 

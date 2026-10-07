@@ -71,7 +71,7 @@ def("ash_cloud", { set: { albedoAdd: 0.1, veil: 0.6 }, needs: [["volcanism", "li
 
 // ---- vivant --------------------------------------------------------------------------------------
 const PHOTO = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "moss", "withered_fern", "cinderbloom"];
-def(PHOTO, { needs: [["sunlight", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
+def(PHOTO, { needs: [["sunlight", "light"], ["breathableAir", "light"], ["temperateLife", "light"], ["oldEnoughSimple", "light"]] });
 def(["great_tree", "grove", "ironwood"], { needs: [["oldEnoughComplex", "light"], ["tallTrees", "light"]] });
 def(["spore", "pale_fungus", "lichen", "singing_lichen"], { needs: [["oldEnoughSimple", "light"], ["hardyLife", "light"]] });
 def(["grazer", "herd", "watching_herd"], { needs: [["foodPlants", "light"], ["oldEnoughComplex", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });

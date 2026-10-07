@@ -14,7 +14,7 @@
 const T_SUN = 5778; // K
 const T_EQ_EARTH_FACTOR = 278.6; // T_eq = 278,6 K · S^¼ · (1 − A)^¼  → Terre (A = 0,3) : 255 K
 const EARTH_TAU = 0.836; // épaisseur optique « grise » qui fait passer la Terre de 255 K à 288 K
-const WATER_TRIPLE_BAR = 0.00603; // sous cette pression, l'eau ne peut pas être liquide
+const WATER_TRIPLE_BAR = 0.00612; // point triple de l'eau (611,7 Pa) : sous cette pression, l'eau ne peut pas être liquide
 const R_OVER_L = 8.314 / 40650; // Clausius-Clapeyron, eau
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -68,12 +68,12 @@ function orbitalPeriodDays(a, starMass) {
 
 /**
  * Temps de verrouillage par marée (Ga), ∝ a⁶ / M★². La constante est calée pour que la Terre
- * autour du Soleil ne se verrouille jamais (≈ 50 000 Ga) et qu'une planète tempérée autour d'une
- * naine rouge se verrouille en moins d'un milliard d'années.
+ * autour du Soleil ne se verrouille jamais (≈ 20 000 Ga) et qu'une planète tempérée autour d'une
+ * naine rouge de 0,3 M☉ ou moins se verrouille en moins d'un milliard d'années (à 0,5 M☉, il en faut ~20).
  */
 function tidalLockTime(a, starMass) {
   if (!(starMass > 0) || !isFinite(a)) return Infinity;
-  return (5e4 * Math.pow(a, 6)) / (starMass * starMass);
+  return (2e4 * Math.pow(a, 6)) / (starMass * starMass);
 }
 
 /** Zone habitable (flux reçu) : bord intérieur = emballement de l'effet de serre, bord extérieur = effet de serre maximal. */
@@ -122,15 +122,18 @@ function ageForHeatLevel(mass, radius, h, tidal = 0) {
 const HEAT = { volcanism: 0.5, tectonics: 0.7, liquidCore: 0.4, magmaOcean: 3 };
 
 /**
- * Dynamo (champ magnétique global) : il faut un noyau liquide qui brasse, donc de la chaleur, et
- * une rotation pas trop lente (Vénus, 5 800 h par jour, n'en a pas). Intensité relative (Terre = 1).
+ * Dynamo (champ magnétique global), intensité relative (Terre = 1) : il faut un noyau liquide qui
+ * brasse, donc de la chaleur ; une rotation lente l'affaiblit (Mercure, 59 jours par tour, n'a
+ * qu'un champ de 1 % du terrestre). Vénus sort sans champ du modèle, comme dans la réalité, mais
+ * la vraie raison y est débattue (l'état de son noyau plus que sa rotation) : simplification.
  */
 function dynamo(heat, rotationHours, coreFraction) {
   if (heat < HEAT.liquidCore) return 0;
-  if (rotationHours > 24 * 10) return 0;
-  const spin = clamp(Math.sqrt(24 / Math.max(rotationHours, 4)), 0.3, 2);
+  const spin = clamp(Math.sqrt(24 / Math.max(rotationHours, 4)), 0.05, 2);
   return clamp(spin * (coreFraction / 0.33) * Math.min(1.5, heat), 0, 3);
 }
+/** Seuil d'un « vrai » bouclier magnétique (en dessous : champ faible, aurores pâles). */
+const FIELD_SHIELD = 0.2;
 
 // ---------------------------------------------------------------------------------------------
 // L5 — Atmosphère : rétention, pression, effet de serre
@@ -183,10 +186,16 @@ function greenhouse(Teq, P) {
 // L6 — Eau
 // ---------------------------------------------------------------------------------------------
 
-/** Température d'ébullition (K) à la pression P (bars), Clausius-Clapeyron. */
+/** Température d'ébullition (K) à la pression P (bars), Clausius-Clapeyron (jamais sous le point triple). */
 function boilingPoint(P) {
   if (P <= WATER_TRIPLE_BAR) return 273.16;
-  return 1 / (1 / 373.15 - R_OVER_L * Math.log(P / 1.013));
+  return Math.max(273.16, 1 / (1 / 373.15 - R_OVER_L * Math.log(P / 1.013)));
+}
+
+/** Part de l'air qui reste gazeux : sous ~60 K, l'azote et ses voisins gèlent et tombent en neige. */
+function airFreeze(Teq) {
+  if (Teq >= 60) return 1;
+  return clamp(Math.pow((Teq - 20) / 40, 2), 0, 1);
 }
 
 /** État de l'eau en surface : "liquid", "ice", "vapor" (ou "none" s'il n'y en a pas). */
@@ -203,7 +212,7 @@ module.exports = {
   starLuminosity, starRadius, starTemperature, starLifetime,
   insolation, distanceFor, orbitalPeriodDays, tidalLockTime,
   planetRadius, gravity, escapeVelocity, density,
-  internalHeat, ageForHeatLevel, dynamo,
+  internalHeat, ageForHeatLevel, dynamo, FIELD_SHIELD, airFreeze,
   equilibriumTemperature, retention, surfacePressure, greenhouse,
   boilingPoint, waterState,
 };

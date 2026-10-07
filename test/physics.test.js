@@ -23,7 +23,7 @@ const mars = planet({ M: 0.107, cmf: 0.22, S: 0.43, A: 0.25, rot: 24.6, water: 0
 ok(mars.field === 0 && mars.water === "ice" && mars.P < 0.1 && !mars.volcanism, "Mars : pas de champ, glace, air mince, volcans éteints");
 near(mars.Ts, 195, 225, "Mars : température");
 const venus = planet({ M: 0.815, cmf: 0.3, S: 1.91, A: 0.77, rot: 5832, water: 0.001 });
-ok(venus.field === 0 && venus.P > 20 && venus.Ts > 500, "Vénus : pas de champ (rotation lente), serre emballée");
+ok(venus.field < M.FIELD_SHIELD && venus.P > 20 && venus.Ts > 500 && !venus.tectonics, "Vénus : pas de vrai champ, serre emballée, pas de plaques (pas d’eau)");
 const moon = planet({ M: 0.0123, cmf: 0.02, S: 1, A: 0.12, rot: 655, water: 0.01 });
 ok(moon.P < 1e-3 && moon.heat < 0.1, "Lune : pas d'air, intérieur froid");
 
@@ -91,5 +91,33 @@ for (let i = 0; i < 300; i++) {
   if (!(p.w.Ts > 0 && isFinite(p.w.P))) assert.fail(`monde absurde (R${i})`);
 }
 n++;
+
+// ---- 9. relecture indépendante (8 oct.) : cas limites et pistes qui tiennent après réécriture ------------------------------
+const { plain } = require("../src/physics/text");
+ok(solve({ ids: ["starless", "water"], src: "insolation: 0.8", seed: "N" }).w.S === 0, "sans étoile, une insolation écrite ne compte pas");
+ok(!solve({ ids: ["starless", "frozen_cycle"], seed: "N" }).w.locked, "sans étoile, pas de face figée");
+for (const bad of ["orbit: 0", "radius: 0\nage: 0", "mass: 0\nage: 0\ninsolation: 0", "mass: 1000\nage: 1000\ninsolation: 100000\nstar_mass: 100"]) {
+  const r = solve({ ids: ["single_sun", "water"], src: bad, seed: "L" }), txt = JSON.stringify(P.sheet(r, "fr"));
+  ok(!/NaN|undefined|∞/.test(txt) && isFinite(r.w.heat) && isFinite(r.w.a), `valeurs extrêmes sans NaN ni infini : ${JSON.stringify(bad)}`);
+}
+ok(solve({ ids: ["single_sun"], src: "mass: 1000", seed: "L" }).clamped.some((c) => c.key === "mass" && c.to === 20), "une valeur hors plage est ramenée, et signalée");
+ok(solve({ ids: ["blue_sun", "fern"], src: "age: 5", seed: "B" }).tensions.some((t) => t.id === "starAlive"), "un monde plus vieux que son étoile : tension");
+ok(solve({ ids: ["fern"], src: "age: 0.1", seed: "Y" }).tensions.some((t) => t.id === "oldEnoughSimple"), "des fougères sur un monde de 100 Ma : trop tôt");
+ok(plain("fr")(1400) === "1400" && plain("fr")(0.55) === "0,55" && plain("en")(12345) === "12000", "les pistes s'écrivent comme on les relit");
+{ // chaque piste, écrite dans le bloc et relue, allège le total des tensions
+  const combos = [["lava", "ash"], ["jungle_world"], ["ocean_world"], ["desert_world", "water"], ["frozen_world", "rain"], ["red_sun", "frozen_cycle", "fern"], ["lava_world"],
+    ["auroras", "frozen_cycle", "red_sun"], ["scorched_surface", "water"], ["dust_storm", "starless"], ["meltwater"], ["drifter"], ["jungle_world", "planet_rings"], ["frozen_cycle", "single_sun", "water"]];
+  let tot = 0, worse = 0;
+  for (const ids of combos) for (const src of ["", "mass: 0.3\nage: 9", "orbit: 1", "mass: 3"]) for (const seed of ["A", "B"]) {
+    const r = solve({ ids, src, seed });
+    for (const t of r.tensions) for (const h of t.hints || []) {
+      tot++; const line = `${h.key}: ${plain("fr")(h.value)}`;
+      if (solve({ ids, src: src + "\n" + line, seed }).cost >= r.cost - 1e-9) worse++;
+    }
+  }
+  ok(tot > 20 && worse === 0, `${tot} pistes réécrites dans le bloc : ${worse} n'allègent pas le monde`);
+}
+const { verdictOf } = require("../src/engine/analysis");
+ok(verdictOf(74) === "unstable" && P.applyPhysics(an, ph, "strict").verdict === verdictOf(P.applyPhysics(an, ph, "strict").stability), "le verdict strict suit les seuils du moteur");
 
 console.log(`physics.test.js : ${n} vérifications, tout passe`);

@@ -15,22 +15,22 @@ fern
 grazer
 ```
 
-- **Star** : 0.73 M☉ · 4,797 K · light 0.29 L☉ · lives 25.4 Gyr
-- **Orbit** : 0.52 AU · receives 1.07 × Earth · 160-day year · 11.8 h day
-- **Planet** : 0.78 M⊕ · radius 0.94 · gravity 0.90 g · density 5.27 g/cm³ · 1.69 Gyr
-- **Interior** : heat 1.96 × Earth · active volcanoes · moving plates · core liquid · magnetic field 2.15 × Earth
-- **Atmosphere** : 1.00 bar · 97 % retained · 259 K without greenhouse → 293 K at the surface (19 °C)
-- **Water** : liquid (boils at 373 K)
-- **Life** : light at ground level 1.07 × Earth
+- **Star** : 0.80 M☉ (5,042 K) · light 0.40 L☉ · lives 19.8 Gyr
+- **Orbit** : 0.60 AU · receives 1.14 × Earth · 188-day year · 41.7 h day
+- **Planet** : 0.66 M⊕ · radius 0.90 · gravity 0.82 g · density 5.04 g/cm³ · 4.23 Gyr
+- **Interior** : heat 0.85 × Earth · active volcanoes · moving plates · core liquid · magnetic field 0.61 × Earth
+- **Atmosphere** : 0.96 bar · 95 % retained · 263 K without greenhouse → 296 K at the surface (23 °C)
+- **Water** : liquid (boils at 372 K)
+- **Life** : light at ground level 1.14 × Earth
 
 Why this world is so :
 
-- Liquid core and a 12 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
-- The greenhouse adds 34 K.
+- Liquid core and a 42 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
+- The greenhouse adds 33 K.
 
 Nothing grinds.
 
-Stability : 85 (stable) → strict 85 (stable) · chosen world n° 3/48, cost 0.00
+Stability : 85 (stable) → strict 85 (stable) · chosen world n° 1/48, cost 0.00
 
 ## Forge
 
@@ -43,22 +43,23 @@ stone
 ash
 ```
 
-- **Star** : 0.76 M☉ · 4,915 K · light 0.34 L☉ · lives 22.5 Gyr
-- **Orbit** : 0.75 AU · receives 0.60 × Earth · 273-day year · 33.7 h day
-- **Planet** : 1.02 M⊕ · radius 1.00 · gravity 1.03 g · density 5.70 g/cm³ · 6.79 Gyr
-- **Interior** : heat 0.52 × Earth · active volcanoes · stagnant lid · core liquid · magnetic field 0.51 × Earth
-- **Atmosphere** : 1.82 bar · 99 % retained · 224 K without greenhouse → 276 K at the surface (3 °C)
-- **Water** : liquid (boils at 391 K)
-- **Life** : light at ground level 0.60 × Earth
+- **Star** : 1.19 M☉ (6,531 K) · light 1.98 L☉ · lives 5.98 Gyr
+- **Orbit** : 1.17 AU · receives 1.45 × Earth · 424-day year · 10.5 h day
+- **Planet** : 1.33 M⊕ · radius 1.09 · gravity 1.13 g · density 5.72 g/cm³ · 5.68 Gyr
+- **Interior** : heat 0.85 × Earth · active volcanoes · moving plates · core liquid · magnetic field 1.18 × Earth
+- **Atmosphere** : 1.59 bar · 97 % retained · 280 K without greenhouse → 337 K at the surface (63 °C)
+- **Water** : liquid (boils at 386 K)
+- **Life** : light at ground level 1.45 × Earth
 
 Why this world is so :
 
-- Liquid core and a 34 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
-- The greenhouse adds 52 K.
+- Liquid core and a 10 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
+- Inside the inner edge of the habitable zone: water struggles against evaporation.
+- The greenhouse adds 57 K.
 
 Nothing grinds.
 
-Stability : 70 (unstable) → strict 70 (unstable) · chosen world n° 1/48, cost 0.00
+Stability : 70 (unstable) → strict 70 (unstable) · chosen world n° 2/48, cost 0.00
 
 ## Braise lente
 
@@ -71,24 +72,23 @@ mass: 0.2
 age: 9
 ```
 
-- **Star** : 0.74 M☉ · 4,805 K · light 0.29 L☉ · lives 25.2 Gyr
-- **Orbit** : 0.52 AU · receives 1.07 × Earth · 161-day year · 25.0 h day
-- **Planet** : 0.20 M⊕ · radius 0.65 · gravity 0.47 g · density 3.93 g/cm³ · 9.00 Gyr
-- **Interior** : heat 0.090 × Earth · dead volcanoes · stagnant lid · core frozen · magnetic field none
-- **Atmosphere** : 0.040 bar · 8 % retained · 238 K without greenhouse → 239 K at the surface (-34 °C)
+- **Star** : 0.74 M☉ (4,805 K) · light 0.29 L☉ · lives 25.2 Gyr
+- **Orbit** : 0.71 AU · receives 0.58 × Earth · 256-day year · 20.0 h day
+- **Planet** : 0.20 M⊕ · radius 0.65 · gravity 0.48 g · density 4.08 g/cm³ · 9.00 Gyr
+- **Interior** : heat 0.089 × Earth · dead volcanoes · stagnant lid · core frozen · magnetic field none
+- **Atmosphere** : 0.19 bar · 38 % retained · 204 K without greenhouse → 208 K at the surface (-65 °C)
 - **Water** : ice
-- **Life** : light at ground level 1.07 × Earth
+- **Life** : light at ground level 0.58 × Earth
 
 Why this world is so :
 
 - The core has frozen: no dynamo, no magnetic shield.
-- Low gravity and stellar wind: the air leaks into space.
-- Under 0.47 g, mountains rise tall and strides are long.
+- Under 0.48 g, mountains rise tall and strides are long.
 
 What does not hold :
 
-- **medium** · geological — The interior is too cold to feed volcanoes (internal heat 0.090; at least 0.50 is needed).
-  - Ways out : a younger world (age: 3.50) ; a more massive planet (mass: 2.60) ; a nearby giant kneading it by tides (planet_rings)
+- **medium** · geological — The interior is too cold to feed volcanoes (internal heat 0.089; at least 0.50 is needed).
+  - Ways out : a younger world (age: 3.5) ; a more massive planet (mass: 2.6) ; a nearby giant kneading it by tides (planet_rings)
 
 Stability : 92 (stable) → strict 72 (unstable) · chosen world n° 1/48, cost 0.20
 
@@ -105,23 +105,24 @@ fern
 wind
 ```
 
-- **Star** : 0.20 M☉ · 3,026 K · light 0.006 L☉ · lives 346 Gyr
-- **Orbit** : 0.056 AU · receives 1.85 × Earth · 11-day year · one face fixed (day = 10.8 Earth days)
-- **Planet** : 0.96 M⊕ · radius 0.97 · gravity 1.02 g · density 5.84 g/cm³ · 3.89 Gyr
-- **Interior** : heat 1.25 × Earth (tides 0.10) · active volcanoes · moving plates · core liquid · magnetic field none
-- **Atmosphere** : 0.61 bar · 53 % retained · 297 K without greenhouse → 320 K at the surface (47 °C)
-- **Water** : liquid (boils at 359 K)
-- **Life** : light at ground level 1.85 × Earth
+- **Star** : 0.17 M☉ (2,923 K) · light 0.0037 L☉ · lives 448 Gyr
+- **Orbit** : 0.070 AU · receives 0.75 × Earth · 17-day year · one face fixed (day = 16.7 Earth days)
+- **Planet** : 1.96 M⊕ · radius 1.22 · gravity 1.31 g · density 5.91 g/cm³ · 0.50 Gyr
+- **Interior** : heat 4.52 × Earth (tides 0.10) · active volcanoes · moving plates · core liquid · magnetic field 0.26 × Earth
+- **Atmosphere** : 2.89 bar · 99 % retained · 237 K without greenhouse → 319 K at the surface (46 °C)
+- **Water** : liquid (boils at 406 K)
+- **Life** : light at ground level 0.75 × Earth
 
 Why this world is so :
 
-- The star's tide has frozen its spin: the day side climbs toward 107 °C, the night side sinks toward -42 °C, and life holds the twilight band.
-- The core is liquid but the spin too slow for a dynamo: no magnetic shield.
-- The greenhouse adds 23 K.
+- The star's tide has frozen its spin: the day side climbs toward 70 °C, the night side sinks toward 9 °C, and life holds the twilight band.
+- Liquid core and a 400 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
+- The greenhouse adds 81 K.
+- A searing interior: volcanoes everywhere, frequent quakes, young ground always on the move.
 
 Nothing grinds.
 
-Stability : 77 (stable) → strict 77 (stable) · chosen world n° 3/48, cost 0.00
+Stability : 77 (stable) → strict 77 (stable) · chosen world n° 1/48, cost 0.00
 
 ## Midi figé
 
@@ -133,27 +134,26 @@ frozen_cycle
 water
 ```
 
-- **Star** : 0.83 M☉ · 5,162 K · light 0.47 L☉ · lives 17.6 Gyr
-- **Orbit** : 0.70 AU · receives 0.96 × Earth · 236-day year · one face fixed (day = 236 Earth days)
-- **Planet** : 2.99 M⊕ · radius 1.36 · gravity 1.62 g · density 6.59 g/cm³ · 4.80 Gyr
-- **Interior** : heat 1.72 × Earth · active volcanoes · moving plates · core liquid · magnetic field none
-- **Atmosphere** : 1.17 bar · 95 % retained · 252 K without greenhouse → 290 K at the surface (17 °C)
-- **Water** : liquid (boils at 377 K)
-- **Life** : light at ground level 0.96 × Earth
+- **Star** : 1.29 M☉ (6,923 K) · light 2.75 L☉ · lives 4.68 Gyr
+- **Orbit** : 1.36 AU · receives 1.48 × Earth · 512-day year · one face fixed (day = 512 Earth days)
+- **Planet** : 0.42 M⊕ · radius 0.79 · gravity 0.66 g · density 4.60 g/cm³ · 4.45 Gyr
+- **Interior** : heat 0.61 × Earth · active volcanoes · stagnant lid · core liquid · magnetic field weak
+- **Atmosphere** : 0.13 bar · 19 % retained · 281 K without greenhouse → 285 K at the surface (12 °C)
+- **Water** : liquid (boils at 322 K)
+- **Life** : light at ground level 1.48 × Earth
 
 Why this world is so :
 
-- The star's tide has frozen its spin: the day side climbs toward 57 °C, the night side sinks toward -43 °C, and life holds the twilight band.
-- The core is liquid but the spin too slow for a dynamo: no magnetic shield.
-- The greenhouse adds 38 K.
-- Under 1.62 g, mountains stay low and creatures squat.
+- The star's tide has frozen its spin: the day side climbs toward 87 °C, the night side sinks toward -102 °C, and life holds the twilight band.
+- The core is liquid but turns too slowly: the dynamo stays weak, with no real magnetic shield.
+- Low gravity and stellar wind: the air leaks into space.
 
 What does not hold :
 
-- **light** · cosmological — At 0.70 AU from a 0.83 M☉ star, a world takes about 8,701 Gyr to stop spinning; it is only 4.80 Gyr old.
-  - Ways out : closer to the star (insolation: 13.0) ; a red sun: worlds huddle close and tides freeze their spin fast (red_sun) ; make this world a giant's moon, always showing it the same face (planet_rings)
+- **light** · cosmological — At 1.36 AU from a 1.29 M☉ star, a world takes about 76,978 Gyr to stop spinning; it is only 4.45 Gyr old.
+  - Ways out : a small red sun and a tight orbit: tides freeze the spin fast there (red_sun) ; make this world a giant's moon, always showing it the same face (planet_rings)
 
-Stability : 85 (stable) → strict 75 (stable) · chosen world n° 3/48, cost 0.10
+Stability : 85 (stable) → strict 75 (stable) · chosen world n° 1/48, cost 0.10
 
 ## Io
 
@@ -166,19 +166,19 @@ steam
 water
 ```
 
-- **Star** : 0.96 M☉ · 5,651 K · light 0.86 L☉ · lives 11.2 Gyr
-- **Orbit** : 0.93 AU · receives 0.99 × Earth · 336-day year · 49.9 h day
-- **Planet** : 1.68 M⊕ · radius 1.14 · gravity 1.30 g · density 6.29 g/cm³ · 8.60 Gyr
-- **Interior** : heat 1.14 × Earth (tides 0.71) · active volcanoes · moving plates · core liquid · magnetic field 0.92 × Earth
-- **Atmosphere** : 0.93 bar · 99 % retained · 254 K without greenhouse → 285 K at the surface (12 °C)
-- **Water** : liquid (boils at 371 K)
-- **Life** : light at ground level 0.99 × Earth
+- **Star** : 0.96 M☉ (5,651 K) · light 0.86 L☉ · lives 11.2 Gyr
+- **Orbit** : 1.02 AU · receives 0.83 × Earth · 381-day year · 83.2 h day
+- **Planet** : 0.89 M⊕ · radius 0.93 · gravity 1.03 g · density 6.15 g/cm³ · 8.90 Gyr
+- **Interior** : heat 2.44 × Earth (tides 2.19) · active volcanoes · moving plates · core liquid · magnetic field 1.31 × Earth
+- **Atmosphere** : 1.30 bar · 98 % retained · 244 K without greenhouse → 285 K at the surface (11 °C)
+- **Water** : liquid (boils at 380 K)
+- **Life** : light at ground level 0.83 × Earth
 
 Why this world is so :
 
 - This world is the moon of a ringed giant: it fills the sky and kneads it with tides.
-- Liquid core and a 50 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
-- The greenhouse adds 31 K.
+- Liquid core and a 83 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
+- The greenhouse adds 41 K.
 
 Nothing grinds.
 
@@ -197,29 +197,30 @@ great_tree
 ```
 
 - **Star** : none: only the ground's own heat
-- **Orbit** : rogue, starless · 19.5 h day
-- **Planet** : 0.73 M⊕ · radius 0.92 · gravity 0.86 g · density 5.16 g/cm³ · 2.40 Gyr
-- **Interior** : heat 1.53 × Earth · active volcanoes · moving plates · core liquid · magnetic field 1.63 × Earth
-- **Atmosphere** : 2.67 bar · 100 % retained · 39 K without greenhouse → 51 K at the surface (-222 °C)
+- **Orbit** : rogue, starless · 24.2 h day
+- **Planet** : 1.16 M⊕ · radius 1.06 · gravity 1.02 g · density 5.28 g/cm³ · 2.81 Gyr
+- **Interior** : heat 1.76 × Earth · active volcanoes · stagnant lid · core liquid · magnetic field 0.99 × Earth
+- **Atmosphere** : 1.35 bar · 100 % retained · 40 K without greenhouse → 47 K at the surface (-226 °C)
 - **Water** : ice
 - **Life** : light at ground level 0.00 × Earth
 
 Why this world is so :
 
-- Liquid core and a 20 h spin: a magnetic field that no stellar wind ever tests.
-- The greenhouse adds 12 K.
+- Liquid core and a 24 h spin: a magnetic field that no stellar wind ever tests.
+- So cold that the air itself freezes and falls as snow.
+- The greenhouse adds 7 K.
 - Beneath the ice, the ground's heat may keep a hidden ocean.
 
 What does not hold :
 
-- **light** · geological — At 51 K at the surface, water is ice.
+- **light** · geological — At 47 K at the surface, water is ice.
   - Ways out : or embrace the ice: deep_cold, frozen_world
-- **light** · ecological (already counted by the engine) — Green plants live on light, and almost none reaches the ground.
+- **light** · ecological — Green plants live on light, and almost none reaches the ground.
   - Ways out : fungi and spores, which live on heat (spore, pale_fungus) ; a light of their own (glowvine)
-- **light** · ecological (already counted by the engine) — At -222 °C, sap freezes: nothing green grows in the open.
+- **light** · ecological — At -226 °C, sap freezes: nothing green grows in the open.
   - Ways out : or hardier life: lichen, moss, fungi
 
-Stability : 70 (unstable) → strict 70 (unstable) · chosen world n° 2/48, cost 0.30
+Stability : 70 (unstable) → strict 61 (unstable) · chosen world n° 3/48, cost 0.30
 
 ## Bleue
 
@@ -231,27 +232,28 @@ great_tree
 grazer
 ```
 
-- **Star** : 10.5 M☉ · 25,154 K · light 5,238 L☉ · lives 0.020 Gyr
-- **Orbit** : 80.3 AU · receives 0.81 × Earth · 81,098-day year · 30.0 h day
-- **Planet** : 1.38 M⊕ · radius 1.09 · gravity 1.16 g · density 5.85 g/cm³ · 0.019 Gyr
-- **Interior** : heat 4.22 × Earth · active volcanoes · moving plates · core liquid · magnetic field 1.34 × Earth
-- **Atmosphere** : 1.77 bar · 99 % retained · 242 K without greenhouse → 296 K at the surface (23 °C)
-- **Water** : liquid (boils at 390 K)
-- **Life** : light at ground level 0.81 × Earth
+- **Star** : 3.06 M☉ (12,147 K) · light 69.8 L☉ · lives 0.44 Gyr
+- **Orbit** : 9.59 AU · receives 0.76 × Earth · 6,206-day year · 12.0 h day
+- **Planet** : 2.88 M⊕ · radius 1.32 · gravity 1.64 g · density 6.84 g/cm³ · 0.42 Gyr
+- **Interior** : heat 5.49 × Earth · active volcanoes · moving plates · core liquid · magnetic field 2.28 × Earth
+- **Atmosphere** : 2.77 bar · 100 % retained · 238 K without greenhouse → 317 K at the surface (43 °C)
+- **Water** : liquid (boils at 404 K)
+- **Life** : light at ground level 0.76 × Earth
 
 Why this world is so :
 
-- So fierce a star lives only 20 million years: this world must be young.
-- Liquid core and a 30 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
-- The greenhouse adds 54 K.
-- Enough heat for a magma ocean beneath the crust: the ground is young, and it moves.
+- So fierce a star lives only 438 million years: this world must be young.
+- Liquid core and a 12 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
+- The greenhouse adds 79 K.
+- A searing interior: volcanoes everywhere, frequent quakes, young ground always on the move.
+- Under 1.64 g, mountains stay low and creatures squat.
 
 What does not hold :
 
-- **light** · ecological — A 10.5 M☉ star burns out in 20 million years; trees and beasts need about a thousand.
+- **light** · ecological — A 3.06 M☉ star burns out in 438 million years; trees and beasts need about a thousand.
   - Ways out : a gentler sun (orange_sun, single_sun) ; or builders who brought them (tablet, door, bridge…)
 
-Stability : 76 (stable) → strict 76 (stable) · chosen world n° 3/48, cost 0.10
+Stability : 76 (stable) → strict 76 (stable) · chosen world n° 29/48, cost 0.10
 
 ## Bleue semée
 
@@ -265,20 +267,20 @@ tablet
 door
 ```
 
-- **Star** : 7.53 M☉ · 20,675 K · light 1,637 L☉ · lives 0.046 Gyr
-- **Orbit** : 35.1 AU · receives 1.33 × Earth · 27,671-day year · 30.4 h day
-- **Planet** : 0.83 M⊕ · radius 0.94 · gravity 0.94 g · density 5.54 g/cm³ · 0.044 Gyr
-- **Interior** : heat 3.26 × Earth · active volcanoes · moving plates · core liquid · magnetic field 1.59 × Earth
-- **Atmosphere** : 1.11 bar · 96 % retained · 274 K without greenhouse → 313 K at the surface (40 °C)
-- **Water** : liquid (boils at 376 K)
-- **Life** : light at ground level 1.33 × Earth
+- **Star** : 7.53 M☉ (20,675 K) · light 1,637 L☉ · lives 0.046 Gyr
+- **Orbit** : 40.1 AU · receives 1.02 × Earth · 33,850-day year · 33.4 h day
+- **Planet** : 1.30 M⊕ · radius 1.10 · gravity 1.08 g · density 5.43 g/cm³ · 0.044 Gyr
+- **Interior** : heat 4.08 × Earth · active volcanoes · moving plates · core liquid · magnetic field 0.87 × Earth
+- **Atmosphere** : 2.09 bar · 98 % retained · 256 K without greenhouse → 322 K at the surface (49 °C)
+- **Water** : liquid (boils at 395 K)
+- **Life** : light at ground level 1.02 × Earth
 
 Why this world is so :
 
-- So fierce a star lives only 46 million years: this world must be young.
-- Liquid core and a 30 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
-- The greenhouse adds 39 K.
-- Enough heat for a magma ocean beneath the crust: the ground is young, and it moves.
+- So fierce a star lives only 46.0 million years: this world must be young.
+- Liquid core and a 33 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
+- The greenhouse adds 66 K.
+- A searing interior: volcanoes everywhere, frequent quakes, young ground always on the move.
 
 Nothing grinds.
 
@@ -295,18 +297,18 @@ drifter
 companion_moon
 ```
 
-- **Star** : 1.10 M☉ · 6,183 K · light 1.46 L☉ · lives 7.53 Gyr
-- **Orbit** : 1.35 AU · receives 0.80 × Earth · 548-day year · 22.2 h day
-- **Planet** : 1.15 M⊕ · radius 1.05 · gravity 1.05 g · density 5.48 g/cm³ · 6.04 Gyr
-- **Interior** : heat 0.73 × Earth · active volcanoes · moving plates · core liquid · magnetic field 0.64 × Earth
-- **Atmosphere** : 1.28 bar · 99 % retained · 241 K without greenhouse → 281 K at the surface (7 °C)
-- **Water** : liquid (boils at 380 K)
-- **Life** : light at ground level 0.80 × Earth
+- **Star** : 1.10 M☉ (6,183 K) · light 1.46 L☉ · lives 7.53 Gyr
+- **Orbit** : 1.02 AU · receives 1.41 × Earth · 358-day year · 22.1 h day
+- **Planet** : 0.95 M⊕ · radius 1.00 · gravity 0.95 g · density 5.28 g/cm³ · 7.15 Gyr
+- **Interior** : heat 0.49 × Earth · dead volcanoes · stagnant lid · core liquid · magnetic field 0.43 × Earth
+- **Atmosphere** : 0.59 bar · 96 % retained · 278 K without greenhouse → 298 K at the surface (25 °C)
+- **Water** : liquid (boils at 359 K)
+- **Life** : light at ground level 1.41 × Earth
 
 Why this world is so :
 
 - Liquid core and a 22 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
-- The greenhouse adds 40 K.
+- The greenhouse adds 21 K.
 
 Nothing grinds.
 
@@ -324,17 +326,18 @@ dust_storm
 mass: 0.3
 ```
 
-- **Star** : 1.07 M☉ · 6,072 K · light 1.32 L☉ · lives 8.12 Gyr
-- **Orbit** : 1.44 AU · receives 0.64 × Earth · 609-day year · 41.4 h day
-- **Planet** : 0.30 M⊕ · radius 0.72 · gravity 0.57 g · density 4.38 g/cm³ · 7.71 Gyr
-- **Interior** : heat 0.18 × Earth · dead volcanoes · stagnant lid · core frozen · magnetic field none
-- **Atmosphere** : 0.12 bar · 48 % retained · 228 K without greenhouse → 231 K at the surface (-43 °C)
-- **Water** : ice
-- **Life** : light at ground level 0.64 × Earth
+- **Star** : 1.07 M☉ (6,072 K) · light 1.32 L☉ · lives 8.12 Gyr
+- **Orbit** : 0.95 AU · receives 1.47 × Earth · 325-day year · 15.9 h day
+- **Planet** : 0.30 M⊕ · radius 0.71 · gravity 0.59 g · density 4.60 g/cm³ · 7.54 Gyr
+- **Interior** : heat 0.19 × Earth · dead volcanoes · stagnant lid · core frozen · magnetic field none
+- **Atmosphere** : 0.042 bar · 8 % retained · 281 K without greenhouse → 282 K at the surface (8 °C)
+- **Water** : liquid (boils at 300 K)
+- **Life** : light at ground level 1.47 × Earth
 
 Why this world is so :
 
 - The core has frozen: no dynamo, no magnetic shield.
+- Low gravity and stellar wind: the air leaks into space.
 
 Nothing grinds.
 
@@ -350,13 +353,13 @@ mass: 0.1
 age: 8
 ```
 
-- **Star** : 1.03 M☉ · 5,903 K · light 1.13 L☉ · lives 9.14 Gyr
-- **Orbit** : 1.05 AU · receives 1.02 × Earth · 388-day year · 42.5 h day
-- **Planet** : 0.10 M⊕ · radius 0.53 · gravity 0.36 g · density 3.76 g/cm³ · 8.00 Gyr
-- **Interior** : heat 0.072 × Earth · dead volcanoes · stagnant lid · core frozen · magnetic field none
-- **Atmosphere** : almost none
+- **Star** : 1.03 M☉ (5,903 K) · light 1.13 L☉ · lives 9.14 Gyr
+- **Orbit** : 1.16 AU · receives 0.84 × Earth · 450-day year · 15.5 h day
+- **Planet** : 0.10 M⊕ · radius 0.53 · gravity 0.36 g · density 3.74 g/cm³ · 8.00 Gyr
+- **Interior** : heat 0.073 × Earth · dead volcanoes · stagnant lid · core frozen · magnetic field none
+- **Atmosphere** : 0.0017 bar · 1 % retained · 224 K without greenhouse → 224 K at the surface (-49 °C)
 - **Water** : ice
-- **Life** : light at ground level 1.02 × Earth
+- **Life** : light at ground level 0.84 × Earth
 
 Why this world is so :
 
@@ -367,8 +370,8 @@ Why this world is so :
 
 What does not hold :
 
-- **light** · cosmological — The core has frozen (internal heat 0.072): no dynamo, so auroras stay faint and patchy, as on Mars.
-  - Ways out : a younger world (age: 2.80) ; a more massive planet (mass: 1.30) ; more iron at the core (iron)
+- **light** · cosmological — The core has frozen (internal heat 0.073): no dynamo, so auroras stay faint and patchy, as on Mars.
+  - Ways out : a younger world (age: 2.8) ; a more massive planet (mass: 1.3) ; more iron at the core (iron)
 
 Stability : 75 (stable) → strict 65 (unstable) · chosen world n° 1/48, cost 0.10
 
@@ -382,17 +385,18 @@ water
 fern
 ```
 
-- **Star** : 1.01 M☉ · 5,813 K · light 1.03 L☉ · lives 9.75 Gyr
-- **Orbit** : 1.01 AU · receives 1.01 × Earth · 371-day year · 15.9 h day
-- **Planet** : 0.59 M⊕ · radius 0.88 · gravity 0.77 g · density 4.84 g/cm³ · 4.49 Gyr
-- **Interior** : heat 0.74 × Earth · active volcanoes · moving plates · core liquid · magnetic field 0.78 × Earth
-- **Atmosphere** : 1.11 bar · 95 % retained · 255 K without greenhouse → 292 K at the surface (19 °C)
-- **Water** : liquid (boils at 376 K)
-- **Life** : light at ground level 1.01 × Earth
+- **Star** : 1.04 M☉ (5,959 K) · light 1.19 L☉ · lives 8.79 Gyr
+- **Orbit** : 0.92 AU · receives 1.40 × Earth · 317-day year · 20.9 h day
+- **Planet** : 0.21 M⊕ · radius 0.65 · gravity 0.50 g · density 4.26 g/cm³ · 1.35 Gyr
+- **Interior** : heat 1.09 × Earth · active volcanoes · stagnant lid · core liquid · magnetic field 1.35 × Earth
+- **Atmosphere** : 1.03 bar · 71 % retained · 277 K without greenhouse → 314 K at the surface (41 °C)
+- **Water** : liquid (boils at 374 K)
+- **Life** : light at ground level 1.40 × Earth
 
 Why this world is so :
 
-- Liquid core and a 16 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
+- Liquid core and a 21 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
+- Inside the inner edge of the habitable zone: water struggles against evaporation.
 - The greenhouse adds 37 K.
 
 What does not hold :
@@ -400,7 +404,7 @@ What does not hold :
 - **light** · metaphysical — No star shines green or violet: a star peaking in green looks white to us. This sky comes from the Art, not from nature.
   - Ways out : keep this sun knowingly: it costs a little Art
 
-Stability : 77 (stable) → strict 77 (stable) · chosen world n° 1/48, cost 0.10
+Stability : 77 (stable) → strict 77 (stable) · chosen world n° 2/48, cost 0.10
 
 ## Jumeaux
 
@@ -414,7 +418,7 @@ fern
 rain
 ```
 
-- **Stars** : 1.21 M☉ + 0.75 M☉ · 6,623 K · light 2.47 L☉ · lives 5.64 Gyr
+- **Stars** : 1.21 M☉ (6,623 K) + 0.75 M☉ (4,868 K) · light 2.47 L☉ · lives 5.64 Gyr
 - **Orbit** : 1.76 AU · receives 0.80 × Earth · 609-day year · 18.8 h day
 - **Planet** : 2.13 M⊕ · radius 1.19 · gravity 1.50 g · density 6.95 g/cm³ · 0.70 Gyr
 - **Interior** : heat 4.36 × Earth · active volcanoes · moving plates · core liquid · magnetic field 2.40 × Earth
@@ -426,7 +430,7 @@ Why this world is so :
 
 - Liquid core and a 19 h spin: a dynamo, hence a magnetic field turning aside the stellar wind.
 - The greenhouse adds 48 K.
-- Enough heat for a magma ocean beneath the crust: the ground is young, and it moves.
+- A searing interior: volcanoes everywhere, frequent quakes, young ground always on the move.
 - Under 1.50 g, mountains stay low and creatures squat.
 
 Nothing grinds.

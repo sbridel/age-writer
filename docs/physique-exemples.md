@@ -15,22 +15,22 @@ fern
 grazer
 ```
 
-- **Étoile** : 0,73 M☉ · 4 797 K · lumière 0,29 L☉ · vit 25,4 Ga
-- **Orbite** : 0,52 UA · flux reçu 1,07 × Terre · année de 160 jours · jour de 11,8 h
-- **Planète** : 0,78 M⊕ · rayon 0,94 · gravité 0,90 g · densité 5,27 g/cm³ · 1,69 Ga
-- **Intérieur** : chaleur 1,96 × Terre · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 2,15 × Terre
-- **Atmosphère** : 1,00 bar · retenue à 97 % · 259 K sans effet de serre → 293 K en surface (19 °C)
-- **Eau** : liquide (bout à 373 K)
-- **Vivant** : lumière au sol 1,07 × Terre
+- **Étoile** : 0,80 M☉ (5 042 K) · lumière 0,40 L☉ · vit 19,8 Ga
+- **Orbite** : 0,60 UA · flux reçu 1,14 × Terre · année de 188 jours · jour de 41,7 h
+- **Planète** : 0,66 M⊕ · rayon 0,90 · gravité 0,82 g · densité 5,04 g/cm³ · 4,23 Ga
+- **Intérieur** : chaleur 0,85 × Terre · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 0,61 × Terre
+- **Atmosphère** : 0,96 bar · retenue à 95 % · 263 K sans effet de serre → 296 K en surface (23 °C)
+- **Eau** : liquide (bout à 372 K)
+- **Vivant** : lumière au sol 1,14 × Terre
 
 Pourquoi ce monde est ainsi :
 
-- Noyau liquide et rotation de 12 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
-- L'effet de serre ajoute 34 K.
+- Noyau liquide et rotation de 42 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
+- L'effet de serre ajoute 33 K.
 
 Rien ne grince.
 
-Stabilité : 85 (stable) → strict 85 (stable) · monde retenu n° 3/48, coût 0,00
+Stabilité : 85 (stable) → strict 85 (stable) · monde retenu n° 1/48, coût 0,00
 
 ## Forge
 
@@ -43,22 +43,23 @@ stone
 ash
 ```
 
-- **Étoile** : 0,76 M☉ · 4 915 K · lumière 0,34 L☉ · vit 22,5 Ga
-- **Orbite** : 0,75 UA · flux reçu 0,60 × Terre · année de 273 jours · jour de 33,7 h
-- **Planète** : 1,02 M⊕ · rayon 1,00 · gravité 1,03 g · densité 5,70 g/cm³ · 6,79 Ga
-- **Intérieur** : chaleur 0,52 × Terre · volcans actifs · croûte figée · noyau liquide · champ magnétique 0,51 × Terre
-- **Atmosphère** : 1,82 bar · retenue à 99 % · 224 K sans effet de serre → 276 K en surface (3 °C)
-- **Eau** : liquide (bout à 391 K)
-- **Vivant** : lumière au sol 0,60 × Terre
+- **Étoile** : 1,19 M☉ (6 531 K) · lumière 1,98 L☉ · vit 5,98 Ga
+- **Orbite** : 1,17 UA · flux reçu 1,45 × Terre · année de 424 jours · jour de 10,5 h
+- **Planète** : 1,33 M⊕ · rayon 1,09 · gravité 1,13 g · densité 5,72 g/cm³ · 5,68 Ga
+- **Intérieur** : chaleur 0,85 × Terre · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 1,18 × Terre
+- **Atmosphère** : 1,59 bar · retenue à 97 % · 280 K sans effet de serre → 337 K en surface (63 °C)
+- **Eau** : liquide (bout à 386 K)
+- **Vivant** : lumière au sol 1,45 × Terre
 
 Pourquoi ce monde est ainsi :
 
-- Noyau liquide et rotation de 34 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
-- L'effet de serre ajoute 52 K.
+- Noyau liquide et rotation de 10 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
+- Plus près de l'étoile que le bord intérieur de la zone habitable : l'eau y lutte contre l'évaporation.
+- L'effet de serre ajoute 57 K.
 
 Rien ne grince.
 
-Stabilité : 70 (unstable) → strict 70 (unstable) · monde retenu n° 1/48, coût 0,00
+Stabilité : 70 (unstable) → strict 70 (unstable) · monde retenu n° 2/48, coût 0,00
 
 ## Braise lente
 
@@ -71,24 +72,23 @@ mass: 0.2
 age: 9
 ```
 
-- **Étoile** : 0,74 M☉ · 4 805 K · lumière 0,29 L☉ · vit 25,2 Ga
-- **Orbite** : 0,52 UA · flux reçu 1,07 × Terre · année de 161 jours · jour de 25,0 h
-- **Planète** : 0,20 M⊕ · rayon 0,65 · gravité 0,47 g · densité 3,93 g/cm³ · 9,00 Ga
-- **Intérieur** : chaleur 0,090 × Terre · volcans éteints · croûte figée · noyau figé · champ magnétique aucun
-- **Atmosphère** : 0,040 bar · retenue à 8 % · 238 K sans effet de serre → 239 K en surface (-34 °C)
+- **Étoile** : 0,74 M☉ (4 805 K) · lumière 0,29 L☉ · vit 25,2 Ga
+- **Orbite** : 0,71 UA · flux reçu 0,58 × Terre · année de 256 jours · jour de 20,0 h
+- **Planète** : 0,20 M⊕ · rayon 0,65 · gravité 0,48 g · densité 4,08 g/cm³ · 9,00 Ga
+- **Intérieur** : chaleur 0,089 × Terre · volcans éteints · croûte figée · noyau figé · champ magnétique aucun
+- **Atmosphère** : 0,19 bar · retenue à 38 % · 204 K sans effet de serre → 208 K en surface (-65 °C)
 - **Eau** : glace
-- **Vivant** : lumière au sol 1,07 × Terre
+- **Vivant** : lumière au sol 0,58 × Terre
 
 Pourquoi ce monde est ainsi :
 
 - Le noyau s'est figé : plus de dynamo, plus de bouclier magnétique.
-- Faible gravité et vent d'étoile : l'air fuit dans l'espace.
-- Sous 0,47 g, les montagnes s'élèvent haut et les pas sont longs.
+- Sous 0,48 g, les montagnes s'élèvent haut et les pas sont longs.
 
 Ce qui ne tient pas :
 
-- **medium** · geological — L'intérieur est trop froid pour nourrir des volcans (chaleur interne 0,090 ; il faut au moins 0,50).
-  - Pistes : un monde plus jeune (age: 3,50) ; une planète plus massive (mass: 2,60) ; une géante toute proche qui la pétrit par marée (planet_rings)
+- **medium** · geological — L'intérieur est trop froid pour nourrir des volcans (chaleur interne 0,089 ; il faut au moins 0,50).
+  - Pistes : un monde plus jeune (age: 3,5) ; une planète plus massive (mass: 2,6) ; une géante toute proche qui la pétrit par marée (planet_rings)
 
 Stabilité : 92 (stable) → strict 72 (unstable) · monde retenu n° 1/48, coût 0,20
 
@@ -105,23 +105,24 @@ fern
 wind
 ```
 
-- **Étoile** : 0,20 M☉ · 3 026 K · lumière 0,006 L☉ · vit 346 Ga
-- **Orbite** : 0,056 UA · flux reçu 1,85 × Terre · année de 11 jours · face fixe (jour = 10,8 jours terrestres)
-- **Planète** : 0,96 M⊕ · rayon 0,97 · gravité 1,02 g · densité 5,84 g/cm³ · 3,89 Ga
-- **Intérieur** : chaleur 1,25 × Terre (dont marée 0,10) · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique aucun
-- **Atmosphère** : 0,61 bar · retenue à 53 % · 297 K sans effet de serre → 320 K en surface (47 °C)
-- **Eau** : liquide (bout à 359 K)
-- **Vivant** : lumière au sol 1,85 × Terre
+- **Étoile** : 0,17 M☉ (2 923 K) · lumière 0,0037 L☉ · vit 448 Ga
+- **Orbite** : 0,070 UA · flux reçu 0,75 × Terre · année de 17 jours · face fixe (jour = 16,7 jours terrestres)
+- **Planète** : 1,96 M⊕ · rayon 1,22 · gravité 1,31 g · densité 5,91 g/cm³ · 0,50 Ga
+- **Intérieur** : chaleur 4,52 × Terre (dont marée 0,10) · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 0,26 × Terre
+- **Atmosphère** : 2,89 bar · retenue à 99 % · 237 K sans effet de serre → 319 K en surface (46 °C)
+- **Eau** : liquide (bout à 406 K)
+- **Vivant** : lumière au sol 0,75 × Terre
 
 Pourquoi ce monde est ainsi :
 
-- La marée de l'étoile a figé sa rotation : la face de jour monte vers 107 °C, la face de nuit descend vers -42 °C, et la vie tient la bande du crépuscule.
-- Le noyau est liquide, mais la rotation trop lente pour une dynamo : pas de bouclier magnétique.
-- L'effet de serre ajoute 23 K.
+- La marée de l'étoile a figé sa rotation : la face de jour monte vers 70 °C, la face de nuit descend vers 9 °C, et la vie tient la bande du crépuscule.
+- Noyau liquide et rotation de 400 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
+- L'effet de serre ajoute 81 K.
+- Un intérieur brûlant : volcans partout, séismes fréquents, un sol jeune qui bouge sans cesse.
 
 Rien ne grince.
 
-Stabilité : 77 (stable) → strict 77 (stable) · monde retenu n° 3/48, coût 0,00
+Stabilité : 77 (stable) → strict 77 (stable) · monde retenu n° 1/48, coût 0,00
 
 ## Midi figé
 
@@ -133,27 +134,26 @@ frozen_cycle
 water
 ```
 
-- **Étoile** : 0,83 M☉ · 5 162 K · lumière 0,47 L☉ · vit 17,6 Ga
-- **Orbite** : 0,70 UA · flux reçu 0,96 × Terre · année de 236 jours · face fixe (jour = 236 jours terrestres)
-- **Planète** : 2,99 M⊕ · rayon 1,36 · gravité 1,62 g · densité 6,59 g/cm³ · 4,80 Ga
-- **Intérieur** : chaleur 1,72 × Terre · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique aucun
-- **Atmosphère** : 1,17 bar · retenue à 95 % · 252 K sans effet de serre → 290 K en surface (17 °C)
-- **Eau** : liquide (bout à 377 K)
-- **Vivant** : lumière au sol 0,96 × Terre
+- **Étoile** : 1,29 M☉ (6 923 K) · lumière 2,75 L☉ · vit 4,68 Ga
+- **Orbite** : 1,36 UA · flux reçu 1,48 × Terre · année de 512 jours · face fixe (jour = 512 jours terrestres)
+- **Planète** : 0,42 M⊕ · rayon 0,79 · gravité 0,66 g · densité 4,60 g/cm³ · 4,45 Ga
+- **Intérieur** : chaleur 0,61 × Terre · volcans actifs · croûte figée · noyau liquide · champ magnétique faible
+- **Atmosphère** : 0,13 bar · retenue à 19 % · 281 K sans effet de serre → 285 K en surface (12 °C)
+- **Eau** : liquide (bout à 322 K)
+- **Vivant** : lumière au sol 1,48 × Terre
 
 Pourquoi ce monde est ainsi :
 
-- La marée de l'étoile a figé sa rotation : la face de jour monte vers 57 °C, la face de nuit descend vers -43 °C, et la vie tient la bande du crépuscule.
-- Le noyau est liquide, mais la rotation trop lente pour une dynamo : pas de bouclier magnétique.
-- L'effet de serre ajoute 38 K.
-- Sous 1,62 g, les montagnes restent basses et les êtres trapus.
+- La marée de l'étoile a figé sa rotation : la face de jour monte vers 87 °C, la face de nuit descend vers -102 °C, et la vie tient la bande du crépuscule.
+- Le noyau est liquide, mais il tourne trop lentement : la dynamo reste faible, sans vrai bouclier magnétique.
+- Faible gravité et vent d'étoile : l'air fuit dans l'espace.
 
 Ce qui ne tient pas :
 
-- **light** · cosmological — À 0,70 UA d'une étoile de 0,83 M☉, un monde met environ 8 701 Ga à cesser de tourner sur lui-même ; il n'a que 4,80 Ga.
-  - Pistes : plus près de l'étoile (insolation: 13,0) ; un soleil rouge : on s'en tient tout près, et la marée fige vite la rotation (red_sun) ; faire de ce monde la lune d'une géante, qui lui montre toujours la même face (planet_rings)
+- **light** · cosmological — À 1,36 UA d'une étoile de 1,29 M☉, un monde met environ 76 978 Ga à cesser de tourner sur lui-même ; il n'a que 4,45 Ga.
+  - Pistes : un petit soleil rouge et une orbite serrée : la marée y fige vite la rotation (red_sun) ; faire de ce monde la lune d'une géante, qui lui montre toujours la même face (planet_rings)
 
-Stabilité : 85 (stable) → strict 75 (stable) · monde retenu n° 3/48, coût 0,10
+Stabilité : 85 (stable) → strict 75 (stable) · monde retenu n° 1/48, coût 0,10
 
 ## Io
 
@@ -166,19 +166,19 @@ steam
 water
 ```
 
-- **Étoile** : 0,96 M☉ · 5 651 K · lumière 0,86 L☉ · vit 11,2 Ga
-- **Orbite** : 0,93 UA · flux reçu 0,99 × Terre · année de 336 jours · jour de 49,9 h
-- **Planète** : 1,68 M⊕ · rayon 1,14 · gravité 1,30 g · densité 6,29 g/cm³ · 8,60 Ga
-- **Intérieur** : chaleur 1,14 × Terre (dont marée 0,71) · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 0,92 × Terre
-- **Atmosphère** : 0,93 bar · retenue à 99 % · 254 K sans effet de serre → 285 K en surface (12 °C)
-- **Eau** : liquide (bout à 371 K)
-- **Vivant** : lumière au sol 0,99 × Terre
+- **Étoile** : 0,96 M☉ (5 651 K) · lumière 0,86 L☉ · vit 11,2 Ga
+- **Orbite** : 1,02 UA · flux reçu 0,83 × Terre · année de 381 jours · jour de 83,2 h
+- **Planète** : 0,89 M⊕ · rayon 0,93 · gravité 1,03 g · densité 6,15 g/cm³ · 8,90 Ga
+- **Intérieur** : chaleur 2,44 × Terre (dont marée 2,19) · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 1,31 × Terre
+- **Atmosphère** : 1,30 bar · retenue à 98 % · 244 K sans effet de serre → 285 K en surface (11 °C)
+- **Eau** : liquide (bout à 380 K)
+- **Vivant** : lumière au sol 0,83 × Terre
 
 Pourquoi ce monde est ainsi :
 
 - Ce monde est la lune d'une géante annelée : elle emplit son ciel et le pétrit par ses marées.
-- Noyau liquide et rotation de 50 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
-- L'effet de serre ajoute 31 K.
+- Noyau liquide et rotation de 83 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
+- L'effet de serre ajoute 41 K.
 
 Rien ne grince.
 
@@ -197,29 +197,30 @@ great_tree
 ```
 
 - **Étoile** : aucune : seule la chaleur du sol
-- **Orbite** : errante, sans étoile · jour de 19,5 h
-- **Planète** : 0,73 M⊕ · rayon 0,92 · gravité 0,86 g · densité 5,16 g/cm³ · 2,40 Ga
-- **Intérieur** : chaleur 1,53 × Terre · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 1,63 × Terre
-- **Atmosphère** : 2,67 bar · retenue à 100 % · 39 K sans effet de serre → 51 K en surface (-222 °C)
+- **Orbite** : errante, sans étoile · jour de 24,2 h
+- **Planète** : 1,16 M⊕ · rayon 1,06 · gravité 1,02 g · densité 5,28 g/cm³ · 2,81 Ga
+- **Intérieur** : chaleur 1,76 × Terre · volcans actifs · croûte figée · noyau liquide · champ magnétique 0,99 × Terre
+- **Atmosphère** : 1,35 bar · retenue à 100 % · 40 K sans effet de serre → 47 K en surface (-226 °C)
 - **Eau** : glace
 - **Vivant** : lumière au sol 0,00 × Terre
 
 Pourquoi ce monde est ainsi :
 
-- Noyau liquide et rotation de 20 h : un champ magnétique, que nul vent d'étoile ne vient éprouver.
-- L'effet de serre ajoute 12 K.
+- Noyau liquide et rotation de 24 h : un champ magnétique, que nul vent d'étoile ne vient éprouver.
+- Si froid que l'air lui-même gèle et tombe en neige.
+- L'effet de serre ajoute 7 K.
 - Sous la glace, la chaleur du sol peut garder un océan caché.
 
 Ce qui ne tient pas :
 
-- **light** · geological — À 51 K en surface, l'eau est de la glace.
+- **light** · geological — À 47 K en surface, l'eau est de la glace.
   - Pistes : ou assumer la glace : deep_cold, frozen_world
-- **light** · ecological (déjà compté par le moteur) — Les plantes vertes vivent de lumière, et il n'en arrive presque pas jusqu'au sol.
+- **light** · ecological — Les plantes vertes vivent de lumière, et il n'en arrive presque pas jusqu'au sol.
   - Pistes : des champignons et des spores, qui vivent de chaleur (spore, pale_fungus) ; une lumière à elles (glowvine)
-- **light** · ecological (déjà compté par le moteur) — À -222 °C, la sève gèle : rien de vert ne pousse à découvert.
+- **light** · ecological — À -226 °C, la sève gèle : rien de vert ne pousse à découvert.
   - Pistes : ou une vie plus rude : lichen, mousse, champignons
 
-Stabilité : 70 (unstable) → strict 70 (unstable) · monde retenu n° 2/48, coût 0,30
+Stabilité : 70 (unstable) → strict 61 (unstable) · monde retenu n° 3/48, coût 0,30
 
 ## Bleue
 
@@ -231,27 +232,28 @@ great_tree
 grazer
 ```
 
-- **Étoile** : 10,5 M☉ · 25 154 K · lumière 5 238 L☉ · vit 0,020 Ga
-- **Orbite** : 80,3 UA · flux reçu 0,81 × Terre · année de 81 098 jours · jour de 30,0 h
-- **Planète** : 1,38 M⊕ · rayon 1,09 · gravité 1,16 g · densité 5,85 g/cm³ · 0,019 Ga
-- **Intérieur** : chaleur 4,22 × Terre · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 1,34 × Terre
-- **Atmosphère** : 1,77 bar · retenue à 99 % · 242 K sans effet de serre → 296 K en surface (23 °C)
-- **Eau** : liquide (bout à 390 K)
-- **Vivant** : lumière au sol 0,81 × Terre
+- **Étoile** : 3,06 M☉ (12 147 K) · lumière 69,8 L☉ · vit 0,44 Ga
+- **Orbite** : 9,59 UA · flux reçu 0,76 × Terre · année de 6 206 jours · jour de 12,0 h
+- **Planète** : 2,88 M⊕ · rayon 1,32 · gravité 1,64 g · densité 6,84 g/cm³ · 0,42 Ga
+- **Intérieur** : chaleur 5,49 × Terre · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 2,28 × Terre
+- **Atmosphère** : 2,77 bar · retenue à 100 % · 238 K sans effet de serre → 317 K en surface (43 °C)
+- **Eau** : liquide (bout à 404 K)
+- **Vivant** : lumière au sol 0,76 × Terre
 
 Pourquoi ce monde est ainsi :
 
-- Une étoile si ardente ne vit que 20 millions d'années : ce monde est forcément jeune.
-- Noyau liquide et rotation de 30 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
-- L'effet de serre ajoute 54 K.
-- Assez de chaleur pour un océan de magma sous la croûte : le sol est jeune, et il bouge.
+- Une étoile si ardente ne vit que 438 millions d'années : ce monde est forcément jeune.
+- Noyau liquide et rotation de 12 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
+- L'effet de serre ajoute 79 K.
+- Un intérieur brûlant : volcans partout, séismes fréquents, un sol jeune qui bouge sans cesse.
+- Sous 1,64 g, les montagnes restent basses et les êtres trapus.
 
 Ce qui ne tient pas :
 
-- **light** · ecological — Une étoile de 10,5 M☉ s'éteint en 20 millions d'années ; il en faut environ mille pour des arbres et des bêtes.
+- **light** · ecological — Une étoile de 3,06 M☉ s'éteint en 438 millions d'années ; il en faut environ mille pour des arbres et des bêtes.
   - Pistes : un soleil moins ardent (orange_sun, single_sun) ; ou des bâtisseurs qui les ont apportés (tablet, door, bridge…)
 
-Stabilité : 76 (stable) → strict 76 (stable) · monde retenu n° 3/48, coût 0,10
+Stabilité : 76 (stable) → strict 76 (stable) · monde retenu n° 29/48, coût 0,10
 
 ## Bleue semée
 
@@ -265,20 +267,20 @@ tablet
 door
 ```
 
-- **Étoile** : 7,53 M☉ · 20 675 K · lumière 1 637 L☉ · vit 0,046 Ga
-- **Orbite** : 35,1 UA · flux reçu 1,33 × Terre · année de 27 671 jours · jour de 30,4 h
-- **Planète** : 0,83 M⊕ · rayon 0,94 · gravité 0,94 g · densité 5,54 g/cm³ · 0,044 Ga
-- **Intérieur** : chaleur 3,26 × Terre · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 1,59 × Terre
-- **Atmosphère** : 1,11 bar · retenue à 96 % · 274 K sans effet de serre → 313 K en surface (40 °C)
-- **Eau** : liquide (bout à 376 K)
-- **Vivant** : lumière au sol 1,33 × Terre
+- **Étoile** : 7,53 M☉ (20 675 K) · lumière 1 637 L☉ · vit 0,046 Ga
+- **Orbite** : 40,1 UA · flux reçu 1,02 × Terre · année de 33 850 jours · jour de 33,4 h
+- **Planète** : 1,30 M⊕ · rayon 1,10 · gravité 1,08 g · densité 5,43 g/cm³ · 0,044 Ga
+- **Intérieur** : chaleur 4,08 × Terre · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 0,87 × Terre
+- **Atmosphère** : 2,09 bar · retenue à 98 % · 256 K sans effet de serre → 322 K en surface (49 °C)
+- **Eau** : liquide (bout à 395 K)
+- **Vivant** : lumière au sol 1,02 × Terre
 
 Pourquoi ce monde est ainsi :
 
-- Une étoile si ardente ne vit que 46 millions d'années : ce monde est forcément jeune.
-- Noyau liquide et rotation de 30 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
-- L'effet de serre ajoute 39 K.
-- Assez de chaleur pour un océan de magma sous la croûte : le sol est jeune, et il bouge.
+- Une étoile si ardente ne vit que 46,0 millions d'années : ce monde est forcément jeune.
+- Noyau liquide et rotation de 33 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
+- L'effet de serre ajoute 66 K.
+- Un intérieur brûlant : volcans partout, séismes fréquents, un sol jeune qui bouge sans cesse.
 
 Rien ne grince.
 
@@ -295,18 +297,18 @@ drifter
 companion_moon
 ```
 
-- **Étoile** : 1,10 M☉ · 6 183 K · lumière 1,46 L☉ · vit 7,53 Ga
-- **Orbite** : 1,35 UA · flux reçu 0,80 × Terre · année de 548 jours · jour de 22,2 h
-- **Planète** : 1,15 M⊕ · rayon 1,05 · gravité 1,05 g · densité 5,48 g/cm³ · 6,04 Ga
-- **Intérieur** : chaleur 0,73 × Terre · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 0,64 × Terre
-- **Atmosphère** : 1,28 bar · retenue à 99 % · 241 K sans effet de serre → 281 K en surface (7 °C)
-- **Eau** : liquide (bout à 380 K)
-- **Vivant** : lumière au sol 0,80 × Terre
+- **Étoile** : 1,10 M☉ (6 183 K) · lumière 1,46 L☉ · vit 7,53 Ga
+- **Orbite** : 1,02 UA · flux reçu 1,41 × Terre · année de 358 jours · jour de 22,1 h
+- **Planète** : 0,95 M⊕ · rayon 1,00 · gravité 0,95 g · densité 5,28 g/cm³ · 7,15 Ga
+- **Intérieur** : chaleur 0,49 × Terre · volcans éteints · croûte figée · noyau liquide · champ magnétique 0,43 × Terre
+- **Atmosphère** : 0,59 bar · retenue à 96 % · 278 K sans effet de serre → 298 K en surface (25 °C)
+- **Eau** : liquide (bout à 359 K)
+- **Vivant** : lumière au sol 1,41 × Terre
 
 Pourquoi ce monde est ainsi :
 
 - Noyau liquide et rotation de 22 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
-- L'effet de serre ajoute 40 K.
+- L'effet de serre ajoute 21 K.
 
 Rien ne grince.
 
@@ -324,17 +326,18 @@ dust_storm
 mass: 0.3
 ```
 
-- **Étoile** : 1,07 M☉ · 6 072 K · lumière 1,32 L☉ · vit 8,12 Ga
-- **Orbite** : 1,44 UA · flux reçu 0,64 × Terre · année de 609 jours · jour de 41,4 h
-- **Planète** : 0,30 M⊕ · rayon 0,72 · gravité 0,57 g · densité 4,38 g/cm³ · 7,71 Ga
-- **Intérieur** : chaleur 0,18 × Terre · volcans éteints · croûte figée · noyau figé · champ magnétique aucun
-- **Atmosphère** : 0,12 bar · retenue à 48 % · 228 K sans effet de serre → 231 K en surface (-43 °C)
-- **Eau** : glace
-- **Vivant** : lumière au sol 0,64 × Terre
+- **Étoile** : 1,07 M☉ (6 072 K) · lumière 1,32 L☉ · vit 8,12 Ga
+- **Orbite** : 0,95 UA · flux reçu 1,47 × Terre · année de 325 jours · jour de 15,9 h
+- **Planète** : 0,30 M⊕ · rayon 0,71 · gravité 0,59 g · densité 4,60 g/cm³ · 7,54 Ga
+- **Intérieur** : chaleur 0,19 × Terre · volcans éteints · croûte figée · noyau figé · champ magnétique aucun
+- **Atmosphère** : 0,042 bar · retenue à 8 % · 281 K sans effet de serre → 282 K en surface (8 °C)
+- **Eau** : liquide (bout à 300 K)
+- **Vivant** : lumière au sol 1,47 × Terre
 
 Pourquoi ce monde est ainsi :
 
 - Le noyau s'est figé : plus de dynamo, plus de bouclier magnétique.
+- Faible gravité et vent d'étoile : l'air fuit dans l'espace.
 
 Rien ne grince.
 
@@ -350,13 +353,13 @@ mass: 0.1
 age: 8
 ```
 
-- **Étoile** : 1,03 M☉ · 5 903 K · lumière 1,13 L☉ · vit 9,14 Ga
-- **Orbite** : 1,05 UA · flux reçu 1,02 × Terre · année de 388 jours · jour de 42,5 h
-- **Planète** : 0,10 M⊕ · rayon 0,53 · gravité 0,36 g · densité 3,76 g/cm³ · 8,00 Ga
-- **Intérieur** : chaleur 0,072 × Terre · volcans éteints · croûte figée · noyau figé · champ magnétique aucun
-- **Atmosphère** : presque vide
+- **Étoile** : 1,03 M☉ (5 903 K) · lumière 1,13 L☉ · vit 9,14 Ga
+- **Orbite** : 1,16 UA · flux reçu 0,84 × Terre · année de 450 jours · jour de 15,5 h
+- **Planète** : 0,10 M⊕ · rayon 0,53 · gravité 0,36 g · densité 3,74 g/cm³ · 8,00 Ga
+- **Intérieur** : chaleur 0,073 × Terre · volcans éteints · croûte figée · noyau figé · champ magnétique aucun
+- **Atmosphère** : 0,0017 bar · retenue à 1 % · 224 K sans effet de serre → 224 K en surface (-49 °C)
 - **Eau** : glace
-- **Vivant** : lumière au sol 1,02 × Terre
+- **Vivant** : lumière au sol 0,84 × Terre
 
 Pourquoi ce monde est ainsi :
 
@@ -367,8 +370,8 @@ Pourquoi ce monde est ainsi :
 
 Ce qui ne tient pas :
 
-- **light** · cosmological — Le noyau s'est figé (chaleur interne 0,072) : pas de dynamo, donc des aurores faibles et diffuses, comme sur Mars.
-  - Pistes : un monde plus jeune (age: 2,80) ; une planète plus massive (mass: 1,30) ; plus de fer au cœur (iron)
+- **light** · cosmological — Le noyau s'est figé (chaleur interne 0,073) : pas de dynamo, donc des aurores faibles et diffuses, comme sur Mars.
+  - Pistes : un monde plus jeune (age: 2,8) ; une planète plus massive (mass: 1,3) ; plus de fer au cœur (iron)
 
 Stabilité : 75 (stable) → strict 65 (unstable) · monde retenu n° 1/48, coût 0,10
 
@@ -382,17 +385,18 @@ water
 fern
 ```
 
-- **Étoile** : 1,01 M☉ · 5 813 K · lumière 1,03 L☉ · vit 9,75 Ga
-- **Orbite** : 1,01 UA · flux reçu 1,01 × Terre · année de 371 jours · jour de 15,9 h
-- **Planète** : 0,59 M⊕ · rayon 0,88 · gravité 0,77 g · densité 4,84 g/cm³ · 4,49 Ga
-- **Intérieur** : chaleur 0,74 × Terre · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 0,78 × Terre
-- **Atmosphère** : 1,11 bar · retenue à 95 % · 255 K sans effet de serre → 292 K en surface (19 °C)
-- **Eau** : liquide (bout à 376 K)
-- **Vivant** : lumière au sol 1,01 × Terre
+- **Étoile** : 1,04 M☉ (5 959 K) · lumière 1,19 L☉ · vit 8,79 Ga
+- **Orbite** : 0,92 UA · flux reçu 1,40 × Terre · année de 317 jours · jour de 20,9 h
+- **Planète** : 0,21 M⊕ · rayon 0,65 · gravité 0,50 g · densité 4,26 g/cm³ · 1,35 Ga
+- **Intérieur** : chaleur 1,09 × Terre · volcans actifs · croûte figée · noyau liquide · champ magnétique 1,35 × Terre
+- **Atmosphère** : 1,03 bar · retenue à 71 % · 277 K sans effet de serre → 314 K en surface (41 °C)
+- **Eau** : liquide (bout à 374 K)
+- **Vivant** : lumière au sol 1,40 × Terre
 
 Pourquoi ce monde est ainsi :
 
-- Noyau liquide et rotation de 16 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
+- Noyau liquide et rotation de 21 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
+- Plus près de l'étoile que le bord intérieur de la zone habitable : l'eau y lutte contre l'évaporation.
 - L'effet de serre ajoute 37 K.
 
 Ce qui ne tient pas :
@@ -400,7 +404,7 @@ Ce qui ne tient pas :
 - **light** · metaphysical — Aucune étoile ne brille vert ou violet : une étoile qui émet surtout du vert nous paraît blanche. Ce ciel tient de l'Art, pas de la nature.
   - Pistes : garder ce soleil, en connaissance de cause : il coûte un peu d'Art
 
-Stabilité : 77 (stable) → strict 77 (stable) · monde retenu n° 1/48, coût 0,10
+Stabilité : 77 (stable) → strict 77 (stable) · monde retenu n° 2/48, coût 0,10
 
 ## Jumeaux
 
@@ -414,7 +418,7 @@ fern
 rain
 ```
 
-- **Étoiles** : 1,21 M☉ + 0,75 M☉ · 6 623 K · lumière 2,47 L☉ · vit 5,64 Ga
+- **Étoiles** : 1,21 M☉ (6 623 K) + 0,75 M☉ (4 868 K) · lumière 2,47 L☉ · vit 5,64 Ga
 - **Orbite** : 1,76 UA · flux reçu 0,80 × Terre · année de 609 jours · jour de 18,8 h
 - **Planète** : 2,13 M⊕ · rayon 1,19 · gravité 1,50 g · densité 6,95 g/cm³ · 0,70 Ga
 - **Intérieur** : chaleur 4,36 × Terre · volcans actifs · plaques en mouvement · noyau liquide · champ magnétique 2,40 × Terre
@@ -426,7 +430,7 @@ Pourquoi ce monde est ainsi :
 
 - Noyau liquide et rotation de 19 h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.
 - L'effet de serre ajoute 48 K.
-- Assez de chaleur pour un océan de magma sous la croûte : le sol est jeune, et il bouge.
+- Un intérieur brûlant : volcans partout, séismes fréquents, un sol jeune qui bouge sans cesse.
 - Sous 1,50 g, les montagnes restent basses et les êtres trapus.
 
 Rien ne grince.
