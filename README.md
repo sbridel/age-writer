@@ -1,52 +1,59 @@
 # Age Writer
 
-Plugin Obsidian, inspiré de Mystcraft et de la série Myst. Tu écris un **Âge** (un monde) dans un bloc `age`, une page par ligne, et le plugin calcule le reste : description, stabilité, fenêtre de liaison peinte et animée, livre à feuilleter avec sa couverture, carte des mondes liés, et un refuge (le **Relto**) où ranger tes Âges. Tout est local : pas de réseau, pas d'IA à l'exécution, tous les sons sont synthétisés et tous les dessins sont procéduraux.
+[Français](README.fr.md) · **English**
 
-Idée de départ : dans Mystcraft, on ne **crée** pas un monde, on se **lie** à un monde qui existe. Ce que tu écris le décrit ; ce que tu laisses ouvert est tiré au sort, toujours de la même façon pour la même note. Et si tu réécris un monde déjà exploré, tu l'abîmes.
+An Obsidian plugin inspired by Mystcraft and the Myst series. You write an **Age** (a world) in an `age` block, one page per line, and the plugin works out the rest: description, stability, a painted and animated linking window, a flippable book with its cover, a map of linked worlds, and a refuge (the **Relto**) where your Ages are shelved. Everything is local: no network, no AI at runtime, every sound is synthesized and every picture is procedural.
 
-> Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part. Aucune ressource de Myst (police, image, son) n'est fournie.
+The founding idea: in Mystcraft you don't **create** a world, you **link** to a world that already exists. What you write describes it; what you leave open is drawn by lot, always the same way for the same note. And if you rewrite a world you've already explored, you damage it.
 
-**Version 1.15.2** : feu de la cabane : les gros « pop » étaient une note qui descend (d'où le « ploc ploc ») ; ce sont maintenant de simples claquements de bruit, sans hauteur. **1.15.1** : feu de la cabane : plus de souffle d'air permanent, grondement très léger, ce sont surtout les craquements du bois. **1.15.0** : la **cabane** joue un **feu qui crépite** (grondement doux, souffle, crépitements en rafale et gros « pop » de bûche) quand la page *cheminée* est active ; réglage facultatif « Fichier son de la cheminée » pour utiliser un vrai enregistrement ; âtre froid = silence. **1.14.4** : un fichier de miaulements qui contient **plusieurs miaulements** est maintenant découpé aux silences : un seul est joué à chaque fois, jamais deux fois de suite le même, à vitesse légèrement variable. **1.14.3** : les sons du bassin, du ronron et du miaou peuvent venir de **vrais enregistrements** de ton coffre (Réglages > Son > Relto : « Fichier son du bassin / du ronronnement / du miaou » ; ogg, mp3 ou wav ; vide = son synthétisé). Les fichiers ne sont pas fournis avec le plugin : prends des sons libres de droits (CC0 ou licence qui t'autorise l'usage, vérifie la page de chaque son). **1.14.2** : les **aurores boréales** ne sont visibles que la nuit, dans le Relto (île et vue globale) comme dans les Âges (elles se lèvent au crépuscule et disparaissent à l'aube). **1.14.1** : sons des vues rapprochées refaits (clapotis très léger au bassin, ronronnement plus doux, miaou plus naturel avec parfois un court « mrrp ») ; les jouets du chat sont au tout premier plan, sans herbe par-dessus. **1.14.0** : deux nouvelles pages : **page_cat_toys** (jouets du chat dans la vue du chat : pelote qui roule, souris qui couine, balle à grelot, canne à plumes, boîte en carton) et **page_pond_decor** (vue **« Le bassin, de près »** : le bassin presque plein cadre avec nénuphars et fleurs, lanterne de pierre, tuyau de bambou dont l'eau goutte, roseaux, galets et algues, libellules le jour, lucioles le soir ; elle demande la page koï). **1.13.1** : **motifs de koï générés** (variétés kohaku, sanke, showa, tancho, asagi, orange, yamabuki ; taches tirées au hasard, déterministes avec la graine du Relto) ; **sons des vues rapprochées** synthétisés : eau qui coule au bassin, chat qui ronronne et miaule (un clic sur le chat le fait miauler), réglage « Sons des vues rapprochées » ; le ruisseau de la vue du bassin naît maintenant d'une encoche dans la falaise, longe la paroi et coule jusqu'au bassin. **1.13.0** : **plan de l'île** (cabane, bassin, piliers de liaison, chat, arbre à tiges, banc, pierres dressées sont placés côte à côte sans se chevaucher ; si tout ne tient pas, les moins importants restent pour les sous-vues) ; **boutons de navigation** dans la bande du haut (île, vue globale, cabane, piliers, bosquet, bassin, chat) ; nouvelles vues rapprochées **bassin** (avec le ruisseau), **chat** (son nom, un clic) et **bosquet** ; le **mont** est plus grand et porte la source d'un **ruisseau** qui descend jusqu'au bassin puis tombe de l'île ; page **page_stalk_tree** (un arbre à tiges, un seul) ; les **lanternes** deviennent volantes. **1.12.0** : premières **sous-vues point-and-click** : un clic sur la cabane ouvre son **intérieur** (cheminée, étagère des Âges en grand, livre des glyphes et livre de la bibliothèque sur la table, porte pour ressortir) et un clic sur les piliers ouvre la **vue des piliers de liaison** (la fenêtre de liaison s'allume quand des Âges y reviennent) ; le bouton de la bande du haut ramène à l'île. Quand la cabane existe, l'étagère et les gros livres ne sont plus sur l'île (plus de place pour les arbres). **1.11.1** : infobulles du Relto toujours entières (recadrées dans l'image) ; quand la page *pinacle du calendrier* est active, le ponton devient un **pont** vers le pinacle ; les **arbres** se répartissent entre les essences choisies (budget partagé, étalés sur l'île) ; le bouton de **vue globale** est dans la bande du haut, avec les onglets ; l'île est élargie à gauche et l'îlot du fond éloigné. **1.11.0** : une **vue globale** du Relto (bouton en coin de l'image : le Relto vu de loin, au milieu de la mer de brume, avec ses pinacles, ses îlots et un pont ; un clic sur l'île ramène à la vue de l'île, qui reste l'ouverture par défaut) et **14 nouvelles pages** : pluie, orage, oiseaux, papillons, lune et soleil, ponton, banc, îlots, pinacle du calendrier, fleurs bleues, herbe, pins ponderosa, érables, arbre de cristal. (1.10 : bassin de koï et chat ; 1.9 : deux livres à part ; 1.8 : quantité de hasard.) Le moteur (issu du 1.3.0) est en sources lisibles dans `src/engine/`. Le `manifest.json` annonce `1.15.2`.
+> Fan project, not affiliated with or endorsed by Cyan Worlds. No Myst asset (font, image, sound) is included.
+
+**Version 1.15.2.** The engine (derived from 1.3.0) is available as readable sources in `src/engine/`. `manifest.json` announces `1.15.2`. Highlights of the latest releases (full history in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)):
+
+- **1.15.x**: the cabin plays a crackling **fireplace** when the *chimney* page is active (soft rumble, wood crackles; a cold hearth is silent). Optional "fireplace sound file" setting to use a real recording.
+- **1.14.x**: pond, purr and meow sounds can come from **real recordings** in your vault (Settings > Sound > Relto; ogg, mp3 or wav; empty = synthesized). Files are not shipped: use royalty-free sounds (CC0 or a licence that allows your use; check each sound's page). A meow file containing **several meows** is split at the silences and one is played at a time. **Northern lights** are only visible at night, in the Relto and in Ages. New pages: **page_cat_toys** and **page_pond_decor** (the close-up "Pond, close up" view with lilies, stone lantern, bamboo spout, reeds, dragonflies by day, fireflies at dusk).
+- **1.13.x**: **procedural koi patterns** (kohaku, sanke, showa, tancho, asagi, orange, yamabuki); synthesized close-up sounds; **island layout** (cabin, pond, linking pillars, cat, stalk tree, bench and standing stones are placed side by side without overlapping; what doesn't fit stays in the sub-views); **navigation buttons** in the top bar (island, global view, cabin, pillars, grove, pond, cat); bigger **mountain** with a **stream** down to the pond and off the island; *page_stalk_tree*; flying **lanterns**.
+- **1.12.0**: first **point-and-click sub-views**: click the cabin to see its **interior** (fireplace, big shelf of Ages, glyph book and library book on the table, door back out); click the pillars for the **linking pillars** view.
+- **1.11.x**: a **global view** of the Relto and **14 new pages** (rain, storm, birds, butterflies, moon & sun, dock, bench, islets, calendar pinnacle, blue flowers, grass, ponderosa pines, maples, crystal tree).
 
 ---
 
-## Sommaire
+## Contents
 
 1. [Installation](#1-installation)
-2. [Démarrage rapide](#2-démarrage-rapide)
-3. [Écrire un Âge](#3-écrire-un-âge)
-4. [Le bloc Âge : trois onglets](#4-le-bloc-âge--trois-onglets)
-5. [Le livre](#5-le-livre)
-6. [Le Relto](#6-le-relto)
-7. [Les sons](#7-les-sons)
-8. [Le monde : stabilité, tirage, loi du changement](#8-le-monde)
-9. [Fenêtre, effets, pièges](#9-fenêtre-effets-pièges)
-10. [D'ni, mécanismes, journal](#10-dni-mécanismes-journal)
-11. [Réglages](#11-réglages)
-12. [Guide intégré](#12-guide-intégré)
-13. [Commandes](#13-commandes)
-14. [Limites connues](#14-limites-connues)
-15. [Développement](#15-développement)
-16. [Licences](#16-licences-et-mentions)
-17. [Historique des changements récents](#17-changements-récents)
+2. [Quick start](#2-quick-start)
+3. [Writing an Age](#3-writing-an-age)
+4. [The Age block: three tabs](#4-the-age-block-three-tabs)
+5. [The book](#5-the-book)
+6. [The Relto](#6-the-relto)
+7. [Sounds](#7-sounds)
+8. [The world: stability, drawing, law of change](#8-the-world)
+9. [Window, effects, traps](#9-window-effects-traps)
+10. [D'ni, mechanisms, journal](#10-dni-mechanisms-journal)
+11. [Settings](#11-settings)
+12. [Built-in guide](#12-built-in-guide)
+13. [Commands](#13-commands)
+14. [Known limitations](#14-known-limitations)
+15. [Development](#15-development)
+16. [Licences and credits](#16-licences-and-credits)
 
 ---
 
 ## 1. Installation
 
-Manuelle, pour l'instant :
+Manual, for now:
 
-1. Récupérer `main.js`, `styles.css`, `manifest.json`.
-2. Les copier dans `<coffre>/.obsidian/plugins/age-writer/`.
-3. Dans Obsidian : *Réglages → Plugins communautaires*, recharger, activer **Age Writer**.
+1. Get `main.js`, `styles.css`, `manifest.json` (build them, see §15).
+2. Copy them to `<vault>/.obsidian/plugins/age-writer/`.
+3. In Obsidian: *Settings → Community plugins*, reload, enable **Age Writer**.
 
-Les réglages de l'extension sont dans l'onglet de réglages du plugin, sous le titre « Extensions ». La langue de l'interface suit celle d'Obsidian (anglais ou français). Le contenu du moteur (noms de blocs, descriptions générées) est en anglais.
+The extension's settings live in the plugin's settings tab, under the "Extensions" heading. The interface language follows Obsidian's (English or French). The engine's content (block names, generated descriptions) is in English.
 
 ---
 
-## 2. Démarrage rapide
+## 2. Quick start
 
-1. Écris un bloc `age` dans une note :
+1. Write an `age` block in a note:
 
 ````
 ```age
@@ -57,270 +64,274 @@ link: [[Sunder Reach]]
 ```
 ````
 
-2. Sous le bloc, le panneau s'affiche (onglets *Texte & glyphes*, *Fenêtre de liaison*, *Détails*).
-3. Commande **Open this Age as a book** : le livre s'ouvre dans un onglet, sur sa couverture.
-4. Commande **Create a Relto page**, puis un bloc `relto` dans une note : ton refuge, avec tes Âges sur l'étagère.
-5. Si tu te perds : commande **Open the Age Writer guide** (guide court) ou **Open the Age Writer full reference**.
+2. Below the block, the panel appears (tabs *Text & glyphs*, *Linking window*, *Details*).
+3. Run **Open this Age as a book**: the book opens in a tab, on its cover.
+4. Run **Create a Relto page**, then put a `relto` block in a note: your refuge, with your Ages on the shelf.
+5. If you get lost: **Open the Age Writer guide** (short guide) or **Open the Age Writer full reference**.
 
 ---
 
-## 3. Écrire un Âge
+## 3. Writing an Age
 
-Un bloc de code `age`, une page par ligne (un identifiant de bloc), plus des lignes spéciales.
+An `age` code block, one page per line (a block identifier), plus special lines.
 
-| Ligne | Effet |
+| Line | Effect |
 |---|---|
-| `link: [[Note]]` | livre de liaison vers un autre Âge (plusieurs permis) |
-| `return: [[Note]]` | livre de retour |
-| `panel: [[image]]` | image de fenêtre à toi |
-| `seed: 42` | change le tirage (même note + même graine = même monde) |
-| `cover: sober` | sobriété de la couverture : `ornate`, `classic`, `sober`, `plain`, ou 0 à 1 |
-| `window_style: generative` | rendu de la fenêtre (`generative` ou `classic`) |
-| `window_size: xl` / `window_width: 520` | taille de la fenêtre |
-| `fx: tv` | effet de fenêtre : `classic`, `static`, `ripple`, `sweep`, `tv`, `random`, `off` |
-| `day_length: 40`, `year_length: 12` | durée du jour (minutes réelles) et de l'année (jours), rendu génératif |
-| `many: ruins` / `few: rain` / `normal: water` | quantités |
-| `mechanism: orrery` | mécanisme de l'Âge |
-| `trap book` | livre-piège (ni retour ni fissure) |
-| `damaged_pages = 2`, `removed_pages = 1` | livre de liaison abîmé |
+| `link: [[Note]]` | linking book to another Age (several allowed) |
+| `return: [[Note]]` | return book |
+| `panel: [[image]]` | your own window image |
+| `seed: 42` | changes the draw (same note + same seed = same world) |
+| `cover: sober` | cover sobriety: `ornate`, `classic`, `sober`, `plain`, or 0 to 1 |
+| `window_style: generative` | window rendering (`generative` or `classic`) |
+| `window_size: xl` / `window_width: 520` | window size |
+| `fx: tv` | window effect: `classic`, `static`, `ripple`, `sweep`, `tv`, `random`, `off` |
+| `day_length: 40`, `year_length: 12` | day length (real minutes) and year length (days), generative rendering |
+| `many: ruins` / `few: rain` / `normal: water` | quantities |
+| `mechanism: orrery` | the Age's mechanism |
+| `trap book` | trap book (neither return nor crack) |
+| `damaged_pages = 2`, `removed_pages = 1` | damaged linking book |
 
-Les lignes spéciales sont ignorées par le moteur : elles ne comptent pas comme des pages. La liste complète des blocs (92 identifiants, par axe) et de tous les alias est dans la **référence complète** intégrée au plugin.
-
----
-
-## 4. Le bloc Âge : trois onglets
-
-Pour ne pas tout montrer à la fois, le panneau sous le bloc a trois onglets (réglage *Onglets dans le bloc Âge*) :
-
-- **Texte & glyphes** : description et glyphes, avec une petite fenêtre de liaison centrée ;
-- **Fenêtre de liaison** : la grande fenêtre ; un clic joue le son de liaison ;
-- **Détails** : stabilité, mécanismes, journal, bouton « Écouter l'Âge ».
+Special lines are ignored by the engine: they don't count as pages. The complete list of blocks (92 identifiers, by axis) and all aliases is in the **full reference** built into the plugin.
 
 ---
 
-## 5. Le livre
+## 4. The Age block: three tabs
 
-Commande **Open this Age as a book**. Il s'ouvre dans un onglet principal (ou une fenêtre, ou le panneau latéral : réglage *Ouvrir le livre dans*) et toujours sur la **Couverture**.
+So as not to show everything at once, the panel below the block has three tabs (setting *Tabs in the Age block*):
 
-- **Couverture** : générée à partir de l'Âge (marbre, cuir, dos nervuré, coins ou rivets, médaillon ou cartouche, usure selon le verdict). Sobriété réglable, de très ornée à nue ; export en SVG.
-- **Descriptive book** : les pages du monde ; ✓ garde une page tirée, × la retire ; une palette ajoute ou retire des pages.
-- **Linking book** : trois pages à droite (glyphes + texte, vitre de liaison, liens). On tourne les pages en cliquant la page de droite (suivante) ou de gauche (précédente), avec un bruit de page.
-
-Cliquer la vitre ou « open ↗ » te lie vers l'Âge visé (liaison parfois incertaine si le livre est abîmé).
+- **Text & glyphs**: description and glyphs, with a small centred linking window;
+- **Linking window**: the big window; a click plays the linking sound;
+- **Details**: stability, mechanisms, journal, "Listen to the Age" button.
 
 ---
 
-## 6. Le Relto
+## 5. The book
 
-Ton refuge : une île avec cabane, étagère de livres (tes Âges, cliquables et colorés par stabilité), piliers de liaison, et des **pages** qui ajoutent des éléments et des ambiances. Un bloc `relto` dans une note l'affiche.
+Command **Open this Age as a book**. It opens in a main tab (or a window, or the side panel: setting *Open the book in*), always on the **Cover**.
 
-### Onglets
+- **Cover**: generated from the Age (marble, leather, ribbed spine, corners or rivets, medallion or cartouche, wear according to the verdict). Adjustable sobriety, from very ornate to bare; SVG export.
+- **Descriptive book**: the world's pages; ✓ keeps a drawn page, × removes it; a palette adds or removes pages.
+- **Linking book**: three pages on the right (glyphs + text, linking pane, links). Turn pages by clicking the right page (next) or the left page (previous), with a page-turn sound.
 
-Une fine rangée d'icônes discrètes au-dessus de l'image :
+Clicking the pane or "open ↗" links you to the target Age (sometimes uncertainly if the book is damaged).
 
-| Onglet | Contenu |
+---
+
+## 6. The Relto
+
+Your refuge: an island with a cabin, a shelf of books (your Ages, clickable and coloured by stability), linking pillars, and **pages** that add elements and moods. A `relto` block in a note displays it.
+
+### Tabs
+
+A thin row of discreet icons above the picture:
+
+| Tab | Content |
 |---|---|
-| **Vue** (œil) | l'image ; dessous, l'heure et l'heure D'ni en grand. Un clic sur l'heure la cache ; elle s'efface seule après quelques secondes, sauf si la souris est sur la vue. Le nom D'ni s'affiche en petit, en haut, dans la bande noire |
-| **Pages** | pages actives, disponibles, verrouillées ; livres affichés sur l'étagère |
-| **Réglages** | heure du ciel, ambiance sonore, niveau, volume |
-| **Agrandir** | ouvre la **vue Relto** dans un onglet principal (aussi : commande *Open the Relto view (large)*) |
+| **View** (eye) | the picture; below it, the time and D'ni time in large type. Clicking the time hides it; it fades by itself after a few seconds unless the mouse is over the view. The D'ni name is shown small, at the top, in the black band |
+| **Pages** | active, available and locked pages; books shown on the shelf |
+| **Settings** | sky time, ambience, level, volume |
+| **Enlarge** | opens the **Relto view** in a main tab (also: command *Open the Relto view (large)*) |
 
-Dans la vue Relto, une icône **plein écran** met l'image sur tout l'écran ; la barre d'icônes et l'heure flottent par-dessus et s'effacent. Échap pour quitter. Le son du Relto continue quand on change d'onglet.
+In the Relto view, a **fullscreen** icon puts the picture on the whole screen; the icon bar and time float above it and fade. Esc to leave. Relto sound keeps playing when you switch tabs.
 
-### Les deux livres du Relto
+### Navigation and sub-views
 
-Au pied de l'étagère, deux livres d'aspect différent des Âges (aussi dans l'onglet **Pages**, et par commandes) :
+Since 1.13 a **navigation bar** sits in the band above the picture: **island** (opening view), **global view**, **cabin**, **linking pillars**, **grove**, **pond**, **pond ++** and **cat**. You can also click things directly in the island view (the cabin, the pillars, the pond, the cat…). Which buttons are available depends on the active pages.
 
-- **Livre des glyphes** (turquoise, losange) : un clic ouvre la liste des glyphes *utilisés* dans les Âges de l'étagère, avec leur dessin et les Âges où ils apparaissent (clic = ouvre l'Âge). Pour l'instant « connu » = écrit dans un Âge ; la future boucle de jeu pourra le limiter aux glyphes découverts. Commande : *Open the book of glyphs*.
-- **Livre de la bibliothèque** (rouge, fermoir) : un clic propose *Blocs, réactions et variantes d'Âges* (`age-library`) ou *Pages du Relto* (`relto-library`). Le plugin ouvre la note de bibliothèque existante, ou la crée avec un exemple commenté (`Age Library.md`, `Relto Library.md`, dans le dossier de bibliothèque s'il est défini). Tu n'as plus qu'à écrire. Commande : *Open a library note*.
+- **Island layout**: cabin, pond, pillars, cat, stalk tree, bench and standing stones are placed by a deterministic layout so that big elements never overlap. If not everything fits, the least important ones stay in their sub-views.
+- **Cabin interior**: fireplace (lit when the *chimney* page is active, otherwise "Cold hearth"), a 3×10 shelf of your Ages (each book clickable), a table with the glyph book and the library book, a door back to the island.
+- **Linking pillars**: the linking window lights up when Ages lead back to this Relto.
+- **Grove, pond, cat, pond ++**: close-up views. *Pond ++* (page *page_pond_decor*) shows the pond almost full frame with lilies, a stone lantern, a bamboo spout, reeds, pebbles and seaweed, dragonflies by day and fireflies at dusk. Cat toys (page *page_cat_toys*): rolling yarn ball, squeaking mouse, jingle ball, feather wand, cardboard box; click a toy.
 
-La syntaxe d'une page du Relto accepte `page lagon: …` ou `page_lagon: …` (le second n'était pas reconnu avant, alors que les exemples le montraient).
+### The Relto's two special books
 
-### La vue globale
+At the foot of the shelf (in the cabin since 1.12), two books look different from the Ages (also in the **Pages** tab, and by commands):
 
-Un petit bouton (globe) en haut à gauche de l'image bascule entre la **vue de l'île** (celle d'ouverture) et la **vue globale** : le Relto vu de loin, l'île au centre dans la mer de brume, des pinacles de roche qui en émergent. Les pages y ajoutent leurs éléments : les **îlots** (page *Islets*), le **pont** de cordes qui les relie, le **pinacle du calendrier** (page *Calendar pinnacle*, qui porte le jour D'ni), le ciel (lune, pluie, orage, oiseaux, aurore, neige). Un clic sur l'île (« Your Relto ») ramène à la vue de l'île ; le même bouton (maison) fait aussi le retour.
+- **Book of glyphs** (turquoise, diamond): a click opens the list of glyphs *used* in the Ages on the shelf, with their drawing and the Ages where they appear (click = open the Age). For now "known" = written in an Age; the future game loop may limit it to discovered glyphs. Command: *Open the book of glyphs*.
+- **Library book** (red, clasp): a click offers *Blocks, reactions and Age variants* (`age-library`) or *Relto pages* (`relto-library`). The plugin opens the existing library note, or creates it with a commented example (`Age Library.md`, `Relto Library.md`, in the library folder if set). Command: *Open a library note*.
 
-### Pages du décor, du ciel et de la faune (1.11)
+A Relto page's syntax accepts `page lagoon: …` or `page_lagoon: …`.
 
-| Page | Ce qu'elle ajoute |
+### The global view
+
+A small button (globe) at the top left toggles between the **island view** (opening view) and the **global view**: the Relto seen from afar, the island at the centre in the sea of mist, rock pinnacles emerging. Pages add their elements there: **islets** (page *Islets*), the rope **bridge** joining them, the **calendar pinnacle** (page *Calendar pinnacle*, which carries the D'ni day), the sky (moon, rain, storm, birds, aurora, snow). A click on the island ("Your Relto") returns to the island view.
+
+### Scenery, sky and wildlife pages
+
+| Page | What it adds |
 |---|---|
-| *Rain*, *Storm* | pluie ; orage avec éclairs espacés et ciel assombri (`rain`, `storm`, densité 0 à 1) |
-| *Birds*, *Butterflies* | oiseaux qui traversent le ciel (le jour surtout) ; papillons qui voltigent autour de l'île |
-| *Moon & sun* | une grande lune et sa petite compagne, visibles aussi de jour |
-| *Dock* | un ponton dans la brume, à droite de l'île, avec une barque et une lanterne la nuit |
-| *Bench* | un banc de bois entre la cabane et l'étagère |
-| *Islets* | des îlots flottants derrière l'île (densité = nombre) |
-| *Calendar pinnacle* | une pierre dressée sur un îlot, qui affiche le jour D'ni |
-| *Blue flowers* | fleurs basses le long du sol (`asset` : blue, red, yellow, white, pink) |
-| *Grass* | herbe haute le long du sol |
-| *Ponderosa pines*, *Maples*, *Crystal tree* | arbres de fond (`vegetation` avec `asset` ponderosa, maple, crystal) |
+| *Rain*, *Storm* | rain; storm with spaced lightning and a darkened sky (`rain`, `storm`, density 0 to 1) |
+| *Birds*, *Butterflies* | birds crossing the sky (mostly by day); butterflies fluttering around the island |
+| *Moon & sun* | a large moon and its small companion, visible by day too |
+| *Dock* | a dock in the mist, right of the island, with a boat and a lantern at night (becomes a rope **bridge** to the pinnacle when the *Calendar pinnacle* page is active) |
+| *Bench* | a wooden bench |
+| *Islets* | floating islets behind the island (density = number) |
+| *Calendar pinnacle* | a standing stone on an islet that shows the D'ni day |
+| *Blue flowers* | low flowers along the ground (`asset`: blue, red, yellow, white, pink) |
+| *Grass* | tall grass along the ground |
+| *Ponderosa pines*, *Maples*, *Crystal tree* | background trees (`vegetation` with `asset` ponderosa, maple, crystal) |
+| *Stalk tree* | a single stalk tree (`page_stalk_tree`) |
+| *Flying lanterns* | lanterns floating up into the sky |
 
-Chaque page est un préréglage (« Nouvelle page »), et tous ces effets s'écrivent aussi dans un bloc `relto-library`, par exemple `page pluie: Pluie | rain 0.9, birds 0.4 | audio=soft_rain`.
+Each page is a preset ("New page"), and all these effects can also be written in a `relto-library` block, for example `page rain: Rain | rain 0.9, birds 0.4 | audio=soft_rain`.
 
-### Le bassin de koï et le chat
+### Koi pond and cat
 
-- **Bassin de koï** (page *Koi pond*) : un bassin vu en coupe, à droite de la cabane, avec des carpes qui nagent. Une **koï rare** les accompagne : `koi_rare` dans les propriétés de la note de la page vaut `ogon` (doré), `platinum` ou `ghost` (fantôme). Sans valeur, la variété est tirée d'après la graine du Relto. `koi_name` donne un nom à la koï rare (par défaut « Ogon », « Platinum » ou « Ghost »). Un clic sur la koï (ou sur le chat) affiche son nom un instant.
-- **Chat** (page *Cat*) : assis à gauche de la cabane, il cligne des yeux, bat de la queue et dort la nuit. Dans la note de la page, `cat_name` donne son nom (affiché au survol) et `cat_color` sa robe : `black`, `white`, `orange`, `grey`, `cream`, `tabby`, `calico`, `tuxedo`, `siamese`, ou un code `#rrggbb`.
-- Dans un bloc `relto-library` : `page chat: Chat | cat color=black name="Petit Loup"` et `page bassin: Bassin | koi 0.8 rare=platinum` (la densité de `koi` règle le nombre de carpes).
+- **Koi pond** (page *Koi pond*): a cross-section pond right of the cabin, with swimming carp. Koi patterns are **procedurally generated** (kohaku, sanke, showa, tancho, asagi, orange, yamabuki), deterministic from the Relto seed. A **rare koi** joins them: `koi_rare` in the page note's properties is `ogon` (gold), `platinum` or `ghost`. With no value, the variety is drawn from the Relto seed. `koi_name` names the rare koi (default "Ogon", "Platinum" or "Ghost"). A click on the koi (or the cat) shows its name for a moment.
+- **Cat** (page *Cat*): sits left of the cabin, blinks, flicks its tail and sleeps at night. In the page note, `cat_name` gives its name (shown on hover) and `cat_color` its coat: `black`, `white`, `orange`, `grey`, `cream`, `tabby`, `calico`, `tuxedo`, `siamese`, or a `#rrggbb` code.
+- In a `relto-library` block: `page cat: Cat | cat color=black name="Little Wolf"` and `page pond: Pond | koi 0.8 rare=platinum` (`koi` density sets the number of carp).
 
-Les arbres (pins, bouleaux, palmes) sont grands et dessinés à l'arrière-plan, derrière la cabane, l'étagère, le chat et le bassin, et ils évitent la place exacte du chat, du bassin et des deux livres à part : rien ne les cache.
+Trees (pines, birches, palms) are tall and drawn in the background, behind the cabin, shelf, cat and pond, and they avoid the exact spot of the cat, the pond and the two special books: nothing hides them.
 
-### Pages intégrées
+### Built-in pages
 
-Pins, bouleaux, palmes, fougères, cascade, lucioles, lanternes, neige, aurore, feux d'artifice, montagne, menhirs, cheminée, brume, et sous l'île : **gemmes, or, argent** (filons et cristaux dans la roche, scintillants). « Nouvelle page » crée une page ; on peut aussi les écrire à la main (une note par page) ou dans un bloc `relto-library` :
+Pines, birches, palms, ferns, waterfall, fireflies, lanterns, snow, aurora, fireworks, mountain, menhirs, chimney, mist, and under the island: **gems, gold, silver** (veins and crystals in the rock, glittering). The mountain is bigger and carries the source of a **stream** that runs down to the pond and falls off the island. "New page" creates a page; you can also write them by hand (one note per page) or in a `relto-library` block:
 
 ````
 ```relto-library
-page lagon: Lagon | vegetation 0.5 palm, gold 0.6 | audio=river | unlock=[[Marais de verre]]:60
+page lagoon: Lagoon | vegetation 0.5 palm, gold 0.6 | audio=river | unlock=[[Glass Marsh]]:60
 ```
 ````
 
-Le choix des livres de l'étagère se fait par les cases à cocher de l'onglet Pages, ou par les options `folders:`, `exclude:`, `books:` du bloc.
+The shelf's books are chosen with the checkboxes in the Pages tab, or with the block's `folders:`, `exclude:`, `books:` options.
 
 ---
 
-## 7. Les sons
+## 7. Sounds
 
-Tout est synthétisé (Web Audio). Trois gestes, trois sons, chacun réglable séparément :
+Everything is synthesized (Web Audio). Three gestures, three sounds, each adjustable separately:
 
-| Geste | Son | Réglage |
+| Gesture | Sound | Setting |
 |---|---|---|
-| Manipuler le livre (la vue livre s'ouvre) | choc, cuir, pages ; puis 2 à 5 clics de fermoir | *Son du livre*, *Clics du fermoir* |
-| Se déplacer dans l'Âge (la note s'ouvre) ou toucher une vitre | son de liaison, onze variantes tirées au hasard | *Son de liaison* |
-| Tourner une page du livre de liaison | froissement de papier | *Pages tournées* |
+| Handling the book (the book view opens) | thud, leather, pages; then 2 to 5 clasp clicks | *Book sound*, *Clasp clicks* |
+| Moving into the Age (the note opens) or touching a window | linking sound, eleven variants drawn at random | *Linking sound* |
+| Turning a linking-book page | paper rustle | *Turned pages* |
 
-Quand le livre est déjà ouvert, cliquer une vitre ne rejoue que le son de liaison. Les ambiances (Relto, Âge) se lancent avec le bouton ♪ ; niveaux minimal / zen / complet.
+When the book is already open, clicking a window only replays the linking sound. Ambiences (Relto, Age) start with the ♪ button; levels minimal / zen / full.
 
----
-
-## 8. Le monde
-
-- **Stabilité** : cinq axes (cosmologique, géologique, météo, écologique, métaphysique) plus l'axe `alteration`. L'Âge prend la stabilité de son axe le plus faible : ≥ 75 % stable, 40–74 % instable, < 40 % mourant.
-- **Tirage** : ce que le livre laisse ouvert est tiré, toujours pareil pour la même note. Un livre vague tombe sur un monde stable environ 96 % du temps.
-- **Fissure** : environ la moitié des mondes n'en ont pas. Sans livre de retour **et** sans fissure, l'Âge est un piège.
-- **Loi du changement** : tant que l'encre est fraîche (15 min par défaut), tu peux retoucher. Ensuite, modifier le monde (ajouter ou retirer une page) l'abîme (0,06 d'instabilité par élément, plafond 0,30), puis il guérit lentement. Espaces, sauts de ligne, casse et renommage ne comptent pas.
-- **Ciel étendu** (ceinture et champ d'astéroïdes, anneaux, comète, soleils colorés), **mondes-types** (gelé, lave, désert, océan, jungle), **richesses et cicatrices** (or, argent, gemmes… compensées par des cicatrices jusqu'à 75 %) : voir la référence complète.
+**Close-up views** have their own sounds (setting *Close-up view sounds*): a very light trickle at the pond, a purr and meow at the cat (click the cat to make it meow), a crackling fire in the cabin when the chimney page is active. They can come from **real recordings** in your vault: *Settings > Sound > Relto*, "Pond / Purr / Meow / Fireplace sound file" (ogg, mp3 or wav; empty = synthesized). A file with several meows is split at the silences. Files are not provided with the plugin.
 
 ---
 
-## 9. Fenêtre, effets, pièges
+## 8. The world
 
-- **Rendu** : `classic` (la fenêtre peinte du moteur) ou `generative` (paysage tiré de la graine : ciel, relief, végétation, météo, reflets, premier plan, un détail habité).
-- **Effets** : parasites, ondulation, balayage, vieille télé… selon l'instabilité ; `prefers-reduced-motion` est respecté.
-- **Dégâts** : `damaged_pages` (zones décalées, séparation de couleurs, figées, taches d'encre), `removed_pages` (trous brûlés), fractures quand l'instabilité monte. Tirés de la graine du livre.
-- **Livre-piège** : `trap book`. Il a l'air normal.
-- **Liaisons incertaines** (réglage) : au-delà de 30 % d'instabilité de liaison, la liaison peut vaciller ou glisser vers un autre livre du même Âge.
-
----
-
-## 10. D'ni, mécanismes, journal
-
-- **Chiffres D'ni** en base 25 (numéro d'Âge, graine, énigmes, horloge). Niveaux : police installée (non fournie), fichier de glyphes local, chiffres dessinés par le plugin. **Heure D'ni** du Relto d'après l'horloge de l'ordinateur.
-- **Mécanismes** : onze (ascenseur à vapeur, vanne, télescope, serrure sonore, réseau de fréquences, générateur, imageur holofatique, planétaire, écluse, orgue à vent, réseau de lentilles), chacun avec un état et une énigme.
-- **Solitude** : pondère le tirage vers des mondes déserts.
-- **Journal d'exploration** : un bloc `age-journal` qui s'écrit au fil des notes liées ; voix Atrus, Gehn ou Miller.
-- **Bibliothèque personnelle** : des blocs `age-library` définissent tes propres blocs, produits, réactions et variantes.
+- **Stability**: five axes (cosmological, geological, weather, ecological, metaphysical) plus the `alteration` axis. The Age takes the stability of its weakest axis: ≥ 75% stable, 40–74% unstable, < 40% dying.
+- **Drawing**: what the book leaves open is drawn, always the same for the same note. A vague book lands on a stable world about 96% of the time.
+- **Crack**: about half of worlds have none. With no return book **and** no crack, the Age is a trap.
+- **Law of change**: while the ink is fresh (15 min by default) you can retouch. After that, changing the world (adding or removing a page) damages it (0.06 instability per element, capped at 0.30), then it slowly heals. Spaces, line breaks, case and renaming don't count.
+- **Extended sky** (belt and asteroid field, rings, comet, coloured suns), **world types** (frozen, lava, desert, ocean, jungle), **riches and scars** (gold, silver, gems… offset by scars up to 75%): see the full reference.
+- **Aurora** is only visible at night, in Ages as in the Relto (it rises at dusk and fades at dawn).
 
 ---
 
-## 11. Réglages
+## 9. Window, effects, traps
 
-Dans l'onglet de réglages du plugin : une carte **Guide** (boutons Guide et Référence) puis sept rubriques, chacune avec icône, description et valeur courante.
+- **Rendering**: `classic` (the engine's painted window) or `generative` (landscape drawn from the seed: sky, relief, vegetation, weather, reflections, foreground, one inhabited detail).
+- **Effects**: static, ripple, sweep, old TV… depending on instability; `prefers-reduced-motion` is respected.
+- **Damage**: `damaged_pages` (shifted zones, colour separation, frozen, ink stains), `removed_pages` (burnt holes), fractures as instability rises. Drawn from the book's seed.
+- **Trap book**: `trap book`. It looks normal.
+- **Uncertain links** (setting): above 30% link instability, the link may flicker or slide to another book of the same Age.
 
-| Rubrique | Contenu |
+---
+
+## 10. D'ni, mechanisms, journal
+
+- **D'ni numerals** in base 25 (Age number, seed, puzzles, clock). Levels: installed font (not provided), local glyph file, numerals drawn by the plugin. **D'ni time** in the Relto from the computer's clock.
+- **Mechanisms**: eleven (steam elevator, sluice, telescope, sound lock, frequency array, generator, holographic imager, orrery, lock, wind organ, lens array), each with a state and a puzzle.
+- **Solitude**: weights the draw toward deserted worlds.
+- **Exploration journal**: an `age-journal` block written as you go through linked notes; Atrus, Gehn or Miller voice.
+- **Personal library**: `age-library` blocks define your own blocks, products, reactions and variants.
+
+---
+
+## 11. Settings
+
+In the plugin's settings tab: a **Guide** card (Guide and Reference buttons) then seven sections, each with an icon, a description and its current value.
+
+| Section | Content |
 |---|---|
-| Livres & couvertures | cuir, onglet couverture, où s'ouvre le livre, ouverture sur la couverture, sobriété des couvertures, livre en 3 pages |
-| Sons | sons (général), volume, son du livre, clics du fermoir, pages tournées, son de liaison, ambiance et volume du Relto |
-| Fenêtre de liaison | onglets du bloc Âge, rendu, taille, effet, intensité, liaisons incertaines |
-| D'ni & chiffres | langue, chiffres, police, nombres, noms en D'ni, heure D'ni, Relto en onglets |
-| Âges & mécanismes | loi du changement, encre, guérison, mécanismes, solitude |
-| Dossiers | journaux, refuge |
-| Tirage & bibliothèque | réglages du moteur : propriétés automatiques, fenêtre dessinée, tirage des cases ouvertes, force du pli, dossier de bibliothèque, image de panneau par défaut |
+| Books & covers | leather, cover tab, where the book opens, open on cover, cover sobriety, 3-page book |
+| Sounds | sounds (general), volume, book sound, clasp clicks, turned pages, linking sound, Relto ambience and volume, close-up view sounds and optional recordings |
+| Linking window | Age block tabs, rendering, size, effect, intensity, uncertain links |
+| D'ni & numerals | language, numerals, font, numbers, D'ni names, D'ni time, Relto in tabs |
+| Ages & mechanisms | law of change, ink, healing, mechanisms, solitude |
+| Folders | journals, refuge |
+| Draw & library | engine settings: automatic properties, drawn window, open-slot draw, fold strength, library folder, default panel image |
 
-Défauts notables : cuir et couverture activés ; livre dans un onglet principal, ouvert sur la couverture ; couverture « auto » ; fenêtre grande ; encre 15 min ; guérison 0,05 par jour ; ambiance du Relto zen ; volume 0,35 ; Relto en onglets activé.
-
----
-
-## 12. Guide intégré
-
-Deux niveaux, dans une fenêtre à rubriques (et exportables en notes) :
-
-- **Guide court** : écrire un Âge, le bloc, le livre, le Relto, les sons, la loi du changement, les réglages ;
-- **Référence complète** (en français) : toutes les lignes et leurs alias, les 92 blocs par axe, ciel étendu, quantités, stabilité, fenêtre, pièges, Relto (note YAML, pages, options), D'ni, mécanismes, journal, sons, bibliothèque, tous les réglages, commandes, propriétés, limites.
+Notable defaults: leather and cover on; book in a main tab, opened on the cover; cover "auto"; large window; ink 15 min; healing 0.05 per day; Relto ambience zen; volume 0.35; Relto in tabs on.
 
 ---
 
-## 13. Commandes
+## 12. Built-in guide
 
-| Commande | Rôle |
+Two levels, in a window with sections (and exportable as notes):
+
+- **Short guide**: writing an Age, the block, the book, the Relto, sounds, the law of change, settings;
+- **Full reference** (in French): all lines and aliases, the 92 blocks by axis, extended sky, quantities, stability, window, traps, Relto (YAML note, pages, options), D'ni, mechanisms, journal, sounds, library, all settings, commands, properties, limitations.
+
+---
+
+## 13. Commands
+
+| Command | Role |
 |---|---|
-| Open this Age as a book | vue livre |
-| Open the Relto · Open the Relto view (large) | refuge dans une note · vue dédiée |
-| Create a Relto page | crée une page de refuge |
-| Open the Age Writer guide · full reference | guide court · référence complète |
-| Save this Age's book cover (SVG) | couverture en SVG |
+| Open this Age as a book | book view |
+| Open the Relto · Open the Relto view (large) | refuge in a note · dedicated view |
+| Create a Relto page | creates a refuge page |
+| Open the Age Writer guide · full reference | short guide · full reference |
+| Save this Age's book cover (SVG) | cover as SVG |
 | Create the exploration journal for this Age | journal |
-| Save this Age's window as a GIF | export de la fenêtre |
-| Generate the Age map (canvas) | carte des Âges liés (bleu = aller-retour, orange = sens unique) |
-| Update Age data in this note / in every note | écrit `age_verdict`, `age_stability`, `age_axes`, `age_return`, `age_links`, `age_discovered`, `age_drawn`, `age_home` |
-| Create / Reload an Age library · Copy the built-in content | bibliothèque personnelle |
-| Stop the soundscape | coupe l'ambiance |
+| Save this Age's window as a GIF | window export |
+| Generate the Age map (canvas) | map of linked Ages (blue = round trip, orange = one way) |
+| Update Age data in this note / in every note | writes `age_verdict`, `age_stability`, `age_axes`, `age_return`, `age_links`, `age_discovered`, `age_drawn`, `age_home` |
+| Create / Reload an Age library · Copy the built-in content | personal library |
+| Open the book of glyphs · Open a library note | the Relto's special books |
+| Stop the soundscape | stops the ambience |
 
 ---
 
-## 14. Limites connues
+## 14. Known limitations
 
-- **Obsidian réel** : le plugin est testé par des tests automatiques (jsdom, faux AudioContext, rendus Chromium, intégration contre le vrai `main.js`), mais pas systématiquement dans Obsidian lui-même. Mobile et thème clair ne sont pas testés.
-- Les réglages utilisent les composants classiques d'Obsidian, avec une navigation à rubriques faite à la main (pas l'API de réglages récente).
-- La loi du changement range son état par **nom de note**.
-- Une note à plusieurs blocs `age` : chaque bloc tire son propre monde.
-- Le monde est entièrement sur l'eau ou entièrement à sec : pas de rivage.
-- Le rendu génératif ne s'applique pas à l'export GIF.
-- Le contenu du moteur est en anglais ; la référence complète est en français seulement.
-- Le vocabulaire « Relto », « D'ni » apparaît dans l'interface et les clés YAML.
+- **Real Obsidian**: the plugin is tested by automated tests (jsdom, fake AudioContext, Chromium renders, integration against the real `main.js`), but not systematically inside Obsidian itself. Mobile and light theme are untested.
+- Close-up view sounds have been tuned by ear in a few iterations; recordings from your vault are the fallback if the synthesized ones don't suit you.
+- Settings use Obsidian's classic components, with hand-made section navigation (not the recent settings API).
+- The law of change stores its state by **note name**.
+- A note with several `age` blocks: each block draws its own world.
+- The world is entirely on water or entirely dry: no shoreline.
+- Generative rendering doesn't apply to GIF export.
+- The engine's content is in English; the full reference is in French only.
+- The vocabulary "Relto", "D'ni" appears in the interface and YAML keys.
 
 ---
 
-## 15. Développement
+## 15. Development
 
-Depuis la 1.7.0, **tout le code est lisible** : le moteur d'origine (1.3.0, dont les sources TypeScript étaient perdues) a été dé-minifié, renommé et découpé en modules dans `src/engine/` (`registry`, `rules`, `draw`, `resolve`, `prose`, `glyphs`, `analysis`, `book-view`, `settings-tab`, `plugin`…). Les anciennes retouches par expressions régulières sur du code minifié ont disparu : les points de contact avec l'extension sont de vrais appels à `src/engine/hooks.js`. Le `main.js` 1.3.0 d'origine est conservé tel quel dans `legacy/` (provenance).
+Since 1.7.0, **all the code is readable**: the original engine (1.3.0, whose TypeScript sources were lost) was de-minified, renamed and split into modules in `src/engine/` (`registry`, `rules`, `draw`, `resolve`, `prose`, `glyphs`, `analysis`, `book-view`, `settings-tab`, `plugin`…). The old regex patches on minified code are gone: the touch points with the extension are real calls to `src/engine/hooks.js`. The original 1.3.0 `main.js` is kept as is in `legacy/` (provenance).
 
-Le build produit **deux versions du même code** :
-- `dist/` : **lisible** (non minifiée) — pour lire, déboguer, suivre une erreur ;
-- `release/` : **minifiée** — celle qu'on installe ou publie.
+The build produces **two versions of the same code**:
+- `dist/`: **readable** (unminified), for reading, debugging, tracing an error;
+- `release/`: **minified**, the one you install or publish.
 
 ```sh
-npm install          # une fois (jsdom, eslint, esbuild — développement seulement)
-npm run build        # src/ → dist/ (lisible) + release/ (minifié)
-npm test             # tous les tests, sur la version lisible puis sur la minifiée
+npm install          # once (jsdom, eslint, esbuild: development only)
+npm run build        # src/ → dist/ (readable) + release/ (minified)
+npm test             # all tests, on the readable build then on the minified one
 npm run lint
-npm run equiv -- <ancien main.js>   # non-régression : 600 Âges au hasard, ancien build contre nouveau
-node test/visual/make.js            # pages de rendu dans test/visual/out/
+npm run equiv -- <old main.js>      # non-regression: 600 random Ages, old build vs new
+node test/visual/make.js            # render pages in test/visual/out/
 npm run zip          # release/age-writer-<v>.zip (plugin) + -src.zip (sources)
 ```
 
-Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine/` (le moteur), puis la couche d'extension : `entry.js` (patchs du livre et des blocs), `ui-extras.js` (panneau et onglets), `ui-relto.js` (Relto, vue dédiée), `relto-render.js` (canvas), `cover.js` (couvertures), `sound.js` (sons), `linkfx.js` et `genscene.js` (fenêtre), `law.js` (loi du changement), `mech.js` (lignes spéciales), `settings-ui.js` (réglages), `guide.js` (guide), `i18n.js`. Détails : `docs/DEV.md`.
+In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the engine), then the extension layer: `entry.js` (book and block patches), `ui-extras.js` (panel and tabs), `ui-relto.js` (Relto, dedicated view, navigation), `relto-render.js` (canvas), `relto-rooms.js` (cabin, pillars, pond, pond ++, cat, grove), `relto-model.js` (pages, island layout), `relto-scenery.js`, `relto-global.js`, `relto-books.js`, `cover.js` (covers), `sound.js` (sounds, room sounds), `linkfx.js` and `genscene.js` (window), `law.js` (law of change), `mech.js` (special lines), `settings-ui.js` (settings), `guide.js` (guide), `i18n.js`. Details: [`docs/DEV.md`](docs/DEV.md) (in French).
 
 ---
 
-## 16. Licences et mentions
+## 16. Licences and credits
 
-À compléter avant publication :
+To complete before publication:
 
-- **Licence du projet** : à choisir (fichier `LICENSE`).
-- **gifenc** (MIT, © Matt DesLauriers) : export GIF, embarqué dans le moteur.
-- **Tracery** (`tracery-grammar`, ISC, © Kate Compton) : prose, embarquée dans le moteur d'origine ; texte de licence à joindre ou remplacement.
-- **Police D'ni** : non fournie ; chacun utilise sa copie, selon sa licence.
-- Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part.
-
----
-
-## 17. Changements récents
-
-- Relto : onglets Vue / Pages / Réglages, heure en grand qui se cache et s'efface, nom D'ni en bandeau, vue dédiée et plein écran, pages gemmes / or / argent, graine retirée du roc, son qui continue d'un onglet à l'autre.
-- Livre : ouverture sur la couverture, couvertures procédurales à sobriété réglable, linking book en trois pages à tourner (clic droite/gauche), livre ouvert dans un onglet principal, plus petit et plus haut.
-- Sons : trois réglages séparés (livre, fermoir, liaison) + pages tournées ; seul le son de liaison joue quand on clique une vitre depuis le livre ; onze variantes de liaison.
-- Bloc Âge : trois onglets, petite fenêtre centrée, grande fenêtre cliquable.
-- Loi du changement : espaces, sauts de ligne, casse n'altèrent plus l'Âge.
-- Piège : « trap book » ne dessine plus de fissure sous-marine à l'insu du texte.
-- Réglages : rubriques avec icônes et valeurs ; guide court et référence complète intégrés.
+- **Project licence**: to be chosen (`LICENSE` file).
+- **gifenc** (MIT, © Matt DesLauriers): GIF export, bundled in the engine.
+- **Tracery** (`tracery-grammar`, ISC, © Kate Compton): prose, bundled in the original engine; licence text to be attached, or replace it.
+- **D'ni font**: not provided; everyone uses their own copy, under its licence.
+- Fan project, not affiliated with or endorsed by Cyan Worlds.
