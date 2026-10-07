@@ -318,8 +318,8 @@ function drawCatRoom(r, ctx, sc, sky, t) {
 const tz = sc.additions.find((a) => a.type === "cattoys"), td = tz ? (tz.density == null ? 0.6 : tz.density) : 0;
   if (tz) catToys(r, ctx, sc, sky, t, gy, td, true);
   r.withView(ctx, { S: 8, ox: 320, oy: gy + 12, fx: r.lay.cat.x, fy: GY }, () => r.drawCat(ctx, cat, sky, t));
-  if (tz) catToys(r, ctx, sc, sky, t, gy, td, false);
   meadow(r, ctx, sc, sky, t, gy + 30, 50, 0x77e, 26); // brins au premier plan, devant les pattes
+  if (tz) catToys(r, ctx, sc, sky, t, gy, td, false); // les jouets sont au tout premier plan : aucune herbe par-dessus
   if (sky.night > 0.3) { const q = rng(0xf1f1); for (let i = 0; i < 16; i++) { const x = q() * W + Math.sin(t * 0.5 + i) * 12, y = 120 + q() * 150 + Math.sin(t * 0.8 + i * 1.4) * 8; ctx.fillStyle = rgba(240, 238, 150, sky.night * (0.4 + 0.6 * Math.abs(Math.sin(t + i)))); ctx.beginPath(); ctx.arc(x, y, 1.8, 0, 6.283); ctx.fill(); } }
   const nm = String(cat.name || "").trim();
   if (nm) { ctx.font = "italic 22px serif"; ctx.textAlign = "center"; ctx.fillStyle = rgba(233, 220, 184, 0.92); ctx.fillText(nm, 320, H - 14); ctx.textAlign = "left"; }
