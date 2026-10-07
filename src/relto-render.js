@@ -4,7 +4,7 @@
  * Tout est procédural et déterministe (graine = seed du Relto), animé par le temps.
  */
 const { rng, clamp, lerp, frac, mix, rgba, hexa, fnv } = require("./util");
-const { skyAt, hourFor } = require("./relto-model");
+const { skyAt, hourFor, placePlants } = require("./relto-model");
 const SC = require("./relto-scenery");
 const GL = require("./relto-global");
 
@@ -88,27 +88,15 @@ class ReltoRenderer {
     [[26, 0], [22, 1], [18, 2]].forEach(([n, L]) => { for (let i = 0; i < n; i++) g.clouds[L].push({ x: r() * W, y: 40 + r() * 70 - L * 12, s: 38 + r() * 56, a: 0.6 + r() * 0.4 }); });
     // contour de l'île : bord supérieur irrégulier, flancs en escaliers, pointe en bas
     const top = [], right = [[470, 207], [466, 226], [452, 246], [441, 262], [420, 286], [398, 306], [372, 330], [348, 352], [330, 372]];
-    for (let x = 170; x <= 470; x += 20) top.push([x, GY - 1 - r() * 3]);
-    const left = right.map(([x, y]) => [640 - x, y]).reverse();
+    for (let x = 130; x <= 470; x += 20) top.push([x, GY - 1 - r() * 3]);
+    const left = right.map(([x, y]) => [640 - x - 40 * (1 - (y - 207) / 165), y]).reverse(); // flanc gauche élargi (île plus large à gauche)
     g.outline = [...top, ...right.slice(1).map(([x, y]) => [x + (r() - 0.5) * 6, y]), ...left.slice(0, -1).map(([x, y]) => [x + (r() - 0.5) * 6, y])];
     for (let i = 0; i < 26; i++) { const y = GY + 8 + r() * 120, w = 30 + r() * 120; g.strata.push([320 - w / 2 - (y - GY) * 0.1 + r() * 20, y, w * (1 - (y - GY) / 220)]); }
-    for (let x = 172; x < 470; x += 6 + r() * 6) g.tufts.push([x, 2 + r() * 4]);
+    for (let x = 132; x < 470; x += 6 + r() * 6) g.tufts.push([x, 2 + r() * 4]);
     // végétation : on laisse libres le chat, le bassin et les deux livres à part (rien ne doit les cacher)
     const clear = [[374, 404]]; if (scene.additions.some((a) => a.type === "cat")) clear.push([190, 216]); if (scene.additions.some((a) => a.type === "koi")) clear.push([276, 340]);
     g.clear = clear;
-    const TALL = { ponderosa: [62, 18], maple: [44, 16], crystal: [46, 16] };
-    for (const a of scene.additions.filter((a) => a.type === "vegetation")) {
-      const n = Math.round(4 + a.density * 14), pr = rng(scene.seed ^ fnv(a.pageId || a.asset || "v"));
-      let guard = 0;
-      while (g.plants.filter((p) => p.page === a.pageId).length < n && guard++ < 200) {
-        const x = 184 + pr() * 272;
-        if (clear.some(([c0, c1]) => x > c0 && x < c1) || Math.abs(x - HUT_X) < 30 || Math.abs(x - SHELF_X) < 24 || x > PILLAR_X[0] - 12 && x < PILLAR_X[1] + 12) continue;
-        // les arbres sont grands et toujours à l'arrière-plan (derrière cabane, étagère, bassin, chat) ; seules les fougères basses peuvent passer devant
-        const low = (a.asset || "conifer") === "fern", row = low ? (pr() < 0.5 ? 0 : 1) : 0;
-        g.plants.push({ x, row, h: low ? 12 + pr() * 8 : (TALL[a.asset] || [40, 18])[0] + pr() * (TALL[a.asset] || [40, 18])[1], sw: pr() * 6.28, kind: a.asset || "conifer", page: a.pageId });
-      }
-    }
-    g.plants.sort((a, b) => a.row - b.row || a.x - b.x);
+    g.plants = placePlants(scene.additions, scene.seed, (x) => clear.some(([c0, c1]) => x > c0 && x < c1) || Math.abs(x - HUT_X) < 30 || Math.abs(x - SHELF_X) < 24 || (x > PILLAR_X[0] - 12 && x < PILLAR_X[1] + 12));
     // livres de l'étagère
     scene.ages.slice(0, 30).forEach((age, i) => {
       const h = fnv(age.name);
@@ -160,7 +148,7 @@ class ReltoRenderer {
     const is = has("islets"); if (is) SC.islets(ctx, this, is.density, sky, t);
     const cal = has("calendar"); if (cal) SC.calendar(ctx, this, sky, t);
     this.drawIsland(ctx, sky, t);
-    const dk = has("dock"); if (dk) SC.dock(ctx, this, sky, t);
+    const dk = has("dock"); if (dk) SC.dock(ctx, this, sky, t, !!cal);
     for (const k of ["gold", "silver", "gems"]) { const o = has(k); if (o) this.drawOre(ctx, k, o.density, sky, t); }
     const mt = has("mountain"); if (mt) this.drawMount(ctx, mt.density, sky, t);
     this.drawPlants(ctx, 0, t);
@@ -291,7 +279,7 @@ class ReltoRenderer {
     }
     ctx.restore();
     // surface
-    ctx.fillStyle = shade(T.top); ctx.beginPath(); ctx.moveTo(168, GY); ctx.lineTo(472, GY); ctx.lineTo(462, GY + 9); ctx.quadraticCurveTo(320, GY + 16, 178, GY + 9); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = shade(T.top); ctx.beginPath(); ctx.moveTo(128, GY); ctx.lineTo(472, GY); ctx.lineTo(462, GY + 9); ctx.quadraticCurveTo(300, GY + 16, 138, GY + 9); ctx.closePath(); ctx.fill();
     ctx.fillStyle = shade(T.tuft);
     for (const [x, h] of g.tufts) { ctx.beginPath(); ctx.moveTo(x - 2, GY + 1); ctx.lineTo(x, GY - h); ctx.lineTo(x + 2, GY + 1); ctx.fill(); }
   }
@@ -436,10 +424,12 @@ class ReltoRenderer {
   }
 
   /** étiquette brève (nom du chat, de la koï) affichée après un clic */
+  /** partie visible du monde (x0, x1, y0) : la caméra de l'île recadre les bords, la vue globale montre tout */
+  visible_() { return this.view === "global" ? [0, W, 0] : [CAM_X - CAM_X / CAM, CAM_X + (W - CAM_X) / CAM, CAM_Y - CAM_OY / CAM]; }
   drawFlash(ctx) {
     const f = this.flash; if (!f) return;
     if (Date.now() > f.until) { this.flash = null; return; }
-    ctx.save(); ctx.font = "8px serif"; const tw = ctx.measureText(f.text).width, w = tw + 10, x = clamp(f.x - w / 2, 4, W - w - 4), y = f.y - 12;
+    ctx.save(); const [vx0, vx1, vy0] = this.visible_(); ctx.font = "8px serif"; const tw = ctx.measureText(f.text).width, w = tw + 10, x = clamp(f.x - w / 2, vx0 + 4, Math.max(vx0 + 4, vx1 - w - 4)), y = Math.max(vy0 + 2, f.y - 12);
     ctx.fillStyle = "rgba(14,12,10,0.82)"; ctx.fillRect(x, y, w, 12); ctx.strokeStyle = "rgba(205,189,148,0.7)"; ctx.lineWidth = 0.7; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, 11);
     ctx.fillStyle = "#eadfb8"; ctx.textBaseline = "middle"; ctx.fillText(f.text, x + 5, y + 6.4); ctx.restore();
   }
@@ -656,7 +646,8 @@ class ReltoRenderer {
   drawHover(ctx) {
     const h = this.hover; if (!h) return;
     ctx.strokeStyle = "rgba(255,240,200,0.9)"; ctx.lineWidth = 1; ctx.strokeRect(h.x - 1, h.y - 1, h.w + 2, h.h + 2);
-    ctx.font = "11px serif"; const tw = ctx.measureText(h.tip).width, bx = clamp(h.x + h.w / 2 - tw / 2 - 6, 4, W - tw - 16), by = Math.max(4, h.y - 24);
+    const [vx0, vx1, vy0] = this.visible_();
+    ctx.font = "11px serif"; const tw = ctx.measureText(h.tip).width, bx = clamp(h.x + h.w / 2 - tw / 2 - 6, vx0 + 4, Math.max(vx0 + 4, vx1 - tw - 16)), by = Math.max(vy0 + 4, h.y - 24);
     ctx.fillStyle = "rgba(16,13,9,0.92)"; ctx.fillRect(bx, by, tw + 12, 18); ctx.strokeStyle = "rgba(205,189,148,0.8)"; ctx.strokeRect(bx, by, tw + 12, 18);
     ctx.fillStyle = "#e9dcb8"; ctx.fillText(h.tip, bx + 6, by + 13);
   }

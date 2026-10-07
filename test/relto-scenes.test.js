@@ -43,7 +43,7 @@ for (const id of ids) { r.setScene(mkScene([id])); r.setHour(12); r.draw(2.2); r
 ok(bad === 0, "chaque page seule se dessine dans les deux vues");
 // bascule et zones cliquables
 r.setScene(mkScene(["page_islets", "page_calendar", "page_dock", "page_bench", "page_koi", "page_cat"])); r.setHour(12);
-r.draw(1); ok(r.hot.some((h) => h.tip === "Dock") && r.hot.some((h) => h.tip === "Bench") && r.hot.some((h) => /^Calendar pinnacle/.test(h.tip)) && r.hot.some((h) => h.tip === "Islet"), "zones : ponton, banc, pinacle, îlot");
+r.draw(1); ok(r.hot.some((h) => h.tip === "Bridge to the calendar pinnacle") && r.hot.some((h) => h.tip === "Bench") && r.hot.some((h) => /^Calendar pinnacle/.test(h.tip)) && r.hot.some((h) => h.tip === "Islet"), "zones : pont, banc, pinacle, îlot");
 let seen = null; r.opts.onView = (v) => { seen = v; };
 r.setView("global"); ok(r.view === "global" && seen === "global", "setView global prévient l'interface");
 ok(r.hot.some((h) => h.go === "island") && r.hot.some((h) => /^Calendar pinnacle/.test(h.tip)), "vue globale : l'île ramène à la vue de l'île, pinacle du calendrier présent");

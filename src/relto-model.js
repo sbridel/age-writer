@@ -6,7 +6,7 @@
  *    éléments au paysage et une ambiance sonore ;
  *  - les Âges du coffre, qui deviennent les livres de l'étagère.
  */
-const { clamp, lerp } = require("./util");
+const { clamp, lerp, rng, fnv } = require("./util");
 
 const TERRAINS = ["volcanic_plateau", "mossy_plateau", "sand_island", "glacier", "obsidian_plateau"];
 const SURROUNDINGS = ["cloud_sea", "fog_sea", "ocean", "void", "lava_sea"];
@@ -16,6 +16,39 @@ const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow"
 /** Options propres à certains effets (texte court) : couleur et nom du chat, variété du koï rare. */
 const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
 const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern", "ponderosa", "maple", "crystal"], flowers: ["blue", "red", "yellow", "white", "pink"] };
+
+/**
+ * Répartit les plantes de l'île entre les pages de végétation. Les arbres (tout sauf les fougères) sont limités à `cap` au total :
+ * quand plusieurs essences sont choisies, elles se partagent la place (au prorata de leur densité) et s'intercalent au lieu de se superposer.
+ * @param {{type:string,asset?:string,density:number,pageId?:string}[]} additions
+ * @param {number} seed
+ * @param {(x:number)=>boolean} blocked  vrai si la position est interdite (cabane, étagère, piliers, chat, bassin, livres)
+ * @returns {{x:number,row:number,h:number,sw:number,kind:string,page?:string}[]} triés par rangée puis abscisse
+ */
+const TALL_H = { ponderosa: [62, 18], maple: [44, 16], crystal: [46, 16] };
+function placePlants(additions, seed, blocked, cap = 14) {
+  const veg = additions.filter((a) => a.type === "vegetation"), kindOf = (a) => a.asset || "conifer";
+  const trees = veg.filter((a) => kindOf(a) !== "fern"), ferns = veg.filter((a) => kindOf(a) === "fern"), out = [];
+  // arbres : budget total, partagé au prorata
+  const raw = trees.map((a) => Math.round(4 + a.density * 14)), sum = raw.reduce((s, v) => s + v, 0), scale = sum > cap ? cap / sum : 1;
+  const counts = raw.map((v) => Math.max(1, Math.round(v * scale)));
+  while (counts.reduce((s, v) => s + v, 0) > cap && counts.some((v) => v > 1)) counts[counts.indexOf(Math.max(...counts))]--;
+  const pr = rng((seed ^ 0x7ee5) >>> 0), kinds = [];
+  trees.forEach((a, i) => { for (let k = 0; k < counts[i]; k++) kinds.push({ a, i }); });
+  for (let i = kinds.length - 1; i > 0; i--) { const j = Math.floor(pr() * (i + 1)); [kinds[i], kinds[j]] = [kinds[j], kinds[i]]; } // mélange : les essences s'intercalent
+  const slots = []; for (let x = 178; x <= 466; x += 3) if (!blocked(x)) slots.push(x);
+  const N = Math.min(kinds.length, slots.length);
+  for (let i = 0; i < N; i++) {
+    const span = slots.length / N, idx = clamp(Math.floor((i + 0.5) * span + (pr() - 0.5) * span * 0.5), 0, slots.length - 1), kd = kinds[i], kind = kindOf(kd.a), hr = TALL_H[kind] || [40, 18];
+    out.push({ x: slots[idx], row: 0, h: hr[0] + pr() * hr[1], sw: pr() * 6.28, kind, page: kd.a.pageId });
+  }
+  // fougères : basses, devant ou derrière
+  for (const a of ferns) {
+    const fr = rng(seed ^ fnv(a.pageId || "fern")), n = Math.round(4 + a.density * 14);
+    for (let k = 0, guard = 0; k < n && guard++ < 200;) { const x = 184 + fr() * 272; if (blocked(x)) continue; out.push({ x, row: fr() < 0.5 ? 0 : 1, h: 12 + fr() * 8, sw: fr() * 6.28, kind: "fern", page: a.pageId }); k++; }
+  }
+  return out.sort((p, q) => p.row - q.row || p.x - q.x);
+}
 
 /** Pages proposées à la création (id -> modèle). */
 const PAGE_PRESETS = {
@@ -287,5 +320,5 @@ function hourFor(skyCycle, now = new Date()) {
 
 module.exports = {
   parseList, filterAges, TERRAINS, SURROUNDINGS, SKY_CYCLES, STRUCTURES, EFFECT_TYPES, ASSETS, PAGE_PRESETS,
-  optsOf, stripLink, parseReltoLibrary, libraryPage, parseRelto, parsePage, checkUnlock, buildScene, pageFrontmatter, defaultReltoFrontmatter, skyAt, hourFor,
+  placePlants, optsOf, stripLink, parseReltoLibrary, libraryPage, parseRelto, parsePage, checkUnlock, buildScene, pageFrontmatter, defaultReltoFrontmatter, skyAt, hourFor,
 };

@@ -203,7 +203,7 @@ async function renderRelto(plugin, source, el, ctx) {
     pick(defs.some((d) => d[0] === ui0.reltoTab) ? ui0.reltoTab : "view");
   } else { root.setAttr("data-tab", "all"); }
   // bascule vue de l'île ⇄ vue globale (petit bouton en coin de l'image) ; l'ouverture reste la vue de l'île
-  const viewBtn = stage.createEl("button", { cls: "age-relto__viewbtn" });
+  const viewBtn = (tabBar || stage).createEl("button", { cls: "age-relto__viewbtn" + (tabBar ? " age-relto__viewbtn--bar" : "") }); if (tabBar) tabBar.insertBefore(viewBtn, tabBar.firstChild);
   const syncView = (v) => { viewBtn.empty(); try { obsidian.setIcon(viewBtn, v === "global" ? "home" : "globe"); } catch (e) { /* ignore */ } const l = t(v === "global" ? "relto.islandview" : "relto.globalview"); viewBtn.setAttr("aria-label", l); viewBtn.toggleClass("is-global", v === "global"); };
   syncView("island");
   const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
