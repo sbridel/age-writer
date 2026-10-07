@@ -181,7 +181,7 @@ function meadow(r, ctx, sc, sky, t, y, n, seed, h0) {
 
 /** Le bassin de koï en gros plan : la coupe dans la roche, le ruisseau qui y tombe et la chute qui en repart. */
 function drawPondRoom(r, ctx, sc, sky, t) {
-  const T = r.terrain(), k = 0.35 + 0.65 * sky.ambient, c = (h) => mix("#05060c", h, k), koi = sc.additions.find((a) => a.type === "koi"), wf = sc.additions.find((a) => a.type === "waterfall");
+  const T = r.terrain(), k = 0.6 + 0.4 * sky.ambient, c = (h) => mix("#05060c", h, k), koi = sc.additions.find((a) => a.type === "koi"), wf = sc.additions.find((a) => a.type === "waterfall");
   const S = 5.5, K = r.lay.koi, fx = K.x0 + 26, fy = GY + 9.5, ox = 320, oy = 215, yg = oy + (GY - fy) * S, y0 = oy + (GY + 2 - fy) * S, y1 = oy + (GY + 17 - fy) * S, xr = ox + (K.x1 - fx) * S;
   outdoorBackdrop(r, ctx, sky, t, yg);
   // roche : face de l'île sous le bassin, strates
