@@ -418,3 +418,7 @@
 .age-det__skynums { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; align-items: center; }
 .age-det__skynum { display: inline-flex; align-items: center; gap: 6px; color: var(--text-normal); }
 .age-det__skylabel { color: var(--text-faint); font-size: var(--font-ui-smaller); }
+
+.age-surveyor { display: flex; flex-direction: column; gap: 10px; }
+.age-surveyor__card { padding: 8px 12px; border-left: 3px solid var(--interactive-accent); background: var(--background-secondary); border-radius: 4px; }
+.age-surveyor__name { font-weight: 600; display: block; margin-bottom: 2px; }

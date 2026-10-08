@@ -114,6 +114,12 @@ function drawCabin(r, ctx, sc, sky, t) {
     const ig = ctx.createRadialGradient(ix, iy - 27, 0, ix, iy - 27, 18); ig.addColorStop(0, "rgba(127,214,200,0.35)"); ig.addColorStop(1, "rgba(127,214,200,0)"); ctx.fillStyle = ig; ctx.fillRect(ix - 18, iy - 45, 36, 36);
     r.hot.push({ x: ix - 12, y: iy - 38, w: 24, h: 38, tip: "The Imager", go: "imager" });
   }
+  if (r.scene.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { // le carnet de l'arpenteur : posé à plat sur la table, signet rouge
+    const nx = tx + 110, ny = ty - 5;
+    ctx.fillStyle = c("#3b2a1a"); ctx.fillRect(nx, ny, 22, 5); ctx.fillStyle = c("#6b4a2a"); ctx.fillRect(nx, ny - 1, 22, 2);
+    ctx.fillStyle = c("#c9a24e"); ctx.fillRect(nx + 1, ny + 1, 2, 3); ctx.fillRect(nx + 19, ny + 1, 2, 3); ctx.fillStyle = c("#8e2b27"); ctx.fillRect(nx + 14, ny + 4, 1.4, 4);
+    r.hot.push({ x: nx - 2, y: ny - 4, w: 26, h: 12, tip: "Surveyor's notebook", special: "surveyor" });
+  }
   const cx = tx + tw - 34;
   ctx.fillStyle = c("#e8dcc0"); ctx.fillRect(cx, ty - 14, 7, 14);
   const cf = clamp(0.75 * fl + 0.2); ctx.fillStyle = rgba(255, 190, 80, cf); ctx.beginPath(); ctx.ellipse(cx + 3.5, ty - 19, 2.4, 5 * cf, 0, 0, 6.283); ctx.fill();

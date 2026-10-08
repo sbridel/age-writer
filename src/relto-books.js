@@ -96,4 +96,37 @@ function openGlyphBook(plugin, ages) {
   new GlyphBook(plugin.app).open();
 }
 
-module.exports = { glyphBook, openGlyphBook, openLibraryBook, openLibraryNote, RELTO_LIBRARY_TEMPLATE };
+/** Le carnet de l'arpenteur (Relto, sur la table) : pour chaque Âge du refuge, ce que chante son ciel, avec ou sans les trois valeurs selon le réglage. */
+function openSurveyorBook(plugin, ages) {
+  const t = plugin.t, IM = require("./imager"), lang = plugin.lang(), full = plugin.ext.imagerNotes === "full", list = (ages || []).slice(0, 30);
+  class SurveyorBook extends obsidian.Modal {
+    async onOpen() {
+      const { contentEl, modalEl, app } = this; contentEl.empty(); modalEl.addClass("age-glyphbook-modal");
+      contentEl.createEl("h2", { text: t("books.surveyor"), cls: "age-glyphbook__title" });
+      contentEl.createDiv({ cls: "age-relto__hint", text: t(full ? "books.surveyor.hintfull" : "books.surveyor.hint") });
+      if (!list.length) { contentEl.createDiv({ cls: "age-relto__hint", text: t("books.surveyor.none") }); return; }
+      const box = contentEl.createDiv({ cls: "age-surveyor" });
+      for (const a of list) {
+        try {
+          const f = app.vault.getAbstractFileByPath(a.path); if (!f) continue;
+          const src = plugin.core.extract(await app.vault.cachedRead(f)); if (src == null) continue;
+          const name = plugin.core.base(f.path), tg = IM.targetsOf(plugin.core.analyse(src, { seed: name }), name), hn = IM.hints(tg, lang);
+          const card = box.createDiv({ cls: "age-surveyor__card" });
+          const link = card.createEl("a", { cls: "internal-link age-surveyor__name", text: a.name || name });
+          link.addEventListener("click", (e) => { e.preventDefault(); this.close(); app.workspace.openLinkText(a.path, "", false); });
+          card.createDiv({ cls: "age-det__skyline", text: hn.line });
+          if (hn.lightLine) card.createDiv({ cls: "age-det__skyline", text: hn.lightLine });
+          if (full) {
+            const nums = card.createDiv({ cls: "age-det__skynums" });
+            for (const [label, v] of [[t("det.sky.freq"), tg.freq], [t("det.sky.amp"), tg.amp], [t("det.sky.harm"), tg.harm]]) { const c = nums.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label }); setMarkup(c.createSpan(), plugin.dni.numberSvg(v, { size: 16 })); }
+            nums.createSpan({ cls: "age-det__skynum", text: tg.pol > 0 ? "+" : "−" });
+          }
+        } catch (e) { console.warn("[Age Writer ext] carnet", e); }
+      }
+    }
+    onClose() { this.contentEl.empty(); }
+  }
+  new SurveyorBook(plugin.app).open();
+}
+
+module.exports = { openSurveyorBook, glyphBook, openGlyphBook, openLibraryBook, openLibraryNote, RELTO_LIBRARY_TEMPLATE };

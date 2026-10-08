@@ -103,6 +103,12 @@ const imagerDone = (async () => {
   const store = {}, sounds = [], tgt = { freq: 9, amp: 13, harm: 6, pol: -1, phase0: 3, drift: 1, erratic: false, hours: 24, name: "A", crystals: cr, lens };
   const ri = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { onImagerAge: (age) => ({ target: { ...tgt, name: age.name }, model: null }), imagerGet: (p) => store[p], imagerSet: (p, v) => { store[p] = v; }, onImagerSound: (k) => sounds.push(k) });
   ri.setScene(sc); ok(ri.available().imager, "page de l'Imageur : la vue existe");
+  { // le carnet de l'arpenteur, à plat sur la table de la cabane
+    ri.setView("cabin"); ri.draw(1); const nb = ri.hot.find((h) => h.special === "surveyor");
+    ok(nb && /notebook/i.test(nb.tip), "cabane : le carnet de l'arpenteur est sur la table");
+    ri.opts.notes = "off"; ri.draw(1); ok(!ri.hot.some((h) => h.special === "surveyor"), "réglage « aucune note » : plus de carnet");
+    ri.opts.notes = "words"; ri.draw(1); ok(ri.hot.some((h) => h.special === "surveyor"), "mots seulement : le carnet revient");
+  }
   ri.setView("imager"); ok(ri.view === "imager", "vue de l'Imageur");
   ri.nowOverride = 1.8e12; ri.draw(1);
   await Promise.resolve();
