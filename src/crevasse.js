@@ -5,6 +5,7 @@
  *
  *   crevasse(g, { x, y0, y1, w, jit, t, water, seed, shape })
  *     x, y0, y1 : axe et hauteur ; w : demi-largeur maximale ; jit : 7 nombres de −0,5 à 0,5 (l'allure du tracé) ;
+ *     open : 0 à 1 (1 par défaut) : de la fissure fermée à la crevasse grande ouverte, étoiles comprises ;
  *     shape : "wedge" (étroite au loin, large près de nous : une faille dans le sol) ou "lens" (une bouche ovale).
  */
 const TAU = Math.PI * 2;
@@ -25,7 +26,8 @@ function outline({ x, y0, y1, w, jit, shape, seed }) {
 }
 
 function crevasse(g, o) {
-  const { x, y0, y1, w, t = 0, water = false, shape = "wedge" } = o, seed = o.seed || 1;
+  const open = o.open == null ? 1 : Math.max(0, Math.min(1, o.open)), ease = open * open * (3 - 2 * open); // 0 : un fil de lumière ; 1 : la crevasse ouverte
+  const { x, y0, t = 0, water = false, shape = "wedge" } = o, seed = o.seed || 1, w = o.w * (0.1 + 0.9 * ease), y1 = y0 + (o.y1 - y0) * (0.4 + 0.6 * ease);
   const jit = Array.isArray(o.jit) && o.jit.length > 1 ? o.jit : [0, 0.1, -0.1, 0.05];
   const { L, R } = outline({ x, y0, y1, w, jit, shape, seed });
   const path = () => { g.beginPath(); L.forEach(([px, py], i) => (i ? g.lineTo(px, py) : g.moveTo(px, py))); for (let i = R.length - 1; i >= 0; i--) g.lineTo(R[i][0], R[i][1]); g.closePath(); };
@@ -47,7 +49,7 @@ function crevasse(g, o) {
   for (let i = 0; i < n; i++) {
     const sx = minX + (maxX - minX) * hash(seed + i * 1.7), sy = y0 + (y1 - y0) * hash(seed + i * 2.9 + 5);
     const tw = 0.5 + 0.5 * Math.sin(TAU * (t * 0.6 + hash(seed + i * 0.9) * 3)), big = i % 7 === 0;
-    g.fillStyle = rgba(big ? [255, 245, 220] : tint, (big ? 0.55 : 0.3) + 0.55 * tw);
+    g.fillStyle = rgba(big ? [255, 245, 220] : tint, ((big ? 0.55 : 0.3) + 0.55 * tw) * Math.min(1, ease * 1.6));
     g.fillRect(sx - (big ? 0.7 : 0.4), sy - (big ? 0.7 : 0.4), big ? 1.5 : 0.9, big ? 1.5 : 0.9);
   }
   g.restore();
