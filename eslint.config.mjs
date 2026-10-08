@@ -1,7 +1,7 @@
-"use strict";
 // Vérifications utiles seulement (variables non définies / inutilisées, code mort) : pas de style.
-const globals = require("globals");
-module.exports = [
+import globals from "globals";
+
+export default [
   { ignores: ["dist/**", "release/**", "legacy/**", "src/engine/vendor/**", "node_modules/**", "test/fixture-main.js", "test/visual/out/**"] },
   {
     files: ["**/*.js"],
