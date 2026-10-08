@@ -308,7 +308,7 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   let neb = 0, band = 0; for (let i = 0; i < 200; i++) { const nn = night({}, "N" + i); neb += nn.nebula ? 1 : 0; band += nn.band ? 1 : 0; ok(nn.cons.length >= 2 && nn.cons.length <= 4, "deux à quatre constellations"); }
   ok(neb > 40 && neb < 100 && band > 50 && band < 110, `nébuleuses (${neb}) et bandes d'étoiles (${band}) : parfois`);
   ok(night({ moon: true }).moons.length === 1 && night({}).moons.length === 0 && night({ moons: 3 }).moons.length === 3 && night({ moon: true, moons: 0 }).moons.length === 0, "lunes : companion_moon ou moons: N");
-  ok(SK.parseSky("moons: 3").moons === 3 && SK.parseSky("lunes: 2").moons === 2 && SK.parseSky("moons: 9").moons === undefined && SK.MOONS_RE.test("moons: 2"), "ligne moons: (0 à 5)");
+  ok(SK.parseSky("moons: 3").moons === 3 && SK.parseSky("lunes: 2").moons === 2 && SK.parseSky("moons: 9").moons === 5 && SK.parseSky("moons: 12").moons === 5 && SK.MOONS_RE.test("moons: 2"), "ligne moons: (0 à 5)");
   const l = []; G.paint(fakeCtx(l), G.build({ ...G.sceneOf(an(["single_sun"]), "N1"), moons: 4 }, 320, 192), 0.3, { day: 0.85 }); ok(l.filter((x) => x.startsWith("arc")).length > 8, "nuit : étoiles des constellations et lunes dessinées");
 }
 
@@ -326,6 +326,20 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   const dark = analyseAgeBase("starless\nkelp\ncoral", { seed: "K" }), ph = P.physicsOf(dark, "starless\nkelp\ncoral", "K"); hooks.skip = skip0;
   const tn = ph.tensions.map((x) => x.id + ":" + x.ids.join(","));
   ok(tn.some((x) => x.startsWith("sunlight") && x.includes("kelp")) && tn.some((x) => x.startsWith("warmClimate") && x.includes("coral")), "physique : varech et corail demandent lumière (et chaleur pour le corail) : " + tn);
+}
+
+// relecture : corail dans l'eau, acide sur la terre, rien de marin sur la glace seule, lune à l'écart du soleil figé
+{
+  const inside = (pts, x, y) => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c; } return c; };
+  let badA = 0, badC = 0, tot = 0;
+  for (let i = 0; i < 300; i++) {
+    const m = G.build(G.sceneOf(an(["single_sun", "water", "stone", "coral", "acid"]), "Rive" + i), 320, 192); if (!m.shore) continue;
+    for (const a of m.sea.acid) { const p = G.seaSpot(m, a.x, a.u, -1); tot++; if (!inside(m.shore.land, p[0], Math.min(p[1], 191))) badA++; }
+    for (const c of m.sea.coral) { const p = G.seaSpot(m, c.x, c.u, 1); if (!inside(m.shore.wet, p[0], Math.min(p[1], 191))) badC++; }
+  }
+  ok(tot > 300 && badA / tot < 0.03 && badC / tot < 0.05, `flaques sur la terre (${badA} hors), corail dans l'eau (${badC} hors) sur ${tot}`);
+  const l = []; G.paint(fakeCtx(l), G.build(G.sceneOf(an(["single_sun", "ice", "kelp", "coral"]), "Glace"), 320, 192), 0.3, { day: 0.4 }); ok(l.length > 50, "glace seule : rendu");
+  const iceOnly = G.build(G.sceneOf(an(["single_sun", "ice", "kelp"]), "Glace"), 320, 192); ok(iceOnly.S.ice && !iceOnly.S.water, "glace sans eau : pas de varech dessiné (pas d'eau)");
 }
 
 console.log(`gen.test.js : ${n} vérifications OK`);

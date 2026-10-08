@@ -238,7 +238,7 @@ function buildNight(S, W, H, hz) {
   const nebula = q() < 0.35 ? { x: W * (0.15 + 0.7 * q()), y: hz * (0.15 + 0.4 * q()), R: H * (0.14 + 0.16 * q()), hue: [300, 200, 20, 160, 260][Math.floor(q() * 5)], blobs: Array.from({ length: 7 }, () => ({ dx: (q() - 0.5) * 1.6, dy: (q() - 0.5) * 0.9, r: 0.35 + q() * 0.6 })) } : null;
   const band = q() < 0.4 ? { a: (q() - 0.5) * 1.2, y: hz * (0.25 + 0.3 * q()), w: H * (0.05 + 0.05 * q()), pts: Array.from({ length: 160 }, () => ({ u: q(), v: (q() + q() + q() - 1.5) / 1.5, b: q() })) } : null;
   const n = S.moons != null ? clamp(Math.round(S.moons), 0, 5) : S.moon ? 1 : 0;
-  const moons = Array.from({ length: n }, (_, i) => ({ r: H * (i === 0 ? 0.045 : 0.015 + 0.03 * q()), ph: q() * 0.8 - 0.4, off: i === 0 ? 0 : q(), sp: i === 0 ? 1 : 0.6 + q() * 1.6, tint: i === 0 ? [207, 214, 226] : [[220, 200, 180], [190, 210, 230], [230, 190, 170], [210, 215, 200]][Math.floor(q() * 4)], fx: 0.15 + 0.7 * q(), fy: 0.15 + 0.3 * q() }));
+  const moons = Array.from({ length: n }, (_, i) => ({ r: H * (i === 0 ? 0.045 : 0.015 + 0.03 * q()), ph: i === 0 ? 0.28 : q() * 0.8 - 0.4, off: i === 0 ? 0 : q(), sp: i === 0 ? 1 : 0.6 + q() * 1.6, tint: i === 0 ? [207, 214, 226] : [[220, 200, 180], [190, 210, 230], [230, 190, 170], [210, 215, 200]][Math.floor(q() * 4)], fx: 0.15 + 0.7 * q(), fy: 0.15 + 0.3 * q() }));
   return { cons, nebula, band, moons };
 }
 
@@ -289,7 +289,7 @@ function suns(m, t, season = 0) {
   const { S, W, H, hz } = m, top = H * (0.14 + 0.08 * (0.5 - 0.5 * season)), out = [], erratic = (i) => { const q = Math.floor(t * 6), g = rng(S.seed + q * 31 + i); return { x: W * (0.2 + 0.6 * g()), y: H * (0.2 + 0.34 * g()) }; };
   for (let i = 0; i < S.suns; i++) {
     const rad = H * (i === 0 ? 0.085 : 0.055) * (S.phys ? clamp(Math.sqrt(S.phys.disc), 0.6, 1.7) : 1); let b = null;
-    if (S.cycle === "frozen") { const fz = rng((S.seed ^ 0x10c4) >>> 0), el = 0.32 + 0.4 * fz(), fx = 0.25 + 0.5 * fz(); b = { x: W * (fx - 0.22 * i), y: hz - (hz - top) * el, e: 0.12 + el * 0.5 }; } // soleil immobile : sa hauteur et sa place dépendent de l'endroit du monde (graine)
+    if (S.cycle === "frozen") { const fz = rng((S.seed ^ 0x10c4) >>> 0), el = 0.32 + 0.4 * fz(), fx = 0.25 + 0.5 * fz(); b = { x: W * (fx - 0.22 * i), y: hz - (hz - top) * el, e: el }; } // soleil immobile : sa hauteur et sa place dépendent de l'endroit du monde (graine)
     else if (S.cycle === "erratic") { const p = erratic(i); b = { x: p.x, y: p.y, e: clamp((hz - p.y) / (hz * 0.8)) }; }
     else { const p = frac(t - i * 0.1); if (p <= 0.7) { const q = p / 0.7, e = Math.sin(Math.PI * q); b = { x: W * (0.06 + 0.88 * q), y: hz - e * (hz - top), e }; } }
     if (!b) continue;
@@ -302,7 +302,7 @@ function suns(m, t, season = 0) {
 // ---- dessin ----------------------------------------------------------------------------------------
 function paint(g, m, t, o = {}) {
   t = frac(t); const { S, W, H, hz, pal } = m, td = o.day != null ? frac(o.day) : t, cs = o.clock != null ? o.clock : t * 8, sn = suns(m, td, o.season || 0);
-  const d = S.suns === 0 ? 0 : S.cycle === "frozen" ? 0.2 : S.cycle === "erratic" ? 0.2 + 0.6 * rng(S.seed + Math.floor(td * 6))() : Math.max(0, ...sn.map((s) => s.e));
+  const d = S.suns === 0 ? 0 : S.cycle === "frozen" ? (sn.length ? Math.max(...sn.map((s) => s.e)) * 0.8 : 0.2) : S.cycle === "erratic" ? 0.2 + 0.6 * rng(S.seed + Math.floor(td * 6))() : Math.max(0, ...sn.map((s) => s.e));
   const night = 1 - smooth(d * 3), day = smooth((d - 0.25) / 0.75);
   let top = mixc(mixc(pal.nightTop, pal.dawnTop, smooth(d * 3)), pal.dayTop, day), hzc = mixc(mixc(pal.nightHz, pal.dawnHz, smooth(d * 3)), pal.dayHz, day);
   const hues = S.sunHues || []; if (hues[0]) { hzc = mixc(hzc, hues[0], 0.3 * day); top = mixc(top, hues[0], 0.14 * day); } // soleil coloré : la lumière du jour prend sa teinte
@@ -334,9 +334,9 @@ function paint(g, m, t, o = {}) {
     g.strokeStyle = css([255, 255, 255], 0.8 * (1 - k)); g.lineWidth = 1.3; g.beginPath(); g.moveTo(x + k * W * 0.28, y + k * H * 0.24); g.lineTo(x + k * W * 0.28 - H * 0.18, y + k * H * 0.24 - H * 0.13); g.stroke();
   }
   // lune
-  for (const mo of (m.night && m.night.moons) || []) { // les lunes : chacune sa taille, sa teinte, sa phase et son pas
+  for (const [mi, mo] of ((m.night && m.night.moons) || []).entries()) { // les lunes : chacune sa taille, sa teinte, sa phase et son pas
     const rad = mo.r; let mp = null;
-    if (S.cycle === "frozen") mp = { x: W * mo.fx, y: H * mo.fy }; else { const p = frac(td * mo.sp - 0.6 + mo.off); if (p <= 0.7) { const q = p / 0.7; mp = { x: W * (0.06 + 0.88 * q), y: hz - Math.sin(Math.PI * q) * (hz - H * (0.2 + 0.1 * mo.off)) }; } }
+    if (S.cycle === "frozen") { const fz = rng((S.seed ^ 0x10c4) >>> 0); fz(); const sfx = 0.25 + 0.5 * fz(), mx = 0.1 + 0.8 * frac(sfx - 0.1 + 0.5 + mo.off * 0.3 + mi * 0.12); mp = { x: W * mx, y: H * mo.fy }; } // à l'opposé du soleil immobile else { const p = frac(td * mo.sp - 0.6 + mo.off); if (p <= 0.7) { const q = p / 0.7; mp = { x: W * (0.06 + 0.88 * q), y: hz - Math.sin(Math.PI * q) * (hz - H * (0.2 + 0.1 * mo.off)) }; } }
     if (mp) { g.fillStyle = css(mo.tint); g.beginPath(); g.arc(mp.x, mp.y, rad, 0, TAU); g.fill(); g.fillStyle = "rgba(10,12,20,0.5)"; g.beginPath(); g.arc(mp.x + rad * mo.ph * 1.6, mp.y - rad * 0.2, rad * 0.9, 0, TAU); g.fill(); }
   }
   // nuages (dérive lente, boucle)
@@ -472,6 +472,17 @@ function shoreEdge(g, m, t, night) {
   if (sh.kind === "grass") for (const r of sh.rocks) { const [x, y] = L[r.k], h = (4 + 9 * depth(y)) * r.s, sw = Math.sin(TAU * t + r.dx) * 1.2; g.strokeStyle = css([70, 96, 56], 0.85 * lit); g.lineWidth = 1; g.beginPath(); for (let i = -1; i <= 1; i++) { g.moveTo(x + i * 2, y); g.lineTo(x + i * 3 + sw, y - h); } g.stroke(); } // roseaux
 }
 
+/** Avec un rivage, corail (side = 1, côté eau) et flaques d'acide (side = −1, côté terre) se placent près de la ligne d'eau : jamais découpés hors de leur part. Sans rivage : null. */
+function seaSpot(m, x, u, side) {
+  const { W, H, hz, shore } = m; if (!shore) return null;
+  const L = shore.line, D = H - hz, k = Math.max(0, Math.min(L.length - 1, Math.round((x / W) * (L.length - 1)))), [lx, ly] = L[k];
+  const dir = shore.mode === "side" ? [-shore.side, 0] : [0, shore.mode === "far" ? 1 : -1], poly = side > 0 ? shore.wet : shore.land;
+  let dist = (8 + 22 * u) * (0.4 + (ly - hz) / D);
+  for (let i = 0; i < 6; i++, dist *= 0.5) { const x2 = clamp(lx + dir[0] * dist * side, 2, W - 2), y2 = clamp(ly + dir[1] * dist * side * 0.6, hz + 1, H - 1); if (inPoly(poly, x2, y2)) return [x2, y2]; } // trop loin (bord, horizon) : on se rapproche de la ligne
+  return [clamp(lx + dir[0] * 1.5 * side, 2, W - 2), clamp(ly + dir[1] * side, hz + 1, H - 1)];
+}
+function inPoly(pts, x, y) { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c; } return c; }
+
 /**
  * Varech, corail, acide. Sous l'eau (dans la part d'eau quand il y a un rivage) : le varech monte du fond et ondule,
  * le corail fait des taches vives près du bas ; l'acide fait des flaques jaune-vert qui bouillonnent sur la terre,
@@ -479,7 +490,8 @@ function shoreEdge(g, m, t, night) {
  */
 function seaLife(g, m, t, night) {
   const { S, W, H, hz, sea, shore } = m; if (!sea || (!sea.kelp.length && !sea.coral.length && !sea.acid.length)) return;
-  const D = H - hz, lit = 1 - 0.6 * night, wet = S.water || S.ice;
+  const D = H - hz, lit = 1 - 0.6 * night, wet = S.water;
+  const near = (x, u, side) => seaSpot(m, x, u, side);
   if (wet && (sea.kelp.length || sea.coral.length)) {
     g.save(); if (shore) { shorePath(g, shore.wet); g.clip(); }
     for (const k of sea.kelp) { // des lanières qui montent du fond et ondulent avec le courant
@@ -489,11 +501,11 @@ function seaLife(g, m, t, night) {
       for (let j = 1; j <= k.leaves; j++) { const u = j / (k.leaves + 1), y = H + 2 - (H + 2 - top) * u, x = k.x + Math.sin(TAU * t + k.p + u * 2.4) * 6 * u, sd = j % 2 ? 1 : -1; g.beginPath(); g.ellipse(x + sd * 4, y, 4.5, 1.6, sd * 0.5, 0, TAU); g.fill(); }
     }
     for (const c of sea.coral) { // récif : branches, éventails ou boules aux couleurs vives, ternies par la profondeur
-      const y = hz + D * c.u, R = (5 + 9 * c.u) * c.s, col = css(mixc(hsl(c.hue, 0.65, 0.6), [10, 30, 45], 0.35 + 0.45 * night), 0.85 * lit + 0.1);
+      const pc = near(c.x, c.u, 1), cx0 = pc ? pc[0] : c.x, y = pc ? pc[1] : hz + D * c.u, R = (5 + 9 * c.u) * c.s, col = css(mixc(hsl(c.hue, 0.65, 0.6), [10, 30, 45], 0.35 + 0.45 * night), 0.85 * lit + 0.1);
       g.fillStyle = col; g.strokeStyle = col; g.lineCap = "round";
-      if (c.kind === 0) { g.lineWidth = Math.max(1, R * 0.18); g.beginPath(); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * 0.38 + (c.pts[i] - 0.5) * 0.3; g.moveTo(c.x, y); g.lineTo(c.x + Math.cos(a) * R * (0.7 + 0.5 * c.pts[i]), y + Math.sin(a) * R * (0.7 + 0.5 * c.pts[i])); } g.stroke(); }
-      else if (c.kind === 1) { g.beginPath(); g.moveTo(c.x, y); g.arc(c.x, y, R, Math.PI * 1.1, Math.PI * 1.9); g.closePath(); g.globalAlpha = 0.8; g.fill(); g.globalAlpha = 1; }
-      else for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(c.x + (c.pts[i] - 0.5) * R * 1.6, y - c.pts[i + 1] * R * 0.6, R * (0.25 + 0.2 * c.pts[i]), 0, TAU); g.fill(); }
+      if (c.kind === 0) { g.lineWidth = Math.max(1, R * 0.18); g.beginPath(); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * 0.38 + (c.pts[i] - 0.5) * 0.3; g.moveTo(cx0, y); g.lineTo(cx0 + Math.cos(a) * R * (0.7 + 0.5 * c.pts[i]), y + Math.sin(a) * R * (0.7 + 0.5 * c.pts[i])); } g.stroke(); }
+      else if (c.kind === 1) { g.beginPath(); g.moveTo(cx0, y); g.arc(cx0, y, R, Math.PI * 1.1, Math.PI * 1.9); g.closePath(); g.globalAlpha = 0.8; g.fill(); g.globalAlpha = 1; }
+      else for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(cx0 + (c.pts[i] - 0.5) * R * 1.6, y - c.pts[i + 1] * R * 0.6, R * (0.25 + 0.2 * c.pts[i]), 0, TAU); g.fill(); }
     }
     g.restore();
   }
@@ -501,11 +513,11 @@ function seaLife(g, m, t, night) {
     if (S.water && !shore) { g.fillStyle = css([170, 190, 60], 0.12 + 0.03 * Math.sin(TAU * t)); g.fillRect(0, hz, W, D); } // pas de terre : l'acide est dans l'eau
     g.save(); if (shore) { shorePath(g, shore.land); g.clip(); } else if (S.water) { g.restore(); return; }
     for (const a of sea.acid) { // flaques qui bouillonnent, une vapeur pâle au-dessus
-      const y = hz + D * a.u * a.u + D * 0.05, rx = (10 + 26 * a.u) * a.w, ry = 1.6 + 5 * a.u;
-      g.fillStyle = css(mixc([190, 210, 70], [10, 14, 8], 0.3 + 0.5 * night), 0.85); g.beginPath(); g.ellipse(a.x, y, rx, ry, 0, 0, TAU); g.fill();
-      g.strokeStyle = css([230, 245, 140], 0.35 * lit); g.lineWidth = 0.8; g.beginPath(); g.ellipse(a.x, y, rx, ry, 0, Math.PI, TAU); g.stroke();
-      for (let i = 0; i < 3; i++) { const q = frac(t * 2 + a.p + i / 3); g.strokeStyle = css([235, 250, 160], 0.5 * (1 - q) * lit); g.beginPath(); g.arc(a.x + (i - 1) * rx * 0.4, y - q * 2, 0.8 + q * 1.6, 0, TAU); g.stroke(); }
-      const vq = frac(t + a.p); g.fillStyle = css([210, 230, 140], 0.12 * (1 - vq) * lit); g.beginPath(); g.ellipse(a.x, y - 4 - vq * 14, rx * 0.6, 3 + vq * 4, 0, 0, TAU); g.fill();
+      const pa = near(a.x, a.u, -1), ax = pa ? pa[0] : a.x, y = pa ? pa[1] : hz + D * a.u * a.u + D * 0.05, rx = (10 + 26 * ((y - hz) / D)) * a.w, ry = 1.6 + 5 * ((y - hz) / D);
+      g.fillStyle = css(mixc([190, 210, 70], [10, 14, 8], 0.3 + 0.5 * night), 0.85); g.beginPath(); g.ellipse(ax, y, rx, ry, 0, 0, TAU); g.fill();
+      g.strokeStyle = css([230, 245, 140], 0.35 * lit); g.lineWidth = 0.8; g.beginPath(); g.ellipse(ax, y, rx, ry, 0, Math.PI, TAU); g.stroke();
+      for (let i = 0; i < 3; i++) { const q = frac(t * 2 + a.p + i / 3); g.strokeStyle = css([235, 250, 160], 0.5 * (1 - q) * lit); g.beginPath(); g.arc(ax + (i - 1) * rx * 0.4, y - q * 2, 0.8 + q * 1.6, 0, TAU); g.stroke(); }
+      const vq = frac(t + a.p); g.fillStyle = css([210, 230, 140], 0.12 * (1 - vq) * lit); g.beginPath(); g.ellipse(ax, y - 4 - vq * 14, rx * 0.6, 3 + vq * 4, 0, 0, TAU); g.fill();
     }
     g.restore();
   }
@@ -513,9 +525,10 @@ function seaLife(g, m, t, night) {
 
 /** Le ciel nocturne propre à l'Âge : bande d'étoiles, nébuleuse, constellations (parfois reliées d'un trait très pâle). */
 function nightSky(g, m, t, sv) {
-  const { night: n, W } = m;
-  if (n.band) { g.save(); g.translate(W / 2, n.band.y); g.rotate(n.band.a); for (const p of n.band.pts) { g.fillStyle = css([225, 228, 245], (0.12 + 0.35 * p.b) * sv); g.fillRect((p.u - 0.5) * W * 1.4, p.v * n.band.w, 1, 1); } const bg = g.createLinearGradient(0, -n.band.w, 0, n.band.w); bg.addColorStop(0, "rgba(220,225,245,0)"); bg.addColorStop(0.5, css([220, 225, 245], 0.07 * sv)); bg.addColorStop(1, "rgba(220,225,245,0)"); g.fillStyle = bg; g.fillRect(-W * 0.7, -n.band.w, W * 1.4, n.band.w * 2); g.restore(); }
-  if (n.nebula) { const nb = n.nebula; g.save(); g.globalCompositeOperation = "lighter"; for (const b of nb.blobs) { const x = nb.x + b.dx * nb.R, y = nb.y + b.dy * nb.R, R = nb.R * b.r, gr = g.createRadialGradient(x, y, 0, x, y, R); gr.addColorStop(0, css(hsl(nb.hue + b.dx * 40, 0.6, 0.55), 0.14 * sv)); gr.addColorStop(1, css(hsl(nb.hue, 0.6, 0.5), 0)); g.fillStyle = gr; g.fillRect(x - R, y - R, R * 2, R * 2); } g.restore(); }
+  const { night: n, W, S } = m, few = S.amt && S.amt.stars != null ? S.amt.stars : 1; // « peu d'étoiles » : pas de bande ni de nébuleuse, constellations plus pâles
+  sv *= Math.min(1, few); if (sv <= 0.01) return;
+  if (n.band && few >= 0.6) { g.save(); g.translate(W / 2, n.band.y); g.rotate(n.band.a); for (const p of n.band.pts) { g.fillStyle = css([225, 228, 245], (0.12 + 0.35 * p.b) * sv); g.fillRect((p.u - 0.5) * W * 1.4, p.v * n.band.w, 1, 1); } const bg = g.createLinearGradient(0, -n.band.w, 0, n.band.w); bg.addColorStop(0, "rgba(220,225,245,0)"); bg.addColorStop(0.5, css([220, 225, 245], 0.07 * sv)); bg.addColorStop(1, "rgba(220,225,245,0)"); g.fillStyle = bg; g.fillRect(-W * 0.7, -n.band.w, W * 1.4, n.band.w * 2); g.restore(); }
+  if (n.nebula && few >= 0.6) { const nb = n.nebula; g.save(); g.globalCompositeOperation = "lighter"; for (const b of nb.blobs) { const x = nb.x + b.dx * nb.R, y = nb.y + b.dy * nb.R, R = nb.R * b.r, gr = g.createRadialGradient(x, y, 0, x, y, R); gr.addColorStop(0, css(hsl(nb.hue + b.dx * 40, 0.6, 0.55), 0.14 * sv)); gr.addColorStop(1, css(hsl(nb.hue, 0.6, 0.5), 0)); g.fillStyle = gr; g.fillRect(x - R, y - R, R * 2, R * 2); } g.restore(); }
   for (const c of n.cons) {
     if (c.lines) { g.strokeStyle = css(c.tint, 0.13 * sv); g.lineWidth = 0.7; g.beginPath(); c.pts.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y))); g.stroke(); }
     for (const p of c.pts) { const a = (0.6 + 0.4 * Math.sin(TAU * t * 2 + p.tw)) * sv; g.fillStyle = css(c.tint, a); g.beginPath(); g.arc(p.x, p.y, p.s * 0.6, 0, TAU); g.fill(); if (p.s > 2.3) { g.fillStyle = css(c.tint, 0.18 * a); g.beginPath(); g.arc(p.x, p.y, p.s * 1.8, 0, TAU); g.fill(); } }
@@ -851,4 +864,4 @@ function extraAt(g, m, t, layer) {
 }
 
 
-module.exports = { sceneOf, traits, KNOWN, build, paint, suns, PERIOD, hsl };
+module.exports = { sceneOf, traits, KNOWN, build, paint, suns, PERIOD, hsl, seaSpot };
