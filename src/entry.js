@@ -195,7 +195,7 @@ module.exports = function build(Base, core, AGEX) {
         const cover = this.mode === "cover";
         if (cover) this.mode = "descriptive";
         await orig.call(this);
-        if (opening) { this.__openedPath = p; if (plugin.ext && plugin.ext.sound && !(this.__quietUntil > Date.now())) openSequence(plugin.ext.volume, { book: plugin.ext.soundBook !== false, clasp: plugin.ext.soundClasp !== false, link: false }); }
+        if (opening) { this.__openedPath = p; const isAge = await plugin.noteHasAge(plugin.currentAgeFile); if (isAge && plugin.ext && plugin.ext.sound && !(this.__quietUntil > Date.now())) openSequence(plugin.ext.volume, { book: plugin.ext.soundBook !== false, clasp: plugin.ext.soundClasp !== false, link: false }); }
         if (cover) this.mode = "cover";
         try { await plugin.extendBook(this, cover); } catch (e) { console.warn("[Age Writer ext] book", e); }
       };
@@ -266,6 +266,9 @@ module.exports = function build(Base, core, AGEX) {
       });
     }
 
+    /** La note contient-elle un bloc `age` ? (le livre ne s'ouvre en musique que pour un Âge, pas pour n'importe quelle note) */
+    async noteHasAge(file) { try { return !!file && core.extract(await this.app.vault.cachedRead(file)) !== null; } catch (e) { return false; } }
+
     async extendBook(view, cover) {
       const el = view.contentEl, spread = el.querySelector(".age-book__spread"); if (!spread || !this.law) return;
       const ext = this.ext, t = this.t, file = this.currentAgeFile; if (!file) return;
@@ -290,11 +293,11 @@ module.exports = function build(Base, core, AGEX) {
       } else if (view.mode === "descriptive") {
         const right = spread.querySelector(".age-book__page--right");
         if (right) X.renderExtras(this, right, { src, analysis, name: file.basename, compact: true });
-      } else if (view.mode === "linking" && ext.linkLeaves !== false) this.leafLinking(view, spread);
+      } else if (view.mode === "linking" && ext.linkLeaves !== false) this.leafLinking(view, spread, { src, analysis, file });
     }
 
     // Livre de liaison en trois pages « de gauche », une seule visible : glyphes + texte, vitre, liens.
-    leafLinking(view, spread) {
+    leafLinking(view, spread, own) {
       const L = spread.querySelector(".age-book__page--left"), R = spread.querySelector(".age-book__page--right"); if (!L || !R || spread.querySelector(".age-book__leaf")) return;
       const mk = (cls) => { const d = document.createElement("div"); d.className = cls; return d; }, t = this.t, ext = this.ext, leaf = (name) => { return mk("age-book__leaf age-book__leaf--" + name); };
       const pick = (sel, host) => host.querySelector(":scope > " + sel);
@@ -302,6 +305,18 @@ module.exports = function build(Base, core, AGEX) {
       for (const sel of [".age-book__strip", ".age-book__glimpse"]) { const n = pick(sel, L); if (n) l0.appendChild(n); }
       for (const sel of [".age-book__window", ".age-book__caption"]) { const n = pick(sel, L); if (n) l1.appendChild(n); }
       while (R.firstChild) l2.appendChild(R.firstChild);
+      if (!l0.firstChild && own) { // pas de livre de liaison : la page montre les symboles de l'Âge lui-même et sa première phrase
+        guard("symboles", () => {
+          const pages = core.glyphs(own.analysis).slice(0, 8), size = 34, gap = 8;
+          if (pages.length) {
+            const strip = l0.createDiv({ cls: "age-book__strip" });
+            setMarkup(strip, `<svg viewBox="0 0 ${pages.length * (size + gap)} ${size}" width="100%">` + pages.map((p, i) => core.glyphSvg(p.id, i * (size + gap), 0, size, p.severity)).join("") + "</svg>");
+            const first = String(view.proseFor(own.file.path, own.src, own.analysis) || "").split(/(?<=[.!?])\s/)[0] || "";
+            if (first) l0.createDiv({ cls: "age-book__glimpse", text: first.length > 170 ? first.slice(0, 167) + "…" : first });
+          }
+        });
+        if (l0.firstChild) l0.createDiv({ cls: "age-book__caption", text: t("leaf.own") });
+      }
       if (!l0.firstChild) l0.createDiv({ cls: "age-book__none", text: t("leaf.none") });
       L.empty(); L.addClass("is-blank"); R.empty(); R.appendChild(l0); R.appendChild(l1); R.appendChild(l2); spread.addClass("is-leaves");
       const leaves = [l0, l1, l2], titles = [t("leaf.glyphs"), t("leaf.window"), t("leaf.links")];
