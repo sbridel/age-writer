@@ -74,7 +74,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 Manual, for now:
 
-1. Get `main.js`, `styles.css`, `manifest.json` (build them, see §15).
+1. Get `main.js`, `styles.css`, `manifest.json` (build them, see §16).
 2. Copy them to `<vault>/.obsidian/plugins/age-writer/`.
 3. In Obsidian: *Settings → Community plugins*, reload, enable **Age Writer**.
 
