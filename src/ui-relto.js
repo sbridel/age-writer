@@ -3,7 +3,7 @@ const obsidian = require("obsidian");
 const M = require("./relto-model");
 const { ReltoRenderer } = require("./relto-render");
 const sound = require("./sound");
-const { setMarkup, esc } = require("./util");
+const { setMarkup, esc, leaveFullscreen } = require("./util");
 const G = require("./genscene");
 const SKY = require("./sky");
 const IM = require("./imager");
@@ -111,7 +111,7 @@ async function createReltoPage(plugin) {
     await app.fileManager.processFrontMatter(hub, (fm) => { const a = Array.isArray(fm.relto_pages_active) ? fm.relto_pages_active : []; if (!a.includes(id)) a.push(id); fm.relto_pages_active = a; });
     new obsidian.Notice(t("relto.pagecreated", { name: preset.label }));
     plugin.refreshLive();
-    app.workspace.getLeaf("tab").openFile(f);
+    leaveFullscreen(); app.workspace.getLeaf("tab").openFile(f);
   }, presets).open();
 }
 
