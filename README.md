@@ -287,7 +287,7 @@ When the book is already open, clicking a window only replays the linking sound.
 - **D'ni numerals** in base 25 (Age number, seed, puzzles, clock). Levels: installed font (not provided), local glyph file, numerals drawn by the plugin. **D'ni time** in the Relto from the computer's clock.
 - **Mechanisms**: eleven (steam elevator, sluice, telescope, sound lock, frequency array, generator, holographic imager, orrery, lock, wind organ, lens array), each with a state and a puzzle.
 - **Solitude**: weights the draw toward deserted worlds.
-- **Exploration journal**: an `age-journal` block written as you go through linked notes; Atrus, Gehn or Miller voice.
+- **Exploration journal**: an `age-journal` block written as you go through linked notes; voices inspired by various characters from the games.
 - **Personal library**: `age-library` blocks define your own blocks, products, reactions and variants.
 
 ---

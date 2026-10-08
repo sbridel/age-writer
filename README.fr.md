@@ -263,7 +263,7 @@ Quand le livre est déjà ouvert, cliquer une vitre ne rejoue que le son de liai
 - **Chiffres D'ni** en base 25 (numéro d'Âge, graine, énigmes, horloge). Niveaux : police installée (non fournie), fichier de glyphes local, chiffres dessinés par le plugin. **Heure D'ni** du Relto d'après l'horloge de l'ordinateur.
 - **Mécanismes** : onze (ascenseur à vapeur, vanne, télescope, serrure sonore, réseau de fréquences, générateur, imageur holofatique, planétaire, écluse, orgue à vent, réseau de lentilles), chacun avec un état et une énigme.
 - **Solitude** : pondère le tirage vers des mondes déserts.
-- **Journal d'exploration** : un bloc `age-journal` qui s'écrit au fil des notes liées ; voix Atrus, Gehn ou Miller.
+- **Journal d'exploration** : un bloc `age-journal` qui s'écrit au fil des notes liées ; voix inspirées de divers personnages des jeux.
 - **Bibliothèque personnelle** : des blocs `age-library` définissent tes propres blocs, produits, réactions et variantes.
 
 ---
