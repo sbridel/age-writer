@@ -1,7 +1,7 @@
 {
   "id": "age-writer",
   "name": "Age Writer",
-  "version": "1.17.2",
+  "version": "1.17.3",
   "minAppVersion": "1.0.0",
   "description": "Write a world in a few lines of a code block: get its description, its stability and a living window onto it. Keep your Ages on the shelf of a floating-island refuge.",
   "author": "Sébastien Wallachia",
