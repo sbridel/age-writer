@@ -324,11 +324,10 @@ Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine
 
 ## 16. Licences et mentions
 
-À compléter avant publication :
-
-- **Licence du projet** : à choisir (fichier `LICENSE`).
-- **gifenc** (MIT, © Matt DesLauriers) : export GIF, embarqué dans le moteur.
-- **Tracery** (`tracery-grammar`, ISC, © Kate Compton) : prose, embarquée dans le moteur d'origine ; texte de licence à joindre ou remplacement.
+- **Licence du projet** : à choisir avant publication (fichier `LICENSE`).
+- Le code tiers et ses licences sont listés dans [`NOTICE`](NOTICE) ; les textes de licence sont dans [`LICENSES/`](LICENSES/).
+- **gifenc** (MIT, © 2017 Matt DesLauriers) : export GIF, embarqué dans le moteur.
+- **Tracery** (© Kate Compton ; paquet npm `tracery-grammar` déclaré ISC, dépôt d'origine sous Apache 2.0) : la grammaire de la prose, embarquée dans le moteur.
 - **Police D'ni** : non fournie ; chacun utilise sa copie, selon sa licence.
 - Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part.
 

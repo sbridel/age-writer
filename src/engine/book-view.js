@@ -1,4 +1,5 @@
 "use strict";
+const { setMarkup } = require("../util");
 const obsidian = require("obsidian");
 const { SKY_ENTRIES } = require("./data/sky");
 const { blockList } = require("./registry");
@@ -188,7 +189,7 @@ const BookView = class extends obsidian.ItemView {
     let tab = chipEl.createDiv({ cls: "age-book__tab" });
     if (
       ((tab.style.background = page.blot ? "#3a2f22" : AXIS_COLORS[page.axis ?? "cosmological"]),
-      (chipEl.createDiv({ cls: "age-book__chip-art" }).innerHTML = page.blot
+      setMarkup(chipEl.createDiv({ cls: "age-book__chip-art" }), page.blot
         ? '<svg viewBox="0 0 100 100"><polygon points="22,50 34,30 58,24 80,38 74,66 50,78 30,70" fill="currentColor" opacity="0.8"/><polygon points="40,40 58,36 64,52 48,60" fill="currentColor" opacity="0.5"/></svg>'
         : `<svg viewBox="0 0 100 100">${glyphSvg(page.id, 0, 0, 100, page.severity)}</svg>`),
       page.drawn)
@@ -230,7 +231,7 @@ const BookView = class extends obsidian.ItemView {
           isWritten ? `${item.label} \u2014 in the book (click to take it out)` : item.label,
         ),
           (swatch.style.borderBottomColor = AXIS_COLORS[group.axis]),
-          (swatch.innerHTML = `<svg viewBox="0 0 100 100">${glyphSvg(item.id, 0, 0, 100)}</svg>`),
+          setMarkup(swatch, `<svg viewBox="0 0 100 100">${glyphSvg(item.id, 0, 0, 100)}</svg>`),
           swatch.addEventListener("click", () => {
             this.togglePage(file, item.id);
           }));
@@ -317,15 +318,17 @@ const BookView = class extends obsidian.ItemView {
       ? this.plugin.mountWindow(windowEl, src, analysis.verdict)
       : this.plugin.settings.generatedWindow
         ? this.plugin.mountGenerated(windowEl, analysis, book.file.path)
-        : (windowEl.innerHTML = this.drawnGlass(analysis.verdict));
+        : setMarkup(windowEl, this.drawnGlass(analysis.verdict));
     let pages = pageList(analysis).slice(0, 8),
       size = 34,
       gap = 8,
       strip = container.createDiv({ cls: "age-book__strip" });
-    strip.innerHTML =
+    setMarkup(
+      strip,
       `<svg viewBox="0 0 ${pages.length * (size + gap)} ${size}" width="100%">` +
-      pages.map((page, index) => glyphSvg(page.id, index * (size + gap), 0, size, page.severity)).join("") +
-      "</svg>";
+        pages.map((page, index) => glyphSvg(page.id, index * (size + gap), 0, size, page.severity)).join("") +
+        "</svg>",
+    );
     let firstSentence = this.proseFor(book.file.path, book.source, analysis).split(/(?<=[.!?])\s/)[0] ?? "";
     (container.createDiv({
       cls: "age-book__glimpse",
@@ -346,7 +349,7 @@ const BookView = class extends obsidian.ItemView {
       ? this.plugin.mountWindow(windowEl, src, analysis.verdict)
       : this.plugin.settings.generatedWindow
         ? this.plugin.mountGenerated(windowEl, analysis, file.path)
-        : (windowEl.innerHTML = this.drawnGlass(analysis.verdict)),
+        : setMarkup(windowEl, this.drawnGlass(analysis.verdict)),
       container.createDiv({
         cls: "age-book__caption",
         text:
@@ -358,7 +361,7 @@ const BookView = class extends obsidian.ItemView {
       }));
   }
   dullGlass(container) {
-    container.createDiv({ cls: "age-book__window" }).innerHTML = this.drawnGlass("dying");
+    setMarkup(container.createDiv({ cls: "age-book__window" }), this.drawnGlass("dying"));
   }
   drawnGlass(verdict) {
     return `<svg viewBox="0 0 160 96"><rect x="8" y="8" width="144" height="80" rx="1" class="age-panel__linkrect${verdict === "stable" ? " age-panel__linkrect--lit" : verdict === "dying" ? " age-panel__linkrect--broken" : ""}"/></svg>`;

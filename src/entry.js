@@ -8,6 +8,7 @@
  */
 const obsidian = require("obsidian");
 const { Dni } = require("./dni");
+const { setMarkup } = require("./util");
 const { Law, adjustAnalysis, describeChange, worldIds } = require("./law");
 const { solitudeFactor, COVER_RE, parseCover, KEY_RE, FX_RE, STYLE_RE, TRAP_RE, DMG_RE, parseFx, parseStyle, parseTrap, parseDamage, applyDamage } = require("./mech");
 const { Soundscape, staticBurst, openSequence, linkSound, pageTurn } = require("./sound");
@@ -282,7 +283,7 @@ module.exports = function build(Base, core, AGEX) {
       if (cover) {
         const pal = el.querySelector(".age-book__palette"); if (pal) pal.remove();
         spread.empty(); spread.addClass("is-cover"); if (ext.leather) for (const c of ["tl", "tr", "bl", "br"]) spread.createDiv({ cls: `age-book__corner age-book__corner--${c}` });
-        spread.createDiv({ cls: "age-book__covercontainer" }).innerHTML = this.coverFor(src, analysis, file, false);
+        setMarkup(spread.createDiv({ cls: "age-book__covercontainer" }), this.coverFor(src, analysis, file, false));
         const act = el.createDiv({ cls: "age-book__coveractions" });
         act.createEl("button", { text: t("book.savecover") }).addEventListener("click", () => this.saveCover(file));
       } else if (view.mode === "descriptive") {

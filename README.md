@@ -348,10 +348,9 @@ In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the
 
 ## 16. Licences and credits
 
-To complete before publication:
-
-- **Project licence**: to be chosen (`LICENSE` file).
-- **gifenc** (MIT, © Matt DesLauriers): GIF export, bundled in the engine.
-- **Tracery** (`tracery-grammar`, ISC, © Kate Compton): prose, bundled in the original engine; licence text to be attached, or replace it.
+- **Project licence**: to be chosen before publication (`LICENSE` file).
+- Third-party code and its licences are listed in [`NOTICE`](NOTICE); the licence texts are in [`LICENSES/`](LICENSES/).
+- **gifenc** (MIT, © 2017 Matt DesLauriers): GIF export, bundled in the engine.
+- **Tracery** (© Kate Compton; npm package `tracery-grammar` declared ISC, original repository Apache 2.0): the grammar used for the prose, bundled in the engine.
 - **D'ni font**: not provided; everyone uses their own copy, under its licence.
 - Fan project, not affiliated with or endorsed by Cyan Worlds.

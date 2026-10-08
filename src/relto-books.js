@@ -1,6 +1,7 @@
 "use strict";
 // Les deux livres à part du Relto : le livre des glyphes (lecture) et le livre de la bibliothèque (ouvre la note où l'on écrit).
 const obsidian = require("obsidian");
+const { setMarkup } = require("./util");
 
 /**
  * Glyphes utilisés dans les Âges donnés (chacun a `glyphs: [id…]`) — pur, sans Obsidian.
@@ -81,7 +82,7 @@ function openGlyphBook(plugin, ages) {
       for (const g of list) {
         const card = grid.createDiv({ cls: "age-glyphbook__card" });
         const art = card.createDiv({ cls: "age-glyphbook__art" });
-        try { art.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${plugin.core.glyphSvg(g.id, 0, 0, 100, "light")}</svg>`; } catch (e) { /* glyphe sans dessin */ }
+        try { setMarkup(art, `<svg viewBox="0 0 100 100" aria-hidden="true">${plugin.core.glyphSvg(g.id, 0, 0, 100, "light")}</svg>`); } catch (e) { /* glyphe sans dessin */ }
         card.createDiv({ cls: "age-glyphbook__name", text: g.name });
         const where = card.createDiv({ cls: "age-glyphbook__where" });
         g.ages.forEach((name, i) => {

@@ -3,6 +3,7 @@ const obsidian = require("obsidian");
 const M = require("./relto-model");
 const { ReltoRenderer } = require("./relto-render");
 const sound = require("./sound");
+const { setMarkup, esc } = require("./util");
 const X = require("./ui-extras");
 const DT = require("./dnitime");
 const B = require("./relto-books");
@@ -140,7 +141,7 @@ async function renderRelto(plugin, source, el, ctx) {
     dniClock = when.createSpan({ cls: "age-relto__dnitime" });
     const tickDni = () => {
       const d = DT.fromDate(), n = (v) => plugin.dni.numberSvg(v, { size: tabsOn ? 24 : 13 });
-      dniClock.innerHTML = `${n(d.hahr)}<i>${d.name}</i>${n(d.yahr)}<b>${n(d.gahrtahvo)}${n(d.tahvo)}${n(d.gorahn)}${n(d.prorahn)}</b>`;
+      setMarkup(dniClock, `${n(d.hahr)}<i>${esc(d.name)}</i>${n(d.yahr)}<b>${n(d.gahrtahvo)}${n(d.tahvo)}${n(d.gorahn)}${n(d.prorahn)}</b>`);
       dniClock.setAttr("aria-label", DT.format(d)); // l'infobulle d'Obsidian (aria-label) seule : `title` en ajoutait une seconde, grise
     };
     // la mise à jour reconstruit les chiffres toutes les ~1,4 s, ce qui fermait l'infobulle avant qu'elle n'apparaisse : on suspend tant que la souris est dessus
@@ -345,7 +346,7 @@ async function renderRelto(plugin, source, el, ctx) {
     renderer.setScene(scene); renderer.setHour(scene.skyCycle === "system_time" ? fixed : null); syncNav(scene);
     slider.disabled = scene.skyCycle !== "system_time"; nowBtn.disabled = slider.disabled;
     title.setText(scene.name); if (dniName) dniName.setText(plugin.dni.textFor(scene.name)); if (dniName2) dniName2.setText(plugin.dni.textFor(scene.name));
-    plate.innerHTML = plugin.dni.numberSvg(scene.seed, { size: 16 }); plate.setAttr("title", t("num.seed"));
+    setMarkup(plate, plugin.dni.numberSvg(scene.seed, { size: 16 })); plate.setAttr("title", t("num.seed"));
     syncClock(); renderPages(); renderBooks();
     if (reduced) renderer.draw(0); else renderer.start();
   }
