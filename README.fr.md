@@ -263,7 +263,7 @@ Quand le livre est déjà ouvert, cliquer une vitre ne rejoue que le son de liai
 - **Chiffres D'ni** en base 25 (numéro d'Âge, graine, énigmes, horloge). Niveaux : police installée (non fournie), fichier de glyphes local, chiffres dessinés par le plugin. **Heure D'ni** du Relto d'après l'horloge de l'ordinateur.
 - **Mécanismes** : onze (ascenseur à vapeur, vanne, télescope, serrure sonore, réseau de fréquences, générateur, imageur holofatique, planétaire, écluse, orgue à vent, réseau de lentilles), chacun avec un état et une énigme.
 - **Solitude** : pondère le tirage vers des mondes déserts.
-- **Journal d'exploration** : un bloc `age-journal` qui s'écrit au fil des notes liées ; voix Atrus, Gehn ou Miller.
+- **Journal d'exploration** : un bloc `age-journal` qui s'écrit au fil des notes liées ; voix inspirées de divers personnages des jeux.
 - **Bibliothèque personnelle** : des blocs `age-library` définissent tes propres blocs, produits, réactions et variantes.
 
 ---
@@ -346,7 +346,7 @@ npm test             # tous les tests, sur la version lisible puis sur la minifi
 npm run lint
 npm run equiv -- legacy/main-1.3.0.min.js # non-régression : 600 Âges au hasard, ancien build contre nouveau
 node test/visual/make.js            # pages de rendu dans test/visual/out/
-npm run zip          # release/age-writer-1.17.4.zip (plugin) + -src.zip (sources)
+npm run zip          # release/age-writer-1.17.5.zip (plugin) + -src.zip (sources)
 ```
 
 Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine/` (le moteur), puis la couche d'extension : `entry.js` (patchs du livre et des blocs), `ui-extras.js` (panneau et onglets), `ui-relto.js` (Relto, vue dédiée), `relto-render.js` (canvas), `cover.js` (couvertures), `sound.js` (sons), `linkfx.js` et `genscene.js` (fenêtre), `law.js` (loi du changement), `mech.js` (lignes spéciales), `physics/` (physique des Âges : lois, exigences des blocs, tirage sous contraintes, fiche ; conception dans `docs/DESIGN-physique.md`), `geophys.js` (blocs de géophysique), `settings-ui.js` (réglages), `guide.js` (guide), `i18n.js`. Détails : `docs/DEV.md`.
