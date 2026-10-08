@@ -10,6 +10,7 @@ const GL = require("./relto-global");
 const RM = require("./relto-rooms");
 const RI = require("./relto-imager");
 const IM = require("./imager");
+const RV = require("./genviews");
 const ROOMS = { cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom };
 
 const W = 640, H = 360, GY = 208; // largeur, hauteur logiques ; ligne de sol
@@ -573,7 +574,7 @@ class ReltoRenderer {
    * physique) ; le réglage est relu et gardé par `opts.imagerGet / imagerSet` (par chemin de note).
    */
   imagerState() {
-    if (!this.imager) this.imager = { idx: 0, stage: 0, age: null, target: null, model: null, settings: IM.normalize(null), loading: null, empty: false };
+    if (!this.imager) this.imager = { idx: 0, station: null, hand: null, age: null, target: null, model: null, settings: IM.normalize(null), loading: null, empty: false };
     const st = this.imager, ages = (this.scene && this.scene.ages) || [];
     st.empty = !ages.length;
     if (ages.length && (!st.age || !ages.some((a) => a.path === st.age.path)) && !st.loading) this.imagerLoad(Math.min(st.idx, ages.length - 1));
@@ -583,29 +584,73 @@ class ReltoRenderer {
   imagerLoad(i) {
     const ages = (this.scene && this.scene.ages) || [], st = this.imager; if (!ages.length) return;
     st.idx = ((i % ages.length) + ages.length) % ages.length; const age = ages[st.idx];
-    st.age = age; st.target = null; st.model = null; st.view = false; st.thumb = null;
+    st.age = age; st.target = null; st.model = null; st.view = false; st.thumb = null; st.hand = null; st.anim = null;
     st.settings = IM.normalize(this.opts.imagerGet ? this.opts.imagerGet(age.path) : null);
     if (!this.opts.onImagerAge) return;
     const token = (st.loading = {});
     Promise.resolve(this.opts.onImagerAge(age)).then((d) => {
       if (st.loading !== token) return; st.loading = null;
       if (!d) return; st.target = d.target; st.model = d.model; st.view = !!d.model;
+      if (st.settings.tilt < 0 && !RV.hasUnder(st.model)) st.settings = { ...st.settings, tilt: 0 };
+      if (st.settings.lock && !IM.canLock(st.settings, st.target, this.imagerNow())) st.settings = { ...st.settings, lock: false, az: 0, tilt: 0 }; // le livre a changé depuis : le verrou a glissé
       if (!this.running) this.draw(0);
     }, () => { if (st.loading === token) st.loading = null; });
   }
-  /** La vue de l'Âge dans le cristal (et la miniature du livre) : un petit canvas repeint à chaque image. */
+  /**
+   * La vue de l'Âge sur l'écran : un petit canvas repeint à chaque image (de face ; verrouillé, là où regarde le
+   * périscope). Pendant qu'on tourne ou qu'on lève les yeux, l'ancienne vue est peinte aussi, pour glisser de l'une à l'autre.
+   */
   imagerView(st, t) {
     if (!st.model) return null;
-    if (!st.canvas) { st.canvas = makeCanvas(300, 176); st.thumb = st.canvas; }
-    return RI.paintView(st.canvas, st.model, st.target, t, this.imagerNow());
+    if (!st.canvas) st.canvas = makeCanvas(300, 176);
+    st.thumb = st.canvas;
+    if (!st.sq) st.sq = makeCanvas(350, 350);
+    const s = st.settings, look = s.lock ? { az: s.az, tilt: s.tilt } : { az: 0, tilt: 0 }, now = this.imagerNow();
+    RI.paintView(st.canvas, st.model, st.target, t, now, look, st.sq);
+    const a = st.anim;
+    if (a && t >= a.t0 && t - a.t0 < 0.7) {
+      if (!st.canvas2) st.canvas2 = makeCanvas(300, 176);
+      RI.paintView(st.canvas2, st.model, st.target, t, now, a.from, st.sq);
+      return { cur: st.canvas, prev: st.canvas2, p: (t - a.t0) / 0.7, dx: a.dx, dy: a.dy };
+    }
+    return { cur: st.canvas };
   }
+  /** Un geste sur la machine : un livre, un poste, un cristal, un verre, un bouton, le verrou, le périscope. */
   imagerAct(a) {
-    const st = this.imagerState();
-    if (a.book) { this.imagerLoad(st.idx + a.book); return; }
-    if (a.stage != null) { st.stage = a.stage; return; }
-    st.settings = IM.turn(st.settings, a.key, a.delta, st.target && st.target.crystals ? st.target.crystals.options.length : 8);
+    const st = this.imagerState(), tg = st.target, before = st.settings, now = this.imagerNow(), sfx = (k) => { if (this.opts.onImagerSound) this.opts.onImagerSound(k); };
+    const say = (text) => { const h = this.hover || { x: W / 2, y: H / 2, w: 0 }; this.flash = { text, x: h.x + (h.w || 0) / 2, y: h.y, until: Date.now() + 2400 }; };
+    if (a.book) { this.imagerLoad(st.idx + a.book); sfx("page"); return; }
+    if ("station" in a) { st.station = a.station; st.hand = null; return; }
+    if (a.lock) {
+      if (!tg) return;
+      const res = IM.toggleLock(before, tg, now); st.settings = res.s;
+      if (!res.ok) { sfx("jam"); say("It won't hold — the image is not clear"); return; }
+      sfx(res.locked ? "lock" : "unlock"); say(res.locked ? "Locked — the machine follows the Age" : "Released");
+      if (!res.locked && (before.az || before.tilt)) this.imagerAnim(before, st.settings);
+    } else if (a.slot != null || a.rack != null) {
+      if (before.lock) { say("The lock holds the crystals"); return; }
+      if (a.rack != null && before.cry.includes(a.rack) && !st.hand) return; // sa cheville est vide : le cristal est dans un logement
+      const res = IM.place(before, st.hand, a.slot != null ? { slot: a.slot } : { rack: a.rack }); st.hand = res.hand; st.settings = res.s; sfx(res.hand ? "lift" : "set");
+    } else if ("tilt" in a) {
+      if (!before.lock) { sfx("jam"); say("The periscope is free only once the lock holds"); return; }
+      if (a.tilt < 0 && !RV.hasUnder(st.model)) { sfx("jam"); say("Nothing below but rock"); return; }
+      st.settings = IM.turn(before, "tilt", a.tilt - before.tilt); sfx("lever");
+    } else if (a.key) {
+      if (before.lock && a.key !== "az") { say("The lock holds the tuning"); return; }
+      if (a.key === "az" && !before.lock) { sfx("jam"); say("The periscope is free only once the lock holds"); return; }
+      st.settings = a.value != null ? IM.set(before, a.key, a.value) : IM.turn(before, a.key, a.delta, tg && tg.crystals ? tg.crystals.options.length : 8);
+      sfx(a.key === "az" ? "crank" : a.value != null ? "slide" : "click");
+      if (a.key === "az") st.crankSpin = 0;
+    }
+    if (st.settings.az !== before.az || st.settings.tilt !== before.tilt) this.imagerAnim(before, st.settings);
     if (st.age && this.opts.imagerSet) this.opts.imagerSet(st.age.path, st.settings);
     if (this.opts.onImagerTune) this.opts.onImagerTune(st);
+  }
+  /** La vue glisse de l'ancienne direction vers la nouvelle (de côté pour l'azimut, de haut en bas pour l'inclinaison). */
+  imagerAnim(from, to) {
+    const st = this.imager; if (this.opts.reducedMotion) return;
+    const d = ((to.az - from.az + 4) % 4) === 3 ? -1 : to.az !== from.az ? 1 : 0;
+    st.anim = { from: { az: from.lock ? from.az : 0, tilt: from.lock ? from.tilt : 0 }, t0: this.imagerT || 0, dx: d, dy: d ? 0 : to.tilt > from.tilt ? -1 : 1 };
   }
   /** Les trois réglages et la netteté finale (0 à 1) : pour le son et les tests. */
   imagerClarity() { const st = this.imager; return st && st.target ? IM.clarity(st.settings, st.target, this.imagerNow()) : { cry: 0, lens: 0, atmo: 0, total: 0 }; }

@@ -607,6 +607,28 @@ function jingle(volume = 0.3) {
     [2637, 3136, 2349].forEach((f, i) => { const o = c.createOscillator(), e = c.createGain(), t0 = t + i * 0.07; o.type = "sine"; o.frequency.value = f; e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(1, t0 + 0.005); e.gain.exponentialRampToValueAtTime(0.001, t0 + 0.4); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + 0.45); });
   });
 }
+/**
+ * Les bruits de l'Imageur : le verrou (un choc sourd puis un tintement), le levier qui coince, le cristal qu'on soulève
+ * ou qu'on pose (verre contre laiton), le verre qui glisse sur son rail, le cran d'un bouton, la manivelle (cliquet).
+ */
+function imagerSfx(kind, volume = 0.3) {
+  return oneShot(1.2, (c, out, noise) => {
+    const t = c.currentTime; out.gain.value = volume * 0.5;
+    const thud = (t0, f, dur, g = 1) => { const o = c.createOscillator(), e = c.createGain(); o.type = "sine"; o.frequency.setValueAtTime(f, t0); o.frequency.exponentialRampToValueAtTime(f * 0.5, t0 + dur); e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + 0.004); e.gain.exponentialRampToValueAtTime(0.001, t0 + dur); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + dur + 0.05); };
+    const tick = (t0, f, g = 0.6, dur = 0.03) => { const n = noise(dur + 0.02), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 6; e.gain.setValueAtTime(g, t0); e.gain.exponentialRampToValueAtTime(0.001, t0 + dur); n.connect(bp); bp.connect(e); e.connect(out); n.start(t0); n.stop(t0 + dur + 0.02); };
+    const bell = (t0, f, g = 0.25, dur = 0.8) => { const o = c.createOscillator(), e = c.createGain(); o.type = "sine"; o.frequency.value = f; e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + 0.005); e.gain.exponentialRampToValueAtTime(0.001, t0 + dur); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + dur + 0.05); };
+    if (kind === "lock") { thud(t, 90, 0.35); tick(t, 900, 0.8, 0.05); bell(t + 0.12, 1318, 0.18); bell(t + 0.12, 1976, 0.1); }
+    else if (kind === "unlock") { tick(t, 1200, 0.6, 0.04); thud(t + 0.05, 140, 0.2, 0.6); }
+    else if (kind === "jam") { thud(t, 70, 0.25, 0.8); tick(t + 0.02, 400, 0.5, 0.08); }
+    else if (kind === "lift") { bell(t, 2637, 0.12, 0.35); }
+    else if (kind === "set") { tick(t, 2200, 0.5, 0.03); bell(t + 0.01, 3136, 0.1, 0.5); bell(t + 0.01, 2093, 0.08, 0.6); }
+    else if (kind === "slide") { const n = noise(0.18), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = "bandpass"; bp.frequency.setValueAtTime(1800, t); bp.frequency.linearRampToValueAtTime(2600, t + 0.15); bp.Q.value = 2; e.gain.setValueAtTime(0.25, t); e.gain.exponentialRampToValueAtTime(0.001, t + 0.16); n.connect(bp); bp.connect(e); e.connect(out); n.start(t); n.stop(t + 0.18); }
+    else if (kind === "crank") { for (let i = 0; i < 6; i++) tick(t + i * 0.05, 1500 + (i % 2) * 300, 0.45); thud(t + 0.3, 110, 0.15, 0.4); }
+    else if (kind === "lever") { tick(t, 700, 0.6, 0.05); thud(t + 0.03, 160, 0.15, 0.5); }
+    else if (kind === "page") { tick(t, 3000, 0.25, 0.12); }
+    else tick(t, 1700, 0.5, 0.025); // un cran
+  });
+}
 /** Couinement du jouet-souris. */
 function squeak(volume = 0.3) {
   return oneShot(0.4, (c, out) => {
@@ -673,4 +695,4 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

@@ -39,7 +39,7 @@ ok(I.beatsOf(tuned, earth, t0) === "unison" && I.beatsOf({ ...tuned, freq: tuned
 // commandes
 ok(I.turn(I.START, "pol").pol === -1 && I.turn(I.START, "freq", 30).freq === 24 && I.turn(I.START, "amp", -30).amp === 0, "levier et molettes bornés");
 ok(I.turn({ ...I.START, phase: 24.5 }, "phase", 1).phase === 0 && I.turn({ ...I.START, phase: 0 }, "phase", -1).phase === 24.5, "la roue de phase fait le tour");
-ok(JSON.stringify(I.normalize({ freq: "7", pol: -3, phase: 26 })) === JSON.stringify({ pol: -1, freq: 7, amp: 12, harm: 6, phase: 1, r: 12, g: 12, b: 12, iris: 12, cry: [0, 1, 2, 3] }), "réglage mémorisé relu proprement (et les anciens réglages de l'étape 1 aussi)");
+ok(JSON.stringify(I.normalize({ freq: "7", pol: -3, phase: 26 })) === JSON.stringify({ pol: -1, freq: 7, amp: 12, harm: 6, phase: 1, r: 12, g: 12, b: 12, iris: 12, cry: [0, 1, 2, 3], lock: false, az: 0, tilt: 0 }), "réglage mémorisé relu proprement (et les anciens réglages de l'étape 1 aussi)");
 
 // II. lentilles : la couleur de l'étoile, l'iris selon le flux
 const red = I.targetsOf(A("red_sun\nwater", "Rouge"), "Rouge").lens, blue = I.targetsOf(A("blue_sun\nwater", "Bleu"), "Bleu").lens, sun = I.targetsOf(A("single_sun\nwater", "Sol"), "Sol").lens;
@@ -56,7 +56,7 @@ const right = { ...I.START, cry: cr.ids.map((id) => cr.options.indexOf(id)) };
 ok(I.crystalScore(right, { crystals: cr }) === 1, "cristaux justes : 1");
 const swapped = { ...right, cry: [right.cry[1], right.cry[0], right.cry[2], right.cry[3]] };
 ok(Math.abs(I.crystalScore(swapped, { crystals: cr }) - (2 + 0.6) / 4) < 1e-9, "deux pages échangées : justes à moitié, et un peu pour les bonnes pages mal placées");
-ok(I.turn(right, "cry0", 1, 8).cry[0] === (right.cry[0] + 1) % 8 && I.turn({ ...right, cry: [0, 0, 0, 0] }, "cry1", -1, 8).cry[1] === 7, "emplacement : on fait tourner les cristaux");
+ok(I.turn(right, "cry0", 1, 8).cry[0] === (right.cry[0] + 1) % 8 && I.turn({ ...right, cry: [0, 1, 2, 3] }, "cry1", -1, 8).cry[1] === 0, "emplacement : on fait tourner les cristaux");
 const few = I.targetsOf(A("water", "Peu"), "Peu").crystals; ok(few.ids.length === 1 && few.options.length === 8, "un Âge d'une page : un seul emplacement");
 // netteté finale : il faut les trois
 const ear2 = I.targetsOf(A("single_sun\nsteady_cycle\nwater\nstone\nrotation: 24", "Trio"), "Trio"), ok3 = { pol: ear2.pol, freq: ear2.freq, amp: ear2.amp, harm: ear2.harm, phase: I.phaseAt(ear2, t0), r: ear2.lens.r, g: ear2.lens.g, b: ear2.lens.b, iris: ear2.lens.iris, cry: ear2.crystals.ids.map((id) => ear2.crystals.options.indexOf(id)).concat([0, 0, 0]).slice(0, 4) };
@@ -67,5 +67,21 @@ const hl = I.hints(ear2, "fr"); ok(/lumière de son étoile/.test(hl.lightLine) 
 // indices
 const hf = I.hints(aur, "fr"), he = I.hints(aur, "en");
 ok(/bourdonne/.test(hf.line) && /hums/.test(he.line) && hf.values.freq === aur.freq && !("phase" in hf.values), "indices : une phrase et les valeurs fixes, jamais la phase");
+// le râtelier : des cristaux qui sont des objets
+{ let r = I.place(I.START, null, { rack: 6 }); ok(r.hand && r.hand.opt === 6 && r.hand.slot == null, "on prend un cristal au râtelier");
+  r = I.place(r.s, r.hand, { slot: 2 }); ok(JSON.stringify(r.s.cry) === "[0,1,6,3]" && !r.hand, "posé : celui du logement retourne au râtelier");
+  r = I.place(r.s, null, { slot: 0 }); r = I.place(r.s, r.hand, { slot: 3 }); ok(JSON.stringify(r.s.cry) === "[3,1,6,0]", "d'un logement à l'autre : ils échangent");
+  r = I.place(r.s, null, { slot: 1 }); r = I.place(r.s, r.hand, { rack: 5 }); ok(JSON.stringify(r.s.cry) === "[3,5,6,0]", "rendu au râtelier contre un autre");
+  ok(JSON.stringify(I.normalize({ cry: [2, 2, 2, 2] }).cry) === "[2,0,1,3]", "un cristal n'est qu'à un endroit (anciens réglages)"); }
+// le verrou
+{ const tuned = { ...I.START, pol: earth.pol, freq: earth.freq, amp: earth.amp, harm: earth.harm, phase: I.phaseAt(earth, t0), r: earth.lens.r, g: earth.lens.g, b: earth.lens.b, iris: earth.lens.iris, cry: earth.crystals.ids.map((id) => earth.crystals.options.indexOf(id)).concat([7, 6, 5, 4]).slice(0, 4) };
+  const T0 = I.normalize(tuned); ok(I.clarity(T0, earth, t0).total > 0.95 && I.canLock(T0, earth, t0), "image nette : le verrou peut prendre");
+  const L = I.toggleLock(T0, earth, t0); ok(L.ok && L.locked && L.s.lock, "verrouillé");
+  ok(I.clarity(L.s, earth, t0 + 7 * H).total > 0.95 && I.clarity(T0, earth, t0 + 7 * H).total < 0.6, "verrouillé, il suit la phase ; sans verrou, elle s'en va");
+  ok(I.turn(L.s, "freq", 3).freq === L.s.freq && I.set(L.s, "r", 0).r === L.s.r && I.place(L.s, null, { slot: 0 }).hand === null, "verrouillé : rien ne bouge");
+  ok(I.turn(L.s, "az", 1).az === 1 && I.turn(L.s, "az", -1).az === 3 && I.turn(L.s, "tilt", 5).tilt === 1 && I.turn(T0, "az", 1).az === 0, "le périscope : quatre directions, trois inclinaisons, seulement verrouillé");
+  const U = I.toggleLock({ ...L.s, az: 2, tilt: -1 }, earth, t0 + 7 * H); ok(U.ok && !U.s.lock && U.s.az === 0 && U.s.tilt === 0 && I.clarity(U.s, earth, t0 + 7 * H).total > 0.95, "relâché : de face, net à l'instant où on lâche");
+  ok(!I.toggleLock({ ...T0, freq: 0 }, earth, t0).ok, "image floue : le verrou ne prend pas");
+  ok(I.set(I.START, "iris", 30).iris === 24 && I.set(I.START, "g", 7).g === 7, "un verre posé sur son rail, borné"); }
 hooks.skip = skip0;
 console.log(`imager.test.js : ${n} vérifications OK`);

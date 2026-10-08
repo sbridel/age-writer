@@ -99,27 +99,58 @@ r.setScene(mkScene([])); r.setView("pond"); ok(r.view === "island", "sans page d
 const imagerDone = (async () => {
   const IM = require("../src/imager");
   const sc = mkScene(["page_imager"]); sc.ages = [{ name: "A", path: "A.md", verdict: "stable", stability: 90 }, { name: "B", path: "B.md", verdict: "dying", stability: 20 }];
-  const store = {}, tgt = { freq: 9, amp: 13, harm: 6, pol: -1, phase0: 3, drift: 1, erratic: false, hours: 24, name: "A" };
-  const ri = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { onImagerAge: (age) => ({ target: { ...tgt, name: age.name }, model: null }), imagerGet: (p) => store[p], imagerSet: (p, v) => { store[p] = v; } });
+  const cr = { ids: ["water", "stone"], options: ["fern", "water", "lava", "stone", "fog", "sand", "moth", "door"] }, lens = { r: 24, g: 20, b: 14, iris: 12, rgb: [255, 210, 150] };
+  const store = {}, sounds = [], tgt = { freq: 9, amp: 13, harm: 6, pol: -1, phase0: 3, drift: 1, erratic: false, hours: 24, name: "A", crystals: cr, lens };
+  const ri = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { onImagerAge: (age) => ({ target: { ...tgt, name: age.name }, model: null }), imagerGet: (p) => store[p], imagerSet: (p, v) => { store[p] = v; }, onImagerSound: (k) => sounds.push(k) });
   ri.setScene(sc); ok(ri.available().imager, "page de l'Imageur : la vue existe");
   ri.setView("imager"); ok(ri.view === "imager", "vue de l'Imageur");
   ri.nowOverride = 1.8e12; ri.draw(1);
   await Promise.resolve();
-  { ri.draw(1.2); const st = ri.imager;
-    ok(st.stage === 0 && ri.hot.some((h) => h.imager && h.imager.key === "cry0"), "réglage I (cristaux) d'abord : les logements de cristaux");
-    const plate = ri.hot.find((h) => h.imager && h.imager.stage === 1); ri.toLogical = () => [plate.x + 2, plate.y + 2]; ri.onClick({}); ri.draw(1.25);
-    ok(st.stage === 1 && ri.hot.some((h) => h.imager && h.imager.key === "r") && ri.hot.some((h) => h.imager && h.imager.key === "iris"), "plaque II : les lentilles et l'iris");
-    st.stage = 2; ri.draw(1.3);
+  let T = 1.2; const has = (f) => ri.hot.some((h) => h.imager && f(h.imager));
+  const click = (f, why) => { const h = ri.hot.find((x) => x.imager && f(x.imager)); ok(h, "zone cliquable : " + why); ri.toLogical = () => [h.x + 1, h.y + 1]; ri.onClick({}); ri.draw((T += 0.05)); return h; };
+  { ri.draw(T); const st = ri.imager;
+    ok(st.station == null && ["cry", "lens", "atmo"].every((k) => has((a) => a.station === k)), "vue d'ensemble : trois postes sur l'établi");
+    ok(has((a) => a.lock) && has((a) => a.key === "az") && has((a) => "tilt" in a), "le verrou, la manivelle et le levier du périscope");
+    ok(!has((a) => a.key === "freq" || a.slot != null || a.key === "r"), "aucune commande partagée : chaque réglage est à son poste");
     ok(st.age && st.age.name === "A" && st.target && st.target.freq === 9, "le livre posé sur le lutrin : le premier Âge de l'étagère");
-    const plus = ri.hot.find((h) => h.imager && h.imager.key === "freq" && h.imager.delta > 0); ok(plus, "molette de fréquence cliquable");
-    const f0 = st.settings.freq; ri.toLogical = () => [plus.x + 2, plus.y + 2]; ri.onClick({}); ok(st.settings.freq === f0 + 1 && store["A.md"] && store["A.md"].freq === f0 + 1, "un cran de plus, gardé pour cet Âge");
-    const lever = ri.hot.find((h) => h.imager && h.imager.key === "pol"); ri.toLogical = () => [lever.x + 2, lever.y + 2]; ri.onClick({}); ok(st.settings.pol === -1, "levier de polarité");
-    st.settings = IM.normalize({ pol: -1, freq: 9, amp: 13, harm: 6, phase: IM.phaseAt(st.target, 1.8e12) }); ok(ri.imagerClarity().atmo > 0.97, "atmosphère accordée");
-    st.stage = 0; ri.draw(1.4); const slot = ri.hot.find((h) => h.imager && h.imager.key === "cry0" && h.imager.delta > 0); const c0 = st.settings.cry[0]; ri.toLogical = () => [slot.x + 2, slot.y + 2]; ri.onClick({}); ok(st.settings.cry[0] === (c0 + 1) % 8, "un cristal suivant dans le premier logement");
+    // I. le râtelier
+    click((a) => a.station === "cry", "poste I");
+    ok(st.station === "cry" && ri.hot.filter((h) => h.imager && h.imager.slot != null).length === 4 && ri.hot.filter((h) => h.imager && h.imager.rack != null).length === 8, "gros plan I : quatre logements, huit chevilles");
+    click((a) => a.slot === 1, "logement 2"); ok(st.hand && st.hand.opt === 1 && st.hand.slot === 1, "on prend le cristal du logement 2");
+    click((a) => a.slot === 0, "logement 1"); ok(st.settings.cry[0] === 1 && st.settings.cry[1] === 0 && !st.hand, "posé dans le logement 1 : les deux cristaux changent de place");
+    click((a) => a.rack === 5, "cheville 6"); click((a) => a.slot === 2, "logement 3"); ok(st.settings.cry[2] === 5 && !st.settings.cry.includes(2), "un cristal du râtelier prend la place ; l'autre y retourne");
+    click((a) => a.slot === 3, "logement 4"); click((a) => a.slot === 1, "logement 2"); ok(ri.imagerClarity().cry === 1, "cristaux justes : les pages écrites, dans l'ordre");
+    ok(sounds.includes("lift") && sounds.includes("set"), "le verre tinte quand on le prend, quand on le pose");
+    click((a) => a.station === null, "reculer"); ok(st.station == null, "reculer : la vue d'ensemble");
+    // II. le banc optique
+    click((a) => a.station === "lens", "poste II");
+    ok(["r", "g", "b", "iris"].every((k) => ri.hot.filter((h) => h.imager && h.imager.key === k && h.imager.value != null).length === 25), "gros plan II : trois rails et l'arc de l'iris, vingt-cinq crans chacun");
+    for (const [k, v] of Object.entries({ r: 24, g: 20, b: 14, iris: 12 })) click((a) => a.key === k && a.value === v, `${k} = ${v}`);
+    ok(ri.imagerClarity().lens === 1 && sounds.includes("slide"), "verres posés sur la lumière de l'étoile : lentilles justes");
+    // III. le régulateur
+    click((a) => a.station === null, "reculer"); click((a) => a.station === "atmo", "poste III");
+    const f0 = st.settings.freq; click((a) => a.key === "freq" && a.delta > 0, "fréquence +"); ok(st.settings.freq === f0 + 1 && store["A.md"] && store["A.md"].freq === f0 + 1, "un cran de plus, gardé pour cet Âge");
+    click((a) => a.key === "pol", "inverseur"); ok(st.settings.pol === -1, "inverseur de polarité");
+    st.settings = IM.normalize({ ...st.settings, pol: -1, freq: 9, amp: 13, harm: 6, phase: IM.phaseAt(st.target, ri.nowOverride) }); ok(ri.imagerClarity().total > 0.97, "les trois réglages justes : l'Âge est net");
+    // le verrou
+    click((a) => a.station === null, "reculer"); click((a) => a.lock, "verrou");
+    ok(st.settings.lock && store["A.md"].lock && sounds.includes("lock"), "image nette : le verrou prend, et c'est gardé");
+    ri.nowOverride += 6 * 3600000; ok(ri.imagerClarity().total > 0.97 && IM.clarity({ ...st.settings, lock: false }, st.target, ri.nowOverride).total < 0.6, "six heures plus tard : verrouillée, la machine a suivi le ciel");
+    click((a) => a.station === "atmo", "poste III"); const fz = st.settings.freq; click((a) => a.key === "freq" && a.delta > 0, "fréquence +"); ok(st.settings.freq === fz && ri.flash && /lock/.test(ri.flash.text), "verrouillé : les boutons ne bougent plus");
+    click((a) => a.station === null, "reculer");
+    // le périscope
+    click((a) => a.key === "az" && a.delta > 0, "manivelle"); ok(st.settings.az === 1 && st.anim && st.anim.dx === 1 && sounds.includes("crank"), "la manivelle tourne la vue d'un quart de tour");
+    click((a) => a.tilt === 1, "lever les yeux"); ok(st.settings.tilt === 1, "levier en haut : le zénith");
+    click((a) => a.tilt === -1, "sous l'eau"); ok(st.settings.tilt === 1 && sounds[sounds.length - 1] === "jam", "pas d'eau : le levier ne descend pas");
+    click((a) => a.lock, "verrou"); ok(!st.settings.lock && st.settings.az === 0 && st.settings.tilt === 0 && ri.imagerClarity().total > 0.97, "relâché : de face, toujours net à cet instant");
+    click((a) => a.key === "az" && a.delta > 0, "manivelle"); ok(st.settings.az === 0, "sans verrou, le périscope ne tourne pas");
+    st.settings = IM.normalize({ ...st.settings, freq: 2 }); click((a) => a.lock, "verrou"); ok(!st.settings.lock && sounds[sounds.length - 1] === "jam", "image floue : le verrou ne prend pas");
+    st.settings = IM.normalize({ ...st.settings, freq: 9 }); click((a) => a.lock, "verrou");
     const next = ri.hot.find((h) => h.imager && h.imager.book === 1); ri.toLogical = () => [next.x + 2, next.y + 2]; ri.onClick({});
-    await Promise.resolve(); { ok(ri.imager.age.name === "B" && ri.imager.settings.freq === IM.START.freq && ri.imager.stage === 0, "livre suivant : un autre Âge, son propre réglage");
+    await Promise.resolve(); { ok(ri.imager.age.name === "B" && ri.imager.settings.freq === IM.START.freq && !ri.imager.settings.lock, "livre suivant : un autre Âge, son propre réglage");
       const empty = mkScene(["page_imager"]); empty.ages = []; ri.setScene(empty); ri.setView("imager"); ri.draw(2); ok(ri.imager.empty && ri.imagerSharpness() >= 0, "étagère vide : rien ne casse");
       const cab = mkScene(["page_imager"]); ri.setScene(cab); ri.setView("cabin"); ri.draw(1); ok(ri.hot.some((h) => h.go === "imager"), "dans la cabane, l'appareil mène à l'Imageur");
+      ok(ri.hot.some((h) => h.book && /held by the Imager/.test(h.tip)), "sur l'étagère, le livre verrouillé porte son étiquette");
       ri.setScene(mkScene([])); ri.setView("imager"); ok(ri.view !== "imager", "sans la page, pas d'Imageur"); }
   }
 })().catch((e) => { console.log("KO imageur : " + (e && e.stack || e)); process.exitCode = 1; });

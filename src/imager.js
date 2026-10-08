@@ -124,8 +124,50 @@ function crystalScore(s, t) {
 /** Les trois réglages et la netteté finale (leur produit) : il faut les trois pour voir l'Âge net. */
 function clarity(s, t, now = Date.now()) {
   if (!t) return { cry: 0, lens: 0, atmo: 0, total: 0 };
-  const cry = crystalScore(s, t), lens = lensScore(s, t), atmo = sharpness(s, t, now);
+  const e = effective(s, t, now), cry = crystalScore(e, t), lens = lensScore(e, t), atmo = sharpness(e, t, now);
   return { cry, lens, atmo, total: cry * lens * atmo };
+}
+
+/**
+ * Le VERROU (1.17) : une fois l'image nette, on tire le levier ; la machine suit alors l'Âge toute seule (la phase qui
+ * dérive, les sauts d'un cycle erratique). Verrouillé, le réglage est tenu : les commandes ne bougent plus, et le
+ * périscope (azimut `az` 0 à 3, inclinaison `tilt` −1 sous l'eau, 0 horizon, 1 zénith) devient libre.
+ */
+const LOCK_AT = 0.9;
+function effective(s, t, now = Date.now()) { return s && s.lock && t ? { ...s, phase: phaseAt(t, now) } : s; }
+function canLock(s, t, now = Date.now()) { return !!t && clarity({ ...s, lock: false }, t, now).total >= LOCK_AT; }
+/** Tirer le levier : verrouille si l'image est nette ; déverrouille sinon (la phase reste où le ciel était). */
+function toggleLock(s, t, now = Date.now()) {
+  const o = normalize(s);
+  if (o.lock) { o.lock = false; o.phase = t ? Math.round(phaseAt(t, now) * 2) / 2 % TURN : o.phase; o.az = 0; o.tilt = 0; return { s: o, ok: true, locked: false }; }
+  if (!canLock(o, t, now)) return { s: o, ok: false, locked: false };
+  o.lock = true; return { s: o, ok: true, locked: true };
+}
+
+/**
+ * I. Le râtelier : les cristaux sont des objets. On en prend un (au râtelier ou dans un logement), on le pose dans un
+ * logement : celui qui y était retourne au râtelier, ou change de place si on a pris un cristal déjà posé.
+ * `hand` = null | { opt, slot? } ; `target` = { slot } | { rack: opt }. Renvoie { s, hand }.
+ */
+function place(s, hand, target) {
+  const o = normalize(s); if (o.lock || !target) return { s: o, hand: null };
+  if (!hand) {
+    if (target.slot != null) return { s: o, hand: { opt: o.cry[target.slot], slot: target.slot } };
+    if (target.rack != null) { const at = o.cry.indexOf(target.rack); return { s: o, hand: at >= 0 ? { opt: target.rack, slot: at } : { opt: target.rack } }; }
+    return { s: o, hand: null };
+  }
+  if (target.slot != null) {
+    if (hand.slot === target.slot) return { s: o, hand: null }; // reposé où il était
+    if (hand.slot != null) { const a = o.cry[hand.slot]; o.cry[hand.slot] = o.cry[target.slot]; o.cry[target.slot] = a; return { s: o, hand: null }; }
+    const at = o.cry.indexOf(hand.opt); if (at >= 0) o.cry[at] = o.cry[target.slot]; // déjà posé ailleurs : on échange
+    o.cry[target.slot] = hand.opt; return { s: o, hand: null };
+  }
+  if (target.rack != null) {
+    if (target.rack === hand.opt) return { s: o, hand: null };
+    if (hand.slot != null && !o.cry.includes(target.rack)) { o.cry[hand.slot] = target.rack; return { s: o, hand: null }; } // on rend le cristal, on prend l'autre à sa place
+    const at = o.cry.indexOf(target.rack); return { s: o, hand: at >= 0 ? { opt: target.rack, slot: at } : { opt: target.rack } };
+  }
+  return { s: o, hand: null };
 }
 
 /** Battements entendus : ce qu'on perçoit de l'écart de fréquence (clé i18n). */
@@ -137,25 +179,38 @@ function beatsOf(s, t, now = Date.now()) {
 }
 
 /** Réglage de départ : au milieu, polarité « + ». */
-const START = Object.freeze({ pol: 1, freq: 12, amp: 12, harm: 6, phase: 0, r: 12, g: 12, b: 12, iris: 12, cry: Object.freeze([0, 1, 2, 3]) });
+const START = Object.freeze({ pol: 1, freq: 12, amp: 12, harm: 6, phase: 0, r: 12, g: 12, b: 12, iris: 12, cry: Object.freeze([0, 1, 2, 3]), lock: false, az: 0, tilt: 0 });
 const knob = (v, d) => Math.round(clamp(Number.isFinite(+v) ? +v : d, 0, MAX));
 function normalize(s) {
   const o = { ...START, ...(s || {}) };
   const cry = (Array.isArray(o.cry) ? o.cry : START.cry).slice(0, 4).map((v) => Math.max(0, Math.floor(+v) || 0));
-  while (cry.length < 4) cry.push(cry.length);
+  for (let i = 0; i < cry.length; i++) if (cry.indexOf(cry[i]) < i) { let v = 0; while (cry.includes(v)) v++; cry[i] = v; } // un cristal n'est qu'à un endroit
+  while (cry.length < 4) { let v = 0; while (cry.includes(v)) v++; cry.push(v); }
   return {
     pol: o.pol < 0 ? -1 : 1, freq: knob(o.freq, 12), amp: knob(o.amp, 12), harm: knob(o.harm, 6), phase: ((Math.round((+o.phase || 0) * 2) / 2) % TURN + TURN) % TURN,
     r: knob(o.r, 12), g: knob(o.g, 12), b: knob(o.b, 12), iris: knob(o.iris, 12), cry,
+    lock: !!o.lock, az: ((Math.floor(+o.az) || 0) % 4 + 4) % 4, tilt: Math.max(-1, Math.min(1, Math.round(+o.tilt) || 0)),
   };
 }
 /** Tourner une commande : `key` (freq, amp, harm, phase) de `delta` crans ; la polarité bascule. */
 function turn(s, key, delta, nOptions = 8) {
   const o = normalize(s);
+  if (key === "az") { if (o.lock) o.az = (((o.az + delta) % 4) + 4) % 4; return o; } // le périscope ne tourne que verrouillé
+  if (key === "tilt") { if (o.lock) o.tilt = Math.max(-1, Math.min(1, o.tilt + delta)); return o; }
+  if (o.lock) return o; // verrouillé : le réglage est tenu
   const slot = /^cry([0-3])$/.exec(key || "");
   if (slot) { const i = +slot[1], n = Math.max(1, nOptions); o.cry[i] = (((o.cry[i] + delta) % n) + n) % n; return o; }
   if (key === "pol") o.pol = -o.pol;
   else if (key === "phase") o.phase = ((o.phase + delta * 0.5) % TURN + TURN) % TURN;
   else if (key in o) o[key] = Math.round(clamp(o[key] + delta, 0, MAX));
+  return o;
+}
+
+/** Poser une commande à une valeur (un curseur sur son rail, l'iris sur son arc). */
+function set(s, key, value) {
+  const o = normalize(s); if (o.lock) return o;
+  if (key === "tilt") return o;
+  if (key in o && typeof o[key] === "number" && key !== "pol" && key !== "az") o[key] = key === "phase" ? ((Math.round(value * 2) / 2) % TURN + TURN) % TURN : Math.round(clamp(value, 0, MAX));
   return o;
 }
 
@@ -179,4 +234,4 @@ function hints(t, lang = "en") {
   };
 }
 
-module.exports = { MAX, TURN, START, DECOYS, targetsOf, lensOf, crystalsOf, phaseAt, phaseGap, sharpness, lensScore, crystalScore, clarity, beatsOf, normalize, turn, hints };
+module.exports = { MAX, TURN, START, DECOYS, LOCK_AT, effective, canLock, toggleLock, place, set, targetsOf, lensOf, crystalsOf, phaseAt, phaseGap, sharpness, lensScore, crystalScore, clarity, beatsOf, normalize, turn, hints };

@@ -342,4 +342,20 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   const iceOnly = G.build(G.sceneOf(an(["single_sun", "ice", "kelp"]), "Glace"), 320, 192); ok(iceOnly.S.ice && !iceOnly.S.water, "glace sans eau : pas de varech dessiné (pas d'eau)");
 }
 
+// 1.17 : les vues du périscope de l'Imageur (directions, zénith, sous l'eau)
+{
+  const V = require("../src/genviews");
+  const m0 = G.build(G.sceneOf(an(["single_sun", "water", "sand", "kelp", "coral", "fissure", "grove", "auroras"]), "Lagon"), 300, 176);
+  const h1 = V.heading(m0, 1), h2 = V.heading(m0, 2);
+  ok(V.heading(m0, 0) === m0 && V.heading(m0, 4) === m0 && V.heading(m0, 1) === h1, "direction 0 : la vue de face ; les autres gardées");
+  ok(h1.pal === m0.pal && h1.noSun && h1.sunFrom === m0 && JSON.stringify(h1.ridges[0].xs) !== JSON.stringify(m0.ridges[0].xs) && JSON.stringify(h1.ridges[0].xs) !== JSON.stringify(h2.ridges[0].xs), "une direction : le même ciel, un autre décor");
+  const k0 = G.skyState(m0, 0.3, { day: 0.3 }), k1 = G.skyState(h1, 0.3, { day: 0.3 }); ok(k0.d === k1.d && JSON.stringify(k0.top) === JSON.stringify(k1.top), "même heure, même lumière dans toutes les directions");
+  const l = []; G.paint(fakeCtx(l), h1, 0.3, { day: 0.3 }); ok(l.length > 50, "une autre direction se peint");
+  ok(V.hasUnder(m0) && !V.hasUnder(G.build(G.sceneOf(an(["single_sun", "stone"]), "Roc"), 300, 176)), "sous l'eau : seulement s'il y a de l'eau");
+  const u = []; V.paintUnder(fakeCtx(u), m0, 0.3, { day: 0.3 }, 0); ok(u.length > 100, "sous l'eau : rendu");
+  const U = V.buildUnder(m0, 0); ok(U.kelp.length && U.coral.length && U.fis && JSON.stringify(V.buildUnder(m0, 0)) === JSON.stringify(U) && JSON.stringify(V.buildUnder(m0, 1)) !== JSON.stringify(U), "sous l'eau : varech, corail, la fissure ; même graine, même fond ; autre direction, autre fond");
+  const z = []; V.paintZenith(fakeCtx(z), m0, 0.3, { day: 0.9 }); ok(z.length > 50, "le zénith : rendu");
+  const zz = []; V.paintLook(fakeCtx(zz), G.build(G.sceneOf(an(["single_sun", "stone"]), "Roc"), 300, 176), 0.3, { day: 0.3 }, 0, -1); ok(zz.length > 50, "sans eau, regarder en bas : la vue de face");
+}
+
 console.log(`gen.test.js : ${n} vérifications OK`);
