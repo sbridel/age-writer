@@ -19,7 +19,7 @@
 
 ## À faire hors de la session
 
-- [ ] Essayer la 1.16.1 dans Obsidian, ordinateur **et** mobile (jamais testé sur mobile ; `isDesktopOnly: false`), thème clair et sombre.
+- [ ] Essayer la 1.17.0 dans Obsidian **sur ordinateur, en thème clair d'abord** (c'est celui de l'auteur), puis sombre. Mobile : hors périmètre, `isDesktopOnly: true` dans le manifest (le plugin est pensé pour la souris : zones cliquables fines, sons, canvas animés).
 - [ ] Fusionner les PR (#2 dans `physique`, puis #1 dans `main`).
 - [x] **Release automatique** (`.github/workflows/release.yml`, sur le modèle de celui de Carnet du Poète) : quand la version de `package.json` change sur `main` (ou par le bouton « Run workflow »), GitHub construit le plugin, lance les tests et le lint, vérifie que `manifest.json` annonce la même version, **atteste la provenance** de `main.js`, `manifest.json` et `styles.css` (`actions/attest-build-provenance`), puis crée le tag (la version, sans `v`) et la release avec ces trois fichiers et la section du journal des changements comme notes. Si la version a déjà son tag, rien ne se passe. Différence avec Carnet du Poète : ici les fichiers ne sont pas dans le dépôt, ils sont construits par le workflow (donc l'attestation certifie qu'ils viennent bien de ce code).
   - L'attestation ne marche que sur un **dépôt public** (ou GitHub Enterprise Cloud) : tant que le dépôt est privé, l'étape est sautée et la release se crée quand même.
