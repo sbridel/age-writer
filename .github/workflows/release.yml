@@ -1,7 +1,8 @@
 # Release automatique : quand la version de package.json change sur main (ou à la main, bouton « Run workflow »),
 # on construit le plugin, on lance les tests, on atteste la provenance des fichiers livrés et on crée la release
 # GitHub (tag = la version, sans « v », comme le demande le catalogue des plugins Obsidian) avec main.js,
-# manifest.json et styles.css. Si la release de cette version existe déjà, rien ne se passe.
+# manifest.json et styles.css. Le titre est « version — description courte » et le corps le journal des changements de la
+# version, tous deux tirés de docs/NOTES-historique.md (ou des commits à défaut). Si la release existe déjà, rien ne se passe.
 name: Release
 
 on:
@@ -70,13 +71,14 @@ jobs:
           [ "$m" = "$v" ] || { echo "manifest.json annonce $m, package.json $v"; exit 1; }
           sha256sum release/main.js release/manifest.json release/styles.css
 
-      - name: Notes de version (section du journal des changements)
+      - name: Notes de version (titre et corps automatiques)
+        # Titre : « <version> — description courte » (en-tête de la section du journal) ; corps : cette section.
+        # Sans section, la liste des commits depuis la version précédente. Voir tools/release-notes.js.
+        id: notes
         if: steps.version.outputs.exists == 'false'
         run: |
-          v="${{ steps.version.outputs.version }}"
-          awk -v v="$v" '$0 ~ "^## "v"( |$)" {p=1; print; next} p && /^## / {exit} p' docs/NOTES-historique.md > release-notes.md
-          [ -s release-notes.md ] || echo "Version $v." > release-notes.md
-          printf '\n---\nInstallation : copier `main.js`, `manifest.json` et `styles.css` dans `<coffre>/.obsidian/plugins/age-writer/`.\nProjet de fan, sans lien avec Cyan Worlds.\n' >> release-notes.md
+          node tools/release-notes.js "${{ steps.version.outputs.version }}"
+          echo "title=$(head -n 1 release-title.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Attester la provenance des fichiers
         # Les attestations demandent un dépôt public (ou GitHub Enterprise Cloud pour un dépôt privé).
@@ -93,7 +95,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.version }}
-          name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.notes.outputs.title }}
           target_commitish: ${{ github.sha }}
           body_path: release-notes.md
           files: |

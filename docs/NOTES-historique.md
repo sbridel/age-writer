@@ -232,3 +232,12 @@ unlock:                            # facultatif
 
 - Avertissement exact exigé par Cyan (point 5 de leur politique) affiché en tête des README, dans `NOTICE` et dans le guide ; mention « gratuit et non commercial ».
 - README : l'ouverture décrit le plugin sans citer Myst ; le crédit à Myst/Mystcraft passe dans le bandeau d'hommage (point 10 : ne pas promouvoir avec l'IP de Cyan).
+
+## 1.18.0 — terrains, rivières et lieux (8 oct. 2026)
+
+- **Blocs de terrain** (`src/terrain.js`) : `plains`, `hills`, `mountains`, `canyon` règlent le nombre, la hauteur et l'allure des chaînes de la fenêtre générative ; `river`, `delta`, `lake`, `marsh` allument l'eau et le rivage (le marais ajoute de la brume). Ils se contredisent entre eux (plaines contre montagnes : forte) et jurent avec `desert_world` et `lava_world`. Dans le registre du ciel (axe cosmologique), jamais tirés au sort.
+- **Lieux et habitants** (`src/places.js`) : `library`, `ruined_library`, `garden` (traces de bâtisseurs) et `spiders` (tisseuses de soie farouches devant la lumière, qui ont besoin de proies).
+- Physique : exigences des nouveaux blocs (montagnes : tectonique ; rivière, delta, lac, marais : eau liquide ; collines, canyon, delta : érosion).
+- Guide (EN/FR) et README à jour (107 blocs écrivables au lieu de 92) ; `test/terrain.test.js`.
+- **Release automatique** : le titre est « version — description courte » (en-tête de cette section) et le corps est cette section ; sans section, la liste des commits depuis la version précédente (`tools/release-notes.js`, `test/release-notes.test.js`).
+- Les Âges existants ne changent pas : 600 Âges comparés à la 1.17.6, 0 différence.
