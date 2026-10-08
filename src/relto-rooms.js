@@ -85,7 +85,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     const x0 = 196, w = 244, y0 = 50, RH = 62, S = 3.9;
     ctx.fillStyle = c("#241a12"); ctx.fillRect(x0, y0, w, FLOOR - y0);
     ctx.fillStyle = c("#4b3626"); ctx.fillRect(x0 - 7, y0 - 8, 9, FLOOR - y0 + 8); ctx.fillRect(x0 + w - 2, y0 - 8, 9, FLOOR - y0 + 8); ctx.fillRect(x0 - 7, y0 - 10, w + 14, 10);
-    for (let rw = 0; rw < 4; rw++) ctx.fillRect(x0, y0 + RH * (rw + 1) - 3, w, 5);
+    for (let rw = 0; rw < 3; rw++) ctx.fillRect(x0, y0 + RH * (rw + 1) - 3, w, 5); // trois rayons (30 livres) : un 4e tombait sur le plancher
     for (const b of r.geo.books) {
       const bx = x0 + 10 + b.col * 22, bh = b.h * S, by = y0 + RH * (b.row + 1) - 3 - bh, bw = b.w * S;
       ctx.fillStyle = c(b.color); ctx.fillRect(bx, by, bw, bh);
@@ -109,6 +109,9 @@ function drawCabin(r, ctx, sc, sky, t) {
   const cx = tx + tw - 34;
   ctx.fillStyle = c("#e8dcc0"); ctx.fillRect(cx, ty - 14, 7, 14);
   const cf = clamp(0.75 * fl + 0.2); ctx.fillStyle = rgba(255, 190, 80, cf); ctx.beginPath(); ctx.ellipse(cx + 3.5, ty - 19, 2.4, 5 * cf, 0, 0, 6.283); ctx.fill();
+  // le chat, quand il dort au coin du feu (voir ReltoRenderer.catAsleep) : au premier plan, sur le tapis
+  const cat = r.scene.additions.find((a) => a.type === "cat");
+  if (cat && r.catAsleep()) r.drawSleepingCat(ctx, cat, { x: 428, y: 326, S: 3.1, glow: lit ? d * fl : 0, shade: c }, t);
   // lumière : lueur de l'âtre et de la chandelle, puis pénombre du soir
   let g = ctx.createRadialGradient(mx, FLOOR - 24, 6, mx, FLOOR - 24, 300); g.addColorStop(0, rgba(255, 150, 60, (0.18 + 0.2 * night) * fl * d)); g.addColorStop(1, rgba(255, 130, 40, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   g = ctx.createRadialGradient(cx + 3.5, ty - 19, 2, cx + 3.5, ty - 19, 70); g.addColorStop(0, rgba(255, 190, 90, (0.12 + 0.28 * night) * fl)); g.addColorStop(1, rgba(255, 190, 90, 0)); ctx.fillStyle = g; ctx.fillRect(cx - 80, ty - 90, 160, 140);

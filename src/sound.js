@@ -547,6 +547,24 @@ function segmentsOf(d, sr) {
   }
   return out.length ? out : [{ start: 0, dur: Math.min(4, d.length / sr), peak: Math.max(0.1, ref) }];
 }
+/**
+ * Un ronron bref (clic sur le chat endormi) : ~3 s, qui monte et s'éteint. Avec l'enregistrement de l'utilisateur
+ * (réglage « Purr sound file »), un morceau du fichier ; sinon le même ronron synthétisé que la vue du chat.
+ */
+function purr(volume = 0.3, buf = null) {
+  const dur = 2.8 + Math.random() * 0.8;
+  return oneShot(dur + 0.3, (c, out, noise) => {
+    const t = c.currentTime, env = c.createGain();
+    env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(1, t + 0.5); env.gain.setValueAtTime(1, t + dur - 0.9); env.gain.linearRampToValueAtTime(0.0001, t + dur);
+    env.connect(out);
+    if (buf) { const s = c.createBufferSource(); s.buffer = buf; s.connect(env); out.gain.value = volume * bufferGain(buf); s.start(t, Math.random() * Math.max(0, buf.duration - dur), dur); return; }
+    const ns = noise(dur + 0.2), bp = c.createBiquadFilter(), lp = c.createBiquadFilter(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+    bp.type = "bandpass"; bp.frequency.value = 130; bp.Q.value = 0.9; lp.type = "lowpass"; lp.frequency.value = 320;
+    g.gain.value = 0.55; lfo.frequency.value = 22 + Math.random() * 5; lg.gain.value = 0.22; lfo.connect(lg); lg.connect(g.gain);
+    ns.connect(bp); bp.connect(lp); lp.connect(g); g.connect(env); out.gain.value = volume * 1.6;
+    ns.start(t); lfo.start(t); lfo.stop(t + dur + 0.1);
+  });
+}
 let lastMeowSeg = -1;
 function meow(volume = 0.3, buf = null) {
   if (buf) { // enregistrement de l'utilisateur : un seul des sons du fichier est joué à chaque fois (jamais deux fois de suite le même), à vitesse légèrement variable
@@ -638,4 +656,4 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { segmentsOf, audioContext: sfxCtx, roomStart, roomStop, meow, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { segmentsOf, audioContext: sfxCtx, roomStart, roomStop, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

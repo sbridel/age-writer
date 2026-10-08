@@ -168,6 +168,7 @@ class ReltoRenderer {
     const has = (type) => sc.additions.find((a) => a.type === type);
     this.hot = [];
     if (this.view && this.view !== "island" && this.view !== "global" && !this.available()[this.view]) this.view = "island"; // la page de cette vue a été retirée
+    if (this.view === "cat" && this.catAsleep()) { this.view = "cabin"; if (this.opts.onView) this.opts.onView("cabin"); } // l'heure a tourné : il est rentré dormir
     if (this.view === "global") return this.drawFullView(ctx, sky, () => GL.drawGlobal(this, ctx, sc, sky, t, has));
     if (ROOMS[this.view]) return this.drawFullView(ctx, sky, () => ROOMS[this.view](this, ctx, sc, sky, t));
     ctx.save(); ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0);
@@ -190,7 +191,7 @@ class ReltoRenderer {
     const wf = has("waterfall"); if (wf) this.drawWaterfall(ctx, t);
     this.drawStructures(ctx, sky, t);
     const bn = has("bench"); if (bn) SC.bench(ctx, this, sky, this.lay.bench ? this.lay.bench.x0 : 289);
-    const ct = has("cat"); if (ct) this.drawCat(ctx, ct, sky, t);
+    const ct = has("cat"); if (ct && !this.catAsleep()) this.drawCat(ctx, ct, sky, t); // endormi : il est dans la cabane, près du feu
     const sk = has("stalktree"); if (sk) this.drawStalk(ctx, sk, sky, t);
     const pl = has("pillars"); if (pl) this.drawPillars(ctx, pl.density, sky, t);
     const ch = has("chimney"); if (ch) this.drawChimney(ctx, ch.density, sky, t);
@@ -502,6 +503,62 @@ class ReltoRenderer {
     this.hot.push({ x: CX - 9, y: GY - 26, w: 18, h: 26, tip: nm ? `${nm} — ${cat.label} cat` : `A ${cat.label} cat`, flash: nm || `a ${cat.label} cat` });
   }
 
+  /**
+   * Le chat dort-il dans la cabane, sur le tapis ? Option de page `sleep=` : never (toujours dehors), always (toujours au coin du feu),
+   * auto (défaut) : le soir et la nuit, surtout quand l'âtre brûle ; parfois par pluie ou neige, rarement en plein jour.
+   * Le tirage change par demi-heure (jamais d'une image à l'autre) et dépend de la graine du Relto.
+   */
+  catAsleep() {
+    const sc = this.scene, has = (ty) => sc.additions.find((a) => a.type === ty), cat = has("cat");
+    if (!cat || !sc.structures.includes("hut")) return false;
+    const mode = String(cat.sleep || "auto").toLowerCase();
+    if (mode === "never" || mode === "no" || mode === "off") return false;
+    if (mode === "always" || mode === "yes" || mode === "fire") return true;
+    const h = ((this.hour() % 24) + 24) % 24, fire = !!has("chimney"), wet = !!(has("rain") || has("storm") || has("snow"));
+    const p = h >= 19.5 || h < 6.5 ? (fire ? 0.85 : 0.5) : wet ? 0.55 : h >= 17 && fire ? 0.3 : 0.06;
+    return rng((sc.seed ^ fnv("cat-sleep|" + Math.floor(h * 2))) >>> 0)() < p;
+  }
+
+  /**
+   * Le chat roulé en boule (vue de la cabane) : il respire, une oreille frémit de temps en temps, la queue fait le tour du corps.
+   * (x, y) : le sol sous lui ; S : échelle ; glow : lueur de l'âtre (0 = feu éteint) ; shade : la pénombre de la pièce.
+   */
+  drawSleepingCat(ctx, a, { x, y, S, glow = 0, shade = (c) => c }, t) {
+    const cat = catLook(a.color), br = 1 + 0.045 * Math.sin(t * 1.5), tw = frac(t * 0.13 + (this.scene.seed % 5) / 5) > 0.975 ? Math.sin(t * 40) * 0.25 : 0;
+    ctx.save(); ctx.translate(x, y); ctx.scale(S, S);
+    ctx.fillStyle = "rgba(0,0,0,0.28)"; ctx.beginPath(); ctx.ellipse(0, 0, 13, 2.2, 0, 0, 6.283); ctx.fill(); // ombre sur le tapis
+    // corps : une miche couchée, qui se soulève doucement
+    ctx.save(); ctx.translate(1, 0); ctx.scale(1, br);
+    ctx.fillStyle = shade(cat.fur); ctx.beginPath(); ctx.ellipse(0, -5, 11, 5.4, 0, 0, 6.283); ctx.fill();
+    if (cat.belly) { ctx.fillStyle = shade(cat.belly); ctx.beginPath(); ctx.ellipse(-2.5, -1.7, 5.5, 1.7, 0, 0, 6.283); ctx.fill(); }
+    if (cat.patch) { ctx.fillStyle = shade(cat.patch); ctx.beginPath(); ctx.ellipse(4, -7, 4.2, 2.6, 0.2, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(-2, -8.4, 2.2, 1.4, -0.2, 0, 6.283); ctx.fill(); }
+    if (cat.stripes) { ctx.strokeStyle = shade(cat.stripes); ctx.lineWidth = 0.8; for (let i = 0; i < 4; i++) { const sx = -3 + i * 3.2; ctx.beginPath(); ctx.moveTo(sx, -10.2); ctx.quadraticCurveTo(sx + 1.2, -7.4, sx + 0.4, -5.4); ctx.stroke(); } }
+    ctx.restore();
+    // queue enroulée devant, jusque sous le museau
+    ctx.strokeStyle = shade(cat.tail); ctx.lineWidth = 2.4; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(10.5, -2.5); ctx.bezierCurveTo(13.5, 0.5, 7, 1.6, 0, 1.4); ctx.quadraticCurveTo(-6, 1.2, -9 + Math.sin(t * 0.7) * 0.4, -0.4); ctx.stroke();
+    // patte avant, tête posée dessus
+    ctx.fillStyle = shade(cat.paws || cat.fur); ctx.beginPath(); ctx.ellipse(-9.5, -1.2, 2.6, 1.3, 0, 0, 6.283); ctx.fill();
+    const hx = -8.2, hy = -5.2;
+    ctx.fillStyle = shade(cat.ears || cat.fur);
+    ctx.beginPath(); ctx.moveTo(hx - 3.4, hy - 1.6); ctx.lineTo(hx - 4.4, hy - 6); ctx.lineTo(hx - 0.9, hy - 3.6); ctx.closePath(); ctx.fill();
+    ctx.save(); ctx.translate(hx + 2.2, hy - 2.6); ctx.rotate(0.35 + tw); ctx.beginPath(); ctx.moveTo(-1.6, 0.4); ctx.lineTo(0.2, -4.2); ctx.lineTo(1.8, 0.2); ctx.closePath(); ctx.fill(); ctx.restore();
+    ctx.fillStyle = shade(cat.face || cat.fur); ctx.beginPath(); ctx.ellipse(hx, hy, 4.4, 3.9, -0.15, 0, 6.283); ctx.fill();
+    if (cat.muzzle) { ctx.fillStyle = shade(cat.muzzle); ctx.beginPath(); ctx.ellipse(hx - 0.8, hy + 1.6, 2.2, 1.5, 0, 0, 6.283); ctx.fill(); }
+    // yeux clos : deux petits arcs
+    const fur = String(cat.face || cat.fur), dark = /^#[0-9a-f]{6}$/i.test(fur) && parseInt(fur.slice(1, 3), 16) + parseInt(fur.slice(3, 5), 16) + parseInt(fur.slice(5, 7), 16) < 240;
+    ctx.strokeStyle = shade(dark ? "#8a8296" : "#1a1410"); ctx.lineWidth = 0.55; // sur un pelage sombre, les paupières se lisent en clair
+    for (const ex of [hx - 2.3, hx + 1.3]) { ctx.beginPath(); ctx.arc(ex, hy - 0.4, 0.9, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke(); }
+    ctx.fillStyle = shade("#d98a8a"); ctx.fillRect(hx - 0.9, hy + 1, 0.8, 0.55);
+    // lueur de l'âtre sur le dos (le feu est à droite)
+    if (glow > 0) { ctx.strokeStyle = rgba(255, 170, 80, 0.5 * glow); ctx.lineWidth = 0.9; ctx.lineCap = "butt"; ctx.beginPath(); ctx.ellipse(1, -5 * br, 11, 5.4 * br, 0, -0.95, 0.3); ctx.stroke(); }
+    ctx.restore();
+    // quelques « z » qui montent, très pâles
+    if (!this.opts.reducedMotion) for (let i = 0; i < 2; i++) { const p = frac(t * 0.18 + i * 0.5); ctx.fillStyle = rgba(240, 230, 210, 0.35 * Math.sin(p * Math.PI)); ctx.font = `italic ${Math.round(S * (2.6 + p * 1.6))}px serif`; ctx.fillText("z", x + S * (-11 + p * 4 + i * 2), y - S * (11 + p * 9)); }
+    const nm = String(a.name || "").trim();
+    this.hot.push({ x: x - 14 * S, y: y - 12 * S, w: 27 * S, h: 13 * S, tip: nm ? `${nm} — asleep by the fire` : `A ${cat.label} cat, asleep`, flash: "purr…", purr: true });
+  }
+
   /** étiquette brève (nom du chat, de la koï) affichée après un clic */
   /** partie visible du monde (x0, x1, y0) : la caméra de l'île recadre les bords, la vue globale montre tout */
   visible_() { return this.view && this.view !== "island" ? [0, W, 0] : [CAM_X - CAM_X / CAM, CAM_X + (W - CAM_X) / CAM, CAM_Y - CAM_OY / CAM]; }
@@ -738,6 +795,7 @@ class ReltoRenderer {
   /** « island » (vue de l'île, par défaut) ou « global » (le Relto vu de loin) ; un fondu léger marque le passage. */
   setView(view) {
     if (view !== "global" && !(ROOMS[view] && this.available()[view])) view = "island";
+    if (view === "cat" && this.catAsleep()) view = "cabin"; // il dort au coin du feu : on le trouve dans la cabane
     if (view === (this.view || "island")) return;
     this.view = view; this.hover = null; this.flash = null; this.fadeAt = Date.now();
     if (this.opts.onView) this.opts.onView(view);
@@ -778,7 +836,7 @@ class ReltoRenderer {
     const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go) ? "pointer" : "";
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
-  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
+  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };

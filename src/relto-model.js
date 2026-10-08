@@ -14,7 +14,7 @@ const SKY_CYCLES = ["system_time", "frozen_dawn", "frozen_day", "frozen_dusk", "
 const STRUCTURES = ["hut", "bookshelves", "linking_pillars"];
 const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass"];
 /** Options propres à certains effets (texte court) : couleur et nom du chat, variété du koï rare. */
-const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
+const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare", "sleep"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
 const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern", "ponderosa", "maple", "crystal"], flowers: ["blue", "red", "yellow", "white", "pink"] };
 
 /**
@@ -172,7 +172,7 @@ function parsePage(fm = {}, path = "") {
     type: String(a && a.type || ""),
     density: clamp(Number(a && a.density != null ? a.density : 0.5), 0, 1),
     asset: a && a.asset ? String(a.asset) : undefined,
-    ...optsOf({ ...a, ...(a && a.type === "cat" ? { color: fm.cat_color ?? (a && a.color), name: fm.cat_name ?? (a && a.name) } : {}), ...(a && a.type === "koi" ? { rare: fm.koi_rare ?? (a && a.rare), name: fm.koi_name ?? (a && a.name) } : {}) }),
+    ...optsOf({ ...a, ...(a && a.type === "cat" ? { color: fm.cat_color ?? (a && a.color), name: fm.cat_name ?? (a && a.name), sleep: fm.cat_sleep ?? (a && a.sleep) } : {}), ...(a && a.type === "koi" ? { rare: fm.koi_rare ?? (a && a.rare), name: fm.koi_name ?? (a && a.name) } : {}) }),
   })).filter((a) => EFFECT_TYPES.includes(a.type));
   const audio = eff.ambiance_audio == null ? [] : asList(eff.ambiance_audio).map(String);
   const un = fm.unlock || null;
@@ -211,7 +211,7 @@ function parseReltoLibrary(text) {
       for (const item of part.split(",")) {
         const w = item.trim().match(/\w+=(?:"[^"]*"|\S+)|\S+/g) || []; if (!w.length) continue;
         if (!EFFECT_TYPES.includes(w[0])) { problems.push({ line: i + 1, text: l, message: `unknown effect “${w[0]}” — use one of: ${EFFECT_TYPES.join(", ")}` }); continue; }
-        const e = { type: w[0] }; for (const x of w.slice(1)) { if (/^\d*\.?\d+$/.test(x)) e.density = Number(x); else if (/^(color|colour|name|rare)=/i.test(x)) { const kv = x.match(/^(\w+)=(.*)$/); e[kv[1].toLowerCase() === "colour" ? "color" : kv[1].toLowerCase()] = kv[2].replace(/^"|"$/g, ""); } else e.asset = x; } eff.push(e);
+        const e = { type: w[0] }; for (const x of w.slice(1)) { if (/^\d*\.?\d+$/.test(x)) e.density = Number(x); else if (/^(color|colour|name|rare|sleep)=/i.test(x)) { const kv = x.match(/^(\w+)=(.*)$/); e[kv[1].toLowerCase() === "colour" ? "color" : kv[1].toLowerCase()] = kv[2].replace(/^"|"$/g, ""); } else e.asset = x; } eff.push(e);
       }
     }
     pages.push({ id: m[1], label: parts[0] || m[1], effects: { canvas_additions: eff, ...(audio.length ? { ambiance_audio: audio.length === 1 ? audio[0] : audio } : {}) }, unlock });

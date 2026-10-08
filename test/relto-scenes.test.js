@@ -70,11 +70,31 @@ ok(M.layoutIsland(sceneFull).dropped.join() === lay.dropped.join() && JSON.strin
 const sceneBig = mkScene(["page_koi", "page_cat", "page_stalk_tree", "page_bench", "page_pillars"].filter((id) => M.PAGE_PRESETS[id]), { structures: ["hut", "bookshelves", "linking_pillars"] });
 ok(M.layoutIsland(sceneBig).items.hut && M.layoutIsland(sceneBig).items.koi && M.layoutIsland(sceneBig).items.pillars, "plan : cabane, bassin et piliers jamais écartés");
 const sceneDec = mkScene(["page_koi", "page_cat", "page_cat_toys", "page_pond_decor", "page_flowers"]);
+r.setHour(12); // le chat dort parfois dans la cabane selon l'heure : midi fixe pour les vues rapprochées
 for (const v of ["pond", "pondplus", "cat", "grove"]) { r.setScene(v === "pondplus" || v === "cat" ? sceneDec : sceneFull); r.setView("island"); r.setView(v); ok(r.view === v, `vue ${v} disponible`); r.draw(1.3); }
 r.setScene(sceneDec); r.setView("cat"); r.draw(1); ok(["yarn", "mouse", "bell"].every((k) => r.hot.some((h) => h.toy === k)), "chat : jouets cliquables"); let toyed = null; r.opts.onToy = (k) => { toyed = k; }; const yz = r.hot.find((h) => h.toy === "bell"); r.toLogical = () => [yz.x + 3, yz.y + 3]; r.onClick({}); ok(toyed === "bell", "jouet : clic = son"); r.setView("pondplus"); r.draw(1); ok(r.hot.some((h) => h.tip === "Stone lantern") && r.hot.some((h) => h.flash), "bassin de près : décor et koï rare");
 r.setScene(sceneFull); r.setView("pond"); ok(r.hot.some((h) => h.flash), "bassin : la koï rare est cliquable"); r.setView("cat"); ok(r.hot.some((h) => h.flash), "chat : cliquable pour son nom");
 r.setScene(mkScene(["page_koi"])); r.setView("pondplus"); ok(r.view === "island", "sans la page de décor, pas de bassin de près");
 r.setScene(mkScene([])); r.setView("pond"); ok(r.view === "island", "sans page de koï, pas de vue du bassin");
+// le chat endormi au coin du feu (1.16.1)
+{
+  const night = mkScene(["page_cat", "page_chimney"]), alw = mkScene(["page_cat"]), nev = mkScene(["page_cat", "page_chimney"]);
+  alw.additions.find((a) => a.type === "cat").sleep = "always"; nev.additions.find((a) => a.type === "cat").sleep = "never";
+  const nights = [20, 21, 22, 23, 0, 1, 2, 3, 4, 5].map((h) => { r.setScene(night); r.setHour(h); return r.catAsleep(); }).filter(Boolean).length;
+  ok(nights >= 6, `la nuit, avec le feu, il dort le plus souvent (${nights}/10)`);
+  const days = [9, 10, 11, 12, 13, 14, 15].map((h) => { r.setScene(night); r.setHour(h); return r.catAsleep(); }).filter(Boolean).length;
+  ok(days <= 3, `en plein jour, il est surtout dehors (${days}/7)`);
+  r.setScene(night); r.setHour(22.2); const a1 = r.catAsleep(); r.setHour(22.4); ok(a1 === r.catAsleep(), "le tirage tient une demi-heure (pas de clignotement)");
+  r.setScene(alw); r.setHour(12); ok(r.catAsleep(), "sleep=always : toujours sur le tapis");
+  r.setView("island"); r.draw(1); ok(!r.hot.some((h) => /cat/.test(h.tip || "") && !h.purr), "endormi : absent de l'île");
+  r.setView("cat"); ok(r.view === "cabin", "vue du chat → la cabane, où il dort");
+  r.draw(1); const z = r.hot.find((h) => h.purr); ok(z && /asleep/.test(z.tip), "dans la cabane : cliquable, « asleep »");
+  let purred = false; r.opts.onPurr = () => { purred = true; }; r.toLogical = () => [z.x + 5, z.y + 5]; r.onClick({}); ok(purred, "clic sur le chat endormi : ronron");
+  r.setScene(nev); r.setHour(23); ok(!r.catAsleep(), "sleep=never : jamais dans la cabane");
+  r.setScene(mkScene(["page_cat"], { structures: ["bookshelves"] })); r.setHour(23); ok(!r.catAsleep(), "sans cabane, il dort dehors (reste visible)");
+  const lib2 = M.parseReltoLibrary("page chat: Chat | cat color=black sleep=never");
+  ok(M.libraryPage(lib2.pages[0]).additions[0].sleep === "never", "bibliothèque : option sleep=");
+}
 // pages en bibliothèque
 const lib = M.parseReltoLibrary("page pluie: Pluie | rain 0.9, birds 0.4 | audio=soft_rain\npage fleurs: Fleurs | flowers 0.8 red");
 ok(!lib.problems.length && M.libraryPage(lib.pages[1]).additions[0].asset === "red", "bibliothèque : effets rain/birds/flowers et asset de fleur");
