@@ -216,3 +216,4 @@ unlock:                            # facultatif
 
 - **1.17.1 — première page du livre de liaison vide** (remarque de l'auteur sur un Âge au hasard) : cette page montre, à travers la vitre, l'Âge visé par un livre de liaison (`link:`) ; sans `link:` elle est vide. Les Âges au hasard reçoivent maintenant un `link: [[…]]` vers un Âge existant du coffre ; la page vide explique quoi faire (`leaf.none`) au lieu d'afficher « — » ; la note de bienvenue explique la ligne `link:`.
 - **1.17.1 (suite)** : (a) sans livre de liaison, la première page du livre de liaison montre les **symboles de l'Âge lui-même** et sa première phrase (au lieu d'une page vide) ; (b) le **son du livre** ne se joue plus à chaque note : `noteHasAge` — seulement pour une note qui contient un bloc `age`.
+- **Ordre des icônes du Relto** (demande de l'auteur) : globale, île, cabane, Imageur, puis piliers, bosquet, bassin, bassin de près, chat (`NAV` dans `ui-relto.js`).
