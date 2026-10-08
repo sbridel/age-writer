@@ -80,4 +80,14 @@ console.log("law: ok");
   c = 7e12; lc = fresh("F"); lc.tend("F", 45, 1); c += 1 * 86400000; lc.tend("F", 45, 1); const d1 = lc.get("F").dose; c += 1 * 86400000; lc.tend("F", 100, 1); assert.ok(lc.get("F").dose < d1 * 0.6 && lc.get("F").dose > 0, "stable : la marge se reconstitue, elle double chaque jour");
   c = 7e12; lc = fresh("G"); lc.tend("G", 10, 1); c += 1 * 86400000; lc.tend("G", 10, 1); c += 1 * 86400000; assert.strictEqual(lc.tend("G", 100, 1), true, "définitif : même corrigé ensuite, « beyond repair »");
   assert.strictEqual(lc.tend("Inconnu", 10, 1), false, "Âge inconnu : rien");
+
+  // la fin d'un Âge condamné : on brûle le livre, la fin se joue en direct, puis il est détruit pour toujours
+  const { BURN_SECONDS, DOOM_IDLE } = require("../src/law");
+  c = 7e12; lc = fresh("Z"); assert.strictEqual(lc.doom("Z"), 0, "Âge sain : aucun effondrement"); assert.strictEqual(lc.burn("Z"), false, "on ne brûle pas un Âge qui n'est pas condamné");
+  lc.tend("Z", 10, 1); c += 1 * 86400000; lc.tend("Z", 10, 1); assert.ok(lc.condemned("Z"));
+  assert.strictEqual(lc.doom("Z"), DOOM_IDLE, "condamné : l'effondrement commence"); assert.strictEqual(lc.destroyed("Z"), false);
+  assert.strictEqual(lc.burn("Z"), true); c += BURN_SECONDS * 500;
+  assert.ok(Math.abs(lc.doom("Z") - (DOOM_IDLE + (1 - DOOM_IDLE) / 2)) < 1e-9 && lc.burning("Z") && !lc.destroyed("Z"), "à mi-chemin de la fin, en direct");
+  c += BURN_SECONDS * 600; assert.strictEqual(lc.doom("Z"), 1); assert.ok(lc.destroyed("Z") && !lc.burning("Z"), "détruit"); assert.strictEqual(lc.burn("Z"), false);
+  assert.strictEqual(lc.tend("Z", 100, 0), true, "et rien ne le ramène");
 }

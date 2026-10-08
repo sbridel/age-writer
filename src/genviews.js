@@ -206,8 +206,11 @@ function paintUnder(g, m, t, o = {}, az = 0) {
 
 /** Peint une vue du périscope : `tilt` 1 = zénith, 0 = horizon, −1 = sous l'eau ; `az` 0 à 3. */
 function paintLook(g, m0, t, o, az, tilt) {
-  if (tilt > 0) return paintZenith(g, m0, t, o);
-  if (tilt < 0 && hasUnder(m0)) return paintUnder(g, m0, t, o, az);
+  if (tilt > 0 || (tilt < 0 && hasUnder(m0))) {
+    if (tilt > 0) paintZenith(g, m0, t, o); else paintUnder(g, m0, t, o, az);
+    const p = G.doomOf(m0.S); if (p > 0) G.doomVeil(g, g.canvas.width, g.canvas.height, p, g.canvas.width / 2, g.canvas.height * (tilt > 0 ? 0.5 : 0.2)); // la fin d'un Âge se voit sous l'eau et au zénith aussi
+    return;
+  }
   return G.paint(g, heading(m0, az), t, o);
 }
 

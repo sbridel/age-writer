@@ -171,6 +171,16 @@ function renderExtras(plugin, container, { src, analysis, name, compact, path })
     }
     if (extra > 0.005) l.createDiv({ cls: "age-ext__lawmeter", text: t("law.meter", { n: Math.round(extra * 100) }) });
   }
+  if (ext.law && plugin.law.condemned(name)) {
+    const d = box.createDiv({ cls: "age-ext__law age-ext__doom" });
+    if (plugin.law.destroyed(name)) d.createDiv({ cls: "age-ext__lawhead", text: t("doom.destroyed") });
+    else if (plugin.law.burning(name)) d.createDiv({ cls: "age-ext__lawhead", text: t("doom.burning") });
+    else {
+      d.createDiv({ cls: "age-ext__lawhead", text: t("doom.condemned") });
+      const burn = d.createEl("button", { cls: "age-ext__sound", text: "🔥 " + t("doom.burn"), attr: { type: "button" } });
+      burn.addEventListener("click", () => { if (plugin.law.burn(name)) { plugin.saveExt(); plugin.refreshLive(); } });
+    }
+  }
   const strong = analysis.resolved.triggered.filter((x) => x.severity === "strong");
   if (analysis.damage) box.createDiv({ cls: "age-ext__lawmeter", text: t("book.damage", { d: analysis.damage.damaged, r: analysis.damage.removed }) });
   if (strong.length) box.createDiv({ cls: "age-ext__fissure", text: t("fissure.label", { a: words(strong[0].a), b: words(strong[0].b) }) });

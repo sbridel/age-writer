@@ -69,6 +69,7 @@ module.exports = function build(Base, core, AGEX) {
       this.live = new Set(); this.lawTimers = new Map(); this.fileAudios = []; this.soundBtn = null;
       this.index = new AgeIndex(this);
       this.law = new Law(this.ext.state.law, { dryMinutes: () => this.ext.inkDry, healPerDay: () => this.ext.heal, ignored: (raw) => PH.isPhysicsLine(raw) });
+      GEN_HOOKS.doom = (name) => this.law.doom(name);
       GEN_HOOKS.opening = (name) => this.law.opening(name, this.ext.fissureDays); // les fissures s'ouvrent avec le temps
       this.dni = new Dni({ getMode: () => this.ext.numerals, adapter: this.app.vault.adapter, pluginDir: this.manifest.dir, getVaultFont: () => this.ext.vaultFont });
       this.soundFactor = 1; this.sound = new Soundscape(() => this.ext.volume * (this.soundFactor == null ? 1 : this.soundFactor));
@@ -247,6 +248,7 @@ module.exports = function build(Base, core, AGEX) {
           row.addEventListener("click", (e) => {
             const a = e.target && e.target.closest ? e.target.closest(".age-book__open") : null;
             if (!a) return;
+            if (plugin.law.destroyed(i.name)) { e.stopImmediatePropagation(); e.preventDefault(); row.addClass("is-flicker"); window.setTimeout(() => row.removeClass("is-flicker"), 700); new Notice(plugin.t("doom.gone")); return; } // le livre est brûlé : rien ne s'ouvre plus
             view.__quietUntil = Date.now() + 4000; // déjà dans le livre : pas de bruit d'ouverture
             if (plugin.ext.uncertainLinks === false) { if (plugin.ext.sound && plugin.ext.soundLink !== false) linkSound(plugin.ext.volume); return; }
             const others = [...view.contentEl.querySelectorAll(".age-book__book")].map((r) => r.__item).filter((x) => x && x.file && x.file !== i.file);

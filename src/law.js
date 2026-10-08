@@ -9,7 +9,7 @@
 const { clamp, words } = require("./util");
 
 const DAY = 86400000;
-const COST_PER_ELEMENT = 0.06, COST_CAP_PER_EDIT = 0.3, CONDEMN_MAX_DAYS = 14, CONDEMN_HALF = 10;
+const COST_PER_ELEMENT = 0.06, COST_CAP_PER_EDIT = 0.3, CONDEMN_MAX_DAYS = 14, CONDEMN_HALF = 10, BURN_SECONDS = 30, DOOM_IDLE = 0.12;
 
 /** Les lignes inconnues sont comparées sans tenir compte des espaces (même insécables), des caractères invisibles ni de la casse :
  *  un saut de ligne ou une espace de fin n'est pas une modification du monde. */
@@ -49,6 +49,23 @@ class Law {
     const a = this.get(name); if (!a) return 0;
     if (!(a.born > 0)) a.born = this.now(); // anciens états : le livre « naît » à sa première lecture
     return clamp((this.now() - a.born) / (days * DAY));
+  }
+
+  /** Brûle le livre d'un Âge condamné : la fin se joue en BURN_SECONDS secondes, puis l'Âge est détruit pour toujours. Faux s'il n'est pas condamné. */
+  burn(name) {
+    const a = this.get(name); if (!a || !a.condemned || a.destroyed) return false;
+    if (!a.burnAt) a.burnAt = this.now();
+    return true;
+  }
+  condemned(name) { const a = this.get(name); return !!(a && a.condemned); }
+  destroyed(name) { const a = this.get(name); return !!(a && (a.destroyed || (a.burnAt && this.now() - a.burnAt >= BURN_SECONDS * 1000 && (a.destroyed = this.now())))); }
+  burning(name) { const a = this.get(name); return !!(a && a.burnAt && !this.destroyed(name)); }
+  /** Effondrement (0 à 1) montré par la fenêtre : 0 rien · DOOM_IDLE condamné · de DOOM_IDLE à 1 pendant la fin · 1 détruit. */
+  doom(name) {
+    const a = this.get(name); if (!a || !a.condemned) return 0;
+    if (this.destroyed(name)) return 1;
+    if (!a.burnAt) return DOOM_IDLE;
+    return DOOM_IDLE + (1 - DOOM_IDLE) * clamp((this.now() - a.burnAt) / (BURN_SECONDS * 1000));
   }
 
   /** Veille sur un Âge à fissure : tant qu'il est instable, la fissure ouverte consume sa « marge de vie », d'autant plus vite que le monde est
@@ -147,4 +164,4 @@ function describeChange(entry, t) {
   return parts.join(" ");
 }
 
-module.exports = { Law, worldIds, adjustAnalysis, fissureStrain, strainable, forceAlteration, FISSURE_COST, condemnDays, describeChange, COST_PER_ELEMENT };
+module.exports = { Law, worldIds, adjustAnalysis, fissureStrain, strainable, forceAlteration, FISSURE_COST, condemnDays, BURN_SECONDS, DOOM_IDLE, describeChange, COST_PER_ELEMENT };
