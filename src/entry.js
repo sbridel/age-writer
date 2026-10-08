@@ -9,12 +9,12 @@
 const obsidian = require("obsidian");
 const { Dni } = require("./dni");
 const { setMarkup } = require("./util");
-const { Law, adjustAnalysis, describeChange, worldIds } = require("./law");
+const { Law, adjustAnalysis, fissureStrain, strainable, forceAlteration, describeChange, worldIds } = require("./law");
 const { solitudeFactor, COVER_RE, parseCover, KEY_RE, FX_RE, STYLE_RE, TRAP_RE, DMG_RE, parseFx, parseStyle, parseTrap, parseDamage, applyDamage } = require("./mech");
 const { Soundscape, staticBurst, openSequence, linkSound, pageTurn } = require("./sound");
 const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
-const { sceneOf } = require("./genscene");
+const { sceneOf, HOOKS: GEN_HOOKS } = require("./genscene");
 const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, parseSky } = require("./sky");
 const { AMOUNT_RE, parseAmounts, applyAmounts } = require("./amounts");
 const { rollLink } = fx;
@@ -48,7 +48,9 @@ module.exports = function build(Base, core, AGEX) {
       let leaf = ws.getLeavesOfType(TYPE)[0];
       // un livre resté dans la colonne latérale (disposition enregistrée) est refermé : il serait ré-utilisé à la place
       if (leaf && leaf.getRoot && leaf.getRoot() !== ws.rootSplit && mode === "tab") { leaf.detach(); leaf = null; }
-      if (!leaf) leaf = mode === "window" && typeof ws.openPopoutLeaf === "function" ? ws.openPopoutLeaf() : ws.getLeaf("tab");
+      // une fenêtre séparée n'apparaît pas par-dessus une fenêtre en plein écran : dans ce cas le livre s'ouvre en onglet
+      const full = (() => { try { const w = window, d = w.document, s = w.screen; return !!d.fullscreenElement || (w.outerWidth >= s.width && w.outerHeight >= s.height); } catch { return false; } })();
+      if (!leaf) leaf = mode === "window" && !full && typeof ws.openPopoutLeaf === "function" ? ws.openPopoutLeaf() : ws.getLeaf("tab");
       await leaf.setViewState({ type: TYPE, active: true });
       await ws.revealLeaf(leaf);
       if (this.ext.bookStart !== "keep" && leaf.view && "mode" in leaf.view) leaf.view.mode = "cover"; // rouvrir le livre = revenir à sa couverture
@@ -67,6 +69,8 @@ module.exports = function build(Base, core, AGEX) {
       this.live = new Set(); this.lawTimers = new Map(); this.fileAudios = []; this.soundBtn = null;
       this.index = new AgeIndex(this);
       this.law = new Law(this.ext.state.law, { dryMinutes: () => this.ext.inkDry, healPerDay: () => this.ext.heal, ignored: (raw) => PH.isPhysicsLine(raw) });
+      GEN_HOOKS.doom = (name) => this.law.doom(name);
+      GEN_HOOKS.opening = (name) => this.law.opening(name, this.ext.fissureDays); // les fissures s'ouvrent avec le temps
       this.dni = new Dni({ getMode: () => this.ext.numerals, adapter: this.app.vault.adapter, pluginDir: this.manifest.dir, getVaultFont: () => this.ext.vaultFont });
       this.soundFactor = 1; this.sound = new Soundscape(() => this.ext.volume * (this.soundFactor == null ? 1 : this.soundFactor));
 
@@ -78,6 +82,11 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText) out = guard("quantités", () => applyAmounts(out, parseAmounts(srcText), this.core && this.core.blocks)) || out;
         if (srcText) out = applyDamage(out, parseDamage(srcText));
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
+        if (this.ext.law && o && o.seed) out = guard("fissure", () => { // la fissure grandit : elle abîme un monde instable, et le condamne s'il n'est pas corrigé à temps
+          const op = this.law.opening(o.seed, this.ext.fissureDays), bad = strainable(out);
+          if (this.law.tend(o.seed, bad ? out.stability : 100, op)) { out.condemned = true; return bad || out.fissure === "open" || out.fissure === "submarine" ? forceAlteration(out, 10) : out; }
+          return fissureStrain(out, op);
+        }) || out;
         return out;
       };
       AGEX.skip = (line) => PH.isPhysicsLine(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
@@ -239,6 +248,7 @@ module.exports = function build(Base, core, AGEX) {
           row.addEventListener("click", (e) => {
             const a = e.target && e.target.closest ? e.target.closest(".age-book__open") : null;
             if (!a) return;
+            if (plugin.law.destroyed(i.name)) { e.stopImmediatePropagation(); e.preventDefault(); row.addClass("is-flicker"); window.setTimeout(() => row.removeClass("is-flicker"), 700); new Notice(plugin.t("doom.gone")); return; } // le livre est brûlé : rien ne s'ouvre plus
             view.__quietUntil = Date.now() + 4000; // déjà dans le livre : pas de bruit d'ouverture
             if (plugin.ext.uncertainLinks === false) { if (plugin.ext.sound && plugin.ext.soundLink !== false) linkSound(plugin.ext.volume); return; }
             const others = [...view.contentEl.querySelectorAll(".age-book__book")].map((r) => r.__item).filter((x) => x && x.file && x.file !== i.file);
@@ -262,7 +272,7 @@ module.exports = function build(Base, core, AGEX) {
       return coverSvg({
         name, number: X.ageNumber(name), seedNumber: seed ? Number(seed[1]) : null, dni: this.dni, standalone,
         glyph: (id, x, y, s) => core.glyphSvg(id, x, y, s, "none"), glyphIds: core.glyphs(analysis).filter((g) => !g.blot).map((g) => g.id), world: guard("cover world", () => worldIds(analysis)) || [], sobriety: parseCover(src) ?? ({ ornate: 0.05, classic: 0.35, sober: 0.7, plain: 1 })[this.ext.coverStyle],
-        verdict: analysis.verdict, label: this.t("book.descriptive"),
+        verdict: analysis.verdict, burnt: !!(this.law && this.law.destroyed(name)), label: this.t("book.descriptive"),
       });
     }
 

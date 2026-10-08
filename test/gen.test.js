@@ -353,9 +353,22 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   const l = []; G.paint(fakeCtx(l), h1, 0.3, { day: 0.3 }); ok(l.length > 50, "une autre direction se peint");
   ok(V.hasUnder(m0) && !V.hasUnder(G.build(G.sceneOf(an(["single_sun", "stone"]), "Roc"), 300, 176)), "sous l'eau : seulement s'il y a de l'eau");
   const u = []; V.paintUnder(fakeCtx(u), m0, 0.3, { day: 0.3 }, 0); ok(u.length > 100, "sous l'eau : rendu");
-  const U = V.buildUnder(m0, 0); ok(U.kelp.length && U.coral.length && U.fis && JSON.stringify(V.buildUnder(m0, 0)) === JSON.stringify(U) && JSON.stringify(V.buildUnder(m0, 1)) !== JSON.stringify(U), "sous l'eau : varech, corail, la fissure ; même graine, même fond ; autre direction, autre fond");
+  const U = V.buildUnder(m0, 0); ok(U.kelp.length && U.coral.length && JSON.stringify(V.buildUnder(m0, 0)) === JSON.stringify(U) && JSON.stringify(V.buildUnder(m0, 1)) !== JSON.stringify(U), "sous l'eau : varech, corail ; même graine, même fond ; autre direction, autre fond");
+  const fisViews = [0, 1, 2, 3].filter((a) => V.buildUnder(m0, a).fis); ok(fisViews.length === 1, "la crevasse sous l'eau n'apparaît que dans une direction sur quatre (ici : " + fisViews + ")");
+  const cr = []; V.paintUnder(fakeCtx(cr), m0, 0.3, { day: 0.3 }, fisViews[0]); ok(cr.length > u.length * 0.5, "la direction de la crevasse se peint");
   const z = []; V.paintZenith(fakeCtx(z), m0, 0.3, { day: 0.9 }); ok(z.length > 50, "le zénith : rendu");
   const zz = []; V.paintLook(fakeCtx(zz), G.build(G.sceneOf(an(["single_sun", "stone"]), "Roc"), 300, 176), 0.3, { day: 0.3 }, 0, -1); ok(zz.length > 50, "sans eau, regarder en bas : la vue de face");
 }
 
+// la fin d'un Âge : crochet d'effondrement, la fenêtre se peint à chaque étape, le vide à la fin
+{
+  const S = G.sceneOf(an(["single_sun", "stone", "fissure", "mountains"]), "Fin"), m = G.build(S, 320, 192);
+  try {
+    for (const p of [0, 0.12, 0.35, 0.6, 0.8, 0.9, 0.97, 1]) { G.HOOKS.doom = () => p; const l = []; G.paint(fakeCtx(l), m, 0.3, { day: 0.5 }); ok(l.length > 50, "fin d'un Âge : se peint à p = " + p); }
+    G.HOOKS.doom = () => 0; const calm = []; G.paint(fakeCtx(calm), m, 0.3, { day: 0.5 });
+    G.HOOKS.doom = () => 0.5; const mid = []; G.paint(fakeCtx(mid), m, 0.3, { day: 0.5 }); ok(mid.length > calm.length, "fin d'un Âge : l'effondrement ajoute du dessin (fissures du sol, éclat)");
+    G.HOOKS.doom = () => { throw new Error("x"); }; const bad = []; G.paint(fakeCtx(bad), m, 0.3, { day: 0.5 }); ok(bad.length === calm.length, "un crochet qui plante : l'Âge se peint comme avant");
+    G.HOOKS.doom = () => 0.2; ok(G.openingOf(S) === 1, "un Âge qui s'effondre : fissures grandes ouvertes");
+  } finally { G.HOOKS.doom = () => 0; }
+}
 console.log(`gen.test.js : ${n} vérifications OK`);

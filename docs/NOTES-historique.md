@@ -241,3 +241,14 @@ unlock:                            # facultatif
 - Guide (EN/FR) et README à jour (107 blocs écrivables au lieu de 92) ; `test/terrain.test.js`.
 - **Release automatique** : le titre est « version — description courte » (en-tête de cette section) et le corps est cette section seule, sans pied de page ; sans section, la liste des commits depuis la version précédente (`tools/release-notes.js`, `test/release-notes.test.js`).
 - Les Âges existants ne changent pas : 600 Âges comparés à la 1.17.6, 0 différence.
+
+## 1.18.1 — crevasses et fin des Âges (8 oct. 2026)
+
+- **Crevasse** (`src/crevasse.js`) : la fissure n'est plus une ligne mais une faille aux bords dentelés, dont l'ouverture donne sur le vide étoilé (étoiles qui scintillent, voie lactée de biais, lèvres éclairées) ; bouche ovale dans le fond sous l'eau. Sous l'eau, la fissure n'apparaît plus que dans une direction du périscope sur quatre (au lieu des quatre).
+- **Les fissures s'ouvrent avec le temps** : une fissure à l'air libre ou sous l'eau passe du fil de lumière à la crevasse en `fissureDays` jours (réglage, 7 par défaut, 0 = toujours ouverte) depuis la création du livre. Les fissures de grotte sont toujours des crevasses et n'ajoutent jamais d'instabilité.
+- **Une fissure n'abîme qu'un monde déjà instable** (< 75) : jusqu'à 50 points retirés selon son ouverture. Un monde stable n'en souffre pas.
+- **Condamnation, en demi-vie** : un monde instable consume sa marge de vie d'autant plus vite qu'il est instable (14 jours à 74 %, divisé par deux tous les 10 points ; quelques heures vers 10 %) et que la fissure est ouverte ; stable, la marge se reconstitue (elle double chaque jour). Marge épuisée : condamné, définitivement (« beyond repair »). Une absence ne compte que pour deux jours.
+- **La fin d'un Âge en direct** : un Âge condamné s'effondre et propose « Brûler le livre » (onglet Détails). La fin dure 30 secondes dans toutes les vues de l'Âge (livre, liaison, Imageur, sous l'eau, zénith) : la terre tremble, le sol se fend, le soleil devient supernova, tout blanchit puis noircit ; il reste le vide et des cendres. L'Âge est alors détruit : son livre ne se lie plus et sa couverture est calcinée (suie, bords rongés, braises).
+- **Plein écran** : en mode « fenêtre séparée », le livre s'ouvre en onglet quand Obsidian est en plein écran (une fenêtre séparée restait invisible derrière).
+- Tests : `law.test.js`, `gen.test.js`, `cover.test.js` complétés.
+

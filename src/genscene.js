@@ -11,6 +11,7 @@
 const { rng, fnv, clamp, lerp, smooth, frac } = require("./util");
 const SKY = require("./sky");
 const WT = require("./wealth"), AM = require("./amounts"), SEA = require("./sea"), TERRAIN = require("./terrain");
+const { crevasse } = require("./crevasse");
 
 const TAU = Math.PI * 2, PERIOD = 8000;
 
@@ -33,7 +34,7 @@ function sceneOf(a, name = "", blocks = null) {
   if (r("door", "sealed_door")) ruins.push("door"); if (r("bridge", "fallen_bridge")) ruins.push("bridge");
   if (r("tablet", "worn_tablet", "speaking_tablet")) ruins.push("tablet"); if (r("lamp", "lit_lamp")) ruins.push("lamp");
   const S = {
-    seed: fnv(name + "|" + [...ids].sort().join(",")), verdict: a.verdict, unrest: clamp(1 - (a.stability == null ? 100 : a.stability) / 100),
+    name, seed: fnv(name + "|" + [...ids].sort().join(",")), verdict: a.verdict, unrest: clamp(1 - (a.stability == null ? 100 : a.stability) / 100),
     suns: r("twin_suns") ? 2 : r("single_sun") ? 1 : 0, skyStated: r("twin_suns", "single_sun", "starless"), moon: r("companion_moon"),
     cycle: r("frozen_cycle") ? "frozen" : r("erratic_cycle") ? "erratic" : "steady", chaos: r("chaotic_orbit"), veil: r("permanent_veil"),
     auroras: r("auroras"), eclipses: r("recurring_eclipses"), starfall: r("starfall"),
@@ -323,6 +324,8 @@ function skyState(m, t, o = {}) {
 function paint(g, m, t, o = {}) {
   const { S, W, H, hz, pal } = m, k0 = skyState(m, t, o), { cs, d, night, day, top, hzc, hues, air } = k0, sn = m.noSun ? [] : k0.sn; t = k0.t; // sans soleil dessiné : la lumière reste celle du jour
   g.save(); g.clearRect(0, 0, W, H);
+  const dm = doomOf(S);
+  if (dm > 0.1 && dm < 0.9) { const a = (dm - 0.1) * 3.2, T = Date.now() / 1000; g.translate(Math.sin(T * 61) * a, Math.cos(T * 47) * a * 0.7); } // la terre tremble
   const sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, css(top)); sky.addColorStop(1, css(hzc)); g.fillStyle = sky; g.fillRect(0, 0, W, H);
   if (S.storm) { g.fillStyle = "rgba(14,17,24,0.5)"; g.fillRect(0, 0, W, H); }
   if (S.veil) { g.fillStyle = "rgba(190,190,202,0.2)"; g.fillRect(0, 0, W, H); }
@@ -422,6 +425,7 @@ function paint(g, m, t, o = {}) {
     g.save(); g.globalCompositeOperation = "saturation"; g.globalAlpha = 0.8; g.fillStyle = "#808080"; g.fillRect(0, 0, W, H); g.restore();
     const s0b = sn.find((x) => x.i === 0); if (s0b && s0b.y + s0b.r < hz) { g.strokeStyle = "rgba(150,52,40,0.75)"; g.lineWidth = Math.max(1.2, s0b.r * 0.22); g.beginPath(); g.arc(s0b.x, s0b.y, s0b.r * 1.08, 0, TAU); g.stroke(); }
   }
+  if (dm > 0) doomFx(g, m, dm, sn);
   g.restore();
 }
 
@@ -617,17 +621,63 @@ function frost(g, m, t, night) {
   g.fillStyle = css([235, 246, 255], 0.14); g.fillRect(0, 0, W, H);
 }
 
+/** Crochets posés par le plugin : l'ouverture (0 à 1) des fissures d'un Âge d'après son âge. Sans plugin : grande ouverte. */
+const HOOKS = { opening: () => 1, doom: () => 0 };
+const hook = (fn, S, dflt) => { try { const v = fn(S.name); return typeof v === "number" && v === v ? Math.max(0, Math.min(1, v)) : dflt; } catch (e) { return dflt; } };
+/** Ouverture des fissures : toujours grande ouverte quand l'Âge s'effondre. */
+const openingOf = (S) => (doomOf(S) > 0 ? 1 : hook(HOOKS.opening, S, 1));
+/** Effondrement (0 à 1) : 0 = rien ; ~0,12 = condamné, qui commence à se fissurer ; 0 → 1 pendant la fin en direct ; 1 = détruit (le vide). */
+const doomOf = (S) => hook(HOOKS.doom, S, 0);
+
+/** Voile de fin d'Âge : l'Âge rougeoie, un éclat monte (la supernova), tout devient blanc, puis noir : le vide et des cendres. */
+function doomVeil(g, W, H, p, cx, cy) {
+  const cl = (x) => Math.max(0, Math.min(1, x)), T = Date.now() / 1000;
+  g.save();
+  const warm = 0.3 * cl(p / 0.3) * (1 - cl((p - 0.8) / 0.1));
+  if (warm > 0.01) { g.fillStyle = `rgba(150,36,12,${warm})`; g.fillRect(0, 0, W, H); }
+  const b = cl((p - 0.3) / 0.5);
+  if (b > 0.01) {
+    const R = (0.1 + 1.6 * b * b) * Math.max(W, H), gr = g.createRadialGradient(cx, cy, 1, cx, cy, R);
+    gr.addColorStop(0, `rgba(255,250,230,${0.95 * b})`); gr.addColorStop(0.35, `rgba(255,190,80,${0.55 * b})`); gr.addColorStop(1, "rgba(255,120,30,0)");
+    g.globalCompositeOperation = "lighter"; g.fillStyle = gr; g.fillRect(0, 0, W, H); g.globalCompositeOperation = "source-over";
+  }
+  const w = cl((p - 0.72) / 0.16); if (w > 0) { g.fillStyle = `rgba(255,252,240,${w})`; g.fillRect(0, 0, W, H); }
+  const v = cl((p - 0.86) / 0.1); if (v > 0) { g.fillStyle = `rgba(0,0,0,${v})`; g.fillRect(0, 0, W, H); }
+  if (p > 0.95) for (let i = 0; i < 28; i++) { // cendres qui dérivent dans le vide
+    const q = rng(i * 977 + 13), x = (q() * W + Math.sin(T * 0.3 + i) * 6 + T * 2) % W, y = (q() * H + T * (3 + 4 * q())) % H;
+    g.fillStyle = `rgba(190,170,150,${0.12 + 0.25 * q()})`; g.fillRect(x, y, 1.2, 1.2);
+  }
+  g.restore();
+}
+
+/** L'effondrement vu de la fenêtre : le sol se fend de toutes parts, puis le voile. */
+function doomFx(g, m, p, sn) {
+  const { S, W, H, hz } = m, cl = (x) => Math.max(0, Math.min(1, x));
+  const reach = cl(p / 0.6);
+  if (reach > 0.02) {
+    const q = rng((S.seed ^ 0xd00d) >>> 0), T = Date.now() / 1000; g.save(); g.lineJoin = "miter";
+    for (let i = 0; i < 6; i++) {
+      let x = W * (0.08 + 0.84 * q()), y = H; const pts = [[x, y]], steps = 9;
+      for (let j = 1; j <= steps; j++) { x += (q() - 0.5) * W * 0.12; y -= (H - hz) * 1.05 / steps; pts.push([x, y]); }
+      const n = Math.max(2, Math.round(pts.length * reach));
+      for (const [col, lw] of [["rgba(0,0,0,0.8)", 2.2], [`rgba(255,${150 + 40 * Math.sin(T * 5 + i)},60,${0.55 * cl(p * 2)})`, 0.8]]) { g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); pts.slice(0, n).forEach(([px, py], k) => (k ? g.lineTo(px, py) : g.moveTo(px, py))); g.stroke(); }
+    }
+    g.restore();
+  }
+  const s0 = sn && sn.find((x) => x.i === 0 && x.y < hz), cx = s0 ? s0.x : m.fis ? m.fis.x : W / 2, cy = s0 ? s0.y : hz * 0.55;
+  doomVeil(g, W, H, p, cx, cy);
+}
+
 function fissure(g, m, t) {
-  const { S, W, H, hz, fis } = m, f = 0.5 + 0.5 * Math.sin(TAU * t * 3);
+  const { S, W, H, hz, fis } = m;
   if (S.fissure === "cave") {
     const x = fis.x, hw = H * 0.17, h = H * 0.22; g.fillStyle = "#040406"; g.strokeStyle = "#2c2a36"; g.lineWidth = 1;
     g.beginPath(); g.moveTo(x - hw, hz + 4); g.lineTo(x - hw, hz - h * 0.55); g.quadraticCurveTo(x, hz - h * 1.25, x + hw, hz - h * 0.55); g.lineTo(x + hw, hz + 4); g.closePath(); g.fill(); g.stroke();
-    g.strokeStyle = css([190, 230, 255], 0.5 + 0.4 * f); g.lineWidth = 1.6; g.beginPath(); g.moveTo(x, hz - h * 0.7); g.lineTo(x - 2, hz - h * 0.4); g.lineTo(x + 2, hz - h * 0.15); g.lineTo(x, hz + 2); g.stroke();
+    crevasse(g, { x, y0: hz - h * 0.85, y1: hz + 2, w: hw * 0.45, jit: fis.pts, t, seed: 1 + ((S.seed >>> 0) % 89), shape: "lens", open: 1 }); // dans la grotte, toujours une crevasse (et jamais une menace)
     return;
   }
-  const sub = S.fissure === "submarine", y0 = sub ? hz + (H - hz) * 0.3 : hz + 2, pts = fis.pts.map((q, i) => [fis.x + q * W * 0.06 + i * 1.3, y0 + (H - y0 - 2) * (i / 6)]);
-  const stroke = (col, w) => { g.strokeStyle = col; g.lineWidth = w; g.lineJoin = "miter"; g.beginPath(); pts.forEach(([x, y], i) => { const z = sub ? 1.6 * Math.sin(TAU * (t * 2 + i * 0.45)) : 0; i ? g.lineTo(x + z, y) : g.moveTo(x + z, y); }); g.stroke(); };
-  stroke(sub ? css([110, 190, 225], 0.12 + 0.08 * f) : css([150, 215, 255], 0.1 + 0.08 * f), sub ? 9 : 7); stroke(sub ? css([170, 225, 245], 0.4 + 0.3 * f) : css([205, 238, 255], 0.55 + 0.4 * f), sub ? 1.6 : 1.8);
+  const sub = S.fissure === "submarine", y0 = sub ? hz + (H - hz) * 0.3 : hz + 2;
+  crevasse(g, { x: fis.x, y0, y1: H - 2, w: W * 0.04, jit: fis.pts, t, water: sub, open: openingOf(S), seed: 1 + ((S.seed >>> 0) % 89) });
   if (sub) for (const b of fis.bubbles) { const q = frac(t * 2 + b.p); g.strokeStyle = css([205, 235, 248], 0.5 * (1 - q)); g.lineWidth = 0.9; g.beginPath(); g.arc(fis.x + b.dx, H - 4 - q * (H - y0 - 8), 1 + 1.4 * b.p, 0, TAU); g.stroke(); }
 }
 
@@ -876,4 +926,4 @@ function extraAt(g, m, t, layer) {
 }
 
 
-module.exports = { sceneOf, traits, KNOWN, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
+module.exports = { HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
