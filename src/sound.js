@@ -517,9 +517,9 @@ function bufferGain(buf) {
 }
 const room = { kind: null, out: null, nodes: [], timers: [] };
 /** Accorde le bourdon de l'Imageur : battements selon l'atmosphère `k` (~9 Hz au pire, aucun à l'accord) ; la quinte cristalline quand l'image entière tient (`total`). */
-function imagerTune(k, total = k) {
+function imagerTune(k, total = k, locked = false) {
   const im = room.kind === "imager" && room.imager; if (!im) return;
-  try { const t = im.c.currentTime, kk = Math.max(0, Math.min(1, k || 0)); im.o2.frequency.setTargetAtTime(im.f0 + (1 - kk) * 9, t, 0.25); const tt = Math.max(0, Math.min(1, total || 0)); im.g3.gain.setTargetAtTime(tt > 0.9 ? 0.05 * (tt - 0.9) * 10 : 0, t, 0.6); } catch (e) { /* ignore */ }
+  try { const t = im.c.currentTime, kk = Math.max(0, Math.min(1, k || 0)); im.o2.frequency.setTargetAtTime(im.f0 + (1 - kk) * 4, t, 0.4); im.g.gain.setTargetAtTime(locked ? 0.025 : 0.1, t, 0.8); /* verrouillé : le bourdon s'efface presque, la machine suit seule */ const tt = Math.max(0, Math.min(1, total || 0)); im.g3.gain.setTargetAtTime(tt > 0.9 ? (locked ? 0.012 : 0.03) * (tt - 0.9) * 10 : 0, t, 0.6); } catch (e) { /* ignore */ }
 }
 function roomStop() {
   room.imager = null;
@@ -650,11 +650,11 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
       // l'Imageur : deux bourdons graves ; le second s'écarte du premier selon le désaccord, d'où des battements
       // qui ralentissent à mesure que l'on s'accorde, puis se fondent ; une quinte cristalline s'ajoute quand l'image tient
       const f0 = 98, lp = keep(c.createBiquadFilter()), g = keep(c.createGain()), o1 = keep(c.createOscillator()), o2 = keep(c.createOscillator()), o3 = keep(c.createOscillator()), g3 = keep(c.createGain());
-      lp.type = "lowpass"; lp.frequency.value = 700; g.gain.value = 0.32; o1.type = "triangle"; o2.type = "triangle"; o1.frequency.value = f0; o2.frequency.value = f0 + 6;
+      lp.type = "lowpass"; lp.frequency.value = 380; g.gain.value = 0.1; o1.type = "sine"; o2.type = "sine"; o1.frequency.value = f0; o2.frequency.value = f0 + 4;
       o3.type = "sine"; o3.frequency.value = f0 * 6; g3.gain.value = 0;
       o1.connect(lp); o2.connect(lp); lp.connect(g); g.connect(out); o3.connect(g3); g3.connect(out); o1.start(); o2.start(); o3.start();
-      room.imager = { o2, g3, f0, c };
-      imagerTune(bufs.k == null ? 0 : bufs.k, bufs.total == null ? 0 : bufs.total);
+      room.imager = { o2, g, g3, f0, c };
+      imagerTune(bufs.k == null ? 0 : bufs.k, bufs.total == null ? 0 : bufs.total, !!bufs.locked);
       return true;
     }
     if (kind === "fire" && bufs.main) { fileLoop(bufs.main); } else if (kind === "fire") {
