@@ -4,7 +4,7 @@
  *
  *   node tools/release-notes.js <version> [tag précédent]
  *     → release-title.txt : « <version> — description courte »
- *     → release-notes.md  : le journal des changements de la version, puis l'installation
+ *     → release-notes.md  : le journal des changements de la version (rien d'autre : pas de pied de page)
  *
  * Source, dans l'ordre :
  *   1. la section « ## <version> — description courte (date…) » de docs/NOTES-historique.md : l'en-tête donne le titre,
@@ -16,7 +16,6 @@ const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 
-const FOOTER = "\n---\nInstallation : copier `main.js`, `manifest.json` et `styles.css` dans `<coffre>/.obsidian/plugins/age-writer/`.\nProjet de fan, sans lien avec Cyan Worlds.\n";
 const MAX_SUBJECTS = 40, MAX_TITLE = 72;
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -48,7 +47,7 @@ function build({ version, history, subjects = [] }) {
   if (sec && sec.body) body = sec.body;
   else if (clean.length) body = "## Changements\n\n" + clean.map((s) => "- " + s).join("\n");
   else body = `Version ${version}.`;
-  return { title, body: body + "\n" + FOOTER };
+  return { title, body: body.trim() + "\n" };
 }
 
 /** Les sujets de commits depuis le tag précédent (ou les derniers, sans tag). */
@@ -76,4 +75,4 @@ if (require.main === module) {
   console.log(title);
 }
 
-module.exports = { build, sectionOf, shortOf, FOOTER };
+module.exports = { build, sectionOf, shortOf };

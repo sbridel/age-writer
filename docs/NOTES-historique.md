@@ -239,5 +239,5 @@ unlock:                            # facultatif
 - **Lieux et habitants** (`src/places.js`) : `library`, `ruined_library`, `garden` (traces de bâtisseurs) et `spiders` (tisseuses de soie farouches devant la lumière, qui ont besoin de proies).
 - Physique : exigences des nouveaux blocs (montagnes : tectonique ; rivière, delta, lac, marais : eau liquide ; collines, canyon, delta : érosion).
 - Guide (EN/FR) et README à jour (107 blocs écrivables au lieu de 92) ; `test/terrain.test.js`.
-- **Release automatique** : le titre est « version — description courte » (en-tête de cette section) et le corps est cette section ; sans section, la liste des commits depuis la version précédente (`tools/release-notes.js`, `test/release-notes.test.js`).
+- **Release automatique** : le titre est « version — description courte » (en-tête de cette section) et le corps est cette section seule, sans pied de page ; sans section, la liste des commits depuis la version précédente (`tools/release-notes.js`, `test/release-notes.test.js`).
 - Les Âges existants ne changent pas : 600 Âges comparés à la 1.17.6, 0 différence.
