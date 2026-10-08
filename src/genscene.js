@@ -10,7 +10,7 @@
  */
 const { rng, fnv, clamp, lerp, smooth, frac } = require("./util");
 const SKY = require("./sky");
-const WT = require("./wealth"), AM = require("./amounts"), SEA = require("./sea");
+const WT = require("./wealth"), AM = require("./amounts"), SEA = require("./sea"), TERRAIN = require("./terrain");
 
 const TAU = Math.PI * 2, PERIOD = 8000;
 
@@ -18,7 +18,7 @@ const TAU = Math.PI * 2, PERIOD = 8000;
 const KNOWN = new Set(("door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon frozen_cycle erratic_cycle chaotic_orbit " +
   "permanent_veil auroras recurring_eclipses starfall rain storm thunderstorm whispering_storm waiting_thunder wind dust_storm ash_cloud spore_cloud fog marsh_mist rime watching_mist lightning heat " +
   "hail black_hail steam lava obsidian whispering_obsidian water brine meltwater crying_obsidian ice black_ice deep_cold sand glass singing_glass fulgurite grove great_tree ironwood charred_grove " +
-  "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " + SKY.SKY_BLOCKS.map((b) => b.id).join(" ") + " " + WT.RICH_IDS.join(" ") + " " + WT.SCAR_IDS.join(" ") + " " + SEA.IDS.join(" ")).split(" "));
+  "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " + SKY.SKY_BLOCKS.map((b) => b.id).join(" ") + " " + WT.RICH_IDS.join(" ") + " " + WT.SCAR_IDS.join(" ") + " " + SEA.IDS.join(" ") + " " + TERRAIN.IDS.join(" ")).split(" "));
 const AXES = ["cosmological", "geological", "meteorological", "ecological", "metaphysical"];
 
 function sceneOf(a, name = "", blocks = null) {
@@ -39,9 +39,9 @@ function sceneOf(a, name = "", blocks = null) {
     auroras: r("auroras"), eclipses: r("recurring_eclipses"), starfall: r("starfall"),
     rain: r("rain", "storm", "thunderstorm", "whispering_storm", "waiting_thunder") || wd === "jungle", storm: r("storm", "thunderstorm", "whispering_storm", "waiting_thunder"),
     wind: r("wind", "storm", "thunderstorm", "dust_storm", "ash_cloud", "spore_cloud", "whispering_storm", "waiting_thunder"),
-    fog: r("fog", "marsh_mist", "rime", "watching_mist") || wd === "jungle", lightning: r("lightning", "thunderstorm", "waiting_thunder"), heat: r("heat") || wd === "lava" || wd === "desert",
+    fog: r("fog", "marsh_mist", "rime", "watching_mist", "marsh") || wd === "jungle", lightning: r("lightning", "thunderstorm", "waiting_thunder"), heat: r("heat") || wd === "lava" || wd === "desert",
     hail: r("hail", "black_hail"), steam: r("steam"), dust: r("dust_storm"), ash: r("ash_cloud", "ashen_sky") || wd === "lava",
-    lava: r("lava", "obsidian", "whispering_obsidian") || wd === "lava", water: (r("water", "marsh_mist", "brine", "meltwater", "crying_obsidian") || wd === "ocean") && wd !== "lava" && wd !== "desert",
+    lava: r("lava", "obsidian", "whispering_obsidian") || wd === "lava", water: (r("water", "marsh_mist", "brine", "meltwater", "crying_obsidian", ...TERRAIN.WATER_IDS) || wd === "ocean") && wd !== "lava" && wd !== "desert",
     ice: r("ice", "black_ice", "deep_cold", "hail", "rime") || wd === "frozen", sand: r("sand", "dust_storm", "glass", "singing_glass", "fulgurite") || wd === "desert",
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
     moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine") || wd === "jungle", eyes: r("hunter", "stalking_pack"),
@@ -54,6 +54,7 @@ function sceneOf(a, name = "", blocks = null) {
     fissure: r("no_fissure") ? null : r("cave_fissure") ? "cave" : r("submarine_fissure", "fissure") ? (r("water") ? "submarine" : "open") : null,
   };
   S.kelp = r("kelp"); S.coral = r("coral"); S.acid = r("acid");
+  S.terrain = ["mountains", "canyon", "plains", "hills"].find((id) => r(id)) || null; // relief écrit : règle les chaînes de la fenêtre (src/terrain.js)
   S.shore = shoreOf(S, r, wd);
   const cycleWritten = res.lines.some((l) => l.entry && l.entry.category === "cycle" && !l.autoFilled);
   S.phys = physLook(a.physics && a.physics.w, cycleWritten);
@@ -99,6 +100,7 @@ function shoreOf(S, r, wd) {
   if (S.ice) return "ice";
   if (r("stone", "iron", "crystal", "obsidian", "salt", "rifts", "geysers", "glass", "strange_stone", "copper", "gold", "silver", "gems") || S.ruins.length) return "rock";
   if (S.trees || S.glow || r("moss", "fern", "grove", "vine", "sapling", "seed", "spore", "lichen", "pale_fungus", "grazer", "burrower")) return "grass";
+  if (r(...TERRAIN.WATER_IDS)) return "grass"; // rivière, delta, lac, marais : une berge herbeuse par défaut
   return null;
 }
 
@@ -142,10 +144,11 @@ function build(S, W, H) {
     ground: S.lava ? hsl(8, 0.45, 0.07) : S.sand ? hsl(34, 0.35, 0.2) : S.ice ? hsl(205, 0.25, 0.2) : S.water ? hsl(skyHue + 170, 0.25, 0.1) : hsl(skyHue + 90, 0.25, 0.09),
     rock: hsl(skyHue + 200, 0.2, 0.07),
   };
-  const nCount = S.sand ? 2 : S.ice ? 4 : 3 + Math.floor(r() * 2);
+  const RL = S.terrain ? TERRAIN.RELIEF[S.terrain] : null; // blocs de terrain : nombre, hauteur et allure des chaînes
+  const nCount = RL ? RL.ridges : S.sand ? 2 : S.ice ? 4 : 3 + Math.floor(r() * 2);
   const ridges = Array.from({ length: nCount }, (_, i) => {
-    const d = i / Math.max(1, nCount - 1), n = valueNoise((r() * 4294967296) >>> 0), ridged = S.ice || (!S.sand && r() < 0.3);
-    const amp = (S.sand ? 0.07 : 0.16 + r() * 0.12) * (1 - d * 0.35) * (S.phys ? clamp(Math.pow(S.phys.g, -0.5), 0.6, 1.55) : 1), freq = (S.sand ? 0.9 : 2.2 + r() * 2) * (1 + d * 0.5), base = hz - H * (0.05 + (1 - d) * 0.07);
+    const d = i / Math.max(1, nCount - 1), n = valueNoise((r() * 4294967296) >>> 0), ridged = RL ? RL.ridged : S.ice || (!S.sand && r() < 0.3);
+    const amp = (S.sand ? 0.07 : 0.16 + r() * 0.12) * (1 - d * 0.35) * (S.phys ? clamp(Math.pow(S.phys.g, -0.5), 0.6, 1.55) : 1) * (RL ? RL.amp : 1), freq = (S.sand ? 0.9 : 2.2 + r() * 2) * (1 + d * 0.5), base = hz - H * (0.05 + (1 - d) * 0.07);
     const xs = new Float32Array(Math.ceil(W / 4) + 1);
     for (let k = 0; k < xs.length; k++) {
       const u = k / (xs.length - 1); let v = fbm(n, u * freq * 3 + i * 5, S.ice ? 3 : 4);

@@ -216,7 +216,7 @@ function makeTeller(random) {
 
 // ---- le ciel ---------------------------------------------------------------------------------------------
 /** Ordre de lecture : le monde, puis ses soleils, le corps, l'orbite, le temps, puis ce qui traverse le ciel. */
-const SKY_ORDER = { world: 0, stars: 1, hue: 1, body: 2, orbit: 3, cycle: 4, belt: 5, phenomenon: 6 };
+const SKY_ORDER = { world: 0, stars: 1, hue: 1, body: 2, terrain: 2, orbit: 3, cycle: 4, belt: 5, phenomenon: 6 };
 /** Connecteurs par famille : tous adverbiaux, ils vont devant une proposition comme devant un groupe nominal. */
 const SKY_LINKS = {
   world: ["All around, ", "Everywhere you look, "],

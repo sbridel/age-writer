@@ -118,7 +118,7 @@ Un bloc de code `age`, une page par ligne (un identifiant de bloc), plus des lig
 | `trap book` | livre-piège (ni retour ni fissure) |
 | `damaged_pages = 2`, `removed_pages = 1` | livre de liaison abîmé |
 
-Les lignes spéciales sont ignorées par le moteur : elles ne comptent pas comme des pages. La liste complète des blocs (92 identifiants, par axe) et de tous les alias est dans la **référence complète** intégrée au plugin.
+Les lignes spéciales sont ignorées par le moteur : elles ne comptent pas comme des pages. La liste complète des blocs (107 que tu peux écrire, par axe) et de tous les alias est dans la **référence complète** intégrée au plugin.
 
 ---
 
@@ -295,7 +295,7 @@ Défauts notables : cuir et couverture activés ; livre dans un onglet principal
 Deux niveaux, dans une fenêtre à rubriques (et exportables en notes) :
 
 - **Guide court** : écrire un Âge, le bloc, le livre, le Relto, les sons, la loi du changement, les réglages ;
-- **Référence complète** (en français) : toutes les lignes et leurs alias, les 92 blocs par axe, ciel étendu, quantités, stabilité, fenêtre, pièges, Relto (note YAML, pages, options), D'ni, mécanismes, journal, sons, bibliothèque, tous les réglages, commandes, propriétés, limites.
+- **Référence complète** (en français) : toutes les lignes et leurs alias, les 107 blocs écrivables par axe, ciel étendu, quantités, stabilité, fenêtre, pièges, Relto (note YAML, pages, options), D'ni, mécanismes, journal, sons, bibliothèque, tous les réglages, commandes, propriétés, limites.
 
 ---
 

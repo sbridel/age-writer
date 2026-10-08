@@ -2,6 +2,7 @@
 const WEALTH = require("../wealth");
 const GEOPHYS = require("../geophys");
 const SEA = require("../sea");
+const PLACES = require("../places");
 const {
   CATALYST_ID,
   FAUNA_BLOCKS,
@@ -33,6 +34,7 @@ const BUILTIN_BLOCKS = [
   ...WEALTH.MATTER_BLOCKS,
   ...GEOPHYS.MATTER_BLOCKS,
   ...SEA.MATTER_BLOCKS,
+  ...PLACES.MATTER_BLOCKS,
 ];
 
 const BUILTIN_REACTIONS = [

@@ -10,6 +10,7 @@
 
 const { parseAmounts } = require("./amounts");
 const GEO = require("./geophys");
+const TERRAIN = require("./terrain");
 
 const HUES = { green_sun: [150, 255, 150], red_sun: [255, 110, 80], white_sun: [250, 250, 255], blue_sun: [140, 190, 255], orange_sun: [255, 170, 80], violet_sun: [200, 140, 255], black_sun: [70, 34, 40] };
 const HUE_IDS = Object.keys(HUES);
@@ -36,6 +37,7 @@ const SKY_BLOCKS = [
   ...WORLD_IDS.map((id) => ({ id, category: "world", label: WORLD_LABEL[id], axis: "cosmological", weight: 0.02, proseTag: "#" + id + "#",
     contradictions: WORLD_IDS.filter((o) => o !== id).map((o) => ({ with: o, severity: "strong" })) })),
   ...GEO.SKY_BLOCKS,
+  ...TERRAIN.SKY_BLOCKS,
 ].map((b) => (HUES[b.id] ? { ...b, contradictions: [{ with: "starless", severity: "strong" }, ...hueClash(b.id)] } : b));
 
 const NOTES = {
@@ -75,6 +77,7 @@ const SKY_RULES = [
 /** Banque de phrases : mêmes clés que `proseTag`. */
 const SKY_PROSE = {
   ...GEO.SKY_PROSE,
+  ...TERRAIN.SKY_PROSE,
   asteroid_belt: ["a belt of broken rock circles overhead, glittering", "a river of stone drifts across the sky, never quite still", "a ring of debris keeps the heavens busy, and a little dangerous"],
   asteroid_field: ["great stones drift overhead, each with its own slow errand", "a field of wandering rock turns above, closer than it looks", "a few huge, patient bodies cross the sky, and nobody asked where they are headed"],
   planet_rings: ["a ringed world hangs in the sky, close enough to count the bands", "a pale planet wears its ring like a thin, bright road", "a banded giant rides high, its ring a line drawn across the dark"],
