@@ -315,7 +315,6 @@ module.exports = function build(Base, core, AGEX) {
             if (first) l0.createDiv({ cls: "age-book__glimpse", text: first.length > 170 ? first.slice(0, 167) + "…" : first });
           }
         });
-        if (l0.firstChild) l0.createDiv({ cls: "age-book__caption", text: t("leaf.own") });
       }
       if (!l0.firstChild) l0.createDiv({ cls: "age-book__none", text: t("leaf.none") });
       L.empty(); L.addClass("is-blank"); R.empty(); R.appendChild(l0); R.appendChild(l1); R.appendChild(l2); spread.addClass("is-leaves");
