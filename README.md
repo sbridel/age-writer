@@ -8,6 +8,22 @@ The founding idea: in Mystcraft you don't **create** a world, you **link** to a 
 
 > Fan project, not affiliated with or endorsed by Cyan Worlds. No Myst asset (font, image, sound) is included.
 
+## Inside the fiction
+
+Age Writer is built to be **diegetic**: almost everything it shows is something that happens *in the world*, not a feature of an app. You are not filling in a form; you are a Writer at a desk, and your vault is a library of Descriptive Books.
+
+- **Your note is a Descriptive Book.** Each line of the `age` block is a phrase of the Art. The text under the block is what the book says back once written: *"The sun burns white, leaving no corner kind."* Nothing in it is a label or a field name.
+- **What you leave unwritten is not empty.** The dark fills it, and the book tells you so: *"Unwritten, it was drawn from the dark: a pale companion trails the main star."* Same note, same world, every time: you link to a world that exists, you don't roll a new one.
+- **Stability is how well the Art holds**, not a score. An Age is *stable*, *unstable* or *dying*; contradictions read as the world's own unease (*"a frozen world does not thaw for what is written upon it"*).
+- **Worlds have physics.** The core cools, the air escapes a small world, a red dwarf locks one face in night. When something doesn't hold, the explanation is about the world (*"a molten core, but the interior has cooled"*), and the fix is offered as a line of Art you could write (`age: 3.5`).
+- **You look through a linking panel.** Each Age has its own living window: its sky, its relief, its shore, the branch or reeds at the edge of the frame, its weather and its light at this hour. Click it and you hear the link.
+- **Books behave like books.** A cover drawn from the Age, a clasp that clicks, pages that turn. A trap book looks like any other. Damaged or torn pages make the link uncertain. Rewriting a world you have already explored **damages it** (the law of change): the Art remembers.
+- **Numbers are D'ni.** Age numbers, seeds, puzzles and the Relto clock are written in base 25; the Relto keeps D'ni time.
+- **Home is a place.** The Relto is your Age: an island, a cabin, a shelf where your Ages stand as books coloured by their stability. Pages you earn by writing (a stable Age, a number of Ages) change the island. In the evening the cat sleeps on the rug by the fire. No physics applies here: it is the one place where nothing pushes back.
+- **The journal is written, not logged.** Exploring an Age leaves entries in a voice, alongside the notes that mention it.
+
+Two places step outside the fiction on purpose: the **Details** tab (stability per axis, causes, numbers: read it as a Guild surveyor's notes on your book) and the **Settings**. Everything else tries to stay in the world.
+
 **Version 1.16.1.** The engine (derived from 1.3.0) is available as readable sources in `src/engine/`. `manifest.json` announces `1.16.1`. Highlights of the latest releases (full history in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)):
 
 - **1.16.1**: **shorelines** in the generative window: water and land in the same Age now meet (beach, rocks, grassy bank, steaming lava coast, ice shelf), framed differently for each Age. **Foregrounds** chosen from the Age and generated from its seed: a branch that grows differently in every Age (leafy, needles, bare, blossom, hanging moss, snowy, charred), vines, reeds and cattails by the water, large leaves, a broken column, icicles, rocks, an arch, or nothing. **Descriptions rewritten** (no more "Beyond that… Beyond that…": linking words never repeat, the sky reads in order, unreacting things are grouped, adjectives only on first mention) and **reproducible** (same Age, same text, every time it opens). In the Relto, **the cat sleeps by the fire**: in the evening it is curled up on the cabin rug (a click makes it purr); `cat_sleep: auto | always | never`. Fix: a stray shelf plank lay on the cabin floor.

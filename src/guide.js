@@ -5,6 +5,7 @@ const GUIDE = {
   fr: [
     { id: "start", icon: "feather", title: "Écrire un Âge", body: [
       { p: "Un Âge est un monde décrit dans un bloc de code `age`, une page par ligne. Le plugin calcule le reste : description, stabilité, fenêtre de liaison, livre." },
+      { p: "Tout se joue **dans la fiction** : ta note est un Livre descriptif, chaque ligne une phrase de l'Art, le texte sous le bloc est ce que le livre te renvoie. Ce que tu n'écris pas, l'obscurité le remplit, toujours de la même façon. La stabilité est la tenue de l'Art ; réécrire un monde exploré l'abîme ; le Relto est ta maison. Seuls l'onglet Détails (les notes d'un arpenteur) et les Réglages sortent du monde." },
       { code: "```age\nsingle_sun\nwater\nreturn: [[Hub]]\nlink: [[Sunder Reach]]\n```" },
       { h: "Lignes utiles" },
       { ul: ["`link: [[Note]]` : livre de liaison vers un autre Âge (autant que tu veux)", "`return: [[Note]]` : livre de retour", "`seed: 42` : change le tirage ; même note + même graine = même monde", "`panel: [[image.gif]]` : image de fenêtre à toi", "`trap book` : livre-piège (ni retour ni fissure)", "`cover: sober` : sobriété de la couverture (ornate, classic, sober, plain, ou 0 à 1)", "`window_style: generative`, `window_size: xl`, `fx: tv` : rendu de la fenêtre", "`many: ruins` / `few: rain` : quantités", "`damaged_pages = 2`, `removed_pages = 1` : livre abîmé"] },
@@ -49,6 +50,7 @@ const GUIDE = {
   en: [
     { id: "start", icon: "feather", title: "Writing an Age", body: [
       { p: "An Age is a world described in an `age` code block, one page per line. The plugin works out the rest: description, stability, linking window, book." },
+      { p: "Everything happens **inside the fiction**: your note is a Descriptive Book, each line a phrase of the Art, the text under the block is what the book says back. What you leave unwritten, the dark fills in, always the same way. Stability is how well the Art holds; rewriting an explored world damages it; the Relto is your home. Only the Details tab (a surveyor's notes) and the Settings step outside the world." },
       { code: "```age\nsingle_sun\nwater\nreturn: [[Hub]]\nlink: [[Sunder Reach]]\n```" },
       { h: "Useful lines" },
       { ul: ["`link: [[Note]]`: a linking book to another Age (as many as you like)", "`return: [[Note]]`: the way home", "`seed: 42`: changes the draw; same note + same seed = same world", "`panel: [[image.gif]]`: your own window image", "`trap book`: a trap (no return, no fissure)", "`cover: sober`: cover sobriety (ornate, classic, sober, plain, or 0 to 1)", "`window_style: generative`, `window_size: xl`, `fx: tv`: window rendering", "`many: ruins` / `few: rain`: quantities", "`damaged_pages = 2`, `removed_pages = 1`: a damaged book"] },
