@@ -16,12 +16,13 @@ const HUE_MASS = {
   orange_sun: [0.6, 0.9],
   white_sun: [1.1, 1.6],
   blue_sun: [3, 12],
-  green_sun: [0.8, 1.2],
-  violet_sun: [0.8, 1.2],
+  green_sun: [0.85, 1.15], // une étoile de type solaire dont l'Art teinte la lumière
+  violet_sun: [1.4, 2.4], // lue comme une étoile chaude, riche en ultraviolets
+  black_sun: [0.04, 0.075], // naine brune : voir model.brownDwarf
 };
 
 const B = {};
-const def = (ids, spec) => { for (const id of [].concat(ids)) B[id] = { ...(B[id] || {}), ...spec, needs: [...((B[id] || {}).needs || []), ...(spec.needs || [])] }; };
+const def = (ids, spec) => { for (const id of [].concat(ids)) { const o = B[id] || {}; B[id] = { ...o, ...spec, set: spec.set || o.set ? { ...(o.set || {}), ...(spec.set || {}) } : undefined, needs: [...(o.needs || []), ...(spec.needs || [])] }; } };
 
 // ---- ciel ---------------------------------------------------------------------------------------
 def("single_sun", { set: { stars: 1 } });
@@ -36,6 +37,7 @@ def("planet_rings", { set: { giantHost: true } }); // le ciel montre une géante
 def("close_binary_orbit", { set: { binary: "S" } });
 def("wide_binary_orbit", { set: { binary: "P" } });
 for (const [hue, range] of Object.entries(HUE_MASS)) def(hue, { set: { hue, starMassRange: range } });
+def("black_sun", { set: { blackSun: true } });
 def(["green_sun", "violet_sun"], { needs: [["realStar"]] });
 
 // ---- mondes-types ------------------------------------------------------------------------------
@@ -71,7 +73,7 @@ def("ash_cloud", { set: { albedoAdd: 0.1, veil: 0.6 }, needs: [["volcanism", "li
 
 // ---- vivant --------------------------------------------------------------------------------------
 const PHOTO = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "moss", "withered_fern", "cinderbloom"];
-def(PHOTO, { needs: [["sunlight", "light"], ["breathableAir", "light"], ["temperateLife", "light"], ["oldEnoughSimple", "light"]] });
+def(PHOTO, { needs: [["sunlight", "light"], ["breathableAir", "light"], ["temperateLife", "light"], ["oldEnoughSimple", "light"], ["uvShield", "light"]] });
 def(["great_tree", "grove", "ironwood"], { needs: [["oldEnoughComplex", "light"], ["tallTrees", "light"]] });
 def(["spore", "pale_fungus", "lichen", "singing_lichen"], { needs: [["oldEnoughSimple", "light"], ["hardyLife", "light"]] });
 def(["grazer", "herd", "watching_herd"], { needs: [["foodPlants", "light"], ["oldEnoughComplex", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
@@ -79,6 +81,21 @@ def(["hunter", "stalking_pack"], { needs: [["prey", "light"], ["oldEnoughComplex
 def(["burrower", "warren", "humming_warren"], { needs: [["soil", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
 def(["moth", "lantern_moths", "whispering_moths"], { needs: [["foodPlants", "light"]] });
 def(["drifter"], { needs: [["buoyancy", "light"]] });
+
+// ---- blocs de géophysique (src/geophys.js) : des mots à la place des chiffres -----------------------
+def("close_orbit", { set: { sRange: [1.2, 2.6] } });
+def("distant_orbit", { set: { sRange: [0.12, 0.6] } });
+def("young_world", { set: { ageRange: [0.05, 0.8] } });
+def("ancient_world", { set: { ageRange: [7, 12] }, needs: [["oldStar", "medium"]] });
+def("heavy_world", { set: { massRange: [2.5, 8] } });
+def("light_world", { set: { massRange: [0.06, 0.35] } });
+def("molten_core", { set: { coreAdd: 0.05 }, needs: [["coreMolten", "medium"]] });
+def("dead_core", { needs: [["coreDead", "medium"]] });
+def("geysers", { set: { water: 1 }, needs: [["geothermal", "medium"]] });
+def("rifts", { needs: [["plateTectonics", "medium"]] });
+def("thick_air", { needs: [["airThick", "medium"]] });
+def("thin_air", { needs: [["airThin", "medium"]] });
+def("subsurface_ocean", { set: { water: 1 }, needs: [["iceOcean", "medium"]] });
 
 /** Groupes utiles aux exigences « écologiques » (chaîne alimentaire). */
 const FLORA = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "moss", "lichen", "singing_lichen", "pale_fungus", "spore", "glowvine", "wrong_glowvine", "cinderbloom", "withered_fern", "charred_grove"];

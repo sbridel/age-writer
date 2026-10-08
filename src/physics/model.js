@@ -47,6 +47,35 @@ function starLifetime(mass) {
   return mass > 0 ? (10 * mass) / starLuminosity(mass) : Infinity;
 }
 
+/**
+ * Naine brune (le « soleil noir ») : trop légère pour brûler l'hydrogène, elle rayonne la chaleur de sa
+ * formation et se refroidit lentement. Rayon ~0,1 R☉ quelle que soit sa masse ; 1 300 à 2 000 K selon la
+ * masse (0,04 à 0,075 M☉) ; presque toute sa lumière est infrarouge : à l'œil, un disque sombre et rougeoyant.
+ */
+function brownDwarf(mass) {
+  const T = 1300 + clamp((mass - 0.04) / 0.035, 0, 1) * 700, R = 0.1;
+  return { T, L: R * R * Math.pow(T / T_SUN, 4), life: Infinity };
+}
+
+/** Part de la lumière d'un corps noir à T (K) entre deux longueurs d'onde (µm), par intégration numérique de Planck. */
+const PLANCK_CACHE = new Map();
+function planckFraction(T, a, b) {
+  if (!(T > 0)) return 0;
+  const key = `${Math.round(T / 25)}|${a}|${b}`; const hit = PLANCK_CACHE.get(key); if (hit != null) return hit;
+  const c2 = 14388; // h·c / k, en µm·K
+  const lo = Math.log(0.05), hi = Math.log(100), N = 240;
+  let part = 0, total = 0;
+  for (let i = 0; i < N; i++) {
+    const l = Math.exp(lo + ((i + 0.5) / N) * (hi - lo)), dl = (l * (hi - lo)) / N;
+    const v = dl / (Math.pow(l, 5) * (Math.exp(c2 / (l * T)) - 1));
+    total += v; if (l >= a && l <= b) part += v;
+  }
+  const f = total > 0 ? part / total : 0; PLANCK_CACHE.set(key, f); return f;
+}
+/** Lumière visible (0,4–0,7 µm, celle des plantes) et ultraviolette (0,1–0,4 µm) d'une étoile, rapportées au Soleil. */
+const visibleRatio = (T) => planckFraction(T, 0.4, 0.7) / planckFraction(T_SUN, 0.4, 0.7);
+const uvRatio = (T) => planckFraction(T, 0.1, 0.4) / planckFraction(T_SUN, 0.1, 0.4);
+
 // ---------------------------------------------------------------------------------------------
 // L2 — Orbite et rotation
 // ---------------------------------------------------------------------------------------------
@@ -209,7 +238,7 @@ function waterState(Ts, P, inventory) {
 
 module.exports = {
   T_SUN, WATER_TRIPLE_BAR, HABITABLE, HEAT, clamp,
-  starLuminosity, starRadius, starTemperature, starLifetime,
+  starLuminosity, starRadius, starTemperature, starLifetime, brownDwarf, planckFraction, visibleRatio, uvRatio,
   insolation, distanceFor, orbitalPeriodDays, tidalLockTime,
   planetRadius, gravity, escapeVelocity, density,
   internalHeat, ageForHeatLevel, dynamo, FIELD_SHIELD, airFreeze,

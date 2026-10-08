@@ -83,13 +83,15 @@ const logN = (r, mid, sigma, lo, hi) => M.clamp(mid * Math.exp(sigma * gauss(r))
 
 /** Ce que les blocs écrits fixent : nombre d'étoiles, couleurs, lune, géante, albédo… */
 function blockSettings(ids) {
-  const s = { stars: null, hues: [], moon: false, giantHost: false, locked: false, chaoticAxis: false, binary: null, veil: 1, albedoAdd: 0, coreAdd: 0, water: null };
+  const s = { sRange: null, ageRange: null, massRange: null, stars: null, hues: [], blackSun: false, moon: false, giantHost: false, locked: false, chaoticAxis: false, binary: null, veil: 1, albedoAdd: 0, coreAdd: 0, water: null };
   for (const id of ids) {
     const b = BLOCKS[id]; if (!b || !b.set) continue;
     const t = b.set;
     if (t.stars != null) s.stars = s.stars == null ? t.stars : t.stars === 0 || s.stars === 0 ? 0 : Math.max(s.stars, t.stars);
     if (t.hue && s.hues.length < 2) s.hues.push(t.hue);
     if (t.moon) s.moon = true;
+    if (t.blackSun) s.blackSun = true;
+    for (const k of ["sRange", "ageRange", "massRange"]) if (t[k]) s[k] = t[k];
     if (t.giantHost) s.giantHost = true;
     if (t.locked) s.locked = true;
     if (t.chaoticAxis) s.chaoticAxis = true;
@@ -120,7 +122,11 @@ function candidate(r, set, written) {
   const roll = {
     S: logN(r, 1, 0.35, 0.2, 3), M: logN(r, 1, 0.5, 0.05, 8), cmf: M.clamp(0.33 + 0.06 * gauss(r) + set.coreAdd, 0.05, 0.75),
     ageRoll: r(), rotation: logN(r, 24, 0.45, 6, 120), giantDays: logU(r, 1.5, 8), giantTides: logU(r, 0.1, 5), volatiles: logN(r, 1, 0.5, 0.1, 5),
+    uS: r(), uM: r(), uAge: r(), // dés des blocs de géophysique (orbite, masse, âge), jetés en dernier
   };
+  const inRange = (u, [a, b]) => Math.exp(Math.log(a) + u * (Math.log(b) - Math.log(a)));
+  if (set.sRange) roll.S = inRange(roll.uS, set.sRange);
+  if (set.massRange) roll.M = inRange(roll.uM, set.massRange);
   return {
     starMasses,
     S: set.stars === 0 ? 0 : written.insolation != null ? written.insolation : roll.S,
@@ -128,7 +134,7 @@ function candidate(r, set, written) {
     M: written.mass != null ? written.mass : roll.M,
     cmf: written.core != null ? written.core : roll.cmf,
     ageRoll: roll.ageRoll,
-    age: written.age,
+    age: written.age != null ? written.age : set.ageRange ? inRange(roll.uAge, set.ageRange) : undefined,
     rotation: written.rotation != null ? written.rotation : roll.rotation,
     giantDays: roll.giantDays,
     giantTides: roll.giantTides,
@@ -141,12 +147,19 @@ function candidate(r, set, written) {
 function derive(p, set, written, ids) {
   const w = { ids, stars: set.stars, moon: set.moon, giantHost: set.giantHost, locked: set.locked, hues: set.hues };
   // L1 étoiles
-  const lums = p.starMasses.map(M.starLuminosity);
+  // le soleil noir (naine brune) est la première étoile quand il est écrit
+  const props = p.starMasses.map((m, i) => (set.blackSun && i === 0 ? M.brownDwarf(m) : { T: M.starTemperature(m), L: M.starLuminosity(m), life: M.starLifetime(m) }));
+  const lums = props.map((x) => x.L);
+  w.blackSun = set.blackSun && set.stars > 0;
   w.starMass = p.starMasses[0] || 0;
   w.starMasses = p.starMasses;
-  w.starTemps = p.starMasses.map(M.starTemperature);
+  w.starTemps = props.map((x) => x.T);
   w.starTemp = w.starTemps[0] || 0;
-  w.starLife = p.starMasses.length ? Math.min(...p.starMasses.map(M.starLifetime)) : Infinity;
+  w.starLife = props.length ? Math.min(...props.map((x) => x.life)) : Infinity;
+  // qualité de la lumière : part visible (les plantes) et ultraviolette, pondérée par la luminosité de chaque étoile
+  const Lsum = lums.reduce((a, b) => a + b, 0) || 1;
+  w.visRatio = props.reduce((a, x) => a + (x.L / Lsum) * M.visibleRatio(x.T), 0);
+  w.uvRatio = props.reduce((a, x) => a + (x.L / Lsum) * M.uvRatio(x.T), 0);
   const L = set.binary === "S" && lums.length > 1 ? lums[0] + 0.05 * lums[1] : lums.reduce((a, b) => a + b, 0);
   const hostMass = set.binary === "S" ? w.starMass : p.starMasses.reduce((a, b) => a + b, 0);
   w.L = L;
@@ -167,7 +180,7 @@ function derive(p, set, written, ids) {
   w.R = written.radius != null ? written.radius : M.planetRadius(p.M, p.cmf);
   w.g = M.gravity(w.M, w.R); w.vesc = M.escapeVelocity(w.M, w.R); w.rho = M.density(w.M, w.R);
   // L4 intérieur
-  w.tidal = written.tides != null ? written.tides : (set.giantHost ? p.giantTides : 0) + (set.moon ? 0.03 : 0) + (set.locked && w.a < 0.2 ? 0.1 : 0);
+  w.tidal = written.tides != null ? written.tides : (set.giantHost ? p.giantTides : 0) + (set.moon ? 0.03 : 0) + (set.locked && w.a < 0.2 ? 0.1 : 0) + (w.a < 0.05 ? 0.2 : 0);
   w.heat = M.internalHeat(w.M, w.R, w.age, w.tidal);
   w.volcanism = w.heat >= M.HEAT.volcanism;
   w.liquidCore = w.heat >= M.HEAT.liquidCore;
@@ -186,15 +199,23 @@ function derive(p, set, written, ids) {
     const ok = regime === "liquid" ? water === "liquid" : regime === "ice" ? water === "ice" : water !== "liquid" && water !== "ice";
     return { regime, albedo, Teq, keep, P, tau: gh.tau, Ts: gh.Ts, water, ok };
   };
-  const tries = p.water <= 0.05 ? [atmos("dry")] : [atmos("liquid"), atmos("ice"), atmos("dry")];
-  const a = tries.find((x) => x.ok) || tries[0];
+  // Ordre : océan, glace, puis sec. Si l'eau gèle même sans gaz en plus (supposer « liquide » donne de la glace) alors que
+  // supposer « glace » la ferait fondre, le monde est au bord du gel : il reste gelé (pas de saut vers une serre emballée).
+  let a;
+  if (p.water <= 0.05) a = atmos("dry");
+  else {
+    const L = atmos("liquid"), I = atmos("ice");
+    a = L.ok ? L : I.ok ? I : L.water === "ice" ? { ...L, ok: true } : atmos("dry");
+  }
   Object.assign(w, { albedo: a.albedo, Teq: a.Teq, keep: a.keep, P: a.P, tau: a.tau, Ts: a.Ts, water: a.water, regime: a.regime, regimeStable: a.ok });
   w.airFrozen = written.atmosphere == null && M.airFreeze(a.Teq) < 1;
   w.boil = M.boilingPoint(a.P);
   // la tectonique des plaques demande de l'eau pour lubrifier la croûte (Vénus, chaude mais sèche, n'en a pas)
   w.tectonics = w.heat >= M.HEAT.tectonics && w.M >= 0.5 && w.water === "liquid";
   // L7 lumière au sol (voile, nuages épais)
-  w.light = w.S * set.veil * (a.P > 10 ? 0.5 : 1);
+  // lumière au sol : la part VISIBLE du flux (une naine rouge chauffe mais éclaire peu ; un soleil noir presque pas)
+  w.light = w.S * w.visRatio * set.veil * (a.P > 10 ? 0.5 : 1);
+  w.uv = w.S * w.uvRatio * (a.P > 1 ? 0.5 : 1) * (w.field > M.FIELD_SHIELD ? 0.8 : 1);
   return w;
 }
 

@@ -120,4 +120,38 @@ ok(plain("fr")(1400) === "1400" && plain("fr")(0.55) === "0,55" && plain("en")(1
 const { verdictOf } = require("../src/engine/analysis");
 ok(verdictOf(74) === "unstable" && P.applyPhysics(an, ph, "strict").verdict === verdictOf(P.applyPhysics(an, ph, "strict").stability), "le verdict strict suit les seuils du moteur");
 
+// ---- 10. 1.16 : soleil noir, qualité de la lumière, blocs de géophysique ---------------------------------------------------
+{
+  const bs = solve({ ids: ["black_sun", "water", "fern"], seed: "Noir" });
+  ok(bs.w.blackSun && bs.w.starTemp <= 2000 && bs.w.visRatio < 0.05 && bs.w.light < 0.05, "soleil noir : naine brune, presque pas de lumière visible");
+  ok(!bs.tensions.some((t) => t.id === "sunlight"), "soleil noir : les plantes boivent l'infrarouge (plantes noires), pas de tension de lumière");
+  ok(P.sheet(bs, "fr").facts.some((x) => /soleil noir/i.test(x)), "soleil noir : la fiche l'explique");
+  ok(bs.w.a < 0.05 && bs.w.tidal >= 0.2, "soleil noir : orbite très serrée, marée qui chauffe");
+  const red = solve({ ids: ["red_sun", "water"], seed: "R" }), yellow = solve({ ids: ["single_sun", "water"], seed: "R" });
+  ok(red.w.visRatio < yellow.w.visRatio && red.w.visRatio < 0.6, "une naine rouge éclaire moins qu'elle ne chauffe");
+  ok(solve({ ids: ["violet_sun", "water"], seed: "V" }).w.uvRatio > 1.8, "soleil violet : riche en ultraviolets");
+  const { analyseAgeBase: an2 } = require("../src/engine/analysis");
+  const engineGeo = an2("close_orbit\ndistant_orbit", { seed: "G", draw: false });
+  ok(engineGeo.resolved.triggered.some((c) => c.severity === "strong"), "moteur : orbite serrée et lointaine se contredisent");
+  ok(!an2("young_world\nwater\ngeysers\nrifts\nmolten_core\nthick_air\nblack_sun", { seed: "G", draw: false }).resolved.lines.some((l) => l.unknown), "moteur : les nouveaux blocs sont connus");
+  for (let i = 0; i < 20; i++) {
+    const y = solve({ ids: ["young_world"], seed: "Y" + i }).w, h = solve({ ids: ["heavy_world"], seed: "H" + i }).w, c = solve({ ids: ["close_orbit"], seed: "C" + i }).w, d = solve({ ids: ["distant_orbit"], seed: "D" + i }).w;
+    if (!(y.age <= 0.8 && h.M >= 2.5 && c.S >= 1.2 && d.S <= 0.6)) assert.fail(`blocs de géophysique : tirage hors plage (graine ${i})`);
+  }
+  n++;
+  ok(solve({ ids: ["molten_core", "dead_core"], seed: "K" }).tensions.length >= 1, "noyau en fusion ET mort : impossible");
+  ok(!solve({ ids: ["rifts", "water"], seed: "K" }).tensions.length, "failles + eau : le tirage trouve un monde à plaques");
+  ok(!solve({ ids: ["subsurface_ocean", "distant_orbit"], seed: "K" }).tensions.length, "océan sous la glace d'un monde lointain : tient");
+  // strict : les mondes-types n'orientent plus le tirage
+  let easyCold = 0, strictCold = 0;
+  for (let i = 0; i < 30; i++) { if (solve({ ids: ["frozen_world"], seed: "F" + i, mode: "easy" }).w.Ts < 255) easyCold++; if (solve({ ids: ["frozen_world"], seed: "F" + i, mode: "strict" }).w.Ts < 255) strictCold++; }
+  ok(easyCold >= 28 && strictCold < easyCold, `monde gelé : en facile le tirage s'y plie (${easyCold}/30), en strict il est seulement vérifié (${strictCold}/30)`);
+  // écrire une piste dans la note
+  const { setLineInAgeBlock } = require("../src/physics/edit");
+  const note = "# N\n```age\nlava\nâge: 9\n```\n\n```age\nwater\n```\n";
+  ok(setLineInAgeBlock(note, "lava\nâge: 9", "age", 3.5) === "# N\n```age\nlava\nage: 3.5\n```\n\n```age\nwater\n```\n", "piste : l'alias âge: est remplacé dans le bon bloc");
+  ok(setLineInAgeBlock(note, "water", "mass", 2.04) === "# N\n```age\nlava\nâge: 9\n```\n\n```age\nwater\nmass: 2\n```\n", "piste : ajoutée à la fin du bloc visé, deux chiffres");
+  ok(setLineInAgeBlock(note, "stone", "mass", 2) === null, "piste : bloc introuvable → rien");
+}
+
 console.log(`physics.test.js : ${n} vérifications, tout passe`);

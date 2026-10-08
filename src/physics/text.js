@@ -54,6 +54,12 @@ function facts(w, lang, f) {
   const fr = lang === "fr", out = [];
   const push = (a, b) => out.push(fr ? a : b);
   if (w.stars > 0 && w.starLife < 1 && w.age <= w.starLife) push(`Une étoile si ardente ne vit que ${f(w.starLife * 1000)} millions d'années : ce monde est forcément jeune.`, `So fierce a star lives only ${f(w.starLife * 1000)} million years: this world must be young.`);
+  if (w.blackSun) push("Un soleil noir : une naine brune, presque toute sa lumière est infrarouge. Le jour est une pénombre rouge sombre, les couleurs s'éteignent en gris, et les plantes, pour boire cette chaleur, seraient presque noires.",
+    "A black sun: a brown dwarf whose light is almost all infrared. Day is a dark red dusk, colours fade to grey, and plants, to drink that heat, would be nearly black.");
+  else if (w.stars > 0 && w.visRatio < 0.5) push(`Une étoile froide : elle chauffe plus qu'elle n'éclaire (${f(w.visRatio * 100, 0)} % de la lumière visible du Soleil, à chaleur égale).`, `A cool star: it warms more than it lights (${f(w.visRatio * 100, 0)} % of the Sun's visible light, for the same warmth).`);
+  if (w.hues && w.hues.includes("green_sun")) push("Sous un soleil vert, les plantes boiraient le vert au lieu de le renvoyer : feuillages pourpres, presque noirs.", "Under a green sun, plants would drink the green instead of reflecting it: purple, almost black foliage.");
+  if (w.stars > 0 && w.uvRatio > 1.8) push(`Une étoile chaude, riche en ultraviolets (${f(w.uvRatio)} × le Soleil) : il faut un air épais pour vivre à découvert.`, `A hot star, rich in ultraviolet (${f(w.uvRatio)} × the Sun): life in the open needs thick air.`);
+  if (w.a < 0.05 && w.stars > 0) push(`Une orbite serrée (${f(w.a)} UA) : une année de ${f(w.periodDays)} jours, et la marée de l'étoile chauffe l'intérieur.`, `A tight orbit (${f(w.a)} AU): a ${f(w.periodDays)}-day year, and the star's tide heats the interior.`);
   if (w.locked && !w.giantHost) {
     const day = w.Ts * (1 + 0.3 / (1 + w.P)), night = w.Ts * (1 - 0.45 / (1 + w.P)); // un air épais transporte la chaleur vers la nuit
     push(`La marée de l'étoile a figé sa rotation : la face de jour monte vers ${f(day - 273.15, 0)} °C, la face de nuit descend vers ${f(night - 273.15, 0)} °C, et la vie tient la bande du crépuscule.`,

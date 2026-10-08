@@ -46,7 +46,7 @@ function sceneOf(a, name = "", blocks = null) {
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
     moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine") || wd === "jungle", eyes: r("hunter", "stalking_pack"),
     ruins, lampLit: r("lit_lamp"), tabletAwake: r("speaking_tablet"),
-    world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), sunHues: SKY.sunColors([...ids]),
+    world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), sunHues: SKY.sunColors([...ids]), blackSun: r("black_sun"),
     extras: [...ids].filter((id) => !KNOWN.has(id) && !id.startsWith("?")).sort().slice(0, 8).map((id) => {
       const b = blocks && typeof blocks.get === "function" ? blocks.get(id) : null, ax = b && typeof b.axis === "string" ? b.axis.toLowerCase() : "";
       return { id, axis: AXES.find((x) => ax.startsWith(x.slice(0, 5))) || AXES[fnv(id) % 5], words: b && Array.isArray(b.descriptors) && b.descriptors.length ? b.descriptors.map(String) : id.split("_") };
@@ -162,6 +162,7 @@ function paint(g, m, t, o = {}) {
   const night = 1 - smooth(d * 3), day = smooth((d - 0.25) / 0.75);
   let top = mixc(mixc(pal.nightTop, pal.dawnTop, smooth(d * 3)), pal.dayTop, day), hzc = mixc(mixc(pal.nightHz, pal.dawnHz, smooth(d * 3)), pal.dayHz, day);
   const hues = S.sunHues || []; if (hues[0]) { hzc = mixc(hzc, hues[0], 0.3 * day); top = mixc(top, hues[0], 0.14 * day); } // soleil coloré : la lumière du jour prend sa teinte
+  if (S.blackSun) { const gray = (c) => { const v = (c[0] + c[1] + c[2]) / 3; return [v, v, v]; }; top = mixc(gray(top), [12, 8, 10], 0.55); hzc = mixc(gray(hzc), [60, 26, 26], 0.45); } // soleil noir : jour gris et sombre, horizon rouge éteint
   g.save(); g.clearRect(0, 0, W, H);
   const sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, css(top)); sky.addColorStop(1, css(hzc)); g.fillStyle = sky; g.fillRect(0, 0, W, H);
   if (S.storm) { g.fillStyle = "rgba(14,17,24,0.5)"; g.fillRect(0, 0, W, H); }
@@ -200,6 +201,10 @@ function paint(g, m, t, o = {}) {
     const gl = g.createRadialGradient(s.x, s.y, s.r * 0.5, s.x, s.y, s.r * 5), b = 0.5 * Math.max(Math.pow(Math.max(0, s.e), 0.6), S.cycle === "frozen" ? 0.7 : 0);
     const hc = hues[s.i] || hues[0] && S.suns < 2 && s.i === 0 && hues[0] || null; // 1er soleil : 1re couleur ; 2e soleil : 2e couleur
     gl.addColorStop(0, hc ? css(hc, b) : s.i === 0 ? css([255, 214, 150], b) : css([190, 215, 255], b * 0.8)); gl.addColorStop(1, css(hc || [255, 214, 150], 0)); g.fillStyle = gl; g.fillRect(0, 0, W, H);
+    if (S.blackSun && s.i === 0) { // soleil noir : disque sombre et couronne rouge éteinte
+      g.strokeStyle = css([150, 52, 40], 0.5 + 0.4 * b); g.lineWidth = Math.max(1.2, s.r * 0.22); g.beginPath(); g.arc(s.x, s.y, s.r * 1.08, 0, TAU); g.stroke();
+      g.fillStyle = "#07050a"; g.beginPath(); g.arc(s.x, s.y, s.r, 0, TAU); g.fill(); continue;
+    }
     g.fillStyle = hc ? css(mixc(hc, [255, 255, 255], 0.35)) : s.i === 0 ? "#f6e0a8" : "#cfe0f4"; g.beginPath(); g.arc(s.x, s.y, s.r, 0, TAU); g.fill();
   }
   const s0 = sn.find((s) => s.i === 0);
@@ -253,6 +258,10 @@ function paint(g, m, t, o = {}) {
   foreground(g, m, t, hzc);
   if (S.ice) frost(g, m, t, night);
   const vg = g.createRadialGradient(W / 2, H / 2, H * 0.4, W / 2, H / 2, H * 0.95); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.35)"); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+  if (S.blackSun) { // soleil noir : les couleurs s'éteignent en gris, seule la couronne garde son rouge
+    g.save(); g.globalCompositeOperation = "saturation"; g.globalAlpha = 0.8; g.fillStyle = "#808080"; g.fillRect(0, 0, W, H); g.restore();
+    const s0b = sn.find((x) => x.i === 0); if (s0b && s0b.y + s0b.r < hz) { g.strokeStyle = "rgba(150,52,40,0.75)"; g.lineWidth = Math.max(1.2, s0b.r * 0.22); g.beginPath(); g.arc(s0b.x, s0b.y, s0b.r * 1.08, 0, TAU); g.stroke(); }
+  }
   g.restore();
 }
 

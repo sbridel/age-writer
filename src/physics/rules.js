@@ -199,10 +199,67 @@ const REQUIREMENTS = {
     why: { fr: () => "Le sable naît de l'érosion par le vent ou l'eau ; ici, ni l'un ni l'autre. Seule la poussière des impacts.", en: () => "Sand comes from erosion by wind or water; here there is neither. Only impact dust." },
   },
 
+  // ---- blocs de géophysique ----------------------------------------------------------------------------
+  oldStar: {
+    law: "L1", axis: "cosmological", sev: "medium", search: [],
+    test: (w) => w.stars === 0 || w.starLife >= 7,
+    why: { fr: (w, f) => `Un monde ancien autour d'une étoile qui ne vit que ${f(w.starLife)} Ga ?`, en: (w, f) => `An ancient world around a star that lives only ${f(w.starLife)} Gyr?` },
+    fix: () => [tip("un soleil calme et durable (single_sun, orange_sun, red_sun)", "a calm, long-lived sun (single_sun, orange_sun, red_sun)")],
+  },
+  coreMolten: {
+    law: "L4", axis: "geological", sev: "medium", search: ["age", "mass"],
+    test: (w) => w.heat >= HEAT.liquidCore,
+    why: { fr: (w, f) => `Un noyau en fusion, mais l'intérieur s'est refroidi (chaleur ${f(w.heat)} ; il faut ${f(HEAT.liquidCore)}).`, en: (w, f) => `A molten core, but the interior has cooled (heat ${f(w.heat)}; ${f(HEAT.liquidCore)} is needed).` },
+    fix: (w) => (w.giantHost ? [] : [tip("ou une géante voisine qui la chauffe par marée (planet_rings)", "or a neighbouring giant heating it by tides (planet_rings)")]),
+  },
+  coreDead: {
+    law: "L4", axis: "geological", sev: "medium", search: ["age", "mass"],
+    test: (w) => w.heat < HEAT.liquidCore,
+    why: { fr: (w, f) => `Un noyau mort, mais l'intérieur est encore chaud (chaleur ${f(w.heat)}).`, en: (w, f) => `A dead core, but the interior is still hot (heat ${f(w.heat)}).` },
+    fix: () => [tip("ou un monde ancien et léger (ancient_world, light_world)", "or an ancient, light world (ancient_world, light_world)")],
+  },
+  geothermal: {
+    law: "L4", axis: "geological", sev: "medium", search: ["age", "mass"],
+    test: (w) => w.heat >= 0.35 && w.waterInv > 0.05 && w.P >= WATER_TRIPLE_BAR,
+    why: {
+      fr: (w, f) => (w.heat < 0.35 ? `Des geysers demandent une roche chaude sous l'eau ; ici, la chaleur interne n'est que de ${f(w.heat)}.` : "Des geysers sans eau ni air pour les porter ?"),
+      en: (w, f) => (w.heat < 0.35 ? `Geysers need hot rock under water; here, internal heat is only ${f(w.heat)}.` : "Geysers with no water or air to carry them?"),
+    },
+  },
+  plateTectonics: {
+    law: "L4", axis: "geological", sev: "medium", search: ["age", "mass", "water"],
+    test: (w) => w.tectonics,
+    why: {
+      fr: (w, f) => (w.M < 0.5 ? `Des failles et des plaques qui bougent demandent une planète assez grande ; celle-ci fait ${f(w.M)} M⊕.` : w.heat < HEAT.tectonics ? `Les plaques ne bougent plus : chaleur interne ${f(w.heat)} (il faut ${f(HEAT.tectonics)}).` : "Sans eau liquide pour lubrifier la croûte, les plaques restent soudées (comme sur Vénus)."),
+      en: (w, f) => (w.M < 0.5 ? `Rifts and moving plates need a large enough planet; this one is ${f(w.M)} M⊕.` : w.heat < HEAT.tectonics ? `The plates no longer move: internal heat ${f(w.heat)} (${f(HEAT.tectonics)} needed).` : "Without liquid water to lubricate the crust, the plates stay welded (as on Venus)."),
+    },
+    fix: () => [tip("il faut à la fois un intérieur chaud, une planète assez grande et de l'eau liquide", "it takes a hot interior, a large enough planet and liquid water, all three")],
+  },
+  airThick: {
+    law: "L5", axis: "weather", sev: "medium", search: ["mass", "atmosphere"],
+    test: (w) => w.P >= 2,
+    why: { fr: (w, f) => `Un air épais, mais la planète n'en retient que ${f(w.P)} bar.`, en: (w, f) => `Thick air, but the planet holds only ${f(w.P)} bar.` },
+    fix: () => [tip("ou plus de volatils (volatiles: 3)", "or more volatiles (volatiles: 3)")],
+  },
+  airThin: {
+    law: "L5", axis: "weather", sev: "medium", search: ["mass", "atmosphere"],
+    test: (w) => w.P >= 0.005 && w.P < 0.3,
+    why: { fr: (w, f) => (w.P < 0.005 ? `Un air mince ? Il n'y en a presque plus (${f(w.P)} bar).` : `Un air mince, mais la planète en garde ${f(w.P)} bar.`), en: (w, f) => (w.P < 0.005 ? `Thin air? There is almost none left (${f(w.P)} bar).` : `Thin air, but the planet keeps ${f(w.P)} bar.`) },
+  },
+  iceOcean: {
+    law: "L6", axis: "geological", sev: "medium", search: ["insolation", "age"],
+    test: (w) => w.water === "ice" && w.heat >= 0.2,
+    why: {
+      fr: (w, f) => (w.water !== "ice" ? `Un océan caché sous la glace, mais la surface n'est pas gelée (${f(w.Ts - 273.15, 0)} °C).` : `Un océan sous la glace demande un peu de chaleur venue d'en bas ; ici ${f(w.heat)}.`),
+      en: (w, f) => (w.water !== "ice" ? `An ocean hidden under ice, but the surface is not frozen (${f(w.Ts - 273.15, 0)} °C).` : `An ocean under ice needs some heat from below; here ${f(w.heat)}.`),
+    },
+    fix: () => [tip("ou une géante qui la chauffe par marée, comme Europe (planet_rings)", "or a giant tide-heating it, like Europa (planet_rings)")],
+  },
+
   // ---- L7 : vivant ------------------------------------------------------------------------------------
   sunlight: {
     law: "L7", axis: "ecological", sev: "light", search: ["insolation"],
-    test: (w) => w.light >= 0.01 || has(w, ["glowvine", "wrong_glowvine", "lit_lamp"]),
+    test: (w) => w.light >= 0.01 || (w.blackSun && w.S >= 0.2) || has(w, ["glowvine", "wrong_glowvine", "lit_lamp"]),
     why: { fr: () => "Les plantes vertes vivent de lumière, et il n'en arrive presque pas jusqu'au sol.", en: () => "Green plants live on light, and almost none reaches the ground." },
     fix: () => [tip("des champignons et des spores, qui vivent de chaleur (spore, pale_fungus)", "fungi and spores, which live on heat (spore, pale_fungus)"), tip("une lumière à elles (glowvine)", "a light of their own (glowvine)")],
   },
@@ -219,6 +276,15 @@ const REQUIREMENTS = {
     law: "L7", axis: "ecological", sev: "light", search: ["insolation", "atmosphere"],
     test: (w) => (w.Ts >= 200 && w.Ts <= 360) || w.heat >= 1.5,
     why: { fr: (w, f) => `Même les spores et les champignons ont leurs limites ; ici ${f(w.Ts - 273.15, 0)} °C, sans source chaude où s'abriter.`, en: (w, f) => `Even spores and fungi have limits; here ${f(w.Ts - 273.15, 0)} °C, with no warm vents to shelter by.` },
+  },
+  uvShield: {
+    law: "L7", axis: "ecological", sev: "light", search: ["atmosphere", "insolation"],
+    test: (w) => w.uv <= 2,
+    why: {
+      fr: (w, f) => `L'étoile baigne le sol d'ultraviolets (${f(w.uv)} × la Terre) : à découvert, la vie brûle, faute d'un air assez épais pour la protéger.`,
+      en: (w, f) => `The star bathes the ground in ultraviolet (${f(w.uv)} × Earth): life burns in the open, with no air thick enough to shield it.`,
+    },
+    fix: () => [tip("ou un champ magnétique et un air épais (iron, atmosphere: 2)", "or a magnetic field and thick air (iron, atmosphere: 2)")],
   },
   breathableAir: {
     law: "L7", axis: "ecological", sev: "light", search: ["mass", "atmosphere"],
