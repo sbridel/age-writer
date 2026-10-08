@@ -186,9 +186,10 @@ class ReltoRenderer {
     const dk = has("dock"); if (dk) SC.dock(ctx, this, sky, t, !!cal);
     for (const k of ["gold", "silver", "gems"]) { const o = has(k); if (o) this.drawOre(ctx, k, o.density, sky, t); }
     const mt = has("mountain"); if (mt) this.drawMount(ctx, mt.density, sky, t);
+    const wf = has("waterfall"); if (wf) this.drawWaterfall(ctx, t, "stream"); // le ruisseau coule sur la montagne : derrière les arbres
     this.drawPlants(ctx, 0, t);
     const kp = has("koi"); if (kp) this.drawKoi(ctx, kp, sky, t); // après les arbres du fond : le bassin n'est jamais recouvert
-    const wf = has("waterfall"); if (wf) this.drawWaterfall(ctx, t);
+    if (wf) this.drawWaterfall(ctx, t, "fall"); // éclaboussures sur le bassin et chute sous l'île : devant
     this.drawStructures(ctx, sky, t);
     const bn = has("bench"); if (bn) SC.bench(ctx, this, sky, this.lay.bench ? this.lay.bench.x0 : 289);
     const ct = has("cat"); if (ct && !this.catAsleep()) this.drawCat(ctx, ct, sky, t); // endormi : il est dans la cabane, près du feu
@@ -389,15 +390,19 @@ class ReltoRenderer {
   }
 
   /** Ruisseau : naît sur le flanc du mont, descend jusqu'au bassin (ou jusqu'au bord), puis tombe de l'île dans la brume. */
-  drawWaterfall(ctx, t) {
+  /** Ruisseau (part « stream », sur la montagne, derrière les arbres) puis chute (part « fall », sous l'île, devant). */
+  drawWaterfall(ctx, t, part = "all") {
     const L = this.lay, M = L.mount, koi = L.koi, mt = this.scene.additions.some((a) => a.type === "mountain");
     const fx = koi ? koi.x0 + 16 : M.x + M.hw * 0.5, sx = mt ? M.x + 16 : fx - 22, sy = mt ? GY - M.h * 0.86 : GY - 7, N = 24, pts = [];
     for (let i = 0; i <= N; i++) { const p = i / N; pts.push([sx + (fx - sx) * Math.pow(p, 1.15) + Math.sin(p * 7 + t * 0.4) * 0.8 * (1 - p), sy + (GY - sy) * p, 1.6 + 2.6 * p]); }
+    if (part !== "fall") {
     ctx.fillStyle = "rgba(200,228,248,0.85)"; ctx.beginPath();
     pts.forEach(([x, y, w], i) => (i ? ctx.lineTo(x - w / 2, y) : ctx.moveTo(x - w / 2, y))); for (let i = N; i >= 0; i--) ctx.lineTo(pts[i][0] + pts[i][2] / 2, pts[i][1]); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,0.75)"; ctx.lineWidth = 0.9;
     for (let k = 0; k < 7; k++) { const q = frac(t * 0.4 + k / 7), i = Math.min(N - 1, Math.floor(q * N)), [x, y] = pts[i], [x2, y2] = pts[i + 1]; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x2, y2); ctx.stroke(); }
     ctx.fillStyle = "rgba(190,220,238,0.7)"; ctx.beginPath(); ctx.ellipse(sx, sy, 5, 1.6, 0, 0, 6.283); ctx.fill(); // la source
+    }
+    if (part === "stream") return;
     for (let i = 0; i < 3; i++) { const p = frac(t * 0.5 + i / 3); ctx.strokeStyle = rgba(235, 245, 255, 0.4 * (1 - p)); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.ellipse(fx, GY + 0.6, 2 + p * 7, 0.6 + p * 1.3, 0, 0, 6.283); ctx.stroke(); } // éclaboussures à l'arrivée
     // la chute : du fond du bassin (ou du bord de l'île) jusque dans la brume
     const ex = koi ? koi.x1 - 7 : fx, ey = koi ? GY + 17 : GY + 9, w = 8;
