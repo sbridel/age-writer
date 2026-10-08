@@ -343,6 +343,12 @@ Two levels, in a window with sections (and exportable as notes):
 
 ---
 
+## What's next
+
+This is **sandbox mode**: you write worlds, explore them, tune the Imager and furnish your refuge at your own pace, with nothing to win or lose. A **game mode** is coming soon (goals, discoveries, consequences), and **more to come!** Ideas and bug reports are welcome in the repository's Issues.
+
+---
+
 ## 15. Development
 
 Since 1.7.0, **all the code is readable**: the original engine (1.3.0, whose TypeScript sources were lost) was de-minified, renamed and split into modules in `src/engine/` (`registry`, `rules`, `draw`, `resolve`, `prose`, `glyphs`, `analysis`, `book-view`, `settings-tab`, `plugin`…). The old regex patches on minified code are gone: the touch points with the extension are real calls to `src/engine/hooks.js`. The original 1.3.0 `main.js` is kept as is in `legacy/` (provenance).

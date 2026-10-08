@@ -318,6 +318,12 @@ Deux niveaux, dans une fenêtre à rubriques (et exportables en notes) :
 
 ---
 
+## La suite
+
+Pour l'instant, c'est le **mode bac à sable** : tu écris des mondes, tu les explores, tu règles l'Imageur et tu aménages ton refuge à ton rythme, sans rien à gagner ni à perdre. Un **mode jeu** arrive bientôt (objectifs, découvertes, conséquences), et **bien d'autres choses encore !** Idées et signalements de bugs sont bienvenus dans les Issues du dépôt.
+
+---
+
 ## 15. Développement
 
 Depuis la 1.7.0, **tout le code est lisible** : le moteur d'origine (1.3.0, dont les sources TypeScript étaient perdues) a été dé-minifié, renommé et découpé en modules dans `src/engine/` (`registry`, `rules`, `draw`, `resolve`, `prose`, `glyphs`, `analysis`, `book-view`, `settings-tab`, `plugin`…). Les anciennes retouches par expressions régulières sur du code minifié ont disparu : les points de contact avec l'extension sont de vrais appels à `src/engine/hooks.js`. Le `main.js` 1.3.0 d'origine est conservé tel quel dans `legacy/` (provenance).
