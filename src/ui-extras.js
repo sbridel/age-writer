@@ -1,6 +1,7 @@
 "use strict";
 /** Ajouts à l'interface existante : numéros D'ni, mécanismes, altérations, solitude, son ; journal ; bloc `dni`. */
 const { fnv, esc, words, setMarkup } = require("./util");
+const IMG = require("./imager");
 const { worldIds, describeChange } = require("./law");
 const mech = require("./mech");
 const sound = require("./sound");
@@ -73,6 +74,16 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
   // fiche
   const dl = sec.createEl("dl", { cls: "age-det__sheet" });
   for (const [k, v] of sh.rows) { dl.createEl("dt", { text: k }); dl.createEl("dd", { text: v }); }
+  // notes de l'arpenteur pour l'Imageur du Relto : ce que chante le ciel de l'Âge, trois valeurs en chiffres D'ni (la phase dérive : jamais notée)
+  try {
+    const tg = IMG.targetsOf(analysis, path ? String(path).replace(/^.*\//, "").replace(/\.md$/i, "") : ""), hn = IMG.hints(tg, lang);
+    const sky = sec.createDiv({ cls: "age-det__sky" });
+    sky.createEl("b", { text: t("det.sky") + " " });
+    sky.createSpan({ cls: "age-det__skyline", text: hn.line });
+    const nums = sky.createDiv({ cls: "age-det__skynums" });
+    for (const [label, v] of [[t("det.sky.freq"), tg.freq], [t("det.sky.amp"), tg.amp], [t("det.sky.harm"), tg.harm]]) { const c = nums.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label }); setMarkup(c.createSpan(), plugin.dni.numberSvg(v, { size: 16 })); }
+    nums.createSpan({ cls: "age-det__skynum", text: tg.pol > 0 ? "+" : "−" }).setAttr("aria-label", t("det.sky.pol"));
+  } catch (e) { /* pas de notes */ }
   if (sh.facts.length) {
     heading(sec, t("det.why")).addClass("age-det__h--sub");
     const ul = sec.createEl("ul", { cls: "age-det__facts" });

@@ -516,7 +516,13 @@ function bufferGain(buf) {
   const rms = Math.sqrt(sum / Math.max(1, n)) || 0.1; buf.__gain = Math.max(0.2, Math.min(4, 0.1 / rms)); return buf.__gain;
 }
 const room = { kind: null, out: null, nodes: [], timers: [] };
+/** Accorde le bourdon de l'Imageur sur la netteté `k` (0 à 1) : battements de ~9 Hz au pire, aucun à l'accord. */
+function imagerTune(k) {
+  const im = room.kind === "imager" && room.imager; if (!im) return;
+  try { const t = im.c.currentTime, kk = Math.max(0, Math.min(1, k || 0)); im.o2.frequency.setTargetAtTime(im.f0 + (1 - kk) * 9, t, 0.25); im.g3.gain.setTargetAtTime(kk > 0.9 ? 0.05 * (kk - 0.9) * 10 : 0, t, 0.6); } catch (e) { /* ignore */ }
+}
 function roomStop() {
+  room.imager = null;
   for (const t of room.timers) clearTimeout(t); room.timers = [];
   const out = room.out, nodes = room.nodes; room.out = null; room.nodes = []; room.kind = null;
   if (!out) return;
@@ -618,6 +624,17 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
     const keep = (n) => { room.nodes.push(n); return n; };
     const fileLoop = (buf) => { const s = keep(c.createBufferSource()), g = keep(c.createGain()); s.buffer = buf; s.loop = true; g.gain.value = bufferGain(buf); s.connect(g); g.connect(out); s.start(0, Math.random() * buf.duration * 0.5); };
     const loop = (f) => { const s = keep(c.createBufferSource()); s.buffer = noiseBuf(c, 3); s.loop = true; f(s); s.start(); return s; };
+    if (kind === "imager") {
+      // l'Imageur : deux bourdons graves ; le second s'écarte du premier selon le désaccord, d'où des battements
+      // qui ralentissent à mesure que l'on s'accorde, puis se fondent ; une quinte cristalline s'ajoute quand l'image tient
+      const f0 = 98, lp = keep(c.createBiquadFilter()), g = keep(c.createGain()), o1 = keep(c.createOscillator()), o2 = keep(c.createOscillator()), o3 = keep(c.createOscillator()), g3 = keep(c.createGain());
+      lp.type = "lowpass"; lp.frequency.value = 700; g.gain.value = 0.32; o1.type = "triangle"; o2.type = "triangle"; o1.frequency.value = f0; o2.frequency.value = f0 + 6;
+      o3.type = "sine"; o3.frequency.value = f0 * 6; g3.gain.value = 0;
+      o1.connect(lp); o2.connect(lp); lp.connect(g); g.connect(out); o3.connect(g3); g3.connect(out); o1.start(); o2.start(); o3.start();
+      room.imager = { o2, g3, f0, c };
+      imagerTune(bufs.k == null ? 0 : bufs.k);
+      return true;
+    }
     if (kind === "fire" && bufs.main) { fileLoop(bufs.main); } else if (kind === "fire") {
       // feu qui crépite : surtout les craquements du bois, sous un très léger grondement grave (pas de souffle d'air) ; crépitements (claquements brefs, parfois en rafale) et quelques gros « pop » de bûche
       const d = bufs.d == null ? 0.7 : bufs.d, nb = noiseBuf(c, 1);
@@ -656,4 +673,4 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { segmentsOf, audioContext: sfxCtx, roomStart, roomStop, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

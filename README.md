@@ -24,8 +24,9 @@ Age Writer is built to be **diegetic**: almost everything it shows is something 
 
 Two places step outside the fiction on purpose: the **Details** tab (stability per axis, causes, numbers: read it as a Guild surveyor's notes on your book) and the **Settings**. Everything else tries to stay in the world.
 
-**Version 1.16.1.** The engine (derived from 1.3.0) is available as readable sources in `src/engine/`. `manifest.json` announces `1.16.1`. Highlights of the latest releases (full history in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)):
+**Version 1.17.0.** The engine (derived from 1.3.0) is available as readable sources in `src/engine/`. `manifest.json` announces `1.17.0`. Highlights of the latest releases (full history in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)):
 
+- **1.17.0**: **the Imager**, a machine in the Relto (page *Imager*): put an Age's book on the lectern and tune the console (polarity lever, frequency and amplitude dials, harmonic ring, phase wheel) to that Age's sky, computed by its physics, until the Age appears in the crystal. The phase drifts with the clock. Clues in each Age's Details tab.
 - **1.16.1**: **shorelines** in the generative window: water and land in the same Age now meet (beach, rocks, grassy bank, steaming lava coast, ice shelf), framed differently for each Age. **Foregrounds** chosen from the Age and generated from its seed: a branch that grows differently in every Age (leafy, needles, bare, blossom, hanging moss, snowy, charred), vines, reeds and cattails by the water, large leaves, a broken column, icicles, rocks, an arch, or nothing. **Descriptions rewritten** (no more "Beyond that… Beyond that…": linking words never repeat, the sky reads in order, unreacting things are grouped, adjectives only on first mention) and **reproducible** (same Age, same text, every time it opens). In the Relto, **the cat sleeps by the fire**: in the evening it is curled up on the cabin rug (a click makes it purr); `cat_sleep: auto | always | never`. Fix: a stray shelf plank lay on the cabin floor.
 - **1.16.0**: **physics of the Ages**. Under the blocks, every Age gets a simplified physics (star, orbit, planet, internal heat, core, magnetic field, air, temperature, water, light), chosen to hold what you wrote; the reworked **Details** tab shows it with stability bars per axis, a chain of causes, the world's sheet, what does not hold and why, and suggested lines (`age: 3.5`) that one click writes into the block. **Easy** mode (default) never changes stability; **strict** makes what does not hold cost, with a severity slider. New blocks, never drawn: `black_sun` (a brown dwarf: warmth without light, grey day, black plants), `close_orbit`, `distant_orbit`, `young_world`, `ancient_world`, `heavy_world`, `light_world`, `molten_core`, `dead_core`, `geysers`, `rifts`, `thick_air`, `thin_air`, `subsurface_ocean`. Value lines: `mass:`, `age:`, `orbit:`, `insolation:`, `core:`, `atmosphere:`… Existing Ages keep their pages and stability in easy mode.
 - **1.15.3**: world-type clashes about the weather now count (`desert_world` + `rain`, `frozen_world` + `heat`… used to cost nothing because of a misnamed axis), and every sky ↔ matter clash counts, not just one per world type. Drawn pages don't change; only stability does (about 1 Age in 9, often a few points).
@@ -162,6 +163,19 @@ Since 1.13 a **navigation bar** sits in the band above the picture: **island** (
 - **Cabin interior**: fireplace (lit when the *chimney* page is active, otherwise "Cold hearth"), a 3×10 shelf of your Ages (each book clickable), a table with the glyph book and the library book, a door back to the island.
 - **Linking pillars**: the linking window lights up when Ages lead back to this Relto.
 - **Grove, pond, cat, pond ++**: close-up views. *Pond ++* (page *page_pond_decor*) shows the pond almost full frame with lilies, a stone lantern, a bamboo spout, reeds, pebbles and seaweed, dragonflies by day and fireflies at dusk. Cat toys (page *page_cat_toys*): rolling yarn ball, squeaking mouse, jingle ball, feather wand, cardboard box; click a toy.
+
+### The Imager
+
+The page *Imager* (`page_imager`) adds a machine to the Relto, inspired by the imagers of the Myst series: a cold stone chamber (nav button, or the small brass device glowing on the cabin table). Put an Age's book on the **lectern** (‹ › to change book), then **tune the machine to that Age's sky** until the Age appears in the **crystal**.
+
+- The **wave screen** shows two waves: the Age's sky (green) and your tuning (amber).
+- The **console**: a **polarity lever**, a **frequency dial**, an **amplitude dial**, a **harmonic ring** and a **phase wheel** (click the left half of a dial to lower it, the right half to raise it). Values are shown in D'ni numerals (0 to 24).
+- Nothing is arbitrary: the frequency comes from the Age's **day length**, the amplitude from its **air pressure**, the harmonic from its **aurorae and magnetic field**, the polarity from the direction of its field. The **phase drifts** with the clock, at the pace of the Age's own day: a tuning that holds tonight has to be caught again tomorrow (a tidally locked world barely drifts).
+- As you get closer, the image in the crystal goes from snow to a blurred, washed-out shape to a sharp, living view; the **clarity gauge** rises and its lamp lights up; the drone's **beats slow down** until they merge into one note.
+- Clues stay in the fiction: the **Details** tab of each Age carries a surveyor's note (*"The sky of this Age hums low, softly, with a faint second voice; north lies underfoot."*) and the three fixed values in D'ni numerals. The phase is never written down.
+- Your tuning is kept per Age.
+
+This is stage one (atmosphere). Two more are planned: the **lenses** (tuned to the colour of the Age's star) and the **crystals** (tuned to its glyphs), and other views of an Age (under the water, at night, close up).
 
 ### The Relto's two special books
 

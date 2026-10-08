@@ -8,7 +8,9 @@ const { skyAt, hourFor, placePlants, layoutIsland } = require("./relto-model");
 const SC = require("./relto-scenery");
 const GL = require("./relto-global");
 const RM = require("./relto-rooms");
-const ROOMS = { cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom };
+const RI = require("./relto-imager");
+const IM = require("./imager");
+const ROOMS = { cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom };
 
 const W = 640, H = 360, GY = 208; // largeur, hauteur logiques ; ligne de sol
 
@@ -564,6 +566,49 @@ class ReltoRenderer {
     this.hot.push({ x: x - 14 * S, y: y - 12 * S, w: 27 * S, h: 13 * S, tip: nm ? `${nm} — asleep by the fire` : `A ${cat.label} cat, asleep`, flash: "purr…", purr: true });
   }
 
+  // ---- l'Imageur (page « imager ») --------------------------------------------------------------
+  /**
+   * État de l'Imageur : l'Âge posé sur le lutrin (parmi ceux de l'étagère), son ciel (`target`), sa vue (modèle génératif)
+   * et le réglage de la console. Les données d'un Âge viennent de `opts.onImagerAge(age)` (lecture de la note, analyse,
+   * physique) ; le réglage est relu et gardé par `opts.imagerGet / imagerSet` (par chemin de note).
+   */
+  imagerState() {
+    if (!this.imager) this.imager = { idx: 0, age: null, target: null, model: null, settings: { ...IM.START }, loading: null, empty: false };
+    const st = this.imager, ages = (this.scene && this.scene.ages) || [];
+    st.empty = !ages.length;
+    if (ages.length && (!st.age || !ages.some((a) => a.path === st.age.path)) && !st.loading) this.imagerLoad(Math.min(st.idx, ages.length - 1));
+    return st;
+  }
+  imagerNow() { return this.nowOverride != null ? this.nowOverride : Date.now(); }
+  imagerLoad(i) {
+    const ages = (this.scene && this.scene.ages) || [], st = this.imager; if (!ages.length) return;
+    st.idx = ((i % ages.length) + ages.length) % ages.length; const age = ages[st.idx];
+    st.age = age; st.target = null; st.model = null; st.view = false; st.thumb = null;
+    st.settings = IM.normalize(this.opts.imagerGet ? this.opts.imagerGet(age.path) : null);
+    if (!this.opts.onImagerAge) return;
+    const token = (st.loading = {});
+    Promise.resolve(this.opts.onImagerAge(age)).then((d) => {
+      if (st.loading !== token) return; st.loading = null;
+      if (!d) return; st.target = d.target; st.model = d.model; st.view = !!d.model;
+      if (!this.running) this.draw(0);
+    }, () => { if (st.loading === token) st.loading = null; });
+  }
+  /** La vue de l'Âge dans le cristal (et la miniature du livre) : un petit canvas repeint à chaque image. */
+  imagerView(st, t) {
+    if (!st.model) return null;
+    if (!st.canvas) { st.canvas = makeCanvas(220, 132); st.thumb = st.canvas; }
+    return RI.paintView(st.canvas, st.model, st.target, t, this.imagerNow());
+  }
+  imagerAct(a) {
+    const st = this.imagerState();
+    if (a.book) { this.imagerLoad(st.idx + a.book); return; }
+    st.settings = IM.turn(st.settings, a.key, a.delta);
+    if (st.age && this.opts.imagerSet) this.opts.imagerSet(st.age.path, st.settings);
+    if (this.opts.onImagerTune) this.opts.onImagerTune(st);
+  }
+  /** Netteté actuelle (0 à 1) : pour le son et les tests. */
+  imagerSharpness() { const st = this.imager; return st && st.target ? IM.sharpness(st.settings, st.target, this.imagerNow()) : 0; }
+
   /** étiquette brève (nom du chat, de la koï) affichée après un clic */
   /** partie visible du monde (x0, x1, y0) : la caméra de l'île recadre les bords, la vue globale montre tout */
   visible_() { return this.view && this.view !== "island" ? [0, W, 0] : [CAM_X - CAM_X / CAM, CAM_X + (W - CAM_X) / CAM, CAM_Y - CAM_OY / CAM]; }
@@ -809,7 +854,7 @@ class ReltoRenderer {
   /** vues possibles selon les pages et structures de ce Relto (l'île et la vue globale existent toujours) */
   available() {
     const sc = this.scene, a = (t) => sc.additions.some((x) => x.type === t);
-    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies") };
+    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies"), imager: a("imager") };
   }
   /** dessine `fn` (en coordonnées de l'île) agrandi dans une vue rapprochée et reporte les zones cliquables qu'il crée à l'écran */
   withView(ctx, { S, ox, oy, fx, fy }, fn) {
@@ -838,10 +883,10 @@ class ReltoRenderer {
   }
   hit(x, y) { for (let i = this.hot.length - 1; i >= 0; i--) { const h = this.hot[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h; } return null; }
   onMove(e) {
-    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go) ? "pointer" : "";
+    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go || this.hover.imager || this.hover.purr) ? "pointer" : "";
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
-  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
+  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };

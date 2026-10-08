@@ -4,6 +4,9 @@ const M = require("./relto-model");
 const { ReltoRenderer } = require("./relto-render");
 const sound = require("./sound");
 const { setMarkup, esc } = require("./util");
+const G = require("./genscene");
+const SKY = require("./sky");
+const IM = require("./imager");
 const X = require("./ui-extras");
 const DT = require("./dnitime");
 const B = require("./relto-books");
@@ -205,7 +208,7 @@ async function renderRelto(plugin, source, el, ctx) {
   } else { root.setAttr("data-tab", "all"); }
   // bascule vue de l'île ⇄ vue globale (petit bouton en coin de l'image) ; l'ouverture reste la vue de l'île
   // navigation entre les vues : île, vue globale et sous-vues (cabane, piliers, bosquet, bassin, chat) ; les boutons des vues sans page correspondante sont masqués
-  const NAV = [["island", "mountain", "relto.v.island"], ["global", "globe", "relto.v.global"], ["cabin", "home", "relto.v.cabin"], ["pillars", "landmark", "relto.v.pillars"], ["grove", "trees", "relto.v.grove"], ["pond", "fish", "relto.v.pond"], ["pondplus", "droplets", "relto.v.pondplus"], ["cat", "cat", "relto.v.cat"]];
+  const NAV = [["island", "mountain", "relto.v.island"], ["global", "globe", "relto.v.global"], ["cabin", "home", "relto.v.cabin"], ["pillars", "landmark", "relto.v.pillars"], ["grove", "trees", "relto.v.grove"], ["pond", "fish", "relto.v.pond"], ["pondplus", "droplets", "relto.v.pondplus"], ["cat", "cat", "relto.v.cat"], ["imager", "aperture", "relto.v.imager"]];
   const nav = (tabBar || stage).createDiv({ cls: "age-relto__nav" + (tabBar ? " age-relto__nav--bar" : "") }); if (tabBar) tabBar.insertBefore(nav, tabBar.firstChild);
   const navBtns = {};
   for (const [v, ic, key] of NAV) {
@@ -232,17 +235,29 @@ async function renderRelto(plugin, source, el, ctx) {
   const roomAudio = async (v) => {
     const my = ++roomSeq;
     try {
-      if (!(roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat" || (v === "cabin" && fireLit())) && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages")) { sound.roomStop(); return; }
-      const bufs = v === "cat" ? { main: await roomBuf("roomPurrFile"), meow: await roomBuf("roomMeowFile") } : v === "cabin" ? { main: await roomBuf("roomFireFile"), d: fireLit().density } : { main: await roomBuf("roomWaterFile") };
+      if (!(roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat" || (v === "cabin" && fireLit()) || v === "imager") && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages")) { sound.roomStop(); return; }
+      const bufs = v === "imager" ? { k: renderer.imagerSharpness() } : v === "cat" ? { main: await roomBuf("roomPurrFile"), meow: await roomBuf("roomMeowFile") } : v === "cabin" ? { main: await roomBuf("roomFireFile"), d: fireLit().density } : { main: await roomBuf("roomWaterFile") };
       if (my !== roomSeq) return; // on a changé de vue pendant le chargement
-      sound.roomStart(v === "cat" ? "cat" : v === "cabin" ? "fire" : "water", roomVol(), bufs);
+      sound.roomStart(v === "imager" ? "imager" : v === "cat" ? "cat" : v === "cabin" ? "fire" : "water", roomVol(), bufs);
     } catch (e) { /* ignore */ }
   };
   const syncView = (v) => { for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-active", id === (v || "island")); roomAudio(v); };
   const syncNav = (sc) => { const av = renderer.available(); for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-hidden", !av[id]); syncView(renderer.view); void sc; };
   syncView("island");
   const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onPurr: () => { if (roomSoundOn()) roomBuf("roomPurrFile").then((b) => sound.purr(roomVol(), b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
+  // l'Imageur : lire la note de l'Âge posé sur le lutrin, l'analyser (physique comprise), en tirer le ciel et la vue
+  const imagerAge = async (age) => {
+    try {
+      const f = app.vault.getAbstractFileByPath(age.path); if (!f) return null;
+      const src = plugin.core.extract(await app.vault.cachedRead(f)); if (src == null) return null;
+      const name = plugin.core.base(f.path), a = plugin.core.analyse(src, { seed: name });
+      const S = G.sceneOf(a, name, plugin.core.blocks); if (S) Object.assign(S, SKY.parseSky(src));
+      return { target: IM.targetsOf(a, name), model: S ? G.build(S, 220, 132) : null };
+    } catch (e) { console.warn("[Age Writer ext] imageur", e); return null; }
+  };
+  const imagerGet = (path) => (plugin.ext.imagerTunings || {})[path] || null;
+  const imagerSet = (path, s) => { plugin.ext.imagerTunings = { ...(plugin.ext.imagerTunings || {}), [path]: s }; plugin.saveExt(); };
+  const renderer = new ReltoRenderer(canvas, plugin.dni, { onImagerAge: imagerAge, imagerGet, imagerSet, onImagerTune: () => sound.imagerTune && sound.imagerTune(renderer.imagerSharpness()), reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onPurr: () => { if (roomSoundOn()) roomBuf("roomPurrFile").then((b) => sound.purr(roomVol(), b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;
 
   const fmt = (h) => `${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;

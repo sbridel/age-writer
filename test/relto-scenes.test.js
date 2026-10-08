@@ -95,7 +95,30 @@ r.setScene(mkScene([])); r.setView("pond"); ok(r.view === "island", "sans page d
   const lib2 = M.parseReltoLibrary("page chat: Chat | cat color=black sleep=never");
   ok(M.libraryPage(lib2.pages[0]).additions[0].sleep === "never", "bibliothèque : option sleep=");
 }
+// l'Imageur (1.17)
+const imagerDone = (async () => {
+  const IM = require("../src/imager");
+  const sc = mkScene(["page_imager"]); sc.ages = [{ name: "A", path: "A.md", verdict: "stable", stability: 90 }, { name: "B", path: "B.md", verdict: "dying", stability: 20 }];
+  const store = {}, tgt = { freq: 9, amp: 13, harm: 6, pol: -1, phase0: 3, drift: 1, erratic: false, hours: 24, name: "A" };
+  const ri = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { onImagerAge: (age) => ({ target: { ...tgt, name: age.name }, model: null }), imagerGet: (p) => store[p], imagerSet: (p, v) => { store[p] = v; } });
+  ri.setScene(sc); ok(ri.available().imager, "page de l'Imageur : la vue existe");
+  ri.setView("imager"); ok(ri.view === "imager", "vue de l'Imageur");
+  ri.nowOverride = 1.8e12; ri.draw(1);
+  await Promise.resolve();
+  { ri.draw(1.2); const st = ri.imager;
+    ok(st.age && st.age.name === "A" && st.target && st.target.freq === 9, "le livre posé sur le lutrin : le premier Âge de l'étagère");
+    const plus = ri.hot.find((h) => h.imager && h.imager.key === "freq" && h.imager.delta > 0); ok(plus, "molette de fréquence cliquable");
+    const f0 = st.settings.freq; ri.toLogical = () => [plus.x + 2, plus.y + 2]; ri.onClick({}); ok(st.settings.freq === f0 + 1 && store["A.md"] && store["A.md"].freq === f0 + 1, "un cran de plus, gardé pour cet Âge");
+    const lever = ri.hot.find((h) => h.imager && h.imager.key === "pol"); ri.toLogical = () => [lever.x + 2, lever.y + 2]; ri.onClick({}); ok(st.settings.pol === -1, "levier de polarité");
+    st.settings = { pol: -1, freq: 9, amp: 13, harm: 6, phase: IM.phaseAt(st.target, 1.8e12) }; ok(ri.imagerSharpness() > 0.97, "accordé : netteté");
+    const next = ri.hot.find((h) => h.imager && h.imager.book === 1); ri.toLogical = () => [next.x + 2, next.y + 2]; ri.onClick({});
+    await Promise.resolve(); { ok(ri.imager.age.name === "B" && ri.imager.settings.freq === IM.START.freq, "livre suivant : un autre Âge, son propre réglage");
+      const empty = mkScene(["page_imager"]); empty.ages = []; ri.setScene(empty); ri.setView("imager"); ri.draw(2); ok(ri.imager.empty && ri.imagerSharpness() >= 0, "étagère vide : rien ne casse");
+      const cab = mkScene(["page_imager"]); ri.setScene(cab); ri.setView("cabin"); ri.draw(1); ok(ri.hot.some((h) => h.go === "imager"), "dans la cabane, l'appareil mène à l'Imageur");
+      ri.setScene(mkScene([])); ri.setView("imager"); ok(ri.view !== "imager", "sans la page, pas d'Imageur"); }
+  }
+})().catch((e) => { console.log("KO imageur : " + (e && e.stack || e)); process.exitCode = 1; });
 // pages en bibliothèque
 const lib = M.parseReltoLibrary("page pluie: Pluie | rain 0.9, birds 0.4 | audio=soft_rain\npage fleurs: Fleurs | flowers 0.8 red");
 ok(!lib.problems.length && M.libraryPage(lib.pages[1]).additions[0].asset === "red", "bibliothèque : effets rain/birds/flowers et asset de fleur");
-console.log(`✓ relto-scenes.test.js (${n} contrôles)`);
+imagerDone.then(() => console.log(`✓ relto-scenes.test.js (${n} contrôles)`));
