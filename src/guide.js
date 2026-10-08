@@ -96,6 +96,7 @@ const GUIDE = {
 
 
 // Référence complète (français) : toutes les lignes, tous les blocs connus, tous les réglages.
+const { REF_EN } = require("./guide-ref-en");
 const REF_FR = [
   { id: "lines", icon: "list", title: "Lignes du bloc age", body: [
     { p: "Un bloc `age` contient une page par ligne (un identifiant de bloc) et des lignes spéciales. Les lignes spéciales sont ignorées par le moteur : elles ne comptent pas comme des pages." },
@@ -196,7 +197,7 @@ const REF_FR = [
     { h: "L'Imageur" },
     { p: "Page `page_imager` : une machine sur la table de la cabane, puis sa salle. On pose le livre d'un Âge sur le lutrin (‹ › pour changer de livre) et on l'accorde jusqu'à le voir sur l'écran de laiton. Pas d'onglets : un établi et trois postes, chacun avec sa lampe ; un clic pour s'en approcher, la flèche du bas pour reculer." },
     { ul: ["**I · Râtelier à cristaux** : huit cristaux gravés, quatre logements ; on prend un cristal, on le pose (celui qui y était retourne au râtelier). La bonne réponse : les pages écrites du livre, dans l'ordre du bloc (les quatre premières). Faux : l'image se dédouble ; une bonne page à la mauvaise place luit ambre et compte un peu", "**II · Banc optique** : trois verres (rouge, vert, bleu) qui coulissent sur leurs rails = la lumière de son étoile (couleur du soleil, soleil noir, ou sans étoile) ; l'iris à lamelles = la lumière reçue ; le comparateur montre l'étoile à gauche, ton faisceau à droite. Faux : l'image se teinte ou s'assombrit", "**III · Régulateur** : inverseur de polarité, fréquence, amplitude, harmoniques, phase ; tube cathodique et voltmètre. La fréquence vient de la durée du jour, l'amplitude de la pression de l'air, les harmoniques des aurores et du champ magnétique ; la phase dérive avec l'heure (presque plus si le cycle est figé ; un cycle erratique saute toutes les deux heures)"] },
-    { p: "La netteté est le produit des trois : il faut tout régler ; la jauge donne l'ensemble. **Verrou** : sur une image nette (lampe ambre), on tire le levier : la machine suit l'Âge seule, les commandes sont tenues, le livre porte une étiquette de laiton sur l'étagère. **Périscope** (verrouillé) : la manivelle tourne la vue (quatre directions, même ciel, autre décor), le levier l'incline (zénith, horizon, sous l'eau s'il y a de l'eau : varech, corail, poissons, fissure sous-marine…). Indices : onglet Détails de l'Âge (note d'arpenteur, valeurs en chiffres D'ni). Réglage, verrou et périscope sont gardés par livre." },
+    { p: "La netteté est le produit des trois : il faut tout régler ; la jauge donne l'ensemble. **Verrou** : sur une image nette (lampe ambre), on tire le levier : la machine suit l'Âge seule, les commandes sont tenues, le livre porte une étiquette de laiton sur l'étagère. **Périscope** (verrouillé) : la manivelle tourne la vue (quatre directions, même ciel, autre décor), le levier l'incline (zénith, horizon, sous l'eau s'il y a de l'eau : varech, corail, poissons, fissure sous-marine…). Indices : onglet Détails de l'Âge (note d'arpenteur : une phrase, et selon le réglage « Notes de l'arpenteur » les trois valeurs en chiffres D'ni ; « Mots seulement » par défaut, « Aucune » pour jouer à l'oreille). Réglage, verrou et périscope sont gardés par livre." },
     { h: "Heure D'ni" },
     { p: "Calculée d'après l'horloge de l'ordinateur : année (hahr), mois (vailee), jour (yahr), puis gahrtahvo : tahvo : gorahn : prorahn, en chiffres D'ni. Un prorahn dure environ 1,39 s." },
   ] },
@@ -237,16 +238,16 @@ const REF_FR = [
   { id: "cmd", icon: "terminal", title: "Commandes et propriétés", body: [
     { ul: ["Update Age data in this note / in every note : écrit les propriétés calculées", "Generate the Age map (canvas) : carte des Âges liés (bleu = aller-retour, orange = sens unique)", "Save this Age's window as a GIF", "Open this Age as a book", "Create / Reload an Age library · Copy the built-in content into a library note", "Open the Relto · Open the Relto view (large) · Create a Relto page",  "Generate a random Age : crée une note avec un monde cohérent et stable tiré au hasard (étoile, eau ou terre, décors, parfois lunes, aurores, varech) ; au premier lancement, une note « Age Writer — Bienvenue » avec un Âge d'exemple commenté est créée une fois (jamais dans un coffre qui a déjà des Âges)", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide"] },
     { p: "Propriétés écrites dans la note : `age_verdict`, `age_stability`, `age_axes`, `age_return`, `age_links`, `age_discovered`, `age_drawn`, `age_home` (utilisables avec Dataview ou Bases)." },
-    { p: "Limites connues : mobile et thème clair non testés ; la loi du changement range son état par nom de note ; une note à plusieurs blocs `age` tire un monde par bloc ; le contenu du moteur est en anglais ; pas d'export GIF en rendu génératif." },
+    { p: "Limites connues : bureau seulement (mobile non pris en charge) ; la loi du changement range son état par nom de note ; une note à plusieurs blocs `age` tire un monde par bloc ; le contenu du moteur est en anglais ; pas d'export GIF en rendu génératif." },
   ] },
 ];
 
-/** Niveaux du guide : « quick » (court) et « full » (référence complète, en français). */
-const topics = (lang, level) => (level === "full" ? REF_FR : GUIDE[lang] || GUIDE.en);
+/** Niveaux du guide : « quick » (court) et « full » (référence complète, en français et en anglais). */
+const topics = (lang, level) => (level === "full" ? (lang === "fr" ? REF_FR : REF_EN) : GUIDE[lang] || GUIDE.en);
 
 /** Texte Markdown du guide (pour l'enregistrer dans une note). */
 function toMarkdown(lang, level) {
-  const out = [level === "full" ? "# Age Writer — Référence complète" : "# Age Writer — Guide", ""];
+  const out = [level === "full" ? (lang === "fr" ? "# Age Writer — Référence complète" : "# Age Writer — Full reference") : "# Age Writer — Guide", ""];
   for (const t of topics(lang, level)) {
     out.push("## " + t.title, "");
     for (const b of t.body) {
@@ -288,7 +289,7 @@ function openGuide(plugin, topicId, level0) {
       const tabs = contentEl.createDiv({ cls: "age-guide__levels" }), root = contentEl.createDiv({ cls: "age-guide" });
       const nav = root.createDiv({ cls: "age-guide__nav" }), main = root.createDiv({ cls: "age-guide__main" });
       const body = main.createDiv({ cls: "age-guide__body" }), foot = main.createDiv({ cls: "age-guide__foot" });
-      const lv = { quick: tabs.createEl("button", { text: fr ? "Guide court" : "Quick guide", cls: "age-guide__level" }), full: tabs.createEl("button", { text: fr ? "Référence complète" : "Full reference (French)", cls: "age-guide__level" }) };
+      const lv = { quick: tabs.createEl("button", { text: fr ? "Guide court" : "Quick guide", cls: "age-guide__level" }), full: tabs.createEl("button", { text: fr ? "Référence complète" : "Full reference", cls: "age-guide__level" }) };
       const draw = (id) => {
         const list = topics(lang, level), rows = {}; nav.empty();
         for (const k of Object.keys(lv)) lv[k].toggleClass("is-active", k === level);
@@ -302,7 +303,7 @@ function openGuide(plugin, topicId, level0) {
       };
       for (const k of Object.keys(lv)) lv[k].addEventListener("click", () => { level = k; draw(); });
       foot.createEl("button", { text: fr ? "Enregistrer en note" : "Save as a note" }).addEventListener("click", async () => {
-        const path = level === "full" ? "Age Writer — Référence.md" : "Age Writer — Guide.md", ex = plugin.app.vault.getAbstractFileByPath(path);
+        const path = level === "full" ? (fr ? "Age Writer — Référence.md" : "Age Writer — Reference.md") : "Age Writer — Guide.md", ex = plugin.app.vault.getAbstractFileByPath(path);
         const f = ex || await plugin.app.vault.create(path, toMarkdown(lang, level));
         new obs.Notice(fr ? "Enregistré : " + path : "Saved: " + path); this.close(); plugin.app.workspace.getLeaf("tab").openFile(f);
       });

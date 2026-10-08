@@ -76,11 +76,13 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
   for (const [k, v] of sh.rows) { dl.createEl("dt", { text: k }); dl.createEl("dd", { text: v }); }
   // notes de l'arpenteur pour l'Imageur du Relto : ce que chante le ciel de l'Âge, trois valeurs en chiffres D'ni (la phase dérive : jamais notée)
   try {
+    const notes = plugin.ext.imagerNotes === "off" || plugin.ext.imagerNotes === "full" || plugin.ext.imagerNotes === "words" ? plugin.ext.imagerNotes : "words";
+    if (notes === "off") throw new Error("notes masquées");
     const tg = IMG.targetsOf(analysis, path ? String(path).replace(/^.*\//, "").replace(/\.md$/i, "") : ""), hn = IMG.hints(tg, lang);
     const sky = sec.createDiv({ cls: "age-det__sky" });
     sky.createEl("b", { text: t("det.sky") + " " });
     sky.createSpan({ cls: "age-det__skyline", text: hn.line });
-    const nums = sky.createDiv({ cls: "age-det__skynums" });
+    const nums = sky.createDiv({ cls: "age-det__skynums" }); if (notes !== "full") nums.addClass("is-hidden");
     for (const [label, v] of [[t("det.sky.freq"), tg.freq], [t("det.sky.amp"), tg.amp], [t("det.sky.harm"), tg.harm]]) { const c = nums.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label }); setMarkup(c.createSpan(), plugin.dni.numberSvg(v, { size: 16 })); }
     nums.createSpan({ cls: "age-det__skynum", text: tg.pol > 0 ? "+" : "−" }).setAttr("aria-label", t("det.sky.pol"));
     if (hn.lightLine) {

@@ -881,7 +881,7 @@ class ReltoRenderer {
 
   drawHover(ctx) {
     const h = this.hover; if (!h) return;
-    ctx.strokeStyle = "rgba(255,240,200,0.9)"; ctx.lineWidth = 1; ctx.strokeRect(h.x - 1, h.y - 1, h.w + 2, h.h + 2);
+    if (this.opts.hoverFrame !== false) { ctx.strokeStyle = "rgba(255,240,200,0.9)"; ctx.lineWidth = 1; ctx.strokeRect(h.x - 1, h.y - 1, h.w + 2, h.h + 2); } // cadre : réglage « Cadre des zones cliquables »
     const [vx0, vx1, vy0] = this.visible_();
     ctx.font = "11px serif"; const tw = ctx.measureText(h.tip).width, bx = clamp(h.x + h.w / 2 - tw / 2 - 6, vx0 + 4, Math.max(vx0 + 4, vx1 - tw - 16)), by = Math.max(vy0 + 4, h.y - 24);
     ctx.fillStyle = "rgba(16,13,9,0.92)"; ctx.fillRect(bx, by, tw + 12, 18); ctx.strokeStyle = "rgba(205,189,148,0.8)"; ctx.strokeRect(bx, by, tw + 12, 18);
