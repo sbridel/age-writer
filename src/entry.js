@@ -474,7 +474,7 @@ module.exports = function build(Base, core, AGEX) {
     async observeFile(f) {
       if (!this.ext.law) return;
       const src = core.extract(await this.app.vault.read(f)); if (src === null) return;
-      const ev = this.law.observe(f.basename, core.analyse(src, { seed: f.basename, physics: false }), f.stat.mtime);
+      const ev = this.law.observe(f.basename, core.analyse(src, { seed: f.basename, physics: false }), f.stat.mtime, guard("valeurs physiques", () => PH.parsePhysics(src).params));
       this.saveExt();
       if (ev) {
         new Notice(`${this.t("law.warning")}\n${describeChange(ev, this.t)}`, 9000);
@@ -486,7 +486,7 @@ module.exports = function build(Base, core, AGEX) {
       if (!(f instanceof TFile) || f.extension !== "md") return;
       const oldName = old.replace(/^.*\//, "").replace(/\.md$/i, "");
       const src = core.extract(await this.app.vault.read(f));
-      if (src === null) this.law.forget(oldName); else this.law.rename(oldName, f.basename, core.analyse(src, { seed: f.basename, physics: false }));
+      if (src === null) this.law.forget(oldName); else this.law.rename(oldName, f.basename, core.analyse(src, { seed: f.basename, physics: false }), guard("valeurs physiques", () => PH.parsePhysics(src).params));
       this.saveExt();
     }
 

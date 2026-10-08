@@ -91,3 +91,26 @@ console.log("law: ok");
   c += BURN_SECONDS * 600; assert.strictEqual(lc.doom("Z"), 1); assert.ok(lc.destroyed("Z") && !lc.burning("Z"), "détruit"); assert.strictEqual(lc.burn("Z"), false);
   assert.strictEqual(lc.tend("Z", 100, 0), true, "et rien ne le ramène");
 }
+
+// les valeurs physiques écrites : un changement coûte en proportion (échelle logarithmique), une valeur écrite ou effacée coûte un élément
+{
+  const { physChange } = require("../src/law");
+  const small = physChange({ rotation: 24 }, { rotation: 30 }), big = physChange({ rotation: 24 }, { rotation: 500 });
+  assert.ok(small.cost > 0 && big.cost > small.cost * 5 && big.cost < 0.25, "changer plus coûte plus (24 h → 500 h > 24 h → 30 h)");
+  assert.deepStrictEqual(big.removed, ["rotation: 24"]); assert.deepStrictEqual(big.added, ["rotation: 500"]);
+  assert.strictEqual(physChange({ rotation: 24 }, { rotation: 24.01 }).cost, 0, "un changement minuscule ne coûte rien");
+  assert.ok(Math.abs(physChange({}, { rotation: 20 }).cost - 0.06) < 1e-9 && Math.abs(physChange({ rotation: 20 }, {}).cost - 0.06) < 1e-9, "écrire ou effacer une ligne : un élément");
+  assert.ok(Math.abs(physChange({ rotation: 1 }, { rotation: 1e5 }).cost - 0.6) < 1e-9, "toute l'étendue : le plein tarif");
+  assert.ok(physChange({ water: 0 }, { water: 5 }).cost > 0.29 && physChange({ water: 0 }, { water: 5 }).cost < 0.31, "échelle linéaire pour les valeurs qui ne s'étalent pas sur des ordres de grandeur");
+
+  let c = 9e12; const l = new Law({}, { dryMinutes: () => 15, healPerDay: () => 0.05, now: () => c });
+  assert.strictEqual(l.observe("Phys", A(["stone"]), c, { rotation: 24 }), null);
+  c += 60000; assert.strictEqual(l.observe("Phys", A(["stone"]), c, { rotation: 500 }), null, "encre fraîche : gratuit");
+  c += 20 * 60000; assert.strictEqual(l.observe("Phys", A(["stone"]), c, { rotation: 500 }), null, "rien de changé");
+  const ev2 = l.observe("Phys", A(["stone"]), c + 1, { rotation: 5000 });
+  assert.ok(ev2 && ev2.cost > 0.1 && ev2.removed[0] === "rotation: 500" && ev2.added[0] === "rotation: 5000" && Math.abs(l.effective("Phys") - ev2.cost) < 1e-9, "encre sèche : la valeur changée altère l'Âge, en proportion");
+  c += 60000; assert.strictEqual(l.observe("Phys", A(["stone"]), c, { rotation: 24 }), null, "puis encre fraîche : gratuit");
+  const l2 = new Law({}, { dryMinutes: () => 15, healPerDay: () => 0.05, now: () => c }); l2.observe("Old", A(["stone"]), c); delete l2.state.ages.Old.phys; c += 99 * 60000; // ancien état
+  assert.strictEqual(l2.observe("Old", A(["stone"]), c, { rotation: 20 }), null, "ancien état sans valeurs mémorisées : les valeurs d'aujourd'hui servent de référence, sans frais");
+  c += 99 * 60000; const ev4 = l2.observe("Old", A(["stone", "heat"]), c, { rotation: 20 }); assert.ok(ev4 && Math.abs(ev4.cost - 0.06) < 1e-9, "et les éléments coûtent comme avant");
+}

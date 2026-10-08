@@ -257,3 +257,10 @@ unlock:                            # facultatif
 - **Plein écran du Relto** : le livre des glyphes, le carnet de l'arpenteur, le livre de la bibliothèque et les autres fenêtres modales étaient ouverts derrière le Relto, invisibles. Elles sont désormais déplacées dans l'élément plein écran juste après leur ouverture (`Modal.open` enveloppé au chargement, remis à l'arrêt) ; ouvrir une note depuis ces livres quitte d'abord le plein écran.
 - Tests : `test/fullscreen.test.js`.
 
+## 1.18.3 — l'altération suit les valeurs physiques (9 oct. 2026)
+
+- **Les valeurs physiques altèrent l'Âge en proportion du changement** (`physChange` dans `src/law.js`) : une fois l'encre sèche, changer `rotation: 24` en `rotation: 500` coûte plus que 24 → 30. Le coût se mesure sur l'étendue permise de la valeur (échelle logarithmique pour celles qui s'étalent sur des ordres de grandeur) : 0,6 pour toute l'étendue, borné à 0,3 par modification ; écrire ou effacer une ligne coûte un élément (0,06) ; un changement inférieur à 0,5 % ne compte pas et ne déplace pas la référence. La valeur de départ d'un ancien état sert de référence, sans frais.
+- **Une ligne de valeur commencée** (`spin :` en cours de frappe) n'est plus une ligne inconnue : elle ne coûtait pas seulement une valeur, elle comptait deux fois (apparue, puis retirée) — 12 % pour une frappe.
+- **Notes de l'arpenteur** : « mots seulement » n'affiche plus les valeurs D'ni dans l'onglet Détails (la classe qui les cachait n'avait pas de règle CSS) ; les valeurs ne sont créées qu'en mode « complètes ».
+- Tests : `law.test.js`, `physics.test.js`.
+
