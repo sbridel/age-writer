@@ -31,3 +31,8 @@ ok(coverSvg({ ...base, world: ["water"], sobriety: 0.7 }) === by.sober && coverS
 ok(Object.values(by).every((x) => !/NaN|undefined/.test(x)), "aucune valeur invalide à aucun niveau");
 const auto = new Set(); for (let i = 0; i < 300; i++) { const a = require("../src/cover").autoSobriety(fnv("Age " + i)); auto.add(a < 0.2 ? "ornate" : a < 0.5 ? "classic" : a < 0.85 ? "sober" : "plain"); }
 ok(auto.size === 4, "tirage automatique : les quatre niveaux existent (" + [...auto].join(", ") + ")");
+{ // le livre d'un Âge détruit : noirci, rongé aux bords, déterministe, sans valeur invalide ; sans `burnt`, rien ne change
+  const normal = coverSvg({ ...base, world: ["water"] }), burnt = coverSvg({ ...base, world: ["water"], burnt: true });
+  ok(burnt !== normal && burnt.length > normal.length && /fill-rule="evenodd"/.test(burnt) && !/NaN|undefined/.test(burnt), "couverture calcinée : suie, bords rongés, braises");
+  ok(burnt === coverSvg({ ...base, world: ["water"], burnt: true }) && normal === coverSvg({ ...base, world: ["water"], burnt: false }), "calcinée : déterministe ; non brûlée : inchangée");
+}

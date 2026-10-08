@@ -272,7 +272,7 @@ module.exports = function build(Base, core, AGEX) {
       return coverSvg({
         name, number: X.ageNumber(name), seedNumber: seed ? Number(seed[1]) : null, dni: this.dni, standalone,
         glyph: (id, x, y, s) => core.glyphSvg(id, x, y, s, "none"), glyphIds: core.glyphs(analysis).filter((g) => !g.blot).map((g) => g.id), world: guard("cover world", () => worldIds(analysis)) || [], sobriety: parseCover(src) ?? ({ ornate: 0.05, classic: 0.35, sober: 0.7, plain: 1 })[this.ext.coverStyle],
-        verdict: analysis.verdict, label: this.t("book.descriptive"),
+        verdict: analysis.verdict, burnt: !!(this.law && this.law.destroyed(name)), label: this.t("book.descriptive"),
       });
     }
 

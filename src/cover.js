@@ -235,6 +235,19 @@ function coverSvg(o) {
       s += `<path d="${d}" fill="none" stroke="#050403" stroke-width="2.2" stroke-linejoin="bevel" opacity="0.78" clip-path="url(#${u}face)"/><path d="${d}" fill="none" stroke="#f0e6cc" stroke-width="0.7" opacity="0.22" transform="translate(1.4 0)" clip-path="url(#${u}face)"/>`;
     }
   }
+  if (o.burnt) { // le livre d'un Âge détruit : noirci de suie, rongé depuis les bords, braises mourantes, cendres
+    const ins = (a) => a + R() * 3.2 * a, top = [], right = [], bottom = [], left = [];
+    for (let x = 0; x <= W; x += 22) top.push([x, ins(8)]);
+    for (let y = 0; y <= H; y += 26) right.push([W - ins(8), y]);
+    for (let x = W; x >= 0; x -= 22) bottom.push([x, H - ins(8)]);
+    for (let y = H; y >= 0; y -= 26) left.push([ins(8), y]);
+    const inner = [...top, ...right, ...bottom, ...left].map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join("") + "Z";
+    s += `<rect width="${W}" height="${H}" fill="#0b0705" opacity="0.8"/>`;
+    s += `<path fill-rule="evenodd" d="M0 0H${W}V${H}H0Z${inner}" fill="#030201" opacity="0.94"/>`;
+    s += `<path d="${inner}" fill="none" stroke="#ff7a2a" stroke-width="1.1" opacity="0.5" stroke-linejoin="bevel"/><path d="${inner}" fill="none" stroke="#ffcf6a" stroke-width="0.4" opacity="0.35" stroke-linejoin="bevel"/>`;
+    for (let k = 0; k < 14; k++) s += `<circle cx="${(R() * W).toFixed(1)}" cy="${(R() * H).toFixed(1)}" r="${(0.6 + R() * 1.6).toFixed(1)}" fill="#1a1410" opacity="${(0.3 + R() * 0.4).toFixed(2)}"/>`; // cendres
+    for (let k = 0; k < 5; k++) s += `<circle cx="${(R() * W).toFixed(1)}" cy="${(R() * H).toFixed(1)}" r="0.9" fill="#ff8a30" opacity="${(0.25 + R() * 0.4).toFixed(2)}"/>`; // braises
+  }
   s += `<rect width="${W}" height="${H}" fill="url(#${u}v)"/><rect x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" fill="none" stroke="#000" stroke-opacity="0.5"/></svg>`;
   return s;
 }
