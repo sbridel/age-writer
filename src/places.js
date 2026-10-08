@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Lieux et habitants (après la 1.17.6) : quatre blocs nés de l'essai d'un jardin privé (Vespertine, dans la campagne fan « Unwritten »).
+ * Lieux et habitants (1.18.0) : quatre blocs nés de l'essai d'un jardin privé (Vespertine, dans la campagne fan « Unwritten »).
  *   - `library`, `ruined_library`, `garden` : des traces de bâtisseurs (axe métaphysique), la physique les lit comme des ruines ;
  *   - `spiders` : des tisseuses de soie, farouches devant la lumière (axe écologique), qui ont besoin de proies.
  * Comme tous les blocs ajoutés par l'extension, ils ne sont jamais tirés au sort ; un bloc de la bibliothèque personnelle

@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Blocs de terrain (après la 1.17.6) : des mots pour dire la forme du pays que montre la fenêtre de liaison.
+ * Blocs de terrain (1.18.0) : des mots pour dire la forme du pays que montre la fenêtre de liaison.
  *   - RELIEF : `plains`, `hills`, `mountains`, `canyon` règlent le nombre, la hauteur et l'allure (douce ou en arêtes) des chaînes
  *     de la fenêtre générative (src/genscene.js, `RELIEF`) ; ils se contredisent entre eux (plaines contre montagnes : forte).
  *   - EAU : `river`, `delta`, `lake`, `marsh` allument l'eau et le rivage de la fenêtre (le marais ajoute de la brume) ; ils jurent avec un
