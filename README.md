@@ -8,8 +8,9 @@ The founding idea: in Mystcraft you don't **create** a world, you **link** to a 
 
 > Fan project, not affiliated with or endorsed by Cyan Worlds. No Myst asset (font, image, sound) is included.
 
-**Version 1.15.3.** The engine (derived from 1.3.0) is available as readable sources in `src/engine/`. `manifest.json` announces `1.15.3`. Highlights of the latest releases (full history in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)):
+**Version 1.16.0.** The engine (derived from 1.3.0) is available as readable sources in `src/engine/`. `manifest.json` announces `1.16.0`. Highlights of the latest releases (full history in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)):
 
+- **1.16.0**: **physics of the Ages**. Under the blocks, every Age gets a simplified physics (star, orbit, planet, internal heat, core, magnetic field, air, temperature, water, light), chosen to hold what you wrote; the reworked **Details** tab shows it with stability bars per axis, a chain of causes, the world's sheet, what does not hold and why, and suggested lines (`age: 3.5`) that one click writes into the block. **Easy** mode (default) never changes stability; **strict** makes what does not hold cost, with a severity slider. New blocks, never drawn: `black_sun` (a brown dwarf: warmth without light, grey day, black plants), `close_orbit`, `distant_orbit`, `young_world`, `ancient_world`, `heavy_world`, `light_world`, `molten_core`, `dead_core`, `geysers`, `rifts`, `thick_air`, `thin_air`, `subsurface_ocean`. Value lines: `mass:`, `age:`, `orbit:`, `insolation:`, `core:`, `atmosphere:`… Existing Ages keep their pages and stability in easy mode.
 - **1.15.3**: world-type clashes about the weather now count (`desert_world` + `rain`, `frozen_world` + `heat`… used to cost nothing because of a misnamed axis), and every sky ↔ matter clash counts, not just one per world type. Drawn pages don't change; only stability does (about 1 Age in 9, often a few points).
 - **1.15.x**: the cabin plays a crackling **fireplace** when the *chimney* page is active (soft rumble, wood crackles; a cold hearth is silent). Optional "fireplace sound file" setting to use a real recording.
 - **1.14.x**: pond, purr and meow sounds can come from **real recordings** in your vault (Settings > Sound > Relto; ogg, mp3 or wav; empty = synthesized). Files are not shipped: use royalty-free sounds (CC0 or a licence that allows your use; check each sound's page). A meow file containing **several meows** is split at the silences and one is played at a time. **Northern lights** are only visible at night, in the Relto and in Ages. New pages: **page_cat_toys** and **page_pond_decor** (the close-up "Pond, close up" view with lilies, stone lantern, bamboo spout, reeds, dragonflies by day, fireflies at dusk).
@@ -102,7 +103,7 @@ So as not to show everything at once, the panel below the block has three tabs (
 
 - **Text & glyphs**: description and glyphs, with a small centred linking window;
 - **Linking window**: the big window; a click plays the linking sound;
-- **Details**: stability, mechanisms, journal, "Listen to the Age" button.
+- **Details**: stability per axis, **physics of the world** (sheet, chain of causes, what does not hold, clickable suggestions), D'ni numbers, mechanisms, "Listen to the Age" button.
 
 ---
 
@@ -255,7 +256,7 @@ In the plugin's settings tab: a **Guide** card (Guide and Reference buttons) the
 | Sounds | sounds (general), volume, book sound, clasp clicks, turned pages, linking sound, Relto ambience and volume, close-up view sounds and optional recordings |
 | Linking window | Age block tabs, rendering, size, effect, intensity, uncertain links |
 | D'ni & numerals | language, numerals, font, numbers, D'ni names, D'ni time, Relto in tabs |
-| Ages & mechanisms | law of change, ink, healing, mechanisms, solitude |
+| Ages & mechanisms | law of change, ink, healing, mechanisms, solitude, physics of the Ages (easy / strict / off) and its severity |
 | Folders | journals, refuge |
 | Draw & library | engine settings: automatic properties, drawn window, open-slot draw, fold strength, library folder, default panel image |
 
@@ -323,7 +324,7 @@ node test/visual/make.js            # render pages in test/visual/out/
 npm run zip          # release/age-writer-<v>.zip (plugin) + -src.zip (sources)
 ```
 
-In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the engine), then the extension layer: `entry.js` (book and block patches), `ui-extras.js` (panel and tabs), `ui-relto.js` (Relto, dedicated view, navigation), `relto-render.js` (canvas), `relto-rooms.js` (cabin, pillars, pond, pond ++, cat, grove), `relto-model.js` (pages, island layout), `relto-scenery.js`, `relto-global.js`, `relto-books.js`, `cover.js` (covers), `sound.js` (sounds, room sounds), `linkfx.js` and `genscene.js` (window), `law.js` (law of change), `mech.js` (special lines), `settings-ui.js` (settings), `guide.js` (guide), `i18n.js`. Details: [`docs/DEV.md`](docs/DEV.md) (in French).
+In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the engine), then the extension layer: `entry.js` (book and block patches), `ui-extras.js` (panel and tabs), `ui-relto.js` (Relto, dedicated view, navigation), `relto-render.js` (canvas), `relto-rooms.js` (cabin, pillars, pond, pond ++, cat, grove), `relto-model.js` (pages, island layout), `relto-scenery.js`, `relto-global.js`, `relto-books.js`, `cover.js` (covers), `sound.js` (sounds, room sounds), `linkfx.js` and `genscene.js` (window), `law.js` (law of change), `mech.js` (special lines), `physics/` (physics of the Ages: laws, block requirements, constrained draw, sheet; design in `docs/DESIGN-physique.md`), `geophys.js` (geophysics blocks), `settings-ui.js` (settings), `guide.js` (guide), `i18n.js`. Details: [`docs/DEV.md`](docs/DEV.md) (in French).
 
 ---
 

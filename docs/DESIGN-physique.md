@@ -1,8 +1,8 @@
 # Couche physique des Âges — conception
 
-> **État (8 oct. 2026)** : idée validée par l'auteur ; **prototype écrit et testé, pas encore branché** sur le plugin.
-> Code : `src/physics/` (branche `physique` du dépôt). Tests : `test/physics.test.js`. Galerie : `docs/physique-exemples.md`.
-> Le plugin livré ne change pas : `build.js` laisse `src/physics` hors du paquet (`release/main.js` identique octet pour octet à la 1.15.2).
+> **État (8 oct. 2026, nuit)** : **branché dans le plugin, version 1.16.0** (branche `physique` du dépôt, à fusionner dans `main` après essai de l'auteur dans Obsidian).
+> Code : `src/physics/`, `src/geophys.js`. Tests : `test/physics.test.js`, `test/integration.js`. Galerie : `docs/physique-exemples.md`. Banc d'essai : `node tools/physics-bench.js`.
+> En mode facile (par défaut), les Âges existants gardent exactement leurs pages et leur stabilité (vérifié sur 300 Âges ; `equiv` contre la 1.15.3 : 0 différence).
 
 ---
 
@@ -209,6 +209,27 @@ En strict, une tension n'est pas comptée deux fois quand **tous** les blocs qui
 
 ---
 
+## 6 bis. Lumière des étoiles, soleil noir, blocs de géophysique (1.16.0)
+
+**Qualité de la lumière.** La part visible (0,4–0,7 µm, celle des plantes) et la part ultraviolette (0,1–0,4 µm) de chaque étoile sont calculées par intégration de la loi de Planck, rapportées au Soleil. La lumière au sol est le flux reçu × la part visible : une naine rouge **chauffe plus qu'elle n'éclaire** (≈ 40 % de la lumière visible du Soleil à chaleur égale). Les ultraviolets sont filtrés progressivement par l'air (÷ (1 + 0,8 P)) et un peu par le champ magnétique ; au-delà de 2 × la Terre, la vie à découvert est en tension (`uvShield`).
+
+**Couleurs** (décision 5) : `violet_sun` = étoile chaude riche en ultraviolets (1,4–2,4 M☉) ; `green_sun` = étoile de type solaire à la lumière teintée (la fiche dit que les feuillages seraient pourpres, presque noirs) ; tous deux gardent, en strict, un léger coût d'Art (aucune vraie étoile n'a ces couleurs). Chaque étoile garde sa couleur (rouge + noir, jumeaux + noir).
+
+**Soleil noir** (`black_sun`, demandé par l'auteur) : une **naine brune** (0,04–0,075 M☉, 1 300–2 000 K, rayon ~0,1 R☉), trop légère pour brûler l'hydrogène : elle ne meurt pas, elle se refroidit. Presque toute sa lumière est infrarouge : à l'œil, un disque sombre cerclé de rouge ; le jour est une pénombre grise (la fenêtre générative désature la scène, garde la couronne rouge). Pour avoir de la chaleur, le monde est tout près (≈ 0,01 UA, une année d'un jour ou deux), figé par la marée et chauffé par elle. Les plantes, pour boire l'infrarouge, seraient **presque noires** : elles ne sont pas en tension de lumière. Idée d'origine : un soleil noir de film ; ici, aucune référence, une lecture physique.
+
+**Blocs de géophysique** (`src/geophys.js`, jamais tirés au sort, donc les Âges existants ne changent pas) :
+
+| Bloc | Poids | Ce qu'il fait |
+|---|---|---|
+| `close_orbit` / `distant_orbit` | −5 / −5 | flux tiré entre 1,2 et 2,6 × Terre, ou entre 0,12 et 0,6 ; contradiction forte entre eux |
+| `young_world` / `ancient_world` | −6 / −4 | âge 0,05–0,8 Ga (intérieur brûlant) ou 7–12 Ga (refroidi ; étoile durable exigée) |
+| `heavy_world` / `light_world` | −5 / −4 | masse 2,5–8 ou 0,06–0,35 M⊕ |
+| `molten_core` / `dead_core` | −3 / −4 | noyau liquide (et un peu plus de fer) / noyau figé, vérifiés |
+| `geysers` | −4 | eau + chaleur interne ≥ 0,35 + assez d'air |
+| `rifts` | −5 | plaques en mouvement : chaleur, planète ≥ 0,5 M⊕, eau liquide |
+| `thick_air` / `thin_air` | −3 / −4 | ≥ 2 bar / entre 0,005 et 0,3 bar |
+| `subsurface_ocean` | −4 | surface gelée et chaleur interne ≥ 0,2 |
+
 ## 7. Ce que verrait l'auteur
 
 Un quatrième onglet sous le bloc Âge, **Physique**, ou une section de l'onglet *Détails*. Exemple réel du prototype (Âge « Braise lente » : `lava`, `ash`, `mass: 0.2`, `age: 9`) :
@@ -244,9 +265,9 @@ La galerie `docs/physique-exemples.md` montre 14 Âges passés par le prototype 
 
 ---
 
-## 8. Branchement prévu (non fait)
+## 8. Branchement (fait en 1.16.0)
 
-Tout passe par les crochets existants du moteur (`src/engine/hooks.js`), sans toucher au moteur :
+Tout passe par les crochets existants du moteur (`src/engine/hooks.js`), sans toucher au moteur. Ce qui a été fait, par rapport au plan d'origine : `AGEX.skip` utilise `isPhysicsLine` (seules les valeurs **lisibles** sont des lignes de physique : « water: partout, jusqu'à l'horizon » reste une ligne inconnue comme avant) ; l'analyse est mise en cache (mode, graine, symboles, texte) ; la loi du changement et l'index des Âges (en facile) l'appellent sans physique ; la loi oublie sans frais les anciennes lignes inconnues devenues physiques ; le frontmatter (`age_gravity`…) n'est **pas** encore fait. Plan d'origine :
 
 | Où | Quoi |
 |---|---|
@@ -308,12 +329,12 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 | # | Question | Décision |
 |---|---|---|
 | 1 | Mode par défaut | **Facile** pour tout le monde. |
-| 2 | Barème strict | On essaie 10 / 20 / 35 points (léger / moyen / fort), plafond 45 par axe, **en réglage** (curseur « sévérité de la physique » dans les Réglages) pour pouvoir l'adoucir ou le durcir sans toucher au code. |
+| 2 | Barème strict | On essaie 10 / 20 / 35 points (léger / moyen / fort), plafond 45 par axe, **en réglage** (curseur « sévérité de la physique » dans les Réglages) pour pouvoir l'adoucir ou le durcir sans toucher au code. **Fait en 1.16.0.** |
 | 3 | Alias français des lignes | **Gardés** (`masse:`, `âge:`, `noyau:`…). |
 | 4 | Bâtisseurs (blocs de ruines : `tablet`, `door`, `bridge`, `lamp`, `book`…) | Ils excusent la vie *trop jeune* pour son monde (quelqu'un l'a apportée : arbres sous une étoile bleue), **pas** la vie *impossible* (sans lumière, sans air, à une température invivable). C'est déjà le comportement du prototype. |
-| 5 | Soleil vert / violet | La couleur doit avoir un **effet physique**, pas seulement un coût d'Art. À concevoir : par exemple le violet comme une étoile chaude et ultraviolette (plus de flux, vie plus exposée), le vert comme une étoile de type solaire à la lumière teintée (plantes d'une autre couleur). |
-| 6 | Mondes-types (`frozen_world`…) | **Facile** : le monde-type oriente le tirage (vers le froid pour `frozen_world`). **Strict** : il n'oriente rien, il est seulement vérifié (plus dur à tenir). |
-| 7 | Où afficher la physique | Une **section de l'onglet *Détails***, retravaillé. |
+| 5 | Soleil vert / violet | La couleur doit avoir un **effet physique**, pas seulement un coût d'Art. À concevoir : par exemple le violet comme une étoile chaude et ultraviolette (plus de flux, vie plus exposée), le vert comme une étoile de type solaire à la lumière teintée (plantes d'une autre couleur). **Fait en 1.16.0** (§6 bis). |
+| 6 | Mondes-types (`frozen_world`…) | **Facile** : le monde-type oriente le tirage (vers le froid pour `frozen_world`). **Strict** : il n'oriente rien, il est seulement vérifié (plus dur à tenir). **Fait en 1.16.0.** |
+| 7 | Où afficher la physique | Une **section de l'onglet *Détails***, retravaillé. **Fait en 1.16.0** : stabilité par axe en barres, puis physique du monde. |
 
 ---
 
@@ -330,10 +351,10 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 |---|---|---|
 | **0. Prototype** ✅ | `src/physics/`, tests (279 vérifications), galerie, banc d'essai, relecture indépendante des lois et du code (corrigée) | fait (8 oct. 2026) |
 | 1. Décisions ✅ | réponses au §13 | fait (8 oct. 2026) |
-| 2. Branchement facile | crochets `skip` / `adjust`, réglage, onglet « Physique », i18n | les 600 Âges de `equiv` inchangés ; fiche lisible dans Obsidian |
-| 3. Strict | barème, déduplication avec le moteur, frontmatter | tests de stabilité ; galerie relue par l'auteur |
-| 4. Rendu | soleil, ciel, gravité, face figée dans `genscene` | pages de `test/visual` |
-| 5. Pistes cliquables | une piste s'écrit dans le bloc | test d'intégration |
+| 2. Branchement facile ✅ | crochets `skip` / `adjust`, réglage, section Physique de Détails, i18n | fait en 1.16.0 ; reste : l'essai de l'auteur dans Obsidian |
+| 3. Strict ✅ (sauf frontmatter) | barème × sévérité, déduplication avec le moteur, mondes-types vérifiés sans orienter le tirage | fait en 1.16.0 ; frontmatter `age_gravity`… à faire |
+| 4. Rendu | soleil noir fait ; reste : couleur du soleil d'après sa température, ciel selon l'air, gravité, face figée dans `genscene` | pages de `test/visual` |
+| 5. Pistes cliquables ✅ | une piste s'écrit dans le bloc (mot de l'auteur gardé, CRLF, encadrés) | fait en 1.16.0 |
 | 6. Hardcore ++ | §11, au choix | — |
 
 ---
@@ -342,7 +363,7 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 
 Généré depuis `src/physics/blocks.js` (« réaction » : le bloc ne s'écrit pas, il naît d'une réaction ; *neutre* : la physique ne dit rien de lui).
 
-<!-- 85/135 blocs reliés -->
+<!-- 99/149 blocs reliés -->
 #### Ciel — stars
 
 | Bloc | Écrit ? | Fixe | Exige (gravité) |
@@ -392,12 +413,13 @@ Généré depuis `src/physics/blocks.js` (« réaction » : le bloc ne s'écrit 
 
 | Bloc | Écrit ? | Fixe | Exige (gravité) |
 |---|---|---|---|
-| `green_sun` | oui | hue=green_sun, masse ★ 0.8–1.2 M☉ | realStar (light) |
+| `green_sun` | oui | hue=green_sun, masse ★ 0.85–1.15 M☉ | realStar (light) |
 | `red_sun` | oui | hue=red_sun, masse ★ 0.15–0.5 M☉ | — |
 | `white_sun` | oui | hue=white_sun, masse ★ 1.1–1.6 M☉ | — |
 | `blue_sun` | oui | hue=blue_sun, masse ★ 3–12 M☉ | — |
 | `orange_sun` | oui | hue=orange_sun, masse ★ 0.6–0.9 M☉ | — |
-| `violet_sun` | oui | hue=violet_sun, masse ★ 0.8–1.2 M☉ | realStar (light) |
+| `violet_sun` | oui | hue=violet_sun, masse ★ 1.4–2.4 M☉ | realStar (light) |
+| `black_sun` | oui | hue=black_sun, masse ★ 0.04–0.075 M☉, blackSun=true | — |
 
 #### Ciel — world
 
@@ -408,6 +430,17 @@ Généré depuis `src/physics/blocks.js` (« réaction » : le bloc ne s'écrit 
 | `desert_world` | oui | water=0.02 | dryClimate (medium), notFurnace (medium) |
 | `ocean_world` | oui | water=3 | deepOcean (strong) |
 | `jungle_world` | oui | water=1.5 | liquidWater (medium), warmClimate (medium), sunlight (medium), oldEnoughComplex (medium) |
+
+#### Ciel — body
+
+| Bloc | Écrit ? | Fixe | Exige (gravité) |
+|---|---|---|---|
+| `close_orbit` | oui | sRange=1.2–2.6 | — |
+| `distant_orbit` | oui | sRange=0.12–0.6 | — |
+| `young_world` | oui | ageRange=0.05–0.8 | — |
+| `ancient_world` | oui | ageRange=7–12 | oldStar (medium) |
+| `heavy_world` | oui | massRange=2.5–8 | — |
+| `light_world` | oui | massRange=0.06–0.35 | — |
 
 #### Matière — geological
 
@@ -455,26 +488,33 @@ Généré depuis `src/physics/blocks.js` (« réaction » : le bloc ne s'écrit 
 | `bitter_water` | oui |  | *neutre* |
 | `hollowed_ground` | oui |  | *neutre* |
 | `ashen_sky` | oui |  | volcanism (light) |
+| `molten_core` | oui | coreAdd=0.05 | coreMolten (medium) |
+| `dead_core` | oui |  | coreDead (medium) |
+| `geysers` | oui | water=1 | geothermal (medium) |
+| `rifts` | oui |  | plateTectonics (medium) |
+| `thick_air` | oui |  | airThick (medium) |
+| `thin_air` | oui |  | airThin (medium) |
+| `subsurface_ocean` | oui | water=1 | iceOcean (medium) |
 
 #### Matière — ecological
 
 | Bloc | Écrit ? | Fixe | Exige (gravité) |
 |---|---|---|---|
 | `spore` | oui |  | oldEnoughSimple (light), hardyLife (light) |
-| `seed` | oui |  | sunlight (light), breathableAir (light), temperateLife (light) |
-| `vine` | oui |  | sunlight (light), breathableAir (light), temperateLife (light) |
-| `fern` | oui |  | sunlight (light), breathableAir (light), temperateLife (light) |
-| `great_tree` | oui |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughComplex (light), tallTrees (light) |
-| `moss` | réaction |  | sunlight (light), breathableAir (light), temperateLife (light) |
+| `seed` | oui |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughSimple (light), uvShield (light) |
+| `vine` | oui |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughSimple (light), uvShield (light) |
+| `fern` | oui |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughSimple (light), uvShield (light) |
+| `great_tree` | oui |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughSimple (light), uvShield (light), oldEnoughComplex (light), tallTrees (light) |
+| `moss` | réaction |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughSimple (light), uvShield (light) |
 | `lichen` | réaction |  | oldEnoughSimple (light), hardyLife (light) |
 | `pale_fungus` | réaction |  | oldEnoughSimple (light), hardyLife (light) |
-| `sapling` | réaction |  | sunlight (light), breathableAir (light), temperateLife (light) |
-| `ironwood` | réaction |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughComplex (light), tallTrees (light) |
-| `cinderbloom` | réaction |  | sunlight (light), breathableAir (light), temperateLife (light) |
+| `sapling` | réaction |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughSimple (light), uvShield (light) |
+| `ironwood` | réaction |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughSimple (light), uvShield (light), oldEnoughComplex (light), tallTrees (light) |
+| `cinderbloom` | réaction |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughSimple (light), uvShield (light) |
 | `glowvine` | réaction |  | *neutre* |
-| `withered_fern` | réaction |  | sunlight (light), breathableAir (light), temperateLife (light) |
+| `withered_fern` | réaction |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughSimple (light), uvShield (light) |
 | `charred_grove` | réaction |  | *neutre* |
-| `grove` | réaction |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughComplex (light), tallTrees (light) |
+| `grove` | réaction |  | sunlight (light), breathableAir (light), temperateLife (light), oldEnoughSimple (light), uvShield (light), oldEnoughComplex (light), tallTrees (light) |
 | `singing_lichen` | réaction |  | oldEnoughSimple (light), hardyLife (light) |
 | `wrong_glowvine` | réaction |  | *neutre* |
 | `moth` | oui |  | foodPlants (light) |

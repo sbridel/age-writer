@@ -11,7 +11,7 @@ const { analyseAgeBase } = require("../src/engine/analysis");
 const P = require("../src/physics");
 const { hooks } = require("../src/engine/hooks");
 // comme une fois branché : les lignes de valeurs (mass:, age:…) ne sont pas des symboles inconnus pour le moteur
-hooks.skip = (line) => P.PHYS_RE.test(line);
+hooks.skip = (line) => P.isPhysicsLine(line);
 
 const lang = process.argv[2] === "en" ? "en" : "fr";
 const AGES = [
@@ -29,6 +29,11 @@ const AGES = [
   ["Aurores mortes", "auroras\nmass: 0.1\nage: 8", "Des aurores sans champ magnétique."],
   ["Ciel vert", "green_sun\nwater\nfern", "Un soleil vert : pas une faute physique, un coût d'Art."],
   ["Jumeaux", "twin_suns\nwide_binary_orbit\nwater\nfern\nrain", "Deux soleils, une orbite qui fait le tour des deux."],
+  ["Soleil noir", "black_sun\nwater\nfern\nstone", "Une naine brune : de la chaleur, presque pas de lumière. Les plantes boivent l'infrarouge."],
+  ["Super-Terre", "heavy_world\nrifts\nwater\ngreat_tree", "Un monde lourd : plaques en mouvement, montagnes basses, arbres trapus."],
+  ["Lune glacée", "planet_rings\nsubsurface_ocean\ndistant_orbit", "Un océan caché sous la glace, chauffé par la marée d'une géante."],
+  ["Jeune et lourd", "young_world\nheavy_world\ngeysers\nthick_air", "Un monde neuf, brûlant dessous, à l'air épais."],
+  ["Noyau mort", "ancient_world\nlight_world\ndead_core\nthin_air\nauroras", "Un vieux petit monde sans bouclier : les aurores ne tiennent pas."],
 ];
 
 const f = P.fmt(lang);

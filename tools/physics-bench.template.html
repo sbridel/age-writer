@@ -143,7 +143,7 @@ footer code { font-family: var(--f-mono); font-size: 13px; }
   </div>
 
   <footer>
-    Modèle simplifié, calé sur la Terre, Mars, Vénus et la Lune : un monde crédible et explicable, pas une simulation. Lignes de valeurs reconnues : <code>mass</code>, <code>age</code>, <code>orbit</code>, <code>insolation</code>, <code>star_mass</code>, <code>rotation</code>, <code>core</code>, <code>atmosphere</code>, <code>water</code>, <code>volatiles</code>, <code>albedo</code>, <code>tides</code> (et leurs alias français). Un clic sur une piste en vert l'écrit dans le bloc. Document de conception : <code>docs/DESIGN-physique.md</code>.
+    Modèle simplifié, calé sur la Terre, Mars, Vénus et la Lune : un monde crédible et explicable, pas une simulation. Blocs de géophysique : <code>close_orbit</code>, <code>distant_orbit</code>, <code>young_world</code>, <code>ancient_world</code>, <code>heavy_world</code>, <code>light_world</code>, <code>molten_core</code>, <code>dead_core</code>, <code>geysers</code>, <code>rifts</code>, <code>thick_air</code>, <code>thin_air</code>, <code>subsurface_ocean</code>, <code>black_sun</code>. Lignes de valeurs reconnues : <code>mass</code>, <code>age</code>, <code>orbit</code>, <code>insolation</code>, <code>star_mass</code>, <code>rotation</code>, <code>core</code>, <code>atmosphere</code>, <code>water</code>, <code>volatiles</code>, <code>albedo</code>, <code>tides</code> (et leurs alias français). Un clic sur une piste en vert l'écrit dans le bloc. Document de conception : <code>docs/DESIGN-physique.md</code>.
   </footer>
 </div>
 
@@ -163,6 +163,10 @@ footer code { font-family: var(--f-mono); font-size: 13px; }
     ["Aurores mortes", "auroras\nmass: 0.1\nage: 8", "Des aurores sans champ magnétique."],
     ["Poussière", "desert_world\nsand\nwind\nmass: 0.3", "Un petit désert : assez d'air pour le vent ?"],
     ["Ciel vert", "green_sun\nwater\nfern", "Pas une faute de physique : un coût d'Art."],
+    ["Soleil noir", "black_sun\nwater\nfern\nstone", "Une naine brune : chaleur sans lumière, plantes noires."],
+    ["Super-Terre", "heavy_world\nrifts\nwater\ngreat_tree", "Un monde lourd à plaques, arbres trapus."],
+    ["Lune glacée", "planet_rings\nsubsurface_ocean\ndistant_orbit", "Un océan sous la glace, chauffé par une géante."],
+    ["Noyau mort", "ancient_world\nlight_world\ndead_core\nthin_air\nauroras", "Un vieux petit monde sans bouclier."],
   ];
   const $ = (id) => document.getElementById(id);
   const src = $("src"), seed = $("seed"), draw = $("draw");
@@ -208,8 +212,8 @@ footer code { font-family: var(--f-mono); font-size: 13px; }
     try {
       const text = src.value, name = seed.value || "Sans nom";
       const a = AW.analyseAgeBase(text, { seed: name, draw: draw.checked });
-      const ph = P.physicsOf(a, text, name), out = P.applyPhysics(a, ph, mode), sh = P.sheet(ph, "fr");
-      const strictA = P.applyPhysics(a, ph, "strict");
+      const ph = P.physicsOf(a, text, name, mode), out = P.applyPhysics(a, ph, mode), sh = P.sheet(ph, "fr");
+      const strictA = P.applyPhysics(a, mode === "strict" ? ph : P.physicsOf(a, text, name, "strict"), "strict");
       const counted = new Map(strictA.physics.tensions.map((t) => [t.id, t.counted]));
       $("verdict").innerHTML =
         `<span class="stab v-${a.verdict}">${a.stability}<small>moteur</small></span>` +
