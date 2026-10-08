@@ -224,7 +224,7 @@ async function renderJournal(plugin, source, el, ctx) {
   notes.sort((a, b) => a.ctime - b.ctime);
   for (const n of notes) n.excerpt = journal.excerptAround(await app.vault.cachedRead(n.f), file.basename);
   const alterations = plugin.law.log(file.basename).map((e) => ({ text: describeChange(e, t) }));
-  const prose = core.prose(analysis.resolved).split(/(?<=[.!?])\s/).slice(0, 2).join(" ");
+  const prose = core.prose(analysis.resolved, { seed: file.basename }).split(/(?<=[.!?])\s/).slice(0, 2).join(" ");
   const entries = journal.buildEntries({
     voice, lang, analysis, defOf: (id) => core.blocks.get(id), prose, ids, alterations, notes,
     mechs: mechs.map((m) => ({ id: m.id, state: mech.stateWord(m.state, lang), label: mech.label(m.id, lang), desc: mech.describe(m.id, lang) })),
