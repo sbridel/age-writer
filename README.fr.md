@@ -316,13 +316,12 @@ Deux niveaux, dans une fenêtre à rubriques (et exportables en notes) :
 
 ## 14. Limites connues
 
-- **Obsidian réel** : le plugin est testé par des tests automatiques (jsdom, faux AudioContext, rendus Chromium, intégration contre le vrai `main.js`), mais pas systématiquement dans Obsidian lui-même. Mobile et thème clair ne sont pas testés.
-- Les réglages utilisent les composants classiques d'Obsidian, avec une navigation à rubriques faite à la main (pas l'API de réglages récente).
-- La loi du changement range son état par **nom de note**.
-- Une note à plusieurs blocs `age` : chaque bloc tire son propre monde.
-- Le rendu génératif ne s'applique pas à l'export GIF.
-- Le contenu du moteur est en anglais ; la référence complète est en français seulement.
-- Le vocabulaire « Relto », « D'ni » apparaît dans l'interface et les clés YAML.
+- **Ordinateur seulement** : le plugin est pensé pour la souris, le son et des canvas animés ; il n'existe pas sur mobile.
+- **Surtout testé par machine** : tests automatiques (jsdom, faux `AudioContext`, rendus Chromium, intégration contre le vrai `main.js`) et usage réel dans Obsidian, sur ordinateur et en thème clair d'abord. Le thème sombre et les autres thèmes sont moins testés : signale-moi ce qui cloche.
+- **État rangé par nom de note** : la loi du changement lie son état au nom de la note.
+- **Plusieurs blocs `age` dans une note** : chaque bloc tire son propre monde.
+- **Export GIF** : sans le rendu génératif.
+- **Vocabulaire** : les mots « Relto » et « D'ni » viennent de l'univers de Myst, dans l'interface et les clés YAML. Le guide et la référence complète existent en anglais et en français.
 
 ---
 

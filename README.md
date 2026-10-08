@@ -341,14 +341,12 @@ Two levels, in a window with sections (and exportable as notes):
 
 ## 14. Known limitations
 
-- **Real Obsidian**: the plugin is tested by automated tests (jsdom, fake AudioContext, Chromium renders, integration against the real `main.js`), but not systematically inside Obsidian itself. Mobile and light theme are untested.
-- Close-up view sounds have been tuned by ear in a few iterations; recordings from your vault are the fallback if the synthesized ones don't suit you.
-- Settings use Obsidian's classic components, with hand-made section navigation (not the recent settings API).
-- The law of change stores its state by **note name**.
-- A note with several `age` blocks: each block draws its own world.
-- Generative rendering doesn't apply to GIF export.
-- The engine's content is in English; the full reference is in French only.
-- The vocabulary "Relto", "D'ni" appears in the interface and YAML keys.
+- **Desktop only**: the plugin is built for mouse, sound and animated canvases, so it is not available on mobile.
+- **Tested mostly by machine**: automated tests (jsdom, fake `AudioContext`, Chromium renders, integration against the real `main.js`) plus hands-on use in Obsidian, on desktop with the light theme first. The dark theme and other themes get less testing, so tell me if something looks off.
+- **State by note name**: the law of change ties its state to the note name.
+- **Several `age` blocks in one note**: each block draws its own world.
+- **GIF export** doesn't include the generative rendering.
+- **Vocabulary**: the words "Relto" and "D'ni" are kept from the Myst universe, in the interface and in the YAML keys. The guide and the full reference are available in English and French.
 
 ---
 
