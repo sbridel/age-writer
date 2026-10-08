@@ -84,7 +84,7 @@ class Dni {
   async init() {
     // repart de zéro : un réglage vidé ou changé ne doit pas garder l'ancienne police
     if (this.vaultFace && typeof document !== "undefined" && document.fonts) { try { document.fonts.delete(this.vaultFace); } catch (e) { /* ignore */ } }
-    this.vaultFace = null; this.glyphs = null; this.userFamily = null;
+    this.vaultFace = null; this.glyphs = null; this.userFamily = null; this.missing = null;
     this.family = this.detectInstalled();
     try { await this.loadVaultFont(); } catch (e) { console.warn("[Age Writer] police du coffre illisible", e); }
     try { await this.loadGlyphFile(); } catch (e) { /* facultatif */ }
@@ -154,6 +154,27 @@ class Dni {
 
   hasFont() { return !!this.fontFamily(); }
 
+  /**
+   * Cette police dessine-t-elle vraiment le chiffre `v` ? Certaines polices D'ni n'ont pas tous les caractères
+   * (le 12 est un guillemet « " ») : le navigateur prend alors une police de secours et affiche un guillemet.
+   * On compare la largeur du caractère dans la police et dans deux polices génériques ; identiques → absent.
+   */
+  glyphMissing(v) {
+    const f = this.fontFamily(); if (!f || typeof document === "undefined") return false;
+    const key = f + "|" + v; this.missing = this.missing || new Map();
+    if (this.missing.has(key)) return this.missing.get(key);
+    let miss = false;
+    try {
+      const c = this.probeCtx = this.probeCtx || document.createElement("canvas").getContext("2d");
+      if (c) {
+        const w = (font) => { c.font = "100px " + font; return c.measureText(FONT_CHARS[v]).width; };
+        const mine = w(f);
+        miss = mine > 0 && (Math.abs(mine - w("serif")) < 0.01 || Math.abs(mine - w("sans-serif")) < 0.01);
+      }
+    } catch (e) { miss = false; }
+    this.missing.set(key, miss); return miss;
+  }
+
   /** Les polices D'ni n'ont que des minuscules : une majuscule retomberait dans une police ordinaire. */
   textFor(s) { return String(s == null ? "" : s).toLowerCase(); }
 
@@ -171,7 +192,7 @@ class Dni {
       const [bx, by, , bh] = this.glyphs.box, s = size / bh;
       return `<path transform="translate(${(x - bx * s).toFixed(2)} ${(y - by * s).toFixed(2)}) scale(${s.toFixed(5)})" d="${this.glyphs.paths[v]}" fill="${color}"/>`;
     }
-    if (mode === "font") {
+    if (mode === "font" && !this.glyphMissing(v)) {
       const cw = size * this.cell("font");
       return `<text x="${(x + cw / 2).toFixed(2)}" y="${(y + size).toFixed(2)}" text-anchor="middle" font-family="${esc(this.textStack())}" font-size="${(size / FONT_CAP).toFixed(2)}" fill="${color}">${esc(FONT_CHARS[v])}</text>`;
     }
@@ -215,6 +236,13 @@ class Dni {
         const [bx, by, , bh] = this.glyphs.box, s = size / bh;
         ctx.save(); ctx.translate(dx - bx * s, y - by * s); ctx.scale(s, s);
         ctx.fill(new Path2D(this.glyphs.paths[d])); ctx.restore();
+      } else if (this.glyphMissing(d)) { // la police n'a pas ce chiffre : tracé procédural, centré dans la case
+        const { stroke, fill } = simplePaths(d), s = size / 100;
+        ctx.save(); ctx.translate(dx + (cw - size) / 2, y); ctx.scale(s, s);
+        ctx.lineWidth = 7; ctx.lineCap = "square"; ctx.lineJoin = "miter";
+        for (const p of stroke) ctx.stroke(new Path2D(p));
+        for (const p of fill) ctx.fill(new Path2D(p));
+        ctx.restore();
       } else {
         ctx.font = `${(size / FONT_CAP).toFixed(1)}px ${this.textStack()}`;
         ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";

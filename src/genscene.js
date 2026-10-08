@@ -10,7 +10,7 @@
  */
 const { rng, fnv, clamp, lerp, smooth, frac } = require("./util");
 const SKY = require("./sky");
-const WT = require("./wealth"), AM = require("./amounts");
+const WT = require("./wealth"), AM = require("./amounts"), SEA = require("./sea");
 
 const TAU = Math.PI * 2, PERIOD = 8000;
 
@@ -18,7 +18,7 @@ const TAU = Math.PI * 2, PERIOD = 8000;
 const KNOWN = new Set(("door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon frozen_cycle erratic_cycle chaotic_orbit " +
   "permanent_veil auroras recurring_eclipses starfall rain storm thunderstorm whispering_storm waiting_thunder wind dust_storm ash_cloud spore_cloud fog marsh_mist rime watching_mist lightning heat " +
   "hail black_hail steam lava obsidian whispering_obsidian water brine meltwater crying_obsidian ice black_ice deep_cold sand glass singing_glass fulgurite grove great_tree ironwood charred_grove " +
-  "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " + SKY.SKY_BLOCKS.map((b) => b.id).join(" ") + " " + WT.RICH_IDS.join(" ") + " " + WT.SCAR_IDS.join(" ")).split(" "));
+  "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " + SKY.SKY_BLOCKS.map((b) => b.id).join(" ") + " " + WT.RICH_IDS.join(" ") + " " + WT.SCAR_IDS.join(" ") + " " + SEA.IDS.join(" ")).split(" "));
 const AXES = ["cosmological", "geological", "meteorological", "ecological", "metaphysical"];
 
 function sceneOf(a, name = "", blocks = null) {
@@ -32,7 +32,7 @@ function sceneOf(a, name = "", blocks = null) {
   const ruins = [];
   if (r("door", "sealed_door")) ruins.push("door"); if (r("bridge", "fallen_bridge")) ruins.push("bridge");
   if (r("tablet", "worn_tablet", "speaking_tablet")) ruins.push("tablet"); if (r("lamp", "lit_lamp")) ruins.push("lamp");
-  return {
+  const S = {
     seed: fnv(name + "|" + [...ids].sort().join(",")), verdict: a.verdict, unrest: clamp(1 - (a.stability == null ? 100 : a.stability) / 100),
     suns: r("twin_suns") ? 2 : r("single_sun") ? 1 : 0, skyStated: r("twin_suns", "single_sun", "starless"), moon: r("companion_moon"),
     cycle: r("frozen_cycle") ? "frozen" : r("erratic_cycle") ? "erratic" : "steady", chaos: r("chaotic_orbit"), veil: r("permanent_veil"),
@@ -53,6 +53,53 @@ function sceneOf(a, name = "", blocks = null) {
     }),
     fissure: r("no_fissure") ? null : r("cave_fissure") ? "cave" : r("submarine_fissure", "fissure") ? (r("water") ? "submarine" : "open") : null,
   };
+  S.kelp = r("kelp"); S.coral = r("coral"); S.acid = r("acid");
+  S.shore = shoreOf(S, r, wd);
+  const cycleWritten = res.lines.some((l) => l.entry && l.entry.category === "cycle" && !l.autoFilled);
+  S.phys = physLook(a.physics && a.physics.w, cycleWritten);
+  if (S.phys) {
+    if (!S.sunHues.length && S.phys.sunRGB.length) S.sunHues = S.phys.sunRGB; // couleur du soleil : celle de son étoile (une couleur écrite passe avant)
+    if (S.phys.locked && !cycleWritten && S.cycle !== "erratic") S.cycle = "frozen"; // face figée par la marée : le soleil ne bouge plus
+    if (S.phys.Ts > 318) S.heat = true; // chaleur qui fait trembler l'air
+  }
+  return S;
+}
+
+/** Couleur d'un corps noir (approximation de Tanner Helland), en RGB 0..255. */
+function blackbody(T) {
+  const t = clamp(T, 1000, 40000) / 100;
+  const r = t <= 66 ? 255 : 329.7 * Math.pow(t - 60, -0.1332), g = t <= 66 ? 99.47 * Math.log(t) - 161.12 : 288.12 * Math.pow(t - 60, -0.0755), b = t >= 66 ? 255 : t <= 19 ? 0 : 138.52 * Math.log(t - 10) - 305.04;
+  return [clamp(r, 0, 255), clamp(g, 0, 255), clamp(b, 0, 255)];
+}
+/**
+ * Ce que la physique du monde change à la fenêtre (quand la couche physique est active) :
+ * couleur du soleil (température de l'étoile), taille du disque (rayon de l'étoile et distance), ciel (pression de l'air),
+ * relief (gravité), face figée (marée), lumière au sol, chaleur.
+ */
+function physLook(w, cycleWritten) {
+  if (!w || !Number.isFinite(w.P)) return null;
+  const temps = (w.starTemps || []).filter(Number.isFinite), brown = !!w.blackSun;
+  const T0 = temps[0] || 5772, L = Number.isFinite(w.L) ? w.L : 1, a = Number.isFinite(w.a) && w.a > 0 ? w.a : 1;
+  const disc = clamp((Math.sqrt(Math.max(1e-6, L)) / Math.pow(T0 / 5772, 2)) / a, 0.45, 3); // rayon angulaire relatif au Soleil vu de la Terre
+  return {
+    sunRGB: brown ? [] : temps.slice(0, 2).map(blackbody), disc, P: Math.max(0, w.P), g: Number.isFinite(w.g) ? w.g : 1,
+    locked: !!w.locked, light: Number.isFinite(w.light) ? w.light : 1, Ts: Number.isFinite(w.Ts) ? w.Ts : 288, cycleWritten: !!cycleWritten,
+  };
+}
+
+/**
+ * Rivage : de l'eau ET de la terre dans le même Âge (hors monde-océan, monde gelé, désert, monde de lave, qui imposent
+ * leur décor) → la bande du bas est partagée entre l'eau et une rive. La nature de la rive vient de ce qui est écrit :
+ * lave (côte noire qui fume), sable (plage), glace (banquise), pierre ou ruines (rochers), plantes (berge herbeuse).
+ */
+function shoreOf(S, r, wd) {
+  if (!S.water || wd === "ocean" || wd === "frozen" || wd === "desert" || wd === "lava") return null;
+  if (S.lava) return "lava";
+  if (S.sand) return "sand";
+  if (S.ice) return "ice";
+  if (r("stone", "iron", "crystal", "obsidian", "salt", "rifts", "geysers", "glass", "strange_stone", "copper", "gold", "silver", "gems") || S.ruins.length) return "rock";
+  if (S.trees || S.glow || r("moss", "fern", "grove", "vine", "sapling", "seed", "spore", "lichen", "pale_fungus", "grazer", "burrower")) return "grass";
+  return null;
 }
 
 // ---- outils ----------------------------------------------------------------------------------------
@@ -98,7 +145,7 @@ function build(S, W, H) {
   const nCount = S.sand ? 2 : S.ice ? 4 : 3 + Math.floor(r() * 2);
   const ridges = Array.from({ length: nCount }, (_, i) => {
     const d = i / Math.max(1, nCount - 1), n = valueNoise((r() * 4294967296) >>> 0), ridged = S.ice || (!S.sand && r() < 0.3);
-    const amp = (S.sand ? 0.07 : 0.16 + r() * 0.12) * (1 - d * 0.35), freq = (S.sand ? 0.9 : 2.2 + r() * 2) * (1 + d * 0.5), base = hz - H * (0.05 + (1 - d) * 0.07);
+    const amp = (S.sand ? 0.07 : 0.16 + r() * 0.12) * (1 - d * 0.35) * (S.phys ? clamp(Math.pow(S.phys.g, -0.5), 0.6, 1.55) : 1), freq = (S.sand ? 0.9 : 2.2 + r() * 2) * (1 + d * 0.5), base = hz - H * (0.05 + (1 - d) * 0.07);
     const xs = new Float32Array(Math.ceil(W / 4) + 1);
     for (let k = 0; k < xs.length; k++) {
       const u = k / (xs.length - 1); let v = fbm(n, u * freq * 3 + i * 5, S.ice ? 3 : 4);
@@ -131,21 +178,118 @@ function build(S, W, H) {
   const ringsP = S.rings ? { x: W * (0.2 + 0.55 * q2()), y: H * (0.16 + 0.14 * q2()), R: H * (0.09 + 0.06 * q2()), tilt: (q2() - 0.5) * 0.7, hue: q2() * 60 + 20, sat: 0.2 + q2() * 0.3 } : null;
   const cometP = S.comet ? { ph: q2(), y0: 0.12 + 0.25 * q2(), y1: 0.25 + 0.3 * q2(), dir: q2() < 0.5 ? 1 : -1 } : null;
   const fgKind = ["rocks", "branches", "arch"][Math.floor(r() * 3)], fg = { kind: fgKind, side: r() < 0.5 ? -1 : 1, pts: Array.from({ length: 16 }, () => r()), p: r() * TAU };
+  Object.assign(fg, buildForeground(S, W, H)); // 1.16.1 : type choisi selon l'Âge, géométrie générée (graine propre : le reste de l'image ne bouge pas)
   // détail « habité » : une structure sans usage évident, posée au point le plus dégagé (loin des ruines et des arbres)
   const taken = [...ruins.map((q) => q.x), ...trees.map((q) => q.x)], cand = Array.from({ length: 8 }, () => W * (0.12 + 0.76 * r()));
   const dx = cand.map((x) => [Math.min(W, ...taken.map((q) => Math.abs(q - x))), x]).sort((a, b) => b[0] - a[0])[0][1];
   const det = { kind: ["pylon", "ring", "stair", "dish", "piers"][Math.floor(r() * 5)], x: dx, s: 0.8 + r() * 0.5, p: r() * TAU, hue: r() < 0.5 ? 34 : 190 + r() * 60, n: 4 + Math.floor(r() * 4) };
   const q3 = rng((S.seed ^ 0x601d) >>> 0), rich = (S.riches || []).map((id) => { const n = Math.round(clamp(14 * AM.factorOf(id, S.amt), 4, 60)); return { id, col: WT.RICH_COLOR[id] || [255, 215, 120], big: id === "gems" || id === "pearls", pts: Array.from({ length: n }, () => ({ x: q3(), u: q3(), p: q3(), s: 1 + q3() * 1.3 })) }; });
   const scar = { cracks: Array.from({ length: 12 }, () => ({ x: q3(), u: q3(), pts: Array.from({ length: 5 }, () => q3() - 0.5) })), pits: Array.from({ length: 5 }, () => ({ x: q3(), u: 0.15 + 0.8 * q3(), w: 0.6 + q3() * 0.8 })), embers: Array.from({ length: 22 }, () => ({ x: q3(), u: q3(), p: q3() })) };
-  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava };
+  const shore = S.shore ? buildShore(S, W, H, hz) : null;
+  const night = buildNight(S, W, H, hz);
+  const q7 = rng((S.seed ^ 0x5ea) >>> 0);
+  const sea = {
+    kelp: S.kelp ? Array.from({ length: 7 + Math.floor(q7() * 7) }, () => ({ x: W * q7(), h: 0.45 + 0.5 * q7(), p: q7() * TAU, w: 1.5 + q7() * 2.5, leaves: 4 + Math.floor(q7() * 5) })) : [],
+    coral: S.coral ? Array.from({ length: 6 + Math.floor(q7() * 6) }, () => ({ x: W * q7(), u: 0.55 + 0.45 * q7(), s: 0.6 + q7() * 0.9, hue: [340, 15, 30, 290, 190][Math.floor(q7() * 5)], kind: Math.floor(q7() * 3), pts: Array.from({ length: 5 }, () => q7()) })) : [],
+    acid: S.acid ? Array.from({ length: 3 + Math.floor(q7() * 3) }, () => ({ x: W * (0.08 + 0.84 * q7()), u: 0.15 + 0.8 * q7(), w: 0.5 + q7() * 0.9, p: q7() })) : [],
+  };
+  if (shore && shore.mode === "side" && S.fissure === "submarine") { const wx = lerp(shore.x0, shore.x1, 0.5); fis.x = shore.side < 0 ? lerp(wx, W, 0.45) : lerp(0, wx, 0.55); } // la fissure sous l'eau reste dans l'eau
+  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea };
+}
+
+/**
+ * Géométrie du rivage (graine propre : rien d'autre ne change dans l'image). Trois cadrages :
+ *   side : la rive occupe un côté, la ligne d'eau descend de l'horizon vers le bas de l'image ;
+ *   far  : l'autre rive, au loin, juste sous l'horizon ; l'eau devant ;
+ *   near : on est sur la rive, l'eau s'étend jusqu'à l'horizon.
+ * line : points de la ligne d'eau ; land / wet : polygones de la terre et de l'eau.
+ */
+function buildShore(S, W, H, hz) {
+  const q = rng((S.seed ^ 0x5407e) >>> 0), n = valueNoise((q() * 4294967296) >>> 0), D = H - hz, N = 48;
+  const pick = q(), mode = pick < 0.55 ? "side" : pick < 0.8 ? "far" : "near", freq = 1.6 + q() * 2.6, wob = 0.6 + q() * 0.8;
+  const out = { kind: S.shore, mode, line: [], land: [], wet: [], side: q() < 0.5 ? -1 : 1, x0: W * (0.28 + 0.44 * q()), x1: W * (0.08 + 0.84 * q()), f0: 0 };
+  if (mode === "side") {
+    for (let k = 0; k <= N; k++) { const u = k / N, w = (fbm(n, u * freq) - 0.5) * W * 0.3 * wob * (0.12 + u); out.line.push([lerp(out.x0, out.x1, Math.pow(u, 0.85)) + w, hz + D * u]); }
+    const e = out.side < 0 ? -2 : W + 2, f = out.side < 0 ? W + 2 : -2;
+    out.land = [[e, hz], ...out.line, [e, H + 2]]; out.wet = [[f, hz], ...out.line, [f, H + 2]];
+  } else {
+    out.f0 = mode === "far" ? 0.1 + 0.16 * q() : 0.38 + 0.26 * q();
+    for (let k = 0; k <= N; k++) { const u = k / N, v = out.f0 + (fbm(n, u * freq * 1.5) - 0.5) * 0.16 * wob; out.line.push([-2 + (W + 4) * u, hz + D * clamp(v, 0.04, 0.9)]); }
+    const top = [[W + 2, hz], [-2, hz]], bottom = [[W + 2, H + 2], [-2, H + 2]];
+    if (mode === "far") { out.land = [...out.line, ...top]; out.wet = [...out.line, ...bottom]; } else { out.land = [...out.line, ...bottom]; out.wet = [...out.line, ...top]; }
+  }
+  // détails tirés une fois : rochers et galets sur la ligne, touffes sur la terre, glaçons, bouffées de vapeur
+  out.rocks = Array.from({ length: 9 }, () => ({ k: Math.floor(q() * (N + 1)), s: 0.6 + q() * 0.9, pts: Array.from({ length: 6 }, () => 0.7 + q() * 0.5), dx: (q() - 0.5) * 2 }));
+  out.tufts = Array.from({ length: 70 }, () => ({ x: q() * W, u: q(), h: 2 + q() * 4, p: q() * TAU }));
+  out.floes = Array.from({ length: 8 }, () => ({ k: Math.floor(q() * (N + 1)), d: 4 + q() * 18, w: 3 + q() * 9, p: q() }));
+  out.puffs = Array.from({ length: 7 }, () => ({ k: Math.floor(q() * (N + 1)), p: q() }));
+  return out;
+}
+
+// ---- la nuit d'un Âge : constellations, parfois une nébuleuse ou une bande d'étoiles, ses lunes ----------------------
+function buildNight(S, W, H, hz) {
+  const q = rng((S.seed ^ 0x57a5) >>> 0);
+  const cons = Array.from({ length: 2 + Math.floor(q() * 3) }, () => {
+    const cx = W * (0.1 + 0.8 * q()), cy = hz * (0.08 + 0.45 * q()), R = H * (0.06 + 0.07 * q()), k = 4 + Math.floor(q() * 4);
+    const pts = Array.from({ length: k }, () => ({ x: cx + (q() - 0.5) * 2 * R, y: cy + (q() - 0.5) * 1.4 * R, s: 1.4 + q() * 1.3, tw: q() * TAU }));
+    pts.sort((a, b) => a.x - b.x); // un tracé qui se lit de gauche à droite
+    return { pts, lines: q() < 0.45, tint: q() < 0.3 ? [255, 210, 170] : q() < 0.5 ? [190, 210, 255] : [240, 240, 255] };
+  });
+  const nebula = q() < 0.35 ? { x: W * (0.15 + 0.7 * q()), y: hz * (0.15 + 0.4 * q()), R: H * (0.14 + 0.16 * q()), hue: [300, 200, 20, 160, 260][Math.floor(q() * 5)], blobs: Array.from({ length: 7 }, () => ({ dx: (q() - 0.5) * 1.6, dy: (q() - 0.5) * 0.9, r: 0.35 + q() * 0.6 })) } : null;
+  const band = q() < 0.4 ? { a: (q() - 0.5) * 1.2, y: hz * (0.25 + 0.3 * q()), w: H * (0.05 + 0.05 * q()), pts: Array.from({ length: 160 }, () => ({ u: q(), v: (q() + q() + q() - 1.5) / 1.5, b: q() })) } : null;
+  const n = S.moons != null ? clamp(Math.round(S.moons), 0, 5) : S.moon ? 1 : 0;
+  const moons = Array.from({ length: n }, (_, i) => ({ r: H * (i === 0 ? 0.045 : 0.015 + 0.03 * q()), ph: i === 0 ? 0.28 : q() * 0.8 - 0.4, off: i === 0 ? 0 : q(), sp: i === 0 ? 1 : 0.6 + q() * 1.6, tint: i === 0 ? [207, 214, 226] : [[220, 200, 180], [190, 210, 230], [230, 190, 170], [210, 215, 200]][Math.floor(q() * 4)], fx: 0.15 + 0.7 * q(), fy: 0.15 + 0.3 * q() }));
+  return { cons, nebula, band, moons };
+}
+
+// ---- premier plan : choisi selon l'Âge, dessiné à partir de la graine ----------------------------------------
+/** Poids de chaque premier plan selon ce que contient l'Âge (0 = impossible). « none » : parfois, rien ne cadre la vue. */
+function foregroundWeights(S) {
+  const wet = S.water || !!S.shore, green = S.trees > 0 || S.world === "jungle" || S.glow, dry = S.sand || S.lava || S.world === "desert" || S.world === "lava", ruins = S.ruins.length > 0;
+  return {
+    none: 0.35, rocks: 1 + (dry ? 1.2 : 0), branches: S.world === "desert" || S.world === "lava" || S.world === "ocean" ? 0.2 : 1 + (green ? 1.4 : 0),
+    arch: 0.4 + (ruins ? 0.9 : 0), vines: green || S.fog ? 0.5 + (S.world === "jungle" || S.glow ? 1.4 : 0.5) : 0.15, reeds: wet && !S.ice ? 1.4 : 0,
+    leaves: green ? 1 : 0.2, pillar: 0.3 + (ruins ? 0.9 : 0), icicles: S.ice || S.world === "frozen" ? 2.2 : 0,
+  };
+}
+function buildForeground(S, W, H) {
+  const q = rng((S.seed ^ 0xf06e) >>> 0), wts = foregroundWeights(S), tot = Object.values(wts).reduce((a, b) => a + b, 0);
+  let pick = q() * tot, kind = "rocks";
+  for (const [k, w] of Object.entries(wts)) { if (pick < w) { kind = k; break; } pick -= w; }
+  const out = { kind, side: q() < 0.5 ? -1 : 1, pts: Array.from({ length: 16 }, () => q()), p: q() * TAU };
+  if (kind === "branches") {
+    // une branche qui pousse depuis un bord : chaque segment se divise en deux ou trois, de plus en plus fins ; style selon l'Âge
+    const style = S.burnt ? "charred" : S.ice || S.world === "frozen" ? "snowy" : S.world === "jungle" || S.glow ? "leafy" : S.fog ? "moss" : ["leafy", "needles", "bare", "blossom", "leafy"][Math.floor(q() * 5)];
+    const segs = [], fromTop = q() < 0.35, x0 = fromTop ? W * (0.04 + 0.25 * q()) : -4, y0 = fromTop ? -4 : H * (0.02 + 0.3 * q());
+    const grow = (x, y, a, len, w, d) => {
+      const bend = (q() - 0.5) * 0.6, x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len;
+      segs.push({ x, y, cx: x + Math.cos(a + bend) * len * 0.55, cy: y + Math.sin(a + bend) * len * 0.55, x2, y2, w, d, tip: d >= 3 });
+      if (d >= 3 || len < H * 0.03) { segs[segs.length - 1].tip = true; return; }
+      const n = q() < 0.35 ? 3 : 2;
+      for (let i = 0; i < n; i++) { const da = (i - (n - 1) / 2) * (0.45 + 0.4 * q()) + (q() - 0.5) * 0.3; grow(x2, y2, a + da + 0.12, len * (0.58 + 0.2 * q()), w * 0.62, d + 1); }
+    };
+    grow(x0, y0, fromTop ? Math.PI * (0.18 + 0.2 * q()) : Math.PI * (-0.05 + 0.2 * q()), W * (0.16 + 0.1 * q()), Math.max(2.5, H * (0.02 + 0.012 * q())), 0);
+    out.branch = { style, segs, hue: [330, 350, 10, 45, 280, 200][Math.floor(q() * 6)], tufts: Array.from({ length: 4 }, () => q()) }; // fleurs : rose, rouge, jaune, mauve, bleu pâle
+  } else if (kind === "vines") {
+    out.vines = Array.from({ length: 4 + Math.floor(q() * 5) }, () => ({ x: W * (0.02 + 0.3 * q()), len: H * (0.18 + 0.4 * q()), amp: 2 + q() * 6, f: 1 + q() * 2, p: q() * TAU, leaves: Array.from({ length: 5 + Math.floor(q() * 5) }, () => ({ u: q(), s: 2 + q() * 3, a: q() < 0.5 ? -1 : 1 })) }));
+  } else if (kind === "reeds") {
+    out.reeds = Array.from({ length: 9 + Math.floor(q() * 9) }, () => ({ x: W * (0.01 + 0.3 * q()), h: H * (0.16 + 0.34 * q()), lean: (q() - 0.4) * 0.35, head: q() < 0.45, p: q() * TAU, w: 1 + q() * 1.6 }));
+  } else if (kind === "leaves") {
+    out.leaves = Array.from({ length: 2 + Math.floor(q() * 3) }, () => ({ a: (q() - 0.5) * 1.6, len: H * (0.3 + 0.35 * q()), wd: 0.22 + 0.2 * q(), y: H * (0.55 + 0.45 * q()), p: q() * TAU, notch: q() < 0.4 }));
+  } else if (kind === "pillar") {
+    out.pillar = { w: W * (0.05 + 0.04 * q()), x: W * (0.01 + 0.06 * q()), top: H * (0.05 + 0.35 * q()), cut: Array.from({ length: 5 }, () => q()), flutes: 3 + Math.floor(q() * 3), vine: q() < 0.5 };
+  } else if (kind === "icicles") {
+    out.icicles = Array.from({ length: 14 + Math.floor(q() * 12) }, () => ({ x: q() * W, len: H * (0.03 + 0.2 * Math.pow(q(), 2)), w: 2 + q() * 5, p: q() }));
+  }
+  return out;
 }
 
 // ---- soleils ---------------------------------------------------------------------------------------
 function suns(m, t, season = 0) {
   const { S, W, H, hz } = m, top = H * (0.14 + 0.08 * (0.5 - 0.5 * season)), out = [], erratic = (i) => { const q = Math.floor(t * 6), g = rng(S.seed + q * 31 + i); return { x: W * (0.2 + 0.6 * g()), y: H * (0.2 + 0.34 * g()) }; };
   for (let i = 0; i < S.suns; i++) {
-    const rad = H * (i === 0 ? 0.085 : 0.055); let b = null;
-    if (S.cycle === "frozen") b = { x: W * (0.7 - 0.25 * i), y: hz - H * 0.1, e: 0.12 };
+    const rad = H * (i === 0 ? 0.085 : 0.055) * (S.phys ? clamp(Math.sqrt(S.phys.disc), 0.6, 1.7) : 1); let b = null;
+    if (S.cycle === "frozen") { const fz = rng((S.seed ^ 0x10c4) >>> 0), el = 0.32 + 0.4 * fz(), fx = 0.25 + 0.5 * fz(); b = { x: W * (fx - 0.22 * i), y: hz - (hz - top) * el, e: el }; } // soleil immobile : sa hauteur et sa place dépendent de l'endroit du monde (graine)
     else if (S.cycle === "erratic") { const p = erratic(i); b = { x: p.x, y: p.y, e: clamp((hz - p.y) / (hz * 0.8)) }; }
     else { const p = frac(t - i * 0.1); if (p <= 0.7) { const q = p / 0.7, e = Math.sin(Math.PI * q); b = { x: W * (0.06 + 0.88 * q), y: hz - e * (hz - top), e }; } }
     if (!b) continue;
@@ -156,20 +300,33 @@ function suns(m, t, season = 0) {
 }
 
 // ---- dessin ----------------------------------------------------------------------------------------
-function paint(g, m, t, o = {}) {
-  t = frac(t); const { S, W, H, hz, pal } = m, td = o.day != null ? frac(o.day) : t, cs = o.clock != null ? o.clock : t * 8, sn = suns(m, td, o.season || 0);
-  const d = S.suns === 0 ? 0 : S.cycle === "frozen" ? 0.2 : S.cycle === "erratic" ? 0.2 + 0.6 * rng(S.seed + Math.floor(td * 6))() : Math.max(0, ...sn.map((s) => s.e));
+/**
+ * La lumière du ciel à l'instant `t` : soleils, hauteur du jour, couleurs du zénith et de l'horizon, air mince ou épais.
+ * `m.sunFrom` : un autre modèle dont on prend les soleils (les autres directions du périscope de l'Imageur).
+ */
+function skyState(m, t, o = {}) {
+  t = frac(t); const { S, pal } = m, sm = m.sunFrom || m, td = o.day != null ? frac(o.day) : t, cs = o.clock != null ? o.clock : t * 8, sn = suns(sm, td, o.season || 0);
+  const d = S.suns === 0 ? 0 : S.cycle === "frozen" ? (sn.length ? Math.max(...sn.map((s) => s.e)) * 0.8 : 0.2) : S.cycle === "erratic" ? 0.2 + 0.6 * rng(sm.S.seed + Math.floor(td * 6))() : Math.max(0, ...sn.map((s) => s.e));
   const night = 1 - smooth(d * 3), day = smooth((d - 0.25) / 0.75);
   let top = mixc(mixc(pal.nightTop, pal.dawnTop, smooth(d * 3)), pal.dayTop, day), hzc = mixc(mixc(pal.nightHz, pal.dawnHz, smooth(d * 3)), pal.dayHz, day);
   const hues = S.sunHues || []; if (hues[0]) { hzc = mixc(hzc, hues[0], 0.3 * day); top = mixc(top, hues[0], 0.14 * day); } // soleil coloré : la lumière du jour prend sa teinte
+  const air = S.phys ? { thin: clamp((0.5 - S.phys.P) / 0.45), thick: S.phys.P > 1.5 ? clamp(Math.log2(S.phys.P / 1.5) / 4) : 0 } : { thin: 0, thick: 0 };
+  if (air.thin) { top = mixc(top, [4, 5, 12], 0.9 * air.thin); hzc = mixc(hzc, mixc(hzc, [10, 12, 24], 0.5), air.thin); } // air mince : ciel sombre même à midi
+  if (air.thick) { top = mixc(top, mixc(hzc, [235, 230, 215], 0.3), 0.65 * air.thick); } // air épais : ciel laiteux, sans profondeur
   if (S.blackSun) { const gray = (c) => { const v = (c[0] + c[1] + c[2]) / 3; return [v, v, v]; }; top = mixc(gray(top), [12, 8, 10], 0.55); hzc = mixc(gray(hzc), [60, 26, 26], 0.45); } // soleil noir : jour gris et sombre, horizon rouge éteint
+  return { t, td, cs, sn, d, night, day, top, hzc, hues, air };
+}
+
+function paint(g, m, t, o = {}) {
+  const { S, W, H, hz, pal } = m, k0 = skyState(m, t, o), { cs, d, night, day, top, hzc, hues, air } = k0, sn = m.noSun ? [] : k0.sn; t = k0.t; // sans soleil dessiné : la lumière reste celle du jour
   g.save(); g.clearRect(0, 0, W, H);
   const sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, css(top)); sky.addColorStop(1, css(hzc)); g.fillStyle = sky; g.fillRect(0, 0, W, H);
   if (S.storm) { g.fillStyle = "rgba(14,17,24,0.5)"; g.fillRect(0, 0, W, H); }
   if (S.veil) { g.fillStyle = "rgba(190,190,202,0.2)"; g.fillRect(0, 0, W, H); }
   // étoiles
-  const sv = (S.storm ? 0.25 : 1) * (S.veil ? 0.5 : 1) * (1 - Math.min(1, d * 1.4));
+  const sv = Math.max((S.storm ? 0.25 : 1) * (S.veil ? 0.5 : 1) * (1 - Math.min(1, d * 1.4)), 0.7 * air.thin * air.thin) * (1 - 0.8 * air.thick); // sans air, les étoiles se voient en plein jour ; sous un air épais, presque jamais
   if (sv > 0.02) for (const s of m.stars) { g.fillStyle = css([230, 230, 245], (0.25 + 0.55 * (0.5 + 0.5 * Math.sin(TAU * t * s.k + s.p))) * sv); g.fillRect(s.x, s.y, s.s, s.s); }
+  if (sv > 0.02 && m.night) nightSky(g, m, t, sv);
   // aurores
   const ak = Math.max(0, Math.min(1, (night - 0.3) / 0.45)); // aurores : nuit seulement
   if (S.auroras && ak > 0.01) {
@@ -186,13 +343,13 @@ function paint(g, m, t, o = {}) {
     g.strokeStyle = css([255, 255, 255], 0.8 * (1 - k)); g.lineWidth = 1.3; g.beginPath(); g.moveTo(x + k * W * 0.28, y + k * H * 0.24); g.lineTo(x + k * W * 0.28 - H * 0.18, y + k * H * 0.24 - H * 0.13); g.stroke();
   }
   // lune
-  if (S.moon) {
-    const rad = H * 0.045; let mp = null;
-    if (S.cycle === "frozen") mp = { x: W * 0.3, y: H * 0.3 }; else { const p = frac(td - 0.6); if (p <= 0.7) { const q = p / 0.7; mp = { x: W * (0.06 + 0.88 * q), y: hz - Math.sin(Math.PI * q) * (hz - H * 0.2) }; } }
-    if (mp) { g.fillStyle = "#cfd6e2"; g.beginPath(); g.arc(mp.x, mp.y, rad, 0, TAU); g.fill(); g.fillStyle = "rgba(10,12,20,0.5)"; g.beginPath(); g.arc(mp.x + rad * 0.45, mp.y - rad * 0.2, rad * 0.9, 0, TAU); g.fill(); }
+  for (const [mi, mo] of ((m.night && m.night.moons) || []).entries()) { // les lunes : chacune sa taille, sa teinte, sa phase et son pas
+    const rad = mo.r; let mp = null;
+    if (S.cycle === "frozen") { const fz = rng((S.seed ^ 0x10c4) >>> 0); fz(); const sfx = 0.25 + 0.5 * fz(), mx = 0.1 + 0.8 * frac(sfx - 0.1 + 0.5 + mo.off * 0.3 + mi * 0.12); mp = { x: W * mx, y: H * mo.fy }; } // à l'opposé du soleil immobile else { const p = frac(td * mo.sp - 0.6 + mo.off); if (p <= 0.7) { const q = p / 0.7; mp = { x: W * (0.06 + 0.88 * q), y: hz - Math.sin(Math.PI * q) * (hz - H * (0.2 + 0.1 * mo.off)) }; } }
+    if (mp) { g.fillStyle = css(mo.tint); g.beginPath(); g.arc(mp.x, mp.y, rad, 0, TAU); g.fill(); g.fillStyle = "rgba(10,12,20,0.5)"; g.beginPath(); g.arc(mp.x + rad * mo.ph * 1.6, mp.y - rad * 0.2, rad * 0.9, 0, TAU); g.fill(); }
   }
   // nuages (dérive lente, boucle)
-  for (const c of m.clouds) {
+  for (const c of air.thin > 0.85 ? [] : m.clouds) { // presque pas d'air : pas de nuages
     const x = frac((c.x / W) + t * c.sp) * (W + c.w * 2) - c.w; g.fillStyle = css(S.storm ? [30, 34, 44] : mixc(hzc, [255, 255, 255], 0.35), S.storm ? 0.55 : c.a * (0.4 + day));
     c.lump.forEach((l, k) => { g.beginPath(); g.ellipse(x + (k / 7) * c.w, c.y + (l - 0.5) * c.h * 0.6, c.w * 0.13, c.h * (0.3 + l * 0.3), 0, 0, TAU); g.fill(); });
   }
@@ -222,28 +379,26 @@ function paint(g, m, t, o = {}) {
       const top = Math.min(...rg.xs), mg = g.createLinearGradient(0, top, 0, hz); mg.addColorStop(0, css(hzc, 0)); mg.addColorStop(1, css(hzc, 0.3 * (1 - rg.d) * (0.45 + 0.55 * day) + 0.08)); g.fillStyle = mg; g.fillRect(0, top, W, hz - top);
     }
   });
+  if (air.thick > 0.05) { const hg = g.createLinearGradient(0, 0, 0, hz); hg.addColorStop(0, css(hzc, 0.05 * air.thick)); hg.addColorStop(1, css(mixc(hzc, [240, 235, 220], 0.3), 0.45 * air.thick)); g.fillStyle = hg; g.fillRect(0, 0, W, hz); } // brume d'un air épais sur le relief
   for (const cn of m.cones) { // volcans : cône sombre + lueur du cratère
     g.fillStyle = css(pal.rock); g.beginPath(); g.moveTo(cn.x - cn.w, hz); g.lineTo(cn.x - cn.w * 0.12, hz - cn.h); g.lineTo(cn.x + cn.w * 0.12, hz - cn.h); g.lineTo(cn.x + cn.w, hz); g.closePath(); g.fill();
     const f = 0.5 + 0.5 * Math.sin(TAU * (t * 2) + cn.x), lg = g.createRadialGradient(cn.x, hz - cn.h, 1, cn.x, hz - cn.h, cn.h * 0.9); lg.addColorStop(0, css([255, 130, 50], 0.5 + 0.25 * f)); lg.addColorStop(1, css([255, 90, 30], 0)); g.fillStyle = lg; g.fillRect(0, 0, W, H);
   }
   // sol
   g.fillStyle = css(pal.ground); g.fillRect(0, hz, W, H - hz);
-  if (S.sand) { for (let p = 0; p < 3; p++) { g.fillStyle = css(mixc(pal.ground, [120, 90, 55], 0.25 + 0.15 * p)); g.beginPath(); g.moveTo(0, H); for (let x = 0; x <= W; x += 8) g.lineTo(x, hz + H * (0.07 + 0.06 * p) + H * 0.025 * Math.sin(x / W * TAU * (1 + p) + p * 2)); g.lineTo(W, H); g.closePath(); g.fill(); } }
-  if (S.ice) iceSheet(g, m, t, sn, day, night, hzc);
-  else if (S.water) {
-    const wg = g.createLinearGradient(0, hz, 0, H); wg.addColorStop(0, css(mixc(hzc, [20, 60, 70], 0.7))); wg.addColorStop(1, "#0b181c"); g.fillStyle = wg; g.fillRect(0, hz, W, H - hz);
-    for (const l of m.water.lines) { const x = frac(l.p + t) * (W + l.w) - l.w; g.fillStyle = "rgba(200,225,235,0.22)"; g.fillRect(x, l.y, l.w, 1.2); }
-    const s = sn.find((q) => q.e > 0.15); if (s) for (let b = 0; b < 6; b++) { g.fillStyle = css([255, 220, 160], (0.28 - b * 0.03) * Math.min(1, s.e * 2)); g.fillRect(s.x - (14 - b * 2) / 2 + 3 * Math.sin(TAU * (t * 2 + b * 0.2)), hz + H * (0.05 + 0.045 * b), 14 - b * 2, 1.5); }
-  }
-  if (S.lava) {
-    for (const v of m.lava.veins) { const y = hz + H * 0.08 + v.w * H * 0.14; g.strokeStyle = css([255, 122, 48], 0.55 + 0.4 * Math.sin(TAU * (t * 2 + v.w))); g.lineWidth = 1.6; g.beginPath(); g.moveTo(v.x, y); v.pts.forEach((q, k) => g.lineTo(((k + 1) / 6) * W * 0.9, y + q * H * 0.05)); g.stroke(); }
-    for (const sp of m.lava.sparks) { const q = frac(t * 3 + sp.p); g.fillStyle = css([255, 150, 70], 1 - q); g.fillRect(sp.x + 6 * Math.sin(TAU * (q + sp.p)), hz + H * 0.1 - q * H * 0.45, 1.5, 1.5); }
+  if (m.shore) { waterSurface(g, m, t, sn, hzc); shoreLand(g, m, t, sn, day, night, hzc); } // eau et terre : un rivage
+  else {
+    if (S.sand) dunes(g, m);
+    if (S.ice) iceSheet(g, m, t, sn, day, night, hzc);
+    else if (S.water) waterSurface(g, m, t, sn, hzc);
+    if (S.lava) lavaVeins(g, m, t);
   }
   scarGround(g, m, t, night);
   richGlints(g, m, t, night);
   extraAt(g, m, t, "ground");
+  seaLife(g, m, t, night);
   // fissure
-  if (S.fissure) fissure(g, m, t);
+  if (S.fissure) { const wet = m.shore && S.fissure === "submarine"; if (wet) { g.save(); shorePath(g, m.shore.wet); g.clip(); } fissure(g, m, t); if (wet) g.restore(); }
   // arbres
   if (S.trees) trees(g, m, t);
   // ruines
@@ -251,18 +406,142 @@ function paint(g, m, t, o = {}) {
   detail(g, m, t, night);
   if (S.glow || S.moths) for (let p = 0, np = Math.round(clamp(12 * (S.amt ? (S.moths ? (S.amt.moths != null ? S.amt.moths : 1) : (S.amt.glow != null ? S.amt.glow : 1)) : 1), 3, 40)); p < np; p++) { const q = rng(S.seed + p * 13), x = q() * W, y = hz - q() * H * 0.12, a = 0.35 + 0.5 * Math.sin(TAU * (t * (S.moths ? 2 : 1) + q())); g.fillStyle = css(S.glow ? [140, 255, 190] : [255, 230, 160], Math.max(0, a) * 0.8); g.beginPath(); g.arc(x + (S.moths ? 5 * Math.sin(TAU * (t * 2 + q())) : 0), y + (S.moths ? 3 * Math.cos(TAU * (t * 3 + q())) : 0), 1.4, 0, TAU); g.fill(); }
   for (const e of m.eyes) { const o = Math.sin(TAU * (t * 1 + e.p)); if (o > -0.7) { g.fillStyle = css([255, 200, 90], 0.8); g.fillRect(e.x - 3, e.y, 1.6, 1.6); g.fillRect(e.x + 2, e.y, 1.6, 1.6); } }
-  if (S.ice) reflect(g, m, t, 0.34); else if (S.water) reflect(g, m, t, 0.5);
+  if (m.shore) { g.save(); shorePath(g, m.shore.wet); g.clip(); reflect(g, m, t, 0.5); g.restore(); shoreEdge(g, m, t, night); } // le reflet ne couvre que l'eau ; l'écume par-dessus
+  else if (S.ice) reflect(g, m, t, 0.34); else if (S.water) reflect(g, m, t, 0.5);
   extraAt(g, m, t, "air");
   scarAir(g, m, t);
   weather(g, m, t);
   foreground(g, m, t, hzc);
   if (S.ice) frost(g, m, t, night);
+  if (S.phys && S.phys.light < 0.35 && !S.blackSun) { g.fillStyle = css([4, 5, 12], 0.45 * (1 - S.phys.light / 0.35) * (0.4 + 0.6 * day)); g.fillRect(0, 0, W, H); } // peu de lumière visible au sol : un jour terne
   const vg = g.createRadialGradient(W / 2, H / 2, H * 0.4, W / 2, H / 2, H * 0.95); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.35)"); g.fillStyle = vg; g.fillRect(0, 0, W, H);
   if (S.blackSun) { // soleil noir : les couleurs s'éteignent en gris, seule la couronne garde son rouge
     g.save(); g.globalCompositeOperation = "saturation"; g.globalAlpha = 0.8; g.fillStyle = "#808080"; g.fillRect(0, 0, W, H); g.restore();
     const s0b = sn.find((x) => x.i === 0); if (s0b && s0b.y + s0b.r < hz) { g.strokeStyle = "rgba(150,52,40,0.75)"; g.lineWidth = Math.max(1.2, s0b.r * 0.22); g.beginPath(); g.arc(s0b.x, s0b.y, s0b.r * 1.08, 0, TAU); g.stroke(); }
   }
   g.restore();
+}
+
+/** Dunes de sable (sol entier, ou rive de sable). */
+function dunes(g, m) {
+  const { W, H, hz, pal } = m;
+  for (let p = 0; p < 3; p++) { g.fillStyle = css(mixc(pal.ground, [120, 90, 55], 0.25 + 0.15 * p)); g.beginPath(); g.moveTo(0, H); for (let x = 0; x <= W; x += 8) g.lineTo(x, hz + H * (0.07 + 0.06 * p) + H * 0.025 * Math.sin(x / W * TAU * (1 + p) + p * 2)); g.lineTo(W, H); g.closePath(); g.fill(); }
+}
+/** Surface de l'eau : dégradé, rides qui glissent, reflet du soleil. */
+function waterSurface(g, m, t, sn, hzc) {
+  const { W, H, hz } = m;
+  const wg = g.createLinearGradient(0, hz, 0, H); wg.addColorStop(0, css(mixc(hzc, [20, 60, 70], 0.7))); wg.addColorStop(1, "#0b181c"); g.fillStyle = wg; g.fillRect(0, hz, W, H - hz);
+  for (const l of m.water.lines) { const x = frac(l.p + t) * (W + l.w) - l.w; g.fillStyle = "rgba(200,225,235,0.22)"; g.fillRect(x, l.y, l.w, 1.2); }
+  const s = sn.find((q) => q.e > 0.15); if (s) for (let b = 0; b < 6; b++) { g.fillStyle = css([255, 220, 160], (0.28 - b * 0.03) * Math.min(1, s.e * 2)); g.fillRect(s.x - (14 - b * 2) / 2 + 3 * Math.sin(TAU * (t * 2 + b * 0.2)), hz + H * (0.05 + 0.045 * b), 14 - b * 2, 1.5); }
+}
+/** Veines de lave et étincelles. */
+function lavaVeins(g, m, t) {
+  const { W, H, hz } = m;
+  for (const v of m.lava.veins) { const y = hz + H * 0.08 + v.w * H * 0.14; g.strokeStyle = css([255, 122, 48], 0.55 + 0.4 * Math.sin(TAU * (t * 2 + v.w))); g.lineWidth = 1.6; g.beginPath(); g.moveTo(v.x, y); v.pts.forEach((q, k) => g.lineTo(((k + 1) / 6) * W * 0.9, y + q * H * 0.05)); g.stroke(); }
+  for (const sp of m.lava.sparks) { const q = frac(t * 3 + sp.p); g.fillStyle = css([255, 150, 70], 1 - q); g.fillRect(sp.x + 6 * Math.sin(TAU * (q + sp.p)), hz + H * 0.1 - q * H * 0.45, 1.5, 1.5); }
+}
+
+// ---- rivage ------------------------------------------------------------------------------------------------
+function shorePath(g, pts) { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); }
+const SHORE_COL = { sand: [158, 126, 82], rock: [84, 80, 82], grass: [66, 98, 52], lava: [24, 16, 14] };
+/** La rive : sa matière (sable, rochers, herbe, roche volcanique, banquise), plus claire au loin, plus sombre la nuit. */
+function shoreLand(g, m, t, sn, day, night, hzc) {
+  const { W, H, hz, shore: sh, pal } = m, dk = [6, 7, 12];
+  g.save(); shorePath(g, sh.land); g.clip();
+  if (sh.kind === "ice") iceSheet(g, m, t, sn, day, night, hzc);
+  else {
+    const base = SHORE_COL[sh.kind], near = mixc(base, dk, 0.35 + 0.5 * night), far = mixc(mixc(base, hzc, 0.35), dk, 0.25 + 0.5 * night);
+    const lg = g.createLinearGradient(0, hz, 0, H); lg.addColorStop(0, css(far)); lg.addColorStop(1, css(near)); g.fillStyle = lg; g.fillRect(0, hz, W, H - hz);
+    if (sh.kind === "sand") { g.globalAlpha = 0.55; dunes(g, m); g.globalAlpha = 1; }
+    if (sh.kind === "grass") for (const f of sh.tufts) { const y = hz + (H - hz) * f.u * f.u, k = 0.4 + f.u, sw = Math.sin(TAU * t + f.p) * 0.8; g.strokeStyle = css(mixc([90, 130, 70], dk, 0.3 + 0.5 * night), 0.7); g.lineWidth = 0.8; g.beginPath(); g.moveTo(f.x, y); g.lineTo(f.x + sw, y - f.h * k); g.moveTo(f.x + 1.5, y); g.lineTo(f.x + 2 + sw, y - f.h * k * 0.8); g.stroke(); }
+    if (sh.kind === "rock") for (const f of sh.tufts.slice(0, 26)) { const y = hz + (H - hz) * f.u, k = 0.3 + f.u; g.strokeStyle = css(mixc(pal.rock, [0, 0, 0], 0.4), 0.5); g.lineWidth = 0.8; g.beginPath(); g.moveTo(f.x, y); g.lineTo(f.x + f.h * 2 * k, y + f.h * 0.5 * k); g.stroke(); } // fentes de la pierre
+    if (sh.kind === "lava") lavaVeins(g, m, t);
+  }
+  g.restore();
+}
+/** La ligne d'eau : écume qui va et vient, sable mouillé, rochers, roseaux, glaçons, vapeur de la lave qui touche l'eau. */
+function shoreEdge(g, m, t, night) {
+  const { H, hz, shore: sh } = m, lit = 1 - 0.6 * night, L = sh.line, depth = (y) => (y - hz) / (H - hz);
+  const along = (fn) => { g.beginPath(); L.forEach(([x, y], i) => { const [px, py] = fn(x, y); i ? g.lineTo(px, py) : g.moveTo(px, py); }); };
+  const wave = Math.sin(TAU * t), toward = sh.mode === "side" ? [-sh.side, 0] : [0, sh.mode === "far" ? 1 : -1]; // direction de l'eau, depuis la rive
+  if (sh.kind === "lava") { // la lave rencontre l'eau : bord rougeoyant, vapeur
+    along((x, y) => [x, y]); g.strokeStyle = css([255, 110, 40], (0.45 + 0.3 * Math.sin(TAU * t * 3)) * (0.6 + 0.4 * night)); g.lineWidth = 2.2; g.stroke();
+    for (const p of sh.puffs) { const [x, y] = L[p.k], q = frac(t * 1.5 + p.p), r = 2 + q * 9 * (0.4 + depth(y)); g.fillStyle = css([225, 225, 228], 0.32 * (1 - q) * lit); g.beginPath(); g.arc(x + 3 * Math.sin(TAU * (q + p.p)), y - q * H * 0.18, r, 0, TAU); g.fill(); }
+    return;
+  }
+  if (sh.kind !== "ice") { along((x, y) => { const k = 0.4 + depth(y); return [x - toward[0] * 2.2 * k, y - toward[1] * 1.4 * k]; }); g.strokeStyle = "rgba(0,0,0,0.3)"; g.lineWidth = 2.4; g.stroke(); } // la berge : une ombre du côté de la terre
+  if (sh.kind === "sand") { along((x, y) => [x + toward[0] * -3 * (0.3 + depth(y)), y + toward[1] * -3 * (0.3 + depth(y))]); g.strokeStyle = css([110, 92, 66], 0.55 * lit); g.lineWidth = 4; g.stroke(); } // sable mouillé
+  if (sh.kind === "ice") for (const f of sh.floes) { const [x, y] = L[f.k], k = 0.3 + depth(y), dx = toward[0] * f.d * k + Math.sin(TAU * (t + f.p)) * 1.2, dy = toward[1] * f.d * k * 0.5; g.fillStyle = css([226, 240, 252], 0.75 * lit); g.beginPath(); g.ellipse(x + dx, y + dy, f.w * k, f.w * k * 0.3, 0, 0, TAU); g.fill(); }
+  // écume : deux lignes qui avancent et reculent
+  for (const [off, a] of [[2.5, 0.5], [6, 0.25]]) {
+    const o = off + 2.5 * wave; along((x, y) => { const k = 0.3 + depth(y); return [x + toward[0] * o * k, y + toward[1] * o * k * 0.6]; });
+    g.strokeStyle = css([235, 245, 250], a * lit * (0.7 + 0.3 * wave)); g.lineWidth = 1.1; g.stroke();
+  }
+  if (sh.kind === "rock") for (const r of sh.rocks) { const [x, y] = L[r.k], R = (3 + 7 * depth(y)) * r.s; g.fillStyle = css(mixc(m.pal.rock, [40, 40, 46], 0.5)); g.strokeStyle = css([200, 190, 170], 0.25 * lit); g.lineWidth = 0.8; g.beginPath(); r.pts.forEach((k, i) => { const a = Math.PI + (i / 5) * Math.PI; i ? g.lineTo(x + r.dx * R + Math.cos(a) * R * k, y + Math.sin(a) * R * k * 0.8) : g.moveTo(x + r.dx * R + Math.cos(a) * R * k, y + Math.sin(a) * R * k * 0.8); }); g.closePath(); g.fill(); g.stroke(); }
+  if (sh.kind === "grass") for (const r of sh.rocks) { const [x, y] = L[r.k], h = (4 + 9 * depth(y)) * r.s, sw = Math.sin(TAU * t + r.dx) * 1.2; g.strokeStyle = css([70, 96, 56], 0.85 * lit); g.lineWidth = 1; g.beginPath(); for (let i = -1; i <= 1; i++) { g.moveTo(x + i * 2, y); g.lineTo(x + i * 3 + sw, y - h); } g.stroke(); } // roseaux
+}
+
+/** Avec un rivage, corail (side = 1, côté eau) et flaques d'acide (side = −1, côté terre) se placent près de la ligne d'eau : jamais découpés hors de leur part. Sans rivage : null. */
+function seaSpot(m, x, u, side) {
+  const { W, H, hz, shore } = m; if (!shore) return null;
+  const L = shore.line, D = H - hz, k = Math.max(0, Math.min(L.length - 1, Math.round((x / W) * (L.length - 1)))), [lx, ly] = L[k];
+  const dir = shore.mode === "side" ? [-shore.side, 0] : [0, shore.mode === "far" ? 1 : -1], poly = side > 0 ? shore.wet : shore.land;
+  let dist = (8 + 22 * u) * (0.4 + (ly - hz) / D);
+  for (let i = 0; i < 6; i++, dist *= 0.5) { const x2 = clamp(lx + dir[0] * dist * side, 2, W - 2), y2 = clamp(ly + dir[1] * dist * side * 0.6, hz + 1, H - 1); if (inPoly(poly, x2, y2)) return [x2, y2]; } // trop loin (bord, horizon) : on se rapproche de la ligne
+  return [clamp(lx + dir[0] * 1.5 * side, 2, W - 2), clamp(ly + dir[1] * side, hz + 1, H - 1)];
+}
+function inPoly(pts, x, y) { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c; } return c; }
+
+/**
+ * Varech, corail, acide. Sous l'eau (dans la part d'eau quand il y a un rivage) : le varech monte du fond et ondule,
+ * le corail fait des taches vives près du bas ; l'acide fait des flaques jaune-vert qui bouillonnent sur la terre,
+ * ou teinte l'eau quand il n'y a pas de terre.
+ */
+function seaLife(g, m, t, night) {
+  const { S, W, H, hz, sea, shore } = m; if (!sea || (!sea.kelp.length && !sea.coral.length && !sea.acid.length)) return;
+  const D = H - hz, lit = 1 - 0.6 * night, wet = S.water;
+  const near = (x, u, side) => seaSpot(m, x, u, side);
+  if (wet && (sea.kelp.length || sea.coral.length)) {
+    g.save(); if (shore) { shorePath(g, shore.wet); g.clip(); }
+    for (const k of sea.kelp) { // des lanières qui montent du fond et ondulent avec le courant
+      const top = H - D * k.h, n = 10; g.strokeStyle = css(mixc([60, 130, 70], [6, 12, 10], 0.2 + 0.55 * night), 0.8); g.lineWidth = k.w; g.lineCap = "round"; g.beginPath();
+      for (let i = 0; i <= n; i++) { const u = i / n, y = H + 2 - (H + 2 - top) * u, x = k.x + Math.sin(TAU * t + k.p + u * 2.4) * 6 * u; i ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke();
+      g.fillStyle = css(mixc([80, 150, 80], [6, 12, 10], 0.2 + 0.55 * night), 0.7);
+      for (let j = 1; j <= k.leaves; j++) { const u = j / (k.leaves + 1), y = H + 2 - (H + 2 - top) * u, x = k.x + Math.sin(TAU * t + k.p + u * 2.4) * 6 * u, sd = j % 2 ? 1 : -1; g.beginPath(); g.ellipse(x + sd * 4, y, 4.5, 1.6, sd * 0.5, 0, TAU); g.fill(); }
+    }
+    for (const c of sea.coral) { // récif : branches, éventails ou boules aux couleurs vives, ternies par la profondeur
+      const pc = near(c.x, c.u, 1), cx0 = pc ? pc[0] : c.x, y = pc ? pc[1] : hz + D * c.u, R = (5 + 9 * c.u) * c.s, col = css(mixc(hsl(c.hue, 0.65, 0.6), [10, 30, 45], 0.35 + 0.45 * night), 0.85 * lit + 0.1);
+      g.fillStyle = col; g.strokeStyle = col; g.lineCap = "round";
+      if (c.kind === 0) { g.lineWidth = Math.max(1, R * 0.18); g.beginPath(); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * 0.38 + (c.pts[i] - 0.5) * 0.3; g.moveTo(cx0, y); g.lineTo(cx0 + Math.cos(a) * R * (0.7 + 0.5 * c.pts[i]), y + Math.sin(a) * R * (0.7 + 0.5 * c.pts[i])); } g.stroke(); }
+      else if (c.kind === 1) { g.beginPath(); g.moveTo(cx0, y); g.arc(cx0, y, R, Math.PI * 1.1, Math.PI * 1.9); g.closePath(); g.globalAlpha = 0.8; g.fill(); g.globalAlpha = 1; }
+      else for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(cx0 + (c.pts[i] - 0.5) * R * 1.6, y - c.pts[i + 1] * R * 0.6, R * (0.25 + 0.2 * c.pts[i]), 0, TAU); g.fill(); }
+    }
+    g.restore();
+  }
+  if (sea.acid.length) {
+    if (S.water && !shore) { g.fillStyle = css([170, 190, 60], 0.12 + 0.03 * Math.sin(TAU * t)); g.fillRect(0, hz, W, D); } // pas de terre : l'acide est dans l'eau
+    g.save(); if (shore) { shorePath(g, shore.land); g.clip(); } else if (S.water) { g.restore(); return; }
+    for (const a of sea.acid) { // flaques qui bouillonnent, une vapeur pâle au-dessus
+      const pa = near(a.x, a.u, -1), ax = pa ? pa[0] : a.x, y = pa ? pa[1] : hz + D * a.u * a.u + D * 0.05, rx = (10 + 26 * ((y - hz) / D)) * a.w, ry = 1.6 + 5 * ((y - hz) / D);
+      g.fillStyle = css(mixc([190, 210, 70], [10, 14, 8], 0.3 + 0.5 * night), 0.85); g.beginPath(); g.ellipse(ax, y, rx, ry, 0, 0, TAU); g.fill();
+      g.strokeStyle = css([230, 245, 140], 0.35 * lit); g.lineWidth = 0.8; g.beginPath(); g.ellipse(ax, y, rx, ry, 0, Math.PI, TAU); g.stroke();
+      for (let i = 0; i < 3; i++) { const q = frac(t * 2 + a.p + i / 3); g.strokeStyle = css([235, 250, 160], 0.5 * (1 - q) * lit); g.beginPath(); g.arc(ax + (i - 1) * rx * 0.4, y - q * 2, 0.8 + q * 1.6, 0, TAU); g.stroke(); }
+      const vq = frac(t + a.p); g.fillStyle = css([210, 230, 140], 0.12 * (1 - vq) * lit); g.beginPath(); g.ellipse(ax, y - 4 - vq * 14, rx * 0.6, 3 + vq * 4, 0, 0, TAU); g.fill();
+    }
+    g.restore();
+  }
+}
+
+/** Le ciel nocturne propre à l'Âge : bande d'étoiles, nébuleuse, constellations (parfois reliées d'un trait très pâle). */
+function nightSky(g, m, t, sv) {
+  const { night: n, W, S } = m, few = S.amt && S.amt.stars != null ? S.amt.stars : 1; // « peu d'étoiles » : pas de bande ni de nébuleuse, constellations plus pâles
+  sv *= Math.min(1, few); if (sv <= 0.01) return;
+  if (n.band && few >= 0.6) { g.save(); g.translate(W / 2, n.band.y); g.rotate(n.band.a); for (const p of n.band.pts) { g.fillStyle = css([225, 228, 245], (0.12 + 0.35 * p.b) * sv); g.fillRect((p.u - 0.5) * W * 1.4, p.v * n.band.w, 1, 1); } const bg = g.createLinearGradient(0, -n.band.w, 0, n.band.w); bg.addColorStop(0, "rgba(220,225,245,0)"); bg.addColorStop(0.5, css([220, 225, 245], 0.07 * sv)); bg.addColorStop(1, "rgba(220,225,245,0)"); g.fillStyle = bg; g.fillRect(-W * 0.7, -n.band.w, W * 1.4, n.band.w * 2); g.restore(); }
+  if (n.nebula && few >= 0.6) { const nb = n.nebula; g.save(); g.globalCompositeOperation = "lighter"; for (const b of nb.blobs) { const x = nb.x + b.dx * nb.R, y = nb.y + b.dy * nb.R, R = nb.R * b.r, gr = g.createRadialGradient(x, y, 0, x, y, R); gr.addColorStop(0, css(hsl(nb.hue + b.dx * 40, 0.6, 0.55), 0.14 * sv)); gr.addColorStop(1, css(hsl(nb.hue, 0.6, 0.5), 0)); g.fillStyle = gr; g.fillRect(x - R, y - R, R * 2, R * 2); } g.restore(); }
+  for (const c of n.cons) {
+    if (c.lines) { g.strokeStyle = css(c.tint, 0.13 * sv); g.lineWidth = 0.7; g.beginPath(); c.pts.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y))); g.stroke(); }
+    for (const p of c.pts) { const a = (0.6 + 0.4 * Math.sin(TAU * t * 2 + p.tw)) * sv; g.fillStyle = css(c.tint, a); g.beginPath(); g.arc(p.x, p.y, p.s * 0.6, 0, TAU); g.fill(); if (p.s > 2.3) { g.fillStyle = css(c.tint, 0.18 * a); g.beginPath(); g.arc(p.x, p.y, p.s * 1.8, 0, TAU); g.fill(); } }
+  }
 }
 
 /** Richesses : éclats de métal et de pierre sur le sol, qui scintillent à tour de rôle. */
@@ -485,10 +764,12 @@ function detail(g, m, t, night) {
   }
 }
 
-// ---- premier plan : un cadre sombre au bord de l'image (rochers, branches ou arche) -------------------------
+// ---- premier plan : un cadre sombre au bord de l'image ---------------------------------------------------------
 function foreground(g, m, t, hzc) {
   const { W, H, fg, pal } = m, col = css(mixc(pal.rock, [0, 0, 0], 0.7)), rim = css(mixc(hzc, [255, 230, 190], 0.2), 0.22), sd = fg.side, X = (x) => (sd < 0 ? x : W - x);
-  g.fillStyle = col; g.strokeStyle = rim; g.lineWidth = 1;
+  g.fillStyle = col; g.strokeStyle = rim; g.lineWidth = 1; g.lineCap = "round";
+  const wind = Math.sin(TAU * t + fg.p);
+  if (fg.kind === "none") return;
   if (fg.kind === "rocks") {
     for (const [wd, k] of [[0.3, 0], [0.16, 8]]) {
       g.beginPath(); g.moveTo(X(-2), H + 2); g.lineTo(X(-2), H * (0.74 + 0.1 * fg.pts[k]));
@@ -496,12 +777,53 @@ function foreground(g, m, t, hzc) {
       g.lineTo(X(W * wd), H + 2); g.closePath(); g.fill(); g.stroke();
     }
   } else if (fg.kind === "branches") {
-    const sw = Math.sin(TAU * t + fg.p) * 1.6; g.strokeStyle = col; g.lineCap = "round";
-    g.lineWidth = Math.max(2.5, H * 0.022); g.beginPath(); g.moveTo(X(-4), H * 0.02); g.quadraticCurveTo(X(W * 0.2 + sw), H * (0.04 + 0.08 * fg.pts[0]), X(W * 0.42 + sw), H * (0.14 + 0.1 * fg.pts[1])); g.stroke();
-    for (let i = 0; i < 5; i++) {
-      const bx = W * (0.06 + 0.07 * i) + sw * 0.5, by = H * (0.03 + 0.03 * i), ex = bx + W * (0.04 + 0.04 * fg.pts[i]), ey = by + H * (0.12 + 0.12 * fg.pts[i + 5]);
-      g.lineWidth = Math.max(1.2, H * 0.012); g.beginPath(); g.moveTo(X(bx), by); g.quadraticCurveTo(X(bx + 6), by + (ey - by) * 0.5, X(ex + sw), ey); g.stroke();
-      g.fillStyle = col; for (let k = 0; k < 3; k++) { g.beginPath(); g.ellipse(X(ex + sw + (k - 1) * 3), ey + 2 + (k % 2) * 3, 1.6, 4 + k, 0.5 * (k - 1) * sd, 0, TAU); g.fill(); }
+    const b = fg.branch, sway = (d) => wind * (0.6 + d * 0.9);
+    for (const s of b.segs) { // les branches, de la plus épaisse à la plus fine ; les bouts bougent plus que la base
+      const o0 = sway(s.d - 1) * (s.d > 0 ? 1 : 0), o1 = sway(s.d);
+      g.strokeStyle = b.style === "charred" ? "#060505" : col; g.lineWidth = Math.max(0.8, s.w); g.beginPath(); g.moveTo(X(s.x + o0), s.y + o0 * 0.3); g.quadraticCurveTo(X(s.cx + (o0 + o1) / 2), s.cy, X(s.x2 + o1), s.y2 + o1 * 0.3); g.stroke();
+      if (b.style === "snowy" && s.d < 3) { g.strokeStyle = css([235, 244, 252], 0.75); g.lineWidth = Math.max(0.8, s.w * 0.45); g.beginPath(); g.moveTo(X(s.x + o0), s.y + o0 * 0.3 - s.w * 0.45); g.quadraticCurveTo(X(s.cx + (o0 + o1) / 2), s.cy - s.w * 0.45, X(s.x2 + o1), s.y2 + o1 * 0.3 - s.w * 0.45); g.stroke(); }
+    }
+    for (const s of b.segs) {
+      if (!s.tip) continue; const x = s.x2 + sway(s.d), y = s.y2 + sway(s.d) * 0.3, k = (s.x2 * 7 + s.y2 * 13) % 1;
+      if (b.style === "leafy") { g.fillStyle = col; for (let i = 0; i < 4; i++) { g.beginPath(); g.ellipse(X(x + (i - 1.5) * 4), y + (i % 2) * 4 + 2, 2.4, 6, (i - 1.5) * 0.5 * sd, 0, TAU); g.fill(); } }
+      else if (b.style === "needles") { g.strokeStyle = col; g.lineWidth = 0.9; g.beginPath(); for (let i = -3; i <= 3; i++) { g.moveTo(X(x), y); g.lineTo(X(x + i * 2.2), y + 7 - Math.abs(i)); } g.stroke(); }
+      else if (b.style === "blossom") { g.fillStyle = css(hsl(b.hue, 0.6, 0.78), 0.9); for (let i = 0; i < 6; i++) { const a = i * 1.05 + k * 6; g.beginPath(); g.arc(X(x + Math.cos(a) * 3.4), y + Math.sin(a) * 3.4, 1.9, 0, TAU); g.fill(); } g.fillStyle = css(hsl(b.hue + 30, 0.7, 0.88), 0.95); g.beginPath(); g.arc(X(x), y, 1.3, 0, TAU); g.fill(); }
+      else if (b.style === "moss") { g.strokeStyle = css(mixc(pal.rock, [90, 110, 80], 0.4), 0.55); g.lineWidth = 0.8; g.beginPath(); for (let i = 0; i < 3; i++) { const len = 8 + 14 * ((k + i * 0.37) % 1); g.moveTo(X(x + i * 2 - 2), y); g.quadraticCurveTo(X(x + i * 2 - 2 + wind * 2), y + len * 0.5, X(x + i * 2 - 2 + wind * 3), y + len); } g.stroke(); }
+      else if (b.style === "snowy") { g.fillStyle = css([235, 244, 252], 0.8); g.beginPath(); g.ellipse(X(x), y - 1.5, 2.6, 1.3, 0, 0, TAU); g.fill(); }
+    }
+  } else if (fg.kind === "vines") {
+    for (const v of fg.vines) { // lianes qui pendent du haut, avec leurs feuilles
+      g.strokeStyle = col; g.lineWidth = 1.4; g.beginPath(); const n = 12;
+      for (let i = 0; i <= n; i++) { const u = i / n, y = -2 + v.len * u, x = v.x + Math.sin(u * v.f * TAU + v.p) * v.amp * u + wind * 3 * u * u; i ? g.lineTo(X(x), y) : g.moveTo(X(x), y); }
+      g.stroke(); g.fillStyle = col;
+      for (const l of v.leaves) { const u = l.u, y = -2 + v.len * u, x = v.x + Math.sin(u * v.f * TAU + v.p) * v.amp * u + wind * 3 * u * u; g.beginPath(); g.ellipse(X(x + l.a * l.s), y, l.s * 1.4, l.s * 0.6, l.a * 0.6 * sd, 0, TAU); g.fill(); }
+    }
+  } else if (fg.kind === "reeds") {
+    for (const r of fg.reeds) { // roseaux et massettes au bord de l'eau
+      const sw = Math.sin(TAU * t + r.p) * 2.2, tx = r.x + r.lean * r.h + sw, ty = H - r.h;
+      g.strokeStyle = col; g.lineWidth = r.w; g.beginPath(); g.moveTo(X(r.x), H + 2); g.quadraticCurveTo(X(r.x + r.lean * r.h * 0.4), H - r.h * 0.5, X(tx), ty); g.stroke();
+      if (r.head) { g.fillStyle = col; g.beginPath(); g.ellipse(X(tx - r.lean * 6), ty + 7, 2.2, 6, r.lean * sd, 0, TAU); g.fill(); }
+    }
+  } else if (fg.kind === "leaves") {
+    for (const l of fg.leaves) { // grandes feuilles qui entrent par un côté
+      const a = l.a + wind * 0.04, bx = -6, by = l.y, ex = bx + Math.cos(a) * l.len, ey = by - Math.abs(Math.sin(a)) * l.len * 0.8 - l.len * 0.2, mx = (bx + ex) / 2, my = (by + ey) / 2, nx = -(ey - by) * l.wd, ny = (ex - bx) * l.wd;
+      g.fillStyle = col; g.beginPath(); g.moveTo(X(bx), by); g.quadraticCurveTo(X(mx + nx), my + ny, X(ex), ey); g.quadraticCurveTo(X(mx - nx), my - ny, X(bx), by); g.fill();
+      g.strokeStyle = rim; g.lineWidth = 0.8; g.beginPath(); g.moveTo(X(bx), by); g.lineTo(X(ex), ey); g.stroke();
+      if (l.notch) { g.strokeStyle = rim; g.lineWidth = 0.6; g.beginPath(); for (let i = 1; i < 5; i++) { const u = i / 5, px = lerp(bx, ex, u), py = lerp(by, ey, u); g.moveTo(X(px), py); g.lineTo(X(px + nx * 0.5 + (ex - bx) * 0.08), py + ny * 0.5 + (ey - by) * 0.08); } g.stroke(); } // nervures
+    }
+  } else if (fg.kind === "pillar") {
+    const p = fg.pillar, x = p.x, w = p.w; // colonne brisée sur un bord, parfois prise dans une liane
+    g.fillStyle = col; g.beginPath(); g.moveTo(X(x), H + 2); g.lineTo(X(x), p.top + p.cut[0] * H * 0.04);
+    for (let i = 1; i <= 4; i++) g.lineTo(X(x + w * i / 4), p.top + p.cut[i] * H * 0.06); g.lineTo(X(x + w), H + 2); g.closePath(); g.fill();
+    g.strokeStyle = rim; g.lineWidth = 1; g.beginPath(); for (let i = 1; i < p.flutes; i++) { const fx = x + w * i / p.flutes; g.moveTo(X(fx), p.top + H * 0.08); g.lineTo(X(fx), H); } g.stroke();
+    g.fillStyle = col; g.fillRect(Math.min(X(x - w * 0.15), X(x + w * 1.15)), H * 0.9, w * 1.3, H * 0.1);
+    if (p.vine) { g.strokeStyle = col; g.lineWidth = 1.5; g.beginPath(); for (let i = 0; i <= 14; i++) { const u = i / 14, y = p.top + H * 0.05 + u * (H - p.top), xx = x + w * (0.5 + 0.6 * Math.sin(u * 9 + fg.p)); i ? g.lineTo(X(xx), y) : g.moveTo(X(xx), y); } g.stroke(); }
+  } else if (fg.kind === "icicles") {
+    g.fillStyle = col; g.fillRect(0, 0, W, H * 0.025);
+    for (const c of fg.icicles) { // stalactites de glace au bord du cadre, une goutte de temps en temps
+      g.fillStyle = css([200, 225, 245], 0.55); g.beginPath(); g.moveTo(c.x - c.w, H * 0.02); g.lineTo(c.x, H * 0.02 + c.len); g.lineTo(c.x + c.w, H * 0.02); g.closePath(); g.fill();
+      g.strokeStyle = css([245, 252, 255], 0.6); g.lineWidth = 0.7; g.beginPath(); g.moveTo(c.x - c.w * 0.4, H * 0.025); g.lineTo(c.x, H * 0.02 + c.len * 0.9); g.stroke();
+      const q = frac(t * 2 + c.p); if (c.len > H * 0.08 && q < 0.5) { g.fillStyle = css([220, 240, 255], 0.7 * (1 - q * 2)); g.fillRect(c.x - 0.6, H * 0.02 + c.len + q * H * 0.5, 1.2, 2); }
     }
   } else { // arche : deux piliers et une voûte
     const p1 = W * (0.022 + 0.02 * fg.pts[0]), p2 = W * (0.022 + 0.02 * fg.pts[1]);
@@ -551,4 +873,4 @@ function extraAt(g, m, t, layer) {
 }
 
 
-module.exports = { sceneOf, traits, KNOWN, build, paint, suns, PERIOD, hsl };
+module.exports = { sceneOf, traits, KNOWN, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };

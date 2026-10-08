@@ -44,7 +44,7 @@ class Plugin { constructor(a, m) { this.app = a; this.manifest = m; this.cmds = 
 class Setting { constructor(el) { this.el = el; } setName() { return this; } setDesc() { return this; } setHeading() { return this; } addDropdown(f) { f({ addOptions() { return this; }, setValue() { return this; }, onChange() { return this; } }); return this; }
   addToggle(f) { f({ setValue() { return this; }, onChange() { return this; } }); return this; } addText(f) { f({ setValue() { return this; }, onChange() { return this; }, setPlaceholder() { return this; } }); return this; } addSlider(f) { f({ setLimits() { return this; }, setValue() { return this; }, setDynamicTooltip() { return this; }, onChange() { return this; } }); return this; } }
 const obsidian = { Plugin, ItemView: class { constructor(leaf) { this.app = leaf && leaf.app; this.contentEl = document.createElement("div"); } }, PluginSettingTab: class { constructor() { this.containerEl = document.createElement("div"); } }, Setting,
-  Notice: class { constructor(m) { notices.push(String(m)); } }, TFile, MarkdownRenderChild: class { constructor(e) { this.containerEl = e; } register() {} registerDomEvent() {} registerInterval() {} }, FuzzySuggestModal: class { constructor(a) { this.app = a; } open() {} }, stringifyYaml: (o) => Object.entries(o).map(([k, v]) => `${k}: ${JSON.stringify(v)}\n`).join("") };
+  Notice: class { constructor(m) { notices.push(String(m)); this.noticeEl = document.createElement("div"); } hide() {} }, TFile, MarkdownRenderChild: class { constructor(e) { this.containerEl = e; } register() {} registerDomEvent() {} registerInterval() {} }, FuzzySuggestModal: class { constructor(a) { this.app = a; } open() {} }, stringifyYaml: (o) => Object.entries(o).map(([k, v]) => `${k}: ${JSON.stringify(v)}\n`).join("") };
 
 // build + chargement
 // Le moteur est désormais dans src/engine : on teste le vrai code. MINIFIED=1 teste la version minifiée (release/).
@@ -136,6 +136,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     let gl = null; try { gl = p.core.glyphs(A2("single_sun\ngold\nscorched_surface")); } catch (e) { gl = e; }
     ok(Array.isArray(gl), "richesses : glyphes" + (gl instanceof Error ? " : " + gl.message : ""));
     ok(!/^\s*(day_length|year_length)/.test("") && p.core.analyse("single_sun\nday_length: 40\nyear_length: 12", { seed: "T" }).resolved.lines.every((l) => !l.unknown), "ciel étendu : day_length / year_length ne sont pas des symboles inconnus");
+    ok(p.core.analyse("single_sun\nmoons: 3\nlunes: 2", { seed: "T" }).resolved.lines.every((l) => !l.unknown), "moons: / lunes: ne sont pas des symboles inconnus");
   }
 
   // panneau d'un Âge
@@ -318,6 +319,16 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
       view.contentEl.querySelector(".age-book__page--left").click(); ok(view.leafPage === 0, "clic page gauche : page précédente"); }
     p.ext.bookStart = was; }
   await p.saveCover(f); ok([...files.keys()].some((k) => /cover.*\.svg|Cover/i.test(k)) || notices.some((n) => /cover|couverture/i.test(n)), "saveCover : fichier ou notice");
+  { // Âge au hasard + Âge d'exemple
+    const before = files.size, cmd = p.cmds.find((c) => c.id === "random-age"); ok(!!cmd, "commande « Generate a random Age » enregistrée");
+    await cmd.callback(); const made = [...files.keys()].slice(before);
+    ok(made.length === 1 && /```age\n[\s\S]*seed: \d+/.test(files.get(made[0]).content) && notices.some((x) => /Nouvel Âge|New Age/.test(x)), "Âge au hasard : une note créée avec son bloc et sa graine, une notice");
+    const live = p.index.list; p.index.list = async () => []; p.ext.state.welcomed = false;
+    const b2 = files.size; await p.welcomeOnce(); const w = [...files.keys()].slice(b2);
+    ok(w.length === 1 && /Bienvenue|Welcome/.test(w[0]) && p.ext.state.welcomed, "premier lancement : note de bienvenue créée, une seule fois");
+    await p.welcomeOnce(); ok(files.size === b2 + 1, "pas de seconde note de bienvenue");
+    p.index.list = async () => [{}]; p.ext.state.welcomed = false; const b3 = files.size; await p.welcomeOnce(); ok(files.size === b3 && p.ext.state.welcomed, "coffre qui a déjà des Âges : rien créé");
+    p.index.list = live; }
   if (process.env.DUMP) { fs.writeFileSync(process.env.DUMP + "-cover.html", view.contentEl.outerHTML); view.mode = "cover"; await view.render(); fs.writeFileSync(process.env.DUMP + "-cover.html", view.contentEl.outerHTML); fs.writeFileSync(process.env.DUMP + "-panel.html", host.outerHTML); }
   // réglages
   const st = new p.core.SettingsTab(app, p); st.display(); ok(!!st.containerEl.querySelector(".age-ext-settings"), "réglages de l'extension ajoutés à l'onglet d'origine");

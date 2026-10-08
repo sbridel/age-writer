@@ -1,7 +1,7 @@
 "use strict";
 // Lance tous les tests (intégration sur la version lisible, puis sur la version minifiée).
 const { spawnSync } = require("child_process"), path = require("path");
-const runs = [["law.test.js"], ["i18n.test.js"], ["zen.test.js"], ["gen.test.js"], ["sound.test.js"], ["sound-open.test.js"], ["cover.test.js"], ["draw-amount.test.js"], ["books.test.js"], ["meow-seg.test.js"], ["relto-pages.test.js"], ["relto-scenes.test.js"], ["world-clash.test.js"], ["physics.test.js"], ["integration.js"]];
+const runs = [["law.test.js"], ["i18n.test.js"], ["zen.test.js"], ["gen.test.js"], ["sound.test.js"], ["sound-open.test.js"], ["cover.test.js"], ["draw-amount.test.js"], ["books.test.js"], ["meow-seg.test.js"], ["relto-pages.test.js"], ["relto-scenes.test.js"], ["world-clash.test.js"], ["physics.test.js"], ["prose.test.js"], ["markup.test.js"], ["imager.test.js"], ["ageseed.test.js"], ["polish.test.js"], ["integration.js"]];
 runs.push(["integration.js", { MINIFIED: "1" }]); // la même chose sur la version minifiée (release/)
 let bad = 0;
 for (const [f, env] of runs) {

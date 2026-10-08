@@ -41,4 +41,22 @@ function hexa(h, a) { const [r, g, b] = hex2rgb(h); return rgba(r, g, b, a); }
 /** Identifiant « lisible » : heat_wave -> heat wave */
 const words = (id) => String(id).replace(/_/g, " ");
 
-module.exports = { fnv, rng, clamp, lerp, smooth, frac, pick, esc, mix, rgba, hexa, hex2rgb, words };
+/**
+ * Pose du balisage (SVG, petits fragments) sans innerHTML : le texte est analysé par DOMParser dans un document inerte,
+ * débarrassé des <script>, <iframe>, <object> et des attributs on*, puis ses nœuds sont importés. Remplace le contenu de `el`
+ * (append = false) ou s'ajoute à la fin. Renvoie `el`.
+ */
+function setMarkup(el, markup, append = false) {
+  if (!el) return el;
+  if (!append) while (el.firstChild) el.removeChild(el.firstChild);
+  const view = el.ownerDocument && el.ownerDocument.defaultView, Parser = (view && view.DOMParser) || (typeof DOMParser !== "undefined" ? DOMParser : null);
+  if (!Parser) return el;
+  const doc = new Parser().parseFromString(`<body>${markup == null ? "" : String(markup)}</body>`, "text/html");
+  for (const bad of doc.body.querySelectorAll("script,iframe,object,embed,foreignObject")) bad.remove();
+  for (const node of doc.body.querySelectorAll("*")) for (const at of [...node.attributes]) if (/^on/i.test(at.name) || /^\s*javascript:/i.test(at.value)) node.removeAttribute(at.name);
+  const owner = el.ownerDocument || document;
+  for (const n of [...doc.body.childNodes]) el.appendChild(owner.importNode(n, true));
+  return el;
+}
+
+module.exports = { setMarkup, fnv, rng, clamp, lerp, smooth, frac, pick, esc, mix, rgba, hexa, hex2rgb, words };

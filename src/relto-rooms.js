@@ -85,13 +85,15 @@ function drawCabin(r, ctx, sc, sky, t) {
     const x0 = 196, w = 244, y0 = 50, RH = 62, S = 3.9;
     ctx.fillStyle = c("#241a12"); ctx.fillRect(x0, y0, w, FLOOR - y0);
     ctx.fillStyle = c("#4b3626"); ctx.fillRect(x0 - 7, y0 - 8, 9, FLOOR - y0 + 8); ctx.fillRect(x0 + w - 2, y0 - 8, 9, FLOOR - y0 + 8); ctx.fillRect(x0 - 7, y0 - 10, w + 14, 10);
-    for (let rw = 0; rw < 4; rw++) ctx.fillRect(x0, y0 + RH * (rw + 1) - 3, w, 5);
+    for (let rw = 0; rw < 3; rw++) ctx.fillRect(x0, y0 + RH * (rw + 1) - 3, w, 5); // trois rayons (30 livres) : un 4e tombait sur le plancher
     for (const b of r.geo.books) {
       const bx = x0 + 10 + b.col * 22, bh = b.h * S, by = y0 + RH * (b.row + 1) - 3 - bh, bw = b.w * S;
       ctx.fillStyle = c(b.color); ctx.fillRect(bx, by, bw, bh);
       ctx.fillStyle = c(VERDICT[b.age.verdict] || VERDICT.unknown); ctx.fillRect(bx, by, bw, 5);
       ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(bx + bw - 3, by + 5, 3, bh - 5);
-      r.hot.push({ x: bx, y: by, w: bw, h: bh, tip: `${b.age.name} — ${b.age.verdict || "?"}${b.age.stability != null ? ` ${b.age.stability}%` : ""}`, age: b.age, book: true });
+      const held = r.opts.imagerGet && sc.additions.some((a) => a.type === "imager") && (r.opts.imagerGet(b.age.path) || {}).lock; // tenu par l'Imageur : une petite étiquette de laiton
+      if (held) { ctx.fillStyle = c("#c9a24e"); ctx.fillRect(bx + bw / 2 - 2.5, by + 8, 5, 8); ctx.fillStyle = rgba(127, 214, 200, 0.8); ctx.fillRect(bx + bw / 2 - 1, by + 10, 2, 2); }
+      r.hot.push({ x: bx, y: by, w: bw, h: bh, tip: `${b.age.name} — ${b.age.verdict || "?"}${b.age.stability != null ? ` ${b.age.stability}%` : ""}${held ? " · held by the Imager" : ""}`, age: b.age, book: true });
     }
     if (sc.ages.length > 30) { ctx.fillStyle = rgba(230, 220, 190, 0.75); ctx.font = "11px serif"; ctx.fillText(`+${sc.ages.length - 30}`, x0 + w - 28, y0 - 14); }
     if (!sc.ages.length) { ctx.fillStyle = rgba(230, 220, 190, 0.45); ctx.font = "11px serif"; ctx.fillText("(no Age written yet)", x0 + 70, y0 + RH * 1.5); }
@@ -106,9 +108,24 @@ function drawCabin(r, ctx, sc, sky, t) {
     { kind: "library", x: tx + 38, y: ty, w: 17, h: 33, body: "#5b2b2b", band: "#c9a24e", tip: "Library book (blocks and Relto pages)" },
   ];
   for (const b of books) { standingBook(ctx, c, b); r.hot.push({ x: b.x - 1, y: b.y - b.h - 1, w: b.w + 2, h: b.h + 2, tip: b.tip, special: b.kind }); }
+  if (r.scene.additions.some((a) => a.type === "imager")) { // l'Imageur : un petit appareil de laiton sur la table, son cristal luit ; un clic y mène
+    const ix = tx + 74, iy = ty; ctx.fillStyle = c("#6b5126"); ctx.fillRect(ix - 9, iy - 6, 18, 6); ctx.fillRect(ix - 2, iy - 20, 4, 14);
+    ctx.fillStyle = rgba(127, 214, 200, 0.55 + 0.25 * Math.sin(t * 2)); ctx.beginPath(); ctx.moveTo(ix, iy - 34); ctx.lineTo(ix + 6, iy - 27); ctx.lineTo(ix, iy - 19); ctx.lineTo(ix - 6, iy - 27); ctx.closePath(); ctx.fill();
+    const ig = ctx.createRadialGradient(ix, iy - 27, 0, ix, iy - 27, 18); ig.addColorStop(0, "rgba(127,214,200,0.35)"); ig.addColorStop(1, "rgba(127,214,200,0)"); ctx.fillStyle = ig; ctx.fillRect(ix - 18, iy - 45, 36, 36);
+    r.hot.push({ x: ix - 12, y: iy - 38, w: 24, h: 38, tip: "The Imager", go: "imager" });
+  }
+  if (r.scene.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { // le carnet de l'arpenteur : posé à plat sur la table, signet rouge
+    const nx = tx + 110, ny = ty - 5;
+    ctx.fillStyle = c("#3b2a1a"); ctx.fillRect(nx, ny, 22, 5); ctx.fillStyle = c("#6b4a2a"); ctx.fillRect(nx, ny - 1, 22, 2);
+    ctx.fillStyle = c("#c9a24e"); ctx.fillRect(nx + 1, ny + 1, 2, 3); ctx.fillRect(nx + 19, ny + 1, 2, 3); ctx.fillStyle = c("#8e2b27"); ctx.fillRect(nx + 14, ny + 4, 1.4, 4);
+    r.hot.push({ x: nx - 2, y: ny - 4, w: 26, h: 12, tip: "Surveyor's notebook", special: "surveyor" });
+  }
   const cx = tx + tw - 34;
   ctx.fillStyle = c("#e8dcc0"); ctx.fillRect(cx, ty - 14, 7, 14);
   const cf = clamp(0.75 * fl + 0.2); ctx.fillStyle = rgba(255, 190, 80, cf); ctx.beginPath(); ctx.ellipse(cx + 3.5, ty - 19, 2.4, 5 * cf, 0, 0, 6.283); ctx.fill();
+  // le chat, quand il dort au coin du feu (voir ReltoRenderer.catAsleep) : au premier plan, sur le tapis
+  const cat = r.scene.additions.find((a) => a.type === "cat");
+  if (cat && r.catAsleep()) r.drawSleepingCat(ctx, cat, { x: 428, y: 326, S: 3.1, glow: lit ? d * fl : 0, shade: c }, t);
   // lumière : lueur de l'âtre et de la chandelle, puis pénombre du soir
   let g = ctx.createRadialGradient(mx, FLOOR - 24, 6, mx, FLOOR - 24, 300); g.addColorStop(0, rgba(255, 150, 60, (0.18 + 0.2 * night) * fl * d)); g.addColorStop(1, rgba(255, 130, 40, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   g = ctx.createRadialGradient(cx + 3.5, ty - 19, 2, cx + 3.5, ty - 19, 70); g.addColorStop(0, rgba(255, 190, 90, (0.12 + 0.28 * night) * fl)); g.addColorStop(1, rgba(255, 190, 90, 0)); ctx.fillStyle = g; ctx.fillRect(cx - 80, ty - 90, 160, 140);

@@ -100,6 +100,8 @@ function sunColors(ids) { return ids.filter((i) => HUES[i]).slice(0, 2).map((i) 
 const DAY_RE = /^\s*(?:day_length|day)\s*[:=]\s*(\d+(?:[.,]\d+)?)\s*(?:min|mins|minutes?)?\s*$/i;
 /** `window_size: large` (normal | large | xl) ou `window_width: 520` (pixels, 200 à 800) : taille de la fenêtre de liaison dans le bloc age. */
 const SIZE_RE = /^\s*(?:window_size|window_width|window)\s*[:=]\s*(normal|small|large|big|xl|xxl|\d{3})(?:\s*px)?\s*$/i;
+/** `moons: 2` (0 à 5, au-delà : 5 ; alias `lunes:`) : nombre de lunes dans la fenêtre générative. */
+const MOONS_RE = /^\s*(?:moons|lunes)\s*[:=]\s*(\d+)\s*$/i;
 const YEAR_RE = /^\s*(?:year_length|year|revolution)\s*[:=]\s*(\d+(?:[.,]\d+)?)\s*(?:days?|jours?)?\s*$/i;
 /** `day_length: 40` (minutes réelles par jour, 0,2 à 1440) ; `year_length: 12` (jours par année, 1 à 365). Hors bornes : ignoré. */
 function parseSky(src) {
@@ -107,6 +109,7 @@ function parseSky(src) {
   for (const line of String(src || "").split("\n")) {
     let m = line.match(DAY_RE); if (m) { const v = Number(m[1].replace(",", ".")); if (v >= 0.2 && v <= 1440) out.dayLen = v; continue; }
     m = line.match(SIZE_RE); if (m) { const v = m[1].toLowerCase(); if (/^\d+$/.test(v)) { const px = Number(v); if (px >= 200 && px <= 800) out.size = px; } else out.size = v === "small" ? "normal" : v === "big" ? "large" : v === "xxl" ? "xl" : v; continue; }
+    m = line.match(MOONS_RE); if (m) { out.moons = Math.min(5, Number(m[1])); continue; } // au-delà de cinq : cinq
     m = line.match(YEAR_RE); if (m) { const v = Number(m[1].replace(",", ".")); if (v >= 1 && v <= 365) out.yearLen = v; }
   }
   const amt = parseAmounts(src); if (amt) out.amt = amt; // quantités : beaucoup / peu / normal
@@ -120,4 +123,4 @@ function clockPhases(sky, now = Date.now()) {
   return { day: day < 0 ? day + 1 : day, season: yr };
 }
 
-module.exports = { SIZE_RE, WORLD_IDS, HUES, HUE_IDS, SKY_BLOCKS, SKY_RULES, SKY_PROSE, NOTES, sunColors, DAY_RE, YEAR_RE, parseSky, clockPhases };
+module.exports = { MOONS_RE, SIZE_RE, WORLD_IDS, HUES, HUE_IDS, SKY_BLOCKS, SKY_RULES, SKY_PROSE, NOTES, sunColors, DAY_RE, YEAR_RE, parseSky, clockPhases };

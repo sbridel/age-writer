@@ -1,0 +1,22 @@
+Age Writer
+An Obsidian plugin inspired by Mystcraft and the Myst series.
+
+Fan project. Not affiliated with, endorsed by or sponsored by Cyan Worlds, Inc.
+"Myst", "Riven", "D'ni" and related names are trademarks of Cyan Worlds, Inc.
+No asset from the games (font, image, sound, text) is included: every picture is
+drawn by code and every sound is synthesized at runtime.
+
+This software includes third-party code:
+
+- Tracery, by Kate Compton (galaxykate) — https://github.com/galaxykate/tracery
+  Bundled from the npm package "tracery-grammar" (packaged by v21, declared ISC),
+  itself derived from the original repository, licensed under the Apache License,
+  Version 2.0. The Apache 2.0 text is included to cover the stricter of the two
+  (LICENSES/tracery-Apache-2.0.txt).
+  Location: src/engine/vendor/tracery.js. Modified: reformatted from a minified
+  bundle; behaviour unchanged.
+
+- gifenc, Copyright (c) 2017 Matt DesLauriers — https://github.com/mattdesl/gifenc
+  Licensed under the MIT License (LICENSES/gifenc-MIT.txt).
+  Location: src/engine/vendor/gifenc.js. Modified: reformatted from a minified
+  bundle; behaviour unchanged.
