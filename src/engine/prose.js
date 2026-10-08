@@ -248,7 +248,7 @@ function skySentences(resolved, grammar, teller) {
   let leadDone = false;
   for (const { line } of lines) {
     if (line.unknown) {
-      items.push({ family: "unknown", text: grammar.flatten("#ink_blot#") });
+      items.push({ family: "unknown", text: teller.fresh(SKY_PROSE_GRAMMAR.ink_blot) || grammar.flatten("#ink_blot#") });
       continue;
     }
     const entry = line.entry;
@@ -271,7 +271,7 @@ function skySentences(resolved, grammar, teller) {
     }
     if (item.lead) {
       out.push(capitalize(item.lead + item.text));
-      glued = false;
+      glued = true; // rien ne s'accroche à la phrase du tirage : ce qui suit a été écrit
       return;
     }
     const prev = out[out.length - 1];
@@ -318,7 +318,7 @@ const GROUPED = [
 function makeNamer(teller) {
   const seen = new Set(),
     adjectives = new Set();
-  return (id, most = 2) => {
+  const name = (id, most = 2) => {
     const noun = spaced(id);
     if (seen.has(id)) return "the " + noun;
     seen.add(id);
@@ -329,6 +329,8 @@ function makeNamer(teller) {
     picked.forEach((d) => adjectives.add(d));
     return picked.length ? `${picked.join(", ")} ${noun}` : noun;
   };
+  name.seen = seen;
+  return name;
 }
 
 function listOf(parts) {
@@ -352,11 +354,12 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random)) {
     const A = name(reaction.a),
       B = name(reaction.b);
     sentences.push(capitalize(form.make(A, B, verb, spaced(reaction.shown), teller)) + ".");
+    name.seen.add(reaction.shown); // le produit est nommé : la prochaine fois, « the … »
   }
   const loose = [];
   for (const id of resolved.matter.written) {
     if (used.has(id)) continue;
-    const presence = blockById.get(id)?.presence;
+    const presence = String(blockById.get(id)?.presence ?? "").trim();
     if (presence) sentences.push(capitalize(presence) + ".");
     else loose.push(id);
   }
@@ -409,7 +412,7 @@ function describeAge(resolved, options = {}) {
     const contradictionSentences = resolved.triggered
       .filter((c, i, all) => !c.note || all.findIndex((o) => o.note === c.note) === i) // une phrase par note, même si plusieurs règles la partagent
       .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity))
-      .map((contradiction) => capitalize(unlike(contradiction.note || SKY_PROSE_GRAMMAR[`${contradiction.severity}_contradiction`])) + ".");
+      .map((c) => capitalize(unlike(Array.isArray(c.note) && c.note.length ? c.note : typeof c.note === "string" && c.note ? [c.note] : SKY_PROSE_GRAMMAR[`${c.severity}_contradiction`] || SKY_PROSE_GRAMMAR.light_contradiction)) + ".");
     const matterLines = matterSentences(resolved, grammar, teller);
     matterLines.forEach((x) => starts.add(startOf(x)));
     const drawnNote = resolved.drawn.some((pick) => blockById.has(pick.id))

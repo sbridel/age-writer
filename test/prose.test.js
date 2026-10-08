@@ -57,4 +57,14 @@ assert.ok((wet.match(/\b[a-z]+(, [a-z]+)? water\b/gi) || []).filter((x) => !/^th
 // une couleur de soleil écrite remplace l'étoile unique ajoutée d'office
 const hue = describeAge(A("white_sun\nwater"), { seed: "Blanc" });
 assert.ok(!SKY_PROSE_GRAMMAR.lone_star.some((x) => hue.toLowerCase().includes(x)), "soleil blanc : pas de « un seul soleil » en plus");
+// rien d'écrit ne s'accroche à la phrase du tirage ; un produit de réaction n'a ses adjectifs qu'une fois ; pas deux taches d'encre identiques
+for (let i = 0; i < 60; i++) {
+  const t = describeAge(A("twin_suns\nheavy_world", "L" + i), { seed: "L" + i });
+  const lead = t.split(/(?<=\.)\s/).find((x) => SKY_PROSE_GRAMMAR.drawn_lead.some((l) => x.toLowerCase().startsWith(l.trim().toLowerCase())));
+  assert.ok(!lead || !lead.includes(";"), "phrase du tirage sans « ; » : " + t);
+}
+const obs = describeAge(A("water\nlava\nsalt", "O"), { seed: "O" });
+assert.ok(/\bthe obsidian\b/i.test(obs), "obsidienne : « the obsidian » à la seconde mention : " + obs);
+const ink = describeAge(A("zorgle\nblah\nfoo", "I"), { seed: "I" });
+assert.ok(new Set(SKY_PROSE_GRAMMAR.ink_blot.filter((x) => ink.toLowerCase().includes(x))).size === SKY_PROSE_GRAMMAR.ink_blot.filter((x) => ink.toLowerCase().includes(x)).length && SKY_PROSE_GRAMMAR.ink_blot.every((x) => ink.toLowerCase().split(x).length <= 2), "taches d'encre toutes différentes : " + ink);
 console.log("prose : ok");

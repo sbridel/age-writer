@@ -13,7 +13,7 @@ const app={vault:{on(){}},workspace:{on(){},onLayoutReady(){},getActiveFile(){re
 function core(f){const C=load(f);let got=null;Object.defineProperty(C.prototype,"core",{configurable:true,set(v){got=v;throw new Error("STOP")}});const p=new C(app,{version:"x"});return p.onload().then(()=>got,()=>got)}
 let seed=1;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
 const SYMS="single_sun twin_suns starless companion_moon steady_cycle erratic_cycle frozen_cycle stable_orbit shifting_orbit chaotic_orbit close_binary_orbit wide_binary_orbit auroras recurring_eclipses permanent_veil starfall water lava stone sand salt ash iron crystal strange_stone deep_cold pressure spore seed vine fern great_tree moth grazer burrower hunter drifter tablet lamp bridge door book wind rain fog lightning heat fissure cave_fissure submarine_fissure no_fissure frozen_world lava_world desert_world ocean_world jungle_world gold silver gems scorched_surface poisoned_air many\\ water few\\ lava trap\\ book mechanism:\\ water_valve damaged_pages=2 fx:\\ tv bogus_symbol".split(" ").map(s=>s.replace(/\\/g,"")).join(" ").replace(/many water/,"many water").split(" ");
-(async()=>{const A=await core(require("path").resolve(process.argv[2])),B=await core(require("path").resolve(process.argv.slice(2).filter(a=>!a.startsWith("--"))[1]||require("path").join(__dirname,"..","dist","main.js")));
+(async()=>{const A=await core(require("path").resolve(process.argv.slice(2).filter(a=>!a.startsWith("--"))[0])),B=await core(require("path").resolve(process.argv.slice(2).filter(a=>!a.startsWith("--"))[1]||require("path").join(__dirname,"..","dist","main.js")));
 let n=0,bad=0;
 
 for(let i=0;i<600;i++){
