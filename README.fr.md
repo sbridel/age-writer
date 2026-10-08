@@ -2,9 +2,9 @@
 
 [English](README.md) · **Français**
 
-Plugin Obsidian, inspiré de Mystcraft et de la série Myst. Tu écris un **Âge** (un monde) dans un bloc `age`, une page par ligne, et le plugin calcule le reste : description, stabilité, fenêtre de liaison peinte et animée, livre à feuilleter avec sa couverture, carte des mondes liés, et un refuge (le **Relto**) où ranger tes Âges. Tout est local : pas de réseau, pas d'IA à l'exécution, tous les sons sont synthétisés et tous les dessins sont procéduraux.
+Plugin Obsidian pour écrire des mondes. Tu écris un **Âge** (un monde) dans un bloc `age`, une page par ligne, et le plugin calcule le reste : description, stabilité, fenêtre de liaison peinte et animée, livre à feuilleter avec sa couverture, carte des mondes liés, et un refuge (le **Relto**) où ranger tes Âges. Tout est local : pas de réseau, pas d'IA à l'exécution, tous les sons sont synthétisés et tous les dessins sont procéduraux.
 
-Idée de départ : dans Mystcraft, on ne **crée** pas un monde, on se **lie** à un monde qui existe. Ce que tu écris le décrit ; ce que tu laisses ouvert est tiré au sort, toujours de la même façon pour la même note. Et si tu réécris un monde déjà exploré, tu l'abîmes.
+Idée de départ : on ne **crée** pas un monde, on se **lie** à un monde qui existe. Ce que tu écris le décrit ; ce que tu laisses ouvert est tiré au sort, toujours de la même façon pour la même note. Et si tu réécris un monde déjà exploré, tu l'abîmes.
 
 > **This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan.**
 >
@@ -12,7 +12,7 @@ Idée de départ : dans Mystcraft, on ne **crée** pas un monde, on se **lie** �
 >
 > Projet de fan réalisé selon la politique de contenu de fans de Cyan. Sans lien avec Cyan Worlds ni approbation de leur part. Aucune ressource de Myst (police, image, son) n'est fournie. Gratuit et non commercial.
 >
-> Un hommage : les noms empruntés à l'univers de Myst (Âge, Relto, D'ni, livre de liaison, Livre descriptif…) sont un clin d'œil et une source d'inspiration, pas une reproduction. Le code, les images, les sons et les textes sont originaux. Licence : MIT.
+> Inspiré de la série Myst (et de l'idée de Mystcraft : se lier à un monde plutôt que le créer). Un hommage : les noms empruntés à l'univers de Myst (Âge, Relto, D'ni, livre de liaison, Livre descriptif…) sont un clin d'œil et une source d'inspiration, pas une reproduction. Le code, les images, les sons et les textes sont originaux. Licence : MIT.
 
 ## Dans la fiction
 

@@ -2,15 +2,15 @@
 
 [Français](README.fr.md) · **English**
 
-An Obsidian plugin inspired by Mystcraft and the Myst series. You write an **Age** (a world) in an `age` block, one page per line, and the plugin works out the rest: description, stability, a painted and animated linking window, a flippable book with its cover, a map of linked worlds, and a refuge (the **Relto**) where your Ages are shelved. Everything is local: no network, no AI at runtime, every sound is synthesized and every picture is procedural.
+An Obsidian plugin for writing worlds. You write an **Age** (a world) in an `age` block, one page per line, and the plugin works out the rest: description, stability, a painted and animated linking window, a flippable book with its cover, a map of linked worlds, and a refuge (the **Relto**) where your Ages are shelved. Everything is local: no network, no AI at runtime, every sound is synthesized and every picture is procedural.
 
-The founding idea: in Mystcraft you don't **create** a world, you **link** to a world that already exists. What you write describes it; what you leave open is drawn by lot, always the same way for the same note. And if you rewrite a world you've already explored, you damage it.
+The founding idea: you don't **create** a world, you **link** to a world that already exists. What you write describes it; what you leave open is drawn by lot, always the same way for the same note. And if you rewrite a world you've already explored, you damage it.
 
 > **This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan.**
 >
 > Fan project made under Cyan's Fan-Made Content Policy. Not affiliated with or endorsed by Cyan Worlds. No Myst asset (font, image, sound) is included. Free and non-commercial.
 >
-> A tribute: the names borrowed from the Myst universe (Age, Relto, D'ni, linking book, Descriptive Book…) are an homage and a source of inspiration, not a reproduction. The code, the pictures, the sounds and the texts are original. Licence: MIT.
+> Inspired by the Myst series (and the Mystcraft idea of linking to a world rather than creating one). A tribute: the names borrowed from the Myst universe (Age, Relto, D'ni, linking book, Descriptive Book…) are an homage and a source of inspiration, not a reproduction. The code, the pictures, the sounds and the texts are original. Licence: MIT.
 
 ## Inside the fiction
 
