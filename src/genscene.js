@@ -185,8 +185,9 @@ function build(S, W, H) {
   const q3 = rng((S.seed ^ 0x601d) >>> 0), rich = (S.riches || []).map((id) => { const n = Math.round(clamp(14 * AM.factorOf(id, S.amt), 4, 60)); return { id, col: WT.RICH_COLOR[id] || [255, 215, 120], big: id === "gems" || id === "pearls", pts: Array.from({ length: n }, () => ({ x: q3(), u: q3(), p: q3(), s: 1 + q3() * 1.3 })) }; });
   const scar = { cracks: Array.from({ length: 12 }, () => ({ x: q3(), u: q3(), pts: Array.from({ length: 5 }, () => q3() - 0.5) })), pits: Array.from({ length: 5 }, () => ({ x: q3(), u: 0.15 + 0.8 * q3(), w: 0.6 + q3() * 0.8 })), embers: Array.from({ length: 22 }, () => ({ x: q3(), u: q3(), p: q3() })) };
   const shore = S.shore ? buildShore(S, W, H, hz) : null;
+  const night = buildNight(S, W, H, hz);
   if (shore && shore.mode === "side" && S.fissure === "submarine") { const wx = lerp(shore.x0, shore.x1, 0.5); fis.x = shore.side < 0 ? lerp(wx, W, 0.45) : lerp(0, wx, 0.55); } // la fissure sous l'eau reste dans l'eau
-  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore };
+  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night };
 }
 
 /**
@@ -216,6 +217,22 @@ function buildShore(S, W, H, hz) {
   out.floes = Array.from({ length: 8 }, () => ({ k: Math.floor(q() * (N + 1)), d: 4 + q() * 18, w: 3 + q() * 9, p: q() }));
   out.puffs = Array.from({ length: 7 }, () => ({ k: Math.floor(q() * (N + 1)), p: q() }));
   return out;
+}
+
+// ---- la nuit d'un Âge : constellations, parfois une nébuleuse ou une bande d'étoiles, ses lunes ----------------------
+function buildNight(S, W, H, hz) {
+  const q = rng((S.seed ^ 0x57a5) >>> 0);
+  const cons = Array.from({ length: 2 + Math.floor(q() * 3) }, () => {
+    const cx = W * (0.1 + 0.8 * q()), cy = hz * (0.08 + 0.45 * q()), R = H * (0.06 + 0.07 * q()), k = 4 + Math.floor(q() * 4);
+    const pts = Array.from({ length: k }, () => ({ x: cx + (q() - 0.5) * 2 * R, y: cy + (q() - 0.5) * 1.4 * R, s: 1.4 + q() * 1.3, tw: q() * TAU }));
+    pts.sort((a, b) => a.x - b.x); // un tracé qui se lit de gauche à droite
+    return { pts, lines: q() < 0.45, tint: q() < 0.3 ? [255, 210, 170] : q() < 0.5 ? [190, 210, 255] : [240, 240, 255] };
+  });
+  const nebula = q() < 0.35 ? { x: W * (0.15 + 0.7 * q()), y: hz * (0.15 + 0.4 * q()), R: H * (0.14 + 0.16 * q()), hue: [300, 200, 20, 160, 260][Math.floor(q() * 5)], blobs: Array.from({ length: 7 }, () => ({ dx: (q() - 0.5) * 1.6, dy: (q() - 0.5) * 0.9, r: 0.35 + q() * 0.6 })) } : null;
+  const band = q() < 0.4 ? { a: (q() - 0.5) * 1.2, y: hz * (0.25 + 0.3 * q()), w: H * (0.05 + 0.05 * q()), pts: Array.from({ length: 160 }, () => ({ u: q(), v: (q() + q() + q() - 1.5) / 1.5, b: q() })) } : null;
+  const n = S.moons != null ? clamp(Math.round(S.moons), 0, 5) : S.moon ? 1 : 0;
+  const moons = Array.from({ length: n }, (_, i) => ({ r: H * (i === 0 ? 0.045 : 0.015 + 0.03 * q()), ph: q() * 0.8 - 0.4, off: i === 0 ? 0 : q(), sp: i === 0 ? 1 : 0.6 + q() * 1.6, tint: i === 0 ? [207, 214, 226] : [[220, 200, 180], [190, 210, 230], [230, 190, 170], [210, 215, 200]][Math.floor(q() * 4)], fx: 0.15 + 0.7 * q(), fy: 0.15 + 0.3 * q() }));
+  return { cons, nebula, band, moons };
 }
 
 // ---- premier plan : choisi selon l'Âge, dessiné à partir de la graine ----------------------------------------
@@ -293,6 +310,7 @@ function paint(g, m, t, o = {}) {
   // étoiles
   const sv = Math.max((S.storm ? 0.25 : 1) * (S.veil ? 0.5 : 1) * (1 - Math.min(1, d * 1.4)), 0.7 * air.thin * air.thin) * (1 - 0.8 * air.thick); // sans air, les étoiles se voient en plein jour ; sous un air épais, presque jamais
   if (sv > 0.02) for (const s of m.stars) { g.fillStyle = css([230, 230, 245], (0.25 + 0.55 * (0.5 + 0.5 * Math.sin(TAU * t * s.k + s.p))) * sv); g.fillRect(s.x, s.y, s.s, s.s); }
+  if (sv > 0.02 && m.night) nightSky(g, m, t, sv);
   // aurores
   const ak = Math.max(0, Math.min(1, (night - 0.3) / 0.45)); // aurores : nuit seulement
   if (S.auroras && ak > 0.01) {
@@ -309,10 +327,10 @@ function paint(g, m, t, o = {}) {
     g.strokeStyle = css([255, 255, 255], 0.8 * (1 - k)); g.lineWidth = 1.3; g.beginPath(); g.moveTo(x + k * W * 0.28, y + k * H * 0.24); g.lineTo(x + k * W * 0.28 - H * 0.18, y + k * H * 0.24 - H * 0.13); g.stroke();
   }
   // lune
-  if (S.moon) {
-    const rad = H * 0.045; let mp = null;
-    if (S.cycle === "frozen") mp = { x: W * 0.3, y: H * 0.3 }; else { const p = frac(td - 0.6); if (p <= 0.7) { const q = p / 0.7; mp = { x: W * (0.06 + 0.88 * q), y: hz - Math.sin(Math.PI * q) * (hz - H * 0.2) }; } }
-    if (mp) { g.fillStyle = "#cfd6e2"; g.beginPath(); g.arc(mp.x, mp.y, rad, 0, TAU); g.fill(); g.fillStyle = "rgba(10,12,20,0.5)"; g.beginPath(); g.arc(mp.x + rad * 0.45, mp.y - rad * 0.2, rad * 0.9, 0, TAU); g.fill(); }
+  for (const mo of (m.night && m.night.moons) || []) { // les lunes : chacune sa taille, sa teinte, sa phase et son pas
+    const rad = mo.r; let mp = null;
+    if (S.cycle === "frozen") mp = { x: W * mo.fx, y: H * mo.fy }; else { const p = frac(td * mo.sp - 0.6 + mo.off); if (p <= 0.7) { const q = p / 0.7; mp = { x: W * (0.06 + 0.88 * q), y: hz - Math.sin(Math.PI * q) * (hz - H * (0.2 + 0.1 * mo.off)) }; } }
+    if (mp) { g.fillStyle = css(mo.tint); g.beginPath(); g.arc(mp.x, mp.y, rad, 0, TAU); g.fill(); g.fillStyle = "rgba(10,12,20,0.5)"; g.beginPath(); g.arc(mp.x + rad * mo.ph * 1.6, mp.y - rad * 0.2, rad * 0.9, 0, TAU); g.fill(); }
   }
   // nuages (dérive lente, boucle)
   for (const c of air.thin > 0.85 ? [] : m.clouds) { // presque pas d'air : pas de nuages
@@ -444,6 +462,17 @@ function shoreEdge(g, m, t, night) {
   }
   if (sh.kind === "rock") for (const r of sh.rocks) { const [x, y] = L[r.k], R = (3 + 7 * depth(y)) * r.s; g.fillStyle = css(mixc(m.pal.rock, [40, 40, 46], 0.5)); g.strokeStyle = css([200, 190, 170], 0.25 * lit); g.lineWidth = 0.8; g.beginPath(); r.pts.forEach((k, i) => { const a = Math.PI + (i / 5) * Math.PI; i ? g.lineTo(x + r.dx * R + Math.cos(a) * R * k, y + Math.sin(a) * R * k * 0.8) : g.moveTo(x + r.dx * R + Math.cos(a) * R * k, y + Math.sin(a) * R * k * 0.8); }); g.closePath(); g.fill(); g.stroke(); }
   if (sh.kind === "grass") for (const r of sh.rocks) { const [x, y] = L[r.k], h = (4 + 9 * depth(y)) * r.s, sw = Math.sin(TAU * t + r.dx) * 1.2; g.strokeStyle = css([70, 96, 56], 0.85 * lit); g.lineWidth = 1; g.beginPath(); for (let i = -1; i <= 1; i++) { g.moveTo(x + i * 2, y); g.lineTo(x + i * 3 + sw, y - h); } g.stroke(); } // roseaux
+}
+
+/** Le ciel nocturne propre à l'Âge : bande d'étoiles, nébuleuse, constellations (parfois reliées d'un trait très pâle). */
+function nightSky(g, m, t, sv) {
+  const { night: n, W } = m;
+  if (n.band) { g.save(); g.translate(W / 2, n.band.y); g.rotate(n.band.a); for (const p of n.band.pts) { g.fillStyle = css([225, 228, 245], (0.12 + 0.35 * p.b) * sv); g.fillRect((p.u - 0.5) * W * 1.4, p.v * n.band.w, 1, 1); } const bg = g.createLinearGradient(0, -n.band.w, 0, n.band.w); bg.addColorStop(0, "rgba(220,225,245,0)"); bg.addColorStop(0.5, css([220, 225, 245], 0.07 * sv)); bg.addColorStop(1, "rgba(220,225,245,0)"); g.fillStyle = bg; g.fillRect(-W * 0.7, -n.band.w, W * 1.4, n.band.w * 2); g.restore(); }
+  if (n.nebula) { const nb = n.nebula; g.save(); g.globalCompositeOperation = "lighter"; for (const b of nb.blobs) { const x = nb.x + b.dx * nb.R, y = nb.y + b.dy * nb.R, R = nb.R * b.r, gr = g.createRadialGradient(x, y, 0, x, y, R); gr.addColorStop(0, css(hsl(nb.hue + b.dx * 40, 0.6, 0.55), 0.14 * sv)); gr.addColorStop(1, css(hsl(nb.hue, 0.6, 0.5), 0)); g.fillStyle = gr; g.fillRect(x - R, y - R, R * 2, R * 2); } g.restore(); }
+  for (const c of n.cons) {
+    if (c.lines) { g.strokeStyle = css(c.tint, 0.13 * sv); g.lineWidth = 0.7; g.beginPath(); c.pts.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y))); g.stroke(); }
+    for (const p of c.pts) { const a = (0.6 + 0.4 * Math.sin(TAU * t * 2 + p.tw)) * sv; g.fillStyle = css(c.tint, a); g.beginPath(); g.arc(p.x, p.y, p.s * 0.6, 0, TAU); g.fill(); if (p.s > 2.3) { g.fillStyle = css(c.tint, 0.18 * a); g.beginPath(); g.arc(p.x, p.y, p.s * 1.8, 0, TAU); g.fill(); } }
+  }
 }
 
 /** Richesses : éclats de métal et de pierre sur le sol, qui scintillent à tour de rôle. */

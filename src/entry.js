@@ -14,7 +14,7 @@ const { Soundscape, staticBurst, openSequence, linkSound, pageTurn } = require("
 const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
 const { sceneOf } = require("./genscene");
-const { DAY_RE, YEAR_RE, SIZE_RE, parseSky } = require("./sky");
+const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, parseSky } = require("./sky");
 const { AMOUNT_RE, parseAmounts, applyAmounts } = require("./amounts");
 const { rollLink } = fx;
 const { makeT } = require("./i18n");
@@ -78,7 +78,7 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
         return out;
       };
-      AGEX.skip = (line) => PH.isPhysicsLine(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
+      AGEX.skip = (line) => PH.isPhysicsLine(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
       // livre-piège : « pas de fissure » est une réponse donnée d'avance, le tirage n'en dessine pas une que le pied de bloc nierait
       AGEX.written = (set) => { if (!AGEX.src || !guard("trap draw", () => parseTrap(AGEX.src))) return set; const s = new Set(set); s.add("no_fissure"); return s; };
       AGEX.w = (slot, opt) => { const f = guard("solitude", () => solitudeFactor(this.ext.solitude, slot, opt.id)); return opt.weight * (f == null ? 1 : f); };

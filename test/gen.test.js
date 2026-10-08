@@ -300,4 +300,16 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   for (const w of [{ ...W0, P: 0 }, { ...W0, P: 300, Ts: 700 }, { ...W0, light: 0.05 }, { ...W0, starTemps: [] }, { ...W0, blackSun: true, starTemps: [1500] }]) { const l = []; G.paint(fakeCtx(l), G.build(G.sceneOf(anP(["single_sun"], w), "Q"), 320, 192), 0.6); ok(l.length > 50, "physique extrême : rendu fini"); }
 }
 
+// la nuit propre à chaque Âge (1.16.1) : constellations, nébuleuse ou bande d'étoiles parfois, lunes
+{
+  const SK = require("../src/sky");
+  const night = (o, name = "N") => G.build({ ...G.sceneOf(an(["single_sun"]), name), ...o }, 320, 192).night;
+  ok(JSON.stringify(night({}, "Nuit")) === JSON.stringify(night({}, "Nuit")) && JSON.stringify(night({}, "Nuit")) !== JSON.stringify(night({}, "Autre")), "nuit : déterministe, propre à l'Âge");
+  let neb = 0, band = 0; for (let i = 0; i < 200; i++) { const nn = night({}, "N" + i); neb += nn.nebula ? 1 : 0; band += nn.band ? 1 : 0; ok(nn.cons.length >= 2 && nn.cons.length <= 4, "deux à quatre constellations"); }
+  ok(neb > 40 && neb < 100 && band > 50 && band < 110, `nébuleuses (${neb}) et bandes d'étoiles (${band}) : parfois`);
+  ok(night({ moon: true }).moons.length === 1 && night({}).moons.length === 0 && night({ moons: 3 }).moons.length === 3 && night({ moon: true, moons: 0 }).moons.length === 0, "lunes : companion_moon ou moons: N");
+  ok(SK.parseSky("moons: 3").moons === 3 && SK.parseSky("lunes: 2").moons === 2 && SK.parseSky("moons: 9").moons === undefined && SK.MOONS_RE.test("moons: 2"), "ligne moons: (0 à 5)");
+  const l = []; G.paint(fakeCtx(l), G.build({ ...G.sceneOf(an(["single_sun"]), "N1"), moons: 4 }, 320, 192), 0.3, { day: 0.85 }); ok(l.filter((x) => x.startsWith("arc")).length > 8, "nuit : étoiles des constellations et lunes dessinées");
+}
+
 console.log(`gen.test.js : ${n} vérifications OK`);

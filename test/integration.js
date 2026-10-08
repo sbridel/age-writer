@@ -136,6 +136,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     let gl = null; try { gl = p.core.glyphs(A2("single_sun\ngold\nscorched_surface")); } catch (e) { gl = e; }
     ok(Array.isArray(gl), "richesses : glyphes" + (gl instanceof Error ? " : " + gl.message : ""));
     ok(!/^\s*(day_length|year_length)/.test("") && p.core.analyse("single_sun\nday_length: 40\nyear_length: 12", { seed: "T" }).resolved.lines.every((l) => !l.unknown), "ciel étendu : day_length / year_length ne sont pas des symboles inconnus");
+    ok(p.core.analyse("single_sun\nmoons: 3\nlunes: 2", { seed: "T" }).resolved.lines.every((l) => !l.unknown), "moons: / lunes: ne sont pas des symboles inconnus");
   }
 
   // panneau d'un Âge
