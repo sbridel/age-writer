@@ -141,7 +141,7 @@ function clashCostFor(skyIdSet, matterIds) {
     allMatterIds = new Set(matter.written);
   for (let reaction of matter.reactions) allMatterIds.add(reaction.result);
   let cost = 0;
-  for (let contradiction of findContradictions(skyIdSet, allMatterIds))
+  for (let contradiction of findContradictions(skyIdSet, allMatterIds, { onePerNote: true }))
     cost += CONTRADICTION_COST[contradiction.severity];
   for (let reaction of matter.reactions) cost += Math.max(0, reaction.cost ?? REACTION_COST[reaction.type]);
   return cost;
