@@ -362,3 +362,63 @@
 .age-relto__nav .age-relto__viewbtn.is-active { opacity: 1; background: rgba(14, 12, 10, 0.8); }
 .age-relto__nav .age-relto__viewbtn.is-hidden { display: none; }
 .age-relto[data-tab]:not([data-tab="view"]) .age-relto__nav--bar { display: none; }
+
+/* ---- Détails retravaillé : stabilité par axe, physique du monde (1.16) ---- */
+.age-panel:has(.age-det--stab) .age-panel__debug { display: none; }
+.age-det { display: flex; flex-direction: column; gap: 6px; }
+.age-det + .age-det, .age-det + .age-det__h { margin-top: 6px; padding-top: 10px; border-top: 0.5px solid rgba(205, 189, 148, 0.25); }
+.age-det__h { font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; color: #cdbd94; opacity: 0.85; }
+.age-det__h--sub { margin-top: 6px; font-size: 0.72em; opacity: 0.7; }
+.age-det__hrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.age-det__mode { font-size: 0.85em; font-style: italic; opacity: 0.7; }
+.age-det__verdict { display: flex; align-items: baseline; gap: 6px; }
+.age-det__big { font-size: 2em; line-height: 1; font-variant-numeric: tabular-nums; color: #e0d2a8; }
+.age-det__verdict--unstable .age-det__big { color: #d9b25a; }
+.age-det__verdict--dying .age-det__big { color: #d98a6a; }
+.age-det__unit { opacity: 0.8; }
+.age-det__note, .age-det__calm { font-style: italic; opacity: 0.8; }
+.age-det__calm { color: #a9c79a; }
+.age-det__bars { display: grid; grid-template-columns: max-content minmax(60px, 1fr) max-content; gap: 4px 10px; align-items: center; }
+.age-det__bar { display: contents; }
+.age-det__axis { opacity: 0.85; }
+.age-det__track { height: 6px; border-radius: 3px; background: rgba(205, 189, 148, 0.15); overflow: hidden; }
+.age-det__fill { height: 100%; border-radius: 3px; background: #a9c79a; }
+.age-det__fill.is-warn { background: #d9b25a; }
+.age-det__fill.is-bad { background: #c0553f; }
+.age-det__val { font-variant-numeric: tabular-nums; opacity: 0.85; white-space: nowrap; }
+.age-det__chain { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.age-det__break { flex-basis: 100%; height: 0; }
+.age-det__node { padding: 2px 7px; border: 1px solid rgba(205, 189, 148, 0.35); border-radius: 3px; font-size: 0.92em; white-space: nowrap; }
+.age-det__node b { font-weight: 600; color: #e0d2a8; }
+.age-det__node.is-ok { border-color: rgba(169, 199, 154, 0.7); }
+.age-det__node.is-warn { border-color: rgba(217, 178, 90, 0.8); }
+.age-det__node.is-bad { border-color: #c0553f; color: #d98a6a; }
+.age-det__arrow { opacity: 0.5; }
+.age-det__sheet { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px 12px; margin: 4px 0 0; }
+.age-det__sheet dt { font-size: 0.85em; letter-spacing: 0.06em; text-transform: uppercase; color: #cdbd94; opacity: 0.8; }
+.age-det__sheet dd { margin: 0; font-variant-numeric: tabular-nums; }
+@media (max-width: 520px) { .age-det__sheet { grid-template-columns: 1fr; } .age-det__sheet dd { margin-bottom: 4px; } }
+.age-det__facts { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 3px; }
+.age-det__tensions { display: flex; flex-direction: column; gap: 8px; }
+.age-det__tension { padding: 6px 10px; border-left: 3px solid #d9b25a; background: rgba(217, 178, 90, 0.08); display: flex; flex-direction: column; gap: 4px; }
+.age-det__tension.is-medium { border-left-color: #d98a6a; background: rgba(217, 138, 106, 0.09); }
+.age-det__tension.is-strong { border-left-color: #c0553f; background: rgba(192, 85, 63, 0.11); }
+.age-det__tag { font-size: 0.8em; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
+.age-det__sev { font-weight: 600; }
+.age-det__fixes { display: flex; flex-wrap: wrap; gap: 6px; }
+.age-det__fix { font-size: 0.92em; padding: 2px 8px; height: auto; min-height: 0; line-height: 1.4; text-align: left; white-space: normal; }
+.age-det__fix code { font-size: 0.95em; }
+.age-det__fixtxt { font-size: 0.92em; padding: 2px 0; opacity: 0.85; font-style: italic; }
+.age-ext > .age-det__h { margin-top: 6px; padding-top: 10px; border-top: 0.5px solid rgba(205, 189, 148, 0.25); }
+
+/* Détails : note de l'arpenteur pour l'Imageur */
+.age-det__sky { margin: 8px 0 4px; font-size: var(--font-ui-small); color: var(--text-muted); }
+.age-det__sky b { color: var(--text-normal); font-weight: 600; }
+.age-det__skyline { font-style: italic; }
+.age-det__skynums { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; align-items: center; }
+.age-det__skynum { display: inline-flex; align-items: center; gap: 6px; color: var(--text-normal); }
+.age-det__skylabel { color: var(--text-faint); font-size: var(--font-ui-smaller); }
+
+.age-surveyor { display: flex; flex-direction: column; gap: 10px; }
+.age-surveyor__card { padding: 8px 12px; border-left: 3px solid var(--interactive-accent); background: var(--background-secondary); border-radius: 4px; }
+.age-surveyor__name { font-weight: 600; display: block; margin-bottom: 2px; }

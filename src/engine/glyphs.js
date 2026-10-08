@@ -46,6 +46,13 @@ const polyline = (pts, strokeWidth = 3) => ({ kind: "polyline", pts: pts, stroke
 const line = (from, to, strokeWidth = 2) => ({ kind: "line", a: from, b: to, strokeWidth: strokeWidth });
 
 const EXTRA_GLYPHS = {
+  // soleil noir : un disque plein dans un anneau brisé (sa couronne)
+  black_sun: [
+    fill(hexagon(50, 50, 17)),
+    polyline([[50, 20], [72, 32], [76, 52]], 3),
+    polyline([[70, 74], [50, 82], [28, 74]], 3),
+    polyline([[22, 54], [26, 32]], 3),
+  ],
   shifting_orbit: [
     polyline(
       [

@@ -44,7 +44,7 @@ class Plugin { constructor(a, m) { this.app = a; this.manifest = m; this.cmds = 
 class Setting { constructor(el) { this.el = el; } setName() { return this; } setDesc() { return this; } setHeading() { return this; } addDropdown(f) { f({ addOptions() { return this; }, setValue() { return this; }, onChange() { return this; } }); return this; }
   addToggle(f) { f({ setValue() { return this; }, onChange() { return this; } }); return this; } addText(f) { f({ setValue() { return this; }, onChange() { return this; }, setPlaceholder() { return this; } }); return this; } addSlider(f) { f({ setLimits() { return this; }, setValue() { return this; }, setDynamicTooltip() { return this; }, onChange() { return this; } }); return this; } }
 const obsidian = { Plugin, ItemView: class { constructor(leaf) { this.app = leaf && leaf.app; this.contentEl = document.createElement("div"); } }, PluginSettingTab: class { constructor() { this.containerEl = document.createElement("div"); } }, Setting,
-  Notice: class { constructor(m) { notices.push(String(m)); } }, TFile, MarkdownRenderChild: class { constructor(e) { this.containerEl = e; } register() {} registerDomEvent() {} registerInterval() {} }, FuzzySuggestModal: class { constructor(a) { this.app = a; } open() {} }, stringifyYaml: (o) => Object.entries(o).map(([k, v]) => `${k}: ${JSON.stringify(v)}\n`).join("") };
+  Notice: class { constructor(m) { notices.push(String(m)); this.noticeEl = document.createElement("div"); } hide() {} }, TFile, MarkdownRenderChild: class { constructor(e) { this.containerEl = e; } register() {} registerDomEvent() {} registerInterval() {} }, FuzzySuggestModal: class { constructor(a) { this.app = a; } open() {} }, stringifyYaml: (o) => Object.entries(o).map(([k, v]) => `${k}: ${JSON.stringify(v)}\n`).join("") };
 
 // build + chargement
 // Le moteur est désormais dans src/engine : on teste le vrai code. MINIFIED=1 teste la version minifiée (release/).
@@ -136,6 +136,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     let gl = null; try { gl = p.core.glyphs(A2("single_sun\ngold\nscorched_surface")); } catch (e) { gl = e; }
     ok(Array.isArray(gl), "richesses : glyphes" + (gl instanceof Error ? " : " + gl.message : ""));
     ok(!/^\s*(day_length|year_length)/.test("") && p.core.analyse("single_sun\nday_length: 40\nyear_length: 12", { seed: "T" }).resolved.lines.every((l) => !l.unknown), "ciel étendu : day_length / year_length ne sont pas des symboles inconnus");
+    ok(p.core.analyse("single_sun\nmoons: 3\nlunes: 2", { seed: "T" }).resolved.lines.every((l) => !l.unknown), "moons: / lunes: ne sont pas des symboles inconnus");
   }
 
   // panneau d'un Âge
@@ -149,6 +150,45 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
   ok(!!host.querySelector(".age-ext__plate svg"), "plaque de chiffres affichée");
   ok(!!host.querySelector(".age-ext__mech"), "mécanisme écrit affiché");
   ok(!!host.querySelector(".age-ext__sound"), "bouton son présent");
+  ok(!!host.querySelector(".age-det--stab .age-det__bar") && !!host.querySelector(".age-det--phys .age-det__sheet dd"), "Détails : stabilité par axe et fiche physique");
+
+  // couche physique (1.16) : facile n'altère rien, strict coûte, lignes de valeurs ignorées par le moteur, pistes écrites dans le bloc
+  {
+    const lava = "lava\nash\nmass: 0.2\nage: 9";
+    const was = p.ext.physics; p.ext.physics = "off"; const off = p.core.analyse(lava, { seed: "Braise" });
+    p.ext.physics = "easy"; const easy = p.core.analyse(lava, { seed: "Braise" });
+    ok(!off.resolved.lines.some((l) => l.unknown), "mass: / age: ne sont pas des symboles inconnus");
+    ok(p.core.analyse("single_sun\nwater\nwater: everywhere, to the horizon", { seed: "Mer" }).resolved.lines.filter((l) => l.unknown).length === 1, "une ligne « water: » sans valeur lisible reste une ligne inconnue (comme avant)");
+    ok(easy.stability === off.stability && JSON.stringify(easy.axisStability) === JSON.stringify(off.axisStability) && easy.physics && !off.physics, "mode facile : stabilité inchangée, fiche jointe");
+    ok(easy.physics.tensions.some((t) => t.id === "volcanism"), "mode facile : la tension est expliquée");
+    p.ext.physics = "strict"; p.ext.physicsSeverity = 1; const strict = p.core.analyse(lava, { seed: "Braise" });
+    ok(strict.axisStability.geological === off.axisStability.geological - 20, "mode strict : −20 sur l'axe géologique");
+    p.ext.physicsSeverity = 2; ok(p.core.analyse(lava, { seed: "Braise" }).axisStability.geological === off.axisStability.geological - 40, "sévérité 2 : −40");
+    p.ext.physicsSeverity = 1; p.ext.physics = was;
+    { // 300 Âges au hasard : en facile, rien ne bouge par rapport à « désactivée » (seule la fiche s'ajoute)
+      const SY = ["single_sun", "twin_suns", "starless", "water", "lava", "rain", "fern", "great_tree", "grazer", "desert_world", "frozen_world", "auroras", "tablet", "sand", "wind", "deep_cold", "asteroid_field", "gold"];
+      let x = 9, diff = 0; const r = () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296);
+      for (let i = 0; i < 300; i++) {
+        const src = Array.from({ length: 1 + Math.floor(r() * 6) }, () => SY[Math.floor(r() * SY.length)]).join("\n");
+        p.ext.physics = "off"; const a = p.core.analyse(src, { seed: "R" + i }); p.ext.physics = "easy"; const b = p.core.analyse(src, { seed: "R" + i });
+        const { physics, ...rest } = b; if (!physics || JSON.stringify(rest) !== JSON.stringify(a)) diff++;
+      }
+      ok(diff === 0, `mode facile : 300 Âges identiques au mode désactivé (${diff} différence(s))`);
+    }
+    p.ext.physics = was;
+    files.set("Ages/Braise.md", new TFile("Ages/Braise.md", "# Braise\n```age\n" + lava + "\n```\nfin\n"));
+    const prevProc = app.vault.process; app.vault.process = async (f, fn) => { f.content = fn(f.content); return f.content; };
+    await p.writePhysicsLine("Ages/Braise.md", lava, "age", 3.5);
+    ok(/```age\nlava\nash\nmass: 0.2\nage: 3.5\n```\nfin/.test(files.get("Ages/Braise.md").content), "piste cliquée : la ligne age: est remplacée dans le bloc");
+    await p.writePhysicsLine("Ages/Braise.md", "autre bloc", "age", 1);
+    ok(notices.some((n) => /changé|changed/.test(n)), "bloc introuvable : rien d'écrit, une notice le dit");
+    if (process.env.DUMP) for (const [mode, sv] of [["easy", "lava\nash\nwater\nfern\nmass: 0.2\nage: 9"], ["strict", "black_sun\nwater\nfern\nlight_world\nauroras\nrifts"]]) {
+      p.ext.physics = mode; const h2 = document.createElement("div"); h2.innerHTML = '<div class="age-panel"></div>'; document.body.appendChild(h2);
+      p.renderAgePanel(sv, h2, "Ages/Braise.md"); const pn = h2.querySelector(".age-panel"); if (pn) pn.dataset.tab = "details";
+      fs.writeFileSync(process.env.DUMP + "-details-" + mode + ".html", h2.outerHTML); p.ext.physics = was;
+    }
+    app.vault.process = prevProc;
+  }
 
   // fenêtre génératrice : `window_style: generative` ajoute un canvas de paysage (un de plus que le rendu classique), jamais d'erreur
   {
@@ -279,6 +319,16 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
       view.contentEl.querySelector(".age-book__page--left").click(); ok(view.leafPage === 0, "clic page gauche : page précédente"); }
     p.ext.bookStart = was; }
   await p.saveCover(f); ok([...files.keys()].some((k) => /cover.*\.svg|Cover/i.test(k)) || notices.some((n) => /cover|couverture/i.test(n)), "saveCover : fichier ou notice");
+  { // Âge au hasard + Âge d'exemple
+    const before = files.size, cmd = p.cmds.find((c) => c.id === "random-age"); ok(!!cmd, "commande « Generate a random Age » enregistrée");
+    await cmd.callback(); const made = [...files.keys()].slice(before);
+    ok(made.length === 1 && /```age\n[\s\S]*seed: \d+/.test(files.get(made[0]).content) && notices.some((x) => /Nouvel Âge|New Age/.test(x)), "Âge au hasard : une note créée avec son bloc et sa graine, une notice");
+    const live = p.index.list; p.index.list = async () => []; p.ext.state.welcomed = false;
+    const b2 = files.size; await p.welcomeOnce(); const w = [...files.keys()].slice(b2);
+    ok(w.length === 1 && /Bienvenue|Welcome/.test(w[0]) && p.ext.state.welcomed, "premier lancement : note de bienvenue créée, une seule fois");
+    await p.welcomeOnce(); ok(files.size === b2 + 1, "pas de seconde note de bienvenue");
+    p.index.list = async () => [{}]; p.ext.state.welcomed = false; const b3 = files.size; await p.welcomeOnce(); ok(files.size === b3 && p.ext.state.welcomed, "coffre qui a déjà des Âges : rien créé");
+    p.index.list = live; }
   if (process.env.DUMP) { fs.writeFileSync(process.env.DUMP + "-cover.html", view.contentEl.outerHTML); view.mode = "cover"; await view.render(); fs.writeFileSync(process.env.DUMP + "-cover.html", view.contentEl.outerHTML); fs.writeFileSync(process.env.DUMP + "-panel.html", host.outerHTML); }
   // réglages
   const st = new p.core.SettingsTab(app, p); st.display(); ok(!!st.containerEl.querySelector(".age-ext-settings"), "réglages de l'extension ajoutés à l'onglet d'origine");

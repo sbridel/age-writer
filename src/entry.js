@@ -8,13 +8,14 @@
  */
 const obsidian = require("obsidian");
 const { Dni } = require("./dni");
+const { setMarkup } = require("./util");
 const { Law, adjustAnalysis, describeChange, worldIds } = require("./law");
 const { solitudeFactor, COVER_RE, parseCover, KEY_RE, FX_RE, STYLE_RE, TRAP_RE, DMG_RE, parseFx, parseStyle, parseTrap, parseDamage, applyDamage } = require("./mech");
 const { Soundscape, staticBurst, openSequence, linkSound, pageTurn } = require("./sound");
 const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
 const { sceneOf } = require("./genscene");
-const { DAY_RE, YEAR_RE, SIZE_RE, parseSky } = require("./sky");
+const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, parseSky } = require("./sky");
 const { AMOUNT_RE, parseAmounts, applyAmounts } = require("./amounts");
 const { rollLink } = fx;
 const { makeT } = require("./i18n");
@@ -23,6 +24,8 @@ const X = require("./ui-extras");
 const R = require("./ui-relto");
 const RB = require("./relto-books");
 const G = require("./guide");
+const PH = require("./physics/index");
+const AS = require("./ageseed");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
 
 module.exports = function build(Base, core, AGEX) {
@@ -60,9 +63,10 @@ module.exports = function build(Base, core, AGEX) {
       this.ext = this.settings.ext = { ...DEFAULTS, ...saved, state: { ...(saved.state || {}), law: { ages: {}, ...((saved.state || {}).law || {}) } } };
       if (saved.openSound && saved.soundBook === undefined) { const m = saved.openSound; this.ext.soundLink = m === "openseq"; if (m === "off") { this.ext.soundBook = false; this.ext.soundClasp = false; } delete this.ext.openSound; } // ancien menu → trois interrupteurs
       this.t = makeT(() => this.lang());
+      this.physCache = new Map();
       this.live = new Set(); this.lawTimers = new Map(); this.fileAudios = []; this.soundBtn = null;
       this.index = new AgeIndex(this);
-      this.law = new Law(this.ext.state.law, { dryMinutes: () => this.ext.inkDry, healPerDay: () => this.ext.heal });
+      this.law = new Law(this.ext.state.law, { dryMinutes: () => this.ext.inkDry, healPerDay: () => this.ext.heal, ignored: (raw) => PH.isPhysicsLine(raw) });
       this.dni = new Dni({ getMode: () => this.ext.numerals, adapter: this.app.vault.adapter, pluginDir: this.manifest.dir, getVaultFont: () => this.ext.vaultFont });
       this.soundFactor = 1; this.sound = new Soundscape(() => this.ext.volume * (this.soundFactor == null ? 1 : this.soundFactor));
 
@@ -73,9 +77,10 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText && parseTrap(srcText)) out = { ...out, returnTo: null, stranded: true, fissure: null, trapped: true, home: "none" };
         if (srcText) out = guard("quantités", () => applyAmounts(out, parseAmounts(srcText), this.core && this.core.blocks)) || out;
         if (srcText) out = applyDamage(out, parseDamage(srcText));
+        if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
         return out;
       };
-      AGEX.skip = (line) => KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
+      AGEX.skip = (line) => PH.isPhysicsLine(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
       // livre-piège : « pas de fissure » est une réponse donnée d'avance, le tirage n'en dessine pas une que le pied de bloc nierait
       AGEX.written = (set) => { if (!AGEX.src || !guard("trap draw", () => parseTrap(AGEX.src))) return set; const s = new Set(set); s.add("no_fissure"); return s; };
       AGEX.w = (slot, opt) => { const f = guard("solitude", () => solitudeFactor(this.ext.solitude, slot, opt.id)); return opt.weight * (f == null ? 1 : f); };
@@ -86,7 +91,7 @@ module.exports = function build(Base, core, AGEX) {
       this.registerProcessors();
       this.registerCommands();
       this.registerEvents();
-      this.app.workspace.onLayoutReady(() => guard("scan", () => this.initialScan()));
+      this.app.workspace.onLayoutReady(() => { guard("scan", () => this.initialScan()); window.setTimeout(() => guard("welcome", () => this.welcomeOnce()), 2500); });
     }
 
     onunload() {
@@ -94,6 +99,30 @@ module.exports = function build(Base, core, AGEX) {
       // une sauvegarde en attente (réglages, état de la loi, pages repliées…) ne doit pas être perdue
       if (this.saveTimer) { clearTimeout(this.saveTimer); this.saveTimer = 0; guard("save", () => this.saveSettings()); }
       super.onunload();
+    }
+
+    // ---- couche physique (src/physics) --------------------------------------------------------
+    physicsMode() { const m = this.ext && this.ext.physics; return m === "off" || m === "strict" ? m : "easy"; }
+    /** Retraite une analyse selon le mode physique. Le monde physique est mis en cache (texte du bloc, graine, symboles, mode). */
+    applyPhysicsTo(r, srcText, o) {
+      const mode = this.physicsMode(); if (mode === "off" || !r || !r.resolved || (o && o.physics === false)) return r;
+      const seed = (o && o.seed) || "", ids = [...PH.idsOfAnalysis(r)].sort().join(",");
+      const key = `${mode}|${seed}|${ids}|${srcText}`;
+      let ph = this.physCache.get(key);
+      if (!ph) {
+        ph = PH.physicsOf(r, srcText, seed, mode); this.physCache.set(key, ph);
+        if (this.physCache.size > 1500) this.physCache.delete(this.physCache.keys().next().value);
+      }
+      return PH.applyPhysics(r, ph, mode, { severity: Number(this.ext.physicsSeverity) || 1 });
+    }
+    /** Une piste cliquée dans la fiche : écrit (ou remplace) la ligne `clé: valeur` dans le bloc age de la note. */
+    async writePhysicsLine(path, src, key, value) {
+      const f = this.app.vault.getAbstractFileByPath(path); if (!(f instanceof TFile)) return;
+      let missed = false;
+      const edit = (text) => { const out = PH.setLineInAgeBlock(text, src, key, value); if (out == null) { missed = true; return text; } return out; };
+      if (typeof this.app.vault.process === "function") await this.app.vault.process(f, edit);
+      else await this.app.vault.modify(f, edit(await this.app.vault.read(f)));
+      new Notice(missed ? this.t("phys.notfound") : this.t("phys.written", { line: `${key}: ${PH.asLine(value)}` }));
     }
 
     lang() {
@@ -117,7 +146,7 @@ module.exports = function build(Base, core, AGEX) {
       guard("panel", () => {
         if (!this.law || !analysis) return;
         const panel = el.querySelector(":scope > .age-panel") || el.lastElementChild; if (!panel) return;
-        X.renderExtras(this, panel, { src, analysis, name });
+        X.renderExtras(this, panel, { src, analysis, name, path });
         if (this.ext.panelTabs !== false) X.tabifyPanel(this, panel);
       });
     }
@@ -255,7 +284,7 @@ module.exports = function build(Base, core, AGEX) {
       if (cover) {
         const pal = el.querySelector(".age-book__palette"); if (pal) pal.remove();
         spread.empty(); spread.addClass("is-cover"); if (ext.leather) for (const c of ["tl", "tr", "bl", "br"]) spread.createDiv({ cls: `age-book__corner age-book__corner--${c}` });
-        spread.createDiv({ cls: "age-book__covercontainer" }).innerHTML = this.coverFor(src, analysis, file, false);
+        setMarkup(spread.createDiv({ cls: "age-book__covercontainer" }), this.coverFor(src, analysis, file, false));
         const act = el.createDiv({ cls: "age-book__coveractions" });
         act.createEl("button", { text: t("book.savecover") }).addEventListener("click", () => this.saveCover(file));
       } else if (view.mode === "descriptive") {
@@ -346,7 +375,40 @@ module.exports = function build(Base, core, AGEX) {
         id: "save-age-cover", name: "Save this Age's book cover (SVG)",
         checkCallback: (check) => { const f = this.app.workspace.getActiveFile(); if (!f || f.extension !== "md") return false; if (!check) this.saveCover(f); return true; },
       });
+      this.addCommand({ id: "random-age", name: "Generate a random Age", callback: () => this.randomAge() });
       this.addCommand({ id: "stop-soundscape", name: "Stop the soundscape", callback: () => this.stopSound() });
+    }
+
+    /** Crée une note dans le dossier du refuge (créé au besoin) sans écraser : « Nom », « Nom 2 »… */
+    async createNoteIn(name, body) {
+      const { vault } = this.app, folder = (this.ext.reltoFolder || "Ages").replace(/^\/+|\/+$/g, "");
+      if (folder && !vault.getAbstractFileByPath(folder)) await vault.createFolder(folder);
+      let n = 1, path;
+      do { path = `${folder ? folder + "/" : ""}${name}${n > 1 ? " " + n : ""}.md`; n++; } while (vault.getAbstractFileByPath(path));
+      return vault.create(path, body);
+    }
+
+    /** Commande « Generate a random Age » : un monde tiré au hasard, cohérent et stable, ouvert aussitôt. */
+    async randomAge() {
+      const lang = this.lang(), names = new Set(this.app.vault.getMarkdownFiles().map((f) => f.basename));
+      const check = (lines, name) => { const a = core.analyse(lines.join("\n"), { seed: name }); return !a || a.verdict === "stable"; };
+      const note = AS.randomNote((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0, lang, { check, taken: (nm) => names.has(nm) });
+      const f = await this.createNoteIn(note.name, note.body);
+      new Notice(this.t("random.created", { name: f.basename }));
+      await this.app.workspace.getLeaf(false).openFile(f);
+      this.refreshLive();
+    }
+
+    /** Premier lancement : une note de bienvenue avec un Âge d'exemple (une seule fois, jamais chez un coffre qui a déjà des Âges). */
+    async welcomeOnce() {
+      const st = this.ext.state; if (st.welcomed) return;
+      st.welcomed = true; this.saveExt();
+      const has = (await this.index.list()).length > 0; if (has) return;
+      const w = AS.welcomeNote(this.lang()), f = await this.createNoteIn(w.title, w.body);
+      const n = new Notice("", 15000); n.noticeEl.empty();
+      n.noticeEl.createSpan({ text: this.t("welcome.notice") + " " });
+      n.noticeEl.createEl("button", { text: this.t("welcome.open") }).addEventListener("click", () => { n.hide(); this.app.workspace.getLeaf(false).openFile(f); });
+      this.refreshLive();
     }
 
     async createJournal(file) {
@@ -382,7 +444,7 @@ module.exports = function build(Base, core, AGEX) {
     async observeFile(f) {
       if (!this.ext.law) return;
       const src = core.extract(await this.app.vault.read(f)); if (src === null) return;
-      const ev = this.law.observe(f.basename, core.analyse(src, { seed: f.basename }), f.stat.mtime);
+      const ev = this.law.observe(f.basename, core.analyse(src, { seed: f.basename, physics: false }), f.stat.mtime);
       this.saveExt();
       if (ev) {
         new Notice(`${this.t("law.warning")}\n${describeChange(ev, this.t)}`, 9000);
@@ -394,7 +456,7 @@ module.exports = function build(Base, core, AGEX) {
       if (!(f instanceof TFile) || f.extension !== "md") return;
       const oldName = old.replace(/^.*\//, "").replace(/\.md$/i, "");
       const src = core.extract(await this.app.vault.read(f));
-      if (src === null) this.law.forget(oldName); else this.law.rename(oldName, f.basename, core.analyse(src, { seed: f.basename }));
+      if (src === null) this.law.forget(oldName); else this.law.rename(oldName, f.basename, core.analyse(src, { seed: f.basename, physics: false }));
       this.saveExt();
     }
 
@@ -404,7 +466,7 @@ module.exports = function build(Base, core, AGEX) {
         const c = this.app.metadataCache.getFileCache(f);
         if (c && !(c.sections || []).some((s) => s.type === "code")) continue;
         const src = core.extract(await this.app.vault.cachedRead(f)); if (src === null) continue;
-        if (!this.law.get(f.basename)) this.law.observe(f.basename, core.analyse(src, { seed: f.basename }), f.stat.mtime);
+        if (!this.law.get(f.basename)) this.law.observe(f.basename, core.analyse(src, { seed: f.basename, physics: false }), f.stat.mtime);
         if (++n % 25 === 0) await new Promise((r) => setTimeout(r, 0));
       }
       this.saveExt();

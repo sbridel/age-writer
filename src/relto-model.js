@@ -12,9 +12,9 @@ const TERRAINS = ["volcanic_plateau", "mossy_plateau", "sand_island", "glacier",
 const SURROUNDINGS = ["cloud_sea", "fog_sea", "ocean", "void", "lava_sea"];
 const SKY_CYCLES = ["system_time", "frozen_dawn", "frozen_day", "frozen_dusk", "frozen_night"];
 const STRUCTURES = ["hut", "bookshelves", "linking_pillars"];
-const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass"];
+const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager"];
 /** Options propres à certains effets (texte court) : couleur et nom du chat, variété du koï rare. */
-const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
+const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare", "sleep"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
 const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern", "ponderosa", "maple", "crystal"], flowers: ["blue", "red", "yellow", "white", "pink"] };
 
 /**
@@ -120,6 +120,7 @@ const PAGE_PRESETS = {
   page_gold: { label: "Gold", effects: { canvas_additions: [{ type: "gold", density: 0.6 }], ambiance_audio: "stone_choir" } },
   page_silver: { label: "Silver", effects: { canvas_additions: [{ type: "silver", density: 0.6 }], ambiance_audio: "deep_hum" } },
   page_koi: { label: "Koi pond", effects: { canvas_additions: [{ type: "koi", density: 0.5, rare: "ogon" }], ambiance_audio: "river" } },
+  page_imager: { label: "Imager", effects: { canvas_additions: [{ type: "imager" }], ambiance_audio: "deep_hum" } },
   page_cat_toys: { label: "Cat toys", effects: { canvas_additions: [{ type: "cattoys", density: 0.6 }], ambiance_audio: "hearth" } },
   page_pond_decor: { label: "Pond decor", effects: { canvas_additions: [{ type: "ponddecor", density: 0.6 }], ambiance_audio: "river" } },
   page_cat: { label: "Cat", effects: { canvas_additions: [{ type: "cat", color: "orange", name: "Mochi" }], ambiance_audio: "hearth" } },
@@ -172,7 +173,7 @@ function parsePage(fm = {}, path = "") {
     type: String(a && a.type || ""),
     density: clamp(Number(a && a.density != null ? a.density : 0.5), 0, 1),
     asset: a && a.asset ? String(a.asset) : undefined,
-    ...optsOf({ ...a, ...(a && a.type === "cat" ? { color: fm.cat_color ?? (a && a.color), name: fm.cat_name ?? (a && a.name) } : {}), ...(a && a.type === "koi" ? { rare: fm.koi_rare ?? (a && a.rare), name: fm.koi_name ?? (a && a.name) } : {}) }),
+    ...optsOf({ ...a, ...(a && a.type === "cat" ? { color: fm.cat_color ?? (a && a.color), name: fm.cat_name ?? (a && a.name), sleep: fm.cat_sleep ?? (a && a.sleep) } : {}), ...(a && a.type === "koi" ? { rare: fm.koi_rare ?? (a && a.rare), name: fm.koi_name ?? (a && a.name) } : {}) }),
   })).filter((a) => EFFECT_TYPES.includes(a.type));
   const audio = eff.ambiance_audio == null ? [] : asList(eff.ambiance_audio).map(String);
   const un = fm.unlock || null;
@@ -211,7 +212,7 @@ function parseReltoLibrary(text) {
       for (const item of part.split(",")) {
         const w = item.trim().match(/\w+=(?:"[^"]*"|\S+)|\S+/g) || []; if (!w.length) continue;
         if (!EFFECT_TYPES.includes(w[0])) { problems.push({ line: i + 1, text: l, message: `unknown effect “${w[0]}” — use one of: ${EFFECT_TYPES.join(", ")}` }); continue; }
-        const e = { type: w[0] }; for (const x of w.slice(1)) { if (/^\d*\.?\d+$/.test(x)) e.density = Number(x); else if (/^(color|colour|name|rare)=/i.test(x)) { const kv = x.match(/^(\w+)=(.*)$/); e[kv[1].toLowerCase() === "colour" ? "color" : kv[1].toLowerCase()] = kv[2].replace(/^"|"$/g, ""); } else e.asset = x; } eff.push(e);
+        const e = { type: w[0] }; for (const x of w.slice(1)) { if (/^\d*\.?\d+$/.test(x)) e.density = Number(x); else if (/^(color|colour|name|rare|sleep)=/i.test(x)) { const kv = x.match(/^(\w+)=(.*)$/); e[kv[1].toLowerCase() === "colour" ? "color" : kv[1].toLowerCase()] = kv[2].replace(/^"|"$/g, ""); } else e.asset = x; } eff.push(e);
       }
     }
     pages.push({ id: m[1], label: parts[0] || m[1], effects: { canvas_additions: eff, ...(audio.length ? { ambiance_audio: audio.length === 1 ? audio[0] : audio } : {}) }, unlock });

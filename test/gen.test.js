@@ -96,15 +96,25 @@ for (const w of [[], ["a"], ["vast", "immense", "giant", "huge"], ["tiny", "tiny
   G.paint(gp, mk({ water: true }), 0.3); const ra = al.filter((x) => x < 0.5 && x > 0); ok(ra.length > 20 && ra[2] > ra[ra.length - 2], "reflets : de plus en plus fondus");
   // variété : premier plan et détail dépendent de la graine
   const fgs = new Set(), dets = new Set(); for (let i = 0; i < 60; i++) { const m = mk({}, i * 7919 + 1); fgs.add(m.fg.kind); dets.add(m.det.kind); }
-  ok(fgs.size === 3, "trois premiers plans : " + [...fgs]); ok(dets.size === 5, "cinq détails : " + [...dets]);
+  ok(fgs.size >= 6, "premiers plans variés : " + [...fgs]);
+  // 1.16.1 : le premier plan suit l'Âge, et la branche est générée
+  const kinds = (o) => { const k = new Set(); for (let i = 0; i < 200; i++) k.add(mk(o, i * 104729 + 3).fg.kind); return k; };
+  ok(!kinds({ water: false, ice: false }).has("reeds") && kinds({ water: true }).has("reeds"), "roseaux seulement au bord de l'eau");
+  ok(!kinds({ ice: false }).has("icicles") && kinds({ ice: true }).has("icicles"), "glaçons seulement s'il gèle");
+  const shapes = new Set(); let nb = 0;
+  for (let i = 0; i < 300 && nb < 25; i++) { const m = mk({ trees: 3 }, i * 15485863 + 11); if (m.fg.kind !== "branches") continue; nb++; const sg = m.fg.branch.segs; ok(sg.length >= 4 && sg.every((x) => [x.x, x.y, x.cx, x.cy, x.x2, x.y2, x.w].every(Number.isFinite)), "branche : segments finis"); shapes.add(sg.length + ":" + Math.round(sg[sg.length - 1].x2)); }
+  ok(nb >= 10 && shapes.size >= nb - 2, `branches : une forme par Âge (${shapes.size}/${nb})`); ok(dets.size === 5, "cinq détails : " + [...dets]);
   // déterministe
   ok(JSON.stringify(mk({}, 9).det) === JSON.stringify(mk({}, 9).det) && JSON.stringify(mk({}, 9).fg) === JSON.stringify(mk({}, 9).fg), "premier plan et détail déterministes");
   // le détail est posé loin des ruines et des arbres
   let far = 0; for (let i = 0; i < 40; i++) { const m = mk({ ruins: ["door", "tablet", "lamp"], trees: 5 }, i * 131 + 7); const xs = [...m.ruins.map((q) => q.x), ...m.trees.map((q) => q.x)]; if (Math.min(...xs.map((q) => Math.abs(q - m.det.x))) > W * 0.04) far++; }
   ok(far >= 36, "détail dégagé (" + far + "/40)");
   // chaque détail et chaque premier plan se dessine (valeurs finies, plusieurs phases)
-  for (const kind of ["pylon", "ring", "stair", "dish", "piers"]) for (const fk of ["rocks", "branches", "arch"]) for (const side of [-1, 1]) {
-    const m = mk({}); m.det.kind = kind; m.fg.kind = fk; m.fg.side = side;
+  const byKind = {}; // un Âge pour chaque premier plan (graines au hasard, contenus qui les permettent tous)
+  for (let i = 0; i < 600 && Object.keys(byKind).length < 9; i++) { const m = mk(i % 2 ? { water: true, trees: 3, ruins: ["door"], fog: true } : { ice: true, ruins: ["door"] }, i * 7 + 1); byKind[m.fg.kind] = byKind[m.fg.kind] || i; }
+  ok(Object.keys(byKind).length === 9, "neuf premiers plans possibles : " + Object.keys(byKind));
+  for (const kind of ["pylon", "ring", "stair", "dish", "piers"]) for (const [fk, i] of Object.entries(byKind)) for (const side of [-1, 1]) {
+    const m = mk(i % 2 ? { water: true, trees: 3, ruins: ["door"], fog: true } : { ice: true, ruins: ["door"] }, i * 7 + 1); m.det.kind = kind; m.fg.side = side;
     for (const t of [0, 0.4, 0.8]) ok(rec(m, t).length > 100, "dessine " + kind + "/" + fk);
   }
   { const m = mk({}); m.det.kind = "ring"; ok(rec(m, 0.5).some((x) => x.startsWith("clip")), "l'anneau est coupé à l'horizon (à demi enfoui)"); m.det.kind = "pylon"; ok(!rec(m, 0.5).some((x) => x.startsWith("clip")), "pas de découpe pour un pylône"); }
@@ -251,6 +261,101 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   ok(T.fromDate(new Date(Date.UTC(2026, 9, 7, 17, 0, 0))).hahr === 9682 && /^\d+ · Leef?[a-z]+ \d+ · \d:\d+:\d+:\d+$/.test(T.format(T.fromDate(new Date(Date.UTC(2026, 9, 7, 17, 0, 0))))), "octobre 2026 : hahr 9682, lecture simple");
   const ph = T.dayPhase(T.REF); ok(ph === 0 && T.dayPhase(T.REF + yahrMs * 0.5) > 0.49 && T.dayPhase(T.REF + yahrMs * 0.5) < 0.51 && T.dayPhase(T.REF + yahrMs * 0.999) < 1, "phase du jour D'ni : 0 → 1 sur un yahr");
   ok(T.VAILEE.length === 10 && new Set(T.VAILEE).size === 10, "dix mois");
+}
+
+// rivage (1.16.1) : eau + terre → une rive, dont la nature suit ce qui est écrit ; les mondes-types gardent leur décor
+{
+  const sh = (ids) => G.sceneOf(an(ids), "Rive").shore;
+  ok(sh(["water", "sand"]) === "sand" && sh(["water", "lava"]) === "lava" && sh(["water", "ice"]) === "ice" && sh(["water", "stone"]) === "rock" && sh(["water", "door"]) === "rock" && sh(["water", "great_tree"]) === "grass", "nature de la rive");
+  ok(sh(["water"]) === null && sh(["sand"]) === null, "eau seule ou terre seule : pas de rivage");
+  ok(sh(["ocean_world", "water", "stone"]) === null && sh(["frozen_world", "water", "stone"]) === null, "monde-océan, monde gelé : pas de rivage");
+  const modes = new Set(), kinds = ["sand", "lava", "ice", "stone", "great_tree"];
+  for (let i = 0; i < 90; i++) {
+    const S = G.sceneOf(an(["single_sun", "water", kinds[i % 5], i % 7 === 0 ? "fissure" : "fog"]), "Rive" + i), m = G.build(S, 320, 192);
+    ok(m.shore && m.shore.line.length > 10 && m.shore.land.length > 3 && m.shore.wet.length > 3, "rive : ligne et polygones");
+    ok(m.shore.line.every(([x, y]) => Number.isFinite(x) && y >= m.hz - 0.01 && y <= 192.01), "ligne d'eau sous l'horizon");
+    modes.add(m.shore.mode);
+    const m2 = G.build(S, 320, 192); ok(JSON.stringify(m2.shore) === JSON.stringify(m.shore), "rivage déterministe");
+    for (const t of [0, 0.4, 0.9]) { const log = []; G.paint(fakeCtx(log), m, t, { day: (i % 10) / 10 }); ok(log.some((l) => l.startsWith("clip")), "eau et terre découpées"); }
+  }
+  ok(modes.size === 3, "trois cadrages : côté, rive lointaine, rive proche");
+  const S0 = G.sceneOf(an(["single_sun", "water", "sand"]), "Rive1"), S1 = { ...S0, shore: null };
+  ok(JSON.stringify({ ...G.build(S0, 320, 192), shore: null, S: null }) === JSON.stringify({ ...G.build(S1, 320, 192), shore: null, S: null }), "le rivage ne change rien d'autre dans l'image (graine propre)");
+}
+
+// physique visible (1.16.1) : la fenêtre suit le monde calculé quand la couche physique est active
+{
+  const anP = (ids, w, extra = []) => ({ ...an(ids), physics: { w }, resolved: { lines: [...ids.map((id) => ({ entry: { id } })), ...extra], matter: { written: [], reactions: [] } } });
+  const W0 = { P: 1, g: 1, starTemps: [5772], L: 1, a: 1, locked: false, light: 1, Ts: 288 };
+  ok(G.sceneOf(an(["single_sun"]), "P").phys === null, "sans physique : rien ne change");
+  const red = G.sceneOf(anP(["single_sun"], { ...W0, starTemps: [3000] }), "P"), blue = G.sceneOf(anP(["single_sun"], { ...W0, starTemps: [15000] }), "P");
+  ok(red.sunHues[0][0] > red.sunHues[0][2] + 80 && blue.sunHues[0][2] >= blue.sunHues[0][0], "couleur du soleil : naine rouge rougeâtre, étoile chaude bleutée");
+  ok(G.sceneOf(anP(["single_sun", "blue_sun"], { ...W0, starTemps: [3000] }), "P").sunHues[0][2] > 200, "une couleur écrite passe avant la température");
+  ok(G.sceneOf(anP(["single_sun"], { ...W0, locked: true }), "P").cycle === "frozen", "face figée par la marée : soleil immobile");
+  ok(G.sceneOf(anP(["single_sun", "steady_cycle"], { ...W0, locked: true }, [{ entry: { id: "steady_cycle", category: "cycle" }, autoFilled: false }]), "P").cycle !== "frozen", "un cycle écrit passe avant la marée");
+  const amp = (g) => { const S = G.sceneOf(anP(["single_sun"], { ...W0, g }), "Relief"); const m = G.build(S, 320, 192); return Math.max(...m.ridges.map((r) => Math.max(...r.xs) - Math.min(...r.xs))); };
+  ok(amp(0.3) > amp(1) && amp(1) > amp(3), "relief : plus haut sur un monde léger, plus bas sur un monde lourd");
+  const clouds = (P) => { const S = G.sceneOf(anP(["single_sun"], { ...W0, P }), "Air"); const l = []; G.paint(fakeCtx(l), G.build(S, 320, 192), 0.3, { day: 0.35 }); return l.filter((x) => x.startsWith("ellipse")).length; };
+  ok(clouds(0.01) < clouds(1), "presque pas d'air : pas de nuages");
+  for (const w of [{ ...W0, P: 0 }, { ...W0, P: 300, Ts: 700 }, { ...W0, light: 0.05 }, { ...W0, starTemps: [] }, { ...W0, blackSun: true, starTemps: [1500] }]) { const l = []; G.paint(fakeCtx(l), G.build(G.sceneOf(anP(["single_sun"], w), "Q"), 320, 192), 0.6); ok(l.length > 50, "physique extrême : rendu fini"); }
+}
+
+// la nuit propre à chaque Âge (1.16.1) : constellations, nébuleuse ou bande d'étoiles parfois, lunes
+{
+  const SK = require("../src/sky");
+  const night = (o, name = "N") => G.build({ ...G.sceneOf(an(["single_sun"]), name), ...o }, 320, 192).night;
+  ok(JSON.stringify(night({}, "Nuit")) === JSON.stringify(night({}, "Nuit")) && JSON.stringify(night({}, "Nuit")) !== JSON.stringify(night({}, "Autre")), "nuit : déterministe, propre à l'Âge");
+  let neb = 0, band = 0; for (let i = 0; i < 200; i++) { const nn = night({}, "N" + i); neb += nn.nebula ? 1 : 0; band += nn.band ? 1 : 0; ok(nn.cons.length >= 2 && nn.cons.length <= 4, "deux à quatre constellations"); }
+  ok(neb > 40 && neb < 100 && band > 50 && band < 110, `nébuleuses (${neb}) et bandes d'étoiles (${band}) : parfois`);
+  ok(night({ moon: true }).moons.length === 1 && night({}).moons.length === 0 && night({ moons: 3 }).moons.length === 3 && night({ moon: true, moons: 0 }).moons.length === 0, "lunes : companion_moon ou moons: N");
+  ok(SK.parseSky("moons: 3").moons === 3 && SK.parseSky("lunes: 2").moons === 2 && SK.parseSky("moons: 9").moons === 5 && SK.parseSky("moons: 12").moons === 5 && SK.MOONS_RE.test("moons: 2"), "ligne moons: (0 à 5)");
+  const l = []; G.paint(fakeCtx(l), G.build({ ...G.sceneOf(an(["single_sun"]), "N1"), moons: 4 }, 320, 192), 0.3, { day: 0.85 }); ok(l.filter((x) => x.startsWith("arc")).length > 8, "nuit : étoiles des constellations et lunes dessinées");
+}
+
+// varech, corail, acide (1.16.1)
+{
+  const { analyseAgeBase } = require("../src/engine/analysis");
+  const a = analyseAgeBase("water\nkelp\ncoral\nacid\nstone\niron", { seed: "Mer" });
+  ok(a.resolved.lines.every((l) => !l.unknown) && !a.resolved.matter.written.some((id) => id.startsWith("?")), "kelp, coral, acid : des blocs connus");
+  const shown = a.resolved.matter.reactions.map((r) => r.a + ">" + r.shown);
+  ok(shown.includes("acid>hollowed_ground") && shown.includes("acid>bitter_water"), "l'acide ronge la pierre et rend l'eau amère : " + shown);
+  const S = G.sceneOf(an(["single_sun", "water", "kelp", "coral", "acid", "stone"]), "Mer"), m = G.build(S, 320, 192);
+  ok(S.kelp && S.coral && S.acid && m.sea.kelp.length >= 7 && m.sea.coral.length >= 6 && m.sea.acid.length >= 3, "dessin : varech, corail, flaques");
+  for (const t of [0, 0.5]) { const l = []; G.paint(fakeCtx(l), m, t, { day: 0.4 }); ok(l.length > 200, "varech, corail, acide : rendu fini"); }
+  const P = require("../src/physics"), { hooks } = require("../src/engine/hooks"), skip0 = hooks.skip; hooks.skip = (l) => P.isPhysicsLine(l);
+  const dark = analyseAgeBase("starless\nkelp\ncoral", { seed: "K" }), ph = P.physicsOf(dark, "starless\nkelp\ncoral", "K"); hooks.skip = skip0;
+  const tn = ph.tensions.map((x) => x.id + ":" + x.ids.join(","));
+  ok(tn.some((x) => x.startsWith("sunlight") && x.includes("kelp")) && tn.some((x) => x.startsWith("warmClimate") && x.includes("coral")), "physique : varech et corail demandent lumière (et chaleur pour le corail) : " + tn);
+}
+
+// relecture : corail dans l'eau, acide sur la terre, rien de marin sur la glace seule, lune à l'écart du soleil figé
+{
+  const inside = (pts, x, y) => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c; } return c; };
+  let badA = 0, badC = 0, tot = 0;
+  for (let i = 0; i < 300; i++) {
+    const m = G.build(G.sceneOf(an(["single_sun", "water", "stone", "coral", "acid"]), "Rive" + i), 320, 192); if (!m.shore) continue;
+    for (const a of m.sea.acid) { const p = G.seaSpot(m, a.x, a.u, -1); tot++; if (!inside(m.shore.land, p[0], Math.min(p[1], 191))) badA++; }
+    for (const c of m.sea.coral) { const p = G.seaSpot(m, c.x, c.u, 1); if (!inside(m.shore.wet, p[0], Math.min(p[1], 191))) badC++; }
+  }
+  ok(tot > 300 && badA / tot < 0.03 && badC / tot < 0.05, `flaques sur la terre (${badA} hors), corail dans l'eau (${badC} hors) sur ${tot}`);
+  const l = []; G.paint(fakeCtx(l), G.build(G.sceneOf(an(["single_sun", "ice", "kelp", "coral"]), "Glace"), 320, 192), 0.3, { day: 0.4 }); ok(l.length > 50, "glace seule : rendu");
+  const iceOnly = G.build(G.sceneOf(an(["single_sun", "ice", "kelp"]), "Glace"), 320, 192); ok(iceOnly.S.ice && !iceOnly.S.water, "glace sans eau : pas de varech dessiné (pas d'eau)");
+}
+
+// 1.17 : les vues du périscope de l'Imageur (directions, zénith, sous l'eau)
+{
+  const V = require("../src/genviews");
+  const m0 = G.build(G.sceneOf(an(["single_sun", "water", "sand", "kelp", "coral", "fissure", "grove", "auroras"]), "Lagon"), 300, 176);
+  const h1 = V.heading(m0, 1), h2 = V.heading(m0, 2);
+  ok(V.heading(m0, 0) === m0 && V.heading(m0, 4) === m0 && V.heading(m0, 1) === h1, "direction 0 : la vue de face ; les autres gardées");
+  ok(h1.pal === m0.pal && h1.noSun && h1.sunFrom === m0 && JSON.stringify(h1.ridges[0].xs) !== JSON.stringify(m0.ridges[0].xs) && JSON.stringify(h1.ridges[0].xs) !== JSON.stringify(h2.ridges[0].xs), "une direction : le même ciel, un autre décor");
+  const k0 = G.skyState(m0, 0.3, { day: 0.3 }), k1 = G.skyState(h1, 0.3, { day: 0.3 }); ok(k0.d === k1.d && JSON.stringify(k0.top) === JSON.stringify(k1.top), "même heure, même lumière dans toutes les directions");
+  const l = []; G.paint(fakeCtx(l), h1, 0.3, { day: 0.3 }); ok(l.length > 50, "une autre direction se peint");
+  ok(V.hasUnder(m0) && !V.hasUnder(G.build(G.sceneOf(an(["single_sun", "stone"]), "Roc"), 300, 176)), "sous l'eau : seulement s'il y a de l'eau");
+  const u = []; V.paintUnder(fakeCtx(u), m0, 0.3, { day: 0.3 }, 0); ok(u.length > 100, "sous l'eau : rendu");
+  const U = V.buildUnder(m0, 0); ok(U.kelp.length && U.coral.length && U.fis && JSON.stringify(V.buildUnder(m0, 0)) === JSON.stringify(U) && JSON.stringify(V.buildUnder(m0, 1)) !== JSON.stringify(U), "sous l'eau : varech, corail, la fissure ; même graine, même fond ; autre direction, autre fond");
+  const z = []; V.paintZenith(fakeCtx(z), m0, 0.3, { day: 0.9 }); ok(z.length > 50, "le zénith : rendu");
+  const zz = []; V.paintLook(fakeCtx(zz), G.build(G.sceneOf(an(["single_sun", "stone"]), "Roc"), 300, 176), 0.3, { day: 0.3 }, 0, -1); ok(zz.length > 50, "sans eau, regarder en bas : la vue de face");
 }
 
 console.log(`gen.test.js : ${n} vérifications OK`);

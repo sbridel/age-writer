@@ -8,7 +8,10 @@ const { skyAt, hourFor, placePlants, layoutIsland } = require("./relto-model");
 const SC = require("./relto-scenery");
 const GL = require("./relto-global");
 const RM = require("./relto-rooms");
-const ROOMS = { cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom };
+const RI = require("./relto-imager");
+const IM = require("./imager");
+const RV = require("./genviews");
+const ROOMS = { cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom };
 
 const W = 640, H = 360, GY = 208; // largeur, hauteur logiques ; ligne de sol
 
@@ -168,6 +171,7 @@ class ReltoRenderer {
     const has = (type) => sc.additions.find((a) => a.type === type);
     this.hot = [];
     if (this.view && this.view !== "island" && this.view !== "global" && !this.available()[this.view]) this.view = "island"; // la page de cette vue a été retirée
+    if (this.view === "cat" && this.catAsleep()) { this.view = "cabin"; if (this.opts.onView) this.opts.onView("cabin"); } // l'heure a tourné : il est rentré dormir
     if (this.view === "global") return this.drawFullView(ctx, sky, () => GL.drawGlobal(this, ctx, sc, sky, t, has));
     if (ROOMS[this.view]) return this.drawFullView(ctx, sky, () => ROOMS[this.view](this, ctx, sc, sky, t));
     ctx.save(); ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0);
@@ -185,12 +189,13 @@ class ReltoRenderer {
     const dk = has("dock"); if (dk) SC.dock(ctx, this, sky, t, !!cal);
     for (const k of ["gold", "silver", "gems"]) { const o = has(k); if (o) this.drawOre(ctx, k, o.density, sky, t); }
     const mt = has("mountain"); if (mt) this.drawMount(ctx, mt.density, sky, t);
+    const wf = has("waterfall"); if (wf) this.drawWaterfall(ctx, t, "stream"); // le ruisseau coule sur la montagne : derrière les arbres
     this.drawPlants(ctx, 0, t);
     const kp = has("koi"); if (kp) this.drawKoi(ctx, kp, sky, t); // après les arbres du fond : le bassin n'est jamais recouvert
-    const wf = has("waterfall"); if (wf) this.drawWaterfall(ctx, t);
+    if (wf) this.drawWaterfall(ctx, t, "fall"); // éclaboussures sur le bassin et chute sous l'île : devant
     this.drawStructures(ctx, sky, t);
     const bn = has("bench"); if (bn) SC.bench(ctx, this, sky, this.lay.bench ? this.lay.bench.x0 : 289);
-    const ct = has("cat"); if (ct) this.drawCat(ctx, ct, sky, t);
+    const ct = has("cat"); if (ct && !this.catAsleep()) this.drawCat(ctx, ct, sky, t); // endormi : il est dans la cabane, près du feu
     const sk = has("stalktree"); if (sk) this.drawStalk(ctx, sk, sky, t);
     const pl = has("pillars"); if (pl) this.drawPillars(ctx, pl.density, sky, t);
     const ch = has("chimney"); if (ch) this.drawChimney(ctx, ch.density, sky, t);
@@ -388,15 +393,19 @@ class ReltoRenderer {
   }
 
   /** Ruisseau : naît sur le flanc du mont, descend jusqu'au bassin (ou jusqu'au bord), puis tombe de l'île dans la brume. */
-  drawWaterfall(ctx, t) {
+  /** Ruisseau (part « stream », sur la montagne, derrière les arbres) puis chute (part « fall », sous l'île, devant). */
+  drawWaterfall(ctx, t, part = "all") {
     const L = this.lay, M = L.mount, koi = L.koi, mt = this.scene.additions.some((a) => a.type === "mountain");
     const fx = koi ? koi.x0 + 16 : M.x + M.hw * 0.5, sx = mt ? M.x + 16 : fx - 22, sy = mt ? GY - M.h * 0.86 : GY - 7, N = 24, pts = [];
     for (let i = 0; i <= N; i++) { const p = i / N; pts.push([sx + (fx - sx) * Math.pow(p, 1.15) + Math.sin(p * 7 + t * 0.4) * 0.8 * (1 - p), sy + (GY - sy) * p, 1.6 + 2.6 * p]); }
+    if (part !== "fall") {
     ctx.fillStyle = "rgba(200,228,248,0.85)"; ctx.beginPath();
     pts.forEach(([x, y, w], i) => (i ? ctx.lineTo(x - w / 2, y) : ctx.moveTo(x - w / 2, y))); for (let i = N; i >= 0; i--) ctx.lineTo(pts[i][0] + pts[i][2] / 2, pts[i][1]); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,0.75)"; ctx.lineWidth = 0.9;
     for (let k = 0; k < 7; k++) { const q = frac(t * 0.4 + k / 7), i = Math.min(N - 1, Math.floor(q * N)), [x, y] = pts[i], [x2, y2] = pts[i + 1]; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x2, y2); ctx.stroke(); }
     ctx.fillStyle = "rgba(190,220,238,0.7)"; ctx.beginPath(); ctx.ellipse(sx, sy, 5, 1.6, 0, 0, 6.283); ctx.fill(); // la source
+    }
+    if (part === "stream") return;
     for (let i = 0; i < 3; i++) { const p = frac(t * 0.5 + i / 3); ctx.strokeStyle = rgba(235, 245, 255, 0.4 * (1 - p)); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.ellipse(fx, GY + 0.6, 2 + p * 7, 0.6 + p * 1.3, 0, 0, 6.283); ctx.stroke(); } // éclaboussures à l'arrivée
     // la chute : du fond du bassin (ou du bord de l'île) jusque dans la brume
     const ex = koi ? koi.x1 - 7 : fx, ey = koi ? GY + 17 : GY + 9, w = 8;
@@ -501,6 +510,152 @@ class ReltoRenderer {
     const nm = String(a.name || "").trim();
     this.hot.push({ x: CX - 9, y: GY - 26, w: 18, h: 26, tip: nm ? `${nm} — ${cat.label} cat` : `A ${cat.label} cat`, flash: nm || `a ${cat.label} cat` });
   }
+
+  /**
+   * Le chat dort-il dans la cabane, sur le tapis ? Option de page `sleep=` : never (toujours dehors), always (toujours au coin du feu),
+   * auto (défaut) : le soir et la nuit, surtout quand l'âtre brûle ; parfois par pluie ou neige, rarement en plein jour.
+   * Le tirage change par demi-heure (jamais d'une image à l'autre) et dépend de la graine du Relto.
+   */
+  catAsleep() {
+    const sc = this.scene, has = (ty) => sc.additions.find((a) => a.type === ty), cat = has("cat");
+    if (!cat || !sc.structures.includes("hut")) return false;
+    const mode = String(cat.sleep || "auto").toLowerCase();
+    if (mode === "never" || mode === "no" || mode === "off") return false;
+    if (mode === "always" || mode === "yes" || mode === "fire") return true;
+    const h = ((this.hour() % 24) + 24) % 24, fire = !!has("chimney"), wet = !!(has("rain") || has("storm") || has("snow"));
+    const p = h >= 19.5 || h < 6.5 ? (fire ? 0.85 : 0.5) : wet ? 0.55 : h >= 17 && fire ? 0.3 : 0.06;
+    return rng((sc.seed ^ fnv("cat-sleep|" + Math.floor(h * 2))) >>> 0)() < p;
+  }
+
+  /**
+   * Le chat roulé en boule (vue de la cabane) : il respire, une oreille frémit de temps en temps, la queue fait le tour du corps.
+   * (x, y) : le sol sous lui ; S : échelle ; glow : lueur de l'âtre (0 = feu éteint) ; shade : la pénombre de la pièce.
+   */
+  drawSleepingCat(ctx, a, { x, y, S, glow = 0, shade = (c) => c }, t) {
+    const cat = catLook(a.color), br = 1 + 0.045 * Math.sin(t * 1.5), tw = frac(t * 0.13 + (this.scene.seed % 5) / 5) > 0.975 ? Math.sin(t * 40) * 0.25 : 0;
+    ctx.save(); ctx.translate(x, y); ctx.scale(S, S);
+    ctx.fillStyle = "rgba(0,0,0,0.28)"; ctx.beginPath(); ctx.ellipse(0, 0, 13, 2.2, 0, 0, 6.283); ctx.fill(); // ombre sur le tapis
+    // corps : une miche couchée, qui se soulève doucement
+    ctx.save(); ctx.translate(1, 0); ctx.scale(1, br);
+    ctx.fillStyle = shade(cat.fur); ctx.beginPath(); ctx.ellipse(0, -5, 11, 5.4, 0, 0, 6.283); ctx.fill();
+    if (cat.belly) { ctx.fillStyle = shade(cat.belly); ctx.beginPath(); ctx.ellipse(-2.5, -1.7, 5.5, 1.7, 0, 0, 6.283); ctx.fill(); }
+    if (cat.patch) { ctx.fillStyle = shade(cat.patch); ctx.beginPath(); ctx.ellipse(4, -7, 4.2, 2.6, 0.2, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(-2, -8.4, 2.2, 1.4, -0.2, 0, 6.283); ctx.fill(); }
+    if (cat.stripes) { ctx.strokeStyle = shade(cat.stripes); ctx.lineWidth = 0.8; for (let i = 0; i < 4; i++) { const sx = -3 + i * 3.2; ctx.beginPath(); ctx.moveTo(sx, -10.2); ctx.quadraticCurveTo(sx + 1.2, -7.4, sx + 0.4, -5.4); ctx.stroke(); } }
+    ctx.restore();
+    // queue enroulée devant, jusque sous le museau
+    ctx.strokeStyle = shade(cat.tail); ctx.lineWidth = 2.4; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(10.5, -2.5); ctx.bezierCurveTo(13.5, 0.5, 7, 1.6, 0, 1.4); ctx.quadraticCurveTo(-6, 1.2, -9 + Math.sin(t * 0.7) * 0.4, -0.4); ctx.stroke();
+    // patte avant, tête posée dessus
+    ctx.fillStyle = shade(cat.paws || cat.fur); ctx.beginPath(); ctx.ellipse(-9.5, -1.2, 2.6, 1.3, 0, 0, 6.283); ctx.fill();
+    const hx = -8.2, hy = -5.2;
+    ctx.fillStyle = shade(cat.ears || cat.fur);
+    ctx.beginPath(); ctx.moveTo(hx - 3.4, hy - 1.6); ctx.lineTo(hx - 4.4, hy - 6); ctx.lineTo(hx - 0.9, hy - 3.6); ctx.closePath(); ctx.fill();
+    ctx.save(); ctx.translate(hx + 2.2, hy - 2.6); ctx.rotate(0.35 + tw); ctx.beginPath(); ctx.moveTo(-1.6, 0.4); ctx.lineTo(0.2, -4.2); ctx.lineTo(1.8, 0.2); ctx.closePath(); ctx.fill(); ctx.restore();
+    ctx.fillStyle = shade(cat.face || cat.fur); ctx.beginPath(); ctx.ellipse(hx, hy, 4.4, 3.9, -0.15, 0, 6.283); ctx.fill();
+    if (cat.muzzle) { ctx.fillStyle = shade(cat.muzzle); ctx.beginPath(); ctx.ellipse(hx - 0.8, hy + 1.6, 2.2, 1.5, 0, 0, 6.283); ctx.fill(); }
+    // yeux clos : deux petits arcs
+    const fur = String(cat.face || cat.fur), dark = /^#[0-9a-f]{6}$/i.test(fur) && parseInt(fur.slice(1, 3), 16) + parseInt(fur.slice(3, 5), 16) + parseInt(fur.slice(5, 7), 16) < 240;
+    ctx.strokeStyle = shade(dark ? "#8a8296" : "#1a1410"); ctx.lineWidth = 0.55; // sur un pelage sombre, les paupières se lisent en clair
+    for (const ex of [hx - 2.3, hx + 1.3]) { ctx.beginPath(); ctx.arc(ex, hy - 0.4, 0.9, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke(); }
+    ctx.fillStyle = shade("#d98a8a"); ctx.fillRect(hx - 0.9, hy + 1, 0.8, 0.55);
+    // lueur de l'âtre sur le dos (le feu est à droite)
+    if (glow > 0) { ctx.strokeStyle = rgba(255, 170, 80, 0.5 * glow); ctx.lineWidth = 0.9; ctx.lineCap = "butt"; ctx.beginPath(); ctx.ellipse(1, -5 * br, 11, 5.4 * br, 0, -0.95, 0.3); ctx.stroke(); }
+    ctx.restore();
+    // quelques « z » qui montent, très pâles
+    if (!this.opts.reducedMotion) for (let i = 0; i < 2; i++) { const p = frac(t * 0.18 + i * 0.5); ctx.fillStyle = rgba(240, 230, 210, 0.35 * Math.sin(p * Math.PI)); ctx.font = `italic ${Math.round(S * (2.6 + p * 1.6))}px serif`; ctx.fillText("z", x + S * (-11 + p * 4 + i * 2), y - S * (11 + p * 9)); }
+    const nm = String(a.name || "").trim();
+    this.hot.push({ x: x - 14 * S, y: y - 12 * S, w: 27 * S, h: 13 * S, tip: nm ? `${nm} — asleep by the fire` : `A ${cat.label} cat, asleep`, flash: "purr…", purr: true });
+  }
+
+  // ---- l'Imageur (page « imager ») --------------------------------------------------------------
+  /**
+   * État de l'Imageur : l'Âge posé sur le lutrin (parmi ceux de l'étagère), son ciel (`target`), sa vue (modèle génératif)
+   * et le réglage de la console. Les données d'un Âge viennent de `opts.onImagerAge(age)` (lecture de la note, analyse,
+   * physique) ; le réglage est relu et gardé par `opts.imagerGet / imagerSet` (par chemin de note).
+   */
+  imagerState() {
+    if (!this.imager) this.imager = { idx: 0, station: null, hand: null, age: null, target: null, model: null, settings: IM.normalize(null), loading: null, empty: false };
+    const st = this.imager, ages = (this.scene && this.scene.ages) || [];
+    st.empty = !ages.length;
+    if (ages.length && (!st.age || !ages.some((a) => a.path === st.age.path)) && !st.loading) this.imagerLoad(Math.min(st.idx, ages.length - 1));
+    return st;
+  }
+  imagerNow() { return this.nowOverride != null ? this.nowOverride : Date.now(); }
+  imagerLoad(i) {
+    const ages = (this.scene && this.scene.ages) || [], st = this.imager; if (!ages.length) return;
+    st.idx = ((i % ages.length) + ages.length) % ages.length; const age = ages[st.idx];
+    st.age = age; st.target = null; st.model = null; st.view = false; st.thumb = null; st.hand = null; st.anim = null;
+    st.settings = IM.normalize(this.opts.imagerGet ? this.opts.imagerGet(age.path) : null);
+    if (!this.opts.onImagerAge) return;
+    const token = (st.loading = {});
+    Promise.resolve(this.opts.onImagerAge(age)).then((d) => {
+      if (st.loading !== token) return; st.loading = null;
+      if (!d) return; st.target = d.target; st.model = d.model; st.view = !!d.model;
+      if (st.settings.tilt < 0 && !RV.hasUnder(st.model)) st.settings = { ...st.settings, tilt: 0 };
+      if (st.settings.lock && !IM.canLock(st.settings, st.target, this.imagerNow())) st.settings = { ...st.settings, lock: false, az: 0, tilt: 0 }; // le livre a changé depuis : le verrou a glissé
+      if (!this.running) this.draw(0);
+    }, () => { if (st.loading === token) st.loading = null; });
+  }
+  /**
+   * La vue de l'Âge sur l'écran : un petit canvas repeint à chaque image (de face ; verrouillé, là où regarde le
+   * périscope). Pendant qu'on tourne ou qu'on lève les yeux, l'ancienne vue est peinte aussi, pour glisser de l'une à l'autre.
+   */
+  imagerView(st, t) {
+    if (!st.model) return null;
+    if (!st.canvas) st.canvas = makeCanvas(300, 176);
+    st.thumb = st.canvas;
+    if (!st.sq) st.sq = makeCanvas(350, 350);
+    const s = st.settings, look = s.lock ? { az: s.az, tilt: s.tilt } : { az: 0, tilt: 0 }, now = this.imagerNow();
+    RI.paintView(st.canvas, st.model, st.target, t, now, look, st.sq);
+    const a = st.anim;
+    if (a && t >= a.t0 && t - a.t0 < 0.7) {
+      if (!st.canvas2) st.canvas2 = makeCanvas(300, 176);
+      RI.paintView(st.canvas2, st.model, st.target, t, now, a.from, st.sq);
+      return { cur: st.canvas, prev: st.canvas2, p: (t - a.t0) / 0.7, dx: a.dx, dy: a.dy };
+    }
+    return { cur: st.canvas };
+  }
+  /** Un geste sur la machine : un livre, un poste, un cristal, un verre, un bouton, le verrou, le périscope. */
+  imagerAct(a) {
+    const st = this.imagerState(), tg = st.target, before = st.settings, now = this.imagerNow(), sfx = (k) => { if (this.opts.onImagerSound) this.opts.onImagerSound(k); };
+    const say = (text) => { const h = this.hover || { x: W / 2, y: H / 2, w: 0 }; this.flash = { text, x: h.x + (h.w || 0) / 2, y: h.y, until: Date.now() + 2400 }; };
+    if (a.hum) { if (this.opts.onImagerHum) this.opts.onImagerHum(a.hum); sfx("click"); return; }
+    if (a.book) { this.imagerLoad(st.idx + a.book); sfx("page"); return; }
+    if ("station" in a) { st.station = a.station; st.hand = null; return; }
+    if (a.lock) {
+      if (!tg) return;
+      const res = IM.toggleLock(before, tg, now); st.settings = res.s;
+      if (!res.ok) { sfx("jam"); say("It won't hold — the image is not clear"); return; }
+      sfx(res.locked ? "lock" : "unlock"); say(res.locked ? "Locked — the machine follows the Age" : "Released");
+      if (!res.locked && (before.az || before.tilt)) this.imagerAnim(before, st.settings);
+    } else if (a.slot != null || a.rack != null) {
+      if (before.lock) { say("The lock holds the crystals"); return; }
+      if (a.rack != null && before.cry.includes(a.rack) && !st.hand) return; // sa cheville est vide : le cristal est dans un logement
+      const res = IM.place(before, st.hand, a.slot != null ? { slot: a.slot } : { rack: a.rack }); st.hand = res.hand; st.settings = res.s; sfx(res.hand ? "lift" : "set");
+    } else if ("tilt" in a) {
+      if (!before.lock) { sfx("jam"); say("The periscope is free only once the lock holds"); return; }
+      if (a.tilt < 0 && !RV.hasUnder(st.model)) { sfx("jam"); say("Nothing below but rock"); return; }
+      st.settings = IM.turn(before, "tilt", a.tilt - before.tilt); sfx("lever");
+    } else if (a.key) {
+      if (before.lock && a.key !== "az") { say("The lock holds the tuning"); return; }
+      if (a.key === "az" && !before.lock) { sfx("jam"); say("The periscope is free only once the lock holds"); return; }
+      st.settings = a.value != null ? IM.set(before, a.key, a.value) : IM.turn(before, a.key, a.delta, tg && tg.crystals ? tg.crystals.options.length : 8);
+      sfx(a.key === "az" ? "crank" : a.value != null ? "slide" : "click");
+      if (a.key === "az") st.crankSpin = 0;
+    }
+    if (st.settings.az !== before.az || st.settings.tilt !== before.tilt) this.imagerAnim(before, st.settings);
+    if (st.age && this.opts.imagerSet) this.opts.imagerSet(st.age.path, st.settings);
+    if (this.opts.onImagerTune) this.opts.onImagerTune(st);
+  }
+  /** La vue glisse de l'ancienne direction vers la nouvelle (de côté pour l'azimut, de haut en bas pour l'inclinaison). */
+  imagerAnim(from, to) {
+    const st = this.imager; if (this.opts.reducedMotion) return;
+    const d = ((to.az - from.az + 4) % 4) === 3 ? -1 : to.az !== from.az ? 1 : 0;
+    st.anim = { from: { az: from.lock ? from.az : 0, tilt: from.lock ? from.tilt : 0 }, t0: this.imagerT || 0, dx: d, dy: d ? 0 : to.tilt > from.tilt ? -1 : 1 };
+  }
+  /** Les trois réglages et la netteté finale (0 à 1) : pour le son et les tests. */
+  imagerClarity() { const st = this.imager; return st && st.target ? IM.clarity(st.settings, st.target, this.imagerNow()) : { cry: 0, lens: 0, atmo: 0, total: 0 }; }
+  imagerSharpness() { return this.imagerClarity().total; }
 
   /** étiquette brève (nom du chat, de la koï) affichée après un clic */
   /** partie visible du monde (x0, x1, y0) : la caméra de l'île recadre les bords, la vue globale montre tout */
@@ -727,7 +882,7 @@ class ReltoRenderer {
 
   drawHover(ctx) {
     const h = this.hover; if (!h) return;
-    ctx.strokeStyle = "rgba(255,240,200,0.9)"; ctx.lineWidth = 1; ctx.strokeRect(h.x - 1, h.y - 1, h.w + 2, h.h + 2);
+    if (this.opts.hoverFrame !== false) { ctx.strokeStyle = "rgba(255,240,200,0.9)"; ctx.lineWidth = 1; ctx.strokeRect(h.x - 1, h.y - 1, h.w + 2, h.h + 2); } // cadre : réglage « Cadre des zones cliquables »
     const [vx0, vx1, vy0] = this.visible_();
     ctx.font = "11px serif"; const tw = ctx.measureText(h.tip).width, bx = clamp(h.x + h.w / 2 - tw / 2 - 6, vx0 + 4, Math.max(vx0 + 4, vx1 - tw - 16)), by = Math.max(vy0 + 4, h.y - 24);
     ctx.fillStyle = "rgba(16,13,9,0.92)"; ctx.fillRect(bx, by, tw + 12, 18); ctx.strokeStyle = "rgba(205,189,148,0.8)"; ctx.strokeRect(bx, by, tw + 12, 18);
@@ -738,6 +893,7 @@ class ReltoRenderer {
   /** « island » (vue de l'île, par défaut) ou « global » (le Relto vu de loin) ; un fondu léger marque le passage. */
   setView(view) {
     if (view !== "global" && !(ROOMS[view] && this.available()[view])) view = "island";
+    if (view === "cat" && this.catAsleep()) view = "cabin"; // il dort au coin du feu : on le trouve dans la cabane
     if (view === (this.view || "island")) return;
     this.view = view; this.hover = null; this.flash = null; this.fadeAt = Date.now();
     if (this.opts.onView) this.opts.onView(view);
@@ -746,7 +902,7 @@ class ReltoRenderer {
   /** vues possibles selon les pages et structures de ce Relto (l'île et la vue globale existent toujours) */
   available() {
     const sc = this.scene, a = (t) => sc.additions.some((x) => x.type === t);
-    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies") };
+    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies"), imager: a("imager") };
   }
   /** dessine `fn` (en coordonnées de l'île) agrandi dans une vue rapprochée et reporte les zones cliquables qu'il crée à l'écran */
   withView(ctx, { S, ox, oy, fx, fy }, fn) {
@@ -775,10 +931,10 @@ class ReltoRenderer {
   }
   hit(x, y) { for (let i = this.hot.length - 1; i >= 0; i--) { const h = this.hot[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h; } return null; }
   onMove(e) {
-    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go) ? "pointer" : "";
+    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go || this.hover.imager || this.hover.purr) ? "pointer" : "";
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
-  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
+  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };

@@ -1,4 +1,5 @@
 "use strict";
+const { setMarkup } = require("../util");
 const obsidian = require("obsidian");
 const { AgeSettingTab, DEFAULT_SETTINGS } = require("./settings-tab");
 const { setDrawSettings } = require("./resolve");
@@ -465,7 +466,7 @@ const AgeWriterPlugin = class AgeWriterPlugin extends obsidian.Plugin {
   renderAgePanel(ageSource, container, sourcePath) {
     let analysis = analyseAge(ageSource, { seed: noteName(sourcePath) }),
       resolved = analysis.resolved,
-      journal = describeAge(resolved),
+      journal = describeAge(resolved, { seed: noteName(sourcePath) }),
       panel = container.createDiv({ cls: `age-panel age-panel--${analysis.verdict}` });
     panel.createDiv({ cls: "age-panel__journal" }).setText(journal);
     let visual = panel.createDiv({ cls: "age-panel__visual" }),
@@ -497,7 +498,7 @@ const AgeWriterPlugin = class AgeWriterPlugin extends obsidian.Plugin {
       rect = hasWindow
         ? ""
         : `<rect x="${rectX}" y="${rectY}" width="40" height="24" rx="1" class="age-panel__linkrect${rectClass}"/>`;
-    ((visual.innerHTML = `<svg viewBox="0 0 ${width} ${height}" width="100%">` + glyphs + rect + "</svg>"),
+    (setMarkup(visual, `<svg viewBox="0 0 ${width} ${height}" width="100%">` + glyphs + rect + "</svg>"),
       imageSrc
         ? this.mountWindow(visual, imageSrc, analysis.verdict)
         : this.settings.generatedWindow && this.mountGenerated(visual, analysis, sourcePath));

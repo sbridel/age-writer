@@ -9,8 +9,9 @@
  */
 
 const { parseAmounts } = require("./amounts");
+const GEO = require("./geophys");
 
-const HUES = { green_sun: [150, 255, 150], red_sun: [255, 110, 80], white_sun: [250, 250, 255], blue_sun: [140, 190, 255], orange_sun: [255, 170, 80], violet_sun: [200, 140, 255] };
+const HUES = { green_sun: [150, 255, 150], red_sun: [255, 110, 80], white_sun: [250, 250, 255], blue_sun: [140, 190, 255], orange_sun: [255, 170, 80], violet_sun: [200, 140, 255], black_sun: [70, 34, 40] };
 const HUE_IDS = Object.keys(HUES);
 
 /** Mondes-types : un seul mot pour dire « ici, tout est de glace ». Pèsent sur la stabilité, jamais tirés au sort. */
@@ -31,8 +32,10 @@ const SKY_BLOCKS = [
   { id: "comet", category: "belt", label: "A comet", axis: "cosmological", weight: 0.04, proseTag: "#comet#" },
   star("green_sun", "A green sun", 0.03, "green_sun"), star("red_sun", "A red sun", 0.03, "red_sun"), star("white_sun", "A white sun", 0.02, "white_sun"),
   star("blue_sun", "A blue sun", 0.04, "blue_sun"), star("orange_sun", "An orange sun", 0.02, "orange_sun"), star("violet_sun", "A violet sun", 0.05, "violet_sun"),
+  star("black_sun", "A black sun", 0.06, "black_sun"),
   ...WORLD_IDS.map((id) => ({ id, category: "world", label: WORLD_LABEL[id], axis: "cosmological", weight: 0.02, proseTag: "#" + id + "#",
     contradictions: WORLD_IDS.filter((o) => o !== id).map((o) => ({ with: o, severity: "strong" })) })),
+  ...GEO.SKY_BLOCKS,
 ].map((b) => (HUES[b.id] ? { ...b, contradictions: [{ with: "starless", severity: "strong" }, ...hueClash(b.id)] } : b));
 
 const NOTES = {
@@ -71,6 +74,7 @@ const SKY_RULES = [
 
 /** Banque de phrases : mêmes clés que `proseTag`. */
 const SKY_PROSE = {
+  ...GEO.SKY_PROSE,
   asteroid_belt: ["a belt of broken rock circles overhead, glittering", "a river of stone drifts across the sky, never quite still", "a ring of debris keeps the heavens busy, and a little dangerous"],
   asteroid_field: ["great stones drift overhead, each with its own slow errand", "a field of wandering rock turns above, closer than it looks", "a few huge, patient bodies cross the sky, and nobody asked where they are headed"],
   planet_rings: ["a ringed world hangs in the sky, close enough to count the bands", "a pale planet wears its ring like a thin, bright road", "a banded giant rides high, its ring a line drawn across the dark"],
@@ -85,6 +89,7 @@ const SKY_PROSE = {
   desert_world: ["the world is dry to its bones, a wide and patient desert", "a desert world, where the horizon is the only thing that moves", "sand and silence, to the edge of what the sky can hold"],
   ocean_world: ["the world is water to the horizon, and the horizon is the only land", "an ocean world, deep and without a single shore", "everything here floats, or sinks, or waits beneath the surface"],
   jungle_world: ["the world is a single green hunger, dense and loud", "a jungle world, where every surface is alive with something", "leaf over leaf, to the edge of the sky, and nothing lies still beneath it"],
+  black_sun: ["a black sun hangs overhead, a dark coin rimmed with dull fire, and the day comes as warmth more than light", "the sun is black, and the world beneath it is drawn in greys", "under a black sun, colours drain away and every shadow is soft and red at the edges"],
   violet_sun: ["a violet sun burns at the edge of what the eye can hold", "the sun is violet, and the day has the color of a bruise at dusk", "a violet star, strangely bright, tints the sky with dusk"],
 };
 
@@ -95,6 +100,8 @@ function sunColors(ids) { return ids.filter((i) => HUES[i]).slice(0, 2).map((i) 
 const DAY_RE = /^\s*(?:day_length|day)\s*[:=]\s*(\d+(?:[.,]\d+)?)\s*(?:min|mins|minutes?)?\s*$/i;
 /** `window_size: large` (normal | large | xl) ou `window_width: 520` (pixels, 200 à 800) : taille de la fenêtre de liaison dans le bloc age. */
 const SIZE_RE = /^\s*(?:window_size|window_width|window)\s*[:=]\s*(normal|small|large|big|xl|xxl|\d{3})(?:\s*px)?\s*$/i;
+/** `moons: 2` (0 à 5, au-delà : 5 ; alias `lunes:`) : nombre de lunes dans la fenêtre générative. */
+const MOONS_RE = /^\s*(?:moons|lunes)\s*[:=]\s*(\d+)\s*$/i;
 const YEAR_RE = /^\s*(?:year_length|year|revolution)\s*[:=]\s*(\d+(?:[.,]\d+)?)\s*(?:days?|jours?)?\s*$/i;
 /** `day_length: 40` (minutes réelles par jour, 0,2 à 1440) ; `year_length: 12` (jours par année, 1 à 365). Hors bornes : ignoré. */
 function parseSky(src) {
@@ -102,6 +109,7 @@ function parseSky(src) {
   for (const line of String(src || "").split("\n")) {
     let m = line.match(DAY_RE); if (m) { const v = Number(m[1].replace(",", ".")); if (v >= 0.2 && v <= 1440) out.dayLen = v; continue; }
     m = line.match(SIZE_RE); if (m) { const v = m[1].toLowerCase(); if (/^\d+$/.test(v)) { const px = Number(v); if (px >= 200 && px <= 800) out.size = px; } else out.size = v === "small" ? "normal" : v === "big" ? "large" : v === "xxl" ? "xl" : v; continue; }
+    m = line.match(MOONS_RE); if (m) { out.moons = Math.min(5, Number(m[1])); continue; } // au-delà de cinq : cinq
     m = line.match(YEAR_RE); if (m) { const v = Number(m[1].replace(",", ".")); if (v >= 1 && v <= 365) out.yearLen = v; }
   }
   const amt = parseAmounts(src); if (amt) out.amt = amt; // quantités : beaucoup / peu / normal
@@ -115,4 +123,4 @@ function clockPhases(sky, now = Date.now()) {
   return { day: day < 0 ? day + 1 : day, season: yr };
 }
 
-module.exports = { SIZE_RE, WORLD_IDS, HUES, HUE_IDS, SKY_BLOCKS, SKY_RULES, SKY_PROSE, NOTES, sunColors, DAY_RE, YEAR_RE, parseSky, clockPhases };
+module.exports = { MOONS_RE, SIZE_RE, WORLD_IDS, HUES, HUE_IDS, SKY_BLOCKS, SKY_RULES, SKY_PROSE, NOTES, sunColors, DAY_RE, YEAR_RE, parseSky, clockPhases };

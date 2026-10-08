@@ -7,9 +7,30 @@ An Obsidian plugin inspired by Mystcraft and the Myst series. You write an **Age
 The founding idea: in Mystcraft you don't **create** a world, you **link** to a world that already exists. What you write describes it; what you leave open is drawn by lot, always the same way for the same note. And if you rewrite a world you've already explored, you damage it.
 
 > Fan project, not affiliated with or endorsed by Cyan Worlds. No Myst asset (font, image, sound) is included.
+>
+> A tribute: the names borrowed from the Myst universe (Age, Relto, D'ni, linking book, Descriptive Book…) are an homage and a source of inspiration, not a reproduction. The code, the pictures, the sounds and the texts are original. Licence: MIT.
 
-**Version 1.15.3.** The engine (derived from 1.3.0) is available as readable sources in `src/engine/`. `manifest.json` announces `1.15.3`. Highlights of the latest releases (full history in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)):
+## Inside the fiction
 
+Age Writer is built to be **diegetic**: almost everything it shows is something that happens *in the world*, not a feature of an app. You are not filling in a form; you are a Writer at a desk, and your vault is a library of Descriptive Books.
+
+- **Your note is a Descriptive Book.** Each line of the `age` block is a phrase of the Art. The text under the block is what the book says back once written: *"The sun burns white, leaving no corner kind."* Nothing in it is a label or a field name.
+- **What you leave unwritten is not empty.** The dark fills it, and the book tells you so: *"Unwritten, it was drawn from the dark: a pale companion trails the main star."* Same note, same world, every time: you link to a world that exists, you don't roll a new one.
+- **Stability is how well the Art holds**, not a score. An Age is *stable*, *unstable* or *dying*; contradictions read as the world's own unease (*"a frozen world does not thaw for what is written upon it"*).
+- **Worlds have physics.** The core cools, the air escapes a small world, a red dwarf locks one face in night. When something doesn't hold, the explanation is about the world (*"a molten core, but the interior has cooled"*), and the fix is offered as a line of Art you could write (`age: 3.5`).
+- **You look through a linking panel.** Each Age has its own living window: its sky, its relief, its shore, the branch or reeds at the edge of the frame, its weather and its light at this hour. Click it and you hear the link.
+- **Books behave like books.** A cover drawn from the Age, a clasp that clicks, pages that turn. A trap book looks like any other. Damaged or torn pages make the link uncertain. Rewriting a world you have already explored **damages it** (the law of change): the Art remembers.
+- **Numbers are D'ni.** Age numbers, seeds, puzzles and the Relto clock are written in base 25; the Relto keeps D'ni time.
+- **Home is a place.** The Relto is your Age: an island, a cabin, a shelf where your Ages stand as books coloured by their stability. Pages you earn by writing (a stable Age, a number of Ages) change the island. In the evening the cat sleeps on the rug by the fire. No physics applies here: it is the one place where nothing pushes back.
+- **The journal is written, not logged.** Exploring an Age leaves entries in a voice, alongside the notes that mention it.
+
+Two places step outside the fiction on purpose: the **Details** tab (stability per axis, causes, numbers: read it as a Guild surveyor's notes on your book) and the **Settings**. Everything else tries to stay in the world.
+
+**Version 1.17.0.** The engine (derived from 1.3.0) is available as readable sources in `src/engine/`. `manifest.json` announces `1.17.0`. Highlights of the latest releases (full history in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)):
+
+- **1.17.0**: **the Imager**, a machine in the Relto (page *Imager*): put an Age's book on the lectern and tune it in three steps (I crystals: the Age's written pages; II lenses: its star's light; III atmosphere: its sky, computed by its physics, with a phase that drifts with the clock) until the Age appears on the screen; once **locked**, it follows the Age, and a periscope turns, looks up at the zenith or goes **under the water**. Clues in each Age's Details tab.
+- **1.16.1**: **shorelines** in the generative window: water and land in the same Age now meet (beach, rocks, grassy bank, steaming lava coast, ice shelf), framed differently for each Age. **Foregrounds** chosen from the Age and generated from its seed: a branch that grows differently in every Age (leafy, needles, bare, blossom, hanging moss, snowy, charred), vines, reeds and cattails by the water, large leaves, a broken column, icicles, rocks, an arch, or nothing. **Descriptions rewritten** (no more "Beyond that… Beyond that…": linking words never repeat, the sky reads in order, unreacting things are grouped, adjectives only on first mention) and **reproducible** (same Age, same text, every time it opens). In the Relto, **the cat sleeps by the fire**: in the evening it is curled up on the cabin rug (a click makes it purr); `cat_sleep: auto | always | never`. Fix: a stray shelf plank lay on the cabin floor.
+- **1.16.0**: **physics of the Ages**. Under the blocks, every Age gets a simplified physics (star, orbit, planet, internal heat, core, magnetic field, air, temperature, water, light), chosen to hold what you wrote; the reworked **Details** tab shows it with stability bars per axis, a chain of causes, the world's sheet, what does not hold and why, and suggested lines (`age: 3.5`) that one click writes into the block. **Easy** mode (default) never changes stability; **strict** makes what does not hold cost, with a severity slider. New blocks, never drawn: `black_sun` (a brown dwarf: warmth without light, grey day, black plants), `close_orbit`, `distant_orbit`, `young_world`, `ancient_world`, `heavy_world`, `light_world`, `molten_core`, `dead_core`, `geysers`, `rifts`, `thick_air`, `thin_air`, `subsurface_ocean`. Value lines: `mass:`, `age:`, `orbit:`, `insolation:`, `core:`, `atmosphere:`… Existing Ages keep their pages and stability in easy mode.
 - **1.15.3**: world-type clashes about the weather now count (`desert_world` + `rain`, `frozen_world` + `heat`… used to cost nothing because of a misnamed axis), and every sky ↔ matter clash counts, not just one per world type. Drawn pages don't change; only stability does (about 1 Age in 9, often a few points).
 - **1.15.x**: the cabin plays a crackling **fireplace** when the *chimney* page is active (soft rumble, wood crackles; a cold hearth is silent). Optional "fireplace sound file" setting to use a real recording.
 - **1.14.x**: pond, purr and meow sounds can come from **real recordings** in your vault (Settings > Sound > Relto; ogg, mp3 or wav; empty = synthesized). Files are not shipped: use royalty-free sounds (CC0 or a licence that allows your use; check each sound's page). A meow file containing **several meows** is split at the silences and one is played at a time. **Northern lights** are only visible at night, in the Relto and in Ages. New pages: **page_cat_toys** and **page_pond_decor** (the close-up "Pond, close up" view with lilies, stone lantern, bamboo spout, reeds, dragonflies by day, fireflies at dusk).
@@ -68,7 +89,8 @@ link: [[Sunder Reach]]
 2. Below the block, the panel appears (tabs *Text & glyphs*, *Linking window*, *Details*).
 3. Run **Open this Age as a book**: the book opens in a tab, on its cover.
 4. Run **Create a Relto page**, then put a `relto` block in a note: your refuge, with your Ages on the shelf.
-5. If you get lost: **Open the Age Writer guide** (short guide) or **Open the Age Writer full reference**.
+5. Run **Generate a random Age** for a ready-made world (and read the *Age Writer — Welcome* note created on first launch: an annotated example).
+6. If you get lost: **Open the Age Writer guide** (short guide) or **Open the Age Writer full reference**.
 
 ---
 
@@ -87,6 +109,7 @@ An `age` code block, one page per line (a block identifier), plus special lines.
 | `window_size: xl` / `window_width: 520` | window size |
 | `fx: tv` | window effect: `classic`, `static`, `ripple`, `sweep`, `tv`, `random`, `off` |
 | `day_length: 40`, `year_length: 12` | day length (real minutes) and year length (days), generative rendering |
+| `moons: 3` | number of moons in the generative window (0 to 5; `companion_moon` gives one) |
 | `many: ruins` / `few: rain` / `normal: water` | quantities |
 | `mechanism: orrery` | the Age's mechanism |
 | `trap book` | trap book (neither return nor crack) |
@@ -102,7 +125,7 @@ So as not to show everything at once, the panel below the block has three tabs (
 
 - **Text & glyphs**: description and glyphs, with a small centred linking window;
 - **Linking window**: the big window; a click plays the linking sound;
-- **Details**: stability, mechanisms, journal, "Listen to the Age" button.
+- **Details**: stability per axis, **physics of the world** (sheet, chain of causes, what does not hold, clickable suggestions), D'ni numbers, mechanisms, "Listen to the Age" button.
 
 ---
 
@@ -144,6 +167,20 @@ Since 1.13 a **navigation bar** sits in the band above the picture: **island** (
 - **Linking pillars**: the linking window lights up when Ages lead back to this Relto.
 - **Grove, pond, cat, pond ++**: close-up views. *Pond ++* (page *page_pond_decor*) shows the pond almost full frame with lilies, a stone lantern, a bamboo spout, reeds, pebbles and seaweed, dragonflies by day and fireflies at dusk. Cat toys (page *page_cat_toys*): rolling yarn ball, squeaking mouse, jingle ball, feather wand, cardboard box; click a toy.
 
+### The Imager
+
+The page *Imager* (`page_imager`) adds a machine to the Relto, inspired by the imagers of the Myst series: a cold stone chamber (nav button, or the small brass device glowing on the cabin table). Put an Age's book on the **lectern** (‹ › to change book) and tune the machine to that Age until it appears, alive, on the **screen** (a little crystal projects it there). It is a machine, not a panel with tabs: every control has its own place. Below the screen, a workbench with **three stations**, each with its lamp (lit when that setting is right); click a station to come closer, the arrow at the bottom to step back (the screen stays in view up close):
+
+- **I. Crystal rack** — the Age's resonance: its **written pages, in the order of the book** (the first four). Eight engraved crystals stand on a rack (the Age's pages and decoys); **take one and set it** in one of four sockets (the one already there goes back to the rack, or the two swap). A crystal glows sea-green when it is right, flickers amber when the page belongs to the Age but sits in the wrong place. Wrong crystals make the image **double**.
+- **II. Optical bench** — the colour of the Age's **star light**: a red, a green and a blue glass **slide on their rails** (click where you want them, 0 to 24), and an **iris** with leaves and a lever on its arc, set by how much light the world receives (a close, bright star closes it; a far one opens it). A **comparator** shows the star's light on the left, your beam on the right. Wrong glass **tints** the image.
+- **III. Regulator** — the Age's **sky**: polarity switch and four knobs (frequency, amplitude, harmonics, phase), a **cathode tube** with the sky's wide pale trace and your bright one, a voltmeter. Frequency comes from the **day length**, amplitude from the **air pressure**, harmonics from the **aurorae and magnetic field**, polarity from the direction of the field. The **phase drifts** with the clock at the pace of the Age's own day (a tidally locked world barely drifts). Out of tune, the screen is **snow**.
+
+**The lock.** On the right, a big lever under a lamp: red, amber when the image is clear enough, green once it holds. Pull it on a clear image and the machine **follows the Age by itself** (the drifting phase, the jumps of an erratic cycle); the controls are then held, and the book wears a small brass tag on the cabin shelf. Pull it again to let go.
+
+**The periscope.** Once locked, the crank left of the screen **turns the view** (four directions, each with its own landscape under the same sky; the rose shows where you look) and the lever right of it **tilts** it: up to the **zenith** (the whole sky, its stars, moons, aurorae, the canopy if there are trees), back to the horizon, or **under the water** when the Age has some (light rays, kelp, coral, fish, sunken ruins, acid pits, lava vents, pearls, and the glow of an underwater **fissure**: the way home; under the ice when it is frozen). The view slides as you turn.
+
+Values are shown in D'ni numerals. The Details tab's surveyor's note is set by *Surveyor's notes (Imager)*: full, words only (default) or off. The pale frame around clickable zones is off by default (*Frame around clickable zones*). The **clarity gauge** reads the three settings together, and the drone's **beats slow down** as the atmosphere comes in tune; a crystalline fifth sounds when the whole image holds; glass, rails, crank and lock each have their sound. Clues stay in the fiction: each Age's **Details** tab carries a surveyor's note (how its sky hums, what its star's light looks like, and the fixed values in D'ni numerals); the phase is never written down, and the crystals are the pages of the book itself. Your tuning, the lock and the periscope are kept per Age.
+
 ### The Relto's two special books
 
 At the foot of the shelf (in the cabin since 1.12), two books look different from the Ages (also in the **Pages** tab, and by commands):
@@ -180,7 +217,8 @@ Each page is a preset ("New page"), and all these effects can also be written in
 
 - **Koi pond** (page *Koi pond*): a cross-section pond right of the cabin, with swimming carp. Koi patterns are **procedurally generated** (kohaku, sanke, showa, tancho, asagi, orange, yamabuki), deterministic from the Relto seed. A **rare koi** joins them: `koi_rare` in the page note's properties is `ogon` (gold), `platinum` or `ghost`. With no value, the variety is drawn from the Relto seed. `koi_name` names the rare koi (default "Ogon", "Platinum" or "Ghost"). A click on the koi (or the cat) shows its name for a moment.
 - **Cat** (page *Cat*): sits left of the cabin, blinks, flicks its tail and sleeps at night. In the page note, `cat_name` gives its name (shown on hover) and `cat_color` its coat: `black`, `white`, `orange`, `grey`, `cream`, `tabby`, `calico`, `tuxedo`, `siamese`, or a `#rrggbb` code.
-- In a `relto-library` block: `page cat: Cat | cat color=black name="Little Wolf"` and `page pond: Pond | koi 0.8 rare=platinum` (`koi` density sets the number of carp).
+- **The cat sleeps by the fire.** In the evening and at night (more often when the *Chimney fire* page is lit, sometimes in rain or snow), it is no longer outside: it sleeps curled up on the rug in the cabin, breathing, one ear twitching. A click makes it purr (your *Purr sound file* if set). The "cat" view then leads to the cabin. The draw changes every half hour, from the Relto seed. `cat_sleep` in the page note (or `sleep=` in a library line): `auto` (default), `always` (always by the fire) or `never` (always outside).
+- In a `relto-library` block: `page cat: Cat | cat color=black name="Little Wolf" sleep=auto` and `page pond: Pond | koi 0.8 rare=platinum` (`koi` density sets the number of carp).
 
 Trees (pines, birches, palms) are tall and drawn in the background, behind the cabin, shelf, cat and pond, and they avoid the exact spot of the cat, the pond and the two special books: nothing hides them.
 
@@ -227,7 +265,7 @@ When the book is already open, clicking a window only replays the linking sound.
 
 ## 9. Window, effects, traps
 
-- **Rendering**: `classic` (the engine's painted window) or `generative` (landscape drawn from the seed: sky, relief, vegetation, weather, reflections, foreground, one inhabited detail).
+- **Rendering**: `classic` (the engine's painted window) or `generative` (landscape drawn from the seed: sky, relief, vegetation, weather, reflections, foreground (picked from the Age: branch, vines, reeds, leaves, column, icicles, rocks, arch or none), one inhabited detail). When an Age has **water and land** (sand, stone or ruins, plants, lava, ice), the window shows a **shoreline**: a beach, rocks, a grassy bank with reeds, a black lava coast that steams where it meets the water, or an ice shelf with floes; the shore runs down one side, lies far off under the horizon, or is where you stand. Shape and framing come from the seed. `ocean_world` keeps the open sea, `desert_world` and `lava_world` stay dry, `frozen_world` stays ice. With the **physics layer** on (easy or strict), the window also shows the world that was computed: the sun takes the colour of its star's temperature (a red dwarf glows orange-red, a hot star blue-white) and its size from the star's radius and distance; thin air darkens the sky (stars by day when there is almost none, no clouds); thick air turns it milky and hazy; a light world has tall, sharp mountains, a heavy one low, broad hills; a tidally locked world keeps its sun still, at a height that depends on where you stand; little visible light makes a dull day. A sun colour you wrote yourself always wins. Three more blocks, never drawn: `kelp` (a kelp forest swaying under the water), `coral` (a bright reef in warm shallows), `acid` (bubbling pools; it eats stone into hollowed ground, iron into rust, water into bitter water, coral into salt). **Each Age has its own night**: two to four constellations drawn from the seed (some faintly joined), sometimes a nebula or a band of stars, and its moons (`companion_moon`, or `moons: 3` for up to five, each with its own size, tint, phase and pace).
 - **Effects**: static, ripple, sweep, old TV… depending on instability; `prefers-reduced-motion` is respected.
 - **Damage**: `damaged_pages` (shifted zones, colour separation, frozen, ink stains), `removed_pages` (burnt holes), fractures as instability rises. Drawn from the book's seed.
 - **Trap book**: `trap book`. It looks normal.
@@ -255,7 +293,7 @@ In the plugin's settings tab: a **Guide** card (Guide and Reference buttons) the
 | Sounds | sounds (general), volume, book sound, clasp clicks, turned pages, linking sound, Relto ambience and volume, close-up view sounds and optional recordings |
 | Linking window | Age block tabs, rendering, size, effect, intensity, uncertain links |
 | D'ni & numerals | language, numerals, font, numbers, D'ni names, D'ni time, Relto in tabs |
-| Ages & mechanisms | law of change, ink, healing, mechanisms, solitude |
+| Ages & mechanisms | law of change, ink, healing, mechanisms, solitude, physics of the Ages (easy / strict / off) and its severity |
 | Folders | journals, refuge |
 | Draw & library | engine settings: automatic properties, drawn window, open-slot draw, fold strength, library folder, default panel image |
 
@@ -279,6 +317,7 @@ Two levels, in a window with sections (and exportable as notes):
 | Open this Age as a book | book view |
 | Open the Relto · Open the Relto view (large) | refuge in a note · dedicated view |
 | Create a Relto page | creates a refuge page |
+| Generate a random Age | a coherent, stable random world as a new note in the refuge folder |
 | Open the Age Writer guide · full reference | short guide · full reference |
 | Save this Age's book cover (SVG) | cover as SVG |
 | Create the exploration journal for this Age | journal |
@@ -298,7 +337,6 @@ Two levels, in a window with sections (and exportable as notes):
 - Settings use Obsidian's classic components, with hand-made section navigation (not the recent settings API).
 - The law of change stores its state by **note name**.
 - A note with several `age` blocks: each block draws its own world.
-- The world is entirely on water or entirely dry: no shoreline.
 - Generative rendering doesn't apply to GIF export.
 - The engine's content is in English; the full reference is in French only.
 - The vocabulary "Relto", "D'ni" appears in the interface and YAML keys.
@@ -323,16 +361,15 @@ node test/visual/make.js            # render pages in test/visual/out/
 npm run zip          # release/age-writer-<v>.zip (plugin) + -src.zip (sources)
 ```
 
-In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the engine), then the extension layer: `entry.js` (book and block patches), `ui-extras.js` (panel and tabs), `ui-relto.js` (Relto, dedicated view, navigation), `relto-render.js` (canvas), `relto-rooms.js` (cabin, pillars, pond, pond ++, cat, grove), `relto-model.js` (pages, island layout), `relto-scenery.js`, `relto-global.js`, `relto-books.js`, `cover.js` (covers), `sound.js` (sounds, room sounds), `linkfx.js` and `genscene.js` (window), `law.js` (law of change), `mech.js` (special lines), `settings-ui.js` (settings), `guide.js` (guide), `i18n.js`. Details: [`docs/DEV.md`](docs/DEV.md) (in French).
+In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the engine), then the extension layer: `entry.js` (book and block patches), `ui-extras.js` (panel and tabs), `ui-relto.js` (Relto, dedicated view, navigation), `relto-render.js` (canvas), `relto-rooms.js` (cabin, pillars, pond, pond ++, cat, grove), `relto-model.js` (pages, island layout), `relto-scenery.js`, `relto-global.js`, `relto-books.js`, `cover.js` (covers), `sound.js` (sounds, room sounds), `linkfx.js` and `genscene.js` (window), `law.js` (law of change), `mech.js` (special lines), `physics/` (physics of the Ages: laws, block requirements, constrained draw, sheet; design in `docs/DESIGN-physique.md`), `geophys.js` (geophysics blocks), `settings-ui.js` (settings), `guide.js` (guide), `i18n.js`. Details: [`docs/DEV.md`](docs/DEV.md) (in French).
 
 ---
 
 ## 16. Licences and credits
 
-To complete before publication:
-
-- **Project licence**: to be chosen (`LICENSE` file).
-- **gifenc** (MIT, © Matt DesLauriers): GIF export, bundled in the engine.
-- **Tracery** (`tracery-grammar`, ISC, © Kate Compton): prose, bundled in the original engine; licence text to be attached, or replace it.
+- **Project licence**: [MIT](LICENSE), © Sébastien Wallachia.
+- Third-party code and its licences are listed in [`NOTICE`](NOTICE); the licence texts are in [`LICENSES/`](LICENSES/).
+- **gifenc** (MIT, © 2017 Matt DesLauriers): GIF export, bundled in the engine.
+- **Tracery** (© Kate Compton; npm package `tracery-grammar` declared ISC, original repository Apache 2.0): the grammar used for the prose, bundled in the engine.
 - **D'ni font**: not provided; everyone uses their own copy, under its licence.
 - Fan project, not affiliated with or endorsed by Cyan Worlds.

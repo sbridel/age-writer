@@ -1,0 +1,20 @@
+"use strict";
+// setMarkup : le balisage (SVG des glyphes, chiffres D'ni, couverture) posé sans innerHTML, et nettoyé.
+const assert = require("assert");
+const { JSDOM } = require("jsdom");
+const { setMarkup } = require("../src/util");
+const dom = new JSDOM("<body></body>"), d = dom.window.document;
+const el = d.createElement("div");
+setMarkup(el, '<svg viewBox="0 0 10 10"><path d="M0 0L10 10"/></svg><span class="x">a &amp; b</span>');
+assert.strictEqual(el.firstChild.namespaceURI, "http://www.w3.org/2000/svg", "le SVG garde son espace de noms");
+assert.strictEqual(el.querySelector("path").namespaceURI, "http://www.w3.org/2000/svg", "et ses enfants aussi");
+assert.strictEqual(el.querySelector("span").textContent, "a & b", "texte et entités");
+setMarkup(el, "<b>2</b>");
+assert.strictEqual(el.childNodes.length, 1, "remplace le contenu");
+setMarkup(el, "<i>3</i>", true);
+assert.strictEqual(el.childNodes.length, 2, "ou ajoute à la fin");
+setMarkup(el, '<svg onload="alert(1)"><a href="javascript:alert(1)">x</a><script>alert(1)</script><foreignObject><p>x</p></foreignObject></svg><img src="x" onerror="alert(1)">');
+assert.ok(!el.querySelector("script") && !el.querySelector("foreignObject"), "pas de script ni d'objet étranger");
+assert.ok(![...el.querySelectorAll("*")].some((n) => [...n.attributes].some((a) => /^on/i.test(a.name) || /javascript:/i.test(a.value))), "ni attributs on*, ni liens javascript:");
+assert.strictEqual(setMarkup(null, "<b>x</b>"), null, "sans élément : rien");
+console.log("markup : ok");

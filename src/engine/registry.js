@@ -1,5 +1,7 @@
 "use strict";
 const WEALTH = require("../wealth");
+const GEOPHYS = require("../geophys");
+const SEA = require("../sea");
 const {
   CATALYST_ID,
   FAUNA_BLOCKS,
@@ -29,6 +31,8 @@ const BUILTIN_BLOCKS = [
   ...WEATHER_BLOCKS,
   ...FISSURE_BLOCKS,
   ...WEALTH.MATTER_BLOCKS,
+  ...GEOPHYS.MATTER_BLOCKS,
+  ...SEA.MATTER_BLOCKS,
 ];
 
 const BUILTIN_REACTIONS = [
@@ -37,6 +41,7 @@ const BUILTIN_REACTIONS = [
   ...FAUNA_REACTIONS,
   ...RUINS_REACTIONS,
   ...WEATHER_REACTIONS,
+  ...SEA.REACTIONS,
 ];
 
 const BUILTIN_VARIANTS = Object.entries({
