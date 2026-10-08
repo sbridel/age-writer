@@ -84,13 +84,18 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
     const sky = sec.createDiv({ cls: "age-det__sky" });
     sky.createEl("b", { text: t("det.sky") + " " });
     sky.createSpan({ cls: "age-det__skyline", text: hn.line });
-    const nums = sky.createDiv({ cls: "age-det__skynums" }); if (notes !== "full") nums.addClass("is-hidden");
-    for (const [label, v] of [[t("det.sky.freq"), tg.freq], [t("det.sky.amp"), tg.amp], [t("det.sky.harm"), tg.harm]]) { const c = nums.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label }); setMarkup(c.createSpan(), plugin.dni.numberSvg(v, { size: 16 })); }
-    nums.createSpan({ cls: "age-det__skynum", text: tg.pol > 0 ? "+" : "−" }).setAttr("aria-label", t("det.sky.pol"));
+    const full = notes === "full"; // « mots seulement » : la phrase, sans aucun chiffre (les valeurs ne sont même pas créées, rien à révéler)
+    if (full) {
+      const nums = sky.createDiv({ cls: "age-det__skynums" });
+      for (const [label, v] of [[t("det.sky.freq"), tg.freq], [t("det.sky.amp"), tg.amp], [t("det.sky.harm"), tg.harm]]) { const c = nums.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label }); setMarkup(c.createSpan(), plugin.dni.numberSvg(v, { size: 16 })); }
+      nums.createSpan({ cls: "age-det__skynum", text: tg.pol > 0 ? "+" : "−" }).setAttr("aria-label", t("det.sky.pol"));
+    }
     if (hn.lightLine) {
       sky.createDiv({ cls: "age-det__skyline", text: hn.lightLine });
-      const ln = sky.createDiv({ cls: "age-det__skynums" });
-      for (const [label, v] of [[t("det.sky.r"), hn.lensValues.r], [t("det.sky.g"), hn.lensValues.g], [t("det.sky.b"), hn.lensValues.b], [t("det.sky.iris"), hn.lensValues.iris]]) { const c = ln.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label }); setMarkup(c.createSpan(), plugin.dni.numberSvg(v, { size: 16 })); }
+      if (full) {
+        const ln = sky.createDiv({ cls: "age-det__skynums" });
+        for (const [label, v] of [[t("det.sky.r"), hn.lensValues.r], [t("det.sky.g"), hn.lensValues.g], [t("det.sky.b"), hn.lensValues.b], [t("det.sky.iris"), hn.lensValues.iris]]) { const c = ln.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label }); setMarkup(c.createSpan(), plugin.dni.numberSvg(v, { size: 16 })); }
+      }
     }
   } catch (e) { /* pas de notes */ }
   if (sh.facts.length) {
