@@ -12,7 +12,7 @@
  * src/ui-extras.js (section « Physique du monde » de l'onglet Détails, via sheet()).
  * Voir docs/DESIGN-physique.md.
  */
-const { solve, parsePhysics, PHYS_RE, SEV_COST, isPhysicsLine } = require("./solve");
+const { solve, parsePhysics, PHYS_RE, SEV_COST, isPhysicsLine, isPhysicsStub } = require("./solve");
 const { sheet, fmt, plain } = require("./text");
 const { setLineInAgeBlock, asLine } = require("./edit");
 const { verdictOf } = require("../engine/analysis");
@@ -63,4 +63,4 @@ function applyPhysics(analysis, phys, mode = "easy", { severity = 1 } = {}) {
   return { ...analysis, axisStability, stability, verdict, physics: { ...phys, tensions: counted, axisCost: cost } };
 }
 
-module.exports = { isPhysicsLine, PHYS_RE, AXIS_CAP, idsOfAnalysis, physicsOf, applyPhysics, solve, parsePhysics, sheet, fmt, plain, setLineInAgeBlock, asLine };
+module.exports = { isPhysicsLine, isPhysicsStub, PHYS_RE, AXIS_CAP, idsOfAnalysis, physicsOf, applyPhysics, solve, parsePhysics, sheet, fmt, plain, setLineInAgeBlock, asLine };

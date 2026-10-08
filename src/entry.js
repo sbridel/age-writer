@@ -68,7 +68,7 @@ module.exports = function build(Base, core, AGEX) {
       this.physCache = new Map();
       this.live = new Set(); this.lawTimers = new Map(); this.fileAudios = []; this.soundBtn = null;
       this.index = new AgeIndex(this);
-      this.law = new Law(this.ext.state.law, { dryMinutes: () => this.ext.inkDry, healPerDay: () => this.ext.heal, ignored: (raw) => PH.isPhysicsLine(raw) });
+      this.law = new Law(this.ext.state.law, { dryMinutes: () => this.ext.inkDry, healPerDay: () => this.ext.heal, ignored: (raw) => PH.isPhysicsLine(raw) || PH.isPhysicsStub(raw) });
       guard("modal plein écran", () => { // les fenêtres modales (livre des glyphes, carnet de l'arpenteur…) restent visibles quand le Relto est en plein écran
         const mp = obsidian.Modal && obsidian.Modal.prototype, orig = mp && mp.open; if (!orig) return;
         const self = this; mp.open = function (...a) { const r = orig.apply(this, a); fitModalToFullscreen(this); return r; };
@@ -94,7 +94,7 @@ module.exports = function build(Base, core, AGEX) {
         }) || out;
         return out;
       };
-      AGEX.skip = (line) => PH.isPhysicsLine(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
+      AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
       // livre-piège : « pas de fissure » est une réponse donnée d'avance, le tirage n'en dessine pas une que le pied de bloc nierait
       AGEX.written = (set) => { if (!AGEX.src || !guard("trap draw", () => parseTrap(AGEX.src))) return set; const s = new Set(set); s.add("no_fissure"); return s; };
       AGEX.w = (slot, opt) => { const f = guard("solitude", () => solitudeFactor(this.ext.solitude, slot, opt.id)); return opt.weight * (f == null ? 1 : f); };

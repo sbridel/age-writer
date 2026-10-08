@@ -159,3 +159,12 @@ ok(verdictOf(74) === "unstable" && P.applyPhysics(an, ph, "strict").verdict === 
 }
 
 console.log(`physics.test.js : ${n} vérifications, tout passe`);
+
+// une ligne de valeur en cours de frappe (« spin : ») n'est pas une ligne inconnue : pas d'altération du monde
+{
+  const { isPhysicsStub, isPhysicsLine } = require("../src/physics/solve");
+  const a2 = require("assert");
+  a2.ok(isPhysicsStub("spin :") && isPhysicsStub("  star_mass:") && isPhysicsStub("rotation:") && isPhysicsStub("noyau ="), "ligne commencée : reconnue");
+  a2.ok(!isPhysicsStub("rain") && !isPhysicsStub("water") && !isPhysicsStub("core") && !isPhysicsStub("spin") && !isPhysicsStub("spinning") && !isPhysicsStub("spin : 20") && !isPhysicsStub("sp"), "un bloc ou une ligne finie n'est pas une ligne commencée");
+  a2.ok(isPhysicsLine("spin : 20") && !isPhysicsLine("spin :"), "la ligne finie reste une ligne de valeur, la commencée non");
+}
