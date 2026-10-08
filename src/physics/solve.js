@@ -62,6 +62,10 @@ function isPhysicsLine(line) {
   return !!(WORDS[key] && WORDS[key][raw]) || NUM_RE.test(raw);
 }
 
+/** Une ligne de valeur commencée mais pas finie (« spin : » en train d'être tapée) : ce n'est pas une ligne inconnue, donc pas une altération du monde. */
+const STUB_RE = new RegExp(`^\\s*(${Object.keys(KEYS).join("|")})\\s*[:=]\\s*$`, "i");
+const isPhysicsStub = (line) => STUB_RE.test(String(line));
+
 /** Lit les lignes de valeurs physiques d'un bloc `age`. Renvoie `{ params, asserts, clamped }` (asserts : exigences écrites en mots). */
 function parsePhysics(src) {
   const params = {}, asserts = [], clamped = [];
@@ -337,4 +341,4 @@ function hintsFor(t, best, ctx) {
   return out;
 }
 
-module.exports = { isPhysicsLine, PHYS_RE, KEYS, LIMITS, SEV_COST, CANDIDATES, parsePhysics, blockSettings, candidate, derive, evaluate, costOf, solve };
+module.exports = { isPhysicsStub, isPhysicsLine, PHYS_RE, KEYS, LIMITS, SEV_COST, CANDIDATES, parsePhysics, blockSettings, candidate, derive, evaluate, costOf, solve };

@@ -28,13 +28,23 @@ const mkScene = (pages, extra = {}) => {
   return M.buildScene(relto, defs, [{ name: "A", path: "A.md", verdict: "stable", stability: 90, returnTo: "Relto" }]);
 };
 const r = new ReltoRenderer(dom.window.document.createElement("canvas"), dni);
-for (const view of ["island", "global", "cabin", "pillars", "pond", "pondplus", "cat", "grove"]) {
+for (const view of ["island", "global", "cabin", "pillars", "pond", "pondplus", "cat", "grove", "book"]) {
   r.view = view;
   for (const hour of [3, 7, 13, 19.5, 23]) {
     for (const set of [[], ids.slice(0, 11), ids.slice(11, 22), ids.slice(22), ids]) {
       r.setScene(mkScene(set)); r.setHour(hour); r.draw(1.7);
     }
   }
+}
+{ // le livre des pages, sur la table de la cabane
+  const toggled = [], rb = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { onPageToggle: (id) => toggled.push(id) });
+  rb.setScene(mkScene(ids.slice(0, 3))); rb.setView("cabin"); rb.draw(1);
+  const door = rb.hot.find((h) => h.go === "book"); ok(door && /pages/i.test(door.tip), "cabane : le livre des pages est sur la table");
+  rb.setView("book"); rb.draw(1); const cells = rb.hot.filter((h) => h.pageToggle);
+  ok(cells.length === 3 && rb.hot.some((h) => h.go === "cabin"), "livre : une case par page (12 au plus) et une sortie");
+  rb.toLogical = () => [cells[0].x + 3, cells[0].y + 3]; rb.onClick({}); ok(toggled[0] === cells[0].pageToggle, "un clic sur une page appelle onPageToggle");
+  rb.setScene(mkScene(ids)); rb.draw(1); rb.toLogical = () => { const n = rb.hot.find((h) => h.pbook === 1); return [n.x + 2, n.y + 2]; }; rb.onClick({}); rb.draw(1); ok(rb.pageBook.spread === 1, "la flèche tourne la page");
+  rb.setScene(mkScene([])); rb.setView("cabin"); rb.draw(1); ok(rb.available().book, "sans page attachée, le livre reste");
 }
 ok(calls > 1000 && bad === 0, `${calls} appels de dessin, aucun nombre non fini (${bad})`);
 // chaque page seule, dans les deux vues
