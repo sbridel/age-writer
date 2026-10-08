@@ -3,7 +3,7 @@
 const assert = require("assert");
 const S = require("../src/ageseed"), P = require("../src/physics"), { analyseAgeBase } = require("../src/engine/analysis");
 let n = 0; const ok = (c, m) => { assert(c, m); n++; };
-const SPECIAL = /^(seed|moons):/;
+const SPECIAL = /^(seed|moons|link|return):/;
 const base = (lines) => lines.filter((l) => !SPECIAL.test(l)).join("\n");
 const check = (lines, name) => analyseAgeBase(base(lines), { seed: name, draw: true }).verdict === "stable";
 
@@ -32,6 +32,8 @@ ok(kinds.size >= 5, "tous les archétypes sortent : " + [...kinds]);
 ok(names.size > 40, "des noms variés : " + names.size);
 ok(moons > 5 && rares > 100 && rares < 400, "raretés présentes mais pas systématiques : " + rares);
 
+const lk = S.randomAge(5, "fr", { link: "Autre Âge" });
+ok(lk.lines.includes("link: [[Autre Âge]]") && lk.lines[lk.lines.length - 1].startsWith("seed:"), "livre de liaison vers un Âge existant");
 // noms déjà pris
 const taken = new Set([S.randomAge(7).name]);
 ok(!taken.has(S.randomAge(7, "fr", { taken: (x) => taken.has(x) }).name), "un nom déjà pris est évité");

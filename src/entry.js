@@ -302,7 +302,7 @@ module.exports = function build(Base, core, AGEX) {
       for (const sel of [".age-book__strip", ".age-book__glimpse"]) { const n = pick(sel, L); if (n) l0.appendChild(n); }
       for (const sel of [".age-book__window", ".age-book__caption"]) { const n = pick(sel, L); if (n) l1.appendChild(n); }
       while (R.firstChild) l2.appendChild(R.firstChild);
-      if (!l0.firstChild) l0.createDiv({ cls: "age-book__none", text: "—" });
+      if (!l0.firstChild) l0.createDiv({ cls: "age-book__none", text: t("leaf.none") });
       L.empty(); L.addClass("is-blank"); R.empty(); R.appendChild(l0); R.appendChild(l1); R.appendChild(l2); spread.addClass("is-leaves");
       const leaves = [l0, l1, l2], titles = [t("leaf.glyphs"), t("leaf.window"), t("leaf.links")];
       const nav = mk("age-book__leafnav"), dots = [0, 1, 2].map(() => { const d = document.createElement("span"); d.className = "age-book__dot"; nav.appendChild(d); return d; });
@@ -392,7 +392,8 @@ module.exports = function build(Base, core, AGEX) {
     async randomAge() {
       const lang = this.lang(), names = new Set(this.app.vault.getMarkdownFiles().map((f) => f.basename));
       const check = (lines, name) => { const a = core.analyse(lines.join("\n"), { seed: name }); return !a || a.verdict === "stable"; };
-      const note = AS.randomNote((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0, lang, { check, taken: (nm) => names.has(nm) });
+      const ages = (await this.index.list()).filter((a) => a.name), link = ages.length ? ages[Math.floor(Math.random() * ages.length)].name : null; // un livre de liaison vers un Âge du coffre
+      const note = AS.randomNote((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0, lang, { check, taken: (nm) => names.has(nm), link });
       const f = await this.createNoteIn(note.name, note.body);
       new Notice(this.t("random.created", { name: f.basename }));
       await this.app.workspace.getLeaf(false).openFile(f);
