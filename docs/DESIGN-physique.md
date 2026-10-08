@@ -317,11 +317,10 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 
 ---
 
-## 14. Deux défauts du moteur actuel, trouvés en route (sans rapport avec la physique)
+## 14. Deux défauts du moteur, trouvés en route — corrigés en 1.15.3
 
-**Le premier est un vrai bug.** Les mondes-types (`frozen_world`, `desert_world`, `lava_world`…) ont une liste de choses qu'ils ne supportent pas (un désert n'aime pas la pluie, un monde gelé n'aime pas la chaleur). Chaque incompatibilité est rangée sur un **axe** de stabilité. Pour celles qui touchent au temps qu'il fait, le code a écrit l'axe `"meteorological"`, alors que le moteur ne connaît que `"weather"`. Le coût atterrit donc dans un axe qui n'existe pas, devient un « pas un nombre » (NaN), et disparaît. Résultat : `desert_world` + `rain`, `frozen_world` + `heat`, `lava_world` + `deep_cold`, etc. ne coûtent **rien**, alors qu'ils devraient rendre l'Âge moins stable. La correction tient en un mot (`"weather"` dans `src/sky.js`), mais elle fera baisser la stabilité des Âges déjà écrits qui contiennent ces mélanges : c'est pour ça qu'elle attend ton accord.
-
-**Le second est peut-être voulu.** Quand un monde-type a plusieurs incompatibilités dans le même Âge (un désert avec de la pluie *et* du brouillard), le moteur n'en compte qu'**une**, la première. C'est un effet de bord du code (les règles d'un même monde-type partagent la même phrase de description, et le moteur ne garde qu'une règle par phrase). Ça évite d'écraser un Âge sous les pénalités, donc c'est peut-être un bon comportement ; il faut juste décider si on le garde.
+- **Bug** : les incompatibilités des mondes-types avec le temps qu'il fait (`desert_world` + `rain`, `frozen_world` + `heat`…) étaient rangées sur un axe mal nommé (`"meteorological"` au lieu de `"weather"`) et ne coûtaient rien. Corrigé.
+- **Décompte** : le moteur ne gardait qu'une incompatibilité par monde-type (la première). **Décision de l'auteur : toutes comptent.** Le tirage des pages garde l'ancien décompte, pour que les mondes déjà écrits gardent exactement les mêmes pages ; seule leur stabilité change (11,5 % des Âges sur 3 000 essais, −9,8 points en moyenne, jusqu'à −76 quand beaucoup de règles se cumulent). Détails : `docs/NOTES-historique.md`, section 1.15.3.
 
 ---
 

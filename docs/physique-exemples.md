@@ -215,12 +215,12 @@ Ce qui ne tient pas :
 
 - **light** · geological — À 47 K en surface, l'eau est de la glace.
   - Pistes : ou assumer la glace : deep_cold, frozen_world
-- **light** · ecological — Les plantes vertes vivent de lumière, et il n'en arrive presque pas jusqu'au sol.
+- **light** · ecological (déjà compté par le moteur) — Les plantes vertes vivent de lumière, et il n'en arrive presque pas jusqu'au sol.
   - Pistes : des champignons et des spores, qui vivent de chaleur (spore, pale_fungus) ; une lumière à elles (glowvine)
-- **light** · ecological — À -226 °C, la sève gèle : rien de vert ne pousse à découvert.
+- **light** · ecological (déjà compté par le moteur) — À -226 °C, la sève gèle : rien de vert ne pousse à découvert.
   - Pistes : ou une vie plus rude : lichen, mousse, champignons
 
-Stabilité : 70 (unstable) → strict 61 (unstable) · monde retenu n° 3/48, coût 0,30
+Stabilité : 41 (unstable) → strict 41 (unstable) · monde retenu n° 3/48, coût 0,30
 
 ## Bleue
 

@@ -215,12 +215,12 @@ What does not hold :
 
 - **light** · geological — At 47 K at the surface, water is ice.
   - Ways out : or embrace the ice: deep_cold, frozen_world
-- **light** · ecological — Green plants live on light, and almost none reaches the ground.
+- **light** · ecological (already counted by the engine) — Green plants live on light, and almost none reaches the ground.
   - Ways out : fungi and spores, which live on heat (spore, pale_fungus) ; a light of their own (glowvine)
-- **light** · ecological — At -226 °C, sap freezes: nothing green grows in the open.
+- **light** · ecological (already counted by the engine) — At -226 °C, sap freezes: nothing green grows in the open.
   - Ways out : or hardier life: lichen, moss, fungi
 
-Stability : 70 (unstable) → strict 61 (unstable) · chosen world n° 3/48, cost 0.30
+Stability : 41 (unstable) → strict 41 (unstable) · chosen world n° 3/48, cost 0.30
 
 ## Bleue
 
