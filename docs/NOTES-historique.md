@@ -219,3 +219,7 @@ unlock:                            # facultatif
 - **Ordre des icônes du Relto** (demande de l'auteur) : globale, île, cabane, Imageur, puis piliers, bosquet, bassin, bassin de près, chat (`NAV` dans `ui-relto.js`).
 
 - **1.17.2 — retours du contrôle automatique d'Obsidian** (avertissements seulement) : `eslint.config.js` → `eslint.config.mjs` (import ESM, plus de `require`) ; CSS : plus de `!important` (la spécificité suffit), plus de `:has` (classe `age-panel--stab` posée par `ui-extras`), plus de `display: contents` (chaque ligne de la jauge est sa propre grille), soulignement pointillé → bordure, barré ondulé → barré simple. Restent, volontairement : `clip-path` (coins du livre et du panneau) et ses masques — avertissement « partiellement pris en charge », fonctionne dans Obsidian.
+
+## 1.17.4 — limites connues mises à jour (8 oct. 2026)
+
+- README : section « Limites connues » simplifiée (ordinateur seulement, tests, état par nom de note, blocs multiples, export GIF, vocabulaire). Aucun changement de code.

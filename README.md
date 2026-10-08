@@ -371,7 +371,7 @@ npm test             # all tests, on the readable build then on the minified one
 npm run lint
 npm run equiv -- legacy/main-1.3.0.min.js    # non-regression: 600 random Ages, old build vs new
 node test/visual/make.js            # render pages in test/visual/out/
-npm run zip          # release/age-writer-1.17.3.zip (plugin) + -src.zip (sources); version = package.json
+npm run zip          # release/age-writer-1.17.4.zip (plugin) + -src.zip (sources); version = package.json
 ```
 
 In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the engine), then the extension layer: `entry.js` (book and block patches), `ui-extras.js` (panel and tabs), `ui-relto.js` (Relto, dedicated view, navigation), `relto-render.js` (canvas), `relto-rooms.js` (cabin, pillars, pond, pond ++, cat, grove), `relto-model.js` (pages, island layout), `relto-scenery.js`, `relto-global.js`, `relto-books.js`, `cover.js` (covers), `sound.js` (sounds, room sounds), `linkfx.js` and `genscene.js` (window), `law.js` (law of change), `mech.js` (special lines), `physics/` (physics of the Ages: laws, block requirements, constrained draw, sheet; design in `docs/DESIGN-physique.md`), `geophys.js` (geophysics blocks), `settings-ui.js` (settings), `guide.js` (guide), `i18n.js`. Details: [`docs/DEV.md`](docs/DEV.md) (in French).
