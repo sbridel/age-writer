@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Couche physique des Âges — point d'entrée (PROTOTYPE, pas encore branché sur le plugin).
+ * Couche physique des Âges — point d'entrée.
  *
  *   physicsOf(analysis, src, seed)      → le monde physique d'une analyse du moteur
  *   applyPhysics(analysis, phys, mode)  → l'analyse retraitée selon le mode :
@@ -8,8 +8,8 @@
  *        "easy"    la physique est calculée et jointe (fiche), la stabilité ne bouge pas
  *        "strict"  chaque tension coûte sur son axe, comme une contradiction du moteur
  *
- * Branchement prévu (non fait) : dans src/entry.js, AGEX.adjust appelle applyPhysics après la loi
- * du changement ; AGEX.skip reconnaît PHYS_RE ; l'onglet « Détails » affiche sheet().
+ * Branché en 1.16.0 : src/entry.js (AGEX.adjust → applyPhysicsTo, AGEX.skip → isPhysicsLine),
+ * src/ui-extras.js (section « Physique du monde » de l'onglet Détails, via sheet()).
  * Voir docs/DESIGN-physique.md.
  */
 const { solve, parsePhysics, PHYS_RE, SEV_COST, isPhysicsLine } = require("./solve");
