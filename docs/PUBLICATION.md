@@ -21,7 +21,12 @@
 
 - [ ] Essayer la 1.16.1 dans Obsidian, ordinateur **et** mobile (jamais testé sur mobile ; `isDesktopOnly: false`), thème clair et sombre.
 - [ ] Fusionner les PR (#2 dans `physique`, puis #1 dans `main`).
-- [ ] Créer la **release GitHub** `1.16.1` (le tag doit être exactement la version, **sans `v`**), avec trois fichiers joints : `main.js`, `manifest.json`, `styles.css` (dans `release/` après `npm run build`).
+- [x] **Release automatique** (`.github/workflows/release.yml`, sur le modèle de celui de Carnet du Poète) : quand la version de `package.json` change sur `main` (ou par le bouton « Run workflow »), GitHub construit le plugin, lance les tests et le lint, vérifie que `manifest.json` annonce la même version, **atteste la provenance** de `main.js`, `manifest.json` et `styles.css` (`actions/attest-build-provenance`), puis crée le tag (la version, sans `v`) et la release avec ces trois fichiers et la section du journal des changements comme notes. Si la version a déjà son tag, rien ne se passe. Différence avec Carnet du Poète : ici les fichiers ne sont pas dans le dépôt, ils sont construits par le workflow (donc l'attestation certifie qu'ils viennent bien de ce code).
+  - L'attestation ne marche que sur un **dépôt public** (ou GitHub Enterprise Cloud) : tant que le dépôt est privé, l'étape est sautée et la release se crée quand même.
+  - En fusionnant #1 dans `main` (avec #2 déjà dedans), la release **1.16.1** se créera seule. Les anciennes versions (1.6.3 → 1.16.0) n'auront pas de release : ce n'est pas nécessaire.
+  - Pour une prochaine version : changer `version` dans `package.json` (le build met `manifest.json` et `versions.json` à jour), ajouter sa section `## x.y.z` dans `docs/NOTES-historique.md`, fusionner dans `main`.
+- [x] **Tests à chaque push et à chaque PR** (`.github/workflows/ci.yml`) : build, tests (lisible et minifié), lint.
+- [ ] Vérifier dans GitHub, onglet *Settings → Actions → General*, que les workflows ont le droit d'écrire (« Read and write permissions ») si la création de release échoue faute de droits.
 - [ ] Proposer le plugin au catalogue : PR sur `obsidianmd/obsidian-releases` qui ajoute à `community-plugins.json` : `{ "id": "age-writer", "name": "Age Writer", "author": "…", "description": "…", "repo": "sbridel/age-writer" }`. La relecture automatique puis humaine prend de quelques jours à quelques semaines.
 - [ ] Supprimer la branche parasite `claude/initial-import`.
 
