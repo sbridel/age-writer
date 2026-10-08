@@ -17,7 +17,7 @@ const NOUN_EN = { "Île": "Isle", "Rive": "Shore", "Terrasse": "Terrace", "Plate
 const NAME_EN = { "Marées": "Tides", "Varech": "Kelp", "Écume": "Foam", "Sel": "Salt", "Dunes": "Dunes", "Deux-Soleils": "Twin Suns", "Mirage": "Mirage", "Ocre": "Ochre", "Givre": "Frost", "Banquise": "Floe", "Pâle": "Pale", "Silence": "Silence", "Braise": "Ember", "Cendre": "Ash", "Forge": "Forge", "Basalte": "Basalt", "Canopée": "Canopy", "Mousse": "Moss", "Source": "Spring", "Brume": "Mist", "Veilleuse": "Nightlight", "Nuit": "Night", "Cristal": "Crystal", "Écho": "Echo" };
 
 /** Mêmes lignes pour une même graine. `lang` n'affecte que le nom. */
-function draw1(seed, lang) {
+function draw1(seed, lang, link) {
   const r = rng((Number(seed) >>> 0) ^ 0x9e3779b9); r(); r();
   const kind = KINDS[Math.floor(r() * KINDS.length)];
   const lines = [...kind.core];
@@ -31,24 +31,26 @@ function draw1(seed, lang) {
   const word = pick(r, kind.name), noun = pick(r, NOUN);
   const name = lang === "en" ? `${NOUN_EN[noun]} of ${NAME_EN[word] || word}` : `${noun} ${/^[AEIOUÉÎ]/.test(word) ? "d'" : "de "}${word}`.replace("de Deux-Soleils", "des Deux-Soleils");
   const sd = 1 + Math.floor(r() * 99999);
+  if (link) lines.push(`link: [[${link}]]`);
   const all = [...lines, "seed: " + sd];
   return { kind: kind.id, name, lines: all, text: `\`\`\`age\n${all.join("\n")}\n\`\`\`` };
 }
 
 /**
  * Un Âge au hasard. `opts.check(lines, name)` (facultatif) dit si le moteur trouve le monde stable : on essaie alors
- * jusqu'à 16 tirages voisins et on garde le premier. `opts.taken(name)` écarte les noms déjà pris.
+ * jusqu'à 16 tirages voisins et on garde le premier. `opts.taken(name)` écarte les noms déjà pris. `opts.link` : nom
+ * d'un Âge existant vers lequel poser un livre de liaison (sinon la première page du livre de liaison reste vide).
  */
 function randomAge(seed, lang = "fr", opts = {}) {
   let last = null;
   for (let k = 0; k < 40; k++) {
-    const a = draw1((Number(seed) >>> 0) + k * 7919, lang);
+    const a = draw1((Number(seed) >>> 0) + k * 7919, lang, opts.link);
     if (opts.taken && opts.taken(a.name)) continue;
     last = a;
     if (!opts.check || opts.check(a.lines, a.name)) return a;
     if (k >= 15) break;
   }
-  return last || draw1(seed, lang);
+  return last || draw1(seed, lang, opts.link);
 }
 
 /** Note d'un Âge au hasard (titre + bloc + une ligne d'explication). */
@@ -63,12 +65,12 @@ const WELCOME = {
     title: "Age Writer — Bienvenue",
     // Un Âge d'exemple fait main : eau, sable, varech, deux lunes, aurores.
     lines: ["single_sun", "steady_cycle", "water", "sand", "kelp", "fern", "rain", "companion_moon", "moons: 2", "auroras", "seed: 1118"],
-    body: (block) => `# Age Writer — Bienvenue\n\nVoici un Âge d'exemple, déjà écrit. **Une page par ligne** : chaque ligne du bloc ci-dessous ajoute un élément au monde.\n\n${block}\n\n- \`single_sun\`, \`steady_cycle\` : une étoile, un jour régulier.\n- \`water\`, \`sand\` : une mer et des plages (elles se partagent le bas de la fenêtre).\n- \`kelp\`, \`fern\`, \`wind\` : du varech sous l'eau, des fougères, du vent.\n- \`companion_moon\` et \`moons: 2\` : deux lunes dans le ciel. \`auroras\` : des aurores.\n- \`seed: 1118\` : change ce nombre pour un autre tirage de ce qui reste ouvert.\n\n## Pour commencer\n\n1. Regarde le panneau sous le bloc : onglets *Texte et glyphes*, *Fenêtre de liaison*, *Détails*.\n2. Commande **Ouvrir cet Âge comme un livre** pour le voir en livre.\n3. Commande **Générer un Âge au hasard** pour en créer d'autres.\n4. Commande **Ouvrir le guide Age Writer** pour tout le reste.\n`,
+    body: (block) => `# Age Writer — Bienvenue\n\nVoici un Âge d'exemple, déjà écrit. **Une page par ligne** : chaque ligne du bloc ci-dessous ajoute un élément au monde.\n\n${block}\n\n- \`single_sun\`, \`steady_cycle\` : une étoile, un jour régulier.\n- \`water\`, \`sand\` : une mer et des plages (elles se partagent le bas de la fenêtre).\n- \`kelp\`, \`fern\`, \`wind\` : du varech sous l'eau, des fougères, du vent.\n- \`companion_moon\` et \`moons: 2\` : deux lunes dans le ciel. \`auroras\` : des aurores.\n- \`seed: 1118\` : change ce nombre pour un autre tirage de ce qui reste ouvert.\n- Pour relier cet Âge à un autre : ajoute \`link: [[Nom d'un autre Âge]]\` dans le bloc. Le livre de liaison montre alors l'autre monde à travers la vitre.\n\n## Pour commencer\n\n1. Regarde le panneau sous le bloc : onglets *Texte et glyphes*, *Fenêtre de liaison*, *Détails*.\n2. Commande **Ouvrir cet Âge comme un livre** pour le voir en livre.\n3. Commande **Générer un Âge au hasard** pour en créer d'autres.\n4. Commande **Ouvrir le guide Age Writer** pour tout le reste.\n`,
   },
   en: {
     title: "Age Writer — Welcome",
     lines: ["single_sun", "steady_cycle", "water", "sand", "kelp", "fern", "rain", "companion_moon", "moons: 2", "auroras", "seed: 1118"],
-    body: (block) => `# Age Writer — Welcome\n\nHere is a ready-made example Age. **One page per line**: each line of the block below adds an element to the world.\n\n${block}\n\n- \`single_sun\`, \`steady_cycle\`: one star, a regular day.\n- \`water\`, \`sand\`: a sea and beaches (they share the bottom of the window).\n- \`kelp\`, \`fern\`, \`wind\`: kelp under the water, ferns, wind.\n- \`companion_moon\` and \`moons: 2\`: two moons in the sky. \`auroras\`: auroras.\n- \`seed: 1118\`: change this number for another draw of whatever is left open.\n\n## Getting started\n\n1. Look at the panel under the block: tabs *Text & glyphs*, *Linking window*, *Details*.\n2. Run **Open this Age as a book** to see it as a book.\n3. Run **Generate a random Age** to create more.\n4. Run **Open the Age Writer guide** for everything else.\n`,
+    body: (block) => `# Age Writer — Welcome\n\nHere is a ready-made example Age. **One page per line**: each line of the block below adds an element to the world.\n\n${block}\n\n- \`single_sun\`, \`steady_cycle\`: one star, a regular day.\n- \`water\`, \`sand\`: a sea and beaches (they share the bottom of the window).\n- \`kelp\`, \`fern\`, \`wind\`: kelp under the water, ferns, wind.\n- \`companion_moon\` and \`moons: 2\`: two moons in the sky. \`auroras\`: auroras.\n- \`seed: 1118\`: change this number for another draw of whatever is left open.\n- To link this Age to another: add \`link: [[Name of another Age]]\` to the block. The linking book then shows the other world through the glass.\n\n## Getting started\n\n1. Look at the panel under the block: tabs *Text & glyphs*, *Linking window*, *Details*.\n2. Run **Open this Age as a book** to see it as a book.\n3. Run **Generate a random Age** to create more.\n4. Run **Open the Age Writer guide** for everything else.\n`,
   },
 };
 

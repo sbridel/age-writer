@@ -328,7 +328,9 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     ok(w.length === 1 && /Bienvenue|Welcome/.test(w[0]) && p.ext.state.welcomed, "premier lancement : note de bienvenue créée, une seule fois");
     await p.welcomeOnce(); ok(files.size === b2 + 1, "pas de seconde note de bienvenue");
     p.index.list = async () => [{}]; p.ext.state.welcomed = false; const b3 = files.size; await p.welcomeOnce(); ok(files.size === b3 && p.ext.state.welcomed, "coffre qui a déjà des Âges : rien créé");
-    p.index.list = live; }
+    p.index.list = live;
+    const plain = new TFile("Plain.md", "juste une note, sans Âge"), agef = new TFile("Un Âge.md", "```age\nsingle_sun\n```");
+    ok(await p.noteHasAge(plain) === false && await p.noteHasAge(agef) === true && await p.noteHasAge(null) === false, "le livre ne s'ouvre en musique que pour une note qui contient un Âge"); }
   if (process.env.DUMP) { fs.writeFileSync(process.env.DUMP + "-cover.html", view.contentEl.outerHTML); view.mode = "cover"; await view.render(); fs.writeFileSync(process.env.DUMP + "-cover.html", view.contentEl.outerHTML); fs.writeFileSync(process.env.DUMP + "-panel.html", host.outerHTML); }
   // réglages
   const st = new p.core.SettingsTab(app, p); st.display(); ok(!!st.containerEl.querySelector(".age-ext-settings"), "réglages de l'extension ajoutés à l'onglet d'origine");

@@ -208,7 +208,7 @@ async function renderRelto(plugin, source, el, ctx) {
   } else { root.setAttr("data-tab", "all"); }
   // bascule vue de l'île ⇄ vue globale (petit bouton en coin de l'image) ; l'ouverture reste la vue de l'île
   // navigation entre les vues : île, vue globale et sous-vues (cabane, piliers, bosquet, bassin, chat) ; les boutons des vues sans page correspondante sont masqués
-  const NAV = [["island", "mountain", "relto.v.island"], ["global", "globe", "relto.v.global"], ["cabin", "home", "relto.v.cabin"], ["pillars", "landmark", "relto.v.pillars"], ["grove", "trees", "relto.v.grove"], ["pond", "fish", "relto.v.pond"], ["pondplus", "droplets", "relto.v.pondplus"], ["cat", "cat", "relto.v.cat"], ["imager", "aperture", "relto.v.imager"]];
+  const NAV = [["global", "globe", "relto.v.global"], ["island", "mountain", "relto.v.island"], ["cabin", "home", "relto.v.cabin"], ["imager", "aperture", "relto.v.imager"], ["pillars", "landmark", "relto.v.pillars"], ["grove", "trees", "relto.v.grove"], ["pond", "fish", "relto.v.pond"], ["pondplus", "droplets", "relto.v.pondplus"], ["cat", "cat", "relto.v.cat"]]; // du plus loin au plus près : globale, île, cabane, Imageur, puis les vues de détail
   const nav = (tabBar || stage).createDiv({ cls: "age-relto__nav" + (tabBar ? " age-relto__nav--bar" : "") }); if (tabBar) tabBar.insertBefore(nav, tabBar.firstChild);
   const navBtns = {};
   for (const [v, ic, key] of NAV) {
