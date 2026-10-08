@@ -341,14 +341,12 @@ Two levels, in a window with sections (and exportable as notes):
 
 ## 14. Known limitations
 
-- **Real Obsidian**: the plugin is tested by automated tests (jsdom, fake AudioContext, Chromium renders, integration against the real `main.js`), but not systematically inside Obsidian itself. Mobile and light theme are untested.
-- Close-up view sounds have been tuned by ear in a few iterations; recordings from your vault are the fallback if the synthesized ones don't suit you.
-- Settings use Obsidian's classic components, with hand-made section navigation (not the recent settings API).
-- The law of change stores its state by **note name**.
-- A note with several `age` blocks: each block draws its own world.
-- Generative rendering doesn't apply to GIF export.
-- The engine's content is in English; the full reference is in French only.
-- The vocabulary "Relto", "D'ni" appears in the interface and YAML keys.
+- **Desktop only**: the plugin is built for mouse, sound and animated canvases, so it is not available on mobile.
+- **Tested mostly by machine**: automated tests (jsdom, fake `AudioContext`, Chromium renders, integration against the real `main.js`) plus hands-on use in Obsidian, on desktop with the light theme first. The dark theme and other themes get less testing, so tell me if something looks off.
+- **State by note name**: the law of change ties its state to the note name.
+- **Several `age` blocks in one note**: each block draws its own world.
+- **GIF export** doesn't include the generative rendering.
+- **Vocabulary**: the words "Relto" and "D'ni" are kept from the Myst universe, in the interface and in the YAML keys. The guide and the full reference are available in English and French.
 
 ---
 
@@ -373,7 +371,7 @@ npm test             # all tests, on the readable build then on the minified one
 npm run lint
 npm run equiv -- legacy/main-1.3.0.min.js    # non-regression: 600 random Ages, old build vs new
 node test/visual/make.js            # render pages in test/visual/out/
-npm run zip          # release/age-writer-1.17.3.zip (plugin) + -src.zip (sources); version = package.json
+npm run zip          # release/age-writer-1.17.4.zip (plugin) + -src.zip (sources); version = package.json
 ```
 
 In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the engine), then the extension layer: `entry.js` (book and block patches), `ui-extras.js` (panel and tabs), `ui-relto.js` (Relto, dedicated view, navigation), `relto-render.js` (canvas), `relto-rooms.js` (cabin, pillars, pond, pond ++, cat, grove), `relto-model.js` (pages, island layout), `relto-scenery.js`, `relto-global.js`, `relto-books.js`, `cover.js` (covers), `sound.js` (sounds, room sounds), `linkfx.js` and `genscene.js` (window), `law.js` (law of change), `mech.js` (special lines), `physics/` (physics of the Ages: laws, block requirements, constrained draw, sheet; design in `docs/DESIGN-physique.md`), `geophys.js` (geophysics blocks), `settings-ui.js` (settings), `guide.js` (guide), `i18n.js`. Details: [`docs/DEV.md`](docs/DEV.md) (in French).

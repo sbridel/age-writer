@@ -316,13 +316,12 @@ Deux niveaux, dans une fenêtre à rubriques (et exportables en notes) :
 
 ## 14. Limites connues
 
-- **Obsidian réel** : le plugin est testé par des tests automatiques (jsdom, faux AudioContext, rendus Chromium, intégration contre le vrai `main.js`), mais pas systématiquement dans Obsidian lui-même. Mobile et thème clair ne sont pas testés.
-- Les réglages utilisent les composants classiques d'Obsidian, avec une navigation à rubriques faite à la main (pas l'API de réglages récente).
-- La loi du changement range son état par **nom de note**.
-- Une note à plusieurs blocs `age` : chaque bloc tire son propre monde.
-- Le rendu génératif ne s'applique pas à l'export GIF.
-- Le contenu du moteur est en anglais ; la référence complète est en français seulement.
-- Le vocabulaire « Relto », « D'ni » apparaît dans l'interface et les clés YAML.
+- **Ordinateur seulement** : le plugin est pensé pour la souris, le son et des canvas animés ; il n'existe pas sur mobile.
+- **Surtout testé par machine** : tests automatiques (jsdom, faux `AudioContext`, rendus Chromium, intégration contre le vrai `main.js`) et usage réel dans Obsidian, sur ordinateur et en thème clair d'abord. Le thème sombre et les autres thèmes sont moins testés : signale-moi ce qui cloche.
+- **État rangé par nom de note** : la loi du changement lie son état au nom de la note.
+- **Plusieurs blocs `age` dans une note** : chaque bloc tire son propre monde.
+- **Export GIF** : sans le rendu génératif.
+- **Vocabulaire** : les mots « Relto » et « D'ni » viennent de l'univers de Myst, dans l'interface et les clés YAML. Le guide et la référence complète existent en anglais et en français.
 
 ---
 
@@ -347,7 +346,7 @@ npm test             # tous les tests, sur la version lisible puis sur la minifi
 npm run lint
 npm run equiv -- legacy/main-1.3.0.min.js # non-régression : 600 Âges au hasard, ancien build contre nouveau
 node test/visual/make.js            # pages de rendu dans test/visual/out/
-npm run zip          # release/age-writer-1.17.3.zip (plugin) + -src.zip (sources)
+npm run zip          # release/age-writer-1.17.4.zip (plugin) + -src.zip (sources)
 ```
 
 Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine/` (le moteur), puis la couche d'extension : `entry.js` (patchs du livre et des blocs), `ui-extras.js` (panneau et onglets), `ui-relto.js` (Relto, vue dédiée), `relto-render.js` (canvas), `cover.js` (couvertures), `sound.js` (sons), `linkfx.js` et `genscene.js` (fenêtre), `law.js` (loi du changement), `mech.js` (lignes spéciales), `physics/` (physique des Âges : lois, exigences des blocs, tirage sous contraintes, fiche ; conception dans `docs/DESIGN-physique.md`), `geophys.js` (blocs de géophysique), `settings-ui.js` (réglages), `guide.js` (guide), `i18n.js`. Détails : `docs/DEV.md`.
