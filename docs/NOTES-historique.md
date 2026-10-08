@@ -223,3 +223,7 @@ unlock:                            # facultatif
 ## 1.17.4 — limites connues mises à jour (8 oct. 2026)
 
 - README : section « Limites connues » simplifiée (ordinateur seulement, tests, état par nom de note, blocs multiples, export GIF, vocabulaire). Aucun changement de code.
+
+## 1.17.5 — voix du journal (8 oct. 2026)
+
+- Texte seulement : les voix du journal d'exploration sont décrites comme « inspirées de divers personnages des jeux » (README, guides) au lieu de nommer trois personnages. Les identifiants internes (`atrus`, `gehn`, `miller`) ne changent pas.

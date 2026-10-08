@@ -346,7 +346,7 @@ npm test             # tous les tests, sur la version lisible puis sur la minifi
 npm run lint
 npm run equiv -- legacy/main-1.3.0.min.js # non-régression : 600 Âges au hasard, ancien build contre nouveau
 node test/visual/make.js            # pages de rendu dans test/visual/out/
-npm run zip          # release/age-writer-1.17.4.zip (plugin) + -src.zip (sources)
+npm run zip          # release/age-writer-1.17.5.zip (plugin) + -src.zip (sources)
 ```
 
 Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine/` (le moteur), puis la couche d'extension : `entry.js` (patchs du livre et des blocs), `ui-extras.js` (panneau et onglets), `ui-relto.js` (Relto, vue dédiée), `relto-render.js` (canvas), `cover.js` (couvertures), `sound.js` (sons), `linkfx.js` et `genscene.js` (fenêtre), `law.js` (loi du changement), `mech.js` (lignes spéciales), `physics/` (physique des Âges : lois, exigences des blocs, tirage sous contraintes, fiche ; conception dans `docs/DESIGN-physique.md`), `geophys.js` (blocs de géophysique), `settings-ui.js` (réglages), `guide.js` (guide), `i18n.js`. Détails : `docs/DEV.md`.
