@@ -6,7 +6,9 @@ An Obsidian plugin inspired by Mystcraft and the Myst series. You write an **Age
 
 The founding idea: in Mystcraft you don't **create** a world, you **link** to a world that already exists. What you write describes it; what you leave open is drawn by lot, always the same way for the same note. And if you rewrite a world you've already explored, you damage it.
 
-> Fan project, not affiliated with or endorsed by Cyan Worlds. No Myst asset (font, image, sound) is included.
+> **This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan.**
+>
+> Fan project made under Cyan's Fan-Made Content Policy. Not affiliated with or endorsed by Cyan Worlds. No Myst asset (font, image, sound) is included. Free and non-commercial.
 >
 > A tribute: the names borrowed from the Myst universe (Age, Relto, D'ni, linking book, Descriptive Book…) are an homage and a source of inspiration, not a reproduction. The code, the pictures, the sounds and the texts are original. Licence: MIT.
 

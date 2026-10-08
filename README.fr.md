@@ -6,7 +6,11 @@ Plugin Obsidian, inspiré de Mystcraft et de la série Myst. Tu écris un **Âge
 
 Idée de départ : dans Mystcraft, on ne **crée** pas un monde, on se **lie** à un monde qui existe. Ce que tu écris le décrit ; ce que tu laisses ouvert est tiré au sort, toujours de la même façon pour la même note. Et si tu réécris un monde déjà exploré, tu l'abîmes.
 
-> Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part. Aucune ressource de Myst (police, image, son) n'est fournie.
+> **This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan.**
+>
+> *(Traduction : ce produit contient des marques et/ou des œuvres protégées de Cyan, tous droits réservés par Cyan ; il n'est ni officiel ni approuvé par Cyan.)*
+>
+> Projet de fan réalisé selon la politique de contenu de fans de Cyan. Sans lien avec Cyan Worlds ni approbation de leur part. Aucune ressource de Myst (police, image, son) n'est fournie. Gratuit et non commercial.
 >
 > Un hommage : les noms empruntés à l'univers de Myst (Âge, Relto, D'ni, livre de liaison, Livre descriptif…) sont un clin d'œil et une source d'inspiration, pas une reproduction. Le code, les images, les sons et les textes sont originaux. Licence : MIT.
 

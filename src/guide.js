@@ -44,7 +44,7 @@ const GUIDE = {
     { id: "settings", icon: "settings", title: "Réglages et commandes", body: [
       { p: "Réglages du plugin, section « Extensions », en six rubriques : Livres & couvertures, Sons, Fenêtre de liaison, D'ni & chiffres, Âges & mécanismes, Dossiers." },
       { ul: ["Open this Age as a book", "Open the Relto / Open the Relto view (large)", "Create a Relto page", "Generate a random Age (un monde cohérent tiré au hasard, dans le dossier du refuge)", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide (cette fenêtre)"] },
-      { p: "Projet de fan, sans lien avec Cyan Worlds. Aucune ressource de Myst n'est fournie." },
+      { p: "Projet de fan, sans lien avec Cyan Worlds. Aucune ressource de Myst n'est fournie. This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan." },
     ] },
   ],
   en: [
@@ -89,7 +89,7 @@ const GUIDE = {
     { id: "settings", icon: "settings", title: "Settings & commands", body: [
       { p: "Plugin settings, “Extensions” section, in six pages: Books & covers, Sounds, Linking window, D'ni & numbers, Ages & mechanics, Folders." },
       { ul: ["Open this Age as a book", "Open the Relto / Open the Relto view (large)", "Create a Relto page", "Generate a random Age (a coherent random world, in the refuge folder)", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide (this window)"] },
-      { p: "A fan project, unrelated to Cyan Worlds. No Myst asset is included." },
+      { p: "A fan project, unrelated to Cyan Worlds. No Myst asset is included. This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan." },
     ] },
   ],
 };
