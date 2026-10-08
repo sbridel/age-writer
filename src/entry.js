@@ -48,7 +48,9 @@ module.exports = function build(Base, core, AGEX) {
       let leaf = ws.getLeavesOfType(TYPE)[0];
       // un livre resté dans la colonne latérale (disposition enregistrée) est refermé : il serait ré-utilisé à la place
       if (leaf && leaf.getRoot && leaf.getRoot() !== ws.rootSplit && mode === "tab") { leaf.detach(); leaf = null; }
-      if (!leaf) leaf = mode === "window" && typeof ws.openPopoutLeaf === "function" ? ws.openPopoutLeaf() : ws.getLeaf("tab");
+      // une fenêtre séparée n'apparaît pas par-dessus une fenêtre en plein écran : dans ce cas le livre s'ouvre en onglet
+      const full = (() => { try { const w = window, d = w.document, s = w.screen; return !!d.fullscreenElement || (w.outerWidth >= s.width && w.outerHeight >= s.height); } catch { return false; } })();
+      if (!leaf) leaf = mode === "window" && !full && typeof ws.openPopoutLeaf === "function" ? ws.openPopoutLeaf() : ws.getLeaf("tab");
       await leaf.setViewState({ type: TYPE, active: true });
       await ws.revealLeaf(leaf);
       if (this.ext.bookStart !== "keep" && leaf.view && "mode" in leaf.view) leaf.view.mode = "cover"; // rouvrir le livre = revenir à sa couverture
