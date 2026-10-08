@@ -29,6 +29,8 @@ const heading = (box, text) => box.createDiv({ cls: "age-det__h", text });
 /** Détails · stabilité : verdict et une barre par axe (remplace la ligne brute des coûts). */
 function renderStability(plugin, box, analysis) {
   const t = plugin.t, sec = box.createDiv({ cls: "age-det age-det--stab" });
+  const markPanel = () => { const pn = box.closest && box.closest(".age-panel"); if (pn) pn.classList.add("age-panel--stab"); return !!pn; }; // masque l'ancienne ligne de débogage (remplace :has en CSS)
+  if (!markPanel() && typeof requestAnimationFrame === "function") requestAnimationFrame(markPanel);
   heading(sec, t("det.stability"));
   const head = sec.createDiv({ cls: "age-det__verdict age-det__verdict--" + analysis.verdict });
   head.createSpan({ cls: "age-det__big", text: String(analysis.stability) });

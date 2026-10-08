@@ -416,7 +416,7 @@
 .age-book__book { cursor: pointer; }
 .age-book__book.is-selected { background: rgba(138, 114, 80, 0.16); }
 .age-book__bookname { color: #3a2f22; }
-.age-book__open { margin-left: auto; font-size: 0.75em; color: #6c5a40; text-decoration: underline; text-decoration-style: dotted; }
+.age-book__open { margin-left: auto; font-size: 0.75em; color: #6c5a40; border-bottom: 1px dotted #6c5a40; }
 
 .age-book__strip { max-width: 260px; margin: 12px auto 0; color: #5a4a30; }
 .age-book__strip svg { display: block; }

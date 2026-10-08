@@ -24,7 +24,7 @@
 .age-ext__lawhead { font-weight: 600; color: #d98a6a; }
 .age-ext--compact .age-ext__lawhead { color: #a04a3a; }
 .age-ext__lawline, .age-ext__lawmeter { opacity: 0.85; }
-.age-ext__fissure { padding: 4px 10px; border: 1px dashed #c0553f; color: #d98a6a; text-decoration: line-through wavy rgba(192, 85, 63, 0.5); text-underline-offset: 3px; }
+.age-ext__fissure { padding: 4px 10px; border: 1px dashed #c0553f; color: #d98a6a; text-decoration: line-through; }
 .age-ext--compact .age-ext__fissure { color: #a04a3a; }
 .age-ext__trace { font-style: italic; opacity: 0.7; }
 .age-ext__sound { align-self: flex-start; font-size: 0.9em; padding: 2px 12px; }
@@ -32,8 +32,8 @@
 
 /* fenêtre de liaison : l'effet est dessiné par-dessus, le filtre CSS d'origine est neutralisé */
 .age-panel__window { position: relative; }
-.age-panel__window .age-linkfx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; filter: none !important; }
-.age-panel__window--dying canvas.age-linkfx { filter: none !important; }
+.age-panel__window .age-linkfx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; filter: none; }
+.age-panel__window--dying canvas.age-linkfx { filter: none; }
 /* taille de la fenêtre dans le bloc age (réglage « Taille de la fenêtre ») */
 .age-panel__visual.age-ext-vis-large { flex: 1 1 300px; max-width: 460px; }
 .age-panel__visual.age-ext-vis-large .age-panel__window { width: 100%; max-width: 440px; margin-left: 0; }
@@ -82,7 +82,7 @@
 .age-journal__text { line-height: 1.6; font-style: italic; }
 .age-journal__excerpt { margin-top: 4px; padding-left: 8px; border-left: 2px solid #b8a37a; font-style: normal; font-size: 0.88em; color: #6c5a40; }
 .age-journal__page { text-align: right; color: #8a7a5c; }
-.age-journal__entry--alter .age-journal__text { color: #a04a3a; text-decoration: line-through wavy rgba(160, 74, 58, 0.45); text-underline-offset: 3px; }
+.age-journal__entry--alter .age-journal__text { color: #a04a3a; text-decoration: line-through; }
 .age-journal__entry--warn .age-journal__text { color: #a04a3a; }
 
 /* ======================= bloc `dni` ======================= */
@@ -364,7 +364,7 @@
 .age-relto[data-tab]:not([data-tab="view"]) .age-relto__nav--bar { display: none; }
 
 /* ---- Détails retravaillé : stabilité par axe, physique du monde (1.16) ---- */
-.age-panel:has(.age-det--stab) .age-panel__debug { display: none; }
+.age-panel--stab .age-panel__debug { display: none; } /* classe posée par ui-extras (pas de :has) */
 .age-det { display: flex; flex-direction: column; gap: 6px; }
 .age-det + .age-det, .age-det + .age-det__h { margin-top: 6px; padding-top: 10px; border-top: 0.5px solid rgba(205, 189, 148, 0.25); }
 .age-det__h { font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; color: #cdbd94; opacity: 0.85; }
@@ -378,8 +378,8 @@
 .age-det__unit { opacity: 0.8; }
 .age-det__note, .age-det__calm { font-style: italic; opacity: 0.8; }
 .age-det__calm { color: #a9c79a; }
-.age-det__bars { display: grid; grid-template-columns: max-content minmax(60px, 1fr) max-content; gap: 4px 10px; align-items: center; }
-.age-det__bar { display: contents; }
+.age-det__bars { display: flex; flex-direction: column; gap: 4px; }
+.age-det__bar { display: grid; grid-template-columns: 9.5em minmax(60px, 1fr) minmax(3em, max-content); gap: 10px; align-items: center; }
 .age-det__axis { opacity: 0.85; }
 .age-det__track { height: 6px; border-radius: 3px; background: rgba(205, 189, 148, 0.15); overflow: hidden; }
 .age-det__fill { height: 100%; border-radius: 3px; background: #a9c79a; }
