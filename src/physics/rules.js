@@ -245,6 +245,7 @@ const REQUIREMENTS = {
     law: "L5", axis: "weather", sev: "medium", search: ["mass", "atmosphere"],
     test: (w) => w.P >= 0.005 && w.P < 0.3,
     why: { fr: (w, f) => (w.P < 0.005 ? `Un air mince ? Il n'y en a presque plus (${f(w.P)} bar).` : `Un air mince, mais la planète en garde ${f(w.P)} bar.`), en: (w, f) => (w.P < 0.005 ? `Thin air? There is almost none left (${f(w.P)} bar).` : `Thin air, but the planet keeps ${f(w.P)} bar.`) },
+    fix: (w) => (w.P >= 0.3 ? [tip("ou une planète plus légère (light_world), moins de volatils (volatiles: 0.3)", "or a lighter planet (light_world), fewer volatiles (volatiles: 0.3)")] : [tip("ou un champ magnétique qui garde l'air (molten_core)", "or a magnetic field that keeps the air (molten_core)")]),
   },
   iceOcean: {
     law: "L6", axis: "geological", sev: "medium", search: ["insolation", "age"],

@@ -103,7 +103,7 @@ for (const bad of ["orbit: 0", "radius: 0\nage: 0", "mass: 0\nage: 0\ninsolation
 ok(solve({ ids: ["single_sun"], src: "mass: 1000", seed: "L" }).clamped.some((c) => c.key === "mass" && c.to === 20), "une valeur hors plage est ramenée, et signalée");
 ok(solve({ ids: ["blue_sun", "fern"], src: "age: 5", seed: "B" }).tensions.some((t) => t.id === "starAlive"), "un monde plus vieux que son étoile : tension");
 ok(solve({ ids: ["fern"], src: "age: 0.1", seed: "Y" }).tensions.some((t) => t.id === "oldEnoughSimple"), "des fougères sur un monde de 100 Ma : trop tôt");
-ok(plain("fr")(1400) === "1400" && plain("fr")(0.55) === "0,55" && plain("en")(12345) === "12000", "les pistes s'écrivent comme on les relit");
+ok(plain("fr")(1400) === "1400" && plain("fr")(0.55) === "0,55" && plain("en")(12345) === "12350", "les pistes s'écrivent comme on les relit");
 { // chaque piste, écrite dans le bloc et relue, allège le total des tensions
   const combos = [["lava", "ash"], ["jungle_world"], ["ocean_world"], ["desert_world", "water"], ["frozen_world", "rain"], ["red_sun", "frozen_cycle", "fern"], ["lava_world"],
     ["auroras", "frozen_cycle", "red_sun"], ["scorched_surface", "water"], ["dust_storm", "starless"], ["meltwater"], ["drifter"], ["jungle_world", "planet_rings"], ["frozen_cycle", "single_sun", "water"]];
@@ -149,8 +149,12 @@ ok(verdictOf(74) === "unstable" && P.applyPhysics(an, ph, "strict").verdict === 
   // écrire une piste dans la note
   const { setLineInAgeBlock } = require("../src/physics/edit");
   const note = "# N\n```age\nlava\nâge: 9\n```\n\n```age\nwater\n```\n";
-  ok(setLineInAgeBlock(note, "lava\nâge: 9", "age", 3.5) === "# N\n```age\nlava\nage: 3.5\n```\n\n```age\nwater\n```\n", "piste : l'alias âge: est remplacé dans le bon bloc");
-  ok(setLineInAgeBlock(note, "water", "mass", 2.04) === "# N\n```age\nlava\nâge: 9\n```\n\n```age\nwater\nmass: 2\n```\n", "piste : ajoutée à la fin du bloc visé, deux chiffres");
+  ok(setLineInAgeBlock(note, "lava\nâge: 9", "age", 3.5) === "# N\n```age\nlava\nâge: 3.5\n```\n\n```age\nwater\n```\n", "piste : la ligne âge: est remplacée dans le bon bloc, avec le mot de l'auteur");
+  ok(setLineInAgeBlock(note, "water", "mass", 2.04) === "# N\n```age\nlava\nâge: 9\n```\n\n```age\nwater\nmass: 2.04\n```\n", "piste : ajoutée à la fin du bloc visé");
+  ok(setLineInAgeBlock("a\r\n```age\r\nwater\r\n```\r\n", "water", "age", 2) === "a\r\n```age\r\nwater\r\nage: 2\r\n```\r\n", "piste : une note en CRLF reste en CRLF");
+  ok(setLineInAgeBlock("> [!note]\n> ```age\n> lava\n> ```\n", "lava", "age", 1) === "> [!note]\n> ```age\n> lava\n> age: 1\n> ```\n", "piste : bloc dans un encadré");
+  const { isPhysicsLine } = require("../src/physics/solve");
+  ok(isPhysicsLine("mass: 2") && isPhysicsLine("âge: 500 Ma") && isPhysicsLine("core: liquide") && !isPhysicsLine("water: everywhere, to the horizon") && !isPhysicsLine("Core: a beating heart of fire"), "seules les valeurs lisibles sont des lignes de physique");
   ok(setLineInAgeBlock(note, "stone", "mass", 2) === null, "piste : bloc introuvable → rien");
 }
 

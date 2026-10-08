@@ -33,3 +33,13 @@ assert.strictEqual(describeChange({ added: ["rain"], removed: ["heat"] }, t), "h
   assert.strictEqual(l2.effective("W"), 0);
 }
 console.log("law: ok");
+{ // 1.16 : une ligne de valeur physique enregistrée comme ligne inconnue par une ancienne version est oubliée sans frais
+  let n3 = 1e12; const st3 = {};
+  const l3 = new Law(st3, { dryMinutes: () => 1, healPerDay: () => 0.05, now: () => n3, ignored: (raw) => /^mass\s*:\s*\d/.test(raw) });
+  const U3 = (ids, unk) => ({ resolved: { lines: [...ids.map((id) => ({ entry: { id } })), ...unk.map((raw) => ({ unknown: true, raw }))], matter: { written: [], reactions: [] } } });
+  l3.observe("Lava", U3(["lava"], ["mass: 2"]), n3);
+  n3 += 10 * 60000;
+  assert.strictEqual(l3.observe("Lava", U3(["lava"], []), n3), null, "la ligne mass: 2 n'est plus une altération");
+  assert.strictEqual(l3.effective("Lava"), 0);
+}
+

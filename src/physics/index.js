@@ -12,7 +12,7 @@
  * du changement ; AGEX.skip reconnaît PHYS_RE ; l'onglet « Détails » affiche sheet().
  * Voir docs/DESIGN-physique.md.
  */
-const { solve, parsePhysics, PHYS_RE, SEV_COST } = require("./solve");
+const { solve, parsePhysics, PHYS_RE, SEV_COST, isPhysicsLine } = require("./solve");
 const { sheet, fmt, plain } = require("./text");
 const { setLineInAgeBlock, asLine } = require("./edit");
 const { verdictOf } = require("../engine/analysis");
@@ -63,4 +63,4 @@ function applyPhysics(analysis, phys, mode = "easy", { severity = 1 } = {}) {
   return { ...analysis, axisStability, stability, verdict, physics: { ...phys, tensions: counted, axisCost: cost } };
 }
 
-module.exports = { PHYS_RE, AXIS_CAP, idsOfAnalysis, physicsOf, applyPhysics, solve, parsePhysics, sheet, fmt, plain, setLineInAgeBlock, asLine };
+module.exports = { isPhysicsLine, PHYS_RE, AXIS_CAP, idsOfAnalysis, physicsOf, applyPhysics, solve, parsePhysics, sheet, fmt, plain, setLineInAgeBlock, asLine };

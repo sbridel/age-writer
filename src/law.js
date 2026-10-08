@@ -50,6 +50,8 @@ class Law {
     const ids = worldIds(analysis), now = this.now();
     let a = this.get(name);
     if (a) a.ids = [...new Set(a.ids.map(squash))].sort(); // états enregistrés avec l'ancienne écriture
+    // 1.16 : une ligne de valeur physique (`mass: 2`) n'est plus une ligne inconnue ; l'ancien état la comptait : on l'oublie sans frais
+    if (a && this.o.ignored) a.ids = a.ids.filter((x) => !(x[0] === "?" && this.o.ignored(x.slice(1))));
     if (!a) { this.state.ages[name] = { ids, changedAt: mtime || now, extra: 0, at: now, log: [] }; return null; }
     const same = ids.length === a.ids.length && ids.every((v, i) => v === a.ids[i]);
     if (same) return null;

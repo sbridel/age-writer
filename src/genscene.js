@@ -46,7 +46,7 @@ function sceneOf(a, name = "", blocks = null) {
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
     moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine") || wd === "jungle", eyes: r("hunter", "stalking_pack"),
     ruins, lampLit: r("lit_lamp"), tabletAwake: r("speaking_tablet"),
-    world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), sunHues: SKY.sunColors([...ids]), blackSun: r("black_sun"),
+    world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), sunHues: SKY.sunColors([...ids]), blackDisc: [...ids].find((i) => SKY.HUES[i]) === "black_sun", blackSun: [...ids].find((i) => SKY.HUES[i]) === "black_sun" && !r("twin_suns"),
     extras: [...ids].filter((id) => !KNOWN.has(id) && !id.startsWith("?")).sort().slice(0, 8).map((id) => {
       const b = blocks && typeof blocks.get === "function" ? blocks.get(id) : null, ax = b && typeof b.axis === "string" ? b.axis.toLowerCase() : "";
       return { id, axis: AXES.find((x) => ax.startsWith(x.slice(0, 5))) || AXES[fnv(id) % 5], words: b && Array.isArray(b.descriptors) && b.descriptors.length ? b.descriptors.map(String) : id.split("_") };
@@ -201,7 +201,7 @@ function paint(g, m, t, o = {}) {
     const gl = g.createRadialGradient(s.x, s.y, s.r * 0.5, s.x, s.y, s.r * 5), b = 0.5 * Math.max(Math.pow(Math.max(0, s.e), 0.6), S.cycle === "frozen" ? 0.7 : 0);
     const hc = hues[s.i] || hues[0] && S.suns < 2 && s.i === 0 && hues[0] || null; // 1er soleil : 1re couleur ; 2e soleil : 2e couleur
     gl.addColorStop(0, hc ? css(hc, b) : s.i === 0 ? css([255, 214, 150], b) : css([190, 215, 255], b * 0.8)); gl.addColorStop(1, css(hc || [255, 214, 150], 0)); g.fillStyle = gl; g.fillRect(0, 0, W, H);
-    if (S.blackSun && s.i === 0) { // soleil noir : disque sombre et couronne rouge éteinte
+    if ((S.blackSun || S.blackDisc) && s.i === 0) { // soleil noir : disque sombre et couronne rouge éteinte
       g.strokeStyle = css([150, 52, 40], 0.5 + 0.4 * b); g.lineWidth = Math.max(1.2, s.r * 0.22); g.beginPath(); g.arc(s.x, s.y, s.r * 1.08, 0, TAU); g.stroke();
       g.fillStyle = "#07050a"; g.beginPath(); g.arc(s.x, s.y, s.r, 0, TAU); g.fill(); continue;
     }

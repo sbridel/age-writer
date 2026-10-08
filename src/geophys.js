@@ -20,7 +20,7 @@ const SKY_BLOCKS = [
 ];
 
 const SKY_PROSE = {
-  close_orbit: ["the sun is huge here, and the year passes in a handful of days", "the star hangs close and wide, and the noon is long and white", "so near the sun that its face fills a hand held at arm's length"],
+  close_orbit: ["the sun is large and fierce here, and the noon is long and white", "the star hangs close and wide, and summer is the season it knows best", "close to its star, the world takes its light in great hot measures"],
   distant_orbit: ["the sun is small and far, a hard bright coin in a dark blue sky", "the year is long, and the sun gives light more than warmth", "far from its star, the world keeps its own slow and careful seasons"],
   young_world: ["the world is young, and the ground has not finished deciding its shape", "everything here is new: the mountains are sharp and the rocks still warm", "a young world, restless underfoot, where nothing has had time to wear down"],
   ancient_world: ["the world is old, its mountains worn round by more years than can be counted", "an ancient world, quiet to its core, where even the stones seem tired", "the hills are low and soft here, sanded down by deep time"],

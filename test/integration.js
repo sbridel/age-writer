@@ -157,6 +157,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     const was = p.ext.physics; p.ext.physics = "off"; const off = p.core.analyse(lava, { seed: "Braise" });
     p.ext.physics = "easy"; const easy = p.core.analyse(lava, { seed: "Braise" });
     ok(!off.resolved.lines.some((l) => l.unknown), "mass: / age: ne sont pas des symboles inconnus");
+    ok(p.core.analyse("single_sun\nwater\nwater: everywhere, to the horizon", { seed: "Mer" }).resolved.lines.filter((l) => l.unknown).length === 1, "une ligne « water: » sans valeur lisible reste une ligne inconnue (comme avant)");
     ok(easy.stability === off.stability && JSON.stringify(easy.axisStability) === JSON.stringify(off.axisStability) && easy.physics && !off.physics, "mode facile : stabilité inchangée, fiche jointe");
     ok(easy.physics.tensions.some((t) => t.id === "volcanism"), "mode facile : la tension est expliquée");
     p.ext.physics = "strict"; p.ext.physicsSeverity = 1; const strict = p.core.analyse(lava, { seed: "Braise" });

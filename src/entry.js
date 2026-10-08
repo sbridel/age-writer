@@ -64,7 +64,7 @@ module.exports = function build(Base, core, AGEX) {
       this.physCache = new Map();
       this.live = new Set(); this.lawTimers = new Map(); this.fileAudios = []; this.soundBtn = null;
       this.index = new AgeIndex(this);
-      this.law = new Law(this.ext.state.law, { dryMinutes: () => this.ext.inkDry, healPerDay: () => this.ext.heal });
+      this.law = new Law(this.ext.state.law, { dryMinutes: () => this.ext.inkDry, healPerDay: () => this.ext.heal, ignored: (raw) => PH.isPhysicsLine(raw) });
       this.dni = new Dni({ getMode: () => this.ext.numerals, adapter: this.app.vault.adapter, pluginDir: this.manifest.dir, getVaultFont: () => this.ext.vaultFont });
       this.soundFactor = 1; this.sound = new Soundscape(() => this.ext.volume * (this.soundFactor == null ? 1 : this.soundFactor));
 
@@ -78,7 +78,7 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
         return out;
       };
-      AGEX.skip = (line) => PH.PHYS_RE.test(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
+      AGEX.skip = (line) => PH.isPhysicsLine(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
       // livre-piège : « pas de fissure » est une réponse donnée d'avance, le tirage n'en dessine pas une que le pied de bloc nierait
       AGEX.written = (set) => { if (!AGEX.src || !guard("trap draw", () => parseTrap(AGEX.src))) return set; const s = new Set(set); s.add("no_fissure"); return s; };
       AGEX.w = (slot, opt) => { const f = guard("solitude", () => solitudeFactor(this.ext.solitude, slot, opt.id)); return opt.weight * (f == null ? 1 : f); };
@@ -103,13 +103,13 @@ module.exports = function build(Base, core, AGEX) {
     physicsMode() { const m = this.ext && this.ext.physics; return m === "off" || m === "strict" ? m : "easy"; }
     /** Retraite une analyse selon le mode physique. Le monde physique est mis en cache (texte du bloc, graine, symboles, mode). */
     applyPhysicsTo(r, srcText, o) {
-      const mode = this.physicsMode(); if (mode === "off" || !r || !r.resolved) return r;
+      const mode = this.physicsMode(); if (mode === "off" || !r || !r.resolved || (o && o.physics === false)) return r;
       const seed = (o && o.seed) || "", ids = [...PH.idsOfAnalysis(r)].sort().join(",");
       const key = `${mode}|${seed}|${ids}|${srcText}`;
       let ph = this.physCache.get(key);
       if (!ph) {
         ph = PH.physicsOf(r, srcText, seed, mode); this.physCache.set(key, ph);
-        if (this.physCache.size > 400) this.physCache.delete(this.physCache.keys().next().value);
+        if (this.physCache.size > 1500) this.physCache.delete(this.physCache.keys().next().value);
       }
       return PH.applyPhysics(r, ph, mode, { severity: Number(this.ext.physicsSeverity) || 1 });
     }
@@ -409,7 +409,7 @@ module.exports = function build(Base, core, AGEX) {
     async observeFile(f) {
       if (!this.ext.law) return;
       const src = core.extract(await this.app.vault.read(f)); if (src === null) return;
-      const ev = this.law.observe(f.basename, core.analyse(src, { seed: f.basename }), f.stat.mtime);
+      const ev = this.law.observe(f.basename, core.analyse(src, { seed: f.basename, physics: false }), f.stat.mtime);
       this.saveExt();
       if (ev) {
         new Notice(`${this.t("law.warning")}\n${describeChange(ev, this.t)}`, 9000);
@@ -421,7 +421,7 @@ module.exports = function build(Base, core, AGEX) {
       if (!(f instanceof TFile) || f.extension !== "md") return;
       const oldName = old.replace(/^.*\//, "").replace(/\.md$/i, "");
       const src = core.extract(await this.app.vault.read(f));
-      if (src === null) this.law.forget(oldName); else this.law.rename(oldName, f.basename, core.analyse(src, { seed: f.basename }));
+      if (src === null) this.law.forget(oldName); else this.law.rename(oldName, f.basename, core.analyse(src, { seed: f.basename, physics: false }));
       this.saveExt();
     }
 
@@ -431,7 +431,7 @@ module.exports = function build(Base, core, AGEX) {
         const c = this.app.metadataCache.getFileCache(f);
         if (c && !(c.sections || []).some((s) => s.type === "code")) continue;
         const src = core.extract(await this.app.vault.cachedRead(f)); if (src === null) continue;
-        if (!this.law.get(f.basename)) this.law.observe(f.basename, core.analyse(src, { seed: f.basename }), f.stat.mtime);
+        if (!this.law.get(f.basename)) this.law.observe(f.basename, core.analyse(src, { seed: f.basename, physics: false }), f.stat.mtime);
         if (++n % 25 === 0) await new Promise((r) => setTimeout(r, 0));
       }
       this.saveExt();

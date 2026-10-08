@@ -21,14 +21,14 @@ function fmt(lang) {
 
 /** Nombre à écrire dans un bloc (piste) : sans séparateur de milliers ni exposant, que parsePhysics relit. */
 function plain(lang) {
-  return (v) => { const t = Number(v.toPrecision(2)); const s = t >= 100 ? String(Math.round(t)) : String(t); return lang === "fr" ? s.replace(".", ",") : s; };
+  return (v) => { const t = Number(Number(v).toPrecision(4)); const s = t >= 100 ? String(Math.round(t)) : String(t); return lang === "fr" ? s.replace(".", ",") : s; };
 }
 
 const L = {
   fr: {
     star: "Étoile", stars: "Étoiles", none: "aucune", orbit: "Orbite", planet: "Planète", interior: "Intérieur", air: "Atmosphère", water: "Eau", life: "Vivant",
-    starV: (w, f) => (w.stars === 0 ? "aucune : seule la chaleur du sol" : w.starMasses.map((m, i) => `${f(m)} M☉ (${f(w.starTemps[i], 0)} K)`).join(" + ") + ` · lumière ${f(w.L)} L☉ · vit ${f(w.starLife)} Ga`),
-    orbitV: (w, f) => (w.stars === 0 ? "errante, sans étoile" : `${f(w.a)} UA · flux reçu ${f(w.S)} × Terre · année de ${f(w.periodDays, 0)} jours`),
+    starV: (w, f) => (w.stars === 0 ? "aucune : seule la chaleur du sol" : w.starMasses.map((m, i) => `${f(m)} M☉ (${f(w.starTemps[i], 0)} K)`).join(" + ") + ` · lumière ${f(w.L)} L☉ · ` + (isFinite(w.starLife) ? `vit ${f(w.starLife)} Ga` : "ne brûle pas : se refroidit lentement")),
+    orbitV: (w, f) => (w.stars === 0 ? "errante, sans étoile" : `${f(w.a)} UA · flux reçu ${f(w.S)} × Terre · année de ${f(w.periodDays)} jour${w.periodDays >= 2 ? "s" : ""}`),
     spinV: (w, f) => (w.locked ? `face fixe (jour = ${f(w.rotation / 24)} jours terrestres)` : `jour de ${f(w.rotation)} h`),
     planetV: (w, f) => `${f(w.M)} M⊕ · rayon ${f(w.R)} · gravité ${f(w.g)} g · densité ${f(w.rho * 5.51)} g/cm³ · ${f(w.age)} Ga`,
     interiorV: (w, f) => `chaleur ${f(w.heat)} × Terre${w.tidal > 0.05 ? ` (dont marée ${f(w.tidal)})` : ""} · ${w.volcanism ? "volcans actifs" : "volcans éteints"} · ${w.tectonics ? "plaques en mouvement" : "croûte figée"} · noyau ${w.liquidCore ? "liquide" : "figé"} · champ magnétique ${w.field > FIELD_SHIELD ? f(w.field) + " × Terre" : w.field > 0 ? "faible" : "aucun"}`,
@@ -38,8 +38,8 @@ const L = {
   },
   en: {
     star: "Star", stars: "Stars", none: "none", orbit: "Orbit", planet: "Planet", interior: "Interior", air: "Atmosphere", water: "Water", life: "Life",
-    starV: (w, f) => (w.stars === 0 ? "none: only the ground's own heat" : w.starMasses.map((m, i) => `${f(m)} M☉ (${f(w.starTemps[i], 0)} K)`).join(" + ") + ` · light ${f(w.L)} L☉ · lives ${f(w.starLife)} Gyr`),
-    orbitV: (w, f) => (w.stars === 0 ? "rogue, starless" : `${f(w.a)} AU · receives ${f(w.S)} × Earth · ${f(w.periodDays, 0)}-day year`),
+    starV: (w, f) => (w.stars === 0 ? "none: only the ground's own heat" : w.starMasses.map((m, i) => `${f(m)} M☉ (${f(w.starTemps[i], 0)} K)`).join(" + ") + ` · light ${f(w.L)} L☉ · ` + (isFinite(w.starLife) ? `lives ${f(w.starLife)} Gyr` : "does not burn: cools slowly")),
+    orbitV: (w, f) => (w.stars === 0 ? "rogue, starless" : `${f(w.a)} AU · receives ${f(w.S)} × Earth · ${f(w.periodDays)}-day year`),
     spinV: (w, f) => (w.locked ? `one face fixed (day = ${f(w.rotation / 24)} Earth days)` : `${f(w.rotation)} h day`),
     planetV: (w, f) => `${f(w.M)} M⊕ · radius ${f(w.R)} · gravity ${f(w.g)} g · density ${f(w.rho * 5.51)} g/cm³ · ${f(w.age)} Gyr`,
     interiorV: (w, f) => `heat ${f(w.heat)} × Earth${w.tidal > 0.05 ? ` (tides ${f(w.tidal)})` : ""} · ${w.volcanism ? "active volcanoes" : "dead volcanoes"} · ${w.tectonics ? "moving plates" : "stagnant lid"} · core ${w.liquidCore ? "liquid" : "frozen"} · magnetic field ${w.field > FIELD_SHIELD ? f(w.field) + " × Earth" : w.field > 0 ? "weak" : "none"}`,
@@ -54,12 +54,14 @@ function facts(w, lang, f) {
   const fr = lang === "fr", out = [];
   const push = (a, b) => out.push(fr ? a : b);
   if (w.stars > 0 && w.starLife < 1 && w.age <= w.starLife) push(`Une étoile si ardente ne vit que ${f(w.starLife * 1000)} millions d'années : ce monde est forcément jeune.`, `So fierce a star lives only ${f(w.starLife * 1000)} million years: this world must be young.`);
-  if (w.blackSun) push("Un soleil noir : une naine brune, presque toute sa lumière est infrarouge. Le jour est une pénombre rouge sombre, les couleurs s'éteignent en gris, et les plantes, pour boire cette chaleur, seraient presque noires.",
+  if (w.blackSun && !w.brownDwarfOnly) push("Un soleil noir accompagne l'autre : un disque sombre cerclé de rouge, qui chauffe à peine et n'éclaire presque pas.", "A black sun keeps the other company: a dark disc rimmed with red that barely warms and hardly lights.");
+  else if (w.blackSun) push("Un soleil noir : une naine brune, presque toute sa lumière est infrarouge. Le jour est une pénombre rouge sombre, les couleurs s'éteignent en gris, et les plantes, pour boire cette chaleur, seraient presque noires.",
     "A black sun: a brown dwarf whose light is almost all infrared. Day is a dark red dusk, colours fade to grey, and plants, to drink that heat, would be nearly black.");
   else if (w.stars > 0 && w.visRatio < 0.5) push(`Une étoile froide : elle chauffe plus qu'elle n'éclaire (${f(w.visRatio * 100, 0)} % de la lumière visible du Soleil, à chaleur égale).`, `A cool star: it warms more than it lights (${f(w.visRatio * 100, 0)} % of the Sun's visible light, for the same warmth).`);
   if (w.hues && w.hues.includes("green_sun")) push("Sous un soleil vert, les plantes boiraient le vert au lieu de le renvoyer : feuillages pourpres, presque noirs.", "Under a green sun, plants would drink the green instead of reflecting it: purple, almost black foliage.");
   if (w.stars > 0 && w.uvRatio > 1.8) push(`Une étoile chaude, riche en ultraviolets (${f(w.uvRatio)} × le Soleil) : il faut un air épais pour vivre à découvert.`, `A hot star, rich in ultraviolet (${f(w.uvRatio)} × the Sun): life in the open needs thick air.`);
-  if (w.a < 0.05 && w.stars > 0) push(`Une orbite serrée (${f(w.a)} UA) : une année de ${f(w.periodDays)} jours, et la marée de l'étoile chauffe l'intérieur.`, `A tight orbit (${f(w.a)} AU): a ${f(w.periodDays)}-day year, and the star's tide heats the interior.`);
+  if (w.a < 0.05 && w.stars > 0) push(`Une orbite serrée (${f(w.a)} UA) : une année de ${f(w.periodDays)} jour${w.periodDays >= 2 ? "s" : ""}, et la marée de l'étoile chauffe l'intérieur.`, `A tight orbit (${f(w.a)} AU): a ${f(w.periodDays)}-day year, and the star's tide heats the interior.`);
+  if (w.autoLocked) push("Rien ne l'a écrit, mais l'étoile est si proche que sa marée a eu le temps de figer la rotation.", "Nothing wrote it, but the star is so close that its tide has had time to freeze the spin.");
   if (w.locked && !w.giantHost) {
     const day = w.Ts * (1 + 0.3 / (1 + w.P)), night = w.Ts * (1 - 0.45 / (1 + w.P)); // un air épais transporte la chaleur vers la nuit
     push(`La marée de l'étoile a figé sa rotation : la face de jour monte vers ${f(day - 273.15, 0)} °C, la face de nuit descend vers ${f(night - 273.15, 0)} °C, et la vie tient la bande du crépuscule.`,

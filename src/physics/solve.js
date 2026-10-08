@@ -50,11 +50,23 @@ const LIMITS = {
   albedo: [0, 0.95, false], tides: [0, 50, false],
 };
 
+const NUM_RE = /^(-?\d+(?:[.,]\d+)?)\s*([a-zé]*)$/i;
+/**
+ * Vrai si la ligne est une ligne de valeur que la physique sait lire (`mass: 2`, `âge: 500 Ma`, `core: liquid`).
+ * Une ligne qui commence par le même mot sans valeur lisible (`water: partout, jusqu'à l'horizon`) n'en est pas une :
+ * elle reste ce qu'elle était (une ligne inconnue du moteur).
+ */
+function isPhysicsLine(line) {
+  const m = String(line).match(PHYS_RE); if (!m) return false;
+  const key = KEYS[m[1].toLowerCase()], raw = m[2].trim().toLowerCase();
+  return !!(WORDS[key] && WORDS[key][raw]) || NUM_RE.test(raw);
+}
+
 /** Lit les lignes de valeurs physiques d'un bloc `age`. Renvoie `{ params, asserts, clamped }` (asserts : exigences écrites en mots). */
 function parsePhysics(src) {
   const params = {}, asserts = [], clamped = [];
   for (const line of String(src || "").split("\n")) {
-    const m = line.match(PHYS_RE); if (!m) continue;
+    const m = line.match(PHYS_RE); if (!m || !isPhysicsLine(line)) continue;
     const key = KEYS[m[1].toLowerCase()], raw = m[2].trim().toLowerCase();
     const word = WORDS[key] && WORDS[key][raw];
     if (word) {
@@ -62,7 +74,7 @@ function parsePhysics(src) {
       if (key === "atmosphere") asserts.push("atmosphere_" + word);
       continue;
     }
-    const n = raw.match(/^(-?\d+(?:[.,]\d+)?)\s*([a-zé]*)$/i); if (!n) continue;
+    const n = raw.match(NUM_RE); if (!n) continue;
     let v = Number(n[1].replace(",", ".")); const unit = n[2];
     if (!isFinite(v) || v < 0) continue;
     if (key === "age" && /^(ma|myr|my)$/.test(unit)) v /= 1000;
@@ -112,12 +124,12 @@ function blockSettings(ids) {
  * remplacent les tirées : écrire `insolation: 1` ne déplace pas le tirage de la masse ou de l'âge.
  */
 function candidate(r, set, written) {
-  const starMasses = [];
+  const starMasses = [], starHues = [];
   for (let i = 0; i < Math.max(set.stars, 2); i++) {
-    const hue = set.hues[i] || (i > 0 ? set.hues[0] : null);
+    const hue = set.hues[i] || null; // chaque étoile sa couleur ; sans couleur, une étoile ordinaire
     const range = hue ? HUE_MASS[hue] : [0.7, 1.3];
     const m = logU(r, range[0], range[1]);
-    if (i < set.stars) starMasses.push(i === 0 && written.starMass ? written.starMass : m);
+    if (i < set.stars) { starMasses.push(i === 0 && written.starMass ? written.starMass : m); starHues.push(hue); }
   }
   const roll = {
     S: logN(r, 1, 0.35, 0.2, 3), M: logN(r, 1, 0.5, 0.05, 8), cmf: M.clamp(0.33 + 0.06 * gauss(r) + set.coreAdd, 0.05, 0.75),
@@ -128,7 +140,7 @@ function candidate(r, set, written) {
   if (set.sRange) roll.S = inRange(roll.uS, set.sRange);
   if (set.massRange) roll.M = inRange(roll.uM, set.massRange);
   return {
-    starMasses,
+    starMasses, starHues,
     S: set.stars === 0 ? 0 : written.insolation != null ? written.insolation : roll.S,
     orbit: set.stars === 0 ? null : written.orbit,
     M: written.mass != null ? written.mass : roll.M,
@@ -147,10 +159,12 @@ function candidate(r, set, written) {
 function derive(p, set, written, ids) {
   const w = { ids, stars: set.stars, moon: set.moon, giantHost: set.giantHost, locked: set.locked, hues: set.hues };
   // L1 étoiles
-  // le soleil noir (naine brune) est la première étoile quand il est écrit
-  const props = p.starMasses.map((m, i) => (set.blackSun && i === 0 ? M.brownDwarf(m) : { T: M.starTemperature(m), L: M.starLuminosity(m), life: M.starLifetime(m) }));
+  // le soleil noir (naine brune) est l'étoile qui porte la couleur black_sun
+  const hues = p.starHues || [];
+  const props = p.starMasses.map((m, i) => (hues[i] === "black_sun" ? M.brownDwarf(m) : { T: M.starTemperature(m), L: M.starLuminosity(m), life: M.starLifetime(m) }));
   const lums = props.map((x) => x.L);
-  w.blackSun = set.blackSun && set.stars > 0;
+  w.blackSun = hues.includes("black_sun");
+  w.brownDwarfOnly = props.length > 0 && hues.every((h) => h === "black_sun");
   w.starMass = p.starMasses[0] || 0;
   w.starMasses = p.starMasses;
   w.starTemps = props.map((x) => x.T);
@@ -172,7 +186,9 @@ function derive(p, set, written, ids) {
   const maxAge = isFinite(w.starLife) ? Math.max(0.001, w.starLife * 0.95) : 12;
   w.age = p.age != null ? p.age : Math.min(maxAge, 0.5 + p.ageRoll * 8.5);
   w.lockTime = M.tidalLockTime(w.a, hostMass || 1);
-  if (set.locked) w.rotation = set.giantHost ? p.giantDays * 24 : w.periodDays * 24;
+  // la marée fige la rotation quand le monde a eu le temps de se verrouiller, même si le livre ne l'a pas écrit
+  if (!set.locked && !set.giantHost && set.stars > 0 && w.lockTime < w.age && written.rotation == null) { w.locked = true; w.autoLocked = true; }
+  if (w.locked) w.rotation = set.giantHost ? p.giantDays * 24 : w.periodDays * 24;
   else if (set.giantHost && written.rotation == null) w.rotation = p.giantDays * 24;
   else w.rotation = p.rotation;
   // L3 planète
@@ -180,7 +196,7 @@ function derive(p, set, written, ids) {
   w.R = written.radius != null ? written.radius : M.planetRadius(p.M, p.cmf);
   w.g = M.gravity(w.M, w.R); w.vesc = M.escapeVelocity(w.M, w.R); w.rho = M.density(w.M, w.R);
   // L4 intérieur
-  w.tidal = written.tides != null ? written.tides : (set.giantHost ? p.giantTides : 0) + (set.moon ? 0.03 : 0) + (set.locked && w.a < 0.2 ? 0.1 : 0) + (w.a < 0.05 ? 0.2 : 0);
+  w.tidal = written.tides != null ? written.tides : (set.giantHost ? p.giantTides : 0) + (set.moon ? 0.03 : 0) + (w.locked && w.a < 0.2 ? 0.1 : 0) + (w.a < 0.05 ? 0.2 : 0);
   w.heat = M.internalHeat(w.M, w.R, w.age, w.tidal);
   w.volcanism = w.heat >= M.HEAT.volcanism;
   w.liquidCore = w.heat >= M.HEAT.liquidCore;
@@ -215,7 +231,7 @@ function derive(p, set, written, ids) {
   // L7 lumière au sol (voile, nuages épais)
   // lumière au sol : la part VISIBLE du flux (une naine rouge chauffe mais éclaire peu ; un soleil noir presque pas)
   w.light = w.S * w.visRatio * set.veil * (a.P > 10 ? 0.5 : 1);
-  w.uv = w.S * w.uvRatio * (a.P > 1 ? 0.5 : 1) * (w.field > M.FIELD_SHIELD ? 0.8 : 1);
+  w.uv = (w.S * w.uvRatio * (w.field > M.FIELD_SHIELD ? 0.8 : 1)) / (1 + 0.8 * a.P); // l'air (et sa couche d'ozone) filtre peu à peu
   return w;
 }
 
@@ -274,6 +290,7 @@ const GRID = {
 const current = (key, w) => ({ insolation: w.S, age: w.age, mass: w.M, atmosphere: w.P, water: w.waterInv, rotation: w.rotation }[key]);
 /** Arrondi à deux chiffres significatifs (ce que l'on écrirait à la main). */
 const round2 = (v) => { const e = Math.pow(10, Math.floor(Math.log10(v)) - 1); return Math.round(v / e) * e; };
+const roundN = (v, n) => Number(v.toPrecision(n));
 
 /** Le monde, avec une seule valeur changée. */
 function variant(best, ctx, key, v) {
@@ -309,14 +326,15 @@ function hintsFor(t, best, ctx) {
       if (!found || d < found.d) found = { v, d };
     }
     if (!found) continue;
-    let value = round2(found.v);
-    if (!works(value)) value = found.v;
+    // la piste est écrite telle quelle : on garde le plus court arrondi qui marche encore (2, 3 puis 4 chiffres)
+    let value = [round2(found.v), roundN(found.v, 3), roundN(found.v, 4)].find((x) => works(x));
+    if (value == null) continue;
     const hint = { key, value, dir: value > cur ? "up" : "down" };
-    if (key === "insolation" && ctx.written.orbit != null && best.w.L > 0) Object.assign(hint, { key: "orbit", value: round2(Math.sqrt(best.w.L / value)), dir: value > cur ? "down" : "up" });
+    if (key === "insolation" && ctx.written.orbit != null && best.w.L > 0) Object.assign(hint, { key: "orbit", value: roundN(Math.sqrt(best.w.L / value), 3), dir: value > cur ? "down" : "up" });
     out.push(hint);
     if (out.length >= 2) break;
   }
   return out;
 }
 
-module.exports = { PHYS_RE, KEYS, LIMITS, SEV_COST, CANDIDATES, parsePhysics, blockSettings, candidate, derive, evaluate, costOf, solve };
+module.exports = { isPhysicsLine, PHYS_RE, KEYS, LIMITS, SEV_COST, CANDIDATES, parsePhysics, blockSettings, candidate, derive, evaluate, costOf, solve };

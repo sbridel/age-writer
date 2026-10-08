@@ -64,7 +64,7 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
   node(t("chain.flux"), f(w.S) + "×", w.S > 0 ? "ok" : "warn"); arrow();
   node(t("chain.surface"), f(w.Ts - 273.15, 0) + " °C", temp); arrow();
   node(t("chain.water"), water[0], water[1]); arrow();
-  node(t("chain.light"), f(w.light) + "×", w.light >= 0.01 ? "ok" : "bad");
+  node(t("chain.light"), f(w.light) + "×", w.light >= 0.01 || (w.blackSun && w.S >= 0.2) ? "ok" : "bad");
   chain.createSpan({ cls: "age-det__break" });
   node(t("chain.heat"), f(w.heat) + "×", w.volcanism ? "ok" : "warn"); arrow();
   node(t("chain.core"), w.liquidCore ? t("chain.liquid") : t("chain.frozen"), w.liquidCore ? "ok" : "warn"); arrow();
@@ -96,7 +96,9 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
         const b = fixes.createEl("button", { cls: "age-det__fix", attr: { type: "button", "aria-label": t("det.write", { line: `${h.key}: ${PH.asLine(h.value)}` }) } });
         b.createSpan({ text: txt.replace(/\s*\([^()]*\)\s*$/, "") + " " });
         b.createEl("code", { text: `${h.key}: ${PH.asLine(h.value)}` });
-        b.addEventListener("click", () => plugin.writePhysicsLine(path, src, h.key, h.value));
+        b.addEventListener("click", async () => {
+          try { await plugin.writePhysicsLine(path, src, h.key, h.value); } catch (e) { console.warn("[Age Writer ext] piste", e); try { new (require("obsidian").Notice)(t("phys.notfound")); } catch (x) { /* ignore */ } }
+        });
       } else fixes.createSpan({ cls: "age-det__fixtxt", text: txt });
     });
   });
