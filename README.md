@@ -75,7 +75,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 Manual, for now:
 
 1. Get `main.js`, `styles.css`, `manifest.json` (build them, see §16).
-2. Copy them to `<vault>/.obsidian/plugins/age-writer/`.
+2. Copy them to the `.obsidian/plugins/age-writer/` folder inside your vault.
 3. In Obsidian: *Settings → Community plugins*, reload, enable **Age Writer**.
 
 The extension's settings live in the plugin's settings tab, under the "Extensions" heading. The interface language follows Obsidian's (English or French). The engine's content (block names, generated descriptions) is in English.
@@ -109,9 +109,9 @@ An `age` code block, one page per line (a block identifier), plus special lines.
 
 | Line | Effect |
 |---|---|
-| `link: [[Note]]` | linking book to another Age (several allowed) |
-| `return: [[Note]]` | return book |
-| `panel: [[image]]` | your own window image |
+| `link: [[Sunder Reach]]` | linking book to another Age (several allowed) |
+| `return: [[Hub]]` | return book |
+| `panel: [[lagoon.png]]` | your own window image |
 | `seed: 42` | changes the draw (same note + same seed = same world) |
 | `cover: sober` | cover sobriety: `ornate`, `classic`, `sober`, `plain`, or 0 to 1 |
 | `window_style: generative` | window rendering (`generative` or `classic`) |
@@ -197,7 +197,7 @@ At the foot of the shelf (in the cabin since 1.12), two books look different fro
 - **Book of glyphs** (turquoise, diamond): a click opens the list of glyphs *used* in the Ages on the shelf, with their drawing and the Ages where they appear (click = open the Age). For now "known" = written in an Age; the future game loop may limit it to discovered glyphs. Command: *Open the book of glyphs*.
 - **Library book** (red, clasp): a click offers *Blocks, reactions and Age variants* (`age-library`) or *Relto pages* (`relto-library`). The plugin opens the existing library note, or creates it with a commented example (`Age Library.md`, `Relto Library.md`, in the library folder if set). Command: *Open a library note*.
 
-A Relto page's syntax accepts `page lagoon: …` or `page_lagoon: …`.
+A Relto page's syntax accepts `page lagoon: Lagoon | vegetation 0.5 palm` or `page_lagoon: Lagoon | vegetation 0.5 palm`.
 
 ### The global view
 
@@ -371,9 +371,9 @@ npm install          # once (jsdom, eslint, esbuild: development only)
 npm run build        # src/ → dist/ (readable) + release/ (minified)
 npm test             # all tests, on the readable build then on the minified one
 npm run lint
-npm run equiv -- <old main.js>      # non-regression: 600 random Ages, old build vs new
+npm run equiv -- legacy/main-1.3.0.min.js    # non-regression: 600 random Ages, old build vs new
 node test/visual/make.js            # render pages in test/visual/out/
-npm run zip          # release/age-writer-<v>.zip (plugin) + -src.zip (sources)
+npm run zip          # release/age-writer-1.17.3.zip (plugin) + -src.zip (sources); version = package.json
 ```
 
 In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the engine), then the extension layer: `entry.js` (book and block patches), `ui-extras.js` (panel and tabs), `ui-relto.js` (Relto, dedicated view, navigation), `relto-render.js` (canvas), `relto-rooms.js` (cabin, pillars, pond, pond ++, cat, grove), `relto-model.js` (pages, island layout), `relto-scenery.js`, `relto-global.js`, `relto-books.js`, `cover.js` (covers), `sound.js` (sounds, room sounds), `linkfx.js` and `genscene.js` (window), `law.js` (law of change), `mech.js` (special lines), `physics/` (physics of the Ages: laws, block requirements, constrained draw, sheet; design in `docs/DESIGN-physique.md`), `geophys.js` (geophysics blocks), `settings-ui.js` (settings), `guide.js` (guide), `i18n.js`. Details: [`docs/DEV.md`](docs/DEV.md) (in French).
