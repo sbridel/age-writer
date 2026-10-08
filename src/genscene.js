@@ -34,7 +34,7 @@ function sceneOf(a, name = "", blocks = null) {
   if (r("door", "sealed_door")) ruins.push("door"); if (r("bridge", "fallen_bridge")) ruins.push("bridge");
   if (r("tablet", "worn_tablet", "speaking_tablet")) ruins.push("tablet"); if (r("lamp", "lit_lamp")) ruins.push("lamp");
   const S = {
-    seed: fnv(name + "|" + [...ids].sort().join(",")), verdict: a.verdict, unrest: clamp(1 - (a.stability == null ? 100 : a.stability) / 100),
+    name, seed: fnv(name + "|" + [...ids].sort().join(",")), verdict: a.verdict, unrest: clamp(1 - (a.stability == null ? 100 : a.stability) / 100),
     suns: r("twin_suns") ? 2 : r("single_sun") ? 1 : 0, skyStated: r("twin_suns", "single_sun", "starless"), moon: r("companion_moon"),
     cycle: r("frozen_cycle") ? "frozen" : r("erratic_cycle") ? "erratic" : "steady", chaos: r("chaotic_orbit"), veil: r("permanent_veil"),
     auroras: r("auroras"), eclipses: r("recurring_eclipses"), starfall: r("starfall"),
@@ -618,16 +618,20 @@ function frost(g, m, t, night) {
   g.fillStyle = css([235, 246, 255], 0.14); g.fillRect(0, 0, W, H);
 }
 
+/** Crochets posés par le plugin : l'ouverture (0 à 1) des fissures d'un Âge d'après son âge. Sans plugin : grande ouverte. */
+const HOOKS = { opening: () => 1 };
+const openingOf = (S) => { try { const v = HOOKS.opening(S.name); return typeof v === "number" && v === v ? Math.max(0, Math.min(1, v)) : 1; } catch (e) { return 1; } };
+
 function fissure(g, m, t) {
-  const { S, W, H, hz, fis } = m, f = 0.5 + 0.5 * Math.sin(TAU * t * 3);
+  const { S, W, H, hz, fis } = m;
   if (S.fissure === "cave") {
     const x = fis.x, hw = H * 0.17, h = H * 0.22; g.fillStyle = "#040406"; g.strokeStyle = "#2c2a36"; g.lineWidth = 1;
     g.beginPath(); g.moveTo(x - hw, hz + 4); g.lineTo(x - hw, hz - h * 0.55); g.quadraticCurveTo(x, hz - h * 1.25, x + hw, hz - h * 0.55); g.lineTo(x + hw, hz + 4); g.closePath(); g.fill(); g.stroke();
-    g.strokeStyle = css([190, 230, 255], 0.5 + 0.4 * f); g.lineWidth = 1.6; g.beginPath(); g.moveTo(x, hz - h * 0.7); g.lineTo(x - 2, hz - h * 0.4); g.lineTo(x + 2, hz - h * 0.15); g.lineTo(x, hz + 2); g.stroke();
+    crevasse(g, { x, y0: hz - h * 0.85, y1: hz + 2, w: hw * 0.45, jit: fis.pts, t, seed: 1 + ((S.seed >>> 0) % 89), shape: "lens", open: 1 }); // dans la grotte, toujours une crevasse (et jamais une menace)
     return;
   }
   const sub = S.fissure === "submarine", y0 = sub ? hz + (H - hz) * 0.3 : hz + 2;
-  crevasse(g, { x: fis.x, y0, y1: H - 2, w: W * 0.04, jit: fis.pts, t, water: sub, seed: 1 + ((S.seed >>> 0) % 89) });
+  crevasse(g, { x: fis.x, y0, y1: H - 2, w: W * 0.04, jit: fis.pts, t, water: sub, open: openingOf(S), seed: 1 + ((S.seed >>> 0) % 89) });
   if (sub) for (const b of fis.bubbles) { const q = frac(t * 2 + b.p); g.strokeStyle = css([205, 235, 248], 0.5 * (1 - q)); g.lineWidth = 0.9; g.beginPath(); g.arc(fis.x + b.dx, H - 4 - q * (H - y0 - 8), 1 + 1.4 * b.p, 0, TAU); g.stroke(); }
 }
 
@@ -876,4 +880,4 @@ function extraAt(g, m, t, layer) {
 }
 
 
-module.exports = { sceneOf, traits, KNOWN, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
+module.exports = { HOOKS, openingOf, sceneOf, traits, KNOWN, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };

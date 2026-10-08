@@ -9,7 +9,7 @@
 const { clamp, words } = require("./util");
 
 const DAY = 86400000;
-const COST_PER_ELEMENT = 0.06, COST_CAP_PER_EDIT = 0.3;
+const COST_PER_ELEMENT = 0.06, COST_CAP_PER_EDIT = 0.3, CONDEMN_MAX_DAYS = 14, CONDEMN_HALF = 10;
 
 /** Les lignes inconnues sont comparées sans tenir compte des espaces (même insécables), des caractères invisibles ni de la casse :
  *  un saut de ligne ou une espace de fin n'est pas une modification du monde. */
@@ -42,6 +42,29 @@ class Law {
     return clamp(a.extra - this.o.healPerDay() * days);
   }
 
+  /** Ouverture (0 à 1) des fissures d'un Âge : elles s'ouvrent avec le temps, depuis que le livre existe (`born`), en `days` jours.
+   *  `days` ≤ 0 : toujours grandes ouvertes. Un Âge inconnu est neuf : fissure fermée. */
+  opening(name, days) {
+    if (!(days > 0)) return 1;
+    const a = this.get(name); if (!a) return 0;
+    if (!(a.born > 0)) a.born = this.now(); // anciens états : le livre « naît » à sa première lecture
+    return clamp((this.now() - a.born) / (days * DAY));
+  }
+
+  /** Veille sur un Âge à fissure : tant qu'il est instable, la fissure ouverte consume sa « marge de vie », d'autant plus vite que le monde est
+   *  instable (délai de condamnation : CONDEMN_MAX_DAYS à 74 %, divisé par deux tous les CONDEMN_HALF points en dessous) et que la fissure est ouverte.
+   *  Stable (ou sans fissure à craindre), la marge se reconstitue (elle double tous les jours). Marge épuisée : condamné, et c'est définitif (« beyond repair »).
+   *  `stability` : la stabilité du monde sans la fissure (100 s'il n'y a rien à craindre). Renvoie vrai s'il est condamné. */
+  tend(name, stability, opening) {
+    const a = this.get(name); if (!a) return false;
+    if (a.condemned) return true;
+    const now = this.now(), dt = Math.min(2, Math.max(0, (now - (a.tendAt || now)) / DAY)); a.tendAt = now; // une longue absence ne compte que deux jours
+    if (stability < 75) a.dose = (a.dose || 0) + (dt / condemnDays(stability)) * clamp(opening);
+    else a.dose = (a.dose || 0) * Math.pow(0.5, dt);
+    if (a.dose >= 1) a.condemned = now;
+    return !!a.condemned;
+  }
+
   /**
    * À appeler quand la note d'un Âge est lue/modifiée.
    * @returns {null | {added:string[], removed:string[], cost:number, extra:number, message:string}}
@@ -52,7 +75,7 @@ class Law {
     if (a) a.ids = [...new Set(a.ids.map(squash))].sort(); // états enregistrés avec l'ancienne écriture
     // 1.16 : une ligne de valeur physique (`mass: 2`) n'est plus une ligne inconnue ; l'ancien état la comptait : on l'oublie sans frais
     if (a && this.o.ignored) a.ids = a.ids.filter((x) => !(x[0] === "?" && this.o.ignored(x.slice(1))));
-    if (!a) { this.state.ages[name] = { ids, changedAt: mtime || now, extra: 0, at: now, log: [] }; return null; }
+    if (!a) { this.state.ages[name] = { ids, changedAt: mtime || now, extra: 0, at: now, born: now, log: [] }; return null; }
     const same = ids.length === a.ids.length && ids.every((v, i) => v === a.ids[i]);
     if (same) return null;
     const dry = this.o.dryMinutes();
@@ -94,6 +117,25 @@ function adjustAnalysis(r, extra) {
   return r;
 }
 
+/** Une fissure à l'air libre ou sous l'eau abîme un monde déjà instable, d'autant plus qu'elle est ouverte ;
+ *  un monde stable n'en souffre pas, et une fissure de grotte n'ajoute jamais d'instabilité. Retire jusqu'à FISSURE_COST × 100 points. */
+const FISSURE_COST = 0.5;
+/** Jours avant la condamnation d'un monde de stabilité `s` (< 75) à fissure grande ouverte : une demi-vie par tranche de CONDEMN_HALF points perdus. */
+const condemnDays = (s) => CONDEMN_MAX_DAYS * Math.pow(0.5, (75 - s) / CONDEMN_HALF);
+const strainable = (r) => !!r && (r.fissure === "open" || r.fissure === "submarine") && r.stability < 75;
+function fissureStrain(r, opening) {
+  if (!strainable(r) || !(opening > 0)) return r;
+  const v = clamp(Math.round(r.stability - FISSURE_COST * 100 * Math.min(1, opening)), 0, 100);
+  return forceAlteration(r, v);
+}
+/** Abaisse l'axe « altération » à `v` (s'il ne l'est pas déjà plus bas) et recalcule le verdict. */
+function forceAlteration(r, v) {
+  r.axisStability = { ...r.axisStability, alteration: Math.min(v, r.axisStability.alteration ?? 100) };
+  const min = Math.min(...Object.values(r.axisStability));
+  r.stability = min; r.verdict = min >= 75 ? "stable" : min >= 40 ? "unstable" : "dying";
+  return r;
+}
+
 /** « heat » devient « rain » : décrit une modification. */
 function describeChange(entry, t) {
   const q = (x) => words(x.replace(/^\?/, "")); // les guillemets viennent des phrases traduites
@@ -105,4 +147,4 @@ function describeChange(entry, t) {
   return parts.join(" ");
 }
 
-module.exports = { Law, worldIds, adjustAnalysis, describeChange, COST_PER_ELEMENT };
+module.exports = { Law, worldIds, adjustAnalysis, fissureStrain, strainable, forceAlteration, FISSURE_COST, condemnDays, describeChange, COST_PER_ELEMENT };

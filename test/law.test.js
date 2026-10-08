@@ -43,3 +43,41 @@ console.log("law: ok");
   assert.strictEqual(l3.effective("Lava"), 0);
 }
 
+
+// fissures : elles s'ouvrent avec l'âge du livre ; elles n'abîment qu'un monde déjà instable ; celles des grottes jamais
+{
+  const { fissureStrain } = require("../src/law");
+  let t = 5e12; const lw = new Law({}, { dryMinutes: () => 15, healPerDay: () => 0.05, now: () => t });
+  assert.strictEqual(lw.opening("Neuf", 7), 0, "Âge inconnu : fissure fermée");
+  lw.observe("Neuf", A(["stone"]), t);
+  assert.strictEqual(lw.opening("Neuf", 7), 0, "livre du jour : fermée");
+  t += 3.5 * 86400000; assert.ok(Math.abs(lw.opening("Neuf", 7) - 0.5) < 1e-9, "à mi-chemin : à moitié ouverte");
+  t += 10 * 86400000; assert.strictEqual(lw.opening("Neuf", 7), 1, "puis grande ouverte, pas davantage");
+  assert.strictEqual(lw.opening("Neuf", 0), 1, "0 jour : toujours grande ouverte");
+  lw.state.ages.Vieux = { ids: [], changedAt: 0, extra: 0, at: 0, log: [] }; // ancien état sans `born`
+  assert.strictEqual(lw.opening("Vieux", 7), 0, "ancien livre : naît à sa première lecture"); t += 7 * 86400000; assert.strictEqual(lw.opening("Vieux", 7), 1);
+
+  const mk = (fissure, stability) => ({ fissure, stability, axisStability: { cosmological: stability }, verdict: "x" });
+  assert.strictEqual(fissureStrain(mk("open", 90), 1).stability, 90, "monde stable : la fissure ne le déstabilise pas");
+  assert.strictEqual(fissureStrain(mk("cave", 60), 1).stability, 60, "fissure de grotte : jamais d'instabilité");
+  assert.strictEqual(fissureStrain(mk("open", 60), 0).stability, 60, "fissure fermée : rien");
+  const half = fissureStrain(mk("submarine", 70), 0.5), full = fissureStrain(mk("open", 70), 1);
+  assert.ok(half.stability === 45 && half.verdict === "unstable" && full.stability === 20 && full.verdict === "dying", "monde instable : plus elle s'ouvre, plus elle l'abîme");
+  assert.strictEqual(fissureStrain(mk(null, 60), 1).stability, 60, "sans fissure : rien");
+
+  // condamnation : une demi-vie. Plus le monde est instable, plus vite il est condamné ; stable, la marge se reconstitue ; condamné, c'est définitif
+  const { condemnDays } = require("../src/law");
+  assert.ok(Math.abs(condemnDays(74) - 14 * Math.pow(0.5, 0.1)) < 1e-9 && condemnDays(74) > 13, "à 74 % : environ deux semaines de marge");
+  assert.ok(Math.abs(condemnDays(65) - 7) < 1e-9 && Math.abs(condemnDays(55) - 3.5) < 1e-9, "une demi-vie tous les 10 points");
+  assert.ok(condemnDays(10) < 0.2 && condemnDays(0) < 0.1, "très instable : condamné très vite (en heures)");
+  const fresh = (name) => { const l = new Law({}, { dryMinutes: () => 15, healPerDay: () => 0.05, now: () => c }); l.observe(name, A(["stone"]), c); return l; };
+  let c = 7e12;
+  let lc = fresh("A"); lc.tend("A", 55, 1); c += 3.4 * 86400000; assert.strictEqual(lc.tend("A", 55, 1), false, "55 % : un peu moins de 3,5 jours de marge (le temps compte par pas de 2 jours au plus)");
+  c = 7e12; lc = fresh("B"); lc.tend("B", 55, 1); for (let i = 0; i < 4; i++) { c += 1 * 86400000; lc.tend("B", 55, 1); } assert.strictEqual(lc.get("B").condemned > 0, true, "à 55 %, quatre jours : condamné");
+  c = 7e12; lc = fresh("C"); lc.tend("C", 10, 1); c += 0.3 * 86400000; assert.strictEqual(lc.tend("C", 10, 1), true, "à 10 % : condamné en quelques heures");
+  c = 7e12; lc = fresh("D"); lc.tend("D", 70, 1); c += 1 * 86400000; assert.strictEqual(lc.tend("D", 70, 1), false, "70 % : de la marge"); c += 1 * 86400000; assert.strictEqual(lc.tend("D", 70, 1), false);
+  c = 7e12; lc = fresh("E"); lc.tend("E", 30, 0.2); c += 1 * 86400000; assert.strictEqual(lc.tend("E", 30, 0.2), false, "fissure à peine ouverte : la marge fond lentement");
+  c = 7e12; lc = fresh("F"); lc.tend("F", 45, 1); c += 1 * 86400000; lc.tend("F", 45, 1); const d1 = lc.get("F").dose; c += 1 * 86400000; lc.tend("F", 100, 1); assert.ok(lc.get("F").dose < d1 * 0.6 && lc.get("F").dose > 0, "stable : la marge se reconstitue, elle double chaque jour");
+  c = 7e12; lc = fresh("G"); lc.tend("G", 10, 1); c += 1 * 86400000; lc.tend("G", 10, 1); c += 1 * 86400000; assert.strictEqual(lc.tend("G", 100, 1), true, "définitif : même corrigé ensuite, « beyond repair »");
+  assert.strictEqual(lc.tend("Inconnu", 10, 1), false, "Âge inconnu : rien");
+}
