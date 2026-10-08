@@ -126,7 +126,7 @@ An `age` code block, one page per line (a block identifier), plus special lines.
 | `trap book` | trap book (neither return nor crack) |
 | `damaged_pages = 2`, `removed_pages = 1` | damaged linking book |
 
-Special lines are ignored by the engine: they don't count as pages. The complete list of blocks (92 identifiers, by axis) and all aliases is in the **full reference** built into the plugin.
+Special lines are ignored by the engine: they don't count as pages. The complete list of blocks (107 you can write, by axis) and all aliases is in the **full reference** built into the plugin.
 
 ---
 
@@ -317,7 +317,7 @@ Notable defaults: leather and cover on; book in a main tab, opened on the cover;
 Two levels, in a window with sections (and exportable as notes):
 
 - **Short guide**: writing an Age, the block, the book, the Relto, sounds, the law of change, settings;
-- **Full reference** (in French): all lines and aliases, the 92 blocks by axis, extended sky, quantities, stability, window, traps, Relto (YAML note, pages, options), D'ni, mechanisms, journal, sounds, library, all settings, commands, properties, limitations.
+- **Full reference** (in French): all lines and aliases, the 107 writable blocks by axis, extended sky, quantities, stability, window, traps, Relto (YAML note, pages, options), D'ni, mechanisms, journal, sounds, library, all settings, commands, properties, limitations.
 
 ---
 
