@@ -10,7 +10,7 @@
  */
 const { rng, fnv, clamp, lerp, smooth, frac } = require("./util");
 const SKY = require("./sky");
-const WT = require("./wealth"), AM = require("./amounts");
+const WT = require("./wealth"), AM = require("./amounts"), SEA = require("./sea");
 
 const TAU = Math.PI * 2, PERIOD = 8000;
 
@@ -18,7 +18,7 @@ const TAU = Math.PI * 2, PERIOD = 8000;
 const KNOWN = new Set(("door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon frozen_cycle erratic_cycle chaotic_orbit " +
   "permanent_veil auroras recurring_eclipses starfall rain storm thunderstorm whispering_storm waiting_thunder wind dust_storm ash_cloud spore_cloud fog marsh_mist rime watching_mist lightning heat " +
   "hail black_hail steam lava obsidian whispering_obsidian water brine meltwater crying_obsidian ice black_ice deep_cold sand glass singing_glass fulgurite grove great_tree ironwood charred_grove " +
-  "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " + SKY.SKY_BLOCKS.map((b) => b.id).join(" ") + " " + WT.RICH_IDS.join(" ") + " " + WT.SCAR_IDS.join(" ")).split(" "));
+  "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " + SKY.SKY_BLOCKS.map((b) => b.id).join(" ") + " " + WT.RICH_IDS.join(" ") + " " + WT.SCAR_IDS.join(" ") + " " + SEA.IDS.join(" ")).split(" "));
 const AXES = ["cosmological", "geological", "meteorological", "ecological", "metaphysical"];
 
 function sceneOf(a, name = "", blocks = null) {
@@ -53,6 +53,7 @@ function sceneOf(a, name = "", blocks = null) {
     }),
     fissure: r("no_fissure") ? null : r("cave_fissure") ? "cave" : r("submarine_fissure", "fissure") ? (r("water") ? "submarine" : "open") : null,
   };
+  S.kelp = r("kelp"); S.coral = r("coral"); S.acid = r("acid");
   S.shore = shoreOf(S, r, wd);
   const cycleWritten = res.lines.some((l) => l.entry && l.entry.category === "cycle" && !l.autoFilled);
   S.phys = physLook(a.physics && a.physics.w, cycleWritten);
@@ -186,8 +187,14 @@ function build(S, W, H) {
   const scar = { cracks: Array.from({ length: 12 }, () => ({ x: q3(), u: q3(), pts: Array.from({ length: 5 }, () => q3() - 0.5) })), pits: Array.from({ length: 5 }, () => ({ x: q3(), u: 0.15 + 0.8 * q3(), w: 0.6 + q3() * 0.8 })), embers: Array.from({ length: 22 }, () => ({ x: q3(), u: q3(), p: q3() })) };
   const shore = S.shore ? buildShore(S, W, H, hz) : null;
   const night = buildNight(S, W, H, hz);
+  const q7 = rng((S.seed ^ 0x5ea) >>> 0);
+  const sea = {
+    kelp: S.kelp ? Array.from({ length: 7 + Math.floor(q7() * 7) }, () => ({ x: W * q7(), h: 0.45 + 0.5 * q7(), p: q7() * TAU, w: 1.5 + q7() * 2.5, leaves: 4 + Math.floor(q7() * 5) })) : [],
+    coral: S.coral ? Array.from({ length: 6 + Math.floor(q7() * 6) }, () => ({ x: W * q7(), u: 0.55 + 0.45 * q7(), s: 0.6 + q7() * 0.9, hue: [340, 15, 30, 290, 190][Math.floor(q7() * 5)], kind: Math.floor(q7() * 3), pts: Array.from({ length: 5 }, () => q7()) })) : [],
+    acid: S.acid ? Array.from({ length: 3 + Math.floor(q7() * 3) }, () => ({ x: W * (0.08 + 0.84 * q7()), u: 0.15 + 0.8 * q7(), w: 0.5 + q7() * 0.9, p: q7() })) : [],
+  };
   if (shore && shore.mode === "side" && S.fissure === "submarine") { const wx = lerp(shore.x0, shore.x1, 0.5); fis.x = shore.side < 0 ? lerp(wx, W, 0.45) : lerp(0, wx, 0.55); } // la fissure sous l'eau reste dans l'eau
-  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night };
+  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea };
 }
 
 /**
@@ -380,6 +387,7 @@ function paint(g, m, t, o = {}) {
   scarGround(g, m, t, night);
   richGlints(g, m, t, night);
   extraAt(g, m, t, "ground");
+  seaLife(g, m, t, night);
   // fissure
   if (S.fissure) { const wet = m.shore && S.fissure === "submarine"; if (wet) { g.save(); shorePath(g, m.shore.wet); g.clip(); } fissure(g, m, t); if (wet) g.restore(); }
   // arbres
@@ -462,6 +470,45 @@ function shoreEdge(g, m, t, night) {
   }
   if (sh.kind === "rock") for (const r of sh.rocks) { const [x, y] = L[r.k], R = (3 + 7 * depth(y)) * r.s; g.fillStyle = css(mixc(m.pal.rock, [40, 40, 46], 0.5)); g.strokeStyle = css([200, 190, 170], 0.25 * lit); g.lineWidth = 0.8; g.beginPath(); r.pts.forEach((k, i) => { const a = Math.PI + (i / 5) * Math.PI; i ? g.lineTo(x + r.dx * R + Math.cos(a) * R * k, y + Math.sin(a) * R * k * 0.8) : g.moveTo(x + r.dx * R + Math.cos(a) * R * k, y + Math.sin(a) * R * k * 0.8); }); g.closePath(); g.fill(); g.stroke(); }
   if (sh.kind === "grass") for (const r of sh.rocks) { const [x, y] = L[r.k], h = (4 + 9 * depth(y)) * r.s, sw = Math.sin(TAU * t + r.dx) * 1.2; g.strokeStyle = css([70, 96, 56], 0.85 * lit); g.lineWidth = 1; g.beginPath(); for (let i = -1; i <= 1; i++) { g.moveTo(x + i * 2, y); g.lineTo(x + i * 3 + sw, y - h); } g.stroke(); } // roseaux
+}
+
+/**
+ * Varech, corail, acide. Sous l'eau (dans la part d'eau quand il y a un rivage) : le varech monte du fond et ondule,
+ * le corail fait des taches vives près du bas ; l'acide fait des flaques jaune-vert qui bouillonnent sur la terre,
+ * ou teinte l'eau quand il n'y a pas de terre.
+ */
+function seaLife(g, m, t, night) {
+  const { S, W, H, hz, sea, shore } = m; if (!sea || (!sea.kelp.length && !sea.coral.length && !sea.acid.length)) return;
+  const D = H - hz, lit = 1 - 0.6 * night, wet = S.water || S.ice;
+  if (wet && (sea.kelp.length || sea.coral.length)) {
+    g.save(); if (shore) { shorePath(g, shore.wet); g.clip(); }
+    for (const k of sea.kelp) { // des lanières qui montent du fond et ondulent avec le courant
+      const top = H - D * k.h, n = 10; g.strokeStyle = css(mixc([60, 130, 70], [6, 12, 10], 0.2 + 0.55 * night), 0.8); g.lineWidth = k.w; g.lineCap = "round"; g.beginPath();
+      for (let i = 0; i <= n; i++) { const u = i / n, y = H + 2 - (H + 2 - top) * u, x = k.x + Math.sin(TAU * t + k.p + u * 2.4) * 6 * u; i ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke();
+      g.fillStyle = css(mixc([80, 150, 80], [6, 12, 10], 0.2 + 0.55 * night), 0.7);
+      for (let j = 1; j <= k.leaves; j++) { const u = j / (k.leaves + 1), y = H + 2 - (H + 2 - top) * u, x = k.x + Math.sin(TAU * t + k.p + u * 2.4) * 6 * u, sd = j % 2 ? 1 : -1; g.beginPath(); g.ellipse(x + sd * 4, y, 4.5, 1.6, sd * 0.5, 0, TAU); g.fill(); }
+    }
+    for (const c of sea.coral) { // récif : branches, éventails ou boules aux couleurs vives, ternies par la profondeur
+      const y = hz + D * c.u, R = (5 + 9 * c.u) * c.s, col = css(mixc(hsl(c.hue, 0.65, 0.6), [10, 30, 45], 0.35 + 0.45 * night), 0.85 * lit + 0.1);
+      g.fillStyle = col; g.strokeStyle = col; g.lineCap = "round";
+      if (c.kind === 0) { g.lineWidth = Math.max(1, R * 0.18); g.beginPath(); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * 0.38 + (c.pts[i] - 0.5) * 0.3; g.moveTo(c.x, y); g.lineTo(c.x + Math.cos(a) * R * (0.7 + 0.5 * c.pts[i]), y + Math.sin(a) * R * (0.7 + 0.5 * c.pts[i])); } g.stroke(); }
+      else if (c.kind === 1) { g.beginPath(); g.moveTo(c.x, y); g.arc(c.x, y, R, Math.PI * 1.1, Math.PI * 1.9); g.closePath(); g.globalAlpha = 0.8; g.fill(); g.globalAlpha = 1; }
+      else for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(c.x + (c.pts[i] - 0.5) * R * 1.6, y - c.pts[i + 1] * R * 0.6, R * (0.25 + 0.2 * c.pts[i]), 0, TAU); g.fill(); }
+    }
+    g.restore();
+  }
+  if (sea.acid.length) {
+    if (S.water && !shore) { g.fillStyle = css([170, 190, 60], 0.12 + 0.03 * Math.sin(TAU * t)); g.fillRect(0, hz, W, D); } // pas de terre : l'acide est dans l'eau
+    g.save(); if (shore) { shorePath(g, shore.land); g.clip(); } else if (S.water) { g.restore(); return; }
+    for (const a of sea.acid) { // flaques qui bouillonnent, une vapeur pâle au-dessus
+      const y = hz + D * a.u * a.u + D * 0.05, rx = (10 + 26 * a.u) * a.w, ry = 1.6 + 5 * a.u;
+      g.fillStyle = css(mixc([190, 210, 70], [10, 14, 8], 0.3 + 0.5 * night), 0.85); g.beginPath(); g.ellipse(a.x, y, rx, ry, 0, 0, TAU); g.fill();
+      g.strokeStyle = css([230, 245, 140], 0.35 * lit); g.lineWidth = 0.8; g.beginPath(); g.ellipse(a.x, y, rx, ry, 0, Math.PI, TAU); g.stroke();
+      for (let i = 0; i < 3; i++) { const q = frac(t * 2 + a.p + i / 3); g.strokeStyle = css([235, 250, 160], 0.5 * (1 - q) * lit); g.beginPath(); g.arc(a.x + (i - 1) * rx * 0.4, y - q * 2, 0.8 + q * 1.6, 0, TAU); g.stroke(); }
+      const vq = frac(t + a.p); g.fillStyle = css([210, 230, 140], 0.12 * (1 - vq) * lit); g.beginPath(); g.ellipse(a.x, y - 4 - vq * 14, rx * 0.6, 3 + vq * 4, 0, 0, TAU); g.fill();
+    }
+    g.restore();
+  }
 }
 
 /** Le ciel nocturne propre à l'Âge : bande d'étoiles, nébuleuse, constellations (parfois reliées d'un trait très pâle). */

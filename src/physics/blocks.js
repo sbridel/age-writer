@@ -56,6 +56,9 @@ def(["ash", "obsidian", "whispering_obsidian", "crying_obsidian", "glass", "sing
 def("iron", { set: { coreAdd: 0.12 } });
 def("deep_cold", { needs: [["coldSomewhere", "light"]] });
 def("sand", { needs: [["erosion", "light"]] });
+def("kelp", { needs: [["liquidWater", "medium"], ["sunlight", "light"], ["oldEnoughSimple", "light"]] });
+def("coral", { needs: [["liquidWater", "medium"], ["warmClimate", "light"], ["sunlight", "light"], ["oldEnoughSimple", "light"]] });
+def("acid", { needs: [["volcanism", "light"]] });
 def("pearls", { needs: [["liquidWater", "medium"], ["oldEnoughSimple", "light"]] });
 def(["gold", "silver", "copper"], { needs: [["hydrothermalPast", "light"]] });
 def(["poisoned_air", "ashen_sky"], { needs: [["volcanism", "light"]] });

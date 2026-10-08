@@ -312,4 +312,20 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   const l = []; G.paint(fakeCtx(l), G.build({ ...G.sceneOf(an(["single_sun"]), "N1"), moons: 4 }, 320, 192), 0.3, { day: 0.85 }); ok(l.filter((x) => x.startsWith("arc")).length > 8, "nuit : étoiles des constellations et lunes dessinées");
 }
 
+// varech, corail, acide (1.16.1)
+{
+  const { analyseAgeBase } = require("../src/engine/analysis");
+  const a = analyseAgeBase("water\nkelp\ncoral\nacid\nstone\niron", { seed: "Mer" });
+  ok(a.resolved.lines.every((l) => !l.unknown) && !a.resolved.matter.written.some((id) => id.startsWith("?")), "kelp, coral, acid : des blocs connus");
+  const shown = a.resolved.matter.reactions.map((r) => r.a + ">" + r.shown);
+  ok(shown.includes("acid>hollowed_ground") && shown.includes("acid>bitter_water"), "l'acide ronge la pierre et rend l'eau amère : " + shown);
+  const S = G.sceneOf(an(["single_sun", "water", "kelp", "coral", "acid", "stone"]), "Mer"), m = G.build(S, 320, 192);
+  ok(S.kelp && S.coral && S.acid && m.sea.kelp.length >= 7 && m.sea.coral.length >= 6 && m.sea.acid.length >= 3, "dessin : varech, corail, flaques");
+  for (const t of [0, 0.5]) { const l = []; G.paint(fakeCtx(l), m, t, { day: 0.4 }); ok(l.length > 200, "varech, corail, acide : rendu fini"); }
+  const P = require("../src/physics"), { hooks } = require("../src/engine/hooks"), skip0 = hooks.skip; hooks.skip = (l) => P.isPhysicsLine(l);
+  const dark = analyseAgeBase("starless\nkelp\ncoral", { seed: "K" }), ph = P.physicsOf(dark, "starless\nkelp\ncoral", "K"); hooks.skip = skip0;
+  const tn = ph.tensions.map((x) => x.id + ":" + x.ids.join(","));
+  ok(tn.some((x) => x.startsWith("sunlight") && x.includes("kelp")) && tn.some((x) => x.startsWith("warmClimate") && x.includes("coral")), "physique : varech et corail demandent lumière (et chaleur pour le corail) : " + tn);
+}
+
 console.log(`gen.test.js : ${n} vérifications OK`);
