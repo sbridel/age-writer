@@ -181,7 +181,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     ok(/```age\nlava\nash\nmass: 0.2\nage: 3.5\n```\nfin/.test(files.get("Ages/Braise.md").content), "piste cliquée : la ligne age: est remplacée dans le bloc");
     await p.writePhysicsLine("Ages/Braise.md", "autre bloc", "age", 1);
     ok(notices.some((n) => /changé|changed/.test(n)), "bloc introuvable : rien d'écrit, une notice le dit");
-    if (process.env.DUMP) for (const [mode, sv] of [["easy", "lava\nash\nwater\nfern\nmass: 0.2\nage: 9"], ["strict", "blue_sun\ngreat_tree\ngrazer\nauroras\nwater"]]) {
+    if (process.env.DUMP) for (const [mode, sv] of [["easy", "lava\nash\nwater\nfern\nmass: 0.2\nage: 9"], ["strict", "black_sun\nwater\nfern\nlight_world\nauroras\nrifts"]]) {
       p.ext.physics = mode; const h2 = document.createElement("div"); h2.innerHTML = '<div class="age-panel"></div>'; document.body.appendChild(h2);
       p.renderAgePanel(sv, h2, "Ages/Braise.md"); const pn = h2.querySelector(".age-panel"); if (pn) pn.dataset.tab = "details";
       fs.writeFileSync(process.env.DUMP + "-details-" + mode + ".html", h2.outerHTML); p.ext.physics = was;
