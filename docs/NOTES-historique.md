@@ -227,3 +227,8 @@ unlock:                            # facultatif
 ## 1.17.5 — voix du journal (8 oct. 2026)
 
 - Texte seulement : les voix du journal d'exploration sont décrites comme « inspirées de divers personnages des jeux » (README, guides) au lieu de nommer trois personnages. Les identifiants internes (`atrus`, `gehn`, `miller`) ne changent pas.
+
+## 1.17.6 — politique de contenu de fans de Cyan (8 oct. 2026)
+
+- Avertissement exact exigé par Cyan (point 5 de leur politique) affiché en tête des README, dans `NOTICE` et dans le guide ; mention « gratuit et non commercial ».
+- README : l'ouverture décrit le plugin sans citer Myst ; le crédit à Myst/Mystcraft passe dans le bandeau d'hommage (point 10 : ne pas promouvoir avec l'IP de Cyan).
