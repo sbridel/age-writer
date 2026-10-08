@@ -96,15 +96,25 @@ for (const w of [[], ["a"], ["vast", "immense", "giant", "huge"], ["tiny", "tiny
   G.paint(gp, mk({ water: true }), 0.3); const ra = al.filter((x) => x < 0.5 && x > 0); ok(ra.length > 20 && ra[2] > ra[ra.length - 2], "reflets : de plus en plus fondus");
   // variété : premier plan et détail dépendent de la graine
   const fgs = new Set(), dets = new Set(); for (let i = 0; i < 60; i++) { const m = mk({}, i * 7919 + 1); fgs.add(m.fg.kind); dets.add(m.det.kind); }
-  ok(fgs.size === 3, "trois premiers plans : " + [...fgs]); ok(dets.size === 5, "cinq détails : " + [...dets]);
+  ok(fgs.size >= 6, "premiers plans variés : " + [...fgs]);
+  // 1.16.1 : le premier plan suit l'Âge, et la branche est générée
+  const kinds = (o) => { const k = new Set(); for (let i = 0; i < 200; i++) k.add(mk(o, i * 104729 + 3).fg.kind); return k; };
+  ok(!kinds({ water: false, ice: false }).has("reeds") && kinds({ water: true }).has("reeds"), "roseaux seulement au bord de l'eau");
+  ok(!kinds({ ice: false }).has("icicles") && kinds({ ice: true }).has("icicles"), "glaçons seulement s'il gèle");
+  const shapes = new Set(); let nb = 0;
+  for (let i = 0; i < 300 && nb < 25; i++) { const m = mk({ trees: 3 }, i * 15485863 + 11); if (m.fg.kind !== "branches") continue; nb++; const sg = m.fg.branch.segs; ok(sg.length >= 4 && sg.every((x) => [x.x, x.y, x.cx, x.cy, x.x2, x.y2, x.w].every(Number.isFinite)), "branche : segments finis"); shapes.add(sg.length + ":" + Math.round(sg[sg.length - 1].x2)); }
+  ok(nb >= 10 && shapes.size >= nb - 2, `branches : une forme par Âge (${shapes.size}/${nb})`); ok(dets.size === 5, "cinq détails : " + [...dets]);
   // déterministe
   ok(JSON.stringify(mk({}, 9).det) === JSON.stringify(mk({}, 9).det) && JSON.stringify(mk({}, 9).fg) === JSON.stringify(mk({}, 9).fg), "premier plan et détail déterministes");
   // le détail est posé loin des ruines et des arbres
   let far = 0; for (let i = 0; i < 40; i++) { const m = mk({ ruins: ["door", "tablet", "lamp"], trees: 5 }, i * 131 + 7); const xs = [...m.ruins.map((q) => q.x), ...m.trees.map((q) => q.x)]; if (Math.min(...xs.map((q) => Math.abs(q - m.det.x))) > W * 0.04) far++; }
   ok(far >= 36, "détail dégagé (" + far + "/40)");
   // chaque détail et chaque premier plan se dessine (valeurs finies, plusieurs phases)
-  for (const kind of ["pylon", "ring", "stair", "dish", "piers"]) for (const fk of ["rocks", "branches", "arch"]) for (const side of [-1, 1]) {
-    const m = mk({}); m.det.kind = kind; m.fg.kind = fk; m.fg.side = side;
+  const byKind = {}; // un Âge pour chaque premier plan (graines au hasard, contenus qui les permettent tous)
+  for (let i = 0; i < 600 && Object.keys(byKind).length < 9; i++) { const m = mk(i % 2 ? { water: true, trees: 3, ruins: ["door"], fog: true } : { ice: true, ruins: ["door"] }, i * 7 + 1); byKind[m.fg.kind] = byKind[m.fg.kind] || i; }
+  ok(Object.keys(byKind).length === 9, "neuf premiers plans possibles : " + Object.keys(byKind));
+  for (const kind of ["pylon", "ring", "stair", "dish", "piers"]) for (const [fk, i] of Object.entries(byKind)) for (const side of [-1, 1]) {
+    const m = mk(i % 2 ? { water: true, trees: 3, ruins: ["door"], fog: true } : { ice: true, ruins: ["door"] }, i * 7 + 1); m.det.kind = kind; m.fg.side = side;
     for (const t of [0, 0.4, 0.8]) ok(rec(m, t).length > 100, "dessine " + kind + "/" + fk);
   }
   { const m = mk({}); m.det.kind = "ring"; ok(rec(m, 0.5).some((x) => x.startsWith("clip")), "l'anneau est coupé à l'horizon (à demi enfoui)"); m.det.kind = "pylon"; ok(!rec(m, 0.5).some((x) => x.startsWith("clip")), "pas de découpe pour un pylône"); }

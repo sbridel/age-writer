@@ -148,6 +148,7 @@ function build(S, W, H) {
   const ringsP = S.rings ? { x: W * (0.2 + 0.55 * q2()), y: H * (0.16 + 0.14 * q2()), R: H * (0.09 + 0.06 * q2()), tilt: (q2() - 0.5) * 0.7, hue: q2() * 60 + 20, sat: 0.2 + q2() * 0.3 } : null;
   const cometP = S.comet ? { ph: q2(), y0: 0.12 + 0.25 * q2(), y1: 0.25 + 0.3 * q2(), dir: q2() < 0.5 ? 1 : -1 } : null;
   const fgKind = ["rocks", "branches", "arch"][Math.floor(r() * 3)], fg = { kind: fgKind, side: r() < 0.5 ? -1 : 1, pts: Array.from({ length: 16 }, () => r()), p: r() * TAU };
+  Object.assign(fg, buildForeground(S, W, H)); // 1.16.1 : type choisi selon l'Âge, géométrie générée (graine propre : le reste de l'image ne bouge pas)
   // détail « habité » : une structure sans usage évident, posée au point le plus dégagé (loin des ruines et des arbres)
   const taken = [...ruins.map((q) => q.x), ...trees.map((q) => q.x)], cand = Array.from({ length: 8 }, () => W * (0.12 + 0.76 * r()));
   const dx = cand.map((x) => [Math.min(W, ...taken.map((q) => Math.abs(q - x))), x]).sort((a, b) => b[0] - a[0])[0][1];
@@ -185,6 +186,48 @@ function buildShore(S, W, H, hz) {
   out.tufts = Array.from({ length: 70 }, () => ({ x: q() * W, u: q(), h: 2 + q() * 4, p: q() * TAU }));
   out.floes = Array.from({ length: 8 }, () => ({ k: Math.floor(q() * (N + 1)), d: 4 + q() * 18, w: 3 + q() * 9, p: q() }));
   out.puffs = Array.from({ length: 7 }, () => ({ k: Math.floor(q() * (N + 1)), p: q() }));
+  return out;
+}
+
+// ---- premier plan : choisi selon l'Âge, dessiné à partir de la graine ----------------------------------------
+/** Poids de chaque premier plan selon ce que contient l'Âge (0 = impossible). « none » : parfois, rien ne cadre la vue. */
+function foregroundWeights(S) {
+  const wet = S.water || !!S.shore, green = S.trees > 0 || S.world === "jungle" || S.glow, dry = S.sand || S.lava || S.world === "desert" || S.world === "lava", ruins = S.ruins.length > 0;
+  return {
+    none: 0.35, rocks: 1 + (dry ? 1.2 : 0), branches: S.world === "desert" || S.world === "lava" || S.world === "ocean" ? 0.2 : 1 + (green ? 1.4 : 0),
+    arch: 0.4 + (ruins ? 0.9 : 0), vines: green || S.fog ? 0.5 + (S.world === "jungle" || S.glow ? 1.4 : 0.5) : 0.15, reeds: wet && !S.ice ? 1.4 : 0,
+    leaves: green ? 1 : 0.2, pillar: 0.3 + (ruins ? 0.9 : 0), icicles: S.ice || S.world === "frozen" ? 2.2 : 0,
+  };
+}
+function buildForeground(S, W, H) {
+  const q = rng((S.seed ^ 0xf06e) >>> 0), wts = foregroundWeights(S), tot = Object.values(wts).reduce((a, b) => a + b, 0);
+  let pick = q() * tot, kind = "rocks";
+  for (const [k, w] of Object.entries(wts)) { if (pick < w) { kind = k; break; } pick -= w; }
+  const out = { kind, side: q() < 0.5 ? -1 : 1, pts: Array.from({ length: 16 }, () => q()), p: q() * TAU };
+  if (kind === "branches") {
+    // une branche qui pousse depuis un bord : chaque segment se divise en deux ou trois, de plus en plus fins ; style selon l'Âge
+    const style = S.burnt ? "charred" : S.ice || S.world === "frozen" ? "snowy" : S.world === "jungle" || S.glow ? "leafy" : S.fog ? "moss" : ["leafy", "needles", "bare", "blossom", "leafy"][Math.floor(q() * 5)];
+    const segs = [], fromTop = q() < 0.35, x0 = fromTop ? W * (0.04 + 0.25 * q()) : -4, y0 = fromTop ? -4 : H * (0.02 + 0.3 * q());
+    const grow = (x, y, a, len, w, d) => {
+      const bend = (q() - 0.5) * 0.6, x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len;
+      segs.push({ x, y, cx: x + Math.cos(a + bend) * len * 0.55, cy: y + Math.sin(a + bend) * len * 0.55, x2, y2, w, d, tip: d >= 3 });
+      if (d >= 3 || len < H * 0.03) { segs[segs.length - 1].tip = true; return; }
+      const n = q() < 0.35 ? 3 : 2;
+      for (let i = 0; i < n; i++) { const da = (i - (n - 1) / 2) * (0.45 + 0.4 * q()) + (q() - 0.5) * 0.3; grow(x2, y2, a + da + 0.12, len * (0.58 + 0.2 * q()), w * 0.62, d + 1); }
+    };
+    grow(x0, y0, fromTop ? Math.PI * (0.18 + 0.2 * q()) : Math.PI * (-0.05 + 0.2 * q()), W * (0.16 + 0.1 * q()), Math.max(2.5, H * (0.02 + 0.012 * q())), 0);
+    out.branch = { style, segs, hue: [330, 350, 10, 45, 280, 200][Math.floor(q() * 6)], tufts: Array.from({ length: 4 }, () => q()) }; // fleurs : rose, rouge, jaune, mauve, bleu pâle
+  } else if (kind === "vines") {
+    out.vines = Array.from({ length: 4 + Math.floor(q() * 5) }, () => ({ x: W * (0.02 + 0.3 * q()), len: H * (0.18 + 0.4 * q()), amp: 2 + q() * 6, f: 1 + q() * 2, p: q() * TAU, leaves: Array.from({ length: 5 + Math.floor(q() * 5) }, () => ({ u: q(), s: 2 + q() * 3, a: q() < 0.5 ? -1 : 1 })) }));
+  } else if (kind === "reeds") {
+    out.reeds = Array.from({ length: 9 + Math.floor(q() * 9) }, () => ({ x: W * (0.01 + 0.3 * q()), h: H * (0.16 + 0.34 * q()), lean: (q() - 0.4) * 0.35, head: q() < 0.45, p: q() * TAU, w: 1 + q() * 1.6 }));
+  } else if (kind === "leaves") {
+    out.leaves = Array.from({ length: 2 + Math.floor(q() * 3) }, () => ({ a: (q() - 0.5) * 1.6, len: H * (0.3 + 0.35 * q()), wd: 0.22 + 0.2 * q(), y: H * (0.55 + 0.45 * q()), p: q() * TAU, notch: q() < 0.4 }));
+  } else if (kind === "pillar") {
+    out.pillar = { w: W * (0.05 + 0.04 * q()), x: W * (0.01 + 0.06 * q()), top: H * (0.05 + 0.35 * q()), cut: Array.from({ length: 5 }, () => q()), flutes: 3 + Math.floor(q() * 3), vine: q() < 0.5 };
+  } else if (kind === "icicles") {
+    out.icicles = Array.from({ length: 14 + Math.floor(q() * 12) }, () => ({ x: q() * W, len: H * (0.03 + 0.2 * Math.pow(q(), 2)), w: 2 + q() * 5, p: q() }));
+  }
   return out;
 }
 
@@ -589,10 +632,12 @@ function detail(g, m, t, night) {
   }
 }
 
-// ---- premier plan : un cadre sombre au bord de l'image (rochers, branches ou arche) -------------------------
+// ---- premier plan : un cadre sombre au bord de l'image ---------------------------------------------------------
 function foreground(g, m, t, hzc) {
   const { W, H, fg, pal } = m, col = css(mixc(pal.rock, [0, 0, 0], 0.7)), rim = css(mixc(hzc, [255, 230, 190], 0.2), 0.22), sd = fg.side, X = (x) => (sd < 0 ? x : W - x);
-  g.fillStyle = col; g.strokeStyle = rim; g.lineWidth = 1;
+  g.fillStyle = col; g.strokeStyle = rim; g.lineWidth = 1; g.lineCap = "round";
+  const wind = Math.sin(TAU * t + fg.p);
+  if (fg.kind === "none") return;
   if (fg.kind === "rocks") {
     for (const [wd, k] of [[0.3, 0], [0.16, 8]]) {
       g.beginPath(); g.moveTo(X(-2), H + 2); g.lineTo(X(-2), H * (0.74 + 0.1 * fg.pts[k]));
@@ -600,12 +645,53 @@ function foreground(g, m, t, hzc) {
       g.lineTo(X(W * wd), H + 2); g.closePath(); g.fill(); g.stroke();
     }
   } else if (fg.kind === "branches") {
-    const sw = Math.sin(TAU * t + fg.p) * 1.6; g.strokeStyle = col; g.lineCap = "round";
-    g.lineWidth = Math.max(2.5, H * 0.022); g.beginPath(); g.moveTo(X(-4), H * 0.02); g.quadraticCurveTo(X(W * 0.2 + sw), H * (0.04 + 0.08 * fg.pts[0]), X(W * 0.42 + sw), H * (0.14 + 0.1 * fg.pts[1])); g.stroke();
-    for (let i = 0; i < 5; i++) {
-      const bx = W * (0.06 + 0.07 * i) + sw * 0.5, by = H * (0.03 + 0.03 * i), ex = bx + W * (0.04 + 0.04 * fg.pts[i]), ey = by + H * (0.12 + 0.12 * fg.pts[i + 5]);
-      g.lineWidth = Math.max(1.2, H * 0.012); g.beginPath(); g.moveTo(X(bx), by); g.quadraticCurveTo(X(bx + 6), by + (ey - by) * 0.5, X(ex + sw), ey); g.stroke();
-      g.fillStyle = col; for (let k = 0; k < 3; k++) { g.beginPath(); g.ellipse(X(ex + sw + (k - 1) * 3), ey + 2 + (k % 2) * 3, 1.6, 4 + k, 0.5 * (k - 1) * sd, 0, TAU); g.fill(); }
+    const b = fg.branch, sway = (d) => wind * (0.6 + d * 0.9);
+    for (const s of b.segs) { // les branches, de la plus épaisse à la plus fine ; les bouts bougent plus que la base
+      const o0 = sway(s.d - 1) * (s.d > 0 ? 1 : 0), o1 = sway(s.d);
+      g.strokeStyle = b.style === "charred" ? "#060505" : col; g.lineWidth = Math.max(0.8, s.w); g.beginPath(); g.moveTo(X(s.x + o0), s.y + o0 * 0.3); g.quadraticCurveTo(X(s.cx + (o0 + o1) / 2), s.cy, X(s.x2 + o1), s.y2 + o1 * 0.3); g.stroke();
+      if (b.style === "snowy" && s.d < 3) { g.strokeStyle = css([235, 244, 252], 0.75); g.lineWidth = Math.max(0.8, s.w * 0.45); g.beginPath(); g.moveTo(X(s.x + o0), s.y + o0 * 0.3 - s.w * 0.45); g.quadraticCurveTo(X(s.cx + (o0 + o1) / 2), s.cy - s.w * 0.45, X(s.x2 + o1), s.y2 + o1 * 0.3 - s.w * 0.45); g.stroke(); }
+    }
+    for (const s of b.segs) {
+      if (!s.tip) continue; const x = s.x2 + sway(s.d), y = s.y2 + sway(s.d) * 0.3, k = (s.x2 * 7 + s.y2 * 13) % 1;
+      if (b.style === "leafy") { g.fillStyle = col; for (let i = 0; i < 4; i++) { g.beginPath(); g.ellipse(X(x + (i - 1.5) * 4), y + (i % 2) * 4 + 2, 2.4, 6, (i - 1.5) * 0.5 * sd, 0, TAU); g.fill(); } }
+      else if (b.style === "needles") { g.strokeStyle = col; g.lineWidth = 0.9; g.beginPath(); for (let i = -3; i <= 3; i++) { g.moveTo(X(x), y); g.lineTo(X(x + i * 2.2), y + 7 - Math.abs(i)); } g.stroke(); }
+      else if (b.style === "blossom") { g.fillStyle = css(hsl(b.hue, 0.6, 0.78), 0.9); for (let i = 0; i < 6; i++) { const a = i * 1.05 + k * 6; g.beginPath(); g.arc(X(x + Math.cos(a) * 3.4), y + Math.sin(a) * 3.4, 1.9, 0, TAU); g.fill(); } g.fillStyle = css(hsl(b.hue + 30, 0.7, 0.88), 0.95); g.beginPath(); g.arc(X(x), y, 1.3, 0, TAU); g.fill(); }
+      else if (b.style === "moss") { g.strokeStyle = css(mixc(pal.rock, [90, 110, 80], 0.4), 0.55); g.lineWidth = 0.8; g.beginPath(); for (let i = 0; i < 3; i++) { const len = 8 + 14 * ((k + i * 0.37) % 1); g.moveTo(X(x + i * 2 - 2), y); g.quadraticCurveTo(X(x + i * 2 - 2 + wind * 2), y + len * 0.5, X(x + i * 2 - 2 + wind * 3), y + len); } g.stroke(); }
+      else if (b.style === "snowy") { g.fillStyle = css([235, 244, 252], 0.8); g.beginPath(); g.ellipse(X(x), y - 1.5, 2.6, 1.3, 0, 0, TAU); g.fill(); }
+    }
+  } else if (fg.kind === "vines") {
+    for (const v of fg.vines) { // lianes qui pendent du haut, avec leurs feuilles
+      g.strokeStyle = col; g.lineWidth = 1.4; g.beginPath(); const n = 12;
+      for (let i = 0; i <= n; i++) { const u = i / n, y = -2 + v.len * u, x = v.x + Math.sin(u * v.f * TAU + v.p) * v.amp * u + wind * 3 * u * u; i ? g.lineTo(X(x), y) : g.moveTo(X(x), y); }
+      g.stroke(); g.fillStyle = col;
+      for (const l of v.leaves) { const u = l.u, y = -2 + v.len * u, x = v.x + Math.sin(u * v.f * TAU + v.p) * v.amp * u + wind * 3 * u * u; g.beginPath(); g.ellipse(X(x + l.a * l.s), y, l.s * 1.4, l.s * 0.6, l.a * 0.6 * sd, 0, TAU); g.fill(); }
+    }
+  } else if (fg.kind === "reeds") {
+    for (const r of fg.reeds) { // roseaux et massettes au bord de l'eau
+      const sw = Math.sin(TAU * t + r.p) * 2.2, tx = r.x + r.lean * r.h + sw, ty = H - r.h;
+      g.strokeStyle = col; g.lineWidth = r.w; g.beginPath(); g.moveTo(X(r.x), H + 2); g.quadraticCurveTo(X(r.x + r.lean * r.h * 0.4), H - r.h * 0.5, X(tx), ty); g.stroke();
+      if (r.head) { g.fillStyle = col; g.beginPath(); g.ellipse(X(tx - r.lean * 6), ty + 7, 2.2, 6, r.lean * sd, 0, TAU); g.fill(); }
+    }
+  } else if (fg.kind === "leaves") {
+    for (const l of fg.leaves) { // grandes feuilles qui entrent par un côté
+      const a = l.a + wind * 0.04, bx = -6, by = l.y, ex = bx + Math.cos(a) * l.len, ey = by - Math.abs(Math.sin(a)) * l.len * 0.8 - l.len * 0.2, mx = (bx + ex) / 2, my = (by + ey) / 2, nx = -(ey - by) * l.wd, ny = (ex - bx) * l.wd;
+      g.fillStyle = col; g.beginPath(); g.moveTo(X(bx), by); g.quadraticCurveTo(X(mx + nx), my + ny, X(ex), ey); g.quadraticCurveTo(X(mx - nx), my - ny, X(bx), by); g.fill();
+      g.strokeStyle = rim; g.lineWidth = 0.8; g.beginPath(); g.moveTo(X(bx), by); g.lineTo(X(ex), ey); g.stroke();
+      if (l.notch) { g.strokeStyle = rim; g.lineWidth = 0.6; g.beginPath(); for (let i = 1; i < 5; i++) { const u = i / 5, px = lerp(bx, ex, u), py = lerp(by, ey, u); g.moveTo(X(px), py); g.lineTo(X(px + nx * 0.5 + (ex - bx) * 0.08), py + ny * 0.5 + (ey - by) * 0.08); } g.stroke(); } // nervures
+    }
+  } else if (fg.kind === "pillar") {
+    const p = fg.pillar, x = p.x, w = p.w; // colonne brisée sur un bord, parfois prise dans une liane
+    g.fillStyle = col; g.beginPath(); g.moveTo(X(x), H + 2); g.lineTo(X(x), p.top + p.cut[0] * H * 0.04);
+    for (let i = 1; i <= 4; i++) g.lineTo(X(x + w * i / 4), p.top + p.cut[i] * H * 0.06); g.lineTo(X(x + w), H + 2); g.closePath(); g.fill();
+    g.strokeStyle = rim; g.lineWidth = 1; g.beginPath(); for (let i = 1; i < p.flutes; i++) { const fx = x + w * i / p.flutes; g.moveTo(X(fx), p.top + H * 0.08); g.lineTo(X(fx), H); } g.stroke();
+    g.fillStyle = col; g.fillRect(Math.min(X(x - w * 0.15), X(x + w * 1.15)), H * 0.9, w * 1.3, H * 0.1);
+    if (p.vine) { g.strokeStyle = col; g.lineWidth = 1.5; g.beginPath(); for (let i = 0; i <= 14; i++) { const u = i / 14, y = p.top + H * 0.05 + u * (H - p.top), xx = x + w * (0.5 + 0.6 * Math.sin(u * 9 + fg.p)); i ? g.lineTo(X(xx), y) : g.moveTo(X(xx), y); } g.stroke(); }
+  } else if (fg.kind === "icicles") {
+    g.fillStyle = col; g.fillRect(0, 0, W, H * 0.025);
+    for (const c of fg.icicles) { // stalactites de glace au bord du cadre, une goutte de temps en temps
+      g.fillStyle = css([200, 225, 245], 0.55); g.beginPath(); g.moveTo(c.x - c.w, H * 0.02); g.lineTo(c.x, H * 0.02 + c.len); g.lineTo(c.x + c.w, H * 0.02); g.closePath(); g.fill();
+      g.strokeStyle = css([245, 252, 255], 0.6); g.lineWidth = 0.7; g.beginPath(); g.moveTo(c.x - c.w * 0.4, H * 0.025); g.lineTo(c.x, H * 0.02 + c.len * 0.9); g.stroke();
+      const q = frac(t * 2 + c.p); if (c.len > H * 0.08 && q < 0.5) { g.fillStyle = css([220, 240, 255], 0.7 * (1 - q * 2)); g.fillRect(c.x - 0.6, H * 0.02 + c.len + q * H * 0.5, 1.2, 2); }
     }
   } else { // arche : deux piliers et une voûte
     const p1 = W * (0.022 + 0.02 * fg.pts[0]), p2 = W * (0.022 + 0.02 * fg.pts[1]);
