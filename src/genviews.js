@@ -7,6 +7,7 @@
  */
 const G = require("./genscene");
 const { rng, clamp, lerp, frac, fnv } = require("./util");
+const { crevasse } = require("./crevasse");
 const { mixc, css, hsl } = G;
 const TAU = Math.PI * 2;
 
@@ -119,7 +120,10 @@ function buildUnder(m, az = 0) {
     schools: life && !S.acid ? Array.from({ length: 1 + Math.floor(q() * 3) }, () => ({ y: H * (0.25 + 0.4 * q()), sp: (q() < 0.5 ? -1 : 1) * (0.04 + 0.05 * q()), p: q(), n: 5 + Math.floor(q() * 9), hue: [40, 200, 10, 280, 160][Math.floor(q() * 5)], s: 0.8 + q() * 0.8, fish: Array.from({ length: 14 }, () => [q() - 0.5, q() - 0.5, q()]) })) : [],
     snow: Array.from({ length: 50 }, () => ({ x: q(), y: q(), s: 0.6 + q() })),
     bubbles: Array.from({ length: 10 }, () => ({ x: W * q(), p: q(), s: 0.8 + q() * 1.5 })),
-    fis: S.fissure === "submarine" || S.fissure === "open" ? { x: W * (0.25 + 0.5 * q()), pts: Array.from({ length: 7 }, () => q() - 0.5) } : null,
+    fis: (() => { // une seule direction du périscope montre la crevasse (les autres vues l'ignorent, mais le tirage est le même)
+      const d = S.fissure === "submarine" || S.fissure === "open" ? { x: W * (0.25 + 0.5 * q()), pts: Array.from({ length: 7 }, () => q() - 0.5), seed: 1 + ((S.seed >>> 0) % 89) } : null;
+      return d && ((S.seed >>> 0) % 4) === (((az % 4) + 4) % 4) ? d : null;
+    })(),
     vents: S.lava ? Array.from({ length: 2 }, () => ({ x: W * (0.15 + 0.7 * q()), p: q() })) : [],
     shells: (S.riches || []).includes("pearls") ? Array.from({ length: 3 }, () => ({ x: W * (0.1 + 0.8 * q()), o: q() })) : [],
     glints: (S.riches || []).filter((r) => r !== "pearls").length ? Array.from({ length: 12 }, () => ({ x: W * q(), p: q() })) : [],
@@ -170,7 +174,7 @@ function paintUnder(g, m, t, o = {}, az = 0) {
   // les cheminées de lave
   for (const v of U.vents) { const x = v.x * fx, y = floorAt(x); const lg = g.createRadialGradient(x, y, 1, x, y, 30); lg.addColorStop(0, css([255, 120, 40], 0.55 + 0.2 * Math.sin(TAU * t * 2 + v.p * 9))); lg.addColorStop(1, "rgba(255,90,30,0)"); g.fillStyle = lg; g.fillRect(x - 30, y - 30, 60, 60); g.fillStyle = css([25, 14, 12]); g.beginPath(); g.moveTo(x - 9, y + 2); g.lineTo(x - 3, y - 10); g.lineTo(x + 3, y - 10); g.lineTo(x + 9, y + 2); g.closePath(); g.fill(); for (let i = 0; i < 4; i++) { const qq = frac(t + v.p + i / 4); g.fillStyle = css([90, 80, 80], 0.5 * (1 - qq)); g.beginPath(); g.arc(x + Math.sin(qq * 7 + i) * 4, y - 10 - qq * H * 0.6, 2 + qq * 4, 0, TAU); g.fill(); } }
   // la fissure : la voie du retour, une lueur au fond
-  if (U.fis) { const x0 = U.fis.x * fx, y = floorAt(x0) + 2, f = 0.6 + 0.4 * Math.sin(TAU * t * 1.5); const lg = g.createRadialGradient(x0, y, 1, x0, y, 40); lg.addColorStop(0, css([200, 240, 255], 0.35 * f)); lg.addColorStop(1, "rgba(200,240,255,0)"); g.fillStyle = lg; g.fillRect(x0 - 40, y - 40, 80, 80); g.strokeStyle = css([225, 248, 255], 0.85 * f); g.lineWidth = 1.6; g.beginPath(); U.fis.pts.forEach((p, i) => { const x = x0 - 24 + i * 8, yy = y + p * 4; i ? g.lineTo(x, yy) : g.moveTo(x, yy); }); g.stroke(); for (let i = 0; i < 5; i++) { const qq = frac(t * 0.7 + i / 5); g.strokeStyle = css([230, 250, 255], 0.55 * (1 - qq)); g.lineWidth = 0.8; g.beginPath(); g.arc(x0 + Math.sin(qq * 8 + i) * 6, y - qq * H * 0.7, 1 + qq * 2, 0, TAU); g.stroke(); } }
+  if (U.fis) { const x0 = U.fis.x * fx, y = floorAt(x0) + 2, f = 0.6 + 0.4 * Math.sin(TAU * t * 1.5); const lg = g.createRadialGradient(x0, y, 1, x0, y, 40); lg.addColorStop(0, css([200, 240, 255], 0.35 * f)); lg.addColorStop(1, "rgba(200,240,255,0)"); g.fillStyle = lg; g.fillRect(x0 - 40, y - 40, 80, 80); crevasse(g, { x: x0, y0: y - 5, y1: Math.min(H + 6, y + 38 * fy), w: 8 * fx, jit: U.fis.pts, t, water: true, seed: U.fis.seed, shape: "lens" }); for (let i = 0; i < 5; i++) { const qq = frac(t * 0.7 + i / 5); g.strokeStyle = css([230, 250, 255], 0.55 * (1 - qq)); g.lineWidth = 0.8; g.beginPath(); g.arc(x0 + Math.sin(qq * 8 + i) * 6, y - qq * H * 0.7, 1 + qq * 2, 0, TAU); g.stroke(); } }
   // le corail
   for (const c of U.coral) {
     const x = c.x * fx, y = floorAt(x) + 2, R = (9 + 8 * c.pts[5]) * c.s * fx, col = css(mixc(hsl(c.hue, 0.7, 0.58), deep, 0.25 + 0.5 * night), 0.92); g.fillStyle = col; g.strokeStyle = col; g.lineCap = "round";

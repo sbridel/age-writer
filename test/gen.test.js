@@ -353,7 +353,9 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   const l = []; G.paint(fakeCtx(l), h1, 0.3, { day: 0.3 }); ok(l.length > 50, "une autre direction se peint");
   ok(V.hasUnder(m0) && !V.hasUnder(G.build(G.sceneOf(an(["single_sun", "stone"]), "Roc"), 300, 176)), "sous l'eau : seulement s'il y a de l'eau");
   const u = []; V.paintUnder(fakeCtx(u), m0, 0.3, { day: 0.3 }, 0); ok(u.length > 100, "sous l'eau : rendu");
-  const U = V.buildUnder(m0, 0); ok(U.kelp.length && U.coral.length && U.fis && JSON.stringify(V.buildUnder(m0, 0)) === JSON.stringify(U) && JSON.stringify(V.buildUnder(m0, 1)) !== JSON.stringify(U), "sous l'eau : varech, corail, la fissure ; même graine, même fond ; autre direction, autre fond");
+  const U = V.buildUnder(m0, 0); ok(U.kelp.length && U.coral.length && JSON.stringify(V.buildUnder(m0, 0)) === JSON.stringify(U) && JSON.stringify(V.buildUnder(m0, 1)) !== JSON.stringify(U), "sous l'eau : varech, corail ; même graine, même fond ; autre direction, autre fond");
+  const fisViews = [0, 1, 2, 3].filter((a) => V.buildUnder(m0, a).fis); ok(fisViews.length === 1, "la crevasse sous l'eau n'apparaît que dans une direction sur quatre (ici : " + fisViews + ")");
+  const cr = []; V.paintUnder(fakeCtx(cr), m0, 0.3, { day: 0.3 }, fisViews[0]); ok(cr.length > u.length * 0.5, "la direction de la crevasse se peint");
   const z = []; V.paintZenith(fakeCtx(z), m0, 0.3, { day: 0.9 }); ok(z.length > 50, "le zénith : rendu");
   const zz = []; V.paintLook(fakeCtx(zz), G.build(G.sceneOf(an(["single_sun", "stone"]), "Roc"), 300, 176), 0.3, { day: 0.3 }, 0, -1); ok(zz.length > 50, "sans eau, regarder en bas : la vue de face");
 }

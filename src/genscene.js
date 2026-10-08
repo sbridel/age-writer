@@ -11,6 +11,7 @@
 const { rng, fnv, clamp, lerp, smooth, frac } = require("./util");
 const SKY = require("./sky");
 const WT = require("./wealth"), AM = require("./amounts"), SEA = require("./sea"), TERRAIN = require("./terrain");
+const { crevasse } = require("./crevasse");
 
 const TAU = Math.PI * 2, PERIOD = 8000;
 
@@ -625,9 +626,8 @@ function fissure(g, m, t) {
     g.strokeStyle = css([190, 230, 255], 0.5 + 0.4 * f); g.lineWidth = 1.6; g.beginPath(); g.moveTo(x, hz - h * 0.7); g.lineTo(x - 2, hz - h * 0.4); g.lineTo(x + 2, hz - h * 0.15); g.lineTo(x, hz + 2); g.stroke();
     return;
   }
-  const sub = S.fissure === "submarine", y0 = sub ? hz + (H - hz) * 0.3 : hz + 2, pts = fis.pts.map((q, i) => [fis.x + q * W * 0.06 + i * 1.3, y0 + (H - y0 - 2) * (i / 6)]);
-  const stroke = (col, w) => { g.strokeStyle = col; g.lineWidth = w; g.lineJoin = "miter"; g.beginPath(); pts.forEach(([x, y], i) => { const z = sub ? 1.6 * Math.sin(TAU * (t * 2 + i * 0.45)) : 0; i ? g.lineTo(x + z, y) : g.moveTo(x + z, y); }); g.stroke(); };
-  stroke(sub ? css([110, 190, 225], 0.12 + 0.08 * f) : css([150, 215, 255], 0.1 + 0.08 * f), sub ? 9 : 7); stroke(sub ? css([170, 225, 245], 0.4 + 0.3 * f) : css([205, 238, 255], 0.55 + 0.4 * f), sub ? 1.6 : 1.8);
+  const sub = S.fissure === "submarine", y0 = sub ? hz + (H - hz) * 0.3 : hz + 2;
+  crevasse(g, { x: fis.x, y0, y1: H - 2, w: W * 0.04, jit: fis.pts, t, water: sub, seed: 1 + ((S.seed >>> 0) % 89) });
   if (sub) for (const b of fis.bubbles) { const q = frac(t * 2 + b.p); g.strokeStyle = css([205, 235, 248], 0.5 * (1 - q)); g.lineWidth = 0.9; g.beginPath(); g.arc(fis.x + b.dx, H - 4 - q * (H - y0 - 8), 1 + 1.4 * b.p, 0, TAU); g.stroke(); }
 }
 
