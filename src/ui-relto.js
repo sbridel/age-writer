@@ -236,7 +236,7 @@ async function renderRelto(plugin, source, el, ctx) {
     const my = ++roomSeq;
     try {
       if (!(roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat" || (v === "cabin" && fireLit()) || v === "imager") && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages")) { sound.roomStop(); return; }
-      const bufs = v === "imager" ? { k: renderer.imagerSharpness() } : v === "cat" ? { main: await roomBuf("roomPurrFile"), meow: await roomBuf("roomMeowFile") } : v === "cabin" ? { main: await roomBuf("roomFireFile"), d: fireLit().density } : { main: await roomBuf("roomWaterFile") };
+      const bufs = v === "imager" ? { k: renderer.imagerClarity().atmo, total: renderer.imagerClarity().total } : v === "cat" ? { main: await roomBuf("roomPurrFile"), meow: await roomBuf("roomMeowFile") } : v === "cabin" ? { main: await roomBuf("roomFireFile"), d: fireLit().density } : { main: await roomBuf("roomWaterFile") };
       if (my !== roomSeq) return; // on a changé de vue pendant le chargement
       sound.roomStart(v === "imager" ? "imager" : v === "cat" ? "cat" : v === "cabin" ? "fire" : "water", roomVol(), bufs);
     } catch (e) { /* ignore */ }
@@ -252,12 +252,20 @@ async function renderRelto(plugin, source, el, ctx) {
       const src = plugin.core.extract(await app.vault.cachedRead(f)); if (src == null) return null;
       const name = plugin.core.base(f.path), a = plugin.core.analyse(src, { seed: name });
       const S = G.sceneOf(a, name, plugin.core.blocks); if (S) Object.assign(S, SKY.parseSky(src));
-      return { target: IM.targetsOf(a, name), model: S ? G.build(S, 220, 132) : null };
+      return { target: IM.targetsOf(a, name), model: S ? G.build(S, 300, 176) : null };
     } catch (e) { console.warn("[Age Writer ext] imageur", e); return null; }
+  };
+  // les glyphes des cristaux : le dessin du moteur, en image (une fois par page)
+  const glyphImgs = new Map();
+  const glyphImage = (id) => {
+    if (!id) return null; if (glyphImgs.has(id)) return glyphImgs.get(id);
+    let img = null;
+    try { img = new Image(); img.onload = () => { if (!renderer.running) renderer.draw(0); }; img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" style="color:#e0c27a" color="#e0c27a">${plugin.core.glyphSvg(id, 0, 0, 100, "light")}</svg>`); } catch (e) { img = null; }
+    glyphImgs.set(id, img); return img;
   };
   const imagerGet = (path) => (plugin.ext.imagerTunings || {})[path] || null;
   const imagerSet = (path, s) => { plugin.ext.imagerTunings = { ...(plugin.ext.imagerTunings || {}), [path]: s }; plugin.saveExt(); };
-  const renderer = new ReltoRenderer(canvas, plugin.dni, { onImagerAge: imagerAge, imagerGet, imagerSet, onImagerTune: () => sound.imagerTune && sound.imagerTune(renderer.imagerSharpness()), reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onPurr: () => { if (roomSoundOn()) roomBuf("roomPurrFile").then((b) => sound.purr(roomVol(), b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
+  const renderer = new ReltoRenderer(canvas, plugin.dni, { onImagerAge: imagerAge, imagerGet, imagerSet, glyphImage, onImagerTune: () => { const cl = renderer.imagerClarity(); if (sound.imagerTune) sound.imagerTune(cl.atmo, cl.total); }, reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onPurr: () => { if (roomSoundOn()) roomBuf("roomPurrFile").then((b) => sound.purr(roomVol(), b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onSpecial: (kind) => { if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;
 
   const fmt = (h) => `${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;

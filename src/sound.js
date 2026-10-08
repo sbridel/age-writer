@@ -516,10 +516,10 @@ function bufferGain(buf) {
   const rms = Math.sqrt(sum / Math.max(1, n)) || 0.1; buf.__gain = Math.max(0.2, Math.min(4, 0.1 / rms)); return buf.__gain;
 }
 const room = { kind: null, out: null, nodes: [], timers: [] };
-/** Accorde le bourdon de l'Imageur sur la netteté `k` (0 à 1) : battements de ~9 Hz au pire, aucun à l'accord. */
-function imagerTune(k) {
+/** Accorde le bourdon de l'Imageur : battements selon l'atmosphère `k` (~9 Hz au pire, aucun à l'accord) ; la quinte cristalline quand l'image entière tient (`total`). */
+function imagerTune(k, total = k) {
   const im = room.kind === "imager" && room.imager; if (!im) return;
-  try { const t = im.c.currentTime, kk = Math.max(0, Math.min(1, k || 0)); im.o2.frequency.setTargetAtTime(im.f0 + (1 - kk) * 9, t, 0.25); im.g3.gain.setTargetAtTime(kk > 0.9 ? 0.05 * (kk - 0.9) * 10 : 0, t, 0.6); } catch (e) { /* ignore */ }
+  try { const t = im.c.currentTime, kk = Math.max(0, Math.min(1, k || 0)); im.o2.frequency.setTargetAtTime(im.f0 + (1 - kk) * 9, t, 0.25); const tt = Math.max(0, Math.min(1, total || 0)); im.g3.gain.setTargetAtTime(tt > 0.9 ? 0.05 * (tt - 0.9) * 10 : 0, t, 0.6); } catch (e) { /* ignore */ }
 }
 function roomStop() {
   room.imager = null;
@@ -632,7 +632,7 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
       o3.type = "sine"; o3.frequency.value = f0 * 6; g3.gain.value = 0;
       o1.connect(lp); o2.connect(lp); lp.connect(g); g.connect(out); o3.connect(g3); g3.connect(out); o1.start(); o2.start(); o3.start();
       room.imager = { o2, g3, f0, c };
-      imagerTune(bufs.k == null ? 0 : bufs.k);
+      imagerTune(bufs.k == null ? 0 : bufs.k, bufs.total == null ? 0 : bufs.total);
       return true;
     }
     if (kind === "fire" && bufs.main) { fileLoop(bufs.main); } else if (kind === "fire") {

@@ -864,4 +864,4 @@ function extraAt(g, m, t, layer) {
 }
 
 
-module.exports = { sceneOf, traits, KNOWN, build, paint, suns, PERIOD, hsl, seaSpot };
+module.exports = { sceneOf, traits, KNOWN, build, paint, suns, PERIOD, hsl, seaSpot, blackbody };

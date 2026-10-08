@@ -106,13 +106,18 @@ const imagerDone = (async () => {
   ri.nowOverride = 1.8e12; ri.draw(1);
   await Promise.resolve();
   { ri.draw(1.2); const st = ri.imager;
+    ok(st.stage === 0 && ri.hot.some((h) => h.imager && h.imager.key === "cry0"), "réglage I (cristaux) d'abord : les logements de cristaux");
+    const plate = ri.hot.find((h) => h.imager && h.imager.stage === 1); ri.toLogical = () => [plate.x + 2, plate.y + 2]; ri.onClick({}); ri.draw(1.25);
+    ok(st.stage === 1 && ri.hot.some((h) => h.imager && h.imager.key === "r") && ri.hot.some((h) => h.imager && h.imager.key === "iris"), "plaque II : les lentilles et l'iris");
+    st.stage = 2; ri.draw(1.3);
     ok(st.age && st.age.name === "A" && st.target && st.target.freq === 9, "le livre posé sur le lutrin : le premier Âge de l'étagère");
     const plus = ri.hot.find((h) => h.imager && h.imager.key === "freq" && h.imager.delta > 0); ok(plus, "molette de fréquence cliquable");
     const f0 = st.settings.freq; ri.toLogical = () => [plus.x + 2, plus.y + 2]; ri.onClick({}); ok(st.settings.freq === f0 + 1 && store["A.md"] && store["A.md"].freq === f0 + 1, "un cran de plus, gardé pour cet Âge");
     const lever = ri.hot.find((h) => h.imager && h.imager.key === "pol"); ri.toLogical = () => [lever.x + 2, lever.y + 2]; ri.onClick({}); ok(st.settings.pol === -1, "levier de polarité");
-    st.settings = { pol: -1, freq: 9, amp: 13, harm: 6, phase: IM.phaseAt(st.target, 1.8e12) }; ok(ri.imagerSharpness() > 0.97, "accordé : netteté");
+    st.settings = IM.normalize({ pol: -1, freq: 9, amp: 13, harm: 6, phase: IM.phaseAt(st.target, 1.8e12) }); ok(ri.imagerClarity().atmo > 0.97, "atmosphère accordée");
+    st.stage = 0; ri.draw(1.4); const slot = ri.hot.find((h) => h.imager && h.imager.key === "cry0" && h.imager.delta > 0); const c0 = st.settings.cry[0]; ri.toLogical = () => [slot.x + 2, slot.y + 2]; ri.onClick({}); ok(st.settings.cry[0] === (c0 + 1) % 8, "un cristal suivant dans le premier logement");
     const next = ri.hot.find((h) => h.imager && h.imager.book === 1); ri.toLogical = () => [next.x + 2, next.y + 2]; ri.onClick({});
-    await Promise.resolve(); { ok(ri.imager.age.name === "B" && ri.imager.settings.freq === IM.START.freq, "livre suivant : un autre Âge, son propre réglage");
+    await Promise.resolve(); { ok(ri.imager.age.name === "B" && ri.imager.settings.freq === IM.START.freq && ri.imager.stage === 0, "livre suivant : un autre Âge, son propre réglage");
       const empty = mkScene(["page_imager"]); empty.ages = []; ri.setScene(empty); ri.setView("imager"); ri.draw(2); ok(ri.imager.empty && ri.imagerSharpness() >= 0, "étagère vide : rien ne casse");
       const cab = mkScene(["page_imager"]); ri.setScene(cab); ri.setView("cabin"); ri.draw(1); ok(ri.hot.some((h) => h.go === "imager"), "dans la cabane, l'appareil mène à l'Imageur");
       ri.setScene(mkScene([])); ri.setView("imager"); ok(ri.view !== "imager", "sans la page, pas d'Imageur"); }

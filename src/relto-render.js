@@ -573,7 +573,7 @@ class ReltoRenderer {
    * physique) ; le réglage est relu et gardé par `opts.imagerGet / imagerSet` (par chemin de note).
    */
   imagerState() {
-    if (!this.imager) this.imager = { idx: 0, age: null, target: null, model: null, settings: { ...IM.START }, loading: null, empty: false };
+    if (!this.imager) this.imager = { idx: 0, stage: 0, age: null, target: null, model: null, settings: IM.normalize(null), loading: null, empty: false };
     const st = this.imager, ages = (this.scene && this.scene.ages) || [];
     st.empty = !ages.length;
     if (ages.length && (!st.age || !ages.some((a) => a.path === st.age.path)) && !st.loading) this.imagerLoad(Math.min(st.idx, ages.length - 1));
@@ -596,18 +596,20 @@ class ReltoRenderer {
   /** La vue de l'Âge dans le cristal (et la miniature du livre) : un petit canvas repeint à chaque image. */
   imagerView(st, t) {
     if (!st.model) return null;
-    if (!st.canvas) { st.canvas = makeCanvas(220, 132); st.thumb = st.canvas; }
+    if (!st.canvas) { st.canvas = makeCanvas(300, 176); st.thumb = st.canvas; }
     return RI.paintView(st.canvas, st.model, st.target, t, this.imagerNow());
   }
   imagerAct(a) {
     const st = this.imagerState();
     if (a.book) { this.imagerLoad(st.idx + a.book); return; }
-    st.settings = IM.turn(st.settings, a.key, a.delta);
+    if (a.stage != null) { st.stage = a.stage; return; }
+    st.settings = IM.turn(st.settings, a.key, a.delta, st.target && st.target.crystals ? st.target.crystals.options.length : 8);
     if (st.age && this.opts.imagerSet) this.opts.imagerSet(st.age.path, st.settings);
     if (this.opts.onImagerTune) this.opts.onImagerTune(st);
   }
-  /** Netteté actuelle (0 à 1) : pour le son et les tests. */
-  imagerSharpness() { const st = this.imager; return st && st.target ? IM.sharpness(st.settings, st.target, this.imagerNow()) : 0; }
+  /** Les trois réglages et la netteté finale (0 à 1) : pour le son et les tests. */
+  imagerClarity() { const st = this.imager; return st && st.target ? IM.clarity(st.settings, st.target, this.imagerNow()) : { cry: 0, lens: 0, atmo: 0, total: 0 }; }
+  imagerSharpness() { return this.imagerClarity().total; }
 
   /** étiquette brève (nom du chat, de la koï) affichée après un clic */
   /** partie visible du monde (x0, x1, y0) : la caméra de l'île recadre les bords, la vue globale montre tout */
