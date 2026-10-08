@@ -53,10 +53,10 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 12. [Guide intégré](#12-guide-intégré)
 13. [Commandes](#13-commandes)
 14. [Limites connues](#14-limites-connues)
-- [La suite](#la-suite)
-15. [Développement](#15-développement)
-16. [Licences et mentions](#16-licences-et-mentions)
-17. [Changements récents](#17-changements-récents)
+15. [La suite](#15-la-suite)
+16. [Développement](#16-développement)
+17. [Licences et mentions](#17-licences-et-mentions)
+18. [Changements récents](#18-changements-récents)
 
 ---
 
@@ -326,13 +326,13 @@ Deux niveaux, dans une fenêtre à rubriques (et exportables en notes) :
 
 ---
 
-## La suite
+## 15. La suite
 
 Pour l'instant, c'est le **mode bac à sable** : tu écris des mondes, tu les explores, tu règles l'Imageur et tu aménages ton refuge à ton rythme, sans rien à gagner ni à perdre. Un **mode jeu** arrive bientôt (objectifs, découvertes, conséquences), et **bien d'autres choses encore !** Idées et signalements de bugs sont bienvenus dans les Issues du dépôt.
 
 ---
 
-## 15. Développement
+## 16. Développement
 
 Depuis la 1.7.0, **tout le code est lisible** : le moteur d'origine (1.3.0, dont les sources TypeScript étaient perdues) a été dé-minifié, renommé et découpé en modules dans `src/engine/` (`registry`, `rules`, `draw`, `resolve`, `prose`, `glyphs`, `analysis`, `book-view`, `settings-tab`, `plugin`…). Les anciennes retouches par expressions régulières sur du code minifié ont disparu : les points de contact avec l'extension sont de vrais appels à `src/engine/hooks.js`. Le `main.js` 1.3.0 d'origine est conservé tel quel dans `legacy/` (provenance).
 
@@ -354,7 +354,7 @@ Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine
 
 ---
 
-## 16. Licences et mentions
+## 17. Licences et mentions
 
 - **Licence du projet** : [MIT](LICENSE), © Sébastien Wallachia.
 - Le code tiers et ses licences sont listés dans [`NOTICE`](NOTICE) ; les textes de licence sont dans [`LICENSES/`](LICENSES/).
@@ -365,7 +365,7 @@ Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine
 
 ---
 
-## 17. Changements récents
+## 18. Changements récents
 
 - Relto : onglets Vue / Pages / Réglages, heure en grand qui se cache et s'efface, nom D'ni en bandeau, vue dédiée et plein écran, pages gemmes / or / argent, graine retirée du roc, son qui continue d'un onglet à l'autre.
 - Livre : ouverture sur la couverture, couvertures procédurales à sobriété réglable, linking book en trois pages à tourner (clic droite/gauche), livre ouvert dans un onglet principal, plus petit et plus haut.

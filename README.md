@@ -64,9 +64,9 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 12. [Built-in guide](#12-built-in-guide)
 13. [Commands](#13-commands)
 14. [Known limitations](#14-known-limitations)
-- [What's next](#whats-next)
-15. [Development](#15-development)
-16. [Licences and credits](#16-licences-and-credits)
+15. [What's next](#15-whats-next)
+16. [Development](#16-development)
+17. [Licences and credits](#17-licences-and-credits)
 
 ---
 
@@ -74,7 +74,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 Manual, for now:
 
-1. Get `main.js`, `styles.css`, `manifest.json` (build them, see §15).
+1. Get `main.js`, `styles.css`, `manifest.json` (build them, see §16).
 2. Copy them to `<vault>/.obsidian/plugins/age-writer/`.
 3. In Obsidian: *Settings → Community plugins*, reload, enable **Age Writer**.
 
@@ -352,13 +352,13 @@ Two levels, in a window with sections (and exportable as notes):
 
 ---
 
-## What's next
+## 15. What's next
 
 This is **sandbox mode**: you write worlds, explore them, tune the Imager and furnish your refuge at your own pace, with nothing to win or lose. A **game mode** is coming soon (goals, discoveries, consequences), and **more to come!** Ideas and bug reports are welcome in the repository's Issues.
 
 ---
 
-## 15. Development
+## 16. Development
 
 Since 1.7.0, **all the code is readable**: the original engine (1.3.0, whose TypeScript sources were lost) was de-minified, renamed and split into modules in `src/engine/` (`registry`, `rules`, `draw`, `resolve`, `prose`, `glyphs`, `analysis`, `book-view`, `settings-tab`, `plugin`…). The old regex patches on minified code are gone: the touch points with the extension are real calls to `src/engine/hooks.js`. The original 1.3.0 `main.js` is kept as is in `legacy/` (provenance).
 
@@ -380,7 +380,7 @@ In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the
 
 ---
 
-## 16. Licences and credits
+## 17. Licences and credits
 
 - **Project licence**: [MIT](LICENSE), © Sébastien Wallachia.
 - Third-party code and its licences are listed in [`NOTICE`](NOTICE); the licence texts are in [`LICENSES/`](LICENSES/).
