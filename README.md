@@ -89,7 +89,8 @@ link: [[Sunder Reach]]
 2. Below the block, the panel appears (tabs *Text & glyphs*, *Linking window*, *Details*).
 3. Run **Open this Age as a book**: the book opens in a tab, on its cover.
 4. Run **Create a Relto page**, then put a `relto` block in a note: your refuge, with your Ages on the shelf.
-5. If you get lost: **Open the Age Writer guide** (short guide) or **Open the Age Writer full reference**.
+5. Run **Generate a random Age** for a ready-made world (and read the *Age Writer — Welcome* note created on first launch: an annotated example).
+6. If you get lost: **Open the Age Writer guide** (short guide) or **Open the Age Writer full reference**.
 
 ---
 
@@ -316,6 +317,7 @@ Two levels, in a window with sections (and exportable as notes):
 | Open this Age as a book | book view |
 | Open the Relto · Open the Relto view (large) | refuge in a note · dedicated view |
 | Create a Relto page | creates a refuge page |
+| Generate a random Age | a coherent, stable random world as a new note in the refuge folder |
 | Open the Age Writer guide · full reference | short guide · full reference |
 | Save this Age's book cover (SVG) | cover as SVG |
 | Create the exploration journal for this Age | journal |

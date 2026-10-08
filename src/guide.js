@@ -43,7 +43,7 @@ const GUIDE = {
     ] },
     { id: "settings", icon: "settings", title: "Réglages et commandes", body: [
       { p: "Réglages du plugin, section « Extensions », en six rubriques : Livres & couvertures, Sons, Fenêtre de liaison, D'ni & chiffres, Âges & mécanismes, Dossiers." },
-      { ul: ["Open this Age as a book", "Open the Relto / Open the Relto view (large)", "Create a Relto page", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide (cette fenêtre)"] },
+      { ul: ["Open this Age as a book", "Open the Relto / Open the Relto view (large)", "Create a Relto page", "Generate a random Age (un monde cohérent tiré au hasard, dans le dossier du refuge)", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide (cette fenêtre)"] },
       { p: "Projet de fan, sans lien avec Cyan Worlds. Aucune ressource de Myst n'est fournie." },
     ] },
   ],
@@ -88,7 +88,7 @@ const GUIDE = {
     ] },
     { id: "settings", icon: "settings", title: "Settings & commands", body: [
       { p: "Plugin settings, “Extensions” section, in six pages: Books & covers, Sounds, Linking window, D'ni & numbers, Ages & mechanics, Folders." },
-      { ul: ["Open this Age as a book", "Open the Relto / Open the Relto view (large)", "Create a Relto page", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide (this window)"] },
+      { ul: ["Open this Age as a book", "Open the Relto / Open the Relto view (large)", "Create a Relto page", "Generate a random Age (a coherent random world, in the refuge folder)", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide (this window)"] },
       { p: "A fan project, unrelated to Cyan Worlds. No Myst asset is included." },
     ] },
   ],
@@ -235,7 +235,7 @@ const REF_FR = [
     { ul: ["Mise à jour automatique des propriétés · Fenêtre générée · Tirage des cases ouvertes · Force du pli · Dossier de bibliothèque · Image de panneau par défaut"] },
   ] },
   { id: "cmd", icon: "terminal", title: "Commandes et propriétés", body: [
-    { ul: ["Update Age data in this note / in every note : écrit les propriétés calculées", "Generate the Age map (canvas) : carte des Âges liés (bleu = aller-retour, orange = sens unique)", "Save this Age's window as a GIF", "Open this Age as a book", "Create / Reload an Age library · Copy the built-in content into a library note", "Open the Relto · Open the Relto view (large) · Create a Relto page", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide"] },
+    { ul: ["Update Age data in this note / in every note : écrit les propriétés calculées", "Generate the Age map (canvas) : carte des Âges liés (bleu = aller-retour, orange = sens unique)", "Save this Age's window as a GIF", "Open this Age as a book", "Create / Reload an Age library · Copy the built-in content into a library note", "Open the Relto · Open the Relto view (large) · Create a Relto page",  "Generate a random Age : crée une note avec un monde cohérent et stable tiré au hasard (étoile, eau ou terre, décors, parfois lunes, aurores, varech) ; au premier lancement, une note « Age Writer — Bienvenue » avec un Âge d'exemple commenté est créée une fois (jamais dans un coffre qui a déjà des Âges)", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide"] },
     { p: "Propriétés écrites dans la note : `age_verdict`, `age_stability`, `age_axes`, `age_return`, `age_links`, `age_discovered`, `age_drawn`, `age_home` (utilisables avec Dataview ou Bases)." },
     { p: "Limites connues : mobile et thème clair non testés ; la loi du changement range son état par nom de note ; une note à plusieurs blocs `age` tire un monde par bloc ; le contenu du moteur est en anglais ; pas d'export GIF en rendu génératif." },
   ] },

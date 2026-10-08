@@ -25,6 +25,7 @@ const R = require("./ui-relto");
 const RB = require("./relto-books");
 const G = require("./guide");
 const PH = require("./physics/index");
+const AS = require("./ageseed");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
 
 module.exports = function build(Base, core, AGEX) {
@@ -90,7 +91,7 @@ module.exports = function build(Base, core, AGEX) {
       this.registerProcessors();
       this.registerCommands();
       this.registerEvents();
-      this.app.workspace.onLayoutReady(() => guard("scan", () => this.initialScan()));
+      this.app.workspace.onLayoutReady(() => { guard("scan", () => this.initialScan()); window.setTimeout(() => guard("welcome", () => this.welcomeOnce()), 2500); });
     }
 
     onunload() {
@@ -374,7 +375,40 @@ module.exports = function build(Base, core, AGEX) {
         id: "save-age-cover", name: "Save this Age's book cover (SVG)",
         checkCallback: (check) => { const f = this.app.workspace.getActiveFile(); if (!f || f.extension !== "md") return false; if (!check) this.saveCover(f); return true; },
       });
+      this.addCommand({ id: "random-age", name: "Generate a random Age", callback: () => this.randomAge() });
       this.addCommand({ id: "stop-soundscape", name: "Stop the soundscape", callback: () => this.stopSound() });
+    }
+
+    /** Crée une note dans le dossier du refuge (créé au besoin) sans écraser : « Nom », « Nom 2 »… */
+    async createNoteIn(name, body) {
+      const { vault } = this.app, folder = (this.ext.reltoFolder || "Ages").replace(/^\/+|\/+$/g, "");
+      if (folder && !vault.getAbstractFileByPath(folder)) await vault.createFolder(folder);
+      let n = 1, path;
+      do { path = `${folder ? folder + "/" : ""}${name}${n > 1 ? " " + n : ""}.md`; n++; } while (vault.getAbstractFileByPath(path));
+      return vault.create(path, body);
+    }
+
+    /** Commande « Generate a random Age » : un monde tiré au hasard, cohérent et stable, ouvert aussitôt. */
+    async randomAge() {
+      const lang = this.lang(), names = new Set(this.app.vault.getMarkdownFiles().map((f) => f.basename));
+      const check = (lines, name) => { const a = core.analyse(lines.join("\n"), { seed: name }); return !a || a.verdict === "stable"; };
+      const note = AS.randomNote((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0, lang, { check, taken: (nm) => names.has(nm) });
+      const f = await this.createNoteIn(note.name, note.body);
+      new Notice(this.t("random.created", { name: f.basename }));
+      await this.app.workspace.getLeaf(false).openFile(f);
+      this.refreshLive();
+    }
+
+    /** Premier lancement : une note de bienvenue avec un Âge d'exemple (une seule fois, jamais chez un coffre qui a déjà des Âges). */
+    async welcomeOnce() {
+      const st = this.ext.state; if (st.welcomed) return;
+      st.welcomed = true; this.saveExt();
+      const has = (await this.index.list()).length > 0; if (has) return;
+      const w = AS.welcomeNote(this.lang()), f = await this.createNoteIn(w.title, w.body);
+      const n = new Notice("", 15000); n.noticeEl.empty();
+      n.noticeEl.createSpan({ text: this.t("welcome.notice") + " " });
+      n.noticeEl.createEl("button", { text: this.t("welcome.open") }).addEventListener("click", () => { n.hide(); this.app.workspace.getLeaf(false).openFile(f); });
+      this.refreshLive();
     }
 
     async createJournal(file) {
