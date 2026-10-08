@@ -303,22 +303,25 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 
 ---
 
-## 13. Décisions pour l'auteur
+## 13. Décisions de l'auteur (8 oct. 2026)
 
-1. **Défaut** : facile pour tout le monde, ou off tant que l'onglet n'est pas poli ?
-2. **Barème strict** : 10 / 20 / 35 points et plafond de 45 par axe, ou plus doux ?
-3. **Lignes de valeurs en français** : garder les alias (`masse:`, `âge:`, `noyau:`…) ou n'accepter que l'anglais, comme les blocs ?
-4. **Bâtisseurs** : leur présence doit-elle excuser toute la vie impossible (comme aujourd'hui pour l'âge), ou seulement une partie ?
-5. **Soleil vert / violet** : coût d'Art (métaphysique) en strict, ou rien du tout ?
-6. **Monde-types** : un `frozen_world` doit-il *forcer* le tirage vers le froid (aujourd'hui il l'exige, et le tirage s'y plie), même si l'auteur écrit `insolation: 2` ?
-7. **Onglet** : un quatrième onglet « Physique », ou une section dans *Détails* ?
+| # | Question | Décision |
+|---|---|---|
+| 1 | Mode par défaut | **Facile** pour tout le monde. |
+| 2 | Barème strict | On essaie 10 / 20 / 35 points (léger / moyen / fort), plafond 45 par axe, **en réglage** (curseur « sévérité de la physique » dans les Réglages) pour pouvoir l'adoucir ou le durcir sans toucher au code. |
+| 3 | Alias français des lignes | **Gardés** (`masse:`, `âge:`, `noyau:`…). |
+| 4 | Bâtisseurs | **Pas tranché.** Défaut proposé en attendant : les bâtisseurs excusent la vie *trop jeune* pour son monde (âge, étoile bleue), pas la vie *impossible* (pas de lumière, pas d'air, température invivable). |
+| 5 | Soleil vert / violet | La couleur doit avoir un **effet physique**, pas seulement un coût d'Art. À concevoir : par exemple le violet comme une étoile chaude et ultraviolette (plus de flux, vie plus exposée), le vert comme une étoile de type solaire à la lumière teintée (plantes d'une autre couleur). |
+| 6 | Mondes-types (`frozen_world`…) | **Facile** : le monde-type oriente le tirage (vers le froid pour `frozen_world`). **Strict** : il n'oriente rien, il est seulement vérifié (plus dur à tenir). |
+| 7 | Où afficher la physique | Une **section de l'onglet *Détails***, retravaillé. |
 
 ---
 
-## 14. Trouvé en route dans le moteur (à corriger à part)
+## 14. Deux défauts du moteur actuel, trouvés en route (sans rapport avec la physique)
 
-- **Axe « meteorological » inconnu** : dans `src/sky.js`, `WORLD_CLASH` range plusieurs tensions des mondes-types sur l'axe `"meteorological"`, qui n'existe pas (le moteur dit `"weather"`). Le coût devient `NaN` et la tension **ne compte pas** : `desert_world` + `rain`, `frozen_world` + `heat`, `lava_world` + `deep_cold`… ne coûtent rien. Correction d'un mot (`"weather"`), mais elle change la stabilité de ces Âges : à décider, sur une branche à part.
-- **Une seule tension par monde-type** : `findContradictions` (`src/engine/rules.js`) ne garde qu'une règle par `note`, et toutes les règles d'un monde-type partagent la même note : seule la première compte. Peut-être voulu (éviter l'accumulation) ; à confirmer.
+**Le premier est un vrai bug.** Les mondes-types (`frozen_world`, `desert_world`, `lava_world`…) ont une liste de choses qu'ils ne supportent pas (un désert n'aime pas la pluie, un monde gelé n'aime pas la chaleur). Chaque incompatibilité est rangée sur un **axe** de stabilité. Pour celles qui touchent au temps qu'il fait, le code a écrit l'axe `"meteorological"`, alors que le moteur ne connaît que `"weather"`. Le coût atterrit donc dans un axe qui n'existe pas, devient un « pas un nombre » (NaN), et disparaît. Résultat : `desert_world` + `rain`, `frozen_world` + `heat`, `lava_world` + `deep_cold`, etc. ne coûtent **rien**, alors qu'ils devraient rendre l'Âge moins stable. La correction tient en un mot (`"weather"` dans `src/sky.js`), mais elle fera baisser la stabilité des Âges déjà écrits qui contiennent ces mélanges : c'est pour ça qu'elle attend ton accord.
+
+**Le second est peut-être voulu.** Quand un monde-type a plusieurs incompatibilités dans le même Âge (un désert avec de la pluie *et* du brouillard), le moteur n'en compte qu'**une**, la première. C'est un effet de bord du code (les règles d'un même monde-type partagent la même phrase de description, et le moteur ne garde qu'une règle par phrase). Ça évite d'écraser un Âge sous les pénalités, donc c'est peut-être un bon comportement ; il faut juste décider si on le garde.
 
 ---
 
@@ -327,7 +330,7 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 | Étape | Contenu | Critère de fin |
 |---|---|---|
 | **0. Prototype** ✅ | `src/physics/`, tests (279 vérifications), galerie, banc d'essai, relecture indépendante des lois et du code (corrigée) | fait (8 oct. 2026) |
-| 1. Décisions | réponses au §13 | l'auteur a tranché |
+| 1. Décisions ✅ | réponses au §13 (sauf les bâtisseurs) | fait (8 oct. 2026) |
 | 2. Branchement facile | crochets `skip` / `adjust`, réglage, onglet « Physique », i18n | les 600 Âges de `equiv` inchangés ; fiche lisible dans Obsidian |
 | 3. Strict | barème, déduplication avec le moteur, frontmatter | tests de stabilité ; galerie relue par l'auteur |
 | 4. Rendu | soleil, ciel, gravité, face figée dans `genscene` | pages de `test/visual` |
