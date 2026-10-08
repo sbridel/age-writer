@@ -100,12 +100,21 @@ def("thick_air", { needs: [["airThick", "medium"]] });
 def("thin_air", { needs: [["airThin", "medium"]] });
 def("subsurface_ocean", { set: { water: 1 }, needs: [["iceOcean", "medium"]] });
 
+// ---- terrains (src/terrain.js) et habitants (src/places.js) ----------------------------------------
+def("mountains", { needs: [["plateTectonics", "light"]] });
+def(["hills", "canyon"], { needs: [["erosion", "light"]] });
+def(["river", "delta"], { set: { water: 1 }, needs: [["liquidWater", "medium"], ["rainCycle", "light"]] });
+def("delta", { needs: [["erosion", "light"]] });
+def("lake", { set: { water: 1 }, needs: [["liquidWater", "medium"]] });
+def("marsh", { set: { water: 1 }, needs: [["liquidWater", "medium"], ["moistAir", "light"]] });
+def("spiders", { needs: [["prey", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
+
 /** Groupes utiles aux exigences « écologiques » (chaîne alimentaire). */
 const FLORA = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "moss", "lichen", "singing_lichen", "pale_fungus", "spore", "glowvine", "wrong_glowvine", "cinderbloom", "withered_fern", "charred_grove"];
 const PREY = ["grazer", "herd", "watching_herd", "burrower", "warren", "humming_warren", "drifter", "moth", "lantern_moths", "whispering_moths"];
 const SOIL = ["sand", "silt", "stone", "ash", "salt"];
 /** Bâtisseurs : leurs traces disent que quelqu'un a pu apporter ce que la nature n'aurait pas fait. */
-const BUILDERS = ["tablet", "lamp", "bridge", "door", "book", "worn_tablet", "lit_lamp", "sealed_door", "blurred_book", "fallen_bridge", "speaking_tablet"];
+const BUILDERS = ["tablet", "lamp", "bridge", "door", "book", "worn_tablet", "lit_lamp", "sealed_door", "blurred_book", "fallen_bridge", "speaking_tablet", ...require("../places").BUILT_IDS];
 
 /** Mondes-types : en mode facile ils orientent le tirage, en strict ils sont seulement vérifiés. */
 const WORLDS = ["frozen_world", "lava_world", "desert_world", "ocean_world", "jungle_world"];
