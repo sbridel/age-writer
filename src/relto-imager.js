@@ -348,6 +348,22 @@ function closeAtmo(r, ctx, st, cl, t, c, now) {
   backStrip(r, ctx);
 }
 
+/** Petite plaque de laiton en bas à droite : couper le bourdon (haut-parleur) ou régler son volume (cinq crans). */
+function humPlate(r, ctx, c) {
+  const h = r.opts.imagerHum ? r.opts.imagerHum() : { on: true, vol: 1 }, x = W - 100, y = 334, w = 92, hh = 22;
+  plate(ctx, c, x, y, w, hh, false);
+  const on = h.on && h.vol > 0;
+  ctx.fillStyle = c("#1b130d"); ctx.beginPath(); ctx.moveTo(x + 8, y + 9); ctx.lineTo(x + 12, y + 9); ctx.lineTo(x + 17, y + 5); ctx.lineTo(x + 17, y + 17); ctx.lineTo(x + 12, y + 13); ctx.lineTo(x + 8, y + 13); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = c("#1b130d"); ctx.lineWidth = 1.4;
+  if (on) { for (const k of [1, 2]) { ctx.beginPath(); ctx.arc(x + 17, y + 11, 3 + k * 2.4, -0.9, 0.9); ctx.stroke(); } }
+  else { ctx.beginPath(); ctx.moveTo(x + 21, y + 7); ctx.lineTo(x + 29, y + 15); ctx.moveTo(x + 29, y + 7); ctx.lineTo(x + 21, y + 15); ctx.stroke(); }
+  ctx.fillStyle = c("#1b130d"); ctx.font = "bold 12px serif"; ctx.textAlign = "center"; ctx.fillText("−", x + 40, y + 15); ctx.fillText("+", x + w - 8, y + 15); ctx.textAlign = "left";
+  for (let i = 0; i < 5; i++) { ctx.fillStyle = on && i < Math.round(h.vol * 5) ? c("#f2d27a") : c("#3b2a1b"); ctx.fillRect(x + 48 + i * 7, y + 8 + (4 - i) * 0.0, 4, 6 + i); }
+  r.hot.push({ x, y, w: 30, h: hh, tip: on ? "Hum: on (click to mute)" : "Hum: off (click to restore)", imager: { hum: { toggle: true } } });
+  r.hot.push({ x: x + 33, y, w: 14, h: hh, tip: "Hum quieter", imager: { hum: { delta: -1 } } });
+  r.hot.push({ x: x + w - 14, y, w: 14, h: hh, tip: "Hum louder", imager: { hum: { delta: 1 } } });
+}
+
 function drawImagerRoom(r, ctx, sc, sky, t) {
   const st = r.imagerState(), amb = 0.65 + 0.35 * sky.ambient, c = (h) => mix("#05060c", h, amb), now = r.imagerNow();
   const tg = st.target, cl = tg ? I.clarity(st.settings, tg, now) : { cry: 0, lens: 0, atmo: 0, total: 0 };
@@ -357,6 +373,7 @@ function drawImagerRoom(r, ctx, sc, sky, t) {
   else if (st.station === "atmo") closeAtmo(r, ctx, st, cl, t, c, now);
   else overview(r, ctx, st, cl, t, c, now);
   if (r.opts.onImagerTune && !(Math.abs(t - (r.imagerTunedAt || -9)) < 1)) { r.imagerTunedAt = t; r.opts.onImagerTune(st); } // la phase dérive : le bourdon suit, une fois par seconde
+  humPlate(r, ctx, c);
   const S = st.station ? MINI : SCREEN, k = cl.total;
   const lg2 = ctx.createRadialGradient(S.x + S.w / 2, S.y + S.h / 2, 30, S.x + S.w / 2, S.y + S.h / 2, 420); lg2.addColorStop(0, rgba(127, 214, 200, 0.03 + 0.08 * k)); lg2.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = lg2; ctx.fillRect(0, 0, W, H);
   const vgr = ctx.createRadialGradient(W / 2, H / 2, 180, W / 2, H / 2, 430); vgr.addColorStop(0, "rgba(0,0,0,0)"); vgr.addColorStop(1, "rgba(0,0,0,0.4)"); ctx.fillStyle = vgr; ctx.fillRect(0, 0, W, H);

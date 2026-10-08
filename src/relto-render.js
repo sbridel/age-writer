@@ -619,6 +619,7 @@ class ReltoRenderer {
   imagerAct(a) {
     const st = this.imagerState(), tg = st.target, before = st.settings, now = this.imagerNow(), sfx = (k) => { if (this.opts.onImagerSound) this.opts.onImagerSound(k); };
     const say = (text) => { const h = this.hover || { x: W / 2, y: H / 2, w: 0 }; this.flash = { text, x: h.x + (h.w || 0) / 2, y: h.y, until: Date.now() + 2400 }; };
+    if (a.hum) { if (this.opts.onImagerHum) this.opts.onImagerHum(a.hum); sfx("click"); return; }
     if (a.book) { this.imagerLoad(st.idx + a.book); sfx("page"); return; }
     if ("station" in a) { st.station = a.station; st.hand = null; return; }
     if (a.lock) {

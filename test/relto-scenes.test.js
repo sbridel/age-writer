@@ -110,6 +110,13 @@ const imagerDone = (async () => {
     ri.opts.notes = "words"; ri.draw(1); ok(ri.hot.some((h) => h.special === "surveyor"), "mots seulement : le carnet revient");
   }
   ri.setView("imager"); ok(ri.view === "imager", "vue de l'Imageur");
+  { // plaque du bourdon : couper / régler le volume depuis la salle
+    const acts = []; ri.opts.imagerHum = () => ({ on: true, vol: 0.6 }); ri.opts.onImagerHum = (x) => acts.push(x); ri.draw(1);
+    const hum = ri.hot.filter((h) => h.imager && h.imager.hum); ok(hum.length === 3, "plaque du bourdon : coupure, moins, plus");
+    for (const h of hum) { ri.toLogical = () => [h.x + 2, h.y + 2]; ri.onClick({}); }
+    ok(acts.length === 3 && acts[0].toggle && acts[1].delta === -1 && acts[2].delta === 1, "clics : coupure, moins, plus");
+    ri.opts.imagerHum = () => ({ on: false, vol: 1 }); ri.draw(1); ok(ri.hot.some((h) => /Hum: off/.test(h.tip)), "bourdon coupé : l'infobulle le dit");
+  }
   ri.nowOverride = 1.8e12; ri.draw(1);
   await Promise.resolve();
   let T = 1.2; const has = (f) => ri.hot.some((h) => h.imager && f(h.imager));

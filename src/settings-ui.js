@@ -6,7 +6,7 @@ const DEFAULTS = {
   lang: "auto", numerals: "auto", vaultFont: "", showNumbers: true, dniText: true,
   panelFx: "classic", windowStyle: "classic", windowSize: "large", dniClock: true, hoverFrame: false, imagerNotes: "words", fxStrength: 1, uncertainLinks: true, reltoMode: "zen", reltoVolume: 0.6,
   law: true, inkDry: 15, heal: 0.05,
-  leather: true, coverTab: true, panelTabs: true, bookOpen: "tab", soundBook: true, soundClasp: true, soundLink: true, soundRooms: true, soundImagerHum: true, soundPage: true, reltoTabs: true, linkLeaves: true, coverStyle: "auto", bookStart: "cover",
+  leather: true, coverTab: true, panelTabs: true, bookOpen: "tab", soundBook: true, soundClasp: true, soundLink: true, soundRooms: true, soundImagerHum: true, imagerHumVol: 1, soundPage: true, reltoTabs: true, linkLeaves: true, coverStyle: "auto", bookStart: "cover",
   mechanisms: "draw", solitude: "balanced", physics: "easy", physicsSeverity: 1,
   sound: true, volume: 0.35,
   journalFolder: "", reltoFolder: "Ages",
