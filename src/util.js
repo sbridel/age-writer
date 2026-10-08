@@ -59,4 +59,10 @@ function setMarkup(el, markup, append = false) {
   return el;
 }
 
-module.exports = { setMarkup, fnv, rng, clamp, lerp, smooth, frac, pick, esc, mix, rgba, hexa, hex2rgb, words };
+/** Quitte le plein écran du navigateur (la note qu'on va ouvrir s'ouvrirait derrière, invisible). */
+function leaveFullscreen(doc) { try { const d = doc || (typeof document !== "undefined" ? document : null); if (d && d.fullscreenElement && d.exitFullscreen) d.exitFullscreen(); } catch (e) { /* ignore */ } }
+/** En plein écran, seul l'élément plein écran est visible : une fenêtre modale d'Obsidian (ajoutée au corps de la page) reste cachée.
+ *  On la déplace dans l'élément plein écran, juste après son ouverture. */
+function fitModalToFullscreen(modal) { try { const el = modal && modal.containerEl, fs = el && el.ownerDocument.fullscreenElement; if (fs && !fs.contains(el)) fs.appendChild(el); } catch (e) { /* ignore */ } }
+
+module.exports = { leaveFullscreen, fitModalToFullscreen, setMarkup, fnv, rng, clamp, lerp, smooth, frac, pick, esc, mix, rgba, hexa, hex2rgb, words };

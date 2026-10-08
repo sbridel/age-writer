@@ -1,7 +1,7 @@
 "use strict";
 // Les deux livres à part du Relto : le livre des glyphes (lecture) et le livre de la bibliothèque (ouvre la note où l'on écrit).
 const obsidian = require("obsidian");
-const { setMarkup } = require("./util");
+const { setMarkup, leaveFullscreen } = require("./util");
 
 /**
  * Glyphes utilisés dans les Âges donnés (chacun a `glyphs: [id…]`) — pur, sans Obsidian.
@@ -49,6 +49,7 @@ async function openLibraryNote(plugin, kind) {
       if (text.includes(LIB_BLOCK.relto)) { file = f; break; }
     }
   }
+  leaveFullscreen();
   if (file) { await app.workspace.getLeaf(false).openFile(file); return file; }
   const name = kind === "ages" ? "Age Library.md" : "Relto Library.md", body = kind === "ages" ? plugin.core.libraryTemplate : RELTO_LIBRARY_TEMPLATE;
   const folder = String((plugin.settings && plugin.settings.libraryFolder) || "").trim().replace(/^\/+|\/+$/g, "");
@@ -87,7 +88,7 @@ function openGlyphBook(plugin, ages) {
         const where = card.createDiv({ cls: "age-glyphbook__where" });
         g.ages.forEach((name, i) => {
           const a = where.createEl("a", { cls: "internal-link", text: name });
-          a.addEventListener("click", (e) => { e.preventDefault(); this.close(); plugin.app.workspace.openLinkText(g.paths[i], "", false); });
+          a.addEventListener("click", (e) => { e.preventDefault(); this.close(); leaveFullscreen(); plugin.app.workspace.openLinkText(g.paths[i], "", false); });
         });
       }
     }
@@ -113,7 +114,7 @@ function openSurveyorBook(plugin, ages) {
           const name = plugin.core.base(f.path), tg = IM.targetsOf(plugin.core.analyse(src, { seed: name }), name), hn = IM.hints(tg, lang);
           const card = box.createDiv({ cls: "age-surveyor__card" });
           const link = card.createEl("a", { cls: "internal-link age-surveyor__name", text: a.name || name });
-          link.addEventListener("click", (e) => { e.preventDefault(); this.close(); app.workspace.openLinkText(a.path, "", false); });
+          link.addEventListener("click", (e) => { e.preventDefault(); this.close(); leaveFullscreen(); app.workspace.openLinkText(a.path, "", false); });
           card.createDiv({ cls: "age-det__skyline", text: hn.line });
           if (hn.lightLine) card.createDiv({ cls: "age-det__skyline", text: hn.lightLine });
           if (full) {

@@ -252,3 +252,8 @@ unlock:                            # facultatif
 - **Plein écran** : en mode « fenêtre séparée », le livre s'ouvre en onglet quand Obsidian est en plein écran (une fenêtre séparée restait invisible derrière).
 - Tests : `law.test.js`, `gen.test.js`, `cover.test.js` complétés.
 
+## 1.18.2 — livres visibles en plein écran (9 oct. 2026)
+
+- **Plein écran du Relto** : le livre des glyphes, le carnet de l'arpenteur, le livre de la bibliothèque et les autres fenêtres modales étaient ouverts derrière le Relto, invisibles. Elles sont désormais déplacées dans l'élément plein écran juste après leur ouverture (`Modal.open` enveloppé au chargement, remis à l'arrêt) ; ouvrir une note depuis ces livres quitte d'abord le plein écran.
+- Tests : `test/fullscreen.test.js`.
+
