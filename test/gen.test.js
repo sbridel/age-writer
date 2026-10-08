@@ -283,4 +283,21 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   ok(JSON.stringify({ ...G.build(S0, 320, 192), shore: null, S: null }) === JSON.stringify({ ...G.build(S1, 320, 192), shore: null, S: null }), "le rivage ne change rien d'autre dans l'image (graine propre)");
 }
 
+// physique visible (1.16.1) : la fenêtre suit le monde calculé quand la couche physique est active
+{
+  const anP = (ids, w, extra = []) => ({ ...an(ids), physics: { w }, resolved: { lines: [...ids.map((id) => ({ entry: { id } })), ...extra], matter: { written: [], reactions: [] } } });
+  const W0 = { P: 1, g: 1, starTemps: [5772], L: 1, a: 1, locked: false, light: 1, Ts: 288 };
+  ok(G.sceneOf(an(["single_sun"]), "P").phys === null, "sans physique : rien ne change");
+  const red = G.sceneOf(anP(["single_sun"], { ...W0, starTemps: [3000] }), "P"), blue = G.sceneOf(anP(["single_sun"], { ...W0, starTemps: [15000] }), "P");
+  ok(red.sunHues[0][0] > red.sunHues[0][2] + 80 && blue.sunHues[0][2] >= blue.sunHues[0][0], "couleur du soleil : naine rouge rougeâtre, étoile chaude bleutée");
+  ok(G.sceneOf(anP(["single_sun", "blue_sun"], { ...W0, starTemps: [3000] }), "P").sunHues[0][2] > 200, "une couleur écrite passe avant la température");
+  ok(G.sceneOf(anP(["single_sun"], { ...W0, locked: true }), "P").cycle === "frozen", "face figée par la marée : soleil immobile");
+  ok(G.sceneOf(anP(["single_sun", "steady_cycle"], { ...W0, locked: true }, [{ entry: { id: "steady_cycle", category: "cycle" }, autoFilled: false }]), "P").cycle !== "frozen", "un cycle écrit passe avant la marée");
+  const amp = (g) => { const S = G.sceneOf(anP(["single_sun"], { ...W0, g }), "Relief"); const m = G.build(S, 320, 192); return Math.max(...m.ridges.map((r) => Math.max(...r.xs) - Math.min(...r.xs))); };
+  ok(amp(0.3) > amp(1) && amp(1) > amp(3), "relief : plus haut sur un monde léger, plus bas sur un monde lourd");
+  const clouds = (P) => { const S = G.sceneOf(anP(["single_sun"], { ...W0, P }), "Air"); const l = []; G.paint(fakeCtx(l), G.build(S, 320, 192), 0.3, { day: 0.35 }); return l.filter((x) => x.startsWith("ellipse")).length; };
+  ok(clouds(0.01) < clouds(1), "presque pas d'air : pas de nuages");
+  for (const w of [{ ...W0, P: 0 }, { ...W0, P: 300, Ts: 700 }, { ...W0, light: 0.05 }, { ...W0, starTemps: [] }, { ...W0, blackSun: true, starTemps: [1500] }]) { const l = []; G.paint(fakeCtx(l), G.build(G.sceneOf(anP(["single_sun"], w), "Q"), 320, 192), 0.6); ok(l.length > 50, "physique extrême : rendu fini"); }
+}
+
 console.log(`gen.test.js : ${n} vérifications OK`);

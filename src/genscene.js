@@ -54,7 +54,36 @@ function sceneOf(a, name = "", blocks = null) {
     fissure: r("no_fissure") ? null : r("cave_fissure") ? "cave" : r("submarine_fissure", "fissure") ? (r("water") ? "submarine" : "open") : null,
   };
   S.shore = shoreOf(S, r, wd);
+  const cycleWritten = res.lines.some((l) => l.entry && l.entry.category === "cycle" && !l.autoFilled);
+  S.phys = physLook(a.physics && a.physics.w, cycleWritten);
+  if (S.phys) {
+    if (!S.sunHues.length && S.phys.sunRGB.length) S.sunHues = S.phys.sunRGB; // couleur du soleil : celle de son étoile (une couleur écrite passe avant)
+    if (S.phys.locked && !cycleWritten && S.cycle !== "erratic") S.cycle = "frozen"; // face figée par la marée : le soleil ne bouge plus
+    if (S.phys.Ts > 318) S.heat = true; // chaleur qui fait trembler l'air
+  }
   return S;
+}
+
+/** Couleur d'un corps noir (approximation de Tanner Helland), en RGB 0..255. */
+function blackbody(T) {
+  const t = clamp(T, 1000, 40000) / 100;
+  const r = t <= 66 ? 255 : 329.7 * Math.pow(t - 60, -0.1332), g = t <= 66 ? 99.47 * Math.log(t) - 161.12 : 288.12 * Math.pow(t - 60, -0.0755), b = t >= 66 ? 255 : t <= 19 ? 0 : 138.52 * Math.log(t - 10) - 305.04;
+  return [clamp(r, 0, 255), clamp(g, 0, 255), clamp(b, 0, 255)];
+}
+/**
+ * Ce que la physique du monde change à la fenêtre (quand la couche physique est active) :
+ * couleur du soleil (température de l'étoile), taille du disque (rayon de l'étoile et distance), ciel (pression de l'air),
+ * relief (gravité), face figée (marée), lumière au sol, chaleur.
+ */
+function physLook(w, cycleWritten) {
+  if (!w || !Number.isFinite(w.P)) return null;
+  const temps = (w.starTemps || []).filter(Number.isFinite), brown = !!w.blackSun;
+  const T0 = temps[0] || 5772, L = Number.isFinite(w.L) ? w.L : 1, a = Number.isFinite(w.a) && w.a > 0 ? w.a : 1;
+  const disc = clamp((Math.sqrt(Math.max(1e-6, L)) / Math.pow(T0 / 5772, 2)) / a, 0.45, 3); // rayon angulaire relatif au Soleil vu de la Terre
+  return {
+    sunRGB: brown ? [] : temps.slice(0, 2).map(blackbody), disc, P: Math.max(0, w.P), g: Number.isFinite(w.g) ? w.g : 1,
+    locked: !!w.locked, light: Number.isFinite(w.light) ? w.light : 1, Ts: Number.isFinite(w.Ts) ? w.Ts : 288, cycleWritten: !!cycleWritten,
+  };
 }
 
 /**
@@ -115,7 +144,7 @@ function build(S, W, H) {
   const nCount = S.sand ? 2 : S.ice ? 4 : 3 + Math.floor(r() * 2);
   const ridges = Array.from({ length: nCount }, (_, i) => {
     const d = i / Math.max(1, nCount - 1), n = valueNoise((r() * 4294967296) >>> 0), ridged = S.ice || (!S.sand && r() < 0.3);
-    const amp = (S.sand ? 0.07 : 0.16 + r() * 0.12) * (1 - d * 0.35), freq = (S.sand ? 0.9 : 2.2 + r() * 2) * (1 + d * 0.5), base = hz - H * (0.05 + (1 - d) * 0.07);
+    const amp = (S.sand ? 0.07 : 0.16 + r() * 0.12) * (1 - d * 0.35) * (S.phys ? clamp(Math.pow(S.phys.g, -0.5), 0.6, 1.55) : 1), freq = (S.sand ? 0.9 : 2.2 + r() * 2) * (1 + d * 0.5), base = hz - H * (0.05 + (1 - d) * 0.07);
     const xs = new Float32Array(Math.ceil(W / 4) + 1);
     for (let k = 0; k < xs.length; k++) {
       const u = k / (xs.length - 1); let v = fbm(n, u * freq * 3 + i * 5, S.ice ? 3 : 4);
@@ -235,8 +264,8 @@ function buildForeground(S, W, H) {
 function suns(m, t, season = 0) {
   const { S, W, H, hz } = m, top = H * (0.14 + 0.08 * (0.5 - 0.5 * season)), out = [], erratic = (i) => { const q = Math.floor(t * 6), g = rng(S.seed + q * 31 + i); return { x: W * (0.2 + 0.6 * g()), y: H * (0.2 + 0.34 * g()) }; };
   for (let i = 0; i < S.suns; i++) {
-    const rad = H * (i === 0 ? 0.085 : 0.055); let b = null;
-    if (S.cycle === "frozen") b = { x: W * (0.7 - 0.25 * i), y: hz - H * 0.1, e: 0.12 };
+    const rad = H * (i === 0 ? 0.085 : 0.055) * (S.phys ? clamp(Math.sqrt(S.phys.disc), 0.6, 1.7) : 1); let b = null;
+    if (S.cycle === "frozen") { const fz = rng((S.seed ^ 0x10c4) >>> 0), el = 0.32 + 0.4 * fz(), fx = 0.25 + 0.5 * fz(); b = { x: W * (fx - 0.22 * i), y: hz - (hz - top) * el, e: 0.12 + el * 0.5 }; } // soleil immobile : sa hauteur et sa place dépendent de l'endroit du monde (graine)
     else if (S.cycle === "erratic") { const p = erratic(i); b = { x: p.x, y: p.y, e: clamp((hz - p.y) / (hz * 0.8)) }; }
     else { const p = frac(t - i * 0.1); if (p <= 0.7) { const q = p / 0.7, e = Math.sin(Math.PI * q); b = { x: W * (0.06 + 0.88 * q), y: hz - e * (hz - top), e }; } }
     if (!b) continue;
@@ -253,13 +282,16 @@ function paint(g, m, t, o = {}) {
   const night = 1 - smooth(d * 3), day = smooth((d - 0.25) / 0.75);
   let top = mixc(mixc(pal.nightTop, pal.dawnTop, smooth(d * 3)), pal.dayTop, day), hzc = mixc(mixc(pal.nightHz, pal.dawnHz, smooth(d * 3)), pal.dayHz, day);
   const hues = S.sunHues || []; if (hues[0]) { hzc = mixc(hzc, hues[0], 0.3 * day); top = mixc(top, hues[0], 0.14 * day); } // soleil coloré : la lumière du jour prend sa teinte
+  const air = S.phys ? { thin: clamp((0.5 - S.phys.P) / 0.45), thick: S.phys.P > 1.5 ? clamp(Math.log2(S.phys.P / 1.5) / 4) : 0 } : { thin: 0, thick: 0 };
+  if (air.thin) { top = mixc(top, [4, 5, 12], 0.9 * air.thin); hzc = mixc(hzc, mixc(hzc, [10, 12, 24], 0.5), air.thin); } // air mince : ciel sombre même à midi
+  if (air.thick) { top = mixc(top, mixc(hzc, [235, 230, 215], 0.3), 0.65 * air.thick); } // air épais : ciel laiteux, sans profondeur
   if (S.blackSun) { const gray = (c) => { const v = (c[0] + c[1] + c[2]) / 3; return [v, v, v]; }; top = mixc(gray(top), [12, 8, 10], 0.55); hzc = mixc(gray(hzc), [60, 26, 26], 0.45); } // soleil noir : jour gris et sombre, horizon rouge éteint
   g.save(); g.clearRect(0, 0, W, H);
   const sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, css(top)); sky.addColorStop(1, css(hzc)); g.fillStyle = sky; g.fillRect(0, 0, W, H);
   if (S.storm) { g.fillStyle = "rgba(14,17,24,0.5)"; g.fillRect(0, 0, W, H); }
   if (S.veil) { g.fillStyle = "rgba(190,190,202,0.2)"; g.fillRect(0, 0, W, H); }
   // étoiles
-  const sv = (S.storm ? 0.25 : 1) * (S.veil ? 0.5 : 1) * (1 - Math.min(1, d * 1.4));
+  const sv = Math.max((S.storm ? 0.25 : 1) * (S.veil ? 0.5 : 1) * (1 - Math.min(1, d * 1.4)), 0.7 * air.thin * air.thin) * (1 - 0.8 * air.thick); // sans air, les étoiles se voient en plein jour ; sous un air épais, presque jamais
   if (sv > 0.02) for (const s of m.stars) { g.fillStyle = css([230, 230, 245], (0.25 + 0.55 * (0.5 + 0.5 * Math.sin(TAU * t * s.k + s.p))) * sv); g.fillRect(s.x, s.y, s.s, s.s); }
   // aurores
   const ak = Math.max(0, Math.min(1, (night - 0.3) / 0.45)); // aurores : nuit seulement
@@ -283,7 +315,7 @@ function paint(g, m, t, o = {}) {
     if (mp) { g.fillStyle = "#cfd6e2"; g.beginPath(); g.arc(mp.x, mp.y, rad, 0, TAU); g.fill(); g.fillStyle = "rgba(10,12,20,0.5)"; g.beginPath(); g.arc(mp.x + rad * 0.45, mp.y - rad * 0.2, rad * 0.9, 0, TAU); g.fill(); }
   }
   // nuages (dérive lente, boucle)
-  for (const c of m.clouds) {
+  for (const c of air.thin > 0.85 ? [] : m.clouds) { // presque pas d'air : pas de nuages
     const x = frac((c.x / W) + t * c.sp) * (W + c.w * 2) - c.w; g.fillStyle = css(S.storm ? [30, 34, 44] : mixc(hzc, [255, 255, 255], 0.35), S.storm ? 0.55 : c.a * (0.4 + day));
     c.lump.forEach((l, k) => { g.beginPath(); g.ellipse(x + (k / 7) * c.w, c.y + (l - 0.5) * c.h * 0.6, c.w * 0.13, c.h * (0.3 + l * 0.3), 0, 0, TAU); g.fill(); });
   }
@@ -313,6 +345,7 @@ function paint(g, m, t, o = {}) {
       const top = Math.min(...rg.xs), mg = g.createLinearGradient(0, top, 0, hz); mg.addColorStop(0, css(hzc, 0)); mg.addColorStop(1, css(hzc, 0.3 * (1 - rg.d) * (0.45 + 0.55 * day) + 0.08)); g.fillStyle = mg; g.fillRect(0, top, W, hz - top);
     }
   });
+  if (air.thick > 0.05) { const hg = g.createLinearGradient(0, 0, 0, hz); hg.addColorStop(0, css(hzc, 0.05 * air.thick)); hg.addColorStop(1, css(mixc(hzc, [240, 235, 220], 0.3), 0.45 * air.thick)); g.fillStyle = hg; g.fillRect(0, 0, W, hz); } // brume d'un air épais sur le relief
   for (const cn of m.cones) { // volcans : cône sombre + lueur du cratère
     g.fillStyle = css(pal.rock); g.beginPath(); g.moveTo(cn.x - cn.w, hz); g.lineTo(cn.x - cn.w * 0.12, hz - cn.h); g.lineTo(cn.x + cn.w * 0.12, hz - cn.h); g.lineTo(cn.x + cn.w, hz); g.closePath(); g.fill();
     const f = 0.5 + 0.5 * Math.sin(TAU * (t * 2) + cn.x), lg = g.createRadialGradient(cn.x, hz - cn.h, 1, cn.x, hz - cn.h, cn.h * 0.9); lg.addColorStop(0, css([255, 130, 50], 0.5 + 0.25 * f)); lg.addColorStop(1, css([255, 90, 30], 0)); g.fillStyle = lg; g.fillRect(0, 0, W, H);
@@ -345,6 +378,7 @@ function paint(g, m, t, o = {}) {
   weather(g, m, t);
   foreground(g, m, t, hzc);
   if (S.ice) frost(g, m, t, night);
+  if (S.phys && S.phys.light < 0.35 && !S.blackSun) { g.fillStyle = css([4, 5, 12], 0.45 * (1 - S.phys.light / 0.35) * (0.4 + 0.6 * day)); g.fillRect(0, 0, W, H); } // peu de lumière visible au sol : un jour terne
   const vg = g.createRadialGradient(W / 2, H / 2, H * 0.4, W / 2, H / 2, H * 0.95); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.35)"); g.fillStyle = vg; g.fillRect(0, 0, W, H);
   if (S.blackSun) { // soleil noir : les couleurs s'éteignent en gris, seule la couronne garde son rouge
     g.save(); g.globalCompositeOperation = "saturation"; g.globalAlpha = 0.8; g.fillStyle = "#808080"; g.fillRect(0, 0, W, H); g.restore();
