@@ -99,7 +99,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     if (!sc.ages.length) { ctx.fillStyle = rgba(230, 220, 190, 0.45); ctx.font = "11px serif"; ctx.fillText("(no Age written yet)", x0 + 70, y0 + RH * 1.5); }
   }
   // table, chandelle et livres à part
-  const tx = 60, tw = 136, ty = 284;
+  const tx = 60, tw = 176, ty = 284;
   ctx.fillStyle = c("#2f2016"); ctx.fillRect(tx + 6, ty, 7, 56); ctx.fillRect(tx + tw - 13, ty, 7, 56);
   ctx.fillStyle = c("#4b3322"); ctx.fillRect(tx + 2, ty + 8, tw - 4, 8);
   ctx.fillStyle = c("#6a4a30"); ctx.fillRect(tx, ty, tw, 8);
@@ -109,18 +109,24 @@ function drawCabin(r, ctx, sc, sky, t) {
   ];
   for (const b of books) { standingBook(ctx, c, b); r.hot.push({ x: b.x - 1, y: b.y - b.h - 1, w: b.w + 2, h: b.h + 2, tip: b.tip, special: b.kind }); }
   if (r.scene.additions.some((a) => a.type === "imager")) { // l'Imageur : un petit appareil de laiton sur la table, son cristal luit ; un clic y mène
-    const ix = tx + 74, iy = ty; ctx.fillStyle = c("#6b5126"); ctx.fillRect(ix - 9, iy - 6, 18, 6); ctx.fillRect(ix - 2, iy - 20, 4, 14);
+    const ix = tx + 112, iy = ty; ctx.fillStyle = c("#6b5126"); ctx.fillRect(ix - 9, iy - 6, 18, 6); ctx.fillRect(ix - 2, iy - 20, 4, 14);
     ctx.fillStyle = rgba(127, 214, 200, 0.55 + 0.25 * Math.sin(t * 2)); ctx.beginPath(); ctx.moveTo(ix, iy - 34); ctx.lineTo(ix + 6, iy - 27); ctx.lineTo(ix, iy - 19); ctx.lineTo(ix - 6, iy - 27); ctx.closePath(); ctx.fill();
     const ig = ctx.createRadialGradient(ix, iy - 27, 0, ix, iy - 27, 18); ig.addColorStop(0, "rgba(127,214,200,0.35)"); ig.addColorStop(1, "rgba(127,214,200,0)"); ctx.fillStyle = ig; ctx.fillRect(ix - 18, iy - 45, 36, 36);
     r.hot.push({ x: ix - 12, y: iy - 38, w: 24, h: 38, tip: "The Imager", go: "imager" });
   }
   if (r.scene.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { // le carnet de l'arpenteur : posé à plat sur la table, signet rouge
-    const nx = tx + 110, ny = ty - 5;
+    const nx = tx + 132, ny = ty - 5;
     ctx.fillStyle = c("#3b2a1a"); ctx.fillRect(nx, ny, 22, 5); ctx.fillStyle = c("#6b4a2a"); ctx.fillRect(nx, ny - 1, 22, 2);
     ctx.fillStyle = c("#c9a24e"); ctx.fillRect(nx + 1, ny + 1, 2, 3); ctx.fillRect(nx + 19, ny + 1, 2, 3); ctx.fillStyle = c("#8e2b27"); ctx.fillRect(nx + 14, ny + 4, 1.4, 4);
     r.hot.push({ x: nx - 2, y: ny - 4, w: 26, h: 12, tip: "Surveyor's notebook", special: "surveyor" });
   }
-  const cx = tx + tw - 34;
+  { // le livre des pages : grand livre ouvert, posé à plat ; un clic l'ouvre en gros plan
+    const bx = tx + 60, by = ty - 6;
+    ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 1, by, 30, 6); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx + 1, by - 2, 13, 5); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 15, by - 2, 13, 5);
+    ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 3; k++) { ctx.fillRect(bx + 3, by - 1 + k * 1.4 - 0.6, 9, 0.5); ctx.fillRect(bx + 17, by - 1 + k * 1.4 - 0.6, 9, 0.5); }
+    r.hot.push({ x: bx - 3, y: by - 6, w: 36, h: 14, tip: "Book of pages — click to open", go: "book" });
+  }
+  const cx = tx + tw - 18;
   ctx.fillStyle = c("#e8dcc0"); ctx.fillRect(cx, ty - 14, 7, 14);
   const cf = clamp(0.75 * fl + 0.2); ctx.fillStyle = rgba(255, 190, 80, cf); ctx.beginPath(); ctx.ellipse(cx + 3.5, ty - 19, 2.4, 5 * cf, 0, 0, 6.283); ctx.fill();
   // le chat, quand il dort au coin du feu (voir ReltoRenderer.catAsleep) : au premier plan, sur le tapis
