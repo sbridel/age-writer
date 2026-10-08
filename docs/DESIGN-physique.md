@@ -310,7 +310,7 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 | 1 | Mode par défaut | **Facile** pour tout le monde. |
 | 2 | Barème strict | On essaie 10 / 20 / 35 points (léger / moyen / fort), plafond 45 par axe, **en réglage** (curseur « sévérité de la physique » dans les Réglages) pour pouvoir l'adoucir ou le durcir sans toucher au code. |
 | 3 | Alias français des lignes | **Gardés** (`masse:`, `âge:`, `noyau:`…). |
-| 4 | Bâtisseurs | **Pas tranché.** Défaut proposé en attendant : les bâtisseurs excusent la vie *trop jeune* pour son monde (âge, étoile bleue), pas la vie *impossible* (pas de lumière, pas d'air, température invivable). |
+| 4 | Bâtisseurs (blocs de ruines : `tablet`, `door`, `bridge`, `lamp`, `book`…) | Ils excusent la vie *trop jeune* pour son monde (quelqu'un l'a apportée : arbres sous une étoile bleue), **pas** la vie *impossible* (sans lumière, sans air, à une température invivable). C'est déjà le comportement du prototype. |
 | 5 | Soleil vert / violet | La couleur doit avoir un **effet physique**, pas seulement un coût d'Art. À concevoir : par exemple le violet comme une étoile chaude et ultraviolette (plus de flux, vie plus exposée), le vert comme une étoile de type solaire à la lumière teintée (plantes d'une autre couleur). |
 | 6 | Mondes-types (`frozen_world`…) | **Facile** : le monde-type oriente le tirage (vers le froid pour `frozen_world`). **Strict** : il n'oriente rien, il est seulement vérifié (plus dur à tenir). |
 | 7 | Où afficher la physique | Une **section de l'onglet *Détails***, retravaillé. |
@@ -329,7 +329,7 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 | Étape | Contenu | Critère de fin |
 |---|---|---|
 | **0. Prototype** ✅ | `src/physics/`, tests (279 vérifications), galerie, banc d'essai, relecture indépendante des lois et du code (corrigée) | fait (8 oct. 2026) |
-| 1. Décisions ✅ | réponses au §13 (sauf les bâtisseurs) | fait (8 oct. 2026) |
+| 1. Décisions ✅ | réponses au §13 | fait (8 oct. 2026) |
 | 2. Branchement facile | crochets `skip` / `adjust`, réglage, onglet « Physique », i18n | les 600 Âges de `equiv` inchangés ; fiche lisible dans Obsidian |
 | 3. Strict | barème, déduplication avec le moteur, frontmatter | tests de stabilité ; galerie relue par l'auteur |
 | 4. Rendu | soleil, ciel, gravité, face figée dans `genscene` | pages de `test/visual` |
