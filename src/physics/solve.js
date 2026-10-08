@@ -13,11 +13,12 @@
  * selon le mode (facile / strict), ce que l'on en fait.
  */
 const M = require("./model");
-const { BLOCKS, HUE_MASS } = require("./blocks");
+const { BLOCKS, HUE_MASS, WORLDS } = require("./blocks");
 const { REQUIREMENTS, ASSERTIONS, GLOBAL } = require("./rules");
 const { hashSeed, rng } = require("../engine/draw");
 
 const SEV_COST = { light: 0.1, medium: 0.2, strong: 0.35 };
+const WORLD_SET = new Set(WORLDS);
 const SEV_RANK = { light: 1, medium: 2, strong: 3 };
 const CANDIDATES = 48;
 
@@ -221,9 +222,10 @@ const reqOf = (id) => REQUIREMENTS[id] || ASSERTIONS[id] || GLOBAL[id];
 
 /**
  * Le monde physique d'un Âge. `ids` : symboles présents (écrits, tirés, nés de réactions) ;
- * `src` : texte du bloc (lignes de valeurs) ; `seed` : graine de l'Âge (même graine = même monde).
+ * `src` : texte du bloc (lignes de valeurs) ; `seed` : graine de l'Âge (même graine = même monde) ;
+ * `mode` : en "strict", les mondes-types (`frozen_world`…) n'orientent plus le tirage, ils sont seulement vérifiés.
  */
-function solve({ ids, src = "", seed = "" }) {
+function solve({ ids, src = "", seed = "", mode = "easy" }) {
   const idSet = ids instanceof Set ? ids : new Set(ids);
   const { params: written, asserts, clamped } = parsePhysics(src);
   const set = blockSettings(idSet);
@@ -234,13 +236,14 @@ function solve({ ids, src = "", seed = "" }) {
     const p = candidate(r, set, written);
     const w = derive(p, set, written, idSet);
     const tensions = evaluate(w, idSet, asserts);
-    const cost = costOf(tensions);
-    if (!best || cost < best.cost - 1e-9) best = { k, p, w, tensions, cost };
+    const steer = mode === "strict" ? tensions.filter((t) => !(t.ids.length && t.ids.every((id) => WORLD_SET.has(id)))) : tensions;
+    const cost = costOf(steer);
+    if (!best || cost < best.steer - 1e-9) best = { k, p, w, tensions, cost: costOf(tensions), steer: cost };
     if (cost === 0) break;
   }
   const ctx = { set, written, ids: idSet, asserts };
   for (const t of best.tensions) t.hints = hintsFor(t, best, ctx);
-  return { written, asserts, clamped, settings: set, candidate: best.k, params: best.p, w: best.w, tensions: best.tensions, cost: best.cost };
+  return { mode, written, asserts, clamped, settings: set, candidate: best.k, params: best.p, w: best.w, tensions: best.tensions, cost: best.cost };
 }
 
 // ---- pistes chiffrées : « écris plutôt insolation: 1,4 » ------------------------------------------------

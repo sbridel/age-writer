@@ -149,6 +149,44 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
   ok(!!host.querySelector(".age-ext__plate svg"), "plaque de chiffres affichée");
   ok(!!host.querySelector(".age-ext__mech"), "mécanisme écrit affiché");
   ok(!!host.querySelector(".age-ext__sound"), "bouton son présent");
+  ok(!!host.querySelector(".age-det--stab .age-det__bar") && !!host.querySelector(".age-det--phys .age-det__sheet dd"), "Détails : stabilité par axe et fiche physique");
+
+  // couche physique (1.16) : facile n'altère rien, strict coûte, lignes de valeurs ignorées par le moteur, pistes écrites dans le bloc
+  {
+    const lava = "lava\nash\nmass: 0.2\nage: 9";
+    const was = p.ext.physics; p.ext.physics = "off"; const off = p.core.analyse(lava, { seed: "Braise" });
+    p.ext.physics = "easy"; const easy = p.core.analyse(lava, { seed: "Braise" });
+    ok(!off.resolved.lines.some((l) => l.unknown), "mass: / age: ne sont pas des symboles inconnus");
+    ok(easy.stability === off.stability && JSON.stringify(easy.axisStability) === JSON.stringify(off.axisStability) && easy.physics && !off.physics, "mode facile : stabilité inchangée, fiche jointe");
+    ok(easy.physics.tensions.some((t) => t.id === "volcanism"), "mode facile : la tension est expliquée");
+    p.ext.physics = "strict"; p.ext.physicsSeverity = 1; const strict = p.core.analyse(lava, { seed: "Braise" });
+    ok(strict.axisStability.geological === off.axisStability.geological - 20, "mode strict : −20 sur l'axe géologique");
+    p.ext.physicsSeverity = 2; ok(p.core.analyse(lava, { seed: "Braise" }).axisStability.geological === off.axisStability.geological - 40, "sévérité 2 : −40");
+    p.ext.physicsSeverity = 1; p.ext.physics = was;
+    { // 300 Âges au hasard : en facile, rien ne bouge par rapport à « désactivée » (seule la fiche s'ajoute)
+      const SY = ["single_sun", "twin_suns", "starless", "water", "lava", "rain", "fern", "great_tree", "grazer", "desert_world", "frozen_world", "auroras", "tablet", "sand", "wind", "deep_cold", "asteroid_field", "gold"];
+      let x = 9, diff = 0; const r = () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296);
+      for (let i = 0; i < 300; i++) {
+        const src = Array.from({ length: 1 + Math.floor(r() * 6) }, () => SY[Math.floor(r() * SY.length)]).join("\n");
+        p.ext.physics = "off"; const a = p.core.analyse(src, { seed: "R" + i }); p.ext.physics = "easy"; const b = p.core.analyse(src, { seed: "R" + i });
+        const { physics, ...rest } = b; if (!physics || JSON.stringify(rest) !== JSON.stringify(a)) diff++;
+      }
+      ok(diff === 0, `mode facile : 300 Âges identiques au mode désactivé (${diff} différence(s))`);
+    }
+    p.ext.physics = was;
+    files.set("Ages/Braise.md", new TFile("Ages/Braise.md", "# Braise\n```age\n" + lava + "\n```\nfin\n"));
+    const prevProc = app.vault.process; app.vault.process = async (f, fn) => { f.content = fn(f.content); return f.content; };
+    await p.writePhysicsLine("Ages/Braise.md", lava, "age", 3.5);
+    ok(/```age\nlava\nash\nmass: 0.2\nage: 3.5\n```\nfin/.test(files.get("Ages/Braise.md").content), "piste cliquée : la ligne age: est remplacée dans le bloc");
+    await p.writePhysicsLine("Ages/Braise.md", "autre bloc", "age", 1);
+    ok(notices.some((n) => /changé|changed/.test(n)), "bloc introuvable : rien d'écrit, une notice le dit");
+    if (process.env.DUMP) for (const [mode, sv] of [["easy", "lava\nash\nwater\nfern\nmass: 0.2\nage: 9"], ["strict", "blue_sun\ngreat_tree\ngrazer\nauroras\nwater"]]) {
+      p.ext.physics = mode; const h2 = document.createElement("div"); h2.innerHTML = '<div class="age-panel"></div>'; document.body.appendChild(h2);
+      p.renderAgePanel(sv, h2, "Ages/Braise.md"); const pn = h2.querySelector(".age-panel"); if (pn) pn.dataset.tab = "details";
+      fs.writeFileSync(process.env.DUMP + "-details-" + mode + ".html", h2.outerHTML); p.ext.physics = was;
+    }
+    app.vault.process = prevProc;
+  }
 
   // fenêtre génératrice : `window_style: generative` ajoute un canvas de paysage (un de plus que le rendu classique), jamais d'erreur
   {

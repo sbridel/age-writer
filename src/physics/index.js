@@ -13,7 +13,8 @@
  * Voir docs/DESIGN-physique.md.
  */
 const { solve, parsePhysics, PHYS_RE, SEV_COST } = require("./solve");
-const { sheet, fmt } = require("./text");
+const { sheet, fmt, plain } = require("./text");
+const { setLineInAgeBlock, asLine } = require("./edit");
 const { verdictOf } = require("../engine/analysis");
 /** Plafond du coût physique par axe : la physique éclaire, elle n'écrase pas un monde à elle seule. */
 const AXIS_CAP = 0.45;
@@ -28,8 +29,8 @@ function idsOfAnalysis(analysis) {
   return ids;
 }
 
-function physicsOf(analysis, src, seed) {
-  return solve({ ids: idsOfAnalysis(analysis), src, seed });
+function physicsOf(analysis, src, seed, mode = "easy") {
+  return solve({ ids: idsOfAnalysis(analysis), src, seed, mode });
 }
 
 /**
@@ -41,14 +42,19 @@ function alreadyCounted(analysis, t) {
   return t.ids.length > 0 && t.ids.every((id) => trig.some((c) => (c.a === id || c.b === id) && (c.axis || "cosmological") === t.axis));
 }
 
-function applyPhysics(analysis, phys, mode = "easy") {
+/**
+ * `severity` (réglage « sévérité de la physique », 0,5 à 2) multiplie le barème et le plafond :
+ * 1 = 10 / 20 / 35 points par tension légère / moyenne / forte, au plus 45 points par axe.
+ */
+function applyPhysics(analysis, phys, mode = "easy", { severity = 1 } = {}) {
   if (!analysis || !phys || mode === "off") return analysis;
   if (mode !== "strict") return { ...analysis, physics: phys };
-  const cost = {};
+  const cost = {}, k = Math.max(0, severity), cap = AXIS_CAP * k;
   const counted = phys.tensions.map((t) => {
     const skip = alreadyCounted(analysis, t);
-    if (!skip) cost[t.axis] = Math.min(AXIS_CAP, (cost[t.axis] || 0) + SEV_COST[t.severity]);
-    return { ...t, counted: !skip };
+    const c = SEV_COST[t.severity] * k;
+    if (!skip) cost[t.axis] = Math.min(cap, (cost[t.axis] || 0) + c);
+    return { ...t, counted: !skip, points: skip ? 0 : Math.round(c * 100) };
   });
   const axisStability = { ...analysis.axisStability };
   for (const [axis, c] of Object.entries(cost)) axisStability[axis] = Math.max(0, (axisStability[axis] != null ? axisStability[axis] : 100) - Math.round(c * 100));
@@ -57,4 +63,4 @@ function applyPhysics(analysis, phys, mode = "easy") {
   return { ...analysis, axisStability, stability, verdict, physics: { ...phys, tensions: counted, axisCost: cost } };
 }
 
-module.exports = { PHYS_RE, AXIS_CAP, idsOfAnalysis, physicsOf, applyPhysics, solve, parsePhysics, sheet, fmt };
+module.exports = { PHYS_RE, AXIS_CAP, idsOfAnalysis, physicsOf, applyPhysics, solve, parsePhysics, sheet, fmt, plain, setLineInAgeBlock, asLine };

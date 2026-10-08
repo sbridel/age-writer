@@ -87,4 +87,7 @@ const SOIL = ["sand", "silt", "stone", "ash", "salt"];
 /** Bâtisseurs : leurs traces disent que quelqu'un a pu apporter ce que la nature n'aurait pas fait. */
 const BUILDERS = ["tablet", "lamp", "bridge", "door", "book", "worn_tablet", "lit_lamp", "sealed_door", "blurred_book", "fallen_bridge", "speaking_tablet"];
 
-module.exports = { BLOCKS: B, HUE_MASS, FLORA, PREY, SOIL, BUILDERS, PHOTO };
+/** Mondes-types : en mode facile ils orientent le tirage, en strict ils sont seulement vérifiés. */
+const WORLDS = ["frozen_world", "lava_world", "desert_world", "ocean_world", "jungle_world"];
+
+module.exports = { WORLDS, BLOCKS: B, HUE_MASS, FLORA, PREY, SOIL, BUILDERS, PHOTO };
