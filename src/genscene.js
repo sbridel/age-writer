@@ -32,7 +32,7 @@ function sceneOf(a, name = "", blocks = null) {
   const ruins = [];
   if (r("door", "sealed_door")) ruins.push("door"); if (r("bridge", "fallen_bridge")) ruins.push("bridge");
   if (r("tablet", "worn_tablet", "speaking_tablet")) ruins.push("tablet"); if (r("lamp", "lit_lamp")) ruins.push("lamp");
-  return {
+  const S = {
     seed: fnv(name + "|" + [...ids].sort().join(",")), verdict: a.verdict, unrest: clamp(1 - (a.stability == null ? 100 : a.stability) / 100),
     suns: r("twin_suns") ? 2 : r("single_sun") ? 1 : 0, skyStated: r("twin_suns", "single_sun", "starless"), moon: r("companion_moon"),
     cycle: r("frozen_cycle") ? "frozen" : r("erratic_cycle") ? "erratic" : "steady", chaos: r("chaotic_orbit"), veil: r("permanent_veil"),
@@ -53,6 +53,23 @@ function sceneOf(a, name = "", blocks = null) {
     }),
     fissure: r("no_fissure") ? null : r("cave_fissure") ? "cave" : r("submarine_fissure", "fissure") ? (r("water") ? "submarine" : "open") : null,
   };
+  S.shore = shoreOf(S, r, wd);
+  return S;
+}
+
+/**
+ * Rivage : de l'eau ET de la terre dans le même Âge (hors monde-océan, monde gelé, désert, monde de lave, qui imposent
+ * leur décor) → la bande du bas est partagée entre l'eau et une rive. La nature de la rive vient de ce qui est écrit :
+ * lave (côte noire qui fume), sable (plage), glace (banquise), pierre ou ruines (rochers), plantes (berge herbeuse).
+ */
+function shoreOf(S, r, wd) {
+  if (!S.water || wd === "ocean" || wd === "frozen" || wd === "desert" || wd === "lava") return null;
+  if (S.lava) return "lava";
+  if (S.sand) return "sand";
+  if (S.ice) return "ice";
+  if (r("stone", "iron", "crystal", "obsidian", "salt", "rifts", "geysers", "glass", "strange_stone", "copper", "gold", "silver", "gems") || S.ruins.length) return "rock";
+  if (S.trees || S.glow || r("moss", "fern", "grove", "vine", "sapling", "seed", "spore", "lichen", "pale_fungus", "grazer", "burrower")) return "grass";
+  return null;
 }
 
 // ---- outils ----------------------------------------------------------------------------------------
@@ -137,7 +154,38 @@ function build(S, W, H) {
   const det = { kind: ["pylon", "ring", "stair", "dish", "piers"][Math.floor(r() * 5)], x: dx, s: 0.8 + r() * 0.5, p: r() * TAU, hue: r() < 0.5 ? 34 : 190 + r() * 60, n: 4 + Math.floor(r() * 4) };
   const q3 = rng((S.seed ^ 0x601d) >>> 0), rich = (S.riches || []).map((id) => { const n = Math.round(clamp(14 * AM.factorOf(id, S.amt), 4, 60)); return { id, col: WT.RICH_COLOR[id] || [255, 215, 120], big: id === "gems" || id === "pearls", pts: Array.from({ length: n }, () => ({ x: q3(), u: q3(), p: q3(), s: 1 + q3() * 1.3 })) }; });
   const scar = { cracks: Array.from({ length: 12 }, () => ({ x: q3(), u: q3(), pts: Array.from({ length: 5 }, () => q3() - 0.5) })), pits: Array.from({ length: 5 }, () => ({ x: q3(), u: 0.15 + 0.8 * q3(), w: 0.6 + q3() * 0.8 })), embers: Array.from({ length: 22 }, () => ({ x: q3(), u: q3(), p: q3() })) };
-  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava };
+  const shore = S.shore ? buildShore(S, W, H, hz) : null;
+  if (shore && shore.mode === "side" && S.fissure === "submarine") { const wx = lerp(shore.x0, shore.x1, 0.5); fis.x = shore.side < 0 ? lerp(wx, W, 0.45) : lerp(0, wx, 0.55); } // la fissure sous l'eau reste dans l'eau
+  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore };
+}
+
+/**
+ * Géométrie du rivage (graine propre : rien d'autre ne change dans l'image). Trois cadrages :
+ *   side : la rive occupe un côté, la ligne d'eau descend de l'horizon vers le bas de l'image ;
+ *   far  : l'autre rive, au loin, juste sous l'horizon ; l'eau devant ;
+ *   near : on est sur la rive, l'eau s'étend jusqu'à l'horizon.
+ * line : points de la ligne d'eau ; land / wet : polygones de la terre et de l'eau.
+ */
+function buildShore(S, W, H, hz) {
+  const q = rng((S.seed ^ 0x5407e) >>> 0), n = valueNoise((q() * 4294967296) >>> 0), D = H - hz, N = 48;
+  const pick = q(), mode = pick < 0.55 ? "side" : pick < 0.8 ? "far" : "near", freq = 1.6 + q() * 2.6, wob = 0.6 + q() * 0.8;
+  const out = { kind: S.shore, mode, line: [], land: [], wet: [], side: q() < 0.5 ? -1 : 1, x0: W * (0.28 + 0.44 * q()), x1: W * (0.08 + 0.84 * q()), f0: 0 };
+  if (mode === "side") {
+    for (let k = 0; k <= N; k++) { const u = k / N, w = (fbm(n, u * freq) - 0.5) * W * 0.3 * wob * (0.12 + u); out.line.push([lerp(out.x0, out.x1, Math.pow(u, 0.85)) + w, hz + D * u]); }
+    const e = out.side < 0 ? -2 : W + 2, f = out.side < 0 ? W + 2 : -2;
+    out.land = [[e, hz], ...out.line, [e, H + 2]]; out.wet = [[f, hz], ...out.line, [f, H + 2]];
+  } else {
+    out.f0 = mode === "far" ? 0.1 + 0.16 * q() : 0.38 + 0.26 * q();
+    for (let k = 0; k <= N; k++) { const u = k / N, v = out.f0 + (fbm(n, u * freq * 1.5) - 0.5) * 0.16 * wob; out.line.push([-2 + (W + 4) * u, hz + D * clamp(v, 0.04, 0.9)]); }
+    const top = [[W + 2, hz], [-2, hz]], bottom = [[W + 2, H + 2], [-2, H + 2]];
+    if (mode === "far") { out.land = [...out.line, ...top]; out.wet = [...out.line, ...bottom]; } else { out.land = [...out.line, ...bottom]; out.wet = [...out.line, ...top]; }
+  }
+  // détails tirés une fois : rochers et galets sur la ligne, touffes sur la terre, glaçons, bouffées de vapeur
+  out.rocks = Array.from({ length: 9 }, () => ({ k: Math.floor(q() * (N + 1)), s: 0.6 + q() * 0.9, pts: Array.from({ length: 6 }, () => 0.7 + q() * 0.5), dx: (q() - 0.5) * 2 }));
+  out.tufts = Array.from({ length: 70 }, () => ({ x: q() * W, u: q(), h: 2 + q() * 4, p: q() * TAU }));
+  out.floes = Array.from({ length: 8 }, () => ({ k: Math.floor(q() * (N + 1)), d: 4 + q() * 18, w: 3 + q() * 9, p: q() }));
+  out.puffs = Array.from({ length: 7 }, () => ({ k: Math.floor(q() * (N + 1)), p: q() }));
+  return out;
 }
 
 // ---- soleils ---------------------------------------------------------------------------------------
@@ -228,22 +276,18 @@ function paint(g, m, t, o = {}) {
   }
   // sol
   g.fillStyle = css(pal.ground); g.fillRect(0, hz, W, H - hz);
-  if (S.sand) { for (let p = 0; p < 3; p++) { g.fillStyle = css(mixc(pal.ground, [120, 90, 55], 0.25 + 0.15 * p)); g.beginPath(); g.moveTo(0, H); for (let x = 0; x <= W; x += 8) g.lineTo(x, hz + H * (0.07 + 0.06 * p) + H * 0.025 * Math.sin(x / W * TAU * (1 + p) + p * 2)); g.lineTo(W, H); g.closePath(); g.fill(); } }
-  if (S.ice) iceSheet(g, m, t, sn, day, night, hzc);
-  else if (S.water) {
-    const wg = g.createLinearGradient(0, hz, 0, H); wg.addColorStop(0, css(mixc(hzc, [20, 60, 70], 0.7))); wg.addColorStop(1, "#0b181c"); g.fillStyle = wg; g.fillRect(0, hz, W, H - hz);
-    for (const l of m.water.lines) { const x = frac(l.p + t) * (W + l.w) - l.w; g.fillStyle = "rgba(200,225,235,0.22)"; g.fillRect(x, l.y, l.w, 1.2); }
-    const s = sn.find((q) => q.e > 0.15); if (s) for (let b = 0; b < 6; b++) { g.fillStyle = css([255, 220, 160], (0.28 - b * 0.03) * Math.min(1, s.e * 2)); g.fillRect(s.x - (14 - b * 2) / 2 + 3 * Math.sin(TAU * (t * 2 + b * 0.2)), hz + H * (0.05 + 0.045 * b), 14 - b * 2, 1.5); }
-  }
-  if (S.lava) {
-    for (const v of m.lava.veins) { const y = hz + H * 0.08 + v.w * H * 0.14; g.strokeStyle = css([255, 122, 48], 0.55 + 0.4 * Math.sin(TAU * (t * 2 + v.w))); g.lineWidth = 1.6; g.beginPath(); g.moveTo(v.x, y); v.pts.forEach((q, k) => g.lineTo(((k + 1) / 6) * W * 0.9, y + q * H * 0.05)); g.stroke(); }
-    for (const sp of m.lava.sparks) { const q = frac(t * 3 + sp.p); g.fillStyle = css([255, 150, 70], 1 - q); g.fillRect(sp.x + 6 * Math.sin(TAU * (q + sp.p)), hz + H * 0.1 - q * H * 0.45, 1.5, 1.5); }
+  if (m.shore) { waterSurface(g, m, t, sn, hzc); shoreLand(g, m, t, sn, day, night, hzc); } // eau et terre : un rivage
+  else {
+    if (S.sand) dunes(g, m);
+    if (S.ice) iceSheet(g, m, t, sn, day, night, hzc);
+    else if (S.water) waterSurface(g, m, t, sn, hzc);
+    if (S.lava) lavaVeins(g, m, t);
   }
   scarGround(g, m, t, night);
   richGlints(g, m, t, night);
   extraAt(g, m, t, "ground");
   // fissure
-  if (S.fissure) fissure(g, m, t);
+  if (S.fissure) { const wet = m.shore && S.fissure === "submarine"; if (wet) { g.save(); shorePath(g, m.shore.wet); g.clip(); } fissure(g, m, t); if (wet) g.restore(); }
   // arbres
   if (S.trees) trees(g, m, t);
   // ruines
@@ -251,7 +295,8 @@ function paint(g, m, t, o = {}) {
   detail(g, m, t, night);
   if (S.glow || S.moths) for (let p = 0, np = Math.round(clamp(12 * (S.amt ? (S.moths ? (S.amt.moths != null ? S.amt.moths : 1) : (S.amt.glow != null ? S.amt.glow : 1)) : 1), 3, 40)); p < np; p++) { const q = rng(S.seed + p * 13), x = q() * W, y = hz - q() * H * 0.12, a = 0.35 + 0.5 * Math.sin(TAU * (t * (S.moths ? 2 : 1) + q())); g.fillStyle = css(S.glow ? [140, 255, 190] : [255, 230, 160], Math.max(0, a) * 0.8); g.beginPath(); g.arc(x + (S.moths ? 5 * Math.sin(TAU * (t * 2 + q())) : 0), y + (S.moths ? 3 * Math.cos(TAU * (t * 3 + q())) : 0), 1.4, 0, TAU); g.fill(); }
   for (const e of m.eyes) { const o = Math.sin(TAU * (t * 1 + e.p)); if (o > -0.7) { g.fillStyle = css([255, 200, 90], 0.8); g.fillRect(e.x - 3, e.y, 1.6, 1.6); g.fillRect(e.x + 2, e.y, 1.6, 1.6); } }
-  if (S.ice) reflect(g, m, t, 0.34); else if (S.water) reflect(g, m, t, 0.5);
+  if (m.shore) { g.save(); shorePath(g, m.shore.wet); g.clip(); reflect(g, m, t, 0.5); g.restore(); shoreEdge(g, m, t, night); } // le reflet ne couvre que l'eau ; l'écume par-dessus
+  else if (S.ice) reflect(g, m, t, 0.34); else if (S.water) reflect(g, m, t, 0.5);
   extraAt(g, m, t, "air");
   scarAir(g, m, t);
   weather(g, m, t);
@@ -263,6 +308,65 @@ function paint(g, m, t, o = {}) {
     const s0b = sn.find((x) => x.i === 0); if (s0b && s0b.y + s0b.r < hz) { g.strokeStyle = "rgba(150,52,40,0.75)"; g.lineWidth = Math.max(1.2, s0b.r * 0.22); g.beginPath(); g.arc(s0b.x, s0b.y, s0b.r * 1.08, 0, TAU); g.stroke(); }
   }
   g.restore();
+}
+
+/** Dunes de sable (sol entier, ou rive de sable). */
+function dunes(g, m) {
+  const { W, H, hz, pal } = m;
+  for (let p = 0; p < 3; p++) { g.fillStyle = css(mixc(pal.ground, [120, 90, 55], 0.25 + 0.15 * p)); g.beginPath(); g.moveTo(0, H); for (let x = 0; x <= W; x += 8) g.lineTo(x, hz + H * (0.07 + 0.06 * p) + H * 0.025 * Math.sin(x / W * TAU * (1 + p) + p * 2)); g.lineTo(W, H); g.closePath(); g.fill(); }
+}
+/** Surface de l'eau : dégradé, rides qui glissent, reflet du soleil. */
+function waterSurface(g, m, t, sn, hzc) {
+  const { W, H, hz } = m;
+  const wg = g.createLinearGradient(0, hz, 0, H); wg.addColorStop(0, css(mixc(hzc, [20, 60, 70], 0.7))); wg.addColorStop(1, "#0b181c"); g.fillStyle = wg; g.fillRect(0, hz, W, H - hz);
+  for (const l of m.water.lines) { const x = frac(l.p + t) * (W + l.w) - l.w; g.fillStyle = "rgba(200,225,235,0.22)"; g.fillRect(x, l.y, l.w, 1.2); }
+  const s = sn.find((q) => q.e > 0.15); if (s) for (let b = 0; b < 6; b++) { g.fillStyle = css([255, 220, 160], (0.28 - b * 0.03) * Math.min(1, s.e * 2)); g.fillRect(s.x - (14 - b * 2) / 2 + 3 * Math.sin(TAU * (t * 2 + b * 0.2)), hz + H * (0.05 + 0.045 * b), 14 - b * 2, 1.5); }
+}
+/** Veines de lave et étincelles. */
+function lavaVeins(g, m, t) {
+  const { W, H, hz } = m;
+  for (const v of m.lava.veins) { const y = hz + H * 0.08 + v.w * H * 0.14; g.strokeStyle = css([255, 122, 48], 0.55 + 0.4 * Math.sin(TAU * (t * 2 + v.w))); g.lineWidth = 1.6; g.beginPath(); g.moveTo(v.x, y); v.pts.forEach((q, k) => g.lineTo(((k + 1) / 6) * W * 0.9, y + q * H * 0.05)); g.stroke(); }
+  for (const sp of m.lava.sparks) { const q = frac(t * 3 + sp.p); g.fillStyle = css([255, 150, 70], 1 - q); g.fillRect(sp.x + 6 * Math.sin(TAU * (q + sp.p)), hz + H * 0.1 - q * H * 0.45, 1.5, 1.5); }
+}
+
+// ---- rivage ------------------------------------------------------------------------------------------------
+function shorePath(g, pts) { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); }
+const SHORE_COL = { sand: [158, 126, 82], rock: [84, 80, 82], grass: [66, 98, 52], lava: [24, 16, 14] };
+/** La rive : sa matière (sable, rochers, herbe, roche volcanique, banquise), plus claire au loin, plus sombre la nuit. */
+function shoreLand(g, m, t, sn, day, night, hzc) {
+  const { W, H, hz, shore: sh, pal } = m, dk = [6, 7, 12];
+  g.save(); shorePath(g, sh.land); g.clip();
+  if (sh.kind === "ice") iceSheet(g, m, t, sn, day, night, hzc);
+  else {
+    const base = SHORE_COL[sh.kind], near = mixc(base, dk, 0.35 + 0.5 * night), far = mixc(mixc(base, hzc, 0.35), dk, 0.25 + 0.5 * night);
+    const lg = g.createLinearGradient(0, hz, 0, H); lg.addColorStop(0, css(far)); lg.addColorStop(1, css(near)); g.fillStyle = lg; g.fillRect(0, hz, W, H - hz);
+    if (sh.kind === "sand") { g.globalAlpha = 0.55; dunes(g, m); g.globalAlpha = 1; }
+    if (sh.kind === "grass") for (const f of sh.tufts) { const y = hz + (H - hz) * f.u * f.u, k = 0.4 + f.u, sw = Math.sin(TAU * t + f.p) * 0.8; g.strokeStyle = css(mixc([90, 130, 70], dk, 0.3 + 0.5 * night), 0.7); g.lineWidth = 0.8; g.beginPath(); g.moveTo(f.x, y); g.lineTo(f.x + sw, y - f.h * k); g.moveTo(f.x + 1.5, y); g.lineTo(f.x + 2 + sw, y - f.h * k * 0.8); g.stroke(); }
+    if (sh.kind === "rock") for (const f of sh.tufts.slice(0, 26)) { const y = hz + (H - hz) * f.u, k = 0.3 + f.u; g.strokeStyle = css(mixc(pal.rock, [0, 0, 0], 0.4), 0.5); g.lineWidth = 0.8; g.beginPath(); g.moveTo(f.x, y); g.lineTo(f.x + f.h * 2 * k, y + f.h * 0.5 * k); g.stroke(); } // fentes de la pierre
+    if (sh.kind === "lava") lavaVeins(g, m, t);
+  }
+  g.restore();
+}
+/** La ligne d'eau : écume qui va et vient, sable mouillé, rochers, roseaux, glaçons, vapeur de la lave qui touche l'eau. */
+function shoreEdge(g, m, t, night) {
+  const { H, hz, shore: sh } = m, lit = 1 - 0.6 * night, L = sh.line, depth = (y) => (y - hz) / (H - hz);
+  const along = (fn) => { g.beginPath(); L.forEach(([x, y], i) => { const [px, py] = fn(x, y); i ? g.lineTo(px, py) : g.moveTo(px, py); }); };
+  const wave = Math.sin(TAU * t), toward = sh.mode === "side" ? [-sh.side, 0] : [0, sh.mode === "far" ? 1 : -1]; // direction de l'eau, depuis la rive
+  if (sh.kind === "lava") { // la lave rencontre l'eau : bord rougeoyant, vapeur
+    along((x, y) => [x, y]); g.strokeStyle = css([255, 110, 40], (0.45 + 0.3 * Math.sin(TAU * t * 3)) * (0.6 + 0.4 * night)); g.lineWidth = 2.2; g.stroke();
+    for (const p of sh.puffs) { const [x, y] = L[p.k], q = frac(t * 1.5 + p.p), r = 2 + q * 9 * (0.4 + depth(y)); g.fillStyle = css([225, 225, 228], 0.32 * (1 - q) * lit); g.beginPath(); g.arc(x + 3 * Math.sin(TAU * (q + p.p)), y - q * H * 0.18, r, 0, TAU); g.fill(); }
+    return;
+  }
+  if (sh.kind !== "ice") { along((x, y) => { const k = 0.4 + depth(y); return [x - toward[0] * 2.2 * k, y - toward[1] * 1.4 * k]; }); g.strokeStyle = "rgba(0,0,0,0.3)"; g.lineWidth = 2.4; g.stroke(); } // la berge : une ombre du côté de la terre
+  if (sh.kind === "sand") { along((x, y) => [x + toward[0] * -3 * (0.3 + depth(y)), y + toward[1] * -3 * (0.3 + depth(y))]); g.strokeStyle = css([110, 92, 66], 0.55 * lit); g.lineWidth = 4; g.stroke(); } // sable mouillé
+  if (sh.kind === "ice") for (const f of sh.floes) { const [x, y] = L[f.k], k = 0.3 + depth(y), dx = toward[0] * f.d * k + Math.sin(TAU * (t + f.p)) * 1.2, dy = toward[1] * f.d * k * 0.5; g.fillStyle = css([226, 240, 252], 0.75 * lit); g.beginPath(); g.ellipse(x + dx, y + dy, f.w * k, f.w * k * 0.3, 0, 0, TAU); g.fill(); }
+  // écume : deux lignes qui avancent et reculent
+  for (const [off, a] of [[2.5, 0.5], [6, 0.25]]) {
+    const o = off + 2.5 * wave; along((x, y) => { const k = 0.3 + depth(y); return [x + toward[0] * o * k, y + toward[1] * o * k * 0.6]; });
+    g.strokeStyle = css([235, 245, 250], a * lit * (0.7 + 0.3 * wave)); g.lineWidth = 1.1; g.stroke();
+  }
+  if (sh.kind === "rock") for (const r of sh.rocks) { const [x, y] = L[r.k], R = (3 + 7 * depth(y)) * r.s; g.fillStyle = css(mixc(m.pal.rock, [40, 40, 46], 0.5)); g.strokeStyle = css([200, 190, 170], 0.25 * lit); g.lineWidth = 0.8; g.beginPath(); r.pts.forEach((k, i) => { const a = Math.PI + (i / 5) * Math.PI; i ? g.lineTo(x + r.dx * R + Math.cos(a) * R * k, y + Math.sin(a) * R * k * 0.8) : g.moveTo(x + r.dx * R + Math.cos(a) * R * k, y + Math.sin(a) * R * k * 0.8); }); g.closePath(); g.fill(); g.stroke(); }
+  if (sh.kind === "grass") for (const r of sh.rocks) { const [x, y] = L[r.k], h = (4 + 9 * depth(y)) * r.s, sw = Math.sin(TAU * t + r.dx) * 1.2; g.strokeStyle = css([70, 96, 56], 0.85 * lit); g.lineWidth = 1; g.beginPath(); for (let i = -1; i <= 1; i++) { g.moveTo(x + i * 2, y); g.lineTo(x + i * 3 + sw, y - h); } g.stroke(); } // roseaux
 }
 
 /** Richesses : éclats de métal et de pierre sur le sol, qui scintillent à tour de rôle. */

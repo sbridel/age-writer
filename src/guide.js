@@ -226,7 +226,7 @@ const REF_FR = [
   { id: "cmd", icon: "terminal", title: "Commandes et propriétés", body: [
     { ul: ["Update Age data in this note / in every note : écrit les propriétés calculées", "Generate the Age map (canvas) : carte des Âges liés (bleu = aller-retour, orange = sens unique)", "Save this Age's window as a GIF", "Open this Age as a book", "Create / Reload an Age library · Copy the built-in content into a library note", "Open the Relto · Open the Relto view (large) · Create a Relto page", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide"] },
     { p: "Propriétés écrites dans la note : `age_verdict`, `age_stability`, `age_axes`, `age_return`, `age_links`, `age_discovered`, `age_drawn`, `age_home` (utilisables avec Dataview ou Bases)." },
-    { p: "Limites connues : mobile et thème clair non testés ; la loi du changement range son état par nom de note ; une note à plusieurs blocs `age` tire un monde par bloc ; pas de rivage (monde entièrement sur l'eau ou à sec) ; le contenu du moteur est en anglais ; pas d'export GIF en rendu génératif." },
+    { p: "Limites connues : mobile et thème clair non testés ; la loi du changement range son état par nom de note ; une note à plusieurs blocs `age` tire un monde par bloc ; le contenu du moteur est en anglais ; pas d'export GIF en rendu génératif." },
   ] },
 ];
 

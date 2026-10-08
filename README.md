@@ -10,7 +10,7 @@ The founding idea: in Mystcraft you don't **create** a world, you **link** to a 
 
 **Version 1.16.1.** The engine (derived from 1.3.0) is available as readable sources in `src/engine/`. `manifest.json` announces `1.16.1`. Highlights of the latest releases (full history in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)):
 
-- **1.16.1**: **descriptions rewritten** (no more "Beyond that… Beyond that…": linking words never repeat, the sky reads in order, unreacting things are grouped, adjectives only on first mention) and **reproducible** (same Age, same text, every time it opens). In the Relto, **the cat sleeps by the fire**: in the evening it is curled up on the cabin rug (a click makes it purr); `cat_sleep: auto | always | never`. Fix: a stray shelf plank lay on the cabin floor.
+- **1.16.1**: **shorelines** in the generative window: water and land in the same Age now meet (beach, rocks, grassy bank, steaming lava coast, ice shelf), framed differently for each Age. **Descriptions rewritten** (no more "Beyond that… Beyond that…": linking words never repeat, the sky reads in order, unreacting things are grouped, adjectives only on first mention) and **reproducible** (same Age, same text, every time it opens). In the Relto, **the cat sleeps by the fire**: in the evening it is curled up on the cabin rug (a click makes it purr); `cat_sleep: auto | always | never`. Fix: a stray shelf plank lay on the cabin floor.
 - **1.16.0**: **physics of the Ages**. Under the blocks, every Age gets a simplified physics (star, orbit, planet, internal heat, core, magnetic field, air, temperature, water, light), chosen to hold what you wrote; the reworked **Details** tab shows it with stability bars per axis, a chain of causes, the world's sheet, what does not hold and why, and suggested lines (`age: 3.5`) that one click writes into the block. **Easy** mode (default) never changes stability; **strict** makes what does not hold cost, with a severity slider. New blocks, never drawn: `black_sun` (a brown dwarf: warmth without light, grey day, black plants), `close_orbit`, `distant_orbit`, `young_world`, `ancient_world`, `heavy_world`, `light_world`, `molten_core`, `dead_core`, `geysers`, `rifts`, `thick_air`, `thin_air`, `subsurface_ocean`. Value lines: `mass:`, `age:`, `orbit:`, `insolation:`, `core:`, `atmosphere:`… Existing Ages keep their pages and stability in easy mode.
 - **1.15.3**: world-type clashes about the weather now count (`desert_world` + `rain`, `frozen_world` + `heat`… used to cost nothing because of a misnamed axis), and every sky ↔ matter clash counts, not just one per world type. Drawn pages don't change; only stability does (about 1 Age in 9, often a few points).
 - **1.15.x**: the cabin plays a crackling **fireplace** when the *chimney* page is active (soft rumble, wood crackles; a cold hearth is silent). Optional "fireplace sound file" setting to use a real recording.
@@ -230,7 +230,7 @@ When the book is already open, clicking a window only replays the linking sound.
 
 ## 9. Window, effects, traps
 
-- **Rendering**: `classic` (the engine's painted window) or `generative` (landscape drawn from the seed: sky, relief, vegetation, weather, reflections, foreground, one inhabited detail).
+- **Rendering**: `classic` (the engine's painted window) or `generative` (landscape drawn from the seed: sky, relief, vegetation, weather, reflections, foreground, one inhabited detail). When an Age has **water and land** (sand, stone or ruins, plants, lava, ice), the window shows a **shoreline**: a beach, rocks, a grassy bank with reeds, a black lava coast that steams where it meets the water, or an ice shelf with floes; the shore runs down one side, lies far off under the horizon, or is where you stand. Shape and framing come from the seed. `ocean_world` keeps the open sea, `desert_world` and `lava_world` stay dry, `frozen_world` stays ice.
 - **Effects**: static, ripple, sweep, old TV… depending on instability; `prefers-reduced-motion` is respected.
 - **Damage**: `damaged_pages` (shifted zones, colour separation, frozen, ink stains), `removed_pages` (burnt holes), fractures as instability rises. Drawn from the book's seed.
 - **Trap book**: `trap book`. It looks normal.
@@ -301,7 +301,6 @@ Two levels, in a window with sections (and exportable as notes):
 - Settings use Obsidian's classic components, with hand-made section navigation (not the recent settings API).
 - The law of change stores its state by **note name**.
 - A note with several `age` blocks: each block draws its own world.
-- The world is entirely on water or entirely dry: no shoreline.
 - Generative rendering doesn't apply to GIF export.
 - The engine's content is in English; the full reference is in French only.
 - The vocabulary "Relto", "D'ni" appears in the interface and YAML keys.

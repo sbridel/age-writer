@@ -253,4 +253,24 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   ok(T.VAILEE.length === 10 && new Set(T.VAILEE).size === 10, "dix mois");
 }
 
+// rivage (1.16.1) : eau + terre → une rive, dont la nature suit ce qui est écrit ; les mondes-types gardent leur décor
+{
+  const sh = (ids) => G.sceneOf(an(ids), "Rive").shore;
+  ok(sh(["water", "sand"]) === "sand" && sh(["water", "lava"]) === "lava" && sh(["water", "ice"]) === "ice" && sh(["water", "stone"]) === "rock" && sh(["water", "door"]) === "rock" && sh(["water", "great_tree"]) === "grass", "nature de la rive");
+  ok(sh(["water"]) === null && sh(["sand"]) === null, "eau seule ou terre seule : pas de rivage");
+  ok(sh(["ocean_world", "water", "stone"]) === null && sh(["frozen_world", "water", "stone"]) === null, "monde-océan, monde gelé : pas de rivage");
+  const modes = new Set(), kinds = ["sand", "lava", "ice", "stone", "great_tree"];
+  for (let i = 0; i < 90; i++) {
+    const S = G.sceneOf(an(["single_sun", "water", kinds[i % 5], i % 7 === 0 ? "fissure" : "fog"]), "Rive" + i), m = G.build(S, 320, 192);
+    ok(m.shore && m.shore.line.length > 10 && m.shore.land.length > 3 && m.shore.wet.length > 3, "rive : ligne et polygones");
+    ok(m.shore.line.every(([x, y]) => Number.isFinite(x) && y >= m.hz - 0.01 && y <= 192.01), "ligne d'eau sous l'horizon");
+    modes.add(m.shore.mode);
+    const m2 = G.build(S, 320, 192); ok(JSON.stringify(m2.shore) === JSON.stringify(m.shore), "rivage déterministe");
+    for (const t of [0, 0.4, 0.9]) { const log = []; G.paint(fakeCtx(log), m, t, { day: (i % 10) / 10 }); ok(log.some((l) => l.startsWith("clip")), "eau et terre découpées"); }
+  }
+  ok(modes.size === 3, "trois cadrages : côté, rive lointaine, rive proche");
+  const S0 = G.sceneOf(an(["single_sun", "water", "sand"]), "Rive1"), S1 = { ...S0, shore: null };
+  ok(JSON.stringify({ ...G.build(S0, 320, 192), shore: null, S: null }) === JSON.stringify({ ...G.build(S1, 320, 192), shore: null, S: null }), "le rivage ne change rien d'autre dans l'image (graine propre)");
+}
+
 console.log(`gen.test.js : ${n} vérifications OK`);
