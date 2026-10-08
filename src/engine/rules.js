@@ -144,7 +144,13 @@ function conditionHolds(condition, skyIds) {
     });
 }
 
-function findContradictions(skyIds, matterIds) {
+/**
+ * Contradictions présentes. Chaque règle ciel ↔ matière compte (depuis la 1.15.3). Avant, une seule règle
+ * par phrase de description était gardée : un désert avec pluie ET brouillard ne payait que la pluie.
+ * `onePerNote` rend l'ancien comportement : le tirage des pages l'utilise, pour que les mondes déjà tirés
+ * gardent exactement les mêmes pages (seule leur stabilité change).
+ */
+function findContradictions(skyIds, matterIds, { onePerNote = false } = {}) {
   let found = [],
     seenPairs = new Set();
   for (let skyId of skyIds) {
@@ -165,7 +171,7 @@ function findContradictions(skyIds, matterIds) {
   let seenNotes = new Set();
   for (let rule of SKY_LIFE_RULES)
     if (skyIds.has(rule.sky) && matterIds.has(rule.with)) {
-      if (seenNotes.has(rule.note)) continue;
+      if (onePerNote && seenNotes.has(rule.note)) continue;
       (seenNotes.add(rule.note),
         found.push({ a: rule.sky, b: rule.with, severity: rule.severity, axis: rule.axis, note: rule.note }));
     }

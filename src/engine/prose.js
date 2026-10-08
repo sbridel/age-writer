@@ -193,7 +193,8 @@ function describeAge(resolved) {
       sentences
         .map((sentence, index) => (index === 0 ? capitalize(sentence) : grammar.flatten("#link#") + sentence))
         .join(". ") + ".",
-    contradictionSentences = [...resolved.triggered]
+    contradictionSentences = resolved.triggered
+      .filter((c, i, all) => !c.note || all.findIndex((o) => o.note === c.note) === i) // une phrase par note, même si plusieurs règles la partagent
       .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity))
       .map((contradiction) =>
         contradiction.note

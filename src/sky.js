@@ -51,11 +51,11 @@ const LIFE = ["great_tree", "grove", "ironwood", "sapling", "fern", "vine", "mos
 const rule = (sky, withId, severity, axis, note) => ({ sky, with: withId, severity, axis, note });
 /** Ce que chaque monde-type ne supporte pas : [id, gravité, axe]. */
 const WORLD_CLASH = {
-  frozen_world: [["lava", "strong", "geological"], ["heat", "medium", "meteorological"], ["wildfire", "medium", "ecological"], ["steam", "light", "meteorological"], ["sand", "light", "geological"], ["dust_storm", "light", "meteorological"]],
-  lava_world: [["ice", "strong", "geological"], ["deep_cold", "strong", "meteorological"], ["black_ice", "medium", "geological"], ["hail", "medium", "meteorological"], ["rime", "medium", "meteorological"], ["meltwater", "light", "geological"], ["water", "light", "geological"]],
-  desert_world: [["water", "medium", "geological"], ["ice", "medium", "geological"], ["deep_cold", "light", "meteorological"], ["rain", "medium", "meteorological"], ["marsh_mist", "medium", "meteorological"], ["fog", "light", "meteorological"]],
-  ocean_world: [["sand", "medium", "geological"], ["lava", "medium", "geological"], ["dust_storm", "medium", "meteorological"], ["wildfire", "medium", "ecological"], ["glass", "light", "geological"]],
-  jungle_world: [["sand", "medium", "geological"], ["ice", "medium", "geological"], ["deep_cold", "medium", "meteorological"], ["lava", "medium", "geological"], ["dust_storm", "medium", "meteorological"], ["wildfire", "strong", "ecological"], ["ash_cloud", "light", "meteorological"]],
+  frozen_world: [["lava", "strong", "geological"], ["heat", "medium", "weather"], ["wildfire", "medium", "ecological"], ["steam", "light", "weather"], ["sand", "light", "geological"], ["dust_storm", "light", "weather"]],
+  lava_world: [["ice", "strong", "geological"], ["deep_cold", "strong", "weather"], ["black_ice", "medium", "geological"], ["hail", "medium", "weather"], ["rime", "medium", "weather"], ["meltwater", "light", "geological"], ["water", "light", "geological"]],
+  desert_world: [["water", "medium", "geological"], ["ice", "medium", "geological"], ["deep_cold", "light", "weather"], ["rain", "medium", "weather"], ["marsh_mist", "medium", "weather"], ["fog", "light", "weather"]],
+  ocean_world: [["sand", "medium", "geological"], ["lava", "medium", "geological"], ["dust_storm", "medium", "weather"], ["wildfire", "medium", "ecological"], ["glass", "light", "geological"]],
+  jungle_world: [["sand", "medium", "geological"], ["ice", "medium", "geological"], ["deep_cold", "medium", "weather"], ["lava", "medium", "geological"], ["dust_storm", "medium", "weather"], ["wildfire", "strong", "ecological"], ["ash_cloud", "light", "weather"]],
 };
 /** Vie fragile selon le monde (gravité de la tension avec chaque bloc vivant). */
 const WORLD_LIFE = { frozen_world: "light", lava_world: "medium", desert_world: "light" };
