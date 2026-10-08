@@ -65,7 +65,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 Manuelle, pour l'instant :
 
 1. Récupérer `main.js`, `styles.css`, `manifest.json`.
-2. Les copier dans `<coffre>/.obsidian/plugins/age-writer/`.
+2. Les copier dans le dossier `.obsidian/plugins/age-writer/` de ton coffre.
 3. Dans Obsidian : *Réglages → Plugins communautaires*, recharger, activer **Age Writer**.
 
 Les réglages de l'extension sont dans l'onglet de réglages du plugin, sous le titre « Extensions ». La langue de l'interface suit celle d'Obsidian (anglais ou français). Le contenu du moteur (noms de blocs, descriptions générées) est en anglais.
@@ -99,9 +99,9 @@ Un bloc de code `age`, une page par ligne (un identifiant de bloc), plus des lig
 
 | Ligne | Effet |
 |---|---|
-| `link: [[Note]]` | livre de liaison vers un autre Âge (plusieurs permis) |
-| `return: [[Note]]` | livre de retour |
-| `panel: [[image]]` | image de fenêtre à toi |
+| `link: [[Sunder Reach]]` | livre de liaison vers un autre Âge (plusieurs permis) |
+| `return: [[Hub]]` | livre de retour |
+| `panel: [[lagoon.png]]` | image de fenêtre à toi |
 | `seed: 42` | change le tirage (même note + même graine = même monde) |
 | `cover: sober` | sobriété de la couverture : `ornate`, `classic`, `sober`, `plain`, ou 0 à 1 |
 | `window_style: generative` | rendu de la fenêtre (`generative` ou `classic`) |
@@ -345,9 +345,9 @@ npm install          # une fois (jsdom, eslint, esbuild — développement seule
 npm run build        # src/ → dist/ (lisible) + release/ (minifié)
 npm test             # tous les tests, sur la version lisible puis sur la minifiée
 npm run lint
-npm run equiv -- <ancien main.js>   # non-régression : 600 Âges au hasard, ancien build contre nouveau
+npm run equiv -- legacy/main-1.3.0.min.js # non-régression : 600 Âges au hasard, ancien build contre nouveau
 node test/visual/make.js            # pages de rendu dans test/visual/out/
-npm run zip          # release/age-writer-<v>.zip (plugin) + -src.zip (sources)
+npm run zip          # release/age-writer-1.17.2.zip (plugin) + -src.zip (sources)
 ```
 
 Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine/` (le moteur), puis la couche d'extension : `entry.js` (patchs du livre et des blocs), `ui-extras.js` (panneau et onglets), `ui-relto.js` (Relto, vue dédiée), `relto-render.js` (canvas), `cover.js` (couvertures), `sound.js` (sons), `linkfx.js` et `genscene.js` (fenêtre), `law.js` (loi du changement), `mech.js` (lignes spéciales), `physics/` (physique des Âges : lois, exigences des blocs, tirage sous contraintes, fiche ; conception dans `docs/DESIGN-physique.md`), `geophys.js` (blocs de géophysique), `settings-ui.js` (réglages), `guide.js` (guide), `i18n.js`. Détails : `docs/DEV.md`.
