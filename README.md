@@ -7,6 +7,8 @@ An Obsidian plugin inspired by Mystcraft and the Myst series. You write an **Age
 The founding idea: in Mystcraft you don't **create** a world, you **link** to a world that already exists. What you write describes it; what you leave open is drawn by lot, always the same way for the same note. And if you rewrite a world you've already explored, you damage it.
 
 > Fan project, not affiliated with or endorsed by Cyan Worlds. No Myst asset (font, image, sound) is included.
+>
+> A tribute: the names borrowed from the Myst universe (Age, Relto, D'ni, linking book, Descriptive Book…) are an homage and a source of inspiration, not a reproduction. The code, the pictures, the sounds and the texts are original. Licence: MIT.
 
 ## Inside the fiction
 
@@ -363,7 +365,7 @@ In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the
 
 ## 16. Licences and credits
 
-- **Project licence**: to be chosen before publication (`LICENSE` file).
+- **Project licence**: [MIT](LICENSE), © Sébastien Wallachia.
 - Third-party code and its licences are listed in [`NOTICE`](NOTICE); the licence texts are in [`LICENSES/`](LICENSES/).
 - **gifenc** (MIT, © 2017 Matt DesLauriers): GIF export, bundled in the engine.
 - **Tracery** (© Kate Compton; npm package `tracery-grammar` declared ISC, original repository Apache 2.0): the grammar used for the prose, bundled in the engine.

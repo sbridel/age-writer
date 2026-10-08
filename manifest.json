@@ -3,7 +3,7 @@
   "name": "Age Writer",
   "version": "1.17.0",
   "minAppVersion": "1.0.0",
-  "description": "Write an Age as a sequence of symbols in a code block; get a rendered panel with a stability reading and generated prose.",
-  "author": "Alucard",
+  "description": "Write a world in a few lines of a code block: get its description, its stability and a living window onto it. Keep your Ages on the shelf of a floating-island refuge.",
+  "author": "Sébastien Wallachia",
   "isDesktopOnly": true
 }

@@ -7,6 +7,8 @@ Plugin Obsidian, inspiré de Mystcraft et de la série Myst. Tu écris un **Âge
 Idée de départ : dans Mystcraft, on ne **crée** pas un monde, on se **lie** à un monde qui existe. Ce que tu écris le décrit ; ce que tu laisses ouvert est tiré au sort, toujours de la même façon pour la même note. Et si tu réécris un monde déjà exploré, tu l'abîmes.
 
 > Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part. Aucune ressource de Myst (police, image, son) n'est fournie.
+>
+> Un hommage : les noms empruntés à l'univers de Myst (Âge, Relto, D'ni, livre de liaison, Livre descriptif…) sont un clin d'œil et une source d'inspiration, pas une reproduction. Le code, les images, les sons et les textes sont originaux. Licence : MIT.
 
 ## Dans la fiction
 
@@ -338,7 +340,7 @@ Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine
 
 ## 16. Licences et mentions
 
-- **Licence du projet** : à choisir avant publication (fichier `LICENSE`).
+- **Licence du projet** : [MIT](LICENSE), © Sébastien Wallachia.
 - Le code tiers et ses licences sont listés dans [`NOTICE`](NOTICE) ; les textes de licence sont dans [`LICENSES/`](LICENSES/).
 - **gifenc** (MIT, © 2017 Matt DesLauriers) : export GIF, embarqué dans le moteur.
 - **Tracery** (© Kate Compton ; paquet npm `tracery-grammar` déclaré ISC, dépôt d'origine sous Apache 2.0) : la grammaire de la prose, embarquée dans le moteur.
