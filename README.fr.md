@@ -44,6 +44,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 6. [Le Relto](#6-le-relto)
    - [Onglets](#onglets)
    - [L'Imageur](#limageur)
+   - [Le télescope](#le-télescope)
    - [Les deux livres du Relto](#les-deux-livres-du-relto)
    - [La vue globale](#la-vue-globale)
    - [Pages du décor, du ciel et de la faune (1.11)](#pages-du-décor-du-ciel-et-de-la-faune-111)
@@ -174,6 +175,10 @@ La page *Imager* (`page_imager`) ajoute au Relto une machine inspirée des image
 **Le périscope.** Verrouillé, la manivelle à gauche de l'écran **tourne la vue** (quatre directions, chacune son paysage sous le même ciel ; la rose montre où l'on regarde) et le levier à droite l'**incline** : vers le **zénith** (tout le ciel, ses étoiles, ses lunes, ses aurores, la canopée s'il y a des arbres), à l'horizon, ou **sous l'eau** quand l'Âge en a (rayons de lumière, varech, corail, poissons, ruines englouties, creux d'acide, cheminées de lave, perles, et la lueur d'une **fissure** sous-marine : la voie du retour ; sous la glace s'il gèle). La vue glisse quand on tourne.
 
 Les valeurs s'affichent en chiffres D'ni. La **jauge de netteté** lit les trois réglages ensemble, et les **battements** du bourdon ralentissent à mesure que l'atmosphère s'accorde ; une quinte cristalline sonne quand l'image entière tient ; verre, rails, manivelle et verrou ont chacun leur bruit. Les indices restent dans la fiction : l'onglet **Détails** de chaque Âge porte une note d'arpenteur (comment son ciel bourdonne, à quoi ressemble la lumière de son étoile, et les valeurs fixes en chiffres D'ni) ; la phase n'est jamais écrite, et les cristaux sont les pages mêmes du livre. Ton réglage, le verrou et le périscope sont gardés pour chaque Âge.
+
+### Le télescope
+
+La page *Telescope* (`page_telescope`) est toujours dans le livre des pages, **verrouillée tant que tu n'as pas écrit ton premier Âge**. Attache-la : une petite lunette de laiton se dresse au sommet du mont (sans la page *Montagnes*, elle apporte son rocher) ; un clic pour y regarder. Chaque Relto cache son propre **Great Zero**, tiré du nom et de la graine du Relto : rien n'est stocké, et deux Reltos ne le partagent jamais. Deux molettes orientent la lunette : **Toran** (la direction, tout le tour) et **Élévation** (au-dessus ou au-dessous du plan zéro) ; la couronne avance d'un chiffre D'ni, le moyeu d'un cran, et les valeurs sont gravées sous chaque molette en chiffres D'ni. Aucune distance n'est affichée : dans l'oculaire, un pouls qui bat au prorahn D'ni n'est d'abord qu'une lueur diffuse et inégale, puis un point de lumière qui se fixe à mesure qu'on approche ; une ligne de mots dit ce qu'on voit et s'il s'avive ou pâlit, et une note douce suit chaque geste (avec les sons des vues rapprochées). Amène le point dans le petit anneau : le Zéro est **trouvé**, gravé sur la plaque, il le reste, et une faible lueur bat au bout de la lunette sur l'île. Un clic sur la plaque y ramène les molettes. (Première étape : le télescope servira ensuite à calibrer l'Imageur.)
 
 ### Les deux livres du Relto
 

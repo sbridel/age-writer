@@ -53,6 +53,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
    - [Tabs](#tabs)
    - [Navigation and sub-views](#navigation-and-sub-views)
    - [The Imager](#the-imager)
+   - [The telescope](#the-telescope)
    - [The Relto's two special books](#the-reltos-two-special-books)
    - [The global view](#the-global-view)
    - [Scenery, sky and wildlife pages](#scenery-sky-and-wildlife-pages)
@@ -191,6 +192,10 @@ The page *Imager* (`page_imager`) adds a machine to the Relto, inspired by the i
 **The periscope.** Once locked, the crank left of the screen **turns the view** (four directions, each with its own landscape under the same sky; the rose shows where you look) and the lever right of it **tilts** it: up to the **zenith** (the whole sky, its stars, moons, aurorae, the canopy if there are trees), back to the horizon, or **under the water** when the Age has some (light rays, kelp, coral, fish, sunken ruins, acid pits, lava vents, pearls, and the glow of an underwater **fissure**: the way home; under the ice when it is frozen). The view slides as you turn.
 
 Values are shown in D'ni numerals. The Details tab's surveyor's note is set by *Surveyor's notes (Imager)*: full, words only (default) or off. The pale frame around clickable zones is off by default (*Frame around clickable zones*). The **clarity gauge** reads the three settings together, and the drone's **beats slow down** as the atmosphere comes in tune; a crystalline fifth sounds when the whole image holds; glass, rails, crank and lock each have their sound. Clues stay in the fiction: each Age's **Details** tab carries a surveyor's note (how its sky hums, what its star's light looks like, and the fixed values in D'ni numerals); the phase is never written down, and the crystals are the pages of the book itself. Your tuning, the lock and the periscope are kept per Age.
+
+### The telescope
+
+The page *Telescope* (`page_telescope`) is always in the book of pages, **locked until you write your first Age**. Attach it and a small brass telescope stands on top of the mountain (without the *Mountains* page, it brings its own rock); click it to look through. Each Relto hides its own **Great Zero**, drawn from the Relto's name and seed: nothing is stored, and two Reltos never share it. Two wheels aim the telescope: **Toran** (the direction, all the way round) and **Elevation** (above or below the zero plane); the rim moves one D'ni numeral, the hub one notch, and the values are engraved under each wheel in D'ni numerals. There is no distance readout: in the eyepiece a pulse, beating with the D'ni prorahn, is a diffuse uneven glow from afar, then a point of light that steadies as you come closer; a line of words says what you see and whether it brightens or fades, and a soft tone follows each turn (with the close-up room sounds). Bring the point into the small ring and the Zero is **found**: it is engraved on the plate, stays found, and a faint light pulses at the end of the telescope on the island. Click the plate to set the wheels back on it. (First step: the telescope will later calibrate the Imager.)
 
 ### The Relto's two special books
 
