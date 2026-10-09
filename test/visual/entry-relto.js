@@ -7,6 +7,11 @@ function renderMany(host, ages) {
   host = host || document.body;
   const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
   const variants = [
+    { h: 15, t: 3.1, env: {}, pages: ["page_telescope", "page_pine_trees", "page_koi"], label: "ISLAND day / telescope on its rock (no mountain page)" },
+    { h: 21.5, t: 3.1, env: {}, pages: ["page_telescope", "page_mountain", "page_waterfall"], label: "ISLAND dusk / telescope on the mountain" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope"], view: "telescope", aim: "far", label: "TELESCOPE night / far" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope"], view: "telescope", aim: [14, -9], label: "TELESCOPE night / near (14, −9)" },
+    { h: 14, t: 3.3, env: {}, pages: ["page_telescope"], view: "telescope", aim: [1, 0], found: true, label: "TELESCOPE day / found" },
     { h: 15, t: 3.3, env: {}, pages: ["page_koi", "page_cat", "page_pond_decor", "page_flowers"], view: "pondplus", label: "POND+ day" },
     { h: 21.5, t: 3.3, env: {}, pages: ["page_koi", "page_cat", "page_pond_decor", "page_flowers"], view: "pondplus", label: "POND+ dusk" },
     { h: 14, t: 3.3, env: {}, pages: ["page_koi", "page_cat", "page_cat_toys", "page_flowers"], tune: { color: "tabby", name: "Mochi" }, view: "cat", label: "CAT toys" },
@@ -57,7 +62,8 @@ function renderMany(host, ages) {
     const scene = M.buildScene(relto, pages, ages);
     const c = document.createElement("canvas"); const d = document.createElement("div"); d.textContent = v.label; host.appendChild(d); host.appendChild(c);
     c.style.width = "640px"; document.body.appendChild(host);
-    const r = new ReltoRenderer(c, dni); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view; if (v.hover) r.hover = { x: v.hover[0] - 24, y: v.hover[1], w: 48, h: 48, tip: "Calendar pinnacle — Leevot 19" }; r.draw(v.t || 3.7);
+    const r = new ReltoRenderer(c, dni); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view;
+    if (v.aim) { const TL = require("./relto-telescope"), st = TL.state(r), z = st.zero; st.aim = v.aim === "far" ? { toran: (z.toran + 300) % 625, elev: 0 } : { toran: (z.toran - v.aim[0] + 625) % 625, elev: z.elevation - v.aim[1] }; st.found = !!v.found; } if (v.hover) r.hover = { x: v.hover[0] - 24, y: v.hover[1], w: 48, h: 48, tip: "Calendar pinnacle — Leevot 19" }; r.draw(v.t || 3.7);
   });
 }
 module.exports = { renderMany };

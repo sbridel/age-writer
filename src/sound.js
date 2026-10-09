@@ -629,6 +629,24 @@ function imagerSfx(kind, volume = 0.3) {
     else tick(t, 1700, 0.5, 0.025); // un cran
   });
 }
+/**
+ * Les bruits du télescope : le cran fin du moyeu (« tick »), le cliquet de la couronne (« turn »), et, après chaque geste,
+ * le pouls du Zéro (« ping ») : deux notes proches qui battent l'une contre l'autre ; `s` (0 à 1, le signal) les accorde :
+ * loin, un murmure grave qui tremble ; près, une note claire et posée. « found » : le Zéro trouvé, une quinte qui reste.
+ */
+function telescopeSfx(kind, s = 0, volume = 0.3) {
+  const k = Math.max(0, Math.min(1, Number(s) || 0));
+  if (kind === "ping" && k < 0.15) return false; // le vide : rien qu'on entende
+  return oneShot(1.6, (c, out, noise) => {
+    const t = c.currentTime; out.gain.value = volume * 0.45;
+    const tone = (t0, f, g, dur) => { const o = c.createOscillator(), e = c.createGain(); o.type = "sine"; o.frequency.value = f; e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + 0.02); e.gain.exponentialRampToValueAtTime(0.001, t0 + dur); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + dur + 0.05); };
+    const tick = (t0, f, g) => { const n = noise(0.05), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 7; e.gain.setValueAtTime(g, t0); e.gain.exponentialRampToValueAtTime(0.001, t0 + 0.03); n.connect(bp); bp.connect(e); e.connect(out); n.start(t0); n.stop(t0 + 0.05); };
+    if (kind === "tick") tick(t, 2400, 0.4);
+    else if (kind === "turn") { for (let i = 0; i < 4; i++) tick(t + i * 0.035, 1500 + (i % 2) * 400, 0.45); }
+    else if (kind === "ping") { const f = 196 + 196 * k, beat = (1 - k) * 9, g = 0.08 + 0.22 * k; tone(t + 0.06, f, g, 0.5 + 0.7 * k); tone(t + 0.06, f + beat, g * (1 - 0.6 * k), 0.5 + 0.7 * k); }
+    else if (kind === "found") { tone(t, 392, 0.25, 1.4); tone(t + 0.12, 587.3, 0.18, 1.3); tone(t + 0.24, 784, 0.1, 1.2); }
+  });
+}
 /** Couinement du jouet-souris. */
 function squeak(volume = 0.3) {
   return oneShot(0.4, (c, out) => {
@@ -695,4 +713,4 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

@@ -41,7 +41,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   FakeAC.prototype.resume = function () { this.state = "running"; return wait(50); }; FakeAC.startState = "suspended";
   const p = sc.start({ wind: 0.4 }); const e = contexts[contexts.length - 1]; sc.stop(true); FakeAC.startState = "running"; assert((await p) === false && e.closed, "arrêt pendant resume");
   // effets ponctuels : un seul contexte partagé
-  const before = contexts.length; S.linkSound(0.3); S.bookOpen(0.3); S.staticBurst(0.3); S.linkSound(0.3);
+  const before = contexts.length; S.linkSound(0.3); S.bookOpen(0.3); S.staticBurst(0.3); S.linkSound(0.3); S.telescopeSfx("tick", 0.2); S.telescopeSfx("ping", 0.7); S.telescopeSfx("found", 1);
+  assert(S.telescopeSfx("ping", 0.05) === false, "télescope : dans le vide, le pouls ne s'entend pas");
   assert(contexts.length - before <= 1, "effets ponctuels : un seul contexte (" + (contexts.length - before) + ")");
   console.log("sound ok"); process.exit(0);
 })().catch((e) => { console.error("FAIL", e); process.exit(1); });
