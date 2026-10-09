@@ -74,6 +74,7 @@ for (const [lang, ref] of [["en", REF_EN], ["fr", REF_FR]]) {
 
 // ---- 4. chaque exemple de bloc `age` se lit sans tache d'encre --------------------------------------------------
 const skip0 = hooks.skip;
+const norm0 = hooks.norm; hooks.norm = require("../src/weather").normalize;
 hooks.skip = (line) => P.isPhysicsLine(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
 let examples = 0;
 for (const [lang, ref] of [["en", REF_EN], ["fr", REF_FR]]) for (const t of ref) for (const b of t.body) {
@@ -83,7 +84,7 @@ for (const [lang, ref] of [["en", REF_EN], ["fr", REF_FR]]) for (const t of ref)
 }
 // et la mise en garde de la référence est vraie : une ligne d'intitulé est une tache d'encre
 ok(resolveAge("stars: twin_suns", { draw: false }).lines.some((l) => l.unknown), "« stars: twin_suns » est bien une tache d'encre");
-hooks.skip = skip0;
+hooks.skip = skip0; hooks.norm = norm0;
 ok(examples >= 20, `exemples de blocs age vérifiés : ${examples}`);
 
 // ---- 5. l'export en note garde les parties et le tableau ---------------------------------------------------------
