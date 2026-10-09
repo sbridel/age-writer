@@ -1,6 +1,6 @@
 "use strict";
 // Guide intégré : une fenêtre à rubriques (et une note exportable). Contenu en français et en anglais.
-// Blocs : { p: texte } | { code: texte } | { ul: [lignes] } | { h: sous-titre }
+// Blocs : { p: texte } | { code: texte } | { ul: [lignes] } | { h: sous-titre } | { note: encadré } | { table: { head, rows } }
 const GUIDE = {
   fr: [
     { id: "start", icon: "feather", title: "Écrire un Âge", body: [
@@ -95,156 +95,16 @@ const GUIDE = {
 };
 
 
-// Référence complète (français) : toutes les lignes, tous les blocs connus, tous les réglages.
+// Référence complète : quatre parties (réglages, ce que l'on écrit, ce que l'Âge produit seul, Relto), en français et en anglais.
 const { REF_EN } = require("./guide-ref-en");
-const REF_FR = [
-  { id: "lines", icon: "list", title: "Lignes du bloc age", body: [
-    { p: "Un bloc `age` contient une page par ligne (un identifiant de bloc) et des lignes spéciales. Les lignes spéciales sont ignorées par le moteur : elles ne comptent pas comme des pages." },
-    { ul: [
-      "`link: [[Note]]` : livre de liaison vers un autre Âge (plusieurs permis)",
-      "`return: [[Note]]` : livre de retour (la voie pour rentrer)",
-      "`panel: [[image]]` : image du panneau à la place de la fenêtre peinte",
-      "`seed: 42` : change le tirage (même note + même graine = même monde)",
-      "`mechanism: steam_powered_elevator` : mécanisme ; aussi `dnie_mechanism:`, `puzzle_type:`, ou une liste séparée par des virgules",
-      "`fx: tv` : effet de fenêtre (classic, static, ripple, sweep, tv, random, off) ; aussi `window_fx:`, `link_fx:`",
-      "`window_style: generative` (ou `classic`) : rendu de la fenêtre ; aussi `render:`",
-      "`window_size: large` (normal, large, xl) ou `window_width: 520` (200 à 800 px)",
-      "`day_length: 40` : minutes réelles par jour (0,2 à 1440), rendu génératif ; aussi `day:`",
-      "`year_length: 12` : jours par année (1 à 365, demande `day_length`) ; aussi `year:`, `revolution:`",
-      "`moons: 2` (`lunes:`) : nombre de lunes dessinées dans le ciel (0 à 5), rendu génératif ; sans cette ligne, `companion_moon` en donne une",
-      "`many: ruins, trees` / `few: rain` / `normal: water` : quantités ; aussi `much`, `lots`, `plenty`, `little`, `beaucoup:`, `peu:`",
-      "`cover: sober` : sobriété de la couverture (ornate, classic, sober, plain, ou 0 à 1) ; aussi `couverture:`, `cover_style:`, `sobriety:`",
-      "`trap book` : livre-piège (ni retour ni fissure) ; aussi `trap_book`, `trap: true`, `livre piège` ; `trap: false` annule",
-      "`damaged_pages = 2` : pages abîmées de la liaison ; `removed_pages: 3` : pages arrachées"] },
-    { p: "Un Âge peut aussi s'écrire en propriétés YAML (voir le Relto, onglet « Relto »)." },
-  ] },
-  { id: "blocks", icon: "layers", title: "Tous les blocs (pages)", body: [
-    { p: "Pages que tu peux écrire, par axe de stabilité. Le tirage au sort complète ce que tu laisses ouvert." },
-    { h: "Cosmologique" },
-    { ul: ["Étoiles : `single_sun`, `twin_suns`, `starless`, `companion_moon`", "Cycle : `steady_cycle`, `erratic_cycle`, `frozen_cycle`", "Orbite : `stable_orbit`, `shifting_orbit`, `chaotic_orbit`, `close_binary_orbit`, `wide_binary_orbit`", "Phénomènes : `auroras`, `recurring_eclipses`, `permanent_veil`, `starfall`"] },
-    { h: "Géologique" },
-    { p: "`water`, `lava`, `stone`, `sand`, `salt`, `ash`, `iron`, `crystal`, `strange_stone`, `deep_cold`, `pressure`" },
-    { p: "Voies de retour : `fissure`, `cave_fissure`, `submarine_fissure`, `no_fissure`" },
-    { h: "Météo" },
-    { p: "`wind`, `rain`, `fog`, `lightning`, `heat`" },
-    { h: "Écologique" },
-    { p: "Flore : `spore`, `seed`, `vine`, `fern`, `great_tree` ; faune : `moth`, `grazer`, `burrower`, `hunter`, `drifter`" },
-    { h: "Métaphysique (ruines)" },
-    { p: "`tablet`, `lamp`, `bridge`, `door`, `book`" },
-    { h: "Produits de réactions (non écrits : ils naissent de combinaisons)" },
-    { ul: ["Géologie : `obsidian`, `ice`, `glass`, `rust`, `brine`, `silt`, `diamond`, `humming_shard`, `crying_obsidian`, `whispering_obsidian`, `black_ice`, `singing_glass`, `living_rust`, `clouded_diamond`, `fulgurite`", "Météo : `storm`, `thunderstorm`, `marsh_mist`, `dust_storm`, `ash_cloud`, `hail`, `steam`, `rime`, `meltwater`, `spore_cloud`, `charged_crystal`, `whispering_storm`, `waiting_thunder`, `watching_mist`, `black_hail`", "Vie : `moss`, `lichen`, `pale_fungus`, `sapling`, `ironwood`, `cinderbloom`, `glowvine`, `withered_fern`, `charred_grove`, `grove`, `singing_lichen`, `wrong_glowvine`, `lantern_moths`, `herd`, `stalking_pack`, `warren`, `still_drifter`, `whispering_moths`, `watching_herd`, `humming_warren`, `wildfire`", "Ruines : `worn_tablet`, `lit_lamp`, `sealed_door`, `blurred_book`, `fallen_bridge`, `speaking_tablet`"] },
-    { p: "Exemples de réactions : eau + lave → obsidienne ; obsidienne + sel → obsidienne qui pleure. Chaînes jusqu'à trois niveaux. `strange_stone` est un catalyseur qui donne des variantes rares." },
-  ] },
-  { id: "ext", icon: "sparkles", title: "Ciel étendu, mondes-types, richesses", body: [
-    { p: "Blocs ajoutés par l'extension : ils comptent dans la stabilité, ont des contradictions et une description, apparaissent dans la palette du livre, mais ne sont **jamais tirés au sort** : tu les écris, ou ils n'existent pas." },
-    { h: "Ciel" },
-    { ul: ["`asteroid_belt` (−7) : ceinture de petits rocs en arc", "`asteroid_field` (−9) : gros blocs isolés, l'un tombe parfois", "`planet_rings` (−2) : planète à anneaux", "`comet` (−4) : comète à longue queue", "Soleils colorés (modificateurs, −2 à −5) : `green_sun`, `red_sun`, `white_sun`, `blue_sun`, `orange_sun`, `violet_sun` ; `black_sun` (−6) : soleil noir, une naine brune qui chauffe sans éclairer (jour gris et sombre, disque noir cerclé de rouge)"] },
-    { p: "Contradictions : une ceinture ou un champ menacent ruines, arbres et eau ; un soleil coloré contredit `starless` et, avec un seul soleil, une autre couleur. Un champ pèse plus qu'une ceinture ; il tombe fort sur un pont." },
-    { h: "Mondes-types (−2, ils imposent le décor génératif)" },
-    { p: "`frozen_world`, `lava_world`, `desert_world`, `ocean_world`, `jungle_world`. Ils ne créent pas de matière : ils la dessinent. Deux mondes-types se contredisent fortement ; chacun heurte ses contraires (`frozen_world` avec `lava`, `lava_world` avec `ice`…)." },
-    { h: "Richesses et cicatrices" },
-    { ul: ["Richesses (coût sur l'axe géologique) : `gold` −9, `silver` −6, `gems` −7, `rare_ore` −8, `pearls` −5, `copper` −3", "Cicatrices (sans coût propre) : `scorched_surface`, `poisoned_air`, `barren_soil`, `bitter_water`, `hollowed_ground`, `ashen_sky`"] },
-    { p: "Chaque cicatrice rachète 3 points du coût des richesses, jusqu'à 75 % de ce coût : un monde riche n'est jamais gratuit. Sans richesse, les cicatrices ne font rien." },
-  ] },
-  { id: "phys", icon: "atom", title: "Physique des Âges", body: [
-    { p: "Sous les blocs, un petit monde physique : étoile, orbite, planète, chaleur interne, noyau, champ magnétique, air, température, eau, lumière. Ce n'est pas une simulation : des lois simplifiées, calées pour que la Terre, Mars, Vénus et la Lune tombent à peu près juste. Ce que le livre laisse ouvert est tiré de la graine, sous contraintes : le monde cherche une physique qui tient ce que tu as écrit (48 essais, toujours les mêmes pour la même graine)." },
-    { h: "Modes (Réglages › Âges & mécanismes)" },
-    { ul: ["**Facile** (défaut) : la fiche explique, la stabilité ne change jamais. Les mondes-types (`frozen_world`…) orientent le tirage.", "**Strict** : chaque tension coûte sur son axe (légère 10, moyenne 20, forte 35 points, au plus 45 par axe), multiplié par le curseur « Sévérité de la physique » (0,5 à 2). Les mondes-types n'orientent plus le tirage : ils sont seulement vérifiés.", "**Désactivée** : rien."] },
-    { h: "Lignes de valeurs (toutes facultatives)" },
-    { ul: ["`mass:` (`masse:`) Terre = 1 · `radius:` (`rayon:`)", "`age:` (`âge:`) en milliards d'années, `500 Ma` accepté", "`orbit:` (`orbite:`, `distance:`) en UA · `insolation:` (`flux:`) Terre = 1 · `star_mass:` (`masse_étoile:`) Soleil = 1", "`rotation:` en heures, `3 j` accepté", "`core:` (`noyau:`) `liquid` / `liquide`, `solid` / `figé`, `none`, ou part de fer 0 à 0,8", "`atmosphere:` (`atmosphère:`, `pression:`) `none`, `thin` / `mince`, `dense` / `épaisse`, ou des bars", "`water:` (`eau:`), `volatiles:`, `albedo:`, `tides:` (`marées:`)", "En nombres, la valeur est fixée ; en mots (`core: liquid`), c'est une affirmation que la physique vérifie. Ces lignes ne sont jamais des taches d'encre."] },
-    { h: "Blocs de géophysique (jamais tirés au sort)" },
-    { ul: ["`close_orbit` (−5) / `distant_orbit` (−5) : tout près de l'étoile ou loin d'elle (ils se contredisent)", "`young_world` (−6) / `ancient_world` (−4) : moins d'un milliard d'années, intérieur brûlant ; ou 7 à 12, intérieur refroidi (étoile durable exigée)", "`heavy_world` (−5) / `light_world` (−4) : super-Terre (gravité forte, montagnes basses) ou petit monde (gravité faible, air qui fuit)", "`molten_core` (−3) / `dead_core` (−4) : noyau en fusion (champ magnétique) ou mort", "`geysers` (−4) : sources chaudes, demandent eau et chaleur interne", "`rifts` (−5) : failles, plaques en mouvement : intérieur chaud, planète assez grande, eau liquide", "`thick_air` (−3) / `thin_air` (−4) : air épais (≥ 2 bar) ou mince", "`subsurface_ocean` (−4) : océan sous la glace, chauffé d'en bas", "`kelp` (−2) : forêt de varech sous l'eau (eau liquide et lumière)", "`coral` (−3) : récif aux couleurs vives (eau liquide et chaude, lumière)", "`acid` (−5) : un acide (volcanisme) qui ronge : la pierre en sol creux, le fer en rouille, l'eau en eau amère, le corail en sel", "`black_sun` (−6) : soleil noir, une naine brune ; presque toute sa lumière est infrarouge : jour gris et sombre, plantes presque noires, orbite très serrée"] },
-    { h: "Couleurs de soleil" },
-    { p: "`red_sun` : naine rouge (chauffe plus qu'elle n'éclaire, faces figées fréquentes) ; `orange_sun` ; `white_sun` ; `blue_sun` : étoile géante qui vit trop peu pour l'évolution ; `violet_sun` : étoile chaude riche en ultraviolets (il faut un air épais pour vivre à découvert) ; `green_sun` : étoile solaire à la lumière teintée (feuillages pourpres). Vert et violet n'existent pas pour de vraies étoiles : en strict, ils coûtent un peu d'Art (axe métaphysique)." },
-    { h: "Blocs de terrain (jamais tirés au sort)" },
-    { ul: ["`plains` (−2) : pays large et bas ; deux chaînes plates dans la fenêtre", "`hills` (−2) : pays doux et ondulé ; trois chaînes douces", "`mountains` (−3) : hauts sommets ; quatre chaînes en arêtes (elles contredisent fortement `plains`, moins `hills`)", "`canyon` (−3) : une gorge profonde ; deux chaînes vives", "`river` (−2), `delta` (−3), `lake` (−2), `marsh` (−2) : de l'eau et un rivage dans la fenêtre (le marais ajoute de la brume) ; ils jurent avec `desert_world` et `lava_world`", "Le désert existe déjà (`desert_world` ou `sand`). Les blocs de terrain sont dans le registre du ciel : leur coût pèse sur l'axe cosmologique."] },
-    { h: "Lieux et habitants" },
-    { ul: ["`library` (−3), `ruined_library` (−4), `garden` (−3) : métaphysiques, traces de bâtisseurs (la physique les lit comme des ruines)", "`spiders` (−3) : écologique, tisseuses de soie farouches devant la lumière ; elles ont besoin de proies"] },
-    { h: "Bâtisseurs" },
-    { p: "Les ruines (`tablet`, `door`, `bridge`, `lamp`, `book`…) disent que quelqu'un est passé : il a pu apporter ce que la nature n'aurait pas fait à temps (des arbres sous une étoile trop jeune). Elles n'excusent pas la vie impossible (sans lumière, sans air, à une température invivable)." },
-    { p: "Le Relto est hors physique : c'est la zone sûre." },
-  ] },
-  { id: "amounts", icon: "gauge", title: "Quantités, jour et année", body: [
-    { p: "Une ligne de quantité met à l'échelle ce qui est déjà écrit. Mots : `many` / `much` / `lots` / `plenty` / `beaucoup` (×2), `few` / `little` / `peu` (×0,4), `normal` (×1). Un bloc en grande quantité coûte le double de son poids, en petite quantité 40 %." },
-    { p: "Cibles : groupes `ruins`, `trees`, `water`, `rain`, `fog`, `wind`, `clouds`, `stars`, `moths`, `glow`, `riches`, `scars` (et `ruines`, `arbres`, `eau`, `pluie`, `brume`, `vent`, `étoiles`, `nuages`, `richesses`, `cicatrices`), ou n'importe quel identifiant de bloc (`many: gold`). Une quantité ne crée rien." },
-    { p: "`day_length` et `year_length` ne changent que le rendu génératif : le soleil suit l'horloge de l'ordinateur ; l'année fait varier sa hauteur selon la saison." },
-  ] },
-  { id: "stab", icon: "activity", title: "Stabilité et tirage", body: [
-    { p: "Cinq axes : cosmologique, géologique, météo, écologique, métaphysique (plus l'axe `alteration` de la loi du changement). L'Âge prend la stabilité de son axe le plus faible : **≥ 75 % stable**, **40 à 74 % instable**, **< 40 % mourant**." },
-    { ul: ["Tout ce que le livre laisse ouvert est tiré (onze cases : étoiles, jour, lune, phénomènes, sol, minéraux, météo, flore, faune, ruines, fissure)", "Même note + même `seed:` → même monde ; renommer la note change son monde", "Les valeurs ordinaires sortent plus souvent ; ce qui contredit ou déclenche une réaction violente est moins probable, jamais impossible (réglage du moteur « force du pli »)", "La fissure n'est pas garantie : sans livre de retour **et** sans fissure, l'Âge est un piège ; avec de l'eau, la fissure est sous-marine", "Réglage « Solitude » : pondère le tirage vers des mondes déserts (aucune / équilibrée / forte)"] },
-  ] },
-  { id: "window", icon: "app-window", title: "Fenêtre, effets, dégâts", body: [
-    { p: "**Rendu** : `classic` (la fenêtre peinte du moteur) ou `generative` (un paysage tiré de la graine : ciel teinté, relief, végétation, météo, reflets, premier plan, un détail habité par Âge). Les blocs inconnus sont peints d'après leur axe et leurs adjectifs." },
-    { p: "**Ce que la fenêtre montre** (rendu génératif) : rien n'y est décoratif, tout vient du livre et de sa physique." },
-    { ul: ["**Rivages** : de l'eau et de la terre dans le même Âge partagent le bas de l'image ; la rive suit ce qui est écrit : lave (côte noire qui fume), sable (plage et dunes), glace (banquise), pierre ou ruines (rochers), plantes (berge herbeuse). Les mondes-types imposent leur décor et n'ont pas de rive", "**Premier plan** : rochers, branche, arche, lianes, roseaux, feuilles, pilier, stalactites de glace, ou rien ; tiré selon l'Âge (roseaux seulement près de l'eau, glace seulement s'il gèle). Les branches poussent à chaque fois différemment (style brûlé, enneigé, moussu, en fleurs, aiguilles…)", "**Physique visible** : la couleur et la taille du soleil viennent de l'étoile et de la distance ; un air mince assombrit le ciel (étoiles en plein jour, peu de nuages), un air épais le rend laiteux ; une gravité forte aplatit le relief, une faible le dresse ; une face figée (rotation verrouillée) garde le soleil immobile ; un monde froid ou brûlant se voit", "**Nuits** : chaque Âge a son ciel : deux à quatre constellations, parfois une nébuleuse ou une bande d'étoiles, ses lunes (`moons:`) ; `few: stars` est respecté", "**Sous la surface** : `kelp` (varech), `coral` (récif) et `acid` (eaux acides) se voient dans l'eau, à leur place"] },
-    { p: "**Effets** (`fx:` ou réglage) : `classic` (tremblements, ciel qui vire, fractures selon l'instabilité), `static` (neige), `ripple`, `sweep`, `tv` (vieille télé), `random` (un effet par nom d'Âge), `off`. Intensité de 0,2 à 2 ; `prefers-reduced-motion` est respecté." },
-    { p: "**Dégâts** (tirés de la graine du livre) : `damaged_pages` = zones décalées, séparation rouge/cyan, figées ou taches d'encre ; `removed_pages` = trous brûlés avec neige ; instabilité forte = fractures ramifiées. Jusqu'à 12 zones et 6 trous ; `fx: off` les supprime." },
-    { p: "**Taille** : `window_size` (normal, large, xl) ou `window_width` en px ; le réglage « Taille de la fenêtre » sert par défaut." },
-  ] },
-  { id: "trap", icon: "triangle-alert", title: "Pièges, livres abîmés, liaisons", body: [
-    { ul: ["**Livre-piège** : `trap book`. Ni retour (un `return:` est ignoré) ni fissure ; il a l'air normal", "**Livre abîmé** : `damaged_pages` (+0,08 d'instabilité de liaison chacune) et `removed_pages` (+0,15, plafond 0,9). Ne touche que la liaison, pas la stabilité de l'Âge. Dès 0,3 apparaît « Écouter les parasites »", "**Liaisons incertaines** (réglage) : au-delà de 30 % d'instabilité de liaison, « open ↗ » ou le clic sur la fenêtre peut vaciller (échec, on réessaie) ou glisser (on arrive dans un autre livre du même Âge). À 85 % : 35 % de vacillements et 24 % d'égarements"] },
-  ] },
-  { id: "relto2", icon: "mountain", title: "Relto : note, pages, options", body: [
-    { h: "La note du refuge" },
-    { code: "---\nage_type: personal_hub\nage_name: Relto\nseed: 19991118\nenvironment:\n  base_terrain: volcanic_plateau\n  surrounding: cloud_sea\n  sky_cycle: system_time\nstructures: [hut, bookshelves, linking_pillars]\nrelto_pages_active: [page_pine_trees, page_waterfall]\n---" },
-    { ul: ["`base_terrain` : volcanic_plateau, mossy_plateau, sand_island, glacier, obsidian_plateau", "`surrounding` : cloud_sea, fog_sea, ocean, void, lava_sea", "`sky_cycle` : system_time, frozen_dawn, frozen_day, frozen_dusk, frozen_night"] },
-    { h: "Options du bloc relto" },
-    { ul: ["`source: Ages/Relto` : la note du refuge", "`time: 21.5` : heure fixe (sinon l'ordinateur)", "`inscription: texte` : devise sous l'image", "`dni_time: off` : masque l'heure D'ni", "`pages: hide` : replie la liste (mode sans onglets)", "`folders:`, `exclude:`, `books:` : choix des livres de l'étagère (listes séparées par des virgules)", "`relto_books` dans la note : liste enregistrée par les cases à cocher ; `[]` = aucun livre"] },
-    { h: "Pages intégrées" },
-    { p: "`page_pine_trees`, `page_birches`, `page_palms`, `page_ferns` (végétation : conifer, birch, palm, fern), `page_waterfall`, `page_fireflies`, `page_lanterns`, `page_snow`, `page_aurora`, `page_fireworks`, `page_mountain`, `page_pillars`, `page_chimney`, `page_mist`, et sous l'île : `page_gems`, `page_gold`, `page_silver` ; puis `page_rain`, `page_storm`, `page_birds`, `page_butterflies`, `page_moons`, `page_dock`, `page_bench`, `page_islets`, `page_calendar`, `page_flowers`, `page_grass`, `page_ponderosa`, `page_maples`, `page_crystal_tree`, `page_stalk_tree`, `page_koi`, `page_pond_decor`, `page_cat`, `page_cat_toys` et `page_imager`." },
-    { p: "Types d'effets : vegetation, waterfall, fireflies, lanterns, snow, aurora, mist, fireworks, mountain, pillars, chimney, gems, gold, silver, koi, cat, rain, storm, birds, butterflies, moons, dock, bench, stalktree, cattoys, ponddecor, islets, calendar, flowers, grass, imager. Ambiances : wind, wind_in_pines, waterfall, river, soft_rain, night_crickets, deep_hum, fire_crackle, hearth, stone_choir, mountain_air, fireworks, metal_chimes, thunder." },
-    { h: "Une page = une note" },
-    { code: "---\nrelto_page_id: page_pine_trees\ntarget_age: Relto\nenabled: true\neffects:\n  canvas_additions:\n    - { type: vegetation, density: 0.7, asset: conifer }\n  ambiance_audio: wind_in_pines\nunlock:\n  age: \"[[Marais de verre]]\"\n  min_stability: 60\n  ages_count: 3\n---" },
-    { p: "États : *active*, *disponible* (bouton Attacher), *verrouillée* (raison affichée), *désactivée*, *manquante*. Bloc `relto-library` : une page par ligne, `page lagon: Lagon | vegetation 0.5 palm, gold 0.6 | audio=river | unlock=[[Marais de verre]]:60`." },
-    { h: "Le chat" },
-    { p: "Page `page_cat` : `cat_name`, `cat_color` (black, white, orange, grey, cream, tabby, calico, tuxedo, siamese ou #rrggbb), `cat_sleep` (auto, always, never). En auto, il dort sur le tapis de la cabane surtout la nuit (plus encore avec la page Cheminée) et par pluie, orage ou neige ; le tirage change toutes les demi-heures. Un clic sur lui : il ronronne." },
-    { h: "L'Imageur" },
-    { p: "Page `page_imager` : une machine sur la table de la cabane, puis sa salle. On pose le livre d'un Âge sur le lutrin (‹ › pour changer de livre) et on l'accorde jusqu'à le voir sur l'écran de laiton. Pas d'onglets : un établi et trois postes, chacun avec sa lampe ; un clic pour s'en approcher, la flèche du bas pour reculer." },
-    { ul: ["**I · Râtelier à cristaux** : huit cristaux gravés, quatre logements ; on prend un cristal, on le pose (celui qui y était retourne au râtelier). La bonne réponse : les pages écrites du livre, dans l'ordre du bloc (les quatre premières). Faux : l'image se dédouble ; une bonne page à la mauvaise place luit ambre et compte un peu", "**II · Banc optique** : trois verres (rouge, vert, bleu) qui coulissent sur leurs rails = la lumière de son étoile (couleur du soleil, soleil noir, ou sans étoile) ; l'iris à lamelles = la lumière reçue ; le comparateur montre l'étoile à gauche, ton faisceau à droite. Faux : l'image se teinte ou s'assombrit", "**III · Régulateur** : inverseur de polarité, fréquence, amplitude, harmoniques, phase ; tube cathodique et voltmètre. La fréquence vient de la durée du jour, l'amplitude de la pression de l'air, les harmoniques des aurores et du champ magnétique ; la phase dérive avec l'heure (presque plus si le cycle est figé ; un cycle erratique saute toutes les deux heures)"] },
-    { p: "La netteté est le produit des trois : il faut tout régler ; la jauge donne l'ensemble. **Verrou** : sur une image nette (lampe ambre), on tire le levier : la machine suit l'Âge seule, les commandes sont tenues, le livre porte une étiquette de laiton sur l'étagère. **Périscope** (verrouillé) : la manivelle tourne la vue (quatre directions, même ciel, autre décor), le levier l'incline (zénith, horizon, sous l'eau s'il y a de l'eau : varech, corail, poissons, fissure sous-marine…). Indices : le carnet de l'arpenteur posé sur la table de la cabane, et l'onglet Détails de l'Âge (note d'arpenteur : une phrase, et selon le réglage « Notes de l'arpenteur » les trois valeurs en chiffres D'ni ; « Mots seulement » par défaut, « Aucune » pour jouer à l'oreille). Réglage, verrou et périscope sont gardés par livre." },
-    { h: "Heure D'ni" },
-    { p: "Calculée d'après l'horloge de l'ordinateur : année (hahr), mois (vailee), jour (yahr), puis gahrtahvo : tahvo : gorahn : prorahn, en chiffres D'ni. Un prorahn dure environ 1,39 s." },
-  ] },
-  { id: "dni", icon: "languages", title: "Chiffres et texte D'ni", body: [
-    { p: "Nombres en base 25 (numéro d'Âge, coordonnées, graine, énigmes). Réglage « Chiffres » : auto, police, glyphes, dessinés. Niveaux : police installée (famille « Dni ») ou fichier .ttf/.otf du coffre ; fichier de glyphes local `dni-numerals.local.json` ; chiffres dessinés par le plugin (toujours disponibles)." },
-    { p: "La police fan n'est ni fournie ni embarquée. Texte D'ni (réglage « Noms en écriture D'ni », police requise) : nom du refuge, plaque d'Âge, titre du journal, couverture, `inscription:`, et `` `dni:texte` `` en ligne. Bloc libre ```` ```dni ````. Sans police : italique latin, jamais de faux D'ni." },
-  ] },
-  { id: "mech", icon: "cog", title: "Mécanismes et solitude", body: [
-    { p: "Onze mécanismes : `steam_powered_elevator`, `water_valve`, `telescope`, `sound_lock`, `frequency_array`, `steam_generator`, `holofatic_imager`, `orrery`, `tide_gate`, `wind_organ`, `lens_array`. Chacun a un état (rouillé, envahi…) et une énigme. Réglage « Mécanismes » : dessinés (l'Âge en invente) ou écrits seulement." },
-    { p: "Solitude : aucune (tirage de la 1.3), équilibrée (ruines ×2,2, flore ×1,3, chasseurs ×0,5), forte (ruines ×3,5, chasseurs ×0,25). Changer ce réglage change les mondes tirés pour les cases ouvertes." },
-  ] },
-  { id: "journal", icon: "notebook-pen", title: "Journal, couverture, cuir", body: [
-    { ul: ["**Journal** : commande « Create the exploration journal for this Age » ; un bloc `age-journal` s'écrit au fil des notes qui renvoient à l'Âge. Voix inspirées de divers personnages des jeux (anglais ou français). Dossier réglable", "**Couverture** : onglet du livre, procédurale (marbre, cuir, laiton, glyphes, médaillon), de la plus ornée à la plus nue ; export SVG", "**Thème cuir** : cuir sombre, parchemin, coins en laiton"] },
-  ] },
-  { id: "snd2", icon: "volume-2", title: "Sons en détail", body: [
-    { ul: ["**Livre** : choc mat, cuir, pages (« Son du livre »), puis 2 à 5 clics de fermoir (« Clics du fermoir »)", "**Liaison** : onze variantes (A à K) tirées au hasard, jamais la même deux fois de suite, avec jeu aléatoire de hauteur, glissando, trémolo, écho, accord", "**Page tournée** : froissement de papier synthétisé", "**Parasites** : souffle à coupures et bourdonnement 50 Hz", "**Ambiances** : vent, pins, eau, cascade, pluie, bourdon, résonance métallique, feu, grillons, tonnerre, nappe, carillon ; niveaux minimal / zen / complet", "**Garde-fou** : l'ambiance s'arrête si la note change, si l'onglet se ferme ou passe à l'arrière-plan ; elle continue quand on change d'onglet à l'intérieur du Relto"] },
-  ] },
-  { id: "lib", icon: "library", title: "Bibliothèque personnelle", body: [
-    { code: "```age-library\nblock moonmilk: pale, thick, patient | geological\nproduct curd: soft, white, sour | geological\nreaction moonmilk + salt -> curd (soothing)\nvariant curd -> watching_curd with crystal\n```" },
-    { p: "Réutiliser l'identifiant d'un bloc intégré le remplace. Un bloc `age-library` affiche en lecture les erreurs ligne par ligne. Commandes : créer une note de bibliothèque, copier le contenu intégré, recharger. Limite : les blocs de bibliothèque ne sont pas tirés au sort ; ils sont peints d'après leur axe et leurs adjectifs." },
-  ] },
-  { id: "setref", icon: "sliders-horizontal", title: "Tous les réglages", body: [
-    { h: "Livres & couvertures" },
-    { ul: ["Thème cuir (oui) · Onglet couverture (oui)", "Ouvrir le livre dans : onglet principal (défaut), fenêtre, panneau latéral", "À l'ouverture d'un livre : couverture (défaut) ou garder l'onglet", "Couvertures : auto, ornée, classique, sobre, nue", "Livre de liaison en 3 pages (oui)"] },
-    { h: "Sons" },
-    { ul: ["Sons (général) · Volume (0,35)", "Son du livre · Clics du fermoir · Pages tournées · Son de liaison (tous activés)", "Ambiance du refuge : minimal / zen (défaut) / complet · Volume du Relto (0,6)"] },
-    { h: "Fenêtre de liaison" },
-    { ul: ["Onglets dans le bloc Âge (oui)", "Rendu de la fenêtre : classique / génératif", "Taille : normale / grande (défaut) / très grande", "Effet : classique, statique, ondulation, balayage, aléatoire, aucun · Intensité 0,2 à 2", "Liaisons incertaines (oui)"] },
-    { h: "D'ni & chiffres" },
-    { ul: ["Langue des extensions : auto, English, Français", "Chiffres : auto / police / glyphes / dessinés · Police des chiffres (nom)", "Afficher les nombres · Noms en écriture D'ni", "Heure D'ni dans le Relto · Relto en onglets"] },
-    { h: "Âges & mécanismes" },
-    { ul: ["Loi du changement (oui) · Minutes avant que l'encre sèche (15, de 1 à 120) · Guérison par jour (0,05, de 0 à 0,3)", "Mécanismes : dessinés / écrits seulement · Solitude : aucune / équilibrée / forte"] },
-    { h: "Dossiers" },
-    { ul: ["Dossier des journaux (vide = à côté de la note de l'Âge) · Dossier du refuge (`Ages`)"] },
-    { h: "Tirage & bibliothèque (réglages du moteur)" },
-    { ul: ["Mise à jour automatique des propriétés · Fenêtre générée · Tirage des cases ouvertes · Force du pli · Dossier de bibliothèque · Image de panneau par défaut"] },
-  ] },
-  { id: "cmd", icon: "terminal", title: "Commandes et propriétés", body: [
-    { ul: ["Update Age data in this note / in every note : écrit les propriétés calculées", "Generate the Age map (canvas) : carte des Âges liés (bleu = aller-retour, orange = sens unique)", "Save this Age's window as a GIF", "Open this Age as a book", "Create / Reload an Age library · Copy the built-in content into a library note", "Open the Relto · Open the Relto view (large) · Create a Relto page",  "Generate a random Age : crée une note avec un monde cohérent et stable tiré au hasard (étoile, eau ou terre, décors, parfois lunes, aurores, varech) ; au premier lancement, une note « Age Writer — Bienvenue » avec un Âge d'exemple commenté est créée une fois (jamais dans un coffre qui a déjà des Âges)", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide"] },
-    { p: "Propriétés écrites dans la note : `age_verdict`, `age_stability`, `age_axes`, `age_return`, `age_links`, `age_discovered`, `age_drawn`, `age_home` (utilisables avec Dataview ou Bases)." },
-    { p: "Limites connues : bureau seulement (mobile non pris en charge) ; la loi du changement range son état par nom de note ; une note à plusieurs blocs `age` tire un monde par bloc ; le contenu du moteur est en anglais ; pas d'export GIF en rendu génératif." },
-  ] },
-];
+const { REF_FR } = require("./guide-ref-fr");
+const PART_ORDER = ["set", "write", "gen", "relto"];
+const PARTS = {
+  en: { set: "Settings", write: "What you write", gen: "What the Age generates by itself", relto: "Relto" },
+  fr: { set: "Réglages", write: "Ce que tu écris", gen: "Ce que l'Âge génère seul", relto: "Relto" },
+};
+/** Rubrique ouverte par défaut dans la référence : la façon d'écrire un Âge. */
+const REF_START = "syntax";
 
 /** Niveaux du guide : « quick » (court) et « full » (référence complète, en français et en anglais). */
 const topics = (lang, level) => (level === "full" ? (lang === "fr" ? REF_FR : REF_EN) : GUIDE[lang] || GUIDE.en);
@@ -252,10 +112,18 @@ const topics = (lang, level) => (level === "full" ? (lang === "fr" ? REF_FR : RE
 /** Texte Markdown du guide (pour l'enregistrer dans une note). */
 function toMarkdown(lang, level) {
   const out = [level === "full" ? (lang === "fr" ? "# Age Writer — Référence complète" : "# Age Writer — Full reference") : "# Age Writer — Guide", ""];
+  const parts = PARTS[lang] || PARTS.en, cell = (x) => String(x).replace(/\|/g, "\\|");
+  let part = null;
   for (const t of topics(lang, level)) {
-    out.push("## " + t.title, "");
+    if (t.part && t.part !== part) { part = t.part; out.push("## " + parts[part], ""); }
+    out.push((t.part ? "### " : "## ") + t.title, "");
     for (const b of t.body) {
-      if (b.p) out.push(b.p, ""); else if (b.h) out.push("### " + b.h, ""); else if (b.code) out.push("````", b.code, "````", ""); else if (b.ul) out.push(...b.ul.map((x) => "- " + x), "");
+      if (b.p) out.push(b.p, "");
+      else if (b.h) out.push((t.part ? "#### " : "### ") + b.h, "");
+      else if (b.code) out.push("````", b.code, "````", "");
+      else if (b.ul) out.push(...b.ul.map((x) => "- " + x), "");
+      else if (b.note) out.push("> " + b.note, "");
+      else if (b.table) out.push("| " + b.table.head.map(cell).join(" | ") + " |", "|" + b.table.head.map(() => " --- |").join(""), ...b.table.rows.map((r) => "| " + r.map(cell).join(" | ") + " |"), "");
     }
   }
   return out.join("\n");
@@ -271,15 +139,23 @@ function inline(el, text) {
   }
 }
 
-/** Dessine une rubrique dans `host`. */
-function renderTopic(host, topic) {
+/** Dessine une rubrique dans `host` (`kicker` : le nom de sa partie, au-dessus du titre). */
+function renderTopic(host, topic, kicker) {
   host.empty();
+  if (kicker) host.createDiv({ cls: "age-guide__kicker", text: kicker });
   host.createEl("h2", { text: topic.title });
   for (const b of topic.body) {
     if (b.p) inline(host.createEl("p"), b.p);
     else if (b.h) host.createEl("h4", { text: b.h });
     else if (b.code) host.createEl("pre", { cls: "age-guide__code" }).createEl("code", { text: b.code });
     else if (b.ul) { const ul = host.createEl("ul"); for (const x of b.ul) inline(ul.createEl("li"), x); }
+    else if (b.note) inline(host.createDiv({ cls: "age-guide__note" }), b.note);
+    else if (b.table) {
+      const wrap = host.createDiv({ cls: "age-guide__tablewrap" }), table = wrap.createEl("table", { cls: "age-guide__table" });
+      const hr = table.createEl("thead").createEl("tr"); for (const x of b.table.head) hr.createEl("th", { text: x });
+      const tb = table.createEl("tbody");
+      for (const r of b.table.rows) { const tr = tb.createEl("tr"); for (const x of r) inline(tr.createEl("td"), x); }
+    }
   }
 }
 
@@ -297,13 +173,16 @@ function openGuide(plugin, topicId, level0) {
       const draw = (id) => {
         const list = topics(lang, level), rows = {}; nav.empty();
         for (const k of Object.keys(lv)) lv[k].toggleClass("is-active", k === level);
-        const show = (tid) => { const t = list.find((x) => x.id === tid) || list[0]; for (const [k, r] of Object.entries(rows)) r.toggleClass("is-active", k === t.id); renderTopic(body, t); body.scrollTop = 0; };
+        const parts = PARTS[lang] || PARTS.en;
+        const show = (tid) => { const t = list.find((x) => x.id === tid) || list[0]; for (const [k, r] of Object.entries(rows)) r.toggleClass("is-active", k === t.id); renderTopic(body, t, t.part && parts[t.part]); body.scrollTop = 0; };
+        let part = null;
         for (const t of list) {
+          if (t.part && t.part !== part) { part = t.part; nav.createDiv({ cls: "age-guide__part", text: parts[part] }); }
           const r = nav.createDiv({ cls: "age-guide__item" }); rows[t.id] = r;
           try { obs.setIcon(r.createSpan({ cls: "age-guide__icon" }), t.icon); } catch (e) { /* ignore */ }
           r.createSpan({ text: t.title }); r.addEventListener("click", () => show(t.id));
         }
-        show(id);
+        show(id || (level === "full" ? REF_START : null));
       };
       for (const k of Object.keys(lv)) lv[k].addEventListener("click", () => { level = k; draw(); });
       foot.createEl("button", { text: fr ? "Enregistrer en note" : "Save as a note" }).addEventListener("click", async () => {
@@ -318,4 +197,4 @@ function openGuide(plugin, topicId, level0) {
   new GuideModal(plugin.app).open();
 }
 
-module.exports = { GUIDE, topics, toMarkdown, renderTopic, openGuide };
+module.exports = { GUIDE, PARTS, PART_ORDER, REF_START, topics, toMarkdown, renderTopic, openGuide };
