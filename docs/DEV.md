@@ -43,6 +43,7 @@ manifest.json + version de package.json ──────────┴─► 
 | `hooks.w(slot, option)` | `draw.js` | solitude (poids des options du tirage) |
 | `hooks.written(ensemble)` | `resolve.js` | livre-piège : la fissure est « répondue » avant le tirage |
 | `hooks.skip(ligne)` | `resolve.js`, `age-text.js` | lignes de l'extension (`mechanism:`, `fx:`, `trap book`…) : ni symbole inconnu, ni page |
+| `hooks.norm(ligne)` | `resolve.js`, `age-text.js` | météo vivante : `rain: sometimes, dawn` est lue comme `rain` (src/weather.js) |
 
 Les valeurs par défaut rendent le moteur identique à la 1.3.0 ; `src/entry.js` les remplace au démarrage.
 L'extension reçoit en plus `core` (`src/main.js`) = `{ analyse, extract, base, glyphSvg, prose, glyphs, blocks, BookView, SettingsTab }`.
@@ -67,6 +68,7 @@ Le ciel étendu (`src/sky.js`) et les richesses (`src/wealth.js`) sont lus direc
 | `linkfx.js` | effets de la fenêtre de liaison (ondulation, statique, télé, coupures), tirage d'une liaison incertaine |
 | `genscene.js` | fenêtre génératrice : `sceneOf` (descripteur, blocs inconnus compris), `traits` (adjectifs → teinte, taille, mouvement), `build` (géométrie tirée de la graine), `paint` (une image à la phase t) |
 | `wealth.js` / `amounts.js` | richesses et cicatrices (blocs de matière), quantités many/few/normal et compensation (`applyAmounts`, appelé par `adjust`) |
+| `weather.js` | météo vivante : lignes `bloc: fréquence, moments`, tirage par (graine de l'Âge, jour D'ni ou jour de l'Âge, moment), présence en fondu ; la fenêtre la lit par `weatherLevels()` (`genscene.js`) |
 | `sky.js` | ciel étendu : blocs de cosmologie et mondes-types (`WORLD_CLASH`, `WORLD_LIFE`), règles ciel↔vivant, phrases, lignes `day_length` / `year_length`, horloge |
 | `damagefx.js` | dégâts procéduraux : `plan` (zones et trous), `branchCracks` / `drawCracks`, `drawDamage` |
 | `sound.js` | synthèse Web Audio : couches d'ambiance, préréglages, niveaux zen/minimal, effets ponctuels (livre, liaison, parasites) |

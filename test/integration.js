@@ -137,6 +137,12 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     ok(Array.isArray(gl), "richesses : glyphes" + (gl instanceof Error ? " : " + gl.message : ""));
     ok(!/^\s*(day_length|year_length)/.test("") && p.core.analyse("single_sun\nday_length: 40\nyear_length: 12", { seed: "T" }).resolved.lines.every((l) => !l.unknown), "ciel étendu : day_length / year_length ne sont pas des symboles inconnus");
     ok(p.core.analyse("single_sun\nmoons: 3\nlunes: 2", { seed: "T" }).resolved.lines.every((l) => !l.unknown), "moons: / lunes: ne sont pas des symboles inconnus");
+    // météo vivante (plugin réel) : la ligne programmée est de la pluie pour le moteur, le programme suit l'analyse jusqu'à la fenêtre
+    const wxA = p.core.analyse("single_sun\nrain: sometimes, dawn\ndrizzle: often, dawn\nflowers\nfog", { seed: "Jardin" }), wxB = p.core.analyse("single_sun\nrain\ndrizzle\nflowers\nfog", { seed: "Jardin" });
+    ok(wxA.resolved.lines.every((l) => !l.unknown) && wxA.resolved.matter.written.includes("rain") && wxA.resolved.matter.written.includes("drizzle"), "météo vivante : `rain: sometimes, dawn` n'est pas un symbole inconnu");
+    ok(wxA.stability === wxB.stability && wxA.weather && wxA.weather.rain[0].slots[0] === "dawn" && !wxB.weather, "météo vivante : même stabilité qu'en lignes nues, programme joint à l'analyse");
+    ok(wxA.resolved.matter.reactions.some((r) => r.result === "scented_mist"), "météo vivante : brume + fleurs = brume parfumée");
+    const wxS = require("../src/genscene").sceneOf(wxA, "Jardin", p.core.blocks); ok(wxS && wxS.weather === wxA.weather && wxS.drizzle && wxS.scent, "météo vivante : la fenêtre générative reçoit le programme");
   }
 
   // panneau d'un Âge

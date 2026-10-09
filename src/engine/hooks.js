@@ -7,6 +7,7 @@
  *   written  ensemble des symboles « déjà répondus » avant le tirage des pages ouvertes
  *   w        poids d'une option du tirage (solitude)
  *   skip     vrai pour une ligne du bloc `age` qui appartient à l'extension (ni symbole inconnu, ni page)
+ *   norm     ramène une ligne à son symbole (`rain: sometimes, dawn` → `rain`, météo vivante) ; identité par défaut
  */
 const hooks = {
   src: null,
@@ -14,6 +15,7 @@ const hooks = {
   written: (set) => set,
   w: (slotName, option) => option.weight,
   skip: () => false,
+  norm: (line) => line,
 };
 
 module.exports = { hooks };

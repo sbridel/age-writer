@@ -13,7 +13,7 @@ function writtenLines(text) {
         !line.startsWith("#") &&
         !/^(link|return|panel|seed)\s*:/i.test(line) &&
         !hooks.skip(line) &&
-        written.add(line);
+        written.add(hooks.norm(line));
     }
   return written;
 }
@@ -48,6 +48,7 @@ function removeLine(text, line) {
       let bodyLines = body.split(`
 `),
         index = bodyLines.findIndex((bodyLine) => bodyLine.trim() === line);
+      if (index === -1) index = bodyLines.findIndex((bodyLine) => bodyLine.trim() !== "" && hooks.norm(bodyLine.trim()) === line); // `rain: sometimes, dawn` se retire avec `rain`
       return index === -1
         ? block
         : ((removed = !0),

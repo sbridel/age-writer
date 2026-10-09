@@ -9,6 +9,7 @@
  */
 
 const { parseAmounts } = require("./amounts");
+const { parseWeather } = require("./weather");
 const GEO = require("./geophys");
 const TERRAIN = require("./terrain");
 
@@ -56,11 +57,11 @@ const LIFE = ["great_tree", "grove", "ironwood", "sapling", "fern", "vine", "mos
 const rule = (sky, withId, severity, axis, note) => ({ sky, with: withId, severity, axis, note });
 /** Ce que chaque monde-type ne supporte pas : [id, gravité, axe]. */
 const WORLD_CLASH = {
-  frozen_world: [["lava", "strong", "geological"], ["heat", "medium", "weather"], ["wildfire", "medium", "ecological"], ["steam", "light", "weather"], ["sand", "light", "geological"], ["dust_storm", "light", "weather"]],
-  lava_world: [["ice", "strong", "geological"], ["deep_cold", "strong", "weather"], ["black_ice", "medium", "geological"], ["hail", "medium", "weather"], ["rime", "medium", "weather"], ["meltwater", "light", "geological"], ["water", "light", "geological"]],
-  desert_world: [["water", "medium", "geological"], ["ice", "medium", "geological"], ["deep_cold", "light", "weather"], ["rain", "medium", "weather"], ["marsh_mist", "medium", "weather"], ["fog", "light", "weather"]],
+  frozen_world: [["lava", "strong", "geological"], ["heat", "medium", "weather"], ["wildfire", "medium", "ecological"], ["steam", "light", "weather"], ["sand", "light", "geological"], ["dust_storm", "light", "weather"], ["flowers", "light", "ecological"]],
+  lava_world: [["ice", "strong", "geological"], ["deep_cold", "strong", "weather"], ["black_ice", "medium", "geological"], ["hail", "medium", "weather"], ["rime", "medium", "weather"], ["meltwater", "light", "geological"], ["water", "light", "geological"], ["snow", "strong", "weather"], ["glaze", "medium", "weather"], ["flowers", "medium", "ecological"]],
+  desert_world: [["water", "medium", "geological"], ["ice", "medium", "geological"], ["deep_cold", "light", "weather"], ["rain", "medium", "weather"], ["marsh_mist", "medium", "weather"], ["fog", "light", "weather"], ["drizzle", "medium", "weather"], ["snow", "light", "weather"]],
   ocean_world: [["sand", "medium", "geological"], ["lava", "medium", "geological"], ["dust_storm", "medium", "weather"], ["wildfire", "medium", "ecological"], ["glass", "light", "geological"]],
-  jungle_world: [["sand", "medium", "geological"], ["ice", "medium", "geological"], ["deep_cold", "medium", "weather"], ["lava", "medium", "geological"], ["dust_storm", "medium", "weather"], ["wildfire", "strong", "ecological"], ["ash_cloud", "light", "weather"]],
+  jungle_world: [["sand", "medium", "geological"], ["ice", "medium", "geological"], ["deep_cold", "medium", "weather"], ["lava", "medium", "geological"], ["dust_storm", "medium", "weather"], ["wildfire", "strong", "ecological"], ["ash_cloud", "light", "weather"], ["snow", "medium", "weather"]],
 };
 /** Vie fragile selon le monde (gravité de la tension avec chaque bloc vivant). */
 const WORLD_LIFE = { frozen_world: "light", lava_world: "medium", desert_world: "light" };
@@ -116,6 +117,7 @@ function parseSky(src) {
     m = line.match(YEAR_RE); if (m) { const v = Number(m[1].replace(",", ".")); if (v >= 1 && v <= 365) out.yearLen = v; }
   }
   const amt = parseAmounts(src); if (amt) out.amt = amt; // quantités : beaucoup / peu / normal
+  const wx = parseWeather(src); if (wx) out.weather = wx; // météo vivante : `rain: sometimes, dawn` (src/weather.js)
   return out;
 }
 

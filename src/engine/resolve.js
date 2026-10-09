@@ -45,6 +45,7 @@ function resolveAge(source, options = {}) {
 `)) {
     let line = rawLine.trim();
     if (line === "" || line.startsWith("#") || hooks.skip(line)) continue;
+    line = hooks.norm(line);
     let seedMatch = line.match(/^seed\s*:\s*(.*)$/i);
     if (seedMatch) {
       seedMatch[1].trim() && (seedLine = seedMatch[1].trim());

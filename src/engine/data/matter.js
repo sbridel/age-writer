@@ -192,6 +192,15 @@ const FLORA_BLOCKS = [
     axis: FLORA_AXIS,
     writable: !1,
   },
+  // météo vivante : des fleurs, pour la brume parfumée (fog + flowers) et la pluie de pétales (wind + flowers)
+  {
+    id: "flowers",
+    descriptors: ["bright", "fragrant", "open"],
+    weight: 0.02,
+    axis: FLORA_AXIS,
+    writable: !0,
+    presence: "flowers open in every hollow, and the air remembers them",
+  },
 ];
 
 const FLORA_REACTIONS = [
@@ -421,6 +430,58 @@ const WEATHER_BLOCKS = [
     writable: !1,
   },
   { id: "black_hail", descriptors: ["black", "silent", "hard"], weight: 0, axis: WEATHER_AXIS, writable: !1 },
+  // météo vivante (src/weather.js) : de nouveaux temps, et ce qu'ils deviennent au contact d'autres pages.
+  // Toutes les réactions ci-dessous touchent un bloc nouveau : les Âges déjà écrits gardent leurs réactions et leur stabilité.
+  {
+    id: "drizzle",
+    descriptors: ["fine", "silver", "hushed"],
+    weight: 0.02,
+    axis: WEATHER_AXIS,
+    writable: !0,
+    presence: "a fine drizzle comes and goes, too light to darken the stone",
+  },
+  {
+    id: "snow",
+    descriptors: ["white", "soundless", "slow"],
+    weight: 0.03,
+    axis: WEATHER_AXIS,
+    writable: !0,
+    presence: "snow falls without a sound, and keeps whatever it covers",
+  },
+  {
+    id: "rainbow",
+    descriptors: ["bright", "arched", "fleeting"],
+    weight: 0.02,
+    axis: WEATHER_AXIS,
+    writable: !0,
+    presence: "a rainbow stands over the far side of the land for a while, then is gone",
+  },
+  {
+    id: "tornado",
+    descriptors: ["spinning", "dark", "roaring"],
+    weight: 0.06,
+    axis: WEATHER_AXIS,
+    writable: !0,
+    presence: "far off, a funnel of wind walks the land and never quite comes closer",
+  },
+  {
+    id: "scented_mist",
+    descriptors: ["sweet", "pale", "lingering"],
+    weight: 0,
+    axis: WEATHER_AXIS,
+    writable: !1,
+  },
+  { id: "petal_rain", descriptors: ["drifting", "pink", "soft"], weight: 0, axis: WEATHER_AXIS, writable: !1 },
+  { id: "glaze", descriptors: ["glassy", "clear", "treacherous"], weight: 0, axis: WEATHER_AXIS, writable: !1 },
+  {
+    id: "crystal_rain",
+    descriptors: ["glinting", "chiming", "sharp"],
+    weight: 0,
+    axis: WEATHER_AXIS,
+    writable: !1,
+  },
+  { id: "ash_rain", descriptors: ["grey", "slow", "staining"], weight: 0, axis: WEATHER_AXIS, writable: !1 },
+  { id: "acid_rain", descriptors: ["sour", "yellow", "biting"], weight: 0, axis: WEATHER_AXIS, writable: !1 },
 ];
 
 const WEATHER_REACTIONS = [
@@ -459,6 +520,15 @@ const WEATHER_REACTIONS = [
   },
   { a: "lightning", b: "sand", result: "fulgurite", type: "crystallizing", verbs: ["fuses it into"] },
   { a: "heat", b: "fern", result: "withered_fern", type: "decaying" },
+  // météo vivante : chaque réaction touche un bloc nouveau (drizzle, snow, flowers)
+  { a: "fog", b: "flowers", result: "scented_mist", type: "soothing", verbs: ["takes their scent and becomes", "softens into"] },
+  { a: "wind", b: "flowers", result: "petal_rain", type: "transmuting", verbs: ["strips them into", "lifts them into"] },
+  { a: "drizzle", b: "deep_cold", result: "glaze", type: "crystallizing", verbs: ["freezes where it lands into", "settles as"] },
+  { a: "drizzle", b: "crystal", result: "crystal_rain", type: "transmuting", verbs: ["catches its light and falls as"] },
+  { a: "drizzle", b: "ash", result: "ash_rain", type: "decaying", verbs: ["darkens into", "carries it down as"] },
+  { a: "drizzle", b: "acid", result: "acid_rain", type: "corrosive", verbs: ["turns sour, falling as"] },
+  { a: "snow", b: "heat", result: "meltwater", type: "soothing" },
+  { a: "snow", b: "lava", result: "steam", type: "violent", cost: 0.2, verbs: ["hisses into"] },
 ];
 
 const WEATHER_VARIANTS = {

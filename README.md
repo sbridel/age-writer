@@ -271,6 +271,7 @@ When the book is already open, clicking a window only replays the linking sound.
 - **Law of change**: while the ink is fresh (15 min by default) you can retouch. After that, changing the world (adding or removing a page) damages it (0.06 instability per element, capped at 0.30), then it slowly heals. Spaces, line breaks, case and renaming don't count.
 - **Extended sky** (belt and asteroid field, rings, comet, coloured suns), **world types** (frozen, lava, desert, ocean, jungle), **riches and scars** (gold, silver, gems… offset by scars up to 75%): see the full reference.
 - **Aurora** is only visible at night, in Ages as in the Relto (it rises at dusk and fades at dawn).
+- **Living weather**: a weather line can carry a frequency and times of day, `drizzle: often, dawn` or `fog: 1/10, night` (`always`, `often`, `sometimes`, `rarely`, a fraction or a percentage; `dawn`, `morning`, `noon`, `afternoon`, `dusk`, `night`). In the generative window it comes and goes with the sun, fading in and out; the draw depends on the Age's seed and the D'ni day (or the Age's own day with `day_length:`), so everyone sees the same weather on the same day. For stability it counts exactly like the bare line; a bare `rain` stays rain all the time. New blocks: `drizzle`, `snow`, `rainbow`, `tornado`, `flowers`; new products: `scented_mist` (fog + flowers), `petal_rain` (wind + flowers), `glaze` (drizzle + deep_cold), `crystal_rain`, `ash_rain`, `acid_rain` (drizzle + crystal / ash / acid).
 
 ---
 
