@@ -52,6 +52,7 @@
 .age-relto__dnitime { display: inline-flex; align-items: center; gap: 6px; color: #cdbd94; font-size: 0.75em; }
 .age-relto__dnitime i { font-style: italic; opacity: 0.75; }
 .age-relto__dnitime b { display: inline-flex; gap: 3px; font-weight: normal; }
+.age-relto__dnitime b.age-relto__dnitime-silent { font-style: italic; opacity: 0.55; letter-spacing: 0.02em; }
 .age-relto__dnitime svg { display: block; }
 .age-relto__controls input[type="range"] { width: 120px; }
 .age-relto__canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 1px solid #8a7250; background: #050505; cursor: default; }

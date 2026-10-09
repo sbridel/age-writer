@@ -104,16 +104,30 @@ ok(T.STEP.torahn.hub === 100 && T.STEP.torahn.rim === 2500 && T.STEP.elev.hub ==
   ok(r.hot.some((h) => h.go === "island") && r.hot.some((h) => /blank/i.test(h.tip)), "redescendre ; plaque vierge");
   // le joueur cherche : à chaque geste, il garde celui qui avive le signal (chaud / froid), couronne puis moyeu
   const click = (axis, delta) => { r.draw(2); const h = r.hot.find((x) => x.tel && x.tel.axis === axis && x.tel.delta === delta); r.toLogical = () => [h.x + 1, h.y + 1]; r.onClick({}); };
-  let steps = 0, lastS = T.signal(st.aim, st.zero).s, stalled = 0;
-  while (!st.found && steps < 400) {
+  // sans « il s'avive / il pâlit », le joueur compare ce qu'il voit sur quelques battements (la scintillation trompe un regard unique)
+  const looks = (aim) => { let m = 0; for (let b = 0; b < 8; b++) m += T.observe(T.signal(aim, st.zero), steps * 31 + b).s; return m / 8; };
+  let steps = 0, stalled = 0;
+  while (!st.found && steps < 1500) {
     let moved = false;
     for (const axis of ["torahn", "elev"]) for (const step of [T.STEP[axis].rim, T.STEP[axis].hub]) for (const dir of [1, -1]) {
       if (moved) continue; const before = { ...st.aim }; click(axis, dir * step); steps++;
-      if (st.trend > 0) moved = true; else { st.aim = before; } // plus froid : on revient
+      if (looks(st.aim) > looks(before)) moved = true; else { st.aim = before; } // plus froid, à l'œil : on revient
     }
-    const s = T.signal(st.aim, st.zero).s; if (s <= lastS) stalled++; lastS = s; if (stalled > 3) break;
+    if (!moved) stalled++; if (stalled > 60) break;
   }
-  ok(st.found, `chaud / froid suffit à trouver le Zéro (${steps} gestes)`);
+  ok(st.found, `à l'œil, en regardant quelques battements, on trouve le Zéro (${steps} gestes)`);
+  { // un seul regard ne suffit pas de loin (la scintillation), mais plusieurs battements tranchent
+    const z = { torahn: 30000, elevation: 0, distance: 1 }, far = { torahn: 10000, elev: 0 }, closer = { torahn: 12500, elev: 0 };
+    let single = 0, avg = 0;
+    for (let b = 0; b < 200; b++) {
+      if (T.observe(T.signal(closer, z), b).s > T.observe(T.signal(far, z), b + 7).s) single++;
+      let m1 = 0, m0 = 0; for (let k = 0; k < 8; k++) { m1 += T.observe(T.signal(closer, z), b * 16 + k).s; m0 += T.observe(T.signal(far, z), b * 16 + 8 + k).s; } if (m1 > m0) avg++;
+    }
+    ok(single < 150 && avg > 155 && avg > single + 20, `de loin, un regard trompe parfois (${single / 2} % juste), huit battements presque jamais (${avg / 2} %)`);
+    const sg = T.signal({ torahn: 30000, elev: 0 }, z); ok(T.observe(sg, 5).found && T.observe(sg, 5).band === 5, "dans l'anneau : la perception ne ment pas");
+    ok(!T.observe(T.signal({ torahn: 30400, elev: 0 }, z), 3).found && [...Array(50).keys()].every((b) => T.observe(T.signal({ torahn: 30400, elev: 0 }, z), b).band < 5), "hors de l'anneau, jamais « au bord de l'anneau »");
+    ok(JSON.stringify(T.observe(T.signal(far, z), 9)) === JSON.stringify(T.observe(T.signal(far, z), 9)), "même battement, même visée : même perception");
+  }
   ok(sounds.some(([k]) => k === "found") && sounds.some(([k]) => k === "ping"), "sons : le pouls après chaque geste, la quinte du Zéro trouvé");
   const key = T.keyOf(sc.name, sc.seed);
   ok(store[key] && store[key].found === true && store[key].at && Math.abs(T.gap(store[key].at, zero).dt) <= T.TOL.torahn && "torahn" in store[key], "trouvé : gardé par Relto (en torantee), avec la visée du moment");

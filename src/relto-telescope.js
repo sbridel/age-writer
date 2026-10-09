@@ -9,7 +9,7 @@
 // de près, elle se resserre en un point dans le champ, qu'on amène dans l'anneau ; au bord, elle se fixe. Pas de distance chiffrée.
 // La visée et le Zéro trouvé sont gardés par Relto (`opts.telescopeGet / telescopeSet`, clé T.keyOf(nom, graine)).
 // Tout est dessiné ici, en coordonnées logiques 640 × 360. Le modèle (pur) est dans src/telescope.js.
-const { rng, clamp, mix, rgba, frac, lerp } = require("./util");
+const { rng, fnv, clamp, mix, rgba, frac, lerp } = require("./util");
 const T = require("./telescope");
 const DT = require("./dnitime");
 const { makeT } = require("./i18n");
@@ -23,6 +23,9 @@ const PULSE_MS = DT.MS_PER_HAHR / DT.PRO_PER_HAHR; // un prorahn (≈ 1,39 s) : 
 const EN = makeT(() => "en");
 const tOf = (r) => (r.opts && typeof r.opts.t === "function" ? r.opts.t : EN);
 const now = (r) => (r.nowOverride != null ? r.nowOverride : Date.now());
+/** Le numéro du prorahn en cours : la scintillation du signal change à chaque battement. */
+const beatOf = (r) => Math.floor((now(r) - DT.REF) / PULSE_MS);
+const fnvKey = (k) => fnv(String(k)) >>> 0;
 /** Les paliers de mots du signal (T.signal().band), du vide au bord de l'anneau. */
 const bandWords = (t, b) => [t("tel.band.void"), t("tel.band.faint"), t("tel.band.far"), t("tel.band.near"), t("tel.band.close"), t("tel.band.edge")][b] || "";
 const axisName = (t, axis) => (axis === "torahn" ? t("tel.torahn") : t("tel.elev"));
@@ -34,7 +37,7 @@ function state(r) {
   if (!r.telescope || r.telescope.key !== key) {
     const g = r.opts.telescopeGet ? r.opts.telescopeGet(key) : null, zero = T.greatZero(sc.name, sc.seed), q = rng((sc.seed ^ 0x7e1e5c0) >>> 0), stars = [];
     for (let i = 0; i < 1400; i++) stars.push({ u: q() * NT, v: (q() * 2 - 1) * (T.ELEV_MAX + FIELD), m: q(), tw: q() * 6.283 }); // u en crans fins, v en shahfeetee
-    r.telescope = { key, zero, aim: T.normAim(g), found: !!(g && g.found), at: g && g.at ? T.normAim(g.at) : null, stars, trend: 0, anim: null };
+    r.telescope = { key, zero, aim: T.normAim(g), found: !!(g && g.found), at: g && g.at ? T.normAim(g.at) : null, stars, anim: null };
   }
   return r.telescope;
 }
@@ -47,10 +50,9 @@ function act(r, a) {
   else if (axis) { st.aim = T.turn(st.aim, axis, a.delta); sfx(Math.abs(a.delta) >= T.STEP[axis].rim ? "turn" : "tick", before.s); }
   else return;
   const after = T.signal(st.aim, st.zero);
-  st.trend = after.s > before.s + 1e-9 ? 1 : after.s < before.s - 1e-9 ? -1 : 0;
   if (!r.opts.reducedMotion) st.anim = { from, t0: r.telescopeT || 0 };
   if (axis) r.wheelSpin = { ...(r.wheelSpin || {}), [axis]: r.telescopeT || 0 };
-  sfx("ping", after.s);
+  sfx("ping", T.observe(after, beatOf(r), fnvKey(st.key)).s); // le pouls entendu scintille, comme celui qu'on voit
   if (after.found && !st.found) { st.found = true; st.at = { torahn: st.aim.torahn, elev: st.aim.elev }; sfx("found", 1); }
   if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, T.saved(st));
 }
@@ -140,7 +142,7 @@ function eyepiece(r, ctx, c, st, sig, tm, ms) {
 
 /** La vue du télescope : le sommet la nuit, l'oculaire, les deux molettes, la plaque, la ligne de mots. */
 function drawTelescopeRoom(r, ctx, sc, sky, tm) {
-  const t = tOf(r), st = state(r), sig = T.signal(st.aim, st.zero), ms = now(r), amb = 0.6 + 0.4 * sky.ambient, c = (h) => mix("#05060c", h, amb);
+  const t = tOf(r), st = state(r), sig = T.observe(T.signal(st.aim, st.zero), beatOf(r), fnvKey(st.key)), ms = now(r), amb = 0.6 + 0.4 * sky.ambient, c = (h) => mix("#05060c", h, amb);
   r.telescopeT = tm;
   // le ciel du sommet (assombri : on regarde dans une lunette) et le parapet de pierre
   const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, mix("#04060d", sky.top, 0.35)); g.addColorStop(1, mix("#0a0c14", sky.bottom, 0.3)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
@@ -166,7 +168,7 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     r.hot.push({ ...PLATE, tip: t("tel.plate.blank") });
   }
   // la ligne de mots, sous l'oculaire
-  const line = st.found && sig.found ? t("tel.found") : bandWords(t, sig.band) + (st.trend > 0 ? " " + t("tel.warmer") : st.trend < 0 ? " " + t("tel.colder") : "");
+  const line = st.found && sig.found ? t("tel.found") : bandWords(t, sig.band); // ce qu'on voit, rien de plus : à toi de comparer
   ctx.font = "italic 14px serif"; ctx.textAlign = "center"; ctx.fillStyle = sig.found ? "#9fe6da" : "#e9dcb8"; ctx.fillText(line, W / 2, 306); ctx.textAlign = "left";
   if (st.found && !sig.found) { ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(233,220,184,0.75)"; ctx.fillText(t("tel.charted"), W / 2, 323); ctx.textAlign = "left"; }
   // redescendre

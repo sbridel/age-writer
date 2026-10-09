@@ -261,7 +261,10 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
   ok(!!r2.querySelector(".age-relto__canvas"), "bloc relto avec note : canvas rendu");
 
   // pages repliables + inscription + texte D'ni inline
-  ok(!!r2.querySelector(".age-relto__dnitime svg"), "Relto : heure D'ni affichée (année, mois, jour, heures)");
+  ok(!!r2.querySelector(".age-relto__dnitime svg"), "Relto : date D'ni affichée (année, mois, jour)");
+  ok(!!r2.querySelector(".age-relto__dnitime-silent"), "Relto : avant le Great Zero, l'heure D'ni se tait (la date reste)");
+  { const tel0 = p.ext.telescope; p.ext.telescope = new Proxy({}, { get: () => ({ found: true }) }); const rz = document.createElement("div"); await p.procs.relto("", rz, { sourcePath: "x.md", addChild() {} }); p.ext.telescope = tel0;
+    ok(!rz.querySelector(".age-relto__dnitime-silent") && rz.querySelectorAll(".age-relto__dnitime b svg").length >= 4, "Relto : Great Zero trouvé, l'heure D'ni s'affiche"); }
   { const roff = document.createElement("div"); await p.procs.relto("dni_time: off", roff, { sourcePath: "x.md", addChild() {} }); ok(!roff.querySelector(".age-relto__dnitime"), "Relto : dni_time: off masque l'heure D'ni");
     p.ext.dniClock = false; const rset = document.createElement("div"); await p.procs.relto("", rset, { sourcePath: "x.md", addChild() {} }); p.ext.dniClock = true; ok(!rset.querySelector(".age-relto__dnitime"), "Relto : réglage désactivé = pas d'heure D'ni"); }
   p.ext.reltoTabs = false; // panneau d'origine (repliables)

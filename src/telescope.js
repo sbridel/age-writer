@@ -92,7 +92,22 @@ function signal(aim, zero) {
   return { dt, de, d, s, band, found: Math.abs(dt) <= TOL.torahn && Math.abs(de) <= TOL.elev };
 }
 
+/**
+ * Ce que l'œil perçoit du signal à un battement donné (`beat` : le numéro du prorahn) : le vrai signal, troublé par une
+ * scintillation qui change à chaque battement. Loin, elle est forte (un seul geste ne dit pas si l'on chauffe : il faut
+ * regarder plusieurs battements) ; près, elle s'apaise. Même battement, même visée : même perception (reproductible).
+ * `s` et `band` sont perçus ; `found` reste exact (l'anneau ne ment pas).
+ */
+const SCINT = { floor: 0.03, rel: 0.12, far: 0.3 }; // amplitude : un plancher, plus une part du signal, plus forte de loin
+function observe(sig, beat, salt = 0) {
+  const r = rng((fnv(`${beat | 0}:${Math.round(sig.d * 10)}`) ^ (salt >>> 0) ^ 0x7e1e5c09) >>> 0); r();
+  const amp = SCINT.floor + sig.s * (SCINT.rel + SCINT.far * (1 - sig.s)), s = Math.max(0, Math.min(1, sig.s + amp * (r() * 2 - 1)));
+  let band = 0; while (band < BANDS.length && s >= BANDS[band]) band++;
+  if (!sig.found) band = Math.min(band, BANDS.length - 1); // le bord de l'anneau ne se voit que dans l'anneau
+  return { ...sig, s: sig.found ? Math.max(s, sig.s) : s, band: sig.found ? sig.band : band };
+}
+
 /** Ce qu'on garde (par Relto) : la visée et, une fois trouvé, le Zéro reste trouvé (avec la visée du moment, `at`, pour l'étape 2). */
 function saved(st) { return { torahn: st.aim.torahn, elev: st.aim.elev, found: !!st.found, ...(st.found && st.at ? { at: { torahn: st.at.torahn, elev: st.at.elev } } : {}) }; }
 
-module.exports = { TURN, NOTCH, STEP, ELEV_MAX, ZERO_ELEV, DIST_MAX, TOL, BANDS, axisOf, keyOf, greatZero, kiElev, normAim, turn, gap, signal, saved };
+module.exports = { TURN, NOTCH, STEP, ELEV_MAX, ZERO_ELEV, DIST_MAX, TOL, BANDS, SCINT, observe, axisOf, keyOf, greatZero, kiElev, normAim, turn, gap, signal, saved };
