@@ -87,7 +87,7 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText && parseTrap(srcText)) out = { ...out, returnTo: null, stranded: true, fissure: null, trapped: true, home: "none" };
         if (srcText) out = guard("quantités", () => applyAmounts(out, parseAmounts(srcText), this.core && this.core.blocks)) || out;
         if (srcText) out = applyDamage(out, parseDamage(srcText));
-        if (srcText) { const wx = guard("météo", () => WX.parseWeather(srcText)); if (wx) out = { ...out, weather: wx }; } // météo vivante : lue par la fenêtre (sceneOf), sans effet sur la stabilité
+        if (srcText) { const wx = guard("météo", () => WX.parseWeather(srcText)); if (wx) out = { ...out, weather: wx, resolved: out.resolved ? { ...out.resolved, weather: wx } : out.resolved }; } // météo vivante : lue par la fenêtre (sceneOf) et la description, sans effet sur la stabilité
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
         if (this.ext.law && o && o.seed) out = guard("fissure", () => { // la fissure grandit : elle abîme un monde instable, et le condamne s'il n'est pas corrigé à temps
           const op = this.law.opening(o.seed, this.ext.fissureDays), bad = strainable(out);

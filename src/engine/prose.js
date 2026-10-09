@@ -1,5 +1,6 @@
 "use strict";
 const EXTRA_SKY = require("../sky");
+const WEATHER = require("../weather");
 const { blockById } = require("./registry");
 const { SEVERITY_ORDER } = require("./rules");
 
@@ -358,7 +359,7 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random)) {
   }
   const loose = [];
   for (const id of resolved.matter.written) {
-    if (used.has(id)) continue;
+    if (used.has(id) || (resolved.weather && resolved.weather[id])) continue; // météo programmée : sa phrase datée la dit (describeAge)
     const presence = String(blockById.get(id)?.presence ?? "").trim();
     if (presence) sentences.push(capitalize(presence) + ".");
     else loose.push(id);
@@ -418,7 +419,9 @@ function describeAge(resolved, options = {}) {
     const drawnNote = resolved.drawn.some((pick) => blockById.has(pick.id))
       ? [capitalize(unlike(SKY_PROSE_GRAMMAR.drawn_matter_note))]
       : [];
-    return [...sky, ...contradictionSentences, ...matterLines, ...drawnNote].join(" ");
+    // météo vivante : une phrase par ligne programmée (`drizzle: often, dawn`), seulement s'il y en a (les autres Âges gardent leur texte)
+    const weatherLines = resolved.weather ? WEATHER.sentences(resolved.weather, teller.pick) : [];
+    return [...sky, ...contradictionSentences, ...matterLines, ...weatherLines, ...drawnNote].join(" ");
   });
 }
 

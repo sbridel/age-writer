@@ -152,4 +152,36 @@ function dayOf(sky, now = Date.now()) {
 /** Graine de l'Âge pour la météo : la même que celle du tirage des pages (nom de la note + ligne `seed:`). */
 const seedKey = (name, seedLine) => `${name || ""}#${seedLine || ""}`;
 
-module.exports = { FREQ, SLOTS, SLOT_ALIAS, LEAD, BOUNDS, FADE, parseValue, parseLine, normalize, isWeatherId, parseWeather, activeIn, drawDay, slotOf, levelAt, dayOf, seedKey };
+// ---- phrases (description de l'Âge, en anglais comme toute la prose) --------------------------------------------
+/** Ce que fait chaque temps, en quelques variantes ; un bloc de la bibliothèque sans phrase prend « <nom> comes ». */
+const SAYS = {
+  drizzle: ["a fine drizzle falls", "a fine drizzle hangs over everything", "a drizzle too light to hear settles on the stone"],
+  rain: ["rain falls", "a steady rain comes down", "the rain arrives, unhurried"],
+  snow: ["snow falls", "snow drifts down without a sound", "a slow snow covers the ground"],
+  fog: ["fog gathers", "a fog rises from the low ground", "the fog comes in and takes the distance away"],
+  wind: ["the wind rises", "a restless wind crosses the land", "the wind comes looking for something"],
+  lightning: ["lightning walks the horizon", "lightning flickers far off", "white light cracks the sky open"],
+  heat: ["the air grows heavy with heat", "a heat settles and the horizon shimmers", "the heat lies down on everything"],
+  rainbow: ["a rainbow stands over the land", "a rainbow arches over the far side of the land", "the light bends into a rainbow"],
+  tornado: ["a funnel of wind walks the far plains", "a tornado wanders along the horizon", "a dark spire of wind turns in the distance"],
+};
+const AT = { dawn: "at dawn", morning: "in the morning", noon: "at midday", afternoon: "in the afternoon", dusk: "at dusk", night: "at night" };
+/** Fréquence dite en mots, devant une proposition (« Some days, … »). */
+function howOften(f) { return f >= 1 ? null : f >= 0.6 ? "more often than not" : f >= 0.3 ? "some days" : f >= 0.1 ? "once in a while" : "once in a long while"; }
+const when = (slots) => { const s = (slots || []).map((x) => AT[x]); return s.length < 2 ? s.join("") : s.slice(0, -1).join(", ") + " and " + s[s.length - 1]; };
+/**
+ * Une phrase par ligne programmée (`drizzle: often, dawn` → « At dawn, more often than not, a fine drizzle falls. »),
+ * au plus `max`. `pick(list)` : le tirage de la description (reproductible). Ne dit rien sans programme.
+ */
+function sentences(sched, pick = (l) => l[0], max = 4) {
+  const out = [];
+  for (const [id, rules] of Object.entries(sched || {})) for (const r of rules) {
+    if (out.length >= max) return out;
+    const what = SAYS[id] ? pick(SAYS[id]) : id.replace(/_/g, " ") + " comes", at = when(r.slots), adv = howOften(r.freq);
+    const s = !adv ? `every day ${at}, ${what}` : at ? `${at}, ${adv}, ${what}` : `${adv}, ${what}`;
+    out.push(s[0].toUpperCase() + s.slice(1) + ".");
+  }
+  return out;
+}
+
+module.exports = { FREQ, SLOTS, SLOT_ALIAS, LEAD, BOUNDS, FADE, SAYS, parseValue, parseLine, normalize, isWeatherId, parseWeather, activeIn, drawDay, slotOf, levelAt, dayOf, seedKey, howOften, sentences };

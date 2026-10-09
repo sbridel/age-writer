@@ -156,4 +156,19 @@ const S3 = G.sceneOf(an(["single_sun", "snow"], [], { snow: [{ freq: 1, slots: [
 ok(sig(S3, 0.3).length < sig({ ...S3, weather: null }, 0.3).length, "neige de nuit : pas de neige à midi");
 ok(sig(S3, 0.9).length === sig({ ...S3, weather: null }, 0.9).length, "… et la nuit, la neige tombe");
 
+// ---- 6. phrases (étape 2) -----------------------------------------------------------------------------------------
+ok(same(WX.sentences({ drizzle: [{ freq: 0.7, slots: ["dawn"] }] }), ["At dawn, more often than not, a fine drizzle falls."]), "« a fine drizzle falls at dawn »");
+ok(same(WX.sentences({ rain: [{ freq: 1, slots: ["dusk", "night"] }] }), ["Every day at dusk and at night, rain falls."]) && same(WX.sentences({ fog: [{ freq: 0.1, slots: null }] }), ["Once in a while, fog gathers."]), "toujours / sans moment");
+ok(WX.sentences({ nimbus: [{ freq: 0.4, slots: ["noon"] }] })[0] === "At midday, some days, nimbus comes." && WX.sentences(null).length === 0, "bloc de bibliothèque sans phrase ; rien sans programme");
+ok(WX.sentences({ rain: Array(9).fill({ freq: 0.4, slots: null }) }).length === 4, "au plus quatre phrases");
+hooks.norm = WX.normalize;
+try {
+  const src = "single_sun\nstone\ndrizzle: often, dawn\nflowers", r = analyseAgeBase(src, { seed: "Jardin" }).resolved, plain = analyseAgeBase(src, { seed: "Jardin" }).resolved;
+  r.weather = WX.parseWeather(src); // ce que fait hooks.adjust (src/entry.js)
+  const said = describeAge(r, { seed: "Jardin" }), before2 = describeAge(plain, { seed: "Jardin" });
+  ok(/At dawn, more often than not, a fine drizzle/.test(said) && said === describeAge(r, { seed: "Jardin" }), "la description dit quand il bruine, toujours pareil");
+  const pres = blockById.get("drizzle").presence.toLowerCase();
+  ok(!said.toLowerCase().includes(pres) && before2.toLowerCase().includes(pres), "la phrase datée remplace la phrase de présence, pas les deux");
+} finally { hooks.norm = (line) => line; }
+
 console.log(`weather : ${n} vérifications, tout passe`);

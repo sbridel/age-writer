@@ -142,6 +142,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     ok(wxA.resolved.lines.every((l) => !l.unknown) && wxA.resolved.matter.written.includes("rain") && wxA.resolved.matter.written.includes("drizzle"), "météo vivante : `rain: sometimes, dawn` n'est pas un symbole inconnu");
     ok(wxA.stability === wxB.stability && wxA.weather && wxA.weather.rain[0].slots[0] === "dawn" && !wxB.weather, "météo vivante : même stabilité qu'en lignes nues, programme joint à l'analyse");
     ok(wxA.resolved.matter.reactions.some((r) => r.result === "scented_mist"), "météo vivante : brume + fleurs = brume parfumée");
+    ok(/at dawn, (more often than not|some days)/i.test(p.core.prose(wxA.resolved, { seed: "Jardin" })) && !/at dawn/i.test(p.core.prose(wxB.resolved, { seed: "Jardin" })), "météo vivante : la description dit le moment (et seulement si la ligne le dit)");
     const wxS = require("../src/genscene").sceneOf(wxA, "Jardin", p.core.blocks); ok(wxS && wxS.weather === wxA.weather && wxS.drizzle && wxS.scent, "météo vivante : la fenêtre générative reçoit le programme");
   }
 
