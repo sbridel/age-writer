@@ -28,18 +28,9 @@ Age Writer is built to be **diegetic**: almost everything it shows is something 
 
 Two places step outside the fiction on purpose: the **Details** tab (stability per axis, causes, numbers: read it as a Guild surveyor's notes on your book) and the **Settings**. Everything else tries to stay in the world.
 
-**Version 1.17.0.** The engine (derived from 1.3.0) is available as readable sources in `src/engine/`. `manifest.json` announces `1.17.0`. Highlights of the latest releases (full history in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)):
+**Status.** Released, desktop only, sandbox mode (see [What's next](#15-whats-next)). The current version is the one in [`manifest.json`](manifest.json) and on the [Releases](https://github.com/sbridel/age-writer/releases) page; the change log, release by release, is in [`docs/NOTES-historique.md`](docs/NOTES-historique.md) (in French).
 
-- **1.17.0**: **the Imager**, a machine in the Relto (page *Imager*): put an Age's book on the lectern and tune it in three steps (I crystals: the Age's written pages; II lenses: its star's light; III atmosphere: its sky, computed by its physics, with a phase that drifts with the clock) until the Age appears on the screen; once **locked**, it follows the Age, and a periscope turns, looks up at the zenith or goes **under the water**. Clues in each Age's Details tab.
-- **1.16.1**: **shorelines** in the generative window: water and land in the same Age now meet (beach, rocks, grassy bank, steaming lava coast, ice shelf), framed differently for each Age. **Foregrounds** chosen from the Age and generated from its seed: a branch that grows differently in every Age (leafy, needles, bare, blossom, hanging moss, snowy, charred), vines, reeds and cattails by the water, large leaves, a broken column, icicles, rocks, an arch, or nothing. **Descriptions rewritten** (no more "Beyond that… Beyond that…": linking words never repeat, the sky reads in order, unreacting things are grouped, adjectives only on first mention) and **reproducible** (same Age, same text, every time it opens). In the Relto, **the cat sleeps by the fire**: in the evening it is curled up on the cabin rug (a click makes it purr); `cat_sleep: auto | always | never`. Fix: a stray shelf plank lay on the cabin floor.
-- **1.16.0**: **physics of the Ages**. Under the blocks, every Age gets a simplified physics (star, orbit, planet, internal heat, core, magnetic field, air, temperature, water, light), chosen to hold what you wrote; the reworked **Details** tab shows it with stability bars per axis, a chain of causes, the world's sheet, what does not hold and why, and suggested lines (`age: 3.5`) that one click writes into the block. **Easy** mode (default) never changes stability; **strict** makes what does not hold cost, with a severity slider. New blocks, never drawn: `black_sun` (a brown dwarf: warmth without light, grey day, black plants), `close_orbit`, `distant_orbit`, `young_world`, `ancient_world`, `heavy_world`, `light_world`, `molten_core`, `dead_core`, `geysers`, `rifts`, `thick_air`, `thin_air`, `subsurface_ocean`. Value lines: `mass:`, `age:`, `orbit:`, `insolation:`, `core:`, `atmosphere:`… Existing Ages keep their pages and stability in easy mode.
-- **1.15.3**: world-type clashes about the weather now count (`desert_world` + `rain`, `frozen_world` + `heat`… used to cost nothing because of a misnamed axis), and every sky ↔ matter clash counts, not just one per world type. Drawn pages don't change; only stability does (about 1 Age in 9, often a few points).
-- **1.15.x**: the cabin plays a crackling **fireplace** when the *chimney* page is active (soft rumble, wood crackles; a cold hearth is silent). Optional "fireplace sound file" setting to use a real recording.
-- **1.14.x**: pond, purr and meow sounds can come from **real recordings** in your vault (Settings > Sound > Relto; ogg, mp3 or wav; empty = synthesized). Files are not shipped: use royalty-free sounds (CC0 or a licence that allows your use; check each sound's page). A meow file containing **several meows** is split at the silences and one is played at a time. **Northern lights** are only visible at night, in the Relto and in Ages. New pages: **page_cat_toys** and **page_pond_decor** (the close-up "Pond, close up" view with lilies, stone lantern, bamboo spout, reeds, dragonflies by day, fireflies at dusk).
-- **1.13.x**: **procedural koi patterns** (kohaku, sanke, showa, tancho, asagi, orange, yamabuki); synthesized close-up sounds; **island layout** (cabin, pond, linking pillars, cat, stalk tree, bench and standing stones are placed side by side without overlapping; what doesn't fit stays in the sub-views); **navigation buttons** in the top bar (island, global view, cabin, pillars, grove, pond, cat); bigger **mountain** with a **stream** down to the pond and off the island; *page_stalk_tree*; flying **lanterns**.
-- **1.12.0**: first **point-and-click sub-views**: click the cabin to see its **interior** (fireplace, big shelf of Ages, glyph book and library book on the table, door back out); click the pillars for the **linking pillars** view.
-- **1.11.x**: a **global view** of the Relto and **14 new pages** (rain, storm, birds, butterflies, moon & sun, dock, bench, islets, calendar pinnacle, blue flowers, grass, ponderosa pines, maples, crystal tree).
-
+Recent additions: **living weather** (weather that comes and goes with the hour, `drizzle: often, dawn`), the Relto's **telescope** (find your Relto's hidden Great Zero), and a **full reference** rebuilt in four parts with example values for every physics line.
 ---
 
 ## Contents
@@ -75,14 +66,10 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 ## 1. Installation
 
-Manual, for now:
+- **From Obsidian** (once the plugin is listed in the community directory): *Settings → Community plugins → Browse*, search for **Age Writer**, install, enable.
+- **By hand**: download `main.js`, `styles.css` and `manifest.json` from the latest [release](https://github.com/sbridel/age-writer/releases), copy them to `.obsidian/plugins/age-writer/` in your vault, then enable **Age Writer** in *Settings → Community plugins*.
 
-1. Get `main.js`, `styles.css`, `manifest.json` (build them, see §16).
-2. Copy them to the `.obsidian/plugins/age-writer/` folder inside your vault.
-3. In Obsidian: *Settings → Community plugins*, reload, enable **Age Writer**.
-
-The extension's settings live in the plugin's settings tab, under the "Extensions" heading. The interface language follows Obsidian's (English or French). The engine's content (block names, generated descriptions) is in English.
-
+The interface follows Obsidian's language (English or French). The world's content (block names, generated descriptions) is in English. The plugin's settings are in its settings tab, under the "Extensions" heading.
 ---
 
 ## 2. Quick start
@@ -100,15 +87,23 @@ link: [[Sunder Reach]]
 
 2. Below the block, the panel appears (tabs *Text & glyphs*, *Linking window*, *Details*).
 3. Run **Open this Age as a book**: the book opens in a tab, on its cover.
-4. Run **Create a Relto page**, then put a `relto` block in a note: your refuge, with your Ages on the shelf.
+4. Run **Open the Relto**: it creates your refuge note (an island, a cabin, a shelf with your Ages as books).
 5. Run **Generate a random Age** for a ready-made world (and read the *Age Writer — Welcome* note created on first launch: an annotated example).
-6. If you get lost: **Open the Age Writer guide** (short guide) or **Open the Age Writer full reference**.
+6. If you don't know what to write: **Open the Age Writer full reference**, part *What you write*: every block, every line, with examples.
 
 ---
 
 ## 3. Writing an Age
 
-An `age` code block, one page per line (a block identifier), plus special lines.
+An `age` code block holds three kinds of lines:
+
+- **a block, alone on its line**, written as is: `water`, `twin_suns`, `great_tree`. Each one is a page of the book;
+- **a key and a value**: `seed: 42`, `link: [[Sunder Reach]]`, `mass: 0.8`;
+- **a list**: `many: ruins, trees`.
+
+`stars: twin_suns` is not a valid line (it is an **ink blot**): write `twin_suns` alone. Anything the plugin doesn't recognise is an ink blot and costs stability.
+
+The special lines:
 
 | Line | Effect |
 |---|---|
@@ -123,11 +118,13 @@ An `age` code block, one page per line (a block identifier), plus special lines.
 | `day_length: 40`, `year_length: 12` | day length (real minutes) and year length (days), generative rendering |
 | `moons: 3` | number of moons in the generative window (0 to 5; `companion_moon` gives one) |
 | `many: ruins` / `few: rain` / `normal: water` | quantities |
+| `rain: sometimes, dawn` | living weather: how often (`always`, `often`, `sometimes`, `rarely`, `1/10`, `30%`) and when (`dawn`, `morning`, `noon`, `afternoon`, `dusk`, `night`) |
+| `mass: 0.8`, `age: 3.5`, `orbit: 1.2`… | physics values (all optional; the reference gives a typical value and what each one means) |
 | `mechanism: orrery` | the Age's mechanism |
 | `trap book` | trap book (neither return nor crack) |
 | `damaged_pages = 2`, `removed_pages = 1` | damaged linking book |
 
-Special lines are ignored by the engine: they don't count as pages. The complete list of blocks (107 you can write, by axis) and all aliases is in the **full reference** built into the plugin.
+Special lines are not pages. Every block you can write, by axis, with its cost, and every alias, is in the **full reference** built into the plugin.
 
 ---
 
@@ -172,7 +169,7 @@ In the Relto view, a **fullscreen** icon puts the picture on the whole screen; t
 
 ### Navigation and sub-views
 
-Since 1.13 a **navigation bar** sits in the band above the picture: **island** (opening view), **global view**, **cabin**, **linking pillars**, **grove**, **pond**, **pond ++** and **cat**. You can also click things directly in the island view (the cabin, the pillars, the pond, the cat…). Which buttons are available depends on the active pages.
+A **navigation bar** sits in the band above the picture: **island** (opening view), **global view**, **cabin**, **linking pillars**, **grove**, **pond**, **pond ++** and **cat**. You can also click things directly in the island view (the cabin, the pillars, the pond, the cat…). Which buttons are available depends on the active pages.
 
 - **Island layout**: cabin, pond, pillars, cat, stalk tree, bench and standing stones are placed by a deterministic layout so that big elements never overlap. If not everything fits, the least important ones stay in their sub-views.
 - **Cabin interior**: fireplace (lit when the *chimney* page is active, otherwise "Cold hearth"), a 3×10 shelf of your Ages (each book clickable), a table with the glyph book and the library book, a door back to the island.
@@ -195,11 +192,11 @@ Values are shown in D'ni numerals. The Details tab's surveyor's note is set by *
 
 ### The telescope
 
-The page *Telescope* (`page_telescope`) is always in the book of pages, **locked until you write your first Age**. Attach it and a small brass telescope stands on top of the mountain (without the *Mountains* page, it brings its own rock); click it to look through. Each Relto hides its own **Great Zero**, drawn from the Relto's name and seed: nothing is stored, and two Reltos never share it. Two wheels aim the telescope: **Torahn** (the angle, clockwise from the Great Zero line, in torantee: a full turn is 62,500) and **Elevation** (height from the Great Zero plane, in shahfeetee; as on the KI, above the plane reads negative); the rim moves 25 notches, the hub one notch (100 torantee or 1 shahfee). These are the D'ni Great Zero Coordinate System (GZCS) units; the third coordinate, the distance from the Zero (in shahfeetee), comes with a later step, and the values are engraved under each wheel in D'ni numerals. There is no distance readout: in the eyepiece a pulse, beating with the D'ni prorahn, is a diffuse uneven glow from afar, then a point of light that steadies as you come closer; a line of words says what you see and whether it brightens or fades, and a soft tone follows each turn (with the close-up room sounds). Bring the point into the small ring and the Zero is **found**: it is engraved on the plate, stays found, and a faint light pulses at the end of the telescope on the island. Click the plate to set the wheels back on it. (First step: the telescope will later calibrate the Imager.)
+The page *Telescope* (`page_telescope`) is always in the book of pages, **locked until you write your first Age**. Attach it and a small brass telescope stands on top of the mountain (without the *Mountains* page, it brings its own rock); click it to look through. Each Relto hides its own **Great Zero**, drawn from the Relto's name and seed: nothing is stored, and two Reltos never share it. Two wheels aim the telescope: **Torahn** (the angle, clockwise from the Great Zero line, in torantee: a full turn is 62,500) and **Elevation** (height from the Great Zero plane, in shahfeetee; as on the KI, above the plane reads negative); the rim moves 25 notches, the hub one notch (100 torantee or 1 shahfee). The values are engraved under each wheel in D'ni numerals. These are the units of the D'ni Great Zero Coordinate System (GZCS); the third coordinate, the distance from the Zero (in shahfeetee), will come with the next step. There is no distance readout: in the eyepiece a pulse, beating with the D'ni prorahn, is a diffuse uneven glow from afar, then a point of light that steadies as you come closer; a line of words says what you see and whether it brightens or fades, and a soft tone follows each turn (with the close-up room sounds). Bring the point into the small ring and the Zero is **found**: it is engraved on the plate, stays found, and a faint light pulses at the end of the telescope on the island. Click the plate to set the wheels back on it. (First step: the telescope will later calibrate the Imager.)
 
 ### The Relto's two special books
 
-At the foot of the shelf (in the cabin since 1.12), two books look different from the Ages (also in the **Pages** tab, and by commands):
+At the foot of the cabin shelf, two books look different from the Ages (also in the **Pages** tab, and by commands):
 
 - **Book of glyphs** (turquoise, diamond): a click opens the list of glyphs *used* in the Ages on the shelf, with their drawing and the Ages where they appear (click = open the Age). For now "known" = written in an Age; the future game loop may limit it to discovered glyphs. Command: *Open the book of glyphs*.
 - **Library book** (red, clasp): a click offers *Blocks, reactions and Age variants* (`age-library`) or *Relto pages* (`relto-library`). The plugin opens the existing library note, or creates it with a commented example (`Age Library.md`, `Relto Library.md`, in the library folder if set). Command: *Open a library note*.
@@ -293,7 +290,7 @@ When the book is already open, clicking a window only replays the linking sound.
 ## 10. D'ni, mechanisms, journal
 
 - **D'ni numerals** in base 25 (Age number, seed, puzzles, clock). Levels: installed font (not provided), local glyph file, numerals drawn by the plugin. **D'ni time** in the Relto from the computer's clock.
-- **Mechanisms**: eleven (steam elevator, sluice, telescope, sound lock, frequency array, generator, holographic imager, orrery, lock, wind organ, lens array), each with a state and a puzzle.
+- **Mechanisms**: eleven (steam-powered elevator, water valve, telescope, sound lock, frequency array, steam generator, holofatic imager, orrery, tide gate, wind organ, lens array; not to be confused with the Relto's telescope page), each with a state and a puzzle.
 - **Solitude**: weights the draw toward deserted worlds.
 - **Exploration journal**: an `age-journal` block written as you go through linked notes; voices inspired by various characters from the games.
 - **Personal library**: `age-library` blocks define your own blocks, products, reactions and variants.
@@ -320,11 +317,10 @@ Notable defaults: leather and cover on; book in a main tab, opened on the cover;
 
 ## 12. Built-in guide
 
-Two levels, in a window with sections (and exportable as notes):
+Two levels, in a window with sections, in English and French (both exportable as notes):
 
 - **Short guide**: writing an Age, the block, the book, the Relto, sounds, the law of change, settings;
-- **Full reference** (in French): all lines and aliases, the 107 writable blocks by axis, extended sky, quantities, stability, window, traps, Relto (YAML note, pages, options), D'ni, mechanisms, journal, sounds, library, all settings, commands, properties, limitations.
-
+- **Full reference**, in four parts: **Settings** (settings and commands), **What you write** (the three kinds of lines, every block by axis with its cost, the physics values with a typical value and what they mean, quantities, weather and window lines), **What the Age generates by itself** (reactions, stability, the draw), **Relto** (the refuge note, pages, cat, Imager, telescope).
 ---
 
 ## 13. Commands
@@ -379,10 +375,10 @@ npm test             # all tests, on the readable build then on the minified one
 npm run lint
 npm run equiv -- legacy/main-1.3.0.min.js    # non-regression: 600 random Ages, old build vs new
 node test/visual/make.js            # render pages in test/visual/out/
-npm run zip          # release/age-writer-1.17.6.zip (plugin) + -src.zip (sources); version = package.json
+npm run zip          # release/age-writer-<version>.zip (plugin) + -src.zip (sources); version = package.json
 ```
 
-In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the engine), then the extension layer: `entry.js` (book and block patches), `ui-extras.js` (panel and tabs), `ui-relto.js` (Relto, dedicated view, navigation), `relto-render.js` (canvas), `relto-rooms.js` (cabin, pillars, pond, pond ++, cat, grove), `relto-model.js` (pages, island layout), `relto-scenery.js`, `relto-global.js`, `relto-books.js`, `cover.js` (covers), `sound.js` (sounds, room sounds), `linkfx.js` and `genscene.js` (window), `law.js` (law of change), `mech.js` (special lines), `physics/` (physics of the Ages: laws, block requirements, constrained draw, sheet; design in `docs/DESIGN-physique.md`), `geophys.js` (geophysics blocks), `settings-ui.js` (settings), `guide.js` (guide), `i18n.js`. Details: [`docs/DEV.md`](docs/DEV.md) (in French).
+In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the engine), then the extension layer: `entry.js` (book and block patches), `ui-extras.js` (panel and tabs), `ui-relto.js` (Relto, dedicated view, navigation), `relto-render.js` (canvas), `relto-rooms.js` (cabin, pillars, pond, pond ++, cat, grove), `relto-model.js` (pages, island layout), `relto-scenery.js`, `relto-global.js`, `relto-books.js`, `cover.js` (covers), `sound.js` (sounds, room sounds), `linkfx.js` and `genscene.js` (window), `law.js` (law of change), `mech.js` (special lines), `physics/` (physics of the Ages: laws, block requirements, constrained draw, sheet; design in `docs/DESIGN-physique.md`), `geophys.js` (geophysics blocks), `weather.js` (living weather), `relto-imager.js` (the Imager), `telescope.js` and `relto-telescope.js` (the telescope), `settings-ui.js` (settings), `guide.js`, `guide-ref-en.js`, `guide-ref-fr.js` (guide and full reference), `i18n.js`. Details: [`docs/DEV.md`](docs/DEV.md) (in French).
 
 ---
 

@@ -30,8 +30,9 @@ Age Writer est pensé pour être **diégétique** : presque tout ce qu'il montre
 
 Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité par axe, causes, chiffres : à lire comme les notes d'un arpenteur de la Guilde sur ton livre) et les **Réglages**. Tout le reste essaie de rester dans le monde.
 
-**Version 1.17.0** : **l'Imageur**, une machine du Relto (page *Imager*) : on pose le livre d'un Âge sur le lutrin et on l'accorde en trois réglages (I cristaux : les pages écrites de l'Âge ; II lentilles : la lumière de son étoile ; III atmosphère : son ciel, calculé par sa physique, avec une phase qui dérive avec l'horloge) jusqu'à ce qu'il apparaisse sur l'écran ; une fois **verrouillé**, il suit l'Âge, et un périscope tourne, lève les yeux au zénith ou descend **sous l'eau**. Indices dans l'onglet Détails de chaque Âge. **1.16.1** : **rivages** dans la fenêtre générative : l'eau et la terre d'un même Âge se rencontrent enfin (plage, rochers, berge herbeuse, côte de lave qui fume, banquise), avec un cadrage propre à chaque Âge. **Premiers plans** choisis selon l'Âge et générés depuis sa graine : une branche qui pousse autrement dans chaque Âge (feuillue, aiguilles, nue, en fleurs, mousse pendante, enneigée, calcinée), des lianes, des roseaux et massettes au bord de l'eau, de grandes feuilles, une colonne brisée, des stalactites de glace, des rochers, une arche, ou rien. **Descriptions réécrites** (fini les « Beyond that… Beyond that… » : les mots de liaison ne se répètent jamais, le ciel se lit dans l'ordre, ce qui ne réagit pas est regroupé, les adjectifs seulement à la première mention) et **reproductibles** (même Âge, même texte à chaque ouverture). Dans le Relto, **le chat dort au coin du feu** : le soir, il est roulé en boule sur le tapis de la cabane (un clic le fait ronronner) ; `cat_sleep: auto | always | never`. Correctif : un rayon d'étagère traînait sur le plancher de la cabane. **1.16.0** : **physique des Âges**. Sous les blocs, chaque Âge reçoit une physique simplifiée (étoile, orbite, planète, chaleur interne, noyau, champ magnétique, air, température, eau, lumière), choisie pour tenir ce que tu as écrit ; l'onglet **Détails** retravaillé la montre : stabilité par axe en barres, chaîne des causes, fiche du monde, ce qui ne tient pas et pourquoi, et des lignes à écrire (`age: 3.5`) qu'un clic écrit dans le bloc. Mode **facile** (par défaut) : la stabilité ne change jamais ; **strict** : ce qui ne tient pas coûte, avec un curseur de sévérité. Nouveaux blocs, jamais tirés au sort : `black_sun` (une naine brune : de la chaleur sans lumière, jour gris, plantes noires), `close_orbit`, `distant_orbit`, `young_world`, `ancient_world`, `heavy_world`, `light_world`, `molten_core`, `dead_core`, `geysers`, `rifts`, `thick_air`, `thin_air`, `subsurface_ocean`. Lignes de valeurs : `mass:`, `age:`, `orbit:`, `insolation:`, `core:`, `atmosphere:`… (alias français acceptés). Les Âges existants gardent leurs pages et leur stabilité en mode facile. **1.15.3** : les incompatibilités des mondes-types avec le temps qu'il fait comptent enfin (`desert_world` + `rain`, `frozen_world` + `heat`… ne coûtaient rien à cause d'un nom d'axe erroné), et **toutes** les incompatibilités ciel ↔ matière comptent, plus seulement une par monde-type. Les pages tirées ne changent pas, seule la stabilité change (environ un Âge sur neuf, souvent de quelques points). **1.15.2** : feu de la cabane : les gros « pop » étaient une note qui descend (d'où le « ploc ploc ») ; ce sont maintenant de simples claquements de bruit, sans hauteur. **1.15.1** : feu de la cabane : plus de souffle d'air permanent, grondement très léger, ce sont surtout les craquements du bois. **1.15.0** : la **cabane** joue un **feu qui crépite** (grondement doux, souffle, crépitements en rafale et gros « pop » de bûche) quand la page *cheminée* est active ; réglage facultatif « Fichier son de la cheminée » pour utiliser un vrai enregistrement ; âtre froid = silence. **1.14.4** : un fichier de miaulements qui contient **plusieurs miaulements** est maintenant découpé aux silences : un seul est joué à chaque fois, jamais deux fois de suite le même, à vitesse légèrement variable. **1.14.3** : les sons du bassin, du ronron et du miaou peuvent venir de **vrais enregistrements** de ton coffre (Réglages > Son > Relto : « Fichier son du bassin / du ronronnement / du miaou » ; ogg, mp3 ou wav ; vide = son synthétisé). Les fichiers ne sont pas fournis avec le plugin : prends des sons libres de droits (CC0 ou licence qui t'autorise l'usage, vérifie la page de chaque son). **1.14.2** : les **aurores boréales** ne sont visibles que la nuit, dans le Relto (île et vue globale) comme dans les Âges (elles se lèvent au crépuscule et disparaissent à l'aube). **1.14.1** : sons des vues rapprochées refaits (clapotis très léger au bassin, ronronnement plus doux, miaou plus naturel avec parfois un court « mrrp ») ; les jouets du chat sont au tout premier plan, sans herbe par-dessus. **1.14.0** : deux nouvelles pages : **page_cat_toys** (jouets du chat dans la vue du chat : pelote qui roule, souris qui couine, balle à grelot, canne à plumes, boîte en carton) et **page_pond_decor** (vue **« Le bassin, de près »** : le bassin presque plein cadre avec nénuphars et fleurs, lanterne de pierre, tuyau de bambou dont l'eau goutte, roseaux, galets et algues, libellules le jour, lucioles le soir ; elle demande la page koï). **1.13.1** : **motifs de koï générés** (variétés kohaku, sanke, showa, tancho, asagi, orange, yamabuki ; taches tirées au hasard, déterministes avec la graine du Relto) ; **sons des vues rapprochées** synthétisés : eau qui coule au bassin, chat qui ronronne et miaule (un clic sur le chat le fait miauler), réglage « Sons des vues rapprochées » ; le ruisseau de la vue du bassin naît maintenant d'une encoche dans la falaise, longe la paroi et coule jusqu'au bassin. **1.13.0** : **plan de l'île** (cabane, bassin, piliers de liaison, chat, arbre à tiges, banc, pierres dressées sont placés côte à côte sans se chevaucher ; si tout ne tient pas, les moins importants restent pour les sous-vues) ; **boutons de navigation** dans la bande du haut (île, vue globale, cabane, piliers, bosquet, bassin, chat) ; nouvelles vues rapprochées **bassin** (avec le ruisseau), **chat** (son nom, un clic) et **bosquet** ; le **mont** est plus grand et porte la source d'un **ruisseau** qui descend jusqu'au bassin puis tombe de l'île ; page **page_stalk_tree** (un arbre à tiges, un seul) ; les **lanternes** deviennent volantes. **1.12.0** : premières **sous-vues point-and-click** : un clic sur la cabane ouvre son **intérieur** (cheminée, étagère des Âges en grand, livre des glyphes et livre de la bibliothèque sur la table, porte pour ressortir) et un clic sur les piliers ouvre la **vue des piliers de liaison** (la fenêtre de liaison s'allume quand des Âges y reviennent) ; le bouton de la bande du haut ramène à l'île. Quand la cabane existe, l'étagère et les gros livres ne sont plus sur l'île (plus de place pour les arbres). **1.11.1** : infobulles du Relto toujours entières (recadrées dans l'image) ; quand la page *pinacle du calendrier* est active, le ponton devient un **pont** vers le pinacle ; les **arbres** se répartissent entre les essences choisies (budget partagé, étalés sur l'île) ; le bouton de **vue globale** est dans la bande du haut, avec les onglets ; l'île est élargie à gauche et l'îlot du fond éloigné. **1.11.0** : une **vue globale** du Relto (bouton en coin de l'image : le Relto vu de loin, au milieu de la mer de brume, avec ses pinacles, ses îlots et un pont ; un clic sur l'île ramène à la vue de l'île, qui reste l'ouverture par défaut) et **14 nouvelles pages** : pluie, orage, oiseaux, papillons, lune et soleil, ponton, banc, îlots, pinacle du calendrier, fleurs bleues, herbe, pins ponderosa, érables, arbre de cristal. (1.10 : bassin de koï et chat ; 1.9 : deux livres à part ; 1.8 : quantité de hasard.) Le moteur (issu du 1.3.0) est en sources lisibles dans `src/engine/`. Le `manifest.json` annonce `1.17.0`.
+**État.** Publié, ordinateur seulement, mode bac à sable (voir [La suite](#15-la-suite)). La version en cours est celle de [`manifest.json`](manifest.json) et de la page [Releases](https://github.com/sbridel/age-writer/releases) ; le journal des changements, version par version, est dans [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+Nouveautés récentes : la **météo vivante** (un temps qui va et vient selon l'heure, `drizzle: often, dawn`), le **télescope** du Relto (retrouver le Great Zero caché de ton Relto) et une **référence complète** refaite en quatre parties, avec des exemples de valeurs pour chaque ligne de physique.
 ---
 
 ## Sommaire
@@ -47,7 +48,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
    - [Le télescope](#le-télescope)
    - [Les deux livres du Relto](#les-deux-livres-du-relto)
    - [La vue globale](#la-vue-globale)
-   - [Pages du décor, du ciel et de la faune (1.11)](#pages-du-décor-du-ciel-et-de-la-faune-111)
+   - [Pages du décor, du ciel et de la faune](#pages-du-décor-du-ciel-et-de-la-faune)
    - [Le bassin de koï et le chat](#le-bassin-de-koï-et-le-chat)
    - [Pages intégrées](#pages-intégrées)
 7. [Les sons](#7-les-sons)
@@ -61,20 +62,15 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 15. [La suite](#15-la-suite)
 16. [Développement](#16-développement)
 17. [Licences et mentions](#17-licences-et-mentions)
-18. [Changements récents](#18-changements-récents)
 
 ---
 
 ## 1. Installation
 
-Manuelle, pour l'instant :
+- **Depuis Obsidian** (une fois le plugin listé dans l'annuaire communautaire) : *Réglages → Plugins communautaires → Parcourir*, chercher **Age Writer**, installer, activer.
+- **À la main** : télécharger `main.js`, `styles.css` et `manifest.json` depuis la dernière [release](https://github.com/sbridel/age-writer/releases), les copier dans `.obsidian/plugins/age-writer/` dans ton coffre, puis activer **Age Writer** dans *Réglages → Plugins communautaires*.
 
-1. Récupérer `main.js`, `styles.css`, `manifest.json`.
-2. Les copier dans le dossier `.obsidian/plugins/age-writer/` de ton coffre.
-3. Dans Obsidian : *Réglages → Plugins communautaires*, recharger, activer **Age Writer**.
-
-Les réglages de l'extension sont dans l'onglet de réglages du plugin, sous le titre « Extensions ». La langue de l'interface suit celle d'Obsidian (anglais ou français). Le contenu du moteur (noms de blocs, descriptions générées) est en anglais.
-
+L'interface suit la langue d'Obsidian (anglais ou français). Le contenu des mondes (noms de blocs, descriptions générées) est en anglais. Les réglages du plugin sont dans son onglet de réglages, sous le titre « Extensions ».
 ---
 
 ## 2. Démarrage rapide
@@ -92,15 +88,23 @@ link: [[Sunder Reach]]
 
 2. Sous le bloc, le panneau s'affiche (onglets *Texte & glyphes*, *Fenêtre de liaison*, *Détails*).
 3. Commande **Open this Age as a book** : le livre s'ouvre dans un onglet, sur sa couverture.
-4. Commande **Create a Relto page**, puis un bloc `relto` dans une note : ton refuge, avec tes Âges sur l'étagère.
+4. Commande **Open the Relto** : elle crée la note de ton refuge (une île, une cabane, une étagère où tes Âges sont rangés en livres).
    Ou **Generate a random Age** pour un monde tout fait ; la note *Age Writer — Bienvenue*, créée au premier lancement, est un exemple commenté.
-5. Si tu te perds : commande **Open the Age Writer guide** (guide court) ou **Open the Age Writer full reference**.
+5. Si tu ne sais pas quoi écrire : commande **Open the Age Writer full reference**, partie *Ce que tu écris* : tous les blocs, toutes les lignes, avec des exemples.
 
 ---
 
 ## 3. Écrire un Âge
 
-Un bloc de code `age`, une page par ligne (un identifiant de bloc), plus des lignes spéciales.
+Un bloc de code `age` contient trois sortes de lignes :
+
+- **un bloc, seul sur sa ligne**, écrit tel quel : `water`, `twin_suns`, `great_tree`. Chacun est une page du livre ;
+- **une clé et une valeur** : `seed: 42`, `link: [[Sunder Reach]]`, `mass: 0.8` ;
+- **une liste** : `many: ruins, trees`.
+
+`stars: twin_suns` n'est pas une ligne valide (c'est une **tache d'encre**) : écris `twin_suns` seul. Tout ce que le plugin ne reconnaît pas est une tache d'encre et coûte de la stabilité.
+
+Les lignes spéciales :
 
 | Ligne | Effet |
 |---|---|
@@ -115,11 +119,13 @@ Un bloc de code `age`, une page par ligne (un identifiant de bloc), plus des lig
 | `day_length: 40`, `year_length: 12` | durée du jour (minutes réelles) et de l'année (jours), rendu génératif |
 | `moons: 3` (ou `lunes: 3`) | nombre de lunes dans la fenêtre générative (0 à 5 ; `companion_moon` en donne une) |
 | `many: ruins` / `few: rain` / `normal: water` | quantités |
+| `rain: sometimes, dawn` | météo vivante : à quelle fréquence (`always`, `often`, `sometimes`, `rarely`, `1/10`, `30%`) et à quel moment (`dawn`, `morning`, `noon`, `afternoon`, `dusk`, `night`) |
+| `mass: 0.8`, `age: 3.5`, `orbit: 1.2`… | valeurs de physique (toutes facultatives ; la référence donne une valeur type et ce que chacune veut dire) |
 | `mechanism: orrery` | mécanisme de l'Âge |
 | `trap book` | livre-piège (ni retour ni fissure) |
 | `damaged_pages = 2`, `removed_pages = 1` | livre de liaison abîmé |
 
-Les lignes spéciales sont ignorées par le moteur : elles ne comptent pas comme des pages. La liste complète des blocs (107 que tu peux écrire, par axe) et de tous les alias est dans la **référence complète** intégrée au plugin.
+Les lignes spéciales ne sont pas des pages. Tous les blocs que tu peux écrire, par axe et avec leur coût, et tous les alias sont dans la **référence complète** intégrée au plugin.
 
 ---
 
@@ -178,7 +184,7 @@ Les valeurs s'affichent en chiffres D'ni. La **jauge de netteté** lit les trois
 
 ### Le télescope
 
-La page *Telescope* (`page_telescope`) est toujours dans le livre des pages, **verrouillée tant que tu n'as pas écrit ton premier Âge**. Attache-la : une petite lunette de laiton se dresse au sommet du mont (sans la page *Montagnes*, elle apporte son rocher) ; un clic pour y regarder. Chaque Relto cache son propre **Great Zero**, tiré du nom et de la graine du Relto : rien n'est stocké, et deux Reltos ne le partagent jamais. Deux molettes orientent la lunette : **Torahn** (l'angle, dans le sens horaire depuis la ligne du Great Zero, en torantee : un tour en fait 62 500) et **Élévation** (la hauteur par rapport au plan du Great Zero, en shahfeetee ; comme sur le KI, au-dessus du plan le chiffre est négatif) ; la couronne avance de 25 crans, le moyeu d'un cran (100 torantee ou 1 shahfee). Ce sont les unités du système de coordonnées D'ni du Great Zero (GZCS) ; la troisième coordonnée, la distance au Zéro (en shahfeetee), viendra avec une étape suivante, et les valeurs sont gravées sous chaque molette en chiffres D'ni. Aucune distance n'est affichée : dans l'oculaire, un pouls qui bat au prorahn D'ni n'est d'abord qu'une lueur diffuse et inégale, puis un point de lumière qui se fixe à mesure qu'on approche ; une ligne de mots dit ce qu'on voit et s'il s'avive ou pâlit, et une note douce suit chaque geste (avec les sons des vues rapprochées). Amène le point dans le petit anneau : le Zéro est **trouvé**, gravé sur la plaque, il le reste, et une faible lueur bat au bout de la lunette sur l'île. Un clic sur la plaque y ramène les molettes. (Première étape : le télescope servira ensuite à calibrer l'Imageur.)
+La page *Telescope* (`page_telescope`) est toujours dans le livre des pages, **verrouillée tant que tu n'as pas écrit ton premier Âge**. Attache-la : une petite lunette de laiton se dresse au sommet du mont (sans la page *Montagnes*, elle apporte son rocher) ; un clic pour y regarder. Chaque Relto cache son propre **Great Zero**, tiré du nom et de la graine du Relto : rien n'est stocké, et deux Reltos ne le partagent jamais. Deux molettes orientent la lunette : **Torahn** (l'angle, dans le sens horaire depuis la ligne du Great Zero, en torantee : un tour en fait 62 500) et **Élévation** (la hauteur par rapport au plan du Great Zero, en shahfeetee ; comme sur le KI, au-dessus du plan le chiffre est négatif) ; la couronne avance de 25 crans, le moyeu d'un cran (100 torantee ou 1 shahfee). Les valeurs sont gravées sous chaque molette en chiffres D'ni. Ce sont les unités du système de coordonnées D'ni du Great Zero (GZCS) ; la troisième coordonnée, la distance au Zéro (en shahfeetee), viendra avec l'étape suivante. Aucune distance n'est affichée : dans l'oculaire, un pouls qui bat au prorahn D'ni n'est d'abord qu'une lueur diffuse et inégale, puis un point de lumière qui se fixe à mesure qu'on approche ; une ligne de mots dit ce qu'on voit et s'il s'avive ou pâlit, et une note douce suit chaque geste (avec les sons des vues rapprochées). Amène le point dans le petit anneau : le Zéro est **trouvé**, gravé sur la plaque, il le reste, et une faible lueur bat au bout de la lunette sur l'île. Un clic sur la plaque y ramène les molettes. (Première étape : le télescope servira ensuite à calibrer l'Imageur.)
 
 ### Les deux livres du Relto
 
@@ -193,7 +199,7 @@ La syntaxe d'une page du Relto accepte `page lagon: …` ou `page_lagon: …` (l
 
 Un petit bouton (globe) en haut à gauche de l'image bascule entre la **vue de l'île** (celle d'ouverture) et la **vue globale** : le Relto vu de loin, l'île au centre dans la mer de brume, des pinacles de roche qui en émergent. Les pages y ajoutent leurs éléments : les **îlots** (page *Islets*), le **pont** de cordes qui les relie, le **pinacle du calendrier** (page *Calendar pinnacle*, qui porte le jour D'ni), le ciel (lune, pluie, orage, oiseaux, aurore, neige). Un clic sur l'île (« Your Relto ») ramène à la vue de l'île ; le même bouton (maison) fait aussi le retour.
 
-### Pages du décor, du ciel et de la faune (1.11)
+### Pages du décor, du ciel et de la faune
 
 | Page | Ce qu'elle ajoute |
 |---|---|
@@ -271,7 +277,7 @@ Quand le livre est déjà ouvert, cliquer une vitre ne rejoue que le son de liai
 ## 10. D'ni, mécanismes, journal
 
 - **Chiffres D'ni** en base 25 (numéro d'Âge, graine, énigmes, horloge). Niveaux : police installée (non fournie), fichier de glyphes local, chiffres dessinés par le plugin. **Heure D'ni** du Relto d'après l'horloge de l'ordinateur.
-- **Mécanismes** : onze (ascenseur à vapeur, vanne, télescope, serrure sonore, réseau de fréquences, générateur, imageur holofatique, planétaire, écluse, orgue à vent, réseau de lentilles), chacun avec un état et une énigme.
+- **Mécanismes** : onze (ascenseur à vapeur, vanne, télescope, serrure sonore, réseau de fréquences, générateur à vapeur, imageur holofatique, planétaire, porte de marée, orgue à vent, réseau de lentilles ; à ne pas confondre avec la page télescope du Relto), chacun avec un état et une énigme.
 - **Solitude** : pondère le tirage vers des mondes déserts.
 - **Journal d'exploration** : un bloc `age-journal` qui s'écrit au fil des notes liées ; voix inspirées de divers personnages des jeux.
 - **Bibliothèque personnelle** : des blocs `age-library` définissent tes propres blocs, produits, réactions et variantes.
@@ -298,11 +304,10 @@ Défauts notables : cuir et couverture activés ; livre dans un onglet principal
 
 ## 12. Guide intégré
 
-Deux niveaux, dans une fenêtre à rubriques (et exportables en notes) :
+Deux niveaux, dans une fenêtre à rubriques, en anglais et en français (exportables en notes) :
 
 - **Guide court** : écrire un Âge, le bloc, le livre, le Relto, les sons, la loi du changement, les réglages ;
-- **Référence complète** (en français) : toutes les lignes et leurs alias, les 107 blocs écrivables par axe, ciel étendu, quantités, stabilité, fenêtre, pièges, Relto (note YAML, pages, options), D'ni, mécanismes, journal, sons, bibliothèque, tous les réglages, commandes, propriétés, limites.
-
+- **Référence complète**, en quatre parties : **Réglages** (réglages et commandes), **Ce que tu écris** (les trois sortes de lignes, tous les blocs par axe avec leur coût, les valeurs de physique avec une valeur type et leur sens, quantités, lignes de météo et de fenêtre), **Ce que l'Âge génère seul** (réactions, stabilité, tirage), **Relto** (la note du refuge, les pages, le chat, l'Imageur, le télescope).
 ---
 
 ## 13. Commandes
@@ -356,10 +361,10 @@ npm test             # tous les tests, sur la version lisible puis sur la minifi
 npm run lint
 npm run equiv -- legacy/main-1.3.0.min.js # non-régression : 600 Âges au hasard, ancien build contre nouveau
 node test/visual/make.js            # pages de rendu dans test/visual/out/
-npm run zip          # release/age-writer-1.17.6.zip (plugin) + -src.zip (sources)
+npm run zip          # release/age-writer-<version>.zip (plugin) + -src.zip (sources) ; version = package.json
 ```
 
-Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine/` (le moteur), puis la couche d'extension : `entry.js` (patchs du livre et des blocs), `ui-extras.js` (panneau et onglets), `ui-relto.js` (Relto, vue dédiée), `relto-render.js` (canvas), `cover.js` (couvertures), `sound.js` (sons), `linkfx.js` et `genscene.js` (fenêtre), `law.js` (loi du changement), `mech.js` (lignes spéciales), `physics/` (physique des Âges : lois, exigences des blocs, tirage sous contraintes, fiche ; conception dans `docs/DESIGN-physique.md`), `geophys.js` (blocs de géophysique), `settings-ui.js` (réglages), `guide.js` (guide), `i18n.js`. Détails : `docs/DEV.md`.
+Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine/` (le moteur), puis la couche d'extension : `entry.js` (patchs du livre et des blocs), `ui-extras.js` (panneau et onglets), `ui-relto.js` (Relto, vue dédiée), `relto-render.js` (canvas), `cover.js` (couvertures), `sound.js` (sons), `linkfx.js` et `genscene.js` (fenêtre), `law.js` (loi du changement), `mech.js` (lignes spéciales), `physics/` (physique des Âges : lois, exigences des blocs, tirage sous contraintes, fiche ; conception dans `docs/DESIGN-physique.md`), `geophys.js` (blocs de géophysique), `weather.js` (météo vivante), `relto-imager.js` (l'Imageur), `telescope.js` et `relto-telescope.js` (le télescope), `settings-ui.js` (réglages), `guide.js`, `guide-ref-en.js`, `guide-ref-fr.js` (guide et référence complète), `i18n.js`. Détails : `docs/DEV.md`.
 
 ---
 
@@ -371,15 +376,3 @@ Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine
 - **Tracery** (© Kate Compton ; paquet npm `tracery-grammar` déclaré ISC, dépôt d'origine sous Apache 2.0) : la grammaire de la prose, embarquée dans le moteur.
 - **Police D'ni** : non fournie ; chacun utilise sa copie, selon sa licence.
 - Projet de fan, sans lien avec Cyan Worlds ni approbation de leur part.
-
----
-
-## 18. Changements récents
-
-- Relto : onglets Vue / Pages / Réglages, heure en grand qui se cache et s'efface, nom D'ni en bandeau, vue dédiée et plein écran, pages gemmes / or / argent, graine retirée du roc, son qui continue d'un onglet à l'autre.
-- Livre : ouverture sur la couverture, couvertures procédurales à sobriété réglable, linking book en trois pages à tourner (clic droite/gauche), livre ouvert dans un onglet principal, plus petit et plus haut.
-- Sons : trois réglages séparés (livre, fermoir, liaison) + pages tournées ; seul le son de liaison joue quand on clique une vitre depuis le livre ; onze variantes de liaison.
-- Bloc Âge : trois onglets, petite fenêtre centrée, grande fenêtre cliquable.
-- Loi du changement : espaces, sauts de ligne, casse n'altèrent plus l'Âge.
-- Piège : « trap book » ne dessine plus de fissure sous-marine à l'insu du texte.
-- Réglages : rubriques avec icônes et valeurs ; guide court et référence complète intégrés.
