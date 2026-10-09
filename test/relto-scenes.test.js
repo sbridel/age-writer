@@ -28,7 +28,7 @@ const mkScene = (pages, extra = {}) => {
   return M.buildScene(relto, defs, [{ name: "A", path: "A.md", verdict: "stable", stability: 90, returnTo: "Relto" }]);
 };
 const r = new ReltoRenderer(dom.window.document.createElement("canvas"), dni);
-for (const view of ["island", "global", "cabin", "pillars", "pond", "pondplus", "cat", "grove", "book"]) {
+for (const view of ["island", "global", "cabin", "pillars", "pond", "pondplus", "cat", "grove", "book", "telescope"]) {
   r.view = view;
   for (const hour of [3, 7, 13, 19.5, 23]) {
     for (const set of [[], ids.slice(0, 11), ids.slice(11, 22), ids.slice(22), ids]) {

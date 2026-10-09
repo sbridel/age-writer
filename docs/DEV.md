@@ -65,6 +65,8 @@ Le ciel étendu (`src/sky.js`) et les richesses (`src/wealth.js`) sont lus direc
 | `ui-relto.js` | bloc `relto` (scène, pages, livres, son du refuge), bloc `relto-library`, création de pages |
 | `relto-model.js` | données du Relto : lecture du frontmatter, pages, déverrouillage, `relto-library`, choix des livres, ciel |
 | `relto-render.js` | rendu canvas du Relto (île, cabane, étagère, effets de pages) |
+| `telescope.js` | télescope, modèle pur : Great Zero caché tiré du nom + graine du Relto (`greatZero`), visée et molettes (`turn`), signal chaud/froid (`signal` : décroît strictement avec l'écart, paliers de mots, tolérance `TOL`) |
+| `relto-telescope.js` | télescope, dessin : la lunette au sommet du mont, sa vue (oculaire, molettes Torahn / Élévation, unités GZCS : torantee et shahfeetee, plaque du Zéro), les gestes ; état gardé par Relto (`ext.telescope[nom#graine]`) |
 | `linkfx.js` | effets de la fenêtre de liaison (ondulation, statique, télé, coupures), tirage d'une liaison incertaine |
 | `genscene.js` | fenêtre génératrice : `sceneOf` (descripteur, blocs inconnus compris), `traits` (adjectifs → teinte, taille, mouvement), `build` (géométrie tirée de la graine), `paint` (une image à la phase t) |
 | `wealth.js` / `amounts.js` | richesses et cicatrices (blocs de matière), quantités many/few/normal et compensation (`applyAmounts`, appelé par `adjust`) |
@@ -86,6 +88,9 @@ Le ciel étendu (`src/sky.js`) et les richesses (`src/wealth.js`) sont lus direc
 **Une page de Relto intégrée** : `PAGE_PRESETS` dans `relto-model.js`. Si elle a un nouvel effet visuel,
 l'ajouter à `EFFECT_TYPES`, écrire `drawXxx()` dans `relto-render.js` et l'appeler dans `draw()` au bon
 endroit de l'ordre de dessin. Vérifier avec `npm run visual` (variante dans `test/visual/entry-relto.js`).
+
+**Une page présente d'office** (verrouillée puis disponible sans qu'on écrive de note, comme le télescope) : son id dans
+`BUILTIN_PAGES` (`relto-model.js`), un préréglage avec `unlock: { agesCount: n }`. Une note ou une ligne de bibliothèque de même id l'emporte.
 
 **Un son** : une méthode-couche `xxx(g)` dans `Soundscape` (`sound.js`), son nom dans `LAYERS`, un
 préréglage dans `PRESETS`. Pour qu'elle reste au refuge en mode zen, l'ajouter à `ZEN_KEEP` (et `ZEN_CAP`).

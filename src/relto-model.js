@@ -12,7 +12,7 @@ const TERRAINS = ["volcanic_plateau", "mossy_plateau", "sand_island", "glacier",
 const SURROUNDINGS = ["cloud_sea", "fog_sea", "ocean", "void", "lava_sea"];
 const SKY_CYCLES = ["system_time", "frozen_dawn", "frozen_day", "frozen_dusk", "frozen_night"];
 const STRUCTURES = ["hut", "bookshelves", "linking_pillars"];
-const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager"];
+const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager", "telescope"];
 /** Options propres à certains effets (texte court) : couleur et nom du chat, variété du koï rare. */
 const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare", "sleep"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
 const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern", "ponderosa", "maple", "crystal"], flowers: ["blue", "red", "yellow", "white", "pink"] };
@@ -121,6 +121,8 @@ const PAGE_PRESETS = {
   page_silver: { label: "Silver", effects: { canvas_additions: [{ type: "silver", density: 0.6 }], ambiance_audio: "deep_hum" } },
   page_koi: { label: "Koi pond", effects: { canvas_additions: [{ type: "koi", density: 0.5, rare: "ogon" }], ambiance_audio: "river" } },
   page_imager: { label: "Imager", effects: { canvas_additions: [{ type: "imager" }], ambiance_audio: "deep_hum" } },
+  // le télescope, au sommet du mont : il se débloque avec le premier Âge écrit (src/relto-telescope.js)
+  page_telescope: { label: "Telescope", effects: { canvas_additions: [{ type: "telescope" }], ambiance_audio: "mountain_air" }, unlock: { agesCount: 1 } },
   page_cat_toys: { label: "Cat toys", effects: { canvas_additions: [{ type: "cattoys", density: 0.6 }], ambiance_audio: "hearth" } },
   page_pond_decor: { label: "Pond decor", effects: { canvas_additions: [{ type: "ponddecor", density: 0.6 }], ambiance_audio: "river" } },
   page_cat: { label: "Cat", effects: { canvas_additions: [{ type: "cat", color: "orange", name: "Mochi" }], ambiance_audio: "hearth" } },
@@ -231,6 +233,15 @@ function libraryPage(lp) {
   };
 }
 
+/**
+ * Pages toujours présentes dans le livre des pages, même sans note : elles se découvrent (verrouillées, puis disponibles).
+ * Une note ou une ligne de bibliothèque de même id l'emporte. Aujourd'hui : le télescope, débloqué par le premier Âge.
+ */
+const BUILTIN_PAGES = ["page_telescope"];
+function builtinPages() {
+  return BUILTIN_PAGES.map((id) => { const p = PAGE_PRESETS[id]; return { ...libraryPage({ id, label: p.label, effects: p.effects, unlock: null }), library: false, builtin: true, unlock: { age: null, minStability: 40, agesCount: p.unlock.agesCount } }; });
+}
+
 /** @returns {{ok:boolean, reason:string}} */
 function checkUnlock(page, ages) {
   const u = page.unlock;
@@ -241,7 +252,7 @@ function checkUnlock(page, ages) {
     if (!a) return { ok: false, reason: `needs the Age “${u.age}”` };
     if (a.stability < u.minStability) return { ok: false, reason: `“${u.age}” must be at least ${u.minStability}% stable (now ${a.stability}%)` };
   }
-  if (u.agesCount != null && ages.length < u.agesCount) return { ok: false, reason: `needs ${u.agesCount} Ages (you have ${ages.length})` };
+  if (u.agesCount != null && ages.length < u.agesCount) return { ok: false, reason: u.agesCount === 1 ? "needs a first Age" : `needs ${u.agesCount} Ages (you have ${ages.length})` };
   return { ok: true, reason: "" };
 }
 
@@ -315,7 +326,8 @@ function pageFrontmatter(id, preset) {
     if (a.type === "cat") { fm.cat_name = a.name || ""; fm.cat_color = a.color || "orange"; }
     if (a.type === "koi") { fm.koi_rare = a.rare || "ogon"; fm.koi_name = a.name || ""; }
   }
-  if (preset.unlock) fm.unlock = { age: `[[${preset.unlock.age}]]`, min_stability: preset.unlock.minStability };
+  const u = preset.unlock;
+  if (u && (u.age || u.agesCount != null)) fm.unlock = { ...(u.age ? { age: `[[${u.age}]]`, min_stability: u.minStability } : {}), ...(u.agesCount != null ? { ages_count: u.agesCount } : {}) };
   return fm;
 }
 
@@ -375,5 +387,5 @@ function hourFor(skyCycle, now = new Date()) {
 
 module.exports = {
   parseList, filterAges, TERRAINS, SURROUNDINGS, SKY_CYCLES, STRUCTURES, EFFECT_TYPES, ASSETS, PAGE_PRESETS,
-  layoutIsland, placePlants, optsOf, stripLink, parseReltoLibrary, libraryPage, parseRelto, parsePage, checkUnlock, buildScene, pageFrontmatter, defaultReltoFrontmatter, skyAt, hourFor,
+  layoutIsland, placePlants, optsOf, stripLink, parseReltoLibrary, libraryPage, BUILTIN_PAGES, builtinPages, parseRelto, parsePage, checkUnlock, buildScene, pageFrontmatter, defaultReltoFrontmatter, skyAt, hourFor,
 };
