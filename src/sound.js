@@ -43,6 +43,9 @@ function layersForWorld(has) {
   if (h("great_tree", "grove", "ironwood")) { L.pines = 0.4; }
   if (h("water", "brine", "meltwater", "marsh_mist", "submarine_fissure")) L.water = 0.45;
   if (h("rain", "storm", "thunderstorm", "hail")) L.rain = h("storm", "thunderstorm") ? 0.7 : 0.45;
+  else if (h("drizzle", "acid_rain", "crystal_rain", "ash_rain")) L.rain = 0.22; // bruine : un murmure de pluie
+  if (h("tornado")) L.wind = 0.75;
+  if (h("crystal_rain")) L.chimes = 0.4;
   if (h("lightning", "thunderstorm", "waiting_thunder")) L.thunder = 0.5;
   if (h("lava", "heat", "steam", "wildfire", "obsidian")) { L.fire = h("wildfire") ? 0.6 : 0.3; L.drone = 0.35; }
   if (h("crystal", "humming_shard", "singing_glass", "charged_crystal", "strange_stone", "singing_lichen")) L.metal = 0.5;

@@ -19,7 +19,7 @@ const GROUPS = {
   ruins: ["door", "sealed_door", "bridge", "fallen_bridge", "tablet", "worn_tablet", "speaking_tablet", "lamp", "lit_lamp"],
   trees: ["grove", "great_tree", "ironwood", "charred_grove"],
   water: ["water", "brine", "meltwater"],
-  rain: ["rain", "storm", "thunderstorm", "whispering_storm", "waiting_thunder"],
+  rain: ["rain", "storm", "thunderstorm", "whispering_storm", "waiting_thunder", "drizzle"],
   fog: ["fog", "marsh_mist", "rime", "watching_mist"],
   wind: ["wind", "dust_storm", "ash_cloud", "spore_cloud"],
   moths: ["moth", "lantern_moths", "whispering_moths"], glow: ["glowvine", "wrong_glowvine"],

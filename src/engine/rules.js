@@ -78,6 +78,29 @@ const SKY_WEATHER_RULES = [
     axis: "weather",
     note: ["the lightning is only ever reported, never seen"],
   },
+  // météo vivante : des tensions qui ne touchent que les nouveaux blocs (les Âges déjà écrits ne changent pas)
+  {
+    sky: "starless",
+    with: "rainbow",
+    severity: "medium",
+    axis: "weather",
+    note: ["a rainbow hangs in a sky that has no sun to make it", "the colors bend through a light that is not there"],
+  },
+  {
+    sky: "starless",
+    with: "drizzle",
+    severity: "light",
+    axis: "weather",
+    note: ["rain falls, though no sun ever lifted the water"],
+  },
+  {
+    sky: "permanent_veil",
+    with: "rainbow",
+    severity: "light",
+    axis: "weather",
+    note: ["the rainbow is only guessed at, behind the veil"],
+  },
+  { sky: "frozen_cycle", with: "tornado", severity: "light", axis: "weather", note: FROZEN_STORM_NOTE },
 ];
 
 SKY_LIFE_RULES.push(...SKY_WEATHER_RULES);

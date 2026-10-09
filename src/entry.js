@@ -26,6 +26,7 @@ const RB = require("./relto-books");
 const G = require("./guide");
 const PH = require("./physics/index");
 const AS = require("./ageseed");
+const WX = require("./weather");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
 
 module.exports = function build(Base, core, AGEX) {
@@ -86,6 +87,7 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText && parseTrap(srcText)) out = { ...out, returnTo: null, stranded: true, fissure: null, trapped: true, home: "none" };
         if (srcText) out = guard("quantités", () => applyAmounts(out, parseAmounts(srcText), this.core && this.core.blocks)) || out;
         if (srcText) out = applyDamage(out, parseDamage(srcText));
+        if (srcText) { const wx = guard("météo", () => WX.parseWeather(srcText)); if (wx) out = { ...out, weather: wx, resolved: out.resolved ? { ...out.resolved, weather: wx } : out.resolved }; } // météo vivante : lue par la fenêtre (sceneOf) et la description, sans effet sur la stabilité
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
         if (this.ext.law && o && o.seed) out = guard("fissure", () => { // la fissure grandit : elle abîme un monde instable, et le condamne s'il n'est pas corrigé à temps
           const op = this.law.opening(o.seed, this.ext.fissureDays), bad = strainable(out);
@@ -94,6 +96,7 @@ module.exports = function build(Base, core, AGEX) {
         }) || out;
         return out;
       };
+      AGEX.norm = (line) => guard("météo", () => WX.normalize(line)) || line; // `rain: sometimes, dawn` : pour le moteur, c'est `rain`
       AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
       // livre-piège : « pas de fissure » est une réponse donnée d'avance, le tirage n'en dessine pas une que le pied de bloc nierait
       AGEX.written = (set) => { if (!AGEX.src || !guard("trap draw", () => parseTrap(AGEX.src))) return set; const s = new Set(set); s.add("no_fissure"); return s; };

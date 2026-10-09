@@ -46,6 +46,33 @@ const polyline = (pts, strokeWidth = 3) => ({ kind: "polyline", pts: pts, stroke
 const line = (from, to, strokeWidth = 2) => ({ kind: "line", a: from, b: to, strokeWidth: strokeWidth });
 
 const EXTRA_GLYPHS = {
+  // météo vivante : bruine (traits courts et fins, serrés), neige (étoiles à six branches), arc-en-ciel (trois arcs),
+  // tornade (entonnoir de traits), fleurs (une corolle de losanges sur sa tige). Les produits (scented_mist…) se composent de leurs parents.
+  drizzle: [
+    line([20, 14], [17, 28], 1.8), line([44, 10], [41, 24], 1.8), line([68, 14], [65, 28], 1.8),
+    line([32, 38], [29, 52], 1.8), line([56, 34], [53, 48], 1.8), line([80, 38], [77, 52], 1.8),
+    line([20, 62], [17, 76], 1.8), line([44, 58], [41, 72], 1.8), line([68, 62], [65, 76], 1.8),
+    line([32, 84], [30, 94], 1.8), line([56, 80], [54, 90], 1.8), line([80, 84], [78, 94], 1.8),
+  ],
+  snow: [
+    line([30, 14], [30, 46], 2.5), line([16, 22], [44, 38], 2.5), line([16, 38], [44, 22], 2.5),
+    line([70, 54], [70, 86], 2.5), line([56, 62], [84, 78], 2.5), line([56, 78], [84, 62], 2.5),
+    fill(diamond(76, 22, 4)), fill(diamond(24, 76, 4)),
+  ],
+  rainbow: [
+    polyline([[8, 84], [16, 52], [34, 30], [50, 24], [66, 30], [84, 52], [92, 84]], 3),
+    polyline([[22, 84], [28, 60], [40, 44], [50, 40], [60, 44], [72, 60], [78, 84]], 3),
+    polyline([[36, 84], [40, 68], [50, 58], [60, 68], [64, 84]], 3),
+  ],
+  tornado: [
+    line([10, 12], [90, 12], 3), line([20, 28], [82, 28], 3), line([30, 44], [72, 44], 3),
+    line([40, 60], [66, 60], 3), line([46, 74], [60, 74], 3), polyline([[52, 82], [50, 94]], 3),
+  ],
+  flowers: [
+    polyline([[50, 94], [50, 52]], 3),
+    line([50, 74], [30, 62], 2.5),
+    fill(diamond(50, 22, 7, 11)), fill(diamond(34, 38, 11, 7)), fill(diamond(66, 38, 11, 7)), fill(diamond(50, 38, 4)),
+  ],
   // soleil noir : un disque plein dans un anneau brisé (sa couronne)
   black_sun: [
     fill(hexagon(50, 50, 17)),

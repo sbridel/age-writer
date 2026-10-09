@@ -12,6 +12,7 @@ const { rng, fnv, clamp, lerp, smooth, frac } = require("./util");
 const SKY = require("./sky");
 const WT = require("./wealth"), AM = require("./amounts"), SEA = require("./sea"), TERRAIN = require("./terrain");
 const { crevasse } = require("./crevasse");
+const WX = require("./weather");
 
 const TAU = Math.PI * 2, PERIOD = 8000;
 
@@ -19,7 +20,8 @@ const TAU = Math.PI * 2, PERIOD = 8000;
 const KNOWN = new Set(("door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon frozen_cycle erratic_cycle chaotic_orbit " +
   "permanent_veil auroras recurring_eclipses starfall rain storm thunderstorm whispering_storm waiting_thunder wind dust_storm ash_cloud spore_cloud fog marsh_mist rime watching_mist lightning heat " +
   "hail black_hail steam lava obsidian whispering_obsidian water brine meltwater crying_obsidian ice black_ice deep_cold sand glass singing_glass fulgurite grove great_tree ironwood charred_grove " +
-  "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " + SKY.SKY_BLOCKS.map((b) => b.id).join(" ") + " " + WT.RICH_IDS.join(" ") + " " + WT.SCAR_IDS.join(" ") + " " + SEA.IDS.join(" ") + " " + TERRAIN.IDS.join(" ")).split(" "));
+  "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " +
+  "drizzle snow rainbow tornado flowers scented_mist petal_rain glaze crystal_rain ash_rain acid_rain " +SKY.SKY_BLOCKS.map((b) => b.id).join(" ") + " " + WT.RICH_IDS.join(" ") + " " + WT.SCAR_IDS.join(" ") + " " + SEA.IDS.join(" ") + " " + TERRAIN.IDS.join(" ")).split(" "));
 const AXES = ["cosmological", "geological", "meteorological", "ecological", "metaphysical"];
 
 function sceneOf(a, name = "", blocks = null) {
@@ -29,7 +31,11 @@ function sceneOf(a, name = "", blocks = null) {
   for (const w of res.matter.written || []) ids.add(w);
   for (const x of res.matter.reactions || []) ids.add(x.result);
   const r = (...n) => n.some((x) => ids.has(x));
-  const wd = r("frozen_world") ? "frozen" : r("lava_world") ? "lava" : r("desert_world") ? "desert" : r("ocean_world") ? "ocean" : r("jungle_world") ? "jungle" : null; // monde-type : impose son décor
+  // météo vivante : quels blocs allument quel temps (une ligne `rain: sometimes, dawn` le fait venir et partir, src/weather.js) ;
+  // « * » : allumé par autre chose qu'un bloc (monde-type, physique), donc toujours là
+  const wxSrc = {}, rw = (flag, ...n) => { const hit = n.filter((x) => ids.has(x)); if (hit.length) (wxSrc[flag] = wxSrc[flag] || []).push(...hit); return hit.length > 0; };
+  const always = (flag, on) => { if (on) (wxSrc[flag] = wxSrc[flag] || []).push("*"); return on; }, or2 = (a, b) => a || b; // or2 : les deux côtés sont déjà évalués (chacun note sa source)
+  const wd =r("frozen_world") ? "frozen" : r("lava_world") ? "lava" : r("desert_world") ? "desert" : r("ocean_world") ? "ocean" : r("jungle_world") ? "jungle" : null; // monde-type : impose son décor
   const ruins = [];
   if (r("door", "sealed_door")) ruins.push("door"); if (r("bridge", "fallen_bridge")) ruins.push("bridge");
   if (r("tablet", "worn_tablet", "speaking_tablet")) ruins.push("tablet"); if (r("lamp", "lit_lamp")) ruins.push("lamp");
@@ -38,10 +44,13 @@ function sceneOf(a, name = "", blocks = null) {
     suns: r("twin_suns") ? 2 : r("single_sun") ? 1 : 0, skyStated: r("twin_suns", "single_sun", "starless"), moon: r("companion_moon"),
     cycle: r("frozen_cycle") ? "frozen" : r("erratic_cycle") ? "erratic" : "steady", chaos: r("chaotic_orbit"), veil: r("permanent_veil"),
     auroras: r("auroras"), eclipses: r("recurring_eclipses"), starfall: r("starfall"),
-    rain: r("rain", "storm", "thunderstorm", "whispering_storm", "waiting_thunder") || wd === "jungle", storm: r("storm", "thunderstorm", "whispering_storm", "waiting_thunder"),
-    wind: r("wind", "storm", "thunderstorm", "dust_storm", "ash_cloud", "spore_cloud", "whispering_storm", "waiting_thunder"),
-    fog: r("fog", "marsh_mist", "rime", "watching_mist", "marsh") || wd === "jungle", lightning: r("lightning", "thunderstorm", "waiting_thunder"), heat: r("heat") || wd === "lava" || wd === "desert",
-    hail: r("hail", "black_hail"), steam: r("steam"), dust: r("dust_storm"), ash: r("ash_cloud", "ashen_sky") || wd === "lava",
+    rain: or2(rw("rain", "rain", "storm", "thunderstorm", "whispering_storm", "waiting_thunder"), always("rain", wd === "jungle")), storm: rw("storm", "storm", "thunderstorm", "whispering_storm", "waiting_thunder"),
+    wind: rw("wind", "wind", "storm", "thunderstorm", "dust_storm", "ash_cloud", "spore_cloud", "whispering_storm", "waiting_thunder"),
+    fog: or2(rw("fog", "fog", "marsh_mist", "rime", "watching_mist", "marsh"), always("fog", wd === "jungle")), lightning: rw("lightning", "lightning", "thunderstorm", "waiting_thunder"), heat: or2(rw("heat", "heat"), always("heat", wd === "lava" || wd === "desert")),
+    hail: rw("hail", "hail", "black_hail"), steam: rw("steam", "steam"), dust: rw("dust", "dust_storm"), ash: or2(rw("ash", "ash_cloud", "ashen_sky"), always("ash", wd === "lava")),
+    // nouveaux temps (météo vivante) et fleurs
+    drizzle: rw("drizzle", "drizzle"), snow: rw("snow", "snow"), rainbow: rw("rainbow", "rainbow"), tornado: rw("tornado", "tornado"), scent: rw("scent", "scented_mist"), petals: rw("petals", "petal_rain"),
+    glaze: rw("glaze", "glaze"), crystalRain: rw("crystalRain", "crystal_rain"), ashRain: rw("ashRain", "ash_rain"), acidRain: rw("acidRain", "acid_rain"), flowers: r("flowers", "scented_mist", "petal_rain"),
     lava: r("lava", "obsidian", "whispering_obsidian") || wd === "lava", water: (r("water", "marsh_mist", "brine", "meltwater", "crying_obsidian", ...TERRAIN.WATER_IDS) || wd === "ocean") && wd !== "lava" && wd !== "desert",
     ice: r("ice", "black_ice", "deep_cold", "hail", "rime") || wd === "frozen", sand: r("sand", "dust_storm", "glass", "singing_glass", "fulgurite") || wd === "desert",
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
@@ -62,9 +71,39 @@ function sceneOf(a, name = "", blocks = null) {
   if (S.phys) {
     if (!S.sunHues.length && S.phys.sunRGB.length) S.sunHues = S.phys.sunRGB; // couleur du soleil : celle de son étoile (une couleur écrite passe avant)
     if (S.phys.locked && !cycleWritten && S.cycle !== "erratic") S.cycle = "frozen"; // face figée par la marée : le soleil ne bouge plus
-    if (S.phys.Ts > 318) S.heat = true; // chaleur qui fait trembler l'air
+    if (S.phys.Ts > 318) { S.heat = true; always("heat", true); } // chaleur qui fait trembler l'air
   }
+  // météo vivante : sources de chaque temps, parents de chaque produit (un orage né d'une pluie programmée vient et part avec elle), graine du tirage
+  S.wxSrc = wxSrc; S.wxParents = {}; S.wxKey = WX.seedKey(name, res.seed); S.weather = a.weather || null;
+  for (const x of res.matter.reactions || []) if (!S.wxParents[x.result]) S.wxParents[x.result] = [x.a, x.b];
   return S;
+}
+
+// ---- météo vivante : ce qui est là, à cet instant du jour --------------------------------------------------
+const WX_FLAGS = ["rain", "storm", "wind", "fog", "lightning", "heat", "hail", "steam", "dust", "ash", "drizzle", "snow", "rainbow", "tornado", "scent", "petals", "glaze", "crystalRain", "ashRain", "acidRain"];
+/**
+ * Présence (0 à 1) de chaque temps à la phase `td` du jour (celle du soleil de la fenêtre). Sans ligne programmée
+ * (`rain: sometimes, dawn`), tout ce qui est écrit vaut 1 : la fenêtre est celle d'avant. Un produit de réaction est là
+ * quand ses deux parents le sont (un orage né d'une pluie du soir ne gronde que le soir). `o.now` : l'instant du tirage du jour.
+ */
+function weatherLevels(m, td, o = {}) {
+  const S = m.S, sched = S.weather, out = {};
+  if (!sched) { for (const f of WX_FLAGS) out[f] = S[f] ? 1 : 0; return out; }
+  const { day, ageDays } = WX.dayOf(S, o.now != null ? o.now : Date.now()), memo = new Map(), parents = S.wxParents || {};
+  if (S.cycle === "frozen") { const fz = rng((S.seed ^ 0x10c4) >>> 0); td = (0.7 * Math.asin(clamp(0.32 + 0.4 * fz()))) / Math.PI; } // le soleil immobile (voir suns) : l'heure aussi
+  const idLv = (id, depth) => {
+    if (memo.has(id)) return memo.get(id);
+    let v = 1;
+    if (sched[id]) v = WX.levelAt(S.wxKey || "", id, sched[id], td, day, ageDays);
+    else if (parents[id] && depth < 6) v = Math.min(idLv(parents[id][0], depth + 1), idLv(parents[id][1], depth + 1));
+    memo.set(id, v); return v;
+  };
+  for (const f of WX_FLAGS) {
+    if (!S[f]) { out[f] = 0; continue; }
+    const src = (S.wxSrc && S.wxSrc[f]) || [];
+    out[f] = !src.length || src.includes("*") ? 1 : Math.max(...src.map((id) => idLv(id, 0)));
+  }
+  return out;
 }
 
 /** Couleur d'un corps noir (approximation de Tanner Helland), en RGB 0..255. */
@@ -197,8 +236,29 @@ function build(S, W, H) {
     coral: S.coral ? Array.from({ length: 6 + Math.floor(q7() * 6) }, () => ({ x: W * q7(), u: 0.55 + 0.45 * q7(), s: 0.6 + q7() * 0.9, hue: [340, 15, 30, 290, 190][Math.floor(q7() * 5)], kind: Math.floor(q7() * 3), pts: Array.from({ length: 5 }, () => q7()) })) : [],
     acid: S.acid ? Array.from({ length: 3 + Math.floor(q7() * 3) }, () => ({ x: W * (0.08 + 0.84 * q7()), u: 0.15 + 0.8 * q7(), w: 0.5 + q7() * 0.9, p: q7() })) : [],
   };
+  const wx = buildWeather(S, W, H); // météo vivante : graine propre, rien d'autre ne bouge dans l'image
   if (shore && shore.mode === "side" && S.fissure === "submarine") { const wx = lerp(shore.x0, shore.x1, 0.5); fis.x = shore.side < 0 ? lerp(wx, W, 0.45) : lerp(0, wx, 0.55); } // la fissure sous l'eau reste dans l'eau
-  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea };
+  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx };
+}
+
+/**
+ * Géométrie des nouveaux temps (bruine, neige, arc-en-ciel, tornade, fleurs, pétales, brume parfumée, pluies étranges),
+ * tirée d'une graine propre : un Âge sans ces blocs garde exactement son image. Les vitesses de chute sont entières
+ * (en hauteurs d'image par boucle de 8 s) : la boucle de l'animation ne saute pas.
+ */
+function buildWeather(S, W, H) {
+  const q = rng((S.seed ^ 0x3a7e5) >>> 0), out = {};
+  if (S.drizzle || S.acidRain || S.crystalRain) out.mist = Array.from({ length: 150 }, () => ({ x: q() * W, y: q(), v: 1 + Math.floor(q() * 2), l: 0.012 + q() * 0.016, a: 0.5 + q() * 0.5 }));
+  if (S.snow || S.ashRain) out.flakes = Array.from({ length: 120 }, () => ({ x: q() * W, y: q(), s: 0.7 + q() * q() * 1.8, p: q(), k: 1 + Math.floor(q() * 2) }));
+  if (S.flowers || S.petals || S.scent) {
+    const base = [340, 352, 12, 45, 285, 205][Math.floor(q() * 6)]; out.hue = base;
+    out.blooms = Array.from({ length: 110 }, () => ({ x: q() * W, u: q(), h: base + (q() - 0.5) * 50 + (q() < 0.22 ? 160 : 0), s: q(), p: q() * TAU }));
+  }
+  if (S.petals) out.petals = Array.from({ length: 46 }, () => ({ x: q(), y: q(), s: 1.6 + q() * 2.2, p: q(), k: 1 + Math.floor(q() * 2), r: q() < 0.5 ? 1 : 2, h: (q() - 0.5) * 30 }));
+  if (S.scent || S.glaze) out.motes = Array.from({ length: 30 }, () => ({ x: q(), y: q(), p: q(), s: 0.8 + q() * 1.2 }));
+  if (S.rainbow) out.bow = { x: W * (q() < 0.5 ? 0.24 + 0.12 * q() : 0.64 + 0.12 * q()), R: H * (0.5 + 0.14 * q()), drop: H * (0.06 + 0.08 * q()) };
+  if (S.tornado) out.twister = { x: W * (0.14 + 0.72 * q()), lean: (q() - 0.5) * 0.12, w: 0.8 + 0.5 * q(), p: q() * TAU, debris: Array.from({ length: 18 }, () => ({ p: q(), r: 0.4 + q(), k: 1 + Math.floor(q() * 2) })) };
+  return out;
 }
 
 /**
@@ -326,11 +386,14 @@ function paint(g, m, t, o = {}) {
   g.save(); g.clearRect(0, 0, W, H);
   const dm = doomOf(S);
   if (dm > 0.1 && dm < 0.9) { const a = (dm - 0.1) * 3.2, T = Date.now() / 1000; g.translate(Math.sin(T * 61) * a, Math.cos(T * 47) * a * 0.7); } // la terre tremble
+  const L = m.lv = weatherLevels(m, k0.td, o); // météo vivante : présence de chaque temps à cette heure (1 partout sans ligne programmée)
   const sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, css(top)); sky.addColorStop(1, css(hzc)); g.fillStyle = sky; g.fillRect(0, 0, W, H);
-  if (S.storm) { g.fillStyle = "rgba(14,17,24,0.5)"; g.fillRect(0, 0, W, H); }
+  if (L.storm > 0.005) { g.fillStyle = css([14, 17, 24], 0.5 * L.storm); g.fillRect(0, 0, W, H); }
+  const grey = Math.max(L.drizzle * 0.55, L.snow * 0.6, L.ashRain * 0.7, L.acidRain * 0.5); // ciel couvert : un voile gris-perle, plus chaud sous la cendre
+  if (grey > 0.005) { g.fillStyle = css(L.ashRain > 0.3 ? [120, 112, 104] : [176, 182, 192], 0.32 * grey * (0.35 + 0.65 * day)); g.fillRect(0, 0, W, hz); }
   if (S.veil) { g.fillStyle = "rgba(190,190,202,0.2)"; g.fillRect(0, 0, W, H); }
   // étoiles
-  const sv = Math.max((S.storm ? 0.25 : 1) * (S.veil ? 0.5 : 1) * (1 - Math.min(1, d * 1.4)), 0.7 * air.thin * air.thin) * (1 - 0.8 * air.thick); // sans air, les étoiles se voient en plein jour ; sous un air épais, presque jamais
+  const sv = Math.max(lerp(1, 0.25, L.storm) * (1 - 0.5 * grey) * (S.veil ? 0.5 : 1) * (1 - Math.min(1, d * 1.4)), 0.7 * air.thin * air.thin) * (1 - 0.8 * air.thick); // sans air, les étoiles se voient en plein jour ; sous un air épais, presque jamais
   if (sv > 0.02) for (const s of m.stars) { g.fillStyle = css([230, 230, 245], (0.25 + 0.55 * (0.5 + 0.5 * Math.sin(TAU * t * s.k + s.p))) * sv); g.fillRect(s.x, s.y, s.s, s.s); }
   if (sv > 0.02 && m.night) nightSky(g, m, t, sv);
   // aurores
@@ -356,7 +419,7 @@ function paint(g, m, t, o = {}) {
   }
   // nuages (dérive lente, boucle)
   for (const c of air.thin > 0.85 ? [] : m.clouds) { // presque pas d'air : pas de nuages
-    const x = frac((c.x / W) + t * c.sp) * (W + c.w * 2) - c.w; g.fillStyle = css(S.storm ? [30, 34, 44] : mixc(hzc, [255, 255, 255], 0.35), S.storm ? 0.55 : c.a * (0.4 + day));
+    const x = frac((c.x / W) + t * c.sp) * (W + c.w * 2) - c.w; g.fillStyle = css(mixc(mixc(hzc, [255, 255, 255], 0.35), [30, 34, 44], L.storm), lerp(c.a * (0.4 + day), 0.55, L.storm));
     c.lump.forEach((l, k) => { g.beginPath(); g.ellipse(x + (k / 7) * c.w, c.y + (l - 0.5) * c.h * 0.6, c.w * 0.13, c.h * (0.3 + l * 0.3), 0, 0, TAU); g.fill(); });
   }
   // soleils
@@ -390,6 +453,7 @@ function paint(g, m, t, o = {}) {
     g.fillStyle = css(pal.rock); g.beginPath(); g.moveTo(cn.x - cn.w, hz); g.lineTo(cn.x - cn.w * 0.12, hz - cn.h); g.lineTo(cn.x + cn.w * 0.12, hz - cn.h); g.lineTo(cn.x + cn.w, hz); g.closePath(); g.fill();
     const f = 0.5 + 0.5 * Math.sin(TAU * (t * 2) + cn.x), lg = g.createRadialGradient(cn.x, hz - cn.h, 1, cn.x, hz - cn.h, cn.h * 0.9); lg.addColorStop(0, css([255, 130, 50], 0.5 + 0.25 * f)); lg.addColorStop(1, css([255, 90, 30], 0)); g.fillStyle = lg; g.fillRect(0, 0, W, H);
   }
+  if (L.rainbow > 0.005) rainbow(g, m, t, sn, day, L.rainbow); // l'arc posé sur les crêtes, derrière le sol
   // sol
   g.fillStyle = css(pal.ground); g.fillRect(0, hz, W, H - hz);
   if (m.shore) { waterSurface(g, m, t, sn, hzc); shoreLand(g, m, t, sn, day, night, hzc); } // eau et terre : un rivage
@@ -400,6 +464,7 @@ function paint(g, m, t, o = {}) {
     if (S.lava) lavaVeins(g, m, t);
   }
   scarGround(g, m, t, night);
+  groundWeather(g, m, t, night, L); // fleurs, neige au sol, verglas, cendre
   richGlints(g, m, t, night);
   extraAt(g, m, t, "ground");
   seaLife(g, m, t, night);
@@ -713,22 +778,111 @@ function ruin(g, m, rn, t) {
     else { g.fillStyle = "#2c2a36"; g.beginPath(); g.arc(b, hz - H * 0.17, 2.2, 0, TAU); g.fill(); } }
 }
 
+/** Le temps qu'il fait, chaque élément à sa présence du moment (`m.lv`, posé par paint ; 1 partout pour un Âge sans ligne programmée). */
 function weather(g, m, t) {
-  const { S, W, H, hz } = m;
+  const { S, W, H, hz } = m, L = m.lv || weatherLevels(m, t);
   const fk = S.amt && S.amt.fog != null ? S.amt.fog : 1;
-  if (S.fog) for (let i = 0; i < 3; i++) { const y = hz - H * (0.02 + 0.07 * i), x = frac(t * (1 + i % 2) + i * 0.3) * W; const gr = g.createLinearGradient(0, y - H * 0.1, 0, y + H * 0.08); gr.addColorStop(0, "rgba(190,200,210,0)"); gr.addColorStop(0.5, css([190, 200, 210], clamp((0.2 - i * 0.04) * fk, 0, 0.75))); gr.addColorStop(1, "rgba(190,200,210,0)"); g.fillStyle = gr; g.fillRect(-x * 0.1, y - H * 0.1, W + 20, H * 0.18); }
-  if (S.heat) { g.fillStyle = css([255, 160, 90], 0.05); for (let y = hz - H * 0.05; y < hz + H * 0.1; y += 4) g.fillRect(2 * Math.sin(TAU * t * 2 + y), y, W, 1); }
-  if (S.steam) for (let i = 0; i < 6; i++) { const q = frac(t * 2 + i / 6); g.fillStyle = css([220, 225, 230], 0.25 * (1 - q)); g.beginPath(); g.arc(W * (0.15 + 0.14 * i) + 5 * Math.sin(TAU * (q + i)), hz - q * H * 0.4, 2 + q * 5, 0, TAU); g.fill(); }
-  if (S.dust || S.ash || S.wind) for (const p of m.motes) { const x = frac(p.x / W + t * p.k * (S.dust ? 3 : 1.5)) * W, y = p.y + 3 * Math.sin(TAU * (t * 2 + p.p)); g.fillStyle = S.ash ? css([160, 160, 160], 0.4) : S.dust ? css([200, 160, 100], 0.45) : css([220, 220, 230], 0.12); g.fillRect(x, y, S.dust ? 2 : 1.2, 1); }
-  if (S.rain) { g.strokeStyle = css([190, 205, 225], S.storm ? 0.45 : 0.3); g.lineWidth = 1; g.beginPath(); for (const d of m.drops) { const y = frac(d.y + t * d.v) * H, x = d.x + y * 0.12; g.moveTo(x, y); g.lineTo(x - 2, y - H * d.l); } g.stroke(); }
-  if (S.hail) { g.fillStyle = "rgba(230,240,255,0.7)"; for (const d of m.drops) { const y = frac(d.y + t * d.v * 1.5) * H; g.fillRect((d.x + y * 0.05) % W, y, 1.6, 1.6); } }
-  if (S.lightning) {
+  if (L.fog > 0.005) for (let i = 0; i < 3; i++) { const y = hz - H * (0.02 + 0.07 * i), x = frac(t * (1 + i % 2) + i * 0.3) * W; const gr = g.createLinearGradient(0, y - H * 0.1, 0, y + H * 0.08); gr.addColorStop(0, "rgba(190,200,210,0)"); gr.addColorStop(0.5, css([190, 200, 210], clamp((0.2 - i * 0.04) * fk, 0, 0.75) * L.fog)); gr.addColorStop(1, "rgba(190,200,210,0)"); g.fillStyle = gr; g.fillRect(-x * 0.1, y - H * 0.1, W + 20, H * 0.18); }
+  if (L.scent > 0.005) scentedMist(g, m, t, L.scent);
+  if (L.heat > 0.005) { g.fillStyle = css([255, 160, 90], 0.05 * L.heat); for (let y = hz - H * 0.05; y < hz + H * 0.1; y += 4) g.fillRect(2 * Math.sin(TAU * t * 2 + y), y, W, 1); }
+  if (L.steam > 0.005) for (let i = 0; i < 6; i++) { const q = frac(t * 2 + i / 6); g.fillStyle = css([220, 225, 230], 0.25 * (1 - q) * L.steam); g.beginPath(); g.arc(W * (0.15 + 0.14 * i) + 5 * Math.sin(TAU * (q + i)), hz - q * H * 0.4, 2 + q * 5, 0, TAU); g.fill(); }
+  const ml = S.ash ? L.ash : S.dust ? L.dust : L.wind; // la couleur des poussières suit celle d'avant : cendre, sinon sable, sinon vent
+  if ((S.dust || S.ash || S.wind) && ml > 0.005) for (const p of m.motes) { const x = frac(p.x / W + t * p.k * (S.dust ? 3 : 1.5)) * W, y = p.y + 3 * Math.sin(TAU * (t * 2 + p.p)); g.fillStyle = S.ash ? css([160, 160, 160], 0.4 * ml) : S.dust ? css([200, 160, 100], 0.45 * ml) : css([220, 220, 230], 0.12 * ml); g.fillRect(x, y, S.dust ? 2 : 1.2, 1); }
+  if (L.tornado > 0.005) tornado(g, m, t, L.tornado);
+  if (L.rain > 0.005) { g.strokeStyle = css([190, 205, 225], lerp(0.3, 0.45, L.storm) * L.rain); g.lineWidth = 1; g.beginPath(); for (const d of m.drops) { const y = frac(d.y + t * d.v) * H, x = d.x + y * 0.12; g.moveTo(x, y); g.lineTo(x - 2, y - H * d.l); } g.stroke(); }
+  if (L.drizzle > 0.005 || L.acidRain > 0.005 || L.crystalRain > 0.005) drizzle(g, m, t, L);
+  if (L.snow > 0.005 || L.ashRain > 0.005) flakes(g, m, t, L);
+  if (L.petals > 0.005) petals(g, m, t, L.petals);
+  if (L.hail > 0.005) { g.fillStyle = css([230, 240, 255], 0.7 * L.hail); for (const d of m.drops) { const y = frac(d.y + t * d.v * 1.5) * H; g.fillRect((d.x + y * 0.05) % W, y, 1.6, 1.6); } }
+  if (L.lightning > 0.005) {
     const q = Math.floor(t * 4), g2 = rng(S.seed + q * 101), on = g2() < 0.35 && frac(t * 4) < 0.18;
     if (on) {
-      g.fillStyle = "rgba(220,230,255,0.22)"; g.fillRect(0, 0, W, H); g.strokeStyle = "rgba(240,245,255,0.9)"; g.lineWidth = 1.4; g.beginPath(); let x = W * (0.2 + 0.6 * g2()), y = 0; g.moveTo(x, y);
+      g.fillStyle = css([220, 230, 255], 0.22 * L.lightning); g.fillRect(0, 0, W, H); g.strokeStyle = css([240, 245, 255], 0.9 * L.lightning); g.lineWidth = 1.4; g.beginPath(); let x = W * (0.2 + 0.6 * g2()), y = 0; g.moveTo(x, y);
       while (y < hz) { x += (g2() - 0.5) * W * 0.07; y += H * (0.05 + 0.05 * g2()); g.lineTo(x, y); } g.stroke();
     }
   }
+}
+
+// ---- météo vivante : les nouveaux temps -------------------------------------------------------------------------
+/** Bruine : des fils très fins et serrés, presque droits, et une brume d'eau qui voile le lointain. Teintée par l'acide, irisée par le cristal. */
+function drizzle(g, m, t, L) {
+  const { W, H, hz, wx } = m; if (!wx.mist) return;
+  const a = Math.max(L.drizzle, L.acidRain, L.crystalRain), acid = L.acidRain, cr = L.crystalRain, wet = mixc([200, 208, 216], [196, 206, 120], acid);
+  const hg = g.createLinearGradient(0, hz - H * 0.22, 0, hz + H * 0.08); hg.addColorStop(0, css(wet, 0)); hg.addColorStop(0.7, css(wet, 0.18 * a)); hg.addColorStop(1, css(wet, 0)); g.fillStyle = hg; g.fillRect(0, hz - H * 0.22, W, H * 0.3);
+  g.lineWidth = 0.7; g.strokeStyle = css(mixc([218, 226, 236], [205, 218, 110], acid), 0.36 * a); g.beginPath();
+  for (const d of wx.mist) { const y = frac(d.y + t * d.v) * H, x = d.x + y * 0.04; g.moveTo(x, y); g.lineTo(x - 0.5, y - H * d.l); }
+  g.stroke();
+  if (cr > 0.005) for (const [i, d] of wx.mist.entries()) { // pluie de cristal : une goutte sur trois accroche la lumière
+    if (i % 3) continue; const y = frac(d.y + t * d.v) * H, x = d.x + y * 0.04, tw = Math.pow(Math.max(0, Math.sin(TAU * (t * 3 + d.a * 7))), 4);
+    g.fillStyle = css(hsl(180 + 180 * frac(d.a * 3 + t), 0.7, 0.85), (0.35 + 0.6 * tw) * cr); g.fillRect(x - 0.6, y - 0.6, 1.4, 1.4);
+    if (tw > 0.6) { g.strokeStyle = css([255, 255, 255], 0.5 * tw * cr); g.lineWidth = 0.6; g.beginPath(); g.moveTo(x - 2.5, y); g.lineTo(x + 2.5, y); g.moveTo(x, y - 2.5); g.lineTo(x, y + 2.5); g.stroke(); }
+  }
+  if (acid > 0.005) { g.fillStyle = css([170, 190, 70], 0.06 * acid); g.fillRect(0, 0, W, H); }
+}
+/** Neige (flocons blancs et doux qui oscillent) ou pluie de cendre (gris, plus lourde). */
+function flakes(g, m, t, L) {
+  const { H, wx } = m; if (!wx.flakes) return;
+  for (const [i, f] of wx.flakes.entries()) {
+    const ash = L.ashRain > 0.005 && (i % 2 === 1 || L.snow <= 0.005), lv = ash ? L.ashRain : L.snow; if (lv <= 0.005) continue;
+    const y = frac(f.y + t * f.k) * (H + 6) - 3, x = f.x + 6 * Math.sin(TAU * (t * 2 + f.p)) + y * 0.05;
+    g.fillStyle = ash ? css(f.p < 0.3 ? [150, 144, 136] : [70, 66, 62], 0.75 * lv) : css([246, 248, 252], (0.55 + 0.4 * f.p) * lv); // la cendre : grise, parfois plus pâle
+    g.beginPath(); if (ash) g.ellipse(x, y, f.s * 1.2, f.s * 0.7, f.p * 3, 0, TAU); else g.arc(x, y, f.s, 0, TAU); g.fill();
+  }
+}
+/** Pluie de pétales : des pétales qui tournoient en descendant de biais, de la couleur des fleurs. */
+function petals(g, m, t, lv) {
+  const { W, H, wx } = m; if (!wx.petals) return;
+  for (const p of wx.petals) {
+    const x = frac(p.x + t * p.k) * (W + 20) - 10, y = frac(p.y + t * p.r) * (H + 10) - 5 + 6 * Math.sin(TAU * (t * 2 + p.p)), spin = TAU * (t * 2 * p.k + p.p);
+    g.fillStyle = css(hsl((wx.hue != null ? wx.hue : 340) + p.h, 0.55, 0.8), 0.85 * lv); g.beginPath(); g.ellipse(x, y, p.s, p.s * (0.25 + 0.35 * Math.abs(Math.sin(spin))), spin, 0, TAU); g.fill();
+  }
+}
+/** Brume parfumée : un voile rose et doré au ras du sol, et du pollen qui monte en luisant. */
+function scentedMist(g, m, t, lv) {
+  const { W, H, hz, wx } = m, tint = hsl(wx.hue != null ? wx.hue + 10 : 350, 0.45, 0.82);
+  for (let i = 0; i < 3; i++) { const y = hz + H * (0.02 + 0.06 * i), x = frac(t + i * 0.37) * W, gr = g.createLinearGradient(0, y - H * 0.09, 0, y + H * 0.07); gr.addColorStop(0, css(tint, 0)); gr.addColorStop(0.5, css(tint, (0.2 - 0.03 * i) * lv)); gr.addColorStop(1, css(tint, 0)); g.fillStyle = gr; g.fillRect(-x * 0.1, y - H * 0.09, W + 20, H * 0.16); }
+  for (const p of wx.motes || []) { const q = frac(p.y + t), x = p.x * W + 4 * Math.sin(TAU * (t + p.p)), y = H - q * (H - hz * 0.8); g.fillStyle = css([255, 236, 190], 0.5 * Math.sin(Math.PI * q) * lv); g.beginPath(); g.arc(x, y, p.s, 0, TAU); g.fill(); }
+}
+/** Tornade : un entonnoir de vent, au loin, qui ondule entre la base des nuages et le sol, et ce qu'il soulève. */
+function tornado(g, m, t, lv) {
+  const { H, hz, wx, pal } = m, tw = wx.twister; if (!tw) return;
+  const top = H * 0.1, n = 26, col = mixc(pal.rock, [120, 118, 112], 0.55);
+  const at = (u) => tw.x + Math.sin(TAU * t + tw.p + u * 3) * H * 0.03 * (1 - u) + tw.lean * H * (1 - u);
+  const cg = g.createLinearGradient(0, 0, 0, top * 2.2); cg.addColorStop(0, css([40, 42, 48], 0.5 * lv)); cg.addColorStop(1, css([40, 42, 48], 0)); g.fillStyle = cg; g.beginPath(); g.ellipse(tw.x, top, H * 0.4, top * 1.2, 0, 0, TAU); g.fill(); // la base des nuages qui l'enfante
+  for (let i = 0; i <= n; i++) { const u = i / n, y = lerp(top, hz, u), w = H * (0.012 + 0.11 * Math.pow(1 - u, 1.8)) * tw.w; g.fillStyle = css(mixc(col, [30, 30, 34], 0.35 * u), (0.22 + 0.25 * u) * lv); g.beginPath(); g.ellipse(at(u) + Math.sin(TAU * t * 3 + i) * w * 0.15, y, w, w * 0.3, 0, 0, TAU); g.fill(); }
+  g.strokeStyle = css([210, 205, 195], 0.18 * lv); g.lineWidth = 0.8; // les filets de vent qui tournent autour de l'entonnoir
+  for (let j = 0; j < 4; j++) { g.beginPath(); for (let i = 0; i <= n; i++) { const u = i / n, y = lerp(top, hz, u), w = H * (0.012 + 0.11 * Math.pow(1 - u, 1.8)) * tw.w, x = at(u) + Math.sin(TAU * (t * 2 + j / 4) + u * 9) * w * 0.9; i ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
+  for (const d of tw.debris) { const a = TAU * (t * d.k * 2 + d.p), r = H * 0.035 * d.r, x = at(1) + Math.cos(a) * r, y = hz - H * 0.015 - Math.abs(Math.sin(a)) * r * 0.6 - d.p * H * 0.05; g.fillStyle = css([60, 56, 50], 0.6 * lv); g.fillRect(x, y, 1.4, 1.4); }
+  const dg = g.createRadialGradient(at(1), hz, 0, at(1), hz, H * 0.08); dg.addColorStop(0, css(col, 0.35 * lv)); dg.addColorStop(1, css(col, 0)); g.fillStyle = dg; g.fillRect(at(1) - H * 0.08, hz - H * 0.08, H * 0.16, H * 0.1); // la poussière à ses pieds
+}
+/** Arc-en-ciel : sept bandes très douces, à l'opposé du soleil, qui s'effacent vers le sol. Seulement quand il fait jour. */
+function rainbow(g, m, t, sn, day, lv) {
+  const { W, H, hz, wx } = m, b = wx.bow; if (!b || day < 0.05) return;
+  const s0 = sn.find((s) => s.e > 0.05), cx = s0 ? clamp(W - s0.x, W * 0.15, W * 0.85) : b.x, cy = hz + b.drop, a = lv * day * (0.85 + 0.15 * Math.sin(TAU * t));
+  const BANDS = [[200, 70, 70], [215, 140, 70], [220, 205, 110], [110, 175, 110], [90, 140, 200], [100, 90, 175], [140, 95, 170]];
+  g.save(); g.beginPath(); g.rect(0, 0, W, hz); g.clip();
+  BANDS.forEach((c, i) => { const R = b.R - i * H * 0.012, gr = g.createLinearGradient(0, cy - R, 0, hz); gr.addColorStop(0, css(c, 0.28 * a)); gr.addColorStop(0.7, css(c, 0.16 * a)); gr.addColorStop(1, css(c, 0)); g.strokeStyle = gr; g.lineWidth = H * 0.013; g.beginPath(); g.arc(cx, cy, R, Math.PI, TAU); g.stroke(); });
+  g.restore();
+}
+/** Le sol sous la neige, le verglas ou la cendre ; les fleurs. Sur la terre seulement (avec un rivage, pas sur l'eau). */
+function groundWeather(g, m, t, night, L) {
+  const { S, W, H, hz, wx, shore } = m, snow = L.snow, glaze = L.glaze, ash = L.ashRain;
+  if (!(snow > 0.005 || glaze > 0.005 || ash > 0.005 || (S.flowers && wx.blooms))) return;
+  if (S.water && !shore) return; // une mer : rien ne s'y pose
+  g.save(); if (shore) { shorePath(g, shore.land); g.clip(); }
+  const lit = 1 - 0.6 * night;
+  if (S.flowers && wx.blooms) for (const b of wx.blooms) { // fleurs : des touches de couleur, serrées au loin, plus grandes devant ; la neige les éteint
+    const y = hz + (H - hz) * b.u * b.u + 1, k = 0.35 + 1.1 * b.u, x = b.x + Math.sin(TAU * t + b.p) * k * 0.8;
+    g.strokeStyle = css(mixc([70, 100, 60], [8, 10, 12], 0.3 + 0.5 * night), 0.6); g.lineWidth = 0.7; g.beginPath(); g.moveTo(b.x, y); g.lineTo(x, y - 3 * k); g.stroke();
+    g.fillStyle = css(mixc(hsl(b.h, 0.55 + 0.2 * b.s, 0.66), [10, 12, 20], clamp(0.15 + 0.6 * night + 0.5 * snow)), 0.9 * lit + 0.1); g.beginPath(); g.arc(x, y - 3 * k, 0.9 + 1.1 * k * (0.6 + 0.4 * b.s), 0, TAU); g.fill();
+  }
+  if (snow > 0.005) { const sg = g.createLinearGradient(0, hz, 0, H); sg.addColorStop(0, css([232, 238, 246], 0.55 * snow * lit)); sg.addColorStop(1, css([214, 224, 238], 0.35 * snow * lit)); g.fillStyle = sg; g.fillRect(0, hz, W, H - hz); }
+  if (ash > 0.005) { g.fillStyle = css([60, 58, 56], 0.3 * ash); g.fillRect(0, hz, W, H - hz); }
+  if (glaze > 0.005) { // verglas : le sol devient un miroir terne, des reflets glissent
+    g.fillStyle = css([200, 220, 240], 0.12 * glaze * lit); g.fillRect(0, hz, W, H - hz);
+    for (const p of wx.motes || []) { const u = p.y, y = hz + (H - hz) * u * u, x = frac(p.x + t * 0.25) * W, a = Math.pow(Math.max(0, Math.sin(TAU * (t + p.p))), 3); g.fillStyle = css([245, 252, 255], (0.15 + 0.6 * a) * glaze * lit); g.fillRect(x, y, 6 + 18 * u, 0.9); }
+  }
+  g.restore();
 }
 
 // ---- corps célestes : ceinture, champ d'astéroïdes, planète à anneaux, comète (mouvements lents, horloge continue en secondes) ----
@@ -926,4 +1080,4 @@ function extraAt(g, m, t, layer) {
 }
 
 
-module.exports = { HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
+module.exports = { HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };

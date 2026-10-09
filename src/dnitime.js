@@ -29,4 +29,7 @@ function format(d) { return `${d.hahr} · ${d.name} ${d.yahr} · ${d.gahrtahvo}:
 /** Phase du jour D'ni (0 au début du yahr, 1 à la fin) : de quoi faire tourner le ciel sur le yahr plutôt que sur le jour terrestre. */
 function dayPhase(date = Date.now()) { const d = fromDate(date); return (d.gahrtahvo * 15625 + d.tahvo * 625 + d.gorahn * 25 + d.prorahn) / PRO_PER_YAHR; }
 
-module.exports = { fromDate, format, dayPhase, VAILEE, REF, REF_HAHR, MS_PER_HAHR, PRO_PER_HAHR };
+/** Numéro du jour D'ni (yahr, 290 par hahr) depuis le point de départ : le même pour tout le monde au même instant (météo vivante). */
+function dayNumber(date = Date.now()) { const ms = date instanceof Date ? date.getTime() : Number(date); return Math.floor(((ms - REF) / MS_PER_HAHR) * 290); }
+
+module.exports = { fromDate, format, dayPhase, dayNumber, VAILEE, REF, REF_HAHR, MS_PER_HAHR, PRO_PER_HAHR };

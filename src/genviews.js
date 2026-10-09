@@ -34,9 +34,10 @@ function paintZenith(g, m, t, o = {}) {
   g.save(); g.clearRect(0, 0, W, H);
   const sky = g.createRadialGradient(cx, cy, 0, cx, cy, R); sky.addColorStop(0, css(mixc(top, [0, 0, 0], 0.12))); sky.addColorStop(0.75, css(mixc(top, hzc, 0.35))); sky.addColorStop(1, css(mixc(top, hzc, 0.7)));
   g.fillStyle = sky; g.fillRect(0, 0, W, H);
-  if (S.storm) { g.fillStyle = "rgba(14,17,24,0.55)"; g.fillRect(0, 0, W, H); }
+  const L = G.weatherLevels(m, k.td, o); // météo vivante : la même que de face (1 partout sans ligne programmée)
+  if (L.storm > 0.005) { g.fillStyle = css([14, 17, 24], 0.55 * L.storm); g.fillRect(0, 0, W, H); }
   if (S.veil) { g.fillStyle = "rgba(190,190,202,0.22)"; g.fillRect(0, 0, W, H); }
-  const sv = Math.max((S.storm ? 0.25 : 1) * (S.veil ? 0.5 : 1) * (1 - Math.min(1, d * 1.4)), 0.7 * air.thin * air.thin) * (1 - 0.8 * air.thick);
+  const sv = Math.max(lerp(1, 0.25, L.storm) * (S.veil ? 0.5 : 1) * (1 - Math.min(1, d * 1.4)), 0.7 * air.thin * air.thin) * (1 - 0.8 * air.thick);
   const few = S.amt && S.amt.stars != null ? Math.min(1, S.amt.stars) : 1, sx = W / m.W, sy = H / (hz * 0.9);
   if (sv > 0.02) {
     for (const s of m.stars) for (const [x, y] of [[s.x * sx, s.y * sy], [W - s.x * sx, H - s.y * sy]]) { g.fillStyle = css([230, 230, 245], (0.25 + 0.55 * (0.5 + 0.5 * Math.sin(TAU * t * s.k + s.p))) * sv); g.fillRect(x, y, s.s, s.s); }
@@ -85,11 +86,14 @@ function paintZenith(g, m, t, o = {}) {
   }
   // nuages : ils passent au-dessus, vus d'en dessous
   for (const c of air.thin > 0.85 ? [] : m.clouds) {
-    const x = frac(c.x / m.W + t * c.sp) * (W + c.w * 2) - c.w, y = (c.y / m.H) * H * 1.8; g.fillStyle = css(S.storm ? [30, 34, 44] : mixc(hzc, [255, 255, 255], 0.3), S.storm ? 0.55 : c.a * (0.5 + day));
+    const x = frac(c.x / m.W + t * c.sp) * (W + c.w * 2) - c.w, y = (c.y / m.H) * H * 1.8; g.fillStyle = css(mixc(mixc(hzc, [255, 255, 255], 0.3), [30, 34, 44], L.storm), lerp(c.a * (0.5 + day), 0.55, L.storm));
     c.lump.forEach((l, j) => { g.beginPath(); g.ellipse(x + (j / 7) * c.w * 1.3, y + (l - 0.5) * c.h, c.w * 0.18, c.h * (0.5 + l * 0.5), 0, 0, TAU); g.fill(); });
   }
-  if (S.rain) { g.strokeStyle = css([200, 215, 235], 0.35); g.lineWidth = 0.8; const q = rng(Math.floor(t * 400)); for (let i = 0; i < 60; i++) { const a = q() * TAU, r0 = q() * R, l = 4 + r0 * 0.06; g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * (r0 + l), cy + Math.sin(a) * (r0 + l)); g.stroke(); } } // la pluie tombe vers soi
-  if (S.lightning && frac(t * 3.7) < 0.03) { g.fillStyle = "rgba(235,240,255,0.35)"; g.fillRect(0, 0, W, H); }
+  const fall = Math.max(L.rain, L.drizzle * 0.6, L.acidRain * 0.6, L.crystalRain * 0.6); // la bruine, plus fine, tombe aussi vers soi
+  if (fall > 0.005) { g.strokeStyle = css([200, 215, 235], 0.35 * fall); g.lineWidth = 0.8; const q = rng(Math.floor(t * 400)); for (let i = 0; i < 60; i++) { const a = q() * TAU, r0 = q() * R, l = 4 + r0 * 0.06; g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * (r0 + l), cy + Math.sin(a) * (r0 + l)); g.stroke(); } } // la pluie tombe vers soi
+  const fl = Math.max(L.snow, L.ashRain); // neige ou cendre : des flocons qui descendent droit sur soi
+  if (fl > 0.005) { const q = rng((S.seed ^ 0x5a0) >>> 0); for (let i = 0; i < 50; i++) { const a = q() * TAU, r0 = frac(q() - t * 0.5) * R; g.fillStyle = L.ashRain > L.snow ? css([96, 92, 88], 0.5 * fl) : css([246, 248, 252], 0.7 * fl); g.beginPath(); g.arc(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0, 0.8 + r0 / R * 2.2, 0, TAU); g.fill(); } }
+  if (L.lightning > 0.005 && frac(t * 3.7) < 0.03) { g.fillStyle = css([235, 240, 255], 0.35 * L.lightning); g.fillRect(0, 0, W, H); }
   // la canopée : des branches qui entrent par les bords
   if (S.trees || S.world === "jungle") {
     const q = rng((S.seed ^ 0xca70) >>> 0), dark = css(mixc(mixc(hzc, [0, 0, 0], 0.85), [10, 30, 15], 0.4), 0.95), n = 5 + Math.floor(q() * 4);
