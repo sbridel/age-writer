@@ -65,7 +65,7 @@ Le ciel étendu (`src/sky.js`) et les richesses (`src/wealth.js`) sont lus direc
 | `relto-model.js` | données du Relto : lecture du frontmatter, pages, déverrouillage, `relto-library`, choix des livres, ciel |
 | `relto-render.js` | rendu canvas du Relto (île, cabane, étagère, effets de pages) |
 | `telescope.js` | télescope, modèle pur : Great Zero caché tiré du nom + graine du Relto (`greatZero`), visée et molettes (`turn`), signal chaud/froid (`signal` : décroît strictement avec l'écart, paliers de mots, tolérance `TOL`) |
-| `relto-telescope.js` | télescope, dessin : la lunette au sommet du mont, sa vue (oculaire, molettes Toran / Élévation, plaque du Zéro), les gestes ; état gardé par Relto (`ext.telescope[nom#graine]`) |
+| `relto-telescope.js` | télescope, dessin : la lunette au sommet du mont, sa vue (oculaire, molettes Torahn / Élévation, unités GZCS : torantee et shahfeetee, plaque du Zéro), les gestes ; état gardé par Relto (`ext.telescope[nom#graine]`) |
 | `linkfx.js` | effets de la fenêtre de liaison (ondulation, statique, télé, coupures), tirage d'une liaison incertaine |
 | `genscene.js` | fenêtre génératrice : `sceneOf` (descripteur, blocs inconnus compris), `traits` (adjectifs → teinte, taille, mouvement), `build` (géométrie tirée de la graine), `paint` (une image à la phase t) |
 | `wealth.js` / `amounts.js` | richesses et cicatrices (blocs de matière), quantités many/few/normal et compensation (`applyAmounts`, appelé par `adjust`) |

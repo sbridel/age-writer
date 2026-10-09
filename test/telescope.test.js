@@ -22,40 +22,46 @@ ok(JSON.stringify(z0) !== JSON.stringify(T.greatZero("Relto", 19991119)), "grain
 ok(JSON.stringify(z0) !== JSON.stringify(T.greatZero("Ma maison", 19991118)), "autre nom, même graine : un autre Zéro");
 {
   const zs = []; for (let s = 1; s <= 400; s++) zs.push(T.greatZero("Relto", s));
-  const distinct = new Set(zs.map((z) => `${z.toran}/${z.elevation}`)).size;
-  ok(distinct >= 390, `400 graines : des Zéros presque tous distincts (${distinct})`);
-  ok(zs.every((z) => Number.isInteger(z.toran) && z.toran >= 0 && z.toran < T.TURN && Number.isInteger(z.elevation) && Math.abs(z.elevation) <= T.ZERO_ELEV && z.distance >= 1 && z.distance <= 624), "Toran sur un tour, élévation loin des butées, distance de 1 à 624");
-  const q = [0, 0, 0, 0]; for (const z of zs) q[Math.floor(z.toran / (T.TURN / 4))]++;
-  ok(q.every((c) => c > 60), `Toran réparti sur tout le tour (${q.join(", ")})`);
+  const distinct = new Set(zs.map((z) => `${z.torahn}/${z.elevation}`)).size;
+  ok(distinct >= 395, `400 graines : des Zéros presque tous distincts (${distinct})`);
+  ok(T.TURN === 62500, "un tour de Torahn = 62 500 torantee");
+  ok(zs.every((z) => Number.isInteger(z.torahn) && z.torahn >= 0 && z.torahn < T.TURN && Number.isInteger(z.elevation) && Math.abs(z.elevation) <= T.ZERO_ELEV && Number.isInteger(z.distance) && z.distance >= 1 && z.distance <= T.DIST_MAX), "Torahn en torantee sur un tour, élévation (shahfeetee) loin des butées, distance en shahfeetee");
+  ok(zs.some((z) => z.torahn % T.NOTCH !== 0), "le Zéro tombe entre deux crans : on l'encadre");
+  const q = [0, 0, 0, 0]; for (const z of zs) q[Math.floor(z.torahn / (T.TURN / 4))]++;
+  ok(q.every((c) => c > 60), `Torahn réparti sur tout le tour (${q.join(", ")})`);
   ok(zs.some((z) => z.elevation > 50) && zs.some((z) => z.elevation < -50), "élévation au-dessus et au-dessous du plan zéro");
 }
 
 // ---- visée et molettes ------------------------------------------------------------------------------
-ok(T.turn({ toran: 620, elev: 0 }, "toran", 10).toran === 5 && T.turn({ toran: 3, elev: 0 }, "toran", -25).toran === 603, "le Toran fait le tour");
-ok(T.turn({ toran: 0, elev: 120 }, "elev", 25).elev === T.ELEV_MAX && T.turn({ toran: 0, elev: -120 }, "elev", -25).elev === -T.ELEV_MAX, "l'élévation s'arrête aux butées");
-ok(JSON.stringify(T.normAim(null)) === JSON.stringify({ toran: 0, elev: 0 }) && T.normAim({ toran: "x", elev: 999 }).elev === T.ELEV_MAX, "visée absente ou abîmée : valeurs sûres");
-ok(T.gap({ toran: 620, elev: 0 }, { toran: 4, elevation: 0 }).dt === 9 && T.gap({ toran: 4, elev: 0 }, { toran: 620, elevation: 0 }).dt === -9, "écart de Toran au plus court sur le cercle");
-{ const d = T.digits(-118); ok(d.neg && d.hi === 4 && d.lo === 18, "chiffres D'ni : signe, puis deux chiffres en base 25"); }
+ok(T.turn({ torahn: 62000, elev: 0 }, "torahn", 1000).torahn === 500 && T.turn({ torahn: 300, elev: 0 }, "torahn", -2500).torahn === 60300, "le Torahn fait le tour (en torantee)");
+ok(T.turn({ torahn: 100, elev: 0 }, "toran", 100).torahn === 200 && T.normAim({ toran: 4200, elev: 3 }).torahn === 4200 && T.axisOf("Toran") === "torahn", "l'ancienne graphie « Toran » est acceptée (axe et visée gardée)");
+ok(T.turn({ torahn: 0, elev: 120 }, "elev", 25).elev === T.ELEV_MAX && T.turn({ torahn: 0, elev: -120 }, "elevation", -25).elev === -T.ELEV_MAX, "l'élévation s'arrête aux butées");
+ok(JSON.stringify(T.normAim(null)) === JSON.stringify({ torahn: 0, elev: 0 }) && T.normAim({ torahn: "x", elev: 999 }).elev === T.ELEV_MAX, "visée absente ou abîmée : valeurs sûres");
+ok(T.gap({ torahn: 62000, elev: 0 }, { torahn: 400, elevation: 0 }).dt === 900 && T.gap({ torahn: 400, elev: 0 }, { torahn: 62000, elevation: 0 }).dt === -900, "écart de Torahn au plus court sur le cercle");
+ok(T.kiElev(40) === -40 && T.kiElev(-12) === 12 && Object.is(T.kiElev(0), 0), "KI : au-dessus du plan, l'élévation s'affiche négative");
+ok(T.STEP.torahn.hub === 100 && T.STEP.torahn.rim === 2500 && T.STEP.elev.hub === 1 && T.STEP.elev.rim === 25, "moyeu : 100 torantee ou 1 shahfee ; couronne : 25 crans");
 
 // ---- le signal : il croît strictement quand on approche ------------------------------------------------
 {
-  const z = { toran: 300, elevation: 40 };
+  const Z = 30037, z = { torahn: Z, elevation: 40 }, at = (u) => ((Z - u) % T.TURN + T.TURN) % T.TURN; // at(u) : u torantee avant le Zéro
   let mono = true, last = -1;
-  for (let d = 312; d >= 0; d--) { const s = T.signal({ toran: 300 - d, elev: 40 }, z).s; if (!(s > last)) mono = false; last = s; }
-  ok(mono, "en Toran seul : le signal croît à chaque cran gagné");
+  for (let d = 31200; d >= 0; d -= 50) { const s = T.signal({ torahn: at(d), elev: 40 }, z).s; if (!(s > last)) mono = false; last = s; }
+  ok(mono, "en Torahn seul : le signal croît à chaque demi-cran gagné");
   last = -1; mono = true;
-  for (let e = -T.ELEV_MAX; e <= 40; e++) { const s = T.signal({ toran: 300, elev: e }, z).s; if (!(s > last)) mono = false; last = s; }
-  ok(mono, "en élévation seule : le signal croît à chaque cran gagné");
-  // en diagonale (les deux axes), en passant par le zéro du Toran
+  for (let e = -T.ELEV_MAX; e <= 40; e++) { const s = T.signal({ torahn: Z, elev: e }, z).s; if (!(s > last)) mono = false; last = s; }
+  ok(mono, "en élévation seule : le signal croît à chaque shahfee gagné");
+  // en diagonale (les deux axes) ; 150 × 200 = 30 000 torantee : moins d'un demi-tour (au-delà, le plus court passe de l'autre côté)
   last = -1; mono = true; let bandsUp = true, lastBand = -1;
-  // 2 × 150 = 300 crans de Toran : moins d'un demi-tour (au-delà, le plus court passe de l'autre côté)
-  for (let k = 150; k >= 0; k--) { const g = T.signal({ toran: (z.toran - 2 * k + T.TURN * 2) % T.TURN, elev: 40 - k }, z); if (!(g.s > last)) mono = false; if (g.band < lastBand) bandsUp = false; last = g.s; lastBand = g.band; }
+  for (let k = 150; k >= 0; k--) { const g = T.signal({ torahn: at(200 * k), elev: 40 - k }, z); if (!(g.s > last)) mono = false; if (g.band < lastBand) bandsUp = false; last = g.s; lastBand = g.band; }
   ok(mono && bandsUp, "en diagonale : signal et paliers de mots ne reculent jamais");
-  const far = T.signal({ toran: (z.toran + 312) % T.TURN, elev: -40 }, z), near = T.signal({ toran: 302, elev: 41 }, z), on = T.signal({ toran: 300, elev: 40 }, z);
+  const far = T.signal({ torahn: (Z + 31250) % T.TURN, elev: -40 }, z), near = T.signal({ torahn: Z + 200, elev: 42 }, z), on = T.signal({ torahn: Z, elev: 40 }, z);
   ok(far.band === 0 && far.s < 0.1 && !far.found, "à l'opposé : le vide");
-  ok(near.found && near.band === 5 && on.s === 1, "à deux crans près : trouvé ; en plein dessus : signal 1");
-  ok(!T.signal({ toran: 303, elev: 40 }, z).found && !T.signal({ toran: 300, elev: 43 }, z).found, "à trois crans : pas encore");
-  ok([0, 1, 2, 3, 4, 5].every((b) => { for (let d = 0; d <= 312; d++) if (T.signal({ toran: (300 - d + T.TURN) % T.TURN, elev: 40 }, z).band === b) return true; return false; }), "les six paliers de mots se rencontrent en chemin");
+  ok(near.found && near.band === 5 && on.s === 1, "à 200 torantee et 2 shahfeetee : trouvé ; en plein dessus : signal 1");
+  ok(!T.signal({ torahn: Z + 201, elev: 40 }, z).found && !T.signal({ torahn: Z, elev: 43 }, z).found, "un peu au-delà : pas encore");
+  ok([0, 1, 2, 3, 4, 5].every((b) => { for (let d = 0; d <= 31200; d += 25) if (T.signal({ torahn: at(d), elev: 40 }, z).band === b) return true; return false; }), "les six paliers de mots se rencontrent en chemin");
+  { // avec les seules molettes (crans de 100 torantee), le Zéro, qui tombe entre deux crans, reste atteignable
+    const zz = { torahn: 4250, elevation: 0 }; ok(T.signal({ torahn: 4200, elev: 0 }, zz).found && T.signal({ torahn: 4300, elev: 0 }, zz).found, "entre deux crans : les deux voisins sont dans l'anneau");
+  }
 }
 
 // ---- la page : verrouillée sans Âge, débloquée par le premier ------------------------------------------
@@ -93,14 +99,15 @@ ok(T.gap({ toran: 620, elev: 0 }, { toran: 4, elevation: 0 }).dt === 9 && T.gap(
   const st = r.telescope, zero = T.greatZero(sc.name, sc.seed);
   ok(JSON.stringify(st.zero) === JSON.stringify(zero) && !st.found, "le Zéro du Relto (nom + graine), pas encore trouvé");
   const tel = r.hot.filter((h) => h.tel && h.tel.axis);
-  ok(tel.length === 8 && ["toran", "elev"].every((a) => [-25, -1, 1, 25].every((d) => tel.some((h) => h.tel.axis === a && h.tel.delta === d))), "deux molettes : couronne (un chiffre D'ni) et moyeu (un cran), dans les deux sens");
+  ok(tel.length === 8 && ["torahn", "elev"].every((a) => [-T.STEP[a].rim, -T.STEP[a].hub, T.STEP[a].hub, T.STEP[a].rim].every((d) => tel.some((h) => h.tel.axis === a && h.tel.delta === d))), "deux molettes, Torahn et Élévation : couronne (25 crans) et moyeu (un cran), dans les deux sens");
+  ok(r.hot.some((h) => /Torahn, in torantee.*62,500/.test(h.tip)) && r.hot.some((h) => /shahfeetee.*KI.*negative/.test(h.tip)), "unités dans la fiction : torantee (62 500 au tour), shahfeetee, le sens du KI");
   ok(r.hot.some((h) => h.go === "island") && r.hot.some((h) => /blank/i.test(h.tip)), "redescendre ; plaque vierge");
   // le joueur cherche : à chaque geste, il garde celui qui avive le signal (chaud / froid), couronne puis moyeu
   const click = (axis, delta) => { r.draw(2); const h = r.hot.find((x) => x.tel && x.tel.axis === axis && x.tel.delta === delta); r.toLogical = () => [h.x + 1, h.y + 1]; r.onClick({}); };
   let steps = 0, lastS = T.signal(st.aim, st.zero).s, stalled = 0;
   while (!st.found && steps < 400) {
     let moved = false;
-    for (const axis of ["toran", "elev"]) for (const step of [25, 1]) for (const dir of [1, -1]) {
+    for (const axis of ["torahn", "elev"]) for (const step of [T.STEP[axis].rim, T.STEP[axis].hub]) for (const dir of [1, -1]) {
       if (moved) continue; const before = { ...st.aim }; click(axis, dir * step); steps++;
       if (st.trend > 0) moved = true; else { st.aim = before; } // plus froid : on revient
     }
@@ -109,9 +116,9 @@ ok(T.gap({ toran: 620, elev: 0 }, { toran: 4, elevation: 0 }).dt === 9 && T.gap(
   ok(st.found, `chaud / froid suffit à trouver le Zéro (${steps} gestes)`);
   ok(sounds.some(([k]) => k === "found") && sounds.some(([k]) => k === "ping"), "sons : le pouls après chaque geste, la quinte du Zéro trouvé");
   const key = T.keyOf(sc.name, sc.seed);
-  ok(store[key] && store[key].found === true && store[key].at && Math.abs(T.gap(store[key].at, zero).dt) <= T.TOL, "trouvé : gardé par Relto, avec la visée du moment");
+  ok(store[key] && store[key].found === true && store[key].at && Math.abs(T.gap(store[key].at, zero).dt) <= T.TOL.torahn && "torahn" in store[key], "trouvé : gardé par Relto (en torantee), avec la visée du moment");
   r.draw(3); ok(r.hot.some((h) => h.tel && h.tel.setZero), "la plaque porte le Zéro, en chiffres D'ni");
-  click("toran", 25); click("toran", 25); click("elev", -25);
+  click("torahn", T.STEP.torahn.rim); click("torahn", T.STEP.torahn.rim); click("elev", -T.STEP.elev.rim);
   ok(st.found && store[key].found && !T.signal(st.aim, st.zero).found, "on s'éloigne : le Zéro reste trouvé");
   const p = r.hot.find((h) => h.tel && h.tel.setZero); r.toLogical = () => [p.x + 2, p.y + 2]; r.onClick({});
   ok(T.signal(st.aim, st.zero).s === 1, "clic sur la plaque : les molettes reviennent au Zéro");
@@ -124,9 +131,9 @@ ok(T.gap({ toran: 620, elev: 0 }, { toran: 4, elevation: 0 }).dt === 9 && T.gap(
   ok(!r2.telescope.found && JSON.stringify(r2.telescope.zero) !== JSON.stringify(zero), "autre graine : autre Zéro, pas trouvé");
   // français : la ligne de mots et les infobulles traduites
   const { makeT } = require("../src/i18n"), rf = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { ...opts(), t: makeT(() => "fr") });
-  rf.setScene(sc); rf.setView("telescope"); rf.draw(1); ok(rf.hot.some((h) => /Toran — couronne/.test(h.tip)), "en français : infobulles traduites");
+  rf.setScene(sc); rf.setView("telescope"); rf.draw(1); ok(rf.hot.some((h) => /Torahn — couronne/.test(h.tip)), "en français : infobulles traduites");
   // mouvement réduit : pas d'animation, dessin à t = 0
-  const rr = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { ...opts(), reducedMotion: true }); rr.setScene(other); rr.setView("telescope"); rr.draw(0); TL.act(rr, { axis: "toran", delta: 1 }); rr.draw(0);
+  const rr = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { ...opts(), reducedMotion: true }); rr.setScene(other); rr.setView("telescope"); rr.draw(0); TL.act(rr, { axis: "toran", delta: T.STEP.torahn.hub }); rr.draw(0);
   ok(!rr.telescope.anim && bad === 0, "mouvement réduit : la visée saute, sans glissement");
   ok(bad === 0, "vue du télescope : aucun nombre non fini");
 }
