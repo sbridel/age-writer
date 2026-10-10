@@ -35,7 +35,7 @@ function layout(zero, systems, line = 0) {
     const ra = (TAU * seen) / T.TURN, miss = SS.miss({ ...rec, seen: Number.isFinite(rec.seen) ? rec.seen : undefined });
     const ages = Array.isArray(rec.ages) ? rec.ages.slice() : [], name = ages.length ? ages.join(", ") : key.replace(/^.*@(sys:)?/, "").replace(/#.*$/, "").replace(/~.*$/, "");
     const pert = (rec.pert || []).map((q) => ({ kind: q.kind, ...plane(q.torahn, q.distance) }));
-    stars.push({ key, x: p.x, y: p.y, z: rec.elevation || 0, name, ages, pert, line: recLine, offLine: recLine !== 0, miss, ray: { x: Math.sin(ra), y: Math.cos(ra) }, tri: !!rec.tri });
+    stars.push({ key, x: p.x, y: p.y, z: rec.elevation || 0, distance: rec.distance, name, ages, pert, line: recLine, offLine: recLine !== 0, miss, ray: { x: Math.sin(ra), y: Math.cos(ra) }, tri: !!rec.tri });
   }
   stars.sort((a, b) => a.key < b.key ? -1 : 1);
   const far = Math.max(Math.hypot(rp.x, rp.y), ...stars.map((s) => Math.hypot(s.x, s.y)), ...stars.flatMap((s) => s.pert.map((q) => Math.hypot(q.x, q.y))), 1);

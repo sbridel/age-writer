@@ -1058,9 +1058,12 @@ class ReltoRenderer {
     const h = this.hover; if (!h) return;
     if (this.opts.hoverFrame !== false) { ctx.strokeStyle = "rgba(255,240,200,0.9)"; ctx.lineWidth = 1; ctx.strokeRect(h.x - 1, h.y - 1, h.w + 2, h.h + 2); } // cadre : réglage « Cadre des zones cliquables »
     const [vx0, vx1, vy0] = this.visible_();
-    ctx.font = "11px serif"; const tw = ctx.measureText(h.tip).width, bx = clamp(h.x + h.w / 2 - tw / 2 - 6, vx0 + 4, Math.max(vx0 + 4, vx1 - tw - 16)), by = Math.max(vy0 + 4, h.y - 24);
+    // `h.frac` (facultatif) : une longueur de faisceau en rahnfee (src/beam.js), gravée en chiffres D'ni après le texte
+    const fs = 10, fw = h.frac && this.dni && this.dni.fractionWidth ? this.dni.fractionWidth(h.frac, fs) + 6 : 0;
+    ctx.font = "11px serif"; const tw = ctx.measureText(h.tip).width + fw, bx = clamp(h.x + h.w / 2 - tw / 2 - 6, vx0 + 4, Math.max(vx0 + 4, vx1 - tw - 16)), by = Math.max(vy0 + 4, h.y - 24);
     ctx.fillStyle = "rgba(16,13,9,0.92)"; ctx.fillRect(bx, by, tw + 12, 18); ctx.strokeStyle = "rgba(205,189,148,0.8)"; ctx.strokeRect(bx, by, tw + 12, 18);
     ctx.fillStyle = "#e9dcb8"; ctx.fillText(h.tip, bx + 6, by + 13);
+    if (fw) this.dni.drawFraction(ctx, h.frac, bx + 6 + tw - fw + 6, by + 4, fs, "#e0c27a");
   }
 
   // ---- vues ----------------------------------------------------------------------------

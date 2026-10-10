@@ -32,6 +32,7 @@ const { rng, fnv } = require("./util");
 const T = require("./telescope");
 const { makeT } = require("./i18n");
 const PB = require("./perturbers");
+const BEAM = require("./beam");
 
 const DELAY_UNIT = 25;     // un cran de la molette du retard = 25 shahfeetee de trajet du pouls
 const DELAY_MAX = 624;     // la molette du retard va de 0 à 624 crans (deux chiffres D'ni)
@@ -39,6 +40,9 @@ const STEP_DELAY = { hub: 1, rim: 25 };
 const TOL = { torahn: T.TOL.torahn, elev: T.TOL.elev, delay: 1 }; // situé : à 200 torantee, 2 shahfeetee et 1 cran de retard près
 const SYS_ELEV = 100;      // hauteur de l'étoile : de −100 à +100 shahfeetee (vue de l'Âge, le Zéro reste dans les butées du télescope)
 const SYS_DIST = [200, 15000]; // distance horizontale de l'étoile au Zéro, en shahfeetee
+// Le rahnfee (src/beam.js, invention de fan) : le trajet du pouls en un prorahn, 15 625 shahfeetee de faisceau. Au-delà, le
+// pouls se mêlerait au battement suivant : aucune étoile, aucun cran de retard n'y va (garde-fou, vérifié au chargement).
+if (Math.hypot(SYS_DIST[1], SYS_ELEV) >= BEAM.RAHNFEE || DELAY_MAX * DELAY_UNIT >= BEAM.RAHNFEE) throw new Error("starsystem: au-delà d'un rahnfee");
 /** Blocs du ciel qui disent l'étoile : combien, quelle couleur, quelle orbite binaire (la lune n'en est pas). */
 const STAR_CATS = new Set(["stars", "hue"]), STAR_EXTRA = new Set(["close_binary_orbit", "wide_binary_orbit"]), NOT_STAR = new Set(["companion_moon"]);
 /** `system: Kerath` (ou `star_system:`, `système:`) : la graine d'étoile partagée. */
@@ -75,7 +79,7 @@ function position(key) {
   const r = rng((fnv("etoile|" + key) ^ 0x57a25e7) >>> 0); r(); r();
   const torahn = Math.floor(r() * (T.TURN / T.NOTCH)) * T.NOTCH + Math.floor(r() * T.NOTCH);
   const elevation = Math.round((r() * 2 - 1) * SYS_ELEV) || 0;
-  const distance = Math.round(SYS_DIST[0] * Math.exp(r() * Math.log(SYS_DIST[1] / SYS_DIST[0]))); // log-uniforme : des voisins et des lointains
+  const distance = Math.min(SYS_DIST[1], Math.round(SYS_DIST[0] * Math.exp(r() * Math.log(SYS_DIST[1] / SYS_DIST[0])))); // log-uniforme : des voisins et des lointains (jamais au-delà d'un rahnfee)
   return { torahn: mod(torahn, T.TURN), distance, elevation };
 }
 

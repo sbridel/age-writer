@@ -18,6 +18,7 @@ const I = require("./imager");
 const GI = require("./imager-guild");
 const CAL = require("./calibration");
 const TEL = require("./telescope");
+const BEAM = require("./beam");
 const { makeT } = require("./i18n");
 const V = require("./genviews");
 const W = 640, H = 360, FLOOR = 300;
@@ -297,11 +298,13 @@ function cartouche(r, ctx, cal) {
   let x = S.x + 6 + Math.min(130, ctx.measureText(words).width) + 8;
   if (lt.known) { const col = cal.certain ? "#9fe6da" : "rgba(240,200,140,0.9)"; x += dn(lt.gahr, x, 10, col) + 2; ctx.fillStyle = col; ctx.fillText(":", x, y + 13); x += 5; x += dn(lt.tahvo, x, 10, col); }
   r.hot.push({ x: S.x, y, w: x - S.x + 4, h: 18, tip: lt.known ? tt("cal.time.tip") : tt("cal.time.unknown.tip") });
-  // KIPS : Torahn · élévation (au sens du KI) · distance, comme sur un KI, en petit à droite
+  // KIPS : Torahn · élévation (au sens du KI) · distance le long du faisceau, en rahnfee (src/beam.js), comme sur un KI, en petit à droite
   if (cal.synced) {
-    const size = 8, kx = S.x + S.w - 6, vals = [cal.sys.torahn, TEL.kiElev(cal.sys.elevation), cal.sys.distance], w = (v) => wOf(v, size) + (v < 0 ? 4 : 0);
-    let px = Math.max(x + 10, kx - vals.reduce((a, v) => a + w(v) + 6, 0) + 6);
+    const size = 8, kx = S.x + S.w - 6, fr = BEAM.digitsOf(cal.sys.distance), vals = [cal.sys.torahn, TEL.kiElev(cal.sys.elevation)], w = (v) => wOf(v, size) + (v < 0 ? 4 : 0);
+    const fw = r.dni && r.dni.fractionWidth ? r.dni.fractionWidth(fr, size) : 24;
+    let px = Math.max(x + 10, kx - vals.reduce((a, v) => a + w(v) + 6, 0) - fw);
     const x0 = px, col = "rgba(224,194,122,0.9)"; for (const v of vals) { if (v < 0) { ctx.fillStyle = col; ctx.fillRect(px, y + 8.5, 3, 1); px += 4; } px += dn(v, px, size, col) + 6; }
+    if (r.dni && r.dni.drawFraction) r.dni.drawFraction(ctx, fr, px, y + (18 - size) / 2, size, col); else { ctx.fillStyle = col; ctx.fillText(fr.join("."), px, y + 13); }
     r.hot.push({ x: x0 - 4, y, w: kx - x0 + 8, h: 18, tip: tt("cal.kips.tip") });
   }
 }

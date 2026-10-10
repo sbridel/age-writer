@@ -29,6 +29,7 @@ const { makeT } = require("./i18n");
 const INS = require("./instruments");
 const MET = require("./metronome");
 const GI = require("./imager-guild");
+const BEAM = require("./beam");
 
 const W = 640, H = 360, GY = 208;
 const EYE = { x: 196, y: 150, r: 116 }, FIELD = 30; // l'oculaire montre ±30 crans fins autour de la visée
@@ -61,6 +62,8 @@ const trendWords = (t, k) => (k > 0 ? t("tel.warmer") : k < 0 ? t("tel.colder") 
 const withTrend = (t, line, k) => (k ? line + " " + trendWords(t, k) : line);
 /** L'écho de l'Âge face au battement du Relto (étape 2) : ensemble, presque, en retard, en avance. */
 const echoWords = (t, dd) => ({ one: t("sys.echo.one"), near: t("sys.echo.near"), late: t("sys.echo.late"), early: t("sys.echo.early") })[SS.echoWord(dd)];
+/** Le retard de la molette (crans) en mots : le pouls arrive une fraction de battement après le balancier (src/beam.js). */
+const lateWords = (t, notches) => t("beam.late.line", { late: String(t("beam.late")).split("|")[BEAM.fracBand(BEAM.lateOf(notches, SS.DELAY_UNIT))] });
 /** Les paliers de mots du signal (T.signal().band), du vide au bord de l'anneau. */
 const bandWords = (t, b) => [t("tel.band.void"), t("tel.band.faint"), t("tel.band.far"), t("tel.band.near"), t("tel.band.close"), t("tel.band.edge")][b] || "";
 const axisName = (t, axis) => (axis === "torahn" ? t("tel.torahn") : axis === "delay" ? t("sys.delay.name") : t("tel.elev"));
@@ -194,16 +197,23 @@ function plate(ctx, c, x, y, w, h) {
   ctx.fillStyle = g; ctx.fillRect(x, y, w, h); ctx.strokeStyle = c("#3b2a1b"); ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
   ctx.fillStyle = c("#3b2a1b"); for (const [px, py] of [[x + 5, y + 5], [x + w - 5, y + 5], [x + 5, y + h - 5], [x + w - 5, y + h - 5]]) { ctx.beginPath(); ctx.arc(px, py, 1.8, 0, 6.283); ctx.fill(); }
 }
-/** Une valeur gravée en chiffres D'ni (base 25), centrée en `cx` ; négative : un trait devant, comme au KI. */
+/**
+ * Une valeur gravée en chiffres D'ni (base 25), centrée en `cx` ; négative : un trait devant, comme au KI. `v` peut aussi
+ * être `{ frac: [entier, f1, …] }` : une longueur en rahnfee (src/beam.js), gravée « 0 · a b c » (Dni.drawFraction).
+ */
 function engraved(r, ctx, v, cx, y, size, col) {
+  if (v && v.frac) { const w = engravedWidth(r, v, size), x = cx - w / 2; if (r.dni && r.dni.drawFraction) r.dni.drawFraction(ctx, v.frac, x, y, size, col); else { ctx.fillStyle = col; ctx.font = `${size}px serif`; ctx.fillText(fracText(v.frac), x, y + size); } return; }
   const n = Math.round(Math.abs(v)), neg = Math.round(v) < 0, dash = neg ? size * 0.55 : 0;
   const w = (r.dni && r.dni.widthOf ? r.dni.widthOf(n, size) : String(n).length * size * 0.6) + dash, x = cx - w / 2;
   if (neg) { ctx.fillStyle = col; ctx.fillRect(x, y + size * 0.47, size * 0.4, Math.max(1.2, size * 0.09)); }
   if (r.dni && r.dni.drawNumber) r.dni.drawNumber(ctx, n, x + dash, y, size, col);
   else { ctx.fillStyle = col; ctx.font = `${size}px serif`; ctx.fillText(String(n), x + dash, y + size); }
 }
+/** Sans police ni tracé D'ni (tests) : la même lecture en chiffres ordinaires, chaque place séparée. */
+const fracText = (d) => d[0] + "." + d.slice(1).join(":");
 /** Largeur gravée d'une valeur (chiffres D'ni, signe compris). */
 function engravedWidth(r, v, size) {
+  if (v && v.frac) return r.dni && r.dni.fractionWidth ? r.dni.fractionWidth(v.frac, size) : fracText(v.frac).length * size * 0.6;
   const n = Math.round(Math.abs(v)), dash = Math.round(v) < 0 ? size * 0.55 : 0;
   return (r.dni && r.dni.widthOf ? r.dni.widthOf(n, size) : String(n).length * size * 0.6) + dash;
 }
@@ -233,7 +243,10 @@ function wheel(r, ctx, c, axis, W0, value, span, shown, tm, o = {}) {
   const small = RING < RING0, unit = axis === "torahn" ? t("tel.unit.torahn") : axis === "delay" ? t("sys.unit.delay") : t("tel.unit.elev");
   ctx.fillStyle = c("#e9dcb8"); ctx.font = small ? "italic 11px serif" : "italic 13px serif"; ctx.textAlign = "center"; ctx.fillText(name, x, y + RING + (small ? 14 : 22)); ctx.textAlign = "left";
   engraved(r, ctx, shown, x, y + RING + (small ? 18 : 30), small ? 9 : 12, "#e0c27a");
-  r.hot.push({ x: x - RING, y: y + RING + 4, w: RING * 2, h: small ? 26 : 40, tip: unit }); // le nom et la valeur : l'unité (et le sens du KI)
+  if (o.valueTip) { // le retard : le nom dit l'unité, la valeur dit le retard du pouls sur le balancier, en mots
+    r.hot.push({ x: x - RING, y: y + RING + 4, w: RING * 2, h: 13, tip: unit });
+    r.hot.push({ x: x - RING, y: y + RING + 17, w: RING * 2, h: 13, tip: o.valueTip });
+  } else r.hot.push({ x: x - RING, y: y + RING + 4, w: RING * 2, h: small ? 26 : 40, tip: unit }); // le nom et la valeur : l'unité (et le sens du KI)
   // couronne d'abord, moyeu ensuite : la dernière zone posée l'emporte (hit cherche de la fin vers le début)
   r.hot.push({ x: x - RING - 4, y: y - RING - 4, w: RING + 4, h: RING * 2 + 8, tip: `${name} — ${t("tel.ring.minus")}`, tel: { axis, delta: -S.rim } });
   r.hot.push({ x, y: y - RING - 4, w: RING + 4, h: RING * 2 + 8, tip: `${name} — ${t("tel.ring.plus")}`, tel: { axis, delta: S.rim } });
@@ -378,7 +391,8 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     eyepiece(r, ctx, c, view, seen, tm, ms, { off: SS.echoOffset(m.dd), ok: m.delayOk }, more);
     wheel(r, ctx, c, "torahn", WHEELS.torahn, st.dial.torahn, T.TURN, st.dial.torahn, tm);
     wheel(r, ctx, c, "elev", WHEELS.elev, st.dial.elev + T.ELEV_MAX, 2 * T.ELEV_MAX + 1, T.kiElev(st.dial.elev), tm);
-    wheel(r, ctx, c, "delay", DELAY, st.dial.delay, SS.DELAY_MAX + 1, st.dial.delay, tm, { step: SS.STEP_DELAY, ring: DRING, hub: DHUB });
+    // le retard se lit en rahnfee (invention de fan, src/beam.js) : le pouls arrive une fraction de battement après le balancier
+    wheel(r, ctx, c, "delay", DELAY, st.dial.delay, SS.DELAY_MAX + 1, { frac: BEAM.delayDigits(st.dial.delay, SS.DELAY_UNIT) }, tm, { step: SS.STEP_DELAY, ring: DRING, hub: DHUB, valueTip: lateWords(t, st.dial.delay) });
     systemPlate(r, ctx, c, st, sys);
     if (guild) triLever(r, ctx, c, st, sys); // les balises : seulement dans l'Art de la Guilde (en mode facile, rien ne trompe)
     const rec = st.systems[sys.key], done = !!rec, off = done && (rec.line || 0) !== st.line, shown = look(r, sc1.shown, beatOf(r), fnvKey(st.key + sys.key));
@@ -428,7 +442,8 @@ function systemPlate(r, ctx, c, st, sys) {
   ctx.fillStyle = c("#2a1d13"); ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillText(t("sys.plate.title"), P.x + P.w / 2, P.y + 14, P.w - 16); ctx.textAlign = "left";
   if (got) {
     const ink = c("#1b130d");
-    engravedRow(r, ctx, [got.torahn, T.kiElev(got.elevation), got.distance], P.x, P.w, P.y + 24, 13, ink);
+    engravedRow(r, ctx, [got.torahn, T.kiElev(got.elevation)], P.x, P.w, P.y + 20, 12, ink); // la direction (comme au KI)
+    engravedRow(r, ctx, [{ frac: BEAM.digitsOf(got.distance) }], P.x, P.w, P.y + 36, 11, ink); // la distance, en rahnfee de faisceau
     if (got.pert && got.pert.length) { ctx.fillStyle = ink; ctx.font = "9px serif"; ctx.textAlign = "center"; ctx.fillText(got.pert.map((p) => PSYM[p.kind] || "").join(" "), P.x + P.w / 2, P.y + P.h - 5); ctx.textAlign = "left"; } // ses perturbateurs, en signes
     r.hot.push({ ...P, tip: t("sys.plate.found"), tel: { setSystem: true } });
     // un coin à gratter : effacer l'étoile (la dégraver) pour la situer à nouveau

@@ -223,34 +223,64 @@ class Dni {
     const digits = toBase25(num), mode = this.mode(), cw = size * this.cell(mode), g = size * gap;
     ctx.save();
     ctx.fillStyle = color; ctx.strokeStyle = color;
-    digits.forEach((d, i) => {
-      const dx = x + i * (cw + g);
-      if (mode === "simple") {
-        const { stroke, fill } = simplePaths(d), s = size / 100;
-        ctx.save(); ctx.translate(dx, y); ctx.scale(s, s);
-        ctx.lineWidth = 7; ctx.lineCap = "square"; ctx.lineJoin = "miter";
-        for (const p of stroke) ctx.stroke(new Path2D(p));
-        for (const p of fill) ctx.fill(new Path2D(p));
-        ctx.restore();
-      } else if (mode === "glyphs") {
-        const [bx, by, , bh] = this.glyphs.box, s = size / bh;
-        ctx.save(); ctx.translate(dx - bx * s, y - by * s); ctx.scale(s, s);
-        ctx.fill(new Path2D(this.glyphs.paths[d])); ctx.restore();
-      } else if (this.glyphMissing(d)) { // la police n'a pas ce chiffre : tracé procédural, centré dans la case
-        const { stroke, fill } = simplePaths(d), s = size / 100;
-        ctx.save(); ctx.translate(dx + (cw - size) / 2, y); ctx.scale(s, s);
-        ctx.lineWidth = 7; ctx.lineCap = "square"; ctx.lineJoin = "miter";
-        for (const p of stroke) ctx.stroke(new Path2D(p));
-        for (const p of fill) ctx.fill(new Path2D(p));
-        ctx.restore();
-      } else {
-        ctx.font = `${(size / FONT_CAP).toFixed(1)}px ${this.textStack()}`;
-        ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-        ctx.fillText(FONT_CHARS[d], dx + cw / 2, y + size);
-      }
-    });
+    digits.forEach((d, i) => this.drawDigit_(ctx, d, x + i * (cw + g), y, size, mode, cw));
     ctx.restore();
     return digits.length * cw + (digits.length - 1) * g;
+  }
+
+  /** Un chiffre 0..24 dans sa case (coin haut-gauche `dx`, `y`, largeur `cw`) ; couleurs déjà posées. */
+  drawDigit_(ctx, d, dx, y, size, mode, cw) {
+    if (mode === "simple" || (mode === "font" && this.glyphMissing(d))) { // tracé procédural (chiffre absent de la police : centré dans la case)
+      const { stroke, fill } = simplePaths(d), s = size / 100;
+      ctx.save(); ctx.translate(dx + (cw - size) / 2, y); ctx.scale(s, s);
+      ctx.lineWidth = 7; ctx.lineCap = "square"; ctx.lineJoin = "miter";
+      for (const p of stroke) ctx.stroke(new Path2D(p));
+      for (const p of fill) ctx.fill(new Path2D(p));
+      ctx.restore();
+    } else if (mode === "glyphs") {
+      const [bx, by, , bh] = this.glyphs.box, s = size / bh;
+      ctx.save(); ctx.translate(dx - bx * s, y - by * s); ctx.scale(s, s);
+      ctx.fill(new Path2D(this.glyphs.paths[d])); ctx.restore();
+    } else {
+      ctx.font = `${(size / FONT_CAP).toFixed(1)}px ${this.textStack()}`;
+      ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+      ctx.fillText(FONT_CHARS[d], dx + cw / 2, y + size);
+    }
+  }
+
+  /**
+   * Un nombre à virgule en base 25 (le rahnfee, src/beam.js) : `digits` = [entier, f1, f2, …], f1 en 25ᵉ, f2 en 625ᵉ…
+   * L'entier s'écrit comme un nombre, puis un POINT bas (un petit carré plein sur la ligne de base, dans un espace
+   * élargi), puis chaque chiffre de la fraction dans sa case (un zéro reste un chiffre gravé : la place compte).
+   * Renvoie { cells: [{ d, x }], dot: { x, s } | null, width, cw }, dans les unités de `size`.
+   */
+  fractionLayout_(digits, size = 28, gap = 0.22) {
+    const arr = Array.isArray(digits) && digits.length ? digits : [0], ints = toBase25(arr[0]);
+    const fr = arr.slice(1).map((d) => Math.max(0, Math.min(24, Math.round(Number(d) || 0))));
+    const cw = size * this.cell(), g = size * gap, sep = size * 0.6, cells = [];
+    let x = 0; ints.forEach((d, i) => { cells.push({ d, x }); x += cw + (i < ints.length - 1 ? g : 0); });
+    let dot = null;
+    if (fr.length) { const s = Math.max(1, size * 0.16); dot = { x: x + (sep - s) / 2, s }; x += sep; fr.forEach((d, i) => { cells.push({ d, x }); x += cw + (i < fr.length - 1 ? g : 0); }); }
+    return { cells, dot, width: x, cw };
+  }
+  /** Largeur d'un nombre à virgule (mêmes unités que size). */
+  fractionWidth(digits, size = 28, gap = 0.22) { return this.fractionLayout_(digits, size, gap).width; }
+  /** Un nombre à virgule en base 25, comme chaîne SVG complète (même dessin que `drawFraction`). */
+  fractionSvg(digits, { size = 28, color = "currentColor", gap = 0.22, cls = "age-dni", label = "" } = {}) {
+    const L = this.fractionLayout_(digits, size, gap), mode = this.mode(), pad = size * 0.04, H = size, W = Math.max(1, L.width);
+    let inner = L.cells.map((c) => this.digitInner(c.d, c.x + pad, pad, size - 2 * pad, color, mode)).join("");
+    if (L.dot) inner += `<rect x="${L.dot.x.toFixed(2)}" y="${(H - pad - L.dot.s).toFixed(2)}" width="${L.dot.s.toFixed(2)}" height="${L.dot.s.toFixed(2)}" fill="${color}"/>`;
+    const aria = label || (Array.isArray(digits) ? digits.join(".") : "0");
+    return `<svg class="${cls}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" width="${W.toFixed(1)}" height="${H.toFixed(1)}" role="img" aria-label="${esc(aria)} (D'ni)">${inner}</svg>`;
+  }
+  /** Dessine un nombre à virgule en base 25 sur un canvas 2D ; renvoie la largeur occupée. */
+  drawFraction(ctx, digits, x, y, size = 28, color = "#cdbd94", gap = 0.22) {
+    const L = this.fractionLayout_(digits, size, gap), mode = this.mode();
+    ctx.save(); ctx.fillStyle = color; ctx.strokeStyle = color;
+    for (const c of L.cells) this.drawDigit_(ctx, c.d, x + c.x, y, size, mode, L.cw);
+    if (L.dot) ctx.fillRect(x + L.dot.x, y + size * 0.96 - L.dot.s, L.dot.s, L.dot.s);
+    ctx.restore();
+    return L.width;
   }
 }
 

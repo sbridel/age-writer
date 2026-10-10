@@ -127,7 +127,7 @@ function openSurveyorBook(plugin, ages) {
             const guild = require("./instruments").isGuild(plugin.ext), w = SS.words(SS.surveyed(sy, guild), lang, { fx: sy.fx, compass: SS.compassOf(fld), easy: !guild }); // étape 3 : ce que l'arpenteur perçoit (Guilde : perturbateurs compris)
             card.createDiv({ cls: "age-det__skyline", text: w.line });
             if (w.pert) card.createDiv({ cls: "age-det__skyline", text: w.pert });
-            if (full) { const nums = card.createDiv({ cls: "age-det__skynums" }); for (const [label, v] of [[t("sys.val.torahn"), w.values.torahn], [t("sys.val.elev"), w.values.elev], [t("sys.val.delay"), w.values.delay]]) { const c = nums.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label }); if (v < 0) c.createSpan({ text: "−" }); setMarkup(c.createSpan(), plugin.dni.numberSvg(Math.abs(v), { size: 16 })); } }
+            if (full) { const nums = card.createDiv({ cls: "age-det__skynums" }); for (const [i, [label, v]] of [[t("sys.val.torahn"), w.values.torahn], [t("sys.val.elev"), w.values.elev], [t("sys.val.delay"), w.values.delay]].entries()) { const c = nums.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label }); if (i === 2) { setMarkup(c.createSpan(), plugin.dni.fractionSvg(require("./beam").delayDigits(v, SS.DELAY_UNIT), { size: 16 })); continue; } if (v < 0) c.createSpan({ text: "−" }); setMarkup(c.createSpan(), plugin.dni.numberSvg(Math.abs(v), { size: 16 })); } } // le retard en rahnfee, comme sous la molette
           }
         } catch (e) { console.warn("[Age Writer ext] carnet", e); }
       }

@@ -12,6 +12,7 @@ const CAL = require("./calibration");
 const SKY = require("./sky");
 const TEL = require("./telescope");
 const INS = require("./instruments");
+const BEAM = require("./beam");
 
 const ageNumber = (name) => fnv(name) % 390625;                    // 25^4
 
@@ -166,13 +167,14 @@ function renderStarNote(plugin, sec, { src, analysis, path }) {
     if (notes === "full") {
       const nums = box.createDiv({ cls: "age-det__skynums" }), vals = [[t("sys.val.torahn"), w.values.torahn], [t("sys.val.elev"), w.values.elev], [t("sys.val.delay"), w.values.delay]];
       if (w.values.beats) vals.push([t("sys.val.beats"), w.values.beats]);
-      for (const [label, v] of vals) {
+      for (const [i, [label, v]] of vals.entries()) {
         const c = nums.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label });
+        if (i === 2) { setMarkup(c.createSpan(), plugin.dni.fractionSvg(BEAM.delayDigits(v, SS.DELAY_UNIT), { size: 16 })); c.setAttr("title", t("beam.delay.tip")); continue; } // le retard, comme sous la molette : en rahnfee
         if (v < 0) c.createSpan({ text: "−" }); setMarkup(c.createSpan(), plugin.dni.numberSvg(Math.abs(v), { size: 16 }));
       }
-      if (C.sys.near && C.sys.near.length) { // « complètes » : les perturbateurs proches, nommés, et leur distance en shahfeetee
+      if (C.sys.near && C.sys.near.length) { // « complètes » : les perturbateurs proches, nommés, et leur distance en rahnfee (src/beam.js)
         const pl = box.createDiv({ cls: "age-det__skynums" }); pl.createSpan({ cls: "age-det__skylabel", text: t("sys.pert.heading") });
-        for (const p of C.sys.near) { const c = pl.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: p.kind === "pulsar" ? t("sys.pert.pulsar.name") : p.kind === "neutron_star" ? t("sys.pert.neutron.name") : t("sys.pert.bh.name") }); setMarkup(c.createSpan(), plugin.dni.numberSvg(p.d, { size: 14 })); }
+        for (const p of C.sys.near) { const c = pl.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: p.kind === "pulsar" ? t("sys.pert.pulsar.name") : p.kind === "neutron_star" ? t("sys.pert.neutron.name") : t("sys.pert.bh.name") }); setMarkup(c.createSpan(), plugin.dni.fractionSvg(BEAM.digitsOf(p.d), { size: 14 })); c.setAttr("title", t("beam.dist.tip")); }
       }
     }
     const why = (C.orbit && C.orbit.why) || [];
@@ -205,7 +207,7 @@ function renderExtras(plugin, container, { src, analysis, name, compact, path })
     let kips = null; try { kips = calibrationOf(plugin, { src, analysis, name, path }).kips; } catch (e) { kips = null; } // étape 2 : les coordonnées KIPS, une fois l'Âge calibré
     dniText(plugin, plate, name, "age-ext__dniname");
     let h = `<span class="age-ext__lbl">${esc(t("num.age"))}</span>${dni.numberSvg(ageNumber(name), { size: 18 })}`;
-    h += `<span class="age-ext__lbl">${esc(kips ? t("cal.kips") : t("num.coords"))}</span>` + (kips ? kips.map((n) => (n < 0 ? '<span class="age-ext__dot">−</span>' : "") + dni.numberSvg(Math.abs(n), { size: 14 })).join('<span class="age-ext__dot">·</span>') : `<span class="age-ext__lbl age-ext__unc">${esc(t("num.uncharted"))}</span>`);
+    h += `<span class="age-ext__lbl">${esc(kips ? t("cal.kips") : t("num.coords"))}</span>` + (kips ? kips.map((n, i) => (i === 2 ? dni.fractionSvg(BEAM.digitsOf(n), { size: 14 }) : (n < 0 ? '<span class="age-ext__dot">−</span>' : "") + dni.numberSvg(Math.abs(n), { size: 14 }))).join('<span class="age-ext__dot">·</span>') : `<span class="age-ext__lbl age-ext__unc">${esc(t("num.uncharted"))}</span>`);
     if (seedLine) h += `<span class="age-ext__lbl">${esc(t("num.seed"))}</span>${dni.numberSvg(seedLine[1], { size: 14 })}`;
     setMarkup(plate, h, true);
   }

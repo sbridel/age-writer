@@ -9,6 +9,7 @@ const { rng, clamp, rgba } = require("./util");
 const T = require("./telescope");
 const MAP = require("./starmap");
 const TL = require("./relto-telescope");
+const BEAM = require("./beam");
 const { makeT } = require("./i18n");
 
 const W = 640, H = 360, SHEET = { x: 70, y: 18, w: 500, h: 300 }, BACK = { x: 0, y: 330, w: W, h: 30 };
@@ -80,7 +81,8 @@ function drawStarMap(r, ctx, sc, sky, tm) {
     const label = s.ages.length ? s.ages[0] + (s.ages.length > 1 ? " +" + (s.ages.length - 1) : "") : "";
     if (label) { ctx.font = "italic 9.5px serif"; ctx.fillStyle = INK2; const at = place(sx, sy, Math.min(120, ctx.measureText(label).width), 10); if (at) ctx.fillText(label, at[0], at[1], 120); } // sans place libre : le nom reste au survol
     const tip = (s.ages.length ? s.ages.join(", ") : t("map.star.unnamed")) + (s.pert.length ? " — " + s.pert.map((p) => pertName(t, p.kind)).join(", ") : "") + (bad ? " — " + t("map.star.miss") : "");
-    r.hot.push({ x: sx - 9, y: sy - 9, w: 18, h: 18, tip });
+    const far = t("beam.far.line", { far: String(t("beam.far")).split("|")[BEAM.fracBand(BEAM.rahnfeeOf(s.distance))] }); // la distance le long du faisceau : en mots, puis en rahnfee (chiffres D'ni)
+    r.hot.push({ x: sx - 9, y: sy - 9, w: 18, h: 18, tip: tip + " — " + far, frac: BEAM.digitsOf(s.distance) });
   }
   ctx.restore();
   // le titre, la légende et, si besoin, l'avertissement de l'arpenteur
