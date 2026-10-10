@@ -125,8 +125,6 @@ function addExtSettings(plugin, el) {
   tg(l.rt, l.rtd, "reltoTabs", () => plugin.refreshLive());
   tg(l.dk, l.dkd, "dniClock", () => plugin.redrawEverything());
   tg(l.hf, l.hfd, "hoverFrame", () => plugin.refreshLive());
-  dd(l.inn, l.innd, "imagerNotes", ["full", "words", "off"], () => plugin.refreshLive());
-  tg(l.lh, l.lhd, "lensHints", () => plugin.refreshLive());
 
   cur = section("mech");
   tg(l.law, l.lawd, "law");
@@ -142,6 +140,8 @@ function addExtSettings(plugin, el) {
 
   sub(l.ins);
   new Setting(cur).setName(l.insm).setDesc(l.insd).addDropdown((d) => d.addOptions(plugin.lang() === "fr" ? { easy: "Facile", guild: "L'Art de la Guilde" } : { easy: "Easy", guild: "The Art of the Guild" }).setValue(INS.modeOf(e)).onChange((v) => { e.instrumentsMode = v; save(); }));
+  dd(l.inn, l.innd, "imagerNotes", ["full", "words", "off"], () => plugin.refreshLive()); // les aides de l'Imageur, avec les instruments
+  tg(l.lh, l.lhd, "lensHints", () => plugin.refreshLive());
 
   cur = section("dir");
   tx(l.jf, l.jfd, "journalFolder");
