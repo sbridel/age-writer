@@ -1119,15 +1119,15 @@ class ReltoRenderer {
     const v = this.view, ROOMS3 = ["cabin", "imager", "telescope"];
     if (!ROOMS3.includes(v) || (v === "imager" && this.imager && this.imager.station)) return;
     const av = this.available(), to = ROOMS3.filter((x) => x !== v && av[x]); if (!to.length) return;
-    const t = this.imagerTr(), y = 335, h = 18;
+    const t = this.imagerTr(), y = 335, h = 18, KEYS = { cabin: ["relto.pass.cabin", "relto.pass.cabin.tip"], imager: ["relto.pass.imager", "relto.pass.imager.tip"], telescope: ["relto.pass.telescope", "relto.pass.telescope.tip"] };
     ctx.save(); ctx.font = "italic 11px serif";
     to.forEach((dest, i) => {
-      const label = t("relto.pass." + dest), w = Math.ceil(ctx.measureText(label).width) + 26, right = i === 1 || (to.length === 1 && dest === "telescope"), x = right ? W - 12 - w : 12;
+      const label = t(KEYS[dest][0]), w = Math.ceil(ctx.measureText(label).width) + 26, right = i === 1 || (to.length === 1 && dest === "telescope"), x = right ? W - 12 - w : 12;
       const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, "#9a7a3c"); g.addColorStop(1, "#6b5226");
       ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.fillRect(x + 1, y + 2, w, h); ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
       ctx.strokeStyle = "rgba(255,226,160,0.35)"; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
       ctx.fillStyle = "#2a1d13"; ctx.textAlign = right ? "right" : "left"; ctx.fillText(right ? label + "  ›" : "‹  " + label, right ? x + w - 8 : x + 8, y + 13); ctx.textAlign = "left";
-      this.hot.push({ x, y, w, h, tip: t("relto.pass." + dest + ".tip"), go: dest });
+      this.hot.push({ x, y, w, h, tip: t(KEYS[dest][1]), go: dest });
     });
     ctx.restore();
   }
