@@ -105,7 +105,7 @@ function drawStarMap(r, ctx, sc, sky, tm) {
     const label = s.ages.length ? s.ages[0] + (s.ages.length > 1 ? " +" + (s.ages.length - 1) : "") : "";
     if (label) labels.push({ x: sx, y: sy, text: label, font: "italic 9.5px serif" }); // sans place libre : le nom reste au survol
     const tip = (s.ages.length ? s.ages.join(", ") : t("map.star.unnamed")) + (s.pert.length ? " — " + s.pert.map((p) => pertName(t, p.kind)).join(", ") : "") + (bad ? " — " + t("map.star.miss") : "") + " — " + t(elevBand(s.z));
-    const far = t("beam.far.line", { far: String(t("beam.far")).split("|")[BEAM.fracBand(BEAM.rahnfeeOf(s.distance))] }); // la distance le long du faisceau : en mots, puis en rahnfee (chiffres D'ni)
+    const rf = BEAM.rahnfeeOf(s.distance), far = rf >= 1 ? t("beam.far.beyond") : t("beam.far.line", { far: String(t("beam.far")).split("|")[BEAM.fracBand(rf)] }); // mondes lointains : au-delà d'un rahnfee // la distance le long du faisceau : en mots, puis en rahnfee (chiffres D'ni)
     r.hot.push({ x: sx - 9, y: sy - 9, w: 18, h: 18, tip: tip + " — " + far, frac: BEAM.digitsOf(s.distance) });
   }
   // les noms, en dernier : liseré de papier pour rester lisibles par-dessus les traits ; un nom écarté est relié à son point

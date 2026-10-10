@@ -34,10 +34,10 @@ function within(sf) { return Number.isFinite(Number(sf)) && Number(sf) >= 0 && N
 
 /**
  * Les chiffres D'ni d'une longueur de faisceau `sf` (shahfeetee), en rahnfee : [entier, f1, …, f`places`], chacun de 0 à 24
- * (f1 = 25ᵉ, f2 = 625ᵉ, f3 = 15 625ᵉ). Arrondi au dernier chiffre. `clamp` (par défaut) : la lecture s'arrête juste sous un
- * rahnfee (au-delà, le pouls se mêle au battement suivant) ; sans lui, l'entier peut dépasser 0.
+ * (f1 = 25ᵉ, f2 = 625ᵉ, f3 = 15 625ᵉ). Arrondi au dernier chiffre. L'entier compte les rahnfeetee entiers (les mondes
+ * lointains en ont un) ; `clamp` : la lecture s'arrête juste sous un rahnfee.
  */
-function digitsOf(sf, places = PLACES, { clamp: cl = true } = {}) {
+function digitsOf(sf, places = PLACES, { clamp: cl = false } = {}) {
   const p = Math.max(0, Math.min(6, Math.round(num(places)))), den = Math.pow(25, p), unit = RAHNFEE / den;
   let n = Math.round(Math.max(0, num(sf)) / unit);
   if (cl) n = Math.min(n, den - 1);

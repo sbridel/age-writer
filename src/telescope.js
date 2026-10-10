@@ -129,7 +129,7 @@ function pulseOf(s, beat) {
 function saved(st) {
   const sys = st.systems && typeof st.systems === "object" && Object.keys(st.systems).length ? st.systems : null;
   return { torahn: st.aim.torahn, elev: st.aim.elev, found: !!st.found, ...(st.found && st.at ? { at: { torahn: st.at.torahn, elev: st.at.elev } } : {}),
-    ...(st.dial ? { dial: { torahn: st.dial.torahn, elev: st.dial.elev, delay: st.dial.delay } } : {}), ...(sys ? { systems: JSON.parse(JSON.stringify(sys)) } : {}) };
+    ...(st.dial ? { dial: { torahn: st.dial.torahn, elev: st.dial.elev, delay: st.dial.delay, ...(st.dial.beats ? { beats: st.dial.beats } : {}) } } : {}), ...(sys ? { systems: JSON.parse(JSON.stringify(sys)) } : {}) };
 }
 
 module.exports = { TURN, NOTCH, STEP, ELEV_MAX, ZERO_ELEV, DIST_MAX, TOL, BANDS, SCINT, observe, pulseOf, axisOf, keyOf, greatZero, kiElev, normAim, turn, gap, signal, level, bandOf, saved, mod };

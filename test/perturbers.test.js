@@ -56,7 +56,7 @@ const findKey = (f, pre = "single_sun@t") => { for (let i = 0; i < 5000; i++) { 
   for (const kinds of [["pulsar"], ["neutron_star"], ["black_hole"], ["pulsar", "black_hole"], ["pulsar", "neutron_star", "black_hole"]]) for (let i = 0; i < 60; i++) {
     const p = SS.placeSystem("single_sun@q" + i, kinds), have = new Set(p.near.map((q) => q.kind)); all++;
     if (!kinds.every((k) => have.has(k))) fail++; if (p.moved) moved++;
-    if (p.pos.distance < SS.SYS_DIST[0] || p.pos.distance > SS.SYS_DIST[1] || Math.abs(p.pos.elevation) > SS.SYS_ELEV) fail++;
+    if (p.pos.distance < SS.SYS_DIST[0] || p.pos.distance > SS.SYS_DIST[1] + SS.DELAY_TURN * SS.DELAY_UNIT || Math.abs(p.pos.elevation) > SS.SYS_ELEV) fail++;
   }
   ok(fail === 0 && moved > all / 2, `écrit, il est toujours là (${all} essais, ${moved} étoiles choisies ailleurs, jamais un ciel qui le contredit)`);
   const w1 = sysOf("single_sun\nwater\nblack_hole", "Gouffre"), w2 = sysOf("single_sun\nwater\nblack_hole", "Gouffre");

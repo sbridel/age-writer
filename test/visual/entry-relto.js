@@ -18,6 +18,7 @@ function renderMany(host, ages) {
     { h: 13, t: 3.1, env: {}, zero: true, now: "tahvo+1s", pages: ["page_dni_clock"], view: "clock", label: "CLOCK day / one second after a new tahvo: its digit glows" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "near", label: "TELESCOPE step 2 / an Age's book on the lectern, wheels near its clues" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", label: "TELESCOPE step 2 / the Age's star charted" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "far", label: "TELESCOPE far world / a whole beat late: the counter on 1, the marked stroke" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", hoverTip: /^The pulse comes/, label: "RAHNFEE / Delay wheel read in rahnfee, its words on hover" },
     { h: 14, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", hoverTip: /^Torahn, elevation \(above the plane reads negative\); below/, label: "RAHNFEE / day: Star of the Age plate, distance in rahnfee" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "starmap", step3: "map", hoverFrac: true, label: "RAHNFEE / star chart tooltip, distance along the beam" },
@@ -103,12 +104,15 @@ function renderMany(host, ages) {
 function step2(r, mode) {
   const { analyseAgeBase } = require("./engine/analysis"), P = require("./physics/index"), { hooks } = require("./engine/hooks"), SS = require("./starsystem"), CAL = require("./calibration"), IM = require("./imager"), SKY = require("./sky"), G = require("./genscene"), TL = require("./relto-telescope"), T = require("./telescope");
   hooks.skip = (l) => P.isPhysicsLine(l) || SS.SYSTEM_RE.test(l);
-  const src = "single_sun\norange_sun\nwater\nfern\nhills\nrotation: 30\nsystem: Kerath", name = "Glass Marsh", a0 = analyseAgeBase(src, { seed: name }), a = P.applyPhysics(a0, P.physicsOf(a0, src, name), "easy");
-  const sys = SS.systemOf(a, src, name), orbit = CAL.orbitOf(a, name, SKY.parseSky(src)), now = 1.8e12;
+  let src = "single_sun\norange_sun\nwater\nfern\nhills\nrotation: 30\nsystem: Kerath"; const name = "Glass Marsh";
+  if (mode === "far") for (let i = 0; i < 300; i++) { const s2 = src.replace("Kerath", "Far" + i); if (SS.farBeats(SS.starKey(analyseAgeBase(s2, { seed: name }), s2, name))) { src = s2; break; } } // un monde lointain
+  const a0 = analyseAgeBase(src, { seed: name }), a = P.applyPhysics(a0, P.physicsOf(a0, src, name), "easy");
+  const sys = SS.systemOf(a, src, name), orbit = CAL.orbitOf(a, name, SKY.parseSky(src)), MET = require("./metronome"), now = mode === "far" ? MET.peakAt(Math.round(MET.beatPos(1.8e12) / MET.GORAHN) * MET.GORAHN) + 60 : 1.8e12; // le lointain : à un coup marqué
   r.nowOverride = now;
   const st = TL.state(r); st.found = true; st.at = { torahn: st.zero.torahn, elev: st.zero.elevation };
   const age = r.scene.ages[0], data = { target: IM.targetsOf(a, name), model: (() => { const S = G.sceneOf(a, name); return S ? G.build(S, 300, 176) : null; })(), system: sys, orbit };
   const c = sys.clue;
+  if (mode === "far") { st.book = { idx: 0, age, data, loading: false }; st.dial = { torahn: c.torahn, elev: c.elevation, delay: c.delay, beats: 1 }; return; } // au coup marqué : le balancier doré, l'écho fort
   if (mode === "near" || mode === "located") {
     st.book = { idx: 0, age, data, loading: false };
     st.dial = mode === "near" ? { torahn: (c.torahn + 700) % T.TURN, elev: c.elevation - 3, delay: c.delay + 6 } : { torahn: c.torahn, elev: c.elevation, delay: c.delay };

@@ -29,5 +29,8 @@ function peakAt(k, period = 1) { return DT.REF + k * period * PRORAHN_MS; }
  * battement du balancier le plus proche : 0 pour le vrai pouls ; il glisse de période en période pour la fausse ligne.
  */
 function slip(k, period = 1) { const t = k * period; return t - Math.round(t); }
+/** Le Great Zero frappe plus fort une fois par gorahn (tous les 25 battements) : le coup « marqué » du balancier (extension assumée). */
+const GORAHN = 25;
+function isMarked(n) { return ((Math.round(n) % GORAHN) + GORAHN) % GORAHN === 0; }
 
-module.exports = { PRORAHN_MS, AMPLITUDE, beatPos, tickOf, swing, sideOf, peakAt, slip };
+module.exports = { GORAHN, isMarked, PRORAHN_MS, AMPLITUDE, beatPos, tickOf, swing, sideOf, peakAt, slip };

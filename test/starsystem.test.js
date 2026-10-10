@@ -75,14 +75,14 @@ const DAY = 86400000, H = 3600000, t0 = 1.8e12;
   let within = 0, all = 0;
   for (let i = 0; i < 200; i++) {
     const zero = T.greatZero("Relto", 1000 + i), sys = { key: "k" + i, pos: SS.position("k" + i) }, c = SS.zeroSeenFrom(sys.pos);
-    const dial = { torahn: c.torahn, elev: c.elevation, delay: c.delay }, m = SS.measure(dial, c), L = SS.locate(zero, dial).gzcs;
+    const dial = { torahn: c.torahn, elev: c.elevation, delay: c.delay, beats: c.beats }, m = SS.measure(dial, c), L = SS.locate(zero, dial).gzcs;
     all++;
     let dt = Math.abs(L.torahn - sys.pos.torahn); dt = Math.min(dt, T.TURN - dt);
     if (m.located && dt <= T.TOL.torahn && Math.abs(L.elevation - sys.pos.elevation) <= 1 && Math.abs(L.distance - sys.pos.distance) <= SS.DELAY_UNIT + 2) within++;
   }
   ok(within === all, `indices bien reportés : situé, et la position calculée tombe dans la tolérance (${within}/${all})`);
   // la différence que fait l'instrument : (Relto → Zéro) − (Âge → Zéro), sans soustraction à la main
-  const zero = T.greatZero("Relto", 42), pos = SS.position("diff"), c = SS.zeroSeenFrom(pos), L = SS.locate(zero, { torahn: c.torahn, elev: c.elevation, delay: c.delay });
+  const zero = T.greatZero("Relto", 42), pos = SS.position("diff"), c = SS.zeroSeenFrom(pos), L = SS.locate(zero, { torahn: c.torahn, elev: c.elevation, delay: c.delay, beats: c.beats });
   const R = SS.cart({ torahn: (zero.torahn + T.TURN / 2) % T.TURN, distance: zero.distance, elevation: -zero.elevation }), S = SS.cart(pos);
   ok(Math.hypot(L.fromRelto.x - (S.x - R.x), L.fromRelto.y - (S.y - R.y), L.fromRelto.z - (S.z - R.z)) < SS.DELAY_UNIT + 2, "l'instrument rend le système vu du Relto (S − R), à un cran de retard près");
   const R2 = L.reltoAt; ok(Math.abs(R2.distance - zero.distance) <= 1 && R2.elevation === -zero.elevation, "et la position du Relto lui-même, par rapport au Zéro");
@@ -98,7 +98,19 @@ const DAY = 86400000, H = 3600000, t0 = 1.8e12;
   ok(SS.measure({ ...right, torahn: (c.torahn + 2500) % T.TURN }, c).s < SS.measure({ ...right, torahn: (c.torahn + 500) % T.TURN }, c).s, "le signal s'avive quand les molettes approchent des indices");
   // molette du retard : butées, couronne et moyeu
   ok(SS.turnDial({ delay: 620 }, "delay", 25).delay === SS.DELAY_MAX && SS.turnDial({ delay: 3 }, "delay", -25).delay === 0 && SS.turnDial({ torahn: 62400, elev: 0, delay: 9 }, "torahn", 200).torahn === 100 && SS.turnDial({ delay: 9 }, "elev", 5).delay === 9, "molette du retard : butées 0 et 624 ; les deux autres comme à l'étape 1");
-  ok(JSON.stringify(SS.normDial(null)) === JSON.stringify({ torahn: 0, elev: 0, delay: 0 }) && SS.normDial({ delay: "x" }).delay === 0, "réglage absent ou abîmé : valeurs sûres");
+  ok(JSON.stringify(SS.normDial(null)) === JSON.stringify({ torahn: 0, elev: 0, delay: 0, beats: 0 }) && SS.normDial({ delay: "x" }).delay === 0 && SS.normDial({ beats: 7 }).beats === SS.BEATS_MAX, "réglage absent ou abîmé : valeurs sûres");
+  // mondes lointains : le compteur de battements, et le piège du mauvais battement
+  { let fk = null; for (let i = 0; i < 400 && !fk; i++) if (SS.farBeats("single_sun@far" + i)) fk = "single_sun@far" + i;
+    const fsys = SS.placeSystem(fk, []), fc = SS.zeroSeenFrom(fsys.pos), sysF = { key: fsys.key, pos: fsys.pos, near: fsys.near };
+    ok(fk && fc.beats === 1 && fc.delay <= SS.DELAY_MAX && fsys.pos.distance >= SS.DELAY_TURN * SS.DELAY_UNIT, "une étoile lointaine : un battement entier de retard, plus une fraction");
+    ok(SS.turnDial({ beats: 0 }, "beats", 1).beats === 1 && SS.turnDial({ beats: 1 }, "beats", 1).beats === 0, "le compteur : 0, 1, puis retour à 0");
+    const good = { torahn: fc.torahn, elev: fc.elevation, delay: fc.delay, beats: 1 }, bad = { ...good, beats: 0 };
+    const mg = SS.measure(good, fc), mb = SS.measure(bad, fc);
+    ok(mg.located && mg.beatsOk && mb.located && !mb.beatsOk && mb.beatShift === 1, "l'anneau et l'écho ne lisent que la fraction : un compte faux situe quand même");
+    const easyB = SS.scope(bad, sysF, { easy: true }).m; ok(!easyB.located && easyB.beatWait, "mode facile : un compte faux ne situe rien (il attend le bon battement)");
+    const z0 = T.greatZero("Relto", 7), rg = SS.record(sysF, z0, good, 1), rb = SS.record(sysF, z0, bad, 1);
+    ok(rg.distance === fsys.pos.distance && !rg.beatErr && rg.beats === 1 && rb.beatErr === -1 && rb.distance === Math.max(1, fsys.pos.distance - SS.DELAY_TURN * SS.DELAY_UNIT), "gravée au mauvais battement : un rahnfee trop près, et marquée (`beatErr`)");
+  }
   // gardé avec l'état du télescope ; un état de l'étape 1 se relit tel quel
   const old = { torahn: 4200, elev: 3, found: true, at: { torahn: 4200, elev: 3 } };
   ok(JSON.stringify(T.saved({ aim: T.normAim(old), found: true, at: old.at, systems: {} })) === JSON.stringify(old), "état de l'étape 1 : rien de plus n'est écrit tant qu'aucun système n'est situé");
@@ -173,7 +185,7 @@ const relDone = (async () => {
   ok(!Object.keys(st.systems).length && st.dial.torahn === 0, "sans le Zéro, les molettes cherchent le Zéro du Relto : aucun système ne peut être situé");
   // le Zéro trouvé (comme à l'étape 1), on reporte les indices
   st.found = true; st.at = { torahn: st.zero.torahn, elev: st.zero.elevation }; r.draw(4);
-  ok(r.hot.filter((h) => h.tel && h.tel.axis).length === 12 && r.hot.some((h) => h.tel && h.tel.axis === "delay" && h.tel.delta === SS.STEP_DELAY.rim), "Zéro trouvé, livre posé : trois molettes (Torahn, élévation, retard)");
+  ok(r.hot.filter((h) => h.tel && h.tel.axis).length === 13 && r.hot.some((h) => h.tel && h.tel.axis === "delay" && h.tel.delta === SS.STEP_DELAY.rim) && r.hot.some((h) => h.tel && h.tel.axis === "beats"), "Zéro trouvé, livre posé : trois molettes (Torahn, élévation, retard) et le compteur de battements");
   ok(r.hot.some((h) => /blank plate: it waits for the Age's star/.test(h.tip)) && r.hot.some((h) => /Delay of the pulse/.test(h.tip)), "plaque de l'étoile vierge ; unité du retard expliquée");
   // le joueur tourne les molettes jusqu'aux valeurs des notes « complètes »
   const reach = (axis, target, cur) => { const S = axis === "delay" ? SS.STEP_DELAY : T.STEP[axis]; let k = 0; while (cur() !== target && k++ < 900) { let d = target - cur(); if (axis === "torahn") { d = ((d % T.TURN) + T.TURN) % T.TURN; if (d > T.TURN / 2) d -= T.TURN; } const step = Math.abs(d) >= S.rim ? S.rim : S.hub; if (Math.abs(d) < S.hub) break; click((a) => a.axis === axis && a.delta === Math.sign(d) * step, axis); } };

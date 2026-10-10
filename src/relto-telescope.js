@@ -164,8 +164,8 @@ function saveOf(st) { const s = T.saved(st); if (st.found && st.line) s.line = s
 /** Étape 2 : un geste quand un livre est sur le lutrin et le Zéro trouvé (les molettes portent le réglage `dial`). */
 function actSystem(r, st, a, sfx) {
   const sys = bookSystem(st), clue = sys.clue, tri = st.triFor === sys.key, sc0 = scopeOf(r, st, sys), before = sc0.shown, from = st.dial, rec = st.systems[sys.key];
-  const axis = a.axis === "delay" ? "delay" : a.axis ? T.axisOf(a.axis) : null;
-  if (a.setSystem) { if (!rec) return; st.dial = SS.normDial({ torahn: clue.torahn, elev: clue.elevation, delay: clue.delay }); sfx("turn", 1); }
+  const axis = a.axis === "delay" || a.axis === "beats" ? a.axis : a.axis ? T.axisOf(a.axis) : null;
+  if (a.setSystem) { if (!rec) return; st.dial = SS.normDial({ torahn: clue.torahn, elev: clue.elevation, delay: clue.delay, beats: rec.beats != null ? rec.beats : clue.beats }); sfx("turn", 1); }
   else if (a.unchart) { if (!rec) return; const o = { ...st.systems }; delete o[sys.key]; st.systems = o; st.note = "sys.unchart.done"; sfx("turn", 0.4); if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st)); return; }
   else if (a.triangulate) { // les balises : deux étoiles situées voisines, gravées sur la même ligne que l'instrument (Art de la Guilde)
     if (!guildOf(r)) return;
@@ -175,15 +175,17 @@ function actSystem(r, st, a, sfx) {
     return;
   }
   else if (a.setZero) return;
+  else if (axis === "beats") { st.dial = SS.turnDial(st.dial, "beats", 1); sfx("turn", 0.6); } // le compteur de battements : un déclic
   else if (axis) { st.dial = SS.turnDial(st.dial, axis, a.delta); const S = axis === "delay" ? SS.STEP_DELAY : T.STEP[axis]; sfx(Math.abs(a.delta) >= S.rim ? "turn" : "tick", before.s); }
   else return;
   const sc = scopeOf(r, st, sys), after = sc.m;
   if (!r.opts.reducedMotion) st.anim = { from, t0: r.telescopeT || 0 };
   if (axis) r.wheelSpin = { ...(r.wheelSpin || {}), [axis]: r.telescopeT || 0 };
-  if (axis && axis !== "delay" && !guildOf(r)) st.trend = trendOf(sc0.m.s, sc.m.s); // mode facile : il s'avive, il pâlit (le retard a son écho)
+  if (axis && axis !== "delay" && axis !== "beats" && !guildOf(r)) st.trend = trendOf(sc0.m.s, sc.m.s); // mode facile : il s'avive, il pâlit (le retard a son écho)
   sfx("ping", look(r, sc.shown, beatOf(r), fnvKey(st.key + sys.key)).s);
   // situé (l'anneau ne ment pas, perturbé ou non) : gravé sur la ligne où l'instrument est calé ; une étoile gravée sur une autre ligne est regravée
-  if (after.located && (!rec || (rec.line || 0) !== st.line)) {
+  const beatErr = st.dial.beats - (clue.beats || 0); // mauvais battement : regravée si le compte change
+  if (after.located && (!rec || (rec.line || 0) !== st.line || (rec.beatErr || 0) !== beatErr)) {
     const name = st.book && st.book.age ? st.book.age.name : null;
     st.systems = { ...st.systems, [sys.key]: SS.record(sys, st.zero, st.dial, now(r), { line: st.line, ages: [...((rec && rec.ages) || []), name].filter(Boolean), tri: tri && sys.perturbed }) };
     st.note = rec ? "sys.recharted" : null; sfx("found", 1);
@@ -320,7 +322,10 @@ function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null, more = null) {
   if (sig.found) { ctx.strokeStyle = rgba(127, 214, 200, 0.5 + 0.3 * Math.exp(-beat * 4)); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, (tol + 0.5) * k + 4 + 6 * beat, 0, 6.283); ctx.stroke(); }
   if (echo && haze > 0.05) { // l'écho de l'Âge : un cercle d'ambre qui bat avec son retard ; accordé, il bat avec le pouls
     const eb = frac(beat - echo.off), ea = clamp(haze) * (0.25 + 0.6 * Math.exp(-eb * 5)) * (echo.ok ? 0.4 : 1);
-    ctx.strokeStyle = rgba(240, 184, 96, ea); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(hx, hy, 4 + 14 * eb, 0, 6.283); ctx.stroke();
+    // le battement fort : le Zéro frappe plus fort une fois par gorahn ; son écho revient sur le coup marqué du balancier si le
+    // compte de battements est juste, un coup plus tôt ou plus tard sinon (le mauvais battement)
+    const etick = Math.floor((ms - DT.REF) / PULSE_MS - echo.off), strong = MET.isMarked(etick - (echo.shift || 0)) ? 1 : 0;
+    ctx.strokeStyle = strong ? rgba(255, 214, 120, Math.min(1, ea * 1.6 + 0.2)) : rgba(240, 184, 96, ea); ctx.lineWidth = strong ? 2.6 : 1.2; ctx.beginPath(); ctx.arc(hx, hy, (4 + 14 * eb) * (strong ? 1.5 : 1), 0, 6.283); ctx.stroke();
   }
   if (more && more.echo2 && haze > 0.05) { // étape 3 : le faux pouls a son propre écho, plus vif ; celui du Zéro reste pâle dessous
     const e2 = more.echo2, per = PULSE_MS * e2.period, b2 = frac((ms - DT.REF) / per - e2.off), ea = clamp(haze) * (0.3 + 0.65 * Math.exp(-b2 * 6)) * (e2.ok ? 0.5 : 1);
@@ -388,15 +393,16 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     const more = { sources: [], echo2: null, blur: sc1.blur || 0 };
     if (sc1.lure) more.sources.push({ sig: look(r, sc1.lure, beatOf(r) + 7, fnvKey(sys.key)), period: 1, col: [235, 210, 160], smear: { dt: sc1.true.dt, de: sc1.true.de } });
     if (sc1.beat) { more.sources.push({ sig: { ...sc1.true, s: Math.max(0.15, sc1.true.s) }, period: sc1.fx.beat.period, col: [170, 200, 255], sharp: true }); more.echo2 = { off: SS.echoOffset(sc1.echoDd), ok: sc1.falseLock, period: sc1.fx.beat.period }; }
-    eyepiece(r, ctx, c, view, seen, tm, ms, { off: SS.echoOffset(m.dd), ok: m.delayOk }, more);
+    eyepiece(r, ctx, c, view, seen, tm, ms, { off: SS.echoOffset(m.dd), ok: m.delayOk, shift: m.beatShift || 0 }, more);
     wheel(r, ctx, c, "torahn", WHEELS.torahn, st.dial.torahn, T.TURN, st.dial.torahn, tm);
     wheel(r, ctx, c, "elev", WHEELS.elev, st.dial.elev + T.ELEV_MAX, 2 * T.ELEV_MAX + 1, T.kiElev(st.dial.elev), tm);
     // le retard se lit en rahnfee (invention de fan, src/beam.js) : le pouls arrive une fraction de battement après le balancier
-    wheel(r, ctx, c, "delay", DELAY, st.dial.delay, SS.DELAY_MAX + 1, { frac: BEAM.delayDigits(st.dial.delay, SS.DELAY_UNIT) }, tm, { step: SS.STEP_DELAY, ring: DRING, hub: DHUB, valueTip: lateWords(t, st.dial.delay) });
+    beatCounter(r, ctx, c, st); // les battements entiers : le chiffre nu devant les lucarnes
+    wheel(r, ctx, c, "delay", DELAY, st.dial.delay, SS.DELAY_MAX + 1, { frac: BEAM.delayDigits(st.dial.delay + (st.dial.beats || 0) * SS.DELAY_TURN, SS.DELAY_UNIT) }, tm, { step: SS.STEP_DELAY, ring: DRING, hub: DHUB, valueTip: (st.dial.beats ? t("sys.beats.plus") + " " : "") + lateWords(t, st.dial.delay) });
     systemPlate(r, ctx, c, st, sys);
     if (guild) triLever(r, ctx, c, st, sys); // les balises : seulement dans l'Art de la Guilde (en mode facile, rien ne trompe)
     const rec = st.systems[sys.key], done = !!rec, off = done && (rec.line || 0) !== st.line, shown = look(r, sc1.shown, beatOf(r), fnvKey(st.key + sys.key));
-    const line = m.located ? (off ? t("sys.offline") : t("sys.located")) : sc1.bentLock ? t("sys.bent.hold") : withTrend(t, bandWords(t, shown.band), guild ? 0 : st.trend);
+    const line = m.located ? (off ? t("sys.offline") : t("sys.located")) : m.beatWait ? t("sys.beats.wait") : sc1.bentLock ? t("sys.bent.hold") : withTrend(t, bandWords(t, shown.band), guild ? 0 : st.trend);
     ctx.font = "italic 14px serif"; ctx.textAlign = "center"; ctx.fillStyle = m.located && !off ? "#9fe6da" : "#e9dcb8"; ctx.fillText(line, TEXT_X, 306, 500); ctx.textAlign = "left";
     const sub = st.note ? t(st.note) : m.located ? (st.guild && aimedKey(st) ? t("guild.sent") : "") : sc1.falseLock ? t("sys.beat.lock") : shown.band >= 2 ? (sc1.beat ? t("sys.beat.cross") + " " : sc1.bend ? t("sys.bend.arc") + " " : "") + echoWords(t, sc1.echoDd) : done ? (off ? t("sys.offline.sub") : t("sys.charted")) : "";
     if (sub) { ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(233,220,184,0.8)"; ctx.fillText(sub, TEXT_X, 323, 520); ctx.textAlign = "left"; }
@@ -473,9 +479,9 @@ function metronome(r, ctx, c, ms) {
   ctx.strokeStyle = c("#7a5c28"); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, len - 14, Math.PI / 2 - MET.AMPLITUDE - 0.04, Math.PI / 2 + MET.AMPLITUDE + 0.04); ctx.stroke();
   for (let i = -4; i <= 4; i++) { const q = Math.PI / 2 + (i / 4) * MET.AMPLITUDE; ctx.beginPath(); ctx.moveTo(x + Math.cos(q) * (len - 14), y + Math.sin(q) * (len - 14)); ctx.lineTo(x + Math.cos(q) * (len - (i % 4 ? 18 : 21)), y + Math.sin(q) * (len - (i % 4 ? 18 : 21))); ctx.stroke(); }
   for (const side of [-1, 1]) {
-    const px = x + side * (ext + 9), py = by - 2, lit = side === hit ? glow : 0; // battement pair : la butée de droite (hit = 1)
-    ctx.fillStyle = lit > 0.3 ? mix(c("#c9a24e"), "#bff5ea", lit) : c("#c9a24e"); ctx.beginPath(); ctx.arc(px, py, 2.6, 0, 6.283); ctx.fill();
-    if (lit > 0.02) { const g = ctx.createRadialGradient(px, py, 0, px, py, 12); g.addColorStop(0, rgba(150, 230, 215, 0.9 * lit)); g.addColorStop(1, "rgba(150,230,215,0)"); ctx.fillStyle = g; ctx.fillRect(px - 12, py - 12, 24, 24); }
+    const px = x + side * (ext + 9), py = by - 2, lit = side === hit ? glow : 0, marked = side === hit && MET.isMarked(n); // battement pair : la butée de droite (hit = 1) ; le coup marqué du gorahn : doré, plus large
+    ctx.fillStyle = lit > 0.3 ? mix(c("#c9a24e"), marked ? "#ffe2a0" : "#bff5ea", lit) : c("#c9a24e"); ctx.beginPath(); ctx.arc(px, py, marked ? 3.4 : 2.6, 0, 6.283); ctx.fill();
+    if (lit > 0.02) { const R = marked ? 20 : 12, g = ctx.createRadialGradient(px, py, 0, px, py, R); g.addColorStop(0, marked ? rgba(255, 214, 120, 0.95 * lit) : rgba(150, 230, 215, 0.9 * lit)); g.addColorStop(1, marked ? "rgba(255,214,120,0)" : "rgba(150,230,215,0)"); ctx.fillStyle = g; ctx.fillRect(px - R, py - R, R * 2, R * 2); }
   }
   // la tige et la lentille : à l'extrémité exactement quand le vrai pouls culmine
   const bx = x + Math.sin(a) * len, byy = y + Math.cos(a) * len;
@@ -494,6 +500,15 @@ const TRI = { x: 474, y: 108, w: 50, h: 14 }; // entre les deux grandes molettes
  * Le levier de triangulation (étape 3) : seulement pour un système perturbé. Tiré, l'instrument interroge les étoiles situées
  * voisines (au moins deux, gravées sur la même ligne) : si elles s'accordent, la déviation et le faux pouls s'effacent.
  */
+/** Le compteur de battements entiers, sous la molette du retard : un petit bouton de laiton ; un clic compte un battement de plus (puis 0). */
+const BEATS = { x: 385, y: 278 };
+function beatCounter(r, ctx, c, st) {
+  const t = tOf(r), { x, y } = BEATS, n = st.dial.beats || 0;
+  ctx.fillStyle = c("#2a1d13"); ctx.beginPath(); ctx.arc(x, y, 6.5, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#8a6a2e"); ctx.lineWidth = 1; ctx.stroke();
+  for (let i = 0; i <= SS.BEATS_MAX; i++) { const a = -Math.PI / 2 + (i - SS.BEATS_MAX / 2) * 0.9, on = i === n; ctx.fillStyle = on ? "#ffe2a0" : c("#7a5c28"); ctx.beginPath(); ctx.arc(x + Math.cos(a) * 4, y + Math.sin(a) * 4, on ? 1.8 : 1.2, 0, 6.283); ctx.fill(); } // ses crans : 0, 1
+  r.hot.push({ x: x - 9, y: y - 9, w: 18, h: 18, tip: t("sys.beats.tip", { n: String(n) }), tel: { axis: "beats", delta: 1 } });
+}
+
 function triLever(r, ctx, c, st, sys) {
   if (!sys.perturbed) return;
   const t = tOf(r), on = st.triFor === sys.key, b = SS.beacons(sys, st.systems, st.line), { x, y, w, h } = TRI;

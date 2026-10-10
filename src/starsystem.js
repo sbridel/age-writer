@@ -35,6 +35,9 @@ const PB = require("./perturbers");
 
 const DELAY_UNIT = 25;     // un cran de la molette du retard = 25 shahfeetee de trajet du pouls
 const DELAY_MAX = 624;     // la molette du retard va de 0 à 624 crans (deux chiffres D'ni)
+const DELAY_TURN = DELAY_MAX + 1; // un tour de la molette : 625 crans = un rahnfee = un battement de retard
+const FAR_SHARE = 1 / 6;   // mondes lointains : à peu près une étoile sur six est au-delà d'un rahnfee (un battement entier de retard en plus)
+const BEATS_MAX = 1;       // le compteur de battements : 0 ou 1 battement entier
 const STEP_DELAY = { hub: 1, rim: 25 };
 const TOL = { torahn: T.TOL.torahn, elev: T.TOL.elev, delay: 1 }; // situé : à 200 torantee, 2 shahfeetee et 1 cran de retard près
 const SYS_ELEV = 100;      // hauteur de l'étoile : de −100 à +100 shahfeetee (vue de l'Âge, le Zéro reste dans les butées du télescope)
@@ -73,13 +76,16 @@ function starKey(analysis, src, name) {
   return `${ids.length ? ids.join("+") : "single_sun"}@${sys != null ? "sys:" + sys : String(name || "").trim().toLowerCase() + "#" + seedLine}`;
 }
 
+/** Mondes lointains : 1 si l'étoile de cette clé est au-delà d'un rahnfee (son pouls arrive un battement entier plus tard), sinon 0. */
+function farBeats(key) { const r = rng((fnv("loin|" + key) ^ 0x1f4b) >>> 0); r(); return r() < FAR_SHARE ? 1 : 0; }
+
 /** La position GZCS du système d'une clé d'étoile : { torahn, distance, elevation } (entiers). Même clé, même position. */
 function position(key) {
   const r = rng((fnv("etoile|" + key) ^ 0x57a25e7) >>> 0); r(); r();
   const torahn = Math.floor(r() * (T.TURN / T.NOTCH)) * T.NOTCH + Math.floor(r() * T.NOTCH);
   const elevation = Math.round((r() * 2 - 1) * SYS_ELEV) || 0;
   const distance = Math.min(SYS_DIST[1], Math.round(SYS_DIST[0] * Math.exp(r() * Math.log(SYS_DIST[1] / SYS_DIST[0])))); // log-uniforme : des voisins et des lointains (jamais au-delà d'un rahnfee)
-  return { torahn: mod(torahn, T.TURN), distance, elevation };
+  return { torahn: mod(torahn, T.TURN), distance: distance + farBeats(key) * DELAY_TURN * DELAY_UNIT, elevation }; // lointaine : un rahnfee de plus
 }
 
 /** Du cylindre GZCS au repère cartésien (x vers le quart de tour, y le long de la ligne du Zéro, z la hauteur). */
@@ -89,7 +95,7 @@ const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
 const neg = (a) => ({ x: -a.x, y: -a.y, z: -a.z });
 
 /** Le retard du pouls pour une position (en crans de la molette) : la longueur du trajet, sur 25 shahfeetee. */
-function delayOf(p) { return Math.max(0, Math.min(DELAY_MAX, Math.round(Math.hypot(p.distance || 0, p.elevation || 0) / DELAY_UNIT))); }
+function delayOf(p) { return Math.max(0, Math.min(DELAY_TURN * (BEATS_MAX + 1) - 1, Math.round(Math.hypot(p.distance || 0, p.elevation || 0) / DELAY_UNIT))); }
 /** L'éclat du pouls (0 à 1) : il pâlit avec la distance (le carré). */
 function strengthOf(delay) { return 1 / (1 + Math.pow(delay / 150, 2)); }
 
@@ -98,8 +104,9 @@ function strengthOf(delay) { return 1 / (1 + Math.pow(delay / 150, 2)); }
  * 0 par défaut) : la ligne d'origine perçue est décalée d'autant de torantee (fausse ligne).
  */
 function zeroSeenFrom(pos, { lineOffset = 0 } = {}) {
-  const delay = delayOf(pos);
-  return { torahn: mod(pos.torahn + T.TURN / 2 + int(lineOffset), T.TURN), elevation: -(pos.elevation || 0) || 0, delay, strength: strengthOf(delay) };
+  // le retard complet se lit en deux temps : les battements entiers (`beats`, le compteur) et la fraction de battement (`delay`, la molette)
+  const full = delayOf(pos), delay = full % DELAY_TURN, beats = Math.floor(full / DELAY_TURN);
+  return { torahn: mod(pos.torahn + T.TURN / 2 + int(lineOffset), T.TURN), elevation: -(pos.elevation || 0) || 0, delay, beats, strength: strengthOf(full) };
 }
 
 /**
@@ -145,7 +152,7 @@ function perceive(sys, { tri = false } = {}) {
  */
 function systemOf(analysis, src, name) {
   const key0 = starKey(analysis, src, name), written = writtenPerturbers(analysis), P = placeSystem(key0, written);
-  const fx = PB.effects(P.near, P.key, delayOf(P.pos), DELAY_MAX), v = perceive({ key: P.key, pos: P.pos, near: P.near, fx });
+  const fx = PB.effects(P.near, P.key, delayOf(P.pos) % DELAY_TURN, DELAY_MAX), v = perceive({ key: P.key, pos: P.pos, near: P.near, fx });
   const beats = P.near.filter((p) => p.period).map((p) => ({ kind: p.kind, period: p.period, torahn: v.clue.torahn, elevation: v.clue.elevation, delay: v.clue.delay, strength: v.clue.strength * (0.4 + 0.5 * p.k) }));
   return { key: P.key, stars: starIds(analysis), shared: parseSystem(src), pos: P.pos, near: P.near, fx, written, moved: P.moved, sources: sources(P.pos, { perturbers: beats }), clue: v.clue, seen: v.seen, perturbed: v.perturbed };
 }
@@ -198,10 +205,11 @@ function beacons(sys, systems, line = 0) {
 
 // ---- la molette du retard et le réglage du joueur ------------------------------------------------------------
 /** Le réglage reporté au télescope : { torahn, elev, delay } (visée où le Zéro apparaît vu de l'Âge, et retard). */
-function normDial(d) { const a = T.normAim(d), o = d && typeof d === "object" ? d : {}; return { ...a, delay: Math.max(0, Math.min(DELAY_MAX, int(o.delay))) }; }
+function normDial(d) { const a = T.normAim(d), o = d && typeof d === "object" ? d : {}; return { ...a, delay: Math.max(0, Math.min(DELAY_MAX, int(o.delay))), beats: Math.max(0, Math.min(BEATS_MAX, int(o.beats))) }; }
 /** Tourner une molette du réglage : Torahn, élévation (comme à l'étape 1) ou retard (butées 0 et 624). */
 function turnDial(dial, axis, delta) {
   const d = normDial(dial);
+  if (String(axis).toLowerCase() === "beats") return { ...d, beats: mod(d.beats + int(delta), BEATS_MAX + 1) }; // le compteur : un cran de plus, puis retour à zéro
   if (String(axis).toLowerCase() === "delay") return { ...d, delay: Math.max(0, Math.min(DELAY_MAX, d.delay + int(delta))) };
   return { ...d, ...T.turn(d, axis, delta) };
 }
@@ -212,7 +220,9 @@ function turnDial(dial, axis, delta) {
  */
 function measure(dial, clue) {
   const d = normDial(dial), sig = T.signal(d, { torahn: clue.torahn, elevation: clue.elevation }), dd = d.delay - clue.delay;
-  return { ...sig, dd, delayOk: Math.abs(dd) <= TOL.delay, located: sig.found && Math.abs(dd) <= TOL.delay };
+  // `beatsOk` : le compteur porte le bon nombre de battements entiers. L'anneau et l'écho ne le voient pas (ils ne lisent que la
+  // fraction) : un compte faux situe quand même l'étoile, un battement trop près ou trop loin (le piège du mauvais battement)
+  return { ...sig, dd, delayOk: Math.abs(dd) <= TOL.delay, located: sig.found && Math.abs(dd) <= TOL.delay, beatsOk: d.beats === (clue.beats || 0), beatShift: (clue.beats || 0) - d.beats };
 }
 
 /**
@@ -225,7 +235,8 @@ function measure(dial, clue) {
 const BEND_DIM = 0.45;
 function scope(dial, sys, { tri = false, easy = false } = {}) {
   // mode facile (src/instruments.js) : les étoiles mortes ne trompent pas (ni leurre, ni faux pouls) ; elles brouillent seulement un peu l'image (`blur`)
-  const v0 = perceive(sys, { tri: tri || easy }), v = easy && !tri ? { ...v0, tri: false } : v0, d = normDial(dial), m = measure(d, v.clue), bend = !!(v.fx.deflect && !v0.tri), beat = !!(v.fx.beat && !v0.tri);
+  // mode facile : le mauvais compte de battements ne situe rien (`beatWait`), au lieu de graver l'étoile au mauvais battement
+  const v0 = perceive(sys, { tri: tri || easy }), v = easy && !tri ? { ...v0, tri: false } : v0, d = normDial(dial), m0 = measure(d, v.clue), m = easy && m0.located && !m0.beatsOk ? { ...m0, located: false, beatWait: true } : m0, bend = !!(v.fx.deflect && !v0.tri), beat = !!(v.fx.beat && !v0.tri);
   const dim = bend ? BEND_DIM : 1, tr = m.found ? m : { ...m, s: m.s * dim, band: Math.min(T.bandOf(m.s * dim), T.BANDS.length - 1) };
   let lure = null;
   if (bend) { const l = T.signal(d, { torahn: v.seen.torahn, elevation: v.seen.elevation }); lure = { ...l, found: false, band: Math.min(l.band, T.BANDS.length - 1) }; }
@@ -248,7 +259,7 @@ function echoWord(dd) { const a = Math.abs(dd); return a <= TOL.delay ? "one" : 
  * cartésien et GZCS) et `gzcs` (sa position par rapport au Zéro). `zero` : T.greatZero du Relto (Relto → Zéro).
  */
 function locate(zero, dial) {
-  const d = normDial(dial), path = d.delay * DELAY_UNIT, h = d.elev, rho = Math.sqrt(Math.max(0, path * path - h * h));
+  const d = normDial(dial), path = (d.beats * DELAY_TURN + d.delay) * DELAY_UNIT, h = d.elev, rho = Math.sqrt(Math.max(0, path * path - h * h));
   const ageToZero = cart({ torahn: d.torahn, distance: rho, elevation: h }), reltoToZero = cart({ torahn: zero.torahn, distance: zero.distance, elevation: zero.elevation });
   const rel = sub(reltoToZero, ageToZero); // (Relto → Zéro) − (Âge → Zéro) = S − R
   return { fromRelto: { ...rel, ...cyl(rel) }, gzcs: cyl(neg(ageToZero)), reltoAt: cyl(neg(reltoToZero)) };
@@ -261,8 +272,11 @@ function locate(zero, dial) {
  * l'erreur), `pert` (ses perturbateurs : genre et position GZCS gravée), `tri` (situé par triangulation), `ages` (noms).
  */
 function record(sys, zero, dial, now = Date.now(), { line = 0, ages = null, tri = false } = {}) {
-  const L = int(line), r = locate(believedZero(zero, L), dial).fromRelto;
-  const out = { at: Math.round(now), torahn: mod(sys.pos.torahn + L, T.TURN), elevation: sys.pos.elevation, distance: sys.pos.distance, rel: { x: Math.round(r.x), y: Math.round(r.y), z: Math.round(r.z) } };
+  const L = int(line), d = normDial(dial), r = locate(believedZero(zero, L), d).fromRelto, err = d.beats - (zeroSeenFrom(sys.pos).beats || 0);
+  // mauvais battement : l'étoile est gravée un rahnfee trop près (ou trop loin) ; l'Imageur ne pourra pas la tenir (`beatErr`)
+  const dist = err ? Math.max(1, sys.pos.distance + err * DELAY_TURN * DELAY_UNIT) : sys.pos.distance;
+  const out = { at: Math.round(now), torahn: mod(sys.pos.torahn + L, T.TURN), elevation: sys.pos.elevation, distance: dist, beats: d.beats, rel: { x: Math.round(r.x), y: Math.round(r.y), z: Math.round(r.z) } };
+  if (err) out.beatErr = err;
   if (sys.near) { out.seen = zeroSeenFrom(sys.pos).torahn; if (sys.near.length) out.pert = sys.near.map((p) => { const c = PB.cylOf(p); return { kind: p.kind, torahn: mod(c.torahn + L, T.TURN), distance: c.distance, elevation: c.elevation }; }); }
   if (L) out.line = L;
   if (tri) out.tri = true;
@@ -306,12 +320,15 @@ function words(clue, lang = "en", opts = {}) {
   const t = makeT(() => (lang === "fr" ? "fr" : "en")), n = opts.compass === 4 || opts.compass === 8 ? opts.compass : 16, sec = sectorOf(clue.torahn);
   const coarse = mod(Math.round((sec * n) / 16), n), dir = n === 16 ? list(t("sys.compass"))[sec] : n === 8 ? list(t("sys.compass"))[coarse * 2] : list(t("sys.compass.four"))[coarse];
   const parts = { dir, height: list(t("sys.height"))[heightBand(clue.elevation)], delay: list(t("sys.delay"))[delayBand(clue.delay)], faint: list(t("sys.faint"))[faintBand(clue.strength)] };
-  const out = { line: t("sys.line", parts), parts, bands: { sector: sec, compass: n, height: heightBand(clue.elevation), delay: delayBand(clue.delay), faint: faintBand(clue.strength) }, values: { torahn: clue.torahn, elev: T.kiElev(clue.elevation), delay: clue.delay } };
+  const out = { line: t("sys.line", parts), parts, bands: { sector: sec, compass: n, height: heightBand(clue.elevation), delay: delayBand(clue.delay), faint: faintBand(clue.strength) }, values: { torahn: clue.torahn, elev: T.kiElev(clue.elevation), delay: clue.delay, whole: clue.beats || 0 } };
   // étape 3 : ce que l'arpenteur remarque des perturbateurs (faux pouls, lumière courbée) et de sa boussole (sans nord, des relèvements grossiers)
   const fx = opts.fx, bits = [];
   if (opts.easy && fx && (fx.beat || fx.deflect)) bits.push(t("sys.pert.blur")); // mode facile : une étoile morte brouille seulement un peu l'image
   else if (fx && fx.beat) { bits.push(fx.beat.kind === "pulsar" ? t("sys.pert.pulsar") : t("sys.pert.neutron")); out.values.beats = PB.beatsPer25(fx.beat.period); }
   if (fx && fx.deflect && !opts.easy) bits.push(t("sys.pert.bend"));
+  // mondes lointains : en mode facile, l'arpenteur dit le battement entier ; dans l'Art de la Guilde, il faut le compter soi-même
+  // (`opts.far === false` : l'étoile est déjà gravée d'avant les mondes lointains, on n'en parle pas)
+  if (opts.easy && clue.beats && opts.far !== false) bits.push(t("sys.far.easy"));
   if (n === 4) bits.push(t("sys.compass.none")); else if (n === 8) bits.push(t("sys.compass.weak"));
   if (bits.length) out.pert = bits.join(" ");
   return out;
@@ -338,4 +355,4 @@ function lineSignals(aim, zero, old, { easy = false } = {}) {
   return { true: a, old: o, best };
 }
 
-module.exports = { surveyed, BEND_DIM, scope, OLD_LINE, OLD_GAIN, BEACON_RANGE, FIELD_NONE, writtenPerturbers, placeSystem, perceive, oldLine, believedZero, miss, offLine, beacons, compassOf, lineSignals, DELAY_UNIT, DELAY_MAX, STEP_DELAY, TOL, SYS_ELEV, SYS_DIST, SYSTEM_RE, HEIGHT_AT, DELAY_AT, FAINT_AT, parseSystem, starIds, starKey, position, cart, cyl, delayOf, strengthOf, zeroSeenFrom, sources, systemOf, normDial, turnDial, measure, echoOffset, echoWord, locate, record, isLocated, findLocated, sectorOf, heightBand, delayBand, faintBand, words };
+module.exports = { farBeats, FAR_SHARE, DELAY_TURN, BEATS_MAX, surveyed, BEND_DIM, scope, OLD_LINE, OLD_GAIN, BEACON_RANGE, FIELD_NONE, writtenPerturbers, placeSystem, perceive, oldLine, believedZero, miss, offLine, beacons, compassOf, lineSignals, DELAY_UNIT, DELAY_MAX, STEP_DELAY, TOL, SYS_ELEV, SYS_DIST, SYSTEM_RE, HEIGHT_AT, DELAY_AT, FAINT_AT, parseSystem, starIds, starKey, position, cart, cyl, delayOf, strengthOf, zeroSeenFrom, sources, systemOf, normDial, turnDial, measure, echoOffset, echoWord, locate, record, isLocated, findLocated, sectorOf, heightBand, delayBand, faintBand, words };

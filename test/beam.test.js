@@ -20,7 +20,7 @@ ok(BEAM.RAHNFEE === 15625 && BEAM.RAHNFEE === 25 * 25 * 25, "1 rahnfee = 25³ = 
 ok(BEAM.rahnfeeOf(15625) === 1 && BEAM.shahfeeteeOf(1) === 15625 && BEAM.rahnfeeOf(7812.5) === 0.5 && BEAM.rahnfeeOf(NaN) === 0, "conversions dans les deux sens (non fini → 0)");
 ok(JSON.stringify(BEAM.digitsOf(0)) === "[0,0,0,0]" && JSON.stringify(BEAM.digitsOf(625)) === "[0,1,0,0]" && JSON.stringify(BEAM.digitsOf(25)) === "[0,0,1,0]" && JSON.stringify(BEAM.digitsOf(1)) === "[0,0,0,1]", "un 25ᵉ = 625, un 625ᵉ = 25, un 15 625ᵉ = 1 shahfee");
 ok(JSON.stringify(BEAM.digitsOf(7812)) === "[0,12,12,12]", "un demi-rahnfee : 0·12 12 12 (7 812 shahfeetee)");
-ok(JSON.stringify(BEAM.digitsOf(15625, 3, { clamp: false })) === "[1,0,0,0]" && JSON.stringify(BEAM.digitsOf(15625)) === "[0,24,24,24]", "un rahnfee entier : 1·0 0 0 ; borné, la lecture s'arrête juste dessous");
+ok(JSON.stringify(BEAM.digitsOf(15625, 3, { clamp: false })) === "[1,0,0,0]" && JSON.stringify(BEAM.digitsOf(15625, 3, { clamp: true })) === "[0,24,24,24]" && JSON.stringify(BEAM.digitsOf(23437)) === "[1,12,12,12]", "un rahnfee entier : 1·0 0 0 (un monde lointain : 1·12 12 12) ; borné, la lecture s'arrête juste dessous");
 { // trois places : le même entier que la valeur en shahfeetee, lu après le point
   let same = true; for (let sf = 0; sf < BEAM.RAHNFEE; sf += 37) { const d = BEAM.digitsOf(sf); if (d[0] !== 0 || fromBase25(d.slice(1)) !== sf || BEAM.fromDigits(d) !== sf || d.some((x) => x < 0 || x > 24 || !Number.isInteger(x))) same = false; }
   ok(same, "sous un rahnfee, « 0·abc » est exactement l'entier en shahfeetee écrit en base 25 (aller-retour)");
@@ -46,12 +46,13 @@ ok(BEAM.clamp(20000) === BEAM.REACH && BEAM.clamp(-3) === 0 && BEAM.within(15624
   const sd = D.en["sys.delay"].split("|"); ok(/third of a beat/.test(sd[2]) && /half a beat/.test(sd[3]) && Math.abs(BEAM.lateOf(185) - 1 / 3) < 0.1 && Math.abs(BEAM.lateOf(325) - 1 / 2) < 0.1, "l'arpenteur : « about a third / half a beat late » au milieu de ces paliers");
 }
 
-// ---- 3. portée : aucune étoile au-delà d'un rahnfee ---------------------------------------------------------------------
+// ---- 3. portée : sous un rahnfee, sauf les mondes lointains (un battement entier de plus, jamais deux) -------------------
 {
-  let far = 0, okp = true; for (let i = 0; i < 3000; i++) { const p = SS.position("single_sun@reach" + i); far = Math.max(far, p.distance); if (!BEAM.within(Math.hypot(p.distance, p.elevation)) || SS.delayOf(p) * SS.DELAY_UNIT >= BEAM.RAHNFEE) okp = false; }
-  ok(okp && far < BEAM.RAHNFEE && SS.SYS_DIST[1] < BEAM.RAHNFEE, `3 000 étoiles : toutes sous un rahnfee (la plus lointaine à ${far})`);
-  let okw = true; for (const kinds of [["pulsar"], ["black_hole"], ["neutron_star"], ["pulsar", "black_hole"]]) for (let i = 0; i < 12; i++) { const s = SS.placeSystem("single_sun@w" + kinds.join() + i, kinds); if (!BEAM.within(s.pos.distance) || s.near.some((q) => !BEAM.within(q.d))) okw = false; }
-  ok(okw, "écrire des étoiles mortes ne pousse aucune étoile au-delà d'un rahnfee ; leurs distances non plus");
+  let far = 0, n = 0, okp = true; for (let i = 0; i < 3000; i++) { const k = "single_sun@reach" + i, p = SS.position(k), c = SS.zeroSeenFrom(p), b = SS.farBeats(k); far = Math.max(far, p.distance); if (b) n++;
+    if (Math.hypot(p.distance, p.elevation) >= 2 * BEAM.RAHNFEE || c.beats !== b || c.delay > SS.DELAY_MAX || BEAM.within(p.distance) === !!b) okp = false; }
+  ok(okp && far < 2 * BEAM.RAHNFEE && SS.SYS_DIST[1] < BEAM.RAHNFEE && n > 3000 * 0.12 && n < 3000 * 0.22, `3 000 étoiles : ${n} lointaines (un battement de plus), aucune au-delà de deux rahnfeetee (la plus lointaine à ${far})`);
+  let okw = true; for (const kinds of [["pulsar"], ["black_hole"], ["neutron_star"], ["pulsar", "black_hole"]]) for (let i = 0; i < 12; i++) { const s = SS.placeSystem("single_sun@w" + kinds.join() + i, kinds); if (s.pos.distance >= 2 * BEAM.RAHNFEE || s.near.some((q) => !BEAM.within(q.d))) okw = false; }
+  ok(okw, "écrire des étoiles mortes ne pousse aucune étoile au-delà de deux rahnfeetee ; leurs distances restent sous un rahnfee");
   ok(T.DIST_MAX < BEAM.RAHNFEE, "le Zéro d'un Relto reste sous un rahnfee (DIST_MAX 15 624)");
 }
 

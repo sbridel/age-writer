@@ -719,7 +719,8 @@ class ReltoRenderer {
     const tel = TL.systemsOf(this), sys = tel.found && tel.systems ? tel.systems[st.system.key] : null; if (!sys) return null;
     const other = st.guild && st.g.syncFor !== (st.world && st.world.age.path); // mode Guilde : la synchro vaut pour le monde où elle a été faite
     const now = this.imagerNow(), set = other || (st.settings.sysKey && st.settings.sysKey !== st.system.key) ? { ...st.settings, syncAt: null } : st.settings; // l'étoile a changé depuis la synchro
-    const c = CAL.state(set, st.orbit, true, now);
+    let c = CAL.state(set, st.orbit, true, now);
+    if (sys.beatErr) c = { ...c, synced: false, certain: false, q: 0, slip: true }; // gravée au mauvais battement : la planète glisse, rien ne tient
     return { ...c, sys, system: st.system, lt: CAL.localTime(st.orbit, c, now + CAL.lineShift(st.orbit, sys.line)) }; // étape 3 : gravée sur la fausse ligne, l'heure là-bas est fausse
   }
   /** Un geste sur la machine : un livre, un poste, un cristal, un verre, un bouton, le verrou, le périscope, le micromètre. */
@@ -729,6 +730,7 @@ class ReltoRenderer {
     if (a.hum) { if (this.opts.onImagerHum) this.opts.onImagerHum(a.hum); sfx("click"); return; }
     if (a.sync != null) { // le micromètre de synchro : seulement quand le système de l'Âge est situé
       const cal = this.imagerCal(), tt = this.opts && typeof this.opts.t === "function" ? this.opts.t : null; if (!cal) return;
+      if (cal.slip) { st.settings = IM.normalize({ ...before, sync: CAL.turnSync(before, a.sync, st.orbit, true, now).s.sync, syncAt: null }); sfx("click"); if (tt) say(tt("cal.slip")); this.imagerSave(); return; } // le mauvais battement : la planète glisse
       const res = CAL.turnSync(before, a.sync, st.orbit, true, now); st.settings = IM.normalize(res.synced ? { ...res.s, sysKey: st.system.key } : res.s);
       if (st.guild) {
         st.g = { ...st.g, syncFor: res.synced && st.world ? st.world.age.path : null };
