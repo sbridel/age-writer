@@ -80,6 +80,28 @@ const EXTRA_GLYPHS = {
     polyline([[70, 74], [50, 82], [28, 74]], 3),
     polyline([[22, 54], [26, 32]], 3),
   ],
+  // perturbateurs (télescope, étape 3) : le pulsar, un petit losange plein et ses deux faisceaux opposés, avec des tirets
+  // (les éclats) ; l'étoile à neutrons, un très petit hexagone plein dans deux anneaux serrés (sa masse) ; le trou noir, un
+  // vide (hexagone en creux) autour duquel la lumière s'enroule en arcs
+  pulsar: [
+    fill(diamond(50, 50, 8)),
+    line([42, 42], [14, 14], 3), line([58, 58], [86, 86], 3),
+    line([62, 38], [70, 30], 2), line([38, 62], [30, 70], 2),
+    line([76, 24], [84, 16], 2), line([24, 76], [16, 84], 2),
+  ],
+  neutron_star: [
+    fill(hexagon(50, 50, 9)),
+    outline(hexagon(50, 50, 20), 2.5),
+    outline(hexagon(50, 50, 31), 1.6),
+    line([50, 4], [50, 14], 2), line([50, 86], [50, 96], 2),
+  ],
+  black_hole: [
+    outline(hexagon(50, 50, 13), 3),
+    polyline([[22, 50], [26, 30], [42, 20], [62, 22], [76, 34]], 3),
+    polyline([[78, 50], [74, 70], [58, 80], [38, 78], [24, 66]], 3),
+    polyline([[8, 46], [14, 22], [34, 8]], 1.8),
+    polyline([[92, 54], [86, 78], [66, 92]], 1.8),
+  ],
   shifting_orbit: [
     polyline(
       [

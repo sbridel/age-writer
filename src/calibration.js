@@ -34,22 +34,39 @@ function diff(a, b) { let d = wrap(b - a); if (d > TURN / 2) d -= TURN; return d
  * L'orbite et le jour d'un Âge : { phase0, periodMs, dayMs, err } (ms réelles). `sky` : SKY.parseSky(src) (day_length,
  * year_length), facultatif. `name` : nom de la note (la graine).
  */
-function orbitOf(analysis, name = "", sky = null) {
+function orbitOf(analysis, name = "", sky = null, near = null) {
   const w = analysis && analysis.physics && analysis.physics.w;
   let dayMs = w && Number.isFinite(w.rotation) && w.rotation > 0 ? w.rotation * H : 24 * H;
   let periodMs = w && Number.isFinite(w.periodDays) && w.periodDays > 0 ? w.periodDays * DAY : 365 * DAY;
   if (sky && sky.dayLen > 0) { dayMs = sky.dayLen * 60000; if (sky.yearLen > 0) periodMs = sky.yearLen * dayMs; }
-  const e = fnv(name + "|calibration-derive");
-  return { phase0: (fnv(name + "|orbite") % 1000) / 1000 * TURN, periodMs: Math.max(periodMs, H), dayMs: Math.max(dayMs, 12000), err: (e % 2 ? 1 : -1) * (2 + (e % 1000) / 500) };
+  const e = fnv(name + "|calibration-derive"), d = driftOf({ field: w && Number.isFinite(w.field) ? w.field : null, near });
+  return { phase0: (fnv(name + "|orbite") % 1000) / 1000 * TURN, periodMs: Math.max(periodMs, H), dayMs: Math.max(dayMs, 12000), err: (e % 2 ? 1 : -1) * (2 + (e % 1000) / 500), drift: d.rate, why: d.why };
 }
 
 /** Où est la planète sur son orbite à l'instant `now` (0 à 25). */
 function orbitAt(o, now = Date.now()) { return wrap(o.phase0 + (now / o.periodMs) * TURN); }
 
-/** Qualité de la calibration (0 à 1) selon le temps écoulé depuis la synchro `at` : 1 sept jours, puis elle décroît jusqu'à 0. */
-function quality(at, now = Date.now()) {
+/**
+ * Étape 3 : la vitesse de la dérive (1 = une semaine intacte, perdue à deux). Le nord magnétique tient la calibration : un
+ * Âge sans dynamo (noyau mort, ou qui ne tourne pas : `field` ≤ 0,02) dérive deux fois plus vite, un champ faible (< 0,2)
+ * 1,4 fois ; près d'un perturbateur c'est pire (trou noir × 1,5, pulsar ou étoile à neutrons × 1,3). Plafond × 4.
+ * `why` : les raisons, pour les mots de l'arpenteur (« nofield », « weakfield », « black_hole », « pulsar », « neutron_star »).
+ */
+const DRIFT_FACTOR = { nofield: 2, weakfield: 1.4, black_hole: 1.5, pulsar: 1.3, neutron_star: 1.3 }, DRIFT_CAP = 4;
+function driftOf({ field = null, near = null } = {}) {
+  const why = [];
+  if (field != null && Number.isFinite(field)) { if (field <= 0.02) why.push("nofield"); else if (field < 0.2) why.push("weakfield"); }
+  for (const k of ["black_hole", "pulsar", "neutron_star"]) if ((near || []).some((p) => p && p.kind === k)) why.push(k);
+  return { rate: Math.min(DRIFT_CAP, why.reduce((r, k) => r * DRIFT_FACTOR[k], 1)), why };
+}
+
+/**
+ * Qualité de la calibration (0 à 1) selon le temps écoulé depuis la synchro `at` : 1 sept jours, puis elle décroît jusqu'à 0
+ * au quatorzième. `rate` (étape 3, `driftOf`) accélère le temps de la dérive : c'est le seul endroit où ajouter un facteur.
+ */
+function quality(at, now = Date.now(), rate = 1) {
   if (!Number.isFinite(at)) return 0;
-  const age = now - at; if (age < 0) return 1;
+  const age = (now - at) * (Number.isFinite(rate) && rate > 0 ? rate : 1); if (age < 0) return 1;
   return age <= DRIFT_START ? 1 : clamp(1 - (age - DRIFT_START) / (DRIFT_FULL - DRIFT_START), 0, 1);
 }
 
@@ -62,7 +79,7 @@ function syncOf(s) { const o = s || {}; return { sync: half(Number.isFinite(+o.s
  */
 function reading(s, o, now = Date.now()) {
   const c = syncOf(s); if (c.at == null || !o) return c.sync;
-  return half(orbitAt(o, now) + (1 - quality(c.at, now)) * o.err);
+  return half(orbitAt(o, now) + (1 - quality(c.at, now, o.drift)) * o.err);
 }
 
 /**
@@ -70,7 +87,7 @@ function reading(s, o, now = Date.now()) {
  * (q > 0) ; `certain` (l'heure locale est sûre) ; `gap` (écart du micromètre à la planète, en crans).
  */
 function state(s, o, located, now = Date.now()) {
-  const c = syncOf(s), q = located && c.at != null ? quality(c.at, now) : 0, r = o ? reading(s, o, now) : c.sync;
+  const c = syncOf(s), q = located && c.at != null ? quality(c.at, now, o ? o.drift : 1) : 0, r = o ? reading(s, o, now) : c.sync;
   return { located: !!located, q, synced: q > 0, certain: q >= CERTAIN_AT, reading: r, gap: o ? diff(r, orbitAt(o, now)) : 0, at: c.at };
 }
 
@@ -99,6 +116,12 @@ function localTime(o, st, now = Date.now()) {
   return { known: true, certain: st.certain, phase: p, slot: WX.slotOf(p), gahr: Math.floor(u / 25), tahvo: u % 25 };
 }
 
+/**
+ * Étape 3 : une étoile gravée sur la fausse ligne (`line` torantee de travers) donne une heure locale fausse d'autant : le
+ * décalage, en ms, à ajouter à `now` (une fraction du jour de l'Âge égale à la fraction du tour). 0 sur la vraie ligne.
+ */
+function lineShift(o, line) { const L = Math.round(Number(line) || 0); return o && L ? (L / 62500) * o.dayMs : 0; }
+
 /** La phrase de l'heure locale (Détails, Imageur). */
 function timeWords(lt, lang = "en") {
   const t = makeT(() => (lang === "fr" ? "fr" : "en"));
@@ -113,4 +136,4 @@ function timeWords(lt, lang = "en") {
  */
 function boost(k, q) { const x = clamp(k, 0, 1); return x + (1 - x) * x * clamp(q, 0, 1); }
 
-module.exports = { TURN, SYNC_TOL, DRIFT_START, DRIFT_FULL, CERTAIN_AT, diff, orbitOf, orbitAt, quality, syncOf, reading, state, turnSync, dayPhase, localTime, timeWords, boost };
+module.exports = { TURN, SYNC_TOL, DRIFT_START, DRIFT_FULL, CERTAIN_AT, DRIFT_FACTOR, DRIFT_CAP, driftOf, lineShift, diff, orbitOf, orbitAt, quality, syncOf, reading, state, turnSync, dayPhase, localTime, timeWords, boost };

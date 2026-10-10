@@ -138,7 +138,7 @@ for (const w of [[], ["a"], ["vast", "immense", "giant", "huge"], ["tiny", "tiny
   ok(K.SKY_BLOCKS.every((b) => b.axis === "cosmological" && b.proseTag && K.SKY_PROSE[b.proseTag.replace(/#/g, "")]), "chaque bloc de ciel a sa phrase");
   ok(K.SKY_RULES.every((r) => K.NOTES[r.note] && ["light", "medium", "strong"].includes(r.severity)), "chaque règle a sa note et une gravité valide");
   ok(new Set(K.SKY_BLOCKS.map((b) => b.id)).size === K.SKY_BLOCKS.length, "identifiants uniques");
-  ok(K.SKY_BLOCKS.every((b) => (b.contradictions || []).every((c) => K.SKY_BLOCKS.some((x) => x.id === c.with) || ["starless", "single_sun", "twin_suns"].includes(c.with))), "contradictions : cibles connues");
+  ok(K.SKY_BLOCKS.every((b) => (b.contradictions || []).every((c) => K.SKY_BLOCKS.some((x) => x.id === c.with) || ["starless", "single_sun", "twin_suns", "stable_orbit"].includes(c.with))), "contradictions : cibles connues");
   // scène
   const sc = G.sceneOf(an(["single_sun", "asteroid_field", "planet_rings", "comet", "green_sun", "red_sun"]), "C");
   ok(sc.belt === "field" && sc.rings && sc.comet && sc.sunHues.length === 2 && sc.extras.length === 0, "sceneOf : corps célestes lus, pas peints en générique");

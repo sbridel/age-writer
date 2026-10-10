@@ -264,7 +264,8 @@ async function renderRelto(plugin, source, el, ctx) {
       const name = plugin.core.base(f.path), a = plugin.core.analyse(src, { seed: name });
       const S = G.sceneOf(a, name, plugin.core.blocks), sky = SKY.parseSky(src); if (S) Object.assign(S, sky);
       // étape 2 : le système d'étoile (télescope) et l'orbite de la planète (micromètre de l'Imageur)
-      return { target: IM.targetsOf(a, name), model: S ? G.build(S, 300, 176) : null, system: SS.systemOf(a, src, name), orbit: CAL.orbitOf(a, name, sky) };
+      const system = SS.systemOf(a, src, name); // étape 3 : ses perturbateurs font dériver plus vite la calibration
+      return { target: IM.targetsOf(a, name), model: S ? G.build(S, 300, 176) : null, system, orbit: CAL.orbitOf(a, name, sky, system.near) };
     } catch (e) { console.warn("[Age Writer ext] imageur", e); return null; }
   };
   // les glyphes des cristaux : le dessin du moteur, en image (une fois par page)

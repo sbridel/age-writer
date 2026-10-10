@@ -12,6 +12,11 @@
 // visent alors où le Zéro apparaît VU DE CET ÂGE (les indices de l'arpenteur), et une troisième molette, le RETARD du pouls,
 // accorde l'écho de l'Âge sur le battement du Relto. Dans la tolérance, le système d'étoile de l'Âge est situé : la plaque
 // grave sa position GZCS (l'instrument fait lui-même la différence Relto → Zéro moins Âge → Zéro). Modèle : src/starsystem.js.
+// Étape 3 : la FAUSSE LIGNE de Me'erta (un second pouls, plus pâle, qui glisse contre l'horloge D'ni : si on l'amène dans
+// l'anneau avant le vrai Zéro, l'instrument se cale dessus, `line` ≠ 0, et tout ce qu'il situe ensuite tourne d'autant ; viser
+// le vrai Zéro le recale) ; les PERTURBATEURS (lumière courbée par un trou noir : une image brillante qui ne tient jamais, le
+// vrai point pâle au bout d'un arc ; faux pouls d'un pulsar ou d'une étoile à neutrons : l'écho s'accorde sur lui) ; le levier
+// de TRIANGULATION (deux étoiles situées voisines l'annulent) ; la CARTE DES ÉTOILES (vue `starmap`, `drawStarMap`).
 // Tout est dessiné ici, en coordonnées logiques 640 × 360. Le modèle (pur) est dans src/telescope.js.
 const { rng, fnv, clamp, mix, rgba, frac, lerp } = require("./util");
 const T = require("./telescope");
@@ -47,9 +52,18 @@ function state(r) {
     const g = r.opts.telescopeGet ? r.opts.telescopeGet(key) : null, zero = T.greatZero(sc.name, sc.seed), q = rng((sc.seed ^ 0x7e1e5c0) >>> 0), stars = [];
     for (let i = 0; i < 1400; i++) stars.push({ u: q() * NT, v: (q() * 2 - 1) * (T.ELEV_MAX + FIELD), m: q(), tw: q() * 6.283 }); // u en crans fins, v en shahfeetee
     r.telescope = { key, gen, zero, aim: T.normAim(g), found: !!(g && g.found), at: g && g.at ? T.normAim(g.at) : null, stars, anim: null,
-      dial: SS.normDial(g && g.dial), systems: g && g.systems && typeof g.systems === "object" ? { ...g.systems } : {}, book: null };
+      dial: SS.normDial(g && g.dial), systems: g && g.systems && typeof g.systems === "object" ? { ...g.systems } : {}, book: null,
+      line: g && g.found && Number.isFinite(+g.line) ? Math.round(+g.line) : 0, old: SS.oldLine(zero, key), triFor: null, note: null }; // étape 3 : la ligne où l'instrument est calé (0 : la vraie)
   }
   return r.telescope;
+}
+/** Le Zéro tel que l'instrument le tient : le vrai, ou la fausse ligne s'il s'est calé dessus (Torahn et élévation). */
+function heldZero(st) { return st.line && st.old && st.line === st.old.L ? { torahn: st.old.torahn, elevation: st.old.elevation } : { torahn: SS.believedZero(st.zero, st.line).torahn, elevation: st.zero.elevation }; }
+/** Les noms des Âges d'un système situé : gravés au lutrin (`ages`). */
+function noteAge(r, st, key, name) {
+  const rec = st.systems[key]; if (!rec || !name || (rec.ages || []).includes(name)) return;
+  st.systems = { ...st.systems, [key]: { ...rec, ages: [...(rec.ages || []), name].sort() } };
+  if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st));
 }
 
 /** Les systèmes situés du Relto courant (pour l'Imageur) : l'état ouvert s'il existe, sinon l'état gardé. */
@@ -67,7 +81,11 @@ function bookLoad(r, i) {
   if (idx < 0) { st.book = null; return; }
   const age = ages[idx], book = (st.book = { idx, age, data: null, loading: true });
   if (!r.opts.onImagerAge) { book.loading = false; return; }
-  Promise.resolve(r.opts.onImagerAge(age)).then((d) => { if (st.book !== book) return; book.loading = false; book.data = d || null; if (!r.running) r.draw(0); }, () => { book.loading = false; });
+  Promise.resolve(r.opts.onImagerAge(age)).then((d) => {
+    if (st.book !== book) return; book.loading = false; book.data = d || null;
+    const sys = d && d.system; if (sys && st.found) noteAge(r, st, sys.key, age.name); // un Âge d'un système déjà situé : son nom s'ajoute à la carte
+    if (!r.running) r.draw(0);
+  }, () => { book.loading = false; });
 }
 /** Le système de l'Âge sur le lutrin (ou null), et si l'on mesure (le Zéro du Relto est trouvé). */
 function bookSystem(st) { const sys = st.book && st.book.data && st.book.data.system; return sys && sys.clue ? sys : null; }
@@ -76,35 +94,57 @@ function measuring(st) { return !!(st.found && bookSystem(st)); }
 /** Un geste : `{ axis, delta }` (molette ; delta en torantee ou shahfeetee), `{ setZero: true }` (régler les molettes sur la plaque). */
 function act(r, a) {
   const st = state(r), sfx = (k, s) => { if (r.opts.onTelescopeSound) r.opts.onTelescopeSound(k, s); };
-  if (a.book) { bookLoad(r, (st.book ? st.book.idx : -1) + a.book); sfx("turn", 0.5); return; }
+  if (a.book) { bookLoad(r, (st.book ? st.book.idx : -1) + a.book); st.note = null; sfx("turn", 0.5); return; }
+  if (a.go) { r.setView(a.go); return; }
+  if (a.axis || a.setZero || a.setSystem) st.note = null; // la phrase d'un geste précédent s'efface au geste suivant
   if (measuring(st)) return actSystem(r, st, a, sfx);
-  const before = T.signal(st.aim, st.zero), from = st.aim;
+  const from = st.aim, before = SS.lineSignals(st.aim, st.zero, st.old).best;
   const axis = a.axis ? T.axisOf(a.axis) : null;
-  if (a.setZero) { if (!st.found) return; st.aim = T.normAim({ torahn: st.zero.torahn, elev: st.zero.elevation }); sfx("turn", 1); }
+  if (a.setZero) { if (!st.found) return; const z = heldZero(st); st.aim = T.normAim({ torahn: z.torahn, elev: z.elevation }); sfx("turn", 1); }
   else if (axis) { st.aim = T.turn(st.aim, axis, a.delta); sfx(Math.abs(a.delta) >= T.STEP[axis].rim ? "turn" : "tick", before.s); }
   else return;
-  const after = T.signal(st.aim, st.zero);
+  const L = SS.lineSignals(st.aim, st.zero, st.old), after = L.best;
   if (!r.opts.reducedMotion) st.anim = { from, t0: r.telescopeT || 0 };
   if (axis) r.wheelSpin = { ...(r.wheelSpin || {}), [axis]: r.telescopeT || 0 };
   sfx("ping", T.observe(after, beatOf(r), fnvKey(st.key)).s); // le pouls entendu scintille, comme celui qu'on voit
-  if (after.found && !st.found) { st.found = true; st.at = { torahn: st.aim.torahn, elev: st.aim.elev }; sfx("found", 1); }
-  if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, T.saved(st));
+  // étape 3 : la première fois, l'anneau se ferme sur la vraie ligne ou sur celle de Me'erta, et l'instrument se cale dessus ;
+  // ensuite seule la vraie ligne le recale (une fois le vrai Zéro tenu, la ligne ancienne ne le reprend plus)
+  const landed = L.true.found ? 0 : !st.found && L.old.found ? st.old.L : null;
+  if (landed != null && (!st.found || st.line !== landed)) {
+    const was = st.found; st.found = true; st.line = landed; st.at = { torahn: st.aim.torahn, elev: st.aim.elev };
+    st.note = was ? "tel.recal.true" : null; sfx("found", 1);
+  }
+  if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st));
 }
+/** L'état à garder : celui de l'étape 2 (T.saved), plus la ligne où l'instrument est calé si ce n'est pas la vraie. */
+function saveOf(st) { const s = T.saved(st); if (st.found && st.line) s.line = st.line; return s; }
 
 /** Étape 2 : un geste quand un livre est sur le lutrin et le Zéro trouvé (les molettes portent le réglage `dial`). */
 function actSystem(r, st, a, sfx) {
-  const sys = bookSystem(st), clue = sys.clue, before = SS.measure(st.dial, clue), from = st.dial;
+  const sys = bookSystem(st), clue = sys.clue, tri = st.triFor === sys.key, before = SS.scope(st.dial, sys, { tri }).shown, from = st.dial, rec = st.systems[sys.key];
   const axis = a.axis === "delay" ? "delay" : a.axis ? T.axisOf(a.axis) : null;
-  if (a.setSystem) { if (!st.systems[sys.key]) return; st.dial = SS.normDial({ torahn: clue.torahn, elev: clue.elevation, delay: clue.delay }); sfx("turn", 1); }
+  if (a.setSystem) { if (!rec) return; st.dial = SS.normDial({ torahn: clue.torahn, elev: clue.elevation, delay: clue.delay }); sfx("turn", 1); }
+  else if (a.unchart) { if (!rec) return; const o = { ...st.systems }; delete o[sys.key]; st.systems = o; st.note = "sys.unchart.done"; sfx("turn", 0.4); if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st)); return; }
+  else if (a.triangulate) { // les balises : deux étoiles situées voisines, gravées sur la même ligne que l'instrument
+    const b = SS.beacons(sys, st.systems, st.line);
+    st.note = !sys.perturbed ? "sys.tri.clear" : !b.ok ? "sys.tri.few" : !b.agree ? "sys.tri.disagree" : "sys.tri.agree";
+    if (sys.perturbed && b.ok && b.agree) { st.triFor = sys.key; sfx("turn", 1); } else sfx("tick", 0.2);
+    return;
+  }
   else if (a.setZero) return;
   else if (axis) { st.dial = SS.turnDial(st.dial, axis, a.delta); const S = axis === "delay" ? SS.STEP_DELAY : T.STEP[axis]; sfx(Math.abs(a.delta) >= S.rim ? "turn" : "tick", before.s); }
   else return;
-  const after = SS.measure(st.dial, clue);
+  const sc = SS.scope(st.dial, sys, { tri }), after = sc.m;
   if (!r.opts.reducedMotion) st.anim = { from, t0: r.telescopeT || 0 };
   if (axis) r.wheelSpin = { ...(r.wheelSpin || {}), [axis]: r.telescopeT || 0 };
-  sfx("ping", T.observe(after, beatOf(r), fnvKey(st.key + sys.key)).s);
-  if (after.located && !st.systems[sys.key]) { st.systems = { ...st.systems, [sys.key]: SS.record(sys, st.zero, st.dial, now(r)) }; sfx("found", 1); }
-  if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, T.saved(st));
+  sfx("ping", T.observe(sc.shown, beatOf(r), fnvKey(st.key + sys.key)).s);
+  // situé (l'anneau ne ment pas, perturbé ou non) : gravé sur la ligne où l'instrument est calé ; une étoile gravée sur une autre ligne est regravée
+  if (after.located && (!rec || (rec.line || 0) !== st.line)) {
+    const name = st.book && st.book.age ? st.book.age.name : null;
+    st.systems = { ...st.systems, [sys.key]: SS.record(sys, st.zero, st.dial, now(r), { line: st.line, ages: [...((rec && rec.ages) || []), name].filter(Boolean), tri: tri && sys.perturbed }) };
+    st.note = rec ? "sys.recharted" : null; sfx("found", 1);
+  }
+  if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st));
 }
 
 // ---- petits dessins -----------------------------------------------------------------------------------
@@ -152,8 +192,30 @@ function shownAim(st, tm) { // st : { aim, anim } (la visée du Zéro, ou le ré
   return { u: (a.from.torahn + g.dt * p) / T.NOTCH, v: lerp(a.from.elev, st.aim.elev, p) };
 }
 
-/** L'oculaire : le ciel vu dans la lunette, le pouls du Zéro, l'anneau de visée. Coordonnées en crans fins. */
-function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null) {
+/**
+ * Une autre source dans l'oculaire (étape 3), à sa place par rapport à la visée : `sig` (son écart et sa force), `period`
+ * (en prorahn : la fausse ligne glisse contre l'horloge, le pulsar bat plus vite), `col` (teinte), `smear` (trou noir :
+ * l'image étirée en arc vers le vrai point `smear`), `sharp` (faux pouls : des éclats brefs).
+ */
+function source(ctx, E, g, ms, lag) {
+  const { cx, cy, k, R } = E, sig = g.sig, s = sig.s, per = PULSE_MS * (g.period || 1), b = frac((ms - DT.REF) / per), amp = T.pulseOf(s, Math.floor((ms - DT.REF) / per) ^ 0x51).amp;
+  const pulse = g.sharp ? Math.exp(-b * 14) * amp : 0.35 + 0.65 * Math.exp(-b * (2 + 5 * s)) * amp, haze = clamp(1 - sig.d / (FIELD * 1.4)), [cr, cg, cb] = g.col;
+  const hx = cx + (sig.dt / T.NOTCH + lag.u) * k * haze, hy = cy - (sig.de + lag.v) * k * haze, hr = lerp(R * 1.1, 4 + 9 * (1 - s), haze);
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  if (g.smear && haze > 0.05) { // l'arc de lumière courbée : de l'image déviée vers le vrai point
+    const tx = cx + (g.smear.dt / T.NOTCH + lag.u) * k * haze, ty = cy - (g.smear.de + lag.v) * k * haze, mx = (hx + tx) / 2 - (ty - hy) * 0.35, my = (hy + ty) / 2 + (tx - hx) * 0.35;
+    ctx.strokeStyle = rgba(cr, cg, cb, clamp(s * 0.55 * pulse)); ctx.lineWidth = 2.4 * haze + 0.6; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo(mx, my, tx, ty); ctx.stroke();
+    ctx.lineWidth = 6 * haze; ctx.strokeStyle = rgba(cr, cg, cb, clamp(s * 0.12 * pulse)); ctx.stroke();
+  }
+  const hg = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr); hg.addColorStop(0, rgba(cr, cg, cb, clamp(s * 0.85 * pulse))); hg.addColorStop(0.5, rgba(cr, cg, cb, clamp(s * 0.3 * pulse))); hg.addColorStop(1, rgba(cr, cg, cb, 0));
+  ctx.fillStyle = hg; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+  if (haze > 0.05) { ctx.fillStyle = rgba(Math.min(255, cr + 40), Math.min(255, cg + 30), Math.min(255, cb + 30), clamp(haze * (0.3 + 0.7 * pulse) * (g.sharp ? 1 : 0.8))); ctx.beginPath(); ctx.arc(hx, hy, 1 + 1.6 * haze, 0, 6.283); ctx.fill(); }
+  ctx.restore();
+  return { hx, hy, haze };
+}
+
+/** L'oculaire : le ciel vu dans la lunette, le pouls du Zéro, l'anneau de visée. Coordonnées en crans fins. `more` (étape 3) : d'autres sources, un second écho. */
+function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null, more = null) {
   const { x: cx, y: cy, r: R } = EYE, k = R / FIELD, aim = shownAim(st, tm), tol = T.TOL.torahn / T.NOTCH;
   // le fût de laiton autour
   ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.beginPath(); ctx.arc(cx + 6, cy + 8, R + 22, 0, 6.283); ctx.fill();
@@ -179,6 +241,8 @@ function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null) {
   ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.fillStyle = hg; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
   if (haze > 0.05) { ctx.fillStyle = rgba(235, 255, 250, clamp(haze * (0.4 + 0.6 * pulse))); ctx.beginPath(); ctx.arc(hx, hy, 1.2 + 1.8 * haze, 0, 6.283); ctx.fill(); } // le point, dans le champ
   ctx.restore();
+  const lagUV = { u: lag, v: st.aim.elev - aim.v }, at = [];
+  for (const g of (more && more.sources) || []) at.push(source(ctx, { cx, cy, k, R }, g, ms, lagUV)); // étape 3 : fausse ligne, image courbée, faux pouls
   // l'anneau de visée (la tolérance) et la croisée
   ctx.strokeStyle = sig.found ? "rgba(127,214,200,0.9)" : "rgba(224,194,122,0.55)"; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.arc(cx, cy, (tol + 0.5) * k, 0, 6.283); ctx.stroke();
@@ -188,6 +252,11 @@ function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null) {
     const eb = frac(beat - echo.off), ea = clamp(haze) * (0.25 + 0.6 * Math.exp(-eb * 5)) * (echo.ok ? 0.4 : 1);
     ctx.strokeStyle = rgba(240, 184, 96, ea); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(hx, hy, 4 + 14 * eb, 0, 6.283); ctx.stroke();
   }
+  if (more && more.echo2 && haze > 0.05) { // étape 3 : le faux pouls a son propre écho, plus vif ; celui du Zéro reste pâle dessous
+    const e2 = more.echo2, per = PULSE_MS * e2.period, b2 = frac((ms - DT.REF) / per - e2.off), ea = clamp(haze) * (0.3 + 0.65 * Math.exp(-b2 * 6)) * (e2.ok ? 0.5 : 1);
+    ctx.strokeStyle = rgba(170, 200, 255, ea); ctx.lineWidth = 1.3; ctx.setLineDash && ctx.setLineDash([3, 2]); ctx.beginPath(); ctx.arc(hx, hy, 5 + 16 * b2, 0, 6.283); ctx.stroke(); ctx.setLineDash && ctx.setLineDash([]);
+  }
+  void at;
   const vg = ctx.createRadialGradient(cx, cy, R * 0.55, cx, cy, R); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.6)"); ctx.fillStyle = vg; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
   const gl = ctx.createLinearGradient(cx - R, cy - R, cx, cy); gl.addColorStop(0, "rgba(255,255,255,0.08)"); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = gl; ctx.fillRect(cx - R, cy - R, R * 2, R * 2); // reflet de la lentille
   ctx.restore();
@@ -215,7 +284,8 @@ function lectern(r, ctx, c, st) {
 /** La vue du télescope : le sommet la nuit, l'oculaire, les deux molettes, la plaque, la ligne de mots. */
 function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   const t = tOf(r), st = state(r), ms = now(r), amb = 0.6 + 0.4 * sky.ambient, c = (h) => mix("#05060c", h, amb);
-  const sys0 = bookSystem(st), sig = st.found && sys0 ? T.observe(SS.measure(st.dial, sys0.clue), beatOf(r), fnvKey(st.key + sys0.key)) : T.observe(T.signal(st.aim, st.zero), beatOf(r), fnvKey(st.key));
+  const sys0 = bookSystem(st), lines = SS.lineSignals(st.aim, st.zero, st.old), sc0 = st.found && sys0 ? SS.scope(st.dial, sys0, { tri: st.triFor === sys0.key }) : null;
+  const sig = sc0 ? T.observe(sc0.shown, beatOf(r), fnvKey(st.key + sys0.key)) : T.observe(lines.best, beatOf(r), fnvKey(st.key)); // ce qu'on entend : la source qu'on voit le mieux
   r.telescopeT = tm;
   // le pouls à l'oreille : une note douce à chaque prorahn, tant qu'on regarde dans l'oculaire (même scintillation, mêmes battements manqués que la lueur)
   { const b = beatOf(r); if (r.telescopePulse != null && b !== r.telescopePulse && r.opts.onTelescopeSound) { const p = T.pulseOf(sig.s, b); if (!p.skip) r.opts.onTelescopeSound("pulse", sig.s * p.amp); } r.telescopePulse = b; }
@@ -237,39 +307,49 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   ctx.fillStyle = c("#2a1d13"); ctx.fillRect(330, 140, 46, 20); // le bras qui relie l'oculaire au panneau
   const sys = bookSystem(st), meas = !!(st.found && sys);
   if (meas) { // étape 2 : les molettes portent les indices de l'Âge ; l'oculaire montre son écho
-    const m = SS.measure(st.dial, sys.clue), seen = T.observe(m, beatOf(r), fnvKey(st.key + sys.key)), view = { aim: st.dial, anim: st.anim, stars: st.stars };
-    eyepiece(r, ctx, c, view, seen, tm, ms, { off: SS.echoOffset(m.dd), ok: m.delayOk });
+    const sc1 = sc0, m = sc1.m, seen = T.observe(sc1.true, beatOf(r), fnvKey(st.key + sys.key)), view = { aim: st.dial, anim: st.anim, stars: st.stars };
+    // étape 3 : l'image courbée (trou noir) et le faux pouls (pulsar, étoile à neutrons), à côté du vrai point pâli
+    const more = { sources: [], echo2: null };
+    if (sc1.lure) more.sources.push({ sig: T.observe(sc1.lure, beatOf(r) + 7, fnvKey(sys.key)), period: 1, col: [235, 210, 160], smear: { dt: sc1.true.dt, de: sc1.true.de } });
+    if (sc1.beat) { more.sources.push({ sig: { ...sc1.true, s: Math.max(0.15, sc1.true.s) }, period: sc1.fx.beat.period, col: [170, 200, 255], sharp: true }); more.echo2 = { off: SS.echoOffset(sc1.echoDd), ok: sc1.falseLock, period: sc1.fx.beat.period }; }
+    eyepiece(r, ctx, c, view, seen, tm, ms, { off: SS.echoOffset(m.dd), ok: m.delayOk }, more);
     wheel(r, ctx, c, "torahn", WHEELS.torahn, st.dial.torahn, T.TURN, st.dial.torahn, tm);
     wheel(r, ctx, c, "elev", WHEELS.elev, st.dial.elev + T.ELEV_MAX, 2 * T.ELEV_MAX + 1, T.kiElev(st.dial.elev), tm);
     wheel(r, ctx, c, "delay", DELAY, st.dial.delay, SS.DELAY_MAX + 1, st.dial.delay, tm, { step: SS.STEP_DELAY, ring: DRING, hub: DHUB });
     systemPlate(r, ctx, c, st, sys);
-    const done = !!st.systems[sys.key], line = m.located ? t("sys.located") : bandWords(t, seen.band);
-    ctx.font = "italic 14px serif"; ctx.textAlign = "center"; ctx.fillStyle = m.located ? "#9fe6da" : "#e9dcb8"; ctx.fillText(line, TEXT_X, 306, 500); ctx.textAlign = "left";
-    const sub = m.located ? "" : seen.band >= 2 ? echoWords(t, m.dd) : done ? t("sys.charted") : "";
-    if (sub) { ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(233,220,184,0.8)"; ctx.fillText(sub, TEXT_X, 323, 500); ctx.textAlign = "left"; }
+    triLever(r, ctx, c, st, sys);
+    const rec = st.systems[sys.key], done = !!rec, off = done && (rec.line || 0) !== st.line, shown = T.observe(sc1.shown, beatOf(r), fnvKey(st.key + sys.key));
+    const line = m.located ? (off ? t("sys.offline") : t("sys.located")) : sc1.bentLock ? t("sys.bent.hold") : bandWords(t, shown.band);
+    ctx.font = "italic 14px serif"; ctx.textAlign = "center"; ctx.fillStyle = m.located && !off ? "#9fe6da" : "#e9dcb8"; ctx.fillText(line, TEXT_X, 306, 500); ctx.textAlign = "left";
+    const sub = st.note ? t(st.note) : m.located ? "" : sc1.falseLock ? t("sys.beat.lock") : shown.band >= 2 ? (sc1.beat ? t("sys.beat.cross") + " " : sc1.bend ? t("sys.bend.arc") + " " : "") + echoWords(t, sc1.echoDd) : done ? (off ? t("sys.offline.sub") : t("sys.charted")) : "";
+    if (sub) { ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(233,220,184,0.8)"; ctx.fillText(sub, TEXT_X, 323, 520); ctx.textAlign = "left"; }
   } else {
-    eyepiece(r, ctx, c, st, sig, tm, ms);
+    // étape 3 : la ligne de Me'erta, un second pouls plus pâle qui glisse contre l'horloge D'ni
+    const oldSig = T.observe(lines.old, beatOf(r) + 3, fnvKey(st.key + "|merta"));
+    eyepiece(r, ctx, c, st, T.observe(lines.true, beatOf(r), fnvKey(st.key)), tm, ms, null, { sources: [{ sig: oldSig, period: st.old.period, col: [190, 220, 205] }] });
     wheel(r, ctx, c, "torahn", WHEELS.torahn, st.aim.torahn, T.TURN, st.aim.torahn, tm);
     wheel(r, ctx, c, "elev", WHEELS.elev, st.aim.elev + T.ELEV_MAX, 2 * T.ELEV_MAX + 1, T.kiElev(st.aim.elev), tm);
     // la plaque : vierge tant que le Zéro n'est pas trouvé ; ensuite ses coordonnées gravées en chiffres D'ni (élévation au sens du KI)
     plate(ctx, c, PLATE.x, PLATE.y, PLATE.w, PLATE.h);
     ctx.fillStyle = c("#2a1d13"); ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillText(t("tel.plate.title"), PLATE.x + PLATE.w / 2, PLATE.y + 15); ctx.textAlign = "left";
-    if (st.found) {
-      const ink = c("#1b130d");
-      engraved(r, ctx, st.zero.torahn, PLATE.x + 62, PLATE.y + 26, 17, ink);
-      engraved(r, ctx, T.kiElev(st.zero.elevation), PLATE.x + 160, PLATE.y + 26, 17, ink);
+    if (st.found) { // la plaque grave le Zéro tel que l'instrument le tient (sur la fausse ligne, c'est elle qu'elle grave)
+      const ink = c("#1b130d"), z = heldZero(st);
+      engraved(r, ctx, z.torahn, PLATE.x + 62, PLATE.y + 26, 17, ink);
+      engraved(r, ctx, T.kiElev(z.elevation), PLATE.x + 160, PLATE.y + 26, 17, ink);
       r.hot.push({ ...PLATE, tip: t("tel.plate.found"), tel: { setZero: true } });
     } else {
       ctx.strokeStyle = rgba(43, 29, 19, 0.35); ctx.lineWidth = 1; for (const x0 of [PLATE.x + 30, PLATE.x + 136]) { ctx.beginPath(); ctx.moveTo(x0, PLATE.y + 44); ctx.lineTo(x0 + 50, PLATE.y + 44); ctx.stroke(); }
       r.hot.push({ ...PLATE, tip: t("tel.plate.blank") });
     }
-    // la ligne de mots, sous l'oculaire
-    const tx = st.book ? TEXT_X : W / 2, line = st.found && sig.found ? t("tel.found") : bandWords(t, sig.band); // ce qu'on voit, rien de plus : à toi de comparer
-    ctx.font = "italic 14px serif"; ctx.textAlign = "center"; ctx.fillStyle = sig.found ? "#9fe6da" : "#e9dcb8"; ctx.fillText(line, tx, 306, 500); ctx.textAlign = "left";
-    const sub = st.book && !st.found ? t("sys.needzero") : st.found && !sig.found ? t("tel.charted") : "";
-    if (sub) { ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(233,220,184,0.75)"; ctx.fillText(sub, tx, 323, 500); ctx.textAlign = "left"; }
+    // la ligne de mots, sous l'oculaire ; étape 3 : dans l'anneau de la ligne de Me'erta, le pouls tient mais glisse contre l'horloge
+    const onOld = lines.old.found && !lines.true.found, tx = st.book ? TEXT_X : W / 2;
+    const line = st.found && sig.found ? (onOld ? t("tel.found.old") : t("tel.found")) : bandWords(t, sig.band); // ce qu'on voit, rien de plus : à toi de comparer
+    ctx.font = "italic 14px serif"; ctx.textAlign = "center"; ctx.fillStyle = sig.found && !onOld ? "#9fe6da" : "#e9dcb8"; ctx.fillText(line, tx, 306, 500); ctx.textAlign = "left";
+    const sub = st.note ? t(st.note) : st.book && !st.found ? t("sys.needzero") : st.found && !sig.found ? t("tel.charted") : "";
+    if (sub) { ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(233,220,184,0.75)"; ctx.fillText(sub, tx, 323, 520); ctx.textAlign = "left"; }
   }
   if (((r.scene && r.scene.ages) || []).length || st.book) lectern(r, ctx, c, st);
+  if (st.found) mapDoor(r, ctx, c, st); // étape 3 : la carte des étoiles, au mur
   // redescendre
   ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(BACK.x, BACK.y, BACK.w, BACK.h);
   ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "16px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 20); ctx.textAlign = "left";
@@ -289,11 +369,41 @@ function systemPlate(r, ctx, c, st, sys) {
     engraved(r, ctx, got.torahn, P.x + 32, P.y + 24, 13, ink);
     engraved(r, ctx, T.kiElev(got.elevation), P.x + 80, P.y + 24, 13, ink);
     engraved(r, ctx, got.distance, P.x + 128, P.y + 24, 13, ink);
+    if (got.pert && got.pert.length) { ctx.fillStyle = ink; ctx.font = "9px serif"; ctx.textAlign = "center"; ctx.fillText(got.pert.map((p) => PSYM[p.kind] || "").join(" "), P.x + P.w / 2, P.y + P.h - 5); ctx.textAlign = "left"; } // ses perturbateurs, en signes
     r.hot.push({ ...P, tip: t("sys.plate.found"), tel: { setSystem: true } });
+    // un coin à gratter : effacer l'étoile (la dégraver) pour la situer à nouveau
+    const kx = P.x + P.w - 14, ky = P.y + 4; ctx.strokeStyle = rgba(43, 29, 19, 0.8); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(kx + 2, ky + 2); ctx.lineTo(kx + 8, ky + 8); ctx.moveTo(kx + 8, ky + 2); ctx.lineTo(kx + 2, ky + 8); ctx.stroke();
+    r.hot.push({ x: kx - 2, y: ky - 2, w: 14, h: 14, tip: t("sys.unchart"), tel: { unchart: true } });
   } else {
     ctx.strokeStyle = rgba(43, 29, 19, 0.35); ctx.lineWidth = 1; for (const x0 of [P.x + 16, P.x + 64, P.x + 112]) { ctx.beginPath(); ctx.moveTo(x0, P.y + 44); ctx.lineTo(x0 + 32, P.y + 44); ctx.stroke(); }
     r.hot.push({ ...P, tip: t("sys.plate.blank") });
   }
+}
+
+/** Les signes des perturbateurs (plaque, carte) : pulsar, étoile à neutrons, trou noir. */
+const PSYM = { pulsar: "✶", neutron_star: "✦", black_hole: "◉" };
+const TRI = { x: 474, y: 108, w: 50, h: 14 }; // entre les deux grandes molettes
+/**
+ * Le levier de triangulation (étape 3) : seulement pour un système perturbé. Tiré, l'instrument interroge les étoiles situées
+ * voisines (au moins deux, gravées sur la même ligne) : si elles s'accordent, la déviation et le faux pouls s'effacent.
+ */
+function triLever(r, ctx, c, st, sys) {
+  if (!sys.perturbed) return;
+  const t = tOf(r), on = st.triFor === sys.key, b = SS.beacons(sys, st.systems, st.line), { x, y, w, h } = TRI;
+  ctx.fillStyle = c("#2a1d13"); ctx.fillRect(x, y, w, h); ctx.strokeStyle = c("#8a6a2e"); ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+  const kx = on ? x + w - 9 : x + 9; ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(kx, y + h / 2, 4.2, 0, 6.283); ctx.fill(); // le pommeau
+  for (let i = 0; i < Math.min(3, b.list.length); i++) { ctx.fillStyle = on ? "#9fe6da" : b.agree || i >= 2 ? "rgba(224,194,122,0.85)" : "rgba(224,194,122,0.85)"; ctx.beginPath(); ctx.arc(x + 22 + i * 7, y + h / 2, 1.8, 0, 6.283); ctx.fill(); } // une petite lampe par balise
+  ctx.font = "italic 10px serif"; ctx.fillStyle = "#e0c27a"; ctx.textAlign = "center"; ctx.fillText(t("sys.tri.name"), x + w / 2, y - 3); ctx.textAlign = "left";
+  r.hot.push({ x: x - 2, y: y - 14, w: w + 4, h: h + 16, tip: on ? t("sys.tri.on") : t("sys.tri.tip"), tel: { triangulate: true } });
+}
+/** Au mur de l'observatoire, à droite : un rouleau de parchemin (la carte des étoiles) ; un clic l'ouvre. */
+function mapDoor(r, ctx, c, st) {
+  const t = tOf(r), x = 600, y = 6, n = Object.keys(st.systems || {}).length; // en haut à droite, au-dessus du panneau
+  ctx.fillStyle = c("#e8dcc0"); ctx.fillRect(x - 18, y, 36, 22); ctx.fillStyle = c("#8a6a2e"); ctx.fillRect(x - 21, y - 2, 42, 4); ctx.fillRect(x - 21, y + 21, 42, 4);
+  ctx.strokeStyle = c("#7a5c28"); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.arc(x, y + 11, 6, 0, 6.283); ctx.stroke();
+  ctx.fillStyle = c("#3b2a1b"); for (let i = 0; i < Math.min(5, n); i++) { const a = i * 1.3; ctx.fillRect(x + Math.cos(a) * 9 - 0.8, y + 11 + Math.sin(a) * 6 - 0.8, 1.6, 1.6); }
+  ctx.fillStyle = c("#3b2a1b"); ctx.beginPath(); ctx.arc(x, y + 11, 1.4, 0, 6.283); ctx.fill();
+  r.hot.push({ x: x - 24, y: y - 6, w: 48, h: 34, tip: t("map.door"), tel: { go: "starmap" } });
 }
 
 /**

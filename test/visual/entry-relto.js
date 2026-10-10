@@ -15,6 +15,11 @@ function renderMany(host, ages) {
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", label: "TELESCOPE step 2 / the Age's star charted" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager", label: "IMAGER step 2 / sync micrometer, in sync: local time and KIPS" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager-off", label: "IMAGER step 2 / star charted, not yet in sync" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step3: "bent", label: "TELESCOPE step 3 / black hole: the bent image, the pale true point" },
+    { h: 22, t: 3.45, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step3: "pulsar", label: "TELESCOPE step 3 / pulsar: a second, faster beat" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step3: "oldline", label: "TELESCOPE step 3 / the old line (Me'erta) beside the true Zero" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "starmap", step3: "map", label: "STAR MAP / a constellation, a black hole, a pulsar" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "starmap", step3: "mapold", label: "STAR MAP / the old line: stars that miss the Zero" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: "far", label: "TELESCOPE night / far" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: [14, -9], label: "TELESCOPE night / near (14, −9)" },
     { h: 14, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: [1, 0], found: true, label: "TELESCOPE day / found" },
@@ -71,6 +76,7 @@ function renderMany(host, ages) {
     c.style.width = "640px"; document.body.appendChild(host);
     const r = new ReltoRenderer(c, dni); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view;
     if (v.step2) step2(r, v.step2);
+    if (v.step3) step3(r, v.step3);
     if (v.aim) { const TL = require("./relto-telescope"), st = TL.state(r), z = st.zero; st.aim = v.aim === "far" ? { torahn: (z.torahn + 30000) % 62500, elev: 0 } : { torahn: (z.torahn - v.aim[0] * 100 + 62500) % 62500, elev: z.elevation - v.aim[1] }; st.found = !!v.found; } if (v.hover) r.hover = { x: v.hover[0] - 24, y: v.hover[1], w: 48, h: 48, tip: "Calendar pinnacle — Leevot 19" }; r.draw(v.t || 3.7);
   });
 }
@@ -94,6 +100,31 @@ function step2(r, mode) {
   const tg = data.target, set = IM.normalize({ pol: tg.pol, freq: tg.freq, amp: tg.amp, harm: tg.harm, phase: IM.phaseAt(tg, now) + 1, r: tg.lens.r, g: tg.lens.g, b: tg.lens.b, iris: tg.lens.iris, cry: tg.crystals.ids.map((id) => tg.crystals.options.indexOf(id)).concat([7, 6, 5, 4]).slice(0, 4),
     ...(mode === "imager" ? { sync: CAL.orbitAt(orbit, now), syncAt: now - 2 * 86400000, sysKey: sys.key } : { sync: CAL.orbitAt(orbit, now) + 2.5 }) });
   r.imager = { idx: 0, station: null, hand: null, age, target: data.target, model: data.model, view: !!data.model, settings: set, loading: null, empty: false, system: sys, orbit };
+}
+
+/** Étape 3 : un système perturbé sur le lutrin, la ligne ancienne, la carte des étoiles (avec ou sans le piège). */
+function step3(r, mode) {
+  const SS = require("./starsystem"), PB = require("./perturbers"), TL = require("./relto-telescope"), T = require("./telescope");
+  const now = 1.8e12; r.nowOverride = now;
+  const st = TL.state(r); st.found = true; st.at = { torahn: st.zero.torahn, elev: st.zero.elevation };
+  const find = (f, pre) => { for (let i = 0; i < 5000; i++) { const k = pre + i, p = SS.placeSystem(k, []), fx = PB.effects(p.near, p.key, SS.delayOf(p.pos), SS.DELAY_MAX); if (f(p, fx)) return { key: p.key, pos: p.pos, near: p.near, fx }; } return null; };
+  const full = (s) => ({ ...s, ...SS.perceive(s) });
+  if (mode === "bent" || mode === "pulsar") {
+    const s = full(find((p, fx) => (mode === "bent" ? fx.deflect && !fx.beat : fx.beat && fx.beat.kind === "pulsar" && !fx.deflect), "single_sun@v"));
+    st.book = { idx: 0, age: r.scene.ages[0], data: { system: s }, loading: false };
+    st.dial = mode === "bent" ? { torahn: (s.clue.torahn + (s.seen.torahn > s.clue.torahn ? 900 : -900) + T.TURN) % T.TURN, elev: s.clue.elevation + 3, delay: s.clue.delay } : { torahn: (s.clue.torahn + 300) % T.TURN, elev: s.clue.elevation - 2, delay: s.seen.delay + 3 };
+    return;
+  }
+  if (mode === "oldline") { st.found = false; st.at = null; const o = st.old; st.aim = { torahn: (Math.round((st.zero.torahn + o.torahn) / 2 / 100) * 100) % T.TURN, elev: Math.round((st.zero.elevation + o.elevation) / 2) }; if (Math.abs(o.L) > 3000) st.aim.torahn = (st.zero.torahn + Math.sign(o.L) * 1500 + T.TURN) % T.TURN; return; }
+  // la carte : des étoiles d'Ages du shelf, une perturbée par un trou noir, une par un pulsar
+  const names = r.scene.ages.map((a) => a.name), systems = {}, add = (s, line, ages) => { const c = SS.zeroSeenFrom(s.pos); systems[s.key] = SS.record(s, st.zero, { torahn: c.torahn, elev: c.elevation, delay: c.delay }, now, { line, ages }); };
+  const L = mode === "mapold" ? st.old.L : 0;
+  add({ key: "a@sys:kerath", pos: SS.position("a@sys:kerath"), near: [] }, 0, names.slice(0, 2));
+  add({ key: "b@x", pos: SS.position("b@x"), near: [] }, L, [names[2]]);
+  add({ key: "c@x", pos: SS.position("c@x2"), near: [] }, L, [names[3]]);
+  const bh = find((p, fx) => fx.deflect && !fx.beat, "single_sun@m"), ps = find((p, fx) => fx.beat && fx.beat.kind === "pulsar", "single_sun@n");
+  add(bh, mode === "mapold" ? 0 : 0, [names[4]]); add(ps, L, [names[5], names[6]]);
+  st.systems = systems; st.line = mode === "mapold" ? L : 0;
 }
 
 module.exports = { renderMany };

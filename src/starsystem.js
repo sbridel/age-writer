@@ -19,15 +19,19 @@
  *   - Le joueur reporte ces indices sur les molettes (visée + molette du retard) ; l'instrument calcule lui-même
  *     (Relto → Zéro) − (Âge → Zéro) = S − R, la position du système vue du Relto, et S, sa position GZCS.
  *
- * Étape 3 (pas ici) : `sources()` rend une liste de sources de signal avec leur période (le Zéro bat au prorahn) ; les
- * perturbateurs (pulsar, étoile à neutrons, trou noir) s'y ajouteront. `lineOffset` (0 par défaut) décale la ligne
- * d'origine perçue : la fausse ligne de Me'erta.
+ * Étape 3 : les perturbateurs (src/perturbers.js) existent dans la région de l'étoile, écrits ou non ; un livre qui les ÉCRIT
+ * décrit une étoile qui en a (la clé d'étoile prend un suffixe `~n` si l'étoile d'origine n'en a pas). `sys.clue` reste le
+ * réglage VRAI (ce que l'instrument doit viser), `sys.seen` ce que l'arpenteur perçoit (dévié, faux retard). La TRIANGULATION
+ * depuis deux étoiles situées voisines (`beacons`) annule ces effets. La FAUSSE LIGNE de Me'erta (`oldLine`) : une seconde
+ * ligne d'origine, jamais décrétée, que le télescope du Relto peut prendre pour la vraie ; calibré dessus (`line` ≠ 0), tout
+ * ce qu'il situe ensuite tourne d'autant autour du Zéro (`record`), et l'étoile gravée ne « regarde » plus le Zéro (`miss`).
  *
  * Module pur (sans DOM ni Obsidian) : testé dans test/starsystem.test.js. Le dessin est dans src/relto-telescope.js.
  */
 const { rng, fnv } = require("./util");
 const T = require("./telescope");
 const { makeT } = require("./i18n");
+const PB = require("./perturbers");
 
 const DELAY_UNIT = 25;     // un cran de la molette du retard = 25 shahfeetee de trajet du pouls
 const DELAY_MAX = 624;     // la molette du retard va de 0 à 624 crans (deux chiffres D'ni)
@@ -103,10 +107,90 @@ function sources(pos, { lineOffset = 0, perturbers = [] } = {}) {
   return [{ kind: "zero", period: 1, ...zeroSeenFrom(pos, { lineOffset }) }, ...perturbers.map((p) => ({ period: 1, ...p }))];
 }
 
-/** Tout ce qu'il faut d'un Âge : sa clé d'étoile, la position de son système, ce qu'on y perçoit du Zéro. */
-function systemOf(analysis, src, name, opts = {}) {
-  const key = starKey(analysis, src, name), pos = position(key), src0 = sources(pos, opts);
-  return { key, stars: starIds(analysis), shared: parseSystem(src), pos, sources: src0, clue: src0[0] };
+/** Les perturbateurs ÉCRITS dans un Âge (lignes du bloc, jamais tirées). */
+function writtenPerturbers(analysis) {
+  const lines = (analysis && analysis.resolved && analysis.resolved.lines) || [];
+  return [...new Set(lines.filter((l) => l.entry && !l.autoFilled && PB.KINDS.includes(l.entry.id)).map((l) => l.entry.id))].sort();
+}
+
+/**
+ * Le système d'une clé d'étoile, perturbateurs compris : écrits (`kinds`), ils désignent une étoile qui en a (la clé
+ * devient `clé~n` si l'étoile d'origine n'en a pas) ; non écrits, ce qui est là est là. Renvoie { key, pos, near, moved }.
+ */
+function placeSystem(key0, kinds = []) {
+  const res = PB.placeFor((i) => position(i ? key0 + "~" + i : key0), kinds, key0), key = res.moved ? key0 + "~" + kinds.join("+") : key0;
+  return { key, pos: res.pos, near: PB.near(res.pos), moved: res.moved };
+}
+
+/**
+ * Ce que l'Âge perçoit du Zéro, perturbateurs compris : `clue` vrai (le réglage que l'instrument doit viser), `seen` (ce
+ * que l'arpenteur note : dévié par un trou noir, retard faussé par un faux pouls). Triangulé (`tri`) : rien n'est faussé.
+ */
+function perceive(sys, { tri = false } = {}) {
+  const clue = { kind: "zero", period: 1, ...zeroSeenFrom(sys.pos) }, fx = sys.fx || PB.effects(sys.near || [], sys.key, clue.delay, DELAY_MAX);
+  const perturbed = !!(fx.deflect || fx.beat);
+  if (tri || !perturbed) return { clue, seen: clue, fx, perturbed, tri: !!tri && perturbed };
+  const seen = { ...clue };
+  if (fx.deflect) { seen.torahn = mod(clue.torahn + fx.deflect.dt, T.TURN); seen.elevation = Math.max(-T.ELEV_MAX, Math.min(T.ELEV_MAX, clue.elevation + fx.deflect.de)) || 0; }
+  if (fx.beat) seen.delay = Math.max(0, Math.min(DELAY_MAX, clue.delay + fx.beat.delayErr));
+  return { clue, seen, fx, perturbed, tri: false };
+}
+
+/**
+ * Tout ce qu'il faut d'un Âge : sa clé d'étoile, la position de son système, ses perturbateurs (`near`, effets `fx`,
+ * `written`), ce qu'on y perçoit du Zéro (`clue` vrai, `seen` perçu) et les sources de signal (le Zéro, les faux pouls).
+ */
+function systemOf(analysis, src, name) {
+  const key0 = starKey(analysis, src, name), written = writtenPerturbers(analysis), P = placeSystem(key0, written);
+  const fx = PB.effects(P.near, P.key, delayOf(P.pos), DELAY_MAX), v = perceive({ key: P.key, pos: P.pos, near: P.near, fx });
+  const beats = P.near.filter((p) => p.period).map((p) => ({ kind: p.kind, period: p.period, torahn: v.clue.torahn, elevation: v.clue.elevation, delay: v.clue.delay, strength: v.clue.strength * (0.4 + 0.5 * p.k) }));
+  return { key: P.key, stars: starIds(analysis), shared: parseSystem(src), pos: P.pos, near: P.near, fx, written, moved: P.moved, sources: sources(P.pos, { perturbers: beats }), clue: v.clue, seen: v.seen, perturbed: v.perturbed };
+}
+
+// ---- la fausse ligne de Me'erta (jamais décrétée) -------------------------------------------------------------
+const OLD_LINE = { torahn: [1500, 3500], elev: [5, 12], period: 1.06 };
+/**
+ * La fausse ligne d'origine d'un Relto (`key` : T.keyOf) : un second pouls, plus pâle, à `L` torantee de la vraie ligne
+ * (et quelques shahfeetee plus haut ou plus bas), qui bat un peu à contretemps du prorahn. Déterministe ; rien n'est gardé.
+ */
+function oldLine(zero, key) {
+  const r = rng((fnv("merta|" + key) ^ 0x3e47a) >>> 0); r();
+  const L = (r() < 0.5 ? -1 : 1) * Math.round(OLD_LINE.torahn[0] + r() * (OLD_LINE.torahn[1] - OLD_LINE.torahn[0]));
+  const e = (r() < 0.5 ? -1 : 1) * Math.round(OLD_LINE.elev[0] + r() * (OLD_LINE.elev[1] - OLD_LINE.elev[0]));
+  const el = Math.max(-T.ELEV_MAX + 2, Math.min(T.ELEV_MAX - 2, zero.elevation + e));
+  return { L, torahn: mod(zero.torahn + L, T.TURN), elevation: el, distance: zero.distance, period: OLD_LINE.period };
+}
+/** Le Zéro tel que l'instrument le croit, calibré sur la ligne `line` (0 : la vraie) : tourné de `line` torantee. */
+function believedZero(zero, line = 0) { return { ...zero, torahn: mod(zero.torahn + int(line), T.TURN) }; }
+
+/**
+ * L'écart (torantee, 0 à 31 250) entre la direction où l'Âge voit vraiment le Zéro (`rec.seen`) et celle que donne l'étoile
+ * gravée (son Torahn plus un demi-tour) : 0 pour une étoile bien située ; une étoile gravée sur la fausse ligne s'écarte de |line|.
+ */
+function miss(rec) {
+  if (!rec || !Number.isFinite(rec.seen)) return 0;
+  let d = mod(rec.seen - mod(rec.torahn + T.TURN / 2, T.TURN), T.TURN); if (d > T.TURN / 2) d = T.TURN - d; return d;
+}
+/** Une étoile gravée sur une autre ligne que la vraie : elle « ne regarde pas le Zéro » (anciens états : jamais). */
+const offLine = (rec) => !!(rec && int(rec.line) !== 0);
+
+// ---- les balises : trianguler depuis les étoiles déjà situées ------------------------------------------------------
+const BEACON_RANGE = 6000; // une étoile située sert de balise à moins de 6 000 shahfeetee
+/**
+ * Les balises d'un système `sys` ({ key, pos }) parmi les systèmes situés `systems` (par clé) : les plus proches d'abord.
+ * `ok` : au moins deux ; `agree` : toutes gravées sur la même ligne que l'instrument (`line`) — sinon les étoiles se
+ * contredisent et la triangulation ne tient pas.
+ */
+function beacons(sys, systems, line = 0) {
+  const S = cart(sys.pos), list = [];
+  for (const [k, rec] of Object.entries(systems || {})) {
+    if (k === sys.key || !rec || !Number.isFinite(rec.at) || !Number.isFinite(rec.torahn)) continue;
+    const b = cart({ torahn: mod(rec.torahn - int(rec.line), T.TURN), distance: rec.distance, elevation: rec.elevation }), d = Math.hypot(b.x - S.x, b.y - S.y, b.z - S.z);
+    if (d <= BEACON_RANGE) list.push({ key: k, d: Math.round(d), line: int(rec.line) });
+  }
+  list.sort((a, b) => a.d - b.d);
+  const two = list.slice(0, 2);
+  return { list, ok: list.length >= 2, agree: list.length >= 2 && two.every((b) => b.line === int(line)) };
 }
 
 // ---- la molette du retard et le réglage du joueur ------------------------------------------------------------
@@ -126,6 +210,23 @@ function turnDial(dial, axis, delta) {
 function measure(dial, clue) {
   const d = normDial(dial), sig = T.signal(d, { torahn: clue.torahn, elevation: clue.elevation }), dd = d.delay - clue.delay;
   return { ...sig, dd, delayOk: Math.abs(dd) <= TOL.delay, located: sig.found && Math.abs(dd) <= TOL.delay };
+}
+
+/**
+ * Étape 3 : ce que l'oculaire montre d'un système perturbé, au réglage `dial`. `m` : la mesure VRAIE (seule elle situe :
+ * l'anneau ne ment pas). Trou noir non triangulé (`bend`) : le vrai point pâlit (× `BEND_DIM`) et une image déviée, brillante
+ * (`lure`), attire l'œil là où l'arpenteur l'a notée ; elle ne se fixe jamais. Pulsar ou étoile à neutrons (`beat`) : l'écho
+ * s'accorde sur le FAUX pouls (`echoDd` contre le retard perçu) ; accordé sur lui, rien ne se fixe (`falseLock`). Triangulé
+ * (`tri`) : la mesure de l'étape 2, sans leurre. `shown` : le signal qu'on voit le mieux (pour les mots et le son).
+ */
+const BEND_DIM = 0.45;
+function scope(dial, sys, { tri = false } = {}) {
+  const v = perceive(sys, { tri }), d = normDial(dial), m = measure(d, v.clue), bend = !!(v.fx.deflect && !v.tri), beat = !!(v.fx.beat && !v.tri);
+  const dim = bend ? BEND_DIM : 1, tr = m.found ? m : { ...m, s: m.s * dim, band: Math.min(T.bandOf(m.s * dim), T.BANDS.length - 1) };
+  let lure = null;
+  if (bend) { const l = T.signal(d, { torahn: v.seen.torahn, elevation: v.seen.elevation }); lure = { ...l, found: false, band: Math.min(l.band, T.BANDS.length - 1) }; }
+  const shown = lure && !m.found && lure.s > tr.s ? lure : tr, ddFalse = beat ? d.delay - v.seen.delay : null;
+  return { ...v, m, true: tr, lure, shown, bend, beat, echoDd: beat ? ddFalse : m.dd, falseLock: beat && Math.abs(ddFalse) <= TOL.delay && !m.delayOk, bentLock: !!(lure && lure.band >= 4 && !m.found) };
 }
 
 /**
@@ -149,10 +250,20 @@ function locate(zero, dial) {
   return { fromRelto: { ...rel, ...cyl(rel) }, gzcs: cyl(neg(ageToZero)), reltoAt: cyl(neg(reltoToZero)) };
 }
 
-/** Un système situé, tel qu'on le garde (par Relto, sous sa clé d'étoile) : la position, le moment, la vue depuis le Relto. */
-function record(sys, zero, dial, now = Date.now()) {
-  const l = locate(zero, dial), r = l.fromRelto;
-  return { at: Math.round(now), torahn: sys.pos.torahn, elevation: sys.pos.elevation, distance: sys.pos.distance, rel: { x: Math.round(r.x), y: Math.round(r.y), z: Math.round(r.z) } };
+/**
+ * Un système situé, tel qu'on le garde (par Relto, sous sa clé d'étoile) : la position GRAVÉE, le moment, la vue depuis le
+ * Relto. Étape 3 (champs facultatifs, absents des états de l'étape 2) : `line` (≠ 0 : l'instrument était calibré sur la fausse
+ * ligne ; tout tourne de `line` torantee autour du Zéro), `seen` (où l'Âge voit vraiment le Zéro, pour que la carte trahisse
+ * l'erreur), `pert` (ses perturbateurs : genre et position GZCS gravée), `tri` (situé par triangulation), `ages` (noms).
+ */
+function record(sys, zero, dial, now = Date.now(), { line = 0, ages = null, tri = false } = {}) {
+  const L = int(line), r = locate(believedZero(zero, L), dial).fromRelto;
+  const out = { at: Math.round(now), torahn: mod(sys.pos.torahn + L, T.TURN), elevation: sys.pos.elevation, distance: sys.pos.distance, rel: { x: Math.round(r.x), y: Math.round(r.y), z: Math.round(r.z) } };
+  if (sys.near) { out.seen = zeroSeenFrom(sys.pos).torahn; if (sys.near.length) out.pert = sys.near.map((p) => { const c = PB.cylOf(p); return { kind: p.kind, torahn: mod(c.torahn + L, T.TURN), distance: c.distance, elevation: c.elevation }; }); }
+  if (L) out.line = L;
+  if (tri) out.tri = true;
+  if (ages && ages.length) out.ages = [...new Set(ages)].sort();
+  return out;
 }
 /** Le système est-il situé dans cet état du télescope (le Zéro du Relto doit être trouvé) ? */
 function isLocated(telState, key) { return !!(telState && telState.found && telState.systems && telState.systems[key] && Number.isFinite(telState.systems[key].at)); }
@@ -181,10 +292,36 @@ function faintBand(s) { let i = 0; while (i < FAINT_AT.length && s < FAINT_AT[i]
  * La phrase de l'arpenteur (notes de l'onglet Détails) : ce qu'on perçoit du Zéro depuis l'Âge, en mots seulement.
  * `values` : les trois réglages du télescope (Torahn, élévation au sens du KI, retard), pour le mode « complet ».
  */
-function words(clue, lang = "en") {
-  const t = makeT(() => (lang === "fr" ? "fr" : "en"));
-  const parts = { dir: list(t("sys.compass"))[sectorOf(clue.torahn)], height: list(t("sys.height"))[heightBand(clue.elevation)], delay: list(t("sys.delay"))[delayBand(clue.delay)], faint: list(t("sys.faint"))[faintBand(clue.strength)] };
-  return { line: t("sys.line", parts), parts, bands: { sector: sectorOf(clue.torahn), height: heightBand(clue.elevation), delay: delayBand(clue.delay), faint: faintBand(clue.strength) }, values: { torahn: clue.torahn, elev: T.kiElev(clue.elevation), delay: clue.delay } };
+function words(clue, lang = "en", opts = {}) {
+  const t = makeT(() => (lang === "fr" ? "fr" : "en")), n = opts.compass === 4 || opts.compass === 8 ? opts.compass : 16, sec = sectorOf(clue.torahn);
+  const coarse = mod(Math.round((sec * n) / 16), n), dir = n === 16 ? list(t("sys.compass"))[sec] : n === 8 ? list(t("sys.compass"))[coarse * 2] : list(t("sys.compass.four"))[coarse];
+  const parts = { dir, height: list(t("sys.height"))[heightBand(clue.elevation)], delay: list(t("sys.delay"))[delayBand(clue.delay)], faint: list(t("sys.faint"))[faintBand(clue.strength)] };
+  const out = { line: t("sys.line", parts), parts, bands: { sector: sec, compass: n, height: heightBand(clue.elevation), delay: delayBand(clue.delay), faint: faintBand(clue.strength) }, values: { torahn: clue.torahn, elev: T.kiElev(clue.elevation), delay: clue.delay } };
+  // étape 3 : ce que l'arpenteur remarque des perturbateurs (faux pouls, lumière courbée) et de sa boussole (sans nord, des relèvements grossiers)
+  const fx = opts.fx, bits = [];
+  if (fx && fx.beat) { bits.push(fx.beat.kind === "pulsar" ? t("sys.pert.pulsar") : t("sys.pert.neutron")); out.values.beats = PB.beatsPer25(fx.beat.period); }
+  if (fx && fx.deflect) bits.push(t("sys.pert.bend"));
+  if (n === 4) bits.push(t("sys.compass.none")); else if (n === 8) bits.push(t("sys.compass.weak"));
+  if (bits.length) out.pert = bits.join(" ");
+  return out;
 }
 
-module.exports = { DELAY_UNIT, DELAY_MAX, STEP_DELAY, TOL, SYS_ELEV, SYS_DIST, SYSTEM_RE, HEIGHT_AT, DELAY_AT, FAINT_AT, parseSystem, starIds, starKey, position, cart, cyl, delayOf, strengthOf, zeroSeenFrom, sources, systemOf, normDial, turnDial, measure, echoOffset, echoWord, locate, record, isLocated, findLocated, sectorOf, heightBand, delayBand, faintBand, words };
+/**
+ * La boussole de l'arpenteur selon le champ magnétique de l'Âge (`field` : w.field de la physique, Terre = 1) : un vrai
+ * nord, 16 directions ; un champ faible, 8 ; pas de dynamo (noyau mort ou monde qui ne tourne pas), 4. Inconnu : 16.
+ */
+const FIELD_SHIELD = 0.2, FIELD_NONE = 0.02; // le seuil d'un vrai bouclier (src/physics/model.js) ; en dessous de 0,02 : pas de nord
+function compassOf(field) { return field == null || !Number.isFinite(field) ? 16 : field <= FIELD_NONE ? 4 : field < FIELD_SHIELD ? 8 : 16; }
+
+/**
+ * Le Zéro et la fausse ligne vus dans l'oculaire, lutrin vide (étape 1, avec le piège de l'étape 3) : `true` (le vrai Zéro),
+ * `old` (la ligne de Me'erta : un pouls plus pâle, `OLD_GAIN`), `best` (celui qu'on voit le mieux, avec `line` : 0 ou L).
+ */
+const OLD_GAIN = 0.82;
+function lineSignals(aim, zero, old) {
+  const a = T.signal(aim, zero), o0 = T.signal(aim, { torahn: old.torahn, elevation: old.elevation }), s = o0.s * OLD_GAIN, o = { ...o0, s, band: o0.found ? o0.band : Math.min(T.bandOf(s), T.BANDS.length - 1) };
+  const best = a.found || !o.found && a.s >= o.s ? { ...a, line: 0 } : { ...o, line: old.L };
+  return { true: a, old: o, best };
+}
+
+module.exports = { BEND_DIM, scope, OLD_LINE, OLD_GAIN, BEACON_RANGE, FIELD_NONE, writtenPerturbers, placeSystem, perceive, oldLine, believedZero, miss, offLine, beacons, compassOf, lineSignals, DELAY_UNIT, DELAY_MAX, STEP_DELAY, TOL, SYS_ELEV, SYS_DIST, SYSTEM_RE, HEIGHT_AT, DELAY_AT, FAINT_AT, parseSystem, starIds, starKey, position, cart, cyl, delayOf, strengthOf, zeroSeenFrom, sources, systemOf, normDial, turnDial, measure, echoOffset, echoWord, locate, record, isLocated, findLocated, sectorOf, heightBand, delayBand, faintBand, words };

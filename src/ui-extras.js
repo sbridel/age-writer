@@ -23,8 +23,10 @@ const ageNumber = (name) => fnv(name) % 390625;                    // 25^4
 function calibrationOf(plugin, { src, analysis, name, path }) {
   const sys = SS.systemOf(analysis, src, name), { zero, rec } = SS.findLocated(plugin.ext.telescope, sys.key), now = Date.now();
   const tune = (plugin.ext.imagerTunings || {})[path] || null, moved = !!(tune && tune.sysKey && tune.sysKey !== sys.key && tune.syncAt != null);
-  const orbit = CAL.orbitOf(analysis, name, SKY.parseSky(src)), cal = CAL.state(moved ? { ...tune, syncAt: null } : tune, orbit, !!rec, now);
-  return { sys, rec, zero, cal, moved, lt: CAL.localTime(orbit, cal, now), kips: rec && cal.synced ? [rec.torahn, TEL.kiElev(rec.elevation), rec.distance] : null };
+  const orbit = CAL.orbitOf(analysis, name, SKY.parseSky(src), sys.near), cal = CAL.state(moved ? { ...tune, syncAt: null } : tune, orbit, !!rec, now);
+  // étape 3 : gravée sur la fausse ligne, l'étoile donne une heure et des KIPS faux (on les montre tels quels : c'est le piège)
+  const field = analysis && analysis.physics && analysis.physics.w ? analysis.physics.w.field : null;
+  return { sys, rec, zero, cal, moved, orbit, compass: SS.compassOf(field), old: SS.offLine(rec), lt: CAL.localTime(orbit, cal, now + CAL.lineShift(orbit, rec && rec.line)), kips: rec && cal.synced ? [rec.torahn, TEL.kiElev(rec.elevation), rec.distance] : null };
 }
 
 function dateStr(ms, lang) { try { return new Date(ms).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-GB", { day: "numeric", month: "short" }); } catch (e) { return ""; } }
@@ -155,18 +157,27 @@ function renderStarNote(plugin, sec, { src, analysis, path }) {
   const name = path ? String(path).replace(/^.*\//, "").replace(/\.md$/i, "") : "", C = calibrationOf(plugin, { src, analysis, name, path });
   const box = sec.createDiv({ cls: "age-det__sky age-det__star" });
   if (notes !== "off") {
-    const w = SS.words(C.sys.clue, lang);
+    // ce que l'arpenteur perçoit (étape 3 : dévié par un trou noir, retard faussé par un faux pouls, boussole grossière sans nord magnétique)
+    const w = SS.words(C.sys.seen || C.sys.clue, lang, { fx: C.sys.fx, compass: C.compass });
     box.createEl("b", { text: t("sys.heading") + " " });
     box.createSpan({ cls: "age-det__skyline", text: w.line });
+    if (w.pert) box.createDiv({ cls: "age-det__skyline age-det__pert", text: w.pert });
     if (notes === "full") {
-      const nums = box.createDiv({ cls: "age-det__skynums" });
-      for (const [label, v] of [[t("sys.val.torahn"), w.values.torahn], [t("sys.val.elev"), w.values.elev], [t("sys.val.delay"), w.values.delay]]) {
+      const nums = box.createDiv({ cls: "age-det__skynums" }), vals = [[t("sys.val.torahn"), w.values.torahn], [t("sys.val.elev"), w.values.elev], [t("sys.val.delay"), w.values.delay]];
+      if (w.values.beats) vals.push([t("sys.val.beats"), w.values.beats]);
+      for (const [label, v] of vals) {
         const c = nums.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label });
         if (v < 0) c.createSpan({ text: "−" }); setMarkup(c.createSpan(), plugin.dni.numberSvg(Math.abs(v), { size: 16 }));
       }
+      if (C.sys.near && C.sys.near.length) { // « complètes » : les perturbateurs proches, nommés, et leur distance en shahfeetee
+        const pl = box.createDiv({ cls: "age-det__skynums" }); pl.createSpan({ cls: "age-det__skylabel", text: t("sys.pert.heading") });
+        for (const p of C.sys.near) { const c = pl.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: p.kind === "pulsar" ? t("sys.pert.pulsar.name") : p.kind === "neutron_star" ? t("sys.pert.neutron.name") : t("sys.pert.bh.name") }); setMarkup(c.createSpan(), plugin.dni.numberSvg(p.d, { size: 14 })); }
+      }
     }
+    const why = (C.orbit && C.orbit.why) || [];
+    if (C.rec && why.length) box.createDiv({ cls: "age-det__state is-drift", text: why.includes("nofield") ? t("sys.drift.nofield") : why.includes("weakfield") ? t("sys.drift.weakfield") : t("sys.drift.pert") });
   }
-  if (C.zero) box.createDiv({ cls: "age-det__state" + (C.rec ? " is-located" : ""), text: C.rec ? t("sys.state.located") : t("sys.state.not") });
+  if (C.zero) box.createDiv({ cls: "age-det__state" + (C.rec ? (C.old ? " is-moved" : " is-located") : ""), text: C.rec ? (C.old ? t("sys.state.old") : t("sys.state.located")) : t("sys.state.not") });
   if (C.moved) box.createDiv({ cls: "age-det__state is-moved", text: t("sys.moved") });
   // l'heure là-bas : seulement si l'Imageur est synchronisé ; sinon elle reste incertaine (le temps se gagne en se situant)
   if (C.rec) {

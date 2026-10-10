@@ -37,6 +37,12 @@ const SKY_BLOCKS = [
   star("black_sun", "A black sun", 0.06, "black_sun"),
   ...WORLD_IDS.map((id) => ({ id, category: "world", label: WORLD_LABEL[id], axis: "cosmological", weight: 0.02, proseTag: "#" + id + "#",
     contradictions: WORLD_IDS.filter((o) => o !== id).map((o) => ({ with: o, severity: "strong" })) })),
+  // perturbateurs (télescope, étape 3 : src/perturbers.js) : ils existent dans la région de l'étoile, écrits ou non ; les écrire DÉCRIT
+  // un monde qui en a un près de lui (son étoile est choisie en conséquence), jamais tirés au sort
+  { id: "pulsar", category: "remnant", label: "A pulsar", axis: "cosmological", weight: 0.06, proseTag: "#pulsar#" },
+  { id: "neutron_star", category: "remnant", label: "A neutron star", axis: "cosmological", weight: 0.05, proseTag: "#neutron_star#" },
+  { id: "black_hole", category: "remnant", label: "A black hole", axis: "cosmological", weight: 0.08, proseTag: "#black_hole#",
+    contradictions: [{ with: "stable_orbit", severity: "light" }] },
   ...GEO.SKY_BLOCKS,
   ...TERRAIN.SKY_BLOCKS,
 ].map((b) => (HUES[b.id] ? { ...b, contradictions: [{ with: "starless", severity: "strong" }, ...hueClash(b.id)] } : b));
@@ -46,7 +52,8 @@ const NOTES = {
   rock_field: ["one of the great stones overhead is a little closer each season", "something large drifts above, and the ground below has no say in where it lands"],
   rock_life: ["the green things grow in the shadow of falling stone", "the roots hold on beneath a sky that sometimes drops rock"],
   rock_lamp: ["a lamp still burns beneath a sky of falling stone"],
-  rock_sea: ["the water keeps the shape of every stone the sky has thrown into it"],  frozen_world: ["the cold here is older than anything written beside it", "a frozen world does not thaw for what is written upon it"],
+  rock_sea: ["the water keeps the shape of every stone the sky has thrown into it"],
+  pulsar_life: ["the living things here have learned to grow between the lashes of a dead star", "a hard light sweeps the sky, and what grows here keeps its head low"],  frozen_world: ["the cold here is older than anything written beside it", "a frozen world does not thaw for what is written upon it"],
   lava_world: ["the ground is still being made here, and will not wait for what stands on it", "a world of fire gives little thought to what it burns"],
   desert_world: ["the dry world has no patience for anything that wants to be wet", "the sand keeps its own counsel, and drinks what is spilled upon it"],
   ocean_world: ["a world of water has no shore to hold what is dry", "the sea claims what it can reach, and it can reach everything"],
@@ -71,6 +78,7 @@ const SKY_RULES = [
   ...LIFE.map((w) => rule("asteroid_belt", w, "light", "ecological", "rock_life")),
   ...LIFE.map((w) => rule("asteroid_field", w, "medium", "ecological", "rock_life")),
   rule("asteroid_belt", "lit_lamp", "light", "metaphysical", "rock_lamp"),
+  ...LIFE.map((w) => rule("pulsar", w, "light", "ecological", "pulsar_life")),
   ...["water", "brine", "meltwater"].map((w) => rule("asteroid_field", w, "light", "geological", "rock_sea")),
   ...Object.entries(WORLD_CLASH).flatMap(([world, list]) => [...list.map(([w, sev, ax]) => rule(world, w, sev, ax, world)), ...(WORLD_LIFE[world] ? LIFE.map((w) => rule(world, w, WORLD_LIFE[world], "ecological", world)) : [])]),
 ];
@@ -82,6 +90,9 @@ const SKY_PROSE = {
   asteroid_belt: ["a belt of broken rock circles overhead, glittering", "a river of stone drifts across the sky, never quite still", "a ring of debris keeps the heavens busy, and a little dangerous"],
   asteroid_field: ["great stones drift overhead, each with its own slow errand", "a field of wandering rock turns above, closer than it looks", "a few huge, patient bodies cross the sky, and nobody asked where they are headed"],
   planet_rings: ["a ringed world hangs in the sky, close enough to count the bands", "a pale planet wears its ring like a thin, bright road", "a banded giant rides high, its ring a line drawn across the dark"],
+  pulsar: ["a dead star spins out there, and its beam sweeps the sky like a lighthouse that never tires", "somewhere in the dark a pulsar ticks, faster than a heart, and the night counts with it", "a tiny, furious star spins in the dark, flashing its hard light again and again"],
+  neutron_star: ["a small, heavy star burns blue-white in the dark, no bigger than a spark and heavier than worlds", "the ember of a dead sun hangs in the sky, dense and slow, keeping its own heavy time", "a pale, crushed star sits among the others, and its light seems to weigh more than theirs"],
+  black_hole: ["near the horizon, the stars bend around a place where there is nothing at all", "a ring of light circles an empty dark, and everything that passes too close is drawn in", "something unseen swallows a patch of sky, and the stars at its edge are smeared into arcs"],
   comet: ["a comet trails its pale tail across the sky, in no hurry", "a long-haired star passes, and the night remembers it", "a slow streak of ice and light crosses overhead"],
   green_sun: ["the sun burns green, and the light has a leaf's patience", "a green star holds the sky, and everything under it is tinted", "a green sun, bright and strange, sets the colors of this place"],
   red_sun: ["a red sun hangs heavy, its light low and warm", "the sun burns red, and shadows lean long", "a swollen red star keeps a slow, embered watch"],

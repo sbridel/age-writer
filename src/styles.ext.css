@@ -434,6 +434,8 @@
 .age-det__state { margin-top: 3px; font-size: var(--font-ui-smaller); color: var(--text-faint); }
 .age-det__state.is-located { color: var(--text-muted); }
 .age-det__state.is-moved { color: var(--text-warning, var(--text-muted)); font-style: italic; }
+.age-det__state.is-drift { color: var(--text-muted); font-style: italic; }
+.age-det__pert { display: block; margin-top: 2px; font-style: italic; }
 .age-det__time { margin-top: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-style: italic; color: var(--text-faint); }
 .age-det__time.is-certain { color: var(--text-normal); }
 .age-det__time.is-drift { color: var(--text-muted); opacity: 0.85; }
