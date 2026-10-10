@@ -14,6 +14,8 @@ function renderMany(host, ages) {
     { h: 21.5, t: 3.1, env: {}, pages: ["page_telescope", "page_mountain", "page_waterfall"], label: "ISLAND dusk / observatory on the mountain" },
     { h: 21.5, t: 3.1, env: {}, zero: true, pages: ["page_telescope", "page_mountain", "page_dni_clock", "page_calendar", "page_dock"], label: "ISLAND dusk / D'ni clock and calendar pinnacle" },
     { h: 15, t: 3.1, env: {}, zero: true, pages: ["page_dni_clock", "page_calendar", "page_islets", "page_dock"], view: "global", label: "GLOBAL day / D'ni clock" },
+    { h: 21.5, t: 3.1, env: {}, zero: true, now: 1791591000000, pages: ["page_dni_clock", "page_calendar", "page_dock"], view: "clock", label: "CLOCK dusk / the armillary sphere up close, calendar pinnacle far off" },
+    { h: 13, t: 3.1, env: {}, zero: true, now: "tahvo+1s", pages: ["page_dni_clock"], view: "clock", label: "CLOCK day / one second after a new tahvo: its digit glows" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "near", label: "TELESCOPE step 2 / an Age's book on the lectern, wheels near its clues" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", label: "TELESCOPE step 2 / the Age's star charted" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager", label: "IMAGER step 2 / sync micrometer, in sync: local time and KIPS" },
@@ -81,6 +83,7 @@ function renderMany(host, ages) {
     const c = document.createElement("canvas"); const d = document.createElement("div"); d.textContent = v.label; host.appendChild(d); host.appendChild(c);
     c.style.width = "640px"; document.body.appendChild(host);
     const r = new ReltoRenderer(c, dni, v.reduced ? { reducedMotion: true } : {}); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view;
+    if (v.now) { const DC = require("./dniclock"); if (v.now === "tahvo+1s") { const ms = 1791591000000, tv = DC.rings(ms).find((q) => q.key === "tahvo"); r.nowOverride = ms - tv.elapsed + 1000; } else r.nowOverride = v.now; } // l'horloge D'ni à un instant fixe
     if (v.step2) step2(r, v.step2);
     if (v.step3) step3(r, v.step3);
     if (v.aim) { const TL = require("./relto-telescope"), st = TL.state(r), z = st.zero; st.aim = v.aim === "far" ? { torahn: (z.torahn + 30000) % 62500, elev: 0 } : { torahn: (z.torahn - v.aim[0] * 100 + 62500) % 62500, elev: z.elevation - v.aim[1] }; st.found = !!v.found; } if (v.at != null) r.nowOverride = require("./metronome").peakAt(1.29e9 + (v.step3 ? 9 : 0) + v.at); // un instant choisi dans le battement (0 : le sommet du vrai pouls)
