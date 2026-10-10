@@ -99,7 +99,7 @@ function evaluate(store, key, ctx) {
 }
 
 /** Le mentor : un personnage inventé, qui écrit de courtes lettres. */
-const MENTOR = "Orsen Vael";
+const MENTOR = "Adrin Vesparath"; // un clin d’œil à Adrian Vesper, en D’ni
 
 /** Le prochain chapitre à faire (le premier non réussi), ou null quand l'histoire est finie (pour l'instant). */
 const nextChapter = (done) => CHAPTERS.find((c) => !(done || []).includes(c.id)) || null;
