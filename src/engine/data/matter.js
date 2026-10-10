@@ -201,6 +201,23 @@ const FLORA_BLOCKS = [
     writable: !0,
     presence: "flowers open in every hollow, and the air remembers them",
   },
+  // l'herbe (s'écrit) et la prairie (naît de l'herbe et des fleurs) : une terre couverte, que le vent fait onduler
+  {
+    id: "grass",
+    descriptors: ["green", "low", "restless"],
+    weight: 0.02,
+    axis: FLORA_AXIS,
+    writable: !0,
+    presence: "grass covers the land, and the wind runs through it in long slow waves",
+  },
+  {
+    id: "meadow",
+    descriptors: ["wide", "tall", "humming"],
+    weight: 0,
+    axis: FLORA_AXIS,
+    writable: !1,
+    presence: "a meadow of tall grass runs to the horizon, flowers scattered through it",
+  },
 ];
 
 const FLORA_REACTIONS = [
@@ -208,6 +225,7 @@ const FLORA_REACTIONS = [
   { a: "moss", b: "deep_cold", result: "lichen", type: "growing" },
   { a: "spore", b: "ash", result: "pale_fungus", type: "growing" },
   { a: "seed", b: "water", result: "sapling", type: "growing" },
+  { a: "grass", b: "flowers", result: "meadow", type: "growing", verbs: ["grows tall with them into", "opens into"] },
   { a: "sapling", b: "pressure", result: "ironwood", type: "transmuting" },
   { a: "seed", b: "lava", result: "cinderbloom", type: "transmuting" },
   { a: "vine", b: "crystal", result: "glowvine", type: "transmuting" },

@@ -170,6 +170,20 @@ const EXTRA_GLYPHS = {
     line([10, 12], [90, 12], 3), line([20, 28], [82, 28], 3), line([30, 44], [72, 44], 3),
     line([40, 60], [66, 60], 3), line([46, 74], [60, 74], 3), polyline([[52, 82], [50, 94]], 3),
   ],
+  // l'herbe : trois brins qui penchent du même côté, sous le vent
+  grass: [
+    polyline([[30, 92], [26, 58], [16, 30]], 3),
+    polyline([[50, 92], [50, 50], [42, 14]], 3),
+    polyline([[70, 92], [74, 60], [70, 34]], 3),
+    line([18, 92], [82, 92], 3),
+  ],
+  // la prairie : des brins plus serrés, et une fleur au-dessus
+  meadow: [
+    polyline([[22, 92], [20, 62]], 2.5), polyline([[36, 92], [32, 54]], 2.5), polyline([[64, 92], [68, 56]], 2.5), polyline([[78, 92], [82, 64]], 2.5),
+    polyline([[50, 92], [50, 40]], 3),
+    fill(diamond(50, 26, 6, 9)), fill(diamond(37, 32, 8, 5)), fill(diamond(63, 32, 8, 5)),
+    line([12, 92], [88, 92], 3),
+  ],
   flowers: [
     polyline([[50, 94], [50, 52]], 3),
     line([50, 74], [30, 62], 2.5),

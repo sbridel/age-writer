@@ -32,6 +32,10 @@ const CASES = [
   ["Soleil noir (midi)", { suns: 1, sunHues: [[70, 34, 40]], blackSun: true, trees: 3, water: true, ruins: ["tablet"] }, 2030, 0.3, { day: 0.4 }],
   ["Soleil noir (désert, matin)", { suns: 1, sunHues: [[70, 34, 40]], blackSun: true, sand: true, wind: true }, 2031, 0.3, { day: 0.15 }],
   ["Sans soleil, étoiles", { suns: 0, skyStated: true, moon: true, ruins: ["door", "tablet"], tabletAwake: true }, 9992, 0.2],
+  ["Herbe (grass)", { grass: true }, 3031, 0.3, { day: 0.4 }],
+  ["Prairie + vent (meadow, plains)", { grass: true, meadow: true, wind: true, terrain: "plains" }, 3032, 0.3, { day: 0.45 }],
+  ["Herbe au bord d'un lac", { grass: true, water: true, shore: "grass", trees: 3 }, 3033, 0.3, { day: 0.4 }],
+  ["Prairie au crépuscule", { grass: true, meadow: true, flowers: true }, 3034, 0.3, { day: 0.85 }],
 ];
 function run(host) {
   for (const [label, o, seed, ph, po] of CASES) {

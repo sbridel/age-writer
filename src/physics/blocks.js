@@ -84,7 +84,7 @@ def("scented_mist", { needs: [["moistAir", "light"]] });
 def("petal_rain", { needs: [["someAir", "light"]] });
 
 // ---- vivant --------------------------------------------------------------------------------------
-const PHOTO = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "moss", "withered_fern", "cinderbloom", "flowers"];
+const PHOTO = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "moss", "withered_fern", "cinderbloom", "flowers", "grass", "meadow"];
 def(PHOTO, { needs: [["sunlight", "light"], ["breathableAir", "light"], ["temperateLife", "light"], ["oldEnoughSimple", "light"], ["uvShield", "light"]] });
 def(["great_tree", "grove", "ironwood"], { needs: [["oldEnoughComplex", "light"], ["tallTrees", "light"]] });
 def(["spore", "pale_fungus", "lichen", "singing_lichen"], { needs: [["oldEnoughSimple", "light"], ["hardyLife", "light"]] });
@@ -119,7 +119,7 @@ def("marsh", { set: { water: 1 }, needs: [["liquidWater", "medium"], ["moistAir"
 def("spiders", { needs: [["prey", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
 
 /** Groupes utiles aux exigences « écologiques » (chaîne alimentaire). */
-const FLORA = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "moss", "lichen", "singing_lichen", "pale_fungus", "spore", "glowvine", "wrong_glowvine", "cinderbloom", "withered_fern", "charred_grove", "flowers"];
+const FLORA = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "moss", "lichen", "singing_lichen", "pale_fungus", "spore", "glowvine", "wrong_glowvine", "cinderbloom", "withered_fern", "charred_grove", "flowers", "grass", "meadow"];
 const PREY = ["grazer", "herd", "watching_herd", "burrower", "warren", "humming_warren", "drifter", "moth", "lantern_moths", "whispering_moths"];
 const SOIL = ["sand", "silt", "stone", "ash", "salt"];
 /** Bâtisseurs : leurs traces disent que quelqu'un a pu apporter ce que la nature n'aurait pas fait. */

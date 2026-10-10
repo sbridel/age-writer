@@ -21,7 +21,7 @@ const KNOWN = new Set(("door sealed_door bridge fallen_bridge tablet worn_tablet
   "permanent_veil auroras recurring_eclipses starfall rain storm thunderstorm whispering_storm waiting_thunder wind dust_storm ash_cloud spore_cloud fog marsh_mist rime watching_mist lightning heat " +
   "hail black_hail steam lava obsidian whispering_obsidian water brine meltwater crying_obsidian ice black_ice deep_cold sand glass singing_glass fulgurite grove great_tree ironwood charred_grove " +
   "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " +
-  "drizzle snow rainbow tornado flowers scented_mist petal_rain glaze crystal_rain ash_rain acid_rain " +SKY.SKY_BLOCKS.map((b) => b.id).join(" ") + " " + WT.RICH_IDS.join(" ") + " " + WT.SCAR_IDS.join(" ") + " " + SEA.IDS.join(" ") + " " + TERRAIN.IDS.join(" ")).split(" "));
+  "drizzle snow rainbow tornado flowers grass meadow scented_mist petal_rain glaze crystal_rain ash_rain acid_rain " +SKY.SKY_BLOCKS.map((b) => b.id).join(" ") + " " + WT.RICH_IDS.join(" ") + " " + WT.SCAR_IDS.join(" ") + " " + SEA.IDS.join(" ") + " " + TERRAIN.IDS.join(" ")).split(" "));
 const AXES = ["cosmological", "geological", "meteorological", "ecological", "metaphysical"];
 
 function sceneOf(a, name = "", blocks = null) {
@@ -50,7 +50,7 @@ function sceneOf(a, name = "", blocks = null) {
     hail: rw("hail", "hail", "black_hail"), steam: rw("steam", "steam"), dust: rw("dust", "dust_storm"), ash: or2(rw("ash", "ash_cloud", "ashen_sky"), always("ash", wd === "lava")),
     // nouveaux temps (météo vivante) et fleurs
     drizzle: rw("drizzle", "drizzle"), snow: rw("snow", "snow"), rainbow: rw("rainbow", "rainbow"), tornado: rw("tornado", "tornado"), scent: rw("scent", "scented_mist"), petals: rw("petals", "petal_rain"),
-    glaze: rw("glaze", "glaze"), crystalRain: rw("crystalRain", "crystal_rain"), ashRain: rw("ashRain", "ash_rain"), acidRain: rw("acidRain", "acid_rain"), flowers: r("flowers", "scented_mist", "petal_rain"),
+    glaze: rw("glaze", "glaze"), crystalRain: rw("crystalRain", "crystal_rain"), ashRain: rw("ashRain", "ash_rain"), acidRain: rw("acidRain", "acid_rain"), grass: r("grass", "meadow"), meadow: r("meadow"), flowers: r("flowers", "scented_mist", "petal_rain"),
     lava: r("lava", "obsidian", "whispering_obsidian") || wd === "lava", water: (r("water", "marsh_mist", "brine", "meltwater", "crying_obsidian", ...TERRAIN.WATER_IDS) || wd === "ocean") && wd !== "lava" && wd !== "desert",
     ice: r("ice", "black_ice", "deep_cold", "hail", "rime") || wd === "frozen", sand: r("sand", "dust_storm", "glass", "singing_glass", "fulgurite") || wd === "desert",
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
@@ -138,6 +138,7 @@ function shoreOf(S, r, wd) {
   if (S.lava) return "lava";
   if (S.sand) return "sand";
   if (S.ice) return "ice";
+  if (S.grass) return "grass"; // herbe ou prairie écrite : la rive est d'herbe
   if (r("stone", "iron", "crystal", "obsidian", "salt", "rifts", "geysers", "glass", "strange_stone", "copper", "gold", "silver", "gems") || S.ruins.length) return "rock";
   if (S.trees || S.glow || r("moss", "fern", "grove", "vine", "sapling", "seed", "spore", "lichen", "pale_fungus", "grazer", "burrower")) return "grass";
   if (r(...TERRAIN.WATER_IDS)) return "grass"; // rivière, delta, lac, marais : une berge herbeuse par défaut
@@ -238,9 +239,10 @@ function build(S, W, H) {
     coral: S.coral ? Array.from({ length: 6 + Math.floor(q7() * 6) }, () => ({ x: W * q7(), u: 0.55 + 0.45 * q7(), s: 0.6 + q7() * 0.9, hue: [340, 15, 30, 290, 190][Math.floor(q7() * 5)], kind: Math.floor(q7() * 3), pts: Array.from({ length: 5 }, () => q7()) })) : [],
     acid: S.acid ? Array.from({ length: 3 + Math.floor(q7() * 3) }, () => ({ x: W * (0.08 + 0.84 * q7()), u: 0.15 + 0.8 * q7(), w: 0.5 + q7() * 0.9, p: q7() })) : [],
   };
+  const meadow = S.grass ? buildMeadow(S, W, H, hz) : null; // herbe, prairie : graine propre
   const wx = buildWeather(S, W, H); // météo vivante : graine propre, rien d'autre ne bouge dans l'image
   if (shore && shore.mode === "side" && S.fissure === "submarine") { const wx = lerp(shore.x0, shore.x1, 0.5); fis.x = shore.side < 0 ? lerp(wx, W, 0.45) : lerp(0, wx, 0.55); } // la fissure sous l'eau reste dans l'eau
-  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx };
+  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow };
 }
 
 /**
@@ -261,6 +263,15 @@ function buildWeather(S, W, H) {
   if (S.rainbow) out.bow = { x: W * (q() < 0.5 ? 0.24 + 0.12 * q() : 0.64 + 0.12 * q()), R: H * (0.5 + 0.14 * q()), drop: H * (0.06 + 0.08 * q()) };
   if (S.tornado) out.twister = { x: W * (0.14 + 0.72 * q()), lean: (q() - 0.5) * 0.12, w: 0.8 + 0.5 * q(), p: q() * TAU, debris: Array.from({ length: 18 }, () => ({ p: q(), r: 0.4 + q(), k: 1 + Math.floor(q() * 2) })) };
   return out;
+}
+
+/** L'herbe (`grass`) ou la prairie (`meadow`, plus haute et fleurie) : des brins sur toute la terre, serrés au loin. */
+function buildMeadow(S, W, H, hz) {
+  const q = rng((S.seed ^ 0x6a55) >>> 0), tall = !!S.meadow;
+  const blades = Array.from({ length: tall ? 360 : 240 }, () => ({ x: q() * W, u: q(), h: (tall ? 5 : 3) + q() * (tall ? 7 : 4), p: q() * TAU, dry: q() }));
+  blades.sort((a, b) => a.u - b.u); // du fond vers le devant
+  const flowers = tall ? Array.from({ length: 70 }, () => ({ x: q() * W, u: q(), hue: [48, 205, 330, 0, 280, 55][Math.floor(q() * 6)], s: q(), p: q() * TAU })) : [];
+  return { tall, blades, flowers };
 }
 
 /**
@@ -316,6 +327,7 @@ function foregroundWeights(S) {
     none: 0.35, rocks: 1 + (dry ? 1.2 : 0), branches: S.world === "desert" || S.world === "lava" || S.world === "ocean" ? 0.2 : 1 + (green ? 1.4 : 0),
     arch: 0.4 + (ruins ? 0.9 : 0), vines: green || S.fog ? 0.5 + (S.world === "jungle" || S.glow ? 1.4 : 0.5) : 0.15, reeds: wet && !S.ice ? 1.4 : 0,
     leaves: green ? 1 : 0.2, pillar: 0.3 + (ruins ? 0.9 : 0), icicles: S.ice || S.world === "frozen" ? 2.2 : 0,
+    tallgrass: S.grass ? (S.meadow ? 3.2 : 2.2) : 0, // en dernier : n'altère pas le tirage des Âges sans herbe
   };
 }
 function buildForeground(S, W, H) {
@@ -340,6 +352,8 @@ function buildForeground(S, W, H) {
     out.vines = Array.from({ length: 4 + Math.floor(q() * 5) }, () => ({ x: W * (0.02 + 0.3 * q()), len: H * (0.18 + 0.4 * q()), amp: 2 + q() * 6, f: 1 + q() * 2, p: q() * TAU, leaves: Array.from({ length: 5 + Math.floor(q() * 5) }, () => ({ u: q(), s: 2 + q() * 3, a: q() < 0.5 ? -1 : 1 })) }));
   } else if (kind === "reeds") {
     out.reeds = Array.from({ length: 9 + Math.floor(q() * 9) }, () => ({ x: W * (0.01 + 0.3 * q()), h: H * (0.16 + 0.34 * q()), lean: (q() - 0.4) * 0.35, head: q() < 0.45, p: q() * TAU, w: 1 + q() * 1.6 }));
+  } else if (kind === "tallgrass") {
+    out.grass = Array.from({ length: 26 + Math.floor(q() * 14) }, () => ({ x: W * (0.01 + 0.34 * q()), h: H * (0.12 + 0.3 * q()), lean: (q() - 0.3) * 0.5, p: q() * TAU, w: 0.8 + q() * 1.4, seed: S.meadow && q() < 0.3 }));
   } else if (kind === "leaves") {
     out.leaves = Array.from({ length: 2 + Math.floor(q() * 3) }, () => ({ a: (q() - 0.5) * 1.6, len: H * (0.3 + 0.35 * q()), wd: 0.22 + 0.2 * q(), y: H * (0.55 + 0.45 * q()), p: q() * TAU, notch: q() < 0.4 }));
   } else if (kind === "pillar") {
@@ -465,6 +479,7 @@ function paint(g, m, t, o = {}) {
     else if (S.water) waterSurface(g, m, t, sn, hzc);
     if (S.lava) lavaVeins(g, m, t);
   }
+  if (m.meadow) meadowGround(g, m, t, night, L, hzc);
   scarGround(g, m, t, night);
   groundWeather(g, m, t, night, L); // fleurs, neige au sol, verglas, cendre
   richGlints(g, m, t, night);
@@ -493,6 +508,29 @@ function paint(g, m, t, o = {}) {
     const s0b = sn.find((x) => x.i === 0); if (s0b && s0b.y + s0b.r < hz) { g.strokeStyle = "rgba(150,52,40,0.75)"; g.lineWidth = Math.max(1.2, s0b.r * 0.22); g.beginPath(); g.arc(s0b.x, s0b.y, s0b.r * 1.08, 0, TAU); g.stroke(); }
   }
   if (dm > 0) doomFx(g, m, dm, sn);
+  g.restore();
+}
+
+/** L'herbe et la prairie : la terre verdit, et le vent passe sur les brins en longues vagues (plus fortes avec du vent). */
+function meadowGround(g, m, t, night, L, hzc) {
+  const { S, W, H, hz, shore, meadow: md } = m;
+  if (S.water && !shore) return; // une mer : pas d'herbe
+  if (S.world === "lava" || S.world === "desert" || (S.ice && !shore)) return;
+  g.save(); if (shore) { shorePath(g, shore.land); g.clip(); }
+  const dk = [6, 7, 12], lit = 1 - 0.6 * night, base = md.tall ? [86, 120, 58] : [74, 108, 54];
+  const lg = g.createLinearGradient(0, hz, 0, H); lg.addColorStop(0, css(mixc(mixc(base, hzc || base, 0.3), dk, 0.3 + 0.5 * night), 0.55)); lg.addColorStop(1, css(mixc(base, dk, 0.35 + 0.5 * night), 0.7));
+  g.fillStyle = lg; g.fillRect(0, hz, W, H - hz);
+  const gust = 0.8 + ((L && L.wind) || (S.wind ? 1 : 0)) * 1.6, D = H - hz;
+  g.lineWidth = 0.8; g.lineCap = "round";
+  for (const b of md.blades) {
+    const y = hz + D * b.u * b.u, k = 0.35 + b.u * 1.1, wave = Math.sin(TAU * t - (b.x / W) * 5 + b.u * 2), sw = (wave * 0.8 + Math.sin(TAU * t * 2 + b.p) * 0.25) * gust * k;
+    const col = mixc(mixc([92, 134, 66], [158, 160, 88], b.dry * (md.tall ? 0.6 : 0.35)), dk, 0.3 + 0.5 * night);
+    g.strokeStyle = css(col, (0.45 + 0.4 * b.u) * lit + 0.15); g.beginPath(); g.moveTo(b.x, y); g.quadraticCurveTo(b.x + sw * 0.4, y - b.h * k * 0.6, b.x + sw, y - b.h * k); g.stroke();
+  }
+  for (const f of md.flowers) { // prairie : des fleurs dans les herbes hautes, qui bougent avec elles
+    const y = hz + D * f.u * f.u, k = 0.35 + f.u * 1.1, wave = Math.sin(TAU * t - (f.x / W) * 5 + f.u * 2) * gust * k, r = (0.8 + f.s) * k;
+    g.fillStyle = css(mixc(hsl(f.hue, 0.55, 0.72), dk, 0.2 + 0.6 * night), 0.85 * lit); g.beginPath(); g.arc(f.x + wave, y - 9 * k, r, 0, TAU); g.fill();
+  }
   g.restore();
 }
 
@@ -1036,6 +1074,12 @@ function foreground(g, m, t, hzc) {
       const sw = Math.sin(TAU * t + r.p) * 2.2, tx = r.x + r.lean * r.h + sw, ty = H - r.h;
       g.strokeStyle = col; g.lineWidth = r.w; g.beginPath(); g.moveTo(X(r.x), H + 2); g.quadraticCurveTo(X(r.x + r.lean * r.h * 0.4), H - r.h * 0.5, X(tx), ty); g.stroke();
       if (r.head) { g.fillStyle = col; g.beginPath(); g.ellipse(X(tx - r.lean * 6), ty + 7, 2.2, 6, r.lean * sd, 0, TAU); g.fill(); }
+    }
+  } else if (fg.kind === "tallgrass") {
+    for (const b of fg.grass) { // herbes hautes au premier plan, qui suivent la vague du vent
+      const sw = Math.sin(TAU * t - (b.x / W) * 5 + b.p * 0.3) * (2 + b.h / H * 10), tx = b.x + b.lean * b.h + sw, ty = H - b.h;
+      g.strokeStyle = col; g.lineWidth = b.w; g.beginPath(); g.moveTo(X(b.x), H + 2); g.quadraticCurveTo(X(b.x + b.lean * b.h * 0.3), H - b.h * 0.55, X(tx), ty); g.stroke();
+      if (b.seed) { g.fillStyle = col; g.beginPath(); g.ellipse(X(tx), ty + 3, 1.6, 4, b.lean * sd, 0, TAU); g.fill(); }
     }
   } else if (fg.kind === "leaves") {
     for (const l of fg.leaves) { // grandes feuilles qui entrent par un côté
