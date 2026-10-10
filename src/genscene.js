@@ -1023,6 +1023,7 @@ function reflect(g, m, t, a) {
 
 // ---- détail habité : une structure sans usage évident -------------------------------------------------
 function detail(g, m, t, night) {
+  if (!m.det) return; // les autres directions du périscope n'en ont pas : il est unique
   const { W, H, hz, det: d, pal } = m, x = d.x, s = d.s, dark = css(mixc(pal.rock, [0, 0, 0], 0.55)), rim = css(mixc(pal.rock, [220, 200, 170], 0.4), 0.5);
   const blink = night * (0.35 + 0.65 * Math.max(0, Math.sin(TAU * (t * 2) + d.p))), glow = css(hsl(d.hue, 0.8, 0.6), 1);
   g.fillStyle = dark; g.strokeStyle = rim; g.lineWidth = 1;

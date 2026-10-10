@@ -16,9 +16,12 @@ function heading(m0, k) {
   k = ((k % 4) + 4) % 4; if (!k || !m0) return m0;
   m0.headings = m0.headings || {};
   if (m0.headings[k]) return m0.headings[k];
-  const S = { ...m0.S, seed: (m0.S.seed ^ Math.imul(k, 0x9e3779b1)) >>> 0, fissure: null }; // la fissure est d'un seul côté : celui qu'on voit de face
+  // ce qui est unique n'est que d'un côté, celui qu'on voit de face : la fissure, la tornade, l'arc-en-ciel, les astres morts
+  // (pulsar, étoile à neutrons, trou noir), et les ruines quand le livre n'en écrit pas beaucoup (ruins > 1 : un champ de ruines, partout)
+  const S0 = m0.S, many = !!(S0.amt && S0.amt.ruins > 1);
+  const S = { ...S0, seed: (S0.seed ^ Math.imul(k, 0x9e3779b1)) >>> 0, fissure: null, tornado: false, rainbow: false, remnants: [], ruins: many ? S0.ruins : [], lampLit: many && S0.lampLit, tabletAwake: many && S0.tabletAwake };
   const m = G.build(S, m0.W, m0.H);
-  m.pal = m0.pal; m.sunFrom = m0; m.noSun = true; m.ringsP = null; m.cometP = null; // le soleil, les anneaux, la comète : de face seulement
+  m.pal = m0.pal; m.sunFrom = m0; m.noSun = true; m.ringsP = null; m.cometP = null; m.det = null; // le soleil, les anneaux, la comète, la structure « habitée » : de face seulement
   m.night = { ...m.night, moons: [] };
   return (m0.headings[k] = m);
 }

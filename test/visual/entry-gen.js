@@ -47,5 +47,21 @@ function run(host) {
     wrap.appendChild(c); wrap.appendChild(document.createTextNode(label)); host.appendChild(wrap);
     G.paint(c.getContext("2d"), G.build(S, W, H), ph, po);
   }
+  // le périscope : les quatre directions et le zénith d'un même Âge (les éléments uniques : de face seulement)
+  const V = require("./genviews");
+  for (const [label, o, seed, ph, po] of LOOKS) {
+    const S = { ...base, ...o, seed }, W = 320, H = 192, m0 = G.build(S, W, H);
+    for (const look of [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1]]) {
+      const wrap = document.createElement("div"); wrap.style.cssText = "display:inline-block;margin:6px;width:320px;font:11px sans-serif;color:#ccc";
+      const c = document.createElement("canvas"); c.width = W; c.height = H; c.style.cssText = "display:block;border:1px solid #cdbd94";
+      wrap.appendChild(c); wrap.appendChild(document.createTextNode(label + " — " + (look[1] ? "zénith" : "direction " + look[0]))); host.appendChild(wrap);
+      if (look[1]) { const sq = document.createElement("canvas"); sq.width = sq.height = 368; V.paintZenith(sq.getContext("2d"), m0, ph, po || {}); const g = c.getContext("2d"); g.drawImage(sq, (W - 368) / 2, (H - 368) / 2); }
+      else V.paintLook(c.getContext("2d"), m0, ph, po || {}, look[0], 0);
+    }
+  }
 }
+const LOOKS = [
+  ["Ruines, tornade, arc-en-ciel", { suns: 1, ruins: ["tablet", "door"], tornado: true, rainbow: true, rain: true, water: true, trees: 3, remnants: ["pulsar"] }, 4041, 0.3, { day: 0.4 }],
+  ["Deux soleils, désert", { suns: 2, sand: true, ruins: ["bridge", "lamp"], extras: [{ id: "shards", axis: "geological", words: ["sharp", "pale"] }] }, 4042, 0.3, { day: 0.4 }],
+];
 module.exports = { run };
