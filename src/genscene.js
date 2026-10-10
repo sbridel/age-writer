@@ -56,7 +56,7 @@ function sceneOf(a, name = "", blocks = null) {
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
     moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine") || wd === "jungle", eyes: r("hunter", "stalking_pack"),
     ruins, lampLit: r("lit_lamp"), tabletAwake: r("speaking_tablet"),
-    world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), sunHues: SKY.sunColors([...ids]), blackDisc: [...ids].find((i) => SKY.HUES[i]) === "black_sun", blackSun: [...ids].find((i) => SKY.HUES[i]) === "black_sun" && !r("twin_suns"),
+    world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), remnants: ["pulsar", "neutron_star", "black_hole"].filter((id) => ids.has(id)), sunHues: SKY.sunColors([...ids]), blackDisc: [...ids].find((i) => SKY.HUES[i]) === "black_sun", blackSun: [...ids].find((i) => SKY.HUES[i]) === "black_sun" && !r("twin_suns"),
     extras: [...ids].filter((id) => !KNOWN.has(id) && !id.startsWith("?")).sort().slice(0, 8).map((id) => {
       const b = blocks && typeof blocks.get === "function" ? blocks.get(id) : null, ax = b && typeof b.axis === "string" ? b.axis.toLowerCase() : "";
       return { id, axis: AXES.find((x) => ax.startsWith(x.slice(0, 5))) || AXES[fnv(id) % 5], words: b && Array.isArray(b.descriptors) && b.descriptors.length ? b.descriptors.map(String) : id.split("_") };
@@ -220,6 +220,8 @@ function build(S, W, H) {
   const field = S.belt === "field" ? { rocks: Array.from({ length: 7 }, () => ({ u: q2(), y: q2(), r: 0.025 + q2() * 0.04, rot: (q2() - 0.5) * 0.5, ph: q2() * TAU, pts: Array.from({ length: 8 }, () => 0.65 + q2() * 0.55) })) } : null;
   const ringsP = S.rings ? { x: W * (0.2 + 0.55 * q2()), y: H * (0.16 + 0.14 * q2()), R: H * (0.09 + 0.06 * q2()), tilt: (q2() - 0.5) * 0.7, hue: q2() * 60 + 20, sat: 0.2 + q2() * 0.3 } : null;
   const cometP = S.comet ? { ph: q2(), y0: 0.12 + 0.25 * q2(), y1: 0.25 + 0.3 * q2(), dir: q2() < 0.5 ? 1 : -1 } : null;
+  const q8 = rng((S.seed ^ 0x9e3779b1) >>> 0); // perturbateurs écrits (étape 3) : graine propre, rien d'autre ne bouge dans l'image
+  const remn = (S.remnants || []).map((kind, i) => ({ kind, x: W * (0.12 + 0.76 * ((i + q8()) / Math.max(1, S.remnants.length))), y: H * (0.08 + 0.22 * q8()), ph: q8(), spin: 0.5 + q8() * 0.5, tilt: q8() * Math.PI, R: H * (0.025 + 0.015 * q8()) }));
   const fgKind = ["rocks", "branches", "arch"][Math.floor(r() * 3)], fg = { kind: fgKind, side: r() < 0.5 ? -1 : 1, pts: Array.from({ length: 16 }, () => r()), p: r() * TAU };
   Object.assign(fg, buildForeground(S, W, H)); // 1.16.1 : type choisi selon l'Âge, géométrie générée (graine propre : le reste de l'image ne bouge pas)
   // détail « habité » : une structure sans usage évident, posée au point le plus dégagé (loin des ruines et des arbres)
@@ -238,7 +240,7 @@ function build(S, W, H) {
   };
   const wx = buildWeather(S, W, H); // météo vivante : graine propre, rien d'autre ne bouge dans l'image
   if (shore && shore.mode === "side" && S.fissure === "submarine") { const wx = lerp(shore.x0, shore.x1, 0.5); fis.x = shore.side < 0 ? lerp(wx, W, 0.45) : lerp(0, wx, 0.55); } // la fissure sous l'eau reste dans l'eau
-  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx };
+  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx };
 }
 
 /**
@@ -917,6 +919,7 @@ function skyBodies(g, m, cs, day, hzc, sn) {
       if (ph > 0.9) { const f = (ph - 0.9) * 10, fg = g.createRadialGradient(x1, hz, 0, x1, hz, H * 0.3 * f); fg.addColorStop(0, css([255, 230, 190], 0.8 * (1 - f))); fg.addColorStop(1, css([255, 150, 60], 0)); g.fillStyle = fg; g.fillRect(0, 0, W, H); }
     }
   }
+  for (const p of m.remn || []) remnant(g, p, cs, lum, hzc);
   if (m.cometP) { // comète : passe en ~45 s toutes les 90 s ; la queue s'éloigne de sa direction
     const c = m.cometP, p = frac(cs / 90 + c.ph) / 0.5; if (p < 1) {
       const x = c.dir > 0 ? lerp(-W * 0.1, W * 1.1, p) : lerp(W * 1.1, -W * 0.1, p), y = H * lerp(c.y0, c.y1, p), tx = x - c.dir * W * 0.38, ty = y - H * (c.y1 - c.y0) * 0.38;
@@ -924,6 +927,29 @@ function skyBodies(g, m, cs, day, hzc, sn) {
       g.lineWidth = 1; g.beginPath(); g.moveTo(x, y + 2); g.lineTo(tx, ty + H * 0.05); g.stroke();
       const hg = g.createRadialGradient(x, y, 0, x, y, H * 0.06); hg.addColorStop(0, "rgba(255,255,255,0.95)"); hg.addColorStop(1, "rgba(180,215,255,0)"); g.fillStyle = hg; g.fillRect(x - H * 0.06, y - H * 0.06, H * 0.12, H * 0.12);
     }
+  }
+}
+
+/**
+ * Un perturbateur écrit (télescope, étape 3), dans le ciel de la fenêtre : le pulsar, un point dont le faisceau balaie le ciel
+ * et éclate quand il passe vers nous ; l'étoile à neutrons, une étincelle bleu-blanc dans un halo serré ; le trou noir, un
+ * disque vide dans un anneau de lumière courbée, les étoiles voisines étirées en arcs. Plus visibles la nuit (`lum`).
+ */
+function remnant(g, p, cs, lum, hzc) {
+  const { x, y, R } = p, k = clamp(lum);
+  if (p.kind === "pulsar") {
+    const a = p.tilt + cs * p.spin * TAU * 0.6, flash = Math.pow(Math.max(0, Math.cos(cs * p.spin * TAU * 0.6 + p.ph * TAU)), 24);
+    for (const sgn of [1, -1]) { const tx = x + sgn * Math.cos(a) * R * 9, ty = y + sgn * Math.sin(a) * R * 4, gr = g.createLinearGradient(x, y, tx, ty); gr.addColorStop(0, css([210, 230, 255], 0.35 * k)); gr.addColorStop(1, css([210, 230, 255], 0)); g.strokeStyle = gr; g.lineWidth = R * 0.5; g.beginPath(); g.moveTo(x, y); g.lineTo(tx, ty); g.stroke(); }
+    const hg = g.createRadialGradient(x, y, 0, x, y, R * (1.2 + 3 * flash)); hg.addColorStop(0, css([240, 248, 255], (0.6 + 0.4 * flash) * k)); hg.addColorStop(1, css([180, 210, 255], 0)); g.fillStyle = hg; g.fillRect(x - R * 4.5, y - R * 4.5, R * 9, R * 9);
+  } else if (p.kind === "neutron_star") {
+    const tw = 0.85 + 0.15 * Math.sin(cs * 0.9 + p.ph * TAU), hg = g.createRadialGradient(x, y, 0, x, y, R * 2.2);
+    hg.addColorStop(0, css([235, 245, 255], 0.95 * k * tw)); hg.addColorStop(0.25, css([170, 205, 255], 0.5 * k)); hg.addColorStop(1, css([120, 160, 255], 0)); g.fillStyle = hg; g.fillRect(x - R * 2.2, y - R * 2.2, R * 4.4, R * 4.4);
+    g.strokeStyle = css([190, 215, 255], 0.35 * k); g.lineWidth = 0.8; g.beginPath(); g.arc(x, y, R * 1.3, 0, TAU); g.stroke();
+  } else {
+    const rr = R * 1.6, ring = g.createRadialGradient(x, y, rr * 0.9, x, y, rr * 1.9); ring.addColorStop(0, css([255, 214, 160], 0.75 * k)); ring.addColorStop(0.4, css([255, 170, 110], 0.3 * k)); ring.addColorStop(1, css([255, 150, 90], 0));
+    g.fillStyle = ring; g.beginPath(); g.arc(x, y, rr * 1.9, 0, TAU); g.fill();
+    g.strokeStyle = css(mixc([200, 210, 240], hzc, 0.2), 0.5 * k); g.lineWidth = 1; for (let i = 0; i < 4; i++) { const a0 = p.tilt + i * 1.7 + cs * 0.02; g.beginPath(); g.arc(x, y, rr * (2.3 + i * 0.5), a0, a0 + 0.5 + 0.2 * i); g.stroke(); } // les étoiles derrière, étirées en arcs
+    g.fillStyle = "#030205"; g.beginPath(); g.arc(x, y, rr, 0, TAU); g.fill();
   }
 }
 

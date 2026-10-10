@@ -190,6 +190,10 @@ function normalize(s) {
     pol: o.pol < 0 ? -1 : 1, freq: knob(o.freq, 12), amp: knob(o.amp, 12), harm: knob(o.harm, 6), phase: ((Math.round((+o.phase || 0) * 2) / 2) % TURN + TURN) % TURN,
     r: knob(o.r, 12), g: knob(o.g, 12), b: knob(o.b, 12), iris: knob(o.iris, 12), cry,
     lock: !!o.lock, az: ((Math.floor(+o.az) || 0) % 4 + 4) % 4, tilt: Math.max(-1, Math.min(1, Math.round(+o.tilt) || 0)),
+    // étape 2 du télescope (src/calibration.js) : le micromètre de synchro et l'instant de la synchro ; absents des anciens réglages
+    ...(o.sync != null && Number.isFinite(+o.sync) ? { sync: ((Math.round(+o.sync * 2) / 2) % TURN + TURN) % TURN } : {}),
+    ...(o.syncAt != null && Number.isFinite(+o.syncAt) ? { syncAt: +o.syncAt } : {}),
+    ...(typeof o.sysKey === "string" && o.sysKey ? { sysKey: o.sysKey } : {}), // la clé d'étoile au moment de la synchro : « le signal a changé »
   };
 }
 /** Tourner une commande : `key` (freq, amp, harm, phase) de `delta` crans ; la polarité bascule. */

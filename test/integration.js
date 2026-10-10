@@ -159,6 +159,33 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
   ok(!!host.querySelector(".age-ext__sound"), "bouton son présent");
   ok(!!host.querySelector(".age-det--stab .age-det__bar") && !!host.querySelector(".age-det--phys .age-det__sheet dd"), "Détails : stabilité par axe et fiche physique");
 
+  // télescope, étape 2 : les notes de l'arpenteur disent le Great Zero vu de l'Âge ; situé + synchronisé : l'heure là-bas, KIPS
+  {
+    const SS = require("../src/starsystem"), CAL = require("../src/calibration"), TEL = require("../src/telescope");
+    const sSrc = "water\nsingle_sun\nsystem: Kerath\nseed: 4242", mk = () => { const h = document.createElement("div"); h.innerHTML = '<div class="age-panel"></div>'; document.body.appendChild(h); p.renderAgePanel(sSrc, h, "Ages/Alpha.md"); return h; };
+    ok(p.core.analyse(sSrc, { seed: "Alpha" }).resolved.lines.every((l) => !l.unknown), "`system: Kerath` n'est pas une tache d'encre");
+    const was = p.ext.imagerNotes, wasTel = p.ext.telescope, wasTun = p.ext.imagerTunings;
+    p.ext.imagerNotes = "words"; let h = mk(); const star = h.querySelector(".age-det__star");
+    ok(star && /Great Zero shows to the/.test(star.textContent) && !star.querySelector(".age-det__skynums svg") && !/\d/.test(star.querySelector(".age-det__skyline").textContent), "Détails, mots seulement : le Great Zero vu de l'Âge, sans chiffre");
+    ok(!star.querySelector(".age-det__time") && /uncharted/.test(h.querySelector(".age-ext__plate").textContent), "pas de Zéro trouvé : ni état, ni heure ; plaque « uncharted » (plus de coordonnées tirées du nom)");
+    p.ext.imagerNotes = "full"; h = mk(); ok(h.querySelectorAll(".age-det__star .age-det__skynums .age-det__skynum").length === 3, "Détails, notes complètes : Torahn, élévation, retard en chiffres D'ni");
+    p.ext.imagerNotes = "off"; h = mk(); ok(!h.querySelector(".age-det__star .age-det__skyline"), "notes aucune : rien du Great Zero");
+    p.ext.imagerNotes = "words";
+    const a = p.core.analyse(sSrc, { seed: "Alpha" }), sys = SS.systemOf(a, sSrc, "Alpha"), zero = TEL.greatZero("Relto", 1), now = Date.now();
+    p.ext.telescope = { "relto#1": { torahn: 0, elev: 0, found: true } }; h = mk();
+    ok(/not charted yet/.test(h.querySelector(".age-det__star").textContent), "Zéro trouvé, étoile non située : le lutrin de l'observatoire est suggéré");
+    p.ext.telescope = { "relto#1": { torahn: 0, elev: 0, found: true, systems: { [sys.key]: SS.record(sys, zero, { torahn: sys.clue.torahn, elev: sys.clue.elevation, delay: sys.clue.delay }, now) } } }; h = mk();
+    ok(/is charted from your Relto/.test(h.querySelector(".age-det__star").textContent) && /uncertain: sync the Imager/.test(h.querySelector(".age-det__time").textContent), "étoile située, pas synchronisé : l'heure là-bas reste incertaine");
+    const o = CAL.orbitOf(a, "Alpha", require("../src/sky").parseSky(sSrc));
+    p.ext.imagerTunings = { "Ages/Alpha.md": { sync: CAL.orbitAt(o, now), syncAt: now, sysKey: sys.key } }; h = mk();
+    ok(/^Over there, it is /.test(h.querySelector(".age-det__time").textContent) && h.querySelector(".age-det__time.is-certain .age-det__timenum svg") && /KIPS/.test(h.querySelector(".age-ext__plate").textContent), "synchronisé : « Over there, it is … » en chiffres D'ni, et les coordonnées KIPS");
+    p.ext.imagerTunings = { "Ages/Alpha.md": { sync: 3, syncAt: now - 12 * 86400000, sysKey: sys.key } }; h = mk();
+    ok(/should be/.test(h.querySelector(".age-det__time").textContent) && h.querySelector(".age-det__time.is-drift"), "douze jours plus tard : l'heure devient incertaine (dérive)");
+    p.ext.imagerTunings = { "Ages/Alpha.md": { sync: 3, syncAt: now, sysKey: "autre@etoile" } }; h = mk();
+    ok(/signal has changed/.test(h.querySelector(".age-det__star").textContent) && /uncertain/.test(h.querySelector(".age-det__time").textContent), "étoile réécrite depuis la synchro : « le signal a changé »");
+    p.ext.imagerNotes = was; p.ext.telescope = wasTel; p.ext.imagerTunings = wasTun;
+  }
+
   // couche physique (1.16) : facile n'altère rien, strict coûte, lignes de valeurs ignorées par le moteur, pistes écrites dans le bloc
   {
     const lava = "lava\nash\nmass: 0.2\nage: 9";

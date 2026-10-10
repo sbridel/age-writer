@@ -122,6 +122,13 @@ function openSurveyorBook(plugin, ages) {
             for (const [label, v] of [[t("det.sky.freq"), tg.freq], [t("det.sky.amp"), tg.amp], [t("det.sky.harm"), tg.harm]]) { const c = nums.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label }); setMarkup(c.createSpan(), plugin.dni.numberSvg(v, { size: 16 })); }
             nums.createSpan({ cls: "age-det__skynum", text: tg.pol > 0 ? "+" : "−" });
           }
+          { // télescope, étape 2 : le Great Zero vu de cet Âge (mêmes mots que l'onglet Détails)
+            const SS = require("./starsystem"), a = plugin.core.analyse(src, { seed: name }), sy = SS.systemOf(a, src, name), fld = a && a.physics && a.physics.w ? a.physics.w.field : null;
+            const w = SS.words(sy.seen || sy.clue, lang, { fx: sy.fx, compass: SS.compassOf(fld) }); // étape 3 : ce que l'arpenteur perçoit, perturbateurs compris
+            card.createDiv({ cls: "age-det__skyline", text: w.line });
+            if (w.pert) card.createDiv({ cls: "age-det__skyline", text: w.pert });
+            if (full) { const nums = card.createDiv({ cls: "age-det__skynums" }); for (const [label, v] of [[t("sys.val.torahn"), w.values.torahn], [t("sys.val.elev"), w.values.elev], [t("sys.val.delay"), w.values.delay]]) { const c = nums.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label }); if (v < 0) c.createSpan({ text: "−" }); setMarkup(c.createSpan(), plugin.dni.numberSvg(Math.abs(v), { size: 16 })); } }
+          }
         } catch (e) { console.warn("[Age Writer ext] carnet", e); }
       }
     }

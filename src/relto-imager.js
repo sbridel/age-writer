@@ -10,8 +10,14 @@
 //   III : le tube cathodique (les deux ondes), l'inverseur de polarité, quatre boutons, un voltmètre.
 // Verrouillé, la machine suit l'Âge seule ; les commandes ne bougent plus ; le périscope tourne (quatre directions) et
 // s'incline (zénith, horizon, sous l'eau). Tout est dessiné ici, en coordonnées logiques 640 × 360.
+// Étape 2 du télescope : quand le système d'étoile de l'Âge est situé (r.imagerCal()), un MICROMÈTRE de synchro apparaît
+// entre l'écran et le verrou, avec sa petite fenêtre à réticule ; synchronisé, l'image s'aiguise (r.imagerSeen()) et un
+// cartouche au bas de l'écran dit l'heure là-bas et les coordonnées KIPS (src/calibration.js). Sans calibration : rien ne change.
 const { rng, clamp, mix, rgba, frac } = require("./util");
 const I = require("./imager");
+const CAL = require("./calibration");
+const TEL = require("./telescope");
+const { makeT } = require("./i18n");
 const V = require("./genviews");
 const W = 640, H = 360, FLOOR = 300;
 const SCREEN = { x: 178, y: 18, w: 300, h: 172 }, MINI = { x: 404, y: 16, w: 220, h: 126 };
@@ -20,6 +26,9 @@ const STATIONS = { cry: { x: 148, y: 222, w: 146, h: 74, tip: "Crystal rack" }, 
 const LABEL = { freq: "Frequency", amp: "Amplitude", harm: "Harmonics", phase: "Phase", pol: "Polarity switch", r: "Red glass", g: "Green glass", b: "Blue glass", iris: "Iris" };
 const GLASS = { r: [230, 70, 60], g: [80, 200, 110], b: [80, 120, 240] };
 const BACK = { x: 0, y: 330, w: W, h: 30 };
+const MICRO = { x: 524, y: 192, r: 13, hub: 6, win: { x: 494, y: 160, w: 60, h: 14 }, span: 6 }; // le micromètre de synchro ; la fenêtre montre ±6 crans
+const EN = makeT(() => "en");
+const tOf = (r) => (r.opts && typeof r.opts.t === "function" ? r.opts.t : EN);
 
 /** L'onde d'un ciel (ou d'un réglage) : `s` = { pol, freq, amp, harm }, `phase` de 0 à 25, dans le rectangle `b`. */
 function wavePath(ctx, s, phase, b) {
@@ -84,6 +93,7 @@ function crystal(r, ctx, x, y, w, h, id, glow, t, i = 0) {
 
 /** L'écran de laiton dans le rectangle `S`, avec l'Âge (ou la neige). */
 function drawScreen(r, ctx, S, st, cl, t, c) {
+  if (st.target && r.imagerSeen) cl = r.imagerSeen(); // calibré : l'image s'aiguise (sans calibration, la même netteté)
   const k = cl.total, s = st.settings, tg = st.target, sc = S.w / 300, fw = 10 * sc;
   ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.fillRect(S.x - fw * 0.6, S.y + fw * 0.6, S.w + fw * 1.4, S.h + fw * 1.4);
   const fr = ctx.createLinearGradient(S.x, S.y, S.x + S.w, S.y + S.h); fr.addColorStop(0, c("#c9a24e")); fr.addColorStop(0.5, c("#7a5c28")); fr.addColorStop(1, c("#b8913f"));
@@ -189,6 +199,8 @@ function overview(r, ctx, st, cl, t, c, now) {
   const lg = ctx.createRadialGradient(lx + (locked ? 9 : -11), ly - 2, 1, lx + (locked ? 10 : -10), ly, 9); lg.addColorStop(0, "#f3dca0"); lg.addColorStop(1, "#6b5126"); ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(lx + (locked ? 10 : -10), ly, 8, 0, 6.283); ctx.fill();
   lamp(ctx, L.x, L.y - 50, locked ? "green" : ready ? "amber" : st.age ? "red" : null, 4);
   r.hot.push({ x: L.x - 28, y: L.y - 60, w: 56, h: 116, tip: locked ? "The lock — pull to release" : ready ? "The lock — the image is clear: pull" : "The lock — it only holds a clear image", imager: { lock: true } });
+  const cal = r.imagerCal ? r.imagerCal() : null;
+  if (cal) { micrometer(r, ctx, c, cal, t); cartouche(r, ctx, cal); }
 
   // le lutrin : le livre de l'Âge visé ; ‹ › pour changer de livre
   ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(70, 200, 8, FLOOR - 200); ctx.fillRect(52, FLOOR - 6, 44, 6);
@@ -236,6 +248,56 @@ function overview(r, ctx, st, cl, t, c, now) {
     lamp(ctx, b.x + b.w - 10, b.y + 10, lit("atmo"));
   }
   for (const [key, b] of Object.entries(STATIONS)) r.hot.push({ x: b.x, y: b.y, w: b.w, h: b.h, tip: `${b.tip} — come closer`, imager: { station: key } });
+}
+
+/**
+ * Le micromètre de synchro (étape 2) : un petit tambour moleté (couronne : cinq crans ; moyeu : un demi-cran) et, au-dessus,
+ * sa fenêtre à réticule où passe la planète quand on approche de sa place sur l'orbite. Synchronisé : la fenêtre s'allume.
+ */
+function micrometer(r, ctx, c, cal, t) {
+  const tt = tOf(r), M = MICRO, wn = M.win, a = -Math.PI / 2 + (cal.reading / CAL.TURN) * Math.PI * 2;
+  // la fenêtre : un réticule vertical ; la planète, un point, décalée de l'écart (visible à ±6 crans)
+  ctx.fillStyle = c("#1b130d"); ctx.fillRect(wn.x - 3, wn.y - 3, wn.w + 6, wn.h + 6);
+  ctx.fillStyle = "#04080a"; ctx.fillRect(wn.x, wn.y, wn.w, wn.h);
+  ctx.save(); ctx.beginPath(); ctx.rect(wn.x, wn.y, wn.w, wn.h); ctx.clip();
+  const cx = wn.x + wn.w / 2, cy = wn.y + wn.h / 2;
+  if (Math.abs(cal.gap) <= M.span) { const px = cx + (cal.gap / M.span) * (wn.w / 2 - 3), tw = 0.6 + 0.4 * Math.sin(t * 5); ctx.fillStyle = rgba(235, 245, 255, 0.55 + 0.4 * tw * (1 - Math.abs(cal.gap) / M.span)); ctx.beginPath(); ctx.arc(px, cy, 1.6, 0, 6.283); ctx.fill(); }
+  ctx.strokeStyle = cal.synced ? rgba(127, 214, 200, 0.5 + 0.4 * cal.q) : "rgba(224,194,122,0.6)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, wn.y); ctx.lineTo(cx, wn.y + wn.h); ctx.stroke();
+  ctx.restore();
+  r.hot.push({ x: wn.x - 3, y: wn.y - 3, w: wn.w + 6, h: wn.h + 6, tip: cal.synced ? (cal.certain ? tt("cal.window.synced") : tt("cal.window.drift")) : tt("cal.window") });
+  // le tambour
+  const g = ctx.createRadialGradient(M.x - 4, M.y - 5, 1, M.x, M.y, M.r); g.addColorStop(0, c("#f3dca0")); g.addColorStop(0.55, c("#b8913f")); g.addColorStop(1, c("#5a4322"));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(M.x, M.y, M.r, 0, 6.283); ctx.fill();
+  ctx.strokeStyle = c("#3a2a14"); ctx.lineWidth = 0.8; for (let i = 0; i < 25; i++) { const q = a + (i / 25) * 6.283; ctx.beginPath(); ctx.moveTo(M.x + Math.cos(q) * (M.r - 3), M.y + Math.sin(q) * (M.r - 3)); ctx.lineTo(M.x + Math.cos(q) * M.r, M.y + Math.sin(q) * M.r); ctx.stroke(); }
+  ctx.fillStyle = c("#2a1d13"); ctx.beginPath(); ctx.arc(M.x, M.y, M.hub + 1.5, 0, 6.283); ctx.fill();
+  ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(M.x, M.y, M.hub, 0, 6.283); ctx.fill();
+  ctx.strokeStyle = c("#1b130d"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(M.x, M.y); ctx.lineTo(M.x + Math.cos(a) * (M.hub - 1), M.y + Math.sin(a) * (M.hub - 1)); ctx.stroke();
+  lamp(ctx, M.x + M.r + 7, M.y - M.r + 2, cal.synced ? (cal.certain ? "green" : "amber") : null, 2.6);
+  const name = tt("cal.micro");
+  r.hot.push({ x: M.x - M.r - 4, y: M.y - M.r - 4, w: M.r + 4, h: M.r * 2 + 8, tip: `${name} — ${tt("cal.rim.minus")}`, imager: { sync: -10 } });
+  r.hot.push({ x: M.x, y: M.y - M.r - 4, w: M.r + 4, h: M.r * 2 + 8, tip: `${name} — ${tt("cal.rim.plus")}`, imager: { sync: 10 } });
+  r.hot.push({ x: M.x - M.hub - 2, y: M.y - M.hub - 2, w: M.hub + 2, h: M.hub * 2 + 4, tip: `${name} — ${tt("cal.hub.minus")}`, imager: { sync: -1 } });
+  r.hot.push({ x: M.x, y: M.y - M.hub - 2, w: M.hub + 2, h: M.hub * 2 + 4, tip: `${name} — ${tt("cal.hub.plus")}`, imager: { sync: 1 } });
+}
+
+/** Le cartouche au bas de l'écran (étape 2) : l'heure là-bas, en mots et en chiffres D'ni (gahrtahvo · tahvo), et les coordonnées KIPS. */
+function cartouche(r, ctx, cal) {
+  const tt = tOf(r), S = SCREEN, lang = tt("cal.lang"), y = S.y + S.h - 18, lt = cal.lt;
+  ctx.fillStyle = "rgba(4,8,10,0.62)"; ctx.fillRect(S.x, y, S.w, 18);
+  ctx.font = "italic 11px serif"; ctx.fillStyle = cal.synced ? (cal.certain ? "#cfeee7" : "rgba(240,200,140,0.9)") : "rgba(233,220,184,0.7)";
+  const words = CAL.timeWords(lt, lang); ctx.fillText(words, S.x + 6, y + 13, 130);
+  const wOf = (v, size) => (r.dni && r.dni.widthOf ? r.dni.widthOf(Math.round(Math.abs(v)), size) : String(Math.round(Math.abs(v))).length * size * 0.6);
+  const dn = (v, x, size, col) => { if (r.dni && r.dni.drawNumber) r.dni.drawNumber(ctx, Math.round(Math.abs(v)), x, y + (18 - size) / 2, size, col); else { ctx.fillStyle = col; ctx.font = `${size}px serif`; ctx.fillText(String(Math.round(Math.abs(v))), x, y + 13); } return wOf(v, size); };
+  let x = S.x + 6 + Math.min(130, ctx.measureText(words).width) + 8;
+  if (lt.known) { const col = cal.certain ? "#9fe6da" : "rgba(240,200,140,0.9)"; x += dn(lt.gahr, x, 10, col) + 2; ctx.fillStyle = col; ctx.fillText(":", x, y + 13); x += 5; x += dn(lt.tahvo, x, 10, col); }
+  r.hot.push({ x: S.x, y, w: x - S.x + 4, h: 18, tip: lt.known ? tt("cal.time.tip") : tt("cal.time.unknown.tip") });
+  // KIPS : Torahn · élévation (au sens du KI) · distance, comme sur un KI, en petit à droite
+  if (cal.synced) {
+    const size = 8, kx = S.x + S.w - 6, vals = [cal.sys.torahn, TEL.kiElev(cal.sys.elevation), cal.sys.distance], w = (v) => wOf(v, size) + (v < 0 ? 4 : 0);
+    let px = Math.max(x + 10, kx - vals.reduce((a, v) => a + w(v) + 6, 0) + 6);
+    const x0 = px, col = "rgba(224,194,122,0.9)"; for (const v of vals) { if (v < 0) { ctx.fillStyle = col; ctx.fillRect(px, y + 8.5, 3, 1); px += 4; } px += dn(v, px, size, col) + 6; }
+    r.hot.push({ x: x0 - 4, y, w: kx - x0 + 8, h: 18, tip: tt("cal.kips.tip") });
+  }
 }
 
 // ---- I. le râtelier à cristaux -----------------------------------------------------------------------
