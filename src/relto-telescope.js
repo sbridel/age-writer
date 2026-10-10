@@ -35,9 +35,9 @@ const W = 640, H = 360, GY = 208;
 const EYE = { x: 196, y: 150, r: 116 }, FIELD = 30; // l'oculaire montre ±30 crans fins autour de la visée
 const NT = T.TURN / T.NOTCH; // crans fins par tour (625)
 // le panneau de l'instrument, de haut en bas : la plaque (Great Zero ou étoile de l'Âge), les deux grandes molettes, puis la rangée du retard
-const WHEELS = { torahn: { x: 438, y: 140 }, elev: { x: 560, y: 140 } }, RING0 = 34, HUB0 = 15;
-const PLATE = { x: 392, y: 42, w: 214, h: 58 }, BACK = { x: 0, y: 330, w: W, h: 30 };
-const SPLATE = { x: 392, y: 40, w: 214, h: 60 }, DELAY = { x: 458, y: 254 }, DRING = 22, DHUB = 9; // étape 2 : la plaque du système et la molette du retard
+const WHEELS = { torahn: { x: 438, y: 146 }, elev: { x: 560, y: 146 } }, RING0 = 31, HUB0 = 14;
+const PLATE = { x: 392, y: 42, w: 214, h: 56 }, BACK = { x: 0, y: 330, w: W, h: 30 };
+const SPLATE = { x: 392, y: 40, w: 214, h: 58 }, DELAY = { x: 458, y: 254 }, DRING = 22, DHUB = 9; // étape 2 : la plaque du système et la molette du retard
 const LECTERN = { x: 54, y: 302 }, TEXT_X = 372; // le lutrin, sur le sol à gauche ; la ligne de mots se décale à droite quand il est là
 const PULSE_MS = DT.MS_PER_HAHR / DT.PRO_PER_HAHR; // un prorahn (≈ 1,39 s) : le pouls du Zéro bat l'heure D'ni
 const EN = makeT(() => "en");
@@ -400,7 +400,7 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     wheel(r, ctx, c, "torahn", WHEELS.torahn, st.dial.torahn, T.TURN, st.dial.torahn, tm);
     wheel(r, ctx, c, "elev", WHEELS.elev, st.dial.elev + T.ELEV_MAX, 2 * T.ELEV_MAX + 1, T.kiElev(st.dial.elev), tm);
     // le retard se lit en rahnfee (invention de fan, src/beam.js) : le pouls arrive une fraction de battement après le balancier
-    divider(ctx, c, 222); // un filet gravé : au-dessus la direction, au-dessous le retard
+    divider(ctx, c, 225); // un filet gravé : au-dessus la direction, au-dessous le retard
     beatCounter(r, ctx, c, st); // les battements entiers : le chiffre nu devant les lucarnes
     wheel(r, ctx, c, "delay", DELAY, st.dial.delay, SS.DELAY_MAX + 1, { frac: BEAM.delayDigits(st.dial.delay + (st.dial.beats || 0) * SS.DELAY_TURN, SS.DELAY_UNIT) }, tm, { step: SS.STEP_DELAY, ring: DRING, hub: DHUB, side: 40, valueTip: (st.dial.beats ? t("sys.beats.plus") + " " : "") + lateWords(t, st.dial.delay) });
     systemPlate(r, ctx, c, st, sys);
@@ -499,7 +499,7 @@ function metronome(r, ctx, c, ms) {
 
 /** Les signes des perturbateurs (plaque, carte) : pulsar, étoile à neutrons, trou noir. */
 const PSYM = { pulsar: "✶", neutron_star: "✦", black_hole: "◉" };
-const TRI = { x: 474, y: 133, w: 50, h: 14 }; // entre les deux grandes molettes
+const TRI = { x: 474, y: 139, w: 50, h: 14 }; // entre les deux grandes molettes
 /**
  * Le levier de triangulation (étape 3) : seulement pour un système perturbé. Tiré, l'instrument interroge les étoiles situées
  * voisines (au moins deux, gravées sur la même ligne) : si elles s'accordent, la déviation et le faux pouls s'effacent.
