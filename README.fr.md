@@ -166,6 +166,8 @@ Une fine rangée d'icônes discrètes au-dessus de l'image :
 | **Réglages** | heure du ciel, ambiance sonore, niveau, volume |
 | **Agrandir** | ouvre la **vue Relto** dans un onglet principal (aussi : commande *Open the Relto view (large)*) |
 
+Une **roue des vues** se trouve en haut à gauche de la bande : son bouton montre la vue en cours ; un clic ouvre sur l'image une roue de laiton avec toutes les vues disponibles (**île**, celle d'ouverture ; **vue globale** ; **cabane** ; **Imageur** ; **observatoire** ; **horloge D'ni** ; **piliers de liaison** ; **bosquet** ; **bassin** ; **bassin ++** ; **chat**), leur nom au moyeu au survol. Un clic sur une vue y va ; Échap ou un clic ailleurs referme la roue. L'onglet **Réglages** tient en deux lignes : l'heure du ciel (curseur, l'heure lue, ↺) et le son (♪, l'ambiance, le volume en fader vertical).
+
 Dans la vue Relto, une icône **plein écran** met l'image sur tout l'écran ; la barre d'icônes et l'heure flottent par-dessus et s'effacent. Échap pour quitter. Le son du Relto continue quand on change d'onglet.
 
 ### L'Imageur
@@ -219,7 +221,7 @@ La syntaxe d'une page du Relto accepte `page lagon: …` ou `page_lagon: …` (l
 
 ### La vue globale
 
-Un petit bouton (globe) en haut à gauche de l'image bascule entre la **vue de l'île** (celle d'ouverture) et la **vue globale** : le Relto vu de loin, l'île au centre dans la mer de brume, des pinacles de roche qui en émergent. Les pages y ajoutent leurs éléments : les **îlots** (page *Islets*), le **pont** de cordes qui les relie, le **pinacle du calendrier** (page *Calendar pinnacle*, qui porte le jour D'ni), le ciel (lune, comète, pluie, orage, oiseaux, aurore, neige). Un clic sur l'île (« Your Relto ») ramène à la vue de l'île ; le même bouton (maison) fait aussi le retour.
+La **roue des vues** (en haut à gauche) bascule entre la **vue de l'île** (celle d'ouverture) et la **vue globale** : le Relto vu de loin, l'île au centre dans la mer de brume, des pinacles de roche qui en émergent. Les pages y ajoutent leurs éléments : les **îlots** (page *Islets*), le **pont** de cordes qui les relie, le **pinacle du calendrier** (page *Calendar pinnacle*, qui porte le jour D'ni), le ciel (lune, comète, pluie, orage, oiseaux, aurore, neige). Un clic sur l'île (« Your Relto ») ramène à la vue de l'île ; le même bouton (maison) fait aussi le retour.
 
 ### Pages du décor, du ciel et de la faune
 

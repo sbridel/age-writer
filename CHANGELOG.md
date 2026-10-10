@@ -11,6 +11,13 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **The ink dries before your eyes.** In the book (descriptive pages: text and glyphs) and in the Age block's *Text & glyphs* tab, freshly written ink is dark and glistening, a glint slides over it, and it slowly turns matte and brown over the drying time (15 minutes by default). Hovering the text or glyphs says how many minutes are left to change the Age freely, or that the ink is dry.
 - **`grass`**: green land that the wind combs in long waves across the linking window; a grassy shore by water, sometimes tall grass in the foreground. Written with `flowers`, it grows into a **meadow** (`meadow` ← `grass` + `flowers`): taller grass to the horizon, with flowers moving through it.
 
+### Changed
+- **The wheel of views:** the row of view icons above the Relto becomes a single button (showing the current view); it opens a brass wheel over the picture with every available view, its name at the hub on hover.
+- **A compact Settings tab:** the sky time on one line, with the hour it shows and ↺; the sound on one line, with a vertical volume fader.
+
+### Fixed
+- In a narrow panel, the Relto's D'ni name no longer slides under the view icons (it goes on its own line above).
+
 ## 1.22.0 — Plumb lines on the star chart (2026-10-10)
 
 ### Added

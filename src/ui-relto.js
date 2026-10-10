@@ -166,19 +166,25 @@ async function renderRelto(plugin, source, el, ctx) {
   }
   const lbl = (k) => { if (tabsOn) controls.createDiv({ cls: "age-relto__lbl", text: t(k) }); };
   lbl("relto.lbl.time");
-  const slider = controls.createEl("input", { type: "range", attr: { min: "0", max: "24", step: "0.25" } });
-  const nowBtn = controls.createEl("button", { text: "↺", attr: { title: t("relto.now") } });
+  // onglet Réglages : chaque réglage sur une ligne (l'heure du ciel : curseur, l'heure lue, ↺ ; le son : ♪, l'ambiance, le volume en fader vertical)
+  const rowTime = tabsOn ? controls.createDiv({ cls: "age-relto__row" }) : controls;
+  const slider = rowTime.createEl("input", { type: "range", attr: { min: "0", max: "24", step: "0.25" } });
+  const skyVal = tabsOn ? rowTime.createSpan({ cls: "age-relto__skyval" }) : null;
+  const nowBtn = rowTime.createEl("button", { text: "↺", attr: { title: t("relto.now") } });
   lbl("relto.lbl.sound");
-  const soundBtn = plugin.ext.sound ? controls.createEl("button", { cls: "age-ext__sound", text: "♪" }) : null;
+  const rowSound = tabsOn ? controls.createDiv({ cls: "age-relto__row age-relto__row--sound" }) : controls;
+  const soundBtn = plugin.ext.sound ? rowSound.createEl("button", { cls: "age-ext__sound", text: "♪" }) : null;
   const mode = () => ["minimal", "zen", "full"].includes(plugin.ext.reltoMode) ? plugin.ext.reltoMode : "zen";
   let modeSel = null, volIn = null;
   if (soundBtn) {
-    modeSel = controls.createEl("select", { cls: "age-relto__mode", attr: { title: t("relto.soundmode") } });
+    modeSel = rowSound.createEl("select", { cls: "age-relto__mode", attr: { title: t("relto.soundmode") } });
     const modeLabel = { minimal: t("relto.mode.minimal"), zen: t("relto.mode.zen"), full: t("relto.mode.full") };
     for (const m of ["minimal", "zen", "full"]) modeSel.createEl("option", { value: m, text: modeLabel[m] });
     modeSel.value = mode();
-    lbl("relto.lbl.vol");
-    volIn = controls.createEl("input", { type: "range", cls: "age-relto__vol", attr: { min: "0", max: "1", step: "0.05", title: t("relto.volume") } });
+    if (!tabsOn) lbl("relto.lbl.vol");
+    const volBox = tabsOn ? rowSound.createDiv({ cls: "age-relto__fader", attr: { title: t("relto.volume") } }) : controls;
+    volIn = volBox.createEl("input", { type: "range", cls: "age-relto__vol" + (tabsOn ? " is-vertical" : ""), attr: { min: "0", max: "1", step: "0.05", title: t("relto.volume") } });
+    if (tabsOn) { const ic = volBox.createSpan({ cls: "age-relto__fadericon" }); try { obsidian.setIcon(ic, "volume-2"); } catch (e) { /* ignore */ } }
     volIn.value = String(plugin.ext.reltoVolume == null ? 0.6 : plugin.ext.reltoVolume);
   }
   const dniName = X.dniText(plugin, head, "", "age-relto__dniname");
@@ -223,12 +229,30 @@ async function renderRelto(plugin, source, el, ctx) {
   // navigation entre les vues : île, vue globale et sous-vues (cabane, piliers, bosquet, bassin, chat) ; les boutons des vues sans page correspondante sont masqués
   const NAV = [["global", "globe", "relto.v.global"], ["island", "mountain", "relto.v.island"], ["cabin", "home", "relto.v.cabin"], ["imager", "aperture", "relto.v.imager"], ["telescope", "telescope", "relto.v.telescope"], ["clock", "clock", "relto.v.clock"], ["pillars", "landmark", "relto.v.pillars"], ["grove", "trees", "relto.v.grove"], ["pond", "fish", "relto.v.pond"], ["pondplus", "droplets", "relto.v.pondplus"], ["cat", "cat", "relto.v.cat"]]; // du plus loin au plus près : globale, île, cabane, Imageur, puis les vues de détail
   const nav = (tabBar || stage).createDiv({ cls: "age-relto__nav" + (tabBar ? " age-relto__nav--bar" : "") }); if (tabBar) tabBar.insertBefore(nav, tabBar.firstChild);
-  const navBtns = {};
+  // la roue des vues : un seul bouton (l'icône de la vue en cours) ; un clic ouvre, sur l'image, une roue de laiton avec les vues
+  // disponibles en cercle (leur nom au moyeu, au survol) ; un clic sur une vue y va et referme la roue (Échap ou un clic ailleurs aussi)
+  const navBtns = {}, iconOf = {}, wheelBtn = nav.createEl("button", { cls: "age-relto__viewbtn age-relto__wheelbtn", attr: { "aria-label": t("relto.views") } });
+  const wheel = stage.createDiv({ cls: "age-relto__wheel" }), hub = wheel.createDiv({ cls: "age-relto__wheelhub" });
+  const closeWheel = () => { wheel.removeClass("is-open"); wheelBtn.removeClass("is-active"); };
+  const openWheel = () => {
+    const vis = NAV.map(([v]) => v).filter((v) => !navBtns[v].hasClass("is-hidden")), n = vis.length || 1;
+    const R = Math.max(42, Math.min(118, Math.min(stage.clientWidth || 300, stage.clientHeight || 170) / 2 - 24));
+    wheel.style.setProperty("--wr", R + "px");
+    vis.forEach((v, i) => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / n; navBtns[v].style.setProperty("--wx", (R * Math.cos(a)).toFixed(1) + "px"); navBtns[v].style.setProperty("--wy", (R * Math.sin(a)).toFixed(1) + "px"); });
+    hub.setText(t("relto.views")); wheel.addClass("is-open"); wheelBtn.addClass("is-active");
+  };
+  wheelBtn.addEventListener("click", (e) => { e.stopPropagation(); if (wheel.hasClass("is-open")) closeWheel(); else openWheel(); });
   for (const [v, ic, key] of NAV) {
-    const b = nav.createEl("button", { cls: "age-relto__viewbtn" }); navBtns[v] = b;
+    const b = wheel.createEl("button", { cls: "age-relto__viewbtn age-relto__wheelitem" }); navBtns[v] = b; iconOf[v] = ic;
     try { obsidian.setIcon(b, ic); } catch (e) { /* ignore */ }
-    b.setAttr("aria-label", t(key)); b.addEventListener("click", () => renderer.setView(v));
+    b.setAttr("aria-label", t(key));
+    b.addEventListener("mouseenter", () => hub.setText(t(key))); b.addEventListener("mouseleave", () => hub.setText(t("relto.views")));
+    b.addEventListener("click", (e) => { e.stopPropagation(); renderer.setView(v); closeWheel(); });
   }
+  wheel.addEventListener("click", (e) => { if (e.target === wheel) closeWheel(); }); // un clic sur le fond de la roue la referme
+  const offWheel = (e) => { if (!root.isConnected) { root.ownerDocument.removeEventListener("pointerdown", offWheel, true); root.ownerDocument.removeEventListener("keydown", escWheel, true); return; } if (wheel.hasClass("is-open") && !wheel.contains(e.target) && !wheelBtn.contains(e.target)) closeWheel(); };
+  const escWheel = (e) => { if (e.key === "Escape" && wheel.hasClass("is-open")) { closeWheel(); e.stopPropagation(); } };
+  root.ownerDocument.addEventListener("pointerdown", offWheel, true); root.ownerDocument.addEventListener("keydown", escWheel, true);
   const roomSoundOn = () => !!plugin.ext.sound && plugin.ext.soundRooms !== false;
   const roomVol = () => (plugin.ext.volume == null ? 0.35 : plugin.ext.volume) * 0.7;
   // enregistrements facultatifs de l'utilisateur (réglages > Son > Relto) : lus dans le coffre, décodés une fois
@@ -255,7 +279,7 @@ async function renderRelto(plugin, source, el, ctx) {
       sound.roomStart(v === "imager" ? "imager" : v === "cat" ? "cat" : v === "cabin" ? "fire" : "water", roomVol() * (v === "imager" ? humVol() : 1), bufs);
     } catch (e) { /* ignore */ }
   };
-  const syncView = (v) => { for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-active", id === (v || "island")); roomAudio(v); };
+  const syncView = (v) => { const cur = v || "island"; for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-active", id === cur); try { obsidian.setIcon(wheelBtn, iconOf[cur] || "compass"); } catch (e) { /* ignore */ } roomAudio(v); };
   const syncNav = (sc) => { const av = renderer.available(); for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-hidden", !av[id]); syncView(renderer.view); void sc; };
   syncView("island");
   const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -305,9 +329,10 @@ async function renderRelto(plugin, source, el, ctx) {
   const renderer = new ReltoRenderer(canvas, plugin.dni, { telescopeGen: () => plugin.telescopeGen || 0, instrumentsMode: () => INS.modeOf(plugin.ext), lensHints: () => plugin.ext.lensHints !== false,hoverFrame: plugin.ext.hoverFrame === true, imagerHum: () => ({ on: plugin.ext.soundImagerHum !== false, vol: humVol() }), onImagerHum: (a) => { if (a.toggle) plugin.ext.soundImagerHum = plugin.ext.soundImagerHum === false; else plugin.ext.imagerHumVol = Math.round(Math.max(0, Math.min(1, humVol() + a.delta * 0.2)) * 10) / 10; if (a.delta && plugin.ext.soundImagerHum === false && plugin.ext.imagerHumVol > 0) plugin.ext.soundImagerHum = true; plugin.saveExt(); roomAudio("imager"); }, notes: plugin.ext.imagerNotes || "words", onImagerAge: imagerAge, unwrittenFind, onTranscribe, imagerGet, imagerSet, glyphImage, t, telescopeGet, telescopeSet, onTelescopeSound, onImagerTune: () => { const cl = renderer.imagerClarity(); if (sound.imagerTune) sound.imagerTune(cl.atmo, cl.total, !!(renderer.imager && renderer.imager.settings && renderer.imager.settings.lock)); }, onImagerSound: (k) => { if (roomSoundOn() && sound.imagerSfx) sound.imagerSfx(k, roomVol()); }, reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onPurr: () => { if (roomSoundOn()) roomBuf("roomPurrFile").then((b) => sound.purr(roomVol(), b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onPageToggle: async (id) => { const on = scene && scene.pagesActive.includes(id); await reltoEdit((l) => (on ? l.filter((x) => x !== id) : [...l, id])); plugin.refreshLive(); }, onSpecial: (kind) => { if (kind === "surveyor") B.openSurveyorBook(plugin, scene ? scene.ages : []); else if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;
 
-  const fmt = (h) => `${String(Math.floor(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
-  const syncClock = () => { const h = renderer.hour(); clock.setText(fmt(h)); slider.value = String(h); };
-  slider.addEventListener("input", () => { fixed = Number(slider.value); renderer.setHour(fixed); clock.setText(fmt(fixed)); if (reduced) renderer.draw(0); });
+  const fmt = (h) => { const m = Math.round(Number(h) * 60) % 1440; return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; };
+  const showSky = (h) => { clock.setText(fmt(h)); if (skyVal) skyVal.setText(fmt(h)); }; // l'heure du ciel se lit aussi à côté du curseur
+  const syncClock = () => { const h = renderer.hour(); showSky(h); slider.value = String(h); };
+  slider.addEventListener("input", () => { fixed = Number(slider.value); renderer.setHour(fixed); showSky(fixed); if (reduced) renderer.draw(0); });
   nowBtn.addEventListener("click", () => { fixed = null; renderer.setHour(null); syncClock(); if (reduced) renderer.draw(0); });
 
   const reltoEdit = (fn) => app.fileManager.processFrontMatter(file, (fm) => { const a = Array.isArray(fm.relto_pages_active) ? fm.relto_pages_active.map((x) => M.stripLink(x)) : []; fm.relto_pages_active = fn(a); });

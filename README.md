@@ -169,7 +169,7 @@ In the Relto view, a **fullscreen** icon puts the picture on the whole screen; t
 
 ### Navigation and sub-views
 
-A **navigation bar** sits in the band above the picture: **island** (opening view), **global view**, **cabin**, **linking pillars**, **grove**, **pond**, **pond ++** and **cat**. You can also click things directly in the island view (the cabin, the pillars, the pond, the cat…). Which buttons are available depends on the active pages.
+A **wheel of views** sits at the top left of the band above the picture: its button shows the current view; a click opens a brass wheel over the picture with every view available (**island**, the opening view; **global view**; **cabin**; **Imager**; **observatory**; **D'ni clock**; **linking pillars**; **grove**; **pond**; **pond ++**; **cat**), its name at the hub on hover. Click a view to go there; Escape or a click elsewhere closes the wheel. You can also click things directly in the island view (the cabin, the pillars, the pond, the cat…). Which buttons are available depends on the active pages.
 
 - **Island layout**: cabin, pond, pillars, cat, stalk tree, bench and standing stones are placed by a deterministic layout so that big elements never overlap. If not everything fits, the least important ones stay in their sub-views.
 - **Cabin interior**: fireplace (lit when the *chimney* page is active, otherwise "Cold hearth"), a 3×10 shelf of your Ages (each book clickable), a table with the glyph book and the library book, a door back to the island.
@@ -227,7 +227,7 @@ A Relto page's syntax accepts `page lagoon: Lagoon | vegetation 0.5 palm` or `pa
 
 ### The global view
 
-A small button (globe) at the top left toggles between the **island view** (opening view) and the **global view**: the Relto seen from afar, the island at the centre in the sea of mist, rock pinnacles emerging. Pages add their elements there: **islets** (page *Islets*), the rope **bridge** joining them, the **calendar pinnacle** (page *Calendar pinnacle*, which carries the D'ni day), the sky (moon, comet, rain, storm, birds, aurora, snow). A click on the island ("Your Relto") returns to the island view.
+The **wheel of views** (top left) switches between the **island view** (opening view) and the **global view**: the Relto seen from afar, the island at the centre in the sea of mist, rock pinnacles emerging. Pages add their elements there: **islets** (page *Islets*), the rope **bridge** joining them, the **calendar pinnacle** (page *Calendar pinnacle*, which carries the D'ni day), the sky (moon, comet, rain, storm, birds, aurora, snow). A click on the island ("Your Relto") returns to the island view.
 
 ### Scenery, sky and wildlife pages
 
