@@ -141,7 +141,7 @@ const LETTERS = {
 function chapterNote(chapter, lang, name) {
   const l = lang === "fr" ? "fr" : "en", w = WORLDS[chapter.id] || { lines: [] }, L = LETTERS[chapter.id][l];
   const title = chapter.title[l];
-  return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n— ${MENTOR}\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`\n`;
+  return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n— ${MENTOR}, seltahn\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`\n`;
 }
 
 /**
