@@ -428,7 +428,7 @@ function closeCry(r, ctx, st, cl, t, c) {
 }
 
 // ---- II. le banc optique -----------------------------------------------------------------------------
-const RAIL = { x0: 70, x1: 590 };
+const RAIL = { x0: 78, x1: 566 }; // de la lampe (à droite) au prisme (à gauche)
 function closeLens(r, ctx, st, cl, t, c) {
   const s = st.settings, tg = st.target, L = st.guild ? st.light : tg && tg.lens; // mode Guilde : la lumière que renvoie le télescope (sinon, le noir)
   room(ctx, c, t); bench(ctx, c, 176);
@@ -459,18 +459,41 @@ function closeLens(r, ctx, st, cl, t, c) {
   ctx.fillStyle = c("#e0c27a"); ctx.beginPath(); ctx.arc(Ir.x + Math.cos(ia) * (AR + 7), Ir.y + Math.sin(ia) * (AR + 7), 4.5, 0, 6.283); ctx.fill();
   number(r, ctx, s.iris, Ir.x, Ir.y + Ir.r + 10, 14);
   for (let v = 0; v <= I.MAX; v++) { const a = arc(v), x = Ir.x + Math.cos(a) * AR, y = Ir.y + Math.sin(a) * AR; r.hot.push({ x: x - 7, y: y - 9, w: 14, h: 18, tip: s.lock ? "Iris — held by the lock" : LABEL.iris, imager: { key: "iris", value: v } }); }
-  // les trois rails et leurs verres
-  ctx.fillStyle = c("#5a4322"); ctx.fillRect(28, 190, 30, 112); ctx.fillStyle = rgba(255, 232, 180, 0.55 + 0.15 * Math.sin(t * 2)); ctx.beginPath(); ctx.arc(52, 246, 6, 0, 6.283); ctx.fill(); // la lampe du banc
+  // le banc : la lampe à droite envoie un rayon le long de chaque rail ; chaque verre teinte le rayon de sa couleur, d'autant plus
+  // qu'il est avancé ; les trois rayons se rejoignent dans le prisme, à gauche, et le mélange monte jusqu'au comparateur
+  const LAMP = { x: 584, y: 192, w: 36, h: 108 }, PRISM = { x: 46, y: 248 }, flick = 0.9 + 0.1 * Math.sin(t * 2.3);
+  const lg = ctx.createLinearGradient(LAMP.x, 0, LAMP.x + LAMP.w, 0); lg.addColorStop(0, c("#7a5c28")); lg.addColorStop(1, c("#3b2a1b"));
+  ctx.fillStyle = lg; ctx.fillRect(LAMP.x, LAMP.y, LAMP.w, LAMP.h); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1; ctx.strokeRect(LAMP.x + 0.5, LAMP.y + 0.5, LAMP.w - 1, LAMP.h - 1);
+  for (let i = 0; i < 3; i++) { const y = 210 + i * 38, hg = ctx.createRadialGradient(LAMP.x, y, 0, LAMP.x, y, 16); hg.addColorStop(0, rgba(255, 244, 214, 0.95 * flick)); hg.addColorStop(1, rgba(255, 232, 180, 0)); ctx.fillStyle = hg; ctx.fillRect(LAMP.x - 16, y - 16, 32, 32); }
   for (const [i, key] of ["r", "g", "b"].entries()) {
-    const y = 210 + i * 38, x = RAIL.x0 + (s[key] / I.MAX) * (RAIL.x1 - RAIL.x0);
-    ctx.fillStyle = c("#1b130d"); ctx.fillRect(RAIL.x0 - 6, y - 3, RAIL.x1 - RAIL.x0 + 12, 6);
-    ctx.strokeStyle = c("#8a6a2e"); ctx.lineWidth = 1; for (let v = 0; v <= I.MAX; v++) { const tx = RAIL.x0 + (v / I.MAX) * (RAIL.x1 - RAIL.x0); ctx.beginPath(); ctx.moveTo(tx, y + 5); ctx.lineTo(tx, y + (v % 4 ? 8 : 11)); ctx.stroke(); }
-    ctx.fillStyle = c("#6b5126"); ctx.fillRect(x - 9, y - 4, 18, 10);
-    const gg = ctx.createRadialGradient(x - 4, y - 18, 2, x, y - 14, 16); gg.addColorStop(0, rgba(255, 255, 255, 0.8)); gg.addColorStop(0.35, rgba(...GLASS[key], 0.8)); gg.addColorStop(1, rgba(...GLASS[key].map((v) => v * 0.35), 0.9));
-    ctx.fillStyle = gg; ctx.beginPath(); ctx.ellipse(x, y - 14, 6, 15, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.stroke();
-    number(r, ctx, s[key], RAIL.x1 + 26, y - 9, 13);
-    for (let v = 0; v <= I.MAX; v++) { const tx = RAIL.x0 + (v / I.MAX) * (RAIL.x1 - RAIL.x0), hw = (RAIL.x1 - RAIL.x0) / I.MAX; r.hot.push({ x: tx - hw / 2, y: y - 32, w: hw, h: 44, tip: s.lock ? `${LABEL[key]} — held by the lock` : LABEL[key], imager: { key, value: v } }); }
+    const y = 210 + i * 38, v = s[key], k = v / I.MAX, x = RAIL.x0 + k * (RAIL.x1 - RAIL.x0), G3 = GLASS[key];
+    // le rail, gradué du sombre au saturé : on voit d'un coup d'œil où l'on en est
+    const rg2 = ctx.createLinearGradient(RAIL.x0, 0, RAIL.x1, 0); rg2.addColorStop(0, c("#1b130d")); rg2.addColorStop(1, rgba(...G3.map((q) => q * 0.55), 1));
+    ctx.fillStyle = rg2; ctx.fillRect(RAIL.x0 - 6, y + 6, RAIL.x1 - RAIL.x0 + 12, 4);
+    ctx.fillStyle = c("#1b130d"); ctx.fillRect(RAIL.x0 - 6, y + 2, RAIL.x1 - RAIL.x0 + 12, 4);
+    ctx.strokeStyle = c("#8a6a2e"); ctx.lineWidth = 1; for (let q = 0; q <= I.MAX; q++) { const gx = RAIL.x0 + (q / I.MAX) * (RAIL.x1 - RAIL.x0); ctx.beginPath(); ctx.moveTo(gx, y + 10); ctx.lineTo(gx, y + (q % 4 ? 13 : 16)); ctx.stroke(); }
+    // le rayon : blanc de la lampe jusqu'au verre, puis de la couleur du verre (d'autant plus vive qu'il est avancé) jusqu'au prisme
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    const wb = ctx.createLinearGradient(LAMP.x, 0, x, 0); wb.addColorStop(0, rgba(255, 244, 214, 0.5 * flick)); wb.addColorStop(1, rgba(255, 244, 214, 0.22 * flick)); ctx.fillStyle = wb; ctx.fillRect(x, y - 3, LAMP.x - x, 6);
+    ctx.fillStyle = rgba(...G3, (0.12 + 0.6 * k) * flick); ctx.fillRect(PRISM.x + 8, y - 3, x - PRISM.x - 8, 6);
+    ctx.restore();
+    // le verre : un disque teinté dans sa monture de laiton, sur un chariot ; plus il est avancé, plus il est saturé
+    ctx.fillStyle = c("#6b5126"); ctx.fillRect(x - 10, y + 1, 20, 7); ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(x - 2, y - 4, 4, 6);
+    ctx.fillStyle = c("#b8913f"); ctx.beginPath(); ctx.arc(x, y - 14, 15, 0, 6.283); ctx.fill();
+    const gg = ctx.createRadialGradient(x - 5, y - 19, 1, x, y - 14, 12); gg.addColorStop(0, rgba(255, 255, 255, 0.75)); gg.addColorStop(0.3, rgba(...G3, 0.35 + 0.6 * k)); gg.addColorStop(1, rgba(...G3.map((q) => q * (0.3 + 0.4 * k)), 0.95));
+    ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(x, y - 14, 12, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#e0c27a"); ctx.lineWidth = 1; ctx.stroke();
+    number(r, ctx, v, x, y + 17, 10);
+    for (let q = 0; q <= I.MAX; q++) { const gx = RAIL.x0 + (q / I.MAX) * (RAIL.x1 - RAIL.x0), hw = (RAIL.x1 - RAIL.x0) / I.MAX; r.hot.push({ x: gx - hw / 2, y: y - 32, w: hw, h: 50, tip: s.lock ? `${LABEL[key]} — held by the lock` : LABEL[key], imager: { key, value: q } }); }
   }
+  // le prisme qui rassemble les trois rayons, et le mélange qui monte jusqu'au comparateur
+  const mine3 = [s.r, s.g, s.b].map((v) => Math.round((255 * v) / Math.max(1, s.r, s.g, s.b))), lvl = 0.25 + 0.65 * (1 - Math.abs(s.iris - 12) / 24);
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  ctx.fillStyle = rgba(...mine3, 0.35 * lvl * flick); ctx.beginPath(); ctx.moveTo(PRISM.x - 4, PRISM.y - 40); ctx.lineTo(PRISM.x + 10, PRISM.y - 40); ctx.lineTo(O.x + 10, O.y + O.r + 10); ctx.lineTo(O.x - 10, O.y + O.r + 10); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = c("#6b5126"); ctx.beginPath(); ctx.moveTo(PRISM.x - 14, PRISM.y + 48); ctx.lineTo(PRISM.x + 14, PRISM.y + 48); ctx.lineTo(PRISM.x + 14, PRISM.y - 48); ctx.closePath(); ctx.fill();
+  const pg2 = ctx.createLinearGradient(PRISM.x - 10, 0, PRISM.x + 12, 0); pg2.addColorStop(0, rgba(220, 235, 255, 0.25)); pg2.addColorStop(1, rgba(...mine3, 0.45 * lvl)); ctx.fillStyle = pg2;
+  ctx.beginPath(); ctx.moveTo(PRISM.x - 9, PRISM.y + 44); ctx.lineTo(PRISM.x + 11, PRISM.y + 44); ctx.lineTo(PRISM.x + 11, PRISM.y - 40); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c("#e0c27a"); ctx.lineWidth = 1; ctx.stroke();
+  r.hot.push({ x: PRISM.x - 14, y: PRISM.y - 48, w: 28, h: 96, tip: tx(r).t("lens.prism") });
   // l'aide en mots (réglage « Aide aux lentilles ») : sous l'écran, ce que l'œil lit dans le comparateur
   if (L && (!r.opts.lensHints || r.opts.lensHints())) {
     const T = tx(r).t, cname = (k) => T(`lens.c.${k}`), parts = I.lensWords(s, L) || [];
