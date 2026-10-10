@@ -276,3 +276,13 @@ unlock:                            # facultatif
 - **Comètes dans le Relto** (effet `comet`, page `page_comets`) et **vrais glyphes** pour les 29 blocs de ciel étendu qui partageaient un hexagone générique.
 - README (EN/FR) assainis : plus de version figée, historique laissé à ce journal, installation et syntaxe clarifiées.
 - Les Âges existants gardent leur analyse, leurs pages et leur texte (600 Âges comparés à la 1.18.3 : seuls les glyphes du ciel étendu changent de dessin).
+
+## 1.20.0 — l'Art de la Guilde : livre vierge, métronome, horloge D'ni (10 oct. 2026)
+
+- **Deux façons de jouer les instruments** (réglage *Instruments*, `src/instruments.js`) : **facile** (défaut) — l'observatoire dit « Il s'avive / Il pâlit », le signal scintille peu, ni ligne de Me'erta ni faux pouls, les étoiles mortes brouillent seulement un peu l'image ; **l'Art de la Guilde** — le comportement de la 1.19, plus le livre vierge de l'Imageur.
+- **Le métronome de l'observatoire** (`src/metronome.js`) : un balancier de laiton bat le prorahn ; le vrai pouls culmine quand il touche une butée, la ligne de Me'erta glisse contre lui, à l'œil et à l'oreille.
+- **L'Imageur au livre vierge** (Art de la Guilde, `src/imager-guild.js`) : on ne choisit plus l'Âge. Le télescope tenu sur une étoile située envoie sa lumière au comparateur ; les cristaux (glyphes connus) verrouillent une planète et éveillent la station III ; quand l'image tient, le nom de l'Âge s'inscrit dans le livre.
+- **Les mondes jamais écrits** (`src/unwritten.js`) : réglé à l'aveugle, le livre vierge forme parfois un monde que personne n'a écrit (reproductible selon les réglages) ; *Transcrire ce monde* en fait une note d'Âge.
+- **L'horloge D'ni enrichie** (`src/relto-clock.js`) : quatre anneaux (vailee, yahr, gahrtahvo, tahvo) dont le chiffre luit quand il change ; vue rapprochée d'un clic sur la sphère, date et heure en chiffres D'ni.
+- **Aide aux lentilles** (réglage, activé par défaut) : au banc optique, une ligne de mots dit quelle couleur est en trop ou manque et si le faisceau est trop vif ou trop sombre.
+- **Correctif** : les coordonnées gravées des plaques *Great Zero* et *Star of the Age* ne débordent plus avec une police D'ni large.

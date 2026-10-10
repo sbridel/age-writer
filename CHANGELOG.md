@@ -2,6 +2,19 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.20.0 — The Art of the Guild: blank book, metronome, D'ni clock (2026-10-10)
+
+### Added
+- **Two ways to play the instruments** (setting *Instruments*): **easy** (default) — the observatory says "It brightens / It fades", the signal barely shimmers, no Me'erta line or false pulses, dead stars only blur the image; **the Art of the Guild** — the 1.19 behaviour, plus the Imager's blank book.
+- **The observatory metronome:** a brass pendulum beats the prorahn; the true pulse peaks as it touches a stop, while the Me'erta line slides against it, to the eye and to the ear.
+- **The blank-book Imager** (Art of the Guild): you no longer choose the Age. The telescope, held on a located star, sends its light to the comparator; the crystals (known glyphs) lock a planet and wake station III; once the image holds, the Age's name is inscribed in the book.
+- **Worlds no one has written:** tuning blind, the blank book sometimes forms an unwritten world (reproducible from the settings); *Transcribe this world* turns it into an Age note.
+- **The D'ni clock, richer:** four rings (vailee, yahr, gahrtahvo, tahvo) whose digit glows when it changes; a close-up view from a click on the sphere, with date and time in D'ni numerals.
+- **Lens hints** (setting, on by default): at the optical bench, a line of words says which colour is too strong or missing and whether the beam is too bright or too dim.
+
+### Fixed
+- The engraved coordinates of the *Great Zero* and *Star of the Age* plates no longer run off the edge with a wide D'ni font.
+
 ## 1.19.0 — Living weather, the observatory and the Great Zero (2026-10-10)
 
 ### Added
