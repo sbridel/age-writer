@@ -10,6 +10,7 @@ const { rng, clamp, lerp, frac, fnv } = require("./util");
 const { crevasse } = require("./crevasse");
 const { mixc, css, hsl } = G;
 const TAU = Math.PI * 2;
+const ZENITH_SUN_E = 0.6; // hauteur (0 à 1) à partir de laquelle un soleil se voit en levant les yeux
 
 /** Le modèle d'une direction `k` (0 = la vue de face, celle de la fenêtre de liaison ; 1 à 3 en tournant). */
 function heading(m0, k) {
@@ -81,7 +82,7 @@ function paintZenith(g, m, t, o = {}) {
   if (m.ringsP) { const p = m.ringsP, x = W * 0.72, y = H * 0.3, rr = p.R * (W / m.W) * 1.2; g.fillStyle = css(hsl(p.hue, p.sat, 0.55), 0.9); g.beginPath(); g.arc(x, y, rr, 0, TAU); g.fill(); g.strokeStyle = css(hsl(p.hue + 20, p.sat, 0.75), 0.7); g.lineWidth = rr * 0.18; g.beginPath(); g.ellipse(x, y, rr * 2, rr * 0.55, p.tilt, 0, TAU); g.stroke(); }
   if (m.belt) { g.save(); g.translate(cx, cy); g.rotate(m.belt.tilt + 1.1); for (const b of m.belt.rocks) { g.fillStyle = css([150, 140, 125], (0.4 + 0.4 * day) * b.k); g.fillRect((b.u - 0.5) * R * 2, b.off * H * 0.05, b.r, b.r); } g.restore(); }
   // les soleils : haut dans le ciel, ils sont près du centre ; bas, vers le bord
-  for (const s of m.noSun ? [] : k.sn) {
+  for (const s of m.noSun ? [] : k.sn.filter((u) => u.e >= ZENITH_SUN_E)) { // seuls les soleils hauts passent au-dessus de la tête ; un soleil bas reste à l'horizon de face
     const e = clamp(s.e), x = cx + ((s.x / m.W) - 0.5) * W * 0.9, y = cy + (1 - e) * H * 0.55, rr = s.r * (W / m.W) * 1.1, hc = (k.hues[s.i] || k.hues[0] || (s.i ? [190, 215, 255] : [255, 214, 150]));
     const gl = g.createRadialGradient(x, y, rr * 0.5, x, y, rr * 7); gl.addColorStop(0, css(hc, 0.55 * Math.max(0.2, e))); gl.addColorStop(1, css(hc, 0)); g.fillStyle = gl; g.fillRect(0, 0, W, H);
     if (S.blackSun && s.i === 0) { g.strokeStyle = "rgba(150,52,40,0.8)"; g.lineWidth = Math.max(1.2, rr * 0.22); g.beginPath(); g.arc(x, y, rr * 1.08, 0, TAU); g.stroke(); g.fillStyle = "#07050a"; g.beginPath(); g.arc(x, y, rr, 0, TAU); g.fill(); continue; }

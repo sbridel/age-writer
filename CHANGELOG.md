@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## Unreleased
+
+### Fixed
+- The Imager's periscope, looking up: only a sun high in the sky shows overhead. A low sun stays at the horizon of the front view instead of appearing in all four directions.
+
 ## 1.23.0 — A finished Relto (2026-10-11)
 
 ### Added
