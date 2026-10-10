@@ -409,6 +409,8 @@ module.exports = function build(Base, core, AGEX) {
       });
       this.addCommand({ id: "random-age", name: "Generate a random Age", callback: () => this.randomAge() });
       this.addCommand({ id: "stop-soundscape", name: "Stop the soundscape", callback: () => this.stopSound() });
+      // refaire la synchro du télescope : oublie le Great Zero trouvé (et la visée) de tous les Reltos ; l'heure D'ni se tait de nouveau
+      this.addCommand({ id: "forget-great-zero", name: "Forget the Great Zero (aim the telescope again)", callback: () => this.forgetGreatZero() });
     }
 
     /** Crée une note dans le dossier du refuge (créé au besoin) sans écraser : « Nom », « Nom 2 »… */
@@ -540,7 +542,13 @@ module.exports = function build(Base, core, AGEX) {
     }
     /** Relance l'ambiance en cours avec d'autres couches (page coupée, volume, niveau zen). */
     restartSound(layers, seed) { if (this.sound && this.sound.playing) this.sound.start(layers, { seed }); }
-    stopSound() {
+    /** Commande de débogage et de resynchro : le Great Zero de chaque Relto redevient inconnu (visée remise à l'origine). */
+  forgetGreatZero() {
+    const tel = this.ext.telescope || {}, had = Object.values(tel).some((g) => g && g.found);
+    this.ext.telescope = {}; this.telescopeGen = (this.telescopeGen || 0) + 1; this.saveExt(); this.redrawEverything(); // les vues ouvertes relisent l'état (gen)
+    new Notice(this.t(had ? "tel.forgot" : "tel.forgot.none"));
+  }
+  stopSound() {
       clearInterval(this.soundWatch);
       this.sound && this.sound.stop(); for (const a of this.fileAudios) a.pause(); this.fileAudios = [];
       if (this.soundBtn) { this.soundBtn.removeClass("is-on"); this.soundBtn = null; }

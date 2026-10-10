@@ -33,11 +33,11 @@ const axisName = (t, axis) => (axis === "torahn" ? t("tel.torahn") : t("tel.elev
 // ---- état et gestes ---------------------------------------------------------------------------------
 /** L'état du télescope pour la scène courante : relu (visée, trouvé) quand le Relto change de nom ou de graine. */
 function state(r) {
-  const sc = r.scene || {}, key = T.keyOf(sc.name, sc.seed);
-  if (!r.telescope || r.telescope.key !== key) {
+  const sc = r.scene || {}, key = T.keyOf(sc.name, sc.seed), gen = r.opts.telescopeGen ? r.opts.telescopeGen() : 0; // gen : change quand le Zéro est oublié (commande)
+  if (!r.telescope || r.telescope.key !== key || r.telescope.gen !== gen) {
     const g = r.opts.telescopeGet ? r.opts.telescopeGet(key) : null, zero = T.greatZero(sc.name, sc.seed), q = rng((sc.seed ^ 0x7e1e5c0) >>> 0), stars = [];
     for (let i = 0; i < 1400; i++) stars.push({ u: q() * NT, v: (q() * 2 - 1) * (T.ELEV_MAX + FIELD), m: q(), tw: q() * 6.283 }); // u en crans fins, v en shahfeetee
-    r.telescope = { key, zero, aim: T.normAim(g), found: !!(g && g.found), at: g && g.at ? T.normAim(g.at) : null, stars, anim: null };
+    r.telescope = { key, gen, zero, aim: T.normAim(g), found: !!(g && g.found), at: g && g.at ? T.normAim(g.at) : null, stars, anim: null };
   }
   return r.telescope;
 }
@@ -120,8 +120,7 @@ function eyepiece(r, ctx, c, st, sig, tm, ms) {
     ctx.fillStyle = rgba(225, 232, 255, a); ctx.fillRect(px, py, 0.8 + s.m * 1.6, 0.8 + s.m * 1.6);
   }
   // le pouls du Zéro : il bat au prorahn ; loin, il hésite et se dilue ; près, il se resserre et se fixe
-  const s = sig.s, beat = frac((ms - DT.REF) / PULSE_MS), jit = 1 - s, n = rng(Math.floor((ms - DT.REF) / PULSE_MS) ^ 0x2e70);
-  const skip = n() < jit * 0.55, amp = skip ? 0.15 : 1 - jit * 0.6 * n(), pulse = (0.35 + 0.65 * Math.exp(-beat * (2 + 5 * s)) * amp);
+  const s = sig.s, beat = frac((ms - DT.REF) / PULSE_MS), { amp } = T.pulseOf(s, Math.floor((ms - DT.REF) / PULSE_MS)), pulse = (0.35 + 0.65 * Math.exp(-beat * (2 + 5 * s)) * amp);
   let lag = st.aim.torahn / T.NOTCH - aim.u; lag -= Math.round(lag / NT) * NT; // la visée affichée glisse encore : au plus court sur le cercle
   const haze = clamp(1 - sig.d / (FIELD * 1.4)), dx = sig.dt / T.NOTCH + lag, dy = sig.de + (st.aim.elev - aim.v);
   const hx = cx + dx * k * haze, hy = cy - dy * k * haze, hr = lerp(R * 1.1, 5 + 10 * (1 - s), haze);
@@ -144,6 +143,8 @@ function eyepiece(r, ctx, c, st, sig, tm, ms) {
 function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   const t = tOf(r), st = state(r), sig = T.observe(T.signal(st.aim, st.zero), beatOf(r), fnvKey(st.key)), ms = now(r), amb = 0.6 + 0.4 * sky.ambient, c = (h) => mix("#05060c", h, amb);
   r.telescopeT = tm;
+  // le pouls à l'oreille : une note douce à chaque prorahn, tant qu'on regarde dans l'oculaire (même scintillation, mêmes battements manqués que la lueur)
+  { const b = beatOf(r); if (r.telescopePulse != null && b !== r.telescopePulse && r.opts.onTelescopeSound) { const p = T.pulseOf(sig.s, b); if (!p.skip) r.opts.onTelescopeSound("pulse", sig.s * p.amp); } r.telescopePulse = b; }
   // le ciel du sommet (assombri : on regarde dans une lunette) et le parapet de pierre
   const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, mix("#04060d", sky.top, 0.35)); g.addColorStop(1, mix("#0a0c14", sky.bottom, 0.3)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   const q = rng(((sc.seed || 0) ^ 0x51a7) >>> 0); for (let i = 0; i < 70; i++) { const x = q() * W, y = q() * 220, a = (0.2 + 0.5 * q()) * (0.6 + 0.4 * (sky.night == null ? 1 : sky.night)); ctx.fillStyle = rgba(230, 236, 255, a); ctx.fillRect(x, y, 1, 1); }

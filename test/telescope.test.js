@@ -150,6 +150,18 @@ ok(T.STEP.torahn.hub === 100 && T.STEP.torahn.rim === 2500 && T.STEP.elev.hub ==
   const rr = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { ...opts(), reducedMotion: true }); rr.setScene(other); rr.setView("telescope"); rr.draw(0); TL.act(rr, { axis: "toran", delta: T.STEP.torahn.hub }); rr.draw(0);
   ok(!rr.telescope.anim && bad === 0, "mouvement réduit : la visée saute, sans glissement");
   ok(bad === 0, "vue du télescope : aucun nombre non fini");
+  // le pouls à l'oreille : une note par prorahn tant qu'on regarde ; loin, des battements manqués
+  const listen = (aim) => { sounds.length = 0; const rp = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts()); rp.setScene(other); rp.setView("telescope"); rp.draw(0); rp.telescope.aim = aim;
+    for (let i = 0; i < 120; i++) { rp.nowOverride = 1.8e12 + i * T2.PULSE_MS; rp.draw(i); } return sounds.filter(([k]) => k === "pulse"); };
+  const T2 = require("../src/relto-telescope"), zo = T.greatZero(other.name, other.seed);
+  const nearP = listen({ torahn: zo.torahn, elev: zo.elevation }), farP = listen({ torahn: (zo.torahn + 31250) % T.TURN, elev: zo.elevation > 0 ? -100 : 100 });
+  ok(nearP.length >= 110 && farP.length < nearP.length - 15, `pouls : près, presque chaque battement (${nearP.length}/119) ; loin, il en manque (${farP.length})`);
+  ok(Math.min(...nearP.map(([, v]) => v)) > Math.max(...farP.map(([, v]) => v)), "pouls : plus fort près que loin");
+  // commande « oublier le Great Zero » : les vues ouvertes relisent l'état
+  { let gen = 0; const st0 = { [T.keyOf(other.name, other.seed)]: { torahn: 100, elev: 0, found: true } };
+    const rg = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { telescopeGen: () => gen, telescopeGet: (k) => st0[k] || null });
+    rg.setScene(other); rg.setView("telescope"); rg.draw(0); ok(rg.telescope.found, "Zéro relevé");
+    delete st0[T.keyOf(other.name, other.seed)]; gen++; rg.draw(1); ok(!rg.telescope.found && rg.telescope.aim.torahn === 0, "oublié : la vue ouverte repart de zéro"); }
 }
 ok(["tel.found", "tel.band.void", "tel.band.edge", "relto.v.telescope"].every((k) => D.en[k] && D.fr[k]), "textes en anglais et en français");
 console.log(`✓ telescope.test.js (${n} contrôles)`);

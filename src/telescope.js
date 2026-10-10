@@ -107,7 +107,17 @@ function observe(sig, beat, salt = 0) {
   return { ...sig, s: sig.found ? Math.max(s, sig.s) : s, band: sig.found ? sig.band : band };
 }
 
+/**
+ * Un battement du pouls (`beat` : le numéro du prorahn), pour l'œil et pour l'oreille à la fois : loin, il en saute
+ * souvent un et faiblit au hasard ; près, il bat sans faute. `skip` : battement manqué ; `amp` : sa force (0 à 1).
+ */
+function pulseOf(s, beat) {
+  const n = rng(((beat | 0) ^ 0x2e70) >>> 0), jit = 1 - Math.max(0, Math.min(1, s));
+  const skip = n() < jit * 0.55;
+  return { skip, amp: skip ? 0.15 : 1 - jit * 0.6 * n() };
+}
+
 /** Ce qu'on garde (par Relto) : la visée et, une fois trouvé, le Zéro reste trouvé (avec la visée du moment, `at`, pour l'étape 2). */
 function saved(st) { return { torahn: st.aim.torahn, elev: st.aim.elev, found: !!st.found, ...(st.found && st.at ? { at: { torahn: st.at.torahn, elev: st.at.elev } } : {}) }; }
 
-module.exports = { TURN, NOTCH, STEP, ELEV_MAX, ZERO_ELEV, DIST_MAX, TOL, BANDS, SCINT, observe, axisOf, keyOf, greatZero, kiElev, normAim, turn, gap, signal, saved };
+module.exports = { TURN, NOTCH, STEP, ELEV_MAX, ZERO_ELEV, DIST_MAX, TOL, BANDS, SCINT, observe, pulseOf, axisOf, keyOf, greatZero, kiElev, normAim, turn, gap, signal, saved };
