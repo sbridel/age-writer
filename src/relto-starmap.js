@@ -54,7 +54,17 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   ctx.strokeStyle = rgba(107, 74, 42, 0.45); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(zx, zy); ctx.lineTo(zx, zy - P.R * TI - 6); ctx.stroke();
   ctx.font = "italic 9px serif"; ctx.fillStyle = INK2; ctx.textAlign = "center"; ctx.fillText(t("map.north"), zx, zy - P.R * TI - 9); ctx.textAlign = "left";
   // les étiquettes ne se chevauchent pas : chacune cherche, autour de son point, une place libre
-  const taken = [], place = (x, y, w, h) => { for (const [dx, dy] of [[9, -4], [9, 10], [-9 - w, -4], [-9 - w, 10], [-w / 2, -12], [-w / 2, 18], [12, -16], [-12 - w, 20]]) { const b = { x: x + dx, y: y + dy - h, w, h }; if (b.x < S.x + 14 || b.x + w > S.x + S.w - 14 || b.y < S.y + 14) continue; if (!taken.some((o) => b.x < o.x + o.w && b.x + b.w > o.x && b.y < o.y + o.h && b.y + b.h > o.y)) { taken.push(b); return [b.x, b.y + h - 2]; } } return null; };
+  // les étiquettes ne se chevauchent pas : chacune cherche, autour de son point, une place libre ; d'abord tout près, puis plus loin
+  // (reliée alors à son étoile par un trait fin). Elles s'écrivent à la fin, par-dessus les traits, avec un liseré de papier.
+  const OFFS = [[9, -4], [9, 10], [-9, -4], [-9, 10], [0, -12], [0, 18], [12, -16], [-12, 20]];
+  const taken = [], place = (x, y, w, h) => {
+    for (const k of [1, 1.9, 2.8]) for (const [ox, oy] of OFFS) {
+      const dx = ox > 0 ? ox * k : ox < 0 ? ox * k - w : -w / 2, dy = oy * k, b = { x: x + dx, y: y + dy - h, w, h };
+      if (b.x < S.x + 14 || b.x + w > S.x + S.w - 14 || b.y < S.y + 34 || b.y + h > S.y + S.h - 30) continue;
+      if (!taken.some((o) => b.x < o.x + o.w && b.x + b.w > o.x && b.y < o.y + o.h && b.y + b.h > o.y)) { taken.push(b); return [b.x, b.y + h - 2, k > 1, b]; }
+    }
+    return null;
+  }, labels = [];
   // la constellation : chaque étoile reliée à sa plus proche voisine
   ctx.strokeStyle = rgba(59, 42, 27, 0.35); ctx.lineWidth = 0.8;
   for (const s of map.stars) { let best = null, bd = Infinity; for (const o of map.stars) { if (o === s) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < bd) { bd = d; best = o; } } if (best && s.key < best.key || (best && map.stars.length === 2)) { const [ax, ay] = P.at(s.x, s.y, s.z), [bx, by] = P.at(best.x, best.y, best.z); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); } }
@@ -80,7 +90,7 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   ctx.fillStyle = INK; ctx.fillRect(rx - 1.5, ry - 6, 3, 3.4); // la cabane
   taken.push({ x: zx - 12, y: zy - 12, w: 24, h: 24 }, { x: rx - 7, y: ry - 7, w: 14, h: 12 });
   for (const s of map.stars) { const [sx, sy] = P.at(s.x, s.y, s.z); taken.push({ x: sx - 6, y: sy - 6, w: 12, h: 12 }); }
-  ctx.font = "italic 10px serif"; ctx.fillStyle = INK2; { const w = ctx.measureText(t("map.relto")).width, at = place(rx, ry, w, 10); if (at) ctx.fillText(t("map.relto"), at[0], at[1]); }
+  labels.push({ x: rx, y: ry, text: t("map.relto"), font: "italic 10px serif" });
   r.hot.push({ x: rx - 10, y: ry - 10, w: 20, h: 20, tip: `${sc.name || "Relto"} — ${t("map.relto.tip")}` });
   // les étoiles situées, leurs perturbateurs, leur trait de plomb vers le Zéro
   for (const s of map.stars) {
@@ -93,10 +103,19 @@ function drawStarMap(r, ctx, sc, sky, tm) {
     if (s.offLine) { ctx.strokeStyle = RED; ctx.lineWidth = 0.8; ctx.setLineDash && ctx.setLineDash([2, 2]); ctx.beginPath(); ctx.arc(sx, sy, 9, 0, 6.283); ctx.stroke(); ctx.setLineDash && ctx.setLineDash([]); }
     if (s.tri) { ctx.strokeStyle = LEAD; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(sx - 8, sy + 7); ctx.lineTo(sx, sy - 7); ctx.lineTo(sx + 8, sy + 7); ctx.closePath(); ctx.stroke(); } // triangulée
     const label = s.ages.length ? s.ages[0] + (s.ages.length > 1 ? " +" + (s.ages.length - 1) : "") : "";
-    if (label) { ctx.font = "italic 9.5px serif"; ctx.fillStyle = INK2; const at = place(sx, sy, Math.min(120, ctx.measureText(label).width), 10); if (at) ctx.fillText(label, at[0], at[1], 120); } // sans place libre : le nom reste au survol
+    if (label) labels.push({ x: sx, y: sy, text: label, font: "italic 9.5px serif" }); // sans place libre : le nom reste au survol
     const tip = (s.ages.length ? s.ages.join(", ") : t("map.star.unnamed")) + (s.pert.length ? " — " + s.pert.map((p) => pertName(t, p.kind)).join(", ") : "") + (bad ? " — " + t("map.star.miss") : "") + " — " + t(elevBand(s.z));
     const far = t("beam.far.line", { far: String(t("beam.far")).split("|")[BEAM.fracBand(BEAM.rahnfeeOf(s.distance))] }); // la distance le long du faisceau : en mots, puis en rahnfee (chiffres D'ni)
     r.hot.push({ x: sx - 9, y: sy - 9, w: 18, h: 18, tip: tip + " — " + far, frac: BEAM.digitsOf(s.distance) });
+  }
+  // les noms, en dernier : liseré de papier pour rester lisibles par-dessus les traits ; un nom écarté est relié à son point
+  ctx.lineJoin = "round";
+  for (const L of labels) {
+    ctx.font = L.font; const w = Math.min(120, ctx.measureText(L.text).width), at = place(L.x, L.y, w, 10); if (!at) continue;
+    const [lx, ly, far, b] = at;
+    if (far) { const tx = Math.max(b.x, Math.min(b.x + b.w, L.x)), ty = Math.max(b.y, Math.min(b.y + b.h, L.y)); ctx.strokeStyle = rgba(107, 74, 42, 0.45); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(L.x, L.y); ctx.lineTo(tx, ty); ctx.stroke(); }
+    ctx.strokeStyle = "rgba(240,230,205,0.9)"; ctx.lineWidth = 3; ctx.strokeText(L.text, lx, ly, 120);
+    ctx.fillStyle = INK2; ctx.fillText(L.text, lx, ly, 120);
   }
   // l'échelle des hauteurs, gravée dans un coin : les fils ne sont pas à l'échelle des distances
   { const lx = S.x + 26, ly = S.y + S.h - 40, h = 50 * P.hz; ctx.strokeStyle = INK2; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx, ly - h); ctx.moveTo(lx - 3, ly); ctx.lineTo(lx + 3, ly); ctx.moveTo(lx - 3, ly - h); ctx.lineTo(lx + 3, ly - h); ctx.stroke();
