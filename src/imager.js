@@ -116,6 +116,7 @@ function lensScore(s, t) {
 }
 /** I. Justesse des cristaux (0 à 1) : chaque emplacement juste compte ; une bonne page à la mauvaise place, un peu. */
 function crystalScore(s, t) {
+  if (t && Number.isFinite(t.cryScore)) return t.cryScore; // mode Guilde (src/imager-guild.js) : les cristaux sont des glyphes, la justesse vient avec la cible
   const C = t.crystals; if (!C || !C.ids.length) return 1;
   let k = 0;
   C.ids.forEach((id, i) => { const pick = C.options[(s.cry || [])[i]]; if (pick === id) k += 1; else if (C.ids.includes(pick)) k += 0.3; });

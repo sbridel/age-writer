@@ -15,6 +15,7 @@
 // cartouche au bas de l'écran dit l'heure là-bas et les coordonnées KIPS (src/calibration.js). Sans calibration : rien ne change.
 const { rng, clamp, mix, rgba, frac } = require("./util");
 const I = require("./imager");
+const GI = require("./imager-guild");
 const CAL = require("./calibration");
 const TEL = require("./telescope");
 const { makeT } = require("./i18n");
@@ -29,6 +30,7 @@ const BACK = { x: 0, y: 330, w: W, h: 30 };
 const MICRO = { x: 524, y: 192, r: 13, hub: 6, win: { x: 494, y: 160, w: 60, h: 14 }, span: 6 }; // le micromètre de synchro ; la fenêtre montre ±6 crans
 const EN = makeT(() => "en");
 const tOf = (r) => (r.opts && typeof r.opts.t === "function" ? r.opts.t : EN);
+const tx = (r) => ({ t: tOf(r) }); // tx(r).t("clé") : là où `t` est déjà le temps de l'animation
 
 /** L'onde d'un ciel (ou d'un réglage) : `s` = { pol, freq, amp, harm }, `phase` de 0 à 25, dans le rectangle `b`. */
 function wavePath(ctx, s, phase, b) {
@@ -121,7 +123,7 @@ function drawScreen(r, ctx, S, st, cl, t, c) {
       ctx.fillStyle = rgba(0, 0, 0, 0.35 * Math.min(1, Math.abs(s.iris - (tg && tg.lens ? tg.lens.iris : s.iris)) / 12)); ctx.fillRect(S.x, S.y, S.w, S.h); // iris trop ouvert ou trop fermé
     }
   }
-  const nz = rng(Math.floor(t * 12)); ctx.fillStyle = rgba(170, 230, 220, 0.3 * (1 - cl.atmo)); for (let i = 0; i < 260 * (1 - cl.atmo) * sc; i++) ctx.fillRect(S.x + nz() * S.w, S.y + nz() * S.h, 1.4, 1.4); // neige
+  const nz = rng(Math.floor(t * 12)); ctx.fillStyle = rgba(170, 230, 220, (st.guild && !st.world ? 0.04 : 0.3) * (1 - cl.atmo)); for (let i = 0; i < 260 * (1 - cl.atmo) * sc; i++) ctx.fillRect(S.x + nz() * S.w, S.y + nz() * S.h, 1.4, 1.4); // neige (mode Guilde, aucun monde : presque rien, la fenêtre reste noire)
   ctx.strokeStyle = rgba(127, 214, 200, 0.12 * (1 - k)); ctx.lineWidth = 1; for (let y = S.y; y < S.y + S.h; y += 4) { ctx.beginPath(); ctx.moveTo(S.x, y + frac(t) * 4); ctx.lineTo(S.x + S.w, y + frac(t) * 4); ctx.stroke(); } // balayage
   const gl = ctx.createLinearGradient(S.x, S.y, S.x + S.w * 0.6, S.y + S.h); gl.addColorStop(0, "rgba(255,255,255,0.10)"); gl.addColorStop(0.4, "rgba(255,255,255,0)"); ctx.fillStyle = gl; ctx.fillRect(S.x, S.y, S.w, S.h); // reflet du verre
   const vg = ctx.createRadialGradient(S.x + S.w / 2, S.y + S.h / 2, S.h * 0.4, S.x + S.w / 2, S.y + S.h / 2, S.w * 0.65); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.45)"); ctx.fillStyle = vg; ctx.fillRect(S.x, S.y, S.w, S.h);
@@ -161,7 +163,7 @@ function overview(r, ctx, st, cl, t, c, now) {
   ctx.fillStyle = c("#0b0d11"); ctx.fillRect(10, 150, 24, FLOOR - 150); ctx.strokeStyle = c("#3a4048"); ctx.strokeRect(10, 150, 24, FLOOR - 150);
   r.hot.push({ x: 8, y: 148, w: 28, h: FLOOR - 146, tip: "Door — back outside", go: "island" });
   drawScreen(r, ctx, SCREEN, st, cl, t, c);
-  r.hot.push({ x: SCREEN.x, y: SCREEN.y, w: SCREEN.w, h: SCREEN.h, tip: k > 0.9 && st.age ? st.age.name : "The screen" });
+  r.hot.push({ x: SCREEN.x, y: SCREEN.y, w: SCREEN.w, h: SCREEN.h, tip: st.guild ? (k > 0.9 && st.planet ? st.age.name : st.world ? tx(r).t("guild.screen.blur") : tx(r).t("guild.screen.dark")) : k > 0.9 && st.age ? st.age.name : "The screen" });
 
   // le périscope : la manivelle (azimut) à gauche de l'écran, le levier d'inclinaison à droite ; libres une fois verrouillé
   const K = CRANK, ang = (s.az / 4) * Math.PI * 2 + (st.crankSpin || 0);
@@ -202,7 +204,8 @@ function overview(r, ctx, st, cl, t, c, now) {
   const cal = r.imagerCal ? r.imagerCal() : null;
   if (cal) { micrometer(r, ctx, c, cal, t); cartouche(r, ctx, cal); }
 
-  // le lutrin : le livre de l'Âge visé ; ‹ › pour changer de livre
+  if (st.guild) blankBook(r, ctx, st, c);
+  else { // le lutrin : le livre de l'Âge visé ; ‹ › pour changer de livre
   ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(70, 200, 8, FLOOR - 200); ctx.fillRect(52, FLOOR - 6, 44, 6);
   ctx.save(); ctx.translate(74, 196); ctx.rotate(-0.18);
   ctx.fillStyle = c("#2a1d13"); ctx.fillRect(-46, -6, 92, 30);
@@ -213,6 +216,7 @@ function overview(r, ctx, st, cl, t, c, now) {
   ctx.fillStyle = "#e0c27a"; ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillText(st.age ? st.age.name : st.empty ? "(no Age on the shelf)" : "…", 74, 238); ctx.textAlign = "left";
   for (const [dx, sym, d] of [[-56, "‹", -1], [56, "›", 1]]) { ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "20px serif"; ctx.textAlign = "center"; ctx.fillText(sym, 74 + dx, 203); ctx.textAlign = "left"; r.hot.push({ x: 74 + dx - 12, y: 182, w: 24, h: 28, tip: d < 0 ? "Previous book" : "Next book", imager: { book: d } }); }
   r.hot.push({ x: 28, y: 180, w: 92, h: 66, tip: st.age ? `${st.age.name} — on the lectern` : "Lectern", imager: { book: 1 } });
+  }
 
   // l'établi et ses trois postes
   ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(140, 218, 492, FLOOR - 218); ctx.fillStyle = c("#5a4322"); ctx.fillRect(136, 212, 500, 8);
@@ -222,7 +226,8 @@ function overview(r, ctx, st, cl, t, c, now) {
   ctx.fillStyle = beam; ctx.beginPath(); ctx.moveTo(px - 3, py - 8); ctx.lineTo(SCREEN.x + 10, SCREEN.y + SCREEN.h - 20); ctx.lineTo(SCREEN.x + 70, SCREEN.y + SCREEN.h); ctx.lineTo(px + 3, py - 4); ctx.closePath(); ctx.fill();
   ctx.fillStyle = rgba(160, 230, 220, 0.55 + 0.3 * k); ctx.beginPath(); ctx.moveTo(px, py - 14); ctx.lineTo(px + 5, py - 7); ctx.lineTo(px, py); ctx.lineTo(px - 5, py - 7); ctx.closePath(); ctx.fill();
   const lit = (key) => (locked || cl[key] > 0.9 ? "green" : null);
-  { // I. le râtelier
+  if (st.guild) guildRackMini(ctx, c, st, lit);
+  else { // I. le râtelier
     const b = STATIONS.cry; ctx.fillStyle = c("#2a1d13"); ctx.fillRect(b.x + 8, b.y + 44, b.w - 24, 10);
     const C = tg && tg.crystals;
     for (let i = 0; i < 8; i++) { if (C && s.cry.includes(i)) continue; const x = b.x + 16 + i * 14; ctx.fillStyle = rgba(170, 225, 220, 0.55); ctx.beginPath(); ctx.moveTo(x, b.y + 30); ctx.lineTo(x + 4, b.y + 34); ctx.lineTo(x + 4, b.y + 46); ctx.lineTo(x - 4, b.y + 46); ctx.lineTo(x - 4, b.y + 34); ctx.closePath(); ctx.fill(); }
@@ -241,7 +246,7 @@ function overview(r, ctx, st, cl, t, c, now) {
     const b = STATIONS.atmo, crt = { x: b.x + 8, y: b.y + 6, w: 62, h: 40 };
     ctx.fillStyle = "#061a14"; ctx.fillRect(crt.x, crt.y, crt.w, crt.h); ctx.strokeStyle = c("#8a6a2e"); ctx.lineWidth = 2; ctx.strokeRect(crt.x, crt.y, crt.w, crt.h);
     ctx.save(); ctx.beginPath(); ctx.rect(crt.x, crt.y, crt.w, crt.h); ctx.clip();
-    if (tg) { wavePath(ctx, I.effective(s, tg, now), s.lock ? I.phaseAt(tg, now) : s.phase, crt); ctx.strokeStyle = "rgba(120,255,170,0.85)"; ctx.lineWidth = 1; ctx.stroke(); }
+    if (tg && !(st.guild && !st.planet)) { wavePath(ctx, I.effective(s, tg, now), s.lock ? I.phaseAt(tg, now) : s.phase, crt); ctx.strokeStyle = "rgba(120,255,170,0.85)"; ctx.lineWidth = 1; ctx.stroke(); } // mode Guilde : le tube dort tant que les cristaux ne tiennent pas une planète
     ctx.restore();
     for (let i = 0; i < 4; i++) { const x = b.x + 86 + (i % 2) * 22, y = b.y + 14 + Math.floor(i / 2) * 22; ctx.fillStyle = c("#b8913f"); ctx.beginPath(); ctx.arc(x, y, 7, 0, 6.283); ctx.fill(); }
     ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(b.x + 138, b.y + 50); ctx.lineTo(b.x + 138 + (s.pol > 0 ? 6 : -6), b.y + 34); ctx.stroke();
@@ -300,6 +305,73 @@ function cartouche(r, ctx, cal) {
   }
 }
 
+// ---- mode Guilde : le livre vierge ---------------------------------------------------------------------
+/** Le monde est-il formé (cristaux justes, image nette ou tenue par le verrou) ? Son nom s'inscrit alors sur la page. */
+function formed(r, st) { return !!(st.guild && st.planet && st.world && (st.settings.lock || (r.imagerClarity ? r.imagerClarity().total : 0) >= I.LOCK_AT)); }
+/**
+ * Le livre vierge, fixé dans l'appareil (pas de ‹ ›) : une fenêtre noire sur sa page droite, qui montre le monde quand il se
+ * forme ; sur la page gauche, le nom s'inscrit à l'encre quand l'image tient. Il se souvient des mondes déjà formés.
+ */
+function blankBook(r, ctx, st, c) {
+  const t = tOf(r), on = formed(r, st), name = on ? String(st.world.age.name) : "";
+  ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(70, 200, 8, FLOOR - 200); ctx.fillRect(52, FLOOR - 6, 44, 6);
+  ctx.fillStyle = c("#5a4322"); ctx.fillRect(38, 214, 72, 4); // le support de laiton qui le tient
+  ctx.save(); ctx.translate(74, 196); ctx.rotate(-0.18);
+  ctx.fillStyle = c("#2a1d13"); ctx.fillRect(-46, -6, 92, 30);
+  ctx.fillStyle = c("#e8dcc0"); ctx.fillRect(-43, -4, 42, 25); ctx.fillRect(1, -4, 42, 25);
+  ctx.fillStyle = "#05080a"; ctx.fillRect(5, -1, 34, 20); // la fenêtre noire
+  if (on && st.thumb) ctx.drawImage(st.thumb, 5, -1, 34, 20);
+  if (on) { ctx.fillStyle = "#3b2a1b"; ctx.font = "italic 6px serif"; ctx.textAlign = "center"; ctx.fillText(name, -22, 10, 38); ctx.textAlign = "left"; } // l'encre du nom
+  else { ctx.strokeStyle = c("#c8baa0"); ctx.lineWidth = 0.5; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(-38, 4 + i * 5); ctx.lineTo(-6, 4 + i * 5); ctx.stroke(); } }
+  ctx.restore();
+  ctx.fillStyle = "#e0c27a"; ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillText(on ? name : t("guild.book"), 74, 238, 120); ctx.textAlign = "left";
+  const seen = st.g.seen.length ? " — " + t("guild.book.seen", { names: st.g.seen.join(", ") }) : "";
+  r.hot.push({ x: 28, y: 180, w: 92, h: 66, tip: (on ? t("guild.book.formed", { name }) : t("guild.book.tip")) + seen });
+}
+/** Vue d'ensemble, station I en mode Guilde : quatre logements (verts, ambre) et les cristaux de la rangée. */
+function guildRackMini(ctx, c, st, lit) {
+  const b = STATIONS.cry, slots = GI.slotsOf(st.g.cry, st.world ? GI.crystalIds(st.world) : []);
+  ctx.fillStyle = c("#2a1d13"); ctx.fillRect(b.x + 8, b.y + 44, b.w - 24, 10);
+  const shown = GI.rackPage(GI.rackOf(st.ages || [], st.cands), st.g.page);
+  shown.forEach((id, i) => { if (st.g.cry.includes(id)) return; const x = b.x + 16 + i * 14; ctx.fillStyle = rgba(170, 225, 220, 0.55); ctx.beginPath(); ctx.moveTo(x, b.y + 30); ctx.lineTo(x + 4, b.y + 34); ctx.lineTo(x + 4, b.y + 46); ctx.lineTo(x - 4, b.y + 46); ctx.lineTo(x - 4, b.y + 34); ctx.closePath(); ctx.fill(); });
+  plate(ctx, c, b.x + 8, b.y + 4, b.w - 40, 22, false);
+  slots.forEach((q, i) => { const x = b.x + 22 + i * 25; ctx.fillStyle = "#1b130d"; ctx.fillRect(x - 6, b.y + 9, 12, 12); if (q.id) { ctx.fillStyle = q.ok ? rgba(127, 214, 200, 0.8) : q.half ? rgba(240, 184, 96, 0.55) : rgba(170, 225, 220, 0.35); ctx.fillRect(x - 3, b.y + 6, 6, 12); } });
+  lamp(ctx, b.x + b.w - 14, b.y + 14, st.planet ? "green" : lit("cry"));
+}
+
+/** Gros plan I en mode Guilde : le râtelier des glyphes connus (par rangées de huit, ‹ ›), quatre logements. */
+function closeCryGuild(r, ctx, st, cl, t, c) {
+  const s = st.settings, hand = st.hand, ids = st.world ? GI.crystalIds(st.world) : [], slots = GI.slotsOf(st.g.cry, ids);
+  room(ctx, c, t); bench(ctx, c, 186);
+  drawScreen(r, ctx, MINI, st, cl, t, c);
+  plate(ctx, c, 24, 26, 360, 140);
+  ctx.fillStyle = c("#1b130d"); ctx.font = "bold 13px serif"; ctx.fillText("I", 36, 46);
+  for (let i = 0; i < GI.SLOTS; i++) {
+    const x = 74 + i * 88, y = 146, q = slots[i], lifted = hand && hand.slot === i;
+    ctx.fillStyle = "#120c08"; ctx.beginPath(); ctx.ellipse(x, y, 26, 7, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.stroke();
+    if (q.ok || q.half) { const g = ctx.createRadialGradient(x, y, 2, x, y, 34); g.addColorStop(0, q.ok ? "rgba(127,214,200,0.45)" : "rgba(240,184,96,0.35)"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(x - 34, y - 34, 68, 68); }
+    if (q.id) crystal(r, ctx, x, y - (lifted ? 16 : 2), 40, 92, q.id, q.ok ? "ok" : q.half ? "half" : 0, t, i);
+    if (lifted) { ctx.strokeStyle = "rgba(240,184,96,0.8)"; ctx.setLineDash([3, 3]); ctx.strokeRect(x - 30, y - 128, 60, 136); ctx.setLineDash([]); }
+    r.hot.push({ x: x - 34, y: y - 120, w: 68, h: 132, tip: s.lock ? tx(r).t("guild.lock.cry") : hand ? tx(r).t("guild.slot.put") : q.id ? `${q.id.replace(/_/g, " ")} — ${tx(r).t("guild.slot.take")}` : tx(r).t("guild.slot.empty"), imager: { slot: i } });
+  }
+  if (st.planet) { ctx.fillStyle = "#9fe6da"; ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillText(tx(r).t("guild.planet"), 204, 180, 340); ctx.textAlign = "left"; }
+  // le râtelier : les glyphes connus, huit par rangée ; un cristal posé laisse sa cheville vide
+  const rack = GI.rackOf(st.ages || [], st.cands), n = GI.pages(rack), shown = GI.rackPage(rack, st.g.page);
+  ctx.fillStyle = c("#2a1d13"); ctx.fillRect(18, 298, 604, 18); ctx.fillStyle = c("#4b3626"); ctx.fillRect(18, 294, 604, 6);
+  shown.forEach((id, j) => {
+    const x = 56 + j * 76, y = 296, placed = st.g.cry.includes(id), held = hand && hand.id === id && hand.slot == null;
+    ctx.fillStyle = c("#6b5126"); ctx.fillRect(x - 3, y - 12, 6, 12);
+    if (!placed) crystal(r, ctx, x, y - (held ? 22 : 4), 30, 70, id, held ? "half" : 0, t, j);
+    r.hot.push({ x: x - 32, y: y - 92, w: 64, h: 100, tip: s.lock ? tx(r).t("guild.lock.cry") : placed ? (hand && hand.id === id ? tx(r).t("guild.rack.back") : tx(r).t("guild.rack.placed")) : `${id.replace(/_/g, " ")} — ${hand ? tx(r).t("guild.rack.swap") : tx(r).t("guild.rack.take")}`, imager: { rack: id } });
+  });
+  if (!rack.length) { ctx.fillStyle = "rgba(233,220,184,0.75)"; ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillText(tx(r).t("guild.rack.none"), W / 2, 270, 560); ctx.textAlign = "left"; }
+  if (n > 1) {
+    ctx.fillStyle = "#e0c27a"; ctx.font = "11px serif"; ctx.textAlign = "center"; ctx.fillText(`${st.g.page % n + 1} / ${n}`, W / 2, 196); ctx.textAlign = "left";
+    for (const [x, sym, d] of [[10, "‹", -1], [W - 10, "›", 1]]) { ctx.fillStyle = rgba(224, 194, 122, 0.9); ctx.font = "22px serif"; ctx.textAlign = "center"; ctx.fillText(sym, x, 268); ctx.textAlign = "left"; r.hot.push({ x: x - 10, y: 240, w: 20, h: 40, tip: d < 0 ? tx(r).t("guild.rack.prev") : tx(r).t("guild.rack.next"), imager: { rackPage: d } }); }
+  }
+  backStrip(r, ctx);
+}
+
 // ---- I. le râtelier à cristaux -----------------------------------------------------------------------
 function closeCry(r, ctx, st, cl, t, c) {
   const s = st.settings, tg = st.target, C = tg && tg.crystals, hand = st.hand;
@@ -331,7 +403,7 @@ function closeCry(r, ctx, st, cl, t, c) {
 // ---- II. le banc optique -----------------------------------------------------------------------------
 const RAIL = { x0: 70, x1: 590 };
 function closeLens(r, ctx, st, cl, t, c) {
-  const s = st.settings, tg = st.target, L = tg && tg.lens;
+  const s = st.settings, tg = st.target, L = st.guild ? st.light : tg && tg.lens; // mode Guilde : la lumière que renvoie le télescope (sinon, le noir)
   room(ctx, c, t); bench(ctx, c, 176);
   drawScreen(r, ctx, MINI, st, cl, t, c);
   // le comparateur : deux demi-champs dans un oculaire de laiton
@@ -345,7 +417,7 @@ function closeLens(r, ctx, st, cl, t, c) {
   ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(O.x - 1, O.y - O.r, 2, O.r * 2);
   const vg = ctx.createRadialGradient(O.x, O.y, O.r * 0.5, O.x, O.y, O.r); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.5)"); ctx.fillStyle = vg; ctx.fillRect(O.x - O.r, O.y - O.r, O.r * 2, O.r * 2);
   ctx.restore();
-  r.hot.push({ x: O.x - O.r, y: O.y - O.r, w: O.r * 2, h: O.r * 2, tip: "Comparator — left: the star's light · right: your beam" });
+  r.hot.push({ x: O.x - O.r, y: O.y - O.r, w: O.r * 2, h: O.r * 2, tip: st.guild ? (L ? tx(r).t("guild.comp.lit") : tx(r).t("guild.comp.dark")) : "Comparator — left: the star's light · right: your beam" });
   // l'iris à lamelles et son levier sur un arc
   const Ir = { x: 296, y: 100, r: 50 }, open = 6 + (s.iris / I.MAX) * 34;
   ctx.fillStyle = c("#3b2a1b"); ctx.beginPath(); ctx.arc(Ir.x, Ir.y, Ir.r + 8, 0, 6.283); ctx.fill();
@@ -387,11 +459,13 @@ function closeAtmo(r, ctx, st, cl, t, c, now) {
   ctx.save(); ctx.beginPath(); ctx.roundRect ? ctx.roundRect(T.x, T.y, T.w, T.h, 14) : ctx.rect(T.x, T.y, T.w, T.h); ctx.clip();
   ctx.strokeStyle = "rgba(60,140,100,0.25)"; ctx.lineWidth = 1; for (let i = 1; i < 8; i++) { ctx.beginPath(); ctx.moveTo(T.x + (i * T.w) / 8, T.y); ctx.lineTo(T.x + (i * T.w) / 8, T.y + T.h); ctx.stroke(); } for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(T.x, T.y + (i * T.h) / 4); ctx.lineTo(T.x + T.w, T.y + (i * T.h) / 4); ctx.stroke(); }
   ctx.lineCap = "round";
-  if (tg) { wavePath(ctx, tg, I.phaseAt(tg, now), T); ctx.strokeStyle = "rgba(90,220,150,0.28)"; ctx.lineWidth = 6; ctx.stroke(); ctx.strokeStyle = "rgba(120,255,170,0.35)"; ctx.lineWidth = 2.5; ctx.stroke(); }
+  const asleep = st.guild && !st.planet; // mode Guilde : la trace du ciel n'apparaît qu'une planète tenue
+  if (tg && !asleep) { wavePath(ctx, tg, I.phaseAt(tg, now), T); ctx.strokeStyle = "rgba(90,220,150,0.28)"; ctx.lineWidth = 6; ctx.stroke(); ctx.strokeStyle = "rgba(120,255,170,0.35)"; ctx.lineWidth = 2.5; ctx.stroke(); }
   const e = tg ? I.effective(s, tg, now) : s; wavePath(ctx, e, e.phase, T); ctx.strokeStyle = "rgba(190,255,210,0.95)"; ctx.lineWidth = 1.4; ctx.stroke();
   const gl = ctx.createRadialGradient(T.x + T.w * 0.3, T.y + T.h * 0.2, 4, T.x + T.w / 2, T.y + T.h / 2, T.w * 0.7); gl.addColorStop(0, "rgba(255,255,255,0.07)"); gl.addColorStop(1, "rgba(0,0,0,0.35)"); ctx.fillStyle = gl; ctx.fillRect(T.x, T.y, T.w, T.h);
   ctx.restore();
-  r.hot.push({ x: T.x, y: T.y, w: T.w, h: T.h, tip: "Cathode tube — the Age's sky (wide trace) and your tuning (bright trace)" });
+  if (asleep) { ctx.fillStyle = "rgba(120,255,170,0.45)"; ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillText(tx(r).t("guild.tube.asleep"), T.x + T.w / 2, T.y + T.h - 14, T.w - 30); ctx.textAlign = "left"; }
+  r.hot.push({ x: T.x, y: T.y, w: T.w, h: T.h, tip: asleep ? tx(r).t("guild.tube.tip") : "Cathode tube — the Age's sky (wide trace) and your tuning (bright trace)" });
   // le voltmètre : la seule mesure du régulateur
   const M = { x: 560, y: 196, r: 40 }; plate(ctx, c, M.x - 52, M.y - 44, 104, 58, false);
   ctx.fillStyle = c("#e8dcc0"); ctx.beginPath(); ctx.arc(M.x, M.y, M.r, Math.PI * 1.1, Math.PI * 1.9); ctx.lineTo(M.x, M.y); ctx.closePath(); ctx.fill();
@@ -431,7 +505,7 @@ function drawImagerRoom(r, ctx, sc, sky, t) {
   const st = r.imagerState(), amb = 0.65 + 0.35 * sky.ambient, c = (h) => mix("#05060c", h, amb), now = r.imagerNow();
   const tg = st.target, cl = tg ? I.clarity(st.settings, tg, now) : { cry: 0, lens: 0, atmo: 0, total: 0 };
   r.imagerT = t;
-  if (st.station === "cry") closeCry(r, ctx, st, cl, t, c);
+  if (st.station === "cry") (st.guild ? closeCryGuild : closeCry)(r, ctx, st, cl, t, c);
   else if (st.station === "lens") closeLens(r, ctx, st, cl, t, c);
   else if (st.station === "atmo") closeAtmo(r, ctx, st, cl, t, c, now);
   else overview(r, ctx, st, cl, t, c, now);

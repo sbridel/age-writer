@@ -13,6 +13,9 @@ const PB = require("./relto-pagebook");
 const TL = require("./relto-telescope");
 const SM = require("./relto-starmap");
 const IM = require("./imager");
+const GI = require("./imager-guild");
+const T = require("./telescope");
+const EN_T = require("./i18n").makeT(() => "en");
 const CAL = require("./calibration");
 const RV = require("./genviews");
 const ROOMS = { cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom, book: PB.drawBookRoom, telescope: TL.drawTelescopeRoom, starmap: SM.drawStarMap };
@@ -581,6 +584,9 @@ class ReltoRenderer {
    * physique) ; le réglage est relu et gardé par `opts.imagerGet / imagerSet` (par chemin de note).
    */
   imagerState() {
+    const guild = this.imagerGuildOn();
+    if (this.imager && !!this.imager.guild !== guild) this.imager = null; // le mode a changé : l'appareil change de livre
+    if (guild) return this.imagerGuild();
     if (!this.imager) this.imager = { idx: 0, station: null, hand: null, age: null, target: null, model: null, settings: IM.normalize(null), loading: null, empty: false };
     const st = this.imager, ages = (this.scene && this.scene.ages) || [];
     st.empty = !ages.length;
@@ -588,6 +594,64 @@ class ReltoRenderer {
     return st;
   }
   imagerNow() { return this.nowOverride != null ? this.nowOverride : Date.now(); }
+  /** Le mode des instruments (réglage `instrumentsMode`, lu par `opts.instrumentsMode()`) : "guild" = l'Art de la Guilde. */
+  imagerGuildOn() { return !!(this.opts && typeof this.opts.instrumentsMode === "function" && this.opts.instrumentsMode() === "guild"); }
+  /** Où le mode Guilde garde son état (par Relto, à part des réglages de chaque Âge) : une clé dans `imagerGet / imagerSet`. */
+  imagerGuildKey() { const sc = this.scene || {}; return "guild:" + T.keyOf(sc.name, sc.seed); }
+  /**
+   * L'Imageur au LIVRE VIERGE (mode Guilde, src/imager-guild.js) : on ne choisit pas l'Âge, on le trouve. Les Âges de l'étagère
+   * sont tous lus (`cands`) ; à chaque image, le monde que les réglages approchent (`world`) devient la cible : parmi les Âges
+   * de l'étoile que tient le télescope (`star`, sa lumière `light` au comparateur), sinon parmi tous. Aucun : fenêtre noire.
+   * Cristaux justes (`planet`) : la station III s'éveille, et le micromètre de synchro (étape 2) trouve la planète.
+   */
+  imagerGuild() {
+    const ages = (this.scene && this.scene.ages) || [], sig = ages.map((a) => a.path).join("\n"), gkey = this.imagerGuildKey();
+    if (!this.imager || this.imager.gkey !== gkey) {
+      const saved = this.opts.imagerGet ? this.opts.imagerGet(gkey) : null;
+      this.imager = { guild: true, gkey, station: null, hand: null, age: null, target: null, model: null, settings: IM.normalize(saved), g: GI.normalize(saved), cands: [], sig: null, loading: null, empty: false, world: null, planet: false, star: null, light: null };
+    }
+    const st = this.imager; st.empty = !ages.length; st.ages = ages;
+    if (st.sig !== sig && !st.loading) {
+      st.sig = sig; const token = (st.loading = {});
+      Promise.all(ages.map((age) => Promise.resolve(this.opts.onImagerAge ? this.opts.onImagerAge(age) : null).then((data) => ({ age, data }), () => ({ age, data: null })))).then((list) => {
+        if (st.loading !== token) return; st.loading = null; st.cands = list.filter((c) => c.data && c.data.target);
+        if (!this.running) this.draw(0);
+      });
+    }
+    this.imagerFind();
+    this.imagerRemember((text) => { this.flash = { text, x: W / 2, y: 120, until: Date.now() + 3200 }; }); // l'image peut se former d'elle-même (la phase dérive)
+    return st;
+  }
+  /** Le monde que les réglages approchent, et ce qui en découle (cible, vue, système, lumière renvoyée par le télescope). */
+  imagerFind() {
+    const st = this.imager, now = this.imagerNow(), star = TL.aimedOf(this), s = st.settings, g = st.g;
+    st.star = star; st.light = GI.lightOf(st.cands, star);
+    let pick = GI.choose(st.cands, g.cry, s, now, star);
+    if (s.lock && g.lockOn) { const held = st.cands.find((c) => c.age.path === g.lockOn); if (held) pick = { world: held, planet: true }; } // verrouillé : la machine tient son monde
+    const w = pick.world;
+    if (!w || !st.world || w.age.path !== st.world.age.path) { st.anim = null; st.thumb = null; }
+    st.world = w; st.planet = !!(w && pick.planet); st.age = w ? w.age : null;
+    st.target = GI.targetOf(w, g.cry); st.model = w ? w.data.model || null : null; st.view = !!st.model;
+    st.system = st.planet ? w.data.system || null : null; st.orbit = st.planet ? w.data.orbit || null : null; // la synchro ne cherche qu'une planète tenue
+    if (s.lock && !st.planet && !st.loading) { st.settings = { ...s, lock: false, az: 0, tilt: 0 }; st.g = { ...g, lockOn: null }; } // le monde a glissé : le verrou lâche
+  }
+  /** Les textes de l'Imageur (`opts.t`, l'anglais à défaut). */
+  imagerTr() { return this.opts && typeof this.opts.t === "function" ? this.opts.t : EN_T; }
+  /** Garder le réglage : par Âge (mode facile), ou l'état du livre vierge (mode Guilde). */
+  imagerSave() {
+    const st = this.imager; if (!this.opts.imagerSet) return;
+    if (st.guild) this.opts.imagerSet(st.gkey, GI.saved(st.settings, st.g));
+    else if (st.age) this.opts.imagerSet(st.age.path, st.settings);
+  }
+  /** Mode Guilde : l'image se forme (nette, cristaux justes) — le livre vierge s'en souvient, le nom s'inscrit sur sa page. */
+  imagerRemember(say) {
+    const st = this.imager; if (!st.guild || !st.planet || !st.world) return false;
+    const name = String(st.world.age.name), clear = st.settings.lock || this.imagerClarity().total >= IM.LOCK_AT;
+    if (!clear || st.g.seen.includes(name)) return false;
+    st.g = { ...st.g, seen: [...st.g.seen, name].sort() }; this.imagerSave();
+    const t = this.imagerTr(); if (say) say(t("guild.inscribed", { name }));
+    return true;
+  }
   imagerLoad(i) {
     const ages = (this.scene && this.scene.ages) || [], st = this.imager; if (!ages.length) return;
     st.idx = ((i % ages.length) + ages.length) % ages.length; const age = ages[st.idx];
@@ -630,7 +694,8 @@ class ReltoRenderer {
   imagerCal() {
     const st = this.imager; if (!st || !st.system || !st.orbit) return null;
     const tel = TL.systemsOf(this), sys = tel.found && tel.systems ? tel.systems[st.system.key] : null; if (!sys) return null;
-    const now = this.imagerNow(), set = st.settings.sysKey && st.settings.sysKey !== st.system.key ? { ...st.settings, syncAt: null } : st.settings; // l'étoile a changé depuis la synchro
+    const other = st.guild && st.g.syncFor !== (st.world && st.world.age.path); // mode Guilde : la synchro vaut pour le monde où elle a été faite
+    const now = this.imagerNow(), set = other || (st.settings.sysKey && st.settings.sysKey !== st.system.key) ? { ...st.settings, syncAt: null } : st.settings; // l'étoile a changé depuis la synchro
     const c = CAL.state(set, st.orbit, true, now);
     return { ...c, sys, system: st.system, lt: CAL.localTime(st.orbit, c, now + CAL.lineShift(st.orbit, sys.line)) }; // étape 3 : gravée sur la fausse ligne, l'heure là-bas est fausse
   }
@@ -642,18 +707,24 @@ class ReltoRenderer {
     if (a.sync != null) { // le micromètre de synchro : seulement quand le système de l'Âge est situé
       const cal = this.imagerCal(), tt = this.opts && typeof this.opts.t === "function" ? this.opts.t : null; if (!cal) return;
       const res = CAL.turnSync(before, a.sync, st.orbit, true, now); st.settings = IM.normalize(res.synced ? { ...res.s, sysKey: st.system.key } : res.s);
+      if (st.guild) {
+        st.g = { ...st.g, syncFor: res.synced && st.world ? st.world.age.path : null };
+        if (res.synced && st.world && this.opts.imagerGet && this.opts.imagerSet) { const p = st.world.age.path, s = st.settings; this.opts.imagerSet(p, { ...(this.opts.imagerGet(p) || {}), sync: s.sync, syncAt: s.syncAt, sysKey: s.sysKey }); } // l'onglet Détails de l'Âge dit l'heure là-bas
+      }
       if (res.synced && !(cal.synced && cal.certain && cal.q >= 1)) { sfx("lock"); if (tt) say(tt("cal.synced")); } else sfx("click");
-      if (st.age && this.opts.imagerSet) this.opts.imagerSet(st.age.path, st.settings);
+      this.imagerSave();
       if (this.opts.onImagerTune) this.opts.onImagerTune(st);
       return;
     }
-    if (a.book) { this.imagerLoad(st.idx + a.book); sfx("page"); return; }
+    if (st.guild) { if (this.imagerGuildAct(a, st, before, sfx, say)) return; }
+    else if (a.book) { this.imagerLoad(st.idx + a.book); sfx("page"); return; }
     if ("station" in a) { st.station = a.station; st.hand = null; return; }
     if (a.lock) {
       if (!tg) return;
       const res = IM.toggleLock(before, tg, now); st.settings = res.s;
       if (!res.ok) { sfx("jam"); say("It won't hold — the image is not clear"); return; }
       sfx(res.locked ? "lock" : "unlock"); say(res.locked ? "Locked — the machine follows the Age" : "Released");
+      if (st.guild) st.g = { ...st.g, lockOn: res.locked && st.world ? st.world.age.path : null };
       if (!res.locked && (before.az || before.tilt)) this.imagerAnim(before, st.settings);
     } else if (a.slot != null || a.rack != null) {
       if (before.lock) { say("The lock holds the crystals"); return; }
@@ -671,8 +742,28 @@ class ReltoRenderer {
       if (a.key === "az") st.crankSpin = 0;
     }
     if (st.settings.az !== before.az || st.settings.tilt !== before.tilt) this.imagerAnim(before, st.settings);
-    if (st.age && this.opts.imagerSet) this.opts.imagerSet(st.age.path, st.settings);
+    if (st.guild) { this.imagerFind(); this.imagerRemember(say); }
+    this.imagerSave();
     if (this.opts.onImagerTune) this.opts.onImagerTune(st);
+  }
+  /**
+   * Mode Guilde : les gestes propres au livre vierge (les cristaux sont des glyphes ; le râtelier a des rangées ; la station III
+   * dort tant que les cristaux ne tiennent pas une planète). Renvoie vrai si le geste est traité ici.
+   */
+  imagerGuildAct(a, st, before, sfx, say) {
+    const t = this.imagerTr(), done = () => { this.imagerFind(); this.imagerSave(); if (this.opts.onImagerTune) this.opts.onImagerTune(st); return true; };
+    if (a.book) return true; // un seul livre, fixé dans l'appareil
+    if (a.rackPage) { const rack = GI.rackOf((this.scene && this.scene.ages) || [], st.cands), n = GI.pages(rack); st.g = { ...st.g, page: (((st.g.page + a.rackPage) % n) + n) % n }; sfx("click"); return done(); }
+    if (a.slot != null || a.rack != null) {
+      if (before.lock) { say(t("guild.lock.cry")); return true; }
+      const res = GI.place(st.g.cry, st.hand, a.slot != null ? { slot: a.slot } : { rack: a.rack }), was = st.planet;
+      st.hand = res.hand; st.g = { ...st.g, cry: res.cry }; sfx(res.hand ? "lift" : "set");
+      this.imagerFind(); if (st.planet && !was) { sfx("lock"); say(t("guild.planet")); }
+      this.imagerRemember(say);
+      return done();
+    }
+    if (a.key && ["freq", "amp", "harm", "phase", "pol"].includes(a.key) && !st.planet && !before.lock) { sfx("jam"); say(t("guild.atmo.asleep")); return true; }
+    return false;
   }
   /** La vue glisse de l'ancienne direction vers la nouvelle (de côté pour l'azimut, de haut en bas pour l'inclinaison). */
   imagerAnim(from, to) {
