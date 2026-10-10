@@ -19,6 +19,7 @@ const CHAPTERS = [
   { id: "rest", page: "page_chimney", title: { en: "A world to rest in", fr: "Un monde où se reposer" } },
   { id: "mend", page: "page_lanterns", title: { en: "Mending without breaking", fr: "Corriger sans casser" } },
   { id: "weather", page: "page_fireflies", title: { en: "A day that changes", fr: "Un jour qui change" } },
+  { id: "laws", page: "page_aurora", title: { en: "The laws of a world", fr: "Les lois du monde" } },
 ];
 
 /** La page finale (pour l'instant : un encrier posé sur la table). Le nom reste neutre. */
@@ -90,6 +91,11 @@ function check(chapter, ctx) {
     if (!stable.length) return { ok: false, why: "stable" };
     return stable.some((a) => a.programmed > 0) ? { ok: true, why: "" } : { ok: false, why: "program" };
   }
+  if (chapter.id === "laws") {
+    // « les lois du monde » : un monde stable qui écrit au moins deux valeurs physiques (mass: 0.8, age: 3.5…)
+    if (!stable.length) return { ok: false, why: "stable" };
+    return stable.some((a) => a.physics >= 2) ? { ok: true, why: "" } : { ok: false, why: "physics" };
+  }
   return { ok: false, why: "unknown" };
 }
 
@@ -117,6 +123,7 @@ const nextChapter = (done) => CHAPTERS.find((c) => !(done || []).includes(c.id))
 const WORLDS = {
   rest: { lines: ["water"] },
   mend: { lines: ["single_sun", "steady_cycle", "water", "lava"], fixed: ["single_sun", "steady_cycle", "water"] },
+  laws: { lines: ["single_sun", "steady_cycle", "water", "salt"], stable: true },
   weather: { lines: ["single_sun", "steady_cycle", "water", "rain"], stable: true }, // le monde de départ doit tenir : seule la météo reste à écrire
 };
 
@@ -148,6 +155,10 @@ const LETTERS = {
   mend: {
     en: ["Well done. Now the harder half of the craft.", "I wrote this world in a hurry, and something in it is wrong. Find what, and mend it. Take out as little as you can: a world is not mended by emptying it.", "The world must end up stable."],
     fr: ["Bien joué. Voici maintenant la moitié la plus difficile du métier.", "J'ai écrit ce monde trop vite, et quelque chose y cloche. Trouve quoi, et corrige-le. Retire le moins possible : on ne répare pas un monde en le vidant.", "Le monde doit finir stable."],
+  },
+  laws: {
+    en: ["A world is also a weight and an age.", "Look at what the book answers under your block: water and salt, set side by side, already answer each other. Now give this world its laws. Under the pages, write two values, one per line, with a colon: how heavy the world is, and how old.", "Add `mass: 0.8` and `age: 3.5` to the block, and keep the world stable."],
+    fr: ["Un monde, c'est aussi un poids et un âge.", "Regarde ce que le livre répond sous ton bloc : l'eau et le sel, posés côte à côte, se répondent déjà. Donne maintenant ses lois à ce monde. Sous les pages, écris deux valeurs, une par ligne, avec deux-points : le poids du monde, et son âge.", "Ajoute `mass: 0.8` et `age: 3.5` au bloc, et garde le monde stable."],
   },
   weather: {
     en: ["A world that never changes is a painting. Let us make it a day.", "Here the rain falls without end. Teach it manners: let it fall only sometimes, and only at dawn. A line can carry a frequency and a moment, after a colon.", "Rewrite the rain line as `rain: sometimes, dawn`, and keep the world stable."],

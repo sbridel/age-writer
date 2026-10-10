@@ -356,8 +356,15 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         files.get(c3[0]).content = files.get(c3[0]).content.replace("\nrain\n", "\nrain: sometimes, dawn\n"); files.get(c3[0]).stat.mtime++; p.index.invalidate(); notices.length = 0;
         el = await show(sf.path);
         ok(row(el, "Fireflies") && /is-available/.test(row(el, "Fireflies").className), "chapitre 3 réussi : la page des lucioles est disponible");
+        ok(row(el, "Inkwell") && /is-locked/.test(row(el, "Inkwell").className), "la page finale reste fermée tant qu'un chapitre manque (4e)");
+        const b3 = [...files.keys()]; notices.length = 0; await nx.callback();
+        const c4 = [...files.keys()].filter((k) => !b3.includes(k));
+        ok(c4.length === 1 && /Les lois du monde|The laws of a world/.test(c4[0]), "chapitre 4 : la note des lois est créée");
+        files.get(c4[0]).content = files.get(c4[0]).content.replace("\n```\n", "\nmass: 0.8\nage: 3.5\n```\n"); files.get(c4[0]).stat.mtime++; p.index.invalidate(); notices.length = 0;
+        el = await show(sf.path);
+        ok(row(el, "Aurora") && /is-available/.test(row(el, "Aurora").className), "chapitre 4 réussi : la page de l'aurore est disponible");
         ok(row(el, "Inkwell") && /is-available/.test(row(el, "Inkwell").className), "fin de l'histoire : la page finale (l'encrier) est disponible");
-        notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); files.delete(c3[0]); }
+        notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); files.delete(c3[0]); files.delete(c4[0]); }
       files.delete(c2[0]); }
     const sb = await show("x.md"), sbn = shelf(sb);
     ok(sbn.includes("Dehors") && !sbn.includes("Premier"), "mode histoire : sans précision, le Relto du bac à sable, qui ne voit pas les Âges de l'histoire");
