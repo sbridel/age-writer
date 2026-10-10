@@ -10,7 +10,7 @@ const REF_FR = [
     { h: "Sons" },
     { ul: ["Sons (général) (oui) · Volume (0,35)", "Livre : Son du livre · Clics du fermoir · Pages tournées (tous activés)", "Âge : Son de liaison (oui)", "Relto : Sons des vues rapprochées · Bourdon de l'Imageur (oui) ; fichiers sons facultatifs pour le bassin, la cheminée, le ronronnement, le miaou", "Ambiance du refuge : minimal / zen (défaut) / complet · Volume du Relto (0,6)"] },
     { h: "Fenêtre de liaison" },
-    { ul: ["Onglets dans le bloc Âge (oui)", "Rendu de la fenêtre : classique (défaut) / génératif", "Taille de la fenêtre : normale / grande (défaut) / très grande", "Effet de la fenêtre de liaison : classique (défaut), statique, ondulation, balayage, aléatoire, aucun · Intensité de l'effet (1, de 0,2 à 2)", "Liaisons incertaines (oui)"] },
+    { ul: ["Onglets dans le bloc Âge (oui)", "Rendu de la fenêtre : génératif (défaut, le monde que montre l'Imageur) / classique", "Taille de la fenêtre : normale / grande (défaut) / très grande", "Effet de la fenêtre de liaison : classique (défaut), statique, ondulation, balayage, aléatoire, aucun · Intensité de l'effet (1, de 0,2 à 2)", "Liaisons incertaines (oui)"] },
     { h: "D'ni & chiffres" },
     { ul: ["Langue des extensions : auto, English, Français", "Chiffres : auto / police / fichier de glyphes / dessinés · Police des chiffres (nom)", "Afficher les nombres (oui) · Noms en écriture D'ni (oui)", "Relto en onglets (oui) · Heure D'ni dans le Relto (oui) · Cadre autour des zones cliquables (non)", "Notes de l'arpenteur (Imageur) : complètes / mots seulement (défaut) / aucune · Aide aux lentilles (Imageur) : activée (défaut) / désactivée"] },
     { h: "Âges & mécanismes" },

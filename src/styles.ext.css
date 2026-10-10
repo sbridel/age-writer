@@ -498,3 +498,24 @@
 .age-relto[data-tab] .age-relto__controls input.age-relto__vol.is-vertical { writing-mode: vertical-lr; direction: rtl; width: 22px; height: 68px; margin: 0; }
 .age-relto__fadericon { color: #a89a78; display: flex; }
 .age-relto__fadericon svg { width: 14px; height: 14px; }
+
+/* ======================= Relto : l'onglet Pages, rangé ======================= */
+.age-relto__sec { border-bottom: 0.5px solid rgba(205, 189, 148, 0.2); padding: 2px 0 6px; }
+.age-relto__sechead { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; font-size: 0.72em; letter-spacing: 0.1em; text-transform: uppercase; color: #a89a78; padding: 6px 0 4px; }
+.age-relto__sechead::-webkit-details-marker { display: none; }
+.age-relto__sechead::before { content: "▸"; font-size: 0.9em; transition: transform 0.15s; display: inline-block; }
+.age-relto__sec[open] > .age-relto__sechead::before { transform: rotate(90deg); }
+.age-relto__secn { opacity: 0.6; }
+.age-relto__sec--active .age-relto__sechead { color: #8fae6a; }
+.age-relto__sec--locked .age-relto__sechead, .age-relto__sec--missing .age-relto__sechead { color: #c0553f; }
+.age-relto__secbody { display: flex; flex-direction: column; }
+.age-relto__secbody .age-relto__page { display: flex; align-items: baseline; gap: 2px 10px; padding: 3px 0 3px 14px; border-bottom: none; flex-wrap: wrap; }
+.age-relto__pname { min-width: 9em; }
+.age-relto__secbody .age-relto__page .age-relto__fx { flex: 1 1 auto; }
+.age-relto__secbody .age-relto__pbtn { margin-left: auto; font-size: 0.75em; padding: 0 9px; height: auto; }
+.age-relto__snd { display: flex; align-items: center; gap: 10px; padding: 3px 0 3px 14px; }
+.age-relto__snd .age-relto__pagesound { font-size: 0.8em; padding: 0 8px; height: auto; min-width: 2.4em; }
+.age-relto__sndname { min-width: 8em; }
+.age-relto__sndusers { flex: 1 1 auto; font-size: 0.75em; opacity: 0.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.age-relto__snd .age-relto__pagevol { width: 90px; flex: 0 0 auto; }
+.age-relto__snd.is-muted .age-relto__sndname, .age-relto__snd.is-muted .age-relto__sndusers { opacity: 0.4; }

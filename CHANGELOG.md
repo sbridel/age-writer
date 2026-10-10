@@ -10,6 +10,8 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **`grass`**: green land that the wind combs in long waves across the linking window; a grassy shore by water, sometimes tall grass in the foreground. Written with `flowers`, it grows into a **meadow** (`meadow` ← `grass` + `flowers`): taller grass to the horizon, with flowers moving through it.
 
 ### Changed
+- **The generative window is now the default** in the Age block and the book: the same world the Imager shows. The original painted window is still there (setting *Window rendering*: classic, or `window_style: classic` in an age block). Existing installs keep their saved choice.
+- **A tidier Pages tab:** pages grouped by state (active, available, locked), each group folding away, with readable names; the sounds have their own group, **one setting per sound** (on/off and volume) for every page that plays it, instead of a button and a slider on each page. Earlier per-page sound settings are not carried over.
 - **The cave fissure** is now a rocky mound with a dark, jagged mouth (it used to look like a hut); its crevasse glows inside the mouth and no longer spills out of it.
 - `pages: hide` in the `relto` block now removes the Pages tab, for a finished Relto (attach and detach pages in the book of pages, in the cabin); without tabs it still collapses the list.
 - A new Relto gets a seed of its own: its own island and its own Great Zero to find (until now every new Relto started with the same seed, so the same Zero). Existing Reltos are unchanged.

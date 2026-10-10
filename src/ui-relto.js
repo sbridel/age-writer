@@ -124,7 +124,6 @@ async function createReltoPage(plugin) {
   }, presets).open();
 }
 
-const effectSummary = (p) => [...p.additions.map((a) => a.type + (a.asset ? ` (${a.asset})` : "")), ...p.audio.map((a) => "♪ " + a)].join(" · ");
 
 async function renderRelto(plugin, source, el, ctx) {
   const { app, t } = plugin, opt = parseOptions(source);
@@ -339,16 +338,17 @@ async function renderRelto(plugin, source, el, ctx) {
 
   const reltoEdit = (fn) => app.fileManager.processFrontMatter(file, (fm) => { const a = Array.isArray(fm.relto_pages_active) ? fm.relto_pages_active.map((x) => M.stripLink(x)) : []; fm.relto_pages_active = fn(a); });
 
-  const soundCfg = (id) => { const ui = (plugin.ext.state.ui = plugin.ext.state.ui || {}); const all = (ui.reltoSound = ui.reltoSound || {}); return (all[id] = all[id] || {}); };
+  // le son se règle par SON, plus par page : plusieurs pages qui jouent le même son n'ont qu'un réglage (allumé, volume)
+  const soundCfg = (name) => { const ui = (plugin.ext.state.ui = plugin.ext.state.ui || {}); const all = (ui.reltoSoundBy = ui.reltoSoundBy || {}); return (all[name] = all[name] || {}); };
   /** couches du refuge : une entrée par page active, réglable (muet / volume), puis niveau zen. */
   function reltoLayers() {
     const act = scene ? scene.pages.filter((p) => p.state === "active") : [], names = [];
     let L = {};
-    for (const p of act) {
-      const c = soundCfg(p.id); if (c.on === false) continue;
-      const v = c.vol == null ? 1 : c.vol, pl = sound.layersForNames(p.audio);
+    for (const p of act) for (const n of p.audio) {
+      const c = soundCfg(n); if (c.on === false) continue;
+      const v = c.vol == null ? 1 : c.vol, pl = sound.layersForNames([n]);
       for (const k in pl) L[k] = Math.max(L[k] || 0, pl[k] * v);
-      for (const n of p.audio) if (!names.includes(n)) names.push(n);
+      if (!names.includes(n)) names.push(n);
     }
     if (!act.length) L = { wind: 0.25, drone: 0.15, pad: 0.2 };
     if (mode() !== "full") L = sound.zenify(L, mode());
@@ -369,28 +369,51 @@ async function renderRelto(plugin, source, el, ctx) {
     const body = pagesEl.createDiv({ cls: "age-relto__pagesbody" + (hidden ? " is-hidden" : "") });
     if (!tabsOn) head.addEventListener("click", () => { hidden = !hidden; body.toggleClass("is-hidden", hidden); head.setText(label()); if (!opt.pages) { ui.reltoHidden = hidden; plugin.saveExt(); } });
     if (!scene.pages.length && !scene.missingPages.length) body.createDiv({ cls: "age-relto__hint", text: t("relto.nopages") });
-    for (const p of scene.pages) {
-      const row = body.createDiv({ cls: `age-relto__page is-${p.state}` });
-      row.createSpan({ cls: "age-relto__chip", text: t("relto.state." + p.state) });
-      if (p.path) { const a = row.createEl("a", { cls: "internal-link", text: p.id }); a.addEventListener("click", (e) => { e.preventDefault(); app.workspace.openLinkText(p.path, "", false); }); }
-      else row.createSpan({ cls: "age-relto__libpage", text: p.label ? `${p.label} (${p.id})` : p.id, attr: { title: "relto-library" } });
-      row.createSpan({ cls: "age-relto__fx", text: effectSummary(p) });
-      if (soundBtn && p.state === "active" && p.audio.length) {
-        const c = soundCfg(p.id), mute = row.createEl("button", { cls: "age-relto__pagesound" + (c.on === false ? " is-muted" : ""), text: c.on === false ? "🔇" : "♪", attr: { title: t("relto.pagesound") } });
-        const vol = row.createEl("input", { type: "range", cls: "age-relto__pagevol", attr: { min: "0", max: "1", step: "0.05", title: t("relto.pagevol") } });
+    // rangées par état, chacune repliable (ouverte ou fermée : gardé) ; puis les sons des pages actives, un réglage par son
+    const open = (ui.reltoPagesOpen = ui.reltoPagesOpen || { active: true, available: true, locked: false, missing: true, sounds: true });
+    const section = (key, title, n) => {
+      const d = body.createEl("details", { cls: "age-relto__sec age-relto__sec--" + key }); if (open[key] !== false) d.setAttr("open", "");
+      const sm = d.createEl("summary", { cls: "age-relto__sechead" }); sm.createSpan({ text: title }); sm.createSpan({ cls: "age-relto__secn", text: String(n) });
+      d.addEventListener("toggle", () => { open[key] = d.open; plugin.saveExt(); });
+      return d.createDiv({ cls: "age-relto__secbody" });
+    };
+    const nameOf = (p) => p.label || String(p.id).replace(/^page_/, "").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+    const whatOf = (p) => p.additions.map((a) => a.type + (a.asset ? ` (${a.asset})` : "")).join(" · ");
+    const row = (box, p) => {
+      const r = box.createDiv({ cls: `age-relto__page is-${p.state}` });
+      if (p.path) { const a = r.createEl("a", { cls: "internal-link age-relto__pname", text: nameOf(p), attr: { title: p.id } }); a.addEventListener("click", (e) => { e.preventDefault(); app.workspace.openLinkText(p.path, "", false); }); }
+      else r.createSpan({ cls: "age-relto__pname age-relto__libpage", text: nameOf(p), attr: { title: p.id + " (relto-library)" } });
+      const w = whatOf(p); if (w) r.createSpan({ cls: "age-relto__fx", text: w });
+      if (p.reason) r.createSpan({ cls: "age-relto__reason", text: p.reason });
+      const listed = scene.pagesActive.includes(p.id);
+      if (p.state === "available") r.createEl("button", { cls: "age-relto__pbtn", text: t("relto.attach") }).addEventListener("click", async () => { await reltoEdit((l) => [...l, p.id]); plugin.refreshLive(); });
+      else if (listed) r.createEl("button", { cls: "age-relto__pbtn", text: t("relto.detach") }).addEventListener("click", async () => { await reltoEdit((l) => l.filter((x) => x !== p.id)); plugin.refreshLive(); });
+    };
+    for (const [key, st] of [["active", "active"], ["available", "available"], ["locked", "locked"]]) {
+      const list = scene.pages.filter((p) => p.state === st); if (!list.length) continue;
+      const box = section(key, t("relto.state." + st), list.length); for (const p of list) row(box, p);
+    }
+    if (scene.missingPages.length) {
+      const box = section("missing", t("relto.state.missing"), scene.missingPages.length);
+      for (const id of scene.missingPages) {
+        const r = box.createDiv({ cls: "age-relto__page is-missing" }); r.createSpan({ cls: "age-relto__pname", text: id });
+        r.createEl("button", { cls: "age-relto__pbtn", text: t("relto.detach") }).addEventListener("click", async () => { await reltoEdit((l) => l.filter((x) => x !== id)); plugin.refreshLive(); });
+      }
+    }
+    // les sons : un par son joué par les pages actives (quelles pages le jouent, au survol et en petit), allumé ou non, et son volume
+    const bySound = new Map(); for (const p of scene.pages.filter((q) => q.state === "active")) for (const n of p.audio) { if (!bySound.has(n)) bySound.set(n, []); bySound.get(n).push(nameOf(p)); }
+    if (soundBtn && bySound.size) {
+      const box = section("sounds", t("relto.sounds"), bySound.size);
+      for (const [n, users] of bySound) {
+        const c = soundCfg(n), r = box.createDiv({ cls: "age-relto__snd" + (c.on === false ? " is-muted" : "") });
+        const mute = r.createEl("button", { cls: "age-relto__pagesound", text: c.on === false ? "🔇" : "♪", attr: { title: t("relto.pagesound") } });
+        r.createSpan({ cls: "age-relto__sndname", text: n.replace(/_/g, " ") });
+        r.createSpan({ cls: "age-relto__sndusers", text: users.join(", "), attr: { title: users.join(", ") } });
+        const vol = r.createEl("input", { type: "range", cls: "age-relto__pagevol", attr: { min: "0", max: "1", step: "0.05", title: t("relto.pagevol") } });
         vol.value = String(c.vol == null ? 1 : c.vol); vol.disabled = c.on === false;
-        mute.addEventListener("click", () => { c.on = c.on === false; mute.setText(c.on === false ? "🔇" : "♪"); mute.toggleClass("is-muted", c.on === false); vol.disabled = c.on === false; plugin.saveExt(); liveSound(); });
+        mute.addEventListener("click", () => { c.on = c.on === false; mute.setText(c.on === false ? "🔇" : "♪"); r.toggleClass("is-muted", c.on === false); vol.disabled = c.on === false; plugin.saveExt(); liveSound(); });
         vol.addEventListener("change", () => { c.vol = Number(vol.value); plugin.saveExt(); liveSound(); });
       }
-      if (p.reason) row.createSpan({ cls: "age-relto__reason", text: p.reason });
-      const listed = scene.pagesActive.includes(p.id);
-      if (p.state === "available") row.createEl("button", { text: t("relto.attach") }).addEventListener("click", async () => { await reltoEdit((l) => [...l, p.id]); plugin.refreshLive(); });
-      else if (listed) row.createEl("button", { text: t("relto.detach") }).addEventListener("click", async () => { await reltoEdit((l) => l.filter((x) => x !== p.id)); plugin.refreshLive(); });
-    }
-    for (const id of scene.missingPages) {
-      const row = body.createDiv({ cls: "age-relto__page is-missing" });
-      row.createSpan({ cls: "age-relto__chip", text: t("relto.state.missing") }); row.createSpan({ text: id });
-      row.createEl("button", { text: t("relto.detach") }).addEventListener("click", async () => { await reltoEdit((l) => l.filter((x) => x !== id)); plugin.refreshLive(); });
     }
     if (scene.unknownStructures && scene.unknownStructures.length) body.createDiv({ cls: "age-relto__hint", text: t("relto.unknownstruct", { list: scene.unknownStructures.join(", ") }) });
     body.createEl("button", { cls: "age-relto__newpage", text: t("relto.newpage") }).addEventListener("click", () => createReltoPage(plugin));
