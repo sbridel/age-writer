@@ -1106,29 +1106,7 @@ class ReltoRenderer {
   drawFullView(ctx, sky, fn) {
     ctx.save(); ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0); ctx.clearRect(0, 0, W, H);
     fn();
-    this.drawPassages(ctx);
     this.drawGrade(ctx, sky); this.drawHover(ctx); this.drawFlash(ctx); this.drawFade(ctx, sky);
-    ctx.restore();
-  }
-  /**
-   * Les passages entre la maison, l'Imageur et l'observatoire : deux petites plaques de laiton aux coins du bas de chaque
-   * pièce (celles qui existent dans ce Relto), pour aller de l'une à l'autre sans repasser par l'île. Pas en gros plan
-   * d'une station de l'Imageur (on y recule d'abord).
-   */
-  drawPassages(ctx) {
-    const v = this.view, ROOMS3 = ["cabin", "imager", "telescope"];
-    if (!ROOMS3.includes(v) || (v === "imager" && this.imager && this.imager.station)) return;
-    const av = this.available(), to = ROOMS3.filter((x) => x !== v && av[x]); if (!to.length) return;
-    const t = this.imagerTr(), y = 335, h = 18, KEYS = { cabin: ["relto.pass.cabin", "relto.pass.cabin.tip"], imager: ["relto.pass.imager", "relto.pass.imager.tip"], telescope: ["relto.pass.telescope", "relto.pass.telescope.tip"] };
-    ctx.save(); ctx.font = "italic 11px serif";
-    to.forEach((dest, i) => {
-      const label = t(KEYS[dest][0]), w = Math.ceil(ctx.measureText(label).width) + 26, right = i === 1 || (to.length === 1 && dest === "telescope"), x = right ? W - 12 - w : 12;
-      const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, "#9a7a3c"); g.addColorStop(1, "#6b5226");
-      ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.fillRect(x + 1, y + 2, w, h); ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
-      ctx.strokeStyle = "rgba(255,226,160,0.35)"; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-      ctx.fillStyle = "#2a1d13"; ctx.textAlign = right ? "right" : "left"; ctx.fillText(right ? label + "  ›" : "‹  " + label, right ? x + w - 8 : x + 8, y + 13); ctx.textAlign = "left";
-      this.hot.push({ x, y, w, h, tip: t(KEYS[dest][1]), go: dest });
-    });
     ctx.restore();
   }
   drawFade(ctx, sky) {

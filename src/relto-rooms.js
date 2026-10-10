@@ -1,6 +1,8 @@
 "use strict";
 // Sous-vues « point-and-click » du Relto : l'intérieur de la cabane (cheminée, étagère des Âges, livres à part) et les piliers de liaison de près.
 // Plein cadre, sans zoom de caméra ; tout est dessiné ici (aucun asset). Les zones `go: "island"` ramènent à la vue de l'île.
+const PS = require("./relto-passages");
+const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 const { rng, clamp, mix, rgba, hexa } = require("./util");
 const SC = require("./relto-scenery");
 const W = 640, H = 360, FLOOR = 250, GY = 208;
@@ -51,6 +53,7 @@ function drawCabin(r, ctx, sc, sky, t) {
   ctx.strokeStyle = c("#2a1c14"); ctx.lineWidth = 5; ctx.strokeRect(wx, wy, ww, wh);
   ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(wx + ww / 2, wy); ctx.lineTo(wx + ww / 2, wy + wh); ctx.moveTo(wx, wy + wh / 2); ctx.lineTo(wx + ww, wy + wh / 2); ctx.stroke();
   ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(wx - 6, wy + wh + 2, ww + 12, 6);
+  if (r.available && r.available().telescope) PS.spyglass(r, ctx, c, wx + ww - 14, wy + wh + 2, t, TR(r)("relto.pass.telescope.tip")); // la longue-vue, sur le rebord : elle mène à l'observatoire
   if (sky.ambient > 0.35) { ctx.fillStyle = rgba(255, 240, 200, 0.07 * sky.ambient); ctx.beginPath(); ctx.moveTo(wx, wy + wh); ctx.lineTo(wx + ww, wy + wh); ctx.lineTo(wx + ww + 70, FLOOR + 60); ctx.lineTo(wx + 40, FLOOR + 60); ctx.closePath(); ctx.fill(); }
   // porte (retour à l'île)
   const dx = 22, dy = 112, dw = 64;
@@ -108,12 +111,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     { kind: "library", x: tx + 38, y: ty, w: 17, h: 33, body: "#5b2b2b", band: "#c9a24e", tip: "Library book (blocks and Relto pages)" },
   ];
   for (const b of books) { standingBook(ctx, c, b); r.hot.push({ x: b.x - 1, y: b.y - b.h - 1, w: b.w + 2, h: b.h + 2, tip: b.tip, special: b.kind }); }
-  if (r.scene.additions.some((a) => a.type === "imager")) { // l'Imageur : un petit appareil de laiton sur la table, son cristal luit ; un clic y mène
-    const ix = tx + 112, iy = ty; ctx.fillStyle = c("#6b5126"); ctx.fillRect(ix - 9, iy - 6, 18, 6); ctx.fillRect(ix - 2, iy - 20, 4, 14);
-    ctx.fillStyle = rgba(127, 214, 200, 0.55 + 0.25 * Math.sin(t * 2)); ctx.beginPath(); ctx.moveTo(ix, iy - 34); ctx.lineTo(ix + 6, iy - 27); ctx.lineTo(ix, iy - 19); ctx.lineTo(ix - 6, iy - 27); ctx.closePath(); ctx.fill();
-    const ig = ctx.createRadialGradient(ix, iy - 27, 0, ix, iy - 27, 18); ig.addColorStop(0, "rgba(127,214,200,0.35)"); ig.addColorStop(1, "rgba(127,214,200,0)"); ctx.fillStyle = ig; ctx.fillRect(ix - 18, iy - 45, 36, 36);
-    r.hot.push({ x: ix - 12, y: iy - 38, w: 24, h: 38, tip: "The Imager", go: "imager" });
-  }
+  if (r.scene.additions.some((a) => a.type === "imager")) PS.imagerMini(r, ctx, c, tx + 112, ty, t, TR(r)("relto.pass.imager.tip")); // l'Imageur : un petit appareil de laiton sur la table, son cristal luit ; un clic y mène
   if (r.scene.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { // le carnet de l'arpenteur : posé à plat sur la table, signet rouge
     const nx = tx + 132, ny = ty - 5;
     ctx.fillStyle = c("#3b2a1a"); ctx.fillRect(nx, ny, 22, 5); ctx.fillStyle = c("#6b4a2a"); ctx.fillRect(nx, ny - 1, 22, 2);

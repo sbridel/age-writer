@@ -24,6 +24,7 @@
 const { rng, fnv, clamp, mix, rgba, frac, lerp } = require("./util");
 const T = require("./telescope");
 const SS = require("./starsystem");
+const PS = require("./relto-passages");
 const DT = require("./dnitime");
 const { makeT } = require("./i18n");
 const INS = require("./instruments");
@@ -437,6 +438,9 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   }
   if (((r.scene && r.scene.ages) || []).length || st.book) lectern(r, ctx, c, st);
   if (st.found) mapDoor(r, ctx, c, st); // étape 3 : la carte des étoiles, au mur
+  { const av = r.available ? r.available() : {}, tr = (k) => t(k); // sur le rebord de la fente : la lampe de la maison, le petit Imageur
+    if (av.cabin) PS.houseLamp(r, ctx, c, 330, 286, tm, tr("relto.pass.cabin.tip"));
+    if (av.imager) PS.imagerMini(r, ctx, c, 356, 286, tm, tr("relto.pass.imager.tip")); }
   // redescendre
   ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(BACK.x, BACK.y, BACK.w, BACK.h);
   ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "16px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 20); ctx.textAlign = "left";

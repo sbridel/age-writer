@@ -16,6 +16,7 @@
 const { rng, clamp, mix, rgba, frac } = require("./util");
 const I = require("./imager");
 const GI = require("./imager-guild");
+const PS = require("./relto-passages");
 const CAL = require("./calibration");
 const TEL = require("./telescope");
 const BEAM = require("./beam");
@@ -187,7 +188,9 @@ function overview(r, ctx, st, cl, t, c, now) {
   const s = st.settings, k = cl.total, tg = st.target, locked = s.lock, ready = !locked && k >= I.LOCK_AT;
   room(ctx, c, t);
   ctx.fillStyle = c("#0b0d11"); ctx.fillRect(10, 150, 24, FLOOR - 150); ctx.strokeStyle = c("#3a4048"); ctx.strokeRect(10, 150, 24, FLOOR - 150);
-  r.hot.push({ x: 8, y: 148, w: 28, h: FLOOR - 146, tip: "Door — back outside", go: "island" });
+  const av = r.available ? r.available() : {}, tr = tx(r).t;
+  r.hot.push({ x: 8, y: 148, w: 28, h: FLOOR - 146, tip: av.cabin ? tr("relto.pass.door.cabin") : "Door — back outside", go: av.cabin ? "cabin" : "island" }); // la porte : vers la maison (d'où l'on vient), l'île sinon
+  if (av.telescope) { ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(48, 132, 30, 3); ctx.fillRect(52, 135, 2, 6); ctx.fillRect(72, 135, 2, 6); PS.spyglass(r, ctx, c, 63, 132, t, tr("relto.pass.telescope.tip")); } // la longue-vue, sur une console au mur : vers l'observatoire
   drawScreen(r, ctx, SCREEN, st, cl, t, c);
   r.hot.push({ x: SCREEN.x, y: SCREEN.y, w: SCREEN.w, h: SCREEN.h, tip: st.guild ? (k > 0.9 && st.planet ? (st.world.unwritten ? tx(r).t("guild.unwritten.screen") : st.age.name) : st.world ? tx(r).t("guild.screen.blur") : tx(r).t("guild.screen.dark")) : k > 0.9 && st.age ? st.age.name : "The screen" });
 
