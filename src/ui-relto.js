@@ -265,6 +265,13 @@ async function renderRelto(plugin, source, el, ctx) {
     b.addEventListener("mouseenter", () => hub.setText(t(key))); b.addEventListener("mouseleave", () => hub.setText(t("relto.views")));
     b.addEventListener("click", (e) => { e.stopPropagation(); renderer.setView(v); closeWheel(); });
   }
+  // à côté de la roue, toujours là : l'île, puis la maison, l'Imageur et l'observatoire (d'une vue à l'autre en un clic)
+  const QUICK = ["island", "cabin", "imager", "telescope"], quickBtns = {};
+  for (const v of QUICK) {
+    const [, ic, key] = NAV.find((d) => d[0] === v), b = nav.createEl("button", { cls: "age-relto__viewbtn age-relto__quick" }); quickBtns[v] = b;
+    try { obsidian.setIcon(b, ic); } catch (e) { /* ignore */ }
+    b.setAttr("aria-label", t(key)); b.addEventListener("click", (e) => { e.stopPropagation(); closeWheel(); renderer.setView(v); });
+  }
   wheel.addEventListener("click", (e) => { if (e.target === wheel) closeWheel(); }); // un clic sur le fond de la roue la referme
   const offWheel = (e) => { if (!root.isConnected) { root.ownerDocument.removeEventListener("pointerdown", offWheel, true); root.ownerDocument.removeEventListener("keydown", escWheel, true); return; } if (wheel.hasClass("is-open") && !wheel.contains(e.target) && !wheelBtn.contains(e.target)) closeWheel(); };
   const escWheel = (e) => { if (e.key === "Escape" && wheel.hasClass("is-open")) { closeWheel(); e.stopPropagation(); } };
@@ -295,8 +302,8 @@ async function renderRelto(plugin, source, el, ctx) {
       sound.roomStart(v === "imager" ? "imager" : v === "cat" ? "cat" : v === "cabin" ? "fire" : "water", roomVol() * (v === "imager" ? humVol() : 1), bufs);
     } catch (e) { /* ignore */ }
   };
-  const syncView = (v) => { const cur = v || "island"; for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-active", id === cur); try { obsidian.setIcon(wheelBtn, iconOf[cur] || "compass"); } catch (e) { /* ignore */ } roomAudio(v); };
-  const syncNav = (sc) => { const av = renderer.available(); for (const [id, b] of Object.entries(navBtns)) b.toggleClass("is-hidden", !av[id]); syncView(renderer.view); void sc; };
+  const syncView = (v) => { const cur = v || "island"; for (const [id, b] of [...Object.entries(navBtns), ...Object.entries(quickBtns)]) b.toggleClass("is-active", id === cur); try { obsidian.setIcon(wheelBtn, iconOf[cur] || "compass"); } catch (e) { /* ignore */ } roomAudio(v); };
+  const syncNav = (sc) => { const av = renderer.available(); for (const [id, b] of [...Object.entries(navBtns), ...Object.entries(quickBtns)]) b.toggleClass("is-hidden", !av[id]); syncView(renderer.view); void sc; };
   syncView("island");
   const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   // l'Imageur : lire la note de l'Âge posé sur le lutrin, l'analyser (physique comprise), en tirer le ciel et la vue

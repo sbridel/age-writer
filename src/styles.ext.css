@@ -380,6 +380,7 @@
 .age-relto__nav:not(.age-relto__nav--bar) .age-relto__viewbtn { position: static; }
 .age-relto__nav .age-relto__viewbtn.is-active { opacity: 1; background: rgba(14, 12, 10, 0.8); }
 .age-relto__nav .age-relto__viewbtn.is-hidden { display: none; }
+.age-relto__nav .age-relto__wheelbtn { margin-right: 4px; } /* la roue, puis les quatre vues de tous les jours */
 .age-relto[data-tab]:not([data-tab="view"]) .age-relto__nav--bar { display: none; }
 
 /* ---- Détails retravaillé : stabilité par axe, physique du monde (1.16) ---- */
