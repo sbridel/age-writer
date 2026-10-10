@@ -265,8 +265,8 @@ async function renderRelto(plugin, source, el, ctx) {
     b.addEventListener("mouseenter", () => hub.setText(t(key))); b.addEventListener("mouseleave", () => hub.setText(t("relto.views")));
     b.addEventListener("click", (e) => { e.stopPropagation(); renderer.setView(v); closeWheel(); });
   }
-  // à côté de la roue, toujours là : l'île, puis la maison, l'Imageur et l'observatoire (d'une vue à l'autre en un clic)
-  const QUICK = ["island", "cabin", "imager", "telescope"], quickBtns = {};
+  // à côté de la roue, toujours là : l'île, pour y revenir d'un clic (entre la maison, l'Imageur et l'observatoire : les plaques de passage, dans l'image)
+  const QUICK = ["island"], quickBtns = {};
   for (const v of QUICK) {
     const [, ic, key] = NAV.find((d) => d[0] === v), b = nav.createEl("button", { cls: "age-relto__viewbtn age-relto__quick" }); quickBtns[v] = b;
     try { obsidian.setIcon(b, ic); } catch (e) { /* ignore */ }
