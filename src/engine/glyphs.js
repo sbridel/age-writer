@@ -45,7 +45,109 @@ const polyline = (pts, strokeWidth = 3) => ({ kind: "polyline", pts: pts, stroke
 
 const line = (from, to, strokeWidth = 2) => ({ kind: "line", a: from, b: to, strokeWidth: strokeWidth });
 
+/** Points d'un arc d'ellipse (centre, rayons, angles en degrés, rotation en degrés) : sert aux anneaux, orbites et collines. */
+const arc = (cx, cy, rx, ry, from, to, steps = 12, rot = 0) => {
+  const out = [], r = (rot * Math.PI) / 180;
+  for (let i = 0; i <= steps; i++) {
+    const a = ((from + ((to - from) * i) / steps) * Math.PI) / 180, x = rx * Math.cos(a), y = ry * Math.sin(a);
+    out.push([+(cx + x * Math.cos(r) - y * Math.sin(r)).toFixed(1), +(cy + x * Math.sin(r) + y * Math.cos(r)).toFixed(1)]);
+  }
+  return out;
+};
+/** Rayons courts autour d'un disque : n traits de r0 à r1, à partir de l'angle a0 (degrés). */
+const rays = (cx, cy, r0, r1, n, a0 = -90, w = 2.5) =>
+  Array.from({ length: n }, (_, k) => {
+    const a = ((a0 + (k * 360) / n) * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
+    return line([+(cx + r0 * c).toFixed(1), +(cy + r0 * s).toFixed(1)], [+(cx + r1 * c).toFixed(1), +(cy + r1 * s).toFixed(1)], w);
+  });
+/** Une planète : un disque cerné (le cadre des mondes-types). */
+const planet = (r = 36) => outline(hexagon(50, 50, r), 2);
+
+/**
+ * Ciel étendu (src/sky.js) : chaque bloc a son glyphe, monochrome et lisible en petit.
+ * Corps : comète (tête et queue balayée), ceinture (arc de cailloux), champ (rochers épars), anneaux (planète et ellipse).
+ * Soleils de couleur, reconnaissables sans la couleur : rouge = géante pâle et immense ; orange = soleil rayonnant ordinaire ;
+ * blanc = petit éclat à quatre longues pointes ; bleu = disque chaud qui émet des ondes ; vert = soleil couchant et son rayon vert ;
+ * violet = disque creux, rayons en diagonale (lumière qu'on voit mal). Le soleil noir garde le sien.
+ * Mondes-types : un disque cerné et ce qui le couvre. Orbite, âge, masse, relief : un motif chacun.
+ */
+const SKY_GLYPHS = {
+  comet: [
+    fill(hexagon(72, 28, 10)),
+    line([64, 36], [12, 84], 3.5),
+    line([62, 30], [10, 62], 2),
+    line([70, 38], [36, 92], 2),
+  ],
+  asteroid_belt: [
+    fill(diamond(10, 72, 4)),
+    fill(diamond(22, 55, 5)),
+    fill(diamond(36, 44, 3.5)),
+    fill(diamond(50, 40, 5.5)),
+    fill(diamond(64, 44, 3.5)),
+    fill(diamond(78, 55, 5)),
+    fill(diamond(90, 72, 4)),
+    fill(diamond(50, 76, 3), 0.5),
+  ],
+  asteroid_field: [
+    fill([[16, 30], [28, 18], [42, 24], [38, 40], [22, 42]]),
+    fill([[60, 58], [72, 48], [88, 56], [86, 76], [66, 78]]),
+    fill([[62, 20], [72, 16], [76, 28], [66, 32]]),
+    fill([[18, 70], [30, 64], [34, 78], [24, 84]]),
+    fill(diamond(46, 58, 3)),
+  ],
+  planet_rings: [fill(hexagon(50, 50, 20)), outline(arc(50, 52, 44, 13, 0, 360, 24, -14), 2.5)],
+  red_sun: [fill(hexagon(50, 54, 38), 0.45), outline(hexagon(50, 54, 38), 2), fill(diamond(50, 54, 6))],
+  orange_sun: [fill(hexagon(50, 50, 17)), ...rays(50, 50, 24, 34, 8, -90, 3)],
+  white_sun: [fill(hexagon(50, 50, 9)), ...rays(50, 50, 13, 44, 4, -90, 2.5), ...rays(50, 50, 13, 24, 4, -45, 1.5)],
+  blue_sun: [
+    fill(hexagon(34, 50, 16)),
+    polyline(arc(34, 50, 30, 30, -40, 40, 6), 2.5),
+    polyline(arc(34, 50, 42, 42, -40, 40, 6), 2.5),
+    polyline(arc(34, 50, 54, 54, -36, 36, 6), 2.5),
+  ],
+  green_sun: [
+    fill([...arc(50, 70, 26, 26, 180, 360, 8)]),
+    line([8, 70], [92, 70], 3),
+    line([38, 30], [62, 30], 3.5),
+    line([44, 20], [56, 20], 2),
+  ],
+  violet_sun: [outline(hexagon(50, 50, 20), 2.5), fill(diamond(50, 50, 6)), ...rays(50, 50, 27, 40, 4, -45, 3)],
+  frozen_world: [planet(), line([50, 24], [50, 76], 2.5), line([28, 37], [72, 63], 2.5), line([28, 63], [72, 37], 2.5)],
+  lava_world: [planet(), polyline([[26, 34], [42, 46], [36, 58], [52, 70]], 2.5), polyline([[64, 26], [58, 44], [74, 56]], 2.5), fill(diamond(42, 46, 4))],
+  desert_world: [planet(), polyline(arc(40, 62, 22, 10, 180, 360, 8), 2.5), polyline(arc(64, 46, 18, 8, 180, 360, 8), 2.5), fill(diamond(36, 36, 3)), fill(diamond(60, 70, 3))],
+  ocean_world: [
+    planet(),
+    polyline([[22, 40], [32, 34], [42, 40], [52, 34], [62, 40], [72, 34], [80, 40]], 2.5),
+    polyline([[20, 56], [30, 50], [40, 56], [50, 50], [60, 56], [70, 50], [80, 56]], 2.5),
+  ],
+  jungle_world: [planet(), fill(kite(34, 30, 70, 7)), fill(kite(52, 22, 74, 9)), fill(kite(68, 36, 70, 6)), line([24, 72], [76, 72], 2)],
+  close_orbit: [fill(hexagon(36, 50, 24)), polyline(arc(36, 50, 36, 36, -70, 70, 10), 2), fill(diamond(72, 50, 6))],
+  distant_orbit: [fill(hexagon(14, 50, 7)), polyline(arc(14, 50, 76, 44, -80, 80, 14), 2), fill(diamond(90, 50, 4))],
+  young_world: [fill(hexagon(50, 60, 22)), ...rays(50, 60, 28, 40, 5, -150, 2.5).slice(0, 3)],
+  ancient_world: [outline(hexagon(50, 52, 34), 2.5), outline(hexagon(50, 52, 22), 1.5), outline(hexagon(50, 52, 10), 1.5)],
+  heavy_world: [fill(hexagon(50, 34, 20)), line([12, 90], [88, 90], 4), polyline([[38, 64], [50, 76], [62, 64]], 3)],
+  light_world: [outline(hexagon(50, 30, 18), 2.5), line([24, 90], [76, 90], 1.5), polyline([[38, 72], [50, 60], [62, 72]], 3)],
+  plains: [line([6, 46], [94, 46], 2), line([14, 62], [86, 62], 2.5), line([24, 78], [76, 78], 3)],
+  hills: [polyline(arc(32, 74, 28, 26, 180, 360, 10), 3), polyline(arc(66, 78, 28, 18, 180, 360, 10), 3), line([4, 80], [96, 80], 2)],
+  mountains: [polyline([[4, 84], [30, 28], [46, 56], [64, 16], [96, 84]], 3), polyline([[22, 44], [30, 38], [36, 44]], 2), polyline([[56, 32], [64, 26], [70, 32]], 2)],
+  canyon: [
+    fill([[6, 20], [36, 20], [40, 50], [34, 88], [6, 88]]),
+    fill([[94, 20], [64, 20], [60, 46], [66, 88], [94, 88]]),
+    polyline([[44, 90], [50, 70], [46, 50]], 2),
+  ],
+  river: [polyline([[30, 8], [56, 28], [36, 52], [62, 74], [46, 94]], 3), polyline([[44, 8], [70, 28], [50, 52], [76, 74], [60, 94]], 1.5)],
+  delta: [polyline([[50, 6], [50, 44]], 3.5), polyline([[50, 44], [22, 90]], 2.5), polyline([[50, 44], [50, 92]], 2.5), polyline([[50, 44], [78, 90]], 2.5), line([10, 94], [90, 94], 2)],
+  lake: [outline(arc(50, 56, 40, 22, 0, 360, 20), 2.5), polyline([[30, 56], [40, 50], [50, 56], [60, 50], [70, 56]], 2)],
+  marsh: [
+    polyline([[6, 76], [20, 70], [34, 76], [48, 70], [62, 76], [76, 70], [94, 76]], 2.5),
+    line([24, 70], [24, 30], 2), fill(kite(24, 22, 40, 3.5)),
+    line([50, 70], [50, 22], 2), fill(kite(50, 14, 32, 3.5)),
+    line([74, 70], [72, 36], 2), fill(kite(72, 28, 44, 3.5)),
+  ],
+};
+
 const EXTRA_GLYPHS = {
+  ...SKY_GLYPHS,
   // météo vivante : bruine (traits courts et fins, serrés), neige (étoiles à six branches), arc-en-ciel (trois arcs),
   // tornade (entonnoir de traits), fleurs (une corolle de losanges sur sa tige). Les produits (scented_mist…) se composent de leurs parents.
   drizzle: [
