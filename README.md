@@ -269,7 +269,7 @@ page lagoon: Lagoon | vegetation 0.5 palm, gold 0.6 | audio=river | unlock=[[Gla
 ```
 ````
 
-The shelf's books are chosen with the checkboxes in the Pages tab, or with the block's `folders:`, `exclude:`, `books:` options.
+The shelf's books are chosen with the book pills in the Pages tab (coloured by stability; filled = on the shelf, a click toggles; sort by name or stability), or with the block's `folders:`, `exclude:`, `books:` options.
 
 ---
 

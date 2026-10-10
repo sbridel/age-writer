@@ -261,7 +261,7 @@ page lagon: Lagon | vegetation 0.5 palm, gold 0.6 | audio=river | unlock=[[Marai
 ```
 ````
 
-Le choix des livres de l'étagère se fait par les cases à cocher de l'onglet Pages, ou par les options `folders:`, `exclude:`, `books:` du bloc.
+Le choix des livres de l'étagère se fait par les pastilles de livres de l'onglet Pages (colorées selon la stabilité ; pleine = sur l'étagère, un clic bascule ; tri par nom ou par stabilité), ou par les options `folders:`, `exclude:`, `books:` du bloc.
 
 ---
 
