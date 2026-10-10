@@ -2,6 +2,15 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.22.0 — Plumb lines on the star chart (2026-10-10)
+
+### Added
+- **Heights on the star chart.** The plane of the Great Zero is now seen at a slant, like a table, and every star, dead star and your Relto hangs on a plumb line from its foot on the plane: solid above it, dotted below. Heights have their own scale, engraved in a corner (next to the distances they would be invisible); each star's tooltip says how high it stands ("high above the plane").
+
+### Changed
+- The *Great Zero* plate's tooltip names its new distance row.
+- The telescope's tooltips no longer mention the KI (the sign convention is still explained: above the plane reads negative).
+
 ## 1.21.0 — The rahnfee, a unit of the beam (2026-10-10)
 
 ### Added

@@ -299,3 +299,8 @@ unlock:                            # facultatif
 - **La molette du retard** lit en rahnfee, comme un retard sur le métronome ; mêmes mécanismes et tolérances.
 - **Distances en rahnfee** : plaque *Star of the Age* (deux lignes), plaque *Great Zero* (nouvelle ligne : la distance du Zéro), distance KIPS (onglet Détails, Imageur), notes complètes de l'arpenteur, infobulles de la carte stellaire. Les élévations restent en shahfeetee ; les données enregistrées ne changent pas.
 - Légende KIPS de l'Imageur raccourcie.
+
+## 1.22.0 — des fils à plomb sur la carte des étoiles (10 oct. 2026)
+
+- **Les hauteurs sur la carte des étoiles** (`src/relto-starmap.js`, `fit3` dans `src/starmap.js`) : le plan du Great Zero est vu de biais, comme une table ; chaque étoile, étoile morte et le Relto pend à un fil à plomb depuis son pied sur le plan, plein au-dessus, pointillé dessous. Les hauteurs ont leur propre échelle, gravée dans un coin (exagération déclarée, à la manière des coupes de cartographe) ; l'infobulle de chaque étoile dit sa hauteur en mots.
+- Infobulles du télescope : plus de mention du KI (la convention de signe reste expliquée) ; celle de la plaque *Great Zero* nomme sa ligne de distance.
