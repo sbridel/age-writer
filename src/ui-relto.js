@@ -11,6 +11,7 @@ const X = require("./ui-extras");
 const DT = require("./dnitime");
 const B = require("./relto-books");
 const TEL = require("./telescope");
+const DC = require("./dniclock");
 
 const AUDIO_EXT = ["mp3", "ogg", "wav", "m4a", "flac"];
 
@@ -51,6 +52,7 @@ async function libraryPages(plugin) {
 async function buildScene(plugin, file, opt = {}) {
   const { app } = plugin;
   const relto = { ...M.parseRelto(fmOf(app, file)), name: file.basename };
+  { const g = (plugin.ext.telescope || {})[TEL.keyOf(relto.name, relto.seed)]; relto.zeroFound = !!(g && g.found); } // débloque l'horloge D'ni
   const pages = [];
   for (const f of app.vault.getMarkdownFiles()) {
     const fm = fmOf(app, f);
@@ -142,15 +144,16 @@ async function renderRelto(plugin, source, el, ctx) {
   const clock = when.createSpan({ cls: "age-relto__clock" });
   // heure D'ni (comme le KI) : année, mois, jour, puis gahrtahvo : tahvo : gorahn : prorahn, en chiffres D'ni ; ligne `dni_time: off` pour la masquer
   let dniClock = null;
-  // l'heure D'ni voyage avec le pouls du Great Zero : tant que le télescope ne l'a pas capté, on connaît la date (le calendrier), pas l'heure
-  const zero = { found: () => false };
+  // l'heure D'ni voyage sur le faisceau du Great Zero : sans l'horloge D'ni (page débloquée par le Zéro), le Relto ne connaît que
+  // la date de sa pierre-calendrier, qui dérive de quelques yahr, et l'heure se tait (src/dniclock.js)
+  const zero = { scene: () => null };
   if (plugin.ext.dniClock !== false && !/^(off|no|non|false|0)$/i.test(String(opt.dni_time || ""))) {
     dniClock = when.createSpan({ cls: "age-relto__dnitime" });
     const tickDni = () => {
-      const d = DT.fromDate(), n = (v) => plugin.dni.numberSvg(v, { size: tabsOn ? 24 : 13 });
-      const caught = zero.found();
+      const d = DC.reltoDate(zero.scene()), n = (v) => plugin.dni.numberSvg(v, { size: tabsOn ? 24 : 13 });
+      const caught = d.synced;
       setMarkup(dniClock, `${n(d.hahr)}<i>${esc(d.name)}</i>${n(d.yahr)}` + (caught ? `<b>${n(d.gahrtahvo)}${n(d.tahvo)}${n(d.gorahn)}${n(d.prorahn)}</b>` : `<b class="age-relto__dnitime-silent">${esc(t("relto.dni.silent"))}</b>`));
-      dniClock.setAttr("aria-label", caught ? DT.format(d) : t("relto.dni.silent.tip")); // l'infobulle d'Obsidian (aria-label) seule : `title` en ajoutait une seconde, grise
+      dniClock.toggleClass("is-drifting", !caught); dniClock.setAttr("aria-label", caught ? DT.format(d) : t("relto.dni.silent.tip")); // l'infobulle d'Obsidian (aria-label) seule : `title` en ajoutait une seconde, grise
     };
     // la mise à jour reconstruit les chiffres toutes les ~1,4 s, ce qui fermait l'infobulle avant qu'elle n'apparaisse : on suspend tant que la souris est dessus
     let over = false; dniClock.addEventListener("mouseenter", () => { over = true; }); dniClock.addEventListener("mouseleave", () => { over = false; tickDni(); });
@@ -273,8 +276,8 @@ async function renderRelto(plugin, source, el, ctx) {
   const imagerSet = (path, s) => { plugin.ext.imagerTunings = { ...(plugin.ext.imagerTunings || {}), [path]: s }; plugin.saveExt(); };
   // le télescope : visée et Great Zero trouvé, gardés par Relto (nom + graine), comme les réglages de l'Imageur
   const telescopeGet = (key) => (plugin.ext.telescope || {})[key] || null;
-  const telescopeSet = (key, s) => { plugin.ext.telescope = { ...(plugin.ext.telescope || {}), [key]: s }; plugin.saveExt(); };
-  zero.found = () => { const sc = scene; if (!sc) return false; const g = telescopeGet(TEL.keyOf(sc.name, sc.seed)); return !!(g && g.found); };
+  const telescopeSet = (key, s) => { const was = !!((plugin.ext.telescope || {})[key] || {}).found; plugin.ext.telescope = { ...(plugin.ext.telescope || {}), [key]: s }; plugin.saveExt(); if (s && s.found && !was) refresh().catch((e) => console.warn("[Age Writer ext] relto", e)); }; // le Zéro trouvé débloque l'horloge D'ni
+  zero.scene = () => scene;
   const onTelescopeSound = (k, s) => { if (roomSoundOn() && sound.telescopeSfx) sound.telescopeSfx(k, s, roomVol()); };
   const renderer = new ReltoRenderer(canvas, plugin.dni, { telescopeGen: () => plugin.telescopeGen || 0, hoverFrame: plugin.ext.hoverFrame === true, imagerHum: () => ({ on: plugin.ext.soundImagerHum !== false, vol: humVol() }), onImagerHum: (a) => { if (a.toggle) plugin.ext.soundImagerHum = plugin.ext.soundImagerHum === false; else plugin.ext.imagerHumVol = Math.round(Math.max(0, Math.min(1, humVol() + a.delta * 0.2)) * 10) / 10; if (a.delta && plugin.ext.soundImagerHum === false && plugin.ext.imagerHumVol > 0) plugin.ext.soundImagerHum = true; plugin.saveExt(); roomAudio("imager"); }, notes: plugin.ext.imagerNotes || "words", onImagerAge: imagerAge, imagerGet, imagerSet, glyphImage, t, telescopeGet, telescopeSet, onTelescopeSound, onImagerTune: () => { const cl = renderer.imagerClarity(); if (sound.imagerTune) sound.imagerTune(cl.atmo, cl.total, !!(renderer.imager && renderer.imager.settings && renderer.imager.settings.lock)); }, onImagerSound: (k) => { if (roomSoundOn() && sound.imagerSfx) sound.imagerSfx(k, roomVol()); }, reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onPurr: () => { if (roomSoundOn()) roomBuf("roomPurrFile").then((b) => sound.purr(roomVol(), b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onPageToggle: async (id) => { const on = scene && scene.pagesActive.includes(id); await reltoEdit((l) => (on ? l.filter((x) => x !== id) : [...l, id])); plugin.refreshLive(); }, onSpecial: (kind) => { if (kind === "surveyor") B.openSurveyorBook(plugin, scene ? scene.ages : []); else if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;
@@ -378,7 +381,12 @@ async function renderRelto(plugin, source, el, ctx) {
     const built = await buildScene(plugin, file, opt); scene = built.scene;
     scene.pagesActive = built.relto.pagesActive;
     renderer.setScene(scene); renderer.setHour(scene.skyCycle === "system_time" ? fixed : null); syncNav(scene);
-    if (dniClock) dniClock.tick(); // la scène connue : l'heure D'ni sait si le Zéro de ce Relto est capté
+    if (dniClock) dniClock.tick(); // la scène connue : l'heure D'ni sait si l'horloge est là
+    { // la première fois que l'horloge est attachée : l'observatoire diffuse le faisceau dans tout le Relto, le calendrier se recale
+      const k = TEL.keyOf(scene.name, scene.seed), seen = (plugin.ext.clockSynced = plugin.ext.clockSynced || {});
+      if (DC.synced(scene) && !seen[k]) { seen[k] = true; plugin.saveExt(); new obsidian.Notice(t("relto.dni.synced")); }
+      else if (!DC.synced(scene) && seen[k]) { delete seen[k]; plugin.saveExt(); } // horloge retirée ou Zéro oublié : le prochain recalage se verra de nouveau
+    }
     slider.disabled = scene.skyCycle !== "system_time"; nowBtn.disabled = slider.disabled;
     title.setText(scene.name); if (dniName) dniName.setText(plugin.dni.textFor(scene.name)); if (dniName2) dniName2.setText(plugin.dni.textFor(scene.name));
     setMarkup(plate, plugin.dni.numberSvg(scene.seed, { size: 16 })); plate.setAttr("title", t("num.seed"));

@@ -68,7 +68,7 @@ ok(T.STEP.torahn.hub === 100 && T.STEP.torahn.rim === 2500 && T.STEP.elev.hub ==
 {
   const relto = M.parseRelto({ seed: 7, relto_pages_active: ["page_telescope", "page_mountain"] });
   const mount = M.parsePage(M.pageFrontmatter("page_mountain", M.PAGE_PRESETS.page_mountain), "m.md");
-  const bp0 = M.builtinPages(), bp = [...bp0, mount]; ok(bp0.length === 1 && bp0[0].id === "page_telescope" && bp0[0].unlock.agesCount === 1 && bp0[0].unlock.page === "page_mountain", "le télescope est une page présente d'office");
+  const bp0 = M.builtinPages(), bp = [...bp0, mount]; const tp = bp0.find((p) => p.id === "page_telescope"); ok(tp && tp.unlock.agesCount === 1 && tp.unlock.page === "page_mountain", "le télescope est une page présente d'office");
   const none = M.buildScene(relto, bp, []), one = M.buildScene(relto, bp, [{ name: "Premier", path: "Premier.md", verdict: "stable", stability: 80 }]);
   const p0 = none.pages.find((p) => p.id === "page_telescope"), p1 = one.pages.find((p) => p.id === "page_telescope");
   ok(p0.state === "locked" && /first Age/.test(p0.reason) && !none.additions.some((a) => a.type === "telescope"), "aucun Âge : page verrouillée, pas de télescope sur l'île");

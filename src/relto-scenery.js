@@ -3,6 +3,7 @@
 // Chaque fonction reçoit le contexte 2D, le renderer `r` (pour la graine, le dessin du ciel, les zones cliquables), le ciel `sky` et le temps `t`.
 const { rng, clamp, mix, rgba, fnv } = require("./util");
 const DT = require("./dnitime");
+const DC = require("./dniclock");
 const W = 640, H = 360, GY = 208;
 const amb = (sky) => 0.35 + 0.65 * sky.ambient;
 
@@ -136,7 +137,7 @@ function islets(ctx, r, d, sky, t) {
 
 /** Pinacle du calendrier : une pierre dressée sur un îlot, qui porte le jour D'ni (en chiffres D'ni). */
 function calendar(ctx, r, sky, t) {
-  const x = 548, y = 200, k = amb(sky), d = DT.fromDate();
+  const x = 548, y = 200, k = amb(sky), d = DC.reltoDate(r.scene); // sans l'horloge D'ni, la pierre dérive de quelques yahr
   ctx.save(); ctx.globalAlpha = 0.85;
   ctx.fillStyle = mix("#05060c", "#5a5148", k); ctx.beginPath(); ctx.moveTo(x - 24, y); ctx.lineTo(x + 24, y); ctx.lineTo(x + 8, y + 24); ctx.lineTo(x, y + 34); ctx.lineTo(x - 11, y + 20); ctx.closePath(); ctx.fill();
   ctx.fillStyle = mix("#05060c", "#6f8a4a", k); ctx.beginPath(); ctx.ellipse(x, y, 24, 5, 0, 0, 6.283); ctx.fill();
@@ -145,7 +146,36 @@ function calendar(ctx, r, sky, t) {
   const glow = 0.45 + 0.4 * sky.night + 0.1 * Math.sin(t * 1.6), size = 9;
   if (r.dni) { const w = r.dni.widthOf(d.yahr, size); r.dni.drawNumber(ctx, d.yahr, x - 1 - w / 2, y - 40, size, `rgba(255,226,150,${clamp(glow).toFixed(2)})`); }
   ctx.restore();
-  r.hot.push({ x: x - 24, y: y - 62, w: 48, h: 98, tip: `Calendar pinnacle — ${d.name} ${d.yahr}` });
+  r.hot.push({ x: x - 24, y: y - 62, w: 48, h: 98, tip: `Calendar pinnacle — ${d.name} ${d.yahr}${d.synced ? "" : " (by the stone's own reckoning)"}` });
 }
 
-module.exports = { moons, rain, storm, birds, butterflies, dock, bench, flowers, grass, islets, calendar, W, H, GY };
+/**
+ * L'horloge D'ni : sur son îlot, un pilier de pierre qui porte une sphère armillaire de laiton. L'anneau des heures tourne
+ * avec le jour D'ni (une révolution par yahr), le globe intérieur lentement ; rien ne clignote : le faisceau, c'est
+ * l'observatoire qui le répand dans le Relto.
+ */
+function dniClock(ctx, r, sky, t) {
+  const x = 92, y = 206, k = amb(sky), d = DC.reltoDate(r.scene), ph = DT.dayPhase(), brass = () => mix("#05060c", "#c9a75a", k);
+  ctx.save(); ctx.globalAlpha = 0.9;
+  // l'îlot
+  ctx.fillStyle = mix("#05060c", "#5a5148", k); ctx.beginPath(); ctx.moveTo(x - 22, y); ctx.lineTo(x + 22, y); ctx.lineTo(x + 9, y + 22); ctx.lineTo(x - 1, y + 32); ctx.lineTo(x - 10, y + 19); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = mix("#05060c", "#6f8a4a", k); ctx.beginPath(); ctx.ellipse(x, y, 22, 4.5, 0, 0, 6.283); ctx.fill();
+  // le pilier : un fût de pierre, une base et un chapiteau
+  const sg = ctx.createLinearGradient(x - 5, 0, x + 5, 0); sg.addColorStop(0, mix("#05060c", "#8d8578", k)); sg.addColorStop(1, mix("#05060c", "#57524a", k));
+  ctx.fillStyle = sg; ctx.fillRect(x - 7, y - 6, 14, 6); ctx.fillRect(x - 4, y - 40, 8, 34); ctx.fillRect(x - 6.5, y - 44, 13, 4);
+  ctx.fillStyle = rgba(0, 0, 0, 0.18); ctx.fillRect(x + 1, y - 40, 3, 34);
+  // la sphère armillaire
+  const cx = x, cy = y - 56, R = 11;
+  ctx.lineWidth = 1.3; ctx.strokeStyle = brass();
+  ctx.beginPath(); ctx.moveTo(cx, y - 44); ctx.lineTo(cx, cy + R + 1); ctx.stroke(); // le pied
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.283); ctx.stroke(); // le méridien
+  ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(cx, cy, R, R * 0.32, -0.42, 0, 6.283); ctx.stroke(); // l'écliptique, incliné
+  ctx.beginPath(); ctx.ellipse(cx, cy, R * Math.abs(Math.cos(ph * 6.283)), R, 0, 0, 6.283); ctx.stroke(); // l'anneau des heures : il tourne avec le jour D'ni
+  ctx.beginPath(); ctx.moveTo(cx - R - 3, cy + 4); ctx.lineTo(cx + R + 3, cy - 4); ctx.stroke(); // l'axe
+  const gg = ctx.createRadialGradient(cx - 1.5, cy - 1.5, 0.5, cx, cy, 4); gg.addColorStop(0, mix("#05060c", "#e8d3a0", k)); gg.addColorStop(1, mix("#05060c", "#7a5c28", k));
+  ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(cx + Math.sin(t * 0.15) * 0.6, cy, 3.4, 0, 6.283); ctx.fill(); // le globe
+  ctx.restore();
+  r.hot.push({ x: x - 22, y: y - 70, w: 44, h: 104, tip: `D'ni clock — ${DT.format(d)}` });
+}
+
+module.exports = { moons, rain, storm, birds, butterflies, dock, bench, flowers, grass, islets, calendar, dniClock, W, H, GY };

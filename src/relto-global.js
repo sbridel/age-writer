@@ -3,7 +3,7 @@
 // Dessinée entièrement ici (aucun asset). Les zones cliquables (`go: "island"`) ramènent à la vue de l'île.
 const { rng, clamp, mix, rgba, hexa, fnv } = require("./util");
 const SC = require("./relto-scenery");
-const DT = require("./dnitime");
+const DC = require("./dniclock");
 const W = 640, H = 360;
 
 const k = (sky) => 0.35 + 0.65 * sky.ambient;
@@ -76,11 +76,15 @@ function drawGlobal(r, ctx, sc, sky, t, has) {
   const isl = has("islets"), cal = has("calendar"), spots = [[470, 246, 0.95], [150, 252, 0.8], [118, 280, 0.6], [548, 282, 0.65], [250, 274, 0.55]], n = isl ? Math.min(spots.length, Math.round(2 + isl.density * 3)) : 0;
   for (let i = 0; i < n; i++) { islet(ctx, spots[i][0], spots[i][1], spots[i][2], sky, i, t); r.hot.push({ x: spots[i][0] - 26 * spots[i][2], y: spots[i][1] - 28 * spots[i][2], w: 52 * spots[i][2], h: 62 * spots[i][2], tip: `Islet ${i + 1}` }); }
   if (cal) {
-    const x = 575, y = 246, d = DT.fromDate();
+    const x = 575, y = 246, d = DC.reltoDate(r.scene);
     islet(ctx, x, y, 0.9, sky, 0, t);
     ctx.fillStyle = mix("#05060c", "#7d7468", k(sky)); ctx.beginPath(); ctx.moveTo(x - 6, y); ctx.lineTo(x - 3, y - 54); ctx.lineTo(x + 3, y - 58); ctx.lineTo(x + 6, y); ctx.closePath(); ctx.fill();
     const glow = 0.5 + 0.4 * sky.night; if (r.dni) { const w = r.dni.widthOf(d.yahr, 8); r.dni.drawNumber(ctx, d.yahr, x - w / 2 - 1, y - 38, 8, `rgba(255,226,150,${clamp(glow).toFixed(2)})`); }
     r.hot.push({ x: x - 22, y: y - 60, w: 44, h: 96, tip: `Calendar pinnacle — ${d.name} ${d.yahr}` });
+  }
+  if (has("dniclock")) { // l'horloge D'ni, plus loin dans la brume, à gauche
+    const s = 0.75, gx = 88, gy = 250; ctx.save(); ctx.translate(gx - 92 * s, gy - 206 * s); ctx.scale(s, s); SC.dniClock(ctx, r, sky, t); ctx.restore();
+    const h = r.hot.pop(); r.hot.push({ ...h, x: gx - 22 * s, y: gy - 70 * s, w: 44 * s, h: 104 * s });
   }
   if (n > 0 || cal) bridge(ctx, 388, 230, 470 - 22, 244, sky);
   if (n > 0 && cal) bridge(ctx, 470 + 22, 246, 575 - 22, 246, sky);

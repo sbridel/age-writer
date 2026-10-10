@@ -9,9 +9,11 @@ function renderMany(host, ages) {
   const variants = [
     { h: 15, t: 3.1, env: {}, pages: ["page_telescope", "page_mountain", "page_pine_trees", "page_koi"], label: "ISLAND day / observatory on the mountain" },
     { h: 21.5, t: 3.1, env: {}, pages: ["page_telescope", "page_mountain", "page_waterfall"], label: "ISLAND dusk / observatory on the mountain" },
-    { h: 22, t: 3.3, env: {}, pages: ["page_telescope"], view: "telescope", aim: "far", label: "TELESCOPE night / far" },
-    { h: 22, t: 3.3, env: {}, pages: ["page_telescope"], view: "telescope", aim: [14, -9], label: "TELESCOPE night / near (14, −9)" },
-    { h: 14, t: 3.3, env: {}, pages: ["page_telescope"], view: "telescope", aim: [1, 0], found: true, label: "TELESCOPE day / found" },
+    { h: 21.5, t: 3.1, env: {}, zero: true, pages: ["page_telescope", "page_mountain", "page_dni_clock", "page_calendar"], label: "ISLAND dusk / D'ni clock and calendar pinnacle" },
+    { h: 15, t: 3.1, env: {}, zero: true, pages: ["page_dni_clock", "page_calendar", "page_islets"], view: "global", label: "GLOBAL day / D'ni clock" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: "far", label: "TELESCOPE night / far" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: [14, -9], label: "TELESCOPE night / near (14, −9)" },
+    { h: 14, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: [1, 0], found: true, label: "TELESCOPE day / found" },
     { h: 15, t: 3.3, env: {}, pages: ["page_koi", "page_cat", "page_pond_decor", "page_flowers"], view: "pondplus", label: "POND+ day" },
     { h: 21.5, t: 3.3, env: {}, pages: ["page_koi", "page_cat", "page_pond_decor", "page_flowers"], view: "pondplus", label: "POND+ dusk" },
     { h: 14, t: 3.3, env: {}, pages: ["page_koi", "page_cat", "page_cat_toys", "page_flowers"], tune: { color: "tabby", name: "Mochi" }, view: "cat", label: "CAT toys" },
@@ -56,6 +58,7 @@ function renderMany(host, ages) {
   ];
   variants.forEach((v, i) => {
     const relto = M.parseRelto({ seed: 19991118, environment: v.env, structures: ["hut", "bookshelves", "linking_pillars"], relto_pages_active: v.pages });
+    relto.zeroFound = !!v.zero; // l'horloge D'ni se débloque avec le Great Zero
     const pages = v.pages.map((id) => M.parsePage(M.pageFrontmatter(id, M.PAGE_PRESETS[id]), id + ".md"));
     if (v.tune) for (const pg of pages) for (const a of pg.additions) if (a.type === "cat") Object.assign(a, v.tune);
     if (v.tuneKoi) for (const pg of pages) for (const a of pg.additions) if (a.type === "koi") a.rare = v.tuneKoi;

@@ -187,6 +187,7 @@ class ReltoRenderer {
     if (sc.surrounding === "ocean") this.drawOcean(ctx, sky, t);
     const is = has("islets"); if (is) SC.islets(ctx, this, is.density, sky, t);
     const cal = has("calendar"); if (cal) SC.calendar(ctx, this, sky, t);
+    if (has("dniclock")) SC.dniClock(ctx, this, sky, t);
     this.drawIsland(ctx, sky, t);
     const dk = has("dock"); if (dk) SC.dock(ctx, this, sky, t, !!cal);
     for (const k of ["gold", "silver", "gems"]) { const o = has(k); if (o) this.drawOre(ctx, k, o.density, sky, t); }
