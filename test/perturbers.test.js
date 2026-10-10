@@ -194,7 +194,7 @@ const relDone = (async () => {
   const relto = M.parseRelto({ seed: 4242, structures: ["hut"], relto_pages_active: pages });
   const sc = M.buildScene(relto, [M.parsePage(M.pageFrontmatter("page_mountain", M.PAGE_PRESETS.page_mountain), "m.md"), ...M.builtinPages()], ages); sc.ages = ages;
   const store = {}, sounds = [];
-  const opts = (extra = {}) => ({ telescopeGet: (k) => store[k] || null, telescopeSet: (k, v) => { store[k] = JSON.parse(JSON.stringify(v)); }, onTelescopeSound: (k) => sounds.push(k), onImagerAge: ageData, ...extra });
+  const opts = (extra = {}) => ({ instrumentsMode: "guild", telescopeGet: (k) => store[k] || null, telescopeSet: (k, v) => { store[k] = JSON.parse(JSON.stringify(v)); }, onTelescopeSound: (k) => sounds.push(k), onImagerAge: ageData, ...extra });
   const r = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts());
   r.setScene(sc); r.setView("telescope"); r.nowOverride = t0; r.draw(1);
   const tick = () => new Promise((res) => setTimeout(res, 0));
@@ -251,7 +251,7 @@ const relDone = (async () => {
   ok(rf.hot.some((h) => /Rouler la carte/.test(h.tip)) && rf.hot.some((h) => /Le Great Zero/.test(h.tip)), "en français : la carte");
   // un état de l'étape 2 se relit tel quel
   const st2 = { torahn: 4200, elev: 3, found: true, at: { torahn: 4200, elev: 3 }, systems: { k: { at: t0, torahn: 100, elevation: 2, distance: 900, rel: { x: 1, y: 2, z: 3 } } } };
-  const r2 = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { telescopeGet: () => st2 }); r2.setScene(sc); r2.setView("starmap"); r2.draw(1);
+  const r2 = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { instrumentsMode: "guild", telescopeGet: () => st2 }); r2.setScene(sc); r2.setView("starmap"); r2.draw(1);
   ok(r2.telescope.line === 0 && r2.telescope.found && MAP.layout(r2.telescope.zero, r2.telescope.systems).stars[0].miss === 0, "un état de l'étape 2 : sur la vraie ligne, ses étoiles justes sur la carte");
   ok(bad === 0, "étape 2 relue : aucun nombre non fini");
 })();

@@ -220,13 +220,14 @@ function measure(dial, clue) {
  * (`tri`) : la mesure de l'étape 2, sans leurre. `shown` : le signal qu'on voit le mieux (pour les mots et le son).
  */
 const BEND_DIM = 0.45;
-function scope(dial, sys, { tri = false } = {}) {
-  const v = perceive(sys, { tri }), d = normDial(dial), m = measure(d, v.clue), bend = !!(v.fx.deflect && !v.tri), beat = !!(v.fx.beat && !v.tri);
+function scope(dial, sys, { tri = false, easy = false } = {}) {
+  // mode facile (src/instruments.js) : les étoiles mortes ne trompent pas (ni leurre, ni faux pouls) ; elles brouillent seulement un peu l'image (`blur`)
+  const v0 = perceive(sys, { tri: tri || easy }), v = easy && !tri ? { ...v0, tri: false } : v0, d = normDial(dial), m = measure(d, v.clue), bend = !!(v.fx.deflect && !v0.tri), beat = !!(v.fx.beat && !v0.tri);
   const dim = bend ? BEND_DIM : 1, tr = m.found ? m : { ...m, s: m.s * dim, band: Math.min(T.bandOf(m.s * dim), T.BANDS.length - 1) };
   let lure = null;
   if (bend) { const l = T.signal(d, { torahn: v.seen.torahn, elevation: v.seen.elevation }); lure = { ...l, found: false, band: Math.min(l.band, T.BANDS.length - 1) }; }
   const shown = lure && !m.found && lure.s > tr.s ? lure : tr, ddFalse = beat ? d.delay - v.seen.delay : null;
-  return { ...v, m, true: tr, lure, shown, bend, beat, echoDd: beat ? ddFalse : m.dd, falseLock: beat && Math.abs(ddFalse) <= TOL.delay && !m.delayOk, bentLock: !!(lure && lure.band >= 4 && !m.found) };
+  return { ...v, m, true: tr, lure, shown, bend, beat, blur: easy && v.perturbed ? 1 : 0, echoDd: beat ? ddFalse : m.dd, falseLock: beat && Math.abs(ddFalse) <= TOL.delay && !m.delayOk, bentLock: !!(lure && lure.band >= 4 && !m.found) };
 }
 
 /**
@@ -289,8 +290,14 @@ const FAINT_AT = [0.6, 0.25, 0.08];
 function faintBand(s) { let i = 0; while (i < FAINT_AT.length && s < FAINT_AT[i]) i++; return i; }
 
 /**
+ * Ce que l'arpenteur note d'un système `sys` (systemOf) : dans l'Art de la Guilde (`guild`), ce qu'il perçoit (`seen`,
+ * faussé par les étoiles mortes) ; en mode facile, le vrai (`clue`). Passer aussi `{ easy: !guild }` à `words`.
+ */
+function surveyed(sys, guild) { return (guild && sys.seen) || sys.clue; }
+/**
  * La phrase de l'arpenteur (notes de l'onglet Détails) : ce qu'on perçoit du Zéro depuis l'Âge, en mots seulement.
  * `values` : les trois réglages du télescope (Torahn, élévation au sens du KI, retard), pour le mode « complet ».
+ * `opts.easy` (mode facile) : ni faux pouls ni lumière courbée dans les mots, seulement un léger brouillage.
  */
 function words(clue, lang = "en", opts = {}) {
   const t = makeT(() => (lang === "fr" ? "fr" : "en")), n = opts.compass === 4 || opts.compass === 8 ? opts.compass : 16, sec = sectorOf(clue.torahn);
@@ -299,8 +306,9 @@ function words(clue, lang = "en", opts = {}) {
   const out = { line: t("sys.line", parts), parts, bands: { sector: sec, compass: n, height: heightBand(clue.elevation), delay: delayBand(clue.delay), faint: faintBand(clue.strength) }, values: { torahn: clue.torahn, elev: T.kiElev(clue.elevation), delay: clue.delay } };
   // étape 3 : ce que l'arpenteur remarque des perturbateurs (faux pouls, lumière courbée) et de sa boussole (sans nord, des relèvements grossiers)
   const fx = opts.fx, bits = [];
-  if (fx && fx.beat) { bits.push(fx.beat.kind === "pulsar" ? t("sys.pert.pulsar") : t("sys.pert.neutron")); out.values.beats = PB.beatsPer25(fx.beat.period); }
-  if (fx && fx.deflect) bits.push(t("sys.pert.bend"));
+  if (opts.easy && fx && (fx.beat || fx.deflect)) bits.push(t("sys.pert.blur")); // mode facile : une étoile morte brouille seulement un peu l'image
+  else if (fx && fx.beat) { bits.push(fx.beat.kind === "pulsar" ? t("sys.pert.pulsar") : t("sys.pert.neutron")); out.values.beats = PB.beatsPer25(fx.beat.period); }
+  if (fx && fx.deflect && !opts.easy) bits.push(t("sys.pert.bend"));
   if (n === 4) bits.push(t("sys.compass.none")); else if (n === 8) bits.push(t("sys.compass.weak"));
   if (bits.length) out.pert = bits.join(" ");
   return out;
@@ -316,12 +324,15 @@ function compassOf(field) { return field == null || !Number.isFinite(field) ? 16
 /**
  * Le Zéro et la fausse ligne vus dans l'oculaire, lutrin vide (étape 1, avec le piège de l'étape 3) : `true` (le vrai Zéro),
  * `old` (la ligne de Me'erta : un pouls plus pâle, `OLD_GAIN`), `best` (celui qu'on voit le mieux, avec `line` : 0 ou L).
+ * `easy` (mode facile) : la fausse ligne reste invisible (`old.hidden`, signal nul), `best` est toujours le vrai Zéro.
  */
 const OLD_GAIN = 0.82;
-function lineSignals(aim, zero, old) {
-  const a = T.signal(aim, zero), o0 = T.signal(aim, { torahn: old.torahn, elevation: old.elevation }), s = o0.s * OLD_GAIN, o = { ...o0, s, band: o0.found ? o0.band : Math.min(T.bandOf(s), T.BANDS.length - 1) };
+function lineSignals(aim, zero, old, { easy = false } = {}) {
+  const a = T.signal(aim, zero);
+  if (easy || !old) return { true: a, old: { ...a, s: 0, band: 0, found: false, hidden: true }, best: { ...a, line: 0 } }; // mode facile : la ligne de Me'erta n'apparaît jamais
+  const o0 = T.signal(aim, { torahn: old.torahn, elevation: old.elevation }), s = o0.s * OLD_GAIN, o = { ...o0, s, band: o0.found ? o0.band : Math.min(T.bandOf(s), T.BANDS.length - 1) };
   const best = a.found || !o.found && a.s >= o.s ? { ...a, line: 0 } : { ...o, line: old.L };
   return { true: a, old: o, best };
 }
 
-module.exports = { BEND_DIM, scope, OLD_LINE, OLD_GAIN, BEACON_RANGE, FIELD_NONE, writtenPerturbers, placeSystem, perceive, oldLine, believedZero, miss, offLine, beacons, compassOf, lineSignals, DELAY_UNIT, DELAY_MAX, STEP_DELAY, TOL, SYS_ELEV, SYS_DIST, SYSTEM_RE, HEIGHT_AT, DELAY_AT, FAINT_AT, parseSystem, starIds, starKey, position, cart, cyl, delayOf, strengthOf, zeroSeenFrom, sources, systemOf, normDial, turnDial, measure, echoOffset, echoWord, locate, record, isLocated, findLocated, sectorOf, heightBand, delayBand, faintBand, words };
+module.exports = { surveyed, BEND_DIM, scope, OLD_LINE, OLD_GAIN, BEACON_RANGE, FIELD_NONE, writtenPerturbers, placeSystem, perceive, oldLine, believedZero, miss, offLine, beacons, compassOf, lineSignals, DELAY_UNIT, DELAY_MAX, STEP_DELAY, TOL, SYS_ELEV, SYS_DIST, SYSTEM_RE, HEIGHT_AT, DELAY_AT, FAINT_AT, parseSystem, starIds, starKey, position, cart, cyl, delayOf, strengthOf, zeroSeenFrom, sources, systemOf, normDial, turnDial, measure, echoOffset, echoWord, locate, record, isLocated, findLocated, sectorOf, heightBand, delayBand, faintBand, words };

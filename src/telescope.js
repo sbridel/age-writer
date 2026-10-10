@@ -101,10 +101,11 @@ function bandOf(s) { let band = 0; while (band < BANDS.length && s >= BANDS[band
  * regarder plusieurs battements) ; près, elle s'apaise. Même battement, même visée : même perception (reproductible).
  * `s` et `band` sont perçus ; `found` reste exact (l'anneau ne ment pas).
  */
-const SCINT = { floor: 0.03, rel: 0.12, far: 0.3 }; // amplitude : un plancher, plus une part du signal, plus forte de loin
-function observe(sig, beat, salt = 0) {
+const SCINT = { floor: 0.03, rel: 0.12, far: 0.3, easy: 0.2 }; // amplitude : un plancher, plus une part du signal, plus forte de loin ; `easy` : facteur du mode facile
+/** `scale` : 1 pour l'Art de la Guilde ; `SCINT.easy` (bien plus faible) pour le mode facile (src/instruments.js). */
+function observe(sig, beat, salt = 0, scale = 1) {
   const r = rng((fnv(`${beat | 0}:${Math.round(sig.d * 10)}`) ^ (salt >>> 0) ^ 0x7e1e5c09) >>> 0); r();
-  const amp = SCINT.floor + sig.s * (SCINT.rel + SCINT.far * (1 - sig.s)), s = Math.max(0, Math.min(1, sig.s + amp * (r() * 2 - 1)));
+  const amp = (SCINT.floor + sig.s * (SCINT.rel + SCINT.far * (1 - sig.s))) * (Number.isFinite(scale) ? Math.max(0, scale) : 1), s = Math.max(0, Math.min(1, sig.s + amp * (r() * 2 - 1)));
   let band = 0; while (band < BANDS.length && s >= BANDS[band]) band++;
   if (!sig.found) band = Math.min(band, BANDS.length - 1); // le bord de l'anneau ne se voit que dans l'anneau
   return { ...sig, s: sig.found ? Math.max(s, sig.s) : s, band: sig.found ? sig.band : band };

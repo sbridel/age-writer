@@ -43,6 +43,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   // effets ponctuels : un seul contexte partagé
   const before = contexts.length; S.linkSound(0.3); S.bookOpen(0.3); S.staticBurst(0.3); S.linkSound(0.3); S.telescopeSfx("tick", 0.2); S.telescopeSfx("ping", 0.7); S.telescopeSfx("found", 1);
   assert(S.telescopeSfx("ping", 0.05) === false, "télescope : dans le vide, le pouls ne s'entend pas");
+  assert(S.telescopeSfx("metronome", 1) !== false && S.telescopeSfx("falsebeat", 0.6) !== false && S.telescopeSfx("falsebeat", 0) === false, "télescope : le tic du métronome, le faux pouls");
   assert(contexts.length - before <= 1, "effets ponctuels : un seul contexte (" + (contexts.length - before) + ")");
   console.log("sound ok"); process.exit(0);
 })().catch((e) => { console.error("FAIL", e); process.exit(1); });

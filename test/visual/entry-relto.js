@@ -24,6 +24,9 @@ function renderMany(host, ages) {
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "starmap", step3: "map", label: "STAR MAP / a constellation, a black hole, a pulsar" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "starmap", step3: "mapold", label: "STAR MAP / the old line: stars that miss the Zero" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: "far", label: "TELESCOPE night / far" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: [6, -3], at: 0.04, label: "METRONOME / easy: true pulse at its peak, pendulum at its extreme" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step3: "oldline", at: 0.5, label: "METRONOME / guild: pendulum mid-swing, the old line drifting" },
+    { h: 14, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: [6, -3], at: 0.04, reduced: true, label: "METRONOME / day, reduced motion: pendulum at rest, beat lamp" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: [14, -9], label: "TELESCOPE night / near (14, −9)" },
     { h: 14, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: [1, 0], found: true, label: "TELESCOPE day / found" },
     { h: 15, t: 3.3, env: {}, pages: ["page_koi", "page_cat", "page_pond_decor", "page_flowers"], view: "pondplus", label: "POND+ day" },
@@ -77,10 +80,11 @@ function renderMany(host, ages) {
     const scene = M.buildScene(relto, pages, ages);
     const c = document.createElement("canvas"); const d = document.createElement("div"); d.textContent = v.label; host.appendChild(d); host.appendChild(c);
     c.style.width = "640px"; document.body.appendChild(host);
-    const r = new ReltoRenderer(c, dni); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view;
+    const r = new ReltoRenderer(c, dni, v.reduced ? { reducedMotion: true } : {}); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view;
     if (v.step2) step2(r, v.step2);
     if (v.step3) step3(r, v.step3);
-    if (v.aim) { const TL = require("./relto-telescope"), st = TL.state(r), z = st.zero; st.aim = v.aim === "far" ? { torahn: (z.torahn + 30000) % 62500, elev: 0 } : { torahn: (z.torahn - v.aim[0] * 100 + 62500) % 62500, elev: z.elevation - v.aim[1] }; st.found = !!v.found; } if (v.hover) r.hover = { x: v.hover[0] - 24, y: v.hover[1], w: 48, h: 48, tip: "Calendar pinnacle — Leevot 19" }; r.draw(v.t || 3.7);
+    if (v.aim) { const TL = require("./relto-telescope"), st = TL.state(r), z = st.zero; st.aim = v.aim === "far" ? { torahn: (z.torahn + 30000) % 62500, elev: 0 } : { torahn: (z.torahn - v.aim[0] * 100 + 62500) % 62500, elev: z.elevation - v.aim[1] }; st.found = !!v.found; } if (v.at != null) r.nowOverride = require("./metronome").peakAt(1.29e9 + (v.step3 ? 9 : 0) + v.at); // un instant choisi dans le battement (0 : le sommet du vrai pouls)
+    if (v.hover) r.hover = { x: v.hover[0] - 24, y: v.hover[1], w: 48, h: 48, tip: "Calendar pinnacle — Leevot 19" }; r.draw(v.t || 3.7);
   });
 }
 /** Étape 2 du télescope : un Âge sur le lutrin (observatoire) ou dans l'Imageur, son étoile située, le micromètre synchronisé. */
@@ -108,7 +112,7 @@ function step2(r, mode) {
 /** Étape 3 : un système perturbé sur le lutrin, la ligne ancienne, la carte des étoiles (avec ou sans le piège). */
 function step3(r, mode) {
   const SS = require("./starsystem"), PB = require("./perturbers"), TL = require("./relto-telescope"), T = require("./telescope");
-  const now = 1.8e12; r.nowOverride = now;
+  const now = 1.8e12; r.nowOverride = now; r.opts.instrumentsMode = "guild"; // l'Art de la Guilde : leurres, faux pouls, ligne ancienne
   const st = TL.state(r); st.found = true; st.at = { torahn: st.zero.torahn, elev: st.zero.elevation };
   const find = (f, pre) => { for (let i = 0; i < 5000; i++) { const k = pre + i, p = SS.placeSystem(k, []), fx = PB.effects(p.near, p.key, SS.delayOf(p.pos), SS.DELAY_MAX); if (f(p, fx)) return { key: p.key, pos: p.pos, near: p.near, fx }; } return null; };
   const full = (s) => ({ ...s, ...SS.perceive(s) });

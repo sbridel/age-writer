@@ -157,7 +157,7 @@ const relDone = (async () => {
   const sc = M.buildScene(relto, [...pages.filter((id) => id !== "page_telescope").map((id) => M.parsePage(M.pageFrontmatter(id, M.PAGE_PRESETS[id]), id + ".md")), ...M.builtinPages()], ages);
   sc.ages = ages;
   const store = {}, tunings = {}, sounds = [];
-  const opts = (extra = {}) => ({ telescopeGet: (k) => store[k] || null, telescopeSet: (k, v) => { store[k] = JSON.parse(JSON.stringify(v)); }, onTelescopeSound: (k) => sounds.push(k), onImagerAge: ageData, imagerGet: (p) => tunings[p] || null, imagerSet: (p, v) => { tunings[p] = JSON.parse(JSON.stringify(v)); }, ...extra });
+  const opts = (extra = {}) => ({ instrumentsMode: "guild", telescopeGet: (k) => store[k] || null, telescopeSet: (k, v) => { store[k] = JSON.parse(JSON.stringify(v)); }, onTelescopeSound: (k) => sounds.push(k), onImagerAge: ageData, imagerGet: (p) => tunings[p] || null, imagerSet: (p, v) => { tunings[p] = JSON.parse(JSON.stringify(v)); }, ...extra });
   const r = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts());
   r.setScene(sc); r.setView("telescope"); r.nowOverride = t0; r.draw(1);
   const tick = () => new Promise((res) => setTimeout(res, 0));
