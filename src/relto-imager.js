@@ -281,10 +281,10 @@ function micrometer(r, ctx, c, cal, t) {
   ctx.strokeStyle = c("#1b130d"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(M.x, M.y); ctx.lineTo(M.x + Math.cos(a) * (M.hub - 1), M.y + Math.sin(a) * (M.hub - 1)); ctx.stroke();
   lamp(ctx, M.x + M.r + 7, M.y - M.r + 2, cal.synced ? (cal.certain ? "green" : "amber") : null, 2.6);
   const name = tt("cal.micro");
-  r.hot.push({ x: M.x - M.r - 4, y: M.y - M.r - 4, w: M.r + 4, h: M.r * 2 + 8, tip: `${name} — ${tt("cal.rim.minus")}`, imager: { sync: -10 } });
-  r.hot.push({ x: M.x, y: M.y - M.r - 4, w: M.r + 4, h: M.r * 2 + 8, tip: `${name} — ${tt("cal.rim.plus")}`, imager: { sync: 10 } });
-  r.hot.push({ x: M.x - M.hub - 2, y: M.y - M.hub - 2, w: M.hub + 2, h: M.hub * 2 + 4, tip: `${name} — ${tt("cal.hub.minus")}`, imager: { sync: -1 } });
-  r.hot.push({ x: M.x, y: M.y - M.hub - 2, w: M.hub + 2, h: M.hub * 2 + 4, tip: `${name} — ${tt("cal.hub.plus")}`, imager: { sync: 1 } });
+  r.hot.push({ x: M.x - M.r - 4, y: M.y - M.r - 4, w: M.r + 4, h: M.r * 2 + 8, tip: `${name} — ${tt("cal.rim.minus")}`, tipBelow: true, imager: { sync: -10 } });
+  r.hot.push({ x: M.x, y: M.y - M.r - 4, w: M.r + 4, h: M.r * 2 + 8, tip: `${name} — ${tt("cal.rim.plus")}`, tipBelow: true, imager: { sync: 10 } });
+  r.hot.push({ x: M.x - M.hub - 2, y: M.y - M.hub - 2, w: M.hub + 2, h: M.hub * 2 + 4, tip: `${name} — ${tt("cal.hub.minus")}`, tipBelow: true, imager: { sync: -1 } });
+  r.hot.push({ x: M.x, y: M.y - M.hub - 2, w: M.hub + 2, h: M.hub * 2 + 4, tip: `${name} — ${tt("cal.hub.plus")}`, tipBelow: true, imager: { sync: 1 } });
 }
 
 /** Le cartouche au bas de l'écran (étape 2) : l'heure là-bas, en mots et en chiffres D'ni (gahrtahvo · tahvo), et les coordonnées KIPS. */

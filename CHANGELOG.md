@@ -10,6 +10,8 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **`grass`**: green land that the wind combs in long waves across the linking window; a grassy shore by water, sometimes tall grass in the foreground. Written with `flowers`, it grows into a **meadow** (`meadow` ← `grass` + `flowers`): taller grass to the horizon, with flowers moving through it.
 
 ### Changed
+- The Pages tab says in words what each page adds ("a waterfall", "stones by the pond", "ponderosa pines") instead of the effect's technical name; its buttons and the Books buttons are lighter.
+- The Relto's tooltips wait a moment (about half a second) before showing, so you can see what a control covers; the Imager's sync micrometer shows its tooltip below the knob, leaving the hairline window visible.
 - **Renaming an Age keeps its world.** The plugin writes the former name as the note's property `age_seed`; the drawn world, the star, its charted position and the Imager's tuning stay the same, and the names engraved at the observatory follow the new name. Delete `age_seed` to draw a new world. For an Age renamed earlier: command *Give this Age back the world of its former name*.
 - **The generative window is now the default** in the Age block and the book: the same world the Imager shows. The original painted window is still there (setting *Window rendering*: classic, or `window_style: classic` in an age block). Existing installs keep their saved choice.
 - **A tidier Pages tab:** pages grouped by state (active, available, locked), each group folding away, with readable names; the sounds have their own group, **one setting per sound** (on/off and volume) for every page that plays it, instead of a button and a slider on each page. Earlier per-page sound settings are not carried over. The columns are aligned and titled (page · what it adds, or why it is locked · the button). The books for the shelf are colour pills like the books' spines (green stable, amber unstable, red dying): filled when on the shelf, hollow when put away, a click toggles; sort by name or by stability.
@@ -21,6 +23,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **A compact Settings tab:** the sky time on one line, with the hour it shows and ↺; the sound on one line, with a vertical volume fader.
 
 ### Fixed
+- A black sun's red corona no longer shows through the mountains: the ridges hide it as they hide the disc.
 - The Imager's periscope no longer shows the Age's fissure in every direction: it is on one side only, the one seen from the front.
 - In a narrow panel, the Relto's D'ni name no longer slides under the view icons (it goes on its own line above).
 

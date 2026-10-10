@@ -125,6 +125,21 @@ async function createReltoPage(plugin) {
 }
 
 
+/** Ce qu'une page ajoute au Relto, en mots lisibles (et non le nom technique de l'effet). */
+const FX_WORDS = {
+  en: { vegetation: "trees", waterfall: "a waterfall", fireflies: "fireflies", lanterns: "lanterns", snow: "snow", aurora: "an aurora", mist: "mist", fireworks: "fireworks", mountain: "a mountain", pillars: "standing stones", chimney: "a chimney", gems: "gems", gold: "gold", silver: "silver", koi: "koi", cat: "a cat", rain: "rain", storm: "a storm", birds: "birds", butterflies: "butterflies", moons: "moons", dock: "a dock", bench: "a bench", stalktree: "a stalk tree", cattoys: "the cat's toys", ponddecor: "stones by the pond", islets: "islets", calendar: "the calendar pinnacle", flowers: "flowers", grass: "grass", imager: "the Imager", telescope: "the observatory", dniclock: "the D'ni clock", comet: "comets" },
+  fr: { vegetation: "des arbres", waterfall: "une cascade", fireflies: "des lucioles", lanterns: "des lanternes", snow: "de la neige", aurora: "une aurore", mist: "de la brume", fireworks: "des feux d'artifice", mountain: "une montagne", pillars: "des menhirs", chimney: "une cheminée", gems: "des gemmes", gold: "de l'or", silver: "de l'argent", koi: "des koïs", cat: "un chat", rain: "la pluie", storm: "l'orage", birds: "des oiseaux", butterflies: "des papillons", moons: "des lunes", dock: "un ponton", bench: "un banc", stalktree: "un arbre-tige", cattoys: "les jouets du chat", ponddecor: "des pierres au bord du bassin", islets: "des îlots", calendar: "la pierre-calendrier", flowers: "des fleurs", grass: "de l'herbe", imager: "l'Imageur", telescope: "l'observatoire", dniclock: "l'horloge D'ni", comet: "des comètes" },
+};
+const ASSET_WORDS = {
+  en: { conifer: "pines", birch: "birches", palm: "palms", fern: "ferns", ponderosa: "ponderosa pines", maple: "maples", crystal: "crystal trees", blue: "blue", red: "red", yellow: "yellow", white: "white", pink: "pink" },
+  fr: { conifer: "pins", birch: "bouleaux", palm: "palmiers", fern: "fougères", ponderosa: "pins ponderosa", maple: "érables", crystal: "arbres de cristal", blue: "bleues", red: "rouges", yellow: "jaunes", white: "blanches", pink: "roses" },
+};
+function fxLabel(a, lang) {
+  const L = lang === "fr" ? "fr" : "en", base = FX_WORDS[L][a.type] || String(a.type).replace(/_/g, " "), asset = a.asset ? ASSET_WORDS[L][a.asset] || a.asset : null;
+  if (a.type === "vegetation" && asset) return asset;
+  return asset ? `${base} (${asset})` : base;
+}
+
 async function renderRelto(plugin, source, el, ctx) {
   const { app, t } = plugin, opt = parseOptions(source);
   el.empty();
@@ -378,7 +393,7 @@ async function renderRelto(plugin, source, el, ctx) {
       return d.createDiv({ cls: "age-relto__secbody" });
     };
     const nameOf = (p) => p.label || String(p.id).replace(/^page_/, "").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
-    const whatOf = (p) => p.additions.map((a) => a.type + (a.asset ? ` (${a.asset})` : "")).join(" · ");
+    const whatOf = (p) => p.additions.map((a) => fxLabel(a, plugin.lang())).join(" · ");
     // trois colonnes alignées (la page · ce qu'elle ajoute au Relto, ou pourquoi elle est verrouillée · le bouton), avec leurs titres
     const colHead = (box, cells) => { const h = box.createDiv({ cls: "age-relto__colhead" }); for (const c of cells) h.createSpan({ text: c }); };
     const row = (box, p) => {

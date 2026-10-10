@@ -79,7 +79,7 @@ const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
   const sc = M.buildScene(relto, [M.parsePage(M.pageFrontmatter("page_mountain", M.PAGE_PRESETS.page_mountain), "m.md"), ...M.builtinPages()], ages); sc.ages = ages;
   for (const [lang, dist] of [["en", 14999], ["fr", 9876], ["en", 200]]) {
     const pos = { torahn: 31250, distance: dist, elevation: -100 }, clue = SS.zeroSeenFrom(pos), sys = { key: "k" + dist, pos, near: [], fx: {}, clue, seen: clue, perturbed: false };
-    const r = new ReltoRenderer(dom.window.document.createElement("canvas"), spy, { instrumentsMode: "easy", t: makeT(() => lang) });
+    const r = new ReltoRenderer(dom.window.document.createElement("canvas"), spy, { instrumentsMode: "easy", t: makeT(() => lang), tipDelay: 0 });
     r.setScene(sc); r.setView("telescope"); r.nowOverride = 1.8e12; r.draw(1);
     const st = r.telescope; st.found = true; st.book = { idx: 0, age: ages[0], data: { system: sys }, loading: false };
     st.dial = { torahn: clue.torahn, elev: clue.elevation, delay: clue.delay };

@@ -83,6 +83,7 @@ function catLook(color) {
   if (/^#?[0-9a-f]{6}$/.test(key)) { const c = key.startsWith("#") ? key : "#" + key; return { label: c, fur: c, tail: c, eyes: "#7fb04a" }; }
   return CATS.orange;
 }
+const TIP_DELAY = 450; // ms avant qu'une infobulle du canvas apparaisse
 const VERDICT = { stable: "#8fae6a", unstable: "#d9a24a", dying: "#c0553f", unknown: "#7a7a8a" };
 const BOOKS = ["#7a3b2a", "#2f4a3a", "#3a3f6a", "#6a5a2a", "#5a2f4a", "#2f5a5a"];
 const CAM = 1.2, CAM_X = 320, CAM_Y = 214, CAM_OY = 196; // zoom sur l'île
@@ -1058,11 +1059,15 @@ class ReltoRenderer {
 
   drawHover(ctx) {
     const h = this.hover; if (!h) return;
+    // l'infobulle attend un instant (TIP_DELAY) : on peut viser une zone, et voir ce qu'elle couvre, sans qu'elle s'interpose aussitôt
+    const k = `${Math.round(h.x)},${Math.round(h.y)},${h.tip}`; if (k !== this.tipKey) { this.tipKey = k; this.tipAt = Date.now(); const delay = this.opts.tipDelay != null ? this.opts.tipDelay : TIP_DELAY; if (!this.running && delay > 0) window.setTimeout(() => { if (this.tipKey === k) this.draw(0); }, delay + 20); }
+    const late = Date.now() - this.tipAt >= (this.opts.tipDelay != null ? this.opts.tipDelay : TIP_DELAY);
     if (this.opts.hoverFrame !== false) { ctx.strokeStyle = "rgba(255,240,200,0.9)"; ctx.lineWidth = 1; ctx.strokeRect(h.x - 1, h.y - 1, h.w + 2, h.h + 2); } // cadre : réglage « Cadre des zones cliquables »
+    if (!late || !h.tip) return;
     const [vx0, vx1, vy0] = this.visible_();
     // `h.frac` (facultatif) : une longueur de faisceau en rahnfee (src/beam.js), gravée en chiffres D'ni après le texte
     const fs = 10, fw = h.frac && this.dni && this.dni.fractionWidth ? this.dni.fractionWidth(h.frac, fs) + 6 : 0;
-    ctx.font = "11px serif"; const tw = ctx.measureText(h.tip).width + fw, bx = clamp(h.x + h.w / 2 - tw / 2 - 6, vx0 + 4, Math.max(vx0 + 4, vx1 - tw - 16)), by = Math.max(vy0 + 4, h.y - 24);
+    ctx.font = "11px serif"; const tw = ctx.measureText(h.tip).width + fw, bx = clamp(h.x + h.w / 2 - tw / 2 - 6, vx0 + 4, Math.max(vx0 + 4, vx1 - tw - 16)), by = h.tipBelow ? Math.min(H - 22, h.y + h.h + 6) : Math.max(vy0 + 4, h.y - 24); // `tipBelow` : sous la zone (le micromètre : sa fenêtre et son fil restent visibles)
     ctx.fillStyle = "rgba(16,13,9,0.92)"; ctx.fillRect(bx, by, tw + 12, 18); ctx.strokeStyle = "rgba(205,189,148,0.8)"; ctx.strokeRect(bx, by, tw + 12, 18);
     ctx.fillStyle = "#e9dcb8"; ctx.fillText(h.tip, bx + 6, by + 13);
     if (fw) this.dni.drawFraction(ctx, h.frac, bx + 6 + tw - fw + 6, by + 4, fs, "#e0c27a");

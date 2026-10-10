@@ -89,7 +89,7 @@ function renderMany(host, ages) {
     const scene = M.buildScene(relto, pages, ages);
     const c = document.createElement("canvas"); const d = document.createElement("div"); d.textContent = v.label; host.appendChild(d); host.appendChild(c);
     c.style.width = "640px"; document.body.appendChild(host);
-    const r = new ReltoRenderer(c, dni, v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view;
+    const r = new ReltoRenderer(c, dni, { tipDelay: 0, ...(v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}) }); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view;
     if (v.now) { const DC = require("./dniclock"); if (v.now === "tahvo+1s") { const ms = 1791591000000, tv = DC.rings(ms).find((q) => q.key === "tahvo"); r.nowOverride = ms - tv.elapsed + 1000; } else r.nowOverride = v.now; } // l'horloge D'ni à un instant fixe
     if (v.unwritten) unwrittenView(r, v.unwritten);
     if (v.step2) step2(r, v.step2);

@@ -505,7 +505,12 @@ function paint(g, m, t, o = {}) {
   const vg = g.createRadialGradient(W / 2, H / 2, H * 0.4, W / 2, H / 2, H * 0.95); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.35)"); g.fillStyle = vg; g.fillRect(0, 0, W, H);
   if (S.blackSun) { // soleil noir : les couleurs s'éteignent en gris, seule la couronne garde son rouge
     g.save(); g.globalCompositeOperation = "saturation"; g.globalAlpha = 0.8; g.fillStyle = "#808080"; g.fillRect(0, 0, W, H); g.restore();
-    const s0b = sn.find((x) => x.i === 0); if (s0b && s0b.y + s0b.r < hz) { g.strokeStyle = "rgba(150,52,40,0.75)"; g.lineWidth = Math.max(1.2, s0b.r * 0.22); g.beginPath(); g.arc(s0b.x, s0b.y, s0b.r * 1.08, 0, TAU); g.stroke(); }
+    const s0b = sn.find((x) => x.i === 0);
+    if (s0b && s0b.y - s0b.r * 1.3 < hz) { // la couronne reste dans le ciel : les crêtes la cachent comme elles cachent le disque
+      const yAt = (x) => m.ridges.reduce((lo, rg) => { const n = rg.xs.length - 1, f = Math.max(0, Math.min(n, (x / W) * n)), i = Math.floor(f), y = rg.xs[i] + (rg.xs[Math.min(n, i + 1)] - rg.xs[i]) * (f - i); return Math.min(lo, y); }, hz);
+      g.save(); g.beginPath(); g.moveTo(0, -1); g.lineTo(W, -1); for (let k = 64; k >= 0; k--) { const x = (k / 64) * W; g.lineTo(x, yAt(x)); } g.closePath(); g.clip();
+      g.strokeStyle = "rgba(150,52,40,0.75)"; g.lineWidth = Math.max(1.2, s0b.r * 0.22); g.beginPath(); g.arc(s0b.x, s0b.y, s0b.r * 1.08, 0, TAU); g.stroke(); g.restore();
+    }
   }
   if (dm > 0) doomFx(g, m, dm, sn);
   g.restore();

@@ -545,3 +545,8 @@
 .age-relto__pill.is-on { background: var(--pc); color: #16140f; opacity: 1; }
 .age-relto__pill:hover { opacity: 1; filter: brightness(1.1); }
 .age-relto__pillpct { font-size: 0.82em; opacity: 0.8; }
+
+/* les boutons du bloc Livres et des pages : discrets, comme ceux du tri */
+.age-relto__booktools button, .age-relto__newpage, .age-relto__secbody .age-relto__pbtn { height: auto; padding: 1px 10px; font-size: 0.78em; background: transparent; box-shadow: none; border: 1px solid rgba(205, 189, 148, 0.3); border-radius: 4px; color: #b9ac8a; }
+.age-relto__booktools button:hover, .age-relto__newpage:hover, .age-relto__secbody .age-relto__pbtn:hover { background: rgba(205, 189, 148, 0.14); color: #e9dcb8; }
+.age-relto__booktools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0; }

@@ -30,6 +30,7 @@ const CASES = [
   ["Même Âge : midi (été)", { suns: 1, water: true, trees: 3, ruins: ["door"] }, 2029, 0.3, { day: 0.35, season: 1 }],
   ["Même Âge : soir", { suns: 1, water: true, trees: 3, ruins: ["door"] }, 2029, 0.3, { day: 0.62, season: 0 }],
   ["Soleil noir (midi)", { suns: 1, sunHues: [[70, 34, 40]], blackSun: true, trees: 3, water: true, ruins: ["tablet"] }, 2030, 0.3, { day: 0.4 }],
+  ["Soleil noir derrière les crêtes (aube)", { suns: 1, sunHues: [[70, 34, 40]], blackSun: true, terrain: "mountains", trees: 2 }, 2033, 0.3, { day: 0.06 }],
   ["Soleil noir (désert, matin)", { suns: 1, sunHues: [[70, 34, 40]], blackSun: true, sand: true, wind: true }, 2031, 0.3, { day: 0.15 }],
   ["Sans soleil, étoiles", { suns: 0, skyStated: true, moon: true, ruins: ["door", "tablet"], tabletAwake: true }, 9992, 0.2],
   ["Herbe (grass)", { grass: true }, 3031, 0.3, { day: 0.4 }],
