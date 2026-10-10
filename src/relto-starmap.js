@@ -37,7 +37,10 @@ function elevBand(z) { const a = Math.abs(Number(z) || 0); return a <= 5 ? "map.
 
 /** La vue de la carte. */
 function drawStarMap(r, ctx, sc, sky, tm) {
-  const t = tOf(r), st = TL.state(r), map = MAP.layout(st.zero, st.found ? st.systems : {}, st.line), S = SHEET;
+  // les noms gravés qui ne sont plus ceux d'un Âge (note renommée avant la 1.23, ou effacée) ne s'affichent plus ; la gravure, elle, reste
+  const st = TL.state(r), known = new Set([...((sc && sc.candidates) || []), ...((sc && sc.ages) || [])].map((a) => a && a.name).filter(Boolean));
+  const systems = {}; for (const [k, rec] of Object.entries(st.found ? st.systems || {} : {})) systems[k] = rec && Array.isArray(rec.ages) && known.size ? { ...rec, ages: rec.ages.filter((n) => known.has(n)) } : rec;
+  const t = tOf(r), map = MAP.layout(st.zero, systems, st.line), S = SHEET;
   // la table et le parchemin (taché, bords sombres), éclairé par une lampe
   const tg = ctx.createRadialGradient(W / 2, H / 2, 60, W / 2, H / 2, 420); tg.addColorStop(0, "#4a3a2a"); tg.addColorStop(1, "#1c140e"); ctx.fillStyle = tg; ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(S.x + 6, S.y + 8, S.w, S.h);

@@ -24,6 +24,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **A compact Settings tab:** the sky time on one line, with the hour it shows and ↺; the sound on one line, with a vertical volume fader.
 
 ### Fixed
+- The star chart no longer shows names of Ages that no longer exist (renamed before this version, or deleted); the engraving itself is kept.
 - A black sun's red corona no longer shows through the mountains: the ridges hide it as they hide the disc.
 - The Imager's periscope no longer shows the Age's fissure in every direction: it is on one side only, the one seen from the front.
 - In a narrow panel, the Relto's D'ni name no longer slides under the view icons (it goes on its own line above).
