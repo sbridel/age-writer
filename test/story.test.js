@@ -75,7 +75,7 @@ ok(scene(["rest"]).pages.find((p) => p.id === mendPage.id).state === "locked" &&
 // ---- notes de chapitre
 const an = (text, nm) => analyseAgeBase(text, { seed: nm });
 const mend = ST.chapterById("mend"), restC = ST.chapterById("rest");
-ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]) === null, "nextChapter : dans l'ordre, null à la fin");
+ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]).id === "weather" && ST.nextChapter(["rest", "mend", "weather"]) === null, "nextChapter : dans l'ordre, null à la fin");
 ok(Object.keys(ST.get({}, "k").notes).length === 0, "get : normalise les notes de chapitre");
 let fair = 0, same = 0;
 for (let i = 0; i < 300; i++) {
@@ -91,6 +91,15 @@ for (const lang of ["en", "fr"]) for (const c of ST.CHAPTERS) {
   ok(t.startsWith("# Nom") && t.includes(ST.MENTOR) && blk && blk[1].split("\n").length === ST.WORLDS[c.id].lines.length, "note de chapitre " + c.id + "/" + lang + " : titre, mentor, bloc age");
   ok(!/bahro|encrier|inkwell|endgame/i.test(t), "note de chapitre " + c.id + "/" + lang + " : rien de réservé");
 }
+
+// ---- chapitre 3 : la météo programmée
+const wc = ST.chapterById("weather"), wl = ST.WORLDS.weather.lines;
+const wa = (programmed) => ({ ...age("Pluie", wl), programmed });
+ok(ST.check(wc, ctx([wa(0)])).why === "program" && ST.check(wc, ctx([wa(1)])).ok, "weather : la pluie en continu ne suffit pas, une ligne programmée oui");
+ok(ST.check(wc, ctx([{ ...wa(1), stability: 50 }])).why === "stable", "weather : un monde instable ne passe pas");
+let wfair = 0; for (let i = 0; i < 200; i++) { const nm = ST.chapterName(wc, `Un jour qui change · ${1000 + i * 7919}`, an); if (an(wl.join("\n"), nm).stability >= 80) wfair++; }
+ok(wfair === 200, "weather : le monde de départ tient avec de la marge, pour tout nom (" + wfair + "/200)");
+ok(require("../src/weather").parseWeather("rain: sometimes, dawn").rain.length === 1 && ST.chapterNote(wc, "en", "N").includes("rain: sometimes, dawn"), "weather : la ligne à écrire est celle que lit le moteur");
 
 // ---- la page finale
 const endP = ST.rewardPages().find((p) => p.id === ST.ENDGAME.id);

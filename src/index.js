@@ -1,5 +1,8 @@
 "use strict";
 // Index des Âges du coffre (mis en cache par date de modification) : verdict, stabilité, liens.
+const WX = require("./weather");
+/** Le nombre de lignes de météo programmées (`rain: sometimes, dawn`) d'un bloc `age`. */
+const weatherPrograms = (src) => { try { const w = WX.parseWeather(src); return w ? Object.keys(w).length : 0; } catch (e) { return 0; } };
 class AgeIndex {
   constructor(plugin) { this.p = plugin; this.cache = new Map(); }
   invalidate() { this.cache.clear(); }
@@ -16,7 +19,7 @@ class AgeIndex {
         if (src !== null) try {
           const a = core.analyse(src, { seed: core.seed(f.path), physics: this.p.physicsMode && this.p.physicsMode() === "strict" }); // en facile la physique ne change rien à la stabilité : inutile de la calculer pour toute la bibliothèque
           const back = a.returnTo ? app.metadataCache.getFirstLinkpathDest(a.returnTo, f.path) : null;
-          hit.info = { name: f.basename, path: f.path, verdict: a.verdict, stability: a.stability, returnTo: back ? back.basename : a.returnTo || null, links: a.links, glyphs: [...new Set(core.glyphs(a).filter((g) => g.written && !g.blot).map((g) => g.id))] };
+          hit.info = { name: f.basename, path: f.path, verdict: a.verdict, stability: a.stability, returnTo: back ? back.basename : a.returnTo || null, links: a.links, glyphs: [...new Set(core.glyphs(a).filter((g) => g.written && !g.blot).map((g) => g.id))], programmed: weatherPrograms(src) };
         } catch (e) { console.warn("[Age Writer ext] index " + f.path, e); } // un Âge illisible ne vide pas l'étagère
         this.cache.set(f.path, hit);
       }

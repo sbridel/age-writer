@@ -18,6 +18,7 @@ const SKY_AXIS = new Map(SKY_ENTRIES.map((e) => [e.id, e.axis]));
 const CHAPTERS = [
   { id: "rest", page: "page_chimney", title: { en: "A world to rest in", fr: "Un monde où se reposer" } },
   { id: "mend", page: "page_lanterns", title: { en: "Mending without breaking", fr: "Corriger sans casser" } },
+  { id: "weather", page: "page_fireflies", title: { en: "A day that changes", fr: "Un jour qui change" } },
 ];
 
 /** La page finale (pour l'instant : un encrier posé sur la table). Le nom reste neutre. */
@@ -84,6 +85,11 @@ function check(chapter, ctx) {
     const seen = (ctx && ctx.seen) || {};
     return stable.some((a) => seen[a.name]) ? { ok: true, why: "" } : { ok: false, why: "mend" };
   }
+  if (chapter.id === "weather") {
+    // « un jour qui change » : un monde stable dont la météo suit une ligne programmée (rain: sometimes, dawn)
+    if (!stable.length) return { ok: false, why: "stable" };
+    return stable.some((a) => a.programmed > 0) ? { ok: true, why: "" } : { ok: false, why: "program" };
+  }
   return { ok: false, why: "unknown" };
 }
 
@@ -111,6 +117,7 @@ const nextChapter = (done) => CHAPTERS.find((c) => !(done || []).includes(c.id))
 const WORLDS = {
   rest: { lines: ["water"] },
   mend: { lines: ["single_sun", "steady_cycle", "water", "lava"], fixed: ["single_sun", "steady_cycle", "water"] },
+  weather: { lines: ["single_sun", "steady_cycle", "water", "rain"], stable: true }, // le monde de départ doit tenir : seule la météo reste à écrire
 };
 
 /**
@@ -120,6 +127,10 @@ const WORLDS = {
  */
 function chapterName(chapter, base, analyse) {
   const w = WORLDS[chapter.id];
+  if (w && w.stable && analyse) { // un monde de départ qui tient avec de la marge, pour ce nom
+    for (let i = 0; i < 80; i++) { const nm = i ? `${base} ${i + 1}` : base, a = analyse(w.lines.join("\n"), nm); if (a && a.stability >= STABLE_AT + 5) return nm; }
+    return base;
+  }
   if (!w || !w.fixed || !analyse) return base;
   const st = (lines, nm) => { const a = analyse(lines.join("\n"), nm); return a && Number.isFinite(a.stability) ? a.stability : null; };
   for (let i = 0; i < 80; i++) {
@@ -137,6 +148,10 @@ const LETTERS = {
   mend: {
     en: ["Well done. Now the harder half of the craft.", "I wrote this world in a hurry, and something in it is wrong. Find what, and mend it. Take out as little as you can: a world is not mended by emptying it.", "The world must end up stable."],
     fr: ["Bien joué. Voici maintenant la moitié la plus difficile du métier.", "J'ai écrit ce monde trop vite, et quelque chose y cloche. Trouve quoi, et corrige-le. Retire le moins possible : on ne répare pas un monde en le vidant.", "Le monde doit finir stable."],
+  },
+  weather: {
+    en: ["A world that never changes is a painting. Let us make it a day.", "Here the rain falls without end. Teach it manners: let it fall only sometimes, and only at dawn. A line can carry a frequency and a moment, after a colon.", "Rewrite the rain line as `rain: sometimes, dawn`, and keep the world stable."],
+    fr: ["Un monde qui ne change jamais est un tableau. Faisons-en un jour.", "Ici la pluie tombe sans fin. Apprends-lui les manières : qu'elle ne tombe que parfois, et seulement à l'aube. Une ligne peut porter une fréquence et un moment, après deux-points.", "Récris la ligne de pluie ainsi : `rain: sometimes, dawn`, et garde le monde stable."],
   },
 };
 

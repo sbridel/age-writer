@@ -349,8 +349,16 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
       files.get(c2[0]).content = files.get(c2[0]).content.replace("\nlava\n", "\nsand\n"); files.get(c2[0]).stat.mtime++; p.index.invalidate(); notices.length = 0;
       el = await show(sf.path);
       ok(row(el, "Lanterns") && /is-available/.test(row(el, "Lanterns").className), "chapitre 2 réussi : la page des lanternes est disponible");
-      ok(row(el, "Inkwell") && /is-available/.test(row(el, "Inkwell").className), "fin de l'histoire : la page finale (l'encrier) est disponible");
-      notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); files.delete(c2[0]); }
+      { const b2 = [...files.keys()]; notices.length = 0; await nx.callback();
+        const c3 = [...files.keys()].filter((k) => !b2.includes(k));
+        ok(c3.length === 1 && c3[0].startsWith(dir + "/") && /Un jour qui change|A day that changes/.test(c3[0]) && /\nrain\n/.test(files.get(c3[0]).content), "chapitre 3 : la note de la météo est créée, avec une pluie continue");
+        ok(row(el, "Inkwell") && /is-locked/.test(row(el, "Inkwell").className), "la page finale reste fermée tant qu'un chapitre manque");
+        files.get(c3[0]).content = files.get(c3[0]).content.replace("\nrain\n", "\nrain: sometimes, dawn\n"); files.get(c3[0]).stat.mtime++; p.index.invalidate(); notices.length = 0;
+        el = await show(sf.path);
+        ok(row(el, "Fireflies") && /is-available/.test(row(el, "Fireflies").className), "chapitre 3 réussi : la page des lucioles est disponible");
+        ok(row(el, "Inkwell") && /is-available/.test(row(el, "Inkwell").className), "fin de l'histoire : la page finale (l'encrier) est disponible");
+        notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); files.delete(c3[0]); }
+      files.delete(c2[0]); }
     const sb = await show("x.md"), sbn = shelf(sb);
     ok(sbn.includes("Dehors") && !sbn.includes("Premier"), "mode histoire : sans précision, le Relto du bac à sable, qui ne voit pas les Âges de l'histoire");
     ok(!row(sb, "Chimney fire") && !row(sb, "Lanterns"), "mode histoire : les pages-récompenses n'existent pas dans le bac à sable");
