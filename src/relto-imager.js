@@ -471,6 +471,13 @@ function closeLens(r, ctx, st, cl, t, c) {
     number(r, ctx, s[key], RAIL.x1 + 26, y - 9, 13);
     for (let v = 0; v <= I.MAX; v++) { const tx = RAIL.x0 + (v / I.MAX) * (RAIL.x1 - RAIL.x0), hw = (RAIL.x1 - RAIL.x0) / I.MAX; r.hot.push({ x: tx - hw / 2, y: y - 32, w: hw, h: 44, tip: s.lock ? `${LABEL[key]} — held by the lock` : LABEL[key], imager: { key, value: v } }); }
   }
+  // l'aide en mots (réglage « Aide aux lentilles ») : sous l'écran, ce que l'œil lit dans le comparateur
+  if (L && (!r.opts.lensHints || r.opts.lensHints())) {
+    const T = tx(r).t, cname = (k) => T(`lens.c.${k}`), parts = I.lensWords(s, L) || [];
+    ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillStyle = rgba(224, 194, 122, 0.9);
+    parts.forEach((p, i) => ctx.fillText(T(p.key, { c: p.vars.c ? cname(p.vars.c) : "" }), MINI.x + MINI.w / 2, MINI.y + MINI.h + 13 + i * 13));
+    ctx.textAlign = "left";
+  }
   backStrip(r, ctx);
 }
 

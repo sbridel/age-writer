@@ -19,6 +19,7 @@ function renderMany(host, ages) {
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "near", label: "TELESCOPE step 2 / an Age's book on the lectern, wheels near its clues" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", label: "TELESCOPE step 2 / the Age's star charted" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager", label: "IMAGER step 2 / sync micrometer, in sync: local time and KIPS" },
+    { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager", lens: true, label: "IMAGER lens hint / off by a few notches" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager-off", label: "IMAGER step 2 / star charted, not yet in sync" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", unwritten: "en", label: "IMAGER guild / a world no one has written, in the blank book (Transcribe)" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", unwritten: "fr", label: "IMAGEUR Guilde / un monde que personne n'a écrit, transcrit (FR)" },
@@ -88,6 +89,7 @@ function renderMany(host, ages) {
     if (v.now) { const DC = require("./dniclock"); if (v.now === "tahvo+1s") { const ms = 1791591000000, tv = DC.rings(ms).find((q) => q.key === "tahvo"); r.nowOverride = ms - tv.elapsed + 1000; } else r.nowOverride = v.now; } // l'horloge D'ni à un instant fixe
     if (v.unwritten) unwrittenView(r, v.unwritten);
     if (v.step2) step2(r, v.step2);
+    if (v.lens && r.imager) { r.imager.station = "lens"; const st = r.imager.settings; r.imager.settings = { ...st, r: Math.max(0, st.r - 5), b: Math.min(24, st.b + 2), iris: Math.min(24, st.iris + 4), lock: false }; } // aide aux lentilles
     if (v.step3) step3(r, v.step3);
     if (v.aim) { const TL = require("./relto-telescope"), st = TL.state(r), z = st.zero; st.aim = v.aim === "far" ? { torahn: (z.torahn + 30000) % 62500, elev: 0 } : { torahn: (z.torahn - v.aim[0] * 100 + 62500) % 62500, elev: z.elevation - v.aim[1] }; st.found = !!v.found; } if (v.at != null) r.nowOverride = require("./metronome").peakAt(1.29e9 + (v.step3 ? 9 : 0) + v.at); // un instant choisi dans le battement (0 : le sommet du vrai pouls)
     if (v.hover) r.hover = { x: v.hover[0] - 24, y: v.hover[1], w: 48, h: 48, tip: "Calendar pinnacle — Leevot 19" }; r.draw(v.t || 3.7);

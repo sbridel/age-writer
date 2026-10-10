@@ -83,5 +83,16 @@ ok(/bourdonne/.test(hf.line) && /hums/.test(he.line) && hf.values.freq === aur.f
   const U = I.toggleLock({ ...L.s, az: 2, tilt: -1 }, earth, t0 + 7 * H); ok(U.ok && !U.s.lock && U.s.az === 0 && U.s.tilt === 0 && I.clarity(U.s, earth, t0 + 7 * H).total > 0.95, "relâché : de face, net à l'instant où on lâche");
   ok(!I.toggleLock({ ...T0, freq: 0 }, earth, t0).ok, "image floue : le verrou ne prend pas");
   ok(I.set(I.START, "iris", 30).iris === 24 && I.set(I.START, "g", 7).g === 7, "un verre posé sur son rail, borné"); }
+{ // aide aux lentilles : la couleur la plus éloignée, puis l'éclat ; « se confondent » quand tout est juste
+  const L = { r: 20, g: 10, b: 4, iris: 12 };
+  ok(I.lensWords({ r: 20, g: 10, b: 4, iris: 12 }, null) === null, "sans lumière de référence : pas d'aide");
+  ok(I.lensWords({ r: 20, g: 11, b: 5, iris: 13 }, L)[0].key === "lens.match", "à un cran près partout : les deux lumières se confondent");
+  const w1 = I.lensWords({ r: 20, g: 10, b: 16, iris: 12 }, L); ok(w1.length === 1 && w1[0].key === "lens.more.lot" && w1[0].vars.c === "b", "beaucoup trop de bleu");
+  const w2 = I.lensWords({ r: 16, g: 10, b: 4, iris: 6 }, L); ok(w2[0].key === "lens.less.some" && w2[0].vars.c === "r" && w2[1].key === "lens.dim.some", "il manque du rouge, et c'est trop sombre");
+  const w3 = I.lensWords({ r: 18, g: 10, b: 4, iris: 22 }, L); ok(w3[0].key === "lens.less.bit" && w3[1].key === "lens.bright.lot", "un peu de rouge en moins, et il éblouit");
+  const { makeT } = require("../src/i18n");
+  for (const lang of ["en", "fr"]) { const T = makeT(() => lang); for (const k of ["lens.match", "lens.c.r", "lens.c.g", "lens.c.b", ...["more", "less", "bright", "dim"].flatMap((d) => ["bit", "some", "lot"].map((z) => `lens.${d}.${z}`))]) ok(T(k) !== k, `${lang} : texte « ${k} »`); }
+  ok(/lensHints: true/.test(require("fs").readFileSync(require("path").join(__dirname, "../src/settings-ui.js"), "utf8")), "aide aux lentilles activée par défaut");
+}
 hooks.skip = skip0;
 console.log(`imager.test.js : ${n} vérifications OK`);

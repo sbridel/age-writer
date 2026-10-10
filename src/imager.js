@@ -109,6 +109,22 @@ function sharpness(s, t, now = Date.now()) {
   return k;
 }
 
+/**
+ * II. Aide en mots (réglage « Aide aux lentilles ») : ce que l'œil voit en comparant les deux moitiés du comparateur, sans chiffre.
+ * Renvoie `{ key, vars }` pour i18n : la couleur la plus éloignée (trop ou pas assez, un peu / nettement / beaucoup), puis l'éclat
+ * si l'iris est loin ; `lens.match` quand les deux lumières se confondent ; null sans lumière de référence.
+ */
+function lensWords(s, L) {
+  if (!L) return null;
+  const d = { r: s.r - L.r, g: s.g - L.g, b: s.b - L.b }, di = s.iris - L.iris;
+  const col = ["r", "g", "b"].reduce((a, k) => (Math.abs(d[k]) > Math.abs(d[a]) ? k : a), "r"), dc = d[col];
+  const size = (v) => (Math.abs(v) >= 8 ? "lot" : Math.abs(v) >= 3 ? "some" : "bit");
+  const parts = [];
+  if (Math.abs(dc) > 1) parts.push({ key: `lens.${dc > 0 ? "more" : "less"}.${size(dc)}`, vars: { c: col } });
+  if (Math.abs(di) > 1) parts.push({ key: `lens.${di > 0 ? "bright" : "dim"}.${size(di)}`, vars: {} });
+  return parts.length ? parts : [{ key: "lens.match", vars: {} }];
+}
+
 /** II. Justesse des lentilles (0 à 1) : écart des trois couleurs, puis de l'iris. */
 function lensScore(s, t) {
   const L = t.lens; if (!L) return 1;
@@ -239,4 +255,4 @@ function hints(t, lang = "en") {
   };
 }
 
-module.exports = { MAX, TURN, START, DECOYS, LOCK_AT, effective, canLock, toggleLock, place, set, targetsOf, lensOf, crystalsOf, phaseAt, phaseGap, sharpness, lensScore, crystalScore, clarity, beatsOf, normalize, turn, hints };
+module.exports = { lensWords, MAX, TURN, START, DECOYS, LOCK_AT, effective, canLock, toggleLock, place, set, targetsOf, lensOf, crystalsOf, phaseAt, phaseGap, sharpness, lensScore, crystalScore, clarity, beatsOf, normalize, turn, hints };

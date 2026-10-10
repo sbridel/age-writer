@@ -15,7 +15,7 @@ const REF_EN = [
     { h: "Linking window" },
     { ul: ["Tabs in the Age block (on)", "Window rendering: classic (default) / generative", "Window size: normal / large (default) / extra large", "Linking window effect: classic (default), static, ripple, sweep, random, off · Effect strength (1, from 0.2 to 2)", "Uncertain links (on)"] },
     { h: "D'ni & numbers" },
-    { ul: ["Language of the extensions: auto, English, Français", "Numerals: auto / font / glyph file / drawn · Numeral font (name)", "Show numbers (on) · Names in D'ni script (on)", "Relto in tabs (on) · D'ni time in the Relto (on) · Frame around clickable zones (off)", "Surveyor's notes (Imager): full / words only (default) / off"] },
+    { ul: ["Language of the extensions: auto, English, Français", "Numerals: auto / font / glyph file / drawn · Numeral font (name)", "Show numbers (on) · Names in D'ni script (on)", "Relto in tabs (on) · D'ni time in the Relto (on) · Frame around clickable zones (off)", "Surveyor's notes (Imager): full / words only (default) / off · Lens hints (Imager): on (default) / off"] },
     { h: "Ages & mechanics" },
     { ul: ["Law of change (on) · Minutes before the ink dries (15, from 1 to 120) · Healing per day (0.05, from 0 to 0.3)", "Fissure opening (7 days, from 0 to 30)", "Mechanisms: draw (default) / written only · Solitude: off / balanced (default) / strong", "Physics of the Ages: easy (default) / strict / off · Physics severity (1, from 0.5 to 2)", "Way of the instruments (telescope and Imager): easy (default) / the Art of the Guild"] },
     { h: "Folders" },
