@@ -12,6 +12,8 @@ const DT = require("./dnitime");
 const B = require("./relto-books");
 const TEL = require("./telescope");
 const DC = require("./dniclock");
+const SS = require("./starsystem");
+const CAL = require("./calibration");
 
 const AUDIO_EXT = ["mp3", "ogg", "wav", "m4a", "flac"];
 
@@ -260,8 +262,9 @@ async function renderRelto(plugin, source, el, ctx) {
       const f = app.vault.getAbstractFileByPath(age.path); if (!f) return null;
       const src = plugin.core.extract(await app.vault.cachedRead(f)); if (src == null) return null;
       const name = plugin.core.base(f.path), a = plugin.core.analyse(src, { seed: name });
-      const S = G.sceneOf(a, name, plugin.core.blocks); if (S) Object.assign(S, SKY.parseSky(src));
-      return { target: IM.targetsOf(a, name), model: S ? G.build(S, 300, 176) : null };
+      const S = G.sceneOf(a, name, plugin.core.blocks), sky = SKY.parseSky(src); if (S) Object.assign(S, sky);
+      // étape 2 : le système d'étoile (télescope) et l'orbite de la planète (micromètre de l'Imageur)
+      return { target: IM.targetsOf(a, name), model: S ? G.build(S, 300, 176) : null, system: SS.systemOf(a, src, name), orbit: CAL.orbitOf(a, name, sky) };
     } catch (e) { console.warn("[Age Writer ext] imageur", e); return null; }
   };
   // les glyphes des cristaux : le dessin du moteur, en image (une fois par page)
@@ -276,7 +279,12 @@ async function renderRelto(plugin, source, el, ctx) {
   const imagerSet = (path, s) => { plugin.ext.imagerTunings = { ...(plugin.ext.imagerTunings || {}), [path]: s }; plugin.saveExt(); };
   // le télescope : visée et Great Zero trouvé, gardés par Relto (nom + graine), comme les réglages de l'Imageur
   const telescopeGet = (key) => (plugin.ext.telescope || {})[key] || null;
-  const telescopeSet = (key, s) => { const was = !!((plugin.ext.telescope || {})[key] || {}).found; plugin.ext.telescope = { ...(plugin.ext.telescope || {}), [key]: s }; plugin.saveExt(); if (s && s.found && !was) refresh().catch((e) => console.warn("[Age Writer ext] relto", e)); }; // le Zéro trouvé débloque l'horloge D'ni
+  const telescopeSet = (key, s) => {
+    const old = (plugin.ext.telescope || {})[key] || {}, was = !!old.found, nSys = (o) => Object.keys((o && o.systems) || {}).length;
+    plugin.ext.telescope = { ...(plugin.ext.telescope || {}), [key]: s }; plugin.saveExt();
+    if (s && s.found && !was) refresh().catch((e) => console.warn("[Age Writer ext] relto", e)); // le Zéro trouvé débloque l'horloge D'ni
+    if (nSys(s) > nSys(old)) plugin.refreshLive(); // un système situé : les Détails des Âges le disent
+  };
   zero.scene = () => scene;
   const onTelescopeSound = (k, s) => { if (roomSoundOn() && sound.telescopeSfx) sound.telescopeSfx(k, s, roomVol()); };
   const renderer = new ReltoRenderer(canvas, plugin.dni, { telescopeGen: () => plugin.telescopeGen || 0, hoverFrame: plugin.ext.hoverFrame === true, imagerHum: () => ({ on: plugin.ext.soundImagerHum !== false, vol: humVol() }), onImagerHum: (a) => { if (a.toggle) plugin.ext.soundImagerHum = plugin.ext.soundImagerHum === false; else plugin.ext.imagerHumVol = Math.round(Math.max(0, Math.min(1, humVol() + a.delta * 0.2)) * 10) / 10; if (a.delta && plugin.ext.soundImagerHum === false && plugin.ext.imagerHumVol > 0) plugin.ext.soundImagerHum = true; plugin.saveExt(); roomAudio("imager"); }, notes: plugin.ext.imagerNotes || "words", onImagerAge: imagerAge, imagerGet, imagerSet, glyphImage, t, telescopeGet, telescopeSet, onTelescopeSound, onImagerTune: () => { const cl = renderer.imagerClarity(); if (sound.imagerTune) sound.imagerTune(cl.atmo, cl.total, !!(renderer.imager && renderer.imager.settings && renderer.imager.settings.lock)); }, onImagerSound: (k) => { if (roomSoundOn() && sound.imagerSfx) sound.imagerSfx(k, roomVol()); }, reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onPurr: () => { if (roomSoundOn()) roomBuf("roomPurrFile").then((b) => sound.purr(roomVol(), b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onPageToggle: async (id) => { const on = scene && scene.pagesActive.includes(id); await reltoEdit((l) => (on ? l.filter((x) => x !== id) : [...l, id])); plugin.refreshLive(); }, onSpecial: (kind) => { if (kind === "surveyor") B.openSurveyorBook(plugin, scene ? scene.ages : []); else if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } });

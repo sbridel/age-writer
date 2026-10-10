@@ -14,6 +14,7 @@ const { KEYS } = require("../src/physics/solve");
 const { KEY_RE, FX_RE, STYLE_RE, TRAP_RE, DMG_RE, COVER_RE } = require("../src/mech");
 const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE } = require("../src/sky");
 const { AMOUNT_RE } = require("../src/amounts");
+const { SYSTEM_RE } = require("../src/starsystem");
 
 // ---- 1. quatre parties, dans l'ordre demandé, dans les deux langues --------------------------------------------
 const ORDER = ["set", "write", "gen", "relto"];
@@ -75,7 +76,7 @@ for (const [lang, ref] of [["en", REF_EN], ["fr", REF_FR]]) {
 // ---- 4. chaque exemple de bloc `age` se lit sans tache d'encre --------------------------------------------------
 const skip0 = hooks.skip;
 const norm0 = hooks.norm; hooks.norm = require("../src/weather").normalize;
-hooks.skip = (line) => P.isPhysicsLine(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
+hooks.skip = (line) => P.isPhysicsLine(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line) || SYSTEM_RE.test(line);
 let examples = 0;
 for (const [lang, ref] of [["en", REF_EN], ["fr", REF_FR]]) for (const t of ref) for (const b of t.body) {
   const m = b.code && /^```age\n([\s\S]*?)\n```$/.exec(b.code); if (!m) continue;

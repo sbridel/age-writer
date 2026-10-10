@@ -430,6 +430,15 @@
 .age-det__skynums { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; align-items: center; }
 .age-det__skynum { display: inline-flex; align-items: center; gap: 6px; color: var(--text-normal); }
 .age-det__skylabel { color: var(--text-faint); font-size: var(--font-ui-smaller); }
+.age-det__star { margin-top: 6px; }
+.age-det__state { margin-top: 3px; font-size: var(--font-ui-smaller); color: var(--text-faint); }
+.age-det__state.is-located { color: var(--text-muted); }
+.age-det__state.is-moved { color: var(--text-warning, var(--text-muted)); font-style: italic; }
+.age-det__time { margin-top: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-style: italic; color: var(--text-faint); }
+.age-det__time.is-certain { color: var(--text-normal); }
+.age-det__time.is-drift { color: var(--text-muted); opacity: 0.85; }
+.age-det__timenum { display: inline-flex; align-items: center; gap: 2px; color: var(--text-normal); }
+.age-ext__unc { font-style: italic; opacity: 0.8; }
 
 .age-surveyor { display: flex; flex-direction: column; gap: 10px; }
 .age-surveyor__card { padding: 8px 12px; border-left: 3px solid var(--interactive-accent); background: var(--background-secondary); border-radius: 4px; }

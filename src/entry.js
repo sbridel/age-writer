@@ -27,6 +27,7 @@ const G = require("./guide");
 const PH = require("./physics/index");
 const AS = require("./ageseed");
 const WX = require("./weather");
+const { SYSTEM_RE } = require("./starsystem");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
 
 module.exports = function build(Base, core, AGEX) {
@@ -97,7 +98,7 @@ module.exports = function build(Base, core, AGEX) {
         return out;
       };
       AGEX.norm = (line) => guard("météo", () => WX.normalize(line)) || line; // `rain: sometimes, dawn` : pour le moteur, c'est `rain`
-      AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line);
+      AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line) || SYSTEM_RE.test(line); // `system: Kerath` : la graine d'étoile partagée (télescope, étape 2)
       // livre-piège : « pas de fissure » est une réponse donnée d'avance, le tirage n'en dessine pas une que le pied de bloc nierait
       AGEX.written = (set) => { if (!AGEX.src || !guard("trap draw", () => parseTrap(AGEX.src))) return set; const s = new Set(set); s.add("no_fissure"); return s; };
       AGEX.w = (slot, opt) => { const f = guard("solitude", () => solitudeFactor(this.ext.solitude, slot, opt.id)); return opt.weight * (f == null ? 1 : f); };

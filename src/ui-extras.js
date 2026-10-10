@@ -7,9 +7,25 @@ const mech = require("./mech");
 const sound = require("./sound");
 const journal = require("./journal");
 const PH = require("./physics/index");
+const SS = require("./starsystem");
+const CAL = require("./calibration");
+const SKY = require("./sky");
+const TEL = require("./telescope");
 
 const ageNumber = (name) => fnv(name) % 390625;                    // 25^4
-const coords = (name) => ["x", "y", "z"].map((k) => fnv(name + "|" + k) % 625); // 25^2
+
+/**
+ * Étape 2 du télescope : ce que le Relto sait du système de cet Âge et de sa calibration (sans DOM). `sys` (clé d'étoile,
+ * position, indices), `rec` (le système situé, ou null), `zero` (un Great Zero est trouvé), `cal` (état du micromètre),
+ * `lt` (l'heure locale), `moved` (synchronisé sur une autre étoile : le monde a été réécrit), `kips` (synchronisé : les
+ * coordonnées KIPS, KI-style).
+ */
+function calibrationOf(plugin, { src, analysis, name, path }) {
+  const sys = SS.systemOf(analysis, src, name), { zero, rec } = SS.findLocated(plugin.ext.telescope, sys.key), now = Date.now();
+  const tune = (plugin.ext.imagerTunings || {})[path] || null, moved = !!(tune && tune.sysKey && tune.sysKey !== sys.key && tune.syncAt != null);
+  const orbit = CAL.orbitOf(analysis, name, SKY.parseSky(src)), cal = CAL.state(moved ? { ...tune, syncAt: null } : tune, orbit, !!rec, now);
+  return { sys, rec, zero, cal, moved, lt: CAL.localTime(orbit, cal, now), kips: rec && cal.synced ? [rec.torahn, TEL.kiElev(rec.elevation), rec.distance] : null };
+}
 
 function dateStr(ms, lang) { try { return new Date(ms).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-GB", { day: "numeric", month: "short" }); } catch (e) { return ""; } }
 
@@ -98,6 +114,7 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
       }
     }
   } catch (e) { /* pas de notes */ }
+  try { renderStarNote(plugin, sec, { src, analysis, path }); } catch (e) { console.warn("[Age Writer ext] étoile", e); }
   if (sh.facts.length) {
     heading(sec, t("det.why")).addClass("age-det__h--sub");
     const ul = sec.createEl("ul", { cls: "age-det__facts" });
@@ -129,6 +146,36 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
   });
 }
 
+/**
+ * Notes de l'arpenteur, suite (étape 2) : ce qu'on perçoit du Great Zero depuis l'Âge (en mots ; « complètes » : les trois
+ * réglages du télescope en chiffres D'ni ; « aucune » : rien), si son étoile est située, et l'heure là-bas.
+ */
+function renderStarNote(plugin, sec, { src, analysis, path }) {
+  const t = plugin.t, lang = plugin.lang() === "fr" ? "fr" : "en", notes = plugin.ext.imagerNotes === "off" || plugin.ext.imagerNotes === "full" ? plugin.ext.imagerNotes : "words";
+  const name = path ? String(path).replace(/^.*\//, "").replace(/\.md$/i, "") : "", C = calibrationOf(plugin, { src, analysis, name, path });
+  const box = sec.createDiv({ cls: "age-det__sky age-det__star" });
+  if (notes !== "off") {
+    const w = SS.words(C.sys.clue, lang);
+    box.createEl("b", { text: t("sys.heading") + " " });
+    box.createSpan({ cls: "age-det__skyline", text: w.line });
+    if (notes === "full") {
+      const nums = box.createDiv({ cls: "age-det__skynums" });
+      for (const [label, v] of [[t("sys.val.torahn"), w.values.torahn], [t("sys.val.elev"), w.values.elev], [t("sys.val.delay"), w.values.delay]]) {
+        const c = nums.createSpan({ cls: "age-det__skynum" }); c.createSpan({ cls: "age-det__skylabel", text: label });
+        if (v < 0) c.createSpan({ text: "−" }); setMarkup(c.createSpan(), plugin.dni.numberSvg(Math.abs(v), { size: 16 }));
+      }
+    }
+  }
+  if (C.zero) box.createDiv({ cls: "age-det__state" + (C.rec ? " is-located" : ""), text: C.rec ? t("sys.state.located") : t("sys.state.not") });
+  if (C.moved) box.createDiv({ cls: "age-det__state is-moved", text: t("sys.moved") });
+  // l'heure là-bas : seulement si l'Imageur est synchronisé ; sinon elle reste incertaine (le temps se gagne en se situant)
+  if (C.rec) {
+    const tl = box.createDiv({ cls: "age-det__time" + (C.lt.known ? (C.lt.certain ? " is-certain" : " is-drift") : "") });
+    tl.createSpan({ text: C.lt.known ? CAL.timeWords(C.lt, lang) + " " : t("cal.time.sync") });
+    if (C.lt.known) setMarkup(tl.createSpan({ cls: "age-det__timenum" }), plugin.dni.numberSvg(C.lt.gahr, { size: 14 }) + '<span class="age-ext__dot">:</span>' + plugin.dni.numberSvg(C.lt.tahvo, { size: 14 }));
+  }
+}
+
 function renderExtras(plugin, container, { src, analysis, name, compact, path }) {
   const t = plugin.t, lang = plugin.lang(), ext = plugin.ext, dni = plugin.dni;
   const box = container.createDiv({ cls: "age-ext" + (compact ? " age-ext--compact" : "") });
@@ -142,10 +189,11 @@ function renderExtras(plugin, container, { src, analysis, name, compact, path })
 
   if (ext.showNumbers) {
     const plate = box.createDiv({ cls: "age-ext__plate" }); plate.setAttr("title", t("num.title"));
-    const c = coords(name), seedLine = /^\s*seed\s*:\s*(\d+)\s*$/im.exec(src);
+    const seedLine = /^\s*seed\s*:\s*(\d+)\s*$/im.exec(src);
+    let kips = null; try { kips = calibrationOf(plugin, { src, analysis, name, path }).kips; } catch (e) { kips = null; } // étape 2 : les coordonnées KIPS, une fois l'Âge calibré
     dniText(plugin, plate, name, "age-ext__dniname");
     let h = `<span class="age-ext__lbl">${esc(t("num.age"))}</span>${dni.numberSvg(ageNumber(name), { size: 18 })}`;
-    h += `<span class="age-ext__lbl">${esc(t("num.coords"))}</span>` + c.map((n) => dni.numberSvg(n, { size: 14 })).join('<span class="age-ext__dot">·</span>');
+    h += `<span class="age-ext__lbl">${esc(kips ? t("cal.kips") : t("num.coords"))}</span>` + (kips ? kips.map((n) => (n < 0 ? '<span class="age-ext__dot">−</span>' : "") + dni.numberSvg(Math.abs(n), { size: 14 })).join('<span class="age-ext__dot">·</span>') : `<span class="age-ext__lbl age-ext__unc">${esc(t("num.uncharted"))}</span>`);
     if (seedLine) h += `<span class="age-ext__lbl">${esc(t("num.seed"))}</span>${dni.numberSvg(seedLine[1], { size: 14 })}`;
     setMarkup(plate, h, true);
   }
@@ -299,4 +347,4 @@ function renderDniBlock(plugin, source, el) {
   if (!plugin.dni.hasFont()) root.createDiv({ cls: "age-dniblock__note", text: plugin.t("dni.nofont") });
 }
 
-module.exports = { dniText, renderExtras, tabifyPanel, renderJournal, renderDniBlock, ageNumber, coords, mechanismsFor, parseJournalSource };
+module.exports = { dniText, renderExtras, tabifyPanel, renderJournal, renderDniBlock, ageNumber, calibrationOf, mechanismsFor, parseJournalSource };

@@ -12,6 +12,7 @@ const RI = require("./relto-imager");
 const PB = require("./relto-pagebook");
 const TL = require("./relto-telescope");
 const IM = require("./imager");
+const CAL = require("./calibration");
 const RV = require("./genviews");
 const ROOMS = { cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom, book: PB.drawBookRoom, telescope: TL.drawTelescopeRoom };
 
@@ -588,13 +589,13 @@ class ReltoRenderer {
   imagerLoad(i) {
     const ages = (this.scene && this.scene.ages) || [], st = this.imager; if (!ages.length) return;
     st.idx = ((i % ages.length) + ages.length) % ages.length; const age = ages[st.idx];
-    st.age = age; st.target = null; st.model = null; st.view = false; st.thumb = null; st.hand = null; st.anim = null;
+    st.age = age; st.target = null; st.model = null; st.view = false; st.thumb = null; st.hand = null; st.anim = null; st.system = null; st.orbit = null;
     st.settings = IM.normalize(this.opts.imagerGet ? this.opts.imagerGet(age.path) : null);
     if (!this.opts.onImagerAge) return;
     const token = (st.loading = {});
     Promise.resolve(this.opts.onImagerAge(age)).then((d) => {
       if (st.loading !== token) return; st.loading = null;
-      if (!d) return; st.target = d.target; st.model = d.model; st.view = !!d.model;
+      if (!d) return; st.target = d.target; st.model = d.model; st.view = !!d.model; st.system = d.system || null; st.orbit = d.orbit || null; // étape 2 : son système d'étoile, son orbite
       if (st.settings.tilt < 0 && !RV.hasUnder(st.model)) st.settings = { ...st.settings, tilt: 0 };
       if (st.settings.lock && !IM.canLock(st.settings, st.target, this.imagerNow())) st.settings = { ...st.settings, lock: false, az: 0, tilt: 0 }; // le livre a changé depuis : le verrou a glissé
       if (!this.running) this.draw(0);
@@ -619,11 +620,31 @@ class ReltoRenderer {
     }
     return { cur: st.canvas };
   }
-  /** Un geste sur la machine : un livre, un poste, un cristal, un verre, un bouton, le verrou, le périscope. */
+  /**
+   * Étape 2 : la calibration de l'Âge sur le lutrin (src/calibration.js). Null tant que son système d'étoile n'est pas situé
+   * au télescope de ce Relto : l'Imageur est alors exactement celui d'avant. Sinon : l'état du micromètre (`q`, `synced`,
+   * `certain`, `reading`, `gap`), le système situé (`sys`, sa position GZCS) et l'heure locale (`lt`).
+   */
+  imagerCal() {
+    const st = this.imager; if (!st || !st.system || !st.orbit) return null;
+    const tel = TL.systemsOf(this), sys = tel.found && tel.systems ? tel.systems[st.system.key] : null; if (!sys) return null;
+    const now = this.imagerNow(), set = st.settings.sysKey && st.settings.sysKey !== st.system.key ? { ...st.settings, syncAt: null } : st.settings; // l'étoile a changé depuis la synchro
+    const c = CAL.state(set, st.orbit, true, now);
+    return { ...c, sys, system: st.system, lt: CAL.localTime(st.orbit, c, now) };
+  }
+  /** Un geste sur la machine : un livre, un poste, un cristal, un verre, un bouton, le verrou, le périscope, le micromètre. */
   imagerAct(a) {
     const st = this.imagerState(), tg = st.target, before = st.settings, now = this.imagerNow(), sfx = (k) => { if (this.opts.onImagerSound) this.opts.onImagerSound(k); };
     const say = (text) => { const h = this.hover || { x: W / 2, y: H / 2, w: 0 }; this.flash = { text, x: h.x + (h.w || 0) / 2, y: h.y, until: Date.now() + 2400 }; };
     if (a.hum) { if (this.opts.onImagerHum) this.opts.onImagerHum(a.hum); sfx("click"); return; }
+    if (a.sync != null) { // le micromètre de synchro : seulement quand le système de l'Âge est situé
+      const cal = this.imagerCal(), tt = this.opts && typeof this.opts.t === "function" ? this.opts.t : null; if (!cal) return;
+      const res = CAL.turnSync(before, a.sync, st.orbit, true, now); st.settings = IM.normalize(res.synced ? { ...res.s, sysKey: st.system.key } : res.s);
+      if (res.synced && !(cal.synced && cal.certain && cal.q >= 1)) { sfx("lock"); if (tt) say(tt("cal.synced")); } else sfx("click");
+      if (st.age && this.opts.imagerSet) this.opts.imagerSet(st.age.path, st.settings);
+      if (this.opts.onImagerTune) this.opts.onImagerTune(st);
+      return;
+    }
     if (a.book) { this.imagerLoad(st.idx + a.book); sfx("page"); return; }
     if ("station" in a) { st.station = a.station; st.hand = null; return; }
     if (a.lock) {
@@ -659,6 +680,8 @@ class ReltoRenderer {
   }
   /** Les trois réglages et la netteté finale (0 à 1) : pour le son et les tests. */
   imagerClarity() { const st = this.imager; return st && st.target ? IM.clarity(st.settings, st.target, this.imagerNow()) : { cry: 0, lens: 0, atmo: 0, total: 0 }; }
+  /** La netteté vue à l'écran : celle du réglage, plus le bonus de la calibration (identique sans calibration). */
+  imagerSeen() { const cl = this.imagerClarity(), cal = this.imagerCal(), q = cal ? cal.q : 0; if (!(q > 0)) return cl; const o = { cry: CAL.boost(cl.cry, q), lens: CAL.boost(cl.lens, q), atmo: CAL.boost(cl.atmo, q) }; return { ...o, total: o.cry * o.lens * o.atmo }; }
   imagerSharpness() { return this.imagerClarity().total; }
 
   /** étiquette brève (nom du chat, de la koï) affichée après un clic */

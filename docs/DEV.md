@@ -61,12 +61,14 @@ Le ciel étendu (`src/sky.js`) et les richesses (`src/wealth.js`) sont lus direc
 | `entry.js` | la classe étendue : cycle de vie, crochets, vue livre (couverture, clic sur la vitre, liaisons incertaines), commandes, son (marche/arrêt, garde-fou) |
 | `settings-ui.js` | réglages de l'extension (`DEFAULTS`, section ajoutée à l'onglet d'origine) |
 | `i18n.js` | textes en/fr ; `test/i18n.test.js` vérifie que chaque clé utilisée existe dans les deux langues |
-| `ui-extras.js` | ce qui s'ajoute au panneau d'un Âge (plaque, chiffres, mécanismes, loi, son), journal, bloc `dni` |
+| `ui-extras.js` | ce qui s'ajoute au panneau d'un Âge (plaque, chiffres, mécanismes, loi, son ; notes de l'arpenteur, dont le Great Zero vu de l'Âge, l'heure là-bas et KIPS : `calibrationOf`), journal, bloc `dni` |
 | `ui-relto.js` | bloc `relto` (scène, pages, livres, son du refuge), bloc `relto-library`, création de pages |
 | `relto-model.js` | données du Relto : lecture du frontmatter, pages, déverrouillage, `relto-library`, choix des livres, ciel |
-| `relto-render.js` | rendu canvas du Relto (île, cabane, étagère, effets de pages) |
-| `telescope.js` | télescope, modèle pur : Great Zero caché tiré du nom + graine du Relto (`greatZero`), visée et molettes (`turn`), signal chaud/froid (`signal` : décroît strictement avec l'écart, paliers de mots, tolérance `TOL`) |
-| `relto-telescope.js` | télescope, dessin : la lunette au sommet du mont, sa vue (oculaire, molettes Torahn / Élévation, unités GZCS : torantee et shahfeetee, plaque du Zéro), les gestes ; état gardé par Relto (`ext.telescope[nom#graine]`) |
+| `relto-render.js` | rendu canvas du Relto (île, cabane, étagère, effets de pages) ; état de l'Imageur, sa calibration (`imagerCal`, `imagerSeen`) |
+| `telescope.js` | télescope, modèle pur : Great Zero caché tiré du nom + graine du Relto (`greatZero`), visée et molettes (`turn`), signal chaud/froid (`signal`, `level`, `bandOf` : décroît strictement avec l'écart, paliers de mots, tolérance `TOL`), état gardé (`saved`) |
+| `starsystem.js` | télescope, étape 2, modèle pur : clé d'étoile d'un Âge (`starKey` : blocs d'étoile + ligne `system:` ou nom#graine), position GZCS du système (`position`), le Zéro vu de l'Âge (`zeroSeenFrom`, `sources` : liste de sources avec période, `lineOffset` pour l'étape 3), mots de l'arpenteur (`words`), molette du retard (`turnDial`, `measure`, `echoOffset`), calcul de l'instrument (`locate` : (Relto → Zéro) − (Âge → Zéro)), système situé (`record`, `findLocated`) |
+| `calibration.js` | calibration d'un Âge, modèle pur : orbite et jour (`orbitOf` : physique ou `day_length` / `year_length`), micromètre de synchro (`turnSync`, `reading`, `state`), dérive d'une semaine (`quality` : intacte 7 jours, perdue à 14), heure locale (`localTime`, `timeWords`), bonus d'image (`boost`) |
+| `relto-telescope.js` | télescope, dessin : la lunette au sommet du mont, sa vue (oculaire, molettes Torahn / Élévation, unités GZCS : torantee et shahfeetee, plaque du Zéro), les gestes ; état gardé par Relto (`ext.telescope[nom#graine]`). Étape 2 : le lutrin (‹ ›, livre chargé par `opts.onImagerAge`), la molette du Retard, l'écho, la plaque de l'étoile ; état gardé dans le même objet (`dial`, `systems[cléÉtoile]`) |
 | `linkfx.js` | effets de la fenêtre de liaison (ondulation, statique, télé, coupures), tirage d'une liaison incertaine |
 | `genscene.js` | fenêtre génératrice : `sceneOf` (descripteur, blocs inconnus compris), `traits` (adjectifs → teinte, taille, mouvement), `build` (géométrie tirée de la graine), `paint` (une image à la phase t) |
 | `wealth.js` / `amounts.js` | richesses et cicatrices (blocs de matière), quantités many/few/normal et compensation (`applyAmounts`, appelé par `adjust`) |
@@ -117,7 +119,7 @@ et dans la liste du réglage (`settings-ui.js`).
 
 | Commande | Ce qui est vérifié |
 |---|---|
-| `npm test` (lisible, puis minifié) | `law`, `i18n`, `zen` (sons, effets, clés du bloc age, livres), `gen` (paysage génératif, dégâts procéduraux), `sound` (cycle de vie avec un faux AudioContext), `integration` (build + exécution dans jsdom avec un faux `obsidian`, sur une maquette du moteur) |
+| `npm test` (lisible, puis minifié) | `law`, `i18n`, `zen` (sons, effets, clés du bloc age, livres), `gen` (paysage génératif, dégâts procéduraux), `sound` (cycle de vie avec un faux AudioContext), `telescope` et `starsystem` (Great Zero ; étoiles des Âges, lutrin, calibration, dérive), `integration` (build + exécution dans jsdom avec un faux `obsidian`, sur une maquette du moteur) |
 | `npm run equiv -- <ancien main.js>` | non-régression : 600 Âges au hasard, ancien build contre nouveau |
 | `npm run lint` | eslint : variables non définies ou inutilisées, code mort |
 | `npm run visual` | pages HTML de rendu (Relto, fenêtres, couverture) à ouvrir ou capturer |
