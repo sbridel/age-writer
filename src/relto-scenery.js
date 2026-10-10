@@ -158,11 +158,13 @@ function calendar(ctx, r, sky, t) {
 
 /**
  * L'horloge D'ni : sur son îlot, un pilier de pierre qui porte une sphère armillaire de laiton. L'anneau des heures tourne
- * avec le jour D'ni (une révolution par yahr), le globe intérieur lentement ; rien ne clignote : le faisceau, c'est
- * l'observatoire qui le répand dans le Relto.
+ * avec le jour D'ni (une révolution par yahr), celui du vailee avec le hahr, celui du gahrtahvo avec le yahr, à petits pas ;
+ * le globe intérieur lentement ; rien ne clignote : le faisceau, c'est l'observatoire qui le répand dans le Relto.
+ * Les chiffres gravés ne se lisent que de près : un clic mène à la vue rapprochée (src/relto-clock.js).
  */
 function dniClock(ctx, r, sky, t) {
-  const x = 92, y = 206, k = amb(sky), d = DC.reltoDate(r.scene), ph = DT.dayPhase(), brass = () => mix("#05060c", "#c9a75a", k);
+  const x = 92, y = 206, k = amb(sky), ms = r.nowOverride != null ? r.nowOverride : Date.now(), d = DC.reltoDate(r.scene, ms), ph = DT.dayPhase(ms), brass = () => mix("#05060c", "#c9a75a", k);
+  const rg = DC.rings(ms), ring = (key) => rg.find((q) => q.key === key);
   ctx.save(); ctx.globalAlpha = 0.9;
   // l'îlot
   ctx.fillStyle = mix("#05060c", "#5a5148", k); ctx.beginPath(); ctx.moveTo(x - 22, y); ctx.lineTo(x + 22, y); ctx.lineTo(x + 9, y + 22); ctx.lineTo(x - 1, y + 32); ctx.lineTo(x - 10, y + 19); ctx.closePath(); ctx.fill();
@@ -178,11 +180,17 @@ function dniClock(ctx, r, sky, t) {
   ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.283); ctx.stroke(); // le méridien
   ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(cx, cy, R, R * 0.32, -0.42, 0, 6.283); ctx.stroke(); // l'écliptique, incliné
   ctx.beginPath(); ctx.ellipse(cx, cy, R * Math.abs(Math.cos(ph * 6.283)), R, 0, 0, 6.283); ctx.stroke(); // l'anneau des heures : il tourne avec le jour D'ni
+  ctx.lineWidth = 0.7; ctx.strokeStyle = mix("#05060c", "#7fa890", k); // vert-de-gris : l'anneau du vailee (un tour par hahr), plus large
+  ctx.beginPath(); ctx.ellipse(cx, cy, R + 2.4, (R + 2.4) * Math.max(0.08, Math.abs(Math.sin(ring("vailee").angle))), 0.5, 0, 6.283); ctx.stroke();
+  ctx.strokeStyle = brass(); // l'anneau du gahrtahvo (un tour par yahr), plus serré
+  ctx.beginPath(); ctx.ellipse(cx, cy, (R - 3) * Math.max(0.1, Math.abs(Math.cos(ring("gahrtahvo").angle))), R - 3, 0.35, 0, 6.283); ctx.stroke();
+  ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(cx - R - 3, cy + 4); ctx.lineTo(cx + R + 3, cy - 4); ctx.stroke(); // l'axe
   const gg = ctx.createRadialGradient(cx - 1.5, cy - 1.5, 0.5, cx, cy, 4); gg.addColorStop(0, mix("#05060c", "#e8d3a0", k)); gg.addColorStop(1, mix("#05060c", "#7a5c28", k));
   ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(cx + Math.sin(t * 0.15) * 0.6, cy, 3.4, 0, 6.283); ctx.fill(); // le globe
   ctx.restore();
-  r.hot.push({ x: x - 22, y: y - 70, w: 44, h: 104, tip: `D'ni clock — ${DT.format(d)}` });
+  const tip = r.opts && typeof r.opts.t === "function" ? r.opts.t("clock.island", { time: DT.format(d) }) : `D'ni clock — ${DT.format(d)} — click to look closer`;
+  r.hot.push({ x: x - 22, y: y - 70, w: 44, h: 104, tip, go: "clock" });
 }
 
 /**

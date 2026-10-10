@@ -12,10 +12,11 @@ const RI = require("./relto-imager");
 const PB = require("./relto-pagebook");
 const TL = require("./relto-telescope");
 const SM = require("./relto-starmap");
+const CK = require("./relto-clock");
 const IM = require("./imager");
 const CAL = require("./calibration");
 const RV = require("./genviews");
-const ROOMS = { cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom, book: PB.drawBookRoom, telescope: TL.drawTelescopeRoom, starmap: SM.drawStarMap };
+const ROOMS = { cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom, book: PB.drawBookRoom, telescope: TL.drawTelescopeRoom, starmap: SM.drawStarMap, clock: CK.drawClockRoom };
 
 const W = 640, H = 360, GY = 208; // largeur, hauteur logiques ; ligne de sol
 
@@ -944,7 +945,7 @@ class ReltoRenderer {
   /** vues possibles selon les pages et structures de ce Relto (l'île et la vue globale existent toujours) */
   available() {
     const sc = this.scene, a = (t) => sc.additions.some((x) => x.type === t);
-    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies"), imager: a("imager"), book: sc.structures.includes("hut"), telescope: a("telescope"), starmap: a("telescope") };
+    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies"), imager: a("imager"), book: sc.structures.includes("hut"), telescope: a("telescope"), starmap: a("telescope"), clock: a("dniclock") };
   }
   /** dessine `fn` (en coordonnées de l'île) agrandi dans une vue rapprochée et reporte les zones cliquables qu'il crée à l'écran */
   withView(ctx, { S, ox, oy, fx, fy }, fn) {
