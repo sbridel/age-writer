@@ -214,7 +214,7 @@ The page *Telescope* (`page_telescope`) is always in the book of pages, **locked
 
 **Drift and magnetic north (step 3).** The calibration drift depends on the Age's physics: a world without a magnetic field (a dead core, or one that barely spins) has no north, so its surveyor gives rough bearings (four compass words, or eight with a weak field) and its calibration wears twice as fast (1.4 times with a weak field); near a dead star it wears faster still (×1.5 by a black hole, ×1.3 by a pulsar or neutron star; at most ×4). The Details tab says why.
 
-**About distances.** The coordinates are those of the Great Zero Coordinate System, in its own units: a shahfee (span) is about 4.82 m, so the furthest stars sit some 72 km from the Zero and the heights stay within about ±480 m. That is the scale of the D'ni Cavern, not of space, and it is meant: an Age's coordinates are those of the **beam**, the path its pulse travels to reach the Zero, not a distance through space. The Art links worlds across universes, not across the sky; the Great Zero is the reference for that linking.
+**About distances.** The coordinates are those of the Great Zero Coordinate System, in shahfeetee — but for the Ages they are **shahfeetee of the beam**: the length of the path the pulse travels through the Art to reach the Zero, not a distance through space. It is the Cavern's unit, measuring something else, so it has no equivalent in kilometres: a value of 15,000 means far along the beam, nothing more. The Art links worlds across universes, not across the sky; the Great Zero is the reference for that linking.
 
 ### The Relto's two special books
 
