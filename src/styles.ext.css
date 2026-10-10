@@ -380,6 +380,9 @@
 .age-relto__nav:not(.age-relto__nav--bar) .age-relto__viewbtn { position: static; }
 .age-relto__nav .age-relto__viewbtn.is-active { opacity: 1; background: rgba(14, 12, 10, 0.8); }
 .age-relto__nav .age-relto__viewbtn.is-hidden { display: none; }
+.age-relto__here { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; margin-left: 2px; border-radius: 10px; color: #f0d58a; background: rgba(224, 194, 122, 0.22); box-shadow: 0 0 0 1px rgba(224, 194, 122, 0.45), 0 0 8px rgba(224, 194, 122, 0.35); }
+.age-relto__here.is-hidden { display: none; }
+.age-relto__here svg { width: 16px; height: 16px; }
 .age-relto__nav .age-relto__wheelbtn { margin-right: 4px; } /* la roue, puis l'île */
 .age-relto[data-tab]:not([data-tab="view"]) .age-relto__nav--bar { display: none; }
 

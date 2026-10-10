@@ -303,6 +303,8 @@ async function renderRelto(plugin, source, el, ctx) {
     try { obsidian.setIcon(b, ic); } catch (e) { /* ignore */ }
     b.setAttr("aria-label", t(key)); b.addEventListener("click", (e) => { e.stopPropagation(); closeWheel(); renderer.setView(v); });
   }
+  // « vous êtes ici » : l'icône de la vue en cours, en surbrillance, après l'île (sur l'île, c'est le bouton île qui s'allume)
+  const here = nav.createSpan({ cls: "age-relto__here is-hidden" });
   wheel.addEventListener("click", (e) => { if (e.target === wheel) closeWheel(); }); // un clic sur le fond de la roue la referme
   const offWheel = (e) => { if (!root.isConnected) { root.ownerDocument.removeEventListener("pointerdown", offWheel, true); root.ownerDocument.removeEventListener("keydown", escWheel, true); return; } if (wheel.hasClass("is-open") && !wheel.contains(e.target) && !wheelBtn.contains(e.target)) closeWheel(); };
   const escWheel = (e) => { if (e.key === "Escape" && wheel.hasClass("is-open")) { closeWheel(); e.stopPropagation(); } };
@@ -333,7 +335,7 @@ async function renderRelto(plugin, source, el, ctx) {
       sound.roomStart(v === "imager" ? "imager" : v === "cat" ? "cat" : v === "cabin" ? "fire" : "water", roomVol() * (v === "imager" ? humVol() : 1), bufs);
     } catch (e) { /* ignore */ }
   };
-  const syncView = (v) => { const cur = v || "island"; for (const [id, b] of [...Object.entries(navBtns), ...Object.entries(quickBtns)]) b.toggleClass("is-active", id === cur);  roomAudio(v); };
+  const syncView = (v) => { const cur = v || "island"; for (const [id, b] of [...Object.entries(navBtns), ...Object.entries(quickBtns)]) b.toggleClass("is-active", id === cur); here.toggleClass("is-hidden", cur === "island" || !iconOf[cur]); if (iconOf[cur] && cur !== "island") { try { obsidian.setIcon(here, iconOf[cur]); } catch (e) { /* ignore */ } here.setAttr("aria-label", t(NAV.find((d) => d[0] === cur)[2])); }  roomAudio(v); };
   const syncNav = (sc) => { const av = renderer.available(); for (const [id, b] of [...Object.entries(navBtns), ...Object.entries(quickBtns)]) b.toggleClass("is-hidden", !av[id]); syncView(renderer.view); void sc; };
   syncView("island");
   const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
