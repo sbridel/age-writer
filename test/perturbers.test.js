@@ -205,7 +205,7 @@ const relDone = (async () => {
   const reach = (get, axis, target) => { const S = T.STEP[axis]; let k = 0; while (get() !== target && k++ < 900) { let d = target - get(); if (axis === "torahn") { d = ((d % T.TURN) + T.TURN) % T.TURN; if (d > T.TURN / 2) d -= T.TURN; } if (Math.abs(d) < S.hub) break; const step = Math.abs(d) >= S.rim ? S.rim : S.hub; click((a) => a.axis === axis && a.delta === Math.sign(d) * step && !a.book, axis); } };
   reach(() => st.aim.elev, "elev", old.elevation); reach(() => st.aim.torahn, "torahn", Math.round(old.torahn / 100) * 100 % T.TURN);
   ok(st.found && st.line === old.L && store[st.key].line === old.L && sounds.includes("found"), "dans l'anneau de la ligne ancienne : l'instrument s'y cale, et c'est gardé");
-  r.draw(3); ok(r.hot.some((h) => /Great Zero, KI-style/.test(h.tip)) && JSON.stringify(TL.state(r).line) === String(old.L), "la plaque grave le Zéro tel que l'instrument le tient");
+  r.draw(3); ok(r.hot.some((h) => /elevation of the Great Zero/.test(h.tip)) && JSON.stringify(TL.state(r).line) === String(old.L), "la plaque grave le Zéro tel que l'instrument le tient");
   // on situe Brume : gravée de travers
   click((a) => a.book === 1, "livre suivant"); await tick(); r.draw(4);
   const sysB = st.book.data.system, c = sysB.clue; st.dial = { torahn: (c.torahn + 300) % T.TURN, elev: c.elevation, delay: c.delay };

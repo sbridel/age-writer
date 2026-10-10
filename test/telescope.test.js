@@ -104,7 +104,7 @@ ok(T.STEP.torahn.hub === 100 && T.STEP.torahn.rim === 2500 && T.STEP.elev.hub ==
   ok(JSON.stringify(st.zero) === JSON.stringify(zero) && !st.found, "le Zéro du Relto (nom + graine), pas encore trouvé");
   const tel = r.hot.filter((h) => h.tel && h.tel.axis);
   ok(tel.length === 8 && ["torahn", "elev"].every((a) => [-T.STEP[a].rim, -T.STEP[a].hub, T.STEP[a].hub, T.STEP[a].rim].every((d) => tel.some((h) => h.tel.axis === a && h.tel.delta === d))), "deux molettes, Torahn et Élévation : couronne (25 crans) et moyeu (un cran), dans les deux sens");
-  ok(r.hot.some((h) => /Torahn, in torantee.*62,500/.test(h.tip)) && r.hot.some((h) => /shahfeetee.*KI.*negative/.test(h.tip)), "unités dans la fiction : torantee (62 500 au tour), shahfeetee, le sens du KI");
+  ok(r.hot.some((h) => /Torahn, in torantee.*62,500/.test(h.tip)) && r.hot.some((h) => /shahfeetee.*above the plane reads negative/.test(h.tip)), "unités dans la fiction : torantee (62 500 au tour), shahfeetee, le sens du KI (sans le nommer)");
   ok(r.hot.some((h) => h.go === "island") && r.hot.some((h) => /blank/i.test(h.tip)), "redescendre ; plaque vierge");
   // le joueur cherche : à chaque geste, il garde celui qui avive le signal (chaud / froid), couronne puis moyeu
   const click = (axis, delta) => { r.draw(2); const h = r.hot.find((x) => x.tel && x.tel.axis === axis && x.tel.delta === delta); r.toLogical = () => [h.x + 1, h.y + 1]; r.onClick({}); };
