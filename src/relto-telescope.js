@@ -202,6 +202,21 @@ function engraved(r, ctx, v, cx, y, size, col) {
   if (r.dni && r.dni.drawNumber) r.dni.drawNumber(ctx, n, x + dash, y, size, col);
   else { ctx.fillStyle = col; ctx.font = `${size}px serif`; ctx.fillText(String(n), x + dash, y + size); }
 }
+/** Largeur gravée d'une valeur (chiffres D'ni, signe compris). */
+function engravedWidth(r, v, size) {
+  const n = Math.round(Math.abs(v)), dash = Math.round(v) < 0 ? size * 0.55 : 0;
+  return (r.dni && r.dni.widthOf ? r.dni.widthOf(n, size) : String(n).length * size * 0.6) + dash;
+}
+/**
+ * Une rangée de valeurs gravées sur une plaque : centrée dans [x0, x0 + w], espacée, et réduite si elle ne tient pas
+ * (selon la police installée, les chiffres D'ni sont plus ou moins larges) : rien ne déborde du bord.
+ */
+function engravedRow(r, ctx, values, x0, w, y, size, col) {
+  const gap = size * 0.9, total = (s) => values.reduce((a, v) => a + engravedWidth(r, v, s), 0) + gap * (s / size) * (values.length - 1);
+  let s = size; const room = w - 12; if (total(s) > room) s = Math.max(6, size * (room / total(size)));
+  let x = x0 + (w - total(s)) / 2; const dy = (size - s) / 2;
+  for (const v of values) { const vw = engravedWidth(r, v, s); engraved(r, ctx, v, x + vw / 2, y + dy, s, col); x += vw + gap * (s / size); }
+}
 /** Une molette : couronne moletée (25 crans) et moyeu (un cran fin). Moitié gauche « − », droite « + ». */
 function wheel(r, ctx, c, axis, W0, value, span, shown, tm, o = {}) {
   const t = tOf(r), { x, y } = W0, a = -Math.PI / 2 + (value / span) * Math.PI * 2, name = axisName(t, axis), S = o.step || T.STEP[axis], RING = o.ring || RING0, HUB = o.hub || HUB0;
@@ -382,8 +397,7 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     ctx.fillStyle = c("#2a1d13"); ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillText(t("tel.plate.title"), PLATE.x + PLATE.w / 2, PLATE.y + 15); ctx.textAlign = "left";
     if (st.found) { // la plaque grave le Zéro tel que l'instrument le tient (sur la fausse ligne, c'est elle qu'elle grave)
       const ink = c("#1b130d"), z = heldZero(st);
-      engraved(r, ctx, z.torahn, PLATE.x + 62, PLATE.y + 26, 17, ink);
-      engraved(r, ctx, T.kiElev(z.elevation), PLATE.x + 160, PLATE.y + 26, 17, ink);
+      engravedRow(r, ctx, [z.torahn, T.kiElev(z.elevation)], PLATE.x, PLATE.w, PLATE.y + 26, 17, ink);
       r.hot.push({ ...PLATE, tip: t("tel.plate.found"), tel: { setZero: true } });
     } else {
       ctx.strokeStyle = rgba(43, 29, 19, 0.35); ctx.lineWidth = 1; for (const x0 of [PLATE.x + 30, PLATE.x + 136]) { ctx.beginPath(); ctx.moveTo(x0, PLATE.y + 44); ctx.lineTo(x0 + 50, PLATE.y + 44); ctx.stroke(); }
@@ -414,9 +428,7 @@ function systemPlate(r, ctx, c, st, sys) {
   ctx.fillStyle = c("#2a1d13"); ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillText(t("sys.plate.title"), P.x + P.w / 2, P.y + 14, P.w - 16); ctx.textAlign = "left";
   if (got) {
     const ink = c("#1b130d");
-    engraved(r, ctx, got.torahn, P.x + 32, P.y + 24, 13, ink);
-    engraved(r, ctx, T.kiElev(got.elevation), P.x + 80, P.y + 24, 13, ink);
-    engraved(r, ctx, got.distance, P.x + 128, P.y + 24, 13, ink);
+    engravedRow(r, ctx, [got.torahn, T.kiElev(got.elevation), got.distance], P.x, P.w, P.y + 24, 13, ink);
     if (got.pert && got.pert.length) { ctx.fillStyle = ink; ctx.font = "9px serif"; ctx.textAlign = "center"; ctx.fillText(got.pert.map((p) => PSYM[p.kind] || "").join(" "), P.x + P.w / 2, P.y + P.h - 5); ctx.textAlign = "left"; } // ses perturbateurs, en signes
     r.hot.push({ ...P, tip: t("sys.plate.found"), tel: { setSystem: true } });
     // un coin à gratter : effacer l'étoile (la dégraver) pour la situer à nouveau
