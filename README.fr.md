@@ -223,7 +223,7 @@ Un petit bouton (globe) en haut à gauche de l'image bascule entre la **vue de l
 | *Bench* | un banc de bois entre la cabane et l'étagère |
 | *Islets* | des îlots flottants derrière l'île (densité = nombre) |
 | *Calendar pinnacle* | une pierre dressée sur un îlot, qui affiche le jour D'ni (décalé de quelques yahr tant que l'horloge D'ni ne l'a pas recalé) |
-| *D'ni clock* | une sphère armillaire de laiton sur son pilier dans la brume ; débloquée en trouvant le Great Zero, elle apporte l'heure D'ni (voir [Le télescope](#le-télescope)) |
+| *D'ni clock* | une sphère armillaire de laiton sur son pilier dans la brume ; débloquée en trouvant le Great Zero, elle apporte l'heure D'ni (voir [Le télescope](#le-télescope)). Un clic la montre de près : quatre anneaux portent le vailee, le yahr, le gahrtahvo et le tahvo, chacun tournant à son rythme avec ses chiffres D'ni gravés, lus sous l'index, en haut ; un chiffre luit un instant quand son unité change ; le socle porte la date et l'heure en chiffres D'ni et le nom du vailee |
 | *Blue flowers* | fleurs basses le long du sol (`asset` : blue, red, yellow, white, pink) |
 | *Grass* | herbe haute le long du sol |
 | *Ponderosa pines*, *Maples*, *Crystal tree* | arbres de fond (`vegetation` avec `asset` ponderosa, maple, crystal) |

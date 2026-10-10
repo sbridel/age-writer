@@ -231,7 +231,7 @@ A small button (globe) at the top left toggles between the **island view** (open
 | *Bench* | a wooden bench |
 | *Islets* | floating islets behind the island (density = number) |
 | *Calendar pinnacle* | a standing stone on an islet that shows the D'ni day (a few yahr off until the D'ni clock sets it right) |
-| *D'ni clock* | a brass armillary sphere on its own pillar in the mist; unlocked by finding the Great Zero, it brings the D'ni hour (see [The telescope](#the-telescope)) |
+| *D'ni clock* | a brass armillary sphere on its own pillar in the mist; unlocked by finding the Great Zero, it brings the D'ni hour (see [The telescope](#the-telescope)). Click it to see it up close: four rings carry the vailee, yahr, gahrtahvo and tahvo, each turning at its own pace with its engraved D'ni numerals, read under the index at the top; a digit glows briefly when its unit changes; the plinth bears the date and hour in D'ni numerals and the vailee's name |
 | *Blue flowers* | low flowers along the ground (`asset`: blue, red, yellow, white, pink) |
 | *Grass* | tall grass along the ground |
 | *Ponderosa pines*, *Maples*, *Crystal tree* | background trees (`vegetation` with `asset` ponderosa, maple, crystal) |
