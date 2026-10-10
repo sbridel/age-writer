@@ -30,7 +30,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 **Status.** Released, desktop only, sandbox mode (see [What's next](#15-whats-next)). The current version is the one in [`manifest.json`](manifest.json) and on the [Releases](https://github.com/sbridel/age-writer/releases) page; what changed in each version is in [`CHANGELOG.md`](CHANGELOG.md) (a more detailed developer log, in French, is in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)).
 
-Recent additions: **living weather** (weather that comes and goes with the hour, `drizzle: often, dawn`), the Relto's **telescope** (find your Relto's hidden Great Zero), and a **full reference** rebuilt in four parts with example values for every physics line.
+Recent additions: **the Art of the Guild** (setting *Instruments*: a blank book in the Imager that you tune until a world appears, sometimes one no one has written; a pendulum metronome in the observatory to tell the true pulse from false ones), the **D'ni clock** that wakes once your Relto's Great Zero is found, the **observatory** and its star chart (locate your Ages' stars, dead stars, King Me'erta's false line), a redrawn **optical bench** with optional lens hints, and **living weather** (`drizzle: often, dawn`). Details in [`CHANGELOG.md`](CHANGELOG.md).
 ---
 
 ## Contents
@@ -213,6 +213,8 @@ The page *Telescope* (`page_telescope`) is always in the book of pages, **locked
 **The star chart (step 3).** The parchment roll at the top right of the observatory unrolls a chart: the Great Zero as a compass rose at the centre, your Relto, and every charted star system (a constellation, each star joined to its nearest neighbour), with its Ages (first name drawn, all of them on hover) and its dead stars in cinnabar. North is the line the instrument holds; distances go by square root so near and far fit on one sheet. One well-charted Age is enough to anchor it. Ink on paper: it reads the same in light and dark themes.
 
 **Drift and magnetic north (step 3).** The calibration drift depends on the Age's physics: a world without a magnetic field (a dead core, or one that barely spins) has no north, so its surveyor gives rough bearings (four compass words, or eight with a weak field) and its calibration wears twice as fast (1.4 times with a weak field); near a dead star it wears faster still (×1.5 by a black hole, ×1.3 by a pulsar or neutron star; at most ×4). The Details tab says why.
+
+**About distances.** The coordinates are those of the Great Zero Coordinate System, in its own units: a shahfee (span) is about 4.82 m, so the furthest stars sit some 72 km from the Zero and the heights stay within about ±480 m. That is the scale of the D'ni Cavern, not of space, and it is meant: an Age's coordinates are those of the **beam**, the path its pulse travels to reach the Zero, not a distance through space. The Art links worlds across universes, not across the sky; the Great Zero is the reference for that linking.
 
 ### The Relto's two special books
 

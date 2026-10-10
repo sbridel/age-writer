@@ -32,7 +32,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 **État.** Publié, ordinateur seulement, mode bac à sable (voir [La suite](#15-la-suite)). La version en cours est celle de [`manifest.json`](manifest.json) et de la page [Releases](https://github.com/sbridel/age-writer/releases) ; les changements de chaque version sont dans [`CHANGELOG.md`](CHANGELOG.md) (en anglais) et, plus en détail, dans [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-Nouveautés récentes : la **météo vivante** (un temps qui va et vient selon l'heure, `drizzle: often, dawn`), le **télescope** du Relto (retrouver le Great Zero caché de ton Relto) et une **référence complète** refaite en quatre parties, avec des exemples de valeurs pour chaque ligne de physique.
+Nouveautés récentes : **l'Art de la Guilde** (réglage *Instruments* : un livre vierge dans l'Imageur, qu'on accorde jusqu'à voir paraître un monde, parfois un monde que personne n'a écrit ; un balancier-métronome dans l'observatoire pour distinguer le vrai pouls des faux), l'**horloge D'ni** qui s'éveille quand le Great Zero de ton Relto est trouvé, l'**observatoire** et sa carte des étoiles (situer les étoiles de tes Âges, étoiles mortes, fausse ligne du roi Me'erta), un **banc optique** redessiné avec une aide aux lentilles, et la **météo vivante** (`drizzle: often, dawn`). Le détail est dans [`CHANGELOG.md`](CHANGELOG.md).
 ---
 
 ## Sommaire
@@ -205,6 +205,8 @@ La page *Telescope* (`page_telescope`) est toujours dans le livre des pages, **v
 **La carte des étoiles (étape 3).** Le rouleau de parchemin en haut à droite de l'observatoire déroule une carte : le Great Zero en rose des vents au centre, ton Relto, et chaque système situé (une constellation, chaque étoile reliée à sa plus proche voisine), avec ses Âges (le premier nom écrit, tous au survol) et ses étoiles mortes en cinabre. Le nord est la ligne que tient l'instrument ; les distances vont en racine carrée, pour que voisines et lointaines tiennent sur une feuille. Un seul Âge bien situé suffit à l'ancrer. Encre sur papier : elle se lit de même en thème clair et sombre.
 
 **Dérive et nord magnétique (étape 3).** La dérive de la calibration dépend de la physique de l'Âge : un monde sans champ magnétique (noyau mort, ou qui tourne à peine) n'a pas de nord ; son arpenteur donne des relèvements grossiers (quatre mots de boussole, ou huit avec un champ faible) et sa calibration s'use deux fois plus vite (1,4 fois avec un champ faible) ; près d'une étoile morte, plus vite encore (× 1,5 près d'un trou noir, × 1,3 près d'un pulsar ou d'une étoile à neutrons ; au plus × 4). L'onglet Détails dit pourquoi.
+
+**À propos des distances.** Les coordonnées sont celles du système de coordonnées du Great Zero, dans ses propres unités : un shahfee (span) mesure environ 4,82 m, si bien que les étoiles les plus lointaines sont à quelque 72 km du Zéro et que les hauteurs restent dans environ ±480 m. C'est l'échelle de la Caverne D'ni, pas celle de l'espace, et c'est voulu : les coordonnées d'un Âge sont celles du **faisceau**, le trajet que fait son pouls pour atteindre le Zéro, pas une distance à travers l'espace. L'Art relie des mondes d'univers à univers, pas d'un bout du ciel à l'autre ; le Great Zero est le repère de ces liaisons.
 
 ### Les deux livres du Relto
 
