@@ -2,6 +2,7 @@
 /** Ajouts à l'interface existante : numéros D'ni, mécanismes, altérations, solitude, son ; journal ; bloc `dni`. */
 const { fnv, esc, words, setMarkup } = require("./util");
 const IMG = require("./imager");
+const GI = require("./imager-guild");
 const { worldIds, describeChange } = require("./law");
 const mech = require("./mech");
 const sound = require("./sound");
@@ -105,6 +106,11 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
     const sky = sec.createDiv({ cls: "age-det__sky" });
     sky.createEl("b", { text: t("det.sky") + " " });
     sky.createSpan({ cls: "age-det__skyline", text: hn.line });
+    const chord = INS.isGuild(plugin.ext) && tg.crystals && tg.crystals.ids ? GI.chordOf(tg.crystals.ids) : []; // l'Art de la Guilde : l'accord de ses cristaux, à comparer à l'oreille
+    if (chord.length && sound.crystalChord) {
+      const b = sky.createEl("button", { cls: "age-det__chord clickable-icon", text: "♪" }); b.setAttr("aria-label", t("det.sky.chord")); b.setAttr("title", t("det.sky.chord"));
+      b.onclick = () => sound.crystalChord(chord, 0, plugin.ext.volume == null ? 0.35 : plugin.ext.volume);
+    }
     const full = notes === "full"; // « mots seulement » : la phrase, sans aucun chiffre (les valeurs ne sont même pas créées, rien à révéler)
     if (full) {
       const nums = sky.createDiv({ cls: "age-det__skynums" });

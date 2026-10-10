@@ -638,6 +638,23 @@ function imagerSfx(kind, volume = 0.3) {
   });
 }
 /**
+ * L'accord des cristaux de l'Imageur (Art de la Guilde) : `freqs` les notes (src/imager-guild.js, `chordOf`), égrenées
+ * puis tenues ; `beat` (0 à 1) double chaque note d'une jumelle désaccordée : à 0 l'accord est posé, à 1 il tremble
+ * (jusqu'à ~6 Hz de battement). Une seule note : le cristal qu'on pose.
+ */
+function crystalChord(freqs, beat = 0, volume = 0.3) {
+  const fs = (freqs || []).filter((f) => f > 0); if (!fs.length) return false;
+  const b = Math.max(0, Math.min(1, Number(beat) || 0)), dur = fs.length > 1 ? 2.6 : 1.3;
+  return oneShot(dur + 0.3, (c, out) => {
+    const t = c.currentTime; out.gain.value = volume * 0.5 / Math.sqrt(fs.length);
+    const tone = (t0, f, g) => { const o = c.createOscillator(), e = c.createGain(); o.type = "sine"; o.frequency.value = f; e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + 0.04); e.gain.setTargetAtTime(g * 0.6, t0 + 0.1, 0.3); e.gain.exponentialRampToValueAtTime(0.001, t0 + dur); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + dur + 0.05); };
+    fs.forEach((f, i) => {
+      const t0 = t + i * 0.09; tone(t0, f, 0.22); tone(t0, f * 2, 0.04); // la note et son octave, un timbre de verre
+      if (b > 0) tone(t0, f + b * (3 + i * 1.1), 0.18); // la jumelle qui bat
+    });
+  });
+}
+/**
  * Les bruits du télescope : le cran fin du moyeu (« tick »), le cliquet de la couronne (« turn »), et, après chaque geste,
  * le pouls du Zéro (« ping ») : deux notes proches qui battent l'une contre l'autre ; `s` (0 à 1, le signal) les accorde :
  * loin, un murmure grave qui tremble ; près, une note claire et posée. « found » : le Zéro trouvé, une quinte qui reste.
@@ -732,4 +749,4 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { crystalChord, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

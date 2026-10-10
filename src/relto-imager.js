@@ -352,10 +352,31 @@ function blankBook(r, ctx, st, c) {
   if (on && st.thumb) ctx.drawImage(st.thumb, 5, -1, 34, 20);
   if (on) { ctx.fillStyle = "#3b2a1b"; ctx.font = "italic 6px serif"; ctx.textAlign = "center"; ctx.fillText(name, -22, 10, 38); ctx.textAlign = "left"; } // l'encre du nom
   else { ctx.strokeStyle = c("#c8baa0"); ctx.lineWidth = 0.5; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(-38, 4 + i * 5); ctx.lineTo(-6, 4 + i * 5); ctx.stroke(); } }
+  const ghost = on ? [] : ghostIds(st);
+  if (ghost.length) ghostGlyphs(r, ctx, ghost);
   ctx.restore();
   ctx.fillStyle = "#e0c27a"; ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillText(on ? name : t("guild.book"), 74, 238, 120); ctx.textAlign = "left";
   const seen = st.g.seen.length ? " — " + t("guild.book.seen", { names: st.g.seen.join(", ") }) : "";
-  r.hot.push({ x: 28, y: 180, w: 92, h: 66, tip: (on ? t("guild.book.formed", { name }) : t("guild.book.tip")) + seen });
+  r.hot.push({ x: 28, y: 180, w: 92, h: 66, tip: (on ? t("guild.book.formed", { name }) : t("guild.book.tip") + (ghost.length ? " " + t("guild.book.ghost") : "")) + seen });
+}
+/** Les cristaux de l'étoile que tient le télescope (le premier de ses Âges, par nom, comme sa lumière) : ce qui transparaît. */
+function ghostIds(st) {
+  if (!st.star) return [];
+  const list = (st.cands || []).filter((x) => GI.starOf(x) === st.star && GI.crystalIds(x).length).sort((a, b) => String(a.age.name).localeCompare(String(b.age.name)));
+  return list.length ? GI.crystalIds(list[0]).slice(0, GI.SLOTS) : [];
+}
+/**
+ * Les glyphes qui transparaissent sur la page gauche du livre vierge, vus à travers le papier : pâles, à l'envers (en miroir),
+ * deux par ligne. Ils disent quelles pages chercher, pas lesquelles sont déjà posées.
+ */
+function ghostGlyphs(r, ctx, ids) {
+  ctx.save(); ctx.globalAlpha = 0.2; ctx.scale(-1, 1); // le verso : en miroir
+  ids.forEach((id, i) => {
+    const gx = 8 + (i % 2) * 17, gy = -2 + Math.floor(i / 2) * 11, gs = 10, img = r.opts.glyphImage ? r.opts.glyphImage(id) : null;
+    if (img && img.complete !== false && img.width) ctx.drawImage(img, gx, gy, gs, gs);
+    else { ctx.fillStyle = "#3b2a1b"; ctx.font = "italic 4px serif"; ctx.fillText(String(id).replace(/_/g, " ").slice(0, 8), gx - 2, gy + 6, 16); }
+  });
+  ctx.restore();
 }
 /**
  * Le livre vierge quand il montre un monde que personne n'a écrit : pas de nom ; quelques mots de sa description en encre

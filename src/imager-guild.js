@@ -17,6 +17,7 @@
  * glyphes ou vides) et les noms dont le livre se souvient. Testé dans test/imager-guild.test.js.
  */
 const I = require("./imager");
+const { fnv } = require("./util");
 
 const SLOTS = 4, RACK = 8; // quatre logements ; huit chevilles par rangée du râtelier (au-delà : des rangées, ‹ ›)
 const EXTRA = 0.25;        // un cristal de trop (au-delà des pages du monde) brouille d'autant
@@ -127,6 +128,18 @@ function place(cry0, hand, target) {
   return { cry, hand: null };
 }
 
+// ---- l'accord des cristaux ---------------------------------------------------------------------------------------
+/**
+ * Chaque cristal a sa note (d'après son glyphe : une pentatonique sur deux octaves à partir du la 220) ; quatre posés
+ * sonnent ensemble. `beatOf` : 0 quand le monde est tenu (l'accord est posé), sinon d'autant plus de battement que les
+ * cristaux sont loin du monde le plus proche (sa justesse `cryScore`). On ne dit pas lequel est faux : l'oreille compare
+ * avec l'accord que note l'arpenteur (le ♪ de l'onglet Détails).
+ */
+const PENTA = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
+function noteOf(id) { return 220 * Math.pow(2, PENTA[fnv(String(id)) % PENTA.length] / 12); }
+function chordOf(ids) { return [...new Set((ids || []).filter(isId))].map(noteOf).sort((a, b) => a - b); }
+function beatOf(planet, target) { return planet ? 0 : Math.max(0.25, 1 - ((target && target.cryScore) || 0)); }
+
 // ---- le lien avec le télescope ------------------------------------------------------------------------------------
 /**
  * L'étoile que le télescope tient, telle qu'il la garde (`tel` = ext.telescope[relto]) : `aimedAt`, si le Zéro est trouvé
@@ -138,4 +151,4 @@ function aimedOf(tel) {
   return k && tel.systems && tel.systems[k] && Number.isFinite(tel.systems[k].at) ? k : null;
 }
 
-module.exports = { aimedOf, SLOTS, RACK, EXTRA, normCry, normalize, saved, rackOf, rackPage, pages, exact, score, slotsOf, choose, unwritten, full, lightOf, targetOf, place, starOf, crystalIds };
+module.exports = { aimedOf, SLOTS, RACK, EXTRA, normCry, normalize, saved, rackOf, rackPage, pages, exact, score, slotsOf, choose, unwritten, full, lightOf, targetOf, place, starOf, crystalIds, noteOf, chordOf, beatOf };

@@ -789,6 +789,11 @@ class ReltoRenderer {
       const removed = res.cry.filter(Boolean).length < st.g.cry.filter(Boolean).length;
       st.hand = null; st.g = { ...st.g, cry: res.cry }; sfx(removed ? "lift" : "set");
       this.imagerFind(); if (st.planet && !was) { sfx("lock"); say(t("guild.planet")); }
+      if (this.opts.onImagerChord) { // la note du cristal posé ; les quatre posés : l'accord, posé ou qui bat
+        const placed = !removed && a.rack != null ? a.rack : null;
+        if (GI.full(st.g.cry)) this.opts.onImagerChord(GI.chordOf(st.g.cry), GI.beatOf(st.planet, st.target));
+        else if (placed) this.opts.onImagerChord(GI.chordOf([placed]), 0);
+      }
       this.imagerRemember(say);
       return done();
     }

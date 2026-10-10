@@ -14,6 +14,8 @@ const grad = { addColorStop() {} };
 const ctx = new Proxy({}, { get: (_, k) => (k === "measureText" ? () => ({ width: 30 }) : k === "createLinearGradient" || k === "createRadialGradient" ? (...a) => { a.forEach(chk); return grad; } : (...a) => a.forEach(chk)), set: () => true });
 dom.window.HTMLCanvasElement.prototype.getContext = () => ctx;
 const SS = require("../src/starsystem"), CAL = require("../src/calibration"), IM = require("../src/imager"), GI = require("../src/imager-guild"), SKY = require("../src/sky");
+// l'accord des cristaux : une note par glyphe, stable ; quatre notes triées ; posé si le monde est tenu, qui bat sinon
+{ const a = GI.noteOf("water"); ok(a === GI.noteOf("water") && a >= 220 && a < 880, "accord : une note fixe par cristal, sur deux octaves"); const ch = GI.chordOf(["water", "lava", "water", null, "moss"]); ok(ch.length === 3 && ch.every((f, i) => !i || f >= ch[i - 1]), "accord : les notes des cristaux posés, sans doublon, triées"); ok(GI.beatOf(true, { cryScore: 0.5 }) === 0 && GI.beatOf(false, { cryScore: 0.75 }) === 0.25 && GI.beatOf(false, null) === 1, "accord : posé quand le monde est tenu, battement selon la justesse sinon"); }
 const M = require("../src/relto-model"), { ReltoRenderer } = require("../src/relto-render"), { Dni } = require("../src/dni"), { D, makeT } = require("../src/i18n");
 const TL = require("../src/relto-telescope");
 const { analyseAgeBase, pageList } = require("../src/engine/analysis");
@@ -108,6 +110,7 @@ const relDone = (async () => {
   const st = ri.imager;
   ok(st.guild && st.cands.length === 4, "mode Guilde : l'appareil a lu les Âges de l'étagère");
   ok(!ri.hot.some((h) => h.imager && h.imager.book != null) && ri.hot.some((h) => /blank book/.test(h.tip)), "pas de ‹ › : un seul livre, vierge");
+  ok(!ri.hot.some((h) => /Through the paper/.test(h.tip)), "sans étoile tenue : rien ne transparaît");
   ok(!st.world && !st.target && ri.hot.some((h) => /window is black/.test(h.tip)), "fenêtre noire tant qu'aucun monde ne répond");
   // II. le comparateur, sans télescope
   clickOn(ri, (a) => a.station === "lens", "poste II"); ri.draw(2);
@@ -127,6 +130,7 @@ const relDone = (async () => {
   ok(store[ts.key].aimedAt === K && store[ts.key].book === "Ages/Brume.md", "molettes sur Kerath : le télescope tient l'étoile, c'est gardé");
   tr.draw(4); ok(true, "dessin de l'observatoire qui tient l'étoile");
   ri.draw(3); ok(st.star === K && st.light && st.light.r === data["Ages/Brume.md"].target.lens.r, "l'Imageur reçoit la lumière de Kerath");
+  ok(ri.hot.some((h) => /Through the paper/.test(h.tip)), "le livre vierge : les glyphes de l'étoile tenue transparaissent");
   clickOn(ri, (a) => a.station === "lens", "poste II"); ri.draw(3);
   ok(ri.hot.some((h) => /light the telescope sends/.test(h.tip)), "le comparateur s'allume à gauche");
   clickOn(ri, (a) => a.station === null, "reculer");

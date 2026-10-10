@@ -434,6 +434,8 @@
 .age-det__sky { margin: 8px 0 4px; font-size: var(--font-ui-small); color: var(--text-muted); }
 .age-det__sky b { color: var(--text-normal); font-weight: 600; }
 .age-det__skyline { font-style: italic; }
+.age-det__chord { display: inline-flex; margin-left: 6px; padding: 0 6px; height: 20px; font-size: 13px; vertical-align: middle; opacity: .7; }
+.age-det__chord:hover { opacity: 1; }
 .age-det__skynums { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; align-items: center; }
 .age-det__skynum { display: inline-flex; align-items: center; gap: 6px; color: var(--text-normal); }
 .age-det__skylabel { color: var(--text-faint); font-size: var(--font-ui-smaller); }
