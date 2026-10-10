@@ -63,7 +63,7 @@ ok(ST.get({}, "a") !== ST.get({}, "b") && (() => { const s = {}; ST.get(s, "a").
 
 // --- pages-récompenses : verrouillées jusqu'au chapitre, puis disponibles
 const rp = ST.rewardPages();
-ok(rp.length === ST.CHAPTERS.length && rp.every((p) => p.story && p.unlock && p.unlock.story && M.PAGE_PRESETS[p.id]), "rewardPages : une page par chapitre, tirée d'un préréglage existant");
+ok(rp.length === ST.CHAPTERS.length + 1 && rp.every((p) => p.story && p.unlock && p.unlock.story && (M.PAGE_PRESETS[p.id] || p.id === ST.ENDGAME.id)), "rewardPages : une page par chapitre (préréglage existant) et la page finale");
 const rest = rp.find((p) => p.unlock.story === "rest");
 ok(!M.checkUnlock(rest, [], new Set(), { storyDone: [] }).ok && /chapter/.test(M.checkUnlock(rest, [], new Set(), { storyDone: [] }).reason), "page verrouillée tant que le chapitre n'est pas réussi (avec la raison)");
 ok(M.checkUnlock(rest, [], new Set(), { storyDone: ["rest"] }).ok && !M.checkUnlock(rest, [], new Set(), {}).ok, "page débloquée par le chapitre (et verrouillée sans état)");
@@ -91,5 +91,12 @@ for (const lang of ["en", "fr"]) for (const c of ST.CHAPTERS) {
   ok(t.startsWith("# Nom") && t.includes(ST.MENTOR) && blk && blk[1].split("\n").length === ST.WORLDS[c.id].lines.length, "note de chapitre " + c.id + "/" + lang + " : titre, mentor, bloc age");
   ok(!/bahro|encrier|inkwell|endgame/i.test(t), "note de chapitre " + c.id + "/" + lang + " : rien de réservé");
 }
+
+// ---- la page finale
+const endP = ST.rewardPages().find((p) => p.id === ST.ENDGAME.id);
+ok(endP && endP.additions.some((a) => a.type === "inkwell") && endP.unlock.story === "end", "page finale : un encrier, ouverte par la fin de l'histoire");
+ok(!M.checkUnlock(endP, [], new Set(), { storyDone: ["rest", "mend"] }).ok && M.checkUnlock(endP, [], new Set(), { storyDone: ["rest", "mend", "end"] }).ok, "page finale : fermée avant la fin, ouverte après");
+ok(!/bahro/i.test(JSON.stringify(ST.ENDGAME)) && !Object.keys(M.PAGE_PRESETS).includes(ST.ENDGAME.id), "page finale : nom neutre, hors du bac à sable");
+ok(ST.chapterNote(mend, "fr", "N").includes("Deseekay") && !ST.chapterNote(restC, "fr", "N").includes("Deseekay"), "chapitre 2 : sous-titre D'ni");
 
 console.log(`story.test.js : ${n} vérifications ok`);

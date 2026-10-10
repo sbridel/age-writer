@@ -118,6 +118,22 @@ function drawCabin(r, ctx, sc, sky, t) {
     ctx.fillStyle = c("#c9a24e"); ctx.fillRect(nx + 1, ny + 1, 2, 3); ctx.fillRect(nx + 19, ny + 1, 2, 3); ctx.fillStyle = c("#8e2b27"); ctx.fillRect(nx + 14, ny + 4, 1.4, 4);
     r.hot.push({ x: nx - 2, y: ny - 4, w: 26, h: 12, tip: "Surveyor's notebook", special: "surveyor" });
   }
+  if (r.scene.mode === "story") { // la lettre du mentor : pliée sur la table, cachet rouge ; un clic ouvre le chapitre en cours
+    const lx = tx + 96, ly = ty - 4, pulse = 0.5 + 0.5 * Math.sin(t * 2);
+    ctx.fillStyle = c("#e9ddbd"); ctx.fillRect(lx, ly - 3, 20, 7); ctx.fillStyle = c("#d6c7a0"); ctx.fillRect(lx, ly + 1, 20, 1.2);
+    ctx.strokeStyle = rgba(120, 90, 50, 0.5); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(lx, ly - 3); ctx.lineTo(lx + 10, ly + 1); ctx.lineTo(lx + 20, ly - 3); ctx.stroke();
+    ctx.fillStyle = c("#8e2b27"); ctx.beginPath(); ctx.arc(lx + 10, ly + 1, 2.4, 0, 6.283); ctx.fill();
+    if (!(r.scene.storyDone || []).includes("end")) { ctx.fillStyle = rgba(255, 170, 90, 0.12 + 0.18 * pulse); ctx.beginPath(); ctx.arc(lx + 10, ly + 1, 6, 0, 6.283); ctx.fill(); }
+    r.hot.push({ x: lx - 2, y: ly - 6, w: 24, h: 12, tip: TR(r)("story.letter.tip"), special: "story" });
+  }
+  if (r.scene.additions.some((a) => a.type === "inkwell")) { // l'encrier : un petit pot sombre au col étroit, une plume dedans
+    const ix = tx + 130, iy = ty;
+    ctx.fillStyle = c("#14202a"); ctx.beginPath(); ctx.ellipse(ix + 7, iy - 4, 8, 4.4, 0, 0, 6.283); ctx.fill(); ctx.fillRect(ix + 4, iy - 11, 6, 6);
+    ctx.fillStyle = c("#2d4a5c"); ctx.fillRect(ix + 3, iy - 12, 8, 2); ctx.fillStyle = rgba(150, 200, 230, 0.35); ctx.fillRect(ix + 2, iy - 6, 2, 1.6);
+    ctx.strokeStyle = c("#e8dcc0"); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(ix + 8, iy - 11); ctx.lineTo(ix + 17, iy - 26); ctx.stroke();
+    ctx.strokeStyle = c("#b9a97f"); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(ix + 10, iy - 17); ctx.lineTo(ix + 17, iy - 24); ctx.stroke();
+    r.hot.push({ x: ix - 3, y: iy - 28, w: 24, h: 30, tip: TR(r)("story.ink.tip"), flash: TR(r)("story.ink.flash") });
+  }
   { // le livre des pages : grand livre ouvert, posé à plat ; un clic l'ouvre en gros plan
     const bx = tx + 60, by = ty - 6;
     ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 1, by, 30, 6); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx + 1, by - 2, 13, 5); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 15, by - 2, 13, 5);

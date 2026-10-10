@@ -20,6 +20,9 @@ const CHAPTERS = [
   { id: "mend", page: "page_lanterns", title: { en: "Mending without breaking", fr: "Corriger sans casser" } },
 ];
 
+/** La page finale (pour l'instant : un encrier posé sur la table). Le nom reste neutre. */
+const ENDGAME = { id: "page_endgame", label: "Inkwell", effects: { canvas_additions: [{ type: "inkwell", density: 1 }] } };
+
 /** Cette note de refuge est-elle un Relto histoire ? (propriétés de la note) */
 const isStory = (fm) => !!fm && fm.relto_mode === MODE;
 
@@ -140,7 +143,7 @@ const LETTERS = {
 /** Le texte d'une note de chapitre : titre, lettre du mentor, ce qu'il faut faire, et le bloc `age` de départ. */
 function chapterNote(chapter, lang, name) {
   const l = lang === "fr" ? "fr" : "en", w = WORLDS[chapter.id] || { lines: [] }, L = LETTERS[chapter.id][l];
-  const title = chapter.title[l];
+  const title = (chapter.id === "mend" ? "Deseekay · " : "") + chapter.title[l]; // deseekay : « énigme », en D'ni
   return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n— ${MENTOR}, seltahn\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`\n`;
 }
 
@@ -155,7 +158,10 @@ function rewardPages() {
     const p = M.libraryPage({ id: c.page, label: preset.label, effects: preset.effects, unlock: null });
     out.push({ ...p, library: false, builtin: true, story: true, unlock: { age: null, minStability: 40, agesCount: null, page: null, zero: false, story: c.id, storyTitle: c.title.en } });
   }
+  // la page de la fin : une pièce d'écriture posée sur la table, qui s'ouvre quand tous les chapitres sont faits
+  const p = M.libraryPage({ id: ENDGAME.id, label: ENDGAME.label, effects: ENDGAME.effects, unlock: null });
+  out.push({ ...p, library: false, builtin: true, story: true, unlock: { age: null, minStability: 40, agesCount: null, page: null, zero: false, story: "end", storyTitle: "the last chapter" } });
   return out;
 }
 
-module.exports = { MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
+module.exports = { MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };

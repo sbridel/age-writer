@@ -333,6 +333,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     const shelf = (e) => [...e.querySelectorAll(".age-relto__pillname")].map((x) => x.textContent);
     let el = await show(sf.path);
     ok(row(el, "Chimney fire") && /is-locked/.test(row(el, "Chimney fire").className), "mode histoire : la page du premier chapitre est verrouillée au départ");
+    ok(row(el, "Inkwell") && /is-locked/.test(row(el, "Inkwell").className), "mode histoire : la page finale est verrouillée au départ");
     ok(shelf(el).join() === "Premier", "mode histoire : l'étagère ne montre que les Âges du dossier de l'histoire");
     inside.content = "```age\nsingle_sun\nsteady_cycle\nwater\nsand\nfern\n```\n"; inside.stat.mtime++; p.index.invalidate(); notices.length = 0;
     el = await show(sf.path);
@@ -348,6 +349,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
       files.get(c2[0]).content = files.get(c2[0]).content.replace("\nlava\n", "\nsand\n"); files.get(c2[0]).stat.mtime++; p.index.invalidate(); notices.length = 0;
       el = await show(sf.path);
       ok(row(el, "Lanterns") && /is-available/.test(row(el, "Lanterns").className), "chapitre 2 réussi : la page des lanternes est disponible");
+      ok(row(el, "Inkwell") && /is-available/.test(row(el, "Inkwell").className), "fin de l'histoire : la page finale (l'encrier) est disponible");
       notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); files.delete(c2[0]); }
     const sb = await show("x.md"), sbn = shelf(sb);
     ok(sbn.includes("Dehors") && !sbn.includes("Premier"), "mode histoire : sans précision, le Relto du bac à sable, qui ne voit pas les Âges de l'histoire");
