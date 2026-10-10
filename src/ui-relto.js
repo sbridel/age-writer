@@ -379,31 +379,34 @@ async function renderRelto(plugin, source, el, ctx) {
     };
     const nameOf = (p) => p.label || String(p.id).replace(/^page_/, "").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
     const whatOf = (p) => p.additions.map((a) => a.type + (a.asset ? ` (${a.asset})` : "")).join(" · ");
+    // trois colonnes alignées (la page · ce qu'elle ajoute au Relto, ou pourquoi elle est verrouillée · le bouton), avec leurs titres
+    const colHead = (box, cells) => { const h = box.createDiv({ cls: "age-relto__colhead" }); for (const c of cells) h.createSpan({ text: c }); };
     const row = (box, p) => {
       const r = box.createDiv({ cls: `age-relto__page is-${p.state}` });
       if (p.path) { const a = r.createEl("a", { cls: "internal-link age-relto__pname", text: nameOf(p), attr: { title: p.id } }); a.addEventListener("click", (e) => { e.preventDefault(); app.workspace.openLinkText(p.path, "", false); }); }
       else r.createSpan({ cls: "age-relto__pname age-relto__libpage", text: nameOf(p), attr: { title: p.id + " (relto-library)" } });
-      const w = whatOf(p); if (w) r.createSpan({ cls: "age-relto__fx", text: w });
-      if (p.reason) r.createSpan({ cls: "age-relto__reason", text: p.reason });
-      const listed = scene.pagesActive.includes(p.id);
-      if (p.state === "available") r.createEl("button", { cls: "age-relto__pbtn", text: t("relto.attach") }).addEventListener("click", async () => { await reltoEdit((l) => [...l, p.id]); plugin.refreshLive(); });
-      else if (listed) r.createEl("button", { cls: "age-relto__pbtn", text: t("relto.detach") }).addEventListener("click", async () => { await reltoEdit((l) => l.filter((x) => x !== p.id)); plugin.refreshLive(); });
+      const mid = r.createSpan({ cls: "age-relto__fx" }); mid.setText(p.reason || whatOf(p));
+      const act = r.createSpan({ cls: "age-relto__pact" }), listed = scene.pagesActive.includes(p.id);
+      if (p.state === "available") act.createEl("button", { cls: "age-relto__pbtn", text: t("relto.attach") }).addEventListener("click", async () => { await reltoEdit((l) => [...l, p.id]); plugin.refreshLive(); });
+      else if (listed) act.createEl("button", { cls: "age-relto__pbtn", text: t("relto.detach") }).addEventListener("click", async () => { await reltoEdit((l) => l.filter((x) => x !== p.id)); plugin.refreshLive(); });
     };
     for (const [key, st] of [["active", "active"], ["available", "available"], ["locked", "locked"]]) {
       const list = scene.pages.filter((p) => p.state === st); if (!list.length) continue;
-      const box = section(key, t("relto.state." + st), list.length); for (const p of list) row(box, p);
+      const box = section(key, t("relto.state." + st), list.length);
+      colHead(box, [t("relto.col.page"), st === "locked" ? t("relto.col.why") : t("relto.col.adds"), ""]); for (const p of list) row(box, p);
     }
     if (scene.missingPages.length) {
       const box = section("missing", t("relto.state.missing"), scene.missingPages.length);
       for (const id of scene.missingPages) {
-        const r = box.createDiv({ cls: "age-relto__page is-missing" }); r.createSpan({ cls: "age-relto__pname", text: id });
-        r.createEl("button", { cls: "age-relto__pbtn", text: t("relto.detach") }).addEventListener("click", async () => { await reltoEdit((l) => l.filter((x) => x !== id)); plugin.refreshLive(); });
+        const r = box.createDiv({ cls: "age-relto__page is-missing" }); r.createSpan({ cls: "age-relto__pname", text: id }); r.createSpan({ cls: "age-relto__fx" });
+        r.createSpan({ cls: "age-relto__pact" }).createEl("button", { cls: "age-relto__pbtn", text: t("relto.detach") }).addEventListener("click", async () => { await reltoEdit((l) => l.filter((x) => x !== id)); plugin.refreshLive(); });
       }
     }
     // les sons : un par son joué par les pages actives (quelles pages le jouent, au survol et en petit), allumé ou non, et son volume
     const bySound = new Map(); for (const p of scene.pages.filter((q) => q.state === "active")) for (const n of p.audio) { if (!bySound.has(n)) bySound.set(n, []); bySound.get(n).push(nameOf(p)); }
     if (soundBtn && bySound.size) {
       const box = section("sounds", t("relto.sounds"), bySound.size);
+      colHead(box, ["", t("relto.col.sound"), t("relto.col.playedby"), t("relto.col.volume")]);
       for (const [n, users] of bySound) {
         const c = soundCfg(n), r = box.createDiv({ cls: "age-relto__snd" + (c.on === false ? " is-muted" : "") });
         const mute = r.createEl("button", { cls: "age-relto__pagesound", text: c.on === false ? "🔇" : "♪", attr: { title: t("relto.pagesound") } });
@@ -439,12 +442,20 @@ async function renderRelto(plugin, source, el, ctx) {
     tools.createEl("button", { text: t("relto.booksall") }).addEventListener("click", () => setList(null));
     tools.createEl("button", { text: t("relto.booksnone") }).addEventListener("click", () => setList([]));
     if (!cand.length) body.createDiv({ cls: "age-relto__hint", text: t("relto.nobooks") });
-    for (const a of cand) {
-      const row = body.createEl("label", { cls: "age-relto__book" }), cb = row.createEl("input", { type: "checkbox" });
-      cb.checked = shown.has(a.path); cb.disabled = !!scene.booksFromBlock;
-      row.createSpan({ text: a.name }); row.createSpan({ cls: "age-relto__reason", text: `${a.verdict} ${a.stability}%` });
-      cb.addEventListener("change", () => {
-        const cur = new Set(shown); if (cb.checked) cur.add(a.path); else cur.delete(a.path);
+    // les livres de l'étagère en pastilles, colorées comme la tranche des livres (stable, instable, mourant) ; pleine : sur l'étagère, en
+    // creux : rangée ; un clic l'ajoute ou la retire. Tri par nom ou par stabilité (gardé).
+    const sortBy = ui.reltoBooksSort === "stability" ? "stability" : "name";
+    const sorter = tools.createDiv({ cls: "age-relto__booksort" }); sorter.createSpan({ text: t("relto.sort") });
+    for (const [k, key] of [["name", "relto.sort.name"], ["stability", "relto.sort.stability"]]) { const b = sorter.createEl("button", { cls: k === sortBy ? "is-active" : "", text: t(key) }); b.addEventListener("click", () => { ui.reltoBooksSort = k; plugin.saveExt(); renderBooks(); }); }
+    const list = [...cand].sort((x, y) => (sortBy === "stability" ? (Number(y.stability) || 0) - (Number(x.stability) || 0) : 0) || String(x.name).localeCompare(String(y.name)));
+    const pills = body.createDiv({ cls: "age-relto__pills" });
+    for (const a of list) {
+      const on = shown.has(a.path), v = ["stable", "unstable", "dying"].includes(a.verdict) ? a.verdict : "unknown";
+      const pill = pills.createEl("button", { cls: `age-relto__pill is-${v}` + (on ? " is-on" : ""), attr: { title: `${a.name} — ${a.verdict || "?"} ${a.stability}%` + (on ? "" : " · " + t("relto.pill.off")) } });
+      pill.createSpan({ cls: "age-relto__pillname", text: a.name }); pill.createSpan({ cls: "age-relto__pillpct", text: `${a.stability}%` });
+      pill.disabled = !!scene.booksFromBlock;
+      pill.addEventListener("click", () => {
+        const cur = new Set(shown); if (on) cur.delete(a.path); else cur.add(a.path);
         setList(cand.filter((x) => cur.has(x.path)).map((x) => x.name));
       });
     }

@@ -519,3 +519,29 @@
 .age-relto__sndusers { flex: 1 1 auto; font-size: 0.75em; opacity: 0.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .age-relto__snd .age-relto__pagevol { width: 90px; flex: 0 0 auto; }
 .age-relto__snd.is-muted .age-relto__sndname, .age-relto__snd.is-muted .age-relto__sndusers { opacity: 0.4; }
+
+/* Pages : trois colonnes alignées, avec leurs titres ; une largeur raisonnable, même dans un grand onglet */
+.age-relto__secbody { display: grid; grid-template-columns: minmax(7em, max-content) minmax(0, max-content) max-content; justify-content: start; column-gap: 28px; row-gap: 2px; align-items: baseline; padding-right: 14px; }
+.age-relto__secbody > .age-relto__page, .age-relto__secbody > .age-relto__colhead { display: contents; }
+.age-relto__secbody .age-relto__page > *, .age-relto__colhead > * { padding: 3px 0; }
+.age-relto__secbody .age-relto__page > .age-relto__pname { padding-left: 14px; min-width: 0; }
+.age-relto__colhead > * { font-size: 0.66em; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.45; padding-top: 0; }
+.age-relto__colhead > :first-child { padding-left: 14px; }
+.age-relto__secbody .age-relto__pact { justify-self: start; }
+.age-relto__secbody .age-relto__pbtn { margin-left: 0; }
+.age-relto__sec--sounds .age-relto__secbody { grid-template-columns: max-content minmax(7em, max-content) minmax(0, max-content) 100px; column-gap: 20px; align-items: center; }
+.age-relto__secbody > .age-relto__snd { display: contents; }
+.age-relto__secbody > .age-relto__snd > :first-child { margin-left: 14px; }
+.age-relto__sec--sounds .age-relto__colhead > :first-child { padding-left: 0; }
+.age-relto__snd .age-relto__pagevol { width: 100%; }
+
+/* les livres de l'étagère : des pastilles à la couleur de la tranche (stable, instable, mourant) */
+.age-relto__booksort { display: inline-flex; align-items: center; gap: 4px; margin-left: 12px; font-size: 0.8em; opacity: 0.85; }
+.age-relto__booksort button { font-size: 0.9em; padding: 0 8px; height: auto; background: transparent; box-shadow: none; border: 1px solid rgba(205, 189, 148, 0.25); color: #a89a78; }
+.age-relto__booksort button.is-active { background: rgba(205, 189, 148, 0.18); color: #e9dcb8; }
+.age-relto__pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; max-width: 760px; }
+.age-relto__pill { --pc: #7a7a8a; display: inline-flex; align-items: baseline; gap: 6px; height: auto; padding: 3px 10px; border-radius: 999px; border: 1.5px solid var(--pc); background: transparent; box-shadow: none; color: var(--pc); font-size: 0.85em; cursor: pointer; opacity: 0.75; }
+.age-relto__pill.is-stable { --pc: #8fae6a; } .age-relto__pill.is-unstable { --pc: #d9a24a; } .age-relto__pill.is-dying { --pc: #c0553f; }
+.age-relto__pill.is-on { background: var(--pc); color: #16140f; opacity: 1; }
+.age-relto__pill:hover { opacity: 1; filter: brightness(1.1); }
+.age-relto__pillpct { font-size: 0.82em; opacity: 0.8; }
