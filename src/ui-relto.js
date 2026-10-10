@@ -16,6 +16,7 @@ const DC = require("./dniclock");
 const SS = require("./starsystem");
 const CAL = require("./calibration");
 const UW = require("./unwritten");
+const ST = require("./story");
 
 const AUDIO_EXT = ["mp3", "ogg", "wav", "m4a", "flac"];
 
@@ -27,13 +28,16 @@ function parseOptions(src) {
 
 const fmOf = (app, f) => (app.metadataCache.getFileCache(f) || {}).frontmatter || {};
 const isHub = (app, f) => fmOf(app, f).age_type === "personal_hub";
+const isStoryHub = (app, f) => isHub(app, f) && ST.isStory(fmOf(app, f));
+/** Les dossiers de tous les Reltos histoire du coffre (leurs Âges et leurs pages ne se mêlent pas à ceux du bac à sable). */
+const storyDirsOf = (app) => app.vault.getMarkdownFiles().filter((f) => isStoryHub(app, f)).map((f) => ST.dirOf(f.path)).filter(Boolean);
 
 function findReltoFile(plugin, opt, sourcePath) {
   const { app } = plugin;
   if (opt.source) return app.metadataCache.getFirstLinkpathDest(M.stripLink(opt.source), sourcePath);
   const here = app.vault.getAbstractFileByPath(sourcePath);
   if (here && here.extension === "md" && isHub(app, here)) return here;
-  return app.vault.getMarkdownFiles().find((f) => isHub(app, f)) || null;
+  return app.vault.getMarkdownFiles().find((f) => isHub(app, f) && !isStoryHub(app, f)) || null; // sans précision, le Relto du bac à sable
 }
 
 const LIB_RE = /```relto-library[ \t]*\r?\n([\s\S]*?)```/g;
@@ -57,15 +61,25 @@ async function buildScene(plugin, file, opt = {}) {
   const { app } = plugin;
   const relto = { ...M.parseRelto(fmOf(app, file)), name: file.basename };
   { const g = (plugin.ext.telescope || {})[TEL.keyOf(relto.name, relto.seed)]; relto.zeroFound = !!(g && g.found); } // débloque l'horloge D'ni
+  // Relto histoire : son dossier, ses Âges, ses pages (récompenses) ; les autres Reltos ne voient rien de ce dossier
+  const story = relto.mode === "story", mine = story ? ST.dirOf(file.path) : "", scope = { story, mine, storyDirs: storyDirsOf(app) };
   const pages = [];
   for (const f of app.vault.getMarkdownFiles()) {
     const fm = fmOf(app, f);
-    if (fm.relto_page_id) { const p = M.parsePage(fm, f.path); if (p) pages.push(p); }
+    if (fm.relto_page_id && ST.scopePaths(f.path, scope)) { const p = M.parsePage(fm, f.path); if (p) pages.push(p); }
   }
-  // une page écrite dans une note l'emporte sur la même page de la bibliothèque
-  for (const lp of (await libraryPages(plugin)).pages) if (!pages.some((p) => p.id === lp.id)) pages.push(M.libraryPage(lp));
+  // une page écrite dans une note l'emporte sur la même page de la bibliothèque (la bibliothèque est celle du bac à sable)
+  if (!story) for (const lp of (await libraryPages(plugin)).pages) if (!pages.some((p) => p.id === lp.id)) pages.push(M.libraryPage(lp));
   for (const bp of M.builtinPages()) if (!pages.some((p) => p.id === bp.id)) pages.push(bp); // le télescope : présent d'office, débloqué par le premier Âge
-  const ages = (await plugin.index.list()).filter((a) => a.path !== file.path);
+  if (story) for (const rp of ST.rewardPages()) if (!pages.some((p) => p.id === rp.id)) pages.push(rp); // les récompenses des chapitres
+  const ages = ST.scopeAges((await plugin.index.list()).filter((a) => a.path !== file.path), scope);
+  if (story) { // l'avancement : évalué à chaque lecture de la scène (les Âges du dossier sont ceux d'ici)
+    const store = plugin.ext.story || (plugin.ext.story = {}), key = TEL.keyOf(relto.name, relto.seed);
+    const axisOf = (id) => { const b = plugin.core && plugin.core.blocks && plugin.core.blocks.get ? plugin.core.blocks.get(id) : null; return b ? b.axis : null; };
+    const done = ST.evaluate(store, key, { ages, axisOf });
+    if (done.length) { plugin.saveExt(); for (const c of done) new obsidian.Notice(plugin.t("story.done", { title: plugin.lang() === "fr" ? c.title.fr : c.title.en })); }
+    relto.storyDone = ST.get(store, key).done;
+  }
   // choix des livres : options du bloc (folders / exclude / books) ; à défaut, liste du refuge (relto_books)
   const fm = fmOf(app, file), rules = { folders: opt.folders || fm.relto_folders, exclude: opt.exclude || fm.relto_exclude, books: opt.books || fm.relto_books };
   const { candidates, shown } = M.filterAges(ages, rules);
@@ -104,7 +118,7 @@ async function cleanStarChart(plugin) {
 
 async function createReltoNote(plugin) {
   const { app, t } = plugin;
-  const existing = app.vault.getMarkdownFiles().find((f) => isHub(app, f));
+  const existing = app.vault.getMarkdownFiles().find((f) => isHub(app, f) && !isStoryHub(app, f)); // le Relto du bac à sable, jamais celui de l'histoire
   if (existing) return existing;
   const folder = (plugin.ext.reltoFolder || "Ages").replace(/^\/+|\/+$/g, "");
   await ensureFolder(app, folder);
@@ -119,6 +133,26 @@ async function createReltoNote(plugin) {
 async function openRelto(plugin) {
   const f = await createReltoNote(plugin);
   await plugin.app.workspace.getLeaf(false).openFile(f);
+}
+
+/**
+ * Commande à part : lancer l'histoire. Crée (une seule fois) un dossier et un Relto « histoire » à l'intérieur, avec sa propre
+ * graine (son île, son Great Zero) et le marqueur `relto_mode: story`, puis l'ouvre. Si un Relto histoire existe déjà, l'ouvre.
+ */
+async function startStory(plugin) {
+  const { app, t } = plugin;
+  const existing = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
+  if (existing) { new obsidian.Notice(t("story.exists")); await app.workspace.getLeaf(false).openFile(existing); return existing; }
+  const fr = plugin.lang() === "fr", folder = (plugin.ext.storyFolder || (fr ? "Histoire" : "Story")).replace(/^\/+|\/+$/g, "");
+  await ensureFolder(app, folder);
+  let name = fr ? "Relto de l'histoire" : "Story Relto", n = 1, path;
+  do { path = `${folder}/${name}${n > 1 ? " " + n : ""}.md`; n++; } while (app.vault.getAbstractFileByPath(path));
+  const base = path.replace(/^.*\//, "").replace(/\.md$/, "");
+  const fm = { ...M.defaultReltoFrontmatter(1 + Math.floor(Math.random() * 99999999)), age_name: base, relto_mode: ST.MODE };
+  const f = await app.vault.create(path, `---\n${obsidian.stringifyYaml(fm)}---\n# ${base}\n\n\`\`\`relto\n\`\`\`\n`);
+  new obsidian.Notice(t("story.created", { folder }));
+  await app.workspace.getLeaf(false).openFile(f);
+  return f;
 }
 
 class PresetModal extends obsidian.FuzzySuggestModal {
@@ -591,4 +625,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };

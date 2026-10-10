@@ -314,6 +314,36 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
   const r6 = document.createElement("div"); await p.procs.relto("folders: Nulle part", r6, { sourcePath: "x.md", addChild() {} });
   ok(/· 0\/0/.test(r6.querySelector(".age-relto__books .age-relto__toggle").textContent), "folders: filtre les livres");
   p.ext.reltoTabs = true;
+  // ---- mode histoire : un Relto à part, avec son dossier, ses Âges et ses pages-récompenses
+  { const gfcS = p.app.metadataCache.getFileCache, cmd = p.cmds.find((c) => c.id === "start-story");
+    const fmOfNote = (src) => { const m = {}; for (const l of src.split("---")[1].trim().split("\n")) { const i = l.indexOf(":"); try { m[l.slice(0, i)] = JSON.parse(l.slice(i + 1)); } catch (e) { /* ligne non JSON */ } } return m; };
+    ok(!!cmd, "mode histoire : commande « Start the story » enregistrée");
+    const before = [...files.keys()]; await cmd.callback();
+    const made = [...files.keys()].filter((k) => !before.includes(k));
+    ok(made.length === 1 && /^[^/]+\/[^/]+\.md$/.test(made[0]), "mode histoire : la commande crée un Relto dans son propre dossier (" + made[0] + ")");
+    const sf = files.get(made[0]), sfm = fmOfNote(sf.content), dir = made[0].replace(/\/[^/]+$/, "");
+    ok(sfm.relto_mode === "story" && sfm.age_type === "personal_hub" && Number(sfm.seed) > 0, "mode histoire : marqueur relto_mode, refuge, graine propre");
+    p.app.metadataCache.getFileCache = (ff) => (ff.path === sf.path ? { frontmatter: sfm } : gfcS(ff));
+    const age = (name, lns, where) => { const path = (where ? where + "/" : "") + name + ".md", f = new TFile(path, "```age\n" + lns.join("\n") + "\n```\n"); files.set(path, f); return f; };
+    const inside = age("Premier", ["single_sun", "steady_cycle", "water", "lava"], dir), outside = age("Dehors", ["single_sun", "steady_cycle", "water", "sand"], "");
+    p.index.invalidate();
+    const show = async (src) => { const el = document.createElement("div"); await p.procs.relto("", el, { sourcePath: src, addChild() {} }); return el; };
+    const row = (e, label) => [...e.querySelectorAll(".age-relto__page")].find((r) => r.textContent.includes(label));
+    const shelf = (e) => [...e.querySelectorAll(".age-relto__pillname")].map((x) => x.textContent);
+    let el = await show(sf.path);
+    ok(row(el, "Chimney fire") && /is-locked/.test(row(el, "Chimney fire").className), "mode histoire : la page du premier chapitre est verrouillée au départ");
+    ok(shelf(el).join() === "Premier", "mode histoire : l'étagère ne montre que les Âges du dossier de l'histoire");
+    inside.content = "```age\nsingle_sun\nsteady_cycle\nwater\nsand\nfern\n```\n"; inside.stat.mtime++; p.index.invalidate(); notices.length = 0;
+    el = await show(sf.path);
+    ok(notices.some((n) => /Chapter complete|Chapitre réussi/.test(n)), "mode histoire : un monde stable avec ciel, eau et vivant réussit le chapitre (notice)");
+    ok(row(el, "Chimney fire") && /is-available/.test(row(el, "Chimney fire").className), "mode histoire : la page du chapitre devient disponible");
+    ok(Object.values(p.ext.story || {}).some((s) => s.done.includes("rest")), "mode histoire : l'avancement est gardé par Relto");
+    const sb = await show("x.md"), sbn = shelf(sb);
+    ok(sbn.includes("Dehors") && !sbn.includes("Premier"), "mode histoire : sans précision, le Relto du bac à sable, qui ne voit pas les Âges de l'histoire");
+    ok(!row(sb, "Chimney fire") && !row(sb, "Lanterns"), "mode histoire : les pages-récompenses n'existent pas dans le bac à sable");
+    const n0 = files.size; notices.length = 0; await cmd.callback();
+    ok(files.size === n0 && notices.some((n) => /already exists|existe déjà/.test(n)), "mode histoire : relancer la commande rouvre le Relto histoire sans en créer un autre");
+    p.app.metadataCache.getFileCache = gfcS; for (const f of [sf, inside, outside]) files.delete(f.path); delete p.ext.story; p.index.invalidate(); }
   { const rt = document.createElement("div"); await p.procs.relto("", rt, { sourcePath: "x.md", addChild() {} });
     const root = rt.querySelector(".age-relto"), tb = [...rt.querySelectorAll(".age-relto__tab:not(.age-relto__tab--expand):not(.age-relto__tab--full)")];
     ok(tb.length === 3 && root.getAttribute("data-tab") === "view", "Relto en onglets : Vue / Pages / Réglages, Vue d'abord");

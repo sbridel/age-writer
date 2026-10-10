@@ -161,6 +161,7 @@ function parseRelto(fm = {}) {
   return {
     name: fm.age_name || "Relto",
     seed,
+    mode: fm.relto_mode === "story" ? "story" : "sandbox", // un Relto histoire a son dossier, ses Âges et ses pages (src/story.js)
     stability: clamp(Number(fm.stability ?? 100), 0, 100),
     terrain: pick(env.base_terrain, TERRAINS, "volcanic_plateau"),
     surrounding: pick(env.surrounding, SURROUNDINGS, "cloud_sea"),
@@ -252,6 +253,7 @@ function checkUnlock(page, ages, active, relto) {
   const u = page.unlock;
   if (!u) return { ok: true, reason: "" };
   if (u.zero && !(relto && relto.zeroFound)) return { ok: false, reason: "needs the Great Zero (find it with the telescope)" };
+  if (u.story && !(relto && Array.isArray(relto.storyDone) && relto.storyDone.includes(u.story))) return { ok: false, reason: `needs the chapter “${u.storyTitle || u.story}”` }; // une récompense de chapitre (Relto histoire)
   if (u.page && active && !active.has(u.page)) { const want = PAGE_PRESETS[u.page]; return { ok: false, reason: `needs the page “${want ? want.label : u.page}”` }; } // une page qui en demande une autre (l'observatoire et le mont)
   if (u.age) {
     const want = String(u.age).replace(/^.*\//, "").replace(/\.md$/i, "").toLowerCase(); // [[Ages/Nom]] ou [[Nom]]
