@@ -20,6 +20,7 @@ const CHAPTERS = [
   { id: "mend", page: "page_lanterns", title: { en: "Mending without breaking", fr: "Corriger sans casser" } },
   { id: "weather", page: "page_fireflies", title: { en: "A day that changes", fr: "Un jour qui change" } },
   { id: "laws", page: "page_aurora", title: { en: "The laws of a world", fr: "Les lois du monde" } },
+  { id: "alter", page: "page_mist", title: { en: "Changing what is written", fr: "Modifier ce qui est écrit" } },
 ];
 
 /** La page finale (pour l'instant : un encrier posé sur la table). Le nom reste neutre. */
@@ -96,6 +97,12 @@ function check(chapter, ctx) {
     if (!stable.length) return { ok: false, why: "stable" };
     return stable.some((a) => a.physics >= 2) ? { ok: true, why: "" } : { ok: false, why: "physics" };
   }
+  if (chapter.id === "alter") {
+    // « modifier ce qui est écrit » : la note du chapitre a été modifiée après séchage de l'encre (Loi du Changement), et le monde tient encore
+    const mine = ages.find((a) => a.path === ((ctx && ctx.notes) || {}).alter);
+    if (!mine || !(mine.altered >= 1)) return { ok: false, why: "dry" };
+    return mine.stability >= STABLE_AT ? { ok: true, why: "" } : { ok: false, why: "stable" };
+  }
   return { ok: false, why: "unknown" };
 }
 
@@ -107,7 +114,7 @@ function evaluate(store, key, ctx) {
   const st = get(store, key), newly = [];
   for (const c of CHAPTERS) {
     if (st.done.includes(c.id)) continue;
-    if (!check(c, { ...ctx, seen: st.seen }).ok) break;
+    if (!check(c, { ...ctx, seen: st.seen, notes: st.notes }).ok) break;
     st.done.push(c.id); newly.push(c);
   }
   return newly;
@@ -123,6 +130,7 @@ const nextChapter = (done) => CHAPTERS.find((c) => !(done || []).includes(c.id))
 const WORLDS = {
   rest: { lines: ["water"] },
   mend: { lines: ["single_sun", "steady_cycle", "water", "lava"], fixed: ["single_sun", "steady_cycle", "water"] },
+  alter: { lines: ["single_sun", "steady_cycle", "water", "sand", "fern"], stable: true },
   laws: { lines: ["single_sun", "steady_cycle", "water", "salt"], stable: true },
   weather: { lines: ["single_sun", "steady_cycle", "water", "rain"], stable: true }, // le monde de départ doit tenir : seule la météo reste à écrire
 };
@@ -159,6 +167,10 @@ const LETTERS = {
   laws: {
     en: ["A world is also a weight and an age.", "Look at what the book answers under your block: water and salt, set side by side, already answer each other. Now give this world its laws. Under the pages, write two values, one per line, with a colon: how heavy the world is, and how old.", "Add `mass: 0.8` and `age: 3.5` to the block, and keep the world stable."],
     fr: ["Un monde, c'est aussi un poids et un âge.", "Regarde ce que le livre répond sous ton bloc : l'eau et le sel, posés côte à côte, se répondent déjà. Donne maintenant ses lois à ce monde. Sous les pages, écris deux valeurs, une par ligne, avec deux-points : le poids du monde, et son âge.", "Ajoute `mass: 0.8` et `age: 3.5` au bloc, et garde le monde stable."],
+  },
+  alter: {
+    en: ["Ink needs time to dry.", "Until it has, you may change a book as you like. Afterwards, every change is paid for: a world is not rewritten, it is bound to. Wait for the ink of this book to dry (a quarter of an hour, unless your settings say otherwise), then change one thing in it, and see that it holds.", "Once the ink is dry, add or remove a single page, and keep the world stable."],
+    fr: ["L'encre a besoin de temps pour sécher.", "Tant qu'elle n'a pas séché, tu peux changer un livre à ta guise. Ensuite, chaque changement se paie : on ne réécrit pas un monde, on s'y lie. Attends que l'encre de ce livre soit sèche (un quart d'heure, sauf réglage contraire), puis change une seule chose, et vois qu'il tient.", "Une fois l'encre sèche, ajoute ou retire une seule page, et garde le monde stable."],
   },
   weather: {
     en: ["A world that never changes is a painting. Let us make it a day.", "Here the rain falls without end. Teach it manners: let it fall only sometimes, and only at dawn. A line can carry a frequency and a moment, after a colon.", "Rewrite the rain line as `rain: sometimes, dawn`, and keep the world stable."],

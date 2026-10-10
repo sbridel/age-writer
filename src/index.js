@@ -25,7 +25,7 @@ class AgeIndex {
         } catch (e) { console.warn("[Age Writer ext] index " + f.path, e); } // un Âge illisible ne vide pas l'étagère
         this.cache.set(f.path, hit);
       }
-      if (hit.info) out.push(hit.info);
+      if (hit.info) { hit.info.altered = this.p.law && this.p.law.get(f.basename) ? (this.p.law.get(f.basename).log || []).length : 0; out.push(hit.info); } // les modifications faites après séchage (Loi du Changement)
     }
     return out;
   }

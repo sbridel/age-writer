@@ -75,7 +75,7 @@ ok(scene(["rest"]).pages.find((p) => p.id === mendPage.id).state === "locked" &&
 // ---- notes de chapitre
 const an = (text, nm) => analyseAgeBase(text, { seed: nm });
 const mend = ST.chapterById("mend"), restC = ST.chapterById("rest");
-ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]).id === "weather" && ST.nextChapter(["rest", "mend", "weather"]).id === "laws" && ST.nextChapter(["rest", "mend", "weather", "laws"]) === null, "nextChapter : dans l'ordre, null à la fin");
+ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]).id === "weather" && ST.nextChapter(["rest", "mend", "weather"]).id === "laws" && ST.nextChapter(["rest", "mend", "weather", "laws"]).id === "alter" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter"]) === null, "nextChapter : dans l'ordre, null à la fin");
 ok(Object.keys(ST.get({}, "k").notes).length === 0, "get : normalise les notes de chapitre");
 let fair = 0, same = 0;
 for (let i = 0; i < 300; i++) {
@@ -108,6 +108,15 @@ ok(ST.check(lc, ctx([{ ...age("L", ll), physics: 2, stability: 50 }])).why === "
 let lfair = 0; for (let i = 0; i < 200; i++) { const nm = ST.chapterName(lc, `Les lois du monde · ${1000 + i * 7919}`, an); if (an(ll.join("\n"), nm).stability >= 80) lfair++; }
 ok(lfair === 200, "laws : le monde de départ tient avec de la marge (" + lfair + "/200)");
 ok(an(ll.join("\n"), "x").resolved.matter.reactions.length >= 1 && Object.keys(require("../src/physics").parsePhysics("mass: 0.8\nage: 3.5").params).length === 2 && /mass: 0\.8/.test(ST.chapterNote(lc, "en", "N")), "laws : une réaction à voir, et les deux lignes de la lettre sont lues par le moteur");
+
+// ---- chapitre 5 : modifier ce qui est écrit (Loi du Changement)
+const ac = ST.chapterById("alter"), al = ST.WORLDS.alter.lines, me = { alter: "Dossier/Note.md" };
+const aa = (altered, st) => ({ ...age("Note", al, "Dossier/Note.md"), altered, ...(st != null ? { stability: st } : {}) });
+ok(ST.check(ac, { ...ctx([aa(0)]), notes: me }).why === "dry" && ST.check(ac, { ...ctx([aa(1)]), notes: me }).ok, "alter : pas de modification après séchage, pas de réussite ; une, oui");
+ok(ST.check(ac, { ...ctx([aa(1, 50)]), notes: me }).why === "stable", "alter : modifié mais le monde ne tient plus");
+ok(ST.check(ac, { ...ctx([{ ...aa(3), path: "Autre/Age.md" }]), notes: me }).why === "dry" && ST.check(ac, ctx([aa(1)])).why === "dry", "alter : seule la note du chapitre compte");
+let afair = 0; for (let i = 0; i < 200; i++) { const nm = ST.chapterName(ac, `Modifier ce qui est écrit · ${1000 + i * 7919}`, an); if (an(al.join("\n"), nm).stability >= 80) afair++; }
+ok(afair === 200, "alter : le monde de départ tient avec de la marge (" + afair + "/200)");
 
 // ---- la page finale
 const endP = ST.rewardPages().find((p) => p.id === ST.ENDGAME.id);

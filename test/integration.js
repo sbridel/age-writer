@@ -363,8 +363,17 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         files.get(c4[0]).content = files.get(c4[0]).content.replace("\n```\n", "\nmass: 0.8\nage: 3.5\n```\n"); files.get(c4[0]).stat.mtime++; p.index.invalidate(); notices.length = 0;
         el = await show(sf.path);
         ok(row(el, "Aurora") && /is-available/.test(row(el, "Aurora").className), "chapitre 4 réussi : la page de l'aurore est disponible");
+        ok(row(el, "Inkwell") && /is-locked/.test(row(el, "Inkwell").className), "la page finale reste fermée tant qu'un chapitre manque (5e)");
+        const b4 = [...files.keys()]; notices.length = 0; await nx.callback();
+        const c5 = [...files.keys()].filter((k) => !b4.includes(k)), f5 = files.get(c5[0]);
+        ok(c5.length === 1 && /Modifier ce qui est écrit|Changing what is written/.test(c5[0]), "chapitre 5 : la note de la Loi du Changement est créée");
+        p.ext.law = true; await p.observeFile(f5); const tN = Date.now(); p.law.now = () => tN + 40 * 60000; // l'encre a séché
+        el = await show(sf.path); ok(row(el, "Mist") && /is-locked/.test(row(el, "Mist").className), "chapitre 5 : sans modification, la page reste fermée");
+        f5.content = f5.content.replace("\nfern\n", "\nfern\nmoss\n"); f5.stat.mtime++; await p.observeFile(f5); p.index.invalidate();
+        el = await show(sf.path);
+        ok(row(el, "Mist") && /is-available/.test(row(el, "Mist").className), "chapitre 5 réussi : une modification après séchage, le monde tient (page de la brume)");
         ok(row(el, "Inkwell") && /is-available/.test(row(el, "Inkwell").className), "fin de l'histoire : la page finale (l'encrier) est disponible");
-        notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); files.delete(c3[0]); files.delete(c4[0]); }
+        notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); p.law.now = () => Date.now(); files.delete(c3[0]); files.delete(c4[0]); files.delete(c5[0]); }
       files.delete(c2[0]); }
     const sb = await show("x.md"), sbn = shelf(sb);
     ok(sbn.includes("Dehors") && !sbn.includes("Premier"), "mode histoire : sans précision, le Relto du bac à sable, qui ne voit pas les Âges de l'histoire");
