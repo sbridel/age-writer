@@ -304,3 +304,14 @@ unlock:                            # facultatif
 
 - **Les hauteurs sur la carte des étoiles** (`src/relto-starmap.js`, `fit3` dans `src/starmap.js`) : le plan du Great Zero est vu de biais, comme une table ; chaque étoile, étoile morte et le Relto pend à un fil à plomb depuis son pied sur le plan, plein au-dessus, pointillé dessous. Les hauteurs ont leur propre échelle, gravée dans un coin (exagération déclarée, à la manière des coupes de cartographe) ; l'infobulle de chaque étoile dit sa hauteur en mots.
 - Infobulles du télescope : plus de mention du KI (la convention de signe reste expliquée) ; celle de la plaque *Great Zero* nomme sa ligne de distance.
+
+## 1.23.0 — un Relto fini (11 oct. 2026)
+
+- **Les mondes lointains** (`src/starsystem.js`) : une étoile sur six est au-delà d'un rahnfee entier, son pouls arrive un battement plus tard ; un interrupteur à levier (0 / 1) à côté du retard ; une fois par gorahn le Great Zero frappe plus fort (coup doré du balancier). Facile : les notes le disent, un mauvais battement ne situe rien ; Guilde : l'étoile est gravée un rahnfee de travers et l'Imageur ne tient pas sa planète.
+- **L'encre qui sèche** : fraîche, sombre et luisante, puis mate et brune en 15 minutes (livre, onglet *Texte & glyphes*).
+- **`grass`**, et **`meadow`** ← `grass` + `flowers` (réaction ; `meadow` ne s'écrit pas).
+- **Les cristaux de l'Imageur refaits** : un clic pose, un clic reprend ; un ensemble, l'ordre ne compte plus ; pages écrites complétées par les pages tirées, jusqu'à quatre ; teinte, forme et glyphe. Guilde : les quatre s'allument ensemble seulement s'ils sont tous justes ; une note par cristal, l'accord des quatre posé ou qui bat ; ♪ dans la note de l'arpenteur ; glyphes de l'étoile tenue en transparence dans le livre vierge.
+- **Le Relto** : roue des vues (boussole) + bouton île + « vous êtes ici » ; passages par des objets (longue-vue, lampe de la maison, petit Imageur) ; plein écran depuis la note ; onglet Pages regroupé (sons réglés une fois chacun, pastilles de livres) ; réglages compacts ; `pages: hide` retire l'onglet ; fenêtre générative par défaut ; graine propre pour chaque nouveau Relto ; panneau de l'observatoire réordonné (plaque, molettes, filet, retard).
+- **Renommer un Âge garde son monde** (`age_seed`) ; commande pour rendre son monde à un Âge renommé avant.
+- **Carte des étoiles** : noms posés en dernier avec halo ; plus d'étoiles ni de noms d'Âges disparus ; commande *Clean the star chart*.
+- **Correctifs** : périscope (fissure, tornade, arc-en-ciel, astres morts, ruines, structure : de face seulement), couronne du soleil noir derrière les crêtes, grotte redessinée, nom D'ni sous les icônes en panneau étroit.
