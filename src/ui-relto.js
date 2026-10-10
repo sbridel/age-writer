@@ -210,7 +210,9 @@ async function renderRelto(plugin, source, el, ctx) {
   const pagesEl = panePages.createDiv({ cls: "age-relto__pages" });
   const booksEl = panePages.createDiv({ cls: "age-relto__books" });
   if (tabBar) {
-    const defs = [["view", "tab.view", "eye"], ["pages", "tab.pages", "file-text"], ["settings", "tab.settings", "settings"]], btns = {};
+    // `pages: hide` : un Relto « fini » sans onglet Pages (les pages se gèrent alors dans le livre des pages, sur la table de la cabane)
+    const noPages = !!opt.pages && /^(hide|hidden|off|no|non)$/i.test(opt.pages);
+    const defs = [["view", "tab.view", "eye"], ...(noPages ? [] : [["pages", "tab.pages", "file-text"]]), ["settings", "tab.settings", "settings"]], btns = {};
     const pick = (k) => { root.setAttr("data-tab", k); try { if (k !== "view") sound.roomStop(); else roomAudio(renderer.view); } catch (e) { /* ignore */ } ui0.reltoTab = k; for (const [id, b] of Object.entries(btns)) b.toggleClass("is-active", id === k); };
     for (const [k, key, ic] of defs) {
       const b = tabBar.createEl("button", { cls: "age-relto__tab" }); btns[k] = b;

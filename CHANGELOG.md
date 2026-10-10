@@ -10,12 +10,15 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **`grass`**: green land that the wind combs in long waves across the linking window; a grassy shore by water, sometimes tall grass in the foreground. Written with `flowers`, it grows into a **meadow** (`meadow` ← `grass` + `flowers`): taller grass to the horizon, with flowers moving through it.
 
 ### Changed
+- **The cave fissure** is now a rocky mound with a dark, jagged mouth (it used to look like a hut); its crevasse glows inside the mouth and no longer spills out of it.
+- `pages: hide` in the `relto` block now removes the Pages tab, for a finished Relto (attach and detach pages in the book of pages, in the cabin); without tabs it still collapses the list.
 - A new Relto gets a seed of its own: its own island and its own Great Zero to find (until now every new Relto started with the same seed, so the same Zero). Existing Reltos are unchanged.
 - The star chart writes its names last, with a halo of paper so lines crossing them do not hide them; when a star is crowded, its name sits a little further away, joined to it by a fine line.
 - **The wheel of views:** the row of view icons above the Relto becomes a single button (showing the current view); it opens a brass wheel over the picture with every available view, its name at the hub on hover.
 - **A compact Settings tab:** the sky time on one line, with the hour it shows and ↺; the sound on one line, with a vertical volume fader.
 
 ### Fixed
+- The Imager's periscope no longer shows the Age's fissure in every direction: it is on one side only, the one seen from the front.
 - In a narrow panel, the Relto's D'ni name no longer slides under the view icons (it goes on its own line above).
 
 ## 1.22.0 — Plumb lines on the star chart (2026-10-10)

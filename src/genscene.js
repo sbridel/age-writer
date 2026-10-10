@@ -776,9 +776,22 @@ function doomFx(g, m, p, sn) {
 function fissure(g, m, t) {
   const { S, W, H, hz, fis } = m;
   if (S.fissure === "cave") {
-    const x = fis.x, hw = H * 0.17, h = H * 0.22; g.fillStyle = "#040406"; g.strokeStyle = "#2c2a36"; g.lineWidth = 1;
-    g.beginPath(); g.moveTo(x - hw, hz + 4); g.lineTo(x - hw, hz - h * 0.55); g.quadraticCurveTo(x, hz - h * 1.25, x + hw, hz - h * 0.55); g.lineTo(x + hw, hz + 4); g.closePath(); g.fill(); g.stroke();
-    crevasse(g, { x, y0: hz - h * 0.85, y1: hz + 2, w: hw * 0.45, jit: fis.pts, t, seed: 1 + ((S.seed >>> 0) % 89), shape: "lens", open: 1 }); // dans la grotte, toujours une crevasse (et jamais une menace)
+    // une butte rocheuse irrégulière (des blocs, des strates), une bouche de grotte sombre et déchiquetée ; la crevasse luit au fond, sans jamais déborder de la bouche
+    const x = fis.x, hw = H * 0.22, h = H * 0.2, J = fis.pts, rock = mixc(m.pal.rock, [150, 140, 128], 0.22), N = 16, top = [];
+    for (let i = 0; i <= N; i++) { const u = i / N, bump = Math.pow(Math.sin(Math.PI * u), 0.6), n1 = J[i % J.length], n2 = J[(i * 3 + 1) % J.length]; top.push([x - hw * 1.4 + u * hw * 2.8 + n1 * hw * 0.08, hz - h * bump * (0.75 + 0.35 * n2) - (i % 3 === 1 ? h * 0.12 : 0)]); }
+    g.fillStyle = css(rock); g.strokeStyle = css(mixc(rock, [0, 0, 0], 0.45)); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(x - hw * 1.45, hz + 4); top.forEach(([px, py]) => g.lineTo(px, py)); g.lineTo(x + hw * 1.45, hz + 4); g.closePath(); g.fill(); g.stroke();
+    g.save(); g.clip(); g.strokeStyle = css(mixc(rock, [0, 0, 0], 0.3), 0.6); g.lineWidth = 0.8; // des strates et des fentes dans la roche
+    for (let k = 1; k <= 3; k++) { const y = hz - h * 0.22 * k; g.beginPath(); g.moveTo(x - hw * 1.4, y + J[k] * 4); g.lineTo(x - hw * 0.2, y - 3 + J[k + 1] * 3); g.lineTo(x + hw * 1.4, y + 2 + J[k + 2] * 4); g.stroke(); }
+    g.fillStyle = css(mixc(rock, [255, 245, 225], 0.12), 0.5); g.beginPath(); g.moveTo(x - hw * 1.2, hz - h * 0.2); top.slice(2, 8).forEach(([px, py]) => g.lineTo(px, py + 2)); g.lineTo(x - hw * 0.2, hz - h * 0.4); g.closePath(); g.fill(); // la lumière sur le flanc
+    g.restore();
+    const mw = hw * 0.42, mh = h * 0.6, mouth = [];
+    for (let i = 0; i <= 12; i++) { const a = Math.PI + (i / 12) * Math.PI, rr = 1 + J[i % J.length] * 0.25; mouth.push([x + Math.cos(a) * mw * rr, hz + 3 + Math.sin(a) * mh * rr]); }
+    g.beginPath(); mouth.forEach(([px, py], i) => (i ? g.lineTo(px, py) : g.moveTo(px, py))); g.closePath();
+    g.fillStyle = "#020203"; g.fill(); g.strokeStyle = css(mixc(rock, [0, 0, 0], 0.65)); g.lineWidth = 2; g.stroke(); // la bouche, plus sombre que tout, et son rebord
+    g.save(); g.clip();
+    crevasse(g, { x, y0: hz - mh * 0.8, y1: hz + 2, w: mw * 0.5, jit: J, t, seed: 1 + ((S.seed >>> 0) % 89), shape: "lens", open: 1 }); // dans la grotte, toujours une crevasse (et jamais une menace)
+    g.restore();
     return;
   }
   const sub = S.fissure === "submarine", y0 = sub ? hz + (H - hz) * 0.3 : hz + 2;

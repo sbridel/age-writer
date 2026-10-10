@@ -16,7 +16,7 @@ function heading(m0, k) {
   k = ((k % 4) + 4) % 4; if (!k || !m0) return m0;
   m0.headings = m0.headings || {};
   if (m0.headings[k]) return m0.headings[k];
-  const S = { ...m0.S, seed: (m0.S.seed ^ Math.imul(k, 0x9e3779b1)) >>> 0 };
+  const S = { ...m0.S, seed: (m0.S.seed ^ Math.imul(k, 0x9e3779b1)) >>> 0, fissure: null }; // la fissure est d'un seul côté : celui qu'on voit de face
   const m = G.build(S, m0.W, m0.H);
   m.pal = m0.pal; m.sunFrom = m0; m.noSun = true; m.ringsP = null; m.cometP = null; // le soleil, les anneaux, la comète : de face seulement
   m.night = { ...m.night, moons: [] };
