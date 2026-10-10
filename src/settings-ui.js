@@ -1,13 +1,14 @@
 "use strict";
 const obs = require("obsidian"), { Setting } = obs;
 const G = require("./guide");
+const INS = require("./instruments");
 
 const DEFAULTS = {
   lang: "auto", numerals: "auto", vaultFont: "", showNumbers: true, dniText: true,
   panelFx: "classic", windowStyle: "classic", windowSize: "large", dniClock: true, hoverFrame: false, imagerNotes: "words", fxStrength: 1, uncertainLinks: true, reltoMode: "zen", reltoVolume: 0.6,
   law: true, inkDry: 15, heal: 0.05, fissureDays: 7,
   leather: true, coverTab: true, panelTabs: true, bookOpen: "tab", soundBook: true, soundClasp: true, soundLink: true, soundRooms: true, soundImagerHum: true, imagerHumVol: 1, soundPage: true, reltoTabs: true, linkLeaves: true, coverStyle: "auto", bookStart: "cover",
-  mechanisms: "draw", solitude: "balanced", physics: "easy", physicsSeverity: 1,
+  mechanisms: "draw", solitude: "balanced", physics: "easy", physicsSeverity: 1, instrumentsMode: "easy",
   sound: true, volume: 0.35,
   journalFolder: "", reltoFolder: "Ages",
   state: { law: { ages: {} } },
@@ -16,6 +17,7 @@ const DEFAULTS = {
 const L = {
   en: {
     phy: "Physics of the Ages", phm: "Mode", phyd: "Easy: each Age gets a simplified physics (star, planet, core, air, water…) shown in the Details tab, with explanations; stability does not change. Strict: what does not hold costs stability. Off: nothing.", phs: "Physics severity (strict)", phsd: "Multiplies the cost of each tension in strict mode (1 = 10 / 20 / 35 points for light / medium / strong, at most 45 per axis).",
+    ins: "Instruments (telescope and Imager)", insm: "Way of the instruments", insd: "Easy: after each turn the telescope says whether the glow brightens or fades, the signal barely shimmers, the old line never shows and dead stars only blur the image a little. The Art of the Guild: no such words, a shimmering signal, the old line of Me'erta, false beats and bent light (count them against the pendulum).",
     h: "Extensions", sec: { book: ["Books & covers", "book-open", "Leather, covers, where and how a book opens."], snd: ["Sounds", "volume-2", "Book, clasp, linking, soundscapes."], win: ["Linking window", "app-window", "Window style, size, effects, tabs."], dni: ["D'ni & numbers", "languages", "Language, numerals, D'ni script and clock."], mech: ["Ages & mechanics", "settings-2", "Law of change, mechanisms, solitude."], dir: ["Folders", "folder", "Journal and hub folders."], eng: ["Drawing & library", "dices", "Open-slot drawing, drawn panel, auto properties, library folder, default image."], back: "Back", guide: "Guide", guided: "Quick guide and full reference: writing an Age, every line and block, the book, the Relto, sounds, settings.", open: "Guide", ref: "Reference", on: "On", off: "Off" }, lang: "Language of the extensions", num: "Numerals", numd: "Auto picks an installed font, then a local glyph file, then drawn numerals.",
     vf: "Numeral font (name)", vfd: "Family name of a font installed on your system, or a font file in the vault (.ttf/.otf). Not bundled: check its licence.",
     fd: "Fissure opening (days)", fdd: "An open-air or underwater fissure widens into a crevasse over this many days after the book is made. In an unstable Age it adds instability as it widens; in a stable one it does nothing. Cave fissures are always crevasses and never add instability. 0: always wide open.", hf: "Frame around clickable zones", hfd: "Off (default): only the label and the pointer show what you can click, for a more immersive Relto. On: a pale frame outlines the zone under the pointer.", inn: "Surveyor's notes (Imager)", innd: "What the Details tab tells about an Age's sky. Full: words and the three values. Words only: the sentence, no numbers. Off: nothing, you tune by ear and by eye.",
@@ -27,6 +29,7 @@ const L = {
   },
   fr: {
     phy: "Physique des Âges", phm: "Mode", phyd: "Facile : chaque Âge reçoit une physique simplifiée (étoile, planète, noyau, air, eau…) affichée dans l'onglet Détails, avec ses explications ; la stabilité ne change pas. Strict : ce qui ne tient pas coûte de la stabilité. Désactivée : rien.", phs: "Sévérité de la physique (strict)", phsd: "Multiplie le coût de chaque tension en mode strict (1 = 10 / 20 / 35 points pour léger / moyen / fort, au plus 45 par axe).",
+    ins: "Instruments (télescope et Imageur)", insm: "Manière des instruments", insd: "Facile : après chaque geste, le télescope dit si la lueur s'avive ou pâlit, le signal scintille à peine, la fausse ligne n'apparaît jamais et les étoiles mortes brouillent seulement un peu l'image. L'Art de la Guilde : pas de ces mots, un signal qui scintille, la ligne de Me'erta, les faux pouls et la lumière courbée (à compter contre le balancier).",
     h: "Extensions", sec: { book: ["Livres & couvertures", "book-open", "Cuir, couvertures, où et comment s'ouvre un livre."], snd: ["Sons", "volume-2", "Livre, fermoir, liaison, ambiances."], win: ["Fenêtre de liaison", "app-window", "Style, taille, effets et onglets de la fenêtre."], dni: ["D'ni & chiffres", "languages", "Langue, chiffres, écriture et horloge D'ni."], mech: ["Âges & mécanismes", "settings-2", "Loi du changement, mécanismes, solitude."], dir: ["Dossiers", "folder", "Dossiers des journaux et du refuge."], eng: ["Tirage & bibliothèque", "dices", "Tirage des cases ouvertes, fenêtre dessinée, propriétés auto, dossier de bibliothèque, image par défaut."], back: "Retour", guide: "Guide", guided: "Guide court et référence complète : écrire un Âge, toutes les lignes et tous les blocs, le livre, le Relto, les sons, les réglages.", open: "Guide", ref: "Référence", on: "Activé", off: "Désactivé" }, lang: "Langue des extensions", num: "Chiffres", numd: "Auto choisit une police installée, puis un fichier de glyphes local, puis des chiffres dessinés.",
     vf: "Police des chiffres (nom)", vfd: "Nom d'une famille installée sur le système, ou fichier de police dans le coffre (.ttf/.otf). Non fournie : vérifiez sa licence.",
     fd: "Ouverture des fissures (jours)", fdd: "Une fissure à l'air libre ou sous l'eau s'ouvre en crevasse en autant de jours après la création du livre. Dans un Âge instable elle ajoute de l'instabilité en s'ouvrant ; dans un Âge stable, rien. Les fissures de grotte sont toujours des crevasses et n'ajoutent jamais d'instabilité. 0 : toujours grande ouverte.", hf: "Cadre autour des zones cliquables", hfd: "Désactivé (par défaut) : seuls l'infobulle et le pointeur montrent ce qui est cliquable, pour un Relto plus immersif. Activé : un cadre pâle entoure la zone sous le pointeur.", inn: "Notes de l'arpenteur (Imageur)", innd: "Ce que l'onglet Détails dit du ciel d'un Âge. Complètes : la phrase et les trois valeurs. Mots seulement : la phrase, sans chiffres. Aucune : rien, on règle à l'oreille et à l'œil.",
@@ -136,10 +139,15 @@ function addExtSettings(plugin, el) {
   new Setting(cur).setName(l.phm).setDesc(l.phyd).addDropdown((d) => d.addOptions(plugin.lang() === "fr" ? { easy: "Facile", strict: "Strict", off: "Désactivée" } : { easy: "Easy", strict: "Strict", off: "Off" }).setValue(e.physics || "easy").onChange((v) => { e.physics = v; save(); reindex(); redraw(); }));
   new Setting(cur).setName(l.phs).setDesc(l.phsd).addSlider((s) => s.setLimits(0.5, 2, 0.1).setValue(e.physicsSeverity || 1).setDynamicTooltip().onChange((v) => { e.physicsSeverity = v; save(); if (e.physics === "strict") { reindex(); redraw(); } }));
 
+  sub(l.ins);
+  new Setting(cur).setName(l.insm).setDesc(l.insd).addDropdown((d) => d.addOptions(plugin.lang() === "fr" ? { easy: "Facile", guild: "L'Art de la Guilde" } : { easy: "Easy", guild: "The Art of the Guild" }).setValue(INS.modeOf(e)).onChange((v) => { e.instrumentsMode = v; save(); }));
+
   cur = section("dir");
   tx(l.jf, l.jfd, "journalFolder");
   tx(l.rf, "", "reltoFolder");
   if (engineEls.length) { cur = section("eng"); for (const c of engineEls) cur.appendChild(c); }
   root.createDiv({ cls: "age-set__footer", text: "Age Writer " + ((plugin.manifest && plugin.manifest.version) || "") });
 }
-module.exports = { addExtSettings, DEFAULTS };
+/** Les instruments demandent-ils l'Art de la Guilde ? (`ext.instrumentsMode === "guild"` ; voir src/instruments.js) */
+const isGuild = INS.isGuild;
+module.exports = { addExtSettings, DEFAULTS, isGuild };

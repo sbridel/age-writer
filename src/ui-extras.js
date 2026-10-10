@@ -11,6 +11,7 @@ const SS = require("./starsystem");
 const CAL = require("./calibration");
 const SKY = require("./sky");
 const TEL = require("./telescope");
+const INS = require("./instruments");
 
 const ageNumber = (name) => fnv(name) % 390625;                    // 25^4
 
@@ -158,7 +159,7 @@ function renderStarNote(plugin, sec, { src, analysis, path }) {
   const box = sec.createDiv({ cls: "age-det__sky age-det__star" });
   if (notes !== "off") {
     // ce que l'arpenteur perçoit (étape 3 : dévié par un trou noir, retard faussé par un faux pouls, boussole grossière sans nord magnétique)
-    const w = SS.words(C.sys.seen || C.sys.clue, lang, { fx: C.sys.fx, compass: C.compass });
+    const guild = INS.isGuild(plugin.ext), w = SS.words(SS.surveyed(C.sys, guild), lang, { fx: C.sys.fx, compass: C.compass, easy: !guild }); // mode facile : les étoiles mortes ne faussent pas les notes
     box.createEl("b", { text: t("sys.heading") + " " });
     box.createSpan({ cls: "age-det__skyline", text: w.line });
     if (w.pert) box.createDiv({ cls: "age-det__skyline age-det__pert", text: w.pert });

@@ -640,7 +640,7 @@ function imagerSfx(kind, volume = 0.3) {
 function telescopeSfx(kind, s = 0, volume = 0.3) {
   const k = Math.max(0, Math.min(1, Number(s) || 0));
   if (kind === "ping" && k < 0.15) return false; // le vide : rien qu'on entende
-  if (kind === "pulse" && k < 0.02) return false;
+  if ((kind === "pulse" || kind === "falsebeat") && k < 0.02) return false;
   return oneShot(1.6, (c, out, noise) => {
     const t = c.currentTime; out.gain.value = volume * 0.45;
     const tone = (t0, f, g, dur) => { const o = c.createOscillator(), e = c.createGain(); o.type = "sine"; o.frequency.value = f; e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + 0.02); e.gain.exponentialRampToValueAtTime(0.001, t0 + dur); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + dur + 0.05); };
@@ -651,6 +651,12 @@ function telescopeSfx(kind, s = 0, volume = 0.3) {
     else if (kind === "pulse") { // le pouls continu : loin, un souffle sourd et une note qui bat ; près, une note nette, brève et posée
       const f = 220 + 110 * k, g = 0.03 + 0.1 * k, dur = 0.18 + 0.3 * k; tone(t + 0.01, f, g, dur); tone(t + 0.01, f + (1 - k) * 6, g * (1 - 0.7 * k), dur);
       if (k < 0.6) { const n = noise(0.3), lp = c.createBiquadFilter(), e = c.createGain(); lp.type = "lowpass"; lp.frequency.value = 500; e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(0.05 * (1 - k), t + 0.06); e.gain.exponentialRampToValueAtTime(0.001, t + 0.28); n.connect(lp); lp.connect(e); e.connect(out); n.start(t); n.stop(t + 0.3); }
+    }
+    else if (kind === "metronome") { // le tic du balancier : bois et laiton, sec, sans hauteur ; on l'entend se séparer de la note du pouls
+      tick(t, 3400, 0.22); tick(t + 0.004, 900, 0.18);
+    }
+    else if (kind === "falsebeat") { // le faux pouls d'une étoile morte : un éclat bref, plus aigu et plus froid que la note du Zéro
+      tone(t + 0.005, 523 + 140 * k, 0.03 + 0.06 * k, 0.12); tick(t, 5200, 0.08 * k);
     }
     else if (kind === "found") { tone(t, 392, 0.25, 1.4); tone(t + 0.12, 587.3, 0.18, 1.3); tone(t + 0.24, 784, 0.1, 1.2); }
   });

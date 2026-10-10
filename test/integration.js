@@ -62,6 +62,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
   const p = new Plug(app, { dir: "plugins/age", version: "1.4.0" });
   await p.onload();
   ok(p.ext && p.ext.panelFx === "classic", "réglages par défaut fusionnés");
+  ok(p.ext.instrumentsMode === "easy", "instruments : mode facile par défaut");
   ok(["age-journal", "relto", "dni"].every((n) => p.procs[n]), "blocs relto / age-journal / dni enregistrés");
   ok(["open-relto", "create-relto-page", "create-exploration-journal", "save-age-cover", "stop-soundscape"].every((id) => p.cmds.some((c) => c.id === id)), "commandes enregistrées");
 

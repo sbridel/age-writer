@@ -90,7 +90,7 @@ ok(T.STEP.torahn.hub === 100 && T.STEP.torahn.rim === 2500 && T.STEP.elev.hub ==
   const ages = [{ name: "A", path: "A.md", verdict: "stable", stability: 90 }];
   const mk = (pages, extra = {}) => { const relto = M.parseRelto({ seed: 4242, structures: ["hut"], relto_pages_active: pages, ...extra }); return M.buildScene(relto, [...pages.filter((id) => id !== "page_telescope").map((id) => M.parsePage(M.pageFrontmatter(id, M.PAGE_PRESETS[id]), id + ".md")), ...M.builtinPages()], ages); };
   const store = {}, sounds = [];
-  const opts = () => ({ telescopeGet: (k) => store[k] || null, telescopeSet: (k, v) => { store[k] = JSON.parse(JSON.stringify(v)); }, onTelescopeSound: (k, s) => sounds.push([k, s]) });
+  const opts = () => ({ instrumentsMode: "guild", telescopeGet: (k) => store[k] || null, telescopeSet: (k, v) => { store[k] = JSON.parse(JSON.stringify(v)); }, onTelescopeSound: (k, s) => sounds.push([k, s]) });
   const r = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts());
   r.setScene(mk([])); ok(!r.available().telescope, "page détachée : pas de vue du télescope");
   r.setView("telescope"); ok((r.view || "island") === "island", "vue demandée sans la page : l'île");
@@ -163,7 +163,7 @@ ok(T.STEP.torahn.hub === 100 && T.STEP.torahn.rim === 2500 && T.STEP.elev.hub ==
   ok(Math.min(...nearP.map(([, v]) => v)) > Math.max(...farP.map(([, v]) => v)), "pouls : plus fort près que loin");
   // commande « oublier le Great Zero » : les vues ouvertes relisent l'état
   { let gen = 0; const st0 = { [T.keyOf(other.name, other.seed)]: { torahn: 100, elev: 0, found: true } };
-    const rg = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { telescopeGen: () => gen, telescopeGet: (k) => st0[k] || null });
+    const rg = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { instrumentsMode: "guild", telescopeGen: () => gen, telescopeGet: (k) => st0[k] || null });
     rg.setScene(other); rg.setView("telescope"); rg.draw(0); ok(rg.telescope.found, "Zéro relevé");
     delete st0[T.keyOf(other.name, other.seed)]; gen++; rg.draw(1); ok(!rg.telescope.found && rg.telescope.aim.torahn === 0, "oublié : la vue ouverte repart de zéro"); }
 }
