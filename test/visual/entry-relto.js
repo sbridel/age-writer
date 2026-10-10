@@ -19,7 +19,7 @@ function renderMany(host, ages) {
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "near", label: "TELESCOPE step 2 / an Age's book on the lectern, wheels near its clues" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", label: "TELESCOPE step 2 / the Age's star charted" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", hoverTip: /^The pulse comes/, label: "RAHNFEE / Delay wheel read in rahnfee, its words on hover" },
-    { h: 14, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", hoverTip: /^Torahn, elevation \(KI-style\); below/, label: "RAHNFEE / day: Star of the Age plate, distance in rahnfee" },
+    { h: 14, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", hoverTip: /^Torahn, elevation \(above the plane reads negative\); below/, label: "RAHNFEE / day: Star of the Age plate, distance in rahnfee" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "starmap", step3: "map", hoverFrac: true, label: "RAHNFEE / star chart tooltip, distance along the beam" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager", label: "IMAGER step 2 / sync micrometer, in sync: local time and KIPS" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager", lens: true, label: "IMAGER lens hint / off by a few notches" },
