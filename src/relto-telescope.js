@@ -145,9 +145,17 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   r.telescopeT = tm;
   // le pouls à l'oreille : une note douce à chaque prorahn, tant qu'on regarde dans l'oculaire (même scintillation, mêmes battements manqués que la lueur)
   { const b = beatOf(r); if (r.telescopePulse != null && b !== r.telescopePulse && r.opts.onTelescopeSound) { const p = T.pulseOf(sig.s, b); if (!p.skip) r.opts.onTelescopeSound("pulse", sig.s * p.amp); } r.telescopePulse = b; }
-  // le ciel du sommet (assombri : on regarde dans une lunette) et le parapet de pierre
-  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, mix("#04060d", sky.top, 0.35)); g.addColorStop(1, mix("#0a0c14", sky.bottom, 0.3)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  const q = rng(((sc.seed || 0) ^ 0x51a7) >>> 0); for (let i = 0; i < 70; i++) { const x = q() * W, y = q() * 220, a = (0.2 + 0.5 * q()) * (0.6 + 0.4 * (sky.night == null ? 1 : sky.night)); ctx.fillStyle = rgba(230, 236, 255, a); ctx.fillRect(x, y, 1, 1); }
+  // l'intérieur de l'observatoire : la coupole sombre et ses nervures, la fente ouverte sur le ciel, le grand tube, le sol de pierre
+  const dg = ctx.createRadialGradient(W / 2, 300, 40, W / 2, 300, 520); dg.addColorStop(0, c("#2b2621")); dg.addColorStop(1, c("#0d0b0a")); ctx.fillStyle = dg; ctx.fillRect(0, 0, W, H);
+  const SL = { x: 318, w: 52 }; // la fente de la coupole, entre l'oculaire et le panneau
+  ctx.save(); ctx.beginPath(); ctx.rect(SL.x, 0, SL.w, 286); ctx.clip();
+  const g = ctx.createLinearGradient(0, 0, 0, 286); g.addColorStop(0, mix("#04060d", sky.top, 0.35)); g.addColorStop(1, mix("#0a0c14", sky.bottom, 0.3)); ctx.fillStyle = g; ctx.fillRect(SL.x, 0, SL.w, 286);
+  const q = rng(((sc.seed || 0) ^ 0x51a7) >>> 0); for (let i = 0; i < 70; i++) { const x = SL.x + q() * SL.w, y = q() * 260, a = (0.2 + 0.5 * q()) * (0.6 + 0.4 * (sky.night == null ? 1 : sky.night)); ctx.fillStyle = rgba(230, 236, 255, a); ctx.fillRect(x, y, 1, 1); }
+  ctx.restore();
+  ctx.strokeStyle = c("#4a3a26"); ctx.lineWidth = 3; ctx.strokeRect(SL.x - 1.5, -2, SL.w + 3, 289); // les bords de la fente (les volets ouverts)
+  ctx.strokeStyle = "rgba(0,0,0,0.45)"; ctx.lineWidth = 1.4; // les nervures de la coupole
+  for (let k = 1; k <= 4; k++) { const y0 = 286 - k * 62; ctx.beginPath(); ctx.moveTo(0, y0 + 30); ctx.quadraticCurveTo(SL.x / 2, y0 - 4, SL.x - 2, y0); ctx.moveTo(SL.x + SL.w + 2, y0); ctx.quadraticCurveTo((SL.x + SL.w + W) / 2, y0 - 4, W, y0 + 30); ctx.stroke(); }
+  for (const x of [24, 150, 250, 420, 520, 620]) { ctx.beginPath(); const L = x < SL.x; ctx.moveTo(x, 286); ctx.quadraticCurveTo(x + (L ? 40 : -40), 110, L ? SL.x - 4 : SL.x + SL.w + 4, 0); ctx.stroke(); }
   const pg = ctx.createLinearGradient(0, 286, 0, H); pg.addColorStop(0, c("#3a3530")); pg.addColorStop(1, c("#1a1714")); ctx.fillStyle = pg; ctx.fillRect(0, 286, W, H - 286);
   ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.lineWidth = 1; for (let x = 0; x < W; x += 46) { ctx.beginPath(); ctx.moveTo(x + (x / 46 % 2) * 20, 286); ctx.lineTo(x + (x / 46 % 2) * 20, H); ctx.stroke(); } ctx.beginPath(); ctx.moveTo(0, 312); ctx.lineTo(W, 312); ctx.stroke();
   // le corps de l'instrument : un panneau de laiton sombre derrière les molettes
@@ -179,19 +187,29 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
 }
 
 /**
- * Sur l'île : la lunette sur son trépied, au sommet du mont (`lay.mount`). Un clic mène à sa vue. Une fois le Zéro trouvé,
- * une petite lueur bat au bout de la lunette, au rythme du prorahn.
+ * Sur l'île : un petit observatoire au sommet du mont (`lay.mount`) : un tambour de pierre, une coupole de cuivre vert-de-gris
+ * fendue, d'où dépasse le tube. Une fenêtre s'allume le soir. Un clic mène à sa vue. Une fois le Zéro trouvé, une petite lueur
+ * bat au bout du tube, au rythme du prorahn.
  */
 function drawOnIsland(r, ctx, sky, tm) {
-  const { x: mx, h } = r.lay.mount, amb = 0.4 + 0.6 * sky.ambient, c = (col) => mix("#05060c", col, amb), bx = mx - 6, by = GY - h * 0.985;
-  ctx.strokeStyle = c("#2a1d13"); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(bx, by - 7); ctx.lineTo(bx - 5, by + 1); ctx.moveTo(bx, by - 7); ctx.lineTo(bx + 5, by + 1); ctx.moveTo(bx, by - 7); ctx.lineTo(bx + 1, by + 1); ctx.stroke(); // le trépied
-  ctx.save(); ctx.translate(bx, by - 8); ctx.rotate(-0.55);
-  const g = ctx.createLinearGradient(0, -2.5, 0, 2.5); g.addColorStop(0, c("#e8c97a")); g.addColorStop(1, c("#7a5c28")); ctx.fillStyle = g;
-  ctx.fillRect(-7, -1.8, 18, 3.6); ctx.fillRect(10, -2.4, 4, 4.8); ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(-9, -1.2, 2.4, 2.4); // tube, pare-soleil, oculaire
-  const found = state(r).found;
-  if (found) { const beat = frac((now(r) - DT.REF) / PULSE_MS), a = 0.35 + 0.5 * Math.exp(-beat * 4) * (0.5 + 0.5 * (sky.night == null ? 0.5 : sky.night)); const gl = ctx.createRadialGradient(14, 0, 0, 14, 0, 7); gl.addColorStop(0, rgba(160, 235, 220, a)); gl.addColorStop(1, "rgba(160,235,220,0)"); ctx.fillStyle = gl; ctx.fillRect(7, -7, 14, 14); }
+  const { x: mx, h } = r.lay.mount, amb = 0.4 + 0.6 * sky.ambient, c = (col) => mix("#05060c", col, amb), bx = mx - 4, by = GY - h * 0.985 + 1;
+  const night = sky.night == null ? 0 : sky.night, found = state(r).found;
+  ctx.save(); ctx.translate(bx, by); ctx.scale(1.45, 1.45); ctx.translate(-bx, -by); // à l'échelle de la cabane
+  // le tambour de pierre
+  const sg = ctx.createLinearGradient(bx - 9, 0, bx + 9, 0); sg.addColorStop(0, c("#8d8578")); sg.addColorStop(1, c("#4f4a43")); ctx.fillStyle = sg; ctx.fillRect(bx - 9, by - 8, 18, 8);
+  ctx.strokeStyle = c("#3a352f"); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(bx - 9, by - 4); ctx.lineTo(bx + 9, by - 4); ctx.stroke();
+  ctx.fillStyle = c("#2a2018"); ctx.fillRect(bx - 1.6, by - 5, 3.2, 5); // la porte
+  if (night > 0.3) { ctx.fillStyle = rgba(255, 196, 120, 0.5 + 0.4 * night); ctx.fillRect(bx + 4, by - 6.5, 2, 2); } // une fenêtre éclairée le soir
+  // la coupole et sa fente
+  const dg = ctx.createLinearGradient(bx - 9, by - 18, bx + 9, by - 8); dg.addColorStop(0, c("#9fc3b0")); dg.addColorStop(1, c("#4d6f61")); ctx.fillStyle = dg;
+  ctx.beginPath(); ctx.moveTo(bx - 9.5, by - 8); ctx.arc(bx, by - 8, 9.5, Math.PI, 0); ctx.closePath(); ctx.fill();
+  ctx.save(); ctx.translate(bx, by - 8); ctx.rotate(0.35); ctx.fillStyle = c("#1a1714"); ctx.fillRect(-1.6, -9.6, 3.2, 9); ctx.restore();
+  // le tube qui sort de la fente
+  ctx.save(); ctx.translate(bx + 1, by - 12); ctx.rotate(-1.22); const g = ctx.createLinearGradient(0, -1.6, 0, 1.6); g.addColorStop(0, c("#e8c97a")); g.addColorStop(1, c("#7a5c28")); ctx.fillStyle = g; ctx.fillRect(0, -1.5, 10, 3);
+  if (found) { const beat = frac((now(r) - DT.REF) / PULSE_MS), a = 0.35 + 0.5 * Math.exp(-beat * 4) * (0.5 + 0.5 * (sky.night == null ? 0.5 : sky.night)); const gl = ctx.createRadialGradient(11, 0, 0, 11, 0, 6); gl.addColorStop(0, rgba(160, 235, 220, a)); gl.addColorStop(1, "rgba(160,235,220,0)"); ctx.fillStyle = gl; ctx.fillRect(5, -6, 12, 12); }
   ctx.restore();
-  const t = tOf(r); r.hot.push({ x: bx - 10, y: by - 20, w: 26, h: 24, tip: found ? t("tel.island.found") : t("tel.island"), go: "telescope" });
+  ctx.restore();
+  const t = tOf(r); r.hot.push({ x: bx - 16, y: by - 34, w: 32, h: 36, tip: found ? t("tel.island.found") : t("tel.island"), go: "telescope" });
   void tm;
 }
 

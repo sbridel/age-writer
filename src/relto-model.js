@@ -121,8 +121,8 @@ const PAGE_PRESETS = {
   page_silver: { label: "Silver", effects: { canvas_additions: [{ type: "silver", density: 0.6 }], ambiance_audio: "deep_hum" } },
   page_koi: { label: "Koi pond", effects: { canvas_additions: [{ type: "koi", density: 0.5, rare: "ogon" }], ambiance_audio: "river" } },
   page_imager: { label: "Imager", effects: { canvas_additions: [{ type: "imager" }], ambiance_audio: "deep_hum" } },
-  // le télescope, au sommet du mont : il se débloque avec le premier Âge écrit (src/relto-telescope.js)
-  page_telescope: { label: "Telescope", effects: { canvas_additions: [{ type: "telescope" }], ambiance_audio: "mountain_air" }, unlock: { agesCount: 1 } },
+  // le télescope (un petit observatoire), au sommet du mont : il se débloque avec le premier Âge écrit (src/relto-telescope.js)
+  page_telescope: { label: "Telescope", effects: { canvas_additions: [{ type: "telescope" }], ambiance_audio: "mountain_air" }, unlock: { agesCount: 1, page: "page_mountain" } }, // l'observatoire est au sommet : il lui faut le mont
   page_cat_toys: { label: "Cat toys", effects: { canvas_additions: [{ type: "cattoys", density: 0.6 }], ambiance_audio: "hearth" } },
   page_pond_decor: { label: "Pond decor", effects: { canvas_additions: [{ type: "ponddecor", density: 0.6 }], ambiance_audio: "river" } },
   page_cat: { label: "Cat", effects: { canvas_additions: [{ type: "cat", color: "orange", name: "Mochi" }], ambiance_audio: "hearth" } },
@@ -191,6 +191,7 @@ function parsePage(fm = {}, path = "") {
       age: un.age ? stripLink(un.age) : null,
       minStability: Number(un.min_stability ?? 40),
       agesCount: un.ages_count != null ? Number(un.ages_count) : null,
+      page: un.page ? String(un.page) : null,
     } : null,
   };
 }
@@ -239,13 +240,14 @@ function libraryPage(lp) {
  */
 const BUILTIN_PAGES = ["page_telescope"];
 function builtinPages() {
-  return BUILTIN_PAGES.map((id) => { const p = PAGE_PRESETS[id]; return { ...libraryPage({ id, label: p.label, effects: p.effects, unlock: null }), library: false, builtin: true, unlock: { age: null, minStability: 40, agesCount: p.unlock.agesCount } }; });
+  return BUILTIN_PAGES.map((id) => { const p = PAGE_PRESETS[id]; return { ...libraryPage({ id, label: p.label, effects: p.effects, unlock: null }), library: false, builtin: true, unlock: { age: null, minStability: 40, agesCount: p.unlock.agesCount, page: p.unlock.page || null } }; });
 }
 
 /** @returns {{ok:boolean, reason:string}} */
-function checkUnlock(page, ages) {
+function checkUnlock(page, ages, active) {
   const u = page.unlock;
   if (!u) return { ok: true, reason: "" };
+  if (u.page && active && !active.has(u.page)) { const want = PAGE_PRESETS[u.page]; return { ok: false, reason: `needs the page “${want ? want.label : u.page}”` }; } // une page qui en demande une autre (l'observatoire et le mont)
   if (u.age) {
     const want = String(u.age).replace(/^.*\//, "").replace(/\.md$/i, "").toLowerCase(); // [[Ages/Nom]] ou [[Nom]]
     const a = ages.find((x) => String(x.name).toLowerCase() === want);
@@ -263,8 +265,9 @@ function checkUnlock(page, ages) {
  */
 function buildScene(relto, pages, ages, shown) {
   const active = new Set(relto.pagesActive);
+  const activeOk = new Set(pages.filter((p) => active.has(p.id) && p.enabled !== false).map((p) => p.id)); // pages attachées et actives (une page exigée doit l'être)
   const states = pages.map((p) => {
-    const lock = checkUnlock(p, ages);
+    const lock = checkUnlock(p, ages, activeOk);
     let state;
     if (active.has(p.id)) state = !p.enabled ? "disabled" : lock.ok ? "active" : "locked";
     else state = lock.ok ? "available" : "locked";
@@ -327,7 +330,7 @@ function pageFrontmatter(id, preset) {
     if (a.type === "koi") { fm.koi_rare = a.rare || "ogon"; fm.koi_name = a.name || ""; }
   }
   const u = preset.unlock;
-  if (u && (u.age || u.agesCount != null)) fm.unlock = { ...(u.age ? { age: `[[${u.age}]]`, min_stability: u.minStability } : {}), ...(u.agesCount != null ? { ages_count: u.agesCount } : {}) };
+  if (u && (u.age || u.agesCount != null)) fm.unlock = { ...(u.age ? { age: `[[${u.age}]]`, min_stability: u.minStability } : {}), ...(u.agesCount != null ? { ages_count: u.agesCount } : {}), ...(u.page ? { page: u.page } : {}) };
   return fm;
 }
 

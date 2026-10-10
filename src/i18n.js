@@ -111,7 +111,7 @@ const D = {
     "tel.forgot": "The Great Zero is lost to the telescope: the plate is blank, the D'ni hour falls silent. Aim again.", "tel.forgot.none": "No Great Zero was charted: the telescope had nothing to forget.",
     "tel.charted": "The Great Zero is charted: click the plate to set the wheels on it.",
     "tel.plate.title": "Great Zero", "tel.plate.blank": "A blank plate: it waits for the Zero", "tel.plate.found": "Torahn and elevation of the Great Zero, KI-style (above the plane reads negative) — click to set the wheels on it",
-    "tel.back": "Climb down — back to the island", "tel.island": "Telescope — click to look through it", "tel.island.found": "Telescope — the Great Zero is charted",
+    "tel.back": "Leave the dome — back to the island", "tel.island": "Observatory — click to go in", "tel.island.found": "Observatory — the Great Zero is charted",
   },
   fr: {
     "det.stability": "Stabilité",
@@ -223,7 +223,7 @@ const D = {
     "tel.forgot": "Le télescope a perdu le Great Zero : la plaque est vierge, l'heure D'ni se tait. À toi de viser de nouveau.", "tel.forgot.none": "Aucun Great Zero n'était relevé : le télescope n'avait rien à oublier.",
     "tel.charted": "Le Great Zero est relevé : un clic sur la plaque y ramène les molettes.",
     "tel.plate.title": "Great Zero", "tel.plate.blank": "Plaque vierge : elle attend le Zéro", "tel.plate.found": "Torahn et élévation du Great Zero, à la manière du KI (au-dessus du plan, négatif) — un clic y ramène les molettes",
-    "tel.back": "Redescendre — retour à l'île", "tel.island": "Télescope — un clic pour y regarder", "tel.island.found": "Télescope — le Great Zero est relevé",
+    "tel.back": "Sortir de la coupole — retour à l'île", "tel.island": "Observatoire — un clic pour y entrer", "tel.island.found": "Observatoire — le Great Zero est relevé",
   },
 };
 

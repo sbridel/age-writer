@@ -66,17 +66,21 @@ ok(T.STEP.torahn.hub === 100 && T.STEP.torahn.rim === 2500 && T.STEP.elev.hub ==
 
 // ---- la page : verrouillée sans Âge, débloquée par le premier ------------------------------------------
 {
-  const relto = M.parseRelto({ seed: 7, relto_pages_active: ["page_telescope"] });
-  const bp = M.builtinPages(); ok(bp.length === 1 && bp[0].id === "page_telescope" && bp[0].unlock.agesCount === 1, "le télescope est une page présente d'office");
+  const relto = M.parseRelto({ seed: 7, relto_pages_active: ["page_telescope", "page_mountain"] });
+  const mount = M.parsePage(M.pageFrontmatter("page_mountain", M.PAGE_PRESETS.page_mountain), "m.md");
+  const bp0 = M.builtinPages(), bp = [...bp0, mount]; ok(bp0.length === 1 && bp0[0].id === "page_telescope" && bp0[0].unlock.agesCount === 1 && bp0[0].unlock.page === "page_mountain", "le télescope est une page présente d'office");
   const none = M.buildScene(relto, bp, []), one = M.buildScene(relto, bp, [{ name: "Premier", path: "Premier.md", verdict: "stable", stability: 80 }]);
   const p0 = none.pages.find((p) => p.id === "page_telescope"), p1 = one.pages.find((p) => p.id === "page_telescope");
   ok(p0.state === "locked" && /first Age/.test(p0.reason) && !none.additions.some((a) => a.type === "telescope"), "aucun Âge : page verrouillée, pas de télescope sur l'île");
   ok(p1.state === "active" && one.additions.some((a) => a.type === "telescope"), "un Âge : page active, le télescope est là");
-  const free = M.buildScene(M.parseRelto({ seed: 7 }), bp, [{ name: "Premier", path: "Premier.md", verdict: "dying", stability: 5 }]);
-  ok(free.pages[0].state === "available", "non attachée : disponible dès le premier Âge, même mourant");
+  const free = M.buildScene(M.parseRelto({ seed: 7, relto_pages_active: ["page_mountain"] }), bp, [{ name: "Premier", path: "Premier.md", verdict: "dying", stability: 5 }]);
+  ok(free.pages[0].state === "available", "non attachée : disponible dès le premier Âge (avec le mont), même mourant");
+  const flat = M.buildScene(M.parseRelto({ seed: 7, relto_pages_active: ["page_telescope"] }), bp, [{ name: "Premier", path: "Premier.md", verdict: "stable", stability: 80 }]);
+  const pf = flat.pages.find((p) => p.id === "page_telescope");
+  ok(pf.state === "locked" && /Mountains/.test(pf.reason) && !flat.additions.some((a) => a.type === "telescope"), "sans la page Montagnes : l'observatoire reste verrouillé (il lui faut le sommet)");
   const fm = M.pageFrontmatter("page_telescope", M.PAGE_PRESETS.page_telescope);
-  ok(fm.unlock && fm.unlock.ages_count === 1 && !("age" in fm.unlock), "note créée depuis le préréglage : unlock.ages_count = 1");
-  ok(M.parsePage(fm, "t.md").unlock.agesCount === 1 && M.parsePage(fm, "t.md").additions[0].type === "telescope", "la note se relit : même déverrouillage, même effet");
+  ok(fm.unlock && fm.unlock.ages_count === 1 && fm.unlock.page === "page_mountain" && !("age" in fm.unlock), "note créée depuis le préréglage : unlock.ages_count = 1");
+  ok(M.parsePage(fm, "t.md").unlock.agesCount === 1 && M.parsePage(fm, "t.md").unlock.page === "page_mountain" && M.parsePage(fm, "t.md").additions[0].type === "telescope", "la note se relit : même déverrouillage, même effet");
   const fmLib = M.pageFrontmatter("page_x", { effects: { canvas_additions: [] }, unlock: { age: "Glass", minStability: 60 } });
   ok(fmLib.unlock.age === "[[Glass]]" && fmLib.unlock.min_stability === 60 && !("ages_count" in fmLib.unlock), "déverrouillage par un Âge (bibliothèque) : inchangé");
 }
@@ -90,10 +94,10 @@ ok(T.STEP.torahn.hub === 100 && T.STEP.torahn.rim === 2500 && T.STEP.elev.hub ==
   const r = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts());
   r.setScene(mk([])); ok(!r.available().telescope, "page détachée : pas de vue du télescope");
   r.setView("telescope"); ok((r.view || "island") === "island", "vue demandée sans la page : l'île");
-  const sc = mk(["page_telescope"]); r.setScene(sc); r.setHour(22);
+  const sc = mk(["page_telescope", "page_mountain"]); r.setScene(sc); r.setHour(22);
   r.draw(1); const onIsle = r.hot.find((h) => h.go === "telescope"); ok(onIsle, "sur l'île : la lunette, au sommet, mène à sa vue");
-  ok(bad === 0, "île : aucun nombre non fini (sans page Montagnes, la page apporte son rocher)");
-  r.setScene(mk(["page_telescope", "page_mountain"])); r.draw(1.2); ok(r.hot.some((h) => h.go === "telescope") && bad === 0, "avec le mont : la lunette est à son sommet");
+  ok(bad === 0, "île : aucun nombre non fini");
+  r.setScene(mk(["page_telescope"])); r.draw(1.2); ok(!r.hot.some((h) => h.go === "telescope") && !r.available().telescope, "sans le mont : pas d'observatoire");
   r.setScene(sc); r.draw(1); r.toLogical = () => [onIsle.x + 2, onIsle.y + 2]; r.onClick({}); ok(r.view === "telescope", "clic : vue du télescope");
   r.nowOverride = 1.8e12; r.draw(1.5);
   const st = r.telescope, zero = T.greatZero(sc.name, sc.seed);
@@ -141,7 +145,7 @@ ok(T.STEP.torahn.hub === 100 && T.STEP.torahn.rim === 2500 && T.STEP.elev.hub ==
   ok(r2.telescope.found && r2.hot.some((h) => h.tel && h.tel.setZero), "relu : le Zéro est toujours trouvé");
   r2.setView("island"); r2.draw(1); ok(r2.hot.some((h) => h.go === "telescope" && /charted/.test(h.tip)), "sur l'île, la lunette le dit");
   // un autre Relto (autre graine) : un autre Zéro, à trouver
-  const other = mk(["page_telescope"], { seed: 9 }); r2.setScene(other); r2.setView("telescope"); r2.draw(1);
+  const other = mk(["page_telescope", "page_mountain"], { seed: 9 }); r2.setScene(other); r2.setView("telescope"); r2.draw(1);
   ok(!r2.telescope.found && JSON.stringify(r2.telescope.zero) !== JSON.stringify(zero), "autre graine : autre Zéro, pas trouvé");
   // français : la ligne de mots et les infobulles traduites
   const { makeT } = require("../src/i18n"), rf = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, { ...opts(), t: makeT(() => "fr") });

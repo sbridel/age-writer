@@ -7,8 +7,8 @@ function renderMany(host, ages) {
   host = host || document.body;
   const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
   const variants = [
-    { h: 15, t: 3.1, env: {}, pages: ["page_telescope", "page_pine_trees", "page_koi"], label: "ISLAND day / telescope on its rock (no mountain page)" },
-    { h: 21.5, t: 3.1, env: {}, pages: ["page_telescope", "page_mountain", "page_waterfall"], label: "ISLAND dusk / telescope on the mountain" },
+    { h: 15, t: 3.1, env: {}, pages: ["page_telescope", "page_mountain", "page_pine_trees", "page_koi"], label: "ISLAND day / observatory on the mountain" },
+    { h: 21.5, t: 3.1, env: {}, pages: ["page_telescope", "page_mountain", "page_waterfall"], label: "ISLAND dusk / observatory on the mountain" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope"], view: "telescope", aim: "far", label: "TELESCOPE night / far" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope"], view: "telescope", aim: [14, -9], label: "TELESCOPE night / near (14, −9)" },
     { h: 14, t: 3.3, env: {}, pages: ["page_telescope"], view: "telescope", aim: [1, 0], found: true, label: "TELESCOPE day / found" },
