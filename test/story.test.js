@@ -72,4 +72,24 @@ ok(scene([]).pages.find((p) => p.id === rest.id).state === "locked" && scene(["r
 const mendPage = rp.find((p) => p.unlock.story === "mend");
 ok(scene(["rest"]).pages.find((p) => p.id === mendPage.id).state === "locked" && scene(["rest", "mend"]).pages.find((p) => p.id === mendPage.id).state === "available", "buildScene : chaque chapitre ouvre sa propre page");
 
+// ---- notes de chapitre
+const an = (text, nm) => analyseAgeBase(text, { seed: nm });
+const mend = ST.chapterById("mend"), restC = ST.chapterById("rest");
+ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]) === null, "nextChapter : dans l'ordre, null à la fin");
+ok(Object.keys(ST.get({}, "k").notes).length === 0, "get : normalise les notes de chapitre");
+let fair = 0, same = 0;
+for (let i = 0; i < 300; i++) {
+  const base = `Corriger sans casser · ${1000 + i * 7919}`, nm = ST.chapterName(mend, base, an);
+  if (an(ST.WORLDS.mend.lines.join("\n"), nm).stability < 75 && an(ST.WORLDS.mend.fixed.join("\n"), nm).stability >= 75) fair++;
+  if (nm === base) same++;
+}
+ok(fair === 300, "chapitre 2 : pour tout nom, le monde abîmé est instable et le monde corrigé stable (" + fair + "/300)");
+ok(same > 150, "chapitre 2 : le nom est le plus souvent gardé tel quel");
+ok(ST.chapterName(restC, "X", an) === "X", "chapitre 1 : le nom ne change pas");
+for (const lang of ["en", "fr"]) for (const c of ST.CHAPTERS) {
+  const t = ST.chapterNote(c, lang, "Nom"), blk = t.match(/```age\n([\s\S]*?)\n```/);
+  ok(t.startsWith("# Nom") && t.includes(ST.MENTOR) && blk && blk[1].split("\n").length === ST.WORLDS[c.id].lines.length, "note de chapitre " + c.id + "/" + lang + " : titre, mentor, bloc age");
+  ok(!/bahro|encrier|inkwell|endgame/i.test(t), "note de chapitre " + c.id + "/" + lang + " : rien de réservé");
+}
+
 console.log(`story.test.js : ${n} vérifications ok`);

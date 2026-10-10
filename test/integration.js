@@ -339,6 +339,16 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     ok(notices.some((n) => /Chapter complete|Chapitre réussi/.test(n)), "mode histoire : un monde stable avec ciel, eau et vivant réussit le chapitre (notice)");
     ok(row(el, "Chimney fire") && /is-available/.test(row(el, "Chimney fire").className), "mode histoire : la page du chapitre devient disponible");
     ok(Object.values(p.ext.story || {}).some((s) => s.done.includes("rest")), "mode histoire : l'avancement est gardé par Relto");
+    { const nx = p.cmds.find((c) => c.id === "story-next"); ok(!!nx, "mode histoire : commande « Story: next chapter » enregistrée");
+      const b0 = [...files.keys()]; notices.length = 0; await nx.callback();
+      const c2 = [...files.keys()].filter((k) => !b0.includes(k));
+      ok(c2.length === 1 && c2[0].startsWith(dir + "/") && /Corriger sans casser|Mending without breaking/.test(c2[0]) && files.get(c2[0]).content.includes("lava"), "chapitre suivant : la note du chapitre 2 est créée dans le dossier de l'histoire (" + c2[0] + ")");
+      ok(Object.values(p.ext.story).some((s) => s.notes.mend === c2[0] && s.seen[files.get(c2[0]).basename]), "chapitre suivant : note retenue, monde vu abîmé");
+      const b1 = files.size; notices.length = 0; await nx.callback(); ok(files.size === b1, "chapitre suivant : relancer rouvre la même note");
+      files.get(c2[0]).content = files.get(c2[0]).content.replace("\nlava\n", "\nsand\n"); files.get(c2[0]).stat.mtime++; p.index.invalidate(); notices.length = 0;
+      el = await show(sf.path);
+      ok(row(el, "Lanterns") && /is-available/.test(row(el, "Lanterns").className), "chapitre 2 réussi : la page des lanternes est disponible");
+      notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); files.delete(c2[0]); }
     const sb = await show("x.md"), sbn = shelf(sb);
     ok(sbn.includes("Dehors") && !sbn.includes("Premier"), "mode histoire : sans précision, le Relto du bac à sable, qui ne voit pas les Âges de l'histoire");
     ok(!row(sb, "Chimney fire") && !row(sb, "Lanterns"), "mode histoire : les pages-récompenses n'existent pas dans le bac à sable");

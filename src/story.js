@@ -52,6 +52,7 @@ function get(store, key) {
   const e = store[key] && typeof store[key] === "object" ? store[key] : (store[key] = {});
   if (!Array.isArray(e.done)) e.done = [];
   if (!e.seen || typeof e.seen !== "object") e.seen = {};
+  if (!e.notes || typeof e.notes !== "object") e.notes = {}; // chapitre → chemin de sa note
   return e;
 }
 
@@ -97,6 +98,52 @@ function evaluate(store, key, ctx) {
   return newly;
 }
 
+/** Le mentor : un personnage inventé, qui écrit de courtes lettres. */
+const MENTOR = "Orsen Vael";
+
+/** Le prochain chapitre à faire (le premier non réussi), ou null quand l'histoire est finie (pour l'instant). */
+const nextChapter = (done) => CHAPTERS.find((c) => !(done || []).includes(c.id)) || null;
+
+// Les mondes de départ : le chapitre 1 donne une seule page (water) ; le chapitre 2 donne un monde abîmé (lava de trop) et son remède.
+const WORLDS = {
+  rest: { lines: ["water"] },
+  mend: { lines: ["single_sun", "steady_cycle", "water", "lava"], fixed: ["single_sun", "steady_cycle", "water"] },
+};
+
+/**
+ * Le nom de la note d'un chapitre. Le moteur tire des pages supplémentaires selon le nom : pour le chapitre « corriger », on
+ * cherche un nom pour lequel le monde abîmé est bien instable ET le monde corrigé bien stable (sinon le chapitre serait injuste).
+ * `analyse(texte, nom)` → { stability }.
+ */
+function chapterName(chapter, base, analyse) {
+  const w = WORLDS[chapter.id];
+  if (!w || !w.fixed || !analyse) return base;
+  const st = (lines, nm) => { const a = analyse(lines.join("\n"), nm); return a && Number.isFinite(a.stability) ? a.stability : null; };
+  for (let i = 0; i < 80; i++) {
+    const nm = i ? `${base} ${i + 1}` : base, bad = st(w.lines, nm), good = st(w.fixed, nm);
+    if (bad !== null && good !== null && bad < STABLE_AT && good >= STABLE_AT) return nm;
+  }
+  return base;
+}
+
+const LETTERS = {
+  rest: {
+    en: ["Come in. The cabin is yours; I only ask one thing of you.", "Write me a world where someone could rest: a sky that keeps its rhythm, ground or water under it, and something alive. At least four pages, and it must hold.", "Open the block below, add pages, and watch what the stability says."],
+    fr: ["Entre. La cabane est à toi ; je ne te demande qu'une chose.", "Écris-moi un monde où l'on pourrait se reposer : un ciel qui garde son rythme, de la terre ou de l'eau dessous, et du vivant. Quatre pages au moins, et il doit tenir.", "Ouvre le bloc ci-dessous, ajoute des pages, et regarde ce que dit la stabilité."],
+  },
+  mend: {
+    en: ["Well done. Now the harder half of the craft.", "I wrote this world in a hurry, and something in it is wrong. Find what, and mend it. Take out as little as you can: a world is not mended by emptying it.", "The world must end up stable."],
+    fr: ["Bien joué. Voici maintenant la moitié la plus difficile du métier.", "J'ai écrit ce monde trop vite, et quelque chose y cloche. Trouve quoi, et corrige-le. Retire le moins possible : on ne répare pas un monde en le vidant.", "Le monde doit finir stable."],
+  },
+};
+
+/** Le texte d'une note de chapitre : titre, lettre du mentor, ce qu'il faut faire, et le bloc `age` de départ. */
+function chapterNote(chapter, lang, name) {
+  const l = lang === "fr" ? "fr" : "en", w = WORLDS[chapter.id] || { lines: [] }, L = LETTERS[chapter.id][l];
+  const title = chapter.title[l];
+  return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n— ${MENTOR}\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`\n`;
+}
+
 /**
  * Les pages que donnent les chapitres, sous la forme d'une page du livre des pages (sans note) : verrouillées tant que le
  * chapitre n'est pas réussi, puis disponibles. Elles n'existent que dans un Relto histoire.
@@ -111,4 +158,4 @@ function rewardPages() {
   return out;
 }
 
-module.exports = { MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages };
+module.exports = { MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };

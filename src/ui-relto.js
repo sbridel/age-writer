@@ -160,6 +160,31 @@ async function startStory(plugin) {
   return f;
 }
 
+/** Chapitre suivant : crée (ou rouvre) la note du prochain chapitre dans le dossier de l'histoire. */
+async function storyNext(plugin) {
+  const { app, t } = plugin;
+  const hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
+  if (!hub) { new obsidian.Notice(t("story.nohub")); return null; }
+  await buildScene(plugin, hub); // évalue l'avancement (un chapitre réussi depuis la dernière fois est compté)
+  const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, store = plugin.ext.story || (plugin.ext.story = {});
+  const key = TEL.keyOf(relto.name, relto.seed), st = ST.get(store, key), ch = ST.nextChapter(st.done);
+  if (!ch) { new obsidian.Notice(t("story.end")); return null; }
+  const lang = plugin.lang(), dir = ST.dirOf(hub.path), known = st.notes[ch.id] && app.vault.getAbstractFileByPath(st.notes[ch.id]);
+  if (known) { new obsidian.Notice(t("story.reopen")); await app.workspace.getLeaf(false).openFile(known); return known; }
+  const base = `${ch.title[lang === "fr" ? "fr" : "en"]} · ${relto.seed}`;
+  const analyse = (text, nm) => plugin.core.analyse(text, { seed: nm });
+  let name = ST.chapterName(ch, base, analyse), path, n = 1;
+  do { path = `${dir}/${name}${n > 1 ? " " + n : ""}.md`; n++; } while (app.vault.getAbstractFileByPath(path));
+  const f = await app.vault.create(path, ST.chapterNote(ch, lang, path.replace(/^.*\//, "").replace(/\.md$/, "")));
+  st.notes[ch.id] = path;
+  const w = ST.WORLDS[ch.id];
+  if (w && w.fixed) { const a = analyse(w.lines.join("\n"), f.basename); if (a && a.stability < 75) ST.noteSeen(store, key, f.basename); } // seulement s'il est vraiment abîmé
+  plugin.saveExt();
+  new obsidian.Notice(t("story.note", { title: ch.title[lang === "fr" ? "fr" : "en"] }));
+  await app.workspace.getLeaf(false).openFile(f);
+  return f;
+}
+
 class PresetModal extends obsidian.FuzzySuggestModal {
   constructor(app, onChoose, presets) { super(app); this.onChoose = onChoose; this.presets = presets; this.setPlaceholder("Relto page…"); }
   getItems() { return Object.keys(this.presets); }
@@ -630,4 +655,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyNext, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
