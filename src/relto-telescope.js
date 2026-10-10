@@ -86,7 +86,7 @@ function state(r) {
   return r.telescope;
 }
 /** Le Zéro tel que l'instrument le tient : le vrai, ou la fausse ligne s'il s'est calé dessus (Torahn et élévation). */
-function heldZero(st) { return st.line && st.old && st.line === st.old.L ? { torahn: st.old.torahn, elevation: st.old.elevation } : { torahn: SS.believedZero(st.zero, st.line).torahn, elevation: st.zero.elevation }; }
+function heldZero(st) { return st.line && st.old && st.line === st.old.L ? { torahn: st.old.torahn, elevation: st.old.elevation, distance: st.old.distance } : { torahn: SS.believedZero(st.zero, st.line).torahn, elevation: st.zero.elevation, distance: st.zero.distance }; }
 /** Les noms des Âges d'un système situé : gravés au lutrin (`ages`). */
 function noteAge(r, st, key, name) {
   const rec = st.systems[key]; if (!rec || !name || (rec.ages || []).includes(name)) return;
@@ -411,7 +411,8 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     ctx.fillStyle = c("#2a1d13"); ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillText(t("tel.plate.title"), PLATE.x + PLATE.w / 2, PLATE.y + 15); ctx.textAlign = "left";
     if (st.found) { // la plaque grave le Zéro tel que l'instrument le tient (sur la fausse ligne, c'est elle qu'elle grave)
       const ink = c("#1b130d"), z = heldZero(st);
-      engravedRow(r, ctx, [z.torahn, T.kiElev(z.elevation)], PLATE.x, PLATE.w, PLATE.y + 26, 17, ink);
+      engravedRow(r, ctx, [z.torahn, T.kiElev(z.elevation)], PLATE.x, PLATE.w, PLATE.y + 20, 14, ink); // la direction et la hauteur (comme au KI)
+      engravedRow(r, ctx, [{ frac: BEAM.digitsOf(z.distance) }], PLATE.x, PLATE.w, PLATE.y + 38, 12, ink); // la distance du Zéro, en rahnfee de faisceau
       r.hot.push({ ...PLATE, tip: t("tel.plate.found"), tel: { setZero: true } });
     } else {
       ctx.strokeStyle = rgba(43, 29, 19, 0.35); ctx.lineWidth = 1; for (const x0 of [PLATE.x + 30, PLATE.x + 136]) { ctx.beginPath(); ctx.moveTo(x0, PLATE.y + 44); ctx.lineTo(x0 + 50, PLATE.y + 44); ctx.stroke(); }

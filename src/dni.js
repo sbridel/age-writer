@@ -249,36 +249,42 @@ class Dni {
   }
 
   /**
-   * Un nombre à virgule en base 25 (le rahnfee, src/beam.js) : `digits` = [entier, f1, f2, …], f1 en 25ᵉ, f2 en 625ᵉ…
-   * L'entier s'écrit comme un nombre, puis un POINT bas (un petit carré plein sur la ligne de base, dans un espace
-   * élargi), puis chaque chiffre de la fraction dans sa case (un zéro reste un chiffre gravé : la place compte).
-   * Renvoie { cells: [{ d, x }], dot: { x, s } | null, width, cw }, dans les unités de `size`.
+   * Une longueur en rahnfee (src/beam.js), sans virgule moderne : `digits` = [entier, f1, f2, …], f1 en 25ᵉ, f2 en 625ᵉ…
+   * Chaque chiffre de la fraction est gravé dans sa petite LUCARNE, comme sur les cadrans d'un instrument de mesureur ;
+   * la place de la lucarne dit le rang (25ᵉ, 625ᵉ, 15 625ᵉ). Un zéro reste gravé : la place compte. Un entier non nul
+   * (au-delà d'un rahnfee : rien ne l'atteint aujourd'hui) s'écrit d'abord, à nu, avant les lucarnes.
+   * Renvoie { cells: [{ d, x, framed }], width, cw, pad }, dans les unités de `size`.
    */
-  fractionLayout_(digits, size = 28, gap = 0.22) {
-    const arr = Array.isArray(digits) && digits.length ? digits : [0], ints = toBase25(arr[0]);
+  fractionLayout_(digits, size = 28, gap = 0.36) {
+    const arr = Array.isArray(digits) && digits.length ? digits : [0], whole = Math.max(0, Math.round(Number(arr[0]) || 0));
     const fr = arr.slice(1).map((d) => Math.max(0, Math.min(24, Math.round(Number(d) || 0))));
-    const cw = size * this.cell(), g = size * gap, sep = size * 0.6, cells = [];
-    let x = 0; ints.forEach((d, i) => { cells.push({ d, x }); x += cw + (i < ints.length - 1 ? g : 0); });
-    let dot = null;
-    if (fr.length) { const s = Math.max(1, size * 0.16); dot = { x: x + (sep - s) / 2, s }; x += sep; fr.forEach((d, i) => { cells.push({ d, x }); x += cw + (i < fr.length - 1 ? g : 0); }); }
-    return { cells, dot, width: x, cw };
+    const cw = size * this.cell(), g = size * gap, pad = size * 0.14, cells = [];
+    let x = 0;
+    if (whole > 0 || !fr.length) { toBase25(whole).forEach((d) => { cells.push({ d, x, framed: false }); x += cw + size * 0.22; }); if (fr.length) x += g; }
+    fr.forEach((d, i) => { cells.push({ d, x: x + pad, framed: true }); x += cw + 2 * pad + (i < fr.length - 1 ? g * 0.5 : 0); });
+    return { cells, width: x, cw, pad };
   }
-  /** Largeur d'un nombre à virgule (mêmes unités que size). */
-  fractionWidth(digits, size = 28, gap = 0.22) { return this.fractionLayout_(digits, size, gap).width; }
-  /** Un nombre à virgule en base 25, comme chaîne SVG complète (même dessin que `drawFraction`). */
-  fractionSvg(digits, { size = 28, color = "currentColor", gap = 0.22, cls = "age-dni", label = "" } = {}) {
-    const L = this.fractionLayout_(digits, size, gap), mode = this.mode(), pad = size * 0.04, H = size, W = Math.max(1, L.width);
-    let inner = L.cells.map((c) => this.digitInner(c.d, c.x + pad, pad, size - 2 * pad, color, mode)).join("");
-    if (L.dot) inner += `<rect x="${L.dot.x.toFixed(2)}" y="${(H - pad - L.dot.s).toFixed(2)}" width="${L.dot.s.toFixed(2)}" height="${L.dot.s.toFixed(2)}" fill="${color}"/>`;
-    const aria = label || (Array.isArray(digits) ? digits.join(".") : "0");
+  /** Largeur d'une longueur en lucarnes (mêmes unités que size). */
+  fractionWidth(digits, size = 28, gap = 0.36) { return this.fractionLayout_(digits, size, gap).width; }
+  /** Une longueur en lucarnes, comme chaîne SVG complète (même dessin que `drawFraction`). */
+  fractionSvg(digits, { size = 28, color = "currentColor", gap = 0.36, cls = "age-dni", label = "" } = {}) {
+    const L = this.fractionLayout_(digits, size, gap), mode = this.mode(), pad = size * 0.04, H = size + 2 * L.pad, W = Math.max(1, L.width), sw = Math.max(0.6, size * 0.05);
+    let inner = "";
+    for (const c of L.cells) {
+      if (c.framed) inner += `<rect x="${(c.x - L.pad + sw / 2).toFixed(2)}" y="${(sw / 2).toFixed(2)}" width="${(L.cw + 2 * L.pad - sw).toFixed(2)}" height="${(H - sw).toFixed(2)}" rx="${(size * 0.12).toFixed(2)}" fill="none" stroke="${color}" stroke-width="${sw.toFixed(2)}" opacity="0.7"/>`;
+      inner += this.digitInner(c.d, c.x + pad, L.pad + pad, size - 2 * pad, color, mode);
+    }
+    const aria = label || (Array.isArray(digits) ? digits.join(" ") : "0");
     return `<svg class="${cls}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" width="${W.toFixed(1)}" height="${H.toFixed(1)}" role="img" aria-label="${esc(aria)} (D'ni)">${inner}</svg>`;
   }
-  /** Dessine un nombre à virgule en base 25 sur un canvas 2D ; renvoie la largeur occupée. */
-  drawFraction(ctx, digits, x, y, size = 28, color = "#cdbd94", gap = 0.22) {
+  /** Dessine une longueur en lucarnes sur un canvas 2D ; renvoie la largeur occupée. */
+  drawFraction(ctx, digits, x, y, size = 28, color = "#cdbd94", gap = 0.36) {
     const L = this.fractionLayout_(digits, size, gap), mode = this.mode();
     ctx.save(); ctx.fillStyle = color; ctx.strokeStyle = color;
-    for (const c of L.cells) this.drawDigit_(ctx, c.d, x + c.x, y, size, mode, L.cw);
-    if (L.dot) ctx.fillRect(x + L.dot.x, y + size * 0.96 - L.dot.s, L.dot.s, L.dot.s);
+    for (const c of L.cells) {
+      if (c.framed) { ctx.save(); ctx.globalAlpha *= 0.7; ctx.lineWidth = Math.max(0.6, size * 0.05); ctx.strokeRect(x + c.x - L.pad, y - L.pad, L.cw + 2 * L.pad, size + 2 * L.pad); ctx.restore(); }
+      this.drawDigit_(ctx, c.d, x + c.x, y, size, mode, L.cw);
+    }
     ctx.restore();
     return L.width;
   }

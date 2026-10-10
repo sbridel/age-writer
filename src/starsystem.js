@@ -32,7 +32,6 @@ const { rng, fnv } = require("./util");
 const T = require("./telescope");
 const { makeT } = require("./i18n");
 const PB = require("./perturbers");
-const BEAM = require("./beam");
 
 const DELAY_UNIT = 25;     // un cran de la molette du retard = 25 shahfeetee de trajet du pouls
 const DELAY_MAX = 624;     // la molette du retard va de 0 à 624 crans (deux chiffres D'ni)

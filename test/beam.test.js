@@ -59,10 +59,11 @@ ok(BEAM.clamp(20000) === BEAM.REACH && BEAM.clamp(-3) === 0 && BEAM.within(15624
 const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
 {
   const s = dni.fractionSvg([0, 12, 3, 24], { size: 16 });
-  ok(/^<svg/.test(s) && !/NaN|undefined|Infinity/.test(s) && (s.match(/<g /g) || []).length === 4 && /<rect /.test(s), "SVG : quatre chiffres (0 compris) et le point");
-  ok(dni.fractionWidth([0, 1, 2, 3], 10) > dni.widthOf(0, 10) * 4 && Number.isFinite(dni.fractionWidth(null, 10)), "largeur : quatre cases et le point ; sans chiffres, finie");
+  ok(/^<svg/.test(s) && !/NaN|undefined|Infinity/.test(s) && (s.match(/<g /g) || []).length === 3 && (s.match(/<rect /g) || []).length === 3, "SVG : trois chiffres, chacun dans sa lucarne ; ni zéro entier ni virgule");
+  const big = dni.fractionSvg([1, 2], { size: 16 }); ok((big.match(/<g /g) || []).length === 2 && (big.match(/<rect /g) || []).length === 1, "un entier non nul s'écrit à nu, avant les lucarnes");
+  ok(dni.fractionWidth([0, 1, 2, 3], 10) > dni.widthOf(0, 10) * 3 && Number.isFinite(dni.fractionWidth(null, 10)), "largeur : trois lucarnes ; sans chiffres, finie");
   const log = []; const lc = new Proxy({}, { get: (_, k) => (...a) => { log.push([k, ...a]); a.forEach(chk); }, set: () => true });
-  const w = dni.drawFraction(lc, [0, 24, 24, 24], 10, 5, 12, "#000"); ok(Math.abs(w - dni.fractionWidth([0, 24, 24, 24], 12)) < 1e-9 && log.some((l) => l[0] === "fillRect"), "le dessin occupe la largeur annoncée, avec le point");
+  const w = dni.drawFraction(lc, [0, 24, 24, 24], 10, 5, 12, "#000"); ok(Math.abs(w - dni.fractionWidth([0, 24, 24, 24], 12)) < 1e-9 && log.filter((l) => l[0] === "strokeRect").length === 3, "le dessin occupe la largeur annoncée, trois lucarnes");
 }
 
 // ---- 5. le rendu : molette du retard, plaque de l'étoile, carte ----------------------------------------------------------
