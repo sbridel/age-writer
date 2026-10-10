@@ -35,9 +35,9 @@ const W = 640, H = 360, GY = 208;
 const EYE = { x: 196, y: 150, r: 116 }, FIELD = 30; // l'oculaire montre ±30 crans fins autour de la visée
 const NT = T.TURN / T.NOTCH; // crans fins par tour (625)
 // le panneau de l'instrument, de haut en bas : la plaque (Great Zero ou étoile de l'Âge), les deux grandes molettes, puis la rangée du retard
-const WHEELS = { torahn: { x: 438, y: 142 }, elev: { x: 560, y: 142 } }, RING0 = 34, HUB0 = 15;
+const WHEELS = { torahn: { x: 438, y: 140 }, elev: { x: 560, y: 140 } }, RING0 = 34, HUB0 = 15;
 const PLATE = { x: 392, y: 42, w: 214, h: 58 }, BACK = { x: 0, y: 330, w: W, h: 30 };
-const SPLATE = { x: 392, y: 40, w: 214, h: 62 }, DELAY = { x: 458, y: 252 }, DRING = 22, DHUB = 9; // étape 2 : la plaque du système et la molette du retard
+const SPLATE = { x: 392, y: 40, w: 214, h: 60 }, DELAY = { x: 458, y: 254 }, DRING = 22, DHUB = 9; // étape 2 : la plaque du système et la molette du retard
 const LECTERN = { x: 54, y: 302 }, TEXT_X = 372; // le lutrin, sur le sol à gauche ; la ligne de mots se décale à droite quand il est là
 const PULSE_MS = DT.MS_PER_HAHR / DT.PRO_PER_HAHR; // un prorahn (≈ 1,39 s) : le pouls du Zéro bat l'heure D'ni
 const EN = makeT(() => "en");
@@ -400,6 +400,7 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     wheel(r, ctx, c, "torahn", WHEELS.torahn, st.dial.torahn, T.TURN, st.dial.torahn, tm);
     wheel(r, ctx, c, "elev", WHEELS.elev, st.dial.elev + T.ELEV_MAX, 2 * T.ELEV_MAX + 1, T.kiElev(st.dial.elev), tm);
     // le retard se lit en rahnfee (invention de fan, src/beam.js) : le pouls arrive une fraction de battement après le balancier
+    divider(ctx, c, 222); // un filet gravé : au-dessus la direction, au-dessous le retard
     beatCounter(r, ctx, c, st); // les battements entiers : le chiffre nu devant les lucarnes
     wheel(r, ctx, c, "delay", DELAY, st.dial.delay, SS.DELAY_MAX + 1, { frac: BEAM.delayDigits(st.dial.delay + (st.dial.beats || 0) * SS.DELAY_TURN, SS.DELAY_UNIT) }, tm, { step: SS.STEP_DELAY, ring: DRING, hub: DHUB, side: 40, valueTip: (st.dial.beats ? t("sys.beats.plus") + " " : "") + lateWords(t, st.dial.delay) });
     systemPlate(r, ctx, c, st, sys);
@@ -498,18 +499,36 @@ function metronome(r, ctx, c, ms) {
 
 /** Les signes des perturbateurs (plaque, carte) : pulsar, étoile à neutrons, trou noir. */
 const PSYM = { pulsar: "✶", neutron_star: "✦", black_hole: "◉" };
-const TRI = { x: 474, y: 135, w: 50, h: 14 }; // entre les deux grandes molettes
+const TRI = { x: 474, y: 133, w: 50, h: 14 }; // entre les deux grandes molettes
 /**
  * Le levier de triangulation (étape 3) : seulement pour un système perturbé. Tiré, l'instrument interroge les étoiles situées
  * voisines (au moins deux, gravées sur la même ligne) : si elles s'accordent, la déviation et le faux pouls s'effacent.
  */
-/** Le compteur de battements entiers, sous la molette du retard : un petit bouton de laiton ; un clic compte un battement de plus (puis 0). */
-const BEATS = { x: 554, y: 254 }; // juste après les fenêtres du retard : la rangée du bas est centrée
+/** Un filet de laiton gravé en travers du panneau, avec un rivet à chaque bout. */
+function divider(ctx, c, y) {
+  const x0 = 396, x1 = 602;
+  ctx.strokeStyle = "rgba(0,0,0,0.55)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y + 0.5); ctx.lineTo(x1, y + 0.5); ctx.stroke(); // le sillon
+  ctx.strokeStyle = c("#8a6a2e"); ctx.beginPath(); ctx.moveTo(x0, y + 1.5); ctx.lineTo(x1, y + 1.5); ctx.stroke(); // son bord éclairé
+  ctx.fillStyle = c("#a8843c"); for (const x of [x0 - 4, x1 + 4]) { ctx.beginPath(); ctx.arc(x, y + 1, 1.8, 0, 6.283); ctx.fill(); }
+}
+/** Un chiffre D'ni gravé, minuscule : 0 (un point dans le carré) ou 1 (un trait). */
+function dniTiny(ctx, x, y, n, col) {
+  ctx.strokeStyle = col; ctx.lineWidth = 0.8; ctx.strokeRect(x - 2.5, y - 2.5, 5, 5);
+  ctx.fillStyle = col; if (n) ctx.fillRect(x - 0.4, y - 2.5, 0.8, 5); else { ctx.beginPath(); ctx.arc(x, y, 0.8, 0, 6.283); ctx.fill(); }
+}
+/**
+ * Le battement entier, juste après les fenêtres du retard : un interrupteur à levier sur sa platine (0 en haut, 1 en bas).
+ * Un clic le bascule ; levé : le pouls arrive dans ce battement ; baissé : un battement entier plus tard.
+ */
+const BEATS = { x: 552, y: 254 };
 function beatCounter(r, ctx, c, st) {
-  const t = tOf(r), { x, y } = BEATS, n = st.dial.beats || 0;
-  ctx.fillStyle = c("#2a1d13"); ctx.beginPath(); ctx.arc(x, y, 6.5, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#8a6a2e"); ctx.lineWidth = 1; ctx.stroke();
-  for (let i = 0; i <= SS.BEATS_MAX; i++) { const a = -Math.PI / 2 + (i - SS.BEATS_MAX / 2) * 0.9, on = i === n; ctx.fillStyle = on ? "#ffe2a0" : c("#7a5c28"); ctx.beginPath(); ctx.arc(x + Math.cos(a) * 4, y + Math.sin(a) * 4, on ? 1.8 : 1.2, 0, 6.283); ctx.fill(); } // ses crans : 0, 1
-  r.hot.push({ x: x - 9, y: y - 9, w: 18, h: 18, tip: t("sys.beats.tip", { n: String(n) }), tel: { axis: "beats", delta: 1 } });
+  const t = tOf(r), { x, y } = BEATS, n = Math.min(1, st.dial.beats || 0), dark = c("#7a5c28"), lit = "#ffe2a0";
+  ctx.fillStyle = c("#2a1d13"); ctx.fillRect(x - 6, y - 14, 12, 28); ctx.strokeStyle = c("#8a6a2e"); ctx.lineWidth = 1; ctx.strokeRect(x - 5.5, y - 13.5, 11, 27); // la platine
+  ctx.fillStyle = "#05080a"; ctx.fillRect(x - 1.5, y - 6, 3, 12); // la fente
+  const ty = n ? y + 9 : y - 9; ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, ty); ctx.stroke(); // le levier
+  ctx.fillStyle = c("#e0c27a"); ctx.beginPath(); ctx.arc(x, ty, 2.6, 0, 6.283); ctx.fill(); // son pommeau
+  dniTiny(ctx, x + 11, y - 8, 0, n ? dark : lit); dniTiny(ctx, x + 11, y + 8, 1, n ? lit : dark); // 0 et 1, gravés à côté ; celui du levier s'éclaire
+  r.hot.push({ x: x - 8, y: y - 16, w: 26, h: 32, tip: t("sys.beats.tip", { n: String(n) }), tel: { axis: "beats", delta: 1 } });
 }
 
 function triLever(r, ctx, c, st, sys) {

@@ -27,6 +27,7 @@ function renderMany(host, ages) {
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager", cry: true, label: "IMAGER crystals / two right (lit), a decoy, an empty socket" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager-off", label: "IMAGER step 2 / star charted, not yet in sync" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", unwritten: "en", label: "IMAGER guild / a world no one has written, in the blank book (Transcribe)" },
+    { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", unwritten: "en", ghost: true, label: "IMAGER guild / the telescope holds a star: its glyphs show through the blank book, backwards" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", unwritten: "fr", label: "IMAGEUR Guilde / un monde que personne n'a écrit, transcrit (FR)" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step3: "bent", label: "TELESCOPE step 3 / black hole: the bent image, the pale true point" },
     { h: 22, t: 3.45, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step3: "pulsar", label: "TELESCOPE step 3 / pulsar: a second, faster beat" },
@@ -92,7 +93,7 @@ function renderMany(host, ages) {
     c.style.width = "640px"; document.body.appendChild(host);
     const r = new ReltoRenderer(c, dni, { tipDelay: 0, ...(v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}) }); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view;
     if (v.now) { const DC = require("./dniclock"); if (v.now === "tahvo+1s") { const ms = 1791591000000, tv = DC.rings(ms).find((q) => q.key === "tahvo"); r.nowOverride = ms - tv.elapsed + 1000; } else r.nowOverride = v.now; } // l'horloge D'ni à un instant fixe
-    if (v.unwritten) unwrittenView(r, v.unwritten);
+    if (v.ghost) ghostView(r); else if (v.unwritten) unwrittenView(r, v.unwritten);
     if (v.step2) step2(r, v.step2);
     if (v.cry && r.imager) { const C = r.imager.target.crystals, ok = C.options.indexOf(C.ids[0]), ok2 = C.options.indexOf(C.ids[2]), bad = C.options.findIndex((id) => !C.ids.includes(id)); r.imager.station = "cry"; r.imager.settings = { ...r.imager.settings, cry: [ok, bad, -1, ok2], lock: false }; } // les cristaux : deux justes (allumés), un leurre, un logement vide
     if (v.lens && r.imager) { r.imager.station = "lens"; const st = r.imager.settings; r.imager.settings = { ...st, r: Math.max(0, st.r - 5), b: Math.min(24, st.b + 2), iris: Math.min(24, st.iris + 4), lock: false }; } // aide aux lentilles
@@ -140,6 +141,12 @@ function unwrittenDeps() {
 function unwrittenOpts(lang) {
   const UW = require("./unwritten"), { makeT } = require("./i18n");
   return { instrumentsMode: () => "guild", t: makeT(() => lang), unwrittenFind: (cry, s) => UW.find(cry, s, unwrittenDeps()) };
+}
+function ghostView(r) {
+  const st = r.imagerState(); st.loading = null; st.sig = st.sig || "";
+  st.cands = [{ age: { name: "Brume" }, data: { system: { key: "kerath" }, target: { crystals: { ids: ["water", "fern", "great_tree", "rain"] } } } }];
+  r.imagerFind = () => { st.star = "kerath"; st.world = null; st.planet = false; st.target = null; };
+  r.imagerFind();
 }
 function unwrittenView(r, lang) {
   const UW = require("./unwritten"), IM = require("./imager"), { rng } = require("./util"), now = 1.8e12;
