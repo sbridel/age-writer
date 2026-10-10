@@ -34,9 +34,10 @@ const BEAM = require("./beam");
 const W = 640, H = 360, GY = 208;
 const EYE = { x: 196, y: 150, r: 116 }, FIELD = 30; // l'oculaire montre ±30 crans fins autour de la visée
 const NT = T.TURN / T.NOTCH; // crans fins par tour (625)
-const WHEELS = { torahn: { x: 438, y: 112 }, elev: { x: 560, y: 112 } }, RING0 = 34, HUB0 = 15;
-const PLATE = { x: 392, y: 214, w: 214, h: 58 }, BACK = { x: 0, y: 330, w: W, h: 30 };
-const SPLATE = { x: 452, y: 210, w: 158, h: 62 }, DELAY = { x: 414, y: 236 }, DRING = 22, DHUB = 9; // étape 2 : la plaque du système et la molette du retard
+// le panneau de l'instrument, de haut en bas : la plaque (Great Zero ou étoile de l'Âge), les deux grandes molettes, puis la rangée du retard
+const WHEELS = { torahn: { x: 438, y: 142 }, elev: { x: 560, y: 142 } }, RING0 = 34, HUB0 = 15;
+const PLATE = { x: 392, y: 42, w: 214, h: 58 }, BACK = { x: 0, y: 330, w: W, h: 30 };
+const SPLATE = { x: 392, y: 40, w: 214, h: 62 }, DELAY = { x: 458, y: 252 }, DRING = 22, DHUB = 9; // étape 2 : la plaque du système et la molette du retard
 const LECTERN = { x: 54, y: 302 }, TEXT_X = 372; // le lutrin, sur le sol à gauche ; la ligne de mots se décale à droite quand il est là
 const PULSE_MS = DT.MS_PER_HAHR / DT.PRO_PER_HAHR; // un prorahn (≈ 1,39 s) : le pouls du Zéro bat l'heure D'ni
 const EN = makeT(() => "en");
@@ -243,11 +244,13 @@ function wheel(r, ctx, c, axis, W0, value, span, shown, tm, o = {}) {
   ctx.fillStyle = c("#e0c27a"); ctx.beginPath(); ctx.arc(x + Math.cos(a) * (RING - 3), y + Math.sin(a) * (RING - 3), 2.4, 0, 6.283); ctx.fill(); // le repère de la couronne
   if (r.wheelSpin && r.wheelSpin[axis] && tm - r.wheelSpin[axis] < 0.25) { ctx.strokeStyle = rgba(243, 220, 160, 0.5 * (1 - (tm - r.wheelSpin[axis]) / 0.25)); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, RING + 3, 0, 6.283); ctx.stroke(); }
   const small = RING < RING0, unit = axis === "torahn" ? t("tel.unit.torahn") : axis === "delay" ? t("sys.unit.delay") : t("tel.unit.elev");
-  ctx.fillStyle = c("#e9dcb8"); ctx.font = small ? "italic 11px serif" : "italic 13px serif"; ctx.textAlign = "center"; ctx.fillText(name, x, y + RING + (small ? 14 : 22)); ctx.textAlign = "left";
-  engraved(r, ctx, shown, x, y + RING + (small ? 18 : 30), small ? 9 : 12, "#e0c27a");
+  // `side` (la molette du retard) : le nom et la lecture à droite de la molette, pour tenir dans le bas du panneau
+  const lx = o.side ? x + RING + o.side : x, ly = o.side ? y - 9 : y + RING + (small ? 14 : 22), vy = o.side ? y - 4 : y + RING + (small ? 18 : 30);
+  ctx.fillStyle = c("#e9dcb8"); ctx.font = small ? "italic 11px serif" : "italic 13px serif"; ctx.textAlign = "center"; ctx.fillText(name, lx, ly); ctx.textAlign = "left";
+  engraved(r, ctx, shown, lx, vy, small ? 9 : 12, "#e0c27a");
   if (o.valueTip) { // le retard : le nom dit l'unité, la valeur dit le retard du pouls sur le balancier, en mots
-    r.hot.push({ x: x - RING, y: y + RING + 4, w: RING * 2, h: 13, tip: unit });
-    r.hot.push({ x: x - RING, y: y + RING + 17, w: RING * 2, h: 13, tip: o.valueTip });
+    r.hot.push({ x: lx - 40, y: ly - 11, w: 80, h: 13, tip: unit });
+    r.hot.push({ x: lx - 40, y: vy - 2, w: 80, h: 16, tip: o.valueTip });
   } else r.hot.push({ x: x - RING, y: y + RING + 4, w: RING * 2, h: small ? 26 : 40, tip: unit }); // le nom et la valeur : l'unité (et le sens du KI)
   // couronne d'abord, moyeu ensuite : la dernière zone posée l'emporte (hit cherche de la fin vers le début)
   r.hot.push({ x: x - RING - 4, y: y - RING - 4, w: RING + 4, h: RING * 2 + 8, tip: `${name} — ${t("tel.ring.minus")}`, tel: { axis, delta: -S.rim } });
@@ -398,7 +401,7 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     wheel(r, ctx, c, "elev", WHEELS.elev, st.dial.elev + T.ELEV_MAX, 2 * T.ELEV_MAX + 1, T.kiElev(st.dial.elev), tm);
     // le retard se lit en rahnfee (invention de fan, src/beam.js) : le pouls arrive une fraction de battement après le balancier
     beatCounter(r, ctx, c, st); // les battements entiers : le chiffre nu devant les lucarnes
-    wheel(r, ctx, c, "delay", DELAY, st.dial.delay, SS.DELAY_MAX + 1, { frac: BEAM.delayDigits(st.dial.delay + (st.dial.beats || 0) * SS.DELAY_TURN, SS.DELAY_UNIT) }, tm, { step: SS.STEP_DELAY, ring: DRING, hub: DHUB, valueTip: (st.dial.beats ? t("sys.beats.plus") + " " : "") + lateWords(t, st.dial.delay) });
+    wheel(r, ctx, c, "delay", DELAY, st.dial.delay, SS.DELAY_MAX + 1, { frac: BEAM.delayDigits(st.dial.delay + (st.dial.beats || 0) * SS.DELAY_TURN, SS.DELAY_UNIT) }, tm, { step: SS.STEP_DELAY, ring: DRING, hub: DHUB, side: 40, valueTip: (st.dial.beats ? t("sys.beats.plus") + " " : "") + lateWords(t, st.dial.delay) });
     systemPlate(r, ctx, c, st, sys);
     if (guild) triLever(r, ctx, c, st, sys); // les balises : seulement dans l'Art de la Guilde (en mode facile, rien ne trompe)
     const rec = st.systems[sys.key], done = !!rec, off = done && (rec.line || 0) !== st.line, shown = look(r, sc1.shown, beatOf(r), fnvKey(st.key + sys.key));
@@ -495,13 +498,13 @@ function metronome(r, ctx, c, ms) {
 
 /** Les signes des perturbateurs (plaque, carte) : pulsar, étoile à neutrons, trou noir. */
 const PSYM = { pulsar: "✶", neutron_star: "✦", black_hole: "◉" };
-const TRI = { x: 474, y: 108, w: 50, h: 14 }; // entre les deux grandes molettes
+const TRI = { x: 474, y: 135, w: 50, h: 14 }; // entre les deux grandes molettes
 /**
  * Le levier de triangulation (étape 3) : seulement pour un système perturbé. Tiré, l'instrument interroge les étoiles situées
  * voisines (au moins deux, gravées sur la même ligne) : si elles s'accordent, la déviation et le faux pouls s'effacent.
  */
 /** Le compteur de battements entiers, sous la molette du retard : un petit bouton de laiton ; un clic compte un battement de plus (puis 0). */
-const BEATS = { x: 385, y: 278 };
+const BEATS = { x: 554, y: 254 }; // juste après les fenêtres du retard : la rangée du bas est centrée
 function beatCounter(r, ctx, c, st) {
   const t = tOf(r), { x, y } = BEATS, n = st.dial.beats || 0;
   ctx.fillStyle = c("#2a1d13"); ctx.beginPath(); ctx.arc(x, y, 6.5, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#8a6a2e"); ctx.lineWidth = 1; ctx.stroke();

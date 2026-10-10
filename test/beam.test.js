@@ -88,7 +88,7 @@ const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
     const P = TL.SPLATE, plateMarks = marks.filter((m) => m.y >= P.y && m.y < P.y + P.h), fr = plateMarks.find((m) => m.frac);
     ok(fr && JSON.stringify(fr.d) === JSON.stringify(BEAM.digitsOf(dist)), `${lang} ${dist} : la plaque grave la distance en rahnfee (0·${BEAM.digitsOf(dist).slice(1).join(" ")})`);
     ok(plateMarks.length >= 2 && plateMarks.every((m) => m.x >= P.x + 4 && m.x + m.w <= P.x + P.w - 4 && m.y + m.size <= P.y + P.h), `${lang} ${dist} : tout tient sur la plaque de l'étoile`);
-    const dm = marks.find((m) => m.frac && m.y > TL.DELAY.y && m.y < TL.DELAY.y + 60);
+    const dm = marks.find((m) => m.frac && m.y > TL.DELAY.y - 30 && m.y < TL.DELAY.y + 30 && m.x > TL.DELAY.x); // à droite de la molette
     ok(dm && JSON.stringify(dm.d) === JSON.stringify(BEAM.delayDigits(clue.delay)), `${lang} ${dist} : sous la molette, le retard en rahnfee (0·${BEAM.delayDigits(clue.delay).slice(1).join(" ")})`);
     ok(dm.x >= 374 && dm.x + dm.w <= 374 + 250, "la lecture du retard reste sur le panneau de l'instrument");
     const late = r.hot.find((h) => lang === "en" ? /^The pulse comes .* the pendulum\.$/.test(h.tip) : /^Le pouls arrive .* le balancier\.$/.test(h.tip));
