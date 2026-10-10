@@ -192,9 +192,10 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
  * bat au bout du tube, au rythme du prorahn.
  */
 function drawOnIsland(r, ctx, sky, tm) {
-  const { x: mx, h } = r.lay.mount, amb = 0.4 + 0.6 * sky.ambient, c = (col) => mix("#05060c", col, amb), bx = mx - 4, by = GY - h * 0.985 + 1;
+  const { x: mx, h } = r.lay.mount, amb = 0.4 + 0.6 * sky.ambient, c = (col) => mix("#05060c", col, amb), bx = mx - 6, by = GY - h + 5; // la base s'enfonce dans le sommet arrondi
   const night = sky.night == null ? 0 : sky.night, found = state(r).found;
-  ctx.save(); ctx.translate(bx, by); ctx.scale(1.45, 1.45); ctx.translate(-bx, -by); // à l'échelle de la cabane
+  ctx.save(); ctx.translate(bx, by); ctx.scale(1.3, 1.3); ctx.translate(-bx, -by); // à l'échelle de la cabane
+  // (le sommet est aplani en terrasse par le dessin du mont : drawMount(…, terrace))
   // le tambour de pierre
   const sg = ctx.createLinearGradient(bx - 9, 0, bx + 9, 0); sg.addColorStop(0, c("#8d8578")); sg.addColorStop(1, c("#4f4a43")); ctx.fillStyle = sg; ctx.fillRect(bx - 9, by - 8, 18, 8);
   ctx.strokeStyle = c("#3a352f"); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(bx - 9, by - 4); ctx.lineTo(bx + 9, by - 4); ctx.stroke();
@@ -205,8 +206,8 @@ function drawOnIsland(r, ctx, sky, tm) {
   ctx.beginPath(); ctx.moveTo(bx - 9.5, by - 8); ctx.arc(bx, by - 8, 9.5, Math.PI, 0); ctx.closePath(); ctx.fill();
   ctx.save(); ctx.translate(bx, by - 8); ctx.rotate(0.35); ctx.fillStyle = c("#1a1714"); ctx.fillRect(-1.6, -9.6, 3.2, 9); ctx.restore();
   // le tube qui sort de la fente
-  ctx.save(); ctx.translate(bx + 1, by - 12); ctx.rotate(-1.22); const g = ctx.createLinearGradient(0, -1.6, 0, 1.6); g.addColorStop(0, c("#e8c97a")); g.addColorStop(1, c("#7a5c28")); ctx.fillStyle = g; ctx.fillRect(0, -1.5, 10, 3);
-  if (found) { const beat = frac((now(r) - DT.REF) / PULSE_MS), a = 0.35 + 0.5 * Math.exp(-beat * 4) * (0.5 + 0.5 * (sky.night == null ? 0.5 : sky.night)); const gl = ctx.createRadialGradient(11, 0, 0, 11, 0, 6); gl.addColorStop(0, rgba(160, 235, 220, a)); gl.addColorStop(1, "rgba(160,235,220,0)"); ctx.fillStyle = gl; ctx.fillRect(5, -6, 12, 12); }
+  ctx.save(); ctx.translate(bx + 1, by - 12); ctx.rotate(-1.22); const g = ctx.createLinearGradient(0, -1.6, 0, 1.6); g.addColorStop(0, c("#e8c97a")); g.addColorStop(1, c("#7a5c28")); ctx.fillStyle = g; ctx.fillRect(0, -1.2, 7.5, 2.4);
+  if (found) { const beat = frac((now(r) - DT.REF) / PULSE_MS), a = 0.35 + 0.5 * Math.exp(-beat * 4) * (0.5 + 0.5 * (sky.night == null ? 0.5 : sky.night)); const gl = ctx.createRadialGradient(8.5, 0, 0, 8.5, 0, 5); gl.addColorStop(0, rgba(160, 235, 220, a)); gl.addColorStop(1, "rgba(160,235,220,0)"); ctx.fillStyle = gl; ctx.fillRect(3.5, -5, 10, 10); }
   ctx.restore();
   ctx.restore();
   const t = tOf(r); r.hot.push({ x: bx - 16, y: by - 34, w: 32, h: 36, tip: found ? t("tel.island.found") : t("tel.island"), go: "telescope" });

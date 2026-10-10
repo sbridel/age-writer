@@ -190,7 +190,7 @@ class ReltoRenderer {
     this.drawIsland(ctx, sky, t);
     const dk = has("dock"); if (dk) SC.dock(ctx, this, sky, t, !!cal);
     for (const k of ["gold", "silver", "gems"]) { const o = has(k); if (o) this.drawOre(ctx, k, o.density, sky, t); }
-    const mt = has("mountain"), tl = has("telescope"); if (mt || tl) this.drawMount(ctx, mt ? mt.density : 0, sky, t); // le télescope apporte son rocher s'il n'y a pas de mont
+    const mt = has("mountain"), tl = has("telescope"); if (mt || tl) this.drawMount(ctx, mt ? mt.density : 0, sky, t, !!tl); // avec l'observatoire, le sommet est aplani en terrasse
     if (tl) TL.drawOnIsland(this, ctx, sky, t);
     const wf = has("waterfall"); if (wf) this.drawWaterfall(ctx, t, "stream"); // le ruisseau coule sur la montagne : derrière les arbres
     this.drawPlants(ctx, 0, t);
@@ -749,18 +749,24 @@ class ReltoRenderer {
   }
 
   /** un petit mont rocheux derrière la cabane, posé sur l'île (pas une chaîne à l'horizon) */
-  drawMount(ctx, d, sky, t) {
+  drawMount(ctx, d, sky, t, terrace = false) {
     const T = TERRAIN[this.scene.terrain], amb = 0.35 + 0.65 * sky.ambient, shade = (c) => mix("#05060c", c, amb);
     const { x: cx, hw, h } = this.lay.mount; // le mont, derrière la cabane, grand : il porte la source du ruisseau
     const path = () => { ctx.beginPath(); ctx.moveTo(cx - hw, GY + 2); ctx.bezierCurveTo(cx - hw * 0.55, GY - h * 0.35, cx - hw * 0.3, GY - h * 0.95, cx - 6, GY - h); ctx.bezierCurveTo(cx + 14, GY - h * 1.02, cx + hw * 0.35, GY - h * 0.7, cx + hw * 0.62, GY - h * 0.32); ctx.bezierCurveTo(cx + hw * 0.85, GY - h * 0.1, cx + hw * 0.95, GY - 2, cx + hw, GY + 2); ctx.closePath(); };
     ctx.save(); path();
     const g = ctx.createLinearGradient(0, GY - h, 0, GY); g.addColorStop(0, shade(T.rock2)); g.addColorStop(1, shade(T.rock)); ctx.fillStyle = g; ctx.fill();
+    if (terrace) { // un sommet aplani : une large épaule de roche sur laquelle l'observatoire tient tout entier
+      const px = cx - 6, py = GY - h + 5; ctx.beginPath(); ctx.moveTo(px - 34, py + 18); ctx.quadraticCurveTo(px - 24, py + 2, px - 17, py); ctx.lineTo(px + 17, py); ctx.quadraticCurveTo(px + 24, py + 2, px + 34, py + 18); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = rgba(0, 0, 0, 0.18); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(px - 17, py + 0.5); ctx.lineTo(px + 17, py + 0.5); ctx.stroke();
+      path(); ctx.moveTo(px - 34, py + 18); ctx.quadraticCurveTo(px - 24, py + 2, px - 17, py); ctx.lineTo(px + 17, py); ctx.quadraticCurveTo(px + 24, py + 2, px + 34, py + 18); ctx.closePath();
+    }
     ctx.clip();
     // face à l'ombre à droite, strates, calotte herbeuse en haut
     ctx.fillStyle = rgba(0, 0, 0, 0.24); ctx.beginPath(); ctx.moveTo(cx + 4, GY - h); ctx.lineTo(cx + hw + 4, GY + 4); ctx.lineTo(cx + 6, GY + 4); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = rgba(0, 0, 0, 0.22); ctx.lineWidth = 1;
     for (let i = 1; i < 6; i++) { const y = GY - h + i * (h / 6.2); ctx.beginPath(); ctx.moveTo(cx - hw, y + 3); ctx.lineTo(cx - 10, y - 2); ctx.lineTo(cx + hw * 0.5, y + 4); ctx.stroke(); }
-    ctx.fillStyle = shade(T.top); ctx.beginPath(); ctx.moveTo(cx - 30, GY - h * 0.7); ctx.quadraticCurveTo(cx - 6, GY - h * 1.12, cx + 30, GY - h * 0.58); ctx.lineTo(cx + 30, GY - h * 1.2); ctx.lineTo(cx - 30, GY - h * 1.2); ctx.closePath(); ctx.fill();
+    if (!terrace) ctx.fillStyle = shade(T.top); else ctx.fillStyle = "rgba(0,0,0,0)"; // la calotte herbeuse : pas sur une terrasse de pierre
+    ctx.beginPath(); ctx.moveTo(cx - 30, GY - h * 0.7); ctx.quadraticCurveTo(cx - 6, GY - h * 1.12, cx + 30, GY - h * 0.58); ctx.lineTo(cx + 30, GY - h * 1.2); ctx.lineTo(cx - 30, GY - h * 1.2); ctx.closePath(); ctx.fill();
     ctx.restore();
     ctx.fillStyle = shade(T.tuft); const r = rng((this.scene.seed ^ 0x2f1d) >>> 0);
     for (let i = 0; i < 9; i++) { const x = cx - 24 + r() * 44, y = GY - h * (0.86 + 0.1 * Math.sin((x - cx) / 14)) + 3; ctx.beginPath(); ctx.moveTo(x - 1.5, y); ctx.lineTo(x, y - 3 - r() * 3); ctx.lineTo(x + 1.5, y); ctx.fill(); }
