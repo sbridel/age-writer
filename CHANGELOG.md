@@ -5,6 +5,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 ## Unreleased
 
 ### Added
+- **The ink dries before your eyes.** In the book (descriptive pages: text and glyphs) and in the Age block's *Text & glyphs* tab, freshly written ink is dark and glistening, a glint slides over it, and it slowly turns matte and brown over the drying time (15 minutes by default). Hovering the text or glyphs says how many minutes are left to change the Age freely, or that the ink is dry.
 - **`grass`**: green land that the wind combs in long waves across the linking window; a grassy shore by water, sometimes tall grass in the foreground. Written with `flowers`, it grows into a **meadow** (`meadow` ← `grass` + `flowers`): taller grass to the horizon, with flowers moving through it.
 
 ## 1.22.0 — Plumb lines on the star chart (2026-10-10)

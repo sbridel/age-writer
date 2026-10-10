@@ -61,6 +61,15 @@ class Law {
     return clamp(a.extra - this.o.healPerDay() * days);
   }
 
+  /** Fraîcheur de l'encre (1 : tout juste écrite, 0 : sèche) : le temps qui reste avant que modifier l'Âge ne l'abîme.
+   *  Encre qui ne sèche jamais (délai ≤ 0) : 1. Âge jamais lu : null. `left` : millisecondes avant qu'elle sèche. */
+  ink(name) {
+    const a = this.get(name); if (!a) return null;
+    const dry = this.o.dryMinutes(); if (!(dry > 0)) return { fresh: 1, left: Infinity };
+    const left = Math.max(0, a.changedAt + dry * 60000 - this.now());
+    return { fresh: clamp(left / (dry * 60000)), left };
+  }
+
   /** Ouverture (0 à 1) des fissures d'un Âge : elles s'ouvrent avec le temps, depuis que le livre existe (`born`), en `days` jours.
    *  `days` ≤ 0 : toujours grandes ouvertes. Un Âge inconnu est neuf : fissure fermée. */
   opening(name, days) {

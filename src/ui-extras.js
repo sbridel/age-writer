@@ -361,4 +361,24 @@ function renderDniBlock(plugin, source, el) {
   if (!plugin.dni.hasFont()) root.createDiv({ cls: "age-dniblock__note", text: plugin.t("dni.nofont") });
 }
 
-module.exports = { dniText, renderExtras, tabifyPanel, renderJournal, renderDniBlock, ageNumber, calibrationOf, mechanismsFor, parseJournalSource };
+/**
+ * L'encre qui sèche : sur `el` (le panneau de l'Âge ou le livre), la variable CSS `--aw-ink` va de 1 (encre fraîche, sombre et luisante)
+ * à 0 (sèche, mate) ; `targets` (texte, glyphes) disent au survol combien de temps reste pour corriger librement. Mise à jour toutes les 10 s
+ * tant que l'élément est affiché. Sans loi du changement : rien.
+ */
+function inkFresh(plugin, el, name, targets = []) {
+  if (!el || !plugin.ext || !plugin.ext.law || !plugin.law) return;
+  if (el.__inkTimer) window.clearInterval(el.__inkTimer);
+  const t = plugin.t, tick = () => {
+    el.__inkTicks = (el.__inkTicks || 0) + 1;
+    if (!el.isConnected && (el.__inkSeen || el.__inkTicks > 6)) { window.clearInterval(el.__inkTimer); el.__inkTimer = 0; return; } // retiré (ou jamais affiché) : on s'arrête
+    if (el.isConnected) el.__inkSeen = true;
+    const k = plugin.law.ink(name); if (!k) return;
+    el.addClass("age-ink"); el.style.setProperty("--aw-ink", k.fresh.toFixed(3)); el.toggleClass("is-wet", k.fresh > 0.02);
+    const tip = k.left === Infinity ? t("ink.never") : k.fresh > 0 ? t("ink.fresh", { n: Math.max(1, Math.ceil(k.left / 60000)) }) : t("ink.dry");
+    for (const x of targets) if (x) x.setAttr("title", tip);
+  };
+  tick(); el.__inkTimer = window.setInterval(tick, 10000);
+}
+
+module.exports = { inkFresh, dniText, renderExtras, tabifyPanel, renderJournal, renderDniBlock, ageNumber, calibrationOf, mechanismsFor, parseJournalSource };

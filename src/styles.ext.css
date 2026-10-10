@@ -445,3 +445,20 @@
 .age-surveyor { display: flex; flex-direction: column; gap: 10px; }
 .age-surveyor__card { padding: 8px 12px; border-left: 3px solid var(--interactive-accent); background: var(--background-secondary); border-radius: 4px; }
 .age-surveyor__name { font-weight: 600; display: block; margin-bottom: 2px; }
+
+/* ======================= l'encre qui sèche (--aw-ink : 1 fraîche → 0 sèche) ======================= */
+/* Le livre (papier) : encre ferro-gallique, bleu-noir et luisante quand elle est fraîche, puis mate et brunie (la couleur de toujours). */
+.age-book.age-ink .age-book__prose { position: relative; color: color-mix(in srgb, #16203a calc(var(--aw-ink, 0) * 100%), #3a2f22);
+  text-shadow: 0 -0.6px 0 rgba(255, 255, 255, calc(var(--aw-ink, 0) * 0.55)), 0 0.8px 1.2px rgba(10, 14, 30, calc(var(--aw-ink, 0) * 0.35)); }
+.age-book.age-ink .age-book__chip { color: color-mix(in srgb, #16203a calc(var(--aw-ink, 0) * 100%), #5a4a30); }
+.age-book.age-ink .age-book__chip-art svg { filter: drop-shadow(0 -0.6px 0 rgba(255, 255, 255, calc(var(--aw-ink, 0) * 0.6))) drop-shadow(0 0.8px 1px rgba(10, 14, 30, calc(var(--aw-ink, 0) * 0.4))); }
+/* Le panneau (sombre) : l'encre fraîche accroche la lumière, plus claire, avec un halo ; sèche, elle reprend son ton éteint. */
+.age-panel.age-ink .age-panel__journal { position: relative; color: color-mix(in srgb, #f1e5c4 calc(var(--aw-ink, 0) * 100%), #b9ac8a);
+  text-shadow: 0 0 calc(var(--aw-ink, 0) * 5px) rgba(233, 220, 184, calc(var(--aw-ink, 0) * 0.35)); }
+.age-panel.age-ink .age-panel__visual svg { filter: drop-shadow(0 0 calc(var(--aw-ink, 0) * 3px) rgba(240, 228, 196, calc(var(--aw-ink, 0) * 0.55))); }
+/* le reflet qui glisse sur l'encre humide */
+.age-ink.is-wet .age-book__prose::after, .age-ink.is-wet .age-panel__journal::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.5) 50%, transparent 62%) no-repeat; background-size: 300% 100%;
+  mix-blend-mode: soft-light; opacity: calc(var(--aw-ink, 0) * 0.8); animation: age-ink-glint 7s ease-in-out infinite; }
+@keyframes age-ink-glint { 0% { background-position: 120% 0; } 60%, 100% { background-position: -20% 0; } }
+@media (prefers-reduced-motion: reduce) { .age-ink.is-wet .age-book__prose::after, .age-ink.is-wet .age-panel__journal::after { animation: none; display: none; } }

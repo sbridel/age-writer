@@ -167,6 +167,7 @@ module.exports = function build(Base, core, AGEX) {
         const panel = el.querySelector(":scope > .age-panel") || el.lastElementChild; if (!panel) return;
         X.renderExtras(this, panel, { src, analysis, name, path });
         if (this.ext.panelTabs !== false) X.tabifyPanel(this, panel);
+        X.inkFresh(this, panel, name, [panel.querySelector(".age-panel__journal"), panel.querySelector(".age-panel__visual")]); // l'encre qui sèche
       });
     }
     mountGenerated(parent, analysis, path) { super.mountGenerated(parent, analysis, path); this.applyFx(parent, analysis, path); }
@@ -297,6 +298,7 @@ module.exports = function build(Base, core, AGEX) {
       if (ext.leather && !spread.querySelector(".age-book__corner")) for (const c of ["tl", "tr", "bl", "br"]) spread.createDiv({ cls: `age-book__corner age-book__corner--${c}` });
       const src = core.extract(await this.app.vault.cachedRead(file)); if (src === null) return;
       const analysis = core.analyse(src, { seed: core.base(file.path) });
+      guard("encre", () => X.inkFresh(this, el, core.base(file.path), [el.querySelector(".age-book__prose"), el.querySelector(".age-book__chips")]));
       const tabs = el.querySelector(".age-book__tabs");
       if (tabs && ext.coverTab) {
         const b = tabs.createEl("button", { text: t("book.cover"), cls: cover ? "is-active" : "" });
