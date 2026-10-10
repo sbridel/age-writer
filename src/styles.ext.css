@@ -309,7 +309,14 @@
 .age-relto[data-tab] .age-relto__tabs { position: relative; min-height: 38px; padding-right: 48px; margin-bottom: 6px; align-items: center; opacity: 1; }
 .age-relto[data-tab] .age-relto__tab { opacity: 0.4; transition: opacity 0.2s; }
 .age-relto[data-tab] .age-relto__tabs:hover .age-relto__tab, .age-relto[data-tab] .age-relto__tabs:focus-within .age-relto__tab { opacity: 0.95; }
-.age-relto__tabs .age-relto__dnioverlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.2em; text-shadow: none; }
+/* le nom D'ni prend sa place entre les icônes de navigation et les onglets (plus en surimpression) : dans un panneau étroit,
+   il passe à la ligne au lieu de glisser sous les icônes */
+.age-relto[data-tab] .age-relto__tabs { flex-wrap: wrap; row-gap: 2px; }
+.age-relto__tabs > .age-relto__nav--bar { order: 0; margin-right: 0; }
+.age-relto__tabs .age-relto__dnioverlay { position: static; transform: none; order: 1; flex: 1 1 auto; min-width: 0; padding: 0 8px; text-align: center; white-space: nowrap; overflow: hidden; font-size: 1.2em; text-shadow: none; }
+.age-relto__tabs > .age-relto__tab { order: 2; }
+.age-relto[data-tab] { container-type: inline-size; }
+@container (max-width: 600px) { .age-relto__tabs .age-relto__dnioverlay { order: -1; flex-basis: 100%; padding: 2px 0 0; } .age-relto__tabs > .age-relto__nav--bar { margin-right: auto; } } /* étroit : le nom au-dessus, les icônes et les onglets dessous */
 
 /* Vue Relto : marges réduites au minimum ; plein écran réel (bouton « expand ») */
 .age-reltoview { padding: 0; }
