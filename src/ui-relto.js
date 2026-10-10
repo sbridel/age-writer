@@ -289,7 +289,7 @@ async function renderRelto(plugin, source, el, ctx) {
     try {
       const f = app.vault.getAbstractFileByPath(age.path); if (!f) return null;
       const src = plugin.core.extract(await app.vault.cachedRead(f)); if (src == null) return null;
-      const name = plugin.core.base(f.path), a = plugin.core.analyse(src, { seed: name });
+      const name = plugin.core.seed(f.path), a = plugin.core.analyse(src, { seed: name }); // la graine (`age_seed` après un renommage)
       const S = G.sceneOf(a, name, plugin.core.blocks), sky = SKY.parseSky(src); if (S) Object.assign(S, sky);
       // étape 2 : le système d'étoile (télescope) et l'orbite de la planète (micromètre de l'Imageur)
       const system = SS.systemOf(a, src, name); // étape 3 : ses perturbateurs font dériver plus vite la calibration

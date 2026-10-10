@@ -196,7 +196,7 @@ const REF_EN = [
     { h: "What the Age draws when you leave it open" },
     { ul: [
       "Eleven slots: stars, day cycle, moon, phenomena, ground, minerals, weather, flora, fauna, ruins, fissure. Stars, day cycle, ground and fissure take one value: write one and nothing else is drawn there (`twin_suns` means no drawn sun). The other slots can still add to what you wrote",
-      "Same note + same `seed:` → same world; renaming the note changes its world",
+      "Same note + same `seed:` → same world. Renaming the note keeps its world and its star: the plugin writes its former name as the property `age_seed` (delete it to draw a new world). For an Age renamed before that existed: command *Give this Age back the world of its former name*",
       "Ordinary values come up more often; what would clash or react violently is less likely, never impossible (engine setting “How much a clash steers the draw”)",
       "Drawn pages are marked in the book; ✓ keeps one as written, × removes it",
       "The “Solitude” setting weights the draw toward deserted worlds: more ruins and wild nature, fewer hunters",

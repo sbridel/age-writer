@@ -42,6 +42,17 @@ module.exports = function build(Base, core, AGEX) {
     onChooseItem(v) { this.onChoose(v); }
   }
 
+  /** Le nom d'origine d'un Âge renommé : les noms gravés à l'observatoire qui ne sont plus ceux d'une note, ou ce qu'on tape (classe créée à la demande). */
+  const formerNameModal = (app, cands, placeholder, onChoose) => {
+    class FormerNameModal extends obsidian.SuggestModal {
+      constructor() { super(app); this.setPlaceholder(placeholder); }
+      getSuggestions(q) { const v = String(q || "").trim(), c = cands.filter((n) => n.toLowerCase().includes(v.toLowerCase())); return v && !c.includes(v) ? [v, ...c] : c; }
+      renderSuggestion(v, el) { el.setText(v); }
+      onChooseSuggestion(v) { onChoose(v); }
+    }
+    return new FormerNameModal();
+  };
+
   return class AgeWriterExt extends Base {
     // ---- ouverture du livre : panneau latéral (origine), onglet principal ou fenêtre séparée -------
     async openBook() {
@@ -98,6 +109,9 @@ module.exports = function build(Base, core, AGEX) {
         }) || out;
         return out;
       };
+      // la graine d'un Âge renommé : sa propriété `age_seed` (posée au renommage), pour qu'il garde son monde et son étoile
+      this.renamedSeeds = new Map(); // chemin → graine, posée au renommage (le cache des propriétés suit un peu plus tard)
+      AGEX.seedName = (path) => { if (this.renamedSeeds.has(path)) return this.renamedSeeds.get(path); const f = this.app.vault.getAbstractFileByPath(path), fm = f ? (this.app.metadataCache.getFileCache(f) || {}).frontmatter : null; const v = fm && fm.age_seed; return v != null && String(v).trim() ? String(v).trim() : null; };
       AGEX.norm = (line) => guard("météo", () => WX.normalize(line)) || line; // `rain: sometimes, dawn` : pour le moteur, c'est `rain`
       AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line) || SYSTEM_RE.test(line); // `system: Kerath` : la graine d'étoile partagée (télescope, étape 2)
       // livre-piège : « pas de fissure » est une réponse donnée d'avance, le tirage n'en dessine pas une que le pied de bloc nierait
@@ -159,7 +173,7 @@ module.exports = function build(Base, core, AGEX) {
 
     // ---- remplacements de méthodes du plugin d'origine ---------------------------------------
     renderAgePanel(src, el, path) {
-      const name = core.base(path), analysis = guard("analyse", () => core.analyse(src, { seed: name }));
+      const name = core.base(path), analysis = guard("analyse", () => core.analyse(src, { seed: core.seed(path) })); // la graine : `age_seed` si l'Âge a été renommé
       this.fxCtx = { mode: parseFx(src), style: parseStyle(src), sky: parseSky(src), seed: String(path), analysis };
       try { super.renderAgePanel(src, el, path); } finally { this.fxCtx = null; }
       guard("panel", () => {
@@ -185,7 +199,7 @@ module.exports = function build(Base, core, AGEX) {
       guard("fx", () => {
         if (!this.ext) return;
         const r = this.resolveFx(analysis);
-        const gen = r.style === "gen" ? sceneOf(r.a, String(r.seed || key).replace(/^.*\//, "").replace(/\.md$/i, ""), core.blocks) : null; // fenêtre génératrice (si l'analyse est connue)
+        const gen = r.style === "gen" ? sceneOf(r.a, core.seed(String(r.seed || key)), core.blocks) : null; // fenêtre génératrice (si l'analyse est connue)
         if (gen) Object.assign(gen, r.sky); // durée du jour et de l'année (lignes day_length / year_length)
         const size = r.sky.size || this.ext.windowSize || "large"; // la ligne window_size / window_width du bloc passe avant le réglage ; les livres et le Relto gardent leur taille
         if (key !== "window") {
@@ -281,7 +295,7 @@ module.exports = function build(Base, core, AGEX) {
     coverFor(src, analysis, file, standalone) {
       const name = file.basename, seed = /^\s*seed\s*:\s*(\d+)\s*$/im.exec(src);
       return coverSvg({
-        name, number: X.ageNumber(name), seedNumber: seed ? Number(seed[1]) : null, dni: this.dni, standalone,
+        name, number: X.ageNumber(core.seed(file.path)), seedNumber: seed ? Number(seed[1]) : null, dni: this.dni, standalone,
         glyph: (id, x, y, s) => core.glyphSvg(id, x, y, s, "none"), glyphIds: core.glyphs(analysis).filter((g) => !g.blot).map((g) => g.id), world: guard("cover world", () => worldIds(analysis)) || [], sobriety: parseCover(src) ?? ({ ornate: 0.05, classic: 0.35, sober: 0.7, plain: 1 })[this.ext.coverStyle],
         verdict: analysis.verdict, burnt: !!(this.law && this.law.destroyed(name)), label: this.t("book.descriptive"),
       });
@@ -297,8 +311,8 @@ module.exports = function build(Base, core, AGEX) {
       el.setAttr("data-age-mode", cover ? "cover" : view.mode); // le livre de liaison est plus haut (voir styles.ext.css)
       if (ext.leather && !spread.querySelector(".age-book__corner")) for (const c of ["tl", "tr", "bl", "br"]) spread.createDiv({ cls: `age-book__corner age-book__corner--${c}` });
       const src = core.extract(await this.app.vault.cachedRead(file)); if (src === null) return;
-      const analysis = core.analyse(src, { seed: core.base(file.path) });
-      guard("encre", () => X.inkFresh(this, el, core.base(file.path), [el.querySelector(".age-book__prose"), el.querySelector(".age-book__chips")]));
+      const analysis = core.analyse(src, { seed: core.seed(file.path) });
+      guard("encre", () => X.inkFresh(this, el, file.basename, [el.querySelector(".age-book__prose"), el.querySelector(".age-book__chips")]));
       const tabs = el.querySelector(".age-book__tabs");
       if (tabs && ext.coverTab) {
         const b = tabs.createEl("button", { text: t("book.cover"), cls: cover ? "is-active" : "" });
@@ -314,7 +328,7 @@ module.exports = function build(Base, core, AGEX) {
         act.createEl("button", { text: t("book.savecover") }).addEventListener("click", () => this.saveCover(file));
       } else if (view.mode === "descriptive") {
         const right = spread.querySelector(".age-book__page--right");
-        if (right) X.renderExtras(this, right, { src, analysis, name: file.basename, compact: true });
+        if (right) X.renderExtras(this, right, { src, analysis, name: file.basename, path: file.path, compact: true });
       } else if (view.mode === "linking" && ext.linkLeaves !== false) this.leafLinking(view, spread, { src, analysis, file });
     }
 
@@ -359,7 +373,7 @@ module.exports = function build(Base, core, AGEX) {
 
     async saveCover(file) {
       const src = core.extract(await this.app.vault.read(file)); if (src === null) return new Notice(this.t("cover.noage"));
-      const analysis = core.analyse(src, { seed: core.base(file.path) }), svg = this.coverFor(src, analysis, file, true);
+      const analysis = core.analyse(src, { seed: core.seed(file.path) }), svg = this.coverFor(src, analysis, file, true);
       const dir = file.parent && file.parent.path !== "/" ? file.parent.path + "/" : "", path = `${dir}${file.basename} cover.svg`;
       const ex = this.app.vault.getAbstractFileByPath(path);
       if (ex instanceof TFile) await this.app.vault.modify(ex, svg); else await this.app.vault.create(path, svg);
@@ -414,6 +428,7 @@ module.exports = function build(Base, core, AGEX) {
       this.addCommand({ id: "random-age", name: "Generate a random Age", callback: () => this.randomAge() });
       this.addCommand({ id: "stop-soundscape", name: "Stop the soundscape", callback: () => this.stopSound() });
       // refaire la synchro du télescope : oublie le Great Zero trouvé (et la visée) de tous les Reltos ; l'heure D'ni se tait de nouveau
+      this.addCommand({ id: "keep-world-former-name", name: "Give this Age back the world of its former name", callback: () => this.keepFormerWorld() });
       this.addCommand({ id: "forget-great-zero", name: "Forget the Great Zero (aim the telescope again)", callback: () => this.forgetGreatZero() });
     }
 
@@ -500,7 +515,7 @@ module.exports = function build(Base, core, AGEX) {
     async observeFile(f) {
       if (!this.ext.law) return;
       const src = core.extract(await this.app.vault.read(f)); if (src === null) return;
-      const ev = this.law.observe(f.basename, core.analyse(src, { seed: f.basename, physics: false }), f.stat.mtime, guard("valeurs physiques", () => PH.parsePhysics(src).params));
+      const ev = this.law.observe(f.basename, core.analyse(src, { seed: core.seed(f.path), physics: false }), f.stat.mtime, guard("valeurs physiques", () => PH.parsePhysics(src).params));
       this.saveExt();
       if (ev) {
         new Notice(`${this.t("law.warning")}\n${describeChange(ev, this.t)}`, 9000);
@@ -512,8 +527,41 @@ module.exports = function build(Base, core, AGEX) {
       if (!(f instanceof TFile) || f.extension !== "md") return;
       const oldName = old.replace(/^.*\//, "").replace(/\.md$/i, "");
       const src = core.extract(await this.app.vault.read(f));
-      if (src === null) this.law.forget(oldName); else this.law.rename(oldName, f.basename, core.analyse(src, { seed: f.basename, physics: false }), guard("valeurs physiques", () => PH.parsePhysics(src).params));
-      this.saveExt();
+      if (src === null) { this.law.forget(oldName); this.saveExt(); return; }
+      // un Âge renommé garde son monde : son ancienne graine devient sa propriété `age_seed` (sauf s'il en a déjà une)
+      const fm = (this.app.metadataCache.getFileCache(f) || {}).frontmatter, had = fm && fm.age_seed != null && String(fm.age_seed).trim() ? String(fm.age_seed).trim() : null;
+      const seed = had || core.seed(old) || oldName;
+      this.renamedSeeds.set(f.path, seed);
+      if (!had) await guard("age_seed", () => this.app.fileManager.processFrontMatter(f, (p) => { if (p.age_seed == null || !String(p.age_seed).trim()) p.age_seed = seed; }));
+      this.law.rename(oldName, f.basename, core.analyse(src, { seed, physics: false }), guard("valeurs physiques", () => PH.parsePhysics(src).params));
+      guard("renommage", () => this.renameEverywhere(old, f.path, oldName, f.basename));
+      this.saveExt(); this.refreshLive();
+    }
+
+    /** Commande : un Âge renommé avant que le plugin ne garde les graines retrouve le monde de son ancien nom (propriété `age_seed`), sans altération. */
+    async keepFormerWorld() {
+      const f = this.app.workspace.getActiveFile(); if (!(f instanceof TFile) || f.extension !== "md") { new Notice(this.t("seed.noage")); return; }
+      const src = core.extract(await this.app.vault.read(f)); if (src === null) { new Notice(this.t("seed.noage")); return; }
+      const notes = new Set(this.app.vault.getMarkdownFiles().map((x) => x.basename)), cands = new Set();
+      for (const st of Object.values(this.ext.telescope || {})) for (const rec of Object.values((st && st.systems) || {})) for (const n of (rec && rec.ages) || []) if (!notes.has(n)) cands.add(n);
+      formerNameModal(this.app, [...cands].sort(), this.t("seed.prompt"), async (former) => {
+        const seed = String(former).trim(); if (!seed) return;
+        this.renamedSeeds.set(f.path, seed);
+        await guard("age_seed", () => this.app.fileManager.processFrontMatter(f, (p) => { p.age_seed = seed; }));
+        this.law.rename(f.basename, f.basename, core.analyse(src, { seed, physics: false }), guard("valeurs physiques", () => PH.parsePhysics(src).params)); // le monde retrouvé n'est pas une altération
+        guard("renommage", () => this.renameEverywhere(f.path, f.path, seed, f.basename));
+        this.saveExt(); this.refreshLive(); new Notice(this.t("seed.done", { name: f.basename, former: seed }));
+      }).open();
+    }
+
+    /** Après un renommage : les noms gravés à l'observatoire (systèmes situés, tous les Reltos) et les réglages de l'Imageur suivent le nouveau nom. */
+    renameEverywhere(oldPath, newPath, oldName, newName) {
+      for (const st of Object.values(this.ext.telescope || {})) {
+        if (!st || !st.systems) continue;
+        for (const rec of Object.values(st.systems)) if (rec && Array.isArray(rec.ages) && rec.ages.includes(oldName)) rec.ages = [...new Set(rec.ages.map((n) => (n === oldName ? newName : n)))].sort();
+        if (st.book === oldPath) st.book = newPath;
+      }
+      const tun = this.ext.imagerTunings; if (tun && tun[oldPath] && !tun[newPath]) { tun[newPath] = tun[oldPath]; delete tun[oldPath]; }
     }
 
     async initialScan() {
@@ -522,7 +570,7 @@ module.exports = function build(Base, core, AGEX) {
         const c = this.app.metadataCache.getFileCache(f);
         if (c && !(c.sections || []).some((s) => s.type === "code")) continue;
         const src = core.extract(await this.app.vault.cachedRead(f)); if (src === null) continue;
-        if (!this.law.get(f.basename)) this.law.observe(f.basename, core.analyse(src, { seed: f.basename, physics: false }), f.stat.mtime);
+        if (!this.law.get(f.basename)) this.law.observe(f.basename, core.analyse(src, { seed: core.seed(f.path), physics: false }), f.stat.mtime);
         if (++n % 25 === 0) await new Promise((r) => setTimeout(r, 0));
       }
       this.saveExt();

@@ -22,10 +22,11 @@ const ageNumber = (name) => fnv(name) % 390625;                    // 25^4
  * `lt` (l'heure locale), `moved` (synchronisé sur une autre étoile : le monde a été réécrit), `kips` (synchronisé : les
  * coordonnées KIPS, KI-style).
  */
+const seedOf = (plugin, path, name) => (path && plugin.core && plugin.core.seed ? plugin.core.seed(path) : name); // la graine de l'Âge (`age_seed` après un renommage)
 function calibrationOf(plugin, { src, analysis, name, path }) {
-  const sys = SS.systemOf(analysis, src, name), { zero, rec } = SS.findLocated(plugin.ext.telescope, sys.key), now = Date.now();
+  const seed = seedOf(plugin, path, name), sys = SS.systemOf(analysis, src, seed), { zero, rec } = SS.findLocated(plugin.ext.telescope, sys.key), now = Date.now();
   const tune = (plugin.ext.imagerTunings || {})[path] || null, moved = !!(tune && tune.sysKey && tune.sysKey !== sys.key && tune.syncAt != null);
-  const orbit = CAL.orbitOf(analysis, name, SKY.parseSky(src), sys.near), cal = CAL.state(moved ? { ...tune, syncAt: null } : tune, orbit, !!rec && !rec.beatErr, now); // gravée au mauvais battement : l'Imageur ne la tient pas
+  const orbit = CAL.orbitOf(analysis, seed, SKY.parseSky(src), sys.near), cal = CAL.state(moved ? { ...tune, syncAt: null } : tune, orbit, !!rec && !rec.beatErr, now); // gravée au mauvais battement : l'Imageur ne la tient pas
   // étape 3 : gravée sur la fausse ligne, l'étoile donne une heure et des KIPS faux (on les montre tels quels : c'est le piège)
   const field = analysis && analysis.physics && analysis.physics.w ? analysis.physics.w.field : null;
   return { sys, rec, zero, cal, moved, orbit, compass: SS.compassOf(field), old: SS.offLine(rec), lt: CAL.localTime(orbit, cal, now + CAL.lineShift(orbit, rec && rec.line)), kips: rec && cal.synced ? [rec.torahn, TEL.kiElev(rec.elevation), rec.distance] : null };
@@ -100,7 +101,7 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
   try {
     const notes = plugin.ext.imagerNotes === "off" || plugin.ext.imagerNotes === "full" || plugin.ext.imagerNotes === "words" ? plugin.ext.imagerNotes : "words";
     if (notes === "off") throw new Error("notes masquées");
-    const tg = IMG.targetsOf(analysis, path ? String(path).replace(/^.*\//, "").replace(/\.md$/i, "") : ""), hn = IMG.hints(tg, lang);
+    const tg = IMG.targetsOf(analysis, path ? seedOf(plugin, path, String(path).replace(/^.*\//, "").replace(/\.md$/i, "")) : ""), hn = IMG.hints(tg, lang);
     const sky = sec.createDiv({ cls: "age-det__sky" });
     sky.createEl("b", { text: t("det.sky") + " " });
     sky.createSpan({ cls: "age-det__skyline", text: hn.line });
@@ -193,7 +194,7 @@ function renderStarNote(plugin, sec, { src, analysis, path }) {
 function renderExtras(plugin, container, { src, analysis, name, compact, path }) {
   const t = plugin.t, lang = plugin.lang(), ext = plugin.ext, dni = plugin.dni;
   const box = container.createDiv({ cls: "age-ext" + (compact ? " age-ext--compact" : "") });
-  const { list, unknown, world } = mechanismsFor(plugin, src, analysis, name);
+  const seed = seedOf(plugin, path, name), { list, unknown, world } = mechanismsFor(plugin, src, analysis, seed);
 
   if (!compact) {
     try { renderStability(plugin, box, analysis); } catch (e) { console.warn("[Age Writer ext] stabilité", e); }
@@ -252,7 +253,7 @@ function renderExtras(plugin, container, { src, analysis, name, compact, path })
   if (analysis.damage) box.createDiv({ cls: "age-ext__lawmeter", text: t("book.damage", { d: analysis.damage.damaged, r: analysis.damage.removed }) });
   if (strong.length) box.createDiv({ cls: "age-ext__fissure", text: t("fissure.label", { a: words(strong[0].a), b: words(strong[0].b) }) });
 
-  if (ext.solitude !== "off") box.createDiv({ cls: "age-ext__trace", text: mech.traceFor(name, lang) });
+  if (ext.solitude !== "off") box.createDiv({ cls: "age-ext__trace", text: mech.traceFor(seed, lang) });
 
   if (ext.sound) {
     let layers = sound.mergeLayers(sound.layersForWorld(world), sound.layersForMechs(list.map((x) => x.id)));
@@ -308,8 +309,8 @@ async function renderJournal(plugin, source, el, ctx) {
   const src = file ? core.extract(await app.vault.cachedRead(file)) : null;
   if (!file || src === null) { root.createDiv({ cls: "age-journal__empty", text: t("journal.notfound", { name: link }) }); return; }
   const lang = opt.lang || plugin.lang(), voice = (opt.voice || "atrus").toLowerCase();
-  const analysis = core.analyse(src, { seed: core.base(file.path) });
-  const { list: mechs, world } = mechanismsFor(plugin, src, analysis, file.basename);
+  const analysis = core.analyse(src, { seed: core.seed(file.path) });
+  const { list: mechs, world } = mechanismsFor(plugin, src, analysis, core.seed(file.path));
   const ids = [...world].filter((i) => !i.startsWith("?"));
   // notes qui renvoient vers l'Âge
   const notes = [];
@@ -321,7 +322,7 @@ async function renderJournal(plugin, source, el, ctx) {
   notes.sort((a, b) => a.ctime - b.ctime);
   for (const n of notes) n.excerpt = journal.excerptAround(await app.vault.cachedRead(n.f), file.basename);
   const alterations = plugin.law.log(file.basename).map((e) => ({ text: describeChange(e, t) }));
-  const prose = core.prose(analysis.resolved, { seed: file.basename }).split(/(?<=[.!?])\s/).slice(0, 2).join(" ");
+  const prose = core.prose(analysis.resolved, { seed: core.seed(file.path) }).split(/(?<=[.!?])\s/).slice(0, 2).join(" ");
   const entries = journal.buildEntries({
     voice, lang, analysis, defOf: (id) => core.blocks.get(id), prose, ids, alterations, notes,
     mechs: mechs.map((m) => ({ id: m.id, state: mech.stateWord(m.state, lang), label: mech.label(m.id, lang), desc: mech.describe(m.id, lang) })),

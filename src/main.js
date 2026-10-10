@@ -6,7 +6,7 @@
  */
 const { AgeWriterPlugin } = require("./engine/plugin");
 const { hooks } = require("./engine/hooks");
-const { analyseAge, extractAge, noteName, pageList } = require("./engine/analysis");
+const { analyseAge, extractAge, noteName, pageList, seedName } = require("./engine/analysis");
 const { glyphSvg } = require("./engine/glyphs");
 const { describeAge } = require("./engine/prose");
 const { blockById } = require("./engine/registry");
@@ -16,7 +16,7 @@ const { LIBRARY_TEMPLATE } = require("./engine/library");
 
 // Ce que la couche d'extension utilise du moteur.
 const core = {
-  analyse: analyseAge, extract: extractAge, base: noteName, glyphSvg, prose: describeAge,
+  analyse: analyseAge, extract: extractAge, base: noteName, seed: seedName, glyphSvg, prose: describeAge,
   glyphs: pageList, blocks: blockById, libraryTemplate: LIBRARY_TEMPLATE, BookView, SettingsTab: AgeSettingTab,
 };
 

@@ -61,6 +61,12 @@ function noteName(path) {
   return path.replace(/^.*\//, "").replace(/\.md$/i, "");
 }
 
+/** La graine d'un Âge : le nom de sa note, sauf si l'extension en connaît une autre (propriété `age_seed`, gardée au renommage). */
+function seedName(path) {
+  const v = hooks.seedName ? hooks.seedName(path) : null;
+  return v ? String(v) : noteName(path);
+}
+
 const STABLE_AT = 75;
 
 const UNSTABLE_AT = 40;
@@ -182,6 +188,7 @@ module.exports = {
   frontmatterFor,
   homeMessage,
   noteName,
+  seedName,
   pageList,
   verdictOf,
 };

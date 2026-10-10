@@ -3,7 +3,7 @@ const { setMarkup } = require("../util");
 const obsidian = require("obsidian");
 const { SKY_ENTRIES } = require("./data/sky");
 const { blockList } = require("./registry");
-const { analyseAge, extractAge, homeMessage, noteName, pageList } = require("./analysis");
+const { analyseAge, extractAge, homeMessage, pageList, seedName } = require("./analysis");
 const { addLine, removeLine, setSeedLine, writtenLines } = require("./age-text");
 const { describeAge } = require("./prose");
 const { glyphSvg } = require("./glyphs");
@@ -83,7 +83,7 @@ const BookView = class extends obsidian.ItemView {
     if (ageSource === null) return this.message(container, `\u201C${file.basename}\u201D has no age block.`);
     this.shownPath !== file.path &&
       ((this.shownPath = file.path), (this.spread = 0), (this.selectedBook = null));
-    let analysis = analyseAge(ageSource, { seed: noteName(file.path) }),
+    let analysis = analyseAge(ageSource, { seed: seedName(file.path) }),
       head = container.createDiv({ cls: "age-book__head" });
     (head.createSpan({ cls: "age-book__title", text: file.basename }),
       head.createSpan({
@@ -116,7 +116,7 @@ const BookView = class extends obsidian.ItemView {
   proseFor(path, source, analysis) {
     let cached = this.proseCache.get(path);
     if (cached && cached.source === source) return cached.text;
-    let text = describeAge(analysis.resolved, { seed: noteName(path) });
+    let text = describeAge(analysis.resolved, { seed: seedName(path) });
     return (this.proseCache.set(path, { source: source, text: text }), text);
   }
   descriptive(leftPage, rightPage, analysis, ageSource, file) {
@@ -268,7 +268,7 @@ const BookView = class extends obsidian.ItemView {
     if (!dest) return base;
     let ageSource = extractAge(await this.app.vault.cachedRead(dest));
     if (ageSource === null) return base;
-    let analysis = analyseAge(ageSource, { seed: noteName(dest.path) }),
+    let analysis = analyseAge(ageSource, { seed: seedName(dest.path) }),
       comesBack = [...analysis.links, ...(analysis.returnTo ? [analysis.returnTo] : [])].some(
         (link) => this.app.metadataCache.getFirstLinkpathDest(link, dest.path)?.path === file.path,
       );

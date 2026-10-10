@@ -193,7 +193,7 @@ const REF_FR = [
     { h: "Ce que l'Âge tire quand tu laisses ouvert" },
     { ul: [
       "Onze cases : étoiles, cycle du jour, lune, phénomènes, sol, minéraux, météo, flore, faune, ruines, fissure. Étoiles, cycle, sol et fissure prennent une seule valeur : écris-en une et rien d'autre n'y est tiré (`twin_suns` : pas de soleil tiré). Les autres cases peuvent encore ajouter à ce que tu as écrit",
-      "Même note + même `seed:` → même monde ; renommer la note change son monde",
+      "Même note + même `seed:` → même monde. Renommer la note garde son monde et son étoile : le plugin écrit son ancien nom dans la propriété `age_seed` (efface-la pour tirer un nouveau monde). Pour un Âge renommé avant cela : commande *Give this Age back the world of its former name*",
       "Les valeurs ordinaires sortent plus souvent ; ce qui contredirait ou réagirait violemment est moins probable, jamais impossible (réglage du moteur « How much a clash steers the draw »)",
       "Les pages tirées sont marquées dans le livre ; ✓ en garde une comme écrite, × la retire",
       "Le réglage « Solitude » pondère le tirage vers des mondes déserts : plus de ruines et de nature sauvage, moins de chasseurs",

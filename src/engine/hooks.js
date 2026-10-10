@@ -16,6 +16,7 @@ const hooks = {
   w: (slotName, option) => option.weight,
   skip: () => false,
   norm: (line) => line,
+  seedName: null, // chemin d'une note d'Âge → sa graine (`age_seed`), ou null : le nom de la note
 };
 
 module.exports = { hooks };

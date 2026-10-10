@@ -14,7 +14,7 @@ class AgeIndex {
         hit = { mtime: f.stat.mtime, bucket, info: null };
         let src = null; try { src = core.extract(await app.vault.cachedRead(f)); } catch (e) { /* illisible */ }
         if (src !== null) try {
-          const a = core.analyse(src, { seed: core.base(f.path), physics: this.p.physicsMode && this.p.physicsMode() === "strict" }); // en facile la physique ne change rien à la stabilité : inutile de la calculer pour toute la bibliothèque
+          const a = core.analyse(src, { seed: core.seed(f.path), physics: this.p.physicsMode && this.p.physicsMode() === "strict" }); // en facile la physique ne change rien à la stabilité : inutile de la calculer pour toute la bibliothèque
           const back = a.returnTo ? app.metadataCache.getFirstLinkpathDest(a.returnTo, f.path) : null;
           hit.info = { name: f.basename, path: f.path, verdict: a.verdict, stability: a.stability, returnTo: back ? back.basename : a.returnTo || null, links: a.links, glyphs: [...new Set(core.glyphs(a).filter((g) => g.written && !g.blot).map((g) => g.id))] };
         } catch (e) { console.warn("[Age Writer ext] index " + f.path, e); } // un Âge illisible ne vide pas l'étagère

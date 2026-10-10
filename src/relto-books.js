@@ -111,7 +111,7 @@ function openSurveyorBook(plugin, ages) {
         try {
           const f = app.vault.getAbstractFileByPath(a.path); if (!f) continue;
           const src = plugin.core.extract(await app.vault.cachedRead(f)); if (src == null) continue;
-          const name = plugin.core.base(f.path), tg = IM.targetsOf(plugin.core.analyse(src, { seed: name }), name), hn = IM.hints(tg, lang);
+          const name = plugin.core.seed(f.path), tg = IM.targetsOf(plugin.core.analyse(src, { seed: name }), name), hn = IM.hints(tg, lang);
           const card = box.createDiv({ cls: "age-surveyor__card" });
           const link = card.createEl("a", { cls: "internal-link age-surveyor__name", text: a.name || name });
           link.addEventListener("click", (e) => { e.preventDefault(); this.close(); leaveFullscreen(); app.workspace.openLinkText(a.path, "", false); });

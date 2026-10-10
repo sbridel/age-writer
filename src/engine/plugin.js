@@ -18,7 +18,7 @@ const {
   analyseAge,
   extractAge,
   frontmatterFor,
-  noteName,
+  seedName,
   pageList,
 } = require("./analysis");
 const { buildCanvas } = require("./age-map");
@@ -319,7 +319,7 @@ const AgeWriterPlugin = class AgeWriterPlugin extends obsidian.Plugin {
   async updateFrontmatter(file) {
     let ageSource = extractAge(await this.app.vault.read(file));
     if (ageSource === null) return "no-age";
-    let fields = frontmatterFor(analyseAge(ageSource, { seed: noteName(file.path) })),
+    let fields = frontmatterFor(analyseAge(ageSource, { seed: seedName(file.path) })),
       existing = this.app.metadataCache.getFileCache(file)?.frontmatter ?? {};
     return FRONTMATTER_KEYS.every((key) => JSON.stringify(fields[key]) === JSON.stringify(existing[key]))
       ? "unchanged"
@@ -352,7 +352,7 @@ const AgeWriterPlugin = class AgeWriterPlugin extends obsidian.Plugin {
     let ages = new Map();
     for (let file of this.app.vault.getMarkdownFiles()) {
       let ageSource = extractAge(await this.app.vault.cachedRead(file));
-      ageSource !== null && ages.set(file.path, analyseAge(ageSource, { seed: noteName(file.path) }));
+      ageSource !== null && ages.set(file.path, analyseAge(ageSource, { seed: seedName(file.path) }));
     }
     if (ages.size === 0) {
       new obsidian.Notice("No Age found in this vault yet.");
@@ -425,7 +425,7 @@ const AgeWriterPlugin = class AgeWriterPlugin extends obsidian.Plugin {
       return;
     }
     new obsidian.Notice("Drawing the window\u2026");
-    let scene = windowScene(analyseAge(ageSource, { seed: noteName(file.path) }), file.basename),
+    let scene = windowScene(analyseAge(ageSource, { seed: seedName(file.path) }), seedName(file.path)),
       gif = await renderWindowGif(scene, (width, height) => {
         let canvas = document.createElement("canvas");
         return ((canvas.width = width), (canvas.height = height), canvas);
@@ -464,9 +464,9 @@ const AgeWriterPlugin = class AgeWriterPlugin extends obsidian.Plugin {
     } else windowEl.createEl("img", { attr: { src: src, alt: "linking panel" } });
   }
   renderAgePanel(ageSource, container, sourcePath) {
-    let analysis = analyseAge(ageSource, { seed: noteName(sourcePath) }),
+    let analysis = analyseAge(ageSource, { seed: seedName(sourcePath) }),
       resolved = analysis.resolved,
-      journal = describeAge(resolved, { seed: noteName(sourcePath) }),
+      journal = describeAge(resolved, { seed: seedName(sourcePath) }),
       panel = container.createDiv({ cls: `age-panel age-panel--${analysis.verdict}` });
     panel.createDiv({ cls: "age-panel__journal" }).setText(journal);
     let visual = panel.createDiv({ cls: "age-panel__visual" }),
