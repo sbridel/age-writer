@@ -2,6 +2,14 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.20.1 — A redrawn optical bench (2026-10-10)
+
+### Changed
+- **The Imager's optical bench:** the lamp now sits on the right and sends a beam along each rail; white up to the glass, it then takes the glass's colour, brighter the further the glass is moved. The glasses are tinted discs in brass mounts on carriages, with their value engraved below; the rails are graded from dark to saturated; a prism on the left gathers the three beams and sends their mix to the comparator. Only the drawing changes.
+
+### Fixed
+- The lens hint is a single line below the screen frame and no longer overlaps the screen.
+
 ## 1.20.0 — The Art of the Guild: blank book, metronome, D'ni clock (2026-10-10)
 
 ### Added

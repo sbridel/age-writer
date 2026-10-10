@@ -286,3 +286,8 @@ unlock:                            # facultatif
 - **L'horloge D'ni enrichie** (`src/relto-clock.js`) : quatre anneaux (vailee, yahr, gahrtahvo, tahvo) dont le chiffre luit quand il change ; vue rapprochée d'un clic sur la sphère, date et heure en chiffres D'ni.
 - **Aide aux lentilles** (réglage, activé par défaut) : au banc optique, une ligne de mots dit quelle couleur est en trop ou manque et si le faisceau est trop vif ou trop sombre.
 - **Correctif** : les coordonnées gravées des plaques *Great Zero* et *Star of the Age* ne débordent plus avec une police D'ni large.
+
+## 1.20.1 — un banc optique redessiné (10 oct. 2026)
+
+- **Banc optique de l'Imageur** (station II, `src/relto-imager.js`) : la lampe, à droite, envoie un rayon le long de chaque rail ; blanc jusqu'au verre, il prend ensuite la couleur du verre, d'autant plus vive que le verre est avancé. Les verres sont des disques teintés dans une monture de laiton, sur un chariot, leur valeur gravée dessous ; les rails sont gradués du sombre au saturé ; un prisme, à gauche, rassemble les trois rayons et envoie leur mélange au comparateur. Seul le dessin change.
+- **Aide aux lentilles** : une seule ligne, sous le cadre de l'écran, resserrée si besoin ; elle ne déborde plus sur l'écran.
