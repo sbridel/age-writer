@@ -9,8 +9,8 @@ function renderMany(host, ages) {
   const variants = [
     { h: 15, t: 3.1, env: {}, pages: ["page_telescope", "page_mountain", "page_pine_trees", "page_koi"], label: "ISLAND day / observatory on the mountain" },
     { h: 21.5, t: 3.1, env: {}, pages: ["page_telescope", "page_mountain", "page_waterfall"], label: "ISLAND dusk / observatory on the mountain" },
-    { h: 21.5, t: 3.1, env: {}, zero: true, pages: ["page_telescope", "page_mountain", "page_dni_clock", "page_calendar"], label: "ISLAND dusk / D'ni clock and calendar pinnacle" },
-    { h: 15, t: 3.1, env: {}, zero: true, pages: ["page_dni_clock", "page_calendar", "page_islets"], view: "global", label: "GLOBAL day / D'ni clock" },
+    { h: 21.5, t: 3.1, env: {}, zero: true, pages: ["page_telescope", "page_mountain", "page_dni_clock", "page_calendar", "page_dock"], label: "ISLAND dusk / D'ni clock and calendar pinnacle" },
+    { h: 15, t: 3.1, env: {}, zero: true, pages: ["page_dni_clock", "page_calendar", "page_islets", "page_dock"], view: "global", label: "GLOBAL day / D'ni clock" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: "far", label: "TELESCOPE night / far" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: [14, -9], label: "TELESCOPE night / near (14, −9)" },
     { h: 14, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: [1, 0], found: true, label: "TELESCOPE day / found" },

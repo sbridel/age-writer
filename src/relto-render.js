@@ -189,7 +189,7 @@ class ReltoRenderer {
     const cal = has("calendar"); if (cal) SC.calendar(ctx, this, sky, t);
     if (has("dniclock")) SC.dniClock(ctx, this, sky, t);
     this.drawIsland(ctx, sky, t);
-    const dk = has("dock"); if (dk) SC.dock(ctx, this, sky, t, !!cal);
+    const dk = has("dock"); if (dk) SC.dock(ctx, this, sky, t, !!cal, !!has("dniclock"));
     for (const k of ["gold", "silver", "gems"]) { const o = has(k); if (o) this.drawOre(ctx, k, o.density, sky, t); }
     const mt = has("mountain"), tl = has("telescope"); if (mt || tl) this.drawMount(ctx, mt ? mt.density : 0, sky, t, !!tl); // avec l'observatoire, le sommet est aplani en terrasse
     if (tl) TL.drawOnIsland(this, ctx, sky, t);

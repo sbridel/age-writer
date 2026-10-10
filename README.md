@@ -214,7 +214,7 @@ A small button (globe) at the top left toggles between the **island view** (open
 | *Rain*, *Storm* | rain; storm with spaced lightning and a darkened sky (`rain`, `storm`, density 0 to 1) |
 | *Birds*, *Butterflies* | birds crossing the sky (mostly by day); butterflies fluttering around the island |
 | *Moon & sun* | a large moon and its small companion, visible by day too |
-| *Dock* | a dock in the mist, right of the island, with a boat and a lantern at night (becomes a rope **bridge** to the pinnacle when the *Calendar pinnacle* page is active) |
+| *Dock* | a dock in the mist, right of the island, with a boat and a lantern at night (becomes a rope **bridge** to the pinnacle when the *Calendar pinnacle* page is active, and a second bridge leads to the *D'ni clock* when it stands in the mist) |
 | *Bench* | a wooden bench |
 | *Islets* | floating islets behind the island (density = number) |
 | *Calendar pinnacle* | a standing stone on an islet that shows the D'ni day (a few yahr off until the D'ni clock sets it right) |

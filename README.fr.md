@@ -206,7 +206,7 @@ Un petit bouton (globe) en haut à gauche de l'image bascule entre la **vue de l
 | *Rain*, *Storm* | pluie ; orage avec éclairs espacés et ciel assombri (`rain`, `storm`, densité 0 à 1) |
 | *Birds*, *Butterflies* | oiseaux qui traversent le ciel (le jour surtout) ; papillons qui voltigent autour de l'île |
 | *Moon & sun* | une grande lune et sa petite compagne, visibles aussi de jour |
-| *Dock* | un ponton dans la brume, à droite de l'île, avec une barque et une lanterne la nuit |
+| *Dock* | un ponton dans la brume, à droite de l'île, avec une barque et une lanterne la nuit ; il devient un pont de cordes vers la *Calendar pinnacle*, et un second pont mène à la *D'ni clock* quand elle se dresse dans la brume |
 | *Bench* | un banc de bois entre la cabane et l'étagère |
 | *Islets* | des îlots flottants derrière l'île (densité = nombre) |
 | *Calendar pinnacle* | une pierre dressée sur un îlot, qui affiche le jour D'ni (décalé de quelques yahr tant que l'horloge D'ni ne l'a pas recalé) |

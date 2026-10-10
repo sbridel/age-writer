@@ -68,16 +68,23 @@ function butterflies(ctx, d, sky, t) {
 function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
 
 /** Ponton de bois qui s'avance dans la brume, à droite de l'île, avec une barque amarrée. */
-function dock(ctx, r, sky, t, toPinnacle) {
+/** Un pont de cordes de (x0, y0) à (x1, y1), planches et poteaux, un peu affaissé au milieu. */
+function ropeBridge(ctx, r, c, x0, y0, x1, y1, tip) {
+  const sag = 6, n = Math.max(6, Math.round(Math.abs(x1 - x0) / 4.6));
+  ctx.strokeStyle = c("#8a6a44"); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y0 - 5); ctx.quadraticCurveTo((x0 + x1) / 2, (y0 + y1) / 2 - 5 + sag, x1, y1 - 5); ctx.stroke();
+  ctx.fillStyle = c("#6b4a30"); for (let i = 0; i <= n; i++) { const p = i / n, x = x0 + (x1 - x0) * p, y = y0 + (y1 - y0) * p + Math.sin(p * Math.PI) * sag * 0.9; ctx.fillRect(x - 1.6, y, 3.2, 1.6); }
+  ctx.fillStyle = c("#4a3220"); ctx.fillRect(x0 - 1, y0 - 7, 1.6, 8); ctx.fillRect(x1 - 1, y1 - 7, 1.6, 8);
+  r.hot.push({ x: Math.min(x0, x1) - 2, y: Math.min(y0, y1) - 10, w: Math.abs(x1 - x0) + 4, h: Math.abs(y0 - y1) + 18, tip });
+}
+
+/**
+ * Le ponton, à droite de l'île. Avec le pinacle du calendrier, il devient un pont de cordes qui y mène ; avec l'horloge D'ni,
+ * un second pont part du bord gauche de l'île jusqu'à son îlot.
+ */
+function dock(ctx, r, sky, t, toPinnacle, toClock) {
   const a = 0.4 + 0.6 * sky.ambient, c = (h) => mix("#05060c", h, a);
-  if (toPinnacle) { // avec le pinacle du calendrier, le ponton devient un pont de cordes qui y mène
-    const x0 = 470, y0 = GY + 2, x1 = 526, y1 = 202, sag = 6;
-    ctx.strokeStyle = c("#8a6a44"); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y0 - 5); ctx.quadraticCurveTo((x0 + x1) / 2, (y0 + y1) / 2 - 5 + sag, x1, y1 - 5); ctx.stroke();
-    ctx.fillStyle = c("#6b4a30"); const n = 12; for (let i = 0; i <= n; i++) { const p = i / n, x = x0 + (x1 - x0) * p, y = y0 + (y1 - y0) * p + Math.sin(p * Math.PI) * sag * 0.9; ctx.fillRect(x - 1.6, y, 3.2, 1.6); }
-    ctx.fillStyle = c("#4a3220"); ctx.fillRect(x0 - 1, y0 - 7, 1.6, 8); ctx.fillRect(x1 - 1, y1 - 7, 1.6, 8);
-    r.hot.push({ x: x0 - 2, y: y1 - 10, w: x1 - x0 + 4, h: y0 - y1 + 18, tip: "Bridge to the calendar pinnacle" });
-    return;
-  }
+  if (toClock) ropeBridge(ctx, r, c, 148, GY + 2, 112, 204, "Bridge to the D'ni clock");
+  if (toPinnacle) { ropeBridge(ctx, r, c, 470, GY + 2, 526, 202, "Bridge to the calendar pinnacle"); return; }
   const X0 = 470, X1 = 530, y = GY + 3;
   ctx.fillStyle = c("#6b4a30"); ctx.fillRect(X0, y, X1 - X0, 3);
   ctx.strokeStyle = rgba(0, 0, 0, 0.3); ctx.lineWidth = 0.6; for (let x = X0 + 4; x < X1; x += 5) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 3); ctx.stroke(); }

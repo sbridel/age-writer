@@ -85,6 +85,7 @@ function drawGlobal(r, ctx, sc, sky, t, has) {
   if (has("dniclock")) { // l'horloge D'ni, plus loin dans la brume, à gauche
     const s = 0.75, gx = 88, gy = 250; ctx.save(); ctx.translate(gx - 92 * s, gy - 206 * s); ctx.scale(s, s); SC.dniClock(ctx, r, sky, t); ctx.restore();
     const h = r.hot.pop(); r.hot.push({ ...h, x: gx - 22 * s, y: gy - 70 * s, w: 44 * s, h: 104 * s });
+    if (has("dock")) bridge(ctx, gx + 16, gy - 1, 262, 236, sky); // la page Ponton : un pont de cordes jusqu'à l'horloge
   }
   if (n > 0 || cal) bridge(ctx, 388, 230, 470 - 22, 244, sky);
   if (n > 0 && cal) bridge(ctx, 470 + 22, 246, 575 - 22, 246, sky);
