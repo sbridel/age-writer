@@ -27,6 +27,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **A compact Settings tab:** the sky time on one line, with the hour it shows and ↺; the sound on one line, with a vertical volume fader.
 
 ### Fixed
+- The star chart no longer draws the star of an Age that is no longer on the Relto's shelf (its name was already hidden, its drawing stayed). New command *Clean the star chart*: forgets for good, in every Relto, the names of such Ages and the stars that had only them.
 - The Imager's periscope: what is unique in an Age is now on one side only, the one the linking window faces. Turning no longer shows the same tornado, rainbow, dead star (pulsar, neutron star, black hole), ruins (unless the book writes many) or odd structure in every direction.
 - The star chart no longer shows names of Ages that no longer exist (renamed before this version, or deleted); the engraving itself is kept.
 - A black sun's red corona no longer shows through the mountains: the ridges hide it as they hide the disc.

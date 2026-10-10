@@ -79,6 +79,29 @@ async function ensureFolder(app, path) {
   await app.vault.createFolder(path);
 }
 
+/**
+ * Nettoyer la carte des étoiles : pour chaque Relto, oublier les noms d'Âges qui ne sont plus sur son étagère (supprimés,
+ * renommés hors du coffre, exclus), et les étoiles qui n'avaient que de tels Âges (leur dessin restait sans nom). Les étoiles
+ * notées sans livre ne bougent pas. Renvoie { names, stars } (combien de noms et d'étoiles oubliés).
+ */
+async function cleanStarChart(plugin) {
+  const { app } = plugin, tel = plugin.ext.telescope || {}; let names = 0, stars = 0;
+  for (const f of app.vault.getMarkdownFiles().filter((x) => isHub(app, x))) {
+    const scene = await buildScene(plugin, f), key = TEL.keyOf(scene.name, scene.seed), g = tel[key]; if (!g || !g.systems) continue;
+    const known = new Set([...(scene.candidates || []), ...(scene.ages || [])].map((a) => a && a.name).filter(Boolean)); if (!known.size) continue; // étagère vide : on ne touche à rien
+    const out = {};
+    for (const [k, rec] of Object.entries(g.systems)) {
+      const had = rec && Array.isArray(rec.ages) ? rec.ages : [], keep = had.filter((n) => known.has(n));
+      names += had.length - keep.length;
+      if (had.length && !keep.length) { stars++; continue; } // une étoile dont aucun Âge n'est plus là : oubliée
+      out[k] = had.length === keep.length ? rec : { ...rec, ages: keep };
+    }
+    g.systems = out; if (g.aimedAt && !out[g.aimedAt]) delete g.aimedAt;
+  }
+  if (names || stars) { await plugin.saveExt(); plugin.refreshLive(); }
+  return { names, stars };
+}
+
 async function createReltoNote(plugin) {
   const { app, t } = plugin;
   const existing = app.vault.getMarkdownFiles().find((f) => isHub(app, f));
@@ -566,4 +589,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };

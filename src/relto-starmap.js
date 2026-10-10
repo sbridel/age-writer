@@ -39,7 +39,10 @@ function elevBand(z) { const a = Math.abs(Number(z) || 0); return a <= 5 ? "map.
 function drawStarMap(r, ctx, sc, sky, tm) {
   // les noms gravés qui ne sont plus ceux d'un Âge (note renommée avant la 1.23, ou effacée) ne s'affichent plus ; la gravure, elle, reste
   const st = TL.state(r), known = new Set([...((sc && sc.candidates) || []), ...((sc && sc.ages) || [])].map((a) => a && a.name).filter(Boolean));
-  const systems = {}; for (const [k, rec] of Object.entries(st.found ? st.systems || {} : {})) systems[k] = rec && Array.isArray(rec.ages) && known.size ? { ...rec, ages: rec.ages.filter((n) => known.has(n)) } : rec;
+  const systems = {}; for (const [k, rec] of Object.entries(st.found ? st.systems || {} : {})) { // un Âge qui n'est plus sur l'étagère : ni son nom, ni (s'il était seul) son étoile
+    if (!(rec && Array.isArray(rec.ages) && rec.ages.length && known.size)) { systems[k] = rec; continue; }
+    const ages = rec.ages.filter((n) => known.has(n)); if (ages.length) systems[k] = { ...rec, ages };
+  }
   const t = tOf(r), map = MAP.layout(st.zero, systems, st.line), S = SHEET;
   // la table et le parchemin (taché, bords sombres), éclairé par une lampe
   const tg = ctx.createRadialGradient(W / 2, H / 2, 60, W / 2, H / 2, 420); tg.addColorStop(0, "#4a3a2a"); tg.addColorStop(1, "#1c140e"); ctx.fillStyle = tg; ctx.fillRect(0, 0, W, H);
