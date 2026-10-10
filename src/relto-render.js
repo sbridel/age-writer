@@ -753,13 +753,20 @@ class ReltoRenderer {
     const T = TERRAIN[this.scene.terrain], amb = 0.35 + 0.65 * sky.ambient, shade = (c) => mix("#05060c", c, amb);
     const { x: cx, hw, h } = this.lay.mount; // le mont, derrière la cabane, grand : il porte la source du ruisseau
     const path = () => { ctx.beginPath(); ctx.moveTo(cx - hw, GY + 2); ctx.bezierCurveTo(cx - hw * 0.55, GY - h * 0.35, cx - hw * 0.3, GY - h * 0.95, cx - 6, GY - h); ctx.bezierCurveTo(cx + 14, GY - h * 1.02, cx + hw * 0.35, GY - h * 0.7, cx + hw * 0.62, GY - h * 0.32); ctx.bezierCurveTo(cx + hw * 0.85, GY - h * 0.1, cx + hw * 0.95, GY - 2, cx + hw, GY + 2); ctx.closePath(); };
-    ctx.save(); path();
-    const g = ctx.createLinearGradient(0, GY - h, 0, GY); g.addColorStop(0, shade(T.rock2)); g.addColorStop(1, shade(T.rock)); ctx.fillStyle = g; ctx.fill();
-    if (terrace) { // un sommet aplani : une large épaule de roche sur laquelle l'observatoire tient tout entier
-      const px = cx - 6, py = GY - h + 5; ctx.beginPath(); ctx.moveTo(px - 34, py + 18); ctx.quadraticCurveTo(px - 24, py + 2, px - 17, py); ctx.lineTo(px + 17, py); ctx.quadraticCurveTo(px + 24, py + 2, px + 34, py + 18); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = rgba(0, 0, 0, 0.18); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(px - 17, py + 0.5); ctx.lineTo(px + 17, py + 0.5); ctx.stroke();
-      path(); ctx.moveTo(px - 34, py + 18); ctx.quadraticCurveTo(px - 24, py + 2, px - 17, py); ctx.lineTo(px + 17, py); ctx.quadraticCurveTo(px + 24, py + 2, px + 34, py + 18); ctx.closePath();
+    ctx.save();
+    if (terrace) { // un sommet aplani : on coupe la pointe à la hauteur où le mont est assez large pour porter l'observatoire
+      const bz = (a, b, c2, d, t) => { const u = 1 - t; return u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c2 + t * t * t * d; };
+      const L = [], R = []; for (let i = 0; i <= 60; i++) { const t = i / 60;
+        L.push([bz(cx - hw, cx - hw * 0.55, cx - hw * 0.3, cx - 6, t), bz(GY + 2, GY - h * 0.35, GY - h * 0.95, GY - h, t)]);
+        R.push([bz(cx - 6, cx + 14, cx + hw * 0.35, cx + hw * 0.62, t), bz(GY - h, GY - h * 1.02, GY - h * 0.7, GY - h * 0.32, t)]); }
+      const xAt = (pts, y) => { for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; if ((y0 - y) * (y1 - y) <= 0 && y0 !== y1) return x0 + (x1 - x0) * (y - y0) / (y1 - y0); } return null; };
+      let ty = GY - h + 2, lx = cx - 6, rx = cx - 6;
+      for (; ty < GY - h * 0.6; ty += 0.5) { lx = xAt(L, ty); rx = xAt(R, ty); if (lx != null && rx != null && rx - lx >= 34) break; }
+      this.lay.mount.ty = ty; this.lay.mount.tx = (lx + rx) / 2; // lus par l'observatoire (relto-telescope.js)
+      ctx.beginPath(); ctx.rect(0, ty, 10000, 10000); ctx.clip();
     }
+    path();
+    const g = ctx.createLinearGradient(0, GY - h, 0, GY); g.addColorStop(0, shade(T.rock2)); g.addColorStop(1, shade(T.rock)); ctx.fillStyle = g; ctx.fill();
     ctx.clip();
     // face à l'ombre à droite, strates, calotte herbeuse en haut
     ctx.fillStyle = rgba(0, 0, 0, 0.24); ctx.beginPath(); ctx.moveTo(cx + 4, GY - h); ctx.lineTo(cx + hw + 4, GY + 4); ctx.lineTo(cx + 6, GY + 4); ctx.closePath(); ctx.fill();
@@ -769,7 +776,7 @@ class ReltoRenderer {
     ctx.beginPath(); ctx.moveTo(cx - 30, GY - h * 0.7); ctx.quadraticCurveTo(cx - 6, GY - h * 1.12, cx + 30, GY - h * 0.58); ctx.lineTo(cx + 30, GY - h * 1.2); ctx.lineTo(cx - 30, GY - h * 1.2); ctx.closePath(); ctx.fill();
     ctx.restore();
     ctx.fillStyle = shade(T.tuft); const r = rng((this.scene.seed ^ 0x2f1d) >>> 0);
-    for (let i = 0; i < 9; i++) { const x = cx - 24 + r() * 44, y = GY - h * (0.86 + 0.1 * Math.sin((x - cx) / 14)) + 3; ctx.beginPath(); ctx.moveTo(x - 1.5, y); ctx.lineTo(x, y - 3 - r() * 3); ctx.lineTo(x + 1.5, y); ctx.fill(); }
+    for (let i = 0; i < 9; i++) { const x = cx - 24 + r() * 44, y = GY - h * (0.86 + 0.1 * Math.sin((x - cx) / 14)) + 3; if (terrace && (y < this.lay.mount.ty + 3 || Math.abs(x - this.lay.mount.tx) < 15)) continue; ctx.beginPath(); ctx.moveTo(x - 1.5, y); ctx.lineTo(x, y - 3 - r() * 3); ctx.lineTo(x + 1.5, y); ctx.fill(); }
     if (T.glow) { ctx.strokeStyle = hexa(T.glow, (0.3 + 0.3 * Math.sin(t * 0.8)) * (0.5 + 0.5 * sky.night)); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(cx - 20, GY - h * 0.5); ctx.lineTo(cx - 14, GY - h * 0.38); ctx.lineTo(cx - 19, GY - h * 0.25); ctx.stroke(); }
   }
 

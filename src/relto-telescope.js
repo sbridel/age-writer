@@ -192,7 +192,7 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
  * bat au bout du tube, au rythme du prorahn.
  */
 function drawOnIsland(r, ctx, sky, tm) {
-  const { x: mx, h } = r.lay.mount, amb = 0.4 + 0.6 * sky.ambient, c = (col) => mix("#05060c", col, amb), bx = mx - 6, by = GY - h + 5; // la base s'enfonce dans le sommet arrondi
+  const { x: mx, h } = r.lay.mount, amb = 0.4 + 0.6 * sky.ambient, c = (col) => mix("#05060c", col, amb), bx = r.lay.mount.tx != null ? r.lay.mount.tx : mx - 6, by = r.lay.mount.ty != null ? r.lay.mount.ty + 0.5 : GY - h + 5; // posé sur la terrasse taillée par drawMount
   const night = sky.night == null ? 0 : sky.night, found = state(r).found;
   ctx.save(); ctx.translate(bx, by); ctx.scale(1.3, 1.3); ctx.translate(-bx, -by); // à l'échelle de la cabane
   // (le sommet est aplani en terrasse par le dessin du mont : drawMount(…, terrace))
