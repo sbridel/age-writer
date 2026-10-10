@@ -8,7 +8,8 @@
  *  - Distance : distance horizontale au centre du cylindre du Great Zero, en shahfeetee (singulier shahfee) ;
  *  - Élévation : distance verticale au plan de référence du Great Zero, en shahfeetee. Le KI affiche NÉGATIVES les
  *    valeurs au-dessus du plan (`kiElev`) ; ici, `elevation` / `elev` gardent la hauteur vraie (au-dessus = positif).
- * Le télescope vise en Torahn et en Élévation ; la distance est tirée elle aussi (pour l'étape 2), pas encore mesurée.
+ * Le télescope vise en Torahn et en Élévation ; la distance est tirée elle aussi. L'étape 2 (situer le système d'étoile d'un
+ * Âge) est dans src/starsystem.js.
  *
  * Chaque Relto a son Great Zero, tiré de son nom et de sa graine : reproductible, rien n'est stocké ; seul le fait de
  * l'avoir trouvé (et la visée du joueur) est gardé, par Relto (`keyOf`). Aucune coordonnée terrestre ici.
@@ -86,11 +87,13 @@ function gap(aim, zero) {
  * se précise dans les derniers crans. `band` : le palier de mots (0 à 5) ; `found` : dans la tolérance sur chaque axe.
  */
 function signal(aim, zero) {
-  const { dt, de } = gap(aim, zero), d = Math.hypot(dt / NOTCH, de / STEP.elev.hub);
-  const s = 0.5 * Math.exp(-d / BROAD) + 0.5 * Math.exp(-d / SHARP);
-  let band = 0; while (band < BANDS.length && s >= BANDS[band]) band++;
-  return { dt, de, d, s, band, found: Math.abs(dt) <= TOL.torahn && Math.abs(de) <= TOL.elev };
+  const { dt, de } = gap(aim, zero), d = Math.hypot(dt / NOTCH, de / STEP.elev.hub), s = level(d);
+  return { dt, de, d, s, band: bandOf(s), found: Math.abs(dt) <= TOL.torahn && Math.abs(de) <= TOL.elev };
 }
+/** La force du signal pour un écart `d` (en crans fins) : une pente large et un pic étroit (aussi pour l'étape 2, src/starsystem.js). */
+function level(d) { return 0.5 * Math.exp(-d / BROAD) + 0.5 * Math.exp(-d / SHARP); }
+/** Le palier de mots (0 à 5) d'un signal `s`. */
+function bandOf(s) { let band = 0; while (band < BANDS.length && s >= BANDS[band]) band++; return band; }
 
 /**
  * Ce que l'œil perçoit du signal à un battement donné (`beat` : le numéro du prorahn) : le vrai signal, troublé par une
@@ -117,7 +120,15 @@ function pulseOf(s, beat) {
   return { skip, amp: skip ? 0.15 : 1 - jit * 0.6 * n() };
 }
 
-/** Ce qu'on garde (par Relto) : la visée et, une fois trouvé, le Zéro reste trouvé (avec la visée du moment, `at`, pour l'étape 2). */
-function saved(st) { return { torahn: st.aim.torahn, elev: st.aim.elev, found: !!st.found, ...(st.found && st.at ? { at: { torahn: st.at.torahn, elev: st.at.elev } } : {}) }; }
+/**
+ * Ce qu'on garde (par Relto) : la visée et, une fois trouvé, le Zéro reste trouvé (avec la visée du moment, `at`).
+ * Étape 2 (src/starsystem.js) : `dial`, les molettes réglées sur les indices d'un Âge, et `systems`, les systèmes
+ * d'étoiles situés (par clé d'étoile). Un état de l'étape 1 (sans ces champs) se relit tel quel.
+ */
+function saved(st) {
+  const sys = st.systems && typeof st.systems === "object" && Object.keys(st.systems).length ? st.systems : null;
+  return { torahn: st.aim.torahn, elev: st.aim.elev, found: !!st.found, ...(st.found && st.at ? { at: { torahn: st.at.torahn, elev: st.at.elev } } : {}),
+    ...(st.dial ? { dial: { torahn: st.dial.torahn, elev: st.dial.elev, delay: st.dial.delay } } : {}), ...(sys ? { systems: JSON.parse(JSON.stringify(sys)) } : {}) };
+}
 
-module.exports = { TURN, NOTCH, STEP, ELEV_MAX, ZERO_ELEV, DIST_MAX, TOL, BANDS, SCINT, observe, pulseOf, axisOf, keyOf, greatZero, kiElev, normAim, turn, gap, signal, saved };
+module.exports = { TURN, NOTCH, STEP, ELEV_MAX, ZERO_ELEV, DIST_MAX, TOL, BANDS, SCINT, observe, pulseOf, axisOf, keyOf, greatZero, kiElev, normAim, turn, gap, signal, level, bandOf, saved, mod };
