@@ -291,3 +291,11 @@ unlock:                            # facultatif
 
 - **Banc optique de l'Imageur** (station II, `src/relto-imager.js`) : la lampe, à droite, envoie un rayon le long de chaque rail ; blanc jusqu'au verre, il prend ensuite la couleur du verre, d'autant plus vive que le verre est avancé. Les verres sont des disques teintés dans une monture de laiton, sur un chariot, leur valeur gravée dessous ; les rails sont gradués du sombre au saturé ; un prisme, à gauche, rassemble les trois rayons et envoie leur mélange au comparateur. Seul le dessin change.
 - **Aide aux lentilles** : une seule ligne, sous le cadre de l'écran, resserrée si besoin ; elle ne déborde plus sur l'écran.
+
+## 1.21.0 — le rahnfee, une unité du faisceau (10 oct. 2026)
+
+- **Le rahnfee** (`src/beam.js`) : la longueur que parcourt le pouls du Great Zero le long du faisceau en un prorahn, 25³ = 15 625 shahfeetee de faisceau (pluriel *rahnfeetee*). Unité de fan, bâtie sur le prorahn et le shahfee, pas un mot D'ni attesté ; aucune conversion en kilomètres.
+- **Notation sans virgule** (`src/dni.js`) : chaque place (25ᵉ, 625ᵉ, 15 625ᵉ de rahnfee) est gravée dans sa propre lucarne, comme les cadrans d'un instrument d'arpenteur ; un entier non nul se grave nu devant. Les instruments le disent aussi en mots (« environ un demi-battement »).
+- **La molette du retard** lit en rahnfee, comme un retard sur le métronome ; mêmes mécanismes et tolérances.
+- **Distances en rahnfee** : plaque *Star of the Age* (deux lignes), plaque *Great Zero* (nouvelle ligne : la distance du Zéro), distance KIPS (onglet Détails, Imageur), notes complètes de l'arpenteur, infobulles de la carte stellaire. Les élévations restent en shahfeetee ; les données enregistrées ne changent pas.
+- Légende KIPS de l'Imageur raccourcie.

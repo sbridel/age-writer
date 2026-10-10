@@ -2,7 +2,7 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## Unreleased
+## 1.21.0 — The rahnfee, a unit of the beam (2026-10-10)
 
 ### Added
 - **The rahnfee**, a unit of the beam: the length the Great Zero's pulse travels along the beam in one prorahn, 25³ = 15,625 shahfeetee of the beam (plural *rahnfeetee*). It is a fan-made unit, built from prorahn and shahfee; not an attested D'ni word. Lengths are written in D'ni numerals without a decimal point: each place (25th, 625th, 15,625th of a rahnfee) is engraved in its own small window, like the dials of a surveyor's instrument, and the instruments also say it in words. No kilometre conversion.
@@ -11,6 +11,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **The Delay wheel** reads in rahnfee, as a lateness behind the metronome: its engraved value is the delay as a fraction of a rahnfee, and its tooltip says it in words ("The pulse comes about half a beat after the pendulum."). Same mechanics and tolerances; the echo words are unchanged.
 - **Distances along the beam in rahnfee:** the *Star of the Age* plate (now in two rows: Torahn and elevation, then distance), the KIPS distance (Details tab and Imager), the surveyor's full notes (delay and dead stars) and the star chart tooltips. The *Great Zero* plate gains a second row: the Zero's distance in rahnfee. Elevations stay in shahfeetee. Saved data is unchanged (still in shahfeetee).
 - The surveyor's delay words speak in fractions of a beat ("its pulse arrives about a third of a beat late"); the bands are unchanged.
+- The Imager's KIPS caption is shorter.
 
 ## 1.20.1 — A redrawn optical bench (2026-10-10)
 

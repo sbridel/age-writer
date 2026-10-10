@@ -30,7 +30,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 **Status.** Released, desktop only, sandbox mode (see [What's next](#15-whats-next)). The current version is the one in [`manifest.json`](manifest.json) and on the [Releases](https://github.com/sbridel/age-writer/releases) page; what changed in each version is in [`CHANGELOG.md`](CHANGELOG.md) (a more detailed developer log, in French, is in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)).
 
-Recent additions: **the Art of the Guild** (setting *Instruments*: a blank book in the Imager that you tune until a world appears, sometimes one no one has written; a pendulum metronome in the observatory to tell the true pulse from false ones), the **D'ni clock** that wakes once your Relto's Great Zero is found, the **observatory** and its star chart (locate your Ages' stars, dead stars, King Me'erta's false line), a redrawn **optical bench** with optional lens hints, and **living weather** (`drizzle: often, dawn`). Details in [`CHANGELOG.md`](CHANGELOG.md).
+Recent additions: **the Art of the Guild** (setting *Instruments*: a blank book in the Imager that you tune until a world appears, sometimes one no one has written; a pendulum metronome in the observatory to tell the true pulse from false ones), the **D'ni clock** that wakes once your Relto's Great Zero is found, the **observatory** and its star chart (locate your Ages' stars, dead stars, King Me'erta's false line), a redrawn **optical bench** with optional lens hints, **living weather** (`drizzle: often, dawn`), and the **rahnfee**, a fan-made unit for distances along the Great Zero's beam. Details in [`CHANGELOG.md`](CHANGELOG.md).
 ---
 
 ## Contents
