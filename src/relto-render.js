@@ -754,8 +754,9 @@ class ReltoRenderer {
       if (!res.locked && (before.az || before.tilt)) this.imagerAnim(before, st.settings);
     } else if (a.slot != null || a.rack != null) {
       if (before.lock) { say("The lock holds the crystals"); return; }
-      if (a.rack != null && before.cry.includes(a.rack) && !st.hand) return; // sa cheville est vide : le cristal est dans un logement
-      const res = IM.place(before, st.hand, a.slot != null ? { slot: a.slot } : { rack: a.rack }); st.hand = res.hand; st.settings = res.s; sfx(res.hand ? "lift" : "set");
+      const res = IM.place(before, null, a.slot != null ? { slot: a.slot } : { rack: a.rack }); st.hand = null; // d'un clic : posé dans le premier logement libre, ou rendu
+      if (res.full) { sfx("jam"); say(this.imagerTr()("cry.full")); return; }
+      st.settings = res.s; sfx(res.s.cry.filter((v) => v >= 0).length < before.cry.filter((v) => v >= 0).length ? "lift" : "set");
     } else if ("tilt" in a) {
       if (!before.lock) { sfx("jam"); say("The periscope is free only once the lock holds"); return; }
       if (a.tilt < 0 && !RV.hasUnder(st.model)) { sfx("jam"); say("Nothing below but rock"); return; }
@@ -783,8 +784,10 @@ class ReltoRenderer {
     if (a.rackPage) { const rack = GI.rackOf((this.scene && this.scene.ages) || [], st.cands), n = GI.pages(rack); st.g = { ...st.g, page: (((st.g.page + a.rackPage) % n) + n) % n }; sfx("click"); return done(); }
     if (a.slot != null || a.rack != null) {
       if (before.lock) { say(t("guild.lock.cry")); return true; }
-      const res = GI.place(st.g.cry, st.hand, a.slot != null ? { slot: a.slot } : { rack: a.rack }), was = st.planet;
-      st.hand = res.hand; st.g = { ...st.g, cry: res.cry }; sfx(res.hand ? "lift" : "set");
+      const res = GI.place(st.g.cry, null, a.slot != null ? { slot: a.slot } : { rack: a.rack }), was = st.planet;
+      if (res.full) { sfx("jam"); say(t("cry.full")); return true; }
+      const removed = res.cry.filter(Boolean).length < st.g.cry.filter(Boolean).length;
+      st.hand = null; st.g = { ...st.g, cry: res.cry }; sfx(removed ? "lift" : "set");
       this.imagerFind(); if (st.planet && !was) { sfx("lock"); say(t("guild.planet")); }
       this.imagerRemember(say);
       return done();

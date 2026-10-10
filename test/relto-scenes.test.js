@@ -139,10 +139,13 @@ const imagerDone = (async () => {
     // I. le râtelier
     click((a) => a.station === "cry", "poste I");
     ok(st.station === "cry" && ri.hot.filter((h) => h.imager && h.imager.slot != null).length === 4 && ri.hot.filter((h) => h.imager && h.imager.rack != null).length === 8, "gros plan I : quatre logements, huit chevilles");
-    click((a) => a.slot === 1, "logement 2"); ok(st.hand && st.hand.opt === 1 && st.hand.slot === 1, "on prend le cristal du logement 2");
-    click((a) => a.slot === 0, "logement 1"); ok(st.settings.cry[0] === 1 && st.settings.cry[1] === 0 && !st.hand, "posé dans le logement 1 : les deux cristaux changent de place");
-    click((a) => a.rack === 5, "cheville 6"); click((a) => a.slot === 2, "logement 3"); ok(st.settings.cry[2] === 5 && !st.settings.cry.includes(2), "un cristal du râtelier prend la place ; l'autre y retourne");
-    click((a) => a.slot === 3, "logement 4"); click((a) => a.slot === 1, "logement 2"); ok(ri.imagerClarity().cry === 1, "cristaux justes : les pages écrites, dans l'ordre");
+    // d'un clic : un cristal du râtelier va dans le premier logement libre ; un clic sur un logement le rend
+    const C = st.target.crystals, want = C.ids.map((id) => C.options.indexOf(id)), decoy = C.options.findIndex((id) => !C.ids.includes(id));
+    click((a) => a.rack === decoy, "un leurre"); ok(st.settings.cry[0] === decoy && !st.hand, "un clic : le leurre va dans le premier logement");
+    click((a) => a.slot === 0, "logement 1"); ok(st.settings.cry[0] === -1, "un clic sur le logement : il revient au râtelier");
+    for (const j of [...want].reverse()) click((a) => a.rack === j, "cristal " + C.options[j]);
+    ok(ri.imagerClarity().cry === 1, "les bonnes pages, dans n'importe quel ordre : cristaux justes");
+    if (want.length === 4) { click((a) => a.rack === decoy, "un cinquième"); ok(st.settings.cry.every((v) => want.includes(v)) && sounds[sounds.length - 1] === "jam", "logements pleins : rien ne bouge"); }
     ok(sounds.includes("lift") && sounds.includes("set"), "le verre tinte quand on le prend, quand on le pose");
     click((a) => a.station === null, "reculer"); ok(st.station == null, "reculer : la vue d'ensemble");
     // II. le banc optique

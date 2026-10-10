@@ -83,14 +83,38 @@ function knob(r, ctx, key, x, y, value, max, c, R = 17, locked = false) {
   r.hot.push({ x, y: y - R - 6, w: R + 6, h: R * 2 + 12, tip: tip || `${LABEL[key]} +`, imager: { key, delta: 1 } });
 }
 
-/** Un cristal debout (prisme taillé) portant la page gravée ; `glow` : 0, « half » (ambre) ou « ok » (vert d'eau). */
+/**
+ * Chaque cristal a son allure : sa TEINTE vient du domaine de sa page (ciel violet, terre ambre, météo bleue, vivant vert,
+ * métaphysique pâle), sa FORME de la page elle-même (prisme, aiguille, géode, lentille), et son glyphe est gravé dedans.
+ */
+const CRY_TINT = { cosmological: [196, 168, 255], geological: [236, 186, 104], weather: [140, 196, 255], ecological: [140, 222, 156], metaphysical: [228, 222, 244] };
+const SKY_IDS = new Set(require("./sky").SKY_BLOCKS.map((b) => b.id));
+const WATERY = /water|rain|drizzle|snow|ice|fog|mist|sea|ocean|lake|river|marsh|delta|brine|meltwater|kelp|coral|rime|hail|steam|cloud/;
+function crystalAxis(id) {
+  if (WATERY.test(String(id))) return "weather"; // l'eau sous toutes ses formes : bleue, quel que soit son domaine
+  if (/hill|mountain|plain|canyon|stone|rock|sand|lava|obsidian|crystal|iron|copper|gold|silver|gem|salt|glass|fissure|rift|geyser|core|ash|cave/.test(String(id))) return "geological"; // la terre : ambre
+  if (/fern|tree|grove|vine|moss|seed|sapling|spore|flower|grass|meadow|moth|grazer|herd|hunter|pack|bird|burrow|warren|drifter|spider|lichen|fungus|bloom|glowvine/.test(String(id))) return "ecological"; // le vivant : vert
+  let ax = null; try { const b = require("./engine/registry").blockById.get(id); ax = b && b.axis; } catch (e) { ax = null; }
+  if (!ax && SKY_IDS.has(id)) ax = "cosmological";
+  return CRY_TINT[ax] ? ax : SKY_IDS.has(id) || /sun|moon|star|orbit|cycle|eclipse|aurora/.test(String(id)) ? "cosmological" : ax === "meteorological" ? "weather" : CRY_TINT[ax] ? ax : "metaphysical";
+}
+function crystalShape(id) { let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h % 4; }
+/** Un cristal debout portant la page gravée ; `glow` : 0 ou « ok » (vert d'eau). */
 function crystal(r, ctx, x, y, w, h, id, glow, t, i = 0) {
-  const top = y - h, path = () => { ctx.beginPath(); ctx.moveTo(x, top - w * 0.45); ctx.lineTo(x + w / 2, top); ctx.lineTo(x + w / 2, y); ctx.lineTo(x - w / 2, y); ctx.lineTo(x - w / 2, top); ctx.closePath(); };
-  const g = ctx.createLinearGradient(x - w / 2, top, x + w / 2, y); g.addColorStop(0, rgba(210, 245, 240, 0.55)); g.addColorStop(0.5, rgba(110, 170, 175, 0.35)); g.addColorStop(1, rgba(50, 100, 110, 0.5));
-  path(); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = rgba(210, 245, 240, 0.75); ctx.lineWidth = 1; ctx.stroke();
-  ctx.strokeStyle = rgba(255, 255, 255, 0.25); ctx.beginPath(); ctx.moveTo(x, top - w * 0.45); ctx.lineTo(x, y); ctx.stroke(); // l'arête
-  if (glow) { ctx.save(); path(); ctx.clip(); const f = glow === "ok" ? 0.32 + 0.1 * Math.sin(t * 3 + i) : 0.18 + 0.16 * Math.max(0, Math.sin(t * 11 + i * 2)); ctx.fillStyle = glow === "ok" ? rgba(127, 214, 200, f) : rgba(240, 184, 96, f); ctx.fillRect(x - w, top - w, w * 2, h + w * 2); ctx.restore(); }
-  const img = id && r.opts.glyphImage ? r.opts.glyphImage(id) : null, gs = Math.min(w - 6, h * 0.6);
+  const top = y - h, tint = CRY_TINT[crystalAxis(id)] || CRY_TINT.metaphysical, shape = id ? crystalShape(id) : 0, [tr, tg, tb] = tint;
+  const path = () => {
+    ctx.beginPath();
+    if (shape === 1) { ctx.moveTo(x, top - w * 0.7); ctx.lineTo(x + w * 0.32, top + h * 0.15); ctx.lineTo(x + w * 0.28, y); ctx.lineTo(x - w * 0.28, y); ctx.lineTo(x - w * 0.32, top + h * 0.15); } // l'aiguille
+    else if (shape === 2) { for (let k = 0; k < 6; k++) { const a = -Math.PI / 2 + (k * Math.PI) / 3, rx = w * 0.55, ry = h * 0.5; ctx.lineTo(x + Math.cos(a) * rx, top + h * 0.5 + Math.sin(a) * ry); } } // la géode (hexagone)
+    else if (shape === 3) { ctx.moveTo(x, top - w * 0.2); ctx.lineTo(x + w * 0.55, top + h * 0.45); ctx.lineTo(x, y); ctx.lineTo(x - w * 0.55, top + h * 0.45); } // la lentille (losange)
+    else { ctx.moveTo(x, top - w * 0.45); ctx.lineTo(x + w / 2, top); ctx.lineTo(x + w / 2, y); ctx.lineTo(x - w / 2, y); ctx.lineTo(x - w / 2, top); } // le prisme
+    ctx.closePath();
+  };
+  const g = ctx.createLinearGradient(x - w / 2, top, x + w / 2, y); g.addColorStop(0, rgba(Math.min(255, tr + 30), Math.min(255, tg + 30), Math.min(255, tb + 30), 0.75)); g.addColorStop(0.5, rgba(tr * 0.75, tg * 0.75, tb * 0.75, 0.6)); g.addColorStop(1, rgba(tr * 0.4, tg * 0.4, tb * 0.4, 0.7));
+  path(); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = rgba(Math.min(255, tr + 30), Math.min(255, tg + 30), Math.min(255, tb + 30), 0.8); ctx.lineWidth = 1; ctx.stroke();
+  ctx.strokeStyle = rgba(255, 255, 255, 0.22); ctx.beginPath(); ctx.moveTo(x, top - (shape === 1 ? w * 0.7 : shape === 2 ? 0 : w * 0.3)); ctx.lineTo(x, y); ctx.stroke(); // l'arête
+  if (glow) { ctx.save(); const f = 0.65 + 0.25 * Math.sin(t * 3 + i); ctx.shadowColor = rgba(127, 214, 200, 0.9); ctx.shadowBlur = 10; ctx.strokeStyle = rgba(160, 235, 222, f); ctx.lineWidth = 2.2; path(); ctx.stroke(); ctx.restore(); } // juste : un liseré lumineux, la teinte du cristal reste visible
+  const img = id && r.opts.glyphImage ? r.opts.glyphImage(id) : null, gs = Math.min(w - 6, h * 0.6) * (shape === 1 ? 0.75 : 1);
   if (img && img.complete !== false && img.width) ctx.drawImage(img, x - gs / 2, top + (h - gs) / 2, gs, gs);
   else if (id) { ctx.fillStyle = "#e0c27a"; ctx.font = "8px serif"; ctx.textAlign = "center"; ctx.fillText(String(id).replace(/_/g, " ").slice(0, 9), x, top + h / 2 + 3); ctx.textAlign = "left"; }
 }
@@ -234,7 +258,7 @@ function overview(r, ctx, st, cl, t, c, now) {
     const C = tg && tg.crystals;
     for (let i = 0; i < 8; i++) { if (C && s.cry.includes(i)) continue; const x = b.x + 16 + i * 14; ctx.fillStyle = rgba(170, 225, 220, 0.55); ctx.beginPath(); ctx.moveTo(x, b.y + 30); ctx.lineTo(x + 4, b.y + 34); ctx.lineTo(x + 4, b.y + 46); ctx.lineTo(x - 4, b.y + 46); ctx.lineTo(x - 4, b.y + 34); ctx.closePath(); ctx.fill(); }
     plate(ctx, c, b.x + 8, b.y + 4, b.w - 40, 22, false);
-    for (let i = 0; i < 4; i++) { const x = b.x + 22 + i * 25, pick = C ? C.options[s.cry[i]] : null, ok = C && pick === C.ids[i], half = C && !ok && C.ids.includes(pick); ctx.fillStyle = "#1b130d"; ctx.fillRect(x - 6, b.y + 9, 12, 12); ctx.fillStyle = ok ? rgba(127, 214, 200, 0.8) : half ? rgba(240, 184, 96, 0.55) : rgba(170, 225, 220, 0.35); ctx.fillRect(x - 3, b.y + 6, 6, 12); }
+    for (let i = 0; i < 4; i++) { const x = b.x + 22 + i * 25, ok = I.crystalOk(tg, s.cry[i]); ctx.fillStyle = "#1b130d"; ctx.fillRect(x - 6, b.y + 9, 12, 12); if (s.cry[i] >= 0) { ctx.fillStyle = ok ? rgba(127, 214, 200, 0.8) : rgba(170, 225, 220, 0.35); ctx.fillRect(x - 3, b.y + 6, 6, 12); } } // un logement juste s'allume (mode facile)
     lamp(ctx, b.x + b.w - 14, b.y + 14, lit("cry"));
   }
   { // II. le banc optique
@@ -365,7 +389,7 @@ function guildRackMini(ctx, c, st, lit) {
   const shown = GI.rackPage(GI.rackOf(st.ages || [], st.cands), st.g.page);
   shown.forEach((id, i) => { if (st.g.cry.includes(id)) return; const x = b.x + 16 + i * 14; ctx.fillStyle = rgba(170, 225, 220, 0.55); ctx.beginPath(); ctx.moveTo(x, b.y + 30); ctx.lineTo(x + 4, b.y + 34); ctx.lineTo(x + 4, b.y + 46); ctx.lineTo(x - 4, b.y + 46); ctx.lineTo(x - 4, b.y + 34); ctx.closePath(); ctx.fill(); });
   plate(ctx, c, b.x + 8, b.y + 4, b.w - 40, 22, false);
-  slots.forEach((q, i) => { const x = b.x + 22 + i * 25; ctx.fillStyle = "#1b130d"; ctx.fillRect(x - 6, b.y + 9, 12, 12); if (q.id) { ctx.fillStyle = q.ok ? rgba(127, 214, 200, 0.8) : q.half ? rgba(240, 184, 96, 0.55) : rgba(170, 225, 220, 0.35); ctx.fillRect(x - 3, b.y + 6, 6, 12); } });
+  slots.forEach((q, i) => { const x = b.x + 22 + i * 25; ctx.fillStyle = "#1b130d"; ctx.fillRect(x - 6, b.y + 9, 12, 12); if (q.id) { ctx.fillStyle = st.planet ? rgba(127, 214, 200, 0.8) : rgba(170, 225, 220, 0.35); ctx.fillRect(x - 3, b.y + 6, 6, 12); } }); // l'Art de la Guilde : tous ensemble, seulement quand tous sont justes
   lamp(ctx, b.x + b.w - 14, b.y + 14, st.planet ? "green" : lit("cry"));
 }
 
@@ -379,10 +403,11 @@ function closeCryGuild(r, ctx, st, cl, t, c) {
   for (let i = 0; i < GI.SLOTS; i++) {
     const x = 74 + i * 88, y = 146, q = slots[i], lifted = hand && hand.slot === i;
     ctx.fillStyle = "#120c08"; ctx.beginPath(); ctx.ellipse(x, y, 26, 7, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.stroke();
-    if (q.ok || q.half) { const g = ctx.createRadialGradient(x, y, 2, x, y, 34); g.addColorStop(0, q.ok ? "rgba(127,214,200,0.45)" : "rgba(240,184,96,0.35)"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(x - 34, y - 34, 68, 68); }
-    if (q.id) crystal(r, ctx, x, y - (lifted ? 16 : 2), 40, 92, q.id, q.ok ? "ok" : q.half ? "half" : 0, t, i);
+    const all = st.planet && q.id; // l'Art de la Guilde : les quatre s'allument ensemble, et seulement quand tous sont justes
+    if (all) { const g = ctx.createRadialGradient(x, y, 2, x, y, 34); g.addColorStop(0, "rgba(127,214,200,0.45)"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(x - 34, y - 34, 68, 68); }
+    if (q.id) crystal(r, ctx, x, y - (lifted ? 16 : 2), 40, 92, q.id, all ? "ok" : 0, t, i);
     if (lifted) { ctx.strokeStyle = "rgba(240,184,96,0.8)"; ctx.setLineDash([3, 3]); ctx.strokeRect(x - 30, y - 128, 60, 136); ctx.setLineDash([]); }
-    r.hot.push({ x: x - 34, y: y - 120, w: 68, h: 132, tip: s.lock ? tx(r).t("guild.lock.cry") : hand ? tx(r).t("guild.slot.put") : q.id ? `${q.id.replace(/_/g, " ")} — ${tx(r).t("guild.slot.take")}` : tx(r).t("guild.slot.empty"), imager: { slot: i } });
+    r.hot.push({ x: x - 34, y: y - 120, w: 68, h: 132, tip: s.lock ? tx(r).t("guild.lock.cry") : q.id ? `${q.id.replace(/_/g, " ")} — ${tx(r).t("cry.slot.back")}` : tx(r).t("guild.slot.empty"), imager: { slot: i } });
   }
   if (st.planet) { ctx.fillStyle = "#9fe6da"; ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillText(tx(r).t("guild.planet"), 204, 180, 340); ctx.textAlign = "left"; }
   // le râtelier : les glyphes connus, huit par rangée ; un cristal posé laisse sa cheville vide
@@ -392,7 +417,7 @@ function closeCryGuild(r, ctx, st, cl, t, c) {
     const x = 56 + j * 76, y = 296, placed = st.g.cry.includes(id), held = hand && hand.id === id && hand.slot == null;
     ctx.fillStyle = c("#6b5126"); ctx.fillRect(x - 3, y - 12, 6, 12);
     if (!placed) crystal(r, ctx, x, y - (held ? 22 : 4), 30, 70, id, held ? "half" : 0, t, j);
-    r.hot.push({ x: x - 32, y: y - 92, w: 64, h: 100, tip: s.lock ? tx(r).t("guild.lock.cry") : placed ? (hand && hand.id === id ? tx(r).t("guild.rack.back") : tx(r).t("guild.rack.placed")) : `${id.replace(/_/g, " ")} — ${hand ? tx(r).t("guild.rack.swap") : tx(r).t("guild.rack.take")}`, imager: { rack: id } });
+    r.hot.push({ x: x - 32, y: y - 92, w: 64, h: 100, tip: s.lock ? tx(r).t("guild.lock.cry") : placed ? `${id.replace(/_/g, " ")} — ${tx(r).t("cry.slot.back")}` : `${id.replace(/_/g, " ")} — ${tx(r).t("cry.rack.put")}`, imager: { rack: id } });
   });
   if (!rack.length) { ctx.fillStyle = "rgba(233,220,184,0.75)"; ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillText(tx(r).t("guild.rack.none"), W / 2, 270, 560); ctx.textAlign = "left"; }
   if (n > 1) {
@@ -411,12 +436,12 @@ function closeCry(r, ctx, st, cl, t, c) {
   plate(ctx, c, 24, 26, 360, 140);
   ctx.fillStyle = c("#1b130d"); ctx.font = "bold 13px serif"; ctx.fillText("I", 36, 46);
   for (let i = 0; i < 4; i++) {
-    const x = 74 + i * 88, y = 146, opt = s.cry[i], id = C ? C.options[opt] : null, ok = C && id === C.ids[i], half = C && !ok && C.ids.includes(id), lifted = hand && hand.slot === i;
+    const x = 74 + i * 88, y = 146, opt = s.cry[i], id = C && opt >= 0 ? C.options[opt] : null, ok = !!id && I.crystalOk(tg, opt), half = false, lifted = hand && hand.slot === i; // l'ordre ne compte pas : un bon cristal s'allume où qu'il soit
     ctx.fillStyle = "#120c08"; ctx.beginPath(); ctx.ellipse(x, y, 26, 7, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.stroke();
     if (ok || half) { const g = ctx.createRadialGradient(x, y, 2, x, y, 34); g.addColorStop(0, ok ? "rgba(127,214,200,0.45)" : "rgba(240,184,96,0.35)"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(x - 34, y - 34, 68, 68); }
-    if (C) crystal(r, ctx, x, y - (lifted ? 16 : 2), 40, 92, id, ok ? "ok" : half ? "half" : 0, t, i);
+    if (C && id) crystal(r, ctx, x, y - (lifted ? 16 : 2), 40, 92, id, ok ? "ok" : 0, t, i);
     if (lifted) { ctx.strokeStyle = "rgba(240,184,96,0.8)"; ctx.setLineDash([3, 3]); ctx.strokeRect(x - 30, y - 128, 60, 136); ctx.setLineDash([]); }
-    r.hot.push({ x: x - 34, y: y - 120, w: 68, h: 132, tip: s.lock ? "The lock holds the crystals" : hand ? "Put the crystal here" : "Take this crystal", imager: { slot: i } });
+    r.hot.push({ x: x - 34, y: y - 120, w: 68, h: 132, tip: s.lock ? tx(r).t("guild.lock.cry") : id ? `${id.replace(/_/g, " ")} — ${tx(r).t("cry.slot.back")}` : tx(r).t("guild.slot.empty"), imager: { slot: i } });
   }
   // le râtelier : les huit cristaux ; ceux qui sont posés laissent leur cheville vide
   ctx.fillStyle = c("#2a1d13"); ctx.fillRect(18, 298, 604, 18); ctx.fillStyle = c("#4b3626"); ctx.fillRect(18, 294, 604, 6);
@@ -425,7 +450,7 @@ function closeCry(r, ctx, st, cl, t, c) {
     const x = 56 + j * 76, y = 296, placed = s.cry.includes(j), held = hand && hand.opt === j && hand.slot == null;
     ctx.fillStyle = c("#6b5126"); ctx.fillRect(x - 3, y - 12, 6, 12); // la cheville
     if (C && !placed) crystal(r, ctx, x, y - (held ? 22 : 4), 30, 70, C.options[j], held ? "half" : 0, t, j);
-    r.hot.push({ x: x - 32, y: y - 92, w: 64, h: 100, tip: s.lock ? "The lock holds the crystals" : placed ? "(its crystal is in a socket)" : hand ? "Swap for this crystal" : "Take this crystal", imager: { rack: j } });
+    r.hot.push({ x: x - 32, y: y - 92, w: 64, h: 100, tip: s.lock ? tx(r).t("guild.lock.cry") : placed ? tx(r).t("cry.slot.back") : (C ? C.options[j].replace(/_/g, " ") + " — " : "") + tx(r).t("cry.rack.put"), imager: { rack: j } });
   }
   backStrip(r, ctx);
 }

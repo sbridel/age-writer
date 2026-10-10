@@ -52,7 +52,7 @@ const isId = (v) => typeof v === "string" && /^[a-z0-9_]+$/i.test(v);
 /** La clé des réglages, ou null si quatre cristaux ne sont pas posés. `cry` : quatre identifiants ; `s` : le réglage commun. */
 function keyOf(cry, s) {
   if (!Array.isArray(cry) || cry.length < SLOTS || !cry.slice(0, SLOTS).every(isId) || new Set(cry.slice(0, SLOTS)).size < SLOTS || !s) return null;
-  return `${cry.slice(0, SLOTS).join(",")}|s${starOf(s)}|i${binOf(s.iris)}|f${binOf(s.freq)}|a${binOf(s.amp)}`;
+  return `${cry.slice(0, SLOTS).slice().sort().join(",")}|s${starOf(s)}|i${binOf(s.iris)}|f${binOf(s.freq)}|a${binOf(s.amp)}`;
 }
 /** La clé décomposée. */
 function parseKey(key) {

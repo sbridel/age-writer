@@ -46,9 +46,9 @@ let sample = null; // un monde trouvé, pour la suite
   ok(again && again.unwritten.key === u.key && again.unwritten.seed === u.seed && again.unwritten.name === u.name && again.unwritten.text === u.text, "mêmes réglages : le même monde (clé, graine, nom, bloc)");
   const other = UW.find(cry, { ...s, phase: (s.phase + 7) % 25, harm: (s.harm + 9) % 25, pol: -s.pol }, dep);
   ok(other && other.unwritten.key === u.key, "la phase, l'harmonique, la polarité s'accordent ensuite : le monde ne change pas");
-  ok(w.age.unwritten && w.planet === undefined && w.data.target.crystals.ids.join() === cry.join(), "ses premières pages : ces cristaux, dans cet ordre");
+  ok(w.age.unwritten && w.planet === undefined && w.data.target.crystals.ids.slice().sort().join() === cry.slice().sort().join(), "ses pages : ces cristaux");
   ok(UW.keyOf(cry, { ...w.data.target.lens, freq: w.data.target.freq, amp: w.data.target.amp }) === u.key, "accordé sur son propre ciel, on reste sur lui");
-  ok(UW.find([cry[1], cry[0], cry[2], cry[3]], s, dep) === null || UW.find([cry[1], cry[0], cry[2], cry[3]], s, dep).unwritten.key !== u.key, "l'ordre des cristaux compte");
+  { const sw = UW.find([cry[1], cry[0], cry[3], cry[2]], s, dep); ok(sw && sw.unwritten.key === u.key, "l'ordre des cristaux ne compte pas : le même monde"); }
   // déterminisme de la réponse « rien »
   const r2 = rng(77); let same = 0;
   for (let i = 0; i < 200; i++) { const c = randomCry(r2), x = randomSettings(r2), a = UW.find(c, x, dep), b = UW.find(c, x, dep); if ((!a && !b) || (a && b && a.unwritten.key === b.unwritten.key)) same++; }
@@ -86,7 +86,7 @@ let sample = null; // un monde trouvé, pour la suite
   ok(found >= 20 && blots === 0 && dying === 0, `${found} mondes jamais écrits : aucune tache d'encre, aucun mourant`);
   ok(painted >= 60 && bad === 0, `peints ${painted} fois : aucun nombre non fini`);
   const u = sample.w.unwritten;
-  ok(u.lines.length === 8 && u.lines.slice(0, 4).join() === sample.cry.join() && u.lines.slice(4).every((l) => P.isPhysicsLine(l)), "le bloc : les quatre pages, puis l'étoile et le ciel en lignes de valeurs");
+  ok(u.lines.length === 8 && u.lines.slice(0, 4).join() === sample.cry.slice().sort().join() && u.lines.slice(4).every((l) => P.isPhysicsLine(l)), "le bloc : les quatre pages, puis l'étoile et le ciel en lignes de valeurs");
   ok(typeof u.words === "string" && u.words.length > 0 && u.words.split(/\s+/).length <= 7, `quelques mots de sa description : « ${u.words} »`);
 }
 
@@ -97,7 +97,7 @@ let sample = null; // un monde trouvé, pour la suite
     const cry = randomCry(r), s = randomSettings(r), w = UW.find(cry, s, dep); if (!w) continue; trips++;
     const u = w.unwritten, note = UW.noteOf(u, "intro"), src = extractAge(note.body), a = A(src, note.name), a0 = A(u.text, u.name);
     ok(note.name === u.name && note.body.startsWith("# " + u.name) && src.trim() === u.text, "la note : son nom, le bloc exact (les lignes et `seed:`)");
-    ok(a.resolved.seed === String(u.seed) && IM.crystalsOf(a, "").ids.join() === cry.join(), "relu : même graine, mêmes premières pages");
+    ok(a.resolved.seed === String(u.seed) && IM.crystalsOf(a, "").ids.slice().sort().join() === cry.slice().sort().join(), "relu : même graine, mêmes pages (les cristaux)");
     ok(JSON.stringify(pageList(a)) === JSON.stringify(pageList(a0)) && a.verdict === a0.verdict, "relu : mêmes pages, même tirage, même verdict");
     const tg = IM.targetsOf(a, note.name), tw = w.data.target;
     ok(tg.freq === tw.freq && tg.amp === tw.amp && JSON.stringify(tg.lens) === JSON.stringify(tw.lens) && tg.pol === tw.pol, "relu : le même ciel à l'Imageur");

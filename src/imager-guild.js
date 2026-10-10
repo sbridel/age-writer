@@ -6,7 +6,7 @@
  *   - le télescope donne la cible : visant l'étoile d'un système situé, il renvoie sa lumière (`lightOf`) ; les candidats
  *     sont alors les Âges de cette étoile ; sans cible, tous les Âges de l'étagère (à l'aveugle) ;
  *   - station I : le râtelier offre les glyphes CONNUS (`rackOf` : ceux des Âges de l'étagère, comme le livre des glyphes),
- *     quatre logements ; quatre cristaux dans l'ordre = les premières pages d'un monde. Juste (`exact`) : la planète est
+ *     quatre logements ; quatre cristaux, dans n'importe quel ordre = les pages d'un monde (écrites, puis tirées). Juste (`exact`) : la planète est
  *     verrouillée et la station III s'éveille ;
  *   - stations II et III : comme en mode facile, contre le monde trouvé ; plusieurs Âges d'une même étoile (même lumière,
  *     mêmes premières pages) : l'atmosphère départage (`choose`).
@@ -57,16 +57,16 @@ function rackPage(rack, page) { const p = Math.min(Math.max(0, page), pages(rack
 const crystalIds = (c) => (c && c.data && c.data.target && c.data.target.crystals ? c.data.target.crystals.ids : []);
 const starOf = (c) => (c && c.data && c.data.system ? c.data.system.key : null);
 
-/** Les cristaux justes pour un monde : ses pages dans l'ordre, et rien dans les logements suivants. */
-function exact(cry, ids) { return !!ids.length && ids.every((id, i) => cry[i] === id) && cry.slice(ids.length).every((x) => !x); }
-/** Justesse des cristaux (0 à 1) : comme en mode facile (bonne place 1, bonne page ailleurs 0,3), moins les cristaux de trop. */
+/** Les cristaux justes pour un monde : exactement ses pages, dans n'importe quel ordre (un ensemble), et rien de plus. */
+function exact(cry, ids) { const on = (cry || []).filter(Boolean); return !!ids.length && on.length === ids.length && ids.every((id) => on.includes(id)); }
+/** Justesse des cristaux (0 à 1) : chaque page du monde posée compte, l'ordre non ; un cristal faux brouille d'autant. */
 function score(cry, ids) {
   if (!ids.length) return 0;
-  let k = 0; ids.forEach((id, i) => { if (cry[i] === id) k += 1; else if (cry[i] && ids.includes(cry[i])) k += 0.3; });
-  return Math.max(0, k / ids.length - EXTRA * cry.slice(ids.length).filter(Boolean).length);
+  const on = (cry || []).filter(Boolean), ok = ids.filter((id) => on.includes(id)).length, wrong = on.filter((x) => !ids.includes(x)).length;
+  return Math.max(0, ok / ids.length - EXTRA * wrong);
 }
-/** Par logement : juste (`ok`), bonne page mal placée (`half`), pour les lampes du râtelier (rien sans monde). */
-function slotsOf(cry, ids) { return cry.map((id, i) => ({ id, ok: !!id && ids[i] === id, half: !!id && ids[i] !== id && ids.includes(id) })); }
+/** Par logement : juste (`ok`) si la page est du monde (l'ordre ne compte plus) ; `half` n'existe plus (toujours faux). */
+function slotsOf(cry, ids) { return cry.map((id) => ({ id, ok: !!id && ids.includes(id), half: false })); }
 
 /**
  * Le monde que les réglages approchent. `cands` : [{ age, data: { target, system, … } }] (chargés) ; `star` : la clé
@@ -112,27 +112,17 @@ function lightOf(cands, star) {
 function targetOf(world, cry) { return world && world.data && world.data.target ? { ...world.data.target, cryScore: score(cry, crystalIds(world)) } : null; }
 
 /**
- * Le râtelier, geste par geste (comme `place` du mode facile, mais avec des glyphes et des logements vides) : `hand` =
- * null | { id, slot? } ; `target` = { slot } | { rack: id }. Rendre un cristal à sa propre cheville vide son logement.
+ * Le râtelier, d'un clic (comme `place` du mode facile, mais avec des glyphes) : `target` = { slot } | { rack: id } ;
+ * logements pleins : rien ne bouge (`full`). `hand` reste null (gardé pour la signature).
  */
 function place(cry0, hand, target) {
+  // d'un clic : un glyphe du râtelier va dans le premier logement libre (déjà posé : il revient) ; un logement cliqué se vide
   const cry = normCry(cry0); if (!target) return { cry, hand: null };
-  if (!hand) {
-    if (target.slot != null) return { cry, hand: cry[target.slot] ? { id: cry[target.slot], slot: target.slot } : null };
-    if (target.rack != null) { const at = cry.indexOf(target.rack); return { cry, hand: at >= 0 ? null : { id: target.rack } }; } // un cristal posé laisse sa cheville vide
-    return { cry, hand: null };
-  }
-  if (target.slot != null) {
-    if (hand.slot === target.slot) return { cry, hand: null };
-    if (hand.slot != null) { const a = cry[hand.slot]; cry[hand.slot] = cry[target.slot]; cry[target.slot] = a; return { cry, hand: null }; }
-    const at = cry.indexOf(hand.id); if (at >= 0) cry[at] = cry[target.slot];
-    cry[target.slot] = hand.id; return { cry, hand: null };
-  }
+  if (target.slot != null) { cry[target.slot] = null; return { cry, hand: null }; }
   if (target.rack != null) {
-    if (hand.slot != null && target.rack === hand.id) { cry[hand.slot] = null; return { cry, hand: null }; } // rendu au râtelier
-    if (target.rack === hand.id) return { cry, hand: null };
-    if (hand.slot != null && !cry.includes(target.rack)) { cry[hand.slot] = target.rack; return { cry, hand: null }; } // échangé contre un autre
-    return { cry, hand: cry.includes(target.rack) ? null : { id: target.rack } };
+    const at = cry.indexOf(target.rack); if (at >= 0) { cry[at] = null; return { cry, hand: null }; }
+    const free = cry.indexOf(null); if (free < 0) return { cry, hand: null, full: true };
+    cry[free] = target.rack; return { cry, hand: null };
   }
   return { cry, hand: null };
 }

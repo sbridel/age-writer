@@ -67,15 +67,16 @@ function lensOf(w, ids) {
 /** Cristaux leurres : des pages courantes, pour qu'on ait à choisir. */
 const DECOYS = ["water", "stone", "fern", "wind", "fog", "lava", "sand", "great_tree", "moth", "door", "lamp", "crystal", "rain", "salt", "iron", "seed", "grazer", "tablet", "bridge", "auroras", "single_sun", "steady_cycle"];
 /**
- * I. Les cristaux : les pages écrites de l'Âge, dans l'ordre du livre (sans doublon, sans tache), les quatre premières ;
- * s'il n'en a aucune d'écrite, les premières tirées. Les choix : ces pages et des leurres, huit en tout, mêlés par la graine.
+ * I. Les cristaux : quatre pages de l'Âge (sans doublon, sans tache) : d'abord celles qu'on a écrites, puis celles que le
+ * monde a tirées (l'Imageur voit le monde tel qu'il est). L'ORDRE NE COMPTE PAS : c'est un ensemble. Les choix : ces pages
+ * et des leurres, huit en tout, mêlés par la graine.
  */
 function crystalsOf(analysis, name) {
   let pages = [];
   try { pages = analysis && analysis.resolved ? pageList(analysis) : []; } catch (e) { pages = []; }
   const uniq = (list) => [...new Set(list.map((p) => p.id))];
-  let ids = uniq(pages.filter((p) => p.written)).slice(0, 4);
-  if (!ids.length) ids = uniq(pages).slice(0, 4);
+  const real = pages.filter((p) => !p.blot && p.id && p.id !== "ink_blot");
+  let ids = uniq([...real.filter((p) => p.written), ...real.filter((p) => !p.written)]).slice(0, 4); // écrites d'abord, puis tirées
   if (!ids.length) ids = ["water"];
   const pool = DECOYS.filter((d) => !ids.includes(d)), opts = [...ids];
   let h = fnv(name + "|imageur-cristaux");
@@ -130,14 +131,17 @@ function lensScore(s, t) {
   const L = t.lens; if (!L) return 1;
   return Math.max(0, 1 - (Math.abs(s.r - L.r) + Math.abs(s.g - L.g) + Math.abs(s.b - L.b)) / 40 - (0.7 * Math.abs(s.iris - L.iris)) / MAX);
 }
-/** I. Justesse des cristaux (0 à 1) : chaque emplacement juste compte ; une bonne page à la mauvaise place, un peu. */
+/** I. Justesse des cristaux (0 à 1) : un ensemble, l'ordre ne compte pas ; chaque bon cristal compte, un cristal faux brouille. */
+const CRY_WRONG = 0.25;
 function crystalScore(s, t) {
   if (t && Number.isFinite(t.cryScore)) return t.cryScore; // mode Guilde (src/imager-guild.js) : les cristaux sont des glyphes, la justesse vient avec la cible
   const C = t.crystals; if (!C || !C.ids.length) return 1;
-  let k = 0;
-  C.ids.forEach((id, i) => { const pick = C.options[(s.cry || [])[i]]; if (pick === id) k += 1; else if (C.ids.includes(pick)) k += 0.3; });
-  return k / C.ids.length;
+  const picks = (s.cry || []).filter((v) => v >= 0).map((v) => C.options[v]).filter(Boolean);
+  const ok = new Set(picks.filter((p) => C.ids.includes(p))).size, wrong = picks.filter((p) => !C.ids.includes(p)).length;
+  return Math.max(0, ok / C.ids.length - CRY_WRONG * wrong);
 }
+/** Un cristal posé est-il juste ? (les logements qui s'allument, en mode facile) */
+function crystalOk(t, opt) { const C = t && t.crystals; return !!(C && opt >= 0 && C.ids.includes(C.options[opt])); }
 /** Les trois réglages et la netteté finale (leur produit) : il faut les trois pour voir l'Âge net. */
 function clarity(s, t, now = Date.now()) {
   if (!t) return { cry: 0, lens: 0, atmo: 0, total: 0 };
@@ -162,11 +166,21 @@ function toggleLock(s, t, now = Date.now()) {
 }
 
 /**
- * I. Le râtelier : les cristaux sont des objets. On en prend un (au râtelier ou dans un logement), on le pose dans un
- * logement : celui qui y était retourne au râtelier, ou change de place si on a pris un cristal déjà posé.
- * `hand` = null | { opt, slot? } ; `target` = { slot } | { rack: opt }. Renvoie { s, hand }.
+ * I. Le râtelier, d'un clic : un cristal du râtelier va dans le premier logement libre (déjà posé : il revient) ; un cristal
+ * posé revient au râtelier. Logements pleins : rien ne bouge (`full`). `target` = { slot } | { rack: opt }. Renvoie { s, hand: null, full? }.
  */
 function place(s, hand, target) {
+  const o = normalize(s); if (o.lock || !target) return { s: o, hand: null };
+  if (target.slot != null) { if (o.cry[target.slot] >= 0) o.cry[target.slot] = -1; return { s: o, hand: null }; }
+  if (target.rack != null) {
+    const at = o.cry.indexOf(target.rack); if (at >= 0) { o.cry[at] = -1; return { s: o, hand: null }; }
+    const free = o.cry.indexOf(-1); if (free < 0) return { s: o, hand: null, full: true };
+    o.cry[free] = target.rack; return { s: o, hand: null };
+  }
+  return { s: o, hand: null };
+}
+/** L'ancien geste en deux temps (prendre, poser), gardé pour les états anciens. */
+function placeTwoStep(s, hand, target) {
   const o = normalize(s); if (o.lock || !target) return { s: o, hand: null };
   if (!hand) {
     if (target.slot != null) return { s: o, hand: { opt: o.cry[target.slot], slot: target.slot } };
@@ -196,13 +210,14 @@ function beatsOf(s, t, now = Date.now()) {
 }
 
 /** Réglage de départ : au milieu, polarité « + ». */
-const START = Object.freeze({ pol: 1, freq: 12, amp: 12, harm: 6, phase: 0, r: 12, g: 12, b: 12, iris: 12, cry: Object.freeze([0, 1, 2, 3]), lock: false, az: 0, tilt: 0 });
+const START = Object.freeze({ pol: 1, freq: 12, amp: 12, harm: 6, phase: 0, r: 12, g: 12, b: 12, iris: 12, cry: Object.freeze([-1, -1, -1, -1]), lock: false, az: 0, tilt: 0 });
 const knob = (v, d) => Math.round(clamp(Number.isFinite(+v) ? +v : d, 0, MAX));
 function normalize(s) {
   const o = { ...START, ...(s || {}) };
-  const cry = (Array.isArray(o.cry) ? o.cry : START.cry).slice(0, 4).map((v) => Math.max(0, Math.floor(+v) || 0));
-  for (let i = 0; i < cry.length; i++) if (cry.indexOf(cry[i]) < i) { let v = 0; while (cry.includes(v)) v++; cry[i] = v; } // un cristal n'est qu'à un endroit
-  while (cry.length < 4) { let v = 0; while (cry.includes(v)) v++; cry.push(v); }
+  // les logements : un cristal (indice de choix) ou −1 (vide) ; un cristal n'est qu'à un endroit
+  const cry = (Array.isArray(o.cry) ? o.cry : START.cry).slice(0, 4).map((v) => { const n = Math.floor(+v); return Number.isFinite(n) && n >= 0 ? n : -1; });
+  for (let i = 0; i < cry.length; i++) if (cry[i] >= 0 && cry.indexOf(cry[i]) < i) cry[i] = -1;
+  while (cry.length < 4) cry.push(-1);
   return {
     pol: o.pol < 0 ? -1 : 1, freq: knob(o.freq, 12), amp: knob(o.amp, 12), harm: knob(o.harm, 6), phase: ((Math.round((+o.phase || 0) * 2) / 2) % TURN + TURN) % TURN,
     r: knob(o.r, 12), g: knob(o.g, 12), b: knob(o.b, 12), iris: knob(o.iris, 12), cry,
@@ -255,4 +270,4 @@ function hints(t, lang = "en") {
   };
 }
 
-module.exports = { lensWords, MAX, TURN, START, DECOYS, LOCK_AT, effective, canLock, toggleLock, place, set, targetsOf, lensOf, crystalsOf, phaseAt, phaseGap, sharpness, lensScore, crystalScore, clarity, beatsOf, normalize, turn, hints };
+module.exports = { lensWords, MAX, TURN, START, DECOYS, LOCK_AT, CRY_WRONG, crystalOk, placeTwoStep, effective, canLock, toggleLock, place, set, targetsOf, lensOf, crystalsOf, phaseAt, phaseGap, sharpness, lensScore, crystalScore, clarity, beatsOf, normalize, turn, hints };

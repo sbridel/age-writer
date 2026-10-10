@@ -42,8 +42,8 @@ const tune = (tg, phaseAt = t0) => ({ pol: tg.pol, freq: tg.freq, amp: tg.amp, h
 {
   ok(data["Ages/Cendre.md"].system.key === K && data["Ages/Roc.md"].system.key === K && data["Ages/Seul.md"].system.key !== K, "Brume, Cendre, Roc : une étoile (Kerath) ; Seul : la sienne");
   ok(JSON.stringify(ids("Ages/Brume.md")) === JSON.stringify(ids("Ages/Cendre.md")), "Brume et Cendre : mêmes premières pages (seule l'atmosphère les départage)");
-  const rack = GI.rackOf(ages, cands), known = new Set(ages.flatMap((a) => a.glyphs));
-  ok(rack.length === known.size && rack.every((id) => known.has(id)), `le râtelier : exactement les glyphes connus (${rack.join(", ")})`);
+  const rack = GI.rackOf(ages, cands), known = new Set([...ages.flatMap((a) => a.glyphs), ...cands.flatMap((c) => ids(c.age.path))]);
+  ok(rack.length === known.size && rack.every((id) => known.has(id)), `le râtelier : les glyphes connus et les pages des mondes de l'étagère (${rack.join(", ")})`);
   ok(!rack.includes("lava") && !rack.some((id) => IM.DECOYS.includes(id) && !known.has(id)), "aucun leurre inventé : seulement ce que l'étagère écrit");
   ok(GI.rackOf([], []).length === 0, "étagère vide : râtelier vide");
   const many = Array.from({ length: 19 }, (_, i) => "g" + String(i).padStart(2, "0"));
@@ -57,7 +57,7 @@ const tune = (tg, phaseAt = t0) => ({ pol: tg.pol, freq: tg.freq, amp: tg.amp, h
   { const w = GI.choose(cands, seul, IM.START, t0, K); ok(!w.planet && (!w.world || w.world.age.name !== "Seul"), "le télescope tient Kerath : Seul (une autre étoile) ne peut pas répondre"); }
   const swapped = GI.normCry([ids("Ages/Roc.md")[1], ids("Ages/Roc.md")[0], ids("Ages/Roc.md")[2]]), r2 = GI.choose(cands, swapped, IM.START, t0);
   ok(r2.world && !r2.planet && r2.score > 0 && r2.score < 1, "deux cristaux intervertis : un monde approché, pas tenu (image dédoublée)");
-  ok(!GI.choose(cands, GI.normCry([...ids("Ages/Roc.md"), "water"]), IM.START, t0).planet && GI.score(GI.normCry([...ids("Ages/Roc.md"), "water"]), ids("Ages/Roc.md")) < 1, "un cristal de trop : pas tenu");
+  { const bad = GI.normCry([...ids("Ages/Roc.md").slice(0, 3), "zzz_wrong"]); ok(!GI.choose(cands, bad, IM.START, t0).planet && GI.score(bad, ids("Ages/Roc.md")) < 0.75, "un cristal faux à la place d'une page : pas tenu, et il brouille"); }
   ok(GI.choose(cands, GI.normCry(["zzz_unknown"]), IM.START, t0).world === null && GI.unwritten(["zzz_unknown"], null) === null, "aucun monde écrit : null (le crochet des mondes jamais écrits)");
   // même étoile, mêmes pages : l'atmosphère départage
   const bc = GI.normCry(ids("Ages/Brume.md"));
@@ -66,10 +66,12 @@ const tune = (tg, phaseAt = t0) => ({ pol: tg.pol, freq: tg.freq, amp: tg.amp, h
   // la lumière renvoyée
   ok(GI.lightOf(cands, null) === null && JSON.stringify(GI.lightOf(cands, K)) === JSON.stringify(data["Ages/Brume.md"].target.lens), "la lumière : rien sans étoile tenue ; celle de Kerath sinon");
   // les gestes du râtelier
-  let h = GI.place(empty, null, { rack: "water" }); ok(h.hand && h.hand.id === "water", "on prend un cristal au râtelier");
-  h = GI.place(empty, h.hand, { slot: 2 }); ok(h.cry[2] === "water" && !h.hand, "on le pose dans le logement 3");
-  let h2 = GI.place(h.cry, null, { slot: 2 }); h2 = GI.place(h.cry, h2.hand, { rack: "water" }); ok(h2.cry[2] === null, "rendu à sa cheville : le logement se vide");
-  h2 = GI.place(h.cry, null, { slot: 2 }); h2 = GI.place(h.cry, h2.hand, { slot: 0 }); ok(h2.cry[0] === "water" && h2.cry[2] === null, "déplacé d'un logement à l'autre");
+  let h = GI.place(empty, null, { rack: "water" }); ok(h.cry[0] === "water" && !h.hand, "un clic au râtelier : le cristal va dans le premier logement libre");
+  h = GI.place(h.cry, null, { rack: "stone" }); ok(h.cry[1] === "stone", "puis le suivant");
+  let h2 = GI.place(h.cry, null, { slot: 0 }); ok(h2.cry[0] === null && h2.cry[1] === "stone", "un clic sur un logement : il se vide");
+  h2 = GI.place(h.cry, null, { rack: "stone" }); ok(h2.cry[1] === null, "un clic sur un cristal posé : il revient au râtelier");
+  ok(GI.place(["a", "b", "c", "d"], null, { rack: "e" }).full, "logements pleins : rien ne bouge");
+  const rocIds = ids("Ages/Roc.md"); ok(GI.exact(GI.normCry([...rocIds].reverse()), rocIds) && GI.score(GI.normCry([...rocIds].reverse()), rocIds) === 1, "l'ordre ne compte pas : les pages de Roc à l'envers tiennent Roc");
   ok(JSON.stringify(GI.normCry(["water", "water", "x"])) === JSON.stringify(["water", null, "x", null]), "un cristal n'est qu'à un endroit");
   // l'état gardé
   const g = GI.normalize({ ...IM.START, gcry: ["water", null, "fern"], seen: ["Roc", "Roc", "Brume"], lock: true, lockOn: "Ages/Roc.md" });
@@ -139,12 +141,12 @@ const relDone = (async () => {
   ok(rackIds.length === Math.min(GI.RACK, known.length) && rackIds.every((id) => known.includes(id)), `le râtelier : les glyphes connus (${rackIds.join(", ")})`);
   if (known.length > GI.RACK) ok(ri.hot.some((h) => h.imager && h.imager.rackPage === 1), "plus de huit : on change de rangée");
   // les pages de Roc dans l'ordre
-  const put = (id, slot) => { let pg = 0; while (!ri.hot.some((h) => h.imager && h.imager.rack === id) && pg++ < 5) clickOn(ri, (a) => a.rackPage === 1, "rangée suivante"); clickOn(ri, (a) => a.rack === id, "cristal " + id); clickOn(ri, (a) => a.slot === slot, "logement " + (slot + 1)); };
-  const roc = ids("Ages/Roc.md"); put(roc[0], 0); put(roc[1], 1);
-  ok(!st.planet, "deux cristaux sur trois : pas encore de planète");
-  put(roc[2], 2);
-  ok(st.planet && st.world.age.name === "Roc" && sounds.includes("lock") && /regulator wakes/.test(ri.flash.text), "les pages de Roc dans l'ordre : la planète est tenue, la station III s'éveille");
-  ok(tunings[ri.imagerGuildKey()] && tunings[ri.imagerGuildKey()].gcry.join() === [...roc, null].join(), "les logements sont gardés (état du livre vierge, à part)");
+  const put = (id) => { let pg = 0; while (!ri.hot.some((h) => h.imager && h.imager.rack === id) && pg++ < 5) clickOn(ri, (a) => a.rackPage === 1, "rangée suivante"); clickOn(ri, (a) => a.rack === id, "cristal " + id); }; // un clic : il va dans le premier logement libre
+  const roc = ids("Ages/Roc.md"); put(roc[2]); put(roc[0]); put(roc[3]);
+  ok(!st.planet, "trois cristaux sur quatre : pas encore de planète");
+  put(roc[1]);
+  ok(st.planet && st.world.age.name === "Roc" && sounds.includes("lock") && /regulator wakes/.test(ri.flash.text), "les pages de Roc, dans n'importe quel ordre : la planète est tenue, la station III s'éveille");
+  ok(tunings[ri.imagerGuildKey()] && tunings[ri.imagerGuildKey()].gcry.slice().sort().join() === [...roc].sort().join(), "les logements sont gardés (état du livre vierge, à part)");
   ok(!tunings["Ages/Roc.md"], "le mode Guilde n'écrit pas dans le réglage de l'Âge (mode facile)");
   clickOn(ri, (a) => a.station === null, "reculer");
   clickOn(ri, (a) => a.station === "atmo", "poste III"); ri.draw(5);
@@ -153,9 +155,9 @@ const relDone = (async () => {
 
   // même étoile : Brume et Cendre (mêmes cristaux), l'atmosphère départage
   clickOn(ri, (a) => a.station === "cry", "poste I");
-  for (let i = 2; i >= 0; i--) { clickOn(ri, (a) => a.slot === i, "reprendre"); clickOn(ri, (a) => a.rack === roc[i], "rendre au râtelier"); }
+  for (let i = 3; i >= 0; i--) clickOn(ri, (a) => a.slot === i, "vider le logement " + (i + 1)); // un clic : le cristal revient
   ok(st.g.cry.every((x) => !x) && !st.world, "logements vidés : fenêtre noire");
-  const bc = ids("Ages/Brume.md"); bc.forEach((id, i) => put(id, i));
+  const bc = ids("Ages/Brume.md"); bc.forEach((id) => put(id));
   ok(st.planet && ["Brume", "Cendre"].includes(st.world.age.name), "les pages de Brume et Cendre : un des deux mondes");
   st.settings = IM.normalize({ ...st.settings, ...tune(data["Ages/Cendre.md"].target) }); ri.draw(6);
   ok(st.world.age.name === "Cendre", "l'atmosphère de Cendre : Cendre");
@@ -187,10 +189,10 @@ const relDone = (async () => {
 
   // aucun monde : fenêtre noire
   clickOn(ri, (a) => a.station === "cry", "poste I");
-  for (let i = 3; i >= 0; i--) { clickOn(ri, (a) => a.slot === i, "reprendre"); clickOn(ri, (a) => a.rack === bc[i], "rendre"); }
+  for (let i = 3; i >= 0; i--) clickOn(ri, (a) => a.slot === i, "vider");
   put("water", 0); put("stone", 1); put("fern", 2); put("orange_sun", 3);
   ok(st.world && !st.planet, "des cristaux mêlés : un monde approché, jamais tenu");
-  for (let i = 3; i >= 0; i--) { const id = st.g.cry[i]; clickOn(ri, (a) => a.slot === i, "reprendre"); clickOn(ri, (a) => a.rack === id, "rendre"); }
+  for (let i = 3; i >= 0; i--) clickOn(ri, (a) => a.slot === i, "vider");
   ok(!st.world && !st.target && ri.imagerClarity().total === 0, "aucun cristal : aucun monde, fenêtre noire");
   ok(bad === 0, "aucun nombre non fini");
 
