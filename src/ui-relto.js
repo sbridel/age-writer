@@ -138,17 +138,22 @@ async function openRelto(plugin) {
 /**
  * Commande à part : lancer l'histoire. Crée (une seule fois) un dossier et un Relto « histoire » à l'intérieur, avec sa propre
  * graine (son île, son Great Zero) et le marqueur `relto_mode: story`, puis l'ouvre. Si un Relto histoire existe déjà, l'ouvre.
+ * Dossier et note portent la date et la graine (« Relto Story Mode 2026-10-11 74561208 ») : aucune collision avec le coffre.
  */
 async function startStory(plugin) {
   const { app, t } = plugin;
   const existing = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
   if (existing) { new obsidian.Notice(t("story.exists")); await app.workspace.getLeaf(false).openFile(existing); return existing; }
-  const fr = plugin.lang() === "fr", folder = (plugin.ext.storyFolder || (fr ? "Histoire" : "Story")).replace(/^\/+|\/+$/g, "");
+  // Un nom qui ne peut pas entrer en collision avec une note ou un dossier du coffre : « Relto Story Mode », la date du jour et la graine du Relto
+  const seed = 1 + Math.floor(Math.random() * 99999999), now = new Date(), pad = (v) => String(v).padStart(2, "0");
+  const stamp = `Relto Story Mode ${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${seed}`;
+  let folder = (plugin.ext.storyFolder || stamp).replace(/^\/+|\/+$/g, ""), k = 1;
+  while (!plugin.ext.storyFolder && app.vault.getAbstractFileByPath(folder)) folder = `${stamp} ${++k}`; // un dossier de ce nom existe déjà : jamais d'écrasement
   await ensureFolder(app, folder);
-  let name = fr ? "Relto de l'histoire" : "Story Relto", n = 1, path;
+  const name = `Relto Story Mode ${seed}`; let n = 1, path;
   do { path = `${folder}/${name}${n > 1 ? " " + n : ""}.md`; n++; } while (app.vault.getAbstractFileByPath(path));
   const base = path.replace(/^.*\//, "").replace(/\.md$/, "");
-  const fm = { ...M.defaultReltoFrontmatter(1 + Math.floor(Math.random() * 99999999)), age_name: base, relto_mode: ST.MODE };
+  const fm = { ...M.defaultReltoFrontmatter(seed), age_name: base, relto_mode: ST.MODE };
   const f = await app.vault.create(path, `---\n${obsidian.stringifyYaml(fm)}---\n# ${base}\n\n\`\`\`relto\n\`\`\`\n`);
   new obsidian.Notice(t("story.created", { folder }));
   await app.workspace.getLeaf(false).openFile(f);

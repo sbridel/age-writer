@@ -323,6 +323,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     ok(made.length === 1 && /^[^/]+\/[^/]+\.md$/.test(made[0]), "mode histoire : la commande crée un Relto dans son propre dossier (" + made[0] + ")");
     const sf = files.get(made[0]), sfm = fmOfNote(sf.content), dir = made[0].replace(/\/[^/]+$/, "");
     ok(sfm.relto_mode === "story" && sfm.age_type === "personal_hub" && Number(sfm.seed) > 0, "mode histoire : marqueur relto_mode, refuge, graine propre");
+    ok(new RegExp("^Relto Story Mode \\d{4}-\\d{2}-\\d{2} " + sfm.seed + "$").test(dir) && sf.basename === "Relto Story Mode " + sfm.seed, "mode histoire : dossier et note nommés d'après la date et la graine (aucune collision possible)");
     p.app.metadataCache.getFileCache = (ff) => (ff.path === sf.path ? { frontmatter: sfm } : gfcS(ff));
     const age = (name, lns, where) => { const path = (where ? where + "/" : "") + name + ".md", f = new TFile(path, "```age\n" + lns.join("\n") + "\n```\n"); files.set(path, f); return f; };
     const inside = age("Premier", ["single_sun", "steady_cycle", "water", "lava"], dir), outside = age("Dehors", ["single_sun", "steady_cycle", "water", "sand"], "");
