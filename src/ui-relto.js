@@ -234,10 +234,17 @@ async function renderRelto(plugin, source, el, ctx) {
       b.setAttr("aria-label", t(key)); b.addEventListener("click", () => { pick(k); plugin.saveExt(); if (k === "view") { try { renderer.draw(0); } catch (e) { /* ignore */ } if (root.__fadeArm) root.__fadeArm(); } });
     }
     if (!ctx.big) { const x = tabBar.createEl("button", { cls: "age-relto__tab age-relto__tab--expand" }); try { obsidian.setIcon(x.createSpan({ cls: "age-relto__tabicon" }), "maximize-2"); } catch (e) { /* ignore */ } x.setAttr("aria-label", t("tab.expand")); x.addEventListener("click", () => openReltoView(plugin)); }
-    if (ctx.big) {
+    { // le plein écran, dans la grande vue comme dans la note : dans la note, son conteneur prend le temps du plein écran l'habit de la grande vue
       const fs = tabBar.createEl("button", { cls: "age-relto__tab age-relto__tab--full" }); try { obsidian.setIcon(fs.createSpan({ cls: "age-relto__tabicon" }), "expand"); } catch (e) { /* ignore */ }
       fs.setAttr("aria-label", t("tab.fullscreen"));
-      fs.addEventListener("click", () => { const host = root.closest(".age-reltoview") || root, d = host.ownerDocument; try { if (d.fullscreenElement) d.exitFullscreen(); else host.requestFullscreen(); } catch (e) { /* ignore */ } });
+      fs.addEventListener("click", () => {
+        const big = root.closest(".age-reltoview"), host = big || root.parentElement || root, d = host.ownerDocument;
+        try {
+          if (d.fullscreenElement) { d.exitFullscreen(); return; }
+          if (!big) { host.addClass("age-reltoview", "age-reltoview--inline"); const off = () => { if (!d.fullscreenElement) { host.removeClass("age-reltoview", "age-reltoview--inline"); d.removeEventListener("fullscreenchange", off); } }; d.addEventListener("fullscreenchange", off); }
+          const p = host.requestFullscreen(); if (p && p.catch) p.catch(() => { if (!big) host.removeClass("age-reltoview", "age-reltoview--inline"); });
+        } catch (e) { /* ignore */ }
+      });
     }
     pick(defs.some((d) => d[0] === ui0.reltoTab) ? ui0.reltoTab : "view");
   } else { root.setAttr("data-tab", "all"); }
@@ -248,6 +255,7 @@ async function renderRelto(plugin, source, el, ctx) {
   // la roue des vues : un seul bouton (l'icône de la vue en cours) ; un clic ouvre, sur l'image, une roue de laiton avec les vues
   // disponibles en cercle (leur nom au moyeu, au survol) ; un clic sur une vue y va et referme la roue (Échap ou un clic ailleurs aussi)
   const navBtns = {}, iconOf = {}, wheelBtn = nav.createEl("button", { cls: "age-relto__viewbtn age-relto__wheelbtn", attr: { "aria-label": t("relto.views") } });
+  try { obsidian.setIcon(wheelBtn, "compass"); } catch (e) { /* ignore */ } // la roue garde son icône : la boussole (l'île a son propre bouton)
   const wheel = stage.createDiv({ cls: "age-relto__wheel" }), hub = wheel.createDiv({ cls: "age-relto__wheelhub" });
   const closeWheel = () => { wheel.removeClass("is-open"); wheelBtn.removeClass("is-active"); };
   const openWheel = () => {
@@ -302,7 +310,7 @@ async function renderRelto(plugin, source, el, ctx) {
       sound.roomStart(v === "imager" ? "imager" : v === "cat" ? "cat" : v === "cabin" ? "fire" : "water", roomVol() * (v === "imager" ? humVol() : 1), bufs);
     } catch (e) { /* ignore */ }
   };
-  const syncView = (v) => { const cur = v || "island"; for (const [id, b] of [...Object.entries(navBtns), ...Object.entries(quickBtns)]) b.toggleClass("is-active", id === cur); try { obsidian.setIcon(wheelBtn, iconOf[cur] || "compass"); } catch (e) { /* ignore */ } roomAudio(v); };
+  const syncView = (v) => { const cur = v || "island"; for (const [id, b] of [...Object.entries(navBtns), ...Object.entries(quickBtns)]) b.toggleClass("is-active", id === cur);  roomAudio(v); };
   const syncNav = (sc) => { const av = renderer.available(); for (const [id, b] of [...Object.entries(navBtns), ...Object.entries(quickBtns)]) b.toggleClass("is-hidden", !av[id]); syncView(renderer.view); void sc; };
   syncView("island");
   const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
