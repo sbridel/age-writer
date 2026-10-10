@@ -497,8 +497,10 @@ function closeLens(r, ctx, st, cl, t, c) {
   // l'aide en mots (réglage « Aide aux lentilles ») : sous l'écran, ce que l'œil lit dans le comparateur
   if (L && (!r.opts.lensHints || r.opts.lensHints())) {
     const T = tx(r).t, cname = (k) => T(`lens.c.${k}`), parts = I.lensWords(s, L) || [];
-    ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillStyle = rgba(224, 194, 122, 0.9);
-    parts.forEach((p, i) => ctx.fillText(T(p.key, { c: p.vars.c ? cname(p.vars.c) : "" }), MINI.x + MINI.w / 2, MINI.y + MINI.h + 13 + i * 13));
+    // une seule ligne, dans la bande libre entre le cadre de l'écran et le bord du banc : jamais sur l'écran
+    const line = parts.map((p) => T(p.key, { c: p.vars.c ? cname(p.vars.c) : "" })).join(" ");
+    ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = rgba(224, 194, 122, 0.9);
+    ctx.fillText(line, MINI.x + MINI.w / 2, MINI.y + MINI.h + 26, MINI.w + 24);
     ctx.textAlign = "left";
   }
   backStrip(r, ctx);
