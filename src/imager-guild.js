@@ -10,8 +10,9 @@
  *     verrouillée et la station III s'éveille ;
  *   - stations II et III : comme en mode facile, contre le monde trouvé ; plusieurs Âges d'une même étoile (même lumière,
  *     mêmes premières pages) : l'atmosphère départage (`choose`).
- * Un réglage qui ne correspond à aucun Âge écrit : la fenêtre reste noire (`unwritten`, un crochet qui renvoie null pour
- * l'instant : les mondes jamais écrits viendront plus tard).
+ * Un réglage qui ne correspond exactement à aucun Âge écrit tombe parfois sur un monde que personne n'a écrit (`unwritten`,
+ * src/unwritten.js) : seulement à l'aveugle (aucune étoile tenue au télescope), quatre cristaux posés ; sinon la fenêtre
+ * reste noire. Un Âge écrit dont les cristaux sont justes l'emporte toujours.
  * L'état gardé (`normalize`, `saved`) est à part de celui du mode facile (par Relto) : quatre logements (identifiants de
  * glyphes ou vides) et les noms dont le livre se souvient. Testé dans test/imager-guild.test.js.
  */
@@ -73,7 +74,7 @@ function slotsOf(cry, ids) { return cry.map((id, i) => ({ id, ok: !!id && ids[i]
  * justesse des cristaux, puis l'atmosphère (deux mondes d'une même étoile aux mêmes premières pages), puis le nom.
  * Renvoie { world, planet (cristaux justes), score } ; world null : aucun cristal ne résonne (fenêtre noire).
  */
-function choose(cands, cry, settings, now = Date.now(), star = null) {
+function choose(cands, cry, settings, now = Date.now(), star = null, finder = null) {
   const pool = (cands || []).filter((c) => c && c.data && c.data.target && (!star || starOf(c) === star));
   let best = null;
   for (const c of pool) {
@@ -82,15 +83,23 @@ function choose(cands, cry, settings, now = Date.now(), star = null) {
     const k = { c, ex, sc, atmo, name };
     if (!best || ex > best.ex || (ex === best.ex && (sc > best.sc + 1e-9 || (Math.abs(sc - best.sc) < 1e-9 && (atmo > best.atmo + 1e-9 || (Math.abs(atmo - best.atmo) < 1e-9 && name < best.name)))))) best = k;
   }
-  if (!best) return { world: unwritten(cry, star), planet: false, score: 0 };
-  return { world: best.c, planet: best.ex, score: best.sc };
+  if (best && best.ex) return { world: best.c, planet: true, score: best.sc }; // un Âge écrit, cristaux justes : il l'emporte toujours
+  const u = unwritten(cry, star, settings, finder);
+  if (u) return { world: u, planet: true, score: 1, unwritten: true }; // ses premières pages sont ces cristaux : la planète est tenue
+  if (!best) return { world: null, planet: false, score: 0 };
+  return { world: best.c, planet: false, score: best.sc };
 }
 
+/** Les quatre logements sont-ils garnis ? (le régulateur cherche alors, même sans monde tenu) */
+const full = (cry) => Array.isArray(cry) && cry.length >= SLOTS && cry.slice(0, SLOTS).every((x) => isId(x));
+
 /**
- * Crochet : un monde jamais écrit que ces réglages feraient apparaître (dans le lore, l'Art relie des mondes qui existent
- * déjà). Pour l'instant : null, la fenêtre reste noire. Plus tard : une scène générative tirée des réglages, reproductible.
+ * Un monde jamais écrit que ces réglages font apparaître (dans le lore, l'Art relie des mondes qui existent déjà) : à
+ * l'aveugle seulement (`star` null : le télescope ne tient aucune étoile, la lumière vient des lentilles), quatre cristaux
+ * posés. `finder(cry, settings)` (src/unwritten.js, `find`, avec le moteur ; mis en cache par le rendu) renvoie un candidat
+ * comme ceux de l'étagère, ou null. Sans `finder` : null.
  */
-function unwritten(cry, star) { return null; }
+function unwritten(cry, star, settings, finder) { return !star && full(cry) && typeof finder === "function" ? finder(cry.slice(0, SLOTS), settings) || null : null; }
 
 /** La lumière que le télescope renvoie : celle de l'étoile visée (le premier de ses Âges, par nom), ou null. */
 function lightOf(cands, star) {
@@ -139,4 +148,4 @@ function aimedOf(tel) {
   return k && tel.systems && tel.systems[k] && Number.isFinite(tel.systems[k].at) ? k : null;
 }
 
-module.exports = { aimedOf, SLOTS, RACK, EXTRA, normCry, normalize, saved, rackOf, rackPage, pages, exact, score, slotsOf, choose, unwritten, lightOf, targetOf, place, starOf, crystalIds };
+module.exports = { aimedOf, SLOTS, RACK, EXTRA, normCry, normalize, saved, rackOf, rackPage, pages, exact, score, slotsOf, choose, unwritten, full, lightOf, targetOf, place, starOf, crystalIds };

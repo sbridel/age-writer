@@ -185,6 +185,13 @@ const D = {
     "guild.slot.put": "Put the crystal here", "guild.slot.take": "take this crystal", "guild.slot.empty": "An empty socket",
     "guild.rack.take": "take this crystal", "guild.rack.swap": "swap for this crystal", "guild.rack.placed": "(its crystal is in a socket)", "guild.rack.back": "Put the crystal back on its peg",
     "guild.rack.none": "No crystal yet: none of the shelf's Ages has written pages.", "guild.rack.prev": "Previous row of crystals", "guild.rack.next": "Next row of crystals",
+    "guild.tube.search": "no sky answers — the regulator searches", "guild.tube.search.tip": "Cathode tube — four crystals set, no written world: the regulator searches (frequency and amplitude still matter)",
+    "guild.unwritten.formed": "The book shows a world no one has written.", "guild.unwritten.book": "a world no one has written",
+    "guild.unwritten.screen": "A world no one has written", "guild.unwritten.tip": "The blank book shows a world no one has written: no name rises in the ink",
+    "guild.transcribe": "Transcribe this world", "guild.transcribe.tip": "Transcribe this world: a new note with its pages, as the book shows them",
+    "guild.transcribe.done": "Transcribed", "guild.transcribe.blur": "The image must hold before the world can be transcribed",
+    "guild.transcribed": "Transcribed — {name}: the world is written now", "guild.transcribe.fail": "The ink would not take: nothing was written",
+    "unwritten.intro": "A world no one had written, found through the blank book of the Imager and transcribed as it showed itself. Its lines are its first pages and its sky; `seed:` keeps the same draw.",
   },
   fr: {
     "det.stability": "Stabilité",
@@ -369,6 +376,13 @@ const D = {
     "guild.slot.put": "Poser le cristal ici", "guild.slot.take": "prendre ce cristal", "guild.slot.empty": "Un logement vide",
     "guild.rack.take": "prendre ce cristal", "guild.rack.swap": "échanger contre ce cristal", "guild.rack.placed": "(son cristal est dans un logement)", "guild.rack.back": "Remettre le cristal sur sa cheville",
     "guild.rack.none": "Pas encore de cristal : aucun Âge de l'étagère n'a de pages écrites.", "guild.rack.prev": "Rangée de cristaux précédente", "guild.rack.next": "Rangée de cristaux suivante",
+    "guild.tube.search": "aucun ciel ne répond — le régulateur cherche", "guild.tube.search.tip": "Tube cathodique — quatre cristaux posés, aucun monde écrit : le régulateur cherche (fréquence et amplitude comptent encore)",
+    "guild.unwritten.formed": "Le livre montre un monde que personne n'a écrit.", "guild.unwritten.book": "un monde que personne n'a écrit",
+    "guild.unwritten.screen": "Un monde que personne n'a écrit", "guild.unwritten.tip": "Le livre vierge montre un monde que personne n'a écrit : aucun nom ne monte dans l'encre",
+    "guild.transcribe": "Transcrire ce monde", "guild.transcribe.tip": "Transcrire ce monde : une nouvelle note avec ses pages, telles que le livre les montre",
+    "guild.transcribe.done": "Transcrit", "guild.transcribe.blur": "L'image doit tenir avant qu'on puisse transcrire ce monde",
+    "guild.transcribed": "Transcrit — {name} : ce monde est écrit désormais", "guild.transcribe.fail": "L'encre n'a pas pris : rien n'a été écrit",
+    "unwritten.intro": "Un monde que personne n'avait écrit, trouvé par le livre vierge de l'Imageur et transcrit tel qu'il s'est montré. Ses lignes sont ses premières pages et son ciel ; `seed:` garde le même tirage.",
   },
 };
 

@@ -26,6 +26,7 @@ const RB = require("./relto-books");
 const G = require("./guide");
 const PH = require("./physics/index");
 const AS = require("./ageseed");
+const UW = require("./unwritten");
 const WX = require("./weather");
 const { SYSTEM_RE } = require("./starsystem");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
@@ -433,6 +434,23 @@ module.exports = function build(Base, core, AGEX) {
       new Notice(this.t("random.created", { name: f.basename }));
       await this.app.workspace.getLeaf(false).openFile(f);
       this.refreshLive();
+    }
+
+    /**
+     * Transcrire un monde que personne n'a écrit (Imageur au livre vierge, src/unwritten.js) : une note dans le dossier où
+     * « Generate a random Age » met les siennes, avec exactement les lignes qui le décrivent et sa graine. Le nom de la note est
+     * aussi la graine du tirage : s'il est déjà pris, on retire le monde sous le nom suivant (même clé, mêmes pages) ; jamais
+     * d'écrasement (`createNoteIn` ajoute un suffixe en dernier recours). Renvoie le fichier, ou null.
+     */
+    async transcribeWorld(u) {
+      if (!u || !Array.isArray(u.lines) || !u.key) return null;
+      const names = new Set(this.app.vault.getMarkdownFiles().map((f) => f.basename));
+      let w = u;
+      if (names.has(u.name)) { const again = UW.find(UW.parseKey(u.key).cry, null, { analyse: (text, name) => core.analyse(text, { seed: name }), taken: (nm) => names.has(nm) }, u.key); if (again) w = again.unwritten; }
+      const note = UW.noteOf(w, this.t("unwritten.intro"));
+      const f = await this.createNoteIn(note.name, note.body);
+      new Notice(this.t("random.created", { name: f.basename }));
+      return f;
     }
 
     /** Premier lancement : une note de bienvenue avec un Âge d'exemple (une seule fois, jamais chez un coffre qui a déjà des Âges). */

@@ -20,6 +20,8 @@ function renderMany(host, ages) {
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", label: "TELESCOPE step 2 / the Age's star charted" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager", label: "IMAGER step 2 / sync micrometer, in sync: local time and KIPS" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager-off", label: "IMAGER step 2 / star charted, not yet in sync" },
+    { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", unwritten: "en", label: "IMAGER guild / a world no one has written, in the blank book (Transcribe)" },
+    { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", unwritten: "fr", label: "IMAGEUR Guilde / un monde que personne n'a écrit, transcrit (FR)" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step3: "bent", label: "TELESCOPE step 3 / black hole: the bent image, the pale true point" },
     { h: 22, t: 3.45, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step3: "pulsar", label: "TELESCOPE step 3 / pulsar: a second, faster beat" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step3: "oldline", label: "TELESCOPE step 3 / the old line (Me'erta) beside the true Zero" },
@@ -82,8 +84,9 @@ function renderMany(host, ages) {
     const scene = M.buildScene(relto, pages, ages);
     const c = document.createElement("canvas"); const d = document.createElement("div"); d.textContent = v.label; host.appendChild(d); host.appendChild(c);
     c.style.width = "640px"; document.body.appendChild(host);
-    const r = new ReltoRenderer(c, dni, v.reduced ? { reducedMotion: true } : {}); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view;
+    const r = new ReltoRenderer(c, dni, v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view;
     if (v.now) { const DC = require("./dniclock"); if (v.now === "tahvo+1s") { const ms = 1791591000000, tv = DC.rings(ms).find((q) => q.key === "tahvo"); r.nowOverride = ms - tv.elapsed + 1000; } else r.nowOverride = v.now; } // l'horloge D'ni à un instant fixe
+    if (v.unwritten) unwrittenView(r, v.unwritten);
     if (v.step2) step2(r, v.step2);
     if (v.step3) step3(r, v.step3);
     if (v.aim) { const TL = require("./relto-telescope"), st = TL.state(r), z = st.zero; st.aim = v.aim === "far" ? { torahn: (z.torahn + 30000) % 62500, elev: 0 } : { torahn: (z.torahn - v.aim[0] * 100 + 62500) % 62500, elev: z.elevation - v.aim[1] }; st.found = !!v.found; } if (v.at != null) r.nowOverride = require("./metronome").peakAt(1.29e9 + (v.step3 ? 9 : 0) + v.at); // un instant choisi dans le battement (0 : le sommet du vrai pouls)
@@ -110,6 +113,42 @@ function step2(r, mode) {
   const tg = data.target, set = IM.normalize({ pol: tg.pol, freq: tg.freq, amp: tg.amp, harm: tg.harm, phase: IM.phaseAt(tg, now) + 1, r: tg.lens.r, g: tg.lens.g, b: tg.lens.b, iris: tg.lens.iris, cry: tg.crystals.ids.map((id) => tg.crystals.options.indexOf(id)).concat([7, 6, 5, 4]).slice(0, 4),
     ...(mode === "imager" ? { sync: CAL.orbitAt(orbit, now), syncAt: now - 2 * 86400000, sysKey: sys.key } : { sync: CAL.orbitAt(orbit, now) + 2.5 }) });
   r.imager = { idx: 0, station: null, hand: null, age, target: data.target, model: data.model, view: !!data.model, settings: set, loading: null, empty: false, system: sys, orbit };
+}
+
+/** Mode Guilde : un monde que personne n'a écrit (src/unwritten.js), trouvé à l'aveugle, l'image formée dans le livre vierge. */
+let UWD = null;
+function unwrittenDeps() {
+  if (UWD) return UWD;
+  const { analyseAgeBase } = require("./engine/analysis"), P = require("./physics/index"), { hooks } = require("./engine/hooks"), SS = require("./starsystem"), SKY = require("./sky"), G = require("./genscene"), { describeAge } = require("./engine/prose");
+  hooks.skip = (l) => P.isPhysicsLine(l) || SS.SYSTEM_RE.test(l) || SKY.DAY_RE.test(l);
+  const A = (src, name) => { const a = analyseAgeBase(src, { seed: name }); return P.applyPhysics(a, P.physicsOf(a, src, name), "easy"); };
+  UWD = { analyse: A, prose: describeAge, scene: (a, name, text) => { const S = G.sceneOf(a, name); if (!S) return null; Object.assign(S, SKY.parseSky(text)); return G.build(S, 300, 176); } };
+  return UWD;
+}
+function unwrittenOpts(lang) {
+  const UW = require("./unwritten"), { makeT } = require("./i18n");
+  return { instrumentsMode: () => "guild", t: makeT(() => lang), unwrittenFind: (cry, s) => UW.find(cry, s, unwrittenDeps()) };
+}
+function unwrittenView(r, lang) {
+  const UW = require("./unwritten"), IM = require("./imager"), { rng } = require("./util"), now = 1.8e12;
+  r.nowOverride = now;
+  // des réglages à l'aveugle qui tombent sur un monde : de l'eau, des fougères, un ciel du jour
+  const GLY = ["water", "fern", "great_tree", "wind", "rain", "fog", "single_sun", "steady_cycle", "stone", "sand", "vine", "moth", "lamp", "bridge"], q = rng(lang === "fr" ? 31 : 11);
+  let hit = null;
+  for (let i = 0; i < 6000 && !hit; i++) {
+    const pool = GLY.slice(), cry = []; for (let j = 0; j < 4; j++) cry.push(pool.splice(Math.floor(q() * pool.length), 1)[0]);
+    const st = UW.STARS[2 + Math.floor(q() * 5)], s = { r: st.rgb[0], g: st.rgb[1], b: st.rgb[2], iris: 7 + Math.floor(q() * 10), freq: 8 + Math.floor(q() * 10), amp: 8 + Math.floor(q() * 6) };
+    if (!cry.includes("water")) continue;
+    const w = UW.find(cry, s, unwrittenDeps()); if (w && w.data.model && w.unwritten.words) hit = { cry, s, w };
+  }
+  const st = r.imagerState(); st.loading = null; st.cands = []; st.sig = st.sig || "";
+  const tg = hit.w.data.target;
+  st.g = { ...st.g, cry: hit.cry.slice() };
+  st.settings = IM.normalize({ ...hit.s, freq: tg.freq, amp: tg.amp, harm: tg.harm, pol: tg.pol, phase: IM.phaseAt(tg, now), r: tg.lens.r, g: tg.lens.g, b: tg.lens.b, iris: tg.lens.iris });
+  r.imagerFind();
+  if (lang === "fr") st.transcribed = { key: hit.w.unwritten.key, name: hit.w.unwritten.name };
+  const T = require("./relto-imager").TRANSCRIBE;
+  if (lang !== "fr") r.hover = { ...T, tip: r.imagerTr()("guild.transcribe.tip") }; // en français : sans infobulle, pour lire la légende sous le livre
 }
 
 /** Étape 3 : un système perturbé sur le lutrin, la ligne ancienne, la carte des étoiles (avec ou sans le piège). */

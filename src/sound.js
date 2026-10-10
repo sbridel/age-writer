@@ -629,6 +629,11 @@ function imagerSfx(kind, volume = 0.3) {
     else if (kind === "crank") { for (let i = 0; i < 6; i++) tick(t + i * 0.05, 1500 + (i % 2) * 300, 0.45); thud(t + 0.3, 110, 0.15, 0.4); }
     else if (kind === "lever") { tick(t, 700, 0.6, 0.05); thud(t + 0.03, 160, 0.15, 0.5); }
     else if (kind === "page") { tick(t, 3000, 0.25, 0.12); }
+    else if (kind === "unwritten") { // un monde que personne n'a écrit : un triton qui bat lentement et glisse vers le bas, une cloche sans fond
+      const glide = (t0, f0, f1, g, dur) => { const o = c.createOscillator(), e = c.createGain(); o.type = "sine"; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f1, t0 + dur); e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + 0.25); e.gain.exponentialRampToValueAtTime(0.001, t0 + dur); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + dur + 0.05); };
+      glide(t, 311, 293, 0.16, 1.1); glide(t, 313.5, 292, 0.12, 1.1); glide(t + 0.08, 440, 415, 0.1, 1.05); // deux notes presque à l'unisson (le battement), le triton au-dessus
+      bell(t + 0.3, 1661, 0.05, 0.8);
+    }
     else tick(t, 1700, 0.5, 0.025); // un cran
   });
 }

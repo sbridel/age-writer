@@ -367,6 +367,14 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     const before = files.size, cmd = p.cmds.find((c) => c.id === "random-age"); ok(!!cmd, "commande « Generate a random Age » enregistrée");
     await cmd.callback(); const made = [...files.keys()].slice(before);
     ok(made.length === 1 && /```age\n[\s\S]*seed: \d+/.test(files.get(made[0]).content) && notices.some((x) => /Nouvel Âge|New Age/.test(x)), "Âge au hasard : une note créée avec son bloc et sa graine, une notice");
+    // un monde que personne n'a écrit (Imageur au livre vierge), transcrit : même dossier, bloc exact, jamais d'écrasement
+    const u = { key: "single_sun,water,fern,wind|s5|i2|f2|a2", seed: 4711, name: "Tahvoreth", lines: ["single_sun", "water", "fern", "wind", "star_mass: 1", "insolation: 1", "rotation: 24", "atmosphere: 1"] };
+    const b1 = files.size, f1 = await p.transcribeWorld(u), made1 = [...files.keys()].slice(b1);
+    ok(made1.length === 1 && f1 && files.get(made1[0]).content.includes("```age\n" + u.lines.join("\n") + "\nseed: 4711\n```") && /Tahvoreth/.test(made1[0]), "monde transcrit : une note, le bloc exact (lignes + seed)");
+    const ra = p.core.analyse(p.core.extract(files.get(made1[0]).content), { seed: f1.basename });
+    ok(ra.resolved.seed === "4711" && !ra.resolved.lines.some((l) => l.unknown), "relu : même graine, aucune tache d'encre");
+    const f2 = await p.transcribeWorld(u);
+    ok(f2 && f2.path !== f1.path && files.get(f1.path).content === files.get(made1[0]).content, "transcrit deux fois : une autre note, la première intacte");
     const live = p.index.list; p.index.list = async () => []; p.ext.state.welcomed = false;
     const b2 = files.size; await p.welcomeOnce(); const w = [...files.keys()].slice(b2);
     ok(w.length === 1 && /Bienvenue|Welcome/.test(w[0]) && p.ext.state.welcomed, "premier lancement : note de bienvenue créée, une seule fois");

@@ -27,6 +27,7 @@ const STATIONS = { cry: { x: 148, y: 222, w: 146, h: 74, tip: "Crystal rack" }, 
 const LABEL = { freq: "Frequency", amp: "Amplitude", harm: "Harmonics", phase: "Phase", pol: "Polarity switch", r: "Red glass", g: "Green glass", b: "Blue glass", iris: "Iris" };
 const GLASS = { r: [230, 70, 60], g: [80, 200, 110], b: [80, 120, 240] };
 const BACK = { x: 0, y: 330, w: W, h: 30 };
+const TRANSCRIBE = { x: 30, y: 256, w: 92, h: 17 }; // la plaque « Transcrire ce monde », sous le livre vierge (mode Guilde)
 const MICRO = { x: 524, y: 192, r: 13, hub: 6, win: { x: 494, y: 160, w: 60, h: 14 }, span: 6 }; // le micromètre de synchro ; la fenêtre montre ±6 crans
 const EN = makeT(() => "en");
 const tOf = (r) => (r.opts && typeof r.opts.t === "function" ? r.opts.t : EN);
@@ -163,7 +164,7 @@ function overview(r, ctx, st, cl, t, c, now) {
   ctx.fillStyle = c("#0b0d11"); ctx.fillRect(10, 150, 24, FLOOR - 150); ctx.strokeStyle = c("#3a4048"); ctx.strokeRect(10, 150, 24, FLOOR - 150);
   r.hot.push({ x: 8, y: 148, w: 28, h: FLOOR - 146, tip: "Door — back outside", go: "island" });
   drawScreen(r, ctx, SCREEN, st, cl, t, c);
-  r.hot.push({ x: SCREEN.x, y: SCREEN.y, w: SCREEN.w, h: SCREEN.h, tip: st.guild ? (k > 0.9 && st.planet ? st.age.name : st.world ? tx(r).t("guild.screen.blur") : tx(r).t("guild.screen.dark")) : k > 0.9 && st.age ? st.age.name : "The screen" });
+  r.hot.push({ x: SCREEN.x, y: SCREEN.y, w: SCREEN.w, h: SCREEN.h, tip: st.guild ? (k > 0.9 && st.planet ? (st.world.unwritten ? tx(r).t("guild.unwritten.screen") : st.age.name) : st.world ? tx(r).t("guild.screen.blur") : tx(r).t("guild.screen.dark")) : k > 0.9 && st.age ? st.age.name : "The screen" });
 
   // le périscope : la manivelle (azimut) à gauche de l'écran, le levier d'inclinaison à droite ; libres une fois verrouillé
   const K = CRANK, ang = (s.az / 4) * Math.PI * 2 + (st.crankSpin || 0);
@@ -313,7 +314,8 @@ function formed(r, st) { return !!(st.guild && st.planet && st.world && (st.sett
  * forme ; sur la page gauche, le nom s'inscrit à l'encre quand l'image tient. Il se souvient des mondes déjà formés.
  */
 function blankBook(r, ctx, st, c) {
-  const t = tOf(r), on = formed(r, st), name = on ? String(st.world.age.name) : "";
+  const t = tOf(r), on = formed(r, st), u = on && st.world.unwritten ? st.world.unwritten : null, name = on && !u ? String(st.world.age.name) : "";
+  if (u) return unwrittenBook(r, ctx, st, c, u);
   ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(70, 200, 8, FLOOR - 200); ctx.fillRect(52, FLOOR - 6, 44, 6);
   ctx.fillStyle = c("#5a4322"); ctx.fillRect(38, 214, 72, 4); // le support de laiton qui le tient
   ctx.save(); ctx.translate(74, 196); ctx.rotate(-0.18);
@@ -327,6 +329,31 @@ function blankBook(r, ctx, st, c) {
   ctx.fillStyle = "#e0c27a"; ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillText(on ? name : t("guild.book"), 74, 238, 120); ctx.textAlign = "left";
   const seen = st.g.seen.length ? " — " + t("guild.book.seen", { names: st.g.seen.join(", ") }) : "";
   r.hot.push({ x: 28, y: 180, w: 92, h: 66, tip: (on ? t("guild.book.formed", { name }) : t("guild.book.tip")) + seen });
+}
+/**
+ * Le livre vierge quand il montre un monde que personne n'a écrit : pas de nom ; quelques mots de sa description en encre
+ * pâle sur la page gauche ; sous le livre, « un monde que personne n'a écrit » et la plaque « Transcrire ce monde ».
+ */
+function unwrittenBook(r, ctx, st, c, u) {
+  const t = tOf(r), done = st.transcribed && st.transcribed.key === u.key ? st.transcribed.name : null;
+  ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(70, 200, 8, FLOOR - 200); ctx.fillRect(52, FLOOR - 6, 44, 6);
+  ctx.fillStyle = c("#5a4322"); ctx.fillRect(38, 214, 72, 4);
+  ctx.save(); ctx.translate(74, 196); ctx.rotate(-0.18);
+  ctx.fillStyle = c("#2a1d13"); ctx.fillRect(-46, -6, 92, 30);
+  ctx.fillStyle = c("#e8dcc0"); ctx.fillRect(-43, -4, 42, 25); ctx.fillRect(1, -4, 42, 25);
+  ctx.fillStyle = "#05080a"; ctx.fillRect(5, -1, 34, 20);
+  if (st.thumb) ctx.drawImage(st.thumb, 5, -1, 34, 20);
+  const words = String(u.words || "").split(/\s+/).filter(Boolean); // l'encre qui hésite : quelques mots, pâles, sans nom
+  ctx.fillStyle = "rgba(59,42,27,0.55)"; ctx.font = "italic 4.5px serif";
+  for (let i = 0; i < 3; i++) { const line = words.slice(i * 2, i * 2 + 2).join(" "); if (line) ctx.fillText(line, -40, 3 + i * 6, 36); }
+  ctx.restore();
+  ctx.fillStyle = "#cfe3dc"; ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillText(t("guild.unwritten.book"), 74, 238, 128);
+  if (u.words) { ctx.fillStyle = "rgba(233,220,184,0.7)"; ctx.font = "italic 9px serif"; ctx.fillText(u.words, 74, 250, 128); }
+  ctx.textAlign = "left";
+  const P = TRANSCRIBE; plate(ctx, c, P.x, P.y, P.w, P.h, false);
+  ctx.fillStyle = c("#1b130d"); ctx.font = "italic 9px serif"; ctx.textAlign = "center"; ctx.fillText(done ? t("guild.transcribe.done") : t("guild.transcribe"), P.x + P.w / 2, P.y + 12, P.w - 8); ctx.textAlign = "left";
+  r.hot.push({ x: 28, y: 180, w: 92, h: 62, tip: t("guild.unwritten.tip") + (u.words ? ` — « ${u.words} »` : "") });
+  r.hot.push({ ...P, tip: done ? t("guild.transcribed", { name: done }) : t("guild.transcribe.tip"), imager: { transcribe: true } });
 }
 /** Vue d'ensemble, station I en mode Guilde : quatre logements (verts, ambre) et les cristaux de la rangée. */
 function guildRackMini(ctx, c, st, lit) {
@@ -459,13 +486,13 @@ function closeAtmo(r, ctx, st, cl, t, c, now) {
   ctx.save(); ctx.beginPath(); ctx.roundRect ? ctx.roundRect(T.x, T.y, T.w, T.h, 14) : ctx.rect(T.x, T.y, T.w, T.h); ctx.clip();
   ctx.strokeStyle = "rgba(60,140,100,0.25)"; ctx.lineWidth = 1; for (let i = 1; i < 8; i++) { ctx.beginPath(); ctx.moveTo(T.x + (i * T.w) / 8, T.y); ctx.lineTo(T.x + (i * T.w) / 8, T.y + T.h); ctx.stroke(); } for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(T.x, T.y + (i * T.h) / 4); ctx.lineTo(T.x + T.w, T.y + (i * T.h) / 4); ctx.stroke(); }
   ctx.lineCap = "round";
-  const asleep = st.guild && !st.planet; // mode Guilde : la trace du ciel n'apparaît qu'une planète tenue
+  const asleep = st.guild && !st.planet, searching = asleep && GI.full(st.g.cry); // mode Guilde : la trace du ciel n'apparaît qu'une planète tenue ; quatre cristaux posés, le régulateur cherche
   if (tg && !asleep) { wavePath(ctx, tg, I.phaseAt(tg, now), T); ctx.strokeStyle = "rgba(90,220,150,0.28)"; ctx.lineWidth = 6; ctx.stroke(); ctx.strokeStyle = "rgba(120,255,170,0.35)"; ctx.lineWidth = 2.5; ctx.stroke(); }
   const e = tg ? I.effective(s, tg, now) : s; wavePath(ctx, e, e.phase, T); ctx.strokeStyle = "rgba(190,255,210,0.95)"; ctx.lineWidth = 1.4; ctx.stroke();
   const gl = ctx.createRadialGradient(T.x + T.w * 0.3, T.y + T.h * 0.2, 4, T.x + T.w / 2, T.y + T.h / 2, T.w * 0.7); gl.addColorStop(0, "rgba(255,255,255,0.07)"); gl.addColorStop(1, "rgba(0,0,0,0.35)"); ctx.fillStyle = gl; ctx.fillRect(T.x, T.y, T.w, T.h);
   ctx.restore();
-  if (asleep) { ctx.fillStyle = "rgba(120,255,170,0.45)"; ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillText(tx(r).t("guild.tube.asleep"), T.x + T.w / 2, T.y + T.h - 14, T.w - 30); ctx.textAlign = "left"; }
-  r.hot.push({ x: T.x, y: T.y, w: T.w, h: T.h, tip: asleep ? tx(r).t("guild.tube.tip") : "Cathode tube — the Age's sky (wide trace) and your tuning (bright trace)" });
+  if (asleep) { ctx.fillStyle = "rgba(120,255,170,0.45)"; ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillText(tx(r).t(searching ? "guild.tube.search" : "guild.tube.asleep"), T.x + T.w / 2, T.y + T.h - 14, T.w - 30); ctx.textAlign = "left"; }
+  r.hot.push({ x: T.x, y: T.y, w: T.w, h: T.h, tip: searching ? tx(r).t("guild.tube.search.tip") : asleep ? tx(r).t("guild.tube.tip") : "Cathode tube — the Age's sky (wide trace) and your tuning (bright trace)" });
   // le voltmètre : la seule mesure du régulateur
   const M = { x: 560, y: 196, r: 40 }; plate(ctx, c, M.x - 52, M.y - 44, 104, 58, false);
   ctx.fillStyle = c("#e8dcc0"); ctx.beginPath(); ctx.arc(M.x, M.y, M.r, Math.PI * 1.1, Math.PI * 1.9); ctx.lineTo(M.x, M.y); ctx.closePath(); ctx.fill();
@@ -531,4 +558,4 @@ function paintView(canvas, model, target, t, now, look = null, sq = null) {
   return canvas;
 }
 
-module.exports = { drawImagerRoom, paintView, wavePath, STATIONS, SCREEN, MINI, LOCK, CRANK, TILT, W, H };
+module.exports = { drawImagerRoom, paintView, wavePath, formed, STATIONS, SCREEN, MINI, LOCK, CRANK, TILT, TRANSCRIBE, W, H };

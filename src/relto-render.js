@@ -15,6 +15,7 @@ const SM = require("./relto-starmap");
 const CK = require("./relto-clock");
 const IM = require("./imager");
 const GI = require("./imager-guild");
+const UW = require("./unwritten");
 const T = require("./telescope");
 const EN_T = require("./i18n").makeT(() => "en");
 const CAL = require("./calibration");
@@ -613,7 +614,7 @@ class ReltoRenderer {
     }
     const st = this.imager; st.empty = !ages.length; st.ages = ages;
     if (st.sig !== sig && !st.loading) {
-      st.sig = sig; const token = (st.loading = {});
+      st.sig = sig; const token = (st.loading = {}); if (this.unwrittenCache) this.unwrittenCache.clear(); // l'étagère a changé (un monde transcrit l'a rejointe) : on recherche
       Promise.all(ages.map((age) => Promise.resolve(this.opts.onImagerAge ? this.opts.onImagerAge(age) : null).then((data) => ({ age, data }), () => ({ age, data: null })))).then((list) => {
         if (st.loading !== token) return; st.loading = null; st.cands = list.filter((c) => c.data && c.data.target);
         if (!this.running) this.draw(0);
@@ -627,7 +628,7 @@ class ReltoRenderer {
   imagerFind() {
     const st = this.imager, now = this.imagerNow(), star = TL.aimedOf(this), s = st.settings, g = st.g;
     st.star = star; st.light = GI.lightOf(st.cands, star);
-    let pick = GI.choose(st.cands, g.cry, s, now, star);
+    let pick = GI.choose(st.cands, g.cry, s, now, star, st.loading || st.sig == null ? null : this.imagerFinder()); // les mondes jamais écrits : une fois l'étagère lue (un Âge écrit l'emporte toujours)
     if (s.lock && g.lockOn) { const held = st.cands.find((c) => c.age.path === g.lockOn); if (held) pick = { world: held, planet: true }; } // verrouillé : la machine tient son monde
     const w = pick.world;
     if (!w || !st.world || w.age.path !== st.world.age.path) { st.anim = null; st.thumb = null; }
@@ -635,6 +636,21 @@ class ReltoRenderer {
     st.target = GI.targetOf(w, g.cry); st.model = w ? w.data.model || null : null; st.view = !!st.model;
     st.system = st.planet ? w.data.system || null : null; st.orbit = st.planet ? w.data.orbit || null : null; // la synchro ne cherche qu'une planète tenue
     if (s.lock && !st.planet && !st.loading) { st.settings = { ...s, lock: false, az: 0, tilt: 0 }; st.g = { ...g, lockOn: null }; } // le monde a glissé : le verrou lâche
+  }
+  /**
+   * Mode Guilde : le chercheur de mondes jamais écrits (src/unwritten.js, `find`, fourni par `opts.unwrittenFind(cry, s)`),
+   * mis en cache par clé de réglages (mêmes réglages, même monde ou rien ; la scène générative n'est construite qu'une fois).
+   */
+  imagerFinder() {
+    const f = this.opts && this.opts.unwrittenFind; if (typeof f !== "function") return null;
+    const cache = (this.unwrittenCache = this.unwrittenCache || new Map());
+    return (cry, s) => {
+      const k = UW.keyOf(cry, s); if (!k) return null;
+      if (cache.has(k)) return cache.get(k);
+      let w = null; try { w = UW.lucky(k) ? f(cry, s) || null : null; } catch (e) { w = null; }
+      if (cache.size > 200) cache.delete(cache.keys().next().value);
+      cache.set(k, w); return w;
+    };
   }
   /** Les textes de l'Imageur (`opts.t`, l'anglais à défaut). */
   imagerTr() { return this.opts && typeof this.opts.t === "function" ? this.opts.t : EN_T; }
@@ -648,6 +664,12 @@ class ReltoRenderer {
   imagerRemember(say) {
     const st = this.imager; if (!st.guild || !st.planet || !st.world) return false;
     const name = String(st.world.age.name), clear = st.settings.lock || this.imagerClarity().total >= IM.LOCK_AT;
+    if (st.world.unwritten) { // un monde que personne n'a écrit : pas de nom à inscrire ; une note étrange et une ligne, une fois par monde
+      const key = st.world.unwritten.key; if (!clear || st.uSeen === key) return false;
+      st.uSeen = key; if (this.opts.onImagerSound) this.opts.onImagerSound("unwritten");
+      const t = this.imagerTr(); if (say) say(t("guild.unwritten.formed"));
+      return true;
+    }
     if (!clear || st.g.seen.includes(name)) return false;
     st.g = { ...st.g, seen: [...st.g.seen, name].sort() }; this.imagerSave();
     const t = this.imagerTr(); if (say) say(t("guild.inscribed", { name }));
@@ -754,6 +776,7 @@ class ReltoRenderer {
   imagerGuildAct(a, st, before, sfx, say) {
     const t = this.imagerTr(), done = () => { this.imagerFind(); this.imagerSave(); if (this.opts.onImagerTune) this.opts.onImagerTune(st); return true; };
     if (a.book) return true; // un seul livre, fixé dans l'appareil
+    if (a.transcribe) { this.imagerTranscribe(st, sfx, say); return true; }
     if (a.rackPage) { const rack = GI.rackOf((this.scene && this.scene.ages) || [], st.cands), n = GI.pages(rack); st.g = { ...st.g, page: (((st.g.page + a.rackPage) % n) + n) % n }; sfx("click"); return done(); }
     if (a.slot != null || a.rack != null) {
       if (before.lock) { say(t("guild.lock.cry")); return true; }
@@ -763,8 +786,25 @@ class ReltoRenderer {
       this.imagerRemember(say);
       return done();
     }
-    if (a.key && ["freq", "amp", "harm", "phase", "pol"].includes(a.key) && !st.planet && !before.lock) { sfx("jam"); say(t("guild.atmo.asleep")); return true; }
+    // quatre cristaux posés sans monde tenu : le régulateur cherche (un monde que personne n'a écrit, src/unwritten.js)
+    if (a.key && ["freq", "amp", "harm", "phase", "pol"].includes(a.key) && !st.planet && !GI.full(st.g.cry) && !before.lock) { sfx("jam"); say(t("guild.atmo.asleep")); return true; }
     return false;
+  }
+  /**
+   * Transcrire le monde jamais écrit que montre le livre vierge (image formée) : `opts.onTranscribe(u)` crée la note (src/entry.js,
+   * `transcribeWorld`) et renvoie son nom. Le monde devient un Âge écrit : il rejoint l'étagère, et c'est lui qui répondra.
+   */
+  imagerTranscribe(st, sfx, say) {
+    const t = this.imagerTr(), w = st.world, u = w && w.unwritten;
+    if (!u || !RI.formed(this, st)) { sfx("jam"); say(t("guild.transcribe.blur")); return; }
+    if (!this.opts.onTranscribe || st.transcribing) return;
+    st.transcribing = true; sfx("page");
+    Promise.resolve(this.opts.onTranscribe(u)).then((name) => {
+      st.transcribing = false;
+      if (name) { st.transcribed = { key: u.key, name }; this.flash = { text: t("guild.transcribed", { name }), x: W / 2, y: 120, until: Date.now() + 3600 }; }
+      else this.flash = { text: t("guild.transcribe.fail"), x: W / 2, y: 120, until: Date.now() + 3200 };
+      if (!this.running) this.draw(0);
+    }, () => { st.transcribing = false; });
   }
   /** La vue glisse de l'ancienne direction vers la nouvelle (de côté pour l'azimut, de haut en bas pour l'inclinaison). */
   imagerAnim(from, to) {
