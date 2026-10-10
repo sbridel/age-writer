@@ -42,7 +42,7 @@ const SYS_ELEV = 100;      // hauteur de l'étoile : de −100 à +100 shahfeete
 const SYS_DIST = [200, 15000]; // distance horizontale de l'étoile au Zéro, en shahfeetee
 // Le rahnfee (src/beam.js, invention de fan) : le trajet du pouls en un prorahn, 15 625 shahfeetee de faisceau. Au-delà, le
 // pouls se mêlerait au battement suivant : aucune étoile, aucun cran de retard n'y va (garde-fou, vérifié au chargement).
-if (Math.hypot(SYS_DIST[1], SYS_ELEV) >= BEAM.RAHNFEE || DELAY_MAX * DELAY_UNIT >= BEAM.RAHNFEE) throw new Error("starsystem: au-delà d'un rahnfee");
+// Portée : aucune étoile ni aucun cran de retard n'atteint un rahnfee (vérifié par test/beam.test.js, pas au chargement : une erreur ici empêcherait le plugin de démarrer).
 /** Blocs du ciel qui disent l'étoile : combien, quelle couleur, quelle orbite binaire (la lune n'en est pas). */
 const STAR_CATS = new Set(["stars", "hue"]), STAR_EXTRA = new Set(["close_binary_orbit", "wide_binary_orbit"]), NOT_STAR = new Set(["companion_moon"]);
 /** `system: Kerath` (ou `star_system:`, `système:`) : la graine d'étoile partagée. */
