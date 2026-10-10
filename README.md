@@ -205,7 +205,7 @@ A Relto page's syntax accepts `page lagoon: Lagoon | vegetation 0.5 palm` or `pa
 
 ### The global view
 
-A small button (globe) at the top left toggles between the **island view** (opening view) and the **global view**: the Relto seen from afar, the island at the centre in the sea of mist, rock pinnacles emerging. Pages add their elements there: **islets** (page *Islets*), the rope **bridge** joining them, the **calendar pinnacle** (page *Calendar pinnacle*, which carries the D'ni day), the sky (moon, rain, storm, birds, aurora, snow). A click on the island ("Your Relto") returns to the island view.
+A small button (globe) at the top left toggles between the **island view** (opening view) and the **global view**: the Relto seen from afar, the island at the centre in the sea of mist, rock pinnacles emerging. Pages add their elements there: **islets** (page *Islets*), the rope **bridge** joining them, the **calendar pinnacle** (page *Calendar pinnacle*, which carries the D'ni day), the sky (moon, comet, rain, storm, birds, aurora, snow). A click on the island ("Your Relto") returns to the island view.
 
 ### Scenery, sky and wildlife pages
 
@@ -214,6 +214,7 @@ A small button (globe) at the top left toggles between the **island view** (open
 | *Rain*, *Storm* | rain; storm with spaced lightning and a darkened sky (`rain`, `storm`, density 0 to 1) |
 | *Birds*, *Butterflies* | birds crossing the sky (mostly by day); butterflies fluttering around the island |
 | *Moon & sun* | a large moon and its small companion, visible by day too |
+| *Comets* | now and then a comet slowly crosses the sky (a pass lasts 40 to 60 s), bluish-white head and long soft tail; mostly at night, faint by day. `comet` density = how often (from about every 8 minutes at 0 to about every minute at 1); also in the global view |
 | *Dock* | a dock in the mist, right of the island, with a boat and a lantern at night (becomes a rope **bridge** to the pinnacle when the *Calendar pinnacle* page is active, and a second bridge leads to the *D'ni clock* when it stands in the mist) |
 | *Bench* | a wooden bench |
 | *Islets* | floating islets behind the island (density = number) |

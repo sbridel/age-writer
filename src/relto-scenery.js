@@ -1,7 +1,7 @@
 "use strict";
 // Éléments de décor ajoutés par les pages du Relto (ciel, faune, mobilier, îlots). Tout est dessiné ici, rien n'est emprunté.
 // Chaque fonction reçoit le contexte 2D, le renderer `r` (pour la graine, le dessin du ciel, les zones cliquables), le ciel `sky` et le temps `t`.
-const { rng, clamp, mix, rgba, fnv } = require("./util");
+const { rng, clamp, lerp, smooth, mix, rgba, fnv } = require("./util");
 const DT = require("./dnitime");
 const DC = require("./dniclock");
 const W = 640, H = 360, GY = 208;
@@ -185,4 +185,45 @@ function dniClock(ctx, r, sky, t) {
   r.hot.push({ x: x - 22, y: y - 70, w: 44, h: 104, tip: `D'ni clock — ${DT.format(d)}` });
 }
 
-module.exports = { moons, rain, storm, birds, butterflies, dock, bench, flowers, grass, islets, calendar, dniClock, W, H, GY };
+/**
+ * Comète (effet `comet`, densité = fréquence) : de temps en temps, une comète traverse lentement le ciel du Relto.
+ * Le temps est découpé en fenêtres de `period` secondes (de ~8 min à densité 0 jusqu'à ~1 min 10 à densité 1) ; chaque fenêtre k
+ * contient un passage de 40 à 60 s, tiré de la graine du Relto et de k (instant, sens, hauteur, longueur et courbure de la queue).
+ * Hauteur : y de 78 à 132 (coordonnées logiques), pour rester dans le ciel visible de la vue de l'île (zoom 1,2 autour de y = 214).
+ * Renvoie la tête (x, y), la direction unitaire (dx, dy), la longueur de la queue, l'enveloppe du passage `env` (0..1), ou null.
+ * `still` (prefers-reduced-motion) : une comète immobile, au milieu de son premier passage.
+ */
+function cometAt(seed, t, d, still) {
+  const period = 70 + Math.pow(1 - clamp(d), 1.5) * 410, base = (seed ^ fnv("comet")) >>> 0;
+  const pass = (k) => { const q = rng((base ^ Math.imul(k + 1, 0x9e3779b1)) >>> 0), dur = 40 + q() * 20; return { k, dur, start: k * period + q() * (period - dur), dir: q() < 0.5 ? 1 : -1, y0: 78 + q() * 30, y1: 92 + q() * 40, len: 95 + q() * 50, curl: (q() - 0.5) * 0.5 }; };
+  let c, p;
+  if (still) { c = pass(0); p = 0.5; } else { c = pass(Math.floor(t / period)); p = (t - c.start) / c.dur; if (!(p >= 0 && p < 1)) return null; }
+  const x0 = c.dir > 0 ? -40 : W + 40, x1 = c.dir > 0 ? W + 40 : -40, vx = x1 - x0, vy = c.y1 - c.y0, n = Math.hypot(vx, vy);
+  return { x: lerp(x0, x1, p), y: lerp(c.y0, c.y1, p), dx: vx / n, dy: vy / n, len: c.len, curl: c.curl, env: smooth(p / 0.12) * smooth((1 - p) / 0.12), p, k: c.k, dir: c.dir, period };
+}
+
+/** Visibilité de la comète selon l'heure : pleine la nuit, se lève au crépuscule, presque effacée en plein jour. */
+const cometVis = (sky) => 0.06 + 0.94 * smooth(((sky.night == null ? 0 : sky.night) - 0.2) / 0.55);
+
+/** Dessine la comète : tête blanc bleuté, longue queue douce et légèrement courbe qui s'éloigne de sa direction, fin trait d'ions. */
+function comet(ctx, r, d, sky, t) {
+  const c = cometAt(r.scene.seed, t, d, !!(r.opts && r.opts.reducedMotion)); if (!c) return;
+  const a = c.env * cometVis(sky); if (a < 0.01) return;
+  const bx = -c.dx, by = -c.dy, nx = -by, ny = bx, L = c.len, tx = c.x + bx * L, ty = c.y + by * L;
+  const qx = c.x + bx * L * 0.55 + nx * L * c.curl * 0.35, qy = c.y + by * L * 0.55 + ny * L * c.curl * 0.35;
+  ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.lineCap = "round";
+  for (const [w, al] of [[14, 0.09], [7, 0.15], [3, 0.26]]) { // queue de poussière : trois voiles, du plus large au plus fin
+    const g = ctx.createLinearGradient(c.x, c.y, tx, ty); g.addColorStop(0, rgba(210, 228, 255, al * a)); g.addColorStop(0.45, rgba(170, 200, 250, al * 0.55 * a)); g.addColorStop(1, rgba(150, 180, 240, 0));
+    ctx.strokeStyle = g; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.quadraticCurveTo(qx, qy, tx, ty); ctx.stroke();
+  }
+  const ix = c.x + bx * L * 1.15 - nx * 6, iy = c.y + by * L * 1.15 - ny * 6, gi = ctx.createLinearGradient(c.x, c.y, ix, iy); // queue d'ions : droite, plus bleue
+  gi.addColorStop(0, rgba(150, 190, 255, 0.35 * a)); gi.addColorStop(1, rgba(120, 160, 255, 0));
+  ctx.strokeStyle = gi; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(ix, iy); ctx.stroke();
+  const hg = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 11); // la chevelure et le noyau
+  hg.addColorStop(0, rgba(255, 255, 255, 0.95 * a)); hg.addColorStop(0.3, rgba(205, 228, 255, 0.5 * a)); hg.addColorStop(1, rgba(180, 210, 255, 0));
+  ctx.fillStyle = hg; ctx.fillRect(c.x - 11, c.y - 11, 22, 22);
+  ctx.fillStyle = rgba(250, 252, 255, a); ctx.beginPath(); ctx.arc(c.x, c.y, 1.4, 0, 6.283); ctx.fill();
+  ctx.restore();
+}
+
+module.exports = { cometAt, cometVis, comet, moons, rain, storm, birds, butterflies, dock, bench, flowers, grass, islets, calendar, dniClock, W, H, GY };

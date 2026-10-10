@@ -181,6 +181,7 @@ class ReltoRenderer {
     ctx.save(); ctx.translate(CAM_X, CAM_OY); ctx.scale(CAM, CAM); ctx.translate(-CAM_X, -CAM_Y);
     this.drawSky(ctx, sky, t, has("aurora"));
     const mo = has("moons"); if (mo) SC.moons(ctx, sky);
+    const cm = has("comet"); if (cm) SC.comet(ctx, this, cm.density, sky, t); // devant les étoiles, derrière les nuages
     this.drawClouds(ctx, 0, sky, t);
     const bd = has("birds"); if (bd) SC.birds(ctx, bd.density, sky, t);
     const fw = has("fireworks"); if (fw) this.drawFireworks(ctx, fw.density, sky, t);

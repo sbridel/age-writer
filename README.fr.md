@@ -197,7 +197,7 @@ La syntaxe d'une page du Relto accepte `page lagon: …` ou `page_lagon: …` (l
 
 ### La vue globale
 
-Un petit bouton (globe) en haut à gauche de l'image bascule entre la **vue de l'île** (celle d'ouverture) et la **vue globale** : le Relto vu de loin, l'île au centre dans la mer de brume, des pinacles de roche qui en émergent. Les pages y ajoutent leurs éléments : les **îlots** (page *Islets*), le **pont** de cordes qui les relie, le **pinacle du calendrier** (page *Calendar pinnacle*, qui porte le jour D'ni), le ciel (lune, pluie, orage, oiseaux, aurore, neige). Un clic sur l'île (« Your Relto ») ramène à la vue de l'île ; le même bouton (maison) fait aussi le retour.
+Un petit bouton (globe) en haut à gauche de l'image bascule entre la **vue de l'île** (celle d'ouverture) et la **vue globale** : le Relto vu de loin, l'île au centre dans la mer de brume, des pinacles de roche qui en émergent. Les pages y ajoutent leurs éléments : les **îlots** (page *Islets*), le **pont** de cordes qui les relie, le **pinacle du calendrier** (page *Calendar pinnacle*, qui porte le jour D'ni), le ciel (lune, comète, pluie, orage, oiseaux, aurore, neige). Un clic sur l'île (« Your Relto ») ramène à la vue de l'île ; le même bouton (maison) fait aussi le retour.
 
 ### Pages du décor, du ciel et de la faune
 
@@ -206,6 +206,7 @@ Un petit bouton (globe) en haut à gauche de l'image bascule entre la **vue de l
 | *Rain*, *Storm* | pluie ; orage avec éclairs espacés et ciel assombri (`rain`, `storm`, densité 0 à 1) |
 | *Birds*, *Butterflies* | oiseaux qui traversent le ciel (le jour surtout) ; papillons qui voltigent autour de l'île |
 | *Moon & sun* | une grande lune et sa petite compagne, visibles aussi de jour |
+| *Comets* | de temps en temps, une comète traverse lentement le ciel (un passage dure 40 à 60 s), tête blanc bleuté et longue queue douce ; surtout la nuit, à peine visible le jour. Densité de `comet` = fréquence (environ toutes les 8 minutes à 0, environ chaque minute à 1) ; aussi dans la vue globale |
 | *Dock* | un ponton dans la brume, à droite de l'île, avec une barque et une lanterne la nuit ; il devient un pont de cordes vers la *Calendar pinnacle*, et un second pont mène à la *D'ni clock* quand elle se dresse dans la brume |
 | *Bench* | un banc de bois entre la cabane et l'étagère |
 | *Islets* | des îlots flottants derrière l'île (densité = nombre) |

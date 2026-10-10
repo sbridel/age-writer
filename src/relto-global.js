@@ -66,6 +66,7 @@ function bridge(ctx, x0, y0, x1, y1, sky) {
 function drawGlobal(r, ctx, sc, sky, t, has) {
   r.drawSky(ctx, sky, t, has("aurora"));
   if (has("moons")) SC.moons(ctx, sky);
+  if (has("comet")) SC.comet(ctx, r, has("comet").density, sky, t);
   r.drawClouds(ctx, 0, sky, t);
   if (has("birds")) SC.birds(ctx, has("birds").density, sky, t);
   // pinacles lointains puis brume
