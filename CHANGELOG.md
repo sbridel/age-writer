@@ -6,12 +6,12 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 
 ### Added
 - **Far worlds and the wrong beat.** About one star in six lies beyond a whole rahnfee: its pulse arrives a whole beat late. A brass counter beside the Delay wheel holds the whole beats; once a gorahn the Great Zero strikes harder (the pendulum's stroke glows gold), and with the right count the echo's strong beat comes back on that marked stroke. Easy way: the surveyor's notes say it, and a wrong count charts nothing. Art of the Guild: a wrong count charts the star a rahnfee off and the Imager cannot hold its planet. Stars already charted keep their engraving.
-- A new Relto gets a seed of its own: its own island and its own Great Zero to find (until now every new Relto started with the same seed, so the same Zero). Existing Reltos are unchanged.
-- The star chart writes its names last, with a halo of paper so lines crossing them do not hide them; when a star is crowded, its name sits a little further away, joined to it by a fine line.
 - **The ink dries before your eyes.** In the book (descriptive pages: text and glyphs) and in the Age block's *Text & glyphs* tab, freshly written ink is dark and glistening, a glint slides over it, and it slowly turns matte and brown over the drying time (15 minutes by default). Hovering the text or glyphs says how many minutes are left to change the Age freely, or that the ink is dry.
 - **`grass`**: green land that the wind combs in long waves across the linking window; a grassy shore by water, sometimes tall grass in the foreground. Written with `flowers`, it grows into a **meadow** (`meadow` ← `grass` + `flowers`): taller grass to the horizon, with flowers moving through it.
 
 ### Changed
+- A new Relto gets a seed of its own: its own island and its own Great Zero to find (until now every new Relto started with the same seed, so the same Zero). Existing Reltos are unchanged.
+- The star chart writes its names last, with a halo of paper so lines crossing them do not hide them; when a star is crowded, its name sits a little further away, joined to it by a fine line.
 - **The wheel of views:** the row of view icons above the Relto becomes a single button (showing the current view); it opens a brass wheel over the picture with every available view, its name at the hub on hover.
 - **A compact Settings tab:** the sky time on one line, with the hour it shows and ↺; the sound on one line, with a vertical volume fader.
 
