@@ -23,6 +23,7 @@ const T = require("./telescope");
 const SS = require("./starsystem");
 const DT = require("./dnitime");
 const { makeT } = require("./i18n");
+const GI = require("./imager-guild");
 
 const W = 640, H = 360, GY = 208;
 const EYE = { x: 196, y: 150, r: 116 }, FIELD = 30; // l'oculaire montre ±30 crans fins autour de la visée
@@ -53,8 +54,12 @@ function state(r) {
     for (let i = 0; i < 1400; i++) stars.push({ u: q() * NT, v: (q() * 2 - 1) * (T.ELEV_MAX + FIELD), m: q(), tw: q() * 6.283 }); // u en crans fins, v en shahfeetee
     r.telescope = { key, gen, zero, aim: T.normAim(g), found: !!(g && g.found), at: g && g.at ? T.normAim(g.at) : null, stars, anim: null,
       dial: SS.normDial(g && g.dial), systems: g && g.systems && typeof g.systems === "object" ? { ...g.systems } : {}, book: null,
-      line: g && g.found && Number.isFinite(+g.line) ? Math.round(+g.line) : 0, old: SS.oldLine(zero, key), triFor: null, note: null }; // étape 3 : la ligne où l'instrument est calé (0 : la vraie)
+      line: g && g.found && Number.isFinite(+g.line) ? Math.round(+g.line) : 0, old: SS.oldLine(zero, key), triFor: null, note: null, // étape 3 : la ligne où l'instrument est calé (0 : la vraie)
+      aimed: g && g.aimedAt ? g.aimedAt : null };
+    const at = guild(r) && g && g.aimedAt && typeof g.book === "string" ? ((sc.ages || []).findIndex((a) => a.path === g.book)) : -1;
+    if (at >= 0) bookLoad(r, at); // l'étoile tenue (mode Guilde) : son livre reste sur le lutrin
   }
+  r.telescope.guild = guild(r); // mode facile : rien de plus n'est gardé
   return r.telescope;
 }
 /** Le Zéro tel que l'instrument le tient : le vrai, ou la fausse ligne s'il s'est calé dessus (Torahn et élévation). */
@@ -74,6 +79,18 @@ function systemsOf(r) {
   return { found: !!(g && g.found), systems: (g && g.systems) || {} };
 }
 
+/**
+ * L'étoile que le télescope tient, pour l'Imageur en mode Guilde (src/imager-guild.js) : un livre sur le lutrin, son étoile
+ * déjà située, les trois molettes sur ses indices (dans la tolérance). Sinon null. Gardée dans l'état (`aimedAt`).
+ */
+function aimedKey(st) {
+  const sys = st.found ? bookSystem(st) : null, rec = sys && st.systems[sys.key];
+  return rec && (rec.line || 0) === st.line && SS.measure(st.dial, sys.clue).located ? sys.key : null;
+}
+const guild = (r) => !!(r.opts && typeof r.opts.instrumentsMode === "function" && r.opts.instrumentsMode() === "guild");
+/** Garder l'état si l'étoile tenue a changé (on pose ou retire un livre). */
+function keepAim(r, st) { if (st.guild && (st.aimed || null) !== aimedKey(st) && r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st)); }
+
 /** Le livre posé sur le lutrin : `idx` −1 = lutrin vide (on cherche le Zéro du Relto), sinon un Âge de l'étagère. */
 function bookLoad(r, i) {
   const st = state(r), ages = (r.scene && r.scene.ages) || [], n = ages.length + 1;
@@ -84,6 +101,7 @@ function bookLoad(r, i) {
   Promise.resolve(r.opts.onImagerAge(age)).then((d) => {
     if (st.book !== book) return; book.loading = false; book.data = d || null;
     const sys = d && d.system; if (sys && st.found) noteAge(r, st, sys.key, age.name); // un Âge d'un système déjà situé : son nom s'ajoute à la carte
+    keepAim(r, st); // l'Imageur (mode Guilde) : la lumière suit le livre
     if (!r.running) r.draw(0);
   }, () => { book.loading = false; });
 }
@@ -94,7 +112,7 @@ function measuring(st) { return !!(st.found && bookSystem(st)); }
 /** Un geste : `{ axis, delta }` (molette ; delta en torantee ou shahfeetee), `{ setZero: true }` (régler les molettes sur la plaque). */
 function act(r, a) {
   const st = state(r), sfx = (k, s) => { if (r.opts.onTelescopeSound) r.opts.onTelescopeSound(k, s); };
-  if (a.book) { bookLoad(r, (st.book ? st.book.idx : -1) + a.book); st.note = null; sfx("turn", 0.5); return; }
+  if (a.book) { bookLoad(r, (st.book ? st.book.idx : -1) + a.book); st.note = null; sfx("turn", 0.5); keepAim(r, st); return; }
   if (a.go) { r.setView(a.go); return; }
   if (a.axis || a.setZero || a.setSystem) st.note = null; // la phrase d'un geste précédent s'efface au geste suivant
   if (measuring(st)) return actSystem(r, st, a, sfx);
@@ -117,7 +135,7 @@ function act(r, a) {
   if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st));
 }
 /** L'état à garder : celui de l'étape 2 (T.saved), plus la ligne où l'instrument est calé si ce n'est pas la vraie. */
-function saveOf(st) { const s = T.saved(st); if (st.found && st.line) s.line = st.line; return s; }
+function saveOf(st) { const s = T.saved(st); if (st.found && st.line) s.line = st.line; const k = st.guild ? aimedKey(st) : null; st.aimed = k; if (k) { s.aimedAt = k; s.book = st.book.age.path; } return s; } // `aimedAt` : l'étoile tenue (l'Imageur, mode Guilde), et le livre qui la tient
 
 /** Étape 2 : un geste quand un livre est sur le lutrin et le Zéro trouvé (les molettes portent le réglage `dial`). */
 function actSystem(r, st, a, sfx) {
@@ -321,7 +339,7 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     const rec = st.systems[sys.key], done = !!rec, off = done && (rec.line || 0) !== st.line, shown = T.observe(sc1.shown, beatOf(r), fnvKey(st.key + sys.key));
     const line = m.located ? (off ? t("sys.offline") : t("sys.located")) : sc1.bentLock ? t("sys.bent.hold") : bandWords(t, shown.band);
     ctx.font = "italic 14px serif"; ctx.textAlign = "center"; ctx.fillStyle = m.located && !off ? "#9fe6da" : "#e9dcb8"; ctx.fillText(line, TEXT_X, 306, 500); ctx.textAlign = "left";
-    const sub = st.note ? t(st.note) : m.located ? "" : sc1.falseLock ? t("sys.beat.lock") : shown.band >= 2 ? (sc1.beat ? t("sys.beat.cross") + " " : sc1.bend ? t("sys.bend.arc") + " " : "") + echoWords(t, sc1.echoDd) : done ? (off ? t("sys.offline.sub") : t("sys.charted")) : "";
+    const sub = st.note ? t(st.note) : m.located ? (st.guild && aimedKey(st) ? t("guild.sent") : "") : sc1.falseLock ? t("sys.beat.lock") : shown.band >= 2 ? (sc1.beat ? t("sys.beat.cross") + " " : sc1.bend ? t("sys.bend.arc") + " " : "") + echoWords(t, sc1.echoDd) : done ? (off ? t("sys.offline.sub") : t("sys.charted")) : "";
     if (sub) { ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(233,220,184,0.8)"; ctx.fillText(sub, TEXT_X, 323, 520); ctx.textAlign = "left"; }
   } else {
     // étape 3 : la ligne de Me'erta, un second pouls plus pâle qui glisse contre l'horloge D'ni
@@ -434,4 +452,11 @@ function drawOnIsland(r, ctx, sky, tm) {
   void tm;
 }
 
-module.exports = { drawTelescopeRoom, drawOnIsland, state, act, systemsOf, bookLoad, EYE, WHEELS, PLATE, SPLATE, DELAY, LECTERN, FIELD, PULSE_MS };
+/** L'étoile que tient le télescope du Relto courant (mode Guilde) : l'état ouvert s'il existe, sinon l'état gardé. */
+function aimedOf(r) {
+  const sc = r.scene || {}, key = T.keyOf(sc.name, sc.seed);
+  if (r.telescope && r.telescope.key === key) return r.telescope.guild ? aimedKey(r.telescope) : null;
+  return GI.aimedOf(r.opts && r.opts.telescopeGet ? r.opts.telescopeGet(key) : null);
+}
+
+module.exports = { drawTelescopeRoom, drawOnIsland, state, act, systemsOf, aimedOf, aimedKey, bookLoad, EYE, WHEELS, PLATE, SPLATE, DELAY, LECTERN, FIELD, PULSE_MS };
