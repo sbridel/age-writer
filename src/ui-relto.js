@@ -86,7 +86,8 @@ async function createReltoNote(plugin) {
   const folder = (plugin.ext.reltoFolder || "Ages").replace(/^\/+|\/+$/g, "");
   await ensureFolder(app, folder);
   const path = (folder ? folder + "/" : "") + "Relto.md";
-  const body = `---\n${obsidian.stringifyYaml(M.defaultReltoFrontmatter())}---\n# Relto\n\n\`\`\`relto\n\`\`\`\n`;
+  // une graine tirée au hasard : chaque nouveau Relto a son île et son propre Great Zero à chercher
+  const body = `---\n${obsidian.stringifyYaml(M.defaultReltoFrontmatter(1 + Math.floor(Math.random() * 99999999)))}---\n# Relto\n\n\`\`\`relto\n\`\`\`\n`;
   const f = app.vault.getAbstractFileByPath(path) instanceof obsidian.TFile ? app.vault.getAbstractFileByPath(path) : await app.vault.create(path, body);
   new obsidian.Notice(t("relto.created"));
   return f;
