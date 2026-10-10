@@ -30,7 +30,7 @@ Age Writer est pensé pour être **diégétique** : presque tout ce qu'il montre
 
 Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité par axe, causes, chiffres : à lire comme les notes d'un arpenteur de la Guilde sur ton livre) et les **Réglages**. Tout le reste essaie de rester dans le monde.
 
-**État.** Publié, ordinateur seulement, mode bac à sable (voir [La suite](#15-la-suite)). La version en cours est celle de [`manifest.json`](manifest.json) et de la page [Releases](https://github.com/sbridel/age-writer/releases) ; le journal des changements, version par version, est dans [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
+**État.** Publié, ordinateur seulement, mode bac à sable (voir [La suite](#15-la-suite)). La version en cours est celle de [`manifest.json`](manifest.json) et de la page [Releases](https://github.com/sbridel/age-writer/releases) ; les changements de chaque version sont dans [`CHANGELOG.md`](CHANGELOG.md) (en anglais) et, plus en détail, dans [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
 Nouveautés récentes : la **météo vivante** (un temps qui va et vient selon l'heure, `drizzle: often, dawn`), le **télescope** du Relto (retrouver le Great Zero caché de ton Relto) et une **référence complète** refaite en quatre parties, avec des exemples de valeurs pour chaque ligne de physique.
 ---

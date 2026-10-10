@@ -28,7 +28,7 @@ Age Writer is built to be **diegetic**: almost everything it shows is something 
 
 Two places step outside the fiction on purpose: the **Details** tab (stability per axis, causes, numbers: read it as a Guild surveyor's notes on your book) and the **Settings**. Everything else tries to stay in the world.
 
-**Status.** Released, desktop only, sandbox mode (see [What's next](#15-whats-next)). The current version is the one in [`manifest.json`](manifest.json) and on the [Releases](https://github.com/sbridel/age-writer/releases) page; the change log, release by release, is in [`docs/NOTES-historique.md`](docs/NOTES-historique.md) (in French).
+**Status.** Released, desktop only, sandbox mode (see [What's next](#15-whats-next)). The current version is the one in [`manifest.json`](manifest.json) and on the [Releases](https://github.com/sbridel/age-writer/releases) page; what changed in each version is in [`CHANGELOG.md`](CHANGELOG.md) (a more detailed developer log, in French, is in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)).
 
 Recent additions: **living weather** (weather that comes and goes with the hour, `drizzle: often, dawn`), the Relto's **telescope** (find your Relto's hidden Great Zero), and a **full reference** rebuilt in four parts with example values for every physics line.
 ---
