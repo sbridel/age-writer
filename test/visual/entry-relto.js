@@ -7,6 +7,9 @@ function renderMany(host, ages) {
   host = host || document.body;
   const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
   const variants = [
+    { h: 23, t: 68, env: {}, pages: ["page_comets", "page_mountain", "page_pine_trees", "page_mist"], label: "ISLAND night / comet" },
+    { h: 13, t: 81.5, env: {}, pages: ["page_comets", "page_mountain", "page_pine_trees"], label: "ISLAND day / comet (faded)" },
+    { h: 20.6, t: 70, env: {}, pages: ["page_comets", "page_islets", "page_calendar"], view: "global", label: "GLOBAL dusk / comet" },
     { h: 15, t: 3.1, env: {}, pages: ["page_telescope", "page_mountain", "page_pine_trees", "page_koi"], label: "ISLAND day / observatory on the mountain" },
     { h: 21.5, t: 3.1, env: {}, pages: ["page_telescope", "page_mountain", "page_waterfall"], label: "ISLAND dusk / observatory on the mountain" },
     { h: 21.5, t: 3.1, env: {}, zero: true, pages: ["page_telescope", "page_mountain", "page_dni_clock", "page_calendar", "page_dock"], label: "ISLAND dusk / D'ni clock and calendar pinnacle" },

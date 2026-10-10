@@ -12,7 +12,7 @@ const TERRAINS = ["volcanic_plateau", "mossy_plateau", "sand_island", "glacier",
 const SURROUNDINGS = ["cloud_sea", "fog_sea", "ocean", "void", "lava_sea"];
 const SKY_CYCLES = ["system_time", "frozen_dawn", "frozen_day", "frozen_dusk", "frozen_night"];
 const STRUCTURES = ["hut", "bookshelves", "linking_pillars"];
-const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager", "telescope", "dniclock"];
+const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager", "telescope", "dniclock", "comet"];
 /** Options propres à certains effets (texte court) : couleur et nom du chat, variété du koï rare. */
 const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare", "sleep"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
 const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern", "ponderosa", "maple", "crystal"], flowers: ["blue", "red", "yellow", "white", "pink"] };
@@ -143,6 +143,7 @@ const PAGE_PRESETS = {
   page_maples: { label: "Maples", effects: { canvas_additions: [{ type: "vegetation", density: 0.5, asset: "maple" }], ambiance_audio: "wind" } },
   page_stalk_tree: { label: "Stalk tree", effects: { canvas_additions: [{ type: "stalktree", density: 0.5 }], ambiance_audio: "wind" } },
   page_crystal_tree: { label: "Crystal tree", effects: { canvas_additions: [{ type: "vegetation", density: 0.2, asset: "crystal" }], ambiance_audio: "deep_hum" } },
+  page_comets: { label: "Comets", effects: { canvas_additions: [{ type: "comet", density: 0.6 }], ambiance_audio: "deep_hum" } },
   page_mist: { label: "Mist", effects: { canvas_additions: [{ type: "mist", density: 0.6 }], ambiance_audio: "wind" } },
 };
 
