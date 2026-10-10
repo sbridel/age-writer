@@ -20,7 +20,8 @@ const CHAPTERS = [
   { id: "mend", page: "page_lanterns", title: { en: "Mending without breaking", fr: "Corriger sans casser" } },
   { id: "weather", page: "page_fireflies", title: { en: "A day that changes", fr: "Un jour qui change" } },
   { id: "laws", page: "page_aurora", title: { en: "The laws of a world", fr: "Les lois du monde" } },
-  { id: "alter", page: "page_mist", title: { en: "Changing what is written", fr: "Modifier ce qui est écrit" } },
+  { id: "alter", page: "page_mountain", title: { en: "Changing what is written", fr: "Modifier ce qui est écrit" } },
+  { id: "zero", page: "page_comets", title: { en: "Looking up", fr: "Lever les yeux" } },
 ];
 
 /** La page finale (pour l'instant : un encrier posé sur la table). Le nom reste neutre. */
@@ -97,6 +98,7 @@ function check(chapter, ctx) {
     if (!stable.length) return { ok: false, why: "stable" };
     return stable.some((a) => a.physics >= 2) ? { ok: true, why: "" } : { ok: false, why: "physics" };
   }
+  if (chapter.id === "zero") return ctx && ctx.zeroFound ? { ok: true, why: "" } : { ok: false, why: "zero" }; // « lever les yeux » : le Great Zero de ce Relto est trouvé
   if (chapter.id === "alter") {
     // « modifier ce qui est écrit » : la note du chapitre a été modifiée après séchage de l'encre (Loi du Changement), et le monde tient encore
     const mine = ages.find((a) => a.path === ((ctx && ctx.notes) || {}).alter);
@@ -130,7 +132,8 @@ const nextChapter = (done) => CHAPTERS.find((c) => !(done || []).includes(c.id))
 const WORLDS = {
   rest: { lines: ["water"] },
   mend: { lines: ["single_sun", "steady_cycle", "water", "lava"], fixed: ["single_sun", "steady_cycle", "water"] },
-  alter: { lines: ["single_sun", "steady_cycle", "water", "sand", "fern"], stable: true },
+  zero: { lines: [] },
+  alter: { lines: ["single_sun", "steady_cycle", "water", "sand", "fern"], stable: true, margin: 15 }, // une marge large : la modification elle-même coûte (Loi du Changement)
   laws: { lines: ["single_sun", "steady_cycle", "water", "salt"], stable: true },
   weather: { lines: ["single_sun", "steady_cycle", "water", "rain"], stable: true }, // le monde de départ doit tenir : seule la météo reste à écrire
 };
@@ -143,7 +146,7 @@ const WORLDS = {
 function chapterName(chapter, base, analyse) {
   const w = WORLDS[chapter.id];
   if (w && w.stable && analyse) { // un monde de départ qui tient avec de la marge, pour ce nom
-    for (let i = 0; i < 80; i++) { const nm = i ? `${base} ${i + 1}` : base, a = analyse(w.lines.join("\n"), nm); if (a && a.stability >= STABLE_AT + 5) return nm; }
+    for (let i = 0; i < 80; i++) { const nm = i ? `${base} ${i + 1}` : base, a = analyse(w.lines.join("\n"), nm); if (a && a.stability >= STABLE_AT + (w.margin || 5)) return nm; }
     return base;
   }
   if (!w || !w.fixed || !analyse) return base;
@@ -172,6 +175,10 @@ const LETTERS = {
     en: ["Ink needs time to dry.", "Until it has, you may change a book as you like. Afterwards, every change is paid for: a world is not rewritten, it is bound to. Wait for the ink of this book to dry (a quarter of an hour, unless your settings say otherwise), then change one thing in it, and see that it holds.", "Once the ink is dry, add or remove a single page, and keep the world stable."],
     fr: ["L'encre a besoin de temps pour sécher.", "Tant qu'elle n'a pas séché, tu peux changer un livre à ta guise. Ensuite, chaque changement se paie : on ne réécrit pas un monde, on s'y lie. Attends que l'encre de ce livre soit sèche (un quart d'heure, sauf réglage contraire), puis change une seule chose, et vois qu'il tient.", "Une fois l'encre sèche, ajoute ou retire une seule page, et garde le monde stable."],
   },
+  zero: {
+    en: ["A writer who only looks down at the page never learns where the page is.", "Every Relto hides its own Great Zero, the reference all linking is measured from. The cabin has a summit, and on it a small observatory. Place the Mountains page, let the telescope follow, and look up. Find your Zero.", "Find your Relto's Great Zero with the telescope."],
+    fr: ["Un écrivain qui ne regarde que sa page n'apprend jamais où se trouve la page.", "Chaque Relto cache son propre Great Zero, la référence dont se mesure toute liaison. La cabane a un sommet, et sur le sommet un petit observatoire. Pose la page des Montagnes, laisse venir le télescope, et lève les yeux. Trouve ton Zéro.", "Trouve le Great Zero de ton Relto avec le télescope."],
+  },
   weather: {
     en: ["A world that never changes is a painting. Let us make it a day.", "Here the rain falls without end. Teach it manners: let it fall only sometimes, and only at dawn. A line can carry a frequency and a moment, after a colon.", "Rewrite the rain line as `rain: sometimes, dawn`, and keep the world stable."],
     fr: ["Un monde qui ne change jamais est un tableau. Faisons-en un jour.", "Ici la pluie tombe sans fin. Apprends-lui les manières : qu'elle ne tombe que parfois, et seulement à l'aube. Une ligne peut porter une fréquence et un moment, après deux-points.", "Récris la ligne de pluie ainsi : `rain: sometimes, dawn`, et garde le monde stable."],
@@ -182,7 +189,7 @@ const LETTERS = {
 function chapterNote(chapter, lang, name) {
   const l = lang === "fr" ? "fr" : "en", w = WORLDS[chapter.id] || { lines: [] }, L = LETTERS[chapter.id][l];
   const title = (chapter.id === "mend" ? "Deseekay · " : "") + chapter.title[l]; // deseekay : « énigme », en D'ni
-  return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n— ${MENTOR}, seltahn\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`\n`;
+  return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n— ${MENTOR}, seltahn${w.lines.length ? `\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`` : ""}\n`;
 }
 
 /**
