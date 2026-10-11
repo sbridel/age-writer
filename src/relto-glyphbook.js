@@ -97,7 +97,7 @@ function drawPage(r, ctx, pg, side, c, live, tr, BV) {
       } else { // pas encore appris : une silhouette pâle, sans nom
         try { ctx.filter = "blur(1px) grayscale(1)"; } catch (e) { /* pas de filtre */ }
         drawGlyph(r, ctx, cell.id, gx, y + 4, 38, faint, 0.28); try { ctx.filter = "none"; } catch (e) { /* pas de filtre */ }
-        if (live) r.hot.push({ x: x + 2, y, w: CW - 4, h: CH - 4, tip: cell.hint, secret: true });
+        if (live) r.hot.push({ x: x + 2, y, w: CW - 4, h: CH - 4, tip: cell.hint });
       }
     });
     if (pg.more > 0) { ctx.fillStyle = faint; ctx.font = "italic 9px serif"; ctx.fillText(tr("glyphbook.more", { n: pg.more }), cx, PT + PH - 34); }
