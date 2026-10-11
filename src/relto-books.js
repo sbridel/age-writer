@@ -33,8 +33,10 @@ in the block below; lines starting with # are comments.
 
 const LIB_BLOCK = { ages: "```age-library", relto: "```relto-library" };
 
-/** Ouvre la note de bibliothèque (la crée avec un exemple si elle n'existe pas). kind : "ages" | "relto". */
-async function openLibraryNote(plugin, kind) {
+const BLOCK_RE = { ages: /```age-library[ \t]*\r?\n([\s\S]*?)```/g, relto: /```relto-library[ \t]*\r?\n([\s\S]*?)```/g };
+
+/** La note de bibliothèque d'un genre (la crée avec un exemple si elle n'existe pas) — sans l'ouvrir. kind : "ages" | "relto". */
+async function libraryFile(plugin, kind, create = true) {
   const { app } = plugin, t = plugin.t;
   let file = null;
   if (kind === "ages" && plugin.libraryPaths && plugin.libraryPaths.size) {
@@ -49,16 +51,53 @@ async function openLibraryNote(plugin, kind) {
       if (text.includes(LIB_BLOCK.relto)) { file = f; break; }
     }
   }
-  leaveFullscreen();
-  if (file) { await app.workspace.getLeaf(false).openFile(file); return file; }
+  if (file || !create) return file;
   const name = kind === "ages" ? "Age Library.md" : "Relto Library.md", body = kind === "ages" ? plugin.core.libraryTemplate : RELTO_LIBRARY_TEMPLATE;
   const folder = String((plugin.settings && plugin.settings.libraryFolder) || "").trim().replace(/^\/+|\/+$/g, "");
   if (folder && !app.vault.getAbstractFileByPath(folder)) await app.vault.createFolder(folder);
   const path = folder ? `${folder}/${name}` : name, ex = app.vault.getAbstractFileByPath(path);
   const f = ex instanceof obsidian.TFile ? ex : await app.vault.create(path, body);
   new obsidian.Notice(t("books.created", { name: path }));
-  await app.workspace.getLeaf(false).openFile(f);
   return f;
+}
+
+/** Ouvre la note de bibliothèque. */
+async function openLibraryNote(plugin, kind) {
+  const file = await libraryFile(plugin, kind);
+  leaveFullscreen(); await plugin.app.workspace.getLeaf(false).openFile(file);
+  return file;
+}
+
+/** Les lignes écrites (hors commentaires et lignes vides) dans les blocs de bibliothèque d'un genre, avec leur note. */
+async function libraryLines(plugin, kind) {
+  const { app } = plugin, out = [];
+  const files = kind === "ages" ? [...(plugin.libraryPaths || [])].sort().map((p) => app.vault.getAbstractFileByPath(p)).filter(Boolean) : app.vault.getMarkdownFiles();
+  for (const f of files) {
+    if (kind !== "ages") { const c = app.metadataCache.getFileCache(f); if (c && !(c.sections || []).some((s) => s.type === "code")) continue; }
+    let text = ""; try { text = await app.vault.cachedRead(f); } catch (e) { continue; }
+    for (const m of text.matchAll(new RegExp(BLOCK_RE[kind].source, "g"))) for (const l of m[1].split(/\r?\n/)) { const x = l.trim(); if (x && !x.startsWith("#")) out.push({ text: x, file: f.path }); }
+  }
+  return out;
+}
+
+/** Vérifie les lignes puis les ajoute au premier bloc de la note de bibliothèque (sans l'ouvrir). @returns {{ok:boolean, error?:string, n?:number}} */
+async function addLibraryLines(plugin, kind, raw) {
+  const lines = String(raw || "").split(/\r?\n/).map((x) => x.trim()).filter((x) => x && !x.startsWith("#"));
+  if (!lines.length) return { ok: false, error: "empty" };
+  for (const l of lines) {
+    if (kind === "relto") { const res = require("./relto-model").parseReltoLibrary(l); if (res.problems.length || res.pages.length !== 1) return { ok: false, error: (res.problems[0] && res.problems[0].message) || "?", line: l }; }
+    else { const res = require("./engine/library").parseLibrary(l, ""), bad = res.problems.find((p) => p.level === "error"); if (bad) return { ok: false, error: bad.message, line: l }; if (!res.blocks.length && !res.reactions.length && !res.variants.length) return { ok: false, error: "?", line: l }; }
+  }
+  const file = await libraryFile(plugin, kind), add = lines.join("\n");
+  const edit = (text) => {
+    const re = new RegExp(BLOCK_RE[kind].source), m = re.exec(text);
+    if (!m) return text.replace(/\s*$/, "\n\n") + LIB_BLOCK[kind] + "\n" + add + "\n```\n";
+    const end = m.index + m[0].length - 3; // juste avant la clôture ```
+    return text.slice(0, end) + (m[1].endsWith("\n") || !m[1] ? "" : "\n") + add + "\n" + text.slice(end);
+  };
+  if (plugin.app.vault.process) await plugin.app.vault.process(file, edit); else await plugin.app.vault.modify(file, edit(await plugin.app.vault.read(file)));
+  if (kind === "ages" && plugin.loadLibrary) { try { await plugin.loadLibrary(); } catch (e) { /* rechargé à la prochaine modification */ } }
+  return { ok: true, n: lines.length };
 }
 
 class LibraryChoice extends obsidian.FuzzySuggestModal {
@@ -166,4 +205,4 @@ function openSurveyorBook(plugin, ages) {
   new SurveyorBook(plugin.app).open();
 }
 
-module.exports = { openSurveyorBook, glyphBook, openGlyphBook, openLibraryBook, openLibraryNote, RELTO_LIBRARY_TEMPLATE };
+module.exports = { openSurveyorBook, glyphBook, openGlyphBook, openLibraryBook, openLibraryNote, libraryLines, addLibraryLines, RELTO_LIBRARY_TEMPLATE };

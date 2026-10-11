@@ -9,9 +9,7 @@ const flick = (t) => 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1) + 0.06 * 
 /** Un bouton rond, en haut à gauche, pour se retourner : deux flèches qui tournent. */
 function turnButton(r, ctx, label, go) {
   ctx.fillStyle = "rgba(20,14,8,0.72)"; ctx.beginPath(); ctx.arc(28, 28, 17, 0, 6.283); ctx.fill(); ctx.strokeStyle = "#c9a24e"; ctx.lineWidth = 1.6; ctx.stroke();
-  ctx.strokeStyle = "rgba(233,220,184,0.95)"; ctx.lineWidth = 2; ctx.lineCap = "round";
-  ctx.beginPath(); ctx.arc(28, 28, 8, 3.6, 5.9); ctx.stroke(); ctx.beginPath(); ctx.moveTo(35.5, 24); ctx.lineTo(36, 29.5); ctx.lineTo(30.5, 27.5); ctx.stroke();
-  ctx.beginPath(); ctx.arc(28, 28, 8, 0.46, 2.76); ctx.stroke(); ctx.beginPath(); ctx.moveTo(20.5, 32); ctx.lineTo(20, 26.5); ctx.lineTo(25.5, 28.5); ctx.stroke(); ctx.lineCap = "butt";
+  ctx.strokeStyle = "rgba(233,220,184,0.95)"; ctx.lineWidth = 2.2; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(20, 28); ctx.lineTo(36, 28); ctx.moveTo(30, 22); ctx.lineTo(36, 28); ctx.lineTo(30, 34); ctx.stroke(); ctx.lineCap = "butt"; // une simple flèche vers la droite
   r.hot.push({ x: 8, y: 8, w: 40, h: 40, tip: label, go });
 }
 
