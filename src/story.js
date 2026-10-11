@@ -300,4 +300,15 @@ function rewardPages() {
 /** Le moteur tire-t-il des pages au hasard dans les Âges de l'histoire ? Pas avant l'Imageur : il faut écrire ses glyphes soi-même. */
 const drawsOn = (done) => (done || []).includes("imager");
 
-module.exports = { REVIEW, reviewSheet, COURSE, courseSheet, drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
+/**
+ * Les blocs que la palette du livre montre dans un Âge de l'histoire : ce que la Guilde a fait apprendre jusqu'au chapitre en cours
+ * (feuilles de cours et mondes de départ). Null = tous : à partir de l'Imageur, l'apprentissage est fini.
+ */
+function knownBlocks(done) {
+  if (drawsOn(done)) return null;
+  const set = new Set(), cur = nextChapter(done), upto = cur ? CHAPTERS.findIndex((c) => c.id === cur.id) : CHAPTERS.length - 1;
+  for (const c of CHAPTERS.slice(0, upto + 1)) { for (const r of COURSE[c.id] || []) set.add(r[0]); for (const b of (WORLDS[c.id] || {}).lines || []) set.add(b); }
+  return set;
+}
+
+module.exports = { knownBlocks, REVIEW, reviewSheet, COURSE, courseSheet, drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };

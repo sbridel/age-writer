@@ -205,6 +205,16 @@ function storyNoDraw(plugin) {
   } catch (e) { console.warn("[Age Writer ext] tirage", e); }
   return (plugin._noDraw = set);
 }
+/** Les blocs connus d'une note de l'histoire (palette du livre) ; null pour toute autre note, ou quand l'apprentissage est fini. */
+function storyKnown(plugin, path) {
+  const { app } = plugin;
+  for (const hub of app.vault.getMarkdownFiles().filter((f) => isStoryHub(app, f))) {
+    if (!ST.inDirs(path, [ST.dirOf(hub.path)]) || path === hub.path) continue;
+    const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename };
+    return ST.knownBlocks(ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed)).done);
+  }
+  return null;
+}
 const resetStoryDraw = (plugin) => { plugin._noDraw = null; };
 
 /** Chapitre suivant : crée (ou rouvre) la note du prochain chapitre dans le dossier de l'histoire. */
@@ -720,4 +730,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyNext, storyRestart, storyNoDraw, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyNext, storyRestart, storyNoDraw, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };

@@ -7,6 +7,7 @@ const { analyseAge, extractAge, homeMessage, pageList, seedName } = require("./a
 const { addLine, removeLine, setSeedLine, writtenLines } = require("./age-text");
 const { describeAge } = require("./prose");
 const { glyphSvg } = require("./glyphs");
+const { hooks } = require("./hooks");
 
 const AXIS_LABELS = {
   cosmological: "Sky",
@@ -220,10 +221,13 @@ const BookView = class extends obsidian.ItemView {
         this.paletteOpen = details.open;
       }),
       details.createEl("summary", { text: "Add or remove a page" }));
+    let known = hooks.known(file.path);
     for (let group of paletteGroups()) {
+      if (known && !group.items.some((item) => known.has(item.id) || written.has(item.id))) continue;
       details.createDiv({ cls: "age-book__palette-heading", text: group.label });
       let grid = details.createDiv({ cls: "age-book__palette-grid" });
       for (let item of group.items) {
+        if (known && !known.has(item.id) && !written.has(item.id)) continue;
         let isWritten = written.has(item.id),
           swatch = grid.createEl("button", { cls: "age-book__swatch" + (isWritten ? " is-written" : "") });
         (swatch.setAttr(

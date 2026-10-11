@@ -172,5 +172,6 @@ ok(!ST.drawsOn([]) && !ST.drawsOn(["rest","hard"]) && ST.drawsOn(["rest","imager
 ok(Object.keys(ST.COURSE).every((id) => ST.chapterById(id)) && ST.COURSE.rest.every((r) => ST.courseSheet("rest", "fr").includes("`" + r[0] + "`")), "feuille de cours : mots des chapitres, tous dans la feuille");
 ok(!ST.courseSheet("hard", "en") && !ST.courseSheet("strange", "fr") && /Guilde des Writers/.test(ST.chapterNote(ST.chapterById("weather"), "fr", "N")) && !/Guilde/.test(ST.chapterNote(ST.chapterById("strange"), "fr", "N")), "feuille de cours : aucune pour les épreuves");
 ok(/s___/.test(ST.reviewSheet("alter", "fr")) && !/`sand`/.test(ST.reviewSheet("alter", "fr")) && !/`lava`/.test(ST.reviewSheet("zero", "en")) && /\| \? \|/.test(ST.reviewSheet("zero", "en")) && !ST.reviewSheet("rest", "en"), "feuille de cours : s'efface en révision (initiale, puis plus rien)");
+ok(ST.knownBlocks([]).has("fern") && !ST.knownBlocks([]).has("rain") && ST.knownBlocks(["rest"]).has("lava") && ST.knownBlocks(["rest", "mend"]).has("rain") && !ST.knownBlocks(["rest"]).has("violet_sun") && ST.knownBlocks(["rest", "mend", "weather", "laws", "alter", "zero", "imager"]) === null, "palette du livre : seuls les blocs appris, puis tout après l'Imageur");
 console.log(`story.test.js : ${n} vérifications ok`);
 
