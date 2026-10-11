@@ -724,19 +724,28 @@ function slideWood(volume = 0.3, { open = true } = {}) {
 }
 /** Une trappe de fer qu'on ouvre : le loquet qui claque deux fois, la charnière qui grince et racle, la lourde plaque qui retombe. */
 function clang(volume = 0.3) {
-  return oneShot(2.2, (c, out, noise) => {
+  // trappe de fer : verrou qu'on tire, gonds rouillés, puis la plaque qui bute et RÉSONNE (partiels inharmoniques de métal frappé)
+  return oneShot(3.2, (c, out, noise) => {
     out.gain.value = volume; const t = c.currentTime;
-    const tick = (at, f, g) => { const n = noise(0.05), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 5; e.gain.setValueAtTime(g, t + at); e.gain.exponentialRampToValueAtTime(0.0001, t + at + 0.045); n.connect(bp); bp.connect(e); e.connect(out);
-      const o = c.createOscillator(), oe = c.createGain(); o.type = "square"; o.frequency.value = f * 0.5; oe.gain.setValueAtTime(g * 0.25, t + at); oe.gain.exponentialRampToValueAtTime(0.0001, t + at + 0.03); o.connect(oe); oe.connect(out); o.start(t + at); o.stop(t + at + 0.04); };
-    tick(0, 2600, 0.8); tick(0.11, 1900, 0.6); // le loquet
-    const D = 1.0, S = 0.3; // la charnière : un raclement qui monte, un grincement aigu qui vacille
-    const gn = noise(D + 0.05), gb = c.createBiquadFilter(), ge = c.createGain(); gb.type = "bandpass"; gb.Q.value = 3; gb.frequency.setValueAtTime(380, t + S); gb.frequency.linearRampToValueAtTime(900, t + S + D); ge.gain.setValueAtTime(0.0001, t + S); ge.gain.linearRampToValueAtTime(0.35, t + S + 0.15); ge.gain.setValueAtTime(0.3, t + S + D - 0.2); ge.gain.exponentialRampToValueAtTime(0.0001, t + S + D); gn.connect(gb); gb.connect(ge); ge.connect(out);
-    const sq = c.createOscillator(), vib = c.createOscillator(), vg = c.createGain(), se = c.createGain(); sq.type = "sawtooth"; sq.frequency.setValueAtTime(520, t + S); sq.frequency.linearRampToValueAtTime(760, t + S + D); vib.frequency.value = 11; vg.gain.value = 22; vib.connect(vg); vg.connect(sq.frequency);
-    const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1500; se.gain.setValueAtTime(0.0001, t + S); se.gain.linearRampToValueAtTime(0.09, t + S + 0.3); se.gain.linearRampToValueAtTime(0.06, t + S + D - 0.2); se.gain.exponentialRampToValueAtTime(0.0001, t + S + D); sq.connect(lp); lp.connect(se); se.connect(out); sq.start(t + S); vib.start(t + S); sq.stop(t + S + D + 0.05); vib.stop(t + S + D + 0.05);
-    const T = S + D + 0.02; // la plaque touche : un choc sourd, un dernier cliquetis de fer
-    const th = c.createOscillator(), te = c.createGain(); th.type = "sine"; th.frequency.setValueAtTime(95, t + T); th.frequency.exponentialRampToValueAtTime(42, t + T + 0.22); te.gain.setValueAtTime(0.9, t + T); te.gain.exponentialRampToValueAtTime(0.0001, t + T + 0.3); th.connect(te); te.connect(out); th.start(t + T); th.stop(t + T + 0.32);
-    const tn = noise(0.12), tl = c.createBiquadFilter(), tg = c.createGain(); tl.type = "lowpass"; tl.frequency.value = 600; tg.gain.setValueAtTime(0.5, t + T); tg.gain.exponentialRampToValueAtTime(0.0001, t + T + 0.1); tn.connect(tl); tl.connect(tg); tg.connect(out);
-    for (const [f, a, d] of [[310, 0.12, 0.35], [870, 0.07, 0.2]]) { const o = c.createOscillator(), e = c.createGain(); o.type = "sine"; o.frequency.value = f; e.gain.setValueAtTime(a, t + T); e.gain.exponentialRampToValueAtTime(0.0001, t + T + d); o.connect(e); e.connect(out); o.start(t + T); o.stop(t + T + d + 0.05); }
+    const env = (g, at, peak, dec) => { g.gain.setValueAtTime(0.0001, t + at); g.gain.linearRampToValueAtTime(peak, t + at + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + at + dec); };
+    const hit = (at, f0, amp, dec, ratios) => { // coup sur du métal : somme de partiels non harmoniques, les aigus s'éteignent vite
+      ratios.forEach((r, i) => { for (const dt of [1, 1.006]) { const o = c.createOscillator(), e = c.createGain(); o.type = "sine"; o.frequency.value = f0 * r * dt; env(e.gain, at, amp / (1 + i * 0.7), dec / (1 + i * 0.45)); o.connect(e); e.connect(out); o.start(t + at); o.stop(t + at + dec + 0.1); } });
+      const n = noise(0.06), hp = c.createBiquadFilter(), e = c.createGain(); hp.type = "highpass"; hp.frequency.value = 1800; env(e.gain, at, amp * 1.6, 0.05); n.connect(hp); hp.connect(e); e.connect(out); n.start(t + at);
+    };
+    const MET = [1, 2.32, 4.25, 6.63, 9.38, 12.4];
+    hit(0, 520, 0.16, 0.35, MET); // verrou qui claque
+    hit(0.14, 700, 0.12, 0.25, MET);
+    // gonds rouillés : bruit à résonance très étroite qui balaye, saccadé comme un frottement
+    const S = 0.42, D = 0.9, gn = noise(D + 0.1), gb = c.createBiquadFilter(), ge = c.createGain(), jit = c.createOscillator(), jg = c.createGain();
+    gb.type = "bandpass"; gb.Q.value = 14; gb.frequency.setValueAtTime(420, t + S); gb.frequency.linearRampToValueAtTime(1250, t + S + D);
+    ge.gain.setValueAtTime(0.0001, t + S); ge.gain.linearRampToValueAtTime(0.5, t + S + 0.12); ge.gain.setValueAtTime(0.4, t + S + D - 0.15); ge.gain.exponentialRampToValueAtTime(0.0001, t + S + D);
+    jit.frequency.value = 23; jg.gain.value = 0.22; jit.connect(jg); jg.connect(ge.gain); jit.start(t + S); jit.stop(t + S + D + 0.1);
+    gn.connect(gb); gb.connect(ge); ge.connect(out); gn.start(t + S);
+    // la plaque bute : coup grave, long, avec le gong de fer qui traîne
+    const T = S + D + 0.03;
+    const th = c.createOscillator(), te = c.createGain(); th.type = "sine"; th.frequency.setValueAtTime(110, t + T); th.frequency.exponentialRampToValueAtTime(48, t + T + 0.25); env(te.gain, T, 1, 0.45); th.connect(te); te.connect(out); th.start(t + T); th.stop(t + T + 0.5);
+    hit(T, 190, 0.26, 1.9, MET);
+    hit(T + 0.01, 330, 0.12, 1.1, [1, 2.76, 5.4, 8.93]);
   });
 }
 function squeak(volume = 0.3) {
