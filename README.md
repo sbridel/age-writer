@@ -359,10 +359,6 @@ The surveyor's notes say it in words (“A second, faster beat crosses the Zero'
 
 Such a star can still be charted by looking past the lure, or **indirectly**: once two charted stars lie nearby (within 6,000 shahfeetee), pull the **Beacons** lever between the wheels: “The charted stars agree”, and the bent light and false beat fall away.
 
-#### Early readings (step 3)
-
-It exists in the Art of the Guild only. Not everything the instrument shows early on is what it seems: maybe you could play and find out.
-
 #### The star chart (step 3)
 
 The parchment roll at the top right of the observatory unrolls a chart: the Great Zero as a compass rose at the centre, your Relto, and every charted star system (a constellation, each star joined to its nearest neighbour), with its Ages (first name drawn, all of them on hover) and its dead stars in cinnabar.

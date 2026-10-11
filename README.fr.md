@@ -359,10 +359,6 @@ Les notes de l'arpenteur le disent en mots (« Un second battement, plus rapide,
 
 Une telle étoile se situe tout de même en cherchant au-delà du leurre, ou **indirectement** : dès que deux étoiles situées sont voisines (à moins de 6 000 shahfeetee), tire le levier **Balises** entre les molettes : « Les étoiles situées s'accordent », et la lumière courbée comme le faux battement s'effacent.
 
-#### Premières lectures (étape 3)
-
-Elle n'existe que dans l'Art de la Guilde. Tout ce que l'instrument montre au début n'est pas ce qu'il semble : tu pourrais peut-être jouer pour le découvrir.
-
 #### La carte des étoiles (étape 3)
 
 Le rouleau de parchemin en haut à droite de l'observatoire déroule une carte : le Great Zero en rose des vents au centre, ton Relto, et chaque système situé (une constellation, chaque étoile reliée à sa plus proche voisine), avec ses Âges (le premier nom écrit, tous au survol) et ses étoiles mortes en cinabre.
