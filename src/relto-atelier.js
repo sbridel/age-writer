@@ -210,4 +210,36 @@ function drawLoft(r, ctx, sc, sky, t) {
   backButton(r, ctx, TRr("atelier.loft.down"), "atelier");
 }
 
-module.exports = { drawAtelier, drawDesk, drawLoft, SECRET };
+/** Découpe un texte en lignes qui tiennent dans `maxW` (la police du contexte). */
+function wrapLines(ctx, text, maxW) {
+  const out = []; let line = "";
+  for (const w of String(text).split(/\s+/)) { const tryL = line ? line + " " + w : w; if (ctx.measureText(tryL).width > maxW && line) { out.push(line); line = w; } else line = tryL; }
+  if (line) out.push(line); return out;
+}
+/** La dernière lettre du mentor, dépliée sur le bureau : du parchemin, une écriture penchée, un cachet de cire (le nôtre : une plume et un livre). */
+function drawLetter(r, ctx, sc, sky, t) {
+  const TRr = TR(r), amb = 0.55 + 0.45 * sky.ambient, c = (h) => mix("#05060c", h, amb), q = rng(0x1e77), fl = flick(t);
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, c("#34261b")); g.addColorStop(1, c("#1d140e")); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = rgba(0, 0, 0, 0.18); ctx.lineWidth = 1; for (let i = 0; i < 12; i++) { const y = 10 + q() * 340; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y + q() * 6 - 3); ctx.stroke(); }
+  ctx.fillStyle = rgba(255, 190, 90, 0.07 * fl); ctx.beginPath(); ctx.arc(320, 180, 260, 0, 6.283); ctx.fill();
+  const x0 = 130, y0 = 22, w = 380, h = 316; ctx.save(); ctx.translate(320, 180); ctx.rotate(-0.012); ctx.translate(-320, -180);
+  ctx.fillStyle = rgba(0, 0, 0, 0.45); ctx.fillRect(x0 + 6, y0 + 8, w, h); // l'ombre
+  const pg = ctx.createLinearGradient(x0, y0, x0 + w, y0 + h); pg.addColorStop(0, c("#eadfb8")); pg.addColorStop(0.5, c("#e2d3a6")); pg.addColorStop(1, c("#d3c18f")); ctx.fillStyle = pg;
+  ctx.beginPath(); ctx.moveTo(x0, y0 + 3); for (let i = 1; i <= 16; i++) ctx.lineTo(x0 + i * w / 16, y0 + (i % 2 ? 0 : 2.5)); ctx.lineTo(x0 + w, y0 + h - 2); for (let i = 15; i >= 0; i--) ctx.lineTo(x0 + i * w / 16, y0 + h - (i % 2 ? 0 : 2.5)); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = rgba(120, 90, 50, 0.18); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y0 + h / 3); ctx.lineTo(x0 + w, y0 + h / 3); ctx.moveTo(x0, y0 + 2 * h / 3); ctx.lineTo(x0 + w, y0 + 2 * h / 3); ctx.stroke(); // les plis
+  const vg = ctx.createRadialGradient(x0 + w / 2, y0 + h / 2, 60, x0 + w / 2, y0 + h / 2, 240); vg.addColorStop(0, "rgba(120,80,30,0)"); vg.addColorStop(1, "rgba(120,80,30,0.22)"); ctx.fillStyle = vg; ctx.fillRect(x0, y0, w, h);
+  // le texte : une écriture penchée, à l'encre brune
+  ctx.fillStyle = c("#3a2514"); ctx.font = "italic 18px serif"; let y = y0 + 44; const paras = [TRr("story.letter.hi"), TRr("story.end"), TRr("story.letter.more") + " " + TRr("atelier.clue")];
+  for (const p of paras) { for (const ln of wrapLines(ctx, p, w - 76)) { ctx.fillText(ln, x0 + 38, y); y += 23; } y += 9; }
+  ctx.textAlign = "right"; ctx.fillText("\u2014 Adrin Vesparath, seltahn", x0 + w - 40, y + 6); ctx.textAlign = "left";
+  // le cachet de cire, en bas : une plume posée sur un petit livre, dans un double anneau
+  const sx = x0 + w - 62, sy = y0 + h - 40, rr = 22; ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.beginPath(); ctx.arc(sx + 2, sy + 3, rr, 0, 6.283); ctx.fill();
+  ctx.fillStyle = c("#8e2420"); ctx.beginPath(); for (let i = 0; i <= 28; i++) { const a = i / 28 * 6.283, rad = rr + (i % 2 ? 1.5 : -0.5) + Math.sin(i * 2.3) * 0.8; ctx.lineTo(sx + Math.cos(a) * rad, sy + Math.sin(a) * rad); } ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = rgba(60, 8, 6, 0.55); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(sx, sy, rr - 4, 0, 6.283); ctx.stroke(); ctx.strokeStyle = rgba(255, 150, 130, 0.25); ctx.beginPath(); ctx.arc(sx, sy, rr - 6.5, 0, 6.283); ctx.stroke();
+  ctx.fillStyle = rgba(60, 8, 6, 0.6); ctx.fillRect(sx - 9, sy + 1, 8, 6); ctx.fillRect(sx + 1, sy + 1, 8, 6); ctx.strokeStyle = rgba(60, 8, 6, 0.6); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(sx - 8, sy + 2); ctx.quadraticCurveTo(sx + 2, sy - 12, sx + 10, sy - 12); ctx.stroke(); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(sx - 2, sy - 3); ctx.lineTo(sx + 6, sy - 10); ctx.stroke();
+  ctx.fillStyle = rgba(255, 200, 190, 0.18); ctx.beginPath(); ctx.ellipse(sx - 8, sy - 10, 6, 3, -0.6, 0, 6.283); ctx.fill();
+  ctx.restore();
+  backButton(r, ctx, TRr("atelier.stand.tip"), "cabin");
+}
+
+module.exports = { drawAtelier, drawDesk, drawLoft, drawLetter, SECRET };

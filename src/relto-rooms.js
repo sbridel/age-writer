@@ -135,7 +135,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     ctx.strokeStyle = rgba(120, 90, 50, 0.5); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(lx, ly - 3); ctx.lineTo(lx + 10, ly + 1); ctx.lineTo(lx + 20, ly - 3); ctx.stroke();
     ctx.fillStyle = c("#8e2b27"); ctx.beginPath(); ctx.arc(lx + 10, ly + 1, 2.4, 0, 6.283); ctx.fill();
     if (!(r.scene.storyDone || []).includes("end")) { ctx.fillStyle = rgba(255, 170, 90, 0.12 + 0.18 * pulse); ctx.beginPath(); ctx.arc(lx + 10, ly + 1, 6, 0, 6.283); ctx.fill(); }
-    r.hot.push({ x: lx - 2, y: ly - 6, w: 24, h: 12, tip: TR(r)("story.letter.tip"), special: "story" });
+    r.hot.push({ x: lx - 2, y: ly - 6, w: 24, h: 12, tip: TR(r)("story.letter.tip"), ...((r.scene.storyDone || []).includes("end") ? { go: "letter" } : { special: "story" }) }); // la dernière lettre se lit dépliée sur le bureau
   }
   if (r.scene.additions.some((a) => a.type === "inkwell")) { // l'encrier : un petit pot sombre au col étroit, une plume dedans
     const ix = tx + 130, iy = ty;
