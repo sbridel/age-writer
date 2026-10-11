@@ -297,7 +297,7 @@ Until then the Relto only knows the date by its calendar pinnacle, which drifts 
 
 On the observatory's left wall hangs a small brass pendulum, set by hand, that beats the prorahn mechanically (“A D'ni pendulum, set by hand: it counts the prorahn, it does not know the hour”). It strikes one side, then the other, once per prorahn, and the stop it touches glows for an instant: the true Zero's pulse always peaks exactly then.
 
-Anything else slides against it: the old line of Me'erta (about 1.06 prorahn) drifts a little further from the swing beat after beat, and a pulsar's or a neutron star's false beat is plainly off.
+Anything else slides against it: a faint older pulse drifts a little further from the swing beat after beat, and a pulsar's or a neutron star's false beat is plainly off.
 
 With the close-up room sounds you hear it too: a dry wooden tick per swing, distinct from the pulse's note, so you can hear the two come apart. With reduced motion the pendulum stays at rest and a small lamp on each side marks the beat.
 
@@ -361,7 +361,7 @@ Such a star can still be charted by looking past the lure, or **indirectly**: on
 
 #### The old line (step 3)
 
-It exists in the Art of the Guild only. Before you find the Zero, a second, paler pulse may catch your eye, slipping against the D'ni clock: an old origin line, King Me'erta's, never decreed. Bring it into the ring and the instrument settles on it: its plate engraves *that* line, and every star charted afterwards is turned by the same angle (the hour over there and the KIPS are wrong with it).
+It exists in the Art of the Guild only. Its early readings are not always what they seem: maybe you could try the story mode to find out.
 
 Nothing says so outright, but it shows:
 

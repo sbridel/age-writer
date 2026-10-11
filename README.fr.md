@@ -297,7 +297,7 @@ Jusque-là, le Relto ne connaît la date que par sa pierre-calendrier, qui déri
 
 Au mur de gauche de l'observatoire pend un petit balancier de laiton, réglé à la main, qui bat le prorahn mécaniquement (« Un balancier D'ni, réglé à la main : il compte les prorahn, il ne connaît pas l'heure »). Il frappe d'un côté puis de l'autre, une fois par prorahn, et la butée touchée luit un instant : le pouls du vrai Zéro culmine toujours à ce moment-là.
 
-Tout le reste glisse contre lui : la ligne ancienne de Me'erta (environ 1,06 prorahn) s'écarte un peu plus du balancier à chaque battement, et le faux battement d'un pulsar ou d'une étoile à neutrons tombe nettement à côté.
+Tout le reste glisse contre lui : un pouls plus ancien et pâle s'écarte un peu plus du balancier à chaque battement, et le faux battement d'un pulsar ou d'une étoile à neutrons tombe nettement à côté.
 
 Avec les sons des vues rapprochées, on l'entend aussi : un tic sec, de bois, à chaque battement, distinct de la note du pouls, pour entendre les deux se séparer. En mouvement réduit, le balancier reste au repos et une petite lampe de chaque côté marque le battement.
 
@@ -361,7 +361,7 @@ Une telle étoile se situe tout de même en cherchant au-delà du leurre, ou **i
 
 #### La ligne ancienne (étape 3)
 
-Elle n'existe que dans l'Art de la Guilde. Avant de trouver le Zéro, un second pouls, plus pâle, peut attirer l'œil, glissant contre l'horloge D'ni : une ancienne ligne d'origine, celle du roi Me'erta, jamais décrétée. Amène-la dans l'anneau et l'instrument s'y cale : sa plaque grave *cette* ligne, et chaque étoile située ensuite tourne du même angle (l'heure là-bas et les KIPS sont faux avec elle).
+Elle n'existe que dans l'Art de la Guilde. Ses premières lectures ne sont pas toujours ce qu'elles semblent : tu pourrais peut-être essayer le mode histoire pour le découvrir.
 
 Rien ne le dit tout net, mais cela se voit :
 
