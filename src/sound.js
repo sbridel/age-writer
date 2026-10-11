@@ -723,31 +723,6 @@ function slideWood(volume = 0.3, { open = true } = {}) {
   });
 }
 /** Une trappe de fer qu'on ouvre : le loquet qui claque deux fois, la charnière qui grince et racle, la lourde plaque qui retombe. */
-function clang(volume = 0.3) {
-  // trappe de fer : verrou qu'on tire, gonds rouillés, puis la plaque qui bute et RÉSONNE (partiels inharmoniques de métal frappé)
-  return oneShot(3.2, (c, out, noise) => {
-    out.gain.value = volume; const t = c.currentTime;
-    const env = (g, at, peak, dec) => { g.setValueAtTime(0.0001, t + at); g.linearRampToValueAtTime(peak, t + at + 0.003); g.exponentialRampToValueAtTime(0.0001, t + at + dec); };
-    const hit = (at, f0, amp, dec, ratios) => { // coup sur du métal : somme de partiels non harmoniques, les aigus s'éteignent vite
-      ratios.forEach((r, i) => { for (const dt of [1, 1.006]) { const o = c.createOscillator(), e = c.createGain(); o.type = "sine"; o.frequency.value = f0 * r * dt; env(e.gain, at, amp / (1 + i * 0.7), dec / (1 + i * 0.45)); o.connect(e); e.connect(out); o.start(t + at); o.stop(t + at + dec + 0.1); } });
-      const n = noise(0.06), hp = c.createBiquadFilter(), e = c.createGain(); hp.type = "highpass"; hp.frequency.value = 1800; env(e.gain, at, amp * 1.6, 0.05); n.connect(hp); hp.connect(e); e.connect(out); n.start(t + at);
-    };
-    const MET = [1, 2.32, 4.25, 6.63, 9.38, 12.4];
-    hit(0, 520, 0.16, 0.35, MET); // verrou qui claque
-    hit(0.14, 700, 0.12, 0.25, MET);
-    // gonds rouillés : bruit à résonance très étroite qui balaye, saccadé comme un frottement
-    const S = 0.42, D = 0.9, gn = noise(D + 0.1), gb = c.createBiquadFilter(), ge = c.createGain(), jit = c.createOscillator(), jg = c.createGain();
-    gb.type = "bandpass"; gb.Q.value = 14; gb.frequency.setValueAtTime(420, t + S); gb.frequency.linearRampToValueAtTime(1250, t + S + D);
-    ge.gain.setValueAtTime(0.0001, t + S); ge.gain.linearRampToValueAtTime(0.5, t + S + 0.12); ge.gain.setValueAtTime(0.4, t + S + D - 0.15); ge.gain.exponentialRampToValueAtTime(0.0001, t + S + D);
-    jit.frequency.value = 23; jg.gain.value = 0.22; jit.connect(jg); jg.connect(ge.gain); jit.start(t + S); jit.stop(t + S + D + 0.1);
-    gn.connect(gb); gb.connect(ge); ge.connect(out); gn.start(t + S);
-    // la plaque bute : coup grave, long, avec le gong de fer qui traîne
-    const T = S + D + 0.03;
-    const th = c.createOscillator(), te = c.createGain(); th.type = "sine"; th.frequency.setValueAtTime(110, t + T); th.frequency.exponentialRampToValueAtTime(48, t + T + 0.25); env(te.gain, T, 1, 0.45); th.connect(te); te.connect(out); th.start(t + T); th.stop(t + T + 0.5);
-    hit(T, 190, 0.26, 1.9, MET);
-    hit(T + 0.01, 330, 0.12, 1.1, [1, 2.76, 5.4, 8.93]);
-  });
-}
 function squeak(volume = 0.3) {
   return oneShot(0.4, (c, out) => {
     const t = c.currentTime, o = c.createOscillator(), e = c.createGain(); out.gain.value = volume * 0.3;
@@ -813,4 +788,4 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { knock, clang, creak, slideStone, slideWood, crystalChord, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { knock, creak, slideStone, slideWood, crystalChord, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
