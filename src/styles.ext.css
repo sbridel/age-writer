@@ -578,7 +578,7 @@
 .age-book__more { align-self: center; font-size: 0.72em; opacity: 0.5; padding: 0 6px; letter-spacing: 0.08em; }
 
 /* prendre un livre de l'étagère : il se lève, s'ouvre sur son panneau, on le touche, on arrive */
-.age-linkanim { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(6, 5, 4, 0.62); cursor: pointer; animation: age-linkanim-in 0.25s ease-out both; }
+.age-linkanim { position: absolute; inset: 0; z-index: 30; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(6, 5, 4, 0.62); cursor: pointer; animation: age-linkanim-in 0.25s ease-out both; }
 .age-linkanim__book { position: absolute; width: 150px; height: 200px; border-radius: 4px 10px 10px 4px; background: linear-gradient(100deg, #3b2a1b, #5a4322 60%, #3b2a1b); border: 1px solid #c9a24e; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; text-align: center; color: #e0c27a; font-family: serif; padding: 12px; animation: age-linkanim-lift 1s cubic-bezier(.2,.8,.2,1) both; }
 .age-linkanim.is-open .age-linkanim__book { opacity: 0; transform: scale(1.5) rotateY(70deg); transition: all 0.9s ease-in; }
 .age-linkanim__panel { position: relative; width: min(60%, 420px); opacity: 0; transform: scale(0.8); transition: opacity 0.9s ease-out, transform 0.9s ease-out; border: 2px solid #c9a24e; border-radius: 3px; overflow: hidden; box-shadow: 0 0 40px rgba(201, 162, 78, 0.35); }
@@ -605,13 +605,13 @@
 /* les pages qu'on tourne : des feuilles qui pivotent sur la reliure, à l'endroit où le panneau va apparaître */
 .age-linkanim__sheets { position: absolute; width: min(60%, 420px); aspect-ratio: 3 / 2; perspective: 900px; opacity: 0; transition: opacity 0.6s ease-out; pointer-events: none; }
 .age-linkanim.is-open .age-linkanim__sheets { opacity: 1; }
-.age-linkanim.is-panel .age-linkanim__sheets { opacity: 0; transition: opacity 0.5s ease-in; }
+.age-linkanim.is-done .age-linkanim__sheets { opacity: 0; transition: opacity 0.3s ease-in; }
 .age-linkanim__sheet { position: absolute; inset: 0; transform-origin: left center; background: linear-gradient(90deg, #cdbd94, #e8dcb8 30%, #d8c9a0); border: 1px solid #8a6a2e; border-radius: 2px 6px 6px 2px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4); backface-visibility: hidden; }
 .age-linkanim.is-flip .age-linkanim__sheet { animation: age-linkanim-flip ease-in-out both; }
 @keyframes age-linkanim-flip { 0% { transform: rotateY(0deg); } 85% { opacity: 1; } 100% { transform: rotateY(-175deg); opacity: 0; } }
 
 /* le panneau sur une page (portrait, comme le livre de liaison) ; les feuilles qu'on tourne ont la même taille */
-.age-linkanim__page, .age-linkanim__sheets { height: min(82vh, 640px); width: auto; aspect-ratio: 3 / 4; }
+.age-linkanim__page, .age-linkanim__sheets { height: var(--page-h, min(82vh, 640px)); width: auto; aspect-ratio: 3 / 4; flex: none; }
 .age-linkanim__page { position: relative; display: flex; align-items: center; justify-content: center; padding: 0 7%; background: linear-gradient(90deg, #b9a877, #e8dcb8 14%, #e2d4ac 86%, #cdbd94); border: 1px solid #8a6a2e; border-radius: 2px 8px 8px 2px; box-shadow: inset 14px 0 18px -10px rgba(0, 0, 0, 0.45), 0 14px 50px rgba(0, 0, 0, 0.65); opacity: 0; transform: scale(0.92); transition: opacity 0.9s ease-out, transform 0.9s ease-out; }
 .age-linkanim.is-panel .age-linkanim__page { opacity: 1; transform: none; }
 .age-linkanim__page .age-linkanim__panel { width: 100%; opacity: 1; transform: none; transition: filter 0.7s ease-in; border: 2px solid #8a6a2e; box-shadow: none; }

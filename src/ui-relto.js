@@ -275,6 +275,7 @@ async function playLinkAnim(plugin, age, host, snd, open) {
   if (analysis) { try { plugin.mountGenerated(panel, analysis, age.path); } catch (e) { console.warn("[Age Writer ext] panneau", e); } }
   const sheets = ov.createDiv({ cls: "age-linkanim__sheets" }); // les pages qu'on tourne avant d'arriver sur le panneau
   for (let i = 0; i < pages; i++) { const sh = sheets.createDiv({ cls: "age-linkanim__sheet" }); sh.style.animationDelay = `${i * gap}ms`; sh.style.animationDuration = `${Math.max(380, Math.round(gap * 1.7))}ms`; sh.style.zIndex = String(pages - i); }
+  { const r = host.getBoundingClientRect(); if (r.width && r.height) ov.style.setProperty("--page-h", `${Math.round(Math.max(160, Math.min(r.height * 0.9, (r.width * 0.9) / 0.75, 640)))}px`); } // la page tient dans la zone où l'on est (petit mode compris)
   const touch = ov.createDiv({ cls: "age-linkanim__touch" }), timers = [], at = (fn, ms) => timers.push(window.setTimeout(fn, ms));
   const quiet = !plugin.ext.sound, vol = plugin.ext.volume;
   let done = false, ready = false;
@@ -292,8 +293,9 @@ async function playLinkAnim(plugin, age, host, snd, open) {
   // les pages ne se tournent qu'une fois le son du livre et des clics fini (même durée que dans openSequence)
   const lead = quiet ? 0 : plugin.ext.soundBook !== false ? 1350 : plugin.ext.soundClasp !== false ? 550 : 0, start = 1100 + lead + 250;
   for (let i = 0; i < pages; i++) at(() => { if (!quiet && plugin.ext.soundBook !== false) sound.pageTurn(vol, { quick: i < pages - 1 }); }, start + i * gap); // les pages qu'on tourne : la dernière garde sa traîne
-  at(() => ov.addClass("is-flip"), start); // les pages se tournent (le dessin suit le son)
-  at(() => { ready = true; ov.addClass("is-panel"); ov.addClass("is-ready"); }, start + pages * gap + Math.max(380, Math.round(gap * 1.7))); // la dernière page est tournée : le panneau attend d'être touché
+  const flip = Math.max(380, Math.round(gap * 1.7));
+  at(() => { ov.addClass("is-flip"); ov.addClass("is-panel"); }, start); // les pages se tournent, et la page de liaison est dessous : pas d'attente entre les deux
+  at(() => { ready = true; ov.addClass("is-done"); ov.addClass("is-ready"); }, start + (pages - 1) * gap + flip); // la dernière page est tournée : le panneau attend d'être touché
 }
 
 /** Après une modification : revoir l'avancement de l'histoire (une notice quand un chapitre est réussi), sans qu'il faille ouvrir le Relto. */
