@@ -378,9 +378,16 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         ok(c6.length === 1 && /Lever les yeux|Looking up/.test(c6[0]) && !/```age/.test(files.get(c6[0]).content), "chapitre 6 : la note du Great Zero est créée");
         p.ext.telescope = { ...(p.ext.telescope || {}), [sf.basename.toLowerCase().trim() + "#" + sfm.seed]: { found: true } };
         el = await show(sf.path);
-        ok(row(el, "Comets") && /is-available/.test(row(el, "Comets").className), "chapitre 6 réussi : le Great Zero trouvé, la page des comètes est disponible");
+        ok(row(el, "Imager") && /is-available/.test(row(el, "Imager").className), "chapitre 6 réussi : le Great Zero trouvé, la page de l'Imageur est disponible");
+        ok(row(el, "Inkwell") && /is-locked/.test(row(el, "Inkwell").className), "la page finale reste fermée tant qu'un chapitre manque (7e)");
+        const b6 = [...files.keys()]; notices.length = 0; await nx.callback();
+        const c7 = [...files.keys()].filter((k) => !b6.includes(k));
+        ok(c7.length === 1 && /Écouter le ciel|Listening to the sky/.test(c7[0]), "chapitre 7 : la note de l'Imageur est créée");
+        p.ext.imagerTunings = { ...(p.ext.imagerTunings || {}), [c4[0]]: { lock: true } };
+        el = await show(sf.path);
+        ok(row(el, "Comets") && /is-available/.test(row(el, "Comets").className), "chapitre 7 réussi : l'Imageur verrouillé sur un Âge, la page des comètes est disponible");
         ok(row(el, "Inkwell") && /is-available/.test(row(el, "Inkwell").className), "fin de l'histoire : la page finale (l'encrier) est disponible");
-        notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); p.law.now = () => Date.now(); files.delete(c3[0]); files.delete(c4[0]); files.delete(c5[0]); files.delete(c6[0]); delete p.ext.telescope[sf.basename.toLowerCase().trim() + "#" + sfm.seed]; }
+        notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); p.law.now = () => Date.now(); files.delete(c3[0]); files.delete(c4[0]); files.delete(c5[0]); files.delete(c6[0]); files.delete(c7[0]); delete p.ext.imagerTunings[c4[0]]; delete p.ext.telescope[sf.basename.toLowerCase().trim() + "#" + sfm.seed]; }
       files.delete(c2[0]); }
     const sb = await show("x.md"), sbn = shelf(sb);
     ok(sbn.includes("Dehors") && !sbn.includes("Premier"), "mode histoire : sans précision, le Relto du bac à sable, qui ne voit pas les Âges de l'histoire");

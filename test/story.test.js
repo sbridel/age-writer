@@ -75,7 +75,7 @@ ok(scene(["rest"]).pages.find((p) => p.id === mendPage.id).state === "locked" &&
 // ---- notes de chapitre
 const an = (text, nm) => analyseAgeBase(text, { seed: nm });
 const mend = ST.chapterById("mend"), restC = ST.chapterById("rest");
-ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]).id === "weather" && ST.nextChapter(["rest", "mend", "weather"]).id === "laws" && ST.nextChapter(["rest", "mend", "weather", "laws"]).id === "alter" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter"]).id === "zero" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero"]) === null, "nextChapter : dans l'ordre, null à la fin");
+ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]).id === "weather" && ST.nextChapter(["rest", "mend", "weather"]).id === "laws" && ST.nextChapter(["rest", "mend", "weather", "laws"]).id === "alter" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter"]).id === "zero" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero"]).id === "imager" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager"]) === null, "nextChapter : dans l'ordre, null à la fin");
 ok(Object.keys(ST.get({}, "k").notes).length === 0, "get : normalise les notes de chapitre");
 let fair = 0, same = 0;
 for (let i = 0; i < 300; i++) {
@@ -123,6 +123,12 @@ const zc = ST.chapterById("zero");
 ok(ST.check(zc, ctx([])).why === "zero" && ST.check(zc, { ...ctx([]), zeroFound: true }).ok, "zero : réussi quand le Great Zero est trouvé, pas avant");
 ok(!/```age/.test(ST.chapterNote(zc, "en", "N")) && ST.chapterNote(zc, "fr", "N").includes("Great Zero"), "zero : une note sans bloc age, qui parle du Great Zero");
 ok(M.PAGE_PRESETS.page_telescope.unlock.page === "page_mountain" && ST.CHAPTERS.some((c) => c.page === "page_mountain"), "zero : la page des Montagnes (qui mène au télescope) est une récompense de chapitre");
+
+// ---- chapitre 7 : écouter le ciel (l'Imageur verrouillé)
+const ic = ST.chapterById("imager");
+ok(ST.check(ic, ctx([age("I", ["water"], "Dossier/I.md")])).why === "lock" && ST.check(ic, { ...ctx([{ ...age("I", ["water"]), path: "Dossier/I.md" }]), tunings: { "Dossier/I.md": { lock: false } } }).why === "lock", "imager : pas de verrou, pas de réussite");
+ok(ST.check(ic, { ...ctx([{ ...age("I", ["water"]), path: "Dossier/I.md" }]), tunings: { "Dossier/I.md": { lock: true } } }).ok && ST.check(ic, { ...ctx([]), tunings: { "Autre.md": { lock: true } } }).why === "lock", "imager : verrouillé sur un Âge du dossier ; un verrou ailleurs ne compte pas");
+ok(ST.CHAPTERS.find((c) => c.id === "zero").page === "page_imager" && !M.PAGE_PRESETS.page_imager.unlock, "imager : la page de l'Imageur est offerte par le chapitre précédent");
 
 // ---- la page finale
 const endP = ST.rewardPages().find((p) => p.id === ST.ENDGAME.id);

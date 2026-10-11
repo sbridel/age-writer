@@ -21,7 +21,8 @@ const CHAPTERS = [
   { id: "weather", page: "page_fireflies", title: { en: "A day that changes", fr: "Un jour qui change" } },
   { id: "laws", page: "page_aurora", title: { en: "The laws of a world", fr: "Les lois du monde" } },
   { id: "alter", page: "page_mountain", title: { en: "Changing what is written", fr: "Modifier ce qui est écrit" } },
-  { id: "zero", page: "page_comets", title: { en: "Looking up", fr: "Lever les yeux" } },
+  { id: "zero", page: "page_imager", title: { en: "Looking up", fr: "Lever les yeux" } },
+  { id: "imager", page: "page_comets", title: { en: "Listening to the sky", fr: "Écouter le ciel" } },
 ];
 
 /** La page finale (pour l'instant : un encrier posé sur la table). Le nom reste neutre. */
@@ -99,6 +100,10 @@ function check(chapter, ctx) {
     return stable.some((a) => a.physics >= 2) ? { ok: true, why: "" } : { ok: false, why: "physics" };
   }
   if (chapter.id === "zero") return ctx && ctx.zeroFound ? { ok: true, why: "" } : { ok: false, why: "zero" }; // « lever les yeux » : le Great Zero de ce Relto est trouvé
+  if (chapter.id === "imager") { // « écouter le ciel » : l'Imageur est réglé et verrouillé sur l'un des Âges du dossier
+    const tun = (ctx && ctx.tunings) || {};
+    return ages.some((a) => tun[a.path] && tun[a.path].lock) ? { ok: true, why: "" } : { ok: false, why: "lock" };
+  }
   if (chapter.id === "alter") {
     // « modifier ce qui est écrit » : la note du chapitre a été modifiée après séchage de l'encre (Loi du Changement), et le monde tient encore
     const mine = ages.find((a) => a.path === ((ctx && ctx.notes) || {}).alter);
@@ -133,6 +138,7 @@ const WORLDS = {
   rest: { lines: ["water"] },
   mend: { lines: ["single_sun", "steady_cycle", "water", "lava"], fixed: ["single_sun", "steady_cycle", "water"] },
   zero: { lines: [] },
+  imager: { lines: [] },
   alter: { lines: ["single_sun", "steady_cycle", "water", "sand", "fern"], stable: true, margin: 15 }, // une marge large : la modification elle-même coûte (Loi du Changement)
   laws: { lines: ["single_sun", "steady_cycle", "water", "salt"], stable: true },
   weather: { lines: ["single_sun", "steady_cycle", "water", "rain"], stable: true }, // le monde de départ doit tenir : seule la météo reste à écrire
@@ -178,6 +184,10 @@ const LETTERS = {
   zero: {
     en: ["A writer who only looks down at the page never learns where the page is.", "Every Relto hides its own Great Zero, the reference all linking is measured from. The cabin has a summit, and on it a small observatory. Place the Mountains page, let the telescope follow, and look up. Find your Zero.", "Find your Relto's Great Zero with the telescope."],
     fr: ["Un écrivain qui ne regarde que sa page n'apprend jamais où se trouve la page.", "Chaque Relto cache son propre Great Zero, la référence dont se mesure toute liaison. La cabane a un sommet, et sur le sommet un petit observatoire. Pose la page des Montagnes, laisse venir le télescope, et lève les yeux. Trouve ton Zéro.", "Trouve le Great Zero de ton Relto avec le télescope."],
+  },
+  imager: {
+    en: ["Every Age hums. Most writers never hear it.", "The cabin has a machine of brass and crystal, and it listens. The Great Zero told you where; now learn to hear. Choose one of your Ages, tune the machine until its image is clear, and fix the tuning so it holds.", "Tune the Imager on one of your Ages until the image is sharp, then lock it with the lever."],
+    fr: ["Chaque Âge bourdonne. La plupart des écrivains ne l'entendent jamais.", "La cabane a une machine de laiton et de cristal, et elle écoute. Le Great Zero t'a dit où ; apprends maintenant à entendre. Choisis l'un de tes Âges, règle la machine jusqu'à ce que l'image soit nette, et fixe le réglage pour qu'il tienne.", "Règle l'Imageur sur l'un de tes Âges jusqu'à ce que l'image soit nette, puis verrouille-le avec le levier."],
   },
   weather: {
     en: ["A world that never changes is a painting. Let us make it a day.", "Here the rain falls without end. Teach it manners: let it fall only sometimes, and only at dawn. A line can carry a frequency and a moment, after a colon.", "Rewrite the rain line as `rain: sometimes, dawn`, and keep the world stable."],

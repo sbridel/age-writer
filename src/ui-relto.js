@@ -76,7 +76,7 @@ async function buildScene(plugin, file, opt = {}) {
   if (story) { // l'avancement : évalué à chaque lecture de la scène (les Âges du dossier sont ceux d'ici)
     const store = plugin.ext.story || (plugin.ext.story = {}), key = TEL.keyOf(relto.name, relto.seed);
     const axisOf = (id) => { const b = plugin.core && plugin.core.blocks && plugin.core.blocks.get ? plugin.core.blocks.get(id) : null; return b ? b.axis : null; };
-    const done = ST.evaluate(store, key, { ages, axisOf, zeroFound: relto.zeroFound });
+    const done = ST.evaluate(store, key, { ages, axisOf, zeroFound: relto.zeroFound, tunings: plugin.ext.imagerTunings });
     if (done.length) { plugin.saveExt(); for (const c of done) new obsidian.Notice(plugin.t("story.done", { title: plugin.lang() === "fr" ? c.title.fr : c.title.en })); }
     relto.storyDone = ST.get(store, key).done.concat(ST.nextChapter(ST.get(store, key).done) ? [] : ["end"]); // « end » : tous les chapitres sont faits
   }
