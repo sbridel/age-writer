@@ -556,7 +556,7 @@ class ReltoRenderer {
    * Le chat roulé en boule (vue de la cabane) : il respire, une oreille frémit de temps en temps, la queue fait le tour du corps.
    * (x, y) : le sol sous lui ; S : échelle ; glow : lueur de l'âtre (0 = feu éteint) ; shade : la pénombre de la pièce.
    */
-  drawSleepingCat(ctx, a, { x, y, S, glow = 0, shade = (c) => c }, t) {
+  drawSleepingCat(ctx, a, { x, y, S, glow = 0, shade = (c) => c, tip = null }, t) {
     const cat = catLook(a.color), br = 1 + 0.045 * Math.sin(t * 1.5), tw = frac(t * 0.13 + (this.scene.seed % 5) / 5) > 0.975 ? Math.sin(t * 40) * 0.25 : 0;
     ctx.save(); ctx.translate(x, y); ctx.scale(S, S);
     ctx.fillStyle = "rgba(0,0,0,0.28)"; ctx.beginPath(); ctx.ellipse(0, 0, 13, 2.2, 0, 0, 6.283); ctx.fill(); // ombre sur le tapis
@@ -589,7 +589,7 @@ class ReltoRenderer {
     // quelques « z » qui montent, très pâles
     if (!this.opts.reducedMotion) for (let i = 0; i < 2; i++) { const p = frac(t * 0.18 + i * 0.5); ctx.fillStyle = rgba(240, 230, 210, 0.35 * Math.sin(p * Math.PI)); ctx.font = `italic ${Math.round(S * (2.6 + p * 1.6))}px serif`; ctx.fillText("z", x + S * (-11 + p * 4 + i * 2), y - S * (11 + p * 9)); }
     const nm = String(a.name || "").trim();
-    this.hot.push({ x: x - 14 * S, y: y - 12 * S, w: 27 * S, h: 13 * S, tip: nm ? `${nm} — asleep by the fire` : `A ${cat.label} cat, asleep`, flash: "purr…", purr: true });
+    this.hot.push({ x: x - 14 * S, y: y - 12 * S, w: 27 * S, h: 13 * S, tip: tip ? (nm ? `${nm} — ${tip}` : tip) : nm ? `${nm} — asleep by the fire` : `A ${cat.label} cat, asleep`, flash: "purr…", purr: true });
   }
 
   // ---- l'Imageur (page « imager ») --------------------------------------------------------------

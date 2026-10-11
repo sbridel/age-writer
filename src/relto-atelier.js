@@ -5,7 +5,6 @@ const { rng, clamp, mix, rgba, fnv } = require("./util");
 const EMB = require("./emblem");
 const W = 640, H = 360, FLOOR = 250, GALLERY = 100;
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
-const CAT_FUR = { orange: "#d9822b", black: "#2a2a31", white: "#e9e4da", grey: "#8c8c94", gray: "#8c8c94", brown: "#7a5236", cream: "#e3cfa4" };
 const flick = (t) => 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1) + 0.06 * Math.sin(t * 17);
 
 /** La tablette : une dalle de pierre noire, des lignes gravées qui luisent faiblement. `s` : sa demi-largeur. */
@@ -148,15 +147,8 @@ function drawAtelier(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#5b2b2b"); ctx.fillRect(ax, ay - 52, 52, 54); ctx.fillStyle = c("#6d3535"); ctx.fillRect(ax - 8, ay - 30, 14, 36); ctx.fillRect(ax + 46, ay - 30, 14, 36); ctx.fillRect(ax + 4, ay - 26, 44, 28);
   ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(ax - 8, ay + 2, 68, 5); ctx.fillStyle = c("#2f2016"); ctx.fillRect(ax - 6, ay + 6, 4, 8); ctx.fillRect(ax + 54, ay + 6, 4, 8);
   const cat = sc.additions.find((a) => a.type === "cat");
-  if (cat && r.catSpotFor() === 0) {
-    const fur = CAT_FUR[String(cat.color || "orange").toLowerCase()] || CAT_FUR.orange, br = Math.sin(t * 1.6) * 0.8;
-    ctx.fillStyle = c(fur); ctx.beginPath(); ctx.ellipse(ax + 26, ay - 30, 17, 9 + br * 0.4, 0, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(ax + 13, ay - 33, 8, 7, 0, 0, 6.283); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(ax + 8, ay - 38); ctx.lineTo(ax + 9, ay - 45); ctx.lineTo(ax + 13, ay - 39); ctx.moveTo(ax + 15, ay - 39); ctx.lineTo(ax + 18, ay - 45); ctx.lineTo(ax + 19, ay - 37); ctx.fill();
-    ctx.strokeStyle = c(fur); ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(ax + 40, ay - 26); ctx.quadraticCurveTo(ax + 48, ay - 22, ax + 34, ay - 20); ctx.stroke(); ctx.lineCap = "butt";
-    ctx.strokeStyle = rgba(30, 20, 10, 0.7); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ax + 9, ay - 33); ctx.lineTo(ax + 12, ay - 33); ctx.moveTo(ax + 14, ay - 33); ctx.lineTo(ax + 17, ay - 33); ctx.stroke();
-    const nm = String(cat.name || "").trim();
-    r.hot.push({ x: ax - 4, y: ay - 50, w: 62, h: 40, tip: nm ? `${nm} — ${TRr("atelier.cat.tip")}` : TRr("atelier.cat.tip"), flash: "purr…", purr: true });
-  } else r.hot.push({ x: ax - 8, y: ay - 52, w: 68, h: 56, tip: TRr("atelier.chair.tip"), flash: TRr("atelier.chair.flash") });
+  if (cat && r.catSpotFor() === 0) r.drawSleepingCat(ctx, cat, { x: ax + 28, y: ay - 26, S: 1.7, shade: c, tip: TRr("atelier.cat.tip") }, t); // le même chat que dans la cabane, roulé sur l'assise
+  else r.hot.push({ x: ax - 8, y: ay - 52, w: 68, h: 56, tip: TRr("atelier.chair.tip"), flash: TRr("atelier.chair.flash") });
   // le mur derrière le bureau : un portrait, le tableau aux ficelles rouges, un baromètre, une étagère de bocaux
   { const { pin, sheet } = wallBits(ctx, c), TRd = (k) => TRr(k), wq = rng(0xb0a7);
     ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.ellipse(141, 158, 21, 28, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#2e3a36"); ctx.beginPath(); ctx.ellipse(141, 158, 17, 24, 0, 0, 6.283); ctx.fill();
