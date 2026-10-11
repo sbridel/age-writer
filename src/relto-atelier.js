@@ -267,7 +267,7 @@ function drawLetter(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#2c3d2b"); ctx.font = "italic 16px serif"; let y = y0 + 40; const paras = [TRr("story.letter.hi"), TRr("story.end"), TRr("story.letter.more") + " " + TRr("atelier.clue")];
   for (const p of paras) { for (const ln of wrapLines(ctx, p, w - 76)) { ctx.fillText(ln, x0 + 38, y); y += 20; } y += 8; }
   ctx.textAlign = "right"; ctx.fillText("\u2014 Adrin Vesparath, seltahn", x0 + w - 40, y + 6); ctx.textAlign = "left";
-  EMB.drawSeal(ctx, x0 + 90, y0 + h - 52, 40, c, t); // l'emblème de l'auteur, en sceau de cire
+  EMB.drawSeal(ctx, x0 + 80, y0 + h - 40, 31, c, t); // l'emblème de l'auteur, en sceau de cire
   ctx.restore();
   backButton(r, ctx, TRr("atelier.stand.tip"), "cabin");
 }

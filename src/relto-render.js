@@ -1135,6 +1135,13 @@ class ReltoRenderer {
     else if (k === "release" && ui.held && !ui.relAt && now - ui.heldAt > 500) { ui.relAt = now; if (this.opts.onRelic) this.opts.onRelic("put"); }
     if (!this.running) this.draw(0);
   }
+  /** Un leurre : une pierre de la cheminée de la cabane s'enfonce un instant, puis revient ; rien ne se passe. */
+  stoneTap(x, y) {
+    const fx = 462, fw = 156, row = Math.floor((y - 24) / 16), y0 = 24 + 16 * row, off = ((y0 / 16) % 2) * 14, j = Math.floor((x - fx - off) / 28);
+    let x0 = fx + off + 28 * j, x1 = x0 + 28; const lo = y0 < 114 ? fx + 20 : fx, hi = y0 < 114 ? fx + fw - 20 : fx + fw; x0 = Math.max(x0, lo); x1 = Math.min(x1, hi);
+    this.stoneAt = { x: x0, y: y0, w: x1 - x0, h: 16, at: Date.now() }; if (this.opts.onKnock) this.opts.onKnock("stone");
+    if (!this.running) this.draw(0);
+  }
   /** La bibliothèque devant le panneau : on touche trois livres. Dans le bon ordre, le meuble coulisse et disparaît ; sinon ils ressortent en faisant un bruit de bois creux. */
   shelfBook(i) {
     const sh = (this.shelf = this.shelf || { seq: [], at: 0 }), now = Date.now();
@@ -1153,7 +1160,7 @@ class ReltoRenderer {
     if (ok || K.length >= 3) this.knocks = [];
     if (ok) { this.panelAt = Date.now(); window.setTimeout(() => this.setView("atelier"), 1400); } // le panneau coulisse, puis on passe
   }
-  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
+  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.stone) this.stoneTap(x, y); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };

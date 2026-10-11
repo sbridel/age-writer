@@ -94,6 +94,11 @@ function drawCabin(r, ctx, sc, sky, t) {
   }
   if (lit) for (let i = 0; i < 7; i++) { const p = ((t * 0.5 + i * 0.19) % 1), x = mx + Math.sin(p * 9 + i * 3) * 18, y = by - 20 - p * 70; ctx.fillStyle = rgba(255, 190 - p * 90, 80, (1 - p) * 0.9); ctx.fillRect(x, y, 1.6, 1.6); }
   r.hot.push({ x: fx - 12, y: 104, w: fw + 24, h: FLOOR - 104, tip: lit ? "Fireplace" : "Cold hearth (add the chimney page to light it)" });
+  if (r.available && r.available().atelier) { // un leurre : les pierres de la cheminée s'enfoncent un instant quand on les touche, et il ne se passe rien
+    const stone = (x, y, w, h) => r.hot.push({ x, y, w, h, tip: "", stone: true, secret: true });
+    stone(fx + 20, 24, fw - 40, 90); stone(fx, 114, ox - fx, FLOOR - 114); stone(ox + ow, 114, fx + fw - ox - ow, FLOOR - 114); stone(ox, 114, ow, 22);
+    const sa = r.stoneAt, now = Date.now(); if (sa && now - sa.at < 800) { const k = 1 - (now - sa.at) / 800; ctx.fillStyle = rgba(0, 0, 0, 0.3 * k); ctx.fillRect(sa.x + 1, sa.y + 1, sa.w - 2, sa.h - 2); ctx.fillStyle = rgba(255, 220, 160, 0.1 * k); ctx.fillRect(sa.x + 1, sa.y + sa.h - 2, sa.w - 2, 1.5); }
+  }
   // étagère des Âges
   if (st.has("bookshelves")) {
     const x0 = 196, w = 244, y0 = 50, RH = 62, S = 3.9;
