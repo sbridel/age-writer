@@ -198,6 +198,15 @@ function catchUpTags(plugin, hub) {
   }
 }
 
+/** Commande : revoir l'avancement tout de suite (notice du chapitre réussi, étiquettes) et dire ce qui manque encore. */
+async function storyCheck(plugin) {
+  const { app, t } = plugin, hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
+  if (!hub) { new obsidian.Notice(t("story.nohub")); return; }
+  await storyTick(plugin);
+  const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed)), ch = ST.nextChapter(st.done);
+  new obsidian.Notice(ch ? t("story.checked", { title: ch.title[plugin.lang() === "fr" ? "fr" : "en"] }) + whyText(plugin, st.why) : t("story.end"), 8000);
+}
+
 /** Après une modification : revoir l'avancement de l'histoire (une notice quand un chapitre est réussi), sans qu'il faille ouvrir le Relto. */
 async function storyTick(plugin) {
   const { app } = plugin, hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
@@ -532,7 +541,7 @@ async function renderRelto(plugin, source, el, ctx) {
     glyphImgs.set(id, img); return img;
   };
   const imagerGet = (path) => (plugin.ext.imagerTunings || {})[path] || null;
-  const imagerSet = (path, s) => { plugin.ext.imagerTunings = { ...(plugin.ext.imagerTunings || {}), [path]: s }; plugin.saveExt(); };
+  const imagerSet = (path, s) => { plugin.ext.imagerTunings = { ...(plugin.ext.imagerTunings || {}), [path]: s }; plugin.saveExt(); if (s && s.lock) { clearTimeout(plugin._lockTick); plugin._lockTick = window.setTimeout(() => storyTick(plugin), 400); } }; // un verrou tiré peut réussir le chapitre de l'Imageur
   // le télescope : visée et Great Zero trouvé, gardés par Relto (nom + graine), comme les réglages de l'Imageur
   const telescopeGet = (key) => (plugin.ext.telescope || {})[key] || null;
   const telescopeSet = (key, s) => {
@@ -756,4 +765,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyNext, storyRestart, storyNoDraw, storyNotes, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyCheck, storyNext, storyRestart, storyNoDraw, storyNotes, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
