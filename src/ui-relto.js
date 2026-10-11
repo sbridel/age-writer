@@ -3,7 +3,7 @@ const obsidian = require("obsidian");
 const M = require("./relto-model");
 const { ReltoRenderer } = require("./relto-render");
 const sound = require("./sound");
-const { setMarkup, esc, leaveFullscreen } = require("./util");
+const { setMarkup, esc, leaveFullscreen, leaveFullscreenAsync } = require("./util");
 const G = require("./genscene");
 const SKY = require("./sky");
 const IM = require("./imager");
@@ -342,22 +342,33 @@ function storyNotes(plugin) {
 }
 const resetStoryDraw = (plugin) => { plugin._noDraw = null; plugin._storySet = null; };
 
+/** Un message du mentor en fenêtre (visible aussi en plein écran, contrairement à une notification). */
+function storyPopup(plugin, text) {
+  if (!obsidian.Modal) { new obsidian.Notice(text); return; }
+  class Pop extends obsidian.Modal {
+    onOpen() { this.titleEl.setText("Age Writer"); this.contentEl.createEl("p", { text }); const row = this.contentEl.createDiv({ cls: "modal-button-container" }); row.createEl("button", { text: plugin.t("story.pop.close") }).addEventListener("click", () => this.close()); }
+    onClose() { this.contentEl.empty(); }
+  }
+  new Pop(plugin.app).open();
+}
+
 /** Chapitre suivant : crée (ou rouvre) la note du prochain chapitre dans le dossier de l'histoire. */
 async function storyNext(plugin, opts = {}) {
   const { app, t } = plugin;
   const hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
-  if (!hub) { new obsidian.Notice(t("story.nohub")); return null; }
+  if (!hub) { storyPopup(plugin, t("story.nohub")); return null; }
   await buildScene(plugin, hub); // évalue l'avancement (un chapitre réussi depuis la dernière fois est compté)
   const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, store = plugin.ext.story || (plugin.ext.story = {});
   const key = TEL.keyOf(relto.name, relto.seed), st = ST.get(store, key), ch = ST.nextChapter(st.done);
-  if (!ch) { new obsidian.Notice(t("story.end")); return null; }
+  if (!ch) { storyPopup(plugin, t("story.end")); return null; }
   const lang = plugin.lang(), dir = ST.dirOf(hub.path), known = !opts.fresh && st.notes[ch.id] && app.vault.getAbstractFileByPath(st.notes[ch.id]);
-  if (known) { new obsidian.Notice(t("story.reopen") + whyText(plugin, st.why)); await app.workspace.getLeaf(false).openFile(known); return known; }
+  if (known) { await leaveFullscreenAsync(); new obsidian.Notice(t("story.reopen") + whyText(plugin, st.why)); await app.workspace.getLeaf(false).openFile(known); return known; }
   // « Age 1 », « Age 2 »… : court ; le nom ne doit exister nulle part dans le coffre (la Loi du Changement et l'avancement sont gardés par nom)
   const taken = new Set(app.vault.getMarkdownFiles().map((x) => x.basename));
   const nameAt = (i) => { for (let k = 1, c = 0; ; k++) { const nm = `Age ${k}`; if (taken.has(nm)) continue; if (c++ === i) return nm; } };
   const analyse = (text, nm) => plugin.core.analyse(text, { seed: nm, draw: ST.drawsOn(st.done) ? undefined : false });
   const name = ST.kindOf(ch) === "explore" ? ST.exploreName(ch, lang, taken) : ST.chapterName(ch, nameAt, analyse), path = `${dir}/${name}.md`;
+  await leaveFullscreenAsync(); // la note s'ouvrirait derrière le plein écran
   const f = await app.vault.create(path, ST.chapterNote(ch, lang, path.replace(/^.*\//, "").replace(/\.md$/, "")));
   if (opts.fresh) delete st.seen[ST.chapterName ? (st.notes[ch.id] || "").replace(/^.*\//, "").replace(/\.md$/, "") : ""];
   st.notes[ch.id] = path; resetStoryDraw(plugin); plugin.index.invalidate();
@@ -595,7 +606,7 @@ async function renderRelto(plugin, source, el, ctx) {
     const my = ++roomSeq;
     try {
       if (!(roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat" || ((v === "cabin" || v === "atelier") && fireLit()) || (v === "imager" && plugin.ext.soundImagerHum !== false)) && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages")) { sound.roomStop(); return; }
-      const bufs = v === "imager" ? { k: renderer.imagerClarity().atmo, total: renderer.imagerClarity().total, locked: !!(renderer.imager && renderer.imager.settings && renderer.imager.settings.lock) } : v === "cat" ? { main: await roomBuf("roomPurrFile"), meow: await roomBuf("roomMeowFile") } : v === "cabin" ? { main: await roomBuf("roomFireFile"), d: fireLit().density } : { main: await roomBuf("roomWaterFile") };
+      const bufs = v === "imager" ? { k: renderer.imagerClarity().atmo, total: renderer.imagerClarity().total, locked: !!(renderer.imager && renderer.imager.settings && renderer.imager.settings.lock) } : v === "cat" ? { main: await roomBuf("roomPurrFile"), meow: await roomBuf("roomMeowFile") } : (v === "cabin" || v === "atelier") ? { main: await roomBuf("roomFireFile"), d: fireLit().density } : { main: await roomBuf("roomWaterFile") };
       if (my !== roomSeq) return; // on a changé de vue pendant le chargement
       sound.roomStart(v === "imager" ? "imager" : v === "cat" ? "cat" : (v === "cabin" || v === "atelier") ? "fire" : "water", roomVol() * (v === "imager" ? humVol() : 1), bufs);
     } catch (e) { /* ignore */ }

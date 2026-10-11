@@ -8,7 +8,7 @@
  */
 const obsidian = require("obsidian");
 const { Dni } = require("./dni");
-const { setMarkup, fitModalToFullscreen } = require("./util");
+const { setMarkup, fitModalToFullscreen, rescueModals } = require("./util");
 const { Law, adjustAnalysis, fissureStrain, strainable, forceAlteration, describeChange, worldIds } = require("./law");
 const { solitudeFactor, COVER_RE, parseCover, KEY_RE, FX_RE, STYLE_RE, TRAP_RE, DMG_RE, parseFx, parseStyle, parseTrap, parseDamage, applyDamage } = require("./mech");
 const { Soundscape, staticBurst, openSequence, linkSound, pageTurn } = require("./sound");
@@ -88,6 +88,7 @@ module.exports = function build(Base, core, AGEX) {
         const mp = obsidian.Modal && obsidian.Modal.prototype, orig = mp && mp.open; if (!orig) return;
         const self = this; mp.open = function (...a) { const r = orig.apply(this, a); fitModalToFullscreen(this); return r; };
         self.register(() => { mp.open = orig; });
+        self.registerDomEvent(document, "fullscreenchange", () => rescueModals(document)); // sortie du plein écran : aucune fenêtre ne doit rester coincée (elle bloquerait les clics)
       });
       GEN_HOOKS.doom = (name) => this.law.doom(name);
       GEN_HOOKS.opening = (name) => this.law.opening(name, this.ext.fissureDays); // les fissures s'ouvrent avec le temps
