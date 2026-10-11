@@ -2,7 +2,7 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## Unreleased
+## 1.26.0 — Life, soil, caverns and writing from the Relto (2026-10-12)
 
 ### Added
 - **Life and soil.** New blocks you can write: micro-life (`plankton`, `microbial_mat`, `mycelium`), three shrubs (`berry_shrub`, `thorn_bush`, `heath_shrub`), fauna by habitat (`shoal`, `raptor`, `deep_hunter`, `cave_stalker`, `carrion_beetle`, `bee`) and ground born of life (`earth`, `humus`, `peat`). Some things are only ever produced: mycelium and water give mushrooms, wind, spores and fog give a living mist, a spore in silt gives soil bacteria, bees make the flowers hum. `hunter` stays the all-round carnivore. The mushroom has two rare variants: it glows when `strange_stone` is in the Age, and sings when a `crystal` is.

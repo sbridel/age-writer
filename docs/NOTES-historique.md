@@ -335,3 +335,10 @@ unlock:                            # facultatif
 ## 1.25.1 — le README sans texte de gabarit (11 oct. 2026)
 
 - README (EN et FR) : plus de jeton `<version>` ni de « coming soon », relevés par la vérification du catalogue (« README contains unfilled placeholder text »). « Vault Enumeration » n'est qu'une information : le plugin liste les notes pour retrouver les Âges.
+
+## 1.26.0 — vie, sol, cavernes et écriture depuis le Relto (12 oct. 2026)
+
+- Tranches 2, 3 et 4 : vie et sol (blocs, lois de la vie), titre d'écrivain, monde sous roche (`cavern_world`, `glow_algae`, `pellet`).
+- **Écrire un Âge depuis le Relto** : livre vierge → vrai livre (fenêtre de liaison, glyphes à l'encre, description, page libre), classeur de glyphes, registre de l'Imageur, coffre de livres descriptifs (trappe de fer, niches de cinq livres, décors dans les niches vides), livres de liaison à l'aspect propre. Un Âge = une note = deux livres.
+- Essai d'un bruit de trappe : abandonné (rien ne sonnait juste).
+
