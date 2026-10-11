@@ -1,5 +1,5 @@
 "use strict";
-// L'atelier d'écriture : une pièce cachée derrière un panneau de la cabane. Un grand bureau chargé d'objets étranges, une cheminée,
+// L'atelier d'écriture : une pièce cachée derrière une bibliothèque de la cabane. Un grand bureau chargé d'objets étranges, une cheminée,
 // un fauteuil (le chat s'y repose) et, en haut, une galerie de livres. Tout est dessiné ici (aucun asset).
 const { rng, clamp, mix, rgba } = require("./util");
 const EMB = require("./emblem");
@@ -25,8 +25,39 @@ function backButton(r, ctx, label, go) {
   r.hot.push({ x: 8, y: 8, w: 40, h: 40, tip: label, go });
 }
 
-/** Où se trouve le panneau secret dans la cabane (coordonnées logiques) ; la pièce n'a aucun bouton de navigation. */
-const SECRET = { x: 112, y: 182, w: 66, h: 66 };
+/** Où se trouve la bibliothèque qui cache le passage, dans la cabane (coordonnées logiques) ; la pièce n'a aucun bouton de navigation. */
+const SECRET = { x: 104, y: 176, w: 84, h: 86 };
+/** Les douze livres de la petite bibliothèque (deux rayons de six). Un seul bleu, un seul rouge, un seul dos sans titre : la combinaison est bleu, rouge, sans titre. */
+const SHELF = [
+  { col: "#a8802f", w: 13, h: 34 }, { col: "#3f5a3a", w: 11, h: 30 }, { col: "#8a2f2a", w: 12, h: 33 }, { col: "#4c2d4a", w: 14, h: 31 }, { col: "#5b4030", w: 11, h: 35 }, { col: "#444a50", w: 12, h: 29 },
+  { col: "#5d6130", w: 13, h: 32 }, { col: "#2d4f7a", w: 12, h: 34 }, { col: "#6a4a32", w: 13, h: 31, blank: true }, { col: "#b08a3a", w: 11, h: 30 }, { col: "#3b4d33", w: 12, h: 33 }, { col: "#2b2724", w: 12, h: 28 },
+];
+const COMBO = [7, 2, 8];
+/** La bibliothèque qui masque le passage : on touche trois livres dans l'ordre ; les bons font coulisser le meuble. Chaque livre touché s'enfonce un peu, puis tout ressort si l'ordre est faux ou si l'on attend. */
+function drawBookcase(r, ctx, c) {
+  const S = SECRET, sh = (r.shelf = r.shelf || { seq: [], at: 0 }), now = Date.now();
+  if (sh.seq.length && !r.panelAt && now - sh.at > 9000) sh.seq = [];
+  const sp = r.panelAt ? Math.min(1, (now - r.panelAt) / 1100) : 0, ease = sp * sp * (3 - 2 * sp);
+  if (sp > 0) { ctx.fillStyle = "#120b07"; ctx.fillRect(S.x - 4, S.y - 4, S.w + 8, S.h + 8); const gl = ctx.createLinearGradient(S.x, 0, S.x + S.w, 0); gl.addColorStop(0, rgba(255, 170, 80, 0.5 * sp)); gl.addColorStop(1, rgba(255, 170, 80, 0.1 * sp)); ctx.fillStyle = gl; ctx.fillRect(S.x - 4, S.y - 4, S.w + 8, S.h + 8); }
+  ctx.save(); ctx.beginPath(); ctx.rect(S.x - 4, S.y - 4, S.w + 8, S.h + 8); ctx.clip(); ctx.translate(-(S.w + 10) * ease, 0);
+  ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(S.x - 4, S.y - 4, S.w + 8, S.h + 8); ctx.fillStyle = c("#1f160f"); ctx.fillRect(S.x, S.y, S.w, S.h);
+  const rowH = S.h / 2;
+  for (let row = 0; row < 2; row++) {
+    const base = S.y + rowH * (row + 1) - 3; let x = S.x + 3;
+    for (let k = 0; k < 6; k++) {
+      const i = row * 6 + k, b = SHELF[i], pressed = sh.seq.includes(i), by = base - b.h + (pressed ? 2.5 : 0);
+      ctx.fillStyle = c(b.col); ctx.fillRect(x, by, b.w, b.h);
+      ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x + b.w - 3, by, 3, b.h);
+      if (!b.blank) { ctx.fillStyle = c("#c9a24e"); ctx.fillRect(x, by + 4, b.w, 2.5); ctx.fillRect(x, by + b.h - 8, b.w, 1.6); ctx.fillStyle = rgba(236, 222, 180, 0.55); ctx.fillRect(x + 2.5, by + 11, b.w - 5, 6); }
+      if (pressed) { ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(x, by, b.w, b.h); }
+      if (!sp) r.hot.push({ x, y: by, w: b.w, h: b.h, tip: "", shelf: i, secret: true });
+      x += b.w + 1;
+    }
+    ctx.fillStyle = c("#4b3626"); ctx.fillRect(S.x, base, S.w, 3);
+  }
+  ctx.fillStyle = rgba(0, 0, 0, 0.16); ctx.fillRect(S.x - 4, S.y - 4, S.w + 8, 3);
+  ctx.restore();
+}
 
 function drawAtelier(r, ctx, sc, sky, t) {
   const amb = 0.5 + 0.5 * sky.ambient, c = (h) => mix("#05060c", h, amb), TRr = TR(r), q = rng(0xa7e1);
@@ -61,7 +92,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#5a4330"); ctx.fillRect(628, GALLERY - 4, 5, FLOOR - GALLERY); ctx.fillRect(612, GALLERY - 4, 5, FLOOR - GALLERY);
   for (let y = GALLERY + 14; y < FLOOR - 6; y += 18) ctx.fillRect(612, y, 21, 3);
   r.hot.push({ x: 606, y: GALLERY - 4, w: 30, h: FLOOR - GALLERY, tip: TRr("atelier.ladder.tip"), go: "loft" });
-  // porte : le panneau pivote vers la cabane
+  // porte : la bibliothèque coulisse vers la cabane
   const dx = 28, dy = 118, dw = 62;
   ctx.fillStyle = c("#241810"); ctx.fillRect(dx - 4, dy - 4, dw + 8, FLOOR - dy + 4); ctx.fillStyle = c("#46301f"); ctx.fillRect(dx, dy, dw, FLOOR - dy - 2);
   ctx.strokeStyle = rgba(0, 0, 0, 0.35); ctx.lineWidth = 1; for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(dx + i * dw / 4, dy); ctx.lineTo(dx + i * dw / 4, FLOOR - 2); ctx.stroke(); }
@@ -229,8 +260,8 @@ function drawLetter(r, ctx, sc, sky, t) {
   ctx.beginPath(); ctx.moveTo(x0, y0 + 3); for (let i = 1; i <= 16; i++) ctx.lineTo(x0 + i * w / 16, y0 + (i % 2 ? 0 : 2.5)); ctx.lineTo(x0 + w, y0 + h - 2); for (let i = 15; i >= 0; i--) ctx.lineTo(x0 + i * w / 16, y0 + h - (i % 2 ? 0 : 2.5)); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = rgba(120, 90, 50, 0.18); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y0 + h / 3); ctx.lineTo(x0 + w, y0 + h / 3); ctx.moveTo(x0, y0 + 2 * h / 3); ctx.lineTo(x0 + w, y0 + 2 * h / 3); ctx.stroke(); // les plis
   const vg = ctx.createRadialGradient(x0 + w / 2, y0 + h / 2, 60, x0 + w / 2, y0 + h / 2, 240); vg.addColorStop(0, "rgba(120,80,30,0)"); vg.addColorStop(1, "rgba(120,80,30,0.22)"); ctx.fillStyle = vg; ctx.fillRect(x0, y0, w, h);
-  // le texte : une écriture penchée, à l'encre brune
-  ctx.fillStyle = c("#3a2514"); ctx.font = "italic 16px serif"; let y = y0 + 40; const paras = [TRr("story.letter.hi"), TRr("story.end"), TRr("story.letter.more") + " " + TRr("atelier.clue")];
+  // le texte : une écriture penchée, à l'encre ferro-gallique (un vert sombre, presque noir)
+  ctx.fillStyle = c("#2c3d2b"); ctx.font = "italic 16px serif"; let y = y0 + 40; const paras = [TRr("story.letter.hi"), TRr("story.end"), TRr("story.letter.more") + " " + TRr("atelier.clue")];
   for (const p of paras) { for (const ln of wrapLines(ctx, p, w - 76)) { ctx.fillText(ln, x0 + 38, y); y += 20; } y += 8; }
   ctx.textAlign = "right"; ctx.fillText("\u2014 Adrin Vesparath, seltahn", x0 + w - 40, y + 6); ctx.textAlign = "left";
   EMB.drawSeal(ctx, x0 + w - 96, y0 + h - 82, 50, c, t); // l'emblème de l'auteur, en sceau de cire
@@ -238,4 +269,4 @@ function drawLetter(r, ctx, sc, sky, t) {
   backButton(r, ctx, TRr("atelier.stand.tip"), "cabin");
 }
 
-module.exports = { drawAtelier, drawDesk, drawLoft, drawLetter, SECRET };
+module.exports = { drawAtelier, drawDesk, drawLoft, drawLetter, drawBookcase, SECRET, COMBO };
