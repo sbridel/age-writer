@@ -174,11 +174,16 @@ function markChapterDone(plugin, ch, st) {
   }
   if (!obsidian.Modal) return;
   const preset = ch.page && M.PAGE_PRESETS[ch.page], next = ST.nextChapter(st.done);
+  if (!next) { // le dernier chapitre : la page de la fin se pose d'elle-même sur la table de la cabane
+    const hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
+    if (hub) app.fileManager.processFrontMatter(hub, (fm) => { const a = Array.isArray(fm.relto_pages_active) ? fm.relto_pages_active : []; if (!a.includes(ST.ENDGAME.id)) a.push(ST.ENDGAME.id); fm.relto_pages_active = a; }).then(() => plugin.refreshLive()).catch(() => {});
+  }
   class Done extends obsidian.Modal {
     onOpen() {
       const { contentEl } = this; this.titleEl.setText(t("story.pop.title"));
       contentEl.createEl("p", { text: ch.title[lang] });
       if (preset) contentEl.createEl("p", { text: t("story.pop.page", { name: preset.label }) });
+      if (!next) contentEl.createEl("p", { text: t("story.pop.end") });
       const row = contentEl.createDiv({ cls: "modal-button-container" });
       if (next) row.createEl("button", { cls: "mod-cta", text: t("story.pop.next") }).addEventListener("click", () => { this.close(); storyNext(plugin); });
       row.createEl("button", { text: t("story.pop.close") }).addEventListener("click", () => this.close());
