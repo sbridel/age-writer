@@ -2,7 +2,7 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## Unreleased
+## 1.24.0 — Story mode (2026-10-11)
 
 ### Added
 - **Story mode.** A mentor, Adrin Vesparath, sends short letters (English and French) and sets nine chapters, each with a Writers' Guild course sheet that fades as you revise, a hint ladder, and a reward for your Relto. The story Relto has its own folder, apart from the sandbox, and the book only offers the blocks you have learned. Commands: “Start the story”, “Story: next chapter / restart the current chapter / check progress now / hint / repair chapter notes”.

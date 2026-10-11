@@ -315,3 +315,12 @@ unlock:                            # facultatif
 - **Renommer un Âge garde son monde** (`age_seed`) ; commande pour rendre son monde à un Âge renommé avant.
 - **Carte des étoiles** : noms posés en dernier avec halo ; plus d'étoiles ni de noms d'Âges disparus ; commande *Clean the star chart*.
 - **Correctifs** : périscope (fissure, tornade, arc-en-ciel, astres morts, ruines, structure : de face seulement), couronne du soleil noir derrière les crêtes, grotte redessinée, nom D'ni sous les icônes en panneau étroit.
+
+## 1.24.0 — le mode histoire (11 oct. 2026)
+
+- **Le mode histoire** (`src/story.js`) : un mentor, Adrin Vesparath, écrit de courtes lettres (EN/FR) et confie neuf chapitres, chacun avec une feuille de cours de la Guilde des Writers (qui s'efface en révision), trois niveaux d'indices et une récompense pour le Relto. Le Relto d'histoire vit dans son propre dossier, séparé du bac à sable ; le livre ne propose que les blocs appris. Commandes « Start the story » et « Story: … » (chapitre suivant, reprise, vérification, indices, réparation des notes).
+- **Le livre des glyphes et le livre de la bibliothèque** sont de vrais livres sur le canevas (pages qui tournent, entrées déjà écrites, page blanche pour en ajouter sans quitter le Relto).
+- **La référence complète et le README aérés**, avec une dernière partie « Spoilers » cachée derrière une case à cocher (absente de l'export en note).
+- Infobulles des glyphes non appris : seulement l'indice. Périscope : seul un soleil haut se voit au zénith.
+- Pages du Relto : nouveaux préréglages pour le bac à sable.
+
