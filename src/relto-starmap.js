@@ -134,7 +134,7 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   // redescendre à l'observatoire
   ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(BACK.x, BACK.y, BACK.w, BACK.h);
   ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 29); ctx.textAlign = "left";
-  r.hot.push({ ...BACK, tip: t("map.back"), go: "telescope" });
+  r.hot.push({ ...BACK, tip: t(r.mapFrom === "desk" ? "map.back.desk" : "map.back"), go: r.mapFrom === "desk" ? "desk" : "telescope" }); // on revient là d'où l'on vient
   void tm; void sky; void clamp;
 }
 

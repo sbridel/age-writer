@@ -71,6 +71,13 @@ function lampChain(r, ctx, c, x, y, len, t, tip, bodyHot) {
   r.hot.push({ x: x - 7, y: y + L - 6, w: 16, h: 16, tip, lamp: true });
 }
 
+/** Les petites choses du mur (épingle, feuille posée de travers) : les mêmes au bureau et dans l'atelier. */
+function wallBits(ctx, c) {
+  const pin = (x, y) => { ctx.fillStyle = c("#8e2b27"); ctx.beginPath(); ctx.arc(x, y, 2.2, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, 0.35); ctx.fillRect(x - 1, y - 1.2, 1, 1); };
+  const sheet = (x, y, w, h, rot, col, draw) => { ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.rotate(rot); ctx.fillStyle = rgba(0, 0, 0, 0.28); ctx.fillRect(-w / 2 + 2, -h / 2 + 3, w, h); ctx.fillStyle = c(col); ctx.fillRect(-w / 2, -h / 2, w, h); ctx.strokeStyle = rgba(90, 60, 20, 0.35); ctx.lineWidth = 0.8; ctx.strokeRect(-w / 2 + 0.5, -h / 2 + 0.5, w - 1, h - 1); draw(w, h); ctx.restore(); };
+  return { pin, sheet };
+}
+
 function drawAtelier(r, ctx, sc, sky, t) {
   const amb = 0.5 + 0.5 * sky.ambient, c = (h) => mix("#05060c", h, amb), TRr = TR(r), q = rng(0xa7e1);
   const lit = sc.additions.find((a) => a.type === "chimney"), d = lit ? clamp(lit.density == null ? 0.7 : lit.density, 0.2, 1) : 0.45, fl = flick(t);
@@ -115,6 +122,8 @@ function drawAtelier(r, ctx, sc, sky, t) {
   const wx = 66, wy = 58, wr = 32; // à l'étage, en haut à gauche (la galerie de livres commence plus loin)
   ctx.save(); ctx.beginPath(); ctx.arc(wx, wy, wr, 0, 6.283); ctx.clip(); const sg = ctx.createLinearGradient(0, wy - wr, 0, wy + wr); sg.addColorStop(0, sky.top); sg.addColorStop(1, sky.bottom); ctx.fillStyle = sg; ctx.fillRect(wx - wr, wy - wr, 2 * wr, 2 * wr);
   if (sky.stars > 0.05) { const s = rng(0x91); for (let i = 0; i < 10; i++) { ctx.fillStyle = rgba(235, 238, 255, sky.stars * (0.4 + 0.5 * s())); ctx.fillRect(wx - wr + s() * 2 * wr, wy - wr + s() * wr, 1.2, 1.2); } }
+  if (r.sprite) ctx.drawImage(r.sprite, wx - wr - 10 + ((t * 4) % (2 * wr + 42)), wy - wr * 0.1, 50, 22); // un nuage qui passe, comme à la fenêtre de la cabane
+  if (r.cloudColor) { ctx.fillStyle = r.cloudColor(sky); ctx.globalAlpha = 0.5; ctx.fillRect(wx - wr, wy + wr - 13, 2 * wr, 13); ctx.globalAlpha = 1; } // la brume sur l'horizon
   ctx.restore();
   ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(wx, wy, wr, 0, 6.283); ctx.stroke(); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(wx - wr, wy); ctx.lineTo(wx + wr, wy); ctx.moveTo(wx, wy - wr); ctx.lineTo(wx, wy + wr); ctx.stroke();
   // cheminée
@@ -134,7 +143,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#5b2b2b"); ctx.fillRect(ax, ay - 52, 52, 54); ctx.fillStyle = c("#6d3535"); ctx.fillRect(ax - 8, ay - 30, 14, 36); ctx.fillRect(ax + 46, ay - 30, 14, 36); ctx.fillRect(ax + 4, ay - 26, 44, 28);
   ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(ax - 8, ay + 2, 68, 5); ctx.fillStyle = c("#2f2016"); ctx.fillRect(ax - 6, ay + 6, 4, 8); ctx.fillRect(ax + 54, ay + 6, 4, 8);
   const cat = sc.additions.find((a) => a.type === "cat");
-  if (cat && !r.catSpot) {
+  if (cat && r.catSpotFor() === 0) {
     const fur = CAT_FUR[String(cat.color || "orange").toLowerCase()] || CAT_FUR.orange, br = Math.sin(t * 1.6) * 0.8;
     ctx.fillStyle = c(fur); ctx.beginPath(); ctx.ellipse(ax + 26, ay - 30, 17, 9 + br * 0.4, 0, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(ax + 13, ay - 33, 8, 7, 0, 0, 6.283); ctx.fill();
     ctx.beginPath(); ctx.moveTo(ax + 8, ay - 38); ctx.lineTo(ax + 9, ay - 45); ctx.lineTo(ax + 13, ay - 39); ctx.moveTo(ax + 15, ay - 39); ctx.lineTo(ax + 18, ay - 45); ctx.lineTo(ax + 19, ay - 37); ctx.fill();
@@ -143,6 +152,26 @@ function drawAtelier(r, ctx, sc, sky, t) {
     const nm = String(cat.name || "").trim();
     r.hot.push({ x: ax - 4, y: ay - 50, w: 62, h: 40, tip: nm ? `${nm} — ${TRr("atelier.cat.tip")}` : TRr("atelier.cat.tip"), flash: "purr…", purr: true });
   } else r.hot.push({ x: ax - 8, y: ay - 52, w: 68, h: 56, tip: TRr("atelier.chair.tip"), flash: TRr("atelier.chair.flash") });
+  // le mur derrière le bureau : un portrait, le tableau aux ficelles rouges, un baromètre, une étagère de bocaux
+  { const { pin, sheet } = wallBits(ctx, c), TRd = (k) => TRr(k), wq = rng(0xb0a7);
+    ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.ellipse(141, 158, 21, 28, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#2e3a36"); ctx.beginPath(); ctx.ellipse(141, 158, 17, 24, 0, 0, 6.283); ctx.fill(); // un portrait ovale : une silhouette sans visage
+    ctx.fillStyle = c("#14201c"); ctx.beginPath(); ctx.arc(141, 152, 7, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(141, 176, 12, 9, 0, Math.PI, 0); ctx.fill();
+    r.hot.push({ x: 119, y: 129, w: 44, h: 58, tip: TRd("atelier.deco.portrait"), flash: TRd("atelier.deco.portrait.flash") });
+    ctx.fillStyle = c("#5a4330"); ctx.fillRect(188, 126, 108, 72); ctx.strokeStyle = c("#2f2118"); ctx.lineWidth = 3; ctx.strokeRect(188, 126, 108, 72); // le tableau : liège sombre, feuilles, ficelles
+    for (let i = 0; i < 60; i++) { ctx.fillStyle = rgba(0, 0, 0, 0.1); ctx.fillRect(190 + wq() * 104, 128 + wq() * 68, 1.5, 1.5); }
+    const P = [[200, 136, 22, 28, "#d9c9a0", -0.05], [236, 134, 26, 22, "#cdbb8a", 0.04], [268, 140, 22, 30, "#e0d3ae", -0.03], [212, 168, 26, 20, "#d6c598", 0.05], [252, 172, 28, 18, "#d9c9a0", -0.04]], pts = [];
+    for (const [x, y, w, h, col, rot] of P) { sheet(x, y, w, h, rot, col, () => { ctx.strokeStyle = rgba(60, 45, 25, 0.5); ctx.lineWidth = 0.8; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(-w / 2 + 4, -h / 2 + 6 + k * 5); ctx.lineTo(w / 2 - 4 - k * 2, -h / 2 + 6 + k * 5); ctx.stroke(); } }); pts.push([x + w / 2, y + 4]); }
+    ctx.strokeStyle = rgba(160, 40, 36, 0.85); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (const k of [1, 2, 4, 3, 0, 2]) ctx.lineTo(pts[k][0], pts[k][1]); ctx.stroke(); for (const [x, y] of pts) pin(x, y);
+    r.hot.push({ x: 188, y: 126, w: 108, h: 72, tip: TRd("atelier.deco.board"), flash: TRd("atelier.deco.board.flash") });
+    { const bx = 326, by = 160; ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(bx, by, 22, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#e6d9b8"); ctx.beginPath(); ctx.arc(bx, by, 18, 0, 6.283); ctx.fill(); // un baromètre : l'aiguille ne bouge jamais
+      ctx.strokeStyle = c("#2a1c14"); ctx.lineWidth = 0.8; for (let i = 0; i < 12; i++) { const a = 2.4 + i * 0.4; ctx.beginPath(); ctx.moveTo(bx + Math.cos(a) * 14, by + Math.sin(a) * 14); ctx.lineTo(bx + Math.cos(a) * 17, by + Math.sin(a) * 17); ctx.stroke(); }
+      ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + Math.cos(4.3) * 13, by + Math.sin(4.3) * 13); ctx.stroke(); ctx.fillStyle = c("#2a1c14"); ctx.beginPath(); ctx.arc(bx, by, 2, 0, 6.283); ctx.fill();
+      r.hot.push({ x: bx - 23, y: by - 23, w: 46, h: 46, tip: TRd("atelier.deco.baro"), flash: TRd("atelier.deco.baro.flash") }); }
+    { const sx = 364, sy = 176; ctx.fillStyle = c("#4b3626"); ctx.fillRect(sx, sy, 84, 5); ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(sx + 6, sy + 5, 4, 8); ctx.fillRect(sx + 74, sy + 5, 4, 8); // une étagère, des bocaux et un crâne de souris
+      const J = [["#2f6b48", 12, 22], ["#7a3a3a", 10, 17], ["#3b3560", 14, 25], ["#6a4a2a", 11, 15]]; let jx = sx + 6;
+      for (const [col, w, h] of J) { ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(jx + 1, sy - h + 1, w, h); ctx.fillStyle = c(col); ctx.fillRect(jx, sy - h, w, h); ctx.fillStyle = rgba(255, 255, 255, 0.18); ctx.fillRect(jx + 2, sy - h + 3, 2, h - 7); ctx.fillStyle = c("#c9a24e"); ctx.fillRect(jx + 1, sy - h - 3, w - 2, 3); jx += w + 5; }
+      ctx.fillStyle = c("#e6d9b8"); ctx.beginPath(); ctx.ellipse(sx + 74, sy - 4, 5, 4, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#2a1c14"); ctx.fillRect(sx + 72, sy - 5, 1.5, 1.5); ctx.fillRect(sx + 75, sy - 5, 1.5, 1.5);
+      r.hot.push({ x: sx - 2, y: sy - 30, w: 90, h: 36, tip: TRd("atelier.deco.shelf"), flash: TRd("atelier.deco.shelf.flash") }); } }
   // le grand bureau
   const tx = 100, tw = 270, ty = 270;
   ctx.fillStyle = c("#2f2016"); ctx.fillRect(tx + 8, ty, 10, 74); ctx.fillRect(tx + tw - 18, ty, 10, 74); ctx.fillStyle = c("#3d2a1c"); ctx.fillRect(tx + 6, ty + 10, tw - 12, 46);
@@ -176,8 +205,7 @@ function drawDesk(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#2b2018"); ctx.fillRect(0, 0, W, H); // le mur, dans l'ombre
   for (let x = 0; x < W; x += 36) { ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x, 0, 1.4, 190); }
   // au mur : la carte du ciel, des parchemins épinglés, une carte de l'île, un croquis encadré (plus de fenêtre : on a le dos à la lumière)
-  const pin = (x, y) => { ctx.fillStyle = c("#8e2b27"); ctx.beginPath(); ctx.arc(x, y, 2.2, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, 0.35); ctx.fillRect(x - 1, y - 1.2, 1, 1); };
-  const sheet = (x, y, w, h, rot, col, draw) => { ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.rotate(rot); ctx.fillStyle = rgba(0, 0, 0, 0.28); ctx.fillRect(-w / 2 + 2, -h / 2 + 3, w, h); ctx.fillStyle = c(col); ctx.fillRect(-w / 2, -h / 2, w, h); ctx.strokeStyle = rgba(90, 60, 20, 0.35); ctx.lineWidth = 0.8; ctx.strokeRect(-w / 2 + 0.5, -h / 2 + 0.5, w - 1, h - 1); draw(w, h); ctx.restore(); };
+  const { pin, sheet } = wallBits(ctx, c);
   const wq = rng(0x5a17);
   sheet(446, 22, 104, 82, -0.02, "#1f2a44", (w, h) => { // la carte du ciel : un fond d'encre bleue, des étoiles, des lignes de constellations, un cercle de mois
     ctx.strokeStyle = rgba(216, 192, 122, 0.55); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(0, 0, 34, 0, 6.283); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, 38, 0, 6.283); ctx.stroke();

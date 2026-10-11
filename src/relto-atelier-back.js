@@ -61,9 +61,9 @@ function drawBackroom(r, ctx, sc, sky, t) {
     ctx.fillStyle = c("#ece6d4"); ctx.beginPath(); ctx.ellipse(bx + 40, 196, 22, 8, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(0, 0, 0, 0.12); ctx.beginPath(); ctx.ellipse(bx + 43, 197, 10, 4, 0, 0, 6.283); ctx.fill(); // l'oreiller, et le creux d'une tête
     item(bx, 60, bw, 192, "back.bed.tip", "back.bed.flash");
     const cat = sc.additions.find((a) => a.type === "cat");
-    if (cat && r.catSpot === 2) curledCat(r, ctx, c, cat, bx + 128, 205, t, "atelier.cat.tip", TRr); // le chat dort sur l'édredon
+    if (cat && r.catSpotFor() === 2) curledCat(r, ctx, c, cat, bx + 128, 205, t, "atelier.cat.tip", TRr); // le chat dort sur l'édredon
   }
-  { const cat = sc.additions.find((a) => a.type === "cat"); if (cat && r.catSpot === 1) curledCat(r, ctx, c, cat, 300, 304, t, "atelier.cat.tip", TRr); } // ou sur le tapis
+  { const cat = sc.additions.find((a) => a.type === "cat"); if (cat && r.catSpotFor() === 1) curledCat(r, ctx, c, cat, 300, 304, t, "atelier.cat.tip", TRr); } // ou sur le tapis
 
   // l'armoire : on peut l'ouvrir ; elle ne contient que des manches
   { const wx = 292, wy = 72, ww = 110, wh = FLOOR - wy, op = r.wardAt ? clamp((now - r.wardAt) / 550) : 0, k = r.wardOpen ? op : 1 - op;

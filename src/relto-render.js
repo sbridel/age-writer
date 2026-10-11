@@ -533,10 +533,18 @@ class ReltoRenderer {
    * auto (défaut) : le soir et la nuit, surtout quand l'âtre brûle ; parfois par pluie ou neige, rarement en plein jour.
    * Le tirage change par demi-heure (jamais d'une image à l'autre) et dépend de la graine du Relto.
    */
+  /** Où il dort : « cabin » (sur le tapis du feu, par défaut) ou « atelier » (option `sleep=atelier` : dans l'atelier, à une place qui change par demi-heure). */
+  catWhere() { const cat = this.scene.additions.find((a) => a.type === "cat"); return cat && /^atelier/i.test(String(cat.sleep || "")) ? "atelier" : "cabin"; }
+  /** La place du chat dans l'atelier : -1 (pas là), 0 le fauteuil, 1 le tapis du fond, 2 le lit. En `sleep=atelier` il dort là quand il dort, et la place change par demi-heure ; sinon c'est un tirage à chaque visite. */
+  catSpotFor() {
+    const sc = this.scene, cat = sc.additions.find((a) => a.type === "cat"); if (!cat) return -1;
+    if (this.catWhere() === "atelier") return this.catAsleep() ? Math.floor(rng((sc.seed ^ fnv("cat-spot|" + Math.floor(this.hour() * 2))) >>> 0)() * 3) : -1;
+    return this.catSpot || 0;
+  }
   catAsleep() {
     const sc = this.scene, has = (ty) => sc.additions.find((a) => a.type === ty), cat = has("cat");
     if (!cat || !sc.structures.includes("hut")) return false;
-    const mode = String(cat.sleep || "auto").toLowerCase();
+    const mode = String(cat.sleep || "auto").toLowerCase().replace(/^atelier\b[\s:-]*/, "") || "auto"; // « atelier » : mêmes heures de sommeil, mais dans l'atelier (voir catWhere)
     if (mode === "never" || mode === "no" || mode === "off") return false;
     if (mode === "always" || mode === "yes" || mode === "fire") return true;
     const h = ((this.hour() % 24) + 24) % 24, fire = !!has("chimney"), wet = !!(has("rain") || has("storm") || has("snow"));
@@ -1092,6 +1100,7 @@ class ReltoRenderer {
     if (view === "cat" && this.catAsleep()) view = "cabin"; // il dort au coin du feu : on le trouve dans la cabane
     if (view === (this.view || "island")) return;
     { const grp = ["atelier", "atelierback", "desk", "loft", "letter"]; if (view === "atelier" && !grp.includes(this.view)) this.catSpot = Math.floor(Math.random() * 3); } // le chat choisit : fauteuil (0), tapis (1) ou lit (2)
+    if (view === "starmap") this.mapFrom = this.view; // la flèche du bas ramène au bureau si on vient de la carte du mur
     if (view === "glyphbook" || view === "librarybook") this.gbook = { spread: 0, anim: null };
     if (view === "librarybook") { this._lbData = null; if (this.libUI) { this.libUI.msg = ""; } if (this.opts.onLibraryOpen) this.opts.onLibraryOpen(); }
     if (this.view === "librarybook" && this.libUI && this.libUI.root) this.libUI.root.style.display = "none";
