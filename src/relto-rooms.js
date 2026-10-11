@@ -5,23 +5,12 @@ const PS = require("./relto-passages");
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 const { rng, clamp, mix, rgba, hexa } = require("./util");
 const SC = require("./relto-scenery");
+const PILE = require("./relto-vault");
 const ATELIER = require("./relto-atelier");
 const W = 640, H = 360, FLOOR = 250, GY = 208;
 const VERDICT = { stable: "#8fae6a", unstable: "#d9a24a", dying: "#c0553f", unknown: "#7a7a8a" };
 
 const flicker = (t) => 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1) + 0.06 * Math.sin(t * 17);
-
-/** Livre à part posé sur la table : glyphes ou bibliothèque. */
-function standingBook(ctx, c, b) {
-  const y = b.y - b.h;
-  ctx.fillStyle = c(b.body); ctx.fillRect(b.x, y, b.w, b.h);
-  ctx.fillStyle = c(b.band); ctx.fillRect(b.x, y + 5, b.w, 3); ctx.fillRect(b.x, y + b.h - 8, b.w, 3);
-  ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(b.x + b.w - 3.5, y, 3.5, b.h);
-  const mx = b.x + b.w / 2, my = y + b.h / 2;
-  ctx.fillStyle = c(b.band);
-  if (b.kind === "glyphs") { ctx.beginPath(); ctx.moveTo(mx, my - 7); ctx.lineTo(mx + 4.5, my); ctx.lineTo(mx, my + 7); ctx.lineTo(mx - 4.5, my); ctx.closePath(); ctx.fill(); }
-  else { ctx.fillRect(mx - 3, my - 5, 6, 8); ctx.fillStyle = c(b.body); ctx.fillRect(mx - 1, my - 2.5, 2, 3.5); }
-}
 
 /** Intérieur de la cabane. */
 function drawCabin(r, ctx, sc, sky, t) {
@@ -99,7 +88,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     stone(fx + 20, 24, fw - 40, 90); stone(fx, 114, ox - fx, FLOOR - 114); stone(ox + ow, 114, fx + fw - ox - ow, FLOOR - 114); stone(ox, 114, ow, 22);
     const sa = r.stoneAt, now = Date.now(); if (sa && now - sa.at < 800) { const k = 1 - (now - sa.at) / 800; ctx.fillStyle = rgba(0, 0, 0, 0.3 * k); ctx.fillRect(sa.x + 1, sa.y + 1, sa.w - 2, sa.h - 2); ctx.fillStyle = rgba(255, 220, 160, 0.1 * k); ctx.fillRect(sa.x + 1, sa.y + sa.h - 2, sa.w - 2, 1.5); }
   }
-  require("./relto-vault").ironDoor(r, ctx, c, 620, 124, 18, FLOOR - 126, TR(r)("vault.door.tip")); // la porte de fer, dans le mur, à droite du foyer : le coffre des livres descriptifs
+  PILE.trapDoor(r, ctx, c, 540, 306, 84, 28, TR(r)("vault.door.tip")); // la trappe de fer, dans le sol devant le foyer : le coffre des livres descriptifs
   // étagère des Âges
   if (st.has("bookshelves")) {
     const x0 = 196, w = 244, y0 = 50, RH = 62, S = 3.9;
@@ -123,20 +112,18 @@ function drawCabin(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#2f2016"); ctx.fillRect(tx + 6, ty, 7, 56); ctx.fillRect(tx + tw - 13, ty, 7, 56);
   ctx.fillStyle = c("#4b3322"); ctx.fillRect(tx + 2, ty + 8, tw - 4, 8);
   ctx.fillStyle = c("#6a4a30"); ctx.fillRect(tx, ty, tw, 8);
-  const books = [
-    { kind: "glyphs", x: tx + 16, y: ty, w: 17, h: 38, body: "#27555a", band: "#d8c07a", tip: "Book of glyphs" },
-    { kind: "library", x: tx + 38, y: ty, w: 17, h: 33, body: "#5b2b2b", band: "#c9a24e", tip: "Library book (blocks and Relto pages)" },
-    { kind: "descbook", x: tx + 60, y: ty, w: 17, h: 30, body: "#3d3a2a", band: "#d8c07a", tip: TR(r)("agebook.tip") },
-  ];
   const moved = !!(r.available && r.available().atelier); // l'atelier est ouvert : les livres de référence ont déménagé à l'étage
   if (moved && r.opts.relicState && (r.opts.relicState() || {}).seen) r.hot.push({ x: tx, y: ty - 8, w: tw, h: 14, tip: "", go: "desk", secret: true }); // un raccourci caché vers le bureau (une fois l'atelier découvert)
   if (moved && r.opts.atelierDirect && r.opts.atelierDirect() && r.opts.relicState && (r.opts.relicState() || {}).seen) { // une clé de laiton, posée sur la table : un raccourci vers l'atelier, une fois l'énigme résolue
-    const kx = tx + 30, ky = ty - 3; ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(kx - 2, ky + 1, 32, 3);
+    const kx = tx + 66, ky = ty - 3; ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(kx - 2, ky + 1, 32, 3);
     ctx.strokeStyle = c("#d8b45e"); ctx.fillStyle = c("#d8b45e"); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(kx + 4, ky - 3, 4, 0, 6.283); ctx.stroke(); ctx.fillRect(kx + 8, ky - 4, 18, 2.2); ctx.fillRect(kx + 20, ky - 4, 2.2, 5); ctx.fillRect(kx + 25, ky - 4, 2.2, 4);
     const gl = 0.25 + 0.2 * Math.sin(t * 1.4); ctx.fillStyle = rgba(255, 235, 170, gl); ctx.fillRect(kx + 9, ky - 4, 5, 1);
     r.hot.push({ x: kx - 3, y: ky - 12, w: 34, h: 16, tip: TR(r)("atelier.key.tip"), go: "atelier" });
   }
-  for (const b of moved ? books.filter((x) => x.kind === "descbook") : books) { standingBook(ctx, c, b); r.hot.push({ x: b.x - 1, y: b.y - b.h - 1, w: b.w + 2, h: b.h + 2, tip: b.tip, ...(b.kind === "glyphs" ? { go: "glyphbook" } : b.kind === "descbook" ? { go: "descbook" } : { special: b.kind }) }); }
+  { // les livres de référence : empilés à plat sur la table, le titre sur le dos (un seul, le livre vierge, quand l'atelier a pris les autres)
+    const order = [{ kind: "glyphs", w: 50, h: 8, body: "#27555a", band: "#d8c07a", title: TR(r)("book.t.glyphs"), tip: "Book of glyphs" }, { kind: "library", w: 54, h: 9, body: "#5b2b2b", band: "#c9a24e", title: TR(r)("book.t.library"), tip: "Library book (blocks and Relto pages)" }, { kind: "descbook", w: 46, h: 8, body: "#3d3a2a", band: "#d8c07a", title: TR(r)("book.t.desc"), tip: TR(r)("agebook.tip") }];
+    for (const z of PILE.pile(ctx, c, tx + 8, ty, moved ? order.filter((x) => x.kind === "descbook") : order, 6.5)) r.hot.push({ x: z.x, y: z.y, w: z.w, h: z.h, tip: z.b.tip, ...(z.b.kind === "glyphs" ? { go: "glyphbook" } : z.b.kind === "descbook" ? { go: "descbook" } : { special: z.b.kind }) });
+  }
   if (r.scene.additions.some((a) => a.type === "imager")) PS.imagerMini(r, ctx, c, tx + 112, ty, t, TR(r)("relto.pass.imager.tip")); // l'Imageur : un petit appareil de laiton sur la table, son cristal luit ; un clic y mène
   if (!moved && r.scene.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { // le carnet de l'arpenteur : posé à plat sur la table, signet rouge
     const nx = tx + 132, ny = ty - 5;

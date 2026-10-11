@@ -167,6 +167,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
       for (const [col, w, h] of J) { ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(jx + 1, sy - h + 1, w, h); ctx.fillStyle = c(col); ctx.fillRect(jx, sy - h, w, h); ctx.fillStyle = rgba(255, 255, 255, 0.18); ctx.fillRect(jx + 2, sy - h + 3, 2, h - 7); ctx.fillStyle = c("#c9a24e"); ctx.fillRect(jx + 1, sy - h - 3, w - 2, 3); jx += w + 5; }
       ctx.fillStyle = c("#e6d9b8"); ctx.beginPath(); ctx.ellipse(sx + 74, sy - 4, 5, 4, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#2a1c14"); ctx.fillRect(sx + 72, sy - 5, 1.5, 1.5); ctx.fillRect(sx + 75, sy - 5, 1.5, 1.5);
       r.hot.push({ x: sx - 2, y: sy - 30, w: 90, h: 36, tip: TRd("atelier.deco.shelf"), flash: TRd("atelier.deco.shelf.flash") }); } }
+  require("./relto-vault").trapDoor(r, ctx, c, 535, 306, 92, 28, TRr("vault.door.tip")); // la trappe de fer, dans le sol devant la cheminée : le coffre des livres descriptifs
   // le grand bureau
   const tx = 100, tw = 270, ty = 270;
   ctx.fillStyle = c("#2f2016"); ctx.fillRect(tx + 8, ty, 10, 74); ctx.fillRect(tx + tw - 18, ty, 10, 74); ctx.fillStyle = c("#3d2a1c"); ctx.fillRect(tx + 6, ty + 10, tw - 12, 46);
@@ -187,6 +188,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   // le grand livre ouvert, la plume et l'encrier
   { const bx = tx + 108; ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 1, top - 6, 56, 6); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx + 1, top - 9, 26, 5); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 28, top - 9, 26, 5); ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 3; k++) { ctx.fillRect(bx + 4, top - 8 + k * 1.4, 20, 0.6); ctx.fillRect(bx + 31, top - 8 + k * 1.4, 20, 0.6); }
     item(bx - 2, top - 12, 58, 14, "atelier.book.tip", "atelier.book.flash");
+    require("./relto-vault").flatBook(ctx, c, bx + 8, top - 9, 30, 5, "#3d3a2a", "#d8c07a", "", 5); r.hot.push({ x: bx + 7, y: top - 15, w: 32, h: 8, tip: TRr("agebook.tip"), go: "descbook" }); // le livre vierge, posé sur le grand livre
     const ix = bx + 70; ctx.fillStyle = c("#14202a"); ctx.beginPath(); ctx.ellipse(ix + 6, top - 4, 7, 4, 0, 0, 6.283); ctx.fill(); ctx.fillRect(ix + 3, top - 10, 6, 6); ctx.strokeStyle = c("#e8dcc0"); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(ix + 7, top - 10); ctx.lineTo(ix + 15, top - 26); ctx.stroke();
     item(ix - 2, top - 28, 22, 30, "atelier.ink.tip", "atelier.ink.flash"); }
   // un sablier et un cristal étrange qui respire
@@ -238,6 +240,7 @@ function drawDesk(r, ctx, sc, sky, t) {
   { const bx = 230, by = 230, bw = 190, bh = 100; ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 8, by - 6, bw + 16, bh + 12); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx, by - 2, bw / 2 - 2, bh); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + bw / 2 + 2, by - 2, bw / 2 - 2, bh);
     ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(bx + bw / 2 - 2, by - 2, 4, bh); ctx.fillStyle = rgba(110, 80, 45, 0.55); for (let k = 0; k < 8; k++) { ctx.fillRect(bx + 10, by + 8 + k * 11, 66 - (k % 3) * 8, 1.4); ctx.fillRect(bx + bw / 2 + 12, by + 8 + k * 11, 62 - (k % 4) * 7, 1.4); }
     r.hot.push({ x: bx - 8, y: by - 8, w: bw + 16, h: bh + 16, tip: TRr("atelier.book.tip"), flash: TRr("atelier.book.flash") }); }
+  require("./relto-vault").flatBook(ctx, c, 182, 322, 44, 9, "#3d3a2a", "#d8c07a", TRr("book.t.desc"), 7); r.hot.push({ x: 181, y: 311, w: 46, h: 13, tip: TRr("agebook.tip"), go: "descbook" }); // le livre vierge, à portée de main
   // l'encrier et la plume, à droite
   { const ix = 470, iy = 300; ctx.fillStyle = c("#14202a"); ctx.beginPath(); ctx.ellipse(ix, iy, 26, 12, 0, 0, 6.283); ctx.fill(); ctx.fillRect(ix - 10, iy - 22, 20, 18); ctx.fillStyle = c("#2d4a5c"); ctx.fillRect(ix - 12, iy - 24, 24, 5); ctx.strokeStyle = c("#e8dcc0"); ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(ix + 6, iy - 24); ctx.lineTo(ix + 52, iy - 78); ctx.stroke();
     r.hot.push({ x: ix - 28, y: iy - 80, w: 84, h: 94, tip: TRr("atelier.ink.tip"), flash: TRr("atelier.ink.flash") }); }
@@ -291,19 +294,12 @@ function drawLoft(r, ctx, sc, sky, t) {
   ctx.fillStyle = rgba(255, 190, 90, 0.05 * fl); ctx.fillRect(0, 0, W, 220);
   const g = ctx.createLinearGradient(0, 214, 0, H); g.addColorStop(0, c("#6d4c31")); g.addColorStop(1, c("#35241a")); ctx.fillStyle = g; ctx.fillRect(0, 214, W, H - 214); // la longue table
   ctx.fillStyle = c("#7d5a3b"); ctx.fillRect(0, 214, W, 4); ctx.strokeStyle = rgba(0, 0, 0, 0.14); ctx.lineWidth = 1; for (let i = 0; i < 9; i++) { const y = 224 + q() * 120; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y + q() * 4 - 2); ctx.stroke(); }
-  const stand = (x, y, w, h, body, band, kind) => {
-    ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(x - 4, y, w + 14, 7); ctx.fillStyle = c(body); ctx.fillRect(x, y - h, w, h); ctx.fillStyle = c(band); ctx.fillRect(x, y - h + 10, w, 5); ctx.fillRect(x, y - 16, w, 5); ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x + w - 6, y - h, 6, h);
-    const mx = x + w / 2, my = y - h / 2; ctx.fillStyle = c(band);
-    if (kind === "descbook") { ctx.fillRect(mx - 7, my - 9, 14, 18); ctx.fillStyle = c(body); ctx.fillRect(mx - 5, my - 7, 10, 14); ctx.fillStyle = c(band); ctx.fillRect(mx - 1, my - 7, 2, 14); }
-    else if (kind === "glyphs") { ctx.beginPath(); ctx.moveTo(mx, my - 14); ctx.lineTo(mx + 9, my); ctx.lineTo(mx, my + 14); ctx.lineTo(mx - 9, my); ctx.closePath(); ctx.fill(); } else { ctx.fillRect(mx - 6, my - 10, 12, 16); ctx.fillStyle = c(body); ctx.fillRect(mx - 2, my - 5, 4, 7); }
-  };
-  stand(70, 296, 38, 84, "#27555a", "#d8c07a", "glyphs"); r.hot.push({ x: 66, y: 208, w: 52, h: 94, tip: TRr("atelier.loft.glyphs"), go: "glyphbook" });
-  stand(136, 296, 38, 74, "#5b2b2b", "#c9a24e", "library"); r.hot.push({ x: 132, y: 218, w: 52, h: 84, tip: TRr("atelier.loft.library"), special: "library" });
-  stand(202, 296, 30, 62, "#3d3a2a", "#d8c07a", "descbook"); r.hot.push({ x: 198, y: 232, w: 42, h: 72, tip: TRr("atelier.loft.agebook"), go: "descbook" });
+  { // les livres de référence, empilés à plat sur la longue table, le titre sur le dos
+    const zs = require("./relto-vault").pile(ctx, c, 70, 306, [{ kind: "glyphs", w: 128, h: 17, body: "#27555a", band: "#d8c07a", title: TRr("book.t.glyphs"), tip: "atelier.loft.glyphs" }, { kind: "library", w: 136, h: 19, body: "#5b2b2b", band: "#c9a24e", title: TRr("book.t.library"), tip: "atelier.loft.library" }, { kind: "descbook", w: 118, h: 16, body: "#3d3a2a", band: "#d8c07a", title: TRr("book.t.desc"), tip: "atelier.loft.agebook" }], 11);
+    for (const z of zs) r.hot.push({ x: z.x, y: z.y, w: z.w, h: z.h, tip: TRr(z.b.tip), ...(z.b.kind === "glyphs" ? { go: "glyphbook" } : z.b.kind === "descbook" ? { go: "descbook" } : { special: "library" }) }); }
   { const bx = 262, by = 292; ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 4, by - 2, 170, 20); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx, by - 8, 80, 18); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 84, by - 8, 80, 18); ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 4; k++) { ctx.fillRect(bx + 8, by - 3 + k * 4, 62, 1); ctx.fillRect(bx + 92, by - 3 + k * 4, 62, 1); }
     r.hot.push({ x: bx - 6, y: by - 12, w: 176, h: 34, tip: TRr("atelier.loft.pages"), go: "book" }); }
   if (sc.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { const nx = 450, ny = 290; ctx.fillStyle = c("#3b2a1a"); ctx.fillRect(nx, ny, 62, 14); ctx.fillStyle = c("#6b4a2a"); ctx.fillRect(nx, ny - 3, 62, 5); ctx.fillStyle = c("#c9a24e"); ctx.fillRect(nx + 3, ny + 2, 5, 9); ctx.fillRect(nx + 54, ny + 2, 5, 9); ctx.fillStyle = c("#8e2b27"); ctx.fillRect(nx + 40, ny + 12, 3, 12); r.hot.push({ x: nx - 3, y: ny - 8, w: 68, h: 36, tip: TRr("atelier.loft.surveyor"), special: "surveyor" }); }
-  require("./relto-vault").ironDoor(r, ctx, c, 566, 120, 52, 92, TRr("vault.door.tip")); // la même porte de fer, à l'étage : le coffre est à portée sans redescendre
   backButton(r, ctx, TRr("atelier.loft.down"), "atelier");
 }
 

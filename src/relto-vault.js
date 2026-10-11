@@ -8,14 +8,33 @@ const COLS = ["#3d3a2a", "#2f3e4f", "#4a2f3a", "#33442f", "#4b3a26", "#2b3a45"];
 const hash = (s) => { let h = 2166136261; for (const ch of String(s)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return h >>> 0; };
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 
-/** Une porte de fer : battant riveté, anneau, un peu de rouille. Sert aux deux accès (cabane, étage de l'atelier). */
-function ironDoor(r, ctx, c, x, y, w, h, tip) {
-  ctx.fillStyle = c("#1b1c20"); ctx.fillRect(x - 3, y - 3, w + 6, h + 3);
-  ctx.fillStyle = c("#3a3d44"); ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = rgba(0, 0, 0, 0.28); for (let k = 1; k < 3; k++) ctx.fillRect(x, y + (k * h) / 3 - 1, w, 2);
-  ctx.fillStyle = c("#555a63"); for (let k = 0; k < 3; k++) for (const sx of [x + 3, x + w - 4]) ctx.fillRect(sx, y + 4 + (k * h) / 3, 2, 2);
-  ctx.strokeStyle = c("#8a8f99"); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(x + w - 8, y + h * 0.55, 3.2, 0, 6.283); ctx.stroke();
-  r.hot.push({ x: x - 4, y: y - 4, w: w + 8, h: h + 4, tip, go: "vault" });
+/** Une trappe de fer dans le sol (vue en perspective douce) : plaque rivetée, anneau de traction. Sert aux deux accès : la cabane et l'atelier. */
+function trapDoor(r, ctx, c, cx, cy, w, h, tip) {
+  const sk = h * 0.35; // le bord du fond est plus étroit : la plaque est couchée sur le sol
+  ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.beginPath(); ctx.moveTo(cx - w / 2 + sk - 4, cy - h / 2 - 3); ctx.lineTo(cx + w / 2 - sk + 4, cy - h / 2 - 3); ctx.lineTo(cx + w / 2 + 4, cy + h / 2 + 3); ctx.lineTo(cx - w / 2 - 4, cy + h / 2 + 3); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = c("#3a3d44"); ctx.beginPath(); ctx.moveTo(cx - w / 2 + sk, cy - h / 2); ctx.lineTo(cx + w / 2 - sk, cy - h / 2); ctx.lineTo(cx + w / 2, cy + h / 2); ctx.lineTo(cx - w / 2, cy + h / 2); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = c("#1b1c20"); ctx.lineWidth = 1.4; ctx.stroke();
+  ctx.strokeStyle = rgba(0, 0, 0, 0.3); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx - w / 2 + sk * 0.5, cy); ctx.lineTo(cx + w / 2 - sk * 0.5, cy); ctx.stroke();
+  ctx.fillStyle = c("#5a5f69"); for (const fy of [-0.34, 0.34]) for (const fx of [-0.36, 0.36]) ctx.fillRect(cx + fx * w - 1, cy + fy * h - 1, 2.2, 1.6);
+  ctx.strokeStyle = c("#9a9fa9"); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(cx, cy + 1, 6, 2.6, 0, 0, 6.283); ctx.stroke();
+  r.hot.push({ x: cx - w / 2 - 4, y: cy - h / 2 - 4, w: w + 8, h: h + 8, tip, go: "vault" });
+}
+
+/** Un livre posé à plat, vu de la tranche : le dos porte son titre. Se range en pile (voir `pile`). */
+function flatBook(ctx, c, x, y, w, h, body, band, title, fontPx) {
+  ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(x + 1, y - 1, w, 2);
+  ctx.fillStyle = c(body); ctx.fillRect(x, y - h, w, h);
+  ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(x + w - 3, y - h + 1.2, 3, h - 2.4); // la tranche des pages, côté ouvert
+  ctx.fillStyle = c(band); ctx.fillRect(x + 4, y - h, 1.8, h); ctx.fillRect(x + w - 9, y - h, 1.8, h); // les nerfs du dos
+  ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x, y - 1.6, w, 1.6);
+  if (title) { ctx.font = `${fontPx}px serif`; let t = title; while (t.length > 2 && ctx.measureText(t).width > w - 20) t = t.slice(0, -2) + "…"; ctx.fillStyle = c(band); ctx.textAlign = "center"; ctx.fillText(t, x + w / 2 - 1, y - h / 2 + fontPx * 0.35); ctx.textAlign = "left"; }
+}
+
+/** Une pile de livres à plat, du bas vers le haut ; renvoie les zones à pousser. books : [{x?, w, h, body, band, title, ...reste}] */
+function pile(ctx, c, x, y, books, fontPx) {
+  const out = []; let cy = y;
+  books.forEach((b, i) => { const bx = x + (b.dx != null ? b.dx : [0, 3, -2, 2][i % 4]); flatBook(ctx, c, bx, cy, b.w, b.h, b.body, b.band, b.title, fontPx); out.push({ b, x: bx - 1, y: cy - b.h - 1, w: b.w + 2, h: b.h + 2 }); cy -= b.h; });
+  return out;
 }
 
 function drawVault(r, ctx, sc, sky, t) {
@@ -53,4 +72,4 @@ function drawVault(r, ctx, sc, sky, t) {
   require("./relto-atelier").backButton(r, ctx, tr("vault.back"), r.vaultFrom || "cabin");
 }
 
-module.exports = { drawVault, ironDoor };
+module.exports = { drawVault, trapDoor, flatBook, pile };
