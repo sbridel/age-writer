@@ -14,12 +14,12 @@ const { glyphSvg } = require("./engine/glyphs");
 const { hooks } = require("./engine/hooks");
 const { setMarkup } = require("./util");
 
-const PER_PAGE = 4, PER_SPREAD = 8, BINDER_PER = 14;
+const PER_PAGE = 6, PER_SPREAD = 12, BINDER_PER = 14;
 const BLANK = "```age\n```";
 const STUB = { path: "", basename: "" };
 const LABEL = {
-  en: { title: "A blank book", free: "free page", wtitle: "Write in the book…", wsub: "straight into the Age's note", wh1: "a word the book knows: moss, rain…", wh2: "a setting: seed: 12, size: large", wph: "One entry per line…", wgo: "write it", link: "linking", glyphs: "glyphs", desc: "description", binder: "Glyph binder", close: "Close the binder", add_slot: "Add a glyph", take: "take this glyph out", drawn: "drawn by the book", more: "{n} not yet learned", say: "Write a line", say_hint: "A line the palette has no glyph for: a setting (seed: 12, size: large…) or a word the engine knows.", prev: "previous page", next: "next page", written: "Written in this book", none: "Nothing written yet.", ph: "Write a line…", add: "Write the page", bad: "Not understood: {w}", pull: "take this line out", edit: "take this line back to rewrite it", name: "name it in your vault" },
-  fr: { title: "Un livre vierge", free: "page libre", wtitle: "Écrire dans le livre…", wsub: "directement dans la note de l'Âge", wh1: "un mot que le livre connaît : moss, rain…", wh2: "un réglage : seed: 12, size: large", wph: "Une entrée par ligne…", wgo: "l'écrire", link: "liaison", glyphs: "glyphes", desc: "description", binder: "Classeur des glyphes", close: "Fermer le classeur", add_slot: "Ajouter un glyphe", take: "retirer ce glyphe", drawn: "tracé par le livre", more: "{n} pas encore appris", say: "Écrire une ligne", say_hint: "Une ligne que la palette n'a pas en glyphe : un réglage (seed: 12, size: large…) ou un mot que le moteur connaît.", prev: "page précédente", next: "page suivante", written: "Écrit dans ce livre", none: "Rien d'écrit pour l'instant.", ph: "Écris une ligne…", add: "Écrire la page", bad: "Pas compris : {w}", pull: "retirer cette ligne", edit: "reprendre cette ligne pour la récrire", name: "à nommer dans ton coffre" },
+  en: { title: "A blank book", free: "free page", wtitle: "Write in the book…", wsub: "straight into the Age's note", wh1: "a word the book knows: moss, rain…", wh2: "a setting: seed: 12, size: large", wph: "One entry per line…", wgo: "write it", link: "linking", glyphs: "glyphs", desc: "description", binder: "Glyph binder", tab: "Binder", close: "Close the binder", add_slot: "Add a glyph", take: "take this glyph out", drawn: "drawn by the book", more: "{n} not yet learned", say: "Write a line", say_hint: "A line the palette has no glyph for: a setting (seed: 12, size: large…) or a word the engine knows.", prev: "previous page", next: "next page", written: "Written in this book", none: "Nothing written yet.", ph: "Write a line…", add: "Write the page", bad: "Not understood: {w}", pull: "take this line out", edit: "take this line back to rewrite it", name: "name it in your vault" },
+  fr: { title: "Un livre vierge", free: "page libre", wtitle: "Écrire dans le livre…", wsub: "directement dans la note de l'Âge", wh1: "un mot que le livre connaît : moss, rain…", wh2: "un réglage : seed: 12, size: large", wph: "Une entrée par ligne…", wgo: "l'écrire", link: "liaison", glyphs: "glyphes", desc: "description", binder: "Classeur des glyphes", tab: "Classeur", close: "Fermer le classeur", add_slot: "Ajouter un glyphe", take: "retirer ce glyphe", drawn: "tracé par le livre", more: "{n} pas encore appris", say: "Écrire une ligne", say_hint: "Une ligne que la palette n'a pas en glyphe : un réglage (seed: 12, size: large…) ou un mot que le moteur connaît.", prev: "page précédente", next: "page suivante", written: "Écrit dans ce livre", none: "Rien d'écrit pour l'instant.", ph: "Écris une ligne…", add: "Écrire la page", bad: "Pas compris : {w}", pull: "retirer cette ligne", edit: "reprendre cette ligne pour la récrire", name: "à nommer dans ton coffre" },
 };
 
 /** Les lignes du bloc `age` (hors lignes vides et commentaires), avec ce que le moteur en comprend. */
@@ -52,10 +52,11 @@ function mount(plugin, root, o) {
  /** La taille d'une page : un livre se règle sur la hauteur du cadre, toutes les pages à la même taille (portrait, trois sur quatre), le texte à l'échelle. */
   const fit = () => {
     const w = root.clientWidth, h = root.clientHeight; if (!w || !h) return;
-    const fs = Math.max(9, Math.round(h / 34)), ph = Math.max(60, Math.min(h - fs * 4.2 - 52, (w - 50) / 1.5));
+    const fs = Math.max(9, Math.round(h / 34)), ph = Math.max(60, Math.min(h - fs * 2.6 - 40, (w - 50) / 1.5));
     root.style.fontSize = fs + "px"; root.style.setProperty("--ph", Math.round(ph) + "px");
   };
   root.addEventListener("age-fit", fit);
+  const flip = () => { try { if (o.onFlip) o.onFlip(); } catch (e) { /* ignore */ } };
   const textOf = async () => (state.file ? app.vault.cachedRead(state.file) : BLANK);
 
   async function create(line) {
@@ -121,9 +122,9 @@ function mount(plugin, root, o) {
     }
     if (b.p === pages - 1 && g.hidden.length) sheet.createDiv({ cls: "age-dbook__more", text: L.more.replace("{n}", String(g.hidden.length)) });
     const nav = el.createDiv({ cls: "age-dbook__bnav" });
-    const prev = nav.createEl("button", { text: "◀", attr: { title: L.prev } }); prev.disabled = b.p === 0; prev.addEventListener("click", () => { b.p--; host.render(); });
+    const prev = nav.createEl("button", { text: "◀", attr: { title: L.prev } }); prev.disabled = b.p === 0; prev.addEventListener("click", () => { b.p--; flip(); host.render(); });
     nav.createSpan({ text: `${g.label} · ${b.p + 1}/${pages}` });
-    const next = nav.createEl("button", { text: "▶", attr: { title: L.next } }); next.disabled = b.p >= pages - 1; next.addEventListener("click", () => { b.p++; host.render(); });
+    const next = nav.createEl("button", { text: "▶", attr: { title: L.next } }); next.disabled = b.p >= pages - 1; next.addEventListener("click", () => { b.p++; flip(); host.render(); });
   }
 
   host.render = async function () {
@@ -172,10 +173,10 @@ function mount(plugin, root, o) {
       right.createDiv({ cls: "age-book__line-msg", text: this.msg || "" });
       right.createEl("button", { cls: "age-dbook__quiet", text: L.wgo }).addEventListener("click", () => { submitAll(); });
     }
+    spreadEl.createEl("button", { cls: "age-dbook__folder" + (this.binder ? " is-open" : ""), text: L.tab, attr: { title: L.binder } }).addEventListener("click", () => { this.binder = this.binder || { g: 0, p: 0 }; flip(); this.render(); }); // l'onglet du classeur : toujours là, de n'importe quelle page
     // on tourne la page en touchant son bord extérieur (un coin replié y invite) ; le bas du livre ne dit que la page où l'on est
-    if (this.spread > 0) spreadEl.createDiv({ cls: "age-dbook__turn age-dbook__turn--prev", attr: { title: L.prev } }).addEventListener("click", () => { this.spread--; this.msg = ""; this.render(); });
-    if (this.spread < plan.length - 1) spreadEl.createDiv({ cls: "age-dbook__turn age-dbook__turn--next", attr: { title: L.next } }).addEventListener("click", () => { this.spread++; this.msg = ""; this.render(); });
-    container.createDiv({ cls: "age-dbook__nav", text: `${cur.label}  ·  ${this.spread + 1}/${plan.length}` });
+    if (this.spread > 0) spreadEl.createDiv({ cls: "age-dbook__turn age-dbook__turn--prev", attr: { title: L.prev } }).addEventListener("click", () => { this.spread--; this.msg = ""; flip(); this.render(); });
+    if (this.spread < plan.length - 1) spreadEl.createDiv({ cls: "age-dbook__turn age-dbook__turn--next", attr: { title: L.next } }).addEventListener("click", () => { this.spread++; this.msg = ""; flip(); this.render(); });
     if (this.binder) binderEl(container, file, writtenLines(text));
   };
 

@@ -672,13 +672,13 @@
 .age-dbook__turn::after { content: ""; position: absolute; bottom: 12px; width: 20px; height: 20px; background: linear-gradient(135deg, rgba(0, 0, 0, 0.18) 50%, #c9b585 50%); box-shadow: -1px -1px 3px rgba(0, 0, 0, 0.3); }
 .age-dbook__turn--prev::after { left: 14px; transform: scaleX(-1); }
 .age-dbook__turn--next::after { right: 14px; }
-.age-dbook__glyphs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; height: 100%; grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.age-dbook__glyphs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; height: 100%; grid-template-rows: repeat(3, minmax(0, 1fr)); }
 .age-dbook__cell { position: relative; min-height: 0; display: flex; align-items: center; justify-content: center; border: 1px solid transparent; color: #2b2118; }
 .age-dbook__cell.is-drawn { border: 1px dashed rgba(90, 70, 40, 0.65); }
 .age-dbook__cell--empty { border-color: transparent; }
 .age-dbook__cell--plus { border: 1px dashed rgba(90, 70, 40, 0.45); cursor: pointer; font-size: 2em; font-family: serif; color: rgba(60, 45, 28, 0.55); }
 .age-dbook__cell--plus:hover { background: rgba(120, 90, 50, 0.12); color: #2b2118; }
-.age-dbook__ink { width: 60%; max-height: 80%; display: flex; justify-content: center; filter: drop-shadow(0 0 0.7px rgba(43, 33, 24, 0.7)); opacity: 0.92; }
+.age-dbook__ink { width: 56%; max-height: 80%; display: flex; justify-content: center; filter: drop-shadow(0 0 0.7px rgba(43, 33, 24, 0.7)); opacity: 0.92; }
 .age-dbook__ink svg { display: block; width: 100%; height: auto; }
 .age-dbook__cell.is-fresh .age-dbook__ink { animation: age-dbook-ink 1.4s ease-out both; }
 @keyframes age-dbook-ink { 0% { opacity: 0; filter: blur(4px); transform: scale(1.18); } 55% { opacity: 0.8; filter: blur(1.5px); } 100% { opacity: 0.92; filter: blur(0); transform: none; } }
@@ -723,3 +723,5 @@
 .age-dbook__quiet { display: block; margin: 0.5em 0 0 auto; padding: 0 0.2em; border: 0; background: transparent; box-shadow: none; font-family: serif; font-style: italic; color: #6a4a2a; border-bottom: 1px solid rgba(106, 74, 42, 0.5); cursor: pointer; }
 .age-dbook__quiet:hover { color: #2b2118; }
 .age-dbook .age-book__pull--line { width: 1.5em; height: 1.5em; min-width: 0; padding: 0; line-height: 1; font-size: 0.8em; border-radius: 50%; }
+.age-dbook__folder { position: absolute; right: -1.7em; top: 14%; z-index: 4; writing-mode: vertical-rl; padding: 0.7em 0.35em; border: 1px solid #0d0804; border-left: 0; border-radius: 0 6px 6px 0; background: linear-gradient(90deg, #3a2a1b, #5a4322); color: #e0c27a; font-family: serif; font-size: 0.9em; letter-spacing: 0.08em; box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5); cursor: pointer; }
+.age-dbook__folder:hover, .age-dbook__folder.is-open { background: linear-gradient(90deg, #5a4322, #7a5c2e); color: #f4e2a8; }

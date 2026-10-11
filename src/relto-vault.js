@@ -47,8 +47,26 @@ function drawVault(r, ctx, sc, sky, t) {
   const list = ((r.opts.vaultAges ? r.opts.vaultAges() : []) || []).slice().sort((x, y) => String(x.name).localeCompare(String(y.name))), niches = [];
   for (let i = 0; i < list.length; i += PER_NICHE) niches.push(list.slice(i, i + PER_NICHE));
   const pages = Math.max(1, Math.ceil(niches.length / PER)); r.vaultPage = Math.min(Math.max(0, r.vaultPage || 0), pages - 1);
-  niches.slice(r.vaultPage * PER, r.vaultPage * PER + PER).forEach((grp, i) => { // trois colonnes à gauche, trois à droite, deux rangées
-    const side = i % 6 < 3 ? 0 : 1, col = i % 3, row = i < 6 ? 0 : 1, nx = side ? 392 + col * 80 : 28 + col * 80, ny = 44 + row * 108;
+  const spot = (i) => { const side = i % 6 < 3 ? 0 : 1, col = i % 3, row = i < 6 ? 0 : 1; return [side ? 392 + col * 80 : 28 + col * 80, 44 + row * 108]; }; // trois colonnes à gauche, trois à droite, deux rangées
+  const shownN = niches.slice(r.vaultPage * PER, r.vaultPage * PER + PER);
+  for (let i = shownN.length; i < PER; i++) { // les niches vides ne le restent pas tout à fait : une bougie, une araignée sur sa toile, un vase de fleurs sèches
+    const [nx, ny] = spot(i); ctx.fillStyle = c("#0e0f12"); ctx.fillRect(nx - 3, ny - 3, NW + 6, NH + 6); ctx.fillStyle = c("#17181c"); ctx.fillRect(nx, ny, NW, NH);
+    const kind = (i + r.vaultPage) % 3, bx = nx + NW / 2, by = ny + NH - 4;
+    if (kind === 0) { // une bougie, dont la flamme vacille et éclaire la niche
+      const f = 0.8 + 0.2 * Math.sin(t * 7 + i) * Math.sin(t * 3.1 + i); ctx.fillStyle = rgba(255, 190, 90, 0.1 * f); ctx.beginPath(); ctx.arc(bx, by - 26, 34, 0, 6.283); ctx.fill();
+      ctx.fillStyle = c("#5a4c36"); ctx.fillRect(bx - 7, by - 3, 14, 3); ctx.fillStyle = c("#d9ceb0"); ctx.fillRect(bx - 3, by - 24, 6, 21); ctx.fillStyle = rgba(255, 200, 100, 0.95 * f); ctx.beginPath(); ctx.ellipse(bx, by - 29, 2.2, 4.5 * f, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 245, 200, 0.9); ctx.beginPath(); ctx.ellipse(bx, by - 28, 1, 2.2, 0, 0, 6.283); ctx.fill();
+    } else if (kind === 1) { // une toile dans le coin, et l'araignée qui descend et remonte sur son fil
+      ctx.strokeStyle = rgba(220, 220, 230, 0.22); ctx.lineWidth = 0.7; ctx.beginPath(); for (let k = 0; k <= 4; k++) { const a = (k / 4) * 1.5708; ctx.moveTo(nx, ny); ctx.lineTo(nx + Math.cos(a) * 38, ny + Math.sin(a) * 38); } ctx.stroke();
+      for (const rr of [10, 20, 30]) { ctx.beginPath(); ctx.arc(nx, ny, rr, 0, 1.5708); ctx.stroke(); }
+      const sy = ny + 28 + 10 * Math.sin(t * 0.8 + i), sx = nx + 30; ctx.strokeStyle = rgba(220, 220, 230, 0.3); ctx.beginPath(); ctx.moveTo(sx, ny + 2); ctx.lineTo(sx, sy); ctx.stroke();
+      ctx.fillStyle = c("#0a0a0c"); ctx.beginPath(); ctx.arc(sx, sy, 2.4, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#0a0a0c"); ctx.lineWidth = 0.8; for (const d of [-1, 1]) for (const k of [0, 1, 2]) { ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + d * (4 + k), sy - 2 + k * 2.2); ctx.stroke(); }
+    } else { // un vase et trois tiges sèches
+      ctx.fillStyle = c("#4b3a26"); ctx.beginPath(); ctx.moveTo(bx - 6, by); ctx.lineTo(bx + 6, by); ctx.lineTo(bx + 4, by - 15); ctx.lineTo(bx - 4, by - 15); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = c("#8a7a4a"); ctx.lineWidth = 1; for (const [dx, h] of [[-5, 36], [0, 44], [5, 32]]) { ctx.beginPath(); ctx.moveTo(bx, by - 14); ctx.quadraticCurveTo(bx + dx * 0.6, by - h * 0.6, bx + dx, by - h); ctx.stroke(); ctx.fillStyle = c("#a89460"); ctx.beginPath(); ctx.arc(bx + dx, by - h, 2, 0, 6.283); ctx.fill(); }
+    }
+  }
+  shownN.forEach((grp, i) => {
+    const [nx, ny] = spot(i);
     ctx.fillStyle = c("#0e0f12"); ctx.fillRect(nx - 3, ny - 3, NW + 6, NH + 6); ctx.fillStyle = c("#17181c"); ctx.fillRect(nx, ny, NW, NH); // la niche
     const sw = 11, x0 = nx + 4 + Math.floor((NW - 8 - grp.length * sw) / 2);
     grp.forEach((a, k) => { // un dos par livre, debout, tous différents de hauteur

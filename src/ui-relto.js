@@ -717,8 +717,8 @@ async function renderRelto(plugin, source, el, ctx) {
       await attachToShelf(f); plugin.refreshLive(); return f;
     } catch (e) { console.warn("[Age Writer ext] livre vierge", e); return null; }
   };
-  const onDescMount = (root, path) => {
-    const f = path ? app.vault.getAbstractFileByPath(path) : null, ctrl = DB.mount(plugin, root, { file: f instanceof obsidian.TFile ? f : null, fr: plugin.lang() === "fr", onCreate: createAgeNote });
+  const onDescMount = (root, path, flip) => {
+    const f = path ? app.vault.getAbstractFileByPath(path) : null, ctrl = DB.mount(plugin, root, { file: f instanceof obsidian.TFile ? f : null, fr: plugin.lang() === "fr", onCreate: createAgeNote, onFlip: flip });
     ctrl.render(); return ctrl;
   };
   // le registre de l'Imageur (src/relto-ledger.js, src/lectern.js) : lit l'Âge posé sur le lutrin, par couches selon le titre d'écrivain
