@@ -291,7 +291,7 @@ async function playLinkAnim(plugin, age, host, snd, open) {
   at(() => { ov.addClass("is-open"); if (!quiet && plugin.ext.soundBook !== false) sound.openSequence(vol, { book: true, clasp: plugin.ext.soundClasp !== false, link: false }); }, 1100); // le livre s'ouvre : son panneau apparaît
   // les pages ne se tournent qu'une fois le son du livre et des clics fini (même durée que dans openSequence)
   const lead = quiet ? 0 : plugin.ext.soundBook !== false ? 1350 : plugin.ext.soundClasp !== false ? 550 : 0, start = 1100 + lead + 250;
-  for (let i = 0; i < pages; i++) at(() => { if (!quiet && plugin.ext.soundBook !== false) sound.pageTurn(vol, { quick: true }); }, start + i * gap); // les pages qu'on tourne
+  for (let i = 0; i < pages; i++) at(() => { if (!quiet && plugin.ext.soundBook !== false) sound.pageTurn(vol, { quick: i < pages - 1 }); }, start + i * gap); // les pages qu'on tourne : la dernière garde sa traîne
   at(() => ov.addClass("is-flip"), start); // les pages se tournent (le dessin suit le son)
   at(() => { ready = true; ov.addClass("is-panel"); ov.addClass("is-ready"); }, start + pages * gap + Math.max(380, Math.round(gap * 1.7))); // la dernière page est tournée : le panneau attend d'être touché
 }
