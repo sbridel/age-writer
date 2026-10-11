@@ -169,5 +169,7 @@ ok(ST.chapterNote(mend, "fr", "N").includes("Deseekay") && !ST.chapterNote(restC
 
 ok(!ST.drawsOn([]) && !ST.drawsOn(["rest","hard"]) && ST.drawsOn(["rest","imager"]), "tirage des pages : coupé jusqu'à l'Imageur");
 
+ok(Object.keys(ST.COURSE).every((id) => ST.chapterById(id)) && ST.COURSE.rest.every((r) => ST.courseSheet("rest", "fr").includes("`" + r[0] + "`")), "feuille de cours : mots des chapitres, tous dans la feuille");
+ok(!ST.courseSheet("hard", "en") && !ST.courseSheet("strange", "fr") && /Guilde des Writers/.test(ST.chapterNote(ST.chapterById("weather"), "fr", "N")) && !/Guilde/.test(ST.chapterNote(ST.chapterById("strange"), "fr", "N")), "feuille de cours : aucune pour les épreuves");
 console.log(`story.test.js : ${n} vérifications ok`);
 

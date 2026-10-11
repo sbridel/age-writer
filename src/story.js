@@ -6,6 +6,7 @@
 const M = require("./relto-model");
 const { STABLE_AT } = require("./engine/analysis");
 const { SKY_ENTRIES } = require("./engine/data/sky");
+const { BUILTIN_BLOCKS } = require("./engine/registry");
 
 const MODE = "story";
 // Les pages du ciel de base (soleils, cycle, lune, phénomènes) ne sont pas dans le registre des blocs : leur axe est dans SKY_ENTRIES.
@@ -245,11 +246,30 @@ const LETTERS = {
   },
 };
 
+/**
+ * La feuille de cours : ce que la Guilde des Writers fait apprendre dans le chapitre (les noms des blocs, à connaître par cœur
+ * plutôt qu'à chercher dans la référence). [bloc, sens en anglais, sens en français]. Pas de feuille pour les épreuves (le monde
+ * difficile, le monde étrange) : il faut alors savoir.
+ */
+const COURSE = {
+  rest: [["single_sun", "one sun: the plain sky", "un seul soleil : le ciel simple"], ["steady_cycle", "day and night that keep their rhythm", "un jour et une nuit qui gardent leur rythme"], ["water", "water: ground that flows", "l'eau : une terre qui coule"], ["sand", "dry, shifting ground", "un sol sec et mouvant"], ["stone", "heavy, patient ground", "un sol lourd et patient"], ["fern", "something alive, in the damp", "du vivant, dans l'humide"], ["grass", "something alive, low and restless", "du vivant, bas et remuant"], ["moss", "something alive, soft and quiet", "du vivant, doux et silencieux"]],
+  mend: [["lava", "searing, molten ground", "un sol brûlant, en fusion"], ["ice", "pale, brittle ground: cold", "un sol pâle et cassant : le froid"], ["twin_suns", "two suns: a heavier sky", "deux soleils : un ciel plus lourd"]],
+  weather: [["rain", "steady rain", "une pluie continue"], ["drizzle", "fine rain, silver and hushed", "une bruine fine, argentée"], ["fog", "thick, pale, muffling", "épaisse, pâle, étouffante"], ["snow", "white and soundless", "blanche et sans bruit"], ["storm", "churning, dark, loud", "tourmentée, sombre, bruyante"], ["wind", "restless, thin, cold", "agité, mince, froid"]],
+  laws: [["salt", "bitter, bright ground", "un sol amer et brillant"], ["mass", "a value, written with a colon: how heavy the world is", "une valeur, écrite avec deux-points : le poids du monde"], ["age", "a value, written with a colon: how old the world is", "une valeur, écrite avec deux-points : l'âge du monde"]],
+};
+const AXIS_WORD = { cosmological: { en: "sky", fr: "ciel" }, geological: { en: "ground", fr: "sol" }, ecological: { en: "living", fr: "vivant" }, weather: { en: "weather", fr: "météo" }, metaphysical: { en: "beyond", fr: "au-delà" } };
+function courseSheet(id, lang) {
+  const rows = COURSE[id]; if (!rows) return "";
+  const l = lang === "fr" ? "fr" : "en", ax = (b) => { const x = (BUILTIN_BLOCKS.find((q) => q.id === b) || SKY_ENTRIES.find((q) => q.id === b) || {}).axis; return AXIS_WORD[x] ? AXIS_WORD[x][l] : "—"; };
+  return `\n\n---\n**${l === "fr" ? "Feuille de cours · Guilde des Writers" : "Course sheet · the Writers' Guild"}**\n${l === "fr" ? "À savoir par cœur : c'est ainsi qu'on les écrit." : "To know by heart: this is how they are written."}\n\n| ${l === "fr" ? "Mot" : "Word"} | ${l === "fr" ? "Famille" : "Kind"} | ${l === "fr" ? "Sens" : "Meaning"} |\n|---|---|---|\n${rows.map((r) => `| \`${r[0]}\` | ${COURSE_NOAXIS.has(r[0]) ? "—" : ax(r[0])} | ${r[l === "fr" ? 2 : 1]} |`).join("\n")}\n`;
+}
+const COURSE_NOAXIS = new Set(["mass", "age"]);
+
 /** Le texte d'une note de chapitre : titre, lettre du mentor, ce qu'il faut faire, et le bloc `age` de départ. */
 function chapterNote(chapter, lang, name) {
   const l = lang === "fr" ? "fr" : "en", w = WORLDS[chapter.id] || { lines: [] }, L = LETTERS[chapter.id][l];
   const title = (chapter.id === "mend" ? "Deseekay · " : "") + chapter.title[l]; // deseekay : « énigme », en D'ni
-  return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n${L[2] ? `**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n` : ""}— ${MENTOR}, seltahn${w.lines.length ? `\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`` : ""}\n`;
+  return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n${L[2] ? `**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n` : ""}— ${MENTOR}, seltahn${courseSheet(chapter.id, l)}${w.lines.length ? `\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`` : ""}\n`;
 }
 
 /**
@@ -272,4 +292,4 @@ function rewardPages() {
 /** Le moteur tire-t-il des pages au hasard dans les Âges de l'histoire ? Pas avant l'Imageur : il faut écrire ses glyphes soi-même. */
 const drawsOn = (done) => (done || []).includes("imager");
 
-module.exports = { drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
+module.exports = { COURSE, courseSheet, drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
