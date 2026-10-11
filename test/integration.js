@@ -393,8 +393,15 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         files.get(c9[0]).content = files.get(c9[0]).content.replace(/```age\n[\s\S]*?\n```/, "```age\nsingle_sun\nsteady_cycle\nwater\nsand\nfern\ngrass\nrain: sometimes, dawn\nfog\nmass: 0.8\nage: 3.5\n```"); files.get(c9[0]).stat.mtime++; p.index.invalidate();
         el = await show(sf.path);
         ok(row(el, "Koi") && /is-available/.test(row(el, "Koi").className), "chapitre 9 réussi : le monde difficile écrit, la page du bassin est disponible");
+        ok(row(el, "Inkwell") && /is-locked/.test(row(el, "Inkwell").className), "la page finale reste fermée tant qu'un chapitre manque (10e)");
+        const b9 = [...files.keys()]; notices.length = 0; await nx.callback();
+        const c10 = [...files.keys()].filter((k) => !b9.includes(k));
+        ok(c10.length === 1 && /Un monde étrange et merveilleux|A strange and marvellous world/.test(c10[0]) && !/violet/.test(files.get(c10[0]).content), "chapitre 10 : la note du monde étrange est créée, sans recette");
+        notices.length = 0; await p.cmds.find((c) => c.id === "story-hint").callback(); ok(notices.some((n) => /pierre étrange|strange stone/.test(n)), "chapitre 10 : l'indice facultatif parle en mots");
+        files.get(c10[0]).content = files.get(c10[0]).content.replace(/```age\n[\s\S]*?\n```/, "```age\n" + require("../src/story").WORLDS.strange.ref.join("\n") + "\n```"); files.get(c10[0]).stat.mtime++; p.index.invalidate();
+        el = await show(sf.path);
         ok(row(el, "Inkwell") && /is-available/.test(row(el, "Inkwell").className), "fin de l'histoire : la page finale (l'encrier) est disponible");
-        notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); p.law.now = () => Date.now(); files.delete(c3[0]); files.delete(c4[0]); files.delete(c5[0]); files.delete(c6[0]); files.delete(c7[0]); files.delete(c9[0]); delete p.ext.imagerTunings[c4[0]]; delete p.ext.telescope[sf.basename.toLowerCase().trim() + "#" + sfm.seed]; }
+        notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); p.law.now = () => Date.now(); files.delete(c3[0]); files.delete(c4[0]); files.delete(c5[0]); files.delete(c6[0]); files.delete(c7[0]); files.delete(c9[0]); files.delete(c10[0]); delete p.ext.imagerTunings[c4[0]]; delete p.ext.telescope[sf.basename.toLowerCase().trim() + "#" + sfm.seed]; }
       files.delete(c2[0]); }
     const sb = await show("x.md"), sbn = shelf(sb);
     ok(sbn.includes("Dehors") && !sbn.includes("Premier"), "mode histoire : sans précision, le Relto du bac à sable, qui ne voit pas les Âges de l'histoire");

@@ -411,6 +411,7 @@ module.exports = function build(Base, core, AGEX) {
     registerCommands() {
       this.addCommand({ id: "open-relto", name: "Open the Relto", callback: () => R.openRelto(this) });
       this.addCommand({ id: "start-story", name: "Start the story (create or open the story Relto)", callback: () => R.startStory(this) });
+    this.addCommand({ id: "story-hint", name: "Story: a hint for the current chapter", callback: () => R.storyHint(this) });
     this.addCommand({ id: "story-next", name: "Story: next chapter (create or reopen its note)", callback: () => R.storyNext(this) });
       this.addCommand({ id: "clean-star-chart", name: "Clean the star chart (forget the stars of Ages no longer on the Relto's shelf)", callback: async () => { try { const n = await R.cleanStarChart(this); new obsidian.Notice(n.names || n.stars ? this.t("map.clean.done", { stars: String(n.stars), names: String(n.names) }) : this.t("map.clean.none")); } catch (e) { console.warn("[Age Writer ext] carte", e); } } });
       this.addCommand({ id: "open-guide", name: "Open the Age Writer guide", callback: () => G.openGuide(this) });

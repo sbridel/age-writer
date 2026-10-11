@@ -63,7 +63,7 @@ ok(ST.get({}, "a") !== ST.get({}, "b") && (() => { const s = {}; ST.get(s, "a").
 
 // --- pages-récompenses : verrouillées jusqu'au chapitre, puis disponibles
 const rp = ST.rewardPages();
-ok(rp.length === ST.CHAPTERS.length + 1 && rp.every((p) => p.story && p.unlock && p.unlock.story && (M.PAGE_PRESETS[p.id] || p.id === ST.ENDGAME.id)), "rewardPages : une page par chapitre (préréglage existant) et la page finale");
+ok(rp.length === ST.CHAPTERS.filter((c) => c.page).length + 1 && rp.every((p) => p.story && p.unlock && p.unlock.story && (M.PAGE_PRESETS[p.id] || p.id === ST.ENDGAME.id)), "rewardPages : une page par chapitre (préréglage existant) et la page finale");
 const rest = rp.find((p) => p.unlock.story === "rest");
 ok(!M.checkUnlock(rest, [], new Set(), { storyDone: [] }).ok && /chapter/.test(M.checkUnlock(rest, [], new Set(), { storyDone: [] }).reason), "page verrouillée tant que le chapitre n'est pas réussi (avec la raison)");
 ok(M.checkUnlock(rest, [], new Set(), { storyDone: ["rest"] }).ok && !M.checkUnlock(rest, [], new Set(), {}).ok, "page débloquée par le chapitre (et verrouillée sans état)");
@@ -75,7 +75,7 @@ ok(scene(["rest"]).pages.find((p) => p.id === mendPage.id).state === "locked" &&
 // ---- notes de chapitre
 const an = (text, nm) => analyseAgeBase(text, { seed: nm });
 const mend = ST.chapterById("mend"), restC = ST.chapterById("rest");
-ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]).id === "weather" && ST.nextChapter(["rest", "mend", "weather"]).id === "laws" && ST.nextChapter(["rest", "mend", "weather", "laws"]).id === "alter" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter"]).id === "zero" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero"]).id === "imager" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager"]).id === "hard" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard"]) === null, "nextChapter : dans l'ordre, null à la fin");
+ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]).id === "weather" && ST.nextChapter(["rest", "mend", "weather"]).id === "laws" && ST.nextChapter(["rest", "mend", "weather", "laws"]).id === "alter" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter"]).id === "zero" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero"]).id === "imager" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager"]).id === "hard" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard"]).id === "strange" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard", "strange"]) === null, "nextChapter : dans l'ordre, null à la fin");
 ok(Object.keys(ST.get({}, "k").notes).length === 0, "get : normalise les notes de chapitre");
 let fair = 0, same = 0;
 for (let i = 0; i < 300; i++) {
@@ -139,6 +139,20 @@ ok(ST.check(hc, ctx([hw({ stability: 90, programmed: 0 })])).why === "all" && ST
 ok(ST.check(hc, ctx([hw({ stability: 77 })])).why === "all" && ST.check(hc, ctx([hw({ stability: 50 })])).why === "stable", "hard : il faut de la marge (80), et un monde instable ne compte pas");
 let hfair = 0; for (let i = 0; i < 200; i++) { const nm = ST.chapterName(hc, `Le monde difficile · ${1000 + i * 7919}`, an); if (an(hr.join("\n"), nm).stability >= 80) hfair++; }
 ok(hfair === 200, "hard : un monde de référence tient pour tout nom (" + hfair + "/200)");
+
+// ---- chapitre 10 : un monde étrange et merveilleux
+const sc = ST.chapterById("strange"), sw = ST.WORLDS.strange.ref;
+const info = (lines, nm) => { const a = an(lines.join("\n"), nm); return { name: nm, path: "D/" + nm + ".md", stability: a.stability, glyphs: lines, reactions: a.resolved.matter.reactions.map((r) => ({ shown: r.shown, type: r.type, catalyzed: !!r.catalyzed })) }; };
+let sfair = 0; for (let i = 0; i < 60; i++) { const nm = ST.chapterName(sc, `Un monde étrange et merveilleux · ${1000 + i * 7919}`, an); if (ST.check(sc, ctx([info(sw, nm)])).ok) sfair++; }
+ok(sfair >= 58, "strange : un monde de référence existe pour presque tout nom (" + sfair + "/60)");
+const sname = ST.chapterName(sc, "Un monde étrange et merveilleux · 1", an), sgood = info(sw, sname);
+ok(ST.check(sc, ctx([sgood])).ok, "strange : soleil violet, stable, réactions rares avec la pierre étrange, ruines : réussi");
+ok(!ST.check(sc, ctx([{ ...sgood, glyphs: sgood.glyphs.map((g) => (g === "violet_sun" ? "red_sun" : g)) }])).ok, "strange : un autre soleil ne suffit pas");
+ok(!ST.check(sc, ctx([{ ...sgood, glyphs: sgood.glyphs.filter((g) => g !== "tablet") }])).ok, "strange : sans l'axe métaphysique, non");
+ok(!ST.check(sc, ctx([{ ...sgood, reactions: sgood.reactions.map((r) => ({ ...r, catalyzed: false })) }])).ok && !ST.check(sc, ctx([{ ...sgood, reactions: sgood.reactions.slice(0, 2) }])).ok, "strange : sans pierre étrange, ou sous trois réactions, non");
+ok(!ST.check(sc, ctx([{ ...sgood, reactions: sgood.reactions.map((r) => ({ ...r, type: "violent" })) }])).ok && !ST.check(sc, ctx([{ ...sgood, stability: 77 }])).ok, "strange : des réactions violentes ou une marge trop courte, non");
+const sn = ST.chapterNote(sc, "fr", "N");
+ok(!/À faire/.test(sn) && !/violet_sun|strange_stone|tablet|deep_cold|drizzle/.test(sn) && ST.HINTS.strange.fr && !/violet_sun|strange_stone|tablet_|deep_cold|drizzle/.test(JSON.stringify(ST.HINTS)), "strange : la lettre et l'indice ne donnent ni recette ni nom de bloc");
 
 // ---- la page finale
 const endP = ST.rewardPages().find((p) => p.id === ST.ENDGAME.id);

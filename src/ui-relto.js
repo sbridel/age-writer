@@ -185,6 +185,15 @@ async function storyNext(plugin) {
   return f;
 }
 
+/** Un indice facultatif sur le chapitre en cours (seulement ceux dont la lettre ne donne pas la recette). */
+function storyHint(plugin) {
+  const { app, t } = plugin, hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
+  if (!hub) { new obsidian.Notice(t("story.nohub")); return; }
+  const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed)), ch = ST.nextChapter(st.done);
+  const h = ch && ST.HINTS[ch.id];
+  new obsidian.Notice(h ? h[plugin.lang() === "fr" ? "fr" : "en"] : t("story.nohint"), h ? 12000 : 4000);
+}
+
 class PresetModal extends obsidian.FuzzySuggestModal {
   constructor(app, onChoose, presets) { super(app); this.onChoose = onChoose; this.presets = presets; this.setPlaceholder("Relto page…"); }
   getItems() { return Object.keys(this.presets); }
@@ -655,4 +664,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyNext, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyNext, storyHint, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };

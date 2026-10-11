@@ -24,7 +24,16 @@ const CHAPTERS = [
   { id: "zero", page: "page_imager", title: { en: "Looking up", fr: "Lever les yeux" } },
   { id: "imager", page: "page_comets", title: { en: "Listening to the sky", fr: "Écouter le ciel" } },
   { id: "hard", page: "page_koi", title: { en: "The difficult world", fr: "Le monde difficile" } },
+  { id: "strange", page: null, title: { en: "A strange and marvellous world", fr: "Un monde étrange et merveilleux" } }, // la récompense est la page de la fin
 ];
+
+/** Un indice facultatif, en mots, sans nommer de blocs (commande « Story: hint ») : seulement pour les chapitres dont la lettre ne dit pas la recette. */
+const HINTS = {
+  strange: {
+    en: "Some matters, set side by side, answer each other, and what they make is rarer than either. A strange stone changes what they answer. Not every sun is gold. And a world that has only earth and sky has never known what is written on a tablet.",
+    fr: "Certaines matières, posées côte à côte, se répondent, et ce qu'elles font est plus rare que chacune. Une pierre étrange change ce qu'elles répondent. Tous les soleils ne sont pas dorés. Et un monde qui n'a que la terre et le ciel n'a jamais su ce qu'une tablette dit.",
+  },
+};
 
 /** La page finale (pour l'instant : un encrier posé sur la table). Le nom reste neutre. */
 const ENDGAME = { id: "page_endgame", label: "Inkwell", effects: { canvas_additions: [{ type: "inkwell", density: 1 }] } };
@@ -101,6 +110,7 @@ function check(chapter, ctx) {
     return stable.some((a) => a.physics >= 2) ? { ok: true, why: "" } : { ok: false, why: "physics" };
   }
   if (chapter.id === "zero") return ctx && ctx.zeroFound ? { ok: true, why: "" } : { ok: false, why: "zero" }; // « lever les yeux » : le Great Zero de ce Relto est trouvé
+  if (chapter.id === "strange") return ages.some((a) => strangeOk(a, ctx.axisOf)) ? { ok: true, why: "" } : { ok: false, why: "strange" }; // aucun message d'échec : le chapitre reste ouvert
   if (chapter.id === "hard") {
     // « le monde difficile » : tout ensemble, et qui tient (marge de 5) : huit pages au moins, quatre axes, une météo programmée, deux valeurs physiques
     const good = ages.find((a) => a.stability >= STABLE_AT + 5 && (a.glyphs || []).length >= 8 && axesOf(a.glyphs, ctx.axisOf).size >= 4 && a.programmed >= 1 && a.physics >= 2);
@@ -137,6 +147,17 @@ function evaluate(store, key, ctx) {
 /** Le mentor : un personnage inventé, qui écrit de courtes lettres. */
 const MENTOR = "Adrin Vesparath"; // un clin d’œil à Adrian Vesper, en D’ni
 
+const reactionsOfAnalysis = (a) => ((a && a.resolved && a.resolved.matter && a.resolved.matter.reactions) || []).map((r) => ({ shown: r.shown, type: r.type, catalyzed: !!r.catalyzed }));
+const blockAxis = (id) => { try { const b = require("./engine/registry").blockById.get(id); return b ? b.axis : null; } catch (e) { return null; } };
+// « Étrange » : des produits rares nés de réactions bénignes (pas de réaction violente, corrosive ou qui ronge)
+const BENIGN = new Set(["transmuting", "crystallizing", "awakening", "soothing"]);
+const benign = (rx) => (rx || []).filter((r) => BENIGN.has(r.type));
+/** Le monde final : soleil violet, stable avec de la marge, au moins trois produits bénins dont un obtenu avec le catalyseur, et l'axe métaphysique. */
+function strangeOk(a, axisOf) {
+  const rx = benign(a.reactions), glyphs = a.glyphs || [];
+  return glyphs.includes("violet_sun") && a.stability >= STABLE_AT + 5 && rx.length >= 3 && rx.some((r) => r.catalyzed) && axesOf(glyphs, axisOf).has("metaphysical");
+}
+
 /** Le prochain chapitre à faire (le premier non réussi), ou null quand l'histoire est finie (pour l'instant). */
 const nextChapter = (done) => CHAPTERS.find((c) => !(done || []).includes(c.id)) || null;
 
@@ -144,6 +165,7 @@ const nextChapter = (done) => CHAPTERS.find((c) => !(done || []).includes(c.id))
 const WORLDS = {
   rest: { lines: ["water"] },
   mend: { lines: ["single_sun", "steady_cycle", "water", "lava"], fixed: ["single_sun", "steady_cycle", "water"] },
+  strange: { lines: ["steady_cycle", "water"], ref: ["violet_sun", "steady_cycle", "strange_stone", "tablet", "rain", "drizzle", "deep_cold"], strange: true }, // `ref` : un monde qui répond (pour choisir un nom qui le permet)
   hard: { lines: ["single_sun", "steady_cycle"], ref: ["single_sun", "steady_cycle", "water", "sand", "fern", "grass", "rain", "fog"] }, // `ref` : un monde qui répond à tout (pour choisir un nom qui le laisse tenir)
   zero: { lines: [] },
   imager: { lines: [] },
@@ -164,7 +186,11 @@ function chapterName(chapter, base, analyse) {
     return base;
   }
   if (w && w.ref && analyse) { // un nom pour lequel une solution existe, avec de la marge
-    for (let i = 0; i < 80; i++) { const nm = i ? `${base} ${i + 1}` : base, a = analyse(w.ref.join("\n"), nm); if (a && a.stability >= STABLE_AT + 5) return nm; }
+    for (let i = 0; i < 120; i++) {
+      const nm = i ? `${base} ${i + 1}` : base, a = analyse(w.ref.join("\n"), nm); if (!a) continue;
+      const ok = w.strange ? strangeOk({ glyphs: w.ref, stability: a.stability, reactions: reactionsOfAnalysis(a) }, (id) => { const b = blockAxis(id); return b; }) : a.stability >= STABLE_AT + 5;
+      if (ok) return nm;
+    }
     return base;
   }
   if (!w || !w.fixed || !analyse) return base;
@@ -205,6 +231,10 @@ const LETTERS = {
     en: ["You have learned each part. Now the whole.", "Write me a difficult world: one that has everything at once, a sky and the ground under it, something alive, days that change, and laws of its own. Every part you add makes the others harder to keep. It must still hold.", "Write a stable world of at least eight pages, covering four of the five axes, with a programmed weather line (`rain: sometimes, dawn`) and two physical values (`mass`, `age`)."],
     fr: ["Tu connais chaque partie. Voici le tout.", "Écris-moi un monde difficile : un monde qui a tout à la fois, un ciel et la terre dessous, du vivant, des jours qui changent, et ses propres lois. Chaque partie que tu ajoutes rend les autres plus dures à tenir. Il doit pourtant tenir.", "Écris un monde stable d'au moins huit pages, qui couvre quatre des cinq axes, avec une ligne de météo programmée (`rain: sometimes, dawn`) et deux valeurs physiques (`mass`, `age`)."],
   },
+  strange: {
+    en: ["Last of all, a thing I cannot teach.", "Write me a world nobody would expect, and that holds anyway.", ""],
+    fr: ["Enfin, une chose que je ne peux pas t'enseigner.", "Écris-moi un monde que personne n'attendrait, et qui tienne quand même.", ""],
+  },
   weather: {
     en: ["A world that never changes is a painting. Let us make it a day.", "Here the rain falls without end. Teach it manners: let it fall only sometimes, and only at dawn. A line can carry a frequency and a moment, after a colon.", "Rewrite the rain line as `rain: sometimes, dawn`, and keep the world stable."],
     fr: ["Un monde qui ne change jamais est un tableau. Faisons-en un jour.", "Ici la pluie tombe sans fin. Apprends-lui les manières : qu'elle ne tombe que parfois, et seulement à l'aube. Une ligne peut porter une fréquence et un moment, après deux-points.", "Récris la ligne de pluie ainsi : `rain: sometimes, dawn`, et garde le monde stable."],
@@ -215,7 +245,7 @@ const LETTERS = {
 function chapterNote(chapter, lang, name) {
   const l = lang === "fr" ? "fr" : "en", w = WORLDS[chapter.id] || { lines: [] }, L = LETTERS[chapter.id][l];
   const title = (chapter.id === "mend" ? "Deseekay · " : "") + chapter.title[l]; // deseekay : « énigme », en D'ni
-  return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n— ${MENTOR}, seltahn${w.lines.length ? `\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`` : ""}\n`;
+  return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n${L[2] ? `**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n` : ""}— ${MENTOR}, seltahn${w.lines.length ? `\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`` : ""}\n`;
 }
 
 /**
@@ -235,4 +265,4 @@ function rewardPages() {
   return out;
 }
 
-module.exports = { MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
+module.exports = { MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
