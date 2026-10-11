@@ -117,7 +117,8 @@ The special lines:
 | `fx: tv` | window effect: `classic`, `static`, `ripple`, `sweep`, `tv`, `random`, `off` |
 | `day_length: 40`, `year_length: 12` | day length (real minutes) and year length (days), generative rendering |
 | `moons: 3` | number of moons in the generative window (0 to 5; `companion_moon` gives one) |
-| `many: ruins` / `few: rain` / `water: few` | quantities (a little of what clashes costs less) |
+| `many: ruins` / `few: rain` / `water: few` | quantities (a little of what clashes costs less; the more of the world they touch, the more it matters) |
+| `size: small` / `medium` / `large` | the size of the world (a small world forgives, a large one does not; not `window_size`) |
 | `rain: sometimes, dawn` | living weather: how often (`always`, `often`, `sometimes`, `rarely`, `1/10`, `30%`) and when (`dawn`, `morning`, `noon`, `afternoon`, `dusk`, `night`) |
 | `mass: 0.8`, `age: 3.5`, `orbit: 1.2`… | physics values (all optional; the reference gives a typical value and what each one means) |
 | `mechanism: orrery` | the Age's mechanism |

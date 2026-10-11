@@ -6,11 +6,14 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 
 ### Added
 - **Turning pages in the books** (setting, on by default). Turn it off and the book of glyphs and the library book change their double page at once, without the page-turning animation. A system set to reduce motion already did so.
-- **Dosing.** A quantity now softens the clashes of what it describes. `few: water` in a desert world is a pond rather than a lake (`water: few` works too). What is local (water, ice, trees, ruins) is softened most; what covers the whole sky (rain, fog, wind) still clashes in small amounts. `many:` makes clashes worse. A panel line shows what the dosing changed.
+- **Rigour of the laws** (setting): gentle (default), balanced, strict (you tick which laws count) and extreme. Gentle changes no Age for the worse: only what lightens an Age counts. Soil, life and balance are ready for the coming updates.
+- **Dosing, by extent.** A clash between the sky and the matter now costs in proportion to how much they touch: the quantity (`few:`, `many:`) × the size of the world (new line `size: small | medium | large`) × the number of biomes. `few: water` in a desert world is a pond rather than a lake (`water: few` works too); a small world forgives more. A panel line shows what the dosing changed.
+- **How deeply an Age rests.** Under the costs, one sentence: each line is removed in turn, and if the Age falls without one of them, it holds by a thread. No number is shown.
 
 ### Changed
+- **The cat is never in two rooms at once**: with `cat_sleep: always` (or at night), a cat asleep by the fire in the cabin no longer shows up in the study as well.
 - **Weather that follows from itself is no longer held against an Age**: rain and wind making a storm, a storm and lightning making thunder, and water on iron making rust cost almost nothing now. Rain with wind and lightning used to be unstable; it is stable.
-- **Everything has a budget**: more than six things written on one axis cost a little extra each, gently at first.
+- **Everything has a budget** (balanced rigour and above): more than six things written on one axis cost a little extra each, gently at first.
 
 ## 1.24.0 — Story mode (2026-10-11)
 

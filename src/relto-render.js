@@ -539,7 +539,7 @@ class ReltoRenderer {
   catSpotFor() {
     const sc = this.scene, cat = sc.additions.find((a) => a.type === "cat"); if (!cat) return -1;
     if (this.catWhere() === "atelier") return this.catAsleep() ? Math.floor(rng((sc.seed ^ fnv("cat-spot|" + Math.floor(this.hour() * 2))) >>> 0)() * 3) : -1;
-    return this.catSpot || 0;
+    return this.catAsleep() ? -1 : this.catSpot || 0; // il dort déjà au coin du feu dans la cabane : il ne peut pas être aussi dans l'atelier (`cat_sleep: always`)
   }
   catAsleep() {
     const sc = this.scene, has = (ty) => sc.additions.find((a) => a.type === ty), cat = has("cat");

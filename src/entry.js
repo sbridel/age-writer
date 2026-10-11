@@ -30,6 +30,8 @@ const UW = require("./unwritten");
 const WX = require("./weather");
 const DFR = require("./descriptors-fr");
 const DOSE = require("./dosage");
+const RG = require("./rigor");
+const DEPTH = require("./depth");
 const { SYSTEM_RE } = require("./starsystem");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
 
@@ -102,11 +104,11 @@ module.exports = function build(Base, core, AGEX) {
         let out = guard("adjust", () => (this.ext.law && o && o.seed ? adjustAnalysis(r, this.law.effective(o.seed)) : r)) || r;
         // livre-piège déclaré : ni livre de retour, ni fissure
         if (srcText && parseTrap(srcText)) out = { ...out, returnTo: null, stranded: true, fissure: null, trapped: true, home: "none" };
-        if (srcText) out = guard("quantités", () => applyAmounts(out, parseAmounts(srcText), this.core && this.core.blocks)) || out;
+        if (srcText) out = guard("quantités", () => applyAmounts(out, parseAmounts(srcText), this.core && this.core.blocks, { weights: RG.weightsOf(this.ext), size: DOSE.worldSize(srcText) })) || out;
         if (srcText) out = applyDamage(out, parseDamage(srcText));
         if (srcText) { const wx = guard("météo", () => WX.parseWeather(srcText)); if (wx) out = { ...out, weather: wx, resolved: out.resolved ? { ...out.resolved, weather: wx } : out.resolved }; } // météo vivante : lue par la fenêtre (sceneOf) et la description, sans effet sur la stabilité
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
-        if (this.ext.law && o && o.seed) out = guard("fissure", () => { // la fissure grandit : elle abîme un monde instable, et le condamne s'il n'est pas corrigé à temps
+        if (this.ext.law && o && o.seed && !o.probe) out = guard("fissure", () => { // (un essai de retrait, `probe`, ne touche pas à l'état de la loi) // la fissure grandit : elle abîme un monde instable, et le condamne s'il n'est pas corrigé à temps
           const op = this.law.opening(o.seed, this.ext.fissureDays), bad = strainable(out);
           if (this.law.tend(o.seed, bad ? out.stability : 100, op)) { out.condemned = true; return bad || out.fissure === "open" || out.fissure === "submarine" ? forceAlteration(out, 10) : out; }
           return fissureStrain(out, op);
@@ -121,10 +123,21 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.ghostTip = () => this.t("story.ghost");
       AGEX.ghostWord = (word) => (this.lang() === "fr" ? DFR.tr(word) : word); // indices des glyphes non appris : dans la langue de l'interface
       AGEX.dosageNote = (d) => DOSE.note(d, this.lang() === "fr");
+      this.depthCache = new Map();
+      // la profondeur de l'équilibre : le test par retrait, à l'affichage du panneau (jamais à chaque frappe), mis en cache par texte, graine et rigueur
+      AGEX.depthNote = (text, seed) => guard("profondeur", () => {
+        const key = `${RG.levelOf(this.ext)}|${RG.familiesOf(this.ext).join(",")}|${this.ext.physics}|${seed}|${text}`;
+        let d = this.depthCache.get(key);
+        if (d === undefined) {
+          d = DEPTH.depthOf(text, (s) => core.analyse(s, { seed, draw: false, probe: true }), (l) => AGEX.skip(l)) || null;
+          this.depthCache.set(key, d); if (this.depthCache.size > 300) this.depthCache.delete(this.depthCache.keys().next().value);
+        }
+        return DEPTH.note(d, this.lang() === "fr");
+      }) || "";
       AGEX.ghostSky = (category, phrase) => (this.lang() === "fr" ? DFR.skyPhrase(category) : phrase);
       AGEX.noDraw = (seed) => seed != null && R.storyNoDraw(this).has(String(seed));
       AGEX.norm = (line) => guard("météo", () => WX.normalize(line)) || line; // `rain: sometimes, dawn` : pour le moteur, c'est `rain`
-      AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line) || SYSTEM_RE.test(line); // `system: Kerath` : la graine d'étoile partagée (télescope, étape 2)
+      AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || DOSE.WORLD_SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line) || SYSTEM_RE.test(line); // `system: Kerath` : la graine d'étoile partagée (télescope, étape 2)
       // livre-piège : « pas de fissure » est une réponse donnée d'avance, le tirage n'en dessine pas une que le pied de bloc nierait
       AGEX.written = (set) => { if (!AGEX.src || !guard("trap draw", () => parseTrap(AGEX.src))) return set; const s = new Set(set); s.add("no_fissure"); return s; };
       AGEX.w = (slot, opt) => { const f = guard("solitude", () => solitudeFactor(this.ext.solitude, slot, opt.id)); return opt.weight * (f == null ? 1 : f); };
@@ -149,7 +162,9 @@ module.exports = function build(Base, core, AGEX) {
     physicsMode() { const m = this.ext && this.ext.physics; return m === "off" || m === "strict" ? m : "easy"; }
     /** Retraite une analyse selon le mode physique. Le monde physique est mis en cache (texte du bloc, graine, symboles, mode). */
     applyPhysicsTo(r, srcText, o) {
-      const mode = this.physicsMode(); if (mode === "off" || !r || !r.resolved || (o && o.physics === false)) return r;
+      let mode = this.physicsMode(); if (mode === "off" || !r || !r.resolved || (o && o.physics === false)) return r;
+      // la rigueur (src/rigor.js) : la famille « physique » fait payer la physique, même en mode facile, au poids qui lui revient
+      const wPhys = RG.weightsOf(this.ext).physics; if (mode === "easy" && wPhys > 0) mode = "strict";
       const seed = (o && o.seed) || "", ids = [...PH.idsOfAnalysis(r)].sort().join(",");
       const key = `${mode}|${seed}|${ids}|${srcText}`;
       let ph = this.physCache.get(key);
@@ -157,7 +172,8 @@ module.exports = function build(Base, core, AGEX) {
         ph = PH.physicsOf(r, srcText, seed, mode); this.physCache.set(key, ph);
         if (this.physCache.size > 1500) this.physCache.delete(this.physCache.keys().next().value);
       }
-      return PH.applyPhysics(r, ph, mode, { severity: Number(this.ext.physicsSeverity) || 1 });
+      // le mode « strict » du réglage Physique garde plein poids ; sinon la sévérité est multipliée par le poids de la rigueur
+      return PH.applyPhysics(r, ph, mode, { severity: (Number(this.ext.physicsSeverity) || 1) * (this.physicsMode() === "strict" ? 1 : wPhys) });
     }
     /** Une piste cliquée dans la fiche : écrit (ou remplace) la ligne `clé: valeur` dans le bloc age de la note. */
     async writePhysicsLine(path, src, key, value) {

@@ -118,7 +118,8 @@ Les lignes spéciales :
 | `fx: tv` | effet de fenêtre : `classic`, `static`, `ripple`, `sweep`, `tv`, `random`, `off` |
 | `day_length: 40`, `year_length: 12` | durée du jour (minutes réelles) et de l'année (jours), rendu génératif |
 | `moons: 3` (ou `lunes: 3`) | nombre de lunes dans la fenêtre générative (0 à 5 ; `companion_moon` en donne une) |
-| `many: ruins` / `few: rain` / `water: few` | quantités (un peu de ce qui heurte coûte moins) |
+| `many: ruins` / `few: rain` / `water: few` | quantités (un peu de ce qui heurte coûte moins ; plus elles touchent le monde, plus cela compte) |
+| `size: small` / `medium` / `large` | la taille du monde (un petit monde pardonne, un grand non ; pas `window_size`) |
 | `rain: sometimes, dawn` | météo vivante : à quelle fréquence (`always`, `often`, `sometimes`, `rarely`, `1/10`, `30%`) et à quel moment (`dawn`, `morning`, `noon`, `afternoon`, `dusk`, `night`) |
 | `mass: 0.8`, `age: 3.5`, `orbit: 1.2`… | valeurs de physique (toutes facultatives ; la référence donne une valeur type et ce que chacune veut dire) |
 | `mechanism: orrery` | mécanisme de l'Âge |

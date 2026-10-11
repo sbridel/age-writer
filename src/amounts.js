@@ -66,8 +66,9 @@ function shift(r, byAxis) {
  *  1. chaque bloc écrit dont le facteur n'est pas 1 déplace le coût de weight × (facteur − 1) ;
  *  2. les cicatrices rachètent une part du coût des richesses : RELIEF_PER_SCAR chacune (× leur facteur), au plus RELIEF_CAP du coût total des richesses.
  * @param blocks la table des blocs du moteur (id → bloc)
+ * @param opts   { weights: poids des familles de lois (src/rigor.js), size: taille du monde } ; sans lui, plein poids et monde moyen
  */
-function applyAmounts(r, amt, blocks) {
+function applyAmounts(r, amt, blocks, opts) {
   if (!r || !r.axisStability || !r.resolved || !r.resolved.matter) return r;
   const written = r.resolved.matter.written || [], get = (id) => (blocks && blocks.get ? blocks.get(id) : null);
   const delta = {}; let rich = 0, relief = 0;
@@ -80,7 +81,8 @@ function applyAmounts(r, amt, blocks) {
   }
   relief = Math.min(relief, rich * W.RELIEF_CAP);
   if (relief > 0) delta.geological = (delta.geological || 0) - relief;
-  const dose = DS.dosage(r, (id) => factorOf(id, amt), get); // le dosage : contradictions adoucies, réactions naturelles, budget de richesse
+  // le dosage selon les lois : étendue des contradictions, réactions naturelles, budget de richesse. `opts` : { weights (src/rigor.js), size }
+  const dose = DS.dosage(r, (id) => factorOf(id, amt), get, { weight: opts && opts.weights ? opts.weights.extent : 1, size: opts && opts.size });
   if (dose) for (const [a, d] of Object.entries(dose.delta)) delta[a] = (delta[a] || 0) + d;
   if (!Object.keys(delta).length) return r;
   const out = shift(r, delta); if (rich > 0) out.compensation = { riches: rich, relief };
