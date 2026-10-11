@@ -3,7 +3,7 @@
 // Chaque livre est le livre descriptif d'un Âge (sa note) : supprimer la note le fait disparaître d'ici comme de l'étagère. Rien n'est dessiné hors du canevas.
 const { rng, mix, rgba } = require("./util");
 
-const W = 640, H = 360, FLOOR = 262, PER = 12, NW = 66, NH = 84;
+const W = 640, H = 360, FLOOR = 262, PER = 12, PER_NICHE = 5, NW = 66, NH = 84;
 const COLS = ["#3d3a2a", "#2f3e4f", "#4a2f3a", "#33442f", "#4b3a26", "#2b3a45"]; // des reliures de savant : ternes, jamais vives
 const hash = (s) => { let h = 2166136261; for (const ch of String(s)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return h >>> 0; };
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
@@ -43,17 +43,22 @@ function drawVault(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#1d1e22"); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(W, 0); ctx.lineTo(W, 26); ctx.quadraticCurveTo(W / 2, 62, 0, 26); ctx.closePath(); ctx.fill(); // la voûte
   const fg = ctx.createLinearGradient(0, FLOOR, 0, H); fg.addColorStop(0, c("#34353a")); fg.addColorStop(1, c("#1c1d21")); ctx.fillStyle = fg; ctx.fillRect(0, FLOOR, W, H - FLOOR);
   ctx.fillStyle = c("#15161a"); ctx.fillRect(0, FLOOR - 4, W, 6);
-  const list = (r.opts.vaultAges ? r.opts.vaultAges() : []) || [], pages = Math.max(1, Math.ceil(list.length / PER)); r.vaultPage = Math.min(Math.max(0, r.vaultPage || 0), pages - 1);
-  const shown = list.slice(r.vaultPage * PER, r.vaultPage * PER + PER);
-  shown.forEach((a, i) => { // trois colonnes à gauche, trois à droite, deux rangées
+  // une niche garde plusieurs livres (cinq au plus), rangés par ordre alphabétique ; son écriteau dit d'où à où elle va
+  const list = ((r.opts.vaultAges ? r.opts.vaultAges() : []) || []).slice().sort((x, y) => String(x.name).localeCompare(String(y.name))), niches = [];
+  for (let i = 0; i < list.length; i += PER_NICHE) niches.push(list.slice(i, i + PER_NICHE));
+  const pages = Math.max(1, Math.ceil(niches.length / PER)); r.vaultPage = Math.min(Math.max(0, r.vaultPage || 0), pages - 1);
+  niches.slice(r.vaultPage * PER, r.vaultPage * PER + PER).forEach((grp, i) => { // trois colonnes à gauche, trois à droite, deux rangées
     const side = i % 6 < 3 ? 0 : 1, col = i % 3, row = i < 6 ? 0 : 1, nx = side ? 392 + col * 80 : 28 + col * 80, ny = 44 + row * 108;
     ctx.fillStyle = c("#0e0f12"); ctx.fillRect(nx - 3, ny - 3, NW + 6, NH + 6); ctx.fillStyle = c("#17181c"); ctx.fillRect(nx, ny, NW, NH); // la niche
-    const body = COLS[hash(a.path) % COLS.length], bx = nx + 18, bw = 30, bh = NH - 16, by = ny + NH - bh - 4;
-    ctx.fillStyle = c(body); ctx.fillRect(bx, by, bw, bh); ctx.fillStyle = c("#b8a878"); ctx.fillRect(bx, by + 6, bw, 2); ctx.fillRect(bx, by + bh - 9, bw, 2); ctx.fillStyle = rgba(0, 0, 0, 0.24); ctx.fillRect(bx + bw - 4, by, 4, bh);
-    ctx.fillStyle = c("#b8a878"); ctx.fillRect(bx + bw / 2 - 3, by + bh / 2 - 6, 6, 9);
-    ctx.fillStyle = c("#3a3326"); ctx.fillRect(nx, ny + NH + 4, NW, 12); ctx.fillStyle = c("#e0d4b0"); ctx.font = "9px serif"; ctx.textAlign = "center";
-    let label = a.name; while (label.length > 3 && ctx.measureText(label).width > NW - 6) label = label.slice(0, -2); if (label !== a.name) label += "…"; ctx.fillText(label, nx + NW / 2, ny + NH + 13); ctx.textAlign = "left";
-    r.hot.push({ x: nx - 3, y: ny - 3, w: NW + 6, h: NH + 22, tip: a.name, go: "descbook", arg: a.path });
+    const sw = 11, x0 = nx + 4 + Math.floor((NW - 8 - grp.length * sw) / 2);
+    grp.forEach((a, k) => { // un dos par livre, debout, tous différents de hauteur
+      const hh = hash(a.path), bh = 46 + (hh % 28), bx = x0 + k * sw, by = ny + NH - 4 - bh;
+      ctx.fillStyle = c(COLS[hh % COLS.length]); ctx.fillRect(bx, by, sw - 1, bh); ctx.fillStyle = c("#b8a878"); ctx.fillRect(bx, by + 5, sw - 1, 1.6); ctx.fillRect(bx, by + bh - 8, sw - 1, 1.6); ctx.fillStyle = rgba(0, 0, 0, 0.24); ctx.fillRect(bx + sw - 4, by, 3, bh);
+      r.hot.push({ x: bx, y: by, w: sw - 1, h: bh, tip: a.name, go: "descbook", arg: a.path });
+    });
+    const first = grp[0].name, last = grp[grp.length - 1].name, abbr = (n) => (n.length > 7 ? n.slice(0, 6) + "…" : n), label = grp.length === 1 ? abbr(first) : `${abbr(first)} – ${abbr(last)}`;
+    ctx.fillStyle = c("#3a3326"); ctx.fillRect(nx, ny + NH + 4, NW, 12); ctx.fillStyle = c("#e0d4b0"); ctx.font = "8px serif"; ctx.textAlign = "center";
+    let lab = label; while (lab.length > 3 && ctx.measureText(lab).width > NW - 4) lab = lab.slice(0, -2); ctx.fillText(lab, nx + NW / 2, ny + NH + 13); ctx.textAlign = "left";
   });
   if (!list.length) { ctx.fillStyle = rgba(230, 220, 190, 0.5); ctx.font = "italic 13px serif"; ctx.textAlign = "center"; ctx.fillText(tr("vault.empty"), W / 2, 110); ctx.textAlign = "left"; }
   // le pupitre central et le livre vierge

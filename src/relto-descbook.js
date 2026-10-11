@@ -18,8 +18,8 @@ const PER_PAGE = 4, PER_SPREAD = 8, BINDER_PER = 14;
 const BLANK = "```age\n```";
 const STUB = { path: "", basename: "" };
 const LABEL = {
-  en: { title: "A blank book", free: "free page", link: "linking", glyphs: "glyphs", desc: "description", binder: "Glyph binder", close: "Close the binder", add_slot: "Add a glyph", take: "take this glyph out", drawn: "drawn by the book", more: "{n} not yet learned", say: "Write a line", say_hint: "A line the palette has no glyph for: a setting (seed: 12, size: large…) or a word the engine knows.", prev: "previous page", next: "next page", written: "Written in this book", none: "Nothing written yet.", ph: "Write a line…", add: "Write the page", bad: "Not understood: {w}", pull: "take this line out", edit: "take this line back to rewrite it", name: "name it in your vault" },
-  fr: { title: "Un livre vierge", free: "page libre", link: "liaison", glyphs: "glyphes", desc: "description", binder: "Classeur des glyphes", close: "Fermer le classeur", add_slot: "Ajouter un glyphe", take: "retirer ce glyphe", drawn: "tracé par le livre", more: "{n} pas encore appris", say: "Écrire une ligne", say_hint: "Une ligne que la palette n'a pas en glyphe : un réglage (seed: 12, size: large…) ou un mot que le moteur connaît.", prev: "page précédente", next: "page suivante", written: "Écrit dans ce livre", none: "Rien d'écrit pour l'instant.", ph: "Écris une ligne…", add: "Écrire la page", bad: "Pas compris : {w}", pull: "retirer cette ligne", edit: "reprendre cette ligne pour la récrire", name: "à nommer dans ton coffre" },
+  en: { title: "A blank book", free: "free page", wtitle: "Write in the book…", wsub: "straight into the Age's note", wh1: "a word the book knows: moss, rain…", wh2: "a setting: seed: 12, size: large", wph: "One entry per line…", wgo: "write it", link: "linking", glyphs: "glyphs", desc: "description", binder: "Glyph binder", close: "Close the binder", add_slot: "Add a glyph", take: "take this glyph out", drawn: "drawn by the book", more: "{n} not yet learned", say: "Write a line", say_hint: "A line the palette has no glyph for: a setting (seed: 12, size: large…) or a word the engine knows.", prev: "previous page", next: "next page", written: "Written in this book", none: "Nothing written yet.", ph: "Write a line…", add: "Write the page", bad: "Not understood: {w}", pull: "take this line out", edit: "take this line back to rewrite it", name: "name it in your vault" },
+  fr: { title: "Un livre vierge", free: "page libre", wtitle: "Écrire dans le livre…", wsub: "directement dans la note de l'Âge", wh1: "un mot que le livre connaît : moss, rain…", wh2: "un réglage : seed: 12, size: large", wph: "Une entrée par ligne…", wgo: "l'écrire", link: "liaison", glyphs: "glyphes", desc: "description", binder: "Classeur des glyphes", close: "Fermer le classeur", add_slot: "Ajouter un glyphe", take: "retirer ce glyphe", drawn: "tracé par le livre", more: "{n} pas encore appris", say: "Écrire une ligne", say_hint: "Une ligne que la palette n'a pas en glyphe : un réglage (seed: 12, size: large…) ou un mot que le moteur connaît.", prev: "page précédente", next: "page suivante", written: "Écrit dans ce livre", none: "Rien d'écrit pour l'instant.", ph: "Écris une ligne…", add: "Écrire la page", bad: "Pas compris : {w}", pull: "retirer cette ligne", edit: "reprendre cette ligne pour la récrire", name: "à nommer dans ton coffre" },
 };
 
 /** Les lignes du bloc `age` (hors lignes vides et commentaires), avec ce que le moteur en comprend. */
@@ -46,9 +46,16 @@ function mount(plugin, root, o) {
   const L = LABEL[o.fr ? "fr" : "en"], app = plugin.app, state = { file: o.file || null, text: BLANK };
   const host = Object.create(BV.BookView.prototype);
   Object.assign(host, {
-    app, contentEl: root, mode: "linking", spread: 0, shownPath: null, selectedBook: null, proseCache: new Map(), binder: null, seen: new Map(), editing: null, msg: "",
+    app, contentEl: root, mode: "linking", spread: 0, shownPath: null, selectedBook: null, proseCache: new Map(), binder: null, seen: new Map(), draft: "", msg: "",
     plugin: Object.create(plugin, { currentAgeFile: { get: () => state.file || STUB } }),
   });
+ /** La taille d'une page : un livre se règle sur la hauteur du cadre, toutes les pages à la même taille (portrait, trois sur quatre), le texte à l'échelle. */
+  const fit = () => {
+    const w = root.clientWidth, h = root.clientHeight; if (!w || !h) return;
+    const fs = Math.max(9, Math.round(h / 34)), ph = Math.max(60, Math.min(h - fs * 4.2 - 52, (w - 50) / 1.5));
+    root.style.fontSize = fs + "px"; root.style.setProperty("--ph", Math.round(ph) + "px");
+  };
+  root.addEventListener("age-fit", fit);
   const textOf = async () => (state.file ? app.vault.cachedRead(state.file) : BLANK);
 
   async function create(line) {
@@ -59,13 +66,17 @@ function mount(plugin, root, o) {
     if (!state.file) { await create(id); return; }
     await BV.BookView.prototype.togglePage.call(this, state.file, id);
   };
-  async function submit(inp) {
-    const line = inp.value.trim(); if (!line) return;
-    const text = state.file ? await app.vault.cachedRead(state.file) : BLANK, base = host.editing ? (removeLine(text, host.editing) || text) : text, res = understood(base, line);
-    if (!res.ok) { host.msg = L.bad.replace("{w}", line); host.render(); return; }
-    const editing = host.editing; host.editing = null; host.msg = "";
-    if (!state.file) { await create(line); return; }
-    await app.vault.process(state.file, (t) => { const b = editing ? (removeLine(t, editing) || t) : t; return addLine(b, line) || b; });
+  /** Écrit chaque ligne du brouillon que le moteur comprend ; les autres restent dans le brouillon, signalées. */
+  async function submitAll() {
+    const lines = host.draft.split("\n").map((l) => l.trim()).filter(Boolean); if (!lines.length) return;
+    let text = state.file ? await app.vault.cachedRead(state.file) : BLANK; const ok = [], bad = [];
+    for (const ln of lines) { const res = understood(text, ln); if (res.ok) { text = res.next; ok.push(ln); } else bad.push(ln); }
+    host.draft = bad.join("\n"); host.msg = bad.length ? L.bad.replace("{w}", bad.join(", ")) : "";
+    if (!ok.length) { await host.render(); return; }
+    let rest = ok;
+    if (!state.file) { await create(ok[0]); rest = ok.slice(1); if (!state.file) return; }
+    if (rest.length) await app.vault.process(state.file, (t) => { let b = t; for (const ln of rest) b = addLine(b, ln) || b; return b; });
+    else await host.render();
   }
 
   const ink = (parent, id, severity) => setMarkup(parent.createDiv({ cls: "age-dbook__ink" }), `<svg viewBox="0 0 100 100">${glyphSvg(id, 0, 0, 100, severity)}</svg>`);
@@ -116,7 +127,7 @@ function mount(plugin, root, o) {
   }
 
   host.render = async function () {
-    const container = this.contentEl; container.empty(); container.addClass("age-book"); container.addClass("age-dbook");
+    fit(); const container = this.contentEl; container.empty(); container.addClass("age-book"); container.addClass("age-dbook");
     const file = state.file || STUB, text = await textOf(); state.text = text;
     const ageSource = extractAge(text) || "", analysis = analyseAge(ageSource, { seed: seedName(file.path || "Age") });
     if (this.shownPath !== file.path) { this.shownPath = file.path; this.selectedBook = null; if (!this.seen.has(file.path)) this.seen.set(file.path, new Set(pageList(analysis, true).map((p) => p.id))); }
@@ -136,27 +147,30 @@ function mount(plugin, root, o) {
     if (cur.k === "link") await this.linking(left, right, analysis, file);
     else if (cur.k === "glyphs") { glyphSpread(left, right, pages, cur.i, seen, file); for (const p of pages) seen.add(p.id); }
     else if (cur.k === "desc") {
-      left.createDiv({ cls: "age-book__prose", text: this.proseFor(file.path, ageSource, analysis) });
+      const sentences = this.proseFor(file.path, ageSource, analysis).split(/(?<=[.!?])\s+/).filter(Boolean), lp = left.createDiv({ cls: "age-book__prose", text: sentences.join(" ") }), rp = right.createDiv({ cls: "age-book__prose" });
+      let moved = []; // le texte coule d'une page à l'autre : ce qui ne tient pas sur la page de gauche passe sur celle de droite
+      while (sentences.length > 1 && left.scrollHeight > left.clientHeight + 1) { moved.unshift(sentences.pop()); lp.textContent = sentences.join(" "); }
+      rp.textContent = moved.join(" ");
       right.createDiv({ cls: "age-book__colophon", text: Object.entries(analysis.axisStability).map(([axis, st]) => `${axis} ${st}%`).join(" · ") });
       if (analysis.drawn.length > 0) { const n = analysis.drawn.length, d = right.createDiv({ cls: "age-book__drawn" }); d.createSpan({ text: `${n} page${n === 1 ? "" : "s"} drawn by the book, which left ${n === 1 ? "it" : "them"} open. ` }); d.createEl("button", { text: "Draw again" }).addEventListener("click", () => { this.redraw(file); }); }
     } else {
       left.createDiv({ cls: "age-book__heading", text: L.written });
       const box = left.createDiv({ cls: "age-book__lines" }), rows = linesOf(ageSource, analysis);
       if (!rows.length) box.createDiv({ cls: "age-book__none", text: L.none });
-      right.createDiv({ cls: "age-book__heading", text: L.say });
-      const inp = right.createEl("input", { cls: "age-book__line-input", attr: { type: "text", placeholder: L.ph, list: "age-book-words", spellcheck: "false" } });
-      const dl = right.createEl("datalist", { attr: { id: "age-book-words" } });
-      for (const g of BV.paletteGroups()) for (const it of g.items) dl.createEl("option", { attr: { value: it.id } });
-      if (this.editing) inp.value = this.editing;
       for (const r of rows) {
         const row = box.createDiv({ cls: "age-book__line" + (r.unknown ? " is-unknown" : "") });
-        row.createSpan({ cls: "age-book__line-text", text: r.text, attr: { title: L.edit } }).addEventListener("click", () => { this.editing = r.text; this.render(); });
+        row.createSpan({ cls: "age-book__line-text", text: r.text, attr: { title: L.edit } }).addEventListener("click", async () => { // reprendre la ligne : elle quitte la note et passe au brouillon, pour être récrite
+          this.draft = (this.draft ? this.draft + "\n" : "") + r.text; if (state.file) await app.vault.process(state.file, (t) => removeLine(t, r.text) || t); else this.render(); });
         if (state.file) row.createEl("button", { cls: "age-book__pull age-book__pull--line", text: "×", attr: { title: L.pull } }).addEventListener("click", async () => { await app.vault.process(state.file, (t) => removeLine(t, r.text) || t); });
       }
+      right.addClass("age-dbook__write");
+      right.createDiv({ cls: "age-dbook__wtitle", text: L.wtitle }); right.createDiv({ cls: "age-dbook__wsub", text: L.wsub });
+      right.createDiv({ cls: "age-dbook__whint", text: L.wh1 }); right.createDiv({ cls: "age-dbook__whint", text: L.wh2 });
+      const ta = right.createEl("textarea", { cls: "age-dbook__ruled", attr: { placeholder: L.wph, spellcheck: "false", rows: "6" } }); ta.value = this.draft;
+      ta.addEventListener("input", () => { this.draft = ta.value; });
+      ta.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submitAll(); } });
       right.createDiv({ cls: "age-book__line-msg", text: this.msg || "" });
-      right.createEl("button", { cls: "age-book__line-go", text: L.add }).addEventListener("click", () => { submit(inp); });
-      right.createDiv({ cls: "age-book__none", text: L.say_hint });
-      inp.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") { e.preventDefault(); submit(inp); } });
+      right.createEl("button", { cls: "age-dbook__quiet", text: L.wgo }).addEventListener("click", () => { submitAll(); });
     }
     // on tourne la page en touchant son bord extérieur (un coin replié y invite) ; le bas du livre ne dit que la page où l'on est
     if (this.spread > 0) spreadEl.createDiv({ cls: "age-dbook__turn age-dbook__turn--prev", attr: { title: L.prev } }).addEventListener("click", () => { this.spread--; this.msg = ""; this.render(); });
@@ -173,7 +187,7 @@ function mount(plugin, root, o) {
     setFile: (f) => { state.file = f || null; host.shownPath = null; host.spread = f ? 0 : 0; host.binder = null; return host.render(); },
     file: () => state.file,
     turnTo: (n) => { host.spread = n; return host.render(); },
-    dispose: () => { clearTimeout(timer); try { app.vault.offref(ref); } catch (e) { /* ignore */ } },
+    dispose: () => { root.removeEventListener("age-fit", fit); clearTimeout(timer); try { app.vault.offref(ref); } catch (e) { /* ignore */ } },
   };
 }
 

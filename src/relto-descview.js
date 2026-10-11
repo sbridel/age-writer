@@ -22,7 +22,13 @@ function mountOverlay(r) {
   const parent = r.canvas.parentElement; if (!parent || !r.opts.onDescMount || typeof document === "undefined") return;
   ui = r.dbUI = { root: null, ctrl: null };
   const root = document.createElement("div"); root.className = "age-relto-descbook";
-  const s = root.style; s.position = "absolute"; s.left = ((X0 + 10) / W) * 100 + "%"; s.top = ((Y0 + 10) / H) * 100 + "%"; s.right = ((W - X0 - BW + 10) / W) * 100 + "%"; s.bottom = ((H - Y0 - BH + 10) / H) * 100 + "%"; s.pointerEvents = "auto"; s.boxSizing = "border-box";
+  const s = root.style; s.position = "absolute"; s.pointerEvents = "auto"; s.boxSizing = "border-box";
+  const place = () => { // des pixels, pas des pourcentages : la hauteur du parent peut être indéterminée, celle du canevas, jamais
+    const cv = r.canvas, w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
+    s.left = cv.offsetLeft + ((X0 + 10) / W) * w + "px"; s.top = cv.offsetTop + ((Y0 + 10) / H) * h + "px"; s.width = ((BW - 20) / W) * w + "px"; s.height = ((BH - 20) / H) * h + "px";
+    root.dispatchEvent(new Event("age-fit"));
+  };
+  place(); if (typeof ResizeObserver !== "undefined") { ui.ro = new ResizeObserver(place); ui.ro.observe(r.canvas); }
   for (const ev of ["keydown", "keyup", "keypress", "mousedown", "click", "wheel"]) root.addEventListener(ev, (e) => e.stopPropagation());
   parent.appendChild(root); ui.root = root;
   try { ui.ctrl = r.opts.onDescMount(root, r.descTarget || null); } catch (e) { console.warn("[Age Writer ext] livre descriptif", e); }
@@ -31,7 +37,7 @@ function mountOverlay(r) {
 /** À la sortie de la vue : le livre est démonté (il se remonte à jour à la prochaine entrée). */
 function unmount(r) {
   const ui = r.dbUI; if (!ui) return;
-  try { if (ui.ctrl && ui.ctrl.dispose) ui.ctrl.dispose(); } catch (e) { /* ignore */ }
+  try { if (ui.ro) ui.ro.disconnect(); if (ui.ctrl && ui.ctrl.dispose) ui.ctrl.dispose(); } catch (e) { /* ignore */ }
   if (ui.root) ui.root.remove(); r.dbUI = null;
 }
 
