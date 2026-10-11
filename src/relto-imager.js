@@ -553,6 +553,7 @@ function closeLens(r, ctx, st, cl, t, c) {
     const line = parts.map((p) => T(p.key, { c: p.vars.c ? cname(p.vars.c) : "" })).join(" ");
     ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = rgba(224, 194, 122, 0.9);
     ctx.fillText(line, MINI.x + MINI.w / 2, MINI.y + MINI.h + 26, MINI.w + 24);
+    if (!s.lock && r.imagerClarity && r.imagerClarity().total >= I.LOCK_AT) ctx.fillText(T("lens.pull"), MINI.x + MINI.w / 2, MINI.y + MINI.h + 40, MINI.w + 24); // l'image est nette : reste à fixer le réglage
     ctx.textAlign = "left";
   }
   backStrip(r, ctx);
