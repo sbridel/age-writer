@@ -120,7 +120,7 @@ function ghostGlyphs(ages, used) {
   const known = H.known(path), per = H.ghosts(path), list = []; let more = 0;
   for (const g of BV.paletteGroups()) {
     const hidden = g.items.filter((it) => !known.has(it.id) && !used.has(it.id)).sort((x, y) => BV.hashOf(x.id) - BV.hashOf(y.id)), n = Math.min(per, hidden.length);
-    for (const it of hidden.slice(0, n)) list.push({ id: it.id, axis: g.axis, hint: H.ghostTip() + BV.ghostHint(it.id) });
+    for (const it of hidden.slice(0, n)) list.push({ id: it.id, axis: g.axis, hint: BV.ghostText(H, it.id) });
     more += hidden.length - n;
   }
   return { list, more };

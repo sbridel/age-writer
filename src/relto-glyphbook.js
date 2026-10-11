@@ -10,7 +10,7 @@ const INK = "#3a2d1a", FAINT = "#8a7650";
 
 /** Les pages du livre, à partir des Âges du refuge (pur : `deps` donne le moteur et les accroches de l'histoire, pour les tests). */
 function buildPages(ages, deps) {
-  const { groups, hooks, hashOf, ghostHint, unscore } = deps, used = new Map(), reacts = new Map();
+  const { groups, hooks, hashOf, ghostText, unscore } = deps, used = new Map(), reacts = new Map();
   for (const a of ages || []) {
     for (const id of a.glyphs || []) { if (!used.has(id)) used.set(id, []); used.get(id).push(a); }
     for (const x of a.reactions || []) { const key = (x.a || "") + "+" + (x.b || "") + "=" + (x.shown || ""); if (x.shown && !reacts.has(key)) reacts.set(key, x); }
@@ -21,7 +21,7 @@ function buildPages(ages, deps) {
     const cells = [], seen = [], rest = [];
     for (const it of g.items) { if (used.has(it.id)) cells.push({ id: it.id, name: it.label, state: "used", ages: used.get(it.id) }); else if (known && known.has(it.id)) seen.push({ id: it.id, name: it.label, state: "known" }); else if (known) rest.push(it); }
     const hidden = rest.sort((x, y) => hashOf(x.id) - hashOf(y.id)), n = Math.min(per, hidden.length);
-    const ghosts = hidden.slice(0, n).map((it) => ({ id: it.id, state: "ghost", hint: hooks.ghostTip() + ghostHint(it.id) }));
+    const ghosts = hidden.slice(0, n).map((it) => ({ id: it.id, state: "ghost", hint: ghostText(hooks, it.id) }));
     const all = [...cells, ...seen, ...ghosts];
     if (all.length) sections.push({ axis: g.axis, label: g.label, cells: all, more: hidden.length - n });
   }
@@ -118,7 +118,7 @@ function drawPage(r, ctx, pg, side, c, live, tr, BV) {
 function drawGlyphBook(r, ctx, sc, sky, t) {
   const BV = require("./engine/book-view"), hooks = require("./engine/hooks").hooks, tr = r.imagerTr ? r.imagerTr() : (k) => k;
   const amb = 0.7 + 0.3 * sky.ambient, c = (h) => mix("#05060c", h, amb), st = r.gbook || (r.gbook = { spread: 0, anim: null });
-  if (!r._gbData || r._gbData.sc !== sc) r._gbData = { sc, pages: buildPages(sc.ages || [], { groups: BV.paletteGroups().map((g) => { const k = "glyphbook.axis." + g.axis, v = tr(k); return { ...g, label: v && v !== k ? v : g.label }; }), hooks, hashOf: BV.hashOf, ghostHint: BV.ghostHint, unscore: BV.unscore }) };
+  if (!r._gbData || r._gbData.sc !== sc) r._gbData = { sc, pages: buildPages(sc.ages || [], { groups: BV.paletteGroups().map((g) => { const k = "glyphbook.axis." + g.axis, v = tr(k); return { ...g, label: v && v !== k ? v : g.label }; }), hooks, hashOf: BV.hashOf, ghostText: BV.ghostText, unscore: BV.unscore }) };
   const pages = r._gbData.pages, nS = Math.max(1, Math.ceil(pages.length / 2)); st.spread = clamp(st.spread, 0, nS - 1);
   // la table, dans la pénombre ; le livre : couverture de cuir sarcelle, deux pages
   ctx.fillStyle = c("#2a1c12"); ctx.fillRect(0, 0, W, H);

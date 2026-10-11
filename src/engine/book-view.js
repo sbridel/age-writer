@@ -28,6 +28,8 @@ const ghostHint = (id) => {
   let sky = SKY_ENTRIES.find((e) => e.id === id);
   return sky ? " \u2014 " + ({ stars: "a star", cycle: "a rhythm of days", orbit: "an orbit", phenomenon: "a sky phenomenon", belt: "a belt", hue: "a colour of the sky", world: "a kind of world", body: "a trait of the world", remnant: "a remnant", terrain: "a lay of the land" }[sky.category] || "something of the sky") : "";
 };
+/** Le texte du survol d'un glyphe non appris : seulement de quoi le deviner (« lourd, amer »), le mot « pas appris » va de soi ; sans indice, la formule générale. */
+const ghostText = (hooks, id) => { const h = ghostHint(id).replace(/^\s*\u2014\s*/, ""); return h ? h.charAt(0).toUpperCase() + h.slice(1) : hooks.ghostTip(); };
 const unscore = (text) => text.replace(/_/g, " ");
 
 function paletteGroups() {
@@ -240,7 +242,7 @@ const BookView = class extends obsidian.ItemView {
         let hidden = group.items.filter((item) => !known.has(item.id) && !written.has(item.id)), n = Math.min(hooks.ghosts(file.path), hidden.length);
         hidden = hidden.sort((a, b) => hashOf(a.id) - hashOf(b.id));
         hidden.slice(0, n).forEach((item) => {
-          let tip = hooks.ghostTip() + ghostHint(item.id),
+          let tip = ghostText(hooks, item.id),
             ghost = grid.createEl("span", { cls: "age-book__swatch is-ghost", attr: { title: tip, "aria-label": tip } });
           ((ghost.style.borderBottomColor = AXIS_COLORS[group.axis]), setMarkup(ghost, `<svg viewBox="0 0 100 100">${glyphSvg(item.id, 0, 0, 100)}</svg>`));
         });
@@ -402,6 +404,7 @@ module.exports = {
   PALETTE_AXES,
   paletteGroups,
   ghostHint,
+  ghostText,
   hashOf,
   unscore,
 };

@@ -93,7 +93,7 @@ function drawBackroom(r, ctx, sc, sky, t) {
     ctx.fillStyle = c("#e6d9b8"); ctx.beginPath(); ctx.arc(hx + hw / 2, hy + 26, 15, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#2a1c14"); ctx.lineWidth = 1.2; ctx.stroke();
     for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283; ctx.beginPath(); ctx.moveTo(hx + hw / 2 + Math.cos(a) * 12, hy + 26 + Math.sin(a) * 12); ctx.lineTo(hx + hw / 2 + Math.cos(a) * 14, hy + 26 + Math.sin(a) * 14); ctx.stroke(); }
     ctx.fillStyle = c("#2a1c14"); ctx.beginPath(); ctx.arc(hx + hw / 2, hy + 26, 1.6, 0, 6.283); ctx.fill(); // pas d'aiguilles
-    ctx.fillStyle = "#0b0807"; ctx.fillRect(hx + 7, hy + 54, hw - 14, 100); const pa = Math.sin(t * 2.4) * 0.22, px = hx + hw / 2, py = hy + 56; ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + Math.sin(pa) * 66, py + Math.cos(pa) * 66); ctx.stroke(); ctx.fillStyle = c("#d8b45e"); ctx.beginPath(); ctx.arc(px + Math.sin(pa) * 66, py + Math.cos(pa) * 66, 7, 0, 6.283); ctx.fill();
+    ctx.fillStyle = "#0b0807"; ctx.fillRect(hx + 5, hy + 54, hw - 10, 100); const pa = Math.sin(t * 2.4) * 0.1, px = hx + hw / 2, py = hy + 56; ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + Math.sin(pa) * 66, py + Math.cos(pa) * 66); ctx.stroke(); ctx.fillStyle = c("#d8b45e"); ctx.beginPath(); ctx.arc(px + Math.sin(pa) * 66, py + Math.cos(pa) * 66, 5, 0, 6.283); ctx.fill();
     item(hx - 4, hy - 6, hw + 8, FLOOR - hy + 6, "back.clock.tip", "back.clock.flash");
   }
 
