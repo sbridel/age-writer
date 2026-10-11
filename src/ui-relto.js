@@ -161,7 +161,7 @@ async function startStory(plugin) {
 }
 
 /** Ce qui manque au chapitre en cours, en une phrase (vide pour le chapitre final : il ne dit jamais ce qui manque). */
-const WHY = { noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all" };
+const WHY = { noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all", hardstable: "story.why.hardstable", hardpages: "story.why.hardpages", hardaxes: "story.why.hardaxes" };
 const whyText = (plugin, why) => (WHY[why] ? "\n" + plugin.t(WHY[why]) : "");
 
 /** Un chapitre réussi : la note reçoit la propriété `story_chapter: completed` et l'étiquette `completed`, et une fenêtre le dit sans qu'il faille revenir au Relto. */

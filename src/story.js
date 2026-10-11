@@ -118,9 +118,12 @@ function check(chapter, ctx) {
   if (chapter.id === "strange") return ages.some((a) => strangeOk(a, ctx.axisOf)) ? { ok: true, why: "" } : { ok: false, why: "strange" }; // aucun message d'échec : le chapitre reste ouvert
   if (chapter.id === "hard") {
     // « le monde difficile » : tout ensemble, et qui tient (marge de 5) : huit pages au moins, quatre axes, une météo programmée, deux valeurs physiques
-    const good = ages.find((a) => a.stability >= STABLE_AT + 5 && (a.glyphs || []).length >= 8 && axesOf(a.glyphs, ctx.axisOf).size >= 4 && a.programmed >= 1 && a.physics >= 2);
+    const unmet = (a) => [a.stability >= STABLE_AT + 5 ? "" : "hardstable", (a.glyphs || []).length >= 8 ? "" : "hardpages", axesOf(a.glyphs, ctx.axisOf).size >= 4 ? "" : "hardaxes", a.programmed >= 1 ? "" : "program", a.physics >= 2 ? "" : "physics"].filter(Boolean);
+    const good = ages.find((a) => !unmet(a).length);
     if (good) return { ok: true, why: "", path: good.path };
-    return stable.length ? { ok: false, why: "all" } : { ok: false, why: "stable" };
+    if (!ages.length) return { ok: false, why: "noage" };
+    const best = ages.reduce((m, a) => (unmet(a).length < unmet(m).length || (unmet(a).length === unmet(m).length && a.stability > m.stability) ? a : m)); // l'Âge le plus proche : on dit ce qui lui manque, d'abord
+    return { ok: false, why: unmet(best)[0] };
   }
   if (chapter.id === "imager") { // « écouter le ciel » : l'Imageur est réglé et verrouillé sur l'un des Âges du dossier
     const tun = (ctx && ctx.tunings) || {};

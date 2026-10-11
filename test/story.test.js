@@ -135,8 +135,8 @@ const hc = ST.chapterById("hard"), hr = ST.WORLDS.hard.ref;
 const hw = (extra) => ({ ...age("Dur", hr, "Dossier/Dur.md"), programmed: 1, physics: 2, ...(extra || {}) });
 ok(hr.length >= 8 && ST.axesOf(hr, axisOf).size >= 4, "hard : le monde de référence a huit pages et quatre axes");
 ok(ST.check(hc, ctx([hw({ stability: 90 })])).ok, "hard : tout ensemble et stable, réussi");
-ok(ST.check(hc, ctx([hw({ stability: 90, programmed: 0 })])).why === "all" && ST.check(hc, ctx([hw({ stability: 90, physics: 1 })])).why === "all" && ST.check(hc, ctx([hw({ stability: 90, glyphs: hr.slice(0, 7) })])).why === "all", "hard : sans météo programmée, sans deux valeurs physiques ou sous huit pages, non");
-ok(ST.check(hc, ctx([hw({ stability: 77 })])).why === "all" && ST.check(hc, ctx([hw({ stability: 50 })])).why === "stable", "hard : il faut de la marge (80), et un monde instable ne compte pas");
+ok(ST.check(hc, ctx([hw({ stability: 90, programmed: 0 })])).why === "program" && ST.check(hc, ctx([hw({ stability: 90, physics: 1 })])).why === "physics" && ST.check(hc, ctx([hw({ stability: 90, glyphs: hr.slice(0, 7) })])).why === "hardpages", "hard : sans météo programmée, sans deux valeurs physiques ou sous huit pages, non");
+ok(ST.check(hc, ctx([hw({ stability: 77 })])).why === "hardstable" && ST.check(hc, ctx([hw({ stability: 50 })])).why === "hardstable", "hard : il faut de la marge (80), et un monde instable ne compte pas");
 let hfair = 0; for (let i = 0; i < 200; i++) { const nm = ST.chapterName(hc, `Le monde difficile · ${1000 + i * 7919}`, an); if (an(hr.join("\n"), nm).stability >= 80) hfair++; }
 ok(hfair === 200, "hard : un monde de référence tient pour tout nom (" + hfair + "/200)");
 
