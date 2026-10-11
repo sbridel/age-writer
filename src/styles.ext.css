@@ -652,30 +652,52 @@
 .age-set__pill.age-set__pill:hover { color: var(--text-normal); border-color: var(--text-faint); }
 .age-set__pill.age-set__pill.is-on { background: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent); }
 
-/* le livre descriptif monté dans le Relto : la palette devient un porte-document (planchette de bois, pince de laiton) à côté du livre */
-.age-relto-descbook.age-relto-descbook { overflow: hidden; }
-.age-relto-descbook.age-book--relto.age-book--relto { display: grid; grid-template-columns: minmax(0, 1fr) 190px; grid-template-rows: auto minmax(0, 1fr); gap: 4px 8px; height: 100%; padding: 4px; box-sizing: border-box; overflow: hidden; }
-.age-book--relto .age-book__head { grid-column: 1 / 3; grid-row: 1; margin-bottom: 0; color: #e9dcb8; }
-.age-book--relto .age-book__spread { grid-column: 1; grid-row: 2; min-height: 0; padding: 6px; overflow: hidden; }
-.age-book--relto .age-book__page { padding: 8px 8px; overflow: auto; font-size: 0.82em; }
-.age-book--relto .age-book__chips { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 6px; padding-left: 4px; }
-.age-book--relto .age-book__chip { max-width: 54px; }
-.age-book--relto .age-book__prose { line-height: 1.45; }
-.age-book--relto .age-book__colophon { margin-top: 8px; }
-.age-book--relto .age-book__head { font-size: 0.85em; }
-.age-book--relto .age-book__palette { grid-column: 2; grid-row: 2; margin-top: 0; min-height: 0; overflow: auto; position: relative; padding: 18px 8px 8px; background: #7a5a36; border: 1px solid #3a2a18; border-radius: 3px; box-shadow: inset 0 0 0 3px #8a6a40, 0 2px 6px rgba(0, 0, 0, 0.5); }
-.age-book--relto .age-book__palette::before { content: ""; position: absolute; left: 50%; top: 2px; width: 46px; height: 11px; margin-left: -23px; background: linear-gradient(#d8b45e, #9a7a30); border-radius: 2px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); }
-.age-book--relto .age-book__palette summary { color: #f0e2b8; }
-.age-book--relto .age-book__palette-heading { color: #f0e2b8; }
-.age-book--relto .age-book__swatch { width: 36px; height: 36px; }
-.age-book--relto .age-book__title { color: #f0e2b8; }
-.age-book--relto .age-book__line { display: flex; align-items: baseline; gap: 6px; padding: 1px 0; font-size: 0.85em; border-bottom: 1px dotted rgba(110, 80, 40, 0.3); }
-.age-book--relto .age-book__line.is-unknown .age-book__line-text { color: #8a3a2a; text-decoration: underline wavy; }
-.age-book--relto .age-book__line-text { cursor: pointer; flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.age-book--relto .age-book__pull--line { position: static; opacity: 0.7; }
-.age-book--relto .age-book__line-input { width: 100%; margin-top: 8px; box-sizing: border-box; background: rgba(250, 242, 214, 0.55); color: #2c3d2b; font-style: italic; }
-.age-book--relto .age-book__line-go { margin-top: 4px; }
-.age-book--relto .age-book__line-msg { margin-top: 4px; font-size: 0.8em; font-style: italic; color: #8a2f2f; }
+/* Le livre descriptif monté dans le Relto */
+.age-relto-descbook { overflow: hidden; }
+/* Le livre descriptif du Relto : un vrai livre de cuir, des pages de parchemin, des glyphes à l'encre. */
+.age-dbook { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; padding: 6px 8px 4px; position: relative; font-size: 0.85em; }
+.age-dbook__head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; color: #f0e2b8; }
+.age-dbook__title { font-size: 1.15em; font-weight: 600; font-family: serif; }
+.age-dbook__spread { flex: 1; min-height: 0; margin: 0; padding: 12px 14px; background: repeating-linear-gradient(37deg, rgba(0, 0, 0, 0.16) 0 1px, transparent 1px 5px), #24170f; border: 1px solid #0d0804; box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6), 0 3px 10px rgba(0, 0, 0, 0.45); animation: age-dbook-turn 0.28s ease-out; }
+.age-dbook .age-book__page { background: radial-gradient(ellipse at 30% 20%, rgba(255, 250, 230, 0.35), transparent 60%), #e4d4ab; box-shadow: inset 0 0 26px rgba(110, 80, 40, 0.35); padding: 12px 14px; overflow: auto; }
+.age-dbook .age-book__gutter { background: linear-gradient(90deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.08) 45%, rgba(0, 0, 0, 0.08) 55%, rgba(0, 0, 0, 0.5)); }
+@keyframes age-dbook-turn { from { opacity: 0.2; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+.age-dbook__nav { display: flex; align-items: center; justify-content: center; gap: 14px; padding-top: 4px; color: #f0e2b8; }
+.age-dbook__nav button { padding: 0 10px; }
+.age-dbook__glyphs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; height: 100%; grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.age-dbook__cell { position: relative; min-height: 0; display: flex; align-items: center; justify-content: center; border: 1px solid transparent; color: #2b2118; }
+.age-dbook__cell.is-drawn { border: 1px dashed rgba(90, 70, 40, 0.65); }
+.age-dbook__cell--empty { border-color: transparent; }
+.age-dbook__cell--plus { border: 1px dashed rgba(90, 70, 40, 0.45); cursor: pointer; font-size: 2em; font-family: serif; color: rgba(60, 45, 28, 0.55); }
+.age-dbook__cell--plus:hover { background: rgba(120, 90, 50, 0.12); color: #2b2118; }
+.age-dbook__ink { width: 60%; max-height: 80%; display: flex; justify-content: center; filter: drop-shadow(0 0 0.7px rgba(43, 33, 24, 0.7)); opacity: 0.92; }
+.age-dbook__ink svg { display: block; width: 100%; height: auto; }
+.age-dbook__cell.is-fresh .age-dbook__ink { animation: age-dbook-ink 1.4s ease-out both; }
+@keyframes age-dbook-ink { 0% { opacity: 0; filter: blur(4px); transform: scale(1.18); } 55% { opacity: 0.8; filter: blur(1.5px); } 100% { opacity: 0.92; filter: blur(0); transform: none; } }
+.age-dbook__take { position: absolute; top: 2px; right: 2px; padding: 0 5px; font-size: 0.8em; opacity: 0; background: rgba(228, 212, 171, 0.9); }
+.age-dbook__cell:hover .age-dbook__take { opacity: 0.85; }
+.age-dbook__binder { position: absolute; inset: 28px 18px 26px 18px; z-index: 5; display: flex; flex-direction: column; background: #2a2018; border: 2px solid #8a6a2e; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7); padding: 6px 8px 8px; }
+.age-dbook__tabs { display: flex; gap: 3px; align-items: flex-end; }
+.age-dbook__tabbtn { border: 0; border-top: 4px solid #b8934a; border-radius: 4px 4px 0 0; background: #4a3a28; color: #e8dcb8; padding: 2px 10px; font-size: 0.85em; }
+.age-dbook__tabbtn.is-on { background: #e4d4ab; color: #2b2118; }
+.age-dbook__close { margin-left: auto; padding: 0 8px; }
+.age-dbook__sheet { flex: 1; min-height: 0; overflow: auto; background: radial-gradient(ellipse at 30% 20%, rgba(255, 250, 230, 0.35), transparent 60%), #e4d4ab; padding: 10px; box-shadow: inset 0 0 26px rgba(110, 80, 40, 0.35); }
+.age-dbook__bgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.age-dbook__bcell { aspect-ratio: 1; padding: 8px; border: 1px solid transparent; background: transparent; color: #2b2118; cursor: pointer; box-shadow: none; }
+.age-dbook__bcell svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 0.6px rgba(43, 33, 24, 0.7)); }
+.age-dbook__bcell:hover { background: rgba(120, 90, 50, 0.14); }
+.age-dbook__bcell.is-on { border: 1px dashed #5a4a30; background: rgba(120, 90, 50, 0.22); }
+.age-dbook__more { margin-top: 8px; font-style: italic; color: #6a5a40; font-size: 0.85em; }
+.age-dbook__bnav { display: flex; justify-content: center; align-items: center; gap: 12px; padding-top: 6px; color: #e8dcb8; }
+.age-dbook__bnav button { padding: 0 10px; }
+.age-dbook .age-book__prose { line-height: 1.5; font-style: italic; }
+.age-dbook .age-book__line { display: flex; align-items: baseline; gap: 6px; padding: 1px 0; }
+.age-dbook .age-book__line.is-unknown .age-book__line-text { color: #8a3a2a; text-decoration: underline wavy; }
+.age-dbook .age-book__line-text { cursor: pointer; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.age-dbook .age-book__pull--line { position: static; opacity: 0.7; }
+.age-dbook .age-book__line-input { width: 100%; margin-top: 8px; box-sizing: border-box; background: #f4ead0; color: #2b2118; border: 1px solid #8a7250; }
+.age-dbook .age-book__line-go { margin-top: 6px; }
+.age-dbook .age-book__line-msg { margin-top: 4px; font-size: 0.8em; font-style: italic; color: #8a3a2a; }
 
 /* Les trois mines du livre d'un Âge : la couverture (le dessin propre à l'Âge), le livre descriptif (reliure de savant, parchemin et encre, voir plus haut)
    et le livre de liaison — reliure sombre, fermoir de laiton, et sa page de liaison cerclée de cuir. */
