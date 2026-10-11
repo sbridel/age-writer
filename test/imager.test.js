@@ -89,6 +89,7 @@ ok(/bourdonne/.test(hf.line) && /hums/.test(he.line) && hf.values.freq === aur.f
 { // aide aux lentilles : la couleur la plus éloignée, puis l'éclat ; « se confondent » quand tout est juste
   const L = { r: 20, g: 10, b: 4, iris: 12 };
   ok(I.lensWords({ r: 20, g: 10, b: 4, iris: 12 }, null) === null, "sans lumière de référence : pas d'aide");
+  ok(I.lensScore({ r: 20, g: 11, b: 5, iris: 13 }, { lens: L }) === 1, "à un cran près partout : la lentille est juste (lampe verte, verrou possible)");
   ok(I.lensWords({ r: 20, g: 11, b: 5, iris: 13 }, L)[0].key === "lens.match", "à un cran près partout : les deux lumières se confondent");
   const w1 = I.lensWords({ r: 20, g: 10, b: 16, iris: 12 }, L); ok(w1.length === 1 && w1[0].key === "lens.more.lot" && w1[0].vars.c === "b", "beaucoup trop de bleu");
   const w2 = I.lensWords({ r: 16, g: 10, b: 4, iris: 6 }, L); ok(w2[0].key === "lens.less.some" && w2[0].vars.c === "r" && w2[1].key === "lens.dim.some", "il manque du rouge, et c'est trop sombre");

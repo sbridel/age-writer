@@ -129,7 +129,8 @@ function lensWords(s, L) {
 /** II. Justesse des lentilles (0 à 1) : écart des trois couleurs, puis de l'iris. */
 function lensScore(s, t) {
   const L = t.lens; if (!L) return 1;
-  return Math.max(0, 1 - (Math.abs(s.r - L.r) + Math.abs(s.g - L.g) + Math.abs(s.b - L.b)) / 40 - (0.7 * Math.abs(s.iris - L.iris)) / MAX);
+  const gap = (a, b) => Math.max(0, Math.abs(a - b) - 1); // un cran d'écart ne se voit pas : c'est « les deux lumières se confondent » (lensWords), donc la lentille est juste
+  return Math.max(0, 1 - (gap(s.r, L.r) + gap(s.g, L.g) + gap(s.b, L.b)) / 40 - (0.7 * gap(s.iris, L.iris)) / MAX);
 }
 /** I. Justesse des cristaux (0 à 1) : un ensemble, l'ordre ne compte pas ; chaque bon cristal compte, un cristal faux brouille. */
 const CRY_WRONG = 0.25;
