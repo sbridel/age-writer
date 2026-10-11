@@ -24,7 +24,7 @@ const AT = require("./relto-atelier");
 const GB = require("./relto-glyphbook");
 const LB = require("./relto-librarybook");
 const AB = require("./relto-atelier-back");
-const ROOMS = { librarybook: LB.drawLibraryBook, atelierback: AB.drawBackroom, glyphbook: GB.drawGlyphBook, letter: AT.drawLetter, atelier: AT.drawAtelier, desk: AT.drawDesk, loft: AT.drawLoft, cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom, book: PB.drawBookRoom, telescope: TL.drawTelescopeRoom, starmap: SM.drawStarMap, clock: CK.drawClockRoom };
+const ROOMS = { flower: AT.drawFlowerView, librarybook: LB.drawLibraryBook, atelierback: AB.drawBackroom, glyphbook: GB.drawGlyphBook, letter: AT.drawLetter, atelier: AT.drawAtelier, desk: AT.drawDesk, loft: AT.drawLoft, cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom, book: PB.drawBookRoom, telescope: TL.drawTelescopeRoom, starmap: SM.drawStarMap, clock: CK.drawClockRoom };
 
 const W = 640, H = 360, GY = 208; // largeur, hauteur logiques ; ligne de sol
 
@@ -554,9 +554,9 @@ class ReltoRenderer {
 
   /**
    * Le chat roulé en boule (vue de la cabane) : il respire, une oreille frémit de temps en temps, la queue fait le tour du corps.
-   * (x, y) : le sol sous lui ; S : échelle ; glow : lueur de l'âtre (0 = feu éteint) ; shade : la pénombre de la pièce.
+   * (x, y) : le sol sous lui ; S : échelle ; shade : la pénombre de la pièce.
    */
-  drawSleepingCat(ctx, a, { x, y, S, glow = 0, shade = (c) => c, tip = null }, t) {
+  drawSleepingCat(ctx, a, { x, y, S, shade = (c) => c, tip = null }, t) {
     const cat = catLook(a.color), br = 1 + 0.045 * Math.sin(t * 1.5), tw = frac(t * 0.13 + (this.scene.seed % 5) / 5) > 0.975 ? Math.sin(t * 40) * 0.25 : 0;
     ctx.save(); ctx.translate(x, y); ctx.scale(S, S);
     ctx.fillStyle = "rgba(0,0,0,0.28)"; ctx.beginPath(); ctx.ellipse(0, 0, 13, 2.2, 0, 0, 6.283); ctx.fill(); // ombre sur le tapis
@@ -584,7 +584,6 @@ class ReltoRenderer {
     for (const ex of [hx - 2.3, hx + 1.3]) { ctx.beginPath(); ctx.arc(ex, hy - 0.4, 0.9, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke(); }
     ctx.fillStyle = shade("#d98a8a"); ctx.fillRect(hx - 0.9, hy + 1, 0.8, 0.55);
     // lueur de l'âtre sur le dos (le feu est à droite)
-    if (glow > 0) { ctx.strokeStyle = rgba(255, 170, 80, 0.5 * glow); ctx.lineWidth = 0.9; ctx.lineCap = "butt"; ctx.beginPath(); ctx.ellipse(1, -5 * br, 11, 5.4 * br, 0, -0.95, 0.3); ctx.stroke(); }
     ctx.restore();
     // quelques « z » qui montent, très pâles
     if (!this.opts.reducedMotion) for (let i = 0; i < 2; i++) { const p = frac(t * 0.18 + i * 0.5); ctx.fillStyle = rgba(240, 230, 210, 0.35 * Math.sin(p * Math.PI)); ctx.font = `italic ${Math.round(S * (2.6 + p * 1.6))}px serif`; ctx.fillText("z", x + S * (-11 + p * 4 + i * 2), y - S * (11 + p * 9)); }
@@ -1099,7 +1098,7 @@ class ReltoRenderer {
     if (view !== "global" && !(ROOMS[view] && this.available()[view])) view = "island";
     if (view === "cat" && this.catAsleep()) view = "cabin"; // il dort au coin du feu : on le trouve dans la cabane
     if (view === (this.view || "island")) return;
-    { const grp = ["atelier", "atelierback", "desk", "loft", "letter"]; if (view === "atelier" && !grp.includes(this.view)) this.catSpot = Math.floor(Math.random() * 3); } // le chat choisit : fauteuil (0), tapis (1) ou lit (2)
+    { const grp = ["atelier", "atelierback", "desk", "loft", "letter", "flower"]; if (view === "atelier" && !grp.includes(this.view)) this.catSpot = Math.floor(Math.random() * 3); } // le chat choisit : fauteuil (0), tapis (1) ou lit (2)
     if (view === "starmap") this.mapFrom = this.view; // la flèche du bas ramène au bureau si on vient de la carte du mur
     if (view === "glyphbook" || view === "librarybook") this.gbook = { spread: 0, anim: null };
     if (view === "librarybook") { this._lbData = null; if (this.libUI) { this.libUI.msg = ""; } if (this.opts.onLibraryOpen) this.opts.onLibraryOpen(); }
@@ -1112,7 +1111,7 @@ class ReltoRenderer {
   /** vues possibles selon les pages et structures de ce Relto (l'île et la vue globale existent toujours) */
   available() {
     const sc = this.scene, a = (t) => sc.additions.some((x) => x.type === t);
-    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies"), imager: a("imager"), book: sc.structures.includes("hut"), telescope: a("telescope"), starmap: a("telescope"), clock: a("dniclock"), atelier: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), letter: sc.structures.includes("hut") && ((sc.mode === "story" && (sc.storyDone || []).includes("end")) || (sc.mode !== "story" && a("inkwell"))), desk: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), loft: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), glyphbook: sc.structures.includes("hut"), librarybook: sc.structures.includes("hut"), atelierback: sc.structures.includes("hut") && (a("atelier") || a("inkwell")) };
+    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies"), imager: a("imager"), book: sc.structures.includes("hut"), telescope: a("telescope"), starmap: a("telescope"), clock: a("dniclock"), atelier: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), letter: sc.structures.includes("hut") && ((sc.mode === "story" && (sc.storyDone || []).includes("end")) || (sc.mode !== "story" && a("inkwell"))), desk: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), loft: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), glyphbook: sc.structures.includes("hut"), librarybook: sc.structures.includes("hut"), atelierback: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), flower: sc.structures.includes("hut") && (a("atelier") || a("inkwell")) };
   }
   /** dessine `fn` (en coordonnées de l'île) agrandi dans une vue rapprochée et reporte les zones cliquables qu'il crée à l'écran */
   withView(ctx, { S, ox, oy, fx, fy }, fn) {

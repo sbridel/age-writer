@@ -170,7 +170,7 @@ function drawCabin(r, ctx, sc, sky, t) {
   const cf = clamp(0.75 * fl + 0.2); ctx.fillStyle = rgba(255, 190, 80, cf); ctx.beginPath(); ctx.ellipse(cx + 3.5, ty - 19, 2.4, 5 * cf, 0, 0, 6.283); ctx.fill();
   // le chat, quand il dort au coin du feu (voir ReltoRenderer.catAsleep) : au premier plan, sur le tapis
   const cat = r.scene.additions.find((a) => a.type === "cat");
-  if (cat && r.catAsleep() && r.catWhere() !== "atelier") r.drawSleepingCat(ctx, cat, { x: 372, y: 328, S: 3.1, glow: lit ? d * fl : 0, shade: c }, t);
+  if (cat && r.catAsleep() && r.catWhere() !== "atelier") r.drawSleepingCat(ctx, cat, { x: 372, y: 328, S: 3.1, shade: c }, t);
   // lumière : lueur de l'âtre et de la chandelle, puis pénombre du soir
   let g = ctx.createRadialGradient(mx, FLOOR - 24, 6, mx, FLOOR - 24, 300); g.addColorStop(0, rgba(255, 150, 60, (0.18 + 0.2 * night) * fl * d)); g.addColorStop(1, rgba(255, 130, 40, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   g = ctx.createRadialGradient(cx + 3.5, ty - 19, 2, cx + 3.5, ty - 19, 70); g.addColorStop(0, rgba(255, 190, 90, (0.12 + 0.28 * night) * fl)); g.addColorStop(1, rgba(255, 190, 90, 0)); ctx.fillStyle = g; ctx.fillRect(cx - 80, ty - 90, 160, 140);

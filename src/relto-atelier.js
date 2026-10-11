@@ -1,8 +1,9 @@
 "use strict";
 // L'atelier d'écriture : une pièce cachée derrière une bibliothèque et un panneau de la cabane. Un grand bureau chargé d'objets étranges, une cheminée,
 // un fauteuil (le chat s'y repose) et, en haut, une galerie de livres. Tout est dessiné ici (aucun asset).
-const { rng, clamp, mix, rgba, fnv } = require("./util");
+const { rng, clamp, mix, rgba } = require("./util");
 const EMB = require("./emblem");
+const FL = require("./relto-flower");
 const W = 640, H = 360, FLOOR = 250, GALLERY = 100;
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 const flick = (t) => 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1) + 0.06 * Math.sin(t * 17);
@@ -71,8 +72,6 @@ function lampChain(r, ctx, c, x, y, len, t, tip, bodyHot) {
   r.hot.push({ x: x - 7, y: y + L - 6, w: 16, h: 16, tip, lamp: true });
 }
 
-/** Teinte (0–360), saturation, clarté (0–1) → « #rrggbb » : pour la fleur de cristal, dont les couleurs viennent de la graine du Relto. */
-function hsl(h, sa, l) { h = ((h % 360) + 360) % 360; const k = (n) => (n + h / 30) % 12, a = sa * Math.min(l, 1 - l), f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))), x = (v) => Math.round(v * 255).toString(16).padStart(2, "0"); return "#" + x(f(0)) + x(f(8)) + x(f(4)); }
 
 /** Les petites choses du mur (épingle, feuille posée de travers) : les mêmes au bureau et dans l'atelier. */
 function wallBits(ctx, c) {
@@ -151,22 +150,8 @@ function drawAtelier(r, ctx, sc, sky, t) {
   else r.hot.push({ x: ax - 8, y: ay - 52, w: 68, h: 56, tip: TRr("atelier.chair.tip"), flash: TRr("atelier.chair.flash") });
   // le mur derrière le bureau : un portrait, le tableau aux ficelles rouges, un baromètre, une étagère de bocaux
   { const { pin, sheet } = wallBits(ctx, c), TRd = (k) => TRr(k), wq = rng(0xb0a7);
-    ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.ellipse(141, 158, 21, 28, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#2e3a36"); ctx.beginPath(); ctx.ellipse(141, 158, 17, 24, 0, 0, 6.283); ctx.fill();
-    ctx.save(); ctx.beginPath(); ctx.ellipse(141, 158, 17, 24, 0, 0, 6.283); ctx.clip(); // dans l'ovale : une fleur de cristal, qui luit doucement
-    const gl = 0.5 + 0.5 * Math.sin(t * 1.3), cx = 141, cy = 150, fq = rng((sc.seed ^ fnv("crystal-flower")) >>> 0), hue = fq() * 360, spread = 22 + fq() * 30, fsat = 0.5 + fq() * 0.3; // la couleur et le dégradé viennent de la graine du Relto
-    const P1 = hsl(hue, fsat, 0.42), P2 = hsl(hue + spread * 0.6, fsat, 0.55), P3 = hsl(hue + spread, fsat + 0.1, 0.5), HEART = hsl(hue + 150, 0.6, 0.74), BG0 = hsl(hue, 0.3, 0.12), BG1 = hsl(hue + spread, 0.28, 0.2), STEM = hsl(hue + 150, 0.35, 0.38), LEAF = hsl(hue + 150, 0.4, 0.3);
-    const bgG = ctx.createLinearGradient(0, 134, 0, 182); bgG.addColorStop(0, c(BG1)); bgG.addColorStop(1, c(BG0)); ctx.fillStyle = bgG; ctx.fillRect(120, 130, 42, 56); // le fond de l'ovale : un dégradé de la même teinte
-    const hg = ctx.createRadialGradient(cx, cy, 2, cx, cy, 22); hg.addColorStop(0, rgba(parseInt(P2.slice(1, 3), 16), parseInt(P2.slice(3, 5), 16), parseInt(P2.slice(5, 7), 16), 0.35 + 0.15 * gl)); hg.addColorStop(1, rgba(parseInt(P2.slice(1, 3), 16), parseInt(P2.slice(3, 5), 16), parseInt(P2.slice(5, 7), 16), 0)); ctx.fillStyle = hg; ctx.fillRect(cx - 24, cy - 24, 48, 48);
-    ctx.strokeStyle = c(STEM); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(cx, cy + 6); ctx.quadraticCurveTo(cx - 2, cy + 20, cx + 1, cy + 34); ctx.stroke(); // la tige
-    for (const [dx, dy, sg] of [[-1, 24, -1], [1, 17, 1]]) { ctx.fillStyle = c(LEAF); ctx.beginPath(); ctx.moveTo(cx + dx, cy + dy); ctx.lineTo(cx + dx + sg * 10, cy + dy - 6); ctx.lineTo(cx + dx + sg * 3, cy + dy + 3); ctx.closePath(); ctx.fill(); } // deux feuilles taillées
-    const petal = (ang, len, w, col, hi) => { ctx.save(); ctx.translate(cx, cy); ctx.rotate(ang); ctx.fillStyle = c(col); ctx.beginPath(); ctx.moveTo(0, -2); ctx.lineTo(-w, -len * 0.45); ctx.lineTo(0, -len); ctx.lineTo(w, -len * 0.45); ctx.closePath(); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, hi); ctx.beginPath(); ctx.moveTo(0, -2); ctx.lineTo(0, -len); ctx.lineTo(w, -len * 0.45); ctx.closePath(); ctx.fill(); ctx.restore(); };
-    petal(-1.95, 13, 3.8, P1, 0.08); petal(1.95, 13, 3.8, P1, 0.08); // les deux pétales du bas, qui retombent vers la tige : la fleur ne flotte plus
-    ctx.fillStyle = c(LEAF); ctx.beginPath(); ctx.moveTo(cx, cy + 1); ctx.lineTo(cx + 4, cy + 7); ctx.lineTo(cx, cy + 10); ctx.lineTo(cx - 4, cy + 7); ctx.closePath(); ctx.fill(); // le calice, où la tige rejoint la fleur
-    for (let i = 0; i < 5; i++) petal(-1.25 + i * 0.62, 15, 4.2, [P1, P2, P3, P2, P1][i], 0.14 + 0.1 * gl); // les pétales, des losanges à facettes
-    ctx.fillStyle = c(HEART); ctx.beginPath(); ctx.moveTo(cx, cy - 4); ctx.lineTo(cx + 3.2, cy); ctx.lineTo(cx, cy + 4); ctx.lineTo(cx - 3.2, cy); ctx.closePath(); ctx.fill(); // le cœur, de la teinte complémentaire
-    ctx.fillStyle = rgba(255, 255, 255, 0.5 + 0.4 * gl); ctx.fillRect(cx + 7, cy - 17, 1.4, 1.4); ctx.fillRect(cx - 9, cy - 9, 1.2, 1.2); // des éclats
-    ctx.restore();
-    r.hot.push({ x: 119, y: 129, w: 44, h: 58, tip: TRd("atelier.deco.portrait"), flash: TRd("atelier.deco.portrait.flash") });
+    FL.drawPortrait(ctx, c, sc, t); // l'ovale au mur : une fleur de cristal, qui luit doucement
+    r.hot.push({ x: 119, y: 129, w: 44, h: 58, tip: TRd("atelier.deco.portrait"), go: "flower" });
     ctx.fillStyle = c("#5a4330"); ctx.fillRect(188, 126, 108, 72); ctx.strokeStyle = c("#2f2118"); ctx.lineWidth = 3; ctx.strokeRect(188, 126, 108, 72); // le tableau : liège sombre, feuilles, ficelles
     for (let i = 0; i < 60; i++) { ctx.fillStyle = rgba(0, 0, 0, 0.1); ctx.fillRect(190 + wq() * 104, 128 + wq() * 68, 1.5, 1.5); }
     const P = [[200, 136, 22, 28, "#d9c9a0", -0.05], [236, 134, 26, 22, "#cdbb8a", 0.04], [268, 140, 22, 30, "#e0d3ae", -0.03], [212, 168, 26, 20, "#d6c598", 0.05], [252, 172, 28, 18, "#d9c9a0", -0.04]], pts = [];
@@ -345,4 +330,12 @@ function drawLetter(r, ctx, sc, sky, t) {
   backButton(r, ctx, TRr("atelier.stand.tip"), "cabin");
 }
 
-module.exports = { drawAtelier, drawDesk, drawLoft, drawLetter, drawBookcase, backButton, SECRET, CASE, COMBO };
+/** La fleur de cristal du mur, en gros plan (un clic sur le cadre ovale de l'atelier). */
+function drawFlowerView(r, ctx, sc, sky, t) {
+  const TRr = TR(r), amb = 0.55 + 0.45 * sky.ambient, c = (h) => mix("#05060c", h, amb);
+  FL.drawCloseup(ctx, c, sc, t, W, H);
+  r.hot.push({ x: 200, y: 20, w: 240, h: 320, tip: TRr("atelier.flower.tip"), flash: TRr("atelier.flower.flash") });
+  backButton(r, ctx, TRr("atelier.flower.back"), "atelier");
+}
+
+module.exports = { drawFlowerView, drawAtelier, drawDesk, drawLoft, drawLetter, drawBookcase, backButton, SECRET, CASE, COMBO };
