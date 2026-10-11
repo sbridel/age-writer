@@ -263,13 +263,21 @@ function courseSheet(id, lang) {
   const l = lang === "fr" ? "fr" : "en", ax = (b) => { const x = (BUILTIN_BLOCKS.find((q) => q.id === b) || SKY_ENTRIES.find((q) => q.id === b) || {}).axis; return AXIS_WORD[x] ? AXIS_WORD[x][l] : "—"; };
   return `\n\n---\n**${l === "fr" ? "Feuille de cours · Guilde des Writers" : "Course sheet · the Writers' Guild"}**\n${l === "fr" ? "À savoir par cœur : c'est ainsi qu'on les écrit." : "To know by heart: this is how they are written."}\n\n| ${l === "fr" ? "Mot" : "Word"} | ${l === "fr" ? "Famille" : "Kind"} | ${l === "fr" ? "Sens" : "Meaning"} |\n|---|---|---|\n${rows.map((r) => `| \`${r[0]}\` | ${COURSE_NOAXIS.has(r[0]) ? "—" : ax(r[0])} | ${r[l === "fr" ? 2 : 1]} |`).join("\n")}\n`;
 }
+/** La feuille s'efface : en révision, le mot n'est plus donné qu'à moitié (niveau 1 : l'initiale et la longueur), puis plus du tout (niveau 2). */
+const REVIEW = { alter: { level: 1, ids: ["sand", "fern", "rain", "salt"] }, zero: { level: 2, ids: ["lava", "ice", "snow", "grass"] }, imager: { level: 2, ids: ["storm", "fog", "moss", "stone"] } };
+function reviewSheet(id, lang) {
+  const rv = REVIEW[id]; if (!rv) return "";
+  const l = lang === "fr" ? "fr" : "en", all = Object.values(COURSE).flat(), rows = rv.ids.map((w) => all.find((r) => r[0] === w)).filter(Boolean);
+  const hint = (w) => (rv.level === 1 ? `\`${w[0]}${"_".repeat(w.length - 1)}\`` : "?");
+  return `\n\n---\n**${l === "fr" ? "Révision · Guilde des Writers" : "Review · the Writers' Guild"}**\n${l === "fr" ? "Retrouve le mot, de mémoire." : "Find the word, from memory."}\n\n| ${l === "fr" ? "Mot" : "Word"} | ${l === "fr" ? "Sens" : "Meaning"} |\n|---|---|\n${rows.map((r) => `| ${hint(r[0])} | ${r[l === "fr" ? 2 : 1]} |`).join("\n")}\n`;
+}
 const COURSE_NOAXIS = new Set(["mass", "age"]);
 
 /** Le texte d'une note de chapitre : titre, lettre du mentor, ce qu'il faut faire, et le bloc `age` de départ. */
 function chapterNote(chapter, lang, name) {
   const l = lang === "fr" ? "fr" : "en", w = WORLDS[chapter.id] || { lines: [] }, L = LETTERS[chapter.id][l];
   const title = (chapter.id === "mend" ? "Deseekay · " : "") + chapter.title[l]; // deseekay : « énigme », en D'ni
-  return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n${L[2] ? `**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n` : ""}— ${MENTOR}, seltahn${courseSheet(chapter.id, l)}${w.lines.length ? `\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`` : ""}\n`;
+  return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n${L[2] ? `**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n` : ""}— ${MENTOR}, seltahn${courseSheet(chapter.id, l)}${reviewSheet(chapter.id, l)}${w.lines.length ? `\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`` : ""}\n`;
 }
 
 /**
@@ -292,4 +300,4 @@ function rewardPages() {
 /** Le moteur tire-t-il des pages au hasard dans les Âges de l'histoire ? Pas avant l'Imageur : il faut écrire ses glyphes soi-même. */
 const drawsOn = (done) => (done || []).includes("imager");
 
-module.exports = { COURSE, courseSheet, drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
+module.exports = { REVIEW, reviewSheet, COURSE, courseSheet, drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };

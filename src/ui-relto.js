@@ -77,7 +77,7 @@ async function buildScene(plugin, file, opt = {}) {
     const store = plugin.ext.story || (plugin.ext.story = {}), key = TEL.keyOf(relto.name, relto.seed);
     const axisOf = (id) => { const b = plugin.core && plugin.core.blocks && plugin.core.blocks.get ? plugin.core.blocks.get(id) : null; return b ? b.axis : null; };
     const done = ST.evaluate(store, key, { ages, axisOf, zeroFound: relto.zeroFound, tunings: plugin.ext.imagerTunings });
-    if (done.length) { plugin.saveExt(); for (const c of done) new obsidian.Notice(plugin.t("story.done", { title: plugin.lang() === "fr" ? c.title.fr : c.title.en })); }
+    if (done.length) { plugin.saveExt(); for (const c of done) { new obsidian.Notice(plugin.t("story.done", { title: plugin.lang() === "fr" ? c.title.fr : c.title.en })); markChapterDone(plugin, c, ST.get(store, key)); } }
     relto.storyDone = ST.get(store, key).done.concat(ST.nextChapter(ST.get(store, key).done) ? [] : ["end"]); // « end » : tous les chapitres sont faits
   }
   // choix des livres : options du bloc (folders / exclude / books) ; à défaut, liste du refuge (relto_books)
@@ -163,6 +163,26 @@ async function startStory(plugin) {
 /** Ce qui manque au chapitre en cours, en une phrase (vide pour le chapitre final : il ne dit jamais ce qui manque). */
 const WHY = { noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all" };
 const whyText = (plugin, why) => (WHY[why] ? "\n" + plugin.t(WHY[why]) : "");
+
+/** Un chapitre réussi : la note reçoit la propriété `story_chapter: completed` et l'étiquette `completed`, et une fenêtre le dit sans qu'il faille revenir au Relto. */
+function markChapterDone(plugin, ch, st) {
+  const { app, t } = plugin, lang = plugin.lang() === "fr" ? "fr" : "en", path = st.notes && st.notes[ch.id], f = path && app.vault.getAbstractFileByPath(path);
+  if (f) app.fileManager.processFrontMatter(f, (fm) => { fm.story_chapter = "completed"; const tg = Array.isArray(fm.tags) ? fm.tags : fm.tags ? [fm.tags] : []; if (!tg.includes("completed")) tg.push("completed"); fm.tags = tg; }).catch(() => {});
+  if (!obsidian.Modal) return;
+  const preset = ch.page && M.PAGE_PRESETS[ch.page], next = ST.nextChapter(st.done);
+  class Done extends obsidian.Modal {
+    onOpen() {
+      const { contentEl } = this; this.titleEl.setText(t("story.pop.title"));
+      contentEl.createEl("p", { text: ch.title[lang] });
+      if (preset) contentEl.createEl("p", { text: t("story.pop.page", { name: preset.label }) });
+      const row = contentEl.createDiv({ cls: "modal-button-container" });
+      if (next) row.createEl("button", { cls: "mod-cta", text: t("story.pop.next") }).addEventListener("click", () => { this.close(); storyNext(plugin); });
+      row.createEl("button", { text: t("story.pop.close") }).addEventListener("click", () => this.close());
+    }
+    onClose() { this.contentEl.empty(); }
+  }
+  new Done(app).open();
+}
 
 /** Après une modification : revoir l'avancement de l'histoire (une notice quand un chapitre est réussi), sans qu'il faille ouvrir le Relto. */
 async function storyTick(plugin) {
