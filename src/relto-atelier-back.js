@@ -16,12 +16,16 @@ function turnButton(r, ctx, label, go) {
 const CAT_FUR = { orange: "#d9822b", black: "#2a2a31", white: "#e9e4da", grey: "#8c8c94", gray: "#8c8c94", brown: "#7a5236", cream: "#e3cfa4" };
 /** Le chat, roulé en boule, posé en (x, y) (le bas du corps) ; il respire. */
 function curledCat(r, ctx, c, cat, x, y, t, tipKey, TRr) {
-  const fur = c(CAT_FUR[String(cat.color || "orange").toLowerCase()] || CAT_FUR.orange), br = Math.sin(t * 1.6) * 0.8;
-  ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.beginPath(); ctx.ellipse(x, y + 1, 24, 5, 0, 0, 6.283); ctx.fill();
-  ctx.fillStyle = fur; ctx.beginPath(); ctx.ellipse(x, y - 8, 20, 9 + br * 0.4, 0, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(x - 15, y - 10, 8, 7, 0, 0, 6.283); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(x - 20, y - 15); ctx.lineTo(x - 19, y - 22); ctx.lineTo(x - 15, y - 16); ctx.moveTo(x - 13, y - 16); ctx.lineTo(x - 10, y - 22); ctx.lineTo(x - 9, y - 14); ctx.fill();
-  ctx.strokeStyle = fur; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(x + 16, y - 4); ctx.quadraticCurveTo(x + 26, y, x + 10, y + 1); ctx.stroke(); ctx.lineCap = "butt";
-  ctx.strokeStyle = rgba(30, 20, 10, 0.7); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x - 19, y - 10); ctx.lineTo(x - 16, y - 10); ctx.moveTo(x - 14, y - 10); ctx.lineTo(x - 11, y - 10); ctx.stroke();
+  const base = CAT_FUR[String(cat.color || "orange").toLowerCase()] || CAT_FUR.orange, fur = c(base), lite = c(mix(base, "#ffffff", 0.16)), dark = c(mix(base, "#000000", 0.28)), br = Math.sin(t * 1.6) * 0.7;
+  ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.beginPath(); ctx.ellipse(x + 1, y + 1, 26, 5, 0, 0, 6.283); ctx.fill();
+  ctx.strokeStyle = fur; ctx.lineWidth = 5.5; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(x + 17, y - 6); ctx.quadraticCurveTo(x + 24, y + 1, x + 6, y + 0.5); ctx.quadraticCurveTo(x - 4, y + 0.5, x - 7, y - 2); ctx.stroke(); ctx.lineCap = "butt"; // la queue, enroulée devant le corps
+  ctx.fillStyle = fur; ctx.beginPath(); ctx.ellipse(x + 2, y - 9, 21, 10 + br * 0.4, 0, 0, 6.283); ctx.fill(); // le dos rond
+  ctx.fillStyle = lite; ctx.beginPath(); ctx.ellipse(x + 4, y - 14, 14, 3.4, 0, 0, 6.283); ctx.fill(); // un reflet sur le dos
+  ctx.fillStyle = fur; ctx.beginPath(); ctx.arc(x - 14, y - 8, 8, 0, 6.283); ctx.fill(); // la tête, posée bas
+  ctx.beginPath(); ctx.moveTo(x - 20, y - 12); ctx.lineTo(x - 19, y - 20); ctx.lineTo(x - 14, y - 14.5); ctx.closePath(); ctx.moveTo(x - 13, y - 14.5); ctx.lineTo(x - 9.5, y - 19.5); ctx.lineTo(x - 7.5, y - 12.5); ctx.closePath(); ctx.fill(); // les oreilles
+  ctx.fillStyle = dark; ctx.beginPath(); ctx.moveTo(x - 18.6, y - 13.5); ctx.lineTo(x - 18.4, y - 17.5); ctx.lineTo(x - 15.6, y - 14.5); ctx.fill();
+  ctx.fillStyle = lite; ctx.beginPath(); ctx.ellipse(x - 9, y - 2.4, 6, 2.6, 0, 0, 6.283); ctx.fill(); // les pattes avant, sous le menton
+  ctx.strokeStyle = rgba(30, 20, 10, 0.75); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x - 17.2, y - 8.6, 1.9, 0.15 * Math.PI, 0.85 * Math.PI); ctx.arc(x - 11.4, y - 8.6, 1.9, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke(); // les yeux clos
   const nm = String(cat.name || "").trim(), tip = TRr(tipKey);
   r.hot.push({ x: x - 26, y: y - 26, w: 54, h: 30, tip: nm ? `${nm} — ${tip}` : tip, flash: "purr…", purr: true });
 }
@@ -61,9 +65,9 @@ function drawBackroom(r, ctx, sc, sky, t) {
     ctx.fillStyle = c("#ece6d4"); ctx.beginPath(); ctx.ellipse(bx + 40, 196, 22, 8, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(0, 0, 0, 0.12); ctx.beginPath(); ctx.ellipse(bx + 43, 197, 10, 4, 0, 0, 6.283); ctx.fill(); // l'oreiller, et le creux d'une tête
     item(bx, 60, bw, 192, "back.bed.tip", "back.bed.flash");
     const cat = sc.additions.find((a) => a.type === "cat");
-    if (cat && r.catSpotFor() === 2) curledCat(r, ctx, c, cat, bx + 128, 205, t, "atelier.cat.tip", TRr); // le chat dort sur l'édredon
+    if (cat && r.catSpotFor() === 2) curledCat(r, ctx, c, cat, bx + 128, 205, t, "atelier.cat.bed", TRr); // le chat dort sur l'édredon
   }
-  { const cat = sc.additions.find((a) => a.type === "cat"); if (cat && r.catSpotFor() === 1) curledCat(r, ctx, c, cat, 300, 304, t, "atelier.cat.tip", TRr); } // ou sur le tapis
+  { const cat = sc.additions.find((a) => a.type === "cat"); if (cat && r.catSpotFor() === 1) curledCat(r, ctx, c, cat, 300, 304, t, "atelier.cat.rug", TRr); } // ou sur le tapis
 
   // l'armoire : on peut l'ouvrir ; elle ne contient que des manches
   { const wx = 292, wy = 72, ww = 110, wh = FLOOR - wy, op = r.wardAt ? clamp((now - r.wardAt) / 550) : 0, k = r.wardOpen ? op : 1 - op;
