@@ -576,3 +576,17 @@
 /* palette de l'histoire : les glyphes non appris se devinent (silhouettes pâles, sans nom) */
 .age-book__swatch.is-ghost { opacity: 0.2; filter: blur(1px) grayscale(1); cursor: help; pointer-events: auto; }
 .age-book__more { align-self: center; font-size: 0.72em; opacity: 0.5; padding: 0 6px; letter-spacing: 0.08em; }
+
+/* prendre un livre de l'étagère : il se lève, s'ouvre sur son panneau, on le touche, on arrive */
+.age-linkanim { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; background: rgba(6, 5, 4, 0.62); cursor: pointer; animation: age-linkanim-in 0.25s ease-out both; }
+.age-linkanim__book { position: absolute; width: 150px; height: 200px; border-radius: 4px 10px 10px 4px; background: linear-gradient(100deg, #3b2a1b, #5a4322 60%, #3b2a1b); border: 1px solid #c9a24e; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; text-align: center; color: #e0c27a; font-family: serif; padding: 12px; animation: age-linkanim-lift 0.65s cubic-bezier(.2,.8,.2,1) both; }
+.age-linkanim.is-open .age-linkanim__book { opacity: 0; transform: scale(1.5) rotateY(70deg); transition: all 0.5s ease-in; }
+.age-linkanim__panel { position: relative; width: min(60%, 420px); opacity: 0; transform: scale(0.8); transition: opacity 0.5s ease-out, transform 0.5s ease-out; border: 2px solid #c9a24e; border-radius: 3px; overflow: hidden; box-shadow: 0 0 40px rgba(201, 162, 78, 0.35); }
+.age-linkanim__panel canvas { width: 100%; height: auto; display: block; }
+.age-linkanim.is-open .age-linkanim__panel { opacity: 1; transform: scale(1); }
+.age-linkanim.is-touch .age-linkanim__panel { filter: brightness(1.8) saturate(0.6); transition: filter 0.45s ease-in; }
+.age-linkanim__touch { position: absolute; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #f0dca0; opacity: 0; pointer-events: none; }
+.age-linkanim__touch.is-on { animation: age-linkanim-ripple 0.6s ease-out both; }
+@keyframes age-linkanim-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes age-linkanim-lift { from { opacity: 0; transform: translateY(80px) scale(0.6); } to { opacity: 1; transform: none; } }
+@keyframes age-linkanim-ripple { from { opacity: 0.9; transform: scale(1); } to { opacity: 0; transform: scale(14); } }
