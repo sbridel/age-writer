@@ -75,7 +75,7 @@ ok(scene(["rest"]).pages.find((p) => p.id === mendPage.id).state === "locked" &&
 // ---- notes de chapitre
 const an = (text, nm) => analyseAgeBase(text, { seed: nm });
 const mend = ST.chapterById("mend"), restC = ST.chapterById("rest");
-ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]).id === "weather" && ST.nextChapter(["rest", "mend", "weather"]).id === "laws" && ST.nextChapter(["rest", "mend", "weather", "laws"]).id === "alter" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter"]).id === "zero" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero"]).id === "imager" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager"]) === null, "nextChapter : dans l'ordre, null à la fin");
+ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]).id === "weather" && ST.nextChapter(["rest", "mend", "weather"]).id === "laws" && ST.nextChapter(["rest", "mend", "weather", "laws"]).id === "alter" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter"]).id === "zero" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero"]).id === "imager" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager"]).id === "hard" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard"]) === null, "nextChapter : dans l'ordre, null à la fin");
 ok(Object.keys(ST.get({}, "k").notes).length === 0, "get : normalise les notes de chapitre");
 let fair = 0, same = 0;
 for (let i = 0; i < 300; i++) {
@@ -129,6 +129,16 @@ const ic = ST.chapterById("imager");
 ok(ST.check(ic, ctx([age("I", ["water"], "Dossier/I.md")])).why === "lock" && ST.check(ic, { ...ctx([{ ...age("I", ["water"]), path: "Dossier/I.md" }]), tunings: { "Dossier/I.md": { lock: false } } }).why === "lock", "imager : pas de verrou, pas de réussite");
 ok(ST.check(ic, { ...ctx([{ ...age("I", ["water"]), path: "Dossier/I.md" }]), tunings: { "Dossier/I.md": { lock: true } } }).ok && ST.check(ic, { ...ctx([]), tunings: { "Autre.md": { lock: true } } }).why === "lock", "imager : verrouillé sur un Âge du dossier ; un verrou ailleurs ne compte pas");
 ok(ST.CHAPTERS.find((c) => c.id === "zero").page === "page_imager" && !M.PAGE_PRESETS.page_imager.unlock, "imager : la page de l'Imageur est offerte par le chapitre précédent");
+
+// ---- chapitre 9 : le monde difficile
+const hc = ST.chapterById("hard"), hr = ST.WORLDS.hard.ref;
+const hw = (extra) => ({ ...age("Dur", hr, "Dossier/Dur.md"), programmed: 1, physics: 2, ...(extra || {}) });
+ok(hr.length >= 8 && ST.axesOf(hr, axisOf).size >= 4, "hard : le monde de référence a huit pages et quatre axes");
+ok(ST.check(hc, ctx([hw({ stability: 90 })])).ok, "hard : tout ensemble et stable, réussi");
+ok(ST.check(hc, ctx([hw({ stability: 90, programmed: 0 })])).why === "all" && ST.check(hc, ctx([hw({ stability: 90, physics: 1 })])).why === "all" && ST.check(hc, ctx([hw({ stability: 90, glyphs: hr.slice(0, 7) })])).why === "all", "hard : sans météo programmée, sans deux valeurs physiques ou sous huit pages, non");
+ok(ST.check(hc, ctx([hw({ stability: 77 })])).why === "all" && ST.check(hc, ctx([hw({ stability: 50 })])).why === "stable", "hard : il faut de la marge (80), et un monde instable ne compte pas");
+let hfair = 0; for (let i = 0; i < 200; i++) { const nm = ST.chapterName(hc, `Le monde difficile · ${1000 + i * 7919}`, an); if (an(hr.join("\n"), nm).stability >= 80) hfair++; }
+ok(hfair === 200, "hard : un monde de référence tient pour tout nom (" + hfair + "/200)");
 
 // ---- la page finale
 const endP = ST.rewardPages().find((p) => p.id === ST.ENDGAME.id);

@@ -23,6 +23,7 @@ const CHAPTERS = [
   { id: "alter", page: "page_mountain", title: { en: "Changing what is written", fr: "Modifier ce qui est écrit" } },
   { id: "zero", page: "page_imager", title: { en: "Looking up", fr: "Lever les yeux" } },
   { id: "imager", page: "page_comets", title: { en: "Listening to the sky", fr: "Écouter le ciel" } },
+  { id: "hard", page: "page_koi", title: { en: "The difficult world", fr: "Le monde difficile" } },
 ];
 
 /** La page finale (pour l'instant : un encrier posé sur la table). Le nom reste neutre. */
@@ -100,6 +101,12 @@ function check(chapter, ctx) {
     return stable.some((a) => a.physics >= 2) ? { ok: true, why: "" } : { ok: false, why: "physics" };
   }
   if (chapter.id === "zero") return ctx && ctx.zeroFound ? { ok: true, why: "" } : { ok: false, why: "zero" }; // « lever les yeux » : le Great Zero de ce Relto est trouvé
+  if (chapter.id === "hard") {
+    // « le monde difficile » : tout ensemble, et qui tient (marge de 5) : huit pages au moins, quatre axes, une météo programmée, deux valeurs physiques
+    const good = ages.find((a) => a.stability >= STABLE_AT + 5 && (a.glyphs || []).length >= 8 && axesOf(a.glyphs, ctx.axisOf).size >= 4 && a.programmed >= 1 && a.physics >= 2);
+    if (good) return { ok: true, why: "" };
+    return stable.length ? { ok: false, why: "all" } : { ok: false, why: "stable" };
+  }
   if (chapter.id === "imager") { // « écouter le ciel » : l'Imageur est réglé et verrouillé sur l'un des Âges du dossier
     const tun = (ctx && ctx.tunings) || {};
     return ages.some((a) => tun[a.path] && tun[a.path].lock) ? { ok: true, why: "" } : { ok: false, why: "lock" };
@@ -137,6 +144,7 @@ const nextChapter = (done) => CHAPTERS.find((c) => !(done || []).includes(c.id))
 const WORLDS = {
   rest: { lines: ["water"] },
   mend: { lines: ["single_sun", "steady_cycle", "water", "lava"], fixed: ["single_sun", "steady_cycle", "water"] },
+  hard: { lines: ["single_sun", "steady_cycle"], ref: ["single_sun", "steady_cycle", "water", "sand", "fern", "grass", "rain", "fog"] }, // `ref` : un monde qui répond à tout (pour choisir un nom qui le laisse tenir)
   zero: { lines: [] },
   imager: { lines: [] },
   alter: { lines: ["single_sun", "steady_cycle", "water", "sand", "fern"], stable: true, margin: 15 }, // une marge large : la modification elle-même coûte (Loi du Changement)
@@ -153,6 +161,10 @@ function chapterName(chapter, base, analyse) {
   const w = WORLDS[chapter.id];
   if (w && w.stable && analyse) { // un monde de départ qui tient avec de la marge, pour ce nom
     for (let i = 0; i < 80; i++) { const nm = i ? `${base} ${i + 1}` : base, a = analyse(w.lines.join("\n"), nm); if (a && a.stability >= STABLE_AT + (w.margin || 5)) return nm; }
+    return base;
+  }
+  if (w && w.ref && analyse) { // un nom pour lequel une solution existe, avec de la marge
+    for (let i = 0; i < 80; i++) { const nm = i ? `${base} ${i + 1}` : base, a = analyse(w.ref.join("\n"), nm); if (a && a.stability >= STABLE_AT + 5) return nm; }
     return base;
   }
   if (!w || !w.fixed || !analyse) return base;
@@ -188,6 +200,10 @@ const LETTERS = {
   imager: {
     en: ["Every Age hums. Most writers never hear it.", "The cabin has a machine of brass and crystal, and it listens. The Great Zero told you where; now learn to hear. Choose one of your Ages, tune the machine until its image is clear, and fix the tuning so it holds.", "Tune the Imager on one of your Ages until the image is sharp, then lock it with the lever."],
     fr: ["Chaque Âge bourdonne. La plupart des écrivains ne l'entendent jamais.", "La cabane a une machine de laiton et de cristal, et elle écoute. Le Great Zero t'a dit où ; apprends maintenant à entendre. Choisis l'un de tes Âges, règle la machine jusqu'à ce que l'image soit nette, et fixe le réglage pour qu'il tienne.", "Règle l'Imageur sur l'un de tes Âges jusqu'à ce que l'image soit nette, puis verrouille-le avec le levier."],
+  },
+  hard: {
+    en: ["You have learned each part. Now the whole.", "Write me a difficult world: one that has everything at once, a sky and the ground under it, something alive, days that change, and laws of its own. Every part you add makes the others harder to keep. It must still hold.", "Write a stable world of at least eight pages, covering four of the five axes, with a programmed weather line (`rain: sometimes, dawn`) and two physical values (`mass`, `age`)."],
+    fr: ["Tu connais chaque partie. Voici le tout.", "Écris-moi un monde difficile : un monde qui a tout à la fois, un ciel et la terre dessous, du vivant, des jours qui changent, et ses propres lois. Chaque partie que tu ajoutes rend les autres plus dures à tenir. Il doit pourtant tenir.", "Écris un monde stable d'au moins huit pages, qui couvre quatre des cinq axes, avec une ligne de météo programmée (`rain: sometimes, dawn`) et deux valeurs physiques (`mass`, `age`)."],
   },
   weather: {
     en: ["A world that never changes is a painting. Let us make it a day.", "Here the rain falls without end. Teach it manners: let it fall only sometimes, and only at dawn. A line can carry a frequency and a moment, after a colon.", "Rewrite the rain line as `rain: sometimes, dawn`, and keep the world stable."],

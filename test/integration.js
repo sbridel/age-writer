@@ -346,7 +346,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
       ok(c2.length === 1 && c2[0].startsWith(dir + "/") && /Corriger sans casser|Mending without breaking/.test(c2[0]) && files.get(c2[0]).content.includes("lava"), "chapitre suivant : la note du chapitre 2 est créée dans le dossier de l'histoire (" + c2[0] + ")");
       ok(Object.values(p.ext.story).some((s) => s.notes.mend === c2[0] && s.seen[files.get(c2[0]).basename]), "chapitre suivant : note retenue, monde vu abîmé");
       const b1 = files.size; notices.length = 0; await nx.callback(); ok(files.size === b1, "chapitre suivant : relancer rouvre la même note");
-      files.get(c2[0]).content = files.get(c2[0]).content.replace("\nlava\n", "\nsand\n"); files.get(c2[0]).stat.mtime++; p.index.invalidate(); notices.length = 0;
+      files.get(c2[0]).content = files.get(c2[0]).content.replace("\nlava\n", "\n"); files.get(c2[0]).stat.mtime++; p.index.invalidate(); notices.length = 0;
       el = await show(sf.path);
       ok(row(el, "Lanterns") && /is-available/.test(row(el, "Lanterns").className), "chapitre 2 réussi : la page des lanternes est disponible");
       { const b2 = [...files.keys()]; notices.length = 0; await nx.callback();
@@ -386,8 +386,15 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         p.ext.imagerTunings = { ...(p.ext.imagerTunings || {}), [c4[0]]: { lock: true } };
         el = await show(sf.path);
         ok(row(el, "Comets") && /is-available/.test(row(el, "Comets").className), "chapitre 7 réussi : l'Imageur verrouillé sur un Âge, la page des comètes est disponible");
+        ok(row(el, "Inkwell") && /is-locked/.test(row(el, "Inkwell").className), "la page finale reste fermée tant qu'un chapitre manque (9e)");
+        const b7 = [...files.keys()]; notices.length = 0; await nx.callback();
+        const c9 = [...files.keys()].filter((k) => !b7.includes(k));
+        ok(c9.length === 1 && /Le monde difficile|The difficult world/.test(c9[0]), "chapitre 9 : la note du monde difficile est créée");
+        files.get(c9[0]).content = files.get(c9[0]).content.replace(/```age\n[\s\S]*?\n```/, "```age\nsingle_sun\nsteady_cycle\nwater\nsand\nfern\ngrass\nrain: sometimes, dawn\nfog\nmass: 0.8\nage: 3.5\n```"); files.get(c9[0]).stat.mtime++; p.index.invalidate();
+        el = await show(sf.path);
+        ok(row(el, "Koi") && /is-available/.test(row(el, "Koi").className), "chapitre 9 réussi : le monde difficile écrit, la page du bassin est disponible");
         ok(row(el, "Inkwell") && /is-available/.test(row(el, "Inkwell").className), "fin de l'histoire : la page finale (l'encrier) est disponible");
-        notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); p.law.now = () => Date.now(); files.delete(c3[0]); files.delete(c4[0]); files.delete(c5[0]); files.delete(c6[0]); files.delete(c7[0]); delete p.ext.imagerTunings[c4[0]]; delete p.ext.telescope[sf.basename.toLowerCase().trim() + "#" + sfm.seed]; }
+        notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); p.law.now = () => Date.now(); files.delete(c3[0]); files.delete(c4[0]); files.delete(c5[0]); files.delete(c6[0]); files.delete(c7[0]); files.delete(c9[0]); delete p.ext.imagerTunings[c4[0]]; delete p.ext.telescope[sf.basename.toLowerCase().trim() + "#" + sfm.seed]; }
       files.delete(c2[0]); }
     const sb = await show("x.md"), sbn = shelf(sb);
     ok(sbn.includes("Dehors") && !sbn.includes("Premier"), "mode histoire : sans précision, le Relto du bac à sable, qui ne voit pas les Âges de l'histoire");
