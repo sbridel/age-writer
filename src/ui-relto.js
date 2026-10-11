@@ -3,6 +3,7 @@ const obsidian = require("obsidian");
 const M = require("./relto-model");
 const { ReltoRenderer } = require("./relto-render");
 const sound = require("./sound");
+const MAIL = require("./story-mail");
 const { setMarkup, esc, leaveFullscreen, leaveFullscreenAsync } = require("./util");
 const G = require("./genscene");
 const SKY = require("./sky");
@@ -302,6 +303,31 @@ async function storyTick(plugin) {
   const { app } = plugin, hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
   if (!hub) return;
   try { resetStoryDraw(plugin); plugin.index.invalidate(); await buildScene(plugin, hub); resetStoryDraw(plugin); catchUpTags(plugin, hub); } catch (e) { console.warn("[Age Writer ext] histoire", e); }
+}
+
+/** Le courrier du mentor (src/story-mail.js) : l'état à dessiner, l'arrivée d'une lettre, l'ouverture de la note. */
+const mailState = (plugin, hub) => {
+  if (!hub || !isStoryHub(plugin.app, hub)) return { unread: false, has: false };
+  const relto = { ...M.parseRelto(fmOf(plugin.app, hub)), name: hub.basename }, m = (ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed))).mail;
+  return { unread: !!(m && m.unread), has: !!(m && m.note) };
+};
+async function mailTick(plugin, hub) {
+  const { app, t } = plugin; if (!hub || !isStoryHub(app, hub)) return false;
+  const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, key = TEL.keyOf(relto.name, relto.seed), st = ST.get(plugin.ext.story || (plugin.ext.story = {}), key);
+  if (!relto.pagesActive.includes(ST.ENDGAME.id)) return false; // l'atelier existe quand l'encrier est posé
+  if (!open) return false;
+  const lang = plugin.lang(), l = MAIL.step(st, Date.now(), ST.knownBlocks(st.done, st.hintN), key, lang === "fr" ? "fr" : "en", Math.random);
+  if (!l) { plugin.saveExt(); return false; }
+  const dir = ST.dirOf(hub.path), path = (st.mail.note && app.vault.getAbstractFileByPath(st.mail.note)) ? st.mail.note : `${dir}/${lang === "fr" ? "Courrier" : "Mail"}.md`;
+  const stamp = new Date().toLocaleDateString(lang === "fr" ? "fr-FR" : "en-GB", { day: "numeric", month: "long" }), block = `\n\n---\n*${stamp}*\n\n${l.text}\n`;
+  try { let f = app.vault.getAbstractFileByPath(path); if (f) await app.vault.process(f, (d) => d + block); else f = await app.vault.create(path, `# ${t("story.mail.title")}\n\n${t("story.mail.intro")}${block}`); st.mail.note = path; } catch (e) { console.warn("[Age Writer ext] courrier", e); st.mail.unread = false; st.mail.told.pop(); st.mail.at = Date.now() + 600000; }
+  plugin.saveExt(); return true;
+}
+async function openMail(plugin, hub) {
+  const { app } = plugin; if (!hub) return;
+  const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed)), f = st.mail && st.mail.note && app.vault.getAbstractFileByPath(st.mail.note);
+  if (!f) return;
+  await leaveFullscreenAsync(); MAIL.read(st, Date.now(), Math.random); plugin.saveExt(); await app.workspace.getLeaf(false).openFile(f);
 }
 
 /** Noms des notes de l'histoire dont les pages ne sont pas tirées au hasard (tant que l'Imageur n'est pas réussi). Mis en cache : appelé à chaque analyse. */
@@ -658,7 +684,7 @@ async function renderRelto(plugin, source, el, ctx) {
   };
   zero.scene = () => scene;
   const onTelescopeSound = (k, s) => { if (roomSoundOn() && sound.telescopeSfx) sound.telescopeSfx(k, s, roomVol()); };
-  const renderer = new ReltoRenderer(canvas, plugin.dni, { telescopeGen: () => plugin.telescopeGen || 0, instrumentsMode: () => INS.modeOf(plugin.ext), lensHints: () => plugin.ext.lensHints !== false,hoverFrame: plugin.ext.hoverFrame === true, imagerHum: () => ({ on: plugin.ext.soundImagerHum !== false, vol: humVol() }), onImagerHum: (a) => { if (a.toggle) plugin.ext.soundImagerHum = plugin.ext.soundImagerHum === false; else plugin.ext.imagerHumVol = Math.round(Math.max(0, Math.min(1, humVol() + a.delta * 0.2)) * 10) / 10; if (a.delta && plugin.ext.soundImagerHum === false && plugin.ext.imagerHumVol > 0) plugin.ext.soundImagerHum = true; plugin.saveExt(); roomAudio("imager"); }, notes: plugin.ext.imagerNotes || "words", onImagerAge: imagerAge, unwrittenFind, onTranscribe, imagerGet, imagerSet, glyphImage, t, telescopeGet, telescopeSet, onTelescopeSound, onImagerTune: () => { const cl = renderer.imagerClarity(); if (sound.imagerTune) sound.imagerTune(cl.atmo, cl.total, !!(renderer.imager && renderer.imager.settings && renderer.imager.settings.lock)); }, onImagerSound: (k) => { if (roomSoundOn() && sound.imagerSfx) sound.imagerSfx(k, roomVol()); }, onImagerChord: (fs, beat) => { if (roomSoundOn() && sound.crystalChord) sound.crystalChord(fs, beat, roomVol()); }, reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onPurr: () => { if (roomSoundOn()) roomBuf("roomPurrFile").then((b) => sound.purr(roomVol(), b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onPageToggle: async (id) => { const on = scene && scene.pagesActive.includes(id); await reltoEdit((l) => (on ? l.filter((x) => x !== id) : [...l, id])); plugin.refreshLive(); }, onSpecial: (kind) => { if (kind === "story") storyNext(plugin); else if (kind === "surveyor") B.openSurveyorBook(plugin, scene ? scene.ages : []); else if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => playLinkAnim(plugin, age, canvas.parentElement || document.body, () => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); }, () => app.workspace.openLinkText(age.path, "", false)) });
+  const renderer = new ReltoRenderer(canvas, plugin.dni, { mailState: () => mailState(plugin, file), telescopeGen: () => plugin.telescopeGen || 0, instrumentsMode: () => INS.modeOf(plugin.ext), lensHints: () => plugin.ext.lensHints !== false,hoverFrame: plugin.ext.hoverFrame === true, imagerHum: () => ({ on: plugin.ext.soundImagerHum !== false, vol: humVol() }), onImagerHum: (a) => { if (a.toggle) plugin.ext.soundImagerHum = plugin.ext.soundImagerHum === false; else plugin.ext.imagerHumVol = Math.round(Math.max(0, Math.min(1, humVol() + a.delta * 0.2)) * 10) / 10; if (a.delta && plugin.ext.soundImagerHum === false && plugin.ext.imagerHumVol > 0) plugin.ext.soundImagerHum = true; plugin.saveExt(); roomAudio("imager"); }, notes: plugin.ext.imagerNotes || "words", onImagerAge: imagerAge, unwrittenFind, onTranscribe, imagerGet, imagerSet, glyphImage, t, telescopeGet, telescopeSet, onTelescopeSound, onImagerTune: () => { const cl = renderer.imagerClarity(); if (sound.imagerTune) sound.imagerTune(cl.atmo, cl.total, !!(renderer.imager && renderer.imager.settings && renderer.imager.settings.lock)); }, onImagerSound: (k) => { if (roomSoundOn() && sound.imagerSfx) sound.imagerSfx(k, roomVol()); }, onImagerChord: (fs, beat) => { if (roomSoundOn() && sound.crystalChord) sound.crystalChord(fs, beat, roomVol()); }, reducedMotion: reduced, onView: syncView, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onPurr: () => { if (roomSoundOn()) roomBuf("roomPurrFile").then((b) => sound.purr(roomVol(), b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onPageToggle: async (id) => { const on = scene && scene.pagesActive.includes(id); await reltoEdit((l) => (on ? l.filter((x) => x !== id) : [...l, id])); plugin.refreshLive(); }, onSpecial: (kind) => { if (kind === "story") storyNext(plugin); else if (kind === "mail") openMail(plugin, file).then(() => renderer.draw(0)); else if (kind === "surveyor") B.openSurveyorBook(plugin, scene ? scene.ages : []); else if (kind === "glyphs") B.openGlyphBook(plugin, scene ? scene.ages : []); else B.openLibraryBook(plugin); }, onOpen: (age) => playLinkAnim(plugin, age, canvas.parentElement || document.body, () => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); }, () => app.workspace.openLinkText(age.path, "", false)) });
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;
 
   const fmt = (h) => { const m = Math.round(Number(h) * 60) % 1440; return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; };
@@ -830,6 +856,7 @@ async function renderRelto(plugin, source, el, ctx) {
   }
   const child = new obsidian.MarkdownRenderChild(el); child.onunload = () => { try { sound.roomStop(); } catch (e) { /* ignore */ } renderer.stop(); plugin.live.delete(inst); }; ctx.addChild(child);
   await refresh();
+  const mailTimer = window.setInterval(() => { if (!root.isConnected) return window.clearInterval(mailTimer); mailTick(plugin, file).then((got) => { if (got && !renderer.running) renderer.draw(0); }).catch(() => {}); }, 20000); // le courrier arrive au hasard, pendant qu'on est là
   const clockTimer = window.setInterval(() => { if (!root.isConnected) return window.clearInterval(clockTimer); if (fixed == null) syncClock(); }, 15000);
   child.register(() => window.clearInterval(clockTimer));
   if (dniClock) { const dniTimer = window.setInterval(() => { if (!root.isConnected) return window.clearInterval(dniTimer); dniClock.tick(); }, 1393); child.register(() => window.clearInterval(dniTimer)); } // un prorahn

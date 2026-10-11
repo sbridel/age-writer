@@ -177,5 +177,15 @@ const allDone = ["rest", "mend", "weather", "laws", "alter", "zero", "imager", "
 ok(!ST.knownBlocks(allDone).has("violet_sun") && !ST.knownBlocks(allDone).has("black_sun") && !ST.knownBlocks(allDone).has("pulsar") && ST.knownBlocks(allDone, { strange: 2 }).has("violet_sun"), "palette du livre : au dernier chapitre, ni soleil noir ni pulsar ; le dernier indice donne le monde du maître");
 ok(ST.kindOf(ST.chapterById("zero")) === "explore" && ST.kindOf(ST.chapterById("imager")) === "explore" && ST.kindOf(ST.chapterById("rest")) === "write" && ST.exploreName(ST.chapterById("zero"), "en", new Set(["Looking up"])) === "Looking up 2" && /Relto exploration/.test(ST.chapterNote(ST.chapterById("zero"), "en", "N")) && /Writing exercise/.test(ST.chapterNote(ST.chapterById("rest"), "en", "N")), "chapitres : exercice d'écriture ou exploration du Relto, nom propre à l'exploration");
 ok(ST.check(ST.chapterById("imager"), { ages: [{ path: "a.md", stability: 80 }], tunings: {}, guildLock: true }).ok && !ST.check(ST.chapterById("imager"), { ages: [{ path: "a.md", stability: 80 }], tunings: {}, guildLock: false }).ok && !ST.check(ST.chapterById("imager"), { ages: [], tunings: {}, guildLock: true }).ok, "chapitre de l'Imageur : le verrou de l'Imageur de la Guilde compte");
+{ // le courrier du mentor
+  const MAIL = require("../src/story-mail"), known = ST.knownBlocks([], {}), st = {}, r = () => 0.5;
+  ok(MAIL.step(st, 1000, known, "k", "en", r) === null && st.mail.at > 1000, "mail: first call only schedules");
+  ok(MAIL.step(st, 1001, known, "k", "en", r) === null, "mail: not before the delay");
+  const l = MAIL.step(st, st.mail.at + 1, known, "k", "fr", r);
+  ok(l && !known.has(l.id) && l.text.includes(l.id) && st.mail.unread && st.mail.told[0] === l.id, "mail: a letter about an unknown block");
+  ok(MAIL.step(st, 9e12, known, "k", "fr", r) === null, "mail: no second letter while unread");
+  MAIL.read(st, 5, r); ok(!st.mail.unread && st.mail.at > 5, "mail: reading schedules the next");
+  ok(!MAIL.candidates(known, []).some((id) => ST.WORLDS.strange.ref.includes(id)), "mail: never gives away the final test");
+}
 console.log(`story.test.js : ${n} vérifications ok`);
 

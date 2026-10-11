@@ -86,6 +86,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   ctx.fillStyle = rgba(0, 0, 0, 0.3); for (let i = 0; i < 3; i++) ctx.fillRect(tx + 24 + i * 78, ty + 16, 66, 34); ctx.fillStyle = c("#c9a24e"); for (let i = 0; i < 3; i++) ctx.fillRect(tx + 52 + i * 78, ty + 30, 10, 3);
   ctx.fillStyle = c("#6d4c31"); ctx.fillRect(tx - 6, ty - 8, tw + 12, 10); ctx.fillStyle = c("#7d5a3b"); ctx.fillRect(tx - 6, ty - 8, tw + 12, 3);
   const top = ty - 8;
+  r.hot.push({ x: tx - 6, y: top - 36, w: tw + 12, h: 100, tip: TRr("atelier.sit.tip"), go: "desk" }); // s'asseoir au bureau (les objets, poussés après, gardent la priorité)
   const item = (x, y, w, h, tip, flash) => r.hot.push({ x, y, w, h, tip: TRr(tip), flash: flash ? TRr(flash) : undefined });
   // l'orrery : une sphère de laiton et ses anneaux qui tournent
   { const ox2 = tx + 30, oy2 = top - 34; ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(ox2 - 2, oy2 + 14, 4, 14); ctx.fillRect(ox2 - 12, top - 6, 24, 4);
@@ -105,4 +106,39 @@ function drawAtelier(r, ctx, sc, sky, t) {
     const kx = tx + 246, p = 0.5 + 0.5 * Math.sin(t * 1.3); ctx.fillStyle = rgba(140, 90, 220, 0.12 + 0.12 * p); ctx.beginPath(); ctx.arc(kx, top - 14, 15, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#8d5fd6"); ctx.beginPath(); ctx.moveTo(kx, top - 30); ctx.lineTo(kx + 7, top - 14); ctx.lineTo(kx, top - 2); ctx.lineTo(kx - 7, top - 14); ctx.closePath(); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, 0.35); ctx.fillRect(kx - 2, top - 24, 2, 8); item(kx - 9, top - 32, 18, 32, "atelier.crystal.tip", "atelier.crystal.flash"); }
 }
 
-module.exports = { drawAtelier, SECRET };
+/** « Je m'assois au bureau » : le gros plan du plateau, la corbeille à lettres à gauche. */
+function drawDesk(r, ctx, sc, sky, t) {
+  const amb = 0.55 + 0.45 * sky.ambient, c = (h) => mix("#05060c", h, amb), TRr = TR(r), fl = flick(t), mail = (r.opts.mailState && r.opts.mailState()) || {};
+  ctx.fillStyle = c("#2b2018"); ctx.fillRect(0, 0, W, H); // le mur, dans l'ombre
+  for (let x = 0; x < W; x += 36) { ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x, 0, 1.4, 190); }
+  const wx = 470, wy = 40, ww = 110, wh = 100; ctx.save(); ctx.beginPath(); ctx.rect(wx, wy, ww, wh); ctx.clip(); const sg = ctx.createLinearGradient(0, wy, 0, wy + wh); sg.addColorStop(0, sky.top); sg.addColorStop(1, sky.bottom); ctx.fillStyle = sg; ctx.fillRect(wx, wy, ww, wh); ctx.restore();
+  ctx.strokeStyle = c("#1d140e"); ctx.lineWidth = 6; ctx.strokeRect(wx, wy, ww, wh); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(wx + ww / 2, wy); ctx.lineTo(wx + ww / 2, wy + wh); ctx.stroke();
+  const g = ctx.createLinearGradient(0, 180, 0, H); g.addColorStop(0, c("#6d4c31")); g.addColorStop(1, c("#3a2717")); ctx.fillStyle = g; ctx.fillRect(0, 180, W, H - 180); // le plateau
+  ctx.fillStyle = c("#7d5a3b"); ctx.fillRect(0, 180, W, 4); const q = rng(0xde5c); ctx.strokeStyle = rgba(0, 0, 0, 0.14); ctx.lineWidth = 1; for (let i = 0; i < 14; i++) { const y = 190 + q() * 170; ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(200, y + q() * 6 - 3, 440, y + q() * 6 - 3, W, y); ctx.stroke(); }
+  // la lampe verte, en haut à gauche : son cône éclaire le plateau
+  { const lx = 150; ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(lx - 3, 90, 6, 92); ctx.fillRect(lx - 22, 176, 44, 8); ctx.fillStyle = c("#2f6b48"); ctx.beginPath(); ctx.moveTo(lx - 38, 78); ctx.lineTo(lx + 38, 78); ctx.lineTo(lx + 20, 34); ctx.lineTo(lx - 20, 34); ctx.fill();
+    ctx.fillStyle = rgba(255, 224, 150, 0.1 + 0.03 * fl); ctx.beginPath(); ctx.moveTo(lx - 38, 78); ctx.lineTo(lx + 38, 78); ctx.lineTo(lx + 230, 360); ctx.lineTo(lx - 150, 360); ctx.fill();
+    r.hot.push({ x: lx - 40, y: 32, w: 80, h: 150, tip: TRr("atelier.lamp.tip"), flash: TRr("atelier.lamp.flash") }); }
+  // le planétaire, au fond à droite
+  { const ox = 410, oy = 150; ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(ox - 3, oy + 22, 6, 30); ctx.fillRect(ox - 20, 176, 40, 6); ctx.strokeStyle = c("#d8b45e"); ctx.lineWidth = 2; for (let k = 0; k < 3; k++) { const a = t * 0.5 + k * 1.05; ctx.beginPath(); ctx.ellipse(ox, oy, 28, 28 * Math.abs(Math.cos(a)) + 3, k * 1.05, 0, 6.283); ctx.stroke(); } ctx.fillStyle = c("#7fd6c8"); ctx.beginPath(); ctx.arc(ox, oy, 6, 0, 6.283); ctx.fill();
+    r.hot.push({ x: ox - 32, y: oy - 32, w: 64, h: 84, tip: TRr("atelier.orrery.tip"), flash: TRr("atelier.orrery.flash") }); }
+  // le grand livre ouvert, au centre : des lignes d'écriture qui attendent
+  { const bx = 230, by = 230, bw = 190, bh = 100; ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 8, by - 6, bw + 16, bh + 12); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx, by - 2, bw / 2 - 2, bh); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + bw / 2 + 2, by - 2, bw / 2 - 2, bh);
+    ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(bx + bw / 2 - 2, by - 2, 4, bh); ctx.fillStyle = rgba(110, 80, 45, 0.55); for (let k = 0; k < 8; k++) { ctx.fillRect(bx + 10, by + 8 + k * 11, 66 - (k % 3) * 8, 1.4); ctx.fillRect(bx + bw / 2 + 12, by + 8 + k * 11, 62 - (k % 4) * 7, 1.4); }
+    r.hot.push({ x: bx - 8, y: by - 8, w: bw + 16, h: bh + 16, tip: TRr("atelier.book.tip"), flash: TRr("atelier.book.flash") }); }
+  // l'encrier et la plume, à droite
+  { const ix = 470, iy = 300; ctx.fillStyle = c("#14202a"); ctx.beginPath(); ctx.ellipse(ix, iy, 26, 12, 0, 0, 6.283); ctx.fill(); ctx.fillRect(ix - 10, iy - 22, 20, 18); ctx.fillStyle = c("#2d4a5c"); ctx.fillRect(ix - 12, iy - 24, 24, 5); ctx.strokeStyle = c("#e8dcc0"); ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(ix + 6, iy - 24); ctx.lineTo(ix + 52, iy - 78); ctx.stroke();
+    r.hot.push({ x: ix - 28, y: iy - 80, w: 84, h: 94, tip: TRr("atelier.ink.tip"), flash: TRr("atelier.ink.flash") }); }
+  // la corbeille à lettres, à gauche : un panier de laiton ; une enveloppe cachetée dépasse quand du courrier est arrivé
+  { const cx = 70, cy = 262, cw = 110, ch = 64; ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.beginPath(); ctx.ellipse(cx + cw / 2, cy + ch + 4, cw / 2 + 6, 8, 0, 0, 6.283); ctx.fill();
+    const env = (x, y, a, col) => { ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.fillStyle = c(col); ctx.fillRect(-30, -18, 60, 36); ctx.strokeStyle = rgba(120, 90, 50, 0.5); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-30, -18); ctx.lineTo(0, 4); ctx.lineTo(30, -18); ctx.stroke(); ctx.restore(); };
+    if (mail.has) { env(cx + 30, cy + 8, -0.25, "#d6c7a0"); env(cx + 62, cy + 4, 0.18, "#e2d5b0"); }
+    if (mail.unread) { const p = 0.5 + 0.5 * Math.sin(t * 2.4); env(cx + 48, cy - 8, 0.06, "#efe3c2"); ctx.fillStyle = c("#8e2b27"); ctx.beginPath(); ctx.arc(cx + 48, cy - 4, 5, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 190, 100, 0.12 + 0.2 * p); ctx.beginPath(); ctx.arc(cx + 48, cy - 4, 46, 0, 6.283); ctx.fill(); }
+    ctx.fillStyle = c("#7a5c2a"); ctx.beginPath(); ctx.moveTo(cx, cy + 10); ctx.lineTo(cx + cw, cy + 10); ctx.lineTo(cx + cw - 10, cy + ch); ctx.lineTo(cx + 10, cy + ch); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.2; for (let k = 1; k < 6; k++) { ctx.beginPath(); ctx.moveTo(cx + k * cw / 6, cy + 10); ctx.lineTo(cx + 10 + k * (cw - 20) / 6, cy + ch); ctx.stroke(); } for (let k = 1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(cx + 2 + k * 2, cy + 10 + k * 13); ctx.lineTo(cx + cw - 2 - k * 2, cy + 10 + k * 13); ctx.stroke(); }
+    ctx.strokeStyle = c("#d8b45e"); ctx.lineWidth = 3; ctx.strokeRect(cx, cy + 8, cw, 4);
+    r.hot.push(mail.unread || mail.has ? { x: cx - 4, y: cy - 32, w: cw + 8, h: ch + 40, tip: TRr(mail.unread ? "atelier.tray.new" : "atelier.tray.tip"), special: "mail" } : { x: cx - 4, y: cy - 4, w: cw + 8, h: ch + 12, tip: TRr("atelier.tray.tip"), flash: TRr("atelier.tray.empty") }); }
+  r.hot.push({ x: 0, y: H - 30, w: W, h: 30, tip: TRr("atelier.stand.tip"), go: "atelier" }); // se lever
+}
+
+module.exports = { drawAtelier, drawDesk, SECRET };
