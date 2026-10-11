@@ -164,7 +164,7 @@ ok(!/À faire/.test(sn) && !/violet_sun|strange_stone|tablet|deep_cold|drizzle/.
 const endP = ST.rewardPages().find((p) => p.id === ST.ENDGAME.id);
 ok(endP && endP.additions.some((a) => a.type === "inkwell") && endP.unlock.story === "end", "page finale : un encrier, ouverte par la fin de l'histoire");
 ok(!M.checkUnlock(endP, [], new Set(), { storyDone: ["rest", "mend"] }).ok && M.checkUnlock(endP, [], new Set(), { storyDone: ["rest", "mend", "end"] }).ok, "page finale : fermée avant la fin, ouverte après");
-ok(!/bahro/i.test(JSON.stringify(ST.ENDGAME)) && !Object.keys(M.PAGE_PRESETS).includes(ST.ENDGAME.id), "page finale : nom neutre, hors du bac à sable");
+ok(!/bahro/i.test(JSON.stringify(ST.ENDGAME)) && !/bahro/i.test(JSON.stringify(M.PAGE_PRESETS[ST.ENDGAME.id] || {})), "page finale : nom neutre (proposée aussi au bac à sable, sans déblocage)");
 ok(ST.chapterNote(mend, "fr", "N").includes("Deseekay") && !ST.chapterNote(restC, "fr", "N").includes("Deseekay"), "chapitre 2 : sous-titre D'ni");
 
 ok(!ST.drawsOn([]) && !ST.drawsOn(["rest","hard"]) && ST.drawsOn(["rest","imager"]), "tirage des pages : coupé jusqu'à l'Imageur");
