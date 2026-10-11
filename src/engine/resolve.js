@@ -31,7 +31,7 @@ function emptyAxes() {
 }
 
 function resolveAge(source, options = {}) {
-  let drawEnabled = options.draw ?? drawSettings.draw,
+  let drawEnabled = options.draw ?? (hooks.noDraw(options.seed) ? false : drawSettings.draw),
     pull = options.pull ?? drawSettings.pull,
     amount = options.amount ?? drawSettings.amount,
     lines = [],

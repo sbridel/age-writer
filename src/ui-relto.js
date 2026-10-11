@@ -168,11 +168,27 @@ const whyText = (plugin, why) => (WHY[why] ? "\n" + plugin.t(WHY[why]) : "");
 async function storyTick(plugin) {
   const { app } = plugin, hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
   if (!hub) return;
-  try { plugin.index.invalidate(); await buildScene(plugin, hub); } catch (e) { console.warn("[Age Writer ext] histoire", e); }
+  try { resetStoryDraw(plugin); plugin.index.invalidate(); await buildScene(plugin, hub); resetStoryDraw(plugin); } catch (e) { console.warn("[Age Writer ext] histoire", e); }
 }
 
+/** Noms des notes de l'histoire dont les pages ne sont pas tirées au hasard (tant que l'Imageur n'est pas réussi). Mis en cache : appelé à chaque analyse. */
+function storyNoDraw(plugin) {
+  if (plugin._noDraw) return plugin._noDraw;
+  const set = new Set(), { app } = plugin;
+  try {
+    for (const hub of app.vault.getMarkdownFiles().filter((f) => isStoryHub(app, f))) {
+      const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed));
+      if (ST.drawsOn(st.done)) continue;
+      const dir = ST.dirOf(hub.path);
+      for (const f of app.vault.getMarkdownFiles()) if (f !== hub && ST.inDirs(f.path, [dir])) set.add(f.basename);
+    }
+  } catch (e) { console.warn("[Age Writer ext] tirage", e); }
+  return (plugin._noDraw = set);
+}
+const resetStoryDraw = (plugin) => { plugin._noDraw = null; };
+
 /** Chapitre suivant : crée (ou rouvre) la note du prochain chapitre dans le dossier de l'histoire. */
-async function storyNext(plugin) {
+async function storyNext(plugin, opts = {}) {
   const { app, t } = plugin;
   const hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
   if (!hub) { new obsidian.Notice(t("story.nohub")); return null; }
@@ -180,22 +196,26 @@ async function storyNext(plugin) {
   const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, store = plugin.ext.story || (plugin.ext.story = {});
   const key = TEL.keyOf(relto.name, relto.seed), st = ST.get(store, key), ch = ST.nextChapter(st.done);
   if (!ch) { new obsidian.Notice(t("story.end")); return null; }
-  const lang = plugin.lang(), dir = ST.dirOf(hub.path), known = st.notes[ch.id] && app.vault.getAbstractFileByPath(st.notes[ch.id]);
+  const lang = plugin.lang(), dir = ST.dirOf(hub.path), known = !opts.fresh && st.notes[ch.id] && app.vault.getAbstractFileByPath(st.notes[ch.id]);
   if (known) { new obsidian.Notice(t("story.reopen") + whyText(plugin, st.why)); await app.workspace.getLeaf(false).openFile(known); return known; }
   // « Age 1 », « Age 2 »… : court ; le nom ne doit exister nulle part dans le coffre (la Loi du Changement et l'avancement sont gardés par nom)
   const taken = new Set(app.vault.getMarkdownFiles().map((x) => x.basename));
   const nameAt = (i) => { for (let k = 1, c = 0; ; k++) { const nm = `Age ${k}`; if (taken.has(nm)) continue; if (c++ === i) return nm; } };
-  const analyse = (text, nm) => plugin.core.analyse(text, { seed: nm });
+  const analyse = (text, nm) => plugin.core.analyse(text, { seed: nm, draw: ST.drawsOn(st.done) ? undefined : false });
   const name = ST.chapterName(ch, nameAt, analyse), path = `${dir}/${name}.md`;
   const f = await app.vault.create(path, ST.chapterNote(ch, lang, path.replace(/^.*\//, "").replace(/\.md$/, "")));
-  st.notes[ch.id] = path;
+  if (opts.fresh) delete st.seen[ST.chapterName ? (st.notes[ch.id] || "").replace(/^.*\//, "").replace(/\.md$/, "") : ""];
+  st.notes[ch.id] = path; resetStoryDraw(plugin); plugin.index.invalidate();
   const w = ST.WORLDS[ch.id];
   if (w && w.fixed) { const a = analyse(w.lines.join("\n"), f.basename); if (a && a.stability < 75) ST.noteSeen(store, key, f.basename); } // seulement s'il est vraiment abîmé
   plugin.saveExt();
-  new obsidian.Notice(t("story.note", { title: ch.title[lang === "fr" ? "fr" : "en"] }));
+  new obsidian.Notice(t(opts.fresh ? "story.restarted" : "story.note", { title: ch.title[lang === "fr" ? "fr" : "en"] }));
   await app.workspace.getLeaf(false).openFile(f);
   return f;
 }
+
+/** Relancer le chapitre en cours : une nouvelle note neuve (l'ancienne reste dans le dossier, intacte). */
+const storyRestart = (plugin) => storyNext(plugin, { fresh: true });
 
 /** Un indice facultatif sur le chapitre en cours (seulement ceux dont la lettre ne donne pas la recette). */
 function storyHint(plugin) {
@@ -680,4 +700,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyNext, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyNext, storyRestart, storyNoDraw, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };

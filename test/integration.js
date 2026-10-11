@@ -358,6 +358,13 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         ok(c3.length === 1 && c3[0].startsWith(dir + "/") && /Un jour qui change|A day that changes/.test(files.get(c3[0]).content) && /\nrain\n/.test(files.get(c3[0]).content), "chapitre 3 : la note de la météo est créée, avec une pluie continue");
         ok(/\/Age \d+\.md$/.test(c3[0]), "chapitre 3 : la note s'appelle « Age N » (court, sans la graine)");
         notices.length = 0; await nx.callback(); ok(notices.some((n) => /Not yet|Pas encore/.test(n)), "chapitre rouvert : une phrase dit ce qui manque");
+        { const src3 = p.core.extract(files.get(c3[0]).content), nm3 = files.get(c3[0]).basename;
+          ok(JSON.stringify(p.core.analyse(src3, { seed: nm3 })) === JSON.stringify(p.core.analyse(src3, { seed: nm3, draw: false })), "histoire : aucune page tirée au hasard dans un Âge de l'histoire (avant l'Imageur)");
+          const rs = p.cmds.find((c) => c.id === "story-restart"); ok(!!rs, "commande « Story: restart the current chapter » enregistrée");
+          const stW = Object.values(p.ext.story).find((x) => x.notes.weather === c3[0]), b5 = [...files.keys()]; notices.length = 0; await rs.callback();
+          const c3b = [...files.keys()].filter((q) => !b5.includes(q));
+          ok(c3b.length === 1 && stW.notes.weather === c3b[0] && files.has(c3[0]) && /\nrain\n/.test(files.get(c3b[0]).content), "relancer le chapitre : une note neuve, l'ancienne reste");
+          files.delete(c3b[0]); stW.notes.weather = c3[0]; }
         ok(row(el, "Inkwell") && /is-locked/.test(row(el, "Inkwell").className), "la page finale reste fermée tant qu'un chapitre manque");
         files.get(c3[0]).content = files.get(c3[0]).content.replace("\nrain\n", "\nrain: sometimes, dawn\n"); files.get(c3[0]).stat.mtime++; p.index.invalidate(); notices.length = 0;
         el = await show(sf.path);

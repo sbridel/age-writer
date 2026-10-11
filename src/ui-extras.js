@@ -282,6 +282,8 @@ function tabifyPanel(plugin, panel) {
     const b = bar.createEl("button", { cls: "age-tabs__btn", text: label, attr: { type: "button", role: "tab" } });
     b.addEventListener("click", () => show(id)); btns[id] = b;
   }
+  const ob = bar.createEl("button", { cls: "age-tabs__btn age-tabs__book", text: "📖 " + t("book.open"), attr: { type: "button", title: t("book.open.tip") } });
+  ob.addEventListener("click", () => { plugin.bookFromLeaf = plugin.app.workspace.getMostRecentLeaf(); plugin.openBook(); }); // le livre s'ouvre à côté ; « Fermer le livre » ramène ici
   const win = panel.querySelector(".age-panel__window");
   if (win) {
     const box = panel.createDiv({ cls: "age-tabs__win" });

@@ -16,6 +16,7 @@ const hooks = {
   w: (slotName, option) => option.weight,
   skip: () => false,
   norm: (line) => line,
+  noDraw: () => false, // vrai pour une graine dont les pages ouvertes ne sont pas tirées (Âges de l'histoire, au début)
   seedName: null, // chemin d'une note d'Âge → sa graine (`age_seed`), ou null : le nom de la note
 };
 

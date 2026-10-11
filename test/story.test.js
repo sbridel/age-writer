@@ -167,4 +167,7 @@ ok(!M.checkUnlock(endP, [], new Set(), { storyDone: ["rest", "mend"] }).ok && M.
 ok(!/bahro/i.test(JSON.stringify(ST.ENDGAME)) && !Object.keys(M.PAGE_PRESETS).includes(ST.ENDGAME.id), "page finale : nom neutre, hors du bac à sable");
 ok(ST.chapterNote(mend, "fr", "N").includes("Deseekay") && !ST.chapterNote(restC, "fr", "N").includes("Deseekay"), "chapitre 2 : sous-titre D'ni");
 
+ok(!ST.drawsOn([]) && !ST.drawsOn(["rest","hard"]) && ST.drawsOn(["rest","imager"]), "tirage des pages : coupé jusqu'à l'Imageur");
+
 console.log(`story.test.js : ${n} vérifications ok`);
+

@@ -269,4 +269,7 @@ function rewardPages() {
   return out;
 }
 
-module.exports = { MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
+/** Le moteur tire-t-il des pages au hasard dans les Âges de l'histoire ? Pas avant l'Imageur : il faut écrire ses glyphes soi-même. */
+const drawsOn = (done) => (done || []).includes("imager");
+
+module.exports = { drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };

@@ -112,6 +112,7 @@ module.exports = function build(Base, core, AGEX) {
       // la graine d'un Âge renommé : sa propriété `age_seed` (posée au renommage), pour qu'il garde son monde et son étoile
       this.renamedSeeds = new Map(); // chemin → graine, posée au renommage (le cache des propriétés suit un peu plus tard)
       AGEX.seedName = (path) => { if (this.renamedSeeds.has(path)) return this.renamedSeeds.get(path); const f = this.app.vault.getAbstractFileByPath(path), fm = f ? (this.app.metadataCache.getFileCache(f) || {}).frontmatter : null; const v = fm && fm.age_seed; return v != null && String(v).trim() ? String(v).trim() : null; };
+      AGEX.noDraw = (seed) => seed != null && R.storyNoDraw(this).has(String(seed));
       AGEX.norm = (line) => guard("météo", () => WX.normalize(line)) || line; // `rain: sometimes, dawn` : pour le moteur, c'est `rain`
       AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line) || SYSTEM_RE.test(line); // `system: Kerath` : la graine d'étoile partagée (télescope, étape 2)
       // livre-piège : « pas de fissure » est une réponse donnée d'avance, le tirage n'en dessine pas une que le pied de bloc nierait
@@ -314,6 +315,15 @@ module.exports = function build(Base, core, AGEX) {
       const analysis = core.analyse(src, { seed: core.seed(file.path) });
       guard("encre", () => X.inkFresh(this, el, file.basename, [el.querySelector(".age-book__prose"), el.querySelector(".age-book__chips")]));
       const tabs = el.querySelector(".age-book__tabs");
+      if (tabs && !tabs.querySelector(".age-book__close")) {
+        const x = tabs.createEl("button", { cls: "age-book__close", text: "✕ " + t("book.close"), attr: { title: t("book.close.tip") } });
+        x.addEventListener("click", () => {
+          const ws = this.app.workspace, back = this.bookFromLeaf && this.bookFromLeaf.view && this.bookFromLeaf.getRoot ? this.bookFromLeaf : null;
+          view.leaf.detach();
+          const target = back && back.getRoot() ? back : ws.getMostRecentLeaf();
+          if (target) ws.setActiveLeaf(target, { focus: true });
+        });
+      }
       if (tabs && ext.coverTab) {
         const b = tabs.createEl("button", { text: t("book.cover"), cls: cover ? "is-active" : "" });
         tabs.insertBefore(b, tabs.firstChild); // couverture, livre descriptif, livre de liaison
@@ -412,6 +422,7 @@ module.exports = function build(Base, core, AGEX) {
       this.addCommand({ id: "open-relto", name: "Open the Relto", callback: () => R.openRelto(this) });
       this.addCommand({ id: "start-story", name: "Start the story (create or open the story Relto)", callback: () => R.startStory(this) });
     this.addCommand({ id: "story-hint", name: "Story: a hint for the current chapter", callback: () => R.storyHint(this) });
+    this.addCommand({ id: "story-restart", name: "Story: restart the current chapter (fresh note)", callback: () => R.storyRestart(this) });
     this.addCommand({ id: "story-next", name: "Story: next chapter (create or reopen its note)", callback: () => R.storyNext(this) });
       this.addCommand({ id: "clean-star-chart", name: "Clean the star chart (forget the stars of Ages no longer on the Relto's shelf)", callback: async () => { try { const n = await R.cleanStarChart(this); new obsidian.Notice(n.names || n.stars ? this.t("map.clean.done", { stars: String(n.stars), names: String(n.names) }) : this.t("map.clean.none")); } catch (e) { console.warn("[Age Writer ext] carte", e); } } });
       this.addCommand({ id: "open-guide", name: "Open the Age Writer guide", callback: () => G.openGuide(this) });
@@ -507,8 +518,9 @@ module.exports = function build(Base, core, AGEX) {
         this.lawTimers.set(f.path, window.setTimeout(() => { this.lawTimers.delete(f.path); this.observeFile(f); R.storyTick(this); }, 1500));
         this.refreshLive();
       }));
-      this.registerEvent(vault.on("rename", (f, old) => guard("rename", () => this.onRename(f, old))));
-      this.registerEvent(vault.on("delete", (f) => { if (f instanceof TFile) { this.law.forget(f.basename); this.saveExt(); } }));
+      this.registerEvent(vault.on("rename", (f, old) => guard("rename", () => { R.resetStoryDraw(this); this.onRename(f, old); })));
+      this.registerEvent(vault.on("create", () => R.resetStoryDraw(this)));
+      this.registerEvent(vault.on("delete", (f) => { R.resetStoryDraw(this); if (f instanceof TFile) { this.law.forget(f.basename); this.saveExt(); } }));
       this.registerEvent(metadataCache.on("changed", () => this.refreshLive()));
       const recheck = () => window.setTimeout(() => this.checkSound && this.checkSound(), 150);
       this.registerEvent(this.app.workspace.on("active-leaf-change", recheck));
