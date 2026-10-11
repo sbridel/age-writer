@@ -62,7 +62,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     const sp = r.panelAt ? Math.min(1, (Date.now() - r.panelAt) / 1100) : 0; // le panneau coulisse sur le côté et montre une ouverture chaude
     if (sp > 0) { ctx.fillStyle = "#120b07"; ctx.fillRect(S2.x, S2.y, S2.w, S2.h); const gl = ctx.createLinearGradient(S2.x, 0, S2.x + S2.w, 0); gl.addColorStop(0, rgba(255, 170, 80, 0.5 * sp)); gl.addColorStop(1, rgba(255, 170, 80, 0.1 * sp)); ctx.fillStyle = gl; ctx.fillRect(S2.x, S2.y, S2.w, S2.h);
       ctx.save(); ctx.beginPath(); ctx.rect(S2.x, S2.y, S2.w, S2.h); ctx.clip(); const ox = -S2.w * (sp * sp * (3 - 2 * sp)); ctx.fillStyle = c("#5a4330"); ctx.fillRect(S2.x + ox, S2.y, S2.w, S2.h); ctx.strokeStyle = rgba(0, 0, 0, 0.3); for (let k = 1; k < 3; k++) { ctx.beginPath(); ctx.moveTo(S2.x + ox + k * S2.w / 3, S2.y); ctx.lineTo(S2.x + ox + k * S2.w / 3, S2.y + S2.h); ctx.stroke(); } ctx.restore(); }
-    const gone = !!r.shelfOpen || !!(r.opts.relicState && (r.opts.relicState() || {}).seen); // la bibliothèque est déjà écartée (ou le passage déjà découvert)
+    const gone = !!r.shelfOpen; // la bibliothèque a déjà été écartée pendant cette visite
     if (gone) r.hot.push({ x: S2.x, y: S2.y, w: S2.w, h: S2.h, tip: "", knock: true, secret: true }); // derrière : on frappe, deux coups brefs, un temps, un coup franc (voir ReltoRenderer.knockBeat)
     ATELIER.drawBookcase(r, ctx, c, gone); // devant : une petite bibliothèque, trois livres à toucher dans l'ordre
   }
