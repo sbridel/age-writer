@@ -156,14 +156,15 @@ function drawAtelier(r, ctx, sc, sky, t) {
   // le mur derrière le bureau : un portrait, le tableau aux ficelles rouges, un baromètre, une étagère de bocaux
   { const { pin, sheet } = wallBits(ctx, c), TRd = (k) => TRr(k), wq = rng(0xb0a7);
     ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.ellipse(141, 158, 21, 28, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#2e3a36"); ctx.beginPath(); ctx.ellipse(141, 158, 17, 24, 0, 0, 6.283); ctx.fill();
-    ctx.save(); ctx.beginPath(); ctx.ellipse(141, 158, 17, 24, 0, 0, 6.283); ctx.clip(); // un portrait ovale : la silhouette d'une femme, de profil trois-quarts, sans visage
-    const fig = c("#101a17"), skin = c("#5a6e64"); ctx.fillStyle = fig;
-    ctx.beginPath(); ctx.arc(141, 141, 5, 0, 6.283); ctx.fill(); // le chignon
-    ctx.beginPath(); ctx.ellipse(141, 153, 9, 11, 0, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.moveTo(133, 156); ctx.quadraticCurveTo(129, 168, 134, 175); ctx.lineTo(139, 172); ctx.fill(); // la tête, une mèche qui retombe
-    ctx.fillStyle = skin; ctx.beginPath(); ctx.ellipse(142.5, 155, 6, 7.6, 0.08, 0, 6.283); ctx.fill(); // le visage, tourné, sans traits
-    ctx.beginPath(); ctx.moveTo(140, 159); ctx.lineTo(145.5, 159); ctx.quadraticCurveTo(145, 166, 150, 171); ctx.lineTo(135, 171); ctx.quadraticCurveTo(140, 166, 140, 159); ctx.fill(); // le cou, qui s'évase vers les épaules
-    ctx.beginPath(); ctx.moveTo(122, 178); ctx.quadraticCurveTo(128, 170, 142.5, 170); ctx.quadraticCurveTo(157, 170, 163, 178); ctx.lineTo(122, 178); ctx.fill(); // la peau des épaules, dégagées
-    ctx.fillStyle = fig; ctx.beginPath(); ctx.moveTo(112, 190); ctx.quadraticCurveTo(113, 178, 124, 176); ctx.quadraticCurveTo(142.5, 186, 161, 176); ctx.quadraticCurveTo(172, 178, 173, 190); ctx.fill(); // la robe, encolure en bateau
+    ctx.save(); ctx.beginPath(); ctx.ellipse(141, 158, 17, 24, 0, 0, 6.283); ctx.clip(); // dans l'ovale : une fleur de cristal, qui luit doucement
+    const gl = 0.5 + 0.5 * Math.sin(t * 1.3), cx = 141, cy = 150;
+    const hg = ctx.createRadialGradient(cx, cy, 2, cx, cy, 22); hg.addColorStop(0, rgba(170, 120, 255, 0.35 + 0.15 * gl)); hg.addColorStop(1, rgba(170, 120, 255, 0)); ctx.fillStyle = hg; ctx.fillRect(cx - 24, cy - 24, 48, 48);
+    ctx.strokeStyle = c("#3f7a68"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(cx, cy + 6); ctx.quadraticCurveTo(cx - 2, cy + 20, cx + 1, cy + 34); ctx.stroke(); // la tige
+    for (const [dx, dy, sg] of [[-1, 24, -1], [1, 17, 1]]) { ctx.fillStyle = c("#2f6b58"); ctx.beginPath(); ctx.moveTo(cx + dx, cy + dy); ctx.lineTo(cx + dx + sg * 10, cy + dy - 6); ctx.lineTo(cx + dx + sg * 3, cy + dy + 3); ctx.closePath(); ctx.fill(); } // deux feuilles taillées
+    const petal = (ang, len, w, col, hi) => { ctx.save(); ctx.translate(cx, cy); ctx.rotate(ang); ctx.fillStyle = c(col); ctx.beginPath(); ctx.moveTo(0, -2); ctx.lineTo(-w, -len * 0.45); ctx.lineTo(0, -len); ctx.lineTo(w, -len * 0.45); ctx.closePath(); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, hi); ctx.beginPath(); ctx.moveTo(0, -2); ctx.lineTo(0, -len); ctx.lineTo(w, -len * 0.45); ctx.closePath(); ctx.fill(); ctx.restore(); };
+    for (let i = 0; i < 5; i++) petal(-1.25 + i * 0.62 + Math.PI * 0, 15, 4.2, ["#6b46c1", "#7c5ad6", "#5a8fd6", "#7c5ad6", "#6b46c1"][i], 0.14 + 0.1 * gl); // les pétales, des losanges à facettes
+    ctx.fillStyle = c("#9be8dc"); ctx.beginPath(); ctx.moveTo(cx, cy - 4); ctx.lineTo(cx + 3.2, cy); ctx.lineTo(cx, cy + 4); ctx.lineTo(cx - 3.2, cy); ctx.closePath(); ctx.fill(); // le cœur
+    ctx.fillStyle = rgba(255, 255, 255, 0.5 + 0.4 * gl); ctx.fillRect(cx + 7, cy - 17, 1.4, 1.4); ctx.fillRect(cx - 9, cy - 9, 1.2, 1.2); // des éclats
     ctx.restore();
     r.hot.push({ x: 119, y: 129, w: 44, h: 58, tip: TRd("atelier.deco.portrait"), flash: TRd("atelier.deco.portrait.flash") });
     ctx.fillStyle = c("#5a4330"); ctx.fillRect(188, 126, 108, 72); ctx.strokeStyle = c("#2f2118"); ctx.lineWidth = 3; ctx.strokeRect(188, 126, 108, 72); // le tableau : liège sombre, feuilles, ficelles
