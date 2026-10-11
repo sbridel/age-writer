@@ -13,6 +13,10 @@ const edgesPath = (ctx, k, sx, sy) => { ctx.beginPath(); for (const [m, ...cs] o
 const shaftPath = (ctx, k, sx, sy) => { ctx.beginPath(); ctx.moveTo(-0.462 * k * sx, -0.801 * k * sy); ctx.lineTo(-0.257 * k * sx, -0.452 * k * sy); };
 const beadAt = (ctx, k, sx, sy, r) => { ctx.beginPath(); ctx.arc(-0.329 * k * sx, -0.579 * k * sy, r * k, 0, 6.283); };
 
+/** Les ornements de gauche et de droite (la « montagne ») : un zigzag à dents qui pointent vers le centre, et la barre fourchue à son extrémité. `d` : -1 gauche, 1 droite. */
+const zigPath = (ctx, R, d) => { ctx.beginPath(); [[0.78, -0.21], [0.58, -0.105], [0.78, 0], [0.58, 0.105], [0.78, 0.21]].forEach(([x, y], i) => (i ? ctx.lineTo(x * R * d, y * R) : ctx.moveTo(x * R * d, y * R))); };
+const barPath = (ctx, R, d) => { ctx.beginPath(); ctx.moveTo(0.79 * R * d, -0.09 * R); ctx.lineTo(0.79 * R * d, 0.09 * R); ctx.moveTo(0.79 * R * d, -0.045 * R); ctx.lineTo(0.88 * R * d, -0.045 * R); ctx.moveTo(0.79 * R * d, 0.045 * R); ctx.lineTo(0.88 * R * d, 0.045 * R); };
+
 /** Dessine l'emblème centré en (cx, cy), de rayon `R`. `c` : filtre de couleur (lumière ambiante), facultatif ; `t` : temps (un reflet qui glisse). */
 function drawEmblem(ctx, cx, cy, R, c = (h) => h, t = 0) {
   const GOLD = c("#d8a448"), GOLD_L = c("#f2cf7a"), GOLD_D = c("#8a5e22"), RED = c("#7a1410"), RED_D = c("#3a0806");
@@ -20,6 +24,8 @@ function drawEmblem(ctx, cx, cy, R, c = (h) => h, t = 0) {
   // fond d'émail
   ctx.fillStyle = RED_D; ctx.beginPath(); ctx.arc(0, 0, R, 0, 6.283); ctx.fill();
   const eg = ctx.createRadialGradient(0, R * 0.2, R * 0.1, 0, 0, R * 0.95); eg.addColorStop(0, c("#a01e14")); eg.addColorStop(1, RED); ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(0, 0, R * 0.93, 0, 6.283); ctx.fill();
+  // les ornements latéraux
+  for (const d of [-1, 1]) { zigPath(ctx, R, d); ctx.strokeStyle = GOLD_D; ctx.lineWidth = R * 0.05; ctx.stroke(); ctx.strokeStyle = GOLD; ctx.lineWidth = R * 0.034; ctx.stroke(); barPath(ctx, R, d); ctx.strokeStyle = GOLD_D; ctx.lineWidth = R * 0.036; ctx.stroke(); ctx.strokeStyle = GOLD_L; ctx.lineWidth = R * 0.02; ctx.stroke(); }
   // les quatre plumes : épaule et arête en filet d'or, tige fine, grosse perle
   for (const [sx, sy] of PENS) {
     edgesPath(ctx, R, sx, sy); ctx.strokeStyle = GOLD; ctx.lineWidth = Math.max(0.8, R * 0.016); ctx.stroke();
@@ -56,6 +62,8 @@ function drawSeal(ctx, cx, cy, R, c = (h) => h, t = 0, wax = "#7c1f2c") {
   ctx.fillStyle = FIELD; ctx.beginPath(); ctx.arc(0, 0, R * 0.85, 0, 6.283); ctx.fill();
   const pg = ctx.createLinearGradient(0, -R * 0.85, 0, R * 0.85); pg.addColorStop(0, BROWN); pg.addColorStop(0.38, c("#5a0e0a")); pg.addColorStop(0.5, RED); pg.addColorStop(0.7, c("#9a3a14")); pg.addColorStop(1, ORANGE); ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(0, 0, R * 0.85, 0, 6.283); ctx.fill();
   const gl = ctx.createRadialGradient(0, 0, R * 0.2, 0, 0, R * 0.85); gl.addColorStop(0, "rgba(0,0,0,0)"); gl.addColorStop(1, "rgba(20,0,0,0.35)"); ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 0, R * 0.85, 0, 6.283); ctx.fill();
+  // les ornements latéraux en relief
+  for (const d of [-1, 1]) { raise(() => { zigPath(ctx, R, d); ctx.lineWidth = R * 0.036; ctx.stroke(); }); raise(() => { barPath(ctx, R, d); ctx.lineWidth = R * 0.028; ctx.stroke(); }); }
   // les quatre plumes en relief : épaule et arête, tige, perle
   for (const [sx, sy] of PENS) {
     raise(() => { edgesPath(ctx, R, sx, sy); ctx.lineWidth = Math.max(0.9, R * 0.022); ctx.stroke(); });
