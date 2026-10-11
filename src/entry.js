@@ -188,7 +188,7 @@ module.exports = function build(Base, core, AGEX) {
     lang() {
       const v = this.ext && this.ext.lang;
       if (v === "en" || v === "fr") return v;
-      let l = "en"; try { l = ((window.moment && window.moment.locale && window.moment.locale()) || navigator.language || "en"); // moment suit la langue de l'interface d'Obsidian } catch (e) { /* ignore */ }
+      let l = "en"; try { l = ((window.moment && window.moment.locale && window.moment.locale()) || navigator.language || "en"); } catch (e) { /* ignore */ }
       return String(l).toLowerCase().startsWith("fr") ? "fr" : "en";
     }
 
