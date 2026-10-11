@@ -160,6 +160,17 @@ async function startStory(plugin) {
   return f;
 }
 
+/** Ce qui manque au chapitre en cours, en une phrase (vide pour le chapitre final : il ne dit jamais ce qui manque). */
+const WHY = { noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all" };
+const whyText = (plugin, why) => (WHY[why] ? "\n" + plugin.t(WHY[why]) : "");
+
+/** Après une modification : revoir l'avancement de l'histoire (une notice quand un chapitre est réussi), sans qu'il faille ouvrir le Relto. */
+async function storyTick(plugin) {
+  const { app } = plugin, hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
+  if (!hub) return;
+  try { plugin.index.invalidate(); await buildScene(plugin, hub); } catch (e) { console.warn("[Age Writer ext] histoire", e); }
+}
+
 /** Chapitre suivant : crée (ou rouvre) la note du prochain chapitre dans le dossier de l'histoire. */
 async function storyNext(plugin) {
   const { app, t } = plugin;
@@ -170,11 +181,12 @@ async function storyNext(plugin) {
   const key = TEL.keyOf(relto.name, relto.seed), st = ST.get(store, key), ch = ST.nextChapter(st.done);
   if (!ch) { new obsidian.Notice(t("story.end")); return null; }
   const lang = plugin.lang(), dir = ST.dirOf(hub.path), known = st.notes[ch.id] && app.vault.getAbstractFileByPath(st.notes[ch.id]);
-  if (known) { new obsidian.Notice(t("story.reopen")); await app.workspace.getLeaf(false).openFile(known); return known; }
-  const base = `${ch.title[lang === "fr" ? "fr" : "en"]} · ${relto.seed}`;
+  if (known) { new obsidian.Notice(t("story.reopen") + whyText(plugin, st.why)); await app.workspace.getLeaf(false).openFile(known); return known; }
+  // « Age 1 », « Age 2 »… : court ; le nom ne doit exister nulle part dans le coffre (la Loi du Changement et l'avancement sont gardés par nom)
+  const taken = new Set(app.vault.getMarkdownFiles().map((x) => x.basename));
+  const nameAt = (i) => { for (let k = 1, c = 0; ; k++) { const nm = `Age ${k}`; if (taken.has(nm)) continue; if (c++ === i) return nm; } };
   const analyse = (text, nm) => plugin.core.analyse(text, { seed: nm });
-  let name = ST.chapterName(ch, base, analyse), path, n = 1;
-  do { path = `${dir}/${name}${n > 1 ? " " + n : ""}.md`; n++; } while (app.vault.getAbstractFileByPath(path));
+  const name = ST.chapterName(ch, nameAt, analyse), path = `${dir}/${name}.md`;
   const f = await app.vault.create(path, ST.chapterNote(ch, lang, path.replace(/^.*\//, "").replace(/\.md$/, "")));
   st.notes[ch.id] = path;
   const w = ST.WORLDS[ch.id];
@@ -668,4 +680,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyNext, storyHint, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyNext, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };

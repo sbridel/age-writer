@@ -34,7 +34,7 @@ const few = age("Court", ["single_sun", "water", "fern"]);
 ok(few.stability >= 75 && ST.check(ST.chapterById("rest"), ctx([few])).why === "pages", "rest : moins de quatre pages ne suffit pas");
 const noLife = age("SansVie", ["single_sun", "steady_cycle", "water", "sand"]);
 ok(noLife.stability >= 75 && ST.check(ST.chapterById("rest"), ctx([noLife])).why === "axes", "rest : sans vivant, il manque quelque chose");
-ok(ST.check(ST.chapterById("rest"), ctx([])).why === "stable", "rest : aucun Âge");
+ok(ST.check(ST.chapterById("rest"), ctx([])).why === "noage", "rest : aucun Âge");
 ok(ST.check(ST.chapterById("rest"), ctx([bad, good])).ok, "rest : un seul Âge réussi suffit parmi plusieurs");
 ok(ST.axesOf(["single_sun", "steady_cycle", "water", "fern", "inconnu"], axisOf).has("cosmological") && ST.axesOf(["single_sun"], null).has("cosmological"), "axesOf : le ciel de base est lu même hors registre");
 
@@ -153,6 +153,12 @@ ok(!ST.check(sc, ctx([{ ...sgood, reactions: sgood.reactions.map((r) => ({ ...r,
 ok(!ST.check(sc, ctx([{ ...sgood, reactions: sgood.reactions.map((r) => ({ ...r, type: "violent" })) }])).ok && !ST.check(sc, ctx([{ ...sgood, stability: 77 }])).ok, "strange : des réactions violentes ou une marge trop courte, non");
 const sn = ST.chapterNote(sc, "fr", "N");
 ok(!/À faire/.test(sn) && !/violet_sun|strange_stone|tablet|deep_cold|drizzle/.test(sn) && ST.HINTS.strange.fr && !/violet_sun|strange_stone|tablet_|deep_cold|drizzle/.test(JSON.stringify(ST.HINTS)), "strange : la lettre et l'indice ne donnent ni recette ni nom de bloc");
+
+// ---- ce qui manque, et les noms « Age N »
+{ const st = {}, sky = age("Sans vie", ["single_sun", "steady_cycle", "water", "rain"]);
+  ST.evaluate(st, "k", { ages: [sky], axisOf }); ok(ST.get(st, "k").why === "axes", "evaluate : un monde sans vivant — ce qui manque est « axes »");
+  const st0 = {}; ST.evaluate(st0, "k", { ages: [], axisOf }); ok(ST.get(st0, "k").why === "noage", "evaluate : aucun Âge — « noage »"); }
+{ const names = []; const nm = ST.chapterName(ST.chapterById("mend"), (i) => "Age " + (i + 1), an); names.push(nm); ok(/^Age \d+$/.test(nm) && an(ST.WORLDS.mend.lines.join("\n"), nm).stability < 75 && an(ST.WORLDS.mend.fixed.join("\n"), nm).stability >= 75, "chapterName : un nom « Age N » équitable pour le chapitre 2"); }
 
 // ---- la page finale
 const endP = ST.rewardPages().find((p) => p.id === ST.ENDGAME.id);

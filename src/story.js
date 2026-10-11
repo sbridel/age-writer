@@ -88,6 +88,7 @@ function check(chapter, ctx) {
   const ages = (ctx && ctx.ages) || [], stable = ages.filter((a) => a.stability >= STABLE_AT);
   if (chapter.id === "rest") {
     // « un monde où se reposer » : stable, au moins quatre pages, un ciel, une terre ou de l'eau, un vivant
+    if (!ages.length) return { ok: false, why: "noage" };
     if (!stable.length) return { ok: false, why: "stable" };
     const rich = stable.filter((a) => (a.glyphs || []).length >= 4);
     if (!rich.length) return { ok: false, why: "pages" };
@@ -138,8 +139,9 @@ function evaluate(store, key, ctx) {
   const st = get(store, key), newly = [];
   for (const c of CHAPTERS) {
     if (st.done.includes(c.id)) continue;
-    if (!check(c, { ...ctx, seen: st.seen, notes: st.notes }).ok) break;
-    st.done.push(c.id); newly.push(c);
+    const r = check(c, { ...ctx, seen: st.seen, notes: st.notes });
+    if (!r.ok) { st.why = r.why; break; } // ce qui manque au chapitre en cours (une clé : le plugin en fait une phrase)
+    st.done.push(c.id); newly.push(c); st.why = "";
   }
   return newly;
 }
@@ -179,15 +181,17 @@ const WORLDS = {
  * cherche un nom pour lequel le monde abîmé est bien instable ET le monde corrigé bien stable (sinon le chapitre serait injuste).
  * `analyse(texte, nom)` → { stability }.
  */
-function chapterName(chapter, base, analyse) {
+function chapterName(chapter, nameAt, analyse) {
+  // `nameAt` : un nom de base (les variantes : « X 2 », « X 3 »…) ou une fonction i → nom (le Âge 1, Âge 2… du Relto histoire)
+  const at = (i) => (typeof nameAt === "function" ? nameAt(i) : i ? `${nameAt} ${i + 1}` : nameAt), base = at(0);
   const w = WORLDS[chapter.id];
   if (w && w.stable && analyse) { // un monde de départ qui tient avec de la marge, pour ce nom
-    for (let i = 0; i < 80; i++) { const nm = i ? `${base} ${i + 1}` : base, a = analyse(w.lines.join("\n"), nm); if (a && a.stability >= STABLE_AT + (w.margin || 5)) return nm; }
+    for (let i = 0; i < 80; i++) { const nm = at(i), a = analyse(w.lines.join("\n"), nm); if (a && a.stability >= STABLE_AT + (w.margin || 5)) return nm; }
     return base;
   }
   if (w && w.ref && analyse) { // un nom pour lequel une solution existe, avec de la marge
     for (let i = 0; i < 120; i++) {
-      const nm = i ? `${base} ${i + 1}` : base, a = analyse(w.ref.join("\n"), nm); if (!a) continue;
+      const nm = at(i), a = analyse(w.ref.join("\n"), nm); if (!a) continue;
       const ok = w.strange ? strangeOk({ glyphs: w.ref, stability: a.stability, reactions: reactionsOfAnalysis(a) }, (id) => { const b = blockAxis(id); return b; }) : a.stability >= STABLE_AT + 5;
       if (ok) return nm;
     }
@@ -196,7 +200,7 @@ function chapterName(chapter, base, analyse) {
   if (!w || !w.fixed || !analyse) return base;
   const st = (lines, nm) => { const a = analyse(lines.join("\n"), nm); return a && Number.isFinite(a.stability) ? a.stability : null; };
   for (let i = 0; i < 80; i++) {
-    const nm = i ? `${base} ${i + 1}` : base, bad = st(w.lines, nm), good = st(w.fixed, nm);
+    const nm = at(i), bad = st(w.lines, nm), good = st(w.fixed, nm);
     if (bad !== null && good !== null && bad < STABLE_AT && good >= STABLE_AT) return nm;
   }
   return base;

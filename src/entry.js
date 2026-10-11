@@ -504,7 +504,7 @@ module.exports = function build(Base, core, AGEX) {
       this.registerEvent(vault.on("modify", (f) => {
         if (!(f instanceof TFile) || f.extension !== "md") return;
         clearTimeout(this.lawTimers.get(f.path));
-        this.lawTimers.set(f.path, window.setTimeout(() => { this.lawTimers.delete(f.path); this.observeFile(f); }, 1500));
+        this.lawTimers.set(f.path, window.setTimeout(() => { this.lawTimers.delete(f.path); this.observeFile(f); R.storyTick(this); }, 1500));
         this.refreshLive();
       }));
       this.registerEvent(vault.on("rename", (f, old) => guard("rename", () => this.onRename(f, old))));
