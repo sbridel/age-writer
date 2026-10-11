@@ -632,6 +632,7 @@
 .age-libbook__ta.age-libbook__ta { resize: none; appearance: none; -webkit-appearance: none; padding: 3px 8px; margin: 0; border: none; border-radius: 1px; box-shadow: inset 0 0 0 1px rgba(120, 90, 40, 0.35), inset 0 2px 6px rgba(80, 55, 20, 0.22);
   background-color: rgba(250, 242, 214, 0.55); background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 1.55em, rgba(110, 80, 40, 0.22) 1.55em, rgba(110, 80, 40, 0.22) calc(1.55em + 1px)); background-attachment: local;
   color: #2c3d2b; caret-color: #2c3d2b; font-family: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif; font-style: italic; line-height: calc(1.55em + 1px); letter-spacing: 0.01em; }
+.age-libbook__ta.age-agebook__name.age-agebook__name { background-image: none; line-height: normal; font-style: normal; text-align: center; }
 .age-libbook__ta::placeholder { color: rgba(44, 61, 43, 0.45); font-style: italic; }
 .age-libbook__ta.age-libbook__ta:focus { outline: none; box-shadow: inset 0 0 0 1px rgba(160, 110, 40, 0.85), inset 0 2px 6px rgba(80, 55, 20, 0.22), 0 0 6px rgba(201, 162, 78, 0.45); }
 .age-libbook__ta::selection { background: rgba(44, 61, 43, 0.28); }

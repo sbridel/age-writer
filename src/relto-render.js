@@ -23,8 +23,9 @@ const RV = require("./genviews");
 const AT = require("./relto-atelier");
 const GB = require("./relto-glyphbook");
 const LB = require("./relto-librarybook");
+const AB2 = require("./relto-agebook");
 const AB = require("./relto-atelier-back");
-const ROOMS = { flower: AT.drawFlowerView, librarybook: LB.drawLibraryBook, atelierback: AB.drawBackroom, glyphbook: GB.drawGlyphBook, letter: AT.drawLetter, atelier: AT.drawAtelier, desk: AT.drawDesk, loft: AT.drawLoft, cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom, book: PB.drawBookRoom, telescope: TL.drawTelescopeRoom, starmap: SM.drawStarMap, clock: CK.drawClockRoom };
+const ROOMS = { flower: AT.drawFlowerView, librarybook: LB.drawLibraryBook, agebook: AB2.drawAgeBook, atelierback: AB.drawBackroom, glyphbook: GB.drawGlyphBook, letter: AT.drawLetter, atelier: AT.drawAtelier, desk: AT.drawDesk, loft: AT.drawLoft, cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom, book: PB.drawBookRoom, telescope: TL.drawTelescopeRoom, starmap: SM.drawStarMap, clock: CK.drawClockRoom };
 
 const W = 640, H = 360, GY = 208; // largeur, hauteur logiques ; ligne de sol
 
@@ -175,7 +176,7 @@ class ReltoRenderer {
     };
     this.raf = requestAnimationFrame(loop);
   }
-  stop() { this.running = false; if (this.libUI && this.libUI.root) { this.libUI.root.remove(); this.libUI.root = null; } if (this.raf) cancelAnimationFrame(this.raf); if (this.io) { try { this.io.disconnect(); } catch (e) { /* ignore */ } this.io = null; } }
+  stop() { this.running = false; if (this.libUI && this.libUI.root) { this.libUI.root.remove(); this.libUI.root = null; } if (this.abUI && this.abUI.root) { this.abUI.root.remove(); this.abUI.root = null; } if (this.raf) cancelAnimationFrame(this.raf); if (this.io) { try { this.io.disconnect(); } catch (e) { /* ignore */ } this.io = null; } }
 
   // ---- dessin --------------------------------------------------------------------------
   draw(t) {
@@ -1103,6 +1104,8 @@ class ReltoRenderer {
     if (view === "glyphbook" || view === "librarybook") this.gbook = { spread: 0, anim: null };
     if (view === "librarybook") { this._lbData = null; if (this.libUI) { this.libUI.msg = ""; } if (this.opts.onLibraryOpen) this.opts.onLibraryOpen(); }
     if (this.view === "librarybook" && this.libUI && this.libUI.root) this.libUI.root.style.display = "none";
+    if (this.view === "agebook" && this.abUI && this.abUI.root) this.abUI.root.style.display = "none";
+    if (view === "agebook") { const ab = this.abUI || (this.abUI = { msg: "", bad: false, slot: null, read: null, draft: { name: "", text: "" } }); ab.msg = ""; AB2.readNow(this); this.bookFrom = ["cabin", "loft"].includes(this.view) ? this.view : "cabin"; }
     if (view === "glyphbook" || view === "librarybook") this.bookFrom = ["cabin", "loft"].includes(this.view) ? this.view : "cabin"; // la flèche ronde du livre y retourne
     this.view = view; this.hover = null; this.flash = null; this.fadeAt = Date.now(); this.deskUI = null; if (view !== "cabin") { this.panelAt = 0; this.shelf = null; if (view !== "glyphbook" && view !== "librarybook") { this.shelfOpen = false; this.bookAt = 0; } } // en quittant la cabane, la bibliothèque reprend sa place // en quittant le bureau, le tiroir se referme
     if (this.opts.onView) this.opts.onView(view);
@@ -1111,7 +1114,7 @@ class ReltoRenderer {
   /** vues possibles selon les pages et structures de ce Relto (l'île et la vue globale existent toujours) */
   available() {
     const sc = this.scene, a = (t) => sc.additions.some((x) => x.type === t);
-    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies"), imager: a("imager"), book: sc.structures.includes("hut"), telescope: a("telescope"), starmap: a("telescope"), clock: a("dniclock"), atelier: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), letter: sc.structures.includes("hut") && ((sc.mode === "story" && (sc.storyDone || []).includes("end")) || (sc.mode !== "story" && a("inkwell"))), desk: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), loft: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), glyphbook: sc.structures.includes("hut"), librarybook: sc.structures.includes("hut"), atelierback: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), flower: sc.structures.includes("hut") && (a("atelier") || a("inkwell")) };
+    return { island: true, global: true, cabin: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies"), imager: a("imager"), book: sc.structures.includes("hut"), telescope: a("telescope"), starmap: a("telescope"), clock: a("dniclock"), atelier: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), letter: sc.structures.includes("hut") && ((sc.mode === "story" && (sc.storyDone || []).includes("end")) || (sc.mode !== "story" && a("inkwell"))), desk: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), loft: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), glyphbook: sc.structures.includes("hut"), librarybook: sc.structures.includes("hut"), agebook: sc.structures.includes("hut"), atelierback: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), flower: sc.structures.includes("hut") && (a("atelier") || a("inkwell")) };
   }
   /** dessine `fn` (en coordonnées de l'île) agrandi dans une vue rapprochée et reporte les zones cliquables qu'il crée à l'écran */
   withView(ctx, { S, ox, oy, fx, fy }, fn) {

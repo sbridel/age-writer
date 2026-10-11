@@ -125,6 +125,7 @@ function drawCabin(r, ctx, sc, sky, t) {
   const books = [
     { kind: "glyphs", x: tx + 16, y: ty, w: 17, h: 38, body: "#27555a", band: "#d8c07a", tip: "Book of glyphs" },
     { kind: "library", x: tx + 38, y: ty, w: 17, h: 33, body: "#5b2b2b", band: "#c9a24e", tip: "Library book (blocks and Relto pages)" },
+    { kind: "agebook", x: tx + 60, y: ty, w: 17, h: 30, body: "#3d3a2a", band: "#d8c07a", tip: TR(r)("agebook.tip") },
   ];
   const moved = !!(r.available && r.available().atelier); // l'atelier est ouvert : les livres de référence ont déménagé à l'étage
   if (moved && r.opts.relicState && (r.opts.relicState() || {}).seen) r.hot.push({ x: tx, y: ty - 8, w: tw, h: 14, tip: "", go: "desk", secret: true }); // un raccourci caché vers le bureau (une fois l'atelier découvert)
@@ -134,7 +135,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     const gl = 0.25 + 0.2 * Math.sin(t * 1.4); ctx.fillStyle = rgba(255, 235, 170, gl); ctx.fillRect(kx + 9, ky - 4, 5, 1);
     r.hot.push({ x: kx - 3, y: ky - 12, w: 34, h: 16, tip: TR(r)("atelier.key.tip"), go: "atelier" });
   }
-  for (const b of moved ? [] : books) { standingBook(ctx, c, b); r.hot.push({ x: b.x - 1, y: b.y - b.h - 1, w: b.w + 2, h: b.h + 2, tip: b.tip, ...(b.kind === "glyphs" ? { go: "glyphbook" } : { special: b.kind }) }); }
+  for (const b of moved ? [] : books) { standingBook(ctx, c, b); r.hot.push({ x: b.x - 1, y: b.y - b.h - 1, w: b.w + 2, h: b.h + 2, tip: b.tip, ...(b.kind === "glyphs" ? { go: "glyphbook" } : b.kind === "agebook" ? { go: "agebook" } : { special: b.kind }) }); }
   if (r.scene.additions.some((a) => a.type === "imager")) PS.imagerMini(r, ctx, c, tx + 112, ty, t, TR(r)("relto.pass.imager.tip")); // l'Imageur : un petit appareil de laiton sur la table, son cristal luit ; un clic y mène
   if (!moved && r.scene.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { // le carnet de l'arpenteur : posé à plat sur la table, signet rouge
     const nx = tx + 132, ny = ty - 5;
