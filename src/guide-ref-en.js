@@ -361,7 +361,7 @@ const REF_EN = [
   ] },
   // ---- Spoilers ---------------------------------------------------------------------------------------------------
   { id: "spoilers", part: "spoil", icon: "eye-off", title: "Secrets of the Relto", spoiler: true,
-    gate: { p: "This page gives away what the Relto hides: the writing room, its puzzle, and what lies inside. Nothing here is needed to use the plugin. If you would rather find it all by yourself, leave the box unticked.", label: "Show the spoilers" }, body: [
+    gate: { p: "Everything below spoils the game. None of it is needed to use the plugin. If you would rather find it all by yourself, leave the box unticked.", label: "Show the spoilers" }, body: [
     { h: "Getting in" },
     { p: "The hidden writing room needs the cabin. It opens once the story is finished (the inkwell), or in the sandbox when the page **Writing room** is active. The page **Inkwell** adds the mentor's last letter to the sandbox as well. Both are in the list of the command “Create a Relto page”." },
     { p: "The clue is scrawled on the back of the mentor's last letter, on the cabin table. It leads to the small bookcase under the window: touch three books in the right order, the one the sea dyed (blue), the one the fire left behind (red), the one with no title. The bookcase slides away. Behind it, a wooden panel answers to knocking: two quick knocks, a pause (between 0.75 and 2.8 seconds), then one firm knock." },

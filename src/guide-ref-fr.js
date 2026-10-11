@@ -358,7 +358,7 @@ const REF_FR = [
   ] },
   // ---- Spoilers ---------------------------------------------------------------------------------------------------
   { id: "spoilers", part: "spoil", icon: "eye-off", title: "Secrets du Relto", spoiler: true,
-    gate: { p: "Cette page dévoile ce que le Relto cache : l'atelier, son énigme et ce qu'on y trouve. Rien ici n'est nécessaire pour utiliser le plugin. Si tu préfères tout découvrir seul, laisse la case décochée.", label: "Afficher les spoilers" }, body: [
+    gate: { p: "Tout ce qui suit gâche le jeu. Rien n'est nécessaire pour utiliser le plugin. Si tu préfères tout découvrir seul, laisse la case décochée.", label: "Afficher les spoilers" }, body: [
     { h: "Y entrer" },
     { p: "L'atelier caché demande la cabane. Il s'ouvre une fois l'histoire terminée (l'encrier), ou, dans le bac à sable, quand la page **Writing room** est active. La page **Inkwell** ajoute aussi au bac à sable la dernière lettre du mentor. Les deux figurent dans la liste de la commande « Create a Relto page »." },
     { p: "L'indice est griffonné au dos de la dernière lettre du mentor, sur la table de la cabane. Il mène à la petite bibliothèque sous la fenêtre : touche trois livres dans l'ordre, celui que la mer a teint (bleu), celui que le feu a laissé (rouge), celui qui n'a pas de titre. La bibliothèque coulisse. Derrière, un panneau de bois répond aux coups : deux coups brefs, une pause (entre 0,75 et 2,8 secondes), puis un coup franc." },

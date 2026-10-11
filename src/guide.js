@@ -117,7 +117,7 @@ function toMarkdown(lang, level) {
   for (const t of topics(lang, level)) {
     if (t.part && t.part !== part) { part = t.part; out.push("## " + parts[part], ""); }
     out.push((t.part ? "### " : "## ") + t.title, "");
-    if (t.gate) out.push("> " + t.gate.p, "");
+    if (t.gate) out.push("> **SPOILER** — " + t.gate.p, "");
     for (const b of t.body) {
       if (b.p) out.push(b.p, "");
       else if (b.h) out.push((t.part ? "#### " : "### ") + b.h, "");
@@ -147,7 +147,7 @@ function renderTopic(host, topic, kicker, spoil) {
   host.createEl("h2", { text: topic.title });
   let page = host; // une rubrique « spoiler » s'ouvre sur un avertissement et une case : le texte reste caché tant qu'elle n'est pas cochée
   if (topic.gate) {
-    const st = spoil || { on: false }, gate = host.createDiv({ cls: "age-guide__gate" }); inline(gate.createEl("p"), topic.gate.p);
+    const st = spoil || { on: false }, gate = host.createDiv({ cls: "age-guide__gate" }); gate.createDiv({ cls: "age-guide__spoiltag", text: "⚠ SPOILER ⚠" }); inline(gate.createEl("p"), topic.gate.p);
     const lab = gate.createEl("label", { cls: "age-guide__gatebox" }), cb = lab.createEl("input", { type: "checkbox" }); lab.appendText(" " + topic.gate.label); cb.checked = !!st.on;
     page = host.createDiv({ cls: "age-guide__spoiler" }); page.hidden = !st.on;
     cb.addEventListener("change", () => { st.on = cb.checked; page.hidden = !st.on; });

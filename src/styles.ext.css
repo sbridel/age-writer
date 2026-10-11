@@ -643,3 +643,4 @@
 /* guide : la rubrique des spoilers, cachée derrière une case à cocher */
 .age-guide__gate { border: 1px solid var(--background-modifier-border); border-left: 3px solid var(--text-warning, #c9a24e); border-radius: 4px; padding: 6px 14px 10px; margin: 0 0 14px; background: var(--background-secondary); }
 .age-guide__gatebox { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; }
+.age-guide__spoiltag { font-size: 1.9em; font-weight: 800; letter-spacing: 0.18em; text-align: center; color: var(--text-error, #c0553f); padding: 6px 0 2px; }
