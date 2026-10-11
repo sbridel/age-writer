@@ -1,7 +1,7 @@
 "use strict";
 // L'emblème de l'auteur (dessiné ici, aucun asset) : un disque de laiton et d'émail rouge, quatre plumes en diagonale, un cercle central au glyphe,
 // des nuages d'émail en haut et en bas, deux ornements en zigzag. Version simplifiée, aplats et reflets, pour s'accorder au reste du Relto.
-const { rgba } = require("./util");
+const { rgba, mix } = require("./util");
 
 /** Dessine l'emblème centré en (cx, cy), de rayon `R`. `c` : filtre de couleur (lumière ambiante), facultatif ; `t` : temps (un reflet qui glisse). */
 function drawEmblem(ctx, cx, cy, R, c = (h) => h, t = 0) {
@@ -35,4 +35,46 @@ function drawEmblem(ctx, cx, cy, R, c = (h) => h, t = 0) {
   ctx.restore();
 }
 
-module.exports = { drawEmblem };
+/**
+ * Le même emblème en sceau de cire : un disque aux bords ondulés, un bourrelet, et le dessin en relief (reflet en haut à gauche, ombre en bas à droite).
+ * `wax` : la couleur de la cire (bordeaux par défaut).
+ */
+function drawSeal(ctx, cx, cy, R, c = (h) => h, t = 0, wax = "#7c1f2c") {
+  const W0 = c(wax), W_L = c(mix(wax, "#ffd7d0", 0.28)), W_D = c(mix(wax, "#14040a", 0.55)), FIELD = c(mix(wax, "#2a0508", 0.35)), RED = c("#8a1a14"), ORANGE = c("#c2561c"), BROWN = c("#4a0c08");
+  ctx.save(); ctx.translate(cx, cy);
+  const raise = (draw, d = Math.max(0.8, R * 0.025), base = W0) => { // un élément en relief : ombre, reflet, puis la cire elle-même
+    ctx.save(); ctx.translate(d, d); ctx.fillStyle = ctx.strokeStyle = W_D; draw(); ctx.restore();
+    ctx.save(); ctx.translate(-d * 0.8, -d * 0.8); ctx.fillStyle = ctx.strokeStyle = W_L; draw(); ctx.restore();
+    ctx.fillStyle = ctx.strokeStyle = base; draw();
+  };
+  // le disque de cire, bords ondulés, et son ombre sur le papier
+  const edge = (r) => { ctx.beginPath(); for (let i = 0; i <= 72; i++) { const a = (i / 72) * 6.283, k = 1 + 0.018 * Math.sin(a * 3 + 0.6) + 0.011 * Math.sin(a * 7 + 1.9) + 0.006 * Math.sin(a * 13); const x = Math.cos(a) * r * k, y = Math.sin(a) * r * k; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.closePath(); };
+  ctx.fillStyle = "rgba(40,10,10,0.35)"; ctx.save(); ctx.translate(R * 0.06, R * 0.09); edge(R); ctx.fill(); ctx.restore();
+  const wg = ctx.createRadialGradient(-R * 0.3, -R * 0.35, R * 0.1, 0, 0, R * 1.05); wg.addColorStop(0, W_L); wg.addColorStop(0.35, W0); wg.addColorStop(1, W_D); ctx.fillStyle = wg; edge(R); ctx.fill();
+  ctx.lineWidth = R * 0.06; ctx.strokeStyle = W_D; ctx.save(); ctx.translate(R * 0.02, R * 0.02); edge(R * 0.955); ctx.stroke(); ctx.restore(); ctx.strokeStyle = W_L; ctx.save(); ctx.translate(-R * 0.02, -R * 0.02); edge(R * 0.955); ctx.stroke(); ctx.restore(); ctx.strokeStyle = W0; edge(R * 0.955); ctx.stroke(); // le bourrelet
+  // le champ en creux : quatre plages (nuages sombres en haut, ambrés en bas)
+  ctx.fillStyle = FIELD; ctx.beginPath(); ctx.arc(0, 0, R * 0.85, 0, 6.283); ctx.fill();
+  const pg = ctx.createLinearGradient(0, -R * 0.85, 0, R * 0.85); pg.addColorStop(0, BROWN); pg.addColorStop(0.38, c("#5a0e0a")); pg.addColorStop(0.5, RED); pg.addColorStop(0.7, c("#9a3a14")); pg.addColorStop(1, ORANGE); ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(0, 0, R * 0.85, 0, 6.283); ctx.fill();
+  const gl = ctx.createRadialGradient(0, 0, R * 0.2, 0, 0, R * 0.85); gl.addColorStop(0, "rgba(0,0,0,0)"); gl.addColorStop(1, "rgba(20,0,0,0.35)"); ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 0, R * 0.85, 0, 6.283); ctx.fill();
+  // nuages en relief : des lignes concentriques festonnées
+  const cloud = (x, y, s, col) => { ctx.strokeStyle = col; ctx.lineJoin = "round"; for (let k = 0; k < 2; k++) { const q = s * (1 - k * 0.32), oy = y - k * s * 0.08; ctx.lineWidth = Math.max(0.9, R * (k ? 0.02 : 0.03)); ctx.beginPath(); ctx.arc(x - 0.55 * q, oy, 0.36 * q, Math.PI * 0.95, Math.PI * 1.85); ctx.arc(x, oy - 0.1 * q, 0.5 * q, Math.PI * 1.2, Math.PI * 1.8); ctx.arc(x + 0.55 * q, oy, 0.36 * q, Math.PI * 1.15, Math.PI * 2.05); ctx.stroke(); } };
+  cloud(0, -R * 0.58, R * 0.42, c("#a24a30")); cloud(0, R * 0.78, R * 0.46, c("#f0a050")); 
+  // les zigzags latéraux et leurs barres
+  const zig = (dir) => raise(() => { ctx.beginPath(); ctx.moveTo(dir * R * 0.86, -R * 0.1); ctx.lineTo(dir * R * 0.58, -R * 0.2); ctx.lineTo(dir * R * 0.7, -R * 0.02); ctx.lineTo(dir * R * 0.54, R * 0.02); ctx.lineTo(dir * R * 0.7, R * 0.05); ctx.lineTo(dir * R * 0.58, R * 0.22); ctx.lineTo(dir * R * 0.86, R * 0.1); ctx.closePath(); ctx.fill(); ctx.fillRect(Math.min(dir * R * 0.86, dir * R * 0.95), -R * 0.035, R * 0.09, R * 0.07); });
+  zig(-1); zig(1);
+  // les quatre plumes, pointe vers le centre
+  const nib = (a) => { ctx.save(); ctx.rotate(a); ctx.translate(0, -R * 0.69); const L = R * 0.4, Wd = R * 0.095;
+    raise(() => { ctx.beginPath(); ctx.moveTo(0, L * 0.55); ctx.lineTo(Wd, -L * 0.15); ctx.lineTo(Wd * 0.55, -L * 0.55); ctx.lineTo(-Wd * 0.55, -L * 0.55); ctx.lineTo(-Wd, -L * 0.15); ctx.closePath(); ctx.fill(); });
+    ctx.fillStyle = FIELD; ctx.beginPath(); ctx.arc(0, -L * 0.22, Wd * 0.3, 0, 6.283); ctx.fill(); ctx.strokeStyle = W_D; ctx.lineWidth = Math.max(0.7, R * 0.014); ctx.beginPath(); ctx.moveTo(0, L * 0.5); ctx.lineTo(0, -L * 0.12); ctx.stroke(); ctx.restore(); };
+  for (const a of [Math.PI / 4, -Math.PI / 4, (3 * Math.PI) / 4, (-3 * Math.PI) / 4]) nib(a);
+  // le cercle central en relief, son champ plat, et le glyphe
+  ctx.fillStyle = c(mix(wax, "#000000", 0.12)); ctx.beginPath(); ctx.arc(0, 0, R * 0.41, 0, 6.283); ctx.fill();
+  raise(() => { ctx.lineWidth = R * 0.05; ctx.beginPath(); ctx.arc(0, 0, R * 0.43, 0, 6.283); ctx.stroke(); });
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  raise(() => { ctx.lineWidth = R * 0.07; ctx.beginPath(); ctx.moveTo(R * 0.02, -R * 0.3); ctx.lineTo(-R * 0.06, -R * 0.04); ctx.lineTo(R * 0.06, R * 0.04); ctx.lineTo(-R * 0.04, R * 0.28); ctx.stroke(); ctx.lineWidth = R * 0.04; for (const k of [0, 1, 2]) { ctx.beginPath(); ctx.moveTo(-R * (0.3 - k * 0.07), R * 0.02); ctx.quadraticCurveTo(-R * (0.31 - k * 0.07), -R * 0.2, -R * (0.14 - k * 0.07), -R * 0.3); ctx.stroke(); } ctx.lineWidth = R * 0.055; ctx.beginPath(); ctx.moveTo(R * 0.3, -R * 0.06); ctx.quadraticCurveTo(R * 0.26, R * 0.22, -R * 0.02, R * 0.3); ctx.stroke(); ctx.lineWidth = R * 0.04; ctx.beginPath(); ctx.moveTo(R * 0.1, -R * 0.24); ctx.lineTo(R * 0.26, -R * 0.2); ctx.stroke(); }, Math.max(0.6, R * 0.018));
+  ctx.lineCap = "butt";
+  const sh = (t * 0.3) % 6.283; ctx.strokeStyle = "rgba(255,225,215,0.28)"; ctx.lineWidth = R * 0.03; ctx.beginPath(); ctx.arc(0, 0, R * 0.955, sh, sh + 0.45); ctx.stroke(); // un reflet de cire qui glisse
+  ctx.restore();
+}
+
+module.exports = { drawEmblem, drawSeal };

@@ -222,18 +222,18 @@ function drawLetter(r, ctx, sc, sky, t) {
   const TRr = TR(r), amb = 0.55 + 0.45 * sky.ambient, c = (h) => mix("#05060c", h, amb), q = rng(0x1e77), fl = flick(t);
   const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, c("#34261b")); g.addColorStop(1, c("#1d140e")); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   ctx.strokeStyle = rgba(0, 0, 0, 0.18); ctx.lineWidth = 1; for (let i = 0; i < 12; i++) { const y = 10 + q() * 340; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y + q() * 6 - 3); ctx.stroke(); }
-  ctx.fillStyle = rgba(255, 190, 90, 0.07 * fl); ctx.beginPath(); ctx.arc(320, 180, 260, 0, 6.283); ctx.fill();
-  const x0 = 130, y0 = 12, w = 380, h = 336; ctx.save(); ctx.translate(320, 180); ctx.rotate(-0.012); ctx.translate(-320, -180);
+  { const lg = ctx.createRadialGradient(320, 180, 20, 320, 180, 300); lg.addColorStop(0, rgba(255, 190, 90, 0.12 * fl)); lg.addColorStop(1, rgba(255, 190, 90, 0)); ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H); } // la lueur de la lampe
+  const x0 = 130, y0 = 8, w = 380, h = 344; ctx.save(); ctx.translate(320, 180); ctx.rotate(-0.012); ctx.translate(-320, -180);
   ctx.fillStyle = rgba(0, 0, 0, 0.45); ctx.fillRect(x0 + 6, y0 + 8, w, h); // l'ombre
   const pg = ctx.createLinearGradient(x0, y0, x0 + w, y0 + h); pg.addColorStop(0, c("#eadfb8")); pg.addColorStop(0.5, c("#e2d3a6")); pg.addColorStop(1, c("#d3c18f")); ctx.fillStyle = pg;
   ctx.beginPath(); ctx.moveTo(x0, y0 + 3); for (let i = 1; i <= 16; i++) ctx.lineTo(x0 + i * w / 16, y0 + (i % 2 ? 0 : 2.5)); ctx.lineTo(x0 + w, y0 + h - 2); for (let i = 15; i >= 0; i--) ctx.lineTo(x0 + i * w / 16, y0 + h - (i % 2 ? 0 : 2.5)); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = rgba(120, 90, 50, 0.18); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y0 + h / 3); ctx.lineTo(x0 + w, y0 + h / 3); ctx.moveTo(x0, y0 + 2 * h / 3); ctx.lineTo(x0 + w, y0 + 2 * h / 3); ctx.stroke(); // les plis
   const vg = ctx.createRadialGradient(x0 + w / 2, y0 + h / 2, 60, x0 + w / 2, y0 + h / 2, 240); vg.addColorStop(0, "rgba(120,80,30,0)"); vg.addColorStop(1, "rgba(120,80,30,0.22)"); ctx.fillStyle = vg; ctx.fillRect(x0, y0, w, h);
   // le texte : une écriture penchée, à l'encre brune
-  ctx.fillStyle = c("#3a2514"); ctx.font = "italic 16px serif"; let y = y0 + 112; const paras = [TRr("story.letter.hi"), TRr("story.end"), TRr("story.letter.more") + " " + TRr("atelier.clue")];
+  ctx.fillStyle = c("#3a2514"); ctx.font = "italic 16px serif"; let y = y0 + 40; const paras = [TRr("story.letter.hi"), TRr("story.end"), TRr("story.letter.more") + " " + TRr("atelier.clue")];
   for (const p of paras) { for (const ln of wrapLines(ctx, p, w - 76)) { ctx.fillText(ln, x0 + 38, y); y += 20; } y += 8; }
   ctx.textAlign = "right"; ctx.fillText("\u2014 Adrin Vesparath, seltahn", x0 + w - 40, y + 6); ctx.textAlign = "left";
-  EMB.drawEmblem(ctx, x0 + w / 2, y0 + 50, 34, c, t); // l'emblème de l'auteur, en tête de lettre
+  EMB.drawSeal(ctx, x0 + w - 96, y0 + h - 82, 50, c, t); // l'emblème de l'auteur, en sceau de cire
   ctx.restore();
   backButton(r, ctx, TRr("atelier.stand.tip"), "cabin");
 }
