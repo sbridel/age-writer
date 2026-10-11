@@ -125,7 +125,9 @@ function check(chapter, ctx) {
   if (chapter.id === "imager") { // « écouter le ciel » : l'Imageur est réglé et verrouillé sur l'un des Âges du dossier
     const tun = (ctx && ctx.tunings) || {};
     const k = ages.find((a) => tun[a.path] && tun[a.path].lock);
-    return k ? { ok: true, why: "", path: k.path } : { ok: false, why: "lock" };
+    if (k) return { ok: true, why: "", path: k.path };
+    // l'Imageur de la Guilde (livre vierge) garde son verrou par Relto, pas par Âge : un verrou tenu sur l'un des Âges du dossier compte
+    return ctx && ctx.guildLock && ages.length ? { ok: true, why: "" } : { ok: false, why: "lock" };
   }
   if (chapter.id === "alter") {
     // « modifier ce qui est écrit » : la note du chapitre a été modifiée après séchage de l'encre (Loi du Changement), et le monde tient encore
