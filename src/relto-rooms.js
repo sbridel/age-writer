@@ -121,7 +121,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     r.hot.push({ x: kx - 3, y: ky - 12, w: 34, h: 16, tip: TR(r)("atelier.key.tip"), go: "atelier" });
   }
   { // les livres de référence : empilés à plat sur la table, le titre sur le dos (un seul, le livre vierge, quand l'atelier a pris les autres)
-    const order = [{ kind: "glyphs", w: 50, h: 8, body: "#27555a", band: "#d8c07a", title: TR(r)("book.t.glyphs"), tip: "Book of glyphs" }, { kind: "library", w: 54, h: 9, body: "#5b2b2b", band: "#c9a24e", title: TR(r)("book.t.library"), tip: "Library book (blocks and Relto pages)" }, { kind: "descbook", w: 46, h: 8, body: "#3d3a2a", band: "#d8c07a", title: TR(r)("book.t.desc"), tip: TR(r)("agebook.tip") }];
+    const order = [{ kind: "glyphs", w: 50, h: 8, body: "#27555a", band: "#d8c07a", title: TR(r)("book.t.glyphs"), tip: "Book of glyphs" }, { kind: "library", w: 54, h: 9, body: "#5b2b2b", band: "#c9a24e", title: TR(r)("book.t.library"), tip: "Library book (blocks and Relto pages)" }, { kind: "descbook", w: 46, h: 8, body: "#3d3a2a", band: "#d8c07a", title: "", tip: TR(r)("agebook.tip") }];
     for (const z of PILE.pile(ctx, c, tx + 8, ty, moved ? order.filter((x) => x.kind === "descbook") : order, 6.5)) r.hot.push({ x: z.x, y: z.y, w: z.w, h: z.h, tip: z.b.tip, ...(z.b.kind === "glyphs" ? { go: "glyphbook" } : z.b.kind === "descbook" ? { go: "descbook" } : { special: z.b.kind }) });
   }
   if (r.scene.additions.some((a) => a.type === "imager")) PS.imagerMini(r, ctx, c, tx + 112, ty, t, TR(r)("relto.pass.imager.tip")); // l'Imageur : un petit appareil de laiton sur la table, son cristal luit ; un clic y mène

@@ -158,10 +158,10 @@ function mount(plugin, root, o) {
       right.createDiv({ cls: "age-book__none", text: L.say_hint });
       inp.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") { e.preventDefault(); submit(inp); } });
     }
-    const nav = container.createDiv({ cls: "age-dbook__nav" });
-    const prev = nav.createEl("button", { text: "◀", attr: { title: L.prev } }); prev.disabled = this.spread === 0; prev.addEventListener("click", () => { this.spread--; this.msg = ""; this.render(); });
-    nav.createSpan({ text: `${cur.label}  ·  ${this.spread + 1}/${plan.length}` });
-    const next = nav.createEl("button", { text: "▶", attr: { title: L.next } }); next.disabled = this.spread >= plan.length - 1; next.addEventListener("click", () => { this.spread++; this.msg = ""; this.render(); });
+    // on tourne la page en touchant son bord extérieur (un coin replié y invite) ; le bas du livre ne dit que la page où l'on est
+    if (this.spread > 0) spreadEl.createDiv({ cls: "age-dbook__turn age-dbook__turn--prev", attr: { title: L.prev } }).addEventListener("click", () => { this.spread--; this.msg = ""; this.render(); });
+    if (this.spread < plan.length - 1) spreadEl.createDiv({ cls: "age-dbook__turn age-dbook__turn--next", attr: { title: L.next } }).addEventListener("click", () => { this.spread++; this.msg = ""; this.render(); });
+    container.createDiv({ cls: "age-dbook__nav", text: `${cur.label}  ·  ${this.spread + 1}/${plan.length}` });
     if (this.binder) binderEl(container, file, writtenLines(text));
   };
 

@@ -22,7 +22,7 @@ function mountOverlay(r) {
   const parent = r.canvas.parentElement; if (!parent || !r.opts.onDescMount || typeof document === "undefined") return;
   ui = r.dbUI = { root: null, ctrl: null };
   const root = document.createElement("div"); root.className = "age-relto-descbook";
-  const s = root.style; s.position = "absolute"; s.left = ((X0 + 10) / W) * 100 + "%"; s.top = ((Y0 + 10) / H) * 100 + "%"; s.width = ((BW - 20) / W) * 100 + "%"; s.height = ((BH - 20) / H) * 100 + "%"; s.pointerEvents = "auto"; s.boxSizing = "border-box";
+  const s = root.style; s.position = "absolute"; s.left = ((X0 + 10) / W) * 100 + "%"; s.top = ((Y0 + 10) / H) * 100 + "%"; s.right = ((W - X0 - BW + 10) / W) * 100 + "%"; s.bottom = ((H - Y0 - BH + 10) / H) * 100 + "%"; s.pointerEvents = "auto"; s.boxSizing = "border-box";
   for (const ev of ["keydown", "keyup", "keypress", "mousedown", "click", "wheel"]) root.addEventListener(ev, (e) => e.stopPropagation());
   parent.appendChild(root); ui.root = root;
   try { ui.ctrl = r.opts.onDescMount(root, r.descTarget || null); } catch (e) { console.warn("[Age Writer ext] livre descriptif", e); }

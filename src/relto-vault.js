@@ -24,7 +24,6 @@ function trapDoor(r, ctx, c, cx, cy, w, h, tip) {
 function flatBook(ctx, c, x, y, w, h, body, band, title, fontPx) {
   ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(x + 1, y - 1, w, 2);
   ctx.fillStyle = c(body); ctx.fillRect(x, y - h, w, h);
-  ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(x + w - 3, y - h + 1.2, 3, h - 2.4); // la tranche des pages, côté ouvert
   ctx.fillStyle = c(band); ctx.fillRect(x + 4, y - h, 1.8, h); ctx.fillRect(x + w - 9, y - h, 1.8, h); // les nerfs du dos
   ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x, y - 1.6, w, 1.6);
   if (title) { ctx.font = `${fontPx}px serif`; let t = title; while (t.length > 2 && ctx.measureText(t).width > w - 20) t = t.slice(0, -2) + "…"; ctx.fillStyle = c(band); ctx.textAlign = "center"; ctx.fillText(t, x + w / 2 - 1, y - h / 2 + fontPx * 0.35); ctx.textAlign = "left"; }
