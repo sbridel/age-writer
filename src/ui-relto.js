@@ -254,29 +254,39 @@ async function storyRepair(plugin) {
 }
 
 /**
- * Prendre un livre sur l'étagère : il se lève, s'ouvre sur son panneau de liaison (en petit), on le touche, puis on arrive sur la note.
- * Un clic abrège ; sans animation (réglage « mouvement réduit » ou `linkAnim: false`), la note s'ouvre tout de suite.
+ * Prendre un livre sur l'étagère : il se lève, s'ouvre sur son panneau de liaison (en petit) en tournant 3 à 10 pages (selon la graine
+ * de l'Âge), puis c'est le joueur qui touche le panneau : on arrive sur la note. Un clic à côté, ou Échap, referme le livre ; sans animation (réglage « mouvement réduit » ou `linkAnim: false`), la note s'ouvre tout de suite.
  */
 async function playLinkAnim(plugin, age, host, snd, open) {
   const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduced || plugin.ext.linkAnim === false || !host || !host.createDiv) { snd(); return open(); }
-  let analysis = null, f = plugin.app.vault.getAbstractFileByPath(age.path);
-  try { const src = f && plugin.core.extract(await plugin.app.vault.cachedRead(f)); analysis = src != null ? plugin.core.analyse(src, { seed: plugin.core.seed(age.path) }) : null; } catch (e) { analysis = null; }
+  let analysis = null, seed = age.name || "", f = plugin.app.vault.getAbstractFileByPath(age.path);
+  try { const src = f && plugin.core.extract(await plugin.app.vault.cachedRead(f)); seed = plugin.core.seed(age.path) || seed; analysis = src != null ? plugin.core.analyse(src, { seed }) : null; } catch (e) { analysis = null; }
+  // le nombre de pages tournées vient de la graine de l'Âge : de 3 (lentes) à 10 (vite)
+  let h = 2166136261; for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+  const pages = 3 + ((h >>> 0) % 8), gap = Math.round(700 - ((pages - 3) / 7) * 520); // 700 ms entre deux pages pour 3, 180 ms pour 10
   if (window.getComputedStyle(host).position === "static") host.style.position = "relative";
   const ov = host.createDiv({ cls: "age-linkanim" }), book = ov.createDiv({ cls: "age-linkanim__book" });
   book.createDiv({ cls: "age-linkanim__title", text: age.name || f.basename });
   const panel = ov.createDiv({ cls: "age-linkanim__panel" });
+  ov.createDiv({ cls: "age-linkanim__hint", text: plugin.t("link.touchpanel") });
   if (analysis) { try { plugin.mountGenerated(panel, analysis, age.path); } catch (e) { console.warn("[Age Writer ext] panneau", e); } }
-  const touch = ov.createDiv({ cls: "age-linkanim__touch" });
-  let done = false;
-  let sounded = false; const ring = () => { if (!sounded) { sounded = true; snd(); } };
-  const finish = () => { if (done) return; done = true; ring(); ov.remove(); open(); };
-  ov.addEventListener("click", finish);
-  const quiet = !plugin.ext.sound, vol = plugin.ext.volume, ok = (fn) => { if (!done && !quiet) fn(); };
-  window.setTimeout(() => { if (done) return; ov.addClass("is-open"); ok(() => { if (plugin.ext.soundBook !== false) sound.openSequence(vol, { book: true, clasp: plugin.ext.soundClasp !== false, link: false }); }); }, 1100); // le livre s'ouvre : son panneau apparaît
-  for (const at of [1550, 1900, 2250]) window.setTimeout(() => ok(() => { if (plugin.ext.soundBook !== false) sound.pageTurn(vol); }), at); // les pages qu'on tourne
-  window.setTimeout(() => { if (done) return; ov.addClass("is-touch"); touch.addClass("is-on"); ring(); }, 2800); // on le touche
-  window.setTimeout(finish, 3600); // et on arrive
+  const touch = ov.createDiv({ cls: "age-linkanim__touch" }), timers = [], at = (fn, ms) => timers.push(window.setTimeout(fn, ms));
+  const quiet = !plugin.ext.sound, vol = plugin.ext.volume;
+  let done = false, ready = false;
+  const end = () => { done = true; timers.forEach((x) => window.clearTimeout(x)); document.removeEventListener("keydown", onKey, true); ov.remove(); };
+  const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); end(); } };
+  document.addEventListener("keydown", onKey, true);
+  ov.addEventListener("click", () => { if (!ready) end(); }); // un clic à côté ferme le livre (pas avant : il faut le laisser s'ouvrir)
+  panel.addEventListener("click", (e) => { // c'est le joueur qui touche le panneau : l'anneau, le son de la liaison, puis la note
+    e.stopPropagation(); if (!ready || done) return; ready = false;
+    const r = ov.getBoundingClientRect(); touch.style.left = `${e.clientX - r.left - 10}px`; touch.style.top = `${e.clientY - r.top - 10}px`;
+    ov.addClass("is-touch"); touch.addClass("is-on"); ov.removeClass("is-ready"); snd();
+    at(() => { end(); open(); }, 900);
+  });
+  at(() => { ov.addClass("is-open"); if (!quiet && plugin.ext.soundBook !== false) sound.openSequence(vol, { book: true, clasp: plugin.ext.soundClasp !== false, link: false }); }, 1100); // le livre s'ouvre : son panneau apparaît
+  for (let i = 0; i < pages; i++) at(() => { if (!quiet && plugin.ext.soundBook !== false) sound.pageTurn(vol); }, 1600 + i * gap); // les pages qu'on tourne
+  at(() => { ready = true; ov.addClass("is-ready"); }, 1700 + pages * gap); // le panneau attend d'être touché
 }
 
 /** Après une modification : revoir l'avancement de l'histoire (une notice quand un chapitre est réussi), sans qu'il faille ouvrir le Relto. */
