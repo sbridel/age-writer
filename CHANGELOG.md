@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.25.1 — README wording (2026-10-11)
+
+### Changed
+- README: no more template-like text (a `<version>` token, "coming soon"), as flagged by the plugin catalogue check.
+
 ## 1.25.0 — Rigour of the laws (2026-10-11)
 
 ### Added

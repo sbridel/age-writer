@@ -332,3 +332,6 @@ unlock:                            # facultatif
 - **Livre des glyphes** : en bac à sable, tous les glyphes sont montrés (pâles si pas écrits). **Chat** : plus dans deux pièces à la fois.
 - **Scorecard d'Obsidian** : plus de `!important`, de `clip-path`, de `display: contents` ni de `column-gap` ; la langue vient de `moment.locale()` et non de `localStorage`.
 
+## 1.25.1 — le README sans texte de gabarit (11 oct. 2026)
+
+- README (EN et FR) : plus de jeton `<version>` ni de « coming soon », relevés par la vérification du catalogue (« README contains unfilled placeholder text »). « Vault Enumeration » n'est qu'une information : le plugin liste les notes pour retrouver les Âges.
