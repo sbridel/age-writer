@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## Unreleased
+
+### Added
+- **A writer's title.** An Age that stays stable for seven days in a row earns you a title, by the rigour it held under: Scribe (gentle), Seasoned Seltahn (balanced), Master (strict, with at least three law families ticked), Grand Master (extreme). The first Age to hold seven days is also marked once. The title never goes back down, and nothing is locked by it; changing the rigour, or falling below stable, restarts the count.
+
 ## 1.25.1 — README wording (2026-10-11)
 
 ### Changed

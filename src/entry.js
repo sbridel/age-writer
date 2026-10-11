@@ -31,6 +31,7 @@ const WX = require("./weather");
 const DFR = require("./descriptors-fr");
 const DOSE = require("./dosage");
 const RG = require("./rigor");
+const STAT = require("./status");
 const DEPTH = require("./depth");
 const { SYSTEM_RE } = require("./starsystem");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
@@ -88,6 +89,7 @@ module.exports = function build(Base, core, AGEX) {
       this.index = new AgeIndex(this);
       // la note du chapitre « Modifier ce qui est écrit » : l'encre y sèche en 2 min au plus (ailleurs, un délai court ferait des altérations)
       this.law = new Law(this.ext.state.law, { dryMinutes: (name) => (R.storyNotes(this).has(name) ? Math.min(2, this.ext.inkDry) : this.ext.inkDry), healPerDay: () => this.ext.heal, ignored: (raw) => PH.isPhysicsLine(raw) || PH.isPhysicsStub(raw) });
+      this.status = new STAT.Status(this.ext.state.status || (this.ext.state.status = {})); // le statut d'écrivain : le titre et les jours tenus par Âge
       guard("modal plein écran", () => { // les fenêtres modales (livre des glyphes, carnet de l'arpenteur…) restent visibles quand le Relto est en plein écran
         const mp = obsidian.Modal && obsidian.Modal.prototype, orig = mp && mp.open; if (!orig) return;
         const self = this; mp.open = function (...a) { const r = orig.apply(this, a); fitModalToFullscreen(this); return r; };
@@ -113,6 +115,7 @@ module.exports = function build(Base, core, AGEX) {
           if (this.law.tend(o.seed, bad ? out.stability : 100, op)) { out.condemned = true; return bad || out.fissure === "open" || out.fissure === "submarine" ? forceAlteration(out, 10) : out; }
           return fissureStrain(out, op);
         }) || out;
+        if (o && o.seed && !o.probe) guard("statut", () => this.statusWatch(o.seed, out.stability));
         return out;
       };
       // la graine d'un Âge renommé : sa propriété `age_seed` (posée au renommage), pour qu'il garde son monde et son étoile
@@ -183,6 +186,14 @@ module.exports = function build(Base, core, AGEX) {
       if (typeof this.app.vault.process === "function") await this.app.vault.process(f, edit);
       else await this.app.vault.modify(f, edit(await this.app.vault.read(f)));
       new Notice(missed ? this.t("phys.notfound") : this.t("phys.written", { line: `${key}: ${PH.asLine(value)}` }));
+    }
+
+    /** Le statut d'écrivain : un Âge qui reste stable sept jours donne un titre ; on l'annonce une fois (le Korfah d'abord, puis le palier). */
+    statusWatch(name, stability) {
+      const up = this.status.watch(name, stability, this.ext); if (!up) return;
+      this.saveExt();
+      if (up.korfah) new Notice(this.t("status.korfah"), 12000);
+      new Notice(this.t("status.up", { title: this.t("status.title." + up.tier) }), 9000);
     }
 
     lang() {
@@ -548,7 +559,7 @@ module.exports = function build(Base, core, AGEX) {
       }));
       this.registerEvent(vault.on("rename", (f, old) => guard("rename", () => { R.resetStoryDraw(this); this.onRename(f, old); })));
       this.registerEvent(vault.on("create", () => R.resetStoryDraw(this)));
-      this.registerEvent(vault.on("delete", (f) => { R.resetStoryDraw(this); if (f instanceof TFile) { this.law.forget(f.basename); this.saveExt(); } }));
+      this.registerEvent(vault.on("delete", (f) => { R.resetStoryDraw(this); if (f instanceof TFile) { this.law.forget(f.basename); this.status.forget(f.basename); this.saveExt(); } }));
       this.registerEvent(metadataCache.on("changed", () => this.refreshLive()));
       const recheck = () => window.setTimeout(() => this.checkSound && this.checkSound(), 150);
       this.registerEvent(this.app.workspace.on("active-leaf-change", recheck));
@@ -571,12 +582,13 @@ module.exports = function build(Base, core, AGEX) {
       if (!(f instanceof TFile) || f.extension !== "md") return;
       const oldName = old.replace(/^.*\//, "").replace(/\.md$/i, "");
       const src = core.extract(await this.app.vault.read(f));
-      if (src === null) { this.law.forget(oldName); this.saveExt(); return; }
+      if (src === null) { this.law.forget(oldName); this.status.forget(oldName); this.saveExt(); return; }
       // un Âge renommé garde son monde : son ancienne graine devient sa propriété `age_seed` (sauf s'il en a déjà une)
       const fm = (this.app.metadataCache.getFileCache(f) || {}).frontmatter, had = fm && fm.age_seed != null && String(fm.age_seed).trim() ? String(fm.age_seed).trim() : null;
       const seed = had || core.seed(old) || oldName;
       this.renamedSeeds.set(f.path, seed);
       if (!had) await guard("age_seed", () => this.app.fileManager.processFrontMatter(f, (p) => { if (p.age_seed == null || !String(p.age_seed).trim()) p.age_seed = seed; }));
+      this.status.rename(oldName, f.basename);
       this.law.rename(oldName, f.basename, core.analyse(src, { seed, physics: false }), guard("valeurs physiques", () => PH.parsePhysics(src).params));
       guard("renommage", () => this.renameEverywhere(old, f.path, oldName, f.basename));
       this.saveExt(); this.refreshLive();

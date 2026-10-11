@@ -7,6 +7,7 @@ for (const f of fs.readdirSync(dir)) { if (!f.endsWith(".js") || f.startsWith("v
   for (const m of s.matchAll(/\bt\(\s*"([a-z]+\.[a-z.]+?)"/g)) keys.add(m[1]);
   for (const m of s.matchAll(/this\.t\(\s*"([a-z]+\.[a-z.]+?)"/g)) keys.add(m[1]); }
 keys.delete("relto.state.");
+keys.delete("status.title."); for (let i = 0; i <= 4; i++) { keys.add("status.title." + i); keys.add("status.flash." + i); } // clés bâties avec le palier
 for (const s of ["active", "available", "locked", "disabled", "missing"]) keys.add("relto.state." + s);
 let bad = 0;
 for (const k of keys) for (const l of ["en", "fr"]) if (!D[l][k]) { console.log("MANQUE", l, k); bad++; }
