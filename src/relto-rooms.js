@@ -41,8 +41,8 @@ function drawCabin(r, ctx, sc, sky, t) {
   for (let i = 0; i < 12; i++) { const x = i * 58 + 10; ctx.beginPath(); ctx.moveTo(x, FLOOR); ctx.lineTo(x - (x - 320) * 0.18, H); ctx.stroke(); }
   ctx.fillStyle = c("#2a1c14"); ctx.fillRect(0, FLOOR - 6, W, 8);
   // tapis
-  ctx.fillStyle = c("#5b2b2b"); ctx.beginPath(); ctx.ellipse(330, 322, 170, 24, 0, 0, 6.283); ctx.fill();
-  ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(330, 322, 156, 19, 0, 0, 6.283); ctx.stroke();
+  ctx.fillStyle = c("#5b2b2b"); ctx.beginPath(); ctx.ellipse(262, 322, 170, 24, 0, 0, 6.283); ctx.fill();
+  ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(262, 322, 156, 19, 0, 0, 6.283); ctx.stroke();
   // fenêtre : le ciel de l'île
   const wx = 104, wy = 70, ww = 78, wh = 92;
   ctx.save(); ctx.beginPath(); ctx.rect(wx, wy, ww, wh); ctx.clip();
@@ -62,7 +62,9 @@ function drawCabin(r, ctx, sc, sky, t) {
     const sp = r.panelAt ? Math.min(1, (Date.now() - r.panelAt) / 1100) : 0; // le panneau coulisse sur le côté et montre une ouverture chaude
     if (sp > 0) { ctx.fillStyle = "#120b07"; ctx.fillRect(S2.x, S2.y, S2.w, S2.h); const gl = ctx.createLinearGradient(S2.x, 0, S2.x + S2.w, 0); gl.addColorStop(0, rgba(255, 170, 80, 0.5 * sp)); gl.addColorStop(1, rgba(255, 170, 80, 0.1 * sp)); ctx.fillStyle = gl; ctx.fillRect(S2.x, S2.y, S2.w, S2.h);
       ctx.save(); ctx.beginPath(); ctx.rect(S2.x, S2.y, S2.w, S2.h); ctx.clip(); const ox = -S2.w * (sp * sp * (3 - 2 * sp)); ctx.fillStyle = c("#5a4330"); ctx.fillRect(S2.x + ox, S2.y, S2.w, S2.h); ctx.strokeStyle = rgba(0, 0, 0, 0.3); for (let k = 1; k < 3; k++) { ctx.beginPath(); ctx.moveTo(S2.x + ox + k * S2.w / 3, S2.y); ctx.lineTo(S2.x + ox + k * S2.w / 3, S2.y + S2.h); ctx.stroke(); } ctx.restore(); }
-    r.hot.push({ x: S2.x, y: S2.y, w: S2.w, h: S2.h, tip: "", knock: true, secret: true }); // on y frappe : deux coups brefs, un temps, un coup franc (voir ReltoRenderer.knockBeat)
+    const gone = !!r.shelfOpen || !!(r.opts.relicState && (r.opts.relicState() || {}).seen); // la bibliothèque est déjà écartée (ou le passage déjà découvert)
+    if (gone) r.hot.push({ x: S2.x, y: S2.y, w: S2.w, h: S2.h, tip: "", knock: true, secret: true }); // derrière : on frappe, deux coups brefs, un temps, un coup franc (voir ReltoRenderer.knockBeat)
+    ATELIER.drawBookcase(r, ctx, c, gone); // devant : une petite bibliothèque, trois livres à toucher dans l'ordre
   }
   // porte (retour à l'île)
   const dx = 22, dy = 112, dw = 64;
@@ -111,7 +113,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     if (!sc.ages.length) { ctx.fillStyle = rgba(230, 220, 190, 0.45); ctx.font = "11px serif"; ctx.fillText("(no Age written yet)", x0 + 70, y0 + RH * 1.5); }
   }
   // table, chandelle et livres à part
-  const tx = 60, tw = 176, ty = 284;
+  const tx = 132, tw = 176, ty = 284;
   ctx.fillStyle = c("#2f2016"); ctx.fillRect(tx + 6, ty, 7, 56); ctx.fillRect(tx + tw - 13, ty, 7, 56);
   ctx.fillStyle = c("#4b3322"); ctx.fillRect(tx + 2, ty + 8, tw - 4, 8);
   ctx.fillStyle = c("#6a4a30"); ctx.fillRect(tx, ty, tw, 8);

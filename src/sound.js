@@ -701,6 +701,27 @@ function creak(volume = 0.3) {
     e.gain.setValueAtTime(0.0001, t); e.gain.linearRampToValueAtTime(0.35, t + 0.25); e.gain.linearRampToValueAtTime(0.2, t + 0.8); e.gain.exponentialRampToValueAtTime(0.0001, t + 1.3); o.connect(lp); lp.connect(e); e.connect(out); o.start(t); o.stop(t + 1.4);
   });
 }
+/** Un panneau de pierre et de bois qui coulisse (le passage de l'atelier) : un grondement sourd, du grain de pierre qui racle, des à-coups de bois, et une butée sèche à la fin. */
+function slideStone(volume = 0.3) {
+  return oneShot(1.9, (c, out, noise) => {
+    out.gain.value = volume; const t = c.currentTime, D = 1.15, env = (g, a, peak, d) => { g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.setValueAtTime(peak, t + d - 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + d); };
+    const rum = noise(D + 0.1), rl = c.createBiquadFilter(), rg = c.createGain(); rl.type = "lowpass"; rl.frequency.setValueAtTime(130, t); rl.frequency.linearRampToValueAtTime(230, t + D * 0.5); rl.frequency.linearRampToValueAtTime(110, t + D); env(rg, 0.2, 0.9, D); rum.connect(rl); rl.connect(rg); rg.connect(out); rum.start(t); // le grondement de la dalle
+    const gr = noise(D + 0.1), gb = c.createBiquadFilter(), gg = c.createGain(), lfo = c.createOscillator(), lg = c.createGain(); gb.type = "bandpass"; gb.frequency.setValueAtTime(700, t); gb.frequency.linearRampToValueAtTime(1300, t + D * 0.6); gb.Q.value = 1.3; env(gg, 0.15, 0.2, D); lfo.frequency.value = 17; lg.gain.value = 0.12; lfo.connect(lg); lg.connect(gg.gain); gr.connect(gb); gb.connect(gg); gg.connect(out); gr.start(t); lfo.start(t); lfo.stop(t + D + 0.1); // le grain de pierre qui racle
+    for (const [dt, f] of [[0.08, 118], [0.37, 98], [0.66, 126], [0.93, 104]]) { const o = c.createOscillator(), e = c.createGain(); o.type = "triangle"; o.frequency.setValueAtTime(f, t + dt); o.frequency.exponentialRampToValueAtTime(f * 0.6, t + dt + 0.1); e.gain.setValueAtTime(0.0001, t + dt); e.gain.linearRampToValueAtTime(0.3, t + dt + 0.01); e.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.14); o.connect(e); e.connect(out); o.start(t + dt); o.stop(t + dt + 0.2); } // les à-coups du bois
+    const th = c.createOscillator(), te = c.createGain(); th.type = "sine"; th.frequency.setValueAtTime(70, t + D); th.frequency.exponentialRampToValueAtTime(40, t + D + 0.25); te.gain.setValueAtTime(0.0001, t + D); te.gain.linearRampToValueAtTime(0.9, t + D + 0.008); te.gain.exponentialRampToValueAtTime(0.0001, t + D + 0.4); th.connect(te); te.connect(out); th.start(t + D); th.stop(t + D + 0.5); // la butée
+    const hit = noise(0.06), hl = c.createBiquadFilter(), he = c.createGain(); hl.type = "lowpass"; hl.frequency.value = 700; he.gain.setValueAtTime(0.5, t + D); he.gain.exponentialRampToValueAtTime(0.0001, t + D + 0.06); hit.connect(hl); hl.connect(he); he.connect(out); hit.start(t + D);
+  });
+}
+/** Un panneau de bois qui coulisse (le tiroir du bureau) : le frottement du bois sur le bois, bref, et un petit choc sourd en butée (ouvert) ou en fermant. */
+function slideWood(volume = 0.3, { open = true } = {}) {
+  return oneShot(0.8, (c, out, noise) => {
+    out.gain.value = volume; const t = c.currentTime, D = 0.38;
+    const n = noise(D + 0.05), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = "bandpass"; bp.frequency.setValueAtTime(open ? 520 : 800, t); bp.frequency.linearRampToValueAtTime(open ? 820 : 480, t + D); bp.Q.value = 2.2;
+    e.gain.setValueAtTime(0.0001, t); e.gain.linearRampToValueAtTime(0.5, t + 0.07); e.gain.setValueAtTime(0.4, t + D - 0.1); e.gain.exponentialRampToValueAtTime(0.0001, t + D); n.connect(bp); bp.connect(e); e.connect(out); n.start(t);
+    const g = noise(D), gl = c.createBiquadFilter(), ge = c.createGain(); gl.type = "highpass"; gl.frequency.value = 1800; ge.gain.setValueAtTime(0.06, t); ge.gain.exponentialRampToValueAtTime(0.0001, t + D); g.connect(gl); gl.connect(ge); ge.connect(out); g.start(t); // le grain du bois
+    const o = c.createOscillator(), oe = c.createGain(); o.type = "sine"; o.frequency.setValueAtTime(open ? 130 : 160, t + D); o.frequency.exponentialRampToValueAtTime(70, t + D + 0.12); oe.gain.setValueAtTime(0.0001, t + D); oe.gain.linearRampToValueAtTime(open ? 0.55 : 0.7, t + D + 0.006); oe.gain.exponentialRampToValueAtTime(0.0001, t + D + 0.2); o.connect(oe); oe.connect(out); o.start(t + D); o.stop(t + D + 0.3); // la butée
+  });
+}
 function squeak(volume = 0.3) {
   return oneShot(0.4, (c, out) => {
     const t = c.currentTime, o = c.createOscillator(), e = c.createGain(); out.gain.value = volume * 0.3;
@@ -766,4 +787,4 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { knock, creak, crystalChord, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { knock, creak, slideStone, slideWood, crystalChord, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

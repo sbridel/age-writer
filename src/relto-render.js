@@ -1135,6 +1135,16 @@ class ReltoRenderer {
     else if (k === "release" && ui.held && !ui.relAt && now - ui.heldAt > 500) { ui.relAt = now; if (this.opts.onRelic) this.opts.onRelic("put"); }
     if (!this.running) this.draw(0);
   }
+  /** La bibliothèque devant le panneau : on touche trois livres. Dans le bon ordre, le meuble coulisse et disparaît ; sinon ils ressortent en faisant un bruit de bois creux. */
+  shelfBook(i) {
+    const sh = (this.shelf = this.shelf || { seq: [], at: 0 }), now = Date.now();
+    if (this.shelfOpen || sh.seq.includes(i)) return;
+    sh.seq.push(i); sh.at = now;
+    if (sh.seq.length < 3) { if (this.opts.onKnock) this.opts.onKnock("press"); }
+    else if (AT.COMBO.every((b, k) => sh.seq[k] === b)) { if (this.opts.onKnock) this.opts.onKnock("book"); this.shelfOpen = true; this.bookAt = now; sh.seq = []; }
+    else { sh.seq = []; if (this.opts.onKnock) this.opts.onKnock("wrong"); }
+    if (!this.running) this.draw(0);
+  }
   /** Le panneau de l'atelier : on y frappe. Deux coups brefs, un temps, un coup franc ouvrent le passage ; tout autre rythme n'est qu'un bruit de bois creux. */
   knockBeat() {
     const now = Date.now(), K = (this.knocks = (this.knocks || []).filter((x) => now - x < 3200)); K.push(now);
@@ -1143,7 +1153,7 @@ class ReltoRenderer {
     if (ok || K.length >= 3) this.knocks = [];
     if (ok) { this.panelAt = Date.now(); window.setTimeout(() => this.setView("atelier"), 1400); } // le panneau coulisse, puis on passe
   }
-  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
+  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };
