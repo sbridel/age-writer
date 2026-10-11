@@ -65,7 +65,7 @@ class Law {
    *  Encre qui ne sèche jamais (délai ≤ 0) : 1. Âge jamais lu : null. `left` : millisecondes avant qu'elle sèche. */
   ink(name) {
     const a = this.get(name); if (!a) return null;
-    const dry = this.o.dryMinutes(); if (!(dry > 0)) return { fresh: 1, left: Infinity };
+    const dry = this.o.dryMinutes(name); if (!(dry > 0)) return { fresh: 1, left: Infinity };
     const left = Math.max(0, a.changedAt + dry * 60000 - this.now());
     return { fresh: clamp(left / (dry * 60000)), left };
   }
@@ -125,7 +125,7 @@ class Law {
     if (pn && !a.phys) a.phys = pn; // anciens états : les valeurs d'aujourd'hui servent de référence, sans frais
     const pc = pn ? physChange(a.phys, pn) : { cost: 0, added: [], removed: [] };
     if (same && !(pc.cost > 0)) return null;
-    const dry = this.o.dryMinutes();
+    const dry = this.o.dryMinutes(name);
     const wasDry = dry > 0 && now - a.changedAt >= dry * 60000;
     const idAdded = ids.filter((x) => !a.ids.includes(x)), idRemoved = a.ids.filter((x) => !ids.includes(x));
     const added = [...idAdded, ...pc.added], removed = [...idRemoved, ...pc.removed];

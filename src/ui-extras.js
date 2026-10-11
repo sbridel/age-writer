@@ -282,6 +282,7 @@ function tabifyPanel(plugin, panel) {
     const b = bar.createEl("button", { cls: "age-tabs__btn", text: label, attr: { type: "button", role: "tab" } });
     b.addEventListener("click", () => show(id)); btns[id] = b;
   }
+  bar.createSpan({ cls: "age-tabs__ink" }); // l'état de l'encre, en clair (rempli par inkFresh)
   const ob = bar.createEl("button", { cls: "age-tabs__btn age-tabs__book", text: "📖 " + t("book.open"), attr: { type: "button", title: t("book.open.tip") } });
   ob.addEventListener("click", () => { plugin.bookFromLeaf = plugin.app.workspace.getMostRecentLeaf(); plugin.openBook(); }); // le livre s'ouvre à côté ; « Fermer le livre » ramène ici
   const win = panel.querySelector(".age-panel__window");
@@ -386,6 +387,8 @@ function inkFresh(plugin, el, name, targets = []) {
     el.addClass("age-ink"); el.style.setProperty("--aw-ink", k.fresh.toFixed(3)); el.toggleClass("is-wet", k.fresh > 0.02);
     const tip = k.left === Infinity ? t("ink.never") : k.fresh > 0 ? t("ink.fresh", { n: Math.max(1, Math.ceil(k.left / 60000)) }) : t("ink.dry");
     for (const x of targets) if (x) x.setAttr("title", tip);
+    const chip = el.querySelector(".age-tabs__ink");
+    if (chip) { chip.setText(k.left === Infinity ? "" : k.fresh > 0 ? "✒ " + t("ink.chip.wet", { n: Math.max(1, Math.ceil(k.left / 60000)) }) : "✒ " + t("ink.chip.dry")); chip.setAttr("title", tip); chip.toggleClass("is-wet", k.fresh > 0); }
   };
   tick(); el.__inkTimer = window.setInterval(tick, 10000);
 }

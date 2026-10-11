@@ -229,7 +229,14 @@ function storyKnown(plugin, path) {
   }
   return null;
 }
-const resetStoryDraw = (plugin) => { plugin._noDraw = null; };
+/** Les noms de toutes les notes du dossier d'une histoire (l'encre y sèche vite). */
+function storyNotes(plugin) {
+  if (plugin._storySet) return plugin._storySet;
+  const set = new Set(), { app } = plugin;
+  try { for (const hub of app.vault.getMarkdownFiles().filter((f) => isStoryHub(app, f))) { const dir = ST.dirOf(hub.path); for (const f of app.vault.getMarkdownFiles()) if (f !== hub && ST.inDirs(f.path, [dir])) set.add(f.basename); } } catch (e) { console.warn("[Age Writer ext] histoire", e); }
+  return (plugin._storySet = set);
+}
+const resetStoryDraw = (plugin) => { plugin._noDraw = null; plugin._storySet = null; };
 
 /** Chapitre suivant : crée (ou rouvre) la note du prochain chapitre dans le dossier de l'histoire. */
 async function storyNext(plugin, opts = {}) {
@@ -744,4 +751,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyNext, storyRestart, storyNoDraw, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyNext, storyRestart, storyNoDraw, storyNotes, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };

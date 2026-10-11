@@ -559,4 +559,16 @@
 
 /* boutons Ouvrir / Fermer le livre */
 .age-tabs__book { margin-left: auto; }
+.age-tabs__ink ~ .age-tabs__book { margin-left: 8px; }
 .age-book__close { margin-left: 8px; }
+
+/* onglets discrets, comme le Relto : du texte et un filet, jamais de bouton plein (les thèmes ne les repeignent plus) */
+.age-panel .age-tabs .age-tabs__btn, .age-panel .age-tabs .age-tabs__btn:hover, .age-panel .age-tabs .age-tabs__btn:focus { background: transparent !important; box-shadow: none !important; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important; color: #8f8368 !important; font-size: 0.7em; padding: 3px 9px; }
+.age-panel .age-tabs .age-tabs__btn:hover { color: #cdbd94 !important; }
+.age-panel .age-tabs .age-tabs__btn.is-active { color: #e9dcb8 !important; border-bottom-color: #cdbd94 !important; }
+.age-panel .age-tabs .age-tabs__book { opacity: 0.8; }
+.age-tabs__ink { align-self: center; margin-left: auto; font-size: 0.68em; letter-spacing: 0.08em; color: #8f8368; font-style: italic; }
+.age-tabs__ink.is-wet { color: #cdbd94; }
+.age-tabs__ink:empty { display: none; }
+.age-tabs__ink + .age-tabs__book { margin-left: 8px; }
+.age-book .age-book__close { background: transparent !important; box-shadow: none !important; border: 0 !important; font-size: 0.72em; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.75; }
