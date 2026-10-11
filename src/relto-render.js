@@ -187,7 +187,7 @@ class ReltoRenderer {
     if (this.view && this.view !== "island" && this.view !== "global" && !this.available()[this.view]) this.view = "island"; // la page de cette vue a été retirée
     if (this.view === "cat" && this.catAsleep()) { this.view = "cabin"; if (this.opts.onView) this.opts.onView("cabin"); } // l'heure a tourné : il est rentré dormir
     if (this.view === "global") return this.drawFullView(ctx, sky, () => GL.drawGlobal(this, ctx, sc, sky, t, has));
-    if (ROOMS[this.view]) return this.drawFullView(ctx, sky, () => ROOMS[this.view](this, ctx, sc, sky, t));
+    if (ROOMS[this.view]) return this.drawFullView(ctx, sky, () => { ROOMS[this.view](this, ctx, sc, sky, t); if (this.lampOff && (this.view === "atelier" || this.view === "desk")) { ctx.fillStyle = "rgba(6,4,12,0.34)"; ctx.fillRect(0, 0, W, H); } }); // la lampe éteinte : la pièce s'assombrit
     ctx.save(); ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0);
     ctx.clearRect(0, 0, W, H);
     ctx.save(); ctx.translate(CAM_X, CAM_OY); ctx.scale(CAM, CAM); ctx.translate(-CAM_X, -CAM_Y);
@@ -1132,7 +1132,7 @@ class ReltoRenderer {
   }
   hit(x, y) { for (let i = this.hot.length - 1; i >= 0; i--) { const h = this.hot[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h; } return null; }
   onMove(e) {
-    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && !this.hover.secret && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go || this.hover.imager || this.hover.tel || this.hover.purr || this.hover.pageToggle || this.hover.pbook || this.hover.gbTurn || this.hover.gbGo != null) ? "pointer" : "";
+    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && !this.hover.secret && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go || this.hover.imager || this.hover.tel || this.hover.purr || this.hover.pageToggle || this.hover.pbook || this.hover.gbTurn || this.hover.lamp || this.hover.gbGo != null) ? "pointer" : "";
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
   /** Le bureau : le tiroir (clou de laiton), la tablette qu'on prend entre les mains et qui revient toujours au tiroir. Rien n'est gardé : en s'en allant, le tiroir se ferme. */
@@ -1145,6 +1145,12 @@ class ReltoRenderer {
   }
   /** L'armoire du fond de l'atelier : elle s'ouvre, ou se referme toute seule. */
   wardAct() { this.wardOpen = !this.wardOpen; this.wardAt = Date.now(); this.flash = { text: this.imagerTr()(this.wardOpen ? "back.ward.open" : "back.ward.shut"), x: 347, y: 70, until: Date.now() + 2800 }; if (this.opts.onRelic) this.opts.onRelic(this.wardOpen ? "open" : "close"); if (!this.running) this.draw(0); }
+  /** La chaîne de la lampe : on la tire, la lampe s'éteint ou se rallume (partagé entre l'atelier et le bureau). */
+  lampToggle(h) {
+    this.lampOff = !this.lampOff; this.lampAt = Date.now(); if (this.opts.onKnock) this.opts.onKnock("stone");
+    const TRr = this.imagerTr ? this.imagerTr() : (k) => k; this.flash = { text: TRr(this.lampOff ? "atelier.lamp.off" : "atelier.lamp.on"), x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 };
+    if (!this.running) this.draw(0);
+  }
   /** Le livre des glyphes : tourner d'une volée (± 1), ou aller à la page d'un sommaire. */
   gbTurn(d) {
     const st = (this.gbook = this.gbook || { spread: 0, anim: null }), to = clamp(st.spread + d, 0, (this.gbookN || 1) - 1); if (to === st.spread) return;
@@ -1177,7 +1183,7 @@ class ReltoRenderer {
     if (ok || K.length >= 3) this.knocks = [];
     if (ok) { this.panelAt = Date.now(); window.setTimeout(() => this.setView("atelier"), 1400); } // le panneau coulisse, puis on passe
   }
-  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.ward) this.wardAct(); else if (h.gbTurn) this.gbTurn(h.gbTurn); else if (h.gbGo != null) this.gbGo(h.gbGo); else if (h.stone) this.stoneTap(x, y); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
+  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.lamp) this.lampToggle(h); else if (h.ward) this.wardAct(); else if (h.gbTurn) this.gbTurn(h.gbTurn); else if (h.gbGo != null) this.gbGo(h.gbGo); else if (h.stone) this.stoneTap(x, y); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.go) this.setView(h.go); else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };

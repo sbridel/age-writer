@@ -62,6 +62,15 @@ function drawBookcase(r, ctx, c, gone) {
   ctx.restore();
 }
 
+/** La chaîne de laiton qui pend de l'abat-jour : un clic la tire, la lampe s'éteint ou se rallume (l'état est celui du renderer, partagé entre l'atelier et le bureau). */
+function lampChain(r, ctx, c, x, y, len, t, tip, bodyHot) {
+  const pull = r.lampAt ? clamp(1 - (Date.now() - r.lampAt) / 260) : 0, sw = Math.sin(t * 1.3 + x) * 1.2 * (1 - pull), L = len + 6 * pull;
+  ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1; ctx.setLineDash([1.6, 1.2]); ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + sw * 0.6, y + L * 0.5, x + sw, y + L); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = c("#d8b45e"); ctx.beginPath(); ctx.arc(x + sw, y + L + 2, 2.4, 0, 6.283); ctx.fill();
+  r.hot.push({ x: bodyHot.x, y: bodyHot.y, w: bodyHot.w, h: bodyHot.h, tip, lamp: true });
+  r.hot.push({ x: x - 7, y: y + L - 6, w: 16, h: 16, tip, lamp: true });
+}
+
 function drawAtelier(r, ctx, sc, sky, t) {
   const amb = 0.5 + 0.5 * sky.ambient, c = (h) => mix("#05060c", h, amb), TRr = TR(r), q = rng(0xa7e1);
   const lit = sc.additions.find((a) => a.type === "chimney"), d = lit ? clamp(lit.density == null ? 0.7 : lit.density, 0.2, 1) : 0.45, fl = flick(t);
@@ -147,9 +156,10 @@ function drawAtelier(r, ctx, sc, sky, t) {
     ctx.strokeStyle = c("#d8b45e"); ctx.lineWidth = 1.6; for (let k = 0; k < 3; k++) { const a = t * 0.5 + k * 1.05; ctx.beginPath(); ctx.ellipse(ox2, oy2, 18, 18 * Math.abs(Math.cos(a)) + 2, k * 1.05, 0, 6.283); ctx.stroke(); }
     ctx.fillStyle = c("#7fd6c8"); ctx.beginPath(); ctx.arc(ox2, oy2, 4, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(127, 214, 200, 0.18 + 0.1 * Math.sin(t * 2)); ctx.beginPath(); ctx.arc(ox2, oy2, 11, 0, 6.283); ctx.fill();
     item(ox2 - 22, oy2 - 20, 44, 52, "atelier.orrery.tip", "atelier.orrery.flash"); }
-  // la lampe à abat-jour vert
+  // la lampe à abat-jour vert (une chaîne de laiton l'éteint ou l'allume)
   { const lx = tx + 78; ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(lx - 1.5, top - 26, 3, 24); ctx.fillRect(lx - 8, top - 4, 16, 3); ctx.fillStyle = c("#2f6b48"); ctx.beginPath(); ctx.moveTo(lx - 12, top - 20); ctx.lineTo(lx + 12, top - 20); ctx.lineTo(lx + 7, top - 33); ctx.lineTo(lx - 7, top - 33); ctx.fill();
-    ctx.fillStyle = rgba(255, 220, 140, 0.1 + 0.03 * fl); ctx.beginPath(); ctx.moveTo(lx - 12, top - 20); ctx.lineTo(lx + 12, top - 20); ctx.lineTo(lx + 36, top + 2); ctx.lineTo(lx - 36, top + 2); ctx.fill(); item(lx - 13, top - 35, 26, 36, "atelier.lamp.tip", "atelier.lamp.flash"); }
+    if (!r.lampOff) { ctx.fillStyle = rgba(255, 220, 140, 0.1 + 0.03 * fl); ctx.beginPath(); ctx.moveTo(lx - 12, top - 20); ctx.lineTo(lx + 12, top - 20); ctx.lineTo(lx + 36, top + 2); ctx.lineTo(lx - 36, top + 2); ctx.fill(); }
+    lampChain(r, ctx, c, lx + 9, top - 20, 13, t, TRr("atelier.lamp.tip"), { x: lx - 13, y: top - 35, w: 26, h: 36 }); }
   // le grand livre ouvert, la plume et l'encrier
   { const bx = tx + 108; ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 1, top - 6, 56, 6); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx + 1, top - 9, 26, 5); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 28, top - 9, 26, 5); ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 3; k++) { ctx.fillRect(bx + 4, top - 8 + k * 1.4, 20, 0.6); ctx.fillRect(bx + 31, top - 8 + k * 1.4, 20, 0.6); }
     item(bx - 2, top - 12, 58, 14, "atelier.book.tip", "atelier.book.flash");
@@ -165,14 +175,17 @@ function drawDesk(r, ctx, sc, sky, t) {
   const amb = 0.55 + 0.45 * sky.ambient, c = (h) => mix("#05060c", h, amb), TRr = TR(r), fl = flick(t), mail = (r.opts.mailState && r.opts.mailState()) || {};
   ctx.fillStyle = c("#2b2018"); ctx.fillRect(0, 0, W, H); // le mur, dans l'ombre
   for (let x = 0; x < W; x += 36) { ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x, 0, 1.4, 190); }
-  const wx = 470, wy = 40, ww = 110, wh = 100; ctx.save(); ctx.beginPath(); ctx.rect(wx, wy, ww, wh); ctx.clip(); const sg = ctx.createLinearGradient(0, wy, 0, wy + wh); sg.addColorStop(0, sky.top); sg.addColorStop(1, sky.bottom); ctx.fillStyle = sg; ctx.fillRect(wx, wy, ww, wh); ctx.restore();
-  ctx.strokeStyle = c("#1d140e"); ctx.lineWidth = 6; ctx.strokeRect(wx, wy, ww, wh); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(wx + ww / 2, wy); ctx.lineTo(wx + ww / 2, wy + wh); ctx.stroke();
+  const wx = 524, wy = 92, wr = 54; // le même hublot rond que dans l'atelier, vu de près
+  ctx.save(); ctx.beginPath(); ctx.arc(wx, wy, wr, 0, 6.283); ctx.clip(); const sg = ctx.createLinearGradient(0, wy - wr, 0, wy + wr); sg.addColorStop(0, sky.top); sg.addColorStop(1, sky.bottom); ctx.fillStyle = sg; ctx.fillRect(wx - wr, wy - wr, 2 * wr, 2 * wr);
+  if (sky.stars > 0.05) { const s2 = rng(0x91); for (let i = 0; i < 16; i++) { ctx.fillStyle = rgba(235, 238, 255, sky.stars * (0.4 + 0.5 * s2())); ctx.fillRect(wx - wr + s2() * 2 * wr, wy - wr + s2() * wr, 1.6, 1.6); } }
+  ctx.restore();
+  ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(wx, wy, wr, 0, 6.283); ctx.stroke(); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(wx - wr, wy); ctx.lineTo(wx + wr, wy); ctx.moveTo(wx, wy - wr); ctx.lineTo(wx, wy + wr); ctx.stroke();
   const g = ctx.createLinearGradient(0, 180, 0, H); g.addColorStop(0, c("#6d4c31")); g.addColorStop(1, c("#3a2717")); ctx.fillStyle = g; ctx.fillRect(0, 180, W, H - 180); // le plateau
   ctx.fillStyle = c("#7d5a3b"); ctx.fillRect(0, 180, W, 4); const q = rng(0xde5c); ctx.strokeStyle = rgba(0, 0, 0, 0.14); ctx.lineWidth = 1; for (let i = 0; i < 14; i++) { const y = 190 + q() * 170; ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(200, y + q() * 6 - 3, 440, y + q() * 6 - 3, W, y); ctx.stroke(); }
-  // la lampe verte, en haut à gauche : son cône éclaire le plateau
+  // la lampe verte, en haut à gauche : son cône éclaire le plateau ; la chaîne de laiton l'éteint ou l'allume
   { const lx = 150; ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(lx - 3, 90, 6, 92); ctx.fillRect(lx - 22, 176, 44, 8); ctx.fillStyle = c("#2f6b48"); ctx.beginPath(); ctx.moveTo(lx - 38, 78); ctx.lineTo(lx + 38, 78); ctx.lineTo(lx + 20, 34); ctx.lineTo(lx - 20, 34); ctx.fill();
-    ctx.fillStyle = rgba(255, 224, 150, 0.1 + 0.03 * fl); ctx.beginPath(); ctx.moveTo(lx - 38, 78); ctx.lineTo(lx + 38, 78); ctx.lineTo(lx + 230, 360); ctx.lineTo(lx - 150, 360); ctx.fill();
-    r.hot.push({ x: lx - 40, y: 32, w: 80, h: 150, tip: TRr("atelier.lamp.tip"), flash: TRr("atelier.lamp.flash") }); }
+    if (!r.lampOff) { ctx.fillStyle = rgba(255, 224, 150, 0.1 + 0.03 * fl); ctx.beginPath(); ctx.moveTo(lx - 38, 78); ctx.lineTo(lx + 38, 78); ctx.lineTo(lx + 230, 360); ctx.lineTo(lx - 150, 360); ctx.fill(); }
+    lampChain(r, ctx, c, lx + 28, 78, 34, t, TRr("atelier.lamp.tip"), { x: lx - 40, y: 32, w: 80, h: 150 }); }
   // le planétaire, au fond à droite
   { const ox = 410, oy = 150; ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(ox - 3, oy + 22, 6, 30); ctx.fillRect(ox - 20, 176, 40, 6); ctx.strokeStyle = c("#d8b45e"); ctx.lineWidth = 2; for (let k = 0; k < 3; k++) { const a = t * 0.5 + k * 1.05; ctx.beginPath(); ctx.ellipse(ox, oy, 28, 28 * Math.abs(Math.cos(a)) + 3, k * 1.05, 0, 6.283); ctx.stroke(); } ctx.fillStyle = c("#7fd6c8"); ctx.beginPath(); ctx.arc(ox, oy, 6, 0, 6.283); ctx.fill();
     r.hot.push({ x: ox - 32, y: oy - 32, w: 64, h: 84, tip: TRr("atelier.orrery.tip"), flash: TRr("atelier.orrery.flash") }); }

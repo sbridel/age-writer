@@ -128,6 +128,12 @@ function drawCabin(r, ctx, sc, sky, t) {
   ];
   const moved = !!(r.available && r.available().atelier); // l'atelier est ouvert : les livres de référence ont déménagé à l'étage
   if (moved && r.opts.relicState && (r.opts.relicState() || {}).seen) r.hot.push({ x: tx, y: ty - 8, w: tw, h: 14, tip: "", go: "desk", secret: true }); // un raccourci caché vers le bureau (une fois l'atelier découvert)
+  if (moved && r.opts.atelierDirect && r.opts.atelierDirect() && r.opts.relicState && (r.opts.relicState() || {}).seen) { // une clé de laiton, posée sur la table : un raccourci vers l'atelier, une fois l'énigme résolue
+    const kx = tx + 30, ky = ty - 3; ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(kx - 2, ky + 1, 32, 3);
+    ctx.strokeStyle = c("#d8b45e"); ctx.fillStyle = c("#d8b45e"); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(kx + 4, ky - 3, 4, 0, 6.283); ctx.stroke(); ctx.fillRect(kx + 8, ky - 4, 18, 2.2); ctx.fillRect(kx + 20, ky - 4, 2.2, 5); ctx.fillRect(kx + 25, ky - 4, 2.2, 4);
+    const gl = 0.25 + 0.2 * Math.sin(t * 1.4); ctx.fillStyle = rgba(255, 235, 170, gl); ctx.fillRect(kx + 9, ky - 4, 5, 1);
+    r.hot.push({ x: kx - 3, y: ky - 12, w: 34, h: 16, tip: TR(r)("atelier.key.tip"), go: "atelier" });
+  }
   for (const b of moved ? [] : books) { standingBook(ctx, c, b); r.hot.push({ x: b.x - 1, y: b.y - b.h - 1, w: b.w + 2, h: b.h + 2, tip: b.tip, ...(b.kind === "glyphs" ? { go: "glyphbook" } : { special: b.kind }) }); }
   if (r.scene.additions.some((a) => a.type === "imager")) PS.imagerMini(r, ctx, c, tx + 112, ty, t, TR(r)("relto.pass.imager.tip")); // l'Imageur : un petit appareil de laiton sur la table, son cristal luit ; un clic y mène
   if (!moved && r.scene.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { // le carnet de l'arpenteur : posé à plat sur la table, signet rouge
