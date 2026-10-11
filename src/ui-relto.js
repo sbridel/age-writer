@@ -272,9 +272,11 @@ async function playLinkAnim(plugin, age, host, snd, open) {
   let sounded = false; const ring = () => { if (!sounded) { sounded = true; snd(); } };
   const finish = () => { if (done) return; done = true; ring(); ov.remove(); open(); };
   ov.addEventListener("click", finish);
-  window.setTimeout(() => ov.addClass("is-open"), 650); // le livre s'ouvre : son panneau apparaît
-  window.setTimeout(() => { if (done) return; ov.addClass("is-touch"); touch.addClass("is-on"); ring(); }, 1350); // on le touche
-  window.setTimeout(finish, 2000); // et on arrive
+  const quiet = !plugin.ext.sound, vol = plugin.ext.volume, ok = (fn) => { if (!done && !quiet) fn(); };
+  window.setTimeout(() => { if (done) return; ov.addClass("is-open"); ok(() => { if (plugin.ext.soundBook !== false) sound.openSequence(vol, { book: true, clasp: plugin.ext.soundClasp !== false, link: false }); }); }, 1100); // le livre s'ouvre : son panneau apparaît
+  for (const at of [1550, 1900, 2250]) window.setTimeout(() => ok(() => { if (plugin.ext.soundBook !== false) sound.pageTurn(vol); }), at); // les pages qu'on tourne
+  window.setTimeout(() => { if (done) return; ov.addClass("is-touch"); touch.addClass("is-on"); ring(); }, 2800); // on le touche
+  window.setTimeout(finish, 3600); // et on arrive
 }
 
 /** Après une modification : revoir l'avancement de l'histoire (une notice quand un chapitre est réussi), sans qu'il faille ouvrir le Relto. */
