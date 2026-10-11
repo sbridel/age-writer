@@ -237,7 +237,7 @@ function drawLoft(r, ctx, sc, sky, t) {
     const mx = x + w / 2, my = y - h / 2; ctx.fillStyle = c(band);
     if (kind === "glyphs") { ctx.beginPath(); ctx.moveTo(mx, my - 14); ctx.lineTo(mx + 9, my); ctx.lineTo(mx, my + 14); ctx.lineTo(mx - 9, my); ctx.closePath(); ctx.fill(); } else { ctx.fillRect(mx - 6, my - 10, 12, 16); ctx.fillStyle = c(body); ctx.fillRect(mx - 2, my - 5, 4, 7); }
   };
-  stand(70, 296, 38, 84, "#27555a", "#d8c07a", "glyphs"); r.hot.push({ x: 66, y: 208, w: 52, h: 94, tip: TRr("atelier.loft.glyphs"), special: "glyphs" });
+  stand(70, 296, 38, 84, "#27555a", "#d8c07a", "glyphs"); r.hot.push({ x: 66, y: 208, w: 52, h: 94, tip: TRr("atelier.loft.glyphs"), go: "glyphbook" });
   stand(136, 296, 38, 74, "#5b2b2b", "#c9a24e", "library"); r.hot.push({ x: 132, y: 218, w: 52, h: 84, tip: TRr("atelier.loft.library"), special: "library" });
   { const bx = 232, by = 292; ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 4, by - 2, 170, 20); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx, by - 8, 80, 18); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 84, by - 8, 80, 18); ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 4; k++) { ctx.fillRect(bx + 8, by - 3 + k * 4, 62, 1); ctx.fillRect(bx + 92, by - 3 + k * 4, 62, 1); }
     r.hot.push({ x: bx - 6, y: by - 12, w: 176, h: 34, tip: TRr("atelier.loft.pages"), go: "book" }); }
@@ -272,4 +272,4 @@ function drawLetter(r, ctx, sc, sky, t) {
   backButton(r, ctx, TRr("atelier.stand.tip"), "cabin");
 }
 
-module.exports = { drawAtelier, drawDesk, drawLoft, drawLetter, drawBookcase, SECRET, CASE, COMBO };
+module.exports = { drawAtelier, drawDesk, drawLoft, drawLetter, drawBookcase, backButton, SECRET, CASE, COMBO };

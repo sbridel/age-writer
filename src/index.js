@@ -5,8 +5,8 @@ const WX = require("./weather");
 const weatherPrograms = (src) => { try { const w = WX.parseWeather(src); return w ? Object.keys(w).length : 0; } catch (e) { return 0; } };
 /** Le nombre de valeurs physiques écrites (`mass: 0.8`, `age: 3.5`…) d'un bloc `age`. */
 const physicsLines = (src) => { try { return Object.keys(require("./physics/index").parsePhysics(src).params || {}).length; } catch (e) { return 0; } };
-/** Les réactions de l'Âge, en abrégé : { shown, type, catalyzed } (le chapitre final regarde celles qui sont bénignes). */
-const reactionsOf = (a) => { try { return ((a.resolved && a.resolved.matter && a.resolved.matter.reactions) || []).map((r) => ({ shown: r.shown, type: r.type, catalyzed: !!r.catalyzed })); } catch (e) { return []; } };
+/** Les réactions de l'Âge, en abrégé : { a, b, shown, type, catalyzed } (le chapitre final regarde celles qui sont bénignes). */
+const reactionsOf = (a) => { try { return ((a.resolved && a.resolved.matter && a.resolved.matter.reactions) || []).map((r) => ({ a: r.a, b: r.b, shown: r.shown, type: r.type, catalyzed: !!r.catalyzed })); } catch (e) { return []; } };
 class AgeIndex {
   constructor(plugin) { this.p = plugin; this.cache = new Map(); }
   invalidate() { this.cache.clear(); }
