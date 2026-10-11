@@ -415,7 +415,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         files.get(c10[0]).content = files.get(c10[0]).content.replace(/```age\n[\s\S]*?\n```/, "```age\n" + require("../src/story").WORLDS.strange.ref.join("\n") + "\n```"); files.get(c10[0]).stat.mtime++; p.index.invalidate();
         el = await show(sf.path);
         ok(row(el, "Inkwell") && /is-available/.test(row(el, "Inkwell").className), "fin de l'histoire : la page finale (l'encrier) est disponible");
-        notices.length = 0; await nx.callback(); ok(notices.some((n) => /No more chapters|Plus de chapitre/.test(n)), "fin des chapitres : la commande le dit"); p.law.now = () => Date.now(); files.delete(c3[0]); files.delete(c4[0]); files.delete(c5[0]); files.delete(c6[0]); files.delete(c7[0]); files.delete(c9[0]); files.delete(c10[0]); delete p.ext.imagerTunings[c4[0]]; delete p.ext.telescope[sf.basename.toLowerCase().trim() + "#" + sfm.seed]; }
+        notices.length = 0; await nx.callback(); ok(notices.some((n) => /ending has not yet been written|la fin n.est pas encore/.test(n)), "fin des chapitres : la commande le dit"); p.law.now = () => Date.now(); files.delete(c3[0]); files.delete(c4[0]); files.delete(c5[0]); files.delete(c6[0]); files.delete(c7[0]); files.delete(c9[0]); files.delete(c10[0]); delete p.ext.imagerTunings[c4[0]]; delete p.ext.telescope[sf.basename.toLowerCase().trim() + "#" + sfm.seed]; }
       files.delete(c2[0]); }
     const sb = await show("x.md"), sbn = shelf(sb);
     ok(sbn.includes("Dehors") && !sbn.includes("Premier"), "mode histoire : sans précision, le Relto du bac à sable, qui ne voit pas les Âges de l'histoire");
