@@ -611,10 +611,11 @@
 @keyframes age-linkanim-flip { 0% { transform: rotateY(0deg); } 85% { opacity: 1; } 100% { transform: rotateY(-175deg); opacity: 0; } }
 
 /* le panneau sur une page (portrait, comme le livre de liaison) ; les feuilles qu'on tourne ont la même taille */
-.age-linkanim__page, .age-linkanim__sheets { height: var(--page-h, min(82vh, 640px)); width: auto; aspect-ratio: 3 / 4; flex: none; }
+.age-linkanim__page, .age-linkanim__sheets { height: var(--page-h, min(82vh, 640px)); width: calc(var(--page-h, min(82vh, 640px)) * 0.75); box-sizing: border-box; flex: none; }
 .age-linkanim__page { position: relative; display: flex; align-items: center; justify-content: center; padding: 0 7%; background: linear-gradient(90deg, #b9a877, #e8dcb8 14%, #e2d4ac 86%, #cdbd94); border: 1px solid #8a6a2e; border-radius: 2px 8px 8px 2px; box-shadow: inset 14px 0 18px -10px rgba(0, 0, 0, 0.45), 0 14px 50px rgba(0, 0, 0, 0.65); opacity: 0; transform: scale(0.92); transition: opacity 0.9s ease-out, transform 0.9s ease-out; }
 .age-linkanim.is-panel .age-linkanim__page { opacity: 1; transform: none; }
-.age-linkanim__page .age-linkanim__panel { width: 100%; opacity: 1; transform: none; transition: filter 0.7s ease-in; border: 2px solid #8a6a2e; box-shadow: none; }
+.age-linkanim__page .age-linkanim__panel { flex: 1 1 auto; min-width: 0; width: 100%; opacity: 1; transform: none; transition: filter 0.7s ease-in; border: 2px solid #8a6a2e; box-shadow: none; }
 .age-linkanim.is-ready .age-linkanim__page .age-linkanim__panel { animation: age-linkanim-wait 1.6s ease-in-out infinite; }
 .age-linkanim.is-panel .age-linkanim__panel { transform: none; }
 .age-linkanim__panel .age-panel__window { width: 100%; max-width: none; min-width: 0; margin: 0; }
+.age-linkanim__panel .age-panel__window canvas { width: 100%; height: auto; }
