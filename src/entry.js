@@ -30,6 +30,7 @@ const UW = require("./unwritten");
 const WX = require("./weather");
 const DFR = require("./descriptors-fr");
 const DOSE = require("./dosage");
+const LIFE = require("./life");
 const RG = require("./rigor");
 const STAT = require("./status");
 const DEPTH = require("./depth");
@@ -126,6 +127,7 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.ghostTip = () => this.t("story.ghost");
       AGEX.ghostWord = (word) => (this.lang() === "fr" ? DFR.tr(word) : word); // indices des glyphes non appris : dans la langue de l'interface
       AGEX.dosageNote = (d) => DOSE.note(d, this.lang() === "fr");
+      AGEX.lifeNote = (l) => LIFE.note(l, this.lang() === "fr");
       this.depthCache = new Map();
       // la profondeur de l'équilibre : le test par retrait, à l'affichage du panneau (jamais à chaque frappe), mis en cache par texte, graine et rigueur
       AGEX.depthNote = (text, seed) => guard("profondeur", () => {

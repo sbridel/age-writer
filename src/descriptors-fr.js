@@ -18,6 +18,10 @@ const FR = {
   soundless: "sans bruit", sour: "aigre", spinning: "tournoyant", split: "fendu", steady: "régulier", still: "immobile", submerged: "immergé",
   sudden: "soudain", swaying: "ondoyant", tall: "haut", thick: "épais", thin: "ténu", tireless: "infatigable", translucent: "translucide",
   trembling: "tremblant", turning: "tournant", unread: "non lu", vast: "vaste", violet: "violet", waiting: "en attente", warm: "tiède",
+  ancient: "ancien", circling: "tournoyant", airborne: "aérien", bearing: "fructifère", brown: "brun", busy: "affairé", capped: "coiffé", crumbling: "friable", darting: "vif", distant: "lointain", dutiful: "appliqué",
+  buried: "enfoui", faint: "diffus", glittering: "scintillant", golden: "doré", keen: "perçant", layered: "stratifié", loose: "meuble", purple: "pourpre", shy: "craintif",
+  silvery: "argenté", sleek: "lisse", slick: "visqueux", spongy: "spongieux", stubborn: "têtu", sweet: "sucré", teeming: "grouillant", thorny: "épineux", threading: "filant", tiny: "minuscule",
+  unseen: "invisible", "wind-bent": "courbé par le vent", wiry: "noueux",
   wary: "méfiant", watchful: "vigilant", weightless: "sans poids", white: "blanc", wrong: "dérangeant",
 };
 

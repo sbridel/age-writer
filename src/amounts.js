@@ -12,6 +12,7 @@
  */
 const W = require("./wealth");
 const DS = require("./dosage");
+const LF = require("./life");
 
 const LEVELS = { many: 2, much: 2, lots: 2, plenty: 2, beaucoup: 2, few: 0.4, little: 0.4, peu: 0.4, normal: 1 };
 const LV_SRC = "many|much|lots|plenty|beaucoup|few|little|peu|normal";
@@ -84,8 +85,13 @@ function applyAmounts(r, amt, blocks, opts) {
   // le dosage selon les lois : étendue des contradictions, réactions naturelles, budget de richesse. `opts` : { weights (src/rigor.js), size }
   const dose = DS.dosage(r, (id) => factorOf(id, amt), get, { weight: opts && opts.weights ? opts.weights.extent : 1, size: opts && opts.size });
   if (dose) for (const [a, d] of Object.entries(dose.delta)) delta[a] = (delta[a] || 0) + d;
-  if (!Object.keys(delta).length) return r;
-  const out = shift(r, delta); if (rich > 0) out.compensation = { riches: rich, relief };
+  // la vie et le sol : la boucle, les échelles, le sol, l'énergie. Une phrase toujours ; un coût selon le poids des familles « vie » et « sol »
+  const present = new Set([...written, ...(r.resolved.matter.reactions || []).map((x) => (x && x.result) || x)]);
+  const life = LF.laws(present, { weights: opts && opts.weights });
+  if (life) for (const [a, d] of Object.entries(life.delta)) if (d > 0) delta[a] = (delta[a] || 0) + d;
+  if (!Object.keys(delta).length && !life) return r;
+  const out = Object.keys(delta).length ? shift(r, delta) : { ...r }; if (rich > 0) out.compensation = { riches: rich, relief };
+  if (life) out.life = life;
   if (dose && (dose.softened.length || dose.natural.length || Object.keys(dose.richness).length)) out.dosage = { softened: dose.softened, natural: dose.natural, richness: dose.richness };
   return out;
 }

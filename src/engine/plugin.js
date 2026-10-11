@@ -546,6 +546,8 @@ const AgeWriterPlugin = class AgeWriterPlugin extends obsidian.Plugin {
     debug.setText(costs || "no measurable instability yet");
     const dose = hooks.dosageNote(analysis.dosage);
     dose && debug.createDiv({ cls: "age-panel__dosage", text: dose });
+    const lifeLine = hooks.lifeNote(analysis.life);
+    lifeLine && debug.createDiv({ cls: "age-panel__dosage", text: lifeLine });
     const depth = hooks.depthNote(ageSource, seedName(sourcePath));
     depth && debug.createDiv({ cls: "age-panel__depth", text: depth });
   }

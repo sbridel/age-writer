@@ -5,6 +5,8 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 ## Unreleased
 
 ### Added
+- **Life and soil.** New blocks you can write: micro-life (`plankton`, `microbial_mat`, `mycelium`), three shrubs (`berry_shrub`, `thorn_bush`, `heath_shrub`), fauna by habitat (`shoal`, `raptor`, `deep_hunter`, `cave_stalker`, `carrion_beetle`, `bee`) and ground born of life (`earth`, `humus`, `peat`). Some things are only ever produced: mycelium and water give mushrooms, wind, spores and fog give a living mist, a spore in silt gives soil bacteria, bees make the flowers hum. `hunter` stays the all-round carnivore.
+- **Laws of life.** Under the costs, one line now says what the life of an Age lacks: the loop must close (something returns the dead to the soil), the large rests on the small, flowers want a pollinator, a big tree needs ground that can bear it, plankton needs light and a mat needs heat or chemistry. The sentence is always there; it costs stability only from balanced rigour up (Soil and Life families), and never in gentle.
 - **A writer's title.** An Age that stays stable for seven days in a row earns you a title, by the rigour it held under: Scribe (gentle), Seasoned Seltahn (balanced), Master (strict, with at least three law families ticked), Grand Master (extreme). The first Age to hold seven days is also marked once. The title never goes back down, and nothing is locked by it; changing the rigour, or falling below stable, restarts the count.
 
 ## 1.25.1 — README wording (2026-10-11)
