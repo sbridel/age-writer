@@ -332,7 +332,9 @@ function storyHint(plugin) {
   if (!L) { new obsidian.Notice(t("story.nohint"), 4000); return; }
   const n = Math.min(L.length - 1, st.hintN && st.hintN[ch.id] != null ? st.hintN[ch.id] + 1 : 0); // chaque appel en dévoile un de plus (le dernier se répète ensuite)
   (st.hintN || (st.hintN = {}))[ch.id] = n; plugin.saveExt();
-  new obsidian.Notice(`(${n + 1}/${L.length}) ${L[n]}`, 14000);
+  const MISS = { sun: "story.miss.sun", stable: "story.miss.stable", reactions: "story.miss.reactions", catalyst: "story.miss.catalyst", beyond: "story.miss.beyond" };
+  const miss = n >= 1 && ch.id === "strange" && st.missing && st.missing.length ? "\n" + t("story.miss.head") + " " + st.missing.map((k) => t(MISS[k])).join(" · ") : ""; // le plus proche de tes Âges : ce qui lui manque encore
+  new obsidian.Notice(`(${n + 1}/${L.length}) ${L[n]}${miss}`, 14000);
 }
 
 class PresetModal extends obsidian.FuzzySuggestModal {

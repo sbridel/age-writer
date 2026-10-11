@@ -123,7 +123,11 @@ function check(chapter, ctx) {
     return l ? { ok: true, why: "", path: l.path } : { ok: false, why: "physics" };
   }
   if (chapter.id === "zero") return ctx && ctx.zeroFound ? { ok: true, why: "" } : { ok: false, why: "zero" }; // « lever les yeux » : le Great Zero de ce Relto est trouvé
-  if (chapter.id === "strange") return ages.some((a) => strangeOk(a, ctx.axisOf)) ? { ok: true, why: "" } : { ok: false, why: "strange" }; // aucun message d'échec : le chapitre reste ouvert
+  if (chapter.id === "strange") {
+    const win = ages.find((a) => strangeOk(a, ctx.axisOf)); if (win) return { ok: true, why: "", path: win.path };
+    const miss = ages.map((a) => strangeMissing(a, ctx.axisOf)).sort((x, y) => x.length - y.length)[0]; // l'Âge le plus proche
+    return { ok: false, why: "strange", missing: miss || ["sun", "stable", "reactions", "beyond"] };
+  } // aucun message d'échec : le chapitre reste ouvert
   if (chapter.id === "hard") {
     // « le monde difficile » : tout ensemble, et qui tient (marge de 5) : huit pages au moins, quatre axes, une météo programmée, deux valeurs physiques
     const unmet = (a) => [a.stability >= STABLE_AT + 5 ? "" : "hardstable", (a.glyphs || []).length >= 8 ? "" : "hardpages", axesOf(a.glyphs, ctx.axisOf).size >= 4 ? "" : "hardaxes", a.programmed >= 1 ? "" : "program", a.physics >= 2 ? "" : "physics"].filter(Boolean);
@@ -158,10 +162,10 @@ function evaluate(store, key, ctx) {
   for (const c of CHAPTERS) {
     if (st.done.includes(c.id)) continue;
     const r = check(c, { ...ctx, seen: st.seen, notes: st.notes });
-    if (!r.ok) { st.why = r.why; break; }
+    if (!r.ok) { st.why = r.why; st.missing = r.missing || null; break; }
     // (st.why : ce qui manque au chapitre en cours, une clé dont le plugin fait une phrase)
     if (r.path) (st.by || (st.by = {}))[c.id] = r.path; // l'Âge qui a réussi le chapitre (il reçoit l'étiquette)
-    st.done.push(c.id); newly.push(c); st.why = "";
+    st.done.push(c.id); newly.push(c); st.why = ""; st.missing = null;
   }
   return newly;
 }
@@ -175,6 +179,15 @@ const blockAxis = (id) => { try { const b = require("./engine/registry").blockBy
 const BENIGN = new Set(["transmuting", "crystallizing", "awakening", "soothing"]);
 const benign = (rx) => (rx || []).filter((r) => BENIGN.has(r.type));
 /** Le monde final : soleil violet, stable avec de la marge, au moins trois produits bénins dont un obtenu avec le catalyseur, et l'axe métaphysique. */
+/** Ce qui manque encore à un monde pour le chapitre final (clés : sun, stable, reactions, catalyst, beyond). */
+function strangeMissing(a, axisOf) {
+  const rx = benign(a.reactions), glyphs = a.glyphs || [], out = [];
+  if (!glyphs.includes("violet_sun")) out.push("sun");
+  if (!(a.stability >= STABLE_AT + 5)) out.push("stable");
+  if (rx.length < 3) out.push("reactions"); else if (!rx.some((r) => r.catalyzed)) out.push("catalyst");
+  if (!axesOf(glyphs, axisOf).has("metaphysical")) out.push("beyond");
+  return out;
+}
 function strangeOk(a, axisOf) {
   const rx = benign(a.reactions), glyphs = a.glyphs || [];
   return glyphs.includes("violet_sun") && a.stability >= STABLE_AT + 5 && rx.length >= 3 && rx.some((r) => r.catalyzed) && axesOf(glyphs, axisOf).has("metaphysical");
