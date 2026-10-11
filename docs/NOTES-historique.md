@@ -324,3 +324,11 @@ unlock:                            # facultatif
 - Infobulles des glyphes non appris : seulement l'indice. Périscope : seul un soleil haut se voit au zénith.
 - Pages du Relto : nouveaux préréglages pour le bac à sable.
 
+## 1.25.0 — la rigueur des lois (11 oct. 2026)
+
+- **Rigueur des lois** (`src/rigor.js`, réglage) : doux (par défaut), équilibré, strict (on coche les familles : physique, sol, vie, étendue, équilibre, sous forme de pastilles) et extrême. En doux, rien de nouveau ne coûte de stabilité : sur 3 000 Âges tirés au hasard, aucun n'est moins stable qu'avant. Sol, vie et équilibre sont prêts pour les mises à jour à venir.
+- **Dosage par l'étendue** (`src/dosage.js`) : une contradiction coûte selon la quantité (`few:`, `many:`) × la taille du monde (`size: small | medium | large`) × le nombre de biomes. Le temps qui s'enchaîne (pluie + vent = orage, orage + éclair = tonnerre, eau sur fer = rouille) ne pèse presque plus. Budget de richesse par axe (équilibré et au-delà).
+- **Profondeur d'un équilibre** (`src/depth.js`) : on retire chaque ligne tour à tour ; une phrase sous les coûts dit si l'Âge tient sur le fil, tenu ou profond. Aucun chiffre.
+- **Livre des glyphes** : en bac à sable, tous les glyphes sont montrés (pâles si pas écrits). **Chat** : plus dans deux pièces à la fois.
+- **Scorecard d'Obsidian** : plus de `!important`, de `clip-path`, de `display: contents` ni de `column-gap` ; la langue vient de `moment.locale()` et non de `localStorage`.
+

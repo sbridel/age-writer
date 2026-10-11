@@ -156,6 +156,15 @@ dans `.obsidian/plugins/age-writer/` du coffre de test, puis recharger le plugin
 - **Vocabulaire** : « Relto », « D'ni » apparaissent dans l'interface et les clés YAML. C'est à trancher
   avant toute publication.
 
+## Ce que le scorecard d'Obsidian réprimande (à ne pas réintroduire)
+
+La relecture automatique du catalogue lit `styles.css` et les sources. Corrigé en 1.25.0 ; ne plus écrire :
+- **`!important`** : monter la spécificité à la place (doubler la classe : `.a.a`, ou préfixer par le conteneur) ; ne jamais s'en servir pour battre un thème.
+- **`clip-path` et masques** (« partiellement pris en charge ») : dessiner les formes avec un dégradé à arête nette (coins des livres) ou peindre un triangle de la couleur de fond (coin coupé du panneau, `var(--background-primary)`).
+- **`display: contents`** et **`column-gap`** / `grid-template-columns` en sous-grille (« multicolumn ») : donner à chaque ligne sa propre grille aux mêmes colonnes (variable `--age-cols`) ; écrire l'espacement avec la forme courte `gap: lignes colonnes`.
+- **`localStorage` / `sessionStorage`** : utiliser l'API de données d'Obsidian (`loadData` / `saveData`, `Plugin.saveData`) ; la langue de l'interface se lit par `moment.locale()`.
+- Après chaque release, relancer la vérification du catalogue et corriger ce qu'elle remonte (version incrémentée). Vérifier à l'œil dans Obsidian : coins des livres, coin du panneau, colonnes du Relto, onglets, champ du livre de la bibliothèque.
+
 ## Publier une version
 
 1. `version` dans `package.json`.

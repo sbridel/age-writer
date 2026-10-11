@@ -2,7 +2,7 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## Unreleased
+## 1.25.0 — Rigour of the laws (2026-10-11)
 
 ### Added
 - **Turning pages in the books** (setting, on by default). Turn it off and the book of glyphs and the library book change their double page at once, without the page-turning animation. A system set to reduce motion already did so.
