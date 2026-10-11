@@ -142,13 +142,14 @@ function drawCabin(r, ctx, sc, sky, t) {
     ctx.fillStyle = c("#c9a24e"); ctx.fillRect(nx + 1, ny + 1, 2, 3); ctx.fillRect(nx + 19, ny + 1, 2, 3); ctx.fillStyle = c("#8e2b27"); ctx.fillRect(nx + 14, ny + 4, 1.4, 4);
     r.hot.push({ x: nx - 2, y: ny - 4, w: 26, h: 12, tip: "Surveyor's notebook", special: "surveyor" });
   }
-  if (r.scene.mode === "story") { // la lettre du mentor : pliée sur la table, cachet rouge ; un clic ouvre le chapitre en cours
+  const sandboxEnd = r.scene.mode !== "story" && r.scene.additions.some((a) => a.type === "inkwell"); // bac à sable : la page Inkwell apporte la dernière lettre (et son indice)
+  if (r.scene.mode === "story" || sandboxEnd) { // la lettre du mentor : pliée sur la table, cachet rouge ; un clic ouvre le chapitre en cours
     const lx = tx + 96, ly = ty - 4, pulse = 0.5 + 0.5 * Math.sin(t * 2);
     ctx.fillStyle = c("#e9ddbd"); ctx.fillRect(lx, ly - 3, 20, 7); ctx.fillStyle = c("#d6c7a0"); ctx.fillRect(lx, ly + 1, 20, 1.2);
     ctx.strokeStyle = rgba(120, 90, 50, 0.5); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(lx, ly - 3); ctx.lineTo(lx + 10, ly + 1); ctx.lineTo(lx + 20, ly - 3); ctx.stroke();
     ctx.fillStyle = c("#8e2b27"); ctx.beginPath(); ctx.arc(lx + 10, ly + 1, 2.4, 0, 6.283); ctx.fill();
-    if (!(r.scene.storyDone || []).includes("end")) { ctx.fillStyle = rgba(255, 170, 90, 0.12 + 0.18 * pulse); ctx.beginPath(); ctx.arc(lx + 10, ly + 1, 6, 0, 6.283); ctx.fill(); }
-    r.hot.push({ x: lx - 2, y: ly - 6, w: 24, h: 12, tip: TR(r)("story.letter.tip"), ...((r.scene.storyDone || []).includes("end") ? { go: "letter" } : { special: "story" }) }); // la dernière lettre se lit dépliée sur le bureau
+    if (!sandboxEnd && !(r.scene.storyDone || []).includes("end")) { ctx.fillStyle = rgba(255, 170, 90, 0.12 + 0.18 * pulse); ctx.beginPath(); ctx.arc(lx + 10, ly + 1, 6, 0, 6.283); ctx.fill(); }
+    r.hot.push({ x: lx - 2, y: ly - 6, w: 24, h: 12, tip: TR(r)("story.letter.tip"), ...(sandboxEnd || (r.scene.storyDone || []).includes("end") ? { go: "letter" } : { special: "story" }) }); // la dernière lettre se lit dépliée sur le bureau
   }
   if (r.scene.additions.some((a) => a.type === "inkwell")) { // l'encrier : un petit pot sombre au col étroit, une plume dedans
     const ix = tx + 130, iy = ty;
