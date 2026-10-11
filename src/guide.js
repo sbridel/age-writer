@@ -115,9 +115,9 @@ function toMarkdown(lang, level) {
   const parts = PARTS[lang] || PARTS.en, cell = (x) => String(x).replace(/\|/g, "\\|");
   let part = null;
   for (const t of topics(lang, level)) {
+    if (t.spoiler) continue; // la note enregistrée ne contient jamais les spoilers
     if (t.part && t.part !== part) { part = t.part; out.push("## " + parts[part], ""); }
     out.push((t.part ? "### " : "## ") + t.title, "");
-    if (t.gate) out.push("> **SPOILER** — " + t.gate.p, "");
     for (const b of t.body) {
       if (b.p) out.push(b.p, "");
       else if (b.h) out.push((t.part ? "#### " : "### ") + b.h, "");
