@@ -270,7 +270,7 @@ async function playLinkAnim(plugin, age, host, snd, open) {
   let cover = ""; // la couverture du livre de liaison (celle du livre ouvert), si on sait la dessiner
   try { const src = f && plugin.core.extract(await plugin.app.vault.cachedRead(f)); cover = src != null && analysis && plugin.coverFor ? plugin.coverFor(src, analysis, f, false) : ""; } catch (e) { cover = ""; }
   if (cover) { book.addClass("has-cover"); setMarkup(book, cover); } else book.createDiv({ cls: "age-linkanim__title", text: age.name || f.basename });
-  const panel = ov.createDiv({ cls: "age-linkanim__panel" });
+  const page = ov.createDiv({ cls: "age-linkanim__page" }), panel = page.createDiv({ cls: "age-linkanim__panel" }); // le panneau est collé sur une page du livre
   ov.createDiv({ cls: "age-linkanim__hint", text: plugin.t("link.touchpanel") });
   if (analysis) { try { plugin.mountGenerated(panel, analysis, age.path); } catch (e) { console.warn("[Age Writer ext] panneau", e); } }
   const sheets = ov.createDiv({ cls: "age-linkanim__sheets" }); // les pages qu'on tourne avant d'arriver sur le panneau
