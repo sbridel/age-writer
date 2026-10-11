@@ -98,10 +98,10 @@ const GUIDE = {
 // Référence complète : quatre parties (réglages, ce que l'on écrit, ce que l'Âge produit seul, Relto), en français et en anglais.
 const { REF_EN } = require("./guide-ref-en");
 const { REF_FR } = require("./guide-ref-fr");
-const PART_ORDER = ["set", "write", "gen", "relto"];
+const PART_ORDER = ["set", "write", "gen", "relto", "spoil"];
 const PARTS = {
-  en: { set: "Settings", write: "What you write", gen: "What the Age generates by itself", relto: "Relto" },
-  fr: { set: "Réglages", write: "Ce que tu écris", gen: "Ce que l'Âge génère seul", relto: "Relto" },
+  en: { set: "Settings", write: "What you write", gen: "What the Age generates by itself", relto: "Relto", spoil: "Spoilers" },
+  fr: { set: "Réglages", write: "Ce que tu écris", gen: "Ce que l'Âge génère seul", relto: "Relto", spoil: "Spoilers" },
 };
 /** Rubrique ouverte par défaut dans la référence : la façon d'écrire un Âge. */
 const REF_START = "syntax";
@@ -117,6 +117,7 @@ function toMarkdown(lang, level) {
   for (const t of topics(lang, level)) {
     if (t.part && t.part !== part) { part = t.part; out.push("## " + parts[part], ""); }
     out.push((t.part ? "### " : "## ") + t.title, "");
+    if (t.gate) out.push("> " + t.gate.p, "");
     for (const b of t.body) {
       if (b.p) out.push(b.p, "");
       else if (b.h) out.push((t.part ? "#### " : "### ") + b.h, "");
@@ -140,10 +141,18 @@ function inline(el, text) {
 }
 
 /** Dessine une rubrique dans `host` (`kicker` : le nom de sa partie, au-dessus du titre). */
-function renderTopic(host, topic, kicker) {
+function renderTopic(host, topic, kicker, spoil) {
   host.empty();
   if (kicker) host.createDiv({ cls: "age-guide__kicker", text: kicker });
   host.createEl("h2", { text: topic.title });
+  let page = host; // une rubrique « spoiler » s'ouvre sur un avertissement et une case : le texte reste caché tant qu'elle n'est pas cochée
+  if (topic.gate) {
+    const st = spoil || { on: false }, gate = host.createDiv({ cls: "age-guide__gate" }); inline(gate.createEl("p"), topic.gate.p);
+    const lab = gate.createEl("label", { cls: "age-guide__gatebox" }), cb = lab.createEl("input", { type: "checkbox" }); lab.appendText(" " + topic.gate.label); cb.checked = !!st.on;
+    page = host.createDiv({ cls: "age-guide__spoiler" }); page.hidden = !st.on;
+    cb.addEventListener("change", () => { st.on = cb.checked; page.hidden = !st.on; });
+  }
+  host = page;
   for (const b of topic.body) {
     if (b.p) inline(host.createEl("p"), b.p);
     else if (b.h) host.createEl("h4", { text: b.h });
@@ -165,7 +174,7 @@ function openGuide(plugin, topicId, level0) {
   class GuideModal extends obs.Modal {
     onOpen() {
       const { contentEl, modalEl } = this; contentEl.empty(); modalEl.addClass("age-guide-modal");
-      let level = level0 === "full" ? "full" : "quick";
+      let level = level0 === "full" ? "full" : "quick"; const spoil = { on: false }; // la case « spoilers » : décochée à chaque ouverture du guide
       const tabs = contentEl.createDiv({ cls: "age-guide__levels" }), root = contentEl.createDiv({ cls: "age-guide" });
       const nav = root.createDiv({ cls: "age-guide__nav" }), main = root.createDiv({ cls: "age-guide__main" });
       const body = main.createDiv({ cls: "age-guide__body" }), foot = main.createDiv({ cls: "age-guide__foot" });
@@ -174,7 +183,7 @@ function openGuide(plugin, topicId, level0) {
         const list = topics(lang, level), rows = {}; nav.empty();
         for (const k of Object.keys(lv)) lv[k].toggleClass("is-active", k === level);
         const parts = PARTS[lang] || PARTS.en;
-        const show = (tid) => { const t = list.find((x) => x.id === tid) || list[0]; for (const [k, r] of Object.entries(rows)) r.toggleClass("is-active", k === t.id); renderTopic(body, t, t.part && parts[t.part]); body.scrollTop = 0; };
+        const show = (tid) => { const t = list.find((x) => x.id === tid) || list[0]; for (const [k, r] of Object.entries(rows)) r.toggleClass("is-active", k === t.id); renderTopic(body, t, t.part && parts[t.part], spoil); body.scrollTop = 0; };
         let part = null;
         for (const t of list) {
           if (t.part && t.part !== part) { part = t.part; nav.createDiv({ cls: "age-guide__part", text: parts[part] }); }

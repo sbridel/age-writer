@@ -359,6 +359,22 @@ const REF_EN = [
     { h: "Drift" },
     { ul: ["Ages without a magnetic field (dead core, or a world that does not spin) give rough bearings (four or eight compass words instead of sixteen) and their calibration wears twice as fast", "A weak field: 1.4 times as fast", "Near a dead star: faster still"] },
   ] },
+  // ---- Spoilers ---------------------------------------------------------------------------------------------------
+  { id: "spoilers", part: "spoil", icon: "eye-off", title: "Secrets of the Relto", spoiler: true,
+    gate: { p: "This page gives away what the Relto hides: the writing room, its puzzle, and what lies inside. Nothing here is needed to use the plugin. If you would rather find it all by yourself, leave the box unticked.", label: "Show the spoilers" }, body: [
+    { h: "Getting in" },
+    { p: "The hidden writing room needs the cabin. It opens once the story is finished (the inkwell), or in the sandbox when the page **Writing room** is active. The page **Inkwell** adds the mentor's last letter to the sandbox as well. Both are in the list of the command “Create a Relto page”." },
+    { p: "The clue is scrawled on the back of the mentor's last letter, on the cabin table. It leads to the small bookcase under the window: touch three books in the right order, the one the sea dyed (blue), the one the fire left behind (red), the one with no title. The bookcase slides away. Behind it, a wooden panel answers to knocking: two quick knocks, a pause (between 0.75 and 2.8 seconds), then one firm knock." },
+    { p: "Without the writing room, the bookcase is only a teaser: its books can be touched and do nothing." },
+    { h: "The study key" },
+    { p: "Once the riddle has been solved, **Settings › Age Writer › Relto** (and the Relto's own options) offer **Study key**. Switched on, a brass key lies on the cabin table and leads straight to the writing room. The riddle itself stays as it is." },
+    { h: "Inside" },
+    { ul: ["The desk (click the armchair to sit): a clickable lamp whose brass chain turns the light on and off, the orrery, the big book, the inkwell, a letter basket. The star chart opens from here and returns here.", "The ladder leads to the loft: the reference books (glyphs, library, book of pages, surveyor's notebook) sit on its long table once the room exists.", "The round window, top left, shows the sky; with the **Comets** page active, a comet crosses it from time to time.", "The crystal flower in its oval frame, on the wall behind the desk: click it for a close-up. Its colours come from the Relto's seed. To change them without touching the seed, add `flower_color` to the note of the writing-room page: a hue (`flower_color: 200`) or a colour (`flower_color: \"#d04030\"`).", "The cat can sleep here instead of in the cabin: in its page, `cat_sleep: atelier` (or `atelier always`) keeps the hours of `auto` or `always` but picks the armchair, the rug or the bed, and changes spot every half hour."] },
+    { h: "The drawer and the stone" },
+    { p: "A brass nail glows at the edge of the desk. It pulls out a drawer, where a black stone lies: the secret stone. Take it and it stays on the desk, in the room and in the desk view. It does nothing yet." },
+    { h: "The mail" },
+    { p: "The letter basket stands for a single note named **Courrier**. While the Relto is open, a letter from the mentor lands there at random, 8 to 25 minutes after the previous one: it speaks of a block you do not know yet (three descriptors, a family, a name), and never of the final trial's blocks. A sealed envelope pulses on the desk until you read the note; reading it schedules the next." },
+  ] },
 ];
 
 module.exports = { REF_EN };

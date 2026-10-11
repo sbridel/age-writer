@@ -17,12 +17,12 @@ const { AMOUNT_RE } = require("../src/amounts");
 const { SYSTEM_RE } = require("../src/starsystem");
 
 // ---- 1. quatre parties, dans l'ordre demandé, dans les deux langues --------------------------------------------
-const ORDER = ["set", "write", "gen", "relto"];
+const ORDER = ["set", "write", "gen", "relto", "spoil"];
 ok(JSON.stringify(G.PART_ORDER) === JSON.stringify(ORDER), "ordre des parties : réglages, écrire, généré, Relto");
 for (const [lang, ref] of [["en", REF_EN], ["fr", REF_FR]]) {
   ok(ref.every((t) => ORDER.includes(t.part)), `${lang} : chaque rubrique appartient à une partie`);
   const seen = ref.map((t) => t.part).filter((p, i, a) => i === 0 || a[i - 1] !== p);
-  ok(JSON.stringify(seen) === JSON.stringify(ORDER), `${lang} : les quatre parties, chacune d'un seul tenant, dans l'ordre (${seen.join(", ")})`);
+  ok(JSON.stringify(seen) === JSON.stringify(ORDER), `${lang} : les cinq parties, chacune d'un seul tenant, dans l'ordre (${seen.join(", ")})`);
   ok(ORDER.every((p) => G.PARTS[lang][p]), `${lang} : chaque partie a un nom`);
   ok(ref.some((t) => t.id === G.REF_START), `${lang} : la rubrique d'ouverture existe`);
   ok(new Set(ref.map((t) => t.id)).size === ref.length, `${lang} : identifiants de rubriques uniques`);

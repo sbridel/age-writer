@@ -5,6 +5,8 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 ## Unreleased
 
 ### Added
+- **Story mode.** A mentor, Adrin Vesparath, sends short letters (English and French) and sets nine chapters, each with a Writers' Guild course sheet that fades as you revise, a hint ladder, and a reward for your Relto. The story Relto has its own folder, apart from the sandbox, and the book only offers the blocks you have learned. Commands: “Start the story”, “Story: next chapter / restart the current chapter / check progress now / hint / repair chapter notes”.
+- **Spoilers page in the full reference.** A new last part, hidden behind a tick box, covers what the Relto keeps secret.
 - **The book of glyphs is a real book.** In the cabin, a click opens a book on the canvas: pages that turn (‹ ›, or the table of contents), the glyphs grouped by type, each with its drawing and the Ages where it appears, then a page of the **reactions** you have seen (type and catalyst). In a story Relto, glyphs not yet learned show as pale silhouettes with a hint on hover.
 - **The library book is a real book too**, in two parts: *Library of Ages* and *Library of the Relto*. Each lists the entries already written and ends with a blank page where you write new ones directly (one per line); each line is checked, refused with its reason if it does not parse, and otherwise added to the library note without ever opening it.
 

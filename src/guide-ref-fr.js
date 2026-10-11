@@ -356,6 +356,22 @@ const REF_FR = [
     { h: "Dérive" },
     { ul: ["Les Âges sans champ magnétique (noyau mort, ou monde qui ne tourne pas) donnent des relèvements grossiers (quatre ou huit mots de boussole au lieu de seize) et leur calibration s'use deux fois plus vite", "Un champ faible : 1,4 fois plus vite", "Près d'une étoile morte : plus vite encore"] },
   ] },
+  // ---- Spoilers ---------------------------------------------------------------------------------------------------
+  { id: "spoilers", part: "spoil", icon: "eye-off", title: "Secrets du Relto", spoiler: true,
+    gate: { p: "Cette page dévoile ce que le Relto cache : l'atelier, son énigme et ce qu'on y trouve. Rien ici n'est nécessaire pour utiliser le plugin. Si tu préfères tout découvrir seul, laisse la case décochée.", label: "Afficher les spoilers" }, body: [
+    { h: "Y entrer" },
+    { p: "L'atelier caché demande la cabane. Il s'ouvre une fois l'histoire terminée (l'encrier), ou, dans le bac à sable, quand la page **Writing room** est active. La page **Inkwell** ajoute aussi au bac à sable la dernière lettre du mentor. Les deux figurent dans la liste de la commande « Create a Relto page »." },
+    { p: "L'indice est griffonné au dos de la dernière lettre du mentor, sur la table de la cabane. Il mène à la petite bibliothèque sous la fenêtre : touche trois livres dans l'ordre, celui que la mer a teint (bleu), celui que le feu a laissé (rouge), celui qui n'a pas de titre. La bibliothèque coulisse. Derrière, un panneau de bois répond aux coups : deux coups brefs, une pause (entre 0,75 et 2,8 secondes), puis un coup franc." },
+    { p: "Sans atelier, la bibliothèque n'est qu'un avant-goût : on touche ses livres, sans effet." },
+    { h: "La clé de l'atelier" },
+    { p: "Une fois l'énigme résolue, **Réglages › Age Writer › Relto** (et les options du Relto lui-même) proposent **Clé de l'atelier**. Activée, une clé de laiton repose sur la table de la cabane et mène directement à l'atelier. L'énigme, elle, reste en place." },
+    { h: "À l'intérieur" },
+    { ul: ["Le bureau (clique sur le fauteuil pour s'asseoir) : une lampe dont la chaînette de laiton l'allume et l'éteint, le planétaire, le grand livre, l'encrier, une corbeille à lettres. La carte du ciel s'ouvre d'ici et revient ici.", "L'échelle mène à l'étage : les livres de référence (glyphes, bibliothèque, livre des pages, carnet de l'arpenteur) sont sur sa longue table dès que la pièce existe.", "Le hublot rond, en haut à gauche, montre le ciel ; avec la page **Comets** active, une comète le traverse de temps en temps.", "La fleur de cristal dans son cadre ovale, au mur derrière le bureau : un clic l'agrandit. Ses couleurs viennent de la graine du Relto. Pour les changer sans toucher à la graine, ajoute `flower_color` à la note de la page de l'atelier : une teinte (`flower_color: 200`) ou une couleur (`flower_color: \"#d04030\"`).", "Le chat peut dormir ici plutôt que dans la cabane : dans sa page, `cat_sleep: atelier` (ou `atelier always`) garde les heures de `auto` ou `always` mais choisit le fauteuil, le tapis ou le lit, et change de place toutes les demi-heures."] },
+    { h: "Le tiroir et la pierre" },
+    { p: "Un clou de laiton brille au bord du bureau. Il fait sortir un tiroir, où repose une pierre noire : la pierre secrète. Prise, elle reste sur le bureau, dans la pièce et dans la vue du bureau. Elle ne fait rien pour l'instant." },
+    { h: "Le courrier" },
+    { p: "La corbeille à lettres correspond à une seule note, **Courrier**. Tant que le Relto est ouvert, une lettre du mentor y arrive au hasard, 8 à 25 minutes après la précédente : elle parle d'un bloc que tu ne connais pas encore (trois descripteurs, une famille, un nom), jamais de ceux de l'épreuve finale. Une enveloppe cachetée pulse sur le bureau tant que tu n'as pas lu la note ; la lire programme la suivante." },
+  ] },
 ];
 
 module.exports = { REF_FR };
