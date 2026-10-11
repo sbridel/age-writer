@@ -278,13 +278,13 @@ async function playLinkAnim(plugin, age, host, snd, open) {
   { const r = host.getBoundingClientRect(); if (r.width && r.height) ov.style.setProperty("--page-h", `${Math.round(Math.max(160, Math.min(r.height * 0.9, (r.width * 0.9) / 0.75, 640)))}px`); } // la page tient dans la zone où l'on est (petit mode compris)
   const touch = ov.createDiv({ cls: "age-linkanim__touch" }), timers = [], at = (fn, ms) => timers.push(window.setTimeout(fn, ms));
   const quiet = !plugin.ext.sound, vol = plugin.ext.volume;
-  let done = false, ready = false;
+  let done = false, ready = false, touched = false;
   const end = () => { done = true; timers.forEach((x) => window.clearTimeout(x)); document.removeEventListener("keydown", onKey, true); ov.remove(); };
   const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); end(); } };
   document.addEventListener("keydown", onKey, true);
-  ov.addEventListener("click", () => { if (!ready) end(); }); // un clic à côté ferme le livre (pas avant : il faut le laisser s'ouvrir)
+  ov.addEventListener("click", () => { if (!touched) end(); }); // un clic à côté ferme le livre, tant qu'on n'a pas touché le panneau
   panel.addEventListener("click", (e) => { // c'est le joueur qui touche le panneau : l'anneau, le son de la liaison, puis la note
-    e.stopPropagation(); if (!ready || done) return; ready = false;
+    e.stopPropagation(); if (!ready || done) return; ready = false; touched = true;
     const r = ov.getBoundingClientRect(); touch.style.left = `${e.clientX - r.left - 10}px`; touch.style.top = `${e.clientY - r.top - 10}px`;
     ov.addClass("is-touch"); touch.addClass("is-on"); ov.removeClass("is-ready"); snd();
     at(() => { end(); open(); }, 900);
