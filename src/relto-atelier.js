@@ -125,7 +125,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#5b2b2b"); ctx.fillRect(ax, ay - 52, 52, 54); ctx.fillStyle = c("#6d3535"); ctx.fillRect(ax - 8, ay - 30, 14, 36); ctx.fillRect(ax + 46, ay - 30, 14, 36); ctx.fillRect(ax + 4, ay - 26, 44, 28);
   ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(ax - 8, ay + 2, 68, 5); ctx.fillStyle = c("#2f2016"); ctx.fillRect(ax - 6, ay + 6, 4, 8); ctx.fillRect(ax + 54, ay + 6, 4, 8);
   const cat = sc.additions.find((a) => a.type === "cat");
-  if (cat) {
+  if (cat && !r.catSpot) {
     const fur = CAT_FUR[String(cat.color || "orange").toLowerCase()] || CAT_FUR.orange, br = Math.sin(t * 1.6) * 0.8;
     ctx.fillStyle = c(fur); ctx.beginPath(); ctx.ellipse(ax + 26, ay - 30, 17, 9 + br * 0.4, 0, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(ax + 13, ay - 33, 8, 7, 0, 0, 6.283); ctx.fill();
     ctx.beginPath(); ctx.moveTo(ax + 8, ay - 38); ctx.lineTo(ax + 9, ay - 45); ctx.lineTo(ax + 13, ay - 39); ctx.moveTo(ax + 15, ay - 39); ctx.lineTo(ax + 18, ay - 45); ctx.lineTo(ax + 19, ay - 37); ctx.fill();

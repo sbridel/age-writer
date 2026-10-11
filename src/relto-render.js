@@ -1090,6 +1090,7 @@ class ReltoRenderer {
     if (view !== "global" && !(ROOMS[view] && this.available()[view])) view = "island";
     if (view === "cat" && this.catAsleep()) view = "cabin"; // il dort au coin du feu : on le trouve dans la cabane
     if (view === (this.view || "island")) return;
+    { const grp = ["atelier", "atelierback", "desk", "loft", "letter"]; if (view === "atelier" && !grp.includes(this.view)) this.catSpot = Math.floor(Math.random() * 3); } // le chat choisit : fauteuil (0), tapis (1) ou lit (2)
     if (view === "glyphbook") this.bookFrom = ["cabin", "loft"].includes(this.view) ? this.view : "cabin"; // la flèche ronde du livre y retourne
     this.view = view; this.hover = null; this.flash = null; this.fadeAt = Date.now(); this.deskUI = null; if (view !== "cabin") { this.panelAt = 0; this.shelf = null; if (view !== "glyphbook") { this.shelfOpen = false; this.bookAt = 0; } } // en quittant la cabane, la bibliothèque reprend sa place // en quittant le bureau, le tiroir se referme
     if (this.opts.onView) this.opts.onView(view);
