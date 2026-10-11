@@ -145,7 +145,11 @@ function mount(plugin, root, o) {
     if (state.file) head.createSpan({ cls: `age-panel__verdict age-panel__verdict--${analysis.verdict}`, text: `${analysis.verdict} · ${analysis.stability}%` });
     const spreadEl = container.createDiv({ cls: "age-book__spread age-dbook__spread" }), left = spreadEl.createDiv({ cls: "age-book__page age-book__page--left" });
     spreadEl.createDiv({ cls: "age-book__gutter" }); const right = spreadEl.createDiv({ cls: "age-book__page age-book__page--right" });
-    if (cur.k === "link") await this.linking(left, right, analysis, file);
+    if (cur.k === "link") {
+      await this.linking(left, right, analysis, file);
+      const win = left.querySelector(".age-book__window"); // la vitre de l'Âge lui-même : la toucher, c'est se lier à lui (son du livre, animation, la note s'ouvre)
+      if (win && state.file && !win.classList.contains("is-clickable")) { win.addClass("is-clickable"); win.setAttribute("title", plugin.t ? plugin.t("link.touch") : ""); win.addEventListener("click", () => { if (o.onOpen) o.onOpen({ path: state.file.path, name: state.file.basename }); }); }
+    }
     else if (cur.k === "glyphs") { glyphSpread(left, right, pages, cur.i, seen, file); for (const p of pages) seen.add(p.id); }
     else if (cur.k === "desc") {
       const sentences = this.proseFor(file.path, ageSource, analysis).split(/(?<=[.!?])\s+/).filter(Boolean), lp = left.createDiv({ cls: "age-book__prose", text: sentences.join(" ") }), rp = right.createDiv({ cls: "age-book__prose" });
