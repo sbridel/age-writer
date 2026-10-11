@@ -59,7 +59,7 @@ function drawCabin(r, ctx, sc, sky, t) {
   if (r.available && r.available().atelier) { // un panneau de la boiserie pivote : seule une fine ligne le trahit, et aucune zone ne s'allume au survol
     const S2 = ATELIER.SECRET; ctx.strokeStyle = rgba(0, 0, 0, 0.16); ctx.lineWidth = 1; ctx.strokeRect(S2.x, S2.y, S2.w, S2.h); ctx.strokeStyle = rgba(255, 235, 190, 0.05); ctx.strokeRect(S2.x + 1.5, S2.y + 1.5, S2.w - 3, S2.h - 3);
     ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.beginPath(); ctx.arc(S2.x + S2.w - 9, S2.y + S2.h / 2, 2.2, 0, 6.283); ctx.fill();
-    r.hot.push({ x: S2.x, y: S2.y, w: S2.w, h: S2.h, tip: "", go: "atelier", secret: true });
+    r.hot.push({ x: S2.x, y: S2.y, w: S2.w, h: S2.h, tip: "", knock: true, secret: true }); // on y frappe : deux coups brefs, un temps, un coup franc (voir ReltoRenderer.knockBeat)
   }
   // porte (retour à l'île)
   const dx = 22, dy = 112, dw = 64;
@@ -116,9 +116,11 @@ function drawCabin(r, ctx, sc, sky, t) {
     { kind: "glyphs", x: tx + 16, y: ty, w: 17, h: 38, body: "#27555a", band: "#d8c07a", tip: "Book of glyphs" },
     { kind: "library", x: tx + 38, y: ty, w: 17, h: 33, body: "#5b2b2b", band: "#c9a24e", tip: "Library book (blocks and Relto pages)" },
   ];
-  for (const b of books) { standingBook(ctx, c, b); r.hot.push({ x: b.x - 1, y: b.y - b.h - 1, w: b.w + 2, h: b.h + 2, tip: b.tip, special: b.kind }); }
+  const moved = !!(r.available && r.available().atelier); // l'atelier est ouvert : les livres de référence ont déménagé à l'étage
+  if (moved && r.opts.relicState && (r.opts.relicState() || {}).seen) r.hot.push({ x: tx, y: ty - 8, w: tw, h: 14, tip: "", go: "desk", secret: true }); // un raccourci caché vers le bureau (une fois l'atelier découvert)
+  for (const b of moved ? [] : books) { standingBook(ctx, c, b); r.hot.push({ x: b.x - 1, y: b.y - b.h - 1, w: b.w + 2, h: b.h + 2, tip: b.tip, special: b.kind }); }
   if (r.scene.additions.some((a) => a.type === "imager")) PS.imagerMini(r, ctx, c, tx + 112, ty, t, TR(r)("relto.pass.imager.tip")); // l'Imageur : un petit appareil de laiton sur la table, son cristal luit ; un clic y mène
-  if (r.scene.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { // le carnet de l'arpenteur : posé à plat sur la table, signet rouge
+  if (!moved && r.scene.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { // le carnet de l'arpenteur : posé à plat sur la table, signet rouge
     const nx = tx + 132, ny = ty - 5;
     ctx.fillStyle = c("#3b2a1a"); ctx.fillRect(nx, ny, 22, 5); ctx.fillStyle = c("#6b4a2a"); ctx.fillRect(nx, ny - 1, 22, 2);
     ctx.fillStyle = c("#c9a24e"); ctx.fillRect(nx + 1, ny + 1, 2, 3); ctx.fillRect(nx + 19, ny + 1, 2, 3); ctx.fillStyle = c("#8e2b27"); ctx.fillRect(nx + 14, ny + 4, 1.4, 4);
@@ -140,7 +142,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     ctx.strokeStyle = c("#b9a97f"); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(ix + 10, iy - 17); ctx.lineTo(ix + 17, iy - 24); ctx.stroke();
     r.hot.push({ x: ix - 3, y: iy - 28, w: 24, h: 30, tip: TR(r)("story.ink.tip"), flash: TR(r)("story.ink.flash") });
   }
-  { // le livre des pages : grand livre ouvert, posé à plat ; un clic l'ouvre en gros plan
+  if (!moved) { // le livre des pages : grand livre ouvert, posé à plat ; un clic l'ouvre en gros plan
     const bx = tx + 60, by = ty - 6;
     ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 1, by, 30, 6); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx + 1, by - 2, 13, 5); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 15, by - 2, 13, 5);
     ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 3; k++) { ctx.fillRect(bx + 3, by - 1 + k * 1.4 - 0.6, 9, 0.5); ctx.fillRect(bx + 17, by - 1 + k * 1.4 - 0.6, 9, 0.5); }

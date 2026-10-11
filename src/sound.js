@@ -685,6 +685,22 @@ function telescopeSfx(kind, s = 0, volume = 0.3) {
   });
 }
 /** Couinement du jouet-souris. */
+/** Un coup frappé sur du bois : un choc sourd, un peu de claquement ; `hollow` : le bois sonne creux (le panneau de l'atelier). */
+function knock(volume = 0.3, { hollow = true } = {}) {
+  return oneShot(0.5, (c, out, noise) => {
+    out.gain.value = volume; const t = c.currentTime, o = c.createOscillator(), e = c.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(hollow ? 150 : 210, t); o.frequency.exponentialRampToValueAtTime(hollow ? 62 : 90, t + 0.12); e.gain.setValueAtTime(0.0001, t); e.gain.linearRampToValueAtTime(0.9, t + 0.006); e.gain.exponentialRampToValueAtTime(0.0001, t + (hollow ? 0.34 : 0.18)); o.connect(e); e.connect(out); o.start(t); o.stop(t + 0.4);
+    const n = noise(0.05), lp = c.createBiquadFilter(), ne = c.createGain(); lp.type = "lowpass"; lp.frequency.value = 900; ne.gain.setValueAtTime(0.5, t); ne.gain.exponentialRampToValueAtTime(0.0001, t + 0.05); n.connect(lp); lp.connect(ne); ne.connect(out); n.start(t);
+  });
+}
+/** Le grincement lent d'un panneau ou d'un tiroir de bois qui bouge. */
+function creak(volume = 0.3) {
+  return oneShot(1.4, (c, out) => {
+    out.gain.value = volume * 0.5; const t = c.currentTime, o = c.createOscillator(), lp = c.createBiquadFilter(), e = c.createGain();
+    o.type = "sawtooth"; o.frequency.setValueAtTime(95, t); o.frequency.linearRampToValueAtTime(150, t + 0.5); o.frequency.linearRampToValueAtTime(110, t + 1.1); lp.type = "lowpass"; lp.frequency.value = 520; lp.Q.value = 6;
+    e.gain.setValueAtTime(0.0001, t); e.gain.linearRampToValueAtTime(0.35, t + 0.25); e.gain.linearRampToValueAtTime(0.2, t + 0.8); e.gain.exponentialRampToValueAtTime(0.0001, t + 1.3); o.connect(lp); lp.connect(e); e.connect(out); o.start(t); o.stop(t + 1.4);
+  });
+}
 function squeak(volume = 0.3) {
   return oneShot(0.4, (c, out) => {
     const t = c.currentTime, o = c.createOscillator(), e = c.createGain(); out.gain.value = volume * 0.3;
@@ -750,4 +766,4 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { crystalChord, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { knock, creak, crystalChord, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

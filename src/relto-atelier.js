@@ -7,6 +7,13 @@ const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 const CAT_FUR = { orange: "#d9822b", black: "#2a2a31", white: "#e9e4da", grey: "#8c8c94", gray: "#8c8c94", brown: "#7a5236", cream: "#e3cfa4" };
 const flick = (t) => 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1) + 0.06 * Math.sin(t * 17);
 
+/** La pierre : lisse, noire ; un trait pâle y respire. */
+function stone(ctx, c, x, y, s, t) {
+  ctx.fillStyle = c("#15131a"); ctx.beginPath(); ctx.moveTo(x - s, y); ctx.quadraticCurveTo(x - s * 0.9, y - s * 1.1, x, y - s * 1.15); ctx.quadraticCurveTo(x + s, y - s * 1.1, x + s * 1.05, y); ctx.quadraticCurveTo(x, y + s * 0.5, x - s, y); ctx.fill();
+  ctx.strokeStyle = rgba(150, 110, 230, 0.35 + 0.3 * Math.sin(t * 1.4)); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x - s * 0.4, y - s * 0.5); ctx.lineTo(x, y - s * 0.8); ctx.lineTo(x + s * 0.4, y - s * 0.45); ctx.stroke();
+  ctx.fillStyle = rgba(255, 255, 255, 0.12); ctx.fillRect(x - s * 0.5, y - s * 1.05, s * 0.5, 1.4);
+}
+
 /** Où se trouve le panneau secret dans la cabane (coordonnées logiques) ; la pièce n'a aucun bouton de navigation. */
 const SECRET = { x: 112, y: 182, w: 66, h: 66 };
 
@@ -42,6 +49,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   // l'échelle de la galerie
   ctx.fillStyle = c("#5a4330"); ctx.fillRect(628, GALLERY - 4, 5, FLOOR - GALLERY); ctx.fillRect(612, GALLERY - 4, 5, FLOOR - GALLERY);
   for (let y = GALLERY + 14; y < FLOOR - 6; y += 18) ctx.fillRect(612, y, 21, 3);
+  r.hot.push({ x: 606, y: GALLERY - 4, w: 30, h: FLOOR - GALLERY, tip: TRr("atelier.ladder.tip"), go: "loft" });
   // porte : le panneau pivote vers la cabane
   const dx = 28, dy = 118, dw = 62;
   ctx.fillStyle = c("#241810"); ctx.fillRect(dx - 4, dy - 4, dw + 8, FLOOR - dy + 4); ctx.fillStyle = c("#46301f"); ctx.fillRect(dx, dy, dw, FLOOR - dy - 2);
@@ -85,7 +93,8 @@ function drawAtelier(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#2f2016"); ctx.fillRect(tx + 8, ty, 10, 74); ctx.fillRect(tx + tw - 18, ty, 10, 74); ctx.fillStyle = c("#3d2a1c"); ctx.fillRect(tx + 6, ty + 10, tw - 12, 46);
   ctx.fillStyle = rgba(0, 0, 0, 0.3); for (let i = 0; i < 3; i++) ctx.fillRect(tx + 24 + i * 78, ty + 16, 66, 34); ctx.fillStyle = c("#c9a24e"); for (let i = 0; i < 3; i++) ctx.fillRect(tx + 52 + i * 78, ty + 30, 10, 3);
   ctx.fillStyle = c("#6d4c31"); ctx.fillRect(tx - 6, ty - 8, tw + 12, 10); ctx.fillStyle = c("#7d5a3b"); ctx.fillRect(tx - 6, ty - 8, tw + 12, 3);
-  const top = ty - 8;
+  const top = ty - 8, rs = (r.opts.relicState && r.opts.relicState()) || {};
+  if (rs.stone) { stone(ctx, c, tx + 262, top - 6, 7, t); r.hot.push({ x: tx + 252, y: top - 18, w: 22, h: 18, tip: TRr("atelier.stone.tip"), flash: TRr("atelier.stone.flash") }); }
   r.hot.push({ x: tx - 6, y: top - 36, w: tw + 12, h: 100, tip: TRr("atelier.sit.tip"), go: "desk" }); // s'asseoir au bureau (les objets, poussés après, gardent la priorité)
   const item = (x, y, w, h, tip, flash) => r.hot.push({ x, y, w, h, tip: TRr(tip), flash: flash ? TRr(flash) : undefined });
   // l'orrery : une sphère de laiton et ses anneaux qui tournent
@@ -138,7 +147,43 @@ function drawDesk(r, ctx, sc, sky, t) {
     ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.2; for (let k = 1; k < 6; k++) { ctx.beginPath(); ctx.moveTo(cx + k * cw / 6, cy + 10); ctx.lineTo(cx + 10 + k * (cw - 20) / 6, cy + ch); ctx.stroke(); } for (let k = 1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(cx + 2 + k * 2, cy + 10 + k * 13); ctx.lineTo(cx + cw - 2 - k * 2, cy + 10 + k * 13); ctx.stroke(); }
     ctx.strokeStyle = c("#d8b45e"); ctx.lineWidth = 3; ctx.strokeRect(cx, cy + 8, cw, 4);
     r.hot.push(mail.unread || mail.has ? { x: cx - 4, y: cy - 32, w: cw + 8, h: ch + 40, tip: TRr(mail.unread ? "atelier.tray.new" : "atelier.tray.tip"), special: "mail" } : { x: cx - 4, y: cy - 4, w: cw + 8, h: ch + 12, tip: TRr("atelier.tray.tip"), flash: TRr("atelier.tray.empty") }); }
-  r.hot.push({ x: 0, y: H - 30, w: W, h: 30, tip: TRr("atelier.stand.tip"), go: "atelier" }); // se lever
+  const rs = (r.opts.relicState && r.opts.relicState()) || {};
+  if (rs.drawer) { // le tiroir est sorti : un fond sombre, et la pierre dedans si on ne l'a pas encore prise
+    ctx.fillStyle = c("#2a1c12"); ctx.fillRect(536, 294, 100, 44); ctx.fillStyle = c("#0f0a07"); ctx.fillRect(542, 298, 88, 32); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.strokeRect(536, 294, 100, 44);
+    if (!rs.stone) { stone(ctx, c, 586, 322, 14, t); r.hot.push({ x: 560, y: 298, w: 52, h: 32, tip: TRr("atelier.stone.tip"), relic: "stone" }); }
+  }
+  if (rs.stone) { stone(ctx, c, 204, 316, 12, t); r.hot.push({ x: 190, y: 296, w: 28, h: 26, tip: TRr("atelier.stone.tip"), flash: TRr("atelier.stone.flash") }); }
+  r.hot.push({ x: 0, y: H - 22, w: W, h: 22, tip: TRr("atelier.stand.tip"), go: "atelier" }); // se lever
+  if (!rs.drawer) { // un clou de laiton qui brille un peu trop : c'est le bouton du tiroir
+    const g = 0.35 + 0.35 * Math.sin(t * 1.1); ctx.fillStyle = c("#b98f3c"); ctx.beginPath(); ctx.arc(598, 346, 2.6, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 240, 190, g); ctx.fillRect(597, 344.5, 1.6, 1.6);
+    r.hot.push({ x: 588, y: 336, w: 20, h: 18, tip: "", relic: "drawer", secret: true });
+  }
 }
 
-module.exports = { drawAtelier, drawDesk, SECRET };
+/** L'étage : une galerie de livres, et sur la longue table les livres de référence qui ont quitté la table du salon. */
+function drawLoft(r, ctx, sc, sky, t) {
+  const amb = 0.5 + 0.5 * sky.ambient, c = (h) => mix("#05060c", h, amb), TRr = TR(r), fl = flick(t), q = rng(0x10f7);
+  ctx.fillStyle = c("#3f2f22"); ctx.fillRect(0, 0, W, H);
+  for (let x = 0; x < W; x += 34) { ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.fillRect(x, 0, 1.4, H); }
+  for (let row = 0; row < 3; row++) { // les étagères du fond
+    const y0 = 18 + row * 62; ctx.fillStyle = c("#1d140e"); ctx.fillRect(0, y0, W, 56); ctx.fillStyle = c("#4b3626"); ctx.fillRect(0, y0 + 56, W, 5);
+    let bx = 6; const g = rng(0x600 + row * 11);
+    while (bx < W - 10) { const bw = 6 + Math.floor(g() * 8), bh = 28 + Math.floor(g() * 22), col = ["#27555a", "#5b2b2b", "#3b3560", "#4c5a2c", "#6a4a2a", "#2f3e4f", "#5a3a52"][Math.floor(g() * 7)]; ctx.fillStyle = c(col); ctx.fillRect(bx, y0 + 56 - bh, bw, bh); ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(bx + bw - 2, y0 + 56 - bh, 2, bh); if (g() < 0.45) { ctx.fillStyle = c("#c9a24e"); ctx.fillRect(bx, y0 + 56 - bh + 5, bw, 2); } bx += bw + 1; if (g() < 0.06) bx += 14; }
+  }
+  ctx.fillStyle = rgba(255, 190, 90, 0.05 * fl); ctx.fillRect(0, 0, W, 220);
+  const g = ctx.createLinearGradient(0, 214, 0, H); g.addColorStop(0, c("#6d4c31")); g.addColorStop(1, c("#35241a")); ctx.fillStyle = g; ctx.fillRect(0, 214, W, H - 214); // la longue table
+  ctx.fillStyle = c("#7d5a3b"); ctx.fillRect(0, 214, W, 4); ctx.strokeStyle = rgba(0, 0, 0, 0.14); ctx.lineWidth = 1; for (let i = 0; i < 9; i++) { const y = 224 + q() * 120; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y + q() * 4 - 2); ctx.stroke(); }
+  const stand = (x, y, w, h, body, band, kind) => {
+    ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(x - 4, y, w + 14, 7); ctx.fillStyle = c(body); ctx.fillRect(x, y - h, w, h); ctx.fillStyle = c(band); ctx.fillRect(x, y - h + 10, w, 5); ctx.fillRect(x, y - 16, w, 5); ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x + w - 6, y - h, 6, h);
+    const mx = x + w / 2, my = y - h / 2; ctx.fillStyle = c(band);
+    if (kind === "glyphs") { ctx.beginPath(); ctx.moveTo(mx, my - 14); ctx.lineTo(mx + 9, my); ctx.lineTo(mx, my + 14); ctx.lineTo(mx - 9, my); ctx.closePath(); ctx.fill(); } else { ctx.fillRect(mx - 6, my - 10, 12, 16); ctx.fillStyle = c(body); ctx.fillRect(mx - 2, my - 5, 4, 7); }
+  };
+  stand(70, 296, 38, 84, "#27555a", "#d8c07a", "glyphs"); r.hot.push({ x: 66, y: 208, w: 52, h: 94, tip: TRr("atelier.loft.glyphs"), special: "glyphs" });
+  stand(136, 296, 38, 74, "#5b2b2b", "#c9a24e", "library"); r.hot.push({ x: 132, y: 218, w: 52, h: 84, tip: TRr("atelier.loft.library"), special: "library" });
+  { const bx = 232, by = 292; ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 4, by - 2, 170, 20); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx, by - 8, 80, 18); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 84, by - 8, 80, 18); ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 4; k++) { ctx.fillRect(bx + 8, by - 3 + k * 4, 62, 1); ctx.fillRect(bx + 92, by - 3 + k * 4, 62, 1); }
+    r.hot.push({ x: bx - 6, y: by - 12, w: 176, h: 34, tip: TRr("atelier.loft.pages"), go: "book" }); }
+  if (sc.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { const nx = 450, ny = 290; ctx.fillStyle = c("#3b2a1a"); ctx.fillRect(nx, ny, 62, 14); ctx.fillStyle = c("#6b4a2a"); ctx.fillRect(nx, ny - 3, 62, 5); ctx.fillStyle = c("#c9a24e"); ctx.fillRect(nx + 3, ny + 2, 5, 9); ctx.fillRect(nx + 54, ny + 2, 5, 9); ctx.fillStyle = c("#8e2b27"); ctx.fillRect(nx + 40, ny + 12, 3, 12); r.hot.push({ x: nx - 3, y: ny - 8, w: 68, h: 36, tip: TRr("atelier.loft.surveyor"), special: "surveyor" }); }
+  r.hot.push({ x: 0, y: H - 22, w: W, h: 22, tip: TRr("atelier.loft.down"), go: "atelier" });
+}
+
+module.exports = { drawAtelier, drawDesk, drawLoft, SECRET };
