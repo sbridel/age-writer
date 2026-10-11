@@ -617,3 +617,4 @@
 .age-linkanim__page .age-linkanim__panel { width: 100%; opacity: 1; transform: none; transition: filter 0.7s ease-in; border: 2px solid #8a6a2e; box-shadow: none; }
 .age-linkanim.is-ready .age-linkanim__page .age-linkanim__panel { animation: age-linkanim-wait 1.6s ease-in-out infinite; }
 .age-linkanim.is-panel .age-linkanim__panel { transform: none; }
+.age-linkanim__panel .age-panel__window { width: 100%; max-width: none; min-width: 0; margin: 0; }
