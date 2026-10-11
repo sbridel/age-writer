@@ -141,14 +141,20 @@ function addExtSettings(plugin, el) {
   dd(l.sol, l.sold, "solitude", ["off", "balanced", "strong"], () => { try { plugin.applyDrawingSettings && plugin.applyDrawingSettings(); } catch (x) { /* ignore */ } });
   const reindex = () => { try { plugin.index && plugin.index.invalidate(); } catch (x) { /* ignore */ } };
   sub(l.rg);
-  new Setting(cur).setName(plugin.lang() === "fr" ? "Niveau" : "Level").setDesc(l.rgd).addDropdown((d) => d.addOptions({ gentle: o.rgGentle, balanced: o.rgBalanced, strict: o.rgStrict, extreme: o.rgExtreme }).setValue(RG.levelOf(e)).onChange((v) => { e.rigor = v; save(); reindex(); redraw(); }));
-  new Setting(cur).setName(l.rgf).setDesc(l.rgfd).setHeading();
+  // les familles de lois ne comptent qu'en « strict » : les pastilles n'apparaissent qu'alors
+  let pillsRow = null; const showPills = () => { if (pillsRow) pillsRow.settingEl.toggleClass("age-set__hidden", RG.levelOf(e) !== "strict"); };
+  new Setting(cur).setName(plugin.lang() === "fr" ? "Niveau" : "Level").setDesc(l.rgd).addDropdown((d) => d.addOptions({ gentle: o.rgGentle, balanced: o.rgBalanced, strict: o.rgStrict, extreme: o.rgExtreme }).setValue(RG.levelOf(e)).onChange((v) => { e.rigor = v; save(); showPills(); reindex(); redraw(); }));
+  pillsRow = new Setting(cur).setName(l.rgf).setDesc(l.rgfd);
+  const pills = pillsRow.controlEl.createDiv({ cls: "age-set__pills" });
   for (const fam of RG.FAMILIES) {
-    new Setting(cur).setName(l.rgfam[fam]).addToggle((t) => t.setValue(RG.familiesOf(e).includes(fam)).onChange((v) => {
-      const set = new Set(RG.familiesOf(e)); v ? set.add(fam) : set.delete(fam); e.rigorFamilies = RG.FAMILIES.filter((x) => set.has(x));
-      save(); if (RG.levelOf(e) === "strict") { reindex(); redraw(); }
-    }));
+    const pill = pills.createEl("button", { cls: "age-set__pill", text: l.rgfam[fam] }); pill.type = "button";
+    const paint = () => { const on = RG.familiesOf(e).includes(fam); pill.toggleClass("is-on", on); pill.setAttr("aria-pressed", String(on)); }; paint();
+    pill.addEventListener("click", () => {
+      const set = new Set(RG.familiesOf(e)); set.has(fam) ? set.delete(fam) : set.add(fam); e.rigorFamilies = RG.FAMILIES.filter((x) => set.has(x));
+      paint(); save(); if (RG.levelOf(e) === "strict") { reindex(); redraw(); }
+    });
   }
+  showPills();
   sub(l.phy);
   new Setting(cur).setName(l.phm).setDesc(l.phyd).addDropdown((d) => d.addOptions(plugin.lang() === "fr" ? { easy: "Facile", strict: "Strict", off: "Désactivée" } : { easy: "Easy", strict: "Strict", off: "Off" }).setValue(e.physics || "easy").onChange((v) => { e.physics = v; save(); reindex(); redraw(); }));
   new Setting(cur).setName(l.phs).setDesc(l.phsd).addSlider((s) => s.setLimits(0.5, 2, 0.1).setValue(e.physicsSeverity || 1).setDynamicTooltip().onChange((v) => { e.physicsSeverity = v; save(); if (e.physics === "strict") { reindex(); redraw(); } }));

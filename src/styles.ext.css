@@ -644,3 +644,10 @@
 .age-guide__gate { border: 1px solid var(--background-modifier-border); border-left: 3px solid var(--text-warning, #c9a24e); border-radius: 4px; padding: 6px 14px 10px; margin: 0 0 14px; background: var(--background-secondary); }
 .age-guide__gatebox { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; }
 .age-guide__spoiltag { font-size: 1.9em; font-weight: 800; letter-spacing: 0.18em; text-align: center; color: var(--text-error, #c0553f); padding: 6px 0 2px; }
+
+/* réglages : les familles de lois en pastilles (visibles seulement en « strict ») */
+.age-set__hidden { display: none; }
+.age-set__pills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.age-set__pill.age-set__pill { height: auto; padding: 2px 10px; border-radius: 999px; font-size: 0.8em; box-shadow: none; background: transparent; color: var(--text-muted); border: 1px solid var(--background-modifier-border); cursor: pointer; }
+.age-set__pill.age-set__pill:hover { color: var(--text-normal); border-color: var(--text-faint); }
+.age-set__pill.age-set__pill.is-on { background: var(--interactive-accent); color: var(--text-on-accent); border-color: var(--interactive-accent); }
