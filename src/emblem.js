@@ -10,8 +10,8 @@ const glyphPath = (ctx, k) => { ctx.beginPath(); for (const poly of GLYPH) { pol
 const PANELS = (() => {
   const arc = (r, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + ((a1 - a0) * i) / n; return [Math.cos(a) * r, Math.sin(a) * r]; });
   const mx = (p) => p.map(([x, y]) => [-x, y]), my = (p) => p.map(([x, y]) => [x, -y]), mxy = (p) => p.map(([x, y]) => [-x, -y]);
-  const top = [[-0.34, -0.81], [-0.3, -0.72], [-0.28, -0.62], [-0.27, -0.5], ...arc(0.56, -2.08, -1.06, 6), [0.27, -0.5], [0.25, -0.62], [0.29, -0.72], [0.34, -0.81], ...arc(0.88, -1.17, -1.97, 8)];
-  const corner = [[-0.52, -0.72], ...arc(0.88, -2.19, -2.53, 4), [-0.66, -0.2], [-0.54, -0.22], ...arc(0.56, -2.76, -2.2, 5), [-0.33, -0.52], [-0.5, -0.57], [-0.51, -0.66]];
+  const top = [[-0.36, -0.83], [-0.38, -0.78], [-0.36, -0.75], [-0.255, -0.67], [-0.285, -0.6], [-0.305, -0.52], ...arc(0.554, -2.11, -1.03, 6), [0.305, -0.52], [0.285, -0.6], [0.255, -0.67], [0.36, -0.75], [0.38, -0.78], [0.36, -0.83], ...arc(0.9, -1.16, -1.98, 8)];
+  const corner = [[-0.57, -0.7], ...arc(0.9, -2.26, -2.53, 4), [-0.66, -0.2], [-0.54, -0.22], ...arc(0.56, -2.76, -2.19, 5), [-0.403, -0.565], [-0.485, -0.565], [-0.52, -0.67]];
   const side = [[-0.8, -0.34], [-0.6, -0.14], [-0.54, -0.1], [-0.66, -0.05], [-0.54, 0], [-0.66, 0.05], [-0.54, 0.1], [-0.6, 0.14], [-0.8, 0.34], ...arc(0.88, 2.76, 3.52, 8)];
   return [top, my(top), corner, mx(corner), my(corner), mxy(corner), side, mx(side)];
 })();
@@ -32,7 +32,7 @@ function drawEmblem(ctx, cx, cy, R, c = (h) => h, t = 0) {
     const ng = ctx.createLinearGradient(-Wd, 0, Wd, 0); ng.addColorStop(0, GOLD_L); ng.addColorStop(0.5, GOLD); ng.addColorStop(1, GOLD_D); ctx.fillStyle = ng; nibPath(L, Wd); ctx.fill();
     ctx.strokeStyle = GOLD_D; ctx.lineWidth = Math.max(0.6, R * 0.012); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, L * 0.55); ctx.lineTo(0, -L * 0.12); ctx.strokeStyle = RED_D; ctx.lineWidth = Math.max(0.6, R * 0.014); ctx.stroke();
-    ctx.fillStyle = GOLD; ctx.beginPath(); ctx.arc(0, -L * 0.2, Wd * 1.9, 0, 6.283); ctx.fill(); ctx.strokeStyle = GOLD_D; ctx.lineWidth = Math.max(0.5, R * 0.01); ctx.stroke(); ctx.fillStyle = RED_D; ctx.beginPath(); ctx.arc(0, -L * 0.2, Wd * 0.8, 0, 6.283); ctx.fill();
+    ctx.fillStyle = GOLD; ctx.beginPath(); ctx.arc(0, 0, Wd * 1.9, 0, 6.283); ctx.fill(); ctx.strokeStyle = GOLD_D; ctx.lineWidth = Math.max(0.5, R * 0.01); ctx.stroke(); ctx.fillStyle = RED_D; ctx.beginPath(); ctx.arc(0, 0, Wd * 0.8, 0, 6.283); ctx.fill();
     ctx.strokeStyle = rgba(255, 245, 205, 0.55); ctx.lineWidth = Math.max(0.6, R * 0.014); ctx.beginPath(); ctx.moveTo(-Wd * 0.62, -L * 0.42); ctx.quadraticCurveTo(-Wd * 0.7, -L * 0.05, -Wd * 0.3, L * 0.3); ctx.stroke(); ctx.restore(); };
   for (const a of [Math.PI / 6, -Math.PI / 6, (5 * Math.PI) / 6, (-5 * Math.PI) / 6]) nib(a);
   // les barres sur les côtés (les dents en zigzag sont le bord des plages)
@@ -78,7 +78,7 @@ function drawSeal(ctx, cx, cy, R, c = (h) => h, t = 0, wax = "#7c1f2c") {
   const nib = (a) => { ctx.save(); ctx.rotate(a); ctx.translate(0, -R * 0.72); const L = R * 0.42, Wd = R * 0.022;
     raise(() => { nibPath(L, Wd); ctx.fill(); });
     ctx.strokeStyle = W_D; ctx.lineWidth = Math.max(0.7, R * 0.014); ctx.beginPath(); ctx.moveTo(0, L * 0.55); ctx.lineTo(0, -L * 0.12); ctx.stroke();
-    raise(() => { ctx.beginPath(); ctx.arc(0, -L * 0.2, Wd * 1.9, 0, 6.283); ctx.fill(); }); ctx.fillStyle = FIELD; ctx.beginPath(); ctx.arc(0, -L * 0.2, Wd * 0.7, 0, 6.283); ctx.fill(); ctx.restore(); };
+    raise(() => { ctx.beginPath(); ctx.arc(0, 0, Wd * 1.9, 0, 6.283); ctx.fill(); }); ctx.fillStyle = FIELD; ctx.beginPath(); ctx.arc(0, 0, Wd * 0.7, 0, 6.283); ctx.fill(); ctx.restore(); };
   for (const a of [Math.PI / 6, -Math.PI / 6, (5 * Math.PI) / 6, (-5 * Math.PI) / 6]) nib(a);
   // le cercle central en relief, son champ plat, et le glyphe
   ctx.fillStyle = c(mix(wax, "#000000", 0.12)); ctx.beginPath(); ctx.arc(0, 0, R * 0.47, 0, 6.283); ctx.fill();
