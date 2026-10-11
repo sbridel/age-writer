@@ -131,10 +131,13 @@ const REF_FR = [
     { p: "Une ligne de quantité rend plus ou moins présent ce qui est déjà écrit. Elle ne crée rien : `many: gold` sans ligne `gold` ne fait rien." },
     { code: "```age\ngreat_tree\nrain\ngold\nmany: trees, gold\nfew: rain\n```" },
     { ul: [
-      "Clés : `many:` (aussi `much`, `lots`, `plenty`, `beaucoup`) double ; `few:` (aussi `little`, `peu`) garde 40 % ; `normal:` annule",
+      "Clés : `many:` (aussi `much`, `lots`, `plenty`, `beaucoup`) double ; `few:` (aussi `little`, `peu`) garde 40 % ; `normal:` annule. Le bloc peut venir en premier : `water: few`",
       "Après la clé, une ou plusieurs cibles séparées par des virgules : un groupe ou n'importe quel identifiant de bloc",
       "Groupes : `ruins`, `trees`, `water`, `rain`, `fog`, `wind`, `clouds`, `stars`, `moths`, `glow`, `riches`, `scars` (en français : `ruines`, `arbres`, `eau`, `pluie`, `brume`, `vent`, `nuages`, `étoiles`, `richesses`, `cicatrices`)",
-      "Un bloc en grande quantité coûte le double de son poids, en petite quantité 40 %. `clouds` et `stars` ne changent que la fenêtre générative"] },
+      "Un bloc en grande quantité coûte le double de son poids, en petite quantité 40 %. `clouds` et `stars` ne changent que la fenêtre générative",
+      "**Le dosage adoucit les clashs.** Un peu de ce qui heurte le monde coûte bien moins qu'une quantité normale : `few: water` dans un désert est une mare, pas un lac. Ce qui est local (eau, glace, arbres, ruines) est le plus adouci ; ce qui couvre tout le ciel (pluie, brume, vent, neige, chaleur) reste un clash même en petite quantité. `many:` l'aggrave",
+      "Un temps qui s'enchaîne de lui-même (pluie et vent qui font un orage, un orage et un éclair qui font du tonnerre) n'est plus reproché à l'Âge. Mais tout a un budget : au-delà de six choses écrites sur un même axe, chaque ajout coûte un peu plus que le précédent",
+      "Le panneau montre ce que le dosage a changé, sur une ligne sous les coûts"] },
   ] },
   { id: "book", part: "write", icon: "book-open", title: "Liens, graine, état du livre", body: [
     { code: "```age\nreturn: [[Hub]]\nlink: [[Sunder Reach]]\nlink: [[Glass Marsh]]\nseed: 1118\ncover: sober\n```" },

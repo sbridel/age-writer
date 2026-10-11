@@ -29,6 +29,7 @@ const AS = require("./ageseed");
 const UW = require("./unwritten");
 const WX = require("./weather");
 const DFR = require("./descriptors-fr");
+const DOSE = require("./dosage");
 const { SYSTEM_RE } = require("./starsystem");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
 
@@ -119,6 +120,7 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.ghosts = (path) => (R.storyKnown(this, path) ? 4 : 0);
       AGEX.ghostTip = () => this.t("story.ghost");
       AGEX.ghostWord = (word) => (this.lang() === "fr" ? DFR.tr(word) : word); // indices des glyphes non appris : dans la langue de l'interface
+      AGEX.dosageNote = (d) => DOSE.note(d, this.lang() === "fr");
       AGEX.ghostSky = (category, phrase) => (this.lang() === "fr" ? DFR.skyPhrase(category) : phrase);
       AGEX.noDraw = (seed) => seed != null && R.storyNoDraw(this).has(String(seed));
       AGEX.norm = (line) => guard("météo", () => WX.normalize(line)) || line; // `rain: sometimes, dawn` : pour le moteur, c'est `rain`

@@ -22,6 +22,7 @@ const hooks = {
   ghostTip: () => "Not learned yet",
   ghostWord: (word) => word, // un mot descripteur d'un glyphe non appris, dans la langue de l'interface
   ghostSky: (category, phrase) => phrase, // l'indice d'un glyphe du ciel non appris, dans la langue de l'interface
+  dosageNote: () => "", // la ligne du panneau sur ce que le dosage a changé (vide : rien à dire)
   seedName: null, // chemin d'une note d'Âge → sa graine (`age_seed`), ou null : le nom de la note
 };
 

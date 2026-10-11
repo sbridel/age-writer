@@ -134,10 +134,13 @@ const REF_EN = [
     { p: "A quantity line makes something already written more or less present. It creates nothing: `many: gold` without a `gold` line does nothing." },
     { code: "```age\ngreat_tree\nrain\ngold\nmany: trees, gold\nfew: rain\n```" },
     { ul: [
-      "Keys: `many:` (also `much`, `lots`, `plenty`, `beaucoup`) doubles; `few:` (also `little`, `peu`) keeps 40%; `normal:` cancels",
+      "Keys: `many:` (also `much`, `lots`, `plenty`, `beaucoup`) doubles; `few:` (also `little`, `peu`) keeps 40%; `normal:` cancels. The block can come first: `water: few`",
       "After the key, one or more targets separated by commas: a group or any block identifier",
       "Groups: `ruins`, `trees`, `water`, `rain`, `fog`, `wind`, `clouds`, `stars`, `moths`, `glow`, `riches`, `scars` (French: `ruines`, `arbres`, `eau`, `pluie`, `brume`, `vent`, `nuages`, `étoiles`, `richesses`, `cicatrices`)",
-      "A block in large quantity costs twice its weight, in small quantity 40%. `clouds` and `stars` only change the generative window"] },
+      "A block in large quantity costs twice its weight, in small quantity 40%. `clouds` and `stars` only change the generative window",
+      "**Dosing softens clashes.** A little of something that clashes with the world costs far less than a normal amount: `few: water` in a desert is a pond, not a lake. What is local (water, ice, trees, ruins) is softened most; what covers the whole sky (rain, fog, wind, snow, heat) stays a clash even in small amounts. `many:` makes it worse",
+      "Weather that follows from itself (rain and wind making a storm, a storm and lightning making thunder) is no longer held against the Age. But everything has a budget: the more you write on one axis beyond six things, the more it costs, a little more each time",
+      "The panel shows what the dosing changed, on a line under the costs"] },
   ] },
   { id: "book", part: "write", icon: "book-open", title: "Links, seed, state of the book", body: [
     { code: "```age\nreturn: [[Hub]]\nlink: [[Sunder Reach]]\nlink: [[Glass Marsh]]\nseed: 1118\ncover: sober\n```" },

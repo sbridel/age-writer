@@ -1,5 +1,6 @@
 "use strict";
 const { setMarkup } = require("../util");
+const { hooks } = require("./hooks");
 const obsidian = require("obsidian");
 const { AgeSettingTab, DEFAULT_SETTINGS } = require("./settings-tab");
 const { setDrawSettings } = require("./resolve");
@@ -543,6 +544,8 @@ const AgeWriterPlugin = class AgeWriterPlugin extends obsidian.Plugin {
         .map(([axis, cost]) => `${axis} ${cost.toFixed(2)}`)
         .join(" \xB7 ");
     debug.setText(costs || "no measurable instability yet");
+    const dose = hooks.dosageNote(analysis.dosage);
+    dose && debug.createDiv({ cls: "age-panel__dosage", text: dose });
   }
 };
 

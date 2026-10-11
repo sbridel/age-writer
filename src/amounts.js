@@ -11,9 +11,12 @@
  * Ne crée rien : une quantité ne fait que mettre à l'échelle ce qui est écrit.
  */
 const W = require("./wealth");
+const DS = require("./dosage");
 
 const LEVELS = { many: 2, much: 2, lots: 2, plenty: 2, beaucoup: 2, few: 0.4, little: 0.4, peu: 0.4, normal: 1 };
-const AMOUNT_RE = /^\s*(many|much|lots|plenty|beaucoup|few|little|peu|normal)\s*[:=]\s*(.+?)\s*$/i;
+const LV_SRC = "many|much|lots|plenty|beaucoup|few|little|peu|normal";
+// `few: water` (la quantité d'abord) ou `water: few` (le bloc d'abord) ; plusieurs blocs : `few: water, rain` / `water, rain: few`
+const AMOUNT_RE = new RegExp("^\\s*(?:(" + LV_SRC + ")\\s*[:=]\\s*(.+?)|([a-zé_][a-zé0-9_ ,;]*?)\\s*[:=]\\s*(" + LV_SRC + "))\\s*$", "i");
 const ALIAS = { ruines: "ruins", arbres: "trees", arbre: "trees", eau: "water", pluie: "rain", brume: "fog", vent: "wind", nuages: "clouds", etoiles: "stars", étoiles: "stars", papillons: "moths", lueurs: "glow", richesses: "riches", cicatrices: "scars", ruine: "ruins" };
 const GROUPS = {
   ruins: ["door", "sealed_door", "bridge", "fallen_bridge", "tablet", "worn_tablet", "speaking_tablet", "lamp", "lit_lamp"],
@@ -32,9 +35,10 @@ function parseAmounts(src) {
   let out = null;
   for (const line of String(src || "").split("\n")) {
     const m = line.match(AMOUNT_RE); if (!m) continue;
-    for (const raw of m[2].split(/[,;]|\bet\b|\band\b/i)) {
+    const level = LEVELS[(m[1] || m[4]).toLowerCase()], names = m[2] || m[3];
+    for (const raw of names.split(/[,;]|\bet\b|\band\b/i)) {
       let k = raw.trim().toLowerCase().replace(/\s+/g, "_"); if (!k || !/^[a-zé_][a-zé0-9_]*$/.test(k)) continue;
-      k = ALIAS[k] || k; (out = out || {})[k] = LEVELS[m[1].toLowerCase()];
+      k = ALIAS[k] || k; (out = out || {})[k] = level;
     }
   }
   return out;
@@ -76,8 +80,11 @@ function applyAmounts(r, amt, blocks) {
   }
   relief = Math.min(relief, rich * W.RELIEF_CAP);
   if (relief > 0) delta.geological = (delta.geological || 0) - relief;
+  const dose = DS.dosage(r, (id) => factorOf(id, amt), get); // le dosage : contradictions adoucies, réactions naturelles, budget de richesse
+  if (dose) for (const [a, d] of Object.entries(dose.delta)) delta[a] = (delta[a] || 0) + d;
   if (!Object.keys(delta).length) return r;
   const out = shift(r, delta); if (rich > 0) out.compensation = { riches: rich, relief };
+  if (dose && (dose.softened.length || dose.natural.length || Object.keys(dose.richness).length)) out.dosage = { softened: dose.softened, natural: dose.natural, richness: dose.richness };
   return out;
 }
 
