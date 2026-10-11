@@ -175,11 +175,32 @@ function drawDesk(r, ctx, sc, sky, t) {
   const amb = 0.55 + 0.45 * sky.ambient, c = (h) => mix("#05060c", h, amb), TRr = TR(r), fl = flick(t), mail = (r.opts.mailState && r.opts.mailState()) || {};
   ctx.fillStyle = c("#2b2018"); ctx.fillRect(0, 0, W, H); // le mur, dans l'ombre
   for (let x = 0; x < W; x += 36) { ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x, 0, 1.4, 190); }
-  const wx = 524, wy = 92, wr = 54; // le même hublot rond que dans l'atelier, vu de près
-  ctx.save(); ctx.beginPath(); ctx.arc(wx, wy, wr, 0, 6.283); ctx.clip(); const sg = ctx.createLinearGradient(0, wy - wr, 0, wy + wr); sg.addColorStop(0, sky.top); sg.addColorStop(1, sky.bottom); ctx.fillStyle = sg; ctx.fillRect(wx - wr, wy - wr, 2 * wr, 2 * wr);
-  if (sky.stars > 0.05) { const s2 = rng(0x91); for (let i = 0; i < 16; i++) { ctx.fillStyle = rgba(235, 238, 255, sky.stars * (0.4 + 0.5 * s2())); ctx.fillRect(wx - wr + s2() * 2 * wr, wy - wr + s2() * wr, 1.6, 1.6); } }
-  ctx.restore();
-  ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(wx, wy, wr, 0, 6.283); ctx.stroke(); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(wx - wr, wy); ctx.lineTo(wx + wr, wy); ctx.moveTo(wx, wy - wr); ctx.lineTo(wx, wy + wr); ctx.stroke();
+  // au mur : la carte du ciel, des parchemins épinglés, une carte de l'île, un croquis encadré (plus de fenêtre : on a le dos à la lumière)
+  const pin = (x, y) => { ctx.fillStyle = c("#8e2b27"); ctx.beginPath(); ctx.arc(x, y, 2.2, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, 0.35); ctx.fillRect(x - 1, y - 1.2, 1, 1); };
+  const sheet = (x, y, w, h, rot, col, draw) => { ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.rotate(rot); ctx.fillStyle = rgba(0, 0, 0, 0.28); ctx.fillRect(-w / 2 + 2, -h / 2 + 3, w, h); ctx.fillStyle = c(col); ctx.fillRect(-w / 2, -h / 2, w, h); ctx.strokeStyle = rgba(90, 60, 20, 0.35); ctx.lineWidth = 0.8; ctx.strokeRect(-w / 2 + 0.5, -h / 2 + 0.5, w - 1, h - 1); draw(w, h); ctx.restore(); };
+  const wq = rng(0x5a17);
+  sheet(446, 22, 104, 82, -0.02, "#1f2a44", (w, h) => { // la carte du ciel : un fond d'encre bleue, des étoiles, des lignes de constellations, un cercle de mois
+    ctx.strokeStyle = rgba(216, 192, 122, 0.55); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(0, 0, 34, 0, 6.283); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, 38, 0, 6.283); ctx.stroke();
+    const pts = []; for (let i = 0; i < 22; i++) pts.push([(wq() - 0.5) * (w - 14), (wq() - 0.5) * (h - 14)]);
+    ctx.strokeStyle = rgba(216, 192, 122, 0.35); ctx.beginPath(); for (let i = 0; i < pts.length - 1; i += 3) { ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[i + 1][0], pts[i + 1][1]); ctx.lineTo(pts[i + 2][0], pts[i + 2][1]); } ctx.stroke();
+    for (const [x, y] of pts) { ctx.fillStyle = rgba(240, 232, 200, 0.85); ctx.fillRect(x - 0.9, y - 0.9, 1.8, 1.8); }
+    ctx.fillStyle = rgba(216, 192, 122, 0.9); ctx.beginPath(); ctx.arc(22, -18, 3, 0, 6.283); ctx.fill(); });
+  pin(456, 27); pin(540, 27);
+  r.hot.push({ x: 446, y: 22, w: 104, h: 82, tip: TRr("atelier.wall.chart"), ...(r.available && r.available().starmap ? { go: "starmap" } : { flash: TRr("atelier.wall.chart.flash") }) });
+  sheet(566, 30, 50, 66, 0.045, "#d9c9a0", (w, h) => { ctx.strokeStyle = rgba(60, 45, 25, 0.55); ctx.lineWidth = 1; for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.moveTo(-w / 2 + 6, -h / 2 + 10 + i * 8); ctx.lineTo(w / 2 - 6 - (i % 3) * 5, -h / 2 + 10 + i * 8); ctx.stroke(); } });
+  pin(591, 36); r.hot.push({ x: 566, y: 30, w: 50, h: 66, tip: TRr("atelier.wall.notes"), flash: TRr("atelier.wall.notes.flash") });
+  sheet(470, 112, 76, 50, -0.03, "#cdbb8a", (w, h) => { // une carte de l'île, au trait
+    ctx.strokeStyle = rgba(70, 50, 25, 0.7); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(-26, 2); ctx.quadraticCurveTo(-22, -16, -6, -14); ctx.quadraticCurveTo(8, -20, 20, -8); ctx.quadraticCurveTo(30, 4, 14, 12); ctx.quadraticCurveTo(0, 20, -14, 14); ctx.quadraticCurveTo(-28, 14, -26, 2); ctx.stroke();
+    ctx.setLineDash([2, 2]); ctx.beginPath(); ctx.moveTo(-14, 6); ctx.quadraticCurveTo(0, -4, 12, 0); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = rgba(150, 40, 30, 0.8); ctx.beginPath(); ctx.moveTo(10, -4); ctx.lineTo(16, 2); ctx.moveTo(16, -4); ctx.lineTo(10, 2); ctx.stroke(); });
+  pin(481, 117); pin(536, 116); r.hot.push({ x: 470, y: 112, w: 76, h: 50, tip: TRr("atelier.wall.map"), flash: TRr("atelier.wall.map.flash") });
+  sheet(566, 112, 44, 40, 0.06, "#e0d3ae", (w, h) => { ctx.strokeStyle = rgba(60, 45, 25, 0.5); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, -2, 11, 0, 6.283); ctx.moveTo(-14, 12); ctx.lineTo(14, 12); ctx.moveTo(0, -13); ctx.lineTo(0, 9); ctx.stroke(); }); pin(588, 117);
+  r.hot.push({ x: 566, y: 112, w: 44, h: 40, tip: TRr("atelier.wall.sketch"), flash: TRr("atelier.wall.sketch.flash") });
+  sheet(236, 40, 44, 58, -0.05, "#d6c598", (w, h) => { ctx.strokeStyle = rgba(60, 45, 25, 0.5); ctx.lineWidth = 1; for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.moveTo(-w / 2 + 6, -h / 2 + 9 + i * 9); ctx.lineTo(w / 2 - 6 - (i % 2) * 8, -h / 2 + 9 + i * 9); ctx.stroke(); } }); pin(257, 46);
+  r.hot.push({ x: 236, y: 40, w: 44, h: 58, tip: TRr("atelier.wall.notes"), flash: TRr("atelier.wall.notes.flash") });
+  ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 3; ctx.strokeRect(300, 54, 70, 52); ctx.fillStyle = c("#3d4f46"); ctx.fillRect(302, 56, 66, 48); // un petit cadre : une côte, au crayon vert
+  ctx.strokeStyle = rgba(230, 220, 180, 0.7); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(304, 92); ctx.quadraticCurveTo(320, 70, 336, 86); ctx.quadraticCurveTo(350, 74, 366, 94); ctx.stroke();
+  r.hot.push({ x: 300, y: 54, w: 70, h: 52, tip: TRr("atelier.wall.frame"), flash: TRr("atelier.wall.frame.flash") });
   const g = ctx.createLinearGradient(0, 180, 0, H); g.addColorStop(0, c("#6d4c31")); g.addColorStop(1, c("#3a2717")); ctx.fillStyle = g; ctx.fillRect(0, 180, W, H - 180); // le plateau
   ctx.fillStyle = c("#7d5a3b"); ctx.fillRect(0, 180, W, 4); const q = rng(0xde5c); ctx.strokeStyle = rgba(0, 0, 0, 0.14); ctx.lineWidth = 1; for (let i = 0; i < 14; i++) { const y = 190 + q() * 170; ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(200, y + q() * 6 - 3, 440, y + q() * 6 - 3, W, y); ctx.stroke(); }
   // la lampe verte, en haut à gauche : son cône éclaire le plateau ; la chaîne de laiton l'éteint ou l'allume
