@@ -22,14 +22,17 @@ const PALETTE_AXES = ["cosmological", "worlds", "geological", "weather", "ecolog
 
 const hashOf = (text) => { let h = 2166136261; for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619); return h >>> 0; };
 /** Au survol d'un glyphe non appris : pas son nom, mais de quoi le deviner (les trois mots qui le décrivent ; pour le ciel, sa famille). */
-const ghostHint = (id) => {
+const SKY_HINTS = { stars: "a star", cycle: "a rhythm of days", orbit: "an orbit", phenomenon: "a sky phenomenon", belt: "a belt", hue: "a colour of the sky", world: "a kind of world", body: "a trait of the world", remnant: "a remnant", terrain: "a lay of the land" };
+/** `hooks` (facultatif) : `ghostWord` et `ghostSky` disent les indices dans la langue de l'interface ; sans eux, l'anglais du moteur. */
+const ghostHint = (id, hooks) => {
+  const word = hooks && hooks.ghostWord ? hooks.ghostWord : (w) => w, sky_ = hooks && hooks.ghostSky ? hooks.ghostSky : (c, p) => p;
   let block = blockList.find((b) => b.id === id);
-  if (block && block.descriptors && block.descriptors.length) return " \u2014 " + block.descriptors.join(", ");
+  if (block && block.descriptors && block.descriptors.length) return " \u2014 " + block.descriptors.map((w) => word(w)).join(", ");
   let sky = SKY_ENTRIES.find((e) => e.id === id);
-  return sky ? " \u2014 " + ({ stars: "a star", cycle: "a rhythm of days", orbit: "an orbit", phenomenon: "a sky phenomenon", belt: "a belt", hue: "a colour of the sky", world: "a kind of world", body: "a trait of the world", remnant: "a remnant", terrain: "a lay of the land" }[sky.category] || "something of the sky") : "";
+  return sky ? " \u2014 " + sky_(sky.category, SKY_HINTS[sky.category] || "something of the sky") : "";
 };
 /** Le texte du survol d'un glyphe non appris : seulement de quoi le deviner (« lourd, amer »), le mot « pas appris » va de soi ; sans indice, la formule générale. */
-const ghostText = (hooks, id) => { const h = ghostHint(id).replace(/^\s*\u2014\s*/, ""); return h ? h.charAt(0).toUpperCase() + h.slice(1) : hooks.ghostTip(); };
+const ghostText = (hooks, id) => { const h = ghostHint(id, hooks).replace(/^\s*\u2014\s*/, ""); return h ? h.charAt(0).toUpperCase() + h.slice(1) : hooks.ghostTip(); };
 const unscore = (text) => text.replace(/_/g, " ");
 
 function paletteGroups() {
@@ -404,6 +407,7 @@ module.exports = {
   PALETTE_AXES,
   paletteGroups,
   ghostHint,
+  SKY_HINTS,
   ghostText,
   hashOf,
   unscore,

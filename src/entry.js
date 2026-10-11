@@ -28,6 +28,7 @@ const PH = require("./physics/index");
 const AS = require("./ageseed");
 const UW = require("./unwritten");
 const WX = require("./weather");
+const DFR = require("./descriptors-fr");
 const { SYSTEM_RE } = require("./starsystem");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
 
@@ -117,6 +118,8 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.known = (path) => guard("palette", () => R.storyKnown(this, path)) || null;
       AGEX.ghosts = (path) => (R.storyKnown(this, path) ? 4 : 0);
       AGEX.ghostTip = () => this.t("story.ghost");
+      AGEX.ghostWord = (word) => (this.lang() === "fr" ? DFR.tr(word) : word); // indices des glyphes non appris : dans la langue de l'interface
+      AGEX.ghostSky = (category, phrase) => (this.lang() === "fr" ? DFR.skyPhrase(category) : phrase);
       AGEX.noDraw = (seed) => seed != null && R.storyNoDraw(this).has(String(seed));
       AGEX.norm = (line) => guard("météo", () => WX.normalize(line)) || line; // `rain: sometimes, dawn` : pour le moteur, c'est `rain`
       AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line) || SYSTEM_RE.test(line); // `system: Kerath` : la graine d'étoile partagée (télescope, étape 2)

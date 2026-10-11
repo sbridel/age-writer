@@ -5,7 +5,7 @@ const R = require("./engine/registry");
 const ST = require("./story");
 const DFR = require("./descriptors-fr");
 const MIN_MIN = 8, MAX_MIN = 25; // délai habituel entre deux lettres, en minutes
-const RANGES = { fast: [2, 6], normal: [MIN_MIN, MAX_MIN], slow: [30, 90] }; // selon le réglage `mailDelay` (« normal » si absent ou inconnu)
+const RANGES = { fast: [2, 6], normal: [MIN_MIN, MAX_MIN], slow: [30, 90], daily: [22 * 60, 26 * 60] }; // selon le réglage `mailDelay` (« normal » si absent ou inconnu) ; daily : environ une lettre par jour
 const FAMILY = { cosmological: { en: "sky", fr: "ciel" }, geological: { en: "ground", fr: "sol" }, ecological: { en: "living things", fr: "vivant" }, weather: { en: "weather", fr: "météo" }, metaphysical: { en: "the beyond", fr: "l'au-delà" } };
 const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; };
 
@@ -26,7 +26,7 @@ function letter(id, lang, n) {
     : [`A pupil asked me about a word you have not met yet: the one that is *${d}*. It belongs with ${fam}. Write it \`${id}\`.`, `Something for your notebook: when you mean *${d}*, the Guild writes \`${id}\`. It is a word of ${fam}.`, `I was thinking of you this morning. *${d}*: that is what \`${id}\` does to a world. File it under ${fam}.`];
   return T[n % T.length] + (fr ? "\n\n— Adrin Vesparath, seltahn" : "\n\n— Adrin Vesparath, seltahn");
 }
-/** Délai (ms) jusqu'à la prochaine lettre ; `u` : un nombre entre 0 et 1 (le hasard) ; `mode` : `fast`, `normal` ou `slow`. */
+/** Délai (ms) jusqu'à la prochaine lettre ; `u` : un nombre entre 0 et 1 (le hasard) ; `mode` : `fast`, `normal`, `slow` ou `daily`. */
 const delay = (u, mode) => { const [lo, hi] = RANGES[mode] || RANGES.normal; return Math.round((lo + (hi - lo) * u) * 60000); };
 
 /**

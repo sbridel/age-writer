@@ -20,6 +20,8 @@ const hooks = {
   known: () => null, // chemin d'une note → ensemble des blocs que la palette du livre peut montrer (null : tous) ; l'histoire n'y met que ce qui a été appris
   ghosts: () => 0, // palette limitée : combien de glyphes non appris s'y devinent par groupe (silhouettes pâles, sans nom, non cliquables)
   ghostTip: () => "Not learned yet",
+  ghostWord: (word) => word, // un mot descripteur d'un glyphe non appris, dans la langue de l'interface
+  ghostSky: (category, phrase) => phrase, // l'indice d'un glyphe du ciel non appris, dans la langue de l'interface
   seedName: null, // chemin d'une note d'Âge → sa graine (`age_seed`), ou null : le nom de la note
 };
 

@@ -188,7 +188,7 @@ ok(ST.check(ST.chapterById("imager"), { ages: [{ path: "a.md", stability: 80 }],
   ok(!MAIL.candidates(known, []).some((id) => ST.WORLDS.strange.ref.includes(id)), "mail: never gives away the final test");
   // le réglage du délai (`mailDelay`) : rapide / normal / lent ; absent ou inconnu = normal
   const min = (ms) => ms / 60000;
-  for (const [mode, lo, hi] of [["fast", 2, 6], ["normal", 8, 25], ["slow", 30, 90]]) ok(min(MAIL.delay(0, mode)) === lo && min(MAIL.delay(1, mode)) === hi, `mail: délai « ${mode} » de ${lo} à ${hi} min`);
+  for (const [mode, lo, hi] of [["fast", 2, 6], ["normal", 8, 25], ["slow", 30, 90], ["daily", 22 * 60, 26 * 60]]) ok(min(MAIL.delay(0, mode)) === lo && min(MAIL.delay(1, mode)) === hi, `mail: délai « ${mode} » de ${lo} à ${hi} min`);
   ok(MAIL.delay(0.3) === MAIL.delay(0.3, "normal") && MAIL.delay(0.3, "n'importe quoi") === MAIL.delay(0.3, "normal"), "mail: sans réglage ou réglage inconnu, le délai d'avant");
   const sf = {}, ss = {}; MAIL.step(sf, 0, known, "k", "en", r, "fast"); MAIL.step(ss, 0, known, "k", "en", r, "slow");
   ok(min(sf.mail.at) === 4 && min(ss.mail.at) === 60, "mail: la première arrivée suit le réglage (4 min en rapide, 60 min en lent, à mi-hasard)");
@@ -201,6 +201,18 @@ ok(ST.check(ST.chapterById("imager"), { ages: [{ path: "a.md", stability: 80 }],
   ok(rainEn.includes("*steady, grey, soft*"), "mail: lettre EN, descripteurs d'origine");
   ok(DFR.tr("mot-inconnu") === "mot-inconnu" && DFR.tr("heavy") === "lourd", "mail: un mot sans équivalent reste tel quel");
   const sr = { mail: { at: 0, told: [], unread: true, note: "" } }; MAIL.read(sr, 0, r, "slow"); ok(min(sr.mail.at) === 60, "mail: la lecture programme la suivante selon le réglage");
+}
+{ // les infobulles des glyphes non appris, dans la langue de l'interface (hooks `ghostWord` et `ghostSky`)
+  const Module = require("module"), load = Module._load;
+  Module._load = function (req, ...a) { return req === "obsidian" ? new Proxy({}, { get: () => class {} }) : load.call(this, req, ...a); };
+  const BV = require("../src/engine/book-view"); Module._load = load;
+  const H = require("../src/engine/hooks").hooks, DFR = require("../src/descriptors-fr"), saved = { w: H.ghostWord, s: H.ghostSky };
+  ok(BV.ghostText(H, "rain") === "Steady, grey, soft" && BV.ghostText(H, "pulsar") === "A remnant", "infobulle : sans hooks de langue, l'anglais du moteur");
+  H.ghostWord = DFR.tr; H.ghostSky = (c) => DFR.skyPhrase(c);
+  ok(BV.ghostText(H, "rain") === "Régulier, gris, doux" && BV.ghostText(H, "pulsar") === "Un vestige", "infobulle : en français, descripteurs et indices du ciel traduits");
+  ok(BV.ghostText(H, "pas-un-bloc") === H.ghostTip(), "infobulle : sans indice, la formule générale");
+  ok(Object.keys(DFR.SKY).sort().join() === Object.keys(BV.SKY_HINTS).sort().join(), "infobulle : chaque catégorie du ciel a son indice français");
+  H.ghostWord = saved.w; H.ghostSky = saved.s;
 }
 console.log(`story.test.js : ${n} vérifications ok`);
 

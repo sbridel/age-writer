@@ -24,4 +24,12 @@ const FR = {
 /** Un descripteur en français (le mot lui-même s'il n'a pas d'équivalent). */
 const tr = (word) => FR[word] || word;
 
-module.exports = { FR, tr };
+// Les indices des glyphes du ciel non appris (« a star », « an orbit »…), par catégorie, comme dans `engine/book-view.js` (`ghostHint`).
+const SKY = {
+  stars: "une étoile", cycle: "un rythme des jours", orbit: "une orbite", phenomenon: "un phénomène du ciel", belt: "une ceinture",
+  hue: "une couleur du ciel", world: "une sorte de monde", body: "un trait du monde", remnant: "un vestige", terrain: "un relief",
+};
+/** L'indice d'un glyphe du ciel en français ; une catégorie inconnue : « quelque chose du ciel ». */
+const skyPhrase = (category) => SKY[category] || "quelque chose du ciel";
+
+module.exports = { FR, SKY, tr, skyPhrase };
