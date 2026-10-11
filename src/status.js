@@ -11,6 +11,8 @@ const RG = require("./rigor");
 
 const DAY = 86400000, HOLD_DAYS = 7, STABLE_AT = 75;
 const TITLES = ["apprentice", "scribe", "seltahn", "master", "grandmaster"];
+/** Le titre en mots D'ni (dictionnaires : shelahtahn = scribe, seltahn = écrivain d'Âges, nahvah = maître ; « rehnahvah pah » est une forme reconstruite, non canon). Aucun mot connu pour apprenti : pas de D'ni, jamais de faux D'ni. */
+const DNI_WORDS = [null, "shelahtahn", "seltahn", "nahvah", "rehnahvah pah"];
 
 /** Le palier que donne un Âge tenu sous ces réglages (strict avec moins de trois familles : il compte comme équilibré). */
 function tierOf(ext) {
@@ -46,4 +48,4 @@ class Status {
   rename(from, to) { if (this.s.ages[from]) { this.s.ages[to] = this.s.ages[from]; delete this.s.ages[from]; } }
 }
 
-module.exports = { DAY, HOLD_DAYS, STABLE_AT, TITLES, tierOf, keyOf, Status };
+module.exports = { DAY, HOLD_DAYS, STABLE_AT, TITLES, DNI_WORDS, tierOf, keyOf, Status };

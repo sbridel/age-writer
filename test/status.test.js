@@ -40,4 +40,5 @@ assert.deepStrictEqual([gentle, bal, strict3, strict2, ext].map(S.tierOf), [1, 2
   st.forget("B"); assert.strictEqual(st.heldDays("B", gentle), 0);
   const copy = JSON.parse(JSON.stringify(st.s)); assert.strictEqual(new S.Status(copy).tier(), 1);
 }
+assert.strictEqual(S.DNI_WORDS.length, 5); assert.strictEqual(S.DNI_WORDS[0], null, "aucun mot D'ni pour apprenti : pas de faux D'ni");
 console.log("status.test.js : tout passe");

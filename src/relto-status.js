@@ -2,19 +2,24 @@
 // Le statut d'écrivain, vu de l'atelier : une plaque de laiton au bureau qui porte le titre, et un objet de plus à chaque palier (premier jet à corriger).
 // L'atelier est un lieu secret du jeu : rien de ceci n'est décrit dans la documentation publique, sauf le titre.
 const { rgba } = require("./util");
+const { DNI_WORDS } = require("./status");
 
 /** @param st { tier, korfah, title } (voir `statusState` de ui-relto) ; `c` : le filtre de lumière de la pièce ; `TRr` : la traduction */
 function drawStatus(r, ctx, c, TRr, t, st) {
   const tier = st.tier | 0, hot = (x, y, w, h, tip, flash) => r.hot.push({ x, y, w, h, tip, flash });
   const ink = rgba(40, 28, 14, 0.8);
   // la plaque, posée de biais sur le plateau, deux vis aux bouts
-  { const x = 238, y = 196, w = 140, h = 22; ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.rotate(-0.025);
+  { const x = 238, y = 192, w = 140, h = 28; ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.rotate(-0.025);
     ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(-w / 2 + 2, -h / 2 + 3, w, h);
     const g = ctx.createLinearGradient(0, -h / 2, 0, h / 2); g.addColorStop(0, c("#d8b45e")); g.addColorStop(0.5, c("#b98f3c")); g.addColorStop(1, c("#8a6a2a")); ctx.fillStyle = g; ctx.fillRect(-w / 2, -h / 2, w, h);
     ctx.strokeStyle = c("#f0d58a"); ctx.lineWidth = 0.8; ctx.strokeRect(-w / 2 + 0.5, -h / 2 + 0.5, w - 1, h - 1);
     for (const sx of [-w / 2 + 7, w / 2 - 7]) { ctx.fillStyle = c("#6d5220"); ctx.beginPath(); ctx.arc(sx, 0, 2.2, 0, 6.283); ctx.fill(); ctx.strokeStyle = ink; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(sx - 1.6, -1); ctx.lineTo(sx + 1.6, 1); ctx.stroke(); }
-    ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = ink; let s = String(st.title || ""); while (s.length > 3 && ctx.measureText(s).width > w - 30) s = s.slice(0, -2) + "…";
-    ctx.fillText(s, 0, 1); ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.restore();
+    // le titre : en lettres D'ni (si la police est installée et que le mot existe), le titre lisible en dessous ; sinon l'italique seul
+    const word = (r.dni && r.dni.hasFont && r.dni.hasFont()) ? DNI_WORDS[tier] : null; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = ink;
+    const fit = (txt, font, max) => { ctx.font = font; let u = String(txt || ""); while (u.length > 3 && ctx.measureText(u).width > max) u = u.slice(0, -2) + "…"; return u; };
+    if (word) { ctx.font = "15px " + r.dni.textStack(); ctx.fillText(r.dni.textFor ? r.dni.textFor(word) : word, 0, -3); ctx.fillStyle = rgba(40, 28, 14, 0.7); ctx.fillText(fit(st.title, "italic 8.5px serif", w - 30), 0, 8); }
+    else ctx.fillText(fit(st.title, "italic 12px serif", w - 30), 0, 1);
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.restore();
     hot(x, y - 2, w, h + 6, TRr("atelier.plaque.tip"), TRr("status.flash." + tier)); }
   // le cahier : vierge pour l'Apprenti, une première page copiée dès Scribe
   { const x = 150, y = 206, w = 40, h = 28; ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(x + 2, y + 3, w, h);
