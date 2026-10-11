@@ -5,6 +5,7 @@ const PS = require("./relto-passages");
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 const { rng, clamp, mix, rgba, hexa } = require("./util");
 const SC = require("./relto-scenery");
+const ATELIER = require("./relto-atelier");
 const W = 640, H = 360, FLOOR = 250, GY = 208;
 const VERDICT = { stable: "#8fae6a", unstable: "#d9a24a", dying: "#c0553f", unknown: "#7a7a8a" };
 
@@ -55,6 +56,11 @@ function drawCabin(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(wx - 6, wy + wh + 2, ww + 12, 6);
   if (r.available && r.available().telescope) PS.spyglass(r, ctx, c, wx + ww - 14, wy + wh + 2, t, TR(r)("relto.pass.telescope.tip")); // la longue-vue, sur le rebord : elle mène à l'observatoire
   if (sky.ambient > 0.35) { ctx.fillStyle = rgba(255, 240, 200, 0.07 * sky.ambient); ctx.beginPath(); ctx.moveTo(wx, wy + wh); ctx.lineTo(wx + ww, wy + wh); ctx.lineTo(wx + ww + 70, FLOOR + 60); ctx.lineTo(wx + 40, FLOOR + 60); ctx.closePath(); ctx.fill(); }
+  if (r.available && r.available().atelier) { // un panneau de la boiserie pivote : seule une fine ligne le trahit, et aucune zone ne s'allume au survol
+    const S2 = ATELIER.SECRET; ctx.strokeStyle = rgba(0, 0, 0, 0.16); ctx.lineWidth = 1; ctx.strokeRect(S2.x, S2.y, S2.w, S2.h); ctx.strokeStyle = rgba(255, 235, 190, 0.05); ctx.strokeRect(S2.x + 1.5, S2.y + 1.5, S2.w - 3, S2.h - 3);
+    ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.beginPath(); ctx.arc(S2.x + S2.w - 9, S2.y + S2.h / 2, 2.2, 0, 6.283); ctx.fill();
+    r.hot.push({ x: S2.x, y: S2.y, w: S2.w, h: S2.h, tip: "", go: "atelier", secret: true });
+  }
   // porte (retour à l'île)
   const dx = 22, dy = 112, dw = 64;
   ctx.fillStyle = c("#2a1c14"); ctx.fillRect(dx - 4, dy - 4, dw + 8, FLOOR - dy + 4);
