@@ -285,8 +285,10 @@ async function playLinkAnim(plugin, age, host, snd, open) {
     at(() => { end(); open(); }, 900);
   });
   at(() => { ov.addClass("is-open"); if (!quiet && plugin.ext.soundBook !== false) sound.openSequence(vol, { book: true, clasp: plugin.ext.soundClasp !== false, link: false }); }, 1100); // le livre s'ouvre : son panneau apparaît
-  for (let i = 0; i < pages; i++) at(() => { if (!quiet && plugin.ext.soundBook !== false) sound.pageTurn(vol); }, 1600 + i * gap); // les pages qu'on tourne
-  at(() => { ready = true; ov.addClass("is-ready"); }, 1700 + pages * gap); // le panneau attend d'être touché
+  // les pages ne se tournent qu'une fois le son du livre et des clics fini (même durée que dans openSequence)
+  const lead = quiet ? 0 : plugin.ext.soundBook !== false ? 1350 : plugin.ext.soundClasp !== false ? 550 : 0, start = 1100 + lead + 250;
+  for (let i = 0; i < pages; i++) at(() => { if (!quiet && plugin.ext.soundBook !== false) sound.pageTurn(vol); }, start + i * gap); // les pages qu'on tourne
+  at(() => { ready = true; ov.addClass("is-ready"); }, start + 100 + pages * gap); // le panneau attend d'être touché
 }
 
 /** Après une modification : revoir l'avancement de l'histoire (une notice quand un chapitre est réussi), sans qu'il faille ouvrir le Relto. */
