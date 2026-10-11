@@ -345,12 +345,13 @@ const drawsOn = (done) => (done || []).includes("imager");
 
 /**
  * Les blocs que la palette du livre montre dans un Âge de l'histoire : ce que la Guilde a fait apprendre jusqu'au chapitre en cours
- * (feuilles de cours et mondes de départ). Null = tous : à partir de l'Imageur, l'apprentissage est fini.
+ * (feuilles de cours et mondes de départ), jusqu'au dernier chapitre : un glyphe qu'on n'a pas appris s'écrit à la main, il n'est pas dans la palette.
  */
-function knownBlocks(done) {
-  if (drawsOn(done)) return null;
+function knownBlocks(done, hintN) {
   const set = new Set(), cur = nextChapter(done), upto = cur ? CHAPTERS.findIndex((c) => c.id === cur.id) : CHAPTERS.length - 1;
   for (const c of CHAPTERS.slice(0, upto + 1)) { for (const r of COURSE[c.id] || []) set.add(r[0]); for (const b of (WORLDS[c.id] || {}).lines || []) set.add(b); }
+  // le dernier indice (le monde du maître) donne ses mots : ils entrent dans la palette
+  if (hintN && hintN.strange >= 2) for (const b of WORLDS.strange.ref) set.add(b);
   return set;
 }
 

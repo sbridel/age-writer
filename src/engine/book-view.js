@@ -11,13 +11,14 @@ const { hooks } = require("./hooks");
 
 const AXIS_LABELS = {
   cosmological: "Sky",
+  worlds: "Worlds",
   geological: "Matter",
   weather: "Weather",
   ecological: "Living things",
   metaphysical: "Ruins",
 };
 
-const PALETTE_AXES = ["cosmological", "geological", "weather", "ecological", "metaphysical"];
+const PALETTE_AXES = ["cosmological", "worlds", "geological", "weather", "ecological", "metaphysical"];
 
 const unscore = (text) => text.replace(/_/g, " ");
 
@@ -26,7 +27,7 @@ function paletteGroups() {
     add = (axis, id) => {
       (groups.has(axis) || groups.set(axis, []), groups.get(axis).push({ id: id, label: unscore(id) }));
     };
-  for (let entry of SKY_ENTRIES) add(entry.axis, entry.id);
+  for (let entry of SKY_ENTRIES) add(entry.category === "world" || entry.category === "body" ? "worlds" : entry.axis, entry.id); // desert_world, young_world… : une catégorie à part, pas du ciel
   for (let block of blockList) block.writable && add(block.axis, block.id);
   return PALETTE_AXES.filter((axis) => groups.has(axis)).map((axis) => ({
     axis: axis,
@@ -41,6 +42,7 @@ const CHIPS_PER_SPREAD = 6;
 
 const AXIS_COLORS = {
   cosmological: "#b8934a",
+  worlds: "#b8934a",
   geological: "#9a5238",
   ecological: "#4a7a6a",
   metaphysical: "#6a4a8a",

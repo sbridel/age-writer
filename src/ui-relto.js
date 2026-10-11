@@ -280,7 +280,7 @@ function storyKnown(plugin, path) {
   for (const hub of app.vault.getMarkdownFiles().filter((f) => isStoryHub(app, f))) {
     if (!ST.inDirs(path, [ST.dirOf(hub.path)]) || path === hub.path) continue;
     const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename };
-    return ST.knownBlocks(ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed)).done);
+    const st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed)); return ST.knownBlocks(st.done, st.hintN);
   }
   return null;
 }
