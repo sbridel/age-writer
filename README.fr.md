@@ -32,7 +32,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 **État.** Publié, ordinateur seulement, mode bac à sable (voir [La suite](#15-la-suite)). La version en cours est celle de [`manifest.json`](manifest.json) et de la page [Releases](https://github.com/sbridel/age-writer/releases) ; les changements de chaque version sont dans [`CHANGELOG.md`](CHANGELOG.md) (en anglais) et, plus en détail, dans [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-Nouveautés récentes : **l'Art de la Guilde** (réglage *Instruments* : un livre vierge dans l'Imageur, qu'on accorde jusqu'à voir paraître un monde, parfois un monde que personne n'a écrit ; un balancier-métronome dans l'observatoire pour distinguer le vrai pouls des faux), l'**horloge D'ni** qui s'éveille quand le Great Zero de ton Relto est trouvé, l'**observatoire** et sa carte des étoiles (situer les étoiles de tes Âges, étoiles mortes, fausse ligne du roi Me'erta), un **banc optique** redessiné avec une aide aux lentilles, la **météo vivante** (`drizzle: often, dawn`), et le **rahnfee**, une unité de fan pour les distances le long du faisceau du Great Zero. Le détail est dans [`CHANGELOG.md`](CHANGELOG.md).
+Nouveautés récentes : **deux vrais livres dans la cabane** (le livre des glyphes, dont on tourne les pages, et le livre de la bibliothèque, où l'on écrit de nouvelles entrées sans quitter le Relto), **l'Art de la Guilde** (réglage *Instruments* : un livre vierge dans l'Imageur, qu'on accorde jusqu'à voir paraître un monde, parfois un monde que personne n'a écrit ; un balancier-métronome dans l'observatoire pour distinguer le vrai pouls des faux), l'**horloge D'ni** qui s'éveille quand le Great Zero de ton Relto est trouvé, l'**observatoire** et sa carte des étoiles (situer les étoiles de tes Âges, étoiles mortes, fausse ligne du roi Me'erta), un **banc optique** redessiné avec une aide aux lentilles, la **météo vivante** (`drizzle: often, dawn`), et le **rahnfee**, une unité de fan pour les distances le long du faisceau du Great Zero. Le détail est dans [`CHANGELOG.md`](CHANGELOG.md).
 ---
 
 ## Sommaire
@@ -166,56 +166,269 @@ Une fine rangée d'icônes discrètes au-dessus de l'image :
 | **Réglages** | heure du ciel, ambiance sonore, niveau, volume |
 | **Agrandir** | ouvre la **vue Relto** dans un onglet principal (aussi : commande *Open the Relto view (large)*) |
 
-Une **roue des vues** se trouve en haut à gauche de la bande : son bouton montre la vue en cours ; un clic ouvre sur l'image une roue de laiton avec toutes les vues disponibles (**île**, celle d'ouverture ; **vue globale** ; **cabane** ; **Imageur** ; **observatoire** ; **horloge D'ni** ; **piliers de liaison** ; **bosquet** ; **bassin** ; **bassin ++** ; **chat**), leur nom au moyeu au survol. Un clic sur une vue y va ; Échap ou un clic ailleurs referme la roue. L'onglet **Réglages** tient en deux lignes : l'heure du ciel (curseur, l'heure lue, ↺) et le son (♪, l'ambiance, le volume en fader vertical).
+Une **roue des vues** se trouve en haut à gauche de la bande : son bouton montre la vue en cours. Un clic ouvre sur l'image une roue de laiton avec toutes les vues disponibles, leur nom au moyeu au survol :
+
+- **île** (celle d'ouverture), **vue globale**, **cabane**
+- **Imageur**, **observatoire**, **horloge D'ni**
+- **piliers de liaison**, **bosquet**, **bassin**, **bassin ++**, **chat**
+
+Un clic sur une vue y va ; Échap ou un clic ailleurs referme la roue.
+
+L'onglet **Réglages** tient en deux lignes : l'heure du ciel (curseur, l'heure lue, ↺) et le son (♪, l'ambiance, le volume en fader vertical).
 
 Dans la vue Relto, une icône **plein écran** met l'image sur tout l'écran ; la barre d'icônes et l'heure flottent par-dessus et s'effacent. Échap pour quitter. Le son du Relto continue quand on change d'onglet.
 
 ### L'Imageur
 
-La page *Imager* (`page_imager`) ajoute au Relto une machine inspirée des imageurs de la série Myst : une chambre de pierre froide (bouton de navigation, ou le petit appareil de laiton qui luit sur la table de la cabane). On pose le livre d'un Âge sur le **lutrin** (‹ › pour changer de livre) et on accorde la machine sur cet Âge jusqu'à ce qu'il apparaisse, vivant, sur l'**écran** (un petit cristal l'y projette). C'est une machine, pas un panneau à onglets : chaque commande a sa place. Sous l'écran, un établi et ses **trois postes**, chacun avec sa lampe (allumée quand le réglage est juste) ; un clic sur un poste pour s'en approcher, la flèche du bas pour reculer (de près, l'écran reste visible) :
+La page *Imager* (`page_imager`) ajoute au Relto une machine inspirée des imageurs de la série Myst : une chambre de pierre froide (bouton de navigation, ou le petit appareil de laiton qui luit sur la table de la cabane).
 
-- **I. Râtelier à cristaux** — la résonance de l'Âge : ses **pages écrites**, complétées par les pages que son monde a tirées, jusqu'à quatre ; **l'ordre ne compte pas**, c'est un ensemble. Huit cristaux gravés sur un râtelier (ceux de l'Âge et des leurres), chacun avec son allure : une teinte selon son domaine (ciel violet, terre ambre, eau bleue, vie verte), une forme (prisme, aiguille, géode, lentille), son glyphe. **Un clic** pose un cristal dans le premier logement libre, un clic le reprend. Un cristal juste luit vert d'eau où qu'il soit. Des cristaux faux **dédoublent** l'image.
-- **II. Banc optique** — la couleur de la **lumière de l'étoile** : un verre rouge, un vert, un bleu **coulissent sur leurs rails** (un clic où on les veut, de 0 à 24), et un **iris** à lamelles, avec son levier sur un arc, réglé sur la lumière que reçoit le monde (une étoile proche et vive le ferme, une lointaine l'ouvre). Un **comparateur** montre à gauche la lumière de l'étoile, à droite ton faisceau. Des verres faux **teintent** l'image. Avec l'*Aide aux lentilles* (activée par défaut), une ligne de mots sous l'écran dit ce que l'œil lit dans le comparateur : quelle couleur est en trop ou manque, si ton faisceau est trop vif ou trop sombre.
-- **III. Régulateur** — le **ciel** de l'Âge : inverseur de polarité et quatre boutons (fréquence, amplitude, harmoniques, phase), un **tube cathodique** avec la trace large et pâle du ciel et la tienne, vive, un voltmètre. La fréquence vient de la **durée du jour**, l'amplitude de la **pression de l'air**, les harmoniques des **aurores et du champ magnétique**, la polarité du sens du champ. La **phase dérive** avec l'horloge, au rythme du jour de l'Âge (un monde figé par la marée ne dérive presque pas). Désaccordé, l'écran n'est que **neige**.
+On pose le livre d'un Âge sur le **lutrin** (‹ › pour changer de livre) et on accorde la machine sur cet Âge jusqu'à ce qu'il apparaisse, vivant, sur l'**écran** (un petit cristal l'y projette). C'est une machine, pas un panneau à onglets : chaque commande a sa place.
 
-**Le verrou.** À droite, un grand levier sous une lampe : rouge, ambre quand l'image est assez nette, verte quand il tient. Tiré sur une image nette, la machine **suit l'Âge toute seule** (la phase qui dérive, les sauts d'un cycle erratique) ; les commandes sont alors tenues, et le livre porte une petite étiquette de laiton sur l'étagère de la cabane. On le relâche en le tirant de nouveau.
+#### Les trois postes
 
-**Le périscope.** Verrouillé, la manivelle à gauche de l'écran **tourne la vue** (quatre directions, chacune son paysage sous le même ciel ; la rose montre où l'on regarde) et le levier à droite l'**incline** : vers le **zénith** (tout le ciel, ses étoiles, ses lunes, ses aurores, la canopée s'il y a des arbres), à l'horizon, ou **sous l'eau** quand l'Âge en a (rayons de lumière, varech, corail, poissons, ruines englouties, creux d'acide, cheminées de lave, perles, et la lueur d'une **fissure** sous-marine : la voie du retour ; sous la glace s'il gèle). La vue glisse quand on tourne.
+Sous l'écran, un établi porte **trois postes**, chacun avec sa lampe (allumée quand le réglage est juste). Un clic sur un poste pour s'en approcher, la flèche du bas pour reculer (de près, l'écran reste visible).
 
-Les valeurs s'affichent en chiffres D'ni. La **jauge de netteté** lit les trois réglages ensemble, et les **battements** du bourdon ralentissent à mesure que l'atmosphère s'accorde ; une quinte cristalline sonne quand l'image entière tient ; verre, rails, manivelle et verrou ont chacun leur bruit. Les indices restent dans la fiction : l'onglet **Détails** de chaque Âge porte une note d'arpenteur (comment son ciel bourdonne, à quoi ressemble la lumière de son étoile, et les valeurs fixes en chiffres D'ni) ; la phase n'est jamais écrite, et les cristaux sont les pages mêmes du livre. Ton réglage, le verrou et le périscope sont gardés pour chaque Âge. Une fois l'étoile de l'Âge située au télescope, un micromètre de synchro calibre l'Imageur sur ce monde : une image plus nette, l'heure là-bas et ses coordonnées KIPS (voir [Le télescope](#le-télescope)).
+- **I. Râtelier à cristaux** : la résonance de l'Âge, ses **pages écrites**, complétées par les pages que son monde a tirées, jusqu'à quatre. **L'ordre ne compte pas**, c'est un ensemble.
+  - Huit cristaux gravés sur un râtelier (ceux de l'Âge et des leurres), chacun avec son allure : une teinte selon son domaine (ciel violet, terre ambre, eau bleue, vie verte), une forme (prisme, aiguille, géode, lentille), son glyphe.
+  - **Un clic** pose un cristal dans le premier logement libre, un clic le reprend.
+  - Un cristal juste luit vert d'eau où qu'il soit. Des cristaux faux **dédoublent** l'image.
+- **II. Banc optique** : la couleur de la **lumière de l'étoile**.
+  - Un verre rouge, un vert, un bleu **coulissent sur leurs rails** (un clic où on les veut, de 0 à 24).
+  - Un **iris** à lamelles, avec son levier sur un arc, se règle sur la lumière que reçoit le monde (une étoile proche et vive le ferme, une lointaine l'ouvre).
+  - Un **comparateur** montre à gauche la lumière de l'étoile, à droite ton faisceau. Des verres faux **teintent** l'image.
+  - Avec l'*Aide aux lentilles* (activée par défaut), une ligne de mots sous l'écran dit ce que l'œil lit dans le comparateur : quelle couleur est en trop ou manque, si ton faisceau est trop vif ou trop sombre.
+- **III. Régulateur** : le **ciel** de l'Âge. Inverseur de polarité et quatre boutons (fréquence, amplitude, harmoniques, phase), un **tube cathodique** avec la trace large et pâle du ciel et la tienne, vive, un voltmètre. Désaccordé, l'écran n'est que **neige**.
 
-**L'Art de la Guilde.** Tout ce qui précède est la façon facile (par défaut). Dans la façon exigeante (réglage *Instruments* : *L'Art de la Guilde*), l'Imageur ne contient qu'un **livre vierge**, fixé, à fenêtre noire : on ne choisit pas l'Âge, on le trouve par les réglages. Le **télescope** donne la cible : pose le livre d'un Âge sur le lutrin de l'observatoire, son étoile située et les trois molettes sur ses indices, et l'instrument tient cette étoile et renvoie sa lumière à l'Imageur ; le comparateur de la station II la montre à gauche (sans lui, la moitié gauche reste sombre : on peut encore régler à l'aveugle, d'après les mots de l'arpenteur). La **station I** propose les cristaux des glyphes que tu connais (ceux qu'écrivent les Âges de l'étagère, comme le livre des glyphes ; par rangées de huit) ; quatre cristaux, dans n'importe quel ordre, sont les pages d'un monde ; **les quatre s'allument ensemble, et seulement quand tous sont justes**. Chaque cristal a sa **note** : en poser un la fait sonner, et les quatre sonnent en **accord**, posé quand le monde est tenu, qui bat d'autant plus qu'ils en sont loin (sans jamais dire lequel est faux) ; le ♪ de la note de l'arpenteur (onglet Détails) joue l'accord de l'Âge, pour comparer à l'oreille. Quand le télescope tient une étoile, ses glyphes **transparaissent dans le livre vierge**, pâles et à l'envers. S'ils correspondent à un Âge (parmi ceux de l'étoile tenue, ou parmi tous), ils **verrouillent une planète** et éveillent la **station III** : alors seulement la trace du ciel apparaît sur le tube cathodique. Plusieurs Âges autour d'une même étoile (`system:`) partagent sa lumière : cristaux et atmosphère les départagent. Accorde lentilles et atmosphère, synchronise la planète si son étoile est située, et l'image se forme : le livre vierge **se souvient**, le nom de l'Âge s'inscrit sur sa page. Le verrou et le périscope marchent comme avant. Des réglages partiels donnent les signes habituels (image dédoublée, teinte, neige) sans nommer le monde ; des réglages qui ne correspondent à aucun Âge écrit laissent le plus souvent la fenêtre noire. L'état de la Guilde est gardé par Relto, à part des réglages par Âge du mode facile.
+D'où vient chaque réglage du régulateur :
 
-**Les mondes que personne n'a écrits.** L'Art ne crée pas un monde, il en relie un qui existe déjà : on tombe donc parfois quand même sur un monde. En réglant **à l'aveugle** (le télescope ne tient aucune étoile), pose quatre cristaux qui ne correspondent à aucun Âge écrit : la station III ne dort plus, elle *cherche* (fréquence et amplitude comptent encore). Si les lentilles disent une étoile plausible (la lumière blanche à rouge d'un soleil ordinaire, à quelques crans près), si le jour n'est ni figé ni fou et l'air respirable, et si le livre juge vivant (pas mourant) un monde aux quatre premières pages de ces cristaux, dans cet ordre, alors environ une fois sur trois la fenêtre forme un monde que personne n'a écrit. C'est reproductible : les mêmes cristaux, la même lumière d'étoile et les mêmes plages de crans d'iris, de fréquence et d'amplitude montrent toujours le même monde, ou rien ; la phase, l'harmonique et la polarité s'accordent ensuite sans le changer. Rends-le net (la netteté se règle comme pour un Âge écrit ; ni synchro, ni heure là-bas, ni KIPS) : le livre le montre sans nom, « un monde que personne n'a écrit », avec quelques mots de sa description à l'encre pâle, une note étrange qui bat (avec les sons des vues rapprochées) et une ligne : « Le livre montre un monde que personne n'a écrit. » Clique **Transcrire ce monde** sous le livre : une nouvelle note est créée là où *Générer un Âge au hasard* range les siennes (sans jamais écraser), avec un nom tiré de sa graine et un bloc `age` qui contient exactement ses quatre pages, son étoile et son ciel en lignes de valeurs (`star_mass:`, `insolation:`, `rotation:`, `atmosphere:`) et sa `seed:`. Ouverte, c'est le même monde ; désormais c'est un Âge écrit comme les autres (il rejoint l'étagère, et le livre retiendra son nom). Un Âge écrit dont les pages correspondent l'emporte toujours.
+| Bouton | Vient de |
+|---|---|
+| Fréquence | la **durée du jour** |
+| Amplitude | la **pression de l'air** |
+| Harmoniques | les **aurores et le champ magnétique** |
+| Polarité | le sens du champ |
+| Phase | **dérive** avec l'horloge, au rythme du jour de l'Âge (un monde figé par la marée ne dérive presque pas) |
+
+#### Le verrou
+
+À droite, un grand levier sous une lampe : rouge, ambre quand l'image est assez nette, verte quand il tient. Tiré sur une image nette, la machine **suit l'Âge toute seule** (la phase qui dérive, les sauts d'un cycle erratique) ; les commandes sont alors tenues, et le livre porte une petite étiquette de laiton sur l'étagère de la cabane. On le relâche en le tirant de nouveau.
+
+#### Le périscope
+
+Verrouillé, la manivelle à gauche de l'écran **tourne la vue** : quatre directions, chacune son paysage sous le même ciel ; la rose montre où l'on regarde. La vue glisse quand on tourne. Le levier à droite l'**incline** :
+
+- vers le **zénith** : tout le ciel, ses étoiles, ses lunes, ses aurores, la canopée s'il y a des arbres ;
+- à l'horizon ;
+- **sous l'eau** quand l'Âge en a : rayons de lumière, varech, corail, poissons, ruines englouties, creux d'acide, cheminées de lave, perles, et la lueur d'une **fissure** sous-marine, la voie du retour (sous la glace s'il gèle).
+
+#### Chiffres, sons et indices
+
+Les valeurs s'affichent en chiffres D'ni. La **jauge de netteté** lit les trois réglages ensemble, et les **battements** du bourdon ralentissent à mesure que l'atmosphère s'accorde. Une quinte cristalline sonne quand l'image entière tient ; verre, rails, manivelle et verrou ont chacun leur bruit.
+
+Les indices restent dans la fiction : l'onglet **Détails** de chaque Âge porte une note d'arpenteur (comment son ciel bourdonne, à quoi ressemble la lumière de son étoile, et les valeurs fixes en chiffres D'ni). La phase n'est jamais écrite, et les cristaux sont les pages mêmes du livre. Ton réglage, le verrou et le périscope sont gardés pour chaque Âge.
+
+Une fois l'étoile de l'Âge située au télescope, un micromètre de synchro calibre l'Imageur sur ce monde : une image plus nette, l'heure là-bas et ses coordonnées KIPS (voir [Le télescope](#le-télescope)).
+
+#### L'Art de la Guilde
+
+Tout ce qui précède est la façon facile (par défaut). Dans la façon exigeante (réglage *Instruments* : *L'Art de la Guilde*), l'Imageur ne contient qu'un **livre vierge**, fixé, à fenêtre noire : on ne choisit pas l'Âge, on le trouve par les réglages.
+
+- **Le télescope donne la cible.** Pose le livre d'un Âge sur le lutrin de l'observatoire, son étoile située et les trois molettes sur ses indices : l'instrument tient cette étoile et renvoie sa lumière à l'Imageur. Le comparateur de la station II la montre à gauche (sans lui, la moitié gauche reste sombre : on peut encore régler à l'aveugle, d'après les mots de l'arpenteur).
+- **Station I.** Elle propose les cristaux des glyphes que tu connais (ceux qu'écrivent les Âges de l'étagère, comme le livre des glyphes ; par rangées de huit). Quatre cristaux, dans n'importe quel ordre, sont les pages d'un monde ; **les quatre s'allument ensemble, et seulement quand tous sont justes**.
+- **Les notes.** Chaque cristal a sa **note** : en poser un la fait sonner, et les quatre sonnent en **accord**, posé quand le monde est tenu, qui bat d'autant plus qu'ils en sont loin (sans jamais dire lequel est faux). Le ♪ de la note de l'arpenteur (onglet Détails) joue l'accord de l'Âge, pour comparer à l'oreille.
+- **Station III.** Quand le télescope tient une étoile, ses glyphes **transparaissent dans le livre vierge**, pâles et à l'envers. S'ils correspondent à un Âge (parmi ceux de l'étoile tenue, ou parmi tous), ils **verrouillent une planète** et éveillent la **station III** : alors seulement la trace du ciel apparaît sur le tube cathodique.
+- **Plusieurs Âges, une étoile.** Les Âges d'une même étoile (`system:`) partagent sa lumière : cristaux et atmosphère les départagent.
+
+Accorde lentilles et atmosphère, synchronise la planète si son étoile est située, et l'image se forme : le livre vierge **se souvient**, le nom de l'Âge s'inscrit sur sa page. Le verrou et le périscope marchent comme avant.
+
+Des réglages partiels donnent les signes habituels (image dédoublée, teinte, neige) sans nommer le monde ; des réglages qui ne correspondent à aucun Âge écrit laissent le plus souvent la fenêtre noire. L'état de la Guilde est gardé par Relto, à part des réglages par Âge du mode facile.
+
+#### Les mondes que personne n'a écrits
+
+L'Art ne crée pas un monde, il en relie un qui existe déjà : on tombe donc parfois quand même sur un monde. En réglant **à l'aveugle** (le télescope ne tient aucune étoile), pose quatre cristaux qui ne correspondent à aucun Âge écrit : la station III ne dort plus, elle *cherche* (fréquence et amplitude comptent encore).
+
+Il faut que toutes ces conditions soient réunies :
+
+- les lentilles disent une étoile plausible (la lumière blanche à rouge d'un soleil ordinaire, à quelques crans près) ;
+- le jour n'est ni figé ni fou et l'air est respirable ;
+- le livre juge vivant (pas mourant) un monde aux quatre premières pages de ces cristaux, dans cet ordre.
+
+Alors, environ une fois sur trois, la fenêtre forme un monde que personne n'a écrit. C'est reproductible : les mêmes cristaux, la même lumière d'étoile et les mêmes plages de crans d'iris, de fréquence et d'amplitude montrent toujours le même monde, ou rien ; la phase, l'harmonique et la polarité s'accordent ensuite sans le changer.
+
+Rends-le net (la netteté se règle comme pour un Âge écrit ; ni synchro, ni heure là-bas, ni KIPS) : le livre le montre sans nom, « un monde que personne n'a écrit », avec quelques mots de sa description à l'encre pâle, une note étrange qui bat (avec les sons des vues rapprochées) et une ligne : « Le livre montre un monde que personne n'a écrit. »
+
+Clique **Transcrire ce monde** sous le livre : une nouvelle note est créée là où *Générer un Âge au hasard* range les siennes (sans jamais écraser), avec un nom tiré de sa graine et un bloc `age` qui contient exactement :
+
+- ses quatre pages ;
+- son étoile et son ciel en lignes de valeurs (`star_mass:`, `insolation:`, `rotation:`, `atmosphere:`) ;
+- sa `seed:`.
+
+Ouverte, c'est le même monde ; désormais c'est un Âge écrit comme les autres (il rejoint l'étagère, et le livre retiendra son nom). Un Âge écrit dont les pages correspondent l'emporte toujours.
 
 ### Le télescope
 
-La page *Telescope* (`page_telescope`) est toujours dans le livre des pages, **verrouillée tant que tu n'as pas écrit ton premier Âge et attaché la page *Montagnes***. Attache-la : un petit observatoire se dresse au sommet : un tambour de pierre et une coupole vert-de-gris, la fente ouverte d'où dépasse le tube (une fenêtre s'allume la nuit) ; un clic pour y regarder. Chaque Relto cache son propre **Great Zero**, tiré du nom et de la graine du Relto : rien n'est stocké, et deux Reltos ne le partagent jamais. Deux molettes orientent la lunette : **Torahn** (l'angle, dans le sens horaire depuis la ligne du Great Zero, en torantee : un tour en fait 62 500) et **Élévation** (la hauteur par rapport au plan du Great Zero, en shahfeetee ; comme sur le KI, au-dessus du plan le chiffre est négatif) ; la couronne avance de 25 crans, le moyeu d'un cran (100 torantee ou 1 shahfee). Les valeurs sont gravées sous chaque molette en chiffres D'ni. Ce sont les unités du système de coordonnées D'ni du Great Zero (GZCS) ; la troisième coordonnée, la distance au Zéro (en shahfeetee), se mesure quand on situe l'étoile d'un Âge (ci-dessous). Aucune distance n'est affichée : dans l'oculaire, un pouls qui bat au prorahn D'ni n'est d'abord qu'une lueur diffuse et inégale, puis un point de lumière qui se fixe à mesure qu'on approche ; une ligne de mots dit ce qu'on voit, et une note douce suit chaque geste ; tant qu'on regarde, le pouls bat aussi doucement à l'oreille, en sautant des battements de loin, régulier de près (avec les sons des vues rapprochées). Dans la manière **facile** (par défaut), après chaque geste la ligne de mots ajoute « Il s'avive. » ou « Il pâlit. », et le signal scintille à peine. Dans **l'Art de la Guilde** (réglage *Manière des instruments*), rien ne dit si l'on se rapproche : le signal scintille d'un battement à l'autre, il faut en regarder quelques-uns avant de juger, et comparer soi-même. Amène le point dans le petit anneau : le Zéro est **trouvé**, gravé sur la plaque, il le reste, et une faible lueur bat au bout de la lunette sur l'île. Un clic sur la plaque y ramène les molettes. Trouver le Zéro débloque la page **D'ni clock** (`page_dni_clock`) : une sphère armillaire de laiton sur son propre pilier dans la brume, dont l'anneau des heures tourne avec le jour D'ni. Une fois attachée, l'observatoire répand le faisceau du Zéro dans tout le Relto : l'heure D'ni s'affiche et le calendrier se remet à l'heure. Jusque-là, le Relto ne connaît la date que par sa pierre-calendrier, qui dérive de quelques yahr, et l'heure se tait. (Que le faisceau porte le temps D'ni est une extension du lore propre au plugin.)
+La page *Telescope* (`page_telescope`) est toujours dans le livre des pages, **verrouillée tant que tu n'as pas écrit ton premier Âge et attaché la page *Montagnes***. Attache-la : un petit observatoire se dresse au sommet, un tambour de pierre et une coupole vert-de-gris, la fente ouverte d'où dépasse le tube (une fenêtre s'allume la nuit). Un clic pour y regarder.
 
-**Le métronome.** Au mur de gauche de l'observatoire pend un petit balancier de laiton, réglé à la main, qui bat le prorahn mécaniquement (« Un balancier D'ni, réglé à la main : il compte les prorahn, il ne connaît pas l'heure »). Il frappe d'un côté puis de l'autre, une fois par prorahn, et la butée touchée luit un instant : le pouls du vrai Zéro culmine toujours à ce moment-là. Tout le reste glisse contre lui : la ligne ancienne de Me'erta (environ 1,06 prorahn) s'écarte un peu plus du balancier à chaque battement, et le faux battement d'un pulsar ou d'une étoile à neutrons tombe nettement à côté. Avec les sons des vues rapprochées, on l'entend aussi : un tic sec, de bois, à chaque battement, distinct de la note du pouls, pour entendre les deux se séparer. En mouvement réduit, le balancier reste au repos et une petite lampe de chaque côté marque le battement.
+#### Le Great Zero et les molettes
 
-**Deux manières de jouer.** *Manière des instruments* (Âges & mécanismes) règle ensemble le télescope et l'Imageur. **Facile** (par défaut) : les mots « il s'avive / il pâlit », une scintillation faible, la ligne ancienne n'apparaît jamais, et les étoiles mortes brouillent seulement un peu l'image (ni faux battement, ni direction courbée, ni retard faussé ; les notes de l'arpenteur disent vrai et seulement que la lumière « arrive un peu floue »). **L'Art de la Guilde** : tout ce qui suit, pièges compris. Les récompenses sont les mêmes (le Zéro, l'horloge D'ni, les étoiles situées, l'heure là-bas, KIPS).
+Chaque Relto cache son propre **Great Zero**, tiré du nom et de la graine du Relto : rien n'est stocké, et deux Reltos ne le partagent jamais. Deux molettes orientent la lunette :
 
-**Situer l'étoile d'un Âge (étape 2). Le télescope travaille à l'échelle des systèmes d'étoiles ; l'Imageur trouve ensuite la planète. L'étoile de chaque Âge a une vraie place dans le GZCS (Torahn, distance et élévation par rapport au Great Zero), tirée de ses blocs d'étoile (combien de soleils, leurs couleurs, une orbite binaire) et d'une graine d'étoile : par défaut chaque Âge a sa propre étoile ; écris la même ligne `system: Kerath` (ou `système:`) dans plusieurs Âges qui ont les mêmes blocs d'étoile et ils partagent un système, situé d'un coup. Change l'étoile d'un Âge et son système se déplace : réécrire déplace le monde. L'onglet **Détails** de l'Âge ajoute à sa note d'arpenteur ce qu'on perçoit du Great Zero **depuis cet Âge** : sa direction (des mots de rose des vents, le nord étant la ligne du Zéro), sa hauteur au-dessus ou au-dessous de l'horizon, le retard de son pouls (la distance) et son éclat ; avec *Notes de l'arpenteur* sur complètes, les trois réglages du télescope en chiffres D'ni ; sur aucune, rien. Une fois le Zéro de ton Relto trouvé, pose le livre d'un Âge sur le **lutrin** au pied de l'instrument (‹ › pour choisir ; lutrin vide : retour à ton propre Zéro). Les deux molettes visent alors l'endroit où le Zéro apparaît vu de cet Âge, et une troisième, petite, règle le **Retard** du pouls : combien il arrive après le battement du métronome, lu en rahnfee (plus bas ; la couronne avance d'un 25ᵉ, le moyeu d'un 625ᵉ, soit 25 shahfeetee de trajet). Dans l'oculaire, le même pouls te guide, et un anneau ambre, l'**écho** de l'Âge, bat avant ou après lui tant que le retard n'est pas juste (« L'écho vient après le pouls : plus de retard »). Dans la tolérance (200 torantee, 2 shahfeetee, un cran de retard), l'étoile est **située** : l'instrument fait lui-même la différence (Relto → Zéro) moins (Âge → Zéro), et la plaque *Étoile de l'Âge* grave sa position GZCS (Torahn et élévation, puis sa distance le long du faisceau en rahnfee). Aucun calcul à la main. Il faut le Zéro du Relto pour situer une étoile ; oublier le Zéro oublie aussi les étoiles.
+- **Torahn** : l'angle, dans le sens horaire depuis la ligne du Great Zero, en torantee (un tour en fait 62 500).
+- **Élévation** : la hauteur par rapport au plan du Great Zero, en shahfeetee ; comme sur le KI, au-dessus du plan le chiffre est négatif.
 
-**Calibrer l'Imageur.** La calibration est un bonus : sans elle, l'Imageur marche exactement comme avant. Une fois l'étoile de l'Âge située, un petit **micromètre de synchro** apparaît à côté de l'écran, sous une fenêtre à réticule : tourne-le (couronne : cinq crans, moyeu : un demi-cran) jusqu'à ce que le monde passe sur le réticule. Synchronisé, l'image s'aiguise (d'autant plus que ton réglage est déjà bon), l'écran dit **l'heure là-bas** (« Là-bas, c'est l'aube », puis le jour propre de l'Âge divisé comme un yahr D'ni, en chiffres D'ni) et ses coordonnées **KIPS** s'affichent comme sur un KI ; l'onglet Détails dit l'heure aussi, et la plaque des nombres montre KIPS au lieu de « non situé ». Jusque-là, l'heure de l'Âge reste incertaine : le temps se gagne en se situant. La calibration **dérive** : intacte une semaine réelle, elle s'use ensuite pendant une semaine (l'image s'adoucit, l'heure redevient incertaine, le micromètre glisse hors du réticule) ; resynchronise pour la rendre neuve. Si l'étoile de l'Âge est réécrite après la synchro, son onglet Détails dit que « le signal a changé ».
+La couronne avance de 25 crans, le moyeu d'un cran (100 torantee ou 1 shahfee). Les valeurs sont gravées sous chaque molette en chiffres D'ni. Ce sont les unités du système de coordonnées D'ni du Great Zero (GZCS) ; la troisième coordonnée, la distance au Zéro (en shahfeetee), se mesure quand on situe l'étoile d'un Âge (ci-dessous).
 
-**Étoiles mortes (étape 3 ; leurs pièges dans l'Art de la Guilde seulement).** Certaines régions de l'espace abritent un **pulsar**, une **étoile à neutrons** ou un **trou noir**, que tu les écrives ou non : ils appartiennent à la région (environ une étoile sur dix en ressent un, les étoiles voisines les partagent, et aucun n'est près du Great Zero : tes Âges les plus proches restent faciles à situer). Écrire `pulsar`, `neutron_star` ou `black_hole` ne fait que *décrire* ce qui est là : le livre nomme alors un monde dont l'étoile en a un près d'elle (si l'étoile écrite n'en a pas, le monde est placé près d'une étoile qui en a ; réécrire déplace le monde). Ils apparaissent dans le ciel de la fenêtre générative. Au télescope, ils rendent une étoile difficile à situer : un pulsar ou une étoile à neutrons ajoute un **faux battement** à sa propre période (plus rapide ou plus lent que celui du Zéro) ; le retard de l'arpenteur est faux, et l'écho peut s'accorder sur le faux battement (« L'écho suit le faux battement, pas celui du Zéro ») ; un trou noir **courbe** la lumière du Zéro : la direction de l'arpenteur est fausse, et dans l'oculaire une image brillante ne tient pas, le vrai point étant le bout pâle d'un arc. Les notes de l'arpenteur le disent en mots (« Un second battement, plus rapide, croise celui du Zéro » ; « La lumière du Zéro arrive courbée, étirée en arc ») et, complètes, ajoutent les faux battements pour 25 prorahn et la distance de chaque étoile morte. Une telle étoile se situe tout de même en cherchant au-delà du leurre, ou **indirectement** : dès que deux étoiles situées sont voisines (à moins de 6 000 shahfeetee), tire le levier **Balises** entre les molettes : « Les étoiles situées s'accordent », et la lumière courbée comme le faux battement s'effacent.
+#### Chercher le Zéro
 
-**La ligne ancienne (étape 3 ; l'Art de la Guilde seulement).** Avant de trouver le Zéro, un second pouls, plus pâle, peut attirer l'œil, glissant contre l'horloge D'ni : une ancienne ligne d'origine, celle du roi Me'erta, jamais décrétée. Amène-la dans l'anneau et l'instrument s'y cale : sa plaque grave *cette* ligne, et chaque étoile située ensuite tourne du même angle (l'heure là-bas et les KIPS sont faux avec elle). Rien ne le dit tout net, mais cela se voit : sur la **carte des étoiles**, le trait de plomb de chaque étoile manque le Zéro (« ? »), deux étoiles gravées sur des lignes différentes laissent la carte ouverte, les Âges d'un même `system:` ne s'accordent pas avec une étoile regravée, des balises gravées sur des lignes différentes se contredisent, et l'onglet Détails dit que l'étoile « a été gravée sur une ligne ancienne ». Pour corriger : revise le vrai Zéro (l'instrument s'y cale ; la ligne ancienne ne le reprend plus), puis ramène chaque étoile dans l'anneau pour la regraver, ou gratte-la de sa plaque (la petite croix).
+Aucune distance n'est affichée. Dans l'oculaire, un pouls qui bat au prorahn D'ni n'est d'abord qu'une lueur diffuse et inégale, puis un point de lumière qui se fixe à mesure qu'on approche. Une ligne de mots dit ce qu'on voit, et une note douce suit chaque geste. Tant qu'on regarde, le pouls bat aussi doucement à l'oreille, en sautant des battements de loin, régulier de près (avec les sons des vues rapprochées).
 
-**La carte des étoiles (étape 3).** Le rouleau de parchemin en haut à droite de l'observatoire déroule une carte : le Great Zero en rose des vents au centre, ton Relto, et chaque système situé (une constellation, chaque étoile reliée à sa plus proche voisine), avec ses Âges (le premier nom écrit, tous au survol) et ses étoiles mortes en cinabre. Le plan du Zéro est vu de biais, comme une table, et chaque étoile pend à un **fil à plomb** depuis son pied sur le plan : plein au-dessus, pointillé dessous. Le nord est la ligne que tient l'instrument ; les distances vont en racine carrée, pour que voisines et lointaines tiennent sur une feuille, et les hauteurs ont leur propre échelle, gravée dans un coin (à côté des distances, elles seraient invisibles). Un seul Âge bien situé suffit à l'ancrer. Encre sur papier : elle se lit de même en thème clair et sombre.
+- **Façon facile** (par défaut) : après chaque geste, la ligne de mots ajoute « Il s'avive. » ou « Il pâlit. », et le signal scintille à peine.
+- **L'Art de la Guilde** (réglage *Manière des instruments*) : rien ne dit si l'on se rapproche. Le signal scintille d'un battement à l'autre, il faut en regarder quelques-uns avant de juger, et comparer soi-même.
 
-**Dérive et nord magnétique (étape 3).** La dérive de la calibration dépend de la physique de l'Âge : un monde sans champ magnétique (noyau mort, ou qui tourne à peine) n'a pas de nord ; son arpenteur donne des relèvements grossiers (quatre mots de boussole, ou huit avec un champ faible) et sa calibration s'use deux fois plus vite (1,4 fois avec un champ faible) ; près d'une étoile morte, plus vite encore (× 1,5 près d'un trou noir, × 1,3 près d'un pulsar ou d'une étoile à neutrons ; au plus × 4). L'onglet Détails dit pourquoi.
+Amène le point dans le petit anneau : le Zéro est **trouvé**, gravé sur la plaque, il le reste, et une faible lueur bat au bout de la lunette sur l'île. Un clic sur la plaque y ramène les molettes.
 
-**À propos des distances.** Les coordonnées sont celles du système de coordonnées du Great Zero, en shahfeetee — mais pour les Âges, ce sont des **shahfeetee de faisceau** : la longueur du trajet que fait le pouls à travers l'Art pour atteindre le Zéro, pas une distance à travers l'espace. C'est l'unité de la Caverne, qui mesure autre chose, si bien qu'elle n'a pas d'équivalent en kilomètres : une valeur de 15 000 veut dire loin dans le faisceau, rien de plus. L'Art relie des mondes d'univers à univers, pas d'un bout du ciel à l'autre ; le Great Zero est le repère de ces liaisons. Pour ces longueurs de faisceau, les instruments emploient le **rahnfee** (pluriel *rahnfeetee*) : la longueur que parcourt le pouls du Great Zero dans le faisceau pendant un **prorahn**, soit 25³ = **15 625 shahfeetee de faisceau**. Il n'y a pas de virgule : chaque place est gravée dans sa petite lucarne, comme sur les cadrans d'un instrument de mesureur — la première lucarne compte les 25ᵉ, la deuxième les 625ᵉ, la troisième les 15 625ᵉ —, si bien que les lucarnes 12 · 12 · 12 se lisent environ un demi-rahnfee (7 812 shahfeetee) ; les instruments le disent aussi en mots (« environ un demi-battement »). Les lucarnes sont une notation propre au plugin, cohérente avec la rigueur des mesureurs D'ni, pas une notation D'ni attestée. Les distances se lisent en rahnfee : la molette du Retard, la ligne de distance des plaques *Great Zero* et *Étoile de l'Âge*, la distance des KIPS, les notes complètes de l'arpenteur et la carte des étoiles ; toutes les élévations restent en shahfeetee, l'échelle de la Caverne et la convention du KI. **Mondes lointains :** environ une étoile sur six est au-delà d'un rahnfee entier ; son pouls arrive un battement entier en retard, puis une fraction. La molette du Retard ne lit que la fraction : les battements entiers se règlent sur un petit **compteur** de laiton à côté (son chiffre se grave nu devant les lucarnes). Pour les compter, guette le **battement fort** : une fois par gorahn (tous les 25 battements), le Great Zero frappe plus fort et le coup du balancier luit d'or ; avec le bon compte, le battement fort de l'écho revient sur ce coup marqué, sinon un coup à côté. Dans la manière facile, les notes de l'arpenteur le disent (« un battement entier de retard ») et un compte faux ne situe rien ; dans l'Art de la Guilde, un compte faux grave l'étoile un rahnfee de travers, et l'Imageur ne tient pas sa planète (« la planète glisse d'un battement entier ») : recompte et situe-la de nouveau. Les étoiles situées avant les mondes lointains gardent leur gravure. *Le rahnfee est une unité inventée par des fans, faite de prorahn et de shahfee ; ce n'est pas un mot D'ni attesté.*
+#### L'horloge D'ni
+
+Trouver le Zéro débloque la page **D'ni clock** (`page_dni_clock`) : une sphère armillaire de laiton sur son propre pilier dans la brume, dont l'anneau des heures tourne avec le jour D'ni. Une fois attachée, l'observatoire répand le faisceau du Zéro dans tout le Relto : l'heure D'ni s'affiche et le calendrier se remet à l'heure.
+
+Jusque-là, le Relto ne connaît la date que par sa pierre-calendrier, qui dérive de quelques yahr, et l'heure se tait. (Que le faisceau porte le temps D'ni est une extension du lore propre au plugin.)
+
+#### Le métronome
+
+Au mur de gauche de l'observatoire pend un petit balancier de laiton, réglé à la main, qui bat le prorahn mécaniquement (« Un balancier D'ni, réglé à la main : il compte les prorahn, il ne connaît pas l'heure »). Il frappe d'un côté puis de l'autre, une fois par prorahn, et la butée touchée luit un instant : le pouls du vrai Zéro culmine toujours à ce moment-là.
+
+Tout le reste glisse contre lui : la ligne ancienne de Me'erta (environ 1,06 prorahn) s'écarte un peu plus du balancier à chaque battement, et le faux battement d'un pulsar ou d'une étoile à neutrons tombe nettement à côté.
+
+Avec les sons des vues rapprochées, on l'entend aussi : un tic sec, de bois, à chaque battement, distinct de la note du pouls, pour entendre les deux se séparer. En mouvement réduit, le balancier reste au repos et une petite lampe de chaque côté marque le battement.
+
+#### Deux manières de jouer
+
+*Manière des instruments* (Âges & mécanismes) règle ensemble le télescope et l'Imageur.
+
+- **Facile** (par défaut) : les mots « il s'avive / il pâlit », une scintillation faible, la ligne ancienne n'apparaît jamais, et les étoiles mortes brouillent seulement un peu l'image (ni faux battement, ni direction courbée, ni retard faussé ; les notes de l'arpenteur disent vrai et seulement que la lumière « arrive un peu floue »).
+- **L'Art de la Guilde** : tout ce qui suit, pièges compris.
+
+Les récompenses sont les mêmes (le Zéro, l'horloge D'ni, les étoiles situées, l'heure là-bas, KIPS).
+
+#### Situer l'étoile d'un Âge (étape 2)
+
+Le télescope travaille à l'échelle des systèmes d'étoiles ; l'Imageur trouve ensuite la planète. L'étoile de chaque Âge a une vraie place dans le GZCS (Torahn, distance et élévation par rapport au Great Zero), tirée de ses blocs d'étoile (combien de soleils, leurs couleurs, une orbite binaire) et d'une graine d'étoile.
+
+Par défaut chaque Âge a sa propre étoile ; écris la même ligne `system: Kerath` (ou `système:`) dans plusieurs Âges qui ont les mêmes blocs d'étoile et ils partagent un système, situé d'un coup. Change l'étoile d'un Âge et son système se déplace : réécrire déplace le monde.
+
+**Ce que dit l'onglet Détails.** Il ajoute à la note d'arpenteur ce qu'on perçoit du Great Zero **depuis cet Âge** :
+
+- sa direction (des mots de rose des vents, le nord étant la ligne du Zéro) ;
+- sa hauteur au-dessus ou au-dessous de l'horizon ;
+- le retard de son pouls (la distance) et son éclat ;
+- avec *Notes de l'arpenteur* sur complètes, les trois réglages du télescope en chiffres D'ni ; sur aucune, rien.
+
+**Au télescope.** Une fois le Zéro de ton Relto trouvé, pose le livre d'un Âge sur le **lutrin** au pied de l'instrument (‹ › pour choisir ; lutrin vide : retour à ton propre Zéro). Les deux molettes visent alors l'endroit où le Zéro apparaît vu de cet Âge, et une troisième, petite, règle le **Retard** du pouls : combien il arrive après le battement du métronome, lu en rahnfee (plus bas ; la couronne avance d'un 25ᵉ, le moyeu d'un 625ᵉ, soit 25 shahfeetee de trajet).
+
+Dans l'oculaire, le même pouls te guide, et un anneau ambre, l'**écho** de l'Âge, bat avant ou après lui tant que le retard n'est pas juste (« L'écho vient après le pouls : plus de retard »).
+
+Dans la tolérance (200 torantee, 2 shahfeetee, un cran de retard), l'étoile est **située** : l'instrument fait lui-même la différence (Relto → Zéro) moins (Âge → Zéro), et la plaque *Étoile de l'Âge* grave sa position GZCS (Torahn et élévation, puis sa distance le long du faisceau en rahnfee). Aucun calcul à la main. Il faut le Zéro du Relto pour situer une étoile ; oublier le Zéro oublie aussi les étoiles.
+
+#### Calibrer l'Imageur
+
+La calibration est un bonus : sans elle, l'Imageur marche exactement comme avant. Une fois l'étoile de l'Âge située, un petit **micromètre de synchro** apparaît à côté de l'écran, sous une fenêtre à réticule : tourne-le (couronne : cinq crans, moyeu : un demi-cran) jusqu'à ce que le monde passe sur le réticule.
+
+Synchronisé :
+
+- l'image s'aiguise (d'autant plus que ton réglage est déjà bon) ;
+- l'écran dit **l'heure là-bas** (« Là-bas, c'est l'aube », puis le jour propre de l'Âge divisé comme un yahr D'ni, en chiffres D'ni) ;
+- ses coordonnées **KIPS** s'affichent comme sur un KI ;
+- l'onglet Détails dit l'heure aussi, et la plaque des nombres montre KIPS au lieu de « non situé ».
+
+Jusque-là, l'heure de l'Âge reste incertaine : le temps se gagne en se situant.
+
+La calibration **dérive** : intacte une semaine réelle, elle s'use ensuite pendant une semaine (l'image s'adoucit, l'heure redevient incertaine, le micromètre glisse hors du réticule) ; resynchronise pour la rendre neuve. Si l'étoile de l'Âge est réécrite après la synchro, son onglet Détails dit que « le signal a changé ».
+
+#### Étoiles mortes (étape 3)
+
+Leurs pièges ne valent que dans l'Art de la Guilde. Certaines régions de l'espace abritent un **pulsar**, une **étoile à neutrons** ou un **trou noir**, que tu les écrives ou non : ils appartiennent à la région (environ une étoile sur dix en ressent un, les étoiles voisines les partagent, et aucun n'est près du Great Zero : tes Âges les plus proches restent faciles à situer).
+
+Écrire `pulsar`, `neutron_star` ou `black_hole` ne fait que *décrire* ce qui est là : le livre nomme alors un monde dont l'étoile en a un près d'elle (si l'étoile écrite n'en a pas, le monde est placé près d'une étoile qui en a ; réécrire déplace le monde). Ils apparaissent dans le ciel de la fenêtre générative.
+
+Au télescope, ils rendent une étoile difficile à situer :
+
+- un **pulsar** ou une **étoile à neutrons** ajoute un **faux battement** à sa propre période (plus rapide ou plus lent que celui du Zéro) : le retard de l'arpenteur est faux, et l'écho peut s'accorder sur le faux battement (« L'écho suit le faux battement, pas celui du Zéro ») ;
+- un **trou noir** **courbe** la lumière du Zéro : la direction de l'arpenteur est fausse, et dans l'oculaire une image brillante ne tient pas, le vrai point étant le bout pâle d'un arc.
+
+Les notes de l'arpenteur le disent en mots (« Un second battement, plus rapide, croise celui du Zéro » ; « La lumière du Zéro arrive courbée, étirée en arc ») et, complètes, ajoutent les faux battements pour 25 prorahn et la distance de chaque étoile morte.
+
+Une telle étoile se situe tout de même en cherchant au-delà du leurre, ou **indirectement** : dès que deux étoiles situées sont voisines (à moins de 6 000 shahfeetee), tire le levier **Balises** entre les molettes : « Les étoiles situées s'accordent », et la lumière courbée comme le faux battement s'effacent.
+
+#### La ligne ancienne (étape 3)
+
+Elle n'existe que dans l'Art de la Guilde. Avant de trouver le Zéro, un second pouls, plus pâle, peut attirer l'œil, glissant contre l'horloge D'ni : une ancienne ligne d'origine, celle du roi Me'erta, jamais décrétée. Amène-la dans l'anneau et l'instrument s'y cale : sa plaque grave *cette* ligne, et chaque étoile située ensuite tourne du même angle (l'heure là-bas et les KIPS sont faux avec elle).
+
+Rien ne le dit tout net, mais cela se voit :
+
+- sur la **carte des étoiles**, le trait de plomb de chaque étoile manque le Zéro (« ? ») ;
+- deux étoiles gravées sur des lignes différentes laissent la carte ouverte ;
+- les Âges d'un même `system:` ne s'accordent pas avec une étoile regravée ;
+- des balises gravées sur des lignes différentes se contredisent ;
+- l'onglet Détails dit que l'étoile « a été gravée sur une ligne ancienne ».
+
+Pour corriger : revise le vrai Zéro (l'instrument s'y cale ; la ligne ancienne ne le reprend plus), puis ramène chaque étoile dans l'anneau pour la regraver, ou gratte-la de sa plaque (la petite croix).
+
+#### La carte des étoiles (étape 3)
+
+Le rouleau de parchemin en haut à droite de l'observatoire déroule une carte : le Great Zero en rose des vents au centre, ton Relto, et chaque système situé (une constellation, chaque étoile reliée à sa plus proche voisine), avec ses Âges (le premier nom écrit, tous au survol) et ses étoiles mortes en cinabre.
+
+Le plan du Zéro est vu de biais, comme une table, et chaque étoile pend à un **fil à plomb** depuis son pied sur le plan : plein au-dessus, pointillé dessous. Le nord est la ligne que tient l'instrument ; les distances vont en racine carrée, pour que voisines et lointaines tiennent sur une feuille, et les hauteurs ont leur propre échelle, gravée dans un coin (à côté des distances, elles seraient invisibles).
+
+Un seul Âge bien situé suffit à l'ancrer. Encre sur papier : elle se lit de même en thème clair et sombre.
+
+#### Dérive et nord magnétique (étape 3)
+
+La dérive de la calibration dépend de la physique de l'Âge.
+
+- Un monde sans champ magnétique (noyau mort, ou qui tourne à peine) n'a pas de nord : son arpenteur donne des relèvements grossiers (quatre mots de boussole, ou huit avec un champ faible) et sa calibration s'use deux fois plus vite (1,4 fois avec un champ faible).
+- Près d'une étoile morte, elle s'use plus vite encore : × 1,5 près d'un trou noir, × 1,3 près d'un pulsar ou d'une étoile à neutrons (au plus × 4).
+
+L'onglet Détails dit pourquoi.
+
+#### À propos des distances
+
+Les coordonnées sont celles du système de coordonnées du Great Zero, en shahfeetee, mais pour les Âges ce sont des **shahfeetee de faisceau** : la longueur du trajet que fait le pouls à travers l'Art pour atteindre le Zéro, pas une distance à travers l'espace. C'est l'unité de la Caverne, qui mesure autre chose, si bien qu'elle n'a pas d'équivalent en kilomètres : une valeur de 15 000 veut dire loin dans le faisceau, rien de plus. L'Art relie des mondes d'univers à univers, pas d'un bout du ciel à l'autre ; le Great Zero est le repère de ces liaisons.
+
+**Le rahnfee.** Pour ces longueurs de faisceau, les instruments emploient le **rahnfee** (pluriel *rahnfeetee*) : la longueur que parcourt le pouls du Great Zero dans le faisceau pendant un **prorahn**, soit 25³ = **15 625 shahfeetee de faisceau**.
+
+Il n'y a pas de virgule : chaque place est gravée dans sa petite lucarne, comme sur les cadrans d'un instrument de mesureur.
+
+- La première lucarne compte les 25ᵉ, la deuxième les 625ᵉ, la troisième les 15 625ᵉ.
+- Les lucarnes 12 · 12 · 12 se lisent environ un demi-rahnfee (7 812 shahfeetee) ; les instruments le disent aussi en mots (« environ un demi-battement »).
+- Les lucarnes sont une notation propre au plugin, cohérente avec la rigueur des mesureurs D'ni, pas une notation D'ni attestée.
+
+Les distances se lisent en rahnfee : la molette du Retard, la ligne de distance des plaques *Great Zero* et *Étoile de l'Âge*, la distance des KIPS, les notes complètes de l'arpenteur et la carte des étoiles. Toutes les élévations restent en shahfeetee, l'échelle de la Caverne et la convention du KI.
+
+**Mondes lointains.** Environ une étoile sur six est au-delà d'un rahnfee entier ; son pouls arrive un battement entier en retard, puis une fraction. La molette du Retard ne lit que la fraction : les battements entiers se règlent sur un petit **compteur** de laiton à côté (son chiffre se grave nu devant les lucarnes).
+
+Pour les compter, guette le **battement fort** : une fois par gorahn (tous les 25 battements), le Great Zero frappe plus fort et le coup du balancier luit d'or. Avec le bon compte, le battement fort de l'écho revient sur ce coup marqué, sinon un coup à côté.
+
+- Dans la manière facile, les notes de l'arpenteur le disent (« un battement entier de retard ») et un compte faux ne situe rien.
+- Dans l'Art de la Guilde, un compte faux grave l'étoile un rahnfee de travers, et l'Imageur ne tient pas sa planète (« la planète glisse d'un battement entier ») : recompte et situe-la de nouveau.
+
+Les étoiles situées avant les mondes lointains gardent leur gravure.
+
+*Le rahnfee est une unité inventée par des fans, faite de prorahn et de shahfee ; ce n'est pas un mot D'ni attesté.*
 
 ### Les deux livres du Relto
 
 Au pied de l'étagère, deux livres d'aspect différent des Âges (aussi dans l'onglet **Pages**, et par commandes) :
 
-- **Livre des glyphes** (turquoise, losange) : un clic ouvre la liste des glyphes *utilisés* dans les Âges de l'étagère, avec leur dessin et les Âges où ils apparaissent (clic = ouvre l'Âge). Pour l'instant « connu » = écrit dans un Âge ; la future boucle de jeu pourra le limiter aux glyphes découverts. Commande : *Open the book of glyphs*.
-- **Livre de la bibliothèque** (rouge, fermoir) : un clic propose *Blocs, réactions et variantes d'Âges* (`age-library`) ou *Pages du Relto* (`relto-library`). Le plugin ouvre la note de bibliothèque existante, ou la crée avec un exemple commenté (`Age Library.md`, `Relto Library.md`, dans le dossier de bibliothèque s'il est défini). Tu n'as plus qu'à écrire. Commande : *Open a library note*.
+- **Livre des glyphes** (turquoise, losange) : un clic ouvre un vrai livre dans le Relto, dont on tourne les pages (‹ ›, ou le sommaire).
+  - Les glyphes *utilisés* dans les Âges de l'étagère viennent d'abord, groupés par type (Ciel, Mondes, Matière, Météo, Êtres vivants, Ruines), chacun avec son dessin ; au survol, les Âges où il apparaît, un clic ouvre l'Âge.
+  - Puis la page des **réactions** déjà vues (A + B → C, avec son type, et si un catalyseur a servi).
+  - Dans un Relto d'histoire, les glyphes pas encore appris se devinent en silhouettes pâles, avec un indice au survol.
+  - Pour l'instant « connu » = écrit dans un Âge. La flèche ronde en haut à gauche referme le livre.
+  - Commande et bouton de l'onglet Pages : *Open the book of glyphs* ouvre la même liste dans une fenêtre classique.
+- **Livre de la bibliothèque** (rouge, fermoir) : un clic ouvre un vrai livre en deux parties, **Bibliothèque des Âges** (`age-library` : blocs, réactions, variantes) et **Bibliothèque du Relto** (`relto-library` : pages du Relto).
+  - Chaque partie liste les entrées déjà écrites (survole une ligne pour la lire en entier), puis finit par une page blanche où l'on **écrit directement de nouvelles entrées** : une par ligne, puis *Écrire*. Chaque ligne est vérifiée d'abord ; une ligne incomprise est refusée avec la raison, et rien n'est écrit.
+  - Les lignes valides vont dans le premier bloc de bibliothèque de la note (`Age Library.md`, `Relto Library.md`, dans le dossier de bibliothèque s'il est défini), créée avec un exemple commenté si elle n'existe pas encore. La note n'est jamais ouverte.
+  - Commande et bouton de l'onglet Pages : *Open a library note* ouvre toujours la note elle-même.
 
 La syntaxe d'une page du Relto accepte `page lagon: …` ou `page_lagon: …` (le second n'était pas reconnu avant, alors que les exemples le montraient).
 
@@ -292,7 +505,11 @@ Quand le livre est déjà ouvert, cliquer une vitre ne rejoue que le son de liai
 
 ## 9. Fenêtre, effets, pièges
 
-- **Rendu** : `generative` par défaut (le même monde que montre l'Imageur), ou `classic` (la fenêtre peinte d'origine du moteur). Le paysage génératif est tiré de la graine (ciel, relief, végétation, météo, reflets, premier plan (choisi selon l'Âge : branche, lianes, roseaux, feuilles, colonne, glaçons, rochers, arche ou rien), un détail habité). Quand un Âge a **de l'eau et de la terre** (sable, pierre ou ruines, plantes, lave, glace), la fenêtre montre un **rivage** : plage, rochers, berge herbeuse et roseaux, côte de lave noire qui fume au contact de l'eau, ou banquise et glaçons ; la rive descend sur un côté, se tient au loin sous l'horizon, ou c'est là que l'on se tient. Forme et cadrage viennent de la graine. `ocean_world` garde la mer ouverte, `desert_world` et `lava_world` restent à sec, `frozen_world` reste gelé. Avec la **couche physique** active (facile ou strict), la fenêtre montre aussi le monde calculé : le soleil prend la couleur de la température de son étoile (une naine rouge luit orange-rouge, une étoile chaude blanc-bleu) et sa taille selon le rayon de l'étoile et la distance ; un air mince assombrit le ciel (étoiles en plein jour quand il n'y en a presque plus, pas de nuages) ; un air épais le rend laiteux et brumeux ; un monde léger a des montagnes hautes et fines, un monde lourd des collines basses et larges ; un monde figé par la marée garde son soleil immobile, à une hauteur qui dépend de l'endroit où l'on se tient ; peu de lumière visible donne un jour terne. Une couleur de soleil écrite passe toujours avant. Trois blocs de plus, jamais tirés au sort : `kelp` (une forêt de varech qui ondule sous l'eau), `coral` (un récif vif dans les eaux chaudes), `acid` (des flaques qui bouillonnent ; il ronge la pierre en sol creux, le fer en rouille, l'eau en eau amère, le corail en sel). **Chaque Âge a sa nuit** : deux à quatre constellations tirées de la graine (certaines reliées d'un trait pâle), parfois une nébuleuse ou une bande d'étoiles, et ses lunes (`companion_moon`, ou `moons: 3` jusqu'à cinq, chacune avec sa taille, sa teinte, sa phase et son pas).
+- **Rendu** : `generative` par défaut (le même monde que montre l'Imageur), ou `classic` (la fenêtre peinte d'origine du moteur). Le paysage génératif est tiré de la graine (ciel, relief, végétation, météo, reflets, premier plan (choisi selon l'Âge : branche, lianes, roseaux, feuilles, colonne, glaçons, rochers, arche ou rien), un détail habité).
+  - Quand un Âge a **de l'eau et de la terre** (sable, pierre ou ruines, plantes, lave, glace), la fenêtre montre un **rivage** : plage, rochers, berge herbeuse et roseaux, côte de lave noire qui fume au contact de l'eau, ou banquise et glaçons ; la rive descend sur un côté, se tient au loin sous l'horizon, ou c'est là que l'on se tient. Forme et cadrage viennent de la graine. `ocean_world` garde la mer ouverte, `desert_world` et `lava_world` restent à sec, `frozen_world` reste gelé.
+  - Avec la **couche physique** active (facile ou strict), la fenêtre montre aussi le monde calculé : le soleil prend la couleur de la température de son étoile (une naine rouge luit orange-rouge, une étoile chaude blanc-bleu) et sa taille selon le rayon de l'étoile et la distance ; un air mince assombrit le ciel (étoiles en plein jour quand il n'y en a presque plus, pas de nuages) ; un air épais le rend laiteux et brumeux ; un monde léger a des montagnes hautes et fines, un monde lourd des collines basses et larges ; un monde figé par la marée garde son soleil immobile, à une hauteur qui dépend de l'endroit où l'on se tient ; peu de lumière visible donne un jour terne. Une couleur de soleil écrite passe toujours avant.
+  - Trois blocs de plus, jamais tirés au sort : `kelp` (une forêt de varech qui ondule sous l'eau), `coral` (un récif vif dans les eaux chaudes), `acid` (des flaques qui bouillonnent ; il ronge la pierre en sol creux, le fer en rouille, l'eau en eau amère, le corail en sel).
+  - **Chaque Âge a sa nuit** : deux à quatre constellations tirées de la graine (certaines reliées d'un trait pâle), parfois une nébuleuse ou une bande d'étoiles, et ses lunes (`companion_moon`, ou `moons: 3` jusqu'à cinq, chacune avec sa taille, sa teinte, sa phase et son pas).
 - **Effets** : parasites, ondulation, balayage, vieille télé… selon l'instabilité ; `prefers-reduced-motion` est respecté.
 - **Dégâts** : `damaged_pages` (zones décalées, séparation de couleurs, figées, taches d'encre), `removed_pages` (trous brûlés), fractures quand l'instabilité monte. Tirés de la graine du livre.
 - **Livre-piège** : `trap book`. Il a l'air normal.
@@ -391,7 +608,42 @@ node test/visual/make.js            # pages de rendu dans test/visual/out/
 npm run zip          # release/age-writer-<version>.zip (plugin) + -src.zip (sources) ; version = package.json
 ```
 
-Dans `src/` : `main.js` (point d'entrée : assemble moteur + extension), `engine/` (le moteur), puis la couche d'extension : `entry.js` (patchs du livre et des blocs), `ui-extras.js` (panneau et onglets), `ui-relto.js` (Relto, vue dédiée), `relto-render.js` (canvas), `cover.js` (couvertures), `sound.js` (sons), `linkfx.js` et `genscene.js` (fenêtre), `law.js` (loi du changement), `mech.js` (lignes spéciales), `physics/` (physique des Âges : lois, exigences des blocs, tirage sous contraintes, fiche ; conception dans `docs/DESIGN-physique.md`), `geophys.js` (blocs de géophysique), `weather.js` (météo vivante), `relto-imager.js` (l'Imageur), `imager-guild.js` (son livre vierge, l'Art de la Guilde) et `unwritten.js` (les mondes que personne n'a écrits), `telescope.js`, `starsystem.js`, `perturbers.js`, `calibration.js`, `starmap.js`, `relto-telescope.js` et `relto-starmap.js` (le télescope : Great Zero, étoiles des Âges, étoiles mortes, ligne ancienne, calibration de l'Imageur, carte des étoiles), `settings-ui.js` (réglages), `guide.js`, `guide-ref-en.js`, `guide-ref-fr.js` (guide et référence complète), `i18n.js`. Détails : `docs/DEV.md`.
+Dans `src/` :
+
+- `main.js` (point d'entrée : assemble moteur + extension)
+- `engine/` (le moteur)
+
+Puis la couche d'extension :
+
+- `entry.js` (patchs du livre et des blocs)
+- `ui-extras.js` (panneau et onglets)
+- `ui-relto.js` (Relto, vue dédiée)
+- `relto-render.js` (canvas)
+- `relto-books.js` (livres à part, notes de bibliothèque)
+- `relto-glyphbook.js` et `relto-librarybook.js` (les deux livres, vues du canevas)
+- `cover.js` (couvertures)
+- `sound.js` (sons)
+- `linkfx.js` et `genscene.js` (fenêtre)
+- `law.js` (loi du changement)
+- `mech.js` (lignes spéciales)
+- `physics/` (physique des Âges : lois, exigences des blocs, tirage sous contraintes, fiche ; conception dans `docs/DESIGN-physique.md`)
+- `geophys.js` (blocs de géophysique)
+- `weather.js` (météo vivante)
+- `relto-imager.js` (l'Imageur)
+- `imager-guild.js` (son livre vierge, l'Art de la Guilde) et `unwritten.js` (les mondes que personne n'a écrits)
+- `telescope.js`
+- `starsystem.js`
+- `perturbers.js`
+- `calibration.js`
+- `starmap.js`
+- `relto-telescope.js` et `relto-starmap.js` (le télescope : Great Zero, étoiles des Âges, étoiles mortes, ligne ancienne, calibration de l'Imageur, carte des étoiles)
+- `settings-ui.js` (réglages)
+- `guide.js`
+- `guide-ref-en.js`
+- `guide-ref-fr.js` (guide et référence complète)
+- `i18n.js`
+
+Détails : `docs/DEV.md`.
 
 ---
 

@@ -65,7 +65,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     const gone = !!r.shelfOpen; // la bibliothèque a déjà été écartée pendant cette visite
     if (gone) r.hot.push({ x: S2.x, y: S2.y, w: S2.w, h: S2.h, tip: "", knock: true, secret: true }); // derrière : on frappe, deux coups brefs, un temps, un coup franc (voir ReltoRenderer.knockBeat)
     ATELIER.drawBookcase(r, ctx, c, gone); // devant : une petite bibliothèque, trois livres à toucher dans l'ordre
-  }
+  } else ATELIER.drawBookcase(r, ctx, c, false, true); // pas d'atelier : la petite bibliothèque reste, pour faire patienter — ses livres se touchent, sans effet
   // porte (retour à l'île)
   const dx = 22, dy = 112, dw = 64;
   ctx.fillStyle = c("#2a1c14"); ctx.fillRect(dx - 4, dy - 4, dw + 8, FLOOR - dy + 4);

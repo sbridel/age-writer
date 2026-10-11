@@ -4,6 +4,14 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 
 ## Unreleased
 
+### Added
+- **The book of glyphs is a real book.** In the cabin, a click opens a book on the canvas: pages that turn (‹ ›, or the table of contents), the glyphs grouped by type, each with its drawing and the Ages where it appears, then a page of the **reactions** you have seen (type and catalyst). In a story Relto, glyphs not yet learned show as pale silhouettes with a hint on hover.
+- **The library book is a real book too**, in two parts: *Library of Ages* and *Library of the Relto*. Each lists the entries already written and ends with a blank page where you write new ones directly (one per line); each line is checked, refused with its reason if it does not parse, and otherwise added to the library note without ever opening it.
+
+### Changed
+- Tooltips of glyphs you have not learned yet show only the hint ("Heavy, bitter"), not the obvious "a glyph you have not learned yet" (kept only when there is no hint).
+- **Reference and README laid out for reading**: the Relto sections (observatory, Imager, Art of the Guild, weather, pages and effects) are split into short paragraphs, sub-headings and lists, in both languages, with no change to the content.
+
 ### Fixed
 - The Imager's periscope, looking up: only a sun high in the sky shows overhead. A low sun stays at the horizon of the front view instead of appearing in all four directions.
 

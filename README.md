@@ -30,7 +30,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 **Status.** Released, desktop only, sandbox mode (see [What's next](#15-whats-next)). The current version is the one in [`manifest.json`](manifest.json) and on the [Releases](https://github.com/sbridel/age-writer/releases) page; what changed in each version is in [`CHANGELOG.md`](CHANGELOG.md) (a more detailed developer log, in French, is in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)).
 
-Recent additions: **the Art of the Guild** (setting *Instruments*: a blank book in the Imager that you tune until a world appears, sometimes one no one has written; a pendulum metronome in the observatory to tell the true pulse from false ones), the **D'ni clock** that wakes once your Relto's Great Zero is found, the **observatory** and its star chart (locate your Ages' stars, dead stars, King Me'erta's false line), a redrawn **optical bench** with optional lens hints, **living weather** (`drizzle: often, dawn`), and the **rahnfee**, a fan-made unit for distances along the Great Zero's beam. Details in [`CHANGELOG.md`](CHANGELOG.md).
+Recent additions: **two real books in the cabin** (the book of glyphs, whose pages turn, and the library book, where you can write new entries without leaving the Relto), **the Art of the Guild** (setting *Instruments*: a blank book in the Imager that you tune until a world appears, sometimes one no one has written; a pendulum metronome in the observatory to tell the true pulse from false ones), the **D'ni clock** that wakes once your Relto's Great Zero is found, the **observatory** and its star chart (locate your Ages' stars, dead stars, King Me'erta's false line), a redrawn **optical bench** with optional lens hints, **living weather** (`drizzle: often, dawn`), and the **rahnfee**, a fan-made unit for distances along the Great Zero's beam. Details in [`CHANGELOG.md`](CHANGELOG.md).
 ---
 
 ## Contents
@@ -172,56 +172,263 @@ In the Relto view, a **fullscreen** icon puts the picture on the whole screen; t
 A **wheel of views** sits at the top left of the band above the picture: its button shows the current view; a click opens a brass wheel over the picture with every view available (**island**, the opening view; **global view**; **cabin**; **Imager**; **observatory**; **D'ni clock**; **linking pillars**; **grove**; **pond**; **pond ++**; **cat**), its name at the hub on hover. Click a view to go there; Escape or a click elsewhere closes the wheel. You can also click things directly in the island view (the cabin, the pillars, the pond, the cat…). Which buttons are available depends on the active pages.
 
 - **Island layout**: cabin, pond, pillars, cat, stalk tree, bench and standing stones are placed by a deterministic layout so that big elements never overlap. If not everything fits, the least important ones stay in their sub-views.
-- **Cabin interior**: fireplace (lit when the *chimney* page is active, otherwise "Cold hearth"), a 3×10 shelf of your Ages (each book clickable), a table with the glyph book and the library book, a door back to the island.
+- **Cabin interior**: fireplace (lit when the *chimney* page is active, otherwise "Cold hearth"), a 3×10 shelf of your Ages (each book clickable), a table with the glyph book and the library book (real books: see below), a door back to the island.
 - **Linking pillars**: the linking window lights up when Ages lead back to this Relto.
 - **Grove, pond, cat, pond ++**: close-up views. *Pond ++* (page *page_pond_decor*) shows the pond almost full frame with lilies, a stone lantern, a bamboo spout, reeds, pebbles and seaweed, dragonflies by day and fireflies at dusk. Cat toys (page *page_cat_toys*): rolling yarn ball, squeaking mouse, jingle ball, feather wand, cardboard box; click a toy.
 
 ### The Imager
 
-The page *Imager* (`page_imager`) adds a machine to the Relto, inspired by the imagers of the Myst series: a cold stone chamber (nav button, or the small brass device glowing on the cabin table). Put an Age's book on the **lectern** (‹ › to change book) and tune the machine to that Age until it appears, alive, on the **screen** (a little crystal projects it there). It is a machine, not a panel with tabs: every control has its own place. Below the screen, a workbench with **three stations**, each with its lamp (lit when that setting is right); click a station to come closer, the arrow at the bottom to step back (the screen stays in view up close):
+The page *Imager* (`page_imager`) adds a machine to the Relto, inspired by the imagers of the Myst series: a cold stone chamber (nav button, or the small brass device glowing on the cabin table).
 
-- **I. Crystal rack** — the Age's resonance: its **written pages**, completed by the pages its world drew, up to four; **the order does not matter**, they are a set. Eight engraved crystals stand on a rack (the Age's crystals and decoys), each with its look: a tint from its domain (sky violet, earth amber, water blue, life green), a shape (prism, needle, geode, lens), its glyph. **One click** puts a crystal in the first free socket, one click takes it back. A right crystal glows sea-green wherever it stands. Wrong crystals make the image **double**.
-- **II. Optical bench** — the colour of the Age's **star light**: a red, a green and a blue glass **slide on their rails** (click where you want them, 0 to 24), and an **iris** with leaves and a lever on its arc, set by how much light the world receives (a close, bright star closes it; a far one opens it). A **comparator** shows the star's light on the left, your beam on the right. Wrong glass **tints** the image. With *Lens hints* on (default), a line of words under the screen says what your eye reads in the comparator: which colour is too strong or missing, whether your beam is too bright or too dim.
-- **III. Regulator** — the Age's **sky**: polarity switch and four knobs (frequency, amplitude, harmonics, phase), a **cathode tube** with the sky's wide pale trace and your bright one, a voltmeter. Frequency comes from the **day length**, amplitude from the **air pressure**, harmonics from the **aurorae and magnetic field**, polarity from the direction of the field. The **phase drifts** with the clock at the pace of the Age's own day (a tidally locked world barely drifts). Out of tune, the screen is **snow**.
+Put an Age's book on the **lectern** (‹ › to change book) and tune the machine to that Age until it appears, alive, on the **screen** (a little crystal projects it there). It is a machine, not a panel with tabs: every control has its own place.
 
-**The lock.** On the right, a big lever under a lamp: red, amber when the image is clear enough, green once it holds. Pull it on a clear image and the machine **follows the Age by itself** (the drifting phase, the jumps of an erratic cycle); the controls are then held, and the book wears a small brass tag on the cabin shelf. Pull it again to let go.
+#### The three stations
 
-**The periscope.** Once locked, the crank left of the screen **turns the view** (four directions, each with its own landscape under the same sky; the rose shows where you look) and the lever right of it **tilts** it: up to the **zenith** (the whole sky, its stars, moons, aurorae, the canopy if there are trees), back to the horizon, or **under the water** when the Age has some (light rays, kelp, coral, fish, sunken ruins, acid pits, lava vents, pearls, and the glow of an underwater **fissure**: the way home; under the ice when it is frozen). The view slides as you turn.
+Below the screen, a workbench holds **three stations**, each with its lamp (lit when that setting is right). Click a station to come closer, the arrow at the bottom to step back (the screen stays in view up close).
 
-Values are shown in D'ni numerals. The Details tab's surveyor's note is set by *Surveyor's notes (Imager)*: full, words only (default) or off. The pale frame around clickable zones is off by default (*Frame around clickable zones*). The **clarity gauge** reads the three settings together, and the drone's **beats slow down** as the atmosphere comes in tune; a crystalline fifth sounds when the whole image holds; glass, rails, crank and lock each have their sound. Clues stay in the fiction: each Age's **Details** tab carries a surveyor's note (how its sky hums, what its star's light looks like, and the fixed values in D'ni numerals); the phase is never written down, and the crystals are the pages of the book itself. Your tuning, the lock and the periscope are kept per Age. Once the Age's star is charted at the telescope, a sync micrometer calibrates the Imager on that world: a sharper image, the hour over there and its KIPS coordinates (see [The telescope](#the-telescope)).
+- **I. Crystal rack**: the Age's resonance, its **written pages**, completed by the pages its world drew, up to four. **The order does not matter**, they are a set.
+  - Eight engraved crystals stand on a rack (the Age's crystals and decoys), each with its look: a tint from its domain (sky violet, earth amber, water blue, life green), a shape (prism, needle, geode, lens), its glyph.
+  - **One click** puts a crystal in the first free socket, one click takes it back.
+  - A right crystal glows sea-green wherever it stands. Wrong crystals make the image **double**.
+- **II. Optical bench**: the colour of the Age's **star light**.
+  - A red, a green and a blue glass **slide on their rails** (click where you want them, 0 to 24).
+  - An **iris** with leaves and a lever on its arc is set by how much light the world receives (a close, bright star closes it; a far one opens it).
+  - A **comparator** shows the star's light on the left, your beam on the right. Wrong glass **tints** the image.
+  - With *Lens hints* on (default), a line of words under the screen says what your eye reads in the comparator: which colour is too strong or missing, whether your beam is too bright or too dim.
+- **III. Regulator**: the Age's **sky**. Polarity switch and four knobs (frequency, amplitude, harmonics, phase), a **cathode tube** with the sky's wide pale trace and your bright one, a voltmeter. Out of tune, the screen is **snow**.
 
-**The Art of the Guild.** Everything above is the easy way (the default). In the demanding way (setting *Instruments*: *The Art of the Guild*), the Imager holds a single **blank book**, fixed in place, its window black: you do not choose the Age, you find it with the settings. The **telescope** gives the target: lay an Age's book on the observatory's lectern, with its star charted and the three wheels on its clues, and the instrument holds that star and sends its light down to the Imager; the comparator of station II shows it on the left (without it, the left half stays dark: you can still tune blind, from the surveyor's words). **Station I** offers crystals for the glyphs you know (those written in the shelf's Ages, as in the book of glyphs; rows of eight); four crystals, in any order, are the pages of a world; **the four light up together, and only once all are right**. Each crystal has its **note**: placing one sounds it, and the four sound as a **chord**, steady when the world is held, beating the more the further they are from it (never saying which is wrong); the ♪ in the Details tab's surveyor's note plays the Age's own chord, to compare by ear. When the telescope holds a star, its glyphs **show through the blank book**, faint and backwards. When they match an Age (among those of the held star, or among all of them), they **lock a planet** and wake **station III**: only then does the sky's trace appear on the cathode tube. Several Ages around one star (`system:`) share its light: crystals and atmosphere tell them apart. Tune the lenses and the atmosphere, sync the planet if its star is charted, and the image forms: the blank book **remembers**, the Age's name is inscribed on its page. The lock and periscope work as before. Partial settings give the usual signs (a doubled image, a tint, snow) without naming the world; settings that match no written Age usually leave the window black. The guild state is kept per Relto, apart from the easy mode's per-Age tunings.
+Where each regulator setting comes from:
 
-**Worlds no one has written.** The Art does not create a world, it links to one that already exists, so sometimes you still fall on one. Tuning **blind** (the telescope holds no star), set four crystals that match no written Age: station III no longer sleeps, it *searches* (frequency and amplitude still matter). If the lenses name a plausible star (the white-to-red light of an ordinary sun, within a few notches), the day is neither frozen nor wild and the air is breathable, and if the book judges a world with these four pages, in this order, alive (not dying), then about one time in three the window forms a world no one has written. It is reproducible: the same crystals, the same star light and the same notch ranges of iris, frequency and amplitude always show the same world, or nothing; phase, harmonics and polarity are tuned afterwards without changing it. Bring it into focus (sharpness works as for written Ages; there is no sync, local time or KIPS) and the book shows it without a name: “a world no one has written”, with a few words of its description in pale ink, and a strange, beating tone (with the close-up room sounds) and a line: “The book shows a world no one has written.” Click **Transcribe this world** under the book: a new note is created where *Generate a random Age* puts its notes (never overwriting), with a generated name and an `age` block holding exactly its four pages, its star and sky as value lines (`star_mass:`, `insolation:`, `rotation:`, `atmosphere:`) and its `seed:`. Opened, it is the same world; from then on it is a written Age like any other (it joins the shelf, and the book will remember its name). A written Age whose pages match always wins.
+| Knob | Comes from |
+|---|---|
+| Frequency | the **day length** |
+| Amplitude | the **air pressure** |
+| Harmonics | the **aurorae and magnetic field** |
+| Polarity | the direction of the field |
+| Phase | **drifts** with the clock at the pace of the Age's own day (a tidally locked world barely drifts) |
+
+#### The lock
+
+On the right, a big lever under a lamp: red, amber when the image is clear enough, green once it holds. Pull it on a clear image and the machine **follows the Age by itself** (the drifting phase, the jumps of an erratic cycle); the controls are then held, and the book wears a small brass tag on the cabin shelf. Pull it again to let go.
+
+#### The periscope
+
+Once locked, the crank left of the screen **turns the view**: four directions, each with its own landscape under the same sky; the rose shows where you look. The view slides as you turn. The lever right of it **tilts** the view:
+
+- up to the **zenith**: the whole sky, its stars, moons, aurorae, the canopy if there are trees;
+- back to the horizon;
+- **under the water** when the Age has some: light rays, kelp, coral, fish, sunken ruins, acid pits, lava vents, pearls, and the glow of an underwater **fissure**, the way home (under the ice when it is frozen).
+
+#### Numerals, sounds and clues
+
+Values are shown in D'ni numerals. The Details tab's surveyor's note is set by *Surveyor's notes (Imager)*: full, words only (default) or off. The pale frame around clickable zones is off by default (*Frame around clickable zones*).
+
+The **clarity gauge** reads the three settings together, and the drone's **beats slow down** as the atmosphere comes in tune. A crystalline fifth sounds when the whole image holds; glass, rails, crank and lock each have their sound.
+
+Clues stay in the fiction: each Age's **Details** tab carries a surveyor's note (how its sky hums, what its star's light looks like, and the fixed values in D'ni numerals). The phase is never written down, and the crystals are the pages of the book itself. Your tuning, the lock and the periscope are kept per Age.
+
+Once the Age's star is charted at the telescope, a sync micrometer calibrates the Imager on that world: a sharper image, the hour over there and its KIPS coordinates (see [The telescope](#the-telescope)).
+
+#### The Art of the Guild
+
+Everything above is the easy way (the default). In the demanding way (setting *Instruments*: *The Art of the Guild*), the Imager holds a single **blank book**, fixed in place, its window black: you do not choose the Age, you find it with the settings.
+
+- **The telescope gives the target.** Lay an Age's book on the observatory's lectern, with its star charted and the three wheels on its clues: the instrument holds that star and sends its light down to the Imager. The comparator of station II shows it on the left (without it, the left half stays dark: you can still tune blind, from the surveyor's words).
+- **Station I.** It offers crystals for the glyphs you know (those written in the shelf's Ages, as in the book of glyphs; rows of eight). Four crystals, in any order, are the pages of a world; **the four light up together, and only once all are right**.
+- **The notes.** Each crystal has its **note**: placing one sounds it, and the four sound as a **chord**, steady when the world is held, beating the more the further they are from it (never saying which is wrong). The ♪ in the Details tab's surveyor's note plays the Age's own chord, to compare by ear.
+- **Station III.** When the telescope holds a star, its glyphs **show through the blank book**, faint and backwards. When they match an Age (among those of the held star, or among all of them), they **lock a planet** and wake **station III**: only then does the sky's trace appear on the cathode tube.
+- **Several Ages, one star.** Ages around one star (`system:`) share its light: crystals and atmosphere tell them apart.
+
+Tune the lenses and the atmosphere, sync the planet if its star is charted, and the image forms: the blank book **remembers**, the Age's name is inscribed on its page. The lock and periscope work as before.
+
+Partial settings give the usual signs (a doubled image, a tint, snow) without naming the world; settings that match no written Age usually leave the window black. The guild state is kept per Relto, apart from the easy mode's per-Age tunings.
+
+#### Worlds no one has written
+
+The Art does not create a world, it links to one that already exists, so sometimes you still fall on one. Tuning **blind** (the telescope holds no star), set four crystals that match no written Age: station III no longer sleeps, it *searches* (frequency and amplitude still matter).
+
+All of these must hold:
+
+- the lenses name a plausible star (the white-to-red light of an ordinary sun, within a few notches);
+- the day is neither frozen nor wild and the air is breathable;
+- the book judges a world with these four pages, in this order, alive (not dying).
+
+Then about one time in three the window forms a world no one has written. It is reproducible: the same crystals, the same star light and the same notch ranges of iris, frequency and amplitude always show the same world, or nothing; phase, harmonics and polarity are tuned afterwards without changing it.
+
+Bring it into focus (sharpness works as for written Ages; there is no sync, local time or KIPS) and the book shows it without a name: “a world no one has written”, with a few words of its description in pale ink, and a strange, beating tone (with the close-up room sounds) and a line: “The book shows a world no one has written.”
+
+Click **Transcribe this world** under the book: a new note is created where *Generate a random Age* puts its notes (never overwriting), with a generated name and an `age` block holding exactly:
+
+- its four pages;
+- its star and sky as value lines (`star_mass:`, `insolation:`, `rotation:`, `atmosphere:`);
+- its `seed:`.
+
+Opened, it is the same world; from then on it is a written Age like any other (it joins the shelf, and the book will remember its name). A written Age whose pages match always wins.
 
 ### The telescope
 
-The page *Telescope* (`page_telescope`) is always in the book of pages, **locked until you write your first Age and attach the *Mountains* page**. Attach it and a small observatory stands on the summit: a stone drum and a verdigris dome, its slit open and the tube showing (a window lights up at night); click it to look through. Each Relto hides its own **Great Zero**, drawn from the Relto's name and seed: nothing is stored, and two Reltos never share it. Two wheels aim the telescope: **Torahn** (the angle, clockwise from the Great Zero line, in torantee: a full turn is 62,500) and **Elevation** (height from the Great Zero plane, in shahfeetee; as on the KI, above the plane reads negative); the rim moves 25 notches, the hub one notch (100 torantee or 1 shahfee). The values are engraved under each wheel in D'ni numerals. These are the units of the D'ni Great Zero Coordinate System (GZCS); the third coordinate, the distance from the Zero (in shahfeetee), is measured when you chart an Age's star (below). There is no distance readout: in the eyepiece a pulse, beating with the D'ni prorahn, is a diffuse uneven glow from afar, then a point of light that steadies as you come closer; a line of words says what you see, and a soft tone follows each turn; while you look, the pulse also beats softly in your ear, skipping beats from afar and steady up close (with the close-up room sounds). In the default **easy** way, after each turn the line of words adds “It brightens.” or “It fades.”, and the signal barely shimmers. In **the Art of the Guild** (setting *Way of the instruments*), nothing tells you whether you are getting closer: the signal shimmers from one beat to the next, so watch a few beats before you judge, and compare for yourself. Bring the point into the small ring and the Zero is **found**: it is engraved on the plate, stays found, and a faint light pulses at the end of the telescope on the island. Click the plate to set the wheels back on it. Finding the Zero unlocks the **D'ni clock** page (`page_dni_clock`): a brass armillary sphere on its own pillar in the mist, its hour ring turning with the D'ni day. Once it is attached, the observatory spreads the Zero's beam through the whole Relto: the D'ni hour appears and the calendar sets itself right. Until then the Relto only knows the date by its calendar pinnacle, which drifts by a few yahr, and the hour is silent. (That the beam carries D'ni time is this plugin's own extension of the lore.)
+The page *Telescope* (`page_telescope`) is always in the book of pages, **locked until you write your first Age and attach the *Mountains* page**. Attach it and a small observatory stands on the summit: a stone drum and a verdigris dome, its slit open and the tube showing (a window lights up at night). Click it to look through.
 
-**The metronome.** On the observatory's left wall hangs a small brass pendulum, set by hand, that beats the prorahn mechanically (“A D'ni pendulum, set by hand: it counts the prorahn, it does not know the hour”). It strikes one side, then the other, once per prorahn, and the stop it touches glows for an instant: the true Zero's pulse always peaks exactly then. Anything else slides against it: the old line of Me'erta (about 1.06 prorahn) drifts a little further from the swing beat after beat, and a pulsar's or a neutron star's false beat is plainly off. With the close-up room sounds you hear it too: a dry wooden tick per swing, distinct from the pulse's note, so you can hear the two come apart. With reduced motion the pendulum stays at rest and a small lamp on each side marks the beat.
+#### The Great Zero and the wheels
 
-**Two ways of playing.** *Way of the instruments* (Ages & mechanisms) sets the telescope and the Imager together. **Easy** (default): the warmer/colder words, a faint shimmer, the old line never appears, and dead stars only blur the image a little (no false beat, no bent direction, no false delay; the surveyor's notes tell the truth and only say the light “comes a little blurred”). **The Art of the Guild**: everything below, traps included. The rewards are the same (the Zero, the D'ni clock, charted stars, the hour over there, KIPS).
+Each Relto hides its own **Great Zero**, drawn from the Relto's name and seed: nothing is stored, and two Reltos never share it. Two wheels aim the telescope:
 
-**Charting an Age's star (step 2). The telescope works at the scale of star systems; the Imager then finds the planet. Every Age's star has a real place in the GZCS (Torahn, distance and elevation from the Great Zero), drawn from its star blocks (how many suns, their colours, a binary orbit) and a star seed: by default each Age has its own star; write the same `system: Kerath` line in several Ages that share the same star blocks and they share one system, charted together. Change an Age's star and its system moves: rewriting moves the world. The Age's **Details** tab adds to its surveyor's note what one perceives of the Great Zero **from that Age**: its direction (compass words, north being the Zero line), its height above or below the horizon, how late its pulse arrives (the distance) and how faint it is; with *Surveyor's notes* set to full, the three telescope settings in D'ni numerals; off, nothing. Once your Relto's Zero is found, lay an Age's book on the **lectern** at the foot of the instrument (‹ › to choose; empty lectern: back to your own Zero). The two wheels now aim where the Zero appears seen from that Age, and a third, small wheel sets the pulse's **Delay**: how late it comes after the metronome's beat, read in rahnfee (below; the rim moves a 25th, the hub a 625th, that is 25 shahfeetee of travel). In the eyepiece the same pulse guides you, and an amber ring, the Age's **echo**, beats before or after it until the delay is right (“The echo comes after the pulse: more delay”). Within the tolerance (200 torantee, 2 shahfeetee, one notch of delay), the star is **charted**: the instrument itself subtracts (Relto → Zero) minus (Age → Zero), and the plate *Star of the Age* engraves its GZCS position (Torahn and elevation, then its distance along the beam in rahnfee). No arithmetic by hand. A star must be charted from a Relto whose Zero is found; forgetting the Zero forgets the stars too.
+- **Torahn**: the angle, clockwise from the Great Zero line, in torantee (a full turn is 62,500).
+- **Elevation**: height from the Great Zero plane, in shahfeetee; as on the KI, above the plane reads negative.
 
-**Calibrating the Imager.** Calibration is a bonus: the Imager works exactly as before without it. With the Age's star charted, a small **sync micrometer** appears beside the screen, under a window with a hairline: turn it (rim five notches, hub half a notch) until the world crosses the hairline. In sync, the image sharpens (the closer your tuning already is, the more), the screen tells **the hour over there** (“Over there, it is dawn”, then the Age's own day divided like a D'ni yahr, in D'ni numerals), and its **KIPS** coordinates show KI-style; the Details tab says the hour too, and the number plate shows KIPS instead of “uncharted”. Until then, the Age's hour stays uncertain: time is gained by knowing where you are. The calibration **drifts**: intact for a real week, it then wears off over the next week (the image softens, the hour becomes uncertain again, the micrometer slips off the hairline); sync again to make it new. If the Age's star is rewritten after syncing, its Details tab says that “the signal has changed”.
+The rim moves 25 notches, the hub one notch (100 torantee or 1 shahfee). The values are engraved under each wheel in D'ni numerals. These are the units of the D'ni Great Zero Coordinate System (GZCS); the third coordinate, the distance from the Zero (in shahfeetee), is measured when you chart an Age's star (below).
 
-**Dead stars (step 3; their traps in the Art of the Guild only).** Some regions of space hold a **pulsar**, a **neutron star** or a **black hole**, whether you write them or not: they belong to the region (about one star in ten feels one, nearby stars share them, and none lies close to the Great Zero, so your nearest Ages stay easy to chart). Writing `pulsar`, `neutron_star` or `black_hole` only *describes* what is there: the book then names a world whose star has one nearby (if the star you wrote has none, the world is placed by a star that does; rewriting moves the world). They show in the generative window's sky. At the telescope they make a star hard to chart: a pulsar or a neutron star adds a **false beat** at its own period (faster or slower than the Zero's), so the surveyor's delay is wrong and the echo can lock onto the false beat (“The echo follows the false beat, not the Zero's”); a black hole **bends** the Zero's light, so the surveyor's direction is wrong, and in the eyepiece a bright image will not hold while the true point is the pale end of an arc. The surveyor's notes say it in words (“A second, faster beat crosses the Zero's”; “The Zero's light comes bent, smeared into an arc”), and with full notes add the false beats per 25 prorahn and the distance of each dead star. Such a star can still be charted by looking past the lure, or **indirectly**: once two charted stars lie nearby (within 6,000 shahfeetee), pull the **Beacons** lever between the wheels: “The charted stars agree”, and the bent light and false beat fall away.
+#### Looking for the Zero
 
-**The old line (step 3; the Art of the Guild only).** Before you find the Zero, a second, paler pulse may catch your eye, slipping against the D'ni clock: an old origin line, King Me'erta's, never decreed. Bring it into the ring and the instrument settles on it: its plate engraves *that* line, and every star charted afterwards is turned by the same angle (the hour over there and the KIPS are wrong with it). Nothing says so outright, but it shows: on the **star chart** the lead line from each star misses the Zero (“?”), two stars engraved on different lines leave the chart unclosed, Ages of one `system:` disagree with a re-charted one, beacons engraved on different lines disagree, and the Details tab says the star “was engraved on an old line”. To fix it, aim the true Zero again (the instrument settles on it; the old line will not take it back), then bring each star into the ring again to re-engrave it, or scratch it off its plate (the small cross).
+There is no distance readout. In the eyepiece a pulse, beating with the D'ni prorahn, is a diffuse uneven glow from afar, then a point of light that steadies as you come closer. A line of words says what you see, and a soft tone follows each turn. While you look, the pulse also beats softly in your ear, skipping beats from afar and steady up close (with the close-up room sounds).
 
-**The star chart (step 3).** The parchment roll at the top right of the observatory unrolls a chart: the Great Zero as a compass rose at the centre, your Relto, and every charted star system (a constellation, each star joined to its nearest neighbour), with its Ages (first name drawn, all of them on hover) and its dead stars in cinnabar. The plane of the Zero is seen at a slant, like a table, and each star hangs on a **plumb line** from its foot on the plane: solid above it, dotted below. North is the line the instrument holds; distances go by square root so near and far fit on one sheet, and heights have their own scale, engraved in a corner (next to the distances they would be invisible). One well-charted Age is enough to anchor it. Ink on paper: it reads the same in light and dark themes.
+- **Easy way** (default): after each turn the line of words adds “It brightens.” or “It fades.”, and the signal barely shimmers.
+- **The Art of the Guild** (setting *Way of the instruments*): nothing tells you whether you are getting closer. The signal shimmers from one beat to the next, so watch a few beats before you judge, and compare for yourself.
 
-**Drift and magnetic north (step 3).** The calibration drift depends on the Age's physics: a world without a magnetic field (a dead core, or one that barely spins) has no north, so its surveyor gives rough bearings (four compass words, or eight with a weak field) and its calibration wears twice as fast (1.4 times with a weak field); near a dead star it wears faster still (×1.5 by a black hole, ×1.3 by a pulsar or neutron star; at most ×4). The Details tab says why.
+Bring the point into the small ring and the Zero is **found**: it is engraved on the plate, stays found, and a faint light pulses at the end of the telescope on the island. Click the plate to set the wheels back on it.
 
-**About distances.** The coordinates are those of the Great Zero Coordinate System, in shahfeetee — but for the Ages they are **shahfeetee of the beam**: the length of the path the pulse travels through the Art to reach the Zero, not a distance through space. It is the Cavern's unit, measuring something else, so it has no equivalent in kilometres: a value of 15,000 means far along the beam, nothing more. The Art links worlds across universes, not across the sky; the Great Zero is the reference for that linking. For these lengths of the beam the instruments use the **rahnfee** (plural *rahnfeetee*): the length the Great Zero's pulse travels along the beam in one **prorahn**, that is 25³ = **15,625 shahfeetee of the beam**. There is no decimal point: each place is engraved in its own small window, like the dials of a surveyor's instrument — the first window counts 25ths, the second 625ths, the third 15,625ths — so the windows 12 · 12 · 12 read about half a rahnfee (7,812 shahfeetee); the instruments also say it in words (“about half a beat”). The windows are this plugin's own notation, as consistent as the D'ni surveyors' rigour, not an attested D'ni one. Distances read in rahnfee: the Delay wheel, the distance row of the *Great Zero* and *Star of the Age* plates, the KIPS distance, the surveyor's full notes and the star chart; every elevation stays in shahfeetee, the Cavern's scale and the KI's convention. **Far worlds:** about one star in six lies beyond a whole rahnfee; its pulse arrives a whole beat late, then a fraction. The Delay wheel only reads the fraction: the whole beats go on a small brass **counter** beside it (its digit is engraved bare before the windows). To count them, watch the **strong beat**: once a gorahn (every 25 beats) the Great Zero strikes harder and the pendulum's stroke glows gold; with the right count, the echo's strong beat comes back on that marked stroke, one stroke off otherwise. In the easy way the surveyor's notes say so (“a whole beat late”) and a wrong count charts nothing; in the Art of the Guild a wrong count charts the star a whole rahnfee off, and the Imager cannot hold its planet (“the planet slips away by a whole beat”): count again and chart it again. Stars charted before far worlds existed keep their engraving. *The rahnfee is a fan-made unit, built from prorahn and shahfee; not an attested D'ni word.*
+#### The D'ni clock
+
+Finding the Zero unlocks the **D'ni clock** page (`page_dni_clock`): a brass armillary sphere on its own pillar in the mist, its hour ring turning with the D'ni day. Once it is attached, the observatory spreads the Zero's beam through the whole Relto: the D'ni hour appears and the calendar sets itself right.
+
+Until then the Relto only knows the date by its calendar pinnacle, which drifts by a few yahr, and the hour is silent. (That the beam carries D'ni time is this plugin's own extension of the lore.)
+
+#### The metronome
+
+On the observatory's left wall hangs a small brass pendulum, set by hand, that beats the prorahn mechanically (“A D'ni pendulum, set by hand: it counts the prorahn, it does not know the hour”). It strikes one side, then the other, once per prorahn, and the stop it touches glows for an instant: the true Zero's pulse always peaks exactly then.
+
+Anything else slides against it: the old line of Me'erta (about 1.06 prorahn) drifts a little further from the swing beat after beat, and a pulsar's or a neutron star's false beat is plainly off.
+
+With the close-up room sounds you hear it too: a dry wooden tick per swing, distinct from the pulse's note, so you can hear the two come apart. With reduced motion the pendulum stays at rest and a small lamp on each side marks the beat.
+
+#### Two ways of playing
+
+*Way of the instruments* (Ages & mechanisms) sets the telescope and the Imager together.
+
+- **Easy** (default): the warmer/colder words, a faint shimmer, the old line never appears, and dead stars only blur the image a little (no false beat, no bent direction, no false delay; the surveyor's notes tell the truth and only say the light “comes a little blurred”).
+- **The Art of the Guild**: everything below, traps included.
+
+The rewards are the same (the Zero, the D'ni clock, charted stars, the hour over there, KIPS).
+
+#### Charting an Age's star (step 2)
+
+The telescope works at the scale of star systems; the Imager then finds the planet. Every Age's star has a real place in the GZCS (Torahn, distance and elevation from the Great Zero), drawn from its star blocks (how many suns, their colours, a binary orbit) and a star seed.
+
+By default each Age has its own star; write the same `system: Kerath` line in several Ages that share the same star blocks and they share one system, charted together. Change an Age's star and its system moves: rewriting moves the world.
+
+**What the Details tab says.** It adds to the surveyor's note what one perceives of the Great Zero **from that Age**:
+
+- its direction (compass words, north being the Zero line);
+- its height above or below the horizon;
+- how late its pulse arrives (the distance) and how faint it is;
+- with *Surveyor's notes* set to full, the three telescope settings in D'ni numerals; off, nothing.
+
+**At the telescope.** Once your Relto's Zero is found, lay an Age's book on the **lectern** at the foot of the instrument (‹ › to choose; empty lectern: back to your own Zero). The two wheels now aim where the Zero appears seen from that Age, and a third, small wheel sets the pulse's **Delay**: how late it comes after the metronome's beat, read in rahnfee (below; the rim moves a 25th, the hub a 625th, that is 25 shahfeetee of travel).
+
+In the eyepiece the same pulse guides you, and an amber ring, the Age's **echo**, beats before or after it until the delay is right (“The echo comes after the pulse: more delay”).
+
+Within the tolerance (200 torantee, 2 shahfeetee, one notch of delay), the star is **charted**: the instrument itself subtracts (Relto → Zero) minus (Age → Zero), and the plate *Star of the Age* engraves its GZCS position (Torahn and elevation, then its distance along the beam in rahnfee). No arithmetic by hand. A star must be charted from a Relto whose Zero is found; forgetting the Zero forgets the stars too.
+
+#### Calibrating the Imager
+
+Calibration is a bonus: the Imager works exactly as before without it. With the Age's star charted, a small **sync micrometer** appears beside the screen, under a window with a hairline: turn it (rim five notches, hub half a notch) until the world crosses the hairline.
+
+In sync:
+
+- the image sharpens (the closer your tuning already is, the more);
+- the screen tells **the hour over there** (“Over there, it is dawn”, then the Age's own day divided like a D'ni yahr, in D'ni numerals);
+- its **KIPS** coordinates show KI-style;
+- the Details tab says the hour too, and the number plate shows KIPS instead of “uncharted”.
+
+Until then, the Age's hour stays uncertain: time is gained by knowing where you are.
+
+The calibration **drifts**: intact for a real week, it then wears off over the next week (the image softens, the hour becomes uncertain again, the micrometer slips off the hairline); sync again to make it new. If the Age's star is rewritten after syncing, its Details tab says that “the signal has changed”.
+
+#### Dead stars (step 3)
+
+Their traps apply in the Art of the Guild only. Some regions of space hold a **pulsar**, a **neutron star** or a **black hole**, whether you write them or not: they belong to the region (about one star in ten feels one, nearby stars share them, and none lies close to the Great Zero, so your nearest Ages stay easy to chart).
+
+Writing `pulsar`, `neutron_star` or `black_hole` only *describes* what is there: the book then names a world whose star has one nearby (if the star you wrote has none, the world is placed by a star that does; rewriting moves the world). They show in the generative window's sky.
+
+At the telescope they make a star hard to chart:
+
+- a **pulsar** or a **neutron star** adds a **false beat** at its own period (faster or slower than the Zero's): the surveyor's delay is wrong and the echo can lock onto the false beat (“The echo follows the false beat, not the Zero's”);
+- a **black hole** **bends** the Zero's light: the surveyor's direction is wrong, and in the eyepiece a bright image will not hold while the true point is the pale end of an arc.
+
+The surveyor's notes say it in words (“A second, faster beat crosses the Zero's”; “The Zero's light comes bent, smeared into an arc”), and with full notes add the false beats per 25 prorahn and the distance of each dead star.
+
+Such a star can still be charted by looking past the lure, or **indirectly**: once two charted stars lie nearby (within 6,000 shahfeetee), pull the **Beacons** lever between the wheels: “The charted stars agree”, and the bent light and false beat fall away.
+
+#### The old line (step 3)
+
+It exists in the Art of the Guild only. Before you find the Zero, a second, paler pulse may catch your eye, slipping against the D'ni clock: an old origin line, King Me'erta's, never decreed. Bring it into the ring and the instrument settles on it: its plate engraves *that* line, and every star charted afterwards is turned by the same angle (the hour over there and the KIPS are wrong with it).
+
+Nothing says so outright, but it shows:
+
+- on the **star chart**, the lead line from each star misses the Zero (“?”);
+- two stars engraved on different lines leave the chart unclosed;
+- Ages of one `system:` disagree with a re-charted one;
+- beacons engraved on different lines disagree;
+- the Details tab says the star “was engraved on an old line”.
+
+To fix it, aim the true Zero again (the instrument settles on it; the old line will not take it back), then bring each star into the ring again to re-engrave it, or scratch it off its plate (the small cross).
+
+#### The star chart (step 3)
+
+The parchment roll at the top right of the observatory unrolls a chart: the Great Zero as a compass rose at the centre, your Relto, and every charted star system (a constellation, each star joined to its nearest neighbour), with its Ages (first name drawn, all of them on hover) and its dead stars in cinnabar.
+
+The plane of the Zero is seen at a slant, like a table, and each star hangs on a **plumb line** from its foot on the plane: solid above it, dotted below. North is the line the instrument holds; distances go by square root so near and far fit on one sheet, and heights have their own scale, engraved in a corner (next to the distances they would be invisible).
+
+One well-charted Age is enough to anchor it. Ink on paper: it reads the same in light and dark themes.
+
+#### Drift and magnetic north (step 3)
+
+The calibration drift depends on the Age's physics.
+
+- A world without a magnetic field (a dead core, or one that barely spins) has no north, so its surveyor gives rough bearings (four compass words, or eight with a weak field) and its calibration wears twice as fast (1.4 times with a weak field).
+- Near a dead star it wears faster still: ×1.5 by a black hole, ×1.3 by a pulsar or neutron star (at most ×4).
+
+The Details tab says why.
+
+#### About distances
+
+The coordinates are those of the Great Zero Coordinate System, in shahfeetee, but for the Ages they are **shahfeetee of the beam**: the length of the path the pulse travels through the Art to reach the Zero, not a distance through space. It is the Cavern's unit, measuring something else, so it has no equivalent in kilometres: a value of 15,000 means far along the beam, nothing more. The Art links worlds across universes, not across the sky; the Great Zero is the reference for that linking.
+
+**The rahnfee.** For these lengths of the beam the instruments use the **rahnfee** (plural *rahnfeetee*): the length the Great Zero's pulse travels along the beam in one **prorahn**, that is 25³ = **15,625 shahfeetee of the beam**.
+
+There is no decimal point: each place is engraved in its own small window, like the dials of a surveyor's instrument.
+
+- The first window counts 25ths, the second 625ths, the third 15,625ths.
+- The windows 12 · 12 · 12 read about half a rahnfee (7,812 shahfeetee); the instruments also say it in words (“about half a beat”).
+- The windows are this plugin's own notation, as consistent as the D'ni surveyors' rigour, not an attested D'ni one.
+
+Distances read in rahnfee: the Delay wheel, the distance row of the *Great Zero* and *Star of the Age* plates, the KIPS distance, the surveyor's full notes and the star chart. Every elevation stays in shahfeetee, the Cavern's scale and the KI's convention.
+
+**Far worlds.** About one star in six lies beyond a whole rahnfee; its pulse arrives a whole beat late, then a fraction. The Delay wheel only reads the fraction: the whole beats go on a small brass **counter** beside it (its digit is engraved bare before the windows).
+
+To count them, watch the **strong beat**: once a gorahn (every 25 beats) the Great Zero strikes harder and the pendulum's stroke glows gold. With the right count, the echo's strong beat comes back on that marked stroke, one stroke off otherwise.
+
+- In the easy way the surveyor's notes say so (“a whole beat late”) and a wrong count charts nothing.
+- In the Art of the Guild a wrong count charts the star a whole rahnfee off, and the Imager cannot hold its planet (“the planet slips away by a whole beat”): count again and chart it again.
+
+Stars charted before far worlds existed keep their engraving.
+
+*The rahnfee is a fan-made unit, built from prorahn and shahfee; not an attested D'ni word.*
 
 ### The Relto's two special books
 
 At the foot of the cabin shelf, two books look different from the Ages (also in the **Pages** tab, and by commands):
 
-- **Book of glyphs** (turquoise, diamond): a click opens the list of glyphs *used* in the Ages on the shelf, with their drawing and the Ages where they appear (click = open the Age). For now "known" = written in an Age; the future game loop may limit it to discovered glyphs. Command: *Open the book of glyphs*.
-- **Library book** (red, clasp): a click offers *Blocks, reactions and Age variants* (`age-library`) or *Relto pages* (`relto-library`). The plugin opens the existing library note, or creates it with a commented example (`Age Library.md`, `Relto Library.md`, in the library folder if set). Command: *Open a library note*.
+- **Book of glyphs** (turquoise, diamond): a click opens a real book in the Relto, with pages you turn (‹ ›, or the table of contents).
+  - The glyphs *used* in the Ages on the shelf come first, grouped by type (Sky, Worlds, Matter, Weather, Living things, Ruins), each with its drawing; hover one to see the Ages where it appears, click to open the Age.
+  - Then the page of **reactions** you have seen (A + B → C, with its type, and whether a catalyst was needed).
+  - In a story Relto, the glyphs you have not learned yet show as pale silhouettes with a hint on hover.
+  - For now "known" = written in an Age. The round arrow at the top left closes the book.
+  - Command and Pages-tab button: *Open the book of glyphs* opens the same list in a classic window.
+- **Library book** (red, clasp): a click opens a real book with two parts, **Library of Ages** (`age-library`: blocks, reactions, variants) and **Library of the Relto** (`relto-library`: Relto pages).
+  - Each part lists the entries already written (hover a line to read it whole), then ends with a blank page where you **write new entries directly**: one per line, then *Write it*. Each line is checked first; a line that does not parse is refused with the reason, and nothing is written.
+  - Valid lines go into the first library block of the library note (`Age Library.md`, `Relto Library.md`, in the library folder if set), which is created with a commented example if it does not exist yet. The note is never opened.
+  - Command and Pages-tab button: *Open a library note* still opens the note itself.
 
 A Relto page's syntax accepts `page lagoon: Lagoon | vegetation 0.5 palm` or `page_lagoon: Lagoon | vegetation 0.5 palm`.
 
@@ -303,7 +510,11 @@ When the book is already open, clicking a window only replays the linking sound.
 
 ## 9. Window, effects, traps
 
-- **Rendering**: `generative` by default (the same world the Imager shows), or `classic` (the engine's original painted window). The generative landscape is drawn from the seed (sky, relief, vegetation, weather, reflections, foreground (picked from the Age: branch, vines, reeds, leaves, column, icicles, rocks, arch or none), one inhabited detail). When an Age has **water and land** (sand, stone or ruins, plants, lava, ice), the window shows a **shoreline**: a beach, rocks, a grassy bank with reeds, a black lava coast that steams where it meets the water, or an ice shelf with floes; the shore runs down one side, lies far off under the horizon, or is where you stand. Shape and framing come from the seed. `ocean_world` keeps the open sea, `desert_world` and `lava_world` stay dry, `frozen_world` stays ice. With the **physics layer** on (easy or strict), the window also shows the world that was computed: the sun takes the colour of its star's temperature (a red dwarf glows orange-red, a hot star blue-white) and its size from the star's radius and distance; thin air darkens the sky (stars by day when there is almost none, no clouds); thick air turns it milky and hazy; a light world has tall, sharp mountains, a heavy one low, broad hills; a tidally locked world keeps its sun still, at a height that depends on where you stand; little visible light makes a dull day. A sun colour you wrote yourself always wins. Three more blocks, never drawn: `kelp` (a kelp forest swaying under the water), `coral` (a bright reef in warm shallows), `acid` (bubbling pools; it eats stone into hollowed ground, iron into rust, water into bitter water, coral into salt). **Each Age has its own night**: two to four constellations drawn from the seed (some faintly joined), sometimes a nebula or a band of stars, and its moons (`companion_moon`, or `moons: 3` for up to five, each with its own size, tint, phase and pace).
+- **Rendering**: `generative` by default (the same world the Imager shows), or `classic` (the engine's original painted window). The generative landscape is drawn from the seed (sky, relief, vegetation, weather, reflections, foreground (picked from the Age: branch, vines, reeds, leaves, column, icicles, rocks, arch or none), one inhabited detail).
+  - When an Age has **water and land** (sand, stone or ruins, plants, lava, ice), the window shows a **shoreline**: a beach, rocks, a grassy bank with reeds, a black lava coast that steams where it meets the water, or an ice shelf with floes; the shore runs down one side, lies far off under the horizon, or is where you stand. Shape and framing come from the seed. `ocean_world` keeps the open sea, `desert_world` and `lava_world` stay dry, `frozen_world` stays ice.
+  - With the **physics layer** on (easy or strict), the window also shows the world that was computed: the sun takes the colour of its star's temperature (a red dwarf glows orange-red, a hot star blue-white) and its size from the star's radius and distance; thin air darkens the sky (stars by day when there is almost none, no clouds); thick air turns it milky and hazy; a light world has tall, sharp mountains, a heavy one low, broad hills; a tidally locked world keeps its sun still, at a height that depends on where you stand; little visible light makes a dull day. A sun colour you wrote yourself always wins.
+  - Three more blocks, never drawn: `kelp` (a kelp forest swaying under the water), `coral` (a bright reef in warm shallows), `acid` (bubbling pools; it eats stone into hollowed ground, iron into rust, water into bitter water, coral into salt).
+  - **Each Age has its own night**: two to four constellations drawn from the seed (some faintly joined), sometimes a nebula or a band of stars, and its moons (`companion_moon`, or `moons: 3` for up to five, each with its own size, tint, phase and pace).
 - **Effects**: static, ripple, sweep, old TV… depending on instability; `prefers-reduced-motion` is respected.
 - **Damage**: `damaged_pages` (shifted zones, colour separation, frozen, ink stains), `removed_pages` (burnt holes), fractures as instability rises. Drawn from the book's seed.
 - **Trap book**: `trap book`. It looks normal.
@@ -403,7 +614,46 @@ node test/visual/make.js            # render pages in test/visual/out/
 npm run zip          # release/age-writer-<version>.zip (plugin) + -src.zip (sources); version = package.json
 ```
 
-In `src/`: `main.js` (entry point: assembles engine + extension), `engine/` (the engine), then the extension layer: `entry.js` (book and block patches), `ui-extras.js` (panel and tabs), `ui-relto.js` (Relto, dedicated view, navigation), `relto-render.js` (canvas), `relto-rooms.js` (cabin, pillars, pond, pond ++, cat, grove), `relto-model.js` (pages, island layout), `relto-scenery.js`, `relto-global.js`, `relto-books.js`, `cover.js` (covers), `sound.js` (sounds, room sounds), `linkfx.js` and `genscene.js` (window), `law.js` (law of change), `mech.js` (special lines), `physics/` (physics of the Ages: laws, block requirements, constrained draw, sheet; design in `docs/DESIGN-physique.md`), `geophys.js` (geophysics blocks), `weather.js` (living weather), `relto-imager.js` (the Imager), `imager-guild.js` (its blank book, the Art of the Guild) and `unwritten.js` (worlds no one has written), `telescope.js`, `starsystem.js`, `perturbers.js`, `calibration.js`, `starmap.js`, `relto-telescope.js` and `relto-starmap.js` (the telescope: Great Zero, Ages' stars, dead stars, the old line, Imager calibration, star chart), `settings-ui.js` (settings), `guide.js`, `guide-ref-en.js`, `guide-ref-fr.js` (guide and full reference), `i18n.js`. Details: [`docs/DEV.md`](docs/DEV.md) (in French).
+In `src/`:
+
+- `main.js` (entry point: assembles engine + extension)
+- `engine/` (the engine)
+
+Then the extension layer:
+
+- `entry.js` (book and block patches)
+- `ui-extras.js` (panel and tabs)
+- `ui-relto.js` (Relto, dedicated view, navigation)
+- `relto-render.js` (canvas)
+- `relto-rooms.js` (cabin, pillars, pond, pond ++, cat, grove)
+- `relto-model.js` (pages, island layout)
+- `relto-scenery.js`
+- `relto-global.js`
+- `relto-books.js` (special books, library notes)
+- `relto-glyphbook.js` and `relto-librarybook.js` (the two books as canvas views)
+- `cover.js` (covers)
+- `sound.js` (sounds, room sounds)
+- `linkfx.js` and `genscene.js` (window)
+- `law.js` (law of change)
+- `mech.js` (special lines)
+- `physics/` (physics of the Ages: laws, block requirements, constrained draw, sheet; design in `docs/DESIGN-physique.md`)
+- `geophys.js` (geophysics blocks)
+- `weather.js` (living weather)
+- `relto-imager.js` (the Imager)
+- `imager-guild.js` (its blank book, the Art of the Guild) and `unwritten.js` (worlds no one has written)
+- `telescope.js`
+- `starsystem.js`
+- `perturbers.js`
+- `calibration.js`
+- `starmap.js`
+- `relto-telescope.js` and `relto-starmap.js` (the telescope: Great Zero, Ages' stars, dead stars, the old line, Imager calibration, star chart)
+- `settings-ui.js` (settings)
+- `guide.js`
+- `guide-ref-en.js`
+- `guide-ref-fr.js` (guide and full reference)
+- `i18n.js`
+
+Details: [`docs/DEV.md`](docs/DEV.md) (in French).
 
 ---
 

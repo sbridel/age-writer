@@ -37,7 +37,7 @@ const SHELF = [
 const COMBO = [7, 2, 8];
 /** La bibliothèque qui masque le panneau : on touche trois livres dans l'ordre ; les bons font coulisser le meuble, qui disparaît (le panneau de bois derrière, lui, se tapote). Chaque livre touché s'enfonce un peu, puis tout ressort si l'ordre est faux ou si l'on attend.
  * `gone` : le meuble est déjà écarté ; `r.bookAt` : l'instant où il a commencé à coulisser. */
-function drawBookcase(r, ctx, c, gone) {
+function drawBookcase(r, ctx, c, gone, decoy) {
   const S = CASE, sh = (r.shelf = r.shelf || { seq: [], at: 0 }), now = Date.now();
   const sp = r.bookAt ? Math.min(1, (now - r.bookAt) / 1100) : gone ? 1 : 0, ease = sp * sp * (3 - 2 * sp);
   if (gone && sp >= 1) return;
@@ -53,7 +53,8 @@ function drawBookcase(r, ctx, c, gone) {
       ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x + b.w - 3, by, 3, b.h);
       if (!b.blank) { ctx.fillStyle = c("#c9a24e"); ctx.fillRect(x, by + 4, b.w, 2.5); ctx.fillRect(x, by + b.h - 8, b.w, 1.6); ctx.fillStyle = rgba(236, 222, 180, 0.55); ctx.fillRect(x + 2.5, by + 11, b.w - 5, 6); }
       if (pressed) { ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(x, by, b.w, b.h); }
-      if (!gone) r.hot.push({ x, y: by, w: b.w, h: b.h, tip: "", shelf: i, secret: true });
+      if (decoy) { const TRd = TR(r); r.hot.push({ x, y: by, w: b.w, h: b.h, tip: TRd("cabin.case.tip"), flash: TRd("cabin.case.flash" + (i % 3)) }); } // un décor : on peut les toucher, il ne se passe rien
+      else if (!gone) r.hot.push({ x, y: by, w: b.w, h: b.h, tip: "", shelf: i, secret: true });
       x += b.w + 1;
     }
     ctx.fillStyle = c("#4b3626"); ctx.fillRect(S.x, base, S.w, 3);
