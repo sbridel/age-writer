@@ -727,7 +727,7 @@ function clang(volume = 0.3) {
   // trappe de fer : verrou qu'on tire, gonds rouillés, puis la plaque qui bute et RÉSONNE (partiels inharmoniques de métal frappé)
   return oneShot(3.2, (c, out, noise) => {
     out.gain.value = volume; const t = c.currentTime;
-    const env = (g, at, peak, dec) => { g.gain.setValueAtTime(0.0001, t + at); g.gain.linearRampToValueAtTime(peak, t + at + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + at + dec); };
+    const env = (g, at, peak, dec) => { g.setValueAtTime(0.0001, t + at); g.linearRampToValueAtTime(peak, t + at + 0.003); g.exponentialRampToValueAtTime(0.0001, t + at + dec); };
     const hit = (at, f0, amp, dec, ratios) => { // coup sur du métal : somme de partiels non harmoniques, les aigus s'éteignent vite
       ratios.forEach((r, i) => { for (const dt of [1, 1.006]) { const o = c.createOscillator(), e = c.createGain(); o.type = "sine"; o.frequency.value = f0 * r * dt; env(e.gain, at, amp / (1 + i * 0.7), dec / (1 + i * 0.45)); o.connect(e); e.connect(out); o.start(t + at); o.stop(t + at + dec + 0.1); } });
       const n = noise(0.06), hp = c.createBiquadFilter(), e = c.createGain(); hp.type = "highpass"; hp.frequency.value = 1800; env(e.gain, at, amp * 1.6, 0.05); n.connect(hp); hp.connect(e); e.connect(out); n.start(t + at);
