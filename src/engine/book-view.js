@@ -137,10 +137,13 @@ const BookView = class extends obsidian.ItemView {
   }
   descriptive(leftPage, rightPage, analysis, ageSource, file) {
     let pages = pageList(analysis, !0),
-      spreadCount = Math.max(1, Math.ceil(pages.length / CHIPS_PER_SPREAD));
+      extra = this.free ? 1 : 0, // monté dans le Relto : une dernière page, libre, où l'on voit ce qui est écrit et où l'on écrit (src/relto-descbook.js)
+      spreadCount = Math.max(1, Math.ceil(pages.length / CHIPS_PER_SPREAD)) + extra;
     this.spread = Math.min(this.spread, spreadCount - 1);
-    let visible = pages.slice(this.spread * CHIPS_PER_SPREAD, (this.spread + 1) * CHIPS_PER_SPREAD),
-      chipsEl = leftPage.createDiv({ cls: "age-book__chips" });
+    let isFree = extra && this.spread === spreadCount - 1,
+      visible = isFree ? [] : pages.slice(this.spread * CHIPS_PER_SPREAD, (this.spread + 1) * CHIPS_PER_SPREAD),
+      chipsEl = isFree ? leftPage : leftPage.createDiv({ cls: "age-book__chips" });
+    if (isFree) this.free.page(chipsEl, file, ageSource, analysis);
     if (
       (visible.forEach((page, index) =>
         this.chip(chipsEl, page, CHIP_TILTS[index % CHIP_TILTS.length], file),
@@ -154,7 +157,7 @@ const BookView = class extends obsidian.ItemView {
           (this.spread--, this.render());
         }),
         nav.createSpan({
-          text: `${this.spread * CHIPS_PER_SPREAD + 1}\u2013${this.spread * CHIPS_PER_SPREAD + visible.length} of ${pages.length}`,
+          text: isFree ? this.free.label : `${this.spread * CHIPS_PER_SPREAD + 1}\u2013${this.spread * CHIPS_PER_SPREAD + visible.length} of ${pages.length}`,
         }));
       let nextButton = nav.createEl("button", { text: "\u25B6" });
       ((nextButton.disabled = this.spread >= spreadCount - 1),

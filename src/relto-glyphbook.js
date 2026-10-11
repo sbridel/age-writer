@@ -46,7 +46,7 @@ function glyphImg(r, id, col) {
     e = { img: null, ok: false }; cache.set(key, e);
     try {
       const inner = String(r.opts.glyphSvg(id)).replace(/currentColor/g, col), img = new Image();
-      img.onload = () => { e.ok = true; if (!r.running && (r.view === "glyphbook" || r.view === "agebook")) r.draw(0); };
+      img.onload = () => { e.ok = true; if (!r.running && (r.view === "glyphbook" || r.view === "descbook")) r.draw(0); };
       img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">${inner}</svg>`);
       e.img = img;
     } catch (err) { e.img = null; }

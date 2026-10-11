@@ -294,12 +294,12 @@ function drawLoft(r, ctx, sc, sky, t) {
   const stand = (x, y, w, h, body, band, kind) => {
     ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(x - 4, y, w + 14, 7); ctx.fillStyle = c(body); ctx.fillRect(x, y - h, w, h); ctx.fillStyle = c(band); ctx.fillRect(x, y - h + 10, w, 5); ctx.fillRect(x, y - 16, w, 5); ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x + w - 6, y - h, 6, h);
     const mx = x + w / 2, my = y - h / 2; ctx.fillStyle = c(band);
-    if (kind === "agebook") { ctx.fillRect(mx - 7, my - 9, 14, 18); ctx.fillStyle = c(body); ctx.fillRect(mx - 5, my - 7, 10, 14); ctx.fillStyle = c(band); ctx.fillRect(mx - 1, my - 7, 2, 14); }
+    if (kind === "descbook") { ctx.fillRect(mx - 7, my - 9, 14, 18); ctx.fillStyle = c(body); ctx.fillRect(mx - 5, my - 7, 10, 14); ctx.fillStyle = c(band); ctx.fillRect(mx - 1, my - 7, 2, 14); }
     else if (kind === "glyphs") { ctx.beginPath(); ctx.moveTo(mx, my - 14); ctx.lineTo(mx + 9, my); ctx.lineTo(mx, my + 14); ctx.lineTo(mx - 9, my); ctx.closePath(); ctx.fill(); } else { ctx.fillRect(mx - 6, my - 10, 12, 16); ctx.fillStyle = c(body); ctx.fillRect(mx - 2, my - 5, 4, 7); }
   };
   stand(70, 296, 38, 84, "#27555a", "#d8c07a", "glyphs"); r.hot.push({ x: 66, y: 208, w: 52, h: 94, tip: TRr("atelier.loft.glyphs"), go: "glyphbook" });
   stand(136, 296, 38, 74, "#5b2b2b", "#c9a24e", "library"); r.hot.push({ x: 132, y: 218, w: 52, h: 84, tip: TRr("atelier.loft.library"), special: "library" });
-  stand(202, 296, 30, 62, "#3d3a2a", "#d8c07a", "agebook"); r.hot.push({ x: 198, y: 232, w: 42, h: 72, tip: TRr("atelier.loft.agebook"), go: "agebook" });
+  stand(202, 296, 30, 62, "#3d3a2a", "#d8c07a", "descbook"); r.hot.push({ x: 198, y: 232, w: 42, h: 72, tip: TRr("atelier.loft.agebook"), go: "descbook" });
   { const bx = 262, by = 292; ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 4, by - 2, 170, 20); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx, by - 8, 80, 18); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 84, by - 8, 80, 18); ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 4; k++) { ctx.fillRect(bx + 8, by - 3 + k * 4, 62, 1); ctx.fillRect(bx + 92, by - 3 + k * 4, 62, 1); }
     r.hot.push({ x: bx - 6, y: by - 12, w: 176, h: 34, tip: TRr("atelier.loft.pages"), go: "book" }); }
   if (sc.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { const nx = 450, ny = 290; ctx.fillStyle = c("#3b2a1a"); ctx.fillRect(nx, ny, 62, 14); ctx.fillStyle = c("#6b4a2a"); ctx.fillRect(nx, ny - 3, 62, 5); ctx.fillStyle = c("#c9a24e"); ctx.fillRect(nx + 3, ny + 2, 5, 9); ctx.fillRect(nx + 54, ny + 2, 5, 9); ctx.fillStyle = c("#8e2b27"); ctx.fillRect(nx + 40, ny + 12, 3, 12); r.hot.push({ x: nx - 3, y: ny - 8, w: 68, h: 36, tip: TRr("atelier.loft.surveyor"), special: "surveyor" }); }

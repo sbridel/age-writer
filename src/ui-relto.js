@@ -18,6 +18,7 @@ const SS = require("./starsystem");
 const CAL = require("./calibration");
 const UW = require("./unwritten");
 const ST = require("./story");
+const DB = require("./relto-descbook");
 const LEC = require("./lectern");
 
 const AUDIO_EXT = ["mp3", "ogg", "wav", "m4a", "flac"];
@@ -702,25 +703,34 @@ async function renderRelto(plugin, source, el, ctx) {
     try { img = new Image(); img.onload = () => { if (!renderer.running) renderer.draw(0); }; img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" style="color:#e0c27a" color="#e0c27a">${plugin.core.glyphSvg(id, 0, 0, 100, "light")}</svg>`); } catch (e) { img = null; }
     glyphImgs.set(id, img); return img;
   };
-  // le livre vierge et son lutrin (src/relto-agebook.js, src/lectern.js) : lire l'Âge à mesure qu'on l'écrit, selon le titre d'écrivain ; le sceller en note
-  const lecternRead = (text, name) => {
-    const src = String(text || "").trim(); if (!src) return null;
-    const seed = name || "Age", a = plugin.core.analyse(src, { seed }); if (!a) return null;
-    const fr = plugin.lang() === "fr", tier = plugin.status ? plugin.status.tier() : 0;
-    let prose = ""; try { prose = String(plugin.core.prose(a.resolved, { seed }) || ""); } catch (e) { prose = ""; }
-    const H = require("./engine/hooks").hooks;
-    return LEC.readOut(a, { tier, fr, prose, dosage: H.dosageNote(a.dosage), depth: tier >= 2 ? H.depthNote(src, seed) : "" });
+  // le livre descriptif monté dans le Relto (src/relto-descbook.js) : le vrai livre du moteur ; un livre vierge crée sa note au premier ajout
+  /** Rattache le livre de liaison d'un Âge neuf à l'étagère de ce Relto : s'il a une liste blanche (`relto_books`), l'Âge y entre. */
+  const attachToShelf = async (f) => {
+    try { await app.fileManager.processFrontMatter(file, (fm) => { if (Array.isArray(fm.relto_books)) { if (!fm.relto_books.includes(f.basename)) fm.relto_books.push(f.basename); } else if (typeof fm.relto_books === "string" && fm.relto_books.trim()) fm.relto_books += ", " + f.basename; }); } catch (e) { /* le Relto n'a pas de liste blanche : l'Âge s'y montre déjà */ }
   };
-  const onAgeWrite = async (name, text) => {
-    const lines = String(text || "").split(/\r?\n/).map((l) => l.replace(/\s+$/, "")).filter((l) => l.trim());
-    if (!lines.length) return { ok: false, error: "empty" };
-    const base = String(name || "").replace(/[\\/:*?"<>|#^[\]]/g, "").trim() || "Age", body = `# ${base}\n\n\`\`\`age\n${lines.join("\n")}\n\`\`\`\n`;
+  const createAgeNote = async (line) => {
+    const base = "Age", body = `# ${base}\n\n\`\`\`age\n${String(line || "").trim()}\n\`\`\`\n`;
     try {
       const inStory = !!(scene && scene.mode === "story"), dir = inStory ? ST.dirOf(file.path) : "";
       let f; if (inStory && dir) { let n = 1, path; do { path = `${dir}/${base}${n > 1 ? " " + n : ""}.md`; n++; } while (app.vault.getAbstractFileByPath(path) || app.vault.getMarkdownFiles().some((x) => x.basename === path.replace(/^.*\//, "").replace(/\.md$/, ""))); f = await app.vault.create(path, body); plugin.index.invalidate(); }
       else f = await plugin.createNoteIn(base, body);
-      plugin.refreshLive(); return { ok: true, name: f.basename };
-    } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
+      await attachToShelf(f); plugin.refreshLive(); return f;
+    } catch (e) { console.warn("[Age Writer ext] livre vierge", e); return null; }
+  };
+  const onDescMount = (root, path) => {
+    const f = path ? app.vault.getAbstractFileByPath(path) : null, ctrl = DB.mount(plugin, root, { file: f instanceof obsidian.TFile ? f : null, fr: plugin.lang() === "fr", onCreate: createAgeNote });
+    ctrl.render(); return ctrl;
+  };
+  // le registre de l'Imageur (src/relto-ledger.js, src/lectern.js) : lit l'Âge posé sur le lutrin, par couches selon le titre d'écrivain
+  const onLedger = async (age) => {
+    try {
+      const f = app.vault.getAbstractFileByPath(age.path); if (!f) return null;
+      const src = plugin.core.extract(await app.vault.cachedRead(f)); if (src == null) return null;
+      const seed = plugin.core.seed(f.path), a = plugin.core.analyse(src, { seed }); if (!a) return null;
+      const fr = plugin.lang() === "fr", tier = plugin.status ? plugin.status.tier() : 0, H = require("./engine/hooks").hooks;
+      let prose = ""; try { prose = String(plugin.core.prose(a.resolved, { seed }) || ""); } catch (e) { prose = ""; }
+      return LEC.readOut(a, { tier, fr, prose, dosage: H.dosageNote(a.dosage), depth: tier >= 2 ? H.depthNote(src, seed) : "" });
+    } catch (e) { console.warn("[Age Writer ext] registre", e); return null; }
   };
   const imagerGet = (path) => (plugin.ext.imagerTunings || {})[path] || null;
   const imagerSet = (path, s) => { plugin.ext.imagerTunings = { ...(plugin.ext.imagerTunings || {}), [path]: s }; plugin.saveExt(); if (s && s.lock) { clearTimeout(plugin._lockTick); plugin._lockTick = window.setTimeout(() => storyTick(plugin), 400); } }; // un verrou tiré peut réussir le chapitre de l'Imageur
@@ -738,7 +748,7 @@ async function renderRelto(plugin, source, el, ctx) {
   let libData = { ages: [], relto: [] };
   const libReload = async () => { try { libData = { ages: await B.libraryLines(plugin, "ages"), relto: await B.libraryLines(plugin, "relto") }; } catch (e) { console.warn("[Age Writer ext] library book", e); } renderer._lbData = null; renderer.draw(0); };
   const renderer = new ReltoRenderer(canvas, plugin.dni, { atelierDirect: () => plugin.ext.atelierDirect !== false, bookAnim: () => plugin.ext.bookAnim !== false, libraryData: () => libData, onLibraryOpen: () => { libReload(); },
-    lecternRead, onAgeWrite, onLibraryAdd: async (kind, text) => { const res = await B.addLibraryLines(plugin, kind, text); if (res.ok) { if (kind === "relto") plugin.refreshLive(); await libReload(); } return res; }, mailState: () => mailState(plugin, file), statusState: () => { const tier = plugin.status ? plugin.status.tier() : 0; return { tier, korfah: !!(plugin.status && plugin.status.korfah()), title: plugin.t("status.title." + tier) }; }, relicState: () => relicsOf(plugin, file),
+    onDescMount, onLedger, onLibraryAdd: async (kind, text) => { const res = await B.addLibraryLines(plugin, kind, text); if (res.ok) { if (kind === "relto") plugin.refreshLive(); await libReload(); } return res; }, mailState: () => mailState(plugin, file), statusState: () => { const tier = plugin.status ? plugin.status.tier() : 0; return { tier, korfah: !!(plugin.status && plugin.status.korfah()), title: plugin.t("status.title." + tier) }; }, relicState: () => relicsOf(plugin, file),
     onKnock: (k) => { if (roomSoundOn()) { sound.knock(roomVol() * (k === "stone" ? 0.55 : k === "press" ? 0.8 : k === "book" ? 0.9 : 1.6), { hollow: k !== "press" && k !== "stone" }); if (k === "book") window.setTimeout(() => sound.slideStone(roomVol() * 1.5), 250); else if (k === "open") window.setTimeout(() => sound.slideWood(roomVol() * 1.5, { open: true }), 300); } },
     glyphSvg: (id) => { try { return plugin.core.glyphSvg(id, 0, 0, 100, "none"); } catch (e) { return ""; } }, onFlip: () => { if (roomSoundOn()) sound.pageTurn(roomVol() * 1.2, { quick: true }); }, onRelic: (k) => { if (!roomSoundOn()) return; if (k === "open" || k === "close") sound.slideWood(roomVol() * 1.3, { open: k === "open" }); else sound.knock(roomVol() * 0.9, { hollow: false }); }, telescopeGen: () => plugin.telescopeGen || 0, instrumentsMode: () => INS.modeOf(plugin.ext), lensHints: () => plugin.ext.lensHints !== false,hoverFrame: plugin.ext.hoverFrame === true, imagerHum: () => ({ on: plugin.ext.soundImagerHum !== false, vol: humVol() }), onImagerHum: (a) => { if (a.toggle) plugin.ext.soundImagerHum = plugin.ext.soundImagerHum === false; else plugin.ext.imagerHumVol = Math.round(Math.max(0, Math.min(1, humVol() + a.delta * 0.2)) * 10) / 10; if (a.delta && plugin.ext.soundImagerHum === false && plugin.ext.imagerHumVol > 0) plugin.ext.soundImagerHum = true; plugin.saveExt(); roomAudio("imager"); }, notes: plugin.ext.imagerNotes || "words", onImagerAge: imagerAge, unwrittenFind, onTranscribe, imagerGet, imagerSet, glyphImage, t, telescopeGet, telescopeSet, onTelescopeSound, onImagerTune: () => { const cl = renderer.imagerClarity(); if (sound.imagerTune) sound.imagerTune(cl.atmo, cl.total, !!(renderer.imager && renderer.imager.settings && renderer.imager.settings.lock)); }, onImagerSound: (k) => { if (roomSoundOn() && sound.imagerSfx) sound.imagerSfx(k, roomVol()); }, onImagerChord: (fs, beat) => { if (roomSoundOn() && sound.crystalChord) sound.crystalChord(fs, beat, roomVol()); }, reducedMotion: reduced, onView: (v) => { syncView(v); if (v === "atelier") { const rs = relicsOf(plugin, file); if (!rs.seen) { rs.seen = true; plugin.saveExt(); } syncKey(); } }, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onPurr: () => { if (roomSoundOn()) roomBuf("roomPurrFile").then((b) => sound.purr(roomVol(), b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onPageToggle: async (id) => { const on = scene && scene.pagesActive.includes(id); await reltoEdit((l) => (on ? l.filter((x) => x !== id) : [...l, id])); plugin.refreshLive(); }, onSpecial: (kind) => { if (kind === "story") storyNext(plugin); else if (kind === "mail") openMail(plugin, file).then(() => renderer.draw(0)); else if (kind === "surveyor") B.openSurveyorBook(plugin, scene ? scene.ages : []); else if (kind === "glyphs") { if (renderer.available().glyphbook) renderer.setView("glyphbook"); else B.openGlyphBook(plugin, scene ? scene.ages : []); } else if (renderer.available().librarybook) renderer.setView("librarybook"); else B.openLibraryBook(plugin); }, onOpen: (age) => playLinkAnim(plugin, age, canvas.parentElement || document.body, () => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); }, () => app.workspace.openLinkText(age.path, "", false)) });
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;

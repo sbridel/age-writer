@@ -245,6 +245,7 @@ function overview(r, ctx, st, cl, t, c, now) {
   ctx.fillStyle = "#e0c27a"; ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillText(st.age ? st.age.name : st.empty ? "(no Age on the shelf)" : "…", 74, 238); ctx.textAlign = "left";
   for (const [dx, sym, d] of [[-56, "‹", -1], [56, "›", 1]]) { ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "20px serif"; ctx.textAlign = "center"; ctx.fillText(sym, 74 + dx, 203); ctx.textAlign = "left"; r.hot.push({ x: 74 + dx - 12, y: 182, w: 24, h: 28, tip: d < 0 ? "Previous book" : "Next book", imager: { book: d } }); }
   r.hot.push({ x: 28, y: 180, w: 92, h: 66, tip: st.age ? `${st.age.name} — on the lectern` : "Lectern", imager: { book: 1 } });
+  if (st.age && !st.station && r.opts.onLedger) require("./relto-ledger").drawIcon(r, ctx, c, tx(r).t("ledger.tip"), r.imagerT || 0); // le registre : il lit l'Âge du lutrin
   }
 
   // l'établi et ses trois postes
@@ -622,6 +623,7 @@ function drawImagerRoom(r, ctx, sc, sky, t) {
   else if (st.station === "atmo") closeAtmo(r, ctx, st, cl, t, c, now);
   else overview(r, ctx, st, cl, t, c, now);
   if (r.opts.onImagerTune && !(Math.abs(t - (r.imagerTunedAt || -9)) < 1)) { r.imagerTunedAt = t; r.opts.onImagerTune(st); } // la phase dérive : le bourdon suit, une fois par seconde
+  if (r.ledgerOpen && st.age && !st.station && !st.guild) { const LG = require("./relto-ledger"); LG.drawPanel(r, ctx, c, tx(r).t, LG.ensureRead(r, st.age), st.age.name); } else r.ledgerOpen = false;
   humPlate(r, ctx, c, !st.station); // vue d'ensemble : sur la console, avec le reste ; gros plans : en bas à droite
   const S = st.station ? MINI : SCREEN, k = cl.total;
   const lg2 = ctx.createRadialGradient(S.x + S.w / 2, S.y + S.h / 2, 30, S.x + S.w / 2, S.y + S.h / 2, 420); lg2.addColorStop(0, rgba(127, 214, 200, 0.03 + 0.08 * k)); lg2.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = lg2; ctx.fillRect(0, 0, W, H);
