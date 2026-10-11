@@ -54,6 +54,16 @@ assert.ok(!(LF.laws(set("plankton", "water", "single_sun"), { weights: { life: 1
 assert.ok(LF.laws(set("microbial_mat", "water"), { weights: { life: 1 } }).notes.some((n) => n.id === "noHeat"), "tapis sans chaleur ni chimie");
 assert.ok(!(LF.laws(set("microbial_mat", "water", "lava"), { weights: { life: 1 } }) || { notes: [] }).notes.some((n) => n.id === "noHeat"), "la lave chauffe le tapis");
 
+// 5b. la caverne : l'algue lumineuse est une lampe et un producteur ; la capsule se dose
+assert.ok(!(LF.laws(set("glow_algae", "water"), { weights: { life: 1 } }) || { notes: [] }).notes.some((n) => n.id === "noLight"), "l'algue lumineuse éclaire le plancton");
+assert.ok(LF.laws(set("plankton", "glow_algae", "water"), { weights: { life: 1 } }) === null, "plancton + algue lumineuse : de la lumière");
+const dosePellet = (f) => LF.laws(set("pellet", "fern", "water"), { weights: { life: 1 }, factor: (id) => (id === "pellet" ? f : 1) });
+assert.ok(dosePellet(1).notes.some((n) => n.id === "fedPellet") && dosePellet(0.4).notes.some((n) => n.id === "fedPellet"), "bien dosée, la capsule nourrit");
+assert.ok(dosePellet(2).notes.some((n) => n.id === "overdose" && n.cost > 0) && !dosePellet(2).notes.some((n) => n.id === "fedPellet"), "trop dosée, elle brûle");
+assert.ok(!LF.laws(set("pellet", "stone"), { weights: { life: 1 } }), "rien ne pousse : la capsule ne dit rien");
+assert.ok(!(LF.laws(set("great_tree", "salt", "pellet", "mycelium", "water"), { weights: { soil: 1, life: 1 } }) || { notes: [] }).notes.some((n) => n.id === "noEarth"), "la capsule fait de la terre fertile");
+assert.ok(run("balanced", "fern", "water", "pellet", "many: pellet").stability <= run("balanced", "fern", "water", "pellet").stability, "beaucoup de capsules ne font pas mieux");
+
 // 6. selon la rigueur : en doux, une phrase mais aucun coût ; ensuite, un coût
 const g = run("gentle", "grazer", "fern", "water"), b = run("balanced", "grazer", "fern", "water"), s = run("strict", "grazer", "fern", "water");
 assert.ok(g.life && LF.note(g.life, false) && /Vie/.test(LF.note(g.life, true)), "doux : la phrase est dite, en deux langues");

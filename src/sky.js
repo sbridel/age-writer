@@ -17,8 +17,8 @@ const HUES = { green_sun: [150, 255, 150], red_sun: [255, 110, 80], white_sun: [
 const HUE_IDS = Object.keys(HUES);
 
 /** Mondes-types : un seul mot pour dire « ici, tout est de glace ». Pèsent sur la stabilité, jamais tirés au sort. */
-const WORLD_IDS = ["frozen_world", "lava_world", "desert_world", "ocean_world", "jungle_world"];
-const WORLD_LABEL = { frozen_world: "A frozen world", lava_world: "A world of lava", desert_world: "A desert world", ocean_world: "An ocean world", jungle_world: "A jungle world" };
+const WORLD_IDS = ["frozen_world", "lava_world", "desert_world", "ocean_world", "jungle_world", "cavern_world"];
+const WORLD_LABEL = { frozen_world: "A frozen world", lava_world: "A world of lava", desert_world: "A desert world", ocean_world: "An ocean world", jungle_world: "A jungle world", cavern_world: "A world under rock" };
 
 const star = (id, label, weight, tag) => ({ id, category: "hue", label, axis: "cosmological", weight, proseTag: "#" + tag + "#" });
 /** Deux couleurs de soleil écrites ensemble ne s'accordent que s'il y a deux soleils. */
@@ -57,6 +57,7 @@ const NOTES = {
   lava_world: ["the ground is still being made here, and will not wait for what stands on it", "a world of fire gives little thought to what it burns"],
   desert_world: ["the dry world has no patience for anything that wants to be wet", "the sand keeps its own counsel, and drinks what is spilled upon it"],
   ocean_world: ["a world of water has no shore to hold what is dry", "the sea claims what it can reach, and it can reach everything"],
+  cavern_world: ["the roof of rock keeps the sky out, and keeps what is under it", "a world under stone has weather only in its dreams"],
   jungle_world: ["the green world is hungry, and it takes what does not belong to it", "everything here grows, and grows over what is not alive"],
 };
 const FRAGILE = ["tablet", "lamp", "bridge", "door", "book", "lit_lamp", "worn_tablet", "speaking_tablet", "fallen_bridge", "sealed_door"];
@@ -68,10 +69,11 @@ const WORLD_CLASH = {
   lava_world: [["ice", "strong", "geological"], ["deep_cold", "strong", "weather"], ["black_ice", "medium", "geological"], ["hail", "medium", "weather"], ["rime", "medium", "weather"], ["meltwater", "light", "geological"], ["water", "light", "geological"], ["snow", "strong", "weather"], ["glaze", "medium", "weather"], ["flowers", "medium", "ecological"]],
   desert_world: [["water", "medium", "geological"], ["ice", "medium", "geological"], ["deep_cold", "light", "weather"], ["rain", "medium", "weather"], ["marsh_mist", "medium", "weather"], ["fog", "light", "weather"], ["drizzle", "medium", "weather"], ["snow", "light", "weather"]],
   ocean_world: [["sand", "medium", "geological"], ["lava", "medium", "geological"], ["dust_storm", "medium", "weather"], ["wildfire", "medium", "ecological"], ["glass", "light", "geological"]],
+  cavern_world: [["rain", "strong", "weather"], ["thunderstorm", "strong", "weather"], ["lightning", "strong", "weather"], ["storm", "strong", "weather"], ["wind", "strong", "weather"], ["drizzle", "medium", "weather"], ["hail", "medium", "weather"], ["snow", "medium", "weather"], ["dust_storm", "medium", "weather"], ["ash_cloud", "medium", "weather"], ["deep_cold", "medium", "weather"], ["heat", "medium", "weather"], ["lava", "light", "geological"], ...["single_sun", "twin_suns", "green_sun", "red_sun", "white_sun", "blue_sun", "orange_sun", "violet_sun"].map((id) => [id, "medium", "cosmological"])],
   jungle_world: [["sand", "medium", "geological"], ["ice", "medium", "geological"], ["deep_cold", "medium", "weather"], ["lava", "medium", "geological"], ["dust_storm", "medium", "weather"], ["wildfire", "strong", "ecological"], ["ash_cloud", "light", "weather"], ["snow", "medium", "weather"]],
 };
 /** Vie fragile selon le monde (gravité de la tension avec chaque bloc vivant). */
-const WORLD_LIFE = { frozen_world: "light", lava_world: "medium", desert_world: "light" };
+const WORLD_LIFE = { frozen_world: "light", lava_world: "medium", desert_world: "light", cavern_world: "light" };
 const SKY_RULES = [
   ...FRAGILE.map((w) => rule("asteroid_belt", w, "light", "geological", "rock_belt")),
   ...FRAGILE.map((w) => rule("asteroid_field", w, w === "bridge" || w === "fallen_bridge" ? "strong" : "medium", "geological", "rock_field")),
@@ -104,6 +106,7 @@ const SKY_PROSE = {
   desert_world: ["the world is dry to its bones, a wide and patient desert", "a desert world, where the horizon is the only thing that moves", "sand and silence, to the edge of what the sky can hold"],
   ocean_world: ["the world is water to the horizon, and the horizon is the only land", "an ocean world, deep and without a single shore", "everything here floats, or sinks, or waits beneath the surface"],
   jungle_world: ["the world is a single green hunger, dense and loud", "a jungle world, where every surface is alive with something", "leaf over leaf, to the edge of the sky, and nothing lies still beneath it"],
+  cavern_world: ["the world is a hollow in the rock, and the dark is its only sky", "a world under stone, where the roof is the horizon", "everything here lives beneath a lid of rock, and learns to make its own light"],
   black_sun: ["a black sun hangs overhead, a dark coin rimmed with dull fire, and the day comes as warmth more than light", "the sun is black, and the world beneath it is drawn in greys", "under a black sun, colours drain away and every shadow is soft and red at the edges"],
   violet_sun: ["a violet sun burns at the edge of what the eye can hold", "the sun is violet, and the day has the color of a bruise at dusk", "a violet star, strangely bright, tints the sky with dusk"],
 };

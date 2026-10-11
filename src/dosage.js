@@ -35,7 +35,7 @@ const BIOMES = {
   ice: ["deep_cold", "snow", "frozen_world"],
   water: ["water", "ocean_world", "kelp", "coral", "subsurface_ocean", "bitter_water", "submarine_fissure", "river", "delta", "lake", "marsh"],
   fire: ["lava", "lava_world", "molten_core", "geysers", "ash"],
-  stone: ["stone", "iron", "crystal", "strange_stone", "hollowed_ground", "mountains", "canyon"],
+  stone: ["stone", "iron", "crystal", "strange_stone", "hollowed_ground", "mountains", "canyon", "cavern_world"],
   forest: ["great_tree", "vine", "fern", "grass", "flowers", "garden", "jungle_world"],
   salt: ["salt"],
 };
@@ -69,6 +69,7 @@ function dosage(r, factor, get, opts) {
   const reactions = res.matter.reactions || [], written = res.matter.written || [];
   const delta = {}, add = (axis, d) => { if (Math.abs(d) > 1e-9) delta[axis] = (delta[axis] || 0) + d; };
   const biomes = biomeCount(written);
+  const vault = require("./vault").vaultOf(new Set([...written, ...reactions.map((x) => x.result), ...(res.lines || []).map((l) => l.entry && l.entry.id).filter(Boolean)]), size); // la voûte de la caverne laisse passer une part du froid, de la chaleur et de la lumière
 
   // facteur de dose d'un bloc dérivé : le produit de ceux de ses ingrédients (un peu d'eau fait un peu de brume)
   const by = new Map(reactions.map((x) => [x.result, x])), memo = new Map();
@@ -93,7 +94,7 @@ function dosage(r, factor, get, opts) {
   for (const c of res.triggered || []) {
     if (!c.note || !c.axis || c.a === "fissure" || /_fissure$/.test(c.a)) continue;
     const base = CONTRADICTION_COST[c.severity]; if (!base) continue;
-    const e = extent(f(c.b), size, biomes); if (e === 1) continue;
+    const e = extent(f(c.b), size, biomes) * (c.a === "cavern_world" ? require("./vault").attenuation(vault, c.b) : 1); if (e === 1) continue;
     const d = base * (e - 1) * (e < 1 ? 1 : w); // allègement : plein ; aggravation : au poids de la famille
     if (Math.abs(d) < 1e-9) continue;
     add(c.axis, d); softened.push({ a: c.a, b: c.b, axis: c.axis, saved: -d });

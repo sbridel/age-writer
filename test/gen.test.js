@@ -192,17 +192,18 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
 // mondes-types : un mot impose le décor, et chaque monde se dessine sans erreur
 {
   const K = require("../src/sky");
-  ok(K.WORLD_IDS.length === 5 && K.WORLD_IDS.every((id) => K.SKY_BLOCKS.some((b) => b.id === id && b.category === "world")), "cinq mondes-types");
+  ok(K.WORLD_IDS.length === 6 && K.WORLD_IDS.every((id) => K.SKY_BLOCKS.some((b) => b.id === id && b.category === "world")), "six mondes-types");
   const F = (id) => G.sceneOf(an(["single_sun", id]), "W");
   ok(F("frozen_world").ice && F("frozen_world").world === "frozen" && !F("frozen_world").lava, "frozen_world : glace");
   ok(F("lava_world").lava && F("lava_world").heat && F("lava_world").ash && !F("lava_world").water, "lava_world : lave, chaleur, cendres");
   ok(F("desert_world").sand && F("desert_world").heat && !F("desert_world").water, "desert_world : sable et chaleur");
   ok(F("ocean_world").water && !F("ocean_world").sand, "ocean_world : eau");
   ok(F("jungle_world").trees === 5 && F("jungle_world").fog && F("jungle_world").rain && F("jungle_world").glow, "jungle_world : forêt dense, brume, pluie, lueurs");
+  ok(F("cavern_world").world === "cavern" && F("cavern_world").suns === 0 && F("cavern_world").glow, "cavern_world : sans soleil, des lueurs");
   ok(G.sceneOf(an(["single_sun"]), "W").world === null, "sans monde-type : rien d'imposé");
   for (const id of K.WORLD_IDS) for (const t of [0, 0.3, 0.7]) for (const day of [0.05, 0.4, 0.9]) { const log = []; G.paint(fakeCtx(log), G.build(F(id), 320, 192), t, { day }); ok(log.length > 40, id + " se dessine"); }
   const sg = (id) => { const l = []; G.paint(fakeCtx(l), G.build(F(id), 320, 192), 0.3, { day: 0.4 }); return l.join("|"); };
-  ok(new Set(K.WORLD_IDS.map(sg)).size === 5, "les cinq mondes ont cinq rendus différents");
+  ok(new Set(K.WORLD_IDS.map(sg)).size === 6, "les six mondes ont six rendus différents");
 }
 
 // quantités (beaucoup / peu / normal) et richesses ↔ cicatrices

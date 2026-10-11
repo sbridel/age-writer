@@ -35,13 +35,13 @@ function sceneOf(a, name = "", blocks = null) {
   // « * » : allumé par autre chose qu'un bloc (monde-type, physique), donc toujours là
   const wxSrc = {}, rw = (flag, ...n) => { const hit = n.filter((x) => ids.has(x)); if (hit.length) (wxSrc[flag] = wxSrc[flag] || []).push(...hit); return hit.length > 0; };
   const always = (flag, on) => { if (on) (wxSrc[flag] = wxSrc[flag] || []).push("*"); return on; }, or2 = (a, b) => a || b; // or2 : les deux côtés sont déjà évalués (chacun note sa source)
-  const wd =r("frozen_world") ? "frozen" : r("lava_world") ? "lava" : r("desert_world") ? "desert" : r("ocean_world") ? "ocean" : r("jungle_world") ? "jungle" : null; // monde-type : impose son décor
+  const wd =r("frozen_world") ? "frozen" : r("lava_world") ? "lava" : r("desert_world") ? "desert" : r("ocean_world") ? "ocean" : r("jungle_world") ? "jungle" : r("cavern_world") ? "cavern" : null; // monde-type : impose son décor
   const ruins = [];
   if (r("door", "sealed_door")) ruins.push("door"); if (r("bridge", "fallen_bridge")) ruins.push("bridge");
   if (r("tablet", "worn_tablet", "speaking_tablet")) ruins.push("tablet"); if (r("lamp", "lit_lamp")) ruins.push("lamp");
   const S = {
     name, seed: fnv(name + "|" + [...ids].sort().join(",")), verdict: a.verdict, unrest: clamp(1 - (a.stability == null ? 100 : a.stability) / 100),
-    suns: r("twin_suns") ? 2 : r("single_sun") ? 1 : 0, skyStated: r("twin_suns", "single_sun", "starless"), moon: r("companion_moon"),
+    suns: wd === "cavern" ? 0 : r("twin_suns") ? 2 : r("single_sun") ? 1 : 0, skyStated: r("twin_suns", "single_sun", "starless"), moon: r("companion_moon"),
     cycle: r("frozen_cycle") ? "frozen" : r("erratic_cycle") ? "erratic" : "steady", chaos: r("chaotic_orbit"), veil: r("permanent_veil"),
     auroras: r("auroras"), eclipses: r("recurring_eclipses"), starfall: r("starfall"),
     rain: or2(rw("rain", "rain", "storm", "thunderstorm", "whispering_storm", "waiting_thunder"), always("rain", wd === "jungle")), storm: rw("storm", "storm", "thunderstorm", "whispering_storm", "waiting_thunder"),
@@ -54,7 +54,7 @@ function sceneOf(a, name = "", blocks = null) {
     lava: r("lava", "obsidian", "whispering_obsidian") || wd === "lava", water: (r("water", "marsh_mist", "brine", "meltwater", "crying_obsidian", ...TERRAIN.WATER_IDS) || wd === "ocean") && wd !== "lava" && wd !== "desert",
     ice: r("ice", "black_ice", "deep_cold", "hail", "rime") || wd === "frozen", sand: r("sand", "dust_storm", "glass", "singing_glass", "fulgurite") || wd === "desert",
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
-    moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine") || wd === "jungle", eyes: r("hunter", "stalking_pack"),
+    moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine", "glow_algae") || wd === "jungle" || wd === "cavern", eyes: r("hunter", "stalking_pack"),
     ruins, lampLit: r("lit_lamp"), tabletAwake: r("speaking_tablet"),
     world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), remnants: ["pulsar", "neutron_star", "black_hole"].filter((id) => ids.has(id)), sunHues: SKY.sunColors([...ids]), blackDisc: [...ids].find((i) => SKY.HUES[i]) === "black_sun", blackSun: [...ids].find((i) => SKY.HUES[i]) === "black_sun" && !r("twin_suns"),
     extras: [...ids].filter((id) => !KNOWN.has(id) && !id.startsWith("?")).sort().slice(0, 8).map((id) => {
@@ -177,7 +177,7 @@ function traits(words) {
 function build(S, W, H) {
   const r = rng(S.seed ^ 0x9e3779b9), hz = H * 0.7, A = (k) => (S.amt && S.amt[k] != null ? S.amt[k] : 1), nA = (n, k, lo, hi) => Math.round(clamp(n * A(k), lo, hi)); // quantités : beaucoup / peu / normal
   const hue = r() * 360, sat = 0.28 + r() * 0.35, warm = 20 + r() * 40, cool = 190 + r() * 60;
-  const skyHue = S.world === "jungle" ? 95 + r() * 40 : S.lava ? 8 + r() * 20 : S.sand ? 28 + r() * 16 : S.ice ? 200 + r() * 25 : hue;
+  const skyHue = S.world === "jungle" ? 95 + r() * 40 : S.world === "cavern" ? 215 + r() * 30 : S.lava ? 8 + r() * 20 : S.sand ? 28 + r() * 16 : S.ice ? 200 + r() * 25 : hue;
   const pal = {
     nightTop: hsl(skyHue + 230, 0.45, 0.05), nightHz: hsl(skyHue + 240, 0.35, 0.12),
     dawnTop: hsl(skyHue + 250, 0.4, 0.2), dawnHz: hsl(warm, 0.65, 0.5),

@@ -28,6 +28,11 @@ const BLOCKS = [
   { id: "humus", d: ["dark", "rich", "crumbling"], w: 0.01, axis: "geological", p: "dark humus crumbles under the roots, rich with everything that died here" },
   { id: "peat", d: ["spongy", "dark", "damp"], w: 0.03, axis: "geological", p: "spongy black peat holds the marsh together, and holds its water" },
 ];
+// la caverne : l'algue qui s'éclaire seule, et la capsule de nutriments (un amendement qui se dose)
+BLOCKS.push(
+  { id: "glow_algae", d: ["luminous", "slimy", "cold"], w: 0.02, axis: "ecological", p: "a cold, slimy algae glows in the water, the only lamp for a long way" },
+  { id: "pellet", d: ["compact", "dull", "dense"], w: 0.02, axis: "ecological", p: "a dull, dense pellet of nutrients lies in the ground, waiting to be dissolved" },
+);
 const MATTER_BLOCKS = BLOCKS.map((b) => ({ id: b.id, descriptors: b.d, weight: b.w, axis: b.axis, writable: true, presence: b.p }));
 /** Ce qui naît de la rencontre : jamais écrit, toujours produit (poids 0). */
 const PRODUCED = [
@@ -57,7 +62,7 @@ const IDS = [...BLOCKS.map((b) => b.id), ...PRODUCED.map((b) => b.id)];
 
 // ---- les rôles -------------------------------------------------------------------------------------------------------------
 const ROLES = {
-  producer: ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "grass", "meadow", "flowers", "kelp", "coral", "glowvine", "cinderbloom", "plankton", "microbial_mat", "berry_shrub", "thorn_bush", "heath_shrub", "moss", "lichen", "singing_lichen"],
+  producer: ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "grass", "meadow", "flowers", "kelp", "coral", "glowvine", "cinderbloom", "plankton", "glow_algae", "microbial_mat", "berry_shrub", "thorn_bush", "heath_shrub", "moss", "lichen", "singing_lichen"],
   herbivore: ["grazer", "burrower", "drifter", "shoal", "herd", "watching_herd"],
   carnivore: ["hunter", "stalking_pack", "spiders", "raptor", "deep_hunter", "cave_stalker"],
   scavenger: ["carrion_beetle"],
@@ -67,7 +72,7 @@ const ROLES = {
 /** Les rôles secondaires : l'espèce les tient, moins bien (polyvalents). */
 const SECONDARY = { moth: ["scavenger"], hunter: ["scavenger"], burrower: ["decomposer"], raptor: ["scavenger"], cave_stalker: ["decomposer"] };
 // ---- les échelles : micro < macro < géant (le géant viendra avec le catalogue de Catherine) --------------------------------
-const MICRO = ["spore", "spore_cloud", "pale_fungus", "lichen", "singing_lichen", "moss", "plankton", "microbial_mat", "mycelium", "mushroom", "soil_bacteria", "aeroplankton", "earth", "humus", "peat", "silt",
+const MICRO = ["spore", "spore_cloud", "pale_fungus", "lichen", "singing_lichen", "moss", "plankton", "glow_algae", "microbial_mat", "mycelium", "mushroom", "soil_bacteria", "aeroplankton", "earth", "humus", "peat", "silt",
   // l'eau porte ses microbes : un monde mouillé n'est jamais sans petite vie
   "water", "brine", "meltwater", "marsh", "lake", "river", "delta", "fog", "marsh_mist", "rain"];
 const BIG_TREES = ["great_tree", "grove", "ironwood"];
@@ -77,11 +82,12 @@ const SOIL = {
   earth: { sol: 2, fer: 2, hum: 2 }, humus: { sol: 3, fer: 3, hum: 2 }, peat: { sol: 1, fer: 2, hum: 3 }, iron: { sol: 3, fer: 0, hum: 1 }, crystal: { sol: 3, fer: 0, hum: 0 },
 };
 // ---- l'énergie : plusieurs sources ----------------------------------------------------------------------------------------
+const VAULT = require("./vault");
 const LIGHT = ["single_sun", "twin_suns", "red_sun", "orange_sun", "white_sun", "blue_sun", "green_sun", "violet_sun", "glowvine", "glow_algae"];
 const HEAT = ["lava", "lava_world", "molten_core", "geysers", "rifts", "ash"];
 const CHEM = ["acid", "brine", "iron", "bitter_water"];
 
-const COST = { openLoop: 0.05, thinLoop: 0.02, noMicro: 0.03, weakGround: 0.06, noEarth: 0.04, noLight: 0.03, noHeat: 0.03, noPollinator: 0.02 };
+const COST = { openLoop: 0.05, thinLoop: 0.02, noMicro: 0.03, weakGround: 0.06, noEarth: 0.04, noLight: 0.03, noHeat: 0.03, noPollinator: 0.02, overdose: 0.05, tiredVault: 0.05 };
 const TEXT = {
   openLoop: ["nothing returns the dead to the soil: the loop is open", "rien ne rend les morts au sol : la boucle est ouverte"],
   thinLoop: ["the loop closes, but thinly: the dead are returned by a side-job", "la boucle se referme, mais mal : les morts reviennent au sol par un rôle d'appoint"],
@@ -90,12 +96,17 @@ const TEXT = {
   noEarth: ["roots find no earth here, and nothing is making any", "les racines ne trouvent pas de terre ici, et rien n'en fait"],
   noLight: ["the plankton has no light to live on", "le plancton n'a pas de lumière pour vivre"],
   noHeat: ["the mat feeds on heat or chemistry, and there is none", "le tapis se nourrit de chaleur ou de chimie, et il n'y en a pas"],
+  overdose: ["too much pellet: it burns the roots it was meant to feed", "trop de granulés : ils brûlent les racines qu'ils devaient nourrir"],
+  fedPellet: ["the pellet dissolves slowly and feeds what grows around it", "le granulé se dissout lentement et nourrit ce qui pousse autour"],
+  vaultStrong: [VAULT.TEXT.strong[0], VAULT.TEXT.strong[1]], vaultMedium: [VAULT.TEXT.medium[0], VAULT.TEXT.medium[1]], vaultWeak: [VAULT.TEXT.weak[0], VAULT.TEXT.weak[1]],
+  tiredVault: [VAULT.TEXT.tired[0], VAULT.TEXT.tired[1]],
   noPollinator: ["the flowers have no one to carry them from bloom to bloom", "les fleurs n'ont personne pour les porter d'une corolle à l'autre"],
 };
 
 /**
  * @param present   l'ensemble des blocs présents (écrits ou produits)
  * @param o.weights { life, soil } : les poids des familles de la rigueur (0 en doux)
+ * @param o.factor   (id) → facteur de quantité du bloc (`few` 0,4, `many` 2) ; o.size : la taille du monde (la voûte)
  * @returns null s'il n'y a rien à dire, sinon { delta: { axe: coût }, notes: [{ id, cost }] } ; `delta` est en proportion du poids de la famille
  */
 function laws(present, o) {
@@ -118,14 +129,22 @@ function laws(present, o) {
   const soils = Object.keys(SOIL).filter((id) => present.has(id));
   if (has(BIG_TREES) && soils.length) {
     if (Math.max(...soils.map((id) => SOIL[id].sol)) < 2 && !present.has("stone")) add("weakGround", ws);
-    else if (soils.every((id) => SOIL[id].fer <= 0) && !has(["earth", "humus", "lichen", "moss", "mycelium", "singing_lichen", "pale_fungus"])) add("noEarth", ws);
+    else if (soils.every((id) => SOIL[id].fer <= 0) && !has(["earth", "humus", "lichen", "moss", "mycelium", "singing_lichen", "pale_fungus", "pellet"])) add("noEarth", ws);
   }
   // 5. l'énergie : chaque source nourrit ses producteurs
   if (present.has("plankton") && !has(LIGHT)) add("noLight", wl);
   if (present.has("microbial_mat") && !has([...HEAT, ...CHEM])) add("noHeat", wl);
+  // 6. la capsule de nutriments : bien dosée elle nourrit, trop dosée elle brûle ; elle ne fait rien si rien ne pousse
+  if (present.has("pellet")) {
+    const f = o && o.factor ? o.factor("pellet") : 1, grows = hasRole("producer");
+    if (f > 1 && grows) add("overdose", wl); else if (grows) notes.push({ id: "fedPellet", cost: 0 });
+  }
+  // 7. la voûte de la caverne : une phrase sur sa solidité ; seule une voûte faible sous un monde vaste fatigue (famille sol)
+  const vault = VAULT.vaultOf(present, o && o.size);
+  if (vault) { notes.unshift({ id: "vault" + vault.strength[0].toUpperCase() + vault.strength.slice(1), cost: 0 }); if (VAULT.tired(vault)) add("tiredVault", ws); }
   if (!notes.length) return null;
   const delta = {};
-  for (const n of notes) { const axis = n.id === "weakGround" || n.id === "noEarth" ? "geological" : "ecological"; delta[axis] = (delta[axis] || 0) + n.cost; }
+  for (const n of notes) { const axis = n.id === "weakGround" || n.id === "noEarth" || n.id === "tiredVault" ? "geological" : "ecological"; delta[axis] = (delta[axis] || 0) + n.cost; }
   return { delta, notes };
 }
 

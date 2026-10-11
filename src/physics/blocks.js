@@ -45,6 +45,7 @@ def("frozen_world", { set: { albedoAdd: 0.25 }, needs: [["frozenSurface", "mediu
 def("lava_world", { set: { water: 0.05 }, needs: [["magmaOcean", "strong"]] });
 def("desert_world", { set: { water: 0.02 }, needs: [["dryClimate", "medium"], ["notFurnace", "medium"]] });
 def("ocean_world", { set: { water: 3 }, needs: [["deepOcean", "strong"]] });
+def("cavern_world", {}); // le toit de roche : voir src/vault.js
 def("jungle_world", { set: { water: 1.5 }, needs: [["liquidWater", "medium"], ["warmClimate", "medium"], ["sunlight", "medium"], ["oldEnoughComplex", "medium"]] });
 
 // ---- géologie -----------------------------------------------------------------------------------
@@ -95,6 +96,7 @@ def(["moth", "lantern_moths", "whispering_moths"], { needs: [["foodPlants", "lig
 def(["drifter"], { needs: [["buoyancy", "light"]] });
 // ---- vie et sol (src/life.js) : micro-vie, mycélium, faune par milieu, sols nés de la vie
 def("plankton", { needs: [["liquidWater", "medium"], ["oldEnoughSimple", "light"]] });
+def("glow_algae", { needs: [["liquidWater", "medium"], ["oldEnoughSimple", "light"]] });
 def("microbial_mat", { needs: [["liquidWater", "light"], ["oldEnoughSimple", "light"]] });
 def(["mycelium", "mushroom", "soil_bacteria"], { needs: [["oldEnoughSimple", "light"], ["hardyLife", "light"]] });
 def("aeroplankton", { needs: [["oldEnoughSimple", "light"], ["moistAir", "light"]] });
@@ -132,13 +134,13 @@ def("marsh", { set: { water: 1 }, needs: [["liquidWater", "medium"], ["moistAir"
 def("spiders", { needs: [["prey", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
 
 /** Groupes utiles aux exigences « écologiques » (chaîne alimentaire). */
-const FLORA = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "moss", "lichen", "singing_lichen", "pale_fungus", "spore", "glowvine", "wrong_glowvine", "cinderbloom", "withered_fern", "charred_grove", "flowers", "grass", "meadow", "berry_shrub", "thorn_bush", "heath_shrub"];
+const FLORA = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "moss", "lichen", "singing_lichen", "pale_fungus", "spore", "glowvine", "wrong_glowvine", "cinderbloom", "withered_fern", "charred_grove", "flowers", "grass", "meadow", "berry_shrub", "thorn_bush", "heath_shrub", "glow_algae"];
 const PREY = ["shoal", "grazer", "herd", "watching_herd", "burrower", "warren", "humming_warren", "drifter", "moth", "lantern_moths", "whispering_moths"];
 const SOIL = ["sand", "silt", "stone", "ash", "salt", "earth", "humus", "peat"];
 /** Bâtisseurs : leurs traces disent que quelqu'un a pu apporter ce que la nature n'aurait pas fait. */
 const BUILDERS = ["tablet", "lamp", "bridge", "door", "book", "worn_tablet", "lit_lamp", "sealed_door", "blurred_book", "fallen_bridge", "speaking_tablet", ...require("../places").BUILT_IDS];
 
 /** Mondes-types : en mode facile ils orientent le tirage, en strict ils sont seulement vérifiés. */
-const WORLDS = ["frozen_world", "lava_world", "desert_world", "ocean_world", "jungle_world"];
+const WORLDS = ["frozen_world", "lava_world", "desert_world", "ocean_world", "jungle_world", "cavern_world"];
 
 module.exports = { WORLDS, BLOCKS: B, HUE_MASS, FLORA, PREY, SOIL, BUILDERS, PHOTO };

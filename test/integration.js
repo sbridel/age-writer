@@ -111,7 +111,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     ok(Array.isArray(g) && g.some((x) => x.id === "asteroid_belt"), "ciel étendu : glyphes des nouveaux blocs" + (g instanceof Error ? " : " + g.message : ""));
     // mondes-types
     const WS = SK.WORLD_IDS;
-    ok(WS.every((id) => !A2("single_sun\n" + id).resolved.lines.some((l) => l.unknown)), "mondes-types : les cinq sont reconnus");
+    ok(WS.every((id) => !A2("single_sun\n" + id).resolved.lines.some((l) => l.unknown)), "mondes-types : tous sont reconnus");
     ok(WS.every((id) => A2("single_sun\n" + id).stability < A2("single_sun").stability), "mondes-types : chacun pèse sur la stabilité");
     ok(/strong/.test(sev("single_sun\nfrozen_world\nlava")) && /strong/.test(sev("single_sun\nlava_world\ndeep_cold\nwater")), "mondes-types : glace × lave, lave × froid = tension forte");
     ok(/medium/.test(sev("single_sun\ndesert_world\nwater")) && /medium/.test(sev("single_sun\nocean_world\nsand")), "mondes-types : désert × eau, océan × sable = tension moyenne");

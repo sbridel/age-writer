@@ -120,6 +120,7 @@ const SKY_GLYPHS = {
     polyline([[22, 40], [32, 34], [42, 40], [52, 34], [62, 40], [72, 34], [80, 40]], 2.5),
     polyline([[20, 56], [30, 50], [40, 56], [50, 50], [60, 56], [70, 50], [80, 56]], 2.5),
   ],
+  cavern_world: [polyline(arc(50, 74, 34, 44, 180, 360, 10), 3), line([16, 74], [84, 74], 2.5), line([36, 40], [36, 50], 2), line([50, 34], [50, 48], 2), line([64, 40], [64, 50], 2)],
   jungle_world: [planet(), fill(kite(34, 30, 70, 7)), fill(kite(52, 22, 74, 9)), fill(kite(68, 36, 70, 6)), line([24, 72], [76, 72], 2)],
   close_orbit: [fill(hexagon(36, 50, 24)), polyline(arc(36, 50, 36, 36, -70, 70, 10), 2), fill(diamond(72, 50, 6))],
   distant_orbit: [fill(hexagon(14, 50, 7)), polyline(arc(14, 50, 76, 44, -80, 80, 14), 2), fill(diamond(90, 50, 4))],
