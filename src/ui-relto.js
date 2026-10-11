@@ -718,7 +718,7 @@ async function renderRelto(plugin, source, el, ctx) {
     } catch (e) { console.warn("[Age Writer ext] livre vierge", e); return null; }
   };
   const onDescMount = (root, path, flip, link) => {
-    const f = path ? app.vault.getAbstractFileByPath(path) : null, ctrl = DB.mount(plugin, root, { file: f instanceof obsidian.TFile ? f : null, fr: plugin.lang() === "fr", onCreate: createAgeNote, onFlip: flip, onOpen: link });
+    const f = path ? app.vault.getAbstractFileByPath(path) : null, ctrl = DB.mount(plugin, root, { file: f instanceof obsidian.TFile ? f : null, fr: plugin.lang() === "fr", onCreate: createAgeNote, onFlip: flip, onOpen: (age) => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); app.workspace.openLinkText(age.path, "", false); } }); // toucher la vitre : le son de liaison, puis la note s'ouvre (sans l'animation du Relto)
     ctrl.render(); return ctrl;
   };
   // le registre de l'Imageur (src/relto-ledger.js, src/lectern.js) : lit l'Âge posé sur le lutrin, par couches selon le titre d'écrivain

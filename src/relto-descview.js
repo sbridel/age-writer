@@ -30,7 +30,7 @@ function mountOverlay(r) {
   place(); if (typeof ResizeObserver !== "undefined") { ui.ro = new ResizeObserver(place); ui.ro.observe(r.canvas); }
   for (const ev of ["keydown", "keyup", "keypress", "mousedown", "click", "wheel"]) root.addEventListener(ev, (e) => e.stopPropagation());
   parent.appendChild(root); ui.root = root;
-  try { ui.ctrl = r.opts.onDescMount(root, r.descTarget || null, () => { if (r.opts.onFlip) r.opts.onFlip(); }, (age) => { if (r.opts.onOpen) r.opts.onOpen(age); }); } catch (e) { console.warn("[Age Writer ext] livre descriptif", e); }
+  try { ui.ctrl = r.opts.onDescMount(root, r.descTarget || null, () => { if (r.opts.onFlip) r.opts.onFlip(); }); } catch (e) { console.warn("[Age Writer ext] livre descriptif", e); }
 }
 
 /** À la sortie de la vue : le livre est démonté (il se remonte à jour à la prochaine entrée). */
