@@ -70,26 +70,55 @@ class LibraryChoice extends obsidian.FuzzySuggestModal {
 
 function openLibraryBook(plugin) { new LibraryChoice(plugin).open(); }
 
-/** Fenêtre du livre des glyphes : un glyphe par carte, avec les Âges où il apparaît. */
+/**
+ * Les glyphes pas encore appris, tels que la palette de l'histoire les devine : quelques silhouettes pâles par groupe (toujours les mêmes), le reste en « +N ».
+ * Vide hors de l'histoire (la palette y montre tout) ; `used` : les glyphes déjà écrits quelque part.
+ * @returns {{id:string, axis:string, hint:string}[]} et le nombre de glyphes restés dans l'ombre
+ */
+function ghostGlyphs(ages, used) {
+  const BV = require("./engine/book-view"), H = require("./engine/hooks").hooks, path = (ages || []).map((a) => a.path).find((p) => H.known(p));
+  if (!path) return { list: [], more: 0 };
+  const known = H.known(path), per = H.ghosts(path), list = []; let more = 0;
+  for (const g of BV.paletteGroups()) {
+    const hidden = g.items.filter((it) => !known.has(it.id) && !used.has(it.id)).sort((x, y) => BV.hashOf(x.id) - BV.hashOf(y.id)), n = Math.min(per, hidden.length);
+    for (const it of hidden.slice(0, n)) list.push({ id: it.id, axis: g.axis, hint: H.ghostTip() + BV.ghostHint(it.id) });
+    more += hidden.length - n;
+  }
+  return { list, more };
+}
+
+/** Fenêtre du livre des glyphes : un glyphe par carte, avec les Âges où il apparaît ; en histoire, les glyphes pas encore appris se devinent en pâle à la fin. */
 function openGlyphBook(plugin, ages) {
-  const t = plugin.t, list = glyphBook(ages);
+  const t = plugin.t, list = glyphBook(ages), gh = ghostGlyphs(ages, new Set(list.map((g) => g.id)));
   class GlyphBook extends obsidian.Modal {
     onOpen() {
       const { contentEl, modalEl } = this; contentEl.empty(); modalEl.addClass("age-glyphbook-modal");
       contentEl.createEl("h2", { text: t("books.glyphs"), cls: "age-glyphbook__title" });
-      if (!list.length) { contentEl.createDiv({ cls: "age-relto__hint", text: t("books.noglyphs") }); return; }
-      contentEl.createDiv({ cls: "age-relto__hint", text: t("books.glyphcount", { n: list.length, m: (ages || []).length }) });
-      const grid = contentEl.createDiv({ cls: "age-glyphbook" });
-      for (const g of list) {
-        const card = grid.createDiv({ cls: "age-glyphbook__card" });
-        const art = card.createDiv({ cls: "age-glyphbook__art" });
-        try { setMarkup(art, `<svg viewBox="0 0 100 100" aria-hidden="true">${plugin.core.glyphSvg(g.id, 0, 0, 100, "light")}</svg>`); } catch (e) { /* glyphe sans dessin */ }
-        card.createDiv({ cls: "age-glyphbook__name", text: g.name });
-        const where = card.createDiv({ cls: "age-glyphbook__where" });
-        g.ages.forEach((name, i) => {
-          const a = where.createEl("a", { cls: "internal-link", text: name });
-          a.addEventListener("click", (e) => { e.preventDefault(); this.close(); leaveFullscreen(); plugin.app.workspace.openLinkText(g.paths[i], "", false); });
-        });
+      if (!list.length) contentEl.createDiv({ cls: "age-relto__hint", text: t("books.noglyphs") });
+      else {
+        contentEl.createDiv({ cls: "age-relto__hint", text: t("books.glyphcount", { n: list.length, m: (ages || []).length }) });
+        const grid = contentEl.createDiv({ cls: "age-glyphbook" });
+        for (const g of list) {
+          const card = grid.createDiv({ cls: "age-glyphbook__card" });
+          const art = card.createDiv({ cls: "age-glyphbook__art" });
+          try { setMarkup(art, `<svg viewBox="0 0 100 100" aria-hidden="true">${plugin.core.glyphSvg(g.id, 0, 0, 100, "light")}</svg>`); } catch (e) { /* glyphe sans dessin */ }
+          card.createDiv({ cls: "age-glyphbook__name", text: g.name });
+          const where = card.createDiv({ cls: "age-glyphbook__where" });
+          g.ages.forEach((name, i) => {
+            const a = where.createEl("a", { cls: "internal-link", text: name });
+            a.addEventListener("click", (e) => { e.preventDefault(); this.close(); leaveFullscreen(); plugin.app.workspace.openLinkText(g.paths[i], "", false); });
+          });
+        }
+      }
+      if (gh.list.length) { // pas encore appris : des silhouettes pâles, sans nom, avec de quoi les deviner au survol
+        contentEl.createDiv({ cls: "age-relto__hint age-glyphbook__ghosts-title", text: t("books.glyphs.unknown") });
+        const grid = contentEl.createDiv({ cls: "age-glyphbook" });
+        for (const g of gh.list) {
+          const card = grid.createDiv({ cls: "age-glyphbook__card is-ghost", attr: { title: g.hint, "aria-label": g.hint } });
+          const art = card.createDiv({ cls: "age-glyphbook__art" });
+          try { setMarkup(art, `<svg viewBox="0 0 100 100" aria-hidden="true">${plugin.core.glyphSvg(g.id, 0, 0, 100, "light")}</svg>`); } catch (e) { /* glyphe sans dessin */ }
+        }
+        if (gh.more > 0) contentEl.createDiv({ cls: "age-relto__hint", text: t("books.glyphs.more", { n: gh.more }) });
       }
     }
     onClose() { this.contentEl.empty(); }

@@ -401,5 +401,7 @@ module.exports = {
   CHIP_TILTS,
   PALETTE_AXES,
   paletteGroups,
+  ghostHint,
+  hashOf,
   unscore,
 };

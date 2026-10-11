@@ -623,3 +623,7 @@
 .modal.age-letter p { font-family: serif; font-style: italic; font-size: 1.12em; line-height: 1.6; margin: 0.7em 0; color: #2c3d2b; }
 .modal.age-letter .age-letter__sign { text-align: right; margin-top: 1.4em; }
 .modal.age-letter .age-letter__seal { width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #c4453d, #7d1f1b); margin: 0.6em auto 0.2em; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); }
+
+/* livre des glyphes : les glyphes pas encore appris se devinent (silhouettes pâles, sans nom) */
+.age-glyphbook__card.is-ghost { opacity: 0.22; filter: blur(1px) grayscale(1); cursor: help; }
+.age-glyphbook__ghosts-title { margin-top: 1.2em; }
