@@ -8,9 +8,9 @@ const flick = (t) => 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1) + 0.06 * 
 
 /** Un bouton rond, en haut à gauche, pour se retourner : deux flèches qui tournent. */
 function turnButton(r, ctx, label, go) {
-  ctx.fillStyle = "rgba(20,14,8,0.72)"; ctx.beginPath(); ctx.arc(28, 28, 17, 0, 6.283); ctx.fill(); ctx.strokeStyle = "#c9a24e"; ctx.lineWidth = 1.6; ctx.stroke();
-  ctx.strokeStyle = "rgba(233,220,184,0.95)"; ctx.lineWidth = 2.2; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(20, 28); ctx.lineTo(36, 28); ctx.moveTo(30, 22); ctx.lineTo(36, 28); ctx.lineTo(30, 34); ctx.stroke(); ctx.lineCap = "butt"; // une simple flèche vers la droite
-  r.hot.push({ x: 8, y: 8, w: 40, h: 40, tip: label, go });
+  ctx.fillStyle = "rgba(20,14,8,0.72)"; ctx.beginPath(); ctx.arc(22, 22, 12, 0, 6.283); ctx.fill(); ctx.strokeStyle = "#c9a24e"; ctx.lineWidth = 1.3; ctx.stroke();
+  ctx.strokeStyle = "rgba(233,220,184,0.95)"; ctx.lineWidth = 1.8; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(16, 22); ctx.lineTo(28, 22); ctx.moveTo(24, 17.5); ctx.lineTo(28, 22); ctx.lineTo(24, 26.5); ctx.stroke(); ctx.lineCap = "butt"; // une simple flèche vers la droite
+  r.hot.push({ x: 8, y: 8, w: 28, h: 28, tip: label, go });
 }
 
 const CAT_FUR = { orange: "#d9822b", black: "#2a2a31", white: "#e9e4da", grey: "#8c8c94", gray: "#8c8c94", brown: "#7a5236", cream: "#e3cfa4" };

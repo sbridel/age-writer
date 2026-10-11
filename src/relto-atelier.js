@@ -112,7 +112,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   r.hot.push({ x: dx - 4, y: dy - 4, w: dw + 8, h: FLOOR - dy + 4, tip: TRr("atelier.door.tip"), go: "cabin" });
   require("./relto-atelier-back").turnButton(r, ctx, TRr("atelier.turn.tip"), "atelierback"); // se retourner : l'autre côté de la pièce
   // fenêtre ronde
-  const wx = 200, wy = 168, wr = 34;
+  const wx = 66, wy = 58, wr = 32; // à l'étage, en haut à gauche (la galerie de livres commence plus loin)
   ctx.save(); ctx.beginPath(); ctx.arc(wx, wy, wr, 0, 6.283); ctx.clip(); const sg = ctx.createLinearGradient(0, wy - wr, 0, wy + wr); sg.addColorStop(0, sky.top); sg.addColorStop(1, sky.bottom); ctx.fillStyle = sg; ctx.fillRect(wx - wr, wy - wr, 2 * wr, 2 * wr);
   if (sky.stars > 0.05) { const s = rng(0x91); for (let i = 0; i < 10; i++) { ctx.fillStyle = rgba(235, 238, 255, sky.stars * (0.4 + 0.5 * s())); ctx.fillRect(wx - wr + s() * 2 * wr, wy - wr + s() * wr, 1.2, 1.2); } }
   ctx.restore();
