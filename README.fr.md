@@ -305,7 +305,7 @@ Avec les sons des vues rapprochées, on l'entend aussi : un tic sec, de bois, à
 
 *Manière des instruments* (Âges & mécanismes) règle ensemble le télescope et l'Imageur.
 
-- **Facile** (par défaut) : les mots « il s'avive / il pâlit », une scintillation faible, la ligne ancienne n'apparaît jamais, et les étoiles mortes brouillent seulement un peu l'image (ni faux battement, ni direction courbée, ni retard faussé ; les notes de l'arpenteur disent vrai et seulement que la lumière « arrive un peu floue »).
+- **Facile** (par défaut) : les mots « il s'avive / il pâlit », une scintillation faible, aucun faux pouls, et les étoiles mortes brouillent seulement un peu l'image (ni faux battement, ni direction courbée, ni retard faussé ; les notes de l'arpenteur disent vrai et seulement que la lumière « arrive un peu floue »).
 - **L'Art de la Guilde** : tout ce qui suit, pièges compris.
 
 Les récompenses sont les mêmes (le Zéro, l'horloge D'ni, les étoiles situées, l'heure là-bas, KIPS).
@@ -359,19 +359,9 @@ Les notes de l'arpenteur le disent en mots (« Un second battement, plus rapide,
 
 Une telle étoile se situe tout de même en cherchant au-delà du leurre, ou **indirectement** : dès que deux étoiles situées sont voisines (à moins de 6 000 shahfeetee), tire le levier **Balises** entre les molettes : « Les étoiles situées s'accordent », et la lumière courbée comme le faux battement s'effacent.
 
-#### La ligne ancienne (étape 3)
+#### Premières lectures (étape 3)
 
-Elle n'existe que dans l'Art de la Guilde. Ses premières lectures ne sont pas toujours ce qu'elles semblent : tu pourrais peut-être essayer le mode histoire pour le découvrir.
-
-Rien ne le dit tout net, mais cela se voit :
-
-- sur la **carte des étoiles**, le trait de plomb de chaque étoile manque le Zéro (« ? ») ;
-- deux étoiles gravées sur des lignes différentes laissent la carte ouverte ;
-- les Âges d'un même `system:` ne s'accordent pas avec une étoile regravée ;
-- des balises gravées sur des lignes différentes se contredisent ;
-- l'onglet Détails dit que l'étoile « a été gravée sur une ligne ancienne ».
-
-Pour corriger : revise le vrai Zéro (l'instrument s'y cale ; la ligne ancienne ne le reprend plus), puis ramène chaque étoile dans l'anneau pour la regraver, ou gratte-la de sa plaque (la petite croix).
+Elle n'existe que dans l'Art de la Guilde. Tout ce que l'instrument montre au début n'est pas ce qu'il semble : tu pourrais peut-être essayer le mode histoire pour le découvrir.
 
 #### La carte des étoiles (étape 3)
 

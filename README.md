@@ -305,7 +305,7 @@ With the close-up room sounds you hear it too: a dry wooden tick per swing, dist
 
 *Way of the instruments* (Ages & mechanisms) sets the telescope and the Imager together.
 
-- **Easy** (default): the warmer/colder words, a faint shimmer, the old line never appears, and dead stars only blur the image a little (no false beat, no bent direction, no false delay; the surveyor's notes tell the truth and only say the light “comes a little blurred”).
+- **Easy** (default): the warmer/colder words, a faint shimmer, no false pulses, and dead stars only blur the image a little (no false beat, no bent direction, no false delay; the surveyor's notes tell the truth and only say the light “comes a little blurred”).
 - **The Art of the Guild**: everything below, traps included.
 
 The rewards are the same (the Zero, the D'ni clock, charted stars, the hour over there, KIPS).
@@ -359,19 +359,9 @@ The surveyor's notes say it in words (“A second, faster beat crosses the Zero'
 
 Such a star can still be charted by looking past the lure, or **indirectly**: once two charted stars lie nearby (within 6,000 shahfeetee), pull the **Beacons** lever between the wheels: “The charted stars agree”, and the bent light and false beat fall away.
 
-#### The old line (step 3)
+#### Early readings (step 3)
 
-It exists in the Art of the Guild only. Its early readings are not always what they seem: maybe you could try the story mode to find out.
-
-Nothing says so outright, but it shows:
-
-- on the **star chart**, the lead line from each star misses the Zero (“?”);
-- two stars engraved on different lines leave the chart unclosed;
-- Ages of one `system:` disagree with a re-charted one;
-- beacons engraved on different lines disagree;
-- the Details tab says the star “was engraved on an old line”.
-
-To fix it, aim the true Zero again (the instrument settles on it; the old line will not take it back), then bring each star into the ring again to re-engrave it, or scratch it off its plate (the small cross).
+It exists in the Art of the Guild only. Not everything the instrument shows early on is what it seems: maybe you could try the story mode to find out.
 
 #### The star chart (step 3)
 
