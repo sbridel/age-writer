@@ -722,6 +722,15 @@ function slideWood(volume = 0.3, { open = true } = {}) {
     const o = c.createOscillator(), oe = c.createGain(); o.type = "sine"; o.frequency.setValueAtTime(open ? 130 : 160, t + D); o.frequency.exponentialRampToValueAtTime(70, t + D + 0.12); oe.gain.setValueAtTime(0.0001, t + D); oe.gain.linearRampToValueAtTime(open ? 0.55 : 0.7, t + D + 0.006); oe.gain.exponentialRampToValueAtTime(0.0001, t + D + 0.2); o.connect(oe); oe.connect(out); o.start(t + D); o.stop(t + D + 0.3); // la butée
   });
 }
+/** Un coup sur du fer : des partiels inharmoniques qui s'éteignent à des vitesses différentes, un claquement de bruit, un fond sourd (la trappe du coffre). */
+function clang(volume = 0.3) {
+  return oneShot(1.4, (c, out, noise) => {
+    out.gain.value = volume; const t = c.currentTime;
+    for (const [f, a, d] of [[412, 0.5, 0.9], [1138, 0.32, 0.55], [1796, 0.2, 0.38], [2653, 0.12, 0.24]]) { const o = c.createOscillator(), e = c.createGain(); o.type = "sine"; o.frequency.value = f; e.gain.setValueAtTime(a, t); e.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(e); e.connect(out); o.start(t); o.stop(t + d + 0.05); }
+    const n = noise(0.08), hp = c.createBiquadFilter(), ne = c.createGain(); hp.type = "highpass"; hp.frequency.value = 2400; ne.gain.setValueAtTime(0.35, t); ne.gain.exponentialRampToValueAtTime(0.0001, t + 0.07); n.connect(hp); hp.connect(ne); ne.connect(out);
+    const th = c.createOscillator(), te = c.createGain(); th.type = "sine"; th.frequency.setValueAtTime(110, t); th.frequency.exponentialRampToValueAtTime(55, t + 0.15); te.gain.setValueAtTime(0.5, t); te.gain.exponentialRampToValueAtTime(0.0001, t + 0.18); th.connect(te); te.connect(out); th.start(t); th.stop(t + 0.2);
+  });
+}
 function squeak(volume = 0.3) {
   return oneShot(0.4, (c, out) => {
     const t = c.currentTime, o = c.createOscillator(), e = c.createGain(); out.gain.value = volume * 0.3;
@@ -787,4 +796,4 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { knock, creak, slideStone, slideWood, crystalChord, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { knock, clang, creak, slideStone, slideWood, crystalChord, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
