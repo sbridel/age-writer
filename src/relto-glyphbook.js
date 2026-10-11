@@ -19,7 +19,7 @@ function buildPages(ages, deps) {
   const sections = [];
   for (const g of groups) {
     const cells = [], seen = [], rest = [];
-    for (const it of g.items) { if (used.has(it.id)) cells.push({ id: it.id, name: it.label, state: "used", ages: used.get(it.id) }); else if (known && known.has(it.id)) seen.push({ id: it.id, name: it.label, state: "known" }); else if (known) rest.push(it); }
+    for (const it of g.items) { if (used.has(it.id)) cells.push({ id: it.id, name: it.label, state: "used", ages: used.get(it.id) }); else if (!known || known.has(it.id)) seen.push({ id: it.id, name: it.label, state: "known" }); else rest.push(it); } // hors de l'histoire, tout glyphe est connu : ceux pas encore écrits se montrent en pâle, avec leur nom
     const hidden = rest.sort((x, y) => hashOf(x.id) - hashOf(y.id)), n = Math.min(per, hidden.length);
     const ghosts = hidden.slice(0, n).map((it) => ({ id: it.id, state: "ghost", hint: ghostText(hooks, it.id) }));
     const all = [...cells, ...seen, ...ghosts];

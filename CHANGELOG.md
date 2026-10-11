@@ -11,6 +11,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **How deeply an Age rests.** Under the costs, one sentence: each line is removed in turn, and if the Age falls without one of them, it holds by a thread. No number is shown.
 
 ### Changed
+- **The book of glyphs shows every glyph in the sandbox Relto**: the ones you have not written yet appear faded, with their name; the ones you have written keep the Ages where they appear. (In the story, the unlearned ones are still only guessed.)
 - **Cleaner stylesheet** (Obsidian's compatibility check): no more `!important`, `clip-path` or `display: contents`. The brass corners of the books and the cut corner of the panel are now drawn with gradients, the Relto's page and sound lists keep their columns with fixed widths, and the theme overrides use more specific selectors instead.
 - **The cat is never in two rooms at once**: with `cat_sleep: always` (or at night), a cat asleep by the fire in the cabin no longer shows up in the study as well.
 - **Weather that follows from itself is no longer held against an Age**: rain and wind making a storm, a storm and lightning making thunder, and water on iron making rust cost almost nothing now. Rain with wind and lightning used to be unstable; it is stable.
