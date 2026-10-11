@@ -155,8 +155,16 @@ function drawAtelier(r, ctx, sc, sky, t) {
   } else r.hot.push({ x: ax - 8, y: ay - 52, w: 68, h: 56, tip: TRr("atelier.chair.tip"), flash: TRr("atelier.chair.flash") });
   // le mur derrière le bureau : un portrait, le tableau aux ficelles rouges, un baromètre, une étagère de bocaux
   { const { pin, sheet } = wallBits(ctx, c), TRd = (k) => TRr(k), wq = rng(0xb0a7);
-    ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.ellipse(141, 158, 21, 28, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#2e3a36"); ctx.beginPath(); ctx.ellipse(141, 158, 17, 24, 0, 0, 6.283); ctx.fill(); // un portrait ovale : une silhouette sans visage
-    ctx.fillStyle = c("#14201c"); ctx.beginPath(); ctx.arc(141, 152, 7, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(141, 176, 12, 9, 0, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.ellipse(141, 158, 21, 28, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#2e3a36"); ctx.beginPath(); ctx.ellipse(141, 158, 17, 24, 0, 0, 6.283); ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.ellipse(141, 158, 17, 24, 0, 0, 6.283); ctx.clip(); // un portrait ovale : la silhouette d'une femme, de profil trois-quarts, sans visage
+    const fig = c("#101a17"), skin = c("#5a6e64"); ctx.fillStyle = fig;
+    ctx.beginPath(); ctx.arc(141, 141, 5, 0, 6.283); ctx.fill(); // le chignon
+    ctx.beginPath(); ctx.ellipse(141, 153, 9, 11, 0, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.moveTo(133, 156); ctx.quadraticCurveTo(129, 168, 134, 175); ctx.lineTo(139, 172); ctx.fill(); // la tête, une mèche qui retombe
+    ctx.fillStyle = skin; ctx.beginPath(); ctx.ellipse(142.5, 155, 6, 7.6, 0.08, 0, 6.283); ctx.fill(); // le visage, tourné, sans traits
+    ctx.beginPath(); ctx.moveTo(140, 159); ctx.lineTo(145.5, 159); ctx.quadraticCurveTo(145, 166, 150, 171); ctx.lineTo(135, 171); ctx.quadraticCurveTo(140, 166, 140, 159); ctx.fill(); // le cou, qui s'évase vers les épaules
+    ctx.beginPath(); ctx.moveTo(122, 178); ctx.quadraticCurveTo(128, 170, 142.5, 170); ctx.quadraticCurveTo(157, 170, 163, 178); ctx.lineTo(122, 178); ctx.fill(); // la peau des épaules, dégagées
+    ctx.fillStyle = fig; ctx.beginPath(); ctx.moveTo(112, 190); ctx.quadraticCurveTo(113, 178, 124, 176); ctx.quadraticCurveTo(142.5, 186, 161, 176); ctx.quadraticCurveTo(172, 178, 173, 190); ctx.fill(); // la robe, encolure en bateau
+    ctx.restore();
     r.hot.push({ x: 119, y: 129, w: 44, h: 58, tip: TRd("atelier.deco.portrait"), flash: TRd("atelier.deco.portrait.flash") });
     ctx.fillStyle = c("#5a4330"); ctx.fillRect(188, 126, 108, 72); ctx.strokeStyle = c("#2f2118"); ctx.lineWidth = 3; ctx.strokeRect(188, 126, 108, 72); // le tableau : liège sombre, feuilles, ficelles
     for (let i = 0; i < 60; i++) { ctx.fillStyle = rgba(0, 0, 0, 0.1); ctx.fillRect(190 + wq() * 104, 128 + wq() * 68, 1.5, 1.5); }
