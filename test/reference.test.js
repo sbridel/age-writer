@@ -91,7 +91,8 @@ ok(examples >= 20, `exemples de blocs age vérifiés : ${examples}`);
 // ---- 5. l'export en note garde les parties et le tableau ---------------------------------------------------------
 for (const lang of ["en", "fr"]) {
   const md = G.toMarkdown(lang, "full");
-  ok(ORDER.every((p) => md.includes("## " + G.PARTS[lang][p] + "\n")), `${lang} : l'export Markdown a les quatre parties`);
+  ok(ORDER.filter((p) => p !== "spoil").every((p) => md.includes("## " + G.PARTS[lang][p] + "\n")), `${lang} : l'export Markdown a les quatre parties`);
+  ok(!md.includes("## " + G.PARTS[lang].spoil) && !/SPOILER|Spoilers/.test(md) && !md.includes("flower_color"), `${lang} : l'export Markdown ne contient pas les spoilers`);
   ok(/\n\| --- \| --- \| --- \|\n/.test(md) && md.includes("`tides: 0.03`"), `${lang} : l'export Markdown a le tableau des valeurs`);
 }
 console.log(`reference : ${n} vérifications, tout passe`);
