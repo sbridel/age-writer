@@ -17,11 +17,11 @@ function stone(ctx, c, x, y, s, t) {
   ctx.beginPath(); ctx.moveTo(-w * 0.2, -h * 0.5); ctx.lineTo(0, -h * 0.4); ctx.lineTo(w * 0.2, -h * 0.5); ctx.stroke();
   ctx.restore();
 }
-/** Une bande d'issue, bien visible, au bas d'une vue rapprochée (on s'y retrouvait coincé). */
-function exitBand(r, ctx, label, go) {
-  const g = ctx.createLinearGradient(0, H - 44, 0, H); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.7)"); ctx.fillStyle = g; ctx.fillRect(0, H - 44, W, 44);
-  ctx.font = "italic 15px serif"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(233,220,184,0.9)"; ctx.fillText("\u2193  " + label, W / 2, H - 12); ctx.textAlign = "left";
-  r.hot.push({ x: 0, y: H - 40, w: W, h: 40, tip: label, go });
+/** Un bouton « retour » en haut à gauche d'une vue rapprochée (on s'y retrouvait coincé) : un rond de laiton et sa flèche. */
+function backButton(r, ctx, label, go) {
+  ctx.fillStyle = "rgba(20,14,8,0.72)"; ctx.beginPath(); ctx.arc(28, 28, 17, 0, 6.283); ctx.fill(); ctx.strokeStyle = "#c9a24e"; ctx.lineWidth = 1.6; ctx.stroke();
+  ctx.strokeStyle = "rgba(233,220,184,0.95)"; ctx.lineWidth = 2.2; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(34, 28); ctx.lineTo(21, 28); ctx.moveTo(26, 22); ctx.lineTo(21, 28); ctx.lineTo(26, 34); ctx.stroke(); ctx.lineCap = "butt";
+  r.hot.push({ x: 8, y: 8, w: 40, h: 40, tip: label, go });
 }
 
 /** Où se trouve le panneau secret dans la cabane (coordonnées logiques) ; la pièce n'a aucun bouton de navigation. */
@@ -103,8 +103,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#2f2016"); ctx.fillRect(tx + 8, ty, 10, 74); ctx.fillRect(tx + tw - 18, ty, 10, 74); ctx.fillStyle = c("#3d2a1c"); ctx.fillRect(tx + 6, ty + 10, tw - 12, 46);
   ctx.fillStyle = rgba(0, 0, 0, 0.3); for (let i = 0; i < 3; i++) ctx.fillRect(tx + 24 + i * 78, ty + 16, 66, 34); ctx.fillStyle = c("#c9a24e"); for (let i = 0; i < 3; i++) ctx.fillRect(tx + 52 + i * 78, ty + 30, 10, 3);
   ctx.fillStyle = c("#6d4c31"); ctx.fillRect(tx - 6, ty - 8, tw + 12, 10); ctx.fillStyle = c("#7d5a3b"); ctx.fillRect(tx - 6, ty - 8, tw + 12, 3);
-  const top = ty - 8, rs = (r.opts.relicState && r.opts.relicState()) || {};
-  if (rs.stone) { stone(ctx, c, tx + 262, top - 6, 7, t); r.hot.push({ x: tx + 252, y: top - 18, w: 22, h: 18, tip: TRr("atelier.stone.tip"), flash: TRr("atelier.stone.flash") }); }
+  const top = ty - 8;
   r.hot.push({ x: tx - 6, y: top - 36, w: tw + 12, h: 100, tip: TRr("atelier.sit.tip"), go: "desk" }); // s'asseoir au bureau (les objets, poussés après, gardent la priorité)
   const item = (x, y, w, h, tip, flash) => r.hot.push({ x, y, w, h, tip: TRr(tip), flash: flash ? TRr(flash) : undefined });
   // l'orrery : une sphère de laiton et ses anneaux qui tournent
@@ -157,16 +156,29 @@ function drawDesk(r, ctx, sc, sky, t) {
     ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.2; for (let k = 1; k < 6; k++) { ctx.beginPath(); ctx.moveTo(cx + k * cw / 6, cy + 10); ctx.lineTo(cx + 10 + k * (cw - 20) / 6, cy + ch); ctx.stroke(); } for (let k = 1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(cx + 2 + k * 2, cy + 10 + k * 13); ctx.lineTo(cx + cw - 2 - k * 2, cy + 10 + k * 13); ctx.stroke(); }
     ctx.strokeStyle = c("#d8b45e"); ctx.lineWidth = 3; ctx.strokeRect(cx, cy + 8, cw, 4);
     r.hot.push(mail.unread || mail.has ? { x: cx - 4, y: cy - 32, w: cw + 8, h: ch + 40, tip: TRr(mail.unread ? "atelier.tray.new" : "atelier.tray.tip"), special: "mail" } : { x: cx - 4, y: cy - 4, w: cw + 8, h: ch + 12, tip: TRr("atelier.tray.tip"), flash: TRr("atelier.tray.empty") }); }
-  const rs = (r.opts.relicState && r.opts.relicState()) || {};
-  if (rs.drawer) { // le tiroir est sorti : un fond sombre, et la pierre dedans si on ne l'a pas encore prise
-    ctx.fillStyle = c("#2a1c12"); ctx.fillRect(536, 294, 100, 44); ctx.fillStyle = c("#0f0a07"); ctx.fillRect(542, 298, 88, 32); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.strokeRect(536, 294, 100, 44);
-    if (!rs.stone) { stone(ctx, c, 586, 322, 14, t); r.hot.push({ x: 560, y: 298, w: 52, h: 32, tip: TRr("atelier.stone.tip"), relic: "stone" }); }
+  const ui = (r.deskUI = r.deskUI || { open: false, at: 0, held: false, heldAt: 0, relAt: 0 }), now = Date.now(), ease = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const dp = ui.open ? ease((now - ui.at) / 650) : ease(1 - (now - ui.at) / 500); // le tiroir glisse hors du bureau (ou y rentre) ; il se ferme quand on s'en va
+  if (dp > 0.001) {
+    const dy = H - 66 * dp; ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.fillRect(534, dy - 4, 106, 8); ctx.fillStyle = c("#2a1c12"); ctx.fillRect(536, dy, 100, 66); ctx.fillStyle = c("#0f0a07"); ctx.fillRect(542, dy + 4, 88, 36); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.strokeRect(536, dy, 100, 66);
+    ctx.fillStyle = c("#4a3322"); ctx.fillRect(536, dy + 44, 100, 22); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(586, dy + 55, 4, 0, 6.283); ctx.fill();
+    const hold = ui.held ? (ui.relAt ? 1 - ease((now - ui.relAt) / 550) : ease((now - ui.heldAt) / 600)) : 0; // la tablette quitte le tiroir pour les mains, puis y revient
+    if (!ui.held || hold < 0.999) stone(ctx, c, 586, dy + 22, 14 * (1 - hold * 0.001), t);
+    if (ui.open && now - ui.at > 600 && !ui.held) r.hot.push({ x: 548, y: 294, w: 76, h: 42, tip: TRr("atelier.stone.tip"), desk: "hold" });
+    if (ui.open && now - ui.at > 400) r.hot.push({ x: 536, y: 336, w: 100, h: 24, tip: TRr("atelier.drawer.close"), desk: "drawer" });
   }
-  if (rs.stone) { stone(ctx, c, 204, 316, 12, t); r.hot.push({ x: 190, y: 296, w: 28, h: 26, tip: TRr("atelier.stone.tip"), flash: TRr("atelier.stone.flash") }); }
-  exitBand(r, ctx, TRr("atelier.stand.tip"), "atelier"); // se lever
-  if (!rs.drawer) { // un clou de laiton qui brille un peu trop : c'est le bouton du tiroir
+  if (!ui.open || dp < 0.05) { // un clou de laiton qui brille un peu trop : c'est le bouton du tiroir
     const g = 0.35 + 0.35 * Math.sin(t * 1.1); ctx.fillStyle = c("#b98f3c"); ctx.beginPath(); ctx.arc(598, 346, 2.6, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 240, 190, g); ctx.fillRect(597, 344.5, 1.6, 1.6);
-    r.hot.push({ x: 588, y: 336, w: 20, h: 18, tip: "", relic: "drawer", secret: true });
+    r.hot.push({ x: 588, y: 336, w: 20, h: 18, tip: "", desk: "drawer", secret: true });
+  }
+  backButton(r, ctx, TRr("atelier.stand.tip"), "atelier"); // se lever
+  if (ui.held) { // la tablette entre les mains : on la regarde de près, un clic la rend au tiroir
+    const hp = ui.relAt ? 1 - ease((now - ui.relAt) / 550) : ease((now - ui.heldAt) / 600);
+    if (ui.relAt && now - ui.relAt > 560) { ui.held = false; ui.relAt = 0; } else {
+      ctx.fillStyle = rgba(0, 0, 0, 0.62 * hp); ctx.fillRect(0, 0, W, H);
+      const sx = 586 + (320 - 586) * hp, sy = 322 + (172 - 322) * hp, sz = 14 + 66 * hp; ctx.save(); ctx.translate(sx, sy); ctx.rotate(Math.sin(t * 0.7) * 0.06 * hp); ctx.translate(-sx, -sy); stone(ctx, c, sx, sy, sz, t); ctx.restore();
+      if (hp > 0.9) { ctx.font = "italic 15px serif"; ctx.textAlign = "center"; ctx.fillStyle = rgba(233, 220, 184, 0.85); ctx.fillText(TRr("atelier.stone.flash"), W / 2, 312); ctx.textAlign = "left"; }
+      r.hot.push({ x: 0, y: 0, w: W, h: H, tip: "", desk: "release" });
+    }
   }
 }
 
@@ -193,7 +205,7 @@ function drawLoft(r, ctx, sc, sky, t) {
   { const bx = 232, by = 292; ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 4, by - 2, 170, 20); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx, by - 8, 80, 18); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 84, by - 8, 80, 18); ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 4; k++) { ctx.fillRect(bx + 8, by - 3 + k * 4, 62, 1); ctx.fillRect(bx + 92, by - 3 + k * 4, 62, 1); }
     r.hot.push({ x: bx - 6, y: by - 12, w: 176, h: 34, tip: TRr("atelier.loft.pages"), go: "book" }); }
   if (sc.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { const nx = 450, ny = 290; ctx.fillStyle = c("#3b2a1a"); ctx.fillRect(nx, ny, 62, 14); ctx.fillStyle = c("#6b4a2a"); ctx.fillRect(nx, ny - 3, 62, 5); ctx.fillStyle = c("#c9a24e"); ctx.fillRect(nx + 3, ny + 2, 5, 9); ctx.fillRect(nx + 54, ny + 2, 5, 9); ctx.fillStyle = c("#8e2b27"); ctx.fillRect(nx + 40, ny + 12, 3, 12); r.hot.push({ x: nx - 3, y: ny - 8, w: 68, h: 36, tip: TRr("atelier.loft.surveyor"), special: "surveyor" }); }
-  exitBand(r, ctx, TRr("atelier.loft.down"), "atelier");
+  backButton(r, ctx, TRr("atelier.loft.down"), "atelier");
 }
 
 module.exports = { drawAtelier, drawDesk, drawLoft, SECRET };
