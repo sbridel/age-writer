@@ -21,6 +21,13 @@ const AXIS_LABELS = {
 const PALETTE_AXES = ["cosmological", "worlds", "geological", "weather", "ecological", "metaphysical"];
 
 const hashOf = (text) => { let h = 2166136261; for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619); return h >>> 0; };
+/** Au survol d'un glyphe non appris : pas son nom, mais de quoi le deviner (les trois mots qui le décrivent ; pour le ciel, sa famille). */
+const ghostHint = (id) => {
+  let block = blockList.find((b) => b.id === id);
+  if (block && block.descriptors && block.descriptors.length) return " \u2014 " + block.descriptors.join(", ");
+  let sky = SKY_ENTRIES.find((e) => e.id === id);
+  return sky ? " \u2014 " + ({ stars: "a star", cycle: "a rhythm of days", orbit: "an orbit", phenomenon: "a sky phenomenon", belt: "a belt", hue: "a colour of the sky", world: "a kind of world", body: "a trait of the world", remnant: "a remnant", terrain: "a lay of the land" }[sky.category] || "something of the sky") : "";
+};
 const unscore = (text) => text.replace(/_/g, " ");
 
 function paletteGroups() {
@@ -233,7 +240,8 @@ const BookView = class extends obsidian.ItemView {
         let hidden = group.items.filter((item) => !known.has(item.id) && !written.has(item.id)), n = Math.min(hooks.ghosts(file.path), hidden.length);
         hidden = hidden.sort((a, b) => hashOf(a.id) - hashOf(b.id));
         hidden.slice(0, n).forEach((item) => {
-          let ghost = grid.createEl("span", { cls: "age-book__swatch is-ghost", attr: { title: hooks.ghostTip(), "aria-label": hooks.ghostTip() } });
+          let tip = hooks.ghostTip() + ghostHint(item.id),
+            ghost = grid.createEl("span", { cls: "age-book__swatch is-ghost", attr: { title: tip, "aria-label": tip } });
           ((ghost.style.borderBottomColor = AXIS_COLORS[group.axis]), setMarkup(ghost, `<svg viewBox="0 0 100 100">${glyphSvg(item.id, 0, 0, 100)}</svg>`));
         });
         hidden.length > n && grid.createEl("span", { cls: "age-book__more", text: `+${hidden.length - n}` });
