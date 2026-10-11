@@ -126,6 +126,7 @@ const PAGE_PRESETS = {
   page_dni_clock: { label: "D'ni clock", effects: { canvas_additions: [{ type: "dniclock" }], ambiance_audio: "mountain_air" }, unlock: { zero: true } },
   page_telescope: { label: "Telescope", effects: { canvas_additions: [{ type: "telescope" }], ambiance_audio: "mountain_air" }, unlock: { agesCount: 1, page: "page_mountain" } }, // l'observatoire est au sommet : il lui faut le mont
   page_atelier: { label: "Writing room", effects: { canvas_additions: [{ type: "atelier" }], ambiance_audio: "hearth" } }, // l'atelier : une pièce cachée derrière un panneau de la cabane (src/relto-atelier.js)
+  page_endgame: { label: "Inkwell", effects: { canvas_additions: [{ type: "inkwell", density: 1 }] } }, // l'encrier : la même page que la fin de l'histoire (src/story.js), proposée aussi au bac à sable
   page_cat_toys: { label: "Cat toys", effects: { canvas_additions: [{ type: "cattoys", density: 0.6 }], ambiance_audio: "hearth" } },
   page_pond_decor: { label: "Pond decor", effects: { canvas_additions: [{ type: "ponddecor", density: 0.6 }], ambiance_audio: "river" } },
   page_cat: { label: "Cat", effects: { canvas_additions: [{ type: "cat", color: "orange", name: "Mochi" }], ambiance_audio: "hearth" } },
