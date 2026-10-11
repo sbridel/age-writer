@@ -350,7 +350,7 @@ const REF_EN = [
     { ul: ["A pulsar or neutron star adds a **false beat** at its own period (the surveyor's delay is wrong, and the amber echo can lock onto the false beat: nothing holds)", "A black hole **bends** the Zero's light (the surveyor's direction is wrong; in the eyepiece a bright image will not hold, the true point is the pale end of the arc)"] },
     { p: "Such a star can still be charted by looking past the lure, or by **triangulation**: with two charted stars nearby, pull the **Beacons** lever and the bent light and false beat fall away." },
     { h: "Early readings" },
-    { p: "Not everything the instrument shows early on is what it seems: maybe you could try the story mode to find out." },
+    { p: "Not everything the instrument shows early on is what it seems: maybe you could play and find out." },
     { h: "The star chart" },
     { p: "The parchment roll on the observatory wall opens a map of the Zero, your Relto and every charted star with its Ages (names on hover) and its dead stars, each hanging on a plumb line above or below the plane of the Zero (heights to their own scale); one well-charted Age anchors it." },
     { h: "Drift" },
@@ -358,7 +358,7 @@ const REF_EN = [
   ] },
   // ---- Spoilers ---------------------------------------------------------------------------------------------------
   { id: "spoilers", part: "spoil", icon: "eye-off", title: "Secrets of the Relto", spoiler: true,
-    gate: { p: "Everything below spoils the game. None of it is needed to use the plugin. If you would rather find it all by yourself, leave the box unticked.", label: "Show the spoilers" }, body: [
+    gate: { p: "Everything below spoils the game. None of it is needed to use the plugin: maybe you could just play and find out. If you would rather, leave the box unticked.", label: "Show the spoilers" }, body: [
     { h: "Getting in" },
     { p: "The hidden writing room needs the cabin. It opens once the story is finished (the inkwell), or in the sandbox when the page **Writing room** is active. The page **Inkwell** adds the mentor's last letter to the sandbox as well. Both are in the list of the command “Create a Relto page”." },
     { p: "The clue is scrawled on the back of the mentor's last letter, on the cabin table. It leads to the small bookcase under the window: touch three books in the right order, the one the sea dyed (blue), the one the fire left behind (red), the one with no title. The bookcase slides away. Behind it, a wooden panel answers to knocking: two quick knocks, a pause (between 0.75 and 2.8 seconds), then one firm knock." },

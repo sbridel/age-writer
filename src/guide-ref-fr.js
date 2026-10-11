@@ -347,7 +347,7 @@ const REF_FR = [
     { ul: ["Un pulsar ou une étoile à neutrons ajoute un **faux battement** à sa propre période (le retard de l'arpenteur est faux, et l'écho ambre peut s'accorder sur le faux battement : rien ne tient)", "Un trou noir **courbe** la lumière du Zéro (la direction de l'arpenteur est fausse ; dans l'oculaire une image brillante ne tient pas, le vrai point est le bout pâle de l'arc)"] },
     { p: "Une telle étoile se situe tout de même, en cherchant au-delà du leurre, ou par **triangulation** : avec deux étoiles situées voisines, tire le levier **Balises**, et la lumière courbée comme le faux battement s'effacent." },
     { h: "Premières lectures" },
-    { p: "Tout ce que l'instrument montre au début n'est pas ce qu'il semble : tu pourrais peut-être essayer le mode histoire pour le découvrir." },
+    { p: "Tout ce que l'instrument montre au début n'est pas ce qu'il semble : tu pourrais peut-être jouer pour le découvrir." },
     { h: "La carte des étoiles" },
     { p: "Le rouleau de parchemin au mur de l'observatoire ouvre une carte du Zéro, de ton Relto et de chaque étoile située, avec ses Âges (noms au survol) et ses étoiles mortes, chacune pendue à un fil à plomb au-dessus ou au-dessous du plan du Zéro (hauteurs à leur propre échelle) ; un seul Âge bien situé l'ancre." },
     { h: "Dérive" },
@@ -355,7 +355,7 @@ const REF_FR = [
   ] },
   // ---- Spoilers ---------------------------------------------------------------------------------------------------
   { id: "spoilers", part: "spoil", icon: "eye-off", title: "Secrets du Relto", spoiler: true,
-    gate: { p: "Tout ce qui suit gâche le jeu. Rien n'est nécessaire pour utiliser le plugin. Si tu préfères tout découvrir seul, laisse la case décochée.", label: "Afficher les spoilers" }, body: [
+    gate: { p: "Tout ce qui suit gâche le jeu. Rien n'est nécessaire pour utiliser le plugin : tu pourrais peut-être simplement jouer pour le découvrir. Si tu préfères, laisse la case décochée.", label: "Afficher les spoilers" }, body: [
     { h: "Y entrer" },
     { p: "L'atelier caché demande la cabane. Il s'ouvre une fois l'histoire terminée (l'encrier), ou, dans le bac à sable, quand la page **Writing room** est active. La page **Inkwell** ajoute aussi au bac à sable la dernière lettre du mentor. Les deux figurent dans la liste de la commande « Create a Relto page »." },
     { p: "L'indice est griffonné au dos de la dernière lettre du mentor, sur la table de la cabane. Il mène à la petite bibliothèque sous la fenêtre : touche trois livres dans l'ordre, celui que la mer a teint (bleu), celui que le feu a laissé (rouge), celui qui n'a pas de titre. La bibliothèque coulisse. Derrière, un panneau de bois répond aux coups : deux coups brefs, une pause (entre 0,75 et 2,8 secondes), puis un coup franc." },
