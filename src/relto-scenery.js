@@ -234,4 +234,15 @@ function comet(ctx, r, d, sky, t) {
   ctx.restore();
 }
 
-module.exports = { cometAt, cometVis, comet, moons, rain, storm, birds, butterflies, dock, bench, flowers, grass, islets, calendar, dniClock, W, H, GY };
+/** La même comète, vue par le hublot de l'atelier (même calendrier que dans le ciel du Relto) : une petite tête et sa queue qui traversent le rond ; à appeler dans le clip du hublot. */
+function cometWindow(ctx, r, d, sky, t, wx, wy, wr) {
+  const c = cometAt(r.scene.seed, t, d, false); if (!c) return;
+  const a = c.env * cometVis(sky); if (a < 0.03) return;
+  const u = c.dir > 0 ? c.p : 1 - c.p, x = wx - wr * 1.15 + u * wr * 2.3, y = wy - wr * 0.55 + clamp((c.y - 78) / 70) * wr * 0.5, L = wr * 0.9, bx = -c.dx, by = -c.dy, tx = x + bx * L, ty = y + by * L;
+  ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.lineCap = "round";
+  for (const [w, al] of [[5, 0.12], [2.4, 0.22], [1, 0.4]]) { const g = ctx.createLinearGradient(x, y, tx, ty); g.addColorStop(0, rgba(210, 228, 255, al * a)); g.addColorStop(1, rgba(150, 180, 240, 0)); ctx.strokeStyle = g; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke(); }
+  const hg = ctx.createRadialGradient(x, y, 0, x, y, 5); hg.addColorStop(0, rgba(255, 255, 255, 0.95 * a)); hg.addColorStop(1, rgba(180, 210, 255, 0)); ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(x, y, 5, 0, 6.283); ctx.fill();
+  ctx.restore();
+}
+
+module.exports = { cometWindow, cometAt, cometVis, comet, moons, rain, storm, birds, butterflies, dock, bench, flowers, grass, islets, calendar, dniClock, W, H, GY };
