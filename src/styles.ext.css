@@ -691,7 +691,7 @@
 .age-dbook__close { margin-left: auto; padding: 0 8px; }
 .age-dbook__sheet { flex: 1; min-height: 0; overflow: auto; background: radial-gradient(ellipse at 30% 20%, rgba(255, 250, 230, 0.35), transparent 60%), #e4d4ab; padding: 10px; box-shadow: inset 0 0 26px rgba(110, 80, 40, 0.35); }
 .age-dbook__bgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-.age-dbook__bcell { aspect-ratio: 1; padding: 8px; border: 1px solid transparent; background: transparent; color: #2b2118; cursor: pointer; box-shadow: none; }
+.age-dbook__bcell { width: 100%; aspect-ratio: 1; padding: 8px; border: 1px solid transparent; background: transparent; color: #2b2118; cursor: pointer; box-shadow: none; }
 .age-dbook__bcell svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 0.6px rgba(43, 33, 24, 0.7)); }
 .age-dbook__bcell:hover { background: rgba(120, 90, 50, 0.14); }
 .age-dbook__bcell.is-on { border: 1px dashed #5a4a30; background: rgba(120, 90, 50, 0.22); }
@@ -723,5 +723,5 @@
 .age-dbook__quiet { display: block; margin: 0.5em 0 0 auto; padding: 0 0.2em; border: 0; background: transparent; box-shadow: none; font-family: serif; font-style: italic; color: #6a4a2a; border-bottom: 1px solid rgba(106, 74, 42, 0.5); cursor: pointer; }
 .age-dbook__quiet:hover { color: #2b2118; }
 .age-dbook .age-book__pull--line { width: 1.5em; height: 1.5em; min-width: 0; padding: 0; line-height: 1; font-size: 0.8em; border-radius: 50%; }
-.age-dbook__folder { position: absolute; right: -1.7em; top: 14%; z-index: 4; writing-mode: vertical-rl; padding: 0.7em 0.35em; border: 1px solid #0d0804; border-left: 0; border-radius: 0 6px 6px 0; background: linear-gradient(90deg, #3a2a1b, #5a4322); color: #e0c27a; font-family: serif; font-size: 0.9em; letter-spacing: 0.08em; box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5); cursor: pointer; }
+.age-dbook__folder { position: absolute; left: 50%; top: -1.9em; margin-left: -2.6em; z-index: 4; padding: 0.35em 1em; border: 1px solid #0d0804; border-bottom: 0; border-radius: 6px 6px 0 0; background: linear-gradient(90deg, #3a2a1b, #5a4322); color: #e0c27a; font-family: serif; font-size: 0.9em; letter-spacing: 0.08em; box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.4); cursor: pointer; }
 .age-dbook__folder:hover, .age-dbook__folder.is-open { background: linear-gradient(90deg, #5a4322, #7a5c2e); color: #f4e2a8; }

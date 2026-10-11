@@ -23,8 +23,8 @@ function mountOverlay(r) {
   const s = root.style; s.position = "absolute"; s.pointerEvents = "auto"; s.boxSizing = "border-box";
   const place = () => { // le livre est centré dans l'écran (marges égales de chaque côté) ; des pixels mesurés, jamais des pourcentages
     const cv = r.canvas, cr = cv.getBoundingClientRect(), op = root.offsetParent || parent, pr = op.getBoundingClientRect(); if (!cr.width || !cr.height) return;
-    const k = cr.width / W, mx = 56 * k, my = 12 * k;
-    s.left = cr.left - pr.left - (op.clientLeft || 0) + (op.scrollLeft || 0) + mx + "px"; s.top = cr.top - pr.top - (op.clientTop || 0) + (op.scrollTop || 0) + my + "px"; s.width = cr.width - 2 * mx + "px"; s.height = cr.height - 2 * my + "px";
+    const k = cr.width / W, mx = 56 * k, my = 12 * k, par = parent.getBoundingClientRect(); // à l'horizontale, centré sur l'écran (le cadre qui porte le canevas), pas sur le canevas seul
+    s.left = par.left - pr.left - (op.clientLeft || 0) + (op.scrollLeft || 0) + mx + "px"; s.top = cr.top - pr.top - (op.clientTop || 0) + (op.scrollTop || 0) + my + "px"; s.width = par.width - 2 * mx + "px"; s.height = cr.height - 2 * my + "px";
     root.dispatchEvent(new Event("age-fit"));
   };
   place(); if (typeof ResizeObserver !== "undefined") { ui.ro = new ResizeObserver(place); ui.ro.observe(r.canvas); }
