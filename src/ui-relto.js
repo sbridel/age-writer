@@ -166,8 +166,12 @@ const whyText = (plugin, why) => (WHY[why] ? "\n" + plugin.t(WHY[why]) : "");
 
 /** Un chapitre réussi : la note reçoit la propriété `story_chapter: completed` et l'étiquette `completed`, et une fenêtre le dit sans qu'il faille revenir au Relto. */
 function markChapterDone(plugin, ch, st) {
-  const { app, t } = plugin, lang = plugin.lang() === "fr" ? "fr" : "en", path = st.notes && st.notes[ch.id], f = path && app.vault.getAbstractFileByPath(path);
-  if (f) app.fileManager.processFrontMatter(f, (fm) => { fm.story_chapter = "completed"; const tg = Array.isArray(fm.tags) ? fm.tags : fm.tags ? [fm.tags] : []; if (!tg.includes("completed")) tg.push("completed"); fm.tags = tg; }).catch(() => {});
+  const { app, t } = plugin, lang = plugin.lang() === "fr" ? "fr" : "en";
+  // la note du chapitre, et l'Âge qui l'a vraiment réussi (ce n'est pas toujours la même note)
+  for (const path of new Set([st.notes && st.notes[ch.id], st.by && st.by[ch.id]].filter(Boolean))) {
+    const f = app.vault.getAbstractFileByPath(path);
+    if (f) app.fileManager.processFrontMatter(f, (fm) => { fm.story_chapter = "completed"; const tg = Array.isArray(fm.tags) ? fm.tags : fm.tags ? [fm.tags] : []; if (!tg.includes("completed")) tg.push("completed"); fm.tags = tg; }).catch((e) => console.warn("[Age Writer ext] étiquette", e));
+  }
   if (!obsidian.Modal) return;
   const preset = ch.page && M.PAGE_PRESETS[ch.page], next = ST.nextChapter(st.done);
   class Done extends obsidian.Modal {
@@ -184,11 +188,21 @@ function markChapterDone(plugin, ch, st) {
   new Done(app).open();
 }
 
+/** Les chapitres déjà réussis dont la note n'a pas encore l'étiquette (réussis avant que l'étiquette existe) la reçoivent. */
+function catchUpTags(plugin, hub) {
+  const { app } = plugin, relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed));
+  for (const id of st.done) for (const path of new Set([st.notes[id], st.by && st.by[id]].filter(Boolean))) {
+    const f = app.vault.getAbstractFileByPath(path);
+    const tagged = plugin._tagged || (plugin._tagged = new Set());
+    if (f && !tagged.has(path) && fmOf(app, f).story_chapter !== "completed") { tagged.add(path); app.fileManager.processFrontMatter(f, (fm) => { fm.story_chapter = "completed"; const tg = Array.isArray(fm.tags) ? fm.tags : fm.tags ? [fm.tags] : []; if (!tg.includes("completed")) tg.push("completed"); fm.tags = tg; }).catch(() => {}); }
+  }
+}
+
 /** Après une modification : revoir l'avancement de l'histoire (une notice quand un chapitre est réussi), sans qu'il faille ouvrir le Relto. */
 async function storyTick(plugin) {
   const { app } = plugin, hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
   if (!hub) return;
-  try { resetStoryDraw(plugin); plugin.index.invalidate(); await buildScene(plugin, hub); resetStoryDraw(plugin); } catch (e) { console.warn("[Age Writer ext] histoire", e); }
+  try { resetStoryDraw(plugin); plugin.index.invalidate(); await buildScene(plugin, hub); resetStoryDraw(plugin); catchUpTags(plugin, hub); } catch (e) { console.warn("[Age Writer ext] histoire", e); }
 }
 
 /** Noms des notes de l'histoire dont les pages ne sont pas tirées au hasard (tant que l'Imageur n'est pas réussi). Mis en cache : appelé à chaque analyse. */

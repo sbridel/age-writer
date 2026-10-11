@@ -93,41 +93,45 @@ function check(chapter, ctx) {
     if (!stable.length) return { ok: false, why: "stable" };
     const rich = stable.filter((a) => (a.glyphs || []).length >= 4);
     if (!rich.length) return { ok: false, why: "pages" };
-    const full = rich.some((a) => { const ax = axesOf(a.glyphs, ctx.axisOf); return ax.has("cosmological") && ax.has("geological") && ax.has("ecological"); });
-    return full ? { ok: true, why: "" } : { ok: false, why: "axes" };
+    const full = rich.find((a) => { const ax = axesOf(a.glyphs, ctx.axisOf); return ax.has("cosmological") && ax.has("geological") && ax.has("ecological"); });
+    return full ? { ok: true, why: "", path: full.path } : { ok: false, why: "axes" };
   }
   if (chapter.id === "mend") {
     // « corriger sans casser » : un Âge vu abîmé est maintenant stable
     const seen = (ctx && ctx.seen) || {};
-    return stable.some((a) => seen[a.name]) ? { ok: true, why: "" } : { ok: false, why: "mend" };
+    const m = stable.find((a) => seen[a.name]);
+    return m ? { ok: true, why: "", path: m.path } : { ok: false, why: "mend" };
   }
   if (chapter.id === "weather") {
     // « un jour qui change » : un monde stable dont la météo suit une ligne programmée (rain: sometimes, dawn)
     if (!stable.length) return { ok: false, why: "stable" };
-    return stable.some((a) => a.programmed > 0) ? { ok: true, why: "" } : { ok: false, why: "program" };
+    const w = stable.find((a) => a.programmed > 0);
+    return w ? { ok: true, why: "", path: w.path } : { ok: false, why: "program" };
   }
   if (chapter.id === "laws") {
     // « les lois du monde » : un monde stable qui écrit au moins deux valeurs physiques (mass: 0.8, age: 3.5…)
     if (!stable.length) return { ok: false, why: "stable" };
-    return stable.some((a) => a.physics >= 2) ? { ok: true, why: "" } : { ok: false, why: "physics" };
+    const l = stable.find((a) => a.physics >= 2);
+    return l ? { ok: true, why: "", path: l.path } : { ok: false, why: "physics" };
   }
   if (chapter.id === "zero") return ctx && ctx.zeroFound ? { ok: true, why: "" } : { ok: false, why: "zero" }; // « lever les yeux » : le Great Zero de ce Relto est trouvé
   if (chapter.id === "strange") return ages.some((a) => strangeOk(a, ctx.axisOf)) ? { ok: true, why: "" } : { ok: false, why: "strange" }; // aucun message d'échec : le chapitre reste ouvert
   if (chapter.id === "hard") {
     // « le monde difficile » : tout ensemble, et qui tient (marge de 5) : huit pages au moins, quatre axes, une météo programmée, deux valeurs physiques
     const good = ages.find((a) => a.stability >= STABLE_AT + 5 && (a.glyphs || []).length >= 8 && axesOf(a.glyphs, ctx.axisOf).size >= 4 && a.programmed >= 1 && a.physics >= 2);
-    if (good) return { ok: true, why: "" };
+    if (good) return { ok: true, why: "", path: good.path };
     return stable.length ? { ok: false, why: "all" } : { ok: false, why: "stable" };
   }
   if (chapter.id === "imager") { // « écouter le ciel » : l'Imageur est réglé et verrouillé sur l'un des Âges du dossier
     const tun = (ctx && ctx.tunings) || {};
-    return ages.some((a) => tun[a.path] && tun[a.path].lock) ? { ok: true, why: "" } : { ok: false, why: "lock" };
+    const k = ages.find((a) => tun[a.path] && tun[a.path].lock);
+    return k ? { ok: true, why: "", path: k.path } : { ok: false, why: "lock" };
   }
   if (chapter.id === "alter") {
     // « modifier ce qui est écrit » : la note du chapitre a été modifiée après séchage de l'encre (Loi du Changement), et le monde tient encore
     const mine = ages.find((a) => a.path === ((ctx && ctx.notes) || {}).alter);
     if (!mine || !(mine.altered >= 1)) return { ok: false, why: "dry" };
-    return mine.stability >= STABLE_AT ? { ok: true, why: "" } : { ok: false, why: "stable" };
+    return mine.stability >= STABLE_AT ? { ok: true, why: "", path: mine.path } : { ok: false, why: "stable" };
   }
   return { ok: false, why: "unknown" };
 }
@@ -141,7 +145,9 @@ function evaluate(store, key, ctx) {
   for (const c of CHAPTERS) {
     if (st.done.includes(c.id)) continue;
     const r = check(c, { ...ctx, seen: st.seen, notes: st.notes });
-    if (!r.ok) { st.why = r.why; break; } // ce qui manque au chapitre en cours (une clé : le plugin en fait une phrase)
+    if (!r.ok) { st.why = r.why; break; }
+    // (st.why : ce qui manque au chapitre en cours, une clé dont le plugin fait une phrase)
+    if (r.path) (st.by || (st.by = {}))[c.id] = r.path; // l'Âge qui a réussi le chapitre (il reçoit l'étiquette)
     st.done.push(c.id); newly.push(c); st.why = "";
   }
   return newly;
