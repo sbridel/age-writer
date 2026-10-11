@@ -329,7 +329,7 @@ async function renderRelto(plugin, source, el, ctx) {
       try { obsidian.setIcon(b.createSpan({ cls: "age-relto__tabicon" }), ic); } catch (e) { /* ignore */ }
       b.setAttr("aria-label", t(key)); b.addEventListener("click", () => { pick(k); plugin.saveExt(); if (k === "view") { try { renderer.draw(0); } catch (e) { /* ignore */ } if (root.__fadeArm) root.__fadeArm(); } });
     }
-    if (!ctx.big) { const x = tabBar.createEl("button", { cls: "age-relto__tab age-relto__tab--expand" }); try { obsidian.setIcon(x.createSpan({ cls: "age-relto__tabicon" }), "maximize-2"); } catch (e) { /* ignore */ } x.setAttr("aria-label", t("tab.expand")); x.addEventListener("click", () => openReltoView(plugin)); }
+    if (!ctx.big) { const x = tabBar.createEl("button", { cls: "age-relto__tab age-relto__tab--expand" }); try { obsidian.setIcon(x.createSpan({ cls: "age-relto__tabicon" }), "maximize-2"); } catch (e) { /* ignore */ } x.setAttr("aria-label", t("tab.expand")); x.addEventListener("click", () => openReltoView(plugin, file)); } // la grande vue s'ouvre sur ce Relto-ci (celui de l'histoire, le cas échéant)
     { // le plein écran, dans la grande vue comme dans la note : dans la note, son conteneur prend le temps du plein écran l'habit de la grande vue
       const fs = tabBar.createEl("button", { cls: "age-relto__tab age-relto__tab--full" }); try { obsidian.setIcon(fs.createSpan({ cls: "age-relto__tabicon" }), "expand"); } catch (e) { /* ignore */ }
       fs.setAttr("aria-label", t("tab.fullscreen"));
@@ -642,15 +642,19 @@ class ReltoView extends obsidian.ItemView {
   async onOpen() { await this.render(); }
   async render() {
     const el = this.contentEl; el.empty(); el.addClass("age-reltoview");
-    const file = findReltoFile(this.plugin, {}, "");
+    const mine = this.plugin.reltoViewFile && this.plugin.app.vault.getAbstractFileByPath(this.plugin.reltoViewFile), act = this.plugin.app.workspace.getActiveFile && this.plugin.app.workspace.getActiveFile();
+    const file = (mine && isHub(this.plugin.app, mine) ? mine : null) || (act && act.extension === "md" && isHub(this.plugin.app, act) ? act : null) || findReltoFile(this.plugin, {}, "");
     await renderRelto(this.plugin, "", el.createDiv(), { sourcePath: file ? file.path : "", big: true, addChild: (c) => { if (typeof this.addChild === "function") this.addChild(c); } });
   }
 }
-async function openReltoView(plugin) {
-  const ws = plugin.app.workspace;
+async function openReltoView(plugin, file) {
+  const ws = plugin.app.workspace, act = ws.getActiveFile && ws.getActiveFile();
+  const target = file && file.path ? file : act && act.extension === "md" && isHub(plugin.app, act) ? act : null; // le Relto d'où l'on vient (note de refuge ou bloc)
+  plugin.reltoViewFile = target ? target.path : null;
   const ex = ws.getLeavesOfType ? ws.getLeavesOfType(RELTO_VIEW)[0] : null;
   const leaf = ex || ws.getLeaf("tab");
   if (!ex) await leaf.setViewState({ type: RELTO_VIEW, active: true });
+  else if (ex.view && typeof ex.view.render === "function") await ex.view.render();
   if (ws.revealLeaf) ws.revealLeaf(leaf);
 }
 

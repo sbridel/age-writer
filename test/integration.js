@@ -333,6 +333,10 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     const shelf = (e) => [...e.querySelectorAll(".age-relto__pillname")].map((x) => x.textContent);
     let el = await show(sf.path);
     ok(row(el, "Chimney fire") && /is-locked/.test(row(el, "Chimney fire").className), "mode histoire : la page du premier chapitre est verrouillée au départ");
+    { p.reltoViewFile = null; p.app.workspace.getActiveFile = () => sf; const rv = p.views["age-writer-relto"]({ app: p.app }); await rv.onOpen();
+      const names = [...rv.contentEl.querySelectorAll(".age-relto__pillname")].map((x) => x.textContent).join();
+      ok(names === "Premier", "mode histoire : la grande vue ouverte depuis la note de l'histoire montre le Relto de l'histoire (" + names + ")");
+      p.app.workspace.getActiveFile = () => null; p.reltoViewFile = null; }
     ok(row(el, "Inkwell") && /is-locked/.test(row(el, "Inkwell").className), "mode histoire : la page finale est verrouillée au départ");
     ok(shelf(el).join() === "Premier", "mode histoire : l'étagère ne montre que les Âges du dossier de l'histoire");
     inside.content = "```age\nsingle_sun\nsteady_cycle\nwater\nsand\nfern\n```\n"; inside.stat.mtime++; p.index.invalidate(); notices.length = 0;
