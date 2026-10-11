@@ -30,9 +30,17 @@ const CHAPTERS = [
 
 /** Un indice facultatif, en mots, sans nommer de blocs (commande « Story: hint ») : seulement pour les chapitres dont la lettre ne dit pas la recette. */
 const HINTS = {
-  strange: {
-    en: "Some matters, set side by side, answer each other, and what they make is rarer than either. A strange stone changes what they answer. Not every sun is gold. And a world that has only earth and sky has never known what is written on a tablet.",
-    fr: "Certaines matières, posées côte à côte, se répondent, et ce qu'elles font est plus rare que chacune. Une pierre étrange change ce qu'elles répondent. Tous les soleils ne sont pas dorés. Et un monde qui n'a que la terre et le ciel n'a jamais su ce qu'une tablette dit.",
+  strange: { // trois indices, de plus en plus précis (chaque appel à la commande en dévoile un de plus) ; les deux premiers ne nomment aucun bloc
+    en: [
+      "Some matters, set side by side, answer each other, and what they make is rarer than either. A strange stone changes what they answer. Not every sun is gold. And a world that has only earth and sky has never known what is written on a tablet.",
+      "What is asked: a sun that is violet; something beyond sky and ground, as a tablet speaks; at least three gentle products born of matters that answer each other, one of them only with the strange stone's help; and a world that holds with margin (80% at least).",
+      "The master's own world, if you must: violet_sun, steady_cycle, strange_stone, tablet, rain, drizzle, deep_cold. Try it, then make it yours.",
+    ],
+    fr: [
+      "Certaines matières, posées côte à côte, se répondent, et ce qu'elles font est plus rare que chacune. Une pierre étrange change ce qu'elles répondent. Tous les soleils ne sont pas dorés. Et un monde qui n'a que la terre et le ciel n'a jamais su ce qu'une tablette dit.",
+      "Ce qui est demandé : un soleil violet ; quelque chose au-delà du ciel et du sol, comme parle une tablette ; au moins trois produits doux nés de matières qui se répondent, dont un seulement avec l'aide de la pierre étrange ; et un monde qui tient avec de la marge (80 % au moins).",
+      "Le monde du maître lui-même, s'il le faut : violet_sun, steady_cycle, strange_stone, tablet, rain, drizzle, deep_cold. Essaie-le, puis fais-le tien.",
+    ],
   },
 };
 

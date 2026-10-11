@@ -328,8 +328,11 @@ function storyHint(plugin) {
   const { app, t } = plugin, hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
   if (!hub) { new obsidian.Notice(t("story.nohub")); return; }
   const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed)), ch = ST.nextChapter(st.done);
-  const h = ch && ST.HINTS[ch.id];
-  new obsidian.Notice(h ? h[plugin.lang() === "fr" ? "fr" : "en"] : t("story.nohint"), h ? 12000 : 4000);
+  const h = ch && ST.HINTS[ch.id], L = h && h[plugin.lang() === "fr" ? "fr" : "en"];
+  if (!L) { new obsidian.Notice(t("story.nohint"), 4000); return; }
+  const n = Math.min(L.length - 1, st.hintN && st.hintN[ch.id] != null ? st.hintN[ch.id] + 1 : 0); // chaque appel en dévoile un de plus (le dernier se répète ensuite)
+  (st.hintN || (st.hintN = {}))[ch.id] = n; plugin.saveExt();
+  new obsidian.Notice(`(${n + 1}/${L.length}) ${L[n]}`, 14000);
 }
 
 class PresetModal extends obsidian.FuzzySuggestModal {

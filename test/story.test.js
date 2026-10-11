@@ -152,7 +152,7 @@ ok(!ST.check(sc, ctx([{ ...sgood, glyphs: sgood.glyphs.filter((g) => g !== "tabl
 ok(!ST.check(sc, ctx([{ ...sgood, reactions: sgood.reactions.map((r) => ({ ...r, catalyzed: false })) }])).ok && !ST.check(sc, ctx([{ ...sgood, reactions: sgood.reactions.slice(0, 2) }])).ok, "strange : sans pierre étrange, ou sous trois réactions, non");
 ok(!ST.check(sc, ctx([{ ...sgood, reactions: sgood.reactions.map((r) => ({ ...r, type: "violent" })) }])).ok && !ST.check(sc, ctx([{ ...sgood, stability: 77 }])).ok, "strange : des réactions violentes ou une marge trop courte, non");
 const sn = ST.chapterNote(sc, "fr", "N");
-ok(!/À faire/.test(sn) && !/violet_sun|strange_stone|tablet|deep_cold|drizzle/.test(sn) && ST.HINTS.strange.fr && !/violet_sun|strange_stone|tablet_|deep_cold|drizzle/.test(JSON.stringify(ST.HINTS)), "strange : la lettre et l'indice ne donnent ni recette ni nom de bloc");
+ok(!/À faire/.test(sn) && !/violet_sun|strange_stone|tablet|deep_cold|drizzle/.test(sn) && ST.HINTS.strange.fr.length === 3 && !/violet_sun|strange_stone|tablet_|deep_cold|drizzle/.test(ST.HINTS.strange.fr.slice(0, 2).join(" ") + ST.HINTS.strange.en.slice(0, 2).join(" ")) && ST.HINTS.strange.en[2].includes("violet_sun"), "strange : la lettre et l'indice ne donnent ni recette ni nom de bloc");
 
 // ---- ce qui manque, et les noms « Age N »
 { const st = {}, sky = age("Sans vie", ["single_sun", "steady_cycle", "water", "rain"]);
