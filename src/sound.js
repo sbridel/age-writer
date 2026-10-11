@@ -393,12 +393,13 @@ function bookOpen(volume = 0.3, { clicks = true, book = true } = {}) {
   });
 }
 // page tournée : un froissement de papier (bruit filtré qui monte puis retombe) et un léger « fff » de fin
-function pageTurn(volume = 0.3) {
-  return oneShot(0.6, (c, out, noise) => {
+function pageTurn(volume = 0.3, { quick = false } = {}) { // `quick` : un froissement bref, sans la traîne (pour les pages qui s'enchaînent)
+  return oneShot(quick ? 0.3 : 0.6, (c, out, noise) => {
     out.gain.value = volume; const t = c.currentTime, f = 1500 + Math.random() * 1200;
     const a = noise(0.5), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = "bandpass"; bp.Q.value = 0.9; bp.frequency.setValueAtTime(f * 0.6, t); bp.frequency.exponentialRampToValueAtTime(f * 1.5, t + 0.22);
-    e.gain.setValueAtTime(0.0001, t); e.gain.linearRampToValueAtTime(0.3, t + 0.07); e.gain.exponentialRampToValueAtTime(0.0001, t + 0.34); a.connect(bp); bp.connect(e); e.connect(out); a.start(t);
+    e.gain.setValueAtTime(0.0001, t); e.gain.linearRampToValueAtTime(0.3, t + 0.07); e.gain.exponentialRampToValueAtTime(0.0001, t + (quick ? 0.2 : 0.34)); a.connect(bp); bp.connect(e); e.connect(out); a.start(t);
     for (let i = 0; i < 3; i++) { const tt = t + 0.08 + i * (0.05 + Math.random() * 0.04), k = noise(0.04), hp = c.createBiquadFilter(), ke = c.createGain(); hp.type = "highpass"; hp.frequency.value = 3000; ke.gain.setValueAtTime(0.09, tt); ke.gain.exponentialRampToValueAtTime(0.0001, tt + 0.04); k.connect(hp); hp.connect(ke); ke.connect(out); k.start(tt); }
+    if (quick) return;
     const b = noise(0.3), lp = c.createBiquadFilter(), be = c.createGain(); lp.type = "lowpass"; lp.frequency.value = 1100; be.gain.setValueAtTime(0.0001, t + 0.25); be.gain.linearRampToValueAtTime(0.1, t + 0.3); be.gain.exponentialRampToValueAtTime(0.0001, t + 0.55); b.connect(lp); lp.connect(be); be.connect(out); b.start(t + 0.25);
   });
 }

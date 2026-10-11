@@ -583,7 +583,7 @@
 .age-linkanim.is-open .age-linkanim__book { opacity: 0; transform: scale(1.5) rotateY(70deg); transition: all 0.9s ease-in; }
 .age-linkanim__panel { position: relative; width: min(60%, 420px); opacity: 0; transform: scale(0.8); transition: opacity 0.9s ease-out, transform 0.9s ease-out; border: 2px solid #c9a24e; border-radius: 3px; overflow: hidden; box-shadow: 0 0 40px rgba(201, 162, 78, 0.35); }
 .age-linkanim__panel canvas { width: 100%; height: auto; display: block; }
-.age-linkanim.is-open .age-linkanim__panel { opacity: 1; transform: scale(1); }
+.age-linkanim.is-panel .age-linkanim__panel { opacity: 1; transform: scale(1); }
 .age-linkanim.is-touch .age-linkanim__panel { filter: brightness(1.8) saturate(0.6); transition: filter 0.7s ease-in; }
 .age-linkanim__touch { position: absolute; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #f0dca0; opacity: 0; pointer-events: none; }
 .age-linkanim__touch.is-on { animation: age-linkanim-ripple 0.9s ease-out both; }
@@ -598,3 +598,14 @@
 .age-linkanim.is-ready .age-linkanim__hint { opacity: 0.9; }
 .age-linkanim.is-touch .age-linkanim__hint { opacity: 0; }
 @keyframes age-linkanim-wait { 0%, 100% { box-shadow: 0 0 30px rgba(201, 162, 78, 0.3); } 50% { box-shadow: 0 0 60px rgba(240, 220, 160, 0.75); } }
+
+.age-linkanim__book.has-cover { padding: 0; background: none; border: 0; width: 170px; height: auto; }
+.age-linkanim__book.has-cover svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.6)); }
+
+/* les pages qu'on tourne : des feuilles qui pivotent sur la reliure, à l'endroit où le panneau va apparaître */
+.age-linkanim__sheets { position: absolute; width: min(60%, 420px); aspect-ratio: 3 / 2; perspective: 900px; opacity: 0; transition: opacity 0.6s ease-out; pointer-events: none; }
+.age-linkanim.is-open .age-linkanim__sheets { opacity: 1; }
+.age-linkanim.is-panel .age-linkanim__sheets { opacity: 0; transition: opacity 0.5s ease-in; }
+.age-linkanim__sheet { position: absolute; inset: 0; transform-origin: left center; background: linear-gradient(90deg, #cdbd94, #e8dcb8 30%, #d8c9a0); border: 1px solid #8a6a2e; border-radius: 2px 6px 6px 2px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4); backface-visibility: hidden; }
+.age-linkanim.is-flip .age-linkanim__sheet { animation: age-linkanim-flip ease-in-out both; }
+@keyframes age-linkanim-flip { 0% { transform: rotateY(0deg); } 85% { opacity: 1; } 100% { transform: rotateY(-175deg); opacity: 0; } }

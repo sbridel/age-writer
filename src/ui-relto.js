@@ -267,10 +267,14 @@ async function playLinkAnim(plugin, age, host, snd, open) {
   const pages = 3 + ((h >>> 0) % 8), gap = Math.round(700 - ((pages - 3) / 7) * 520); // 700 ms entre deux pages pour 3, 180 ms pour 10
   if (window.getComputedStyle(host).position === "static") host.style.position = "relative";
   const ov = host.createDiv({ cls: "age-linkanim" }), book = ov.createDiv({ cls: "age-linkanim__book" });
-  book.createDiv({ cls: "age-linkanim__title", text: age.name || f.basename });
+  let cover = ""; // la couverture du livre de liaison (celle du livre ouvert), si on sait la dessiner
+  try { const src = f && plugin.core.extract(await plugin.app.vault.cachedRead(f)); cover = src != null && analysis && plugin.coverFor ? plugin.coverFor(src, analysis, f, false) : ""; } catch (e) { cover = ""; }
+  if (cover) { book.addClass("has-cover"); setMarkup(book, cover); } else book.createDiv({ cls: "age-linkanim__title", text: age.name || f.basename });
   const panel = ov.createDiv({ cls: "age-linkanim__panel" });
   ov.createDiv({ cls: "age-linkanim__hint", text: plugin.t("link.touchpanel") });
   if (analysis) { try { plugin.mountGenerated(panel, analysis, age.path); } catch (e) { console.warn("[Age Writer ext] panneau", e); } }
+  const sheets = ov.createDiv({ cls: "age-linkanim__sheets" }); // les pages qu'on tourne avant d'arriver sur le panneau
+  for (let i = 0; i < pages; i++) { const sh = sheets.createDiv({ cls: "age-linkanim__sheet" }); sh.style.animationDelay = `${i * gap}ms`; sh.style.animationDuration = `${Math.max(380, Math.round(gap * 1.7))}ms`; sh.style.zIndex = String(pages - i); }
   const touch = ov.createDiv({ cls: "age-linkanim__touch" }), timers = [], at = (fn, ms) => timers.push(window.setTimeout(fn, ms));
   const quiet = !plugin.ext.sound, vol = plugin.ext.volume;
   let done = false, ready = false;
@@ -287,8 +291,9 @@ async function playLinkAnim(plugin, age, host, snd, open) {
   at(() => { ov.addClass("is-open"); if (!quiet && plugin.ext.soundBook !== false) sound.openSequence(vol, { book: true, clasp: plugin.ext.soundClasp !== false, link: false }); }, 1100); // le livre s'ouvre : son panneau apparaît
   // les pages ne se tournent qu'une fois le son du livre et des clics fini (même durée que dans openSequence)
   const lead = quiet ? 0 : plugin.ext.soundBook !== false ? 1350 : plugin.ext.soundClasp !== false ? 550 : 0, start = 1100 + lead + 250;
-  for (let i = 0; i < pages; i++) at(() => { if (!quiet && plugin.ext.soundBook !== false) sound.pageTurn(vol); }, start + i * gap); // les pages qu'on tourne
-  at(() => { ready = true; ov.addClass("is-ready"); }, start + 100 + pages * gap); // le panneau attend d'être touché
+  for (let i = 0; i < pages; i++) at(() => { if (!quiet && plugin.ext.soundBook !== false) sound.pageTurn(vol, { quick: true }); }, start + i * gap); // les pages qu'on tourne
+  at(() => ov.addClass("is-flip"), start); // les pages se tournent (le dessin suit le son)
+  at(() => { ready = true; ov.addClass("is-panel"); ov.addClass("is-ready"); }, start + pages * gap + Math.max(380, Math.round(gap * 1.7))); // la dernière page est tournée : le panneau attend d'être touché
 }
 
 /** Après une modification : revoir l'avancement de l'histoire (une notice quand un chapitre est réussi), sans qu'il faille ouvrir le Relto. */
