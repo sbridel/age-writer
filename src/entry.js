@@ -82,7 +82,7 @@ module.exports = function build(Base, core, AGEX) {
       this.physCache = new Map();
       this.live = new Set(); this.lawTimers = new Map(); this.fileAudios = []; this.soundBtn = null;
       this.index = new AgeIndex(this);
-      // dans l'histoire, l'encre sèche vite (2 min au plus)
+      // la note du chapitre « Modifier ce qui est écrit » : l'encre y sèche en 2 min au plus (ailleurs, un délai court ferait des altérations)
       this.law = new Law(this.ext.state.law, { dryMinutes: (name) => (R.storyNotes(this).has(name) ? Math.min(2, this.ext.inkDry) : this.ext.inkDry), healPerDay: () => this.ext.heal, ignored: (raw) => PH.isPhysicsLine(raw) || PH.isPhysicsStub(raw) });
       guard("modal plein écran", () => { // les fenêtres modales (livre des glyphes, carnet de l'arpenteur…) restent visibles quand le Relto est en plein écran
         const mp = obsidian.Modal && obsidian.Modal.prototype, orig = mp && mp.open; if (!orig) return;

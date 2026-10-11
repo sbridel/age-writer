@@ -229,11 +229,16 @@ function storyKnown(plugin, path) {
   }
   return null;
 }
-/** Les noms de toutes les notes du dossier d'une histoire (l'encre y sèche vite). */
+/** La note du chapitre « Modifier ce qui est écrit » : la seule où l'encre sèche vite (ailleurs, un délai court ferait des altérations). */
 function storyNotes(plugin) {
   if (plugin._storySet) return plugin._storySet;
   const set = new Set(), { app } = plugin;
-  try { for (const hub of app.vault.getMarkdownFiles().filter((f) => isStoryHub(app, f))) { const dir = ST.dirOf(hub.path); for (const f of app.vault.getMarkdownFiles()) if (f !== hub && ST.inDirs(f.path, [dir])) set.add(f.basename); } } catch (e) { console.warn("[Age Writer ext] histoire", e); }
+  try {
+    for (const hub of app.vault.getMarkdownFiles().filter((f) => isStoryHub(app, f))) {
+      const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed));
+      if (st.notes.alter) set.add(st.notes.alter.replace(/^.*\//, "").replace(/\.md$/, ""));
+    }
+  } catch (e) { console.warn("[Age Writer ext] histoire", e); }
   return (plugin._storySet = set);
 }
 const resetStoryDraw = (plugin) => { plugin._noDraw = null; plugin._storySet = null; };
