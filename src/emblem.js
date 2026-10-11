@@ -15,7 +15,7 @@ function drawEmblem(ctx, cx, cy, R, c = (h) => h, t = 0) {
   const eg = ctx.createRadialGradient(0, R * 0.2, R * 0.1, 0, 0, R * 0.95); eg.addColorStop(0, c("#a01e14")); eg.addColorStop(1, RED); ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(0, 0, R * 0.93, 0, 6.283); ctx.fill();
   // les quatre plumes en diagonale, pointe vers le centre
   const nibPath = (L, Wd) => { ctx.beginPath(); ctx.moveTo(0, L * 0.58); ctx.quadraticCurveTo(Wd * 0.95, L * 0.28, Wd, -L * 0.12); ctx.quadraticCurveTo(Wd * 1.02, -L * 0.4, Wd * 0.55, -L * 0.56); ctx.lineTo(-Wd * 0.55, -L * 0.56); ctx.quadraticCurveTo(-Wd * 1.02, -L * 0.4, -Wd, -L * 0.12); ctx.quadraticCurveTo(-Wd * 0.95, L * 0.28, 0, L * 0.58); ctx.closePath(); };
-  const nib = (a) => { ctx.save(); ctx.rotate(a); ctx.translate(0, -R * 0.68); const L = R * 0.52, Wd = R * 0.085; // une belle plume : épaules galbées, œillet, fente, reflet
+  const nib = (a) => { ctx.save(); ctx.rotate(a); ctx.translate(0, -R * 0.72); const L = R * 0.4, Wd = R * 0.055; // une belle plume : épaules galbées, œillet, fente, reflet
     ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.save(); ctx.translate(R * 0.015, R * 0.02); nibPath(L, Wd); ctx.fill(); ctx.restore();
     const ng = ctx.createLinearGradient(-Wd, 0, Wd, 0); ng.addColorStop(0, GOLD_L); ng.addColorStop(0.5, GOLD); ng.addColorStop(1, GOLD_D); ctx.fillStyle = ng; nibPath(L, Wd); ctx.fill();
     ctx.strokeStyle = GOLD_D; ctx.lineWidth = Math.max(0.6, R * 0.012); ctx.stroke();
@@ -28,8 +28,8 @@ function drawEmblem(ctx, cx, cy, R, c = (h) => h, t = 0) {
     ctx.fillStyle = GOLD_D; ctx.fillRect(Math.min(x0, dir * R * 0.97), -R * 0.03, R * 0.1, R * 0.06); };
   zig(-1); zig(1);
   // le cercle central et son glyphe
-  ctx.fillStyle = c("#4a0c08"); ctx.beginPath(); ctx.arc(0, 0, R * 0.44, 0, 6.283); ctx.fill(); ctx.strokeStyle = GOLD; ctx.lineWidth = R * 0.05; ctx.stroke();
-  ctx.fillStyle = GOLD_L; glyphPath(ctx, R * 0.43); ctx.fill("evenodd"); ctx.strokeStyle = GOLD_D; ctx.lineWidth = Math.max(0.5, R * 0.01); ctx.stroke();
+  ctx.fillStyle = c("#4a0c08"); ctx.beginPath(); ctx.arc(0, 0, R * 0.485, 0, 6.283); ctx.fill(); ctx.strokeStyle = GOLD; ctx.lineWidth = R * 0.035; ctx.stroke(); ctx.lineWidth = R * 0.012; ctx.beginPath(); ctx.arc(0, 0, R * 0.455, 0, 6.283); ctx.stroke();
+  ctx.fillStyle = GOLD_L; glyphPath(ctx, R * 0.47); ctx.fill("evenodd"); ctx.strokeStyle = GOLD_D; ctx.lineWidth = Math.max(0.5, R * 0.01); ctx.stroke();
   // l'anneau extérieur, avec un reflet qui glisse
   const rg = ctx.createLinearGradient(-R, -R, R, R); rg.addColorStop(0, GOLD_L); rg.addColorStop(0.5, GOLD); rg.addColorStop(1, GOLD_D); ctx.strokeStyle = rg; ctx.lineWidth = R * 0.075; ctx.beginPath(); ctx.arc(0, 0, R * 0.965, 0, 6.283); ctx.stroke();
   const sh = (t * 0.4) % 6.283; ctx.strokeStyle = rgba(255, 250, 220, 0.4); ctx.lineWidth = R * 0.025; ctx.beginPath(); ctx.arc(0, 0, R * 0.965, sh, sh + 0.5); ctx.stroke();
@@ -62,15 +62,15 @@ function drawSeal(ctx, cx, cy, R, c = (h) => h, t = 0, wax = "#7c1f2c") {
   zig(-1); zig(1);
   // les quatre plumes, pointe vers le centre
   const nibPath = (L, Wd) => { ctx.beginPath(); ctx.moveTo(0, L * 0.58); ctx.quadraticCurveTo(Wd * 0.95, L * 0.28, Wd, -L * 0.12); ctx.quadraticCurveTo(Wd * 1.02, -L * 0.4, Wd * 0.55, -L * 0.56); ctx.lineTo(-Wd * 0.55, -L * 0.56); ctx.quadraticCurveTo(-Wd * 1.02, -L * 0.4, -Wd, -L * 0.12); ctx.quadraticCurveTo(-Wd * 0.95, L * 0.28, 0, L * 0.58); ctx.closePath(); };
-  const nib = (a) => { ctx.save(); ctx.rotate(a); ctx.translate(0, -R * 0.68); const L = R * 0.52, Wd = R * 0.085;
+  const nib = (a) => { ctx.save(); ctx.rotate(a); ctx.translate(0, -R * 0.72); const L = R * 0.4, Wd = R * 0.055;
     raise(() => { nibPath(L, Wd); ctx.fill(); });
     ctx.strokeStyle = W_D; ctx.lineWidth = Math.max(0.7, R * 0.014); ctx.beginPath(); ctx.moveTo(0, L * 0.55); ctx.lineTo(0, -L * 0.12); ctx.stroke();
     ctx.fillStyle = FIELD; ctx.beginPath(); ctx.arc(0, -L * 0.2, Wd * 0.3, 0, 6.283); ctx.fill(); ctx.strokeStyle = W_L; ctx.lineWidth = Math.max(0.5, R * 0.01); ctx.stroke(); ctx.restore(); };
   for (const a of [Math.PI / 4, -Math.PI / 4, (3 * Math.PI) / 4, (-3 * Math.PI) / 4]) nib(a);
   // le cercle central en relief, son champ plat, et le glyphe
-  ctx.fillStyle = c(mix(wax, "#000000", 0.12)); ctx.beginPath(); ctx.arc(0, 0, R * 0.41, 0, 6.283); ctx.fill();
-  raise(() => { ctx.lineWidth = R * 0.05; ctx.beginPath(); ctx.arc(0, 0, R * 0.43, 0, 6.283); ctx.stroke(); });
-  raise(() => { glyphPath(ctx, R * 0.43); ctx.fill("evenodd"); }, Math.max(0.6, R * 0.018));
+  ctx.fillStyle = c(mix(wax, "#000000", 0.12)); ctx.beginPath(); ctx.arc(0, 0, R * 0.47, 0, 6.283); ctx.fill();
+  raise(() => { ctx.lineWidth = R * 0.035; ctx.beginPath(); ctx.arc(0, 0, R * 0.485, 0, 6.283); ctx.stroke(); ctx.lineWidth = R * 0.014; ctx.beginPath(); ctx.arc(0, 0, R * 0.45, 0, 6.283); ctx.stroke(); }); // double anneau
+  raise(() => { glyphPath(ctx, R * 0.47); ctx.fill("evenodd"); }, Math.max(0.6, R * 0.018));
   const sh = (t * 0.3) % 6.283; ctx.strokeStyle = "rgba(255,225,215,0.28)"; ctx.lineWidth = R * 0.03; ctx.beginPath(); ctx.arc(0, 0, R * 0.955, sh, sh + 0.45); ctx.stroke(); // un reflet de cire qui glisse
   ctx.restore();
 }
