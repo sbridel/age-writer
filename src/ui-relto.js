@@ -385,6 +385,21 @@ function storyPopup(plugin, text) {
   new Pop(plugin.app).open();
 }
 
+/** Une vraie lettre du mentor, sur du parchemin (fenêtre) : `paras` est la liste de ses paragraphes. */
+function letterPopup(plugin, paras) {
+  if (!obsidian.Modal) { new obsidian.Notice(paras[1] || paras[0]); return; }
+  class Letter extends obsidian.Modal {
+    onOpen() {
+      this.modalEl.addClass("age-letter"); this.titleEl.setText("");
+      for (const p of paras) this.contentEl.createEl("p", { text: p, cls: p.startsWith("\u2014") ? "age-letter__sign" : "" });
+      this.contentEl.createDiv({ cls: "age-letter__seal" });
+      this.contentEl.createDiv({ cls: "modal-button-container" }).createEl("button", { text: plugin.t("story.pop.close") }).addEventListener("click", () => this.close());
+    }
+    onClose() { this.contentEl.empty(); }
+  }
+  new Letter(plugin.app).open();
+}
+
 /** Chapitre suivant : crée (ou rouvre) la note du prochain chapitre dans le dossier de l'histoire. */
 async function storyNext(plugin, opts = {}) {
   const { app, t } = plugin;
@@ -393,7 +408,7 @@ async function storyNext(plugin, opts = {}) {
   await buildScene(plugin, hub); // évalue l'avancement (un chapitre réussi depuis la dernière fois est compté)
   const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, store = plugin.ext.story || (plugin.ext.story = {});
   const key = TEL.keyOf(relto.name, relto.seed), st = ST.get(store, key), ch = ST.nextChapter(st.done);
-  if (!ch) { storyPopup(plugin, t("story.end")); return null; }
+  if (!ch) { letterPopup(plugin, [t("story.letter.hi"), t("story.end"), t("story.letter.more") + " " + t("atelier.clue"), "\u2014 Adrin Vesparath, seltahn"]); return null; }
   const lang = plugin.lang(), dir = ST.dirOf(hub.path), known = !opts.fresh && st.notes[ch.id] && app.vault.getAbstractFileByPath(st.notes[ch.id]);
   if (known) { await leaveFullscreenAsync(); new obsidian.Notice(t("story.reopen") + whyText(plugin, st.why)); await app.workspace.getLeaf(false).openFile(known); return known; }
   // « Age 1 », « Age 2 »… : court ; le nom ne doit exister nulle part dans le coffre (la Loi du Changement et l'avancement sont gardés par nom)

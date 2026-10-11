@@ -159,23 +159,25 @@ function drawDesk(r, ctx, sc, sky, t) {
   const ui = (r.deskUI = r.deskUI || { open: false, at: 0, held: false, heldAt: 0, relAt: 0 }), now = Date.now(), ease = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
   const dp = ui.open ? ease((now - ui.at) / 650) : ease(1 - (now - ui.at) / 500); // le tiroir glisse hors du bureau (ou y rentre) ; il se ferme quand on s'en va
   if (dp > 0.001) {
-    const dy = H - 66 * dp; ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.fillRect(534, dy - 4, 106, 8); ctx.fillStyle = c("#2a1c12"); ctx.fillRect(536, dy, 100, 66); ctx.fillStyle = c("#0f0a07"); ctx.fillRect(542, dy + 4, 88, 36); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.strokeRect(536, dy, 100, 66);
+    const yb = 312, dy = yb - 66 * dp; ctx.save(); ctx.beginPath(); ctx.rect(520, 0, 120, yb); ctx.clip(); // il sort de sous le bord du plateau (et reste au-dessus de la barre d'horloge, en plein écran)
+    ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.fillRect(534, dy - 4, 106, 8); ctx.fillStyle = c("#2a1c12"); ctx.fillRect(536, dy, 100, 66); ctx.fillStyle = c("#0f0a07"); ctx.fillRect(542, dy + 4, 88, 36); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.strokeRect(536, dy, 100, 66);
     ctx.fillStyle = c("#4a3322"); ctx.fillRect(536, dy + 44, 100, 22); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(586, dy + 55, 4, 0, 6.283); ctx.fill();
     const hold = ui.held ? (ui.relAt ? 1 - ease((now - ui.relAt) / 550) : ease((now - ui.heldAt) / 600)) : 0; // la tablette quitte le tiroir pour les mains, puis y revient
-    if (!ui.held || hold < 0.999) stone(ctx, c, 586, dy + 22, 14 * (1 - hold * 0.001), t);
-    if (ui.open && now - ui.at > 600 && !ui.held) r.hot.push({ x: 548, y: 294, w: 76, h: 42, tip: TRr("atelier.stone.tip"), desk: "hold" });
-    if (ui.open && now - ui.at > 400) r.hot.push({ x: 536, y: 336, w: 100, h: 24, tip: TRr("atelier.drawer.close"), desk: "drawer" });
+    if (!ui.held || hold < 0.999) stone(ctx, c, 586, dy + 22, 14, t);
+    ctx.restore();
+    if (ui.open && now - ui.at > 600 && !ui.held) r.hot.push({ x: 548, y: yb - 62, w: 76, h: 42, tip: TRr("atelier.stone.tip"), desk: "hold" });
+    if (ui.open && now - ui.at > 400) r.hot.push({ x: 536, y: yb - 22, w: 100, h: 22, tip: TRr("atelier.drawer.close"), desk: "drawer" });
   }
   if (!ui.open || dp < 0.05) { // un clou de laiton qui brille un peu trop : c'est le bouton du tiroir
-    const g = 0.35 + 0.35 * Math.sin(t * 1.1); ctx.fillStyle = c("#b98f3c"); ctx.beginPath(); ctx.arc(598, 346, 2.6, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 240, 190, g); ctx.fillRect(597, 344.5, 1.6, 1.6);
-    r.hot.push({ x: 588, y: 336, w: 20, h: 18, tip: "", desk: "drawer", secret: true });
+    const g = 0.35 + 0.35 * Math.sin(t * 1.1); ctx.fillStyle = c("#b98f3c"); ctx.beginPath(); ctx.arc(612, 292, 2.6, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 240, 190, g); ctx.fillRect(611, 290.5, 1.6, 1.6);
+    r.hot.push({ x: 600, y: 280, w: 24, h: 24, tip: "", desk: "drawer", secret: true });
   }
   backButton(r, ctx, TRr("atelier.stand.tip"), "atelier"); // se lever
   if (ui.held) { // la tablette entre les mains : on la regarde de près, un clic la rend au tiroir
     const hp = ui.relAt ? 1 - ease((now - ui.relAt) / 550) : ease((now - ui.heldAt) / 600);
     if (ui.relAt && now - ui.relAt > 560) { ui.held = false; ui.relAt = 0; } else {
       ctx.fillStyle = rgba(0, 0, 0, 0.62 * hp); ctx.fillRect(0, 0, W, H);
-      const sx = 586 + (320 - 586) * hp, sy = 322 + (172 - 322) * hp, sz = 14 + 66 * hp; ctx.save(); ctx.translate(sx, sy); ctx.rotate(Math.sin(t * 0.7) * 0.06 * hp); ctx.translate(-sx, -sy); stone(ctx, c, sx, sy, sz, t); ctx.restore();
+      const sx = 586 + (320 - 586) * hp, sy = 290 + (172 - 290) * hp, sz = 14 + 66 * hp; ctx.save(); ctx.translate(sx, sy); ctx.rotate(Math.sin(t * 0.7) * 0.06 * hp); ctx.translate(-sx, -sy); stone(ctx, c, sx, sy, sz, t); ctx.restore();
       if (hp > 0.9) { ctx.font = "italic 15px serif"; ctx.textAlign = "center"; ctx.fillStyle = rgba(233, 220, 184, 0.85); ctx.fillText(TRr("atelier.stone.flash"), W / 2, 312); ctx.textAlign = "left"; }
       r.hot.push({ x: 0, y: 0, w: W, h: H, tip: "", desk: "release" });
     }

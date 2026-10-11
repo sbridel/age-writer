@@ -616,3 +616,10 @@
 .age-linkanim.is-panel .age-linkanim__panel { transform: none; }
 .age-linkanim__panel .age-panel__window { width: 100%; max-width: none; min-width: 0; margin: 0; }
 .age-linkanim__panel .age-panel__window canvas { width: 100%; height: auto; }
+
+/* la dernière lettre du mentor : du parchemin */
+.modal.age-letter { background: linear-gradient(160deg, #eadfb8, #dccd9c); color: #3a2a18; border: 1px solid #8a6a2e; box-shadow: 0 18px 60px rgba(0, 0, 0, 0.6); max-width: 520px; }
+.modal.age-letter .modal-close-button { color: #5a4326; }
+.modal.age-letter p { font-family: serif; font-style: italic; font-size: 1.12em; line-height: 1.6; margin: 0.7em 0; color: #3a2a18; }
+.modal.age-letter .age-letter__sign { text-align: right; margin-top: 1.4em; }
+.modal.age-letter .age-letter__seal { width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #c4453d, #7d1f1b); margin: 0.6em auto 0.2em; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); }
