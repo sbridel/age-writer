@@ -328,4 +328,4 @@ function knownBlocks(done) {
   return set;
 }
 
-module.exports = { kindOf, exploreName, knownBlocks, REVIEW, reviewSheet, COURSE, courseSheet, drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
+module.exports = { KIND_LABEL, kindOf, exploreName, knownBlocks, REVIEW, reviewSheet, COURSE, courseSheet, drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };

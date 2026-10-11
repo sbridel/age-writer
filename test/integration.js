@@ -32,7 +32,7 @@ const events = {};
 const on = (n) => (ev, cb) => { (events[n + ":" + ev] = events[n + ":" + ev] || []).push(cb); return { ev, cb }; };
 const app = {
   vault: { getMarkdownFiles: () => [...files.values()], read: async (f) => f.content, cachedRead: async (f) => f.content, getAbstractFileByPath: (p) => files.get(p) || null,
-    create: async (p, c) => { const f = new TFile(p, c); files.set(p, f); return f; }, createFolder: async () => {}, on: on("vault"), adapter: { exists: async () => false, read: async () => "{}" }, getResourcePath: (f) => "x://" + f },
+    process: async (f, fn) => { f.content = fn(f.content); return f.content; }, create: async (p, c) => { const f = new TFile(p, c); files.set(p, f); return f; }, createFolder: async () => {}, on: on("vault"), adapter: { exists: async () => false, read: async () => "{}" }, getResourcePath: (f) => "x://" + f },
   workspace: { onLayoutReady: (f) => f(), getActiveFile: () => null, iterateAllLeaves: () => {}, getLeavesOfType: () => [], on: on("ws"), openLinkText: async () => {}, getLeaf: () => ({ openFile: async () => {} }), getRightLeaf: () => null },
   metadataCache: { getFileCache: () => null, resolvedLinks: {}, on: on("mc"), getFirstLinkpathDest: () => null, getCache: () => ({ links: [] }) },
   fileManager: { processFrontMatter: async () => {} },
@@ -365,6 +365,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
           const c3b = [...files.keys()].filter((q) => !b5.includes(q));
           ok(c3b.length === 1 && stW.notes.weather === c3b[0] && files.has(c3[0]) && /\nrain\n/.test(files.get(c3b[0]).content), "relancer le chapitre : une note neuve, l'ancienne reste");
           files.delete(c3b[0]); stW.notes.weather = c3[0]; }
+        { const rp = p.cmds.find((c) => c.id === "story-repair"); ok(!!rp, "commande « Story: repair chapter notes » enregistrée"); notices.length = 0; await rp.callback(); ok(notices.some((n) => /repaired|réparées/.test(n)), "réparation : s'exécute et le dit"); }
         ok(row(el, "Inkwell") && /is-locked/.test(row(el, "Inkwell").className), "la page finale reste fermée tant qu'un chapitre manque");
         files.get(c3[0]).content = files.get(c3[0]).content.replace("\nrain\n", "\nrain: sometimes, dawn\n"); files.get(c3[0]).stat.mtime++; p.index.invalidate(); notices.length = 0;
         el = await show(sf.path);

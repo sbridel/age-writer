@@ -207,6 +207,47 @@ async function storyCheck(plugin) {
   new obsidian.Notice(ch ? t("story.checked", { title: ch.title[plugin.lang() === "fr" ? "fr" : "en"] }) + whyText(plugin, st.why) : t("story.end"), 8000);
 }
 
+/**
+ * Commande de réparation : remet d'aplomb les notes de chapitre créées par une version plus ancienne, sans rien recommencer.
+ * Noms (« Age N » pour un exercice d'écriture, le titre pour une exploration du Relto ; la graine de l'Âge est gardée),
+ * propriété `story_kind`, étiquette `completed` des chapitres réussis, ligne « Exercice d'écriture / Exploration du Relto ».
+ */
+async function storyRepair(plugin) {
+  const { app, t } = plugin, hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
+  if (!hub) { new obsidian.Notice(t("story.nohub")); return; }
+  const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed)), lang = plugin.lang() === "fr" ? "fr" : "en";
+  let renamed = 0, tagged = 0, lined = 0;
+  for (const ch of ST.CHAPTERS) {
+    let f = st.notes[ch.id] && app.vault.getAbstractFileByPath(st.notes[ch.id]); if (!(f instanceof obsidian.TFile)) continue;
+    const kind = ST.kindOf(ch), taken = new Set(app.vault.getMarkdownFiles().map((x) => x.basename)); taken.delete(f.basename);
+    let want = null;
+    if (kind === "explore") { if (f.basename !== ST.exploreName(ch, lang, taken) && /^Age \d+$|Relto Story Mode/.test(f.basename)) want = ST.exploreName(ch, lang, taken); }
+    else if (!/^Age \d+$/.test(f.basename)) { for (let k = 1; ; k++) if (!taken.has(`Age ${k}`)) { want = `Age ${k}`; break; } }
+    if (want) {
+      const old = f.basename, path = `${ST.dirOf(f.path)}/${want}.md`;
+      try {
+        await app.fileManager.renameFile(f, path); f = app.vault.getAbstractFileByPath(path) || f;
+        st.notes[ch.id] = f.path; if (st.seen[old]) { st.seen[want] = st.seen[old]; delete st.seen[old]; }
+        if (st.by && st.by[ch.id]) st.by[ch.id] = f.path; renamed++;
+      } catch (e) { console.warn("[Age Writer ext] réparation", e); }
+    }
+    const done = st.done.includes(ch.id);
+    await app.fileManager.processFrontMatter(f, (fm) => {
+      const k = kind === "write" ? "writing-exercise" : "relto-exploration";
+      if (fm.story_kind !== k) { fm.story_kind = k; tagged++; }
+      if (done) { fm.story_chapter = "completed"; const tg = Array.isArray(fm.tags) ? fm.tags : fm.tags ? [fm.tags] : []; if (!tg.includes("completed")) { tg.push("completed"); tagged++; } fm.tags = tg; }
+    }).catch(() => {});
+    const label = ST.KIND_LABEL[kind];
+    try { await app.vault.process(f, (text) => {
+      if (/(Writing exercise|Exercice d'écriture|Relto exploration|Exploration du Relto) ·/.test(text)) return text;
+      const out = text.replace(new RegExp(`^> (${ch.title.en}|${ch.title.fr}|Deseekay · ${ch.title.en}|Deseekay · ${ch.title.fr})$`, "m"), `> ${kind === "write" ? "✒" : "✦"} ${label[lang]} · $1`);
+      if (out !== text) lined++; return out;
+    }); } catch (e) { console.warn("[Age Writer ext] réparation", e); }
+  }
+  resetStoryDraw(plugin); plugin.index.invalidate(); await plugin.saveExt(); await storyTick(plugin);
+  new obsidian.Notice(t("story.repaired", { n: renamed, p: tagged, l: lined }), 8000);
+}
+
 /** Après une modification : revoir l'avancement de l'histoire (une notice quand un chapitre est réussi), sans qu'il faille ouvrir le Relto. */
 async function storyTick(plugin) {
   const { app } = plugin, hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
@@ -765,4 +806,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyCheck, storyNext, storyRestart, storyNoDraw, storyNotes, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyRepair, storyCheck, storyNext, storyRestart, storyNoDraw, storyNotes, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };

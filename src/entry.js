@@ -424,6 +424,7 @@ module.exports = function build(Base, core, AGEX) {
       this.addCommand({ id: "open-relto", name: "Open the Relto", callback: () => R.openRelto(this) });
       this.addCommand({ id: "start-story", name: "Start the story (create or open the story Relto)", callback: () => R.startStory(this) });
     this.addCommand({ id: "story-hint", name: "Story: a hint for the current chapter", callback: () => R.storyHint(this) });
+    this.addCommand({ id: "story-repair", name: "Story: repair chapter notes (names, properties)", callback: () => R.storyRepair(this) });
     this.addCommand({ id: "story-check", name: "Story: check progress now", callback: () => R.storyCheck(this) });
     this.addCommand({ id: "story-restart", name: "Story: restart the current chapter (fresh note)", callback: () => R.storyRestart(this) });
     this.addCommand({ id: "story-next", name: "Story: next chapter (create or reopen its note)", callback: () => R.storyNext(this) });
