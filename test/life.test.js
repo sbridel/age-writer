@@ -22,6 +22,11 @@ assert.ok(made.has("spore_cloud") && made.has("aeroplankton"), "vent + spore →
 assert.ok(analyseAgeBase("water\nash\nspore", { seed: "S" }).resolved.matter.reactions.some((x) => (x.result || x) === "soil_bacteria"), "spore + limon : les bactéries du sol");
 assert.ok(analyseAgeBase("bee\nflowers", { seed: "S" }).resolved.matter.reactions.some((x) => (x.result || x) === "humming_blooms"), "abeille + fleurs : les fleurs bourdonnent");
 
+// les variantes du champignon : lumineux avec une pierre étrange, chantant avec un cristal
+const shown = (...ids) => analyseAgeBase(ids.join("\n"), { seed: "S" }).resolved.matter.reactions.filter((x) => x.result === "mushroom").map((x) => x.shown)[0];
+assert.strictEqual(shown("mycelium", "water"), "mushroom", "sans catalyseur : le champignon ordinaire");
+assert.strictEqual(shown("mycelium", "water", "strange_stone"), "glowing_mushroom", "avec la pierre étrange : il luit");
+assert.strictEqual(shown("mycelium", "water", "crystal"), "singing_mushroom", "avec un cristal : il chante");
 // 2. la boucle vie ↔ mort : un décomposeur ou un nécrophage la ferme ; un rôle d'appoint, moins bien
 const open = LF.laws(set("grazer", "fern", "water"), { weights: { life: 1, soil: 1 } });
 assert.ok(open && open.notes.some((n) => n.id === "openLoop") && open.delta.ecological > 0, "des animaux sans rien pour rendre les morts au sol : boucle ouverte");

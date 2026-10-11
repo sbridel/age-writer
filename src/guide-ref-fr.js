@@ -223,7 +223,7 @@ const REF_FR = [
     { p: "Les réactions violentes coûtent le plus (jusqu'à 25 points) ; les apaisantes, les croissances et les cristallisations rendent quelques points. `acid` change aussi `coral` en `salt`, `stone` en `hollowed_ground` et `water` en `bitter_water` (des blocs qui peuvent aussi s'écrire)." },
     { h: "Variantes rares (avec strange_stone)" },
     { p: "Quand `strange_stone` est dans l'Âge, ces produits se montrent sous leur variante rare :" },
-    { ul: ["`whispering_obsidian`, `black_ice`, `singing_glass`, `living_rust`, `clouded_diamond`", "`whispering_storm`, `waiting_thunder`, `watching_mist`, `black_hail`", "`singing_lichen`, `wrong_glowvine`, `whispering_moths`, `watching_herd`, `humming_warren`"] },
+    { ul: ["`whispering_obsidian`, `black_ice`, `singing_glass`, `living_rust`, `clouded_diamond`", "`whispering_storm`, `waiting_thunder`, `watching_mist`, `black_hail`", "`singing_lichen`, `wrong_glowvine`, `whispering_moths`, `watching_herd`, `humming_warren`", "`glowing_mushroom` (avec `strange_stone`) et `singing_mushroom` (avec un `crystal`) : les deux variantes rares du champignon"] },
   ] },
   { id: "physgen", part: "gen", icon: "orbit", title: "Physique du monde", body: [
     { p: "Sous les blocs, un petit monde physique : étoile, orbite, planète, chaleur interne, noyau, champ magnétique, air, température, eau, lumière. Ce n'est pas une simulation : des lois simplifiées, calées pour que la Terre, Mars, Vénus et la Lune tombent à peu près juste. Ce que le livre laisse ouvert est tiré de la graine, sous contraintes : le monde cherche une physique qui tient ce que tu as écrit (48 essais, toujours les mêmes pour la même graine)." },

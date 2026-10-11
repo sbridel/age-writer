@@ -55,7 +55,7 @@ const BUILTIN_VARIANTS = Object.entries({
   ...FAUNA_VARIANTS,
   ...RUINS_VARIANTS,
   ...WEATHER_VARIANTS,
-}).map(([e, o]) => ({ base: e, variant: o, catalyst: CATALYST_ID }));
+}).map(([e, o]) => ({ base: e, variant: o, catalyst: CATALYST_ID })).concat(LIFE.VARIANTS);
 
 function builtinLibrary() {
   return { blocks: BUILTIN_BLOCKS, reactions: BUILTIN_REACTIONS, variants: BUILTIN_VARIANTS };

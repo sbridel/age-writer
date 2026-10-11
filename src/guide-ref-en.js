@@ -226,7 +226,7 @@ const REF_EN = [
     { p: "Violent reactions cost the most (up to 25 points); soothing, growing and crystallizing ones give a few points back. `acid` also turns `coral` into `salt`, `stone` into `hollowed_ground` and `water` into `bitter_water` (blocks that can also be written)." },
     { h: "Rare variants (with strange_stone)" },
     { p: "When `strange_stone` is in the Age, these products show as their rare variant:" },
-    { ul: ["`whispering_obsidian`, `black_ice`, `singing_glass`, `living_rust`, `clouded_diamond`", "`whispering_storm`, `waiting_thunder`, `watching_mist`, `black_hail`", "`singing_lichen`, `wrong_glowvine`, `whispering_moths`, `watching_herd`, `humming_warren`"] },
+    { ul: ["`whispering_obsidian`, `black_ice`, `singing_glass`, `living_rust`, `clouded_diamond`", "`whispering_storm`, `waiting_thunder`, `watching_mist`, `black_hail`", "`singing_lichen`, `wrong_glowvine`, `whispering_moths`, `watching_herd`, `humming_warren`", "`glowing_mushroom` (with `strange_stone`) and `singing_mushroom` (with a `crystal`): the two rare variants of the mushroom"] },
   ] },
   { id: "physgen", part: "gen", icon: "orbit", title: "Physics of the world", body: [
     { p: "Beneath the blocks lies a small physical world: star, orbit, planet, inner heat, core, magnetic field, air, temperature, water, light. It is not a simulation: simplified laws, tuned so that Earth, Mars, Venus and the Moon come out roughly right. What the book leaves open is drawn from the seed, under constraints: the world looks for a physics that holds what you wrote (48 attempts, always the same for the same seed)." },

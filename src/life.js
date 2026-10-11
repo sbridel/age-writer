@@ -35,6 +35,8 @@ const PRODUCED = [
   { id: "aeroplankton", d: ["airborne", "faint", "glittering"], axis: "ecological", p: "a faint life drifts in the mist itself, glittering where the light catches it" },
   { id: "soil_bacteria", d: ["unseen", "tireless", "ancient"], axis: "ecological", p: "unseen bacteria work the silt, tireless and ancient" },
   { id: "humming_blooms", d: ["golden", "humming", "open"], axis: "ecological", p: "the flowers hum with bees, each one opening for a visitor" },
+  { id: "glowing_mushroom", d: ["luminous", "cool", "patient"], axis: "ecological", p: "mushrooms glow in the dark, cool and patient, lighting nothing but themselves" },
+  { id: "singing_mushroom", d: ["singing", "thin", "clear"], axis: "ecological", p: "the mushrooms sing, thin and clear, a note for each cap" },
 ].map((b) => ({ id: b.id, descriptors: b.d, weight: 0, axis: b.axis, writable: false, presence: b.p }));
 MATTER_BLOCKS.push(...PRODUCED);
 const REACTIONS = [
@@ -45,6 +47,11 @@ const REACTIONS = [
   { a: "earth", b: "mycelium", result: "humus", type: "growing" },
   { a: "moss", b: "marsh", result: "peat", type: "growing" },
   { a: "bee", b: "flowers", result: "humming_blooms", type: "growing" },
+];
+/** Les variantes rares du champignon : lumineux avec `strange_stone` (comme toutes les variantes du moteur), chantant avec un cristal. */
+const VARIANTS = [
+  { base: "mushroom", variant: "glowing_mushroom", catalyst: "strange_stone" },
+  { base: "mushroom", variant: "singing_mushroom", catalyst: "crystal" },
 ];
 const IDS = [...BLOCKS.map((b) => b.id), ...PRODUCED.map((b) => b.id)];
 
@@ -128,4 +135,4 @@ function note(l, fr) {
   return (fr ? "Vie · " : "Life · ") + l.notes.slice(0, 2).map((n) => TEXT[n.id][fr ? 1 : 0]).join(fr ? " · " : " · ");
 }
 
-module.exports = { MATTER_BLOCKS, REACTIONS, IDS, ROLES, SECONDARY, MICRO, SOIL, COST, TEXT, laws, note };
+module.exports = { MATTER_BLOCKS, REACTIONS, VARIANTS, IDS, ROLES, SECONDARY, MICRO, SOIL, COST, TEXT, laws, note };
