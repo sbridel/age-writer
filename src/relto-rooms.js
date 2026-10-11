@@ -99,6 +99,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     stone(fx + 20, 24, fw - 40, 90); stone(fx, 114, ox - fx, FLOOR - 114); stone(ox + ow, 114, fx + fw - ox - ow, FLOOR - 114); stone(ox, 114, ow, 22);
     const sa = r.stoneAt, now = Date.now(); if (sa && now - sa.at < 800) { const k = 1 - (now - sa.at) / 800; ctx.fillStyle = rgba(0, 0, 0, 0.3 * k); ctx.fillRect(sa.x + 1, sa.y + 1, sa.w - 2, sa.h - 2); ctx.fillStyle = rgba(255, 220, 160, 0.1 * k); ctx.fillRect(sa.x + 1, sa.y + sa.h - 2, sa.w - 2, 1.5); }
   }
+  require("./relto-vault").ironDoor(r, ctx, c, 620, 124, 18, FLOOR - 126, TR(r)("vault.door.tip")); // la porte de fer, dans le mur, à droite du foyer : le coffre des livres descriptifs
   // étagère des Âges
   if (st.has("bookshelves")) {
     const x0 = 196, w = 244, y0 = 50, RH = 62, S = 3.9;
@@ -135,7 +136,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     const gl = 0.25 + 0.2 * Math.sin(t * 1.4); ctx.fillStyle = rgba(255, 235, 170, gl); ctx.fillRect(kx + 9, ky - 4, 5, 1);
     r.hot.push({ x: kx - 3, y: ky - 12, w: 34, h: 16, tip: TR(r)("atelier.key.tip"), go: "atelier" });
   }
-  for (const b of moved ? [] : books) { standingBook(ctx, c, b); r.hot.push({ x: b.x - 1, y: b.y - b.h - 1, w: b.w + 2, h: b.h + 2, tip: b.tip, ...(b.kind === "glyphs" ? { go: "glyphbook" } : b.kind === "descbook" ? { go: "descbook" } : { special: b.kind }) }); }
+  for (const b of moved ? books.filter((x) => x.kind === "descbook") : books) { standingBook(ctx, c, b); r.hot.push({ x: b.x - 1, y: b.y - b.h - 1, w: b.w + 2, h: b.h + 2, tip: b.tip, ...(b.kind === "glyphs" ? { go: "glyphbook" } : b.kind === "descbook" ? { go: "descbook" } : { special: b.kind }) }); }
   if (r.scene.additions.some((a) => a.type === "imager")) PS.imagerMini(r, ctx, c, tx + 112, ty, t, TR(r)("relto.pass.imager.tip")); // l'Imageur : un petit appareil de laiton sur la table, son cristal luit ; un clic y mène
   if (!moved && r.scene.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { // le carnet de l'arpenteur : posé à plat sur la table, signet rouge
     const nx = tx + 132, ny = ty - 5;

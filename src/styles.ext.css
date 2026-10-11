@@ -676,3 +676,9 @@
 .age-book--relto .age-book__line-input { width: 100%; margin-top: 8px; box-sizing: border-box; background: rgba(250, 242, 214, 0.55); color: #2c3d2b; font-style: italic; }
 .age-book--relto .age-book__line-go { margin-top: 4px; }
 .age-book--relto .age-book__line-msg { margin-top: 4px; font-size: 0.8em; font-style: italic; color: #8a2f2f; }
+
+/* Les trois mines du livre d'un Âge : la couverture (le dessin propre à l'Âge), le livre descriptif (reliure de savant, parchemin et encre, voir plus haut)
+   et le livre de liaison — reliure sombre, fermoir de laiton, et sa page de liaison cerclée de cuir. */
+.age-linkanim__book:not(.has-cover) { background: linear-gradient(100deg, #15110d, #2a2018 60%, #15110d); border-color: #8a6a2e; color: #d8c07a; }
+.age-linkanim__book:not(.has-cover)::after { content: ""; position: absolute; right: -6px; top: 42%; width: 12px; height: 34px; border-radius: 3px; background: linear-gradient(90deg, #8a6a2e, #e0c27a 50%, #8a6a2e); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6); }
+.age-linkanim__page { border: 5px solid #1d1611; outline: 1px solid #8a6a2e; outline-offset: -5px; }
