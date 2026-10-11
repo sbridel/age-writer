@@ -594,9 +594,6 @@
 /* le panneau du livre attend d'être touché */
 .age-linkanim__panel { cursor: default; }
 .age-linkanim.is-ready .age-linkanim__panel { cursor: pointer; animation: age-linkanim-wait 1.6s ease-in-out infinite; }
-.age-linkanim__hint { position: absolute; bottom: 12%; left: 0; right: 0; text-align: center; font-family: serif; font-style: italic; color: #e0c27a; letter-spacing: 0.1em; opacity: 0; transition: opacity 0.6s; pointer-events: none; }
-.age-linkanim.is-ready .age-linkanim__hint { opacity: 0.9; }
-.age-linkanim.is-touch .age-linkanim__hint { opacity: 0; }
 @keyframes age-linkanim-wait { 0%, 100% { box-shadow: 0 0 30px rgba(201, 162, 78, 0.3); } 50% { box-shadow: 0 0 60px rgba(240, 220, 160, 0.75); } }
 
 .age-linkanim__book.has-cover { padding: 0; background: none; border: 0; width: 170px; height: auto; }
