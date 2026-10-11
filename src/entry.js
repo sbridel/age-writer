@@ -114,6 +114,8 @@ module.exports = function build(Base, core, AGEX) {
       this.renamedSeeds = new Map(); // chemin → graine, posée au renommage (le cache des propriétés suit un peu plus tard)
       AGEX.seedName = (path) => { if (this.renamedSeeds.has(path)) return this.renamedSeeds.get(path); const f = this.app.vault.getAbstractFileByPath(path), fm = f ? (this.app.metadataCache.getFileCache(f) || {}).frontmatter : null; const v = fm && fm.age_seed; return v != null && String(v).trim() ? String(v).trim() : null; };
       AGEX.known = (path) => guard("palette", () => R.storyKnown(this, path)) || null;
+      AGEX.ghosts = (path) => (R.storyKnown(this, path) ? 4 : 0);
+      AGEX.ghostTip = () => this.t("story.ghost");
       AGEX.noDraw = (seed) => seed != null && R.storyNoDraw(this).has(String(seed));
       AGEX.norm = (line) => guard("météo", () => WX.normalize(line)) || line; // `rain: sometimes, dawn` : pour le moteur, c'est `rain`
       AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line) || SYSTEM_RE.test(line); // `system: Kerath` : la graine d'étoile partagée (télescope, étape 2)

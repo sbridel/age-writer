@@ -20,6 +20,7 @@ const AXIS_LABELS = {
 
 const PALETTE_AXES = ["cosmological", "worlds", "geological", "weather", "ecological", "metaphysical"];
 
+const hashOf = (text) => { let h = 2166136261; for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619); return h >>> 0; };
 const unscore = (text) => text.replace(/_/g, " ");
 
 function paletteGroups() {
@@ -225,9 +226,18 @@ const BookView = class extends obsidian.ItemView {
       details.createEl("summary", { text: "Add or remove a page" }));
     let known = hooks.known(file.path);
     for (let group of paletteGroups()) {
-      if (known && !group.items.some((item) => known.has(item.id) || written.has(item.id))) continue;
+      if (known && hooks.ghosts(file.path) === 0 && !group.items.some((item) => known.has(item.id) || written.has(item.id))) continue;
       details.createDiv({ cls: "age-book__palette-heading", text: group.label });
       let grid = details.createDiv({ cls: "age-book__palette-grid" });
+      if (known) { // les glyphes non appris se devinent : quelques silhouettes pâles par groupe (toujours les mêmes), le reste en « +N »
+        let hidden = group.items.filter((item) => !known.has(item.id) && !written.has(item.id)), n = Math.min(hooks.ghosts(file.path), hidden.length);
+        hidden = hidden.sort((a, b) => hashOf(a.id) - hashOf(b.id));
+        hidden.slice(0, n).forEach((item) => {
+          let ghost = grid.createEl("span", { cls: "age-book__swatch is-ghost", attr: { title: hooks.ghostTip(), "aria-label": hooks.ghostTip() } });
+          ((ghost.style.borderBottomColor = AXIS_COLORS[group.axis]), setMarkup(ghost, `<svg viewBox="0 0 100 100">${glyphSvg(item.id, 0, 0, 100)}</svg>`));
+        });
+        hidden.length > n && grid.createEl("span", { cls: "age-book__more", text: `+${hidden.length - n}` });
+      }
       for (let item of group.items) {
         if (known && !known.has(item.id) && !written.has(item.id)) continue;
         let isWritten = written.has(item.id),

@@ -572,3 +572,7 @@
 .age-tabs__ink:empty { display: none; }
 .age-tabs__ink + .age-tabs__book { margin-left: 8px; }
 .age-book .age-book__close { background: transparent !important; box-shadow: none !important; border: 0 !important; font-size: 0.72em; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.75; }
+
+/* palette de l'histoire : les glyphes non appris se devinent (silhouettes pâles, sans nom) */
+.age-book__swatch.is-ghost { opacity: 0.2; filter: blur(1px) grayscale(1); cursor: help; pointer-events: auto; }
+.age-book__more { align-self: center; font-size: 0.72em; opacity: 0.5; padding: 0 6px; letter-spacing: 0.08em; }

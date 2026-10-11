@@ -18,6 +18,8 @@ const hooks = {
   norm: (line) => line,
   noDraw: () => false, // vrai pour une graine dont les pages ouvertes ne sont pas tirées (Âges de l'histoire, au début)
   known: () => null, // chemin d'une note → ensemble des blocs que la palette du livre peut montrer (null : tous) ; l'histoire n'y met que ce qui a été appris
+  ghosts: () => 0, // palette limitée : combien de glyphes non appris s'y devinent par groupe (silhouettes pâles, sans nom, non cliquables)
+  ghostTip: () => "Not learned yet",
   seedName: null, // chemin d'une note d'Âge → sa graine (`age_seed`), ou null : le nom de la note
 };
 
