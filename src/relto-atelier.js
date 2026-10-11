@@ -1,7 +1,7 @@
 "use strict";
 // L'atelier d'écriture : une pièce cachée derrière une bibliothèque et un panneau de la cabane. Un grand bureau chargé d'objets étranges, une cheminée,
 // un fauteuil (le chat s'y repose) et, en haut, une galerie de livres. Tout est dessiné ici (aucun asset).
-const { rng, clamp, mix, rgba } = require("./util");
+const { rng, clamp, mix, rgba, fnv } = require("./util");
 const EMB = require("./emblem");
 const W = 640, H = 360, FLOOR = 250, GALLERY = 100;
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
@@ -70,6 +70,9 @@ function lampChain(r, ctx, c, x, y, len, t, tip, bodyHot) {
   r.hot.push({ x: bodyHot.x, y: bodyHot.y, w: bodyHot.w, h: bodyHot.h, tip, lamp: true });
   r.hot.push({ x: x - 7, y: y + L - 6, w: 16, h: 16, tip, lamp: true });
 }
+
+/** Teinte (0–360), saturation, clarté (0–1) → « #rrggbb » : pour la fleur de cristal, dont les couleurs viennent de la graine du Relto. */
+function hsl(h, sa, l) { h = ((h % 360) + 360) % 360; const k = (n) => (n + h / 30) % 12, a = sa * Math.min(l, 1 - l), f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))), x = (v) => Math.round(v * 255).toString(16).padStart(2, "0"); return "#" + x(f(0)) + x(f(8)) + x(f(4)); }
 
 /** Les petites choses du mur (épingle, feuille posée de travers) : les mêmes au bureau et dans l'atelier. */
 function wallBits(ctx, c) {
@@ -157,13 +160,15 @@ function drawAtelier(r, ctx, sc, sky, t) {
   { const { pin, sheet } = wallBits(ctx, c), TRd = (k) => TRr(k), wq = rng(0xb0a7);
     ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.ellipse(141, 158, 21, 28, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#2e3a36"); ctx.beginPath(); ctx.ellipse(141, 158, 17, 24, 0, 0, 6.283); ctx.fill();
     ctx.save(); ctx.beginPath(); ctx.ellipse(141, 158, 17, 24, 0, 0, 6.283); ctx.clip(); // dans l'ovale : une fleur de cristal, qui luit doucement
-    const gl = 0.5 + 0.5 * Math.sin(t * 1.3), cx = 141, cy = 150;
-    const hg = ctx.createRadialGradient(cx, cy, 2, cx, cy, 22); hg.addColorStop(0, rgba(170, 120, 255, 0.35 + 0.15 * gl)); hg.addColorStop(1, rgba(170, 120, 255, 0)); ctx.fillStyle = hg; ctx.fillRect(cx - 24, cy - 24, 48, 48);
-    ctx.strokeStyle = c("#3f7a68"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(cx, cy + 6); ctx.quadraticCurveTo(cx - 2, cy + 20, cx + 1, cy + 34); ctx.stroke(); // la tige
-    for (const [dx, dy, sg] of [[-1, 24, -1], [1, 17, 1]]) { ctx.fillStyle = c("#2f6b58"); ctx.beginPath(); ctx.moveTo(cx + dx, cy + dy); ctx.lineTo(cx + dx + sg * 10, cy + dy - 6); ctx.lineTo(cx + dx + sg * 3, cy + dy + 3); ctx.closePath(); ctx.fill(); } // deux feuilles taillées
+    const gl = 0.5 + 0.5 * Math.sin(t * 1.3), cx = 141, cy = 150, fq = rng((sc.seed ^ fnv("crystal-flower")) >>> 0), hue = fq() * 360, spread = 22 + fq() * 30, fsat = 0.5 + fq() * 0.3; // la couleur et le dégradé viennent de la graine du Relto
+    const P1 = hsl(hue, fsat, 0.42), P2 = hsl(hue + spread * 0.6, fsat, 0.55), P3 = hsl(hue + spread, fsat + 0.1, 0.5), HEART = hsl(hue + 150, 0.6, 0.74), BG0 = hsl(hue, 0.3, 0.12), BG1 = hsl(hue + spread, 0.28, 0.2), STEM = hsl(hue + 150, 0.35, 0.38), LEAF = hsl(hue + 150, 0.4, 0.3);
+    const bgG = ctx.createLinearGradient(0, 134, 0, 182); bgG.addColorStop(0, c(BG1)); bgG.addColorStop(1, c(BG0)); ctx.fillStyle = bgG; ctx.fillRect(120, 130, 42, 56); // le fond de l'ovale : un dégradé de la même teinte
+    const hg = ctx.createRadialGradient(cx, cy, 2, cx, cy, 22); hg.addColorStop(0, rgba(parseInt(P2.slice(1, 3), 16), parseInt(P2.slice(3, 5), 16), parseInt(P2.slice(5, 7), 16), 0.35 + 0.15 * gl)); hg.addColorStop(1, rgba(parseInt(P2.slice(1, 3), 16), parseInt(P2.slice(3, 5), 16), parseInt(P2.slice(5, 7), 16), 0)); ctx.fillStyle = hg; ctx.fillRect(cx - 24, cy - 24, 48, 48);
+    ctx.strokeStyle = c(STEM); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(cx, cy + 6); ctx.quadraticCurveTo(cx - 2, cy + 20, cx + 1, cy + 34); ctx.stroke(); // la tige
+    for (const [dx, dy, sg] of [[-1, 24, -1], [1, 17, 1]]) { ctx.fillStyle = c(LEAF); ctx.beginPath(); ctx.moveTo(cx + dx, cy + dy); ctx.lineTo(cx + dx + sg * 10, cy + dy - 6); ctx.lineTo(cx + dx + sg * 3, cy + dy + 3); ctx.closePath(); ctx.fill(); } // deux feuilles taillées
     const petal = (ang, len, w, col, hi) => { ctx.save(); ctx.translate(cx, cy); ctx.rotate(ang); ctx.fillStyle = c(col); ctx.beginPath(); ctx.moveTo(0, -2); ctx.lineTo(-w, -len * 0.45); ctx.lineTo(0, -len); ctx.lineTo(w, -len * 0.45); ctx.closePath(); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, hi); ctx.beginPath(); ctx.moveTo(0, -2); ctx.lineTo(0, -len); ctx.lineTo(w, -len * 0.45); ctx.closePath(); ctx.fill(); ctx.restore(); };
-    for (let i = 0; i < 5; i++) petal(-1.25 + i * 0.62 + Math.PI * 0, 15, 4.2, ["#6b46c1", "#7c5ad6", "#5a8fd6", "#7c5ad6", "#6b46c1"][i], 0.14 + 0.1 * gl); // les pétales, des losanges à facettes
-    ctx.fillStyle = c("#9be8dc"); ctx.beginPath(); ctx.moveTo(cx, cy - 4); ctx.lineTo(cx + 3.2, cy); ctx.lineTo(cx, cy + 4); ctx.lineTo(cx - 3.2, cy); ctx.closePath(); ctx.fill(); // le cœur
+    for (let i = 0; i < 5; i++) petal(-1.25 + i * 0.62, 15, 4.2, [P1, P2, P3, P2, P1][i], 0.14 + 0.1 * gl); // les pétales, des losanges à facettes
+    ctx.fillStyle = c(HEART); ctx.beginPath(); ctx.moveTo(cx, cy - 4); ctx.lineTo(cx + 3.2, cy); ctx.lineTo(cx, cy + 4); ctx.lineTo(cx - 3.2, cy); ctx.closePath(); ctx.fill(); // le cœur, de la teinte complémentaire
     ctx.fillStyle = rgba(255, 255, 255, 0.5 + 0.4 * gl); ctx.fillRect(cx + 7, cy - 17, 1.4, 1.4); ctx.fillRect(cx - 9, cy - 9, 1.2, 1.2); // des éclats
     ctx.restore();
     r.hot.push({ x: 119, y: 129, w: 44, h: 58, tip: TRd("atelier.deco.portrait"), flash: TRd("atelier.deco.portrait.flash") });
