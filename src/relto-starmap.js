@@ -12,7 +12,7 @@ const TL = require("./relto-telescope");
 const BEAM = require("./beam");
 const { makeT } = require("./i18n");
 
-const W = 640, H = 360, SHEET = { x: 70, y: 18, w: 500, h: 300 }, BACK = { x: 0, y: 330, w: W, h: 30 };
+const W = 640, H = 360, SHEET = { x: 70, y: 18, w: 500, h: 300 }, BACK = { x: 0, y: 314, w: W, h: 46 };
 const EN = makeT(() => "en");
 const tOf = (r) => (r.opts && typeof r.opts.t === "function" ? r.opts.t : EN);
 const pertName = (t, kind) => (kind === "black_hole" ? t("map.pert.bh") : kind === "pulsar" ? t("map.pert.pulsar") : t("map.pert.ns"));
@@ -133,7 +133,7 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   ctx.font = "italic 11px serif"; ctx.fillStyle = bad ? RED : INK2; ctx.textAlign = "center"; ctx.fillText(msg, S.x + S.w / 2, S.y + S.h - 20, S.w - 40); ctx.textAlign = "left";
   // redescendre à l'observatoire
   ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(BACK.x, BACK.y, BACK.w, BACK.h);
-  ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "16px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 20); ctx.textAlign = "left";
+  ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 29); ctx.textAlign = "left";
   r.hot.push({ ...BACK, tip: t("map.back"), go: "telescope" });
   void tm; void sky; void clamp;
 }

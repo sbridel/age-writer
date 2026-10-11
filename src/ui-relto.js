@@ -258,7 +258,7 @@ async function storyNext(plugin, opts = {}) {
   const taken = new Set(app.vault.getMarkdownFiles().map((x) => x.basename));
   const nameAt = (i) => { for (let k = 1, c = 0; ; k++) { const nm = `Age ${k}`; if (taken.has(nm)) continue; if (c++ === i) return nm; } };
   const analyse = (text, nm) => plugin.core.analyse(text, { seed: nm, draw: ST.drawsOn(st.done) ? undefined : false });
-  const name = ST.chapterName(ch, nameAt, analyse), path = `${dir}/${name}.md`;
+  const name = ST.kindOf(ch) === "explore" ? ST.exploreName(ch, lang, taken) : ST.chapterName(ch, nameAt, analyse), path = `${dir}/${name}.md`;
   const f = await app.vault.create(path, ST.chapterNote(ch, lang, path.replace(/^.*\//, "").replace(/\.md$/, "")));
   if (opts.fresh) delete st.seen[ST.chapterName ? (st.notes[ch.id] || "").replace(/^.*\//, "").replace(/\.md$/, "") : ""];
   st.notes[ch.id] = path; resetStoryDraw(plugin); plugin.index.invalidate();

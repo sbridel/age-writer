@@ -28,7 +28,7 @@ const GAUGE = { x: 584, y: 52, r: 26 }, LOCK = { x: 584, y: 150 }, CRANK = { x: 
 const STATIONS = { cry: { x: 148, y: 222, w: 146, h: 74, tip: "Crystal rack" }, lens: { x: 300, y: 222, w: 160, h: 74, tip: "Optical bench" }, atmo: { x: 466, y: 222, w: 160, h: 74, tip: "Regulator" } };
 const LABEL = { freq: "Frequency", amp: "Amplitude", harm: "Harmonics", phase: "Phase", pol: "Polarity switch", r: "Red glass", g: "Green glass", b: "Blue glass", iris: "Iris" };
 const GLASS = { r: [230, 70, 60], g: [80, 200, 110], b: [80, 120, 240] };
-const BACK = { x: 0, y: 330, w: W, h: 30 };
+const BACK = { x: 0, y: 314, w: W, h: 46 };
 const TRANSCRIBE = { x: 30, y: 256, w: 92, h: 17 }; // la plaque « Transcrire ce monde », sous le livre vierge (mode Guilde)
 const MICRO = { x: 524, y: 192, r: 13, hub: 6, win: { x: 494, y: 160, w: 60, h: 14 }, span: 6 }; // le micromètre de synchro ; la fenêtre montre ±6 crans
 const EN = makeT(() => "en");
@@ -179,7 +179,7 @@ function bench(ctx, c, y0) {
 /** Reculer (gros plan → ensemble). */
 function backStrip(r, ctx) {
   ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(BACK.x, BACK.y, BACK.w, BACK.h);
-  ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "16px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 20); ctx.textAlign = "left";
+  ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 29); ctx.textAlign = "left";
   r.hot.push({ ...BACK, tip: "Step back", imager: { station: null } });
 }
 

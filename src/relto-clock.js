@@ -15,7 +15,7 @@ const { makeT } = require("./i18n");
 const W = 640, H = 360;
 const C = { x: 262, y: 146 }; // le centre de la sphère
 const BANDS = { vailee: [93, 108], yahr: [77, 92], gahrtahvo: [61, 76], tahvo: [45, 60] }; // rayons intérieur, extérieur
-const GLOBE = 29, MERID = 117, BACK = { x: 0, y: 332, w: W, h: 28 };
+const GLOBE = 29, MERID = 117, BACK = { x: 0, y: 314, w: W, h: 46 };
 const PLINTH = { x: 172, y: 280, w: 180, h: 46 };
 const EN = makeT(() => "en");
 const tOf = (r) => (r.opts && typeof r.opts.t === "function" ? r.opts.t : EN);
@@ -171,7 +171,7 @@ function drawClockRoom(r, ctx, sc, sky, t) {
   r.hot.push({ x: C.x - GLOBE, y: C.y - GLOBE, w: 2 * GLOBE, h: 2 * GLOBE, tip: tt("clock.globe") });
   // retour à l'île
   ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.fillRect(BACK.x, BACK.y, BACK.w, BACK.h);
-  ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "16px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 19); ctx.textAlign = "left";
+  ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 29); ctx.textAlign = "left";
   r.hot.push({ ...BACK, tip: tt("clock.back"), go: "island" });
 }
 

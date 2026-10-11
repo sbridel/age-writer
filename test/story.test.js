@@ -88,7 +88,7 @@ ok(same > 150, "chapitre 2 : le nom est le plus souvent gardé tel quel");
 ok(ST.chapterName(restC, "X", an) === "X", "chapitre 1 : le nom ne change pas");
 for (const lang of ["en", "fr"]) for (const c of ST.CHAPTERS) {
   const t = ST.chapterNote(c, lang, "Nom"), blk = t.match(/```age\n([\s\S]*?)\n```/);
-  ok(t.startsWith("# Nom") && t.includes(ST.MENTOR) && (ST.WORLDS[c.id].lines.length ? blk && blk[1].split("\n").length === ST.WORLDS[c.id].lines.length : !blk), "note de chapitre " + c.id + "/" + lang + " : titre, mentor, bloc age");
+  ok(/^---\nstory_kind: [a-z-]+\n---\n# Nom/.test(t) && t.includes(ST.MENTOR) && (ST.WORLDS[c.id].lines.length ? blk && blk[1].split("\n").length === ST.WORLDS[c.id].lines.length : !blk), "note de chapitre " + c.id + "/" + lang + " : titre, mentor, bloc age");
   ok(!/bahro|encrier|inkwell|endgame/i.test(t), "note de chapitre " + c.id + "/" + lang + " : rien de réservé");
 }
 
@@ -173,5 +173,6 @@ ok(Object.keys(ST.COURSE).every((id) => ST.chapterById(id)) && ST.COURSE.rest.ev
 ok(!ST.courseSheet("hard", "en") && !ST.courseSheet("strange", "fr") && /Guilde des Writers/.test(ST.chapterNote(ST.chapterById("weather"), "fr", "N")) && !/Guilde/.test(ST.chapterNote(ST.chapterById("strange"), "fr", "N")), "feuille de cours : aucune pour les épreuves");
 ok(/s___/.test(ST.reviewSheet("alter", "fr")) && !/`sand`/.test(ST.reviewSheet("alter", "fr")) && !/`lava`/.test(ST.reviewSheet("zero", "en")) && /\| \? \|/.test(ST.reviewSheet("zero", "en")) && !ST.reviewSheet("rest", "en"), "feuille de cours : s'efface en révision (initiale, puis plus rien)");
 ok(ST.knownBlocks([]).has("fern") && !ST.knownBlocks([]).has("rain") && ST.knownBlocks(["rest"]).has("lava") && ST.knownBlocks(["rest", "mend"]).has("rain") && !ST.knownBlocks(["rest"]).has("violet_sun") && ST.knownBlocks(["rest", "mend", "weather", "laws", "alter", "zero", "imager"]) === null, "palette du livre : seuls les blocs appris, puis tout après l'Imageur");
+ok(ST.kindOf(ST.chapterById("zero")) === "explore" && ST.kindOf(ST.chapterById("imager")) === "explore" && ST.kindOf(ST.chapterById("rest")) === "write" && ST.exploreName(ST.chapterById("zero"), "en", new Set(["Looking up"])) === "Looking up 2" && /Relto exploration/.test(ST.chapterNote(ST.chapterById("zero"), "en", "N")) && /Writing exercise/.test(ST.chapterNote(ST.chapterById("rest"), "en", "N")), "chapitres : exercice d'écriture ou exploration du Relto, nom propre à l'exploration");
 console.log(`story.test.js : ${n} vérifications ok`);
 

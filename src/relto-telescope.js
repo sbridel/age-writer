@@ -37,7 +37,7 @@ const EYE = { x: 196, y: 150, r: 116 }, FIELD = 30; // l'oculaire montre ±30 cr
 const NT = T.TURN / T.NOTCH; // crans fins par tour (625)
 // le panneau de l'instrument, de haut en bas : la plaque (Great Zero ou étoile de l'Âge), les deux grandes molettes, puis la rangée du retard
 const WHEELS = { torahn: { x: 438, y: 146 }, elev: { x: 560, y: 146 } }, RING0 = 31, HUB0 = 14;
-const PLATE = { x: 392, y: 42, w: 214, h: 56 }, BACK = { x: 0, y: 330, w: W, h: 30 };
+const PLATE = { x: 392, y: 42, w: 214, h: 56 }, BACK = { x: 0, y: 314, w: W, h: 46 };
 const SPLATE = { x: 392, y: 40, w: 214, h: 58 }, DELAY = { x: 458, y: 254 }, DRING = 22, DHUB = 9; // étape 2 : la plaque du système et la molette du retard
 const LECTERN = { x: 54, y: 302 }, TEXT_X = 372; // le lutrin, sur le sol à gauche ; la ligne de mots se décale à droite quand il est là
 const PULSE_MS = DT.MS_PER_HAHR / DT.PRO_PER_HAHR; // un prorahn (≈ 1,39 s) : le pouls du Zéro bat l'heure D'ni
@@ -443,7 +443,7 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     if (av.imager) PS.imagerMini(r, ctx, c, 356, 286, tm, tr("relto.pass.imager.tip")); }
   // redescendre
   ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(BACK.x, BACK.y, BACK.w, BACK.h);
-  ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "16px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 20); ctx.textAlign = "left";
+  ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 29); ctx.textAlign = "left";
   r.hot.push({ ...BACK, tip: t("tel.back"), go: "island" });
 }
 

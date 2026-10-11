@@ -280,10 +280,21 @@ function reviewSheet(id, lang) {
 const COURSE_NOAXIS = new Set(["mass", "age"]);
 
 /** Le texte d'une note de chapitre : titre, lettre du mentor, ce qu'il faut faire, et le bloc `age` de départ. */
+/** Un chapitre d'écriture (un Âge à écrire) ou d'exploration (le Relto seul : télescope, Imageur). */
+const kindOf = (chapter) => (chapter.id === "zero" || chapter.id === "imager" ? "explore" : "write");
+const KIND_LABEL = { write: { en: "Writing exercise", fr: "Exercice d'écriture" }, explore: { en: "Relto exploration", fr: "Exploration du Relto" } };
+/** Le nom de la note d'une exploration : le titre du chapitre (jamais « Age N », qui est réservé aux Âges à écrire). `taken` : noms déjà pris. */
+function exploreName(chapter, lang, taken) {
+  const base = chapter.title[lang === "fr" ? "fr" : "en"].replace(/[\\/:*?"<>|#^\[\]]/g, ""); let nm = base, k = 1;
+  while (taken && taken.has(nm)) nm = `${base} ${++k}`;
+  return nm;
+}
+
 function chapterNote(chapter, lang, name) {
   const l = lang === "fr" ? "fr" : "en", w = WORLDS[chapter.id] || { lines: [] }, L = LETTERS[chapter.id][l];
   const title = (chapter.id === "mend" ? "Deseekay · " : "") + chapter.title[l]; // deseekay : « énigme », en D'ni
-  return `# ${name}\n\n> ${title}\n\n${L[0]}\n\n${L[1]}\n\n${L[2] ? `**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n` : ""}— ${MENTOR}, seltahn${courseSheet(chapter.id, l)}${reviewSheet(chapter.id, l)}${w.lines.length ? `\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`` : ""}\n`;
+  const kind = kindOf(chapter);
+  return `---\nstory_kind: ${kind === "write" ? "writing-exercise" : "relto-exploration"}\n---\n# ${name}\n\n> ${kind === "write" ? "✒" : "✦"} ${KIND_LABEL[kind][l]} · ${title}\n\n${L[0]}\n\n${L[1]}\n\n${L[2] ? `**${l === "fr" ? "À faire" : "To do"}** — ${L[2]}\n\n` : ""}— ${MENTOR}, seltahn${courseSheet(chapter.id, l)}${reviewSheet(chapter.id, l)}${w.lines.length ? `\n\n\`\`\`age\n${w.lines.join("\n")}\n\`\`\`` : ""}\n`;
 }
 
 /**
@@ -317,4 +328,4 @@ function knownBlocks(done) {
   return set;
 }
 
-module.exports = { knownBlocks, REVIEW, reviewSheet, COURSE, courseSheet, drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
+module.exports = { kindOf, exploreName, knownBlocks, REVIEW, reviewSheet, COURSE, courseSheet, drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
