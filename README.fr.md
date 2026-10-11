@@ -596,7 +596,7 @@ npm test             # tous les tests, sur la version lisible puis sur la minifi
 npm run lint
 npm run equiv -- legacy/main-1.3.0.min.js # non-régression : 600 Âges au hasard, ancien build contre nouveau
 node test/visual/make.js            # pages de rendu dans test/visual/out/
-npm run zip          # release/age-writer-<version>.zip (plugin) + -src.zip (sources) ; version = package.json
+npm run zip          # release/ reçoit le zip du plugin et celui des sources, nommés d'après la version de package.json
 ```
 
 Dans `src/` :

@@ -163,6 +163,7 @@ La relecture automatique du catalogue lit `styles.css` et les sources. Corrigé 
 - **`clip-path` et masques** (« partiellement pris en charge ») : dessiner les formes avec un dégradé à arête nette (coins des livres) ou peindre un triangle de la couleur de fond (coin coupé du panneau, `var(--background-primary)`).
 - **`display: contents`** et **`column-gap`** / `grid-template-columns` en sous-grille (« multicolumn ») : donner à chaque ligne sa propre grille aux mêmes colonnes (variable `--age-cols`) ; écrire l'espacement avec la forme courte `gap: lignes colonnes`.
 - **`localStorage` / `sessionStorage`** : utiliser l'API de données d'Obsidian (`loadData` / `saveData`, `Plugin.saveData`) ; la langue de l'interface se lit par `moment.locale()`.
+- **README « texte de gabarit »** : éviter les jetons entre chevrons (`<version>`), les `{x}`, « coming soon », « TODO », « lorem » ; écrire une phrase à la place.
 - Après chaque release, relancer la vérification du catalogue et corriger ce qu'elle remonte (version incrémentée). Vérifier à l'œil dans Obsidian : coins des livres, coin du panneau, colonnes du Relto, onglets, champ du livre de la bibliothèque.
 
 ## Publier une version

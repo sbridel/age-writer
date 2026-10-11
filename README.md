@@ -583,7 +583,7 @@ Two levels, in a window with sections, in English and French (both exportable as
 
 ## 15. What's next
 
-This is **sandbox mode**: you write worlds, explore them, tune the Imager and furnish your refuge at your own pace, with nothing to win or lose. A **game mode** is coming soon (goals, discoveries, consequences), and **more to come!** Ideas and bug reports are welcome in the repository's Issues.
+This is **sandbox mode**: you write worlds, explore them, tune the Imager and furnish your refuge at your own pace, with nothing to win or lose. A **game mode** is planned (goals, discoveries, consequences), and **more to come!** Ideas and bug reports are welcome in the repository's Issues.
 
 ---
 
@@ -602,7 +602,7 @@ npm test             # all tests, on the readable build then on the minified one
 npm run lint
 npm run equiv -- legacy/main-1.3.0.min.js    # non-regression: 600 random Ages, old build vs new
 node test/visual/make.js            # render pages in test/visual/out/
-npm run zip          # release/age-writer-<version>.zip (plugin) + -src.zip (sources); version = package.json
+npm run zip          # release/ gets the plugin zip and the sources zip, named after the version in package.json
 ```
 
 In `src/`:
