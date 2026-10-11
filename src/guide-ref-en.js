@@ -15,7 +15,7 @@ const REF_EN = [
     { h: "Linking window" },
     { ul: ["Tabs in the Age block (on)", "Window rendering: generative (default, the world the Imager shows) / classic", "Window size: normal / large (default) / extra large", "Linking window effect: classic (default), static, ripple, sweep, random, off · Effect strength (1, from 0.2 to 2)", "Uncertain links (on)"] },
     { h: "D'ni & numbers" },
-    { ul: ["Language of the extensions: auto, English, Français", "Numerals: auto / font / glyph file / drawn · Numeral font (name)", "Show numbers (on) · Names in D'ni script (on)", "Relto in tabs (on) · D'ni time in the Relto (on) · Frame around clickable zones (off)", "Surveyor's notes (Imager): full / words only (default) / off · Lens hints (Imager): on (default) / off"] },
+    { ul: ["Language of the extensions: auto, English, Français", "Numerals: auto / font / glyph file / drawn · Numeral font (name)", "Show numbers (on) · Names in D'ni script (on)", "Relto in tabs (on) · D'ni time in the Relto (on) · Frame around clickable zones (off) · Turning pages in the books (on)", "Surveyor's notes (Imager): full / words only (default) / off · Lens hints (Imager): on (default) / off"] },
     { h: "Ages & mechanics" },
     { ul: ["Law of change (on) · Minutes before the ink dries (15, from 1 to 120) · Healing per day (0.05, from 0 to 0.3)", "Fissure opening (7 days, from 0 to 30)", "Mechanisms: draw (default) / written only · Solitude: off / balanced (default) / strong", "Physics of the Ages: easy (default) / strict / off · Physics severity (1, from 0.5 to 2)", "Way of the instruments (telescope and Imager): easy (default) / the Art of the Guild"] },
     { h: "Folders" },
@@ -373,7 +373,7 @@ const REF_EN = [
     { p: "Before you find the Zero, a second, paler pulse may catch your eye, slipping against the D'ni clock and the metronome (about 1.06 prorahn): the line of King Me'erta, never decreed. Lock onto it and the instrument holds that line: every star charted afterwards is turned by the same angle (the plate looks right, but the Age's hour and KIPS are wrong). The observatory's star chart reveals the trap." },
     { ul: ["On the star chart, the lead line from each star misses the Zero (“?”).", "Two stars engraved on different lines leave the chart unclosed; Ages of one `system:` disagree with a re-charted star; beacons engraved on different lines disagree.", "The Details tab says the star “was engraved on an old line”.", "To fix it: aim the true Zero again (the instrument settles on it and the old line will not take it back), then bring each star into the ring to re-engrave it, or scratch it off its plate (the small cross)."] },
     { h: "The mail" },
-    { p: "The letter basket stands for a single note named **Courrier**. While the Relto is open, a letter from the mentor lands there at random, 8 to 25 minutes after the previous one: it speaks of a block you do not know yet (three descriptors, a family, a name), and never of the final trial's blocks. A sealed envelope pulses on the desk until you read the note; reading it schedules the next." },
+    { p: "The letter basket stands for a single note named **Courrier**. While the Relto is open, a letter from the mentor lands there at random, 8 to 25 minutes after the previous one (setting “Mentor's mail”: 2 to 6 or 30 to 90 minutes instead): it speaks of a block you do not know yet (three descriptors, a family, a name), and never of the final trial's blocks. A sealed envelope pulses on the desk until you read the note; reading it schedules the next." },
   ] },
 ];
 

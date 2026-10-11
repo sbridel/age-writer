@@ -62,6 +62,16 @@ r.setView("nimporte"); ok(r.view === "island", "vue inconnue = île");
 // sous-vues : cabane et piliers
 r.setScene(mkScene(["page_chimney"])); r.setHour(21); r.setView("cabin");
 ok(r.view === "cabin" && r.hot.some((h) => h.go === "island") && r.hot.some((h) => h.tip === "Fireplace") && r.hot.some((h) => h.book) && r.hot.some((h) => h.go === "glyphbook") && r.hot.some((h) => h.special === "library"), "cabane : porte, cheminée, livres des Âges et deux livres à part");
+{ // « Pages qui tournent » (livre des glyphes et livre de la bibliothèque : même tournage) : coupé, la double page change d'un coup
+  r.gbook = { spread: 0, anim: null }; r.gbookN = 5; r.opts.bookAnim = () => false; r.gbTurn(1);
+  ok(r.gbook.spread === 1 && r.gbook.anim === null, "livres : réglage coupé, la double page change sans animation");
+  r.opts.bookAnim = () => true; r.gbTurn(1);
+  ok(r.gbook.spread === 2 && r.gbook.anim && r.gbook.anim.dir === 1, "livres : réglage actif, la page tourne");
+  delete r.opts.bookAnim; r.gbook.anim = null; r.gbTurn(-1);
+  ok(r.gbook.spread === 1 && r.gbook.anim && r.gbook.anim.dir === -1, "livres : sans réglage fourni, le comportement d'avant (la page tourne)");
+  r.opts.reducedMotion = true; r.gbTurn(1); ok(r.gbook.anim === null, "livres : mouvement réduit du système, toujours sans animation"); r.opts.reducedMotion = false;
+  r.gbook = null; delete r.gbookN;
+}
 r.setScene(mkScene([])); r.draw(1); ok(r.hot.some((h) => /^Cold hearth/.test(h.tip)), "cabane : âtre froid sans la page cheminée");
 r.setView("island"); r.draw(1);
 ok(r.hot.some((h) => h.go === "cabin") && !r.hot.some((h) => h.special) && !r.hot.some((h) => h.book), "île : la cabane est cliquable, étagère et gros livres sont à l'intérieur");

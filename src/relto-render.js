@@ -1162,7 +1162,8 @@ class ReltoRenderer {
   /** Le livre des glyphes : tourner d'une volée (± 1), ou aller à la page d'un sommaire. */
   gbTurn(d) {
     const st = (this.gbook = this.gbook || { spread: 0, anim: null }), to = clamp(st.spread + d, 0, (this.gbookN || 1) - 1); if (to === st.spread) return;
-    st.anim = this.opts.reducedMotion ? null : { from: st.spread, at: Date.now(), dir: to > st.spread ? 1 : -1 }; st.spread = to; if (this.opts.onFlip) this.opts.onFlip();
+    const still = this.opts.reducedMotion || (this.opts.bookAnim && this.opts.bookAnim() === false); // mouvement réduit du système, ou réglage « Pages qui tournent » coupé
+    st.anim = still ? null : { from: st.spread, at: Date.now(), dir: to > st.spread ? 1 : -1 }; st.spread = to; if (this.opts.onFlip) this.opts.onFlip();
     if (!this.running) this.draw(0);
   }
   gbGo(page) { const st = (this.gbook = this.gbook || { spread: 0, anim: null }), to = Math.floor(page / 2); this.gbTurn(to - st.spread); }

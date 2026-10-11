@@ -186,6 +186,21 @@ ok(ST.check(ST.chapterById("imager"), { ages: [{ path: "a.md", stability: 80 }],
   ok(MAIL.step(st, 9e12, known, "k", "fr", r) === null, "mail: no second letter while unread");
   MAIL.read(st, 5, r); ok(!st.mail.unread && st.mail.at > 5, "mail: reading schedules the next");
   ok(!MAIL.candidates(known, []).some((id) => ST.WORLDS.strange.ref.includes(id)), "mail: never gives away the final test");
+  // le réglage du délai (`mailDelay`) : rapide / normal / lent ; absent ou inconnu = normal
+  const min = (ms) => ms / 60000;
+  for (const [mode, lo, hi] of [["fast", 2, 6], ["normal", 8, 25], ["slow", 30, 90]]) ok(min(MAIL.delay(0, mode)) === lo && min(MAIL.delay(1, mode)) === hi, `mail: délai « ${mode} » de ${lo} à ${hi} min`);
+  ok(MAIL.delay(0.3) === MAIL.delay(0.3, "normal") && MAIL.delay(0.3, "n'importe quoi") === MAIL.delay(0.3, "normal"), "mail: sans réglage ou réglage inconnu, le délai d'avant");
+  const sf = {}, ss = {}; MAIL.step(sf, 0, known, "k", "en", r, "fast"); MAIL.step(ss, 0, known, "k", "en", r, "slow");
+  ok(min(sf.mail.at) === 4 && min(ss.mail.at) === 60, "mail: la première arrivée suit le réglage (4 min en rapide, 60 min en lent, à mi-hasard)");
+  // les lettres françaises disent les descripteurs en français (table `src/descriptors-fr.js`)
+  const REG = require("../src/engine/registry"), DFR = require("../src/descriptors-fr");
+  const miss = [...new Set(REG.blockList.filter((b) => b.writable && b.descriptors).flatMap((b) => b.descriptors))].filter((w) => !DFR.FR[w]);
+  ok(!miss.length, `mail: chaque descripteur d'un bloc écrivable a son équivalent français (manque : ${miss.join(", ")})`);
+  const rainFr = MAIL.letter("rain", "fr", 0), rainEn = MAIL.letter("rain", "en", 0);
+  ok(rainFr.includes("*régulier, gris, doux*") && !/steady|grey|soft/.test(rainFr), "mail: lettre FR, descripteurs traduits");
+  ok(rainEn.includes("*steady, grey, soft*"), "mail: lettre EN, descripteurs d'origine");
+  ok(DFR.tr("mot-inconnu") === "mot-inconnu" && DFR.tr("heavy") === "lourd", "mail: un mot sans équivalent reste tel quel");
+  const sr = { mail: { at: 0, told: [], unread: true, note: "" } }; MAIL.read(sr, 0, r, "slow"); ok(min(sr.mail.at) === 60, "mail: la lecture programme la suivante selon le réglage");
 }
 console.log(`story.test.js : ${n} vérifications ok`);
 
