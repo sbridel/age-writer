@@ -48,20 +48,25 @@ function drawEmblem(ctx, cx, cy, R, c = (h) => h, t = 0) {
 function drawSeal(ctx, cx, cy, R, c = (h) => h, t = 0, wax = "#7c1f2c") {
   const W0 = c(wax), W_L = c(mix(wax, "#ffd7d0", 0.28)), W_D = c(mix(wax, "#14040a", 0.55)), FIELD = c(mix(wax, "#2a0508", 0.35)), RED = c("#8a1a14"), ORANGE = c("#c2561c"), BROWN = c("#4a0c08");
   ctx.save(); ctx.translate(cx, cy); ctx.lineCap = "round"; ctx.lineJoin = "round";
-  const raise = (draw, d = Math.max(0.8, R * 0.025), base = W0) => { // un élément en relief : ombre, reflet, puis la cire elle-même
-    ctx.save(); ctx.translate(d, d); ctx.fillStyle = ctx.strokeStyle = W_D; draw(); ctx.restore();
-    ctx.save(); ctx.translate(-d * 0.8, -d * 0.8); ctx.fillStyle = ctx.strokeStyle = W_L; draw(); ctx.restore();
+  const raise = (draw, d = Math.max(0.8, R * 0.025), base = W0) => { // un élément en relief aux bords adoucis : ombre diffuse, arête claire, puis la cire
+    ctx.save(); ctx.translate(d, d * 1.1); ctx.shadowColor = "rgba(25,2,8,0.75)"; ctx.shadowBlur = d * 2.2; ctx.fillStyle = ctx.strokeStyle = W_D; draw(); ctx.restore();
+    ctx.save(); ctx.translate(-d * 0.7, -d * 0.7); ctx.shadowColor = W_L; ctx.shadowBlur = d * 1.2; ctx.fillStyle = ctx.strokeStyle = W_L; draw(); ctx.restore();
     ctx.fillStyle = ctx.strokeStyle = base; draw();
   };
   // le disque de cire, bords ondulés, et son ombre sur le papier
-  const edge = (r) => { ctx.beginPath(); for (let i = 0; i <= 72; i++) { const a = (i / 72) * 6.283, k = 1 + 0.012 * Math.sin(a * 2 + 0.6) + 0.007 * Math.sin(a * 5 + 1.9); const x = Math.cos(a) * r * k, y = Math.sin(a) * r * k; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.closePath(); };
+  const edge = (r) => { ctx.beginPath(); for (let i = 0; i <= 72; i++) { const a = (i / 72) * 6.283, k = 1 + 0.016 * Math.sin(a * 2 + 0.6) + 0.011 * Math.sin(a * 3 + 2.4) + 0.008 * Math.sin(a * 5 + 1.9) + 0.004 * Math.sin(a * 9 + 0.3); const x = Math.cos(a) * r * k, y = Math.sin(a) * r * k; if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); } ctx.closePath(); };
   ctx.fillStyle = "rgba(40,10,10,0.35)"; ctx.save(); ctx.translate(R * 0.06, R * 0.09); edge(R); ctx.fill(); ctx.restore();
   const wg = ctx.createRadialGradient(-R * 0.3, -R * 0.35, R * 0.1, 0, 0, R * 1.05); wg.addColorStop(0, W_L); wg.addColorStop(0.35, W0); wg.addColorStop(1, W_D); ctx.fillStyle = wg; edge(R); ctx.fill();
-  ctx.lineWidth = R * 0.06; ctx.strokeStyle = W_D; ctx.save(); ctx.translate(R * 0.02, R * 0.02); edge(R * 0.955); ctx.stroke(); ctx.restore(); ctx.strokeStyle = W_L; ctx.save(); ctx.translate(-R * 0.02, -R * 0.02); edge(R * 0.955); ctx.stroke(); ctx.restore(); ctx.strokeStyle = W0; edge(R * 0.955); ctx.stroke(); // le bourrelet
+  // le bourrelet : un boudin de cire, ombré comme un tube (sombre en dessous, clair au-dessus)
+  ctx.lineWidth = R * 0.09; ctx.strokeStyle = W_D; ctx.save(); ctx.translate(R * 0.022, R * 0.026); ctx.shadowColor = "rgba(25,2,8,0.5)"; ctx.shadowBlur = R * 0.03; edge(R * 0.945); ctx.stroke(); ctx.restore();
+  ctx.strokeStyle = W0; edge(R * 0.945); ctx.stroke();
+  ctx.lineWidth = R * 0.04; ctx.strokeStyle = W_L; ctx.save(); ctx.translate(-R * 0.014, -R * 0.016); ctx.shadowColor = W_L; ctx.shadowBlur = R * 0.025; edge(R * 0.945); ctx.stroke(); ctx.restore();
+  ctx.lineWidth = R * 0.012; ctx.strokeStyle = "rgba(255,235,228,0.35)"; ctx.save(); ctx.translate(-R * 0.02, -R * 0.022); edge(R * 0.955); ctx.stroke(); ctx.restore();
   // le champ en creux, sombre en haut, ambré en bas
   ctx.fillStyle = FIELD; ctx.beginPath(); ctx.arc(0, 0, R * 0.85, 0, 6.283); ctx.fill();
   const pg = ctx.createLinearGradient(0, -R * 0.85, 0, R * 0.85); pg.addColorStop(0, BROWN); pg.addColorStop(0.38, c("#5a0e0a")); pg.addColorStop(0.5, RED); pg.addColorStop(0.7, c("#9a3a14")); pg.addColorStop(1, ORANGE); ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(0, 0, R * 0.85, 0, 6.283); ctx.fill();
   const gl = ctx.createRadialGradient(0, 0, R * 0.2, 0, 0, R * 0.85); gl.addColorStop(0, "rgba(0,0,0,0)"); gl.addColorStop(1, "rgba(20,0,0,0.35)"); ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 0, R * 0.85, 0, 6.283); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.arc(0, 0, R * 0.85, 0, 6.283); ctx.clip(); ctx.strokeStyle = "rgba(15,0,4,0.55)"; ctx.lineWidth = R * 0.1; ctx.shadowColor = "rgba(15,0,4,0.8)"; ctx.shadowBlur = R * 0.06; ctx.shadowOffsetX = R * 0.02; ctx.shadowOffsetY = R * 0.03; ctx.beginPath(); ctx.arc(0, 0, R * 0.9, 0, 6.283); ctx.stroke(); ctx.restore(); // le champ est creusé : ombre portée du bord
   // les ornements latéraux en relief
   for (const d of [-1, 1]) { raise(() => { zigPath(ctx, R, d); ctx.lineWidth = R * 0.036; ctx.stroke(); }); raise(() => { barPath(ctx, R, d); ctx.lineWidth = R * 0.028; ctx.stroke(); }); }
   // les quatre plumes en relief : épaule et arête, tige, perle
@@ -74,6 +79,11 @@ function drawSeal(ctx, cx, cy, R, c = (h) => h, t = 0, wax = "#7c1f2c") {
   ctx.fillStyle = c(mix(wax, "#000000", 0.12)); ctx.beginPath(); ctx.arc(0, 0, R * 0.47, 0, 6.283); ctx.fill();
   raise(() => { ctx.lineWidth = R * 0.035; ctx.beginPath(); ctx.arc(0, 0, R * 0.485, 0, 6.283); ctx.stroke(); ctx.lineWidth = R * 0.014; ctx.beginPath(); ctx.arc(0, 0, R * 0.45, 0, 6.283); ctx.stroke(); }); // double anneau
   raise(() => { glyphPath(ctx, R * 0.47); ctx.fill("evenodd"); }, Math.max(0.6, R * 0.018));
+  // le grain de la cire (marbrures, petites bulles) et un brillant doux en haut à gauche
+  ctx.save(); edge(R * 0.99); ctx.clip(); let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0, n = Math.min(500, Math.round(R * 4)); i < n; i++) { const a = rnd() * 6.283, r = Math.sqrt(rnd()) * R, x = Math.cos(a) * r, y = Math.sin(a) * r, q = rnd(); ctx.fillStyle = q < 0.5 ? "rgba(255,225,215," + (0.03 + rnd() * 0.05) + ")" : "rgba(20,0,6," + (0.03 + rnd() * 0.06) + ")"; ctx.beginPath(); ctx.ellipse(x, y, R * (0.004 + rnd() * 0.02), R * (0.003 + rnd() * 0.012), rnd() * 3, 0, 6.283); ctx.fill(); }
+  const gloss = ctx.createRadialGradient(-R * 0.45, -R * 0.55, R * 0.02, -R * 0.3, -R * 0.4, R * 0.7); gloss.addColorStop(0, "rgba(255,235,228,0.2)"); gloss.addColorStop(1, "rgba(255,235,228,0)"); ctx.fillStyle = gloss; ctx.fillRect(-R, -R, R * 2, R * 2);
+  ctx.restore();
   const sh = (t * 0.3) % 6.283; ctx.strokeStyle = "rgba(255,225,215,0.28)"; ctx.lineWidth = R * 0.03; ctx.beginPath(); ctx.arc(0, 0, R * 0.955, sh, sh + 0.45); ctx.stroke(); // un reflet de cire qui glisse
   ctx.restore();
 }
