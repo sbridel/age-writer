@@ -116,15 +116,15 @@
 }
 .age-book--leather .age-book__gutter { background: linear-gradient(90deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.08) 45%, rgba(0, 0, 0, 0.08) 55%, rgba(0, 0, 0, 0.5)); }
 .age-book__corner { position: absolute; width: 28px; height: 28px; pointer-events: none; z-index: 1;
-  background: linear-gradient(135deg, #e0c070 0%, #9a7a30 45%, #5a4416 100%); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
+  }
 .age-book__corner::after { content: ""; position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #2a1d08; box-shadow: inset 0 0 1px rgba(255, 230, 160, 0.6); }
-.age-book__corner--tl { top: 0; left: 0; clip-path: polygon(0 0, 100% 0, 0 100%); }
+.age-book__corner--tl { top: 0; left: 0; background: linear-gradient(135deg, #e0c070 0%, #9a7a30 22%, #5a4416 50%, transparent 50%); }
 .age-book__corner--tl::after { top: 5px; left: 5px; }
-.age-book__corner--tr { top: 0; right: 0; clip-path: polygon(0 0, 100% 0, 100% 100%); }
+.age-book__corner--tr { top: 0; right: 0; background: linear-gradient(225deg, #e0c070 0%, #9a7a30 22%, #5a4416 50%, transparent 50%); }
 .age-book__corner--tr::after { top: 5px; right: 5px; }
-.age-book__corner--bl { bottom: 0; left: 0; clip-path: polygon(0 0, 0 100%, 100% 100%); }
+.age-book__corner--bl { bottom: 0; left: 0; background: linear-gradient(45deg, #e0c070 0%, #9a7a30 22%, #5a4416 50%, transparent 50%); }
 .age-book__corner--bl::after { bottom: 5px; left: 5px; }
-.age-book__corner--br { bottom: 0; right: 0; clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+.age-book__corner--br { bottom: 0; right: 0; background: linear-gradient(315deg, #e0c070 0%, #9a7a30 22%, #5a4416 50%, transparent 50%); }
 .age-book__corner--br::after { bottom: 5px; right: 5px; }
 
 /* couverture */
@@ -527,16 +527,16 @@
 .age-relto__snd.is-muted .age-relto__sndname, .age-relto__snd.is-muted .age-relto__sndusers { opacity: 0.4; }
 
 /* Pages : trois colonnes alignées, avec leurs titres ; une largeur raisonnable, même dans un grand onglet */
-.age-relto__secbody { display: grid; grid-template-columns: minmax(7em, max-content) minmax(0, max-content) max-content; justify-content: start; column-gap: 28px; row-gap: 2px; align-items: baseline; padding-right: 14px; }
-.age-relto__secbody > .age-relto__page, .age-relto__secbody > .age-relto__colhead { display: contents; }
+.age-relto__secbody { display: flex; flex-direction: column; gap: 2px; padding-right: 14px; --age-cols: 14em minmax(0, 1fr) 7em; }
+.age-relto__secbody > .age-relto__page, .age-relto__secbody > .age-relto__colhead { display: grid; grid-template-columns: var(--age-cols); gap: 0 20px; align-items: baseline; padding: 0; }
 .age-relto__secbody .age-relto__page > *, .age-relto__colhead > * { padding: 3px 0; }
 .age-relto__secbody .age-relto__page > .age-relto__pname { padding-left: 14px; min-width: 0; }
 .age-relto__colhead > * { font-size: 0.66em; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.45; padding-top: 0; }
 .age-relto__colhead > :first-child { padding-left: 14px; }
 .age-relto__secbody .age-relto__pact { justify-self: start; }
 .age-relto__secbody .age-relto__pbtn { margin-left: 0; }
-.age-relto__sec--sounds .age-relto__secbody { grid-template-columns: max-content minmax(7em, max-content) minmax(0, max-content) 100px; column-gap: 20px; align-items: center; }
-.age-relto__secbody > .age-relto__snd { display: contents; }
+.age-relto__sec--sounds .age-relto__secbody { --age-cols: 3em 9em minmax(0, 1fr) 100px; }
+.age-relto__secbody > .age-relto__snd { display: grid; grid-template-columns: var(--age-cols); gap: 0 20px; align-items: center; padding: 0; }
 .age-relto__secbody > .age-relto__snd > :first-child { margin-left: 14px; }
 .age-relto__sec--sounds .age-relto__colhead > :first-child { padding-left: 0; }
 .age-relto__snd .age-relto__pagevol { width: 100%; }
@@ -563,15 +563,15 @@
 .age-book__close { margin-left: 8px; }
 
 /* onglets discrets, comme le Relto : du texte et un filet, jamais de bouton plein (les thèmes ne les repeignent plus) */
-.age-panel .age-tabs .age-tabs__btn, .age-panel .age-tabs .age-tabs__btn:hover, .age-panel .age-tabs .age-tabs__btn:focus { background: transparent !important; box-shadow: none !important; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important; color: #8f8368 !important; font-size: 0.7em; padding: 3px 9px; }
-.age-panel .age-tabs .age-tabs__btn:hover { color: #cdbd94 !important; }
-.age-panel .age-tabs .age-tabs__btn.is-active { color: #e9dcb8 !important; border-bottom-color: #cdbd94 !important; }
+.age-panel.age-panel .age-tabs .age-tabs__btn.age-tabs__btn, .age-panel.age-panel .age-tabs .age-tabs__btn.age-tabs__btn:hover, .age-panel.age-panel .age-tabs .age-tabs__btn.age-tabs__btn:focus { background: transparent; box-shadow: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: #8f8368; font-size: 0.7em; padding: 3px 9px; }
+.age-panel.age-panel .age-tabs .age-tabs__btn.age-tabs__btn:hover { color: #cdbd94; }
+.age-panel.age-panel .age-tabs .age-tabs__btn.age-tabs__btn.is-active { color: #e9dcb8; border-bottom-color: #cdbd94; }
 .age-panel .age-tabs .age-tabs__book { opacity: 0.8; }
 .age-tabs__ink { align-self: center; margin-left: auto; font-size: 0.68em; letter-spacing: 0.08em; color: #8f8368; font-style: italic; }
 .age-tabs__ink.is-wet { color: #cdbd94; }
 .age-tabs__ink:empty { display: none; }
 .age-tabs__ink + .age-tabs__book { margin-left: 8px; }
-.age-book .age-book__close { background: transparent !important; box-shadow: none !important; border: 0 !important; font-size: 0.72em; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.75; }
+.age-book.age-book .age-book__close.age-book__close { background: transparent; box-shadow: none; border: 0; font-size: 0.72em; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.75; }
 
 /* palette de l'histoire : les glyphes non appris se devinent (silhouettes pâles, sans nom) */
 .age-book__swatch.is-ghost { opacity: 0.2; filter: blur(1px) grayscale(1); cursor: help; pointer-events: auto; }
@@ -629,14 +629,14 @@
 .age-glyphbook__ghosts-title { margin-top: 1.2em; }
 
 /* livre de la bibliothèque : le champ d'écriture posé sur la page — papier réglé, encre verte ferrogallique, bouton de cuir et d'or */
-.age-libbook__ta { resize: none; appearance: none; -webkit-appearance: none; padding: 3px 8px; margin: 0; border: none !important; border-radius: 1px; box-shadow: inset 0 0 0 1px rgba(120, 90, 40, 0.35), inset 0 2px 6px rgba(80, 55, 20, 0.22) !important;
-  background-color: rgba(250, 242, 214, 0.55) !important; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 1.55em, rgba(110, 80, 40, 0.22) 1.55em, rgba(110, 80, 40, 0.22) calc(1.55em + 1px)); background-attachment: local;
-  color: #2c3d2b !important; caret-color: #2c3d2b; font-family: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif !important; font-style: italic; line-height: calc(1.55em + 1px) !important; letter-spacing: 0.01em; }
+.age-libbook__ta.age-libbook__ta { resize: none; appearance: none; -webkit-appearance: none; padding: 3px 8px; margin: 0; border: none; border-radius: 1px; box-shadow: inset 0 0 0 1px rgba(120, 90, 40, 0.35), inset 0 2px 6px rgba(80, 55, 20, 0.22);
+  background-color: rgba(250, 242, 214, 0.55); background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 1.55em, rgba(110, 80, 40, 0.22) 1.55em, rgba(110, 80, 40, 0.22) calc(1.55em + 1px)); background-attachment: local;
+  color: #2c3d2b; caret-color: #2c3d2b; font-family: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif; font-style: italic; line-height: calc(1.55em + 1px); letter-spacing: 0.01em; }
 .age-libbook__ta::placeholder { color: rgba(44, 61, 43, 0.45); font-style: italic; }
-.age-libbook__ta:focus { outline: none !important; box-shadow: inset 0 0 0 1px rgba(160, 110, 40, 0.85), inset 0 2px 6px rgba(80, 55, 20, 0.22), 0 0 6px rgba(201, 162, 78, 0.45) !important; }
+.age-libbook__ta.age-libbook__ta:focus { outline: none; box-shadow: inset 0 0 0 1px rgba(160, 110, 40, 0.85), inset 0 2px 6px rgba(80, 55, 20, 0.22), 0 0 6px rgba(201, 162, 78, 0.45); }
 .age-libbook__ta::selection { background: rgba(44, 61, 43, 0.28); }
-.age-libbook__btn { appearance: none; -webkit-appearance: none; padding: 0; border: 1px solid #c9a24e !important; border-radius: 2px; background: linear-gradient(#6b3232, #4d2222) !important; color: #f0e2b8 !important; font-family: "Palatino Linotype", Palatino, Georgia, serif !important; font-style: italic; letter-spacing: 0.04em; cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.25), 0 1px 3px rgba(40, 20, 8, 0.45) !important; transition: filter 0.15s; }
+.age-libbook__btn.age-libbook__btn { appearance: none; -webkit-appearance: none; padding: 0; border: 1px solid #c9a24e; border-radius: 2px; background: linear-gradient(#6b3232, #4d2222); color: #f0e2b8; font-family: "Palatino Linotype", Palatino, Georgia, serif; font-style: italic; letter-spacing: 0.04em; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.25), 0 1px 3px rgba(40, 20, 8, 0.45); transition: filter 0.15s; }
 .age-libbook__btn:hover { filter: brightness(1.18); }
 .age-libbook__btn:active { filter: brightness(0.9); }
 

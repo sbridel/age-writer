@@ -10,7 +10,6 @@
   border-radius: 4px;
   padding: 16px;
   margin: 8px 0;
-  clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%);
 }
 
 /* A pale hairline along the "broken" corner, as if the edge caught the light. */
@@ -21,8 +20,7 @@
   right: 0;
   width: 26px;
   height: 26px;
-  background: linear-gradient(135deg, rgba(233, 220, 184, 0.35), transparent 70%);
-  clip-path: polygon(100% 0, 100% 100%, 0 0);
+  background: linear-gradient(225deg, var(--background-primary) 50%, rgba(233, 220, 184, 0.35) 50%, transparent 70%);
   pointer-events: none;
 }
 
