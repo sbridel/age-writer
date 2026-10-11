@@ -350,7 +350,7 @@ const REF_EN = [
     { ul: ["A pulsar or neutron star adds a **false beat** at its own period (the surveyor's delay is wrong, and the amber echo can lock onto the false beat: nothing holds)", "A black hole **bends** the Zero's light (the surveyor's direction is wrong; in the eyepiece a bright image will not hold, the true point is the pale end of the arc)"] },
     { p: "Such a star can still be charted by looking past the lure, or by **triangulation**: with two charted stars nearby, pull the **Beacons** lever and the bent light and false beat fall away." },
     { h: "Early readings" },
-    { p: "Not everything the instrument shows early on is what it seems: maybe you could play and find out." },
+    { p: "Not everything the instrument shows early on is what it seems: maybe you could explore and find out." },
     { h: "The star chart" },
     { p: "The parchment roll on the observatory wall opens a map of the Zero, your Relto and every charted star with its Ages (names on hover) and its dead stars, each hanging on a plumb line above or below the plane of the Zero (heights to their own scale); one well-charted Age anchors it." },
     { h: "Drift" },

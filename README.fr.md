@@ -361,7 +361,7 @@ Une telle étoile se situe tout de même en cherchant au-delà du leurre, ou **i
 
 #### Premières lectures (étape 3)
 
-Elle n'existe que dans l'Art de la Guilde. Tout ce que l'instrument montre au début n'est pas ce qu'il semble : tu pourrais peut-être jouer pour le découvrir.
+Elle n'existe que dans l'Art de la Guilde. Tout ce que l'instrument montre au début n'est pas ce qu'il semble : tu pourrais peut-être explorer pour le découvrir.
 
 #### La carte des étoiles (étape 3)
 

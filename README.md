@@ -361,7 +361,7 @@ Such a star can still be charted by looking past the lure, or **indirectly**: on
 
 #### Early readings (step 3)
 
-It exists in the Art of the Guild only. Not everything the instrument shows early on is what it seems: maybe you could play and find out.
+It exists in the Art of the Guild only. Not everything the instrument shows early on is what it seems: maybe you could explore and find out.
 
 #### The star chart (step 3)
 
