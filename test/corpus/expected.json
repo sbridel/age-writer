@@ -1,0 +1,910 @@
+{
+ "story-rest": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "story-mend-start": {
+  "gentle": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "geological"
+  },
+  "balanced": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "geological"
+  },
+  "strict": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "geological"
+  },
+  "extreme": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "geological"
+  }
+ },
+ "story-mend-fixed": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "story-laws": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "story-weather": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "story-alter": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "story-hard-start": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "story-hard-ref": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "story-strange-start": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "story-strange-ref": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "empty": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": null,
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": null,
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": null,
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": null,
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "type-frozen": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "type-lava": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "type-lava-moss": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "type-desert": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "type-desert-rain": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "type-ocean": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "type-jungle": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "type-cavern": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "type-cavern-algae": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "rich-modest": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "rich-coherent": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "rich-heavy": {
+  "gentle": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "ecological"
+  },
+  "balanced": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "ecological"
+  },
+  "strict": {
+   "verdict": "dying",
+   "depth": null,
+   "scars": [],
+   "weakest": "ecological"
+  },
+  "extreme": {
+   "verdict": "dying",
+   "depth": null,
+   "scars": [],
+   "weakest": "ecological"
+  }
+ },
+ "rich-clash": {
+  "gentle": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "ecological"
+  },
+  "balanced": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "ecological"
+  },
+  "strict": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "ecological"
+  },
+  "extreme": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "ecological"
+  }
+ },
+ "wealth-gold": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "wealth-gold-scar": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "wealth-gems-scars": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "scar-only": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "drawn-scar-lava": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [
+    "poisoned_air:light"
+   ],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [
+    "poisoned_air:light"
+   ],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [
+    "poisoned_air:light"
+   ],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [
+    "poisoned_air:light"
+   ],
+   "weakest": null
+  }
+ },
+ "drawn-scar-desert": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [
+    "scorched_surface:light"
+   ],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [
+    "scorched_surface:light"
+   ],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "unstable",
+   "depth": "deep",
+   "scars": [
+    "scorched_surface:light"
+   ],
+   "weakest": "weather"
+  },
+  "extreme": {
+   "verdict": "unstable",
+   "depth": "deep",
+   "scars": [
+    "scorched_surface:light"
+   ],
+   "weakest": "weather"
+  }
+ },
+ "drawn-scar-desert-weak": {
+  "gentle": {
+   "verdict": "unstable",
+   "depth": "deep",
+   "scars": [
+    "scorched_surface:light"
+   ],
+   "weakest": "weather"
+  },
+  "balanced": {
+   "verdict": "unstable",
+   "depth": "deep",
+   "scars": [
+    "scorched_surface:light"
+   ],
+   "weakest": "weather"
+  },
+  "strict": {
+   "verdict": "unstable",
+   "depth": "deep",
+   "scars": [
+    "scorched_surface:light"
+   ],
+   "weakest": "weather"
+  },
+  "extreme": {
+   "verdict": "unstable",
+   "depth": "deep",
+   "scars": [
+    "scorched_surface:light"
+   ],
+   "weakest": "weather"
+  }
+ },
+ "clash-strong": {
+  "gentle": {
+   "verdict": "dying",
+   "depth": null,
+   "scars": [],
+   "weakest": "geological"
+  },
+  "balanced": {
+   "verdict": "dying",
+   "depth": null,
+   "scars": [],
+   "weakest": "geological"
+  },
+  "strict": {
+   "verdict": "dying",
+   "depth": null,
+   "scars": [],
+   "weakest": "geological"
+  },
+  "extreme": {
+   "verdict": "dying",
+   "depth": null,
+   "scars": [],
+   "weakest": "geological"
+  }
+ },
+ "strange-mix": {
+  "gentle": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "cosmological"
+  },
+  "balanced": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "cosmological"
+  },
+  "strict": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "cosmological"
+  },
+  "extreme": {
+   "verdict": "unstable",
+   "depth": null,
+   "scars": [],
+   "weakest": "cosmological"
+  }
+ },
+ "dark-ruins": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": null,
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": null,
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": null,
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": null,
+   "scars": [],
+   "weakest": null
+  }
+ }
+}

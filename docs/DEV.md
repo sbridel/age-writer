@@ -172,3 +172,7 @@ La relecture automatique du catalogue lit `styles.css` et les sources. Corrigé 
 2. `npm run lint && npm test`.
 3. `npm run zip` → `release/age-writer-<v>.zip` (plugin) et `release/age-writer-<v>-src.zip` (sources).
 4. Mettre à jour `docs/NOTES-historique.md`.
+
+## Reference corpus (non-regression)
+
+`test/corpus/ages.js` holds 34 fixed Ages (story chapters, one per world type, richness, scars, strong clashes). For each, at the four rigours, `test/corpus/expected.json` keeps the verdict, the depth state, the scars and the weakest axis — never the percentage. `test/corpus.test.js` fails when one changes. When a rule change is intended, run `node test/corpus/make.js --update` in the same commit and add a CHANGELOG line. The physics layer (plugin only) is not part of it. Known gap: no "thread" depth case yet.
