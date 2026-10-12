@@ -236,7 +236,7 @@ const REF_EN = [
     {"h": "Rigour of the laws (setting)"},
     {"p": "The setting decides how much of all this counts against stability."},
     {"table": {"head": ["Level", "What counts"], "rows": [["Gentle (default)", "Nothing new costs stability: only what lightens an Age counts (a little water in a desert, a storm that follows from itself)."], ["Balanced", "What makes a clash worse counts at half."], ["Strict", "In full, on the families of laws you tick: physics, soil, life, extent and dosage, balance. The others count at half."], ["Extreme", "Everything counts, in full."]]}},
-    {"p": "All five families act. The laws of life and soil are described with the matter blocks (“Matter blocks”). The rigour you held also decides which writer's title an Age can earn (see “Writer's title”)."},
+    {"p": "Four families act today (physics, soil, life, extent and dosage); balance is kept for the cost of retouching an Age, in a coming update. The laws of life and soil are described with the matter blocks (“Matter blocks”). The rigour you held also decides which writer's title an Age can earn (see “Writer's title”)."},
   ] },
   { id: "title", part: "gen", icon: "award", title: "Writer's title", body: [
     {"p": "Writing earns a title. It recognises what you have achieved and never locks anything: every block, line and room stays open to everyone."},

@@ -233,7 +233,7 @@ const REF_FR = [
     {"h": "Rigueur des lois (réglage)"},
     {"p": "Le réglage décide de la part de tout cela qui pèse sur la stabilité."},
     {"table": {"head": ["Niveau", "Ce qui compte"], "rows": [["Doux (par défaut)", "Rien de nouveau ne coûte de stabilité : seul compte ce qui allège un Âge (un peu d'eau dans un désert, un orage qui découle de lui-même)."], ["Équilibré", "Ce qui aggrave un clash compte à moitié."], ["Strict", "À plein coût, sur les familles de lois cochées : physique, sol, vie, étendue et dosage, équilibre. Les autres comptent à moitié."], ["Extrême", "Tout compte, à plein coût."]]}},
-    {"p": "Les cinq familles agissent. Les lois de la vie et du sol sont décrites avec les blocs de matière (« Blocs de matière »). La rigueur tenue décide aussi du titre d'écrivain qu'un Âge peut faire gagner (voir « Titre d'écrivain »)."},
+    {"p": "Quatre familles agissent aujourd'hui (physique, sol, vie, étendue et dosage) ; l'équilibre est gardé pour le coût des retouches d'un Âge, dans une prochaine mise à jour. Les lois de la vie et du sol sont décrites avec les blocs de matière (« Blocs de matière »). La rigueur tenue décide aussi du titre d'écrivain qu'un Âge peut faire gagner (voir « Titre d'écrivain »)."},
   ] },
   { id: "title", part: "gen", icon: "award", title: "Titre d'écrivain", body: [
     {"p": "Écrire fait gagner un titre. Il reconnaît ce que tu as réussi et ne verrouille jamais rien : tous les blocs, toutes les lignes et toutes les pièces restent ouverts à tous."},
