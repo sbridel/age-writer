@@ -566,6 +566,11 @@ module.exports = function build(Base, core, AGEX) {
       this.registerEvent(vault.on("create", () => R.resetStoryDraw(this)));
       this.registerEvent(vault.on("delete", (f) => { R.resetStoryDraw(this); if (f instanceof TFile) { this.law.forget(f.basename); this.status.forget(f.basename); this.saveExt(); } }));
       this.registerEvent(metadataCache.on("changed", () => this.refreshLive()));
+      this.registerEvent(this.app.workspace.on("file-open", (f) => { // ouvrir la note d'un Relto : le plein écran (src/ui-relto.js) ; si le Relto est déjà dessiné, tout de suite, sinon à la fin de son rendu
+        if (!f || !R.isHubFile(this.app, f)) return;
+        const inst = [...this.live].find((i) => i.path === f.path && i.full && i.el && i.el.isConnected);
+        if (inst) { this.reltoFullArm = null; inst.full(); } else this.reltoFullArm = { path: f.path, at: Date.now() };
+      }));
       const recheck = () => window.setTimeout(() => this.checkSound && this.checkSound(), 150);
       this.registerEvent(this.app.workspace.on("active-leaf-change", recheck));
       this.registerEvent(this.app.workspace.on("layout-change", recheck));

@@ -136,6 +136,7 @@ async function createReltoNote(plugin) {
 
 async function openRelto(plugin) {
   const f = await createReltoNote(plugin);
+  if (f) plugin.reltoFullArm = { path: f.path, at: Date.now() }; // la commande ouvre le Relto en plein écran (réglage)
   await plugin.app.workspace.getLeaf(false).openFile(f);
 }
 
@@ -508,6 +509,15 @@ async function renderRelto(plugin, source, el, ctx) {
   const title = head.createSpan({ cls: "age-relto__title" }), plate = head.createSpan({ cls: "age-relto__plate" });
   const tabsOn = plugin.ext.reltoTabs !== false, ui0 = (plugin.ext.state.ui = plugin.ext.state.ui || {});
   const tabBar = tabsOn ? root.createDiv({ cls: "age-relto__tabs" }) : null;
+  /** Le plein écran, dans la grande vue comme dans la note : dans la note, son conteneur prend le temps du plein écran l'habit de la grande vue. */
+  const toggleFull = () => {
+    const big = root.closest(".age-reltoview"), host = big || root.parentElement || root, d = host.ownerDocument;
+    try {
+      if (d.fullscreenElement) { d.exitFullscreen(); return; }
+      if (!big) { host.addClass("age-reltoview", "age-reltoview--inline"); const off = () => { if (!d.fullscreenElement) { host.removeClass("age-reltoview", "age-reltoview--inline"); d.removeEventListener("fullscreenchange", off); } }; d.addEventListener("fullscreenchange", off); }
+      const p = host.requestFullscreen(); if (p && p.catch) p.catch(() => { if (!big) host.removeClass("age-reltoview", "age-reltoview--inline"); });
+    } catch (e) { /* ignore */ }
+  };
   const paneView = root.createDiv({ cls: "age-relto__pane age-relto__pane--view" }), panePages = root.createDiv({ cls: "age-relto__pane age-relto__pane--pages" }), paneSet = root.createDiv({ cls: "age-relto__pane age-relto__pane--settings" });
   const controls = paneSet.createDiv({ cls: "age-relto__controls" }), when = document.createElement("div"); when.className = "age-relto__when";
   const clock = when.createSpan({ cls: "age-relto__clock" });
@@ -594,14 +604,7 @@ async function renderRelto(plugin, source, el, ctx) {
     { // le plein écran, dans la grande vue comme dans la note : dans la note, son conteneur prend le temps du plein écran l'habit de la grande vue
       const fs = tabBar.createEl("button", { cls: "age-relto__tab age-relto__tab--full" }); try { obsidian.setIcon(fs.createSpan({ cls: "age-relto__tabicon" }), "expand"); } catch (e) { /* ignore */ }
       fs.setAttr("aria-label", t("tab.fullscreen"));
-      fs.addEventListener("click", () => {
-        const big = root.closest(".age-reltoview"), host = big || root.parentElement || root, d = host.ownerDocument;
-        try {
-          if (d.fullscreenElement) { d.exitFullscreen(); return; }
-          if (!big) { host.addClass("age-reltoview", "age-reltoview--inline"); const off = () => { if (!d.fullscreenElement) { host.removeClass("age-reltoview", "age-reltoview--inline"); d.removeEventListener("fullscreenchange", off); } }; d.addEventListener("fullscreenchange", off); }
-          const p = host.requestFullscreen(); if (p && p.catch) p.catch(() => { if (!big) host.removeClass("age-reltoview", "age-reltoview--inline"); });
-        } catch (e) { /* ignore */ }
-      });
+      fs.addEventListener("click", () => toggleFull());
     }
     pick(defs.some((d) => d[0] === ui0.reltoTab) ? ui0.reltoTab : "view");
   } else { root.setAttr("data-tab", "all"); }
@@ -916,7 +919,7 @@ async function renderRelto(plugin, source, el, ctx) {
       if (plugin.soundBtn === soundBtn) { plugin.soundFactor = factor(); plugin.sound.setVolume(); } // seulement si c'est le son du refuge qui joue
     });
   }
-  const inst = { refresh, el: root };
+  const inst = { refresh, el: root, path: file.path, full: () => { if (!ctx.big && plugin.ext.reltoFullscreen !== false && !root.closest(".popover, .hover-popover") && !root.ownerDocument.fullscreenElement) toggleFull(); } }; // `full` : le plein écran à l'ouverture (voir entry.js, file-open)
   plugin.live.add(inst);
   // le garde-fou du plugin coupe le son si la note change ou si l'onglet se ferme ; un nouveau rendu du bloc
   // (édition, défilement) ne le coupe pas : le nouveau bouton reprend l'état « en lecture »
@@ -927,6 +930,11 @@ async function renderRelto(plugin, source, el, ctx) {
   }
   const child = new obsidian.MarkdownRenderChild(el); child.onunload = () => { try { sound.roomStop(); } catch (e) { /* ignore */ } renderer.stop(); plugin.live.delete(inst); }; ctx.addChild(child);
   await refresh();
+  { // ouvrir le Relto (sa note, ou la commande) le met en plein écran (réglage, activé par défaut) : une fois par ouverture, jamais dans un aperçu au survol.
+    // Le plein écran exige un geste récent (le clic ou la commande qui a ouvert la note) ; trop tard, le navigateur refuse, sans bruit.
+    const arm = plugin.reltoFullArm;
+    if (arm && arm.path === file.path && Date.now() - arm.at < 4000) { plugin.reltoFullArm = null; inst.full(); }
+  }
   const mailTimer = window.setInterval(() => { if (!root.isConnected) return window.clearInterval(mailTimer); mailTick(plugin, file).then((got) => { if (got && !renderer.running) renderer.draw(0); }).catch(() => {}); }, 20000); // le courrier arrive au hasard, pendant qu'on est là
   const clockTimer = window.setInterval(() => { if (!root.isConnected) return window.clearInterval(clockTimer); if (fixed == null) syncClock(); }, 15000);
   child.register(() => window.clearInterval(clockTimer));
@@ -970,4 +978,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyRepair, storyCheck, storyNext, storyRestart, storyNoDraw, storyNotes, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { isHubFile: isHub, cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyRepair, storyCheck, storyNext, storyRestart, storyNoDraw, storyNotes, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
