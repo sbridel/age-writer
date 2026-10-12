@@ -338,8 +338,9 @@
 .age-guide__table { width: 100%; border-collapse: collapse; font-size: 0.92em; }
 .age-guide__table th, .age-guide__table td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--background-modifier-border); }
 .age-guide__table th { color: var(--text-muted); font-weight: 600; background: var(--background-secondary); }
-.age-guide__table td:nth-child(2) { white-space: nowrap; }
-.age-guide__table th:last-child, .age-guide__table td:last-child { width: 58%; }
+.age-guide__table td:first-child { min-width: 8em; }
+.age-guide__table--phys td:nth-child(2) { white-space: nowrap; }
+.age-guide__table--phys th:last-child, .age-guide__table--phys td:last-child { width: 58%; }
 
 /* Relto : le nom D'ni en surimpression n'existe que dans l'onglet Vue (les autres onglets ont leur en-tête) */
 .age-relto[data-tab]:not([data-tab="view"]) .age-relto__dnioverlay { display: none; }

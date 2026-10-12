@@ -8,7 +8,7 @@ const GUIDE = {
       { p: "Tout se joue **dans la fiction** : ta note est un Livre descriptif, chaque ligne une phrase de l'Art, le texte sous le bloc est ce que le livre te renvoie. Ce que tu n'écris pas, l'obscurité le remplit, toujours de la même façon. La stabilité est la tenue de l'Art ; réécrire un monde exploré l'abîme ; le Relto est ta maison. Seuls l'onglet Détails (les notes d'un arpenteur) et les Réglages sortent du monde." },
       { code: "```age\nsingle_sun\nwater\nreturn: [[Hub]]\nlink: [[Sunder Reach]]\n```" },
       { h: "Lignes utiles" },
-      { ul: ["`link: [[Note]]` : livre de liaison vers un autre Âge (autant que tu veux)", "`return: [[Note]]` : livre de retour", "`seed: 42` : change le tirage ; même note + même graine = même monde", "`panel: [[image.gif]]` : image de fenêtre à toi", "`trap book` : livre-piège (ni retour ni fissure)", "`cover: sober` : sobriété de la couverture (ornate, classic, sober, plain, ou 0 à 1)", "`window_style: generative`, `window_size: xl`, `fx: tv` : rendu de la fenêtre", "`many: ruins` / `few: rain` : quantités", "`damaged_pages = 2`, `removed_pages = 1` : livre abîmé"] },
+      { ul: ["`link: [[Note]]` : livre de liaison vers un autre Âge (autant que tu veux)", "`return: [[Note]]` : livre de retour", "`seed: 42` : change le tirage ; même note + même graine = même monde", "`panel: [[image.gif]]` : image de fenêtre à toi", "`trap book` : livre-piège (ni retour ni fissure)", "`cover: sober` : sobriété de la couverture (ornate, classic, sober, plain, ou 0 à 1)", "`window_style: generative`, `window_size: xl`, `fx: tv` : rendu de la fenêtre", "`many: ruins` / `few: rain` (ou `rain: few`) : quantités ; `drizzle: often, dawn` : un temps qui va et vient", "`damaged_pages = 2`, `removed_pages = 1` : livre abîmé"] },
       { p: "Ce que tu n'écris pas est tiré au sort, toujours de la même façon pour la même note. Les « pages » (single_sun, water, stone…) se choisissent aussi dans la palette de la vue livre." },
     ] },
     { id: "panel", icon: "layout-panel-top", title: "Le bloc Âge", body: [
@@ -23,7 +23,7 @@ const GUIDE = {
       { p: "Cliquer la vitre ou « open ↗ » t'emmène dans l'Âge visé (liaison parfois incertaine si le livre est abîmé)." },
     ] },
     { id: "relto", icon: "mountain", title: "Le Relto (refuge)", body: [
-      { p: "Ton refuge : une île avec cabane, étagère de livres (tes Âges, cliquables), piliers de liaison. Crée-le avec « Create a Relto page » puis place un bloc `relto` dans une note." },
+      { p: "Ton refuge : une île avec cabane, étagère de livres (tes Âges, cliquables), piliers de liaison. Crée-le avec « Create a Relto page » puis place un bloc `relto` dans une note. Un livre vierge sur la table de la cabane permet d'y écrire un Âge sans quitter le refuge ; une trappe de fer dans le sol mène au coffre où ils sont rangés." },
       { code: "```relto\ninscription: ma devise\n```" },
       { h: "Onglets" },
       { ul: ["**Vue** (œil) : l'image, avec l'heure et l'heure D'ni dessous. Cliquer la zone de l'heure la cache ; elle s'efface seule après quelques secondes, sauf si la souris passe dessus", "**Pages** (feuille) : les pages actives, disponibles, verrouillées ; les livres affichés sur l'étagère", "**Réglages** (engrenage) : heure du ciel, ambiance sonore, niveau et volume", "**Agrandir** : ouvre la **vue Relto** dans un onglet principal, image grande"] },
@@ -53,7 +53,7 @@ const GUIDE = {
       { p: "Everything happens **inside the fiction**: your note is a Descriptive Book, each line a phrase of the Art, the text under the block is what the book says back. What you leave unwritten, the dark fills in, always the same way. Stability is how well the Art holds; rewriting an explored world damages it; the Relto is your home. Only the Details tab (a surveyor's notes) and the Settings step outside the world." },
       { code: "```age\nsingle_sun\nwater\nreturn: [[Hub]]\nlink: [[Sunder Reach]]\n```" },
       { h: "Useful lines" },
-      { ul: ["`link: [[Note]]`: a linking book to another Age (as many as you like)", "`return: [[Note]]`: the way home", "`seed: 42`: changes the draw; same note + same seed = same world", "`panel: [[image.gif]]`: your own window image", "`trap book`: a trap (no return, no fissure)", "`cover: sober`: cover sobriety (ornate, classic, sober, plain, or 0 to 1)", "`window_style: generative`, `window_size: xl`, `fx: tv`: window rendering", "`many: ruins` / `few: rain`: quantities", "`damaged_pages = 2`, `removed_pages = 1`: a damaged book"] },
+      { ul: ["`link: [[Note]]`: a linking book to another Age (as many as you like)", "`return: [[Note]]`: the way home", "`seed: 42`: changes the draw; same note + same seed = same world", "`panel: [[image.gif]]`: your own window image", "`trap book`: a trap (no return, no fissure)", "`cover: sober`: cover sobriety (ornate, classic, sober, plain, or 0 to 1)", "`window_style: generative`, `window_size: xl`, `fx: tv`: window rendering", "`many: ruins` / `few: rain` (or `rain: few`): quantities; `drizzle: often, dawn`: weather that comes and goes", "`damaged_pages = 2`, `removed_pages = 1`: a damaged book"] },
       { p: "Whatever you leave out is drawn at random, always the same way for the same note. Pages (single_sun, water, stone…) can also be picked from the book view palette." },
     ] },
     { id: "panel", icon: "layout-panel-top", title: "The Age block", body: [
@@ -68,7 +68,7 @@ const GUIDE = {
       { p: "Clicking the glass or “open ↗” takes you to the Age (the link can be unreliable if the book is damaged)." },
     ] },
     { id: "relto", icon: "mountain", title: "The Relto (refuge)", body: [
-      { p: "Your refuge: an island with a hut, a bookshelf (your Ages, clickable) and linking pillars. Create it with “Create a Relto page”, then put a `relto` block in a note." },
+      { p: "Your refuge: an island with a hut, a bookshelf (your Ages, clickable) and linking pillars. Create it with “Create a Relto page”, then put a `relto` block in a note. A blank book on the cabin table lets you write an Age without leaving the refuge; an iron hatch in the floor leads to the vault where they are kept." },
       { code: "```relto\ninscription: my motto\n```" },
       { h: "Tabs" },
       { ul: ["**View** (eye): the image, with the time and the D'ni time below. Clicking the time hides it; it also fades by itself after a few seconds unless the mouse is over it", "**Pages** (sheet): active, available and locked pages; the books on the shelf", "**Settings** (cog): sky time, soundscape, level and volume", "**Expand**: opens the dedicated **Relto view** in a main tab, with a large image"] },
@@ -161,7 +161,7 @@ function renderTopic(host, topic, kicker, spoil) {
     else if (b.ul) { const ul = host.createEl("ul"); for (const x of b.ul) inline(ul.createEl("li"), x); }
     else if (b.note) inline(host.createDiv({ cls: "age-guide__note" }), b.note);
     else if (b.table) {
-      const wrap = host.createDiv({ cls: "age-guide__tablewrap" }), table = wrap.createEl("table", { cls: "age-guide__table" });
+      const wrap = host.createDiv({ cls: "age-guide__tablewrap" }), table = wrap.createEl("table", { cls: "age-guide__table" + (b.table.phys ? " age-guide__table--phys" : "") });
       const hr = table.createEl("thead").createEl("tr"); for (const x of b.table.head) hr.createEl("th", { text: x });
       const tb = table.createEl("tbody");
       for (const r of b.table.rows) { const tr = tb.createEl("tr"); for (const x of r) inline(tr.createEl("td"), x); }
