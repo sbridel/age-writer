@@ -535,18 +535,26 @@ class ReltoRenderer {
    * auto (défaut) : le soir et la nuit, surtout quand l'âtre brûle ; parfois par pluie ou neige, rarement en plein jour.
    * Le tirage change par demi-heure (jamais d'une image à l'autre) et dépend de la graine du Relto.
    */
-  /** Où il dort : « cabin » (sur le tapis du feu, par défaut) ou « atelier » (option `sleep=atelier` : dans l'atelier, à une place qui change par demi-heure). */
-  catWhere() { const cat = this.scene.additions.find((a) => a.type === "cat"); return cat && /^atelier/i.test(String(cat.sleep || "")) ? "atelier" : "cabin"; }
-  /** La place du chat dans l'atelier : -1 (pas là), 0 le fauteuil, 1 le tapis du fond, 2 le lit. En `sleep=atelier` il dort là quand il dort, et la place change par demi-heure ; sinon c'est un tirage à chaque visite. */
+  /** `cat_sleep` lu en mots : où (cabane ou atelier), quand (auto, always, never), et dans l'atelier une place fixe (armchair, rug, bed ; en français fauteuil, tapis, lit). Ex. « atelier bed always ». */
+  catSleep() {
+    const cat = this.scene.additions.find((a) => a.type === "cat"), words = String((cat && cat.sleep) || "").toLowerCase().split(/[\s,:;=-]+/).filter(Boolean);
+    const SPOT = { armchair: 0, chair: 0, fauteuil: 0, rug: 1, carpet: 1, tapis: 1, bed: 2, lit: 2 }, spot = words.map((w) => SPOT[w]).find((v) => v != null);
+    const mode = words.find((w) => ["never", "no", "off", "always", "yes", "fire", "auto"].includes(w)) || "auto";
+    return { atelier: words.includes("atelier") || spot != null, spot: spot == null ? null : spot, mode };
+  }
+  /** Où il dort : « cabin » (sur le tapis du feu, par défaut) ou « atelier » (`cat_sleep: atelier` : dans l'atelier). */
+  catWhere() { return this.catSleep().atelier ? "atelier" : "cabin"; }
+  /** La place du chat dans l'atelier : -1 (pas là), 0 le fauteuil, 1 le tapis du fond, 2 le lit. En `atelier`, il dort là quand il dort : à sa place fixe si elle est donnée (`atelier bed`), sinon une place qui change par demi-heure ; hors de l'atelier, c'est un tirage à chaque visite. */
   catSpotFor() {
     const sc = this.scene, cat = sc.additions.find((a) => a.type === "cat"); if (!cat) return -1;
-    if (this.catWhere() === "atelier") return this.catAsleep() ? Math.floor(rng((sc.seed ^ fnv("cat-spot|" + Math.floor(this.hour() * 2))) >>> 0)() * 3) : -1;
+    const cs = this.catSleep();
+    if (cs.atelier) return !this.catAsleep() ? -1 : cs.spot != null ? cs.spot : Math.floor(rng((sc.seed ^ fnv("cat-spot|" + Math.floor(this.hour() * 2))) >>> 0)() * 3);
     return this.catAsleep() ? -1 : this.catSpot || 0; // il dort déjà au coin du feu dans la cabane : il ne peut pas être aussi dans l'atelier (`cat_sleep: always`)
   }
   catAsleep() {
     const sc = this.scene, has = (ty) => sc.additions.find((a) => a.type === ty), cat = has("cat");
     if (!cat || !sc.structures.includes("hut")) return false;
-    const mode = String(cat.sleep || "auto").toLowerCase().replace(/^atelier\b[\s:-]*/, "") || "auto"; // « atelier » : mêmes heures de sommeil, mais dans l'atelier (voir catWhere)
+    const mode = this.catSleep().mode; // « atelier » et sa place ne changent pas les heures de sommeil (voir catWhere)
     if (mode === "never" || mode === "no" || mode === "off") return false;
     if (mode === "always" || mode === "yes" || mode === "fire") return true;
     const h = ((this.hour() % 24) + 24) % 24, fire = !!has("chimney"), wet = !!(has("rain") || has("storm") || has("snow"));

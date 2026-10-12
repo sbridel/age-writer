@@ -2,6 +2,24 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.27.4 — A book you open, a quill in the Relto (2026-10-12)
+
+### Added
+- **The book of the vault opens closed, on its cover.** A blank book: you write its name on the leather (Enter or the right edge opens it), and that name becomes the note's, instead of "Age", "Age 2"… An Age's book shows its own cover. Turning back from the first spread closes the book.
+- **A quill and a drawn hand in the Relto.** The pointer is a quill, tinted like the crystal flower of the study (`flower_color` changes it too); what you can click shows a hand drawn in ink, on the canvas, in the books and on the linking animation. Setting *Quill cursor in the Relto* (on by default).
+- **The Relto opens in full screen** when you open its note or run *Open the Relto*. Escape leaves it. Setting *Open the Relto in full screen* (on by default).
+- **The star chart keeps the history of rewritten Ages.** The first chart shows today's stars, each Age only at its current star; then one chart per Age that changed stars, "The wanderings of …": its former stars, pale, then today's, joined by a dotted path. ‹ › at the top of the parchment.
+- **The cat can sleep at a fixed place in the study**: `cat_sleep: atelier armchair`, `atelier rug` or `atelier bed` (`atelier` alone: the place changes every half hour).
+
+### Changed
+- In the vault's book, the linking panel opens the book (right page, the left one blank), and the linking books with the fissure sentence close it, alone on the last page. "No linking book written. Add link: [[Name]]…" became a sentence in the book's own voice.
+- The sentence about the glass (clear, wavering, silent) moved under the description, small, with the axes.
+- "Draw again" is a pair of ink dice, centred; "write it" is centred, away from the edge where you turn the page. The sentence about drawn pages is in French when the interface is.
+- On the star chart, the Great Zero is in the blue of the telescope's signal and the line of the instrument in indigo.
+
+### Fixed
+- In the large Relto view, the vault no longer shows every book again after going out to the island and back.
+
 ## 1.27.3 — README up to date (2026-10-12)
 
 ### Changed

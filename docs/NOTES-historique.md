@@ -364,3 +364,12 @@ unlock:                            # facultatif
 ## 1.27.3 — README à jour (12 oct. 2026)
 
 - README.md et README.fr.md : la phrase sur les langues (réglage *Langue des extensions*, noms de blocs et descriptions générées en anglais) et la section « Recent changes / Nouveautés récentes » en liste par version jusqu'à la 1.27.
+
+## 1.27.4 — un livre qu'on ouvre, une plume dans le Relto (12 oct. 2026)
+
+- Livre du coffre (`src/relto-descbook.js`) : plan couverture → vitre (page droite, gauche vierge) → glyphes → description → page libre → livres de liaison seuls en dernière page (le moteur `linking` peint la vitre dans une page jetée). Couverture : `plugin.coverFor` pour un Âge ; pour un livre vierge, un cartouche où l'on écrit le nom (`state.name`), passé à `createAgeNote(line, name)` (`src/ui-relto.js`, nettoyé, repli « Age » ; l'histoire garde sa numérotation). Message « rien n'est lié » réécrit ; phrase de la vitre au colophon ; dés à l'encre (`DICE`) pour retirer ; phrase du tirage localisée.
+- Curseurs : plume (SVG 32×32 avec largeur/hauteur explicites, sinon Chromium l'ignore), teintée par `flowerTone`/`quillSvg` (`src/relto-flower.js`) via `--age-quill` ; main dessinée `--age-hand` (canevas : style en ligne `var(--age-hand, pointer)` sur toutes les zones cliquables ; livres, animation de liaison et leurs descendants). Réglage `cursorQuill`.
+- Plein écran à l'ouverture : `file-open` d'une note Relto (ou la commande) arme `reltoFullArm`, consommé par l'instance déjà dessinée ou à la fin du rendu (`toggleFull`, le même que le bouton). Réglage `reltoFullscreen`. Limite : il faut un geste récent.
+- Grande vue : `ReltoView.render` garde `plugin.reltoViewFile` (le coffre reprenait tous les livres après un aller-retour vers l'île).
+- Carte des étoiles (`src/relto-starmap.js`) : rose du Zéro au bleu du signal, ligne de l'instrument en indigo ; étoile actuelle de chaque Âge lue par `onImagerAge` (en arrière-plan, `r.mapCur`) ; page 0 = aujourd'hui, puis une page par Âge déplacé avec son chemin ; `noteAge` garde `when[nom]` (`src/relto-telescope.js`). Rendus `mapmoved0/1` dans `test/visual`.
+- Chat : `catSleep()` lit `cat_sleep` en mots (où, quand, place fixe dans l'atelier).
