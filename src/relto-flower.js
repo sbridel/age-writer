@@ -20,11 +20,11 @@ function flowerTone(sc) {
   return { hue: ov ? ov.hue : seedHue, spread, fsat: ov && ov.sat != null ? ov.sat : seedSat };
 }
 
-/** La plume du curseur (SVG 32×32, pointe en 3,29), teintée comme la fleur de cristal : la barbe dans sa teinte, les barbules dans celle de ses pétales clairs. */
+/** La plume du curseur (SVG 32×32, pointe en 3,29 ; largeur et hauteur explicites, sans quoi Chromium ignore un curseur SVG), teintée comme la fleur de cristal : la barbe dans sa teinte, les barbules dans celle de ses pétales clairs. */
 function quillSvg(sc) {
   const { hue, spread, fsat } = flowerTone(sc), vane = hsl(hue, fsat, 0.36), barb = hsl(hue + spread * 0.6, fsat, 0.66);
   const d = [[14, 18], [17, 15], [20, 12], [23, 9]].map(([x, y]) => `M${x} ${y} L${x + 2.6} ${y + 0.6} M${x} ${y} L${x - 0.6} ${y - 2.6}`).join(" ");
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><g stroke="#f4ead2" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" fill="#f4ead2"><path d="M10 22 C11 13 19 5 30 2 C28 12 21 20 10 22 Z"/><path d="M3 29 L13 19" fill="none"/></g><path d="M10 22 C11 13 19 5 30 2 C28 12 21 20 10 22 Z" fill="${vane}"/><path d="${d}" stroke="${barb}" stroke-width="0.8" stroke-linecap="round" fill="none"/><path d="M3.2 28.8 L27 5" stroke="#21150b" stroke-width="1.3" stroke-linecap="round"/><path d="M2.6 29.4 L5.2 27.6 L4.4 26.8 Z" fill="#21150b"/></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><g stroke="#f4ead2" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" fill="#f4ead2"><path d="M10 22 C11 13 19 5 30 2 C28 12 21 20 10 22 Z"/><path d="M3 29 L13 19" fill="none"/></g><path d="M10 22 C11 13 19 5 30 2 C28 12 21 20 10 22 Z" fill="${vane}"/><path d="${d}" stroke="${barb}" stroke-width="0.8" stroke-linecap="round" fill="none"/><path d="M3.2 28.8 L27 5" stroke="#21150b" stroke-width="1.3" stroke-linecap="round"/><path d="M2.6 29.4 L5.2 27.6 L4.4 26.8 Z" fill="#21150b"/></svg>`;
 }
 
 /** Dessine la fleur (coordonnées du mur : centre 141,150) ; l'appelant a posé le clip de l'ovale. */
