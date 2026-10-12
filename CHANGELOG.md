@@ -2,6 +2,21 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.28.0 — Drawn pages in plain sight, a cavern you look into, a moon you tune, a telescope you must read (2026-10-13)
+
+### Added
+- **Drawn pages shown where they cost.** In the stability details ("What does not hold"), a clash that touches a page the Age drew now names it ("Drawn by the Age, not written in your note: erratic cycle") before the generic advice. *Keep it (write it)* writes it into the note; for a one-value box (stars, cycle, ground, fissure) a button writes each other value instead, and the box closes.
+- **A cavern you look into.** In a `cavern_world` the window shows the inside: a closed vault with stalactites, rock sides and distant pillars in the haze, black pools. The only light is the Age's own: cold algae (`glow_algae`) glow blue-green and tremble in the water, luminous vine green, lava orange. Other worlds are unchanged.
+- **A moon you tune**: `moon: small`, `large`, `distant` or `close` (two words allowed, `lune:` too). A small or distant moon no longer steadies the axis, so an erratic cycle becomes possible again, and its tide weakens; a large or close one heats the interior more. A distant moon needs a planet that can hold it (Hill sphere at least Earth's), otherwise a light clash with hints. The window draws the moon smaller or larger.
+- **Telescope, Art of the Guild.** The pendulum is linked to the instrument: on each beat the eyepiece crosshair glows (gold on the marked stroke), and a **phase dial** engraved in the glass shows where the amber echo is born against the tick (right of noon: more delay; left: less; on noon: set).
+
+### Changed
+- Near a dead star (pulsar, neutron star) and not triangulated, the Art of the Guild no longer lets a sweep chart the star: the true echo is paler, the false beat has the same colour and size as the true one, and you must hold the wheel on the true delay for three beats ("Two beats tangle in the echo: hold still"). Only the true beat does not drift. Triangulation lifts it; Easy mode is unchanged.
+- The advice for the erratic cycle clash offers `moon: small`, then `steady_cycle`, then removing the moon (it used to promise a "small and distant" moon that did not exist).
+
+### Fixed
+- The guide no longer says that × removes a drawn page: × only takes out a written page; a drawn page is closed by writing its box's value.
+
 ## 1.27.4 — A book you open, a quill in the Relto (2026-10-12)
 
 ### Added

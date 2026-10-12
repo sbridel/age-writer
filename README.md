@@ -34,6 +34,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.28, drawn pages in plain sight, a cavern you look into, a tunable moon, a telescope you must read.** The stability details name the pages the Age drew (keep one, or close its box in one click); a `cavern_world` shows the inside of the cave lit by its algae; `moon: small` / `distant` / `large` / `close`; near a dead star the Art of the Guild asks you to hold the true delay, with a phase dial in the eyepiece.
 - **1.27, the sickness of the living and reading the world.** A chain of life held by a single species falls sick (a scar, a sentence, yellowed patches in the window). Coherence buys capacity: a world that holds together can carry more. The scars the world keeps from its draw, retouching that follows depth, and a world that names its faults only with time (setting *Reading the world*).
 - **1.26, life, soil, caverns and writing from the Relto.** New blocks (micro-life, shrubs, fauna by habitat, ground born of life), the laws of life, the `cavern_world`, a writer's title earned by holding an Age stable for seven days, a blank book to write an Age inside the Relto, the ledger on the Imager, and the vault of descriptive books under the cabin hatch (it shows only the books you chose).
 - **1.25, rigour of the laws.** Four rigours (gentle, balanced, strict, extreme), dosing by extent, a sentence on how deeply an Age rests, and every axis has a budget.

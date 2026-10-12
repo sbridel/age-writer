@@ -373,3 +373,12 @@ unlock:                            # facultatif
 - Grande vue : `ReltoView.render` garde `plugin.reltoViewFile` (le coffre reprenait tous les livres après un aller-retour vers l'île).
 - Carte des étoiles (`src/relto-starmap.js`) : rose du Zéro au bleu du signal, ligne de l'instrument en indigo ; étoile actuelle de chaque Âge lue par `onImagerAge` (en arrière-plan, `r.mapCur`) ; page 0 = aujourd'hui, puis une page par Âge déplacé avec son chemin ; `noteAge` garde `when[nom]` (`src/relto-telescope.js`). Rendus `mapmoved0/1` dans `test/visual`.
 - Chat : `catSleep()` lit `cat_sleep` en mots (où, quand, place fixe dans l'atelier).
+
+## 1.28.0 — pages tirées visibles, caverne vue de l'intérieur, lune réglable, télescope à lire (13 oct. 2026)
+
+- Pages tirées (`src/ui-extras.js`, `drawnBox`) : une tension dont `x.ids` touche une page de `analysis.drawn` affiche la page tirée avant les conseils ; ✓ = `addLine` ; case `pick: "one"` de `DRAW_SLOTS` (étoiles, cycle, sol, fissure) : un bouton par autre option. Le guide ne dit plus que × retire une page tirée (× ne retire que les écrites).
+- Caverne (`src/genscene.js`, `buildCave`/`paintCavern`, graine propre `0xca7e5`) : `paint` y court-circuite le ciel (voûte, flancs, piliers, vasques, lumières par `S.algae`/`S.glow`/`S.lava`). `S.algae` ajouté à `sceneOf`. Visuel : `test/visual/entry-worlds.js` (variantes cavern*).
+- Lune réglable (`src/sky.js`, `MOON_RE`/`moonOf`, `moonScale` dans `parseSky`) ; physique : `set.moonSize/moonDist` dans `solve` (petite ou lointaine → `moon:false` pour `axisChaos`, marée 0,01 ; grande ou proche → 0,06), règle `GLOBAL.moonReach` (sphère de Hill ≥ celle de la Terre). `MOON_RE` ajouté à `AGEX.skip`.
+- Télescope (`src/relto-telescope.js`) : en Guilde, étoile morte non triangulée → `needHold` : le vrai retard ne grave rien avant `HOLD_BEATS` = 3 battements immobiles (`st.hold`, effacé au moindre geste) ; le vrai écho pâlit (`echo.pale`) ; croisée qui luit à chaque battement ; `phaseDial` (arc gradué, éclair à midi, un point par écho, faux pouls de même couleur et taille).
+- Piège qui mord (gravure fausse si on tient sur le faux point) : envisagé, mis de côté jusqu'à quelques jours de jeu.
+
