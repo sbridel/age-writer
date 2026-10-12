@@ -14,10 +14,9 @@ const AM = require("../src/amounts"), DS = require("../src/dosage"), RG = requir
 hooks.skip = (l) => AM.AMOUNT_RE.test(l) || DS.WORLD_SIZE_RE.test(l);
 
 // Trous connus (12 oct. 2026), montrés à l'auteur avant d'être comblés :
-//  - amount : `many: gold` double le poids d'un bloc ; seul le chiffre par axe le montre (panneau, Grand Maître au lutrin) ;
-//  - fissure : la fissure qui abîme un monde instable (src/law.js, fissureStrain) ne se dit que par le nom de l'axe « altération ».
-//    (couche du plugin : hors de ce test, rappelée ici pour mémoire)
-const GAPS = new Set(["amount"]);
+//  (aucun pour l'instant : « amount » — `many: gold` — et « notes » — la maladie coupée du panneau — sont comblés ;
+//   la fissure, couche du plugin, se dit dans le panneau : voir test/integration.js)
+const GAPS = new Set();
 
 const ages = [...require("./corpus/ages"),
   { id: "many-gold", seed: "S", lines: ["single_sun", "steady_cycle", "stone", "gold", "many: gold"] },
@@ -39,7 +38,7 @@ for (const a of ages) for (const level of LEVELS) {
   const lectern = LEC.readOut(out, { tier: 1, fr: true, prose, dosage: DS.note(out.dosage, true) });
   const told = new Set(lectern.lines.map((l) => l.text));
   // 1. les quantités : un bloc pesant écrit en grande quantité
-  for (const id of new Set(written)) { const b = reg.blockById.get(id), f = AM.factorOf(id, amt); if (b && b.weight > 0 && f > 1) say(false, "amount", `${where} : ${id}`); }
+  for (const id of new Set(written)) { const b = reg.blockById.get(id), f = AM.factorOf(id, amt); if (b && b.weight > 0 && f > 1) say(prose.toLowerCase().includes(`too much ${id.replace(/_/g, " ")}`), "amount", `${where} : ${id}`); }
   // 2. les cicatrices tirées (et la maladie) : une phrase dans la description
   for (const x of out.scars || []) { const p = String(x.prose || (reg.blockById.get(x.id) || {}).presence || "").trim(); say(p && prose.toLowerCase().includes(p.toLowerCase()), "scar", `${where} : ${x.id}`); }
   const sc = SC.scarring(base.resolved, CONTRADICTION_COST);

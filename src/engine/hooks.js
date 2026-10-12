@@ -22,6 +22,7 @@ const hooks = {
   ghostTip: () => "Not learned yet",
   ghostWord: (word) => word, // un mot descripteur d'un glyphe non appris, dans la langue de l'interface
   ghostSky: (category, phrase) => phrase, // l'indice d'un glyphe du ciel non appris, dans la langue de l'interface
+  fissureNote: () => "", // la ligne du panneau quand la fissure abîme un monde instable (loi 14, Durée)
   lifeNote: () => "", // la ligne du panneau sur la vie et le sol (boucle, échelles, sol, énergie)
   dosageNote: () => "", // la ligne du panneau sur ce que le dosage a changé (vide : rien à dire)
   depthNote: () => "", // (texte du bloc, graine) → la phrase du panneau sur la profondeur de l'équilibre (test par retrait ; vide : rien à dire)

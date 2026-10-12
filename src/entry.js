@@ -129,6 +129,7 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.ghostTip = () => this.t("story.ghost");
       AGEX.ghostWord = (word) => (this.lang() === "fr" ? DFR.tr(word) : word); // indices des glyphes non appris : dans la langue de l'interface
       AGEX.dosageNote = (d) => DOSE.note(d, this.lang() === "fr");
+      AGEX.fissureNote = () => (this.lang() === "fr" ? "Durée · la fissure s'ouvre et le monde s'effrite" : "Duration · the fissure opens and the world crumbles");
       AGEX.lifeNote = (l) => LIFE.note(l, this.lang() === "fr");
       this.depthCache = new Map();
       // la profondeur de l'équilibre : le test par retrait, à l'affichage du panneau (jamais à chaque frappe), mis en cache par texte, graine et rigueur

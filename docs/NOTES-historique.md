@@ -342,3 +342,10 @@ unlock:                            # facultatif
 - **Écrire un Âge depuis le Relto** : livre vierge → vrai livre (fenêtre de liaison, glyphes à l'encre, description, page libre), classeur de glyphes, registre de l'Imageur, coffre de livres descriptifs (trappe de fer, niches de cinq livres, décors dans les niches vides), livres de liaison à l'aspect propre. Un Âge = une note = deux livres.
 - Essai d'un bruit de trappe : abandonné (rien ne sonnait juste).
 
+
+## 1.27.0 — la maladie du vivant et la lecture du monde (12 oct. 2026)
+
+- Tranche 4 close : 4 bis (capacité, cicatrices, retouches, déjà dans la ligne de 1.26 à l'état codé), **4 ter** (maladie du vivant : `pillars`/`blightOf` dans `src/life.js`, cicatrice écologique, taxe légère/normale), **4 quater** (Observation, `src/observe.js` : signe, symptôme, cause ; réglage *Lecture du monde*).
+- **Plancher à 75 %** : le coût de la maladie s'arrête à 75 sur l'axe écologique quand le monde tenait sans elle (3 000 mondes mesurés, 1 056 malades : aucun ne passe de stable à instable).
+- Test « une phrase par point perdu » (`test/sentences.test.js`) : plus aucun trou connu. `many: X` se dit dans la description ; le panneau ne coupe plus les notes de vie qui coûtent ; la fissure qui ronge un monde instable a sa ligne (`strained`).
+- Corpus : 37 Âges (trois pour la maladie).

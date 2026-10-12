@@ -209,7 +209,9 @@ function laws(present, o) {
 /** La ligne du panneau (au plus deux phrases) ; vide s'il n'y a rien à dire. */
 function note(l, fr) {
   if (!l || !l.notes || !l.notes.length) return "";
-  return (fr ? "Vie · " : "Life · ") + l.notes.slice(0, 2).map((n) => textOf(n, fr)).join(" · ");
+  // tout ce qui coûte est dit (la maladie ne se coupe jamais) ; seules les notes sans coût sont plafonnées, à deux en tout
+  const paid = l.notes.filter((n) => n.cost > 0), free = l.notes.filter((n) => !(n.cost > 0)).slice(0, Math.max(0, 2 - paid.length));
+  return (fr ? "Vie · " : "Life · ") + l.notes.filter((n) => paid.includes(n) || free.includes(n)).map((n) => textOf(n, fr)).join(" · ");
 }
 
 module.exports = { MATTER_BLOCKS, REACTIONS, VARIANTS, IDS, ROLES, SECONDARY, MICRO, BIG_TREES, SOIL, COST, TEXT, BLIGHT_CHANCE, BLIGHT_TAX, pillars, blightOf, blightText, blightProse, textOf, laws, note };

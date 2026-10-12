@@ -73,11 +73,12 @@ function shift(r, byAxis) {
 function applyAmounts(r, amt, blocks, opts) {
   if (!r || !r.axisStability || !r.resolved || !r.resolved.matter) return r;
   const written = r.resolved.matter.written || [], get = (id) => (blocks && blocks.get ? blocks.get(id) : null);
-  const delta = {}; let rich = 0, relief = 0;
+  const delta = {}, excess = []; let rich = 0, relief = 0;
   for (const id of new Set(written)) {
     const b = get(id); if (!b) continue;
     const f = factorOf(id, amt);
     if (b.weight > 0 && f !== 1) delta[b.axis] = (delta[b.axis] || 0) + b.weight * (f - 1);
+    if (b.weight > 0 && f > 1) excess.push({ id, prose: `there is far too much ${id.replace(/_/g, " ")} here` }); // « many: X » coûte : la description le dit
     if (W.RICH_IDS.includes(id)) rich += b.weight * f;
     if (W.SCAR_IDS.includes(id)) relief += W.RELIEF_PER_SCAR * f;
   }
@@ -94,13 +95,22 @@ function applyAmounts(r, amt, blocks, opts) {
   // la vie et le sol : la boucle, les échelles, le sol, l'énergie. Une phrase toujours ; un coût selon le poids des familles « vie » et « sol »
   const present = new Set([...written, ...(r.resolved.matter.reactions || []).map((x) => (x && x.result) || x), ...(r.resolved.lines || []).map((l) => l.entry && l.entry.id).filter(Boolean)]);
   const life = LF.laws(present, { weights: opts && opts.weights, size: opts && opts.size, seed: opts && opts.seed, factor: (id) => factorOf(id, amt) });
-  if (life) for (const [a, d] of Object.entries(life.delta)) if (d > 0) delta[a] = (delta[a] || 0) + d;
-  // la maladie du vivant (src/life.js) : son coût est dans `life.delta` ; elle se montre comme une cicatrice (livre, fenêtre, description), sans alléger les richesses
   const bl = life && life.notes.find((n) => n.id === "blight");
+  if (life) for (const [a, d] of Object.entries(life.delta)) { const own = bl && a === "ecological" ? bl.cost : 0; if (d - own > 0) delta[a] = (delta[a] || 0) + d - own; }
+  // la maladie du vivant (src/life.js) : elle se montre comme une cicatrice (livre, fenêtre, description), sans alléger les richesses.
+  // Son coût a un plancher : elle ne fait jamais passer sous 75 un monde qui tenait sans elle (stable), seulement s'enfoncer s'il était déjà instable
+  if (bl) {
+    const base = clamp(Math.round((r.axisStability.ecological == null ? 100 : r.axisStability.ecological) - (delta.ecological || 0) * 100), 0, 100);
+    const room = base >= 75 ? (base - 75) / 100 : Infinity;
+    const cost = Math.min(bl.cost, room);
+    if (cost > 1e-9) delta.ecological = (delta.ecological || 0) + cost;
+    bl.paid = cost;
+  }
   if (bl) scars.push({ id: "blight", axis: "ecological", level: bl.level, role: bl.role, host: bl.host, key: bl.key, prose: LF.blightProse(bl), from: [] });
-  if (!Object.keys(delta).length && !life && !scars.length) return r;
+  if (!Object.keys(delta).length && !life && !scars.length && !excess.length) return r;
   const out = Object.keys(delta).length ? shift(r, delta) : { ...r }; if (rich > 0) out.compensation = { riches: rich, relief };
   if (scars.length) { out.scars = scars; out.resolved = { ...out.resolved, scars }; } // lues par la description, le livre et la fenêtre
+  if (excess.length) { out.excess = excess; out.resolved = { ...out.resolved, excess }; } // lu par la description
   if (sc && sc.forgiven.length) out.forgiven = sc.forgiven;
   if (life) out.life = life;
   if (dose && (dose.softened.length || dose.natural.length || Object.keys(dose.richness).length)) out.dosage = { softened: dose.softened, natural: dose.natural, richness: dose.richness, capacity: dose.capacity };

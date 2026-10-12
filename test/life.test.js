@@ -92,4 +92,9 @@ assert.ok(/grass/.test(LF.blightProse({ ...b1, stage: "symptom" })) && !/grass/.
 const sb = run("strict", ...SICK);
 assert.ok(sb.scars && sb.scars.some((x) => x.id === "blight" && x.prose) && !(sb.compensation && sb.compensation.relief), "la maladie se montre comme une cicatrice, sans alléger les richesses");
 assert.ok(!(run("gentle", ...SICK).scars || []).some((x) => x.id === "blight"), "doux : aucune maladie");
+const many = { notes: [{ id: "fedPellet", cost: 0 }, { id: "vault", cost: 0 }, { id: "weakGround", cost: 0.05 }, { id: "blight", cost: 0.1, role: "producer", host: "grass", level: "normal" }] };
+assert.ok(/seul|alone/.test(LF.note(many, true) + LF.note(many, false)) && /grass/.test(LF.note(many, true)), "le panneau dit tout ce qui coûte : la maladie n'est jamais coupée");
+// plancher : la maladie ne fait pas passer un monde stable sous 75 ; un monde déjà instable s'enfonce
+const sbN = run("strict", ...SICK), sbF = run("gentle", ...SICK);
+assert.ok(sbN.stability >= Math.min(75, sbF.stability), "plancher : stable sans la maladie, il l'est avec");
 console.log("life.test.js : tout passe");

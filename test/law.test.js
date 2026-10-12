@@ -64,6 +64,7 @@ console.log("law: ok");
   const half = fissureStrain(mk("submarine", 70), 0.5), full = fissureStrain(mk("open", 70), 1);
   assert.ok(half.stability === 45 && half.verdict === "unstable" && full.stability === 20 && full.verdict === "dying", "monde instable : plus elle s'ouvre, plus elle l'abîme");
   assert.strictEqual(fissureStrain(mk(null, 60), 1).stability, 60, "sans fissure : rien");
+  assert.ok(full.strained && !fissureStrain(mk("open", 90), 1).strained, "le monde abîmé par la fissure est marqué (la ligne du panneau)");
 
   // condamnation : une demi-vie. Plus le monde est instable, plus vite il est condamné ; stable, la marge se reconstitue ; condamné, c'est définitif
   const { condemnDays } = require("../src/law");

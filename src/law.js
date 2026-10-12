@@ -197,7 +197,8 @@ const strainable = (r) => !!r && (r.fissure === "open" || r.fissure === "submari
 function fissureStrain(r, opening) {
   if (!strainable(r) || !(opening > 0)) return r;
   const v = clamp(Math.round(r.stability - FISSURE_COST * 100 * Math.min(1, opening)), 0, 100);
-  return forceAlteration(r, v);
+  const out = forceAlteration(r, v); out.strained = true; // le panneau le dit : la fissure s'ouvre et le monde s'effrite
+  return out;
 }
 /** Abaisse l'axe « altération » à `v` (s'il ne l'est pas déjà plus bas) et recalcule le verdict. */
 function forceAlteration(r, v) {
