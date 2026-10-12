@@ -349,3 +349,9 @@ unlock:                            # facultatif
 - **Plancher à 75 %** : le coût de la maladie s'arrête à 75 sur l'axe écologique quand le monde tenait sans elle (3 000 mondes mesurés, 1 056 malades : aucun ne passe de stable à instable).
 - Test « une phrase par point perdu » (`test/sentences.test.js`) : plus aucun trou connu. `many: X` se dit dans la description ; le panneau ne coupe plus les notes de vie qui coûtent ; la fissure qui ronge un monde instable a sa ligne (`strained`).
 - Corpus : 37 Âges (trois pour la maladie).
+
+## 1.27.1 — le coffre ne montre que les livres choisis (12 oct. 2026)
+
+- Le coffre des livres descriptifs lisait `scene.candidates` (tous les Âges des dossiers) au lieu de `scene.ages` (ceux de la liste blanche : pastilles de l'onglet Pages, `books:` du bloc) : `vaultAges` dans `src/ui-relto.js`. Même liste que l'étagère ; « Tout masquer » vide aussi le coffre.
+- La carte des étoiles et sa commande de nettoyage continuent de lire `candidates` (un Âge décoché garde son étoile) : laissé tel quel en attendant la décision de l'auteur.
+- CSS : `text-decoration: underline wavy` (ligne au symbole inconnu dans le livre ouvert) devient `underline`, signalé « partiellement pris en charge » par le scorecard d'Obsidian (`src/styles.ext.css`).

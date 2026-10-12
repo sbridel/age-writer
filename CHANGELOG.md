@@ -2,6 +2,12 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.27.1 — The vault shows only the chosen books (2026-10-12)
+
+### Fixed
+- The vault of descriptive books now shows only the books chosen for the shelf (the pills of the Pages tab, or the `books:` line of the block), not every Age of the folders. With *Hide all*, the vault is empty, like the shelf.
+- A line of the book with an unknown symbol is now underlined plainly instead of with a wavy line, which Obsidian's catalogue reports as only partly supported.
+
 ## 1.27.0 — The sickness of the living, and reading the world (2026-10-12)
 
 ### Added
