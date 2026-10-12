@@ -942,6 +942,7 @@ class ReltoView extends obsidian.ItemView {
     const el = this.contentEl; el.empty(); el.addClass("age-reltoview");
     const mine = this.plugin.reltoViewFile && this.plugin.app.vault.getAbstractFileByPath(this.plugin.reltoViewFile), act = this.plugin.app.workspace.getActiveFile && this.plugin.app.workspace.getActiveFile();
     const file = (mine && isHub(this.plugin.app, mine) ? mine : null) || (act && act.extension === "md" && isHub(this.plugin.app, act) ? act : null) || findReltoFile(this.plugin, {}, "");
+    if (file) this.plugin.reltoViewFile = file.path; // la grande vue garde le Relto qu'elle a trouvé : un nouveau rendu (changement de pièce, onglet rouvert) ne retombe pas sur le premier Relto du coffre, qui peut avoir une autre étagère
     await renderRelto(this.plugin, "", el.createDiv(), { sourcePath: file ? file.path : "", big: true, addChild: (c) => { if (typeof this.addChild === "function") this.addChild(c); } });
   }
 }
