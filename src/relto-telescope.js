@@ -334,6 +334,13 @@ function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null, more = null) {
   ctx.strokeStyle = sig.found ? "rgba(127,214,200,0.9)" : "rgba(224,194,122,0.55)"; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.arc(cx, cy, (tol + 0.5) * k, 0, 6.283); ctx.stroke();
   ctx.strokeStyle = "rgba(224,194,122,0.25)"; ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx - (tol + 2) * k, cy); ctx.moveTo(cx + (tol + 2) * k, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy - (tol + 2) * k); ctx.moveTo(cx, cy + (tol + 2) * k); ctx.lineTo(cx, cy + R); ctx.stroke();
+  if (echo) { // le balancier relié à l'instrument : à chaque battement la croisée luit (en or au coup marqué du gorahn) ; l'écho juste naît sur cet éclair
+    const bp = MET.beatPos(ms), bn = Math.floor(bp), fl = Math.exp(-(bp - bn) * 7), gold = MET.isMarked(bn);
+    if (fl > 0.03) {
+      ctx.strokeStyle = gold ? rgba(255, 214, 120, 0.85 * fl) : rgba(240, 220, 170, 0.55 * fl); ctx.lineWidth = gold ? 2.2 : 1.4;
+      ctx.beginPath(); ctx.moveTo(cx - R * 0.55, cy); ctx.lineTo(cx - (tol + 2) * k, cy); ctx.moveTo(cx + (tol + 2) * k, cy); ctx.lineTo(cx + R * 0.55, cy); ctx.moveTo(cx, cy - R * 0.55); ctx.lineTo(cx, cy - (tol + 2) * k); ctx.moveTo(cx, cy + (tol + 2) * k); ctx.lineTo(cx, cy + R * 0.55); ctx.stroke();
+    }
+  }
   if (sig.found) { ctx.strokeStyle = rgba(127, 214, 200, 0.5 + 0.3 * Math.exp(-beat * 4)); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, (tol + 0.5) * k + 4 + 6 * beat, 0, 6.283); ctx.stroke(); }
   if (echo && haze > 0.05) { // l'écho de l'Âge : un cercle d'ambre qui bat avec son retard ; accordé, il bat avec le pouls
     const eb = frac(beat - echo.off), ea = clamp(haze) * (0.25 + 0.6 * Math.exp(-eb * 5)) * (echo.ok ? 0.4 : 1) * (echo.pale || 1);
