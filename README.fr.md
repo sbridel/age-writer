@@ -32,7 +32,15 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 **État.** Publié, ordinateur seulement, mode bac à sable (voir [La suite](#15-la-suite)). La version en cours est celle de [`manifest.json`](manifest.json) et de la page [Releases](https://github.com/sbridel/age-writer/releases) ; les changements de chaque version sont dans [`CHANGELOG.md`](CHANGELOG.md) (en anglais) et, plus en détail, dans [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-Nouveautés récentes : le **mode histoire**, cœur de cette version : un mentor, Adrin Vesparath, t'écrit de courtes lettres et te confie une suite de chapitres (neuf au total, en français et en anglais). Chacun enseigne quelques blocs grâce à une feuille de cours de la Guilde des Writers, te demande d'écrire ou d'explorer, et récompense par un nouvel élément de ton Relto (une cheminée, des lanternes, des lucioles, une aurore, les montagnes et leur télescope, des comètes, un bassin à koï…). Ton Relto d'histoire vit dans son propre dossier, séparé du bac à sable, et le livre ne propose que ce que tu as appris. On le lance avec la commande « Start the story » ; l'avancement, les indices et les reprises se trouvent dans les commandes « Story: ». Aussi nouveaux : **deux vrais livres dans la cabane** (le livre des glyphes, dont on tourne les pages, et le livre de la bibliothèque, où l'on écrit de nouvelles entrées sans quitter le Relto), **l'Art de la Guilde** (réglage *Instruments* : un livre vierge dans l'Imageur, qu'on accorde jusqu'à voir paraître un monde, parfois un monde que personne n'a écrit ; un balancier-métronome dans l'observatoire pour distinguer le vrai pouls des faux), l'**horloge D'ni** qui s'éveille quand le Great Zero de ton Relto est trouvé, l'**observatoire** et sa carte des étoiles (situer les étoiles de tes Âges et étoiles mortes), un **banc optique** redessiné avec une aide aux lentilles, la **météo vivante** (`drizzle: often, dawn`), et le **rahnfee**, une unité de fan pour les distances le long du faisceau du Great Zero. Le détail est dans [`CHANGELOG.md`](CHANGELOG.md).
+### Nouveautés récentes
+
+Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; les dernières versions en bref :
+
+- **1.27, la maladie du vivant et la lecture du monde.** Une chaîne de vie tenue par une seule espèce tombe malade (une cicatrice, une phrase, des plaques jaunies dans la fenêtre). La cohérence achète de la capacité : un monde qui se tient peut porter plus. Les cicatrices que le monde garde de son tirage, la retouche qui suit la profondeur, et un monde qui ne nomme ses défauts qu'avec le temps (réglage *Lecture du monde*).
+- **1.26, vie, sols, cavernes et écriture depuis le Relto.** Nouveaux blocs (micro-vie, arbustes, faune par milieu, sols nés de la vie), les lois du vivant, le `cavern_world`, un titre d'écrivain gagné en tenant un Âge stable sept jours, un livre vierge pour écrire un Âge dans le Relto, le registre de l'Imageur, et le coffre des livres descriptifs sous la trappe de la cabane (il ne montre que les livres choisis).
+- **1.25, rigueur des lois.** Quatre rigueurs (douce, équilibrée, stricte, extrême), le dosage par étendue, une phrase sur la profondeur d'équilibre d'un Âge, et un budget par axe.
+- **1.24, mode histoire.** Un mentor, Adrin Vesparath, vous écrit des lettres et propose neuf chapitres, chacun récompensé par un nouvel élément de votre Relto. Lancez-le avec la commande « Start the story ».
+- **1.23 et avant.** Un Relto achevé, les fils à plomb de la carte des étoiles, le rahnfee (unité de distance le long du faisceau du Great Zero), l'Art de la Guilde (livre vierge, métronome, horloge D'ni), l'observatoire, la météo vivante (`drizzle: often, dawn`).
 ---
 
 ## Sommaire
@@ -70,7 +78,8 @@ Nouveautés récentes : le **mode histoire**, cœur de cette version : un mentor
 - **Depuis Obsidian** (une fois le plugin listé dans l'annuaire communautaire) : *Réglages → Plugins communautaires → Parcourir*, chercher **Age Writer**, installer, activer.
 - **À la main** : télécharger `main.js`, `styles.css` et `manifest.json` depuis la dernière [release](https://github.com/sbridel/age-writer/releases), les copier dans `.obsidian/plugins/age-writer/` dans ton coffre, puis activer **Age Writer** dans *Réglages → Plugins communautaires*.
 
-L'interface suit la langue d'Obsidian (anglais ou français). Le contenu des mondes (noms de blocs, descriptions générées) est en anglais. Les réglages du plugin sont dans son onglet de réglages, sous le titre « Extensions ».
+L'interface suit la langue d'Obsidian (anglais ou français) ; le réglage *Langue des extensions* (section *D'ni & chiffres*) permet d'en imposer une. Les noms de blocs et les descriptions générées (dans le livre, la fenêtre et le panneau) restent en anglais ; le guide, la référence, les lettres de l'histoire et le journal existent dans les deux langues. Les réglages du plugin sont dans son onglet de réglages, sous le titre « Extensions ».
+
 ---
 
 ## 2. Démarrage rapide

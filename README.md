@@ -30,7 +30,15 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 **Status.** Released, desktop only, sandbox mode (see [What's next](#15-whats-next)). The current version is the one in [`manifest.json`](manifest.json) and on the [Releases](https://github.com/sbridel/age-writer/releases) page; what changed in each version is in [`CHANGELOG.md`](CHANGELOG.md) (a more detailed developer log, in French, is in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)).
 
-Recent additions: **Story mode**, the heart of this release: a mentor, Adrin Vesparath, writes you short letters and sets you a series of chapters (nine in all, in English and French). Each one teaches a few blocks through a course sheet from the Writers' Guild, asks you to write or explore, and rewards you with a new piece of your Relto (a fireplace, lanterns, fireflies, an aurora, the mountains and their telescope, comets, a koi pond…). Your story Relto lives in its own folder, apart from the sandbox, and the book only offers what you have learned so far. Start it with the command “Start the story”; progress, hints and restarts are under the “Story:” commands. Also new: **two real books in the cabin** (the book of glyphs, whose pages turn, and the library book, where you can write new entries without leaving the Relto), **the Art of the Guild** (setting *Instruments*: a blank book in the Imager that you tune until a world appears, sometimes one no one has written; a pendulum metronome in the observatory to tell the true pulse from false ones), the **D'ni clock** that wakes once your Relto's Great Zero is found, the **observatory** and its star chart (locate your Ages' stars and the dead ones), a redrawn **optical bench** with optional lens hints, **living weather** (`drizzle: often, dawn`), and the **rahnfee**, a fan-made unit for distances along the Great Zero's beam. Details in [`CHANGELOG.md`](CHANGELOG.md).
+### Recent changes
+
+The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
+
+- **1.27, the sickness of the living and reading the world.** A chain of life held by a single species falls sick (a scar, a sentence, yellowed patches in the window). Coherence buys capacity: a world that holds together can carry more. The scars the world keeps from its draw, retouching that follows depth, and a world that names its faults only with time (setting *Reading the world*).
+- **1.26, life, soil, caverns and writing from the Relto.** New blocks (micro-life, shrubs, fauna by habitat, ground born of life), the laws of life, the `cavern_world`, a writer's title earned by holding an Age stable for seven days, a blank book to write an Age inside the Relto, the ledger on the Imager, and the vault of descriptive books under the cabin hatch (it shows only the books you chose).
+- **1.25, rigour of the laws.** Four rigours (gentle, balanced, strict, extreme), dosing by extent, a sentence on how deeply an Age rests, and every axis has a budget.
+- **1.24, story mode.** A mentor, Adrin Vesparath, writes you letters and sets nine chapters, each rewarded with a new piece of your Relto. Start it with the command “Start the story”.
+- **1.23 and before.** A finished Relto, plumb lines on the star chart, the rahnfee (a unit of distance along the Great Zero's beam), the Art of the Guild (blank book, metronome, D'ni clock), the observatory, living weather (`drizzle: often, dawn`).
 ---
 
 ## Contents
@@ -69,7 +77,8 @@ Recent additions: **Story mode**, the heart of this release: a mentor, Adrin Ves
 - **From Obsidian** (once the plugin is listed in the community directory): *Settings → Community plugins → Browse*, search for **Age Writer**, install, enable.
 - **By hand**: download `main.js`, `styles.css` and `manifest.json` from the latest [release](https://github.com/sbridel/age-writer/releases), copy them to `.obsidian/plugins/age-writer/` in your vault, then enable **Age Writer** in *Settings → Community plugins*.
 
-The interface follows Obsidian's language (English or French). The world's content (block names, generated descriptions) is in English. The plugin's settings are in its settings tab, under the "Extensions" heading.
+The interface follows Obsidian's language (English or French); the setting *Language of the extensions* (section *D'ni & numerals*) lets you force one. The names of the blocks and the generated descriptions (in the book, the window and the panel) stay in English; the guide, the reference, the story letters and the journal are available in both languages. The plugin's settings are in its settings tab, under the "Extensions" heading.
+
 ---
 
 ## 2. Quick start
