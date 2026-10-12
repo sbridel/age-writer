@@ -112,9 +112,10 @@ class Law {
 
   /**
    * À appeler quand la note d'un Âge est lue/modifiée.
-   * @returns {null | {added:string[], removed:string[], cost:number, extra:number, message:string}}
+   * @param o { retouch: () => ({ k, depth }) } : la profondeur de l'Âge avant la retouche, lue seulement si la retouche compte
+   * @returns {null | {added:string[], removed:string[], cost:number, extra:number, depth?:string, k?:number}}
    */
-  observe(name, analysis, mtime, phys) {
+  observe(name, analysis, mtime, phys, o) {
     const ids = worldIds(analysis), now = this.now(), pn = phys && typeof phys === "object" ? { ...phys } : null;
     let a = this.get(name);
     if (a) a.ids = [...new Set(a.ids.map(squash))].sort(); // états enregistrés avec l'ancienne écriture
@@ -131,12 +132,13 @@ class Law {
     const added = [...idAdded, ...pc.added], removed = [...idRemoved, ...pc.removed];
     let out = null;
     if (wasDry) {
-      const cost = Math.min(COST_CAP_PER_EDIT, COST_PER_ELEMENT * (idAdded.length + idRemoved.length) + pc.cost);
+      const rt = (o && o.retouch && o.retouch()) || null, k = rt && rt.k > 0 ? rt.k : 1;
+      const cost = k * Math.min(COST_CAP_PER_EDIT, COST_PER_ELEMENT * (idAdded.length + idRemoved.length) + pc.cost);
       const before = this.effective(name);
       a.extra = clamp(before + cost); a.at = now;
-      a.log.push({ t: now, added, removed, cost });
+      a.log.push({ t: now, added, removed, cost, ...(k !== 1 ? { depth: rt.depth, k } : {}) });
       if (a.log.length > 20) a.log.shift();
-      out = { added, removed, cost, extra: a.extra };
+      out = { added, removed, cost, extra: a.extra, ...(k !== 1 ? { depth: rt.depth, k } : {}) };
     }
     a.ids = ids; a.changedAt = now; if (pn) a.phys = pn;
     return out;
@@ -152,6 +154,13 @@ class Law {
   forget(name) { delete this.state.ages[name]; }
   log(name) { const a = this.get(name); return a ? a.log : []; }
 }
+
+/**
+ * Le coût d'une retouche selon la profondeur de l'Âge avant elle (claude/DESIGN-capacite-et-coherence.md, chantier 3 ; lois 7, 8 et 10) :
+ * un Âge profond se laisse retoucher, un Âge « sur le fil » le fait payer. Au poids de la famille de rigueur « équilibre » : rien en doux.
+ */
+const RETOUCH = { deep: -0.25, held: 0, thread: 0.5 };
+function retouchFactor(depth, weight) { return 1 + (RETOUCH[depth] || 0) * (weight || 0); }
 
 /** Applique l'altération à une analyse du moteur : un axe « alteration » s'ajoute et peut dominer. */
 function adjustAnalysis(r, extra) {
@@ -195,4 +204,4 @@ function describeChange(entry, t) {
   return parts.join(" ");
 }
 
-module.exports = { Law, physChange, worldIds, adjustAnalysis, fissureStrain, strainable, forceAlteration, FISSURE_COST, condemnDays, BURN_SECONDS, DOOM_IDLE, describeChange, COST_PER_ELEMENT };
+module.exports = { Law, physChange, worldIds, adjustAnalysis, fissureStrain, strainable, forceAlteration, FISSURE_COST, condemnDays, BURN_SECONDS, DOOM_IDLE, describeChange, COST_PER_ELEMENT, RETOUCH, retouchFactor };

@@ -109,7 +109,9 @@ function dosage(r, factor, get, opts) {
   }
   // la cohérence achète de la capacité (src/capacity.js) : les lois de l'axe qui s'appliquent et tiennent élargissent le budget
   const CAP = require("./capacity"), present = new Set([...written, ...reactions.map((x) => x.result), ...(res.lines || []).map((l) => l.entry && l.entry.id).filter(Boolean)]);
-  let skyBlocks = 0; for (const id of new Set(written)) { const b = get(id); if (b && b.axis === "cosmological" && b.weight > 0) skyBlocks++; }
+  // le ciel écrit : ses lignes (étoiles, cycle, lune, phénomènes) et les blocs de matière du ciel (anneaux, comète…), hors pages tirées
+  let skyBlocks = (res.lines || []).filter((l) => l.entry && !l.autoFilled && l.entry.axis === "cosmological").length;
+  for (const id of new Set(written)) { const b = get(id); if (b && b.axis === "cosmological" && b.weight > 0 && !drawn.has(id)) skyBlocks++; }
   const skyClashes = (res.triggered || []).filter((c) => c.axis === "cosmological").length;
   const cap = CAP.capacities(present, { factor, natural: natural.length, sky: { blocks: skyBlocks, clashes: skyClashes } });
   const richness = {};

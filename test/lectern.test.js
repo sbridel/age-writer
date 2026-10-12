@@ -39,3 +39,9 @@ assert.ok(calm && calm.lines.length <= 1, "Âge calme : au plus une ligne");
 assert.strictEqual(LC.readOut(null, { tier: 0 }), null, "rien à lire sans analyse");
 assert.ok(/tient|vacille|meurt/.test(LC.readOut(a, { tier: 0, fr: true }).verdict), "verdict en français");
 console.log("lectern.test.js : tout passe");
+{ // les cicatrices gardées du tirage : lues à partir du rang 3
+  const LEC2 = require("../src/lectern");
+  const a = { verdict: "stable", stability: 80, axisStability: { weather: 80 }, resolved: { lines: [], matter: { written: [], reactions: [] }, triggered: [] }, scars: [{ id: "held_rain", axis: "weather", level: "deep" }] };
+  const t3 = LEC2.readOut(a, { tier: 3, fr: true }), t2 = LEC2.readOut(a, { tier: 2, fr: true });
+  require("assert").ok(t3.lines.some((l) => l.kind === "scar" && /held_rain \(profonde\)/.test(l.text)) && !t2.lines.some((l) => l.kind === "scar"), "les cicatrices au rang 3, avec leur intensité");
+}

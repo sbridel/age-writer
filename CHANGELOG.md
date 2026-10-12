@@ -2,6 +2,16 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## Unreleased
+
+### Added
+- **Coherence buys capacity.** Every axis still carries six things for free, but each law of that axis your Age brings into play and keeps adds two more, up to sixteen: the loop of life and death, the large resting on the small, flowers with a pollinator, plankton with light, the ground that bears its tree, weather that follows from itself, a sky that agrees with itself. A rich world that holds together now stays stable at every rigour (a coherent 21-line world: 82% everywhere, where balanced and strict used to drop it to 70% and 58%). A world with a lot of everything still cannot. Take away what keeps a law and the capacity falls: the depth line sees it.
+- **Scars the world keeps from its draw.** A light clash that touches a drawn page no longer costs anything. A medium or strong one no longer costs its full price: the world forms anyway, but keeps a scar, one per axis, that says what went wrong, *light*, *normal* or *deep*. It costs a little, eases the riches' cost a little (more when deep, always within 75%), shows in the book, the description and the window, and heals when you remove the clashing page or write your own value in its slot. Clashes between pages you wrote stay whole. Two new scars: `held_rain` (weather) and `mute_ruins` (ruins).
+- **Retouching follows depth.** Once the ink is dry, changing an Age that rested deep costs less, and one that held by a thread costs more; the notice says so. This is the *balance* family of the rigour, which now acts: nothing changes at gentle rigour.
+
+### Changed
+- The guide and the README say that stability is recalculated each time an Age is read: when the rules evolve, an existing Age may gain or lose a few points (mostly at higher rigours); its text, pages and draw never change.
+
 ## 1.26.0 — Life, soil, caverns and writing from the Relto (2026-10-12)
 
 ### Added

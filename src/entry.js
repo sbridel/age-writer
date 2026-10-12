@@ -9,7 +9,7 @@
 const obsidian = require("obsidian");
 const { Dni } = require("./dni");
 const { setMarkup, fitModalToFullscreen, rescueModals } = require("./util");
-const { Law, adjustAnalysis, fissureStrain, strainable, forceAlteration, describeChange, worldIds } = require("./law");
+const { Law, adjustAnalysis, fissureStrain, strainable, forceAlteration, describeChange, worldIds, retouchFactor } = require("./law");
 const { solitudeFactor, COVER_RE, parseCover, KEY_RE, FX_RE, STYLE_RE, TRAP_RE, DMG_RE, parseFx, parseStyle, parseTrap, parseDamage, applyDamage } = require("./mech");
 const { Soundscape, staticBurst, openSequence, linkSound, pageTurn } = require("./sound");
 const { coverSvg } = require("./cover");
@@ -572,10 +572,19 @@ module.exports = function build(Base, core, AGEX) {
     async observeFile(f) {
       if (!this.ext.law) return;
       const src = core.extract(await this.app.vault.read(f)); if (src === null) return;
-      const ev = this.law.observe(f.basename, core.analyse(src, { seed: core.seed(f.path), physics: false }), f.stat.mtime, guard("valeurs physiques", () => PH.parsePhysics(src).params));
+      const seed = core.seed(f.path), prev = (this.lastAgeSrc || (this.lastAgeSrc = new Map())).get(f.path);
+      // la profondeur de l'Âge tel qu'il était avant la retouche (le test par retrait), lue seulement si la retouche compte
+      const retouch = () => guard("retouche", () => {
+        const wb = RG.weightsOf(this.ext).balance; if (!(wb > 0)) return null;
+        const d = DEPTH.depthOf(prev != null ? prev : src, (s) => core.analyse(s, { seed, draw: false, probe: true }), (l) => AGEX.skip(l));
+        return d ? { k: retouchFactor(d.state, wb), depth: d.state } : null;
+      });
+      const ev = this.law.observe(f.basename, core.analyse(src, { seed, physics: false }), f.stat.mtime, guard("valeurs physiques", () => PH.parsePhysics(src).params), { retouch });
+      this.lastAgeSrc.set(f.path, src);
       this.saveExt();
       if (ev) {
-        new Notice(`${this.t("law.warning")}\n${describeChange(ev, this.t)}`, 9000);
+        const how = ev.k > 1 ? "\n" + this.t("law.thread") : ev.k < 1 ? "\n" + this.t("law.deep") : "";
+        new Notice(`${this.t("law.warning")}\n${describeChange(ev, this.t)}${how}`, 9000);
         this.redrawEverything();
       }
     }
@@ -628,6 +637,7 @@ module.exports = function build(Base, core, AGEX) {
         const c = this.app.metadataCache.getFileCache(f);
         if (c && !(c.sections || []).some((s) => s.type === "code")) continue;
         const src = core.extract(await this.app.vault.cachedRead(f)); if (src === null) continue;
+        (this.lastAgeSrc || (this.lastAgeSrc = new Map())).set(f.path, src); // l'Âge tel qu'il est : sa profondeur comptera à la prochaine retouche
         if (!this.law.get(f.basename)) this.law.observe(f.basename, core.analyse(src, { seed: core.seed(f.path), physics: false }), f.stat.mtime);
         if (++n % 25 === 0) await new Promise((r) => setTimeout(r, 0));
       }

@@ -62,3 +62,10 @@ const huge = run("strict", [...heavy, "shoal", "deep_hunter", "carrion_beetle", 
 assert.ok(huge.stability < 75, "beaucoup de tout reste impossible (loi 5)");
 
 console.log("capacity.test.js ok");
+// le ciel écrit compte ses lignes (étoiles, cycle, lune) : trois lignes accordées achètent de la capacité
+{
+  const a = analyseAgeBase(["single_sun", "steady_cycle", "companion_moon", "stone"].join("\n"), { seed: "S" });
+  const caps = DS.dosage(a, () => 1, (id) => reg.blockById.get(id), { weight: 1 }).capacity.caps;
+  assert.strictEqual(caps.cosmological, 8, "un ciel écrit qui s'accorde : +2");
+}
+console.log("capacity.test.js ok (ciel)");

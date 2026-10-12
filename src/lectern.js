@@ -64,6 +64,9 @@ function readOut(a, o) {
     for (const re of ((a.resolved && a.resolved.matter && a.resolved.matter.reactions) || []).slice(0, 6)) if (re && re.result && re.a && re.b) lines.push({ kind: "reaction", text: `${re.result} ← ${re.a} + ${re.b}` });
     const rich = Object.keys((a.dosage && a.dosage.richness) || {});
     if (rich.length) lines.push({ kind: "balance", text: rich.join(", "), fam: "balance" });
+    const LV = fr ? { light: "légère", normal: "normale", deep: "profonde" } : { light: "light", normal: "normal", deep: "deep" };
+    const scars = (a.scars || []).map((x) => `${x.id} (${LV[x.level] || x.level})`); // les cicatrices gardées du tirage (src/scarring.js)
+    if (scars.length) lines.push({ kind: "scar", text: (fr ? "cicatrices : " : "scars: ") + scars.join(", ") });
   }
   if (tier >= 4) {
     const pts = Object.entries(a.axisStability || {}).filter(([, v]) => v < 100).map(([k, v]) => `${k} −${100 - v}`);

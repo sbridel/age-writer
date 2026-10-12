@@ -114,3 +114,25 @@ console.log("law: ok");
   assert.strictEqual(l2.observe("Old", A(["stone"]), c, { rotation: 20 }), null, "ancien état sans valeurs mémorisées : les valeurs d'aujourd'hui servent de référence, sans frais");
   c += 99 * 60000; const ev4 = l2.observe("Old", A(["stone", "heat"]), c, { rotation: 20 }); assert.ok(ev4 && Math.abs(ev4.cost - 0.06) < 1e-9, "et les éléments coûtent comme avant");
 }
+
+// le coût des retouches selon la profondeur (chantier 3) : au poids de la famille « équilibre »
+{
+  const L = require("../src/law");
+  assert.strictEqual(L.retouchFactor("thread", 0), 1, "doux : la profondeur ne change rien");
+  assert.strictEqual(L.retouchFactor("deep", 1), 0.75, "profond : la retouche coûte moins");
+  assert.strictEqual(L.retouchFactor("held", 1), 1, "tenu : prix normal");
+  assert.strictEqual(L.retouchFactor("thread", 1), 1.5, "sur le fil : la retouche coûte plus");
+  assert.strictEqual(L.retouchFactor("thread", 0.5), 1.25, "équilibré : à moitié");
+  let t = 1e12; const s2 = {}; const lw = new L.Law(s2, { dryMinutes: () => 15, healPerDay: () => 0, now: () => t });
+  lw.observe("Fil", A(["heat", "stone"]), t); t += 20 * 60000;
+  let asked = 0;
+  const e1 = lw.observe("Fil", A(["rain", "stone"]), t, null, { retouch: () => { asked++; return { k: 1.5, depth: "thread" }; } });
+  assert.ok(Math.abs(e1.cost - 0.18) < 1e-9 && e1.depth === "thread" && e1.k === 1.5, "sur le fil : 0,12 × 1,5");
+  assert.strictEqual(lw.log("Fil").slice(-1)[0].depth, "thread", "le journal garde la profondeur");
+  t += 60000; lw.observe("Fil", A(["fog", "stone"]), t, null, { retouch: () => { asked++; return { k: 2, depth: "thread" }; } });
+  assert.strictEqual(asked, 1, "encre fraîche : la profondeur n'est même pas lue");
+  t += 20 * 60000; const e2 = lw.observe("Fil", A(["a", "b", "c", "d", "e", "f", "g"]), t, null, { retouch: () => ({ k: 0.75, depth: "deep" }) });
+  assert.ok(Math.abs(e2.cost - 0.225) < 1e-9, "le plafond par retouche suit le facteur");
+  t += 20 * 60000; const e3 = lw.observe("Fil", A(["x"]), t, null, { retouch: () => null });
+  assert.ok(e3 && e3.k === undefined, "sans profondeur connue : prix normal");
+}
