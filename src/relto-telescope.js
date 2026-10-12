@@ -351,7 +351,7 @@ function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null, more = null) {
   }
   if (more && more.echo2 && haze > 0.05) { // étape 3 : le faux pouls a son propre écho, plus vif ; celui du Zéro reste pâle dessous
     const e2 = more.echo2, per = PULSE_MS * e2.period, b2 = frac((ms - DT.REF) / per - e2.off), ea = clamp(haze) * (0.3 + 0.65 * Math.exp(-b2 * 6)) * (e2.ok ? 0.5 : 1);
-    ctx.strokeStyle = rgba(170, 200, 255, ea); ctx.lineWidth = 1.3; ctx.setLineDash && ctx.setLineDash([3, 2]); ctx.beginPath(); ctx.arc(hx, hy, 5 + 16 * b2, 0, 6.283); ctx.stroke(); ctx.setLineDash && ctx.setLineDash([]);
+    ctx.strokeStyle = rgba(240, 184, 96, ea); ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(hx, hy, 5 + 16 * b2, 0, 6.283); ctx.stroke();
   }
   if (echo && haze > 0.05) phaseDial(ctx, cx, cy, R * 0.86, ms, echo, more && more.echo2);
   void at;
@@ -376,10 +376,10 @@ function phaseDial(ctx, cx, cy, Rd, ms, echo, echo2) {
   const dot = (ph, sinceBirth, col, rr, pale) => { const [x, y] = P(ph, Rd), g = Math.exp(-sinceBirth * 3); ctx.fillStyle = `rgba(${col},${(0.65 + 0.35 * g) * pale})`; ctx.beginPath(); ctx.arc(x, y, rr + 2 * g, 0, 6.283); ctx.fill(); };
   if (echo2) { // le faux pouls : sa dernière naissance, ramenée au tic le plus proche
     const per = echo2.period, kb = Math.floor(bp / per - echo2.off), birth = (kb + echo2.off) * per, ph = birth - Math.round(birth);
-    dot(ph, (bp - birth) / per, "170,200,255", 2.6, 1);
+    dot(ph, (bp - birth) / per, "255,196,110", 4, 0.9); // même couleur, même taille : seul le vrai pouls ne bouge pas
   }
   const off = ((echo.off % 1) + 1.5) % 1 - 0.5, since = ((bp - echo.off) % 1 + 1) % 1; // l'écho du Zéro : toujours au même endroit tant que la molette ne bouge pas
-  dot(off, since, "255,196,110", 4, Math.max(0.6, echo.pale || 1));
+  dot(off, since, "255,196,110", 4, 0.9);
   ctx.restore();
 }
 
