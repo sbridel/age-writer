@@ -14,6 +14,8 @@ const SKY = require("./sky");
 const TEL = require("./telescope");
 const INS = require("./instruments");
 const BEAM = require("./beam");
+const { DRAW_SLOTS } = require("./engine/draw");
+const { addLine } = require("./engine/age-text");
 
 const ageNumber = (name) => fnv(name) % 390625;                    // 25^4
 
@@ -68,6 +70,32 @@ function renderStability(plugin, box, analysis) {
     const fill = track.createDiv({ cls: "age-det__fill " + (v >= 75 ? "is-ok" : v >= 40 ? "is-warn" : "is-bad") });
     fill.style.width = Math.max(2, Math.min(100, v)) + "%";
     row.createSpan({ cls: "age-det__val", text: v + "%" + (pcost[axis] ? `  (${t("det.physpts", { n: Math.round(pcost[axis] * 100) })})` : "") });
+  }
+}
+
+/**
+ * Les pages tirées qui prennent part à une tension : le tirage n'est pas dans le YAML, donc on le montre ici, à l'endroit
+ * où il coûte. Une case « une valeur » se ferme en écrivant sa valeur : un bouton écrit chaque autre option. La page tirée
+ * est proposée avant les conseils généraux : ce qui est écrit pèse plus que le hasard.
+ */
+function drawnBox(plugin, card, analysis, x, path, t) {
+  const picks = new Map(((analysis && analysis.drawn) || []).map((p) => [p.id, p]));
+  const ids = (x.ids || []).filter((id) => picks.has(id));
+  if (!ids.length) return;
+  const write = async (line) => {
+    const f = path && plugin.app.vault.getAbstractFileByPath(path); if (!f || typeof plugin.app.vault.process !== "function") return;
+    await plugin.app.vault.process(f, (text) => addLine(text, line) || text);
+  };
+  for (const id of ids) {
+    const slot = DRAW_SLOTS.find((s) => s.options.some((o) => o.id === id)), one = !!slot && slot.pick === "one";
+    const box = card.createDiv({ cls: "age-det__drawn" });
+    box.createDiv({ cls: "age-det__drawnline", text: t("det.drawn", { id: id.replace(/_/g, " ") }) });
+    box.createDiv({ cls: "age-det__drawnnote", text: t(one ? "det.drawn.fixed" : "det.drawn.many") });
+    if (!path) continue;
+    const row = box.createDiv({ cls: "age-det__fixes" });
+    const btn = (label, line) => { const b = row.createEl("button", { cls: "age-det__fix", text: label + " ", attr: { type: "button" } }); b.createEl("code", { text: line }); b.addEventListener("click", () => { write(line).catch((e) => console.warn("[Age Writer ext] tirée", e)); }); };
+    btn(t("det.drawn.keep"), id);
+    if (one) for (const o of slot.options) if (o.id && o.id !== id) btn(t("det.drawn.swap"), o.id);
   }
 }
 
@@ -140,6 +168,7 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
     tag.createSpan({ cls: "age-det__sev", text: sevLabel(t, x.severity) });
     tag.createSpan({ text: " · " + axisLabel(t, x.axis) + (ph.mode === "strict" ? (raw.counted === false ? " · " + t("det.counted") : raw.points ? " · " + t("det.points", { n: raw.points }) : "") : "") });
     card.createDiv({ cls: "age-det__why", text: x.why });
+    drawnBox(plugin, card, analysis, x, path, t);
     const hints = raw.hints || [];
     if (!x.fix.length) return;
     const fixes = card.createDiv({ cls: "age-det__fixes" });
