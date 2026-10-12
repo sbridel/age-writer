@@ -246,6 +246,17 @@ const relDone = (async () => {
   ok(s2.systems[pert.key] && s2.systems[pert.key].tri && s2.systems[pert.key].pert.some((q) => q.kind === "black_hole"), "triangulé et situé : la plaque garde son trou noir");
   rs.setView("starmap"); rs.draw(4); ok(rs.hot.some((h) => /a black hole/.test(h.tip)), "sur la carte : le trou noir, nommé au survol");
   ok(bad === 0, "carte et triangulation : aucun nombre non fini");
+  // un faux pouls (Guilde, non triangulé) : passer sur le vrai retard ne grave rien ; il faut y tenir la molette trois battements
+  { const pb = findKey((p, fx) => !!fx.beat && !fx.deflect), rb = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts()); rb.setScene(sc); rb.setView("telescope"); rb.nowOverride = t0; rb.draw(1);
+    const s3 = rb.telescope; s3.found = true; s3.line = 0;
+    const pz = { key: pb.p.key, pos: pb.p.pos, near: pb.p.near, fx: pb.fx, perturbed: true, ...SS.perceive({ key: pb.p.key, pos: pb.p.pos, near: pb.p.near }) };
+    s3.book = { idx: 0, age: ages[0], data: { system: pz }, loading: false }; s3.dial = { torahn: (pz.clue.torahn + 100) % T.TURN, elev: pz.clue.elevation, delay: pz.clue.delay };
+    TL.act(rb, { axis: "torahn", delta: -100 });
+    ok(!s3.systems[pz.key] && s3.hold && s3.hold.key === pz.key, "faux pouls : le vrai retard atteint, rien n'est gravé tout de suite");
+    rb.draw(2); ok(!s3.systems[pz.key], "un instant plus tard : toujours rien");
+    TL.act(rb, { axis: "torahn", delta: 300 }); ok(!s3.hold, "la molette quitte le réglage : l'attente s'efface");
+    TL.act(rb, { axis: "torahn", delta: -300 }); const h0 = s3.hold.t0; rb.nowOverride = h0 + 4500; rb.draw(3);
+    ok(s3.systems[pz.key] && !s3.hold, "tenue trois battements : les deux pouls se séparent, l'étoile est gravée"); }
   // français
   const rf = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts({ t: makeT(() => "fr") })); rf.setScene(sc); rf.setView("starmap"); rf.draw(1);
   ok(rf.hot.some((h) => /Rouler la carte/.test(h.tip)) && rf.hot.some((h) => /Le Great Zero/.test(h.tip)), "en français : la carte");

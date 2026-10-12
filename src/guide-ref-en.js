@@ -410,7 +410,7 @@ const REF_EN = [
     { p: "This is the Art of the Guild; in the easy way there are no false pulses and dead stars only blur the image a little, the surveyor's notes telling the truth." },
     { h: "Dead stars" },
     { p: "Some regions of space hold a pulsar, a neutron star or a black hole (`pulsar`, `neutron_star`, `black_hole`), written or not; nearby stars share them." },
-    { ul: ["A pulsar or neutron star adds a **false beat** at its own period (the surveyor's delay is wrong, and the amber echo can lock onto the false beat: nothing holds)", "A black hole **bends** the Zero's light (the surveyor's direction is wrong; in the eyepiece a bright image will not hold, the true point is the pale end of the arc)"] },
+    { ul: ["A pulsar or neutron star adds a **false beat** at its own period (the surveyor's delay is wrong, and the amber echo can lock onto the false beat: nothing holds). The true echo pales under the false one, and even on the true delay the two beats stay tangled: hold the wheel still there for three beats, until they part. A sweep engraves nothing", "A black hole **bends** the Zero's light (the surveyor's direction is wrong; in the eyepiece a bright image will not hold, the true point is the pale end of the arc)"] },
     { p: "Such a star can still be charted by looking past the lure, or by **triangulation**: with two charted stars nearby, pull the **Beacons** lever and the bent light and false beat fall away." },
     { h: "Early readings" },
     { p: "Not everything the instrument shows early on is what it seems: maybe you could explore and find out." },

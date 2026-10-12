@@ -43,6 +43,9 @@ const LECTERN = { x: 54, y: 302 }, TEXT_X = 372; // le lutrin, sur le sol à gau
 const PULSE_MS = DT.MS_PER_HAHR / DT.PRO_PER_HAHR; // un prorahn (≈ 1,39 s) : le pouls du Zéro bat l'heure D'ni
 const EN = makeT(() => "en");
 const tOf = (r) => (r.opts && typeof r.opts.t === "function" ? r.opts.t : EN);
+/** Art de la Guilde, près d'une étoile morte non triangulée : deux pouls s'emmêlent dans l'écho ; il faut tenir la molette
+ *  immobile sur le vrai retard ce nombre de battements, le temps qu'ils se séparent. Un passage en balayant ne situe plus rien. */
+const HOLD_BEATS = 3;
 const now = (r) => (r.nowOverride != null ? r.nowOverride : Date.now());
 /** Le numéro du prorahn en cours : la scintillation du signal change à chaque battement. */
 const beatOf = (r) => Math.floor((now(r) - DT.REF) / PULSE_MS);
@@ -187,11 +190,19 @@ function actSystem(r, st, a, sfx) {
   sfx("ping", look(r, sc.shown, beatOf(r), fnvKey(st.key + sys.key)).s);
   // situé (l'anneau ne ment pas, perturbé ou non) : gravé sur la ligne où l'instrument est calé ; une étoile gravée sur une autre ligne est regravée
   const beatErr = st.dial.beats - (clue.beats || 0); // mauvais battement : regravée si le compte change
+  st.hold = null;
   if (after.located && (!rec || (rec.line || 0) !== st.line || (rec.beatErr || 0) !== beatErr)) {
-    const name = st.book && st.book.age ? st.book.age.name : null;
-    st.systems = { ...st.systems, [sys.key]: SS.record(sys, st.zero, st.dial, now(r), { line: st.line, ages: [...((rec && rec.ages) || []), name].filter(Boolean), tri: tri && sys.perturbed }) };
-    st.note = rec ? "sys.recharted" : null; sfx("found", 1);
+    if (needHold(r, sc, tri)) st.hold = { key: sys.key, t0: now(r) }; // deux pouls emmêlés : rien ne se grave avant qu'ils se séparent
+    else chart(r, st, sys, sfx);
   }
+  if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st));
+}
+const needHold = (r, sc, tri) => guildOf(r) && !!sc.beat && !tri;
+/** Grave l'étoile située sur la ligne où l'instrument est calé (une étoile gravée sur une autre ligne, ou au mauvais battement, est regravée). */
+function chart(r, st, sys, sfx) {
+  const rec = st.systems[sys.key], tri = st.triFor === sys.key, name = st.book && st.book.age ? st.book.age.name : null;
+  st.systems = { ...st.systems, [sys.key]: SS.record(sys, st.zero, st.dial, now(r), { line: st.line, ages: [...((rec && rec.ages) || []), name].filter(Boolean), tri: tri && sys.perturbed }) };
+  st.note = rec ? "sys.recharted" : null; st.hold = null; sfx("found", 1);
   if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st));
 }
 
@@ -325,7 +336,7 @@ function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null, more = null) {
   ctx.strokeStyle = "rgba(224,194,122,0.25)"; ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx - (tol + 2) * k, cy); ctx.moveTo(cx + (tol + 2) * k, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy - (tol + 2) * k); ctx.moveTo(cx, cy + (tol + 2) * k); ctx.lineTo(cx, cy + R); ctx.stroke();
   if (sig.found) { ctx.strokeStyle = rgba(127, 214, 200, 0.5 + 0.3 * Math.exp(-beat * 4)); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, (tol + 0.5) * k + 4 + 6 * beat, 0, 6.283); ctx.stroke(); }
   if (echo && haze > 0.05) { // l'écho de l'Âge : un cercle d'ambre qui bat avec son retard ; accordé, il bat avec le pouls
-    const eb = frac(beat - echo.off), ea = clamp(haze) * (0.25 + 0.6 * Math.exp(-eb * 5)) * (echo.ok ? 0.4 : 1);
+    const eb = frac(beat - echo.off), ea = clamp(haze) * (0.25 + 0.6 * Math.exp(-eb * 5)) * (echo.ok ? 0.4 : 1) * (echo.pale || 1);
     // le battement fort : le Zéro frappe plus fort une fois par gorahn ; son écho revient sur le coup marqué du balancier si le
     // compte de battements est juste, un coup plus tôt ou plus tard sinon (le mauvais battement)
     const etick = Math.floor((ms - DT.REF) / PULSE_MS - echo.off), strong = MET.isMarked(etick - (echo.shift || 0)) ? 1 : 0;
@@ -393,11 +404,15 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   const sys = bookSystem(st), meas = !!(st.found && sys);
   if (meas) { // étape 2 : les molettes portent les indices de l'Âge ; l'oculaire montre son écho
     const sc1 = sc0, m = sc1.m, seen = look(r, sc1.true, beatOf(r), fnvKey(st.key + sys.key)), view = { aim: st.dial, anim: st.anim, stars: st.stars };
+    const tangled = needHold(r, sc1, st.triFor === sys.key); // Guilde, étoile morte : le vrai écho pâlit sous le faux
+    let holding = !!(st.hold && st.hold.key === sys.key);
+    if (holding && !m.located) { st.hold = null; holding = false; }
+    if (holding && ms - st.hold.t0 >= HOLD_BEATS * PULSE_MS) { chart(r, st, sys, sfx); holding = false; } // tenus assez longtemps, les deux pouls se séparent
     // étape 3 : l'image courbée (trou noir) et le faux pouls (pulsar, étoile à neutrons), à côté du vrai point pâli ; mode facile : un léger flou (`blur`)
     const more = { sources: [], echo2: null, blur: sc1.blur || 0 };
     if (sc1.lure) more.sources.push({ sig: look(r, sc1.lure, beatOf(r) + 7, fnvKey(sys.key)), period: 1, col: [235, 210, 160], smear: { dt: sc1.true.dt, de: sc1.true.de } });
     if (sc1.beat) { more.sources.push({ sig: { ...sc1.true, s: Math.max(0.15, sc1.true.s) }, period: sc1.fx.beat.period, col: [170, 200, 255], sharp: true }); more.echo2 = { off: SS.echoOffset(sc1.echoDd), ok: sc1.falseLock, period: sc1.fx.beat.period }; }
-    eyepiece(r, ctx, c, view, seen, tm, ms, { off: SS.echoOffset(m.dd), ok: m.delayOk, shift: m.beatShift || 0 }, more);
+    eyepiece(r, ctx, c, view, seen, tm, ms, { off: SS.echoOffset(m.dd), ok: m.delayOk, shift: m.beatShift || 0, pale: tangled ? 0.45 : 1 }, more);
     wheel(r, ctx, c, "torahn", WHEELS.torahn, st.dial.torahn, T.TURN, st.dial.torahn, tm);
     wheel(r, ctx, c, "elev", WHEELS.elev, st.dial.elev + T.ELEV_MAX, 2 * T.ELEV_MAX + 1, T.kiElev(st.dial.elev), tm);
     // le retard se lit en rahnfee (invention de fan, src/beam.js) : le pouls arrive une fraction de battement après le balancier
@@ -407,9 +422,9 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     systemPlate(r, ctx, c, st, sys);
     if (guild) triLever(r, ctx, c, st, sys); // les balises : seulement dans l'Art de la Guilde (en mode facile, rien ne trompe)
     const rec = st.systems[sys.key], done = !!rec, off = done && (rec.line || 0) !== st.line, shown = look(r, sc1.shown, beatOf(r), fnvKey(st.key + sys.key));
-    const line = m.located ? (off ? t("sys.offline") : t("sys.located")) : m.beatWait ? t("sys.beats.wait") : sc1.bentLock ? t("sys.bent.hold") : withTrend(t, bandWords(t, shown.band), guild ? 0 : st.trend);
-    ctx.font = "italic 14px serif"; ctx.textAlign = "center"; ctx.fillStyle = m.located && !off ? "#9fe6da" : "#e9dcb8"; ctx.fillText(line, TEXT_X, 306, 500); ctx.textAlign = "left";
-    const sub = st.note ? t(st.note) : m.located ? (st.guild && aimedKey(st) ? t("guild.sent") : "") : sc1.falseLock ? t("sys.beat.lock") : shown.band >= 2 ? (sc1.beat ? t("sys.beat.cross") + " " : sc1.bend ? t("sys.bend.arc") + " " : "") + echoWords(t, sc1.echoDd) : done ? (off ? t("sys.offline.sub") : t("sys.charted")) : "";
+    const line = holding ? t("sys.beat.hold") + " " + "·".repeat(1 + Math.min(HOLD_BEATS - 1, Math.floor((ms - st.hold.t0) / PULSE_MS))) : m.located ? (off ? t("sys.offline") : t("sys.located")) : m.beatWait ? t("sys.beats.wait") : sc1.bentLock ? t("sys.bent.hold") : withTrend(t, bandWords(t, shown.band), guild ? 0 : st.trend);
+    ctx.font = "italic 14px serif"; ctx.textAlign = "center"; ctx.fillStyle = m.located && !off && !holding ? "#9fe6da" : "#e9dcb8"; ctx.fillText(line, TEXT_X, 306, 500); ctx.textAlign = "left";
+    const sub = holding ? t("sys.beat.hold.sub") : st.note ? t(st.note) : m.located ? (st.guild && aimedKey(st) ? t("guild.sent") : "") : sc1.falseLock ? t("sys.beat.lock") : shown.band >= 2 ? (sc1.beat ? t("sys.beat.cross") + " " : sc1.bend ? t("sys.bend.arc") + " " : "") + echoWords(t, sc1.echoDd) : done ? (off ? t("sys.offline.sub") : t("sys.charted")) : "";
     if (sub) { ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(233,220,184,0.8)"; ctx.fillText(sub, TEXT_X, 323, 520); ctx.textAlign = "left"; }
   } else {
     // étape 3 : la ligne de Me'erta, un second pouls plus pâle qui glisse contre l'horloge D'ni (Art de la Guilde seulement)
