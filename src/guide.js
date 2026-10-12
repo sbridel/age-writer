@@ -132,10 +132,11 @@ function toMarkdown(lang, level) {
 
 // `code` et **gras** → éléments DOM, sans innerHTML
 function inline(el, text) {
-  for (const part of String(text).split(/(\*\*[^*]+\*\*|`[^`]+`)/)) {
+  for (const part of String(text).split(/(\*\*[^*]+\*\*|`[^`]+`|\*[^*\s][^*]*\*)/)) {
     if (!part) continue;
     if (part.startsWith("**")) el.createEl("strong", { text: part.slice(2, -2) });
     else if (part[0] === "`") el.createEl("code", { text: part.slice(1, -1) });
+    else if (part[0] === "*" && part.length > 2 && part.endsWith("*")) el.createEl("em", { text: part.slice(1, -1) });
     else el.appendText(part);
   }
 }
