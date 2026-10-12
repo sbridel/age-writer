@@ -488,7 +488,7 @@ Quand le livre est déjà ouvert, cliquer une vitre ne rejoue que le son de liai
 
 ## 8. Le monde
 
-- **Stabilité** : cinq axes (cosmologique, géologique, météo, écologique, métaphysique) plus l'axe `alteration`. L'Âge prend la stabilité de son axe le plus faible : ≥ 75 % stable, 40–74 % instable, < 40 % mourant.
+- **Stabilité** : cinq axes (cosmologique, géologique, météo, écologique, métaphysique) plus l'axe `alteration`. L'Âge prend la stabilité de son axe le plus faible : ≥ 75 % stable, 40–74 % instable, < 40 % mourant. La stabilité est recalculée à chaque lecture avec les règles en vigueur : quand elles évoluent, un Âge déjà écrit peut gagner ou perdre quelques points (surtout aux rigueurs élevées ; à la rigueur douce par défaut, peu de choses changent). Son texte, ses pages et son tirage ne changent jamais.
 - **Tirage** : ce que le livre laisse ouvert est tiré, toujours pareil pour la même note. Un livre vague tombe sur un monde stable environ 96 % du temps.
 - **Fissure** : environ la moitié des mondes n'en ont pas. Sans livre de retour **et** sans fissure, l'Âge est un piège.
 - **Loi du changement** : tant que l'encre est fraîche (15 min par défaut), tu peux retoucher. Ensuite, modifier le monde (ajouter ou retirer une page) l'abîme (0,06 d'instabilité par élément, plafond 0,30), puis il guérit lentement. Espaces, sauts de ligne, casse et renommage ne comptent pas ; un Âge renommé garde son monde et son étoile (le plugin écrit son ancien nom dans la propriété `age_seed` ; efface-la pour tirer un nouveau monde).

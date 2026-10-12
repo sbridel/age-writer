@@ -218,6 +218,7 @@ const REF_EN = [
       "Orbit, sun colours, world types, terrain, riches, scars and all the other blocks marked “never drawn” only exist if you write them"] },
     { h: "Home" },
     { p: "No return book **and** no fissure: the Age is a trap. With water, a drawn fissure lies underwater." },
+    { p: "Stability is recalculated each time an Age is read, with the rules in force. When the rules evolve, an existing Age may gain or lose a few points, mostly at higher rigours; at the default gentle rigour little changes. Its text, pages and draw never change." },
     { p: "How the costs are weighed (dosing, rigour, depth) has its own topic, “Dosing, rigour and depth”; the title an Age can earn is in “Writer's title”." },
   ] },
   { id: "dosing", part: "gen", icon: "scale", title: "Dosing, rigour and depth", body: [

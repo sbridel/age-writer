@@ -492,7 +492,7 @@ When the book is already open, clicking a window only replays the linking sound.
 
 ## 8. The world
 
-- **Stability**: five axes (cosmological, geological, weather, ecological, metaphysical) plus the `alteration` axis. The Age takes the stability of its weakest axis: ≥ 75% stable, 40–74% unstable, < 40% dying.
+- **Stability**: five axes (cosmological, geological, weather, ecological, metaphysical) plus the `alteration` axis. The Age takes the stability of its weakest axis: ≥ 75% stable, 40–74% unstable, < 40% dying. Stability is recalculated each time an Age is read, with the rules in force: when the rules evolve, an existing Age may gain or lose a few points (mostly at higher rigours; at the default gentle rigour little changes). Its text, pages and draw never change.
 - **Drawing**: what the book leaves open is drawn, always the same for the same note. A vague book lands on a stable world about 96% of the time.
 - **Crack**: about half of worlds have none. With no return book **and** no crack, the Age is a trap.
 - **Law of change**: while the ink is fresh (15 min by default) you can retouch. After that, changing the world (adding or removing a page) damages it (0.06 instability per element, capped at 0.30), then it slowly heals. Spaces, line breaks, case and renaming don't count; a renamed Age keeps its world and its star (the plugin writes its former name as the property `age_seed`; delete it to draw a new world).

@@ -215,6 +215,7 @@ const REF_FR = [
       "Orbite, couleurs de soleil, mondes-types, terrain, richesses, cicatrices et tous les autres blocs marqués « jamais tirés » n'existent que si tu les écris"] },
     { h: "Le retour" },
     { p: "Sans livre de retour **et** sans fissure, l'Âge est un piège. Avec de l'eau, une fissure tirée est sous-marine." },
+    { p: "La stabilité est recalculée à chaque lecture avec les règles en vigueur. Quand elles évoluent, un Âge déjà écrit peut gagner ou perdre quelques points, surtout aux rigueurs élevées ; à la rigueur douce par défaut, peu de choses changent. Son texte, ses pages et son tirage ne changent jamais." },
     { p: "La façon dont les coûts sont pesés (dosage, rigueur, profondeur) a sa rubrique : « Dosage, rigueur et profondeur » ; le titre qu'un Âge peut faire gagner est dans « Titre d'écrivain »." },
   ] },
   { id: "dosing", part: "gen", icon: "scale", title: "Dosage, rigueur et profondeur", body: [
