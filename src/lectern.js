@@ -11,6 +11,7 @@
  *   tier 4 Grand Maître    tout, avec les coûts par axe en points
  */
 const LF = require("./life");
+const OB = require("./observe");
 const SEV = { strong: 3, medium: 2, light: 1 };
 const SOIL_NOTES = ["weakGround", "noEarth", "tiredVault"];
 
@@ -65,7 +66,7 @@ function readOut(a, o) {
     const rich = Object.keys((a.dosage && a.dosage.richness) || {});
     if (rich.length) lines.push({ kind: "balance", text: rich.join(", "), fam: "balance" });
     const LV = fr ? { light: "légère", normal: "normale", deep: "profonde" } : { light: "light", normal: "normal", deep: "deep" };
-    const scars = (a.scars || []).map((x) => `${x.id} (${LV[x.level] || x.level})`); // les cicatrices gardées du tirage (src/scarring.js)
+    const scars = (a.scars || []).map((x) => OB.scarLine(x, LV)).filter(Boolean); // les cicatrices gardées du tirage (src/scarring.js), selon ce que le monde laisse voir (src/observe.js)
     if (scars.length) lines.push({ kind: "scar", text: (fr ? "cicatrices : " : "scars: ") + scars.join(", ") });
   }
   if (tier >= 4) {

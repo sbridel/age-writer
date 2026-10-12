@@ -144,14 +144,28 @@ class Law {
     return out;
   }
 
-  /** Un renommage change le monde tiré (la graine vient du nom) : ce n'est pas une altération. */
+  /**
+   * Loi 4, Observation : la date où chaque faute légère est apparue (src/observe.js). Une faute qui disparaît est oubliée ; si elle revient, c'est une faute nouvelle.
+   * @param keys les clés des fautes présentes aujourd'hui
+   * @returns { seen: { [clé]: première fois (ms) }, changed } ; `changed` : l'état a bougé (à sauvegarder)
+   */
+  faults(name, keys) {
+    const all = this.state.faults || (this.state.faults = {}), old = all[name] || {}, now = this.now(), seen = {};
+    for (const k of keys) seen[k] = old[k] > 0 ? old[k] : now;
+    const changed = Object.keys(seen).length !== Object.keys(old).length || Object.keys(seen).some((k) => seen[k] !== old[k]);
+    if (Object.keys(seen).length) all[name] = seen; else delete all[name];
+    return { seen, changed };
+  }
+
+  /** Un renommage change le monde tiré (la graine vient du nom) : ce n'est pas une altération. (Les fautes observées sont rangées par graine,
+   *  que le renommage garde dans la propriété `age_seed` : elles restent.) */
   rename(oldName, newName, analysis, phys) {
     const a = this.get(oldName); if (!a) return;
     delete this.state.ages[oldName];
     a.ids = worldIds(analysis); a.changedAt = this.now(); if (phys && typeof phys === "object") a.phys = { ...phys };
     this.state.ages[newName] = a;
   }
-  forget(name) { delete this.state.ages[name]; }
+  forget(name) { delete this.state.ages[name]; if (this.state.faults) delete this.state.faults[name]; }
   log(name) { const a = this.get(name); return a ? a.log : []; }
 }
 

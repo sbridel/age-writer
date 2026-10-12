@@ -275,6 +275,18 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
   f.content = A("water\nsand\nsingle_sun"); await p.observeFile(f);
   ok(notices.some((n) => n.includes("La géométrie de l'Âge a été altérée")), "avertissement en français");
 
+  // loi 4, Observation : une maladie du vivant en strict, vue au signe, puis à la cause une semaine plus tard ; la stabilité ne bouge pas
+  { const rgWas = p.ext.rigor, tObs = Date.now(), sick = "single_sun\nsteady_cycle\nwater\ngrass\ngrazer\ncarrion_beetle";
+    p.ext.rigor = "strict"; p.law.now = () => tObs;
+    const s1 = p.core.analyse(sick, { seed: "xe" }), b1 = (s1.scars || []).find((x) => x.id === "blight");
+    ok(b1 && b1.stage === "sign" && !/grass/.test(b1.prose), "Observation : la maladie se dit d'abord par un signe");
+    ok(p.ext.state.law.faults && p.ext.state.law.faults.xe, "Observation : la date de la faute est gardée, par graine");
+    p.law.now = () => tObs + 8 * 86400000;
+    const s2 = p.core.analyse(sick, { seed: "xe" }), b2 = (s2.scars || []).find((x) => x.id === "blight");
+    ok(b2 && b2.stage === "cause" && /grass/.test(b2.prose) && s2.stability === s1.stability, "Observation : huit jours après, la cause est nommée, au même prix");
+    ok(!(p.core.analyse(sick, { seed: "xe", probe: true }).scars || []).some((x) => x.stage), "un essai de retrait ne touche pas à l'Observation");
+    p.ext.rigor = rgWas; delete p.ext.state.law.faults.xe; p.law.now = () => t0 + 90 * 60000; }
+
   // solitude : les poids changent
   p.ext.solitude = "strong";
   const draw = (lvl) => { p.ext.solitude = lvl; let n = 0; for (let i = 0; i < 60; i++) n += p.core.analyse("water", { seed: "S" + i }).resolved.lines.filter((l) => l.entry && l.entry.id === "tablet").length; return n; };

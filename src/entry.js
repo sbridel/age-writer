@@ -32,6 +32,7 @@ const DFR = require("./descriptors-fr");
 const DOSE = require("./dosage");
 const LIFE = require("./life");
 const RG = require("./rigor");
+const OB = require("./observe");
 const STAT = require("./status");
 const DEPTH = require("./depth");
 const { SYSTEM_RE } = require("./starsystem");
@@ -108,6 +109,7 @@ module.exports = function build(Base, core, AGEX) {
         // livre-piège déclaré : ni livre de retour, ni fissure
         if (srcText && parseTrap(srcText)) out = { ...out, returnTo: null, stranded: true, fissure: null, trapped: true, home: "none" };
         if (srcText) out = guard("quantités", () => applyAmounts(out, parseAmounts(srcText), this.core && this.core.blocks, { weights: RG.weightsOf(this.ext), size: DOSE.worldSize(srcText), seed: o && o.seed })) || out;
+        if (o && o.seed && !o.probe) out = guard("observation", () => this.observeFaults(o.seed, out)) || out; // loi 4 : la phrase des fautes légères mûrit (src/observe.js)
         if (srcText) out = applyDamage(out, parseDamage(srcText));
         if (srcText) { const wx = guard("météo", () => WX.parseWeather(srcText)); if (wx) out = { ...out, weather: wx, resolved: out.resolved ? { ...out.resolved, weather: wx } : out.resolved }; } // météo vivante : lue par la fenêtre (sceneOf) et la description, sans effet sur la stabilité
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
@@ -566,6 +568,16 @@ module.exports = function build(Base, core, AGEX) {
       const recheck = () => window.setTimeout(() => this.checkSound && this.checkSound(), 150);
       this.registerEvent(this.app.workspace.on("active-leaf-change", recheck));
       this.registerEvent(this.app.workspace.on("layout-change", recheck));
+    }
+
+    // ---- loi 4, Observation (src/observe.js) ---------------------------------------------------------
+    /** Donne aux fautes légères de l'Âge leur étape (signe, symptôme, cause), d'après le jour où elles sont apparues. */
+    observeFaults(seed, out) {
+      const keys = OB.faultsOf(out).map((f) => f.key);
+      if (!keys.length && !(this.ext.state.law.faults && this.ext.state.law.faults[seed])) return out;
+      const { seen, changed } = this.law.faults(seed, keys);
+      if (changed) this.saveExt();
+      return OB.apply(out, seen, this.law.now(), { rigor: RG.levelOf(this.ext), speed: this.ext.worldReading, tier: this.status ? this.status.tier() : 0 });
     }
 
     // ---- loi du Changement -------------------------------------------------------------------------
