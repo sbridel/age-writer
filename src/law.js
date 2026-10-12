@@ -96,7 +96,7 @@ class Law {
     return DOOM_IDLE + (1 - DOOM_IDLE) * clamp((this.now() - a.burnAt) / (BURN_SECONDS * 1000));
   }
 
-  /** Veille sur un Âge à fissure : tant qu'il est instable, la fissure ouverte consume sa « marge de vie », d'autant plus vite que le monde est
+  /** Loi 14, Durée. Veille sur un Âge à fissure : tant qu'il est instable, la fissure ouverte consume sa « marge de vie », d'autant plus vite que le monde est
    *  instable (délai de condamnation : CONDEMN_MAX_DAYS à 74 %, divisé par deux tous les CONDEMN_HALF points en dessous) et que la fissure est ouverte.
    *  Stable (ou sans fissure à craindre), la marge se reconstitue (elle double tous les jours). Marge épuisée : condamné, et c'est définitif (« beyond repair »).
    *  `stability` : la stabilité du monde sans la fissure (100 s'il n'y a rien à craindre). Renvoie vrai s'il est condamné. */

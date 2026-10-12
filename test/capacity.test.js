@@ -57,9 +57,9 @@ assert.ok(capOf(noLoop) < capOf(withLoop), "la capacité écologique baisse avec
 // un monde pauvre ne gagne rien
 const poor = run("strict", ["single_sun", "water", "fern", "grazer", "mycelium", "stone"]);
 assert.ok(!poor.dosage || !poor.dosage.richness.ecological, "monde modeste : pas de coût");
-// un monde très riche reste puni (loi 5)
+// un monde très riche reste puni (loi 10, Mesure)
 const huge = run("strict", [...heavy, "shoal", "deep_hunter", "carrion_beetle", "coral", "kelp", "grass", "berry_shrub", "microbial_mat", "glow_algae", "moss", "lichen", "grove", "ironwood", "seed", "sapling", "drifter", "burrower", "herd", "spiders"]);
-assert.ok(huge.stability < 75, "beaucoup de tout reste impossible (loi 5)");
+assert.ok(huge.stability < 75, "beaucoup de tout reste impossible (loi 10, Mesure)");
 
 console.log("capacity.test.js ok");
 // le ciel écrit compte ses lignes (étoiles, cycle, lune) : trois lignes accordées achètent de la capacité

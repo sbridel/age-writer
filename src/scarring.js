@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Le tiré et les cicatrices (claude/DESIGN-capacite-et-coherence.md, chantier 2 ; loi 1).
+ * Le tiré et les cicatrices (claude/DESIGN-capacite-et-coherence.md, chantier 2 ; loi 3, Description).
  * Ce qui est tiré n'est pas une contrainte du joueur : c'est la part du monde qui cherche à se stabiliser au tirage.
  *  - un clash LÉGER qui touche une page tirée ne coûte rien ;
  *  - un clash MOYEN ou FORT qui touche une page tirée ne coûte plus son prix : le monde se génère quand même, mais garde une CICATRICE,

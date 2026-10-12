@@ -21,6 +21,7 @@ const BASE = 6, STEP = 2, MAX = 16;
  * @param o        { factor: (id) → facteur de quantité, natural: nombre de réactions naturelles, sky: { blocks, clashes } }
  * @returns { caps: { axe: capacité }, held: [{ axis, id }] } ; seuls les axes qui gagnent quelque chose figurent dans `held`
  */
+// Loi 16, Œuvres : aucune entrée pour l'axe métaphysique, il garde sa base (ruines et objets n'achètent rien).
 function capacities(present, o) {
   const has = (list) => list.some((id) => present.has(id)), role = (r) => LF.ROLES[r].some((id) => present.has(id));
   // les lois de la vie et du sol, lues avec leur plein poids : une loi qui s'applique et dont la phrase d'échec n'est pas dite tient

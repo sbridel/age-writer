@@ -1,13 +1,13 @@
 "use strict";
 /**
- * Le dosage, selon les lois de l'écriture (claude/LOIS-DE-L-ECRITURE-DNI.md, lois 4 à 6) :
+ * Le dosage, selon les lois de l'écriture (claude/LOIS-DE-L-ECRITURE-DNI.md, lois 9 à 11) :
  * on peut écrire un Âge souple et complexe, à condition de doser. Trois effets sur l'analyse du moteur :
- *  1. l'ÉTENDUE (loi 4) : un clash entre le ciel et la matière coûte en proportion du contact entre les éléments,
+ *  1. l'ÉTENDUE (loi 9) : un clash entre le ciel et la matière coûte en proportion du contact entre les éléments,
  *       étendue = dose × taille du monde × biomes
  *     dose : `few` 0,4 · normal 1 · `many` 2 (la ligne de quantité) ; taille : `size: small | medium | large` (0,6 · 1 · 1,5) ;
  *     biomes : +15 % par famille de sol écrite au-delà de la première. Moins de 1 : le clash est adouci ; plus de 1 : il est aggravé.
- *  2. l'ENCHAÎNEMENT (loi 6) : le temps qui s'enchaîne (pluie + vent → orage) et les transformations banales (rouille) ne sont plus punis ;
- *  3. la MESURE (loi 5) : la richesse a un budget par axe ; au-delà, chaque charge de plus coûte davantage (pente douce).
+ *  2. l'ENCHAÎNEMENT (loi 11) : le temps qui s'enchaîne (pluie + vent → orage) et les transformations banales (rouille) ne sont plus punis ;
+ *  3. la MESURE (loi 10) : la richesse a un budget par axe ; au-delà, chaque charge de plus coûte davantage (pente douce).
  * Selon la rigueur (src/rigor.js), seuls les COÛTS EN PLUS comptent à proportion du poids de la famille « étendue » ;
  * ce qui allège un Âge (peu d'eau, orage naturel) compte toujours : en doux, le dosage ne rend jamais un Âge moins stable.
  * Fonctions pures : elles rendent des déplacements de coût par axe, que `amounts.applyAmounts` applique avec le reste.
