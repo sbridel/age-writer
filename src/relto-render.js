@@ -1146,7 +1146,7 @@ class ReltoRenderer {
   }
   hit(x, y) { for (let i = this.hot.length - 1; i >= 0; i--) { const h = this.hot[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h; } return null; }
   onMove(e) {
-    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && !this.hover.secret && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go || this.hover.imager || this.hover.tel || this.hover.purr || this.hover.pageToggle || this.hover.pbook || this.hover.gbTurn || this.hover.lamp || this.hover.gbGo != null) ? "var(--age-hand, pointer)" : ""; // la main dessinée du Relto (styles.ext.css), la main du système à défaut
+    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && !this.hover.secret && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go || this.hover.imager || this.hover.tel || this.hover.purr || this.hover.pageToggle || this.hover.pbook || this.hover.gbTurn || this.hover.lamp || this.hover.gbGo != null || this.hover.vpage || this.hover.shelf != null || this.hover.stone || this.hover.knock || this.hover.desk || this.hover.toy || this.hover.ward) ? "var(--age-hand, pointer)" : ""; // la main dessinée du Relto (styles.ext.css), la main du système à défaut
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
   /** Le bureau : le tiroir (clou de laiton), la tablette qu'on prend entre les mains et qui revient toujours au tiroir. Rien n'est gardé : en s'en allant, le tiroir se ferme. */
