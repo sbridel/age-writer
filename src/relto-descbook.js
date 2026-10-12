@@ -43,7 +43,7 @@ function understood(text, line) {
  * @returns { render(), setFile(f), dispose(), file(), turnTo(n) }
  */
 function mount(plugin, root, o) {
-  const L = LABEL[o.fr ? "fr" : "en"], app = plugin.app, state = { file: o.file || null, text: BLANK };
+  const L = LABEL[o.fr ? "fr" : "en"], app = plugin.app, state = { file: o.file || null, text: BLANK, name: "" };
   const host = Object.create(BV.BookView.prototype);
   Object.assign(host, {
     app, contentEl: root, mode: "linking", spread: 0, shownPath: null, selectedBook: null, proseCache: new Map(), binder: null, seen: new Map(), draft: "", msg: "",
@@ -60,18 +60,22 @@ function mount(plugin, root, o) {
   const textOf = async () => (state.file ? app.vault.cachedRead(state.file) : BLANK);
 
   async function create(line) {
-    const f = await o.onCreate(line); if (!f) return;
+    const f = await o.onCreate(line, state.name); if (!f) return;
     state.file = f; host.shownPath = null; host.spread = 0; await host.render(); // la note vient d'être créée : le livre s'ouvre sur ses pages de glyphes (la liaison est maintenant en toute dernière page)
   }
   host.togglePage = async function (file, id) {
     if (!state.file) { await create(id); return; }
     await BV.BookView.prototype.togglePage.call(this, state.file, id);
   };
-  /** La page de liaison vient du moteur (src/engine/book-view.js) ; son message « rien n'est lié » est une instruction d'édition
-   * (syntaxe `link: [[Name]]`), à sa place dans le panneau d'écriture sous le bloc, pas dans un livre qu'on feuillette au coffre :
-   * ici on le remplace par une phrase dans la voix du livre. Le message sur la fissure, lui, reste tel quel (déjà dans cette voix). */
+  /** La page de liaison vient du moteur (src/engine/book-view.js). Il la peint par moitié : la vitre sur la page qu'on lui donne en
+   * premier, le reste (titre, livres liés, fissure) sur l'autre. Ici la vitre doit toujours tomber à droite, la gauche restant
+   * vierge : le moteur reçoit right à la place de left, gauche/droite inversées ; son unique repère (la gravité des lignes dans le
+   * CSS du livre, left/right) ne change pas de sens pour lui, seule la page qu'il peint en premier change. Et son message « rien
+   * n'est lié » est une instruction d'édition (syntaxe `link: [[Name]]`), à sa place dans le panneau d'écriture sous le bloc, pas
+   * dans un livre qu'on feuillette au coffre : on le remplace par une phrase dans la voix du livre. Le message sur la fissure reste
+   * tel quel (déjà dans cette voix). */
   host.linking = async function (leftPage, rightPage, analysis, file) {
-    await BV.BookView.prototype.linking.call(this, leftPage, rightPage, analysis, file);
+    await BV.BookView.prototype.linking.call(this, rightPage, rightPage, analysis, file);
     rightPage.querySelectorAll(".age-book__none").forEach((el) => {
       if (/^No linking book written\./.test(el.textContent)) el.textContent = o.fr ? "Ce livre ne porte aucune liaison : rien d'écrit n'en part." : "This book holds no linking page: nothing written leads from here.";
     });
@@ -150,13 +154,19 @@ function mount(plugin, root, o) {
     this.spread = Math.max(0, Math.min(this.spread, plan.length - 1)); const cur = plan[this.spread];
 
     const head = container.createDiv({ cls: "age-dbook__head" });
-    head.createSpan({ cls: "age-dbook__title", text: state.file ? file.basename : L.title });
+    if (state.file) head.createSpan({ cls: "age-dbook__title", text: file.basename });
+    else { // un livre vierge n'a pas encore de note : on écrit son nom sur la couverture, au lieu du « Age 1 », « Age 2 » automatique
+      const nameIn = head.createEl("input", { cls: "age-dbook__title age-dbook__nameinput", attr: { type: "text", placeholder: L.name, spellcheck: "false", "aria-label": L.name } });
+      nameIn.value = state.name;
+      nameIn.addEventListener("input", () => { state.name = nameIn.value; });
+      nameIn.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") e.preventDefault(); });
+    }
     if (state.file) head.createSpan({ cls: `age-panel__verdict age-panel__verdict--${analysis.verdict}`, text: `${analysis.verdict} · ${analysis.stability}%` });
     const spreadEl = container.createDiv({ cls: "age-book__spread age-dbook__spread" }), left = spreadEl.createDiv({ cls: "age-book__page age-book__page--left" });
     spreadEl.createDiv({ cls: "age-book__gutter" }); const right = spreadEl.createDiv({ cls: "age-book__page age-book__page--right" });
     if (cur.k === "link") {
       await this.linking(left, right, analysis, file);
-      const win = left.querySelector(".age-book__window"); // la vitre de l'Âge lui-même : la toucher, c'est se lier à lui (son du livre, animation, la note s'ouvre)
+      const win = right.querySelector(".age-book__window"); // la vitre de l'Âge lui-même, maintenant à droite : la toucher, c'est se lier à lui (son du livre, animation, la note s'ouvre)
       if (win && state.file && !win.classList.contains("is-clickable")) { win.addClass("is-clickable"); win.setAttribute("title", plugin.t ? plugin.t("link.touch") : ""); win.addEventListener("click", () => { if (o.onOpen) o.onOpen({ path: state.file.path, name: state.file.basename }); }); }
     }
     else if (cur.k === "glyphs") { glyphSpread(left, right, pages, cur.i, seen, file); for (const p of pages) seen.add(p.id); }

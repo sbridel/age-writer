@@ -708,12 +708,14 @@ async function renderRelto(plugin, source, el, ctx) {
   const attachToShelf = async (f) => {
     try { await app.fileManager.processFrontMatter(file, (fm) => { if (Array.isArray(fm.relto_books)) { if (!fm.relto_books.includes(f.basename)) fm.relto_books.push(f.basename); } else if (typeof fm.relto_books === "string" && fm.relto_books.trim()) fm.relto_books += ", " + f.basename; }); } catch (e) { /* le Relto n'a pas de liste blanche : l'Âge s'y montre déjà */ }
   };
-  const createAgeNote = async (line) => {
-    const base = "Age", body = `# ${base}\n\n\`\`\`age\n${String(line || "").trim()}\n\`\`\`\n`;
+  // le nom écrit sur la couverture d'un livre vierge (src/relto-descbook.js) devient celui de la note ; nettoyé des caractères interdits dans un chemin, repli sur « Age » si vide
+  const createAgeNote = async (line, name) => {
+    const base = "Age", clean = String(name || "").trim().replace(/[\\/:*?"<>|#^[\]]/g, "").replace(/\s+/g, " ").slice(0, 100), title = clean || base;
+    const body = `# ${title}\n\n\`\`\`age\n${String(line || "").trim()}\n\`\`\`\n`;
     try {
       const inStory = !!(scene && scene.mode === "story"), dir = inStory ? ST.dirOf(file.path) : "";
-      let f; if (inStory && dir) { let n = 1, path; do { path = `${dir}/${base}${n > 1 ? " " + n : ""}.md`; n++; } while (app.vault.getAbstractFileByPath(path) || app.vault.getMarkdownFiles().some((x) => x.basename === path.replace(/^.*\//, "").replace(/\.md$/, ""))); f = await app.vault.create(path, body); plugin.index.invalidate(); }
-      else f = await plugin.createNoteIn(base, body);
+      let f; if (inStory && dir) { let n = 1, path; do { path = `${dir}/${base}${n > 1 ? " " + n : ""}.md`; n++; } while (app.vault.getAbstractFileByPath(path) || app.vault.getMarkdownFiles().some((x) => x.basename === path.replace(/^.*\//, "").replace(/\.md$/, ""))); f = await app.vault.create(path, body); plugin.index.invalidate(); } // l'histoire garde sa numérotation fixe : le nom tapé n'y vaut pas
+      else f = await plugin.createNoteIn(title, body);
       await attachToShelf(f); plugin.refreshLive(); return f;
     } catch (e) { console.warn("[Age Writer ext] livre vierge", e); return null; }
   };
