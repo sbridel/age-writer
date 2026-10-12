@@ -49,3 +49,12 @@ const W = require("../src/wealth");
 assert.ok(W.SCAR_IDS.includes("held_rain") && W.SCAR_IDS.includes("mute_ruins"), "une cicatrice pour la météo et une pour les ruines");
 
 console.log("scarring.test.js ok");
+// un clash tiré n'est pas dosé une seconde fois (la quantité ne le change plus : c'est la cicatrice qui parle)
+{
+  const fakeDraw = (src) => { const b = analyseAgeBase(src, { seed: "S" }); return b; };
+  const DSx = require("../src/dosage");
+  const a = fakeDraw("desert_world\nrain");
+  const d = DSx.dosage(a, (id) => (id === "fog" ? 0.4 : 1), (id) => reg.blockById.get(id), { weight: 1 });
+  assert.ok(!d.softened.some((x) => x.b === "fog" || x.b === "deep_cold"), "le dosage ignore les clashs tirés");
+}
+console.log("scarring.test.js ok (dosage)");

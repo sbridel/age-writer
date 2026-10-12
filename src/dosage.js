@@ -91,9 +91,10 @@ function dosage(r, factor, get, opts) {
   }
 
   // 1. étendue : les règles ciel ↔ matière ; les règles de fissure restent entières
-  const softened = [];
+  const softened = [], drawnIds = new Set((res.drawn || []).map((p) => p.id));
   for (const c of res.triggered || []) {
     if (!c.note || !c.axis || c.a === "fissure" || /_fissure$/.test(c.a)) continue;
+    if (drawnIds.has(c.a) || drawnIds.has(c.b)) continue; // un clash qui touche une page tirée est déjà réglé par les cicatrices (src/scarring.js)
     const base = CONTRADICTION_COST[c.severity]; if (!base) continue;
     const e = extent(f(c.b), size, biomes) * (c.a === "cavern_world" ? require("./vault").attenuation(vault, c.b) : 1); if (e === 1) continue;
     const d = base * (e - 1) * (e < 1 ? 1 : w); // allègement : plein ; aggravation : au poids de la famille
@@ -112,7 +113,7 @@ function dosage(r, factor, get, opts) {
   // le ciel écrit : ses lignes (étoiles, cycle, lune, phénomènes) et les blocs de matière du ciel (anneaux, comète…), hors pages tirées
   let skyBlocks = (res.lines || []).filter((l) => l.entry && !l.autoFilled && l.entry.axis === "cosmological").length;
   for (const id of new Set(written)) { const b = get(id); if (b && b.axis === "cosmological" && b.weight > 0 && !drawn.has(id)) skyBlocks++; }
-  const skyClashes = (res.triggered || []).filter((c) => c.axis === "cosmological").length;
+  const skyClashes = (res.triggered || []).filter((c) => c.axis === "cosmological" && !drawnIds.has(c.a) && !drawnIds.has(c.b)).length; // les clashs tirés sont réglés par les cicatrices
   const cap = CAP.capacities(present, { factor, natural: natural.length, sky: { blocks: skyBlocks, clashes: skyClashes } });
   const richness = {};
   if (w > 0) for (const [axis, l] of Object.entries(load)) { const capa = CAP.capacityOf(cap.caps, axis), extra = richnessCost(l, capa) * w; if (extra > 0) { add(axis, extra); richness[axis] = { load: l, extra, capacity: capa }; } }
