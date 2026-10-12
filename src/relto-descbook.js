@@ -61,11 +61,20 @@ function mount(plugin, root, o) {
 
   async function create(line) {
     const f = await o.onCreate(line); if (!f) return;
-    state.file = f; host.shownPath = null; host.spread = 1; await host.render(); // la note vient d'être créée : le livre s'ouvre sur ses pages de glyphes
+    state.file = f; host.shownPath = null; host.spread = 0; await host.render(); // la note vient d'être créée : le livre s'ouvre sur ses pages de glyphes (la liaison est maintenant en toute dernière page)
   }
   host.togglePage = async function (file, id) {
     if (!state.file) { await create(id); return; }
     await BV.BookView.prototype.togglePage.call(this, state.file, id);
+  };
+  /** La page de liaison vient du moteur (src/engine/book-view.js) ; son message « rien n'est lié » est une instruction d'édition
+   * (syntaxe `link: [[Name]]`), à sa place dans le panneau d'écriture sous le bloc, pas dans un livre qu'on feuillette au coffre :
+   * ici on le remplace par une phrase dans la voix du livre. Le message sur la fissure, lui, reste tel quel (déjà dans cette voix). */
+  host.linking = async function (leftPage, rightPage, analysis, file) {
+    await BV.BookView.prototype.linking.call(this, leftPage, rightPage, analysis, file);
+    rightPage.querySelectorAll(".age-book__none").forEach((el) => {
+      if (/^No linking book written\./.test(el.textContent)) el.textContent = o.fr ? "Ce livre ne porte aucune liaison : rien d'écrit n'en part." : "This book holds no linking page: nothing written leads from here.";
+    });
   };
   /** Écrit chaque ligne du brouillon que le moteur comprend ; les autres restent dans le brouillon, signalées. */
   async function submitAll() {
@@ -134,10 +143,10 @@ function mount(plugin, root, o) {
     if (this.shownPath !== file.path) { this.shownPath = file.path; this.selectedBook = null; if (!this.seen.has(file.path)) this.seen.set(file.path, new Set(pageList(analysis, true).map((p) => p.id))); }
     const seen = this.seen.get(file.path) || new Set(), pages = state.file ? pageList(analysis, true) : [];
     const gCount = Math.max(1, Math.ceil((pages.length + 1) / PER_SPREAD)), plan = [];
-    if (state.file) plan.push({ k: "link", label: L.link });
     for (let i = 0; i < gCount; i++) plan.push({ k: "glyphs", i, label: `${i * PER_SPREAD + 1}–${Math.min(pages.length, (i + 1) * PER_SPREAD)}`.replace(/^1–0$/, L.glyphs) });
     if (state.file) plan.push({ k: "desc", label: L.desc });
     plan.push({ k: "free", label: L.free });
+    if (state.file) plan.push({ k: "link", label: L.link }); // la liaison en toute dernière page du livre, pas en frontispice
     this.spread = Math.max(0, Math.min(this.spread, plan.length - 1)); const cur = plan[this.spread];
 
     const head = container.createDiv({ cls: "age-dbook__head" });
