@@ -182,6 +182,7 @@ function mount(plugin, root, o) {
     spreadEl.createDiv({ cls: "age-book__gutter" }); const right = spreadEl.createDiv({ cls: "age-book__page age-book__page--right" });
     if (cur.k === "glass") { // la vitre de l'Âge, sur la page de droite, la gauche vierge : la toucher, c'est se lier à lui (son du livre, animation, la note s'ouvre)
       this.ownGlass(right, analysis, file);
+      right.querySelectorAll(".age-book__caption").forEach((el) => el.remove()); // la phrase sur la vitre passe en petit au bas de la description, avec les axes
       const win = right.querySelector(".age-book__window");
       if (win && state.file && !win.classList.contains("is-clickable")) { win.addClass("is-clickable"); win.setAttribute("title", plugin.t ? plugin.t("link.touch") : ""); win.addEventListener("click", () => { if (o.onOpen) o.onOpen({ path: state.file.path, name: state.file.basename }); }); }
     }
@@ -192,7 +193,9 @@ function mount(plugin, root, o) {
       let moved = []; // le texte coule d'une page à l'autre : ce qui ne tient pas sur la page de gauche passe sur celle de droite
       while (sentences.length > 1 && left.scrollHeight > left.clientHeight + 1) { moved.unshift(sentences.pop()); lp.textContent = sentences.join(" "); }
       rp.textContent = moved.join(" ");
-      right.createDiv({ cls: "age-book__colophon", text: Object.entries(analysis.axisStability).map(([axis, st]) => `${axis} ${st}%`).join(" · ") });
+      const glassSays = o.fr ? { dying: "La vitre ne répond plus.", unstable: "La vitre vacille.", stable: "La vitre est claire." } : { dying: "The glass has stopped answering.", unstable: "The glass wavers.", stable: "The glass is clear." };
+      const colo = right.createDiv({ cls: "age-book__colophon" }); colo.createDiv({ cls: "age-dbook__glasssays", text: glassSays[analysis.verdict] || glassSays.stable });
+      colo.createDiv({ text: Object.entries(analysis.axisStability).map(([axis, st]) => `${axis} ${st}%`).join(" · ") });
       if (analysis.drawn.length > 0) { // ce que le livre a tiré, dans sa langue ; une paire de dés pour tirer à nouveau, discrète et centrée
         const n = analysis.drawn.length, d = right.createDiv({ cls: "age-book__drawn age-dbook__drawn" });
         d.createDiv({ text: o.fr ? `${n} page${n === 1 ? " tirée" : "s tirées"} par le livre, qui ${n === 1 ? "l'avait laissée ouverte" : "les avait laissées ouvertes"}.` : `${n} page${n === 1 ? "" : "s"} drawn by the book, which left ${n === 1 ? "it" : "them"} open.` });
