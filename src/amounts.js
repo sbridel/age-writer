@@ -92,7 +92,7 @@ function applyAmounts(r, amt, blocks, opts) {
   if (!Object.keys(delta).length && !life) return r;
   const out = Object.keys(delta).length ? shift(r, delta) : { ...r }; if (rich > 0) out.compensation = { riches: rich, relief };
   if (life) out.life = life;
-  if (dose && (dose.softened.length || dose.natural.length || Object.keys(dose.richness).length)) out.dosage = { softened: dose.softened, natural: dose.natural, richness: dose.richness };
+  if (dose && (dose.softened.length || dose.natural.length || Object.keys(dose.richness).length)) out.dosage = { softened: dose.softened, natural: dose.natural, richness: dose.richness, capacity: dose.capacity };
   return out;
 }
 

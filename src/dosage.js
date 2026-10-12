@@ -53,14 +53,15 @@ const extent = (dose, size, biomes) => dose * (SIZE_FACTOR[size] || 1) * biomeFa
 // ---- budget de richesse -------------------------------------------------------------------------------------------
 /** Charge au-delà de CAPACITY par axe → coût EXTRA_LINEAR × e + EXTRA_QUAD × e². */
 const CAPACITY = 6, EXTRA_LINEAR = 0.02, EXTRA_QUAD = 0.01;
-const richnessCost = (load) => { const e = Math.max(0, load - CAPACITY); return EXTRA_LINEAR * e + EXTRA_QUAD * e * e; };
+/** `capacity` : la capacité de l'axe (src/capacity.js : 6 + 2 par loi tenue) ; sans elle, la capacité de base. */
+const richnessCost = (load, capacity) => { const e = Math.max(0, load - (capacity == null ? CAPACITY : capacity)); return EXTRA_LINEAR * e + EXTRA_QUAD * e * e; };
 
 /**
  * @param r      l'analyse du moteur
  * @param factor (id) → facteur de quantité du bloc (1 sans ligne de quantité)
  * @param get    (id) → bloc du moteur
  * @param opts   { weight: poids de la famille « étendue » (0, 0,5 ou 1 ; 1 par défaut), size: "small" | "medium" | "large" }
- * @returns { delta: {axe: coût}, softened: [...], natural: [...], richness: {axe: {load, extra}}, extent: {size, biomes} }
+ * @returns { delta: {axe: coût}, softened: [...], natural: [...], richness: {axe: {load, extra, capacity}}, capacity: {caps, held}, extent: {size, biomes} }
  */
 function dosage(r, factor, get, opts) {
   const { CONTRADICTION_COST } = require("./engine/rules"); // à l'appel : rules.js lit sky.js, qui lit amounts.js, qui lit ce fichier
@@ -106,10 +107,15 @@ function dosage(r, factor, get, opts) {
     const b = get(id); if (!b || !(b.weight > 0) || drawn.has(id) || by.has(id)) continue;
     load[b.axis] = (load[b.axis] || 0) + factor(id);
   }
+  // la cohérence achète de la capacité (src/capacity.js) : les lois de l'axe qui s'appliquent et tiennent élargissent le budget
+  const CAP = require("./capacity"), present = new Set([...written, ...reactions.map((x) => x.result), ...(res.lines || []).map((l) => l.entry && l.entry.id).filter(Boolean)]);
+  let skyBlocks = 0; for (const id of new Set(written)) { const b = get(id); if (b && b.axis === "cosmological" && b.weight > 0) skyBlocks++; }
+  const skyClashes = (res.triggered || []).filter((c) => c.axis === "cosmological").length;
+  const cap = CAP.capacities(present, { factor, natural: natural.length, sky: { blocks: skyBlocks, clashes: skyClashes } });
   const richness = {};
-  if (w > 0) for (const [axis, l] of Object.entries(load)) { const extra = richnessCost(l) * w; if (extra > 0) { add(axis, extra); richness[axis] = { load: l, extra }; } }
+  if (w > 0) for (const [axis, l] of Object.entries(load)) { const capa = CAP.capacityOf(cap.caps, axis), extra = richnessCost(l, capa) * w; if (extra > 0) { add(axis, extra); richness[axis] = { load: l, extra, capacity: capa }; } }
 
-  return { delta, softened, natural, richness, extent: { size, biomes } };
+  return { delta, softened, natural, richness, capacity: cap, extent: { size, biomes } };
 }
 
 /** La ligne du panneau : ce que le dosage a changé, en points de stabilité (« − » : l'Âge y gagne). */

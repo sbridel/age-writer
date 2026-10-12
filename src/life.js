@@ -154,4 +154,4 @@ function note(l, fr) {
   return (fr ? "Vie · " : "Life · ") + l.notes.slice(0, 2).map((n) => TEXT[n.id][fr ? 1 : 0]).join(fr ? " · " : " · ");
 }
 
-module.exports = { MATTER_BLOCKS, REACTIONS, VARIANTS, IDS, ROLES, SECONDARY, MICRO, SOIL, COST, TEXT, laws, note };
+module.exports = { MATTER_BLOCKS, REACTIONS, VARIANTS, IDS, ROLES, SECONDARY, MICRO, BIG_TREES, SOIL, COST, TEXT, laws, note };
