@@ -1,4 +1,5 @@
 "use strict";
+const FLW = require("./relto-flower");
 const obsidian = require("obsidian");
 const M = require("./relto-model");
 const { ReltoRenderer } = require("./relto-render");
@@ -888,6 +889,8 @@ async function renderRelto(plugin, source, el, ctx) {
 
   async function refresh() {
     const built = await buildScene(plugin, file, opt); scene = built.scene;
+    root.toggleClass("age-quill", plugin.ext.cursorQuill !== false); // le curseur plume (réglage, activé par défaut)
+    try { root.style.setProperty("--age-quill", `url("data:image/svg+xml;base64,${btoa(FLW.quillSvg(scene))}") 3 29, auto`); } catch (e) { /* la plume par défaut (styles.ext.css) */ } // la plume prend la teinte de la fleur de cristal
     scene.pagesActive = built.relto.pagesActive;
     renderer.setScene(scene); renderer.setHour(scene.skyCycle === "system_time" ? fixed : null); syncNav(scene);
     if (dniClock) dniClock.tick(); // la scène connue : l'heure D'ni sait si l'horloge est là

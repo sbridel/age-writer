@@ -61,22 +61,21 @@ function mount(plugin, root, o) {
 
   async function create(line) {
     const f = await o.onCreate(line, state.name); if (!f) return;
-    state.file = f; host.shownPath = null; host.spread = 0; await host.render(); // la note vient d'être créée : le livre s'ouvre sur ses pages de glyphes (la liaison est maintenant en toute dernière page)
+    state.file = f; host.shownPath = null; host.spread = 2; await host.render(); // la note vient d'être créée : le livre s'ouvre sur ses pages de glyphes (après la couverture et la vitre)
   }
   host.togglePage = async function (file, id) {
     if (!state.file) { await create(id); return; }
     await BV.BookView.prototype.togglePage.call(this, state.file, id);
   };
-  /** La page de liaison vient du moteur (src/engine/book-view.js). Il la peint par moitié : la vitre sur la page qu'on lui donne en
-   * premier, le reste (titre, livres liés, fissure) sur l'autre. Ici la vitre doit toujours tomber à droite, la gauche restant
-   * vierge : le moteur reçoit right à la place de left, gauche/droite inversées ; son unique repère (la gravité des lignes dans le
-   * CSS du livre, left/right) ne change pas de sens pour lui, seule la page qu'il peint en premier change. Et son message « rien
-   * n'est lié » est une instruction d'édition (syntaxe `link: [[Name]]`), à sa place dans le panneau d'écriture sous le bloc, pas
-   * dans un livre qu'on feuillette au coffre : on le remplace par une phrase dans la voix du livre. Le message sur la fissure reste
-   * tel quel (déjà dans cette voix). */
-  host.linking = async function (leftPage, rightPage, analysis, file) {
-    await BV.BookView.prototype.linking.call(this, rightPage, rightPage, analysis, file);
-    rightPage.querySelectorAll(".age-book__none").forEach((el) => {
+  /** La page des livres de liaison vient du moteur (src/engine/book-view.js), qui la peint par moitié : la vitre sur la première page
+   * qu'on lui donne, le reste (titre, livres liés, fissure) sur la seconde. Au coffre, la vitre de l'Âge ouvre le livre (première
+   * double page, à droite, la gauche vierge : voir `render`) ; ici on ne garde que le reste, seul en dernière page : la vitre part
+   * dans une page jetée. Son message « rien n'est lié » est une instruction d'édition (syntaxe `link: [[Name]]`), à sa place dans le
+   * panneau d'écriture sous le bloc, pas dans un livre qu'on feuillette : on le remplace par une phrase dans la voix du livre. Le
+   * message sur la fissure reste tel quel (déjà dans cette voix). */
+  host.linking = async function (page, analysis, file) {
+    await BV.BookView.prototype.linking.call(this, document.createElement("div"), page, analysis, file);
+    page.querySelectorAll(".age-book__none").forEach((el) => {
       if (/^No linking book written\./.test(el.textContent)) el.textContent = o.fr ? "Ce livre ne porte aucune liaison : rien d'écrit n'en part." : "This book holds no linking page: nothing written leads from here.";
     });
   };
@@ -146,29 +145,45 @@ function mount(plugin, root, o) {
     const ageSource = extractAge(text) || "", analysis = analyseAge(ageSource, { seed: seedName(file.path || "Age") });
     if (this.shownPath !== file.path) { this.shownPath = file.path; this.selectedBook = null; if (!this.seen.has(file.path)) this.seen.set(file.path, new Set(pageList(analysis, true).map((p) => p.id))); }
     const seen = this.seen.get(file.path) || new Set(), pages = state.file ? pageList(analysis, true) : [];
-    const gCount = Math.max(1, Math.ceil((pages.length + 1) / PER_SPREAD)), plan = [];
+    const gCount = Math.max(1, Math.ceil((pages.length + 1) / PER_SPREAD)), plan = [{ k: "cover" }]; // le livre fermé : sa couverture, où l'on écrit le nom d'un livre vierge
+    if (state.file) plan.push({ k: "glass", label: L.link }); // la vitre de liaison ouvre le livre
     for (let i = 0; i < gCount; i++) plan.push({ k: "glyphs", i, label: `${i * PER_SPREAD + 1}–${Math.min(pages.length, (i + 1) * PER_SPREAD)}`.replace(/^1–0$/, L.glyphs) });
     if (state.file) plan.push({ k: "desc", label: L.desc });
     plan.push({ k: "free", label: L.free });
-    if (state.file) plan.push({ k: "link", label: L.link }); // la liaison en toute dernière page du livre, pas en frontispice
+    if (state.file) plan.push({ k: "links", label: L.link }); // les livres de liaison (et la fissure) : seuls, en toute dernière page
     this.spread = Math.max(0, Math.min(this.spread, plan.length - 1)); const cur = plan[this.spread];
 
-    const head = container.createDiv({ cls: "age-dbook__head" });
-    if (state.file) head.createSpan({ cls: "age-dbook__title", text: file.basename });
-    else { // un livre vierge n'a pas encore de note : on écrit son nom sur la couverture, au lieu du « Age 1 », « Age 2 » automatique
-      const nameIn = head.createEl("input", { cls: "age-dbook__title age-dbook__nameinput", attr: { type: "text", placeholder: L.name, spellcheck: "false", "aria-label": L.name } });
-      nameIn.value = state.name;
-      nameIn.addEventListener("input", () => { state.name = nameIn.value; });
-      nameIn.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") e.preventDefault(); });
+    if (cur.k === "cover") { // le livre fermé. Vierge : on écrit son nom sur le cuir (il deviendra celui de la note) ; sinon la couverture de l'Âge. On l'ouvre par son bord droit.
+      const cv = container.createDiv({ cls: "age-dbook__cover" + (state.file ? "" : " is-blank") });
+      let art = ""; if (state.file && plugin.coverFor) { try { art = plugin.coverFor(ageSource, analysis, state.file, false) || ""; } catch (e) { art = ""; } }
+      if (art) setMarkup(cv.createDiv({ cls: "age-dbook__coverart" }), art);
+      else {
+        const plate = cv.createDiv({ cls: "age-dbook__coverplate" });
+        if (state.file) plate.createDiv({ cls: "age-dbook__covername", text: file.basename });
+        else {
+          const nameIn = plate.createEl("input", { cls: "age-dbook__covername age-dbook__nameinput", attr: { type: "text", spellcheck: "false", autocomplete: "off" } });
+          nameIn.value = state.name;
+          nameIn.addEventListener("input", () => { state.name = nameIn.value; });
+          nameIn.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") { e.preventDefault(); this.spread = 1; flip(); this.render(); } }); // Entrée : le nom est écrit, on ouvre le livre
+          window.setTimeout(() => { try { nameIn.focus(); } catch (e) { /* ignore */ } }, 30);
+        }
+      }
+      cv.createDiv({ cls: "age-dbook__turn age-dbook__turn--next", attr: { title: L.next } }).addEventListener("click", () => { this.spread = 1; this.msg = ""; flip(); this.render(); });
+      return;
     }
-    if (state.file) head.createSpan({ cls: `age-panel__verdict age-panel__verdict--${analysis.verdict}`, text: `${analysis.verdict} · ${analysis.stability}%` });
+    if (state.file) {
+      const head = container.createDiv({ cls: "age-dbook__head" });
+      head.createSpan({ cls: "age-dbook__title", text: file.basename });
+      head.createSpan({ cls: `age-panel__verdict age-panel__verdict--${analysis.verdict}`, text: `${analysis.verdict} · ${analysis.stability}%` });
+    }
     const spreadEl = container.createDiv({ cls: "age-book__spread age-dbook__spread" }), left = spreadEl.createDiv({ cls: "age-book__page age-book__page--left" });
     spreadEl.createDiv({ cls: "age-book__gutter" }); const right = spreadEl.createDiv({ cls: "age-book__page age-book__page--right" });
-    if (cur.k === "link") {
-      await this.linking(left, right, analysis, file);
-      const win = right.querySelector(".age-book__window"); // la vitre de l'Âge lui-même, maintenant à droite : la toucher, c'est se lier à lui (son du livre, animation, la note s'ouvre)
+    if (cur.k === "glass") { // la vitre de l'Âge, sur la page de droite, la gauche vierge : la toucher, c'est se lier à lui (son du livre, animation, la note s'ouvre)
+      this.ownGlass(right, analysis, file);
+      const win = right.querySelector(".age-book__window");
       if (win && state.file && !win.classList.contains("is-clickable")) { win.addClass("is-clickable"); win.setAttribute("title", plugin.t ? plugin.t("link.touch") : ""); win.addEventListener("click", () => { if (o.onOpen) o.onOpen({ path: state.file.path, name: state.file.basename }); }); }
     }
+    else if (cur.k === "links") await this.linking(left, analysis, file);
     else if (cur.k === "glyphs") { glyphSpread(left, right, pages, cur.i, seen, file); for (const p of pages) seen.add(p.id); }
     else if (cur.k === "desc") {
       const sentences = this.proseFor(file.path, ageSource, analysis).split(/(?<=[.!?])\s+/).filter(Boolean), lp = left.createDiv({ cls: "age-book__prose", text: sentences.join(" ") }), rp = right.createDiv({ cls: "age-book__prose" });

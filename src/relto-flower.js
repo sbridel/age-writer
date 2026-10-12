@@ -14,9 +14,22 @@ function flowerOverride(sc) {
   const n = Number(v); return Number.isFinite(n) ? { hue: ((n % 360) + 360) % 360 } : null;
 }
 
+/** La teinte de la fleur (et l'écart de son dégradé, sa saturation) : de la graine du Relto, sauf `flower_color` sur la page de l'atelier. La plume du curseur la reprend. */
+function flowerTone(sc) {
+  const fq = rng((sc.seed ^ fnv("crystal-flower")) >>> 0), seedHue = fq() * 360, spread = 22 + fq() * 30, seedSat = 0.5 + fq() * 0.3, ov = flowerOverride(sc);
+  return { hue: ov ? ov.hue : seedHue, spread, fsat: ov && ov.sat != null ? ov.sat : seedSat };
+}
+
+/** La plume du curseur (SVG 32×32, pointe en 3,29), teintée comme la fleur de cristal : la barbe dans sa teinte, les barbules dans celle de ses pétales clairs. */
+function quillSvg(sc) {
+  const { hue, spread, fsat } = flowerTone(sc), vane = hsl(hue, fsat, 0.36), barb = hsl(hue + spread * 0.6, fsat, 0.66);
+  const d = [[14, 18], [17, 15], [20, 12], [23, 9]].map(([x, y]) => `M${x} ${y} L${x + 2.6} ${y + 0.6} M${x} ${y} L${x - 0.6} ${y - 2.6}`).join(" ");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><g stroke="#f4ead2" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" fill="#f4ead2"><path d="M10 22 C11 13 19 5 30 2 C28 12 21 20 10 22 Z"/><path d="M3 29 L13 19" fill="none"/></g><path d="M10 22 C11 13 19 5 30 2 C28 12 21 20 10 22 Z" fill="${vane}"/><path d="${d}" stroke="${barb}" stroke-width="0.8" stroke-linecap="round" fill="none"/><path d="M3.2 28.8 L27 5" stroke="#21150b" stroke-width="1.3" stroke-linecap="round"/><path d="M2.6 29.4 L5.2 27.6 L4.4 26.8 Z" fill="#21150b"/></svg>`;
+}
+
 /** Dessine la fleur (coordonnées du mur : centre 141,150) ; l'appelant a posé le clip de l'ovale. */
 function drawFlowerArt(ctx, c, sc, t) {
-    const gl = 0.5 + 0.5 * Math.sin(t * 1.3), cx = 141, cy = 150, fq = rng((sc.seed ^ fnv("crystal-flower")) >>> 0), seedHue = fq() * 360, spread = 22 + fq() * 30, seedSat = 0.5 + fq() * 0.3, ov = flowerOverride(sc), hue = ov ? ov.hue : seedHue, fsat = ov && ov.sat != null ? ov.sat : seedSat; // la couleur et le dégradé viennent de la graine du Relto — sauf si la page de l'atelier impose une teinte (flower_color)
+    const gl = 0.5 + 0.5 * Math.sin(t * 1.3), cx = 141, cy = 150, { hue, spread, fsat } = flowerTone(sc); // la couleur et le dégradé viennent de la graine du Relto — sauf si la page de l'atelier impose une teinte (flower_color)
     const P1 = hsl(hue, fsat, 0.42), P2 = hsl(hue + spread * 0.6, fsat, 0.55), P3 = hsl(hue + spread, fsat + 0.1, 0.5), HEART = hsl(hue + 150, 0.6, 0.74), BG0 = hsl(hue, 0.3, 0.12), BG1 = hsl(hue + spread, 0.28, 0.2), STEM = hsl(hue + 150, 0.35, 0.38), LEAF = hsl(hue + 150, 0.4, 0.3);
     const bgG = ctx.createLinearGradient(0, 134, 0, 182); bgG.addColorStop(0, c(BG1)); bgG.addColorStop(1, c(BG0)); ctx.fillStyle = bgG; ctx.fillRect(120, 130, 42, 56); // le fond de l'ovale : un dégradé de la même teinte
     const hg = ctx.createRadialGradient(cx, cy, 2, cx, cy, 22); hg.addColorStop(0, rgba(parseInt(P2.slice(1, 3), 16), parseInt(P2.slice(3, 5), 16), parseInt(P2.slice(5, 7), 16), 0.35 + 0.15 * gl)); hg.addColorStop(1, rgba(parseInt(P2.slice(1, 3), 16), parseInt(P2.slice(3, 5), 16), parseInt(P2.slice(5, 7), 16), 0)); ctx.fillStyle = hg; ctx.fillRect(cx - 24, cy - 24, 48, 48);
@@ -44,4 +57,4 @@ function drawCloseup(ctx, c, sc, t, W, H) {
   ctx.save(); ctx.translate(W / 2, H / 2 + 4); ctx.scale(5.5, 5.5); ctx.translate(-141, -158); drawPortrait(ctx, c, sc, t); ctx.restore();
 }
 
-module.exports = { drawPortrait, drawCloseup, flowerOverride };
+module.exports = { drawPortrait, drawCloseup, flowerOverride, flowerTone, quillSvg };
