@@ -92,7 +92,7 @@ function heldZero(st) { return st.line && st.old && st.line === st.old.L ? { tor
 /** Les noms des Âges d'un système situé : gravés au lutrin (`ages`). */
 function noteAge(r, st, key, name) {
   const rec = st.systems[key]; if (!rec || !name || (rec.ages || []).includes(name)) return;
-  st.systems = { ...st.systems, [key]: { ...rec, ages: [...(rec.ages || []), name].sort() } };
+  st.systems = { ...st.systems, [key]: { ...rec, ages: [...(rec.ages || []), name].sort(), when: { ...(rec.when || {}), [name]: Date.now() } } }; // `when` : quand ce nom y a été gravé (l'historique de la carte)
   if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st));
 }
 

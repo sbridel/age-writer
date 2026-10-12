@@ -34,6 +34,8 @@ function renderMany(host, ages) {
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step3: "oldline", label: "TELESCOPE step 3 / the old line (Me'erta) beside the true Zero" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "starmap", step3: "map", label: "STAR MAP / a constellation, a black hole, a pulsar" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "starmap", step3: "mapold", label: "STAR MAP / the old line: stars that miss the Zero" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "starmap", step3: "mapmoved0", label: "STAR MAP / today's stars: a rewritten Age only at its new star" },
+    { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "starmap", step3: "mapmoved1", label: "STAR MAP / the wanderings of a rewritten Age" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: "far", label: "TELESCOPE night / far" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", aim: [6, -3], at: 0.04, label: "METRONOME / easy: true pulse at its peak, pendulum at its extreme" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step3: "oldline", at: 0.5, label: "METRONOME / guild: pendulum mid-swing, the old line drifting" },
@@ -195,6 +197,11 @@ function step3(r, mode) {
   const bh = find((p, fx) => fx.deflect && !fx.beat, "single_sun@m"), ps = find((p, fx) => fx.beat && fx.beat.kind === "pulsar", "single_sun@n");
   add(bh, mode === "mapold" ? 0 : 0, [names[4]]); add(ps, L, [names[5], names[6]]);
   st.systems = systems; st.line = mode === "mapold" ? L : 0;
+  if (/^mapmoved/.test(mode)) { // un Âge récrit a changé d'étoile : il est gravé à son ancienne étoile (a) et à la nouvelle (b)
+    systems["b@x"] = { ...systems["b@x"], ages: [...systems["b@x"].ages, names[0]] };
+    r.mapCur = { scene: r.scene, ready: true, map: new Map([[names[0], "b@x"], [names[1], "a@sys:kerath"], [names[2], "b@x"]]) };
+    r.mapPage = mode === "mapmoved1" ? 1 : 0;
+  }
 }
 
 module.exports = { renderMany };

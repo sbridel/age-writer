@@ -16,7 +16,7 @@ const W = 640, H = 360, SHEET = { x: 70, y: 18, w: 500, h: 300 }, BACK = { x: 0,
 const EN = makeT(() => "en");
 const tOf = (r) => (r.opts && typeof r.opts.t === "function" ? r.opts.t : EN);
 const pertName = (t, kind) => (kind === "black_hole" ? t("map.pert.bh") : kind === "pulsar" ? t("map.pert.pulsar") : t("map.pert.ns"));
-const INK = "#3b2a1b", INK2 = "#6b4a2a", RED = "#9b3b22", LEAD = "#5f6b78";
+const INK = "#3b2a1b", INK2 = "#6b4a2a", RED = "#9b3b22", LEAD = "#5f6b78", SIG = "#2f8a82", SIG2 = "#62b8ae", NORTH = "#4b5f9a"; // SIG : le bleu du signal du télescope (#7fd6c8), foncé pour l'encre ; NORTH : la ligne de l'instrument
 
 /** Une étoile à l'encre : quatre branches et un point (`big` : le système qui a plusieurs Âges). */
 function inkStar(ctx, x, y, s, col) {
@@ -43,7 +43,25 @@ function drawStarMap(r, ctx, sc, sky, tm) {
     if (!(rec && Array.isArray(rec.ages) && rec.ages.length && known.size)) { systems[k] = rec; continue; }
     const ages = rec.ages.filter((n) => known.has(n)); if (ages.length) systems[k] = { ...rec, ages };
   }
-  const t = tOf(r), map = MAP.layout(st.zero, systems, st.line), S = SHEET;
+  // l'étoile d'aujourd'hui de chaque Âge (son système, lu une fois dans son livre, en arrière-plan) : un Âge récrit peut avoir changé d'étoile
+  const ages0 = (sc && sc.ages) || [];
+  if (r.opts.onImagerAge && (!r.mapCur || r.mapCur.scene !== sc)) {
+    const mc = (r.mapCur = { scene: sc, map: new Map(), ready: false });
+    Promise.all(ages0.map((a) => Promise.resolve(r.opts.onImagerAge(a)).then((d) => { const k = d && d.system && d.system.key; if (k) mc.map.set(a.name, k); }, () => {})))
+      .then(() => { mc.ready = true; if (r.mapCur === mc && r.view === "starmap" && !r.running) r.draw(0); });
+  }
+  const cur = r.mapCur && r.mapCur.ready ? r.mapCur.map : null, where = new Map();
+  for (const [k, rec] of Object.entries(systems)) for (const n of (rec && rec.ages) || []) { if (!where.has(n)) where.set(n, []); where.get(n).push(k); }
+  const moved = cur ? [...where.entries()].filter(([n, ks]) => cur.has(n) && ks.some((k) => k !== cur.get(n))).map(([n]) => n).sort((a, b) => a.localeCompare(b)) : [];
+  const pages = 1 + moved.length; r.mapPage = Math.max(0, Math.min(pages - 1, r.mapPage || 0));
+  // la première carte : chaque Âge à sa place d'aujourd'hui ; les suivantes, une par Âge qui a bougé : ses étoiles d'autrefois, puis l'actuelle
+  const focus = r.mapPage ? moved[r.mapPage - 1] : null, view = {};
+  if (focus) { for (const k of where.get(focus) || []) view[k] = { ...systems[k], ages: [focus] }; }
+  else for (const [k, rec] of Object.entries(systems)) {
+    if (!cur || !rec || !Array.isArray(rec.ages) || !rec.ages.length) { view[k] = rec; continue; }
+    const a = rec.ages.filter((n) => !cur.has(n) || cur.get(n) === k); if (a.length) view[k] = { ...rec, ages: a };
+  }
+  const t = tOf(r), map = MAP.layout(st.zero, view, st.line), S = SHEET;
   // la table et le parchemin (taché, bords sombres), éclairé par une lampe
   const tg = ctx.createRadialGradient(W / 2, H / 2, 60, W / 2, H / 2, 420); tg.addColorStop(0, "#4a3a2a"); tg.addColorStop(1, "#1c140e"); ctx.fillStyle = tg; ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(S.x + 6, S.y + 8, S.w, S.h);
@@ -57,8 +75,8 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   ctx.strokeStyle = rgba(107, 74, 42, 0.22); ctx.lineWidth = 0.7; ctx.setLineDash && ctx.setLineDash([2, 4]);
   for (const d of [1000, 2500, 5000, 10000, 15000]) { if (d > map.scale * 1.1) break; ctx.beginPath(); ctx.ellipse(zx, zy, P.ring(d), P.ring(d) * TI, 0, 0, 6.283); ctx.stroke(); }
   ctx.setLineDash && ctx.setLineDash([]);
-  ctx.strokeStyle = rgba(107, 74, 42, 0.45); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(zx, zy); ctx.lineTo(zx, zy - P.R * TI - 6); ctx.stroke();
-  ctx.font = "italic 9px serif"; ctx.fillStyle = INK2; ctx.textAlign = "center"; ctx.fillText(t("map.north"), zx, zy - P.R * TI - 9); ctx.textAlign = "left";
+  ctx.strokeStyle = NORTH; ctx.globalAlpha = 0.75; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(zx, zy); ctx.lineTo(zx, zy - P.R * TI - 6); ctx.stroke(); ctx.globalAlpha = 1;
+  ctx.font = "italic 9px serif"; ctx.fillStyle = NORTH; ctx.textAlign = "center"; ctx.fillText(t("map.north"), zx, zy - P.R * TI - 9); ctx.textAlign = "left";
   // les étiquettes ne se chevauchent pas : chacune cherche, autour de son point, une place libre
   // les étiquettes ne se chevauchent pas : chacune cherche, autour de son point, une place libre ; d'abord tout près, puis plus loin
   // (reliée alors à son étoile par un trait fin). Elles s'écrivent à la fin, par-dessus les traits, avec un liseré de papier.
@@ -76,7 +94,7 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   for (const s of map.stars) { let best = null, bd = Infinity; for (const o of map.stars) { if (o === s) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < bd) { bd = d; best = o; } } if (best && s.key < best.key || (best && map.stars.length === 2)) { const [ax, ay] = P.at(s.x, s.y, s.z), [bx, by] = P.at(best.x, best.y, best.z); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); } }
   // le Great Zero : une rose des vents à huit pointes
   ctx.save(); ctx.translate(zx, zy); ctx.scale(1, Math.min(1, TI * 1.6));
-  for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, L = i % 2 ? 7 : 12; ctx.fillStyle = i % 2 ? INK2 : INK; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.sin(a - 0.25) * 3, -Math.cos(a - 0.25) * 3); ctx.lineTo(Math.sin(a) * L, -Math.cos(a) * L); ctx.lineTo(Math.sin(a + 0.25) * 3, -Math.cos(a + 0.25) * 3); ctx.closePath(); ctx.fill(); }
+  for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, L = i % 2 ? 7 : 12; ctx.fillStyle = i % 2 ? SIG2 : SIG; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.sin(a - 0.25) * 3, -Math.cos(a - 0.25) * 3); ctx.lineTo(Math.sin(a) * L, -Math.cos(a) * L); ctx.lineTo(Math.sin(a + 0.25) * 3, -Math.cos(a + 0.25) * 3); ctx.closePath(); ctx.fill(); }
   ctx.fillStyle = "#f4ead2"; ctx.beginPath(); ctx.arc(0, 0, 1.6, 0, 6.283); ctx.fill(); ctx.restore();
   r.hot.push({ x: zx - 12, y: zy - 12, w: 24, h: 24, tip: t("map.zero") });
   // le Relto : une petite île
@@ -98,6 +116,18 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   for (const s of map.stars) { const [sx, sy] = P.at(s.x, s.y, s.z); taken.push({ x: sx - 6, y: sy - 6, w: 12, h: 12 }); }
   labels.push({ x: rx, y: ry, text: t("map.relto"), font: "italic 10px serif" });
   r.hot.push({ x: rx - 10, y: ry - 10, w: 20, h: 20, tip: `${sc.name || "Relto"} — ${t("map.relto.tip")}` });
+  if (focus) { // le chemin de l'Âge : de sa plus ancienne étoile à l'actuelle (dans l'ordre où son nom y a été gravé), en pointillés, une pointe à l'arrivée
+    const when = (k) => { const rec = systems[k] || {}; return (rec.when && rec.when[focus]) || rec.at || 0; };
+    const keys = (where.get(focus) || []).slice().sort((a, b) => (cur.get(focus) === a ? 1 : cur.get(focus) === b ? -1 : when(a) - when(b)));
+    const pts = keys.map((k) => map.stars.find((x) => x.key === k)).filter(Boolean).map((x) => P.at(x.x, x.y, x.z));
+    ctx.strokeStyle = rgba(47, 138, 130, 0.75); ctx.lineWidth = 1; ctx.setLineDash && ctx.setLineDash([4, 3]);
+    for (let i = 1; i < pts.length; i++) {
+      const [ax, ay] = pts[i - 1], [bx, by] = pts[i], a = Math.atan2(by - ay, bx - ax), e = 9;
+      ctx.beginPath(); ctx.moveTo(ax + Math.cos(a) * e, ay + Math.sin(a) * e); ctx.lineTo(bx - Math.cos(a) * e, by - Math.sin(a) * e); ctx.stroke();
+      ctx.setLineDash && ctx.setLineDash([]); const hx = bx - Math.cos(a) * e, hy = by - Math.sin(a) * e; ctx.fillStyle = rgba(47, 138, 130, 0.85); ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx - Math.cos(a - 0.45) * 6, hy - Math.sin(a - 0.45) * 6); ctx.lineTo(hx - Math.cos(a + 0.45) * 6, hy - Math.sin(a + 0.45) * 6); ctx.closePath(); ctx.fill(); ctx.setLineDash && ctx.setLineDash([4, 3]);
+    }
+    ctx.setLineDash && ctx.setLineDash([]);
+  }
   // les étoiles situées, leurs perturbateurs, leur trait de plomb vers le Zéro
   for (const s of map.stars) {
     const [sx, sy] = P.at(s.x, s.y, s.z);
@@ -105,10 +135,12 @@ function drawStarMap(r, ctx, sc, sky, tm) {
     const len = 22, bad = s.miss > 2 * T.TOL.torahn; // le trait : où l'Âge voit vraiment le Zéro
     ctx.strokeStyle = bad ? RED : LEAD; ctx.lineWidth = bad ? 1.1 : 0.8; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + s.ray.x * len, sy - s.ray.y * len * TI); ctx.stroke();
     if (bad) { ctx.fillStyle = RED; ctx.font = "bold 10px serif"; ctx.fillText("?", sx + s.ray.x * len + 2, sy - s.ray.y * len * TI + 3); }
-    inkStar(ctx, sx, sy, s.ages.length > 1 ? 6.5 : 5, s.offLine ? "rgba(59,42,27,0.55)" : INK);
+    const former = !!(focus && cur && cur.get(focus) !== s.key); // une étoile d'autrefois de l'Âge suivi : pâle, cerclée de pointillés
+    inkStar(ctx, sx, sy, s.ages.length > 1 ? 6.5 : 5, s.offLine || former ? "rgba(59,42,27,0.45)" : INK);
+    if (former) { ctx.strokeStyle = rgba(59, 42, 27, 0.4); ctx.lineWidth = 0.7; ctx.setLineDash && ctx.setLineDash([1.5, 2]); ctx.beginPath(); ctx.arc(sx, sy, 8, 0, 6.283); ctx.stroke(); ctx.setLineDash && ctx.setLineDash([]); }
     if (s.offLine) { ctx.strokeStyle = RED; ctx.lineWidth = 0.8; ctx.setLineDash && ctx.setLineDash([2, 2]); ctx.beginPath(); ctx.arc(sx, sy, 9, 0, 6.283); ctx.stroke(); ctx.setLineDash && ctx.setLineDash([]); }
     if (s.tri) { ctx.strokeStyle = LEAD; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(sx - 8, sy + 7); ctx.lineTo(sx, sy - 7); ctx.lineTo(sx + 8, sy + 7); ctx.closePath(); ctx.stroke(); } // triangulée
-    const label = s.ages.length ? s.ages[0] + (s.ages.length > 1 ? " +" + (s.ages.length - 1) : "") : "";
+    const label = former ? t("map.former") : s.ages.length ? s.ages[0] + (s.ages.length > 1 ? " +" + (s.ages.length - 1) : "") : "";
     if (label) labels.push({ x: sx, y: sy, text: label, font: "italic 9.5px serif" }); // sans place libre : le nom reste au survol
     const tip = (s.ages.length ? s.ages.join(", ") : t("map.star.unnamed")) + (s.pert.length ? " — " + s.pert.map((p) => pertName(t, p.kind)).join(", ") : "") + (bad ? " — " + t("map.star.miss") : "") + " — " + t(elevBand(s.z));
     const rf = BEAM.rahnfeeOf(s.distance), far = rf >= 1 ? t("beam.far.beyond") : t("beam.far.line", { far: String(t("beam.far")).split("|")[BEAM.fracBand(rf)] }); // mondes lointains : au-delà d'un rahnfee // la distance le long du faisceau : en mots, puis en rahnfee (chiffres D'ni)
@@ -128,8 +160,14 @@ function drawStarMap(r, ctx, sc, sky, tm) {
     ctx.font = "italic 8.5px serif"; ctx.fillStyle = INK2; ctx.fillText(t("map.hscale"), lx + 6, ly - h / 2 + 3, 150); r.hot.push({ x: lx - 6, y: ly - h - 4, w: 150, h: h + 8, tip: t("map.hscale.tip") }); }
   ctx.restore();
   // le titre, la légende et, si besoin, l'avertissement de l'arpenteur
-  ctx.font = "italic 13px serif"; ctx.fillStyle = INK; ctx.textAlign = "center"; ctx.fillText(t("map.title"), S.x + S.w / 2, S.y + 29); ctx.textAlign = "left";
-  const bad = map.stars.filter((s) => s.miss > 2 * T.TOL.torahn).length, msg = !st.found ? t("map.nozero") : !map.stars.length ? t("map.empty") : bad ? (map.mixed ? t("map.warn.mixed") : t("map.warn.old")) : t("map.ok");
+  ctx.font = "italic 13px serif"; ctx.fillStyle = INK; ctx.textAlign = "center"; ctx.fillText(focus ? t("map.moved.title", { name: focus }) : t("map.title"), S.x + S.w / 2, S.y + 29, S.w - 80); ctx.textAlign = "left";
+  if (pages > 1) { // feuilleter les cartes : la carte d'aujourd'hui, puis celle de chaque Âge qui a bougé
+    ctx.font = "18px serif"; ctx.fillStyle = INK2;
+    if (r.mapPage > 0) { ctx.fillText("‹", S.x + 20, S.y + 31); r.hot.push({ x: S.x + 12, y: S.y + 14, w: 22, h: 24, tip: r.mapPage === 1 ? t("map.page.now") : t("map.moved.title", { name: moved[r.mapPage - 2] }), mapPage: -1 }); }
+    if (r.mapPage < pages - 1) { ctx.fillText("›", S.x + S.w - 28, S.y + 31); r.hot.push({ x: S.x + S.w - 34, y: S.y + 14, w: 22, h: 24, tip: t("map.moved.title", { name: moved[r.mapPage] }), mapPage: 1 }); }
+    ctx.font = "italic 9px serif"; ctx.textAlign = "center"; ctx.fillText(`${r.mapPage + 1} / ${pages}`, S.x + S.w / 2, S.y + 42); ctx.textAlign = "left";
+  }
+  const bad = map.stars.filter((s) => s.miss > 2 * T.TOL.torahn).length, msg = !st.found ? t("map.nozero") : !map.stars.length ? t("map.empty") : bad ? (map.mixed ? t("map.warn.mixed") : t("map.warn.old")) : focus ? (cur.has(focus) && !map.stars.some((x) => x.key === cur.get(focus)) ? t("map.moved.uncharted") : t("map.moved.ok")) : t("map.ok");
   ctx.font = "italic 11px serif"; ctx.fillStyle = bad ? RED : INK2; ctx.textAlign = "center"; ctx.fillText(msg, S.x + S.w / 2, S.y + S.h - 20, S.w - 40); ctx.textAlign = "left";
   // redescendre à l'observatoire
   ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(BACK.x, BACK.y, BACK.w, BACK.h);
