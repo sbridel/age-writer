@@ -55,7 +55,7 @@ function sceneOf(a, name = "", blocks = null) {
     lava: r("lava", "obsidian", "whispering_obsidian") || wd === "lava", water: (r("water", "marsh_mist", "brine", "meltwater", "crying_obsidian", ...TERRAIN.WATER_IDS) || wd === "ocean") && wd !== "lava" && wd !== "desert",
     ice: r("ice", "black_ice", "deep_cold", "hail", "rime") || wd === "frozen", sand: r("sand", "dust_storm", "glass", "singing_glass", "fulgurite") || wd === "desert",
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
-    moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine", "glow_algae") || wd === "jungle" || wd === "cavern", eyes: r("hunter", "stalking_pack"),
+    moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine", "glow_algae") || wd === "jungle" || wd === "cavern", eyes: r("hunter", "stalking_pack"), algae: r("glow_algae"),
     ruins, lampLit: r("lit_lamp"), tabletAwake: r("speaking_tablet"),
     world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), scarLevel, blight: ids.has("blight"), belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), remnants: ["pulsar", "neutron_star", "black_hole"].filter((id) => ids.has(id)), sunHues: SKY.sunColors([...ids]), blackDisc: [...ids].find((i) => SKY.HUES[i]) === "black_sun", blackSun: [...ids].find((i) => SKY.HUES[i]) === "black_sun" && !r("twin_suns"),
     extras: [...ids].filter((id) => !KNOWN.has(id) && !id.startsWith("?")).sort().slice(0, 8).map((id) => {
@@ -243,7 +243,8 @@ function build(S, W, H) {
   const meadow = S.grass ? buildMeadow(S, W, H, hz) : null; // herbe, prairie : graine propre
   const wx = buildWeather(S, W, H); // météo vivante : graine propre, rien d'autre ne bouge dans l'image
   if (shore && shore.mode === "side" && S.fissure === "submarine") { const wx = lerp(shore.x0, shore.x1, 0.5); fis.x = shore.side < 0 ? lerp(wx, W, 0.45) : lerp(0, wx, 0.55); } // la fissure sous l'eau reste dans l'eau
-  return { S, rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow };
+  const cave = S.world === "cavern" ? buildCave(S, W, H, hz) : null; // la voûte : graine propre, les autres mondes ne bougent pas
+  return { S, cave, rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow };
 }
 
 /**
@@ -398,11 +399,103 @@ function skyState(m, t, o = {}) {
   return { t, td, cs, sn, d, night, day, top, hzc, hues, air };
 }
 
+/**
+ * La caverne : la fenêtre donne sur l'intérieur, une voûte fermée qui remplit tout le cadre, sans ciel ni horizon ouvert.
+ * La seule lumière est celle de l'Âge : algues froides, vigne luisante, lave. Rien d'écrit qui luise, et la caverne reste presque noire.
+ */
+function buildCave(S, W, H, hz) {
+  const q = rng((S.seed ^ 0xca7e5) >>> 0), n = valueNoise((q() * 4294967296) >>> 0), A = S.amt && S.amt.glow != null ? S.amt.glow : 1;
+  const N = Math.ceil(W / 4) + 1, ceil = new Float32Array(N), floor = new Float32Array(N);
+  for (let k = 0; k < N; k++) {
+    const u = k / (N - 1), edge = Math.pow(Math.abs(u - 0.5) * 2, 3);
+    ceil[k] = H * (0.1 + 0.2 * fbm(n, u * 3.2 + 4)) + edge * H * 0.34; // la voûte descend vers les flancs
+    floor[k] = hz + H * (0.03 * fbm(n, u * 5 + 20) - 0.01) + edge * H * 0.05;
+  }
+  const hue0 = S.algae ? 168 + q() * 18 : S.glow ? 110 + q() * 40 : S.lava ? 16 + q() * 14 : 215 + q() * 20;
+  const lights = [];
+  if (S.glow) for (let i = 0, c = Math.round(clamp(9 * A, 3, 26)); i < c; i++) {
+    const zone = q(), wall = zone < 0.28, x = wall ? (q() < 0.5 ? W * (0.03 + 0.1 * q()) : W * (0.87 + 0.1 * q())) : W * (0.06 + 0.88 * q());
+    lights.push({ x, y: wall ? H * (0.3 + 0.45 * q()) : hz + H * (0.02 + 0.2 * q()), r: H * (0.05 + 0.12 * q()), ph: q(), hue: hue0 + (q() - 0.5) * 24, wall });
+  }
+  if (S.lava) for (let i = 0, c = 2 + Math.floor(q() * 2); i < c; i++) lights.push({ x: W * (0.1 + 0.8 * q()), y: hz + H * (0.04 + 0.16 * q()), r: H * (0.09 + 0.1 * q()), ph: q(), hue: 12 + q() * 18, wall: false, lava: true });
+  const pools = S.water ? Array.from({ length: 1 + Math.floor(q() * 2) }, () => ({ x: W * (0.2 + 0.6 * q()), w: W * (0.22 + 0.28 * q()), y: hz + H * (0.07 + 0.1 * q()), h: H * (0.06 + 0.05 * q()) })) : [];
+  const stalactites = Array.from({ length: 16 }, () => ({ x: W * q(), len: H * (0.04 + 0.2 * Math.pow(q(), 1.6)), w: H * (0.014 + 0.03 * q()) }));
+  const stalagmites = Array.from({ length: 10 }, () => ({ x: W * q(), h: H * (0.04 + 0.16 * Math.pow(q(), 1.5)), w: H * (0.015 + 0.03 * q()) }));
+  const columns = Array.from({ length: 5 }, () => ({ x: W * (0.1 + 0.8 * q()), w: H * (0.03 + 0.05 * q()), a: q() }));
+  const strata = Array.from({ length: 7 }, () => ({ y: H * (0.2 + 0.5 * q()), a: q(), p: q() * TAU }));
+  const motes = Array.from({ length: Math.round(clamp(36 * A, 10, 90)) }, () => ({ x: W * q(), y: H * (0.25 + 0.65 * q()), p: q(), k: 1 + Math.floor(q() * 2), r: 0.6 + q() * 1.3 }));
+  const moths = S.moths ? Array.from({ length: 6 }, () => ({ x: W * (0.1 + 0.8 * q()), y: H * (0.35 + 0.35 * q()), p: q(), rx: 14 + q() * 30, ry: 6 + q() * 12 })) : [];
+  return { ceil, floor, hue0, lights, pools, stalactites, stalagmites, columns, strata, motes, moths };
+}
+
+function paintCavern(g, m, t) {
+  const { S, W, H, hz, cave: C } = m, tone = (h, l = 0.6, sa = 0.85) => hsl(h, sa, l), N = C.ceil.length;
+  const base = g.createLinearGradient(0, 0, 0, H); base.addColorStop(0, "rgb(4,5,9)"); base.addColorStop(0.45, "rgb(12,14,21)"); base.addColorStop(1, "rgb(8,10,14)");
+  g.fillStyle = base; g.fillRect(0, 0, W, H);
+  g.save(); g.globalCompositeOperation = "lighter";
+  for (const L of C.lights) { // la brume de lumière : ce qui luit éclaire l'air de la caverne
+    const col = tone(L.hue, 0.5), pulse = 0.75 + 0.25 * Math.sin(TAU * (t + L.ph)), gr = g.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.r * 5);
+    gr.addColorStop(0, css(col, 0.2 * pulse)); gr.addColorStop(1, css(col, 0)); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  }
+  g.restore();
+  for (const s of C.strata) { g.strokeStyle = css([60, 66, 80], 0.05 + 0.05 * s.a); g.lineWidth = 1; g.beginPath(); for (let x = 0; x <= W; x += 24) { const y = s.y + 6 * Math.sin(x / W * TAU * 1.5 + s.p); x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
+  for (const c of C.columns) { // piliers lointains, noyés dans la brume
+    const hg = g.createLinearGradient(0, 0, 0, hz); hg.addColorStop(0, "rgba(10,12,18,0.95)"); hg.addColorStop(1, css(mixc([10, 14, 20], tone(C.hue0, 0.3, 0.5), 0.35), 0.9));
+    g.fillStyle = hg; g.beginPath(); g.moveTo(c.x - c.w, hz); g.quadraticCurveTo(c.x - c.w * 0.3, hz * 0.55, c.x - c.w * 0.5, 0); g.lineTo(c.x + c.w * 0.5, 0); g.quadraticCurveTo(c.x + c.w * 0.3, hz * 0.55, c.x + c.w, hz); g.closePath(); g.fill();
+  }
+  const rim = tone(C.hue0, 0.5, 0.7);
+  const lit = C.lights.length ? 0.14 : 0.04, cg = g.createLinearGradient(0, 0, 0, Math.max(...C.ceil)); cg.addColorStop(0, "rgb(3,4,7)"); cg.addColorStop(0.6, "rgb(6,7,11)"); cg.addColorStop(1, css(mixc([7, 8, 12], rim, lit)));
+  g.fillStyle = cg; g.beginPath(); g.moveTo(0, 0); for (let k = 0; k < N; k++) g.lineTo((k / (N - 1)) * W, C.ceil[k]); g.lineTo(W, 0); g.closePath(); g.fill(); // la voûte, que la lueur d'en bas touche à peine
+  g.strokeStyle = css(rim, C.lights.length ? 0.1 : 0.03); g.lineWidth = 1.2; g.beginPath(); for (let k = 0; k < N; k++) { const x = (k / (N - 1)) * W; k ? g.lineTo(x, C.ceil[k]) : g.moveTo(x, C.ceil[k]); } g.stroke();
+  for (const s of C.stalactites) { // stalactites : le haut est noir, la pointe attrape un peu de lueur
+    const k = Math.max(0, Math.min(N - 1, Math.round((s.x / W) * (N - 1)))), y0 = C.ceil[k] - 2;
+    g.fillStyle = cg; g.beginPath(); g.moveTo(s.x - s.w, y0); g.quadraticCurveTo(s.x - s.w * 0.25, y0 + s.len * 0.6, s.x, y0 + s.len); g.quadraticCurveTo(s.x + s.w * 0.25, y0 + s.len * 0.6, s.x + s.w, y0); g.closePath(); g.fill();
+    if (C.lights.length) { g.fillStyle = css(rim, 0.22); g.beginPath(); g.arc(s.x, y0 + s.len - 1, 1.3, 0, TAU); g.fill(); }
+  }
+  for (const side of [0, 1]) { // les flancs referment la voûte des deux côtés
+    const sg = g.createLinearGradient(side ? W : 0, 0, side ? W * 0.88 : W * 0.12, 0); sg.addColorStop(0, "rgb(3,4,7)"); sg.addColorStop(1, css(mixc([7, 8, 12], rim, lit * 0.8))); g.fillStyle = sg; g.beginPath(); g.moveTo(side ? W : 0, 0); for (let k = 0; k <= 12; k++) { const y = (k / 12) * hz, w = W * (0.015 + 0.075 * Math.pow(k / 12, 1.8) + 0.02 * Math.sin(k * 1.7 + side)); g.lineTo(side ? W - w : w, y); } g.lineTo(side ? W : 0, hz); g.closePath(); g.fill(); }
+  const fl = g.createLinearGradient(0, hz - H * 0.03, 0, H); fl.addColorStop(0, "rgb(11,13,18)"); fl.addColorStop(1, "rgb(5,6,9)"); // le sol de la caverne
+  g.fillStyle = fl; g.beginPath(); g.moveTo(0, H); for (let k = 0; k < N; k++) g.lineTo((k / (N - 1)) * W, C.floor[k]); g.lineTo(W, H); g.closePath(); g.fill();
+  for (const p of C.pools) { // l'eau noire des vasques ; la lumière s'y reflète en traînées qui tremblent
+    const wg = g.createLinearGradient(0, p.y - p.h, 0, p.y + p.h); wg.addColorStop(0, css(mixc([8, 14, 20], tone(C.hue0, 0.25, 0.5), 0.25), 0.95)); wg.addColorStop(1, "rgba(4,7,11,0.95)");
+    g.fillStyle = wg; g.beginPath(); g.ellipse(p.x, p.y, p.w, p.h, 0, 0, TAU); g.fill();
+    g.save(); g.beginPath(); g.ellipse(p.x, p.y, p.w, p.h, 0, 0, TAU); g.clip(); g.globalCompositeOperation = "lighter";
+    for (const L of C.lights) {
+      if (Math.abs(L.x - p.x) > p.w * 1.15) continue; const col = tone(L.hue, 0.55);
+      const rg = g.createRadialGradient(L.x, p.y, 0, L.x, p.y, p.h * 1.6); rg.addColorStop(0, css(col, 0.22)); rg.addColorStop(1, css(col, 0)); g.fillStyle = rg; g.fillRect(L.x - p.h * 1.6, p.y - p.h, p.h * 3.2, p.h * 2);
+      g.strokeStyle = css(col, 0.35); g.lineWidth = 1; // de fines rides qui tremblent sous la lumière
+      for (let i = 0; i < 7; i++) { const y = p.y - p.h * 0.7 + (i / 6) * p.h * 1.4, wob = 4 * Math.sin(TAU * (t * 2 + L.ph + i * 0.23)), w = L.r * 0.45 * (1 - Math.abs(i - 3) / 5); g.globalAlpha = 0.5 + 0.5 * Math.sin(TAU * (t + L.ph + i * 0.31)) ** 2; g.beginPath(); g.moveTo(L.x + wob - w, y); g.lineTo(L.x + wob + w, y); g.stroke(); }
+      g.globalAlpha = 1;
+    }
+    g.restore();
+    g.strokeStyle = css(rim, 0.12); g.lineWidth = 1; g.beginPath(); g.ellipse(p.x, p.y, p.w, p.h, 0, 0, TAU); g.stroke();
+  }
+  for (const s of C.stalagmites) { const k = Math.max(0, Math.min(N - 1, Math.round((s.x / W) * (N - 1)))), y0 = C.floor[k] + 3; g.fillStyle = "rgb(4,5,8)"; g.beginPath(); g.moveTo(s.x - s.w, y0); g.quadraticCurveTo(s.x - s.w * 0.25, y0 - s.h * 0.6, s.x, y0 - s.h); g.quadraticCurveTo(s.x + s.w * 0.25, y0 - s.h * 0.6, s.x + s.w, y0); g.closePath(); g.fill(); }
+  if (S.fissure) { // la bouche de la fissure, dans la pénombre de la caverne
+    g.save(); g.globalAlpha = 0.4; fissure(g, m, t); g.restore();
+  }
+  for (const rn of m.ruins) ruin(g, m, rn, t);
+  for (const e of m.eyes) { const o = Math.sin(TAU * (t + e.p)); if (o > -0.7) { g.fillStyle = css([255, 200, 90], 0.8); g.fillRect(e.x - 3, e.y, 1.6, 1.6); g.fillRect(e.x + 2, e.y, 1.6, 1.6); } }
+  extraAt(g, m, t, "ground");
+  g.save(); g.globalCompositeOperation = "lighter";
+  for (const L of C.lights) { // les algues elles-mêmes : un cœur qui palpite, de petites perles autour
+    const col = tone(L.hue, L.lava ? 0.5 : 0.62), pulse = 0.7 + 0.3 * Math.sin(TAU * (t * (L.lava ? 2 : 1) + L.ph)), gr = g.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.r);
+    gr.addColorStop(0, css(mixc(col, [255, 255, 255], 0.35), 0.8 * pulse)); gr.addColorStop(0.35, css(col, 0.35 * pulse)); gr.addColorStop(1, css(col, 0)); g.fillStyle = gr; g.beginPath(); g.arc(L.x, L.y, L.r, 0, TAU); g.fill();
+    for (let i = 0; i < 6; i++) { const a = (i + L.ph) * 2.4, d = L.r * (0.25 + 0.5 * ((i * 0.37 + L.ph) % 1)), b = 0.5 + 0.5 * Math.sin(TAU * (t * 2 + L.ph + i * 0.21)); g.fillStyle = css(col, 0.55 * b); g.fillRect(L.x + Math.cos(a) * d, L.y + Math.sin(a) * d * 0.6, 1.8, 1.8); }
+  }
+  for (const mo of C.motes) { const x = mo.x + 10 * Math.sin(TAU * (t * mo.k + mo.p)), y = mo.y + 8 * Math.cos(TAU * (t * mo.k + mo.p * 1.7)), a = 0.25 + 0.4 * Math.sin(TAU * (t * 2 + mo.p)) ** 2; g.fillStyle = css(tone(C.hue0, 0.7), a * (C.lights.length ? 1 : 0.2)); g.beginPath(); g.arc(x, y, mo.r, 0, TAU); g.fill(); }
+  for (const mo of C.moths) { const x = mo.x + mo.rx * Math.sin(TAU * (t + mo.p)), y = mo.y + mo.ry * Math.sin(TAU * (t * 2 + mo.p)); g.fillStyle = css([255, 232, 170], 0.85); g.beginPath(); g.arc(x, y, 1.5, 0, TAU); g.fill(); g.fillStyle = css([255, 232, 170], 0.18); g.beginPath(); g.arc(x, y, 6, 0, TAU); g.fill(); }
+  g.restore();
+  extraAt(g, m, t, "air");
+  const vg = g.createRadialGradient(W / 2, H * 0.55, H * 0.3, W / 2, H * 0.55, H * 0.95); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.55)"); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+}
+
 function paint(g, m, t, o = {}) {
   const { S, W, H, hz, pal } = m, k0 = skyState(m, t, o), { cs, d, night, day, top, hzc, hues, air } = k0, sn = m.noSun ? [] : k0.sn; t = k0.t; // sans soleil dessiné : la lumière reste celle du jour
   g.save(); g.clearRect(0, 0, W, H);
   const dm = doomOf(S);
   if (dm > 0.1 && dm < 0.9) { const a = (dm - 0.1) * 3.2, T = Date.now() / 1000; g.translate(Math.sin(T * 61) * a, Math.cos(T * 47) * a * 0.7); } // la terre tremble
+  if (m.cave) { paintCavern(g, m, t); g.restore(); return; } // monde-caverne : une voûte fermée, éclairée par ce qui luit
   const L = m.lv = weatherLevels(m, k0.td, o); // météo vivante : présence de chaque temps à cette heure (1 partout sans ligne programmée)
   const sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, css(top)); sky.addColorStop(1, css(hzc)); g.fillStyle = sky; g.fillRect(0, 0, W, H);
   if (L.storm > 0.005) { g.fillStyle = css([14, 17, 24], 0.5 * L.storm); g.fillRect(0, 0, W, H); }
