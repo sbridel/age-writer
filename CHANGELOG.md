@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.27.2 — The star chart shows only the chosen books (2026-10-12)
+
+### Fixed
+- The star chart now shows only the Ages chosen for the shelf (names and stars), like the shelf and the vault. An Age you untick is hidden, not forgotten: its star and name stay engraved and come back when you tick it again. The *clean* command still forgets only Ages that no longer exist (deleted, renamed, excluded).
+
 ## 1.27.1 — The vault shows only the chosen books (2026-10-12)
 
 ### Fixed

@@ -355,3 +355,8 @@ unlock:                            # facultatif
 - Le coffre des livres descriptifs lisait `scene.candidates` (tous les Âges des dossiers) au lieu de `scene.ages` (ceux de la liste blanche : pastilles de l'onglet Pages, `books:` du bloc) : `vaultAges` dans `src/ui-relto.js`. Même liste que l'étagère ; « Tout masquer » vide aussi le coffre.
 - La carte des étoiles et sa commande de nettoyage continuent de lire `candidates` (un Âge décoché garde son étoile) : laissé tel quel en attendant la décision de l'auteur.
 - CSS : `text-decoration: underline wavy` (ligne au symbole inconnu dans le livre ouvert) devient `underline`, signalé « partiellement pris en charge » par le scorecard d'Obsidian (`src/styles.ext.css`).
+
+## 1.27.2 — la carte des étoiles ne montre que les livres choisis (12 oct. 2026)
+
+- `drawStarMap` (`src/relto-starmap.js`) ne lit plus que `scene.ages` : un Âge décoché disparaît de la carte (nom et étoile s'il était seul), mais la gravure reste dans `telescope[key].systems` ; le recocher le ramène.
+- `cleanStarChart` (`src/ui-relto.js`) lit toujours `candidates ∪ ages` : il n'oublie que les Âges absents (supprimés, renommés, exclus), jamais les simples décochés.
