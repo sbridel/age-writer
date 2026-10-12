@@ -13,6 +13,7 @@
 const W = require("./wealth");
 const DS = require("./dosage");
 const LF = require("./life");
+const SC = require("./scarring");
 
 const LEVELS = { many: 2, much: 2, lots: 2, plenty: 2, beaucoup: 2, few: 0.4, little: 0.4, peu: 0.4, normal: 1 };
 const LV_SRC = "many|much|lots|plenty|beaucoup|few|little|peu|normal";
@@ -80,6 +81,11 @@ function applyAmounts(r, amt, blocks, opts) {
     if (W.RICH_IDS.includes(id)) rich += b.weight * f;
     if (W.SCAR_IDS.includes(id)) relief += W.RELIEF_PER_SCAR * f;
   }
+  // le tiré et les cicatrices (src/scarring.js) : un léger clash tiré ne coûte rien, une grosse incohérence tirée laisse une cicatrice
+  const { CONTRADICTION_COST } = require("./engine/rules"); // à l'appel : rules.js lit sky.js, qui lit ce fichier
+  const sc = SC.scarring(r.resolved, CONTRADICTION_COST), scars = sc ? SC.merge(sc.scars).filter((x) => !written.includes(x.id)) : [];
+  if (sc) for (const [a, d] of Object.entries(sc.delta)) delta[a] = (delta[a] || 0) + d;
+  for (const x of scars) relief += W.RELIEF_PER_SCAR * SC.RELIEF[x.level]; // l'allègement suit l'intensité (0,8 / 1 / 1,25)
   relief = Math.min(relief, rich * W.RELIEF_CAP);
   if (relief > 0) delta.geological = (delta.geological || 0) - relief;
   // le dosage selon les lois : étendue des contradictions, réactions naturelles, budget de richesse. `opts` : { weights (src/rigor.js), size }
@@ -89,8 +95,10 @@ function applyAmounts(r, amt, blocks, opts) {
   const present = new Set([...written, ...(r.resolved.matter.reactions || []).map((x) => (x && x.result) || x), ...(r.resolved.lines || []).map((l) => l.entry && l.entry.id).filter(Boolean)]);
   const life = LF.laws(present, { weights: opts && opts.weights, size: opts && opts.size, factor: (id) => factorOf(id, amt) });
   if (life) for (const [a, d] of Object.entries(life.delta)) if (d > 0) delta[a] = (delta[a] || 0) + d;
-  if (!Object.keys(delta).length && !life) return r;
+  if (!Object.keys(delta).length && !life && !scars.length) return r;
   const out = Object.keys(delta).length ? shift(r, delta) : { ...r }; if (rich > 0) out.compensation = { riches: rich, relief };
+  if (scars.length) { out.scars = scars; out.resolved = { ...out.resolved, scars }; } // lues par la description, le livre et la fenêtre
+  if (sc && sc.forgiven.length) out.forgiven = sc.forgiven;
   if (life) out.life = life;
   if (dose && (dose.softened.length || dose.natural.length || Object.keys(dose.richness).length)) out.dosage = { softened: dose.softened, natural: dose.natural, richness: dose.richness, capacity: dose.capacity };
   return out;

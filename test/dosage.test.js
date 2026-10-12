@@ -22,7 +22,7 @@ assert.strictEqual(dwMany.stability, dw.stability, "doux : beaucoup d'eau n'aggr
 assert.ok(balanced("desert_world", "water", "many: water").stability < dw.stability, "équilibré : beaucoup d'eau est pire que l'eau normale");
 assert.ok(strict("desert_world", "water", "many: water").stability < balanced("desert_world", "water", "many: water").stability, "strict : plus que la moitié");
 const dr = gentle("desert_world", "rain"), drFew = gentle("desert_world", "rain", "few: rain");
-assert.ok(drFew.stability > dr.stability && drFew.stability < 75, "un peu de pluie clashe encore dans un désert");
+assert.ok(drFew.stability > dr.stability && drFew.stability < gentle("desert_world").stability, "un peu de pluie clashe encore dans un désert");
 const lw = gentle("lava_world", "water"), lwFew = gentle("lava_world", "water", "few: water");
 assert.ok(lwFew.stability >= lw.stability, "un monde de lave encaisse un peu d'eau");
 // la syntaxe « bloc : quantité »

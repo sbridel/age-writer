@@ -50,6 +50,16 @@ function pageList(analysis, includeBlots = !1) {
       axis: blockById.get(reaction.shown)?.axis,
     });
   }
+  for (let scar of resolved.scars || []) // une cicatrice gardée du tirage : une page née, jamais écrite (src/scarring.js)
+    pages.push({
+      id: scar.id,
+      born: !0,
+      written: !1,
+      drawn: !1,
+      scar: scar.level,
+      severity: scar.level === "deep" ? "strong" : scar.level === "normal" ? "medium" : "light",
+      axis: scar.axis,
+    });
   if (includeBlots)
     for (let line of resolved.lines)
       line.unknown &&

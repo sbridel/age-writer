@@ -364,6 +364,10 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random)) {
     if (presence) sentences.push(capitalize(presence) + ".");
     else loose.push(id);
   }
+  for (const sc of resolved.scars || []) { // les cicatrices que le monde a gardées de son tirage (src/scarring.js)
+    const presence = String(blockById.get(sc.id)?.presence ?? "").trim();
+    if (presence) sentences.push(capitalize(presence) + ".");
+  }
   // ce qui ne réagit pas : par petits groupes, pas une phrase chacun
   const groups = [];
   for (let i = 0; i < loose.length;) {

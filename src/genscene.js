@@ -30,6 +30,7 @@ function sceneOf(a, name = "", blocks = null) {
   for (const l of res.lines) if (l.entry) ids.add(l.entry.id);
   for (const w of res.matter.written || []) ids.add(w);
   for (const x of res.matter.reactions || []) ids.add(x.result);
+  const scarLevel = {}; for (const x of res.scars || []) { ids.add(x.id); scarLevel[x.id] = x.level; } // cicatrices gardées du tirage, avec leur intensité
   const r = (...n) => n.some((x) => ids.has(x));
   // météo vivante : quels blocs allument quel temps (une ligne `rain: sometimes, dawn` le fait venir et partir, src/weather.js) ;
   // « * » : allumé par autre chose qu'un bloc (monde-type, physique), donc toujours là
@@ -56,7 +57,7 @@ function sceneOf(a, name = "", blocks = null) {
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
     moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine", "glow_algae") || wd === "jungle" || wd === "cavern", eyes: r("hunter", "stalking_pack"),
     ruins, lampLit: r("lit_lamp"), tabletAwake: r("speaking_tablet"),
-    world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), remnants: ["pulsar", "neutron_star", "black_hole"].filter((id) => ids.has(id)), sunHues: SKY.sunColors([...ids]), blackDisc: [...ids].find((i) => SKY.HUES[i]) === "black_sun", blackSun: [...ids].find((i) => SKY.HUES[i]) === "black_sun" && !r("twin_suns"),
+    world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), scarLevel, belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), remnants: ["pulsar", "neutron_star", "black_hole"].filter((id) => ids.has(id)), sunHues: SKY.sunColors([...ids]), blackDisc: [...ids].find((i) => SKY.HUES[i]) === "black_sun", blackSun: [...ids].find((i) => SKY.HUES[i]) === "black_sun" && !r("twin_suns"),
     extras: [...ids].filter((id) => !KNOWN.has(id) && !id.startsWith("?")).sort().slice(0, 8).map((id) => {
       const b = blocks && typeof blocks.get === "function" ? blocks.get(id) : null, ax = b && typeof b.axis === "string" ? b.axis.toLowerCase() : "";
       return { id, axis: AXES.find((x) => ax.startsWith(x.slice(0, 5))) || AXES[fnv(id) % 5], words: b && Array.isArray(b.descriptors) && b.descriptors.length ? b.descriptors.map(String) : id.split("_") };
@@ -480,7 +481,7 @@ function paint(g, m, t, o = {}) {
     if (S.lava) lavaVeins(g, m, t);
   }
   if (m.meadow) meadowGround(g, m, t, night, L, hzc);
-  scarGround(g, m, t, night);
+  scarPass(g, m, () => scarGround(g, m, t, night));
   groundWeather(g, m, t, night, L); // fleurs, neige au sol, verglas, cendre
   richGlints(g, m, t, night);
   extraAt(g, m, t, "ground");
@@ -497,7 +498,7 @@ function paint(g, m, t, o = {}) {
   if (m.shore) { g.save(); shorePath(g, m.shore.wet); g.clip(); reflect(g, m, t, 0.5); g.restore(); shoreEdge(g, m, t, night); } // le reflet ne couvre que l'eau ; l'écume par-dessus
   else if (S.ice) reflect(g, m, t, 0.34); else if (S.water) reflect(g, m, t, 0.5);
   extraAt(g, m, t, "air");
-  scarAir(g, m, t);
+  scarPass(g, m, () => { scarAir(g, m, t); scarHeld(g, m, t); });
   weather(g, m, t);
   foreground(g, m, t, hzc);
   if (S.ice) frost(g, m, t, night);
@@ -689,6 +690,24 @@ function scarGround(g, m, t, night) {
     const x = p.x * W, y = f(p.u), rx = (8 + 14 * p.u) * p.w, ry = 1.6 + 4 * p.u; g.fillStyle = "rgba(0,0,0,0.7)"; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, TAU); g.fill();
     g.strokeStyle = css([150, 130, 110], 0.28); g.lineWidth = 1; g.beginPath(); g.ellipse(x, y, rx, ry, 0, Math.PI, TAU); g.stroke();
   }
+}
+
+/** L'intensité des cicatrices gardées du tirage (src/scarring.js) : légère à demi, profonde repassée une fois ; les cicatrices écrites sont normales. */
+function scarPass(g, m, draw) {
+  const lv = Object.values(m.S.scarLevel || {}), written = (m.S.scars || []).some((id) => !(m.S.scarLevel || {})[id]);
+  const deep = lv.includes("deep"), light = !written && lv.length && lv.every((l) => l === "light");
+  g.save(); if (light) g.globalAlpha *= 0.55; draw(); g.restore();
+  if (deep) { g.save(); g.globalAlpha *= 0.45; draw(); g.restore(); }
+}
+
+/** Pluie retenue : un plafond de nuages lourds et bas, qui ne tombe pas. Ruines muettes : un voile gris sur le sol. */
+function scarHeld(g, m, t) {
+  const { S, W, H, hz } = m, sc = S.scars || [];
+  if (sc.includes("held_rain")) {
+    const gr = g.createLinearGradient(0, 0, 0, hz * 0.6); gr.addColorStop(0, css([38, 42, 52], 0.62)); gr.addColorStop(1, css([38, 42, 52], 0)); g.fillStyle = gr; g.fillRect(0, 0, W, hz * 0.6);
+    for (let i = 0; i < 4; i++) { const x = ((i * 0.27 + t * 0.01) % 1.2 - 0.1) * W, y = hz * (0.08 + 0.07 * i); g.fillStyle = css([30, 34, 44], 0.32); g.beginPath(); g.ellipse(x, y, W * 0.22, hz * 0.06, 0, 0, TAU); g.fill(); }
+  }
+  if (sc.includes("mute_ruins")) { g.fillStyle = css([128, 128, 134], 0.16 + 0.03 * Math.sin(TAU * t)); g.fillRect(0, hz, W, H - hz); }
 }
 
 /** Air empoisonné : voile verdâtre et bandes de brume acide. */

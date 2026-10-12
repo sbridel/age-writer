@@ -229,7 +229,7 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   const hi = AM.applyAmounts(mk(["gold", "silver"], 83), null, blocks); ok(hi === undefined || hi.stability <= 95, "analyse valide");
   ok(AM.applyAmounts(null, { gold: 2 }, blocks) === null && AM.applyAmounts({}, { gold: 2 }, blocks) !== undefined, "entrées invalides tolérées");
   ok(AM.applyAmounts(mk(["gold", "scorched_surface"], 89), null, blocks).compensation.relief > 0, "la compensation est exposée");
-  ok(WT.MATTER_BLOCKS.length === 12 && WT.MATTER_BLOCKS.every((b) => b.writable && b.axis === "geological" && b.descriptors.length === 3 && b.presence) && WT.SCAR_IDS.every((id) => WT.MATTER_BLOCKS.find((b) => b.id === id).weight === 0) && WT.RICH_IDS.every((id) => WT.MATTER_BLOCKS.find((b) => b.id === id).weight > 0), "douze blocs : richesses payantes, cicatrices gratuites");
+  ok(WT.MATTER_BLOCKS.length === 14 && WT.MATTER_BLOCKS.every((b) => b.writable && (b.axis === "geological" || (WT.SCAR_IDS.includes(b.id) && ["weather", "metaphysical"].includes(b.axis))) && b.descriptors.length === 3 && b.presence) && WT.SCAR_IDS.every((id) => WT.MATTER_BLOCKS.find((b) => b.id === id).weight === 0) && WT.RICH_IDS.every((id) => WT.MATTER_BLOCKS.find((b) => b.id === id).weight > 0), "quatorze blocs : richesses payantes, cicatrices gratuites (une pour la météo, une pour les ruines)");
 
   const F = (ids, amt) => { const S = G.sceneOf(an(["single_sun", ...ids]), "Q"); if (amt) S.amt = amt; return S; };
   ok(F(["gold", "silver"]).riches.join() === "gold,silver" && F(["scorched_surface", "ashen_sky"]).scars.join() === "scorched_surface,ashen_sky", "sceneOf : richesses et cicatrices");

@@ -21,12 +21,15 @@ const SCARS = [
   { id: "bitter_water", d: ["cold", "green", "bitter"], p: "the water is bitter, and no one has drunk it twice" },
   { id: "hollowed_ground", d: ["hollow", "dark", "echoing"], p: "the ground sounds hollow, as if something had already been taken from it" },
   { id: "ashen_sky", d: ["grey", "low", "falling"], p: "ash falls without wind, from a sky that has given up" },
+  // une cicatrice par axe (claude/DESIGN-capacite-et-coherence.md) : le temps et les ruines n'en avaient pas
+  { id: "held_rain", d: ["heavy", "low", "still"], axis: "weather", p: "the clouds hang heavy and low, and hold their rain as if they had forgotten how to let it fall" },
+  { id: "mute_ruins", d: ["grey", "silent", "still"], axis: "metaphysical", p: "the ruins have stopped saying anything, even to those who can read them" },
 ];
 const RICH_IDS = RICH.map((b) => b.id), SCAR_IDS = SCARS.map((b) => b.id);
 /** Blocs de matière au format du moteur : { id, descriptors, weight, axis, writable, presence }. */
 const MATTER_BLOCKS = [
   ...RICH.map((b) => ({ id: b.id, descriptors: b.d, weight: b.w, axis: "geological", writable: true, presence: b.p })),
-  ...SCARS.map((b) => ({ id: b.id, descriptors: b.d, weight: 0, axis: "geological", writable: true, presence: b.p })),
+  ...SCARS.map((b) => ({ id: b.id, descriptors: b.d, weight: 0, axis: b.axis || "geological", writable: true, presence: b.p })),
 ];
 const RICH_COLOR = Object.fromEntries(RICH.map((b) => [b.id, b.c]));
 /** Compensation : ce que rachète chaque cicatrice (en coût), et part maximale du coût des richesses qu'on peut racheter. */
