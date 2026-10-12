@@ -317,7 +317,7 @@ function buildNight(S, W, H, hz) {
   const nebula = q() < 0.35 ? { x: W * (0.15 + 0.7 * q()), y: hz * (0.15 + 0.4 * q()), R: H * (0.14 + 0.16 * q()), hue: [300, 200, 20, 160, 260][Math.floor(q() * 5)], blobs: Array.from({ length: 7 }, () => ({ dx: (q() - 0.5) * 1.6, dy: (q() - 0.5) * 0.9, r: 0.35 + q() * 0.6 })) } : null;
   const band = q() < 0.4 ? { a: (q() - 0.5) * 1.2, y: hz * (0.25 + 0.3 * q()), w: H * (0.05 + 0.05 * q()), pts: Array.from({ length: 160 }, () => ({ u: q(), v: (q() + q() + q() - 1.5) / 1.5, b: q() })) } : null;
   const n = S.moons != null ? clamp(Math.round(S.moons), 0, 5) : S.moon ? 1 : 0;
-  const moons = Array.from({ length: n }, (_, i) => ({ r: H * (i === 0 ? 0.045 : 0.015 + 0.03 * q()), ph: i === 0 ? 0.28 : q() * 0.8 - 0.4, off: i === 0 ? 0 : q(), sp: i === 0 ? 1 : 0.6 + q() * 1.6, tint: i === 0 ? [207, 214, 226] : [[220, 200, 180], [190, 210, 230], [230, 190, 170], [210, 215, 200]][Math.floor(q() * 4)], fx: 0.15 + 0.7 * q(), fy: 0.15 + 0.3 * q() }));
+  const moons = Array.from({ length: n }, (_, i) => ({ r: H * (i === 0 ? 0.045 * (S.moonScale || 1) : 0.015 + 0.03 * q()), ph: i === 0 ? 0.28 : q() * 0.8 - 0.4, off: i === 0 ? 0 : q(), sp: i === 0 ? 1 : 0.6 + q() * 1.6, tint: i === 0 ? [207, 214, 226] : [[220, 200, 180], [190, 210, 230], [230, 190, 170], [210, 215, 200]][Math.floor(q() * 4)], fx: 0.15 + 0.7 * q(), fy: 0.15 + 0.3 * q() }));
   return { cons, nebula, band, moons };
 }
 

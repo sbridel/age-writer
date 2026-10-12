@@ -15,7 +15,7 @@ const { Soundscape, staticBurst, openSequence, linkSound, pageTurn } = require("
 const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
 const { sceneOf, HOOKS: GEN_HOOKS } = require("./genscene");
-const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, parseSky } = require("./sky");
+const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, parseSky } = require("./sky");
 const { AMOUNT_RE, parseAmounts, applyAmounts } = require("./amounts");
 const { rollLink } = fx;
 const { makeT } = require("./i18n");
@@ -145,7 +145,7 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.ghostSky = (category, phrase) => (this.lang() === "fr" ? DFR.skyPhrase(category) : phrase);
       AGEX.noDraw = (seed) => seed != null && R.storyNoDraw(this).has(String(seed));
       AGEX.norm = (line) => guard("météo", () => WX.normalize(line)) || line; // `rain: sometimes, dawn` : pour le moteur, c'est `rain`
-      AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || DOSE.WORLD_SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line) || SYSTEM_RE.test(line); // `system: Kerath` : la graine d'étoile partagée (télescope, étape 2)
+      AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || MOON_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || DOSE.WORLD_SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line) || SYSTEM_RE.test(line); // `system: Kerath` : la graine d'étoile partagée (télescope, étape 2)
       // livre-piège : « pas de fissure » est une réponse donnée d'avance, le tirage n'en dessine pas une que le pied de bloc nierait
       AGEX.written = (set) => { if (!AGEX.src || !guard("trap draw", () => parseTrap(AGEX.src))) return set; const s = new Set(set); s.add("no_fissure"); return s; };
       AGEX.w = (slot, opt) => { const f = guard("solitude", () => solitudeFactor(this.ext.solitude, slot, opt.id)); return opt.weight * (f == null ? 1 : f); };

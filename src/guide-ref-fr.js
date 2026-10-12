@@ -68,7 +68,7 @@ const REF_FR = [
     { h: "Étoiles (tirées si tu n'en écris pas)" },
     { ul: ["`single_sun` (−5) : un soleil", "`twin_suns` (−10) : deux soleils", "`starless` (−10) : aucun soleil ; seule la chaleur du sol, et la vie verte peine"] },
     { h: "Lune (parfois tirée)" },
-    { ul: ["`companion_moon` (+3) : une lune dans le ciel ; la ligne `moons: 3` en dessine davantage"] },
+    { ul: ["`companion_moon` (+3) : une lune dans le ciel ; la ligne `moons: 3` en dessine davantage", "`moon: small` · `moon: large` · `moon: distant` · `moon: close`, ou deux mots (`moon: small, distant`) ; aussi `lune: petite, grande, lointaine, proche`. La ligne qualifie la lune écrite et ne coûte rien. Petite ou lointaine, elle ne stabilise plus l'axe du monde : un cycle erratique redevient possible, et la marée faiblit. Grande ou proche, la marée chauffe davantage l'intérieur. Une lune lointaine demande une planète qui ait assez de prise pour la garder : assez lourde, ou assez loin de son étoile (sinon un léger conflit). La fenêtre la dessine plus petite ou plus grande"] },
     { h: "Cycle du jour (tiré si tu n'en écris pas)" },
     { ul: ["`steady_cycle` (−5) : jours et nuits réguliers", "`erratic_cycle` (−8) : jours et nuits de durée inégale", "`frozen_cycle` (−10) : le ciel ne bouge plus ; une face toujours au soleil (il contredit fortement `stable_orbit`, `shifting_orbit` et `chaotic_orbit`)"] },
     { h: "Orbite de deux soleils (jamais tirée)" },

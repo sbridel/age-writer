@@ -84,7 +84,7 @@ const REQUIREMENTS = {
     law: "L2", axis: "cosmological", sev: "light",
     test: (w) => !w.moon,
     why: { fr: () => "Une grande lune stabilise l'axe d'un monde (c'est le cas de la Terre) : des saisons déréglées s'expliquent mal avec elle.", en: () => "A large moon steadies a world's axis (as it does Earth's): erratic seasons are hard to explain with one." },
-    fix: () => [tip("retirer la lune (companion_moon), ou la dire petite et lointaine", "remove the moon (companion_moon), or call it small and distant")],
+    fix: () => [tip("dire la lune petite ou lointaine (moon: small, ou moon: distant)", "call the moon small or distant (moon: small, or moon: distant)"), tip("écrire un cycle régulier (steady_cycle)", "write a steady cycle (steady_cycle)"), tip("retirer la lune (companion_moon)", "remove the moon (companion_moon)")],
   },
 
   // ---- L1 : étoiles ---------------------------------------------------------------------------------
@@ -346,6 +346,17 @@ const REQUIREMENTS = {
 
 /** Exigences qui valent pour tout monde, quels que soient les blocs (`applies` : quand les vérifier). */
 const GLOBAL = {
+  // une lune lointaine ne reste liée que dans la sphère de Hill de sa planète (sa « prise ») : rayon ∝ a · (M / M★)^(1/3).
+  // Celle de la Terre (1 UA, 1 M⊕, 1 M☉) garde une lune deux fois plus loin que la nôtre : c'est la mesure 1.
+  moonReach: {
+    law: "L2", axis: "cosmological", sev: "light", search: ["mass"], applies: (w) => w.moonDist === "distant" && w.stars > 0,
+    test: (w) => w.a * Math.cbrt(w.M / Math.max(0.08, w.starMass)) >= 1,
+    why: {
+      fr: (w, f) => `Une lune lointaine s'échapperait : à ${f(w.a)} UA d'une étoile de ${f(w.starMass)} M☉, un monde de ${f(w.M)} masse${w.M >= 2 ? "s" : ""} terrestre${w.M >= 2 ? "s" : ""} n'a pas assez de prise pour la garder (il en faudrait autant que la Terre au moins).`,
+      en: (w, f) => `A distant moon would escape: ${f(w.a)} AU from a ${f(w.starMass)} M☉ star, a world of ${f(w.M)} Earth mass${w.M >= 2 ? "es" : ""} has too weak a grip to keep it (it needs at least Earth's).`,
+    },
+    fix: () => [tip("un monde plus lourd (heavy_world)", "a heavier world (heavy_world)"), tip("une orbite plus large (distant_orbit)", "a wider orbit (distant_orbit)"), tip("ou une lune proche : moon: small", "or a nearby moon: moon: small")],
+  },
   starAlive: {
     law: "L1", axis: "cosmological", sev: "medium", search: ["age"], applies: (w) => w.stars > 0,
     test: (w) => w.age <= w.starLife,

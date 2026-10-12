@@ -161,7 +161,7 @@ function candidate(r, set, written) {
 
 /** Les grandeurs dérivées d'un monde possible : l'état `w` que lisent les exigences. */
 function derive(p, set, written, ids) {
-  const w = { ids, stars: set.stars, moon: set.moon, giantHost: set.giantHost, locked: set.locked, hues: set.hues };
+  const w = { ids, stars: set.stars, moon: set.moon, moonDist: set.moonDist || null, moonSize: set.moonSize || null, giantHost: set.giantHost, locked: set.locked, hues: set.hues };
   // L1 étoiles
   // le soleil noir (naine brune) est l'étoile qui porte la couleur black_sun
   const hues = p.starHues || [];
@@ -200,7 +200,7 @@ function derive(p, set, written, ids) {
   w.R = written.radius != null ? written.radius : M.planetRadius(p.M, p.cmf);
   w.g = M.gravity(w.M, w.R); w.vesc = M.escapeVelocity(w.M, w.R); w.rho = M.density(w.M, w.R);
   // L4 intérieur
-  w.tidal = written.tides != null ? written.tides : (set.giantHost ? p.giantTides : 0) + (set.moon ? 0.03 : 0) + (w.locked && w.a < 0.2 ? 0.1 : 0) + (w.a < 0.05 ? 0.2 : 0);
+  w.tidal = written.tides != null ? written.tides : (set.giantHost ? p.giantTides : 0) + (set.moon ? (set.moonSize === "large" || set.moonDist === "close" ? 0.06 : 0.03) : set.smallMoon ? 0.01 : 0) + (w.locked && w.a < 0.2 ? 0.1 : 0) + (w.a < 0.05 ? 0.2 : 0);
   w.heat = M.internalHeat(w.M, w.R, w.age, w.tidal);
   w.volcanism = w.heat >= M.HEAT.volcanism;
   w.liquidCore = w.heat >= M.HEAT.liquidCore;
@@ -270,6 +270,8 @@ function solve({ ids, src = "", seed = "", mode = "easy" }) {
   const idSet = ids instanceof Set ? ids : new Set(ids);
   const { params: written, asserts, clamped } = parsePhysics(src);
   const set = blockSettings(idSet);
+  const mo = set.moon ? require("../sky").moonOf(src) : null; // `moon: small` / `distant` : une lune qui ne tient plus l'axe ; `large` / `close` : plus de marée
+  if (mo) { set.moonSize = mo.size; set.moonDist = mo.dist; if (mo.size === "small" || mo.dist === "distant") { set.moon = false; set.smallMoon = true; } }
   const base = hashSeed(`${seed}|physics`);
   let best = null;
   for (let k = 0; k < CANDIDATES; k++) {

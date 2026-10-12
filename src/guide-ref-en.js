@@ -71,7 +71,7 @@ const REF_EN = [
     { h: "Stars (drawn if you write none)" },
     { ul: ["`single_sun` (−5): one sun", "`twin_suns` (−10): two suns", "`starless` (−10): no sun at all; only the ground's own heat, and green life struggles"] },
     { h: "Moon (sometimes drawn)" },
-    { ul: ["`companion_moon` (+3): a moon in the sky; the line `moons: 3` draws more of them"] },
+    { ul: ["`companion_moon` (+3): a moon in the sky; the line `moons: 3` draws more of them", "`moon: small` · `moon: large` · `moon: distant` · `moon: close`, or two words (`moon: small, distant`); also `lune: petite, grande, lointaine, proche`. The line qualifies the written moon and costs nothing. Small or distant, it no longer steadies the world's axis: an erratic cycle becomes possible again, and the tide weakens. Large or close, the tide heats the interior more. A distant moon needs a planet with enough grip to keep it: heavy enough, or far enough from its star (otherwise a light clash). The window draws it smaller or larger"] },
     { h: "Day cycle (drawn if you write none)" },
     { ul: ["`steady_cycle` (−5): regular days and nights", "`erratic_cycle` (−8): days and nights of uneven length", "`frozen_cycle` (−10): the sky never moves; one face always to the sun (it clashes strongly with `stable_orbit`, `shifting_orbit` and `chaotic_orbit`)"] },
     { h: "Orbit of two suns (never drawn)" },
