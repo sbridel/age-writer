@@ -701,7 +701,7 @@
 .age-dbook__bnav button { padding: 0 10px; }
 .age-dbook .age-book__prose { line-height: 1.5; font-style: italic; }
 .age-dbook .age-book__line { display: flex; align-items: baseline; gap: 6px; padding: 1px 0; }
-.age-dbook .age-book__line.is-unknown .age-book__line-text { color: #8a3a2a; text-decoration: underline wavy; }
+.age-dbook .age-book__line.is-unknown .age-book__line-text { color: #8a3a2a; text-decoration: underline; }
 .age-dbook .age-book__line-text { cursor: pointer; flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .age-dbook .age-book__pull--line { position: static; opacity: 0.7; }
 .age-dbook .age-book__line-input { width: 100%; margin-top: 8px; box-sizing: border-box; background: #f4ead0; color: #2b2118; border: 1px solid #8a7250; }
