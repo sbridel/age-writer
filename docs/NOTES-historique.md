@@ -360,3 +360,7 @@ unlock:                            # facultatif
 
 - `drawStarMap` (`src/relto-starmap.js`) ne lit plus que `scene.ages` : un Âge décoché disparaît de la carte (nom et étoile s'il était seul), mais la gravure reste dans `telescope[key].systems` ; le recocher le ramène.
 - `cleanStarChart` (`src/ui-relto.js`) lit toujours `candidates ∪ ages` : il n'oublie que les Âges absents (supprimés, renommés, exclus), jamais les simples décochés.
+
+## 1.27.3 — README à jour (12 oct. 2026)
+
+- README.md et README.fr.md : la phrase sur les langues (réglage *Langue des extensions*, noms de blocs et descriptions générées en anglais) et la section « Recent changes / Nouveautés récentes » en liste par version jusqu'à la 1.27.

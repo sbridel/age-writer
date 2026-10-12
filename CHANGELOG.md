@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.27.3 — README up to date (2026-10-12)
+
+### Changed
+- README (English and French): the note on languages is accurate again (the *Language of the extensions* setting; block names and generated descriptions stay in English; guide, story letters and journal in both languages), and the recent changes are a short list per version, up to 1.27.
+
 ## 1.27.2 — The star chart shows only the chosen books (2026-10-12)
 
 ### Fixed
