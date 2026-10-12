@@ -233,7 +233,7 @@ function overview(r, ctx, st, cl, t, c, now) {
   const cal = r.imagerCal ? r.imagerCal() : null;
   if (cal) { micrometer(r, ctx, c, cal, t); cartouche(r, ctx, cal); }
 
-  if (st.guild) blankBook(r, ctx, st, c);
+  if (st.guild) { blankBook(r, ctx, st, c); if (ledgerReadable(r, st) && r.opts.onLedger) require("./relto-ledger").drawIcon(r, ctx, c, tx(r).t("ledger.tip"), r.imagerT || 0); } // le registre aussi : il lit l'Âge trouvé, dès que son monde est formé
   else { // le lutrin : le livre de l'Âge visé ; ‹ › pour changer de livre
   ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(70, 200, 8, FLOOR - 200); ctx.fillRect(52, FLOOR - 6, 44, 6);
   ctx.save(); ctx.translate(74, 196); ctx.rotate(-0.18);
@@ -338,6 +338,8 @@ function cartouche(r, ctx, cal) {
 }
 
 // ---- mode Guilde : le livre vierge ---------------------------------------------------------------------
+/** Le registre lit l'Âge du lutrin ; en mode Guilde, l'Âge trouvé, une fois son monde formé (jamais un monde que personne n'a écrit). */
+function ledgerReadable(r, st) { return !!(st.age && !st.station && (!st.guild || (formed(r, st) && !st.world.unwritten))); }
 /** Le monde est-il formé (cristaux justes, image nette ou tenue par le verrou) ? Son nom s'inscrit alors sur la page. */
 function formed(r, st) { return !!(st.guild && st.planet && st.world && (st.settings.lock || (r.imagerClarity ? r.imagerClarity().total : 0) >= I.LOCK_AT)); }
 /**
@@ -623,7 +625,7 @@ function drawImagerRoom(r, ctx, sc, sky, t) {
   else if (st.station === "atmo") closeAtmo(r, ctx, st, cl, t, c, now);
   else overview(r, ctx, st, cl, t, c, now);
   if (r.opts.onImagerTune && !(Math.abs(t - (r.imagerTunedAt || -9)) < 1)) { r.imagerTunedAt = t; r.opts.onImagerTune(st); } // la phase dérive : le bourdon suit, une fois par seconde
-  if (r.ledgerOpen && st.age && !st.station && !st.guild) { const LG = require("./relto-ledger"); LG.drawPanel(r, ctx, c, tx(r).t, LG.ensureRead(r, st.age), st.age.name); } else r.ledgerOpen = false;
+  if (r.ledgerOpen && st.age && !st.station && ledgerReadable(r, st)) { const LG = require("./relto-ledger"); LG.drawPanel(r, ctx, c, tx(r).t, LG.ensureRead(r, st.age), st.age.name); } else r.ledgerOpen = false;
   humPlate(r, ctx, c, !st.station); // vue d'ensemble : sur la console, avec le reste ; gros plans : en bas à droite
   const S = st.station ? MINI : SCREEN, k = cl.total;
   const lg2 = ctx.createRadialGradient(S.x + S.w / 2, S.y + S.h / 2, 30, S.x + S.w / 2, S.y + S.h / 2, 420); lg2.addColorStop(0, rgba(127, 214, 200, 0.03 + 0.08 * k)); lg2.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = lg2; ctx.fillRect(0, 0, W, H);
