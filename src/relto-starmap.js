@@ -38,7 +38,7 @@ function elevBand(z) { const a = Math.abs(Number(z) || 0); return a <= 5 ? "map.
 /** La vue de la carte. */
 function drawStarMap(r, ctx, sc, sky, tm) {
   // les noms gravés qui ne sont plus ceux d'un Âge (note renommée avant la 1.23, ou effacée) ne s'affichent plus ; la gravure, elle, reste
-  const st = TL.state(r), known = new Set([...((sc && sc.candidates) || []), ...((sc && sc.ages) || [])].map((a) => a && a.name).filter(Boolean));
+  const st = TL.state(r), known = new Set(((sc && sc.ages) || []).map((a) => a && a.name).filter(Boolean));
   const systems = {}; for (const [k, rec] of Object.entries(st.found ? st.systems || {} : {})) { // un Âge qui n'est plus sur l'étagère : ni son nom, ni (s'il était seul) son étoile
     if (!(rec && Array.isArray(rec.ages) && rec.ages.length && known.size)) { systems[k] = rec; continue; }
     const ages = rec.ages.filter((n) => known.has(n)); if (ages.length) systems[k] = { ...rec, ages };
