@@ -86,6 +86,7 @@ async function buildScene(plugin, file, opt = {}) {
   // choix des livres : options du bloc (folders / exclude / books) ; à défaut, liste du refuge (relto_books)
   const fm = fmOf(app, file), rules = { folders: opt.folders || fm.relto_folders, exclude: opt.exclude || fm.relto_exclude, books: opt.books || fm.relto_books };
   const { candidates, shown } = M.filterAges(ages, rules);
+  console.log("[Age Writer] étagère (diagnostic temporaire)", { relto: file.path, big: !!opt.__big, books: rules.books, folders: rules.folders, exclude: rules.exclude, ages: ages.length, candidates: candidates.length, shown: shown.length, fmKeys: Object.keys(fm) }); // DIAG coffre grande vue : à retirer
   const scene = M.buildScene(relto, pages, ages, shown);
   scene.candidates = candidates; scene.shownCount = shown.length; scene.booksFromBlock = !!opt.books; scene.hasWhitelist = Array.isArray(rules.books) || M.parseList(rules.books).length > 0;
   return { scene, relto };
@@ -493,6 +494,7 @@ async function renderRelto(plugin, source, el, ctx) {
   const { app, t } = plugin, opt = parseOptions(source);
   el.empty();
   const root = el.createDiv({ cls: "age-relto" });
+  if (ctx.big) opt.__big = true; // DIAG coffre grande vue : à retirer
   const file = findReltoFile(plugin, opt, ctx.sourcePath);
   if (!file) {
     root.createDiv({ cls: "age-relto__empty", text: t("relto.none") });
