@@ -503,19 +503,25 @@
   "balanced": {
    "verdict": "stable",
    "depth": "deep",
-   "scars": [],
+   "scars": [
+    "blight:light"
+   ],
    "weakest": null
   },
   "strict": {
    "verdict": "stable",
    "depth": "deep",
-   "scars": [],
+   "scars": [
+    "blight:light"
+   ],
    "weakest": null
   },
   "extreme": {
    "verdict": "stable",
    "depth": "deep",
-   "scars": [],
+   "scars": [
+    "blight:light"
+   ],
    "weakest": null
   }
  },
@@ -748,6 +754,7 @@
    "verdict": "stable",
    "depth": "deep",
    "scars": [
+    "blight:light",
     "poisoned_air:light"
    ],
    "weakest": null
@@ -756,6 +763,7 @@
    "verdict": "stable",
    "depth": "deep",
    "scars": [
+    "blight:light",
     "poisoned_air:light"
    ],
    "weakest": null
@@ -782,6 +790,7 @@
    "verdict": "unstable",
    "depth": "deep",
    "scars": [
+    "blight:light",
     "scorched_surface:light"
    ],
    "weakest": "weather"
@@ -790,6 +799,7 @@
    "verdict": "unstable",
    "depth": "deep",
    "scars": [
+    "blight:light",
     "scorched_surface:light"
    ],
    "weakest": "weather"
@@ -827,6 +837,94 @@
     "scorched_surface:light"
    ],
    "weakest": "weather"
+  }
+ },
+ "blight-grass": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [
+    "blight:light"
+   ],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [
+    "blight:light"
+   ],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [
+    "blight:light"
+   ],
+   "weakest": null
+  }
+ },
+ "blight-cured": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [],
+   "weakest": null
+  }
+ },
+ "blight-mycelium": {
+  "gentle": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "balanced": {
+   "verdict": "stable",
+   "depth": "held",
+   "scars": [],
+   "weakest": null
+  },
+  "strict": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [
+    "blight:light"
+   ],
+   "weakest": null
+  },
+  "extreme": {
+   "verdict": "stable",
+   "depth": "deep",
+   "scars": [
+    "blight:light"
+   ],
+   "weakest": null
   }
  },
  "clash-strong": {

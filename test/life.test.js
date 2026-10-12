@@ -30,8 +30,8 @@ assert.strictEqual(shown("mycelium", "water", "crystal"), "singing_mushroom", "a
 // 2. la boucle vie ↔ mort : un décomposeur ou un nécrophage la ferme ; un rôle d'appoint, moins bien
 const open = LF.laws(set("grazer", "fern", "water"), { weights: { life: 1, soil: 1 } });
 assert.ok(open && open.notes.some((n) => n.id === "openLoop") && open.delta.ecological > 0, "des animaux sans rien pour rendre les morts au sol : boucle ouverte");
-assert.ok(!LF.laws(set("grazer", "fern", "water", "mycelium"), { weights: { life: 1 } }), "avec du mycélium la boucle se ferme");
-assert.ok(!LF.laws(set("grazer", "fern", "water", "carrion_beetle"), { weights: { life: 1 } }), "avec un fossoyeur aussi");
+assert.ok(!LF.laws(set("grazer", "fern", "grass", "water", "mycelium", "carrion_beetle"), { weights: { life: 1 } }), "avec du mycélium (et un fossoyeur : ni l'un ni l'autre seul) la boucle se ferme");
+assert.ok(!LF.laws(set("grazer", "fern", "grass", "water", "carrion_beetle"), { weights: { life: 1 } }), "avec un fossoyeur aussi (deux plantes : pas de maladie)");
 const thin = LF.laws(set("hunter", "grazer", "fern", "water"), { weights: { life: 1 } });
 assert.ok(thin.notes.some((n) => n.id === "thinLoop") && thin.notes[0].cost < open.notes[0].cost, "le chasseur charogne un peu : boucle fermée mais mince, moins chère que ouverte");
 assert.ok(!LF.laws(set("fern", "water"), { weights: { life: 1 } }), "sans consommateur, rien à reboucler");
@@ -70,4 +70,26 @@ assert.ok(g.life && LF.note(g.life, false) && /Vie/.test(LF.note(g.life, true)),
 assert.strictEqual(g.stability, analyseAgeBase("grazer\nfern\nwater", { seed: "S" }).stability, "doux : la vie ne coûte rien");
 assert.ok(b.stability <= g.stability && s.stability <= b.stability && s.stability < g.stability + 1, "équilibré et strict : un coût, croissant");
 assert.strictEqual(LF.note(null, true), "", "rien à dire sans loi");
+
+// 7. la maladie du vivant (claude/DESIGN-maladie-du-vivant.md) : un rôle qui nourrit tenu par une seule espèce, avec des consommateurs
+const bl = (ids, w, seed) => { const l = LF.laws(set(...ids), { weights: { life: w }, seed }); return l && l.notes.find((n) => n.id === "blight"); };
+const SICK = ["grass", "grazer", "carrion_beetle", "water"];
+assert.deepStrictEqual(LF.pillars(set(...SICK)).map((p) => p.role + ":" + p.host), ["producer:grass"], "une seule plante pour les brouteurs : un pilier");
+assert.ok(!LF.pillars(set("grass", "fern", "water")).length, "une plante seule sans consommateur n'est pas un pilier (les chapitres de l'histoire)");
+assert.ok(!LF.pillars(set("grass", "fern", "grazer", "carrion_beetle", "water")).length, "deux plantes : la chaîne ne tient plus par un couple");
+assert.deepStrictEqual(LF.pillars(set("grass", "fern", "grazer", "mycelium", "mushroom", "water")).map((p) => p.host), ["mycelium"], "le mycélium seul à rendre les morts (le champignon est sa lignée)");
+assert.ok(!LF.pillars(set("grass", "fern", "grazer", "mycelium", "carrion_beetle")).length && !LF.pillars(set("grass", "fern", "hunter", "grazer", "mycelium")).length, "un fossoyeur, ou un chasseur qui charogne : le rôle n'est plus seul");
+assert.ok(!bl(SICK, 0, "x"), "jamais en doux");
+const b1 = bl(SICK, 1, "x");
+assert.ok(b1 && b1.level === "light" && b1.cost === LF.BLIGHT_TAX.light && b1.host === "grass", "à plein poids : certaine, une cicatrice légère");
+assert.strictEqual(bl(["grass", "grazer", "herd", "carrion_beetle"], 1, "x").level, "normal", "plusieurs consommateurs en dépendent : normale");
+let drawn = 0; for (let i = 0; i < 400; i++) if (bl(SICK, 0.5, "seed" + i)) drawn++;
+assert.ok(drawn > 400 * 0.25 && drawn < 400 * 0.45, `à moitié poids : tirée, environ une fois sur trois (${drawn}/400)`);
+assert.strictEqual(!!bl(SICK, 0.5, "same"), !!bl(SICK, 0.5, "same"), "même graine, même tirage");
+assert.ok(/grass/.test(LF.blightText(b1, false)) && /seul/.test(LF.blightText(b1, true)), "la cause nomme la plante, en deux langues");
+assert.ok(!/grass/.test(LF.blightText({ ...b1, stage: "symptom" }, false)) && !/grass/.test(LF.blightText({ ...b1, stage: "sign" }, true)), "signe et symptôme du panneau ne nomment pas le bloc");
+assert.ok(/grass/.test(LF.blightProse({ ...b1, stage: "symptom" })) && !/grass/.test(LF.blightProse({ ...b1, stage: "sign" })), "la description nomme la plante dès le symptôme");
+const sb = run("strict", ...SICK);
+assert.ok(sb.scars && sb.scars.some((x) => x.id === "blight" && x.prose) && !(sb.compensation && sb.compensation.relief), "la maladie se montre comme une cicatrice, sans alléger les richesses");
+assert.ok(!(run("gentle", ...SICK).scars || []).some((x) => x.id === "blight"), "doux : aucune maladie");
 console.log("life.test.js : tout passe");

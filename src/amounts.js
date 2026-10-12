@@ -93,8 +93,11 @@ function applyAmounts(r, amt, blocks, opts) {
   if (dose) for (const [a, d] of Object.entries(dose.delta)) delta[a] = (delta[a] || 0) + d;
   // la vie et le sol : la boucle, les échelles, le sol, l'énergie. Une phrase toujours ; un coût selon le poids des familles « vie » et « sol »
   const present = new Set([...written, ...(r.resolved.matter.reactions || []).map((x) => (x && x.result) || x), ...(r.resolved.lines || []).map((l) => l.entry && l.entry.id).filter(Boolean)]);
-  const life = LF.laws(present, { weights: opts && opts.weights, size: opts && opts.size, factor: (id) => factorOf(id, amt) });
+  const life = LF.laws(present, { weights: opts && opts.weights, size: opts && opts.size, seed: opts && opts.seed, factor: (id) => factorOf(id, amt) });
   if (life) for (const [a, d] of Object.entries(life.delta)) if (d > 0) delta[a] = (delta[a] || 0) + d;
+  // la maladie du vivant (src/life.js) : son coût est dans `life.delta` ; elle se montre comme une cicatrice (livre, fenêtre, description), sans alléger les richesses
+  const bl = life && life.notes.find((n) => n.id === "blight");
+  if (bl) scars.push({ id: "blight", axis: "ecological", level: bl.level, role: bl.role, host: bl.host, key: bl.key, prose: LF.blightProse(bl), from: [] });
   if (!Object.keys(delta).length && !life && !scars.length) return r;
   const out = Object.keys(delta).length ? shift(r, delta) : { ...r }; if (rich > 0) out.compensation = { riches: rich, relief };
   if (scars.length) { out.scars = scars; out.resolved = { ...out.resolved, scars }; } // lues par la description, le livre et la fenêtre

@@ -8,7 +8,7 @@ hooks.skip = (l) => AM.AMOUNT_RE.test(l) || DS.WORLD_SIZE_RE.test(l);
 const verdictOf = (s) => (s >= 75 ? "stable" : s >= 40 ? "unstable" : "dying");
 function evaluate(age, rigor) {
   const src = age.lines.join("\n"), weights = RG.weightsOf({ rigor });
-  const run = (text, draw) => AM.applyAmounts(analyseAgeBase(text, { seed: age.seed, draw }), AM.parseAmounts(text), reg.blockById, { weights });
+  const run = (text, draw) => AM.applyAmounts(analyseAgeBase(text, { seed: age.seed, draw }), AM.parseAmounts(text), reg.blockById, { weights, seed: age.seed });
   const r = run(src, true);
   const axes = r.axisStability || {}, weakest = Object.keys(axes).sort((a, b) => (axes[a] - axes[b]) || a.localeCompare(b))[0] || null;
   const d = DEPTH.depthOf(src, (t) => run(t, false), (l) => AM.AMOUNT_RE.test(l) || DS.WORLD_SIZE_RE.test(l));

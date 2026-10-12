@@ -42,6 +42,8 @@ const PRODUCED = [
   { id: "humming_blooms", d: ["golden", "humming", "open"], axis: "ecological", p: "the flowers hum with bees, each one opening for a visitor" },
   { id: "glowing_mushroom", d: ["luminous", "cool", "patient"], axis: "ecological", p: "mushrooms glow in the dark, cool and patient, lighting nothing but themselves" },
   { id: "singing_mushroom", d: ["singing", "thin", "clear"], axis: "ecological", p: "the mushrooms sing, thin and clear, a note for each cap" },
+  // la maladie du vivant : une cicatrice, jamais écrite (sa phrase réelle vient de `blightProse`, selon ce que le monde laisse voir)
+  { id: "blight", d: ["yellowing", "thin", "tired"], axis: "ecological", p: "a blight spreads through the living, where one species carries too much" },
 ].map((b) => ({ id: b.id, descriptors: b.d, weight: 0, axis: b.axis, writable: false, presence: b.p }));
 MATTER_BLOCKS.push(...PRODUCED);
 const REACTIONS = [
@@ -83,6 +85,7 @@ const SOIL = {
 };
 // ---- l'énergie : plusieurs sources ----------------------------------------------------------------------------------------
 const VAULT = require("./vault");
+const { fnv, rng, words } = require("./util");
 const LIGHT = ["single_sun", "twin_suns", "red_sun", "orange_sun", "white_sun", "blue_sun", "green_sun", "violet_sun", "glowvine", "glow_algae"];
 const HEAT = ["lava", "lava_world", "molten_core", "geysers", "rifts", "ash"];
 const CHEM = ["acid", "brine", "iron", "bitter_water"];
@@ -102,6 +105,58 @@ const TEXT = {
   tiredVault: [VAULT.TEXT.tired[0], VAULT.TEXT.tired[1]],
   noPollinator: ["the flowers have no one to carry them from bloom to bloom", "les fleurs n'ont personne pour les porter d'une corolle à l'autre"],
 };
+
+// ---- la maladie du vivant (claude/DESIGN-maladie-du-vivant.md ; lois 2, Couple, et 13, Niches) ----------------------------
+// Un rôle qui NOURRIT (producteur, décomposeur) tenu par une seule espèce, et dont dépendent des consommateurs, tient par un couple :
+// il tombe malade. Jamais en doux (poids « vie » nul) ; tirée par la graine, plus rare que les pages ouvertes, quand la famille compte à moitié ;
+// certaine à plein poids. Une cicatrice légère (normale si plusieurs consommateurs en dépendent) ; elle ne remonte pas la chaîne et ne touche pas
+// à la marge de vie (loi 14). Le remède : une seconde espèce dans le rôle.
+const BLIGHT_CHANCE = 0.35;
+const BLIGHT_TAX = { light: 0.05, normal: 0.1 }; // les taxes des cicatrices (src/scarring.js)
+/** Les piliers d'une chaîne vivante : [{ role, host, consumers }], producteur d'abord. */
+function pillars(present) {
+  const of = (role) => ROLES[role].filter((id) => present.has(id)), out = [];
+  const herb = of("herbivore"), consumers = [...herb, ...of("carnivore")];
+  const prod = of("producer");
+  if (prod.length === 1 && herb.length) out.push({ role: "producer", host: prod[0], consumers: herb });
+  // le champignon et ses variantes naissent du mycélium : une même lignée, pas une seconde espèce
+  const dec = of("decomposer").filter((id) => !(id === "mushroom" && present.has("mycelium")));
+  const side = of("scavenger").length + Object.entries(SECONDARY).filter(([id, rs]) => present.has(id) && rs.some((r) => r === "scavenger" || r === "decomposer")).length;
+  if (dec.length === 1 && !side && consumers.length) out.push({ role: "decomposer", host: dec[0], consumers });
+  return out;
+}
+/** La maladie, s'il y en a une : { role, host, level, key } ; `weight` : le poids de la famille « vie » ; `seed` : la graine de l'Âge. */
+function blightOf(present, weight, seed) {
+  if (!(weight > 0)) return null;
+  for (const p of pillars(present)) {
+    const drawn = weight >= 1 || rng(fnv(`${seed || ""}|blight|${p.host}`))() < BLIGHT_CHANCE;
+    if (drawn) return { role: p.role, host: p.host, level: p.consumers.length >= 2 ? "normal" : "light", key: "blight:" + p.host };
+  }
+  return null;
+}
+/** Ce que dit la maladie selon l'étape de l'Observation (src/observe.js) ; sans étape : la cause. `fr` : la langue de l'interface. */
+const BLIGHT_TEXT = {
+  sign: ["a tension in the living", "une tension dans le vivant"],
+  symptom: { producer: ["the green yellows in patches", "le vert jaunit par endroits"], decomposer: ["the dead lie longer than they should", "les morts restent plus longtemps qu'ils ne devraient"] },
+  cause: { producer: ["{h} is sick: it feeds everything alone", "{h} est malade : seul, il nourrit tout"], decomposer: ["{h} is sick: it returns the dead alone", "{h} est malade : seul, il rend les morts au sol"] },
+};
+function blightText(b, fr) {
+  const i = fr ? 1 : 0, st = b.stage || "cause";
+  if (st === "sign") return BLIGHT_TEXT.sign[i];
+  return BLIGHT_TEXT[st][b.role][i].replace("{h}", b.host);
+}
+/** La phrase de la description (anglais, comme le moteur). */
+function blightProse(b) {
+  const h = words(b.host), st = b.stage || "cause";
+  if (st === "sign") return "something is coming undone in the living";
+  if (st === "symptom") return b.role === "producer" ? `the ${h} yellows in patches` : `the dead lie too long, and the ${h} is slow to take them`;
+  return b.role === "producer" ? `the ${h}, alone to feed everything, is wearing out` : `the ${h}, alone to return the dead, is wearing out`;
+}
+/** La phrase d'une note de la vie (FR ou EN) : la maladie parle selon son étape, les autres lois toujours pareil. */
+function textOf(n, fr) {
+  if (n.id === "blight") return blightText(n, fr);
+  const t = TEXT[n.id]; return t ? t[fr ? 1 : 0] : "";
+}
 
 /**
  * @param present   l'ensemble des blocs présents (écrits ou produits)
@@ -142,6 +197,9 @@ function laws(present, o) {
   // 7. la voûte de la caverne : une phrase sur sa solidité ; seule une voûte faible sous un monde vaste fatigue (famille sol)
   const vault = VAULT.vaultOf(present, o && o.size);
   if (vault) { notes.unshift({ id: "vault" + vault.strength[0].toUpperCase() + vault.strength.slice(1), cost: 0 }); if (VAULT.tired(vault)) add("tiredVault", ws); }
+  // 8. la maladie du vivant : une cicatrice légère, au prix d'une cicatrice (pas au poids de la famille : elle est tirée ou certaine)
+  const blight = blightOf(present, wl, o && o.seed);
+  if (blight) notes.push({ id: "blight", cost: BLIGHT_TAX[blight.level], role: blight.role, host: blight.host, level: blight.level, key: blight.key });
   if (!notes.length) return null;
   const delta = {};
   for (const n of notes) { const axis = n.id === "weakGround" || n.id === "noEarth" || n.id === "tiredVault" ? "geological" : "ecological"; delta[axis] = (delta[axis] || 0) + n.cost; }
@@ -151,7 +209,7 @@ function laws(present, o) {
 /** La ligne du panneau (au plus deux phrases) ; vide s'il n'y a rien à dire. */
 function note(l, fr) {
   if (!l || !l.notes || !l.notes.length) return "";
-  return (fr ? "Vie · " : "Life · ") + l.notes.slice(0, 2).map((n) => TEXT[n.id][fr ? 1 : 0]).join(fr ? " · " : " · ");
+  return (fr ? "Vie · " : "Life · ") + l.notes.slice(0, 2).map((n) => textOf(n, fr)).join(" · ");
 }
 
-module.exports = { MATTER_BLOCKS, REACTIONS, VARIANTS, IDS, ROLES, SECONDARY, MICRO, BIG_TREES, SOIL, COST, TEXT, laws, note };
+module.exports = { MATTER_BLOCKS, REACTIONS, VARIANTS, IDS, ROLES, SECONDARY, MICRO, BIG_TREES, SOIL, COST, TEXT, BLIGHT_CHANCE, BLIGHT_TAX, pillars, blightOf, blightText, blightProse, textOf, laws, note };

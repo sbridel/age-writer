@@ -365,7 +365,7 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random)) {
     else loose.push(id);
   }
   for (const sc of resolved.scars || []) { // les cicatrices que le monde a gardées de son tirage (src/scarring.js)
-    const presence = String(blockById.get(sc.id)?.presence ?? "").trim();
+    const presence = String(sc.prose || blockById.get(sc.id)?.presence || "").trim(); // `prose` : une phrase propre à l'Âge (la maladie, l'Observation)
     if (presence) sentences.push(capitalize(presence) + ".");
   }
   // ce qui ne réagit pas : par petits groupes, pas une phrase chacun

@@ -40,6 +40,10 @@ module.exports = [
   A("drawn-scar-lava", "lave et eau : cicatrice légère tirée", ["lava_world", "single_sun", "steady_cycle", "water"], "s0"),
   A("drawn-scar-desert", "désert et pluie : cicatrice légère tirée, stable", ["desert_world", "single_sun", "steady_cycle", "rain"], "s0"),
   A("drawn-scar-desert-weak", "désert et pluie : cicatrice tirée, monde instable côté temps", ["desert_world", "single_sun", "steady_cycle", "rain"], "s21"),
+  // la maladie du vivant (src/life.js) : un rôle qui nourrit, tenu par une seule espèce, et des consommateurs qui en dépendent
+  A("blight-grass", "herbe seule et brouteurs : malade (tirée en équilibrée avec cette graine)", ["single_sun", "steady_cycle", "water", "grass", "grazer", "carrion_beetle"], "xe"),
+  A("blight-cured", "le remède : une seconde plante", ["single_sun", "steady_cycle", "water", "grass", "fern", "grazer", "carrion_beetle"], "xe"),
+  A("blight-mycelium", "mycélium seul à rendre les morts : malade en stricte", ["single_sun", "steady_cycle", "water", "grass", "fern", "grazer", "mycelium"], "g"),
   // des mondes insolites et des clashs franchement forts
   A("clash-strong", "lave et eau écrites", ["single_sun", "steady_cycle", "lava", "water", "acid", "stone"]),
   A("strange-mix", "étrange : plusieurs soleils et un trou noir", ["twin_suns", "chaotic_orbit", "black_hole", "close_orbit", "tablet", "strange_stone"]),

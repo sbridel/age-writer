@@ -33,8 +33,8 @@ function alertsOf(a, fr) {
     out.push({ text: note || `${L.alert} : ${c.a} / ${c.b}`, rank: SEV[c.severity] || 1, fam: "physics", key: c.a + "|" + c.b });
   }
   for (const n of (a && a.life && a.life.notes) || []) {
-    const t = LF.TEXT[n.id] || (n.id.startsWith("vault") ? null : null); if (!t) continue;
-    out.push({ text: t[fr ? 1 : 0], rank: n.cost > 0 ? 2 : 1, fam: SOIL_NOTES.includes(n.id) ? "soil" : "life", key: "life|" + n.id });
+    const t = LF.textOf(n, fr); if (!t) continue;
+    out.push({ text: t, rank: n.cost > 0 ? 2 : 1, fam: SOIL_NOTES.includes(n.id) ? "soil" : "life", key: "life|" + n.id });
   }
   // une même phrase de monde-type peut revenir pour plusieurs blocs : on ne la dit qu'une fois
   const seen = new Set(), uniq = out.filter((x) => (seen.has(x.text) ? false : (seen.add(x.text), true)));

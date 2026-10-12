@@ -22,7 +22,7 @@ const FR = {
   buried: "enfoui", faint: "diffus", glittering: "scintillant", golden: "doré", keen: "perçant", layered: "stratifié", loose: "meuble", purple: "pourpre", shy: "craintif",
   silvery: "argenté", sleek: "lisse", slick: "visqueux", spongy: "spongieux", stubborn: "têtu", sweet: "sucré", teeming: "grouillant", thorny: "épineux", threading: "filant", tiny: "minuscule",
   unseen: "invisible", slimy: "gluant", compact: "compact", "wind-bent": "courbé par le vent", wiry: "noueux",
-  wary: "méfiant", watchful: "vigilant", weightless: "sans poids", white: "blanc", wrong: "dérangeant",
+  wary: "méfiant", yellowing: "jaunissant", tired: "las", watchful: "vigilant", weightless: "sans poids", white: "blanc", wrong: "dérangeant",
 };
 
 /** Un descripteur en français (le mot lui-même s'il n'a pas d'équivalent). */

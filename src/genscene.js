@@ -57,7 +57,7 @@ function sceneOf(a, name = "", blocks = null) {
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
     moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine", "glow_algae") || wd === "jungle" || wd === "cavern", eyes: r("hunter", "stalking_pack"),
     ruins, lampLit: r("lit_lamp"), tabletAwake: r("speaking_tablet"),
-    world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), scarLevel, belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), remnants: ["pulsar", "neutron_star", "black_hole"].filter((id) => ids.has(id)), sunHues: SKY.sunColors([...ids]), blackDisc: [...ids].find((i) => SKY.HUES[i]) === "black_sun", blackSun: [...ids].find((i) => SKY.HUES[i]) === "black_sun" && !r("twin_suns"),
+    world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), scarLevel, blight: ids.has("blight"), belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), remnants: ["pulsar", "neutron_star", "black_hole"].filter((id) => ids.has(id)), sunHues: SKY.sunColors([...ids]), blackDisc: [...ids].find((i) => SKY.HUES[i]) === "black_sun", blackSun: [...ids].find((i) => SKY.HUES[i]) === "black_sun" && !r("twin_suns"),
     extras: [...ids].filter((id) => !KNOWN.has(id) && !id.startsWith("?")).sort().slice(0, 8).map((id) => {
       const b = blocks && typeof blocks.get === "function" ? blocks.get(id) : null, ax = b && typeof b.axis === "string" ? b.axis.toLowerCase() : "";
       return { id, axis: AXES.find((x) => ax.startsWith(x.slice(0, 5))) || AXES[fnv(id) % 5], words: b && Array.isArray(b.descriptors) && b.descriptors.length ? b.descriptors.map(String) : id.split("_") };
@@ -675,8 +675,11 @@ function richGlints(g, m, t, night) {
 
 /** Cicatrices du sol : surface calcinée (suie, braises), sol stérile (fentes sèches), eau amère (teinte verte), sol creux (fosses). */
 function scarGround(g, m, t, night) {
-  const { S, W, H, hz } = m, sc = new Set(S.scars || []); if (!sc.size) return;
+  const { S, W, H, hz } = m, sc = new Set(S.scars || []); if (!sc.size && !S.blight) return;
   const f = (u) => hz + (H - hz) * u * u;
+  if (S.blight) for (const p of m.scar.pits) { // la maladie du vivant (src/life.js) : des taches jaunies dans le vert
+    const x = p.x * W, y = f(p.u), rx = (14 + 22 * p.u) * p.w, ry = 2.5 + 6 * p.u; g.fillStyle = css([196, 170, 70], 0.22 + 0.04 * Math.sin(TAU * (t + p.x))); g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, TAU); g.fill();
+  }
   if (sc.has("bitter_water") && (S.water || S.ice)) { g.fillStyle = css([96, 160, 64], 0.2 + 0.05 * Math.sin(TAU * t)); g.fillRect(0, hz, W, H - hz); }
   if (sc.has("scorched_surface")) {
     const gr = g.createLinearGradient(0, hz, 0, H); gr.addColorStop(0, "rgba(8,5,4,0.25)"); gr.addColorStop(1, "rgba(8,5,4,0.62)"); g.fillStyle = gr; g.fillRect(0, hz, W, H - hz);
