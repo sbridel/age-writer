@@ -727,8 +727,8 @@
 .age-dbook__whint { font-family: serif; font-style: italic; font-size: 0.85em; color: #5a4a30; line-height: 1.5; }
 .age-dbook__ruled { display: block; width: 100%; box-sizing: border-box; margin-top: 0.7em; padding: 0 0.5em; border: 1px solid #b9a877; border-radius: 0; background: repeating-linear-gradient(180deg, rgba(247, 240, 220, 0.8) 0 1.45em, rgba(150, 120, 70, 0.45) 1.45em calc(1.45em + 1px)); color: #2b2118; font-family: serif; font-size: 1em; line-height: calc(1.45em + 1px); resize: none; box-shadow: none; }
 .age-dbook__ruled::placeholder { color: rgba(60, 45, 28, 0.5); font-style: italic; }
-.age-dbook__quiet { display: block; margin: 0.5em 0 0 auto; padding: 0 0.2em; border: 0; background: transparent; box-shadow: none; font-family: serif; font-style: italic; color: #6a4a2a; border-bottom: 1px solid rgba(106, 74, 42, 0.5); cursor: pointer; }
-.age-dbook__quiet:hover { color: #2b2118; }
+.age-dbook .age-dbook__quiet { display: block; margin: 0.6em auto 0; height: auto; padding: 0 0.2em; border: 0; background: transparent; box-shadow: none; font-family: serif; font-style: italic; color: #6a4a2a; border-bottom: 1px solid rgba(106, 74, 42, 0.5); cursor: pointer; }
+.age-dbook .age-dbook__quiet:hover { color: #2b2118; }
 .age-dbook .age-book__pull--line { width: 1.5em; height: 1.5em; min-width: 0; padding: 0; line-height: 1; font-size: 0.8em; border-radius: 50%; }
 .age-dbook__folder { position: absolute; left: 50%; top: -1.9em; margin-left: -2.6em; z-index: 4; padding: 0.35em 1em; border: 1px solid #0d0804; border-bottom: 0; border-radius: 6px 6px 0 0; background: linear-gradient(90deg, #3a2a1b, #5a4322); color: #e0c27a; font-family: serif; font-size: 0.9em; letter-spacing: 0.08em; box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.4); cursor: pointer; }
 .age-dbook__folder:hover, .age-dbook__folder.is-open { background: linear-gradient(90deg, #5a4322, #7a5c2e); color: #f4e2a8; }
