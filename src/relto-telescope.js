@@ -353,11 +353,34 @@ function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null, more = null) {
     const e2 = more.echo2, per = PULSE_MS * e2.period, b2 = frac((ms - DT.REF) / per - e2.off), ea = clamp(haze) * (0.3 + 0.65 * Math.exp(-b2 * 6)) * (e2.ok ? 0.5 : 1);
     ctx.strokeStyle = rgba(170, 200, 255, ea); ctx.lineWidth = 1.3; ctx.setLineDash && ctx.setLineDash([3, 2]); ctx.beginPath(); ctx.arc(hx, hy, 5 + 16 * b2, 0, 6.283); ctx.stroke(); ctx.setLineDash && ctx.setLineDash([]);
   }
+  if (echo && haze > 0.05) phaseDial(ctx, cx, cy, R * 0.86, ms, echo, more && more.echo2);
   void at;
   const vg = ctx.createRadialGradient(cx, cy, R * 0.55, cx, cy, R); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.6)"); ctx.fillStyle = vg; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
   const gl = ctx.createLinearGradient(cx - R, cy - R, cx, cy); gl.addColorStop(0, "rgba(255,255,255,0.08)"); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = gl; ctx.fillRect(cx - R, cy - R, R * 2, R * 2); // reflet de la lentille
   ctx.restore();
   const t = tOf(r); r.hot.push({ x: cx - R, y: cy - R, w: R * 2, h: R * 2, tip: echo ? t("sys.eyepiece") : t("tel.eyepiece") });
+}
+
+/**
+ * Le cadran de phase : un arc gradué dans le verre, l'éclair du balancier toujours à midi. Chaque écho y laisse un point à
+ * l'instant de sa naissance par rapport au tic : à droite de midi il naît après (plus de retard), à gauche avant (moins de
+ * retard), sur midi le retard est juste. Le faux pouls laisse son point bleu, qui erre (sa période n'est pas celle du balancier).
+ */
+function phaseDial(ctx, cx, cy, Rd, ms, echo, echo2) {
+  const bp = MET.beatPos(ms), at = (ph) => -Math.PI / 2 + ph * 2 * Math.PI, P = (ph, rr) => [cx + Math.cos(at(ph)) * rr, cy + Math.sin(at(ph)) * rr];
+  ctx.save();
+  ctx.strokeStyle = "rgba(224,194,122,0.22)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, Rd, 0, 6.283); ctx.stroke();
+  for (let i = -4; i <= 5; i++) { const ph = i / 10, [x0, y0] = P(ph, Rd - (i === 0 ? 7 : 3)), [x1, y1] = P(ph, Rd + 3); ctx.strokeStyle = i === 0 ? "rgba(255,214,120,0.8)" : "rgba(224,194,122,0.3)"; ctx.lineWidth = i === 0 ? 2 : 1; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); }
+  const fl = Math.exp(-(bp - Math.floor(bp)) * 7), [tx, ty] = P(0, Rd + 8); // midi : l'éclair du balancier
+  ctx.fillStyle = MET.isMarked(Math.floor(bp)) ? `rgba(255,214,120,${0.35 + 0.65 * fl})` : `rgba(240,220,170,${0.25 + 0.6 * fl})`; ctx.beginPath(); ctx.moveTo(tx, ty + 5); ctx.lineTo(tx - 4, ty - 2); ctx.lineTo(tx + 4, ty - 2); ctx.closePath(); ctx.fill();
+  const dot = (ph, sinceBirth, col, rr, pale) => { const [x, y] = P(ph, Rd), g = Math.exp(-sinceBirth * 3); ctx.fillStyle = `rgba(${col},${(0.65 + 0.35 * g) * pale})`; ctx.beginPath(); ctx.arc(x, y, rr + 2 * g, 0, 6.283); ctx.fill(); };
+  if (echo2) { // le faux pouls : sa dernière naissance, ramenée au tic le plus proche
+    const per = echo2.period, kb = Math.floor(bp / per - echo2.off), birth = (kb + echo2.off) * per, ph = birth - Math.round(birth);
+    dot(ph, (bp - birth) / per, "170,200,255", 2.6, 1);
+  }
+  const off = ((echo.off % 1) + 1.5) % 1 - 0.5, since = ((bp - echo.off) % 1 + 1) % 1; // l'écho du Zéro : toujours au même endroit tant que la molette ne bouge pas
+  dot(off, since, "255,196,110", 4, Math.max(0.6, echo.pale || 1));
+  ctx.restore();
 }
 
 /** Le lutrin : le livre de l'Âge dont on reporte les indices (‹ › pour choisir ; vide : on cherche le Zéro du Relto). */
