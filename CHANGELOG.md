@@ -2,6 +2,17 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.30.3 — Wheels you turn with the mouse (2026-10-13)
+
+### Added
+- **Turn a wheel by dragging, with the mouse too**: press a wheel and turn around its centre (a fine notch every 8° at the hub, a coarse one every 20° at the rim). The cursor becomes a grabbing hand over anything that turns.
+- **The scroll wheel** over a wheel turns it one fine notch (Shift: a coarse one), in the large view and in full screen; in a note, the scroll wheel still scrolls the note.
+- **At the Imager, drag a glass along its rail** (and the iris lever along its arc), with the mouse or a finger.
+
+### Fixed
+- On a phone, the descriptive books of the vault were misplaced when the Relto lay sideways in full screen; they now sit on the picture, and move when the phone turns.
+- On a phone, each notch of an Imager rail, of the iris arc and each crystal slot asked for a first touch to read it: a rail, the iris and the crystal slots are now read once, then act at each touch.
+
 ## 1.30.2 — The Relto shows again on a phone (2026-10-13)
 
 ### Fixed

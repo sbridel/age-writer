@@ -415,3 +415,10 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 
 - `inst.full` (plein écran à l'ouverture) ne joue plus sur un écran tactile : en 1.30.1 il posait `is-mobilefull` dès l'ouverture, et la vue fixée, prise dans un parent transformé d'Obsidian mobile, sortait de l'écran.
 - `mobileFull` (`src/ui-relto.js`) : en plein écran mobile, `.age-relto` est déplacé dans `document.body` (un commentaire garde sa place), remis à sa place à la sortie ; si la note se ferme ou se redessine, il s'en va avec elle (contrôle toutes les secondes).
+
+## 1.30.3 — molettes à la souris, Imageur au doigt (13 oct. 2026)
+
+- Souris (`src/relto-render.js`) : `onDown` démarre le glissement autour de `wc` sans « tenir » d'abord (bouton principal) ; `pointermove` va à `onDragMove` pendant un glissement ; curseur `grab`/`grabbing` sur les molettes et les rails. `onWheel` (`WHEEL_STEP` = 90, `deltaMode` normalisé, Maj = gros cran) seulement si `opts.wheelOk` (grande vue, plein écran) ; sinon la roulette fait défiler la note.
+- Rails de l'Imageur : `this.slide` (glisser le verre cran par cran), souris et doigt. `holdKey` regroupe les zones d'un même réglage de l'Imageur (`value`, `slot`, `rack`).
+- Livre descriptif (`src/relto-descview.js`) : couché en portrait plein écran (`opts.rotated`), placé d'après `offsetLeft/Top/Width/Height` du canevas ; se replace au `resize`/`orientationchange`.
+- Guide : « Les molettes à la souris ». Tests : `test/touch.test.js` (41 contrôles).

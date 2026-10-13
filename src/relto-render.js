@@ -90,6 +90,7 @@ function catLook(color) {
   return CATS.orange;
 }
 const TIP_DELAY = 450; // ms avant qu'une infobulle du canvas apparaisse
+const WHEEL_STEP = 90; // la roulette : un cran de molette par cran de roulette (≈ 100 pixels de défilement)
 const TOUCH_REACH = 14; // mode tactile : une zone à moins de 14 unités du doigt répond (≈ 18 px en paysage sur un téléphone)
 const VERDICT = { stable: "#8fae6a", unstable: "#d9a24a", dying: "#c0553f", unknown: "#7a7a8a" };
 const BOOKS = ["#7a3b2a", "#2f4a3a", "#3a3f6a", "#6a5a2a", "#5a2f4a", "#2f5a5a"];
@@ -118,10 +119,11 @@ class ReltoRenderer {
     // les petites cibles s'élargissent (`hit`) ; les molettes se tournent au doigt (`onDown`, glisser autour du centre)
     this.touch = !!this.opts.touch; this.held = null; this.drag = null; this.dragged = false;
     if (this.touch && this.opts.tipDelay == null) this.opts.tipDelay = 0;
-    canvas.addEventListener("pointermove", (e) => (this.touch ? this.onDragMove(e) : this.onMove(e)));
+    canvas.addEventListener("pointermove", (e) => (this.touch || this.drag || this.slide ? this.onDragMove(e) : this.onMove(e)));
+    canvas.addEventListener("wheel", (e) => this.onWheel(e), { passive: false }); // la roulette sur une molette (grande vue et plein écran)
     canvas.addEventListener("pointerleave", () => { if (this.touch) return; this.hover = null; this.pointer = null; this.canvas.style.cursor = ""; });
     canvas.addEventListener("pointerdown", (e) => this.onDown(e));
-    canvas.addEventListener("pointerup", () => { this.drag = null; this.slide = null; });
+    canvas.addEventListener("pointerup", () => { if ((this.drag || this.slide) && !this.touch) this.canvas.style.cursor = "grab"; this.drag = null; this.slide = null; });
     canvas.addEventListener("pointercancel", () => { this.drag = null; this.slide = null; });
     canvas.addEventListener("click", (e) => this.onClick(e));
     // pas de dessin quand le canvas est hors écran ou l'onglet caché
@@ -1195,17 +1197,30 @@ class ReltoRenderer {
   }
   /** Au doigt : un geste de molette (télescope ou Imageur), comme un clic sur son ±. */
   wheelAct(a, kind) { if (kind === "imager") this.imagerAct(a); else TL.act(this, a); }
-  /** Mode tactile : poser le doigt sur une molette (une zone `wc`) commence à la tourner. */
+  /** Poser le doigt (ou presser la souris) sur une molette (une zone `wc`) commence à la tourner ; sur un rail de l'Imageur, à y glisser le verre. Au doigt, seulement une molette déjà lue. */
   onDown(e) {
-    if (!this.touch) return;
-    const [x, y] = this.toLogical(e), h = this.hit(x, y); this.dragged = false;
-    if (h && h.imager && h.imager.value != null && h.imager.key && this.held === this.holdKey(h)) { this.slide = { key: h.imager.key, last: h.imager.value }; try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } return; } // un rail, l'arc de l'iris : on glisse le doigt le long
-    if (!h || !h.wc || this.held !== this.holdKey(h)) return; // une molette pas encore lue : le toucher la montre d'abord
+    if (!this.touch && e.button != null && e.button !== 0) return;
+    const [x, y] = this.toLogical(e), h = this.hit(x, y), ready = (q) => !this.touch || this.held === this.holdKey(q); this.dragged = false;
+    if (h && h.imager && h.imager.value != null && h.imager.key && ready(h)) { this.slide = { key: h.imager.key, last: h.imager.value }; try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } return; } // un rail, l'arc de l'iris : on glisse le doigt le long
+    if (!h || !h.wc || !ready(h)) return; // au doigt, une molette pas encore lue : le toucher la montre d'abord
     const wc = h.wc, r0 = Math.hypot(x - wc.x, y - wc.y);
     this.drag = { wc, a: Math.atan2(y - wc.y, x - wc.x), acc: 0, fine: r0 <= (wc.hub || 0) + 3 || !wc.coarse };
     try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
   }
-  /** Mode tactile : le doigt tourne autour du centre de la molette ; un cran par `deg` degrés (fin au moyeu, gros à la couronne). */
+  /**
+   * La roulette de la souris sur une molette : un cran fin par cran de roulette (Maj : un gros cran). Seulement dans la grande vue
+   * et en plein écran (`opts.wheelOk`) : dans une note, la roulette fait défiler la note.
+   */
+  onWheel(e) {
+    if (this.touch || !(this.opts.wheelOk && this.opts.wheelOk())) return;
+    const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h || !h.wc) { this.wheelAcc = 0; return; }
+    e.preventDefault();
+    const dy = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1); this.wheelAcc = (this.wheelAcc || 0) + dy;
+    const wc = h.wc, coarse = e.shiftKey && wc.coarse; let n = 0;
+    while (Math.abs(this.wheelAcc) >= WHEEL_STEP) { const dir = this.wheelAcc < 0 ? 1 : -1; this.wheelAcc += dir * WHEEL_STEP; this.wheelAct((coarse ? wc.coarse : wc.fine)(dir), wc.kind); n++; } // vers le haut : +
+    if (n && !this.running) this.draw(0);
+  }
+  /** Le doigt (ou la souris pressée) tourne autour du centre de la molette ; un cran par `deg` degrés (fin au moyeu, gros à la couronne). */
   onDragMove(e) {
     if (this.slide) { // le long d'un rail (ou de l'arc de l'iris) : le verre suit le doigt, cran par cran
       const [x, y] = this.toLogical(e), h = this.hit(x, y), sl = this.slide;
@@ -1217,10 +1232,11 @@ class ReltoRenderer {
     const step = ((d.fine ? wc.deg || 8 : wc.degRim || 20) * Math.PI) / 180;
     let n = 0;
     while (Math.abs(d.acc) >= step) { const dir = d.acc > 0 ? 1 : -1; d.acc -= dir * step; this.wheelAct((d.fine ? wc.fine : wc.coarse)(dir), wc.kind); n++; }
-    if (n) { this.dragged = true; try { if (navigator.vibrate) navigator.vibrate(6); } catch (err) { /* ignore */ } if (!this.running) this.draw(0); }
+    if (n) { this.dragged = true; if (!this.touch) this.canvas.style.cursor = "grabbing"; else try { if (navigator.vibrate) navigator.vibrate(6); } catch (err) { /* ignore */ } if (!this.running) this.draw(0); }
   }
   onMove(e) {
     const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && !this.hover.secret && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go || this.hover.imager || this.hover.tel || this.hover.purr || this.hover.pageToggle || this.hover.pbook || this.hover.gbTurn || this.hover.lamp || this.hover.gbGo != null || this.hover.vpage || this.hover.mapPage || this.hover.shelf != null || this.hover.stone || this.hover.knock || this.hover.desk || this.hover.toy || this.hover.ward) ? "var(--age-hand, pointer)" : ""; // la main dessinée du Relto (styles.ext.css), la main du système à défaut
+    if (this.hover && (this.hover.wc || (this.hover.imager && this.hover.imager.value != null)) && !(this.hover.imager && this.hover.tip && /held by the lock/.test(this.hover.tip))) this.canvas.style.cursor = "grab"; // une molette, un rail : ça se saisit et se tourne
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
   /** Le bureau : le tiroir (clou de laiton), la tablette qu'on prend entre les mains et qui revient toujours au tiroir. Rien n'est gardé : en s'en allant, le tiroir se ferme. */

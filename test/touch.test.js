@@ -34,6 +34,23 @@ const centre = (h) => [h.x + h.w / 2, h.y + h.h / 2];
   ok(!r.touch, "souris : pas de mode tactile");
 }
 
+// ---- à la souris : glisser et roulette ----
+{
+  let big = false; const r = make({ wheelOk: () => big }), hub = zone(r, (q) => q.tel && q.tel.axis === "elev" && Math.abs(q.tel.delta) === 1), wc = hub.wc, rr = 8;
+  const e0 = TL.state(r).aim.elev;
+  r.onDown({ ...ev(wc.x + rr, wc.y), button: 0 }); ok(r.drag && r.drag.fine, "souris : presser le moyeu commence à le tourner, sans le lire d'abord");
+  for (let d = 5; d <= 30; d += 5) { const q = (d * Math.PI) / 180; r.onDragMove(ev(wc.x + Math.cos(q) * rr, wc.y + Math.sin(q) * rr)); }
+  ok(TL.state(r).aim.elev - e0 === 3, "souris : 30° au moyeu, trois crans");
+  r.drag = null; const e1 = TL.state(r).aim.elev; r.onClick(ev(wc.x + rr, wc.y)); ok(TL.state(r).aim.elev === e1, "le clic qui termine le glissement ne compte pas");
+  r.onDown({ ...ev(...centre(hub)), button: 0 }); r.drag = null; r.onClick(ev(...centre(hub))); ok(TL.state(r).aim.elev !== e1, "un clic simple sur ± agit toujours");
+  let prevented = 0; const wev = (dy, shift) => ({ ...ev(wc.x, wc.y), deltaY: dy, deltaMode: 0, shiftKey: !!shift, preventDefault: () => prevented++ });
+  const e2 = TL.state(r).aim.elev; r.onWheel(wev(-100)); ok(TL.state(r).aim.elev === e2 && prevented === 0, "dans une note : la roulette laisse défiler la note");
+  big = true; r.onWheel(wev(-100)); ok(TL.state(r).aim.elev === e2 + 1 && prevented === 1, "grande vue : un cran de roulette vers le haut, un cran fin de plus");
+  r.onWheel(wev(100, true)); ok(TL.state(r).aim.elev === e2 + 1 - 25, "Maj : un gros cran");
+  r.onWheel(wev(30)); r.onWheel(wev(30)); ok(TL.state(r).aim.elev === e2 - 24, "un pavé tactile : les petits pas s'additionnent avant de tourner");
+  r.onWheel({ ...ev(630, 4), deltaY: -100, deltaMode: 0, preventDefault: () => prevented++ }); ok(prevented === 4, "hors d'une molette : la roulette n'est pas prise");
+}
+
 // ---- au doigt ----
 {
   const tips = [], r = make({ touch: true, onTip: (t) => tips.push(t) });
@@ -92,6 +109,13 @@ const centre = (h) => [h.x + h.w / 2, h.y + h.h / 2];
   for (let q = 6; q <= 9; q++) r.onDragMove(ev(78 + q * 20, 200));
   ok(acts.slice(1).join() === "6,7,8,9", `le verre suit le doigt cran par cran (${acts.join()})`);
   r.onClick(ev(78 + 180, 200)); ok(acts.length === 5, "le clic de fin de glissement ne compte pas");
+}
+
+{ // la souris glisse aussi un verre le long de son rail
+  const r = make(), acts = []; r.imagerAct = (a) => acts.push(a.value); r.draw = () => {};
+  r.hot = Array.from({ length: 25 }, (_, q) => ({ x: 78 + q * 20 - 10, y: 180, w: 20, h: 50, tip: "Red glass", imager: { key: "r", value: q } }));
+  r.onDown({ ...ev(78 + 40, 200), button: 0 }); for (let q = 3; q <= 5; q++) r.onDragMove(ev(78 + q * 20, 200));
+  ok(acts.join() === "3,4,5", `souris : le verre suit le glissement (${acts.join()})`);
 }
 
 // ---- plein écran mobile en portrait : l'image couchée d'un quart de tour (sens horaire) ----
