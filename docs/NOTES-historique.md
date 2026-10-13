@@ -434,3 +434,8 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 ## 1.30.6 — zone morte des molettes (13 oct. 2026)
 
 - `onDragMove` (`src/relto-render.js`) : `DRAG_START` = 3 unités de déplacement avant que la molette tourne (`d.on`) ; à moins de `DRAG_CORE` = 4 unités du centre, l'angle n'est pas compté. En 1.30.3–1.30.5, le tremblement d'un clic près du centre du moyeu tournait la molette de quelques crans (l'étoile « bougeait »).
+
+## 1.30.7 — plein écran mobile : un volet à la fois (13 oct. 2026)
+
+- `src/styles.ext.css` : sous `.age-relto.is-mobilefull[data-tab=…]`, les règles du plein écran du PC (un seul volet visible : vue, pages ou réglages) ; la barre d'icônes en `z-index: 3` avec un fond ; le Relto en `z-index: 10000` (au-dessus des boutons flottants d'Obsidian mobile). En 1.30.1–1.30.6, l'onglet Pages s'étalait sur l'image et sur la barre : plus moyen d'en sortir.
+- Le bouton « retour » du téléphone ramène Obsidian en arrière ; la note quittée, le Relto en plein écran s'en va avec elle (contrôle de 1.30.2).

@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.30.7 — One pane at a time in full screen on a phone (2026-10-13)
+
+### Fixed
+- On a phone in full screen, the Pages and Settings tabs showed on top of the picture and spilled over the icon bar, which could no longer be touched: you were stuck. As on the desktop, full screen now shows one pane at a time (the view, the pages or the settings), and the icon bar always stays above, touchable.
+
 ## 1.30.6 — A click no longer turns a wheel by itself (2026-10-13)
 
 ### Fixed

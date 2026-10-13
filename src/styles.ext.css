@@ -758,8 +758,13 @@
 .age-relto__tipcard.is-empty { color: transparent; border-color: rgba(205,189,148,0.18); }
 .age-relto.is-touch .age-relto__tipcard { font-size: 0.85em; min-height: 2.2em; padding: 4px 8px; }
 /* plein écran mobile : le navigateur du téléphone refuse le vrai plein écran ; le Relto se fixe sur tout l'écran */
-.age-relto.is-mobilefull { position: fixed; inset: 0; z-index: 1000; margin: 0; max-width: none; border-radius: 0; padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0); background: #0d0b09; display: flex; flex-direction: column; overflow: hidden; }
-.age-relto.is-mobilefull .age-relto__tabs { flex: none; margin: 0; padding: 2px 8px; min-height: 40px; }
+.age-relto.is-mobilefull { position: fixed; inset: 0; z-index: 10000; margin: 0; max-width: none; border-radius: 0; padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0); background: #0d0b09; display: flex; flex-direction: column; overflow: hidden; }
+.age-relto.is-mobilefull .age-relto__tabs { position: relative; z-index: 3; flex: none; margin: 0; padding: 2px 8px; min-height: 40px; background: #0d0b09; } /* la barre d'icônes reste toujours au-dessus et touchable */
+/* un seul volet à la fois, comme le plein écran du PC : la vue, ou les pages, ou les réglages */
+.age-relto.is-mobilefull[data-tab="pages"] .age-relto__pane--view, .age-relto.is-mobilefull[data-tab="settings"] .age-relto__pane--view,
+.age-relto.is-mobilefull[data-tab="view"] .age-relto__pane--pages, .age-relto.is-mobilefull[data-tab="view"] .age-relto__pane--settings,
+.age-relto.is-mobilefull[data-tab="pages"] .age-relto__pane--settings, .age-relto.is-mobilefull[data-tab="settings"] .age-relto__pane--pages { display: none; }
+.age-relto.is-mobilefull[data-tab="pages"] .age-relto__pane--pages, .age-relto.is-mobilefull[data-tab="settings"] .age-relto__pane--settings { display: block; padding: 8px 12px; color: var(--text-normal, #e9dcb8); }
 .age-relto.is-mobilefull .age-relto__when, .age-relto.is-mobilefull .age-relto__inscription, .age-relto.is-mobilefull .age-relto__turn { display: none; }
 .age-relto.is-mobilefull .age-relto__pane--view { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
 .age-relto.is-mobilefull .age-relto__pane--pages, .age-relto.is-mobilefull .age-relto__pane--settings { flex: 1; min-height: 0; overflow: auto; }
