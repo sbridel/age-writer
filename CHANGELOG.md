@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.30.9 — A column of buttons in full screen on a phone (2026-10-13)
+
+### Changed
+- On a phone in full screen, the Relto's buttons stand in one column along the left edge of the picture, close together, and the picture takes the rest of the screen. Nothing changes outside full screen or with a mouse.
+
 ## 1.30.8 — Bigger Relto buttons on a phone (2026-10-13)
 
 ### Changed

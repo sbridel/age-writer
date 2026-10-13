@@ -802,3 +802,11 @@
 .age-relto.is-touch[data-tab] .age-relto__tab, .age-relto.is-touch[data-tab] .age-relto__tabs:hover .age-relto__tab { opacity: 0.95; min-width: 44px; min-height: 44px; padding: 8px 10px; justify-content: center; border-radius: 10px; }
 .age-relto.is-touch[data-tab] .age-relto__tab svg, .age-relto.is-touch .age-relto__tabs .age-relto__viewbtn svg { width: 22px; height: 22px; }
 .age-relto.is-touch .age-relto__tabs .age-relto__viewbtn { width: 44px; height: 44px; opacity: 0.95; }
+/* plein écran au doigt : les boutons en colonne, sur le bord gauche de l'image (l'image prend le reste) */
+.age-relto.is-mobilefull { flex-direction: row; }
+.age-relto.is-mobilefull[data-tab] .age-relto__tabs { flex-direction: column; flex-wrap: nowrap; justify-content: flex-start; align-items: center; width: 56px; min-height: 0; height: 100%; margin: 0; padding: 6px 0; gap: 6px; overflow-y: auto; border: none; }
+.age-relto.is-mobilefull .age-relto__tabs > .age-relto__nav--bar { flex-direction: column; margin: 0; gap: 6px; }
+.age-relto.is-mobilefull .age-relto__tabs .age-relto__dnioverlay { display: none; }
+.age-relto.is-mobilefull .age-relto__pane { flex: 1; min-width: 0; }
+.age-relto.is-mobilefull .age-relto__stage { width: min(100%, calc(100dvh * 1.7778)); }
+@media (orientation: portrait) { .age-relto.is-mobilefull .age-relto__stage { width: min(100%, calc(100vw * 1.7778)); } }

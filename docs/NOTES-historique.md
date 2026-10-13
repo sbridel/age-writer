@@ -443,3 +443,7 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 ## 1.30.8 — barre d'icônes au doigt (13 oct. 2026)
 
 - `src/styles.ext.css`, sous `.age-relto.is-touch` : la barre (`.age-relto__tabs`) aligne tout à gauche (navigation puis onglets), boutons de 44 px, icônes de 22 px, opacité pleine (pas de survol). Souris inchangée.
+
+## 1.30.9 — plein écran mobile : la colonne de boutons (13 oct. 2026)
+
+- `src/styles.ext.css`, sous `.age-relto.is-mobilefull` : disposition en ligne (`flex-direction: row`), la barre `.age-relto__tabs` en colonne de 56 px sur le bord gauche (navigation puis onglets, sans le nom D'ni), l'image dans le reste (`100dvh × 16/9` en paysage, `100vw × 16/9` couchée en portrait).
