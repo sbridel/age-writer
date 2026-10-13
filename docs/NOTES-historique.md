@@ -464,3 +464,7 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 
 - Un chat de plus, pour qui sait le trouver (`page_marcel`, page intégrée secrète ; voir `src/relto-model.js` et les fonctions `marcel*` de `src/relto-render.js` ; tests : `test/marcel.test.js`). Rien dans le guide.
 - L'index des Âges note la maladie du vivant (`sick`).
+
+## 1.32.2 — la housse du jour (13 oct. 2026)
+
+- `src/relto-atelier.js` : `COVERS` (six étoffes sourdes : dossier, assise, couleur de camouflage) et `coverOf(r, now)` (date locale et graine du Relto). Le fauteuil de l'atelier change de housse chaque jour ; ce qui s'y camoufle suit la housse. Tests : `test/marcel.test.js` (29 contrôles).

@@ -1,7 +1,7 @@
 "use strict";
 // L'atelier d'écriture : une pièce cachée derrière une bibliothèque et un panneau de la cabane. Un grand bureau chargé d'objets étranges, une cheminée,
 // un fauteuil (le chat s'y repose) et, en haut, une galerie de livres. Tout est dessiné ici (aucun asset).
-const { rng, clamp, mix, rgba } = require("./util");
+const { rng, clamp, mix, rgba, fnv } = require("./util");
 const EMB = require("./emblem");
 const FL = require("./relto-flower");
 const W = 640, H = 360, FLOOR = 250, GALLERY = 100;
@@ -143,10 +143,11 @@ function drawAtelier(r, ctx, sc, sky, t) {
   r.hot.push({ x: fx - 10, y: 140, w: fw + 20, h: FLOOR - 140, tip: TRr("atelier.fire.tip"), flash: TRr("atelier.fire.flash") });
   // fauteuil devant le feu ; le chat s'y roule en boule
   const ax = 396, ay = 262;
-  ctx.fillStyle = c("#5b2b2b"); ctx.fillRect(ax, ay - 52, 52, 54); ctx.fillStyle = c("#6d3535"); ctx.fillRect(ax - 8, ay - 30, 14, 36); ctx.fillRect(ax + 46, ay - 30, 14, 36); ctx.fillRect(ax + 4, ay - 26, 44, 28);
+  const cover = coverOf(r); // la housse du jour : une étoffe sourde, qui change chaque jour (le même jour, la même toute la journée)
+  ctx.fillStyle = c(cover.back); ctx.fillRect(ax, ay - 52, 52, 54); ctx.fillStyle = c(cover.seat); ctx.fillRect(ax - 8, ay - 30, 14, 36); ctx.fillRect(ax + 46, ay - 30, 14, 36); ctx.fillRect(ax + 4, ay - 26, 44, 28);
   ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(ax - 8, ay + 2, 68, 5); ctx.fillStyle = c("#2f2016"); ctx.fillRect(ax - 6, ay + 6, 4, 8); ctx.fillRect(ax + 54, ay + 6, 4, 8);
   const cat = sc.additions.find((a) => a.type === "cat");
-  if (cat && r.catSpotFor() === 0) r.drawSleepingCat(ctx, cat, { x: ax + 28, y: ay - 26, S: 1.7, shade: c, tip: TRr("atelier.cat.tip"), camo: "#622f2f" }, t); // (Marcel s'y camoufle : entre le cuir du dossier et celui de l'assise) le même chat que dans la cabane, roulé sur l'assise
+  if (cat && r.catSpotFor() === 0) r.drawSleepingCat(ctx, cat, { x: ax + 28, y: ay - 26, S: 1.7, shade: c, tip: TRr("atelier.cat.tip"), camo: cover.camo }, t); // (Marcel s'y camoufle : la couleur de la housse du jour, entre le dossier et l'assise) le même chat que dans la cabane, roulé sur l'assise
   else r.hot.push({ x: ax - 8, y: ay - 52, w: 68, h: 56, tip: TRr("atelier.chair.tip"), flash: TRr("atelier.chair.flash") });
   // le mur derrière le bureau : un portrait, le tableau aux ficelles rouges, un baromètre, une étagère de bocaux
   { const { pin, sheet } = wallBits(ctx, c), TRd = (k) => TRr(k), wq = rng(0xb0a7);
@@ -343,4 +344,21 @@ function drawFlowerView(r, ctx, sc, sky, t) {
   backButton(r, ctx, TRr("atelier.flower.back"), "atelier");
 }
 
-module.exports = { drawFlowerView, drawAtelier, drawDesk, drawLoft, drawLetter, drawBookcase, backButton, SECRET, CASE, COMBO };
+/**
+ * La housse du fauteuil de l'atelier : une étoffe parmi six, tirée chaque jour (date locale et graine du Relto). Tons sourds, ceux
+ * de la pièce. `back` le dossier, `seat` l'assise et les accoudoirs, `camo` la couleur que prend Marcel quand il y dort.
+ */
+const COVERS = [
+  { back: "#5b2b2b", seat: "#6d3535", camo: "#622f2f" }, // le cuir bordeaux
+  { back: "#2c4a3a", seat: "#365a47", camo: "#305140" }, // le velours vert bouteille
+  { back: "#7a5a2c", seat: "#8c6a36", camo: "#836231" }, // l'ocre
+  { back: "#273449", seat: "#304058", camo: "#2b3a50" }, // le bleu nuit
+  { back: "#55524c", seat: "#65615a", camo: "#5d5953" }, // le tweed gris
+  { back: "#4a3326", seat: "#5a3f2f", camo: "#52392a" }, // le cuir tabac
+];
+function coverOf(r, now = Date.now()) {
+  const d = new Date(now), day = d.getFullYear() * 1000 + Math.floor((d - new Date(d.getFullYear(), 0, 1)) / 86400000), seed = (r.scene && r.scene.seed) || 0;
+  return COVERS[Math.floor(rng((fnv("housse|" + day) ^ seed) >>> 0)() * COVERS.length)];
+}
+
+module.exports = { COVERS, coverOf, drawFlowerView, drawAtelier, drawDesk, drawLoft, drawLetter, drawBookcase, backButton, SECRET, CASE, COMBO };

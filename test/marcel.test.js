@@ -81,4 +81,13 @@ const make = (sc, hour) => { const c = dom.window.document.createElement("canvas
   r.setHour(20.5); const dusk = r.marcelCamo(11).dark(0); ok(dusk > 0.3 && dusk < 1, "au crépuscule, le noir gagne");
 }
 
+// ---- la housse du fauteuil : une étoffe par jour ----
+{
+  const AT = require("../src/relto-atelier"), r = make(on, 13), D = 86400000, t0 = new Date(2026, 9, 13, 9).getTime();
+  const c0 = AT.coverOf(r, t0); ok(AT.COVERS.includes(c0), "une housse de la palette");
+  ok(AT.coverOf(r, t0 + 10 * 3600000) === c0, "la même toute la journée");
+  const seen = new Set(); for (let d = 0; d < 30; d++) seen.add(AT.coverOf(r, t0 + d * D)); ok(seen.size >= 4, `elle change selon les jours (${seen.size} étoffes en un mois)`);
+  ok(AT.COVERS.every((c) => c.camo && c.back && c.seat), "chaque étoffe dit la couleur que prend Marcel");
+}
+
 console.log(`✓ marcel.test.js (${n} contrôles)`);
