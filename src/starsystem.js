@@ -196,11 +196,27 @@ function beacons(sys, systems, line = 0) {
   for (const [k, rec] of Object.entries(systems || {})) {
     if (k === sys.key || !rec || !Number.isFinite(rec.at) || !Number.isFinite(rec.torahn)) continue;
     const b = cart({ torahn: mod(rec.torahn - int(rec.line), T.TURN), distance: rec.distance, elevation: rec.elevation }), d = Math.hypot(b.x - S.x, b.y - S.y, b.z - S.z);
-    if (d <= BEACON_RANGE) list.push({ key: k, d: Math.round(d), line: int(rec.line) });
+    if (d <= BEACON_RANGE) list.push({ key: k, d: Math.round(d), line: int(rec.line), bite: int(rec.bite) });
   }
   list.sort((a, b) => a.d - b.d);
   const two = list.slice(0, 2);
   return { list, ok: list.length >= 2, agree: list.length >= 2 && two.every((b) => b.line === int(line)) };
+}
+
+/**
+ * La PRÉDICTION des balises (étape 3, Art de la Guilde) : avec deux étoiles situées voisines, l'instrument calcule où le Zéro
+ * devrait apparaître d'ici (Torahn, hauteur) et avec quel retard, et le MARQUE (un anneau fantôme, un repère sur la molette et
+ * sur le cadran). Il ne retire rien du verre : la lumière courbée et le faux pouls restent là, l'astronome compare. La
+ * prédiction a son erreur propre (quelques crans : elle mène dans la zone, la pose fait le reste) ; une balise gravée au mauvais
+ * retard (`bite`) la décale d'autant : l'astronome voit alors la prédiction contredire la trace. Null sans deux balises.
+ */
+function predict(sys, systems, line = 0) {
+  const b = beacons(sys, systems, line); if (!b.ok) return null;
+  const v = perceive(sys, { tri: true }).clue, r = rng((fnv("predit|" + sys.key) ^ 0x9e3b1) >>> 0), sg = () => (r() < 0.5 ? -1 : 1);
+  let delay = v.delay + sg() * (2 + Math.floor(r() * 3));
+  for (const q of b.list.slice(0, 2)) delay += Math.round((q.bite || 0) / 2);
+  const torahn = mod(v.torahn + sg() * (260 + Math.floor(r() * 200)), T.TURN), elev = Math.max(-T.ELEV_MAX, Math.min(T.ELEV_MAX, v.elevation + sg() * (3 + Math.floor(r() * 2))));
+  return { torahn, elev, delay: Math.max(0, Math.min(DELAY_MAX, delay)), beats: v.beats || 0, beacons: b.list.slice(0, 2).map((q) => q.key) };
 }
 
 // ---- la molette du retard et le réglage du joueur ------------------------------------------------------------
@@ -271,12 +287,14 @@ function locate(zero, dial) {
  * ligne ; tout tourne de `line` torantee autour du Zéro), `seen` (où l'Âge voit vraiment le Zéro, pour que la carte trahisse
  * l'erreur), `pert` (ses perturbateurs : genre et position GZCS gravée), `tri` (situé par triangulation), `ages` (noms).
  */
-function record(sys, zero, dial, now = Date.now(), { line = 0, ages = null, tri = false } = {}) {
+function record(sys, zero, dial, now = Date.now(), { line = 0, ages = null, tri = false, bite = 0 } = {}) {
   const L = int(line), d = normDial(dial), r = locate(believedZero(zero, L), d).fromRelto, err = d.beats - (zeroSeenFrom(sys.pos).beats || 0);
   // mauvais battement : l'étoile est gravée un rahnfee trop près (ou trop loin) ; l'Imageur ne pourra pas la tenir (`beatErr`)
   const dist = err ? Math.max(1, sys.pos.distance + err * DELAY_TURN * DELAY_UNIT) : sys.pos.distance;
   const out = { at: Math.round(now), torahn: mod(sys.pos.torahn + L, T.TURN), elevation: sys.pos.elevation, distance: dist, beats: d.beats, rel: { x: Math.round(r.x), y: Math.round(r.y), z: Math.round(r.z) } };
   if (err) out.beatErr = err;
+  // le piège qui mord : la pose a été faite sur le faux pouls ; l'étoile est gravée à une fausse distance (direction juste), de `bite` crans de retard de trop ou de moins
+  if (bite) { out.bite = int(bite); out.distance = Math.max(1, out.distance + out.bite * DELAY_UNIT); }
   if (sys.near) { out.seen = zeroSeenFrom(sys.pos).torahn; if (sys.near.length) out.pert = sys.near.map((p) => { const c = PB.cylOf(p); return { kind: p.kind, torahn: mod(c.torahn + L, T.TURN), distance: c.distance, elevation: c.elevation }; }); }
   if (L) out.line = L;
   if (tri) out.tri = true;
@@ -355,4 +373,4 @@ function lineSignals(aim, zero, old, { easy = false } = {}) {
   return { true: a, old: o, best };
 }
 
-module.exports = { farBeats, FAR_SHARE, DELAY_TURN, BEATS_MAX, surveyed, BEND_DIM, scope, OLD_LINE, OLD_GAIN, BEACON_RANGE, FIELD_NONE, writtenPerturbers, placeSystem, perceive, oldLine, believedZero, miss, offLine, beacons, compassOf, lineSignals, DELAY_UNIT, DELAY_MAX, STEP_DELAY, TOL, SYS_ELEV, SYS_DIST, SYSTEM_RE, HEIGHT_AT, DELAY_AT, FAINT_AT, parseSystem, starIds, starKey, position, cart, cyl, delayOf, strengthOf, zeroSeenFrom, sources, systemOf, normDial, turnDial, measure, echoOffset, echoWord, locate, record, isLocated, findLocated, sectorOf, heightBand, delayBand, faintBand, words };
+module.exports = { predict, farBeats, FAR_SHARE, DELAY_TURN, BEATS_MAX, surveyed, BEND_DIM, scope, OLD_LINE, OLD_GAIN, BEACON_RANGE, FIELD_NONE, writtenPerturbers, placeSystem, perceive, oldLine, believedZero, miss, offLine, beacons, compassOf, lineSignals, DELAY_UNIT, DELAY_MAX, STEP_DELAY, TOL, SYS_ELEV, SYS_DIST, SYSTEM_RE, HEIGHT_AT, DELAY_AT, FAINT_AT, parseSystem, starIds, starKey, position, cart, cyl, delayOf, strengthOf, zeroSeenFrom, sources, systemOf, normDial, turnDial, measure, echoOffset, echoWord, locate, record, isLocated, findLocated, sectorOf, heightBand, delayBand, faintBand, words };

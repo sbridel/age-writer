@@ -742,7 +742,7 @@ class ReltoRenderer {
     const other = st.guild && st.g.syncFor !== (st.world && st.world.age.path); // mode Guilde : la synchro vaut pour le monde où elle a été faite
     const now = this.imagerNow(), set = other || (st.settings.sysKey && st.settings.sysKey !== st.system.key) ? { ...st.settings, syncAt: null } : st.settings; // l'étoile a changé depuis la synchro
     let c = CAL.state(set, st.orbit, true, now);
-    if (sys.beatErr) c = { ...c, synced: false, certain: false, q: 0, slip: true }; // gravée au mauvais battement : la planète glisse, rien ne tient
+    if (sys.beatErr || sys.bite) c = { ...c, synced: false, certain: false, q: 0, slip: true }; // gravée au mauvais battement : la planète glisse, rien ne tient
     return { ...c, sys, system: st.system, lt: CAL.localTime(st.orbit, c, now + CAL.lineShift(st.orbit, sys.line)) }; // étape 3 : gravée sur la fausse ligne, l'heure là-bas est fausse
   }
   /** Un geste sur la machine : un livre, un poste, un cristal, un verre, un bouton, le verrou, le périscope, le micromètre. */

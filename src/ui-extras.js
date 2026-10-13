@@ -29,7 +29,7 @@ const seedOf = (plugin, path, name) => (path && plugin.core && plugin.core.seed 
 function calibrationOf(plugin, { src, analysis, name, path }) {
   const seed = seedOf(plugin, path, name), sys = SS.systemOf(analysis, src, seed), { zero, rec } = SS.findLocated(plugin.ext.telescope, sys.key), now = Date.now();
   const tune = (plugin.ext.imagerTunings || {})[path] || null, moved = !!(tune && tune.sysKey && tune.sysKey !== sys.key && tune.syncAt != null);
-  const orbit = CAL.orbitOf(analysis, seed, SKY.parseSky(src), sys.near), cal = CAL.state(moved ? { ...tune, syncAt: null } : tune, orbit, !!rec && !rec.beatErr, now); // gravée au mauvais battement : l'Imageur ne la tient pas
+  const orbit = CAL.orbitOf(analysis, seed, SKY.parseSky(src), sys.near), cal = CAL.state(moved ? { ...tune, syncAt: null } : tune, orbit, !!rec && !rec.beatErr && !rec.bite, now); // gravée au mauvais battement : l'Imageur ne la tient pas
   // étape 3 : gravée sur la fausse ligne, l'étoile donne une heure et des KIPS faux (on les montre tels quels : c'est le piège)
   const field = analysis && analysis.physics && analysis.physics.w ? analysis.physics.w.field : null;
   return { sys, rec, zero, cal, moved, orbit, compass: SS.compassOf(field), old: SS.offLine(rec), lt: CAL.localTime(orbit, cal, now + CAL.lineShift(orbit, rec && rec.line)), kips: rec && cal.synced ? [rec.torahn, TEL.kiElev(rec.elevation), rec.distance] : null };
@@ -216,7 +216,7 @@ function renderStarNote(plugin, sec, { src, analysis, path }) {
     const why = (C.orbit && C.orbit.why) || [];
     if (C.rec && why.length) box.createDiv({ cls: "age-det__state is-drift", text: why.includes("nofield") ? t("sys.drift.nofield") : why.includes("weakfield") ? t("sys.drift.weakfield") : t("sys.drift.pert") });
   }
-  if (C.zero) box.createDiv({ cls: "age-det__state" + (C.rec ? (C.old || C.rec.beatErr ? " is-moved" : " is-located") : ""), text: C.rec ? (C.old ? t("sys.state.old") : C.rec.beatErr ? t("sys.state.beat") : t("sys.state.located")) : t("sys.state.not") });
+  if (C.zero) box.createDiv({ cls: "age-det__state" + (C.rec ? (C.old || C.rec.beatErr || C.rec.bite ? " is-moved" : " is-located") : ""), text: C.rec ? (C.old ? t("sys.state.old") : C.rec.beatErr ? t("sys.state.beat") : C.rec.bite ? t("sys.state.bite") : t("sys.state.located")) : t("sys.state.not") });
   if (C.moved) box.createDiv({ cls: "age-det__state is-moved", text: t("sys.moved") });
   // l'heure là-bas : seulement si l'Imageur est synchronisé ; sinon elle reste incertaine (le temps se gagne en se situant)
   if (C.rec) {

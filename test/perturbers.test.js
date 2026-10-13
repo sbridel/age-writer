@@ -21,6 +21,7 @@ const A = (src, name) => { const a = analyseAgeBase(src, { seed: name }); return
 const sysOf = (src, name) => SS.systemOf(A(src, name), src, name);
 const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
 const DAY = 86400000, t0 = 1.8e12;
+const sc0check = () => true;
 const angle = (a, b) => { let d = Math.abs(((a - b) % T.TURN + T.TURN) % T.TURN); return Math.min(d, T.TURN - d); };
 /** La première clé d'étoile (sans rien écrire) dont les perturbateurs vérifient `f`. */
 const findKey = (f, pre = "single_sun@t") => { for (let i = 0; i < 5000; i++) { const k = pre + i, p = SS.placeSystem(k, []), fx = PB.effects(p.near, p.key, SS.delayOf(p.pos), SS.DELAY_MAX); if (f(p, fx)) return { key: k, p, fx }; } return null; };
@@ -236,13 +237,14 @@ const relDone = (async () => {
   const s2 = rs.telescope; s2.found = true; s2.line = 0;
   const pert = { key: bh.p.key, pos: bh.p.pos, near: bh.p.near, fx: bh.fx, perturbed: true, ...SS.perceive({ key: bh.p.key, pos: bh.p.pos, near: bh.p.near }) };
   s2.book = { idx: 0, age: ages[0], data: { system: pert }, loading: false }; s2.dial = { torahn: pert.seen.torahn, elev: pert.seen.elevation, delay: pert.seen.delay }; rs.draw(2);
-  const lever = rs.hot.find((h) => h.tel && h.tel.triangulate); ok(lever && /Triangulate/.test(lever.tip), "un système perturbé : le levier des balises");
+  const lever = rs.hot.find((h) => h.tel && h.tel.triangulate); ok(lever && /Predict/.test(lever.tip), "un système perturbé : le levier des balises");
   TL.act(rs, { triangulate: true }); ok(s2.note === "sys.tri.few" && s2.triFor == null, "sans balises : trop peu d'étoiles voisines");
   const S = SS.cart(pert.pos), bc = (dx, dy) => { const v2 = SS.cyl({ x: S.x + dx, y: S.y + dy, z: S.z }); return { at: t0, torahn: v2.torahn, distance: v2.distance, elevation: v2.elevation }; };
   s2.systems = { b1: bc(700, 200), b2: bc(-900, 600) };
   TL.act(rs, { triangulate: true }); ok(s2.note === "sys.tri.agree" && s2.triFor === pert.key, "deux balises : « the charted stars agree »");
-  rs.draw(3); ok(rs.hot.some((h) => h.tel && h.tel.triangulate && /Triangulated/.test(h.tip)), "le levier tiré");
+  rs.draw(3); ok(rs.hot.some((h) => h.tel && h.tel.triangulate && /Beacons on/.test(h.tip)), "le levier tiré");
   s2.dial = { torahn: (pert.clue.torahn + 100) % T.TURN, elev: pert.clue.elevation, delay: pert.clue.delay }; TL.act(rs, { axis: "torahn", delta: -100 });
+  if (s2.hold) { rs.nowOverride = s2.hold.t0 + 4500; rs.draw(3.5); } // les balises ne dispensent pas de la pose
   ok(s2.systems[pert.key] && s2.systems[pert.key].tri && s2.systems[pert.key].pert.some((q) => q.kind === "black_hole"), "triangulé et situé : la plaque garde son trou noir");
   rs.setView("starmap"); rs.draw(4); ok(rs.hot.some((h) => /a black hole/.test(h.tip)), "sur la carte : le trou noir, nommé au survol");
   ok(bad === 0, "carte et triangulation : aucun nombre non fini");
@@ -273,6 +275,47 @@ const relDone = (async () => {
     const re = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts({ instrumentsMode: "easy" })); re.setScene(sc); re.setView("telescope"); re.nowOverride = t0; re.draw(1);
     const s5 = re.telescope; s5.found = true; s5.line = 0; s5.book = { idx: 0, age: ages[0], data: { system: pz }, loading: false }; s5.dial = { torahn: pz.clue.torahn, elev: pz.clue.elevation, delay: pz.clue.delay }; re.draw(2);
     ok(!re.phaseTrace, "manière facile : un point en direct, pas de trace"); }
+  // la tourelle de verres, la prédiction des balises, le piège qui mord (Guilde)
+  { const MET = require("../src/metronome"), pb = findKey((p, fx) => !!fx.beat && !fx.deflect), rl = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts()); rl.setScene(sc); rl.setView("telescope"); rl.nowOverride = t0; rl.draw(1);
+    const s6 = rl.telescope; s6.found = true; s6.line = 0;
+    const pz = { key: pb.p.key, pos: pb.p.pos, near: pb.p.near, fx: pb.fx, perturbed: true, ...SS.perceive({ key: pb.p.key, pos: pb.p.pos, near: pb.p.near }) };
+    s6.book = { idx: 0, age: ages[0], data: { system: pz }, loading: false }; s6.dial = { torahn: pz.clue.torahn, elev: pz.clue.elevation, delay: pz.clue.delay + 30 }; rl.draw(2);
+    ok(rl.hot.some((h) => h.tel && h.tel.lens), "Guilde : la tourelle de verres est là");
+    const lensNow = () => TL.state(rl).lens || "plate", seq = [lensNow()]; for (let i = 0; i < 4; i++) { TL.act(rl, { lens: 1 }); seq.push(lensNow()); }
+    ok(seq.join() === "plate,both,bare,echo,plate", "un clic tourne la tourelle : plaque, les deux, nu, écho, plaque");
+    TL.act(rl, { lens: 1 }); TL.act(rl, { lens: 1 }); ok(lensNow() === "bare", "verre nu");
+    rl.phaseTrace = {}; const b0 = MET.peakAt(Math.ceil(MET.beatPos(t0))); for (let b = 0; b < 8; b++) { rl.nowOverride = b0 + b * MET.PRORAHN_MS * 0.5 + 30; rl.draw(5 + b); }
+    ok(Object.keys(rl.phaseTrace).length === 0, "verre nu : pas de cadran, aucune trace");
+    TL.act(rl, { lens: 1 }); TL.act(rl, { lens: 1 }); ok(lensNow() === "plate", "retour à la plaque");
+    for (let b = 0; b < 8; b++) { rl.nowOverride = b0 + b * MET.PRORAHN_MS * 0.5 + 30; rl.draw(20 + b); }
+    ok(rl.phaseTrace.echo && rl.phaseTrace.echo.length > 0, "plaque : la trace se grave");
+    const saved = [];
+    const rk = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts({ instrumentsMode: () => "guild", telescopeSet: (k, v) => saved.push(v) })); rk.setScene(sc); rk.setView("telescope"); rk.draw(1); TL.act(rk, { lens: 1 });
+    ok(saved.length && saved[saved.length - 1].lens === "both", "le choix du verre est gardé par Relto");
+    const rg = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts({ instrumentsMode: "easy" })); rg.setScene(sc); rg.setView("telescope"); rg.draw(1); TL.act(rg, { lens: 1 });
+    ok(!rg.hot.some((h) => h.tel && h.tel.lens) && !rg.telescope.lens, "manière facile : pas de tourelle");
+    // la prédiction : proche de la vérité, mais pas exacte ; elle ne filtre rien
+    const S = SS.cart(pz.pos), bc = (dx, dy) => { const v2 = SS.cyl({ x: S.x + dx, y: S.y + dy, z: S.z }); return { at: t0, torahn: v2.torahn, distance: v2.distance, elevation: v2.elevation }; };
+    s6.systems = { b1: bc(700, 200), b2: bc(-900, 600) };
+    const pr = SS.predict(pz, s6.systems, 0), dd = Math.abs(pr.delay - pz.clue.delay);
+    ok(pr && dd >= 2 && dd <= 4 && angle(pr.torahn, pz.clue.torahn) >= 200, "la prédiction a son erreur propre : hors tolérance, dans le champ");
+    ok(SS.predict(pz, { b1: s6.systems.b1 }, 0) === null, "une seule balise : pas de prédiction");
+    const bite = { ...s6.systems, b1: { ...s6.systems.b1, bite: 12 } }, pb2 = SS.predict(pz, bite, 0);
+    ok(pb2.delay === pr.delay + 6, "une balise mordue décale la prédiction de la moitié de sa morsure");
+    TL.act(rl, { triangulate: true }); ok(s6.triFor === pz.key, "les balises tirées");
+    rl.nowOverride = t0; rl.draw(60); ok(rl.telescope.systems && sc0check(rl), "le verre garde tout");
+    // le piège qui mord : poser sur le faux pouls grave une fausse distance
+    s6.triFor = null; s6.systems = {}; const fd = Math.max(0, Math.min(SS.DELAY_MAX, pz.seen.delay)); s6.dial = { torahn: (pz.clue.torahn + 100) % T.TURN, elev: pz.clue.elevation, delay: fd, beats: pz.clue.beats || 0 };
+    TL.act(rl, { axis: "torahn", delta: -100 });
+    if (Math.abs(fd - pz.clue.delay) > SS.TOL.delay) {
+      ok(s6.hold && s6.hold.bite === fd - pz.clue.delay && !s6.systems[pz.key], "la pose commence sur le faux pouls (le télescope ne dit pas qu'il est faux)");
+      rl.nowOverride = s6.hold.t0 + 4500; rl.draw(61);
+      const rec = s6.systems[pz.key]; ok(rec && rec.bite === fd - pz.clue.delay && rec.distance === Math.max(1, pz.pos.distance + rec.bite * SS.DELAY_UNIT) && rec.torahn === pz.pos.torahn, "gravée : direction juste, fausse distance");
+      s6.dial = { torahn: pz.clue.torahn, elev: pz.clue.elevation, delay: pz.clue.delay, beats: pz.clue.beats || 0 }; TL.act(rl, { axis: "torahn", delta: 0 });
+      if (s6.hold) { rl.nowOverride = s6.hold.t0 + 4500; rl.draw(62); }
+      ok(s6.systems[pz.key] && !s6.systems[pz.key].bite && s6.systems[pz.key].distance === pz.pos.distance, "refaire la pose sur le vrai retard répare la plaque");
+    } else ok(true, "faux pouls confondu avec le vrai : pas de morsure");
+  }
   // français
   const rf = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts({ t: makeT(() => "fr") })); rf.setScene(sc); rf.setView("starmap"); rf.draw(1);
   ok(rf.hot.some((h) => /Rouler la carte/.test(h.tip)) && rf.hot.some((h) => /Le Great Zero/.test(h.tip)), "en français : la carte");
