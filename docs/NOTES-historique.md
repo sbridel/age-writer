@@ -382,3 +382,13 @@ unlock:                            # facultatif
 - Télescope (`src/relto-telescope.js`) : en Guilde, étoile morte non triangulée → `needHold` : le vrai retard ne grave rien avant `HOLD_BEATS` = 3 battements immobiles (`st.hold`, effacé au moindre geste) ; le vrai écho pâlit (`echo.pale`) ; croisée qui luit à chaque battement ; `phaseDial` (arc gradué, éclair à midi, un point par écho, faux pouls de même couleur et taille).
 - Piège qui mord (gravure fausse si on tient sur le faux point) : envisagé, mis de côté jusqu'à quelques jours de jeu.
 
+## 1.29.0 — télescope : tourelle de verres, temps de pose, balises qui prédisent, plaque qui mord (13 oct. 2026)
+
+Principe : la lunette montre tout ; la plaque grave ce qu'on expose ; les balises disent ce qu'on devrait voir. Note : `claude/DESIGN-telescope-lunette-et-plaque.md` (projet). Manière facile inchangée.
+- Tourelle (`src/relto-telescope.js`, `LENSES`, `lensOf`, `turret`, `TURRET`) : bouton sur le fût de l'oculaire, `{ lens: 1 }` tourne plaque → les deux → nu → écho ; gardé dans l'état (`lens`, omis si « plate »). `eyepiece` : `rings` (verre d'écho ou les deux, rayons × `ZOOM` = 3,4) et `dial` (plaque ou les deux).
+- Trace du cadran (`phaseDial`, `r.phaseTrace`, `TRACE_BEATS` = 8) ; Me'erta à l'étape 2 (`echo3`, son `hear("merta")`).
+- Pose : `needHold(r, sc)` = Guilde et faux pouls, triangulé ou non ; texte « Pose de la plaque ».
+- Balises (`SS.predict`) : `scopeOf` passe toujours `tri: false` ; la prédiction (erreur propre : retard 2–4 crans, Torahn 260–460 torantee, hauteur 3–4 ; une balise mordue décale le retard de `bite/2`) donne `more.ghost` (anneau pointillé), `phase.ghost` (repère au cadran), repères sur la molette du retard et près de l'interrupteur. Hors du champ : lueur au bord (halo + liseré, bat au pouls) seulement à moins de `GHOST_REACH` = 2 rayons d'oculaire (60 crans).
+- Piège qui mord : pose sur `falseLock` avec direction juste → `st.hold.bite` → `SS.record(…, { bite })` (`distance` + `bite` × 25 shahfeetee, `rec.bite`). `beacons()` porte `bite`. Imageur (`relto-render.js` `imagerCal`) et Détails (`ui-extras.js`, `sys.state.bite`) : la planète glisse. Regravé dès qu'on situe sur le vrai retard (ou gratter).
+- Lore (guide) : la plaque de phase est du verre de l'Imageur, marqué un instant puis oublieux.
+- Tests : `test/perturbers.test.js` (tourelle, prédiction, morsure, réparation).

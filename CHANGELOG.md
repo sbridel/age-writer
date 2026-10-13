@@ -2,6 +2,20 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.29.0 — A telescope that shows everything: a turret of lenses, a pose time, beacons that predict, a plate that bites (2026-10-13)
+
+The observatory's Art of the Guild is rebuilt on one principle: the glass shows everything that arrives, the plate engraves what you expose, the beacons say what you should see. The instrument no longer knows what is false; the astronomer does. Easy mode is unchanged.
+
+### Added
+- **A turret of lenses** on the eyepiece barrel (a brass knob, lower right; a click turns it, Relto keeps the choice): *bare glass* (the sky, the point, the crosshair), *echo glass* (the echo rings magnified ×3.4), *phase plate* (the default: the dial and its trace), or *both*.
+- **The phase dial keeps a trace.** Each pulse leaves a mark where it is born, fading in about eight beats. The Zero's echo piles up in one sharp point; the Me'erta line (now present on every Age, as it crosses matter and Ages like the Zero) marches round the dial; a pulsar crawls, a neutron star jumps. The true beat does not drift. Turning the wheel blurs the trace, which forms again.
+- **The plate bites.** Hold the exposure on the false beat (right direction, false delay) and the star is engraved at the wrong distance. The map does not show it; the Imager cannot hold the planet, and the Details tab says so. Scratch the plate, or expose again on the true delay.
+
+### Changed
+- **Beacons predict instead of filtering.** With two charted stars nearby, the lever marks where the Zero should appear from here: a ghost ring in the eyepiece, a mark on the Delay wheel, near the whole-beat switch and on the dial. Nothing is taken from the glass; the bent light and the false beat stay. The prediction has its own error of a few notches, and inherits the error of a star engraved wrong. Out of the field, there is no arrow: when you are close (within two eyepiece radii) the predicted light spills onto the rim of the glass, beating with the pulse.
+- **Pose time.** Near a false beat the plate always needs three still beats of exposure ("Exposing the plate: hold still"); the beacons no longer exempt it.
+- The telescope no longer says "the echo follows the false beat".
+
 ## 1.28.0 — Drawn pages in plain sight, a cavern you look into, a moon you tune, a telescope you must read (2026-10-13)
 
 ### Added
