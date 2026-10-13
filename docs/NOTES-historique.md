@@ -422,3 +422,7 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 - Rails de l'Imageur : `this.slide` (glisser le verre cran par cran), souris et doigt. `holdKey` regroupe les zones d'un même réglage de l'Imageur (`value`, `slot`, `rack`).
 - Livre descriptif (`src/relto-descview.js`) : couché en portrait plein écran (`opts.rotated`), placé d'après `offsetLeft/Top/Width/Height` du canevas ; se replace au `resize`/`orientationchange`.
 - Guide : « Les molettes à la souris ». Tests : `test/touch.test.js` (41 contrôles).
+
+## 1.30.4 — tout le Relto se couche (13 oct. 2026)
+
+- Plein écran mobile en portrait : la rotation passe de `.age-relto__stage` à `.age-relto.is-mobilefull` entier (`width: 100dvh`, `height: 100vw`, `left: 100vw`, `rotate(90deg)`) ; la barre d'icônes se couche avec l'image ; l'image prend `(100vw − 48 px) × 16/9`.

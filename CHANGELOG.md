@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.30.4 — The whole Relto lies down (2026-10-13)
+
+### Fixed
+- On a phone held upright in full screen, only the picture lay down: the icon bar stayed upright, sideways once the phone was turned. The whole Relto now lies down by a quarter turn, icon bar included.
+
 ## 1.30.3 — Wheels you turn with the mouse (2026-10-13)
 
 ### Added

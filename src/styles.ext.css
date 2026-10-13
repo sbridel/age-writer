@@ -768,8 +768,9 @@
 .age-relto.is-mobilefull .age-relto__tipcard { position: absolute; left: 6px; right: 6px; bottom: 6px; margin: 0; min-height: 0; pointer-events: none; opacity: 0.95; }
 .age-relto.is-mobilefull .age-relto__tipcard.is-empty { display: none; }
 @media (orientation: portrait) {
-  /* en portrait, l'image se couche d'un quart de tour sous la barre d'icônes : le Relto se joue téléphone tourné, sans rotation automatique */
-  .age-relto.is-mobilefull .age-relto__stage { position: fixed; top: calc(48px + env(safe-area-inset-top, 0px)); left: 100vw; width: min(calc(100dvh - 48px - env(safe-area-inset-top, 0px)), 177.78vw); transform-origin: 0 0; transform: rotate(90deg); }
+  /* en portrait, tout le Relto se couche d'un quart de tour (barre d'icônes comprise) : on tourne le téléphone et on joue, sans rotation automatique */
+  .age-relto.is-mobilefull { inset: auto; top: 0; left: 100vw; width: 100dvh; height: 100vw; transform-origin: 0 0; transform: rotate(90deg); padding: env(safe-area-inset-left, 0) env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0); }
+  .age-relto.is-mobilefull .age-relto__stage { width: min(100%, calc((100vw - 48px) * 1.7778)); }
 }
 /* écran étroit (téléphone, panneau latéral) : l'heure plus petite */
 @container (max-width: 600px) {
