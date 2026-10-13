@@ -50,6 +50,8 @@ const HOLD_BEATS = 3;
 const LENSES = ["bare", "echo", "plate", "both"], ZOOM = 3.4;
 const lensOf = (st) => (LENSES.includes(st.lens) ? st.lens : "plate");
 const TURRET = { x: 284, y: 238, r: 10 };
+/** La prédiction hors du champ : sa lumière ne déborde sur le bord du verre qu'à moins de deux rayons d'oculaire (60 crans, ~35°). */
+const GHOST_REACH = 2;
 const now = (r) => (r.nowOverride != null ? r.nowOverride : Date.now());
 /** Le numéro du prorahn en cours : la scintillation du signal change à chaque battement. */
 const beatOf = (r) => Math.floor((now(r) - DT.REF) / PULSE_MS);
@@ -365,11 +367,21 @@ function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null, more = null) {
     const e2 = more.echo2, per = PULSE_MS * e2.period, b2 = frac((ms - DT.REF) / per - e2.off), ea = clamp(haze) * (0.3 + 0.65 * Math.exp(-b2 * 6)) * (e2.ok ? 0.5 : 1);
     ctx.strokeStyle = rgba(240, 184, 96, ea); ctx.lineWidth = 1.3 * (Z > 1 ? 1.5 : 1); ctx.beginPath(); ctx.arc(hx, hy, (5 + 16 * b2) * Z, 0, 6.283); ctx.stroke();
   }
-  if (more && more.ghost) { // la prédiction des balises : où le Zéro devrait apparaître d'ici (un anneau fantôme ; hors du champ, une flèche au bord)
+  if (more && more.ghost) { // la prédiction des balises : où le Zéro devrait apparaître d'ici (un anneau fantôme ; hors du champ, une lueur au bord, seulement de près)
     const gx = cx + (more.ghost.dt / T.NOTCH + lagUV.u) * k, gy = cy - (more.ghost.de + lagUV.v) * k, gd = Math.hypot(gx - cx, gy - cy);
     ctx.strokeStyle = "rgba(159,230,218,0.85)"; ctx.fillStyle = "rgba(159,230,218,0.85)"; ctx.lineWidth = 1.2;
     if (gd < R - 6) { ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(gx, gy, (tol + 0.5) * k, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); }
-    else { const an = Math.atan2(gy - cy, gx - cx), ax = cx + Math.cos(an) * (R - 10), ay = cy + Math.sin(an) * (R - 10); ctx.beginPath(); ctx.moveTo(ax + Math.cos(an) * 7, ay + Math.sin(an) * 7); ctx.lineTo(ax + Math.cos(an + 2.5) * 6, ay + Math.sin(an + 2.5) * 6); ctx.lineTo(ax + Math.cos(an - 2.5) * 6, ay + Math.sin(an - 2.5) * 6); ctx.closePath(); ctx.fill(); }
+    else { // hors du champ : pas de flèche, la lumière prédite déborde sur le bord du verre, seulement de près (moins de deux rayons d'oculaire), et bat avec le pouls
+      const dg = gd / k, a = clamp((GHOST_REACH * FIELD - dg) / ((GHOST_REACH - 1) * FIELD));
+      if (a > 0.01) {
+        const an = Math.atan2(gy - cy, gx - cx), ex = cx + Math.cos(an) * R, ey = cy + Math.sin(an) * R, bp = MET.beatPos(ms), fl = Math.exp(-(bp - Math.floor(bp)) * 4), hr = R * (0.3 + 0.3 * a);
+        const hg = ctx.createRadialGradient(ex, ey, 0, ex, ey, hr); hg.addColorStop(0, rgba(159, 230, 218, 0.45 * a * (0.45 + 0.55 * fl))); hg.addColorStop(1, "rgba(159,230,218,0)");
+        ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.fillStyle = hg; ctx.fillRect(ex - hr, ey - hr, hr * 2, hr * 2);
+        const sp = 0.18 + 0.22 * a; ctx.lineCap = "round"; // là où elle « tape » : un liseré de lumière sur le bord du verre
+        ctx.strokeStyle = rgba(159, 230, 218, 0.7 * a * (0.4 + 0.6 * fl)); ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(cx, cy, R - 1.5, an - sp, an + sp); ctx.stroke();
+        ctx.strokeStyle = rgba(159, 230, 218, 0.25 * a * (0.4 + 0.6 * fl)); ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(cx, cy, R - 4, an - sp * 0.8, an + sp * 0.8); ctx.stroke(); ctx.restore();
+      }
+    }
   }
   if (more && more.phase && dial) phaseDial(ctx, cx, cy, R * 0.86, ms, more.phase.sources, more.phase.trace, more.phase.ghost);
   void at;
