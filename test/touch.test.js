@@ -42,6 +42,9 @@ const centre = (h) => [h.x + h.w / 2, h.y + h.h / 2];
   for (let d = 5; d <= 30; d += 5) { const q = (d * Math.PI) / 180; r.onDragMove(ev(wc.x + Math.cos(q) * rr, wc.y + Math.sin(q) * rr)); }
   ok(TL.state(r).aim.elev - e0 === 3, "souris : 30° au moyeu, trois crans");
   r.drag = null; const e1 = TL.state(r).aim.elev; r.onClick(ev(wc.x + rr, wc.y)); ok(TL.state(r).aim.elev === e1, "le clic qui termine le glissement ne compte pas");
+  { r.drag = null; r.dragged = false; const e9 = TL.state(r).aim.elev; r.onDown({ ...ev(wc.x + 2, wc.y), button: 0 }); for (const [dx, dy] of [[1, 1], [-1, 2], [2, -1], [-2, -2], [1, 0]]) r.onDragMove(ev(wc.x + 2 + dx, wc.y + dy));
+    ok(TL.state(r).aim.elev === e9 && !r.dragged, "un clic qui tremble près du centre du moyeu ne tourne rien");
+    r.onDown({ ...ev(wc.x + 9, wc.y), button: 0 }); r.onDragMove(ev(wc.x + 9, wc.y + 1)); r.onDragMove(ev(wc.x + 8.5, wc.y + 2)); ok(TL.state(r).aim.elev === e9, "un petit écart au bord du moyeu non plus"); r.drag = null; r.dragged = false; }
   r.onDown({ ...ev(...centre(hub)), button: 0 }); r.drag = null; r.onClick(ev(...centre(hub))); ok(TL.state(r).aim.elev !== e1, "un clic simple sur ± agit toujours");
   let prevented = 0; const wev = (dy, shift) => ({ ...ev(wc.x, wc.y), deltaY: dy, deltaMode: 0, shiftKey: !!shift, preventDefault: () => prevented++ });
   const e2 = TL.state(r).aim.elev; r.onWheel(wev(-100)); ok(TL.state(r).aim.elev === e2 && prevented === 0, "dans une note : la roulette laisse défiler la note");

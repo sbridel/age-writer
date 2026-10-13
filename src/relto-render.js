@@ -90,6 +90,7 @@ function catLook(color) {
   return CATS.orange;
 }
 const TIP_DELAY = 450; // ms avant qu'une infobulle du canvas apparaisse
+const DRAG_START = 3, DRAG_CORE = 4; // glisser une molette : il faut bouger de 3 unités avant qu'elle tourne ; à moins de 4 unités du centre, l'angle ne compte pas
 const WHEEL_STEP = 90; // la roulette : un cran de molette par cran de roulette (≈ 100 pixels de défilement)
 const TOUCH_REACH = 14; // mode tactile : une zone à moins de 14 unités du doigt répond (≈ 18 px en paysage sur un téléphone)
 const VERDICT = { stable: "#8fae6a", unstable: "#d9a24a", dying: "#c0553f", unknown: "#7a7a8a" };
@@ -1204,7 +1205,7 @@ class ReltoRenderer {
     if (h && h.imager && h.imager.value != null && h.imager.key && ready(h)) { this.slide = { key: h.imager.key, last: h.imager.value }; try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } return; } // un rail, l'arc de l'iris : on glisse le doigt le long
     if (!h || !h.wc || !ready(h)) return; // au doigt, une molette pas encore lue : le toucher la montre d'abord
     const wc = h.wc, r0 = Math.hypot(x - wc.x, y - wc.y);
-    this.drag = { wc, a: Math.atan2(y - wc.y, x - wc.x), acc: 0, fine: r0 <= (wc.hub || 0) + 3 || !wc.coarse };
+    this.drag = { wc, a: Math.atan2(y - wc.y, x - wc.x), acc: 0, fine: r0 <= (wc.hub || 0) + 3 || !wc.coarse, x0: x, y0: y, on: false };
     try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
   }
   /**
@@ -1228,7 +1229,12 @@ class ReltoRenderer {
       return;
     }
     const d = this.drag; if (!d) return;
-    const [x, y] = this.toLogical(e), wc = d.wc, a = Math.atan2(y - wc.y, x - wc.x); let da = a - d.a; da -= Math.round(da / (2 * Math.PI)) * 2 * Math.PI; d.a = a; d.acc += da;
+    const [x, y] = this.toLogical(e), wc = d.wc, a = Math.atan2(y - wc.y, x - wc.x); let da = a - d.a; da -= Math.round(da / (2 * Math.PI)) * 2 * Math.PI; d.a = a;
+    // une zone morte : le tremblement d'un clic ne tourne rien. Tout près du centre, l'angle s'affole au moindre pixel : on l'ignore ;
+    // et rien ne tourne tant que le pointeur n'a pas vraiment bougé depuis le premier appui
+    if (Math.hypot(x - wc.x, y - wc.y) < DRAG_CORE) return;
+    d.acc += da;
+    if (!d.on) { if (Math.hypot(x - d.x0, y - d.y0) < DRAG_START) return; d.on = true; }
     const step = ((d.fine ? wc.deg || 8 : wc.degRim || 20) * Math.PI) / 180;
     let n = 0;
     while (Math.abs(d.acc) >= step) { const dir = d.acc > 0 ? 1 : -1; d.acc -= dir * step; this.wheelAct((d.fine ? wc.fine : wc.coarse)(dir), wc.kind); n++; }

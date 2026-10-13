@@ -430,3 +430,7 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 ## 1.30.5 — feuille de style sans !important (13 oct. 2026)
 
 - `src/styles.ext.css` : l'heure du Relto sur écran étroit (`@container (max-width: 600px)`) passe par `.age-relto[data-tab] …` et `.age-reltoview .age-relto[data-tab] …` au lieu de `!important` (avertissement du lint CSS). Rendu inchangé.
+
+## 1.30.6 — zone morte des molettes (13 oct. 2026)
+
+- `onDragMove` (`src/relto-render.js`) : `DRAG_START` = 3 unités de déplacement avant que la molette tourne (`d.on`) ; à moins de `DRAG_CORE` = 4 unités du centre, l'angle n'est pas compté. En 1.30.3–1.30.5, le tremblement d'un clic près du centre du moyeu tournait la molette de quelques crans (l'étoile « bougeait »).

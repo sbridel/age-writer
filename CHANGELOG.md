@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.30.6 — A click no longer turns a wheel by itself (2026-10-13)
+
+### Fixed
+- Since 1.30.3, pressing a wheel started turning it at once: near the centre of the hub, the slightest tremor of the click turned it a few notches, and the aim slid away from the star. A wheel now turns only once the pointer has really moved (a few pixels), and the very centre of the hub never turns it.
+
 ## 1.30.5 — Stylesheet clean-up (2026-10-13)
 
 ### Fixed
