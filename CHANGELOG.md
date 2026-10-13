@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.30.5 — Stylesheet clean-up (2026-10-13)
+
+### Fixed
+- The stylesheet no longer uses `!important` (the smaller Relto hour on a narrow screen now relies on more precise selectors). Nothing changes on screen.
+
 ## 1.30.4 — The whole Relto lies down (2026-10-13)
 
 ### Fixed

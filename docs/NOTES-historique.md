@@ -426,3 +426,7 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 ## 1.30.4 — tout le Relto se couche (13 oct. 2026)
 
 - Plein écran mobile en portrait : la rotation passe de `.age-relto__stage` à `.age-relto.is-mobilefull` entier (`width: 100dvh`, `height: 100vw`, `left: 100vw`, `rotate(90deg)`) ; la barre d'icônes se couche avec l'image ; l'image prend `(100vw − 48 px) × 16/9`.
+
+## 1.30.5 — feuille de style sans !important (13 oct. 2026)
+
+- `src/styles.ext.css` : l'heure du Relto sur écran étroit (`@container (max-width: 600px)`) passe par `.age-relto[data-tab] …` et `.age-reltoview .age-relto[data-tab] …` au lieu de `!important` (avertissement du lint CSS). Rendu inchangé.
