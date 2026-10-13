@@ -30,12 +30,13 @@ Age Writer est pensé pour être **diégétique** : presque tout ce qu'il montre
 
 Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité par axe, causes, chiffres : à lire comme les notes d'un arpenteur de la Guilde sur ton livre) et les **Réglages**. Tout le reste essaie de rester dans le monde.
 
-**État.** Publié, ordinateur seulement, mode bac à sable (voir [La suite](#15-la-suite)). La version en cours est celle de [`manifest.json`](manifest.json) et de la page [Releases](https://github.com/sbridel/age-writer/releases) ; les changements de chaque version sont dans [`CHANGELOG.md`](CHANGELOG.md) (en anglais) et, plus en détail, dans [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
+**État.** Publié, ordinateur et mobile, mode bac à sable (voir [La suite](#15-la-suite)). La version en cours est celle de [`manifest.json`](manifest.json) et de la page [Releases](https://github.com/sbridel/age-writer/releases) ; les changements de chaque version sont dans [`CHANGELOG.md`](CHANGELOG.md) (en anglais) et, plus en détail, dans [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
 ### Nouveautés récentes
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; les dernières versions en bref :
 
+- **1.30, sur téléphone.** Age Writer s'installe sur Obsidian mobile ; le Relto se joue au doigt : toucher pour lire, toucher encore pour agir, molettes qu'on tourne en glissant autour, oculaire agrandi.
 - **1.29, un télescope qui montre tout.** En Art de la Guilde, une tourelle de verres (nu, écho grossi, plaque de phase avec sa trace, les deux), un temps de pose près d'un faux pouls, des balises qui prédisent où le Zéro devrait apparaître au lieu de filtrer, et une plaque qui grave une fausse distance si l'on pose sur le faux pouls.
 - **1.28, les pages tirées à découvert, une caverne vue de l'intérieur, une lune réglable, un télescope à lire.** Les détails de stabilité nomment les pages que l'Âge a tirées (en garder une, ou fermer sa case d'un clic) ; un `cavern_world` montre l'intérieur de la caverne éclairée par ses algues ; `moon: small` / `distant` / `large` / `close` ; près d'une étoile morte, l'Art de la Guilde demande de tenir le vrai retard, avec un cadran de phase dans l'oculaire.
 - **1.27, la maladie du vivant et la lecture du monde.** Une chaîne de vie tenue par une seule espèce tombe malade (une cicatrice, une phrase, des plaques jaunies dans la fenêtre). La cohérence achète de la capacité : un monde qui se tient peut porter plus. Les cicatrices que le monde garde de son tirage, la retouche qui suit la profondeur, et un monde qui ne nomme ses défauts qu'avec le temps (réglage *Lecture du monde*).
@@ -580,7 +581,7 @@ Deux niveaux, dans une fenêtre à rubriques, en anglais et en français (export
 
 ## 14. Limites connues
 
-- **Ordinateur seulement** : le plugin est pensé pour la souris, le son et des canvas animés ; il n'existe pas sur mobile.
+- **Le mobile est neuf** : depuis la 1.30, le plugin s'installe sur Obsidian mobile et le Relto se joue au doigt, mais il n'a été testé qu'en simulation ; dis-moi comment il se comporte sur ton téléphone.
 - **Surtout testé par machine** : tests automatiques (jsdom, faux `AudioContext`, rendus Chromium, intégration contre le vrai `main.js`) et usage réel dans Obsidian, sur ordinateur et en thème clair d'abord. Le thème sombre et les autres thèmes sont moins testés : signale-moi ce qui cloche.
 - **État rangé par nom de note** : la loi du changement lie son état au nom de la note.
 - **Plusieurs blocs `age` dans une note** : chaque bloc tire son propre monde.

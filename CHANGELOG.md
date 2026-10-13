@@ -2,6 +2,18 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.30.0 — Age Writer on a phone: a Relto you touch (2026-10-13)
+
+Age Writer now installs on Obsidian mobile. Writing Ages works as on the desktop; the Relto is played with a finger. Nothing changes with a mouse.
+
+### Added
+- **Touch to read, touch again to act.** The first touch frames a thing and shows what it is in a card under the picture; the second acts. A wheel you have read then acts at every touch (both halves and its hub). Doors, books and going down act at once; touching empty space lets go.
+- **Wheels you turn with a finger.** Put a finger on a wheel you have read and turn around its centre: a fine notch every 8° at the hub, a coarse one every 20° at the rim (a short vibration on Android). The Imager's knobs, periscope crank and micrometer turn the same way.
+- **Larger targets**: a zone within a finger's width answers.
+- **The telescope's eyepiece magnifies** at a touch (the wheels stay on the right); another touch gives it back.
+- In portrait, a line asks to turn the phone sideways. The full-screen button makes the Relto take all of Obsidian's room (browsers on phones refuse true full screen).
+- A guide section, "On a phone or tablet".
+
 ## 1.29.0 — A telescope that shows everything: a turret of lenses, a pose time, beacons that predict, a plate that bites (2026-10-13)
 
 The observatory's Art of the Guild is rebuilt on one principle: the glass shows everything that arrives, the plate engraves what you expose, the beacons say what you should see. The instrument no longer knows what is false; the astronomer does. Easy mode is unchanged.

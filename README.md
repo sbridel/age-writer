@@ -28,12 +28,13 @@ Age Writer is built to be **diegetic**: almost everything it shows is something 
 
 Two places step outside the fiction on purpose: the **Details** tab (stability per axis, causes, numbers: read it as a Guild surveyor's notes on your book) and the **Settings**. Everything else tries to stay in the world.
 
-**Status.** Released, desktop only, sandbox mode (see [What's next](#15-whats-next)). The current version is the one in [`manifest.json`](manifest.json) and on the [Releases](https://github.com/sbridel/age-writer/releases) page; what changed in each version is in [`CHANGELOG.md`](CHANGELOG.md) (a more detailed developer log, in French, is in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)).
+**Status.** Released, desktop and mobile, sandbox mode (see [What's next](#15-whats-next)). The current version is the one in [`manifest.json`](manifest.json) and on the [Releases](https://github.com/sbridel/age-writer/releases) page; what changed in each version is in [`CHANGELOG.md`](CHANGELOG.md) (a more detailed developer log, in French, is in [`docs/NOTES-historique.md`](docs/NOTES-historique.md)).
 
 ### Recent changes
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.30, on a phone.** Age Writer installs on Obsidian mobile; the Relto is played with a finger: touch to read, touch again to act, wheels you turn by sliding around them, a magnified eyepiece.
 - **1.29, a telescope that shows everything.** In the Art of the Guild a turret of lenses (bare, echo magnified, phase plate with its trace, both), a pose time near a false beat, beacons that predict where the Zero should appear instead of filtering, and a plate that engraves a wrong distance if you expose on the false beat.
 - **1.28, drawn pages in plain sight, a cavern you look into, a tunable moon, a telescope you must read.** The stability details name the pages the Age drew (keep one, or close its box in one click); a `cavern_world` shows the inside of the cave lit by its algae; `moon: small` / `distant` / `large` / `close`; near a dead star the Art of the Guild asks you to hold the true delay, with a phase dial in the eyepiece.
 - **1.27, the sickness of the living and reading the world.** A chain of life held by a single species falls sick (a scar, a sentence, yellowed patches in the window). Coherence buys capacity: a world that holds together can carry more. The scars the world keeps from its draw, retouching that follows depth, and a world that names its faults only with time (setting *Reading the world*).
@@ -586,7 +587,7 @@ Two levels, in a window with sections, in English and French (both exportable as
 
 ## 14. Known limitations
 
-- **Desktop only**: the plugin is built for mouse, sound and animated canvases, so it is not available on mobile.
+- **Mobile is new**: since 1.30 the plugin installs on Obsidian mobile and the Relto is played by touch, but it has been tested only in simulation so far; tell me how it behaves on your phone.
 - **Tested mostly by machine**: automated tests (jsdom, fake `AudioContext`, Chromium renders, integration against the real `main.js`) plus hands-on use in Obsidian, on desktop with the light theme first. The dark theme and other themes get less testing, so tell me if something looks off.
 - **State by note name**: the law of change ties its state to the note name.
 - **Several `age` blocks in one note**: each block draws its own world.

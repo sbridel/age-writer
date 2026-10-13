@@ -392,3 +392,14 @@ Principe : la lunette montre tout ; la plaque grave ce qu'on expose ; les balise
 - Piège qui mord : pose sur `falseLock` avec direction juste → `st.hold.bite` → `SS.record(…, { bite })` (`distance` + `bite` × 25 shahfeetee, `rec.bite`). `beacons()` porte `bite`. Imageur (`relto-render.js` `imagerCal`) et Détails (`ui-extras.js`, `sys.state.bite`) : la planète glisse. Regravé dès qu'on situe sur le vrai retard (ou gratter).
 - Lore (guide) : la plaque de phase est du verre de l'Imageur, marqué un instant puis oublieux.
 - Tests : `test/perturbers.test.js` (tourelle, prédiction, morsure, réparation).
+
+## 1.30.0 — mode téléphone : le Relto au doigt (13 oct. 2026)
+
+Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est sous `opts.touch`.
+- `manifest.json` : `isDesktopOnly: false`. Détection (`src/ui-relto.js`, `isTouch`) : `Platform.isMobile`, ou pointeur grossier sans pointeur fin ; classe `is-touch`.
+- `src/relto-render.js` : `touchHold` (premier toucher : tenir, cadre et infobulle ; second : agir ; passages immédiats), `holdKey` (une molette entière = une zone via `wc`), `hit` élargi (`TOUCH_REACH` = 14), `onDown`/`onDragMove` (glisser autour de `wc` : 8° fin, 20° gros, `navigator.vibrate`), `dragged` ignore le clic de fin, `tipOut`/`opts.onTip` (carte d'infobulle en DOM), `tipDelay` 0.
+- `wc` sur les molettes du télescope (`wheel`), les boutons (11°), la manivelle (90°) et le micromètre de l'Imageur.
+- Télescope : toucher l'oculaire → `r.eyeZoom` (`eyeZoomed`, ×1,3 en cercle à gauche, copie du canvas).
+- CSS : bandeau `.age-relto__turn` en portrait, `.age-relto__tipcard`, `touch-action: none` sur le canvas tactile. Plein écran mobile : la classe `age-reltoview--inline` au lieu de `requestFullscreen`.
+- Pas faits : boutons × (surcouches fermées d'un toucher à côté), balayage des livres (ils ont des flèches), mise en page portrait.
+- Tests : `test/touch.test.js` (23 contrôles).
