@@ -349,11 +349,15 @@ function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null, more = null) {
     const etick = Math.floor((ms - DT.REF) / PULSE_MS - echo.off), strong = MET.isMarked(etick - (echo.shift || 0)) ? 1 : 0;
     ctx.strokeStyle = strong ? rgba(255, 214, 120, Math.min(1, ea * 1.6 + 0.2)) : rgba(240, 184, 96, ea); ctx.lineWidth = strong ? 2.6 : 1.2; ctx.beginPath(); ctx.arc(hx, hy, (4 + 14 * eb) * (strong ? 1.5 : 1), 0, 6.283); ctx.stroke();
   }
+  if (more && more.echo3 && haze > 0.05) { // la ligne de Me'erta, à sa période, un peu plus pâle
+    const e3 = more.echo3, per = PULSE_MS * e3.period, b3 = frac((ms - DT.REF) / per - e3.off), ea = clamp(haze) * (0.25 + 0.55 * Math.exp(-b3 * 6)) * 0.85;
+    ctx.strokeStyle = rgba(240, 184, 96, ea); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(hx, hy, 5 + 16 * b3, 0, 6.283); ctx.stroke();
+  }
   if (more && more.echo2 && haze > 0.05) { // étape 3 : le faux pouls a son propre écho, plus vif ; celui du Zéro reste pâle dessous
     const e2 = more.echo2, per = PULSE_MS * e2.period, b2 = frac((ms - DT.REF) / per - e2.off), ea = clamp(haze) * (0.3 + 0.65 * Math.exp(-b2 * 6)) * (e2.ok ? 0.5 : 1);
     ctx.strokeStyle = rgba(240, 184, 96, ea); ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(hx, hy, 5 + 16 * b2, 0, 6.283); ctx.stroke();
   }
-  if (echo && haze > 0.05) phaseDial(ctx, cx, cy, R * 0.86, ms, echo, more && more.echo2);
+  if (more && more.phase) phaseDial(ctx, cx, cy, R * 0.86, ms, more.phase.sources, more.phase.trace);
   void at;
   const vg = ctx.createRadialGradient(cx, cy, R * 0.55, cx, cy, R); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.6)"); ctx.fillStyle = vg; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
   const gl = ctx.createLinearGradient(cx - R, cy - R, cx, cy); gl.addColorStop(0, "rgba(255,255,255,0.08)"); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = gl; ctx.fillRect(cx - R, cy - R, R * 2, R * 2); // reflet de la lentille
@@ -362,24 +366,34 @@ function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null, more = null) {
 }
 
 /**
- * Le cadran de phase : un arc gradué dans le verre, l'éclair du balancier toujours à midi. Chaque écho y laisse un point à
- * l'instant de sa naissance par rapport au tic : à droite de midi il naît après (plus de retard), à gauche avant (moins de
- * retard), sur midi le retard est juste. Le faux pouls laisse son point bleu, qui erre (sa période n'est pas celle du balancier).
+ * Le cadran de phase : un arc gradué dans le verre, l'éclair du balancier toujours à midi. Le télescope n'est pas un
+ * calculateur : il montre tout ce qui arrive. Art de la Guilde : chaque naissance d'un pouls laisse une marque qui s'efface
+ * en quelques battements (`r.phaseTrace`, par source). Le pouls du Zéro (ou son écho) naît toujours au même endroit tant que la
+ * molette ne bouge pas : ses marques s'empilent en un point net. La ligne de Me'erta (1,06) marche lentement autour du cadran ;
+ * un pulsar rampe, une étoile à neutrons saute : aucun ne fait de pile. Tourner la molette brouille la trace, qui se reforme.
+ * Manière facile : un seul point, en direct, sans trace (rien ne trompe).
+ * `sources` : { key, period, off (en battements), s (force 0..1) }.
  */
-function phaseDial(ctx, cx, cy, Rd, ms, echo, echo2) {
+const TRACE_BEATS = 8;
+function phaseDial(ctx, cx, cy, Rd, ms, sources, trace) {
   const bp = MET.beatPos(ms), at = (ph) => -Math.PI / 2 + ph * 2 * Math.PI, P = (ph, rr) => [cx + Math.cos(at(ph)) * rr, cy + Math.sin(at(ph)) * rr];
   ctx.save();
   ctx.strokeStyle = "rgba(224,194,122,0.22)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, Rd, 0, 6.283); ctx.stroke();
   for (let i = -4; i <= 5; i++) { const ph = i / 10, [x0, y0] = P(ph, Rd - (i === 0 ? 7 : 3)), [x1, y1] = P(ph, Rd + 3); ctx.strokeStyle = i === 0 ? "rgba(255,214,120,0.8)" : "rgba(224,194,122,0.3)"; ctx.lineWidth = i === 0 ? 2 : 1; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); }
   const fl = Math.exp(-(bp - Math.floor(bp)) * 7), [tx, ty] = P(0, Rd + 8); // midi : l'éclair du balancier
   ctx.fillStyle = MET.isMarked(Math.floor(bp)) ? `rgba(255,214,120,${0.35 + 0.65 * fl})` : `rgba(240,220,170,${0.25 + 0.6 * fl})`; ctx.beginPath(); ctx.moveTo(tx, ty + 5); ctx.lineTo(tx - 4, ty - 2); ctx.lineTo(tx + 4, ty - 2); ctx.closePath(); ctx.fill();
-  const dot = (ph, sinceBirth, col, rr, pale) => { const [x, y] = P(ph, Rd), g = Math.exp(-sinceBirth * 3); ctx.fillStyle = `rgba(${col},${(0.65 + 0.35 * g) * pale})`; ctx.beginPath(); ctx.arc(x, y, rr + 2 * g, 0, 6.283); ctx.fill(); };
-  if (echo2) { // le faux pouls : sa dernière naissance, ramenée au tic le plus proche
-    const per = echo2.period, kb = Math.floor(bp / per - echo2.off), birth = (kb + echo2.off) * per, ph = birth - Math.round(birth);
-    dot(ph, (bp - birth) / per, "255,196,110", 4, 0.9); // même couleur, même taille : seul le vrai pouls ne bouge pas
+  const wrap = (ph) => ((ph % 1) + 1.5) % 1 - 0.5;
+  if (!trace) { // manière facile : le point en direct du seul pouls qui compte
+    const g = sources[0]; if (g) { const since = ((bp - g.off) % 1 + 1) % 1, gl = Math.exp(-since * 3), [x, y] = P(wrap(g.off), Rd); ctx.fillStyle = `rgba(255,196,110,${(0.65 + 0.35 * gl) * Math.max(0.3, g.s)})`; ctx.beginPath(); ctx.arc(x, y, 4 + 2 * gl, 0, 6.283); ctx.fill(); }
+    ctx.restore(); return;
   }
-  const off = ((echo.off % 1) + 1.5) % 1 - 0.5, since = ((bp - echo.off) % 1 + 1) % 1; // l'écho du Zéro : toujours au même endroit tant que la molette ne bouge pas
-  dot(off, since, "255,196,110", 4, 0.9);
+  for (const g of sources) { // chaque pouls laisse sa marque à sa naissance ; les marques vieillissent et s'effacent
+    const per = g.period || 1, kb = Math.floor(bp / per - g.off), birth = (kb + g.off) * per, marks = trace[g.key] || (trace[g.key] = []);
+    if (!marks.length || marks[marks.length - 1].kb !== kb) marks.push({ kb, at: birth, ph: wrap(birth), s: g.s });
+    while (marks.length && bp - marks[0].at > TRACE_BEATS) marks.shift();
+    for (const m of marks) { const age = bp - m.at, a = 0.42 * Math.exp(-age / 3.5) * Math.max(0.45, m.s), [x, y] = P(m.ph, Rd); ctx.fillStyle = `rgba(255,196,110,${a})`; ctx.beginPath(); ctx.arc(x, y, 4.2 + 1.8 * Math.exp(-age * 3), 0, 6.283); ctx.fill(); }
+  }
+  for (const k of Object.keys(trace)) if (!sources.some((g) => g.key === k)) delete trace[k]; // une source disparue (livre changé, balises) : sa trace aussi
   ctx.restore();
 }
 
@@ -414,6 +428,7 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   const heard = r.telescopeBeats || (r.telescopeBeats = {}), hear = (k, period, s, kind) => { const b = Math.floor(MET.beatPos(ms, period)); if (heard[k] && heard[k].p === period && b !== heard[k].b) { const p = T.pulseOf(s, b); if (!p.skip) sfx(kind, s * p.amp); } heard[k] = { b, p: period }; };
   hear("pulse", !sc0 && lines.best.line ? st.old.period : 1, sig.s, "pulse");
   if (sc0 && sc0.beat) hear("false", sc0.fx.beat.period, Math.max(0.15, sc0.true.s), "falsebeat"); else delete heard.false;
+  if (sc0 && guild && st.old) hear("merta", st.old.period, Math.max(0.1, sig.s * 0.6), "pulse"); else delete heard.merta; // la ligne de Me'erta traverse les Âges : on l'entend glisser là aussi
   // l'intérieur de l'observatoire : la coupole sombre et ses nervures, la fente ouverte sur le ciel, le grand tube, le sol de pierre
   const dg = ctx.createRadialGradient(W / 2, 300, 40, W / 2, 300, 520); dg.addColorStop(0, c("#2b2621")); dg.addColorStop(1, c("#0d0b0a")); ctx.fillStyle = dg; ctx.fillRect(0, 0, W, H);
   const SL = { x: 318, w: 52 }; // la fente de la coupole, entre l'oculaire et le panneau
@@ -442,7 +457,12 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     const more = { sources: [], echo2: null, blur: sc1.blur || 0 };
     if (sc1.lure) more.sources.push({ sig: look(r, sc1.lure, beatOf(r) + 7, fnvKey(sys.key)), period: 1, col: [235, 210, 160], smear: { dt: sc1.true.dt, de: sc1.true.de } });
     if (sc1.beat) { more.sources.push({ sig: { ...sc1.true, s: Math.max(0.15, sc1.true.s) }, period: sc1.fx.beat.period, col: [170, 200, 255], sharp: true }); more.echo2 = { off: SS.echoOffset(sc1.echoDd), ok: sc1.falseLock, period: sc1.fx.beat.period }; }
-    eyepiece(r, ctx, c, view, seen, tm, ms, { off: SS.echoOffset(m.dd), ok: m.delayOk, shift: m.beatShift || 0, pale: tangled ? 0.45 : 1 }, more);
+    const haze = Math.max(0.15, seen.s), zOff = SS.echoOffset(m.dd), mOff = (fnvKey(st.key + sys.key + "|merta") % 1000) / 1000; // la ligne de Me'erta traverse les Âges comme le Zéro : son écho est là aussi, à sa période
+    const phase = { sources: [{ key: "echo", period: 1, off: zOff, s: haze }], trace: guild ? (r.phaseTrace || (r.phaseTrace = {})) : null };
+    if (guild && st.old) { phase.sources.push({ key: "merta", period: st.old.period, off: mOff, s: haze * 0.85 }); more.echo3 = { off: mOff, period: st.old.period }; }
+    if (sc1.beat) phase.sources.push({ key: "beat", period: sc1.fx.beat.period, off: SS.echoOffset(sc1.echoDd), s: haze * 0.9 });
+    more.phase = phase;
+    eyepiece(r, ctx, c, view, seen, tm, ms, { off: zOff, ok: m.delayOk, shift: m.beatShift || 0, pale: tangled ? 0.45 : 1 }, more);
     wheel(r, ctx, c, "torahn", WHEELS.torahn, st.dial.torahn, T.TURN, st.dial.torahn, tm);
     wheel(r, ctx, c, "elev", WHEELS.elev, st.dial.elev + T.ELEV_MAX, 2 * T.ELEV_MAX + 1, T.kiElev(st.dial.elev), tm);
     // le retard se lit en rahnfee (invention de fan, src/beam.js) : le pouls arrive une fraction de battement après le balancier
@@ -459,7 +479,9 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   } else {
     // étape 3 : la ligne de Me'erta, un second pouls plus pâle qui glisse contre l'horloge D'ni (Art de la Guilde seulement)
     const oldSig = lines.old.hidden ? null : look(r, lines.old, beatOf(r) + 3, fnvKey(st.key + "|merta"));
-    eyepiece(r, ctx, c, st, look(r, lines.true, beatOf(r), fnvKey(st.key)), tm, ms, null, { sources: oldSig ? [{ sig: oldSig, period: st.old.period, col: [190, 220, 205] }] : [] });
+    const trueSig = look(r, lines.true, beatOf(r), fnvKey(st.key)), more1 = { sources: oldSig ? [{ sig: oldSig, period: st.old.period, col: [190, 220, 205] }] : [] };
+    if (guild && st.old) more1.phase = { sources: [{ key: "zero", period: 1, off: 0, s: trueSig.s }, { key: "merta", period: st.old.period, off: (fnvKey(st.key + "|merta") % 1000) / 1000, s: oldSig ? oldSig.s : 0 }], trace: r.phaseTrace || (r.phaseTrace = {}) }; // Guilde : le vrai Zéro s'empile à midi, la ligne de Me'erta marche
+    eyepiece(r, ctx, c, st, trueSig, tm, ms, null, more1);
     wheel(r, ctx, c, "torahn", WHEELS.torahn, st.aim.torahn, T.TURN, st.aim.torahn, tm);
     wheel(r, ctx, c, "elev", WHEELS.elev, st.aim.elev + T.ELEV_MAX, 2 * T.ELEV_MAX + 1, T.kiElev(st.aim.elev), tm);
     // la plaque : vierge tant que le Zéro n'est pas trouvé ; ensuite ses coordonnées gravées en chiffres D'ni (élévation au sens du KI)

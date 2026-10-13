@@ -257,6 +257,22 @@ const relDone = (async () => {
     TL.act(rb, { axis: "torahn", delta: 300 }); ok(!s3.hold, "la molette quitte le réglage : l'attente s'efface");
     TL.act(rb, { axis: "torahn", delta: -300 }); const h0 = s3.hold.t0; rb.nowOverride = h0 + 4500; rb.draw(3);
     ok(s3.systems[pz.key] && !s3.hold, "tenue trois battements : les deux pouls se séparent, l'étoile est gravée"); }
+  // le cadran de phase (Guilde) : le télescope ne filtre rien ; l'écho du Zéro s'empile, la ligne de Me'erta marche, le faux pouls saute
+  { const MET = require("../src/metronome"), pb = findKey((p, fx) => !!fx.beat && !fx.deflect), rt = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts()); rt.setScene(sc); rt.setView("telescope"); rt.nowOverride = t0; rt.draw(1);
+    const s4 = rt.telescope; s4.found = true; s4.line = 0;
+    const pz = { key: pb.p.key, pos: pb.p.pos, near: pb.p.near, fx: pb.fx, perturbed: true, ...SS.perceive({ key: pb.p.key, pos: pb.p.pos, near: pb.p.near }) };
+    s4.book = { idx: 0, age: ages[0], data: { system: pz }, loading: false }; s4.dial = { torahn: pz.clue.torahn, elev: pz.clue.elevation, delay: pz.clue.delay + 20 };
+    const b0 = MET.peakAt(Math.ceil(MET.beatPos(t0))); for (let b = 0; b <= 24; b++) { rt.nowOverride = b0 + (b / 4) * MET.PRORAHN_MS + 30; rt.draw(2 + b); }
+    const tr = rt.phaseTrace; ok(tr && tr.echo && tr.merta && tr.beat && !tr.zero, "Guilde : trois traces, l'écho du Zéro, Me'erta et le faux pouls (celle du Zéro de l'étape 1 s'est effacée)");
+    ok(tr.echo.length >= 6 && tr.echo.every((m) => Math.abs(m.ph - tr.echo[0].ph) < 1e-9), "l'écho du Zéro s'empile : toutes ses marques au même endroit");
+    ok(new Set(tr.merta.map((m) => m.ph.toFixed(2))).size >= 5, "la ligne de Me'erta marche : chaque marque ailleurs");
+    ok(new Set(tr.beat.map((m) => m.ph.toFixed(2))).size >= 3, "le faux pouls ne fait pas de pile");
+    s4.dial = { ...s4.dial, delay: s4.dial.delay + 40 }; for (let b = 0; b <= 16; b++) { rt.nowOverride = b0 + ((24 + b) / 4) * MET.PRORAHN_MS + 30; rt.draw(40 + b); }
+    ok(new Set(tr.echo.map((m) => m.ph.toFixed(2))).size === 2, "la molette tourne : la trace se brouille (deux piles, l'ancienne s'efface)");
+    s4.book = null; rt.draw(99); ok(!rt.phaseTrace.beat && !rt.phaseTrace.echo && rt.phaseTrace.zero, "lutrin vide : les traces de l'Âge s'effacent, celle du Zéro revient");
+    const re = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts({ instrumentsMode: "easy" })); re.setScene(sc); re.setView("telescope"); re.nowOverride = t0; re.draw(1);
+    const s5 = re.telescope; s5.found = true; s5.line = 0; s5.book = { idx: 0, age: ages[0], data: { system: pz }, loading: false }; s5.dial = { torahn: pz.clue.torahn, elev: pz.clue.elevation, delay: pz.clue.delay }; re.draw(2);
+    ok(!re.phaseTrace, "manière facile : un point en direct, pas de trace"); }
   // français
   const rf = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts({ t: makeT(() => "fr") })); rf.setScene(sc); rf.setView("starmap"); rf.draw(1);
   ok(rf.hot.some((h) => /Rouler la carte/.test(h.tip)) && rf.hot.some((h) => /Le Great Zero/.test(h.tip)), "en français : la carte");
