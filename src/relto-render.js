@@ -90,6 +90,7 @@ function catLook(color) {
   return CATS.orange;
 }
 const TIP_DELAY = 450; // ms avant qu'une infobulle du canvas apparaisse
+const TIP_MAX = 300; // largeur maximale d'une infobulle (unités du canevas) ; au-delà, elle passe à la ligne
 const DRAG_START = 3, DRAG_CORE = 4; // glisser une molette : il faut bouger de 3 unités avant qu'elle tourne ; à moins de 4 unités du centre, l'angle ne compte pas
 const WHEEL_STEP = 90; // la roulette : un cran de molette par cran de roulette (≈ 100 pixels de défilement)
 const TOUCH_REACH = 14; // mode tactile : une zone à moins de 14 unités du doigt répond (≈ 18 px en paysage sur un téléphone)
@@ -124,7 +125,7 @@ class ReltoRenderer {
     canvas.addEventListener("wheel", (e) => this.onWheel(e), { passive: false }); // la roulette sur une molette (grande vue et plein écran)
     canvas.addEventListener("pointerleave", () => { if (this.touch) return; this.hover = null; this.pointer = null; this.canvas.style.cursor = ""; });
     canvas.addEventListener("pointerdown", (e) => this.onDown(e));
-    canvas.addEventListener("pointerup", () => { if ((this.drag || this.slide) && !this.touch) this.canvas.style.cursor = "grab"; this.drag = null; this.slide = null; });
+    canvas.addEventListener("pointerup", () => { if ((this.drag || this.slide) && !this.touch) this.canvas.style.cursor = "var(--age-grab, grab)"; this.drag = null; this.slide = null; });
     canvas.addEventListener("pointercancel", () => { this.drag = null; this.slide = null; });
     canvas.addEventListener("click", (e) => this.onClick(e));
     // pas de dessin quand le canvas est hors écran ou l'onglet caché
@@ -1122,10 +1123,15 @@ class ReltoRenderer {
     const [vx0, vx1, vy0] = this.visible_();
     // `h.frac` (facultatif) : une longueur de faisceau en rahnfee (src/beam.js), gravée en chiffres D'ni après le texte
     const fs = 10, fw = h.frac && this.dni && this.dni.fractionWidth ? this.dni.fractionWidth(h.frac, fs) + 6 : 0;
-    ctx.font = "11px serif"; const tw = ctx.measureText(h.tip).width + fw, bx = clamp(h.x + h.w / 2 - tw / 2 - 6, vx0 + 4, Math.max(vx0 + 4, vx1 - tw - 16)), by = h.tipBelow ? Math.min(H - 22, h.y + h.h + 6) : Math.max(vy0 + 4, h.y - 24); // `tipBelow` : sous la zone (le micromètre : sa fenêtre et son fil restent visibles)
-    ctx.fillStyle = "rgba(16,13,9,0.92)"; ctx.fillRect(bx, by, tw + 12, 18); ctx.strokeStyle = "rgba(205,189,148,0.8)"; ctx.strokeRect(bx, by, tw + 12, 18);
-    ctx.fillStyle = "#e9dcb8"; ctx.fillText(h.tip, bx + 6, by + 13);
-    if (fw) this.dni.drawFraction(ctx, h.frac, bx + 6 + tw - fw + 6, by + 4, fs, "#e0c27a");
+    // une infobulle longue passe à la ligne : jamais plus large que TIP_MAX (le texte complet, sur deux ou trois lignes)
+    ctx.font = "11px serif"; const lines = [], words = String(h.tip).split(" "); let cur = "";
+    for (const w0 of words) { const t2 = cur ? cur + " " + w0 : w0; if (cur && ctx.measureText(t2).width > TIP_MAX) { lines.push(cur); cur = w0; } else cur = t2; }
+    if (cur) lines.push(cur);
+    const tw = Math.max(...lines.map((l) => ctx.measureText(l).width)) + (lines.length === 1 ? fw : 0), bh = 18 + 13 * (lines.length - 1);
+    const bx = clamp(h.x + h.w / 2 - tw / 2 - 6, vx0 + 4, Math.max(vx0 + 4, vx1 - tw - 16)), by = h.tipBelow ? Math.min(H - bh - 4, h.y + h.h + 6) : Math.max(vy0 + 4, h.y - bh - 6);
+    ctx.fillStyle = "rgba(16,13,9,0.92)"; ctx.fillRect(bx, by, tw + 12, bh); ctx.strokeStyle = "rgba(205,189,148,0.8)"; ctx.strokeRect(bx, by, tw + 12, bh);
+    ctx.fillStyle = "#e9dcb8"; lines.forEach((l, n) => ctx.fillText(l, bx + 6, by + 13 + 13 * n));
+    if (fw && lines.length === 1) this.dni.drawFraction(ctx, h.frac, bx + 6 + tw - fw + 6, by + 4, fs, "#e0c27a");
   }
 
   /** La carte d'infobulle (mode tactile, `opts.onTip`) : appelée seulement quand le texte change. */
@@ -1225,7 +1231,7 @@ class ReltoRenderer {
   onDragMove(e) {
     if (this.slide) { // le long d'un rail (ou de l'arc de l'iris) : le verre suit le doigt, cran par cran
       const [x, y] = this.toLogical(e), h = this.hit(x, y), sl = this.slide;
-      if (h && h.imager && h.imager.key === sl.key && h.imager.value != null && h.imager.value !== sl.last) { this.imagerAct(h.imager); this.dragged = true; sl.last = h.imager.value; if (!this.running) this.draw(0); }
+      if (h && h.imager && h.imager.key === sl.key && h.imager.value != null && h.imager.value !== sl.last) { this.imagerAct(h.imager); this.dragged = true; if (!this.touch) this.canvas.style.cursor = "var(--age-grabbing, grabbing)"; sl.last = h.imager.value; if (!this.running) this.draw(0); }
       return;
     }
     const d = this.drag; if (!d) return;
@@ -1238,11 +1244,11 @@ class ReltoRenderer {
     const step = ((d.fine ? wc.deg || 8 : wc.degRim || 20) * Math.PI) / 180;
     let n = 0;
     while (Math.abs(d.acc) >= step) { const dir = d.acc > 0 ? 1 : -1; d.acc -= dir * step; this.wheelAct((d.fine ? wc.fine : wc.coarse)(dir), wc.kind); n++; }
-    if (n) { this.dragged = true; if (!this.touch) this.canvas.style.cursor = "grabbing"; else try { if (navigator.vibrate) navigator.vibrate(6); } catch (err) { /* ignore */ } if (!this.running) this.draw(0); }
+    if (n) { this.dragged = true; if (!this.touch) this.canvas.style.cursor = "var(--age-grabbing, grabbing)"; else try { if (navigator.vibrate) navigator.vibrate(6); } catch (err) { /* ignore */ } if (!this.running) this.draw(0); }
   }
   onMove(e) {
     const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && !this.hover.secret && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go || this.hover.imager || this.hover.tel || this.hover.purr || this.hover.pageToggle || this.hover.pbook || this.hover.gbTurn || this.hover.lamp || this.hover.gbGo != null || this.hover.vpage || this.hover.mapPage || this.hover.shelf != null || this.hover.stone || this.hover.knock || this.hover.desk || this.hover.toy || this.hover.ward) ? "var(--age-hand, pointer)" : ""; // la main dessinée du Relto (styles.ext.css), la main du système à défaut
-    if (this.hover && (this.hover.wc || (this.hover.imager && this.hover.imager.value != null)) && !(this.hover.imager && this.hover.tip && /held by the lock/.test(this.hover.tip))) this.canvas.style.cursor = "grab"; // une molette, un rail : ça se saisit et se tourne
+    if (this.hover && (this.hover.wc || this.hover.book || (this.hover.imager && this.hover.imager.value != null)) && !(this.hover.imager && this.hover.tip && /held by the lock/.test(this.hover.tip))) this.canvas.style.cursor = "var(--age-grab, grab)"; // une molette, un rail, un livre de l'étagère : ça se prend à pleine main (styles.ext.css)
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
   /** Le bureau : le tiroir (clou de laiton), la tablette qu'on prend entre les mains et qui revient toujours au tiroir. Rien n'est gardé : en s'en allant, le tiroir se ferme. */

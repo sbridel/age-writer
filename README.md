@@ -34,6 +34,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.31, hands that take.** A drawn open hand over what you take or touch (wheels, glasses, books, linking panels), closing as you turn; long tooltips wrap.
 - **1.30, on a phone.** Age Writer installs on Obsidian mobile; the Relto is played with a finger: touch to read, touch again to act, wheels you turn by sliding around them, a magnified eyepiece. Full screen fills the phone (held upright, the picture lies down by a quarter turn), and the Age's book reads in one column on a narrow screen (1.30.1, 1.30.2). With a mouse too, wheels turn by dragging around them, or with the scroll wheel in the large view (1.30.3).
 - **1.29, a telescope that shows everything.** In the Art of the Guild a turret of lenses (bare, echo magnified, phase plate with its trace, both), a pose time near a false beat, beacons that predict where the Zero should appear instead of filtering, and a plate that engraves a wrong distance if you expose on the false beat.
 - **1.28, drawn pages in plain sight, a cavern you look into, a tunable moon, a telescope you must read.** The stability details name the pages the Age drew (keep one, or close its box in one click); a `cavern_world` shows the inside of the cave lit by its algae; `moon: small` / `distant` / `large` / `close`; near a dead star the Art of the Guild asks you to hold the true delay, with a phase dial in the eyepiece.

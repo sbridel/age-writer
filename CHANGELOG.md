@@ -2,6 +2,15 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.31.0 — Hands that take, tooltips that fit (2026-10-13)
+
+### Added
+- **A drawn open hand, and a hand that grips**, in the style of the pointing hand: over what you take or touch with your whole hand (a wheel, a glass on its rail, a book on the shelf, a linking panel); the hand closes while you turn. With the quill cursor (setting), as before.
+
+### Changed
+- **Long tooltips wrap** onto two or three lines instead of running off the picture; the lens turret's tooltip is short ("Turret of lenses: Both — click: Bare glass"), the guide explains each glass.
+- On a phone in full screen, the Pages and Settings tabs no longer show the Relto's name and header, which pushed everything aside.
+
 ## 1.30.9 — A column of buttons in full screen on a phone (2026-10-13)
 
 ### Changed

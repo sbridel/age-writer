@@ -447,3 +447,9 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 ## 1.30.9 — plein écran mobile : la colonne de boutons (13 oct. 2026)
 
 - `src/styles.ext.css`, sous `.age-relto.is-mobilefull` : disposition en ligne (`flex-direction: row`), la barre `.age-relto__tabs` en colonne de 56 px sur le bord gauche (navigation puis onglets, sans le nom D'ni), l'image dans le reste (`100dvh × 16/9` en paysage, `100vw × 16/9` couchée en portrait).
+
+## 1.31.0 — mains dessinées, infobulles à la ligne (13 oct. 2026)
+
+- Curseurs (`src/styles.ext.css`) : `--age-grab` (main ouverte) et `--age-grabbing` (main qui serre), SVG 32 × 32 dans le style de `--age-hand`, point actif (16, 16), posés sur `.age-relto.age-quill`. `src/relto-render.js` : molettes (`wc`), rails de l'Imageur et livres de l'étagère (`h.book`) en `var(--age-grab, grab)`, `--age-grabbing` pendant qu'on tourne ou glisse. Fenêtre de liaison (`.age-book__window.is-clickable`) et panneau de l'animation de liaison (`.age-linkanim.is-ready .age-linkanim__panel`) : main ouverte.
+- Infobulles du canevas (`drawHover`) : passage à la ligne au-delà de `TIP_MAX` = 300 unités (la fraction en rahnfee seulement sur une ligne). `tel.lens.tip` raccourci (FR/EN).
+- Plein écran mobile : `.age-relto__head` masqué (onglets Pages et Réglages).
