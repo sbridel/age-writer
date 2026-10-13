@@ -36,7 +36,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; les dernières versions en bref :
 
-- **1.30, sur téléphone.** Age Writer s'installe sur Obsidian mobile ; le Relto se joue au doigt : toucher pour lire, toucher encore pour agir, molettes qu'on tourne en glissant autour, oculaire agrandi.
+- **1.30, sur téléphone.** Age Writer s'installe sur Obsidian mobile ; le Relto se joue au doigt : toucher pour lire, toucher encore pour agir, molettes qu'on tourne en glissant autour, oculaire agrandi. Le plein écran remplit le téléphone (tenu droit, l'image se couche d'un quart de tour), et le livre de l'Âge se lit sur une colonne en écran étroit (1.30.1, 1.30.2).
 - **1.29, un télescope qui montre tout.** En Art de la Guilde, une tourelle de verres (nu, écho grossi, plaque de phase avec sa trace, les deux), un temps de pose près d'un faux pouls, des balises qui prédisent où le Zéro devrait apparaître au lieu de filtrer, et une plaque qui grave une fausse distance si l'on pose sur le faux pouls.
 - **1.28, les pages tirées à découvert, une caverne vue de l'intérieur, une lune réglable, un télescope à lire.** Les détails de stabilité nomment les pages que l'Âge a tirées (en garder une, ou fermer sa case d'un clic) ; un `cavern_world` montre l'intérieur de la caverne éclairée par ses algues ; `moon: small` / `distant` / `large` / `close` ; près d'une étoile morte, l'Art de la Guilde demande de tenir le vrai retard, avec un cadran de phase dans l'oculaire.
 - **1.27, la maladie du vivant et la lecture du monde.** Une chaîne de vie tenue par une seule espèce tombe malade (une cicatrice, une phrase, des plaques jaunies dans la fenêtre). La cohérence achète de la capacité : un monde qui se tient peut porter plus. Les cicatrices que le monde garde de son tirage, la retouche qui suit la profondeur, et un monde qui ne nomme ses défauts qu'avec le temps (réglage *Lecture du monde*).
@@ -189,7 +189,7 @@ Un clic sur une vue y va ; Échap ou un clic ailleurs referme la roue.
 
 L'onglet **Réglages** tient en deux lignes : l'heure du ciel (curseur, l'heure lue, ↺) et le son (♪, l'ambiance, le volume en fader vertical).
 
-Dans la vue Relto, une icône **plein écran** met l'image sur tout l'écran ; la barre d'icônes et l'heure flottent par-dessus et s'effacent. Échap pour quitter. Le son du Relto continue quand on change d'onglet.
+Dans la vue Relto, une icône **plein écran** met l'image sur tout l'écran ; la barre d'icônes et l'heure flottent par-dessus et s'effacent. Échap pour quitter. Sur téléphone, la même icône fixe le Relto sur tout l'écran (les navigateurs des téléphones refusent le vrai plein écran) ; tenu droit, l'image se couche d'un quart de tour : on tourne le téléphone et on joue. Sur téléphone, le Relto ne s'ouvre jamais en plein écran de lui-même. Le son du Relto continue quand on change d'onglet.
 
 ### L'Imageur
 
@@ -581,7 +581,7 @@ Deux niveaux, dans une fenêtre à rubriques, en anglais et en français (export
 
 ## 14. Limites connues
 
-- **Le mobile est neuf** : depuis la 1.30, le plugin s'installe sur Obsidian mobile et le Relto se joue au doigt, mais il n'a été testé qu'en simulation ; dis-moi comment il se comporte sur ton téléphone.
+- **Le mobile est neuf** : depuis la 1.30, le plugin s'installe sur Obsidian mobile et le Relto se joue au doigt. Il a été essayé sur un téléphone Android (plein écran, énigmes, police D'ni dans le coffre) ; pas encore sur iOS : dis-moi comment il se comporte sur le tien.
 - **Surtout testé par machine** : tests automatiques (jsdom, faux `AudioContext`, rendus Chromium, intégration contre le vrai `main.js`) et usage réel dans Obsidian, sur ordinateur et en thème clair d'abord. Le thème sombre et les autres thèmes sont moins testés : signale-moi ce qui cloche.
 - **État rangé par nom de note** : la loi du changement lie son état au nom de la note.
 - **Plusieurs blocs `age` dans une note** : chaque bloc tire son propre monde.

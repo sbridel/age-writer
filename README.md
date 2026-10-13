@@ -34,7 +34,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
-- **1.30, on a phone.** Age Writer installs on Obsidian mobile; the Relto is played with a finger: touch to read, touch again to act, wheels you turn by sliding around them, a magnified eyepiece.
+- **1.30, on a phone.** Age Writer installs on Obsidian mobile; the Relto is played with a finger: touch to read, touch again to act, wheels you turn by sliding around them, a magnified eyepiece. Full screen fills the phone (held upright, the picture lies down by a quarter turn), and the Age's book reads in one column on a narrow screen (1.30.1, 1.30.2).
 - **1.29, a telescope that shows everything.** In the Art of the Guild a turret of lenses (bare, echo magnified, phase plate with its trace, both), a pose time near a false beat, beacons that predict where the Zero should appear instead of filtering, and a plate that engraves a wrong distance if you expose on the false beat.
 - **1.28, drawn pages in plain sight, a cavern you look into, a tunable moon, a telescope you must read.** The stability details name the pages the Age drew (keep one, or close its box in one click); a `cavern_world` shows the inside of the cave lit by its algae; `moon: small` / `distant` / `large` / `close`; near a dead star the Art of the Guild asks you to hold the true delay, with a phase dial in the eyepiece.
 - **1.27, the sickness of the living and reading the world.** A chain of life held by a single species falls sick (a scar, a sentence, yellowed patches in the window). Coherence buys capacity: a world that holds together can carry more. The scars the world keeps from its draw, retouching that follows depth, and a world that names its faults only with time (setting *Reading the world*).
@@ -178,7 +178,7 @@ A thin row of discreet icons above the picture:
 | **Settings** | sky time, ambience, level, volume |
 | **Enlarge** | opens the **Relto view** in a main tab (also: command *Open the Relto view (large)*) |
 
-In the Relto view, a **fullscreen** icon puts the picture on the whole screen; the icon bar and time float above it and fade. Esc to leave. Relto sound keeps playing when you switch tabs.
+In the Relto view, a **fullscreen** icon puts the picture on the whole screen; the icon bar and time float above it and fade. Esc to leave. On a phone the same icon fixes the Relto over the whole screen (phone browsers refuse true full screen); held upright, the picture lies down by a quarter turn, so you turn the phone and play. On a phone, the Relto never opens in full screen by itself. Relto sound keeps playing when you switch tabs.
 
 ### Navigation and sub-views
 
@@ -587,7 +587,7 @@ Two levels, in a window with sections, in English and French (both exportable as
 
 ## 14. Known limitations
 
-- **Mobile is new**: since 1.30 the plugin installs on Obsidian mobile and the Relto is played by touch, but it has been tested only in simulation so far; tell me how it behaves on your phone.
+- **Mobile is new**: since 1.30 the plugin installs on Obsidian mobile and the Relto is played by touch. It has been tried on one Android phone (full screen, puzzles, a D'ni font in the vault); iOS has not been tried yet, so tell me how it behaves on yours.
 - **Tested mostly by machine**: automated tests (jsdom, fake `AudioContext`, Chromium renders, integration against the real `main.js`) plus hands-on use in Obsidian, on desktop with the light theme first. The dark theme and other themes get less testing, so tell me if something looks off.
 - **State by note name**: the law of change ties its state to the note name.
 - **Several `age` blocks in one note**: each block draws its own world.
