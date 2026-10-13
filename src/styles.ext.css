@@ -775,8 +775,8 @@
 /* écran étroit (téléphone, panneau latéral) : l'heure plus petite */
 @container (max-width: 600px) {
   .age-relto__when { gap: 6px 14px; margin-top: 6px; }
-  .age-relto__when .age-relto__clock { font-size: 1.3em !important; }
-  .age-relto__when .age-relto__dnitime { font-size: 0.9em !important; gap: 6px; }
+  .age-relto[data-tab] .age-relto__when .age-relto__clock, .age-reltoview .age-relto[data-tab] .age-relto__when .age-relto__clock { font-size: 1.3em; }
+  .age-relto[data-tab] .age-relto__when .age-relto__dnitime, .age-reltoview .age-relto[data-tab] .age-relto__when .age-relto__dnitime { font-size: 0.9em; gap: 6px; }
 }
 /* le livre de l'Âge sur un écran étroit : une page sous l'autre, onglets qui passent à la ligne */
 .age-book { container-type: inline-size; }
