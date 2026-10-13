@@ -146,7 +146,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#5b2b2b"); ctx.fillRect(ax, ay - 52, 52, 54); ctx.fillStyle = c("#6d3535"); ctx.fillRect(ax - 8, ay - 30, 14, 36); ctx.fillRect(ax + 46, ay - 30, 14, 36); ctx.fillRect(ax + 4, ay - 26, 44, 28);
   ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(ax - 8, ay + 2, 68, 5); ctx.fillStyle = c("#2f2016"); ctx.fillRect(ax - 6, ay + 6, 4, 8); ctx.fillRect(ax + 54, ay + 6, 4, 8);
   const cat = sc.additions.find((a) => a.type === "cat");
-  if (cat && r.catSpotFor() === 0) r.drawSleepingCat(ctx, cat, { x: ax + 28, y: ay - 26, S: 1.7, shade: c, tip: TRr("atelier.cat.tip") }, t); // le même chat que dans la cabane, roulé sur l'assise
+  if (cat && r.catSpotFor() === 0) r.drawSleepingCat(ctx, cat, { x: ax + 28, y: ay - 26, S: 1.7, shade: c, tip: TRr("atelier.cat.tip"), camo: "#622f2f" }, t); // (Marcel s'y camoufle : entre le cuir du dossier et celui de l'assise) le même chat que dans la cabane, roulé sur l'assise
   else r.hot.push({ x: ax - 8, y: ay - 52, w: 68, h: 56, tip: TRr("atelier.chair.tip"), flash: TRr("atelier.chair.flash") });
   // le mur derrière le bureau : un portrait, le tableau aux ficelles rouges, un baromètre, une étagère de bocaux
   { const { pin, sheet } = wallBits(ctx, c), TRd = (k) => TRr(k), wq = rng(0xb0a7);

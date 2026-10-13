@@ -95,8 +95,10 @@ function drawCabin(r, ctx, sc, sky, t) {
     ctx.fillStyle = c("#241a12"); ctx.fillRect(x0, y0, w, FLOOR - y0);
     ctx.fillStyle = c("#4b3626"); ctx.fillRect(x0 - 7, y0 - 8, 9, FLOOR - y0 + 8); ctx.fillRect(x0 + w - 2, y0 - 8, 9, FLOOR - y0 + 8); ctx.fillRect(x0 - 7, y0 - 10, w + 14, 10);
     for (let rw = 0; rw < 3; rw++) ctx.fillRect(x0, y0 + RH * (rw + 1) - 3, w, 5); // trois rayons (30 livres) : un 4e tombait sur le plancher
+    const gone = r.marcelBed ? r.marcelBed() : null; // le livre que Marcel garde n'est plus sur l'étagère : un vide à sa place
     for (const b of r.geo.books) {
       const bx = x0 + 10 + b.col * 22, bh = b.h * S, by = y0 + RH * (b.row + 1) - 3 - bh, bw = b.w * S;
+      if (gone && b.age.path === gone.path) { ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.fillRect(bx, by + bh * 0.08, bw, bh * 0.92); continue; }
       ctx.fillStyle = c(b.color); ctx.fillRect(bx, by, bw, bh);
       ctx.fillStyle = c(VERDICT[b.age.verdict] || VERDICT.unknown); ctx.fillRect(bx, by, bw, 5);
       ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(bx + bw - 3, by + 5, 3, bh - 5);

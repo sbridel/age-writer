@@ -459,3 +459,8 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 - `src/starmap.js` : `layout` donne `d0` (le quart de la distance médiane, au moins 100) ; `radial(map, d)` : `log1p(d/d0) / log1p(scale/d0)` (adaptative) ou la racine carrée ; `fit3` l'utilise.
 - `src/relto-starmap.js` : noms au survol (`r.hover.starKey`) ou tous (`r.mapNames`, bouton « Aa ») ; loupe `r.mapZoom` (`k`, `fx`, `fy`) appliquée à `P.at`/`ring`/`hz` autour du centre du cadre, clip sous le titre ; boutons N/E/S/O (centre des étoiles du quart, ×2,2) et ◎ ; `act(r, a, x, y)` appelé par `onClick` (`h.mapAct`). La légende de la ligne de l'instrument compte parmi les places prises. `setView` range la loupe en quittant la carte.
 - Guide FR/EN ; tests : `test/touch.test.js` (56 contrôles).
+
+## 1.32.1 — un chat (13 oct. 2026)
+
+- Un chat de plus, pour qui sait le trouver (`page_marcel`, page intégrée secrète ; voir `src/relto-model.js` et les fonctions `marcel*` de `src/relto-render.js` ; tests : `test/marcel.test.js`). Rien dans le guide.
+- L'index des Âges note la maladie du vivant (`sick`).

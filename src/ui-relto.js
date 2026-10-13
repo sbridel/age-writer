@@ -460,7 +460,7 @@ class PresetModal extends obsidian.FuzzySuggestModal {
 
 async function createReltoPage(plugin) {
   const { app, t } = plugin;
-  const presets = { ...M.PAGE_PRESETS };
+  const presets = Object.fromEntries(Object.entries(M.PAGE_PRESETS).filter(([, v]) => !v.secret)); // une page secrète ne se crée pas depuis la liste
   for (const lp of (await libraryPages(plugin)).pages) presets[lp.id] = { label: lp.label, effects: lp.effects, unlock: lp.unlock };
   new PresetModal(app, async (id) => {
     const hub = await createReltoNote(plugin);

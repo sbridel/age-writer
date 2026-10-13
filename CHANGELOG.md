@@ -2,6 +2,10 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.32.1 — A cat (2026-10-13)
+
+- A cat, for those who know how to find him.
+
 ## 1.32.0 — A star chart that breathes (2026-10-13)
 
 ### Added

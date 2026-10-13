@@ -93,7 +93,9 @@ const TIP_DELAY = 450; // ms avant qu'une infobulle du canvas apparaisse
 const TIP_MAX = 300; // largeur maximale d'une infobulle (unités du canevas) ; au-delà, elle passe à la ligne
 const DRAG_START = 3, DRAG_CORE = 4; // glisser une molette : il faut bouger de 3 unités avant qu'elle tourne ; à moins de 4 unités du centre, l'angle ne compte pas
 const WHEEL_STEP = 90; // la roulette : un cran de molette par cran de roulette (≈ 100 pixels de défilement)
-const TOUCH_REACH = 14; // mode tactile : une zone à moins de 14 unités du doigt répond (≈ 18 px en paysage sur un téléphone)
+const TOUCH_REACH = 14;
+/** Le camouflage de Marcel : un cycle de trois souffles (le souffle du chat : 2π / 1,5 ≈ 4,2 s), une onde sur la moitié du cycle, sa largeur le long du corps, et sa force en plein jour. */
+const MARCEL = { cycle: 12.6, wave: 0.5, width: 6.5, amp: 0.62 }; // mode tactile : une zone à moins de 14 unités du doigt répond (≈ 18 px en paysage sur un téléphone)
 const VERDICT = { stable: "#8fae6a", unstable: "#d9a24a", dying: "#c0553f", unknown: "#7a7a8a" };
 const BOOKS = ["#7a3b2a", "#2f4a3a", "#3a3f6a", "#6a5a2a", "#5a2f4a", "#2f5a5a"];
 const CAM = 1.2, CAM_X = 320, CAM_Y = 214, CAM_OY = 196; // zoom sur l'île
@@ -574,43 +576,93 @@ class ReltoRenderer {
     return rng((sc.seed ^ fnv("cat-sleep|" + Math.floor(h * 2))) >>> 0)() < p;
   }
 
+  // ---- Marcel (page cachée « page_marcel ») ---------------------------------------------------------------------
+  /** Marcel est là : la page est active (elle ne s'ouvre qu'à un chat noir nommé Marcel, src/relto-model.js) et le chat aussi. */
+  marcelOn() { const ad = (this.scene && this.scene.additions) || []; return ad.some((a) => a.type === "marcel") && ad.some((a) => a.type === "cat"); }
+  /**
+   * Le livre que Marcel garde : celui de l'Âge qui va le plus mal (malade du vivant d'abord, puis la plus basse stabilité sous 50 %). Un chat d'hôpital
+   * ne papillonne pas : il garde le même tant que cet Âge va mal, puis passe au suivant. Null si tout va bien.
+   */
+  marcelBook() {
+    if (!this.marcelOn()) return null;
+    const ages = (this.scene.ages || []).slice(0, 30), ill = (a) => !!a && (a.sick || (a.stability != null && a.stability < 50)), score = (a) => (a.sick ? 100 : 0) + (100 - (a.stability == null ? 100 : a.stability)); // un chat d'hôpital va d'abord au malade
+    const kept = this.marcelKeep && ages.find((a) => a.path === this.marcelKeep);
+    if (ill(kept)) return kept;
+    const pick = ages.filter(ill).sort((a, b) => score(b) - score(a) || String(a.name).localeCompare(String(b.name)))[0] || null;
+    this.marcelKeep = pick ? pick.path : null; return pick;
+  }
+  /** Marcel dort quelque part (le tapis de la cabane, ou l'atelier) : c'est là que le livre le suit. Sinon le livre reste à sa place. */
+  marcelAsleep() { if (!this.marcelOn()) return false; if (this.catAsleep()) return true; const av = this.available ? this.available() : {}; return !!av.atelier && this.catSpotFor() >= 0; }
+  /** Le livre sous Marcel (ou null) : il n'a quitté l'étagère que si Marcel dort. */
+  marcelBed() { return this.marcelAsleep() ? this.marcelBook() : null; }
+  /** La nuit (0 à 1) d'après l'heure du Relto : le camouflage de Marcel se défait au crépuscule. */
+  nightAt() { const h = ((this.hour() % 24) + 24) % 24; return h >= 21.5 || h < 5.5 ? 1 : h >= 19.5 ? (h - 19.5) / 2 : h < 7 ? (7 - h) / 1.5 : 0; }
+  /**
+   * Le camouflage de Marcel à l'instant `t` : `dark(px)` (0 = cuir, 1 = noir) le long de son corps (px de −12, la tête, à +12, la
+   * queue). Une onde part de la tête tous les trois souffles (≈ 12,6 s) et met ≈ 6 s à gagner la queue : longue, lente, qu'on a le
+   * temps de voir. Le jour elle reste à moitié (le cuir l'emporte) ; au crépuscule le fond noircit ; la nuit, il est noir. Une fois sur
+   * trois, au milieu de l'onde, il ouvre les yeux une demi-seconde (`eyes`).
+   */
+  marcelCamo(t) {
+    const night = this.nightAt(), C = MARCEL.cycle, k = Math.floor(t / C), u = (t - k * C) / C, on = u < MARCEL.wave;
+    const v = on ? u / MARCEL.wave : -1, env = on ? Math.sin(Math.PI * v) : 0, head = -16 + v * 34, amp = MARCEL.amp + (1 - MARCEL.amp) * night;
+    const dark = (px) => { if (night >= 1) return 1; const band = on ? Math.exp(-Math.pow((px - head) / MARCEL.width, 2)) : 0; return clamp(night * 0.9 + amp * env * band, 0, 1); };
+    return { dark, eyes: on && k % 3 === 1 && v > 0.42 && v < 0.42 + 0.5 / (C * MARCEL.wave), night };
+  }
+
   /**
    * Le chat roulé en boule (vue de la cabane) : il respire, une oreille frémit de temps en temps, la queue fait le tour du corps.
    * (x, y) : le sol sous lui ; S : échelle ; shade : la pénombre de la pièce.
    */
-  drawSleepingCat(ctx, a, { x, y, S, shade = (c) => c, tip = null }, t) {
+  drawSleepingCat(ctx, a, { x, y, S, shade: shade0 = (c) => c, tip = null, camo = null }, t) {
     const cat = catLook(a.color), br = 1 + 0.045 * Math.sin(t * 1.5), tw = frac(t * 0.13 + (this.scene.seed % 5) / 5) > 0.975 ? Math.sin(t * 40) * 0.25 : 0;
+    const marcel = this.marcelOn(), book = marcel ? this.marcelBed() : null;
+    // le camouflage de Marcel (un fauteuil) : le jour, il a la couleur du cuir ; à chaque souffle profond, une onde de noir le parcourt
+    // lentement de la tête à la queue (longue : on a le temps de la voir) ; au crépuscule le noir gagne ; la nuit, c'est un chat noir
+    const cm = marcel && camo ? this.marcelCamo(t) : null;
+    const shade = cm ? (c, px = 0) => shade0(mix(camo, c, cm.dark(px))) : shade0;
     ctx.save(); ctx.translate(x, y); ctx.scale(S, S);
     ctx.fillStyle = "rgba(0,0,0,0.28)"; ctx.beginPath(); ctx.ellipse(0, 0, 13, 2.2, 0, 0, 6.283); ctx.fill(); // ombre sur le tapis
+    if (book) { // le livre de l'Âge qui va mal, posé à plat sous lui : on en voit la couleur et le coin qui dépasse, devant, à gauche
+      const bc = (this.geo.books.find((b) => b.age.path === book.path) || {}).color || "#6b4a2a";
+      ctx.fillStyle = shade0("#1a120c"); ctx.fillRect(-17, -1.6, 27, 3.6);
+      ctx.fillStyle = shade0("#e8dcc0"); ctx.fillRect(-16.4, -1.2, 25.8, 1.4); // la tranche des pages
+      ctx.fillStyle = shade0(bc); ctx.fillRect(-17, 0.2, 27, 1.8); ctx.fillRect(-17.6, -1.6, 1.4, 3.6); // la couverture et le dos
+    }
     // corps : une miche couchée, qui se soulève doucement
     ctx.save(); ctx.translate(1, 0); ctx.scale(1, br);
-    ctx.fillStyle = shade(cat.fur); ctx.beginPath(); ctx.ellipse(0, -5, 11, 5.4, 0, 0, 6.283); ctx.fill();
+    if (cm) { const g = ctx.createLinearGradient(-12, 0, 12, 0); for (let i = 0; i <= 8; i++) { const px = -12 + i * 3; g.addColorStop(i / 8, shade(cat.fur, px)); } ctx.fillStyle = g; } else ctx.fillStyle = shade(cat.fur);
+    ctx.beginPath(); ctx.ellipse(0, -5, 11, 5.4, 0, 0, 6.283); ctx.fill();
     if (cat.belly) { ctx.fillStyle = shade(cat.belly); ctx.beginPath(); ctx.ellipse(-2.5, -1.7, 5.5, 1.7, 0, 0, 6.283); ctx.fill(); }
     if (cat.patch) { ctx.fillStyle = shade(cat.patch); ctx.beginPath(); ctx.ellipse(4, -7, 4.2, 2.6, 0.2, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(-2, -8.4, 2.2, 1.4, -0.2, 0, 6.283); ctx.fill(); }
     if (cat.stripes) { ctx.strokeStyle = shade(cat.stripes); ctx.lineWidth = 0.8; for (let i = 0; i < 4; i++) { const sx = -3 + i * 3.2; ctx.beginPath(); ctx.moveTo(sx, -10.2); ctx.quadraticCurveTo(sx + 1.2, -7.4, sx + 0.4, -5.4); ctx.stroke(); } }
     ctx.restore();
     // queue enroulée devant, jusque sous le museau
-    ctx.strokeStyle = shade(cat.tail); ctx.lineWidth = 2.4; ctx.lineCap = "round";
+    ctx.strokeStyle = shade(cat.tail, 10); ctx.lineWidth = 2.4; ctx.lineCap = "round";
     ctx.beginPath(); ctx.moveTo(10.5, -2.5); ctx.bezierCurveTo(13.5, 0.5, 7, 1.6, 0, 1.4); ctx.quadraticCurveTo(-6, 1.2, -9 + Math.sin(t * 0.7) * 0.4, -0.4); ctx.stroke();
     // patte avant, tête posée dessus
-    ctx.fillStyle = shade(cat.paws || cat.fur); ctx.beginPath(); ctx.ellipse(-9.5, -1.2, 2.6, 1.3, 0, 0, 6.283); ctx.fill();
+    ctx.fillStyle = shade(cat.paws || cat.fur, -10); ctx.beginPath(); ctx.ellipse(-9.5, -1.2, 2.6, 1.3, 0, 0, 6.283); ctx.fill();
     const hx = -8.2, hy = -5.2;
-    ctx.fillStyle = shade(cat.ears || cat.fur);
+    ctx.fillStyle = shade(cat.ears || cat.fur, -11);
     ctx.beginPath(); ctx.moveTo(hx - 3.4, hy - 1.6); ctx.lineTo(hx - 4.4, hy - 6); ctx.lineTo(hx - 0.9, hy - 3.6); ctx.closePath(); ctx.fill();
     ctx.save(); ctx.translate(hx + 2.2, hy - 2.6); ctx.rotate(0.35 + tw); ctx.beginPath(); ctx.moveTo(-1.6, 0.4); ctx.lineTo(0.2, -4.2); ctx.lineTo(1.8, 0.2); ctx.closePath(); ctx.fill(); ctx.restore();
-    ctx.fillStyle = shade(cat.face || cat.fur); ctx.beginPath(); ctx.ellipse(hx, hy, 4.4, 3.9, -0.15, 0, 6.283); ctx.fill();
+    ctx.fillStyle = shade(cat.face || cat.fur, -9); ctx.beginPath(); ctx.ellipse(hx, hy, 4.4, 3.9, -0.15, 0, 6.283); ctx.fill();
     if (cat.muzzle) { ctx.fillStyle = shade(cat.muzzle); ctx.beginPath(); ctx.ellipse(hx - 0.8, hy + 1.6, 2.2, 1.5, 0, 0, 6.283); ctx.fill(); }
     // yeux clos : deux petits arcs
     const fur = String(cat.face || cat.fur), dark = /^#[0-9a-f]{6}$/i.test(fur) && parseInt(fur.slice(1, 3), 16) + parseInt(fur.slice(3, 5), 16) + parseInt(fur.slice(5, 7), 16) < 240;
     ctx.strokeStyle = shade(dark ? "#8a8296" : "#1a1410"); ctx.lineWidth = 0.55; // sur un pelage sombre, les paupières se lisent en clair
-    for (const ex of [hx - 2.3, hx + 1.3]) { ctx.beginPath(); ctx.arc(ex, hy - 0.4, 0.9, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke(); }
+    if (cm && cm.eyes) for (const ex of [hx - 2.3, hx + 1.3]) { ctx.fillStyle = rgba(236, 196, 90, 0.95); ctx.beginPath(); ctx.ellipse(ex, hy - 0.5, 0.85, 0.7, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = "#101010"; ctx.fillRect(ex - 0.15, hy - 1.1, 0.3, 1.2); } // un instant, il ouvre les yeux
+    else if (cm) { ctx.strokeStyle = shade0(mix(camo, "#1a1410", 0.5 + 0.5 * cm.dark(-9))); for (const ex of [hx - 2.3, hx + 1.3]) { ctx.beginPath(); ctx.arc(ex, hy - 0.4, 0.9, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke(); } } // camouflé : les paupières se fondent dans le cuir
+    else for (const ex of [hx - 2.3, hx + 1.3]) { ctx.beginPath(); ctx.arc(ex, hy - 0.4, 0.9, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke(); }
     ctx.fillStyle = shade("#d98a8a"); ctx.fillRect(hx - 0.9, hy + 1, 0.8, 0.55);
     // lueur de l'âtre sur le dos (le feu est à droite)
     ctx.restore();
     // quelques « z » qui montent, très pâles
     if (!this.opts.reducedMotion) for (let i = 0; i < 2; i++) { const p = frac(t * 0.18 + i * 0.5); ctx.fillStyle = rgba(240, 230, 210, 0.35 * Math.sin(p * Math.PI)); ctx.font = `italic ${Math.round(S * (2.6 + p * 1.6))}px serif`; ctx.fillText("z", x + S * (-11 + p * 4 + i * 2), y - S * (11 + p * 9)); }
-    const nm = String(a.name || "").trim();
-    this.hot.push({ x: x - 14 * S, y: y - 12 * S, w: 27 * S, h: 13 * S, tip: tip ? (nm ? `${nm} — ${tip}` : tip) : nm ? `${nm} — asleep by the fire` : `A ${cat.label} cat, asleep`, flash: "purr…", purr: true });
+    const nm = String(a.name || "").trim(), tt = (k, v) => (typeof this.opts.t === "function" ? this.opts.t(k, v) : k === "marcel.on" ? `Marcel is asleep on ${v.name}` : k);
+    const btip = book ? tt("marcel.on", { name: book.name }) : null; // sur quel livre il dort : une phrase, rien de plus
+    this.hot.push({ x: x - 14 * S, y: y - 12 * S, w: 27 * S, h: 13 * S, tip: btip || (tip ? (nm ? `${nm} — ${tip}` : tip) : nm ? `${nm} — asleep by the fire` : `A ${cat.label} cat, asleep`), flash: "purr…", purr: true });
+    if (book) this.hot.push({ x: x - 18 * S, y: y - 2 * S, w: 8 * S, h: 5 * S, tip: book.name, age: book, book: true }); // le coin du livre qui dépasse : un clic l'ouvre
   }
 
   // ---- l'Imageur (page « imager ») --------------------------------------------------------------

@@ -12,7 +12,7 @@ const TERRAINS = ["volcanic_plateau", "mossy_plateau", "sand_island", "glacier",
 const SURROUNDINGS = ["cloud_sea", "fog_sea", "ocean", "void", "lava_sea"];
 const SKY_CYCLES = ["system_time", "frozen_dawn", "frozen_day", "frozen_dusk", "frozen_night"];
 const STRUCTURES = ["hut", "bookshelves", "linking_pillars"];
-const EFFECT_TYPES = ["vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager", "telescope", "dniclock", "comet", "inkwell", "atelier"];
+const EFFECT_TYPES = ["marcel", "vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager", "telescope", "dniclock", "comet", "inkwell", "atelier"];
 /** Options propres à certains effets (texte court) : couleur et nom du chat, variété du koï rare. */
 const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare", "sleep", "flower"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
 const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern", "ponderosa", "maple", "crystal"], flowers: ["blue", "red", "yellow", "white", "pink"] };
@@ -129,6 +129,8 @@ const PAGE_PRESETS = {
   page_endgame: { label: "Inkwell", effects: { canvas_additions: [{ type: "inkwell", density: 1 }] } }, // l'encrier : la même page que la fin de l'histoire (src/story.js), proposée aussi au bac à sable
   page_cat_toys: { label: "Cat toys", effects: { canvas_additions: [{ type: "cattoys", density: 0.6 }], ambiance_audio: "hearth" } },
   page_pond_decor: { label: "Pond decor", effects: { canvas_additions: [{ type: "ponddecor", density: 0.6 }], ambiance_audio: "river" } },
+  // une page qu'on ne voit pas : elle se montre seulement à qui a un chat noir nommé Marcel (src/relto-render.js, marcel*)
+  page_marcel: { label: "Marcel", effects: { canvas_additions: [{ type: "marcel" }], ambiance_audio: "hearth" }, unlock: { marcel: true }, secret: true },
   page_cat: { label: "Cat", effects: { canvas_additions: [{ type: "cat", color: "orange", name: "Mochi" }], ambiance_audio: "hearth" } },
   page_rain: { label: "Rain", effects: { canvas_additions: [{ type: "rain", density: 0.6 }], ambiance_audio: "soft_rain" } },
   page_storm: { label: "Storm", effects: { canvas_additions: [{ type: "storm", density: 0.7 }], ambiance_audio: "thunder" } },
@@ -245,15 +247,16 @@ function libraryPage(lp) {
  * Pages toujours présentes dans le livre des pages, même sans note : elles se découvrent (verrouillées, puis disponibles).
  * Une note ou une ligne de bibliothèque de même id l'emporte. Aujourd'hui : le télescope, débloqué par le premier Âge.
  */
-const BUILTIN_PAGES = ["page_telescope", "page_dni_clock"];
+const BUILTIN_PAGES = ["page_telescope", "page_dni_clock", "page_marcel"];
 function builtinPages() {
-  return BUILTIN_PAGES.map((id) => { const p = PAGE_PRESETS[id]; return { ...libraryPage({ id, label: p.label, effects: p.effects, unlock: null }), library: false, builtin: true, unlock: { age: null, minStability: 40, agesCount: p.unlock.agesCount != null ? p.unlock.agesCount : null, page: p.unlock.page || null, zero: !!p.unlock.zero } }; });
+  return BUILTIN_PAGES.map((id) => { const p = PAGE_PRESETS[id]; return { ...libraryPage({ id, label: p.label, effects: p.effects, unlock: null }), library: false, builtin: true, secret: !!p.secret, unlock: { age: null, minStability: 40, agesCount: p.unlock.agesCount != null ? p.unlock.agesCount : null, page: p.unlock.page || null, zero: !!p.unlock.zero, marcel: !!p.unlock.marcel } }; });
 }
 
 /** @returns {{ok:boolean, reason:string}} */
 function checkUnlock(page, ages, active, relto) {
   const u = page.unlock;
   if (!u) return { ok: true, reason: "" };
+  if (u.marcel && !(relto && relto.marcelOk)) return { ok: false, reason: "" }; // pas de raison dite : cette page ne se montre pas avant
   if (u.zero && !(relto && relto.zeroFound)) return { ok: false, reason: "needs the Great Zero (find it with the telescope)" };
   if (u.story && !(relto && Array.isArray(relto.storyDone) && relto.storyDone.includes(u.story))) return { ok: false, reason: `needs the chapter “${u.storyTitle || u.story}”` }; // une récompense de chapitre (Relto histoire)
   if (u.page && active && !active.has(u.page)) { const want = PAGE_PRESETS[u.page]; return { ok: false, reason: `needs the page “${want ? want.label : u.page}”` }; } // une page qui en demande une autre (l'observatoire et le mont)
@@ -275,8 +278,11 @@ function checkUnlock(page, ages, active, relto) {
 function buildScene(relto, pages, ages, shown) {
   const active = new Set(relto.pagesActive);
   const activeOk = new Set(pages.filter((p) => active.has(p.id) && p.enabled !== false).map((p) => p.id)); // pages attachées et actives (une page exigée doit l'être)
-  const states = pages.map((p) => {
-    const lock = checkUnlock(p, ages, activeOk, relto);
+  // le chat du Relto : un chat noir nommé Marcel ouvre une page qui ne se montre à personne d'autre
+  const catA = pages.filter((p) => activeOk.has(p.id)).flatMap((p) => p.additions || []).find((a) => a.type === "cat");
+  const rel = { ...relto, marcelOk: !!(catA && /^marcel$/i.test(String(catA.name || "").trim()) && String(catA.color || "").trim().toLowerCase() === "black") };
+  const states = pages.filter((p) => !(p.secret && !active.has(p.id) && !checkUnlock(p, ages, activeOk, rel).ok)).map((p) => { // une page secrète verrouillée n'apparaît nulle part
+    const lock = checkUnlock(p, ages, activeOk, rel);
     let state;
     if (active.has(p.id)) state = !p.enabled ? "disabled" : lock.ok ? "active" : "locked";
     else state = lock.ok ? "available" : "locked";
