@@ -468,3 +468,7 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 ## 1.32.2 — la housse du jour (13 oct. 2026)
 
 - `src/relto-atelier.js` : `COVERS` (six étoffes sourdes : dossier, assise, couleur de camouflage) et `coverOf(r, now)` (date locale et graine du Relto). Le fauteuil de l'atelier change de housse chaque jour ; ce qui s'y camoufle suit la housse. Tests : `test/marcel.test.js` (29 contrôles).
+
+## 1.32.3 — une patte (13 oct. 2026)
+
+- Onglet Pages (`src/ui-relto.js`) : l'infobulle d'une page intégrée est son nom (plus « (relto-library) », réservé aux pages d'une bibliothèque). La page de Marcel : nom doré en italique, une petite patte en SVG (`.age-relto__marcel`, `.age-relto__paw`).

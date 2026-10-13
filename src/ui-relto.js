@@ -833,7 +833,11 @@ async function renderRelto(plugin, source, el, ctx) {
     const row = (box, p) => {
       const r = box.createDiv({ cls: `age-relto__page is-${p.state}` });
       if (p.path) { const a = r.createEl("a", { cls: "internal-link age-relto__pname", text: nameOf(p), attr: { title: p.id } }); a.addEventListener("click", (e) => { e.preventDefault(); app.workspace.openLinkText(p.path, "", false); }); }
-      else r.createSpan({ cls: "age-relto__pname age-relto__libpage", text: nameOf(p), attr: { title: p.id + " (relto-library)" } });
+      else if (p.id === "page_marcel") { // Marcel : son nom doré, en italique, et une petite patte à côté
+        const sp = r.createSpan({ cls: "age-relto__pname age-relto__marcel", text: nameOf(p), attr: { title: nameOf(p) } });
+        sp.insertAdjacentHTML("beforeend", '<svg class="age-relto__paw" viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="10.6" rx="3.6" ry="3" fill="currentColor"/><ellipse cx="3.6" cy="6.6" rx="1.5" ry="1.9" fill="currentColor"/><ellipse cx="6.4" cy="3.8" rx="1.5" ry="1.9" fill="currentColor"/><ellipse cx="9.6" cy="3.8" rx="1.5" ry="1.9" fill="currentColor"/><ellipse cx="12.4" cy="6.6" rx="1.5" ry="1.9" fill="currentColor"/></svg>');
+      }
+      else r.createSpan({ cls: "age-relto__pname age-relto__libpage", text: nameOf(p), attr: { title: p.library ? p.id + " (relto-library)" : nameOf(p) } }); // une page intégrée n'a pas de bibliothèque : son nom, rien de plus
       const mid = r.createSpan({ cls: "age-relto__fx" }); mid.setText(p.reason || whatOf(p));
       const act = r.createSpan({ cls: "age-relto__pact" }), listed = scene.pagesActive.includes(p.id);
       if (p.state === "available") act.createEl("button", { cls: "age-relto__pbtn", text: t("relto.attach") }).addEventListener("click", async () => { await reltoEdit((l) => [...l, p.id]); plugin.refreshLive(); });
