@@ -90,6 +90,7 @@ function catLook(color) {
   return CATS.orange;
 }
 const TIP_DELAY = 450; // ms avant qu'une infobulle du canvas apparaisse
+const TOUCH_REACH = 14; // mode tactile : une zone à moins de 14 unités du doigt répond (≈ 18 px en paysage sur un téléphone)
 const VERDICT = { stable: "#8fae6a", unstable: "#d9a24a", dying: "#c0553f", unknown: "#7a7a8a" };
 const BOOKS = ["#7a3b2a", "#2f4a3a", "#3a3f6a", "#6a5a2a", "#5a2f4a", "#2f5a5a"];
 const CAM = 1.2, CAM_X = 320, CAM_Y = 214, CAM_OY = 196; // zoom sur l'île
@@ -113,8 +114,15 @@ class ReltoRenderer {
     this.running = false;
     this.sprite = this.makeSprite();
     this.layers = [makeCanvas(W, 140), makeCanvas(W, 140), makeCanvas(W, 140)];
-    canvas.addEventListener("pointermove", (e) => this.onMove(e));
-    canvas.addEventListener("pointerleave", () => { this.hover = null; this.pointer = null; this.canvas.style.cursor = ""; });
+    // le mode tactile (téléphone, tablette ; `opts.touch`) : pas de survol ; le premier toucher montre (l'infobulle), le second agit ;
+    // les petites cibles s'élargissent (`hit`) ; les molettes se tournent au doigt (`onDown`, glisser autour du centre)
+    this.touch = !!this.opts.touch; this.held = null; this.drag = null; this.dragged = false;
+    if (this.touch && this.opts.tipDelay == null) this.opts.tipDelay = 0;
+    canvas.addEventListener("pointermove", (e) => (this.touch ? this.onDragMove(e) : this.onMove(e)));
+    canvas.addEventListener("pointerleave", () => { if (this.touch) return; this.hover = null; this.pointer = null; this.canvas.style.cursor = ""; });
+    canvas.addEventListener("pointerdown", (e) => this.onDown(e));
+    canvas.addEventListener("pointerup", () => { this.drag = null; });
+    canvas.addEventListener("pointercancel", () => { this.drag = null; });
     canvas.addEventListener("click", (e) => this.onClick(e));
     // pas de dessin quand le canvas est hors écran ou l'onglet caché
     this.visible = true;
@@ -1087,13 +1095,27 @@ class ReltoRenderer {
     v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.55)"); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
   }
 
+  /**
+   * Mode tactile : le premier toucher d'une zone qui a quelque chose à dire la TIENT (cadre et infobulle), sans agir ; le second
+   * agit. Les passages (portes, livres, vues) agissent tout de suite. Toucher le vide relâche. Renvoie vrai si le geste s'arrête là.
+   */
+  touchHold(h) {
+    const redraw = () => { if (!this.running) this.draw(0); };
+    if (!h) { this.held = null; this.hover = null; redraw(); return true; }
+    const k = this.holdKey(h), nav = h.go || h.book || h.special || h.shelf != null || h.vpage || h.mapPage || h.pbook || h.gbTurn || h.gbGo != null || (h.tel && (h.tel.go || h.tel.book || h.tel.eyeZoom));
+    this.heldTip = h.tip;
+    if (h.tip && !h.secret && !nav && this.held !== k) { this.held = k; this.hover = h; this.tipKey = null; redraw(); return true; }
+    this.held = k; this.hover = h; return false;
+  }
   drawHover(ctx) {
-    const h = this.hover; if (!h) return;
+    if (this.touch && this.held) this.hover = this.hot.find((q) => this.holdKey(q) === this.held && q.tip === this.heldTip) || this.hot.find((q) => this.holdKey(q) === this.held) || null; // la zone tenue, redessinée à chaque image
+    const h = this.hover; if (!h) { this.tipOut(null); return; }
     // l'infobulle attend un instant (TIP_DELAY) : on peut viser une zone, et voir ce qu'elle couvre, sans qu'elle s'interpose aussitôt
     const k = `${Math.round(h.x)},${Math.round(h.y)},${h.tip}`; if (k !== this.tipKey) { this.tipKey = k; this.tipAt = Date.now(); const delay = this.opts.tipDelay != null ? this.opts.tipDelay : TIP_DELAY; if (!this.running && delay > 0) window.setTimeout(() => { if (this.tipKey === k) this.draw(0); }, delay + 20); }
     const late = Date.now() - this.tipAt >= (this.opts.tipDelay != null ? this.opts.tipDelay : TIP_DELAY);
     if (this.opts.hoverFrame !== false && !h.secret) { ctx.strokeStyle = "rgba(255,240,200,0.9)"; ctx.lineWidth = 1; ctx.strokeRect(h.x - 1, h.y - 1, h.w + 2, h.h + 2); } // cadre : réglage « Cadre des zones cliquables »
-    if (!late || !h.tip || h.secret) return;
+    if (!late || !h.tip || h.secret) { this.tipOut(null); return; }
+    if (this.opts.onTip) { this.tipOut(h.tip); return; } // la carte d'infobulle (mode tactile) : le texte va sous l'image, lisible
     const [vx0, vx1, vy0] = this.visible_();
     // `h.frac` (facultatif) : une longueur de faisceau en rahnfee (src/beam.js), gravée en chiffres D'ni après le texte
     const fs = 10, fw = h.frac && this.dni && this.dni.fractionWidth ? this.dni.fractionWidth(h.frac, fs) + 6 : 0;
@@ -1102,6 +1124,9 @@ class ReltoRenderer {
     ctx.fillStyle = "#e9dcb8"; ctx.fillText(h.tip, bx + 6, by + 13);
     if (fw) this.dni.drawFraction(ctx, h.frac, bx + 6 + tw - fw + 6, by + 4, fs, "#e0c27a");
   }
+
+  /** La carte d'infobulle (mode tactile, `opts.onTip`) : appelée seulement quand le texte change. */
+  tipOut(text) { if (!this.opts.onTip || text === this.tipShown) return; this.tipShown = text; try { this.opts.onTip(text); } catch (e) { /* ignore */ } }
 
   // ---- vues ----------------------------------------------------------------------------
   /** « island » (vue de l'île, par défaut) ou « global » (le Relto vu de loin) ; un fondu léger marque le passage. */
@@ -1118,7 +1143,7 @@ class ReltoRenderer {
     if (view === "descbook" && this.view !== "descbook") this.bookFrom = this.view || "cabin"; // la flèche ronde ramène d'où l'on vient (cabane, étage, bureau, coffre…)
     if (view === "vault") { this.vaultFrom = ["cabin", "loft"].includes(this.view) ? this.view : (this.vaultFrom || "cabin"); this.vaultPage = 0; }
     if ((view === "glyphbook" || view === "librarybook") && this.view !== "glyphbook" && this.view !== "librarybook") this.bookFrom = this.view && this.view !== "island" ? this.view : "cabin"; // la flèche ronde du livre y retourne
-    this.view = view; this.hover = null; this.flash = null; this.fadeAt = Date.now(); this.deskUI = null; if (view !== "cabin") { this.panelAt = 0; this.shelf = null; if (view !== "glyphbook" && view !== "librarybook") { this.shelfOpen = false; this.bookAt = 0; } } // en quittant la cabane, la bibliothèque reprend sa place // en quittant le bureau, le tiroir se referme
+    this.view = view; this.hover = null; this.held = null; this.drag = null; this.flash = null; this.fadeAt = Date.now(); this.deskUI = null; if (view !== "cabin") { this.panelAt = 0; this.shelf = null; if (view !== "glyphbook" && view !== "librarybook") { this.shelfOpen = false; this.bookAt = 0; } } // en quittant la cabane, la bibliothèque reprend sa place // en quittant le bureau, le tiroir se referme
     if (this.opts.onView) this.opts.onView(view);
     if (!this.running) this.draw(0);
   }
@@ -1152,7 +1177,36 @@ class ReltoRenderer {
     if (this.view && this.view !== "island") return [px, py]; // les vues plein cadre n'ont pas de zoom
     return [(px - CAM_X) / CAM + CAM_X, (py - CAM_OY) / CAM + CAM_Y]; // inverse de la caméra
   }
-  hit(x, y) { for (let i = this.hot.length - 1; i >= 0; i--) { const h = this.hot[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h; } return null; }
+  hit(x, y) {
+    for (let i = this.hot.length - 1; i >= 0; i--) { const h = this.hot[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h; }
+    if (!this.touch) return null;
+    // au doigt : la zone la plus proche, à moins de TOUCH_REACH unités (le doigt couvre plus qu'une pointe de souris)
+    let best = null, bd = TOUCH_REACH;
+    for (let i = this.hot.length - 1; i >= 0; i--) { const h = this.hot[i], dx = Math.max(h.x - x, 0, x - h.x - h.w), dy = Math.max(h.y - y, 0, y - h.y - h.h), d = Math.hypot(dx, dy); if (d < bd) { bd = d; best = h; } }
+    return best;
+  }
+  /** La clé d'une zone tenue (mode tactile) : une molette entière compte pour une seule zone (on a lu ce qu'elle est, ses ± agissent ensuite). */
+  holdKey(h) { return h.wc ? `wc:${Math.round(h.wc.x)},${Math.round(h.wc.y)}` : `${Math.round(h.x)},${Math.round(h.y)},${Math.round(h.w)},${Math.round(h.h)}`; }
+  /** Au doigt : un geste de molette (télescope ou Imageur), comme un clic sur son ±. */
+  wheelAct(a, kind) { if (kind === "imager") this.imagerAct(a); else TL.act(this, a); }
+  /** Mode tactile : poser le doigt sur une molette (une zone `wc`) commence à la tourner. */
+  onDown(e) {
+    if (!this.touch) return;
+    const [x, y] = this.toLogical(e), h = this.hit(x, y); this.dragged = false;
+    if (!h || !h.wc || this.held !== this.holdKey(h)) return; // une molette pas encore lue : le toucher la montre d'abord
+    const wc = h.wc, r0 = Math.hypot(x - wc.x, y - wc.y);
+    this.drag = { wc, a: Math.atan2(y - wc.y, x - wc.x), acc: 0, fine: r0 <= (wc.hub || 0) + 3 || !wc.coarse };
+    try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  }
+  /** Mode tactile : le doigt tourne autour du centre de la molette ; un cran par `deg` degrés (fin au moyeu, gros à la couronne). */
+  onDragMove(e) {
+    const d = this.drag; if (!d) return;
+    const [x, y] = this.toLogical(e), wc = d.wc, a = Math.atan2(y - wc.y, x - wc.x); let da = a - d.a; da -= Math.round(da / (2 * Math.PI)) * 2 * Math.PI; d.a = a; d.acc += da;
+    const step = ((d.fine ? wc.deg || 8 : wc.degRim || 20) * Math.PI) / 180;
+    let n = 0;
+    while (Math.abs(d.acc) >= step) { const dir = d.acc > 0 ? 1 : -1; d.acc -= dir * step; this.wheelAct((d.fine ? wc.fine : wc.coarse)(dir), wc.kind); n++; }
+    if (n) { this.dragged = true; try { if (navigator.vibrate) navigator.vibrate(6); } catch (err) { /* ignore */ } if (!this.running) this.draw(0); }
+  }
   onMove(e) {
     const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && !this.hover.secret && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go || this.hover.imager || this.hover.tel || this.hover.purr || this.hover.pageToggle || this.hover.pbook || this.hover.gbTurn || this.hover.lamp || this.hover.gbGo != null || this.hover.vpage || this.hover.mapPage || this.hover.shelf != null || this.hover.stone || this.hover.knock || this.hover.desk || this.hover.toy || this.hover.ward) ? "var(--age-hand, pointer)" : ""; // la main dessinée du Relto (styles.ext.css), la main du système à défaut
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
@@ -1206,7 +1260,7 @@ class ReltoRenderer {
     if (ok || K.length >= 3) this.knocks = [];
     if (ok) { this.panelAt = Date.now(); window.setTimeout(() => this.setView("atelier"), 1400); } // le panneau coulisse, puis on passe
   }
-  onClick(e) { const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h) return; if (h.vpage) { this.vaultPage = (this.vaultPage || 0) + h.vpage; if (!this.running) this.draw(0); return; } if (h.mapPage) { this.mapPage = (this.mapPage || 0) + h.mapPage; if (!this.running) this.draw(0); return; } if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.lamp) this.lampToggle(h); else if (h.ward) this.wardAct(); else if (h.gbTurn) this.gbTurn(h.gbTurn); else if (h.gbGo != null) this.gbGo(h.gbGo); else if (h.stone) this.stoneTap(x, y); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.go) { if (h.go === "descbook") this.descTarget = h.arg || null; this.setView(h.go); } else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
+  onClick(e) { if (this.dragged) { this.dragged = false; return; } const [x, y] = this.toLogical(e), h = this.hit(x, y); if (this.touch && this.touchHold(h)) return; if (!h) return; if (h.vpage) { this.vaultPage = (this.vaultPage || 0) + h.vpage; if (!this.running) this.draw(0); return; } if (h.mapPage) { this.mapPage = (this.mapPage || 0) + h.mapPage; if (!this.running) this.draw(0); return; } if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.lamp) this.lampToggle(h); else if (h.ward) this.wardAct(); else if (h.gbTurn) this.gbTurn(h.gbTurn); else if (h.gbGo != null) this.gbGo(h.gbGo); else if (h.stone) this.stoneTap(x, y); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.go) { if (h.go === "descbook") this.descTarget = h.arg || null; this.setView(h.go); } else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };

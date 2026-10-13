@@ -80,8 +80,9 @@ function knob(r, ctx, key, x, y, value, max, c, R = 17, locked = false) {
   for (let i = 0; i <= 12; i++) { const q = -Math.PI * 0.75 + (i / 12) * Math.PI * 1.5; ctx.beginPath(); ctx.moveTo(x + Math.cos(q) * (R + 3), y + Math.sin(q) * (R + 3)); ctx.lineTo(x + Math.cos(q) * (R + (i % 3 ? 5 : 8)), y + Math.sin(q) * (R + (i % 3 ? 5 : 8))); ctx.stroke(); }
   number(r, ctx, value, x, y + R + 10, 14);
   const tip = locked ? `${LABEL[key]} — held by the lock` : null;
-  r.hot.push({ x: x - R - 6, y: y - R - 6, w: R + 6, h: R * 2 + 12, tip: tip || `${LABEL[key]} −`, imager: { key, delta: -1 } });
-  r.hot.push({ x, y: y - R - 6, w: R + 6, h: R * 2 + 12, tip: tip || `${LABEL[key]} +`, imager: { key, delta: 1 } });
+  const wc = { x, y, hub: R + 8, kind: "imager", deg: 11, fine: (d) => ({ key, delta: d }) }; // au doigt : on le tourne en glissant
+  r.hot.push({ x: x - R - 6, y: y - R - 6, w: R + 6, h: R * 2 + 12, tip: tip || `${LABEL[key]} −`, imager: { key, delta: -1 }, wc });
+  r.hot.push({ x, y: y - R - 6, w: R + 6, h: R * 2 + 12, tip: tip || `${LABEL[key]} +`, imager: { key, delta: 1 }, wc });
 }
 
 /**
@@ -205,8 +206,9 @@ function overview(r, ctx, st, cl, t, c, now) {
   for (let i = 0; i < 4; i++) { const a = -Math.PI / 2 + (i / 4) * Math.PI * 2; ctx.fillStyle = i === s.az && locked ? "#7fd6c8" : c("#8a6a2e"); ctx.beginPath(); ctx.arc(rx + Math.cos(a) * 9, ry + Math.sin(a) * 9, i === 0 ? 2.2 : 1.5, 0, 6.283); ctx.fill(); }
   const na = -Math.PI / 2 + (s.az / 4) * Math.PI * 2; ctx.strokeStyle = locked ? "#f0b860" : c("#5a4322"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx + Math.cos(na) * 8, ry + Math.sin(na) * 8); ctx.stroke();
   const ctip = locked ? "Periscope crank" : "Periscope crank — free once the lock holds";
-  r.hot.push({ x: K.x - K.r - 6, y: K.y - K.r - 6, w: K.r + 6, h: K.r * 2 + 12 + 40, tip: ctip + (locked ? " — turn left" : ""), imager: { key: "az", delta: -1 } });
-  r.hot.push({ x: K.x, y: K.y - K.r - 6, w: K.r + 6, h: K.r * 2 + 12 + 40, tip: ctip + (locked ? " — turn right" : ""), imager: { key: "az", delta: 1 } });
+  const kwc = { x: K.x, y: K.y, hub: K.r + 30, kind: "imager", deg: 90, fine: (d) => ({ key: "az", delta: d }) }; // la manivelle : un quart de tour par cran
+  r.hot.push({ x: K.x - K.r - 6, y: K.y - K.r - 6, w: K.r + 6, h: K.r * 2 + 12 + 40, tip: ctip + (locked ? " — turn left" : ""), imager: { key: "az", delta: -1 }, wc: kwc });
+  r.hot.push({ x: K.x, y: K.y - K.r - 6, w: K.r + 6, h: K.r * 2 + 12 + 40, tip: ctip + (locked ? " — turn right" : ""), imager: { key: "az", delta: 1 }, wc: kwc });
   const T = TILT, under = V.hasUnder(st.model), pos = { 1: T.y - 40, 0: T.y, [-1]: T.y + 40 };
   ctx.fillStyle = c("#1b130d"); ctx.fillRect(T.x - 5, T.y - 48, 10, 96); ctx.strokeStyle = c("#8a6a2e"); ctx.lineWidth = 1; ctx.strokeRect(T.x - 5, T.y - 48, 10, 96);
   for (const v of [1, 0, -1]) { ctx.fillStyle = c("#8a6a2e"); ctx.fillRect(T.x + 7, pos[v] - 1, 6, 2); }
@@ -308,11 +310,11 @@ function micrometer(r, ctx, c, cal, t) {
   ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(M.x, M.y, M.hub, 0, 6.283); ctx.fill();
   ctx.strokeStyle = c("#1b130d"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(M.x, M.y); ctx.lineTo(M.x + Math.cos(a) * (M.hub - 1), M.y + Math.sin(a) * (M.hub - 1)); ctx.stroke();
   lamp(ctx, M.x + M.r + 7, M.y - M.r + 2, cal.synced ? (cal.certain ? "green" : "amber") : null, 2.6);
-  const name = tt("cal.micro");
-  r.hot.push({ x: M.x - M.r - 4, y: M.y - M.r - 4, w: M.r + 4, h: M.r * 2 + 8, tip: `${name} — ${tt("cal.rim.minus")}`, tipBelow: true, imager: { sync: -10 } });
-  r.hot.push({ x: M.x, y: M.y - M.r - 4, w: M.r + 4, h: M.r * 2 + 8, tip: `${name} — ${tt("cal.rim.plus")}`, tipBelow: true, imager: { sync: 10 } });
-  r.hot.push({ x: M.x - M.hub - 2, y: M.y - M.hub - 2, w: M.hub + 2, h: M.hub * 2 + 4, tip: `${name} — ${tt("cal.hub.minus")}`, tipBelow: true, imager: { sync: -1 } });
-  r.hot.push({ x: M.x, y: M.y - M.hub - 2, w: M.hub + 2, h: M.hub * 2 + 4, tip: `${name} — ${tt("cal.hub.plus")}`, tipBelow: true, imager: { sync: 1 } });
+  const name = tt("cal.micro"), mwc = { x: M.x, y: M.y, hub: M.hub, kind: "imager", fine: (d) => ({ sync: d }), coarse: (d) => ({ sync: 10 * d }) }; // au doigt : le micromètre se tourne
+  r.hot.push({ x: M.x - M.r - 4, y: M.y - M.r - 4, w: M.r + 4, h: M.r * 2 + 8, tip: `${name} — ${tt("cal.rim.minus")}`, tipBelow: true, imager: { sync: -10 }, wc: mwc });
+  r.hot.push({ x: M.x, y: M.y - M.r - 4, w: M.r + 4, h: M.r * 2 + 8, tip: `${name} — ${tt("cal.rim.plus")}`, tipBelow: true, imager: { sync: 10 }, wc: mwc });
+  r.hot.push({ x: M.x - M.hub - 2, y: M.y - M.hub - 2, w: M.hub + 2, h: M.hub * 2 + 4, tip: `${name} — ${tt("cal.hub.minus")}`, tipBelow: true, imager: { sync: -1 }, wc: mwc });
+  r.hot.push({ x: M.x, y: M.y - M.hub - 2, w: M.hub + 2, h: M.hub * 2 + 4, tip: `${name} — ${tt("cal.hub.plus")}`, tipBelow: true, imager: { sync: 1 }, wc: mwc });
 }
 
 /** Le cartouche au bas de l'écran (étape 2) : l'heure là-bas, en mots et en chiffres D'ni (gahrtahvo · tahvo), et les coordonnées KIPS. */

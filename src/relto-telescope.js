@@ -148,6 +148,7 @@ function act(r, a) {
   const st = state(r), sfx = (k, s) => { if (r.opts.onTelescopeSound) r.opts.onTelescopeSound(k, s); };
   if (a.book) { bookLoad(r, (st.book ? st.book.idx : -1) + a.book); st.note = null; st.trend = 0; sfx("turn", 0.5); keepAim(r, st); return; }
   if (a.go) { r.setView(a.go); return; }
+  if (a.eyeZoom) { r.eyeZoom = !r.eyeZoom; r.held = null; r.hover = null; return; } // mode tactile : l'oculaire agrandi (rien n'y reste tenu)
   if (a.lens) { if (!guildOf(r)) return; st.lens = LENSES[(LENSES.indexOf(lensOf(st)) + 1) % LENSES.length]; sfx("turn", 0.5); if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st)); return; }
   if (a.axis || a.setZero || a.setSystem) { st.note = null; st.trend = 0; } // la phrase d'un geste précédent s'efface au geste suivant
   if (measuring(st)) return actSystem(r, st, a, sfx);
@@ -274,10 +275,12 @@ function wheel(r, ctx, c, axis, W0, value, span, shown, tm, o = {}) {
     r.hot.push({ x: lx - 40, y: vy - 2, w: 80, h: 16, tip: o.valueTip });
   } else r.hot.push({ x: x - RING, y: y + RING + 4, w: RING * 2, h: small ? 26 : 40, tip: unit }); // le nom et la valeur : l'unité (et le sens du KI)
   // couronne d'abord, moyeu ensuite : la dernière zone posée l'emporte (hit cherche de la fin vers le début)
-  r.hot.push({ x: x - RING - 4, y: y - RING - 4, w: RING + 4, h: RING * 2 + 8, tip: `${name} — ${t("tel.ring.minus")}`, tel: { axis, delta: -S.rim } });
-  r.hot.push({ x, y: y - RING - 4, w: RING + 4, h: RING * 2 + 8, tip: `${name} — ${t("tel.ring.plus")}`, tel: { axis, delta: S.rim } });
-  r.hot.push({ x: x - HUB - 2, y: y - HUB - 2, w: HUB + 2, h: HUB * 2 + 4, tip: `${name} — ${t("tel.hub.minus")}`, tel: { axis, delta: -S.hub } });
-  r.hot.push({ x, y: y - HUB - 2, w: HUB + 2, h: HUB * 2 + 4, tip: `${name} — ${t("tel.hub.plus")}`, tel: { axis, delta: S.hub } });
+  // au doigt (mode tactile) : `wc`, la molette qu'on tourne en glissant autour de son centre (fin au moyeu, gros à la couronne)
+  const wc = { x, y, hub: HUB, kind: "tel", fine: (d) => ({ axis, delta: d * S.hub }), coarse: (d) => ({ axis, delta: d * S.rim }) };
+  r.hot.push({ x: x - RING - 4, y: y - RING - 4, w: RING + 4, h: RING * 2 + 8, tip: `${name} — ${t("tel.ring.minus")}`, tel: { axis, delta: -S.rim }, wc });
+  r.hot.push({ x, y: y - RING - 4, w: RING + 4, h: RING * 2 + 8, tip: `${name} — ${t("tel.ring.plus")}`, tel: { axis, delta: S.rim }, wc });
+  r.hot.push({ x: x - HUB - 2, y: y - HUB - 2, w: HUB + 2, h: HUB * 2 + 4, tip: `${name} — ${t("tel.hub.minus")}`, tel: { axis, delta: -S.hub }, wc });
+  r.hot.push({ x, y: y - HUB - 2, w: HUB + 2, h: HUB * 2 + 4, tip: `${name} — ${t("tel.hub.plus")}`, tel: { axis, delta: S.hub }, wc });
 }
 
 /** La visée affichée, en crans fins (u) et shahfeetee (v) : glisse de l'ancienne vers la nouvelle (au plus court sur le cercle). */
@@ -388,7 +391,7 @@ function eyepiece(r, ctx, c, st, sig, tm, ms, echo = null, more = null) {
   const vg = ctx.createRadialGradient(cx, cy, R * 0.55, cx, cy, R); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.6)"); ctx.fillStyle = vg; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
   const gl = ctx.createLinearGradient(cx - R, cy - R, cx, cy); gl.addColorStop(0, "rgba(255,255,255,0.08)"); gl.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = gl; ctx.fillRect(cx - R, cy - R, R * 2, R * 2); // reflet de la lentille
   ctx.restore();
-  const t = tOf(r); r.hot.push({ x: cx - R, y: cy - R, w: R * 2, h: R * 2, tip: echo ? t("sys.eyepiece") : t("tel.eyepiece") });
+  const t = tOf(r); r.hot.push({ x: cx - R, y: cy - R, w: R * 2, h: R * 2, tip: echo ? t("sys.eyepiece") : t("tel.eyepiece"), ...(r.touch ? { tel: { eyeZoom: true } } : {}) }); // au doigt : un toucher l'agrandit
 }
 
 /**
@@ -565,10 +568,27 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   { const av = r.available ? r.available() : {}, tr = (k) => t(k); // sur le rebord de la fente : la lampe de la maison, le petit Imageur
     if (av.cabin) PS.houseLamp(r, ctx, c, 330, 286, tm, tr("relto.pass.cabin.tip"));
     if (av.imager) PS.imagerMini(r, ctx, c, 356, 286, tm, tr("relto.pass.imager.tip")); }
+  if (r.touch && r.eyeZoom) eyeZoomed(r, ctx);
   // redescendre
   ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(BACK.x, BACK.y, BACK.w, BACK.h);
   ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 29); ctx.textAlign = "left";
   r.hot.push({ ...BACK, tip: t("tel.back"), go: "island" });
+}
+
+/**
+ * Mode tactile : l'oculaire agrandi sur toute la gauche de la vue (le métronome et le lutrin dessous), les molettes restent à
+ * droite. C'est le seul endroit où la lecture (trace, lueur, écho grossi) demande des pixels. Un toucher sur l'image la rend.
+ */
+const ZOOM_EYE = { x: 186, y: 151, r: 149 }; // le verre agrandi (×1,3), au-dessus de la ligne de mots
+function eyeZoomed(r, ctx) {
+  const cv = ctx.canvas; if (!cv || !cv.width || !cv.ownerDocument) return;
+  const k = cv.width / W, R = EYE.r, sx = (EYE.x - R) * k, sy = (EYE.y - R) * k, sw = 2 * R * k, Z = ZOOM_EYE;
+  const c2 = r._zoomC || (r._zoomC = cv.ownerDocument.createElement("canvas")); c2.width = Math.round(sw); c2.height = Math.round(sw);
+  const g = c2.getContext("2d"); if (!g) return; g.clearRect(0, 0, c2.width, c2.height); g.drawImage(cv, sx, sy, sw, sw, 0, 0, c2.width, c2.height);
+  ctx.fillStyle = "rgba(8,7,6,0.9)"; ctx.fillRect(0, 0, 372, 298);
+  ctx.save(); ctx.beginPath(); ctx.arc(Z.x, Z.y, Z.r, 0, 6.283); ctx.clip(); ctx.drawImage(c2, Z.x - Z.r, Z.y - Z.r, Z.r * 2, Z.r * 2); ctx.restore();
+  ctx.strokeStyle = "#b8913f"; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(Z.x, Z.y, Z.r + 2, 0, 6.283); ctx.stroke();
+  const t = tOf(r); r.hot.push({ x: 0, y: 0, w: 372, h: 298, tip: t("tel.eye.unzoom"), tel: { eyeZoom: true } });
 }
 
 /**

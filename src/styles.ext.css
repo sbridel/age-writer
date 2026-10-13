@@ -747,3 +747,13 @@
 .age-dbook .age-dbook__dice svg { display: block; width: 100%; height: auto; }
 .age-dbook .age-dbook__dice:hover { opacity: 1; transform: rotate(-6deg); }
 .age-dbook .age-dbook__glasssays { font-style: italic; margin-bottom: 0.2em; }
+
+/* ---- mode tactile (téléphone, tablette) ---- */
+.age-relto.is-touch .age-relto__canvas { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.age-relto__turn { display: none; }
+@media (orientation: portrait) {
+  .age-relto.is-touch .age-relto__turn { display: block; text-align: center; font-family: var(--font-text, serif); font-style: italic; color: #e0c27a; background: rgba(16,13,9,0.9); border: 1px solid #8a7250; border-radius: 6px; padding: 8px 12px; margin: 4px 0 8px; }
+  .age-relto.is-touch .age-relto__canvas { opacity: 0.55; }
+}
+.age-relto__tipcard { min-height: 2.6em; margin-top: 6px; padding: 6px 10px; border: 1px solid rgba(205,189,148,0.6); border-radius: 6px; background: rgba(16,13,9,0.92); color: #e9dcb8; font-family: var(--font-text, serif); font-size: 0.95em; line-height: 1.35; }
+.age-relto__tipcard.is-empty { color: transparent; border-color: rgba(205,189,148,0.18); }
