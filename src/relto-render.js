@@ -121,8 +121,8 @@ class ReltoRenderer {
     canvas.addEventListener("pointermove", (e) => (this.touch ? this.onDragMove(e) : this.onMove(e)));
     canvas.addEventListener("pointerleave", () => { if (this.touch) return; this.hover = null; this.pointer = null; this.canvas.style.cursor = ""; });
     canvas.addEventListener("pointerdown", (e) => this.onDown(e));
-    canvas.addEventListener("pointerup", () => { this.drag = null; });
-    canvas.addEventListener("pointercancel", () => { this.drag = null; });
+    canvas.addEventListener("pointerup", () => { this.drag = null; this.slide = null; });
+    canvas.addEventListener("pointercancel", () => { this.drag = null; this.slide = null; });
     canvas.addEventListener("click", (e) => this.onClick(e));
     // pas de dessin quand le canvas est hors écran ou l'onglet caché
     this.visible = true;
@@ -1187,13 +1187,19 @@ class ReltoRenderer {
     return best;
   }
   /** La clé d'une zone tenue (mode tactile) : une molette entière compte pour une seule zone (on a lu ce qu'elle est, ses ± agissent ensuite). */
-  holdKey(h) { return h.wc ? `wc:${Math.round(h.wc.x)},${Math.round(h.wc.y)}` : `${Math.round(h.x)},${Math.round(h.y)},${Math.round(h.w)},${Math.round(h.h)}`; }
+  holdKey(h) {
+    if (h.wc) return `wc:${Math.round(h.wc.x)},${Math.round(h.wc.y)}`;
+    // un même réglage de l'Imageur en plusieurs zones (les crans d'un rail, de l'arc de l'iris ; les emplacements de cristaux) : une seule zone tenue
+    if (h.imager && typeof h.imager === "object") { const ks = Object.keys(h.imager).sort().join(","); if (h.imager.value != null || h.imager.slot != null || h.imager.rack != null) return `im:${ks}:${h.imager.key || ""}`; }
+    return `${Math.round(h.x)},${Math.round(h.y)},${Math.round(h.w)},${Math.round(h.h)}`;
+  }
   /** Au doigt : un geste de molette (télescope ou Imageur), comme un clic sur son ±. */
   wheelAct(a, kind) { if (kind === "imager") this.imagerAct(a); else TL.act(this, a); }
   /** Mode tactile : poser le doigt sur une molette (une zone `wc`) commence à la tourner. */
   onDown(e) {
     if (!this.touch) return;
     const [x, y] = this.toLogical(e), h = this.hit(x, y); this.dragged = false;
+    if (h && h.imager && h.imager.value != null && h.imager.key && this.held === this.holdKey(h)) { this.slide = { key: h.imager.key, last: h.imager.value }; try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } return; } // un rail, l'arc de l'iris : on glisse le doigt le long
     if (!h || !h.wc || this.held !== this.holdKey(h)) return; // une molette pas encore lue : le toucher la montre d'abord
     const wc = h.wc, r0 = Math.hypot(x - wc.x, y - wc.y);
     this.drag = { wc, a: Math.atan2(y - wc.y, x - wc.x), acc: 0, fine: r0 <= (wc.hub || 0) + 3 || !wc.coarse };
@@ -1201,6 +1207,11 @@ class ReltoRenderer {
   }
   /** Mode tactile : le doigt tourne autour du centre de la molette ; un cran par `deg` degrés (fin au moyeu, gros à la couronne). */
   onDragMove(e) {
+    if (this.slide) { // le long d'un rail (ou de l'arc de l'iris) : le verre suit le doigt, cran par cran
+      const [x, y] = this.toLogical(e), h = this.hit(x, y), sl = this.slide;
+      if (h && h.imager && h.imager.key === sl.key && h.imager.value != null && h.imager.value !== sl.last) { this.imagerAct(h.imager); this.dragged = true; sl.last = h.imager.value; if (!this.running) this.draw(0); }
+      return;
+    }
     const d = this.drag; if (!d) return;
     const [x, y] = this.toLogical(e), wc = d.wc, a = Math.atan2(y - wc.y, x - wc.x); let da = a - d.a; da -= Math.round(da / (2 * Math.PI)) * 2 * Math.PI; d.a = a; d.acc += da;
     const step = ((d.fine ? wc.deg || 8 : wc.degRim || 20) * Math.PI) / 180;

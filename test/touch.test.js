@@ -81,6 +81,19 @@ const centre = (h) => [h.x + h.w / 2, h.y + h.h / 2];
   const m = make(); ok(!zone(m, (q) => q.tel && q.tel.eyeZoom), "à la souris : pas d'agrandissement");
 }
 
+// ---- l'Imageur au doigt : un rail se lit une fois, puis on y glisse le doigt ----
+{
+  const r = make({ touch: true }), acts = []; r.imagerAct = (a) => acts.push(a.value); r.draw = () => {};
+  r.hot = Array.from({ length: 25 }, (_, q) => ({ x: 78 + q * 20 - 10, y: 180, w: 20, h: 50, tip: "Red glass", imager: { key: "r", value: q } }));
+  ok(r.holdKey(r.hot[3]) === r.holdKey(r.hot[17]), "les crans d'un rail forment une seule zone tenue");
+  r.onDown(ev(78 + 60, 200)); r.onClick(ev(78 + 60, 200)); ok(acts.length === 0 && r.held, "premier toucher sur le rail : on lit");
+  r.onDown(ev(78 + 100, 200)); r.onClick(ev(78 + 100, 200)); ok(acts.join() === "5", "second toucher, ailleurs sur le même rail : le verre y va");
+  r.onDown(ev(78 + 100, 200)); ok(r.slide && r.slide.key === "r", "poser le doigt sur un rail lu : on glisse");
+  for (let q = 6; q <= 9; q++) r.onDragMove(ev(78 + q * 20, 200));
+  ok(acts.slice(1).join() === "6,7,8,9", `le verre suit le doigt cran par cran (${acts.join()})`);
+  r.onClick(ev(78 + 180, 200)); ok(acts.length === 5, "le clic de fin de glissement ne compte pas");
+}
+
 // ---- plein écran mobile en portrait : l'image couchée d'un quart de tour (sens horaire) ----
 {
   let rot = true; const r = make({ touch: true, rotated: () => rot });
