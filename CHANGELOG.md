@@ -2,6 +2,13 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.30.1 — Full screen on a phone, a book that fits (2026-10-13)
+
+### Fixed
+- **Full screen works on a phone.** Phone browsers refuse true full screen, so the button did nothing. The Relto now fixes itself over the whole screen, the icon bar on top, the tooltip card over the bottom of the picture. Held upright, the picture lies down by a quarter turn: turn the phone and the Relto fills it, even with auto-rotate locked.
+- **The Age's book on a narrow screen**: one page above the other, the tabs wrap instead of being cut off.
+- In a note on a phone, the D'ni hour and the tooltip card are smaller, the portrait hint is one line (it also offers full screen), and the picture is no longer dimmed.
+
 ## 1.30.0 — Age Writer on a phone: a Relto you touch (2026-10-13)
 
 Age Writer now installs on Obsidian mobile. Writing Ages works as on the desktop; the Relto is played with a finger. Nothing changes with a mouse.

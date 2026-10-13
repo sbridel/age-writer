@@ -403,3 +403,10 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 - CSS : bandeau `.age-relto__turn` en portrait, `.age-relto__tipcard`, `touch-action: none` sur le canvas tactile. Plein écran mobile : la classe `age-reltoview--inline` au lieu de `requestFullscreen`.
 - Pas faits : boutons × (surcouches fermées d'un toucher à côté), balayage des livres (ils ont des flèches), mise en page portrait.
 - Tests : `test/touch.test.js` (23 contrôles).
+
+## 1.30.1 — mobile : plein écran et livre étroit (13 oct. 2026)
+
+- Plein écran mobile (`src/ui-relto.js`, `toggleFull`) : la classe `is-mobilefull` sur `.age-relto` (position fixe, `z-index` 1000, encoches `env(safe-area-inset-*)`) au lieu de `age-reltoview--inline`, qui n'avait de styles que sous `:fullscreen`. En portrait, `.age-relto__stage` tourne d'un quart de tour (`rotate(90deg)`, `transform-origin: 0 0`, sous la barre d'icônes) ; `opts.rotated` fait lire le doigt dans l'image redressée (`toLogical`).
+- Livre de l'Âge : `.age-book` devient un conteneur ; sous 560 px, `.age-book__spread` en colonne, gouttière horizontale, onglets qui passent à la ligne, page blanche des feuillets masquée.
+- Relto dans une note : `@container (max-width: 600px)` réduit l'heure ; carte d'infobulle et bandeau portrait plus discrets ; plus d'assombrissement en portrait.
+- Tests : `test/touch.test.js` (25 contrôles, dont la lecture couchée).
