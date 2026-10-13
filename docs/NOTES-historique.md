@@ -439,3 +439,7 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 
 - `src/styles.ext.css` : sous `.age-relto.is-mobilefull[data-tab=…]`, les règles du plein écran du PC (un seul volet visible : vue, pages ou réglages) ; la barre d'icônes en `z-index: 3` avec un fond ; le Relto en `z-index: 10000` (au-dessus des boutons flottants d'Obsidian mobile). En 1.30.1–1.30.6, l'onglet Pages s'étalait sur l'image et sur la barre : plus moyen d'en sortir.
 - Le bouton « retour » du téléphone ramène Obsidian en arrière ; la note quittée, le Relto en plein écran s'en va avec elle (contrôle de 1.30.2).
+
+## 1.30.8 — barre d'icônes au doigt (13 oct. 2026)
+
+- `src/styles.ext.css`, sous `.age-relto.is-touch` : la barre (`.age-relto__tabs`) aligne tout à gauche (navigation puis onglets), boutons de 44 px, icônes de 22 px, opacité pleine (pas de survol). Souris inchangée.

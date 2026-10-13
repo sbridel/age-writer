@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.30.8 — Bigger Relto buttons on a phone (2026-10-13)
+
+### Changed
+- On a phone or tablet, the Relto's icon bar puts all its buttons on the left, larger (44 px, the size of a finger) and always fully visible (there is no hover to light them). Nothing changes with a mouse.
+
 ## 1.30.7 — One pane at a time in full screen on a phone (2026-10-13)
 
 ### Fixed

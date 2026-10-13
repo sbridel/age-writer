@@ -795,3 +795,10 @@
   .age-book__page { padding: 14px 12px; }
   .is-leaves .age-book__page--left.is-blank, .is-leaves .age-book__page--left.is-blank + .age-book__gutter { display: none; }
 }
+/* tactile : tous les boutons de la barre à gauche, plus grands, toujours visibles (pas de survol pour les éclairer) */
+.age-relto.is-touch[data-tab] .age-relto__tabs { justify-content: flex-start; padding-right: 0; gap: 4px; opacity: 1; }
+.age-relto.is-touch .age-relto__tabs > .age-relto__nav--bar { order: 0; margin-right: 0; }
+.age-relto.is-touch .age-relto__tabs > .age-relto__tab { order: 1; }
+.age-relto.is-touch[data-tab] .age-relto__tab, .age-relto.is-touch[data-tab] .age-relto__tabs:hover .age-relto__tab { opacity: 0.95; min-width: 44px; min-height: 44px; padding: 8px 10px; justify-content: center; border-radius: 10px; }
+.age-relto.is-touch[data-tab] .age-relto__tab svg, .age-relto.is-touch .age-relto__tabs .age-relto__viewbtn svg { width: 22px; height: 22px; }
+.age-relto.is-touch .age-relto__tabs .age-relto__viewbtn { width: 44px; height: 44px; opacity: 0.95; }
