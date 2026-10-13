@@ -40,7 +40,10 @@ function layout(zero, systems, line = 0) {
   stars.sort((a, b) => a.key < b.key ? -1 : 1);
   const far = Math.max(Math.hypot(rp.x, rp.y), ...stars.map((s) => Math.hypot(s.x, s.y)), ...stars.flatMap((s) => s.pert.map((q) => Math.hypot(q.x, q.y))), 1);
   const lines = new Set(stars.map((s) => s.line));
-  return { relto: { ...rp, z: -(zero.elevation || 0) || 0 }, stars, scale: far, anchored: stars.some((s) => !s.offLine), offLine: stars.filter((s) => s.offLine).length, mixed: lines.size > 1, line: L };
+  // l'échelle adaptative : la distance « typique » de la carte (médiane des étoiles et du Relto) règle la courbe (`radial`) ; les
+  // voisines du Zéro s'écartent, la plus lointaine reste au bord
+  const ds = [Math.hypot(rp.x, rp.y), ...stars.map((s) => Math.hypot(s.x, s.y))].filter((d) => d > 0).sort((a, b) => a - b), med = ds.length ? ds[Math.floor(ds.length / 2)] : far;
+  return { relto: { ...rp, z: -(zero.elevation || 0) || 0 }, stars, scale: far, d0: Math.max(100, med * 0.25), anchored: stars.some((s) => !s.offLine), offLine: stars.filter((s) => s.offLine).length, mixed: lines.size > 1, line: L };
 }
 
 /**
@@ -59,10 +62,20 @@ function fit(map, box, margin = 0.1) {
  * gardent l'échelle en racine carrée ; les hauteurs, trop petites face aux distances, ont la leur, gravée sur la carte.
  * `at(x, y, z)` → [px, py] ; `ring(d)` : le demi-grand axe de l'ellipse d'une distance d.
  */
-function fit3(map, box, { tilt = 0.4, hz = 0.55, zmax = 100 } = {}) {
+function fit3(map, box, { tilt = 0.4, hz = 0.55, zmax = 100, adaptive = true } = {}) {
   const cx = box.x + box.w / 2, cy = box.y + box.h / 2, R = Math.max(20, Math.min(box.w * 0.46, (box.h / 2 - zmax * hz - 6) / tilt));
-  const ring = (d) => R * Math.sqrt(Math.max(0, d) / map.scale);
+  const ring = (d) => R * radial(map, d, adaptive);
   return { R, cx, cy, ring, tilt, hz, at: (x, y, z = 0) => { const d = Math.hypot(x, y), k = d ? ring(d) / d : 0; return [cx + x * k, cy - y * k * tilt - (Number(z) || 0) * hz]; } };
 }
 
-module.exports = { plane, layout, fit, fit3 };
+/**
+ * La part du rayon de la carte (0 à 1) d'une distance `d`. Adaptative (`map.d0`, le quart de la distance médiane) : une courbe
+ * en logarithme, qui écarte les étoiles proches les unes des autres et garde la plus lointaine au bord ; sinon la racine carrée.
+ */
+function radial(map, d, adaptive = true) {
+  const x = Math.max(0, d), F = Math.max(1, map.scale);
+  if (!adaptive || !map.d0) return Math.sqrt(x / F);
+  return Math.log1p(x / map.d0) / Math.log1p(F / map.d0);
+}
+
+module.exports = { plane, layout, fit, fit3, radial };

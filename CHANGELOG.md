@@ -2,6 +2,17 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.32.0 — A star chart that breathes (2026-10-13)
+
+### Added
+- **Names on hover.** Star names are written when you hover (or touch) a star; the **Aa** button on the right edge of the parchment shows them all. The Relto keeps its name.
+- **A magnifier**: a click on the parchment magnifies around that point (×2, then ×4, then back to the whole chart).
+- **Regions of the sky**: N, E, S, W look at one quarter of the sky, around its stars; ◎ gives back the whole sky.
+
+### Changed
+- **The scale adapts to your stars**: a logarithmic curve set by their typical distance spreads the stars near the Zero apart and keeps the farthest at the edge; directions stay true.
+- Labels avoid the line of the instrument too.
+
 ## 1.31.0 — Hands that take, tooltips that fit (2026-10-13)
 
 ### Added

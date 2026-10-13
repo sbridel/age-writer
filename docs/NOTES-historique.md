@@ -453,3 +453,9 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 - Curseurs (`src/styles.ext.css`) : `--age-grab` (main ouverte) et `--age-grabbing` (main qui serre), SVG 32 × 32 dans le style de `--age-hand`, point actif (16, 16), posés sur `.age-relto.age-quill`. `src/relto-render.js` : molettes (`wc`), rails de l'Imageur et livres de l'étagère (`h.book`) en `var(--age-grab, grab)`, `--age-grabbing` pendant qu'on tourne ou glisse. Fenêtre de liaison (`.age-book__window.is-clickable`) et panneau de l'animation de liaison (`.age-linkanim.is-ready .age-linkanim__panel`) : main ouverte.
 - Infobulles du canevas (`drawHover`) : passage à la ligne au-delà de `TIP_MAX` = 300 unités (la fraction en rahnfee seulement sur une ligne). `tel.lens.tip` raccourci (FR/EN).
 - Plein écran mobile : `.age-relto__head` masqué (onglets Pages et Réglages).
+
+## 1.32.0 — carte des étoiles : noms au survol, loupe, régions, échelle adaptative (13 oct. 2026)
+
+- `src/starmap.js` : `layout` donne `d0` (le quart de la distance médiane, au moins 100) ; `radial(map, d)` : `log1p(d/d0) / log1p(scale/d0)` (adaptative) ou la racine carrée ; `fit3` l'utilise.
+- `src/relto-starmap.js` : noms au survol (`r.hover.starKey`) ou tous (`r.mapNames`, bouton « Aa ») ; loupe `r.mapZoom` (`k`, `fx`, `fy`) appliquée à `P.at`/`ring`/`hz` autour du centre du cadre, clip sous le titre ; boutons N/E/S/O (centre des étoiles du quart, ×2,2) et ◎ ; `act(r, a, x, y)` appelé par `onClick` (`h.mapAct`). La légende de la ligne de l'instrument compte parmi les places prises. `setView` range la loupe en quittant la carte.
+- Guide FR/EN ; tests : `test/touch.test.js` (56 contrôles).

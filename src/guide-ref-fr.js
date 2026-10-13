@@ -416,6 +416,7 @@ const REF_FR = [
     { h: "Premières lectures" },
     { p: "Tout ce que l'instrument montre au début n'est pas ce qu'il semble : tu pourrais peut-être explorer pour le découvrir." },
     { h: "La carte des étoiles" },
+    { p: "Les noms des étoiles s'écrivent au survol ; le bouton **Aa**, au bord droit du parchemin, les montre tous. Un clic sur le parchemin y pose la **loupe** (×2, puis ×4, puis toute la carte). **N, E, S, O** regardent un quart du ciel ; **◎** rend tout le ciel. L'échelle s'adapte à tes étoiles : les proches du Zéro s'écartent, la plus lointaine reste au bord, et les directions restent justes." },
     { p: "Le rouleau de parchemin au mur de l'observatoire ouvre une carte du Zéro, de ton Relto et de chaque étoile située, avec ses Âges (noms au survol) et ses étoiles mortes, chacune pendue à un fil à plomb au-dessus ou au-dessous du plan du Zéro (hauteurs à leur propre échelle) ; un seul Âge bien situé l'ancre." },
     { h: "Dérive" },
     { ul: ["Les Âges sans champ magnétique (noyau mort, ou monde qui ne tourne pas) donnent des relèvements grossiers (quatre ou huit mots de boussole au lieu de seize) et leur calibration s'use deux fois plus vite", "Un champ faible : 1,4 fois plus vite", "Près d'une étoile morte : plus vite encore"] },

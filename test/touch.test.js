@@ -131,4 +131,27 @@ const centre = (h) => [h.x + h.w / 2, h.y + h.h / 2];
   const [x2, y2] = r.toLogical({ clientX: 160, clientY: 90 }); ok(x2 === 160 && y2 === 90, "debout : inchangé");
 }
 
+// ---- la carte des étoiles : noms au survol, loupe, régions, échelle adaptative ----
+{
+  const MAP = require("../src/starmap"), SM = require("../src/relto-starmap"), SS = require("../src/starsystem");
+  const map = { scale: 10000, d0: 150 };
+  ok(MAP.radial(map, 0) === 0 && Math.abs(MAP.radial(map, 10000) - 1) < 1e-9, "échelle adaptative : le Zéro au centre, la plus lointaine au bord");
+  ok(MAP.radial(map, 500) > Math.sqrt(500 / 10000), "les étoiles proches s'écartent davantage qu'en racine carrée");
+  const r = make(); const st = TL.state(r); st.found = true;
+  const sys = (k, tor, d) => ({ at: 1, torahn: tor, distance: d, elevation: 5, ages: [] });
+  st.systems = { a: sys("Alpha", 1000, 900), b: sys("Beta", 1300, 1100), c: sys("Gamma", 32000, 7000) };
+  r.setView("starmap"); r.draw(1);
+  const star = r.hot.find((h) => h.starKey === "a"); ok(star, "chaque étoile a sa zone (son nom au survol)");
+  const names = r.hot.find((h) => h.mapAct && h.mapAct.names); ok(names && /hover|survol/i.test(names.tip), "un bouton pour les noms : au survol par défaut");
+  SM.act(r, { names: true }); ok(r.mapNames === true, "un clic : tous les noms"); SM.act(r, { names: true }); ok(!r.mapNames, "un autre : au survol de nouveau");
+  SM.act(r, { zoomAt: true }, 300, 160); ok(r.mapZoom && r.mapZoom.k === 2, "la loupe : ×2 au point touché");
+  r.draw(2); SM.act(r, { zoomAt: true }, 300, 160); ok(r.mapZoom.k === 4, "encore : ×4");
+  r.draw(3); SM.act(r, { zoomAt: true }, 300, 160); ok(r.mapZoom === null, "au plus fort, un clic rend toute la carte");
+  r.draw(4); SM.act(r, { region: 0 }); ok(r.mapZoom && r.mapZoom.region === 0 && r.mapZoom.k > 1, "le nord du ciel : la loupe sur ses étoiles");
+  SM.act(r, { region: 0 }); ok(r.mapZoom === null, "un second clic : tout le ciel");
+  SM.act(r, { region: 2 }); SM.act(r, { all: true }); ok(r.mapZoom === null, "◎ : tout le ciel");
+  r.setView("telescope"); r.setView("starmap"); ok(!r.mapZoom, "en quittant la carte, la loupe se range");
+  void SS;
+}
+
 console.log(`✓ touch.test.js (${n} contrôles)`);

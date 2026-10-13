@@ -419,6 +419,7 @@ const REF_EN = [
     { h: "Early readings" },
     { p: "Not everything the instrument shows early on is what it seems: maybe you could explore and find out." },
     { h: "The star chart" },
+    { p: "Star names are written on hover; the **Aa** button, on the right edge of the parchment, shows them all. A click on the parchment sets the **magnifier** there (×2, then ×4, then the whole chart). **N, E, S, W** look at a quarter of the sky; **◎** gives back the whole sky. The scale adapts to your stars: those near the Zero spread out, the farthest stays at the edge, and directions stay true." },
     { p: "The parchment roll on the observatory wall opens a map of the Zero, your Relto and every charted star with its Ages (names on hover) and its dead stars, each hanging on a plumb line above or below the plane of the Zero (heights to their own scale); one well-charted Age anchors it." },
     { h: "Drift" },
     { ul: ["Ages without a magnetic field (dead core, or a world that does not spin) give rough bearings (four or eight compass words instead of sixteen) and their calibration wears twice as fast", "A weak field: 1.4 times as fast", "Near a dead star: faster still"] },

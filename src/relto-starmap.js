@@ -69,14 +69,21 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   const q = rng(((sc.seed || 0) ^ 0x3a9) >>> 0); for (let i = 0; i < 14; i++) { const x = S.x + q() * S.w, y = S.y + q() * S.h, rr = 8 + q() * 30, g = ctx.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, rgba(150, 110, 60, 0.07 + 0.06 * q())); g.addColorStop(1, "rgba(150,110,60,0)"); ctx.fillStyle = g; ctx.fillRect(x - rr, y - rr, rr * 2, rr * 2); } // taches
   ctx.fillStyle = "#8a6a3a"; ctx.fillRect(S.x - 4, S.y - 3, S.w + 8, 6); ctx.fillRect(S.x - 4, S.y + S.h - 3, S.w + 8, 6); // les deux rouleaux
   ctx.strokeStyle = rgba(59, 42, 27, 0.5); ctx.lineWidth = 0.8; ctx.strokeRect(S.x + 10.5, S.y + 12.5, S.w - 21, S.h - 25);
-  const box = { x: S.x + 14, y: S.y + 34, w: S.w - 28, h: S.h - 66 }, P = MAP.fit3(map, box), [zx, zy] = P.at(0, 0, 0), TI = P.tilt;
-  ctx.save(); ctx.beginPath(); ctx.rect(S.x + 11, S.y + 13, S.w - 22, S.h - 26); ctx.clip();
+  const box = { x: S.x + 14, y: S.y + 34, w: S.w - 28, h: S.h - 66 }, P0 = MAP.fit3(map, box), bcx = box.x + box.w / 2, bcy = box.y + box.h / 2;
+  // la loupe (`r.mapZoom` : facteur `k`, point visé `fx, fy` sur la carte entière) : tout s'agrandit autour du point visé
+  const Z = r.mapZoom && r.mapZoom.k > 1 ? r.mapZoom : null; r.mapBox = { box, bcx, bcy, P0 };
+  const P = Z ? { ...P0, R: P0.R * Z.k, hz: P0.hz * Z.k, ring: (d) => P0.ring(d) * Z.k, at: (x, y, z) => { const [px, py] = P0.at(x, y, z); return [bcx + (px - Z.fx) * Z.k, bcy + (py - Z.fy) * Z.k]; } } : P0;
+  const [zx, zy] = P.at(0, 0, 0), TI = P.tilt;
+  // tout le parchemin : un clic y pose la loupe (agrandit autour de ce point) ; les étoiles et les boutons, posés ensuite, l'emportent
+  r.hot.push({ x: box.x, y: box.y, w: box.w, h: box.h, tip: Z && Z.k >= ZOOM_MAX ? t("map.loupe.max") : t("map.loupe"), mapAct: { zoomAt: true } });
+  ctx.save(); ctx.beginPath(); if (Z) ctx.rect(S.x + 11, S.y + 46, S.w - 22, S.h - 76); else ctx.rect(S.x + 11, S.y + 13, S.w - 22, S.h - 26); ctx.clip(); // à la loupe : rien ne monte sur le titre ni ne descend sur la légende
   // cercles de distance (1 000, 2 500, 5 000, 10 000 shahfeetee : l'échelle va en racine carrée) et la ligne d'origine : le nord de la carte est la ligne où l'instrument est calé
   ctx.strokeStyle = rgba(107, 74, 42, 0.22); ctx.lineWidth = 0.7; ctx.setLineDash && ctx.setLineDash([2, 4]);
   for (const d of [1000, 2500, 5000, 10000, 15000]) { if (d > map.scale * 1.1) break; ctx.beginPath(); ctx.ellipse(zx, zy, P.ring(d), P.ring(d) * TI, 0, 0, 6.283); ctx.stroke(); }
   ctx.setLineDash && ctx.setLineDash([]);
   ctx.strokeStyle = NORTH; ctx.globalAlpha = 0.75; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(zx, zy); ctx.lineTo(zx, zy - P.R * TI - 6); ctx.stroke(); ctx.globalAlpha = 1;
   ctx.font = "italic 9px serif"; ctx.fillStyle = NORTH; ctx.textAlign = "center"; ctx.fillText(t("map.north"), zx, zy - P.R * TI - 9); ctx.textAlign = "left";
+  const northW = ctx.measureText(t("map.north")).width;
   // les étiquettes ne se chevauchent pas : chacune cherche, autour de son point, une place libre
   // les étiquettes ne se chevauchent pas : chacune cherche, autour de son point, une place libre ; d'abord tout près, puis plus loin
   // (reliée alors à son étoile par un trait fin). Elles s'écrivent à la fin, par-dessus les traits, avec un liseré de papier.
@@ -112,7 +119,7 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   const [rx, ry] = P.at(map.relto.x, map.relto.y, map.relto.z);
   ctx.fillStyle = "#7a8a5a"; ctx.beginPath(); ctx.ellipse(rx, ry, 6, 3.6, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.9; ctx.stroke();
   ctx.fillStyle = INK; ctx.fillRect(rx - 1.5, ry - 6, 3, 3.4); // la cabane
-  taken.push({ x: zx - 12, y: zy - 12, w: 24, h: 24 }, { x: rx - 7, y: ry - 7, w: 14, h: 12 });
+  taken.push({ x: zx - 12, y: zy - 12, w: 24, h: 24 }, { x: rx - 7, y: ry - 7, w: 14, h: 12 }, { x: zx - northW / 2 - 2, y: zy - P.R * TI - 19, w: northW + 4, h: 12 }); // la légende de la ligne de l'instrument aussi
   for (const s of map.stars) { const [sx, sy] = P.at(s.x, s.y, s.z); taken.push({ x: sx - 6, y: sy - 6, w: 12, h: 12 }); }
   labels.push({ x: rx, y: ry, text: t("map.relto"), font: "italic 10px serif" });
   r.hot.push({ x: rx - 10, y: ry - 10, w: 20, h: 20, tip: `${sc.name || "Relto"} — ${t("map.relto.tip")}` });
@@ -141,10 +148,12 @@ function drawStarMap(r, ctx, sc, sky, tm) {
     if (s.offLine) { ctx.strokeStyle = RED; ctx.lineWidth = 0.8; ctx.setLineDash && ctx.setLineDash([2, 2]); ctx.beginPath(); ctx.arc(sx, sy, 9, 0, 6.283); ctx.stroke(); ctx.setLineDash && ctx.setLineDash([]); }
     if (s.tri) { ctx.strokeStyle = LEAD; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(sx - 8, sy + 7); ctx.lineTo(sx, sy - 7); ctx.lineTo(sx + 8, sy + 7); ctx.closePath(); ctx.stroke(); } // triangulée
     const label = former ? t("map.former") : s.ages.length ? s.ages[0] + (s.ages.length > 1 ? " +" + (s.ages.length - 1) : "") : "";
-    if (label) labels.push({ x: sx, y: sy, text: label, font: "italic 9.5px serif" }); // sans place libre : le nom reste au survol
+    // les noms : au survol seulement (ou tenu, au doigt) ; le bouton « Aa » les montre tous. Sans place libre, le nom reste au survol
+    const shown = r.mapNames || (r.hover && r.hover.starKey === s.key) || focus;
+    if (label && shown) labels.push({ x: sx, y: sy, text: label, font: "italic 9.5px serif", hot: !r.mapNames && !focus });
     const tip = (s.ages.length ? s.ages.join(", ") : t("map.star.unnamed")) + (s.pert.length ? " — " + s.pert.map((p) => pertName(t, p.kind)).join(", ") : "") + (bad ? " — " + t("map.star.miss") : "") + " — " + t(elevBand(s.z));
     const rf = BEAM.rahnfeeOf(s.distance), far = rf >= 1 ? t("beam.far.beyond") : t("beam.far.line", { far: String(t("beam.far")).split("|")[BEAM.fracBand(rf)] }); // mondes lointains : au-delà d'un rahnfee // la distance le long du faisceau : en mots, puis en rahnfee (chiffres D'ni)
-    r.hot.push({ x: sx - 9, y: sy - 9, w: 18, h: 18, tip: tip + " — " + far, frac: BEAM.digitsOf(s.distance) });
+    r.hot.push({ x: sx - 9, y: sy - 9, w: 18, h: 18, tip: tip + " — " + far, frac: BEAM.digitsOf(s.distance), starKey: s.key });
   }
   // les noms, en dernier : liseré de papier pour rester lisibles par-dessus les traits ; un nom écarté est relié à son point
   ctx.lineJoin = "round";
@@ -155,6 +164,7 @@ function drawStarMap(r, ctx, sc, sky, tm) {
     ctx.strokeStyle = "rgba(240,230,205,0.9)"; ctx.lineWidth = 3; ctx.strokeText(L.text, lx, ly, 120);
     ctx.fillStyle = INK2; ctx.fillText(L.text, lx, ly, 120);
   }
+  mapControls(r, ctx, map, P0, S);
   // l'échelle des hauteurs, gravée dans un coin : les fils ne sont pas à l'échelle des distances
   { const lx = S.x + 26, ly = S.y + S.h - 40, h = 50 * P.hz; ctx.strokeStyle = INK2; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx, ly - h); ctx.moveTo(lx - 3, ly); ctx.lineTo(lx + 3, ly); ctx.moveTo(lx - 3, ly - h); ctx.lineTo(lx + 3, ly - h); ctx.stroke();
     ctx.font = "italic 8.5px serif"; ctx.fillStyle = INK2; ctx.fillText(t("map.hscale"), lx + 6, ly - h / 2 + 3, 150); r.hot.push({ x: lx - 6, y: ly - h - 4, w: 150, h: h + 8, tip: t("map.hscale.tip") }); }
@@ -176,4 +186,40 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   void tm; void sky; void clamp;
 }
 
-module.exports = { drawStarMap, SHEET };
+/**
+ * Les petits boutons gravés au bord droit du parchemin : « Aa » (les noms : au survol, ou tous), les quatre régions du ciel
+ * (N, E, S, O : la loupe se pose sur ce quart) et ◎ (tout le ciel). Mêmes encres que la carte.
+ */
+const ZOOM_MAX = 4, REGIONS = [["N", 0], ["E", 1], ["S", 2], ["W", 3]];
+function mapControls(r, ctx, map, P0, S) {
+  const t = tOf(r), x = S.x + S.w - 30, z = r.mapZoom && r.mapZoom.k > 1 ? r.mapZoom : null;
+  const btn = (y, label, on, tip, act) => {
+    ctx.fillStyle = on ? rgba(59, 42, 27, 0.16) : rgba(240, 230, 205, 0.6); ctx.fillRect(x - 9, y - 9, 18, 18); ctx.strokeStyle = rgba(59, 42, 27, on ? 0.8 : 0.45); ctx.lineWidth = 0.8; ctx.strokeRect(x - 8.5, y - 8.5, 17, 17);
+    ctx.font = on ? "bold italic 9.5px serif" : "italic 9.5px serif"; ctx.fillStyle = INK; ctx.textAlign = "center"; ctx.fillText(label, x, y + 3.3); ctx.textAlign = "left";
+    r.hot.push({ x: x - 10, y: y - 10, w: 20, h: 20, tip, mapAct: act });
+  };
+  btn(S.y + 56, "Aa", !!r.mapNames, r.mapNames ? t("map.names.all") : t("map.names.hover"), { names: true });
+  const letters = String(t("map.regions")).split("|");
+  REGIONS.forEach(([k, i], n) => btn(S.y + 82 + n * 22, letters[i] || k, !!(z && z.region === i), t("map.region.tip", { r: String(t("map.region.names")).split("|")[i] || k }), { region: i }));
+  btn(S.y + 82 + 4 * 22 + 4, "◎", !z, t("map.all"), { all: true });
+  void map; void P0;
+}
+
+/** Un geste sur la carte : la loupe (au point touché), une région du ciel, tout le ciel, les noms. `x, y` : le point touché (canevas). */
+function act(r, a, x, y) {
+  const mb = r.mapBox; if (!mb) return;
+  if (a.names) { r.mapNames = !r.mapNames; return; }
+  if (a.all) { r.mapZoom = null; return; }
+  if (a.region != null) { // le quart du ciel : la loupe sur le centre de ses étoiles (ou, s'il est vide, sur le milieu de ce quart)
+    const map = MAP.layout(TL.state(r).zero, TL.state(r).systems || {}, TL.state(r).line), dir = (q) => { const a2 = Math.atan2(q.x, q.y); return ((Math.round(a2 / (Math.PI / 2)) % 4) + 4) % 4; };
+    const pts = map.stars.filter((q) => dir(q) === a.region).map((q) => mb.P0.at(q.x, q.y, q.z));
+    const [fx, fy] = pts.length ? [pts.reduce((u, p) => u + p[0], 0) / pts.length, pts.reduce((u, p) => u + p[1], 0) / pts.length] : mb.P0.at(Math.sin((a.region * Math.PI) / 2) * map.scale * 0.3, Math.cos((a.region * Math.PI) / 2) * map.scale * 0.3, 0);
+    r.mapZoom = r.mapZoom && r.mapZoom.region === a.region ? null : { k: 2.2, fx, fy, region: a.region }; return;
+  }
+  if (a.zoomAt) { // la loupe, posée là où l'on touche : ×2 à chaque fois, jusqu'à ×4 ; au-delà, un clic rend toute la carte
+    const z = r.mapZoom && r.mapZoom.k > 1 ? r.mapZoom : null, ux = z ? z.fx + (x - mb.bcx) / z.k : x, uy = z ? z.fy + (y - mb.bcy) / z.k : y;
+    r.mapZoom = z && z.k >= ZOOM_MAX ? null : { k: Math.min(ZOOM_MAX, (z ? z.k : 1) * 2), fx: ux, fy: uy };
+  }
+}
+
+module.exports = { drawStarMap, SHEET, act };
