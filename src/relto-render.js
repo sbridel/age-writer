@@ -1173,7 +1173,8 @@ class ReltoRenderer {
 
   // ---- souris --------------------------------------------------------------------------
   toLogical(e) {
-    const r = this.canvas.getBoundingClientRect(), px = ((e.clientX - r.left) / r.width) * W, py = ((e.clientY - r.top) / r.height) * H;
+    const r = this.canvas.getBoundingClientRect(), rot = this.opts.rotated && this.opts.rotated(); // plein écran mobile en portrait : l'image est couchée (rotation d'un quart de tour, sens horaire)
+    const px = rot ? ((e.clientY - r.top) / r.height) * W : ((e.clientX - r.left) / r.width) * W, py = rot ? ((r.right - e.clientX) / r.width) * H : ((e.clientY - r.top) / r.height) * H;
     if (this.view && this.view !== "island") return [px, py]; // les vues plein cadre n'ont pas de zoom
     return [(px - CAM_X) / CAM + CAM_X, (py - CAM_OY) / CAM + CAM_Y]; // inverse de la caméra
   }

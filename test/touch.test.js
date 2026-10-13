@@ -81,4 +81,14 @@ const centre = (h) => [h.x + h.w / 2, h.y + h.h / 2];
   const m = make(); ok(!zone(m, (q) => q.tel && q.tel.eyeZoom), "à la souris : pas d'agrandissement");
 }
 
+// ---- plein écran mobile en portrait : l'image couchée d'un quart de tour (sens horaire) ----
+{
+  let rot = true; const r = make({ touch: true, rotated: () => rot });
+  r.canvas.getBoundingClientRect = () => ({ left: 0, top: 48, right: 390, width: 390, height: 693 }); // l'image couchée : 390 de large, 693 de haut à l'écran
+  const [x, y] = r.toLogical({ clientX: 390 - 390 * (90 / 360), clientY: 48 + 693 * (160 / 640) });
+  ok(Math.abs(x - 160) < 0.5 && Math.abs(y - 90) < 0.5, `couchée : le doigt se lit dans l'image redressée (${x.toFixed(1)}, ${y.toFixed(1)})`);
+  rot = false; r.canvas.getBoundingClientRect = () => ({ left: 0, top: 0, right: 640, width: 640, height: 360 });
+  const [x2, y2] = r.toLogical({ clientX: 160, clientY: 90 }); ok(x2 === 160 && y2 === 90, "debout : inchangé");
+}
+
 console.log(`✓ touch.test.js (${n} contrôles)`);

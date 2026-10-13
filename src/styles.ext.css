@@ -752,8 +752,40 @@
 .age-relto.is-touch .age-relto__canvas { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .age-relto__turn { display: none; }
 @media (orientation: portrait) {
-  .age-relto.is-touch .age-relto__turn { display: block; text-align: center; font-family: var(--font-text, serif); font-style: italic; color: #e0c27a; background: rgba(16,13,9,0.9); border: 1px solid #8a7250; border-radius: 6px; padding: 8px 12px; margin: 4px 0 8px; }
-  .age-relto.is-touch .age-relto__canvas { opacity: 0.55; }
+  .age-relto.is-touch .age-relto__turn { display: block; text-align: center; font-family: var(--font-text, serif); font-style: italic; font-size: 0.85em; color: #e0c27a; padding: 2px 8px 6px; }
 }
 .age-relto__tipcard { min-height: 2.6em; margin-top: 6px; padding: 6px 10px; border: 1px solid rgba(205,189,148,0.6); border-radius: 6px; background: rgba(16,13,9,0.92); color: #e9dcb8; font-family: var(--font-text, serif); font-size: 0.95em; line-height: 1.35; }
 .age-relto__tipcard.is-empty { color: transparent; border-color: rgba(205,189,148,0.18); }
+.age-relto.is-touch .age-relto__tipcard { font-size: 0.85em; min-height: 2.2em; padding: 4px 8px; }
+/* plein écran mobile : le navigateur du téléphone refuse le vrai plein écran ; le Relto se fixe sur tout l'écran */
+.age-relto.is-mobilefull { position: fixed; inset: 0; z-index: 1000; margin: 0; max-width: none; border-radius: 0; padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0); background: #0d0b09; display: flex; flex-direction: column; overflow: hidden; }
+.age-relto.is-mobilefull .age-relto__tabs { flex: none; margin: 0; padding: 2px 8px; min-height: 40px; }
+.age-relto.is-mobilefull .age-relto__when, .age-relto.is-mobilefull .age-relto__inscription, .age-relto.is-mobilefull .age-relto__turn { display: none; }
+.age-relto.is-mobilefull .age-relto__pane--view { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.age-relto.is-mobilefull .age-relto__pane--pages, .age-relto.is-mobilefull .age-relto__pane--settings { flex: 1; min-height: 0; overflow: auto; }
+.age-relto.is-mobilefull .age-relto__stage { position: relative; width: min(100%, calc((100dvh - 48px) * 1.7778)); }
+.age-relto.is-mobilefull .age-relto__canvas { width: 100%; border: none; }
+.age-relto.is-mobilefull .age-relto__tipcard { position: absolute; left: 6px; right: 6px; bottom: 6px; margin: 0; min-height: 0; pointer-events: none; opacity: 0.95; }
+.age-relto.is-mobilefull .age-relto__tipcard.is-empty { display: none; }
+@media (orientation: portrait) {
+  /* en portrait, l'image se couche d'un quart de tour sous la barre d'icônes : le Relto se joue téléphone tourné, sans rotation automatique */
+  .age-relto.is-mobilefull .age-relto__stage { position: fixed; top: calc(48px + env(safe-area-inset-top, 0px)); left: 100vw; width: min(calc(100dvh - 48px - env(safe-area-inset-top, 0px)), 177.78vw); transform-origin: 0 0; transform: rotate(90deg); }
+}
+/* écran étroit (téléphone, panneau latéral) : l'heure plus petite */
+@container (max-width: 600px) {
+  .age-relto__when { gap: 6px 14px; margin-top: 6px; }
+  .age-relto__when .age-relto__clock { font-size: 1.3em !important; }
+  .age-relto__when .age-relto__dnitime { font-size: 0.9em !important; gap: 6px; }
+}
+/* le livre de l'Âge sur un écran étroit : une page sous l'autre, onglets qui passent à la ligne */
+.age-book { container-type: inline-size; }
+@container (max-width: 560px) {
+  .age-book__head { gap: 6px 8px; }
+  .age-book__tabs { margin-left: 0; flex-wrap: wrap; }
+  .age-book__spread, .workspace-leaf-content[data-type="age-writer-book"] .age-book__spread, [data-age-mode="linking"] .age-book__spread, .age-book[data-age-mode="linking"] .age-book__spread { flex-direction: column; min-height: 0; padding: 12px 10px; }
+  .age-book__gutter, .age-book--leather .age-book__gutter { width: auto; height: 8px; background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.08) 45%, rgba(0, 0, 0, 0.08) 55%, rgba(0, 0, 0, 0.45)); }
+  .age-book__page--left { border-radius: 4px 4px 0 0; }
+  .age-book__page--right { border-radius: 0 0 4px 4px; }
+  .age-book__page { padding: 14px 12px; }
+  .is-leaves .age-book__page--left.is-blank, .is-leaves .age-book__page--left.is-blank + .age-book__gutter { display: none; }
+}
