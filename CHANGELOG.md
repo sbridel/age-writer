@@ -2,6 +2,10 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.32.4 — Let him sleep (2026-10-13)
+
+- A sleeping cat keeps his eyes closed.
+
 ## 1.32.3 — A paw (2026-10-13)
 
 - In the Pages tab, a built-in page's tooltip is now just its name (it no longer claims to come from a Relto library). And a paw, for one of them.

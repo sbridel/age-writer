@@ -600,14 +600,14 @@ class ReltoRenderer {
   /**
    * Le camouflage de Marcel à l'instant `t` : `dark(px)` (0 = cuir, 1 = noir) le long de son corps (px de −12, la tête, à +12, la
    * queue). Une onde part de la tête tous les trois souffles (≈ 12,6 s) et met ≈ 6 s à gagner la queue : longue, lente, qu'on a le
-   * temps de voir. Le jour elle reste à moitié (le cuir l'emporte) ; au crépuscule le fond noircit ; la nuit, il est noir. Une fois sur
-   * trois, au milieu de l'onde, il ouvre les yeux une demi-seconde (`eyes`).
+   * temps de voir. Le jour elle reste à moitié (le cuir l'emporte) ; au crépuscule le fond noircit ; la nuit, il est noir. Il dort : ses
+   * yeux restent fermés.
    */
   marcelCamo(t) {
     const night = this.nightAt(), C = MARCEL.cycle, k = Math.floor(t / C), u = (t - k * C) / C, on = u < MARCEL.wave;
     const v = on ? u / MARCEL.wave : -1, env = on ? Math.sin(Math.PI * v) : 0, head = -16 + v * 34, amp = MARCEL.amp + (1 - MARCEL.amp) * night;
     const dark = (px) => { if (night >= 1) return 1; const band = on ? Math.exp(-Math.pow((px - head) / MARCEL.width, 2)) : 0; return clamp(night * 0.9 + amp * env * band, 0, 1); };
-    return { dark, eyes: on && k % 3 === 1 && v > 0.42 && v < 0.42 + 0.5 / (C * MARCEL.wave), night };
+    return { dark, night };
   }
 
   /**
@@ -651,8 +651,7 @@ class ReltoRenderer {
     // yeux clos : deux petits arcs
     const fur = String(cat.face || cat.fur), dark = /^#[0-9a-f]{6}$/i.test(fur) && parseInt(fur.slice(1, 3), 16) + parseInt(fur.slice(3, 5), 16) + parseInt(fur.slice(5, 7), 16) < 240;
     ctx.strokeStyle = shade(dark ? "#8a8296" : "#1a1410"); ctx.lineWidth = 0.55; // sur un pelage sombre, les paupières se lisent en clair
-    if (cm && cm.eyes) for (const ex of [hx - 2.3, hx + 1.3]) { ctx.fillStyle = rgba(236, 196, 90, 0.95); ctx.beginPath(); ctx.ellipse(ex, hy - 0.5, 0.85, 0.7, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = "#101010"; ctx.fillRect(ex - 0.15, hy - 1.1, 0.3, 1.2); } // un instant, il ouvre les yeux
-    else if (cm) { ctx.strokeStyle = shade0(mix(camo, "#1a1410", 0.5 + 0.5 * cm.dark(-9))); for (const ex of [hx - 2.3, hx + 1.3]) { ctx.beginPath(); ctx.arc(ex, hy - 0.4, 0.9, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke(); } } // camouflé : les paupières se fondent dans le cuir
+    if (cm) { ctx.strokeStyle = shade0(mix(camo, "#1a1410", 0.5 + 0.5 * cm.dark(-9))); for (const ex of [hx - 2.3, hx + 1.3]) { ctx.beginPath(); ctx.arc(ex, hy - 0.4, 0.9, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke(); } } // camouflé : les paupières se fondent dans le cuir // il dort : les yeux restent fermés, les paupières fondues dans le cuir
     else for (const ex of [hx - 2.3, hx + 1.3]) { ctx.beginPath(); ctx.arc(ex, hy - 0.4, 0.9, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke(); }
     ctx.fillStyle = shade("#d98a8a"); ctx.fillRect(hx - 0.9, hy + 1, 0.8, 0.55);
     // lueur de l'âtre sur le dos (le feu est à droite)

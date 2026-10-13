@@ -472,3 +472,7 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 ## 1.32.3 — une patte (13 oct. 2026)
 
 - Onglet Pages (`src/ui-relto.js`) : l'infobulle d'une page intégrée est son nom (plus « (relto-library) », réservé aux pages d'une bibliothèque). La page de Marcel : nom doré en italique, une petite patte en SVG (`.age-relto__marcel`, `.age-relto__paw`).
+
+## 1.32.4 — le laisser dormir (13 oct. 2026)
+
+- `marcelCamo` ne donne plus `eyes` : endormi dans le fauteuil, il garde les yeux fermés (l'ouverture d'une demi-seconde faisait bizarre).

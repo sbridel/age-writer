@@ -66,11 +66,11 @@ const make = (sc, hour) => { const c = dom.window.document.createElement("canvas
 // ---- le camouflage ----
 {
   const r = make(on, 13);
-  let dayMax = 0, dayMin = 1, eyes = 0;
-  for (let t = 0; t < 120; t += 0.05) { const c = r.marcelCamo(t); for (const px of [-12, 0, 12]) { const d = c.dark(px); dayMax = Math.max(dayMax, d); dayMin = Math.min(dayMin, d); } if (c.eyes) eyes++; }
+  let dayMax = 0, dayMin = 1;
+  for (let t = 0; t < 120; t += 0.05) { const c = r.marcelCamo(t); for (const px of [-12, 0, 12]) { const d = c.dark(px); dayMax = Math.max(dayMax, d); dayMin = Math.min(dayMin, d); } }
   ok(dayMin === 0, "en plein jour, il a la couleur du cuir");
   ok(dayMax > 0.5 && dayMax < 0.75, `une onde de noir le parcourt, sans le révéler tout entier (${dayMax.toFixed(2)})`);
-  ok(eyes > 0 && eyes < 40, `il ouvre les yeux, rarement (${eyes} images sur 2 minutes)`);
+  ok([0, 3, 7.7, 50].every((t) => !("eyes" in r.marcelCamo(t))), "il dort : ses yeux restent fermés");
   // la durée : l'onde est longue
   let onFor = 0; for (let t = 0; t < 12.6; t += 0.05) if (r.marcelCamo(t).dark(0) > 0.05) onFor += 0.05;
   ok(onFor > 2.5, `l'onde se voit longtemps sur son flanc (${onFor.toFixed(1)} s par cycle)`);
