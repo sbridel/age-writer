@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.30.2 — The Relto shows again on a phone (2026-10-13)
+
+### Fixed
+- On a phone, the Relto could vanish: opening it went straight to the new full screen (setting *Open the Relto in full screen*), and inside Obsidian mobile's panels that view could land off screen. On a phone, full screen now only comes from its button, and the full-screen Relto hangs directly on the page, out of Obsidian's panels; leaving it puts it back in its note.
+
 ## 1.30.1 — Full screen on a phone, a book that fits (2026-10-13)
 
 ### Fixed

@@ -410,3 +410,8 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 - Livre de l'Âge : `.age-book` devient un conteneur ; sous 560 px, `.age-book__spread` en colonne, gouttière horizontale, onglets qui passent à la ligne, page blanche des feuillets masquée.
 - Relto dans une note : `@container (max-width: 600px)` réduit l'heure ; carte d'infobulle et bandeau portrait plus discrets ; plus d'assombrissement en portrait.
 - Tests : `test/touch.test.js` (25 contrôles, dont la lecture couchée).
+
+## 1.30.2 — le Relto réapparaît sur téléphone (13 oct. 2026)
+
+- `inst.full` (plein écran à l'ouverture) ne joue plus sur un écran tactile : en 1.30.1 il posait `is-mobilefull` dès l'ouverture, et la vue fixée, prise dans un parent transformé d'Obsidian mobile, sortait de l'écran.
+- `mobileFull` (`src/ui-relto.js`) : en plein écran mobile, `.age-relto` est déplacé dans `document.body` (un commentaire garde sa place), remis à sa place à la sortie ; si la note se ferme ou se redessine, il s'en va avec elle (contrôle toutes les secondes).

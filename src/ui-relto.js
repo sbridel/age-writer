@@ -512,10 +512,24 @@ async function renderRelto(plugin, source, el, ctx) {
   const tabsOn = plugin.ext.reltoTabs !== false, ui0 = (plugin.ext.state.ui = plugin.ext.state.ui || {});
   const tabBar = tabsOn ? root.createDiv({ cls: "age-relto__tabs" }) : null;
   /** Le plein écran, dans la grande vue comme dans la note : dans la note, son conteneur prend le temps du plein écran l'habit de la grande vue. */
+  /**
+   * Le plein écran mobile : le Relto quitte sa place dans la note et s'accroche directement à la page (un parent d'Obsidian
+   * peut être transformé, ce qui décalerait une vue fixée) ; un signet garde sa place pour l'y remettre.
+   */
+  let fullMark = null;
+  const mobileFull = (on) => {
+    const d = root.ownerDocument;
+    if (on && !fullMark) {
+      fullMark = d.createComment("age-relto"); root.parentNode.insertBefore(fullMark, root); d.body.appendChild(root); root.addClass("is-mobilefull");
+      const mark = fullMark, watch = window.setInterval(() => { if (fullMark !== mark) { window.clearInterval(watch); return; } if (!mark.isConnected) { window.clearInterval(watch); root.remove(); fullMark = null; } }, 1000); // la note fermée ou redessinée : le Relto en plein écran s'en va avec elle
+    }
+    else if (!on && fullMark) { root.removeClass("is-mobilefull"); if (fullMark.parentNode) fullMark.parentNode.replaceChild(root, fullMark); else root.remove(); fullMark = null; }
+    if (renderer && !renderer.running) renderer.draw(0);
+  };
   const toggleFull = () => {
     const big = root.closest(".age-reltoview"), host = big || root.parentElement || root, d = host.ownerDocument;
     try {
-      if (isTouch()) { root.toggleClass("is-mobilefull", !root.hasClass("is-mobilefull")); return; } // mobile : le navigateur refuse le plein écran ; le Relto se fixe sur tout l'écran (styles.ext.css), et se couche de lui-même en portrait
+      if (isTouch()) { mobileFull(!root.hasClass("is-mobilefull")); return; } // mobile : le navigateur refuse le plein écran ; le Relto se fixe sur tout l'écran (styles.ext.css), et se couche de lui-même en portrait
       if (d.fullscreenElement) { d.exitFullscreen(); return; }
       if (!big) { host.addClass("age-reltoview", "age-reltoview--inline"); const off = () => { if (!d.fullscreenElement) { host.removeClass("age-reltoview", "age-reltoview--inline"); d.removeEventListener("fullscreenchange", off); } }; d.addEventListener("fullscreenchange", off); }
       const p = host.requestFullscreen(); if (p && p.catch) p.catch(() => { if (!big) host.removeClass("age-reltoview", "age-reltoview--inline"); });
@@ -925,7 +939,7 @@ async function renderRelto(plugin, source, el, ctx) {
       if (plugin.soundBtn === soundBtn) { plugin.soundFactor = factor(); plugin.sound.setVolume(); } // seulement si c'est le son du refuge qui joue
     });
   }
-  const inst = { refresh, el: root, path: file.path, full: () => { if (!ctx.big && plugin.ext.reltoFullscreen !== false && !root.closest(".popover, .hover-popover") && !root.ownerDocument.fullscreenElement && !root.hasClass("is-mobilefull")) toggleFull(); } }; // `full` : le plein écran à l'ouverture (voir entry.js, file-open)
+  const inst = { refresh, el: root, path: file.path, full: () => { if (!ctx.big && plugin.ext.reltoFullscreen !== false && !root.closest(".popover, .hover-popover") && !root.ownerDocument.fullscreenElement && !isTouch()) toggleFull(); } }; // sur téléphone, le plein écran ne vient que du bouton // `full` : le plein écran à l'ouverture (voir entry.js, file-open)
   plugin.live.add(inst);
   // le garde-fou du plugin coupe le son si la note change ou si l'onglet se ferme ; un nouveau rendu du bloc
   // (édition, défilement) ne le coupe pas : le nouveau bouton reprend l'état « en lecture »
