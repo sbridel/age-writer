@@ -491,3 +491,7 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 - `src/ui-relto.js` : bouton `age-relto__tab--guide` (icône `book-open-text`, clé `tab.guide`) ; ouvre `openGuide(plugin, "reltocat" | "relto2", "full", { over: root })` selon la vue.
 - `src/guide.js` : `openGuide(…, opts)` ; sur écran étroit (≤ 640 px), classe `is-toc` : sommaire et texte se relaient, bouton « ‹ Sommaire » ; boutons rubrique précédente / suivante (`age-guide__steps`) ; `opts.over` : en plein écran du navigateur, la fenêtre est déplacée dans l'élément plein écran, et `age-guide-over` (z-index 10050) la pose devant le Relto plein écran mobile (10000).
 - Guide FR/EN : l'icône du ruban et le bouton guide. Test : `test/integration.js` (le bouton guide existe, hors du compte des onglets).
+
+## 1.33.1 — des boutons qui tiennent (14 oct. 2026)
+
+- `src/guide.js`, `src/styles.ext.css` : boutons précédent / suivant en deux lignes (`age-guide__stepword` au-dessus, `age-guide__steptitle` qui passe à la ligne) ; hauteur libre, `white-space: normal` (les boutons d'Obsidian mobile ont une hauteur fixe et ne coupent pas le texte d'un `inline-flex`).

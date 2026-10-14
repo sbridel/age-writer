@@ -193,8 +193,12 @@ function openGuide(plugin, topicId, level0, opts) {
           const t = list.find((x) => x.id === tid) || list[0], i = list.indexOf(t); for (const [k, r] of Object.entries(rows)) r.toggleClass("is-active", k === t.id); renderTopic(body, t, t.part && parts[t.part], spoil); body.scrollTop = 0; toc(false);
           steps.empty(); // rubrique précédente / suivante : lire d'une traite sans repasser par le sommaire
           const prev = list[i - 1], next = list[i + 1];
-          if (prev) steps.createEl("button", { cls: "age-guide__step age-guide__step--prev", text: "‹ " + prev.title }).addEventListener("click", () => show(prev.id));
-          if (next) steps.createEl("button", { cls: "age-guide__step age-guide__step--next", text: next.title + " ›" }).addEventListener("click", () => show(next.id));
+          const step = (t2, cls, word) => { // un mot (« ‹ Précédent ») au-dessus du titre de la rubrique, qui passe à la ligne au lieu de déborder
+            const b = steps.createEl("button", { cls: "age-guide__step " + cls }); b.createSpan({ cls: "age-guide__stepword", text: word }); b.createSpan({ cls: "age-guide__steptitle", text: t2.title });
+            b.addEventListener("click", () => show(t2.id));
+          };
+          if (prev) step(prev, "age-guide__step--prev", fr ? "‹ Précédent" : "‹ Previous");
+          if (next) step(next, "age-guide__step--next", fr ? "Suivant ›" : "Next ›");
         };
         let part = null;
         for (const t of list) {

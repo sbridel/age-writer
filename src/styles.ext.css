@@ -290,8 +290,10 @@
 /* rubrique précédente / suivante, sous le texte */
 .age-guide__steps { display: flex; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--background-modifier-border); margin-top: 8px; }
 .age-guide__steps:empty { display: none; }
-.age-guide__step { max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.age-guide__step--next { margin-left: auto; }
+.age-guide__step { display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; gap: 2px; width: 48%; max-width: 48%; height: auto; min-height: 0; padding: 8px 12px; white-space: normal; text-align: left; line-height: 1.25; }
+.age-guide__step--next { margin-left: auto; align-items: flex-end; text-align: right; }
+.age-guide__stepword { font-size: 0.8em; color: var(--text-muted); }
+.age-guide__steptitle { overflow-wrap: anywhere; }
 .age-guide__tocbtn { display: none; align-self: flex-start; margin-bottom: 8px; }
 /* le guide ouvert depuis le Relto en plein écran passe devant lui */
 .modal-container.age-guide-over { z-index: 10050; }

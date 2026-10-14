@@ -2,6 +2,10 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.33.1 — Buttons that fit (2026-10-14)
+
+- The guide's previous / next buttons no longer let their text run out on a phone: a small “Previous” / “Next” above the topic's title, which wraps.
+
 ## 1.33.0 — The guide on a phone (2026-10-14)
 
 ### Added
