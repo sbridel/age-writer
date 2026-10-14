@@ -287,7 +287,25 @@
 .age-guide__body h2 { margin-top: 0; } .age-guide__body h4 { margin: 14px 0 4px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.8em; }
 .age-guide__code { background: var(--background-secondary); border-radius: 6px; padding: 8px 12px; overflow: auto; }
 .age-guide__foot { display: flex; justify-content: flex-end; padding-top: 10px; }
-@media (max-width: 640px) { .age-guide { flex-direction: column; } .age-guide__nav { flex: none; flex-direction: row; flex-wrap: wrap; border-right: none; } }
+/* rubrique précédente / suivante, sous le texte */
+.age-guide__steps { display: flex; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--background-modifier-border); margin-top: 8px; }
+.age-guide__steps:empty { display: none; }
+.age-guide__step { max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.age-guide__step--next { margin-left: auto; }
+.age-guide__tocbtn { display: none; align-self: flex-start; margin-bottom: 8px; }
+/* le guide ouvert depuis le Relto en plein écran passe devant lui */
+.modal-container.age-guide-over { z-index: 10050; }
+/* écran étroit : le sommaire et le texte se relaient (une rubrique par ligne, « Sommaire » pour revenir) */
+@media (max-width: 640px) {
+  .age-guide { flex-direction: column; max-height: none; min-height: 0; }
+  .age-guide__nav { flex: none; flex-direction: column; flex-wrap: nowrap; border-right: none; padding-right: 0; max-height: 70vh; }
+  .age-guide__item { padding: 11px 10px; }
+  .age-guide.is-toc .age-guide__main { display: none; }
+  .age-guide:not(.is-toc) .age-guide__nav { display: none; }
+  .age-guide__tocbtn { display: inline-block; }
+  .age-guide__body { max-height: 62vh; }
+  .age-guide__foot { padding-top: 6px; }
+}
 
 /* Réglages : cartes arrondies, pastilles d'icônes, valeur courante à droite (dans l'esprit de Cursor-Smith) */
 .age-set__guide, .age-set__nav { border: 1px solid var(--background-modifier-border); border-radius: 10px; background: var(--background-secondary); margin: 10px 0; overflow: hidden; }

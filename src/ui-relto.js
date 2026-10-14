@@ -626,6 +626,11 @@ async function renderRelto(plugin, source, el, ctx) {
       fs.setAttr("aria-label", t("tab.fullscreen"));
       fs.addEventListener("click", () => toggleFull());
     }
+    { // le guide, ouvert sur la rubrique de ce qu'on regarde (télescope, Imageur, chat : leur rubrique ; ailleurs : le refuge)
+      const g = tabBar.createEl("button", { cls: "age-relto__tab age-relto__tab--guide" }); try { obsidian.setIcon(g.createSpan({ cls: "age-relto__tabicon" }), "book-open-text"); } catch (e) { /* ignore */ }
+      g.setAttr("aria-label", t("tab.guide"));
+      g.addEventListener("click", () => { const v = renderer && renderer.view; require("./guide").openGuide(plugin, ["telescope", "imager", "cat", "clock"].includes(v) ? "reltocat" : "relto2", "full", { over: root }); });
+    }
     pick(defs.some((d) => d[0] === ui0.reltoTab) ? ui0.reltoTab : "view");
   } else { root.setAttr("data-tab", "all"); }
   // bascule vue de l'île ⇄ vue globale (petit bouton en coin de l'image) ; l'ouverture reste la vue de l'île

@@ -462,6 +462,7 @@ module.exports = function build(Base, core, AGEX) {
 
     registerCommands() {
       this.addCommand({ id: "open-relto", name: "Open the Relto", callback: () => R.openRelto(this) });
+      if (typeof this.addRibbonIcon === "function") this.addRibbonIcon("mountain", this.t("relto.ribbon"), () => R.openRelto(this)); // le ruban : le Relto en un geste (sur téléphone, dans le menu de gauche)
       this.addCommand({ id: "start-story", name: "Start the story (create or open the story Relto)", callback: () => R.startStory(this) });
     this.addCommand({ id: "story-hint", name: "Story: a hint for the current chapter", callback: () => R.storyHint(this) });
     this.addCommand({ id: "story-repair", name: "Story: repair chapter notes (names, properties)", callback: () => R.storyRepair(this) });

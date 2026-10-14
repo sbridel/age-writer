@@ -26,7 +26,7 @@ const GUIDE = {
       { p: "Ton refuge : une île avec cabane, étagère de livres (tes Âges, cliquables), piliers de liaison. La commande « Open the Relto » le crée ; un bloc `relto` le montre dans n'importe quelle note. Un livre vierge sur la table de la cabane permet d'y écrire un Âge sans quitter le refuge ; une trappe de fer dans le sol mène au coffre où ils sont rangés." },
       { code: "```relto\ninscription: ma devise\n```" },
       { h: "Onglets" },
-      { ul: ["**Vue** (œil) : l'image, avec l'heure et l'heure D'ni dessous. Cliquer la zone de l'heure la cache ; elle s'efface seule après quelques secondes, sauf si la souris passe dessus", "**Pages** (feuille) : les pages actives, disponibles, verrouillées ; les livres affichés sur l'étagère", "**Réglages** (engrenage) : heure du ciel, ambiance sonore, niveau et volume", "**Agrandir** : ouvre la **vue Relto** dans un onglet principal, image grande"] },
+      { ul: ["**Vue** (œil) : l'image, avec l'heure et l'heure D'ni dessous. Cliquer la zone de l'heure la cache ; elle s'efface seule après quelques secondes, sauf si la souris passe dessus", "**Pages** (feuille) : les pages actives, disponibles, verrouillées ; les livres affichés sur l'étagère", "**Réglages** (engrenage) : heure du ciel, ambiance sonore, niveau et volume", "**Agrandir** : ouvre la **vue Relto** dans un onglet principal, image grande", "**Guide** (livre) : ouvre ce guide sur la rubrique de ce que tu regardes. L'icône de montagne du ruban ouvre le Relto"] },
       { h: "Pages du Relto" },
       { p: "Chaque page ajoute un élément et une ambiance : pins, bouleaux, palmes, fougères, cascade, lucioles, lanternes, neige, aurore, feux d'artifice, montagne, menhirs, cheminée, brume, et, sous l'île : **gemmes, or, argent** (filons et cristaux dans la roche). « Nouvelle page » (onglet Pages) en crée une ; un bouton (globe) en coin de l'image bascule vers la **vue globale** du Relto (île, brume, îlots, pont) ; les pages *Rain*, *Storm*, *Birds*, *Butterflies*, *Moon & sun*, *Comets*, *Dock*, *Bench*, *Islets*, *Calendar pinnacle*, *Blue flowers*, *Grass*, *Ponderosa pines*, *Maples* et *Crystal tree* ajoutent leur élément ; deux pages ont des réglages dans leurs propriétés : **Cat** (`cat_name`, `cat_color` : black, white, orange, grey, cream, tabby, calico, tuxedo, siamese ou #rrggbb ; `cat_sleep` : auto, always, never — le soir, il dort sur le tapis de la cabane, près du feu) et **Koi pond** (`koi_rare` : ogon, platinum, ghost) ; la page **Imager** ajoute l'**Imageur** : on y pose le livre d'un Âge et on l'accorde à ses trois postes (I râtelier : poser ses pages écrites, dans l'ordre ; II banc optique : la lumière de son étoile et l'iris ; III régulateur : son ciel, dont la phase dérive avec l'heure) jusqu'à le voir sur l'écran (indices dans l'onglet Détails) ; une image nette se **verrouille**, puis le périscope tourne, regarde au zénith ou sous l'eau ; on peut aussi écrire ses propres pages dans un bloc `relto-library`." },
       { code: "```relto-library\npage lagon: Lagon | vegetation 0.5 palm, gold 0.6 | audio=river\n```" },
@@ -71,7 +71,7 @@ const GUIDE = {
       { p: "Your refuge: an island with a hut, a bookshelf (your Ages, clickable) and linking pillars. The command “Open the Relto” creates it; a `relto` block shows it in any note. A blank book on the cabin table lets you write an Age without leaving the refuge; an iron hatch in the floor leads to the vault where they are kept." },
       { code: "```relto\ninscription: my motto\n```" },
       { h: "Tabs" },
-      { ul: ["**View** (eye): the image, with the time and the D'ni time below. Clicking the time hides it; it also fades by itself after a few seconds unless the mouse is over it", "**Pages** (sheet): active, available and locked pages; the books on the shelf", "**Settings** (cog): sky time, soundscape, level and volume", "**Expand**: opens the dedicated **Relto view** in a main tab, with a large image"] },
+      { ul: ["**View** (eye): the image, with the time and the D'ni time below. Clicking the time hides it; it also fades by itself after a few seconds unless the mouse is over it", "**Pages** (sheet): active, available and locked pages; the books on the shelf", "**Settings** (cog): sky time, soundscape, level and volume", "**Expand**: opens the dedicated **Relto view** in a main tab, with a large image", "**Guide** (book): opens this guide on the topic of what you are looking at. The mountain icon in the ribbon opens the Relto"] },
       { h: "Relto pages" },
       { p: "Each page adds an element and an ambience: pines, birches, palms, ferns, waterfall, fireflies, lanterns, snow, aurora, fireworks, mountain, pillars, chimney, mist and, under the island: **gems, gold, silver** (veins and crystals in the rock). “New page” (Pages tab) creates one; a globe button in the corner of the image switches to the **global view** of the Relto (island, mist, islets, bridge); the pages *Rain*, *Storm*, *Birds*, *Butterflies*, *Moon & sun*, *Comets*, *Dock*, *Bench*, *Islets*, *Calendar pinnacle*, *Blue flowers*, *Grass*, *Ponderosa pines*, *Maples* and *Crystal tree* add their element; two pages have settings in their properties: **Cat** (`cat_name`, `cat_color`: black, white, orange, grey, cream, tabby, calico, tuxedo, siamese or #rrggbb; `cat_sleep`: auto, always, never — in the evening it sleeps on the cabin rug, by the fire) and **Koi pond** (`koi_rare`: ogon, platinum, ghost); the **Imager** page adds the **Imager**: put an Age's book on it and tune it at its three stations (I crystal rack: set its written pages, in order; II optical bench: its star's light and the iris; III regulator: its sky, whose phase drifts with the hour) until you see it on the screen (clues in the Details tab); a clear image can be **locked**, then the periscope turns, looks up at the zenith or under the water; you can also write your own in a `relto-library` block." },
       { code: "```relto-library\npage lagoon: Lagoon | vegetation 0.5 palm, gold 0.6 | audio=river\n```" },
@@ -169,8 +169,10 @@ function renderTopic(host, topic, kicker, spoil) {
   }
 }
 
-/** Ouvre le guide dans une fenêtre : niveau court ou référence complète, rubriques à gauche, texte à droite. */
-function openGuide(plugin, topicId, level0) {
+/** Ouvre le guide dans une fenêtre : niveau court ou référence complète, rubriques à gauche, texte à droite.
+ *  Sur un écran étroit (téléphone), le sommaire et le texte se relaient : on choisit une rubrique, « Sommaire » y ramène.
+ *  `opts.over` : l'élément d'où on l'ouvre (le Relto) ; en plein écran, la fenêtre se pose par-dessus lui. */
+function openGuide(plugin, topicId, level0, opts) {
   const obs = require("obsidian"), lang = plugin.lang(), fr = lang === "fr";
   class GuideModal extends obs.Modal {
     onOpen() {
@@ -178,13 +180,22 @@ function openGuide(plugin, topicId, level0) {
       let level = level0 === "full" ? "full" : "quick"; const spoil = { on: false }; // la case « spoilers » : décochée à chaque ouverture du guide
       const tabs = contentEl.createDiv({ cls: "age-guide__levels" }), root = contentEl.createDiv({ cls: "age-guide" });
       const nav = root.createDiv({ cls: "age-guide__nav" }), main = root.createDiv({ cls: "age-guide__main" });
-      const body = main.createDiv({ cls: "age-guide__body" }), foot = main.createDiv({ cls: "age-guide__foot" });
+      const tocBtn = main.createEl("button", { cls: "age-guide__tocbtn", text: fr ? "‹ Sommaire" : "‹ Contents" }); // écran étroit seulement (CSS)
+      const body = main.createDiv({ cls: "age-guide__body" }), steps = main.createDiv({ cls: "age-guide__steps" }), foot = main.createDiv({ cls: "age-guide__foot" });
+      const toc = (on) => { root.toggleClass("is-toc", on); if (on) nav.scrollTop = 0; };
+      tocBtn.addEventListener("click", () => toc(true));
       const lv = { quick: tabs.createEl("button", { text: fr ? "Guide court" : "Quick guide", cls: "age-guide__level" }), full: tabs.createEl("button", { text: fr ? "Référence complète" : "Full reference", cls: "age-guide__level" }) };
       const draw = (id) => {
         const list = topics(lang, level), rows = {}; nav.empty();
         for (const k of Object.keys(lv)) lv[k].toggleClass("is-active", k === level);
         const parts = PARTS[lang] || PARTS.en;
-        const show = (tid) => { const t = list.find((x) => x.id === tid) || list[0]; for (const [k, r] of Object.entries(rows)) r.toggleClass("is-active", k === t.id); renderTopic(body, t, t.part && parts[t.part], spoil); body.scrollTop = 0; };
+        const show = (tid) => {
+          const t = list.find((x) => x.id === tid) || list[0], i = list.indexOf(t); for (const [k, r] of Object.entries(rows)) r.toggleClass("is-active", k === t.id); renderTopic(body, t, t.part && parts[t.part], spoil); body.scrollTop = 0; toc(false);
+          steps.empty(); // rubrique précédente / suivante : lire d'une traite sans repasser par le sommaire
+          const prev = list[i - 1], next = list[i + 1];
+          if (prev) steps.createEl("button", { cls: "age-guide__step age-guide__step--prev", text: "‹ " + prev.title }).addEventListener("click", () => show(prev.id));
+          if (next) steps.createEl("button", { cls: "age-guide__step age-guide__step--next", text: next.title + " ›" }).addEventListener("click", () => show(next.id));
+        };
         let part = null;
         for (const t of list) {
           if (t.part && t.part !== part) { part = t.part; nav.createDiv({ cls: "age-guide__part", text: parts[part] }); }
@@ -193,7 +204,9 @@ function openGuide(plugin, topicId, level0) {
           r.createSpan({ text: t.title }); r.addEventListener("click", () => show(t.id));
         }
         show(id || (level === "full" ? REF_START : null));
+        if (!id && narrow()) toc(true); // sur téléphone, sans rubrique demandée : on ouvre sur le sommaire
       };
+      const narrow = () => !!(window.matchMedia && window.matchMedia("(max-width: 640px)").matches);
       for (const k of Object.keys(lv)) lv[k].addEventListener("click", () => { level = k; draw(); });
       foot.createEl("button", { text: fr ? "Enregistrer en note" : "Save as a note" }).addEventListener("click", async () => {
         const path = level === "full" ? (fr ? "Age Writer — Référence.md" : "Age Writer — Reference.md") : "Age Writer — Guide.md", ex = plugin.app.vault.getAbstractFileByPath(path);
@@ -204,7 +217,11 @@ function openGuide(plugin, topicId, level0) {
     }
     onClose() { this.contentEl.empty(); }
   }
-  new GuideModal(plugin.app).open();
+  const m = new GuideModal(plugin.app); m.open();
+  // ouvert depuis le Relto en plein écran : la fenêtre doit passer devant lui (plein écran du navigateur : elle doit vivre dans l'élément plein écran)
+  const over = opts && opts.over, fsEl = over && over.ownerDocument && over.ownerDocument.fullscreenElement;
+  if (fsEl && m.containerEl && m.containerEl.parentElement !== fsEl) fsEl.appendChild(m.containerEl);
+  if (over && m.containerEl) m.containerEl.addClass("age-guide-over");
 }
 
 module.exports = { GUIDE, PARTS, PART_ORDER, REF_START, topics, toMarkdown, renderTopic, openGuide };

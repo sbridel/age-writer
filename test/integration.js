@@ -436,8 +436,9 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     ok(files.size === n0 && notices.some((n) => /already exists|existe déjà/.test(n)), "mode histoire : relancer la commande rouvre le Relto histoire sans en créer un autre");
     p.app.metadataCache.getFileCache = gfcS; for (const f of [sf, inside, outside]) files.delete(f.path); delete p.ext.story; p.index.invalidate(); }
   { const rt = document.createElement("div"); await p.procs.relto("", rt, { sourcePath: "x.md", addChild() {} });
-    const root = rt.querySelector(".age-relto"), tb = [...rt.querySelectorAll(".age-relto__tab:not(.age-relto__tab--expand):not(.age-relto__tab--full)")];
+    const root = rt.querySelector(".age-relto"), tb = [...rt.querySelectorAll(".age-relto__tab:not(.age-relto__tab--expand):not(.age-relto__tab--full):not(.age-relto__tab--guide)")];
     ok(tb.length === 3 && root.getAttribute("data-tab") === "view", "Relto en onglets : Vue / Pages / Réglages, Vue d'abord");
+    ok(rt.querySelectorAll(".age-relto__tab--guide").length === 1, "Relto : un bouton ouvre le guide");
     ok(!!rt.querySelector(".age-relto__pane--view .age-relto__canvas") && !!rt.querySelector(".age-relto__pane--view .age-relto__when .age-relto__clock") && !!rt.querySelector(".age-relto__pane--view .age-relto__dnitime"), "onglet Vue : image + date/heure dessous");
     ok(!!rt.querySelector(".age-relto__pane--pages .age-relto__pages") && !!rt.querySelector(".age-relto__pane--settings input[type=range]"), "Pages dans l'onglet Pages ; curseurs dans Réglages");
     tb[1].click(); ok(root.getAttribute("data-tab") === "pages", "clic sur l'onglet Pages");
