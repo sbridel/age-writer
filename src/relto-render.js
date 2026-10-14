@@ -123,12 +123,14 @@ class ReltoRenderer {
     // les petites cibles s'élargissent (`hit`) ; les molettes se tournent au doigt (`onDown`, glisser autour du centre)
     this.touch = !!this.opts.touch; this.held = null; this.drag = null; this.dragged = false;
     if (this.touch && this.opts.tipDelay == null) this.opts.tipDelay = 0;
-    canvas.addEventListener("pointermove", (e) => (this.touch || this.drag || this.slide ? this.onDragMove(e) : this.onMove(e)));
+    canvas.addEventListener("pointermove", (e) => (this.touch || this.drag || this.slide || this.mapGest ? this.onDragMove(e) : this.onMove(e)));
     canvas.addEventListener("wheel", (e) => this.onWheel(e), { passive: false }); // la roulette sur une molette (grande vue et plein écran)
     canvas.addEventListener("pointerleave", () => { if (this.touch) return; this.hover = null; this.pointer = null; this.canvas.style.cursor = ""; });
     canvas.addEventListener("pointerdown", (e) => this.onDown(e));
-    canvas.addEventListener("pointerup", () => { if ((this.drag || this.slide) && !this.touch) this.canvas.style.cursor = "var(--age-grab, grab)"; this.drag = null; this.slide = null; });
-    canvas.addEventListener("pointercancel", () => { this.drag = null; this.slide = null; });
+    canvas.addEventListener("pointerup", (e) => { if ((this.drag || this.slide) && !this.touch) this.canvas.style.cursor = "var(--age-grab, grab)"; if (this.mapGest && !this.touch) this.canvas.style.cursor = ""; this.drag = null; this.slide = null; this.mapUp(e); });
+    canvas.addEventListener("pointercancel", (e) => { this.drag = null; this.slide = null; this.mapUp(e); });
+    // la carte des étoiles se tourne aussi au bouton droit : pas de menu contextuel sur elle
+    canvas.addEventListener("contextmenu", (e) => { if (this.view === "starmap") e.preventDefault(); });
     canvas.addEventListener("click", (e) => this.onClick(e));
     // pas de dessin quand le canvas est hors écran ou l'onglet caché
     this.visible = true;
@@ -1203,7 +1205,7 @@ class ReltoRenderer {
     if (view === "descbook" && this.view !== "descbook") this.bookFrom = this.view || "cabin"; // la flèche ronde ramène d'où l'on vient (cabane, étage, bureau, coffre…)
     if (view === "vault") { this.vaultFrom = ["cabin", "loft"].includes(this.view) ? this.view : (this.vaultFrom || "cabin"); this.vaultPage = 0; }
     if ((view === "glyphbook" || view === "librarybook") && this.view !== "glyphbook" && this.view !== "librarybook") this.bookFrom = this.view && this.view !== "island" ? this.view : "cabin"; // la flèche ronde du livre y retourne
-    this.view = view; this.hover = null; this.held = null; this.drag = null; if (view !== "starmap") this.mapZoom = null; this.flash = null; this.fadeAt = Date.now(); this.deskUI = null; if (view !== "cabin") { this.panelAt = 0; this.shelf = null; if (view !== "glyphbook" && view !== "librarybook") { this.shelfOpen = false; this.bookAt = 0; } } // en quittant la cabane, la bibliothèque reprend sa place // en quittant le bureau, le tiroir se referme
+    this.view = view; this.hover = null; this.held = null; this.drag = null; if (view !== "starmap") { this.mapZoom = null; this.mapTurn = 0; this.mapGest = null; this.mapPtrs = null; } // la carte se rouvre au nord this.flash = null; this.fadeAt = Date.now(); this.deskUI = null; if (view !== "cabin") { this.panelAt = 0; this.shelf = null; if (view !== "glyphbook" && view !== "librarybook") { this.shelfOpen = false; this.bookAt = 0; } } // en quittant la cabane, la bibliothèque reprend sa place // en quittant le bureau, le tiroir se referme
     if (this.opts.onView) this.opts.onView(view);
     if (!this.running) this.draw(0);
   }
@@ -1254,9 +1256,10 @@ class ReltoRenderer {
     return `${Math.round(h.x)},${Math.round(h.y)},${Math.round(h.w)},${Math.round(h.h)}`;
   }
   /** Au doigt : un geste de molette (télescope ou Imageur), comme un clic sur son ±. */
-  wheelAct(a, kind) { if (kind === "imager") this.imagerAct(a); else TL.act(this, a); }
+  wheelAct(a, kind) { if (kind === "imager") this.imagerAct(a); else if (kind === "map") SM.act(this, a); else TL.act(this, a); }
   /** Poser le doigt (ou presser la souris) sur une molette (une zone `wc`) commence à la tourner ; sur un rail de l'Imageur, à y glisser le verre. Au doigt, seulement une molette déjà lue. */
   onDown(e) {
+    if (this.view === "starmap" && this.mapDown(e)) return;
     if (!this.touch && e.button != null && e.button !== 0) return;
     const [x, y] = this.toLogical(e), h = this.hit(x, y), ready = (q) => !this.touch || this.held === this.holdKey(q); this.dragged = false;
     if (h && h.imager && h.imager.value != null && h.imager.key && ready(h)) { this.slide = { key: h.imager.key, last: h.imager.value }; try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } return; } // un rail, l'arc de l'iris : on glisse le doigt le long
@@ -1280,6 +1283,7 @@ class ReltoRenderer {
   }
   /** Le doigt (ou la souris pressée) tourne autour du centre de la molette ; un cran par `deg` degrés (fin au moyeu, gros à la couronne). */
   onDragMove(e) {
+    if (this.mapGest) { this.mapMove(e); return; }
     if (this.slide) { // le long d'un rail (ou de l'arc de l'iris) : le verre suit le doigt, cran par cran
       const [x, y] = this.toLogical(e), h = this.hit(x, y), sl = this.slide;
       if (h && h.imager && h.imager.key === sl.key && h.imager.value != null && h.imager.value !== sl.last) { this.imagerAct(h.imager); this.dragged = true; if (!this.touch) this.canvas.style.cursor = "var(--age-grabbing, grabbing)"; sl.last = h.imager.value; if (!this.running) this.draw(0); }
@@ -1301,6 +1305,50 @@ class ReltoRenderer {
     const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.canvas.style.cursor = this.hover && !this.hover.secret && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go || this.hover.imager || this.hover.tel || this.hover.purr || this.hover.pageToggle || this.hover.pbook || this.hover.gbTurn || this.hover.lamp || this.hover.gbGo != null || this.hover.vpage || this.hover.mapPage || this.hover.shelf != null || this.hover.stone || this.hover.knock || this.hover.desk || this.hover.toy || this.hover.ward) ? "var(--age-hand, pointer)" : ""; // la main dessinée du Relto (styles.ext.css), la main du système à défaut
     if (this.hover && (this.hover.wc || this.hover.book || (this.hover.imager && this.hover.imager.value != null)) && !(this.hover.imager && this.hover.tip && /held by the lock/.test(this.hover.tip))) this.canvas.style.cursor = "var(--age-grab, grab)"; // une molette, un rail, un livre de l'étagère : ça se prend à pleine main (styles.ext.css)
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
+  }
+  /**
+   * Les gestes de la carte des étoiles (`mapGest`) : tirer le parchemin sous la loupe (`pan`, souris ou un doigt, sans tenir
+   * d'abord) ; la tourner autour du Zéro (`spin` : bouton droit, ou Maj + glisser ; `twist` : deux doigts). La rose de laiton,
+   * elle, est une molette (`wc`) et passe par `drag`. Renvoie vrai si le geste est pris.
+   */
+  mapDown(e) {
+    const [x, y] = this.toLogical(e), mb = this.mapBox; if (!mb) return false;
+    const P = (this.mapPtrs = this.mapPtrs || new Map()); P.set(e.pointerId, [x, y]);
+    const inBox = x >= mb.box.x && x <= mb.box.x + mb.box.w && y >= mb.box.y && y <= mb.box.y + mb.box.h, cap = () => { try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } };
+    if (this.touch && P.size === 2) { // deux doigts : l'angle entre eux tourne la carte
+      const [a, b] = [...P.values()]; this.drag = null; this.slide = null;
+      this.mapGest = { kind: "twist", a: Math.atan2(b[0] - a[0], -(b[1] - a[1])), t0: this.mapTurn || 0 }; cap(); return true;
+    }
+    if (!inBox) return false;
+    const h = this.hit(x, y); if (h && h.wc) return false; // la rose : une molette
+    if (!this.touch && (e.button === 2 || (e.button === 0 && e.shiftKey))) { this.mapGest = { kind: "spin", a: SM.angleAt(this, x, y), t0: this.mapTurn || 0, on: false, x0: x, y0: y }; cap(); this.dragged = false; return true; }
+    if (e.button != null && e.button !== 0) return false;
+    if (this.mapZoom && this.mapZoom.k > 1 && !(h && (h.go || h.mapPage || (h.mapAct && !h.mapAct.zoomAt)))) { /* partout sur le parchemin, même sur une étoile ; pas sur un bouton */ this.mapGest = { kind: "pan", x, y, x0: x, y0: y, on: false }; cap(); this.dragged = false; return true; }
+    return false;
+  }
+  mapMove(e) {
+    const g = this.mapGest, [x, y] = this.toLogical(e), P = this.mapPtrs; if (P && P.has(e.pointerId)) P.set(e.pointerId, [x, y]);
+    let moved = false;
+    if (g.kind === "twist") {
+      if (!P || P.size < 2) return; const [a, b] = [...P.values()], ang = Math.atan2(b[0] - a[0], -(b[1] - a[1]));
+      let d = ang - g.a; d -= Math.round(d / (2 * Math.PI)) * 2 * Math.PI; if (Math.abs(d) > 0.01) { SM.turnTo(this, g.t0 + d); moved = true; }
+    } else if (g.kind === "spin") {
+      if (!g.on) { if (Math.hypot(x - g.x0, y - g.y0) < DRAG_START) return; g.on = true; }
+      let d = SM.angleAt(this, x, y) - g.a; d -= Math.round(d / (2 * Math.PI)) * 2 * Math.PI; SM.turnTo(this, g.t0 + d); moved = true;
+      if (!this.touch) this.canvas.style.cursor = "var(--age-grabbing, grabbing)";
+    } else if (g.kind === "pan") {
+      if (!g.on) { if (Math.hypot(x - g.x0, y - g.y0) < DRAG_START) return; g.on = true; }
+      moved = SM.pan(this, x - g.x, y - g.y); g.x = x; g.y = y;
+      if (!this.touch) this.canvas.style.cursor = "var(--age-grabbing, grabbing)";
+    }
+    if (moved) { this.dragged = true; if (!this.running) this.draw(0); }
+  }
+  mapUp(e) {
+    const P = this.mapPtrs; if (P && e) P.delete(e.pointerId);
+    if (!this.mapGest) return;
+    if (this.mapGest.kind === "twist" && P && P.size) { this.mapGest = null; return; } // un doigt levé : le geste s'arrête, l'autre ne tire pas
+    if (this.mapGest.kind === "spin" && e && e.button === 2) this.dragged = false; // le bouton droit ne fait pas de clic : rien à avaler ensuite
+    this.mapGest = null;
   }
   /** Le bureau : le tiroir (clou de laiton), la tablette qu'on prend entre les mains et qui revient toujours au tiroir. Rien n'est gardé : en s'en allant, le tiroir se ferme. */
   deskAct(k) {
@@ -1351,7 +1399,7 @@ class ReltoRenderer {
     if (ok || K.length >= 3) this.knocks = [];
     if (ok) { this.panelAt = Date.now(); window.setTimeout(() => this.setView("atelier"), 1400); } // le panneau coulisse, puis on passe
   }
-  onClick(e) { if (this.dragged) { this.dragged = false; return; } const [x, y] = this.toLogical(e), h = this.hit(x, y); if (this.touch && this.touchHold(h)) return; if (!h) return; if (h.vpage) { this.vaultPage = (this.vaultPage || 0) + h.vpage; if (!this.running) this.draw(0); return; } if (h.mapPage) { this.mapPage = (this.mapPage || 0) + h.mapPage; if (!this.running) this.draw(0); return; } if (h.mapAct) { SM.act(this, h.mapAct, x, y); if (!this.running) this.draw(0); return; } if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.lamp) this.lampToggle(h); else if (h.ward) this.wardAct(); else if (h.gbTurn) this.gbTurn(h.gbTurn); else if (h.gbGo != null) this.gbGo(h.gbGo); else if (h.stone) this.stoneTap(x, y); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.go) { if (h.go === "descbook") this.descTarget = h.arg || null; this.setView(h.go); } else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); if (h.clasp && this.opts.onClasp) this.opts.onClasp(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
+  onClick(e) { if (this.dragged) { this.dragged = false; return; } const [x, y] = this.toLogical(e), h = this.hit(x, y); if (this.touch && this.touchHold(h)) return; if (!h) return; if (h.vpage) { this.vaultPage = (this.vaultPage || 0) + h.vpage; if (!this.running) this.draw(0); return; } if (h.mapPage) { this.mapPage = (this.mapPage || 0) + h.mapPage; if (!this.running) this.draw(0); return; } if (h.mapAct) { SM.act(this, h.mapAct, x, y, e); if (!this.running) this.draw(0); return; } if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.lamp) this.lampToggle(h); else if (h.ward) this.wardAct(); else if (h.gbTurn) this.gbTurn(h.gbTurn); else if (h.gbGo != null) this.gbGo(h.gbGo); else if (h.stone) this.stoneTap(x, y); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.go) { if (h.go === "descbook") this.descTarget = h.arg || null; this.setView(h.go); } else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); if (h.clasp && this.opts.onClasp) this.opts.onClasp(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };

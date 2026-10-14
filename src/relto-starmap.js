@@ -69,21 +69,24 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   const q = rng(((sc.seed || 0) ^ 0x3a9) >>> 0); for (let i = 0; i < 14; i++) { const x = S.x + q() * S.w, y = S.y + q() * S.h, rr = 8 + q() * 30, g = ctx.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, rgba(150, 110, 60, 0.07 + 0.06 * q())); g.addColorStop(1, "rgba(150,110,60,0)"); ctx.fillStyle = g; ctx.fillRect(x - rr, y - rr, rr * 2, rr * 2); } // taches
   ctx.fillStyle = "#8a6a3a"; ctx.fillRect(S.x - 4, S.y - 3, S.w + 8, 6); ctx.fillRect(S.x - 4, S.y + S.h - 3, S.w + 8, 6); // les deux rouleaux
   ctx.strokeStyle = rgba(59, 42, 27, 0.5); ctx.lineWidth = 0.8; ctx.strokeRect(S.x + 10.5, S.y + 12.5, S.w - 21, S.h - 25);
-  const box = { x: S.x + 14, y: S.y + 34, w: S.w - 28, h: S.h - 66 }, P0 = MAP.fit3(map, box), bcx = box.x + box.w / 2, bcy = box.y + box.h / 2;
+  const box = { x: S.x + 14, y: S.y + 34, w: S.w - 28, h: S.h - 66 }, P0 = MAP.fit3(map, box, { turn: r.mapTurn || 0 }), bcx = box.x + box.w / 2, bcy = box.y + box.h / 2;
   // la loupe (`r.mapZoom` : facteur `k`, point visé `fx, fy` sur la carte entière) : tout s'agrandit autour du point visé
   const Z = r.mapZoom && r.mapZoom.k > 1 ? r.mapZoom : null; r.mapBox = { box, bcx, bcy, P0 };
   const P = Z ? { ...P0, R: P0.R * Z.k, hz: P0.hz * Z.k, ring: (d) => P0.ring(d) * Z.k, at: (x, y, z) => { const [px, py] = P0.at(x, y, z); return [bcx + (px - Z.fx) * Z.k, bcy + (py - Z.fy) * Z.k]; } } : P0;
-  const [zx, zy] = P.at(0, 0, 0), TI = P.tilt;
+  const [zx, zy] = P.at(0, 0, 0), TI = P.tilt; r.mapBox.zero = [zx, zy];
   // tout le parchemin : un clic y pose la loupe (agrandit autour de ce point) ; les étoiles et les boutons, posés ensuite, l'emportent
-  r.hot.push({ x: box.x, y: box.y, w: box.w, h: box.h, tip: Z && Z.k >= ZOOM_MAX ? t("map.loupe.max") : t("map.loupe"), mapAct: { zoomAt: true } });
+  r.hot.push({ x: box.x, y: box.y, w: box.w, h: box.h, tip: (Z ? t("map.drag") + " — " : "") + (Z && Z.k >= ZOOM_MAX ? t("map.loupe.max") : t("map.loupe")), mapAct: { zoomAt: true } });
   ctx.save(); ctx.beginPath(); if (Z) ctx.rect(S.x + 11, S.y + 46, S.w - 22, S.h - 76); else ctx.rect(S.x + 11, S.y + 13, S.w - 22, S.h - 26); ctx.clip(); // à la loupe : rien ne monte sur le titre ni ne descend sur la légende
   // cercles de distance (1 000, 2 500, 5 000, 10 000 shahfeetee : l'échelle va en racine carrée) et la ligne d'origine : le nord de la carte est la ligne où l'instrument est calé
   ctx.strokeStyle = rgba(107, 74, 42, 0.22); ctx.lineWidth = 0.7; ctx.setLineDash && ctx.setLineDash([2, 4]);
   for (const d of [1000, 2500, 5000, 10000, 15000]) { if (d > map.scale * 1.1) break; ctx.beginPath(); ctx.ellipse(zx, zy, P.ring(d), P.ring(d) * TI, 0, 0, 6.283); ctx.stroke(); }
   ctx.setLineDash && ctx.setLineDash([]);
-  ctx.strokeStyle = NORTH; ctx.globalAlpha = 0.75; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(zx, zy); ctx.lineTo(zx, zy - P.R * TI - 6); ctx.stroke(); ctx.globalAlpha = 1;
-  ctx.font = "italic 9px serif"; ctx.fillStyle = NORTH; ctx.textAlign = "center"; ctx.fillText(t("map.north"), zx, zy - P.R * TI - 9); ctx.textAlign = "left";
-  const northW = ctx.measureText(t("map.north")).width;
+  // la ligne de l'instrument tourne avec la carte (la rose de laiton dit où elle est) ; sa légende reste droite, au bout
+  const [nx, ny] = P.rot(0, 1), nex = zx + nx * P.R, ney = zy - ny * P.R * TI, nl = Math.hypot(nex - zx, ney - zy) || 1, ux = (nex - zx) / nl, uy = (ney - zy) / nl;
+  ctx.strokeStyle = NORTH; ctx.globalAlpha = 0.75; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(zx, zy); ctx.lineTo(nex + ux * 6, ney + uy * 6); ctx.stroke(); ctx.globalAlpha = 1;
+  const nlx = nex + ux * 14, nly = ney + uy * 12 + 3;
+  ctx.font = "italic 9px serif"; const northW = ctx.measureText(t("map.north")).width, RB = ROSE_BOX(S);
+  if (!(nlx + northW / 2 > RB.x && nlx - northW / 2 < RB.x + RB.w && nly > RB.y && nly - 10 < RB.y + RB.h)) { ctx.fillStyle = NORTH; ctx.textAlign = "center"; ctx.fillText(t("map.north"), nlx, nly); ctx.textAlign = "left"; } // pas sous la rose
   // les étiquettes ne se chevauchent pas : chacune cherche, autour de son point, une place libre
   // les étiquettes ne se chevauchent pas : chacune cherche, autour de son point, une place libre ; d'abord tout près, puis plus loin
   // (reliée alors à son étoile par un trait fin). Elles s'écrivent à la fin, par-dessus les traits, avec un liseré de papier.
@@ -100,7 +103,7 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   ctx.strokeStyle = rgba(59, 42, 27, 0.35); ctx.lineWidth = 0.8;
   for (const s of map.stars) { let best = null, bd = Infinity; for (const o of map.stars) { if (o === s) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < bd) { bd = d; best = o; } } if (best && s.key < best.key || (best && map.stars.length === 2)) { const [ax, ay] = P.at(s.x, s.y, s.z), [bx, by] = P.at(best.x, best.y, best.z); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); } }
   // le Great Zero : une rose des vents à huit pointes
-  ctx.save(); ctx.translate(zx, zy); ctx.scale(1, Math.min(1, TI * 1.6));
+  ctx.save(); ctx.translate(zx, zy); ctx.scale(1, Math.min(1, TI * 1.6)); ctx.rotate(P.turn || 0); // couchée avec le plan, tournée avec la carte
   for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, L = i % 2 ? 7 : 12; ctx.fillStyle = i % 2 ? SIG2 : SIG; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.sin(a - 0.25) * 3, -Math.cos(a - 0.25) * 3); ctx.lineTo(Math.sin(a) * L, -Math.cos(a) * L); ctx.lineTo(Math.sin(a + 0.25) * 3, -Math.cos(a + 0.25) * 3); ctx.closePath(); ctx.fill(); }
   ctx.fillStyle = "#f4ead2"; ctx.beginPath(); ctx.arc(0, 0, 1.6, 0, 6.283); ctx.fill(); ctx.restore();
   r.hot.push({ x: zx - 12, y: zy - 12, w: 24, h: 24, tip: t("map.zero") });
@@ -119,7 +122,7 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   const [rx, ry] = P.at(map.relto.x, map.relto.y, map.relto.z);
   ctx.fillStyle = "#7a8a5a"; ctx.beginPath(); ctx.ellipse(rx, ry, 6, 3.6, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.9; ctx.stroke();
   ctx.fillStyle = INK; ctx.fillRect(rx - 1.5, ry - 6, 3, 3.4); // la cabane
-  taken.push({ x: zx - 12, y: zy - 12, w: 24, h: 24 }, { x: rx - 7, y: ry - 7, w: 14, h: 12 }, { x: zx - northW / 2 - 2, y: zy - P.R * TI - 19, w: northW + 4, h: 12 }); // la légende de la ligne de l'instrument aussi
+  taken.push({ x: zx - 12, y: zy - 12, w: 24, h: 24 }, { x: rx - 7, y: ry - 7, w: 14, h: 12 }, { x: nlx - northW / 2 - 2, y: nly - 10, w: northW + 4, h: 12 }, ROSE_BOX(S)); // la légende de la ligne de l'instrument aussi
   for (const s of map.stars) { const [sx, sy] = P.at(s.x, s.y, s.z); taken.push({ x: sx - 6, y: sy - 6, w: 12, h: 12 }); }
   labels.push({ x: rx, y: ry, text: t("map.relto"), font: "italic 10px serif" });
   r.hot.push({ x: rx - 10, y: ry - 10, w: 20, h: 20, tip: `${sc.name || "Relto"} — ${t("map.relto.tip")}` });
@@ -139,9 +142,9 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   for (const s of map.stars) {
     const [sx, sy] = P.at(s.x, s.y, s.z);
     for (const p of s.pert) { plumb(p.x, p.y, p.z, RED); const [px, py] = P.at(p.x, p.y, p.z); ctx.strokeStyle = rgba(155, 59, 34, 0.35); ctx.lineWidth = 0.6; ctx.setLineDash && ctx.setLineDash([1.5, 2.5]); ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(px, py); ctx.stroke(); ctx.setLineDash && ctx.setLineDash([]); pertSign(ctx, p.kind, px, py); r.hot.push({ x: px - 8, y: py - 8, w: 16, h: 16, tip: pertName(t, p.kind) }); }
-    const len = 22, bad = s.miss > 2 * T.TOL.torahn; // le trait : où l'Âge voit vraiment le Zéro
-    ctx.strokeStyle = bad ? RED : LEAD; ctx.lineWidth = bad ? 1.1 : 0.8; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + s.ray.x * len, sy - s.ray.y * len * TI); ctx.stroke();
-    if (bad) { ctx.fillStyle = RED; ctx.font = "bold 10px serif"; ctx.fillText("?", sx + s.ray.x * len + 2, sy - s.ray.y * len * TI + 3); }
+    const len = 22, bad = s.miss > 2 * T.TOL.torahn, [rx2, ry2] = P.rot(s.ray.x, s.ray.y); // le trait : où l'Âge voit vraiment le Zéro (il tourne avec la carte)
+    ctx.strokeStyle = bad ? RED : LEAD; ctx.lineWidth = bad ? 1.1 : 0.8; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + rx2 * len, sy - ry2 * len * TI); ctx.stroke();
+    if (bad) { ctx.fillStyle = RED; ctx.font = "bold 10px serif"; ctx.fillText("?", sx + rx2 * len + 2, sy - ry2 * len * TI + 3); }
     const former = !!(focus && cur && cur.get(focus) !== s.key); // une étoile d'autrefois de l'Âge suivi : pâle, cerclée de pointillés
     inkStar(ctx, sx, sy, s.ages.length > 1 ? 6.5 : 5, s.offLine || former ? "rgba(59,42,27,0.45)" : INK);
     if (former) { ctx.strokeStyle = rgba(59, 42, 27, 0.4); ctx.lineWidth = 0.7; ctx.setLineDash && ctx.setLineDash([1.5, 2]); ctx.beginPath(); ctx.arc(sx, sy, 8, 0, 6.283); ctx.stroke(); ctx.setLineDash && ctx.setLineDash([]); }
@@ -201,15 +204,56 @@ function mapControls(r, ctx, map, P0, S) {
   btn(S.y + 56, "Aa", !!r.mapNames, r.mapNames ? t("map.names.all") : t("map.names.hover"), { names: true });
   const letters = String(t("map.regions")).split("|");
   REGIONS.forEach(([k, i], n) => btn(S.y + 82 + n * 22, letters[i] || k, !!(z && z.region === i), t("map.region.tip", { r: String(t("map.region.names")).split("|")[i] || k }), { region: i }));
-  btn(S.y + 82 + 4 * 22 + 4, "◎", !z, t("map.all"), { all: true });
+  btn(S.y + 82 + 4 * 22 + 4, "◎", !z && !r.mapTurn, t("map.all"), { all: true });
+  brassRose(r, ctx, S, t);
   void map; void P0;
 }
 
+/**
+ * La rose de laiton, dans le coin bas droit du parchemin : elle montre où est le nord de la carte et la fait tourner. On la tourne
+ * comme une molette (glisser autour de son centre : un cran par seizième de tour) ; un clic : un cran dans le sens des aiguilles
+ * (Maj : dans l'autre sens). Le repère fixe, en haut, est le nord de la table.
+ */
+const ROSE_R = 13, ROSE_BOX = (S) => ({ x: S.x + S.w - 36 - ROSE_R - 3, y: S.y + S.h - 60 - ROSE_R - 3, w: 2 * ROSE_R + 6, h: 2 * ROSE_R + 6 }), TURN_STEP = Math.PI / 8;
+function brassRose(r, ctx, S, t) {
+  const cx = S.x + S.w - 36, cy = S.y + S.h - 60, R = ROSE_R, a = r.mapTurn || 0;
+  ctx.fillStyle = "rgba(0,0,0,0.22)"; ctx.beginPath(); ctx.arc(cx + 1.5, cy + 2, R + 1, 0, 6.283); ctx.fill(); // l'ombre sur le papier
+  const g = ctx.createRadialGradient(cx - 4, cy - 5, 2, cx, cy, R + 1); g.addColorStop(0, "#f0d790"); g.addColorStop(0.6, "#c39a48"); g.addColorStop(1, "#7d5a22");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.283); ctx.fill(); ctx.strokeStyle = "#5a3f17"; ctx.lineWidth = 1; ctx.stroke();
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(a);
+  ctx.strokeStyle = "rgba(70,46,15,0.75)"; ctx.lineWidth = 0.7; // seize crans gravés au bord
+  for (let i = 0; i < 16; i++) { const b = (i * Math.PI) / 8, L = i % 4 ? 2 : 3.5; ctx.beginPath(); ctx.moveTo(Math.sin(b) * (R - 1), -Math.cos(b) * (R - 1)); ctx.lineTo(Math.sin(b) * (R - 1 - L), -Math.cos(b) * (R - 1 - L)); ctx.stroke(); }
+  for (let i = 0; i < 4; i++) { const b = (i * Math.PI) / 2, L = i ? 7.5 : 9.5; ctx.fillStyle = i ? "#5a3f17" : RED; ctx.beginPath(); ctx.moveTo(Math.sin(b - 0.5) * 2.2, -Math.cos(b - 0.5) * 2.2); ctx.lineTo(Math.sin(b) * L, -Math.cos(b) * L); ctx.lineTo(Math.sin(b + 0.5) * 2.2, -Math.cos(b + 0.5) * 2.2); ctx.closePath(); ctx.fill(); }
+  ctx.fillStyle = "#3b2a1b"; ctx.beginPath(); ctx.arc(0, 0, 1.4, 0, 6.283); ctx.fill();
+  ctx.restore();
+  // le repère fixe (le nord de la table) : un petit triangle d'encre au-dessus de la rose
+  ctx.fillStyle = INK; ctx.beginPath(); ctx.moveTo(cx - 3, cy - R - 5); ctx.lineTo(cx + 3, cy - R - 5); ctx.lineTo(cx, cy - R - 1); ctx.closePath(); ctx.fill();
+  const step = { kind: "map", x: cx, y: cy, fine: (d) => ({ turn: d }), coarse: (d) => ({ turn: d }), deg: 22.5, degRim: 22.5, hub: 0 };
+  r.hot.push({ ...ROSE_BOX(S), tip: t("map.rose"), mapAct: { turn: 1 }, wc: step });
+}
+
+/** Tourner la carte à l'angle `to` (radians) ; la loupe, si elle est posée, suit le point qu'elle regardait. */
+function turnTo(r, to) {
+  const TAU = Math.PI * 2, from = r.mapTurn || 0; let a = ((to % TAU) + TAU) % TAU; if (Math.abs(a - TAU) < 1e-9 || Math.abs(a) < 1e-9) a = 0;
+  const mb = r.mapBox, z = r.mapZoom && r.mapZoom.k > 1 ? r.mapZoom : null;
+  if (z && mb) { const [fx, fy] = MAP.turnPoint(z.fx, z.fy, mb.P0.cx, mb.P0.cy, mb.P0.tilt, a - from); r.mapZoom = { ...z, fx, fy }; }
+  r.mapTurn = a || 0;
+}
+/** Tirer le parchemin sous la loupe de `dx, dy` (unités du canevas) : le point visé glisse en sens inverse, sans quitter la carte. */
+function pan(r, dx, dy) {
+  const mb = r.mapBox, z = r.mapZoom && r.mapZoom.k > 1 ? r.mapZoom : null; if (!mb || !z) return false;
+  const b = mb.box, fx = clamp(z.fx - dx / z.k, b.x, b.x + b.w), fy = clamp(z.fy - dy / z.k, b.y, b.y + b.h);
+  r.mapZoom = { ...z, fx, fy }; return true;
+}
+/** L'angle (radians, sens horaire) d'un point du canevas autour du Zéro, mesuré sur le plan redressé. */
+function angleAt(r, x, y) { const mb = r.mapBox, [zx, zy] = (mb && mb.zero) || [0, 0], TI = (mb && mb.P0.tilt) || 1; return Math.atan2(x - zx, (zy - y) / TI); }
+
 /** Un geste sur la carte : la loupe (au point touché), une région du ciel, tout le ciel, les noms. `x, y` : le point touché (canevas). */
-function act(r, a, x, y) {
+function act(r, a, x, y, e) {
   const mb = r.mapBox; if (!mb) return;
   if (a.names) { r.mapNames = !r.mapNames; return; }
-  if (a.all) { r.mapZoom = null; return; }
+  if (a.all) { r.mapZoom = null; r.mapTurn = 0; return; }
+  if (a.turn) { const d = e && e.shiftKey ? -a.turn : a.turn; turnTo(r, (Math.round((r.mapTurn || 0) / TURN_STEP) + d) * TURN_STEP); return; } // la rose : un cran, calé sur les seize crans
   if (a.region != null) { // le quart du ciel : la loupe sur le centre de ses étoiles (ou, s'il est vide, sur le milieu de ce quart)
     const map = MAP.layout(TL.state(r).zero, TL.state(r).systems || {}, TL.state(r).line), dir = (q) => { const a2 = Math.atan2(q.x, q.y); return ((Math.round(a2 / (Math.PI / 2)) % 4) + 4) % 4; };
     const pts = map.stars.filter((q) => dir(q) === a.region).map((q) => mb.P0.at(q.x, q.y, q.z));
@@ -222,4 +266,4 @@ function act(r, a, x, y) {
   }
 }
 
-module.exports = { drawStarMap, SHEET, act };
+module.exports = { drawStarMap, SHEET, act, turnTo, pan, angleAt, TURN_STEP };

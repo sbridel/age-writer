@@ -62,10 +62,22 @@ function fit(map, box, margin = 0.1) {
  * gardent l'échelle en racine carrée ; les hauteurs, trop petites face aux distances, ont la leur, gravée sur la carte.
  * `at(x, y, z)` → [px, py] ; `ring(d)` : le demi-grand axe de l'ellipse d'une distance d.
  */
-function fit3(map, box, { tilt = 0.4, hz = 0.55, zmax = 100, adaptive = true } = {}) {
+function fit3(map, box, { tilt = 0.4, hz = 0.55, zmax = 100, adaptive = true, turn = 0 } = {}) {
   const cx = box.x + box.w / 2, cy = box.y + box.h / 2, R = Math.max(20, Math.min(box.w * 0.46, (box.h / 2 - zmax * hz - 6) / tilt));
-  const ring = (d) => R * radial(map, d, adaptive);
-  return { R, cx, cy, ring, tilt, hz, at: (x, y, z = 0) => { const d = Math.hypot(x, y), k = d ? ring(d) / d : 0; return [cx + x * k, cy - y * k * tilt - (Number(z) || 0) * hz]; } };
+  const ring = (d) => R * radial(map, d, adaptive), c = Math.cos(turn), s = Math.sin(turn);
+  // `turn` (radians, sens horaire vu d'en haut) : la carte tourne autour du Zéro avant d'être couchée ; les hauteurs ne tournent pas
+  const rot = (x, y) => [x * c + y * s, -x * s + y * c];
+  return { R, cx, cy, ring, tilt, hz, turn, rot, at: (x0, y0, z = 0) => { const [x, y] = rot(x0, y0), d = Math.hypot(x, y), k = d ? ring(d) / d : 0; return [cx + x * k, cy - y * k * tilt - (Number(z) || 0) * hz]; } };
+}
+
+/**
+ * Tourner un point de l'écran (le point visé de la loupe, sur la carte entière) de `da` radians autour du centre `cx, cy` du
+ * plan couché (`tilt`) : on le redresse, on le tourne, on le recouche. L'échelle radiale ne dépend que de la distance : elle
+ * ne change pas.
+ */
+function turnPoint(fx, fy, cx, cy, tilt, da) {
+  const u = fx - cx, v = (cy - fy) / tilt, c = Math.cos(da), s = Math.sin(da);
+  return [cx + u * c + v * s, cy - (-u * s + v * c) * tilt];
 }
 
 /**
@@ -78,4 +90,4 @@ function radial(map, d, adaptive = true) {
   return Math.log1p(x / map.d0) / Math.log1p(F / map.d0);
 }
 
-module.exports = { plane, layout, fit, fit3, radial };
+module.exports = { plane, layout, fit, fit3, radial, turnPoint };

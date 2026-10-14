@@ -154,6 +154,66 @@ const centre = (h) => [h.x + h.w / 2, h.y + h.h / 2];
   void SS;
 }
 
+// ---- la carte des étoiles : tourner (rose de laiton, geste) et défiler sous la loupe ----
+{
+  const MAP = require("../src/starmap"), SM = require("../src/relto-starmap");
+  const box = { x: 0, y: 0, w: 400, h: 200 }, map = { scale: 1000, d0: 250 };
+  const P0 = MAP.fit3(map, box), P1 = MAP.fit3(map, box, { turn: Math.PI / 2 });
+  const [n0x, n0y] = P0.at(0, 500), [n1x, n1y] = P1.at(0, 500), [ex, ey] = P0.at(500, 0);
+  ok(Math.abs(n1x - ex) < 1e-6 && Math.abs(n1y - ey) < 1e-6, "un quart de tour : l'étoile du nord passe à l'est");
+  ok(P1.at(0, 0)[0] === P0.at(0, 0)[0] && P1.at(0, 0)[1] === P0.at(0, 0)[1], "le Zéro ne bouge pas");
+  const [f1x, f1y] = P1.at(0, 500, 0), [t1x, t1y] = P1.at(0, 500, 40); ok(f1x === t1x && t1y < f1y, "le fil à plomb reste vertical");
+  void n0x; void n0y;
+  const [qx, qy] = MAP.turnPoint(n0x, n0y, P0.cx, P0.cy, P0.tilt, Math.PI / 2); ok(Math.abs(qx - ex) < 1e-6 && Math.abs(qy - ey) < 1e-6, "le point visé de la loupe tourne avec la carte");
+
+  const r = make(), st = TL.state(r); st.found = true;
+  st.systems = { a: { at: 1, torahn: 1000, distance: 900, elevation: 5, ages: [] }, c: { at: 1, torahn: 32000, distance: 7000, elevation: -5, ages: [] } };
+  r.setView("starmap"); r.draw(1);
+  const rose = r.hot.find((h) => h.wc && h.wc.kind === "map"); ok(rose && /rose/i.test(rose.tip), "la rose de laiton a sa zone (une molette)");
+  ok(!r.mapTurn, "la carte s'ouvre au nord");
+  SM.act(r, rose.mapAct, 0, 0, {}); ok(Math.abs(r.mapTurn - Math.PI / 8) < 1e-9, "un clic sur la rose : un seizième de tour");
+  SM.act(r, rose.mapAct, 0, 0, { shiftKey: true }); ok(r.mapTurn === 0, "Maj + clic : un cran en arrière");
+  r.wheelAct(rose.wc.fine(1), "map"); r.wheelAct(rose.wc.fine(1), "map"); ok(Math.abs(r.mapTurn - Math.PI / 4) < 1e-9, "tournée comme une molette : deux crans");
+  r.draw(2); SM.act(r, { region: 1 }); ok(r.mapZoom && r.mapZoom.region === 1 && Math.abs(r.mapTurn - Math.PI / 4) < 1e-9, "E : un quart du ciel, l'angle ne change pas");
+  SM.act(r, { all: true }); ok(r.mapZoom === null && r.mapTurn === 0, "◎ : tout le ciel, le nord en haut");
+
+  // la souris : Maj + glisser autour du Zéro tourne la carte ; le clic qui suit est avalé
+  r.draw(3); const [zx, zy] = r.mapBox.zero, e = (x, y, b = 0, more = {}) => ({ clientX: x, clientY: y, pointerId: 1, button: b, ...more });
+  r.onDown(e(zx, zy - 60, 0, { shiftKey: true })); ok(r.mapGest && r.mapGest.kind === "spin", "Maj + presser sur la carte : on la prend pour la tourner");
+  r.onDragMove(e(zx + 60 / 0.4 * 0.4, zy, 0)); r.onDragMove(e(zx + 150, zy)); r.canvas.dispatchEvent(new dom.window.Event("pointerup"));
+  ok(r.mapTurn > 1 && r.mapTurn < 2, `un quart de tour à la main (${r.mapTurn.toFixed(2)})`); ok(!r.mapGest, "relâché : le geste s'arrête");
+  const z0 = r.mapZoom; r.onClick(e(zx + 150, zy)); ok(r.mapZoom === z0, "le clic de fin ne pose pas la loupe");
+  // le bouton droit tourne aussi, sans menu contextuel
+  const cm = new dom.window.Event("contextmenu", { cancelable: true }); r.canvas.dispatchEvent(cm); ok(cm.defaultPrevented, "pas de menu contextuel sur la carte");
+  r.onDown(e(zx, zy - 60, 2)); ok(r.mapGest && r.mapGest.kind === "spin", "bouton droit : on tourne la carte"); r.mapUp(e(zx, zy - 60, 2)); ok(!r.dragged, "le bouton droit ne laisse aucun clic à avaler");
+
+  // défiler sous la loupe : tirer déplace le point visé ; sans loupe, rien
+  SM.act(r, { all: true }); r.draw(4); const b = r.mapBox.box, mid = [b.x + b.w / 2, b.y + b.h / 2];
+  r.onDown(e(...mid)); ok(!r.mapGest, "sans loupe, rien à tirer"); r.canvas.dispatchEvent(new dom.window.Event("pointerup"));
+  SM.act(r, { zoomAt: true }, ...mid); r.draw(5); const f0 = { ...r.mapZoom };
+  r.onDown(e(...mid)); ok(r.mapGest && r.mapGest.kind === "pan", "sous la loupe : on tire le parchemin");
+  r.onDragMove(e(mid[0] + 40, mid[1] + 10)); ok(Math.abs(r.mapZoom.fx - (f0.fx - 40 / f0.k)) < 1e-6 && Math.abs(r.mapZoom.fy - (f0.fy - 10 / f0.k)) < 1e-6 && r.mapZoom.k === f0.k, "le point visé glisse en sens inverse, la loupe garde sa force");
+  r.onDragMove(e(mid[0] + 5000, mid[1])); ok(r.mapZoom.fx >= b.x && r.mapZoom.fx <= b.x + b.w, "on ne tire pas au-delà du bord");
+  r.canvas.dispatchEvent(new dom.window.Event("pointerup")); r.onClick(e(mid[0] + 5000, mid[1])); ok(r.mapZoom.k === f0.k, "le clic de fin n'agrandit pas");
+  // la loupe suit le point qu'elle regardait quand la carte tourne
+  const fz = { ...r.mapZoom }; SM.turnTo(r, Math.PI); ok(Math.abs(r.mapZoom.fx - (2 * r.mapBox.P0.cx - fz.fx)) < 1e-6, "un demi-tour : la loupe passe de l'autre côté du Zéro");
+  r.setView("telescope"); r.setView("starmap"); ok(!r.mapTurn && !r.mapZoom, "en quittant la carte, elle reprend le nord");
+}
+
+// ---- au doigt : un doigt tire sous la loupe, deux doigts tournent ----
+{
+  const SM = require("../src/relto-starmap"), r = make({ touch: true }), st = TL.state(r); st.found = true;
+  st.systems = { a: { at: 1, torahn: 1000, distance: 900, elevation: 5, ages: [] } };
+  r.setView("starmap"); r.draw(1); const b = r.mapBox.box, mid = [b.x + b.w / 2, b.y + b.h / 2];
+  SM.act(r, { zoomAt: true }, ...mid); r.draw(2); const f0 = { ...r.mapZoom };
+  const t = (id, x, y) => ({ clientX: x, clientY: y, pointerId: id, pointerType: "touch" });
+  r.onDown(t(1, ...mid)); ok(r.mapGest && r.mapGest.kind === "pan", "au doigt : on tire sans tenir d'abord");
+  r.onDragMove(t(1, mid[0] - 30, mid[1])); ok(r.mapZoom.fx > f0.fx, "le doigt tire le parchemin");
+  r.onDown(t(2, mid[0] + 60, mid[1])); ok(r.mapGest && r.mapGest.kind === "twist", "un second doigt : on tourne");
+  const a0 = r.mapTurn || 0; r.onDragMove(t(2, mid[0] - 30, mid[1] + 90)); ok(r.mapTurn !== a0, "deux doigts : la carte tourne");
+  r.mapUp(t(2)); ok(!r.mapGest, "un doigt levé : le geste s'arrête"); r.mapUp(t(1));
+}
+
 // ---- Art de la Guilde : trois paliers de mots seulement ----
 ok([0, 1, 2, 3, 4, 5].map(TL.coarseBand).join() === "0,1,1,1,4,4", "Guilde : rien, quelque chose, tout près");
 
