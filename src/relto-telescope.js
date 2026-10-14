@@ -76,7 +76,9 @@ const echoWords = (t, dd) => ({ one: t("sys.echo.one"), near: t("sys.echo.near")
 /** Le retard de la molette (crans) en mots : le pouls arrive une fraction de battement après le balancier (src/beam.js). */
 const lateWords = (t, notches) => t("beam.late.line", { late: String(t("beam.late")).split("|")[BEAM.fracBand(BEAM.lateOf(notches, SS.DELAY_UNIT))] });
 /** Les paliers de mots du signal (T.signal().band), du vide au bord de l'anneau. */
-const bandWords = (t, b) => [t("tel.band.void"), t("tel.band.faint"), t("tel.band.far"), t("tel.band.near"), t("tel.band.close"), t("tel.band.edge")][b] || "";
+const bandWords = (t, b, guild = false) => [t("tel.band.void"), t("tel.band.faint"), t("tel.band.far"), t("tel.band.near"), t("tel.band.close"), t("tel.band.edge")][guild ? coarseBand(b) : b] || "";
+/** Art de la Guilde : trois paliers seulement (rien, quelque chose, tout près) ; les mots orientent de loin, ils ne guident plus cran par cran. */
+const coarseBand = (b) => (b <= 0 ? 0 : b <= 3 ? 1 : 4);
 const axisName = (t, axis) => (axis === "torahn" ? t("tel.torahn") : axis === "delay" ? t("sys.delay.name") : t("tel.elev"));
 
 // ---- état et gestes ---------------------------------------------------------------------------------
@@ -530,7 +532,7 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     systemPlate(r, ctx, c, st, sys);
     if (guild) triLever(r, ctx, c, st, sys); // les balises : seulement dans l'Art de la Guilde (en mode facile, rien ne trompe)
     const rec = st.systems[sys.key], done = !!rec, off = done && (rec.line || 0) !== st.line, shown = look(r, sc1.shown, beatOf(r), fnvKey(st.key + sys.key));
-    const line = holding ? t("sys.beat.hold") + " " + "·".repeat(1 + Math.min(HOLD_BEATS - 1, Math.floor((ms - st.hold.t0) / PULSE_MS))) : m.located ? (off ? t("sys.offline") : t("sys.located")) : m.beatWait ? t("sys.beats.wait") : sc1.bentLock ? t("sys.bent.hold") : withTrend(t, bandWords(t, shown.band), guild ? 0 : st.trend);
+    const line = holding ? t("sys.beat.hold") + " " + "·".repeat(1 + Math.min(HOLD_BEATS - 1, Math.floor((ms - st.hold.t0) / PULSE_MS))) : m.located ? (off ? t("sys.offline") : t("sys.located")) : m.beatWait ? t("sys.beats.wait") : sc1.bentLock ? t("sys.bent.hold") : withTrend(t, bandWords(t, shown.band, guild), guild ? 0 : st.trend);
     ctx.font = "italic 14px serif"; ctx.textAlign = "center"; ctx.fillStyle = m.located && !off && !holding ? "#9fe6da" : "#e9dcb8"; ctx.fillText(line, TEXT_X, 306, 500); ctx.textAlign = "left";
     const sub = holding ? t("sys.beat.hold.sub") : st.note ? t(st.note) : m.located ? (st.guild && aimedKey(st) ? t("guild.sent") : "") : shown.band >= 2 ? (sc1.beat ? t("sys.beat.cross") + " " : sc1.bend ? t("sys.bend.arc") + " " : "") + echoWords(t, sc1.echoDd) : done ? (off ? t("sys.offline.sub") : t("sys.charted")) : "";
     if (sub) { ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(233,220,184,0.8)"; ctx.fillText(sub, TEXT_X, 323, 520); ctx.textAlign = "left"; }
@@ -557,7 +559,7 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     }
     // la ligne de mots, sous l'oculaire ; étape 3 : dans l'anneau de la ligne de Me'erta, le pouls tient mais glisse contre l'horloge
     const onOld = lines.old.found && !lines.true.found, tx = st.book ? TEXT_X : W / 2;
-    const line = st.found && sig.found ? (onOld ? t("tel.found.old") : t("tel.found")) : withTrend(t, bandWords(t, sig.band), guild ? 0 : st.trend); // Guilde : ce qu'on voit, rien de plus ; facile : il s'avive, il pâlit
+    const line = st.found && sig.found ? (onOld ? t("tel.found.old") : t("tel.found")) : withTrend(t, bandWords(t, sig.band, guild), guild ? 0 : st.trend); // Guilde : ce qu'on voit, rien de plus ; facile : il s'avive, il pâlit
     ctx.font = "italic 14px serif"; ctx.textAlign = "center"; ctx.fillStyle = sig.found && !onOld ? "#9fe6da" : "#e9dcb8"; ctx.fillText(line, tx, 306, 500); ctx.textAlign = "left";
     const sub = st.note ? t(st.note) : st.book && !st.found ? t("sys.needzero") : st.found && !sig.found ? t("tel.charted") : "";
     if (sub) { ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(233,220,184,0.75)"; ctx.fillText(sub, tx, 323, 520); ctx.textAlign = "left"; }
@@ -733,4 +735,4 @@ function aimedOf(r) {
   return GI.aimedOf(r.opts && r.opts.telescopeGet ? r.opts.telescopeGet(key) : null);
 }
 
-module.exports = { drawTelescopeRoom, drawOnIsland, state, act, systemsOf, aimedOf, aimedKey, bookLoad, EYE, WHEELS, PLATE, SPLATE, DELAY, LECTERN, FIELD, PULSE_MS };
+module.exports = { coarseBand, drawTelescopeRoom, drawOnIsland, state, act, systemsOf, aimedOf, aimedKey, bookLoad, EYE, WHEELS, PLATE, SPLATE, DELAY, LECTERN, FIELD, PULSE_MS };

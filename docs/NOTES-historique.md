@@ -476,3 +476,7 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 ## 1.32.4 — le laisser dormir (13 oct. 2026)
 
 - `marcelCamo` ne donne plus `eyes` : endormi dans le fauteuil, il garde les yeux fermés (l'ouverture d'une demi-seconde faisait bizarre).
+
+## 1.32.5 — moins de mots pour la Guilde (14 oct. 2026)
+
+- `src/relto-telescope.js` : `coarseBand` (0 → rien, 1–3 → quelque chose, 4–5 → tout près) ; `bandWords(t, b, guild)` l'applique en Art de la Guilde (étape du Zéro et étape d'un Âge). Guide FR/EN et réglage mis à jour. Test : `test/touch.test.js`.

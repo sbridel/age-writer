@@ -154,4 +154,7 @@ const centre = (h) => [h.x + h.w / 2, h.y + h.h / 2];
   void SS;
 }
 
+// ---- Art de la Guilde : trois paliers de mots seulement ----
+ok([0, 1, 2, 3, 4, 5].map(TL.coarseBand).join() === "0,1,1,1,4,4", "Guilde : rien, quelque chose, tout près");
+
 console.log(`✓ touch.test.js (${n} contrôles)`);
