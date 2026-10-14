@@ -34,6 +34,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.34, a guide you can search.** A search field that keeps the topics containing your words and highlights them, a mini-contents at the top of long topics, ← → to turn the topics, a larger window on a computer.
 - **1.33, the guide on a phone.** A mountain icon in the ribbon opens the Relto, a book button in the Relto opens the guide on what you are looking at; on a narrow screen the guide's contents and text take turns, with previous / next topic.
 - **1.32, a star chart that breathes.** Names on hover (Aa shows them all), a magnifier, the four regions of the sky, a scale that adapts to your stars.
 - **1.31, hands that take.** A drawn open hand over what you take or touch (wheels, glasses, books, linking panels), closing as you turn; long tooltips wrap.

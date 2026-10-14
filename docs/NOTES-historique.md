@@ -495,3 +495,9 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 ## 1.33.1 — des boutons qui tiennent (14 oct. 2026)
 
 - `src/guide.js`, `src/styles.ext.css` : boutons précédent / suivant en deux lignes (`age-guide__stepword` au-dessus, `age-guide__steptitle` qui passe à la ligne) ; hauteur libre, `white-space: normal` (les boutons d'Obsidian mobile ont une hauteur fixe et ne coupent pas le texte d'un `inline-flex`).
+
+## 1.34.0 — un guide où l'on cherche (14 oct. 2026)
+
+- `src/guide.js` : `fold` (minuscule, sans accent, un caractère pour un) et `topicText` (titre et corps, sauf le corps des spoilers) ; champ `age-guide__search` dans `age-guide__side` ; filtrage par la classe `is-out` (pas `hidden` : `display: flex` l'emporterait) ; `highlight` entoure les correspondances de `mark.age-guide__hit` et le texte défile jusqu'à la première ; `reveal` fait défiler le sommaire jusqu'à la rubrique ouverte ; ← → (écouteur `keydown` sur le document, retiré à la fermeture, ignoré dans un champ) ; précédent / suivant parmi les rubriques visibles.
+- `renderTopic` : mini-sommaire `age-guide__mini` dès quatre sous-titres (pas pour une rubrique à case spoiler) ; `age-guide__body` positionné, `offsetTop` y mène.
+- `src/styles.ext.css` : fenêtre `min(1100px, 94vw)`, `height: 80vh`. Guide FR/EN (rubrique Commandes). Test : `test/reference.test.js` (repli, recherche du rahnfee et du pulsar, secrets hors recherche).

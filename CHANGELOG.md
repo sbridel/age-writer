@@ -2,6 +2,17 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.34.0 — A guide you can search (2026-10-14)
+
+### Added
+- **Search in the guide**: a field at the top of the contents keeps only the topics that contain the words (accents and capitals do not matter) and highlights every match; the text opens on the first. The spoilers' text is never searched, only their title. While searching, previous / next turn among the topics found.
+- **A mini-contents in long topics**: a topic with four subheadings or more opens on a row of links, one per subheading (nineteen for the telescope topic).
+- **← and →** turn the topics.
+
+### Changed
+- **The contents follows the open topic**: opened from the Relto deep in the list, it scrolls to it.
+- **A larger guide window** on a computer (1100 px wide, 80% of the screen's height).
+
 ## 1.33.1 — Buttons that fit (2026-10-14)
 
 - The guide's previous / next buttons no longer let their text run out on a phone: a small “Previous” / “Next” above the topic's title, which wraps.
