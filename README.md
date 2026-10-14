@@ -2,12 +2,12 @@
 
 [Français](README.fr.md) · **English**
 
-[![Obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-c39a48?logo=obsidian&logoColor=f4ead2&style=for-the-badge&labelColor=3b2a1b)](https://obsidian.md)
-[![Downloads of the latest release](https://img.shields.io/github/downloads/sbridel/age-writer/latest/total?label=downloads%40latest&style=for-the-badge&labelColor=273449&color=2f8a82)](https://github.com/sbridel/age-writer/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/sbridel/age-writer/total?label=downloads&style=for-the-badge&labelColor=273449&color=2f8a82)](https://github.com/sbridel/age-writer/releases)
-[![Release](https://img.shields.io/github/v/release/sbridel/age-writer?label=release&style=for-the-badge&labelColor=3b2a1b&color=c39a48)](https://github.com/sbridel/age-writer/releases/latest)
-[![Last commit](https://img.shields.io/github/last-commit/sbridel/age-writer/assembly?label=last%20commit&style=for-the-badge&labelColor=273449&color=2f8a82)](https://github.com/sbridel/age-writer/commits/assembly)
-[![License](https://img.shields.io/github/license/sbridel/age-writer?label=license&style=for-the-badge&labelColor=3b2a1b&color=c39a48)](LICENSE)
+[![Obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md)
+[![Downloads of the latest release](https://img.shields.io/github/downloads/sbridel/age-writer/latest/total?label=downloads%40latest)](https://github.com/sbridel/age-writer/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/sbridel/age-writer/total?label=downloads)](https://github.com/sbridel/age-writer/releases)
+[![Release](https://img.shields.io/github/v/release/sbridel/age-writer?label=release)](https://github.com/sbridel/age-writer/releases/latest)
+[![Last commit](https://img.shields.io/github/last-commit/sbridel/age-writer/assembly?label=last%20commit)](https://github.com/sbridel/age-writer/commits/assembly)
+[![License](https://img.shields.io/github/license/sbridel/age-writer?label=license)](LICENSE)
 
 An Obsidian plugin for writing worlds. You write an **Age** (a world) in an `age` block, one page per line, and the plugin works out the rest: description, stability, a painted and animated linking window, a flippable book with its cover, a map of linked worlds, and a refuge (the **Relto**) where your Ages are shelved. Everything is local: no network, no AI at runtime, every sound is synthesized and every picture is procedural.
 
