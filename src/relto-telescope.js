@@ -534,7 +534,8 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
     const rec = st.systems[sys.key], done = !!rec, off = done && (rec.line || 0) !== st.line, shown = look(r, sc1.shown, beatOf(r), fnvKey(st.key + sys.key));
     const line = holding ? t("sys.beat.hold") + " " + "·".repeat(1 + Math.min(HOLD_BEATS - 1, Math.floor((ms - st.hold.t0) / PULSE_MS))) : m.located ? (off ? t("sys.offline") : t("sys.located")) : m.beatWait ? t("sys.beats.wait") : sc1.bentLock ? t("sys.bent.hold") : withTrend(t, bandWords(t, shown.band, guild), guild ? 0 : st.trend);
     ctx.font = "italic 14px serif"; ctx.textAlign = "center"; ctx.fillStyle = m.located && !off && !holding ? "#9fe6da" : "#e9dcb8"; ctx.fillText(line, TEXT_X, 306, 500); ctx.textAlign = "left";
-    const sub = holding ? t("sys.beat.hold.sub") : st.note ? t(st.note) : m.located ? (st.guild && aimedKey(st) ? t("guild.sent") : "") : shown.band >= 2 ? (sc1.beat ? t("sys.beat.cross") + " " : sc1.bend ? t("sys.bend.arc") + " " : "") + echoWords(t, sc1.echoDd) : done ? (off ? t("sys.offline.sub") : t("sys.charted")) : "";
+    const sub = holding ? t("sys.beat.hold.sub") : st.note ? t(st.note) : m.located ? (st.guild && aimedKey(st) ? t("guild.sent") : "") : shown.band >= 2 ? (sc1.beat ? t("sys.beat.cross") + " " : sc1.bend ? t("sys.bend.arc") + " " : "") + (guild ? "" : echoWords(t, sc1.echoDd)) : // Guilde : l'écho ne se commente pas, on le lit à l'oculaire et au métronome
+       done ? (off ? t("sys.offline.sub") : t("sys.charted")) : "";
     if (sub) { ctx.font = "italic 11px serif"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(233,220,184,0.8)"; ctx.fillText(sub, TEXT_X, 323, 520); ctx.textAlign = "left"; }
   } else {
     // étape 3 : la ligne de Me'erta, un second pouls plus pâle qui glisse contre l'horloge D'ni (Art de la Guilde seulement)

@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.36.1 — The echo without words (2026-10-14)
+
+### Changed
+- **The Art of the Guild no longer comments on the echo.** At step 2 of the telescope, the line under the eyepiece used to say whether the echo came before or after the pulse ("less delay", "more delay"): an aid, not something you see. In the Guild's way it is gone; you read the echo at the eyepiece and the metronome. The easy way keeps its line.
+
 ## 1.36.0 — The chart that turns (2026-10-14)
 
 ### Added

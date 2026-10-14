@@ -214,6 +214,26 @@ const centre = (h) => [h.x + h.w / 2, h.y + h.h / 2];
   r.mapUp(t(2)); ok(!r.mapGest, "un doigt levé : le geste s'arrête"); r.mapUp(t(1));
 }
 
+// ---- étape 2 : en Guilde, aucun mot sur l'écho ; en facile, la ligne dit avant / après ----
+{
+  const { analyseAgeBase } = require("../src/engine/analysis"), P = require("../src/physics/index"), { hooks } = require("../src/engine/hooks"), SS = require("../src/starsystem"), CAL = require("../src/calibration"), IM = require("../src/imager"), SKY = require("../src/sky"), G = require("../src/genscene"), MET = require("../src/metronome"), T = require("../src/telescope");
+  hooks.skip = (l) => P.isPhysicsLine(l) || SS.SYSTEM_RE.test(l);
+  const src = "single_sun\norange_sun\nwater\nfern\nhills\nrotation: 30\nsystem: Kerath", name = "Glass Marsh";
+  const a0 = analyseAgeBase(src, { seed: name }), a = P.applyPhysics(a0, P.physicsOf(a0, src, name), "easy"), sys = SS.systemOf(a, src, name), orbit = CAL.orbitOf(a, name, SKY.parseSky(src)), c = sys.clue;
+  const echoTexts = (mode, delta) => {
+    const r = make({ instrumentsMode: mode }), texts = [], rec = new Proxy({}, { get: (_, k) => (k === "fillText" ? (t) => texts.push(String(t)) : k === "measureText" ? () => ({ width: 30 }) : k === "createLinearGradient" || k === "createRadialGradient" ? () => grad : k === "canvas" ? undefined : () => {}), set: () => true });
+    r.ctx = rec; r.nowOverride = 1.8e12;
+    const st = TL.state(r); st.found = true; st.at = { torahn: st.zero.torahn, elev: st.zero.elevation };
+    st.book = { idx: 0, age: r.scene.ages[0], data: { target: IM.targetsOf(a, name), model: null, system: sys, orbit }, loading: false };
+    st.dial = { torahn: c.torahn, elev: c.elevation, delay: (c.delay + delta + 625) % 625 };
+    r.draw(3); return texts.join(" | ");
+  };
+  const easy = echoTexts("easy", 3), guild = echoTexts("guild", 3);
+  ok(/pulse|pouls/i.test(easy) && /delay|retard/i.test(easy), `facile : la ligne dit avant / après le pouls (« ${easy.slice(0, 90)} »)`);
+  ok(!/echo|écho|delay|retard/i.test(guild.replace(/Delay|Retard/g, "")), `Guilde : aucun mot sur l'écho (« ${guild.slice(0, 90)} »)`);
+  void MET; void T;
+}
+
 // ---- Art de la Guilde : trois paliers de mots seulement ----
 ok([0, 1, 2, 3, 4, 5].map(TL.coarseBand).join() === "0,1,1,1,4,4", "Guilde : rien, quelque chose, tout près");
 

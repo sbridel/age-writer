@@ -516,3 +516,7 @@ Note : `claude/DESIGN-carte-defiler-tourner.md` (projet).
 - `src/relto-starmap.js` : `r.mapTurn` (radians, jamais enregistré) ; ligne de l'instrument, rose du Zéro et traits de plomb tournés ; `brassRose` (coin bas droit, zone `wc` de `kind: "map"`, crans de π/8, clic +1, Maj + clic −1) ; `turnTo` (la loupe suit son point), `pan` (borné au parchemin), `angleAt` ; ◎ remet aussi le nord ; la légende de la ligne ne s'écrit pas sous la rose.
 - `src/relto-render.js` : `mapDown` / `mapMove` / `mapUp` (`mapGest` : `pan` sous la loupe, partout sauf les boutons, sans tenir au doigt ; `spin` au bouton droit ou Maj + glisser ; `twist` à deux doigts, `mapPtrs`) ; `contextmenu` avalé sur la carte ; `wheelAct(…, "map")` ; quitter la carte remet le nord.
 - i18n `map.drag`, `map.rose`, `map.all` ; guide FR/EN (rubrique de la carte). Tests : `test/touch.test.js` (87 contrôles).
+
+## 1.36.1 — l'écho sans mots (14 oct. 2026)
+
+- `src/relto-telescope.js` (étape 2, ligne sous l'oculaire) : en Art de la Guilde, `echoWords` n'est plus ajouté (« l'écho vient avant / après le pouls : moins / plus de retard » était une aide, pas ce qu'on voit) ; les faits de l'instrument restent (pose, second battement, lumière courbée, « l'instrument tient cette étoile »). Facile inchangé. Guide FR/EN (rubrique du métronome). Test : `test/touch.test.js` (89 contrôles).
