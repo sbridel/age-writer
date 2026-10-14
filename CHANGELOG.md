@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.36.0 — The chart that turns (2026-10-14)
+
+### Added
+- **The star chart scrolls and turns.** Under the magnifier, drag the parchment to move it (mouse or one finger). A brass compass rose in the bottom-right corner turns the chart around the Zero: drag around it, or click it (Shift-click turns back), one sixteenth of a turn at a time; Shift-drag or right-drag on the chart turns it freely, and two fingers on a phone. Plumb lines and names stay upright; N, E, S, W keep their quarter of the sky; ◎ gives back the whole sky with north up. The chart always reopens with north up.
+
 ## 1.35.0 — The Treatise of the Art (2026-10-14)
 
 ### Added

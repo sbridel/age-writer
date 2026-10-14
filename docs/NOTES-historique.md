@@ -508,3 +508,11 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 - `src/relto-render.js` : un `flash` à `clasp` appelle `opts.onClasp` (clics de fermoir, `sound.bookOpen` sans le livre).
 - `src/ui-relto.js` : `onSpecial("treatise")` → `openGuide(plugin, null, "full", { over: root, book: { title, dni, font, onFlip } })`.
 - `src/guide.js` : `opts.book` : classe `age-guide-modal--book`, en-tête (titre en D'ni si police, titre latin), `onFlip` à chaque rubrique tournée après la première. CSS parchemin dans `styles.ext.css`. Test : `test/treatise.test.js` (6 contrôles).
+
+## 1.36.0 — la carte qui tourne (14 oct. 2026)
+
+Note : `claude/DESIGN-carte-defiler-tourner.md` (projet).
+- `src/starmap.js` : `fit3(…, { turn })` tourne le plan avant de le coucher (`rot`, sens horaire ; les hauteurs ne tournent pas) ; `turnPoint` tourne un point de l'écran autour du Zéro sur le plan redressé (le point visé de la loupe).
+- `src/relto-starmap.js` : `r.mapTurn` (radians, jamais enregistré) ; ligne de l'instrument, rose du Zéro et traits de plomb tournés ; `brassRose` (coin bas droit, zone `wc` de `kind: "map"`, crans de π/8, clic +1, Maj + clic −1) ; `turnTo` (la loupe suit son point), `pan` (borné au parchemin), `angleAt` ; ◎ remet aussi le nord ; la légende de la ligne ne s'écrit pas sous la rose.
+- `src/relto-render.js` : `mapDown` / `mapMove` / `mapUp` (`mapGest` : `pan` sous la loupe, partout sauf les boutons, sans tenir au doigt ; `spin` au bouton droit ou Maj + glisser ; `twist` à deux doigts, `mapPtrs`) ; `contextmenu` avalé sur la carte ; `wheelAct(…, "map")` ; quitter la carte remet le nord.
+- i18n `map.drag`, `map.rose`, `map.all` ; guide FR/EN (rubrique de la carte). Tests : `test/touch.test.js` (87 contrôles).

@@ -34,6 +34,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.36, the chart that turns.** Drag the star chart under the magnifier; turn it around the Zero with a brass compass rose, Shift- or right-drag, or two fingers.
 - **1.35, the Treatise of the Art.** A thick volume under a brass clasp on the loft's table; a Grand Master opens it and reads the whole reference without leaving the Relto.
 - **1.34, a guide you can search.** A search field that keeps the topics containing your words and highlights them, a mini-contents at the top of long topics, ← → to turn the topics, a larger window on a computer.
 - **1.33, the guide on a phone.** A mountain icon in the ribbon opens the Relto, a book button in the Relto opens the guide on what you are looking at; on a narrow screen the guide's contents and text take turns, with previous / next topic.

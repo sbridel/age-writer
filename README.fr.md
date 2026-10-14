@@ -36,6 +36,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; les dernières versions en bref :
 
+- **1.36, la carte qui tourne.** Tirer la carte des étoiles sous la loupe ; la tourner autour du Zéro avec une rose de laiton, Maj ou bouton droit + glisser, ou deux doigts.
 - **1.35, le Traité de l'Art.** Un gros volume sous un fermoir de laiton sur la table de l'étage ; un Grand Maître l'ouvre et lit toute la référence sans quitter le Relto.
 - **1.34, un guide où l'on cherche.** Un champ de recherche qui garde les rubriques contenant tes mots et les surligne, un mini-sommaire en tête des longues rubriques, ← → pour tourner les rubriques, une fenêtre plus grande sur ordinateur.
 - **1.33, le guide au téléphone.** Une icône de montagne dans le ruban ouvre le Relto, un bouton livre dans le Relto ouvre le guide sur ce que tu regardes ; sur écran étroit, le sommaire et le texte du guide se relaient, avec rubrique précédente / suivante.
