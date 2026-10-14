@@ -203,13 +203,16 @@ function renderTopic(host, topic, kicker, spoil) {
 
 /** Ouvre le guide dans une fenêtre : niveau court ou référence complète, rubriques à gauche, texte à droite.
  *  Sur un écran étroit (téléphone), le sommaire et le texte se relaient : on choisit une rubrique, « Sommaire » y ramène.
- *  `opts.over` : l'élément d'où on l'ouvre (le Relto) ; en plein écran, la fenêtre se pose par-dessus lui. */
+ *  `opts.over` : l'élément d'où on l'ouvre (le Relto) ; en plein écran, la fenêtre se pose par-dessus lui.
+ *  `opts.book` : le Traité de l'Art (le même guide, ouvert depuis le livre de l'étage) : titre du livre (`title`, `dni`, `font`), parchemin, et `onFlip()` à chaque rubrique tournée. */
 function openGuide(plugin, topicId, level0, opts) {
   const obs = require("obsidian"), lang = plugin.lang(), fr = lang === "fr";
   class GuideModal extends obs.Modal {
     onOpen() {
       const { contentEl, modalEl } = this; contentEl.empty(); modalEl.addClass("age-guide-modal");
+      const book = opts && opts.book; if (book) { modalEl.addClass("age-guide-modal--book"); const hd = contentEl.createDiv({ cls: "age-guide__bookhead" }); if (book.dni) { const d = hd.createDiv({ cls: "age-guide__bookdni age-dni" }); d.setText(book.dni); if (book.font) d.style.fontFamily = book.font; } hd.createDiv({ cls: "age-guide__booktitle", text: book.title }); }
       let level = level0 === "full" ? "full" : "quick"; const spoil = { on: false }; // la case « spoilers » : décochée à chaque ouverture du guide
+      let flips = 0; const flip = () => { if (book && book.onFlip && flips++ > 0) book.onFlip(); }; // la première rubrique est l'ouverture du livre, pas une page tournée
       const tabs = contentEl.createDiv({ cls: "age-guide__levels" }), root = contentEl.createDiv({ cls: "age-guide" });
       const side = root.createDiv({ cls: "age-guide__side" }), main = root.createDiv({ cls: "age-guide__main" });
       const search = side.createEl("input", { cls: "age-guide__search", type: "search", attr: { placeholder: fr ? "Chercher dans le guide…" : "Search the guide…", "aria-label": fr ? "Chercher" : "Search" } });
@@ -226,7 +229,7 @@ function openGuide(plugin, topicId, level0, opts) {
         for (const k of Object.keys(lv)) lv[k].toggleClass("is-active", k === level);
         const parts = PARTS[lang] || PARTS.en;
         const show = (tid) => {
-          const t = list.find((x) => x.id === tid) || list[0]; cur = t.id; for (const [k, r] of Object.entries(rows)) r.toggleClass("is-active", k === t.id); renderTopic(body, t, t.part && parts[t.part], spoil); body.scrollTop = 0; toc(false);
+          const t = list.find((x) => x.id === tid) || list[0]; if (cur !== t.id) flip(); cur = t.id; for (const [k, r] of Object.entries(rows)) r.toggleClass("is-active", k === t.id); renderTopic(body, t, t.part && parts[t.part], spoil); body.scrollTop = 0; toc(false);
           reveal(rows[t.id]); // le sommaire défile jusqu'à la rubrique ouverte
           const hit = highlight(body, query); if (hit) body.scrollTop = Math.max(0, hit.offsetTop - body.clientHeight / 3);
           steps.empty(); // rubrique précédente / suivante : lire d'une traite sans repasser par le sommaire

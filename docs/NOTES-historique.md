@@ -501,3 +501,10 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 - `src/guide.js` : `fold` (minuscule, sans accent, un caractère pour un) et `topicText` (titre et corps, sauf le corps des spoilers) ; champ `age-guide__search` dans `age-guide__side` ; filtrage par la classe `is-out` (pas `hidden` : `display: flex` l'emporterait) ; `highlight` entoure les correspondances de `mark.age-guide__hit` et le texte défile jusqu'à la première ; `reveal` fait défiler le sommaire jusqu'à la rubrique ouverte ; ← → (écouteur `keydown` sur le document, retiré à la fermeture, ignoré dans un champ) ; précédent / suivant parmi les rubriques visibles.
 - `renderTopic` : mini-sommaire `age-guide__mini` dès quatre sous-titres (pas pour une rubrique à case spoiler) ; `age-guide__body` positionné, `offsetTop` y mène.
 - `src/styles.ext.css` : fenêtre `min(1100px, 94vw)`, `height: 80vh`. Guide FR/EN (rubrique Commandes). Test : `test/reference.test.js` (repli, recherche du rahnfee et du pulsar, secrets hors recherche).
+
+## 1.35.0 — le Traité de l'Art (14 oct. 2026)
+
+- `src/relto-atelier.js` (`drawLoft`) : le volume à `(548, 318)`, en bac à sable (`sc.mode !== "story"`) ; `statusState().tier >= 4` ouvre le fermoir (languette qui pend, halo) et pose `special: "treatise"` ; sinon `flash` + `clasp: true`. Clés `atelier.loft.treatise`, `.shut`, `.clasp`, `guide.treatise`.
+- `src/relto-render.js` : un `flash` à `clasp` appelle `opts.onClasp` (clics de fermoir, `sound.bookOpen` sans le livre).
+- `src/ui-relto.js` : `onSpecial("treatise")` → `openGuide(plugin, null, "full", { over: root, book: { title, dni, font, onFlip } })`.
+- `src/guide.js` : `opts.book` : classe `age-guide-modal--book`, en-tête (titre en D'ni si police, titre latin), `onFlip` à chaque rubrique tournée après la première. CSS parchemin dans `styles.ext.css`. Test : `test/treatise.test.js` (6 contrôles).

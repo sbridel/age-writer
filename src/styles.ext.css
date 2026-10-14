@@ -304,6 +304,18 @@
 .age-guide__stepword { font-size: 0.8em; color: var(--text-muted); }
 .age-guide__steptitle { overflow-wrap: anywhere; }
 .age-guide__tocbtn { display: none; align-self: flex-start; margin-bottom: 8px; }
+/* le Traité de l'Art : le même guide, habillé en livre (parchemin, titre en D'ni) */
+.age-guide-modal--book { background: #f3e9d2; color: #2a2118; border: 1px solid #b9a27a; box-shadow: 0 0 0 6px #4a3626, 0 0 0 7px #c9a24e, 0 24px 60px rgba(0, 0, 0, 0.55); }
+.age-guide-modal--book .age-guide__bookhead { text-align: center; margin: -4px 0 10px; }
+.age-guide-modal--book .age-guide__bookdni { font-size: 1.5em; color: #6a4a2a; line-height: 1.2; }
+.age-guide-modal--book .age-guide__booktitle { font-family: var(--font-text, serif); font-style: italic; font-size: 1.25em; color: #4a3626; letter-spacing: 0.04em; }
+.age-guide-modal--book .age-guide__body, .age-guide-modal--book .age-guide__nav, .age-guide-modal--book .age-guide__item, .age-guide-modal--book .age-guide__body h4 { color: #2a2118; }
+.age-guide-modal--book .age-guide__item { color: #5a4a3a; } .age-guide-modal--book .age-guide__item.is-active, .age-guide-modal--book .age-guide__item:hover { background: rgba(120, 90, 50, 0.14); color: #2a2118; }
+.age-guide-modal--book .age-guide__part, .age-guide-modal--book .age-guide__kicker, .age-guide-modal--book .age-guide__body h4, .age-guide-modal--book .age-guide__stepword { color: #8a6a3a; }
+.age-guide-modal--book .age-guide__side, .age-guide-modal--book .age-guide__steps, .age-guide-modal--book .age-guide__mini { border-color: #c9b68e; }
+.age-guide-modal--book .age-guide__code, .age-guide-modal--book .age-guide__minilink, .age-guide-modal--book .age-guide__note, .age-guide-modal--book .age-guide__table th { background: rgba(120, 90, 50, 0.1); color: #2a2118; }
+.age-guide-modal--book .age-guide__search, .age-guide-modal--book button { background: #ebdfc4; color: #2a2118; border-color: #c9b68e; }
+.age-guide-modal--book .age-guide__level.is-active { background: #4a3626; color: #f3e9d2; }
 /* le guide ouvert depuis le Relto en plein écran passe devant lui */
 .modal-container.age-guide-over { z-index: 10050; }
 /* écran étroit : le sommaire et le texte se relaient (une rubrique par ligne, « Sommaire » pour revenir) */

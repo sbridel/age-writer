@@ -306,6 +306,20 @@ function drawLoft(r, ctx, sc, sky, t) {
   { const bx = 262, by = 292; ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 4, by - 2, 170, 20); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx, by - 8, 80, 18); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 84, by - 8, 80, 18); ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 4; k++) { ctx.fillRect(bx + 8, by - 3 + k * 4, 62, 1); ctx.fillRect(bx + 92, by - 3 + k * 4, 62, 1); }
     r.hot.push({ x: bx - 6, y: by - 12, w: 176, h: 34, tip: TRr("atelier.loft.pages"), go: "book" }); }
   if (sc.additions.some((a) => a.type === "imager") && r.opts.notes !== "off") { const nx = 450, ny = 290; ctx.fillStyle = c("#3b2a1a"); ctx.fillRect(nx, ny, 62, 14); ctx.fillStyle = c("#6b4a2a"); ctx.fillRect(nx, ny - 3, 62, 5); ctx.fillStyle = c("#c9a24e"); ctx.fillRect(nx + 3, ny + 2, 5, 9); ctx.fillRect(nx + 54, ny + 2, 5, 9); ctx.fillStyle = c("#8e2b27"); ctx.fillRect(nx + 40, ny + 12, 3, 12); r.hot.push({ x: nx - 3, y: ny - 8, w: 68, h: 36, tip: TRr("atelier.loft.surveyor"), special: "surveyor" }); }
+  if (sc.mode !== "story") { // le Traité de l'Art : un gros volume fermé d'un fermoir de laiton, en bac à sable seulement ; le fermoir ne cède qu'au Grand Maître
+    const st = (r.opts.statusState && r.opts.statusState()) || { tier: 0 }, open = st.tier >= 4, bx = 548, by = 318, bw = 74, bh = 26;
+    ctx.fillStyle = rgba(0, 0, 0, 0.28); ctx.fillRect(bx + 2, by + 1, bw, 3);
+    ctx.fillStyle = c("#2a1a30"); ctx.fillRect(bx, by - bh, bw, bh); // la reliure, un cuir sombre
+    ctx.fillStyle = c("#e7dcc0"); ctx.fillRect(bx + 3, by - bh + 3, bw - 10, bh - 6); // la tranche des pages
+    ctx.fillStyle = rgba(0, 0, 0, 0.18); for (let k = 0; k < 6; k++) ctx.fillRect(bx + 3, by - bh + 5 + k * 3.2, bw - 10, 1);
+    ctx.fillStyle = c("#2a1a30"); ctx.fillRect(bx, by - bh, 7, bh); ctx.fillRect(bx + bw - 7, by - bh, 7, bh);
+    ctx.fillStyle = c("#c9a24e"); ctx.fillRect(bx + 1, by - bh + 5, 5, 1.6); ctx.fillRect(bx + 1, by - 7, 5, 1.6); // les nerfs dorés du dos
+    const cx = bx + bw - 4, cy = by - bh / 2; // le fermoir de laiton, sur la tranche
+    if (open) { ctx.fillStyle = c("#d8b45e"); ctx.fillRect(cx - 4, cy - 5, 8, 4); ctx.fillRect(cx - 2, cy - 2, 4, 15); ctx.fillStyle = c("#8a6a2a"); ctx.fillRect(cx - 1, by + 1, 2, 2); } // le fermoir ouvert : sa languette pend sur la table
+    else { ctx.fillStyle = c("#d8b45e"); ctx.fillRect(cx - 4, cy - 5, 8, 10); ctx.fillStyle = c("#8a6a2a"); ctx.fillRect(cx - 2, cy - 2, 4, 4); }
+    if (open) { ctx.fillStyle = rgba(255, 220, 140, 0.08 + 0.06 * fl); ctx.fillRect(bx - 6, by - bh - 6, bw + 12, bh + 10); }
+    r.hot.push({ x: bx - 4, y: by - bh - 4, w: bw + 8, h: bh + 8, tip: TRr(open ? "atelier.loft.treatise" : "atelier.loft.treatise.shut"), ...(open ? { special: "treatise" } : { flash: TRr("atelier.loft.treatise.clasp"), clasp: true }) });
+  }
   backButton(r, ctx, TRr("atelier.loft.down"), "atelier");
 }
 

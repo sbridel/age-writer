@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.35.0 — The Treatise of the Art (2026-10-14)
+
+### Added
+- **A book in the Relto opens the guide.** On the long table of the loft, in the sandbox, lies a thick volume under a brass clasp: the Treatise of the Art. Before the Grand Master title the clasp does not give (a dry click, a sentence); from then on the book opens the whole reference, dressed as a book (parchment, the title in D'ni, a page sound at each topic), over the Relto. The guide button in the bar and the ribbon icon stay, as shortcuts outside the fiction.
+
 ## 1.34.0 — A guide you can search (2026-10-14)
 
 ### Added
