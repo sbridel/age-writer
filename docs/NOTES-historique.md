@@ -484,3 +484,10 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 ## 1.32.6 — un guide français relu (14 oct. 2026)
 
 - `src/guide-ref-fr.js`, `src/guide.js` : relecture du français (calques, tournures approximatives, « Pile à droite de midi » → marques empilées, « revise » → vise de nouveau, condition de déverrouillage du télescope qui disait l'inverse). FR/EN : plus de « bureau seulement », plein écran en portrait décrit, « Open the Relto » crée le refuge, sept pages de réglages.
+
+## 1.33.0 — le guide au téléphone (14 oct. 2026)
+
+- `src/entry.js` : `addRibbonIcon("mountain", …)` ouvre le Relto (clé `relto.ribbon`).
+- `src/ui-relto.js` : bouton `age-relto__tab--guide` (icône `book-open-text`, clé `tab.guide`) ; ouvre `openGuide(plugin, "reltocat" | "relto2", "full", { over: root })` selon la vue.
+- `src/guide.js` : `openGuide(…, opts)` ; sur écran étroit (≤ 640 px), classe `is-toc` : sommaire et texte se relaient, bouton « ‹ Sommaire » ; boutons rubrique précédente / suivante (`age-guide__steps`) ; `opts.over` : en plein écran du navigateur, la fenêtre est déplacée dans l'élément plein écran, et `age-guide-over` (z-index 10050) la pose devant le Relto plein écran mobile (10000).
+- Guide FR/EN : l'icône du ruban et le bouton guide. Test : `test/integration.js` (le bouton guide existe, hors du compte des onglets).

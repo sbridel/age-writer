@@ -2,6 +2,16 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.33.0 — The guide on a phone (2026-10-14)
+
+### Added
+- **A mountain icon in the ribbon opens the Relto** (on a phone, in the left menu).
+- **A guide button in the Relto's bar** (an open book): it opens the full reference on the topic of what you are looking at (the telescope, the Imager, the cat or the clock: their topic; elsewhere, the refuge). In full screen, the guide comes in front of the Relto.
+- **Previous / next topic** buttons under each topic of the guide, to read it straight through.
+
+### Changed
+- **The guide on a narrow screen**: the contents and the text take turns. It opens on the contents, one topic per line; pick a topic to read it, and “‹ Contents” brings the list back.
+
 ## 1.32.6 — A better French guide (2026-10-14)
 
 ### Changed

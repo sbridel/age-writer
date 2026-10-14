@@ -34,6 +34,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.33, the guide on a phone.** A mountain icon in the ribbon opens the Relto, a book button in the Relto opens the guide on what you are looking at; on a narrow screen the guide's contents and text take turns, with previous / next topic.
 - **1.32, a star chart that breathes.** Names on hover (Aa shows them all), a magnifier, the four regions of the sky, a scale that adapts to your stars.
 - **1.31, hands that take.** A drawn open hand over what you take or touch (wheels, glasses, books, linking panels), closing as you turn; long tooltips wrap.
 - **1.30, on a phone.** Age Writer installs on Obsidian mobile; the Relto is played with a finger: touch to read, touch again to act, wheels you turn by sliding around them, a magnified eyepiece. Full screen fills the phone (held upright, the picture lies down by a quarter turn), and the Age's book reads in one column on a narrow screen (1.30.1, 1.30.2). With a mouse too, wheels turn by dragging around them, or with the scroll wheel in the large view (1.30.3).

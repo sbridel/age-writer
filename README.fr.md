@@ -36,6 +36,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; les dernières versions en bref :
 
+- **1.33, le guide au téléphone.** Une icône de montagne dans le ruban ouvre le Relto, un bouton livre dans le Relto ouvre le guide sur ce que tu regardes ; sur écran étroit, le sommaire et le texte du guide se relaient, avec rubrique précédente / suivante.
 - **1.32, une carte des étoiles qui respire.** Les noms au survol (Aa les montre tous), une loupe, les quatre régions du ciel, une échelle qui s'adapte à tes étoiles.
 - **1.31, des mains qui prennent.** Une main ouverte dessinée sur ce qu'on prend ou touche (molettes, verres, livres, panneaux de liaison), qui se ferme quand on tourne ; les infobulles longues passent à la ligne.
 - **1.30, sur téléphone.** Age Writer s'installe sur Obsidian mobile ; le Relto se joue au doigt : toucher pour lire, toucher encore pour agir, molettes qu'on tourne en glissant autour, oculaire agrandi. Le plein écran remplit le téléphone (tenu droit, l'image se couche d'un quart de tour), et le livre de l'Âge se lit sur une colonne en écran étroit (1.30.1, 1.30.2). À la souris aussi, les molettes se tournent en glissant autour, ou à la roulette dans la grande vue (1.30.3).
