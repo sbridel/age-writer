@@ -275,9 +275,18 @@
 .age-reltoview .age-relto[data-tab] .age-relto__when .age-relto__clock { font-size: 2.6em; }
 
 /* Guide intégré */
-.age-guide-modal { width: min(920px, 92vw); max-width: 92vw; }
-.age-guide { display: flex; gap: 18px; min-height: 420px; max-height: 70vh; }
-.age-guide__nav { flex: 0 0 210px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid var(--background-modifier-border); padding-right: 10px; overflow: auto; }
+.age-guide-modal { width: min(1100px, 94vw); max-width: 94vw; }
+.age-guide { display: flex; gap: 18px; min-height: min(420px, 60vh); height: 80vh; max-height: 80vh; }
+.age-guide__side { flex: 0 0 230px; display: flex; flex-direction: column; gap: 8px; min-height: 0; border-right: 1px solid var(--background-modifier-border); padding-right: 10px; }
+.age-guide__search { width: 100%; }
+.age-guide__item.is-out, .age-guide__part.is-out { display: none; }
+.age-guide__none { color: var(--text-muted); font-style: italic; padding: 6px 10px; }
+.age-guide__nav { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; gap: 2px; overflow: auto; }
+.age-guide__body { position: relative; }
+.age-guide__hit { background: rgba(var(--color-yellow-rgb, 230, 190, 60), 0.45); color: inherit; border-radius: 2px; padding: 0 1px; }
+/* mini-sommaire d'une longue rubrique : un lien par sous-titre */
+.age-guide__mini { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: -4px 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--background-modifier-border); }
+.age-guide__minilink { height: auto; min-height: 0; padding: 3px 9px; font-size: 0.82em; white-space: normal; text-align: left; line-height: 1.25; background: var(--background-secondary); box-shadow: none; }
 .age-guide__item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; cursor: pointer; color: var(--text-muted); }
 .age-guide__item:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
 .age-guide__item.is-active { background: var(--background-modifier-hover); color: var(--text-normal); font-weight: 600; }
@@ -299,11 +308,12 @@
 .modal-container.age-guide-over { z-index: 10050; }
 /* écran étroit : le sommaire et le texte se relaient (une rubrique par ligne, « Sommaire » pour revenir) */
 @media (max-width: 640px) {
-  .age-guide { flex-direction: column; max-height: none; min-height: 0; }
-  .age-guide__nav { flex: none; flex-direction: column; flex-wrap: nowrap; border-right: none; padding-right: 0; max-height: 70vh; }
+  .age-guide { flex-direction: column; height: auto; max-height: none; min-height: 0; }
+  .age-guide__side { flex: none; border-right: none; padding-right: 0; }
+  .age-guide__nav { flex: none; flex-direction: column; flex-wrap: nowrap; max-height: 62vh; }
   .age-guide__item { padding: 11px 10px; }
   .age-guide.is-toc .age-guide__main { display: none; }
-  .age-guide:not(.is-toc) .age-guide__nav { display: none; }
+  .age-guide:not(.is-toc) .age-guide__side { display: none; }
   .age-guide__tocbtn { display: inline-block; }
   .age-guide__body { max-height: 62vh; }
   .age-guide__foot { padding-top: 6px; }

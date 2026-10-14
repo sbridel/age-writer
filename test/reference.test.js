@@ -95,4 +95,9 @@ for (const lang of ["en", "fr"]) {
   ok(!md.includes("## " + G.PARTS[lang].spoil) && !/SPOILER|Spoilers/.test(md) && !md.includes("flower_color"), `${lang} : l'export Markdown ne contient pas les spoilers`);
   ok(/\n\| --- \| --- \| --- \|\n/.test(md) && md.includes("`tides: 0.03`"), `${lang} : l'export Markdown a le tableau des valeurs`);
 }
+// la recherche du guide : sans accent ni casse, un caractère pour un ; le corps des spoilers n'est pas cherché
+ok(G.fold("Écrire l'Âge") === "ecrire l'age" && G.fold("Écrire l'Âge").length === "Écrire l'Âge".length, "recherche : accents et casse repliés, même longueur");
+{ const fr = G.topics("fr", "full"), hit = (q) => fr.filter((t) => G.topicText(t).includes(G.fold(q))).map((t) => t.id);
+  ok(hit("RAHNFEE").includes("reltocat") && hit("pulsar").includes("sky"), "recherche : le rahnfee au télescope, le pulsar dans les blocs du ciel");
+  ok(!hit("flower_color").length, "recherche : les secrets (flower_color) ne sortent pas"); }
 console.log(`reference : ${n} vérifications, tout passe`);

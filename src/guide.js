@@ -141,11 +141,39 @@ function inline(el, text) {
   }
 }
 
-/** Dessine une rubrique dans `host` (`kicker` : le nom de sa partie, au-dessus du titre). */
+/** Forme de recherche d'un caractère : minuscule, sans accent (un caractère pour un, pour surligner au bon endroit). */
+const foldChar = (ch) => { const f = ch.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); return f.length === 1 ? f : ch.toLowerCase(); };
+const fold = (s) => Array.from(String(s), foldChar).join("");
+/** Tout le texte d'une rubrique, pour la recherche (le corps d'une rubrique « spoiler » n'en fait pas partie : seul son titre). */
+function topicText(t) {
+  const out = [t.title];
+  if (!t.spoiler) for (const b of t.body) {
+    if (b.p) out.push(b.p); else if (b.h) out.push(b.h); else if (b.code) out.push(b.code); else if (b.note) out.push(b.note);
+    else if (b.ul) out.push(...b.ul); else if (b.table) out.push(...b.table.head, ...b.table.rows.flat());
+  }
+  return fold(out.join("\n").replace(/\*\*|`/g, ""));
+}
+/** Surligne `q` (déjà replié) dans les textes de `el` ; rend la première marque. */
+function highlight(el, q) {
+  if (!q) return null;
+  const doc = el.ownerDocument, walk = doc.createTreeWalker(el, 4), nodes = []; let n, first = null;
+  while ((n = walk.nextNode())) if (!n.parentElement.closest(".age-guide__mini")) nodes.push(n);
+  for (const node of nodes) {
+    const txt = node.nodeValue, f = fold(txt); let i = f.indexOf(q); if (i < 0) continue;
+    const frag = doc.createDocumentFragment(); let at = 0;
+    while (i >= 0) { frag.appendChild(doc.createTextNode(txt.slice(at, i))); const m = doc.createElement("mark"); m.className = "age-guide__hit"; m.textContent = txt.slice(i, i + q.length); frag.appendChild(m); if (!first) first = m; at = i + q.length; i = f.indexOf(q, at); }
+    frag.appendChild(doc.createTextNode(txt.slice(at))); node.parentNode.replaceChild(frag, node);
+  }
+  return first;
+}
+
+/** Dessine une rubrique dans `host` (`kicker` : le nom de sa partie, au-dessus du titre).
+ *  Une longue rubrique (quatre sous-titres ou plus) s'ouvre sur un mini-sommaire : un lien par sous-titre. */
 function renderTopic(host, topic, kicker, spoil) {
   host.empty();
   if (kicker) host.createDiv({ cls: "age-guide__kicker", text: kicker });
   host.createEl("h2", { text: topic.title });
+  const heads = topic.gate ? [] : topic.body.filter((b) => b.h), mini = heads.length >= 4 ? host.createDiv({ cls: "age-guide__mini" }) : null, h4s = [];
   let page = host; // une rubrique « spoiler » s'ouvre sur un avertissement et une case : le texte reste caché tant qu'elle n'est pas cochée
   if (topic.gate) {
     const st = spoil || { on: false }, gate = host.createDiv({ cls: "age-guide__gate" }); gate.createDiv({ cls: "age-guide__spoiltag", text: "⚠ SPOILER ⚠" }); inline(gate.createEl("p"), topic.gate.p);
@@ -156,7 +184,7 @@ function renderTopic(host, topic, kicker, spoil) {
   host = page;
   for (const b of topic.body) {
     if (b.p) inline(host.createEl("p"), b.p);
-    else if (b.h) host.createEl("h4", { text: b.h });
+    else if (b.h) h4s.push(host.createEl("h4", { text: b.h }));
     else if (b.code) host.createEl("pre", { cls: "age-guide__code" }).createEl("code", { text: b.code });
     else if (b.ul) { const ul = host.createEl("ul"); for (const x of b.ul) inline(ul.createEl("li"), x); }
     else if (b.note) inline(host.createDiv({ cls: "age-guide__note" }), b.note);
@@ -166,6 +194,10 @@ function renderTopic(host, topic, kicker, spoil) {
       const tb = table.createEl("tbody");
       for (const r of b.table.rows) { const tr = tb.createEl("tr"); for (const x of r) inline(tr.createEl("td"), x); }
     }
+  }
+  if (mini) for (const h of h4s) { // le corps du guide est positionné : `offsetTop` se compte depuis lui
+    const a = mini.createEl("button", { cls: "age-guide__minilink", text: h.textContent }), box = mini.parentElement;
+    a.addEventListener("click", () => { box.scrollTop = Math.max(0, h.offsetTop - 8); });
   }
 }
 
@@ -179,10 +211,14 @@ function openGuide(plugin, topicId, level0, opts) {
       const { contentEl, modalEl } = this; contentEl.empty(); modalEl.addClass("age-guide-modal");
       let level = level0 === "full" ? "full" : "quick"; const spoil = { on: false }; // la case « spoilers » : décochée à chaque ouverture du guide
       const tabs = contentEl.createDiv({ cls: "age-guide__levels" }), root = contentEl.createDiv({ cls: "age-guide" });
-      const nav = root.createDiv({ cls: "age-guide__nav" }), main = root.createDiv({ cls: "age-guide__main" });
+      const side = root.createDiv({ cls: "age-guide__side" }), main = root.createDiv({ cls: "age-guide__main" });
+      const search = side.createEl("input", { cls: "age-guide__search", type: "search", attr: { placeholder: fr ? "Chercher dans le guide…" : "Search the guide…", "aria-label": fr ? "Chercher" : "Search" } });
+      const nav = side.createDiv({ cls: "age-guide__nav" }), none = side.createDiv({ cls: "age-guide__none", text: fr ? "Rien trouvé." : "Nothing found." }); none.hidden = true;
+      let query = "", cur = null, go = () => {}; // `go(±1)` : rubrique voisine (flèches du clavier)
       const tocBtn = main.createEl("button", { cls: "age-guide__tocbtn", text: fr ? "‹ Sommaire" : "‹ Contents" }); // écran étroit seulement (CSS)
       const body = main.createDiv({ cls: "age-guide__body" }), steps = main.createDiv({ cls: "age-guide__steps" }), foot = main.createDiv({ cls: "age-guide__foot" });
       const toc = (on) => { root.toggleClass("is-toc", on); if (on) nav.scrollTop = 0; };
+      const reveal = (r) => { if (!r || r.offsetParent === null) return; const top = r.offsetTop, bot = top + r.offsetHeight; if (top < nav.scrollTop || bot > nav.scrollTop + nav.clientHeight) nav.scrollTop = Math.max(0, top - nav.clientHeight / 3); };
       tocBtn.addEventListener("click", () => toc(true));
       const lv = { quick: tabs.createEl("button", { text: fr ? "Guide court" : "Quick guide", cls: "age-guide__level" }), full: tabs.createEl("button", { text: fr ? "Référence complète" : "Full reference", cls: "age-guide__level" }) };
       const draw = (id) => {
@@ -190,9 +226,11 @@ function openGuide(plugin, topicId, level0, opts) {
         for (const k of Object.keys(lv)) lv[k].toggleClass("is-active", k === level);
         const parts = PARTS[lang] || PARTS.en;
         const show = (tid) => {
-          const t = list.find((x) => x.id === tid) || list[0], i = list.indexOf(t); for (const [k, r] of Object.entries(rows)) r.toggleClass("is-active", k === t.id); renderTopic(body, t, t.part && parts[t.part], spoil); body.scrollTop = 0; toc(false);
+          const t = list.find((x) => x.id === tid) || list[0]; cur = t.id; for (const [k, r] of Object.entries(rows)) r.toggleClass("is-active", k === t.id); renderTopic(body, t, t.part && parts[t.part], spoil); body.scrollTop = 0; toc(false);
+          reveal(rows[t.id]); // le sommaire défile jusqu'à la rubrique ouverte
+          const hit = highlight(body, query); if (hit) body.scrollTop = Math.max(0, hit.offsetTop - body.clientHeight / 3);
           steps.empty(); // rubrique précédente / suivante : lire d'une traite sans repasser par le sommaire
-          const prev = list[i - 1], next = list[i + 1];
+          const vis = list.filter((x) => !rows[x.id].hasClass("is-out")), j = vis.indexOf(t), prev = j < 0 ? null : vis[j - 1], next = vis[j + 1]; // la recherche active : on tourne parmi les rubriques trouvées
           const step = (t2, cls, word) => { // un mot (« ‹ Précédent ») au-dessus du titre de la rubrique, qui passe à la ligne au lieu de déborder
             const b = steps.createEl("button", { cls: "age-guide__step " + cls }); b.createSpan({ cls: "age-guide__stepword", text: word }); b.createSpan({ cls: "age-guide__steptitle", text: t2.title });
             b.addEventListener("click", () => show(t2.id));
@@ -200,16 +238,30 @@ function openGuide(plugin, topicId, level0, opts) {
           if (prev) step(prev, "age-guide__step--prev", fr ? "‹ Précédent" : "‹ Previous");
           if (next) step(next, "age-guide__step--next", fr ? "Suivant ›" : "Next ›");
         };
-        let part = null;
+        let part = null; const heads = {}, texts = {};
         for (const t of list) {
-          if (t.part && t.part !== part) { part = t.part; nav.createDiv({ cls: "age-guide__part", text: parts[part] }); }
-          const r = nav.createDiv({ cls: "age-guide__item" }); rows[t.id] = r;
+          if (t.part && t.part !== part) { part = t.part; heads[part] = nav.createDiv({ cls: "age-guide__part", text: parts[part] }); }
+          const r = nav.createDiv({ cls: "age-guide__item" }); rows[t.id] = r; texts[t.id] = topicText(t);
           try { obs.setIcon(r.createSpan({ cls: "age-guide__icon" }), t.icon); } catch (e) { /* ignore */ }
           r.createSpan({ text: t.title }); r.addEventListener("click", () => show(t.id));
         }
+        // la recherche : le sommaire ne garde que les rubriques qui contiennent les mots, et le texte les surligne
+        const filter = () => {
+          const seen = list.filter((t) => !query || texts[t.id].includes(query)), keep = new Set(seen.map((t) => t.id));
+          for (const t of list) rows[t.id].toggleClass("is-out", !keep.has(t.id)); // une classe, pas `hidden` : la règle `display: flex` des lignes l'emporterait
+          for (const [p, h] of Object.entries(heads)) h.toggleClass("is-out", !seen.some((t) => t.part === p));
+          none.hidden = seen.length > 0; return seen;
+        };
+        search.oninput = () => { query = fold(search.value.trim()); const seen = filter(); if (seen.length && !narrow()) show(seen.some((t) => t.id === cur) ? cur : seen[0].id); };
+        search.onkeydown = (e) => { if (e.key === "Enter") { const seen = filter(); if (seen.length) show(seen[0].id); } };
+        go = (d) => { const seen = list.filter((t) => !rows[t.id].hasClass("is-out")), i = seen.findIndex((t) => t.id === cur); const t = seen[i + d]; if (t) show(t.id); };
+        filter();
         show(id || (level === "full" ? REF_START : null));
         if (!id && narrow()) toc(true); // sur téléphone, sans rubrique demandée : on ouvre sur le sommaire
       };
+      // ← et → tournent les rubriques (pas pendant qu'on écrit dans la recherche)
+      this.keys = (e) => { if (e.altKey || e.ctrlKey || e.metaKey || /^(INPUT|TEXTAREA)$/.test((e.target && e.target.tagName) || "")) return; if (e.key === "ArrowLeft") { go(-1); e.preventDefault(); } else if (e.key === "ArrowRight") { go(1); e.preventDefault(); } };
+      modalEl.ownerDocument.addEventListener("keydown", this.keys);
       const narrow = () => !!(window.matchMedia && window.matchMedia("(max-width: 640px)").matches);
       for (const k of Object.keys(lv)) lv[k].addEventListener("click", () => { level = k; draw(); });
       foot.createEl("button", { text: fr ? "Enregistrer en note" : "Save as a note" }).addEventListener("click", async () => {
@@ -219,7 +271,7 @@ function openGuide(plugin, topicId, level0, opts) {
       });
       draw(topicId);
     }
-    onClose() { this.contentEl.empty(); }
+    onClose() { if (this.keys) this.modalEl.ownerDocument.removeEventListener("keydown", this.keys); this.contentEl.empty(); }
   }
   const m = new GuideModal(plugin.app); m.open();
   // ouvert depuis le Relto en plein écran : la fenêtre doit passer devant lui (plein écran du navigateur : elle doit vivre dans l'élément plein écran)
@@ -228,4 +280,4 @@ function openGuide(plugin, topicId, level0, opts) {
   if (over && m.containerEl) m.containerEl.addClass("age-guide-over");
 }
 
-module.exports = { GUIDE, PARTS, PART_ORDER, REF_START, topics, toMarkdown, renderTopic, openGuide };
+module.exports = { GUIDE, PARTS, PART_ORDER, REF_START, topics, toMarkdown, renderTopic, openGuide, fold, topicText };
