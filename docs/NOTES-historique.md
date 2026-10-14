@@ -480,3 +480,7 @@ Note : `claude/DESIGN-mode-telephone.md` (projet). Souris inchangée : tout est 
 ## 1.32.5 — moins de mots pour la Guilde (14 oct. 2026)
 
 - `src/relto-telescope.js` : `coarseBand` (0 → rien, 1–3 → quelque chose, 4–5 → tout près) ; `bandWords(t, b, guild)` l'applique en Art de la Guilde (étape du Zéro et étape d'un Âge). Guide FR/EN et réglage mis à jour. Test : `test/touch.test.js`.
+
+## 1.32.6 — un guide français relu (14 oct. 2026)
+
+- `src/guide-ref-fr.js`, `src/guide.js` : relecture du français (calques, tournures approximatives, « Pile à droite de midi » → marques empilées, « revise » → vise de nouveau, condition de déverrouillage du télescope qui disait l'inverse). FR/EN : plus de « bureau seulement », plein écran en portrait décrit, « Open the Relto » crée le refuge, sept pages de réglages.

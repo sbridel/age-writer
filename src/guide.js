@@ -13,17 +13,17 @@ const GUIDE = {
     ] },
     { id: "panel", icon: "layout-panel-top", title: "Le bloc Âge", body: [
       { p: "Sous le bloc, trois onglets pour ne pas tout montrer à la fois :" },
-      { ul: ["**Texte & glyphes** : la description et les glyphes, avec une petite fenêtre de liaison centrée en compagnie", "**Fenêtre de liaison** : la grande fenêtre ; un clic joue le son de liaison", "**Détails** : le reste (stabilité, mécanismes, journal, bouton « Écouter l'Âge »…)"] },
+      { ul: ["**Texte & glyphes** : la description et les glyphes, accompagnés d'une petite fenêtre de liaison au centre", "**Fenêtre de liaison** : la grande fenêtre ; un clic joue le son de liaison", "**Détails** : le reste (stabilité, mécanismes, journal, bouton « Écouter l'Âge »…)"] },
       { p: "Désactivable : réglage « Onglets dans le bloc Âge » (Fenêtre de liaison)." },
       { p: "**Physique du monde** (onglet Détails) : chaque Âge reçoit une physique simplifiée (étoile, orbite, planète, noyau, air, eau, lumière), choisie pour tenir ce que tu as écrit. Si quelque chose ne tient pas, la fiche explique pourquoi et propose une ligne à écrire (`age: 3.5`) : un clic l'écrit dans le bloc. En mode facile (par défaut), la stabilité ne change pas ; en strict, ce qui ne tient pas coûte. Réglage : Âges & mécanismes › Physique des Âges." },
     ] },
     { id: "book", icon: "book-open", title: "Le livre", body: [
       { p: "Commande « Open this Age as a book » : le livre s'ouvre dans un onglet principal (ou une fenêtre, ou le panneau latéral : réglage « Ouvrir le livre dans »). Il s'ouvre toujours sur la **Couverture**." },
-      { ul: ["**Couverture** : générée à partir de l'Âge (marbre, cuir, laiton). Sobriété réglable (réglage « Couvertures des livres » ou ligne `cover:`). « Enregistrer la couverture » l'exporte en SVG", "**Descriptive book** : les pages du monde ; ✓ garde une page tirée, × la retire ; la palette ajoute ou retire des pages", "**Linking book** : trois pages à droite (glyphes + texte, vitre de liaison, liens). Clique la page de droite pour avancer, celle de gauche pour reculer ; un petit bruit de page accompagne"] },
+      { ul: ["**Couverture** : générée à partir de l'Âge (marbre, cuir, laiton). Sobriété réglable (réglage « Couvertures des livres » ou ligne `cover:`). « Enregistrer la couverture » l'exporte en SVG", "**Livre descriptif** : les pages du monde ; ✓ garde une page tirée, × la retire ; la palette ajoute ou retire des pages", "**Livre de liaison** : trois pages de droite (glyphes et texte, vitre de liaison, liens). Clique la page de droite pour avancer, celle de gauche pour reculer ; un froissement de page accompagne le geste"] },
       { p: "Cliquer la vitre ou « open ↗ » t'emmène dans l'Âge visé (liaison parfois incertaine si le livre est abîmé)." },
     ] },
     { id: "relto", icon: "mountain", title: "Le Relto (refuge)", body: [
-      { p: "Ton refuge : une île avec cabane, étagère de livres (tes Âges, cliquables), piliers de liaison. Crée-le avec « Create a Relto page » puis place un bloc `relto` dans une note. Un livre vierge sur la table de la cabane permet d'y écrire un Âge sans quitter le refuge ; une trappe de fer dans le sol mène au coffre où ils sont rangés." },
+      { p: "Ton refuge : une île avec cabane, étagère de livres (tes Âges, cliquables), piliers de liaison. La commande « Open the Relto » le crée ; un bloc `relto` le montre dans n'importe quelle note. Un livre vierge sur la table de la cabane permet d'y écrire un Âge sans quitter le refuge ; une trappe de fer dans le sol mène au coffre où ils sont rangés." },
       { code: "```relto\ninscription: ma devise\n```" },
       { h: "Onglets" },
       { ul: ["**Vue** (œil) : l'image, avec l'heure et l'heure D'ni dessous. Cliquer la zone de l'heure la cache ; elle s'efface seule après quelques secondes, sauf si la souris passe dessus", "**Pages** (feuille) : les pages actives, disponibles, verrouillées ; les livres affichés sur l'étagère", "**Réglages** (engrenage) : heure du ciel, ambiance sonore, niveau et volume", "**Agrandir** : ouvre la **vue Relto** dans un onglet principal, image grande"] },
@@ -42,7 +42,7 @@ const GUIDE = {
       { p: "Réglages : « Loi du changement », « Minutes avant que l'encre sèche », « Guérison par jour »." },
     ] },
     { id: "settings", icon: "settings", title: "Réglages et commandes", body: [
-      { p: "Réglages du plugin, section « Extensions », en six rubriques : Livres & couvertures, Sons, Fenêtre de liaison, D'ni & chiffres, Âges & mécanismes, Dossiers." },
+      { p: "Réglages du plugin, section « Extensions », en sept pages : Livres & couvertures, Sons, Fenêtre de liaison, D'ni & chiffres, Âges & mécanismes, Dossiers, Tirage & bibliothèque." },
       { ul: ["Open this Age as a book", "Open the Relto / Open the Relto view (large)", "Create a Relto page", "Generate a random Age (un monde cohérent tiré au hasard, dans le dossier du refuge)", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide (cette fenêtre)"] },
       { p: "Projet de fan, sans lien avec Cyan Worlds. Aucune ressource de Myst n'est fournie. This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan." },
     ] },
@@ -68,7 +68,7 @@ const GUIDE = {
       { p: "Clicking the glass or “open ↗” takes you to the Age (the link can be unreliable if the book is damaged)." },
     ] },
     { id: "relto", icon: "mountain", title: "The Relto (refuge)", body: [
-      { p: "Your refuge: an island with a hut, a bookshelf (your Ages, clickable) and linking pillars. Create it with “Create a Relto page”, then put a `relto` block in a note. A blank book on the cabin table lets you write an Age without leaving the refuge; an iron hatch in the floor leads to the vault where they are kept." },
+      { p: "Your refuge: an island with a hut, a bookshelf (your Ages, clickable) and linking pillars. The command “Open the Relto” creates it; a `relto` block shows it in any note. A blank book on the cabin table lets you write an Age without leaving the refuge; an iron hatch in the floor leads to the vault where they are kept." },
       { code: "```relto\ninscription: my motto\n```" },
       { h: "Tabs" },
       { ul: ["**View** (eye): the image, with the time and the D'ni time below. Clicking the time hides it; it also fades by itself after a few seconds unless the mouse is over it", "**Pages** (sheet): active, available and locked pages; the books on the shelf", "**Settings** (cog): sky time, soundscape, level and volume", "**Expand**: opens the dedicated **Relto view** in a main tab, with a large image"] },
@@ -87,7 +87,7 @@ const GUIDE = {
       { p: "Settings: “Law of change”, “Minutes before the ink dries”, “Healing per day”." },
     ] },
     { id: "settings", icon: "settings", title: "Settings & commands", body: [
-      { p: "Plugin settings, “Extensions” section, in six pages: Books & covers, Sounds, Linking window, D'ni & numbers, Ages & mechanics, Folders." },
+      { p: "Plugin settings, “Extensions” section, in seven pages: Books & covers, Sounds, Linking window, D'ni & numbers, Ages & mechanics, Folders, Drawing & library." },
       { ul: ["Open this Age as a book", "Open the Relto / Open the Relto view (large)", "Create a Relto page", "Generate a random Age (a coherent random world, in the refuge folder)", "Save this Age's book cover (SVG)", "Create the exploration journal for this Age", "Open the Age Writer guide (this window)"] },
       { p: "A fan project, unrelated to Cyan Worlds. No Myst asset is included. This product contains trademarks and/or copyrighted works of Cyan. All rights reserved by Cyan. This product is not official and is not endorsed by Cyan." },
     ] },

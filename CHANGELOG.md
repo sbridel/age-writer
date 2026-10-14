@@ -2,6 +2,12 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.32.6 — A better French guide (2026-10-14)
+
+### Changed
+- **French guide reread**: clumsy or approximate wording rewritten in natural French (dosing, physics values, telescope, phone, star chart, spoilers), and one sentence whose meaning was reversed (when the telescope page unlocks).
+- **Guide, both languages**: mobile is no longer listed as unsupported; the phone paragraph now describes the portrait full screen; the Relto is created by “Open the Relto”; the settings have seven pages.
+
 ## 1.32.5 — Fewer words for the Guild (2026-10-14)
 
 ### Changed
