@@ -168,10 +168,18 @@ La relecture automatique du catalogue lit `styles.css` et les sources. Corrigé 
 
 ## Publier une version
 
-1. `version` dans `package.json`.
-2. `npm run lint && npm test`.
-3. `npm run zip` → `release/age-writer-<v>.zip` (plugin) et `release/age-writer-<v>-src.zip` (sources).
-4. Mettre à jour `docs/NOTES-historique.md`.
+On travaille sur `assembly` ; `main` = dernière release. Publier seulement sur le « go » de l'auteur.
+
+1. Monter la version dans `package.json`, `manifest.json` et `versions.json` (`"x.y.z": "1.0.0"`).
+2. Écrire la section `## x.y.z — Titre (date)` en anglais dans `CHANGELOG.md` (le test des notes exige un titre après le tiret cadratin), la section française dans `docs/NOTES-historique.md`, et la ligne « Nouveautés récentes » dans `README.md` et `README.fr.md` (avant le premier `- **` du titre).
+3. `npm run lint`, `npm run build`, `npm test` : tout doit être vert avant de pousser.
+4. Commit, puis `git push origin assembly` et `git push origin assembly:main`. Le workflow `.github/workflows/release.yml` voit `package.json` changer sur `main`, crée le tag (sans « v ») et la release avec `main.js`, `manifest.json` et `styles.css` ; les fichiers sont attestés.
+5. Vérifier : `gh api repos/sbridel/age-writer/releases --jq '.[0] | .tag_name + " | " + (.assets|map(.name)|join(","))'` (les fichiers mettent environ 2 minutes à apparaître).
+6. `npm run zip` donne `release/age-writer-<v>.zip` (plugin) et `release/age-writer-<v>-src.zip` (sources), si besoin hors GitHub.
+
+Le catalogue : le plugin est listé sur https://community.obsidian.md/plugins/age-writer (catégories Writing en premier, TTRPG, Visualization). Il passe par le site, pas par une demande dans `obsidian-releases` : rien à faire côté `community-plugins.json`. Chaque release relance la vérification automatique (voir la section précédente). Sans le catalogue, on peut installer avec BRAT (`sbridel/age-writer`).
+
+Tracery (`src/engine/vendor/tracery.js`, 16 Ko) ne fait plus que l'expansion de base ; `prose.js` lui prête le hasard du plugin pour que « même Âge, même texte ». On le garde : le changer réécrirait les descriptions des Âges existants.
 
 ## Reference corpus (non-regression)
 
