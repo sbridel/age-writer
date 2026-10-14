@@ -2,6 +2,13 @@
 
 [English](README.md) · **Français**
 
+[![Obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md)
+[![Downloads of the latest release](https://img.shields.io/github/downloads/sbridel/age-writer/latest/total?label=downloads%40latest)](https://github.com/sbridel/age-writer/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/sbridel/age-writer/total?label=downloads)](https://github.com/sbridel/age-writer/releases)
+[![Release](https://img.shields.io/github/v/release/sbridel/age-writer?label=release)](https://github.com/sbridel/age-writer/releases/latest)
+[![Last commit](https://img.shields.io/github/last-commit/sbridel/age-writer/assembly?label=last%20commit)](https://github.com/sbridel/age-writer/commits/assembly)
+[![License](https://img.shields.io/github/license/sbridel/age-writer?label=license)](LICENSE)
+
 Plugin Obsidian pour écrire des mondes. Tu écris un **Âge** (un monde) dans un bloc `age`, une page par ligne, et le plugin calcule le reste : description, stabilité, fenêtre de liaison peinte et animée, livre à feuilleter avec sa couverture, carte des mondes liés, et un refuge (le **Relto**) où ranger tes Âges. Tout est local : pas de réseau, pas d'IA à l'exécution, tous les sons sont synthétisés et tous les dessins sont procéduraux.
 
 Idée de départ : on ne **crée** pas un monde, on se **lie** à un monde qui existe. Ce que tu écris le décrit ; ce que tu laisses ouvert est tiré au sort, toujours de la même façon pour la même note. Et si tu réécris un monde déjà exploré, tu l'abîmes.
