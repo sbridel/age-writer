@@ -179,19 +179,24 @@ function cabinWindowFrame(ctx, c, sky, wx, wy, ww, wh) {
 /** Le clair de la fenêtre en ogive (pour y peindre le ciel). */
 function cabinWindowClip(ctx, wx, wy, ww, wh) { ogive(ctx, wx, wx + ww, wy - 22, wy + wh); }
 
-/** La porte : une ogive de verre ambre au plomb (un soleil, une tige), cadre de cuivre. */
+/** La porte : une ogive de verre ambre au plomb (un soleil, une tige), cadre de cuivre, sous une imposte (traverse de cuivre entre les deux). */
 function cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl) {
-  const G = glassTones(c, sky, 0.2), top = dy - 16; // pas d'imposte : l'ogive s'arrête sous la fenêtre voisine
-  ctx.fillStyle = c(COPPER_LO); ogive(ctx, dx - 4, dx + dw + 4, top, FLOOR); ctx.fill();
-  const gr = ctx.createLinearGradient(0, top, 0, FLOOR); gr.addColorStop(0, G.amb); gr.addColorStop(1, G.amb2); ctx.fillStyle = gr; ogive(ctx, dx, dx + dw, top + 4, FLOOR - 2); ctx.fill();
-  ctx.save(); ogive(ctx, dx, dx + dw, top + 4, FLOOR - 2); ctx.clip();
-  const m = dx + dw / 2, sy = top + 34; ctx.strokeStyle = rgba(90, 46, 18, 0.85); ctx.lineWidth = 1.6;
+  const G = glassTones(c, sky, 0.2), top = dy - 16;
+  // l'imposte : une ogive de verre vert d'eau au-dessus de la porte, séparée d'elle par une traverse de cuivre (rien ne se chevauche),
+  // l'œil-de-bœuf en son cœur ; elle s'arrête avant la grande fenêtre
+  const ib = top + 2, it = ib - 50; pane(ctx, c, dx + 2, dx + dw - 2, it, ib, G.teal, G.teal2, false, 2.5);
+  cabinOculus(ctx, c, sky, dx + dw / 2, ib - 18, 11);
+  ctx.fillStyle = c(COPPER); ctx.fillRect(dx - 4, ib, dw + 8, 4); ctx.fillStyle = c(COPPER_HI); ctx.fillRect(dx - 4, ib, dw + 8, 1.1); // la traverse
+  ctx.fillStyle = c(COPPER_LO); ogive(ctx, dx - 4, dx + dw + 4, top + 6, FLOOR); ctx.fill();
+  const gr = ctx.createLinearGradient(0, top, 0, FLOOR); gr.addColorStop(0, G.amb); gr.addColorStop(1, G.amb2); ctx.fillStyle = gr; ogive(ctx, dx, dx + dw, top + 10, FLOOR - 2); ctx.fill();
+  ctx.save(); ogive(ctx, dx, dx + dw, top + 10, FLOOR - 2); ctx.clip();
+  const m = dx + dw / 2, sy = top + 46; ctx.strokeStyle = rgba(90, 46, 18, 0.85); ctx.lineWidth = 1.6;
   ctx.beginPath(); ctx.arc(m, sy, 9, 0, 6.283); ctx.stroke(); ctx.beginPath(); ctx.arc(m, sy, 4, 0, 6.283); ctx.stroke();
   for (let i = 0; i < 12; i++) { const a = (i * Math.PI) / 6; ctx.beginPath(); ctx.moveTo(m + Math.cos(a) * 11, sy + Math.sin(a) * 11); ctx.lineTo(m + Math.cos(a) * 16, sy + Math.sin(a) * 16); ctx.stroke(); }
   ctx.beginPath(); ctx.moveTo(m, sy + 16); ctx.bezierCurveTo(m - 10, sy + 50, m + 10, sy + 80, m, FLOOR); ctx.stroke();
   for (const y of [sy + 60, sy + 95]) { ctx.beginPath(); ctx.moveTo(m, y); ctx.quadraticCurveTo(m - 16, y - 6, m - 14, y - 18); ctx.moveTo(m, y); ctx.quadraticCurveTo(m + 16, y - 6, m + 14, y - 18); ctx.stroke(); }
   ctx.restore();
-  ctx.strokeStyle = c(COPPER); ctx.lineWidth = 3; ogive(ctx, dx, dx + dw, top + 4, FLOOR - 2); ctx.stroke();
+  ctx.strokeStyle = c(COPPER); ctx.lineWidth = 3; ogive(ctx, dx, dx + dw, top + 10, FLOOR - 2); ctx.stroke();
   ctx.fillStyle = c("#e6c37a"); ctx.beginPath(); ctx.arc(dx + dw - 9, dy + 70, 3, 0, 6.283); ctx.fill(); // la poignée, à sa place
   void fl;
 }

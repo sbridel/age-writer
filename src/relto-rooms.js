@@ -68,7 +68,7 @@ function drawCabin(r, ctx, sc, sky, t) {
   } else ATELIER.drawBookcase(r, ctx, c, false, true); // pas d'atelier : la petite bibliothèque reste, pour faire patienter — ses livres se touchent, sans effet
   // porte (retour à l'île)
   const dx = 22, dy = 112, dw = 64;
-  if (glass) { GLASS.cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl); GLASS.cabinOculus(ctx, c, sky, dx + dw / 2, 68, 15); } else { // la Verrière : la porte en ogive et un œil-de-bœuf au-dessus
+  if (glass) { GLASS.cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl); } else { // la Verrière : la porte en ogive sous son imposte (l'œil-de-bœuf au cœur)
   ctx.fillStyle = c("#2a1c14"); ctx.fillRect(dx - 4, dy - 4, dw + 8, FLOOR - dy + 4);
   ctx.fillStyle = c("#46301f"); ctx.fillRect(dx, dy, dw, FLOOR - dy - 2);
   ctx.strokeStyle = rgba(0, 0, 0, 0.35); ctx.lineWidth = 1; for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(dx + i * dw / 4, dy); ctx.lineTo(dx + i * dw / 4, FLOOR - 2); ctx.stroke(); }
