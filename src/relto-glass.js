@@ -20,20 +20,64 @@ function glassTones(c, sky, warm) {
   return { teal: c(teal), teal2: c(teal2), amb: c(amb), amb2: c(amb2) };
 }
 
-/** Un panneau de verre en ogive avec son rinceau au plomb (tige en coup de fouet, deux paires de feuilles, un bourgeon) et son cadre de cuivre. */
-function pane(ctx, c, xa, xb, top, base, g1, g2, motif = true, lw = 3) {
+/**
+ * Les motifs au plomb : des fleurs et des feuillages art nouveau, tous de notre main. `kind` : « whip » (tige en coup de fouet,
+ * feuilles, bourgeon), « iris » (trois pétales qui retombent, feuilles en lame), « lily » (lys en trompette), « poppy » (pavot rond
+ * à cœur), « ginkgo » (éventails sur une tige), « tulip » (tulipe en coupe), « fern » (crosse qui se déroule). `m` : l'axe, `top`/`base` :
+ * le haut et le bas du dessin, `s` : l'échelle (1 pour un panneau de 40 px de large). Trace seulement (la couleur et l'épaisseur sont
+ * celles du contexte).
+ */
+const MOTIFS = ["whip", "iris", "lily", "poppy", "ginkgo", "tulip", "fern"];
+function motif(ctx, kind, m, top, base, s = 1) {
+  const h = base - top, L = (y, dx1, dy1, dx2, dy2) => { ctx.beginPath(); ctx.moveTo(m, y); ctx.quadraticCurveTo(m + dx1 * s, y + dy1 * s, m + dx2 * s, y + dy2 * s); ctx.stroke(); };
+  const stem = (topY, sway = 8) => { ctx.beginPath(); ctx.moveTo(m, base); ctx.bezierCurveTo(m - sway * s, base - h * 0.3, m + sway * s, base - h * 0.55, m, topY); ctx.stroke(); };
+  if (kind === "iris") {
+    const fy = top + h * 0.25; stem(fy + 6 * s, 3);
+    ctx.beginPath(); ctx.moveTo(m, fy + 6 * s); ctx.quadraticCurveTo(m - 2 * s, fy - 10 * s, m, fy - 14 * s); ctx.quadraticCurveTo(m + 2 * s, fy - 10 * s, m, fy + 6 * s); ctx.stroke(); // le pétale dressé
+    for (const d of [-1, 1]) { ctx.beginPath(); ctx.moveTo(m, fy + 2 * s); ctx.bezierCurveTo(m + d * 12 * s, fy - 6 * s, m + d * 16 * s, fy + 6 * s, m + d * 9 * s, fy + 12 * s); ctx.stroke(); } // les deux qui retombent
+    for (const d of [-1, 1]) { ctx.beginPath(); ctx.moveTo(m, base); ctx.quadraticCurveTo(m + d * 10 * s, base - h * 0.35, m + d * 6 * s, base - h * 0.62); ctx.stroke(); } // les feuilles en lame
+  } else if (kind === "lily") {
+    const fy = top + h * 0.2; stem(fy + 12 * s, 6);
+    ctx.beginPath(); ctx.moveTo(m - 3 * s, fy + 12 * s); ctx.lineTo(m - 9 * s, fy - 2 * s); ctx.quadraticCurveTo(m - 13 * s, fy - 8 * s, m - 6 * s, fy - 6 * s); ctx.moveTo(m + 3 * s, fy + 12 * s); ctx.lineTo(m + 9 * s, fy - 2 * s); ctx.quadraticCurveTo(m + 13 * s, fy - 8 * s, m + 6 * s, fy - 6 * s); ctx.stroke(); // la trompette et ses lèvres
+    ctx.beginPath(); ctx.moveTo(m, fy + 10 * s); ctx.lineTo(m, fy - 8 * s); ctx.stroke(); for (const d of [-1, 0, 1]) { ctx.beginPath(); ctx.arc(m + d * 3 * s, fy - 9 * s, 1 * s + 0.3, 0, 6.283); ctx.stroke(); } // les étamines
+    L(base - h * 0.4, -12, -4, -10, -16); L(base - h * 0.55, 12, -4, 10, -16);
+  } else if (kind === "poppy") {
+    const fy = top + h * 0.26, r = 9 * s; stem(fy + r, 10);
+    for (let i = 0; i < 5; i++) { const a = (i * 2 * Math.PI) / 5 - Math.PI / 2; ctx.beginPath(); ctx.ellipse(m + Math.cos(a) * r * 0.6, fy + Math.sin(a) * r * 0.6, r * 0.55, r * 0.4, a, 0, 6.283); ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(m, fy, r * 0.28, 0, 6.283); ctx.stroke();
+    L(base - h * 0.3, -10, 2, -12, -10); L(base - h * 0.42, 10, 2, 12, -10);
+    ctx.beginPath(); ctx.arc(m + 8 * s, base - h * 0.62, 2.4 * s, 0, 6.283); ctx.stroke(); // un bouton qui penche
+  } else if (kind === "ginkgo") {
+    stem(top + h * 0.18, 5);
+    for (const [f, d] of [[0.25, -1], [0.45, 1], [0.65, -1], [0.82, 1]]) {
+      const y = top + h * f, x = m + d * 3 * s, a = d > 0 ? -0.35 : Math.PI + 0.35; // un éventail au bout d'un pétiole
+      const ex = x + Math.cos(a) * 9 * s, ey = y + Math.sin(a) * 9 * s; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ex, ey); ctx.arc(ex, ey, 6 * s, a - 0.9, a + 0.9); ctx.closePath(); ctx.stroke();
+    }
+  } else if (kind === "tulip") {
+    const fy = top + h * 0.24; stem(fy + 8 * s, 4);
+    ctx.beginPath(); ctx.moveTo(m - 8 * s, fy - 6 * s); ctx.quadraticCurveTo(m - 9 * s, fy + 9 * s, m, fy + 9 * s); ctx.quadraticCurveTo(m + 9 * s, fy + 9 * s, m + 8 * s, fy - 6 * s); ctx.lineTo(m + 4 * s, fy - 1 * s); ctx.lineTo(m, fy - 8 * s); ctx.lineTo(m - 4 * s, fy - 1 * s); ctx.closePath(); ctx.stroke(); // la coupe à trois pointes
+    for (const d of [-1, 1]) { ctx.beginPath(); ctx.moveTo(m, base - h * 0.08); ctx.bezierCurveTo(m + d * 14 * s, base - h * 0.2, m + d * 12 * s, base - h * 0.42, m + d * 4 * s, base - h * 0.5); ctx.stroke(); } // deux larges feuilles
+  } else if (kind === "fern") {
+    ctx.beginPath(); ctx.moveTo(m, base); ctx.bezierCurveTo(m - 4 * s, base - h * 0.4, m + 6 * s, base - h * 0.7, m, top + h * 0.2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(m - 4 * s, top + h * 0.2, 4 * s, 0, Math.PI * 1.6); ctx.stroke(); ctx.beginPath(); ctx.arc(m - 4 * s, top + h * 0.2, 1.6 * s, 0, Math.PI * 1.4); ctx.stroke(); // la crosse
+    for (let k = 0; k < 6; k++) { const y = base - h * (0.12 + k * 0.11), w = (11 - k * 1.2) * s; for (const d of [-1, 1]) { ctx.beginPath(); ctx.moveTo(m, y); ctx.quadraticCurveTo(m + d * w * 0.6, y - 2 * s, m + d * w, y - 6 * s); ctx.stroke(); } }
+  } else { // « whip » : tige en coup de fouet, deux paires de feuilles, un bourgeon
+    stem(top + h * 0.22, 8);
+    for (const [f, sp] of [[0.38, 1], [0.62, 0.8]]) { const y = base - h * f; L(y, -14 * sp, -4 / s, -11 * sp, -14 * sp); L(y, 14 * sp, -4 / s, 11 * sp, -14 * sp); }
+    ctx.beginPath(); ctx.ellipse(m, top + h * 0.17, 4 * s + 1, 6 * s + 1.5, 0, 0, 6.283); ctx.stroke();
+  }
+}
+
+/** Un panneau de verre en ogive avec son motif au plomb (`kind` : un nom de MOTIFS, ou faux pour aucun) et son cadre de cuivre. */
+function pane(ctx, c, xa, xb, top, base, g1, g2, kind = "whip", lw = 3) {
   const gr = ctx.createLinearGradient(0, top, 0, base); gr.addColorStop(0, g1); gr.addColorStop(1, g2);
   ctx.fillStyle = gr; ogive(ctx, xa, xb, top, base); ctx.fill();
-  if (motif) {
-    const m = (xa + xb) / 2, h = base - top, s = Math.min(1, (xb - xa) / 40);
+  if (kind) {
+    const m = (xa + xb) / 2, s = Math.min(1, (xb - xa) / 40);
     ctx.save(); ogive(ctx, xa, xb, top, base); ctx.clip();
     ctx.strokeStyle = rgba(15, 47, 44, 0.85); ctx.lineWidth = 1.6 * s + 0.4; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(m, base); ctx.bezierCurveTo(m - 8 * s, base - h * 0.3, m + 8 * s, base - h * 0.55, m, top + h * 0.22); ctx.stroke();
-    for (const [f, sp] of [[0.38, 1], [0.62, 0.8]]) {
-      const y = base - h * f;
-      ctx.beginPath(); ctx.moveTo(m, y); ctx.quadraticCurveTo(m - 14 * s * sp, y - 4, m - 11 * s * sp, y - 14 * s * sp); ctx.moveTo(m, y); ctx.quadraticCurveTo(m + 14 * s * sp, y - 4, m + 11 * s * sp, y - 14 * s * sp); ctx.stroke();
-    }
-    ctx.beginPath(); ctx.ellipse(m, top + h * 0.17, 4 * s + 1, 6 * s + 1.5, 0, 0, 6.283); ctx.stroke();
+    motif(ctx, kind === true ? "whip" : kind, m, top + (xb - xa) * 0.25, base, s);
     ctx.restore();
   }
   ctx.strokeStyle = c(COPPER); ctx.lineWidth = lw; ogive(ctx, xa, xb, top, base); ctx.stroke();
@@ -73,7 +117,7 @@ function cabinWalls(r, ctx, c, sky, t, FLOOR) {
   const bg = ctx.createLinearGradient(0, 0, 0, RAIL); bg.addColorStop(0, c("#16302d")); bg.addColorStop(1, c("#1d3a36")); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, RAIL);
   // les panneaux de verre, là où le mur se voit : au-dessus de la porte (l'imposte ambre, dessinée avec la porte), autour de la fenêtre,
   // de part et d'autre du conduit de la cheminée
-  for (const [xa, xb, top, base, amber] of [[0, 16, 40, RAIL, false], [452, 480, 34, 104, false], [600, 638, 34, 104, false], [620, 640, 118, RAIL, false], [440, 450, 118, RAIL, false]]) pane(ctx, c, xa, xb, top, base, amber ? G.amb : G.teal, amber ? G.amb2 : G.teal2, xb - xa > 20, 2.5);
+  for (const [xa, xb, top, base, kind] of [[0, 16, 40, RAIL, null], [452, 480, 34, 104, "iris"], [600, 638, 34, 104, "lily"], [620, 640, 118, RAIL, null], [440, 450, 118, RAIL, null]]) pane(ctx, c, xa, xb, top, base, G.teal, G.teal2, kind, 2.5);
   // le plafond : une poutre de cuivre et des arcs brisés qui retombent sur les trois colonnes
   const cg = ctx.createLinearGradient(0, 0, 0, 26); cg.addColorStop(0, c(COPPER_LO)); cg.addColorStop(0.5, c(COPPER)); cg.addColorStop(1, c(COPPER_LO)); ctx.fillStyle = cg; ctx.fillRect(0, 0, W, 22);
   ctx.strokeStyle = c(COPPER); ctx.lineWidth = 3;
@@ -135,10 +179,9 @@ function cabinWindowFrame(ctx, c, sky, wx, wy, ww, wh) {
 /** Le clair de la fenêtre en ogive (pour y peindre le ciel). */
 function cabinWindowClip(ctx, wx, wy, ww, wh) { ogive(ctx, wx, wx + ww, wy - 22, wy + wh); }
 
-/** La porte : une ogive de verre ambre au plomb (un soleil, une tige), cadre de cuivre, sous une imposte vert d'eau. */
+/** La porte : une ogive de verre ambre au plomb (un soleil, une tige), cadre de cuivre. */
 function cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl) {
-  const G = glassTones(c, sky, 0.2), top = dy - 26;
-  pane(ctx, c, dx - 6, dx + dw + 6, top - 30, top + 10, G.teal, G.teal2, false, 3); // l'imposte, au-dessus
+  const G = glassTones(c, sky, 0.2), top = dy - 16; // pas d'imposte : l'ogive s'arrête sous la fenêtre voisine
   ctx.fillStyle = c(COPPER_LO); ogive(ctx, dx - 4, dx + dw + 4, top, FLOOR); ctx.fill();
   const gr = ctx.createLinearGradient(0, top, 0, FLOOR); gr.addColorStop(0, G.amb); gr.addColorStop(1, G.amb2); ctx.fillStyle = gr; ogive(ctx, dx, dx + dw, top + 4, FLOOR - 2); ctx.fill();
   ctx.save(); ogive(ctx, dx, dx + dw, top + 4, FLOOR - 2); ctx.clip();
@@ -175,10 +218,7 @@ function copperPlate(ctx, c, x, y, w, h, shade = 1) {
   const g = ctx.createLinearGradient(x, y, x + w, y + h); g.addColorStop(0, c("#8a4a1e")); g.addColorStop(0.45, c("#c98a52")); g.addColorStop(1, c("#6b3a16"));
   ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
   ctx.strokeStyle = rgba(60, 28, 8, 0.55 * shade); ctx.lineWidth = 1; ctx.strokeRect(x + 3.5, y + 3.5, w - 7, h - 7);
-  const m = x + w / 2; ctx.strokeStyle = rgba(60, 28, 8, 0.4 * shade); ctx.lineWidth = 1.1; ctx.lineCap = "round";
-  ctx.beginPath(); ctx.moveTo(m, y + h - 8); ctx.bezierCurveTo(m - 7, y + h * 0.62, m + 7, y + h * 0.42, m, y + 14); ctx.stroke();
-  for (const f of [0.62, 0.42]) { const yy = y + h * f; ctx.beginPath(); ctx.moveTo(m, yy); ctx.quadraticCurveTo(m - 12, yy - 3, m - 10, yy - 11); ctx.moveTo(m, yy); ctx.quadraticCurveTo(m + 12, yy - 3, m + 10, yy - 11); ctx.stroke(); }
-  ctx.beginPath(); ctx.ellipse(m, y + 11, 3, 4.5, 0, 0, 6.283); ctx.stroke();
+  ctx.strokeStyle = rgba(60, 28, 8, 0.4 * shade); ctx.lineWidth = 1.1; ctx.lineCap = "round"; motif(ctx, "poppy", x + w / 2, y + 10, y + h - 7, 1); // un pavot gravé
   ctx.fillStyle = c("#e6a06a"); for (const [rx, ry] of [[x + 6, y + 6], [x + w - 6, y + 6], [x + 6, y + h - 6], [x + w - 6, y + h - 6]]) { ctx.beginPath(); ctx.arc(rx, ry, 1.6, 0, 6.283); ctx.fill(); }
   ctx.fillStyle = rgba(255, 230, 180, 0.12 * shade); ctx.fillRect(x + 2, y + 2, w - 4, 2);
 }
@@ -204,4 +244,4 @@ function tableLegs(ctx, c, tx, tw, ty) {
   ctx.fillStyle = c("#2a1a12"); ctx.fillRect(tx + 2, ty + 8, tw - 4, 6);
 }
 
-module.exports = { copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+module.exports = { MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };

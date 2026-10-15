@@ -12,6 +12,7 @@ const RI = require("./relto-imager");
 const PB = require("./relto-pagebook");
 const TL = require("./relto-telescope");
 const SM = require("./relto-starmap");
+const GLASS = require("./relto-glass");
 const CK = require("./relto-clock");
 const IM = require("./imager");
 const GI = require("./imager-guild");
@@ -1106,10 +1107,9 @@ class ReltoRenderer {
     const bays = [[x0 + 1, x0 + 19, y0 + 2], [x0 + w - 19, x0 + w - 1, y0 + 2]], door = [hx - 7, hx + 7, y0 - 4];
     for (const [xa, xb, top] of bays) {
       ctx.fillStyle = vgrad(top, TEAL, TEAL2); ogive(xa, xb, top, GY); ctx.fill();
-      // le rinceau au plomb : une tige en coup de fouet, deux feuilles, un bourgeon
-      const m = (xa + xb) / 2; ctx.strokeStyle = LEAD; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(m, GY); ctx.bezierCurveTo(m - 4, GY - 9, m + 4, GY - 16, m, top + 9); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(m, GY - 12); ctx.quadraticCurveTo(m - 6, GY - 15, m - 5, GY - 20); ctx.moveTo(m, GY - 12); ctx.quadraticCurveTo(m + 6, GY - 15, m + 5, GY - 20); ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(m, top + 7, 1.8, 2.6, 0, 0, 6.283); ctx.stroke();
+      // le motif au plomb : une fleur différente dans chaque baie (src/relto-glass.js, motif)
+      ctx.save(); ogive(xa, xb, top, GY); ctx.clip(); ctx.strokeStyle = LEAD; ctx.lineWidth = 0.7; ctx.lineCap = "round";
+      GLASS.motif(ctx, xa < hx ? "tulip" : "iris", (xa + xb) / 2, top + 5, GY, 0.48); ctx.restore();
       ctx.strokeStyle = CU; ctx.lineWidth = 1.4; ogive(xa, xb, top, GY); ctx.stroke();
     }
     ctx.fillStyle = vgrad(door[2], AMB, AMB2); ogive(door[0], door[1], door[2], GY); ctx.fill();
