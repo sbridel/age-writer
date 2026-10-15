@@ -149,8 +149,11 @@ function drawAtelier(r, ctx, sc, sky, t) {
   // fauteuil devant le feu ; le chat s'y roule en boule
   const ax = 396, ay = 262;
   const cover = coverOf(r); // la housse du jour : une étoffe sourde, qui change chaque jour (le même jour, la même toute la journée)
+  if (glass) require("./relto-glass").armchair(ctx, c, ax, ay, cover); // la Verrière : dossier en fer à cheval clouté de cuivre, accoudoirs en crosse, pieds en coup de fouet ; la housse du jour, la même
+  else {
   ctx.fillStyle = c(cover.back); ctx.fillRect(ax, ay - 52, 52, 54); ctx.fillStyle = c(cover.seat); ctx.fillRect(ax - 8, ay - 30, 14, 36); ctx.fillRect(ax + 46, ay - 30, 14, 36); ctx.fillRect(ax + 4, ay - 26, 44, 28);
   ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(ax - 8, ay + 2, 68, 5); ctx.fillStyle = c("#2f2016"); ctx.fillRect(ax - 6, ay + 6, 4, 8); ctx.fillRect(ax + 54, ay + 6, 4, 8);
+  }
   const cat = sc.additions.find((a) => a.type === "cat");
   if (cat && r.catSpotFor() === 0) r.drawSleepingCat(ctx, cat, { x: ax + 28, y: ay - 26, S: 1.7, shade: c, tip: TRr("atelier.cat.tip"), camo: cover.camo }, t); // (Marcel s'y camoufle : la couleur de la housse du jour, entre le dossier et l'assise) le même chat que dans la cabane, roulé sur l'assise
   else r.hot.push({ x: ax - 8, y: ay - 52, w: 68, h: 56, tip: TRr("atelier.chair.tip"), flash: TRr("atelier.chair.flash") });
@@ -158,7 +161,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   { const { pin, sheet } = wallBits(ctx, c), TRd = (k) => TRr(k), wq = rng(0xb0a7);
     FL.drawPortrait(ctx, c, sc, t); // l'ovale au mur : une fleur de cristal, qui luit doucement
     r.hot.push({ x: 119, y: 129, w: 44, h: 58, tip: TRd("atelier.deco.portrait"), go: "flower" });
-    ctx.fillStyle = c("#5a4330"); ctx.fillRect(188, 126, 108, 72); ctx.strokeStyle = c("#2f2118"); ctx.lineWidth = 3; ctx.strokeRect(188, 126, 108, 72); // le tableau : liège sombre, feuilles, ficelles
+    ctx.fillStyle = c("#5a4330"); ctx.fillRect(188, 126, 108, 72); ctx.strokeStyle = c(glass ? "#b5652a" : "#2f2118"); ctx.lineWidth = 3; ctx.strokeRect(188, 126, 108, 72); // le tableau : liège sombre, feuilles, ficelles (cadre de cuivre sous la Verrière)
     for (let i = 0; i < 60; i++) { ctx.fillStyle = rgba(0, 0, 0, 0.1); ctx.fillRect(190 + wq() * 104, 128 + wq() * 68, 1.5, 1.5); }
     const P = [[200, 136, 22, 28, "#d9c9a0", -0.05], [236, 134, 26, 22, "#cdbb8a", 0.04], [268, 140, 22, 30, "#e0d3ae", -0.03], [212, 168, 26, 20, "#d6c598", 0.05], [252, 172, 28, 18, "#d9c9a0", -0.04]], pts = [];
     for (const [x, y, w, h, col, rot] of P) { sheet(x, y, w, h, rot, col, () => { ctx.strokeStyle = rgba(60, 45, 25, 0.5); ctx.lineWidth = 0.8; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(-w / 2 + 4, -h / 2 + 6 + k * 5); ctx.lineTo(w / 2 - 4 - k * 2, -h / 2 + 6 + k * 5); ctx.stroke(); } }); pts.push([x + w / 2, y + 4]); }
@@ -168,7 +171,9 @@ function drawAtelier(r, ctx, sc, sky, t) {
       ctx.strokeStyle = c("#2a1c14"); ctx.lineWidth = 0.8; for (let i = 0; i < 12; i++) { const a = 2.4 + i * 0.4; ctx.beginPath(); ctx.moveTo(bx + Math.cos(a) * 14, by + Math.sin(a) * 14); ctx.lineTo(bx + Math.cos(a) * 17, by + Math.sin(a) * 17); ctx.stroke(); }
       ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + Math.cos(4.3) * 13, by + Math.sin(4.3) * 13); ctx.stroke(); ctx.fillStyle = c("#2a1c14"); ctx.beginPath(); ctx.arc(bx, by, 2, 0, 6.283); ctx.fill();
       r.hot.push({ x: bx - 23, y: by - 23, w: 46, h: 46, tip: TRd("atelier.deco.baro"), flash: TRd("atelier.deco.baro.flash") }); }
-    { const sx = 364, sy = 176; ctx.fillStyle = c("#4b3626"); ctx.fillRect(sx, sy, 84, 5); ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(sx + 6, sy + 5, 4, 8); ctx.fillRect(sx + 74, sy + 5, 4, 8); // une étagère, des bocaux et un crâne de souris
+    { const sx = 364, sy = 176; ctx.fillStyle = c("#4b3626"); ctx.fillRect(sx, sy, 84, 5);
+      if (glass) { ctx.strokeStyle = c("#b5652a"); ctx.lineWidth = 2; for (const bx of [sx + 8, sx + 76]) { ctx.beginPath(); ctx.moveTo(bx, sy + 5); ctx.bezierCurveTo(bx, sy + 14, bx - 6, sy + 16, bx - 4, sy + 10); ctx.stroke(); } ctx.fillStyle = c("#b5652a"); ctx.fillRect(sx, sy, 84, 1.4); } // des consoles de cuivre en crosse
+      else { ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(sx + 6, sy + 5, 4, 8); ctx.fillRect(sx + 74, sy + 5, 4, 8); } // une étagère, des bocaux et un crâne de souris
       const J = [["#2f6b48", 12, 22], ["#7a3a3a", 10, 17], ["#3b3560", 14, 25], ["#6a4a2a", 11, 15]]; let jx = sx + 6;
       for (const [col, w, h] of J) { ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(jx + 1, sy - h + 1, w, h); ctx.fillStyle = c(col); ctx.fillRect(jx, sy - h, w, h); ctx.fillStyle = rgba(255, 255, 255, 0.18); ctx.fillRect(jx + 2, sy - h + 3, 2, h - 7); ctx.fillStyle = c("#c9a24e"); ctx.fillRect(jx + 1, sy - h - 3, w - 2, 3); jx += w + 5; }
       ctx.fillStyle = c("#e6d9b8"); ctx.beginPath(); ctx.ellipse(sx + 74, sy - 4, 5, 4, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#2a1c14"); ctx.fillRect(sx + 72, sy - 5, 1.5, 1.5); ctx.fillRect(sx + 75, sy - 5, 1.5, 1.5);
@@ -176,9 +181,12 @@ function drawAtelier(r, ctx, sc, sky, t) {
   require("./relto-vault").trapDoor(r, ctx, c, 567, 300, 78, 24, TRr("vault.door.tip")); // la trappe de fer, dans le sol devant la cheminée : le coffre des livres descriptifs
   // le grand bureau
   const tx = 100, tw = 270, ty = 270;
-  ctx.fillStyle = c("#2f2016"); ctx.fillRect(tx + 8, ty, 10, 74); ctx.fillRect(tx + tw - 18, ty, 10, 74); ctx.fillStyle = c("#3d2a1c"); ctx.fillRect(tx + 6, ty + 10, tw - 12, 46);
+  if (glass) require("./relto-glass").tableLegs(ctx, c, tx + 4, tw - 8, ty + 30); // la Verrière : des pieds en coup de fouet sous le caisson
+  else { ctx.fillStyle = c("#2f2016"); ctx.fillRect(tx + 8, ty, 10, 74); ctx.fillRect(tx + tw - 18, ty, 10, 74); }
+  ctx.fillStyle = c(glass ? "#2a1a12" : "#3d2a1c"); ctx.fillRect(tx + 6, ty + 10, tw - 12, 46);
   ctx.fillStyle = rgba(0, 0, 0, 0.3); for (let i = 0; i < 3; i++) ctx.fillRect(tx + 24 + i * 78, ty + 16, 66, 34); ctx.fillStyle = c("#c9a24e"); for (let i = 0; i < 3; i++) ctx.fillRect(tx + 52 + i * 78, ty + 30, 10, 3);
-  ctx.fillStyle = c("#6d4c31"); ctx.fillRect(tx - 6, ty - 8, tw + 12, 10); ctx.fillStyle = c("#7d5a3b"); ctx.fillRect(tx - 6, ty - 8, tw + 12, 3);
+  ctx.fillStyle = c(glass ? "#4a2e1c" : "#6d4c31"); ctx.fillRect(tx - 6, ty - 8, tw + 12, 10); ctx.fillStyle = c(glass ? "#b5652a" : "#7d5a3b"); ctx.fillRect(tx - 6, ty - 8, tw + 12, 3);
+  if (glass) { ctx.fillStyle = c("#b5652a"); ctx.fillRect(tx - 6, ty + 1, tw + 12, 1.4); ctx.strokeStyle = c("#b5652a"); ctx.lineWidth = 1; for (let i = 0; i < 3; i++) ctx.strokeRect(tx + 24.5 + i * 78, ty + 16.5, 65, 33); } // le plateau et les tiroirs filetés de cuivre
   const top = ty - 8;
   r.hot.push({ x: tx - 6, y: top - 36, w: tw + 12, h: 100, tip: TRr("atelier.sit.tip"), go: "desk" }); // s'asseoir au bureau (les objets, poussés après, gardent la priorité)
   const item = (x, y, w, h, tip, flash) => r.hot.push({ x, y, w, h, tip: TRr(tip), flash: flash ? TRr(flash) : undefined });

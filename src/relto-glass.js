@@ -350,4 +350,30 @@ function roundWindowRing(ctx, c, sky, x, y, r) {
   ctx.strokeStyle = rgba(230, 160, 106, 0.6); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(x, y, r + 2.6, 0, 6.283); ctx.stroke();
 }
 
-module.exports = { roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+/**
+ * Le fauteuil de l'atelier sous la Verrière : un dossier en fer à cheval, cloué de cuivre, des accoudoirs qui finissent en crosse,
+ * des pieds en coup de fouet. Les couleurs sont celles de la housse du jour (`cover.back`, `cover.seat`) : le camouflage du chat
+ * suit la même étoffe, et l'assise reste où elle était (le chat s'y roule au même endroit).
+ */
+function armchair(ctx, c, ax, ay, cover) {
+  ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.beginPath(); ctx.ellipse(ax + 26, ay + 8, 38, 4, 0, 0, 6.283); ctx.fill(); // l'ombre au sol
+  ctx.strokeStyle = c("#2a1a12"); ctx.lineWidth = 3.4; ctx.lineCap = "round"; // les pieds
+  for (const [x, d] of [[ax - 4, -1], [ax + 56, 1]]) { ctx.beginPath(); ctx.moveTo(x, ay + 2); ctx.bezierCurveTo(x + d * 2, ay + 6, x - d * 3, ay + 9, x + d * 3, ay + 13); ctx.stroke(); ctx.fillStyle = c(COPPER); ctx.beginPath(); ctx.arc(x + d * 3, ay + 13, 1.6, 0, 6.283); ctx.fill(); }
+  // le dossier en fer à cheval
+  const back = () => { ctx.beginPath(); ctx.moveTo(ax - 1, ay + 2); ctx.lineTo(ax - 1, ay - 38); ctx.bezierCurveTo(ax - 1, ay - 64, ax + 53, ay - 64, ax + 53, ay - 38); ctx.lineTo(ax + 53, ay + 2); ctx.closePath(); };
+  ctx.fillStyle = c(cover.back); back(); ctx.fill();
+  ctx.strokeStyle = c("#2a1a12"); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ax - 1, ay + 2); ctx.lineTo(ax - 1, ay - 38); ctx.bezierCurveTo(ax - 1, ay - 64, ax + 53, ay - 64, ax + 53, ay - 38); ctx.lineTo(ax + 53, ay + 2); ctx.stroke();
+  ctx.fillStyle = c(COPPER_HI); for (let i = 0; i <= 10; i++) { const u = i / 10, x = (1 - u) ** 3 * (ax - 1) + 3 * (1 - u) ** 2 * u * (ax - 1) + 3 * (1 - u) * u * u * (ax + 53) + u ** 3 * (ax + 53), y = (1 - u) ** 3 * (ay - 38) + 3 * (1 - u) ** 2 * u * (ay - 64) + 3 * (1 - u) * u * u * (ay - 64) + u ** 3 * (ay - 38); ctx.beginPath(); ctx.arc(x, y + 3, 1, 0, 6.283); ctx.fill(); } // les clous
+  ctx.strokeStyle = rgba(0, 0, 0, 0.18); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ax + 26, ay - 54); ctx.lineTo(ax + 26, ay - 28); ctx.stroke(); // un capiton
+  // les accoudoirs en crosse, puis l'assise
+  ctx.fillStyle = c(cover.seat);
+  for (const [x, d] of [[ax - 8, -1], [ax + 46, 1]]) {
+    ctx.beginPath(); ctx.moveTo(x, ay + 6); ctx.lineTo(x, ay - 24); ctx.quadraticCurveTo(x + 7, ay - 34, x + 14, ay - 24); ctx.lineTo(x + 14, ay + 6); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = c("#2a1a12"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(x + 7 + d * 1, ay - 23, 4, 0, 6.283); ctx.stroke(); // la crosse
+    ctx.strokeStyle = c(COPPER); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x + 7 + d * 1, ay - 23, 1.6, 0, 6.283); ctx.stroke();
+  }
+  ctx.fillRect(ax + 4, ay - 26, 44, 28);
+  ctx.fillStyle = c(COPPER); ctx.fillRect(ax - 8, ay + 4, 68, 1.6); // un jonc de cuivre au bas de la ceinture
+}
+
+module.exports = { armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
