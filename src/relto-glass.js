@@ -340,8 +340,10 @@ function tableLegs(ctx, c, tx, tw, ty) {
 function imagerRoom(ctx, c, t, FLOOR, overview, W = 640, H = 360) {
   const bg = ctx.createLinearGradient(0, 0, 0, FLOOR); bg.addColorStop(0, c("#12262a")); bg.addColorStop(1, c("#0b1719")); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, FLOOR);
   const G = { teal: c("#1f5a54"), teal2: c("#0e2a28") };
-  pane(ctx, c, 38, 66, 66, FLOOR - 92, G.teal, G.teal2, "fern", 2.5);
-  pane(ctx, c, 612, 638, 30, FLOOR - 92, G.teal, G.teal2, "ginkgo", 2.5);
+  if (overview) { // les deux vitraux ne vivent que dans la vue d'ensemble, là où le mur est dégagé : ni la longue-vue ni la jauge ne les chevauchent ; dans les gros plans, les postes les auraient couverts
+    pane(ctx, c, 12, 38, 66, 142, G.teal, G.teal2, "fern", 2.5);
+    pane(ctx, c, 620, 638, 30, FLOOR - 92, G.teal, G.teal2, "ginkgo", 2.5);
+  }
   ctx.strokeStyle = c(COPPER); ctx.lineWidth = 2; for (const x of [172, 486]) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, FLOOR); ctx.stroke(); } // deux nervures
   ctx.fillStyle = c(COPPER); ctx.fillRect(0, 0, W, 4); ctx.fillStyle = c(COPPER_HI); ctx.fillRect(0, 3, W, 1);
   if (overview) { // la rosace : l'aurore la traverse
