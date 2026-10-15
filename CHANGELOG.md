@@ -2,6 +2,12 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.39.1 — The panel closes again (2026-10-15)
+
+### Fixed
+- **Leaving a room puts its mechanisms back.** Since 1.36.0, the small bookcase of the cabin stayed pushed aside, the hidden panel stayed open, the desk drawer stayed out, the message on screen stayed and the fade between views was gone. All back as before.
+- **The skylight's numerals are all the same size** (0 to 24).
+
 ## 1.39.0 — The calendar up close (2026-10-15)
 
 ### Added

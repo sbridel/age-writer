@@ -41,6 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.39.1, the panel closes again.** Leaving the cabin puts the bookcase and the hidden panel back (a bug since 1.36).
 - **1.37 to 1.39, the Glasshouse and its close-ups.** An art nouveau disguise for the whole Relto (glass, copper, flowers, coloured lamplight; a page you attach or detach). The round window of the writing room opens up ringed by the D'ni numerals 0 to 24, and the calendar pinnacle opens on the full D'ni date.
 - **1.35 and 1.36, the Treatise and the chart.** A thick volume under a brass clasp holds the whole reference, readable without leaving the Relto; the star chart can be dragged and turned around the Zero, and in the Art of the Guild the telescope no longer words its echo for you.
 - **1.30 to 1.34, a phone and a guide you can search.** Age Writer installs on Obsidian mobile and the Relto is played with a finger; hands that take; the guide opens from the Relto, with a search field, a mini-contents and a narrow-screen layout.

@@ -548,3 +548,9 @@ Note : `claude/DESIGN-verriere-art-nouveau.md` (projet). Une page de déguisemen
 - Pavillon de la Verrière (`drawGlasshouse`) : baies à y0+7, sous la coupole.
 - Lucarne : `roundWindowRing(…, buds)` ; sans bourgeons dans la vue rapprochée et à l'atelier (on les lisait comme des zéros) ; bande de chiffres plus fine (R_OUT 148).
 - Tests : `test/glasshouse.test.js` (calendrier : zones identiques, cliquable depuis l'île et le global, retour).
+
+## 1.39.1 — le panneau se referme (15 oct. 2026)
+
+- Régression de la 1.36.0 corrigée (`relto-render.js`, `setView`) : en ajoutant la remise à zéro de la carte, un commentaire `//` posé en milieu de ligne avait avalé la fin (`flash`, `fadeAt`, `deskUI`, et la remise en place de `panelAt` / `shelf` / `shelfOpen` / `bookAt` en quittant la cabane). Les commentaires en milieu de ligne sont maintenant en `/* */`. Test : `test/touch.test.js` (quitter la cabane remet la bibliothèque et le panneau ; changer de vue referme le tiroir et efface le message) ; il échoue sans le correctif.
+- Lucarne : les 25 glyphes à la même taille (18), bande R_OUT 148.
+- README : « Nouveautés récentes » condensées par familles de versions.
