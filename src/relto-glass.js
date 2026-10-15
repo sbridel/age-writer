@@ -405,7 +405,7 @@ function pillarVine(ctx, c, x, y0, y1, hw, k = 1) {
 }
 
 /** Une fenêtre ronde habillée : un anneau de verre coloré (vert d'eau et ambre en alternance, au plomb) autour du clair, cerclé de cuivre. */
-function roundWindowRing(ctx, c, sky, x, y, r) {
+function roundWindowRing(ctx, c, sky, x, y, r, buds = true) {
   const G = glassTones(c, sky, 0.1), ri = r * 0.7, n = 12;
   for (let i = 0; i < n; i++) {
     const a0 = (i * 2 * Math.PI) / n, a1 = ((i + 1) * 2 * Math.PI) / n;
@@ -413,7 +413,7 @@ function roundWindowRing(ctx, c, sky, x, y, r) {
   }
   ctx.strokeStyle = rgba(15, 47, 44, 0.85); ctx.lineWidth = 1.1;
   for (let i = 0; i < n; i++) { const a = (i * 2 * Math.PI) / n; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * ri, y + Math.sin(a) * ri); ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); ctx.stroke(); }
-  for (let i = 0; i < n; i++) { const a = ((i + 0.5) * 2 * Math.PI) / n, m = (r + ri) / 2; ctx.beginPath(); ctx.ellipse(x + Math.cos(a) * m, y + Math.sin(a) * m, 2.2, 1.2, a, 0, 6.283); ctx.stroke(); } // un bourgeon dans chaque verre
+  if (buds) for (let i = 0; i < n; i++) { const a = ((i + 0.5) * 2 * Math.PI) / n, m = (r + ri) / 2; ctx.beginPath(); ctx.ellipse(x + Math.cos(a) * m, y + Math.sin(a) * m, 2.2, 1.2, a, 0, 6.283); ctx.stroke(); } // un bourgeon dans chaque verre
   ctx.strokeStyle = c(COPPER); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, ri, 0, 6.283); ctx.stroke();
   ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.stroke();
   ctx.strokeStyle = rgba(230, 160, 106, 0.6); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(x, y, r + 2.6, 0, 6.283); ctx.stroke();

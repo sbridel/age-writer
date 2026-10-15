@@ -4,7 +4,7 @@
 // (le vitrail agrandi, le cuivre) ; sinon c'est la fenêtre ronde simple, ses croisillons et son laiton.
 const { rng, mix, rgba } = require("./util");
 const GLASS = require("./relto-glass");
-const W = 640, H = 360, CX = 320, CY = 180, R_GLASS = 112, R_IN = 114, R_OUT = 160, N = 25;
+const W = 640, H = 360, CX = 320, CY = 180, R_GLASS = 112, R_IN = 114, R_OUT = 148, N = 25;
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 
 /** Le chemin de la bague : deux cercles, à remplir en « evenodd ». */
@@ -32,7 +32,7 @@ function drawRoundWindow(r, ctx, sc, sky, t) {
   if (r.sprite) ctx.drawImage(r.sprite, CX - R_GLASS - 30 + ((t * 7) % (2 * R_GLASS + 130)), CY - 6, 130, 56);
   if (r.cloudColor) { ctx.fillStyle = r.cloudColor(sky); ctx.globalAlpha = 0.5; ctx.fillRect(CX - R_GLASS, CY + R_GLASS - 36, 2 * R_GLASS, 36); ctx.globalAlpha = 1; }
   ctx.restore();
-  if (glass) GLASS.roundWindowRing(ctx, c, sky, CX, CY, R_GLASS);
+  if (glass) GLASS.roundWindowRing(ctx, c, sky, CX, CY, R_GLASS, false); // sans bourgeons : sur une planche de chiffres, on les lirait comme des zéros
   else { ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(CX, CY, R_GLASS, 0, 6.283); ctx.stroke(); ctx.lineWidth = 3.4; ctx.beginPath(); ctx.moveTo(CX - R_GLASS, CY); ctx.lineTo(CX + R_GLASS, CY); ctx.moveTo(CX, CY - R_GLASS); ctx.lineTo(CX, CY + R_GLASS); ctx.stroke(); }
   // la bague de laiton
   const metal = glass ? GLASS.COPPER : "#b8923e", hi = glass ? GLASS.COPPER_HI : "#e2c06a", lo = glass ? GLASS.COPPER_LO : "#6e5420";
@@ -53,7 +53,7 @@ function drawRoundWindow(r, ctx, sc, sky, t) {
   // les chiffres gravés, 0..24, le pied vers le centre
   if (r.dni) {
     for (let i = 0; i < N; i++) {
-      const a = (i / N) * 6.283, size = i >= 10 ? 17 : 21, w = r.dni.widthOf(i, size), x = CX + Math.sin(a) * mid, y = CY - Math.cos(a) * mid;
+      const a = (i / N) * 6.283, size = i >= 10 ? 14 : 18, w = r.dni.widthOf(i, size), x = CX + Math.sin(a) * mid, y = CY - Math.cos(a) * mid;
       ctx.save(); ctx.translate(x, y); ctx.rotate(a);
       r.dni.drawNumber(ctx, i, -w / 2 + 0.6, -size / 2 + 0.7, size, "rgba(255,244,214,0.3)");
       r.dni.drawNumber(ctx, i, -w / 2, -size / 2, size, rgba(46, 30, 12, 0.88));
