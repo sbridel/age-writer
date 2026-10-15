@@ -43,6 +43,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; les dernières versions en bref :
 
+- **1.40, pelouse et muguet.** La page Herbe fait de l'île une pelouse ; une nouvelle page Muguet.
 - **1.39.1, le panneau se referme.** Quitter la cabane remet la bibliothèque et le panneau caché en place (un bug depuis la 1.36).
 - **1.37 à 1.39, la Verrière et ses gros plans.** Un déguisement art nouveau pour tout le Relto (verre, cuivre, fleurs, lumière colorée des lampes ; une page qu'on attache ou détache). La fenêtre ronde de l'atelier s'ouvre ceinte des chiffres D'ni de 0 à 24, et le pilier du calendrier s'ouvre sur la date D'ni complète.
 - **1.35 et 1.36, le Traité et la carte.** Un gros volume sous un fermoir de laiton porte toute la référence, lisible sans quitter le Relto ; la carte des étoiles se tire et se tourne autour du Zéro, et dans l'Art de la Guilde le télescope ne met plus des mots sur l'écho à ta place.

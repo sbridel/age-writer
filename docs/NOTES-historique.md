@@ -554,3 +554,10 @@ Note : `claude/DESIGN-verriere-art-nouveau.md` (projet). Une page de déguisemen
 - Régression de la 1.36.0 corrigée (`relto-render.js`, `setView`) : en ajoutant la remise à zéro de la carte, un commentaire `//` posé en milieu de ligne avait avalé la fin (`flash`, `fadeAt`, `deskUI`, et la remise en place de `panelAt` / `shelf` / `shelfOpen` / `bookAt` en quittant la cabane). Les commentaires en milieu de ligne sont maintenant en `/* */`. Test : `test/touch.test.js` (quitter la cabane remet la bibliothèque et le panneau ; changer de vue referme le tiroir et efface le message) ; il échoue sans le correctif.
 - Lucarne : les 25 glyphes à la même taille (18), bande R_OUT 148.
 - README : « Nouveautés récentes » condensées par familles de versions.
+
+## 1.40.0 — pelouse et muguet (15 oct. 2026)
+
+- Pelouse : `relto-render.js` (`GRASS`, `lawn()`, `groundTop()`) ; la page Herbe seule fait du dessus de l'île une pelouse (dégradé vert, reflets, frange sur le bord de la roche) ; `relto-rooms.js` : sol des vues en plein air (bassins, chat, bosquet) via `r.groundTop()`. La calotte de la montagne ne change pas.
+- Muguet : `page_lily_of_the_valley` (`relto-model.js`, asset `lily` dans `ASSETS.flowers`) ; `relto-scenery.js` `lilies()` (touffes éparses, deux feuilles en lame, tige arquée, 3 à 5 clochettes) ; mots « lilies of the valley » / « muguet » (`ui-relto.js`) ; listes de pages du guide (EN/FR).
+- Lave sous la Verrière (`drawMount`) : la fissure du plateau volcanique (`T.glow`) entière, qui remonte derrière la coupole (branche, lueur, cœur chaud) ; elle dépassait d'un bout au-dessus du verre, plus bas que l'ancien toit. Sans la Verrière : inchangée.
+- Tests : `test/glasshouse.test.js` (pelouse avec la page Herbe seule ; page muguet ; zones identiques avec et sans la Verrière).

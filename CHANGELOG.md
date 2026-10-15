@@ -2,6 +2,15 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.40.0 — Lawn and lily of the valley (2026-10-15)
+
+### Added
+- **A lawn with the Grass page.** The top of the island becomes green grass, with light streaks and a fringe falling over the rock; the tufts grow out of it. The open-air close-ups (grove, pond, cat) share the same ground. Without the page, the ground keeps the terrain's colour.
+- **A Lily of the valley page** (`page_lily_of_the_valley`): scattered clumps, two blade-like leaves, an arching stem and small white hanging bells.
+
+### Changed
+- **Glasshouse, volcanic plateau**: the lava fissure of the mountain is drawn whole, rising from behind the dome with a branch and a glow, instead of a short stub peeking over the glass.
+
 ## 1.39.1 — The panel closes again (2026-10-15)
 
 ### Fixed
