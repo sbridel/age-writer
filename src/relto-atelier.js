@@ -83,6 +83,7 @@ function wallBits(ctx, c) {
 }
 
 function drawAtelier(r, ctx, sc, sky, t) {
+  const glass = !!(r.glassOn && r.glassOn()); // la Verrière, sobre ici : un vitrail autour de la fenêtre ronde, du cuivre aux rampes et au manteau ; rien d'autre
   const amb = 0.5 + 0.5 * sky.ambient, c = (h) => mix("#05060c", h, amb), TRr = TR(r), q = rng(0xa7e1);
   const lit = sc.additions.find((a) => a.type === "chimney"), d = lit ? clamp(lit.density == null ? 0.7 : lit.density, 0.2, 1) : 0.45, fl = flick(t);
   // murs, boiseries
@@ -109,7 +110,8 @@ function drawAtelier(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(0, GALLERY - 4, W, 8); // plancher de la galerie
   ctx.fillStyle = c("#4b3626"); ctx.fillRect(0, GALLERY + 4, W, 3);
   for (let x = 6; x < W; x += 24) { ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(x, GALLERY + 7, 4, 20); ctx.fillStyle = c("#4b3626"); ctx.beginPath(); ctx.arc(x + 2, GALLERY + 9, 4, 0, 6.283); ctx.fill(); }
-  ctx.fillStyle = c("#4b3626"); ctx.fillRect(0, GALLERY + 26, W, 4); // lisse
+  ctx.fillStyle = c(glass ? "#b5652a" : "#4b3626"); ctx.fillRect(0, GALLERY + 26, W, 4); // lisse
+  if (glass) { ctx.fillStyle = c("#b5652a"); ctx.fillRect(0, GALLERY + 4, W, 3); ctx.fillStyle = c("#e6a06a"); ctx.fillRect(0, GALLERY + 26, W, 1); }
   ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.fillRect(0, GALLERY + 30, W, 8);
   // l'échelle de la galerie
   ctx.fillStyle = c("#5a4330"); ctx.fillRect(628, GALLERY - 4, 5, FLOOR - GALLERY); ctx.fillRect(612, GALLERY - 4, 5, FLOOR - GALLERY);
@@ -130,12 +132,13 @@ function drawAtelier(r, ctx, sc, sky, t) {
   if (r.sprite) ctx.drawImage(r.sprite, wx - wr - 10 + ((t * 4) % (2 * wr + 42)), wy - wr * 0.1, 50, 22); // un nuage qui passe, comme à la fenêtre de la cabane
   if (r.cloudColor) { ctx.fillStyle = r.cloudColor(sky); ctx.globalAlpha = 0.5; ctx.fillRect(wx - wr, wy + wr - 13, 2 * wr, 13); ctx.globalAlpha = 1; } // la brume sur l'horizon
   ctx.restore();
-  ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(wx, wy, wr, 0, 6.283); ctx.stroke(); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(wx - wr, wy); ctx.lineTo(wx + wr, wy); ctx.moveTo(wx, wy - wr); ctx.lineTo(wx, wy + wr); ctx.stroke();
+  if (glass) require("./relto-glass").roundWindowRing(ctx, c, sky, wx, wy, wr); // un anneau de verre coloré, le clair au milieu (la comète y passe toujours)
+  else { ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(wx, wy, wr, 0, 6.283); ctx.stroke(); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(wx - wr, wy); ctx.lineTo(wx + wr, wy); ctx.moveTo(wx, wy - wr); ctx.lineTo(wx, wy + wr); ctx.stroke(); }
   // cheminée
   const fx = 470, fw = 130;
   ctx.fillStyle = c("#6a6258"); ctx.fillRect(fx + 18, GALLERY + 38, fw - 36, 90); ctx.fillStyle = c("#555047"); ctx.fillRect(fx, 150, fw, FLOOR - 150);
   ctx.strokeStyle = rgba(0, 0, 0, 0.26); ctx.lineWidth = 1; for (let y = 150; y < FLOOR; y += 15) { ctx.beginPath(); ctx.moveTo(fx, y); ctx.lineTo(fx + fw, y); ctx.stroke(); }
-  ctx.fillStyle = c("#3a2a22"); ctx.fillRect(fx - 10, 140, fw + 20, 11);
+  ctx.fillStyle = c(glass ? "#b5652a" : "#3a2a22"); ctx.fillRect(fx - 10, 140, fw + 20, 11); if (glass) { ctx.fillStyle = c("#e6a06a"); ctx.fillRect(fx - 10, 140, fw + 20, 1.4); }
   const ox = fx + 20, ow = fw - 40; ctx.fillStyle = "#0e0907"; ctx.beginPath(); ctx.moveTo(ox, FLOOR); ctx.lineTo(ox, 188); ctx.quadraticCurveTo(ox + ow / 2, 160, ox + ow, 188); ctx.lineTo(ox + ow, FLOOR); ctx.closePath(); ctx.fill();
   const mx = ox + ow / 2, by = FLOOR - 9, n = Math.round(3 + 3 * d);
   ctx.fillStyle = "#2b1c12"; ctx.fillRect(mx - 28, by - 5, 56, 7);
@@ -291,17 +294,18 @@ function drawDesk(r, ctx, sc, sky, t) {
 
 /** L'étage : une galerie de livres, et sur la longue table les livres de référence qui ont quitté la table du salon. */
 function drawLoft(r, ctx, sc, sky, t) {
+  const glass = !!(r.glassOn && r.glassOn()); // la Verrière : un filet de cuivre au bord des rayons et de la table, rien d'autre
   const amb = 0.5 + 0.5 * sky.ambient, c = (h) => mix("#05060c", h, amb), TRr = TR(r), fl = flick(t), q = rng(0x10f7);
   ctx.fillStyle = c("#3f2f22"); ctx.fillRect(0, 0, W, H);
   for (let x = 0; x < W; x += 34) { ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.fillRect(x, 0, 1.4, H); }
   for (let row = 0; row < 3; row++) { // les étagères du fond
-    const y0 = 18 + row * 62; ctx.fillStyle = c("#1d140e"); ctx.fillRect(0, y0, W, 56); ctx.fillStyle = c("#4b3626"); ctx.fillRect(0, y0 + 56, W, 5);
+    const y0 = 18 + row * 62; ctx.fillStyle = c("#1d140e"); ctx.fillRect(0, y0, W, 56); ctx.fillStyle = c("#4b3626"); ctx.fillRect(0, y0 + 56, W, 5); if (glass) { ctx.fillStyle = c("#b5652a"); ctx.fillRect(0, y0 + 56, W, 1.6); }
     let bx = 6; const g = rng(0x600 + row * 11);
     while (bx < W - 10) { const bw = 6 + Math.floor(g() * 8), bh = 28 + Math.floor(g() * 22), col = ["#27555a", "#5b2b2b", "#3b3560", "#4c5a2c", "#6a4a2a", "#2f3e4f", "#5a3a52"][Math.floor(g() * 7)]; ctx.fillStyle = c(col); ctx.fillRect(bx, y0 + 56 - bh, bw, bh); ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(bx + bw - 2, y0 + 56 - bh, 2, bh); if (g() < 0.45) { ctx.fillStyle = c("#c9a24e"); ctx.fillRect(bx, y0 + 56 - bh + 5, bw, 2); } bx += bw + 1; if (g() < 0.06) bx += 14; }
   }
   ctx.fillStyle = rgba(255, 190, 90, 0.05 * fl); ctx.fillRect(0, 0, W, 220);
   const g = ctx.createLinearGradient(0, 214, 0, H); g.addColorStop(0, c("#6d4c31")); g.addColorStop(1, c("#35241a")); ctx.fillStyle = g; ctx.fillRect(0, 214, W, H - 214); // la longue table
-  ctx.fillStyle = c("#7d5a3b"); ctx.fillRect(0, 214, W, 4); ctx.strokeStyle = rgba(0, 0, 0, 0.14); ctx.lineWidth = 1; for (let i = 0; i < 9; i++) { const y = 224 + q() * 120; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y + q() * 4 - 2); ctx.stroke(); }
+  ctx.fillStyle = c(glass ? "#b5652a" : "#7d5a3b"); ctx.fillRect(0, 214, W, 4); if (glass) { ctx.fillStyle = c("#e6a06a"); ctx.fillRect(0, 214, W, 1.2); } ctx.strokeStyle = rgba(0, 0, 0, 0.14); ctx.lineWidth = 1; for (let i = 0; i < 9; i++) { const y = 224 + q() * 120; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y + q() * 4 - 2); ctx.stroke(); }
   { // les livres de référence, empilés à plat sur la longue table, le titre sur le dos
     const zs = require("./relto-vault").pile(ctx, c, 70, 306, [{ kind: "glyphs", w: 128, h: 17, body: "#27555a", band: "#d8c07a", title: TRr("book.t.glyphs"), tip: "atelier.loft.glyphs" }, { kind: "library", w: 136, h: 19, body: "#5b2b2b", band: "#c9a24e", title: TRr("book.t.library"), tip: "atelier.loft.library" }, { kind: "descbook", w: 118, h: 16, body: "#3d3a2a", band: "#d8c07a", title: "", tip: "atelier.loft.agebook" }], 11);
     for (const z of zs) r.hot.push({ x: z.x, y: z.y, w: z.w, h: z.h, tip: TRr(z.b.tip), ...(z.b.kind === "glyphs" ? { go: "glyphbook" } : z.b.kind === "descbook" ? { go: "descbook" } : { special: "library" }) }); }
