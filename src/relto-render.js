@@ -1112,12 +1112,16 @@ class ReltoRenderer {
       GLASS.motif(ctx, xa < hx ? "tulip" : "iris", (xa + xb) / 2, top + 5, GY, 0.48); ctx.restore();
       ctx.strokeStyle = CU; ctx.lineWidth = 1.4; ogive(xa, xb, top, GY); ctx.stroke();
     }
-    ctx.fillStyle = vgrad(door[2], AMB, AMB2); ogive(door[0], door[1], door[2], GY); ctx.fill();
-    ctx.strokeStyle = mix(col("#5a2e12"), "#5a2e12", 0.5); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(hx, door[2] + 8, 3, 0, 6.283); ctx.stroke(); // le soleil de la porte
-    for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4; ctx.beginPath(); ctx.moveTo(hx + Math.cos(a) * 4, door[2] + 8 + Math.sin(a) * 4); ctx.lineTo(hx + Math.cos(a) * 5.6, door[2] + 8 + Math.sin(a) * 5.6); ctx.stroke(); }
-    ctx.beginPath(); ctx.moveTo(hx, door[2] + 12); ctx.lineTo(hx, GY); ctx.stroke();
-    ctx.strokeStyle = CU; ctx.lineWidth = 1.4; ogive(door[0], door[1], door[2], GY); ctx.stroke();
-    ctx.fillStyle = CU2; ctx.beginPath(); ctx.arc(hx + 4.5, GY - 8, 0.9, 0, 6.283); ctx.fill(); // la poignée
+    { // la porte : deux battants en plein cintre (comme dedans) : bois irisé, un ovale de verre clair dans chaque battant, de petites fleurs
+      const xa = door[0], xb = door[1], top = door[2] + 2, rr = (xb - xa) / 2, arch = (a, b, y) => { const r0 = (b - a) / 2; ctx.beginPath(); ctx.moveTo(a, GY); ctx.lineTo(a, y + r0); ctx.arc((a + b) / 2, y + r0, r0, Math.PI, 2 * Math.PI); ctx.lineTo(b, GY); ctx.closePath(); };
+      const fr = ctx.createLinearGradient(xa - 1.5, 0, xb + 1.5, 0); fr.addColorStop(0, col("#4a6a4a")); fr.addColorStop(0.5, col("#8a5a5a")); fr.addColorStop(1, col("#4a6a4a"));
+      ctx.fillStyle = fr; arch(xa - 1.5, xb + 1.5, top - 1.5); ctx.fill();
+      ctx.fillStyle = mix(col("#2f6a6a"), "#7fd6c8", clamp(lit * 0.7)); arch(xa, xb, top); ctx.fill();
+      for (const m2 of [xa + rr / 2, xb - rr / 2]) { ctx.fillStyle = mix(col("#9ac8d0"), "#e8fff8", clamp(lit)); ctx.beginPath(); ctx.ellipse(m2, (top + GY) / 2 - 1, rr * 0.28, (GY - top) * 0.28, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = col("#c9a24e"); ctx.lineWidth = 0.5; ctx.stroke(); }
+      const fq = rng(0xd00f); for (let i = 0; i < 10; i++) { ctx.fillStyle = col(["#d88aa0", "#f2e6d4", "#c86a8a"][i % 3]); ctx.beginPath(); ctx.arc(xa + 1 + fq() * (xb - xa - 2), top + 2 + fq() * (GY - top - 6), 0.7, 0, 6.283); ctx.fill(); }
+      ctx.strokeStyle = col("#3a4a2a"); ctx.lineWidth = 0.9; arch(xa, xb, top); ctx.stroke(); ctx.beginPath(); ctx.moveTo(hx, top); ctx.lineTo(hx, GY); ctx.stroke();
+      ctx.fillStyle = col("#e6c37a"); ctx.fillRect(hx - 1.6, GY - 9, 0.8, 3); ctx.fillRect(hx + 0.8, GY - 9, 0.8, 3); // les poignées
+    }
     // le soubassement de cuivre
     ctx.fillStyle = CU; ctx.fillRect(x0 - 1, GY - 2.5, w + 2, 2.5); ctx.fillStyle = col("#5a2e12"); ctx.fillRect(x0 - 1, GY - 0.8, w + 2, 0.8);
     // les lianes qui montent sur les montants
