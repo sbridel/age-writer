@@ -520,3 +520,11 @@ Note : `claude/DESIGN-carte-defiler-tourner.md` (projet).
 ## 1.36.1 — l'écho sans mots (14 oct. 2026)
 
 - `src/relto-telescope.js` (étape 2, ligne sous l'oculaire) : en Art de la Guilde, `echoWords` n'est plus ajouté (« l'écho vient avant / après le pouls : moins / plus de retard » était une aide, pas ce qu'on voit) ; les faits de l'instrument restent (pose, second battement, lumière courbée, « l'instrument tient cette étoile »). Facile inchangé. Guide FR/EN (rubrique du métronome). Test : `test/touch.test.js` (89 contrôles).
+
+## 1.37.0 — la Verrière (15 oct. 2026)
+
+Note : `claude/DESIGN-verriere-art-nouveau.md` (projet). Une page de déguisement art nouveau ; seulement l'enveloppe.
+- `src/relto-model.js` : `page_glasshouse` (effet `glasshouse`, `sandbox: true`), page intégrée (`BUILTIN_PAGES`) ; `builtinPages({ story })` la retire d'un Relto d'histoire.
+- `src/relto-glass.js` (nouveau) : ogives, verres (`glassTones`), sept motifs au plomb (`motif` : coup de fouet, iris, lys, pavot, ginkgo, tulipe, fougère), panneaux, lianes, pots, murs et sol de la cabane (sol en cache), fenêtre et porte (trois dessins, `setDoorStyle` ; par défaut la porte à deux battants en plein cintre), œil-de-bœuf, taches de lumière, salle de l'Imageur (rosace d'aurore), mosaïque sombre, rinceaux d'angle, liane de pilier, meubles, fenêtre ronde, lampes à coupole de verre (`tiffanyLamp`, `lampGlow`, `lampPool` : la flaque colorée teinte aussi ce qui est posé), tapis ouvragés, trappe de bronze et d'argent.
+- Branchements : `relto-render.js` (`glassOn`, `drawGlasshouse` : pavillon et lanternon ; la fumée de la cheminée sort du lanternon), `relto-global.js`, `relto-rooms.js` (cabane), `relto-imager.js`, `relto-telescope.js`, `relto-scenery.js` et `relto-clock.js` (horloge), et les autres pièces (`relto-atelier*.js`, `relto-vault.js`).
+- Test : `test/glasshouse.test.js` (46 contrôles : zones cliquables identiques avec et sans la page, quinze vues, trois heures). `test/treatise.test.js` est enfin dans la suite.

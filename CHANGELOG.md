@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.37.0 — The Glasshouse (2026-10-15)
+
+### Added
+- **The Glasshouse, an art nouveau disguise for the whole Relto.** A new page in the sandbox book of pages (detached by default, absent from the story mode). Attached, the cabin becomes a pavilion of sea-green and amber glass under a copper dome crowned by a small lantern (the chimney smoke rises from it). Inside: ogival stained glass with flower patterns (iris, lily, poppy, tulip, ginkgo, fern), a mosaic floor, ornate rugs, a double door in leaded glass, furniture with whiplash legs and copper trims, lamps with leaded-glass shades whose light takes their colours. Every room changes its clothes, the Imager (a rose window where the aurora shines through) and the observatory included; the D'ni clock stays open to the sky. Only the envelope changes: nothing you click moves, grows or hides, and a test checks it room by room.
+
 ## 1.36.1 — The echo without words (2026-10-14)
 
 ### Changed

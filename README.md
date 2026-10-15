@@ -41,6 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.37, the Glasshouse.** An art nouveau disguise for the whole Relto: glass, copper, flowers, coloured lamplight. A page you attach or detach.
 - **1.36.1, the echo without words.** In the Art of the Guild, the telescope no longer says "more delay / less delay": you read the echo yourself.
 - **1.36, the chart that turns.** Drag the star chart under the magnifier; turn it around the Zero with a brass compass rose, Shift- or right-drag, or two fingers.
 - **1.35, the Treatise of the Art.** A thick volume under a brass clasp on the loft's table; a Grand Master opens it and reads the whole reference without leaving the Relto.
