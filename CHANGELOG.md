@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.38.0 — The skylight (2026-10-15)
+
+### Added
+- **The round window of the writing room can be looked at up close.** Click it: the sky of the hour (and the comet, if one passes) fills a round frame, ringed by a brass band engraved with the D'ni numerals 0 to 24, in order, with no caption. A reading plate for learning the digits. Under the Glasshouse the band is copper with the stained glass enlarged; without it, plain brass around the simple window.
+
 ## 1.37.1 — The same door outside (2026-10-15)
 
 ### Fixed

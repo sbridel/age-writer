@@ -43,6 +43,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; les dernières versions en bref :
 
+- **1.38, la lucarne.** La fenêtre ronde de l'atelier s'ouvre en gros plan, ceinte des chiffres D'ni de 0 à 24.
 - **1.37, la Verrière.** Un déguisement art nouveau pour tout le Relto : verre, cuivre, fleurs, lumière colorée des lampes. Une page qu'on attache ou détache.
 - **1.36.1, l'écho sans mots.** Dans l'Art de la Guilde, le télescope ne dit plus « plus / moins de retard » : tu lis l'écho toi-même.
 - **1.36, la carte qui tourne.** Tirer la carte des étoiles sous la loupe ; la tourner autour du Zéro avec une rose de laiton, Maj ou bouton droit + glisser, ou deux doigts.

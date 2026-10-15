@@ -532,3 +532,10 @@ Note : `claude/DESIGN-verriere-art-nouveau.md` (projet). Une page de déguisemen
 ## 1.37.1 — la même porte dehors (15 oct. 2026)
 
 - `src/relto-render.js` (`drawGlasshouse`) : la porte du pavillon, vue de l'île, devient celle de dedans (deux battants en plein cintre, ovales de verre clair, petites fleurs, bois irisé, deux poignées) au lieu de l'ogive ambre à soleil. Zone cliquable inchangée (`test/glasshouse.test.js`).
+
+## 1.38.0 — la lucarne (15 oct. 2026)
+
+- Nouvelle vue `roundwindow` (`src/relto-roundwindow.js`) : le hublot de l'atelier en gros plan. Ciel de l'heure, comète (`cometWindow`), nuage ; autour, une bague de laiton gravée des vingt-cinq chiffres D'ni 0 à 24 (0 en haut, sens horaire, pied vers le centre), sans légende ni indication d'heure : une planche de lecture, pas un cadran. Le 0 y est toujours visible (c'est un chiffre, rien à voir avec le Grand Zéro).
+- Sous la Verrière : bague de cuivre, vitrail agrandi (`roundWindowRing`, 12 cellules), un bourgeon entre chaque chiffre. Sans : laiton, croisillons, graduations.
+- `relto-atelier.js` : nouvelle zone cliquable sur le hublot (`go: "roundwindow"`), dans les deux modes (exception voulue à « la Verrière ne change que l'enveloppe » : c'est une fonction à part entière). `relto-render.js` : `ROOMS`, `available()` (comme l'atelier), groupe du chat ; `i18n.js` : `atelier.window.tip/back`.
+- Test : `test/glasshouse.test.js` (zones identiques avec et sans la page dans la vue ; chiffres 0..24 tous et seuls ; un seul cliquable, le retour).
