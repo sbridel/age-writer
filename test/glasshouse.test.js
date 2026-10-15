@@ -54,4 +54,12 @@ for (const glass of [false, true]) {
   const R = make(glass, "sandbox", "calendar", 14, ["page_calendar"]); R.calFrom = "global"; R.hot = []; R.draw(5);
   ok(R.view === "calendar" && R.hot.some((h) => h.go === "global") && R.hot.length === 2, `calendrier${glass ? " (Verrière)" : ""} : la pierre et le retour (d'où l'on vient)`);
 }
+// la pelouse (page Herbe seule), le muguet (une page de fleurs), la fissure de lave qui sort derrière la coupole (les zones ne bougent pas)
+{
+  const A = make(false, "sandbox", "island", 15, ["page_grass"]), B = make(false, "sandbox", "island", 15, ["page_flowers"]);
+  ok(A.lawn() && A.groundTop() !== A.terrain().top && !B.lawn() && B.groundTop() === B.terrain().top, "le sol est une pelouse avec la page Herbe, et seulement avec elle");
+  ok(M.PAGE_PRESETS.page_lily_of_the_valley && M.ASSETS.flowers.includes("lily"), "la page muguet existe (fleurs, asset lily)");
+  const L = make(false, "sandbox", "island", 15, ["page_lily_of_the_valley"]); ok(L.scene.additions.some((a) => a.type === "flowers" && a.asset === "lily"), "le muguet est une addition de fleurs");
+  ok(zones(make(false, "sandbox", "island", 15, ["page_lily_of_the_valley", "page_grass"])) === zones(make(true, "sandbox", "island", 15, ["page_lily_of_the_valley", "page_grass"])), "muguet et pelouse : zones identiques avec et sans la Verrière");
+}
 console.log(`✓ glasshouse.test.js (${n} contrôles)`);

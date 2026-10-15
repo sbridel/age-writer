@@ -106,6 +106,7 @@ function bench(ctx, r, sky, bx) {
 
 /** Fleurs basses le long du sol (asset : blue, red, yellow, white, pink). */
 function flowers(ctx, a, sky, t, clear) {
+  if (a.asset === "lily") return lilies(ctx, a, sky, t, clear);
   const PAL = { blue: "#5b8cf0", red: "#e04a4a", yellow: "#f2d04a", white: "#f4f1e8", pink: "#f08ab8" }, col = PAL[a.asset] || PAL.blue, n = Math.round(14 + a.density * 46), r = rng(0x5eed ^ fnv(String(a.asset || "blue")));
   const k = amb(sky);
   for (let i = 0; i < n; i++) {
@@ -113,6 +114,24 @@ function flowers(ctx, a, sky, t, clear) {
     const h = 3 + r() * 4, sw = Math.sin(t * 1.1 + i) * 0.8;
     ctx.strokeStyle = mix("#05060c", "#3f7a3a", k); ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(x, GY + 3); ctx.lineTo(x + sw, GY + 3 - h); ctx.stroke();
     ctx.fillStyle = mix("#05060c", col, k); ctx.beginPath(); ctx.arc(x + sw, GY + 3 - h, 1.5, 0, 6.283); ctx.fill();
+  }
+}
+
+/** Le muguet (page « lily_of_the_valley ») : des touffes éparses, deux feuilles larges en lame, une tige arquée et ses clochettes blanches pendantes. */
+function lilies(ctx, a, sky, t, clear) {
+  const n = Math.round(6 + (a.density == null ? 0.6 : a.density) * 18), r = rng(0x30e7), k = amb(sky), c = (h) => mix("#05060c", h, k);
+  for (let i = 0; i < n; i++) {
+    const x = 176 + r() * 288; if (clear.some(([c0, c1]) => x > c0 && x < c1)) { r(); r(); r(); continue; }
+    const h = 10 + r() * 5, dir = r() < 0.5 ? -1 : 1, nb = 3 + Math.floor(r() * 3), sw = Math.sin(t * 0.9 + i * 1.3) * 0.5, y0 = GY + 3;
+    ctx.fillStyle = c(i % 2 ? "#3f7a3a" : "#4b8a44"); // les deux feuilles, larges, en lame
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x, y0); ctx.quadraticCurveTo(x + s * 4, y0 - h * 0.5, x + s * 1.4, y0 - h * 0.9); ctx.quadraticCurveTo(x + s * 0.6, y0 - h * 0.5, x, y0); ctx.fill(); }
+    const tx = x + dir * 4.5 + sw, ty = y0 - h; // la tige, qui s'arque
+    ctx.strokeStyle = c("#5a8f45"); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(x, y0); ctx.quadraticCurveTo(x + dir * 0.5, ty - 1, tx, ty + 1.5); ctx.stroke();
+    for (let b = 0; b < nb; b++) { // les clochettes, de la plus grosse (en bas de la grappe) à la plus petite (au bout)
+      const u = (b + 1) / (nb + 1), sx = x + dir * 1.2, sy = y0 - h * 0.78, bx = sx + (tx - sx) * u, by = sy + (ty + 1.5 - sy) * u + 1.8, rr = 1.6 - u * 0.5; // le long de l'arc, du bas de la grappe au bout
+      ctx.strokeStyle = c("#5a8f45"); ctx.lineWidth = 0.35; ctx.beginPath(); ctx.moveTo(bx, by - 1.6); ctx.lineTo(bx, by - 0.6); ctx.stroke();
+      ctx.fillStyle = c("#f6f3e6"); ctx.beginPath(); ctx.arc(bx, by, rr, Math.PI, 0); ctx.lineTo(bx + rr * 1.15, by + rr * 0.5); ctx.lineTo(bx - rr * 1.15, by + rr * 0.5); ctx.closePath(); ctx.fill();
+    }
   }
 }
 

@@ -267,7 +267,7 @@ function drawPondRoom(r, ctx, sc, sky, t) {
   const g = ctx.createLinearGradient(0, yg, 0, H); g.addColorStop(0, c(T.rock2)); g.addColorStop(1, c(T.rock)); ctx.fillStyle = g; ctx.fillRect(0, yg - 6, W, H - yg + 6);
   const q = rng(0x5ea7); ctx.strokeStyle = rgba(0, 0, 0, 0.25); ctx.lineWidth = 1.2;
   for (let i = 0; i < 9; i++) { const y = y1 + 10 + i * 14 + q() * 6, x = q() * 500; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 60 + q() * 90, y + 3); ctx.lineTo(x + 150 + q() * 80, y - 2); ctx.stroke(); }
-  ctx.fillStyle = c(T.top); ctx.fillRect(0, yg - 12, W, y0 - yg + 12);
+  ctx.fillStyle = c(r.groundTop()); ctx.fillRect(0, yg - 12, W, y0 - yg + 12);
   ctx.fillStyle = rgba(0, 0, 0, 0.18); ctx.fillRect(0, y0 - 4, W, 4);
   // le mont (falaise à gauche) : le ruisseau naît d'une encoche dans la roche, longe la paroi, coule sur le sol jusqu'au bassin et s'y jette
   if (wf) {
@@ -342,7 +342,7 @@ function drawPondPlusRoom(r, ctx, sc, sky, t) {
   const S = 8, fx = K.x0 + 26, fy = GY + 9.5, ox = 320, oy = 222, yg = oy + (GY - fy) * S, y0 = oy + (GY + 2 - fy) * S, y1 = oy + (GY + 17 - fy) * S, xl = ox + (K.x0 - fx) * S, xr = ox + (K.x1 - fx) * S;
   outdoorBackdrop(r, ctx, sky, t, yg);
   const g = ctx.createLinearGradient(0, yg, 0, H); g.addColorStop(0, c(T.rock2)); g.addColorStop(1, c(T.rock)); ctx.fillStyle = g; ctx.fillRect(0, yg - 6, W, H - yg + 6);
-  ctx.fillStyle = c(T.top); ctx.fillRect(0, yg - 12, W, y0 - yg + 12); ctx.fillStyle = rgba(0, 0, 0, 0.18); ctx.fillRect(0, y0 - 4, W, 4);
+  ctx.fillStyle = c(r.groundTop()); ctx.fillRect(0, yg - 12, W, y0 - yg + 12); ctx.fillStyle = rgba(0, 0, 0, 0.18); ctx.fillRect(0, y0 - 4, W, 4);
   const q = rng(0xbada); ctx.strokeStyle = rgba(0, 0, 0, 0.25); ctx.lineWidth = 1.2; for (let i = 0; i < 6; i++) { const y = y1 + 8 + i * 12, x = q() * 500; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 80 + q() * 80, y + 3); ctx.stroke(); }
   // lanterne de pierre sur la rive gauche
   const lx = xl - 44, lb = y0 - 4;
@@ -392,7 +392,7 @@ function drawPondPlusRoom(r, ctx, sc, sky, t) {
 function drawCatRoom(r, ctx, sc, sky, t) {
   const T = r.terrain(), k = 0.35 + 0.65 * sky.ambient, cat = sc.additions.find((a) => a.type === "cat"), gy = 276;
   outdoorBackdrop(r, ctx, sky, t, gy - 10);
-  const g = ctx.createLinearGradient(0, gy, 0, H); g.addColorStop(0, mix("#05060c", T.top, k)); g.addColorStop(1, mix("#05060c", T.rock, k)); ctx.fillStyle = g; ctx.fillRect(0, gy, W, H - gy);
+  const g = ctx.createLinearGradient(0, gy, 0, H); g.addColorStop(0, mix("#05060c", r.groundTop(), k)); g.addColorStop(1, mix("#05060c", T.rock, k)); ctx.fillStyle = g; ctx.fillRect(0, gy, W, H - gy);
   meadow(r, ctx, sc, sky, t, gy + 4, 120, 0x3c47, 22);
 const tz = sc.additions.find((a) => a.type === "cattoys"), td = tz ? (tz.density == null ? 0.6 : tz.density) : 0;
   if (tz) catToys(r, ctx, sc, sky, t, gy, td, true);
@@ -408,7 +408,7 @@ const tz = sc.additions.find((a) => a.type === "cattoys"), td = tz ? (tz.density
 function drawGroveRoom(r, ctx, sc, sky, t) {
   const T = r.terrain(), k = 0.35 + 0.65 * sky.ambient, has = (ty) => sc.additions.find((a) => a.type === ty), oy = 292, S = 2;
   outdoorBackdrop(r, ctx, sky, t, oy);
-  const g = ctx.createLinearGradient(0, oy, 0, H); g.addColorStop(0, mix("#05060c", T.top, k)); g.addColorStop(1, mix("#05060c", T.rock, k)); ctx.fillStyle = g; ctx.fillRect(0, oy, W, H - oy);
+  const g = ctx.createLinearGradient(0, oy, 0, H); g.addColorStop(0, mix("#05060c", r.groundTop(), k)); g.addColorStop(1, mix("#05060c", T.rock, k)); ctx.fillStyle = g; ctx.fillRect(0, oy, W, H - oy);
   r.withView(ctx, { S, ox: 0, oy, fx: 150, fy: GY }, () => {
     r.drawPlants(ctx, 0, t, r.geo.grove);
     const sk = has("stalktree"); if (sk) r.drawStalk(ctx, sk, sky, t);

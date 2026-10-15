@@ -484,8 +484,8 @@ const FX_WORDS = {
   fr: { vegetation: "des arbres", waterfall: "une cascade", fireflies: "des lucioles", lanterns: "des lanternes", snow: "de la neige", aurora: "une aurore", mist: "de la brume", fireworks: "des feux d'artifice", mountain: "une montagne", pillars: "des menhirs", chimney: "une cheminée", gems: "des gemmes", gold: "de l'or", silver: "de l'argent", koi: "des koïs", cat: "un chat", rain: "la pluie", storm: "l'orage", birds: "des oiseaux", butterflies: "des papillons", moons: "des lunes", dock: "un ponton", bench: "un banc", stalktree: "un arbre-tige", cattoys: "les jouets du chat", ponddecor: "des pierres au bord du bassin", islets: "des îlots", calendar: "la pierre-calendrier", flowers: "des fleurs", grass: "de l'herbe", imager: "l'Imageur", telescope: "l'observatoire", dniclock: "l'horloge D'ni", comet: "des comètes" },
 };
 const ASSET_WORDS = {
-  en: { conifer: "pines", birch: "birches", palm: "palms", fern: "ferns", ponderosa: "ponderosa pines", maple: "maples", crystal: "crystal trees", blue: "blue", red: "red", yellow: "yellow", white: "white", pink: "pink" },
-  fr: { conifer: "pins", birch: "bouleaux", palm: "palmiers", fern: "fougères", ponderosa: "pins ponderosa", maple: "érables", crystal: "arbres de cristal", blue: "bleues", red: "rouges", yellow: "jaunes", white: "blanches", pink: "roses" },
+  en: { conifer: "pines", birch: "birches", palm: "palms", fern: "ferns", ponderosa: "ponderosa pines", maple: "maples", crystal: "crystal trees", blue: "blue", red: "red", yellow: "yellow", white: "white", pink: "pink", lily: "lilies of the valley" },
+  fr: { conifer: "pins", birch: "bouleaux", palm: "palmiers", fern: "fougères", ponderosa: "pins ponderosa", maple: "érables", crystal: "arbres de cristal", blue: "bleues", red: "rouges", yellow: "jaunes", white: "blanches", pink: "roses", lily: "muguet" },
 };
 function fxLabel(a, lang) {
   const L = lang === "fr" ? "fr" : "en", base = FX_WORDS[L][a.type] || String(a.type).replace(/_/g, " "), asset = a.asset ? ASSET_WORDS[L][a.asset] || a.asset : null;

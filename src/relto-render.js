@@ -40,6 +40,8 @@ const TERRAIN = {
   glacier: { rock: "#516b80", rock2: "#6f8ea3", top: "#c9dfec", tuft: "#e4f1f8", glow: null },
   obsidian_plateau: { rock: "#120f16", rock2: "#201a2a", top: "#2a2236", tuft: "#3b2f4a", glow: "#8a5cff" },
 };
+/** La pelouse de la page Herbe : le dessus de l'île (et le sol des vues rapprochées en plein air) quand la page est là. */
+const GRASS = { top: "#55863c", low: "#3b6229", hi: "#7cae58" };
 /** Koï rares du bassin (page « koi », option `rare=`). */
 const KOI_RARE = {
   ogon: { label: "ogon (gold)", title: "Ogon", body: "#e8b838", spot: "#fff3b0", glow: "rgba(255,214,90,0.85)", glow2: "rgba(255,190,60,0.3)", spark: "rgba(255,236,150,A)" },
@@ -358,7 +360,15 @@ class ReltoRenderer {
     }
     ctx.restore();
     // surface
-    ctx.fillStyle = shade(T.top); ctx.beginPath(); ctx.moveTo(128, GY); ctx.lineTo(472, GY); ctx.lineTo(462, GY + 9); ctx.quadraticCurveTo(300, GY + 16, 138, GY + 9); ctx.closePath(); ctx.fill();
+    const lawn = this.lawn(); // la page Herbe : le sol lui-même devient une pelouse, les touffes en sortent
+    if (lawn) { const lg = ctx.createLinearGradient(0, GY, 0, GY + 16); lg.addColorStop(0, shade(GRASS.top)); lg.addColorStop(1, shade(GRASS.low)); ctx.fillStyle = lg; } else ctx.fillStyle = shade(T.top);
+    ctx.beginPath(); ctx.moveTo(128, GY); ctx.lineTo(472, GY); ctx.lineTo(462, GY + 9); ctx.quadraticCurveTo(300, GY + 16, 138, GY + 9); ctx.closePath(); ctx.fill();
+    if (lawn) { // des reflets clairs dans l'herbe, et une frange qui retombe sur le bord de la roche
+      const q = rng(0x1a3e); ctx.strokeStyle = shade(GRASS.hi); ctx.lineWidth = 0.8;
+      for (let i = 0; i < 46; i++) { const x = 140 + q() * 320, y = GY + 1.5 + q() * 6; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 3 + q() * 4, y - 0.6); ctx.stroke(); }
+      ctx.strokeStyle = shade(GRASS.low); ctx.lineWidth = 1;
+      for (let i = 0; i < 70; i++) { const u = q(), x = 140 + u * 320, e = 4 * u * (1 - u), y = GY + 9 + 6.5 * e, l = 2 + q() * 3.5; ctx.beginPath(); ctx.moveTo(x, y - 1); ctx.lineTo(x + (q() - 0.5) * 2, y + l); ctx.stroke(); }
+    }
     ctx.fillStyle = shade(T.tuft);
     for (const [x, h] of g.tufts) { ctx.beginPath(); ctx.moveTo(x - 2, GY + 1); ctx.lineTo(x, GY - h); ctx.lineTo(x + 2, GY + 1); ctx.fill(); }
   }
@@ -1038,7 +1048,18 @@ class ReltoRenderer {
     ctx.restore();
     ctx.fillStyle = shade(T.tuft); const r = rng((this.scene.seed ^ 0x2f1d) >>> 0);
     for (let i = 0; i < 9; i++) { const x = cx - 24 + r() * 44, y = GY - h * (0.86 + 0.1 * Math.sin((x - cx) / 14)) + 3; if (terrace && (y < this.lay.mount.ty + 3 || Math.abs(x - this.lay.mount.tx) < 15)) continue; ctx.beginPath(); ctx.moveTo(x - 1.5, y); ctx.lineTo(x, y - 3 - r() * 3); ctx.lineTo(x + 1.5, y); ctx.fill(); }
-    if (T.glow) { ctx.strokeStyle = hexa(T.glow, (0.3 + 0.3 * Math.sin(t * 0.8)) * (0.5 + 0.5 * sky.night)); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(cx - 20, GY - h * 0.5); ctx.lineTo(cx - 14, GY - h * 0.38); ctx.lineTo(cx - 19, GY - h * 0.25); ctx.stroke(); }
+    if (T.glow) {
+      const a = (0.3 + 0.3 * Math.sin(t * 0.8)) * (0.5 + 0.5 * sky.night);
+      if (this.glassOn()) { // sous la Verrière, la coupole est plus basse que le toit : la fissure entière, qui remonte au-dessus du verre, avec sa lueur et une branche
+        const P = [[cx - 19, GY - h * 0.25], [cx - 14, GY - h * 0.38], [cx - 20, GY - h * 0.5], [cx - 15, GY - h * 0.6], [cx - 21, GY - h * 0.7], [cx - 17, GY - h * 0.78]], B = [[cx - 15, GY - h * 0.6], [cx - 9, GY - h * 0.66], [cx - 6, GY - h * 0.72]];
+        const line = (pts) => { ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); };
+        ctx.lineCap = "round"; ctx.lineJoin = "round";
+        ctx.strokeStyle = hexa(T.glow, a * 0.35); ctx.lineWidth = 4; line(P); ctx.lineWidth = 3; line(B); // la lueur autour
+        ctx.strokeStyle = hexa(T.glow, a); ctx.lineWidth = 1.3; line(P); ctx.lineWidth = 0.9; line(B);
+        ctx.strokeStyle = rgba(255, 230, 170, a * 0.6); ctx.lineWidth = 0.5; line(P.slice(1, 4)); // le cœur plus chaud
+        ctx.lineCap = "butt"; ctx.lineJoin = "miter";
+      } else { ctx.strokeStyle = hexa(T.glow, a); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(cx - 20, GY - h * 0.5); ctx.lineTo(cx - 14, GY - h * 0.38); ctx.lineTo(cx - 19, GY - h * 0.25); ctx.stroke(); }
+    }
   }
 
   /** feux d'artifice : fusée, éclatement, retombée ; plus visibles à la nuit tombée */
@@ -1291,6 +1312,10 @@ class ReltoRenderer {
     for (let i = n0; i < this.hot.length; i++) { const h = this.hot[i]; this.hot[i] = { ...h, x: ox + (h.x - fx) * S, y: oy + (h.y - fy) * S, w: h.w * S, h: h.h * S }; }
   }
   terrain() { return TERRAIN[this.scene.terrain] || TERRAIN.mossy_plateau; }
+  /** La page Herbe est là : le sol est une pelouse. */
+  lawn() { return !!(this.scene && this.scene.additions.some((a) => a.type === "grass")); }
+  /** La couleur du sol en plein air : la pelouse si la page Herbe est là, sinon le dessus du terrain. */
+  groundTop() { return this.lawn() ? GRASS.top : this.terrain().top; }
   /** vues plein cadre (globale, cabane, piliers, bassin, chat, bosquet) : pas de caméra ; `fn` dessine la scène */
   drawFullView(ctx, sky, fn) {
     ctx.save(); ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0); ctx.clearRect(0, 0, W, H);
