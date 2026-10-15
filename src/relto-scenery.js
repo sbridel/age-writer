@@ -173,6 +173,7 @@ function dniClock(ctx, r, sky, t) {
   const sg = ctx.createLinearGradient(x - 5, 0, x + 5, 0); sg.addColorStop(0, mix("#05060c", "#8d8578", k)); sg.addColorStop(1, mix("#05060c", "#57524a", k));
   ctx.fillStyle = sg; ctx.fillRect(x - 7, y - 6, 14, 6); ctx.fillRect(x - 4, y - 40, 8, 34); ctx.fillRect(x - 6.5, y - 44, 13, 4);
   ctx.fillStyle = rgba(0, 0, 0, 0.18); ctx.fillRect(x + 1, y - 40, 3, 34);
+  if (r.glassOn && r.glassOn()) require("./relto-glass").pillarVine(ctx, (h) => mix("#05060c", h, k), x, y - 6, y - 40, 4, 0.3); // la Verrière : une liane de cuivre autour du fût
   // la sphère armillaire
   const cx = x, cy = y - 56, R = 11;
   ctx.lineWidth = 1.3; ctx.strokeStyle = brass();

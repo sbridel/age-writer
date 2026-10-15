@@ -318,4 +318,21 @@ function imagerBench(ctx, c, y0, W = 640, H = 360) {
   ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 1; for (let y = y0 + 14; y < H; y += 17) { ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(W * 0.3, y + 3, W * 0.6, y - 3, W, y + 1); ctx.stroke(); }
 }
 
-module.exports = { darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+/**
+ * Une liane de cuivre qui s'enroule autour d'un fût (x, de y0 en bas à y1 en haut, demi-largeur hw) : deux brins qui se croisent,
+ * des feuilles aux croisements, une vrille en haut. `k` : l'échelle (1 pour la vue rapprochée de l'horloge).
+ */
+function pillarVine(ctx, c, x, y0, y1, hw, k = 1) {
+  const n = 3, step = (y0 - y1) / n;
+  ctx.lineCap = "round";
+  for (const ph of [0, 1]) {
+    ctx.strokeStyle = c(ph ? COPPER : COPPER_HI); ctx.lineWidth = 2.2 * k; ctx.beginPath(); ctx.moveTo(x + (ph ? hw : -hw), y0);
+    for (let i = 0; i < n; i++) { const ya = y0 - step * i, s = (i + ph) % 2 ? 1 : -1; ctx.bezierCurveTo(x + s * hw * 1.25, ya - step * 0.3, x - s * hw * 1.25, ya - step * 0.7, x - s * hw, ya - step); }
+    ctx.stroke();
+  }
+  ctx.fillStyle = c("#4b8a62");
+  for (let i = 0; i < n; i++) { const y = y0 - step * (i + 0.5); for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(x + s * hw * 1.15, y, 5 * k, 2.4 * k, s * 0.5, 0, 6.283); ctx.fill(); } }
+  ctx.strokeStyle = c(COPPER_HI); ctx.lineWidth = 1.4 * k; ctx.beginPath(); ctx.arc(x + hw * 0.6, y1 - 4 * k, 4 * k, Math.PI * 0.2, Math.PI * 1.7); ctx.stroke(); // la vrille
+}
+
+module.exports = { pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
