@@ -53,7 +53,7 @@ function drawRoundWindow(r, ctx, sc, sky, t) {
   // les chiffres gravés, 0..24, le pied vers le centre
   if (r.dni) {
     for (let i = 0; i < N; i++) {
-      const a = (i / N) * 6.283, size = i >= 10 ? 14 : 18, w = r.dni.widthOf(i, size), x = CX + Math.sin(a) * mid, y = CY - Math.cos(a) * mid;
+      const a = (i / N) * 6.283, size = 18, w = r.dni.widthOf(i, size), x = CX + Math.sin(a) * mid, y = CY - Math.cos(a) * mid;
       ctx.save(); ctx.translate(x, y); ctx.rotate(a);
       r.dni.drawNumber(ctx, i, -w / 2 + 0.6, -size / 2 + 0.7, size, "rgba(255,244,214,0.3)");
       r.dni.drawNumber(ctx, i, -w / 2, -size / 2, size, rgba(46, 30, 12, 0.88));
