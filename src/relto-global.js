@@ -41,7 +41,7 @@ function island(r, ctx, sc, sky, t, has) {
     ctx.fillStyle = teal; ctx.fillRect(cx - 33, y - 11, 20, 11); ctx.beginPath(); ctx.ellipse(cx - 23, y - 10, 12, 9, 0, Math.PI, 2 * Math.PI); ctx.fill();
     ctx.strokeStyle = c("#b5652a"); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.ellipse(cx - 23, y - 10, 12, 9, 0, Math.PI, 2 * Math.PI); ctx.stroke(); ctx.strokeRect(cx - 33, y - 11, 20, 11);
     ctx.beginPath(); ctx.moveTo(cx - 23, y - 19); ctx.lineTo(cx - 23, y - 10); ctx.moveTo(cx - 28, y - 11); ctx.lineTo(cx - 28, y); ctx.moveTo(cx - 18, y - 11); ctx.lineTo(cx - 18, y); ctx.stroke();
-    ctx.fillStyle = amb; ctx.fillRect(cx - 25, y - 7, 4, 7); ctx.fillStyle = c("#b5652a"); ctx.fillRect(cx - 30, y - 20, 2.5, 8);
+    ctx.fillStyle = amb; ctx.fillRect(cx - 25, y - 7, 4, 7); ctx.fillStyle = c("#b5652a"); ctx.fillRect(cx - 24.5, y - 22, 3, 3); // le lanternon
   } else {
   ctx.fillStyle = c("#6b4a30"); ctx.fillRect(cx - 34, y - 12, 22, 12); ctx.fillStyle = c("#3a2a22"); ctx.beginPath(); ctx.moveTo(cx - 37, y - 12); ctx.lineTo(cx - 23, y - 22); ctx.lineTo(cx - 9, y - 12); ctx.closePath(); ctx.fill();
   ctx.fillStyle = mix("#2a3a4a", "#ffd58a", clamp(sky.night * 1.1)); ctx.fillRect(cx - 18, y - 9, 4, 4);
@@ -49,7 +49,7 @@ function island(r, ctx, sc, sky, t, has) {
   ctx.fillStyle = c("#4b3626"); ctx.fillRect(cx + 4, y - 14, 12, 14); ctx.fillStyle = c("#241a12"); ctx.fillRect(cx + 5, y - 13, 10, 12);
   ctx.fillStyle = c("#5a5a66"); ctx.fillRect(cx + 38, y - 18, 3, 18); ctx.fillRect(cx + 50, y - 18, 3, 18);
   if (sc.returning > 0) { ctx.strokeStyle = rgba(190, 235, 255, 0.5 + 0.3 * Math.sin(t * 2)); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx + 45.5, y - 12, 5, 0, 6.283); ctx.stroke(); }
-  const pt = has("chimney"); if (pt) { for (let i = 0; i < 3; i++) { const p = ((t * 0.3 + i / 3) % 1); ctx.fillStyle = rgba(190, 190, 200, 0.3 * (1 - p)); ctx.beginPath(); ctx.arc(cx - 28 + p * 8, y - 24 - p * 22, 2 + p * 3, 0, 6.283); ctx.fill(); } }
+  const pt = has("chimney"); if (pt) { for (let i = 0; i < 3; i++) { const p = ((t * 0.3 + i / 3) % 1); ctx.fillStyle = rgba(190, 190, 200, 0.3 * (1 - p)); ctx.beginPath(); ctx.arc((r.glassOn && r.glassOn() ? cx - 23 : cx - 28) + p * 8, y - 24 - p * 22, 2 + p * 3, 0, 6.283); ctx.fill(); } }
   r.hot.push({ x: cx - 66, y: y - 52, w: 132, h: 100, tip: "Your Relto — click to go there", go: "island" });
 }
 

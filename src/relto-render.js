@@ -1071,8 +1071,8 @@ class ReltoRenderer {
   glassOn() { const sc = this.scene; return !!(sc && sc.mode !== "story" && sc.additions.some((a) => a.type === "glasshouse")); }
   /**
    * Le pavillon de verre et de cuivre, à la place de la cabane de planches (même emprise, même zone cliquable) : une coupole à
-   * nervures, deux baies en ogive vert d'eau à rinceaux, une porte ambre à soleil, le tuyau de cuivre du poêle (là où était la
-   * cheminée : la fumée de la page cheminée en sort), des lianes. Le jour, le verre prend le ciel ; la nuit, le poêle et la lampe
+   * nervures et son lanternon (le poêle y respire : la fumée de la page cheminée en sort), deux baies en ogive vert d'eau à
+   * rinceaux, une porte ambre à soleil, des lianes. Le jour, le verre prend le ciel ; la nuit, le poêle et la lampe
    * l'allument de l'intérieur et il jette du vert et de l'ambre sur le sol. Art nouveau : rien de copié, des formes de notre main.
    */
   drawGlasshouse(ctx, sky, t, x0, y0, w, h, col) {
@@ -1096,9 +1096,12 @@ class ReltoRenderer {
     ctx.lineWidth = 0.9; ctx.strokeStyle = CU2;
     for (const k of [-0.62, -0.25, 0.25, 0.62]) { ctx.beginPath(); ctx.moveTo(hx, y0 + 3 - dh); ctx.quadraticCurveTo(hx + k * dr * 0.9, y0 + 3 - dh * 0.75, hx + k * dr, y0 + 3); ctx.stroke(); }
     ctx.beginPath(); ctx.ellipse(hx, y0 + 3, dr * 0.72, dh * 0.42, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke(); // une bague à mi-hauteur
-    ctx.fillStyle = CU; ctx.beginPath(); ctx.arc(hx, y0 + 2 - dh, 2.2, 0, 6.283); ctx.fill();
-    ctx.strokeStyle = CU2; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(hx, y0 - dh); ctx.lineTo(hx, y0 - dh - 6); ctx.stroke();
-    ctx.fillStyle = mix(col("#c98a32"), "#ffd27a", clamp(lit)); ctx.beginPath(); ctx.arc(hx, y0 - dh - 7, 1.2, 0, 6.283); ctx.fill();
+    // le lanternon au sommet : un petit tambour de cuivre ajouré sous un chapeau, par où le poêle respire (la fumée en sort)
+    const ly = y0 + 3 - dh; ctx.fillStyle = CU; ctx.fillRect(hx - 3.5, ly - 5, 7, 5.5);
+    ctx.fillStyle = mix(col("#2a1a10"), "#ffb14a", clamp(lit * 0.9)); ctx.fillRect(hx - 2.5, ly - 4, 1.4, 3); ctx.fillRect(hx - 0.7, ly - 4, 1.4, 3); ctx.fillRect(hx + 1.1, ly - 4, 1.4, 3); // les jours du tambour
+    ctx.fillStyle = CU; ctx.beginPath(); ctx.moveTo(hx - 5, ly - 5); ctx.quadraticCurveTo(hx, ly - 10, hx + 5, ly - 5); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = CU2; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(hx, ly - 8.5); ctx.lineTo(hx, ly - 12); ctx.stroke();
+    ctx.fillStyle = mix(col("#c98a32"), "#ffd27a", clamp(lit)); ctx.beginPath(); ctx.arc(hx, ly - 12.6, 1, 0, 6.283); ctx.fill();
     // les deux baies en ogive (vert d'eau) et la porte (ambre), cerclées de cuivre
     const bays = [[x0 + 1, x0 + 19, y0 + 2], [x0 + w - 19, x0 + w - 1, y0 + 2]], door = [hx - 7, hx + 7, y0 - 4];
     for (const [xa, xb, top] of bays) {
@@ -1117,9 +1120,6 @@ class ReltoRenderer {
     ctx.fillStyle = CU2; ctx.beginPath(); ctx.arc(hx + 4.5, GY - 8, 0.9, 0, 6.283); ctx.fill(); // la poignée
     // le soubassement de cuivre
     ctx.fillStyle = CU; ctx.fillRect(x0 - 1, GY - 2.5, w + 2, 2.5); ctx.fillStyle = col("#5a2e12"); ctx.fillRect(x0 - 1, GY - 0.8, w + 2, 0.8);
-    // le tuyau du poêle (là où était la cheminée : la fumée de la page cheminée en sort), sa collerette
-    ctx.fillStyle = CU; ctx.fillRect(x0 + 8.5, y0 - 26, 6, 20); ctx.fillStyle = CU2; ctx.fillRect(x0 + 9.5, y0 - 26, 1.2, 20);
-    ctx.fillStyle = CU; ctx.fillRect(x0 + 7, y0 - 28, 9, 3);
     // les lianes qui montent sur les montants
     ctx.strokeStyle = col("#3b8f6a"); ctx.lineWidth = 1.1; ctx.fillStyle = col("#4bb08a");
     for (const [bx, dir] of [[x0 + 1, -1], [x0 + w - 1, 1]]) {
@@ -1132,7 +1132,7 @@ class ReltoRenderer {
   /** menhirs et colonnes brisées : ils s'allument de runes la nuit */
   /** cheminée allumée : fumée chaude et dense, lueur vacillante, étincelles, fenêtre éclairée */
   drawChimney(ctx, d, sky, t) {
-    const x0 = this.hutX - 28, y0 = GY - 30, cx = x0 + 11.5, cy = y0 - 24, night = clamp(sky.night == null ? 0.3 : sky.night);
+    const x0 = this.hutX - 28, y0 = GY - 30, glass = this.glassOn(), cx = glass ? this.hutX : x0 + 11.5, cy = glass ? y0 - 27 : y0 - 24, night = clamp(sky.night == null ? 0.3 : sky.night);
     const fl = 0.75 + 0.25 * Math.sin(t * 9.1) * Math.sin(t * 5.3 + 1) + 0.1 * Math.sin(t * 17);
     // fenêtre et lueur de l'âtre
     const wx = x0 + 56 - 14, wy = y0 + 13;
