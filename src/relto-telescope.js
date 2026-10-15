@@ -31,6 +31,7 @@ const INS = require("./instruments");
 const MET = require("./metronome");
 const GI = require("./imager-guild");
 const BEAM = require("./beam");
+const VR = require("./relto-glass");
 
 const W = 640, H = 360, GY = 208;
 const EYE = { x: 196, y: 150, r: 116 }, FIELD = 30; // l'oculaire montre ±30 crans fins autour de la visée
@@ -481,20 +482,24 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   if (sc0 && sc0.beat) hear("false", sc0.fx.beat.period, Math.max(0.15, sc0.true.s), "falsebeat"); else delete heard.false;
   if (sc0 && guild && st.old) hear("merta", st.old.period, Math.max(0.1, sig.s * 0.6), "pulse"); else delete heard.merta; // la ligne de Me'erta traverse les Âges : on l'entend glisser là aussi
   // l'intérieur de l'observatoire : la coupole sombre et ses nervures, la fente ouverte sur le ciel, le grand tube, le sol de pierre
-  const dg = ctx.createRadialGradient(W / 2, 300, 40, W / 2, 300, 520); dg.addColorStop(0, c("#2b2621")); dg.addColorStop(1, c("#0d0b0a")); ctx.fillStyle = dg; ctx.fillRect(0, 0, W, H);
+  const glass = !!(r.glassOn && r.glassOn()); // la Verrière : coupole vert sombre, nervures et bords de cuivre, sol de mosaïque, coins du panneau en rinceaux
+  const dg = ctx.createRadialGradient(W / 2, 300, 40, W / 2, 300, 520); dg.addColorStop(0, c(glass ? "#1e2e2b" : "#2b2621")); dg.addColorStop(1, c(glass ? "#080d0c" : "#0d0b0a")); ctx.fillStyle = dg; ctx.fillRect(0, 0, W, H);
   const SL = { x: 318, w: 52 }; // la fente de la coupole, entre l'oculaire et le panneau
   ctx.save(); ctx.beginPath(); ctx.rect(SL.x, 0, SL.w, 286); ctx.clip();
   const g = ctx.createLinearGradient(0, 0, 0, 286); g.addColorStop(0, mix("#04060d", sky.top, 0.35)); g.addColorStop(1, mix("#0a0c14", sky.bottom, 0.3)); ctx.fillStyle = g; ctx.fillRect(SL.x, 0, SL.w, 286);
   const q = rng(((sc.seed || 0) ^ 0x51a7) >>> 0); for (let i = 0; i < 70; i++) { const x = SL.x + q() * SL.w, y = q() * 260, a = (0.2 + 0.5 * q()) * (0.6 + 0.4 * (sky.night == null ? 1 : sky.night)); ctx.fillStyle = rgba(230, 236, 255, a); ctx.fillRect(x, y, 1, 1); }
   ctx.restore();
-  ctx.strokeStyle = c("#4a3a26"); ctx.lineWidth = 3; ctx.strokeRect(SL.x - 1.5, -2, SL.w + 3, 289); // les bords de la fente (les volets ouverts)
-  ctx.strokeStyle = "rgba(0,0,0,0.45)"; ctx.lineWidth = 1.4; // les nervures de la coupole
+  ctx.strokeStyle = c(glass ? VR.COPPER : "#4a3a26"); ctx.lineWidth = 3; ctx.strokeRect(SL.x - 1.5, -2, SL.w + 3, 289); // les bords de la fente (les volets ouverts)
+  ctx.strokeStyle = glass ? c("#7a4422") : "rgba(0,0,0,0.45)"; ctx.lineWidth = glass ? 1.6 : 1.4; // les nervures de la coupole
   for (let k = 1; k <= 4; k++) { const y0 = 286 - k * 62; ctx.beginPath(); ctx.moveTo(0, y0 + 30); ctx.quadraticCurveTo(SL.x / 2, y0 - 4, SL.x - 2, y0); ctx.moveTo(SL.x + SL.w + 2, y0); ctx.quadraticCurveTo((SL.x + SL.w + W) / 2, y0 - 4, W, y0 + 30); ctx.stroke(); }
   for (const x of [24, 150, 250, 420, 520, 620]) { ctx.beginPath(); const L = x < SL.x; ctx.moveTo(x, 286); ctx.quadraticCurveTo(x + (L ? 40 : -40), 110, L ? SL.x - 4 : SL.x + SL.w + 4, 0); ctx.stroke(); }
+  if (glass) VR.darkMosaic(ctx, c, 286); else {
   const pg = ctx.createLinearGradient(0, 286, 0, H); pg.addColorStop(0, c("#3a3530")); pg.addColorStop(1, c("#1a1714")); ctx.fillStyle = pg; ctx.fillRect(0, 286, W, H - 286);
   ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.lineWidth = 1; for (let x = 0; x < W; x += 46) { ctx.beginPath(); ctx.moveTo(x + (x / 46 % 2) * 20, 286); ctx.lineTo(x + (x / 46 % 2) * 20, H); ctx.stroke(); } ctx.beginPath(); ctx.moveTo(0, 312); ctx.lineTo(W, 312); ctx.stroke();
+  }
   // le corps de l'instrument : un panneau de laiton sombre derrière les molettes
-  ctx.fillStyle = c("#1b130d"); ctx.fillRect(374, 34, 250, 252); ctx.strokeStyle = c("#8a6a2e"); ctx.lineWidth = 1.2; ctx.strokeRect(374.5, 34.5, 249, 251);
+  ctx.fillStyle = c("#1b130d"); ctx.fillRect(374, 34, 250, 252); ctx.strokeStyle = c(glass ? VR.COPPER : "#8a6a2e"); ctx.lineWidth = glass ? 2 : 1.2; ctx.strokeRect(374.5, 34.5, 249, 251);
+  if (glass) VR.cornerVines(ctx, c, 374, 34, 250, 252); // des rinceaux de cuivre aux quatre coins, hors des molettes
   ctx.fillStyle = c("#2a1d13"); ctx.fillRect(330, 140, 46, 20); // le bras qui relie l'oculaire au panneau
   metronome(r, ctx, c, ms); // au mur de gauche : le balancier qui bat le prorahn
   const sys = bookSystem(st), meas = !!(st.found && sys);
@@ -719,6 +724,7 @@ function drawOnIsland(r, ctx, sky, tm) {
   // la coupole et sa fente
   const dg = ctx.createLinearGradient(bx - 9, by - 18, bx + 9, by - 8); dg.addColorStop(0, c("#9fc3b0")); dg.addColorStop(1, c("#4d6f61")); ctx.fillStyle = dg;
   ctx.beginPath(); ctx.moveTo(bx - 9.5, by - 8); ctx.arc(bx, by - 8, 9.5, Math.PI, 0); ctx.closePath(); ctx.fill();
+  if (r.glassOn && r.glassOn()) { ctx.strokeStyle = c(VR.COPPER_HI); ctx.lineWidth = 0.5; for (const k of [-0.6, 0.6]) { ctx.beginPath(); ctx.moveTo(bx, by - 17.5); ctx.quadraticCurveTo(bx + k * 8, by - 15, bx + k * 9.2, by - 8); ctx.stroke(); } ctx.beginPath(); ctx.ellipse(bx, by - 8, 6.6, 4.4, 0, Math.PI, 2 * Math.PI); ctx.stroke(); ctx.fillStyle = c(VR.COPPER); ctx.fillRect(bx - 10, by - 8.6, 20, 1.2); } // la Verrière : nervures et bague de cuivre
   ctx.save(); ctx.translate(bx, by - 8); ctx.rotate(0.35); ctx.fillStyle = c("#1a1714"); ctx.fillRect(-1.6, -9.6, 3.2, 9); ctx.restore();
   // le tube qui sort de la fente
   ctx.save(); ctx.translate(bx + 1, by - 12); ctx.rotate(-1.22); const g = ctx.createLinearGradient(0, -1.6, 0, 1.6); g.addColorStop(0, c("#e8c97a")); g.addColorStop(1, c("#7a5c28")); ctx.fillStyle = g; ctx.fillRect(0, -1.2, 7.5, 2.4);

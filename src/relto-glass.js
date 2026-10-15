@@ -289,11 +289,26 @@ function imagerRoom(ctx, c, t, FLOOR, overview, W = 640, H = 360) {
     ctx.strokeStyle = rgba(230, 160, 106, 0.6); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.arc(x, y, r + 3.5, 0, 6.283); ctx.stroke();
     const glow = ctx.createRadialGradient(x, y + 40, 4, x, y + 60, 120); glow.addColorStop(0, rgba(110, 200, 180, 0.08)); glow.addColorStop(1, rgba(110, 200, 180, 0)); ctx.fillStyle = glow; ctx.fillRect(0, 0, 300, FLOOR);
   }
-  // le sol : une mosaïque sombre
+  darkMosaic(ctx, c, FLOOR, W, H);
+}
+
+/** Un sol de mosaïque sombre (salle de l'Imageur, observatoire), une frise vert d'eau au pied du mur. */
+function darkMosaic(ctx, c, FLOOR, W = 640, H = 360) {
   const fg = ctx.createLinearGradient(0, FLOOR, 0, H); fg.addColorStop(0, c("#22262c")); fg.addColorStop(1, c("#111317")); ctx.fillStyle = fg; ctx.fillRect(0, FLOOR, W, H - FLOOR);
   const q = rng(0x1ea6e);
   for (let row = 0, y = FLOOR + 2; y < H; row++) { const th = 4 + row * 1.2, tw = th * 1.5; for (let x = -((row * 7) % tw); x < W; x += tw + 1) { const v = q(); ctx.fillStyle = c(v < 0.5 ? "#26292e" : v < 0.88 ? "#212428" : "#2f2a24"); ctx.fillRect(x, y, tw, th); } y += th + 1; }
   ctx.fillStyle = c("#1f4a46"); ctx.fillRect(0, FLOOR - 1, W, 3);
+}
+
+/** Des rinceaux de cuivre aux quatre coins d'un cadre (x, y, w, h) : une crosse et deux feuilles, tournées vers l'intérieur. */
+function cornerVines(ctx, c, x, y, w, h) {
+  ctx.strokeStyle = c(COPPER_HI); ctx.lineWidth = 1.2; ctx.lineCap = "round"; ctx.fillStyle = c(COPPER);
+  for (const [cx, cy, sx, sy] of [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]]) {
+    ctx.beginPath(); ctx.moveTo(cx + sx * 3, cy + sy * 3); ctx.bezierCurveTo(cx + sx * 18, cy + sy * 2, cx + sx * 20, cy + sy * 14, cx + sx * 12, cy + sy * 12); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx + sx * 12, cy + sy * 9, 2.4, 0, 6.283); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + sx * 3, cy + sy * 3); ctx.bezierCurveTo(cx + sx * 2, cy + sy * 18, cx + sx * 14, cy + sy * 20, cx + sx * 12, cy + sy * 12); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(cx + sx * 22, cy + sy * 5, 3.4, 1.6, sx * sy * 0.4, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.ellipse(cx + sx * 5, cy + sy * 22, 1.6, 3.4, sx * sy * 0.4, 0, 6.283); ctx.fill();
+  }
 }
 
 /** L'établi vu de près, sous la Verrière : bois sombre, un filet de cuivre au bord. */
@@ -303,4 +318,4 @@ function imagerBench(ctx, c, y0, W = 640, H = 360) {
   ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 1; for (let y = y0 + 14; y < H; y += 17) { ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(W * 0.3, y + 3, W * 0.6, y - 3, W, y + 1); ctx.stroke(); }
 }
 
-module.exports = { imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+module.exports = { darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
