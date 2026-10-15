@@ -1276,7 +1276,7 @@ class ReltoRenderer {
     if (view === "descbook" && this.view !== "descbook") this.bookFrom = this.view || "cabin"; // la flèche ronde ramène d'où l'on vient (cabane, étage, bureau, coffre…)
     if (view === "vault") { this.vaultFrom = ["cabin", "loft"].includes(this.view) ? this.view : (this.vaultFrom || "cabin"); this.vaultPage = 0; }
     if ((view === "glyphbook" || view === "librarybook") && this.view !== "glyphbook" && this.view !== "librarybook") this.bookFrom = this.view && this.view !== "island" ? this.view : "cabin"; // la flèche ronde du livre y retourne
-    this.view = view; this.hover = null; this.held = null; this.drag = null; if (view !== "starmap") { this.mapZoom = null; this.mapTurn = 0; this.mapGest = null; this.mapPtrs = null; } // la carte se rouvre au nord this.flash = null; this.fadeAt = Date.now(); this.deskUI = null; if (view !== "cabin") { this.panelAt = 0; this.shelf = null; if (view !== "glyphbook" && view !== "librarybook") { this.shelfOpen = false; this.bookAt = 0; } } // en quittant la cabane, la bibliothèque reprend sa place // en quittant le bureau, le tiroir se referme
+    this.view = view; this.hover = null; this.held = null; this.drag = null; if (view !== "starmap") { this.mapZoom = null; this.mapTurn = 0; this.mapGest = null; this.mapPtrs = null; } /* la carte se rouvre au nord */ this.flash = null; this.fadeAt = Date.now(); this.deskUI = null; if (view !== "cabin") { this.panelAt = 0; this.shelf = null; if (view !== "glyphbook" && view !== "librarybook") { this.shelfOpen = false; this.bookAt = 0; } } // en quittant la cabane, la bibliothèque reprend sa place ; en quittant le bureau, le tiroir se referme
     if (this.opts.onView) this.opts.onView(view);
     if (!this.running) this.draw(0);
   }

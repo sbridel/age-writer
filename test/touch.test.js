@@ -237,4 +237,11 @@ const centre = (h) => [h.x + h.w / 2, h.y + h.h / 2];
 // ---- Art de la Guilde : trois paliers de mots seulement ----
 ok([0, 1, 2, 3, 4, 5].map(TL.coarseBand).join() === "0,1,1,1,4,4", "Guilde : rien, quelque chose, tout près");
 
+// ---- quitter une pièce remet ses mécanismes en place (régression 1.36.0 : un commentaire avait avalé la suite de la ligne) ----
+{
+  const r = make(); r.setView("cabin"); r.shelfOpen = true; r.bookAt = 1; r.panelAt = Date.now(); r.deskUI = {}; r.flash = { t: 1 };
+  r.setView("island");
+  ok(!r.shelfOpen && !r.panelAt && !r.bookAt, "quitter la cabane : la bibliothèque reprend sa place et le panneau se referme");
+  ok(r.deskUI === null && r.flash === null, "changer de vue : le tiroir du bureau se referme, le message s'efface");
+}
 console.log(`✓ touch.test.js (${n} contrôles)`);
