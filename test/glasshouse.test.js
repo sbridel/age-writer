@@ -24,9 +24,14 @@ ok(M.PAGE_PRESETS.page_glasshouse && M.EFFECT_TYPES.includes("glasshouse"), "la 
 ok(M.builtinPages().some((p) => p.id === "page_glasshouse") && !M.builtinPages({ story: true }).some((p) => p.id === "page_glasshouse"), "bac à sable : la page est au livre des pages ; histoire : non");
 ok(make(true).glassOn() && !make(false).glassOn(), "attachée : la Verrière ; détachée : la cabane");
 ok(!make(true, "story").glassOn(), "Relto d'histoire : jamais de Verrière");
-const ROOMS = [["island", []], ["global", []], ["cabin", []], ["cabin", ["page_atelier", "page_imager", "page_telescope", "page_cat", "page_endgame"]]];
+const ROOMS = [["island", []], ["global", []], ["cabin", []], ["cabin", ["page_atelier", "page_imager", "page_telescope", "page_cat", "page_endgame"]], ["imager", ["page_imager", "page_telescope"]]];
 for (const [view, extra] of ROOMS) for (const hour of [9, 16, 23]) {
   const A = make(false, "sandbox", view, hour, extra), B = make(true, "sandbox", view, hour, extra), a = zones(A), b = zones(B);
   ok(A.hot.length >= (view === "cabin" ? 8 : 1) && a === b, `${view}${extra.length ? " (atelier, Imageur…)" : ""}, ${hour} h : les zones cliquables sont identiques avec et sans la Verrière`);
+}
+// les trois gros plans de l'Imageur
+for (const station of ["cry", "lens", "atmo"]) {
+  const zs = (glass) => { const R = make(glass, "sandbox", "imager", 15, ["page_imager", "page_telescope"]); R.imagerState().station = station; R.hot = []; R.draw(4); return zs2(R); }, zs2 = (R) => ({ n: R.hot.length, z: zones(R) });
+  const a2 = zs(false), b2 = zs(true); ok(a2.n >= 1 && a2.z === b2.z, `Imageur, poste ${station} : les zones cliquables sont identiques avec et sans la Verrière`);
 }
 console.log(`✓ glasshouse.test.js (${n} contrôles)`);

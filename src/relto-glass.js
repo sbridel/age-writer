@@ -263,4 +263,44 @@ function tableLegs(ctx, c, tx, tw, ty) {
   ctx.fillStyle = c("#2a1a12"); ctx.fillRect(tx + 2, ty + 8, tw - 4, 6);
 }
 
-module.exports = { cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+/**
+ * La salle de l'Imageur sous la Verrière : le mur de pierre froide devient une verrière sombre (vert d'eau presque noir : la salle
+ * reste une chambre noire), deux hautes baies à ses bords (fougère, ginkgo) ; en vue d'ensemble, la fente d'aurore devient une
+ * rosace où l'aurore passe, en lents reflets verts et violets ; le sol, une mosaïque sombre.
+ */
+function imagerRoom(ctx, c, t, FLOOR, overview, W = 640, H = 360) {
+  const bg = ctx.createLinearGradient(0, 0, 0, FLOOR); bg.addColorStop(0, c("#12262a")); bg.addColorStop(1, c("#0b1719")); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, FLOOR);
+  const G = { teal: c("#1f5a54"), teal2: c("#0e2a28") };
+  pane(ctx, c, 38, 66, 66, FLOOR - 92, G.teal, G.teal2, "fern", 2.5);
+  pane(ctx, c, 612, 638, 30, FLOOR - 92, G.teal, G.teal2, "ginkgo", 2.5);
+  ctx.strokeStyle = c(COPPER); ctx.lineWidth = 2; for (const x of [172, 486]) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, FLOOR); ctx.stroke(); } // deux nervures
+  ctx.fillStyle = c(COPPER); ctx.fillRect(0, 0, W, 4); ctx.fillStyle = c(COPPER_HI); ctx.fillRect(0, 3, W, 1);
+  if (overview) { // la rosace : l'aurore la traverse
+    const x = 96, y = 40, r = 27, a = t * 0.15;
+    ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.clip();
+    const g = ctx.createLinearGradient(x - r * Math.cos(a), y - r, x + r * Math.cos(a), y + r);
+    g.addColorStop(0, rgba(80, 220, 160, 0.55 + 0.15 * Math.sin(t * 0.7))); g.addColorStop(0.5, rgba(40, 90, 110, 0.6)); g.addColorStop(1, rgba(150, 120, 230, 0.6 + 0.12 * Math.sin(t * 0.5 + 1)));
+    ctx.fillStyle = c("#081014"); ctx.fillRect(x - r, y - r, 2 * r, 2 * r); ctx.fillStyle = g; ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+    ctx.strokeStyle = rgba(10, 20, 22, 0.9); ctx.lineWidth = 1.4; ctx.lineCap = "round";
+    for (let i = 0; i < 12; i++) { const b = (i * Math.PI) / 6, e = b + Math.PI / 12; ctx.beginPath(); ctx.moveTo(x + Math.cos(b) * 8, y + Math.sin(b) * 8); ctx.quadraticCurveTo(x + Math.cos(e) * r * 1.05, y + Math.sin(e) * r * 1.05, x + Math.cos(b + Math.PI / 6) * 8, y + Math.sin(b + Math.PI / 6) * 8); ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(x, y, 8, 0, 6.283); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, 3, 0, 6.283); ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle = c(COPPER); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.stroke();
+    ctx.strokeStyle = rgba(230, 160, 106, 0.6); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.arc(x, y, r + 3.5, 0, 6.283); ctx.stroke();
+    const glow = ctx.createRadialGradient(x, y + 40, 4, x, y + 60, 120); glow.addColorStop(0, rgba(110, 200, 180, 0.08)); glow.addColorStop(1, rgba(110, 200, 180, 0)); ctx.fillStyle = glow; ctx.fillRect(0, 0, 300, FLOOR);
+  }
+  // le sol : une mosaïque sombre
+  const fg = ctx.createLinearGradient(0, FLOOR, 0, H); fg.addColorStop(0, c("#22262c")); fg.addColorStop(1, c("#111317")); ctx.fillStyle = fg; ctx.fillRect(0, FLOOR, W, H - FLOOR);
+  const q = rng(0x1ea6e);
+  for (let row = 0, y = FLOOR + 2; y < H; row++) { const th = 4 + row * 1.2, tw = th * 1.5; for (let x = -((row * 7) % tw); x < W; x += tw + 1) { const v = q(); ctx.fillStyle = c(v < 0.5 ? "#26292e" : v < 0.88 ? "#212428" : "#2f2a24"); ctx.fillRect(x, y, tw, th); } y += th + 1; }
+  ctx.fillStyle = c("#1f4a46"); ctx.fillRect(0, FLOOR - 1, W, 3);
+}
+
+/** L'établi vu de près, sous la Verrière : bois sombre, un filet de cuivre au bord. */
+function imagerBench(ctx, c, y0, W = 640, H = 360) {
+  const tg = ctx.createLinearGradient(0, y0, 0, H); tg.addColorStop(0, c("#3a2418")); tg.addColorStop(1, c("#1a0f0a")); ctx.fillStyle = tg; ctx.fillRect(0, y0, W, H - y0);
+  ctx.fillStyle = c(COPPER); ctx.fillRect(0, y0 - 4, W, 5); ctx.fillStyle = c(COPPER_HI); ctx.fillRect(0, y0 - 4, W, 1.2);
+  ctx.strokeStyle = "rgba(0,0,0,0.2)"; ctx.lineWidth = 1; for (let y = y0 + 14; y < H; y += 17) { ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(W * 0.3, y + 3, W * 0.6, y - 3, W, y + 1); ctx.stroke(); }
+}
+
+module.exports = { imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
