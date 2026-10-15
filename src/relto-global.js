@@ -89,7 +89,7 @@ function drawGlobal(r, ctx, sc, sky, t, has) {
     const x = 575, y = 246, d = DC.reltoDate(r.scene);
     islet(ctx, x, y, 0.9, sky, 0, t);
     ctx.fillStyle = mix("#05060c", "#7d7468", k(sky)); ctx.beginPath(); ctx.moveTo(x - 6, y); ctx.lineTo(x - 3, y - 54); ctx.lineTo(x + 3, y - 58); ctx.lineTo(x + 6, y); ctx.closePath(); ctx.fill();
-    const glow = 0.5 + 0.4 * sky.night; if (r.dni) { const w = r.dni.widthOf(d.yahr, 8); r.dni.drawNumber(ctx, d.yahr, x - w / 2 - 1, y - 38, 8, `rgba(255,226,150,${clamp(glow).toFixed(2)})`); }
+    const glow = 0.5 + 0.4 * sky.night; SC.pillarNumber(ctx, r, d.yahr, x - 0.5, d.yahr >= 25 ? y - 50 : y - 42, 8, `rgba(255,226,150,${clamp(glow).toFixed(2)})`);
     r.hot.push({ x: x - 22, y: y - 60, w: 44, h: 96, tip: `Calendar pinnacle — ${d.name} ${d.yahr}` });
   }
   if (has("dniclock")) { // l'horloge D'ni, plus loin dans la brume, à gauche

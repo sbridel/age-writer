@@ -143,6 +143,13 @@ function islets(ctx, r, d, sky, t) {
 }
 
 /** Pinacle du calendrier : une pierre dressée sur un îlot, qui porte le jour D'ni (en chiffres D'ni). */
+/** Un nombre D'ni sur un fût étroit (le pilier du calendrier) : à deux chiffres ou plus, ils s'empilent (le premier en haut) au lieu de déborder de la pierre. `yTop` : le haut du nombre. */
+function pillarNumber(ctx, r, n, x, yTop, size, color) {
+  if (!r.dni) return; const ds = []; for (let v = Math.max(0, Math.round(n)); ; v = Math.floor(v / 25)) { ds.unshift(v % 25); if (v < 25) break; }
+  const sz = ds.length > 1 ? size * 0.82 : size;
+  ds.forEach((d, i) => { const w = r.dni.widthOf(d, sz); r.dni.drawNumber(ctx, d, x - w / 2, yTop + i * (sz + 1.5), sz, color); });
+}
+
 function calendar(ctx, r, sky, t) {
   const x = 548, y = 200, k = amb(sky), d = DC.reltoDate(r.scene); // sans l'horloge D'ni, la pierre dérive de quelques yahr
   ctx.save(); ctx.globalAlpha = 0.85;
@@ -151,7 +158,7 @@ function calendar(ctx, r, sky, t) {
   ctx.fillStyle = mix("#05060c", "#7d7468", k); ctx.beginPath(); ctx.moveTo(x - 7, y); ctx.lineTo(x - 4, y - 56); ctx.lineTo(x + 3, y - 60); ctx.lineTo(x + 7, y); ctx.closePath(); ctx.fill();
   ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.beginPath(); ctx.moveTo(x + 1, y - 59); ctx.lineTo(x + 7, y); ctx.lineTo(x + 1, y); ctx.closePath(); ctx.fill();
   const glow = 0.45 + 0.4 * sky.night + 0.1 * Math.sin(t * 1.6), size = 9;
-  if (r.dni) { const w = r.dni.widthOf(d.yahr, size); r.dni.drawNumber(ctx, d.yahr, x - 1 - w / 2, y - 40, size, `rgba(255,226,150,${clamp(glow).toFixed(2)})`); }
+  pillarNumber(ctx, r, d.yahr, x - 0.5, y - (d.yahr >= 25 ? 54 : 44), size, `rgba(255,226,150,${clamp(glow).toFixed(2)})`); // empilé, sur le fût
   ctx.restore();
   r.hot.push({ x: x - 24, y: y - 62, w: 48, h: 98, tip: `Calendar pinnacle — ${d.name} ${d.yahr}${d.synced ? "" : " (by the stone's own reckoning)"}` });
 }
@@ -246,4 +253,4 @@ function cometWindow(ctx, r, d, sky, t, wx, wy, wr) {
   ctx.restore();
 }
 
-module.exports = { cometWindow, cometAt, cometVis, comet, moons, rain, storm, birds, butterflies, dock, bench, flowers, grass, islets, calendar, dniClock, W, H, GY };
+module.exports = { pillarNumber, cometWindow, cometAt, cometVis, comet, moons, rain, storm, birds, butterflies, dock, bench, flowers, grass, islets, calendar, dniClock, W, H, GY };

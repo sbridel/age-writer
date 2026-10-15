@@ -135,7 +135,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   if (r.sprite) ctx.drawImage(r.sprite, wx - wr - 10 + ((t * 4) % (2 * wr + 42)), wy - wr * 0.1, 50, 22); // un nuage qui passe, comme à la fenêtre de la cabane
   if (r.cloudColor) { ctx.fillStyle = r.cloudColor(sky); ctx.globalAlpha = 0.5; ctx.fillRect(wx - wr, wy + wr - 13, 2 * wr, 13); ctx.globalAlpha = 1; } // la brume sur l'horizon
   ctx.restore();
-  if (glass) require("./relto-glass").roundWindowRing(ctx, c, sky, wx, wy, wr); // un anneau de verre coloré, le clair au milieu (la comète y passe toujours)
+  if (glass) require("./relto-glass").roundWindowRing(ctx, c, sky, wx, wy, wr, false); // un anneau de verre coloré, le clair au milieu (la comète y passe toujours)
   else { ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(wx, wy, wr, 0, 6.283); ctx.stroke(); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(wx - wr, wy); ctx.lineTo(wx + wr, wy); ctx.moveTo(wx, wy - wr); ctx.lineTo(wx, wy + wr); ctx.stroke(); }
   r.hot.push({ x: wx - wr, y: wy - wr, w: 2 * wr, h: 2 * wr, tip: TRr("atelier.window.tip"), go: "roundwindow" }); // un clic : la lucarne de près, ceinte des chiffres D'ni
   // cheminée

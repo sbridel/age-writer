@@ -1105,7 +1105,7 @@ class ReltoRenderer {
     ctx.strokeStyle = CU2; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(hx, ly - 8.5); ctx.lineTo(hx, ly - 12); ctx.stroke();
     ctx.fillStyle = mix(col("#c98a32"), "#ffd27a", clamp(lit)); ctx.beginPath(); ctx.arc(hx, ly - 12.6, 1, 0, 6.283); ctx.fill();
     // les deux baies en ogive (vert d'eau) et la porte (ambre), cerclées de cuivre
-    const bays = [[x0 + 1, x0 + 19, y0 + 2], [x0 + w - 19, x0 + w - 1, y0 + 2]], door = [hx - 7, hx + 7, y0 - 4];
+    const bays = [[x0 + 1, x0 + 19, y0 + 7], [x0 + w - 19, x0 + w - 1, y0 + 7]], door = [hx - 7, hx + 7, y0 - 4];
     for (const [xa, xb, top] of bays) {
       ctx.fillStyle = vgrad(top, TEAL, TEAL2); ogive(xa, xb, top, GY); ctx.fill();
       // le motif au plomb : une fleur différente dans chaque baie (src/relto-glass.js, motif)
