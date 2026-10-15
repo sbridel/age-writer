@@ -2,6 +2,17 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.39.0 — The calendar up close (2026-10-15)
+
+### Added
+- **The calendar pinnacle opens up close.** Click it, on the island or in the far view: the whole D'ni date is engraved on the stone (hahr, the name of the vailee, the yahr large, and below it gahrtahvo, tahvo, gorahn, prorahn), following the real time. Plain stone, or under the Glasshouse a copper-framed stained-glass slab with the engraving glowing amber.
+
+### Fixed
+- **The yahr no longer spills off the pinnacle**: with two digits they stack on the shaft.
+- **Glasshouse, the Imager**: the side panes exist only in the overview and no longer overlap the spyglass shelf or the gauge.
+- **Glasshouse pavilion**: the two bays sit clear below the dome.
+- **The skylight** of the writing room loses its little buds (they read as zeros), and its close-up has a thinner band.
+
 ## 1.38.0 — The skylight (2026-10-15)
 
 ### Added

@@ -41,6 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.39, the calendar up close.** The calendar pinnacle opens on the full D'ni date, in stone or under the Glasshouse in stained glass.
 - **1.38, the skylight.** The round window of the writing room opens up close, ringed by the D'ni numerals 0 to 24.
 - **1.37, the Glasshouse.** An art nouveau disguise for the whole Relto: glass, copper, flowers, coloured lamplight. A page you attach or detach.
 - **1.36.1, the echo without words.** In the Art of the Guild, the telescope no longer says "more delay / less delay": you read the echo yourself.

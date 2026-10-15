@@ -539,3 +539,12 @@ Note : `claude/DESIGN-verriere-art-nouveau.md` (projet). Une page de déguisemen
 - Sous la Verrière : bague de cuivre, vitrail agrandi (`roundWindowRing`, 12 cellules), un bourgeon entre chaque chiffre. Sans : laiton, croisillons, graduations.
 - `relto-atelier.js` : nouvelle zone cliquable sur le hublot (`go: "roundwindow"`), dans les deux modes (exception voulue à « la Verrière ne change que l'enveloppe » : c'est une fonction à part entière). `relto-render.js` : `ROOMS`, `available()` (comme l'atelier), groupe du chat ; `i18n.js` : `atelier.window.tip/back`.
 - Test : `test/glasshouse.test.js` (zones identiques avec et sans la page dans la vue ; chiffres 0..24 tous et seuls ; un seul cliquable, le retour).
+
+## 1.39.0 — le calendrier de près (15 oct. 2026)
+
+- Nouvelle vue `calendar` (`src/relto-calendar.js`) : le pilier en gros plan, la date D'ni complète (hahr, nom du vailee, yahr en grand ; dessous gahrtahvo · tahvo · gorahn · prorahn), à l'heure réelle (`DC.reltoDate`), sans légende. Normale : dalle de pierre et mousse, gravure sombre. Sous la Verrière : vitrail en ogive cerclé de cuivre, plombs, rinceaux, gravure ambre. Cliquable depuis l'île (`relto-scenery.js`) et la vue globale (`relto-global.js`) dans les deux modes ; `calFrom` ramène d'où l'on vient (`setView`). `available().calendar` = page calendrier.
+- `relto-scenery.js` : `pillarNumber` empile les chiffres d'un nombre à deux chiffres sur le fût du pilier (le yahr 25 « 10 » débordait) ; utilisé aussi par la vue globale.
+- Imageur sous la Verrière (`relto-glass.js`, `imagerRoom`) : les deux vitraux (12–38 × 66–142 et 620–638) ne vivent que dans la vue d'ensemble et ne chevauchent plus l'étagère de la longue-vue (x ≥ 48) ni le boîtier de la jauge (jusqu'à 615). Un `git checkout` malheureux les avait défaits un moment : remis.
+- Pavillon de la Verrière (`drawGlasshouse`) : baies à y0+7, sous la coupole.
+- Lucarne : `roundWindowRing(…, buds)` ; sans bourgeons dans la vue rapprochée et à l'atelier (on les lisait comme des zéros) ; bande de chiffres plus fine (R_OUT 148).
+- Tests : `test/glasshouse.test.js` (calendrier : zones identiques, cliquable depuis l'île et le global, retour).
