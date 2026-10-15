@@ -247,7 +247,7 @@ function drawDesk(r, ctx, sc, sky, t) {
   ctx.fillStyle = c(glass ? "#b5652a" : "#7d5a3b"); ctx.fillRect(0, 180, W, 4); if (glass) { ctx.fillStyle = c("#e6a06a"); ctx.fillRect(0, 180, W, 1.2); } const q = rng(0xde5c); ctx.strokeStyle = rgba(0, 0, 0, 0.14); ctx.lineWidth = 1; for (let i = 0; i < 14; i++) { const y = 190 + q() * 170; ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(200, y + q() * 6 - 3, 440, y + q() * 6 - 3, W, y); ctx.stroke(); }
   // la lampe verte, en haut à gauche : son cône éclaire le plateau ; la chaîne de laiton l'éteint ou l'allume
   { const lx = 150; const glassD = glass;
-    if (glassD) { if (!r.lampOff) require("./relto-glass").lampGlow(ctx, lx, 78, 204, 40, fl, true); require("./relto-glass").tiffanyLamp(ctx, c, lx, 30, 78, 40, 184, 22, !r.lampOff, fl); } // la Verrière : une lampe à coupole de verre au plomb, pied de bronze ; sa lumière se colore sur le mur et le plateau
+    if (glassD) { if (!r.lampOff) require("./relto-glass").lampGlow(ctx, lx, 78, null, 40, fl, true); require("./relto-glass").tiffanyLamp(ctx, c, lx, 30, 78, 40, 184, 22, !r.lampOff, fl); } // la Verrière : une lampe à coupole de verre au plomb, pied de bronze ; sa lumière se colore sur le mur et le plateau
     else { ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(lx - 3, 90, 6, 92); ctx.fillRect(lx - 22, 176, 44, 8); ctx.fillStyle = c("#2f6b48"); ctx.beginPath(); ctx.moveTo(lx - 38, 78); ctx.lineTo(lx + 38, 78); ctx.lineTo(lx + 20, 34); ctx.lineTo(lx - 20, 34); ctx.fill(); }
     if (!r.lampOff) { ctx.fillStyle = glassD ? rgba(255, 214, 160, 0.05 + 0.02 * fl) : rgba(255, 224, 150, 0.1 + 0.03 * fl); ctx.beginPath(); ctx.moveTo(lx - 38, 78); ctx.lineTo(lx + 38, 78); ctx.lineTo(lx + 230, 360); ctx.lineTo(lx - 150, 360); ctx.fill(); }
     lampChain(r, ctx, c, lx + 28, 78, 34, t, TRr("atelier.lamp.tip"), { x: lx - 40, y: 32, w: 80, h: 150 }); }
@@ -294,6 +294,7 @@ function drawDesk(r, ctx, sc, sky, t) {
     const g = 0.35 + 0.35 * Math.sin(t * 1.1); ctx.fillStyle = c("#b98f3c"); ctx.beginPath(); ctx.arc(612, 292, 2.6, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 240, 190, g); ctx.fillRect(611, 290.5, 1.6, 1.6);
     r.hot.push({ x: 600, y: 280, w: 24, h: 24, tip: "", desk: "drawer", secret: true });
   }
+  if (glass && !r.lampOff) require("./relto-glass").lampPool(ctx, 150, 214, 40, fl); // la flaque colorée, sur le plateau ET sur ce qui y est posé
   backButton(r, ctx, TRr("atelier.stand.tip"), "atelier"); // se lever
   if (ui.held) { // la tablette entre les mains : on la regarde de près, un clic la rend au tiroir
     const hp = ui.relAt ? 1 - ease((now - ui.relAt) / 550) : ease((now - ui.heldAt) / 600);

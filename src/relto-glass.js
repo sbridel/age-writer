@@ -517,6 +517,21 @@ function bronzeTrap(ctx, c, cx, cy, w, h) {
 }
 
 /**
+ * La flaque de lumière colorée, posée APRÈS les objets du plateau : elle les teinte aussi (un carnet blanc prend le vert et l'ambre).
+ * Une passe « multiply » colore ce qui est clair, puis la lueur (`lampGlow` sans halo de mur) éclaire.
+ */
+function lampPool(ctx, lx, pool, rx, fl = 1) {
+  const W2 = rx * 2.3, H2 = rx * 0.95, a = 0.85 + 0.15 * fl;
+  ctx.save(); ctx.globalCompositeOperation = "multiply";
+  for (const [dx, col, al] of [[-0.55, [150, 225, 210], 0.55], [0.55, [255, 205, 150], 0.5], [0.15, [205, 230, 170], 0.3]]) {
+    const cx = lx + dx * W2 * 0.5, g = ctx.createRadialGradient(cx, pool, 2, cx, pool, W2 * 0.55); g.addColorStop(0, rgba(col[0], col[1], col[2], al * a)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, pool, W2 * 0.55, H2 * 0.6, 0, 0, 6.283); ctx.fill();
+  }
+  ctx.restore();
+  lampGlow(ctx, lx, pool - 200, pool, rx, fl, false);
+}
+
+/**
  * La lumière colorée d'une lampe à verre au plomb : un halo sur le mur autour de la coupole (vert d'eau, ambre), puis une flaque de
  * lumière sur le plateau, mêlée de taches des couleurs des verres (elles tremblent avec la flamme). `lx` : l'axe ; `edge` : le bord
  * de la coupole ; `pool` : le plateau, sous la lampe ; `rx` : la demi-largeur de la coupole ; `wall` : dessiner le halo du mur.
@@ -528,8 +543,9 @@ function lampGlow(ctx, lx, edge, pool, rx, fl = 1, wall = true) {
     const g = ctx.createRadialGradient(lx + dx * rx, edge - rx * 0.6, 4, lx + dx * rx, edge - rx * 0.6, R * k); g.addColorStop(0, rgba(col[0], col[1], col[2], al * a)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0));
     ctx.fillStyle = g; ctx.fillRect(lx - R * k * 1.6, edge - rx * 0.6 - R * k, R * k * 3.2, R * k * 2);
   }
+  if (pool == null) { ctx.restore(); return; }
   // la flaque sur le plateau : chaude au centre, colorée sur les bords
-  const W2 = rx * 2.2, H2 = rx * 0.6; // une flaque resserrée autour du pied
+  const W2 = rx * 2.3, H2 = rx * 0.95; // une flaque resserrée autour du pied
   for (const [dx, col, al] of [[0, [230, 180, 110], 0.1], [-0.55, [70, 170, 155], 0.22], [0.55, [220, 140, 60], 0.2], [0.15, [120, 170, 80], 0.13]]) {
     const cx = lx + dx * W2 * 0.5, g = ctx.createRadialGradient(cx, pool, 2, cx, pool, W2 * 0.55); g.addColorStop(0, rgba(col[0], col[1], col[2], al * a)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0));
     ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, pool, W2 * 0.55, H2 * 0.55, 0, 0, 6.283); ctx.fill();
@@ -540,4 +556,4 @@ function lampGlow(ctx, lx, edge, pool, rx, fl = 1, wall = true) {
   ctx.restore();
 }
 
-module.exports = { lampGlow, cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+module.exports = { lampPool, lampGlow, cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
