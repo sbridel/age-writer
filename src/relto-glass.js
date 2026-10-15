@@ -529,14 +529,14 @@ function lampGlow(ctx, lx, edge, pool, rx, fl = 1, wall = true) {
     ctx.fillStyle = g; ctx.fillRect(lx - R * k * 1.6, edge - rx * 0.6 - R * k, R * k * 3.2, R * k * 2);
   }
   // la flaque sur le plateau : chaude au centre, colorée sur les bords
-  const W2 = rx * 3.2, H2 = rx * 0.9;
-  for (const [dx, col, al] of [[0, [255, 190, 100], 0.18], [-0.55, [30, 200, 180], 0.38], [0.55, [255, 130, 20], 0.34], [0.15, [100, 200, 50], 0.24]]) {
+  const W2 = rx * 2.2, H2 = rx * 0.6; // une flaque resserrée autour du pied
+  for (const [dx, col, al] of [[0, [230, 180, 110], 0.1], [-0.55, [70, 170, 155], 0.22], [0.55, [220, 140, 60], 0.2], [0.15, [120, 170, 80], 0.13]]) {
     const cx = lx + dx * W2 * 0.5, g = ctx.createRadialGradient(cx, pool, 2, cx, pool, W2 * 0.55); g.addColorStop(0, rgba(col[0], col[1], col[2], al * a)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0));
     ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, pool, W2 * 0.55, H2 * 0.55, 0, 0, 6.283); ctx.fill();
   }
   // les taches des verres : de petites lueurs colorées éparses, au bord de la flaque
-  const q = rng(0x71ff), cols = [[30, 210, 190], [255, 150, 30], [110, 210, 60], [230, 110, 160]];
-  for (let i = 0; i < 14; i++) { const ang = q() * 6.283, rr = 0.35 + q() * 0.6, x = lx + Math.cos(ang) * W2 * 0.5 * rr, y = pool + Math.sin(ang) * H2 * 0.5 * rr, col = cols[i % 4], s = (5 + q() * 9) * k; const g = ctx.createRadialGradient(x, y, 0, x, y, s); g.addColorStop(0, rgba(col[0], col[1], col[2], 0.5 * a)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0)); ctx.fillStyle = g; ctx.fillRect(x - s, y - s, 2 * s, 2 * s); }
+  const q = rng(0x71ff), cols = [[70, 180, 165], [230, 150, 60], [120, 180, 80], [200, 120, 150]];
+  for (let i = 0; i < 8; i++) { const ang = q() * 6.283, rr = 0.35 + q() * 0.6, x = lx + Math.cos(ang) * W2 * 0.5 * rr, y = pool + Math.sin(ang) * H2 * 0.5 * rr, col = cols[i % 4], s = (3 + q() * 5) * k; const g = ctx.createRadialGradient(x, y, 0, x, y, s); g.addColorStop(0, rgba(col[0], col[1], col[2], 0.28 * a)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0)); ctx.fillStyle = g; ctx.fillRect(x - s, y - s, 2 * s, 2 * s); }
   ctx.restore();
 }
 
