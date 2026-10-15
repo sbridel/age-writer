@@ -7,6 +7,7 @@ const { rng, clamp, mix, rgba, hexa } = require("./util");
 const SC = require("./relto-scenery");
 const PILE = require("./relto-vault");
 const ATELIER = require("./relto-atelier");
+const GLASS = require("./relto-glass");
 const W = 640, H = 360, FLOOR = 250, GY = 208;
 const VERDICT = { stable: "#8fae6a", unstable: "#d9a24a", dying: "#c0553f", unknown: "#7a7a8a" };
 
@@ -16,6 +17,8 @@ const flicker = (t) => 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1) + 0.06 
 function drawCabin(r, ctx, sc, sky, t) {
   const st = new Set(sc.structures), night = clamp(sky.night == null ? 0.3 : sky.night), amb = 0.55 + 0.45 * sky.ambient, c = (h) => mix("#05060c", h, amb);
   const lit = r.scene.additions.find((a) => a.type === "chimney"), d = lit ? clamp(lit.density == null ? 0.7 : lit.density, 0.2, 1) : 0.18, fl = flicker(t);
+  const glass = !!(r.glassOn && r.glassOn()); // la Verrière : le même mobilier, un autre habit (src/relto-glass.js)
+  if (glass) { GLASS.cabinWalls(r, ctx, c, sky, t, FLOOR); GLASS.cabinFloor(ctx, c, FLOOR, amb); } else {
   // murs en planches
   const q = rng(0xcab1);
   ctx.fillStyle = c("#5a4330"); ctx.fillRect(0, 0, W, FLOOR);
@@ -29,20 +32,25 @@ function drawCabin(r, ctx, sc, sky, t) {
   for (const y of [FLOOR + 16, FLOOR + 38, FLOOR + 68]) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
   for (let i = 0; i < 12; i++) { const x = i * 58 + 10; ctx.beginPath(); ctx.moveTo(x, FLOOR); ctx.lineTo(x - (x - 320) * 0.18, H); ctx.stroke(); }
   ctx.fillStyle = c("#2a1c14"); ctx.fillRect(0, FLOOR - 6, W, 8);
+  }
   // tapis
   ctx.fillStyle = c("#5b2b2b"); ctx.beginPath(); ctx.ellipse(262, 322, 170, 24, 0, 0, 6.283); ctx.fill();
   ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(262, 322, 156, 19, 0, 0, 6.283); ctx.stroke();
+  if (glass) GLASS.lightPatches(ctx, sky, r.hour(), FLOOR); // le jour, les taches colorées des vitraux glissent sur le sol
   // fenêtre : le ciel de l'île
   const wx = 104, wy = 70, ww = 78, wh = 92;
-  ctx.save(); ctx.beginPath(); ctx.rect(wx, wy, ww, wh); ctx.clip();
+  ctx.save(); ctx.beginPath(); if (glass) GLASS.cabinWindowClip(ctx, wx, wy, ww, wh); else ctx.rect(wx, wy, ww, wh); ctx.clip();
+  if (glass) { ctx.fillStyle = sky.top; ctx.fillRect(wx, wy - 24, ww, 24); } // le haut de l'ogive : le même ciel
   const sg = ctx.createLinearGradient(0, wy, 0, wy + wh); sg.addColorStop(0, sky.top); sg.addColorStop(1, sky.bottom); ctx.fillStyle = sg; ctx.fillRect(wx, wy, ww, wh);
   if (sky.stars > 0.05) { const s = rng(0x57a2); for (let i = 0; i < 14; i++) { ctx.fillStyle = rgba(235, 238, 255, sky.stars * (0.4 + 0.5 * s())); ctx.fillRect(wx + s() * ww, wy + s() * wh * 0.7, 1.2, 1.2); } }
   ctx.drawImage(r.sprite, wx - 10 + ((t * 4) % 120), wy + wh * 0.45, 60, 26);
   ctx.fillStyle = r.cloudColor(sky); ctx.globalAlpha = 0.5; ctx.fillRect(wx, wy + wh - 16, ww, 16); ctx.globalAlpha = 1;
   ctx.restore();
+  if (glass) GLASS.cabinWindowFrame(ctx, c, sky, wx, wy, ww, wh); else {
   ctx.strokeStyle = c("#2a1c14"); ctx.lineWidth = 5; ctx.strokeRect(wx, wy, ww, wh);
   ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(wx + ww / 2, wy); ctx.lineTo(wx + ww / 2, wy + wh); ctx.moveTo(wx, wy + wh / 2); ctx.lineTo(wx + ww, wy + wh / 2); ctx.stroke();
   ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(wx - 6, wy + wh + 2, ww + 12, 6);
+  }
   if (r.available && r.available().telescope) PS.spyglass(r, ctx, c, wx + ww - 14, wy + wh + 2, t, TR(r)("relto.pass.telescope.tip")); // la longue-vue, sur le rebord : elle mène à l'observatoire
   if (sky.ambient > 0.35) { ctx.fillStyle = rgba(255, 240, 200, 0.07 * sky.ambient); ctx.beginPath(); ctx.moveTo(wx, wy + wh); ctx.lineTo(wx + ww, wy + wh); ctx.lineTo(wx + ww + 70, FLOOR + 60); ctx.lineTo(wx + 40, FLOOR + 60); ctx.closePath(); ctx.fill(); }
   if (r.available && r.available().atelier) { // un panneau de la boiserie pivote : seule une fine ligne le trahit, et aucune zone ne s'allume au survol
@@ -57,10 +65,12 @@ function drawCabin(r, ctx, sc, sky, t) {
   } else ATELIER.drawBookcase(r, ctx, c, false, true); // pas d'atelier : la petite bibliothèque reste, pour faire patienter — ses livres se touchent, sans effet
   // porte (retour à l'île)
   const dx = 22, dy = 112, dw = 64;
+  if (glass) GLASS.cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl); else {
   ctx.fillStyle = c("#2a1c14"); ctx.fillRect(dx - 4, dy - 4, dw + 8, FLOOR - dy + 4);
   ctx.fillStyle = c("#46301f"); ctx.fillRect(dx, dy, dw, FLOOR - dy - 2);
   ctx.strokeStyle = rgba(0, 0, 0, 0.35); ctx.lineWidth = 1; for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(dx + i * dw / 4, dy); ctx.lineTo(dx + i * dw / 4, FLOOR - 2); ctx.stroke(); }
   ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(dx + dw - 9, dy + 70, 3, 0, 6.283); ctx.fill();
+  }
   r.hot.push({ x: dx - 4, y: dy - 4, w: dw + 8, h: FLOOR - dy + 4, tip: "Door — back outside", go: "island" });
   // cheminée
   const fx = 462, fw = 156;
@@ -68,7 +78,7 @@ function drawCabin(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#555047"); ctx.fillRect(fx, 114, fw, FLOOR - 114);
   ctx.strokeStyle = rgba(0, 0, 0, 0.28); ctx.lineWidth = 1;
   for (let y = 24; y < FLOOR; y += 16) { ctx.beginPath(); ctx.moveTo(y < 114 ? fx + 20 : fx, y); ctx.lineTo(y < 114 ? fx + fw - 20 : fx + fw, y); ctx.stroke(); for (let x = fx + ((y / 16) % 2) * 14; x < fx + fw; x += 28) { if (y < 114 && (x < fx + 20 || x > fx + fw - 20)) continue; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 16); ctx.stroke(); } }
-  ctx.fillStyle = c("#3a2a22"); ctx.fillRect(fx - 12, 104, fw + 24, 12);
+  ctx.fillStyle = c(glass ? GLASS.COPPER : "#3a2a22"); ctx.fillRect(fx - 12, 104, fw + 24, 12); if (glass) { ctx.fillStyle = c(GLASS.COPPER_HI); ctx.fillRect(fx - 12, 104, fw + 24, 1.5); } // le manteau : de cuivre sous la Verrière
   const ox = fx + 26, ow = fw - 52, oy = 150;
   ctx.fillStyle = "#0e0907"; ctx.beginPath(); ctx.moveTo(ox, FLOOR); ctx.lineTo(ox, oy + 24); ctx.quadraticCurveTo(ox + ow / 2, oy - 14, ox + ow, oy + 24); ctx.lineTo(ox + ow, FLOOR); ctx.closePath(); ctx.fill();
   // feu
@@ -162,6 +172,7 @@ function drawCabin(r, ctx, sc, sky, t) {
   // le chat, quand il dort au coin du feu (voir ReltoRenderer.catAsleep) : au premier plan, sur le tapis
   const cat = r.scene.additions.find((a) => a.type === "cat");
   if (cat && r.catAsleep() && r.catWhere() !== "atelier") r.drawSleepingCat(ctx, cat, { x: 372, y: 328, S: 3.1, shade: c }, t);
+  if (glass) GLASS.cabinPlants(ctx, c, t);
   // lumière : lueur de l'âtre et de la chandelle, puis pénombre du soir
   let g = ctx.createRadialGradient(mx, FLOOR - 24, 6, mx, FLOOR - 24, 300); g.addColorStop(0, rgba(255, 150, 60, (0.18 + 0.2 * night) * fl * d)); g.addColorStop(1, rgba(255, 130, 40, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   g = ctx.createRadialGradient(cx + 3.5, ty - 19, 2, cx + 3.5, ty - 19, 70); g.addColorStop(0, rgba(255, 190, 90, (0.12 + 0.28 * night) * fl)); g.addColorStop(1, rgba(255, 190, 90, 0)); ctx.fillStyle = g; ctx.fillRect(cx - 80, ty - 90, 160, 140);

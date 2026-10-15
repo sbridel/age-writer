@@ -11,8 +11,8 @@ const M = require("../src/relto-model"), { ReltoRenderer } = require("../src/rel
 const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
 // La Verrière (page_glasshouse) : un déguisement de la cabane, jamais de ce qu'on y clique (claude/DESIGN-verriere-art-nouveau.md).
 // Pour chaque vue habillée : les zones cliquables sont les mêmes, avec et sans la page (place, taille, clés).
-const make = (glass, mode = "sandbox", view = "island", hour = 22) => {
-  const pages = ["page_chimney", "page_pine_trees", "page_mountain", ...(glass ? ["page_glasshouse"] : [])];
+const make = (glass, mode = "sandbox", view = "island", hour = 22, extra = []) => {
+  const pages = ["page_chimney", "page_pine_trees", "page_mountain", ...extra, ...(glass ? ["page_glasshouse"] : [])];
   const relto = M.parseRelto({ seed: 4242, structures: ["hut", "bookshelves", "linking_pillars"], relto_pages_active: pages, relto_mode: mode });
   const own = pages.filter((id) => !M.BUILTIN_PAGES.includes(id)).map((id) => M.parsePage(M.pageFrontmatter(id, M.PAGE_PRESETS[id]), id + ".md"));
   const sc = M.buildScene(relto, [...own, ...M.builtinPages({ story: mode === "story" })], []);
@@ -24,8 +24,9 @@ ok(M.PAGE_PRESETS.page_glasshouse && M.EFFECT_TYPES.includes("glasshouse"), "la 
 ok(M.builtinPages().some((p) => p.id === "page_glasshouse") && !M.builtinPages({ story: true }).some((p) => p.id === "page_glasshouse"), "bac à sable : la page est au livre des pages ; histoire : non");
 ok(make(true).glassOn() && !make(false).glassOn(), "attachée : la Verrière ; détachée : la cabane");
 ok(!make(true, "story").glassOn(), "Relto d'histoire : jamais de Verrière");
-for (const view of ["island", "global"]) for (const hour of [13, 22]) {
-  const a = zones(make(false, "sandbox", view, hour)), b = zones(make(true, "sandbox", view, hour));
-  ok(a === b, `${view}, ${hour} h : les zones cliquables sont identiques avec et sans la Verrière`);
+const ROOMS = [["island", []], ["global", []], ["cabin", []], ["cabin", ["page_atelier", "page_imager", "page_telescope", "page_cat", "page_endgame"]]];
+for (const [view, extra] of ROOMS) for (const hour of [9, 16, 23]) {
+  const A = make(false, "sandbox", view, hour, extra), B = make(true, "sandbox", view, hour, extra), a = zones(A), b = zones(B);
+  ok(A.hot.length >= (view === "cabin" ? 8 : 1) && a === b, `${view}${extra.length ? " (atelier, Imageur…)" : ""}, ${hour} h : les zones cliquables sont identiques avec et sans la Verrière`);
 }
 console.log(`✓ glasshouse.test.js (${n} contrôles)`);
