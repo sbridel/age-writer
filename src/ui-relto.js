@@ -76,7 +76,7 @@ async function buildScene(plugin, file, opt = {}) {
   }
   // une page écrite dans une note l'emporte sur la même page de la bibliothèque (la bibliothèque est celle du bac à sable)
   if (!story) for (const lp of (await libraryPages(plugin)).pages) if (!pages.some((p) => p.id === lp.id)) pages.push(M.libraryPage(lp));
-  for (const bp of M.builtinPages()) if (!pages.some((p) => p.id === bp.id)) pages.push(bp); // le télescope : présent d'office, débloqué par le premier Âge
+  for (const bp of M.builtinPages({ story })) if (!pages.some((p) => p.id === bp.id)) pages.push(bp); // le télescope : présent d'office, débloqué par le premier Âge
   if (story) for (const rp of ST.rewardPages()) if (!pages.some((p) => p.id === rp.id)) pages.push(rp); // les récompenses des chapitres
   const ages = ST.scopeAges((await plugin.index.list()).filter((a) => a.path !== file.path), scope);
   if (story) { // l'avancement : évalué à chaque lecture de la scène (les Âges du dossier sont ceux d'ici)

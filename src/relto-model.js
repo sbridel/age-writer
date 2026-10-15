@@ -12,7 +12,7 @@ const TERRAINS = ["volcanic_plateau", "mossy_plateau", "sand_island", "glacier",
 const SURROUNDINGS = ["cloud_sea", "fog_sea", "ocean", "void", "lava_sea"];
 const SKY_CYCLES = ["system_time", "frozen_dawn", "frozen_day", "frozen_dusk", "frozen_night"];
 const STRUCTURES = ["hut", "bookshelves", "linking_pillars"];
-const EFFECT_TYPES = ["marcel", "vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager", "telescope", "dniclock", "comet", "inkwell", "atelier"];
+const EFFECT_TYPES = ["marcel", "vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager", "telescope", "dniclock", "comet", "inkwell", "atelier", "glasshouse"];
 /** Options propres à certains effets (texte court) : couleur et nom du chat, variété du koï rare. */
 const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare", "sleep", "flower"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
 const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern", "ponderosa", "maple", "crystal"], flowers: ["blue", "red", "yellow", "white", "pink"] };
@@ -148,6 +148,9 @@ const PAGE_PRESETS = {
   page_stalk_tree: { label: "Stalk tree", effects: { canvas_additions: [{ type: "stalktree", density: 0.5 }], ambiance_audio: "wind" } },
   page_crystal_tree: { label: "Crystal tree", effects: { canvas_additions: [{ type: "vegetation", density: 0.2, asset: "crystal" }], ambiance_audio: "deep_hum" } },
   page_comets: { label: "Comets", effects: { canvas_additions: [{ type: "comet", density: 0.6 }], ambiance_audio: "deep_hum" } },
+  // la Verrière : un déguisement art nouveau (verre vert et ambre, cuivre, plantes) ; seulement l'enveloppe, rien de cliquable ne bouge
+  // (claude/DESIGN-verriere-art-nouveau.md) ; bac à sable seulement
+  page_glasshouse: { label: "Glasshouse", effects: { canvas_additions: [{ type: "glasshouse" }] }, sandbox: true },
   page_mist: { label: "Mist", effects: { canvas_additions: [{ type: "mist", density: 0.6 }], ambiance_audio: "wind" } },
 };
 
@@ -247,9 +250,10 @@ function libraryPage(lp) {
  * Pages toujours présentes dans le livre des pages, même sans note : elles se découvrent (verrouillées, puis disponibles).
  * Une note ou une ligne de bibliothèque de même id l'emporte. Aujourd'hui : le télescope, débloqué par le premier Âge.
  */
-const BUILTIN_PAGES = ["page_telescope", "page_dni_clock", "page_marcel"];
-function builtinPages() {
-  return BUILTIN_PAGES.map((id) => { const p = PAGE_PRESETS[id]; return { ...libraryPage({ id, label: p.label, effects: p.effects, unlock: null }), library: false, builtin: true, secret: !!p.secret, unlock: { age: null, minStability: 40, agesCount: p.unlock.agesCount != null ? p.unlock.agesCount : null, page: p.unlock.page || null, zero: !!p.unlock.zero, marcel: !!p.unlock.marcel } }; });
+const BUILTIN_PAGES = ["page_telescope", "page_dni_clock", "page_marcel", "page_glasshouse"];
+/** `o.story` : un Relto histoire ne reçoit pas les pages du bac à sable seul (la Verrière). */
+function builtinPages(o = {}) {
+  return BUILTIN_PAGES.filter((id) => !(o.story && PAGE_PRESETS[id].sandbox)).map((id) => { const p = PAGE_PRESETS[id], u = p.unlock || {}; return { ...libraryPage({ id, label: p.label, effects: p.effects, unlock: null }), library: false, builtin: true, secret: !!p.secret, unlock: { age: null, minStability: 40, agesCount: u.agesCount != null ? u.agesCount : null, page: u.page || null, zero: !!u.zero, marcel: !!u.marcel } }; });
 }
 
 /** @returns {{ok:boolean, reason:string}} */

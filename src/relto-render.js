@@ -933,6 +933,7 @@ class ReltoRenderer {
     if (st.has("hut")) {
       const w = 56, h = 30, x0 = this.hutX - w / 2, y0 = GY - h;
       this.hot.push({ x: x0 - 8, y: y0 - 24, w: w + 16, h: h + 24, tip: "Cabin — click to go inside", go: "cabin" });
+      if (this.glassOn()) this.drawGlasshouse(ctx, sky, t, x0, y0, w, h, col); else {
       ctx.fillStyle = col("#5a4330"); ctx.fillRect(x0, y0, w, h);
       ctx.strokeStyle = rgba(0, 0, 0, 0.3); ctx.lineWidth = 1; for (let i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(x0, y0 + i * 5); ctx.lineTo(x0 + w, y0 + i * 5); ctx.stroke(); }
       ctx.fillStyle = col("#2f2a2a"); ctx.fillRect(x0 + 8, y0 - 22, 7, 18); // cheminée
@@ -942,6 +943,7 @@ class ReltoRenderer {
       ctx.fillStyle = mix("#2a3a4a", "#ffd58a", clamp(night * fl * 1.1)); ctx.fillRect(x0 + w - 20, y0 + 8, 11, 10);
       if (night > 0.3) { const gl = ctx.createRadialGradient(x0 + w - 14, y0 + 13, 2, x0 + w - 14, y0 + 13, 38); gl.addColorStop(0, rgba(255, 200, 120, 0.35 * night * fl)); gl.addColorStop(1, rgba(255, 200, 120, 0)); ctx.fillStyle = gl; ctx.fillRect(x0 - 30, y0 - 30, w + 80, 90); }
       for (let i = 0; i < 6; i++) { const p = frac(t * 0.12 + i / 6); ctx.fillStyle = rgba(190, 190, 200, 0.22 * (1 - p)); ctx.beginPath(); ctx.arc(x0 + 11.5 + Math.sin(p * 6 + i) * 5 + p * 16, y0 - 24 - p * 44, 2.5 + p * 6, 0, 6.283); ctx.fill(); }
+      }
     }
     if (st.has("bookshelves") && !st.has("hut")) this.drawShelf(ctx, amb, night); // avec une cabane, l'étagère est à l'intérieur
     if (st.has("linking_pillars")) {
@@ -1065,6 +1067,68 @@ class ReltoRenderer {
     ctx.restore();
   }
 
+  /** La Verrière (page `page_glasshouse`, bac à sable seulement) : un déguisement de la cabane, jamais de ce qu'on y clique. */
+  glassOn() { const sc = this.scene; return !!(sc && sc.mode !== "story" && sc.additions.some((a) => a.type === "glasshouse")); }
+  /**
+   * Le pavillon de verre et de cuivre, à la place de la cabane de planches (même emprise, même zone cliquable) : une coupole à
+   * nervures, deux baies en ogive vert d'eau à rinceaux, une porte ambre à soleil, le tuyau de cuivre du poêle (là où était la
+   * cheminée : la fumée de la page cheminée en sort), des lianes. Le jour, le verre prend le ciel ; la nuit, le poêle et la lampe
+   * l'allument de l'intérieur et il jette du vert et de l'ambre sur le sol. Art nouveau : rien de copié, des formes de notre main.
+   */
+  drawGlasshouse(ctx, sky, t, x0, y0, w, h, col) {
+    const night = clamp(sky.night == null ? 0.3 : sky.night), hx = x0 + w / 2, fl = 0.82 + 0.18 * Math.sin(t * 7.3) * Math.sin(t * 3.1);
+    const lit = night * fl, glass = (day, glow) => mix(col(day), glow, clamp(lit * 0.85)); // le jour : le verre prend le ciel ; la nuit : il s'allume
+    const TEAL = glass("#4fae9e", "#9ff0dc"), TEAL2 = glass("#1f5f58", "#3fbfa8"), AMB = glass("#c98a32", "#ffd27a"), AMB2 = glass("#7a4a1e", "#e0a23a");
+    const CU = col("#b5652a"), CU2 = col("#e6a06a"), LEAD = mix(col("#0f2f2c"), "#0f2f2c", 0.5);
+    // la lumière jetée au sol, la nuit (vert sur les côtés, ambre devant la porte)
+    if (night > 0.15) {
+      const g = ctx.createRadialGradient(hx, GY, 4, hx, GY, 70); g.addColorStop(0, rgba(127, 214, 200, 0.28 * lit)); g.addColorStop(0.45, rgba(224, 162, 58, 0.12 * lit)); g.addColorStop(1, rgba(224, 162, 58, 0));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(hx, GY + 2, 72, 16, 0, 0, 6.283); ctx.fill();
+    }
+    const ogive = (xa, xb, top, base) => { const m = (xa + xb) / 2, k = (xb - xa) * 0.55; ctx.beginPath(); ctx.moveTo(xa, base); ctx.lineTo(xa, top + k); ctx.quadraticCurveTo(xa, top + k * 0.2, m, top); ctx.quadraticCurveTo(xb, top + k * 0.2, xb, top + k); ctx.lineTo(xb, base); ctx.closePath(); };
+    const vgrad = (top, c1, c2) => { const g = ctx.createLinearGradient(0, top, 0, GY); g.addColorStop(0, c1); g.addColorStop(1, c2); return g; };
+    // le corps, derrière : vert profond
+    ctx.fillStyle = col("#163c38"); ctx.fillRect(x0 + 3, y0 + 2, w - 6, h - 2);
+    // la coupole : verre vert d'eau, nervures de cuivre, un fleuron
+    const dr = w / 2 + 5, dh = 24;
+    ctx.fillStyle = vgrad(y0 - dh, mix(TEAL, "#d8fff5", 0.25), TEAL2); ctx.beginPath(); ctx.ellipse(hx, y0 + 3, dr, dh, 0, Math.PI, 2 * Math.PI); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = CU; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(hx, y0 + 3, dr, dh, 0, Math.PI, 2 * Math.PI); ctx.stroke();
+    ctx.lineWidth = 0.9; ctx.strokeStyle = CU2;
+    for (const k of [-0.62, -0.25, 0.25, 0.62]) { ctx.beginPath(); ctx.moveTo(hx, y0 + 3 - dh); ctx.quadraticCurveTo(hx + k * dr * 0.9, y0 + 3 - dh * 0.75, hx + k * dr, y0 + 3); ctx.stroke(); }
+    ctx.beginPath(); ctx.ellipse(hx, y0 + 3, dr * 0.72, dh * 0.42, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke(); // une bague à mi-hauteur
+    ctx.fillStyle = CU; ctx.beginPath(); ctx.arc(hx, y0 + 2 - dh, 2.2, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = CU2; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(hx, y0 - dh); ctx.lineTo(hx, y0 - dh - 6); ctx.stroke();
+    ctx.fillStyle = mix(col("#c98a32"), "#ffd27a", clamp(lit)); ctx.beginPath(); ctx.arc(hx, y0 - dh - 7, 1.2, 0, 6.283); ctx.fill();
+    // les deux baies en ogive (vert d'eau) et la porte (ambre), cerclées de cuivre
+    const bays = [[x0 + 1, x0 + 19, y0 + 2], [x0 + w - 19, x0 + w - 1, y0 + 2]], door = [hx - 7, hx + 7, y0 - 4];
+    for (const [xa, xb, top] of bays) {
+      ctx.fillStyle = vgrad(top, TEAL, TEAL2); ogive(xa, xb, top, GY); ctx.fill();
+      // le rinceau au plomb : une tige en coup de fouet, deux feuilles, un bourgeon
+      const m = (xa + xb) / 2; ctx.strokeStyle = LEAD; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(m, GY); ctx.bezierCurveTo(m - 4, GY - 9, m + 4, GY - 16, m, top + 9); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(m, GY - 12); ctx.quadraticCurveTo(m - 6, GY - 15, m - 5, GY - 20); ctx.moveTo(m, GY - 12); ctx.quadraticCurveTo(m + 6, GY - 15, m + 5, GY - 20); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(m, top + 7, 1.8, 2.6, 0, 0, 6.283); ctx.stroke();
+      ctx.strokeStyle = CU; ctx.lineWidth = 1.4; ogive(xa, xb, top, GY); ctx.stroke();
+    }
+    ctx.fillStyle = vgrad(door[2], AMB, AMB2); ogive(door[0], door[1], door[2], GY); ctx.fill();
+    ctx.strokeStyle = mix(col("#5a2e12"), "#5a2e12", 0.5); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(hx, door[2] + 8, 3, 0, 6.283); ctx.stroke(); // le soleil de la porte
+    for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4; ctx.beginPath(); ctx.moveTo(hx + Math.cos(a) * 4, door[2] + 8 + Math.sin(a) * 4); ctx.lineTo(hx + Math.cos(a) * 5.6, door[2] + 8 + Math.sin(a) * 5.6); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(hx, door[2] + 12); ctx.lineTo(hx, GY); ctx.stroke();
+    ctx.strokeStyle = CU; ctx.lineWidth = 1.4; ogive(door[0], door[1], door[2], GY); ctx.stroke();
+    ctx.fillStyle = CU2; ctx.beginPath(); ctx.arc(hx + 4.5, GY - 8, 0.9, 0, 6.283); ctx.fill(); // la poignée
+    // le soubassement de cuivre
+    ctx.fillStyle = CU; ctx.fillRect(x0 - 1, GY - 2.5, w + 2, 2.5); ctx.fillStyle = col("#5a2e12"); ctx.fillRect(x0 - 1, GY - 0.8, w + 2, 0.8);
+    // le tuyau du poêle (là où était la cheminée : la fumée de la page cheminée en sort), sa collerette
+    ctx.fillStyle = CU; ctx.fillRect(x0 + 8.5, y0 - 26, 6, 20); ctx.fillStyle = CU2; ctx.fillRect(x0 + 9.5, y0 - 26, 1.2, 20);
+    ctx.fillStyle = CU; ctx.fillRect(x0 + 7, y0 - 28, 9, 3);
+    // les lianes qui montent sur les montants
+    ctx.strokeStyle = col("#3b8f6a"); ctx.lineWidth = 1.1; ctx.fillStyle = col("#4bb08a");
+    for (const [bx, dir] of [[x0 + 1, -1], [x0 + w - 1, 1]]) {
+      ctx.beginPath(); ctx.moveTo(bx, GY); ctx.bezierCurveTo(bx + dir * 3, GY - 8, bx - dir * 2, GY - 16, bx + dir * 1, GY - 24); ctx.stroke();
+      for (const [ly, s] of [[GY - 6, 1], [GY - 13, -1], [GY - 20, 1]]) { ctx.beginPath(); ctx.ellipse(bx + dir * s * 2.4, ly, 2.2, 1.2, dir * s * 0.6, 0, 6.283); ctx.fill(); }
+    }
+    // la nuit : une lueur douce autour du verre
+    if (night > 0.3) { const g = ctx.createRadialGradient(hx, y0 + 6, 4, hx, y0 + 6, 46); g.addColorStop(0, rgba(160, 240, 220, 0.18 * lit)); g.addColorStop(1, rgba(160, 240, 220, 0)); ctx.fillStyle = g; ctx.fillRect(hx - 50, y0 - 40, 100, 90); }
+  }
   /** menhirs et colonnes brisées : ils s'allument de runes la nuit */
   /** cheminée allumée : fumée chaude et dense, lueur vacillante, étincelles, fenêtre éclairée */
   drawChimney(ctx, d, sky, t) {
@@ -1074,7 +1138,7 @@ class ReltoRenderer {
     const wx = x0 + 56 - 14, wy = y0 + 13;
     let g = ctx.createRadialGradient(wx, wy, 1, wx, wy, 34 + 10 * d); g.addColorStop(0, rgba(255, 170, 70, (0.35 + 0.25 * night) * fl * d)); g.addColorStop(1, rgba(255, 140, 50, 0));
     ctx.fillStyle = g; ctx.fillRect(wx - 50, wy - 50, 100, 100);
-    ctx.fillStyle = rgba(255, 190, 90, (0.5 + 0.4 * night) * fl); ctx.fillRect(wx - 5, wy - 5, 11, 10);
+    if (!this.glassOn()) { ctx.fillStyle = rgba(255, 190, 90, (0.5 + 0.4 * night) * fl); ctx.fillRect(wx - 5, wy - 5, 11, 10); } // la Verrière s'allume d'elle-même
     g = ctx.createRadialGradient(cx, cy, 1, cx, cy, 18); g.addColorStop(0, rgba(255, 150, 60, (0.25 + 0.3 * night) * fl * d)); g.addColorStop(1, rgba(255, 120, 40, 0));
     ctx.fillStyle = g; ctx.fillRect(cx - 20, cy - 20, 40, 40);
     // fumée : volutes qui s'élargissent, dérivent avec le vent

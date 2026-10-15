@@ -231,7 +231,7 @@ const centre = (h) => [h.x + h.w / 2, h.y + h.h / 2];
   const easy = echoTexts("easy", 3), guild = echoTexts("guild", 3);
   ok(/pulse|pouls/i.test(easy) && /delay|retard/i.test(easy), `facile : la ligne dit avant / après le pouls (« ${easy.slice(0, 90)} »)`);
   ok(!/echo|écho|delay|retard/i.test(guild.replace(/Delay|Retard/g, "")), `Guilde : aucun mot sur l'écho (« ${guild.slice(0, 90)} »)`);
-  void MET; void T;
+  void MET; void T; void G;
 }
 
 // ---- Art de la Guilde : trois paliers de mots seulement ----

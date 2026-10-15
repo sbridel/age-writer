@@ -35,8 +35,17 @@ function island(r, ctx, sc, sky, t, has) {
   ctx.fillStyle = c("#7a9a54"); ctx.beginPath(); ctx.ellipse(cx, y, 64, 8, 0, 0, 6.283); ctx.fill();
   ctx.fillStyle = c("#3d3128"); ctx.beginPath(); ctx.moveTo(cx - 30, y - 2); ctx.quadraticCurveTo(cx - 10, y - 46, cx + 4, y - 48); ctx.quadraticCurveTo(cx + 20, y - 40, cx + 34, y - 2); ctx.closePath(); ctx.fill();
   for (const v of sc.additions.filter((a) => a.type === "vegetation")) { const kind = v.asset || "conifer", n = 5; for (let i = 0; i < n; i++) { const x = cx - 56 + ((i * 41 + fnv(kind) % 13) % 112), h = 10 + (i % 3) * 3; ctx.fillStyle = c(kind === "maple" ? "#c4552a" : kind === "crystal" ? "#6fd6c4" : "#1f4a30"); ctx.beginPath(); ctx.moveTo(x - 3, y); ctx.lineTo(x, y - h); ctx.lineTo(x + 3, y); ctx.closePath(); ctx.fill(); } }
+  if (r.glassOn && r.glassOn()) { // la Verrière, vue de loin : un petit pavillon de verre sous sa coupole, qui s'allume la nuit
+    const lit = clamp(sky.night * 1.1), teal = mix(c("#4fae9e"), "#9ff0dc", lit * 0.85), amb = mix(c("#c98a32"), "#ffd27a", lit);
+    if (sky.night > 0.15) { const g = ctx.createRadialGradient(cx - 23, y, 1, cx - 23, y, 22); g.addColorStop(0, rgba(127, 214, 200, 0.3 * lit)); g.addColorStop(1, rgba(127, 214, 200, 0)); ctx.fillStyle = g; ctx.fillRect(cx - 47, y - 24, 48, 30); }
+    ctx.fillStyle = teal; ctx.fillRect(cx - 33, y - 11, 20, 11); ctx.beginPath(); ctx.ellipse(cx - 23, y - 10, 12, 9, 0, Math.PI, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = c("#b5652a"); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.ellipse(cx - 23, y - 10, 12, 9, 0, Math.PI, 2 * Math.PI); ctx.stroke(); ctx.strokeRect(cx - 33, y - 11, 20, 11);
+    ctx.beginPath(); ctx.moveTo(cx - 23, y - 19); ctx.lineTo(cx - 23, y - 10); ctx.moveTo(cx - 28, y - 11); ctx.lineTo(cx - 28, y); ctx.moveTo(cx - 18, y - 11); ctx.lineTo(cx - 18, y); ctx.stroke();
+    ctx.fillStyle = amb; ctx.fillRect(cx - 25, y - 7, 4, 7); ctx.fillStyle = c("#b5652a"); ctx.fillRect(cx - 30, y - 20, 2.5, 8);
+  } else {
   ctx.fillStyle = c("#6b4a30"); ctx.fillRect(cx - 34, y - 12, 22, 12); ctx.fillStyle = c("#3a2a22"); ctx.beginPath(); ctx.moveTo(cx - 37, y - 12); ctx.lineTo(cx - 23, y - 22); ctx.lineTo(cx - 9, y - 12); ctx.closePath(); ctx.fill();
   ctx.fillStyle = mix("#2a3a4a", "#ffd58a", clamp(sky.night * 1.1)); ctx.fillRect(cx - 18, y - 9, 4, 4);
+  }
   ctx.fillStyle = c("#4b3626"); ctx.fillRect(cx + 4, y - 14, 12, 14); ctx.fillStyle = c("#241a12"); ctx.fillRect(cx + 5, y - 13, 10, 12);
   ctx.fillStyle = c("#5a5a66"); ctx.fillRect(cx + 38, y - 18, 3, 18); ctx.fillRect(cx + 50, y - 18, 3, 18);
   if (sc.returning > 0) { ctx.strokeStyle = rgba(190, 235, 255, 0.5 + 0.3 * Math.sin(t * 2)); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx + 45.5, y - 12, 5, 0, 6.283); ctx.stroke(); }
