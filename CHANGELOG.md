@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.37.1 — The same door outside (2026-10-15)
+
+### Fixed
+- **The Glasshouse door seen from the island** now matches the one inside: two leaves under a round arch, a clear oval in each, small flowers, iridescent wood. It had kept the earlier amber ogive with a sun.
+
 ## 1.37.0 — The Glasshouse (2026-10-15)
 
 ### Added

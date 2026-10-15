@@ -528,3 +528,7 @@ Note : `claude/DESIGN-verriere-art-nouveau.md` (projet). Une page de déguisemen
 - `src/relto-glass.js` (nouveau) : ogives, verres (`glassTones`), sept motifs au plomb (`motif` : coup de fouet, iris, lys, pavot, ginkgo, tulipe, fougère), panneaux, lianes, pots, murs et sol de la cabane (sol en cache), fenêtre et porte (trois dessins, `setDoorStyle` ; par défaut la porte à deux battants en plein cintre), œil-de-bœuf, taches de lumière, salle de l'Imageur (rosace d'aurore), mosaïque sombre, rinceaux d'angle, liane de pilier, meubles, fenêtre ronde, lampes à coupole de verre (`tiffanyLamp`, `lampGlow`, `lampPool` : la flaque colorée teinte aussi ce qui est posé), tapis ouvragés, trappe de bronze et d'argent.
 - Branchements : `relto-render.js` (`glassOn`, `drawGlasshouse` : pavillon et lanternon ; la fumée de la cheminée sort du lanternon), `relto-global.js`, `relto-rooms.js` (cabane), `relto-imager.js`, `relto-telescope.js`, `relto-scenery.js` et `relto-clock.js` (horloge), et les autres pièces (`relto-atelier*.js`, `relto-vault.js`).
 - Test : `test/glasshouse.test.js` (46 contrôles : zones cliquables identiques avec et sans la page, quinze vues, trois heures). `test/treatise.test.js` est enfin dans la suite.
+
+## 1.37.1 — la même porte dehors (15 oct. 2026)
+
+- `src/relto-render.js` (`drawGlasshouse`) : la porte du pavillon, vue de l'île, devient celle de dedans (deux battants en plein cintre, ovales de verre clair, petites fleurs, bois irisé, deux poignées) au lieu de l'ogive ambre à soleil. Zone cliquable inchangée (`test/glasshouse.test.js`).
