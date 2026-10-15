@@ -196,6 +196,20 @@ function cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl) {
   void fl;
 }
 
+/** L'œil-de-bœuf au-dessus de la porte : un rond de verre clair (on y voit le ciel), une rosace au plomb en pétales, un anneau de cuivre. */
+function cabinOculus(ctx, c, sky, x, y, r) {
+  ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.clip();
+  const g = ctx.createLinearGradient(0, y - r, 0, y + r); g.addColorStop(0, sky.top); g.addColorStop(1, sky.bottom); ctx.fillStyle = g; ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+  const G = glassTones(c, sky, 0.1); ctx.fillStyle = G.amb; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.arc(x, y, r * 0.3, 0, 6.283); ctx.fill(); ctx.globalAlpha = 1; // le cœur ambre
+  ctx.strokeStyle = rgba(15, 47, 44, 0.85); ctx.lineWidth = 1.3; ctx.lineCap = "round";
+  for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, b = a + Math.PI / 8; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * r * 0.3, y + Math.sin(a) * r * 0.3); ctx.quadraticCurveTo(x + Math.cos(b) * r * 0.85, y + Math.sin(b) * r * 0.85, x + Math.cos(a + Math.PI / 4) * r * 0.3, y + Math.sin(a + Math.PI / 4) * r * 0.3); ctx.stroke(); } // huit pétales
+  ctx.beginPath(); ctx.arc(x, y, r * 0.3, 0, 6.283); ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle = c(COPPER); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.stroke();
+  ctx.strokeStyle = rgba(230, 160, 106, 0.6); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(x, y, r - 2.2, 0, 6.283); ctx.stroke();
+  ctx.fillStyle = c(COPPER_HI); for (let i = 0; i < 4; i++) { const a = Math.PI / 4 + (i * Math.PI) / 2; ctx.beginPath(); ctx.arc(x + Math.cos(a) * (r + 0.5), y + Math.sin(a) * (r + 0.5), 1.4, 0, 6.283); ctx.fill(); } // quatre rivets
+}
+
 /** Le jour, les vitraux jettent sur le sol des taches vert d'eau et ambre qui glissent avec l'heure. */
 function lightPatches(ctx, sky, hour, FLOOR) {
   const day = clamp(((sky.ambient == null ? 0.6 : sky.ambient) - 0.3) / 0.5); if (day <= 0) return;
@@ -244,4 +258,4 @@ function tableLegs(ctx, c, tx, tw, ty) {
   ctx.fillStyle = c("#2a1a12"); ctx.fillRect(tx + 2, ty + 8, tw - 4, 6);
 }
 
-module.exports = { MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+module.exports = { cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
