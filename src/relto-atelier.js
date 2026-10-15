@@ -43,7 +43,9 @@ function drawBookcase(r, ctx, c, gone, decoy) {
   if (gone && sp >= 1) return;
   if (sh.seq.length && !gone && now - sh.at > 9000) sh.seq = [];
   ctx.save(); ctx.beginPath(); ctx.rect(S.x - 4, S.y - 4, S.w + 8, S.h + 8); ctx.clip(); ctx.translate(-(S.w + 10) * ease, 0);
-  ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(S.x - 4, S.y - 4, S.w + 8, S.h + 8); ctx.fillStyle = c("#1f160f"); ctx.fillRect(S.x, S.y, S.w, S.h);
+  const glass = !!(r.glassOn && r.glassOn()); // la Verrière : bois sombre et cuivre (les livres, eux, ne changent pas)
+  ctx.fillStyle = c(glass ? "#2a1a12" : "#3a2a1e"); ctx.fillRect(S.x - 4, S.y - 4, S.w + 8, S.h + 8); ctx.fillStyle = c("#1f160f"); ctx.fillRect(S.x, S.y, S.w, S.h);
+  if (glass) { ctx.strokeStyle = c("#b5652a"); ctx.lineWidth = 1.3; ctx.strokeRect(S.x - 2.5, S.y - 2.5, S.w + 5, S.h + 5); }
   const rowH = S.h / 2;
   for (let row = 0; row < 2; row++) {
     const base = S.y + rowH * (row + 1) - 3; let x = S.x + 3;
@@ -57,7 +59,7 @@ function drawBookcase(r, ctx, c, gone, decoy) {
       else if (!gone) r.hot.push({ x, y: by, w: b.w, h: b.h, tip: "", shelf: i, secret: true });
       x += b.w + 1;
     }
-    ctx.fillStyle = c("#4b3626"); ctx.fillRect(S.x, base, S.w, 3);
+    ctx.fillStyle = c(glass ? "#b5652a" : "#4b3626"); ctx.fillRect(S.x, base, S.w, 3);
   }
   ctx.fillStyle = rgba(0, 0, 0, 0.16); ctx.fillRect(S.x - 4, S.y - 4, S.w + 8, 3);
   ctx.restore();

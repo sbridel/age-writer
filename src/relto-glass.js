@@ -170,4 +170,38 @@ function cabinPlants(ctx, c, t) {
   hangingPot(ctx, c, 618, 22, 40, t);
 }
 
-module.exports = { ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+/** Une plaque de cuivre rivée (le panneau derrière la petite bibliothèque, sous la Verrière) : un rinceau gravé, quatre rivets. */
+function copperPlate(ctx, c, x, y, w, h, shade = 1) {
+  const g = ctx.createLinearGradient(x, y, x + w, y + h); g.addColorStop(0, c("#8a4a1e")); g.addColorStop(0.45, c("#c98a52")); g.addColorStop(1, c("#6b3a16"));
+  ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = rgba(60, 28, 8, 0.55 * shade); ctx.lineWidth = 1; ctx.strokeRect(x + 3.5, y + 3.5, w - 7, h - 7);
+  const m = x + w / 2; ctx.strokeStyle = rgba(60, 28, 8, 0.4 * shade); ctx.lineWidth = 1.1; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(m, y + h - 8); ctx.bezierCurveTo(m - 7, y + h * 0.62, m + 7, y + h * 0.42, m, y + 14); ctx.stroke();
+  for (const f of [0.62, 0.42]) { const yy = y + h * f; ctx.beginPath(); ctx.moveTo(m, yy); ctx.quadraticCurveTo(m - 12, yy - 3, m - 10, yy - 11); ctx.moveTo(m, yy); ctx.quadraticCurveTo(m + 12, yy - 3, m + 10, yy - 11); ctx.stroke(); }
+  ctx.beginPath(); ctx.ellipse(m, y + 11, 3, 4.5, 0, 0, 6.283); ctx.stroke();
+  ctx.fillStyle = c("#e6a06a"); for (const [rx, ry] of [[x + 6, y + 6], [x + w - 6, y + 6], [x + 6, y + h - 6], [x + w - 6, y + h - 6]]) { ctx.beginPath(); ctx.arc(rx, ry, 1.6, 0, 6.283); ctx.fill(); }
+  ctx.fillStyle = rgba(255, 230, 180, 0.12 * shade); ctx.fillRect(x + 2, y + 2, w - 4, 2);
+}
+
+/** Les montants d'un meuble sous la Verrière : bois sombre et filet de cuivre. */
+function copperEdge(ctx, c, x, y, w, h) { ctx.fillStyle = c("#2a1a12"); ctx.fillRect(x, y, w, h); ctx.fillStyle = c(COPPER); ctx.fillRect(x + 1, y, 1.4, h); ctx.fillRect(x + w - 2.4, y, 1.4, h); }
+
+/** Le fronton de l'étagère des Âges : un arc brisé de bois sombre bordé de cuivre, un fleuron au sommet. */
+function shelfCrest(ctx, c, x0, w, y0) {
+  const m = x0 + w / 2, top = y0 - 26;
+  ctx.fillStyle = c("#2a1a12"); ctx.beginPath(); ctx.moveTo(x0 - 7, y0 - 8); ctx.quadraticCurveTo(x0 + w * 0.25, y0 - 12, m - 18, top + 6); ctx.quadraticCurveTo(m, top - 2, m + 18, top + 6); ctx.quadraticCurveTo(x0 + w * 0.75, y0 - 12, x0 + w + 7, y0 - 8); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = c(COPPER); ctx.lineWidth = 1.6; ctx.stroke();
+  ctx.fillStyle = c(COPPER); ctx.beginPath(); ctx.ellipse(m, top + 2, 3.5, 5, 0, 0, 6.283); ctx.fill();
+  ctx.strokeStyle = c("#3b8f6a"); ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(m - 4, top + 6); ctx.quadraticCurveTo(m - 16, top + 4, m - 24, top + 10); ctx.moveTo(m + 4, top + 6); ctx.quadraticCurveTo(m + 16, top + 4, m + 24, top + 10); ctx.stroke();
+}
+
+/** Les pieds de la table en coup de fouet (cuivre et bois sombre), un filet de cuivre au bord du plateau. */
+function tableLegs(ctx, c, tx, tw, ty) {
+  ctx.strokeStyle = c("#2a1a12"); ctx.lineWidth = 6; ctx.lineCap = "round";
+  for (const [x, d] of [[tx + 10, 1], [tx + tw - 10, -1]]) { ctx.beginPath(); ctx.moveTo(x, ty + 8); ctx.bezierCurveTo(x + d * 8, ty + 24, x - d * 6, ty + 40, x + d * 2, ty + 56); ctx.stroke(); }
+  ctx.strokeStyle = c(COPPER); ctx.lineWidth = 1.2;
+  for (const [x, d] of [[tx + 10, 1], [tx + tw - 10, -1]]) { ctx.beginPath(); ctx.moveTo(x - d * 2, ty + 8); ctx.bezierCurveTo(x + d * 6, ty + 24, x - d * 8, ty + 40, x, ty + 56); ctx.stroke(); }
+  ctx.fillStyle = c("#2a1a12"); ctx.fillRect(tx + 2, ty + 8, tw - 4, 6);
+}
+
+module.exports = { copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };

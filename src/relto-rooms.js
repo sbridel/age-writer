@@ -54,11 +54,14 @@ function drawCabin(r, ctx, sc, sky, t) {
   if (r.available && r.available().telescope) PS.spyglass(r, ctx, c, wx + ww - 14, wy + wh + 2, t, TR(r)("relto.pass.telescope.tip")); // la longue-vue, sur le rebord : elle mène à l'observatoire
   if (sky.ambient > 0.35) { ctx.fillStyle = rgba(255, 240, 200, 0.07 * sky.ambient); ctx.beginPath(); ctx.moveTo(wx, wy + wh); ctx.lineTo(wx + ww, wy + wh); ctx.lineTo(wx + ww + 70, FLOOR + 60); ctx.lineTo(wx + 40, FLOOR + 60); ctx.closePath(); ctx.fill(); }
   if (r.available && r.available().atelier) { // un panneau de la boiserie pivote : seule une fine ligne le trahit, et aucune zone ne s'allume au survol
-    const S2 = ATELIER.SECRET; ctx.strokeStyle = rgba(0, 0, 0, 0.16); ctx.lineWidth = 1; ctx.strokeRect(S2.x, S2.y, S2.w, S2.h); ctx.strokeStyle = rgba(255, 235, 190, 0.05); ctx.strokeRect(S2.x + 1.5, S2.y + 1.5, S2.w - 3, S2.h - 3);
+    const S2 = ATELIER.SECRET;
+    if (glass) GLASS.copperPlate(ctx, c, S2.x, S2.y, S2.w, S2.h); else { // la Verrière : une plaque de cuivre rivée ; sinon, un panneau de la boiserie
+    ctx.strokeStyle = rgba(0, 0, 0, 0.16); ctx.lineWidth = 1; ctx.strokeRect(S2.x, S2.y, S2.w, S2.h); ctx.strokeStyle = rgba(255, 235, 190, 0.05); ctx.strokeRect(S2.x + 1.5, S2.y + 1.5, S2.w - 3, S2.h - 3);
     ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.beginPath(); ctx.arc(S2.x + S2.w - 9, S2.y + S2.h / 2, 2.2, 0, 6.283); ctx.fill();
+    }
     const sp = r.panelAt ? Math.min(1, (Date.now() - r.panelAt) / 1100) : 0; // le panneau coulisse sur le côté et montre une ouverture chaude
     if (sp > 0) { ctx.fillStyle = "#120b07"; ctx.fillRect(S2.x, S2.y, S2.w, S2.h); const gl = ctx.createLinearGradient(S2.x, 0, S2.x + S2.w, 0); gl.addColorStop(0, rgba(255, 170, 80, 0.5 * sp)); gl.addColorStop(1, rgba(255, 170, 80, 0.1 * sp)); ctx.fillStyle = gl; ctx.fillRect(S2.x, S2.y, S2.w, S2.h);
-      ctx.save(); ctx.beginPath(); ctx.rect(S2.x, S2.y, S2.w, S2.h); ctx.clip(); const ox = -S2.w * (sp * sp * (3 - 2 * sp)); ctx.fillStyle = c("#5a4330"); ctx.fillRect(S2.x + ox, S2.y, S2.w, S2.h); ctx.strokeStyle = rgba(0, 0, 0, 0.3); for (let k = 1; k < 3; k++) { ctx.beginPath(); ctx.moveTo(S2.x + ox + k * S2.w / 3, S2.y); ctx.lineTo(S2.x + ox + k * S2.w / 3, S2.y + S2.h); ctx.stroke(); } ctx.restore(); }
+      ctx.save(); ctx.beginPath(); ctx.rect(S2.x, S2.y, S2.w, S2.h); ctx.clip(); const ox = -S2.w * (sp * sp * (3 - 2 * sp)); if (glass) GLASS.copperPlate(ctx, c, S2.x + ox, S2.y, S2.w, S2.h); else { ctx.fillStyle = c("#5a4330"); ctx.fillRect(S2.x + ox, S2.y, S2.w, S2.h); ctx.strokeStyle = rgba(0, 0, 0, 0.3); for (let k = 1; k < 3; k++) { ctx.beginPath(); ctx.moveTo(S2.x + ox + k * S2.w / 3, S2.y); ctx.lineTo(S2.x + ox + k * S2.w / 3, S2.y + S2.h); ctx.stroke(); } } ctx.restore(); }
     const gone = !!r.shelfOpen; // la bibliothèque a déjà été écartée pendant cette visite
     if (gone) r.hot.push({ x: S2.x, y: S2.y, w: S2.w, h: S2.h, tip: "", knock: true, secret: true }); // derrière : on frappe, deux coups brefs, un temps, un coup franc (voir ReltoRenderer.knockBeat)
     ATELIER.drawBookcase(r, ctx, c, gone); // devant : une petite bibliothèque, trois livres à toucher dans l'ordre
@@ -103,8 +106,14 @@ function drawCabin(r, ctx, sc, sky, t) {
   if (st.has("bookshelves")) {
     const x0 = 196, w = 244, y0 = 50, RH = 62, S = 3.9;
     ctx.fillStyle = c("#241a12"); ctx.fillRect(x0, y0, w, FLOOR - y0);
+    if (glass) { // la Verrière : bois sombre, filets de cuivre, un fronton en arc brisé ; les rayons et les livres restent à leur place
+      GLASS.shelfCrest(ctx, c, x0, w, y0); GLASS.copperEdge(ctx, c, x0 - 7, y0 - 8, 9, FLOOR - y0 + 8); GLASS.copperEdge(ctx, c, x0 + w - 2, y0 - 8, 9, FLOOR - y0 + 8);
+      ctx.fillStyle = c("#2a1a12"); ctx.fillRect(x0 - 7, y0 - 10, w + 14, 10); ctx.fillStyle = c(GLASS.COPPER); ctx.fillRect(x0 - 7, y0 - 2, w + 14, 1.6);
+      for (let rw = 0; rw < 3; rw++) { ctx.fillStyle = c("#2a1a12"); ctx.fillRect(x0, y0 + RH * (rw + 1) - 3, w, 5); ctx.fillStyle = c(GLASS.COPPER); ctx.fillRect(x0, y0 + RH * (rw + 1) - 3, w, 1.4); }
+    } else {
     ctx.fillStyle = c("#4b3626"); ctx.fillRect(x0 - 7, y0 - 8, 9, FLOOR - y0 + 8); ctx.fillRect(x0 + w - 2, y0 - 8, 9, FLOOR - y0 + 8); ctx.fillRect(x0 - 7, y0 - 10, w + 14, 10);
     for (let rw = 0; rw < 3; rw++) ctx.fillRect(x0, y0 + RH * (rw + 1) - 3, w, 5); // trois rayons (30 livres) : un 4e tombait sur le plancher
+    }
     const gone = r.marcelBed ? r.marcelBed() : null; // le livre que Marcel garde n'est plus sur l'étagère : un vide à sa place
     for (const b of r.geo.books) {
       const bx = x0 + 10 + b.col * 22, bh = b.h * S, by = y0 + RH * (b.row + 1) - 3 - bh, bw = b.w * S;
@@ -121,9 +130,11 @@ function drawCabin(r, ctx, sc, sky, t) {
   }
   // table, chandelle et livres à part
   const tx = 132, tw = 176, ty = 284;
+  if (glass) { GLASS.tableLegs(ctx, c, tx, tw, ty); ctx.fillStyle = c("#3a2418"); ctx.fillRect(tx, ty, tw, 8); ctx.fillStyle = c(GLASS.COPPER); ctx.fillRect(tx, ty + 6, tw, 2); } else { // la Verrière : pieds en coup de fouet, filet de cuivre ; le plateau à la même place
   ctx.fillStyle = c("#2f2016"); ctx.fillRect(tx + 6, ty, 7, 56); ctx.fillRect(tx + tw - 13, ty, 7, 56);
   ctx.fillStyle = c("#4b3322"); ctx.fillRect(tx + 2, ty + 8, tw - 4, 8);
   ctx.fillStyle = c("#6a4a30"); ctx.fillRect(tx, ty, tw, 8);
+  }
   const moved = !!(r.available && r.available().atelier); // l'atelier est ouvert : les livres de référence ont déménagé à l'étage
   if (moved && r.opts.relicState && (r.opts.relicState() || {}).seen) r.hot.push({ x: tx, y: ty - 8, w: tw, h: 14, tip: "", go: "desk", secret: true }); // un raccourci caché vers le bureau (une fois l'atelier découvert)
   if (moved && r.opts.atelierDirect && r.opts.atelierDirect() && r.opts.relicState && (r.opts.relicState() || {}).seen) { // une clé de laiton, posée sur la table : un raccourci vers l'atelier, une fois l'énigme résolue
@@ -167,6 +178,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     r.hot.push({ x: bx - 3, y: by - 6, w: 36, h: 14, tip: "Book of pages — click to open", go: "book" });
   }
   const cx = tx + tw - 18;
+  if (glass) { ctx.fillStyle = c(GLASS.COPPER); ctx.beginPath(); ctx.ellipse(cx + 3.5, ty - 1, 7, 2, 0, 0, 6.283); ctx.fill(); ctx.fillRect(cx - 1, ty - 4, 9, 3); } // un bougeoir de cuivre
   ctx.fillStyle = c("#e8dcc0"); ctx.fillRect(cx, ty - 14, 7, 14);
   const cf = clamp(0.75 * fl + 0.2); ctx.fillStyle = rgba(255, 190, 80, cf); ctx.beginPath(); ctx.ellipse(cx + 3.5, ty - 19, 2.4, 5 * cf, 0, 0, 6.283); ctx.fill();
   // le chat, quand il dort au coin du feu (voir ReltoRenderer.catAsleep) : au premier plan, sur le tapis
