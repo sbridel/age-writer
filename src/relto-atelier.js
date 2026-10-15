@@ -137,6 +137,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   ctx.restore();
   if (glass) require("./relto-glass").roundWindowRing(ctx, c, sky, wx, wy, wr); // un anneau de verre coloré, le clair au milieu (la comète y passe toujours)
   else { ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(wx, wy, wr, 0, 6.283); ctx.stroke(); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(wx - wr, wy); ctx.lineTo(wx + wr, wy); ctx.moveTo(wx, wy - wr); ctx.lineTo(wx, wy + wr); ctx.stroke(); }
+  r.hot.push({ x: wx - wr, y: wy - wr, w: 2 * wr, h: 2 * wr, tip: TRr("atelier.window.tip"), go: "roundwindow" }); // un clic : la lucarne de près, ceinte des chiffres D'ni
   // cheminée
   const fx = 470, fw = 130;
   ctx.fillStyle = c("#6a6258"); ctx.fillRect(fx + 18, GALLERY + 38, fw - 36, 90); ctx.fillStyle = c("#555047"); ctx.fillRect(fx, 150, fw, FLOOR - 150);

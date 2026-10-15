@@ -24,7 +24,7 @@ ok(M.PAGE_PRESETS.page_glasshouse && M.EFFECT_TYPES.includes("glasshouse"), "la 
 ok(M.builtinPages().some((p) => p.id === "page_glasshouse") && !M.builtinPages({ story: true }).some((p) => p.id === "page_glasshouse"), "bac à sable : la page est au livre des pages ; histoire : non");
 ok(make(true).glassOn() && !make(false).glassOn(), "attachée : la Verrière ; détachée : la cabane");
 ok(!make(true, "story").glassOn(), "Relto d'histoire : jamais de Verrière");
-const ROOMS = [["island", []], ["global", []], ["cabin", []], ["cabin", ["page_atelier", "page_imager", "page_telescope", "page_cat", "page_endgame"]], ["imager", ["page_imager", "page_telescope"]], ["telescope", ["page_telescope"]], ["island", ["page_telescope"]], ["clock", ["page_telescope", "page_dni_clock"]], ["island", ["page_telescope", "page_dni_clock"]], ["atelier", ["page_atelier", "page_comets"]], ["loft", ["page_atelier"]], ["desk", ["page_atelier"]], ["atelierback", ["page_atelier"]]];
+const ROOMS = [["roundwindow", ["page_atelier"]], ["island", []], ["global", []], ["cabin", []], ["cabin", ["page_atelier", "page_imager", "page_telescope", "page_cat", "page_endgame"]], ["imager", ["page_imager", "page_telescope"]], ["telescope", ["page_telescope"]], ["island", ["page_telescope"]], ["clock", ["page_telescope", "page_dni_clock"]], ["island", ["page_telescope", "page_dni_clock"]], ["atelier", ["page_atelier", "page_comets"]], ["loft", ["page_atelier"]], ["desk", ["page_atelier"]], ["atelierback", ["page_atelier"]]];
 for (const [view, extra] of ROOMS) for (const hour of [9, 16, 23]) {
   const A = make(false, "sandbox", view, hour, extra), B = make(true, "sandbox", view, hour, extra), a = zones(A), b = zones(B);
   ok(A.hot.length >= (view === "cabin" ? 8 : 1) && a === b, `${view}${extra.length ? " (atelier, Imageur…)" : ""}, ${hour} h : les zones cliquables sont identiques avec et sans la Verrière`);
@@ -33,5 +33,16 @@ for (const [view, extra] of ROOMS) for (const hour of [9, 16, 23]) {
 for (const station of ["cry", "lens", "atmo"]) {
   const zs = (glass) => { const R = make(glass, "sandbox", "imager", 15, ["page_imager", "page_telescope"]); R.imagerState().station = station; R.hot = []; R.draw(4); return zs2(R); }, zs2 = (R) => ({ n: R.hot.length, z: zones(R) });
   const a2 = zs(false), b2 = zs(true); ok(a2.n >= 1 && a2.z === b2.z, `Imageur, poste ${station} : les zones cliquables sont identiques avec et sans la Verrière`);
+}
+// la lucarne de l'atelier : un clic l'ouvre, avec ou sans la Verrière ; la bague porte les vingt-cinq chiffres D'ni, 0 à 24, et rien d'autre
+for (const glass of [false, true]) {
+  const A = make(glass, "sandbox", "atelier", 14, ["page_atelier"]);
+  ok(A.hot.some((h) => h.go === "roundwindow"), `atelier${glass ? " (Verrière)" : ""} : la lucarne est cliquable`);
+  const R = make(glass, "sandbox", "roundwindow", 14, ["page_atelier"]), seen = new Set(), orig = R.dni.drawNumber;
+  R.dni.drawNumber = function (c2, v, ...rest) { seen.add(v); return orig.call(this, c2, v, ...rest); };
+  R.hot = []; R.draw(5); R.dni.drawNumber = orig;
+  ok(R.view === "roundwindow", "la vue existe");
+  ok(seen.size === 25 && [...Array(25).keys()].every((v) => seen.has(v)), `lucarne${glass ? " (Verrière)" : ""} : les chiffres 0 à 24, tous et seulement eux`);
+  ok(R.hot.length === 1 && R.hot[0].go === "atelier", "lucarne : un seul cliquable, le retour à l'atelier");
 }
 console.log(`✓ glasshouse.test.js (${n} contrôles)`);
