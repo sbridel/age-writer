@@ -95,8 +95,11 @@ function drawAtelier(r, ctx, sc, sky, t) {
   const fg = ctx.createLinearGradient(0, FLOOR, 0, H); fg.addColorStop(0, c("#46321f")); fg.addColorStop(1, c("#26190f")); ctx.fillStyle = fg; ctx.fillRect(0, FLOOR, W, H - FLOOR);
   ctx.strokeStyle = rgba(0, 0, 0, 0.3); ctx.lineWidth = 1; for (const y of [FLOOR + 18, FLOOR + 42, FLOOR + 74]) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
   ctx.fillStyle = c("#2a1c14"); ctx.fillRect(0, FLOOR - 4, W, 6);
+  if (glass) require("./relto-glass").ornateRug(ctx, c, 300, 322, 210, 26, { field: "#3d2a4a", border: "#22303a", vine: "#6a9a8a", gold: "#c9a24e" }); // la Verrière : un tapis ouvragé
+  else {
   ctx.fillStyle = c("#3d2a4a"); ctx.beginPath(); ctx.ellipse(300, 322, 210, 26, 0, 0, 6.283); ctx.fill();
   ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(300, 322, 194, 21, 0, 0, 6.283); ctx.stroke();
+  }
   // galerie : un étage de livres de référence (décor pour l'instant), balustrade, échelle
   ctx.fillStyle = c("#1d140e"); ctx.fillRect(0, 0, W, GALLERY);
   for (let sx = 120; sx < W - 20; sx += 130) {
@@ -196,7 +199,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
     ctx.fillStyle = c("#7fd6c8"); ctx.beginPath(); ctx.arc(ox2, oy2, 4, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(127, 214, 200, 0.18 + 0.1 * Math.sin(t * 2)); ctx.beginPath(); ctx.arc(ox2, oy2, 11, 0, 6.283); ctx.fill();
     item(ox2 - 22, oy2 - 20, 44, 52, "atelier.orrery.tip", "atelier.orrery.flash"); }
   // la lampe à abat-jour vert (une chaîne de laiton l'éteint ou l'allume)
-  { const lx = tx + 78; ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(lx - 1.5, top - 26, 3, 24); ctx.fillRect(lx - 8, top - 4, 16, 3); ctx.fillStyle = c("#2f6b48"); ctx.beginPath(); ctx.moveTo(lx - 12, top - 20); ctx.lineTo(lx + 12, top - 20); ctx.lineTo(lx + 7, top - 33); ctx.lineTo(lx - 7, top - 33); ctx.fill();
+  { const lx = tx + 78; if (glass) require("./relto-glass").tiffanyLamp(ctx, c, lx, top - 34, top - 20, 13, top - 2, 7, !r.lampOff, fl); else { ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(lx - 1.5, top - 26, 3, 24); ctx.fillRect(lx - 8, top - 4, 16, 3); } if (!glass) { ctx.fillStyle = c("#2f6b48"); ctx.beginPath(); ctx.moveTo(lx - 12, top - 20); ctx.lineTo(lx + 12, top - 20); ctx.lineTo(lx + 7, top - 33); ctx.lineTo(lx - 7, top - 33); ctx.fill(); }
     if (!r.lampOff) { ctx.fillStyle = rgba(255, 220, 140, 0.1 + 0.03 * fl); ctx.beginPath(); ctx.moveTo(lx - 12, top - 20); ctx.lineTo(lx + 12, top - 20); ctx.lineTo(lx + 36, top + 2); ctx.lineTo(lx - 36, top + 2); ctx.fill(); }
     lampChain(r, ctx, c, lx + 9, top - 20, 13, t, TRr("atelier.lamp.tip"), { x: lx - 13, y: top - 35, w: 26, h: 36 }); }
   // le grand livre ouvert, la plume et l'encrier
@@ -211,6 +214,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
 
 /** « Je m'assois au bureau » : le gros plan du plateau, la corbeille à lettres à gauche. */
 function drawDesk(r, ctx, sc, sky, t) {
+  const glass = !!(r.glassOn && r.glassOn()); // la Verrière : la lampe à coupole de verre, un filet de cuivre au bord du plateau
   const amb = 0.55 + 0.45 * sky.ambient, c = (h) => mix("#05060c", h, amb), TRr = TR(r), fl = flick(t), mail = (r.opts.mailState && r.opts.mailState()) || {};
   ctx.fillStyle = c("#2b2018"); ctx.fillRect(0, 0, W, H); // le mur, dans l'ombre
   for (let x = 0; x < W; x += 36) { ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x, 0, 1.4, 190); }
@@ -240,9 +244,11 @@ function drawDesk(r, ctx, sc, sky, t) {
   ctx.strokeStyle = rgba(230, 220, 180, 0.7); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(304, 92); ctx.quadraticCurveTo(320, 70, 336, 86); ctx.quadraticCurveTo(350, 74, 366, 94); ctx.stroke();
   r.hot.push({ x: 300, y: 54, w: 70, h: 52, tip: TRr("atelier.wall.frame"), flash: TRr("atelier.wall.frame.flash") });
   const g = ctx.createLinearGradient(0, 180, 0, H); g.addColorStop(0, c("#6d4c31")); g.addColorStop(1, c("#3a2717")); ctx.fillStyle = g; ctx.fillRect(0, 180, W, H - 180); // le plateau
-  ctx.fillStyle = c("#7d5a3b"); ctx.fillRect(0, 180, W, 4); const q = rng(0xde5c); ctx.strokeStyle = rgba(0, 0, 0, 0.14); ctx.lineWidth = 1; for (let i = 0; i < 14; i++) { const y = 190 + q() * 170; ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(200, y + q() * 6 - 3, 440, y + q() * 6 - 3, W, y); ctx.stroke(); }
+  ctx.fillStyle = c(glass ? "#b5652a" : "#7d5a3b"); ctx.fillRect(0, 180, W, 4); if (glass) { ctx.fillStyle = c("#e6a06a"); ctx.fillRect(0, 180, W, 1.2); } const q = rng(0xde5c); ctx.strokeStyle = rgba(0, 0, 0, 0.14); ctx.lineWidth = 1; for (let i = 0; i < 14; i++) { const y = 190 + q() * 170; ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(200, y + q() * 6 - 3, 440, y + q() * 6 - 3, W, y); ctx.stroke(); }
   // la lampe verte, en haut à gauche : son cône éclaire le plateau ; la chaîne de laiton l'éteint ou l'allume
-  { const lx = 150; ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(lx - 3, 90, 6, 92); ctx.fillRect(lx - 22, 176, 44, 8); ctx.fillStyle = c("#2f6b48"); ctx.beginPath(); ctx.moveTo(lx - 38, 78); ctx.lineTo(lx + 38, 78); ctx.lineTo(lx + 20, 34); ctx.lineTo(lx - 20, 34); ctx.fill();
+  { const lx = 150; const glassD = glass;
+    if (glassD) require("./relto-glass").tiffanyLamp(ctx, c, lx, 30, 78, 40, 184, 22, !r.lampOff, fl); // la Verrière : une lampe à coupole de verre au plomb, pied de bronze
+    else { ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(lx - 3, 90, 6, 92); ctx.fillRect(lx - 22, 176, 44, 8); ctx.fillStyle = c("#2f6b48"); ctx.beginPath(); ctx.moveTo(lx - 38, 78); ctx.lineTo(lx + 38, 78); ctx.lineTo(lx + 20, 34); ctx.lineTo(lx - 20, 34); ctx.fill(); }
     if (!r.lampOff) { ctx.fillStyle = rgba(255, 224, 150, 0.1 + 0.03 * fl); ctx.beginPath(); ctx.moveTo(lx - 38, 78); ctx.lineTo(lx + 38, 78); ctx.lineTo(lx + 230, 360); ctx.lineTo(lx - 150, 360); ctx.fill(); }
     lampChain(r, ctx, c, lx + 28, 78, 34, t, TRr("atelier.lamp.tip"), { x: lx - 40, y: 32, w: 80, h: 150 }); }
   // le planétaire, au fond à droite

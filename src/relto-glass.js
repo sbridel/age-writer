@@ -180,7 +180,10 @@ function cabinWindowFrame(ctx, c, sky, wx, wy, ww, wh) {
 function cabinWindowClip(ctx, wx, wy, ww, wh) { ogive(ctx, wx, wx + ww, wy - 22, wy + wh); }
 
 /** La porte : une ogive de verre ambre au plomb (un soleil, une tige), cadre de cuivre, sous une imposte (traverse de cuivre entre les deux). */
+let DOOR_STYLE = "double"; // « double » : l'imposte en ogive au-dessus de la porte en ogive ; « single » : une seule grande ogive, coupée par la traverse
+function setDoorStyle(v) { DOOR_STYLE = v === "single" ? "single" : "double"; }
 function cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl) {
+  if (DOOR_STYLE === "single") return cabinDoorSingle(ctx, c, sky, dx, dy, dw, FLOOR);
   const G = glassTones(c, sky, 0.2), top = dy - 16;
   // l'imposte : une ogive de verre vert d'eau au-dessus de la porte, séparée d'elle par une traverse de cuivre (rien ne se chevauche),
   // l'œil-de-bœuf en son cœur ; elle s'arrête avant la grande fenêtre
@@ -213,6 +216,24 @@ function cabinOculus(ctx, c, sky, x, y, r) {
   ctx.strokeStyle = c(COPPER); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.stroke();
   ctx.strokeStyle = rgba(230, 160, 106, 0.6); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(x, y, r - 2.2, 0, 6.283); ctx.stroke();
   ctx.fillStyle = c(COPPER_HI); for (let i = 0; i < 4; i++) { const a = Math.PI / 4 + (i * Math.PI) / 2; ctx.beginPath(); ctx.arc(x + Math.cos(a) * (r + 0.5), y + Math.sin(a) * (r + 0.5), 1.4, 0, 6.283); ctx.fill(); } // quatre rivets
+}
+
+/** La porte en une seule grande ogive : l'imposte remplit l'arc (l'œil-de-bœuf au cœur), la traverse coupe net, le battant est droit dessous. */
+function cabinDoorSingle(ctx, c, sky, dx, dy, dw, FLOOR) {
+  const G = glassTones(c, sky, 0.2), xa = dx - 4, xb = dx + dw + 4, top = 46, tr = dy - 2;
+  ctx.fillStyle = c(COPPER_LO); ogive(ctx, xa, xb, top, FLOOR); ctx.fill();
+  ctx.save(); ogive(ctx, xa + 3, xb - 3, top + 3, tr); ctx.clip(); const ig = ctx.createLinearGradient(0, top, 0, tr); ig.addColorStop(0, G.teal); ig.addColorStop(1, G.teal2); ctx.fillStyle = ig; ctx.fillRect(xa, top, xb - xa, tr - top); ctx.restore(); // l'imposte : tout l'arc
+  cabinOculus(ctx, c, sky, dx + dw / 2, (top + tr) / 2 + 8, 13);
+  ctx.fillStyle = c(COPPER); ctx.fillRect(xa, tr, xb - xa, 5); ctx.fillStyle = c(COPPER_HI); ctx.fillRect(xa, tr, xb - xa, 1.2); // la traverse
+  const gr = ctx.createLinearGradient(0, tr + 5, 0, FLOOR); gr.addColorStop(0, G.amb); gr.addColorStop(1, G.amb2); ctx.fillStyle = gr; ctx.fillRect(dx, tr + 5, dw, FLOOR - tr - 7); // le battant, droit
+  const m = dx + dw / 2, sy = tr + 30; ctx.strokeStyle = rgba(90, 46, 18, 0.85); ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.arc(m, sy, 9, 0, 6.283); ctx.stroke(); ctx.beginPath(); ctx.arc(m, sy, 4, 0, 6.283); ctx.stroke();
+  for (let i = 0; i < 12; i++) { const a = (i * Math.PI) / 6; ctx.beginPath(); ctx.moveTo(m + Math.cos(a) * 11, sy + Math.sin(a) * 11); ctx.lineTo(m + Math.cos(a) * 16, sy + Math.sin(a) * 16); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(m, sy + 16); ctx.bezierCurveTo(m - 10, sy + 50, m + 10, sy + 80, m, FLOOR - 2); ctx.stroke();
+  for (const y of [sy + 60, sy + 95]) { ctx.beginPath(); ctx.moveTo(m, y); ctx.quadraticCurveTo(m - 16, y - 6, m - 14, y - 18); ctx.moveTo(m, y); ctx.quadraticCurveTo(m + 16, y - 6, m + 14, y - 18); ctx.stroke(); }
+  ctx.strokeStyle = c(COPPER); ctx.lineWidth = 2.5; ctx.strokeRect(dx, tr + 5, dw, FLOOR - tr - 7);
+  ctx.lineWidth = 3.5; ogive(ctx, xa, xb, top, FLOOR); ctx.stroke();
+  ctx.fillStyle = c("#e6c37a"); ctx.beginPath(); ctx.arc(dx + dw - 9, dy + 70, 3, 0, 6.283); ctx.fill(); // la poignée, à sa place
 }
 
 /** Le jour, les vitraux jettent sur le sol des taches vert d'eau et ambre qui glissent avec l'heure. */
@@ -376,4 +397,70 @@ function armchair(ctx, c, ax, ay, cover) {
   ctx.fillStyle = c(COPPER); ctx.fillRect(ax - 8, ay + 4, 68, 1.6); // un jonc de cuivre au bas de la ceinture
 }
 
-module.exports = { armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+/**
+ * Une lampe à abat-jour de verre au plomb (art nouveau) : une coupole de petits verres ambre, vert d'eau et vert feuille, cernés de
+ * plomb, une frise de feuilles au bord, un pied de bronze qui monte du socle comme une tige. `lx` : l'axe ; `top`/`edge` : le haut et
+ * le bord de la coupole ; `rx` : sa demi-largeur ; `foot`/`base` : le pied (de `edge` à `foot`) et la demi-largeur du socle. Allumée,
+ * la coupole luit de l'intérieur.
+ */
+function tiffanyLamp(ctx, c, lx, top, edge, rx, foot, base, on, fl = 1) {
+  const k = rx / 40, glow = on ? clamp(0.55 + 0.15 * fl) : 0;
+  // le pied de bronze : une tige qui s'évase en racines sur le socle
+  ctx.fillStyle = c("#6b4a22"); ctx.beginPath(); ctx.moveTo(lx - 2.5 * k, edge); ctx.lineTo(lx + 2.5 * k, edge); ctx.quadraticCurveTo(lx + 3 * k, foot - 10 * k, lx + base, foot); ctx.lineTo(lx - base, foot); ctx.quadraticCurveTo(lx - 3 * k, foot - 10 * k, lx - 2.5 * k, edge); ctx.fill();
+  ctx.strokeStyle = c("#a8783a"); ctx.lineWidth = 1 * k + 0.3; ctx.beginPath(); ctx.moveTo(lx, edge); ctx.quadraticCurveTo(lx + 2 * k, foot - 12 * k, lx + base * 0.7, foot - 1); ctx.stroke();
+  ctx.fillStyle = c("#4a3218"); ctx.fillRect(lx - base - 2 * k, foot - 1, 2 * base + 4 * k, 3 * k + 1);
+  // la coupole : un demi-ovale découpé en verres
+  const dome = () => { ctx.beginPath(); ctx.moveTo(lx - rx, edge); ctx.bezierCurveTo(lx - rx, top + (edge - top) * 0.1, lx - rx * 0.4, top, lx, top); ctx.bezierCurveTo(lx + rx * 0.4, top, lx + rx, top + (edge - top) * 0.1, lx + rx, edge); ctx.closePath(); };
+  ctx.save(); dome(); ctx.clip();
+  const cols = ["#c98a32", "#4f9e8a", "#7a9a3a", "#d9a84a", "#3f7f74"], rows = 4, h = edge - top;
+  for (let i = 0; i < rows; i++) { const y0 = top + (h * i) / rows, n = 4 + i * 2; for (let j = 0; j < n; j++) { const x0 = lx - rx + (2 * rx * j) / n; ctx.fillStyle = mix(c(cols[(i * 3 + j) % cols.length]), "#ffe2a0", glow * 0.45); ctx.fillRect(x0, y0, 2 * rx / n + 0.5, h / rows + 0.5); } }
+  ctx.strokeStyle = rgba(30, 20, 10, 0.85); ctx.lineWidth = 0.9 * k + 0.2;
+  for (let i = 1; i < rows; i++) { const y = top + (h * i) / rows; ctx.beginPath(); ctx.moveTo(lx - rx, y); ctx.lineTo(lx + rx, y); ctx.stroke(); }
+  for (let i = 0; i < rows; i++) { const y0 = top + (h * i) / rows, n = 4 + i * 2; for (let j = 1; j < n; j++) { const x = lx - rx + (2 * rx * j) / n; ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y0 + h / rows); ctx.stroke(); } }
+  ctx.restore();
+  ctx.strokeStyle = c("#5a3a18"); ctx.lineWidth = 1.6 * k + 0.3; dome(); ctx.stroke();
+  // la frise du bord : des feuilles qui pendent
+  ctx.fillStyle = mix(c("#5a7a2a"), "#c8e090", glow * 0.3);
+  for (let j = 0; j < 9; j++) { const x = lx - rx + 2 + ((2 * rx - 4) * j) / 8; ctx.beginPath(); ctx.ellipse(x, edge + 2.4 * k, 2.6 * k + 0.4, 3.6 * k + 0.6, 0, 0, 6.283); ctx.fill(); }
+  ctx.fillStyle = c("#6b4a22"); ctx.beginPath(); ctx.arc(lx, top - 2 * k, 2.6 * k + 0.4, 0, 6.283); ctx.fill(); // le fleuron
+}
+
+/**
+ * Un tapis ouvragé (art nouveau) : un fond, une bordure à rinceaux (une liane continue et ses feuilles), un médaillon central en lys,
+ * des écoinçons de feuillage. `col` : { field, border, vine, gold }.
+ */
+function ornateRug(ctx, c, cx, cy, rx, ry, col) {
+  ctx.fillStyle = c(col.border); ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, 6.283); ctx.fill();
+  ctx.fillStyle = c(col.field); ctx.beginPath(); ctx.ellipse(cx, cy, rx * 0.86, ry * 0.7, 0, 0, 6.283); ctx.fill();
+  ctx.strokeStyle = c(col.gold); ctx.lineWidth = 1.4; for (const f of [0.97, 0.86]) { ctx.beginPath(); ctx.ellipse(cx, cy, rx * f, ry * (f === 0.97 ? 0.94 : 0.7), 0, 0, 6.283); ctx.stroke(); }
+  // la liane de la bordure : une onde qui fait le tour, une feuille à chaque creux
+  ctx.strokeStyle = c(col.vine); ctx.lineWidth = 1.2; ctx.beginPath(); const N = 64, rm = 0.915;
+  for (let i = 0; i <= N; i++) { const a = (i / N) * 6.283, w = 1 + 0.035 * Math.sin(i * 1.5); const x = cx + Math.cos(a) * rx * rm * w, y = cy + Math.sin(a) * ry * (rm - 0.1) * (1 + 0.12 * Math.sin(i * 1.5)); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); }
+  ctx.stroke(); ctx.fillStyle = c(col.vine);
+  for (let i = 0; i < N; i += 4) { const a = (i / N) * 6.283; ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * rx * rm, cy + Math.sin(a) * ry * (rm - 0.1), 3, 1.2, a + 0.6, 0, 6.283); ctx.fill(); }
+  // le médaillon : un lys stylisé, vu à plat (écrasé par la perspective)
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(1, ry / rx * 2.2);
+  ctx.strokeStyle = c(col.gold); ctx.lineWidth = 1.3; ctx.beginPath(); ctx.ellipse(0, 0, rx * 0.2, rx * 0.06, 0, 0, 6.283); ctx.stroke();
+  ctx.fillStyle = c(col.vine); for (const d of [-1, 1]) { ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(d * rx * 0.1, -rx * 0.05, d * rx * 0.17, 0); ctx.quadraticCurveTo(d * rx * 0.1, rx * 0.03, 0, 0); ctx.fill(); }
+  ctx.fillStyle = c(col.gold); ctx.beginPath(); ctx.ellipse(0, 0, rx * 0.025, rx * 0.04, 0, 0, 6.283); ctx.fill();
+  ctx.restore();
+  for (const d of [-1, 1]) { ctx.strokeStyle = c(col.vine); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(cx + d * rx * 0.36, cy); ctx.bezierCurveTo(cx + d * rx * 0.5, cy - ry * 0.4, cx + d * rx * 0.62, cy + ry * 0.3, cx + d * rx * 0.72, cy - ry * 0.1); ctx.stroke(); } // deux rinceaux de part et d'autre
+}
+
+/** La trappe du coffre sous la Verrière : bronze patiné, un anneau et une rosace d'argent incrustés (même place, même forme). */
+function bronzeTrap(ctx, c, cx, cy, w, h) {
+  const sk = h * 0.35, quad = () => { ctx.beginPath(); ctx.moveTo(cx - w / 2 + sk, cy - h / 2); ctx.lineTo(cx + w / 2 - sk, cy - h / 2); ctx.lineTo(cx + w / 2, cy + h / 2); ctx.lineTo(cx - w / 2, cy + h / 2); ctx.closePath(); };
+  ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.beginPath(); ctx.moveTo(cx - w / 2 + sk - 4, cy - h / 2 - 3); ctx.lineTo(cx + w / 2 - sk + 4, cy - h / 2 - 3); ctx.lineTo(cx + w / 2 + 4, cy + h / 2 + 3); ctx.lineTo(cx - w / 2 - 4, cy + h / 2 + 3); ctx.closePath(); ctx.fill();
+  const g = ctx.createLinearGradient(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2); g.addColorStop(0, c("#7a4e22")); g.addColorStop(0.5, c("#a8743a")); g.addColorStop(1, c("#5e3a18"));
+  ctx.fillStyle = g; quad(); ctx.fill(); ctx.strokeStyle = c("#3a2410"); ctx.lineWidth = 1.4; ctx.stroke();
+  ctx.save(); quad(); ctx.clip();
+  ctx.strokeStyle = c("#c8ccd2"); ctx.lineWidth = 1; // la rosace d'argent incrustée : un anneau, huit pétales écrasés
+  ctx.beginPath(); ctx.ellipse(cx, cy, w * 0.3, h * 0.32, 0, 0, 6.283); ctx.stroke();
+  for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4; ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * w * 0.17, cy + Math.sin(a) * h * 0.18, w * 0.07, h * 0.06, a, 0, 6.283); ctx.stroke(); }
+  ctx.strokeStyle = rgba(120, 200, 180, 0.35); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.ellipse(cx, cy, w * 0.44, h * 0.42, 0, 0, 6.283); ctx.stroke(); // un peu de vert-de-gris au bord
+  ctx.restore();
+  ctx.fillStyle = c("#d8dce2"); for (const fy of [-0.34, 0.34]) for (const fx of [-0.36, 0.36]) { ctx.beginPath(); ctx.arc(cx + fx * w, cy + fy * h, 1.4, 0, 6.283); ctx.fill(); } // rivets d'argent
+  ctx.strokeStyle = c("#e6e9ee"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(cx, cy + 1, 6, 2.6, 0, 0, 6.283); ctx.stroke(); // l'anneau de traction, d'argent
+}
+
+module.exports = { setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };

@@ -10,6 +10,7 @@ const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 
 /** Une trappe de fer dans le sol (vue en perspective douce) : plaque rivetée, anneau de traction. Sert aux deux accès : la cabane et l'atelier. */
 function trapDoor(r, ctx, c, cx, cy, w, h, tip) {
+  if (r.glassOn && r.glassOn()) { require("./relto-glass").bronzeTrap(ctx, c, cx, cy, w, h); r.hot.push({ x: cx - w / 2 - 4, y: cy - h / 2 - 4, w: w + 8, h: h + 8, tip, go: "vault" }); return; } // la Verrière : bronze et argent
   const sk = h * 0.35; // le bord du fond est plus étroit : la plaque est couchée sur le sol
   ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.beginPath(); ctx.moveTo(cx - w / 2 + sk - 4, cy - h / 2 - 3); ctx.lineTo(cx + w / 2 - sk + 4, cy - h / 2 - 3); ctx.lineTo(cx + w / 2 + 4, cy + h / 2 + 3); ctx.lineTo(cx - w / 2 - 4, cy + h / 2 + 3); ctx.closePath(); ctx.fill();
   ctx.fillStyle = c("#3a3d44"); ctx.beginPath(); ctx.moveTo(cx - w / 2 + sk, cy - h / 2); ctx.lineTo(cx + w / 2 - sk, cy - h / 2); ctx.lineTo(cx + w / 2, cy + h / 2); ctx.lineTo(cx - w / 2, cy + h / 2); ctx.closePath(); ctx.fill();

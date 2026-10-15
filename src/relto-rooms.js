@@ -34,8 +34,11 @@ function drawCabin(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#2a1c14"); ctx.fillRect(0, FLOOR - 6, W, 8);
   }
   // tapis
+  if (glass) GLASS.ornateRug(ctx, c, 262, 322, 170, 24, { field: "#5b2b2b", border: "#2a3e3a", vine: "#5a9a7a", gold: "#c9a24e" }); // la Verrière : un tapis ouvragé (même place : le chat y dort)
+  else {
   ctx.fillStyle = c("#5b2b2b"); ctx.beginPath(); ctx.ellipse(262, 322, 170, 24, 0, 0, 6.283); ctx.fill();
   ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(262, 322, 156, 19, 0, 0, 6.283); ctx.stroke();
+  }
   if (glass) GLASS.lightPatches(ctx, sky, r.hour(), FLOOR); // le jour, les taches colorées des vitraux glissent sur le sol
   // fenêtre : le ciel de l'île
   const wx = 104, wy = 70, ww = 78, wh = 92;

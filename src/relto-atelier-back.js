@@ -14,20 +14,25 @@ function turnButton(r, ctx, label, go) {
 }
 
 function drawBackroom(r, ctx, sc, sky, t) {
+  const glass = !!(r.glassOn && r.glassOn()), VR = require("./relto-glass"); // la Verrière : papier peint à lys, applique de verre au plomb, tapis ouvragé, cimaise de cuivre
   const amb = 0.5 + 0.5 * sky.ambient, c = (h) => mix("#05060c", h, amb), TRr = TR(r), q = rng(0xbed1), fl = flick(t), now = Date.now();
   const item = (x, y, w, h, tip, flash, extra) => r.hot.push({ x, y, w, h, tip: TRr(tip), flash: flash ? TRr(flash) : undefined, ...(extra || {}) });
   // murs tendus de papier sombre, lambris, plafond
   ctx.fillStyle = c("#3a423d"); ctx.fillRect(0, 0, W, FLOOR);
   for (let x = 0; x < W; x += 28) { ctx.fillStyle = rgba(q() < 0.5 ? 255 : 0, 235, 210, 0.03 + q() * 0.03); ctx.fillRect(x, 0, 28, FLOOR); ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.fillRect(x, 0, 1.2, FLOOR); }
-  for (let y = 24; y < FLOOR - 70; y += 38) for (let x = 14; x < W; x += 56) { ctx.fillStyle = rgba(200, 170, 90, 0.05); ctx.beginPath(); ctx.arc(x + ((y / 38) % 2) * 28, y, 3, 0, 6.283); ctx.fill(); } // des petites fleurs de papier peint
-  ctx.fillStyle = c("#2a2018"); ctx.fillRect(0, 0, W, 16); ctx.fillStyle = c("#33251a"); ctx.fillRect(0, FLOOR - 70, W, 5); ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.fillRect(0, FLOOR - 65, W, 65);
+  if (glass) { ctx.strokeStyle = rgba(200, 170, 90, 0.13); ctx.lineWidth = 0.9; ctx.lineCap = "round"; for (let y = 30; y < FLOOR - 76; y += 46) for (let x = 14; x < W; x += 56) VR.motif(ctx, ["lily", "iris", "tulip"][((x / 56) + (y / 46)) % 3 | 0], x + ((y / 46) % 2) * 28, y - 16, y + 18, 0.45); } // un papier peint à fleurs au trait
+  else for (let y = 24; y < FLOOR - 70; y += 38) for (let x = 14; x < W; x += 56) { ctx.fillStyle = rgba(200, 170, 90, 0.05); ctx.beginPath(); ctx.arc(x + ((y / 38) % 2) * 28, y, 3, 0, 6.283); ctx.fill(); } // des petites fleurs de papier peint
+  ctx.fillStyle = c("#2a2018"); ctx.fillRect(0, 0, W, 16); ctx.fillStyle = c(glass ? "#b5652a" : "#33251a"); ctx.fillRect(0, FLOOR - 70, W, 5); ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.fillRect(0, FLOOR - 65, W, 65);
   // sol et tapis
   const fg = ctx.createLinearGradient(0, FLOOR, 0, H); fg.addColorStop(0, c("#46321f")); fg.addColorStop(1, c("#26190f")); ctx.fillStyle = fg; ctx.fillRect(0, FLOOR, W, H - FLOOR);
   ctx.strokeStyle = rgba(0, 0, 0, 0.3); ctx.lineWidth = 1; for (const y of [FLOOR + 18, FLOOR + 42, FLOOR + 74]) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
   ctx.fillStyle = c("#2a1c14"); ctx.fillRect(0, FLOOR - 4, W, 6);
-  ctx.fillStyle = c("#7a5a1e"); ctx.beginPath(); ctx.ellipse(340, 316, 230, 26, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#2f4a44"); ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(340, 316, 212, 21, 0, 0, 6.283); ctx.stroke();
+  if (glass) VR.ornateRug(ctx, c, 340, 316, 230, 26, { field: "#7a5a1e", border: "#2f4a44", vine: "#8ab08a", gold: "#d8b45e" });
+  else { ctx.fillStyle = c("#7a5a1e"); ctx.beginPath(); ctx.ellipse(340, 316, 230, 26, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#2f4a44"); ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(340, 316, 212, 21, 0, 0, 6.283); ctx.stroke(); }
   // une applique, au mur, qui éclaire à peine
-  { const ax = 262, ay = 120; ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(ax - 2, ay, 4, 18); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(ax, ay - 2, 5, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 200, 110, 0.5 * fl); ctx.beginPath(); ctx.arc(ax, ay - 9, 3.5, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 190, 90, 0.05 * fl); ctx.beginPath(); ctx.arc(ax, ay - 8, 70, 0, 6.283); ctx.fill(); }
+  { const ax = 262, ay = 120;
+    if (glass) { ctx.strokeStyle = c("#6b4a22"); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ax, ay + 18); ctx.bezierCurveTo(ax - 8, ay + 8, ax + 8, ay + 2, ax, ay - 4); ctx.stroke(); VR.tiffanyLamp(ctx, c, ax, ay - 16, ay - 5, 7, ay - 5, 0.5, true, fl); } // une applique : une tulipe de verre au plomb sur une tige de bronze
+    else { ctx.fillStyle = c("#3a2a1e"); ctx.fillRect(ax - 2, ay, 4, 18); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(ax, ay - 2, 5, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 200, 110, 0.5 * fl); ctx.beginPath(); ctx.arc(ax, ay - 9, 3.5, 0, 6.283); ctx.fill(); } ctx.fillStyle = rgba(255, 190, 90, 0.05 * fl); ctx.beginPath(); ctx.arc(ax, ay - 8, 70, 0, 6.283); ctx.fill(); }
 
   // le lit à baldaquin
   { const bx = 24, bw = 212;
