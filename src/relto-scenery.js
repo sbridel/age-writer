@@ -160,7 +160,7 @@ function calendar(ctx, r, sky, t) {
   const glow = 0.45 + 0.4 * sky.night + 0.1 * Math.sin(t * 1.6), size = 9;
   pillarNumber(ctx, r, d.yahr, x - 0.5, y - (d.yahr >= 25 ? 54 : 44), size, `rgba(255,226,150,${clamp(glow).toFixed(2)})`); // empilé, sur le fût
   ctx.restore();
-  r.hot.push({ x: x - 24, y: y - 62, w: 48, h: 98, tip: `Calendar pinnacle — ${d.name} ${d.yahr}${d.synced ? "" : " (by the stone's own reckoning)"}` });
+  r.hot.push({ x: x - 24, y: y - 62, w: 48, h: 98, tip: `Calendar pinnacle — ${d.name} ${d.yahr}${d.synced ? "" : " (by the stone's own reckoning)"}` , go: "calendar" });
 }
 
 /**
