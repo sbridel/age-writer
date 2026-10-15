@@ -41,24 +41,12 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
-- **1.39, the calendar up close.** The calendar pinnacle opens on the full D'ni date, in stone or under the Glasshouse in stained glass.
-- **1.38, the skylight.** The round window of the writing room opens up close, ringed by the D'ni numerals 0 to 24.
-- **1.37, the Glasshouse.** An art nouveau disguise for the whole Relto: glass, copper, flowers, coloured lamplight. A page you attach or detach.
-- **1.36.1, the echo without words.** In the Art of the Guild, the telescope no longer says "more delay / less delay": you read the echo yourself.
-- **1.36, the chart that turns.** Drag the star chart under the magnifier; turn it around the Zero with a brass compass rose, Shift- or right-drag, or two fingers.
-- **1.35, the Treatise of the Art.** A thick volume under a brass clasp on the loft's table; a Grand Master opens it and reads the whole reference without leaving the Relto.
-- **1.34, a guide you can search.** A search field that keeps the topics containing your words and highlights them, a mini-contents at the top of long topics, ← → to turn the topics, a larger window on a computer.
-- **1.33, the guide on a phone.** A mountain icon in the ribbon opens the Relto, a book button in the Relto opens the guide on what you are looking at; on a narrow screen the guide's contents and text take turns, with previous / next topic.
-- **1.32, a star chart that breathes.** Names on hover (Aa shows them all), a magnifier, the four regions of the sky, a scale that adapts to your stars.
-- **1.31, hands that take.** A drawn open hand over what you take or touch (wheels, glasses, books, linking panels), closing as you turn; long tooltips wrap.
-- **1.30, on a phone.** Age Writer installs on Obsidian mobile; the Relto is played with a finger: touch to read, touch again to act, wheels you turn by sliding around them, a magnified eyepiece. Full screen fills the phone (held upright, the picture lies down by a quarter turn), and the Age's book reads in one column on a narrow screen (1.30.1, 1.30.2). With a mouse too, wheels turn by dragging around them, or with the scroll wheel in the large view (1.30.3).
-- **1.29, a telescope that shows everything.** In the Art of the Guild a turret of lenses (bare, echo magnified, phase plate with its trace, both), a pose time near a false beat, beacons that predict where the Zero should appear instead of filtering, and a plate that engraves a wrong distance if you expose on the false beat.
-- **1.28, drawn pages in plain sight, a cavern you look into, a tunable moon, a telescope you must read.** The stability details name the pages the Age drew (keep one, or close its box in one click); a `cavern_world` shows the inside of the cave lit by its algae; `moon: small` / `distant` / `large` / `close`; near a dead star the Art of the Guild asks you to hold the true delay, with a phase dial in the eyepiece.
-- **1.27, the sickness of the living and reading the world.** A chain of life held by a single species falls sick (a scar, a sentence, yellowed patches in the window). Coherence buys capacity: a world that holds together can carry more. The scars the world keeps from its draw, retouching that follows depth, and a world that names its faults only with time (setting *Reading the world*).
-- **1.26, life, soil, caverns and writing from the Relto.** New blocks (micro-life, shrubs, fauna by habitat, ground born of life), the laws of life, the `cavern_world`, a writer's title earned by holding an Age stable for seven days, a blank book to write an Age inside the Relto, the ledger on the Imager, and the vault of descriptive books under the cabin hatch (it shows only the books you chose).
-- **1.25, rigour of the laws.** Four rigours (gentle, balanced, strict, extreme), dosing by extent, a sentence on how deeply an Age rests, and every axis has a budget.
-- **1.24, story mode.** A mentor, Adrin Vesparath, writes you letters and sets nine chapters, each rewarded with a new piece of your Relto. Start it with the command “Start the story”.
-- **1.23 and before.** A finished Relto, plumb lines on the star chart, the rahnfee (a unit of distance along the Great Zero's beam), the Art of the Guild (blank book, metronome, D'ni clock), the observatory, living weather (`drizzle: often, dawn`).
+- **1.37 to 1.39, the Glasshouse and its close-ups.** An art nouveau disguise for the whole Relto (glass, copper, flowers, coloured lamplight; a page you attach or detach). The round window of the writing room opens up ringed by the D'ni numerals 0 to 24, and the calendar pinnacle opens on the full D'ni date.
+- **1.35 and 1.36, the Treatise and the chart.** A thick volume under a brass clasp holds the whole reference, readable without leaving the Relto; the star chart can be dragged and turned around the Zero, and in the Art of the Guild the telescope no longer words its echo for you.
+- **1.30 to 1.34, a phone and a guide you can search.** Age Writer installs on Obsidian mobile and the Relto is played with a finger; hands that take; the guide opens from the Relto, with a search field, a mini-contents and a narrow-screen layout.
+- **1.28 and 1.29, a telescope that shows everything.** In the Art of the Guild, a turret of lenses, beacons that predict where the Zero should appear, a plate that engraves a wrong distance on a false beat; the Age's stability details name the pages it drew; a cavern you look into, a tunable moon.
+- **1.25 to 1.27, rigour and living worlds.** Four rigours and dosing by extent; life, soils, caverns and the sickness of a chain of life held by a single species; coherence buys capacity; a writer's title earned by holding an Age stable, and a blank book to write an Age inside the Relto.
+- **1.24 and before.** Story mode (a mentor, nine chapters, each rewarded with a piece of your Relto: start it with “Start the story”), a finished Relto, the observatory, the Art of the Guild, living weather.
 ---
 
 ## Contents
