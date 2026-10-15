@@ -470,7 +470,12 @@ function tiffanyLamp(ctx, c, lx, top, edge, rx, foot, base, on, fl = 1) {
   // la frise du bord : des feuilles qui pendent
   ctx.fillStyle = mix(c("#5a7a2a"), "#c8e090", glow * 0.3);
   for (let j = 0; j < 9; j++) { const x = lx - rx + 2 + ((2 * rx - 4) * j) / 8; ctx.beginPath(); ctx.ellipse(x, edge + 2.4 * k, 2.6 * k + 0.4, 3.6 * k + 0.6, 0, 0, 6.283); ctx.fill(); }
+  // une frise de volutes au plomb, au bas de la coupole (comme les crosses d'un vitrail)
+  ctx.save(); dome(); ctx.clip(); ctx.strokeStyle = rgba(30, 20, 10, 0.9); ctx.lineWidth = 1.1 * k + 0.2;
+  const fy = edge - (edge - top) * 0.2, nS = 6; for (let j = 0; j < nS; j++) { const x = lx - rx + (2 * rx * (j + 0.5)) / nS, w = rx / nS; ctx.beginPath(); ctx.arc(x - w * 0.35, fy, w * 0.45, Math.PI * 0.2, Math.PI * 1.6); ctx.stroke(); ctx.beginPath(); ctx.arc(x + w * 0.35, fy, w * 0.45, Math.PI * 1.4, Math.PI * 0.8, true); ctx.stroke(); }
+  ctx.restore();
   ctx.fillStyle = c("#6b4a22"); ctx.beginPath(); ctx.arc(lx, top - 2 * k, 2.6 * k + 0.4, 0, 6.283); ctx.fill(); // le fleuron
+  ctx.beginPath(); ctx.moveTo(lx - 1.6 * k, top - 3 * k); ctx.lineTo(lx, top - 11 * k); ctx.lineTo(lx + 1.6 * k, top - 3 * k); ctx.closePath(); ctx.fill(); // sa pointe
 }
 
 /**
@@ -511,4 +516,28 @@ function bronzeTrap(ctx, c, cx, cy, w, h) {
   ctx.strokeStyle = c("#e6e9ee"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(cx, cy + 1, 6, 2.6, 0, 0, 6.283); ctx.stroke(); // l'anneau de traction, d'argent
 }
 
-module.exports = { cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+/**
+ * La lumière colorée d'une lampe à verre au plomb : un halo sur le mur autour de la coupole (vert d'eau, ambre), puis une flaque de
+ * lumière sur le plateau, mêlée de taches des couleurs des verres (elles tremblent avec la flamme). `lx` : l'axe ; `edge` : le bord
+ * de la coupole ; `pool` : le plateau, sous la lampe ; `rx` : la demi-largeur de la coupole ; `wall` : dessiner le halo du mur.
+ */
+function lampGlow(ctx, lx, edge, pool, rx, fl = 1, wall = true) {
+  const k = rx / 40, a = 0.85 + 0.15 * fl;
+  ctx.save(); ctx.globalCompositeOperation = "screen";
+  if (wall) for (const [dx, col, R, al] of [[-0.5, [40, 200, 180], 90, 0.35], [0.5, [255, 140, 30], 80, 0.32], [0, [110, 200, 60], 60, 0.2]]) {
+    const g = ctx.createRadialGradient(lx + dx * rx, edge - rx * 0.6, 4, lx + dx * rx, edge - rx * 0.6, R * k); g.addColorStop(0, rgba(col[0], col[1], col[2], al * a)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0));
+    ctx.fillStyle = g; ctx.fillRect(lx - R * k * 1.6, edge - rx * 0.6 - R * k, R * k * 3.2, R * k * 2);
+  }
+  // la flaque sur le plateau : chaude au centre, colorée sur les bords
+  const W2 = rx * 3.2, H2 = rx * 0.9;
+  for (const [dx, col, al] of [[0, [255, 190, 100], 0.18], [-0.55, [30, 200, 180], 0.38], [0.55, [255, 130, 20], 0.34], [0.15, [100, 200, 50], 0.24]]) {
+    const cx = lx + dx * W2 * 0.5, g = ctx.createRadialGradient(cx, pool, 2, cx, pool, W2 * 0.55); g.addColorStop(0, rgba(col[0], col[1], col[2], al * a)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(cx, pool, W2 * 0.55, H2 * 0.55, 0, 0, 6.283); ctx.fill();
+  }
+  // les taches des verres : de petites lueurs colorées éparses, au bord de la flaque
+  const q = rng(0x71ff), cols = [[30, 210, 190], [255, 150, 30], [110, 210, 60], [230, 110, 160]];
+  for (let i = 0; i < 14; i++) { const ang = q() * 6.283, rr = 0.35 + q() * 0.6, x = lx + Math.cos(ang) * W2 * 0.5 * rr, y = pool + Math.sin(ang) * H2 * 0.5 * rr, col = cols[i % 4], s = (5 + q() * 9) * k; const g = ctx.createRadialGradient(x, y, 0, x, y, s); g.addColorStop(0, rgba(col[0], col[1], col[2], 0.5 * a)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0)); ctx.fillStyle = g; ctx.fillRect(x - s, y - s, 2 * s, 2 * s); }
+  ctx.restore();
+}
+
+module.exports = { lampGlow, cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
