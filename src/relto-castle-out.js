@@ -265,8 +265,8 @@ function isletTower(ctx, c, night, big) {
  * ni d'herbe, de la maçonnerie suspendue. Sous chaque pièce, un cul-de-lampe de pierre en pointe (il remplace la roche). Cinq pièces :
  * une haute tour en encorbellement, un bastion à deux tourelles, une échauguette, un pan de mur ajouré, une petite tour.
  */
-function castleIslet(ctx, c, night, i) {
-  const kind = i % 5;
+function castleIslet(ctx, c, night, i, low = false) {
+  const kind = low ? 1 : i % 5; /* low : derrière le calendrier ou l'horloge D'ni, un bastion bas, sans tours, pour qu'ils se détachent sur le ciel */
   // le cul-de-lampe : un cône renversé d'assises qui se resserrent, des bagues moulurées, une pointe
   const cw = kind === 1 ? 24 : kind === 3 ? 22 : 15, tip = kind === 1 ? 40 : 32;
   { const g = ctx.createLinearGradient(-cw, 0, cw, 0); g.addColorStop(0, c(STONE)); g.addColorStop(0.6, c(STONE_D)); g.addColorStop(1, c(STONE_DD)); ctx.fillStyle = g; }
@@ -282,7 +282,7 @@ function castleIslet(ctx, c, night, i) {
     ctx.fillStyle = c("#a29dab"); ctx.fillRect(-9, -24, 18, 1.6); ctx.fillStyle = rgba(0, 0, 0, 0.35); for (let x = -8; x < 8; x += 3) ctx.fillRect(x, -27, 1, 3); // un balcon
   } else if (kind === 1) { // un bastion à deux tourelles
     body(0, 34, -14); crenel(0, 34, -14); ctx.fillStyle = rgba(0, 0, 0, 0.3); for (let x = -15; x < 16; x += 6) ctx.fillRect(x, -18, 3, 3.5); // les créneaux
-    for (const x of [-14, 14]) { body(x, 10, -28); roof(x, 10, -29, 17); lancet(ctx, x, -17, 2.4, 6, winColor(night, 0.9)); }
+    if (!low) for (const x of [-14, 14]) { body(x, 10, -28); roof(x, 10, -29, 17); lancet(ctx, x, -17, 2.4, 6, winColor(night, 0.9)); }
     lancet(ctx, 0, -4, 5, 8, winColor(night, 0.8)); ctx.strokeStyle = c("#b8b3c0"); ctx.lineWidth = 0.6; ctx.strokeRect(-3, -12, 6, 8);
   } else if (kind === 2) { // une échauguette, sur une console
     body(0, 10, -22); roof(0, 10, -23, 16); lancet(ctx, 0, -10, 2.4, 6, winColor(night, 1));
@@ -302,6 +302,16 @@ function corbel(ctx, c, x, y, w, tip) {
   for (const v of [0.18, 0.4, 0.64]) { const ww = w * (1 - v * 0.95), yy = y + tip * v; ctx.fillStyle = c("#a29dab"); ctx.fillRect(x - ww, yy, ww * 2, 1.4); ctx.fillStyle = rgba(0, 0, 0, 0.28); ctx.fillRect(x - ww, yy + 1.4, ww * 2, 1); }
   ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(x, y + tip + 1.5, 1.4, 0, 6.283); ctx.fill();
   ctx.fillStyle = c("#a29dab"); ctx.beginPath(); ctx.ellipse(x, y, w + 1, 4, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = rgba(0, 0, 0, 0.25); ctx.lineWidth = 0.6; for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(x + k * w * 0.35, y - 3.4); ctx.lineTo(x + k * w * 0.4, y + 3.4); ctx.stroke(); } // le dallage
+}
+
+/** La stèle du calendrier, sous le Château : granit sombre en arc brisé, filet d'or ; le nombre D'ni s'y lit en or (dessiné ensuite par l'appelant). */
+function calendarStele(ctx, c, x, y, night) {
+  if (night > 0.2) { const g = ctx.createRadialGradient(x, y - 40, 1, x, y - 40, 22); g.addColorStop(0, rgba(232, 190, 96, 0.22 * night)); g.addColorStop(1, rgba(232, 190, 96, 0)); ctx.fillStyle = g; ctx.fillRect(x - 24, y - 64, 48, 48); }
+  { const g = ctx.createLinearGradient(x - 9, 0, x + 9, 0); g.addColorStop(0, c("#5e5966")); g.addColorStop(0.55, c("#46424f")); g.addColorStop(1, c("#2c2934")); ctx.fillStyle = g; }
+  stelePath(ctx, x, y, 9, 62); ctx.fill();
+  ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.8; stelePath(ctx, x, y - 3, 6.5, 54); ctx.stroke();
+  ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.moveTo(x, y - 70); ctx.lineTo(x + 2, y - 63); ctx.lineTo(x - 2, y - 63); ctx.closePath(); ctx.fill(); // le fleuron
+  ctx.fillStyle = c("#7a7683"); ctx.fillRect(x - 11, y - 3, 22, 3); // le socle
 }
 
 /** Une stèle en arc brisé (menhir ou pilier de liaison sous le Château) : chemin seul, pied à y, de demi-largeur w, de hauteur h. */
@@ -324,4 +334,4 @@ function globalCastle(ctx, c, sky, cx, y) {
   ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(cx + 3, y - 56); ctx.lineTo(cx + 3, y - 60); ctx.stroke();
 }
 
-module.exports = { redNight, bloodMoon, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };
+module.exports = { calendarStele, redNight, bloodMoon, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };

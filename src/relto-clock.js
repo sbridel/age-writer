@@ -13,6 +13,7 @@ const DC = require("./dniclock");
 const { makeT } = require("./i18n");
 const VR = require("./relto-glass");
 const CS = require("./relto-castle");
+const CO = require("./relto-castle-out");
 
 const W = 640, H = 360;
 const C = { x: 262, y: 146 }; // le centre de la sphère
@@ -67,36 +68,51 @@ function ring(r, ctx, ring, [r0, r1], c, glow, seed) {
 function backdrop(r, ctx, sc, sky, t, c) {
   r.drawSky(ctx, sky, t, null);
   const fogC = r.cloudColor(sky), q = rng(((sc.seed || 0) ^ 0xc10c) >>> 0);
-  for (const [x, top, w] of [[70, 196, 40], [520, 214, 34], [604, 186, 46], [400, 238, 22]]) {
+  const castle = !!(r.castleOn && r.castleOn());
+  if (castle) for (const [x, top, w] of [[70, 196, 22], [520, 214, 18], [604, 186, 26], [400, 238, 12]]) { // le Château : au loin, des tours et leurs poivrières, en silhouette
+    ctx.globalAlpha = 0.55; ctx.fillStyle = c("#3e3a48"); ctx.fillRect(x - w / 2, top + w, w, 300 - top - w); ctx.beginPath(); ctx.moveTo(x - w / 2 - 2, top + w); ctx.lineTo(x, top - w * 0.6); ctx.lineTo(x + w / 2 + 2, top + w); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = CO.winColor(sky.night || 0, 0.6); ctx.fillRect(x - 1, top + w + 12, 2, 4); ctx.globalAlpha = 1;
+  }
+  else for (const [x, top, w] of [[70, 196, 40], [520, 214, 34], [604, 186, 46], [400, 238, 22]]) {
     ctx.fillStyle = c("#4d463c"); ctx.globalAlpha = 0.55; ctx.beginPath(); ctx.moveTo(x - w / 2, 300); ctx.lineTo(x - w * 0.3, top + 8); ctx.lineTo(x, top); ctx.lineTo(x + w * 0.3, top + 6); ctx.lineTo(x + w / 2, 300); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
   }
   if (sc.additions.some((a) => a.type === "calendar")) { // la pierre-calendrier, loin à droite, son jour gravé : juste, puisque l'horloge est là
     const x = 470, y = 246, d = DC.reltoDate(sc, nowOf(r));
     ctx.save(); ctx.globalAlpha = 0.7;
+    if (castle) { ctx.translate(x, y); ctx.scale(0.68, 0.68); ctx.translate(-x, -y); CO.corbel(ctx, c, x, y, 20, 30); CO.calendarStele(ctx, c, x, y, sky.night || 0); if (r.dni) { const s = 9, w = r.dni.widthOf(d.yahr, s); r.dni.drawNumber(ctx, d.yahr, x - w / 2, y - 43, s, "rgba(236,196,104,0.95)"); } ctx.restore(); } else { // le Château : la stèle de granit et son nombre d'or
     ctx.fillStyle = c("#5a5148"); ctx.beginPath(); ctx.moveTo(x - 16, y); ctx.lineTo(x + 16, y); ctx.lineTo(x + 5, y + 16); ctx.lineTo(x - 7, y + 13); ctx.closePath(); ctx.fill();
     ctx.fillStyle = c("#7d7468"); ctx.beginPath(); ctx.moveTo(x - 5, y); ctx.lineTo(x - 3, y - 40); ctx.lineTo(x + 2, y - 43); ctx.lineTo(x + 5, y); ctx.closePath(); ctx.fill();
     if (r.dni) { const s = 6.5, w = r.dni.widthOf(d.yahr, s); r.dni.drawNumber(ctx, d.yahr, x - w / 2, y - 30, s, `rgba(255,226,150,${(0.45 + 0.4 * (sky.night || 0)).toFixed(2)})`); }
-    ctx.restore();
+    ctx.restore(); }
     r.hot.push({ x: x - 16, y: y - 44, w: 32, h: 60, tip: tOf(r)("clock.pinnacle", { name: d.name, yahr: d.yahr }) });
   }
   // la mer de brume
   const g = ctx.createLinearGradient(0, 220, 0, H); g.addColorStop(0, rgba(0, 0, 0, 0)); g.addColorStop(0.4, fogC); g.addColorStop(1, fogC);
   ctx.save(); ctx.globalAlpha = 0.75; ctx.fillStyle = g; ctx.fillRect(0, 220, W, H - 220);
+  if (sky.red) ctx.globalAlpha = 0.75 * (1 - 0.7 * sky.red); /* la nuit rouge : les nuées blanches s'effacent dans la brume cramoisie */
   for (let i = 0; i < 14; i++) { const s = 60 + q() * 100, x = ((q() * (W + 240) + t * 4 * (0.6 + q())) % (W + 240)) - 120, y = 250 + q() * 80; ctx.drawImage(r.sprite, x - s, y - s * 0.3, s * 2, s * 0.6); }
   ctx.restore();
 }
 
 /** Le pilier : un îlot de roche moussue, le fût, le socle qui porte la lecture, le chapiteau et la fourche de laiton. */
 function pillar(r, ctx, c) {
-  const x = C.x;
+  const x = C.x, castleP = !!(r.castleOn && r.castleOn());
+  if (castleP) { // le Château : une terrasse dallée sur un cul-de-lampe, sa corniche moulurée ; le fût et le socle en pierre du château
+    const g = ctx.createLinearGradient(x - 120, 0, x + 120, 0); g.addColorStop(0, c("#8a8591")); g.addColorStop(0.6, c("#5e5966")); g.addColorStop(1, c("#3a3742")); ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(x - 122, 331); ctx.lineTo(x + 122, 331); ctx.quadraticCurveTo(x + 90, 352, x + 40, 366); ctx.lineTo(x - 40, 366); ctx.quadraticCurveTo(x - 90, 352, x - 122, 331); ctx.closePath(); ctx.fill();
+    for (const [yy, ww] of [[340, 104], [352, 72]]) { ctx.fillStyle = c("#a29dab"); ctx.fillRect(x - ww, yy, ww * 2, 1.6); ctx.fillStyle = rgba(0, 0, 0, 0.28); ctx.fillRect(x - ww, yy + 1.6, ww * 2, 1.2); }
+    ctx.fillStyle = c("#9a95a3"); ctx.beginPath(); ctx.ellipse(x, 330, 122, 9, 0, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = rgba(0, 0, 0, 0.22); ctx.lineWidth = 0.8; for (let k = -5; k <= 5; k++) { ctx.beginPath(); ctx.moveTo(x + k * 22, 321.5); ctx.lineTo(x + k * 25, 338.5); ctx.stroke(); } ctx.beginPath(); ctx.ellipse(x, 330, 70, 5, 0, 0, 6.283); ctx.stroke(); // le dallage
+  } else {
   ctx.fillStyle = c("#4a433a"); ctx.beginPath(); ctx.moveTo(x - 120, 330); ctx.lineTo(x + 120, 330); ctx.lineTo(x + 70, 362); ctx.lineTo(x - 80, 362); ctx.closePath(); ctx.fill();
   ctx.fillStyle = c("#5f7a42"); ctx.beginPath(); ctx.ellipse(x, 330, 120, 9, 0, 0, 6.283); ctx.fill();
-  const sg = ctx.createLinearGradient(x - 30, 0, x + 30, 0); sg.addColorStop(0, c("#958c7e")); sg.addColorStop(0.6, c("#756d61")); sg.addColorStop(1, c("#4f4a42"));
+  }
+  const sg = ctx.createLinearGradient(x - 30, 0, x + 30, 0); sg.addColorStop(0, c(castleP ? "#9a95a3" : "#958c7e")); sg.addColorStop(0.6, c(castleP ? "#6e6876" : "#756d61")); sg.addColorStop(1, c(castleP ? "#4a4552" : "#4f4a42"));
   ctx.fillStyle = sg; ctx.fillRect(x - 24, 270, 48, 62); // le fût
   ctx.fillRect(PLINTH.x, PLINTH.y, PLINTH.w, PLINTH.h); // le socle
   ctx.fillStyle = rgba(0, 0, 0, 0.18); ctx.fillRect(PLINTH.x + PLINTH.w - 22, PLINTH.y, 22, PLINTH.h); ctx.fillRect(x + 10, 324, 16, 8);
   ctx.strokeStyle = rgba(30, 24, 18, 0.45); ctx.lineWidth = 1; ctx.strokeRect(PLINTH.x + 5, PLINTH.y + 5, PLINTH.w - 10, PLINTH.h - 10);
-  ctx.fillStyle = c("#8d8578"); ctx.fillRect(x - 32, 264, 64, 8); // le chapiteau
+  ctx.fillStyle = c(castleP ? "#a29dab" : "#8d8578"); ctx.fillRect(x - 32, 264, 64, 8); // le chapiteau
   // la fourche de laiton qui tient le méridien (sous la Verrière : des bras en coup de fouet, des rinceaux aux coins du socle)
   const glass = !!(r.glassOn && r.glassOn()), castle = !!(r.castleOn && r.castleOn()); // le Château : une fourche de fer en volutes, des lys d'or aux coins du socle
   ctx.strokeStyle = c(castle ? CS.IRON : "#9a7838"); ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x, 265); ctx.lineTo(x, C.y + MERID - 2); ctx.stroke();
@@ -114,7 +130,8 @@ function pillar(r, ctx, c) {
     ctx.strokeStyle = c(VR.COPPER); ctx.lineWidth = 1.2; ctx.strokeRect(PLINTH.x + 2.5, PLINTH.y + 2.5, PLINTH.w - 5, PLINTH.h - 5); // un filet de cuivre autour du socle
     VR.cornerVines(ctx, c, PLINTH.x + 2, PLINTH.y + 2, PLINTH.w - 4, PLINTH.h - 4); // des rinceaux aux coins, loin de la lecture gravée
   }
-  // mousse au pied
+  // mousse au pied (pas sur la terrasse du Château)
+  if (castleP) return;
   const q = rng(0x3055); ctx.fillStyle = c("#6f8f4a"); for (let i = 0; i < 18; i++) { const px = x - 28 + q() * 56; ctx.beginPath(); ctx.ellipse(px, 330 - q() * 3, 3 + q() * 4, 1.6, 0, 0, 6.283); ctx.fill(); }
 }
 

@@ -23,8 +23,9 @@ function drawCalendar(r, ctx, sc, sky, t) {
   r.drawSky(ctx, sky, t, null);
   const hz = ctx.createLinearGradient(0, 200, 0, H); hz.addColorStop(0, rgba(0, 0, 0, 0)); hz.addColorStop(1, c("#2a2a30")); ctx.fillStyle = hz; ctx.fillRect(0, 200, W, H - 200);
   // le socle de pierre et la mousse
-  ctx.fillStyle = c("#5a5148"); ctx.fillRect(X0 - 22, BASE, X1 - X0 + 44, 16); ctx.fillStyle = c("#6a6056"); ctx.fillRect(X0 - 22, BASE, X1 - X0 + 44, 3);
-  ctx.fillStyle = c("#6f8f4a"); for (let i = 0; i < 22; i++) { ctx.beginPath(); ctx.ellipse(X0 - 18 + q() * (X1 - X0 + 36), BASE + 1 - q() * 2, 3 + q() * 4, 1.6, 0, 0, 6.283); ctx.fill(); }
+  ctx.fillStyle = c(castle ? "#5e5966" : "#5a5148"); ctx.fillRect(X0 - 22, BASE, X1 - X0 + 44, 16); ctx.fillStyle = c(castle ? "#9a95a3" : "#6a6056"); ctx.fillRect(X0 - 22, BASE, X1 - X0 + 44, 3);
+  if (castle) { ctx.fillStyle = rgba(0, 0, 0, 0.25); for (let x = X0 - 22 + 30; x < X1 + 22; x += 30) ctx.fillRect(x, BASE + 3, 1, 13); } // le Château : un socle de pierre appareillée, sans mousse
+  else { ctx.fillStyle = c("#6f8f4a"); for (let i = 0; i < 22; i++) { ctx.beginPath(); ctx.ellipse(X0 - 18 + q() * (X1 - X0 + 36), BASE + 1 - q() * 2, 3 + q() * 4, 1.6, 0, 0, 6.283); ctx.fill(); } }
   // le fût
   const ogive = (xa, xb, top, base) => { const m = (xa + xb) / 2, k = (xb - xa) * 0.5; ctx.beginPath(); ctx.moveTo(xa, base); ctx.lineTo(xa, top + k); ctx.quadraticCurveTo(xa, top + k * 0.25, m, top); ctx.quadraticCurveTo(xb, top + k * 0.25, xb, top + k); ctx.lineTo(xb, base); ctx.closePath(); };
   if (castle) {

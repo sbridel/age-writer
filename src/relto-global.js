@@ -76,10 +76,10 @@ function castleIsland(r, ctx, sc, sky, t, has, cx, y) {
 }
 
 /** Un îlot : socle de roche, calotte verte, un arbre. */
-function islet(ctx, x, y, s, sky, i, t) {
+function islet(ctx, x, y, s, sky, i, t, low = false) {
   const a = k(sky), c = (h) => mix("#05060c", h, a), by = y + Math.sin(t * 0.4 + i * 1.7) * 2;
   ctx.save(); ctx.translate(x, by); ctx.scale(s, s);
-  if (castleNow) { require("./relto-castle-out").castleIslet(ctx, c, sky.night || 0, i); ctx.restore(); return; } // le Château : un morceau du château, suspendu
+  if (castleNow) { require("./relto-castle-out").castleIslet(ctx, c, sky.night || 0, i, low); ctx.restore(); return; } // le Château : un morceau du château, suspendu
   ctx.fillStyle = c("#5a5148"); ctx.beginPath(); ctx.moveTo(-26, 0); ctx.lineTo(26, 0); ctx.lineTo(10, 26); ctx.lineTo(0, 38); ctx.lineTo(-12, 22); ctx.closePath(); ctx.fill();
   ctx.fillStyle = c("#6f8a4a"); ctx.beginPath(); ctx.ellipse(0, 0, 26, 5, 0, 0, 6.283); ctx.fill();
   ctx.fillStyle = c(i % 2 ? "#c4552a" : "#2a4a30"); ctx.beginPath(); if (i % 2) ctx.arc(2, -12, 9, 0, 6.283); else { ctx.moveTo(-6, -2); ctx.lineTo(0, -26); ctx.lineTo(6, -2); ctx.closePath(); } ctx.fill();
@@ -110,12 +110,13 @@ function drawGlobal(r, ctx, sc, sky, t, has) {
   fog(r, ctx, sky, t, 200, 270, 0.55, 5, 0xf06);
   // îlots des pages, pont, pinacle du calendrier
   const isl = has("islets"), cal = has("calendar"), spots = [[470, 246, 0.95], [150, 252, 0.8], [118, 280, 0.6], [548, 282, 0.65], [250, 274, 0.55]], n = isl ? Math.min(spots.length, Math.round(2 + isl.density * 3)) : 0;
-  for (let i = 0; i < n; i++) { islet(ctx, spots[i][0], spots[i][1], spots[i][2], sky, i, t); r.hot.push({ x: spots[i][0] - 26 * spots[i][2], y: spots[i][1] - 28 * spots[i][2], w: 52 * spots[i][2], h: 62 * spots[i][2], tip: `Islet ${i + 1}` }); }
+  for (let i = 0; i < n; i++) { islet(ctx, spots[i][0], spots[i][1], spots[i][2], sky, i, t, (i === 3 && !!cal) || ((i === 1 || i === 2) && !!has("dniclock"))); r.hot.push({ x: spots[i][0] - 26 * spots[i][2], y: spots[i][1] - 28 * spots[i][2], w: 52 * spots[i][2], h: 62 * spots[i][2], tip: `Islet ${i + 1}` }); }
   if (cal) {
     const x = 575, y = 246, d = DC.reltoDate(r.scene);
+    if (castleNow) { const CO = require("./relto-castle-out"), c = (h) => mix("#05060c", h, k(sky)); CO.corbel(ctx, c, x, y, 20, 32); CO.calendarStele(ctx, c, x, y, sky.night || 0); SC.pillarNumber(ctx, r, d.yahr, x, d.yahr >= 25 ? y - 53 : y - 43, 8, `rgba(236,196,104,${clamp(0.8 + 0.2 * sky.night).toFixed(2)})`); } else { // le Château : le cul-de-lampe, la stèle de granit, le nombre en or
     islet(ctx, x, y, 0.9, sky, 0, t);
     ctx.fillStyle = mix("#05060c", "#7d7468", k(sky)); ctx.beginPath(); ctx.moveTo(x - 6, y); ctx.lineTo(x - 3, y - 54); ctx.lineTo(x + 3, y - 58); ctx.lineTo(x + 6, y); ctx.closePath(); ctx.fill();
-    const glow = 0.5 + 0.4 * sky.night; SC.pillarNumber(ctx, r, d.yahr, x - 0.5, d.yahr >= 25 ? y - 50 : y - 42, 8, `rgba(255,226,150,${clamp(glow).toFixed(2)})`);
+    const glow = 0.5 + 0.4 * sky.night; SC.pillarNumber(ctx, r, d.yahr, x - 0.5, d.yahr >= 25 ? y - 50 : y - 42, 8, `rgba(255,226,150,${clamp(glow).toFixed(2)})`); }
     r.hot.push({ x: x - 22, y: y - 60, w: 44, h: 96, tip: `Calendar pinnacle — ${d.name} ${d.yahr}` , go: "calendar" });
   }
   if (has("dniclock")) { // l'horloge D'ni, plus loin dans la brume, à gauche
