@@ -272,22 +272,51 @@ function drawPondRoom(r, ctx, sc, sky, t) {
   const T = r.terrain(), k = 0.6 + 0.4 * sky.ambient, c = (h) => mix("#05060c", h, k), koi = sc.additions.find((a) => a.type === "koi"), wf = sc.additions.find((a) => a.type === "waterfall");
   const S = 5.5, K = r.lay.koi, fx = K.x0 + 26, fy = GY + 9.5, ox = 320, oy = 215, yg = oy + (GY - fy) * S, y0 = oy + (GY + 2 - fy) * S, y1 = oy + (GY + 17 - fy) * S, xr = ox + (K.x1 - fx) * S;
   outdoorBackdrop(r, ctx, sky, t, yg);
+  // le Château : la roche devient maçonnerie (la face de l'île, le mont devenu mur du donjon), la source sort d'une gargouille, le trop-plein d'une goulotte
+  const castle = !!(r.castleOn && r.castleOn()), CO = castle ? require("./relto-castle-out") : null, cs = castle ? ((L) => (h) => c(L(h)))(CO.litStone(sky)) : c, night = clamp(sky.night || 0);
+  const exFall = xr - 7 * S;
+  if (castle) { // la face de l'île sous le bassin : un appareil de pierre, un bandeau sous le gazon, une rangée d'arcs aveugles qui évite le bassin et la chute
+    const g = ctx.createLinearGradient(0, yg, 0, H); g.addColorStop(0, cs("#7a7584")); g.addColorStop(1, cs("#46414f")); ctx.fillStyle = g; ctx.fillRect(0, yg - 6, W, H - yg + 6);
+    ctx.fillStyle = rgba(0, 0, 0, 0.2); for (let y = y0 + 16, row = 0; y < H; y += 18, row++) { ctx.fillRect(0, y, W, 1.2); for (let x = (row % 2) * 26; x < W; x += 52) ctx.fillRect(x, y, 1.2, 18); }
+    ctx.fillStyle = rgba(255, 245, 235, 0.04); { const q = rng(0x5ea7); for (let i = 0; i < 30; i++) ctx.fillRect(q() * W, y0 + 16 + q() * (H - y0), 24 + q() * 20, 16); }
+    for (let x = 36; x < W; x += 74) { if (Math.abs(x - exFall) < 56) continue; /* pas d'arc derrière la chute */
+      const top = Math.max(y1 + 22, y0 + 40), bot = H + 4;
+      ctx.fillStyle = rgba(10, 8, 14, 0.5); ctx.beginPath(); ctx.moveTo(x - 22, bot); ctx.lineTo(x - 22, top + 18); ctx.quadraticCurveTo(x - 22, top + 2, x, top - 4); ctx.quadraticCurveTo(x + 22, top + 2, x + 22, top + 18); ctx.lineTo(x + 22, bot); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = cs("#9a95a3"); ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = cs("#a29dab"); ctx.fillRect(x - 5, top - 8, 10, 8); }
+  } else {
   // roche : face de l'île sous le bassin, strates
   const g = ctx.createLinearGradient(0, yg, 0, H); g.addColorStop(0, c(T.rock2)); g.addColorStop(1, c(T.rock)); ctx.fillStyle = g; ctx.fillRect(0, yg - 6, W, H - yg + 6);
   const q = rng(0x5ea7); ctx.strokeStyle = rgba(0, 0, 0, 0.25); ctx.lineWidth = 1.2;
   for (let i = 0; i < 9; i++) { const y = y1 + 10 + i * 14 + q() * 6, x = q() * 500; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 60 + q() * 90, y + 3); ctx.lineTo(x + 150 + q() * 80, y - 2); ctx.stroke(); }
+  }
   ctx.fillStyle = c(r.groundTop()); ctx.fillRect(0, yg - 12, W, y0 - yg + 12);
   ctx.fillStyle = rgba(0, 0, 0, 0.18); ctx.fillRect(0, y0 - 4, W, 4);
+  if (castle) { ctx.fillStyle = cs("#a29dab"); ctx.fillRect(0, y0, W, 3.5); ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(0, y0 + 3.5, W, 2); } /* le bandeau mouluré, sous le gazon */
   // le mont (falaise à gauche) : le ruisseau naît d'une encoche dans la roche, longe la paroi, coule sur le sol jusqu'au bassin et s'y jette
   if (wf) {
     const ED = [[-10, 282], [40, 264], [90, 238], [150, 218], [yg - 8, 202]], edge = (y) => { for (let i = 1; i < ED.length; i++) if (y <= ED[i][0]) { const [ya, xa] = ED[i - 1], [yb, xb] = ED[i]; return xa + ((xb - xa) * (y - ya)) / (yb - ya); } return ED[ED.length - 1][1]; };
-    ctx.fillStyle = c(T.rock2); ctx.beginPath(); ctx.moveTo(-10, -10); for (const [y, x] of ED) ctx.lineTo(x, y); ctx.lineTo(-10, yg - 8); ctx.closePath(); ctx.fill();
+    const cliff = () => { ctx.beginPath(); ctx.moveTo(-10, -10); for (const [y, x] of ED) ctx.lineTo(x, y); ctx.lineTo(-10, yg - 8); ctx.closePath(); };
+    if (castle) { // le mont devenu mur du donjon : un appareil de pierre, des chaînes d'angle le long du bord, une lancette
+      { const g2 = ctx.createLinearGradient(0, 0, 280, 0); g2.addColorStop(0, cs("#5e5866")); g2.addColorStop(1, cs("#3e3946")); ctx.fillStyle = g2; } cliff(); ctx.fill();
+      ctx.save(); cliff(); ctx.clip(); ctx.fillStyle = rgba(0, 0, 0, 0.22); for (let y = -4, row = 0; y < yg; y += 16, row++) { ctx.fillRect(-10, y, 300, 1.1); for (let x = -10 + (row % 2) * 22; x < 300; x += 44) ctx.fillRect(x, y, 1.1, 16); }
+      ctx.restore();
+      for (let y = -4, row = 0; y < yg - 8; y += 16, row++) { const x = edge(y + 8), w = row % 2 ? 14 : 24; ctx.fillStyle = cs("#8a8494"); ctx.beginPath(); ctx.moveTo(x - w, y + 0.6); ctx.lineTo(edge(y) , y + 0.6); ctx.lineTo(edge(y + 15.4), y + 15.4); ctx.lineTo(x - w, y + 15.4); ctx.closePath(); ctx.fill(); ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x - w, y + 15.4, edge(y + 15.4) - (x - w), 0.8); } /* les chaînes d'angle */
+      CO.lancet(ctx, 92, 150, 14, 42, CO.winColor(night, 1)); ctx.strokeStyle = cs("#a29dab"); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(83, 150); ctx.lineTo(83, 122); ctx.quadraticCurveTo(83, 108, 92, 104); ctx.quadraticCurveTo(101, 108, 101, 122); ctx.lineTo(101, 150); ctx.stroke(); ctx.fillStyle = cs("#a29dab"); ctx.fillRect(80, 150, 24, 3); /* une lancette, son larmier, son appui */
+    } else {
+    ctx.fillStyle = c(T.rock2); cliff(); ctx.fill();
+    }
     ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.beginPath(); ctx.moveTo(282, -10); for (const [y, x] of ED) ctx.lineTo(x, y); ctx.lineTo(160, yg - 8); ctx.lineTo(190, 150); ctx.lineTo(214, 90); ctx.lineTo(238, 40); ctx.lineTo(250, -10); ctx.closePath(); ctx.fill();
-    const q2 = rng(0x4c1); ctx.strokeStyle = rgba(0, 0, 0, 0.25); ctx.lineWidth = 1.2; for (let i = 0; i < 7; i++) { const y = 20 + i * 24 + q2() * 8, x = q2() * 120; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 70 + q2() * 60, y + 4); ctx.stroke(); }
+    if (!castle) { const q2 = rng(0x4c1); ctx.strokeStyle = rgba(0, 0, 0, 0.25); ctx.lineWidth = 1.2; for (let i = 0; i < 7; i++) { const y = 20 + i * 24 + q2() * 8, x = q2() * 120; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 70 + q2() * 60, y + 4); ctx.stroke(); } }
     const y0s = 34, ex = ox + (K.x0 + 16 - fx) * S, N = 30, pts = [];
     for (let i = 0; i <= N; i++) { const p = i / N, y = y0s + (yg - 8 - y0s) * p; pts.push([edge(y) - 7 - 3 * p + Math.sin(p * 9 + t * 0.5) * 0.9, y, 9 + 9 * p]); }
     ctx.fillStyle = "rgba(205,232,250,0.92)"; ctx.beginPath(); pts.forEach(([x, y, w], i) => (i ? ctx.lineTo(x - w / 2, y) : ctx.moveTo(x - w / 2, y))); for (let i = N; i >= 0; i--) ctx.lineTo(pts[i][0] + pts[i][2] / 2, pts[i][1]); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = c("#2a2622"); ctx.beginPath(); ctx.ellipse(pts[0][0] + 1, y0s - 1, 14, 5, -0.15, 0, 6.283); ctx.fill(); // l'encoche d'où l'eau sort
+    if (castle) { const gx = pts[0][0], gy = y0s; // la gargouille : une tête de pierre qui sort du mur, la gueule ouverte, d'où l'eau jaillit
+      ctx.fillStyle = cs("#6e6876"); ctx.beginPath(); ctx.moveTo(gx - 30, gy - 14); ctx.lineTo(gx - 6, gy - 13); ctx.lineTo(gx + 2, gy - 9); ctx.lineTo(gx + 10, gy - 6); ctx.lineTo(gx + 8, gy - 2); ctx.lineTo(gx - 2, gy - 2); ctx.lineTo(gx + 6, gy + 3); ctx.lineTo(gx + 2, gy + 6); ctx.lineTo(gx - 10, gy + 4); ctx.lineTo(gx - 30, gy + 8); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = cs("#4a4552"); ctx.beginPath(); ctx.moveTo(gx - 12, gy - 13); ctx.lineTo(gx - 8, gy - 22); ctx.lineTo(gx - 3, gy - 12); ctx.closePath(); ctx.fill(); /* l'oreille pointue */
+      ctx.fillStyle = rgba(10, 6, 10, 0.85); ctx.beginPath(); ctx.moveTo(gx - 2, gy - 2); ctx.lineTo(gx + 8, gy - 2); ctx.lineTo(gx + 5, gy + 1.5); ctx.closePath(); ctx.fill(); /* la gueule */
+      ctx.fillStyle = night > 0.3 ? rgba(255, 106, 58, 0.9) : rgba(10, 6, 10, 0.8); ctx.beginPath(); ctx.arc(gx - 4, gy - 8, 1.6, 0, 6.283); ctx.fill(); /* l'œil */
+      ctx.fillStyle = cs("#8a8494"); ctx.fillRect(gx - 34, gy - 16, 8, 26); } /* la console qui la porte */
+    else { ctx.fillStyle = c("#2a2622"); ctx.beginPath(); ctx.ellipse(pts[0][0] + 1, y0s - 1, 14, 5, -0.15, 0, 6.283); ctx.fill(); } // l'encoche d'où l'eau sort
     ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1.6;
     for (let k = 0; k < 8; k++) { const q = (t * 0.45 + k / 8) % 1, i = Math.min(N - 1, Math.floor(q * N)), [x, y, w] = pts[i], [x2, y2] = pts[i + 1]; ctx.beginPath(); ctx.moveTo(x + ((k % 3) - 1) * w * 0.25, y); ctx.lineTo(x2 + ((k % 3) - 1) * w * 0.25, y2 + 6); ctx.stroke(); }
     // au pied de la paroi : un filet d'eau sur le sol jusqu'au bord du bassin, où il se jette dans l'eau
@@ -303,6 +332,8 @@ function drawPondRoom(r, ctx, sc, sky, t) {
   if (wf) {
     const ex = xr - 7 * S, gr = ctx.createLinearGradient(0, y1, 0, H); gr.addColorStop(0, "rgba(220,240,255,0.9)"); gr.addColorStop(1, "rgba(220,240,255,0.1)"); ctx.fillStyle = gr; ctx.fillRect(ex - 22, y1 - 4, 44, H - y1 + 4);
     ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineWidth = 1.6; for (let i = 0; i < 8; i++) { const p = (t * 0.8 + i / 8) % 1, y = y1 + p * (H - y1 - 10); ctx.beginPath(); ctx.moveTo(ex - 18 + (i % 4) * 11, y); ctx.lineTo(ex - 18 + (i % 4) * 11, y + 12); ctx.stroke(); }
+    if (castle) { ctx.fillStyle = cs("#8a8494"); ctx.beginPath(); ctx.moveTo(ex - 30, y1 - 6); ctx.lineTo(ex + 30, y1 - 6); ctx.lineTo(ex + 26, y1 + 4); ctx.lineTo(ex - 26, y1 + 4); ctx.closePath(); ctx.fill(); ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(ex - 26, y1 + 4, 52, 2); /* la goulotte de pierre, d'où repart le trop-plein */
+      ctx.fillStyle = cs("#a29dab"); for (const sx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(ex + sx * 30, y1 - 6); ctx.lineTo(ex + sx * 34, y1 - 6); ctx.lineTo(ex + sx * 30, y1 + 10); ctx.lineTo(ex + sx * 27, y1 + 4); ctx.closePath(); ctx.fill(); } } /* ses deux consoles */
   }
   meadow(r, ctx, sc, sky, t, y0 - 2, 70, 0x9e1, 14);
 }

@@ -540,7 +540,10 @@ class ReltoRenderer {
     const [rx, ry] = fish(0, genomes[0], 15.5, KOI_RARE[rare]);
     if (rare !== "ghost") for (let k = 0; k < 4; k++) { const p = frac(t * 0.3 + k / 4 + r()); ctx.fillStyle = rgba(255, 245, 200, 0.7 * Math.sin(p * 3.14)); ctx.fillRect(X0 + 8 + r() * (PW - 16), Y0 + 2 + p * (PH - 4), 0.9, 0.9); }
     ctx.restore();
-    ctx.fillStyle = shade(this.castleOn() ? "#8a8591" : "#6d6a64"); for (const [sx, sw] of [[X0 - 4, 5], [X0 + PW - 1, 5]]) { ctx.beginPath(); ctx.ellipse(sx + sw / 2, GY + 1, sw / 2 + 0.5, 3.4, 0, 0, 6.283); ctx.fill(); }
+    if (this.castleOn()) { const L = CO.litStone(sky), sh = (h) => shade(L(h)); // le Château : un bassin de pierre — une margelle autour de l'eau, deux bornes taillées à ses bouts
+      ctx.fillStyle = sh("#8a8494"); ctx.fillRect(X0 - 1.2, Y0, 1.2, PH + 1.2); ctx.fillRect(X0 + PW, Y0, 1.2, PH + 1.2); ctx.fillRect(X0 - 1.2, Y0 + PH, PW + 2.4, 1.2);
+      for (const sx of [X0 - 4.2, X0 + PW + 0.4]) { ctx.fillStyle = sh("#8a8591"); ctx.fillRect(sx, GY - 2.6, 3.8, 4.6); ctx.fillStyle = sh("#a29dab"); ctx.fillRect(sx - 0.5, GY - 3.4, 4.8, 1.1); ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(sx + 2.4, GY - 2.3, 1.4, 4.3); } }
+    else { ctx.fillStyle = shade("#6d6a64"); for (const [sx, sw] of [[X0 - 4, 5], [X0 + PW - 1, 5]]) { ctx.beginPath(); ctx.ellipse(sx + sw / 2, GY + 1, sw / 2 + 0.5, 3.4, 0, 0, 6.283); ctx.fill(); } }
     ctx.strokeStyle = rgba(230, 245, 255, 0.25); ctx.lineWidth = 0.7; const rp = frac(t * 0.25); ctx.beginPath(); ctx.ellipse(X0 + PW * 0.5, GY + 0.8, 6 + rp * 14, 0.9 + rp * 1.2, 0, 0, 6.283); ctx.stroke();
     this.hot.push({ x: X0 - 3, y: GY - 2, w: PW + 6, h: PH + 5, tip: `Koi pond — a rare ${KOI_RARE[rare].label} koi swims here` });
     const nm = String(a.name || "").trim() || KOI_RARE[rare].title;
