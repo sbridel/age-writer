@@ -20,7 +20,7 @@ function drawCabin(r, ctx, sc, sky, t) {
   const lit = r.scene.additions.find((a) => a.type === "chimney"), d = lit ? clamp(lit.density == null ? 0.7 : lit.density, 0.2, 1) : 0.18, fl = flicker(t);
   const glass = !!(r.glassOn && r.glassOn()); // la Verrière : le même mobilier, un autre habit (src/relto-glass.js)
   const castle = !!(r.castleOn && r.castleOn()); // le Château : pierre, noyer, fer et or (src/relto-castle.js)
-  if (castle) { CASTLE.cabinWalls(r, ctx, c, sky, t, FLOOR); CASTLE.cabinFloor(ctx, c, FLOOR); } else if (glass) { GLASS.cabinWalls(r, ctx, c, sky, t, FLOOR); GLASS.cabinFloor(ctx, c, FLOOR, amb); } else {
+  if (castle) { CASTLE.cabinWalls(r, ctx, c, sky, t, FLOOR); CASTLE.cabinFloor(ctx, c, FLOOR, 360, 640, true, amb); } else if (glass) { GLASS.cabinWalls(r, ctx, c, sky, t, FLOOR); GLASS.cabinFloor(ctx, c, FLOOR, amb); } else {
   // murs en planches
   const q = rng(0xcab1);
   ctx.fillStyle = c("#5a4330"); ctx.fillRect(0, 0, W, FLOOR);

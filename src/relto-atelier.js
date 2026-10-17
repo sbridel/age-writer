@@ -88,7 +88,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   const amb = 0.5 + 0.5 * sky.ambient, c = (h) => mix("#05060c", h, amb), TRr = TR(r), q = rng(0xa7e1);
   const lit = sc.additions.find((a) => a.type === "chimney"), d = lit ? clamp(lit.density == null ? 0.7 : lit.density, 0.2, 1) : 0.45, fl = flick(t);
   // murs, boiseries
-  if (castle) { CS.atelierWalls(ctx, c, FLOOR, FLOOR - 70); CS.cabinFloor(ctx, c, FLOOR, H, W, false); } else {
+  if (castle) { CS.atelierWalls(ctx, c, FLOOR, FLOOR - 70); CS.cabinFloor(ctx, c, FLOOR, H, W, false, amb); } else {
   ctx.fillStyle = c("#4d3a2b"); ctx.fillRect(0, 0, W, FLOOR);
   for (let x = 0; x < W; x += 32) { ctx.fillStyle = rgba(q() < 0.5 ? 255 : 0, 215, 165, 0.035 + q() * 0.04); ctx.fillRect(x, 0, 32, FLOOR); ctx.fillStyle = rgba(0, 0, 0, 0.28); ctx.fillRect(x, 0, 1.4, FLOOR); }
   ctx.fillStyle = c("#33251a"); ctx.fillRect(0, FLOOR - 70, W, 5); // lambris

@@ -33,7 +33,7 @@ function drawBackroom(r, ctx, sc, sky, t) {
   }
   if (castle) { ctx.fillStyle = c(CS.WALNUT_LO); ctx.fillRect(0, 0, W, 16); ctx.fillStyle = c(CS.GOLD); ctx.fillRect(0, 15, W, 0.9); }
   // sol et tapis
-  if (castle) { CS.cabinFloor(ctx, c, FLOOR, H, W, false); ctx.fillStyle = c("#2a1c14"); ctx.fillRect(0, FLOOR - 4, W, 6); CS.rug(ctx, c, 340, 316, 230, 26, CS.VELVET_LO); } else {
+  if (castle) { CS.cabinFloor(ctx, c, FLOOR, H, W, false, amb); ctx.fillStyle = c("#2a1c14"); ctx.fillRect(0, FLOOR - 4, W, 6); CS.rug(ctx, c, 340, 316, 230, 26, CS.VELVET_LO); } else {
   const fg = ctx.createLinearGradient(0, FLOOR, 0, H); fg.addColorStop(0, c("#46321f")); fg.addColorStop(1, c("#26190f")); ctx.fillStyle = fg; ctx.fillRect(0, FLOOR, W, H - FLOOR);
   ctx.strokeStyle = rgba(0, 0, 0, 0.3); ctx.lineWidth = 1; for (const y of [FLOOR + 18, FLOOR + 42, FLOOR + 74]) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
   ctx.fillStyle = c("#2a1c14"); ctx.fillRect(0, FLOOR - 4, W, 6);

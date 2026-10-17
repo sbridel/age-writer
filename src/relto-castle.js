@@ -53,17 +53,51 @@ function cabinWalls(r, ctx, c, sky, t, FLOOR) {
   wainscot(ctx, c, 0, RAIL, W, FLOOR - RAIL, 64);
 }
 
-/** Le sol : un parquet de noyer en pointe de Hongrie, en perspective ; un seuil de dalles devant la porte. */
-function cabinFloor(ctx, c, FLOOR, H = 360, W = 640, threshold = true) {
-  const g = ctx.createLinearGradient(0, FLOOR, 0, H); g.addColorStop(0, c("#4a3222")); g.addColorStop(1, c("#1f140d")); ctx.fillStyle = g; ctx.fillRect(0, FLOOR, W, H - FLOOR);
-  const rows = [FLOOR, FLOOR + 12, FLOOR + 26, FLOOR + 43, FLOOR + 64, FLOOR + 90, H];
-  ctx.strokeStyle = rgba(0, 0, 0, 0.32); ctx.lineWidth = 1;
-  for (let i = 0; i + 1 < rows.length; i++) {
-    const y0 = rows[i], y1 = rows[i + 1], hh = y1 - y0, step = hh * 1.6;
-    ctx.beginPath(); ctx.moveTo(0, y1); ctx.lineTo(W, y1); ctx.stroke();
-    for (let x = -step + ((i % 2) * step) / 2; x < W + step; x += step) { ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x + step / 2, y0); ctx.lineTo(x + step, y1); ctx.stroke(); }
+/**
+ * Le sol : un vrai parquet, en perspective (point de fuite au centre, horizon à y = 170). Deux poses : `"batons"` (bâtons rompus :
+ * des lames à 45°, joints et tons qui varient) ou `"panneaux"` (parquet à panneaux, une étoile à huit branches dans chaque carré).
+ * Dessiné une fois en pleine lumière dans une toile à part, puis posé et assombri d'un voile (c(h) est un mélange linéaire vers la nuit).
+ */
+let FLOOR_STYLE = "batons";
+function setFloorStyle(v) { FLOOR_STYLE = v === "panneaux" ? "panneaux" : "batons"; floorCache = {}; }
+let floorCache = {};
+const proj = (X, D) => [320 + (400 * X) / D, 170 + 190 / D]; // le sol vu par le Relto : X latéral, D profondeur (1 au premier plan, 2,4 au fond)
+function poly(ctx, pts) { ctx.beginPath(); pts.forEach(([X, D], i) => { const [x, y] = proj(X, D); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath(); }
+function paintParquet(ctx, style, FLOOR, H, W) {
+  const id = (h) => h, q = rng(style === "panneaux" ? 0x9a7e : 0xba70);
+  ctx.fillStyle = "#3a2619"; ctx.fillRect(0, FLOOR, W, H - FLOOR);
+  const tone = () => { const v = q(); return v < 0.33 ? "#5a3e2a" : v < 0.66 ? "#4e3424" : v < 0.9 ? "#64462e" : "#46301f"; };
+  if (style === "panneaux") {
+    const S = 0.34; // un panneau carré
+    for (let D = 0.98; D < 2.5; D += S) for (let X = -2.2; X < 2.2; X += S) {
+      const X0 = X, X1 = X + S, D0 = D, D1 = D + S, m = 0.035;
+      ctx.fillStyle = "#4a3222"; poly(ctx, [[X0, D0], [X1, D0], [X1, D1], [X0, D1]]); ctx.fill(); // le cadre
+      ctx.fillStyle = q() < 0.5 ? "#5a3e2a" : "#553a27"; poly(ctx, [[X0 + m, D0 + m], [X1 - m, D0 + m], [X1 - m, D1 - m], [X0 + m, D1 - m]]); ctx.fill(); // le fond
+      const cx = X0 + S / 2, cd = D0 + S / 2, R = S * 0.4, r = S * 0.17;
+      for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, a0 = a - Math.PI / 8, a1 = a + Math.PI / 8; ctx.fillStyle = i % 2 ? "#6e4e34" : "#3e2a1c"; poly(ctx, [[cx, cd], [cx + Math.cos(a0) * r, cd + Math.sin(a0) * r], [cx + Math.cos(a) * R, cd + Math.sin(a) * R], [cx + Math.cos(a1) * r, cd + Math.sin(a1) * r]]); ctx.fill(); }
+      ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.lineWidth = 0.8; poly(ctx, [[X0, D0], [X1, D0], [X1, D1], [X0, D1]]); ctx.stroke(); poly(ctx, [[X0 + m, D0 + m], [X1 - m, D0 + m], [X1 - m, D1 - m], [X0 + m, D1 - m]]); ctx.stroke();
+    }
+  } else {
+    const Wd = 0.045, L = 0.18, c45 = Math.SQRT1_2, toW = (p, qq) => [(p - qq) * c45, 1 + (p + qq) * c45]; // bâtons rompus : des chaînes de lames, période (Wd, Wd) ; une chaîne à la suivante : (L, −L)
+    for (let m = -22; m <= 22; m++) for (let k = -10; k <= 40; k++) {
+      const ox = k * Wd + m * L, oy = k * Wd - m * L;
+      for (const [x0, y0, w, h] of [[ox, oy, L, Wd], [ox, oy + Wd, Wd, L]]) {
+        const P = [toW(x0, y0), toW(x0 + w, y0), toW(x0 + w, y0 + h), toW(x0, y0 + h)];
+        if (P.every(([X, D]) => D < 0.95) || P.every(([X, D]) => D > 2.5) || P.every(([X, D]) => Math.abs(X) > (D * 330) / 400)) continue;
+        ctx.fillStyle = tone(); poly(ctx, P); ctx.fill();
+        ctx.strokeStyle = "rgba(20,12,6,0.55)"; ctx.lineWidth = 0.7; ctx.stroke();
+        if (q() < 0.3) { const [a1, b1] = toW(x0 + w * 0.3, y0 + h * 0.5), [a2, b2] = toW(x0 + w * 0.7, y0 + h * 0.5); const [sx1, sy1] = proj(a1, b1), [sx2, sy2] = proj(a2, b2); ctx.strokeStyle = "rgba(255,225,180,0.06)"; ctx.beginPath(); ctx.moveTo(sx1, sy1); ctx.lineTo(sx2, sy2); ctx.stroke(); } // le fil du bois
+      }
+    }
   }
-  ctx.fillStyle = rgba(255, 220, 170, 0.035); for (let i = 0; i < 6; i++) ctx.fillRect(0, rows[i] + 1, W, 1);
+  const sh = ctx.createLinearGradient(0, FLOOR, 0, H); sh.addColorStop(0, "rgba(0,0,0,0.35)"); sh.addColorStop(1, "rgba(0,0,0,0.05)"); ctx.fillStyle = sh; ctx.fillRect(0, FLOOR, W, H - FLOOR); // le fond de la pièce plus sombre
+  void id;
+}
+function cabinFloor(ctx, c, FLOOR, H = 360, W = 640, threshold = true, amb = 1) {
+  const key = FLOOR_STYLE + FLOOR;
+  if (!floorCache[key] && typeof document !== "undefined") { const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext && cv.getContext("2d"); if (g) { paintParquet(g, FLOOR_STYLE, FLOOR, H, W); floorCache[key] = cv; } }
+  if (floorCache[key]) { ctx.drawImage(floorCache[key], 0, FLOOR, W, H - FLOOR, 0, FLOOR, W, H - FLOOR); ctx.fillStyle = rgba(5, 6, 12, clamp(1 - amb)); ctx.fillRect(0, FLOOR, W, H - FLOOR); }
+  else paintParquet(ctx, FLOOR_STYLE, FLOOR, H, W);
   if (!threshold) return;
   // le seuil : des dalles de pierre devant la porte
   const sx = 0, sw = 112; const sg = ctx.createLinearGradient(0, FLOOR, 0, H); sg.addColorStop(0, c("#4a4752")); sg.addColorStop(1, c("#25232b")); ctx.fillStyle = sg;
@@ -336,4 +370,4 @@ function narrowDoor(ctx, c, x, top, w, base) {
   ctx.fillStyle = c(IRON); ctx.fillRect(x, top + 30, w - 4, 3); ctx.fillRect(x, base - 26, w - 4, 3); ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(x + w - 6, (top + base) / 2 + 6, 1.6, 0, 6.283); ctx.fill();
 }
 
-module.exports = { STONE, STONE_HI, STONE_LO, WALNUT, WALNUT_HI, WALNUT_LO, IRON, GOLD, GOLD_HI, VELVET, VELVET_LO, PURPLE, pointed, ashlar, wainscot, lys, cabinWalls, cabinFloor, rug, cabinWindowClip, cabinWindowFrame, cabinDoor, slab, mantel, andirons, shelf, table, candelabrum, sconce, moonPatch, atelierWalls, galleryBays, balustrade, spiralStair, rosette, throne, candlestand, chainLink, candleGlow, goldFrame, stoneTrap, imagerRoom, imagerBench, narrowDoor };
+module.exports = { setFloorStyle, STONE, STONE_HI, STONE_LO, WALNUT, WALNUT_HI, WALNUT_LO, IRON, GOLD, GOLD_HI, VELVET, VELVET_LO, PURPLE, pointed, ashlar, wainscot, lys, cabinWalls, cabinFloor, rug, cabinWindowClip, cabinWindowFrame, cabinDoor, slab, mantel, andirons, shelf, table, candelabrum, sconce, moonPatch, atelierWalls, galleryBays, balustrade, spiralStair, rosette, throne, candlestand, chainLink, candleGlow, goldFrame, stoneTrap, imagerRoom, imagerBench, narrowDoor };
