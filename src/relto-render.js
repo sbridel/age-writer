@@ -205,7 +205,7 @@ class ReltoRenderer {
   draw(t) {
     const ctx = this.ctx, sc = this.scene; if (!sc) return;
     if (this.opts.reducedMotion) t = 0;
-    const sky = skyAt(this.hour());
+    const sky = this.castleOn() ? CO.redNight(skyAt(this.hour())) : skyAt(this.hour()); /* le Château : la nuit est rouge */
     const has = (type) => sc.additions.find((a) => a.type === type);
     this.hot = [];
     if (this.view && this.view !== "island" && this.view !== "global" && !this.available()[this.view]) this.view = "island"; // la page de cette vue a été retirée
@@ -219,6 +219,7 @@ class ReltoRenderer {
     const mo = has("moons"); if (mo) SC.moons(ctx, sky);
     const cm = has("comet"); if (cm) SC.comet(ctx, this, cm.density, sky, t); // devant les étoiles, derrière les nuages
     this.drawClouds(ctx, 0, sky, t);
+    if (sky.red) CO.bloodFog(ctx, sky, t); // le Château : la brume basse cramoisie, sous l'île
     const bd = has("birds"); if (bd) SC.birds(ctx, bd.density, sky, t);
     const fw = has("fireworks"); if (fw) this.drawFireworks(ctx, fw.density, sky, t);
     if (sc.surrounding === "ocean") this.drawOcean(ctx, sky, t);
@@ -246,7 +247,7 @@ class ReltoRenderer {
     const bf = has("butterflies"); if (bf) SC.butterflies(ctx, bf.density, sky, t);
     const ff = has("fireflies"); if (ff) this.drawFireflies(ctx, ff.density, sky, t);
     const ln = has("lanterns"); if (ln) this.drawLanterns(ctx, ln.density, sky, t);
-    const ms = has("mist"); if (ms) this.drawMist(ctx, ms.density, sky, t);
+    const ms = has("mist"); if (ms) this.drawMist(ctx, ms.density, sky, t); else if (sky.red > 0.05) this.drawMist(ctx, 0.5 * sky.red, sky, t); // le Château : la nuit, une brume rase sur la cour
     this.drawClouds(ctx, 1, sky, t);
     this.drawClouds(ctx, 2, sky, t);
     const sn = has("snow"); if (sn) this.drawSnow(ctx, sn.density, t);
@@ -280,9 +281,10 @@ class ReltoRenderer {
       ctx.fillStyle = mix("#fff3c8", "#ffb070", sky.warm); ctx.beginPath(); ctx.arc(x, y, 11, 0, 6.283); ctx.fill();
     }
     const mp = ((h - 18 + 24) % 24) / 13;
-    if (mp >= 0 && mp <= 1) { // lune
+    if (mp >= 0 && mp <= 1 && sky.red) CO.bloodMoon(ctx, sky, t, 60 + 520 * mp, 246 - Math.sin(Math.PI * mp) * 150); // le Château : la lune rouge, pleine et grande
+    if (mp >= 0 && mp <= 1 && (sky.red || 0) < 0.3) { // lune
       const x = 60 + 520 * mp, y = 246 - Math.sin(Math.PI * mp) * 150;
-      ctx.save(); ctx.beginPath(); ctx.arc(x, y, 8, 0, 6.283); ctx.clip();
+      ctx.save(); if (sky.red) ctx.globalAlpha = 1 - sky.red / 0.3; ctx.beginPath(); ctx.arc(x, y, 8, 0, 6.283); ctx.clip();
       ctx.fillStyle = rgba(216, 223, 236, 0.35 + 0.6 * sky.night); ctx.beginPath(); ctx.arc(x, y, 8, 0, 6.283); ctx.arc(x + 4, y - 1.5, 7.4, 0, 6.283); ctx.fill("evenodd");
       ctx.restore();
     }
@@ -301,7 +303,8 @@ class ReltoRenderer {
 
   cloudColor(sky) {
     const base = mix("#2b3555", "#f4f7fb", clamp(sky.ambient * 1.1));
-    return mix(base, "#f0a070", sky.warm * 0.55);
+    const c = mix(base, "#f0a070", sky.warm * 0.55);
+    return sky.red ? mix(c, "#4e1820", sky.red * 0.8) : c; // le Château : des nuées cramoisies
   }
 
   drawClouds(ctx, L, sky, t) {
@@ -1255,7 +1258,9 @@ class ReltoRenderer {
   }
 
   drawGrade(ctx, sky) {
-    if (sky.night > 0.15) { ctx.fillStyle = rgba(12, 16, 48, sky.night * 0.18); ctx.fillRect(0, 0, W, H); }
+    const red = sky.red || 0; // le Château : la nuit vire au sang au lieu de bleuir
+    if (sky.night > 0.15) { ctx.fillStyle = rgba(12, 16, 48, sky.night * 0.18 * (1 - red)); ctx.fillRect(0, 0, W, H); }
+    if (red > 0.02) { ctx.fillStyle = rgba(80, 8, 14, 0.16 * red); ctx.fillRect(0, 0, W, H); }
     if (sky.warm > 0.3) { ctx.fillStyle = rgba(255, 140, 70, (sky.warm - 0.3) * 0.12); ctx.fillRect(0, 0, W, H); }
     const v = ctx.createRadialGradient(W / 2, H / 2, H * 0.4, W / 2, H / 2, W * 0.62);
     v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.55)"); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);

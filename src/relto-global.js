@@ -21,7 +21,7 @@ function fog(r, ctx, sky, t, y0, y1, alpha, speed, seed) {
   const c = r.cloudColor(sky), g = ctx.createLinearGradient(0, y0, 0, y1);
   g.addColorStop(0, hexa(c, 0)); g.addColorStop(0.35, hexa(c, alpha)); g.addColorStop(1, hexa(c, Math.min(1, alpha + 0.25)));
   ctx.fillStyle = g; ctx.fillRect(0, y0, W, y1 - y0);
-  const q = rng(seed); ctx.save(); ctx.globalAlpha = alpha * 0.9;
+  const q = rng(seed); ctx.save(); ctx.globalAlpha = alpha * 0.9 * (sky.red ? 1 - 0.7 * sky.red : 1); /* le Château, la nuit rouge : les nuées blanches s'effacent dans la brume cramoisie */
   for (let i = 0; i < 16; i++) { const s = 60 + q() * 90, x = ((q() * (W + 200) + t * speed * (0.6 + q() * 0.8)) % (W + 200)) - 100, y = y0 + (y1 - y0) * (0.2 + q() * 0.8); ctx.drawImage(r.sprite, x - s, y - s * 0.3, s * 2, s * 0.6); }
   ctx.restore();
 }

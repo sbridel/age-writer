@@ -54,4 +54,9 @@ for (const station of ["cry", "lens", "atmo"]) {
 { const A = make("castle", "sandbox", "island", 15, ["page_telescope"]); ok(A.lay.mount.tx != null && A.lay.mount.ty < 208 - A.lay.mount.h * 0.8, "l'observatoire est posé au sommet du donjon");
   const o = A.hot.find((h) => h.go === "telescope"); ok(A.lay.mount.x === 306 && o && Math.abs(o.x + o.w / 2 - A.lay.mount.tx) < 1, "le donjon est au milieu de l'île, et l'observatoire y est cliquable");
   const B = make("castle", "sandbox", "island", 15, ["page_koi", "page_waterfall", "page_islets", "page_calendar", "page_dni_clock", "page_dock", "page_bench", "page_pillars"]); ok(B.hot.some((h) => h.go === "calendar") && B.hot.filter((h) => h.tip === "Islet").length >= 2, "île sans montagne : le donjon est là, les cliquables aussi"); }
+// la nuit rouge : le jour reste le jour ; la nuit, le ciel est couleur de sang (sans le Château, rien ne change : golden.test.js)
+{ const CO = require("../src/relto-castle-out"), day = M.skyAt(13), night = M.skyAt(1.5), dusk = M.skyAt(19.4);
+  ok(CO.redNight(day) === day && !day.red, "le jour, le Château ne touche pas au ciel");
+  const n = CO.redNight(night); ok(n.red === 1 && n.bottom !== night.bottom && n.ambient === night.ambient, "la nuit, le ciel est rouge, et la lumière reste celle de la nuit");
+  const d = CO.redNight(dusk); ok(d.red > 0 && d.red < 1, "au crépuscule, le ciel vire au rouge peu à peu"); }
 console.log(`✓ castle.test.js (${n} contrôles)`);

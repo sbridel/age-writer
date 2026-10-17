@@ -135,6 +135,34 @@ function keep(r, ctx, M, sky, t, observatory) {
   void t;
 }
 
+/** Le Château : la nuit rouge. Le jour reste le jour ; au crépuscule le ciel vire au rouge sombre, la nuit il est couleur de sang (sky.red, de 0 à 1). */
+function redNight(sky) {
+  const k = clamp(((sky.night == null ? 0 : sky.night) - 0.2) / 0.5); if (k <= 0) return sky;
+  return Object.assign({}, sky, { top: mix(sky.top, "#14060e", k), bottom: mix(sky.bottom, "#5e1a20", k), stars: sky.stars * (1 - 0.35 * k), red: k });
+}
+
+/** La lune rouge : pleine, grande, un halo de braise, des mers sombres ; et des chauves-souris qui passent devant. */
+function bloodMoon(ctx, sky, t, x, y) {
+  const k = sky.red, R = 21;
+  const halo = ctx.createRadialGradient(x, y, R * 0.6, x, y, R * 4); halo.addColorStop(0, rgba(255, 90, 48, 0.45 * k)); halo.addColorStop(1, rgba(255, 90, 48, 0)); ctx.fillStyle = halo; ctx.fillRect(x - R * 4, y - R * 4, R * 8, R * 8);
+  ctx.save(); ctx.globalAlpha = k;
+  const g = ctx.createRadialGradient(x - R * 0.25, y - R * 0.25, R * 0.1, x, y, R); g.addColorStop(0, "#ff8a4a"); g.addColorStop(0.6, "#e03a22"); g.addColorStop(1, "#8a1a14"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, 6.283); ctx.fill();
+  ctx.fillStyle = "rgba(154,36,24,0.45)"; for (const [dx, dy, rr] of [[-0.37, -0.28, 0.14], [0.31, 0.28, 0.1], [0.47, -0.37, 0.07], [-0.19, 0.34, 0.08], [0.05, -0.05, 0.05]]) { ctx.beginPath(); ctx.arc(x + dx * R, y + dy * R, rr * R, 0, 6.283); ctx.fill(); }
+  ctx.restore();
+  if (k > 0.3) { const a = (k - 0.3) / 0.7; ctx.fillStyle = rgba(26, 8, 12, 0.9 * a); // les chauves-souris
+    for (let i = 0; i < 6; i++) { const bx = ((i * 137 + t * (7 + (i % 3) * 3)) % 700) - 30, by = 38 + i * 17 + Math.sin(t * 0.8 + i * 2) * 8, f = Math.sin(t * 10 + i * 1.7), s = 2.4 + (i % 2);
+      ctx.beginPath(); ctx.moveTo(bx - s * 1.6, by - f * s * 0.9); ctx.quadraticCurveTo(bx - s * 0.6, by - s * 0.2, bx, by + s * 0.25); ctx.quadraticCurveTo(bx + s * 0.6, by - s * 0.2, bx + s * 1.6, by - f * s * 0.9); ctx.quadraticCurveTo(bx + s * 0.7, by + s * 0.35, bx, by + s * 0.7); ctx.quadraticCurveTo(bx - s * 0.7, by + s * 0.35, bx - s * 1.6, by - f * s * 0.9); ctx.fill(); } }
+}
+
+/** La brume basse cramoisie de la nuit rouge : de grandes nappes sous l'île, qui dérivent lentement. */
+function bloodFog(ctx, sky, t) {
+  const k = sky.red;
+  for (const [x, y, rx, ry, a, sp] of [[320, 300, 330, 70, 0.5, 0.15], [320, 252, 360, 40, 0.3, -0.1], [100, 330, 180, 40, 0.3, 0.2], [560, 320, 160, 36, 0.3, -0.18]]) {
+    const xx = x + Math.sin(t * sp) * 18; ctx.save(); ctx.translate(xx, y); ctx.scale(1, ry / rx);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); g.addColorStop(0, rgba(176, 84, 96, a * 0.7 * k)); g.addColorStop(1, rgba(176, 84, 96, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, 6.283); ctx.fill(); ctx.restore();
+  }
+}
+
 /** La gargouille du pied du donjon : en (x, y), tournée vers la droite (vers le bassin). */
 function gargoyle(ctx, c, x, y) {
   ctx.fillStyle = c(STONE_D); ctx.beginPath(); ctx.moveTo(x - 6, y - 3); ctx.lineTo(x + 3, y - 4); ctx.lineTo(x + 6, y - 1); ctx.lineTo(x + 3, y + 1); ctx.lineTo(x + 5, y + 3); ctx.lineTo(x - 4, y + 3); ctx.closePath(); ctx.fill();
@@ -296,4 +324,4 @@ function globalCastle(ctx, c, sky, cx, y) {
   ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(cx + 3, y - 56); ctx.lineTo(cx + 3, y - 60); ctx.stroke();
 }
 
-module.exports = { winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };
+module.exports = { redNight, bloodMoon, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };
