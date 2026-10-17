@@ -73,9 +73,8 @@ function keep(r, ctx, M, sky, t, observatory) {
   lancets(["M216 130 v-9 q3 -5 6 0 v9 Z", "M216 176 v-9 q3 -5 6 0 v9 Z", "M224 196 v-7 q2.5 -4 5 0 v7 Z"], 0.9);
   strokeP("M219 121 v9 M216 126 h6 M219 167 v9 M216 172 h6", c("#17141a"), 0.7);
   // l'arc-boutant de gauche : un pinacle posé sur le parapet de la tour ronde, un arc plein qui vole par-dessus le pignon jusqu'au fût de la grande flèche (dessiné avant le pignon et la flèche, qui le recouvrent à ses bouts)
-  fillP("M238 97 Q 266 74 298 85 L 298 89.5 Q 266 80 238 102 Z", c("#4a4350")); strokeP("M238 97 Q 266 74 298 85", c("#7a7683"), 0.8); // un arc fin, l'extrados plus clair
-  ctx.fillStyle = grad(231, 241, FRONT); ctx.fillRect(231, 96, 10, 30); ctx.fillStyle = rgba(0, 0, 0, 0.2); for (let y = 100; y < 126; y += 4.5) ctx.fillRect(231, y, 10, 0.6); // la culée : adossée à la tour ronde, posée sur le toit du corps
-  ctx.fillStyle = c("#a29dab"); ctx.fillRect(230, 95, 12, 1.6); fillP("M230 95 L 236 78 L 242 95 Z", grad(230, 242, SL)); strokeP("M236 78 v-5", c(GOLD), 0.8); ctx.fillStyle = c("#1c1a26"); ctx.fillRect(230.6, 90, 1.2, 1); ctx.fillRect(240.2, 90, 1.2, 1); ctx.fillRect(232, 85, 1.2, 1); ctx.fillRect(238.8, 85, 1.2, 1); // son pinacle
+  fillP("M234 113 Q 264 84 298 85 L 298 89.5 Q 266 90 234 119 Z", c("#4a4350")); strokeP("M234 113 Q 264 84 298 85", c("#7a7683"), 0.8); // un arc fin, qui naît du flanc de la tour ronde sous son avant-toit et monte au fût de la grande flèche
+  ctx.fillStyle = grad(226, 236, MID); ctx.fillRect(226, 111, 10, 10); ctx.fillStyle = c("#a29dab"); ctx.fillRect(225, 111, 12, 1.4); ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(226, 120, 10, 1); // le sommier : une pierre plus claire engagée dans la tour, d'où part l'arc
   // la petite flèche, derrière le pignon (dessinée avant lui : son pied plonge derrière le rampant, elle ne flotte pas)
   ctx.fillStyle = grad(246, 253, MID); ctx.fillRect(246, 92, 7, 30); fillP("M243 92 L 249.5 66 L 256 92 Z", grad(243, 256, SL)); strokeP("M249.5 66 v-5", c(GOLD), 0.9); ctx.fillStyle = W(0.8); ctx.fillRect(248.5, 80, 2, 4);
   // le corps à pignons
