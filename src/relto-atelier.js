@@ -421,46 +421,51 @@ function coverOf(r, now = Date.now()) {
 }
 
 /**
- * Le loup blanc (le Château seulement) : assis, droit, devant le feu, tourné vers la pièce ; une vingtaine de grandes facettes en cinq
- * gris, comme une sculpture de papier : le poitrail et le museau clairs, le dos et les cuisses plus sombres ; la tête un peu plus grosse
- * que nature, c'est elle qu'on lit. Les yeux d'ambre suivent le curseur ; il respire ; au clic, il dresse les oreilles. Un vieux
- * compagnon ; on n'en dit pas plus (atelier.wolf.*).
+ * Le loup blanc (le Château seulement) : un loup d'héraldique, couché, de profil, la tête haute, dessiné à la manière d'un meuble de blason :
+ * des aplats ivoire cernés d'un trait sombre épais, la crinière en pointes déchiquetées, la queue ramenée le long du flanc, la gueule entrouverte.
+ * Le dessin est original (sans reprise d'un fichier existant). Son œil d'ambre suit le curseur ; il respire ; au clic, il dresse les oreilles.
+ * Un vieux compagnon ; on n'en dit pas plus (atelier.wolf.*).
  */
 function wolf(r, ctx, c, sky, t, TRr) {
-  const X = 484, Y = 350, S = 0.74, HS = 1.22, up = r.wolfAt ? Math.max(0, 1 - (Date.now() - r.wolfAt) / 1800) : 0, perk = Math.sin(Math.min(1, up) * Math.PI) * 5, br = 1 + Math.sin(t * 1.4) * 0.012;
-  const G = [c("#f1eff4"), c("#d4d1da"), c("#b0acb8"), c("#857f90"), c("#4e4857")];
-  const poly = (k, pts) => { ctx.fillStyle = G[k]; ctx.strokeStyle = G[k]; ctx.lineWidth = 0.7; ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.fill(); ctx.stroke(); };
+  const X = 456, Y = 351, S = 0.8, up = r.wolfAt ? Math.max(0, 1 - (Date.now() - r.wolfAt) / 1800) : 0, perk = Math.sin(Math.min(1, up) * Math.PI) * 4, br = 1 + Math.sin(t * 1.4) * 0.01;
+  const FILL = c("#ece7ee"), SHADE = c("#c3bccb"), LINE = c("#1d1822"), AMB = c("#e3a93a");
+  const path = (pts, close = true) => { ctx.beginPath(); pts.forEach((p, i) => { if (p.length === 2) i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); else ctx.bezierCurveTo(p[0], p[1], p[2], p[3], p[4], p[5]); }); if (close) ctx.closePath(); };
+  const shape = (pts, fill, close) => { path(pts, close); if (fill) { ctx.fillStyle = fill; ctx.fill(); } ctx.stroke(); };
   ctx.save(); ctx.translate(X, Y);
-  ctx.fillStyle = rgba(0, 0, 0, 0.32); ctx.beginPath(); ctx.ellipse(6, 2, 40, 6, 0, 0, 6.283); ctx.fill(); // l'ombre sur le plancher
-  ctx.scale(S, S * br);
-  // la queue, posée au sol vers la droite, le bout sombre
-  poly(2, [[26, -14], [40, -10], [54, -4], [50, 0], [34, 0], [24, -4]]); poly(4, [[46, -6], [56, -5], [54, 0], [44, 0]]);
-  // l'arrière-train : la cuisse, la patte arrière
-  poly(3, [[14, -58], [30, -48], [34, -24], [26, -6], [10, -8], [4, -30]]); poly(2, [[10, -8], [26, -6], [22, 0], [8, 0]]); poly(4, [[26, -6], [34, -24], [36, -8], [30, 0], [22, 0]]);
-  // le dos et le flanc, sombres ; le poitrail, clair
-  poly(2, [[10, -84], [20, -74], [30, -48], [14, -58], [4, -30], [-2, -56]]); poly(1, [[-2, -56], [4, -30], [-8, -22], [-18, -30], [-20, -56]]); poly(0, [[-20, -56], [-18, -30], [-8, -22], [-12, -60], [-10, -70]]);
-  poly(1, [[-10, -70], [-12, -60], [-2, -56], [10, -84], [0, -84]]); poly(0, [[-20, -56], [-10, -70], [-12, -60]]);
-  // les pattes avant, droites ; les doigts
-  poly(1, [[-20, -30], [-10, -30], [-8, 0], [-22, 0]]); poly(0, [[-18, -30], [-12, -30], [-10, 0], [-16, 0]]); poly(2, [[-8, -24], [0, -22], [2, 0], [-6, 0]]);
-  for (const x of [-22, -16, -10]) { ctx.fillStyle = G[3]; ctx.fillRect(x - 0.3, -2.6, 0.9, 2.6); }
-  poly(0, [[-24, -2], [-6, -2], [-6, 0], [-26, 0]]); poly(1, [[-6, -2], [4, -2], [4, 0], [-6, 0]]);
-  // la tête, agrandie autour de la nuque : le crâne, le front, le museau, la mâchoire ; les oreilles
-  ctx.save(); ctx.translate(-4, -84); ctx.scale(HS, HS); ctx.translate(4, 84);
-  poly(3, [[-6, -96], [-14, -112 - perk], [-2, -98]]); poly(4, [[-7, -97], [-12, -107 - perk], [-4, -98]]); // l'oreille gauche
-  poly(2, [[6, -97], [12, -113 - perk], [14, -94]]); poly(4, [[7.5, -97], [11, -107 - perk], [12.5, -95]]); // l'oreille droite
-  poly(1, [[-6, -96], [6, -97], [14, -94], [16, -84], [10, -84], [0, -84], [-10, -88]]); // le crâne
-  poly(0, [[-10, -88], [0, -84], [-10, -70], [-18, -76], [-22, -84]]); // la joue, claire
-  poly(2, [[-10, -88], [-22, -84], [-30, -82], [-24, -90]]); poly(1, [[-24, -90], [-30, -82], [-34, -83], [-33, -86]]); // le chanfrein, le bout du museau
-  poly(0, [[-22, -84], [-30, -82], [-32, -78], [-18, -76]]); // la mâchoire
-  ctx.fillStyle = c("#15121a"); ctx.beginPath(); ctx.moveTo(-35, -86); ctx.lineTo(-31, -87.5); ctx.lineTo(-31, -82.5); ctx.closePath(); ctx.fill(); // la truffe
-  ctx.strokeStyle = G[4]; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(-32, -79.5); ctx.lineTo(-24, -78.5); ctx.stroke(); // la gueule close
-  { const ex = -15, ey = -89, [px, py] = r.pointer || [X - 200, Y - 120], ang = Math.atan2(py - (Y + ((ey + 84) * HS - 84) * S), px - (X + ((ex + 4) * HS - 4) * S));
-    poly(4, [[ex - 4.5, ey + 1], [ex - 1, ey - 2.4], [ex + 3.5, ey - 1], [ex, ey + 2]]); // le masque sombre, en losange
-    ctx.fillStyle = c("#e0a838"); ctx.beginPath(); ctx.moveTo(ex - 3, ey + 0.6); ctx.lineTo(ex - 0.6, ey - 1.6); ctx.lineTo(ex + 2.4, ey - 0.6); ctx.lineTo(ex, ey + 1.3); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "#120e14"; ctx.beginPath(); ctx.arc(ex + Math.cos(ang) * 0.9, ey - 0.2 + Math.sin(ang) * 0.5, 0.8, 0, 6.283); ctx.fill(); }
+  ctx.fillStyle = rgba(0, 0, 0, 0.32); ctx.beginPath(); ctx.ellipse(44, 1, 50, 5, 0, 0, 6.283); ctx.fill(); /* l'ombre sur le plancher */
+  ctx.scale(S, S * br); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.strokeStyle = LINE; ctx.lineWidth = 1.3;
+  /* la queue : une grosse queue touffue, rabattue le long de la cuisse, la pointe en flamme */
+  shape([[88, -22], [96, -14], [99, -7], [96, -2], [92, -1], [86, -3], [90, -5], [92, -9], [88, -14], [84, -18]], FILL);
+  /* le corps : le dos, la croupe, le ventre, les pattes arrière ramenées */
+  shape([[30, -33], [40, -33.5, 48, -35, 56, -34], [66, -34, 78, -33, 84, -26], [90, -19, 90, -8, 82, -3], [76, -1, 64, -1, 56, -1], [44, -1, 40, -2, 34, -4], [30, -10, 28, -18, 30, -33]], FILL);
+  /* la cuisse : un trait, une ombre */
+  ctx.save(); path([[60, -33], [70, -31, 80, -25, 82, -14], [80, -10, 74, -8, 70, -6], [68, -14, 66, -22, 60, -33]]); ctx.fillStyle = SHADE; ctx.fill(); ctx.stroke(); ctx.restore();
+  /* la patte arrière : le pied à plat, les griffes */
+  shape([[56, -1], [60, -7, 70, -9, 78, -6], [84, -4, 86, -1, 84, 0], [70, 0], [58, 0]], FILL);
+  for (const x of [78, 81, 84]) { ctx.beginPath(); ctx.moveTo(x, -3); ctx.lineTo(x + 1.5, 0.2); ctx.stroke(); }
+  /* la patte avant gauche (la plus loin, plus sombre), puis la droite, tendues en avant */
+  shape([[28, -14], [18, -12, 8, -11, 3, -10], [0, -8, 1, -4, 4, -3], [10, -3, 20, -4, 30, -5]], SHADE);
+  shape([[30, -22], [20, -19, 10, -17, 4, -15], [0, -13, 0, -8, 3, -6], [8, -5, 20, -6, 34, -7]], FILL);
+  for (const [x, y] of [[1, -12.5], [1.5, -9.5], [3, -7.5]]) { ctx.beginPath(); ctx.moveTo(x + 1.5, y); ctx.lineTo(x - 1.2, y + 1); ctx.stroke(); }
+  /* la crinière et le poitrail : des pointes qui retombent sur le poitrail et remontent sur la nuque */
+  shape([[26, -50], [30, -56], [34, -62], [36, -58], [41, -58], [40, -52], [44, -50], [42, -45], [47, -42], [44, -39], [48, -35], [40, -34], [34, -30], [32, -24], [30, -28], [26, -26], [28, -32], [22, -31], [26, -37], [20, -38], [26, -43], [21, -45]], FILL);
+  /* la tête, agrandie autour de la nuque : le crâne, le long chanfrein, la gueule entrouverte aux crocs, les oreilles en flammes */
+  ctx.save(); ctx.translate(26, -56); ctx.scale(1.45, 1.45);
+  shape([[10, -6], [10, -14, 6, -19, 0, -20], [-6, -21, -11, -19, -15, -16], [-24, -12], [-26, -11, -27, -8, -25, -6], [-22, -5], [-6, -4], [-1, -3], [4, -3, 8, -3, 10, -6]], FILL);
+  shape([[-21, -3], [-10, 1], [-4, 3, 2, 3, 6, -1], [8, -4], [2, -3], [-4, -2], [-12, -2.5], [-19, -3.5]], FILL);
+  ctx.fillStyle = c("#f7f4f8"); ctx.lineWidth = 0.7;
+  for (const x of [-20, -16, -12]) { ctx.beginPath(); ctx.moveTo(x, -4.2); ctx.lineTo(x + 1.3, -1.4); ctx.lineTo(x + 2.6, -4.2); ctx.fill(); ctx.stroke(); }
+  for (const x of [-18, -13]) { ctx.beginPath(); ctx.moveTo(x, -2.6); ctx.lineTo(x + 1.2, -4.4); ctx.lineTo(x + 2.4, -2.6); ctx.fill(); ctx.stroke(); }
+  ctx.lineWidth = 1.3;
+  shape([[-5, -19], [-7 - perk * 0.2, -30 - perk], [2, -19.5]], FILL); shape([[3, -19.5], [6 - perk * 0.1, -31 - perk], [9, -17]], FILL);
+  { const ex = -9, ey = -13, [px, py] = r.pointer || [X - 200, Y - 120], ang = Math.atan2(py - (Y + (-56 + ey * 1.45) * S), px - (X + (26 + ex * 1.45) * S));
+    ctx.fillStyle = AMB; ctx.beginPath(); ctx.moveTo(ex - 3.6, ey + 0.8); ctx.quadraticCurveTo(ex, ey - 2.6, ex + 3.6, ey - 1); ctx.quadraticCurveTo(ex, ey + 1.6, ex - 3.6, ey + 0.8); ctx.fill(); ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.fillStyle = "#120e14"; ctx.beginPath(); ctx.arc(ex + Math.cos(ang) * 0.9, ey - 0.3 + Math.sin(ang) * 0.4, 1, 0, 6.283); ctx.fill();
+    ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(ex - 5, ey - 2.2); ctx.lineTo(ex + 3.5, ey - 3.8); ctx.stroke(); /* le sourcil, qui plisse le regard */
+    ctx.fillStyle = LINE; ctx.beginPath(); ctx.ellipse(-25.4, -8.6, 1.5, 1.2, -0.5, 0, 6.283); ctx.fill(); }
   ctx.restore();
   ctx.restore();
-  r.hot.push({ x: X - 36, y: Y - 104, w: 82, h: 106, tip: TRr("atelier.wolf.tip"), flash: TRr("atelier.wolf.flash"), wolf: true, extra: true });
+  r.hot.push({ x: X - 10, y: Y - 92, w: 88, h: 94, tip: TRr("atelier.wolf.tip"), flash: TRr("atelier.wolf.flash"), wolf: true, extra: true });
 }
 
 module.exports = { COVERS, coverOf, drawFlowerView, drawAtelier, drawDesk, drawLoft, drawLetter, drawBookcase, backButton, SECRET, CASE, COMBO };
