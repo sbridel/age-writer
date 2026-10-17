@@ -2,6 +2,24 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.41.2 — Things that walk the Castle at night (2026-10-17)
+
+### Added
+- **Under the Castle, at night**, a giant bat now and then crosses the red moon, slow wings and red eyes.
+- **A stone coffin in the crypt**, its lid not quite shut, a red light breathing underneath. Best not to wake whoever sleeps in it.
+- It is said that, on some nights, a visitor keeps watch by the fire.
+
+### Changed
+- **The astronomer's tower** grows into its observatory instead of carrying it like a hut: corner pinnacles, a gallery on machicolations, buttresses, traceried lancets, and a pointed lead dome with golden ribs and a cross; a longer brass spyglass comes out of its slit.
+- **More rooms take on the disguise**, under the Castle and under the Glasshouse: the furniture of the far room, the vault (a rib-vaulted crypt; a mosaic hall under a copper glass roof), the doors (a flamboyant gothic front door under the Castle; an art nouveau door of iridescent wood under the Glasshouse).
+- **Gold, silver and gems** are set into the Castle's masonry (gilded keystones, jewelled cabochons) instead of being drawn over the stone.
+- **The keep**: a flying buttress that rests on something, a small turret that stands on its own cornice, nothing floating.
+
+### Fixed
+- A piece of furniture looked open while it was shut, so the first click seemed to do the opposite.
+- Castle, far view: the stone footbridges reach their islets.
+- Castle, the Imager: the window above the narrow door sits clear of it.
+
 ## 1.41.1 — The Castle at dusk (2026-10-17)
 
 Just in time for Halloween: attach the Castle, wait for nightfall, and watch the red moon rise over your Relto.

@@ -583,3 +583,15 @@ Pour Halloween : attacher le Château, attendre la nuit, regarder la lune rouge 
 - Vert sous le Château (`relto-render.js`) : `GRASS_CASTLE` pour la pelouse, `deep()` pour le sol sans page Herbe et les touffes, `groundTop()` ; brins de `SC.grass` (paramètre `castle`) ; arbres (`drawPlants`, mélange vers `#10201a` à 35 %).
 - Vue globale (`relto-global.js`, `spire`) : sous le Château, les pinacles de roche deviennent des tours lointaines (poivrière, deux fenêtres, pierre au jour).
 - Tests : golden inchangé (rien ne bouge sans le Château) ; `test/castle.test.js` 139 contrôles.
+
+## 1.41.2 — ce qui hante le Château la nuit (17 oct. 2026)
+
+- Nuit rouge : `giantBat` (`relto-castle-out.js`), toutes les 52 s pendant 8 s, alternant le sens, devant la lune ; appelée par `bloodMoon`.
+- Hôtes du Château (zones `extra: true`, ignorées par la comparaison des zones avec et sans le Château ; présents seulement sous lui : trois contrôles dans `test/castle.test.js`) : le cercueil de la crypte (`relto-vault.js`, son `coffin`), et d'autres que les tests nomment. `ui-relto.js` : sons `coffin`, `sword` (via `onKnock`) ; `h.sfx` et `h.wolf` dans `onClick` ; `onMove` garde `pointer`.
+- `test/castle.test.js` : les zones se comparent sur leurs rectangles et leurs actions, plus sur leurs textes (un objet peut changer d'habit au même endroit).
+- Tour de l'astronome (`keep`) : contreforts à ressauts, lancettes à meneau et larmier, galerie sur mâchicoulis, deux pinacles d'angle et leurs gargouilles ; plus de plate-forme quand l'observatoire est là. Observatoire (`relto-telescope.js`, `drawOnIsland`) sous le Château : plus de tambour beige, la tour monte jusqu'à une corniche ; coupole en arc brisé (`AH = DR · 1,75`) de toute la largeur de la tour, nervures d'or, croix ; lunette plus longue (12), bagues, pare-buée ; la fente suit son axe. Sans le Château : inchangé (golden).
+- Donjon : arc-boutant de la tourelle cachée derrière la tour ronde au fût de la grande flèche ; la petite flèche derrière le pignon devient une tourelle (fût appareillé, corniche sur consoles, lucarne) ; le corps collé à la tour ronde ; plus d'arcs-boutants sans appui.
+- Minerais sous le Château (`castleOre`) : or et argent aux clés et cernes des arcs aveugles, gemmes en cabochons sertis ; `drawOre` ne dessine plus de veines par-dessus les soubassements.
+- Pièces : armoire fermée au départ (`op = 1` sans `wardAt`) ; lit, armoire, horloge en Château (gâbles, pinacles, lancettes, pentures) et en Verrière (coup de fouet, vitraux, cuivre) ; coffre en crypte (ashlar, ogives, niches en arc brisé, lutrin de noyer, chandeliers) et en salle de mosaïque (verrière, niches à lunettes, lampe) ; porte d'entrée flamboyante (`flamboyantDoor`) ; porte de l'atelier en Verrière (`atelierDoor`) ; lancette de l'Imageur recentrée au-dessus de la porte.
+- Vue globale : passerelles posées au bord des culs-de-lampe.
+- Golden régénéré pour les seules vues voulues (chambre, coffre et atelier de la Verrière, chambre normale).
