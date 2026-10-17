@@ -72,6 +72,10 @@ function keep(r, ctx, M, sky, t, observatory) {
   fillP("M206 150 h30 v3 h-30 Z", c("#7a7683")); strokeP("M209 150 v-6 M214 150 v-6 M219 150 v-6 M224 150 v-6 M229 150 v-6 M234 150 v-6", c("#2a2733"), 0.9); ctx.fillStyle = c("#9a95a3"); ctx.fillRect(206, 143, 30, 1.2);
   lancets(["M216 130 v-9 q3 -5 6 0 v9 Z", "M216 176 v-9 q3 -5 6 0 v9 Z", "M224 196 v-7 q2.5 -4 5 0 v7 Z"], 0.9);
   strokeP("M219 121 v9 M216 126 h6 M219 167 v9 M216 172 h6", c("#17141a"), 0.7);
+  // l'arc-boutant de gauche : un pinacle posé sur le parapet de la tour ronde, un arc plein qui vole par-dessus le pignon jusqu'au fût de la grande flèche (dessiné avant le pignon et la flèche, qui le recouvrent à ses bouts)
+  fillP("M236 98 Q 266 72 298 86 L 298 95 Q 266 86 236 108 Z", c("#4a4350")); strokeP("M236 98 Q 266 72 298 86", c("#7a7683"), 1); // l'extrados, plus clair
+  for (const [x, y] of [[250, 88], [262, 84], [274, 84], [286, 86]]) fillP(`M${x - 2} ${y + 6} v-3 q2 -3 4 0 v3 Z`, c("#1c1a22")); // l'arc ajouré
+  ctx.fillStyle = grad(230, 238, FRONT); ctx.fillRect(230, 96, 8, 16); fillP("M229 96 L 234 80 L 239 96 Z", grad(229, 239, SL)); strokeP("M234 80 v-5", c(GOLD), 0.8); ctx.fillStyle = c("#1c1a26"); ctx.fillRect(229.4, 91, 1.2, 1); ctx.fillRect(237.4, 91, 1.2, 1); ctx.fillRect(230.6, 86, 1.2, 1); ctx.fillRect(236.2, 86, 1.2, 1); // le pinacle, qui charge la culée
   // la petite flèche, derrière le pignon (dessinée avant lui : son pied plonge derrière le rampant, elle ne flotte pas)
   ctx.fillStyle = grad(246, 253, MID); ctx.fillRect(246, 92, 7, 30); fillP("M243 92 L 249.5 66 L 256 92 Z", grad(243, 256, SL)); strokeP("M249.5 66 v-5", c(GOLD), 0.9); ctx.fillStyle = W(0.8); ctx.fillRect(248.5, 80, 2, 4);
   // le corps à pignons
