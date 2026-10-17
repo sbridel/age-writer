@@ -421,51 +421,52 @@ function coverOf(r, now = Date.now()) {
 }
 
 /**
- * Le loup blanc (le Château seulement) : un loup d'héraldique, couché, de profil, la tête haute, dessiné à la manière d'un meuble de blason :
- * des aplats ivoire cernés d'un trait sombre épais, la crinière en pointes déchiquetées, la queue ramenée le long du flanc, la gueule entrouverte.
- * Le dessin est original (sans reprise d'un fichier existant). Son œil d'ambre suit le curseur ; il respire ; au clic, il dresse les oreilles.
- * Un vieux compagnon ; on n'en dit pas plus (atelier.wolf.*).
+ * Le loup blanc (le Château seulement) : couché en sphinx sur la pierre du foyer, devant le feu, tourné vers la pièce. Pelage argenté,
+ * collerette ébouriffée, queue touffue ramenée contre les pattes arrière ; les yeux d'or suivent le curseur ; il respire, bâille de temps
+ * en temps, et au clic il lève la tête un instant. Un vieux compagnon ; on n'en dit pas plus (atelier.wolf.*).
  */
 function wolf(r, ctx, c, sky, t, TRr) {
-  const X = 456, Y = 351, S = 0.8, up = r.wolfAt ? Math.max(0, 1 - (Date.now() - r.wolfAt) / 1800) : 0, perk = Math.sin(Math.min(1, up) * Math.PI) * 4, br = 1 + Math.sin(t * 1.4) * 0.01;
-  const FILL = c("#ece7ee"), SHADE = c("#c3bccb"), LINE = c("#1d1822"), AMB = c("#e3a93a");
-  const path = (pts, close = true) => { ctx.beginPath(); pts.forEach((p, i) => { if (p.length === 2) i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); else ctx.bezierCurveTo(p[0], p[1], p[2], p[3], p[4], p[5]); }); if (close) ctx.closePath(); };
-  const shape = (pts, fill, close) => { path(pts, close); if (fill) { ctx.fillStyle = fill; ctx.fill(); } ctx.stroke(); };
+  const X = 540, Y = 280, up = r.wolfAt ? Math.max(0, 1 - (Date.now() - r.wolfAt) / 1800) : 0, lift = Math.sin(Math.min(1, up) * Math.PI), yawn = Math.max(0, Math.sin(t * 0.21) - 0.94) / 0.06, br = 1 + Math.sin(t * 1.4) * 0.015;
+  const F1 = c("#eeecf2"), F2 = c("#cdcad3"), F3 = c("#94909e"), F4 = c("#5e5a68");
+  const P = (pts, fill) => { ctx.fillStyle = fill; ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.fill(); };
   ctx.save(); ctx.translate(X, Y);
-  ctx.fillStyle = rgba(0, 0, 0, 0.32); ctx.beginPath(); ctx.ellipse(44, 1, 50, 5, 0, 0, 6.283); ctx.fill(); /* l'ombre sur le plancher */
-  ctx.scale(S, S * br); ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.strokeStyle = LINE; ctx.lineWidth = 1.3;
-  /* la queue : une grosse queue touffue, rabattue le long de la cuisse, la pointe en flamme */
-  shape([[88, -22], [96, -14], [99, -7], [96, -2], [92, -1], [86, -3], [90, -5], [92, -9], [88, -14], [84, -18]], FILL);
-  /* le corps : le dos, la croupe, le ventre, les pattes arrière ramenées */
-  shape([[30, -33], [40, -33.5, 48, -35, 56, -34], [66, -34, 78, -33, 84, -26], [90, -19, 90, -8, 82, -3], [76, -1, 64, -1, 56, -1], [44, -1, 40, -2, 34, -4], [30, -10, 28, -18, 30, -33]], FILL);
-  /* la cuisse : un trait, une ombre */
-  ctx.save(); path([[60, -33], [70, -31, 80, -25, 82, -14], [80, -10, 74, -8, 70, -6], [68, -14, 66, -22, 60, -33]]); ctx.fillStyle = SHADE; ctx.fill(); ctx.stroke(); ctx.restore();
-  /* la patte arrière : le pied à plat, les griffes */
-  shape([[56, -1], [60, -7, 70, -9, 78, -6], [84, -4, 86, -1, 84, 0], [70, 0], [58, 0]], FILL);
-  for (const x of [78, 81, 84]) { ctx.beginPath(); ctx.moveTo(x, -3); ctx.lineTo(x + 1.5, 0.2); ctx.stroke(); }
-  /* la patte avant gauche (la plus loin, plus sombre), puis la droite, tendues en avant */
-  shape([[28, -14], [18, -12, 8, -11, 3, -10], [0, -8, 1, -4, 4, -3], [10, -3, 20, -4, 30, -5]], SHADE);
-  shape([[30, -22], [20, -19, 10, -17, 4, -15], [0, -13, 0, -8, 3, -6], [8, -5, 20, -6, 34, -7]], FILL);
-  for (const [x, y] of [[1, -12.5], [1.5, -9.5], [3, -7.5]]) { ctx.beginPath(); ctx.moveTo(x + 1.5, y); ctx.lineTo(x - 1.2, y + 1); ctx.stroke(); }
-  /* la crinière et le poitrail : des pointes qui retombent sur le poitrail et remontent sur la nuque */
-  shape([[26, -50], [30, -56], [34, -62], [36, -58], [41, -58], [40, -52], [44, -50], [42, -45], [47, -42], [44, -39], [48, -35], [40, -34], [34, -30], [32, -24], [30, -28], [26, -26], [28, -32], [22, -31], [26, -37], [20, -38], [26, -43], [21, -45]], FILL);
-  /* la tête, agrandie autour de la nuque : le crâne, le long chanfrein, la gueule entrouverte aux crocs, les oreilles en flammes */
-  ctx.save(); ctx.translate(26, -56); ctx.scale(1.45, 1.45);
-  shape([[10, -6], [10, -14, 6, -19, 0, -20], [-6, -21, -11, -19, -15, -16], [-24, -12], [-26, -11, -27, -8, -25, -6], [-22, -5], [-6, -4], [-1, -3], [4, -3, 8, -3, 10, -6]], FILL);
-  shape([[-21, -3], [-10, 1], [-4, 3, 2, 3, 6, -1], [8, -4], [2, -3], [-4, -2], [-12, -2.5], [-19, -3.5]], FILL);
-  ctx.fillStyle = c("#f7f4f8"); ctx.lineWidth = 0.7;
-  for (const x of [-20, -16, -12]) { ctx.beginPath(); ctx.moveTo(x, -4.2); ctx.lineTo(x + 1.3, -1.4); ctx.lineTo(x + 2.6, -4.2); ctx.fill(); ctx.stroke(); }
-  for (const x of [-18, -13]) { ctx.beginPath(); ctx.moveTo(x, -2.6); ctx.lineTo(x + 1.2, -4.4); ctx.lineTo(x + 2.4, -2.6); ctx.fill(); ctx.stroke(); }
-  ctx.lineWidth = 1.3;
-  shape([[-5, -19], [-7 - perk * 0.2, -30 - perk], [2, -19.5]], FILL); shape([[3, -19.5], [6 - perk * 0.1, -31 - perk], [9, -17]], FILL);
-  { const ex = -9, ey = -13, [px, py] = r.pointer || [X - 200, Y - 120], ang = Math.atan2(py - (Y + (-56 + ey * 1.45) * S), px - (X + (26 + ex * 1.45) * S));
-    ctx.fillStyle = AMB; ctx.beginPath(); ctx.moveTo(ex - 3.6, ey + 0.8); ctx.quadraticCurveTo(ex, ey - 2.6, ex + 3.6, ey - 1); ctx.quadraticCurveTo(ex, ey + 1.6, ex - 3.6, ey + 0.8); ctx.fill(); ctx.lineWidth = 0.8; ctx.stroke();
-    ctx.fillStyle = "#120e14"; ctx.beginPath(); ctx.arc(ex + Math.cos(ang) * 0.9, ey - 0.3 + Math.sin(ang) * 0.4, 1, 0, 6.283); ctx.fill();
-    ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(ex - 5, ey - 2.2); ctx.lineTo(ex + 3.5, ey - 3.8); ctx.stroke(); /* le sourcil, qui plisse le regard */
-    ctx.fillStyle = LINE; ctx.beginPath(); ctx.ellipse(-25.4, -8.6, 1.5, 1.2, -0.5, 0, 6.283); ctx.fill(); }
+  ctx.fillStyle = rgba(0, 0, 0, 0.32); ctx.beginPath(); ctx.ellipse(-2, 2, 62, 6, 0, 0, 6.283); ctx.fill(); // l'ombre sur la pierre
+  // le corps : le poitrail profond, le dos, la croupe
+  ctx.save(); ctx.scale(1, br);
+  ctx.fillStyle = F2; ctx.beginPath(); ctx.moveTo(-30, -2); ctx.lineTo(34, -2); ctx.quadraticCurveTo(54, -6, 52, -20); ctx.quadraticCurveTo(48, -32, 34, -31); ctx.quadraticCurveTo(14, -27, -6, -30); ctx.quadraticCurveTo(-20, -33, -28, -40); ctx.quadraticCurveTo(-40, -30, -38, -16); ctx.quadraticCurveTo(-37, -6, -30, -2); ctx.fill();
+  ctx.fillStyle = rgba(94, 90, 104, 0.4); ctx.beginPath(); ctx.moveTo(-24, -37); ctx.quadraticCurveTo(0, -32, 22, -31); ctx.quadraticCurveTo(40, -32, 49, -27); ctx.quadraticCurveTo(34, -22, 12, -22); ctx.quadraticCurveTo(-8, -24, -24, -37); ctx.fill(); /* la selle, plus sombre le long de l'échine */
+  ctx.strokeStyle = F3; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(-14, -14, 13, 3.7, 5.3); ctx.stroke(); /* le galbe de l'épaule */
+  ctx.fillStyle = F1; ctx.beginPath(); ctx.moveTo(-22, -31); ctx.quadraticCurveTo(-6, -31, 12, -28); ctx.quadraticCurveTo(30, -31, 44, -29); ctx.quadraticCurveTo(32, -26, 14, -24); ctx.quadraticCurveTo(-4, -26, -22, -31); ctx.fill(); // la lumière sur le dos
+  ctx.fillStyle = F3; ctx.beginPath(); ctx.moveTo(-26, -2); ctx.lineTo(30, -2); ctx.quadraticCurveTo(10, -8, -20, -6); ctx.closePath(); ctx.fill(); // l'ombre du ventre
+  ctx.fillStyle = F2; ctx.beginPath(); ctx.ellipse(36, -14, 15, 13, -0.2, 0, 6.283); ctx.fill(); ctx.strokeStyle = F3; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(36, -14, 13, 2.2, 4.4); ctx.stroke(); // la cuisse repliée
+  ctx.fillStyle = F2; ctx.beginPath(); ctx.ellipse(22, -1.5, 9, 3, 0, 0, 6.283); ctx.fill(); // la patte arrière
+  ctx.restore();
+  // la queue, touffue, ramenée devant la patte arrière ; le bout plus sombre
+  ctx.fillStyle = F1; ctx.beginPath(); ctx.moveTo(50, -16); ctx.quadraticCurveTo(64, -4, 44, 1); ctx.quadraticCurveTo(24, 4, 6, 0); ctx.quadraticCurveTo(24, -3, 40, -6); ctx.quadraticCurveTo(50, -9, 50, -16); ctx.fill();
+  ctx.strokeStyle = F3; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(44, -4); ctx.quadraticCurveTo(28, 0, 12, -0.5); ctx.stroke();
+  ctx.fillStyle = F4; ctx.beginPath(); ctx.moveTo(16, 2); ctx.quadraticCurveTo(8, 2, 5, 0); ctx.quadraticCurveTo(10, -2.6, 18, -2.4); ctx.closePath(); ctx.fill();
+  // les pattes avant, allongées
+  for (const [dx, col] of [[0, F3], [5, F2]]) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(-24 + dx, -9); ctx.lineTo(-56 + dx, -5); ctx.quadraticCurveTo(-62 + dx, -3, -58 + dx, 0); ctx.lineTo(-24 + dx, 0); ctx.closePath(); ctx.fill(); ctx.strokeStyle = F4; ctx.lineWidth = 0.6; for (const k of [-58, -56]) { ctx.beginPath(); ctx.moveTo(k + dx, -2.5); ctx.lineTo(k + dx + 1.5, 0); ctx.stroke(); } }
+  // la collerette, ébouriffée
+  P([[-12, -33], [-17, -38], [-20, -34], [-25, -40], [-27, -35], [-33, -38], [-33, -32], [-39, -31], [-36, -26], [-41, -22], [-36, -19], [-38, -13], [-32, -14], [-28, -8], [-24, -18], [-16, -26]], F1);
+  P([[-33, -37], [-41, -45], [-29, -42]], F1); P([[-38, -30], [-47, -31], [-40, -24]], F2); P([[-30, -41], [-36, -49], [-24, -40]], F2); /* la collerette gagne des pointes sur la nuque et le cou */
+  // la tête, relevée au clic
+  ctx.save(); ctx.translate(-36, -40); ctx.rotate(-0.12 * lift); ctx.translate(0, -5 * lift); ctx.scale(1.25, 1.25); /* une tête plus forte, un museau plus court : un loup, pas un renard */
+  P([[-4, 6], [8, 2], [10, -6], [4, -10], [-6, -10], [-12, -6]], F2); // le crâne
+  P([[-6, -2], [-12, -1], [-25, 3], [-26, 6], [-23, 8], [-6, 8]], F1); // le museau, et le stop du front
+  ctx.fillStyle = F3; ctx.beginPath(); ctx.moveTo(-6, 8); ctx.lineTo(-23, 8); ctx.lineTo(-9, 11); ctx.closePath(); ctx.fill(); // la mâchoire, dans l'ombre
+  P([[0, -8], [2.5, -25], [7.5, -8]], F2); P([[1.5, -9], [2.8, -21], [6, -9]], F4); // l'oreille proche
+  P([[-6.5, -9], [-5.5, -23], [-0.5, -9]], F3); // l'oreille lointaine
+  P([[2, 4], [8, 6], [10, 12], [4, 12], [-2, 9]], F1); // la joue ébouriffée
+  ctx.fillStyle = c("#14111a"); ctx.beginPath(); ctx.ellipse(-25.4, 3.8, 2.4, 1.8, 0, 0, 6.283); ctx.fill(); // la truffe
+  if (yawn > 0.05) { ctx.fillStyle = c("#3a1018"); ctx.beginPath(); ctx.moveTo(-8, 7); ctx.lineTo(-20, 6.5); ctx.lineTo(-13, 7 + 8 * yawn); ctx.closePath(); ctx.fill(); ctx.fillStyle = c("#f4f0e8"); for (const k of [-18, -10]) { ctx.beginPath(); ctx.moveTo(k - 0.9, 7); ctx.lineTo(k + 0.9, 7); ctx.lineTo(k, 7 + 2.8 * yawn); ctx.closePath(); ctx.fill(); } }
+  else { ctx.strokeStyle = F4; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(-24, 6.4); ctx.quadraticCurveTo(-15, 8, -8, 6.6); ctx.stroke(); } // la gueule close
+  { const ex = -8, ey = -3, [px, py] = r.pointer || [X - 120, Y - 80], wx = X - 36 + ex * 1.25, wy = Y - 40 - 5 * lift + ey * 1.25, ang = Math.atan2(py - wy, px - wx);
+    ctx.fillStyle = c("#d8a844"); ctx.beginPath(); ctx.moveTo(ex - 4, ey + 0.4); ctx.quadraticCurveTo(ex, ey - 3.2, ex + 3.6, ey - 0.8); ctx.quadraticCurveTo(ex, ey + 2.2, ex - 4, ey + 0.4); ctx.fill(); // l'œil en amande, d'or
+    ctx.fillStyle = "#120e14"; ctx.beginPath(); ctx.ellipse(ex + Math.cos(ang) * 1, ey - 0.3 + Math.sin(ang) * 0.6, 0.9, 1.2, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = F4; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(ex - 3.4, ey); ctx.lineTo(ex - 6, ey + 1.6); ctx.stroke(); } // la pupille qui suit ; le trait du coin de l'œil
   ctx.restore();
   ctx.restore();
-  r.hot.push({ x: X - 10, y: Y - 92, w: 88, h: 94, tip: TRr("atelier.wolf.tip"), flash: TRr("atelier.wolf.flash"), wolf: true, extra: true });
+  r.hot.push({ x: X - 64, y: Y - 64, w: 122, h: 66, tip: TRr("atelier.wolf.tip"), flash: TRr("atelier.wolf.flash"), wolf: true, extra: true });
 }
 
 module.exports = { COVERS, coverOf, drawFlowerView, drawAtelier, drawDesk, drawLoft, drawLetter, drawBookcase, backButton, SECRET, CASE, COMBO };
