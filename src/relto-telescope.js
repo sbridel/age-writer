@@ -743,8 +743,11 @@ function drawOnIsland(r, ctx, sky, tm) {
   if (r.glassOn && r.glassOn()) { ctx.strokeStyle = c(VR.COPPER_HI); ctx.lineWidth = 0.5; for (const k of [-0.6, 0.6]) { ctx.beginPath(); ctx.moveTo(bx, by - 17.5); ctx.quadraticCurveTo(bx + k * 8, by - 15, bx + k * 9.2, by - 8); ctx.stroke(); } ctx.beginPath(); ctx.ellipse(bx, by - 8, 6.6, 4.4, 0, Math.PI, 2 * Math.PI); ctx.stroke(); ctx.fillStyle = c(VR.COPPER); ctx.fillRect(bx - 10, by - 8.6, 20, 1.2); } // la Verrière : nervures et bague de cuivre
   ctx.save(); ctx.translate(bx, by - 8); ctx.rotate(0.35); ctx.fillStyle = c("#1a1714"); ctx.fillRect(-1.6, -9.6, 3.2, 9); ctx.restore();
   // le tube qui sort de la fente
-  ctx.save(); ctx.translate(bx + 1, by - 12); ctx.rotate(-1.22); const g = ctx.createLinearGradient(0, -1.6, 0, 1.6); g.addColorStop(0, c("#e8c97a")); g.addColorStop(1, c("#7a5c28")); ctx.fillStyle = g; ctx.fillRect(0, -1.2, 7.5, 2.4);
-  if (found) { const beat = frac((now(r) - DT.REF) / PULSE_MS), a = 0.35 + 0.5 * Math.exp(-beat * 4) * (0.5 + 0.5 * (sky.night == null ? 0.5 : sky.night)); const gl = ctx.createRadialGradient(8.5, 0, 0, 8.5, 0, 5); gl.addColorStop(0, rgba(160, 235, 220, a)); gl.addColorStop(1, "rgba(160,235,220,0)"); ctx.fillStyle = gl; ctx.fillRect(3.5, -5, 10, 10); }
+  const TL0 = castleD ? 12 : 7.5, TE = TL0 + 1; // le Château : une lunette plus longue, de laiton clair, bagues d'or et pare-buée, qui sort haut de la coupole en arc brisé
+  ctx.save(); if (castleD) { ctx.translate(bx + 1.5, by - 17); ctx.rotate(-1.05); } else { ctx.translate(bx + 1, by - 12); ctx.rotate(-1.22); } const g = ctx.createLinearGradient(0, -1.6, 0, 1.6); g.addColorStop(0, c(castleD ? "#f6dc94" : "#e8c97a")); g.addColorStop(1, c(castleD ? "#9a7432" : "#7a5c28")); ctx.fillStyle = g;
+  if (castleD) { ctx.fillRect(-2, -1.1, TL0 + 2, 2.2); ctx.fillRect(TL0 - 2.6, -1.6, 3.4, 3.2); ctx.fillStyle = c("#ffe9a8"); for (const x of [1.5, 5, 8.5]) ctx.fillRect(x, -1.3, 0.7, 2.6); ctx.fillStyle = rgba(255, 255, 240, 0.5); ctx.fillRect(-2, -1.1, TL0 + 2, 0.5); ctx.fillStyle = c("#2a2a3a"); ctx.beginPath(); ctx.ellipse(TL0 + 0.8, 0, 0.5, 1.5, 0, 0, 6.283); ctx.fill(); } // le fût, le pare-buée, trois bagues, l'objectif
+  else ctx.fillRect(0, -1.2, 7.5, 2.4);
+  if (found) { const beat = frac((now(r) - DT.REF) / PULSE_MS), a = 0.35 + 0.5 * Math.exp(-beat * 4) * (0.5 + 0.5 * (sky.night == null ? 0.5 : sky.night)); const gl = ctx.createRadialGradient(TE, 0, 0, TE, 0, 5); gl.addColorStop(0, rgba(160, 235, 220, a)); gl.addColorStop(1, "rgba(160,235,220,0)"); ctx.fillStyle = gl; ctx.fillRect(TE - 5, -5, 10, 10); }
   ctx.restore();
   ctx.restore();
   const t = tOf(r); r.hot.push({ x: bx - 16, y: by - 34, w: 32, h: 36, tip: found ? t("tel.island.found") : t("tel.island"), go: "telescope" });
