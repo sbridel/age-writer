@@ -172,6 +172,50 @@ function isletTower(ctx, c, night, big) {
   ctx.fillStyle = rgba(0, 0, 0, 0.12); for (let y = 6; y < 30; y += 6) ctx.fillRect(-20, y, 40, 0.7); // l'appareil sous la tour : l'îlot est un soubassement
 }
 
+/**
+ * Un îlot devenu morceau du château (dans le repère de l'îlot : son bord haut à y = 0, ±26 de large, échelle déjà posée) : plus de roche
+ * ni d'herbe, de la maçonnerie suspendue. Sous chaque pièce, un cul-de-lampe de pierre en pointe (il remplace la roche). Cinq pièces :
+ * une haute tour en encorbellement, un bastion à deux tourelles, une échauguette, un pan de mur ajouré, une petite tour.
+ */
+function castleIslet(ctx, c, night, i) {
+  const kind = i % 5;
+  // le cul-de-lampe : un cône renversé d'assises qui se resserrent, des bagues moulurées, une pointe
+  const cw = kind === 1 ? 24 : kind === 3 ? 22 : 15, tip = kind === 1 ? 40 : 32;
+  { const g = ctx.createLinearGradient(-cw, 0, cw, 0); g.addColorStop(0, c(STONE)); g.addColorStop(0.6, c(STONE_D)); g.addColorStop(1, c(STONE_DD)); ctx.fillStyle = g; }
+  ctx.beginPath(); ctx.moveTo(-cw, 0); ctx.lineTo(cw, 0); ctx.quadraticCurveTo(cw * 0.7, tip * 0.45, 2, tip); ctx.lineTo(-2, tip); ctx.quadraticCurveTo(-cw * 0.7, tip * 0.45, -cw, 0); ctx.closePath(); ctx.fill();
+  for (const v of [0.18, 0.4, 0.64]) { const ww = cw * (1 - v * 0.95), y = tip * v; ctx.fillStyle = c("#a29dab"); ctx.fillRect(-ww, y, ww * 2, 1.4); ctx.fillStyle = rgba(0, 0, 0, 0.28); ctx.fillRect(-ww, y + 1.4, ww * 2, 1); }
+  ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(0, tip + 1.5, 1.4, 0, 6.283); ctx.fill(); // un fleuron au bout
+  ctx.fillStyle = c("#a29dab"); ctx.fillRect(-cw - 2, -1.5, cw * 2 + 4, 3); // la corniche
+  const body = (x, w, top) => { const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); g.addColorStop(0, c(STONE)); g.addColorStop(0.6, c(STONE_D)); g.addColorStop(1, c(STONE_DD)); ctx.fillStyle = g; ctx.fillRect(x - w / 2, top, w, -top - 1.5); ctx.fillStyle = rgba(0, 0, 0, 0.16); for (let y = top + 5; y < -1.5; y += 5) ctx.fillRect(x - w / 2, y, w, 0.7); };
+  const roof = (x, w, top, h) => { const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); g.addColorStop(0, c("#565a78")); g.addColorStop(1, c(SLATE_D)); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - w / 2 - 2, top); ctx.lineTo(x, top - h); ctx.lineTo(x + w / 2 + 2, top); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x, top - h); ctx.lineTo(x, top - h - 4); ctx.stroke(); };
+  const crenel = (x, w, top) => { ctx.fillStyle = c("#a29dab"); ctx.fillRect(x - w / 2 - 1.5, top - 1.5, w + 3, 2); };
+  if (kind === 0) { // une haute tour en encorbellement
+    body(0, 14, -34); crenel(0, 14, -34); roof(0, 14, -35, 22); lancet(ctx, 0, -20, 3, 8, winColor(night, 1)); lancet(ctx, 0, -6, 2.4, 5, winColor(night, 0.6));
+    ctx.fillStyle = c("#a29dab"); ctx.fillRect(-9, -24, 18, 1.6); ctx.fillStyle = rgba(0, 0, 0, 0.35); for (let x = -8; x < 8; x += 3) ctx.fillRect(x, -27, 1, 3); // un balcon
+  } else if (kind === 1) { // un bastion à deux tourelles
+    body(0, 34, -14); crenel(0, 34, -14); ctx.fillStyle = rgba(0, 0, 0, 0.3); for (let x = -15; x < 16; x += 6) ctx.fillRect(x, -18, 3, 3.5); // les créneaux
+    for (const x of [-14, 14]) { body(x, 10, -28); roof(x, 10, -29, 17); lancet(ctx, x, -17, 2.4, 6, winColor(night, 0.9)); }
+    lancet(ctx, 0, -4, 5, 8, winColor(night, 0.8)); ctx.strokeStyle = c("#b8b3c0"); ctx.lineWidth = 0.6; ctx.strokeRect(-3, -12, 6, 8);
+  } else if (kind === 2) { // une échauguette, sur une console
+    body(0, 10, -22); roof(0, 10, -23, 16); lancet(ctx, 0, -10, 2.4, 6, winColor(night, 1));
+  } else if (kind === 3) { // un pan de mur ajouré : deux arcs brisés, une tourelle d'angle
+    body(-3, 30, -16); crenel(-3, 30, -16);
+    for (const x of [-11, 1]) { ctx.fillStyle = rgba(12, 10, 16, 0.75); ctx.beginPath(); ctx.moveTo(x - 4, -2); ctx.lineTo(x - 4, -9); ctx.quadraticCurveTo(x - 4, -13, x, -14); ctx.quadraticCurveTo(x + 4, -13, x + 4, -9); ctx.lineTo(x + 4, -2); ctx.closePath(); ctx.fill(); }
+    body(15, 8, -26); roof(15, 8, -27, 13); lancet(ctx, 15, -14, 2, 5, winColor(night, 1));
+  } else { // une petite tour
+    body(0, 11, -24); crenel(0, 11, -24); roof(0, 11, -25, 15); lancet(ctx, 0, -11, 2.4, 6, winColor(night, 0.9));
+  }
+}
+
+/** Un cul-de-lampe de pierre sous un îlot du château (le calendrier, l'horloge D'ni) : le dessus à (x, y), demi-largeur w, pointe à y + tip ; un dallage dessus. */
+function corbel(ctx, c, x, y, w, tip) {
+  const g = ctx.createLinearGradient(x - w, 0, x + w, 0); g.addColorStop(0, c(STONE)); g.addColorStop(0.6, c(STONE_D)); g.addColorStop(1, c(STONE_DD)); ctx.fillStyle = g;
+  ctx.beginPath(); ctx.moveTo(x - w, y); ctx.lineTo(x + w, y); ctx.quadraticCurveTo(x + w * 0.7, y + tip * 0.45, x + 2, y + tip); ctx.lineTo(x - 2, y + tip); ctx.quadraticCurveTo(x - w * 0.7, y + tip * 0.45, x - w, y); ctx.closePath(); ctx.fill();
+  for (const v of [0.18, 0.4, 0.64]) { const ww = w * (1 - v * 0.95), yy = y + tip * v; ctx.fillStyle = c("#a29dab"); ctx.fillRect(x - ww, yy, ww * 2, 1.4); ctx.fillStyle = rgba(0, 0, 0, 0.28); ctx.fillRect(x - ww, yy + 1.4, ww * 2, 1); }
+  ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(x, y + tip + 1.5, 1.4, 0, 6.283); ctx.fill();
+  ctx.fillStyle = c("#a29dab"); ctx.beginPath(); ctx.ellipse(x, y, w + 1, 4, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = rgba(0, 0, 0, 0.25); ctx.lineWidth = 0.6; for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(x + k * w * 0.35, y - 3.4); ctx.lineTo(x + k * w * 0.4, y + 3.4); ctx.stroke(); } // le dallage
+}
+
 /** Une stèle en arc brisé (menhir ou pilier de liaison sous le Château) : chemin seul, pied à y, de demi-largeur w, de hauteur h. */
 function stelePath(ctx, x, y, w, h) { ctx.beginPath(); ctx.moveTo(x - w, y); ctx.lineTo(x - w, y - h + w * 1.1); ctx.quadraticCurveTo(x - w, y - h + w * 0.2, x, y - h); ctx.quadraticCurveTo(x + w, y - h + w * 0.2, x + w, y - h + w * 1.1); ctx.lineTo(x + w, y); ctx.closePath(); }
 
@@ -192,4 +236,4 @@ function globalCastle(ctx, c, sky, cx, y) {
   ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(cx + 3, y - 56); ctx.lineTo(cx + 3, y - 60); ctx.stroke();
 }
 
-module.exports = { winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };
+module.exports = { winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };

@@ -155,11 +155,13 @@ function islets(ctx, r, d, sky, t) {
   for (let i = 0; i < Math.min(n, POS.length); i++) {
     const [x, y0, s] = POS[i], y = y0 + Math.sin(t * 0.4 + i * 1.7) * 2;
     ctx.save(); ctx.globalAlpha = 0.5 + 0.35 * s; ctx.translate(x, y); ctx.scale(s, s);
+    if (castleOf(r)) require("./relto-castle-out").castleIslet(ctx, (h) => mix("#05060c", h, k), sky.night || 0, i); // le Château : l'îlot devient un morceau du château (maçonnerie suspendue, plus de roche ni d'herbe)
+    else {
     ctx.fillStyle = mix("#05060c", "#5a5148", k); ctx.beginPath(); ctx.moveTo(-26, 0); ctx.lineTo(26, 0); ctx.lineTo(10, 26); ctx.lineTo(0, 38); ctx.lineTo(-12, 22); ctx.closePath(); ctx.fill();
     ctx.fillStyle = mix("#05060c", "#6f8a4a", k); ctx.beginPath(); ctx.ellipse(0, 0, 26, 5, 0, 0, 6.283); ctx.fill();
-    if (castleOf(r)) { const CO = require("./relto-castle-out"); CO.isletTower(ctx, (h) => mix("#05060c", h, k), sky.night || 0, i < 2); } // le Château : chaque îlot porte une tour
-    else if (i % 2 === 0) { ctx.fillStyle = mix("#05060c", "#2a4a30", k); ctx.beginPath(); ctx.moveTo(-3, -2); ctx.lineTo(0, -22); ctx.lineTo(3, -2); ctx.closePath(); ctx.fill(); }
+    if (i % 2 === 0) { ctx.fillStyle = mix("#05060c", "#2a4a30", k); ctx.beginPath(); ctx.moveTo(-3, -2); ctx.lineTo(0, -22); ctx.lineTo(3, -2); ctx.closePath(); ctx.fill(); }
     else { ctx.fillStyle = mix("#05060c", "#7a6f62", k); ctx.beginPath(); ctx.moveTo(-5, -2); ctx.lineTo(-1, -26); ctx.lineTo(4, -2); ctx.closePath(); ctx.fill(); }
+    }
     ctx.restore();
     if (castleOf(r) && i < 2 && r.lay && r.lay.mount) { const M = r.lay.mount, tx = i === 0 ? M.x - M.hw * 0.62 : M.x + M.hw * 0.86, ty = GY - M.h * (i === 0 ? 0.46 : 0.3), ex = x + (i === 0 ? 8 : -6) * s, ey = y - 4 * s; require("./relto-castle-out").stoneBridge(ctx, (h) => mix("#05060c", h, k), ex, ey, tx, ty); } // une passerelle de pierre vers le donjon (le donjon, dessiné ensuite, en cache le bout)
     r.hot.push({ x: x - 26 * s, y: y - 28 * s, w: 52 * s, h: 60 * s, tip: "Islet" });
@@ -177,8 +179,10 @@ function pillarNumber(ctx, r, n, x, yTop, size, color) {
 function calendar(ctx, r, sky, t) {
   const x = 548, y = 200, k = amb(sky), d = DC.reltoDate(r.scene); // sans l'horloge D'ni, la pierre dérive de quelques yahr
   ctx.save(); ctx.globalAlpha = 0.85;
+  if (castleOf(r)) require("./relto-castle-out").corbel(ctx, (h) => mix("#05060c", h, k), x, y, 22, 34); else { // le Château : un cul-de-lampe de pierre, plus de roche
   ctx.fillStyle = mix("#05060c", "#5a5148", k); ctx.beginPath(); ctx.moveTo(x - 24, y); ctx.lineTo(x + 24, y); ctx.lineTo(x + 8, y + 24); ctx.lineTo(x, y + 34); ctx.lineTo(x - 11, y + 20); ctx.closePath(); ctx.fill();
   ctx.fillStyle = mix("#05060c", "#6f8a4a", k); ctx.beginPath(); ctx.ellipse(x, y, 24, 5, 0, 0, 6.283); ctx.fill();
+  }
   if (castleOf(r)) { const CO = require("./relto-castle-out"); ctx.fillStyle = mix("#05060c", "#8a8591", k); CO.stelePath(ctx, x, y, 8, 60); ctx.fill(); ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x + 1.5, y - 52, 6.5, 52); ctx.strokeStyle = mix("#05060c", "#c9a24e", k); ctx.lineWidth = 0.6; CO.stelePath(ctx, x, y - 3, 5.5, 52); ctx.stroke(); } else { // le Château : une stèle en arc brisé, filet d'or
   ctx.fillStyle = mix("#05060c", "#7d7468", k); ctx.beginPath(); ctx.moveTo(x - 7, y); ctx.lineTo(x - 4, y - 56); ctx.lineTo(x + 3, y - 60); ctx.lineTo(x + 7, y); ctx.closePath(); ctx.fill();
   ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.beginPath(); ctx.moveTo(x + 1, y - 59); ctx.lineTo(x + 7, y); ctx.lineTo(x + 1, y); ctx.closePath(); ctx.fill();
@@ -200,8 +204,10 @@ function dniClock(ctx, r, sky, t) {
   const rg = DC.rings(ms), ring = (key) => rg.find((q) => q.key === key);
   ctx.save(); ctx.globalAlpha = 0.9;
   // l'îlot
+  if (castleOf(r)) require("./relto-castle-out").corbel(ctx, (h) => mix("#05060c", h, k), x, y, 20, 32); else { // le Château : un cul-de-lampe de pierre, plus de roche
   ctx.fillStyle = mix("#05060c", "#5a5148", k); ctx.beginPath(); ctx.moveTo(x - 22, y); ctx.lineTo(x + 22, y); ctx.lineTo(x + 9, y + 22); ctx.lineTo(x - 1, y + 32); ctx.lineTo(x - 10, y + 19); ctx.closePath(); ctx.fill();
   ctx.fillStyle = mix("#05060c", "#6f8a4a", k); ctx.beginPath(); ctx.ellipse(x, y, 22, 4.5, 0, 0, 6.283); ctx.fill();
+  }
   // le pilier : un fût de pierre, une base et un chapiteau
   const sg = ctx.createLinearGradient(x - 5, 0, x + 5, 0); sg.addColorStop(0, mix("#05060c", "#8d8578", k)); sg.addColorStop(1, mix("#05060c", "#57524a", k));
   ctx.fillStyle = sg; ctx.fillRect(x - 7, y - 6, 14, 6); ctx.fillRect(x - 4, y - 40, 8, 34); ctx.fillRect(x - 6.5, y - 44, 13, 4);
