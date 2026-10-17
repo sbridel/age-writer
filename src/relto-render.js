@@ -412,11 +412,11 @@ class ReltoRenderer {
   }
 
   drawPlants(ctx, row, t, list) {
-    const sky = skyAt(this.hour()), amb = 0.4 + 0.6 * sky.ambient;
+    const sky = skyAt(this.hour()), amb = 0.4 + 0.6 * sky.ambient, castleT = this.castleOn();
     for (const p of list || this.geo.plants) {
       if (p.row !== row) continue;
       const y = GY + (row ? 6 : 2), sw = Math.sin(t * 0.9 + p.sw) * (1.2 + p.h / 20), h = p.h;
-      const col = (c) => mix("#05060c", c, amb);
+      const col = castleT ? (c) => mix("#05060c", mix(c, "#10201a", 0.35), amb) : (c) => mix("#05060c", c, amb); // le Château : des arbres plus sombres, comme la cour
       if (p.kind === "conifer") {
         ctx.fillStyle = col("#3a2a1c"); ctx.fillRect(p.x - 1, y - h * 0.22, 2, h * 0.22);
         ctx.fillStyle = col(row ? "#1f4a30" : "#1a3a28");
