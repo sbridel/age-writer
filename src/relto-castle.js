@@ -61,15 +61,16 @@ function cabinWalls(r, ctx, c, sky, t, FLOOR) {
 let FLOOR_STYLE = "batons";
 function setFloorStyle(v) { FLOOR_STYLE = v === "panneaux" ? "panneaux" : "batons"; floorCache = {}; }
 let floorCache = {};
-const proj = (X, D) => [320 + (400 * X) / D, 170 + 190 / D]; // le sol vu par le Relto : X latéral, D profondeur (1 au premier plan, 2,4 au fond)
+const HZ = -250, PK = 360 - HZ, DFAR = PK / (250 - HZ); // une perspective douce : un sol vu de haut et de loin (le fond n'est qu'un cinquième plus petit que le premier plan)
+const proj = (X, D) => [320 + (420 * X) / D, HZ + PK / D]; // X latéral, D profondeur (1 au premier plan, DFAR au fond du sol, à y = 250)
 function poly(ctx, pts) { ctx.beginPath(); pts.forEach(([X, D], i) => { const [x, y] = proj(X, D); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath(); }
 function paintParquet(ctx, style, FLOOR, H, W) {
   const id = (h) => h, q = rng(style === "panneaux" ? 0x9a7e : 0xba70);
   ctx.fillStyle = "#3a2619"; ctx.fillRect(0, FLOOR, W, H - FLOOR);
   const tone = () => { const v = q(); return v < 0.4 ? "#553b28" : v < 0.8 ? "#4f3625" : "#5b402b"; }; // des tons proches : le parquet se lit sans crier
   if (style === "panneaux") {
-    const S = 0.34; // un panneau carré
-    for (let D = 0.98; D < 2.5; D += S) for (let X = -2.2; X < 2.2; X += S) {
+    const S = 0.2; // un panneau carré
+    for (let D = 0.98; D < DFAR + 0.05; D += S) for (let X = -1.2; X < 1.2; X += S) {
       const X0 = X, X1 = X + S, D0 = D, D1 = D + S, m = 0.035;
       ctx.fillStyle = "#4a3222"; poly(ctx, [[X0, D0], [X1, D0], [X1, D1], [X0, D1]]); ctx.fill(); // le cadre
       ctx.fillStyle = q() < 0.5 ? "#5a3e2a" : "#553a27"; poly(ctx, [[X0 + m, D0 + m], [X1 - m, D0 + m], [X1 - m, D1 - m], [X0 + m, D1 - m]]); ctx.fill(); // le fond
@@ -78,14 +79,14 @@ function paintParquet(ctx, style, FLOOR, H, W) {
       ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.lineWidth = 0.8; poly(ctx, [[X0, D0], [X1, D0], [X1, D1], [X0, D1]]); ctx.stroke(); poly(ctx, [[X0 + m, D0 + m], [X1 - m, D0 + m], [X1 - m, D1 - m], [X0 + m, D1 - m]]); ctx.stroke();
     }
   } else {
-    const Wd = 0.045, L = 0.18, c45 = Math.SQRT1_2, toW = (p, qq) => [(p - qq) * c45, 1 + (p + qq) * c45]; // bâtons rompus : des chaînes de lames, période (Wd, Wd) ; une chaîne à la suivante : (L, −L)
-    for (let m = -22; m <= 22; m++) for (let k = -10; k <= 40; k++) {
+    const Wd = 0.024, L = 0.096, c45 = Math.SQRT1_2, toW = (p, qq) => [(p - qq) * c45, 1 + (p + qq) * c45]; // bâtons rompus : des chaînes de lames, période (Wd, Wd) ; une chaîne à la suivante : (L, −L)
+    for (let m = -16; m <= 16; m++) for (let k = -14; k <= 40; k++) {
       const ox = k * Wd + m * L, oy = k * Wd - m * L;
       for (const [x0, y0, w, h] of [[ox, oy, L, Wd], [ox, oy + Wd, Wd, L]]) {
         const P = [toW(x0, y0), toW(x0 + w, y0), toW(x0 + w, y0 + h), toW(x0, y0 + h)];
-        if (P.every(([X, D]) => D < 0.95) || P.every(([X, D]) => D > 2.5) || P.every(([X, D]) => Math.abs(X) > (D * 330) / 400)) continue;
+        if (P.every(([X, D]) => D < 0.97) || P.every(([X, D]) => D > DFAR + 0.03) || P.every(([X, D]) => Math.abs(X) > (D * 330) / 420)) continue;
         ctx.fillStyle = tone(); poly(ctx, P); ctx.fill();
-        ctx.strokeStyle = "rgba(20,12,6,0.38)"; ctx.lineWidth = 0.6; ctx.stroke();
+        ctx.strokeStyle = "rgba(20,12,6,0.5)"; ctx.lineWidth = 0.6; ctx.stroke();
         const lw = w > h; // le fil du bois, toujours dans la longueur de la lame (en travers, il la coupait en deux)
         if (q() < 0.3) { const [a1, b1] = lw ? toW(x0 + w * 0.25, y0 + h * 0.5) : toW(x0 + w * 0.5, y0 + h * 0.25), [a2, b2] = lw ? toW(x0 + w * 0.75, y0 + h * 0.5) : toW(x0 + w * 0.5, y0 + h * 0.75); const [sx1, sy1] = proj(a1, b1), [sx2, sy2] = proj(a2, b2); ctx.strokeStyle = "rgba(255,225,180,0.06)"; ctx.beginPath(); ctx.moveTo(sx1, sy1); ctx.lineTo(sx2, sy2); ctx.stroke(); } // le fil du bois
       }
