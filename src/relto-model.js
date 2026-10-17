@@ -12,7 +12,7 @@ const TERRAINS = ["volcanic_plateau", "mossy_plateau", "sand_island", "glacier",
 const SURROUNDINGS = ["cloud_sea", "fog_sea", "ocean", "void", "lava_sea"];
 const SKY_CYCLES = ["system_time", "frozen_dawn", "frozen_day", "frozen_dusk", "frozen_night"];
 const STRUCTURES = ["hut", "bookshelves", "linking_pillars"];
-const EFFECT_TYPES = ["marcel", "vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager", "telescope", "dniclock", "comet", "inkwell", "atelier", "glasshouse"];
+const EFFECT_TYPES = ["marcel", "vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager", "telescope", "dniclock", "comet", "inkwell", "atelier", "glasshouse", "castle"];
 /** Options propres à certains effets (texte court) : couleur et nom du chat, variété du koï rare. */
 const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare", "sleep", "flower"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
 const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern", "ponderosa", "maple", "crystal"], flowers: ["blue", "red", "yellow", "white", "pink", "lily"] };
@@ -152,6 +152,7 @@ const PAGE_PRESETS = {
   // la Verrière : un déguisement art nouveau (verre vert et ambre, cuivre, plantes) ; seulement l'enveloppe, rien de cliquable ne bouge
   // (claude/DESIGN-verriere-art-nouveau.md) ; bac à sable seulement
   page_glasshouse: { label: "Glasshouse", effects: { canvas_additions: [{ type: "glasshouse" }] }, sandbox: true },
+  page_castle: { label: "Castle", effects: { canvas_additions: [{ type: "castle" }] }, sandbox: true }, // le Château : gothique romantique (claude/DESIGN-chateau-gothique.md)
   page_mist: { label: "Mist", effects: { canvas_additions: [{ type: "mist", density: 0.6 }], ambiance_audio: "wind" } },
 };
 
@@ -251,7 +252,11 @@ function libraryPage(lp) {
  * Pages toujours présentes dans le livre des pages, même sans note : elles se découvrent (verrouillées, puis disponibles).
  * Une note ou une ligne de bibliothèque de même id l'emporte. Aujourd'hui : le télescope, débloqué par le premier Âge.
  */
-const BUILTIN_PAGES = ["page_telescope", "page_dni_clock", "page_marcel", "page_glasshouse"];
+const BUILTIN_PAGES = ["page_telescope", "page_dni_clock", "page_marcel", "page_glasshouse", "page_castle"];
+/** Les déguisements du Relto : un seul à la fois. */
+const DISGUISES = ["page_glasshouse", "page_castle"];
+/** Attacher une page à la liste `list` (ids) : un déguisement détache l'autre. Renvoie une nouvelle liste. */
+function attachPage(list, id) { const l = (list || []).filter((x) => x !== id && !(DISGUISES.includes(id) && DISGUISES.includes(x))); l.push(id); return l; }
 /** `o.story` : un Relto histoire ne reçoit pas les pages du bac à sable seul (la Verrière). */
 function builtinPages(o = {}) {
   return BUILTIN_PAGES.filter((id) => !(o.story && PAGE_PRESETS[id].sandbox)).map((id) => { const p = PAGE_PRESETS[id], u = p.unlock || {}; return { ...libraryPage({ id, label: p.label, effects: p.effects, unlock: null }), library: false, builtin: true, secret: !!p.secret, unlock: { age: null, minStability: 40, agesCount: u.agesCount != null ? u.agesCount : null, page: u.page || null, zero: !!u.zero, marcel: !!u.marcel } }; });
@@ -409,6 +414,6 @@ function hourFor(skyCycle, now = new Date()) {
 }
 
 module.exports = {
-  parseList, filterAges, TERRAINS, SURROUNDINGS, SKY_CYCLES, STRUCTURES, EFFECT_TYPES, ASSETS, PAGE_PRESETS,
+  parseList, filterAges, DISGUISES, attachPage, TERRAINS, SURROUNDINGS, SKY_CYCLES, STRUCTURES, EFFECT_TYPES, ASSETS, PAGE_PRESETS,
   layoutIsland, placePlants, optsOf, stripLink, parseReltoLibrary, libraryPage, BUILTIN_PAGES, builtinPages, parseRelto, parsePage, checkUnlock, buildScene, pageFrontmatter, defaultReltoFrontmatter, skyAt, hourFor,
 };

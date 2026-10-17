@@ -1092,7 +1092,9 @@ class ReltoRenderer {
   }
 
   /** La Verrière (page `page_glasshouse`, bac à sable seulement) : un déguisement de la cabane, jamais de ce qu'on y clique. */
-  glassOn() { const sc = this.scene; return !!(sc && sc.mode !== "story" && sc.additions.some((a) => a.type === "glasshouse")); }
+  /** Le Château (page page_castle) : gothique romantique ; s'il est attaché avec la Verrière, c'est lui qui l'emporte. Jamais en mode histoire. */
+  castleOn() { const sc = this.scene; return !!(sc && sc.mode !== "story" && sc.additions.some((a) => a.type === "castle")); }
+  glassOn() { const sc = this.scene; return !!(sc && sc.mode !== "story" && sc.additions.some((a) => a.type === "glasshouse")) && !this.castleOn(); }
   /**
    * Le pavillon de verre et de cuivre, à la place de la cabane de planches (même emprise, même zone cliquable) : une coupole à
    * nervures et son lanternon (le poêle y respire : la fumée de la page cheminée en sort), deux baies en ogive vert d'eau à

@@ -12,6 +12,7 @@ const DT = require("./dnitime");
 const DC = require("./dniclock");
 const { makeT } = require("./i18n");
 const VR = require("./relto-glass");
+const CS = require("./relto-castle");
 
 const W = 640, H = 360;
 const C = { x: 262, y: 146 }; // le centre de la sphère
@@ -97,13 +98,18 @@ function pillar(r, ctx, c) {
   ctx.strokeStyle = rgba(30, 24, 18, 0.45); ctx.lineWidth = 1; ctx.strokeRect(PLINTH.x + 5, PLINTH.y + 5, PLINTH.w - 10, PLINTH.h - 10);
   ctx.fillStyle = c("#8d8578"); ctx.fillRect(x - 32, 264, 64, 8); // le chapiteau
   // la fourche de laiton qui tient le méridien (sous la Verrière : des bras en coup de fouet, des rinceaux aux coins du socle)
-  const glass = !!(r.glassOn && r.glassOn());
-  ctx.strokeStyle = c("#9a7838"); ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x, 265); ctx.lineTo(x, C.y + MERID - 2); ctx.stroke();
+  const glass = !!(r.glassOn && r.glassOn()), castle = !!(r.castleOn && r.castleOn()); // le Château : une fourche de fer en volutes, des lys d'or aux coins du socle
+  ctx.strokeStyle = c(castle ? CS.IRON : "#9a7838"); ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x, 265); ctx.lineTo(x, C.y + MERID - 2); ctx.stroke();
   ctx.lineWidth = 3; ctx.beginPath();
-  if (glass) { for (const s of [-1, 1]) { ctx.moveTo(x + s * 28, 265); ctx.bezierCurveTo(x + s * 44, C.y + MERID + 20, x + s * 18, C.y + MERID + 4, x + s * 50, C.y + MERID - 12); } }
+  if (castle) { for (const s of [-1, 1]) { ctx.moveTo(x + s * 28, 265); ctx.bezierCurveTo(x + s * 26, C.y + MERID + 26, x + s * 62, C.y + MERID + 10, x + s * 50, C.y + MERID - 12); } }
+  else if (glass) { for (const s of [-1, 1]) { ctx.moveTo(x + s * 28, 265); ctx.bezierCurveTo(x + s * 44, C.y + MERID + 20, x + s * 18, C.y + MERID + 4, x + s * 50, C.y + MERID - 12); } }
   else { ctx.moveTo(x - 28, 265); ctx.quadraticCurveTo(x - 30, C.y + MERID - 2, x - 50, C.y + MERID - 12); ctx.moveTo(x + 28, 265); ctx.quadraticCurveTo(x + 30, C.y + MERID - 2, x + 50, C.y + MERID - 12); }
   ctx.stroke();
-  if (glass) {
+  if (castle) {
+    ctx.fillStyle = c(CS.GOLD); for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(x + s * 50, C.y + MERID - 12, 2.6, 0, 6.283); ctx.fill(); } // une boule d'or au bout de chaque bras
+    ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 1.2; ctx.strokeRect(PLINTH.x + 2.5, PLINTH.y + 2.5, PLINTH.w - 5, PLINTH.h - 5); // un filet d'or autour du socle
+    for (const [px, py] of [[PLINTH.x + 10, PLINTH.y + 10], [PLINTH.x + PLINTH.w - 10, PLINTH.y + 10], [PLINTH.x + 10, PLINTH.y + PLINTH.h - 9], [PLINTH.x + PLINTH.w - 10, PLINTH.y + PLINTH.h - 9]]) CS.lys(ctx, px, py, 2.4, false); // des lys aux coins, loin de la lecture gravée
+  } else if (glass) {
     ctx.fillStyle = c("#4b8a62"); for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(x + s * 52, C.y + MERID - 14, 6, 2.6, s * -0.6, 0, 6.283); ctx.fill(); } // une feuille au bout de chaque bras
     ctx.strokeStyle = c(VR.COPPER); ctx.lineWidth = 1.2; ctx.strokeRect(PLINTH.x + 2.5, PLINTH.y + 2.5, PLINTH.w - 5, PLINTH.h - 5); // un filet de cuivre autour du socle
     VR.cornerVines(ctx, c, PLINTH.x + 2, PLINTH.y + 2, PLINTH.w - 4, PLINTH.h - 4); // des rinceaux aux coins, loin de la lecture gravée

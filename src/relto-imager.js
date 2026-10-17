@@ -23,6 +23,7 @@ const BEAM = require("./beam");
 const { makeT } = require("./i18n");
 const V = require("./genviews");
 const VR = require("./relto-glass");
+const CS = require("./relto-castle");
 const W = 640, H = 360, FLOOR = 300;
 const SCREEN = { x: 178, y: 18, w: 300, h: 172 }, MINI = { x: 404, y: 16, w: 220, h: 126 };
 const GAUGE = { x: 584, y: 52, r: 26 }, LOCK = { x: 584, y: 150 }, CRANK = { x: 146, y: 74, r: 15 }, TILT = { x: 508, y: 104 };
@@ -162,7 +163,9 @@ function drawScreen(r, ctx, S, st, cl, t, c) {
 
 /** Le fond d'une chambre de pierre (et sa fente où passe une aurore). */
 let glassOn = false; // la Verrière (page page_glasshouse) : posé à chaque dessin de la salle (drawImagerRoom)
+let castleOn = false; // le Château (page page_castle) : idem
 function room(ctx, c, t, overview = false) {
+  if (castleOn) return CS.imagerRoom(ctx, c, t, FLOOR, overview);
   if (glassOn) return VR.imagerRoom(ctx, c, t, FLOOR, overview);
   const wg = ctx.createLinearGradient(0, 0, 0, FLOOR); wg.addColorStop(0, c("#232b35")); wg.addColorStop(1, c("#161c23")); ctx.fillStyle = wg; ctx.fillRect(0, 0, W, FLOOR);
   const q = rng(0x1a6e); ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 1;
@@ -175,6 +178,7 @@ function room(ctx, c, t, overview = false) {
 
 /** L'établi vu de près (gros plans) : le mur en haut, la table de bois et de laiton. */
 function bench(ctx, c, y0) {
+  if (castleOn) return CS.imagerBench(ctx, c, y0);
   if (glassOn) return VR.imagerBench(ctx, c, y0);
   const tg = ctx.createLinearGradient(0, y0, 0, H); tg.addColorStop(0, c("#4a3523")); tg.addColorStop(1, c("#24180f")); ctx.fillStyle = tg; ctx.fillRect(0, y0, W, H - y0);
   ctx.fillStyle = c("#6b5126"); ctx.fillRect(0, y0 - 4, W, 5);
@@ -192,7 +196,8 @@ function backStrip(r, ctx) {
 function overview(r, ctx, st, cl, t, c, now) {
   const s = st.settings, k = cl.total, tg = st.target, locked = s.lock, ready = !locked && k >= I.LOCK_AT;
   room(ctx, c, t, true);
-  if (glassOn) VR.pane(ctx, c, 10, 34, 150, FLOOR, c("#b5782e"), c("#5a3214"), "tulip", 2); // la porte : une ogive de verre ambre
+  if (castleOn) CS.narrowDoor(ctx, c, 10, 150, 24, FLOOR); // le Château : une porte étroite en arc brisé
+  else if (glassOn) VR.pane(ctx, c, 10, 34, 150, FLOOR, c("#b5782e"), c("#5a3214"), "tulip", 2); // la porte : une ogive de verre ambre
   else { ctx.fillStyle = c("#0b0d11"); ctx.fillRect(10, 150, 24, FLOOR - 150); ctx.strokeStyle = c("#3a4048"); ctx.strokeRect(10, 150, 24, FLOOR - 150); }
   const av = r.available ? r.available() : {}, tr = tx(r).t;
   r.hot.push({ x: 8, y: 148, w: 28, h: FLOOR - 146, tip: av.cabin ? tr("relto.pass.door.cabin") : "Door — back outside", go: av.cabin ? "cabin" : "island" }); // la porte : vers la maison (d'où l'on vient), l'île sinon
@@ -256,7 +261,8 @@ function overview(r, ctx, st, cl, t, c, now) {
   }
 
   // l'établi et ses trois postes
-  if (glassOn) { ctx.fillStyle = c("#2a1a12"); ctx.fillRect(140, 218, 492, FLOOR - 218); ctx.fillStyle = c(VR.COPPER); ctx.fillRect(136, 212, 500, 8); ctx.fillStyle = c(VR.COPPER_HI); ctx.fillRect(136, 212, 500, 1.4); } // la Verrière : bois sombre, plateau bordé de cuivre
+  if (castleOn) { ctx.fillStyle = c("#241a14"); ctx.fillRect(140, 218, 492, FLOOR - 218); ctx.fillStyle = c("#3a2e28"); ctx.fillRect(136, 212, 500, 8); ctx.fillStyle = c(CS.GOLD); ctx.fillRect(136, 212, 500, 1); } // le Château : chêne noir, filet d'or
+  else if (glassOn) { ctx.fillStyle = c("#2a1a12"); ctx.fillRect(140, 218, 492, FLOOR - 218); ctx.fillStyle = c(VR.COPPER); ctx.fillRect(136, 212, 500, 8); ctx.fillStyle = c(VR.COPPER_HI); ctx.fillRect(136, 212, 500, 1.4); } // la Verrière : bois sombre, plateau bordé de cuivre
   else { ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(140, 218, 492, FLOOR - 218); ctx.fillStyle = c("#5a4322"); ctx.fillRect(136, 212, 500, 8); }
   ctx.strokeStyle = c("#8a6a2e"); ctx.lineWidth = 1; ctx.strokeRect(140, 218, 492, FLOOR - 218);
   // le petit cristal qui projette sur l'écran
@@ -625,7 +631,7 @@ function humPlate(r, ctx, c, onConsole = false) {
 }
 
 function drawImagerRoom(r, ctx, sc, sky, t) {
-  glassOn = !!(r.glassOn && r.glassOn());
+  glassOn = !!(r.glassOn && r.glassOn()); castleOn = !!(r.castleOn && r.castleOn());
   const st = r.imagerState(), amb = 0.65 + 0.35 * sky.ambient, c = (h) => mix("#05060c", h, amb), now = r.imagerNow();
   const tg = st.target, cl = tg ? I.clarity(st.settings, tg, now) : { cry: 0, lens: 0, atmo: 0, total: 0 };
   r.imagerT = t;

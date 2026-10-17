@@ -32,6 +32,7 @@ const MET = require("./metronome");
 const GI = require("./imager-guild");
 const BEAM = require("./beam");
 const VR = require("./relto-glass");
+const CS = require("./relto-castle");
 
 const W = 640, H = 360, GY = 208;
 const EYE = { x: 196, y: 150, r: 116 }, FIELD = 30; // l'oculaire montre ±30 crans fins autour de la visée
@@ -483,22 +484,24 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   if (sc0 && guild && st.old) hear("merta", st.old.period, Math.max(0.1, sig.s * 0.6), "pulse"); else delete heard.merta; // la ligne de Me'erta traverse les Âges : on l'entend glisser là aussi
   // l'intérieur de l'observatoire : la coupole sombre et ses nervures, la fente ouverte sur le ciel, le grand tube, le sol de pierre
   const glass = !!(r.glassOn && r.glassOn()); // la Verrière : coupole vert sombre, nervures et bords de cuivre, sol de mosaïque, coins du panneau en rinceaux
-  const dg = ctx.createRadialGradient(W / 2, 300, 40, W / 2, 300, 520); dg.addColorStop(0, c(glass ? "#1e2e2b" : "#2b2621")); dg.addColorStop(1, c(glass ? "#080d0c" : "#0d0b0a")); ctx.fillStyle = dg; ctx.fillRect(0, 0, W, H);
+  const castle = !!(r.castleOn && r.castleOn()); // le Château : coupole de plomb, nervures de fer, dallage, panneau cerclé d'or
+  const dg = ctx.createRadialGradient(W / 2, 300, 40, W / 2, 300, 520); dg.addColorStop(0, c(castle ? "#2a2834" : glass ? "#1e2e2b" : "#2b2621")); dg.addColorStop(1, c(castle ? "#0b0a10" : glass ? "#080d0c" : "#0d0b0a")); ctx.fillStyle = dg; ctx.fillRect(0, 0, W, H);
   const SL = { x: 318, w: 52 }; // la fente de la coupole, entre l'oculaire et le panneau
   ctx.save(); ctx.beginPath(); ctx.rect(SL.x, 0, SL.w, 286); ctx.clip();
   const g = ctx.createLinearGradient(0, 0, 0, 286); g.addColorStop(0, mix("#04060d", sky.top, 0.35)); g.addColorStop(1, mix("#0a0c14", sky.bottom, 0.3)); ctx.fillStyle = g; ctx.fillRect(SL.x, 0, SL.w, 286);
   const q = rng(((sc.seed || 0) ^ 0x51a7) >>> 0); for (let i = 0; i < 70; i++) { const x = SL.x + q() * SL.w, y = q() * 260, a = (0.2 + 0.5 * q()) * (0.6 + 0.4 * (sky.night == null ? 1 : sky.night)); ctx.fillStyle = rgba(230, 236, 255, a); ctx.fillRect(x, y, 1, 1); }
   ctx.restore();
-  ctx.strokeStyle = c(glass ? VR.COPPER : "#4a3a26"); ctx.lineWidth = 3; ctx.strokeRect(SL.x - 1.5, -2, SL.w + 3, 289); // les bords de la fente (les volets ouverts)
-  ctx.strokeStyle = glass ? c("#7a4422") : "rgba(0,0,0,0.45)"; ctx.lineWidth = glass ? 1.6 : 1.4; // les nervures de la coupole
+  ctx.strokeStyle = c(castle ? CS.IRON : glass ? VR.COPPER : "#4a3a26"); ctx.lineWidth = 3; ctx.strokeRect(SL.x - 1.5, -2, SL.w + 3, 289); if (castle) { ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 0.8; ctx.strokeRect(SL.x - 3.5, -2, SL.w + 7, 291); } // les bords de la fente (les volets ouverts)
+  ctx.strokeStyle = castle ? c("#14121a") : glass ? c("#7a4422") : "rgba(0,0,0,0.45)"; ctx.lineWidth = castle ? 2.2 : glass ? 1.6 : 1.4; // les nervures de la coupole
   for (let k = 1; k <= 4; k++) { const y0 = 286 - k * 62; ctx.beginPath(); ctx.moveTo(0, y0 + 30); ctx.quadraticCurveTo(SL.x / 2, y0 - 4, SL.x - 2, y0); ctx.moveTo(SL.x + SL.w + 2, y0); ctx.quadraticCurveTo((SL.x + SL.w + W) / 2, y0 - 4, W, y0 + 30); ctx.stroke(); }
   for (const x of [24, 150, 250, 420, 520, 620]) { ctx.beginPath(); const L = x < SL.x; ctx.moveTo(x, 286); ctx.quadraticCurveTo(x + (L ? 40 : -40), 110, L ? SL.x - 4 : SL.x + SL.w + 4, 0); ctx.stroke(); }
-  if (glass) VR.darkMosaic(ctx, c, 286); else {
+  if (castle) { const pg = ctx.createLinearGradient(0, 286, 0, H); pg.addColorStop(0, c("#34303c")); pg.addColorStop(1, c("#17151b")); ctx.fillStyle = pg; ctx.fillRect(0, 286, W, H - 286); ctx.strokeStyle = "rgba(0,0,0,0.38)"; ctx.lineWidth = 1; for (const y of [298, 316, 342]) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); } for (let i = 0; i < 12; i++) { const x = i * 58 + 18; ctx.beginPath(); ctx.moveTo(x, 286); ctx.lineTo(x - (x - 320) * 0.2, H); ctx.stroke(); } ctx.fillStyle = c(CS.GOLD); ctx.fillRect(0, 286, W, 0.8); } // le Château : un dallage de pierre
+  else if (glass) VR.darkMosaic(ctx, c, 286); else {
   const pg = ctx.createLinearGradient(0, 286, 0, H); pg.addColorStop(0, c("#3a3530")); pg.addColorStop(1, c("#1a1714")); ctx.fillStyle = pg; ctx.fillRect(0, 286, W, H - 286);
   ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.lineWidth = 1; for (let x = 0; x < W; x += 46) { ctx.beginPath(); ctx.moveTo(x + (x / 46 % 2) * 20, 286); ctx.lineTo(x + (x / 46 % 2) * 20, H); ctx.stroke(); } ctx.beginPath(); ctx.moveTo(0, 312); ctx.lineTo(W, 312); ctx.stroke();
   }
   // le corps de l'instrument : un panneau de laiton sombre derrière les molettes
-  ctx.fillStyle = c("#1b130d"); ctx.fillRect(374, 34, 250, 252); ctx.strokeStyle = c(glass ? VR.COPPER : "#8a6a2e"); ctx.lineWidth = glass ? 2 : 1.2; ctx.strokeRect(374.5, 34.5, 249, 251);
+  ctx.fillStyle = c("#1b130d"); ctx.fillRect(374, 34, 250, 252); ctx.strokeStyle = c(castle ? CS.GOLD : glass ? VR.COPPER : "#8a6a2e"); ctx.lineWidth = glass || castle ? 2 : 1.2; ctx.strokeRect(374.5, 34.5, 249, 251); if (castle) { ctx.strokeStyle = c(CS.IRON); ctx.lineWidth = 1; ctx.strokeRect(377.5, 37.5, 243, 245); }
   if (glass) VR.cornerVines(ctx, c, 374, 34, 250, 252); // des rinceaux de cuivre aux quatre coins, hors des molettes
   ctx.fillStyle = c("#2a1d13"); ctx.fillRect(330, 140, 46, 20); // le bras qui relie l'oculaire au panneau
   metronome(r, ctx, c, ms); // au mur de gauche : le balancier qui bat le prorahn

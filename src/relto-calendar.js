@@ -6,6 +6,7 @@ const { mix, rgba, rng } = require("./util");
 const DC = require("./dniclock");
 const DT = require("./dnitime");
 const GLASS = require("./relto-glass");
+const CS = require("./relto-castle");
 const W = 640, H = 360, CX = 320, X0 = 200, X1 = 440, TOP = 34, BASE = 316;
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 
@@ -16,6 +17,7 @@ function back(r, ctx, label) {
 }
 
 function drawCalendar(r, ctx, sc, sky, t) {
+  const castle = !!(r.castleOn && r.castleOn()); // le Château : une stèle de granit en arc brisé, à crochets et pinacles, la gravure dorée
   const glass = !!(r.glassOn && r.glassOn()), TRr = TR(r), amb = 0.55 + 0.45 * (sky.ambient == null ? 1 : sky.ambient), c = (h) => mix("#05060c", h, amb);
   const ms = r.nowOverride != null ? r.nowOverride : Date.now(), d = DC.reltoDate(r.scene || sc, ms), q = rng(0x5ca1);
   r.drawSky(ctx, sky, t, null);
@@ -25,7 +27,15 @@ function drawCalendar(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#6f8f4a"); for (let i = 0; i < 22; i++) { ctx.beginPath(); ctx.ellipse(X0 - 18 + q() * (X1 - X0 + 36), BASE + 1 - q() * 2, 3 + q() * 4, 1.6, 0, 0, 6.283); ctx.fill(); }
   // le fût
   const ogive = (xa, xb, top, base) => { const m = (xa + xb) / 2, k = (xb - xa) * 0.5; ctx.beginPath(); ctx.moveTo(xa, base); ctx.lineTo(xa, top + k); ctx.quadraticCurveTo(xa, top + k * 0.25, m, top); ctx.quadraticCurveTo(xb, top + k * 0.25, xb, top + k); ctx.lineTo(xb, base); ctx.closePath(); };
-  if (glass) {
+  if (castle) {
+    const g = ctx.createLinearGradient(X0, 0, X1, 0); g.addColorStop(0, c("#9a95a3")); g.addColorStop(0.55, c("#6e6876")); g.addColorStop(1, c("#4a4752")); ctx.fillStyle = g; CS.pointed(ctx, X0, X1, TOP, TOP + 70, BASE); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = rgba(0, 0, 0, 0.3); ctx.lineWidth = 1.4; CS.pointed(ctx, X0, X1, TOP, TOP + 70, BASE); ctx.stroke();
+    ctx.strokeStyle = c("#b8b3c0"); ctx.lineWidth = 1; CS.pointed(ctx, X0 + 9, X1 - 9, TOP + 12, TOP + 74, BASE - 6); ctx.stroke(); // la moulure
+    ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 0.8; CS.pointed(ctx, X0 + 13, X1 - 13, TOP + 18, TOP + 76, BASE - 10); ctx.stroke();
+    ctx.fillStyle = c("#5a5664"); for (let k = 1; k < 6; k++) { const u = k / 6, xl = X0 + (CX - X0) * u * 0.92, yy = TOP + 70 - (70 * Math.sin(u * Math.PI / 2)); for (const [xx, s2] of [[xl, -1], [X1 - (xl - X0), 1]]) { ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx + s2 * 5, yy - 3); ctx.lineTo(xx + s2 * 2, yy + 3); ctx.closePath(); ctx.fill(); } } // les crochets
+    ctx.fillStyle = c(CS.GOLD); ctx.beginPath(); ctx.moveTo(CX, TOP - 14); ctx.lineTo(CX + 4, TOP - 2); ctx.lineTo(CX - 4, TOP - 2); ctx.closePath(); ctx.fill(); // le fleuron
+    for (const x of [X0 - 14, X1 + 14]) { ctx.fillStyle = c("#7a7683"); ctx.fillRect(x - 6, TOP + 110, 12, BASE - TOP - 110); ctx.beginPath(); ctx.moveTo(x - 7, TOP + 110); ctx.lineTo(x, TOP + 78); ctx.lineTo(x + 7, TOP + 110); ctx.closePath(); ctx.fill(); ctx.fillStyle = c(CS.GOLD); ctx.beginPath(); ctx.arc(x, TOP + 76, 1.8, 0, 6.283); ctx.fill(); } // deux pinacles
+  } else if (glass) {
     const g = ctx.createLinearGradient(0, TOP, 0, BASE); g.addColorStop(0, c("#2a7a70")); g.addColorStop(1, c("#0e2a28")); ctx.fillStyle = g; ogive(X0, X1, TOP, BASE); ctx.fill();
     ctx.save(); ogive(X0, X1, TOP, BASE); ctx.clip(); const gl = ctx.createRadialGradient(CX, 170, 10, CX, 170, 150); gl.addColorStop(0, rgba(224, 162, 58, 0.22)); gl.addColorStop(1, rgba(224, 162, 58, 0)); ctx.fillStyle = gl; ctx.fillRect(X0, TOP, X1 - X0, BASE - TOP);
     ctx.strokeStyle = rgba(15, 47, 44, 0.8); ctx.lineWidth = 1.1; for (const x of [X0 + 60, X1 - 60]) { ctx.beginPath(); ctx.moveTo(x, TOP + 40); ctx.lineTo(x, BASE); ctx.stroke(); } // les plombs
@@ -41,7 +51,7 @@ function drawCalendar(r, ctx, sc, sky, t) {
     for (let i = 0; i < 40; i++) { ctx.fillStyle = rgba(q() < 0.5 ? 0 : 255, q() < 0.5 ? 0 : 240, 220, 0.03 + q() * 0.04); ctx.fillRect(X0 + 10 + q() * (X1 - X0 - 20), TOP + 40 + q() * (BASE - TOP - 50), 8 + q() * 20, 1 + q() * 2); }
   }
   // la gravure : le hahr, le nom du vailee, le yahr ; dessous, gahrtahvo · tahvo · gorahn · prorahn
-  const ink = glass ? c("#ffe3a6") : c("#2c2418"), lit = glass ? "rgba(10,30,28,0.7)" : "rgba(255,240,205,0.28)", dx = glass ? -0.6 : 0.6;
+  const ink = castle ? c("#d8b45e") : glass ? c("#ffe3a6") : c("#2c2418"), lit = castle ? "rgba(20,16,24,0.75)" : glass ? "rgba(10,30,28,0.7)" : "rgba(255,240,205,0.28)", dx = castle || glass ? -0.6 : 0.6;
   const num = (v, cx, y, s) => { if (!r.dni) return; const w = r.dni.widthOf(v, s); r.dni.drawNumber(ctx, v, cx - w / 2 + dx, y + 0.7, s, lit); r.dni.drawNumber(ctx, v, cx - w / 2, y, s, ink); return w; };
   if (r.dni) {
     num(d.hahr, CX, 84, 32);
