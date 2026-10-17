@@ -58,8 +58,8 @@ function cabinWalls(r, ctx, c, sky, t, FLOOR) {
  * des lames à 45°, joints et tons qui varient) ou `"panneaux"` (parquet à panneaux, une étoile à huit branches dans chaque carré).
  * Dessiné une fois en pleine lumière dans une toile à part, puis posé et assombri d'un voile (c(h) est un mélange linéaire vers la nuit).
  */
-let FLOOR_STYLE = "batons";
-function setFloorStyle(v) { FLOOR_STYLE = v === "panneaux" ? "panneaux" : "batons"; floorCache = {}; }
+let FLOOR_STYLE = "chevrons";
+function setFloorStyle(v) { FLOOR_STYLE = ["panneaux", "batons"].includes(v) ? v : "chevrons"; floorCache = {}; }
 let floorCache = {};
 const HZ = -250, PK = 360 - HZ, DFAR = PK / (250 - HZ); // une perspective douce : un sol vu de haut et de loin (le fond n'est qu'un cinquième plus petit que le premier plan)
 const proj = (X, D) => [320 + (420 * X) / D, HZ + PK / D]; // X latéral, D profondeur (1 au premier plan, DFAR au fond du sol, à y = 250)
@@ -68,7 +68,20 @@ function paintParquet(ctx, style, FLOOR, H, W) {
   const id = (h) => h, q = rng(style === "panneaux" ? 0x9a7e : 0xba70);
   ctx.fillStyle = "#3a2619"; ctx.fillRect(0, FLOOR, W, H - FLOOR);
   const tone = () => { const v = q(); return v < 0.4 ? "#553b28" : v < 0.8 ? "#4f3625" : "#5b402b"; }; // des tons proches : le parquet se lit sans crier
-  if (style === "panneaux") {
+  if (style === "chevrons") { // le point de Hongrie : des colonnes qui filent vers le fond, des lames coupées en biais qui se rejoignent en V sur chaque joint
+    const Cw = 0.12, s = 0.046; // largeur d'une colonne ; pas entre deux lames, le long de la colonne
+    for (let i = -9; i <= 9; i++) {
+      const odd = ((i % 2) + 2) % 2 === 1, xa = i * Cw, xb = xa + Cw, dir = odd ? 1 : -1, b0 = odd ? 0.9 - Cw : 0.9; // les V se referment sur chaque joint : b0(i+1) = b0(i) + dir(i)·Cw
+      for (let j = -8; j < 14; j++) {
+        const d0 = b0 + j * s, P = [[xa, d0], [xb, d0 + dir * Cw], [xb, d0 + dir * Cw + s], [xa, d0 + s]];
+        if (P.every(([, D]) => D < 0.97) || P.every(([, D]) => D > DFAR + 0.03) || Math.abs(xa) > 1.1) continue;
+        ctx.fillStyle = tone(); poly(ctx, P); ctx.fill();
+        ctx.strokeStyle = "rgba(20,12,6,0.5)"; ctx.lineWidth = 0.6; ctx.stroke();
+        if (q() < 0.35) { const u0 = 0.2 + q() * 0.2, u1 = u0 + 0.35; const [x1, y1] = proj(xa + Cw * u0, d0 + dir * Cw * u0 + s * 0.5), [x2, y2] = proj(xa + Cw * u1, d0 + dir * Cw * u1 + s * 0.5); ctx.strokeStyle = "rgba(255,225,180,0.06)"; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); } // le fil du bois
+      }
+      ctx.strokeStyle = "rgba(20,12,6,0.55)"; ctx.lineWidth = 0.8; ctx.beginPath(); const [sx1, sy1] = proj(xb, 0.97), [sx2, sy2] = proj(xb, DFAR + 0.02); ctx.moveTo(sx1, sy1); ctx.lineTo(sx2, sy2); ctx.stroke(); // le joint droit entre deux colonnes
+    }
+  } else if (style === "panneaux") {
     const S = 0.2; // un panneau carré
     for (let D = 0.98; D < DFAR + 0.05; D += S) for (let X = -1.2; X < 1.2; X += S) {
       const X0 = X, X1 = X + S, D0 = D, D1 = D + S, m = 0.035;
