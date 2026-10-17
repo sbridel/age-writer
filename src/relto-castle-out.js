@@ -65,6 +65,8 @@ function keep(r, ctx, M, sky, t, observatory) {
   ctx.fill(P("M180 210 L 186 160 L 196 160 L 196 136 L 204 136 L 204 160 L 224 160 L 224 118 L 230 100 L 236 118 L 236 160 L 250 160 L 250 110 L 256 110 L 256 160 L 330 160 L 330 128 L 336 128 L 336 160 L 372 160 L 372 112 L 378 92 L 384 112 L 384 160 L 400 160 L 400 136 L 406 136 L 406 160 L 420 210 Z"));
   ctx.fill(P("M322 160 L 326 70 L 330 160 Z M196 136 L 200 112 L 204 136 Z M400 136 L 403 116 L 406 136 Z"));
   ctx.fillStyle = W(0.4); for (const [x, y] of [[229, 126], [229, 140], [377, 120], [377, 136], [325, 100], [325, 124], [200, 146], [403, 146]]) ctx.fillRect(x, y, 2, 4); // des fenêtres lointaines
+  // une tourelle, derrière la tour ronde : plus petite, plus sombre, on la devine à peine (dessinée avant la tour, qui la cache en partie)
+  ctx.fillStyle = c("#3e3a48"); ctx.fillRect(231, 98, 7, 18); fillP("M230 98 L 234.5 84 L 239 98 Z", c("#2e3044")); strokeP("M234.5 84 v-4", c(GOLD), 0.6); ctx.fillStyle = W(0.5); ctx.fillRect(233.8, 102, 1.4, 3);
   // PLAN MOYEN — la tour ronde, à gauche, son toit, son balcon, ses lancettes
   box(208, 112, 26, 98, MID);
   fillP("M204 112 L 221 76 L 238 112 Z", grad(204, 238, SL)); fillP("M221 76 L 238 112 L 221 112 Z", rgba(0, 0, 0, 0.22));
