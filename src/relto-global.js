@@ -28,6 +28,7 @@ function fog(r, ctx, sky, t, y0, y1, alpha, speed, seed) {
 
 function island(r, ctx, sc, sky, t, has) {
   const cx = 320, y = 228, a = k(sky), c = (h) => mix("#05060c", h, a);
+  if (r.castleOn && r.castleOn() && r.lay && r.geo) { castleIsland(r, ctx, sc, sky, t, has, cx, y); r.hot.push({ x: cx - 66, y: y - 52, w: 132, h: 100, tip: "Your Relto — click to go there", go: "island" }); return; }
   const rock = ctx.createLinearGradient(0, y, 0, y + 70); rock.addColorStop(0, c("#6a5d4e")); rock.addColorStop(1, c("#2c2822"));
   ctx.fillStyle = rock; ctx.beginPath(); ctx.moveTo(cx - 64, y); ctx.lineTo(cx + 64, y); ctx.lineTo(cx + 40, y + 34); ctx.lineTo(cx + 14, y + 66); ctx.lineTo(cx - 6, y + 74); ctx.lineTo(cx - 36, y + 38); ctx.closePath(); ctx.fill();
   ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.beginPath(); ctx.moveTo(cx + 12, y); ctx.lineTo(cx + 64, y); ctx.lineTo(cx + 40, y + 34); ctx.lineTo(cx + 14, y + 66); ctx.closePath(); ctx.fill();
@@ -52,6 +53,26 @@ function island(r, ctx, sc, sky, t, has) {
   if (sc.returning > 0) { ctx.strokeStyle = rgba(190, 235, 255, 0.5 + 0.3 * Math.sin(t * 2)); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx + 45.5, y - 12, 5, 0, 6.283); ctx.stroke(); }
   const pt = has("chimney"); if (pt) { for (let i = 0; i < 3; i++) { const p = ((t * 0.3 + i / 3) % 1); ctx.fillStyle = rgba(190, 190, 200, 0.3 * (1 - p)); ctx.beginPath(); ctx.arc((r.glassOn && r.glassOn() ? cx - 23 : cx - 28) + p * 8, y - 24 - p * 22, 2 + p * 3, 0, 6.283); ctx.fill(); } }
   r.hot.push({ x: cx - 66, y: y - 52, w: 132, h: 100, tip: "Your Relto — click to go there", go: "island" });
+}
+
+/**
+ * Le Château, vu de loin : la même île que de près, réduite (le sol de l'île, à y = 208, posé en (cx, y)) — les soubassements et l'enceinte,
+ * l'ancienne montagne devenue château, la courtine, la chapelle, les stèles, la gargouille et sa chute. Rien de cliquable ici : toute l'île
+ * est une seule zone (island()).
+ */
+function castleIsland(r, ctx, sc, sky, t, has, cx, y) {
+  const CO = require("./relto-castle-out"), S = 0.4, amb = 0.4 + 0.6 * sky.ambient, col = (h) => mix("#05060c", h, amb);
+  ctx.save(); ctx.translate(cx - 306 * S, y - 208 * S); ctx.scale(S, S);
+  r.drawIsland(ctx, sky, t);
+  CO.keep(r, ctx, r.lay.mount, sky, t, false);
+  if (has("waterfall")) r.drawWaterfall(ctx, t, "stream", sky);
+  r.drawPlants(ctx, 0, t);
+  if (has("waterfall")) r.drawWaterfall(ctx, t, "fall");
+  const st = new Set(sc.structures);
+  if (st.has("hut")) CO.chapel(ctx, col, sky, t, r.hutX - 28, 178, 56, 30, r.hutX);
+  if (st.has("linking_pillars")) for (const px of r.pillX) { ctx.fillStyle = col("#7a7683"); CO.stelePath(ctx, px, 208, 5.5, 37); ctx.fill(); }
+  r.drawPlants(ctx, 1, t);
+  ctx.restore();
 }
 
 /** Un îlot : socle de roche, calotte verte, un arbre. */
