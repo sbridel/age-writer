@@ -13,6 +13,7 @@ const PB = require("./relto-pagebook");
 const TL = require("./relto-telescope");
 const SM = require("./relto-starmap");
 const GLASS = require("./relto-glass");
+const CO = require("./relto-castle-out"); // le Château, dehors : l'île entière devient le château
 const CK = require("./relto-clock");
 const IM = require("./imager");
 const GI = require("./imager-guild");
@@ -227,9 +228,9 @@ class ReltoRenderer {
     this.drawIsland(ctx, sky, t);
     const dk = has("dock"); if (dk) SC.dock(ctx, this, sky, t, !!cal, !!has("dniclock"));
     for (const k of ["gold", "silver", "gems"]) { const o = has(k); if (o) this.drawOre(ctx, k, o.density, sky, t); }
-    const mt = has("mountain"), tl = has("telescope"); if (mt || tl) this.drawMount(ctx, mt ? mt.density : 0, sky, t, !!tl); // avec l'observatoire, le sommet est aplani en terrasse
+    const mt = has("mountain"), tl = has("telescope"); if (this.castleOn()) { if (tl) Object.assign(this.lay.mount, this.terraceOf(this.lay.mount)); CO.keep(this, ctx, this.lay.mount, sky, t, !!tl); } /* le Château : le donjon, toujours (même sans la page Montagne) */ else if (mt || tl) this.drawMount(ctx, mt ? mt.density : 0, sky, t, !!tl); // avec l'observatoire, le sommet est aplani en terrasse
     if (tl) TL.drawOnIsland(this, ctx, sky, t);
-    const wf = has("waterfall"); if (wf) this.drawWaterfall(ctx, t, "stream"); // le ruisseau coule sur la montagne : derrière les arbres
+    const wf = has("waterfall"); if (wf) this.drawWaterfall(ctx, t, "stream", sky); // le ruisseau coule sur la montagne : derrière les arbres
     this.drawPlants(ctx, 0, t);
     const kp = has("koi"); if (kp) this.drawKoi(ctx, kp, sky, t); // après les arbres du fond : le bassin n'est jamais recouvert
     if (wf) this.drawWaterfall(ctx, t, "fall"); // éclaboussures sur le bassin et chute sous l'île : devant
@@ -351,7 +352,8 @@ class ReltoRenderer {
     ctx.strokeStyle = rgba(0, 0, 0, 0.25); ctx.lineWidth = 1;
     for (const [x, y, w] of g.strata) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w * 0.4, y + 2); ctx.lineTo(x + w, y - 1); ctx.stroke(); }
     ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.beginPath(); ctx.moveTo(380, GY); ctx.lineTo(480, GY); ctx.lineTo(480, 300); ctx.lineTo(330, 380); ctx.closePath(); ctx.fill();
-    if (T.glow) {
+    if (this.castleOn()) CO.foundations(ctx, shade, g.outline); // le Château : soubassements, arcs aveugles, contreforts
+    else if (T.glow) {
       for (let i = 0; i < 6; i++) {
         const a = 0.3 + 0.35 * Math.sin(t * 0.8 + i * 1.7), x = 205 + i * 45 + (i % 2) * 8, y = GY + 24 + (i * 17) % 60;
         ctx.strokeStyle = hexa(T.glow, clamp(a) * (0.6 + 0.4 * sky.night)); ctx.lineWidth = 1.4;
@@ -371,6 +373,7 @@ class ReltoRenderer {
     }
     ctx.fillStyle = shade(T.tuft);
     for (const [x, h] of g.tufts) { ctx.beginPath(); ctx.moveTo(x - 2, GY + 1); ctx.lineTo(x, GY - h); ctx.lineTo(x + 2, GY + 1); ctx.fill(); }
+    if (this.castleOn()) CO.parapet(ctx, shade); // le Château : l'enceinte, un parapet à arcatures sur le bord
   }
 
   /** Filons d'or, d'argent et gemmes dans la roche sous l'île (pages « gold », « silver », « gems »). Déterministe : graine du Relto. */
@@ -442,11 +445,16 @@ class ReltoRenderer {
 
   /** Ruisseau : naît sur le flanc du mont, descend jusqu'au bassin (ou jusqu'au bord), puis tombe de l'île dans la brume. */
   /** Ruisseau (part « stream », sur la montagne, derrière les arbres) puis chute (part « fall », sous l'île, devant). */
-  drawWaterfall(ctx, t, part = "all") {
+  drawWaterfall(ctx, t, part = "all", sky = null) {
     const L = this.lay, M = L.mount, koi = L.koi, mt = this.scene.additions.some((a) => a.type === "mountain");
     const fx = koi ? koi.x0 + 16 : M.x + M.hw * 0.5, sx = mt ? M.x + 16 : fx - 22, sy = mt ? GY - M.h * 0.86 : GY - 7, N = 24, pts = [];
     for (let i = 0; i <= N; i++) { const p = i / N; pts.push([sx + (fx - sx) * Math.pow(p, 1.15) + Math.sin(p * 7 + t * 0.4) * 0.8 * (1 - p), sy + (GY - sy) * p, 1.6 + 2.6 * p]); }
-    if (part !== "fall") {
+    if (part !== "fall" && this.castleOn()) { // le Château : une gargouille au pied du donjon crache l'eau dans le bassin
+      const amb = 0.35 + 0.65 * (sky && sky.ambient != null ? sky.ambient : 1), c = (h) => mix("#05060c", h, amb), gx = fx - 16, gy = GY - 15;
+      ctx.strokeStyle = "rgba(200,228,248,0.85)"; ctx.lineWidth = 2.4; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(gx + 6, gy); ctx.quadraticCurveTo(fx - 4, gy - 1, fx, GY); ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineWidth = 0.8; const q2 = frac(t * 0.6); ctx.beginPath(); ctx.moveTo(gx + 6 + q2 * 6, gy + q2 * 2); ctx.lineTo(gx + 8 + q2 * 6, gy + q2 * 3); ctx.stroke(); ctx.lineCap = "butt";
+      CO.gargoyle(ctx, c, gx, gy);
+    } else if (part !== "fall") {
     ctx.fillStyle = "rgba(200,228,248,0.85)"; ctx.beginPath();
     pts.forEach(([x, y, w], i) => (i ? ctx.lineTo(x - w / 2, y) : ctx.moveTo(x - w / 2, y))); for (let i = N; i >= 0; i--) ctx.lineTo(pts[i][0] + pts[i][2] / 2, pts[i][1]); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,0.75)"; ctx.lineWidth = 0.9;
@@ -526,7 +534,7 @@ class ReltoRenderer {
     const [rx, ry] = fish(0, genomes[0], 15.5, KOI_RARE[rare]);
     if (rare !== "ghost") for (let k = 0; k < 4; k++) { const p = frac(t * 0.3 + k / 4 + r()); ctx.fillStyle = rgba(255, 245, 200, 0.7 * Math.sin(p * 3.14)); ctx.fillRect(X0 + 8 + r() * (PW - 16), Y0 + 2 + p * (PH - 4), 0.9, 0.9); }
     ctx.restore();
-    ctx.fillStyle = shade("#6d6a64"); for (const [sx, sw] of [[X0 - 4, 5], [X0 + PW - 1, 5]]) { ctx.beginPath(); ctx.ellipse(sx + sw / 2, GY + 1, sw / 2 + 0.5, 3.4, 0, 0, 6.283); ctx.fill(); }
+    ctx.fillStyle = shade(this.castleOn() ? "#8a8591" : "#6d6a64"); for (const [sx, sw] of [[X0 - 4, 5], [X0 + PW - 1, 5]]) { ctx.beginPath(); ctx.ellipse(sx + sw / 2, GY + 1, sw / 2 + 0.5, 3.4, 0, 0, 6.283); ctx.fill(); }
     ctx.strokeStyle = rgba(230, 245, 255, 0.25); ctx.lineWidth = 0.7; const rp = frac(t * 0.25); ctx.beginPath(); ctx.ellipse(X0 + PW * 0.5, GY + 0.8, 6 + rp * 14, 0.9 + rp * 1.2, 0, 0, 6.283); ctx.stroke();
     this.hot.push({ x: X0 - 3, y: GY - 2, w: PW + 6, h: PH + 5, tip: `Koi pond — a rare ${KOI_RARE[rare].label} koi swims here` });
     const nm = String(a.name || "").trim() || KOI_RARE[rare].title;
@@ -946,7 +954,8 @@ class ReltoRenderer {
     if (st.has("hut")) {
       const w = 56, h = 30, x0 = this.hutX - w / 2, y0 = GY - h;
       this.hot.push({ x: x0 - 8, y: y0 - 24, w: w + 16, h: h + 24, tip: "Cabin — click to go inside", go: "cabin" });
-      if (this.glassOn()) this.drawGlasshouse(ctx, sky, t, x0, y0, w, h, col); else {
+      if (this.castleOn()) CO.chapel(ctx, col, sky, t, x0, y0, w, h, this.hutX); // le Château : la chapelle, au pied du donjon
+      else if (this.glassOn()) this.drawGlasshouse(ctx, sky, t, x0, y0, w, h, col); else {
       ctx.fillStyle = col("#5a4330"); ctx.fillRect(x0, y0, w, h);
       ctx.strokeStyle = rgba(0, 0, 0, 0.3); ctx.lineWidth = 1; for (let i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(x0, y0 + i * 5); ctx.lineTo(x0 + w, y0 + i * 5); ctx.stroke(); }
       ctx.fillStyle = col("#2f2a2a"); ctx.fillRect(x0 + 8, y0 - 22, 7, 18); // cheminée
@@ -962,9 +971,14 @@ class ReltoRenderer {
     if (st.has("linking_pillars")) {
       const lit = sc.returning > 0, pulse = 0.55 + 0.45 * Math.sin(t * 2.2);
       for (const px of this.pillX) {
+        if (this.castleOn()) { // le Château : une stèle en arc brisé, une croix gravée qui s'allume quand un Âge revient ici
+          ctx.fillStyle = col("#7a7683"); CO.stelePath(ctx, px, GY, 5.5, 37); ctx.fill(); ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(px + 1, GY - 31, 4.5, 31);
+          ctx.fillStyle = lit ? rgba(150, 215, 255, 0.5 + 0.4 * pulse) : rgba(60, 56, 70, 0.7); ctx.fillRect(px - 0.9, GY - 29, 1.8, 13); ctx.fillRect(px - 4, GY - 25, 8, 1.8);
+        } else {
         ctx.fillStyle = col("#5a5a66"); ctx.beginPath(); ctx.moveTo(px - 5, GY); ctx.lineTo(px - 5, GY - 32); ctx.lineTo(px - 2, GY - 36); ctx.lineTo(px + 2, GY - 36); ctx.lineTo(px + 5, GY - 32); ctx.lineTo(px + 5, GY); ctx.closePath(); ctx.fill();
         ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(px + 1, GY - 34, 4, 34);
         ctx.fillStyle = lit ? rgba(150, 215, 255, 0.5 + 0.4 * pulse) : rgba(120, 120, 140, 0.4); ctx.fillRect(px - 1, GY - 28, 2, 7); ctx.fillRect(px - 1, GY - 17, 2, 4);
+        }
       }
       const cx = (this.pillX[0] + this.pillX[1]) / 2;
       if (lit) { const gl = ctx.createRadialGradient(cx, GY - 22, 1, cx, GY - 22, 26); gl.addColorStop(0, rgba(160, 220, 255, 0.55 * pulse)); gl.addColorStop(1, rgba(160, 220, 255, 0)); ctx.fillStyle = gl; ctx.fillRect(cx - 30, GY - 52, 60, 60); }
@@ -1161,13 +1175,13 @@ class ReltoRenderer {
   /** menhirs et colonnes brisées : ils s'allument de runes la nuit */
   /** cheminée allumée : fumée chaude et dense, lueur vacillante, étincelles, fenêtre éclairée */
   drawChimney(ctx, d, sky, t) {
-    const x0 = this.hutX - 28, y0 = GY - 30, glass = this.glassOn(), cx = glass ? this.hutX : x0 + 11.5, cy = glass ? y0 - 27 : y0 - 24, night = clamp(sky.night == null ? 0.3 : sky.night);
+    const x0 = this.hutX - 28, y0 = GY - 30, glass = this.glassOn(), castle = this.castleOn(), [kx, ky] = CO.chimneyAt(x0, y0, 56), cx = castle ? kx : glass ? this.hutX : x0 + 11.5, cy = castle ? ky : glass ? y0 - 27 : y0 - 24, night = clamp(sky.night == null ? 0.3 : sky.night);
     const fl = 0.75 + 0.25 * Math.sin(t * 9.1) * Math.sin(t * 5.3 + 1) + 0.1 * Math.sin(t * 17);
     // fenêtre et lueur de l'âtre
     const wx = x0 + 56 - 14, wy = y0 + 13;
     let g = ctx.createRadialGradient(wx, wy, 1, wx, wy, 34 + 10 * d); g.addColorStop(0, rgba(255, 170, 70, (0.35 + 0.25 * night) * fl * d)); g.addColorStop(1, rgba(255, 140, 50, 0));
     ctx.fillStyle = g; ctx.fillRect(wx - 50, wy - 50, 100, 100);
-    if (!this.glassOn()) { ctx.fillStyle = rgba(255, 190, 90, (0.5 + 0.4 * night) * fl); ctx.fillRect(wx - 5, wy - 5, 11, 10); } // la Verrière s'allume d'elle-même
+    if (!this.glassOn() && !castle) { ctx.fillStyle = rgba(255, 190, 90, (0.5 + 0.4 * night) * fl); ctx.fillRect(wx - 5, wy - 5, 11, 10); } // la Verrière s'allume d'elle-même
     g = ctx.createRadialGradient(cx, cy, 1, cx, cy, 18); g.addColorStop(0, rgba(255, 150, 60, (0.25 + 0.3 * night) * fl * d)); g.addColorStop(1, rgba(255, 120, 40, 0));
     ctx.fillStyle = g; ctx.fillRect(cx - 20, cy - 20, 40, 40);
     // fumée : volutes qui s'élargissent, dérivent avec le vent
@@ -1190,10 +1204,12 @@ class ReltoRenderer {
     spots.forEach(([x, h, whole], i) => {
       const w = 5.5 + rr() * 2, top = GY - h, lean = (rr() - 0.5) * 2;
       ctx.fillStyle = mix("#05060c", i % 2 ? "#6a6a76" : "#5a5a66", amb);
+      if (this.castleOn()) { CO.stelePath(ctx, x, GY, w * 0.85, h); ctx.fill(); ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(x + w * 0.2, top + w, w * 0.65, h - w); } else { // le Château : des stèles droites en arc brisé
       ctx.beginPath(); ctx.moveTo(x - w, GY); ctx.lineTo(x - w + lean * 0.5, top + 3);
       if (whole) { ctx.lineTo(x - w * 0.6 + lean, top); ctx.lineTo(x + w * 0.6 + lean, top); } else { ctx.lineTo(x - w * 0.3 + lean, top - 3); ctx.lineTo(x + w * 0.2 + lean, top + 2); ctx.lineTo(x + w * 0.7 + lean, top - 1); }
       ctx.lineTo(x + w + lean * 0.5, top + 4); ctx.lineTo(x + w, GY); ctx.closePath(); ctx.fill();
       ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(x + w * 0.2, top + 3, w * 0.8, h - 3);
+      }
       ctx.fillStyle = mix("#05060c", "#4f6a3c", amb * 0.8); ctx.fillRect(x - w, GY - 4, w * 2, 4);
       if (night > 0.25) { const pulse = 0.55 + 0.45 * Math.sin(t * 1.4 + i * 1.9), col = rgba(150, 215, 255, night * pulse * 0.9);
         const gl = ctx.createRadialGradient(x, GY - h * 0.55, 0, x, GY - h * 0.55, 12); gl.addColorStop(0, rgba(150, 215, 255, 0.28 * night * pulse)); gl.addColorStop(1, rgba(150, 215, 255, 0)); ctx.fillStyle = gl; ctx.fillRect(x - 12, GY - h * 0.55 - 12, 24, 24);
@@ -1314,6 +1330,15 @@ class ReltoRenderer {
     for (let i = n0; i < this.hot.length; i++) { const h = this.hot[i]; this.hot[i] = { ...h, x: ox + (h.x - fx) * S, y: oy + (h.y - fy) * S, w: h.w * S, h: h.h * S }; }
   }
   terrain() { return TERRAIN[this.scene.terrain] || TERRAIN.mossy_plateau; }
+  /** La terrasse où se pose l'observatoire, au sommet du mont (le même calcul que drawMount(…, terrace)) : { tx, ty }. Le donjon du Château y monte sa tour de l'astronome, pour que l'observatoire ne bouge pas. */
+  terraceOf(M) {
+    const { x: cx, hw, h } = M, bz = (a, b, c2, d, t) => { const u = 1 - t; return u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c2 + t * t * t * d; };
+    const L = [], R = []; for (let i = 0; i <= 60; i++) { const t = i / 60; L.push([bz(cx - hw, cx - hw * 0.55, cx - hw * 0.3, cx - 6, t), bz(GY + 2, GY - h * 0.35, GY - h * 0.95, GY - h, t)]); R.push([bz(cx - 6, cx + 14, cx + hw * 0.35, cx + hw * 0.62, t), bz(GY - h, GY - h * 1.02, GY - h * 0.7, GY - h * 0.32, t)]); }
+    const xAt = (pts, y) => { for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; if ((y0 - y) * (y1 - y) <= 0 && y0 !== y1) return x0 + (x1 - x0) * (y - y0) / (y1 - y0); } return null; };
+    let ty = GY - h + 2, lx = cx - 6, rx = cx - 6;
+    for (; ty < GY - h * 0.6; ty += 0.5) { lx = xAt(L, ty); rx = xAt(R, ty); if (lx != null && rx != null && rx - lx >= 34) break; }
+    return { tx: (lx + rx) / 2, ty };
+  }
   /** La page Herbe est là : le sol est une pelouse. */
   lawn() { return !!(this.scene && this.scene.additions.some((a) => a.type === "grass")); }
   /** La couleur du sol en plein air : la pelouse si la page Herbe est là, sinon le dessus du terrain. */

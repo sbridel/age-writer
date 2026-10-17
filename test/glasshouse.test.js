@@ -15,7 +15,7 @@ const make = (glass, mode = "sandbox", view = "island", hour = 22, extra = []) =
   const pages = ["page_chimney", "page_pine_trees", "page_mountain", ...extra, ...(glass ? ["page_glasshouse"] : [])];
   const relto = M.parseRelto({ seed: 4242, structures: ["hut", "bookshelves", "linking_pillars"], relto_pages_active: pages, relto_mode: mode }); if (extra.includes("page_dni_clock")) relto.zeroFound = true; // l'horloge se débloque avec le Zéro
   const own = pages.filter((id) => !M.BUILTIN_PAGES.includes(id)).map((id) => M.parsePage(M.pageFrontmatter(id, M.PAGE_PRESETS[id]), id + ".md"));
-  const sc = M.buildScene(relto, [...own, ...M.builtinPages({ story: mode === "story" })], []);
+  const sc = M.buildScene(relto, [...own, ...M.builtinPages({ story: mode === "story" })], [{ name: "Brume", path: "Ages/Brume.md", verdict: "stable", stability: 90 }]); // un Âge écrit : sans lui, le télescope (et ce qui en dépend) reste verrouillé et la vue retombe sur l'île
   const c = dom.window.document.createElement("canvas"), r = new ReltoRenderer(c, dni, { t: (k) => k });
   r.setScene(sc); r.setHour(hour); r.view = view; r.draw(3); return r;
 };

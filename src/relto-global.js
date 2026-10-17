@@ -33,9 +33,10 @@ function island(r, ctx, sc, sky, t, has) {
   ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.beginPath(); ctx.moveTo(cx + 12, y); ctx.lineTo(cx + 64, y); ctx.lineTo(cx + 40, y + 34); ctx.lineTo(cx + 14, y + 66); ctx.closePath(); ctx.fill();
   if (has("waterfall")) { ctx.fillStyle = rgba(225, 240, 255, 0.7); ctx.fillRect(cx - 63, y, 3, 46); }
   ctx.fillStyle = c("#7a9a54"); ctx.beginPath(); ctx.ellipse(cx, y, 64, 8, 0, 0, 6.283); ctx.fill();
-  ctx.fillStyle = c("#3d3128"); ctx.beginPath(); ctx.moveTo(cx - 30, y - 2); ctx.quadraticCurveTo(cx - 10, y - 46, cx + 4, y - 48); ctx.quadraticCurveTo(cx + 20, y - 40, cx + 34, y - 2); ctx.closePath(); ctx.fill();
+  if (!(r.castleOn && r.castleOn())) { ctx.fillStyle = c("#3d3128"); ctx.beginPath(); ctx.moveTo(cx - 30, y - 2); ctx.quadraticCurveTo(cx - 10, y - 46, cx + 4, y - 48); ctx.quadraticCurveTo(cx + 20, y - 40, cx + 34, y - 2); ctx.closePath(); ctx.fill(); } // la montagne (sous le Château, le donjon la remplace)
   for (const v of sc.additions.filter((a) => a.type === "vegetation")) { const kind = v.asset || "conifer", n = 5; for (let i = 0; i < n; i++) { const x = cx - 56 + ((i * 41 + fnv(kind) % 13) % 112), h = 10 + (i % 3) * 3; ctx.fillStyle = c(kind === "maple" ? "#c4552a" : kind === "crystal" ? "#6fd6c4" : "#1f4a30"); ctx.beginPath(); ctx.moveTo(x - 3, y); ctx.lineTo(x, y - h); ctx.lineTo(x + 3, y); ctx.closePath(); ctx.fill(); } }
-  if (r.glassOn && r.glassOn()) { // la Verrière, vue de loin : un petit pavillon de verre sous sa coupole, qui s'allume la nuit
+  if (r.castleOn && r.castleOn()) require("./relto-castle-out").globalCastle(ctx, c, sky, cx, y); // le Château, vu de loin : la silhouette du donjon et ses fenêtres rouges
+  else if (r.glassOn && r.glassOn()) { // la Verrière, vue de loin : un petit pavillon de verre sous sa coupole, qui s'allume la nuit
     const lit = clamp(sky.night * 1.1), teal = mix(c("#4fae9e"), "#9ff0dc", lit * 0.85), amb = mix(c("#c98a32"), "#ffd27a", lit);
     if (sky.night > 0.15) { const g = ctx.createRadialGradient(cx - 23, y, 1, cx - 23, y, 22); g.addColorStop(0, rgba(127, 214, 200, 0.3 * lit)); g.addColorStop(1, rgba(127, 214, 200, 0)); ctx.fillStyle = g; ctx.fillRect(cx - 47, y - 24, 48, 30); }
     ctx.fillStyle = teal; ctx.fillRect(cx - 33, y - 11, 20, 11); ctx.beginPath(); ctx.ellipse(cx - 23, y - 10, 12, 9, 0, Math.PI, 2 * Math.PI); ctx.fill();
@@ -64,8 +65,10 @@ function islet(ctx, x, y, s, sky, i, t) {
 }
 
 /** Pont de cordes entre deux points : câble qui s'affaisse, planches et poteaux. */
+let castleNow = false; // le Château est attaché : posé à chaque dessin de la vue globale
 function bridge(ctx, x0, y0, x1, y1, sky) {
   const c = (h) => mix("#05060c", h, k(sky)), sag = 7;
+  if (castleNow) return require("./relto-castle-out").stoneBridge(ctx, c, x0, y0, x1, y1); // le Château : des passerelles de pierre
   ctx.strokeStyle = c("#8a6a44"); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y0 - 5); ctx.quadraticCurveTo((x0 + x1) / 2, (y0 + y1) / 2 - 5 + sag, x1, y1 - 5); ctx.stroke();
   ctx.fillStyle = c("#6b4a30"); const n = Math.max(6, Math.round((x1 - x0) / 5));
   for (let i = 0; i <= n; i++) { const p = i / n, x = x0 + (x1 - x0) * p, y = y0 + (y1 - y0) * p + Math.sin(p * Math.PI) * sag * 0.9; ctx.fillRect(x - 1.6, y, 3.2, 1.6); }
@@ -73,6 +76,7 @@ function bridge(ctx, x0, y0, x1, y1, sky) {
 }
 
 function drawGlobal(r, ctx, sc, sky, t, has) {
+  castleNow = !!(r.castleOn && r.castleOn());
   r.drawSky(ctx, sky, t, has("aurora"));
   if (has("moons")) SC.moons(ctx, sky);
   if (has("comet")) SC.comet(ctx, r, has("comet").density, sky, t);

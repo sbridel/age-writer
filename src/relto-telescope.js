@@ -725,8 +725,10 @@ function drawOnIsland(r, ctx, sky, tm) {
   ctx.fillStyle = c("#2a2018"); ctx.fillRect(bx - 1.6, by - 5, 3.2, 5); // la porte
   if (night > 0.3) { ctx.fillStyle = rgba(255, 196, 120, 0.5 + 0.4 * night); ctx.fillRect(bx + 4, by - 6.5, 2, 2); } // une fenêtre éclairée le soir
   // la coupole et sa fente
-  const dg = ctx.createLinearGradient(bx - 9, by - 18, bx + 9, by - 8); dg.addColorStop(0, c("#9fc3b0")); dg.addColorStop(1, c("#4d6f61")); ctx.fillStyle = dg;
+  const castleD = !!(r.castleOn && r.castleOn()); // le Château : une coupole de plomb, des nervures d'or
+  const dg = ctx.createLinearGradient(bx - 9, by - 18, bx + 9, by - 8); dg.addColorStop(0, c(castleD ? "#6a6e88" : "#9fc3b0")); dg.addColorStop(1, c(castleD ? "#2e3046" : "#4d6f61")); ctx.fillStyle = dg;
   ctx.beginPath(); ctx.moveTo(bx - 9.5, by - 8); ctx.arc(bx, by - 8, 9.5, Math.PI, 0); ctx.closePath(); ctx.fill();
+  if (castleD) { ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 0.5; for (const k of [-0.6, 0, 0.6]) { ctx.beginPath(); ctx.moveTo(bx, by - 17.5); ctx.quadraticCurveTo(bx + k * 8, by - 15, bx + k * 9.2, by - 8); ctx.stroke(); } }
   if (r.glassOn && r.glassOn()) { ctx.strokeStyle = c(VR.COPPER_HI); ctx.lineWidth = 0.5; for (const k of [-0.6, 0.6]) { ctx.beginPath(); ctx.moveTo(bx, by - 17.5); ctx.quadraticCurveTo(bx + k * 8, by - 15, bx + k * 9.2, by - 8); ctx.stroke(); } ctx.beginPath(); ctx.ellipse(bx, by - 8, 6.6, 4.4, 0, Math.PI, 2 * Math.PI); ctx.stroke(); ctx.fillStyle = c(VR.COPPER); ctx.fillRect(bx - 10, by - 8.6, 20, 1.2); } // la Verrière : nervures et bague de cuivre
   ctx.save(); ctx.translate(bx, by - 8); ctx.rotate(0.35); ctx.fillStyle = c("#1a1714"); ctx.fillRect(-1.6, -9.6, 3.2, 9); ctx.restore();
   // le tube qui sort de la fente
