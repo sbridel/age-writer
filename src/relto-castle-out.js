@@ -25,7 +25,7 @@ function lancet(ctx, x, y, w, h, col) { ctx.fillStyle = col; ctx.beginPath(); ct
  */
 function keep(r, ctx, M, sky, t, observatory) {
   const amb = 0.35 + 0.65 * sky.ambient, c = (h) => mix("#05060c", h, amb), night = clamp(sky.night == null ? 0 : sky.night);
-  const ax = observatory ? M.tx : r.terraceOf ? r.terraceOf(M).tx : M.x, s = 0.6 + 0.06 * clamp((M.hw - 100) / 24), raise = M.h * 0.2, cx = M.x, hw = M.hw, h = M.h;
+  const ax = observatory ? M.tx : r.terraceOf ? r.terraceOf(M).tx : M.x, s = 0.66 + 0.04 * clamp((M.hw - 100) / 24), raise = M.h * 0.12, cx = M.x, hw = M.hw, h = M.h;
   const P = (d) => new Path2D(d), W = (k) => winColor(night, k);
   const grad = (x0, x1, stops) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); stops.forEach((h, i) => g.addColorStop(i / (stops.length - 1), c(h))); return g; };
   const MID = ["#6e6876", "#4a4552", "#2e2a36"], FRONT = ["#878090", "#5e5866", "#3a3542"], SL = ["#565a78", "#24263a"];
@@ -142,7 +142,10 @@ function gargoyle(ctx, c, x, y) {
 }
 
 /** La chapelle, à la place de la cabane (même empreinte : x0..x0+w, toit jusqu'à y0 − 24) : pignon d'ardoise raide, une flèche, une lancette qui s'allume, une porte en arc brisé. */
+/** La chapelle est plus petite que l'ancienne cabane (CHAPEL_K) : à côté du donjon, elle doit rester une chapelle. Sa zone cliquable, elle, ne change pas. */
+const CHAPEL_K = 0.72;
 function chapel(ctx, col, sky, t, x0, y0, w, h, hutX) {
+  ctx.save(); ctx.translate(hutX, GY); ctx.scale(CHAPEL_K, CHAPEL_K); ctx.translate(-hutX, -GY); /* réduite, posée au même pied */
   const night = clamp(sky.night == null ? 0 : sky.night), fl = 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1), x1 = x0 + w, ap = y0 - 34, glow = (k) => winColor(night * fl, k);
   const LIME = ["#cfc7b8", "#ada595", "#857d70"], lime = (a, b) => { const g = ctx.createLinearGradient(a, 0, b, 0); LIME.forEach((h2, i) => g.addColorStop(i / 2, col(h2))); return g; };
   // la cheminée, derrière le pignon (la fumée en sort : drawChimney)
@@ -179,9 +182,10 @@ function chapel(ctx, col, sky, t, x0, y0, w, h, hutX) {
   // deux contreforts d'angle, à pinacle
   for (const x of [x0 - 4, x1]) { ctx.fillStyle = lime(x, x + 4); ctx.fillRect(x, y0 + 2, 4, GY - y0 - 2); ctx.fillStyle = col("#857d70"); ctx.fillRect(x - 0.5, y0 + 12, 5, 1.2);
     ctx.fillStyle = col(SLATE_D); ctx.beginPath(); ctx.moveTo(x - 0.6, y0 + 2); ctx.lineTo(x + 2, y0 - 9); ctx.lineTo(x + 4.6, y0 + 2); ctx.closePath(); ctx.fill(); ctx.fillStyle = col(GOLD); ctx.fillRect(x + 1.6, y0 - 11, 0.9, 2); }
+  ctx.restore();
 }
 /** Où sort la fumée de la cheminée de la chapelle. */
-function chimneyAt(x0, y0, w) { return [x0 + w - 9, y0 - 20]; }
+function chimneyAt(x0, y0, w) { const hx = x0 + w / 2; return [hx + (w / 2 - 9) * CHAPEL_K, GY - (GY - y0 + 20) * CHAPEL_K]; }
 
 /** Les soubassements : sur la roche de l'île (dans son découpage), un appareil de pierre, une rangée d'arcs aveugles, des contreforts. */
 function foundations(ctx, c, outline) {
