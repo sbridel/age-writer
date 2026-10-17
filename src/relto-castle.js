@@ -182,6 +182,44 @@ function cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, rise = 20) {
   ctx.strokeStyle = c(GOLD); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(kx, ky + 8, 5, 0, 6.283); ctx.stroke();
 }
 
+/**
+ * La porte d'entrée de la cabane, sous le Château : gothique flamboyant. Trois voussures, un tympan à remplage de flammes (mouchettes et
+ * soufflets) sur des verres rouges et violets, une accolade à crochets et son fleuron d'or, deux pinacles ; dessous, deux vantaux ferrés
+ * et le heurtoir. Même place, même zone cliquable que la porte simple (dx, dy, dw).
+ */
+function flamboyantDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl = 1) {
+  const m = dx + dw / 2, apex = dy - 20, spring = dy + 14, tr = spring + 16, night = clamp(sky.night == null ? 0 : sky.night);
+  // les pinacles, de part et d'autre
+  for (const x of [dx - 19, dx + dw + 19]) { ctx.fillStyle = c(STONE_LO); ctx.fillRect(x - 4, apex - 4, 8, FLOOR - apex + 4); ctx.fillStyle = c(STONE); ctx.fillRect(x - 4, apex - 4, 3, FLOOR - apex + 4);
+    ctx.fillStyle = c(STONE); ctx.beginPath(); ctx.moveTo(x - 5, apex - 4); ctx.lineTo(x, apex - 34); ctx.lineTo(x + 5, apex - 4); ctx.closePath(); ctx.fill(); ctx.fillStyle = c(STONE_LO); for (let k = 1; k < 4; k++) { const y = apex - 4 - k * 7, w = 5 * (1 - k / 4.2); ctx.fillRect(x - w - 1.6, y, 1.6, 1.4); ctx.fillRect(x + w, y, 1.6, 1.4); }
+    ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(x, apex - 35, 1.6, 0, 6.283); ctx.fill(); }
+  // l'accolade : une courbe et contre-courbe qui monte au-dessus de l'arc, des crochets, un fleuron
+  const og = (k) => { ctx.beginPath(); ctx.moveTo(dx - 13 - k, spring); ctx.bezierCurveTo(dx - 13 - k, apex - 30, m - 6, apex - 6, m, apex - 46 - k); ctx.bezierCurveTo(m + 6, apex - 6, dx + dw + 13 + k, apex - 30, dx + dw + 13 + k, spring); };
+  ctx.fillStyle = c(STONE_LO); og(2); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c(STONE_HI); ctx.lineWidth = 2.6; og(0); ctx.stroke();
+  const bz = (a, b, c2, d2, u) => { const v = 1 - u; return v * v * v * a + 3 * v * v * u * b + 3 * v * u * u * c2 + u * u * u * d2; };
+  ctx.fillStyle = c(STONE_HI); for (let k = 1; k < 7; k++) { const u = k / 7; for (const s2 of [-1, 1]) { const x = s2 < 0 ? bz(dx - 13, dx - 13, m - 6, m, u) : bz(dx + dw + 13, dx + dw + 13, m + 6, m, u), y = bz(spring, apex - 30, apex - 6, apex - 46, u); ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x - s2 * 5, y - 5, x - s2 * 2, y - 7); ctx.quadraticCurveTo(x - s2 * 1, y - 3, x, y); ctx.fill(); } } // les crochets
+  ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.moveTo(m, apex - 60); ctx.quadraticCurveTo(m + 5, apex - 52, m, apex - 46); ctx.quadraticCurveTo(m - 5, apex - 52, m, apex - 60); ctx.fill(); for (const s2 of [-1, 1]) { ctx.beginPath(); ctx.ellipse(m + s2 * 4, apex - 49, 3.4, 1.6, s2 * 0.5, 0, 6.283); ctx.fill(); } // le fleuron
+  // les trois voussures
+  for (const [k, col] of [[12, STONE], [7, STONE_LO], [3, STONE]]) { ctx.fillStyle = c(col); pointed(ctx, dx - k, dx + dw + k, apex - k * 1.2, spring, FLOOR); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c(STONE_HI); ctx.lineWidth = 0.9; pointed(ctx, dx - k, dx + dw + k, apex - k * 1.2, spring, FLOOR); ctx.stroke(); }
+  // le tympan : des verres rouges et violets derrière un remplage de flammes
+  ctx.save(); pointed(ctx, dx, dx + dw, apex, spring, tr); ctx.closePath(); ctx.clip();
+  const lit = 0.35 + 0.65 * night * fl, gg = ctx.createLinearGradient(0, apex, 0, tr); gg.addColorStop(0, mix(c("#3a0e22"), "#d8506a", lit * 0.8)); gg.addColorStop(1, mix(c("#24103a"), "#8a4ad0", lit * 0.7)); ctx.fillStyle = gg; ctx.fillRect(dx, apex, dw, tr - apex);
+  ctx.strokeStyle = c(STONE_HI); ctx.lineWidth = 2.2; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(m, tr); ctx.lineTo(m, spring + 2); ctx.stroke(); // le meneau
+  for (const s2 of [-1, 1]) { const a = s2 < 0 ? dx + 3 : m, b = s2 < 0 ? m : dx + dw - 3; pointed(ctx, a, b, spring - 8, spring + 4, tr); ctx.stroke(); } // deux lancettes
+  for (const s2 of [-1, 1]) { ctx.beginPath(); ctx.moveTo(m, spring - 8); ctx.bezierCurveTo(m + s2 * 4, apex + 14, m + s2 * 22, apex + 16, m + s2 * 18, spring - 4); ctx.bezierCurveTo(m + s2 * 12, apex + 26, m + s2 * 5, apex + 20, m, spring - 8); ctx.stroke(); } // deux mouchettes, des flammes
+  ctx.beginPath(); ctx.moveTo(m, apex + 3); ctx.quadraticCurveTo(m + 6, apex + 10, m, apex + 18); ctx.quadraticCurveTo(m - 6, apex + 10, m, apex + 3); ctx.stroke(); // un soufflet au sommet
+  ctx.lineCap = "butt"; ctx.restore();
+  ctx.fillStyle = c(STONE_HI); ctx.fillRect(dx, tr - 1, dw, 4); // le linteau
+  // les deux vantaux, ferrés
+  const g = ctx.createLinearGradient(dx, 0, dx + dw, 0); g.addColorStop(0, c("#22161a")); g.addColorStop(1, c("#0e0a0c")); ctx.fillStyle = g; ctx.fillRect(dx, tr + 3, dw, FLOOR - 2 - tr - 3);
+  ctx.strokeStyle = rgba(0, 0, 0, 0.6); ctx.lineWidth = 1; for (let i = 1; i < 6; i++) { const x = dx + (i * dw) / 6; ctx.beginPath(); ctx.moveTo(x, tr + 3); ctx.lineTo(x, FLOOR - 2); ctx.stroke(); } ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(m, tr + 3); ctx.lineTo(m, FLOOR - 2); ctx.stroke();
+  for (const y of [tr + 22, FLOOR - 34]) for (const s2 of [-1, 1]) { const x0 = s2 < 0 ? dx : dx + dw, x1 = m - s2 * 4; ctx.fillStyle = c(IRON); ctx.fillRect(Math.min(x0, x1), y - 2, Math.abs(x1 - x0), 4); lys(ctx, x1 - s2 * 1, y, 2.6, false); ctx.fillStyle = c("#4a4752"); for (let x = Math.min(x0, x1) + 5; x < Math.max(x0, x1) - 3; x += 9) { ctx.beginPath(); ctx.arc(x, y, 1.1, 0, 6.283); ctx.fill(); } }
+  const kx = m + 9, ky = tr + 52; ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.moveTo(kx - 5, ky - 3); ctx.lineTo(kx - 4, ky - 9); ctx.lineTo(kx - 1.5, ky - 5); ctx.lineTo(kx + 1.5, ky - 5); ctx.lineTo(kx + 4, ky - 9); ctx.lineTo(kx + 5, ky - 3); ctx.lineTo(kx + 2, ky + 3); ctx.lineTo(kx - 2, ky + 3); ctx.closePath(); ctx.fill(); // le heurtoir à tête de loup
+  ctx.strokeStyle = c(GOLD); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(kx, ky + 8, 5, 0, 6.283); ctx.stroke();
+  if (night > 0.3) { const gl = ctx.createRadialGradient(m, (apex + tr) / 2, 2, m, (apex + tr) / 2, 50); gl.addColorStop(0, rgba(220, 80, 110, 0.14 * night * fl)); gl.addColorStop(1, rgba(220, 80, 110, 0)); ctx.fillStyle = gl; ctx.fillRect(m - 50, apex - 20, 100, 90); }
+}
+
 /** Le panneau secret derrière la petite bibliothèque : une dalle de pierre et son anneau de fer, enchâssée dans le lambris. */
 function slab(ctx, c, x, y, w, h) {
   const g = ctx.createLinearGradient(x, y, x + w, y + h); g.addColorStop(0, c("#5e5966")); g.addColorStop(1, c("#3a3741")); ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
@@ -360,7 +398,7 @@ function imagerRoom(ctx, c, t, FLOOR, overview, W = 640, H = 360) {
   for (let i = 0; i < 12; i++) { const x = i * 58 + 18; ctx.beginPath(); ctx.moveTo(x, FLOOR); ctx.lineTo(x - (x - 320) * 0.2, H); ctx.stroke(); }
   ctx.fillStyle = c("#0d0c10"); ctx.fillRect(0, FLOOR - 3, W, 4);
   if (overview) {
-    for (const [xa, xb, top, base] of [[12, 38, 66, 142], [620, 638, 30, FLOOR - 92]]) { // deux lancettes de verre sombre, rouge et violet
+    for (const [xa, xb, top, base] of [[12, 32, 52, 122], [620, 638, 30, FLOOR - 92]]) { /* la première, centrée sur la porte étroite (x 10 à 34) et bien au-dessus de son arc (sommet 138) */ // deux lancettes de verre sombre, rouge et violet
       const gg = ctx.createLinearGradient(0, top, 0, base); gg.addColorStop(0, c(PURPLE)); gg.addColorStop(1, c(VELVET_LO)); ctx.fillStyle = gg; pointed(ctx, xa, xb, top, top + (xb - xa) * 0.9, base); ctx.closePath(); ctx.fill();
       ctx.strokeStyle = rgba(18, 10, 14, 0.85); ctx.lineWidth = 1; for (let y = top + (xb - xa) * 1.2; y < base; y += 14) { ctx.beginPath(); ctx.moveTo(xa, y); ctx.lineTo(xb, y); ctx.stroke(); }
       ctx.strokeStyle = c(STONE_HI); ctx.lineWidth = 3; pointed(ctx, xa, xb, top, top + (xb - xa) * 0.9, base); ctx.stroke();
@@ -385,4 +423,4 @@ function narrowDoor(ctx, c, x, top, w, base) {
   ctx.fillStyle = c(IRON); ctx.fillRect(x, top + 30, w - 4, 3); ctx.fillRect(x, base - 26, w - 4, 3); ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(x + w - 6, (top + base) / 2 + 6, 1.6, 0, 6.283); ctx.fill();
 }
 
-module.exports = { setFloorStyle, STONE, STONE_HI, STONE_LO, WALNUT, WALNUT_HI, WALNUT_LO, IRON, GOLD, GOLD_HI, VELVET, VELVET_LO, PURPLE, pointed, ashlar, wainscot, lys, cabinWalls, cabinFloor, rug, cabinWindowClip, cabinWindowFrame, cabinDoor, slab, mantel, andirons, shelf, table, candelabrum, sconce, moonPatch, atelierWalls, galleryBays, balustrade, spiralStair, rosette, throne, candlestand, chainLink, candleGlow, goldFrame, stoneTrap, imagerRoom, imagerBench, narrowDoor };
+module.exports = { setFloorStyle, STONE, STONE_HI, STONE_LO, WALNUT, WALNUT_HI, WALNUT_LO, IRON, GOLD, GOLD_HI, VELVET, VELVET_LO, PURPLE, pointed, ashlar, wainscot, lys, cabinWalls, cabinFloor, rug, cabinWindowClip, cabinWindowFrame, cabinDoor, flamboyantDoor, slab, mantel, andirons, shelf, table, candelabrum, sconce, moonPatch, atelierWalls, galleryBays, balustrade, spiralStair, rosette, throne, candlestand, chainLink, candleGlow, goldFrame, stoneTrap, imagerRoom, imagerBench, narrowDoor };

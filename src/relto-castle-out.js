@@ -126,7 +126,7 @@ function keep(r, ctx, M, sky, t, observatory) {
   // la tour de l'astronome : avec l'observatoire, son sommet est la terrasse (en coordonnées de l'île : M.ty + 2)
   const top = observatory ? (M.ty + 2 - GY * (1 - s) + raise) / s : 112, aw = 30 / s, a0 = 354 - aw / 2;
   box(a0, top, aw, 210 - top, FRONT);
-  ctx.fillStyle = c("#7a7683"); ctx.fillRect(a0 - 4, top - 4, aw + 8, 4); ctx.fillStyle = c("#2a2733"); for (let x = a0 - 3; x < a0 + aw + 4; x += 6) ctx.fillRect(x, top - 8, 1.2, 4); // la plate-forme et son garde-corps
+  if (!observatory) { ctx.fillStyle = c("#7a7683"); ctx.fillRect(a0 - 4, top - 4, aw + 8, 4); ctx.fillStyle = c("#2a2733"); for (let x = a0 - 3; x < a0 + aw + 4; x += 6) ctx.fillRect(x, top - 8, 1.2, 4); } // la plate-forme et son garde-corps ; avec l'observatoire, la tour se prolonge sans rupture jusqu'à sa coupole
   if (!observatory) { fillP(`M${a0 - 4} ${top - 4} L 354 ${top - 50} L ${a0 + aw + 4} ${top - 4} Z`, grad(a0, a0 + aw, SL)); strokeP(`M354 ${top - 50} v-6`, c(GOLD), 1); }
   for (let y = top + 28; y < 200; y += 26) lancets([`M350 ${y} v-11 q4 -6 8 0 v11 Z`], 0.95);
   ctx.restore();
@@ -165,6 +165,30 @@ function bloodFog(ctx, sky, t) {
   for (const [x, y, rx, ry, a, sp] of [[320, 300, 330, 70, 0.5, 0.15], [320, 252, 360, 40, 0.3, -0.1], [100, 330, 180, 40, 0.3, 0.2], [560, 320, 160, 36, 0.3, -0.18]]) {
     const xx = x + Math.sin(t * sp) * 18; ctx.save(); ctx.translate(xx, y); ctx.scale(1, ry / rx);
     const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx); g.addColorStop(0, rgba(176, 84, 96, a * 0.7 * k)); g.addColorStop(1, rgba(176, 84, 96, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, 6.283); ctx.fill(); ctx.restore();
+  }
+}
+
+/**
+ * Les pages Or, Argent et Gemmes sous le Château : au lieu de veines dessinées par-dessus les soubassements, des ornements serti dans
+ * la maçonnerie. L'or dore les clés et le cerne des arcs aveugles, l'argent ceux des autres arcs, les gemmes sont des cabochons sertis
+ * entre les arcs, qui luisent. La densité règle combien d'arcs en portent.
+ */
+function castleOre(ctx, kind, density, sky, t) {
+  const d = clamp(density == null ? 0.6 : density), n = Math.max(2, Math.round(2 + d * 7)), amb = 0.35 + 0.65 * sky.ambient, c = (h) => mix("#05060c", h, amb), night = clamp(sky.night == null ? 0 : sky.night);
+  const arch = (i) => { const u = (i + 0.5) / 9; return [150 + u * 300, GY + 24 + Math.abs(u - 0.5) * 4]; };
+  if (kind === "gold" || kind === "silver") {
+    const col = kind === "gold" ? "#d8b45e" : "#c8d0dc", hi = kind === "gold" ? "#f4dc90" : "#eef2f8", order = kind === "gold" ? [4, 2, 6, 0, 8, 3, 5, 1, 7] : [3, 5, 1, 7, 0, 8, 2, 4, 6];
+    for (const i of order.slice(0, n)) { const [x, top] = arch(i), w = 20, bot = top + 26;
+      ctx.strokeStyle = c(col); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(x - w / 2 - 1.5, bot); ctx.lineTo(x - w / 2 - 1.5, top + 8); ctx.quadraticCurveTo(x - w / 2 - 1.5, top - 0.5, x, top - 3.5); ctx.quadraticCurveTo(x + w / 2 + 1.5, top - 0.5, x + w / 2 + 1.5, top + 8); ctx.lineTo(x + w / 2 + 1.5, bot); ctx.stroke(); // le cerne de l'arc
+      ctx.fillStyle = c(col); ctx.beginPath(); ctx.moveTo(x - 3, top - 4); ctx.lineTo(x + 3, top - 4); ctx.lineTo(x + 2, top + 2); ctx.lineTo(x - 2, top + 2); ctx.closePath(); ctx.fill(); ctx.fillStyle = c(hi); ctx.fillRect(x - 2.4, top - 4, 1.2, 1.2); // la clé
+      if (Math.sin(t * 1.3 + i * 2.1) > 0.96) { ctx.fillStyle = rgba(255, 250, 230, 0.8); ctx.fillRect(x - 0.6, top - 6, 1.2, 4); ctx.fillRect(x - 2, top - 4.6, 4, 1.2); } // un éclat
+    }
+  } else { // les gemmes : des cabochons sertis entre les arcs, et sous l'enceinte
+    const cols = ["#5ad0a0", "#c04a6a", "#6a7ae0", "#e0b040", "#9a5ad0"];
+    for (let i = 0; i < n; i++) { const x = 150 + ((i * 3 + 1) % 10) * (300 / 9), y = GY + 18 + (i % 3) * 22 + (i % 2) * 6, col = cols[i % cols.length], g = 0.35 + 0.25 * night + 0.15 * Math.sin(t * 1.1 + i);
+      ctx.fillStyle = rgba(parseInt(col.slice(1, 3), 16), parseInt(col.slice(3, 5), 16), parseInt(col.slice(5, 7), 16), 0.18 * g); ctx.beginPath(); ctx.arc(x, y, 8, 0, 6.283); ctx.fill();
+      ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(x, y, 3.6, 0, 6.283); ctx.fill(); // la sertissure
+      ctx.fillStyle = mix(c(col), col, 0.4 + 0.4 * night); ctx.beginPath(); ctx.moveTo(x, y - 2.8); ctx.lineTo(x + 2.4, y); ctx.lineTo(x, y + 2.8); ctx.lineTo(x - 2.4, y); ctx.closePath(); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, 0.55); ctx.fillRect(x - 1, y - 1.6, 1, 1); }
   }
 }
 
@@ -339,4 +363,4 @@ function globalCastle(ctx, c, sky, cx, y) {
   ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(cx + 3, y - 56); ctx.lineTo(cx + 3, y - 60); ctx.stroke();
 }
 
-module.exports = { litStone, daylight, calendarStele, redNight, bloodMoon, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };
+module.exports = { castleOre, litStone, daylight, calendarStele, redNight, bloodMoon, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };

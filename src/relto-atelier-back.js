@@ -48,9 +48,31 @@ function drawBackroom(r, ctx, sc, sky, t) {
 
   // le lit à baldaquin
   { const bx = 24, bw = 212;
+    if (castle) { // le Château : une tête de lit de noyer en arc brisé, deux lancettes aveugles et un trilobe, filet d'or
+      ctx.fillStyle = c(CS.WALNUT_LO); CS.pointed(ctx, bx + 14, bx + bw - 14, 92, 132, 218); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 1; CS.pointed(ctx, bx + 20, bx + bw - 20, 100, 136, 214); ctx.stroke();
+      for (const m of [bx + bw / 2 - 34, bx + bw / 2 + 34]) { ctx.fillStyle = c("#1e140e"); CS.pointed(ctx, m - 18, m + 18, 132, 150, 196); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c(CS.WALNUT_HI); ctx.lineWidth = 1; CS.pointed(ctx, m - 18, m + 18, 132, 150, 196); ctx.stroke(); }
+      ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 1.2; for (const [dx, dy] of [[0, -5], [-5, 3], [5, 3]]) { ctx.beginPath(); ctx.arc(bx + bw / 2 + dx, 120 + dy, 5, 0, 6.283); ctx.stroke(); } // le trilobe
+    } else if (glass) { // la Verrière : une tête de lit en coup de fouet, et dans son cœur un vitrail ovale à iris
+      ctx.fillStyle = c("#3a2416"); ctx.beginPath(); ctx.moveTo(bx + 14, 218); ctx.lineTo(bx + 14, 128); ctx.bezierCurveTo(bx + 40, 96, bx + 80, 124, bx + bw / 2, 100); ctx.bezierCurveTo(bx + bw - 80, 124, bx + bw - 40, 96, bx + bw - 14, 128); ctx.lineTo(bx + bw - 14, 218); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = c(VR.COPPER); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(bx + 18, 132); ctx.bezierCurveTo(bx + 42, 104, bx + 80, 130, bx + bw / 2, 106); ctx.bezierCurveTo(bx + bw - 80, 130, bx + bw - 42, 104, bx + bw - 18, 132); ctx.stroke();
+      const G = VR.glassTones(c, sky, 0.3); ctx.fillStyle = G.teal; ctx.beginPath(); ctx.ellipse(bx + bw / 2, 156, 30, 28, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = rgba(200, 170, 90, 0.75); ctx.lineWidth = 1.1; ctx.lineCap = "round"; VR.motif(ctx, "iris", bx + bw / 2, 134, 180, 0.6); ctx.lineCap = "butt";
+      ctx.strokeStyle = c(VR.COPPER); ctx.lineWidth = 2.4; ctx.beginPath(); ctx.ellipse(bx + bw / 2, 156, 30, 28, 0, 0, 6.283); ctx.stroke();
+    } else {
     ctx.fillStyle = c("#2a1c14"); ctx.fillRect(bx + 14, 118, bw - 28, 100); ctx.fillStyle = c("#3d2a1c"); ctx.beginPath(); ctx.moveTo(bx + 14, 118); ctx.quadraticCurveTo(bx + bw / 2, 96, bx + bw - 14, 118); ctx.fill(); // la tête de lit
+    }
+    if (castle) { // le Château : des colonnes de noyer à bagues d'or, et des pinacles pour boules
+      for (const x of [bx, bx + bw - 9]) { ctx.fillStyle = c(CS.WALNUT_LO); ctx.fillRect(x, 62, 9, 190); ctx.fillStyle = c(CS.WALNUT_HI); ctx.fillRect(x + 1, 62, 1.6, 190); ctx.fillStyle = c(CS.GOLD); for (const y of [100, 160, 220]) ctx.fillRect(x - 1, y, 11, 2);
+        ctx.fillStyle = c(CS.WALNUT); ctx.beginPath(); ctx.moveTo(x - 1, 62); ctx.lineTo(x + 4.5, 40); ctx.lineTo(x + 10, 62); ctx.closePath(); ctx.fill(); ctx.fillStyle = c(CS.GOLD); ctx.beginPath(); ctx.arc(x + 4.5, 38, 2, 0, 6.283); ctx.fill(); }
+    } else if (glass) { // la Verrière : des colonnes de bronze fines, qui finissent en tulipe
+      for (const x of [bx + 2, bx + bw - 7]) { ctx.fillStyle = c("#6b4a22"); ctx.fillRect(x, 62, 5, 190); ctx.fillStyle = c(VR.COPPER_HI); ctx.fillRect(x + 1, 62, 1, 190);
+        ctx.fillStyle = c("#8ab08a"); ctx.beginPath(); ctx.moveTo(x + 2.5, 62); ctx.quadraticCurveTo(x - 6, 54, x - 3, 44); ctx.quadraticCurveTo(x + 2.5, 50, x + 2.5, 62); ctx.quadraticCurveTo(x + 2.5, 50, x + 8, 44); ctx.quadraticCurveTo(x + 11, 54, x + 2.5, 62); ctx.fill(); ctx.fillStyle = c("#d8b45e"); ctx.beginPath(); ctx.ellipse(x + 2.5, 46, 3, 5, 0, 0, 6.283); ctx.fill(); }
+    } else {
     ctx.fillStyle = c("#241a14"); ctx.fillRect(bx, 62, 9, 190); ctx.fillRect(bx + bw - 9, 62, 9, 190); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(bx + 4.5, 60, 6, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.arc(bx + bw - 4.5, 60, 6, 0, 6.283); ctx.fill(); // les colonnes et leurs boules de laiton
+    }
     ctx.fillStyle = c("#2f2118"); ctx.fillRect(bx, 62, bw, 8); // le ciel de lit
+    if (castle) { ctx.fillStyle = c(CS.WALNUT); ctx.fillRect(bx - 3, 56, bw + 6, 7); ctx.fillStyle = c(CS.GOLD); ctx.fillRect(bx - 3, 62, bw + 6, 1); for (let x = bx; x < bx + bw; x += 12) { ctx.fillStyle = c(CS.WALNUT_LO); ctx.beginPath(); ctx.moveTo(x, 56); ctx.lineTo(x + 6, 48); ctx.lineTo(x + 12, 56); ctx.closePath(); ctx.fill(); } } // le Château : une corniche à gâbles
+    if (glass) { ctx.fillStyle = c("#3a2416"); ctx.beginPath(); ctx.moveTo(bx - 2, 62); ctx.quadraticCurveTo(bx + bw / 2, 34, bx + bw + 2, 62); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c(VR.COPPER); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(bx, 60); ctx.quadraticCurveTo(bx + bw / 2, 38, bx + bw, 60); ctx.stroke(); } // la Verrière : un ciel de lit cintré, filet de cuivre
     const cur = c(castle ? "#1f3a30" : "#5b2b3a"), curD = c(castle ? "#12241d" : "#44202c"); /* le Château : un velours vert bouteille, qui se détache de la tenture pourpre */ ctx.fillStyle = cur; for (let i = 0; i < 9; i++) { const sx = bx + 2 + i * (bw - 4) / 9; ctx.beginPath(); ctx.moveTo(sx, 70); ctx.lineTo(sx + (bw - 4) / 9, 70); ctx.quadraticCurveTo(sx + (bw - 4) / 18, 92, sx, 70); ctx.fill(); } // la frange festonnée
     ctx.fillRect(bx + 2, 70, bw - 4, 8);
     if (castle) { ctx.fillStyle = c(CS.GOLD); ctx.fillRect(bx + 2, 77, bw - 4, 1.2); for (let i = 0; i < 9; i++) { const sx = bx + 2 + (i + 0.5) * (bw - 4) / 9; ctx.beginPath(); ctx.arc(sx, 86, 1.6, 0, 6.283); ctx.fill(); } } // la frange d'or et ses glands
@@ -77,9 +99,20 @@ function drawBackroom(r, ctx, sc, sky, t) {
   { const cat = sc.additions.find((a) => a.type === "cat"); if (cat && r.catSpotFor() === 1) r.drawSleepingCat(ctx, cat, { x: 300, y: 306, S: 2.3, shade: c, tip: TRr("atelier.cat.rug") }, t); } // ou sur le tapis
 
   // l'armoire : on peut l'ouvrir ; elle ne contient que des manches
-  { const wx = 292, wy = 72, ww = 110, wh = FLOOR - wy, op = r.wardAt ? clamp((now - r.wardAt) / 550) : 0, k = r.wardOpen ? op : 1 - op;
+  { const wx = 292, wy = 72, ww = 110, wh = FLOOR - wy, op = r.wardAt ? clamp((now - r.wardAt) / 550) : 1, k = r.wardOpen ? op : 1 - op; /* jamais touchée : fermée (op = 1, k = 0) ; avant, op = 0 la dessinait ouverte alors qu'elle était fermée */
     ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(wx + 5, wy + 4, ww, wh);
-    ctx.fillStyle = c("#3d2a1c"); ctx.fillRect(wx, wy, ww, wh); ctx.fillStyle = c("#4b3626"); ctx.fillRect(wx - 6, wy - 8, ww + 12, 12); ctx.fillRect(wx - 3, wy + wh - 8, ww + 6, 8);
+    ctx.fillStyle = c(castle ? CS.WALNUT_LO : glass ? "#2e1e14" : "#3d2a1c"); ctx.fillRect(wx, wy, ww, wh); ctx.fillStyle = c(castle ? CS.WALNUT : glass ? "#3a2416" : "#4b3626"); ctx.fillRect(wx - 6, wy - 8, ww + 12, 12); ctx.fillRect(wx - 3, wy + wh - 8, ww + 6, 8);
+    if (castle) { // le Château : un couronnement en gâble à crochets, deux pinacles, un fleuron d'or
+      ctx.fillStyle = c(CS.WALNUT); ctx.beginPath(); ctx.moveTo(wx - 4, wy - 8); ctx.lineTo(wx + ww / 2, wy - 36); ctx.lineTo(wx + ww + 4, wy - 8); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(wx + 8, wy - 10); ctx.lineTo(wx + ww / 2, wy - 30); ctx.lineTo(wx + ww - 8, wy - 10); ctx.stroke();
+      ctx.fillStyle = c(CS.WALNUT_LO); for (let k = 1; k < 5; k++) { const u = k / 5; for (const s2 of [-1, 1]) { const x = wx + ww / 2 + s2 * (ww / 2 + 4) * (1 - u), y = wy - 8 - 28 * u; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + s2 * 3, y - 2); ctx.lineTo(x + s2 * 1, y + 2); ctx.closePath(); ctx.fill(); } }
+      ctx.fillStyle = c(CS.GOLD); ctx.beginPath(); ctx.moveTo(wx + ww / 2, wy - 46); ctx.lineTo(wx + ww / 2 + 3, wy - 36); ctx.lineTo(wx + ww / 2 - 3, wy - 36); ctx.closePath(); ctx.fill();
+      for (const x of [wx - 4, wx + ww + 4]) { ctx.fillStyle = c(CS.WALNUT); ctx.beginPath(); ctx.moveTo(x - 3, wy - 8); ctx.lineTo(x, wy - 24); ctx.lineTo(x + 3, wy - 8); ctx.closePath(); ctx.fill(); ctx.fillStyle = c(CS.GOLD); ctx.beginPath(); ctx.arc(x, wy - 25, 1.4, 0, 6.283); ctx.fill(); }
+    } else if (glass) { // la Verrière : une corniche cintrée en coup de fouet, filet de cuivre, un bouton de fleur au sommet
+      ctx.fillStyle = c("#3a2416"); ctx.beginPath(); ctx.moveTo(wx - 6, wy - 8); ctx.bezierCurveTo(wx + 20, wy - 10, wx + 30, wy - 30, wx + ww / 2, wy - 30); ctx.bezierCurveTo(wx + ww - 30, wy - 30, wx + ww - 20, wy - 10, wx + ww + 6, wy - 8); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = c(VR.COPPER); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(wx - 2, wy - 9); ctx.bezierCurveTo(wx + 22, wy - 11, wx + 32, wy - 26, wx + ww / 2, wy - 26); ctx.bezierCurveTo(wx + ww - 32, wy - 26, wx + ww - 22, wy - 11, wx + ww + 2, wy - 9); ctx.stroke();
+      ctx.fillStyle = c("#d8b45e"); ctx.beginPath(); ctx.ellipse(wx + ww / 2, wy - 34, 3, 5, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#8ab08a"); for (const s2 of [-1, 1]) { ctx.beginPath(); ctx.ellipse(wx + ww / 2 + s2 * 5, wy - 30, 4, 1.8, s2 * 0.5, 0, 6.283); ctx.fill(); }
+    }
     ctx.fillStyle = "#0b0807"; ctx.fillRect(wx + 8, wy + 12, ww - 16, wh - 26); // l'intérieur
     if (k > 0.05) { // des manteaux vides, aux manches en trop ; deux reflets, parfois
       for (let i = 0; i < 4; i++) { const cx = wx + 22 + i * 21; ctx.fillStyle = c(["#2b2430", "#3a2a2a", "#26302b", "#322a22"][i]); ctx.fillRect(cx - 7, wy + 40, 14, 90); for (let s = 0; s < 2 + (i % 2); s++) { ctx.beginPath(); ctx.moveTo(cx + (s % 2 ? 6 : -6), wy + 48 + s * 6); ctx.quadraticCurveTo(cx + (s % 2 ? 16 : -16), wy + 90 + s * 8, cx + (s % 2 ? 10 : -10), wy + 128 + s * 6); ctx.lineWidth = 5; ctx.strokeStyle = ctx.fillStyle; ctx.stroke(); } }
@@ -89,7 +122,12 @@ function drawBackroom(r, ctx, sc, sky, t) {
     }
     for (const side of [0, 1]) { // les portes : un soleil et une lune, sur charnières
       const w1 = (ww / 2 - 6) * (1 - 0.8 * k), x1 = side ? wx + ww - 8 - w1 : wx + 8;
-      ctx.fillStyle = c("#4a3322"); ctx.fillRect(x1, wy + 12, w1, wh - 26); ctx.strokeStyle = rgba(0, 0, 0, 0.35); ctx.lineWidth = 1; ctx.strokeRect(x1 + 3, wy + 18, w1 - 6, wh - 38);
+      ctx.fillStyle = c(castle ? CS.WALNUT : glass ? "#3e2818" : "#4a3322"); ctx.fillRect(x1, wy + 12, w1, wh - 26); ctx.strokeStyle = rgba(0, 0, 0, 0.35); ctx.lineWidth = 1; ctx.strokeRect(x1 + 3, wy + 18, w1 - 6, wh - 38);
+      if (castle && w1 > 14) { ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 0.9; CS.pointed(ctx, x1 + 5, x1 + w1 - 5, wy + 24, wy + 24 + w1 * 0.6, wy + wh - 22); ctx.stroke(); // le Château : un panneau en arc brisé, des pentures de fer
+        ctx.strokeStyle = c(CS.IRON); ctx.lineWidth = 2; for (const y of [wy + 34, wy + wh - 34]) { const hx0 = side ? x1 + w1 : x1, d = side ? -1 : 1; ctx.beginPath(); ctx.moveTo(hx0, y); ctx.lineTo(hx0 + d * w1 * 0.55, y); ctx.stroke(); ctx.beginPath(); ctx.arc(hx0 + d * w1 * 0.55, y, 2, 0, 6.283); ctx.stroke(); } }
+      if (glass && w1 > 14) { const G = VR.glassTones(c, sky, 0.3), gx0 = x1 + 6, gw = w1 - 12, gy0 = wy + 46, gh = 70; ctx.save(); ctx.beginPath(); ctx.moveTo(gx0, gy0 + gh); ctx.lineTo(gx0, gy0 + gw / 2); ctx.ellipse(gx0 + gw / 2, gy0 + gw / 2, gw / 2, gw / 2, 0, Math.PI, 2 * Math.PI); ctx.lineTo(gx0 + gw, gy0 + gh); ctx.closePath(); ctx.clip(); // la Verrière : un vitrail en plein cintre dans chaque porte
+        const gg = ctx.createLinearGradient(0, gy0, 0, gy0 + gh); gg.addColorStop(0, G.amb); gg.addColorStop(1, G.teal2); ctx.fillStyle = gg; ctx.fillRect(gx0, gy0, gw, gh); ctx.strokeStyle = rgba(30, 20, 10, 0.6); ctx.lineWidth = 1; ctx.lineCap = "round"; VR.motif(ctx, side ? "lily" : "iris", gx0 + gw / 2, gy0 + 6, gy0 + gh, 0.4 * w1 / 45); ctx.lineCap = "butt"; ctx.restore();
+        ctx.strokeStyle = c(VR.COPPER); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(gx0, gy0 + gh); ctx.lineTo(gx0, gy0 + gw / 2); ctx.ellipse(gx0 + gw / 2, gy0 + gw / 2, gw / 2, gw / 2, 0, Math.PI, 2 * Math.PI); ctx.lineTo(gx0 + gw, gy0 + gh); ctx.closePath(); ctx.stroke(); }
       if (w1 > 18) { const cx = x1 + w1 / 2, cy = wy + 78; ctx.strokeStyle = c("#c9a24e"); ctx.fillStyle = c("#c9a24e"); ctx.lineWidth = 1.4;
         if (!side) { ctx.beginPath(); ctx.arc(cx, cy, 8 * w1 / 45, 0, 6.283); ctx.fill(); for (let a = 0; a < 8; a++) { ctx.beginPath(); ctx.moveTo(cx + Math.cos(a * 0.785) * 12 * w1 / 45, cy + Math.sin(a * 0.785) * 12 * w1 / 45); ctx.lineTo(cx + Math.cos(a * 0.785) * 18 * w1 / 45, cy + Math.sin(a * 0.785) * 18 * w1 / 45); ctx.stroke(); } }
         else { ctx.beginPath(); ctx.arc(cx, cy, 14 * w1 / 45, 0.5, 5.8); ctx.stroke(); ctx.beginPath(); ctx.arc(cx + 5 * w1 / 45, cy, 11 * w1 / 45, 0.6, 5.7, true); ctx.stroke(); }
@@ -100,11 +138,19 @@ function drawBackroom(r, ctx, sc, sky, t) {
 
   // l'horloge sans aiguilles
   { const hx = 428, hy = 100, hw = 38;
-    ctx.fillStyle = c("#33241a"); ctx.fillRect(hx, hy, hw, FLOOR - hy); ctx.fillStyle = c("#42301f"); ctx.fillRect(hx - 4, hy - 6, hw + 8, 8); ctx.fillRect(hx - 3, FLOOR - 8, hw + 6, 8);
-    ctx.fillStyle = c("#e6d9b8"); ctx.beginPath(); ctx.arc(hx + hw / 2, hy + 26, 15, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#2a1c14"); ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.fillStyle = c(castle ? CS.WALNUT_LO : glass ? "#2e1e14" : "#33241a"); ctx.fillRect(hx, hy, hw, FLOOR - hy); ctx.fillStyle = c(castle ? CS.WALNUT : glass ? "#3a2416" : "#42301f"); ctx.fillRect(hx - 4, hy - 6, hw + 8, 8); ctx.fillRect(hx - 3, FLOOR - 8, hw + 6, 8);
+    if (castle) { // le Château : un capot en gâble, deux pinacles, un fleuron d'or
+      ctx.fillStyle = c(CS.WALNUT); ctx.beginPath(); ctx.moveTo(hx - 4, hy - 6); ctx.lineTo(hx + hw / 2, hy - 28); ctx.lineTo(hx + hw + 4, hy - 6); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(hx + 2, hy - 8); ctx.lineTo(hx + hw / 2, hy - 23); ctx.lineTo(hx + hw - 2, hy - 8); ctx.stroke();
+      ctx.fillStyle = c(CS.GOLD); ctx.beginPath(); ctx.moveTo(hx + hw / 2, hy - 36); ctx.lineTo(hx + hw / 2 + 2.4, hy - 28); ctx.lineTo(hx + hw / 2 - 2.4, hy - 28); ctx.closePath(); ctx.fill();
+      for (const x of [hx - 3, hx + hw + 3]) { ctx.fillStyle = c(CS.WALNUT); ctx.beginPath(); ctx.moveTo(x - 2.4, hy - 6); ctx.lineTo(x, hy - 20); ctx.lineTo(x + 2.4, hy - 6); ctx.closePath(); ctx.fill(); }
+    } else if (glass) { // la Verrière : un capot cintré, filet de cuivre, et un pied évasé
+      ctx.fillStyle = c("#3a2416"); ctx.beginPath(); ctx.moveTo(hx - 5, hy - 5); ctx.quadraticCurveTo(hx + hw / 2, hy - 30, hx + hw + 5, hy - 5); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c(VR.COPPER); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(hx - 2, hy - 6); ctx.quadraticCurveTo(hx + hw / 2, hy - 26, hx + hw + 2, hy - 6); ctx.stroke();
+      ctx.fillStyle = c("#3a2416"); ctx.beginPath(); ctx.moveTo(hx - 8, FLOOR); ctx.quadraticCurveTo(hx, FLOOR - 4, hx + 2, FLOOR - 22); ctx.lineTo(hx + hw - 2, FLOOR - 22); ctx.quadraticCurveTo(hx + hw, FLOOR - 4, hx + hw + 8, FLOOR); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = c("#e6d9b8"); ctx.beginPath(); ctx.arc(hx + hw / 2, hy + 26, 15, 0, 6.283); ctx.fill(); ctx.strokeStyle = c("#2a1c14"); ctx.lineWidth = 1.2; ctx.stroke(); if (castle || glass) { ctx.strokeStyle = c(castle ? CS.GOLD : VR.COPPER); ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(hx + hw / 2, hy + 26, 16.5, 0, 6.283); ctx.stroke(); ctx.strokeStyle = c("#2a1c14"); ctx.lineWidth = 1.2; } /* une bague d'or ou de cuivre */
     for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283; ctx.beginPath(); ctx.moveTo(hx + hw / 2 + Math.cos(a) * 12, hy + 26 + Math.sin(a) * 12); ctx.lineTo(hx + hw / 2 + Math.cos(a) * 14, hy + 26 + Math.sin(a) * 14); ctx.stroke(); }
     ctx.fillStyle = c("#2a1c14"); ctx.beginPath(); ctx.arc(hx + hw / 2, hy + 26, 1.6, 0, 6.283); ctx.fill(); // pas d'aiguilles
-    ctx.fillStyle = "#0b0807"; ctx.fillRect(hx + 5, hy + 54, hw - 10, 100); const pa = Math.sin(t * 2.4) * 0.1, px = hx + hw / 2, py = hy + 56; ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + Math.sin(pa) * 66, py + Math.cos(pa) * 66); ctx.stroke(); ctx.fillStyle = c("#d8b45e"); ctx.beginPath(); ctx.arc(px + Math.sin(pa) * 66, py + Math.cos(pa) * 66, 5, 0, 6.283); ctx.fill();
+    ctx.fillStyle = "#0b0807"; if (castle) { CS.pointed(ctx, hx + 5, hx + hw - 5, hy + 46, hy + 62, hy + 154); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 1; ctx.stroke(); } else if (glass) { ctx.beginPath(); ctx.ellipse(hx + hw / 2, hy + 104, hw / 2 - 5, 50, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = c(VR.COPPER); ctx.lineWidth = 2; ctx.stroke(); } else ctx.fillRect(hx + 5, hy + 54, hw - 10, 100); /* la gaine : une lancette (Château), un ovale cerclé de cuivre (Verrière) */ const pa = Math.sin(t * 2.4) * 0.1, px = hx + hw / 2, py = hy + 56; ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + Math.sin(pa) * 66, py + Math.cos(pa) * 66); ctx.stroke(); ctx.fillStyle = c("#d8b45e"); ctx.beginPath(); ctx.arc(px + Math.sin(pa) * 66, py + Math.cos(pa) * 66, 5, 0, 6.283); ctx.fill();
     item(hx - 4, hy - 6, hw + 8, FLOOR - hy + 6, "back.clock.tip", "back.clock.flash");
   }
 

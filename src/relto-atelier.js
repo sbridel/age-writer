@@ -130,7 +130,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   r.hot.push({ x: 606, y: GALLERY - 4, w: 30, h: FLOOR - GALLERY, tip: TRr("atelier.ladder.tip"), go: "loft" });
   // porte : le panneau coulisse vers la cabane
   const dx = 28, dy = 118, dw = 62;
-  if (castle) CS.cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, 6); else { // l'arc bas : la rosace est juste au-dessus
+  if (castle) CS.cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, 6); else if (r.glassOn && r.glassOn()) require("./relto-glass").atelierDoor(ctx, c, sky, dx, dy, dw, FLOOR); /* la Verrière : bois irisé, cuivre, vitrail ovale */ else { // l'arc bas : la rosace est juste au-dessus
   ctx.fillStyle = c("#241810"); ctx.fillRect(dx - 4, dy - 4, dw + 8, FLOOR - dy + 4); ctx.fillStyle = c("#46301f"); ctx.fillRect(dx, dy, dw, FLOOR - dy - 2);
   ctx.strokeStyle = rgba(0, 0, 0, 0.35); ctx.lineWidth = 1; for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(dx + i * dw / 4, dy); ctx.lineTo(dx + i * dw / 4, FLOOR - 2); ctx.stroke(); }
   ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(dx + dw - 9, dy + 66, 3, 0, 6.283); ctx.fill();

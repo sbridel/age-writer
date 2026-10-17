@@ -719,16 +719,23 @@ function drawOnIsland(r, ctx, sky, tm) {
   const night = sky.night == null ? 0 : sky.night, found = state(r).found;
   ctx.save(); ctx.translate(bx, by); ctx.scale(1.3, 1.3); ctx.translate(-bx, -by); // à l'échelle de la cabane
   // (le sommet est aplani en terrasse par le dessin du mont : drawMount(…, terrace))
+  const castleD = !!(r.castleOn && r.castleOn()); // le Château : pas de tambour posé dessus, la tour se prolonge jusqu'à la coupole de plomb
+  const DR = castleD ? 11.5 : 9.5; // le rayon de la coupole : sous le Château, toute la largeur de la tour
+  if (castleD) { const L = require("./relto-castle-out").litStone(sky), sc2 = (h) => c(L(h)), sg = ctx.createLinearGradient(bx - DR, 0, bx + DR, 0); sg.addColorStop(0, sc2("#878090")); sg.addColorStop(0.6, sc2("#5e5866")); sg.addColorStop(1, sc2("#3a3542")); ctx.fillStyle = sg; ctx.fillRect(bx - DR, by - 8, DR * 2, 10);
+    ctx.fillStyle = rgba(0, 0, 0, 0.22); for (const y of [by - 4.6, by - 1.2]) ctx.fillRect(bx - DR, y, DR * 2, 0.5);
+    ctx.fillStyle = require("./relto-castle-out").winColor(night, 1); ctx.beginPath(); ctx.moveTo(bx + 3, by - 1); ctx.lineTo(bx + 3, by - 5); ctx.quadraticCurveTo(bx + 4.2, by - 6.6, bx + 5.4, by - 5); ctx.lineTo(bx + 5.4, by - 1); ctx.closePath(); ctx.fill(); // une lancette
+    ctx.fillStyle = sc2("#a29dab"); ctx.fillRect(bx - DR - 1, by - 9, DR * 2 + 2, 1.4); // la corniche où naît la coupole
+  } else {
   // le tambour de pierre
   const sg = ctx.createLinearGradient(bx - 9, 0, bx + 9, 0); sg.addColorStop(0, c("#8d8578")); sg.addColorStop(1, c("#4f4a43")); ctx.fillStyle = sg; ctx.fillRect(bx - 9, by - 8, 18, 8);
   ctx.strokeStyle = c("#3a352f"); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(bx - 9, by - 4); ctx.lineTo(bx + 9, by - 4); ctx.stroke();
   ctx.fillStyle = c("#2a2018"); ctx.fillRect(bx - 1.6, by - 5, 3.2, 5); // la porte
   if (night > 0.3) { ctx.fillStyle = rgba(255, 196, 120, 0.5 + 0.4 * night); ctx.fillRect(bx + 4, by - 6.5, 2, 2); } // une fenêtre éclairée le soir
-  // la coupole et sa fente
-  const castleD = !!(r.castleOn && r.castleOn()); // le Château : une coupole de plomb, des nervures d'or
-  const dg = ctx.createLinearGradient(bx - 9, by - 18, bx + 9, by - 8); dg.addColorStop(0, c(castleD ? "#6a6e88" : "#9fc3b0")); dg.addColorStop(1, c(castleD ? "#2e3046" : "#4d6f61")); ctx.fillStyle = dg;
-  ctx.beginPath(); ctx.moveTo(bx - 9.5, by - 8); ctx.arc(bx, by - 8, 9.5, Math.PI, 0); ctx.closePath(); ctx.fill();
-  if (castleD) { ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 0.5; for (const k of [-0.6, 0, 0.6]) { ctx.beginPath(); ctx.moveTo(bx, by - 17.5); ctx.quadraticCurveTo(bx + k * 8, by - 15, bx + k * 9.2, by - 8); ctx.stroke(); } }
+  }
+  // la coupole et sa fente (le Château : une coupole de plomb, des nervures d'or)
+  const dg = castleD ? ctx.createLinearGradient(bx - DR, by - 8 - DR, bx + DR, by - 8) : ctx.createLinearGradient(bx - 9, by - 18, bx + 9, by - 8); dg.addColorStop(0, c(castleD ? "#6a6e88" : "#9fc3b0")); dg.addColorStop(1, c(castleD ? "#2e3046" : "#4d6f61")); ctx.fillStyle = dg;
+  ctx.beginPath(); ctx.moveTo(bx - DR, by - 8); ctx.arc(bx, by - 8, DR, Math.PI, 0); ctx.closePath(); ctx.fill();
+  if (castleD) { ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 0.5; for (const k of [-0.6, 0, 0.6]) { ctx.beginPath(); ctx.moveTo(bx, by - 8 - DR + 0.5); ctx.quadraticCurveTo(bx + k * DR * 0.85, by - 8 - DR * 0.75, bx + k * DR * 0.97, by - 8); ctx.stroke(); } ctx.fillStyle = c(CS.GOLD); ctx.beginPath(); ctx.arc(bx, by - 8 - DR - 1, 1, 0, 6.283); ctx.fill(); }
   if (r.glassOn && r.glassOn()) { ctx.strokeStyle = c(VR.COPPER_HI); ctx.lineWidth = 0.5; for (const k of [-0.6, 0.6]) { ctx.beginPath(); ctx.moveTo(bx, by - 17.5); ctx.quadraticCurveTo(bx + k * 8, by - 15, bx + k * 9.2, by - 8); ctx.stroke(); } ctx.beginPath(); ctx.ellipse(bx, by - 8, 6.6, 4.4, 0, Math.PI, 2 * Math.PI); ctx.stroke(); ctx.fillStyle = c(VR.COPPER); ctx.fillRect(bx - 10, by - 8.6, 20, 1.2); } // la Verrière : nervures et bague de cuivre
   ctx.save(); ctx.translate(bx, by - 8); ctx.rotate(0.35); ctx.fillStyle = c("#1a1714"); ctx.fillRect(-1.6, -9.6, 3.2, 9); ctx.restore();
   // le tube qui sort de la fente

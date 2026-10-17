@@ -558,4 +558,20 @@ function lampGlow(ctx, lx, edge, pool, rx, fl = 1, wall = true) {
   ctx.restore();
 }
 
-module.exports = { lampPool, lampGlow, cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+/**
+ * La porte de l'atelier sous la Verrière : un bois sombre aux reflets irisés, un encadrement de cuivre au cintre surbaissé (la lucarne est
+ * juste au-dessus), des moulures en coup de fouet, un vitrail ovale à lys dans le haut, une poignée de cuivre en feuille.
+ */
+function atelierDoor(ctx, c, sky, dx, dy, dw, FLOOR) {
+  const G = glassTones(c, sky, 0.25), m = dx + dw / 2, top = dy - 6, sp = dy + 10;
+  const arch = (k) => { ctx.beginPath(); ctx.moveTo(dx - k, FLOOR); ctx.lineTo(dx - k, sp); ctx.quadraticCurveTo(m, top - k * 1.6, dx + dw + k, sp); ctx.lineTo(dx + dw + k, FLOOR); ctx.closePath(); };
+  ctx.fillStyle = c(COPPER_LO); arch(5); ctx.fill(); ctx.strokeStyle = c(COPPER_HI); ctx.lineWidth = 1; arch(5); ctx.stroke();
+  const g = ctx.createLinearGradient(dx, 0, dx + dw, 0); g.addColorStop(0, c("#3a2416")); g.addColorStop(0.5, c("#4a2e1c")); g.addColorStop(1, c("#2a1a10")); ctx.fillStyle = g; arch(0); ctx.fill();
+  ctx.save(); arch(0); ctx.clip(); for (let i = 0; i < 5; i++) { ctx.strokeStyle = rgba(i % 2 ? 120 : 200, i % 2 ? 190 : 120, i % 2 ? 160 : 170, 0.07); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(dx + 6 + i * 12, FLOOR); ctx.bezierCurveTo(dx + i * 12, FLOOR - 60, dx + 14 + i * 12, dy + 60, dx + 4 + i * 12, top); ctx.stroke(); } ctx.restore(); // les veines irisées
+  ctx.strokeStyle = c(COPPER); ctx.lineWidth = 1.4; for (const s2 of [-1, 1]) { const x0 = m + s2 * (dw / 2 - 7); ctx.beginPath(); ctx.moveTo(x0, FLOOR - 8); ctx.lineTo(x0, dy + 70); ctx.bezierCurveTo(x0, dy + 52, m + s2 * 4, dy + 66, m + s2 * 2, dy + 50); ctx.stroke(); } // les moulures en coup de fouet
+  const ox = m, oy = dy + 30; ctx.fillStyle = G.amb; ctx.beginPath(); ctx.ellipse(ox, oy, 14, 19, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = rgba(40, 24, 10, 0.65); ctx.lineWidth = 1; ctx.lineCap = "round"; motif(ctx, "lily", ox, oy - 15, oy + 18, 0.42); ctx.lineCap = "butt";
+  ctx.strokeStyle = c(COPPER); ctx.lineWidth = 2.2; ctx.beginPath(); ctx.ellipse(ox, oy, 14, 19, 0, 0, 6.283); ctx.stroke(); // le vitrail ovale
+  const hx = dx + dw - 10, hy = dy + 70; ctx.fillStyle = c(COPPER_HI); ctx.beginPath(); ctx.moveTo(hx, hy - 8); ctx.quadraticCurveTo(hx + 5, hy, hx, hy + 9); ctx.quadraticCurveTo(hx - 5, hy, hx, hy - 8); ctx.fill(); ctx.fillStyle = c(COPPER_LO); ctx.beginPath(); ctx.arc(hx, hy, 1.6, 0, 6.283); ctx.fill(); // la poignée, une feuille de cuivre
+}
+
+module.exports = { atelierDoor, lampPool, lampGlow, cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };

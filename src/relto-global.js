@@ -131,8 +131,9 @@ function drawGlobal(r, ctx, sc, sky, t, has) {
     const h = r.hot.pop(); r.hot.push({ ...h, x: gx - 22 * s, y: gy - 70 * s, w: 44 * s, h: 104 * s });
     if (has("dock")) bridge(ctx, gx + 16, gy - 1, 262, 236, sky); // la page Ponton : un pont de cordes jusqu'à l'horloge
   }
-  if (n > 0 || cal) bridge(ctx, 388, 230, 470 - 22, 244, sky);
-  if (n > 0 && cal) bridge(ctx, 470 + 22, 246, 575 - 22, 246, sky);
+  const eI = castleNow ? 13 : 22, eC = castleNow ? 19 : 22; // le Château : les culs-de-lampe sont plus étroits que les rochers, les passerelles s'y posent au bord
+  if (n > 0 || cal) bridge(ctx, 388, 230, 470 - eI, 244, sky);
+  if (n > 0 && cal) bridge(ctx, 470 + eI, 246, 575 - eC, 246, sky);
   island(r, ctx, sc, sky, t, has);
   // pinacles proches et brume basse
   spire(ctx, 38, 236, 46, 140, sky, 0.9); spire(ctx, 606, 244, 40, 130, sky, 0.9); spire(ctx, 205, 292, 34, 90, sky, 0.85); spire(ctx, 440, 300, 30, 80, sky, 0.85);
