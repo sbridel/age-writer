@@ -258,19 +258,23 @@ function bloodFog(ctx, sky, t) {
  * la maçonnerie. L'or dore les clés et le cerne des arcs aveugles, l'argent ceux des autres arcs, les gemmes sont des cabochons sertis
  * entre les arcs, qui luisent. La densité règle combien d'arcs en portent.
  */
-function castleOre(ctx, kind, density, sky, t) {
+/** Sous le Château, on ne dessine que ce qui tient dans la maçonnerie de l'île : un point dans son contour, un rectangle (et sa marge) tout entier dedans. */
+function inside(outline, x, y) { let a = false; for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) { const [xi, yi] = outline[i], [xj, yj] = outline[j]; if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) a = !a; } return a; }
+function fits(outline, x0, y0, x1, y1, m = 3) { return !outline || [[x0 - m, y0], [x1 + m, y0], [x0 - m, y1 + m], [x1 + m, y1 + m]].every(([x, y]) => inside(outline, x, y)); }
+
+function castleOre(ctx, kind, density, sky, t, outline) {
   const d = clamp(density == null ? 0.6 : density), n = Math.max(2, Math.round(2 + d * 7)), amb = 0.35 + 0.65 * sky.ambient, c = (h) => mix("#05060c", h, amb), night = clamp(sky.night == null ? 0 : sky.night);
   const arch = (i) => { const u = (i + 0.5) / 9; return [150 + u * 300, GY + 24 + Math.abs(u - 0.5) * 4]; };
   if (kind === "gold" || kind === "silver") {
     const col = kind === "gold" ? "#d8b45e" : "#c8d0dc", hi = kind === "gold" ? "#f4dc90" : "#eef2f8", order = kind === "gold" ? [4, 2, 6, 0, 8, 3, 5, 1, 7] : [3, 5, 1, 7, 0, 8, 2, 4, 6];
-    for (const i of order.slice(0, n)) { const [x, top] = arch(i), w = 20, bot = top + 26;
+    for (const i of order.slice(0, n)) { const [x, top] = arch(i), w = 20, bot = top + 26; if (!fits(outline, x - w / 2 - 3, top - 5, x + w / 2 + 3, bot)) continue; /* pas d'arc doré qui déborde dans le vide */
       ctx.strokeStyle = c(col); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(x - w / 2 - 1.5, bot); ctx.lineTo(x - w / 2 - 1.5, top + 8); ctx.quadraticCurveTo(x - w / 2 - 1.5, top - 0.5, x, top - 3.5); ctx.quadraticCurveTo(x + w / 2 + 1.5, top - 0.5, x + w / 2 + 1.5, top + 8); ctx.lineTo(x + w / 2 + 1.5, bot); ctx.stroke(); // le cerne de l'arc
       ctx.fillStyle = c(col); ctx.beginPath(); ctx.moveTo(x - 3, top - 4); ctx.lineTo(x + 3, top - 4); ctx.lineTo(x + 2, top + 2); ctx.lineTo(x - 2, top + 2); ctx.closePath(); ctx.fill(); ctx.fillStyle = c(hi); ctx.fillRect(x - 2.4, top - 4, 1.2, 1.2); // la clé
       if (Math.sin(t * 1.3 + i * 2.1) > 0.96) { ctx.fillStyle = rgba(255, 250, 230, 0.8); ctx.fillRect(x - 0.6, top - 6, 1.2, 4); ctx.fillRect(x - 2, top - 4.6, 4, 1.2); } // un éclat
     }
   } else { // les gemmes : des cabochons sertis entre les arcs, et sous l'enceinte
     const cols = ["#5ad0a0", "#c04a6a", "#6a7ae0", "#e0b040", "#9a5ad0"];
-    for (let i = 0; i < n; i++) { const x = 150 + ((i * 3 + 1) % 10) * (300 / 9), y = GY + 18 + (i % 3) * 22 + (i % 2) * 6, col = cols[i % cols.length], g = 0.35 + 0.25 * night + 0.15 * Math.sin(t * 1.1 + i);
+    for (let i = 0; i < n; i++) { const x = 150 + ((i * 3 + 1) % 10) * (300 / 9), y = GY + 18 + (i % 3) * 22 + (i % 2) * 6, col = cols[i % cols.length], g = 0.35 + 0.25 * night + 0.15 * Math.sin(t * 1.1 + i); if (!fits(outline, x - 8, y - 8, x + 8, y + 8, 0)) continue;
       ctx.fillStyle = rgba(parseInt(col.slice(1, 3), 16), parseInt(col.slice(3, 5), 16), parseInt(col.slice(5, 7), 16), 0.18 * g); ctx.beginPath(); ctx.arc(x, y, 8, 0, 6.283); ctx.fill();
       ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(x, y, 3.6, 0, 6.283); ctx.fill(); // la sertissure
       ctx.fillStyle = mix(c(col), col, 0.4 + 0.4 * night); ctx.beginPath(); ctx.moveTo(x, y - 2.8); ctx.lineTo(x + 2.4, y); ctx.lineTo(x, y + 2.8); ctx.lineTo(x - 2.4, y); ctx.closePath(); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, 0.55); ctx.fillRect(x - 1, y - 1.6, 1, 1); }
@@ -338,11 +342,11 @@ function foundations(ctx, c, outline) {
   const q = rng(0xf0d7); ctx.fillStyle = rgba(0, 0, 0, 0.1); for (let y = GY + 14, row = 0; y < Y1; y += 9, row++) for (let x = X0 + (row % 2) * 11; x < X1; x += 22) ctx.fillRect(x, y, 0.8, 9);
   ctx.fillStyle = rgba(255, 245, 235, 0.035); for (let i = 0; i < 40; i++) ctx.fillRect(X0 + q() * (X1 - X0), GY + 14 + q() * (Y1 - GY - 14), 10 + q() * 14, 8);
   for (let i = 0; i < 9; i++) { // une rangée d'arcs aveugles, sous le bord
-    const u = (i + 0.5) / 9, x = 150 + u * 300, w = 20, top = GY + 24 + Math.abs(u - 0.5) * 4, bot = top + 26;
+    const u = (i + 0.5) / 9, x = 150 + u * 300, w = 20, top = GY + 24 + Math.abs(u - 0.5) * 4, bot = top + 26; if (!fits(outline, x - w / 2, top - 2, x + w / 2, bot)) continue; /* un arc que le bord de l'île couperait n'est pas dessiné */
     ctx.fillStyle = rgba(10, 8, 14, 0.55); ctx.beginPath(); ctx.moveTo(x - w / 2, bot); ctx.lineTo(x - w / 2, top + 8); ctx.quadraticCurveTo(x - w / 2, top + 1, x, top - 2); ctx.quadraticCurveTo(x + w / 2, top + 1, x + w / 2, top + 8); ctx.lineTo(x + w / 2, bot); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = c("#9a95a3"); ctx.lineWidth = 0.8; ctx.stroke();
   }
-  ctx.fillStyle = c(STONE_D); for (const [x, y, hh] of [[168, GY + 18, 60], [240, GY + 18, 90], [380, GY + 18, 84], [446, GY + 18, 50]]) { ctx.beginPath(); ctx.moveTo(x - 5, y); ctx.lineTo(x + 5, y); ctx.lineTo(x + 3, y + hh); ctx.lineTo(x, y + hh + 8); ctx.lineTo(x - 3, y + hh); ctx.closePath(); ctx.fill(); ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.fillRect(x + 1, y, 4, hh); ctx.fillStyle = c(STONE_D); } // des contreforts qui descendent dans la brume
+  ctx.fillStyle = c(STONE_D); for (const [x, y, hh] of [[168, GY + 18, 60], [240, GY + 18, 90], [380, GY + 18, 84], [446, GY + 18, 50]]) { if (!fits(outline, x - 5, y, x + 5, y + hh, 0) || !inside(outline, x, y + hh + 8)) continue; ctx.beginPath(); ctx.moveTo(x - 5, y); ctx.lineTo(x + 5, y); ctx.lineTo(x + 3, y + hh); ctx.lineTo(x, y + hh + 8); ctx.lineTo(x - 3, y + hh); ctx.closePath(); ctx.fill(); ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.fillRect(x + 1, y, 4, hh); ctx.fillStyle = c(STONE_D); } // des contreforts qui descendent dans la brume
 }
 /** L'enceinte : un parapet bas à arcatures sur le bord avant de l'île (le bord inférieur de la surface). */
 function parapet(ctx, c) {

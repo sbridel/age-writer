@@ -383,7 +383,7 @@ class ReltoRenderer {
 
   /** Filons d'or, d'argent et gemmes dans la roche sous l'île (pages « gold », « silver », « gems »). Déterministe : graine du Relto. */
   drawOre(ctx, kind, density, sky, t) {
-    if (this.castleOn()) return CO.castleOre(ctx, kind, density, sky, t); // le Château : les minerais deviennent des ornements de la maçonnerie, pas des veines par-dessus la pierre
+    if (this.castleOn()) return CO.castleOre(ctx, kind, density, sky, t, this.geo && this.geo.outline); // le Château : les minerais deviennent des ornements de la maçonnerie, pas des veines par-dessus la pierre
     const g = this.geo, amb = 0.35 + 0.65 * sky.ambient, r = rng((this.scene.seed ^ fnv("ore" + kind)) >>> 0), d = clamp(density == null ? 0.6 : density);
     ctx.save(); ctx.beginPath(); g.outline.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.clip();
     const spot = () => { const y = GY + 20 + r() * 64, half = 150 - (y - GY) * 0.9; return [320 + (r() * 2 - 1) * half, y]; };
