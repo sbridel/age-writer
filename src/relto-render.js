@@ -356,7 +356,7 @@ class ReltoRenderer {
     ctx.strokeStyle = rgba(0, 0, 0, 0.25); ctx.lineWidth = 1;
     for (const [x, y, w] of g.strata) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w * 0.4, y + 2); ctx.lineTo(x + w, y - 1); ctx.stroke(); }
     ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.beginPath(); ctx.moveTo(380, GY); ctx.lineTo(480, GY); ctx.lineTo(480, 300); ctx.lineTo(330, 380); ctx.closePath(); ctx.fill();
-    if (this.castleOn()) CO.foundations(ctx, shade, g.outline); // le Château : soubassements, arcs aveugles, contreforts
+    if (this.castleOn()) { const L = CO.litStone(sky); CO.foundations(ctx, (h) => shade(L(h)), g.outline); } // le Château : soubassements, arcs aveugles, contreforts
     else if (T.glow) {
       for (let i = 0; i < 6; i++) {
         const a = 0.3 + 0.35 * Math.sin(t * 0.8 + i * 1.7), x = 205 + i * 45 + (i % 2) * 8, y = GY + 24 + (i * 17) % 60;
@@ -378,7 +378,7 @@ class ReltoRenderer {
     }
     ctx.fillStyle = shade(deep(T.tuft));
     for (const [x, h] of g.tufts) { ctx.beginPath(); ctx.moveTo(x - 2, GY + 1); ctx.lineTo(x, GY - h); ctx.lineTo(x + 2, GY + 1); ctx.fill(); }
-    if (this.castleOn()) CO.parapet(ctx, shade); // le Château : l'enceinte, un parapet à arcatures sur le bord
+    if (this.castleOn()) { const L = CO.litStone(sky); CO.parapet(ctx, (h) => shade(L(h))); } // le Château : l'enceinte, un parapet à arcatures sur le bord
   }
 
   /** Filons d'or, d'argent et gemmes dans la roche sous l'île (pages « gold », « silver », « gems »). Déterministe : graine du Relto. */

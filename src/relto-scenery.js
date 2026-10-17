@@ -156,7 +156,7 @@ function islets(ctx, r, d, sky, t) {
   for (let i = 0; i < Math.min(n, POS.length); i++) {
     const [x, y0, s] = POS[i], y = y0 + Math.sin(t * 0.4 + i * 1.7) * 2;
     ctx.save(); ctx.globalAlpha = 0.5 + 0.35 * s; ctx.translate(x, y); ctx.scale(s, s);
-    if (castleOf(r)) require("./relto-castle-out").castleIslet(ctx, (h) => mix("#05060c", h, k), sky.night || 0, i, (i === 0 && hasAdd(r, "dniclock")) || (i === 1 && hasAdd(r, "calendar"))); // le Château : l'îlot devient un morceau du château (maçonnerie suspendue, plus de roche ni d'herbe)
+    if (castleOf(r)) require("./relto-castle-out").castleIslet(ctx, ((L) => (h) => mix("#05060c", L(h), k))(require("./relto-castle-out").litStone(sky)), sky.night || 0, i, (i === 0 && hasAdd(r, "dniclock")) || (i === 1 && hasAdd(r, "calendar"))); // le Château : l'îlot devient un morceau du château (maçonnerie suspendue, plus de roche ni d'herbe)
     else {
     ctx.fillStyle = mix("#05060c", "#5a5148", k); ctx.beginPath(); ctx.moveTo(-26, 0); ctx.lineTo(26, 0); ctx.lineTo(10, 26); ctx.lineTo(0, 38); ctx.lineTo(-12, 22); ctx.closePath(); ctx.fill();
     ctx.fillStyle = mix("#05060c", "#6f8a4a", k); ctx.beginPath(); ctx.ellipse(0, 0, 26, 5, 0, 0, 6.283); ctx.fill();

@@ -79,7 +79,7 @@ function castleIsland(r, ctx, sc, sky, t, has, cx, y) {
 function islet(ctx, x, y, s, sky, i, t, low = false) {
   const a = k(sky), c = (h) => mix("#05060c", h, a), by = y + Math.sin(t * 0.4 + i * 1.7) * 2;
   ctx.save(); ctx.translate(x, by); ctx.scale(s, s);
-  if (castleNow) { require("./relto-castle-out").castleIslet(ctx, c, sky.night || 0, i, low); ctx.restore(); return; } // le Château : un morceau du château, suspendu
+  if (castleNow) { require("./relto-castle-out").castleIslet(ctx, ((L) => (h) => c(L(h)))(require("./relto-castle-out").litStone(sky)), sky.night || 0, i, low); ctx.restore(); return; } // le Château : un morceau du château, suspendu
   ctx.fillStyle = c("#5a5148"); ctx.beginPath(); ctx.moveTo(-26, 0); ctx.lineTo(26, 0); ctx.lineTo(10, 26); ctx.lineTo(0, 38); ctx.lineTo(-12, 22); ctx.closePath(); ctx.fill();
   ctx.fillStyle = c("#6f8a4a"); ctx.beginPath(); ctx.ellipse(0, 0, 26, 5, 0, 0, 6.283); ctx.fill();
   ctx.fillStyle = c(i % 2 ? "#c4552a" : "#2a4a30"); ctx.beginPath(); if (i % 2) ctx.arc(2, -12, 9, 0, 6.283); else { ctx.moveTo(-6, -2); ctx.lineTo(0, -26); ctx.lineTo(6, -2); ctx.closePath(); } ctx.fill();

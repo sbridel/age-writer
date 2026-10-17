@@ -9,6 +9,10 @@ const GY = 208;
 
 const STONE = "#8a8591", STONE_D = "#5e5966", STONE_DD = "#3a3742", SLATE = "#3e4258", SLATE_D = "#24263a", GOLD = "#c9a24e";
 
+/** La pierre au jour : à midi elle s'éclaircit vers un gris doux et bleuté (la maquette était une scène de nuit) ; au crépuscule elle redescend vers l'anthracite ; la nuit rouge n'y change rien. */
+function daylight(sky) { const d = clamp(((sky.ambient == null ? 1 : sky.ambient) - 0.45) / 0.5) * (1 - (sky.red || 0)); return d; }
+function litStone(sky) { const d = daylight(sky); return d <= 0 ? (h) => h : (h) => mix(h, "#b8bccb", 0.34 * d); }
+
 /** La couleur d'une fenêtre : sombre le jour (un reflet du ciel), rouge orangé et chaude la nuit. */
 function winColor(night, k = 1) { const n = clamp(night * 1.25); return mix(mix("#05060c", "#2e2a3a", 0.7 + 0.3 * k), n > 0.5 ? "#ff6a3a" : "#e0743a", n); }
 
@@ -24,10 +28,11 @@ function lancet(ctx, x, y, w, h, col) { ctx.fillStyle = col; ctx.beginPath(); ct
  * de sa passerelle couverte. Toujours dessiné sous le Château, même sans la page Montagne.
  */
 function keep(r, ctx, M, sky, t, observatory) {
-  const amb = 0.35 + 0.65 * sky.ambient, c = (h) => mix("#05060c", h, amb), night = clamp(sky.night == null ? 0 : sky.night);
+  const lit = litStone(sky), amb = 0.35 + 0.65 * sky.ambient, c = (h) => mix("#05060c", lit(h), amb), night = clamp(sky.night == null ? 0 : sky.night);
+  const sunRight = daylight(sky) > 0 && (sky.hour || 12) > 13; // l'après-midi, le soleil est à droite : la face éclairée change de côté
   const ax = observatory ? M.tx : r.terraceOf ? r.terraceOf(M).tx : M.x, s = 0.66 + 0.04 * clamp((M.hw - 100) / 24), raise = M.h * 0.12, cx = M.x, hw = M.hw, h = M.h;
   const P = (d) => new Path2D(d), W = (k) => winColor(night, k);
-  const grad = (x0, x1, stops) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); stops.forEach((h, i) => g.addColorStop(i / (stops.length - 1), c(h))); return g; };
+  const grad = (x0, x1, stops) => { const g = sunRight ? ctx.createLinearGradient(x1, 0, x0, 0) : ctx.createLinearGradient(x0, 0, x1, 0); stops.forEach((h, i) => g.addColorStop(i / (stops.length - 1), c(h))); return g; };
   const MID = ["#6e6876", "#4a4552", "#2e2a36"], FRONT = ["#878090", "#5e5866", "#3a3542"], SL = ["#565a78", "#24263a"];
   const fillP = (d, f) => { ctx.fillStyle = f; ctx.fill(P(d)); }, strokeP = (d, col, w) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke(P(d)); };
   const courses = (x, y, w, h) => { ctx.fillStyle = rgba(0, 0, 0, 0.22); for (let yy = y + 4.5, k = 0; yy < y + h; yy += 4.5, k++) { ctx.fillRect(x, yy, w, 0.7); for (let xx = x + (k % 2 ? 11 : 5.5); xx < x + w; xx += 11) ctx.fillRect(xx, yy, 0.6, 4.5); } };
@@ -334,4 +339,4 @@ function globalCastle(ctx, c, sky, cx, y) {
   ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(cx + 3, y - 56); ctx.lineTo(cx + 3, y - 60); ctx.stroke();
 }
 
-module.exports = { calendarStele, redNight, bloodMoon, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };
+module.exports = { litStone, daylight, calendarStele, redNight, bloodMoon, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };
