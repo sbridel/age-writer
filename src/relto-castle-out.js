@@ -176,29 +176,30 @@ function bloodMoon(ctx, sky, t, x, y) {
 }
 
 /**
- * La chauve-souris géante : de loin en loin (toutes les 50 s environ, pendant 9 s), elle sort de la lune, petite, et vient vers nous en
- * grandissant, de face, les ailes grandes ouvertes qui battent : la membrane festonnée entre les doigts, les os des doigts, de grandes
- * oreilles, des yeux jaunes qui luisent. Elle sort du cadre par un côté, puis l'autre la fois suivante.
+ * La chauve-souris géante : de loin en loin (toutes les 50 s environ, pendant 9 s), elle sort de la lune, petite, et file vers un bord
+ * en grandissant, de profil, la tête dans le sens du vol : un corps, une tête à museau, une haute oreille, un œil jaune, deux ailes
+ * (la lointaine plus sombre) qui montent et descendent. Elle sort du cadre par un côté, puis l'autre la fois suivante.
  */
 function giantBat(ctx, t, mx, my, a) {
   const P = 50, D = 9, ph = ((t % P) + P) % P; if (ph > D) return;
-  const u = ph / D, dir = Math.floor(t / P) % 2 ? -1 : 1, e = u * u, x = mx + dir * (40 + e * 420) + Math.sin(t * 1.3) * 6, y = my - 6 + e * 70 + Math.sin(t * 2.2) * 4, S = 0.55 + e * 0.95, f = Math.sin(t * 4.2), fade = Math.min(1, u * 6) * a;
-  const MEM = rgba(26, 9, 13, 0.96 * fade), BONE = rgba(86, 36, 42, 0.9 * fade), FUR = rgba(20, 7, 10, fade);
-  ctx.save(); ctx.translate(x, y); ctx.scale(S, S);
-  for (const s of [-1, 1]) { // les deux ailes : l'épaule, le poignet, quatre doigts ; la membrane festonnée entre eux ; elles montent et descendent avec f
-    const L = (px, py) => [s * px, py - f * (px / 50) * 14];
-    const sh = L(5, -3), wr = L(22, -16), d1 = L(48, -24), d2 = L(54, -4), d3 = L(44, 12), d4 = L(26, 16), hip = L(6, 9);
-    ctx.fillStyle = MEM; ctx.beginPath(); ctx.moveTo(...sh); ctx.lineTo(...wr); ctx.lineTo(...d1);
-    const scal = (p0, p1, k) => ctx.quadraticCurveTo((p0[0] + p1[0]) / 2 - s * k, (p0[1] + p1[1]) / 2 - k * 0.3, p1[0], p1[1]); // un feston, creusé vers le corps
-    scal(d1, d2, 6); scal(d2, d3, 6); scal(d3, d4, 5); scal(d4, hip, 4); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = BONE; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(...sh); ctx.lineTo(...wr); ctx.stroke(); ctx.lineWidth = 0.9; for (const d of [d1, d2, d3, d4]) { ctx.beginPath(); ctx.moveTo(...wr); ctx.lineTo(...d); ctx.stroke(); } // le bras, les doigts
-    ctx.fillStyle = BONE; ctx.beginPath(); ctx.moveTo(wr[0], wr[1]); ctx.lineTo(wr[0] + s * 1, wr[1] - 4); ctx.lineTo(wr[0] + s * 3, wr[1] - 0.5); ctx.closePath(); ctx.fill(); // le pouce griffu
-  }
-  ctx.fillStyle = FUR; ctx.beginPath(); ctx.ellipse(0, 3, 6, 9, 0, 0, 6.283); ctx.fill(); // le corps, velu
-  ctx.beginPath(); ctx.arc(0, -7, 5, 0, 6.283); ctx.fill(); for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * 1.5, -10); ctx.lineTo(s * 5.5, -20); ctx.lineTo(s * 5, -8); ctx.closePath(); ctx.fill(); } // la tête, les grandes oreilles
-  ctx.beginPath(); ctx.moveTo(-3, 11); ctx.lineTo(-5, 16); ctx.lineTo(-2, 12); ctx.moveTo(3, 11); ctx.lineTo(5, 16); ctx.lineTo(2, 12); ctx.fill(); // les pattes
-  ctx.fillStyle = rgba(255, 210, 60, 0.95 * fade); for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(s * 2, -7.5, 1.3, 0.9, s * 0.3, 0, 6.283); ctx.fill(); } // les yeux jaunes
-  ctx.fillStyle = rgba(240, 230, 220, 0.8 * fade); ctx.fillRect(-1.4, -4, 0.6, 1.4); ctx.fillRect(0.8, -4, 0.6, 1.4); // les crocs
+  const u = ph / D, dir = Math.floor(t / P) % 2 ? -1 : 1, e = u * u, x = mx + dir * (40 + e * 420), y = my - 6 + e * 70 + Math.sin(t * 2.2) * 4, S = 0.7 + e * 1.2, th = Math.sin(t * 6) * 0.95 + 0.1, fade = Math.min(1, u * 6) * a;
+  const MEM = rgba(30, 10, 15, 0.95 * fade), FAR = rgba(16, 5, 8, 0.92 * fade), BONE = rgba(96, 40, 46, 0.9 * fade), FUR = rgba(20, 7, 10, fade);
+  ctx.save(); ctx.translate(x, y); ctx.scale(S * dir, S); /* de profil, la tête dans le sens du vol */
+  /* une aile, dessinée à plat (x le long du corps, z vers le bout de l'aile) puis relevée de th et vue un peu d'en haut : l'aile proche
+     (s = 1) passe sous le corps, la lointaine (s = -1) au-dessus ; les deux battent ensemble */
+  const wing = (sd, col, bones) => {
+    const Q = ([px, pz]) => [px, -pz * Math.sin(th) + sd * pz * Math.cos(th) * 0.32];
+    const sh = Q([3, 0]), wr = Q([5, 13]), d1 = Q([2, 31]), d2 = Q([-7, 27]), d3 = Q([-12, 17]), hip = Q([-6, 0.5]);
+    const scal = (p0, p1) => ctx.quadraticCurveTo((p0[0] + p1[0]) / 2 + (wr[0] - (p0[0] + p1[0]) / 2) * 0.35, (p0[1] + p1[1]) / 2 + (wr[1] - (p0[1] + p1[1]) / 2) * 0.35, p1[0], p1[1]); /* un feston, creusé vers le poignet */
+    ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(...sh); ctx.lineTo(...wr); ctx.lineTo(...d1); scal(d1, d2); scal(d2, d3); scal(d3, hip); ctx.closePath(); ctx.fill();
+    if (bones) { ctx.strokeStyle = BONE; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(...sh); ctx.lineTo(...wr); ctx.stroke(); ctx.lineWidth = 0.6; ctx.beginPath(); for (const d of [d1, d2, d3]) { ctx.moveTo(...wr); ctx.lineTo(...d); } ctx.stroke(); } };
+  wing(-1, FAR, false); /* l'aile lointaine, derrière le corps */
+  ctx.fillStyle = FUR; ctx.beginPath(); ctx.ellipse(0, 0, 6.5, 3.6, -0.06, 0, 6.283); ctx.fill(); /* le corps */
+  ctx.strokeStyle = FUR; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(-5, 1.5); ctx.lineTo(-11, 2.6); ctx.moveTo(-5, 0.5); ctx.lineTo(-10.5, 0.8); ctx.stroke(); /* les pattes, tendues en arrière */
+  ctx.beginPath(); ctx.arc(7, -1, 3, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.moveTo(8.6, -2.6); ctx.lineTo(12, -0.4); ctx.lineTo(8.6, 1); ctx.closePath(); ctx.fill(); /* la tête, le museau pointu */
+  ctx.beginPath(); ctx.moveTo(4.8, -2.6); ctx.lineTo(5.2, -9.5); ctx.lineTo(7.4, -3.4); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(6.6, -3.4); ctx.lineTo(7.8, -9); ctx.lineTo(9, -3); ctx.closePath(); ctx.fill(); /* les deux grandes oreilles */
+  ctx.fillStyle = rgba(255, 210, 60, 0.95 * fade); ctx.beginPath(); ctx.arc(8.4, -1.6, 0.7, 0, 6.283); ctx.fill(); /* l'œil jaune */
+  wing(1, MEM, true); /* l'aile proche, devant */
   ctx.restore();
 }
 
