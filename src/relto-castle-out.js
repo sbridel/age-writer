@@ -25,7 +25,7 @@ function lancet(ctx, x, y, w, h, col) { ctx.fillStyle = col; ctx.beginPath(); ct
  */
 function keep(r, ctx, M, sky, t, observatory) {
   const amb = 0.35 + 0.65 * sky.ambient, c = (h) => mix("#05060c", h, amb), night = clamp(sky.night == null ? 0 : sky.night);
-  const ax = observatory ? M.tx : r.terraceOf ? r.terraceOf(M).tx : M.x, s = 0.7 + 0.08 * clamp((M.hw - 100) / 24);
+  const ax = observatory ? M.tx : r.terraceOf ? r.terraceOf(M).tx : M.x, s = 0.6 + 0.06 * clamp((M.hw - 100) / 24), raise = M.h * 0.2, cx = M.x, hw = M.hw, h = M.h;
   const P = (d) => new Path2D(d), W = (k) => winColor(night, k);
   const grad = (x0, x1, stops) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); stops.forEach((h, i) => g.addColorStop(i / (stops.length - 1), c(h))); return g; };
   const MID = ["#6e6876", "#4a4552", "#2e2a36"], FRONT = ["#878090", "#5e5866", "#3a3542"], SL = ["#565a78", "#24263a"];
@@ -35,7 +35,26 @@ function keep(r, ctx, M, sky, t, observatory) {
   const lancets = (ds, k) => { for (const d of ds) fillP(d, W(k)); };
   // la lueur rouge des fenêtres, la nuit
   if (night > 0.2) { const g = ctx.createRadialGradient(ax - 40, GY - 90, 4, ax - 40, GY - 90, 120); g.addColorStop(0, rgba(255, 90, 60, 0.18 * night)); g.addColorStop(1, rgba(255, 90, 60, 0)); ctx.fillStyle = g; ctx.fillRect(ax - 170, GY - 210, 260, 220); }
-  ctx.save(); ctx.translate(ax - 354 * s, GY * (1 - s)); ctx.scale(s, s); /* le repère de la maquette : la tour de l'astronome à x = 354, le sol à y = 208 */
+  // la courtine : un mur crénelé au fond de la cour, d'un bord à l'autre de l'île, et une tour d'angle à chaque bout (le donjon passe devant)
+  { const x0 = 152, x1 = 460, top = GY - 24;
+    ctx.fillStyle = grad(x0, x1, ["#6a6472", "#4a4552", "#34303c"]); ctx.fillRect(x0, top, x1 - x0, GY + 2 - top); courses(x0, top, x1 - x0, GY + 2 - top);
+    for (let x = x0; x < x1 - 3; x += 7) ctx.fillRect(x, top - 4, 4, 4); /* les merlons */
+    ctx.fillStyle = c("#8a8494"); ctx.fillRect(x0, top, x1 - x0, 1.4);
+    for (let x = x0 + 22; x < x1 - 12; x += 26) lancets([`M${x - 1.5} ${GY - 6} v-6 q1.5 -3 3 0 v6 Z`], 0.5);
+    for (const [x, hh] of [[x0 + 2, 54], [x1 - 2, 46]]) { box(x - 8, GY - hh, 16, hh + 2, FRONT); ctx.fillStyle = c("#7a7683"); ctx.fillRect(x - 10, GY - hh - 3, 20, 3); fillP(`M${x - 10} ${GY - hh - 3} L ${x} ${GY - hh - 30} L ${x + 10} ${GY - hh - 3} Z`, grad(x - 10, x + 10, SL)); strokeP(`M${x} ${GY - hh - 30} v-5`, c(GOLD), 0.9); lancets([`M${x - 2} ${GY - hh + 18} v-7 q2 -4 4 0 v7 Z`, `M${x - 2} ${GY - 10} v-7 q2 -4 4 0 v7 Z`], 0.9); }
+  }
+  // l'ancienne montagne, devenue la masse du château : sa silhouette exacte, hérissée de pignons, de créneaux et de flèches fines, semée de fenêtres
+  { const bz = (a, b, c2, d, u) => { const v = 1 - u; return v * v * v * a + 3 * v * v * u * b + 3 * v * u * u * c2 + u * u * u * d; }, pts = [];
+    const seg = (x0, y0, x1, y1, x2, y2, x3, y3) => { for (let i = 0; i <= 30; i++) pts.push([bz(x0, x1, x2, x3, i / 30), bz(y0, y1, y2, y3, i / 30)]); };
+    seg(cx - hw, GY + 2, cx - hw * 0.55, GY - h * 0.35, cx - hw * 0.3, GY - h * 0.95, cx - 6, GY - h); seg(cx - 6, GY - h, cx + 14, GY - h * 1.02, cx + hw * 0.35, GY - h * 0.7, cx + hw * 0.62, GY - h * 0.32); seg(cx + hw * 0.62, GY - h * 0.32, cx + hw * 0.85, GY - h * 0.1, cx + hw * 0.95, GY - 2, cx + hw, GY + 2);
+    const yAt = (x) => { for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; if ((x0 - x) * (x1 - x) <= 0 && x0 !== x1) return y0 + (y1 - y0) * (x - x0) / (x1 - x0); } return GY; };
+    const q = rng(0x3a57), st = 9; ctx.fillStyle = grad(cx - hw, cx + hw, ["#3a3542", "#2a2632", "#1e1b26"]); ctx.beginPath(); ctx.moveTo(cx - hw, GY + 2);
+    for (let x = cx - hw + 4; x < cx + hw - 4; x += st) { const y = Math.max(GY - h - 4, yAt(x + st / 2) - 4), k = q(); if (k < 0.34) { ctx.lineTo(x, y); ctx.lineTo(x + st / 2, y - 7); ctx.lineTo(x + st, y); } else if (k < 0.5) { ctx.lineTo(x, y); ctx.lineTo(x + st / 2 - 1.5, y); ctx.lineTo(x + st / 2, y - 16 - q() * 8); ctx.lineTo(x + st / 2 + 1.5, y); ctx.lineTo(x + st, y); } else { for (let m = 0; m < 3; m++) { const xx = x + m * st / 3; ctx.lineTo(xx, y - 2.5); ctx.lineTo(xx + st / 6, y - 2.5); ctx.lineTo(xx + st / 6, y); ctx.lineTo(xx + st / 3, y); } } }
+    ctx.lineTo(cx + hw, GY + 2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = W(0.35); for (let i = 0; i < 26; i++) { const x = cx - hw * 0.9 + q() * hw * 1.8, top = yAt(x); if (GY - top > 14) ctx.fillRect(x, top + 6 + q() * (GY - top - 12), 1.6, 3); } // ses fenêtres
+  }
+  // le repère de la maquette (la tour de l'astronome à x = 354, le sol à y = 208), haussé : le donjon se dresse au sommet de l'ancienne montagne
+  ctx.save(); ctx.translate(ax - 354 * s, GY * (1 - s) - raise); ctx.scale(s, s);
   // PLAN ARRIÈRE : pignons et flèches fines, en silhouette
   ctx.fillStyle = c("#2a2632");
   ctx.fill(P("M180 210 L 186 160 L 196 160 L 196 136 L 204 136 L 204 160 L 224 160 L 224 118 L 230 100 L 236 118 L 236 160 L 250 160 L 250 110 L 256 110 L 256 160 L 330 160 L 330 128 L 336 128 L 336 160 L 372 160 L 372 112 L 378 92 L 384 112 L 384 160 L 400 160 L 400 136 L 406 136 L 406 160 L 420 210 Z"));
@@ -100,12 +119,19 @@ function keep(r, ctx, M, sky, t, observatory) {
   fillP("M373 171 v-5 q2 -3 4 0 v5 Z M381 169 v-5 q2 -3 4 0 v5 Z", c("#0a0809")); strokeP("M368 174 q 12 -10 24 -6", c("#7a7683"), 1.2);
   fillP("M372 176 q 8 14 8 34 l -4 0 q 0 -18 -8 -30 Z", c("#4a4350"));
   // la tour de l'astronome : avec l'observatoire, son sommet est la terrasse (en coordonnées de l'île : M.ty + 2)
-  const top = observatory ? (M.ty + 2 - GY * (1 - s)) / s : 140;
-  box(340, top, 28, 210 - top, FRONT);
-  ctx.fillStyle = c("#7a7683"); ctx.fillRect(336, top - 4, 36, 4); strokeP(`M339 ${top - 3} v-4 M345 ${top - 3} v-4 M351 ${top - 3} v-4 M357 ${top - 3} v-4 M363 ${top - 3} v-4 M369 ${top - 3} v-4`, c("#2a2733"), 0.8); // la plate-forme et son garde-corps
-  if (!observatory) { fillP(`M336 ${top - 4} L 354 ${top - 44} L 372 ${top - 4} Z`, grad(336, 372, SL)); strokeP(`M354 ${top - 44} v-6`, c(GOLD), 1); }
-  for (let y = top + 28; y < 200; y += 28) lancets([`M350 ${y} v-11 q4 -6 8 0 v11 Z`], 0.95);
+  const top = observatory ? (M.ty + 2 - GY * (1 - s) + raise) / s : 112, aw = 30 / s, a0 = 354 - aw / 2;
+  box(a0, top, aw, 210 - top, FRONT);
+  ctx.fillStyle = c("#7a7683"); ctx.fillRect(a0 - 4, top - 4, aw + 8, 4); ctx.fillStyle = c("#2a2733"); for (let x = a0 - 3; x < a0 + aw + 4; x += 6) ctx.fillRect(x, top - 8, 1.2, 4); // la plate-forme et son garde-corps
+  if (!observatory) { fillP(`M${a0 - 4} ${top - 4} L 354 ${top - 50} L ${a0 + aw + 4} ${top - 4} Z`, grad(a0, a0 + aw, SL)); strokeP(`M354 ${top - 50} v-6`, c(GOLD), 1); }
+  for (let y = top + 28; y < 200; y += 26) lancets([`M350 ${y} v-11 q4 -6 8 0 v11 Z`], 0.95);
   ctx.restore();
+  // le pied de l'ancienne montagne : un long corps de logis à contreforts et créneaux, d'un flanc à l'autre, une tour ronde à chaque bout
+  { const x0 = cx - hw + 10, x1 = cx + hw - 10, top = GY - raise - 4;
+    box(x0, top, x1 - x0, GY + 2 - top, MID); ctx.fillStyle = grad(x0, x1, MID); for (let x = x0; x < x1 - 3; x += 6) ctx.fillRect(x, top - 3.5, 3.5, 3.5); /* les merlons */
+    ctx.fillStyle = c("#8a8494"); ctx.fillRect(x0, top, x1 - x0, 1.4);
+    for (let x = x0 + 16; x < x1 - 10; x += 18) { ctx.fillStyle = c("#3a3542"); ctx.beginPath(); ctx.moveTo(x - 2.5, GY + 2); ctx.lineTo(x - 2.5, top + 8); ctx.lineTo(x, top + 3); ctx.lineTo(x + 2.5, top + 8); ctx.lineTo(x + 2.5, GY + 2); ctx.closePath(); ctx.fill(); lancets([`M${x + 9 - 1.8} ${GY - 5} v-9 q1.8 -4 3.6 0 v9 Z`], 0.7); } /* contreforts et lancettes */
+    for (const [x, hh, w] of [[x0 - 2, raise + 30, 16], [x1 + 2, raise + 22, 14]]) { box(x - w / 2, GY - hh, w, hh + 2, FRONT); ctx.fillStyle = c("#7a7683"); ctx.fillRect(x - w / 2 - 2, GY - hh - 3, w + 4, 3); fillP(`M${x - w / 2 - 2} ${GY - hh - 3} L ${x} ${GY - hh - 26} L ${x + w / 2 + 2} ${GY - hh - 3} Z`, grad(x - w / 2, x + w / 2, SL)); strokeP(`M${x} ${GY - hh - 26} v-5`, c(GOLD), 0.9); lancets([`M${x - 2} ${GY - hh + 14} v-7 q2 -4 4 0 v7 Z`, `M${x - 2} ${GY - 8} v-7 q2 -4 4 0 v7 Z`], 0.9); }
+  }
   void t;
 }
 
