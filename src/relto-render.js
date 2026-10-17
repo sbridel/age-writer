@@ -1178,8 +1178,8 @@ class ReltoRenderer {
     const x0 = this.hutX - 28, y0 = GY - 30, glass = this.glassOn(), castle = this.castleOn(), [kx, ky] = CO.chimneyAt(x0, y0, 56), cx = castle ? kx : glass ? this.hutX : x0 + 11.5, cy = castle ? ky : glass ? y0 - 27 : y0 - 24, night = clamp(sky.night == null ? 0.3 : sky.night);
     const fl = 0.75 + 0.25 * Math.sin(t * 9.1) * Math.sin(t * 5.3 + 1) + 0.1 * Math.sin(t * 17);
     // fenêtre et lueur de l'âtre
-    const wx = x0 + 56 - 14, wy = y0 + 13;
-    let g = ctx.createRadialGradient(wx, wy, 1, wx, wy, 34 + 10 * d); g.addColorStop(0, rgba(255, 170, 70, (0.35 + 0.25 * night) * fl * d)); g.addColorStop(1, rgba(255, 140, 50, 0));
+    const wx = castle ? this.hutX : x0 + 56 - 14, wy = castle ? GY - 12 : y0 + 13; /* le Château : la lueur sort du portail de la chapelle, à peine visible le jour */
+    let g = ctx.createRadialGradient(wx, wy, 1, wx, wy, 34 + 10 * d); g.addColorStop(0, rgba(255, 170, 70, (castle ? 0.06 + 0.4 * night : 0.35 + 0.25 * night) * fl * d)); g.addColorStop(1, rgba(255, 140, 50, 0));
     ctx.fillStyle = g; ctx.fillRect(wx - 50, wy - 50, 100, 100);
     if (!this.glassOn() && !castle) { ctx.fillStyle = rgba(255, 190, 90, (0.5 + 0.4 * night) * fl); ctx.fillRect(wx - 5, wy - 5, 11, 10); } // la Verrière s'allume d'elle-même
     g = ctx.createRadialGradient(cx, cy, 1, cx, cy, 18); g.addColorStop(0, rgba(255, 150, 60, (0.25 + 0.3 * night) * fl * d)); g.addColorStop(1, rgba(255, 120, 40, 0));
