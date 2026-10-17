@@ -143,28 +143,42 @@ function gargoyle(ctx, c, x, y) {
 
 /** La chapelle, à la place de la cabane (même empreinte : x0..x0+w, toit jusqu'à y0 − 24) : pignon d'ardoise raide, une flèche, une lancette qui s'allume, une porte en arc brisé. */
 function chapel(ctx, col, sky, t, x0, y0, w, h, hutX) {
-  const night = clamp(sky.night == null ? 0 : sky.night), fl = 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1);
-  const g = ctx.createLinearGradient(x0, 0, x0 + w, 0); g.addColorStop(0, col("#a29dab")); g.addColorStop(0.6, col(STONE)); g.addColorStop(1, col(STONE_D)); ctx.fillStyle = g; ctx.fillRect(x0, y0, w, h);
-  ctx.fillStyle = rgba(0, 0, 0, 0.15); for (let y = y0 + 5; y < y0 + h; y += 5) ctx.fillRect(x0, y, w, 0.7);
-  // le toit d'ardoise, raide, et ses crochets
-  { const sg = ctx.createLinearGradient(x0, 0, x0 + w, 0); sg.addColorStop(0, col("#5a5e7c")); sg.addColorStop(1, col(SLATE_D)); ctx.fillStyle = sg; }
-  ctx.beginPath(); ctx.moveTo(x0 - 5, y0); ctx.lineTo(hutX, y0 - 24); ctx.lineTo(x0 + w + 5, y0); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = col("#1c1a26"); for (let k = 1; k < 4; k++) { const u = k / 4; for (const s of [-1, 1]) { const xx = hutX + s * (w / 2 + 5) * (1 - u), yy = y0 - 24 * u; ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx + s * 2.6, yy - 1.4); ctx.lineTo(xx + s * 0.8, yy + 1.8); ctx.closePath(); ctx.fill(); } }
-  // la petite flèche du clocher, au faîte
-  ctx.fillStyle = col(STONE_D); ctx.fillRect(hutX - 3, y0 - 30, 6, 8); ctx.fillStyle = winColor(night, 1); ctx.fillRect(hutX - 1, y0 - 28, 2, 4);
-  ctx.fillStyle = col(SLATE_D); ctx.beginPath(); ctx.moveTo(hutX - 4, y0 - 30); ctx.lineTo(hutX, y0 - 46); ctx.lineTo(hutX + 4, y0 - 30); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = col(GOLD); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(hutX, y0 - 46); ctx.lineTo(hutX, y0 - 51); ctx.moveTo(hutX - 2, y0 - 49); ctx.lineTo(hutX + 2, y0 - 49); ctx.stroke();
-  // la porte en arc brisé (où était celle de la cabane) et la grande lancette à remplage (où était la fenêtre)
-  ctx.fillStyle = col("#17141a"); ctx.beginPath(); ctx.moveTo(hutX - 17, GY); ctx.lineTo(hutX - 17, GY - 13); ctx.quadraticCurveTo(hutX - 17, GY - 18, hutX - 11, GY - 20); ctx.quadraticCurveTo(hutX - 5, GY - 18, hutX - 5, GY - 13); ctx.lineTo(hutX - 5, GY); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = col("#b8b3c0"); ctx.lineWidth = 0.8; ctx.stroke(); ctx.fillStyle = col(GOLD); ctx.fillRect(hutX - 7.5, GY - 9, 1, 1);
-  const lx = x0 + w - 14; lancet(ctx, lx, y0 + 22, 9, 17, winColor(night * fl, 1));
-  ctx.strokeStyle = col("#17141a"); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(lx, y0 + 22); ctx.lineTo(lx, y0 + 9); ctx.moveTo(lx - 4.5, y0 + 15); ctx.lineTo(lx + 4.5, y0 + 15); ctx.stroke();
-  ctx.strokeStyle = col("#b8b3c0"); ctx.beginPath(); ctx.moveTo(lx - 5.5, y0 + 22); ctx.lineTo(lx - 5.5, y0 + 10); ctx.quadraticCurveTo(lx - 5.5, y0 + 5, lx, y0 + 3.5); ctx.quadraticCurveTo(lx + 5.5, y0 + 5, lx + 5.5, y0 + 10); ctx.lineTo(lx + 5.5, y0 + 22); ctx.stroke();
-  if (night > 0.3) { const gl = ctx.createRadialGradient(lx, y0 + 14, 2, lx, y0 + 14, 34); gl.addColorStop(0, rgba(255, 110, 70, 0.32 * night * fl)); gl.addColorStop(1, rgba(255, 110, 70, 0)); ctx.fillStyle = gl; ctx.fillRect(lx - 36, y0 - 20, 72, 60); }
-  // la cheminée de pierre, côté droit du toit (la fumée en sort : drawChimney)
-  ctx.fillStyle = col(STONE_D); ctx.fillRect(x0 + w - 12, y0 - 18, 6, 14); ctx.fillStyle = col(STONE); ctx.fillRect(x0 + w - 13, y0 - 19, 8, 2);
-  // deux contreforts
-  ctx.fillStyle = col(STONE_D); for (const x of [x0 - 3, x0 + w - 1]) { ctx.beginPath(); ctx.moveTo(x, GY); ctx.lineTo(x, y0 + 8); ctx.lineTo(x + 2, y0 + 5); ctx.lineTo(x + 4, y0 + 8); ctx.lineTo(x + 4, GY); ctx.closePath(); ctx.fill(); }
+  const night = clamp(sky.night == null ? 0 : sky.night), fl = 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1), x1 = x0 + w, ap = y0 - 34, glow = (k) => winColor(night * fl, k);
+  const LIME = ["#cfc7b8", "#ada595", "#857d70"], lime = (a, b) => { const g = ctx.createLinearGradient(a, 0, b, 0); LIME.forEach((h2, i) => g.addColorStop(i / 2, col(h2))); return g; };
+  // la cheminée, derrière le pignon (la fumée en sort : drawChimney)
+  ctx.fillStyle = col(STONE_D); ctx.fillRect(x1 - 12, y0 - 18, 6, 16); ctx.fillStyle = col(STONE); ctx.fillRect(x1 - 13, y0 - 19, 8, 2);
+  // le toit d'ardoise, raide, qui déborde du pignon comme un chaperon, et ses crochets
+  { const sg = ctx.createLinearGradient(x0, 0, x1, 0); sg.addColorStop(0, col("#5a5e7c")); sg.addColorStop(1, col(SLATE_D)); ctx.fillStyle = sg; }
+  ctx.beginPath(); ctx.moveTo(x0 - 4, y0 + 1); ctx.lineTo(hutX, ap - 3); ctx.lineTo(x1 + 4, y0 + 1); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = col("#1c1a26"); for (let k = 1; k < 4; k++) { const u = k / 4; for (const s of [-1, 1]) { const xx = hutX + s * (w / 2 + 4) * (1 - u), yy = y0 + 1 - (y0 + 4 - ap) * u; ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx + s * 2.6, yy - 1.6); ctx.lineTo(xx + s * 0.6, yy + 1.8); ctx.closePath(); ctx.fill(); } }
+  // la façade : le mur et le pignon de pierre claire, d'un seul tenant
+  ctx.fillStyle = lime(x0, x1); ctx.beginPath(); ctx.moveTo(x0, GY); ctx.lineTo(x0, y0); ctx.lineTo(x0 + 2, y0); ctx.lineTo(hutX, ap); ctx.lineTo(x1 - 2, y0); ctx.lineTo(x1, y0); ctx.lineTo(x1, GY); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = rgba(0, 0, 0, 0.13); for (let y = y0 + 5; y < GY; y += 5) ctx.fillRect(x0, y, w, 0.7); for (let y = y0; y > ap + 4; y -= 5) { const half = (w / 2 - 2) * (y - ap) / (y0 - ap); ctx.fillRect(hutX - half, y, half * 2, 0.7); }
+  ctx.fillStyle = col("#ddd6c8"); ctx.fillRect(x0, y0 - 1, w, 1.6); // le bandeau
+  // la rose, dans le pignon
+  { const ry = y0 - 11, rr = 6.5; ctx.fillStyle = glow(0.9); ctx.beginPath(); ctx.arc(hutX, ry, rr, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = col("#2a2630"); ctx.lineWidth = 0.7; ctx.beginPath(); ctx.arc(hutX, ry, 2, 0, 6.283); ctx.stroke(); for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4; ctx.beginPath(); ctx.moveTo(hutX + Math.cos(a) * 2, ry + Math.sin(a) * 2); ctx.lineTo(hutX + Math.cos(a) * rr, ry + Math.sin(a) * rr); ctx.stroke(); }
+    ctx.strokeStyle = col("#efe9dc"); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(hutX, ry, rr + 1, 0, 6.283); ctx.stroke(); }
+  // le clocheton, au faîte : une arcade où pend la cloche, un petit toit, la croix
+  { const bw = 8, by = ap - 1; ctx.fillStyle = lime(hutX - bw / 2, hutX + bw / 2); ctx.fillRect(hutX - bw / 2, by - 12, bw, 12);
+    ctx.fillStyle = col("#1a1720"); ctx.beginPath(); ctx.moveTo(hutX - 2.4, by - 2); ctx.lineTo(hutX - 2.4, by - 8); ctx.quadraticCurveTo(hutX, by - 11, hutX + 2.4, by - 8); ctx.lineTo(hutX + 2.4, by - 2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = col(GOLD); ctx.beginPath(); ctx.moveTo(hutX - 1.8, by - 3.4); ctx.quadraticCurveTo(hutX - 1.6, by - 7.6, hutX, by - 7.8); ctx.quadraticCurveTo(hutX + 1.6, by - 7.6, hutX + 1.8, by - 3.4); ctx.closePath(); ctx.fill(); // la cloche
+    ctx.fillStyle = col(SLATE_D); ctx.beginPath(); ctx.moveTo(hutX - bw / 2 - 1.5, by - 12); ctx.lineTo(hutX, by - 21); ctx.lineTo(hutX + bw / 2 + 1.5, by - 12); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = col(GOLD); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(hutX, by - 21); ctx.lineTo(hutX, by - 29); ctx.moveTo(hutX - 2.6, by - 26); ctx.lineTo(hutX + 2.6, by - 26); ctx.stroke(); }
+  // le portail en arc brisé, au milieu : deux voussures, le tympan, la porte ; la nuit, un rai de lumière
+  { const pw = 13, pt = GY - 22, pa = (k) => { ctx.beginPath(); ctx.moveTo(hutX - pw / 2 - k, GY); ctx.lineTo(hutX - pw / 2 - k, pt + 7); ctx.quadraticCurveTo(hutX - pw / 2 - k, pt - k * 0.8, hutX, pt - 3 - k * 1.2); ctx.quadraticCurveTo(hutX + pw / 2 + k, pt - k * 0.8, hutX + pw / 2 + k, pt + 7); ctx.lineTo(hutX + pw / 2 + k, GY); };
+    ctx.fillStyle = col("#8a8274"); pa(3); ctx.closePath(); ctx.fill(); ctx.fillStyle = col("#1c1612"); pa(0); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = col("#e6dfd2"); ctx.lineWidth = 0.9; pa(3); ctx.stroke(); ctx.strokeStyle = col("#6a6356"); pa(1.4); ctx.stroke();
+    ctx.fillStyle = col("#3a2c22"); ctx.fillRect(hutX - pw / 2 + 0.8, pt + 6, pw - 1.6, GY - pt - 6); ctx.strokeStyle = col("#17110c"); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(hutX, pt + 6); ctx.lineTo(hutX, GY); ctx.stroke(); // les deux battants
+    ctx.fillStyle = col("#1c1820"); for (const yy of [pt + 10, GY - 5]) ctx.fillRect(hutX - pw / 2 + 0.8, yy, pw - 1.6, 1.1); // les pentures
+    ctx.fillStyle = col(GOLD); ctx.beginPath(); ctx.arc(hutX - 1.6, GY - 9, 0.8, 0, 6.283); ctx.arc(hutX + 1.6, GY - 9, 0.8, 0, 6.283); ctx.fill();
+    if (night > 0.3) { ctx.fillStyle = rgba(255, 150, 80, 0.7 * night * fl); ctx.fillRect(hutX - 0.5, pt + 7, 1, GY - pt - 7); } }
+  // deux lancettes de part et d'autre du portail
+  for (const lx of [hutX - 18, hutX + 18]) { lancet(ctx, lx, GY - 9, 5, 13, glow(1)); ctx.strokeStyle = col("#efe9dc"); ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(lx - 3.2, GY - 9); ctx.lineTo(lx - 3.2, GY - 18); ctx.quadraticCurveTo(lx - 3.2, GY - 22, lx, GY - 23.2); ctx.quadraticCurveTo(lx + 3.2, GY - 22, lx + 3.2, GY - 18); ctx.lineTo(lx + 3.2, GY - 9); ctx.stroke(); }
+  if (night > 0.3) { const gl = ctx.createRadialGradient(hutX, GY - 14, 2, hutX, GY - 14, 40); gl.addColorStop(0, rgba(255, 110, 70, 0.28 * night * fl)); gl.addColorStop(1, rgba(255, 110, 70, 0)); ctx.fillStyle = gl; ctx.fillRect(hutX - 42, GY - 56, 84, 60); }
+  // deux contreforts d'angle, à pinacle
+  for (const x of [x0 - 4, x1]) { ctx.fillStyle = lime(x, x + 4); ctx.fillRect(x, y0 + 2, 4, GY - y0 - 2); ctx.fillStyle = col("#857d70"); ctx.fillRect(x - 0.5, y0 + 12, 5, 1.2);
+    ctx.fillStyle = col(SLATE_D); ctx.beginPath(); ctx.moveTo(x - 0.6, y0 + 2); ctx.lineTo(x + 2, y0 - 9); ctx.lineTo(x + 4.6, y0 + 2); ctx.closePath(); ctx.fill(); ctx.fillStyle = col(GOLD); ctx.fillRect(x + 1.6, y0 - 11, 0.9, 2); }
 }
 /** Où sort la fumée de la cheminée de la chapelle. */
 function chimneyAt(x0, y0, w) { return [x0 + w - 9, y0 - 20]; }
