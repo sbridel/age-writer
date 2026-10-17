@@ -307,15 +307,17 @@ function drawPondRoom(r, ctx, sc, sky, t) {
     }
     ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.beginPath(); ctx.moveTo(282, -10); for (const [y, x] of ED) ctx.lineTo(x, y); ctx.lineTo(160, yg - 8); ctx.lineTo(190, 150); ctx.lineTo(214, 90); ctx.lineTo(238, 40); ctx.lineTo(250, -10); ctx.closePath(); ctx.fill();
     if (!castle) { const q2 = rng(0x4c1); ctx.strokeStyle = rgba(0, 0, 0, 0.25); ctx.lineWidth = 1.2; for (let i = 0; i < 7; i++) { const y = 20 + i * 24 + q2() * 8, x = q2() * 120; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 70 + q2() * 60, y + 4); ctx.stroke(); } }
-    const y0s = 34, ex = ox + (K.x0 + 16 - fx) * S, N = 30, pts = [];
+    const y0s = castle ? 46 : 34, ex = ox + (K.x0 + 16 - fx) * S, N = 30, pts = []; /* le Château : le filet commence sous la gueule de la gargouille, après son jet */
     for (let i = 0; i <= N; i++) { const p = i / N, y = y0s + (yg - 8 - y0s) * p; pts.push([edge(y) - 7 - 3 * p + Math.sin(p * 9 + t * 0.5) * 0.9, y, 9 + 9 * p]); }
     ctx.fillStyle = "rgba(205,232,250,0.92)"; ctx.beginPath(); pts.forEach(([x, y, w], i) => (i ? ctx.lineTo(x - w / 2, y) : ctx.moveTo(x - w / 2, y))); for (let i = N; i >= 0; i--) ctx.lineTo(pts[i][0] + pts[i][2] / 2, pts[i][1]); ctx.closePath(); ctx.fill();
-    if (castle) { const gx = pts[0][0], gy = y0s; // la gargouille : une tête de pierre qui sort du mur, la gueule ouverte, d'où l'eau jaillit
+    if (castle) { const gx = pts[0][0] - 8, gy = y0s - 13; // la gargouille : une tête de pierre qui sort du mur, la gueule ouverte, d'où l'eau jaillit
       ctx.fillStyle = cs("#6e6876"); ctx.beginPath(); ctx.moveTo(gx - 30, gy - 14); ctx.lineTo(gx - 6, gy - 13); ctx.lineTo(gx + 2, gy - 9); ctx.lineTo(gx + 10, gy - 6); ctx.lineTo(gx + 8, gy - 2); ctx.lineTo(gx - 2, gy - 2); ctx.lineTo(gx + 6, gy + 3); ctx.lineTo(gx + 2, gy + 6); ctx.lineTo(gx - 10, gy + 4); ctx.lineTo(gx - 30, gy + 8); ctx.closePath(); ctx.fill();
       ctx.fillStyle = cs("#4a4552"); ctx.beginPath(); ctx.moveTo(gx - 12, gy - 13); ctx.lineTo(gx - 8, gy - 22); ctx.lineTo(gx - 3, gy - 12); ctx.closePath(); ctx.fill(); /* l'oreille pointue */
       ctx.fillStyle = rgba(10, 6, 10, 0.85); ctx.beginPath(); ctx.moveTo(gx - 2, gy - 2); ctx.lineTo(gx + 8, gy - 2); ctx.lineTo(gx + 5, gy + 1.5); ctx.closePath(); ctx.fill(); /* la gueule */
       ctx.fillStyle = night > 0.3 ? rgba(255, 106, 58, 0.9) : rgba(10, 6, 10, 0.8); ctx.beginPath(); ctx.arc(gx - 4, gy - 8, 1.6, 0, 6.283); ctx.fill(); /* l'œil */
-      ctx.fillStyle = cs("#8a8494"); ctx.fillRect(gx - 34, gy - 16, 8, 26); } /* la console qui la porte */
+      ctx.fillStyle = cs("#8a8494"); ctx.fillRect(gx - 34, gy - 16, 8, 26); /* la console qui la porte */
+      const jet = (w0, w1) => { ctx.beginPath(); ctx.moveTo(gx + 6, gy - 1.5 - w0 / 2); ctx.quadraticCurveTo(gx + 12 + w1 / 2, gy - 1, pts[0][0] + pts[0][2] / 2, y0s + 1); ctx.lineTo(pts[0][0] - pts[0][2] / 2, y0s + 1); ctx.quadraticCurveTo(gx + 8, gy + 3, gx + 5, gy - 1.5 + w0 / 2); ctx.closePath(); };
+      jet(3, 6); ctx.fillStyle = "rgba(205,232,250,0.92)"; ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,0.75)"; ctx.lineWidth = 1; { const k = (t * 1.2) % 1; ctx.beginPath(); ctx.moveTo(gx + 7 + k * 5, gy - 1.5 + k * 3); ctx.lineTo(gx + 9 + k * 5, gy + k * 6); ctx.stroke(); } } /* le jet : il sort de la gueule vers l'avant, s'incurve et retombe dans le filet */
     else { ctx.fillStyle = c("#2a2622"); ctx.beginPath(); ctx.ellipse(pts[0][0] + 1, y0s - 1, 14, 5, -0.15, 0, 6.283); ctx.fill(); } // l'encoche d'où l'eau sort
     ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1.6;
     for (let k = 0; k < 8; k++) { const q = (t * 0.45 + k / 8) % 1, i = Math.min(N - 1, Math.floor(q * N)), [x, y, w] = pts[i], [x2, y2] = pts[i + 1]; ctx.beginPath(); ctx.moveTo(x + ((k % 3) - 1) * w * 0.25, y); ctx.lineTo(x2 + ((k % 3) - 1) * w * 0.25, y2 + 6); ctx.stroke(); }
