@@ -128,7 +128,14 @@ function keep(r, ctx, M, sky, t, observatory) {
   box(a0, top, aw, 210 - top, FRONT);
   if (!observatory) { ctx.fillStyle = c("#7a7683"); ctx.fillRect(a0 - 4, top - 4, aw + 8, 4); ctx.fillStyle = c("#2a2733"); for (let x = a0 - 3; x < a0 + aw + 4; x += 6) ctx.fillRect(x, top - 8, 1.2, 4); } // la plate-forme et son garde-corps ; avec l'observatoire, la tour se prolonge sans rupture jusqu'à sa coupole
   if (!observatory) { fillP(`M${a0 - 4} ${top - 4} L 354 ${top - 50} L ${a0 + aw + 4} ${top - 4} Z`, grad(a0, a0 + aw, SL)); strokeP(`M354 ${top - 50} v-6`, c(GOLD), 1); }
-  for (let y = top + 28; y < 200; y += 26) lancets([`M350 ${y} v-11 q4 -6 8 0 v11 Z`], 0.95);
+  for (const sx of [-1, 1]) { const bx0 = sx < 0 ? a0 - 5 : a0 + aw; ctx.fillStyle = grad(bx0, bx0 + 5, FRONT); ctx.fillRect(bx0, top + 30, 5, 210 - top - 30); for (let y = top + 60; y < 200; y += 40) { ctx.fillStyle = c("#a29dab"); ctx.fillRect(bx0 - 0.5, y, 6, 1.6); } } // les contreforts, à ressauts
+  for (let y = top + 34; y < 200; y += 26) { lancets([`M350 ${y} v-12 q4 -7 8 0 v12 Z`], 0.95); strokeP(`M354 ${y - 12} v12 M350 ${y - 6} h8`, c("#17141a"), 0.7); strokeP(`M348 ${y} v-12 q6 -10 12 0 v12`, c("#a29dab"), 0.9); } // les lancettes, leur meneau et leur larmier
+  ctx.fillStyle = c("#a29dab"); ctx.fillRect(a0 - 3, top + 16, aw + 6, 2.4); ctx.fillStyle = c("#5e5866"); for (let x = a0 - 2; x < a0 + aw + 2; x += 5) { ctx.beginPath(); ctx.moveTo(x, top + 18.4); ctx.lineTo(x + 3.4, top + 18.4); ctx.lineTo(x + 1.7, top + 23); ctx.closePath(); ctx.fill(); } // une galerie sur mâchicoulis
+  strokeP(`M${a0 + 4} ${top + 16} v-5 M${a0 + aw - 4} ${top + 16} v-5`, c("#2a2733"), 0.8); for (let x = a0 + 4; x < a0 + aw - 3; x += 5) lancets([`M${x} ${top + 15} v-6 q1.5 -2.5 3 0 v6 Z`], 0.5); // l'arcature de la galerie
+  for (const sx of [-1, 1]) { const px = sx < 0 ? a0 - 4 : a0 + aw + 4; ctx.fillStyle = grad(px - 3.5, px + 3.5, FRONT); ctx.fillRect(px - 3.5, top - 8, 7, 26); fillP(`M${px - 4.5} ${top - 8} L ${px} ${top - 34} L ${px + 4.5} ${top - 8} Z`, grad(px - 4.5, px + 4.5, SL)); // deux pinacles d'angle, qui encadrent la coupole
+    ctx.fillStyle = c("#1c1a26"); for (let k = 1; k < 4; k++) { const y = top - 8 - k * 6.5, w = 4.5 * (1 - k / 4); ctx.fillRect(px - w - 1.4, y, 1.4, 1.2); ctx.fillRect(px + w, y, 1.4, 1.2); }
+    strokeP(`M${px} ${top - 34} v-5`, c(GOLD), 0.9); ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(px, top - 39.5, 1.2, 0, 6.283); ctx.fill();
+    fillP(`M${px + sx * 3.5} ${top + 22} l ${sx * 8} -2 l ${sx * 1.5} 2.5 l ${-sx * 3} 1.5 l ${sx * 1} 2.5 l ${-sx * 7.5} -1.5 Z`, c("#5a5664")); } // et leurs gargouilles
   ctx.restore();
   // le pied de l'ancienne montagne : un long corps de logis à contreforts et créneaux, d'un flanc à l'autre, une tour ronde à chaque bout
   { const x0 = cx - hw + 10, x1 = cx + hw - 10, top = GY - raise - 4;
