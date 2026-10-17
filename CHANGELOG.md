@@ -2,6 +2,19 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.41.3 — The Castle under slate (2026-10-17)
+
+### Changed
+- **Slate roofs.** Every roof of the Castle (keep, towers, curtain wall, chapel, hanging towers) is now blue-black slate, with courses, a ridge catching the light and a dark eave; it barely lightens by day, so the towers stand out against the pale stone.
+- **The great spire** grows out of its tower in stages instead of sitting on it like a hat: a belfry with two lancets, a cornice, four corner pinnacles, gables at its foot, then the spire itself, narrower than the tower, in verdigris copper (the Castle's one touch of colour) with scales, a dormer, crockets, a ball and a cross. The other spires and pepper-pot roofs now rest on cornices.
+- **The giant bat** is redrawn: in profile, head first in the direction it flies, scalloped wings beating.
+- **The pond, under the Castle**: the cliff becomes the keep's wall (quoins, a lit lancet), the water leaps from a gargoyle's mouth and falls in an arc into a stone basin with a coping and two carved posts; the overflow leaves through a stone spout, past a row of blind arches.
+- **The crypt**: the niches fit within the walls, the coffin is larger, and the lamp's glow stays on the book.
+- The visitor by the fire has curled up to sleep.
+
+### Fixed
+- Under the Castle's island, blind arches, gilded arches, gems and buttresses no longer spill over the edge into the void.
+
 ## 1.41.2 — Things that walk the Castle at night (2026-10-17)
 
 ### Added

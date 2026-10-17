@@ -43,7 +43,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; les dernières versions en bref :
 
-- **1.41 à 1.41.2, le Château, pour Halloween.** Un déguisement gothique romantique : l'île entière devient un château autour de l'ancienne montagne, avec une chapelle, des tours suspendues et des passerelles de pierre ; les nuits virent au rouge sous une grande lune rouge ; dedans, chaque pièce prend la pierre, le noyer et l'or patiné ; le jour, la pierre prend la lumière ; la nuit, une chauve-souris géante passe devant la lune rouge.
+- **1.41 à 1.41.3, le Château, pour Halloween.** Un déguisement gothique romantique : l'île entière devient un château autour de l'ancienne montagne, avec une chapelle, des tours suspendues et des passerelles de pierre ; les nuits virent au rouge sous une grande lune rouge ; dedans, chaque pièce prend la pierre, le noyer et l'or patiné ; le jour, la pierre prend la lumière ; la nuit, une chauve-souris géante passe devant la lune rouge ; les toits sont d'ardoise, sous une flèche vert-de-gris.
 - **1.40, pelouse et muguet.** La page Herbe fait de l'île une pelouse ; une nouvelle page Muguet.
 - **1.39.1, le panneau se referme.** Quitter la cabane remet la bibliothèque et le panneau caché en place (un bug depuis la 1.36).
 - **1.37 à 1.39, la Verrière et ses gros plans.** Un déguisement art nouveau pour tout le Relto (verre, cuivre, fleurs, lumière colorée des lampes ; une page qu'on attache ou détache). La fenêtre ronde de l'atelier s'ouvre ceinte des chiffres D'ni de 0 à 24, et le pilier du calendrier s'ouvre sur la date D'ni complète.

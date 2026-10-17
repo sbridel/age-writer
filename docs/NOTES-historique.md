@@ -595,3 +595,15 @@ Pour Halloween : attacher le Château, attendre la nuit, regarder la lune rouge 
 - Pièces : armoire fermée au départ (`op = 1` sans `wardAt`) ; lit, armoire, horloge en Château (gâbles, pinacles, lancettes, pentures) et en Verrière (coup de fouet, vitraux, cuivre) ; coffre en crypte (ashlar, ogives, niches en arc brisé, lutrin de noyer, chandeliers) et en salle de mosaïque (verrière, niches à lunettes, lampe) ; porte d'entrée flamboyante (`flamboyantDoor`) ; porte de l'atelier en Verrière (`atelierDoor`) ; lancette de l'Imageur recentrée au-dessus de la porte.
 - Vue globale : passerelles posées au bord des culs-de-lampe.
 - Golden régénéré pour les seules vues voulues (chambre, coffre et atelier de la Verrière, chambre normale).
+
+## 1.41.3 — le Château sous l'ardoise (17 oct. 2026)
+
+- Ardoise (`relto-castle-out.js`, `slateRoof`, `SLATE3`) : un toit (x0, by) → (ax, ay) → (x1, by), pan à l'ombre du côté opposé au soleil, rangs, arête claire, égout sombre ; dans `keep`, couleur `cs` (à peine éclaircie le jour : 12 % vers `#8a93b8`, au lieu des 34 % de la pierre). Appliquée à tous les toits du donjon, de la courtine, de la chapelle et des îlots (`isletTower`, `castleIslet`).
+- Grande flèche (`keep`) : fût, étage de beffroi (deux baies, frise de quadrilobes), corniche ; gâbles, quatre clochetons d'angle à crochets ; flèche en vert-de-gris (`cv`), plus étroite que la tour, arêtes, rangs d'écailles arrondies, lucarne, crochets ; boule et croix. Retournée l'après-midi (`sg`). Petite flèche : deux clochetons aux angles de sa corniche ; corniches sous la poivrière de la tour isolée et de la tourelle collée à la grande flèche. Maquettes faites à part avant de coder.
+- Chauve-souris géante (`giantBat`) : de profil, petit corps, deux oreilles, œil jaune ; ailes à plat (x le long du corps, z vers la pointe) relevées de `th` et vues un peu d'en haut (l'aile proche dessous, la lointaine dessus), trois doigts, bord festonné.
+- Hôtes du Château (zones `extra: true`) : redessinés d'une seule silhouette en courbes, les volumes peints de l'intérieur par découpe et dégradés (pas de bord net) ; la leçon de six essais : la silhouette d'abord, les volumes ensuite, et chaque pièce posée sur une autre.
+- Vue du bassin (`relto-rooms.js`, `drawPondRoom`) sous le Château : face de l'île appareillée, bandeau, arcs aveugles qui évitent la chute ; falaise devenue mur (appareil, chaînes d'angle, lancette) ; gargouille sur console d'où l'eau jaillit et retombe en arc dans le bassin (plus de ruisseau ni de filet sur le gazon) ; goulotte du trop-plein. `drawKoi` sous le Château : margelle et deux bornes taillées (île et vue rapprochée).
+- Soubassements (`foundations`, `castleOre`) : `inside` / `fits` (point dans le contour de l'île) ; un arc, un arc doré, une gemme ou un contrefort que le bord couperait n'est pas dessiné. `drawOre` passe `geo.outline`.
+- Coffre : alcôves dans le mur (corniche, lanterneau au centre), rang du bas sur socle, cercueil agrandi, lueur de la lampe Tiffany limitée au livre.
+- Tests : golden inchangé ; `test/castle.test.js` inchangé (zones identiques).
+
