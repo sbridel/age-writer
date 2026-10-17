@@ -139,13 +139,13 @@ function lilies(ctx, a, sky, t, clear) {
 }
 
 /** Herbe haute le long du sol. */
-function grass(ctx, d, sky, t, clear) {
+function grass(ctx, d, sky, t, clear, castle = false) {
   const n = Math.round(50 + d * 150), r = rng(0x9a55), k = amb(sky);
   ctx.lineWidth = 0.9;
   for (let i = 0; i < n; i++) {
     const x = 172 + r() * 298; if (clear.some(([c0, c1]) => x > c0 && x < c1)) continue;
     const h = 5 + r() * 6, sw = Math.sin(t * 1.3 + i * 0.7) * 1.4;
-    ctx.strokeStyle = mix("#05060c", i % 3 ? "#5a9a46" : "#7ab45a", k); ctx.beginPath(); ctx.moveTo(x, GY + 4); ctx.quadraticCurveTo(x + sw * 0.4, GY + 4 - h * 0.6, x + sw, GY + 4 - h); ctx.stroke();
+    ctx.strokeStyle = mix("#05060c", castle ? (i % 3 ? "#3d7044" : "#558c58") : i % 3 ? "#5a9a46" : "#7ab45a", k); /* le Château : des brins plus profonds */ ctx.beginPath(); ctx.moveTo(x, GY + 4); ctx.quadraticCurveTo(x + sw * 0.4, GY + 4 - h * 0.6, x + sw, GY + 4 - h); ctx.stroke();
   }
 }
 

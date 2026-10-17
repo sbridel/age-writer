@@ -43,6 +43,7 @@ const TERRAIN = {
 };
 /** La pelouse de la page Herbe : le dessus de l'île (et le sol des vues rapprochées en plein air) quand la page est là. */
 const GRASS = { top: "#55863c", low: "#3b6229", hi: "#7cae58" };
+const GRASS_CASTLE = { top: "#33603a", low: "#203e28", hi: "#4f8452" }; // le Château : un vert plus profond et plus froid, la cour d'un vieux château
 /** Koï rares du bassin (page « koi », option `rare=`). */
 const KOI_RARE = {
   ogon: { label: "ogon (gold)", title: "Ogon", body: "#e8b838", spot: "#fff3b0", glow: "rgba(255,214,90,0.85)", glow2: "rgba(255,190,60,0.3)", spark: "rgba(255,236,150,A)" },
@@ -242,7 +243,7 @@ class ReltoRenderer {
     const pl = has("pillars"); if (pl) this.drawPillars(ctx, pl.density, sky, t);
     const ch = has("chimney"); if (ch) this.drawChimney(ctx, ch.density, sky, t);
     this.drawPlants(ctx, 1, t);
-    const gr = has("grass"); if (gr) SC.grass(ctx, gr.density, sky, t, this.geo.clear);
+    const gr = has("grass"); if (gr) SC.grass(ctx, gr.density, sky, t, this.geo.clear, this.castleOn());
     for (const fl of sc.additions.filter((a) => a.type === "flowers")) SC.flowers(ctx, fl, sky, t, this.geo.clear);
     const bf = has("butterflies"); if (bf) SC.butterflies(ctx, bf.density, sky, t);
     const ff = has("fireflies"); if (ff) this.drawFireflies(ctx, ff.density, sky, t);
@@ -366,15 +367,16 @@ class ReltoRenderer {
     ctx.restore();
     // surface
     const lawn = this.lawn(); // la page Herbe : le sol lui-même devient une pelouse, les touffes en sortent
-    if (lawn) { const lg = ctx.createLinearGradient(0, GY, 0, GY + 16); lg.addColorStop(0, shade(GRASS.top)); lg.addColorStop(1, shade(GRASS.low)); ctx.fillStyle = lg; } else ctx.fillStyle = shade(T.top);
+    const GR = this.castleOn() ? GRASS_CASTLE : GRASS, deep = (h) => (this.castleOn() ? mix(h, "#22402a", 0.45) : h);
+    if (lawn) { const lg = ctx.createLinearGradient(0, GY, 0, GY + 16); lg.addColorStop(0, shade(GR.top)); lg.addColorStop(1, shade(GR.low)); ctx.fillStyle = lg; } else ctx.fillStyle = shade(deep(T.top));
     ctx.beginPath(); ctx.moveTo(128, GY); ctx.lineTo(472, GY); ctx.lineTo(462, GY + 9); ctx.quadraticCurveTo(300, GY + 16, 138, GY + 9); ctx.closePath(); ctx.fill();
     if (lawn) { // des reflets clairs dans l'herbe, et une frange qui retombe sur le bord de la roche
-      const q = rng(0x1a3e); ctx.strokeStyle = shade(GRASS.hi); ctx.lineWidth = 0.8;
+      const q = rng(0x1a3e); ctx.strokeStyle = shade(GR.hi); ctx.lineWidth = 0.8;
       for (let i = 0; i < 46; i++) { const x = 140 + q() * 320, y = GY + 1.5 + q() * 6; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 3 + q() * 4, y - 0.6); ctx.stroke(); }
-      ctx.strokeStyle = shade(GRASS.low); ctx.lineWidth = 1;
+      ctx.strokeStyle = shade(GR.low); ctx.lineWidth = 1;
       for (let i = 0; i < 70; i++) { const u = q(), x = 140 + u * 320, e = 4 * u * (1 - u), y = GY + 9 + 6.5 * e, l = 2 + q() * 3.5; ctx.beginPath(); ctx.moveTo(x, y - 1); ctx.lineTo(x + (q() - 0.5) * 2, y + l); ctx.stroke(); }
     }
-    ctx.fillStyle = shade(T.tuft);
+    ctx.fillStyle = shade(deep(T.tuft));
     for (const [x, h] of g.tufts) { ctx.beginPath(); ctx.moveTo(x - 2, GY + 1); ctx.lineTo(x, GY - h); ctx.lineTo(x + 2, GY + 1); ctx.fill(); }
     if (this.castleOn()) CO.parapet(ctx, shade); // le Château : l'enceinte, un parapet à arcatures sur le bord
   }
@@ -1347,7 +1349,7 @@ class ReltoRenderer {
   /** La page Herbe est là : le sol est une pelouse. */
   lawn() { return !!(this.scene && this.scene.additions.some((a) => a.type === "grass")); }
   /** La couleur du sol en plein air : la pelouse si la page Herbe est là, sinon le dessus du terrain. */
-  groundTop() { return this.lawn() ? GRASS.top : this.terrain().top; }
+  groundTop() { const c = this.castleOn(); return this.lawn() ? (c ? GRASS_CASTLE : GRASS).top : c ? mix(this.terrain().top, "#22402a", 0.45) : this.terrain().top; }
   /** vues plein cadre (globale, cabane, piliers, bassin, chat, bosquet) : pas de caméra ; `fn` dessine la scène */
   drawFullView(ctx, sky, fn) {
     ctx.save(); ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0); ctx.clearRect(0, 0, W, H);
