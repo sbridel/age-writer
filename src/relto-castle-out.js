@@ -15,84 +15,97 @@ function winColor(night, k = 1) { const n = clamp(night * 1.25); return mix(mix(
 /** Une lancette (fenêtre étroite en arc brisé) de largeur w, de hauteur h, le bas à (x, y). */
 function lancet(ctx, x, y, w, h, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x - w / 2, y); ctx.lineTo(x - w / 2, y - h + w * 0.6); ctx.quadraticCurveTo(x - w / 2, y - h + w * 0.1, x, y - h); ctx.quadraticCurveTo(x + w / 2, y - h + w * 0.1, x + w / 2, y - h + w * 0.6); ctx.lineTo(x + w / 2, y); ctx.closePath(); ctx.fill(); }
 
-/** Un toit conique d'ardoise (poivrière) au-dessus d'une tour de largeur w posée à x, son pied à y ; une pointe dorée. */
-function cone(ctx, c, x, y, w, h) {
-  const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); g.addColorStop(0, c("#565a78")); g.addColorStop(1, c(SLATE_D)); ctx.fillStyle = g;
-  ctx.beginPath(); ctx.moveTo(x - w / 2 - 1.5, y); ctx.lineTo(x, y - h); ctx.lineTo(x + w / 2 + 1.5, y); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(x, y - h); ctx.lineTo(x, y - h - 5); ctx.stroke();
-}
-
-/** Une tour de pierre (corps rectangulaire), son appareil, ses fenêtres. */
-function tower(ctx, c, x, top, w, base, night, seed, win = true, dark = false) {
-  const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); g.addColorStop(0, c(dark ? STONE_D : STONE)); g.addColorStop(0.6, c(dark ? STONE_DD : STONE_D)); g.addColorStop(1, c(STONE_DD)); ctx.fillStyle = g; ctx.fillRect(x - w / 2, top, w, base - top);
-  ctx.fillStyle = rgba(0, 0, 0, 0.16); for (let y = top + 6; y < base; y += 6) ctx.fillRect(x - w / 2, y, w, 0.7);
-  if (win) { const q = rng(seed); for (let y = top + 10; y < base - 8; y += 16) if (q() < 0.8) lancet(ctx, x + (q() - 0.5) * w * 0.25, y + 8, Math.max(2, w * 0.18), 7, winColor(night, q())); }
-}
-
 /**
- * Le donjon, à la place de la montagne (même pied : M.x, M.hw, M.h). Asymétrique : une masse sombre de pignons et de flèches derrière ;
- * une tour ronde à gauche ; un corps à pignon et sa rose ; la tour de l'astronome, la plus haute, qui porte l'observatoire s'il est là
- * (on y pose M.tx, M.ty, lus par relto-telescope.js), sinon une flèche ; la grande flèche à côté ; une tour carrée basse à droite et sa
- * tourelle ; une tour isolée au bout d'une passerelle ; des arcs-boutants. Toujours dessiné sous le Château, même sans la page Montagne.
+ * Le donjon, à la place de la montagne : la maquette (claude/DESIGN-chateau-gothique.md), dessinée dans son propre repère (le sol à y = 208)
+ * puis posée et mise à l'échelle sur l'île. Trois plans : derrière, une masse sombre de pignons et de flèches fines ; au milieu, la tour
+ * ronde et son balcon, le corps à pignons (la rose, la galerie d'arcatures, les grandes lancettes, le portail à archivoltes), la grande
+ * flèche ajourée et sa tourelle, une petite flèche, des arcs-boutants à pinacles, des gargouilles ; devant à droite, la tour de l'astronome
+ * (l'observatoire s'y pose : son sommet est exactement la terrasse M.tx, M.ty, pour que rien de cliquable ne bouge) et la tour isolée au bout
+ * de sa passerelle couverte. Toujours dessiné sous le Château, même sans la page Montagne.
  */
 function keep(r, ctx, M, sky, t, observatory) {
   const amb = 0.35 + 0.65 * sky.ambient, c = (h) => mix("#05060c", h, amb), night = clamp(sky.night == null ? 0 : sky.night);
-  const cx = M.x, hw = M.hw, h = M.h, B = GY + 2;
+  const ax = observatory ? M.tx : r.terraceOf ? r.terraceOf(M).tx : M.x, s = 0.7 + 0.08 * clamp((M.hw - 100) / 24);
+  const P = (d) => new Path2D(d), W = (k) => winColor(night, k);
+  const grad = (x0, x1, stops) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); stops.forEach((h, i) => g.addColorStop(i / (stops.length - 1), c(h))); return g; };
+  const MID = ["#6e6876", "#4a4552", "#2e2a36"], FRONT = ["#878090", "#5e5866", "#3a3542"], SL = ["#565a78", "#24263a"];
+  const fillP = (d, f) => { ctx.fillStyle = f; ctx.fill(P(d)); }, strokeP = (d, col, w) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke(P(d)); };
+  const courses = (x, y, w, h) => { ctx.fillStyle = rgba(0, 0, 0, 0.22); for (let yy = y + 4.5, k = 0; yy < y + h; yy += 4.5, k++) { ctx.fillRect(x, yy, w, 0.7); for (let xx = x + (k % 2 ? 11 : 5.5); xx < x + w; xx += 11) ctx.fillRect(xx, yy, 0.6, 4.5); } };
+  const box = (x, y, w, h, stops) => { ctx.fillStyle = grad(x, x + w, stops); ctx.fillRect(x, y, w, h); courses(x, y, w, h); };
+  const lancets = (ds, k) => { for (const d of ds) fillP(d, W(k)); };
   // la lueur rouge des fenêtres, la nuit
-  if (night > 0.2) { const g = ctx.createRadialGradient(cx, GY - h * 0.5, 4, cx, GY - h * 0.5, hw); g.addColorStop(0, rgba(255, 90, 60, 0.16 * night)); g.addColorStop(1, rgba(255, 90, 60, 0)); ctx.fillStyle = g; ctx.fillRect(cx - hw, GY - h - 30, hw * 2, h + 40); }
-  // la masse arrière : pignons et flèches fines, en silhouette
+  if (night > 0.2) { const g = ctx.createRadialGradient(ax - 40, GY - 90, 4, ax - 40, GY - 90, 120); g.addColorStop(0, rgba(255, 90, 60, 0.18 * night)); g.addColorStop(1, rgba(255, 90, 60, 0)); ctx.fillStyle = g; ctx.fillRect(ax - 170, GY - 210, 260, 220); }
+  ctx.save(); ctx.translate(ax - 354 * s, GY * (1 - s)); ctx.scale(s, s); /* le repère de la maquette : la tour de l'astronome à x = 354, le sol à y = 208 */
+  // PLAN ARRIÈRE : pignons et flèches fines, en silhouette
   ctx.fillStyle = c("#2a2632");
-  ctx.beginPath(); ctx.moveTo(cx - hw * 0.92, B);
-  const back = [[-0.92, 0.18], [-0.86, 0.3], [-0.78, 0.3], [-0.74, 0.52], [-0.7, 0.3], [-0.62, 0.36], [-0.5, 0.36], [-0.44, 0.62], [-0.38, 0.36], [0.24, 0.4], [0.3, 0.7], [0.36, 0.4], [0.62, 0.34], [0.7, 0.56], [0.76, 0.34], [0.9, 0.22], [0.96, 0.12]];
-  for (const [u, v] of back) ctx.lineTo(cx + u * hw, GY - v * h);
-  ctx.lineTo(cx + hw * 0.96, B); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = winColor(night, 0.4); const qb = rng(0xbac4); for (let i = 0; i < 9; i++) { const u = -0.85 + qb() * 1.7, v = 0.08 + qb() * 0.22; ctx.fillRect(cx + u * hw, GY - v * h, 1.6, 3); } // des fenêtres lointaines
-  // la tour isolée, tout à droite, et sa passerelle (dessinées avant : la tour carrée passe devant)
-  const ix = cx + hw * 0.86, itop = GY - h * 0.42;
-  tower(ctx, c, ix, itop, 11, B, night, 0x15, true, true); cone(ctx, c, ix, itop, 11, 16);
-  const rx = cx + hw * 0.52, rtop = GY - h * 0.5, rw = 22;
-  ctx.fillStyle = c(STONE_D); ctx.beginPath(); ctx.moveTo(rx + rw / 2, rtop + 22); ctx.quadraticCurveTo((rx + ix) / 2, rtop + 16, ix - 5.5, itop + 16); ctx.lineTo(ix - 5.5, itop + 20); ctx.quadraticCurveTo((rx + ix) / 2, rtop + 20, rx + rw / 2, rtop + 26); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = c(STONE_DD); ctx.lineWidth = 0.6; for (let k = 1; k < 4; k++) { const u = k / 4, xx = rx + rw / 2 + (ix - 5.5 - rx - rw / 2) * u; ctx.beginPath(); ctx.moveTo(xx, rtop + 20 - 2 * Math.sin(u * Math.PI) + 6 * 0); ctx.lineTo(xx, rtop + 28); ctx.stroke(); }
-  // la tour ronde, à gauche
-  const lx = cx - hw * 0.58, ltop = GY - h * 0.72, lw = 20;
-  tower(ctx, c, lx, ltop, lw, B, night, 0x1e); cone(ctx, c, lx, ltop, lw, 24);
-  ctx.fillStyle = c("#9a95a3"); ctx.fillRect(lx - lw / 2 - 1.5, ltop + h * 0.22, lw + 3, 2); ctx.fillStyle = rgba(0, 0, 0, 0.35); for (let x = lx - lw / 2; x < lx + lw / 2; x += 3) ctx.fillRect(x, ltop + h * 0.22 - 3, 1, 3); // un balcon
-  // le corps à pignon, et sa rose
-  const bx0 = cx - hw * 0.44, bx1 = cx + hw * 0.36, btop = GY - h * 0.5;
-  tower(ctx, c, (bx0 + bx1) / 2, btop, bx1 - bx0, B, night, 0x2b, false);
-  const gx = cx - hw * 0.12, gtop = btop - 30, ga = bx0 + 4, gb = gx + (gx - ga);
-  { const g = ctx.createLinearGradient(ga, 0, gb, 0); g.addColorStop(0, c("#565a78")); g.addColorStop(1, c(SLATE_D)); ctx.fillStyle = g; }
-  ctx.beginPath(); ctx.moveTo(ga - 2, btop); ctx.lineTo(gx, gtop); ctx.lineTo(gb + 2, btop); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = c("#1c1a26"); for (let k = 1; k < 4; k++) { const u = k / 4; ctx.beginPath(); ctx.moveTo(ga + (gx - ga) * u, btop - (btop - gtop) * u); ctx.lineTo(ga + (gx - ga) * u - 3, btop - (btop - gtop) * u - 1.5); ctx.lineTo(ga + (gx - ga) * u - 1, btop - (btop - gtop) * u + 2); ctx.closePath(); ctx.fill(); } // des crochets sur le rampant
-  const rr = 6; ctx.fillStyle = winColor(night, 0.8); ctx.beginPath(); ctx.arc(gx, btop - 11, rr, 0, 6.283); ctx.fill();
-  ctx.strokeStyle = c("#17141a"); ctx.lineWidth = 0.7; ctx.beginPath(); ctx.arc(gx, btop - 11, rr, 0, 6.283); ctx.stroke(); for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4; ctx.beginPath(); ctx.moveTo(gx, btop - 11); ctx.lineTo(gx + Math.cos(a) * rr, btop - 11 + Math.sin(a) * rr); ctx.stroke(); }
-  ctx.strokeStyle = c("#b8b3c0"); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(gx, btop - 11, rr + 1.5, 0, 6.283); ctx.stroke();
-  const qw = rng(0x2c1); for (let x = bx0 + 8; x < bx1 - 6; x += 11) { lancet(ctx, x, btop + 22, 3.4, 12, winColor(night, qw())); lancet(ctx, x, B - 12, 3.4, 12, winColor(night, qw())); } // deux rangs de lancettes
-  ctx.fillStyle = c("#9a95a3"); ctx.fillRect(bx0, btop + 26, bx1 - bx0, 1.6);
-  // la grande flèche, à gauche de la tour de l'astronome
-  const sx = cx - hw * 0.24, stop = btop - 10;
-  tower(ctx, c, sx, stop, 11, btop, night, 0x3a);
-  { const g = ctx.createLinearGradient(sx - 6, 0, sx + 6, 0); g.addColorStop(0, c("#565a78")); g.addColorStop(1, c(SLATE_D)); ctx.fillStyle = g; }
-  ctx.beginPath(); ctx.moveTo(sx - 7, stop); ctx.lineTo(sx, stop - h * 0.62); ctx.lineTo(sx + 7, stop); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = c("#1c1a26"); for (let k = 1; k < 5; k++) { const u = k / 5, yy = stop - h * 0.62 * u, ww = 7 * (1 - u); ctx.fillRect(sx - ww - 1.4, yy, 1.4, 1.2); ctx.fillRect(sx + ww, yy, 1.4, 1.2); }
-  ctx.strokeStyle = c(GOLD); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(sx, stop - h * 0.62); ctx.lineTo(sx, stop - h * 0.62 - 7); ctx.stroke();
-  ctx.fillStyle = winColor(night, 0.9); ctx.fillRect(sx - 0.8, stop - h * 0.3, 1.6, 4);
-  // la tour de l'astronome : la plus haute ; l'observatoire s'y pose
-  const ax = observatory ? M.tx : cx + hw * 0.08, aw = 30, atop = observatory ? M.ty + 2 : GY - h + 10; // avec l'observatoire : exactement sur sa terrasse (M.tx, M.ty, calculés comme pour la montagne), pour qu'il ne bouge pas
-  tower(ctx, c, ax, atop, aw, B, night, 0x4a);
-  ctx.fillStyle = c("#9a95a3"); ctx.fillRect(ax - aw / 2 - 2, atop - 2, aw + 4, 3); // la plate-forme
-  ctx.fillStyle = c(STONE_D); for (let x = ax - aw / 2 - 2; x < ax + aw / 2 + 1; x += 5) ctx.fillRect(x, atop - 5, 3, 3); // le garde-corps
-  if (!observatory) cone(ctx, c, ax, atop - 2, aw - 4, 34);
-  // la tour carrée basse, à droite, et sa tourelle en encorbellement
-  tower(ctx, c, rx, rtop, rw, B, night, 0x5c); cone(ctx, c, rx, rtop, rw, 20);
-  ctx.fillStyle = c(STONE_D); ctx.beginPath(); ctx.moveTo(rx + rw / 2, rtop + 30); ctx.quadraticCurveTo(rx + rw / 2 + 6, rtop + 26, rx + rw / 2 + 6, rtop + 16); ctx.lineTo(rx + rw / 2, rtop + 16); ctx.closePath(); ctx.fill();
-  tower(ctx, c, rx + rw / 2 + 3, rtop + 2, 6, rtop + 16, night, 0x5d, false); cone(ctx, c, rx + rw / 2 + 3, rtop + 2, 6, 11);
-  // les arcs-boutants : de la tour ronde vers la grande flèche, de la tour carrée vers la tour de l'astronome
-  ctx.strokeStyle = c("#46434f"); ctx.lineWidth = 2.4; ctx.lineCap = "round";
-  ctx.beginPath(); ctx.moveTo(lx + lw / 2, ltop + 10); ctx.quadraticCurveTo((lx + sx) / 2, ltop - 2, sx - 5.5, stop + 4); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(rx - rw / 2, rtop + 8); ctx.quadraticCurveTo((rx + ax) / 2, rtop - 6, ax + aw / 2, atop + 18); ctx.stroke(); ctx.lineCap = "butt";
-  for (const [px, py] of [[lx + lw / 2 + 1, ltop + 10], [rx - rw / 2 - 1, rtop + 8]]) { ctx.fillStyle = c(STONE_D); ctx.beginPath(); ctx.moveTo(px - 2, py); ctx.lineTo(px, py - 7); ctx.lineTo(px + 2, py); ctx.closePath(); ctx.fill(); } // leurs pinacles
-  // la gargouille, au pied, d'où sort la cascade (dessinée par drawWaterfall)
+  ctx.fill(P("M180 210 L 186 160 L 196 160 L 196 136 L 204 136 L 204 160 L 224 160 L 224 118 L 230 100 L 236 118 L 236 160 L 250 160 L 250 110 L 256 110 L 256 160 L 330 160 L 330 128 L 336 128 L 336 160 L 372 160 L 372 112 L 378 92 L 384 112 L 384 160 L 400 160 L 400 136 L 406 136 L 406 160 L 420 210 Z"));
+  ctx.fill(P("M322 160 L 326 70 L 330 160 Z M196 136 L 200 112 L 204 136 Z M400 136 L 403 116 L 406 136 Z"));
+  ctx.fillStyle = W(0.4); for (const [x, y] of [[229, 126], [229, 140], [377, 120], [377, 136], [325, 100], [325, 124], [200, 146], [403, 146]]) ctx.fillRect(x, y, 2, 4); // des fenêtres lointaines
+  // PLAN MOYEN — la tour ronde, à gauche, son toit, son balcon, ses lancettes
+  box(208, 112, 26, 98, MID);
+  fillP("M204 112 L 221 76 L 238 112 Z", grad(204, 238, SL)); fillP("M221 76 L 238 112 L 221 112 Z", rgba(0, 0, 0, 0.22));
+  strokeP("M221 76 v-8", c(GOLD), 1); fillP("M221 68 l-2.5 2.5 l2.5 1.6 l2.5 -1.6 Z", c(GOLD));
+  fillP("M206 150 h30 v3 h-30 Z", c("#7a7683")); strokeP("M209 150 v-6 M214 150 v-6 M219 150 v-6 M224 150 v-6 M229 150 v-6 M234 150 v-6", c("#2a2733"), 0.9); ctx.fillStyle = c("#9a95a3"); ctx.fillRect(206, 143, 30, 1.2);
+  lancets(["M216 130 v-9 q3 -5 6 0 v9 Z", "M216 176 v-9 q3 -5 6 0 v9 Z", "M224 196 v-7 q2.5 -4 5 0 v7 Z"], 0.9);
+  strokeP("M219 121 v9 M216 126 h6 M219 167 v9 M216 172 h6", c("#17141a"), 0.7);
+  // le corps à pignons
+  box(238, 126, 98, 84, MID);
+  fillP("M238 126 L 266 90 L 294 126 Z", grad(238, 294, SL)); fillP("M266 90 L 294 126 L 266 126 Z", rgba(0, 0, 0, 0.2));
+  fillP("M300 126 L 318 104 L 336 126 Z", grad(300, 336, SL));
+  fillP("M248 113 l3 -2 l-1 3 Z M254 105 l3 -2 l-1 3 Z M260 97 l3 -2 l-1 3 Z M284 113 l-3 -2 l1 3 Z M278 105 l-3 -2 l1 3 Z M272 97 l-3 -2 l1 3 Z", c("#1c1a26")); // les crochets
+  strokeP("M266 90 v-7", c(GOLD), 1); ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(266, 82, 1.3, 0, 6.283); ctx.fill();
+  // la grande rose
+  ctx.fillStyle = mix(c("#3a1020"), W(1), night * 0.6); ctx.beginPath(); ctx.arc(266, 116, 9, 0, 6.283); ctx.fill();
+  strokeP("M275 116 A9 9 0 1 1 257 116 A9 9 0 1 1 275 116 M269 116 A3 3 0 1 1 263 116 A3 3 0 1 1 269 116 M266 107 v18 M257 116 h18 M259.6 109.6 l12.8 12.8 M272.4 109.6 l-12.8 12.8 M266 107 q3 2 4 6 M266 107 q-3 2 -4 6 M275 116 q-2 3 -6 4 M275 116 q-2 -3 -6 -4 M266 125 q3 -2 4 -6 M266 125 q-3 -2 -4 -6 M257 116 q2 3 6 4 M257 116 q2 -3 6 -4", c("#17141a"), 0.8);
+  ctx.strokeStyle = c("#9a95a3"); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.arc(266, 116, 10.6, 0, 6.283); ctx.stroke();
+  // la galerie d'arcatures, sous la rose
+  lancets(["M244 150 v-9 q2.5 -4 5 0 v9 Z M252 150 v-9 q2.5 -4 5 0 v9 Z M260 150 v-9 q2.5 -4 5 0 v9 Z M268 150 v-9 q2.5 -4 5 0 v9 Z M276 150 v-9 q2.5 -4 5 0 v9 Z M284 150 v-9 q2.5 -4 5 0 v9 Z"], 0.85);
+  strokeP("M246.5 141 v9 M254.5 141 v9 M262.5 141 v9 M270.5 141 v9 M278.5 141 v9 M286.5 141 v9", c("#17141a"), 0.6);
+  ctx.fillStyle = c("#7a7683"); ctx.fillRect(241, 151, 52, 1.8); ctx.fillRect(241, 138, 52, 1.4);
+  // les grandes lancettes de l'étage bas, et une à droite
+  lancets(["M246 182 v-14 q4 -7 8 0 v14 Z", "M278 182 v-14 q4 -7 8 0 v14 Z", "M308 176 v-12 q3.5 -6 7 0 v12 Z", "M318 150 v-9 q2.5 -4 5 0 v9 Z"], 1);
+  strokeP("M250 168 v14 M246 175 h8 M282 168 v14 M278 175 h8 M311.5 164 v12 M308 170 h7 M247 170 q3 -5 6 0 M279 170 q3 -5 6 0", c("#17141a"), 0.8);
+  strokeP("M244.5 182 v-14 q5.5 -9 11 0 v14 M276.5 182 v-14 q5.5 -9 11 0 v14", c("#9a95a3"), 0.8);
+  // le grand portail à archivoltes et son perron
+  fillP("M258 210 V 194 Q 266 180 274 194 V 210 Z", c("#0a0809"));
+  strokeP("M256 210 V 194 Q 266 177 276 194 V 210", c("#7a7683"), 2); strokeP("M253.5 210 V 194 Q 266 173.5 278.5 194 V 210", c("#4a4752"), 2.2); strokeP("M251 210 V 194 Q 266 170 281 194 V 210", c("#8f8a98"), 1);
+  fillP("M266 177 l-3 -6 l3 -3 l3 3 Z", c(GOLD));
+  if (night > 0.3) fillP("M264 210 v-10 h4 v10 Z", rgba(255, 106, 58, 0.55 * night));
+  // la grande flèche ajourée
+  box(296, 78, 16, 48, FRONT);
+  fillP("M292 78 L 304 14 L 316 78 Z", grad(292, 316, SL)); fillP("M304 14 L 316 78 L 304 78 Z", rgba(0, 0, 0, 0.22));
+  fillP("M300 70 v-6 q4 -5 8 0 v6 Z M301.5 56 v-5 q2.5 -4 5 0 v5 Z M302.5 44 v-4 q1.5 -3 3 0 v4 Z", c("#1c1420")); // les ajours
+  lancets(["M301 69 v-4.5 q3 -3.5 6 0 v4.5 Z", "M302.3 55 v-3.5 q1.7 -2.5 3.4 0 v3.5 Z"], 0.8);
+  fillP("M297 66 l-3 -2 l0 4 Z M311 66 l3 -2 l0 4 Z M298.5 52 l-3 -2 l0 4 Z M309.5 52 l3 -2 l0 4 Z M300.5 38 l-2.5 -2 l0 3.5 Z M307.5 38 l2.5 -2 l0 3.5 Z M302 26 l-2 -2 l0 3 Z M306 26 l2 -2 l0 3 Z", c("#1c1a26")); // les crochets
+  strokeP("M304 14 v-11", c(GOLD), 1.2); fillP("M304 3 l-3 3 l3 2 l3 -2 Z", c(GOLD));
+  fillP("M293 92 h22 v2.6 h-22 Z", c("#7a7683")); strokeP("M296 92 v-5 M300 92 v-5 M304 92 v-5 M308 92 v-5 M312 92 v-5", c("#2a2733"), 0.8); // son balcon
+  lancets(["M300 112 v-9 q4 -6 8 0 v9 Z"], 0.95); strokeP("M304 103 v9 M300 108 h8", c("#17141a"), 0.7);
+  // la tourelle collée à la flèche
+  fillP("M312 118 q7 -3 7 -11 v-7 h-7 Z", c("#4a4350")); ctx.fillStyle = grad(312, 320, FRONT); ctx.fillRect(312, 100, 8, 26);
+  fillP("M310 100 L 316 82 L 322 100 Z", grad(310, 322, SL)); strokeP("M316 82 v-4", c(GOLD), 0.8); ctx.fillStyle = W(0.7); ctx.fillRect(315, 108, 2, 5);
+  // la petite flèche, derrière le pignon
+  ctx.fillStyle = grad(246, 253, MID); ctx.fillRect(246, 92, 7, 12); fillP("M243 92 L 249.5 66 L 256 92 Z", grad(243, 256, SL)); strokeP("M249.5 66 v-5", c(GOLD), 0.9); ctx.fillStyle = W(0.8); ctx.fillRect(248.5, 80, 2, 4);
+  // les arcs-boutants à pinacles
+  ctx.lineCap = "round"; strokeP("M234 104 q 14 -14 30 -14", c("#4a4350"), 2.2); strokeP("M238 120 q 12 -8 26 -8", c("#4a4350"), 1.6); strokeP("M340 130 q -10 -14 -24 -22", c("#4a4350"), 2); ctx.lineCap = "butt";
+  fillP("M232 106 v-8 l3 -6 l3 6 v8 Z M338 132 v-8 l3 -6 l3 6 v8 Z", c("#5a5664")); strokeP("M235 92 v-4 M341 118 v-4", c(GOLD), 0.7);
+  // les gargouilles aux corniches
+  fillP("M236 126 l 8 -2 l 1.5 2.5 l -3 1.5 l 1 2.5 l -7.5 -1.5 Z M340 126 l -8 -2 l -1.5 2.5 l 3 1.5 l -1 2.5 l 7.5 -1.5 Z", c("#5a5664"));
+  // PLAN AVANT DROIT — la tour isolée et sa passerelle couverte (avant la tour de l'astronome, qui passe devant)
+  box(392, 150, 16, 60, FRONT);
+  fillP("M388 150 L 400 120 L 412 150 Z", grad(388, 412, SL)); fillP("M400 120 L 412 150 L 400 150 Z", rgba(0, 0, 0, 0.2));
+  strokeP("M400 120 v-6", c(GOLD), 0.9); ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(400, 113, 1.1, 0, 6.283); ctx.fill();
+  fillP("M390 172 h20 v2.4 h-20 Z", c("#7a7683")); strokeP("M393 172 v-4 M397 172 v-4 M401 172 v-4 M405 172 v-4", c("#2a2733"), 0.8);
+  lancets(["M397 166 v-7 q3 -4 6 0 v7 Z", "M397 192 v-7 q3 -4 6 0 v7 Z"], 0.9);
+  fillP("M368 160 q 12 -10 24 -6 l 0 4 q -12 -4 -24 6 Z", c("#6a6673")); fillP("M368 164 q 12 -10 24 -6 l 0 10 q -12 -4 -24 6 Z", c("#4a4350"));
+  fillP("M373 171 v-5 q2 -3 4 0 v5 Z M381 169 v-5 q2 -3 4 0 v5 Z", c("#0a0809")); strokeP("M368 174 q 12 -10 24 -6", c("#7a7683"), 1.2);
+  fillP("M372 176 q 8 14 8 34 l -4 0 q 0 -18 -8 -30 Z", c("#4a4350"));
+  // la tour de l'astronome : avec l'observatoire, son sommet est la terrasse (en coordonnées de l'île : M.ty + 2)
+  const top = observatory ? (M.ty + 2 - GY * (1 - s)) / s : 140;
+  box(340, top, 28, 210 - top, FRONT);
+  ctx.fillStyle = c("#7a7683"); ctx.fillRect(336, top - 4, 36, 4); strokeP(`M339 ${top - 3} v-4 M345 ${top - 3} v-4 M351 ${top - 3} v-4 M357 ${top - 3} v-4 M363 ${top - 3} v-4 M369 ${top - 3} v-4`, c("#2a2733"), 0.8); // la plate-forme et son garde-corps
+  if (!observatory) { fillP(`M336 ${top - 4} L 354 ${top - 44} L 372 ${top - 4} Z`, grad(336, 372, SL)); strokeP(`M354 ${top - 44} v-6`, c(GOLD), 1); }
+  for (let y = top + 28; y < 200; y += 28) lancets([`M350 ${y} v-11 q4 -6 8 0 v11 Z`], 0.95);
+  ctx.restore();
   void t;
 }
 
