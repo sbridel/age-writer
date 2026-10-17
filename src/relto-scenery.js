@@ -163,7 +163,7 @@ function islets(ctx, r, d, sky, t) {
     else { ctx.fillStyle = mix("#05060c", "#7a6f62", k); ctx.beginPath(); ctx.moveTo(-5, -2); ctx.lineTo(-1, -26); ctx.lineTo(4, -2); ctx.closePath(); ctx.fill(); }
     }
     ctx.restore();
-    if (castleOf(r) && i < 2 && r.lay && r.lay.mount) { const M = r.lay.mount, tx = i === 0 ? M.x - M.hw * 0.62 : M.x + M.hw * 0.86, ty = GY - M.h * (i === 0 ? 0.46 : 0.3), ex = x + (i === 0 ? 8 : -6) * s, ey = y - 4 * s; require("./relto-castle-out").stoneBridge(ctx, (h) => mix("#05060c", h, k), ex, ey, tx, ty); } // une passerelle de pierre vers le donjon (le donjon, dessiné ensuite, en cache le bout)
+    if (castleOf(r) && i < 2) { const tx = i === 0 ? 154 : 458, ty = GY - (i === 0 ? 42 : 34), /* vers la tour d'angle de la courtine, au bord de l'île (relto-castle-out.js) */ ex = x + (i === 0 ? 8 : -6) * s, ey = y - 4 * s; require("./relto-castle-out").stoneBridge(ctx, (h) => mix("#05060c", h, k), ex, ey, tx, ty); } // une passerelle de pierre vers le donjon (le donjon, dessiné ensuite, en cache le bout)
     r.hot.push({ x: x - 26 * s, y: y - 28 * s, w: 52 * s, h: 60 * s, tip: "Islet" });
   }
 }

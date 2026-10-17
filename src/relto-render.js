@@ -165,7 +165,7 @@ class ReltoRenderer {
     for (let i = 0; i < 26; i++) { const y = GY + 8 + r() * 120, w = 30 + r() * 120; g.strata.push([320 - w / 2 - (y - GY) * 0.1 + r() * 20, y, w * (1 - (y - GY) / 220)]); }
     for (let x = 132; x < 470; x += 6 + r() * 6) g.tufts.push([x, 2 + r() * 4]);
     // plan de l'île : chaque gros élément a sa place (voir layoutIsland) ; on ne plante pas là où il y a cabane, bassin, chat, piliers
-    const lay = (this.lay = layoutIsland(scene)); this.hutX = lay.hut ? lay.hut.x : HUT_X; this.pillX = lay.pillars ? lay.pillars.x : PILLAR_X; this.shelfX = lay.shelf ? lay.shelf.x : SHELF_X;
+    const lay = (this.lay = layoutIsland(scene)); if (this.castleOn()) lay.mount.x = 306; /* le Château : l'ancienne montagne (et l'observatoire à son sommet) au milieu de l'île */ this.hutX = lay.hut ? lay.hut.x : HUT_X; this.pillX = lay.pillars ? lay.pillars.x : PILLAR_X; this.shelfX = lay.shelf ? lay.shelf.x : SHELF_X;
     const solid = (x) => lay.solid.some(([c0, c1]) => x > c0 && x < c1);
     g.clear = [lay.koi && [lay.koi.x0 - 3, lay.koi.x1 + 3], lay.cat && [lay.cat.x - 14, lay.cat.x + 14], lay.stalk && [lay.stalk.x - 8, lay.stalk.x + 8]].filter(Boolean);
     g.plants = placePlants(scene.additions, scene.seed, solid);

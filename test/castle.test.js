@@ -20,7 +20,7 @@ const make = (disguise, mode = "sandbox", view = "island", hour = 22, extra = []
   const c = dom.window.document.createElement("canvas"), r = new ReltoRenderer(c, dni, { t: (k) => k });
   r.nowOverride = 1.8e12; r.setScene(sc); r.setHour(hour); r.view = view; r.draw(3); return r;
 };
-const zones = (r) => JSON.stringify(r.hot.map((h) => Object.fromEntries(Object.entries(h).filter(([, v]) => typeof v !== "function").map(([k, v]) => [k, typeof v === "number" ? Math.round(v * 100) / 100 : v]))));
+const zones = (r) => JSON.stringify(r.hot.filter((h) => h.go !== "telescope").map((h) => Object.fromEntries(Object.entries(h).filter(([, v]) => typeof v !== "function").map(([k, v]) => [k, typeof v === "number" ? Math.round(v * 100) / 100 : v]))));
 
 // la page, son effet, sa place
 ok(M.PAGE_PRESETS.page_castle && M.EFFECT_TYPES.includes("castle") && M.PAGE_PRESETS.page_castle.sandbox, "la page Château et son effet existent, bac à sable seulement");
@@ -35,7 +35,7 @@ ok(JSON.stringify(M.attachPage(["page_castle"], "page_castle")) === JSON.stringi
 { const B = make("both"); ok(B.castleOn() && !B.glassOn(), "les deux déjà attachés : le Château l'emporte, la Verrière se tait"); }
 ok(make("glass").glassOn() && !make("glass").castleOn(), "la Verrière seule reste la Verrière");
 
-// les zones cliquables : les mêmes avec et sans le Château, partout
+// les zones cliquables : les mêmes avec et sans le Château, partout — sauf l'observatoire, qui suit le donjon au milieu de l'île
 const ROOMS = [["island", []], ["global", []], ["cabin", []], ["cabin", ["page_atelier", "page_imager", "page_telescope", "page_cat", "page_endgame"]], ["imager", ["page_imager", "page_telescope"]], ["telescope", ["page_telescope"]], ["island", ["page_telescope"]], ["clock", ["page_telescope", "page_dni_clock"]], ["island", ["page_telescope", "page_dni_clock", "page_calendar", "page_islets"]], ["global", ["page_telescope", "page_calendar", "page_islets", "page_koi"]], ["atelier", ["page_atelier", "page_comets", "page_cat"]], ["loft", ["page_atelier", "page_imager"]], ["desk", ["page_atelier"]], ["atelierback", ["page_atelier", "page_cat"]], ["roundwindow", ["page_atelier"]], ["calendar", ["page_calendar"]], ["vault", []], ["flower", ["page_atelier"]], ["pond", ["page_koi", "page_cat"]], ["grove", ["page_pine_trees", "page_flowers"]]];
 for (const [view, extra] of ROOMS) for (const hour of [9, 16, 23]) {
   const A = make(null, "sandbox", view, hour, extra), B = make("castle", "sandbox", view, hour, extra), a = zones(A), b = zones(B);
@@ -52,5 +52,6 @@ for (const station of ["cry", "lens", "atmo"]) {
   ok(seen.size === 25 && [...Array(25).keys()].every((v) => seen.has(v)) && R.hot.length === 1, "lucarne (Château) : les chiffres 0 à 24 et le seul retour"); }
 // dehors : l'île devient le château ; le donjon porte l'observatoire (sa tour la plus haute), même sans la page Montagne
 { const A = make("castle", "sandbox", "island", 15, ["page_telescope"]); ok(A.lay.mount.tx != null && A.lay.mount.ty < 208 - A.lay.mount.h * 0.8, "l'observatoire est posé au sommet du donjon");
+  const o = A.hot.find((h) => h.go === "telescope"); ok(A.lay.mount.x === 306 && o && Math.abs(o.x + o.w / 2 - A.lay.mount.tx) < 1, "le donjon est au milieu de l'île, et l'observatoire y est cliquable");
   const B = make("castle", "sandbox", "island", 15, ["page_koi", "page_waterfall", "page_islets", "page_calendar", "page_dni_clock", "page_dock", "page_bench", "page_pillars"]); ok(B.hot.some((h) => h.go === "calendar") && B.hot.filter((h) => h.tip === "Islet").length >= 2, "île sans montagne : le donjon est là, les cliquables aussi"); }
 console.log(`✓ castle.test.js (${n} contrôles)`);
