@@ -51,8 +51,9 @@ function drawBackroom(r, ctx, sc, sky, t) {
     ctx.fillStyle = c("#2a1c14"); ctx.fillRect(bx + 14, 118, bw - 28, 100); ctx.fillStyle = c("#3d2a1c"); ctx.beginPath(); ctx.moveTo(bx + 14, 118); ctx.quadraticCurveTo(bx + bw / 2, 96, bx + bw - 14, 118); ctx.fill(); // la tête de lit
     ctx.fillStyle = c("#241a14"); ctx.fillRect(bx, 62, 9, 190); ctx.fillRect(bx + bw - 9, 62, 9, 190); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(bx + 4.5, 60, 6, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.arc(bx + bw - 4.5, 60, 6, 0, 6.283); ctx.fill(); // les colonnes et leurs boules de laiton
     ctx.fillStyle = c("#2f2118"); ctx.fillRect(bx, 62, bw, 8); // le ciel de lit
-    const cur = c("#5b2b3a"), curD = c("#44202c"); ctx.fillStyle = cur; for (let i = 0; i < 9; i++) { const sx = bx + 2 + i * (bw - 4) / 9; ctx.beginPath(); ctx.moveTo(sx, 70); ctx.lineTo(sx + (bw - 4) / 9, 70); ctx.quadraticCurveTo(sx + (bw - 4) / 18, 92, sx, 70); ctx.fill(); } // la frange festonnée
+    const cur = c(castle ? "#1f3a30" : "#5b2b3a"), curD = c(castle ? "#12241d" : "#44202c"); /* le Château : un velours vert bouteille, qui se détache de la tenture pourpre */ ctx.fillStyle = cur; for (let i = 0; i < 9; i++) { const sx = bx + 2 + i * (bw - 4) / 9; ctx.beginPath(); ctx.moveTo(sx, 70); ctx.lineTo(sx + (bw - 4) / 9, 70); ctx.quadraticCurveTo(sx + (bw - 4) / 18, 92, sx, 70); ctx.fill(); } // la frange festonnée
     ctx.fillRect(bx + 2, 70, bw - 4, 8);
+    if (castle) { ctx.fillStyle = c(CS.GOLD); ctx.fillRect(bx + 2, 77, bw - 4, 1.2); for (let i = 0; i < 9; i++) { const sx = bx + 2 + (i + 0.5) * (bw - 4) / 9; ctx.beginPath(); ctx.arc(sx, 86, 1.6, 0, 6.283); ctx.fill(); } } // la frange d'or et ses glands
     for (const side of [0, 1]) { // les rideaux, attachés par un cordon
       const x0 = side ? bx + bw - 10 : bx + 9, dir = side ? -1 : 1;
       ctx.fillStyle = cur; ctx.beginPath(); ctx.moveTo(x0, 78); ctx.lineTo(x0 + dir * 34, 78); ctx.quadraticCurveTo(x0 + dir * 12, 138, x0 + dir * 26, 252); ctx.lineTo(x0, 252); ctx.closePath(); ctx.fill();
@@ -61,7 +62,13 @@ function drawBackroom(r, ctx, sc, sky, t) {
     }
     ctx.fillStyle = c("#3d2a1c"); ctx.fillRect(bx + 4, 222, bw - 8, 26); ctx.fillStyle = c("#2f2118"); ctx.fillRect(bx + 4, 222, bw - 8, 4); // le pied du lit
     ctx.fillStyle = c("#d9d2c0"); ctx.fillRect(bx + 16, 200, bw - 32, 24); // le matelas
+    if (castle) { // le Château : un couvre-lit ivoire, brodé de lys, bordé d'or
+      ctx.fillStyle = c("#e6dcc4"); ctx.fillRect(bx + 32, 204, bw - 50, 18); ctx.fillStyle = c("#d2c6a8"); ctx.fillRect(bx + 32, 218, bw - 50, 4);
+      ctx.fillStyle = c(CS.GOLD); ctx.fillRect(bx + 32, 204, bw - 50, 1.4); ctx.fillRect(bx + 32, 216.5, bw - 50, 1.2); ctx.fillRect(bx + 32, 204, 1.4, 18);
+      ctx.fillStyle = rgba(170, 130, 60, 0.55); for (let i = 0; i < 6; i++) CS.lys(ctx, bx + 46 + i * 24, 211, 2.2, false);
+    } else {
     const pat = ["#8a3a3a", "#c9a24e", "#2f4a44", "#5b2b3a"]; for (let i = 0; i < 7; i++) for (let j = 0; j < 2; j++) { ctx.fillStyle = c(pat[(i + j * 2) % 4]); ctx.fillRect(bx + 34 + i * 20, 206 + j * 8, 19, 8); } // l'édredon en patchwork
+    }
     ctx.fillStyle = c("#ece6d4"); ctx.beginPath(); ctx.ellipse(bx + 40, 196, 22, 8, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(0, 0, 0, 0.12); ctx.beginPath(); ctx.ellipse(bx + 43, 197, 10, 4, 0, 0, 6.283); ctx.fill(); // l'oreiller, et le creux d'une tête
     item(bx, 60, bw, 192, "back.bed.tip", "back.bed.flash");
     const cat = sc.additions.find((a) => a.type === "cat");

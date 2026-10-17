@@ -278,11 +278,13 @@ function throne(ctx, c, ax, ay, cover) {
 /** Un chandelier à trois branches, grand, posé sur un pied (la lampe du bureau sous le Château) ; `on` : les chandelles brûlent. */
 function candlestand(ctx, c, x, top, base, on, fl, scale = 1) {
   const s = scale;
-  ctx.strokeStyle = c(IRON); ctx.lineWidth = 2 * s; ctx.beginPath(); ctx.moveTo(x, base); ctx.lineTo(x, top + 8 * s); ctx.moveTo(x - 10 * s, top + 4 * s); ctx.quadraticCurveTo(x, top + 16 * s, x + 10 * s, top + 4 * s); ctx.stroke();
+  ctx.strokeStyle = c(IRON); ctx.lineWidth = 2 * s; ctx.beginPath(); ctx.moveTo(x, base); ctx.lineTo(x, top); ctx.moveTo(x - 10 * s, top + 4 * s); ctx.quadraticCurveTo(x, top + 16 * s, x + 10 * s, top + 4 * s); ctx.stroke(); /* le fût monte jusqu'à la coupelle de la bougie du milieu */
   ctx.fillStyle = c(IRON); ctx.beginPath(); ctx.ellipse(x, base, 8 * s, 2.4 * s, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(x, top + 10 * s, 1.6 * s, 0, 6.283); ctx.fill();
   for (const dx of [-10, 0, 10]) { const cx = x + dx * s, ct = top + (dx ? -4 : -8) * s; ctx.fillStyle = c(IRON); ctx.fillRect(cx - 2.6 * s, ct + 8 * s, 5.2 * s, 1.6 * s); ctx.fillStyle = c("#e8dcc0"); ctx.fillRect(cx - 1.6 * s, ct, 3.2 * s, 8 * s);
     if (on) { const f = clamp(0.75 * fl + 0.2); ctx.fillStyle = rgba(255, 190, 80, f); ctx.beginPath(); ctx.ellipse(cx, ct - 3 * s, 1.6 * s, 3.4 * s * f, 0, 0, 6.283); ctx.fill(); } else { ctx.fillStyle = c("#2a2420"); ctx.fillRect(cx - 0.4 * s, ct - 2 * s, 0.8 * s, 2 * s); } }
 }
+/** L'attache de la chaîne de l'éteignoir sous la branche droite d'un chandelier (branche en (ax, ay), chaîne qui part de (cx, cy)). */
+function chainLink(ctx, c, ax, ay, cx, cy) { ctx.strokeStyle = c(IRON); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(ax + 1, (ay + cy) / 2, cx, cy); ctx.stroke(); ctx.beginPath(); ctx.arc(ax, ay + 1, 1.4, 0, 6.283); ctx.stroke(); }
 /** La lueur chaude d'un chandelier sur ce qui l'entoure (pas de couleur, contrairement à la lampe de la Verrière). */
 function candleGlow(ctx, x, y, R, fl, night = 0.5) { const g = ctx.createRadialGradient(x, y, 2, x, y, R); g.addColorStop(0, rgba(255, 196, 110, (0.14 + 0.16 * night) * fl)); g.addColorStop(1, rgba(255, 190, 90, 0)); ctx.fillStyle = g; ctx.fillRect(x - R, y - R, R * 2, R * 2); }
 
@@ -334,4 +336,4 @@ function narrowDoor(ctx, c, x, top, w, base) {
   ctx.fillStyle = c(IRON); ctx.fillRect(x, top + 30, w - 4, 3); ctx.fillRect(x, base - 26, w - 4, 3); ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(x + w - 6, (top + base) / 2 + 6, 1.6, 0, 6.283); ctx.fill();
 }
 
-module.exports = { STONE, STONE_HI, STONE_LO, WALNUT, WALNUT_HI, WALNUT_LO, IRON, GOLD, GOLD_HI, VELVET, VELVET_LO, PURPLE, pointed, ashlar, wainscot, lys, cabinWalls, cabinFloor, rug, cabinWindowClip, cabinWindowFrame, cabinDoor, slab, mantel, andirons, shelf, table, candelabrum, sconce, moonPatch, atelierWalls, galleryBays, balustrade, spiralStair, rosette, throne, candlestand, candleGlow, goldFrame, stoneTrap, imagerRoom, imagerBench, narrowDoor };
+module.exports = { STONE, STONE_HI, STONE_LO, WALNUT, WALNUT_HI, WALNUT_LO, IRON, GOLD, GOLD_HI, VELVET, VELVET_LO, PURPLE, pointed, ashlar, wainscot, lys, cabinWalls, cabinFloor, rug, cabinWindowClip, cabinWindowFrame, cabinDoor, slab, mantel, andirons, shelf, table, candelabrum, sconce, moonPatch, atelierWalls, galleryBays, balustrade, spiralStair, rosette, throne, candlestand, chainLink, candleGlow, goldFrame, stoneTrap, imagerRoom, imagerBench, narrowDoor };
