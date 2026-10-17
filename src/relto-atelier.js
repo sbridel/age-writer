@@ -450,8 +450,9 @@ function wolf(r, ctx, c, sky, t, TRr) {
   // la collerette, ébouriffée
   P([[-12, -33], [-17, -38], [-20, -34], [-25, -40], [-27, -35], [-33, -38], [-33, -32], [-39, -31], [-36, -26], [-41, -22], [-36, -19], [-38, -13], [-32, -14], [-28, -8], [-24, -18], [-16, -26]], F1);
   P([[-33, -37], [-41, -45], [-29, -42]], F1); P([[-38, -30], [-47, -31], [-40, -24]], F2); P([[-30, -41], [-36, -49], [-24, -40]], F2); /* la collerette gagne des pointes sur la nuque et le cou */
+  P([[-24, -44], [-42, -38], [-52, -26], [-50, -12], [-36, -4], [-24, -4]], F2); P([[-30, -40], [-46, -32], [-50, -18], [-42, -8], [-30, -8]], F1); /* le cou et le poitrail : la gorge descend jusqu'aux pattes, la tête a un appui */
   // la tête, relevée au clic
-  ctx.save(); ctx.translate(-36, -40); ctx.rotate(-0.12 * lift); ctx.translate(0, -5 * lift); ctx.scale(1.25, 1.25); /* une tête plus forte, un museau plus court : un loup, pas un renard */
+  ctx.save(); ctx.translate(-36, -33); ctx.rotate(-0.12 * lift); ctx.translate(0, -5 * lift); ctx.scale(1.25, 1.25); /* une tête plus forte, un museau plus court : un loup, pas un renard */
   P([[-4, 6], [8, 2], [10, -6], [4, -10], [-6, -10], [-12, -6]], F2); // le crâne
   P([[-6, -2], [-12, -1], [-25, 3], [-26, 6], [-23, 8], [-6, 8]], F1); // le museau, et le stop du front
   ctx.fillStyle = F3; ctx.beginPath(); ctx.moveTo(-6, 8); ctx.lineTo(-23, 8); ctx.lineTo(-9, 11); ctx.closePath(); ctx.fill(); // la mâchoire, dans l'ombre
@@ -461,7 +462,7 @@ function wolf(r, ctx, c, sky, t, TRr) {
   ctx.fillStyle = c("#14111a"); ctx.beginPath(); ctx.ellipse(-25.4, 3.8, 2.4, 1.8, 0, 0, 6.283); ctx.fill(); // la truffe
   if (yawn > 0.05) { ctx.fillStyle = c("#3a1018"); ctx.beginPath(); ctx.moveTo(-8, 7); ctx.lineTo(-20, 6.5); ctx.lineTo(-13, 7 + 8 * yawn); ctx.closePath(); ctx.fill(); ctx.fillStyle = c("#f4f0e8"); for (const k of [-18, -10]) { ctx.beginPath(); ctx.moveTo(k - 0.9, 7); ctx.lineTo(k + 0.9, 7); ctx.lineTo(k, 7 + 2.8 * yawn); ctx.closePath(); ctx.fill(); } }
   else { ctx.strokeStyle = F4; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(-24, 6.4); ctx.quadraticCurveTo(-15, 8, -8, 6.6); ctx.stroke(); } // la gueule close
-  { const ex = -8, ey = -3, [px, py] = r.pointer || [X - 120, Y - 80], wx = X - 36 + ex * 1.25, wy = Y - 40 - 5 * lift + ey * 1.25, ang = Math.atan2(py - wy, px - wx);
+  { const ex = -8, ey = -3, [px, py] = r.pointer || [X - 120, Y - 80], wx = X - 36 + ex * 1.25, wy = Y - 33 - 5 * lift + ey * 1.25, ang = Math.atan2(py - wy, px - wx);
     ctx.fillStyle = c("#d8a844"); ctx.beginPath(); ctx.moveTo(ex - 4, ey + 0.4); ctx.quadraticCurveTo(ex, ey - 3.2, ex + 3.6, ey - 0.8); ctx.quadraticCurveTo(ex, ey + 2.2, ex - 4, ey + 0.4); ctx.fill(); // l'œil en amande, d'or
     ctx.fillStyle = "#120e14"; ctx.beginPath(); ctx.ellipse(ex + Math.cos(ang) * 1, ey - 0.3 + Math.sin(ang) * 0.6, 0.9, 1.2, 0, 0, 6.283); ctx.fill(); ctx.strokeStyle = F4; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(ex - 3.4, ey); ctx.lineTo(ex - 6, ey + 1.6); ctx.stroke(); } // la pupille qui suit ; le trait du coin de l'œil
   ctx.restore();
