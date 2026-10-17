@@ -2,6 +2,17 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.41.0 — The Castle (2026-10-17)
+
+### Added
+- **The Castle, a second disguise for the Relto** (`page_castle`, in the sandbox book of pages): romantic gothic, in the spirit of Symphony of the Night. Attach it and the whole island becomes a castle; detach it and everything comes back. Only one disguise at a time: attaching the Castle detaches the Glasshouse, and the other way round. Not in the story mode.
+  - **Outside**: the old mountain becomes the mass of the castle, bristling with gables, battlements and thin spires, in the middle of the island and crowned by the keep (a rose window, an arcaded gallery, a portal with archivolts, an openwork spire); the observatory sits on the astronomer's tower. A long crenellated range runs along its foot, and a curtain wall closes the courtyard. The rock becomes vaulted foundations under a rampart, the cabin a small chapel of old mossy stone with its bell-cote, the islets hanging pieces of the castle joined by stone footbridges, the linking pillars and standing stones steles, the waterfall a gargoyle. The grass, flowers, trees, koi and cat stay as they are.
+  - **The red night**: the day stays the day; at dusk the sky turns blood red, and at night a great red moon rises, bats cross the sky and a low crimson mist drifts under the island. Every window and close-up shows the same sky.
+  - **Inside**: dressed stone above walnut panelling, a herringbone parquet, pointed-arch doors and stained glass, wrought iron, velvet and old gold, candlelight; every room takes it on, the Imager, the observatory and the writing room included.
+  - **The calendar and the D'ni clock**: a granite stele with its number in gold, a paved terrace for the clock; their close-ups follow.
+  - The far view shows the same castle, smaller.
+- Nothing you click moves, except the observatory, which follows the keep to the middle of the island.
+
 ## 1.40.0 — Lawn and lily of the valley (2026-10-15)
 
 ### Added
