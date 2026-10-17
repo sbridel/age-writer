@@ -66,7 +66,7 @@ function poly(ctx, pts) { ctx.beginPath(); pts.forEach(([X, D], i) => { const [x
 function paintParquet(ctx, style, FLOOR, H, W) {
   const id = (h) => h, q = rng(style === "panneaux" ? 0x9a7e : 0xba70);
   ctx.fillStyle = "#3a2619"; ctx.fillRect(0, FLOOR, W, H - FLOOR);
-  const tone = () => { const v = q(); return v < 0.33 ? "#5a3e2a" : v < 0.66 ? "#4e3424" : v < 0.9 ? "#64462e" : "#46301f"; };
+  const tone = () => { const v = q(); return v < 0.4 ? "#553b28" : v < 0.8 ? "#4f3625" : "#5b402b"; }; // des tons proches : le parquet se lit sans crier
   if (style === "panneaux") {
     const S = 0.34; // un panneau carré
     for (let D = 0.98; D < 2.5; D += S) for (let X = -2.2; X < 2.2; X += S) {
@@ -85,8 +85,9 @@ function paintParquet(ctx, style, FLOOR, H, W) {
         const P = [toW(x0, y0), toW(x0 + w, y0), toW(x0 + w, y0 + h), toW(x0, y0 + h)];
         if (P.every(([X, D]) => D < 0.95) || P.every(([X, D]) => D > 2.5) || P.every(([X, D]) => Math.abs(X) > (D * 330) / 400)) continue;
         ctx.fillStyle = tone(); poly(ctx, P); ctx.fill();
-        ctx.strokeStyle = "rgba(20,12,6,0.55)"; ctx.lineWidth = 0.7; ctx.stroke();
-        if (q() < 0.3) { const [a1, b1] = toW(x0 + w * 0.3, y0 + h * 0.5), [a2, b2] = toW(x0 + w * 0.7, y0 + h * 0.5); const [sx1, sy1] = proj(a1, b1), [sx2, sy2] = proj(a2, b2); ctx.strokeStyle = "rgba(255,225,180,0.06)"; ctx.beginPath(); ctx.moveTo(sx1, sy1); ctx.lineTo(sx2, sy2); ctx.stroke(); } // le fil du bois
+        ctx.strokeStyle = "rgba(20,12,6,0.38)"; ctx.lineWidth = 0.6; ctx.stroke();
+        const lw = w > h; // le fil du bois, toujours dans la longueur de la lame (en travers, il la coupait en deux)
+        if (q() < 0.3) { const [a1, b1] = lw ? toW(x0 + w * 0.25, y0 + h * 0.5) : toW(x0 + w * 0.5, y0 + h * 0.25), [a2, b2] = lw ? toW(x0 + w * 0.75, y0 + h * 0.5) : toW(x0 + w * 0.5, y0 + h * 0.75); const [sx1, sy1] = proj(a1, b1), [sx2, sy2] = proj(a2, b2); ctx.strokeStyle = "rgba(255,225,180,0.06)"; ctx.beginPath(); ctx.moveTo(sx1, sy1); ctx.lineTo(sx2, sy2); ctx.stroke(); } // le fil du bois
       }
     }
   }
