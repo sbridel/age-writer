@@ -13,6 +13,24 @@ const STONE = "#8a8591", STONE_D = "#5e5966", STONE_DD = "#3a3742", SLATE = "#3e
 function daylight(sky) { const d = clamp(((sky.ambient == null ? 1 : sky.ambient) - 0.45) / 0.5) * (1 - (sky.red || 0)); return d; }
 function litStone(sky) { const d = daylight(sky); return d <= 0 ? (h) => h : (h) => mix(h, "#b8bccb", 0.34 * d); }
 
+/**
+ * L'ardoise : bleu-noir, nettement plus sombre que la pierre ; le jour elle ne s'éclaircit presque pas (contrairement à la pierre), car
+ * c'est le contraste pierre claire / toit sombre qui donne une tête à chaque tour. Un toit (x0, by) → (ax, ay) → (x1, by) : le pan à
+ * l'ombre (du côté opposé au soleil), des rangs d'ardoises, l'arête accrochée par la lumière, l'égout sombre. col : la couleur de la scène.
+ */
+const SLATE3 = ["#4b5172", "#2e3249", "#1b1e2e"];
+function slateRoof(ctx, col, x0, ax, ay, x1, by, o = {}) {
+  const sr = !!o.sunRight, step = o.step || 4, lw = o.lw || 0.5, path = () => { ctx.beginPath(); ctx.moveTo(x0, by); ctx.lineTo(ax, ay); ctx.lineTo(x1, by); ctx.closePath(); };
+  const g = sr ? ctx.createLinearGradient(x1, 0, x0, 0) : ctx.createLinearGradient(x0, 0, x1, 0); SLATE3.forEach((h, i) => g.addColorStop(i / 2, col(h)));
+  path(); ctx.fillStyle = g; ctx.fill();
+  ctx.save(); path(); ctx.clip();
+  ctx.fillStyle = rgba(0, 0, 0, 0.2); ctx.beginPath(); if (sr) { ctx.moveTo(x0, by); ctx.lineTo(ax, ay); ctx.lineTo(ax, by); } else { ctx.moveTo(ax, ay); ctx.lineTo(x1, by); ctx.lineTo(ax, by); } ctx.closePath(); ctx.fill(); /* le pan à l'ombre */
+  if (o.rows !== false) { ctx.strokeStyle = rgba(6, 8, 18, 0.42); ctx.lineWidth = lw; for (let y = by - step; y > ay + step * 0.8; y -= step) { ctx.beginPath(); ctx.moveTo(Math.min(x0, x1), y); ctx.lineTo(Math.max(x0, x1), y); ctx.stroke(); } } /* les rangs d'ardoises */
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = 0.4; ctx.strokeStyle = col("#a3acd0"); ctx.lineWidth = lw * 1.2; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax, by); ctx.stroke(); ctx.restore(); /* l'arête */
+  if (o.eave !== false) { ctx.fillStyle = col("#12142a"); ctx.fillRect(Math.min(x0, x1) - 0.4, by - lw * 2, Math.abs(x1 - x0) + 0.8, lw * 3.2); } /* l'égout */
+}
+
 /** La couleur d'une fenêtre : sombre le jour (un reflet du ciel), rouge orangé et chaude la nuit. */
 function winColor(night, k = 1) { const n = clamp(night * 1.25); return mix(mix("#05060c", "#2e2a3a", 0.7 + 0.3 * k), n > 0.5 ? "#ff6a3a" : "#e0743a", n); }
 
@@ -33,7 +51,9 @@ function keep(r, ctx, M, sky, t, observatory) {
   const ax = observatory ? M.tx : r.terraceOf ? r.terraceOf(M).tx : M.x, s = 0.66 + 0.04 * clamp((M.hw - 100) / 24), raise = M.h * 0.12, cx = M.x, hw = M.hw, h = M.h;
   const P = (d) => new Path2D(d), W = (k) => winColor(night, k);
   const grad = (x0, x1, stops) => { const g = sunRight ? ctx.createLinearGradient(x1, 0, x0, 0) : ctx.createLinearGradient(x0, 0, x1, 0); stops.forEach((h, i) => g.addColorStop(i / (stops.length - 1), c(h))); return g; };
-  const MID = ["#6e6876", "#4a4552", "#2e2a36"], FRONT = ["#878090", "#5e5866", "#3a3542"], SL = ["#565a78", "#24263a"];
+  const MID = ["#6e6876", "#4a4552", "#2e2a36"], FRONT = ["#878090", "#5e5866", "#3a3542"];
+  const cs = (h) => mix("#05060c", mix(h, "#8a93b8", 0.12 * daylight(sky)), amb); /* l'ardoise, à peine éclaircie le jour */
+  const R = (x0, ax, ay, x1, by, o = {}) => slateRoof(ctx, cs, x0, ax, ay, x1, by, Object.assign({ sunRight }, o));
   const fillP = (d, f) => { ctx.fillStyle = f; ctx.fill(P(d)); }, strokeP = (d, col, w) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke(P(d)); };
   const courses = (x, y, w, h) => { ctx.fillStyle = rgba(0, 0, 0, 0.22); for (let yy = y + 4.5, k = 0; yy < y + h; yy += 4.5, k++) { ctx.fillRect(x, yy, w, 0.7); for (let xx = x + (k % 2 ? 11 : 5.5); xx < x + w; xx += 11) ctx.fillRect(xx, yy, 0.6, 4.5); } };
   const box = (x, y, w, h, stops) => { ctx.fillStyle = grad(x, x + w, stops); ctx.fillRect(x, y, w, h); courses(x, y, w, h); };
@@ -46,7 +66,7 @@ function keep(r, ctx, M, sky, t, observatory) {
     for (let x = x0; x < x1 - 3; x += 7) ctx.fillRect(x, top - 4, 4, 4); /* les merlons */
     ctx.fillStyle = c("#8a8494"); ctx.fillRect(x0, top, x1 - x0, 1.4);
     for (let x = x0 + 22; x < x1 - 12; x += 26) lancets([`M${x - 1.5} ${GY - 6} v-6 q1.5 -3 3 0 v6 Z`], 0.5);
-    for (const [x, hh] of [[x0 + 2, 54], [x1 - 2, 46]]) { box(x - 8, GY - hh, 16, hh + 2, FRONT); ctx.fillStyle = c("#7a7683"); ctx.fillRect(x - 10, GY - hh - 3, 20, 3); fillP(`M${x - 10} ${GY - hh - 3} L ${x} ${GY - hh - 30} L ${x + 10} ${GY - hh - 3} Z`, grad(x - 10, x + 10, SL)); strokeP(`M${x} ${GY - hh - 30} v-5`, c(GOLD), 0.9); lancets([`M${x - 2} ${GY - hh + 18} v-7 q2 -4 4 0 v7 Z`, `M${x - 2} ${GY - 10} v-7 q2 -4 4 0 v7 Z`], 0.9); }
+    for (const [x, hh] of [[x0 + 2, 54], [x1 - 2, 46]]) { box(x - 8, GY - hh, 16, hh + 2, FRONT); ctx.fillStyle = c("#7a7683"); ctx.fillRect(x - 10, GY - hh - 3, 20, 3); R(x - 10, x, GY - hh - 30, x + 10, GY - hh - 3); strokeP(`M${x} ${GY - hh - 30} v-5`, c(GOLD), 0.9); lancets([`M${x - 2} ${GY - hh + 18} v-7 q2 -4 4 0 v7 Z`, `M${x - 2} ${GY - 10} v-7 q2 -4 4 0 v7 Z`], 0.9); }
   }
   // l'ancienne montagne, devenue la masse du château : sa silhouette exacte, hérissée de pignons, de créneaux et de flèches fines, semée de fenêtres
   { const bz = (a, b, c2, d, u) => { const v = 1 - u; return v * v * v * a + 3 * v * v * u * b + 3 * v * u * u * c2 + u * u * u * d; }, pts = [];
@@ -69,7 +89,7 @@ function keep(r, ctx, M, sky, t, observatory) {
   ctx.fillStyle = c("#3e3a48"); ctx.fillRect(231, 98, 7, 18); fillP("M230 98 L 234.5 84 L 239 98 Z", c("#2e3044")); strokeP("M234.5 84 v-4", c(GOLD), 0.6); ctx.fillStyle = W(0.5); ctx.fillRect(233.8, 102, 1.4, 3);
   // PLAN MOYEN — la tour ronde, à gauche, son toit, son balcon, ses lancettes
   box(208, 112, 26, 98, MID);
-  fillP("M204 112 L 221 76 L 238 112 Z", grad(204, 238, SL)); fillP("M221 76 L 238 112 L 221 112 Z", rgba(0, 0, 0, 0.22));
+  R(204, 221, 76, 238, 112);
   strokeP("M221 76 v-8", c(GOLD), 1); fillP("M221 68 l-2.5 2.5 l2.5 1.6 l2.5 -1.6 Z", c(GOLD));
   fillP("M206 150 h30 v3 h-30 Z", c("#7a7683")); strokeP("M209 150 v-6 M214 150 v-6 M219 150 v-6 M224 150 v-6 M229 150 v-6 M234 150 v-6", c("#2a2733"), 0.9); ctx.fillStyle = c("#9a95a3"); ctx.fillRect(206, 143, 30, 1.2);
   lancets(["M216 130 v-9 q3 -5 6 0 v9 Z", "M216 176 v-9 q3 -5 6 0 v9 Z", "M224 196 v-7 q2.5 -4 5 0 v7 Z"], 0.9);
@@ -79,13 +99,14 @@ function keep(r, ctx, M, sky, t, observatory) {
   // la petite flèche, derrière le pignon (dessinée avant lui : son pied plonge derrière le rampant, elle ne flotte pas)
   box(244, 92, 11, 30, MID); lancets(["M248 108 v-6 q1.5 -3 3 0 v6 Z"], 0.8); // le fût : de la pierre appareillée, assez large pour porter sa flèche, et une lancette
   ctx.fillStyle = c("#a29dab"); ctx.fillRect(242.6, 91, 13.8, 1.8); ctx.fillStyle = c("#5e5966"); for (let x = 243.4; x < 256; x += 3.2) { ctx.beginPath(); ctx.moveTo(x, 92.8); ctx.lineTo(x + 2, 92.8); ctx.lineTo(x + 1, 95); ctx.closePath(); ctx.fill(); } // la corniche sur consoles, où la flèche se pose
-  fillP("M243 91 L 249.5 66 L 256 91 Z", grad(243, 256, SL)); fillP("M249.5 66 L 256 91 L 249.5 91 Z", rgba(0, 0, 0, 0.2)); // la flèche d'ardoise, de la largeur de la corniche
+  R(244.4, 249.5, 64, 254.6, 91, { step: 3.5 }); /* la flèche d'ardoise, en retrait de la corniche */
+  for (const px of [244, 255]) { ctx.fillStyle = grad(px - 1.3, px + 1.3, MID); ctx.fillRect(px - 1.3, 85, 2.6, 6); R(px - 1.6, px, 77, px + 1.6, 85, { rows: false, eave: false }); strokeP(`M${px} 77 v-2`, c(GOLD), 0.5); } /* deux clochetons, aux angles de la corniche */
   fillP("M246.8 91 v-5 l2.7 -4 l2.7 4 v5 Z", grad(246, 252, MID)); lancets(["M248.6 90.5 v-3 q0.9 -1.6 1.8 0 v3 Z"], 0.8); // une lucarne au pied de la flèche
   strokeP("M249.5 66 v-5", c(GOLD), 0.9);
   // le corps à pignons
   box(234, 126, 102, 84, MID); /* collé à la tour ronde : plus de jour entre les deux */
-  fillP("M238 126 L 266 90 L 294 126 Z", grad(238, 294, SL)); fillP("M266 90 L 294 126 L 266 126 Z", rgba(0, 0, 0, 0.2));
-  fillP("M300 126 L 318 104 L 336 126 Z", grad(300, 336, SL));
+  R(238, 266, 90, 294, 126);
+  R(300, 318, 104, 336, 126);
   fillP("M248 113 l3 -2 l-1 3 Z M254 105 l3 -2 l-1 3 Z M260 97 l3 -2 l-1 3 Z M284 113 l-3 -2 l1 3 Z M278 105 l-3 -2 l1 3 Z M272 97 l-3 -2 l1 3 Z", c("#1c1a26")); // les crochets
   strokeP("M266 90 v-7", c(GOLD), 1); ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(266, 82, 1.3, 0, 6.283); ctx.fill();
   // la grande rose
@@ -105,18 +126,38 @@ function keep(r, ctx, M, sky, t, observatory) {
   strokeP("M256 210 V 194 Q 266 177 276 194 V 210", c("#7a7683"), 2); strokeP("M253.5 210 V 194 Q 266 173.5 278.5 194 V 210", c("#4a4752"), 2.2); strokeP("M251 210 V 194 Q 266 170 281 194 V 210", c("#8f8a98"), 1);
   fillP("M266 177 l-3 -6 l3 -3 l3 3 Z", c(GOLD));
   if (night > 0.3) fillP("M264 210 v-10 h4 v10 Z", rgba(255, 106, 58, 0.55 * night));
-  // la grande flèche ajourée
+  // la grande flèche : elle naît de sa tour par étages (rien n'est posé sans appui) — le fût, un étage de beffroi à deux baies, une
+  // corniche ; sur la corniche, quatre clochetons d'angle et des gâbles qui enchâssent le pied de la flèche ; la flèche, plus étroite que
+  // la tour, en cuivre vert-de-gris (le seul accent de couleur du Château : tout le reste est d'ardoise), ses arêtes, ses rangs
+  // d'écailles, une lucarne, des crochets ; au sommet, la boule et la croix
   box(296, 78, 16, 48, FRONT);
-  fillP("M292 78 L 304 14 L 316 78 Z", grad(292, 316, SL)); fillP("M304 14 L 316 78 L 304 78 Z", rgba(0, 0, 0, 0.22));
-  fillP("M300 70 v-6 q4 -5 8 0 v6 Z M301.5 56 v-5 q2.5 -4 5 0 v5 Z M302.5 44 v-4 q1.5 -3 3 0 v4 Z", c("#1c1420")); // les ajours
-  lancets(["M301 69 v-4.5 q3 -3.5 6 0 v4.5 Z", "M302.3 55 v-3.5 q1.7 -2.5 3.4 0 v3.5 Z"], 0.8);
-  fillP("M297 66 l-3 -2 l0 4 Z M311 66 l3 -2 l0 4 Z M298.5 52 l-3 -2 l0 4 Z M309.5 52 l3 -2 l0 4 Z M300.5 38 l-2.5 -2 l0 3.5 Z M307.5 38 l2.5 -2 l0 3.5 Z M302 26 l-2 -2 l0 3 Z M306 26 l2 -2 l0 3 Z", c("#1c1a26")); // les crochets
-  strokeP("M304 14 v-11", c(GOLD), 1.2); fillP("M304 3 l-3 3 l3 2 l3 -2 Z", c(GOLD));
+  { const cv = (h) => mix("#05060c", mix(h, "#d6ece2", 0.1 * daylight(sky)), amb), V = { L: cv("#86b8a4"), M: cv("#558f7e"), D: cv("#2f5e55"), R: cv("#b4dccb"), K: cv("#1d3b36") };
+    const sg = sunRight ? -1 : 1, X = 304, B = 78, H = 50, BW = 7.2, poly = (pts, col) => { ctx.fillStyle = col; ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(X + x * sg, B + y) : ctx.moveTo(X + x * sg, B + y))); ctx.closePath(); ctx.fill(); };
+    box(296, 65, 16, 13, FRONT); /* l'étage du beffroi */
+    for (const x of [-5, 0.5]) { poly([[x, -2], [x + 4, -2], [x + 4, -8], [x + 2, -10.5], [x, -8]], W(0.7)); poly([[x + 1.75, -9.5], [x + 2.25, -9.5], [x + 2.25, -2], [x + 1.75, -2]], c("#5e5866")); } /* deux baies en ogive, un meneau */
+    ctx.fillStyle = c("#17141a"); for (const x of [-4, -1, 2, 5]) { ctx.beginPath(); ctx.arc(X + x, B - 0.9, 0.55, 0, 6.283); ctx.fill(); } /* la frise de quadrilobes */
+    ctx.fillStyle = c("#a29dab"); ctx.fillRect(X - 9, B - 14, 18, 1.5); /* la corniche */
+    poly([[-8, -14], [-2, -14], [-5, -21]], V.D); poly([[2, -14], [8, -14], [5, -21]], V.D); /* les gâbles des côtés, derrière */
+    poly([[-BW, -14], [0, -14], [0, -14 - H]], V.L); poly([[0, -14], [BW, -14], [0, -14 - H]], V.M); poly([[BW * 0.55, -14], [BW, -14], [0, -14 - H]], V.D); /* les pans de la flèche */
+    ctx.strokeStyle = V.R; ctx.lineWidth = 0.45; ctx.beginPath(); ctx.moveTo(X, B - 14); ctx.lineTo(X, B - 14 - H); ctx.stroke();
+    ctx.strokeStyle = V.D; ctx.lineWidth = 0.35; ctx.beginPath(); ctx.moveTo(X - BW * 0.55 * sg, B - 14); ctx.lineTo(X, B - 14 - H); ctx.stroke(); /* les arêtes */
+    ctx.save(); ctx.globalAlpha = 0.55; ctx.strokeStyle = V.D; ctx.lineWidth = 0.3;
+    for (let i = 1; i < 12; i++) { const y = B - 14 - (H * i) / 12.5, w = BW * (1 - i / 12.5); ctx.beginPath(); ctx.moveTo(X - w, y); for (let j = 0; j < 4; j++) { const x0 = X - w + (2 * w * j) / 4, x1 = X - w + (2 * w * (j + 1)) / 4; ctx.quadraticCurveTo((x0 + x1) / 2, y + 0.9, x1, y); } ctx.stroke(); } ctx.restore(); /* les rangs d'écailles arrondies */
+    { const y = -14 - H * 0.36; poly([[-2, y + 4], [2, y + 4], [2, y + 1], [0, y - 2], [-2, y + 1]], V.D); poly([[-1, y + 4], [1, y + 4], [1, y + 1.6], [0, y + 0.4], [-1, y + 1.6]], W(0.6)); } /* la lucarne */
+    ctx.fillStyle = V.R; for (let i = 1; i < 5; i++) { const f = i / 5.5, y = B - 14 - H * f, w = BW * (1 - f); for (const k of [-1, 1]) { ctx.beginPath(); ctx.moveTo(X + k * w, y); ctx.lineTo(X + k * (w + 1.3), y - 1.2); ctx.lineTo(X + k * (w - 0.2), y - 1.6); ctx.closePath(); ctx.fill(); } } /* les crochets */
+    poly([[-5.5, -14], [5.5, -14], [0, -24]], V.M); poly([[-5.5, -14], [0, -14], [0, -24]], V.L); /* le gâble de face */
+    ctx.fillStyle = V.D; ctx.beginPath(); ctx.arc(X, B - 17.4, 1.5, 0, 6.283); ctx.fill(); ctx.fillStyle = mix(c("#17141a"), W(1), night * 0.7); for (const an of [0, 2.09, 4.19]) { ctx.beginPath(); ctx.arc(X + Math.sin(an) * 0.55, B - 17.4 - Math.cos(an) * 0.55, 0.5, 0, 6.283); ctx.fill(); } /* son oculus trilobé */
+    ctx.fillStyle = V.R; ctx.beginPath(); ctx.moveTo(X, B - 24); ctx.lineTo(X - 0.6, B - 25.6); ctx.lineTo(X, B - 26.4); ctx.lineTo(X + 0.6, B - 25.6); ctx.closePath(); ctx.fill();
+    for (const k of [-1, 1]) { const x = k * 7.8, lit = k * sg < 0; poly([[x - 1.3, -13], [x + 1.3, -13], [x + 1.3, -19], [x - 1.3, -19]], c(lit ? "#878090" : "#5e5866")); poly([[x - 1.6, -19], [x + 1.6, -19], [x, -29]], lit ? V.L : V.M); /* les clochetons d'angle */
+      ctx.fillStyle = V.R; for (const f of [0.35, 0.65]) { const y = B - 19 - 10 * f, w = 1.6 * (1 - f), xx = X + x * sg; ctx.fillRect(xx - w - 0.6, y - 0.4, 0.7, 0.6); ctx.fillRect(xx + w - 0.1, y - 0.4, 0.7, 0.6); }
+      ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(X + x * sg, B - 29.4, 0.5, 0, 6.283); ctx.fill(); }
+    ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(X, B - 14 - H - 0.8, 0.9, 0, 6.283); ctx.fill(); ctx.fillRect(X - 0.3, B - 14 - H - 7, 0.6, 6.2); ctx.fillRect(X - 1.7, B - 14 - H - 5.4, 3.4, 0.6); /* le fleuron : la boule, la croix */
+  }
   fillP("M293 92 h22 v2.6 h-22 Z", c("#7a7683")); strokeP("M296 92 v-5 M300 92 v-5 M304 92 v-5 M308 92 v-5 M312 92 v-5", c("#2a2733"), 0.8); // son balcon
   lancets(["M300 112 v-9 q4 -6 8 0 v9 Z"], 0.95); strokeP("M304 103 v9 M300 108 h8", c("#17141a"), 0.7);
   // la tourelle collée à la flèche
   fillP("M312 118 q7 -3 7 -11 v-7 h-7 Z", c("#4a4350")); ctx.fillStyle = grad(312, 320, FRONT); ctx.fillRect(312, 100, 8, 26);
-  fillP("M310 100 L 316 82 L 322 100 Z", grad(310, 322, SL)); strokeP("M316 82 v-4", c(GOLD), 0.8); ctx.fillStyle = W(0.7); ctx.fillRect(315, 108, 2, 5);
+  ctx.fillStyle = c("#7a7683"); ctx.fillRect(310.5, 99, 11, 1.8); R(310, 316, 82, 322, 99.5, { step: 3.5 }); /* sa corniche, sa poivrière */ strokeP("M316 82 v-4", c(GOLD), 0.8); ctx.fillStyle = W(0.7); ctx.fillRect(315, 108, 2, 5);
   // les arcs-boutants à pinacles
   ctx.lineCap = "round"; strokeP("M340 130 q -10 -14 -24 -22", c("#4a4350"), 2); ctx.lineCap = "butt"; /* l'arc-boutant de droite seulement : ceux de gauche ne s'appuyaient sur rien */
   fillP("M338 132 v-8 l3 -6 l3 6 v8 Z", c("#5a5664")); strokeP("M341 118 v-4", c(GOLD), 0.7);
@@ -124,7 +165,7 @@ function keep(r, ctx, M, sky, t, observatory) {
   fillP("M236 126 l 8 -2 l 1.5 2.5 l -3 1.5 l 1 2.5 l -7.5 -1.5 Z M340 126 l -8 -2 l -1.5 2.5 l 3 1.5 l -1 2.5 l 7.5 -1.5 Z", c("#5a5664"));
   // PLAN AVANT DROIT — la tour isolée et sa passerelle couverte (avant la tour de l'astronome, qui passe devant)
   box(392, 150, 16, 60, FRONT);
-  fillP("M388 150 L 400 120 L 412 150 Z", grad(388, 412, SL)); fillP("M400 120 L 412 150 L 400 150 Z", rgba(0, 0, 0, 0.2));
+  ctx.fillStyle = c("#7a7683"); ctx.fillRect(389, 148, 22, 2.4); R(388, 400, 120, 412, 149); /* une corniche, où le toit se pose */
   strokeP("M400 120 v-6", c(GOLD), 0.9); ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(400, 113, 1.1, 0, 6.283); ctx.fill();
   fillP("M390 172 h20 v2.4 h-20 Z", c("#7a7683")); strokeP("M393 172 v-4 M397 172 v-4 M401 172 v-4 M405 172 v-4", c("#2a2733"), 0.8);
   lancets(["M397 166 v-7 q3 -4 6 0 v7 Z", "M397 192 v-7 q3 -4 6 0 v7 Z"], 0.9);
@@ -135,12 +176,12 @@ function keep(r, ctx, M, sky, t, observatory) {
   const top = observatory ? (M.ty + 2 - GY * (1 - s) + raise) / s : 112, aw = 30 / s, a0 = 354 - aw / 2;
   box(a0, top, aw, 210 - top, FRONT);
   if (!observatory) { ctx.fillStyle = c("#7a7683"); ctx.fillRect(a0 - 4, top - 4, aw + 8, 4); ctx.fillStyle = c("#2a2733"); for (let x = a0 - 3; x < a0 + aw + 4; x += 6) ctx.fillRect(x, top - 8, 1.2, 4); } // la plate-forme et son garde-corps ; avec l'observatoire, la tour se prolonge sans rupture jusqu'à sa coupole
-  if (!observatory) { fillP(`M${a0 - 4} ${top - 4} L 354 ${top - 50} L ${a0 + aw + 4} ${top - 4} Z`, grad(a0, a0 + aw, SL)); strokeP(`M354 ${top - 50} v-6`, c(GOLD), 1); }
+  if (!observatory) { R(a0 - 4, 354, top - 50, a0 + aw + 4, top - 4); strokeP(`M354 ${top - 50} v-6`, c(GOLD), 1); }
   for (const sx of [-1, 1]) { const bx0 = sx < 0 ? a0 - 5 : a0 + aw; ctx.fillStyle = grad(bx0, bx0 + 5, FRONT); ctx.fillRect(bx0, top + 30, 5, 210 - top - 30); for (let y = top + 60; y < 200; y += 40) { ctx.fillStyle = c("#a29dab"); ctx.fillRect(bx0 - 0.5, y, 6, 1.6); } } // les contreforts, à ressauts
   for (let y = top + 34; y < 200; y += 26) { lancets([`M350 ${y} v-12 q4 -7 8 0 v12 Z`], 0.95); strokeP(`M354 ${y - 12} v12 M350 ${y - 6} h8`, c("#17141a"), 0.7); strokeP(`M348 ${y} v-12 q6 -10 12 0 v12`, c("#a29dab"), 0.9); } // les lancettes, leur meneau et leur larmier
   ctx.fillStyle = c("#a29dab"); ctx.fillRect(a0 - 3, top + 16, aw + 6, 2.4); ctx.fillStyle = c("#5e5866"); for (let x = a0 - 2; x < a0 + aw + 2; x += 5) { ctx.beginPath(); ctx.moveTo(x, top + 18.4); ctx.lineTo(x + 3.4, top + 18.4); ctx.lineTo(x + 1.7, top + 23); ctx.closePath(); ctx.fill(); } // une galerie sur mâchicoulis
   strokeP(`M${a0 + 4} ${top + 16} v-5 M${a0 + aw - 4} ${top + 16} v-5`, c("#2a2733"), 0.8); for (let x = a0 + 4; x < a0 + aw - 3; x += 5) lancets([`M${x} ${top + 15} v-6 q1.5 -2.5 3 0 v6 Z`], 0.5); // l'arcature de la galerie
-  for (const sx of [-1, 1]) { const px = sx < 0 ? a0 - 4 : a0 + aw + 4; ctx.fillStyle = grad(px - 3.5, px + 3.5, FRONT); ctx.fillRect(px - 3.5, top - 8, 7, 26); fillP(`M${px - 4.5} ${top - 8} L ${px} ${top - 34} L ${px + 4.5} ${top - 8} Z`, grad(px - 4.5, px + 4.5, SL)); // deux pinacles d'angle, qui encadrent la coupole
+  for (const sx of [-1, 1]) { const px = sx < 0 ? a0 - 4 : a0 + aw + 4; ctx.fillStyle = grad(px - 3.5, px + 3.5, FRONT); ctx.fillRect(px - 3.5, top - 8, 7, 26); R(px - 4.5, px, top - 34, px + 4.5, top - 8, { rows: false }); // deux pinacles d'angle, qui encadrent la coupole
     ctx.fillStyle = c("#1c1a26"); for (let k = 1; k < 4; k++) { const y = top - 8 - k * 6.5, w = 4.5 * (1 - k / 4); ctx.fillRect(px - w - 1.4, y, 1.4, 1.2); ctx.fillRect(px + w, y, 1.4, 1.2); }
     strokeP(`M${px} ${top - 34} v-5`, c(GOLD), 0.9); ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(px, top - 39.5, 1.2, 0, 6.283); ctx.fill();
     fillP(`M${px + sx * 3.5} ${top + 22} l ${sx * 8} -2 l ${sx * 1.5} 2.5 l ${-sx * 3} 1.5 l ${sx * 1} 2.5 l ${-sx * 7.5} -1.5 Z`, c("#5a5664")); } // et leurs gargouilles
@@ -150,7 +191,7 @@ function keep(r, ctx, M, sky, t, observatory) {
     box(x0, top, x1 - x0, GY + 2 - top, MID); ctx.fillStyle = grad(x0, x1, MID); for (let x = x0; x < x1 - 3; x += 6) ctx.fillRect(x, top - 3.5, 3.5, 3.5); /* les merlons */
     ctx.fillStyle = c("#8a8494"); ctx.fillRect(x0, top, x1 - x0, 1.4);
     for (let x = x0 + 16; x < x1 - 10; x += 18) { ctx.fillStyle = c("#3a3542"); ctx.beginPath(); ctx.moveTo(x - 2.5, GY + 2); ctx.lineTo(x - 2.5, top + 8); ctx.lineTo(x, top + 3); ctx.lineTo(x + 2.5, top + 8); ctx.lineTo(x + 2.5, GY + 2); ctx.closePath(); ctx.fill(); lancets([`M${x + 9 - 1.8} ${GY - 5} v-9 q1.8 -4 3.6 0 v9 Z`], 0.7); } /* contreforts et lancettes */
-    for (const [x, hh, w] of [[x0 - 2, raise + 30, 16], [x1 + 2, raise + 22, 14]]) { box(x - w / 2, GY - hh, w, hh + 2, FRONT); ctx.fillStyle = c("#7a7683"); ctx.fillRect(x - w / 2 - 2, GY - hh - 3, w + 4, 3); fillP(`M${x - w / 2 - 2} ${GY - hh - 3} L ${x} ${GY - hh - 26} L ${x + w / 2 + 2} ${GY - hh - 3} Z`, grad(x - w / 2, x + w / 2, SL)); strokeP(`M${x} ${GY - hh - 26} v-5`, c(GOLD), 0.9); lancets([`M${x - 2} ${GY - hh + 14} v-7 q2 -4 4 0 v7 Z`, `M${x - 2} ${GY - 8} v-7 q2 -4 4 0 v7 Z`], 0.9); }
+    for (const [x, hh, w] of [[x0 - 2, raise + 30, 16], [x1 + 2, raise + 22, 14]]) { box(x - w / 2, GY - hh, w, hh + 2, FRONT); ctx.fillStyle = c("#7a7683"); ctx.fillRect(x - w / 2 - 2, GY - hh - 3, w + 4, 3); R(x - w / 2 - 2, x, GY - hh - 26, x + w / 2 + 2, GY - hh - 3); strokeP(`M${x} ${GY - hh - 26} v-5`, c(GOLD), 0.9); lancets([`M${x - 2} ${GY - hh + 14} v-7 q2 -4 4 0 v7 Z`, `M${x - 2} ${GY - 8} v-7 q2 -4 4 0 v7 Z`], 0.9); }
   }
   void t;
 }
@@ -252,8 +293,7 @@ function chapel(ctx, col, sky, t, x0, y0, w, h, hutX) {
   // la cheminée, derrière le pignon (la fumée en sort : drawChimney)
   ctx.fillStyle = col(STONE_D); ctx.fillRect(x1 - 12, y0 - 18, 6, 16); ctx.fillStyle = col(STONE); ctx.fillRect(x1 - 13, y0 - 19, 8, 2);
   // le toit d'ardoise, raide, qui déborde du pignon comme un chaperon, et ses crochets
-  { const sg = ctx.createLinearGradient(x0, 0, x1, 0); sg.addColorStop(0, col("#5a5e7c")); sg.addColorStop(1, col(SLATE_D)); ctx.fillStyle = sg; }
-  ctx.beginPath(); ctx.moveTo(x0 - 4, y0 + 1); ctx.lineTo(hutX, ap - 3); ctx.lineTo(x1 + 4, y0 + 1); ctx.closePath(); ctx.fill();
+  slateRoof(ctx, col, x0 - 4, hutX, ap - 3, x1 + 4, y0 + 1, { sunRight: daylight(sky) > 0 && (sky.hour || 12) > 13 });
   ctx.fillStyle = col("#1c1a26"); for (let k = 1; k < 4; k++) { const u = k / 4; for (const s of [-1, 1]) { const xx = hutX + s * (w / 2 + 4) * (1 - u), yy = y0 + 1 - (y0 + 4 - ap) * u; ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx + s * 2.6, yy - 1.6); ctx.lineTo(xx + s * 0.6, yy + 1.8); ctx.closePath(); ctx.fill(); } }
   // la façade : le mur et le pignon de pierre claire, d'un seul tenant
   ctx.fillStyle = lime(x0, x1); ctx.beginPath(); ctx.moveTo(x0, GY); ctx.lineTo(x0, y0); ctx.lineTo(x0 + 2, y0); ctx.lineTo(hutX, ap); ctx.lineTo(x1 - 2, y0); ctx.lineTo(x1, y0); ctx.lineTo(x1, GY); ctx.closePath(); ctx.fill();
@@ -328,7 +368,7 @@ function isletTower(ctx, c, night, big) {
   const g = ctx.createLinearGradient(-w / 2, 0, w / 2, 0); g.addColorStop(0, c(STONE)); g.addColorStop(1, c(STONE_DD)); ctx.fillStyle = g; ctx.fillRect(-w / 2, top, w, -top);
   ctx.fillStyle = rgba(0, 0, 0, 0.16); for (let y = top + 5; y < 0; y += 5) ctx.fillRect(-w / 2, y, w, 0.7);
   lancet(ctx, 0, top + 13, 2.8, 6, winColor(night, 1));
-  ctx.fillStyle = c(SLATE); ctx.beginPath(); ctx.moveTo(-w / 2 - 2, top); ctx.lineTo(0, top - (big ? 18 : 14)); ctx.lineTo(w / 2 + 2, top); ctx.closePath(); ctx.fill();
+  slateRoof(ctx, c, -w / 2 - 2, 0, top - (big ? 18 : 14), w / 2 + 2, top, { step: 3.5 });
   ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(0, top - (big ? 18 : 14)); ctx.lineTo(0, top - (big ? 22 : 17)); ctx.stroke();
   ctx.fillStyle = rgba(0, 0, 0, 0.12); for (let y = 6; y < 30; y += 6) ctx.fillRect(-20, y, 40, 0.7); // l'appareil sous la tour : l'îlot est un soubassement
 }
@@ -348,7 +388,7 @@ function castleIslet(ctx, c, night, i, low = false) {
   ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(0, tip + 1.5, 1.4, 0, 6.283); ctx.fill(); // un fleuron au bout
   ctx.fillStyle = c("#a29dab"); ctx.fillRect(-cw - 2, -1.5, cw * 2 + 4, 3); // la corniche
   const body = (x, w, top) => { const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); g.addColorStop(0, c(STONE)); g.addColorStop(0.6, c(STONE_D)); g.addColorStop(1, c(STONE_DD)); ctx.fillStyle = g; ctx.fillRect(x - w / 2, top, w, -top - 1.5); ctx.fillStyle = rgba(0, 0, 0, 0.16); for (let y = top + 5; y < -1.5; y += 5) ctx.fillRect(x - w / 2, y, w, 0.7); };
-  const roof = (x, w, top, h) => { const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); g.addColorStop(0, c("#565a78")); g.addColorStop(1, c(SLATE_D)); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - w / 2 - 2, top); ctx.lineTo(x, top - h); ctx.lineTo(x + w / 2 + 2, top); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x, top - h); ctx.lineTo(x, top - h - 4); ctx.stroke(); };
+  const roof = (x, w, top, h) => { slateRoof(ctx, c, x - w / 2 - 2, x, top - h, x + w / 2 + 2, top, { step: 3.5 }); ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x, top - h); ctx.lineTo(x, top - h - 4); ctx.stroke(); };
   const crenel = (x, w, top) => { ctx.fillStyle = c("#a29dab"); ctx.fillRect(x - w / 2 - 1.5, top - 1.5, w + 3, 2); };
   if (kind === 0) { // une haute tour en encorbellement
     body(0, 14, -34); crenel(0, 14, -34); roof(0, 14, -35, 22); lancet(ctx, 0, -20, 3, 8, winColor(night, 1)); lancet(ctx, 0, -6, 2.4, 5, winColor(night, 0.6));
