@@ -163,7 +163,20 @@ function bloodMoon(ctx, sky, t, x, y) {
   ctx.restore();
   if (k > 0.3) { const a = (k - 0.3) / 0.7; ctx.fillStyle = rgba(26, 8, 12, 0.9 * a); // les chauves-souris
     for (let i = 0; i < 6; i++) { const bx = ((i * 137 + t * (7 + (i % 3) * 3)) % 700) - 30, by = 38 + i * 17 + Math.sin(t * 0.8 + i * 2) * 8, f = Math.sin(t * 10 + i * 1.7), s = 2.4 + (i % 2);
-      ctx.beginPath(); ctx.moveTo(bx - s * 1.6, by - f * s * 0.9); ctx.quadraticCurveTo(bx - s * 0.6, by - s * 0.2, bx, by + s * 0.25); ctx.quadraticCurveTo(bx + s * 0.6, by - s * 0.2, bx + s * 1.6, by - f * s * 0.9); ctx.quadraticCurveTo(bx + s * 0.7, by + s * 0.35, bx, by + s * 0.7); ctx.quadraticCurveTo(bx - s * 0.7, by + s * 0.35, bx - s * 1.6, by - f * s * 0.9); ctx.fill(); } }
+      ctx.beginPath(); ctx.moveTo(bx - s * 1.6, by - f * s * 0.9); ctx.quadraticCurveTo(bx - s * 0.6, by - s * 0.2, bx, by + s * 0.25); ctx.quadraticCurveTo(bx + s * 0.6, by - s * 0.2, bx + s * 1.6, by - f * s * 0.9); ctx.quadraticCurveTo(bx + s * 0.7, by + s * 0.35, bx, by + s * 0.7); ctx.quadraticCurveTo(bx - s * 0.7, by + s * 0.35, bx - s * 1.6, by - f * s * 0.9); ctx.fill(); }
+    giantBat(ctx, t, x, y, a); }
+}
+
+/** La chauve-souris géante : de loin en loin (toutes les 50 s environ, pendant 8 s), une grande silhouette traverse le ciel devant la lune, à grands coups d'ailes lents, les yeux rouges. */
+function giantBat(ctx, t, mx, my, a) {
+  const P = 52, D = 8, ph = ((t % P) + P) % P; if (ph > D) return;
+  const u = ph / D, dir = Math.floor(t / P) % 2 ? -1 : 1, x = dir > 0 ? -70 + u * 780 : 710 - u * 780, y = my - 30 + Math.sin(u * Math.PI) * 44 + Math.sin(t * 2.6) * 5, f = Math.sin(t * 3.4), S = 1 + 0.5 * Math.sin(u * Math.PI);
+  ctx.save(); ctx.translate(x, y); ctx.scale(dir * S, S); ctx.fillStyle = rgba(16, 6, 10, 0.95 * a);
+  const wing = (s) => { ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(s * 14, -8 - f * 14, s * 34, -10 - f * 26); ctx.quadraticCurveTo(s * 30, -2 - f * 14, s * 24, 4 - f * 8); ctx.quadraticCurveTo(s * 20, 0 - f * 6, s * 14, 6 - f * 4); ctx.quadraticCurveTo(s * 9, 2, s * 4, 8); ctx.closePath(); ctx.fill(); ctx.strokeStyle = rgba(16, 6, 10, 0.95 * a); ctx.lineWidth = 0.8; for (const k of [0.45, 0.75]) { ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(s * 34 * k, (-10 - f * 26) * k + 4 * (1 - k)); ctx.stroke(); } };
+  wing(1); wing(-1);
+  ctx.beginPath(); ctx.ellipse(0, 3, 3.2, 6, 0, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.arc(0, -3, 2.6, 0, 6.283); ctx.fill(); for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * 1.4, -4.5); ctx.lineTo(s * 2.6, -8.5); ctx.lineTo(s * 0.4, -5.6); ctx.closePath(); ctx.fill(); } // le corps, la tête, les oreilles
+  ctx.fillStyle = rgba(255, 60, 40, 0.9 * a); ctx.fillRect(-1.6, -3.4, 1, 1); ctx.fillRect(0.6, -3.4, 1, 1); // les yeux
+  ctx.restore();
 }
 
 /** La brume basse cramoisie de la nuit rouge : de grandes nappes sous l'île, qui dérivent lentement. */

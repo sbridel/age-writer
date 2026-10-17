@@ -196,6 +196,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
       for (const [col, w, h] of J) { ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(jx + 1, sy - h + 1, w, h); ctx.fillStyle = c(col); ctx.fillRect(jx, sy - h, w, h); ctx.fillStyle = rgba(255, 255, 255, 0.18); ctx.fillRect(jx + 2, sy - h + 3, 2, h - 7); ctx.fillStyle = c("#c9a24e"); ctx.fillRect(jx + 1, sy - h - 3, w - 2, 3); jx += w + 5; }
       ctx.fillStyle = c("#e6d9b8"); ctx.beginPath(); ctx.ellipse(sx + 74, sy - 4, 5, 4, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#2a1c14"); ctx.fillRect(sx + 72, sy - 5, 1.5, 1.5); ctx.fillRect(sx + 75, sy - 5, 1.5, 1.5);
       r.hot.push({ x: sx - 2, y: sy - 30, w: 90, h: 36, tip: TRd("atelier.deco.shelf"), flash: TRd("atelier.deco.shelf.flash") }); } }
+  if (castle) wolf(r, ctx, c, sky, t, TRr); // le Château : un loup blanc couché devant le feu
   require("./relto-vault").trapDoor(r, ctx, c, 567, 300, 78, 24, TRr("vault.door.tip")); // la trappe de fer, dans le sol devant la cheminée : le coffre des livres descriptifs
   // le grand bureau
   const tx = 100, tw = 270, ty = 270;
@@ -417,6 +418,29 @@ const COVERS = [
 function coverOf(r, now = Date.now()) {
   const d = new Date(now), day = d.getFullYear() * 1000 + Math.floor((d - new Date(d.getFullYear(), 0, 1)) / 86400000), seed = (r.scene && r.scene.seed) || 0;
   return COVERS[Math.floor(rng((fnv("housse|" + day) ^ seed) >>> 0)() * COVERS.length)];
+}
+
+/**
+ * Le loup blanc (le Château seulement) : couché devant le feu, entre le fauteuil et la trappe, le pelage argenté, les yeux d'or qui suivent
+ * le curseur ; il bâille de temps en temps ; au clic, il lève la tête un instant. Un vieux compagnon ; on n'en dit pas plus (atelier.wolf.*).
+ */
+function wolf(r, ctx, c, sky, t, TRr) {
+  const x = 466, y = 324, up = r.wolfAt ? Math.max(0, 1 - (Date.now() - r.wolfAt) / 1800) : 0, lift = Math.sin(Math.min(1, up) * Math.PI) * 9, yawn = Math.max(0, Math.sin(t * 0.21) - 0.94) / 0.06, br = Math.sin(t * 1.4) * 0.8;
+  const fur = (h) => c(h), F1 = "#e8e6ea", F2 = "#c9c6cf", F3 = "#9a97a3";
+  ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.beginPath(); ctx.ellipse(x + 4, y + 9, 50, 7, 0, 0, 6.283); ctx.fill();
+  // le corps couché, la queue ramenée
+  ctx.fillStyle = fur(F2); ctx.beginPath(); ctx.moveTo(x - 36, y + 6); ctx.quadraticCurveTo(x - 40, y - 10 - br, x - 16, y - 16 - br); ctx.quadraticCurveTo(x + 10, y - 22 - br, x + 30, y - 12); ctx.quadraticCurveTo(x + 46, y - 4, x + 44, y + 6); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = fur(F1); ctx.beginPath(); ctx.moveTo(x - 30, y - 2); ctx.quadraticCurveTo(x - 20, y - 14 - br, x + 4, y - 16 - br); ctx.quadraticCurveTo(x + 22, y - 14 - br, x + 30, y - 6); ctx.quadraticCurveTo(x + 10, y - 8, x - 30, y - 2); ctx.fill(); // le dos, plus clair
+  ctx.strokeStyle = fur(F2); ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(x - 34, y + 2); ctx.quadraticCurveTo(x - 50, y + 10, x - 38 + Math.sin(t * 0.7) * 3, y + 7); ctx.stroke(); ctx.lineCap = "butt"; // la queue
+  ctx.fillStyle = fur(F2); for (const px of [x + 12, x + 30]) { ctx.beginPath(); ctx.ellipse(px, y + 5, 9, 3.4, 0, 0, 6.283); ctx.fill(); } ctx.fillStyle = fur(F3); for (const px of [x + 6, x + 24]) ctx.fillRect(px, y + 6, 1.2, 1.6); // les pattes avant allongées
+  // la tête, posée sur les pattes ; relevée au clic
+  const hx = x + 38, hy = y - 8 - lift, [px, py] = r.pointer || [hx + 40, hy - 20], ang = Math.atan2(py - hy, px - hx), ex = Math.cos(ang) * 1.1, ey = Math.sin(ang) * 0.8;
+  ctx.fillStyle = fur(F2); ctx.beginPath(); ctx.ellipse(hx, hy, 12, 9.5, -0.1, 0, 6.283); ctx.fill(); ctx.fillStyle = fur(F1); ctx.beginPath(); ctx.ellipse(hx + 8, hy + 2, 9, 5.5, -0.15, 0, 6.283); ctx.fill(); // le crâne et le museau
+  for (const s of [-1, 1]) { ctx.fillStyle = fur(F2); ctx.beginPath(); ctx.moveTo(hx - 6 + s * 4, hy - 6); ctx.lineTo(hx - 6 + s * 6, hy - 17); ctx.lineTo(hx + s * 3, hy - 7); ctx.closePath(); ctx.fill(); ctx.fillStyle = c("#5a4a52"); ctx.beginPath(); ctx.moveTo(hx - 6 + s * 4.6, hy - 7.5); ctx.lineTo(hx - 6 + s * 6, hy - 14); ctx.lineTo(hx - 1 + s * 3, hy - 8); ctx.closePath(); ctx.fill(); } // les oreilles
+  ctx.fillStyle = c("#1a1418"); ctx.beginPath(); ctx.ellipse(hx + 16.5, hy + 1, 2.2, 1.7, 0, 0, 6.283); ctx.fill(); // la truffe
+  if (yawn > 0.05) { ctx.fillStyle = c("#2a1016"); ctx.beginPath(); ctx.moveTo(hx + 8, hy + 4); ctx.lineTo(hx + 17, hy + 3); ctx.lineTo(hx + 12, hy + 4 + 7 * yawn); ctx.closePath(); ctx.fill(); ctx.fillStyle = c("#f4f0e8"); for (const k of [9.5, 15]) { ctx.beginPath(); ctx.moveTo(hx + k - 0.8, hy + 3.6); ctx.lineTo(hx + k + 0.8, hy + 3.6); ctx.lineTo(hx + k, hy + 3.6 + 2.6 * yawn); ctx.closePath(); ctx.fill(); } } // le bâillement
+  for (const s of [-1, 1]) { const ox = hx + 3 + s * 4.2, oy = hy - 2.2; ctx.fillStyle = c("#d8a844"); ctx.beginPath(); ctx.ellipse(ox, oy, 2.4, 1.9, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = "#17141a"; ctx.beginPath(); ctx.ellipse(ox + ex, oy + ey, 1.1, 1.4, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 240, 200, 0.7); ctx.fillRect(ox - 1 + ex, oy - 1.2 + ey, 0.7, 0.7); } // les yeux d'or, qui suivent
+  r.hot.push({ x: x - 50, y: y - 28, w: 104, h: 42, tip: TRr("atelier.wolf.tip"), flash: TRr("atelier.wolf.flash"), wolf: true, extra: true });
 }
 
 module.exports = { COVERS, coverOf, drawFlowerView, drawAtelier, drawDesk, drawLoft, drawLetter, drawBookcase, backButton, SECRET, CASE, COMBO };

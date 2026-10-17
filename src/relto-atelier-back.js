@@ -173,11 +173,22 @@ function drawBackroom(r, ctx, sc, sky, t) {
     ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(gx, gy, 20, 6, -0.3, 0, 6.283); ctx.stroke(); ctx.beginPath(); ctx.ellipse(gx, gy, 6, 20, -0.3, 0, 6.283); ctx.stroke();
     item(gx - 22, gy - 22, 44, 62, "back.globe.tip", "back.globe.flash");
   }
-  // un porte-chapeau, une plume humide
-  { const hx = 258, hy = 250; ctx.strokeStyle = c("#2a1c14"); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, 142); ctx.stroke(); ctx.beginPath(); ctx.moveTo(hx - 14, hy); ctx.lineTo(hx + 14, hy); ctx.stroke();
+  // un porte-chapeau, une plume humide (le Château : une cape y pend, et une épée au fourreau est appuyée au mur à côté — à qui sait)
+  { const hx = 258, hy = 250; ctx.strokeStyle = c(castle ? CS.IRON : "#2a1c14"); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, 142); ctx.stroke(); ctx.beginPath(); ctx.moveTo(hx - 14, hy); ctx.lineTo(hx + 14, hy); ctx.stroke();
     for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(hx, 150); ctx.quadraticCurveTo(hx + s * 10, 150, hx + s * 14, 142); ctx.stroke(); }
+    if (castle) {
+      const sx = 244, sw0 = Math.sin(t * 0.5) * 0.6; // l'épée : le fourreau noir à bouterolle d'or, la garde en croix, le pommeau
+      ctx.save(); ctx.translate(sx, FLOOR); ctx.rotate(-0.1); ctx.fillStyle = c("#15121a"); ctx.fillRect(-2.6, -78, 5.2, 78); ctx.fillStyle = c(CS.GOLD); ctx.fillRect(-2.6, -8, 5.2, 4); ctx.fillRect(-2.2, -52, 4.4, 1.4); ctx.fillRect(-9, -82, 18, 3); ctx.fillRect(-1.6, -96, 3.2, 14); ctx.beginPath(); ctx.arc(0, -98, 3, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#8a1a2a"); ctx.beginPath(); ctx.arc(0, -98, 1.3, 0, 6.283); ctx.fill(); ctx.restore();
+      item(sx - 10, FLOOR - 104, 20, 106, "back.sword.tip", "back.sword.flash", { sfx: "sword", extra: true });
+      ctx.fillStyle = c("#0e0b10"); ctx.beginPath(); ctx.moveTo(hx - 14, 142); ctx.quadraticCurveTo(hx - 24 + sw0, 190, hx - 20 + sw0, 246); ctx.lineTo(hx + 22 + sw0, 246); ctx.quadraticCurveTo(hx + 26 + sw0, 190, hx + 14, 142); ctx.closePath(); ctx.fill(); // la cape, noire
+      ctx.fillStyle = c("#6a1020"); ctx.beginPath(); ctx.moveTo(hx + 14, 142); ctx.quadraticCurveTo(hx + 4 + sw0, 200, hx + 8 + sw0, 246); ctx.lineTo(hx + 22 + sw0, 246); ctx.quadraticCurveTo(hx + 26 + sw0, 190, hx + 14, 142); ctx.closePath(); ctx.fill(); // le revers rouge
+      ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(hx - 14, 142); ctx.quadraticCurveTo(hx - 24 + sw0, 190, hx - 20 + sw0, 246); ctx.moveTo(hx + 14, 142); ctx.quadraticCurveTo(hx + 4 + sw0, 200, hx + 8 + sw0, 246); ctx.stroke(); ctx.fillStyle = c(CS.GOLD); ctx.beginPath(); ctx.arc(hx, 146, 2.4, 0, 6.283); ctx.fill(); // les galons, l'agrafe d'or
+      ctx.strokeStyle = rgba(0, 0, 0, 0.35); ctx.lineWidth = 1.2; for (const k of [-10, -2, 6]) { ctx.beginPath(); ctx.moveTo(hx + k, 150); ctx.quadraticCurveTo(hx + k - 3 + sw0, 200, hx + k - 2 + sw0, 244); ctx.stroke(); } // les plis
+      item(hx - 18, 106, 38, 148, "back.cape.tip", "back.cape.flash"); /* la zone du porte-chapeau, inchangée */
+    } else {
     ctx.fillStyle = c("#26302b"); ctx.beginPath(); ctx.ellipse(hx - 2, 140, 16, 5, -0.1, 0, 6.283); ctx.fill(); ctx.fillRect(hx - 9, 128, 15, 12); ctx.strokeStyle = c("#d8d2c0"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(hx + 5, 132); ctx.quadraticCurveTo(hx + 14, 118, hx + 22, 112); ctx.stroke(); ctx.fillStyle = rgba(30, 40, 90, 0.8); ctx.beginPath(); ctx.arc(hx + 22, 112, 1.6, 0, 6.283); ctx.fill();
     item(hx - 18, 106, 38, 148, "back.hat.tip", "back.hat.flash");
+    }
   }
   // une pile de livres sans titre, penchée
   { const px = 488, py = 250; for (const [i, col, w, dx] of [[0, "#5b2b2b", 40, 0], [1, "#27555a", 34, 4], [2, "#4c5a2c", 30, -3]]) { ctx.save(); ctx.translate(px + dx, py - 8 - i * 9); ctx.rotate((i - 1) * 0.04); ctx.fillStyle = c(col); ctx.fillRect(-w / 2, -4, w, 9); ctx.fillStyle = rgba(236, 222, 180, 0.7); ctx.fillRect(-w / 2 + 2, 3.5, w - 4, 1.8); ctx.restore(); }

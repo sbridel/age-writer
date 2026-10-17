@@ -20,7 +20,9 @@ const make = (disguise, mode = "sandbox", view = "island", hour = 22, extra = []
   const c = dom.window.document.createElement("canvas"), r = new ReltoRenderer(c, dni, { t: (k) => k });
   r.nowOverride = 1.8e12; r.setScene(sc); r.setHour(hour); r.view = view; r.draw(3); return r;
 };
-const zones = (r) => JSON.stringify(r.hot.filter((h) => h.go !== "telescope").map((h) => Object.fromEntries(Object.entries(h).filter(([, v]) => typeof v !== "function").map(([k, v]) => [k, typeof v === "number" ? Math.round(v * 100) / 100 : v]))));
+// les zones : mêmes rectangles et mêmes actions ; les textes peuvent changer d'habit (la cape sur le porte-chapeau) ; l'observatoire suit le donjon ;
+// les hôtes du Château (`extra` : le loup, l'épée, le cercueil) s'ajoutent sans rien déplacer
+const zones = (r) => JSON.stringify(r.hot.filter((h) => h.go !== "telescope" && !h.extra).map((h) => Object.fromEntries(Object.entries(h).filter(([k, v]) => typeof v !== "function" && k !== "tip" && k !== "flash").map(([k, v]) => [k, typeof v === "number" ? Math.round(v * 100) / 100 : v]))));
 
 // la page, son effet, sa place
 ok(M.PAGE_PRESETS.page_castle && M.EFFECT_TYPES.includes("castle") && M.PAGE_PRESETS.page_castle.sandbox, "la page Château et son effet existent, bac à sable seulement");
@@ -59,4 +61,11 @@ for (const station of ["cry", "lens", "atmo"]) {
   ok(CO.redNight(day) === day && !day.red, "le jour, le Château ne touche pas au ciel");
   const n = CO.redNight(night); ok(n.red === 1 && n.bottom !== night.bottom && n.ambient === night.ambient, "la nuit, le ciel est rouge, et la lumière reste celle de la nuit");
   const d = CO.redNight(dusk); ok(d.red > 0 && d.red < 1, "au crépuscule, le ciel vire au rouge peu à peu"); }
+// les hôtes du Château : le loup de l'atelier, l'épée de la chambre, le cercueil de la crypte ; absents sans lui
+{ const W0 = make("castle", "sandbox", "atelier", 21, ["page_atelier"]), W1 = make(null, "sandbox", "atelier", 21, ["page_atelier"]);
+  ok(W0.hot.some((h) => h.wolf) && !W1.hot.some((h) => h.wolf), "le loup blanc veille dans l'atelier du Château, et nulle part ailleurs");
+  const S0 = make("castle", "sandbox", "atelierback", 21, ["page_atelier"]), S1 = make(null, "sandbox", "atelierback", 21, ["page_atelier"]);
+  ok(S0.hot.some((h) => h.sfx === "sword") && !S1.hot.some((h) => h.sfx === "sword"), "l'épée au fourreau, dans la chambre du Château seulement");
+  const V0 = make("castle", "sandbox", "vault", 21, []), V1 = make(null, "sandbox", "vault", 21, []);
+  ok(V0.hot.some((h) => h.sfx === "coffin") && !V1.hot.some((h) => h.sfx === "coffin"), "le cercueil, dans la crypte du Château seulement"); }
 console.log(`✓ castle.test.js (${n} contrôles)`);
