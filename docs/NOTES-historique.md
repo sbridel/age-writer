@@ -575,3 +575,11 @@ Note : `claude/DESIGN-chateau-gothique.md` (projet), maquette (artefact). Second
 - Vue globale (`relto-global.js`, `castleIsland`) : l'île de près, réduite (0,4) : soubassements, château, chapelle, stèles, arbres, gargouille.
 - Tests : `test/golden.test.js` (nouveau : empreinte de tous les appels du canvas sur 150 vues sans le Château ; `GOLDEN_WRITE=1` pour la régénérer quand c'est voulu) ; `test/castle.test.js` (139 contrôles : zones cliquables identiques avec et sans le Château dans vingt vues à trois heures, sauf l'observatoire ; un seul déguisement ; jamais en histoire ; nuit rouge). Les tests de vues construisent une scène avec un Âge écrit, sinon le télescope reste verrouillé et la vue retombe sur l'île.
 - Leçon gardée : jamais de `//` en milieu de ligne (deux fois du code avalé) ; `/* */`.
+
+## 1.41.1 — le Château au crépuscule (17 oct. 2026)
+
+Pour Halloween : attacher le Château, attendre la nuit, regarder la lune rouge se lever sur le Relto.
+- Pierre au jour (`relto-castle-out.js`, `daylight`, `litStone`) : à midi elle s'éclaircit vers `#b8bccb` (34 % au plus, suivant `ambient`, nul la nuit rouge) ; `keep` retourne ses dégradés l'après-midi (la face éclairée suit le soleil). Appliquée au donjon, à la masse, au corps de logis, à la courtine, aux îlots (île et global), aux soubassements et à l'enceinte. La chapelle garde sa vieille pierre.
+- Vert sous le Château (`relto-render.js`) : `GRASS_CASTLE` pour la pelouse, `deep()` pour le sol sans page Herbe et les touffes, `groundTop()` ; brins de `SC.grass` (paramètre `castle`) ; arbres (`drawPlants`, mélange vers `#10201a` à 35 %).
+- Vue globale (`relto-global.js`, `spire`) : sous le Château, les pinacles de roche deviennent des tours lointaines (poivrière, deux fenêtres, pierre au jour).
+- Tests : golden inchangé (rien ne bouge sans le Château) ; `test/castle.test.js` 139 contrôles.

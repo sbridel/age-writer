@@ -2,6 +2,15 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.41.1 — The Castle at dusk (2026-10-17)
+
+Just in time for Halloween: attach the Castle, wait for nightfall, and watch the red moon rise over your Relto.
+
+### Changed
+- **The Castle takes the daylight.** By day its stone lightens to a soft bluish grey and is lit on the side of the sun (left in the morning, right in the afternoon); at dusk it sinks back to charcoal, and the red night is unchanged.
+- **A deeper green under the Castle**: the courtyard lawn, the grass, the tufts and the trees take a deeper, colder green, the garden of an old castle. Flowers, koi and the cat keep their colours.
+- **The far view**: the pale rock pinnacles around the island become distant towers.
+
 ## 1.41.0 — The Castle (2026-10-17)
 
 ### Added
