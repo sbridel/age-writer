@@ -77,7 +77,11 @@ function keep(r, ctx, M, sky, t, observatory) {
   // l'arc-boutant de gauche : un pinacle posé sur le parapet de la tour ronde, un arc plein qui vole par-dessus le pignon jusqu'au fût de la grande flèche (dessiné avant le pignon et la flèche, qui le recouvrent à ses bouts)
   fillP("M238 100 Q 266 78 298 85 L 298 89.5 Q 266 84 238 105 Z", c("#4a4350")); strokeP("M238 100 Q 266 78 298 85", c("#7a7683"), 0.8); // un arc fin, de la tourelle cachée derrière la tour ronde jusqu'au fût de la grande flèche
   // la petite flèche, derrière le pignon (dessinée avant lui : son pied plonge derrière le rampant, elle ne flotte pas)
-  ctx.fillStyle = grad(246, 253, MID); ctx.fillRect(246, 92, 7, 30); fillP("M243 92 L 249.5 66 L 256 92 Z", grad(243, 256, SL)); strokeP("M249.5 66 v-5", c(GOLD), 0.9); ctx.fillStyle = W(0.8); ctx.fillRect(248.5, 80, 2, 4);
+  box(244, 92, 11, 30, MID); lancets(["M248 108 v-6 q1.5 -3 3 0 v6 Z"], 0.8); // le fût : de la pierre appareillée, assez large pour porter sa flèche, et une lancette
+  ctx.fillStyle = c("#a29dab"); ctx.fillRect(242.6, 91, 13.8, 1.8); ctx.fillStyle = c("#5e5966"); for (let x = 243.4; x < 256; x += 3.2) { ctx.beginPath(); ctx.moveTo(x, 92.8); ctx.lineTo(x + 2, 92.8); ctx.lineTo(x + 1, 95); ctx.closePath(); ctx.fill(); } // la corniche sur consoles, où la flèche se pose
+  fillP("M243 91 L 249.5 66 L 256 91 Z", grad(243, 256, SL)); fillP("M249.5 66 L 256 91 L 249.5 91 Z", rgba(0, 0, 0, 0.2)); // la flèche d'ardoise, de la largeur de la corniche
+  fillP("M246.8 91 v-5 l2.7 -4 l2.7 4 v5 Z", grad(246, 252, MID)); lancets(["M248.6 90.5 v-3 q0.9 -1.6 1.8 0 v3 Z"], 0.8); // une lucarne au pied de la flèche
+  strokeP("M249.5 66 v-5", c(GOLD), 0.9);
   // le corps à pignons
   box(234, 126, 102, 84, MID); /* collé à la tour ronde : plus de jour entre les deux */
   fillP("M238 126 L 266 90 L 294 126 Z", grad(238, 294, SL)); fillP("M266 90 L 294 126 L 266 126 Z", rgba(0, 0, 0, 0.2));
