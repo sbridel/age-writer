@@ -9,8 +9,16 @@ const W = 640, H = 360;
 const k = (sky) => 0.35 + 0.65 * sky.ambient;
 
 /** Pinacle de roche qui sort de la brume (le bas est noyé par la brume dessinée ensuite). */
+let castleNow = false; // le Château est attaché : posé à chaque dessin de la vue globale
 function spire(ctx, x, top, w, h, sky, shade) {
   const col = (c) => mix("#05060c", c, k(sky) * shade);
+  if (castleNow) { // le Château : les pinacles de roche sont des tours lointaines, en silhouette, une poivrière et deux fenêtres
+    const CO = require("./relto-castle-out"), L = CO.litStone(sky), cc = (c) => col(L(c)), tw = w * 0.55, g = ctx.createLinearGradient(x - tw / 2, 0, x + tw / 2, 0); g.addColorStop(0, cc("#4a4552")); g.addColorStop(1, cc("#2a2733"));
+    ctx.fillStyle = g; ctx.fillRect(x - tw / 2, top + tw * 0.9, tw, h - tw * 0.9); ctx.fillStyle = rgba(0, 0, 0, 0.18); for (let y = top + tw * 0.9 + 6; y < top + h; y += 6) ctx.fillRect(x - tw / 2, y, tw, 0.8);
+    ctx.fillStyle = cc("#a29dab"); ctx.fillRect(x - tw / 2 - 1.5, top + tw * 0.9 - 2, tw + 3, 2); ctx.fillStyle = cc("#2e3048"); ctx.beginPath(); ctx.moveTo(x - tw / 2 - 1.5, top + tw * 0.9 - 2); ctx.lineTo(x, top - h * 0.12); ctx.lineTo(x + tw / 2 + 1.5, top + tw * 0.9 - 2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = CO.winColor(sky.night || 0, 0.7); for (const v of [0.35, 0.6]) ctx.fillRect(x - 1, top + h * v, 2, 4);
+    return;
+  }
   const g = ctx.createLinearGradient(0, top, 0, top + h); g.addColorStop(0, col("#6d6354")); g.addColorStop(1, col("#3a342c"));
   ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - w / 2, top + h); ctx.lineTo(x - w * 0.42, top + h * 0.12); ctx.lineTo(x - w * 0.18, top); ctx.lineTo(x + w * 0.22, top + 2); ctx.lineTo(x + w * 0.46, top + h * 0.1); ctx.lineTo(x + w / 2, top + h); ctx.closePath(); ctx.fill();
   ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.beginPath(); ctx.moveTo(x + w * 0.1, top + 2); ctx.lineTo(x + w * 0.46, top + h * 0.1); ctx.lineTo(x + w / 2, top + h); ctx.lineTo(x + w * 0.1, top + h); ctx.closePath(); ctx.fill();
@@ -87,7 +95,6 @@ function islet(ctx, x, y, s, sky, i, t, low = false) {
 }
 
 /** Pont de cordes entre deux points : câble qui s'affaisse, planches et poteaux. */
-let castleNow = false; // le Château est attaché : posé à chaque dessin de la vue globale
 function bridge(ctx, x0, y0, x1, y1, sky) {
   const c = (h) => mix("#05060c", h, k(sky)), sag = 7;
   if (castleNow) return require("./relto-castle-out").stoneBridge(ctx, c, x0, y0, x1, y1); // le Château : des passerelles de pierre
