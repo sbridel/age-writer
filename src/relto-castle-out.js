@@ -72,8 +72,10 @@ function keep(r, ctx, M, sky, t, observatory) {
   fillP("M206 150 h30 v3 h-30 Z", c("#7a7683")); strokeP("M209 150 v-6 M214 150 v-6 M219 150 v-6 M224 150 v-6 M229 150 v-6 M234 150 v-6", c("#2a2733"), 0.9); ctx.fillStyle = c("#9a95a3"); ctx.fillRect(206, 143, 30, 1.2);
   lancets(["M216 130 v-9 q3 -5 6 0 v9 Z", "M216 176 v-9 q3 -5 6 0 v9 Z", "M224 196 v-7 q2.5 -4 5 0 v7 Z"], 0.9);
   strokeP("M219 121 v9 M216 126 h6 M219 167 v9 M216 172 h6", c("#17141a"), 0.7);
+  // la petite flèche, derrière le pignon (dessinée avant lui : son pied plonge derrière le rampant, elle ne flotte pas)
+  ctx.fillStyle = grad(246, 253, MID); ctx.fillRect(246, 92, 7, 30); fillP("M243 92 L 249.5 66 L 256 92 Z", grad(243, 256, SL)); strokeP("M249.5 66 v-5", c(GOLD), 0.9); ctx.fillStyle = W(0.8); ctx.fillRect(248.5, 80, 2, 4);
   // le corps à pignons
-  box(238, 126, 98, 84, MID);
+  box(234, 126, 102, 84, MID); /* collé à la tour ronde : plus de jour entre les deux */
   fillP("M238 126 L 266 90 L 294 126 Z", grad(238, 294, SL)); fillP("M266 90 L 294 126 L 266 126 Z", rgba(0, 0, 0, 0.2));
   fillP("M300 126 L 318 104 L 336 126 Z", grad(300, 336, SL));
   fillP("M248 113 l3 -2 l-1 3 Z M254 105 l3 -2 l-1 3 Z M260 97 l3 -2 l-1 3 Z M284 113 l-3 -2 l1 3 Z M278 105 l-3 -2 l1 3 Z M272 97 l-3 -2 l1 3 Z", c("#1c1a26")); // les crochets
@@ -107,11 +109,9 @@ function keep(r, ctx, M, sky, t, observatory) {
   // la tourelle collée à la flèche
   fillP("M312 118 q7 -3 7 -11 v-7 h-7 Z", c("#4a4350")); ctx.fillStyle = grad(312, 320, FRONT); ctx.fillRect(312, 100, 8, 26);
   fillP("M310 100 L 316 82 L 322 100 Z", grad(310, 322, SL)); strokeP("M316 82 v-4", c(GOLD), 0.8); ctx.fillStyle = W(0.7); ctx.fillRect(315, 108, 2, 5);
-  // la petite flèche, derrière le pignon
-  ctx.fillStyle = grad(246, 253, MID); ctx.fillRect(246, 92, 7, 12); fillP("M243 92 L 249.5 66 L 256 92 Z", grad(243, 256, SL)); strokeP("M249.5 66 v-5", c(GOLD), 0.9); ctx.fillStyle = W(0.8); ctx.fillRect(248.5, 80, 2, 4);
   // les arcs-boutants à pinacles
-  ctx.lineCap = "round"; strokeP("M234 104 q 14 -14 30 -14", c("#4a4350"), 2.2); strokeP("M238 120 q 12 -8 26 -8", c("#4a4350"), 1.6); strokeP("M340 130 q -10 -14 -24 -22", c("#4a4350"), 2); ctx.lineCap = "butt";
-  fillP("M232 106 v-8 l3 -6 l3 6 v8 Z M338 132 v-8 l3 -6 l3 6 v8 Z", c("#5a5664")); strokeP("M235 92 v-4 M341 118 v-4", c(GOLD), 0.7);
+  ctx.lineCap = "round"; strokeP("M340 130 q -10 -14 -24 -22", c("#4a4350"), 2); ctx.lineCap = "butt"; /* l'arc-boutant de droite seulement : ceux de gauche ne s'appuyaient sur rien */
+  fillP("M338 132 v-8 l3 -6 l3 6 v8 Z", c("#5a5664")); strokeP("M341 118 v-4", c(GOLD), 0.7);
   // les gargouilles aux corniches
   fillP("M236 126 l 8 -2 l 1.5 2.5 l -3 1.5 l 1 2.5 l -7.5 -1.5 Z M340 126 l -8 -2 l -1.5 2.5 l 3 1.5 l -1 2.5 l 7.5 -1.5 Z", c("#5a5664"));
   // PLAN AVANT DROIT — la tour isolée et sa passerelle couverte (avant la tour de l'astronome, qui passe devant)
