@@ -2,6 +2,16 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.42.0 — The Relto book (2026-10-18)
+
+### Added
+- **The Relto book**: the mountain icon in the ribbon now opens a closed green book with a gold-tooled binding, a garnet medallion engraved with the island, the mountain and the hut. Opening it (a click, or Enter) plays the book and clasp sounds, then turns to a double page for each Relto in the vault: the text on the left (name, inscription, story chapter, shelf, time there in D'ni, Ages linking back, last visit), the linking glass on the right with the island alive at the hour of the day. Touch the glass to link: the Relto opens in full screen. A "Cover" button brings you back to the closed book, and the Cover tab setting applies.
+- **Setting "The Relto button opens"**: the Relto book (default), or straight to the last Relto visited, as before. A command, "Relto button: switch between the Relto book and the last Relto visited", flips between the two. The "Open the Relto" command stays direct.
+- A book whose `return:` line points to a Relto no longer says "not an Age": it reads "Relto · home", and its glass shows the island.
+
+### Fixed
+- Clicking the Relto from another note no longer opens a second tab of the same Relto: the existing tab is reached instead.
+
 ## 1.41.5 — Gargoyles on the corners (2026-10-18)
 
 ### Fixed

@@ -622,3 +622,13 @@ Pour Halloween : attacher le Château, attendre la nuit, regarder la lune rouge 
 - Tour de l'astronome (`relto-castle-out.js`, `keep`) : les deux gargouilles, de simples polygones posés sous le pied des pinacles, à côté du mur (rien derrière elles), sortent maintenant de l'angle de la tour (`a0`, `a0 + aw`), sous la bande de la galerie : une console prise dans la maçonnerie, une bête de profil penchée dans le vide (dos voûté éclairé, aile repliée, oreille, gueule ouverte, œil), la patte agrippée à la console. Rien ne flotte.
 - Maquette faite à part avant de coder (matin, après-midi, nuit).
 - Tests : golden inchangé ; `test/castle.test.js` inchangé (zones identiques).
+
+## 1.42.0 — le Livre du Relto (18 oct. 2026)
+
+- Le livre « à la ceinture » (`src/relto-book.js`, vue `age-writer-relto-book`) : le bouton du ruban l'ouvre. Une double page par Relto du coffre (toute note `age_type: personal_hub`, le refuge avant l'histoire), texte à gauche (nom, inscription du bloc `relto`, chapitre de l'histoire, étagère, heure là-bas, retours, dernière visite), vitre de liaison à droite : l'île vivante, rendue par `ReltoRenderer` (30 images/s au plus, seulement à l'écran). Toucher la vitre : son de liaison, puis `openHubFile` (`ui-relto.js`).
+- La couverture (`reltoCoverSvg`) : maroquin vert forêt très sombre, reliure dorée (double filet à frise de losanges, dos à cinq nerfs, fleurons), ovale et couronne de laurier nouée, médaillon grenat cerclé d'or (bleu-vert prévu aussi, `medal: "teal"`) gravé de l'île, la montagne et la cabane. Dessinée de notre main. Le livre s'ouvre dessus (réglage « Cover tab »), un clic joue le son du livre et du fermoir, un bouton ramène à elle.
+- Réglage `reltoRibbon` (« book » par défaut, « last ») et commande « Relto button: switch… ». « Open the Relto » reste direct. `ext.reltoVisits` garde la dernière visite de chaque Relto (`file-open`).
+- `openHubFile` : jamais deux onglets du même Relto (un onglet qui montre déjà la note, y compris différé, est rejoint ; le livre se ferme derrière). Le plein écran est armé une seule fois.
+- Livre d'Âge : un `return:`/`link:` vers un Relto n'affiche plus « not an Age » mais « Relto · refuge », avec l'île dans la vitre (`look` inchangé : crochet dans `entry.js`, `isHubBook`).
+- `cover.js` : options `emblem` et `medal` (non utilisées par les couvertures d'Âge). Pierres de liaison inchangées (leur sens reste à décider).
+- Tests : `relto-book.test.js` (15 vérifications) ; banc visuel `rbook.html` (`test/visual/entry-rbook.js`).

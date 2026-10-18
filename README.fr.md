@@ -43,6 +43,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; les dernières versions en bref :
 
+- **1.42, le Livre du Relto.** L'icône du ruban ouvre un livre vert à reliure dorée : une double page par Relto, l'île vivante dans sa vitre ; la toucher, c'est se lier. Un réglage et une commande ramènent le bouton au dernier Relto visité.
 - **1.41 à 1.41.5, le Château, pour Halloween.** Un déguisement gothique romantique : l'île entière devient un château autour de l'ancienne montagne, avec une chapelle, des tours suspendues et des passerelles de pierre ; les nuits virent au rouge sous une grande lune rouge ; dedans, chaque pièce prend la pierre, le noyer et l'or patiné ; le jour, la pierre prend la lumière ; la nuit, une chauve-souris géante passe devant la lune rouge ; les toits sont d'ardoise, sous une flèche vert-de-gris ; derrière le donjon, une masse chaotique de tours et une tour à rosace.
 - **1.40, pelouse et muguet.** La page Herbe fait de l'île une pelouse ; une nouvelle page Muguet.
 - **1.39.1, le panneau se referme.** Quitter la cabane remet la bibliothèque et le panneau caché en place (un bug depuis la 1.36).

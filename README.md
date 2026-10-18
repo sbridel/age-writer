@@ -41,6 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.42, the Relto book.** The ribbon icon opens a green gold-tooled book: one double page per Relto, the island alive in its glass; touch it to link. A setting and a command switch the button back to the last Relto visited.
 - **1.41 to 1.41.5, the Castle, for Halloween.** A romantic gothic disguise: the whole island becomes a castle around the old mountain, with a chapel, hanging towers and stone footbridges; the nights turn red under a great red moon; every room inside takes on stone, walnut and old gold; by day the stone takes the light; at night, a giant bat crosses the red moon; the roofs are slate, under a verdigris spire; behind the keep, a chaotic mass of towers and a rose-window tower.
 - **1.40, lawn and lily of the valley.** The Grass page turns the island into a lawn; a new Lily of the valley page.
 - **1.39.1, the panel closes again.** Leaving the cabin puts the bookcase and the hidden panel back (a bug since 1.36).
