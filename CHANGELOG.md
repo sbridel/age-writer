@@ -2,6 +2,12 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.44.1 — The tap's own voice (2026-10-18)
+
+### Fixed
+- **The tap has its own sound**: a thin stream falling into an enamel basin (a moving trickle, a light hiss, the low ring of the basin, small close bubbles), no longer the pond's lapping.
+- **The Relto book on the pedestal**: a click beside the open book puts it down again. The book no longer fills the whole scene; the Relto shows around it.
+
 ## 1.44.0 — Running water (2026-10-18)
 
 ### Added

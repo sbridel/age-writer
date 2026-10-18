@@ -646,3 +646,8 @@ Pour Halloween : attacher le Château, attendre la nuit, regarder la lune rouge 
 - Le Livre du Relto pris sur le piédestal s'ouvre par-dessus le Relto (`openInRelto`, `src/relto-book.js`), comme un livre de liaison : le livre est maintenant une classe à part (`ReltoBook`, dessinée dans un conteneur), que l'onglet (`ReltoBookView`) et la surimpression partagent. Mis à l'échelle de la scène (`fit`), fermé d'abord, `keepCover` ; la vitre du Relto où l'on est ramène sur l'île (`renderer.setView("island")`), celle d'un autre Relto y mène (`openHubFile`) ; clic à côté ou Échap : le livre se repose.
 - Banc visuel : `rbook-over.html` (le livre par-dessus un Relto), la vue du salon robinet ouvert.
 
+## 1.44.1 — la voix du robinet (18 oct. 2026)
+
+- Le robinet a son propre son (`roomStart("tap")`, `sound.js`) : bruit filtré en bande autour de 1,7 kHz modulé (le filet qui ondule), souffle aigu, résonance grave du bac, petites bulles serrées. Il jouait le clapotis du bassin (`water`) ; le fichier d'eau des réglages reste au bassin.
+- Livre du Relto par-dessus le Relto : un clic hors du livre (ouvert ou fermé) le repose ; le livre est mis à l'échelle à 85 % de la scène (il la remplissait presque, il ne restait rien « à côté »).
+

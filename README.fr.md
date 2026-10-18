@@ -43,7 +43,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; les dernières versions en bref :
 
-- **1.44, l'eau qui coule.** Le robinet du salon s'ouvre ; le Livre du Relto du piédestal s'ouvre dans le Relto, comme un livre de liaison.
+- **1.44, l'eau qui coule** (1.44.1 : le robinet a son propre son). Le robinet du salon s'ouvre ; le Livre du Relto du piédestal s'ouvre dans le Relto, comme un livre de liaison.
 - **1.43, le salon.** Dans la cabane, on se retourne : un coin cuisine, un grand canapé sous une grande fenêtre, et le Livre du Relto sur son piédestal. Le Livre du Relto tourne maintenant ses pages comme un vrai livre.
 - **1.42, le Livre du Relto.** L'icône du ruban ouvre un livre vert à reliure dorée : une double page par Relto, l'île vivante dans sa vitre ; la toucher, c'est se lier. Un réglage et une commande ramènent le bouton au dernier Relto visité.
 - **1.41 à 1.41.5, le Château, pour Halloween.** Un déguisement gothique romantique : l'île entière devient un château autour de l'ancienne montagne, avec une chapelle, des tours suspendues et des passerelles de pierre ; les nuits virent au rouge sous une grande lune rouge ; dedans, chaque pièce prend la pierre, le noyer et l'or patiné ; le jour, la pierre prend la lumière ; la nuit, une chauve-souris géante passe devant la lune rouge ; les toits sont d'ardoise, sous une flèche vert-de-gris ; derrière le donjon, une masse chaotique de tours et une tour à rosace.
