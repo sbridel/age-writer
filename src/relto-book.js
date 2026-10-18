@@ -189,3 +189,15 @@ function toggleRibbon(plugin) {
 }
 
 module.exports = { RELTO_BOOK_VIEW, ReltoBookView, openReltoBook, ribbon, toggleRibbon, hubsOf, lastHub, noteVisit, visitText, mountGlass };
+
+/** L'emblème frappé au médaillon du Livre du Relto : l'île flottante, ses deux pierres de liaison et l'anneau entre elles, au fer doré. */
+function islandEmblem(cx, cy, r, col) {
+  const k = r / 34, P = (pts) => pts.map(([x, y], i) => `${i ? "L" : "M"}${(cx + x * k).toFixed(1)} ${(cy + y * k).toFixed(1)}`).join(" ");
+  const island = P([[-26, 2], [-20, 0], [-8, 1], [4, -1], [16, 1], [26, 0], [22, 7], [14, 14], [9, 22], [3, 29], [-2, 22], [-9, 15], [-18, 9]]) + " Z";
+  const pill = (x) => P([[x - 2.6, 0], [x - 2.6, -15], [x - 1, -17.5], [x + 1, -17.5], [x + 2.6, -15], [x + 2.6, 0]]) + " Z";
+  const ring = `<ellipse cx="${(cx + 9 * k).toFixed(1)}" cy="${(cy - 9 * k).toFixed(1)}" rx="${(3.6 * k).toFixed(1)}" ry="${(5 * k).toFixed(1)}" fill="none" stroke="${col}" stroke-width="${(1.1 * k).toFixed(2)}"/>`;
+  const hut = P([[-17, 0], [-17, -7], [-12.5, -11.5], [-8, -7], [-8, 0]]);
+  const strata = [P([[-14, 8], [6, 7]]), P([[-6, 16], [8, 15]])].map((d) => `<path d="${d}" stroke="${col}" stroke-opacity="0.55" stroke-width="${(0.8 * k).toFixed(2)}" fill="none"/>`).join("");
+  return `<g fill="none" stroke="${col}" stroke-width="${(1.3 * k).toFixed(2)}" stroke-linejoin="round" opacity="0.92"><path d="${island}"/><path d="${hut}"/><path d="${pill(2)}"/><path d="${pill(16)}"/></g>${ring}${strata}`;
+}
+module.exports.islandEmblem = islandEmblem;

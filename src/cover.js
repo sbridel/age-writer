@@ -207,10 +207,10 @@ function coverSvg(o) {
     s += `<text x="${CX}" y="132" text-anchor="middle" font-family="Georgia, serif" font-size="11" letter-spacing="3.5" fill="${GOLD}">${labelTxt}</text>`;
   } else {
     // médaillon rond de laiton, comme sur les vieux livres : le numéro D'ni, le nom frappé dessous, quelques symboles discrets
-    const my = 262, r = 40 - 6 * (sob - 0.55);
+    const my = 262, r = o.medal || 40 - 6 * (sob - 0.55); // `medal` : un médaillon plus grand (le Livre du Relto)
     s += `<circle cx="${CX}" cy="${my}" r="${r + 4}" fill="#000" opacity="0.28"/><circle cx="${CX}" cy="${my}" r="${r}" fill="${GOLD}" stroke="#000" stroke-opacity="0.5" stroke-width="1.2"/>`;
     s += `<circle cx="${CX}" cy="${my}" r="${r - 6}" fill="${mix(lb, "#000", 0.55)}" stroke="${b2}" stroke-opacity="0.8" stroke-width="1"/>`;
-    s += numG(o.number, 20, my - 10, b2);
+    if (typeof o.emblem === "function") s += o.emblem(CX, my, r - 6, b2); else s += numG(o.number, 20, my - 10, b2); // un emblème frappé (le Livre du Relto : l'île) à la place du numéro
     if (dniName) s += `<text x="${CX}" y="${my + r + 40}" text-anchor="middle" font-family="${fam}" font-size="24" fill="${mix(lb, "#e8cfa0", 0.55)}" opacity="0.85">${dniName}</text>`;
     const ly = my + r + (dniName ? 66 : 44);
     s += `<text x="${CX}" y="${ly}" text-anchor="middle" font-family="${serif}" font-style="italic" font-size="17" fill="${mix(lb, "#e8cfa0", 0.6)}" opacity="0.9">${esc(o.name)}</text>`;
