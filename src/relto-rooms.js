@@ -74,7 +74,7 @@ function drawCabin(r, ctx, sc, sky, t) {
   } else ATELIER.drawBookcase(r, ctx, c, false, true); // pas d'atelier : la petite bibliothèque reste, pour faire patienter — ses livres se touchent, sans effet
   // porte (retour à l'île)
   const dx = 22, dy = 112, dw = 64;
-  if (castle) CASTLE.flamboyantDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl); /* le Château : la porte d'entrée en gothique flamboyant (celle de l'atelier reste l'arc simple) */ else if (glass) { GLASS.cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl); } else { // la Verrière : la porte en ogive sous son imposte (l'œil-de-bœuf au cœur)
+  if (castle) { const K = ATELIER.CASE; ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(K.x - 4, K.y - 4, K.w + 8, K.h + 8); ctx.clip("evenodd"); CASTLE.flamboyantDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl, 12); ctx.restore(); } /* la petite bibliothèque est devant le mur : le pinacle de droite de la porte passe derrière elle, sans la recouvrir */ /* le Château : la porte d'entrée en gothique flamboyant (celle de l'atelier reste l'arc simple) */ else if (glass) { GLASS.cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl); } else { // la Verrière : la porte en ogive sous son imposte (l'œil-de-bœuf au cœur)
   ctx.fillStyle = c("#2a1c14"); ctx.fillRect(dx - 4, dy - 4, dw + 8, FLOOR - dy + 4);
   ctx.fillStyle = c("#46301f"); ctx.fillRect(dx, dy, dw, FLOOR - dy - 2);
   ctx.strokeStyle = rgba(0, 0, 0, 0.35); ctx.lineWidth = 1; for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(dx + i * dw / 4, dy); ctx.lineTo(dx + i * dw / 4, FLOOR - 2); ctx.stroke(); }

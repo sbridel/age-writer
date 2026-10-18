@@ -187,10 +187,10 @@ function cabinDoor(ctx, c, sky, dx, dy, dw, FLOOR, rise = 20) {
  * soufflets) sur des verres rouges et violets, une accolade à crochets et son fleuron d'or, deux pinacles ; dessous, deux vantaux ferrés
  * et le heurtoir. Même place, même zone cliquable que la porte simple (dx, dy, dw).
  */
-function flamboyantDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl = 1) {
+function flamboyantDoor(ctx, c, sky, dx, dy, dw, FLOOR, fl = 1, pin = 19) { // `pin` : l'écart des pinacles (la cabane les resserre : la fenêtre est tout près)
   const m = dx + dw / 2, apex = dy - 20, spring = dy + 14, tr = spring + 16, night = clamp(sky.night == null ? 0 : sky.night);
   // les pinacles, de part et d'autre
-  for (const x of [dx - 19, dx + dw + 19]) { ctx.fillStyle = c(STONE_LO); ctx.fillRect(x - 4, apex - 4, 8, FLOOR - apex + 4); ctx.fillStyle = c(STONE); ctx.fillRect(x - 4, apex - 4, 3, FLOOR - apex + 4);
+  for (const x of [dx - pin, dx + dw + pin]) { ctx.fillStyle = c(STONE_LO); ctx.fillRect(x - 4, apex - 4, 8, FLOOR - apex + 4); ctx.fillStyle = c(STONE); ctx.fillRect(x - 4, apex - 4, 3, FLOOR - apex + 4);
     ctx.fillStyle = c(STONE); ctx.beginPath(); ctx.moveTo(x - 5, apex - 4); ctx.lineTo(x, apex - 34); ctx.lineTo(x + 5, apex - 4); ctx.closePath(); ctx.fill(); ctx.fillStyle = c(STONE_LO); for (let k = 1; k < 4; k++) { const y = apex - 4 - k * 7, w = 5 * (1 - k / 4.2); ctx.fillRect(x - w - 1.6, y, 1.6, 1.4); ctx.fillRect(x + w, y, 1.6, 1.4); }
     ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(x, apex - 35, 1.6, 0, 6.283); ctx.fill(); }
   // l'accolade : une courbe et contre-courbe qui monte au-dessus de l'arc, des crochets, un fleuron
