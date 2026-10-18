@@ -632,3 +632,11 @@ Pour Halloween : attacher le Château, attendre la nuit, regarder la lune rouge 
 - Livre d'Âge : un `return:`/`link:` vers un Relto n'affiche plus « not an Age » mais « Relto · refuge », avec l'île dans la vitre (`look` inchangé : crochet dans `entry.js`, `isHubBook`).
 - `cover.js` : options `emblem` et `medal` (non utilisées par les couvertures d'Âge). Pierres de liaison inchangées (leur sens reste à décider).
 - Tests : `relto-book.test.js` (15 vérifications) ; banc visuel `rbook.html` (`test/visual/entry-rbook.js`).
+
+## 1.43.0 — le salon (18 oct. 2026)
+
+- Le salon (`src/relto-lounge.js`, vue `lounge`, disponible avec la cabane) : l'autre côté de la pièce. On s'y retourne par les bords de la vue (`turnEdges`, bandes de 16 px, partagées avec la cabane). Coin cuisine (évier d'émail, mélangeur mural de laiton à col de cygne, poêle à bois, étagère arrêtée avant le tuyau, casseroles), grande fenêtre en arc sur la mer de nuages, grand canapé sous elle, le Livre du Relto fermé sur un piédestal (`special: "reltobook"` : `openReltoBook`, après avoir quitté le plein écran). Habits : Château (`CASTLE.cabinWalls`, `cabinFloor`, `rug` ; ogive à remplage, velours, lustre de fer, flammes d'or sur la marche du milieu) et Verrière (`GLASS.cabinWalls`, `cabinFloor`, `lightPatches` ; vitrail en éventail, hotte de cuivre, suspension de verre) ; aucune zone ne bouge (`castle.test.js` couvre le salon).
+- Livre du Relto : les pages se tournent comme un livre (clic sur la page, glisser au doigt, flèches ; animation `rotateY` sur la reliure ; coin corné, folios) ; avant le premier Relto, le livre se referme. Plus de boutons, ni titre, ni légende, ni lien autour de la vitre.
+- Château, cabane : le pinacle droit de la porte flamboyante ne passe plus sur la petite bibliothèque (`flamboyantDoor(…, pin)`, pinacles resserrés à 12 ; la bibliothèque reste devant, découpe en pair-impair).
+- Tests : `golden.json` régénéré (la cabane et la vue du chat : les deux flèches des bords) ; banc visuel : quatre vues du salon et la cabane du Château.
+

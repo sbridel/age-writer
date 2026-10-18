@@ -2,6 +2,17 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.43.0 — The lounge (2026-10-18)
+
+### Added
+- **The lounge**: the other side of the cabin. Turn around from the edges of the cabin view (a pale arrow on each side). A small kitchen corner (an enamel sink under an old brass wall tap, a wood stove with a steaming pot and a kettle, a shelf of jars, copper pans), a great arched window over the sea of clouds and, under it, a deep sofa you could sleep on; on the right, the Relto book rests closed on a carved pedestal: click it to open the book. At night the lantern lights the sofa, the stove glows and a candle burns by the book. The Castle and the Glasshouse dress it too (stone, walnut and crimson velvet under a pointed window and an iron chandelier; glass, copper, green velvet, a fan of stained glass and a hanging glass lamp).
+
+### Changed
+- **The Relto book turns like a book**: click the right page to go forward, the left one to go back (or swipe; the arrow keys too). The page folds down onto the spine and the next one rises. A dog-eared corner says a page can be turned, and each page has its number; before the first Relto, the book closes on its cover. No more buttons, and nothing around the glass: no title, no caption, no link. The glass alone is touched (Enter from the keyboard).
+
+### Fixed
+- **The Castle**: in the cabin, the right pinnacle of the gothic door no longer runs over the small bookcase.
+
 ## 1.42.0 — The Relto book (2026-10-18)
 
 ### Added
