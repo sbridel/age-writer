@@ -41,6 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.44, running water.** The lounge's tap runs; the Relto book on its pedestal opens inside the Relto, like a linking book.
 - **1.43, the lounge.** Turn around in the cabin: a kitchen corner, a deep sofa under a great window, and the Relto book on its pedestal. The Relto book now turns its pages like a real book.
 - **1.42, the Relto book.** The ribbon icon opens a green gold-tooled book: one double page per Relto, the island alive in its glass; touch it to link. A setting and a command switch the button back to the last Relto visited.
 - **1.41 to 1.41.5, the Castle, for Halloween.** A romantic gothic disguise: the whole island becomes a castle around the old mountain, with a chapel, hanging towers and stone footbridges; the nights turn red under a great red moon; every room inside takes on stone, walnut and old gold; by day the stone takes the light; at night, a giant bat crosses the red moon; the roofs are slate, under a verdigris spire; behind the keep, a chaotic mass of towers and a rose-window tower.

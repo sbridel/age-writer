@@ -2,6 +2,14 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.44.0 — Running water (2026-10-18)
+
+### Added
+- **The tap runs**: in the lounge, click the sink and the old brass tap opens; a thin stream of water falls into the basin, rings widen in it, and the sound of the room turns from the crackling stove to running water. Click again to close it. The water keeps running if you leave and come back.
+
+### Changed
+- **The Relto book on the pedestal opens inside the Relto**, like the linking books of the shelf: no new tab, the full screen stays. It arrives closed; a click opens it (book and clasp sounds) on the page of the Relto you are in, and the pages turn as in the book's tab. The glass of the Relto you are in plays the linking sound and brings you back outside, on the island; the glass of another Relto takes you there. A click beside the book, or Escape, puts it down.
+
 ## 1.43.0 — The lounge (2026-10-18)
 
 ### Added

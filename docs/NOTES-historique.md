@@ -640,3 +640,9 @@ Pour Halloween : attacher le Château, attendre la nuit, regarder la lune rouge 
 - Château, cabane : le pinacle droit de la porte flamboyante ne passe plus sur la petite bibliothèque (`flamboyantDoor(…, pin)`, pinacles resserrés à 12 ; la bibliothèque reste devant, découpe en pair-impair).
 - Tests : `golden.json` régénéré (la cabane et la vue du chat : les deux flèches des bords) ; banc visuel : quatre vues du salon et la cabane du Château.
 
+## 1.44.0 — l'eau qui coule (18 oct. 2026)
+
+- Salon : le robinet s'ouvre (`tap: true` → `ReltoRenderer.tapToggle`, `r.tapOn`) : un filet d'eau qui ondule, des cercles et de l'écume dans le bac ; le son de la pièce suit (`onTap` → `roomAudio` : le poêle crépite, `fire` ; robinet ouvert, `water`). L'eau coule encore si l'on revient.
+- Le Livre du Relto pris sur le piédestal s'ouvre par-dessus le Relto (`openInRelto`, `src/relto-book.js`), comme un livre de liaison : le livre est maintenant une classe à part (`ReltoBook`, dessinée dans un conteneur), que l'onglet (`ReltoBookView`) et la surimpression partagent. Mis à l'échelle de la scène (`fit`), fermé d'abord, `keepCover` ; la vitre du Relto où l'on est ramène sur l'île (`renderer.setView("island")`), celle d'un autre Relto y mène (`openHubFile`) ; clic à côté ou Échap : le livre se repose.
+- Banc visuel : `rbook-over.html` (le livre par-dessus un Relto), la vue du salon robinet ouvert.
+
