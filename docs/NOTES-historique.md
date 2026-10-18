@@ -616,3 +616,9 @@ Pour Halloween : attacher le Château, attendre la nuit, regarder la lune rouge 
 - Un hôte du Château retouché (zone `extra: true`).
 - Maquettes faites à part avant de coder (vue de l'île, matin, après-midi, nuit ; vue globale).
 - Tests : golden inchangé ; `test/castle.test.js` inchangé (zones identiques).
+
+## 1.41.5 — les gargouilles sur les angles (18 oct. 2026)
+
+- Tour de l'astronome (`relto-castle-out.js`, `keep`) : les deux gargouilles, de simples polygones posés sous le pied des pinacles, à côté du mur (rien derrière elles), sortent maintenant de l'angle de la tour (`a0`, `a0 + aw`), sous la bande de la galerie : une console prise dans la maçonnerie, une bête de profil penchée dans le vide (dos voûté éclairé, aile repliée, oreille, gueule ouverte, œil), la patte agrippée à la console. Rien ne flotte.
+- Maquette faite à part avant de coder (matin, après-midi, nuit).
+- Tests : golden inchangé ; `test/castle.test.js` inchangé (zones identiques).

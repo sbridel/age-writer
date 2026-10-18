@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.41.5 — Gargoyles on the corners (2026-10-18)
+
+### Fixed
+- **The astronomer's tower**: its two gargoyles no longer float beside the wall. Each now juts from a corner of the tower, just under the gallery, a small crouching beast on its corbel, wings folded, jaws open.
+
 ## 1.41.4 — The Castle beyond the keep (2026-10-18)
 
 ### Changed
