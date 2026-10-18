@@ -858,3 +858,36 @@
 /* Marcel, dans la liste des pages : doré, en italique, une petite patte */
 .age-relto .age-relto__page .age-relto__marcel { color: #e0c27a; font-style: italic; display: inline-flex; align-items: center; gap: 0.35em; }
 .age-relto__paw { width: 0.85em; height: 0.85em; opacity: 0.85; transform: rotate(-12deg); }
+
+/* ======================= Livre du Relto (src/relto-book.js) ======================= */
+.workspace-leaf-content[data-type="age-writer-relto-book"] .view-content { outline: none; }
+.age-rbook { max-width: 1000px; margin: 0 auto; padding: 18px 20px; }
+.age-rbook__spread { min-height: 560px; align-items: stretch; }
+.age-rbook__text { padding: 30px 28px; }
+.age-rbook__name { font-family: var(--font-text, Georgia, serif); font-size: 1.9em; line-height: 1.15; color: #2a2418; margin: 4px 0 6px; overflow-wrap: anywhere; }
+.age-rbook__ins { font-style: italic; color: #5a4a30; font-size: 1.1em; margin-bottom: 18px; }
+.age-rbook__rows { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin-top: 14px; }
+/* chaque ligne : ses deux cases se rangent dans la grille */
+.age-rbook__row { display: contents; }
+.age-rbook__k { font-size: 0.72em; letter-spacing: 0.1em; text-transform: uppercase; color: #8a7a5c; padding-top: 0.25em; }
+.age-rbook__v { color: #3a2f22; font-size: 0.95em; }
+.age-rbook__right { display: flex; flex-direction: column; padding: 26px 24px 20px; }
+/* la vitre : une arche, l'île cadrée au centre (le canvas du Relto est en 16:9) */
+.age-rbook__glass, .age-rbook__inbook .age-rbook__glass { position: relative; width: 100%; max-width: 420px; margin: 4px auto 0; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 46% 46% 6px 6px / 34% 34% 6px 6px; border: 4px solid #6b4a2a; background: #05060c; box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(40, 25, 10, 0.35); }
+.age-rbook__canvas { position: absolute; top: 0; left: 50%; height: 100%; width: auto; aspect-ratio: 16 / 9; transform: translateX(-50%); pointer-events: none; display: block; }
+.age-rbook__glass.is-clickable, .age-rbook__inbook.is-clickable { cursor: pointer; }
+.age-rbook__glass.is-clickable:hover, .age-rbook__inbook.is-clickable:hover .age-rbook__glass { filter: brightness(1.1) drop-shadow(0 0 6px rgba(205, 189, 148, 0.5)); }
+.age-rbook__open { align-self: flex-end; margin-top: auto; padding-top: 8px; cursor: pointer; color: #5a4a30; text-decoration: underline dotted; }
+.age-rbook__nav { padding-top: 12px; }
+.age-rbook__nav .age-book__dot { cursor: pointer; }
+.age-rbook__turn { background: none; box-shadow: none; border: none; font: 26px/1 serif; color: #cdbd94; padding: 0 8px; cursor: pointer; }
+.age-rbook__turn:disabled { opacity: 0.2; cursor: default; }
+.age-rbook .age-book__dot { background: #cdbd94; }
+@media (max-width: 640px) {
+  .age-rbook { padding: 8px 4px; }
+  .age-rbook__spread { flex-direction: column-reverse; min-height: 0; }
+  .age-rbook__spread > .age-book__gutter { display: none; }
+  .age-rbook__text { padding: 18px 16px; }
+  .age-rbook__right { padding: 16px; }
+  .age-rbook__glass { max-width: 300px; }
+}

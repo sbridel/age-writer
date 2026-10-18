@@ -138,8 +138,33 @@ async function createReltoNote(plugin) {
 
 async function openRelto(plugin) {
   const f = await createReltoNote(plugin);
-  if (f) plugin.reltoFullArm = { path: f.path, at: Date.now() }; // la commande ouvre le Relto en plein écran (réglage)
-  await plugin.app.workspace.getLeaf(false).openFile(f);
+  if (f) await openHubFile(plugin, f);
+}
+
+/** L'onglet qui montre déjà cette note (y compris un onglet d'arrière-plan pas encore chargé), ou null. */
+function leafShowing(app, path) {
+  const ws = app.workspace, leaves = ws.getLeavesOfType ? ws.getLeavesOfType("markdown") : [];
+  return leaves.find((l) => { const f = l.view && l.view.file; if (f) return f.path === path; try { const st = l.getViewState(); return !!(st && st.state && st.state.file === path); } catch (e) { return false; } }) || null;
+}
+
+/**
+ * Ouvrir la note d'un Relto en plein écran (réglage), sans jamais en ouvrir un second onglet : si un onglet la montre déjà, on s'y
+ * rend. `leaf` : l'onglet où l'ouvrir sinon (le Livre du Relto s'y remplace par le Relto), à défaut l'onglet actif.
+ */
+async function openHubFile(plugin, f, leaf = null) {
+  const ws = plugin.app.workspace, open = leafShowing(plugin.app, f.path);
+  plugin.reltoFullArm = { path: f.path, at: Date.now() }; // le plein écran, à la fin du rendu (ou tout de suite s'il est déjà dessiné)
+  if (open) {
+    if (leaf && leaf !== open) { try { leaf.detach(); } catch (e) { /* ignore */ } } // le livre s'efface : on est passé de l'autre côté
+    if (ws.setActiveLeaf) ws.setActiveLeaf(open, { focus: true });
+    if (ws.revealLeaf) await ws.revealLeaf(open);
+    const inst = [...plugin.live].find((i) => i.path === f.path && i.full && i.el && i.el.isConnected);
+    if (inst) { plugin.reltoFullArm = null; inst.full(); }
+    return open;
+  }
+  const target = leaf || ws.getLeaf(false);
+  await target.openFile(f);
+  return target;
 }
 
 /**
@@ -948,7 +973,7 @@ async function renderRelto(plugin, source, el, ctx) {
       if (plugin.soundBtn === soundBtn) { plugin.soundFactor = factor(); plugin.sound.setVolume(); } // seulement si c'est le son du refuge qui joue
     });
   }
-  const inst = { refresh, el: root, path: file.path, full: () => { if (!ctx.big && plugin.ext.reltoFullscreen !== false && !root.closest(".popover, .hover-popover") && !root.ownerDocument.fullscreenElement && !isTouch()) toggleFull(); } }; // sur téléphone, le plein écran ne vient que du bouton // `full` : le plein écran à l'ouverture (voir entry.js, file-open)
+  const inst = { refresh, el: root, path: file.path, full: () => { if (!ctx.big && plugin.ext.reltoFullscreen !== false && !root.closest(".popover, .hover-popover") && !root.ownerDocument.fullscreenElement && !isTouch() && Date.now() - (plugin._reltoFullAt || 0) > 1500) { plugin._reltoFullAt = Date.now(); toggleFull(); } } }; // sur téléphone, le plein écran ne vient que du bouton // `full` : le plein écran à l'ouverture (voir entry.js, file-open)
   plugin.live.add(inst);
   // le garde-fou du plugin coupe le son si la note change ou si l'onglet se ferme ; un nouveau rendu du bloc
   // (édition, défilement) ne le coupe pas : le nouveau bouton reprend l'état « en lecture »
@@ -1007,4 +1032,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { isHubFile: isHub, cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyRepair, storyCheck, storyNext, storyRestart, storyNoDraw, storyNotes, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { isHubFile: isHub, isStoryHub, openHubFile, leafShowing, cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyRepair, storyCheck, storyNext, storyRestart, storyNoDraw, storyNotes, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };

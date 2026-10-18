@@ -22,6 +22,7 @@ const { makeT } = require("./i18n");
 const { AgeIndex } = require("./index");
 const X = require("./ui-extras");
 const R = require("./ui-relto");
+const RBK = require("./relto-book");
 const RB = require("./relto-books");
 const G = require("./guide");
 const PH = require("./physics/index");
@@ -286,8 +287,16 @@ module.exports = function build(Base, core, AGEX) {
         plugin.fxCtx = a ? { mode: null, analysis: a, seed: file && file.path } : null;
         try { return origOwn.call(this, t, a, file); } finally { plugin.fxCtx = null; }
       };
+      const isHubBook = (i) => !!(i && i.file && !i.analysis && R.isHubFile(plugin.app, i.file)); // un livre qui mène à un Relto (return: [[Relto]]) : pas un Âge, mais le refuge
       if (origGlimpse) proto.glimpse = function (t, i) {
         const view = this;
+        if (isHubBook(i)) { // la vitre montre l'île vivante, comme le Livre du Relto ; la toucher, c'est rentrer
+          const win = t.createDiv({ cls: "age-book__window age-rbook__inbook is-clickable" }); win.setAttr("title", plugin.t("link.touch"));
+          RBK.mountGlass(plugin, win, i.file).catch((e) => console.warn("[Age Writer ext] vitre du Relto", e));
+          t.createDiv({ cls: "age-book__caption", text: plugin.t("rbook.homeglass", { name: i.file.basename }) });
+          win.addEventListener("click", () => { view.__quietUntil = Date.now() + 4000; if (plugin.ext.sound && plugin.ext.soundLink !== false) linkSound(plugin.ext.volume); R.openHubFile(plugin, i.file); });
+          return;
+        }
         plugin.fxCtx = i && i.analysis ? { mode: parseFx(i.source), style: parseStyle(i.source), sky: parseSky(i.source), analysis: i.analysis, seed: i.file && i.file.path, glimpse: true } : null;
         try { origGlimpse.call(this, t, i); } finally { plugin.fxCtx = null; }
         guard("window click", () => {
@@ -310,6 +319,17 @@ module.exports = function build(Base, core, AGEX) {
       };
       if (origRow) proto.bookRow = function (t, i, sel, srcFile) {
         origRow.call(this, t, i, sel, srcFile);
+        if (isHubBook(i)) guard("hub row", () => { // « not an Age » → « Relto · refuge » ; ouvrir = rentrer, sans second onglet
+          const row = t.lastElementChild; if (!row) return;
+          const note = row.querySelector(".age-book__destnote"); if (note) note.setText(plugin.t("rbook.home"));
+          const view = this;
+          row.addEventListener("click", (e) => {
+            const a = e.target && e.target.closest ? e.target.closest(".age-book__open") : null; if (!a) return;
+            e.stopImmediatePropagation(); e.preventDefault(); view.__quietUntil = Date.now() + 4000;
+            if (plugin.ext.sound && plugin.ext.soundLink !== false) linkSound(plugin.ext.volume);
+            R.openHubFile(plugin, i.file);
+          }, true);
+        });
         guard("uncertain link", () => {
           const row = t.lastElementChild; if (!row || !i || !i.analysis || !i.file) return;
           row.__item = i; const view = this;
@@ -462,7 +482,10 @@ module.exports = function build(Base, core, AGEX) {
 
     registerCommands() {
       this.addCommand({ id: "open-relto", name: "Open the Relto", callback: () => R.openRelto(this) });
-      if (typeof this.addRibbonIcon === "function") this.addRibbonIcon("mountain", this.t("relto.ribbon"), () => R.openRelto(this)); // le ruban : le Relto en un geste (sur téléphone, dans le menu de gauche)
+      if (typeof this.addRibbonIcon === "function") this.addRibbonIcon("mountain", this.t("relto.ribbon"), () => RBK.ribbon(this)); // le ruban : le Livre du Relto, ou droit au dernier Relto visité (réglage) ; sur téléphone, dans le menu de gauche
+      if (typeof this.registerView === "function") this.registerView(RBK.RELTO_BOOK_VIEW, (leaf) => new RBK.ReltoBookView(leaf, this));
+      this.addCommand({ id: "open-relto-book", name: "Open the Relto book", callback: () => RBK.openReltoBook(this) });
+      this.addCommand({ id: "toggle-relto-ribbon", name: "Relto button: switch between the Relto book and the last Relto visited", callback: () => RBK.toggleRibbon(this) });
       this.addCommand({ id: "start-story", name: "Start the story (create or open the story Relto)", callback: () => R.startStory(this) });
     this.addCommand({ id: "story-hint", name: "Story: a hint for the current chapter", callback: () => R.storyHint(this) });
     this.addCommand({ id: "story-repair", name: "Story: repair chapter notes (names, properties)", callback: () => R.storyRepair(this) });
@@ -569,6 +592,7 @@ module.exports = function build(Base, core, AGEX) {
       this.registerEvent(metadataCache.on("changed", () => this.refreshLive()));
       this.registerEvent(this.app.workspace.on("file-open", (f) => { // ouvrir la note d'un Relto : le plein écran (src/ui-relto.js) ; si le Relto est déjà dessiné, tout de suite, sinon à la fin de son rendu
         if (!f || !R.isHubFile(this.app, f)) return;
+        RBK.noteVisit(this, f); // le dernier Relto visité : là où mène le bouton du ruban (réglage), et la ligne « dernière visite » du Livre du Relto
         const inst = [...this.live].find((i) => i.path === f.path && i.full && i.el && i.el.isConnected);
         if (inst) { this.reltoFullArm = null; inst.full(); } else this.reltoFullArm = { path: f.path, at: Date.now() };
       }));
