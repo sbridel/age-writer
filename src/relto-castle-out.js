@@ -73,10 +73,61 @@ function keep(r, ctx, M, sky, t, observatory) {
     const seg = (x0, y0, x1, y1, x2, y2, x3, y3) => { for (let i = 0; i <= 30; i++) pts.push([bz(x0, x1, x2, x3, i / 30), bz(y0, y1, y2, y3, i / 30)]); };
     seg(cx - hw, GY + 2, cx - hw * 0.55, GY - h * 0.35, cx - hw * 0.3, GY - h * 0.95, cx - 6, GY - h); seg(cx - 6, GY - h, cx + 14, GY - h * 1.02, cx + hw * 0.35, GY - h * 0.7, cx + hw * 0.62, GY - h * 0.32); seg(cx + hw * 0.62, GY - h * 0.32, cx + hw * 0.85, GY - h * 0.1, cx + hw * 0.95, GY - 2, cx + hw, GY + 2);
     const yAt = (x) => { for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; if ((x0 - x) * (x1 - x) <= 0 && x0 !== x1) return y0 + (y1 - y0) * (x - x0) / (x1 - x0); } return GY; };
-    const q = rng(0x3a57), st = 9; ctx.fillStyle = grad(cx - hw, cx + hw, ["#3a3542", "#2a2632", "#1e1b26"]); ctx.beginPath(); ctx.moveTo(cx - hw, GY + 2);
-    for (let x = cx - hw + 4; x < cx + hw - 4; x += st) { const y = Math.max(GY - h - 4, yAt(x + st / 2) - 4), k = q(); if (k < 0.34) { ctx.lineTo(x, y); ctx.lineTo(x + st / 2, y - 7); ctx.lineTo(x + st, y); } else if (k < 0.5) { ctx.lineTo(x, y); ctx.lineTo(x + st / 2 - 1.5, y); ctx.lineTo(x + st / 2, y - 16 - q() * 8); ctx.lineTo(x + st / 2 + 1.5, y); ctx.lineTo(x + st, y); } else { for (let m = 0; m < 3; m++) { const xx = x + m * st / 3; ctx.lineTo(xx, y - 2.5); ctx.lineTo(xx + st / 6, y - 2.5); ctx.lineTo(xx + st / 6, y); ctx.lineTo(xx + st / 3, y); } } }
-    ctx.lineTo(cx + hw, GY + 2); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = W(0.35); for (let i = 0; i < 26; i++) { const x = cx - hw * 0.9 + q() * hw * 1.8, top = yAt(x); if (GY - top > 14) ctx.fillRect(x, top + 6 + q() * (GY - top - 12), 1.6, 3); } // ses fenêtres
+    const q = rng(0x3a57), skyline = (seed, fill, lift, wins, sky0 = 8, tall = 0) => { /* une ligne de tours : chacune repose sur la masse du mont (son pied plonge dedans), aucune ne flotte */
+      const z = rng(seed), roof = (x0, x1, y, kind) => { const w = x1 - x0, m = (x0 + x1) / 2;
+        if (kind === 0) { ctx.moveTo(x0 - 1, y); ctx.lineTo(m, y - w * (1.5 + z() * 0.9)); ctx.lineTo(x1 + 1, y); } /* un toit en poivrière, raide */
+        else if (kind === 1) { ctx.moveTo(m - 1.2, y); ctx.lineTo(m, y - 12 - z() * 14); ctx.lineTo(m + 1.2, y); } /* une flèche fine */
+        else if (kind === 2) { const n = Math.max(2, Math.round(w / 3.4)); ctx.moveTo(x0, y); for (let i = 0; i < n; i++) { const a = x0 + (i * w) / n, b = a + w / n * 0.55, hh = z() < 0.22 ? 1 + z() * 1.5 : 3; ctx.lineTo(a, y - hh); ctx.lineTo(b, y - hh); ctx.lineTo(b, y); ctx.lineTo(a + w / n, y); } } /* des créneaux, dont certains brisés */
+        else { ctx.moveTo(x0 - 1, y); ctx.lineTo(x0 + w * 0.22, y - w * 0.9); ctx.lineTo(x1 - w * 0.22, y - w * 0.9); ctx.lineTo(x1 + 1, y); ctx.moveTo(m - 1, y - w * 0.9); ctx.lineTo(m, y - w * 0.9 - 9 - z() * 8); ctx.lineTo(m + 1, y - w * 0.9); } }; /* un comble brisé et son épi */
+      ctx.fillStyle = fill; ctx.beginPath();
+      for (let x = cx - hw + 8; x < cx + hw - 10;) { const w = z() < 0.22 ? 12 + z() * 8 : 4 + z() * 8, base = yAt(x + w / 2), rise = (z() < 0.3 + tall ? 8 + z() * 14 + tall * 120 * z() : 1 + z() * 7) * lift, top = Math.max(GY - h - sky0, base - rise), k = z();
+        ctx.rect(x, top, w, GY - top); roof(x, x + w, top, w > 14 ? (k < 0.5 ? 3 : 2) : k < 0.5 ? 0 : k < 0.75 ? 1 : 2);
+        if (w < 12 && z() < 0.3) { const tw = w * 0.6, tx = x + (z() < 0.5 ? -tw * 0.35 : w - tw * 0.65), ty = top + 4 + z() * 6; ctx.moveTo(tx + tw, ty + 6); ctx.lineTo(tx + tw / 2, ty + 10); ctx.lineTo(tx, ty + 6); ctx.rect(tx, ty - 6, tw, 12); ctx.moveTo(tx - 0.5, ty - 6); ctx.lineTo(tx + tw / 2, ty - 6 - tw * 2.2); ctx.lineTo(tx + tw + 0.5, ty - 6); } /* une tourelle en encorbellement, accrochée au flanc */
+        if (wins) wins.push([x, top, w]);
+        x += w * (0.55 + z() * 0.6); }
+      ctx.fill(); };
+    const far = mix(c("#4e4858"), c("#7a7488"), 0.25 * daylight(sky)), wins = [];
+    skyline(0x91d2, far, 1.1, null); /* le plan lointain, plus clair */
+    const Yp = (u) => GY - 100 * u, Xp = (u) => cx + hw * u;
+    const crown = (x, y, w) => { ctx.moveTo(x - 1.5, y - 2.4); ctx.lineTo(x + w + 1.5, y - 2.4); ctx.lineTo(x + w + 1.5, y); ctx.lineTo(x - 1.5, y); }; /* tracée dans le même sens que les fûts (sinon, au chevauchement, le remplissage s'annule et laisse voir le ciel) */
+    const spire = (x, y, w, k) => { ctx.moveTo(x - 0.8, y); ctx.lineTo(x + w / 2, y - w * k); ctx.lineTo(x + w + 0.8, y); };
+    const foot = (x, w) => Math.min(GY, yAt(x + w / 2) + 6);
+    const tower = (x, top, w, bot, k) => { ctx.rect(x, top, w, bot - top); crown(x, top, w); spire(x, top - 2.4, w, k); };
+    /* au fond, la tour de l'horloge : un fût carré très haut, le cadran, un beffroi ajouré, une flèche et ses clochetons ; à gauche une petite tour
+       posée sur la masse, reliée par une passerelle ; à droite une tourelle suspendue au bout d'un bras, sur sa jambe de force. Rien ne flotte. */
+    const CT = { x: Xp(0.2), w: 18, top: Yp(1.14) }, ctMid = CT.x + CT.w / 2, B = CT.top - 20, dialY = B + 10.5;
+    ctx.fillStyle = far; ctx.beginPath();
+    { const { x, w, top } = CT; ctx.rect(x, top, w, foot(x, w) - top); /* le fût, entier jusqu'à la masse */
+      crown(x, top + 25, w); ctx.rect(x - 2, top + 25, w + 4, 2); for (let k = 0; k <= 6; k++) ctx.rect(x - 1.6 + k * (w + 3.2) / 6, top + 22.6, 0.9, 2.4); /* une galerie à balustrade, sous le cadran */
+      crown(x, top, w); ctx.rect(x, B, w, 20); crown(x, B, w); /* le beffroi, aussi large que le fût, entre deux corniches */
+      ctx.moveTo(x + 1, B - 2.4); ctx.lineTo(ctMid, B - 2.4 - w * 1.25); ctx.lineTo(x + w - 1, B - 2.4); /* la flèche */
+      ctx.moveTo(ctMid - 2, B - 10); ctx.lineTo(ctMid, B - 14); ctx.lineTo(ctMid + 2, B - 10); ctx.rect(ctMid - 2, B - 10, 4, 3.5); /* une lucarne sur la flèche */
+      for (const px of [x - 1.5, x + w - 1.5]) { ctx.rect(px, B - 7, 3, 7); ctx.moveTo(px - 0.4, B - 7); ctx.lineTo(px + 1.5, B - 16); ctx.lineTo(px + 3.4, B - 7); } /* les clochetons d'angle */
+      for (const px of [x - 1.2, x + w - 1.8]) { ctx.rect(px, top - 2, 3, 4); ctx.moveTo(px - 0.3, top - 2); ctx.lineTo(px + 1.5, top - 7); ctx.lineTo(px + 3.3, top - 2); } } /* et deux pinacles, à la corniche du cadran */
+    /* les deux tours reliées, minuscules (elles sont aussi loin que l'horloge) : à gauche une tourelle sur la masse et sa passerelle ; à droite une tourelle suspendue au bout d'un bras grêle */
+    { const w = 5, x = CT.x - 13, top = CT.top - 16, by = CT.top - 4; tower(x, top, w, foot(x, w), 2.6); ctx.rect(x + w, by, CT.x - x - w, 1.4); ctx.moveTo(CT.x, by + 1.4); ctx.lineTo(CT.x - 2.5, by + 1.4); ctx.lineTo(CT.x, by + 4.5); }
+    { const ax0 = CT.x + CT.w, ay = CT.top - 2, ax1 = ax0 + 13, th = 1.4; ctx.moveTo(ax0, ay); ctx.lineTo(ax1, ay - 1); ctx.lineTo(ax1, ay - 1 + th); ctx.lineTo(ax0, ay + th);
+      ctx.moveTo(ax0, ay + th + 5); ctx.lineTo(ax0 + 6, ay + th - 0.4); ctx.lineTo(ax0 + 4.5, ay + th - 0.4); ctx.lineTo(ax0, ay + th + 7); /* la jambe de force */
+      const hw3 = 4.6, hx = ax1 - hw3 / 2, hy = ay - 6, len = 8; tower(hx, hy, hw3, hy + len, 2.2); ctx.moveTo(hx - 0.5, hy + len); ctx.quadraticCurveTo(hx + hw3 / 2, hy + len + 3, hx + hw3 + 0.5, hy + len); ctx.moveTo(hx + 0.6, hy + len + 1.4); ctx.lineTo(hx + hw3 / 2, hy + len + 1.4 + hw3 * 1.6); ctx.lineTo(hx + hw3 - 0.6, hy + len + 1.4); }
+    ctx.fill();
+    { const d = daylight(sky), right = d > 0 && (sky.hour || 12) > 13; if (d > 0) { const ww = CT.w * 0.45, yb = foot(CT.x, CT.w); ctx.fillStyle = rgba(255, 250, 240, 0.12 * d); ctx.fillRect(right ? CT.x + CT.w * 0.55 : CT.x, B, ww, yb - B); ctx.fillStyle = rgba(0, 0, 0, 0.08 * d); ctx.fillRect(right ? CT.x : CT.x + CT.w * 0.55, B, ww, yb - B); } } /* le côté éclairé : la tour prend du volume */
+    { const R = 6.4, nt = clamp(sky.night || 0); /* la rosace : un vitrail sombre qui s'embrase la nuit, son réseau de pierre, un anneau */
+      ctx.fillStyle = mix(c("#3a1020"), W(1), nt * 0.6); ctx.beginPath(); ctx.arc(ctMid, dialY, R, 0, 6.283); ctx.fill();
+      ctx.strokeStyle = c("#17141a"); ctx.lineWidth = 0.7; ctx.beginPath(); ctx.arc(ctMid, dialY, R * 0.34, 0, 6.283); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; ctx.moveTo(ctMid + Math.cos(a) * R * 0.34, dialY + Math.sin(a) * R * 0.34); ctx.lineTo(ctMid + Math.cos(a) * R, dialY + Math.sin(a) * R); } ctx.stroke();
+      ctx.beginPath(); for (let k = 0; k < 8; k++) { const a = (k + 0.5) * Math.PI / 4, ox = ctMid + Math.cos(a) * R * 0.66, oy = dialY + Math.sin(a) * R * 0.66; ctx.moveTo(ox + R * 0.24, oy); ctx.arc(ox, oy, R * 0.24, 0, 6.283); } ctx.stroke(); /* les lobes */
+      ctx.strokeStyle = mix(c("#8a8494"), c("#a8a2b2"), 0.4 * daylight(sky)); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(ctMid, dialY, R + 0.9, 0, 6.283); ctx.stroke();
+      ctx.fillStyle = W(0.6); for (const bx of [CT.x + 4, CT.x + CT.w - 7]) { const y0 = CT.top + 4; ctx.beginPath(); ctx.moveTo(bx, y0 + 9); ctx.lineTo(bx, y0 + 3); ctx.quadraticCurveTo(bx + 1.5, y0, bx + 3, y0 + 3); ctx.lineTo(bx + 3, y0 + 9); ctx.closePath(); ctx.fill(); } /* deux baies en arc, sous la rosace */
+      for (let y = CT.top + 30; y < foot(CT.x, CT.w) - 8; y += 12) ctx.fillRect(ctMid - 0.8, y, 1.6, 3.4); } /* des meurtrières le long du fût */
+    ctx.fillStyle = grad(cx - hw, cx + hw, ["#3a3542", "#2a2632", "#1e1b26"]); ctx.beginPath(); ctx.moveTo(cx - hw, GY + 2); for (const [x, y] of pts) ctx.lineTo(x, y); ctx.lineTo(cx + hw, GY + 2); ctx.closePath(); ctx.fill(); /* la masse du mont */
+    skyline(0x3a57, grad(cx - hw, cx + hw, ["#3a3542", "#2a2632", "#1e1b26"]), 1, wins); /* le plan proche */
+    /* devant : une tour étagée à gauche, une flèche brisée qui penche, et un seul bras court à droite qui porte une tour suspendue */
+    ctx.fillStyle = grad(cx - hw, cx + hw, ["#3a3542", "#2a2632", "#1e1b26"]); ctx.beginPath();
+    { const x = Xp(-0.46), w = 12, top = Yp(0.88), w2 = 7, x2 = x + 4, t2 = top - 16; ctx.rect(x, top, w, foot(x, w) - top); crown(x, top, w); ctx.rect(x2, t2, w2, top - t2); crown(x2, t2, w2); spire(x2, t2 - 2.4, w2, 2.6);
+      ctx.moveTo(x - 1, top - 2.4); ctx.lineTo(x + 1.4, top - 9); ctx.lineTo(x + 3.8, top - 2.4); ctx.moveTo(x + w - 3.8, top - 2.4); ctx.lineTo(x + w - 1.4, top - 9); ctx.lineTo(x + w + 1, top - 2.4); wins.push([x, top, w]); } /* la tour étagée et ses clochetons */
+    { const x = Xp(-0.06), w = 7, top = Yp(0.84); ctx.rect(x, top, w, foot(x, w) - top); crown(x, top, w); ctx.moveTo(x - 0.6, top - 2.4); ctx.lineTo(x + 6, top - 13); ctx.lineTo(x + 3.4, top - 15.5); ctx.lineTo(x + 5.6, top - 19); ctx.lineTo(x + w + 0.6, top - 2.4); } /* une flèche brisée, qui penche, son bout cassé */
+    { const x0 = Xp(0.4), w0 = 11, top0 = Yp(0.9); ctx.rect(x0, top0, w0, foot(x0, w0) - top0); crown(x0, top0, w0); spire(x0, top0 - 2.4, w0, 2.2); wins.push([x0, top0, w0]); }
+    ctx.fill();
+    ctx.fillStyle = W(0.35); for (const [x, top, w] of wins) { if (q() < 0.55 && GY - top > 18) { const n = 1 + (q() * 2 | 0); for (let i = 0; i < n; i++) ctx.fillRect(x + w / 2 - 0.8, top + 6 + i * 7 + q() * 3, 1.6, 3); } } /* ses fenêtres, sur les tours */
   }
   // le repère de la maquette (la tour de l'astronome à x = 354, le sol à y = 208), haussé : le donjon se dresse au sommet de l'ancienne montagne
   ctx.save(); ctx.translate(ax - 354 * s, GY * (1 - s) - raise); ctx.scale(s, s);
@@ -190,7 +241,7 @@ function keep(r, ctx, M, sky, t, observatory) {
   { const x0 = cx - hw + 10, x1 = cx + hw - 10, top = GY - raise - 4;
     box(x0, top, x1 - x0, GY + 2 - top, MID); ctx.fillStyle = grad(x0, x1, MID); for (let x = x0; x < x1 - 3; x += 6) ctx.fillRect(x, top - 3.5, 3.5, 3.5); /* les merlons */
     ctx.fillStyle = c("#8a8494"); ctx.fillRect(x0, top, x1 - x0, 1.4);
-    for (let x = x0 + 16; x < x1 - 10; x += 18) { ctx.fillStyle = c("#3a3542"); ctx.beginPath(); ctx.moveTo(x - 2.5, GY + 2); ctx.lineTo(x - 2.5, top + 8); ctx.lineTo(x, top + 3); ctx.lineTo(x + 2.5, top + 8); ctx.lineTo(x + 2.5, GY + 2); ctx.closePath(); ctx.fill(); lancets([`M${x + 9 - 1.8} ${GY - 5} v-9 q1.8 -4 3.6 0 v9 Z`], 0.7); } /* contreforts et lancettes */
+    for (let x = x0 + 16; x < x1 - 10; x += 18) { ctx.fillStyle = c("#3a3542"); ctx.beginPath(); ctx.moveTo(x - 2.5, GY + 2); ctx.lineTo(x - 2.5, top + 8); ctx.lineTo(x, top + 3); ctx.lineTo(x + 2.5, top + 8); ctx.lineTo(x + 2.5, GY + 2); ctx.closePath(); ctx.fill(); { const lh = Math.min(9, GY - 5 - (top + 3) - 3), lw = lh < 6 ? 2.6 : 3.6; if (lh >= 2) lancets([`M${x + 9 - lw / 2} ${GY - 5} v-${lh.toFixed(1)} q${lw / 2} -${lw < 3 ? 2.6 : 4} ${lw} 0 v${lh.toFixed(1)} Z`], 0.7); } } /* contreforts et lancettes (la lancette tient sous le bandeau, quelle que soit la hauteur du mur) */
     for (const [x, hh, w] of [[x0 - 2, raise + 30, 16], [x1 + 2, raise + 22, 14]]) { box(x - w / 2, GY - hh, w, hh + 2, FRONT); ctx.fillStyle = c("#7a7683"); ctx.fillRect(x - w / 2 - 2, GY - hh - 3, w + 4, 3); R(x - w / 2 - 2, x, GY - hh - 26, x + w / 2 + 2, GY - hh - 3); strokeP(`M${x} ${GY - hh - 26} v-5`, c(GOLD), 0.9); lancets([`M${x - 2} ${GY - hh + 14} v-7 q2 -4 4 0 v7 Z`, `M${x - 2} ${GY - 8} v-7 q2 -4 4 0 v7 Z`], 0.9); }
   }
   void t;
