@@ -202,35 +202,55 @@ function islandEmblem(cx, cy, r, col) {
 }
 module.exports.islandEmblem = islandEmblem;
 
+/** L'emblème du Relto, au médaillon de sa couverture : la montagne, et la cabane devant elle, gravées en traits. */
+function hutEmblem(cx, cy, r, col) {
+  const k = r / 34, P = (pts) => pts.map(([x, y], i) => `${i ? "L" : "M"}${(cx + x * k).toFixed(1)} ${(cy + y * k).toFixed(1)}`).join(" ");
+  const sw = (w) => (w * k).toFixed(2);
+  const mount = P([[-27, 14], [-17, -2], [-12, 2], [-2, -20], [4, -14], [7, -17], [20, 4], [27, 14]]); // deux sommets, le plus haut à gauche du centre
+  const snow = P([[-6, -12], [-2, -20], [3, -15]]);
+  const hut = P([[-9, 14], [-9, 3], [-2, -4], [5, 3], [5, 14]]), roof = P([[-11, 4.5], [-2, -5.5], [7, 4.5]]);
+  const door = P([[-4.5, 14], [-4.5, 7.5], [-1.5, 7.5], [-1.5, 14]]), win = `<rect x="${(cx + 1 * k).toFixed(1)}" y="${(cy + 6.5 * k).toFixed(1)}" width="${(2.6 * k).toFixed(1)}" height="${(2.6 * k).toFixed(1)}" fill="none" stroke="${col}" stroke-width="${sw(0.8)}"/>`;
+  const chim = P([[1.5, -1.5], [1.5, -5], [3.5, -5], [3.5, 0.5]]), ground = P([[-25, 14], [25, 14]]);
+  return `<g fill="none" stroke="${col}" stroke-linejoin="round" stroke-linecap="round"><path d="${mount}" stroke-width="${sw(1.2)}" opacity="0.85"/><path d="${snow}" stroke-width="${sw(0.9)}" opacity="0.6"/>` +
+    `<path d="${hut}" stroke-width="${sw(1.3)}" fill="#1a3324"/><path d="${roof}" stroke-width="${sw(1.4)}"/><path d="${chim}" stroke-width="${sw(1)}"/><path d="${door}" stroke-width="${sw(0.9)}"/>${win}<path d="${ground}" stroke-width="${sw(1.1)}"/></g>`;
+}
+
 /**
- * La couverture du Livre du Relto : un livre de voyage, pas un livre d'Âge. Cuir grenu vert-olive, sans laiton, coins arrondis
- * par l'usage ; au centre un médaillon vert sombre, serti, où l'île est gravée en vert pâle. Aucun texte. Dessinée de notre main.
+ * La couverture du Livre du Relto : un livre de voyage, pas un livre d'Âge. Cuir vert-olive au grain repoussé (relief éclairé),
+ * sans laiton ni texte, coins arrondis par l'usage ; au centre un médaillon vert sombre cerclé d'or, où la montagne et la
+ * cabane sont gravées. Dessinée de notre main.
  */
 function reltoCoverSvg({ standalone = false } = {}) {
-  const W = 300, H = 460, cx = W / 2, cy = 160, R = 54, u = "rbc";
+  const W = 300, H = 460, cx = 150, cy = 158, R = 52, u = "rbc";
   let s = `<svg ${standalone ? `xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" ` : ""}class="age-cover age-rbook__cover" viewBox="0 0 ${W} ${H}" role="img" aria-label="Relto">`;
   s += `<defs>
 <filter id="${u}g" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
-<feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2" seed="7" result="grain"/>
-<feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="3" seed="3" result="mottle"/>
-<feColorMatrix in="grain" type="matrix" values="0 0 0 0 0.05  0 0 0 0 0.05  0 0 0 0 0  0 0 0 -1.6 0.92" result="pits"/>
-<feColorMatrix in="mottle" type="matrix" values="0 0 0 0 0.10  0 0 0 0 0.09  0 0 0 0 0.02  0 0 0 -1.1 0.75" result="dark"/>
-<feMerge result="all"><feMergeNode in="SourceGraphic"/><feMergeNode in="dark"/><feMergeNode in="pits"/></feMerge>
-<feComposite in="all" in2="SourceAlpha" operator="in"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="3" seed="11" result="bump"/>
+<feDiffuseLighting in="bump" surfaceScale="1.3" diffuseConstant="1.12" lighting-color="#ffffff" result="relief"><feDistantLight azimuth="235" elevation="58"/></feDiffuseLighting>
+<feComposite in="SourceGraphic" in2="relief" operator="arithmetic" k1="1.05" k2="0" k3="0" k4="0" result="grained"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.006 0.011" numOctaves="3" seed="4" result="mottle"/>
+<feColorMatrix in="mottle" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.3 0.62" result="patina"/>
+<feSpecularLighting in="bump" surfaceScale="1.3" specularConstant="0.4" specularExponent="18" lighting-color="#f4f0c8" result="sheen"><feDistantLight azimuth="235" elevation="50"/></feSpecularLighting>
+<feComposite in="sheen" in2="SourceAlpha" operator="in" result="sheen2"/>
+<feMerge result="all"><feMergeNode in="grained"/><feMergeNode in="patina"/></feMerge>
+<feComposite in="sheen2" in2="all" operator="arithmetic" k1="0" k2="0.35" k3="1" k4="0" result="lit"/>
+<feComposite in="lit" in2="SourceAlpha" operator="in"/>
 </filter>
-<radialGradient id="${u}l" cx="45%" cy="38%" r="75%"><stop offset="0" stop-color="#a7a35c"/><stop offset="0.6" stop-color="#8a8646"/><stop offset="1" stop-color="#5c5a2c"/></radialGradient>
-<radialGradient id="${u}m" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#2d4e39"/><stop offset="1" stop-color="#14261b"/></radialGradient>
-<linearGradient id="${u}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b9b67a"/><stop offset="0.5" stop-color="#6d6a36"/><stop offset="1" stop-color="#3e3c1d"/></linearGradient>
+<radialGradient id="${u}l" cx="42%" cy="34%" r="80%"><stop offset="0" stop-color="#9d9a55"/><stop offset="0.55" stop-color="#7e7b3e"/><stop offset="1" stop-color="#4e4c22"/></radialGradient>
+<radialGradient id="${u}m" cx="40%" cy="34%" r="72%"><stop offset="0" stop-color="#2f523c"/><stop offset="1" stop-color="#12231a"/></radialGradient>
+<linearGradient id="${u}au" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3dc95"/><stop offset="0.35" stop-color="#c49a45"/><stop offset="0.65" stop-color="#8a6524"/><stop offset="1" stop-color="#e0bd6c"/></linearGradient>
 <clipPath id="${u}c"><rect x="6" y="4" width="${W - 10}" height="${H - 8}" rx="14"/></clipPath>
 </defs>`;
   s += `<rect x="9" y="8" width="${W - 10}" height="${H - 8}" rx="14" fill="#000" opacity="0.35"/>`; // ombre
   s += `<g clip-path="url(#${u}c)"><rect x="0" y="0" width="${W}" height="${H}" fill="url(#${u}l)" filter="url(#${u}g)"/>`;
-  s += `<rect x="6" y="4" width="16" height="${H}" fill="#000" opacity="0.18"/><rect x="22" y="4" width="2" height="${H}" fill="#000" opacity="0.18"/>`; // le pli du dos
-  s += `<rect x="6" y="4" width="${W - 10}" height="${H - 8}" rx="14" fill="none" stroke="#000" stroke-opacity="0.35" stroke-width="6"/></g>`; // bords usés
-  // le médaillon serti : un anneau de cuir repoussé, le disque vert, l'île gravée
-  s += `<circle cx="${cx + 1.5}" cy="${cy + 2}" r="${R + 7}" fill="#000" opacity="0.3"/><circle cx="${cx}" cy="${cy}" r="${R + 6}" fill="url(#${u}r)" filter="url(#${u}g)"/>`;
-  s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${u}m)" stroke="#0c1810" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="${R - 5}" fill="none" stroke="#7fa585" stroke-opacity="0.45" stroke-width="1"/>`;
-  s += `<g opacity="0.95">${islandEmblem(cx, cy - 2, R - 12, "#9cc39b")}</g>`;
+  s += `<rect x="6" y="4" width="17" height="${H}" fill="#000" opacity="0.16"/><path d="M23.5 4 V${H}" stroke="#000" stroke-opacity="0.3" stroke-width="1.5"/><path d="M25 4 V${H}" stroke="#e8e4b0" stroke-opacity="0.12" stroke-width="1"/>`; // le pli du dos
+  s += `<rect x="6" y="4" width="${W - 10}" height="${H - 8}" rx="14" fill="none" stroke="#1d1c0c" stroke-opacity="0.45" stroke-width="7"/></g>`; // bords usés, plus sombres
+  // le médaillon : repoussé dans le cuir, cerclé d'or, le disque vert, la montagne et la cabane gravées
+  s += `<circle cx="${cx}" cy="${cy + 1.5}" r="${R + 9}" fill="#000" opacity="0.28"/>`;
+  s += `<circle cx="${cx}" cy="${cy}" r="${R + 5}" fill="url(#${u}au)" stroke="#4a3510" stroke-width="1"/><circle cx="${cx}" cy="${cy}" r="${R + 1.6}" fill="none" stroke="#5a4214" stroke-opacity="0.8" stroke-width="1"/>`;
+  s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${u}m)"/><circle cx="${cx}" cy="${cy}" r="${R - 5}" fill="none" stroke="#d9b866" stroke-opacity="0.55" stroke-width="0.9"/>`;
+  s += `<ellipse cx="${cx - 14}" cy="${cy - 22}" rx="22" ry="11" fill="#ffffff" opacity="0.05"/>`; // reflet sur l'émail
+  s += hutEmblem(cx, cy + 1, R - 8, "#a9cfa5");
   return s + "</svg>";
 }
 module.exports.reltoCoverSvg = reltoCoverSvg;
