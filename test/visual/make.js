@@ -16,6 +16,6 @@ fs.writeFileSync(path.join(OUT, "cover.html"), page("#222", `<div id=o></div><sc
 fs.writeFileSync(path.join(OUT, "gen.html"), page("#111", `<div id=o></div><script>window.X=${pack("entry-gen")};X.run(document.getElementById('o'))</script>`));
 const css = ["styles.css", "styles.ext.css"].map((f) => fs.readFileSync(path.join(SRC, f), "utf8")).join("\n");
 const rbook = bundle(SRC, "entry-rbook", { outerRequire: "function(n){if(n==='obsidian')return window.__obs;throw new Error('no '+n)}", extra: { "entry-rbook": path.join(__dirname, "entry-rbook.js") } });
-fs.writeFileSync(path.join(OUT, "rbook.html"), page("#1e1e1e", `<style>${css}</style><div id=o></div><script>window.X=${rbook};(async()=>{const o=document.getElementById('o');const a=X.run(o,'en',15.5);await a.onOpen();const b=X.run(o,'fr',22.5);b.idx=1;await b.onOpen();document.title='done'})()</script>`));
+fs.writeFileSync(path.join(OUT, "rbook.html"), page("#1e1e1e", `<style>${css}</style><div id=o></div><script>window.X=${rbook};(async()=>{const o=document.getElementById('o');const a=X.run(o,'en',15.5);await a.onOpen();const b=X.run(o,'fr',22.5);b.idx=1;b.cover=false;await b.onOpen();document.title='done'})()</script>`));
 fs.writeFileSync(path.join(OUT, "dmg.html"), page("#111", `<div id=o></div><script>window.X=${pack("entry-dmg")};X.run(document.getElementById('o'))</script>`));
 console.log("écrit : " + ["relto", "fx", "cover", "gen", "dmg", "rbook"].map((n) => path.join("test/visual/out", n + ".html")).join(", "));
