@@ -203,7 +203,7 @@ function islandEmblem(cx, cy, r, col) {
 module.exports.islandEmblem = islandEmblem;
 
 /** L'emblème du Relto, au médaillon de sa couverture : l'île flottante, la montagne dessus, la cabane devant elle, gravées en traits. */
-function hutEmblem(cx, cy, r, col) {
+function hutEmblem(cx, cy, r, col, bg = "#16291e") {
   const k = r / 34, P = (pts) => pts.map(([x, y], i) => `${i ? "L" : "M"}${(cx + x * k).toFixed(1)} ${(cy + y * k).toFixed(1)}`).join(" ");
   const sw = (w) => (w * k).toFixed(2), G = 6; // G : le sol de l'île
   const island = P([[-29, G], [-24, G - 1], [-12, G], [0, G - 1], [12, G], [24, G - 1], [29, G], [25, G + 6], [17, G + 11], [10, G + 18], [3, G + 26], [-3, G + 19], [-11, G + 13], [-20, G + 8]]) + " Z";
@@ -215,62 +215,91 @@ function hutEmblem(cx, cy, r, col) {
   const win = `<rect x="${(cx + (hx + 2) * k).toFixed(1)}" y="${(cy + (G - 7) * k).toFixed(1)}" width="${(2.6 * k).toFixed(1)}" height="${(2.6 * k).toFixed(1)}" fill="none" stroke="${col}" stroke-width="${sw(0.8)}"/>`;
   return `<g fill="none" stroke="${col}" stroke-linejoin="round" stroke-linecap="round"><path d="${island}" stroke-width="${sw(1.3)}"/>${strata.map((d) => `<path d="${d}" stroke-width="${sw(0.8)}" opacity="0.6"/>`).join("")}` +
     `<path d="${mount}" stroke-width="${sw(1.2)}" opacity="0.9"/><path d="${snow}" stroke-width="${sw(0.9)}" opacity="0.6"/>` +
-    `<path d="${hut}" stroke-width="${sw(1.3)}" fill="#16291e"/><path d="${roof}" stroke-width="${sw(1.4)}"/><path d="${chim}" stroke-width="${sw(1)}"/><path d="${door}" stroke-width="${sw(0.9)}"/>${win}</g>`;
+    `<path d="${hut}" stroke-width="${sw(1.3)}" fill="${bg}"/><path d="${roof}" stroke-width="${sw(1.4)}"/><path d="${chim}" stroke-width="${sw(1)}"/><path d="${door}" stroke-width="${sw(0.9)}"/>${win}</g>`;
 }
 
+/** Les teintes du médaillon de la couverture : grenat (complémentaire du vert) ou bleu-vert profond (analogue). */
+const MEDALS = { garnet: ["#6a1d27", "#2c0910", "#c79a8a"], teal: ["#1d4a50", "#0a1f24", "#8fb8b4"] };
+
 /**
- * La couverture du Livre du Relto : un vieux maroquin vert, au grain fin, patiné et taché par l'usage ; un double filet doré
- * le long des bords, un fleuron à chaque coin ; au centre, un ovale doré au fer, une couronne de feuilles, et le médaillon
- * vert sombre cerclé d'or où la montagne et la cabane sont gravées. Sans texte. Dessinée de notre main.
+ * La couverture du Livre du Relto : un vieux maroquin vert forêt très sombre, au grain fin, usé aux bords et aux coins ;
+ * un double filet doré le long des bords, un fleuron à chaque coin ; au centre, un ovale doré au fer, une couronne de
+ * feuilles, et le médaillon cerclé d'or où l'île du Relto (sa montagne, sa cabane) est gravée. Sans texte. De notre main.
  */
-function reltoCoverSvg({ standalone = false } = {}) {
-  const W = 300, H = 460, cx = 160, cy = 206, R = 40, u = "rbc", AU = "#d8b65e", AU2 = "#a8862e";
+function reltoCoverSvg({ standalone = false, medal = "garnet" } = {}) {
+  const W = 300, H = 460, cx = 160, cy = 206, R = 40, u = "rbc" + medal, AU = "#d4b25a", AU2 = "#a8862e", M = MEDALS[medal] || MEDALS.garnet;
   let s = `<svg ${standalone ? `xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" ` : ""}class="age-cover age-rbook__cover" viewBox="0 0 ${W} ${H}" role="img" aria-label="Relto">`;
   s += `<defs>
 <filter id="${u}g" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
 <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="11" result="bump"/>
-<feDiffuseLighting in="bump" surfaceScale="0.7" diffuseConstant="1.08" lighting-color="#ffffff" result="relief"><feDistantLight azimuth="235" elevation="62"/></feDiffuseLighting>
-<feComposite in="SourceGraphic" in2="relief" operator="arithmetic" k1="1.02" k2="0" k3="0" k4="0" result="grained"/>
-<feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="4" seed="4" result="mottle"/>
-<feColorMatrix in="mottle" type="matrix" values="0 0 0 0 0.12  0 0 0 0 0.16  0 0 0 0 0.05  0 0 0 -1.5 0.70" result="patina"/>
+<feDiffuseLighting in="bump" surfaceScale="0.8" diffuseConstant="1.12" lighting-color="#ffffff" result="relief"><feDistantLight azimuth="235" elevation="60"/></feDiffuseLighting>
+<feComposite in="SourceGraphic" in2="relief" operator="arithmetic" k1="1.04" k2="0" k3="0" k4="0" result="grained"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.01 0.014" numOctaves="4" seed="4" result="mottle"/>
+<feColorMatrix in="mottle" type="matrix" values="0 0 0 0 0.02  0 0 0 0 0.05  0 0 0 0 0.02  0 0 0 -1.4 0.62" result="patina"/>
 <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" seed="23" result="spots"/>
-<feColorMatrix in="spots" type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.17  0 0 0 0 0.09  0 0 0 -11 2.25" result="stains"/>
-<feTurbulence type="fractalNoise" baseFrequency="0.02 0.05" numOctaves="3" seed="8" result="fade"/>
-<feColorMatrix in="fade" type="matrix" values="0 0 0 0 0.75  0 0 0 0 0.82  0 0 0 0 0.62  0 0 0 -1.6 0.72" result="worn"/>
-<feMerge result="all"><feMergeNode in="grained"/><feMergeNode in="patina"/><feMergeNode in="worn"/><feMergeNode in="stains"/></feMerge>
+<feColorMatrix in="spots" type="matrix" values="0 0 0 0 0.04  0 0 0 0 0.05  0 0 0 0 0.02  0 0 0 -11 2.3" result="stains"/>
+<feMerge result="all"><feMergeNode in="grained"/><feMergeNode in="patina"/><feMergeNode in="stains"/></feMerge>
 <feComposite in="all" in2="SourceAlpha" operator="in"/>
 </filter>
-<radialGradient id="${u}l" cx="45%" cy="38%" r="85%"><stop offset="0" stop-color="#7cb27a"/><stop offset="0.6" stop-color="#5f9a62"/><stop offset="1" stop-color="#3d6a42"/></radialGradient>
-<radialGradient id="${u}m" cx="40%" cy="34%" r="72%"><stop offset="0" stop-color="#2c4e38"/><stop offset="1" stop-color="#12231a"/></radialGradient>
+<filter id="${u}w" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+<feGaussianBlur in="SourceGraphic" stdDeviation="5" result="soft"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="3" seed="31" result="n"/>
+<feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 2.6 -1.05" result="nm"/>
+<feComposite in="soft" in2="nm" operator="in"/>
+</filter>
+<radialGradient id="${u}l" cx="45%" cy="36%" r="85%"><stop offset="0" stop-color="#16301d"/><stop offset="0.6" stop-color="#0e2215"/><stop offset="1" stop-color="#06110a"/></radialGradient>
+<radialGradient id="${u}m" cx="40%" cy="34%" r="72%"><stop offset="0" stop-color="${M[0]}"/><stop offset="1" stop-color="${M[1]}"/></radialGradient>
 <linearGradient id="${u}au" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1d98e"/><stop offset="0.4" stop-color="#c49a45"/><stop offset="0.7" stop-color="#8a6524"/><stop offset="1" stop-color="#e0bd6c"/></linearGradient>
 <clipPath id="${u}c"><rect x="6" y="4" width="${W - 10}" height="${H - 8}" rx="9"/></clipPath>
 </defs>`;
-  s += `<rect x="9" y="8" width="${W - 10}" height="${H - 8}" rx="9" fill="#000" opacity="0.35"/>`; // ombre
+  s += `<rect x="9" y="8" width="${W - 10}" height="${H - 8}" rx="9" fill="#000" opacity="0.4"/>`; // ombre
   s += `<g clip-path="url(#${u}c)"><rect x="0" y="0" width="${W}" height="${H}" fill="url(#${u}l)" filter="url(#${u}g)"/>`;
-  s += `<rect x="6" y="4" width="15" height="${H}" fill="#0b1a0d" opacity="0.2"/><path d="M21.5 4 V${H}" stroke="#0b1a0d" stroke-opacity="0.35" stroke-width="1.4"/><path d="M23 4 V${H}" stroke="#e8f0c8" stroke-opacity="0.15" stroke-width="1"/>`; // le mors
-  s += `<rect x="6" y="4" width="${W - 10}" height="${H - 8}" rx="9" fill="none" stroke="#24321a" stroke-opacity="0.45" stroke-width="5"/></g>`; // bords frottés
-  // dorures au fer : le double filet, un fleuron à chaque coin (une tige, deux feuilles, un bouton)
-  const gold = (d, w = 1) => `<path d="${d}" fill="none" stroke="${AU}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" opacity="0.88"/>`;
+  // l'usure : là où la main frotte, les bords, les coins, le mors ; le cuir s'éclaircit par plaques irrégulières
+  const wear = "#4a6646";
+  s += `<g filter="url(#${u}w)" opacity="0.38"><rect x="6" y="4" width="${W - 10}" height="${H - 8}" rx="9" fill="none" stroke="${wear}" stroke-width="16"/>` +
+    [[8, 6], [W - 6, 6], [8, H - 6], [W - 6, H - 6]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="26" fill="${wear}"/>`).join("") +
+    `<rect x="16" y="4" width="10" height="${H}" fill="${wear}"/><ellipse cx="${W - 30}" cy="${H * 0.55}" rx="22" ry="70" fill="${wear}" opacity="0.5"/></g>`;
+  s += `<rect x="6" y="4" width="15" height="${H}" fill="#000" opacity="0.25"/><path d="M21.5 4 V${H}" stroke="#000" stroke-opacity="0.45" stroke-width="1.4"/><path d="M23 4 V${H}" stroke="#cfe0b8" stroke-opacity="0.12" stroke-width="1"/>`; // le mors
+  s += `<rect x="6" y="4" width="${W - 10}" height="${H - 8}" rx="9" fill="none" stroke="#050b07" stroke-opacity="0.5" stroke-width="3"/></g>`;
+  // dorures au fer
+  const gold = (d, w = 1, fill = "none") => `<path d="${d}" fill="${fill}" stroke="${AU}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>`;
   const fx0 = 34, fy0 = 18, fx1 = W - 16, fy1 = H - 18;
   s += gold(`M${fx0} ${fy0} H${fx1} V${fy1} H${fx0} Z`, 1.3) + gold(`M${fx0 + 4} ${fy0 + 4} H${fx1 - 4} V${fy1 - 4} H${fx0 + 4} Z`, 0.6);
-  const sprig = (x, y, sx, sy) => { // un fleuron : un bouton, deux volutes, une feuille vers le centre
+  // un fleuron à chaque coin : un bouton, deux volutes pleines, une feuille pleine vers le centre
+  const fleuron = (x, y, sx, sy) => {
     const T = (a, b) => `${(x + a * sx).toFixed(1)} ${(y + b * sy).toFixed(1)}`;
-    return gold(`M${T(2, 2)} C${T(9, 3)} ${T(13, 7)} ${T(15, 15)}`, 1) + gold(`M${T(15, 15)} C${T(19, 13)} ${T(22, 17)} ${T(19, 21)} C${T(16, 21)} ${T(14, 18)} ${T(15, 15)} Z`, 0.9) +
-      gold(`M${T(2, 2)} C${T(1, 6)} ${T(5, 9)} ${T(8, 7)}`, 0.9) + gold(`M${T(2, 2)} C${T(6, 1)} ${T(9, 5)} ${T(7, 8)}`, 0.9) + `<circle cx="${T(2, 2).split(" ")[0]}" cy="${T(2, 2).split(" ")[1]}" r="1.8" fill="${AU}" opacity="0.88"/>`;
+    return gold(`M${T(3, 3)} C${T(10, 4)} ${T(14, 8)} ${T(16, 15)}`, 1.4) +
+      gold(`M${T(15, 15)} C${T(21, 14)} ${T(25, 19)} ${T(27, 27)} C${T(19, 25)} ${T(15, 21)} ${T(15, 15)} Z`, 0.8, AU) + // la feuille
+      gold(`M${T(3, 3)} C${T(1, 8)} ${T(5, 12)} ${T(9, 10)} C${T(10, 8)} ${T(8, 7)} ${T(7, 8.5)}`, 1.4) + // volute basse
+      gold(`M${T(3, 3)} C${T(8, 1)} ${T(12, 5)} ${T(10, 9)} C${T(8, 10)} ${T(7, 8)} ${T(8.5, 7)}`, 1.4) + // volute haute
+      `<circle cx="${T(3, 3).split(" ")[0]}" cy="${T(3, 3).split(" ")[1]}" r="2.4" fill="${AU}" opacity="0.9"/>` +
+      `<circle cx="${T(11, 16).split(" ")[0]}" cy="${T(11, 16).split(" ")[1]}" r="1.2" fill="${AU}" opacity="0.9"/><circle cx="${T(16, 11).split(" ")[0]}" cy="${T(16, 11).split(" ")[1]}" r="1.2" fill="${AU}" opacity="0.9"/>`;
   };
-  s += sprig(fx0 + 8, fy0 + 8, 1, 1) + sprig(fx1 - 8, fy0 + 8, -1, 1) + sprig(fx0 + 8, fy1 - 8, 1, -1) + sprig(fx1 - 8, fy1 - 8, -1, -1);
-  // l'ovale central : deux filets, une couronne de feuilles, des points en guise d'inscription (aucune lettre)
+  s += fleuron(fx0 + 8, fy0 + 8, 1, 1) + fleuron(fx1 - 8, fy0 + 8, -1, 1) + fleuron(fx0 + 8, fy1 - 8, 1, -1) + fleuron(fx1 - 8, fy1 - 8, -1, -1);
+  // l'ovale central : deux filets et un rang de points (aucune lettre)
   const ox = 62, oy = 76;
   s += `<ellipse cx="${cx}" cy="${cy}" rx="${ox}" ry="${oy}" fill="none" stroke="${AU}" stroke-width="1.1" opacity="0.85"/><ellipse cx="${cx}" cy="${cy}" rx="${ox - 9}" ry="${oy - 9}" fill="none" stroke="${AU}" stroke-width="0.7" opacity="0.8"/>`;
   for (let i = 0; i < 36; i++) { const a = (i / 36) * 6.283; s += `<circle cx="${(cx + Math.cos(a) * (ox - 4.5)).toFixed(1)}" cy="${(cy + Math.sin(a) * (oy - 4.5)).toFixed(1)}" r="${i % 9 === 0 ? 1.5 : 0.8}" fill="${AU}" opacity="0.8"/>`; }
-  for (const side of [-1, 1]) for (let i = 0; i < 7; i++) { // la couronne : deux branches qui montent autour du médaillon
-    const a = Math.PI / 2 + side * (0.35 + i * 0.32), lx = cx + Math.cos(a) * (R + 10), ly = cy + Math.sin(a) * (R + 13), ang = (a * 180) / Math.PI + side * 70;
-    s += `<ellipse cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" rx="4.2" ry="1.7" transform="rotate(${ang.toFixed(0)} ${lx.toFixed(1)} ${ly.toFixed(1)})" fill="none" stroke="${AU}" stroke-width="0.8" opacity="0.85"/>`;
+  // la couronne : deux branches de laurier nouées en bas, qui montent de part et d'autre du médaillon
+  const rr = R + 12, leaf = (x, y, ang, len) => { // une feuille pointue, pleine, avec sa nervure
+    const c = Math.cos(ang), sn = Math.sin(ang), px = -sn, py = c, L = (a, b) => `${(x + c * a + px * b).toFixed(1)} ${(y + sn * a + py * b).toFixed(1)}`;
+    return `<path d="M${L(0, 0)} Q${L(len * 0.5, len * 0.32)} ${L(len, 0)} Q${L(len * 0.5, -len * 0.32)} ${L(0, 0)} Z" fill="${AU}" opacity="0.85"/><path d="M${L(len * 0.1, 0)} L${L(len * 0.85, 0)}" stroke="#1a1408" stroke-width="0.5" opacity="0.6"/>`;
+  };
+  for (const side of [-1, 1]) {
+    const a0 = Math.PI / 2 + side * 0.28, a1 = Math.PI / 2 + side * 2.55, pts = [];
+    for (let i = 0; i <= 24; i++) { const a = a0 + (a1 - a0) * (i / 24); pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * (rr + 4)]); }
+    s += `<path d="M${pts.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L")}" fill="none" stroke="${AU}" stroke-width="1" opacity="0.85"/>`;
+    for (let i = 1; i <= 22; i += 2) { // les feuilles, en alternance dehors / dedans, pointées vers le haut de la branche
+      const [x, y] = pts[i], [x2, y2] = pts[i + 1], dir = Math.atan2(y2 - y, x2 - x), out = (i % 2 ? 1 : -1) * 0.75;
+      s += leaf(x, y, dir + out, 12);
+    }
+    const [ex, ey] = pts[24]; s += `<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="1.6" fill="${AU}" opacity="0.9"/>`; // une baie au bout
   }
-  // le médaillon : cerclé d'or, vert sombre, la montagne et la cabane gravées en or
-  s += `<circle cx="${cx}" cy="${cy + 1}" r="${R + 4}" fill="#000" opacity="0.25"/><circle cx="${cx}" cy="${cy}" r="${R + 3}" fill="url(#${u}au)" stroke="#4a3510" stroke-width="0.8"/>`;
+  { const ny = cy + rr + 5; s += gold(`M${cx} ${ny} C${cx - 4} ${ny - 6} ${cx - 11} ${ny - 3} ${cx - 8} ${ny + 2} C${cx - 6} ${ny + 4} ${cx - 2} ${ny + 2} ${cx} ${ny}`, 1) + gold(`M${cx} ${ny} C${cx + 4} ${ny - 6} ${cx + 11} ${ny - 3} ${cx + 8} ${ny + 2} C${cx + 6} ${ny + 4} ${cx + 2} ${ny + 2} ${cx} ${ny}`, 1) + gold(`M${cx - 1} ${ny} L${cx - 5} ${ny + 8} M${cx + 1} ${ny} L${cx + 5} ${ny + 8}`, 1) + `<circle cx="${cx}" cy="${ny}" r="1.8" fill="${AU}" opacity="0.9"/>`; } // le nœud : deux boucles, deux pans
+  // le médaillon : cerclé d'or, l'île du Relto gravée en or
+  s += `<circle cx="${cx}" cy="${cy + 1}" r="${R + 4}" fill="#000" opacity="0.3"/><circle cx="${cx}" cy="${cy}" r="${R + 3}" fill="url(#${u}au)" stroke="#4a3510" stroke-width="0.8"/>`;
   s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${u}m)"/><circle cx="${cx}" cy="${cy}" r="${R - 3.5}" fill="none" stroke="${AU2}" stroke-opacity="0.7" stroke-width="0.7"/>`;
-  s += hutEmblem(cx, cy - 1, R - 4, AU);
+  s += hutEmblem(cx, cy - 1, R - 4, AU, M[1]);
   return s + "</svg>";
 }
 module.exports.reltoCoverSvg = reltoCoverSvg;
