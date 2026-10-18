@@ -201,3 +201,36 @@ function islandEmblem(cx, cy, r, col) {
   return `<g fill="none" stroke="${col}" stroke-width="${(1.3 * k).toFixed(2)}" stroke-linejoin="round" opacity="0.92"><path d="${island}"/><path d="${hut}"/><path d="${pill(2)}"/><path d="${pill(16)}"/></g>${ring}${strata}`;
 }
 module.exports.islandEmblem = islandEmblem;
+
+/**
+ * La couverture du Livre du Relto : un livre de voyage, pas un livre d'Âge. Cuir grenu vert-olive, sans laiton, coins arrondis
+ * par l'usage ; au centre un médaillon vert sombre, serti, où l'île est gravée en vert pâle. Aucun texte. Dessinée de notre main.
+ */
+function reltoCoverSvg({ standalone = false } = {}) {
+  const W = 300, H = 460, cx = W / 2, cy = 160, R = 54, u = "rbc";
+  let s = `<svg ${standalone ? `xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" ` : ""}class="age-cover age-rbook__cover" viewBox="0 0 ${W} ${H}" role="img" aria-label="Relto">`;
+  s += `<defs>
+<filter id="${u}g" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2" seed="7" result="grain"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="3" seed="3" result="mottle"/>
+<feColorMatrix in="grain" type="matrix" values="0 0 0 0 0.05  0 0 0 0 0.05  0 0 0 0 0  0 0 0 -1.6 0.92" result="pits"/>
+<feColorMatrix in="mottle" type="matrix" values="0 0 0 0 0.10  0 0 0 0 0.09  0 0 0 0 0.02  0 0 0 -1.1 0.75" result="dark"/>
+<feMerge result="all"><feMergeNode in="SourceGraphic"/><feMergeNode in="dark"/><feMergeNode in="pits"/></feMerge>
+<feComposite in="all" in2="SourceAlpha" operator="in"/>
+</filter>
+<radialGradient id="${u}l" cx="45%" cy="38%" r="75%"><stop offset="0" stop-color="#a7a35c"/><stop offset="0.6" stop-color="#8a8646"/><stop offset="1" stop-color="#5c5a2c"/></radialGradient>
+<radialGradient id="${u}m" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#2d4e39"/><stop offset="1" stop-color="#14261b"/></radialGradient>
+<linearGradient id="${u}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b9b67a"/><stop offset="0.5" stop-color="#6d6a36"/><stop offset="1" stop-color="#3e3c1d"/></linearGradient>
+<clipPath id="${u}c"><rect x="6" y="4" width="${W - 10}" height="${H - 8}" rx="14"/></clipPath>
+</defs>`;
+  s += `<rect x="9" y="8" width="${W - 10}" height="${H - 8}" rx="14" fill="#000" opacity="0.35"/>`; // ombre
+  s += `<g clip-path="url(#${u}c)"><rect x="0" y="0" width="${W}" height="${H}" fill="url(#${u}l)" filter="url(#${u}g)"/>`;
+  s += `<rect x="6" y="4" width="16" height="${H}" fill="#000" opacity="0.18"/><rect x="22" y="4" width="2" height="${H}" fill="#000" opacity="0.18"/>`; // le pli du dos
+  s += `<rect x="6" y="4" width="${W - 10}" height="${H - 8}" rx="14" fill="none" stroke="#000" stroke-opacity="0.35" stroke-width="6"/></g>`; // bords usés
+  // le médaillon serti : un anneau de cuir repoussé, le disque vert, l'île gravée
+  s += `<circle cx="${cx + 1.5}" cy="${cy + 2}" r="${R + 7}" fill="#000" opacity="0.3"/><circle cx="${cx}" cy="${cy}" r="${R + 6}" fill="url(#${u}r)" filter="url(#${u}g)"/>`;
+  s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${u}m)" stroke="#0c1810" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="${R - 5}" fill="none" stroke="#7fa585" stroke-opacity="0.45" stroke-width="1"/>`;
+  s += `<g opacity="0.95">${islandEmblem(cx, cy - 2, R - 12, "#9cc39b")}</g>`;
+  return s + "</svg>";
+}
+module.exports.reltoCoverSvg = reltoCoverSvg;
