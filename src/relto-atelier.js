@@ -423,8 +423,8 @@ function coverOf(r, now = Date.now()) {
 /**
  * Le loup blanc (le Château seulement) : roulé devant le feu, comme le chat, mais d'une seule silhouette en courbes (le museau posé
  * sur les pattes, le front, les oreilles, la collerette ébouriffée, le dos voûté, la croupe), peinte de l'intérieur : la selle plus
- * sombre sur l'échine, le masque et la collerette clairs, l'ombre du ventre ; la queue touffue ramenée devant, le bout sombre sous le
- * museau. Il dort ; une oreille frémit parfois. Au clic, il dresse les oreilles et ouvre un œil d'ambre qui suit le curseur, puis se
+ * sombre sur l'échine, le masque et la collerette clairs, l'ombre du ventre ; les pattes suggérées dans la silhouette (l'avant-bras
+ * couché sous le menton, la patte arrière repliée) ; la queue touffue qui s'enroule autour de la cuisse, le bout sombre. Il dort ; une oreille frémit parfois. Au clic, il dresse les oreilles et ouvre un œil d'ambre qui suit le curseur, puis se
  * rendort. Un vieux compagnon ; on n'en dit pas plus (atelier.wolf.*).
  */
 function wolf(r, ctx, c, sky, t, TRr) {
@@ -456,13 +456,29 @@ function wolf(r, ctx, c, sky, t, TRr) {
   ctx.strokeStyle = rgba(94, 90, 104, 0.45); ctx.lineWidth = 0.8; for (const [x, y] of [[0, -28], [8, -30], [16, -29], [26, -27], [36, -23]]) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 3, y + 2.5); ctx.stroke(); } /* quelques mèches sur le dos */
   ctx.restore();
   body(); ctx.strokeStyle = EDGE; ctx.lineWidth = 0.8; ctx.stroke();
-  /* les doigts des pattes avant */
-  ctx.strokeStyle = F3; ctx.lineWidth = 0.7; for (const k of [-60, -57]) { ctx.beginPath(); ctx.moveTo(k, -3.5); ctx.lineTo(k + 1, -0.6); ctx.stroke(); }
-  /* la queue, touffue, ramenée devant jusque sous le museau ; le bout sombre */
-  const tail = () => { ctx.beginPath(); ctx.moveTo(46, -12); ctx.bezierCurveTo(54, -3, 40, -3, 20, -3.6); ctx.bezierCurveTo(0, -4.4, -30, -4.6, -46, -4.4); ctx.bezierCurveTo(-52, -4.2, -55, -1.5, -51, 0.4); ctx.bezierCurveTo(-30, 1.6, 0, 1.6, 22, 1.2); ctx.bezierCurveTo(44, 1, 54, -3, 46, -12); ctx.closePath(); };
+  /* les pattes, suggérées dans la silhouette (rien ne dépasse) : devant, l'avant-bras couché sous le menton, le coude replié en arrière ;
+     derrière, le jarret replié et la patte arrière qui pointe devant le bout de la queue ; les doigts et les griffes */
+  const SH = (al) => rgba(94, 90, 104, al);
+  ctx.save(); body(); ctx.clip();
+  { const g = ctx.createLinearGradient(0, -8.4, 0, -4.6); g.addColorStop(0, SH(0)); g.addColorStop(0.55, SH(0.3)); g.addColorStop(1, SH(0)); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-61, -8); ctx.bezierCurveTo(-52, -7.6, -42, -7.4, -32, -8.6); ctx.bezierCurveTo(-30, -6, -30, -3, -31, 0); ctx.lineTo(-33, 0); ctx.bezierCurveTo(-34, -3, -36, -4.8, -40, -5); ctx.lineTo(-61, -4.6); ctx.closePath(); ctx.fill(); } /* le dessus de l'avant-bras, sous le menton ; le coude */
+  { const g = ctx.createLinearGradient(0, -5, 0, 0); g.addColorStop(0, F1 + "73"); g.addColorStop(1, F1 + "00"); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-62, -5.2); ctx.bezierCurveTo(-52, -5.4, -42, -5.2, -36, -4.6); ctx.bezierCurveTo(-33, -3.4, -32.6, -1.4, -33, 0); ctx.lineTo(-62, 0); ctx.closePath(); ctx.fill(); } /* l'avant-bras, clair, couché au sol */
+  { const g = ctx.createLinearGradient(0, -6.6, 0, -1); g.addColorStop(0, SH(0)); g.addColorStop(0.5, SH(0.4)); g.addColorStop(1, SH(0)); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(18, -9); ctx.bezierCurveTo(14, -6.6, 8, -5.4, 2, -5.6); ctx.bezierCurveTo(0, -4.4, 0, -2, 1, 0); ctx.lineTo(3, 0); ctx.bezierCurveTo(4, -2, 8, -3.4, 18, -4); ctx.closePath(); ctx.fill(); } /* le jarret replié */
+  { ctx.fillStyle = F1 + "cc"; ctx.beginPath(); ctx.moveTo(14, -3.8); ctx.bezierCurveTo(8, -3.6, 4, -4.2, 2, -3.2); ctx.bezierCurveTo(0.6, -2.2, 1, -0.2, 2.6, 0); ctx.lineTo(14, 0); ctx.closePath(); ctx.fill(); } /* la patte arrière */
+  ctx.restore();
+  ctx.strokeStyle = SH(0.75); ctx.lineWidth = 0.55; for (const [x, y0, y1] of [[-60.2, -0.2, -3.8], [-58.4, -0.2, -4], [3.6, -0.2, -2.8], [5.2, -0.2, -3]]) { ctx.beginPath(); ctx.moveTo(x, y0); ctx.quadraticCurveTo(x - 0.2, (y0 + y1) / 2, x + 0.5, y1); ctx.stroke(); } /* les doigts */
+  ctx.fillStyle = F4; for (const x of [-61.6, -59.6, -57.8, 1.8, 3.6, 5.4]) { ctx.beginPath(); ctx.ellipse(x, -0.35, 0.55, 0.38, 0, 0, 6.283); ctx.fill(); } /* les griffes */
+  /* la queue, touffue, qui naît de la croupe et s'enroule autour de la cuisse jusqu'au genou ; le bout sombre */
+  const TP = [[47, -10], [55, 0.5], [32, 1], [12, -2.2]], TN = 30, at = (u) => { const m = 1 - u, a = m * m * m, b = 3 * m * m * u, d = 3 * m * u * u, e = u * u * u; return [a * TP[0][0] + b * TP[1][0] + d * TP[2][0] + e * TP[3][0], a * TP[0][1] + b * TP[1][1] + d * TP[2][1] + e * TP[3][1]]; };
+  const tup = [], tdn = [];
+  for (let i = 0; i <= TN; i++) { const u = i / TN, [x, y] = at(u), [x2, y2] = at(Math.min(1, u + 0.01)), [x0, y0] = at(Math.max(0, u - 0.01)), L = Math.hypot(x2 - x0, y2 - y0) || 1, nx = -(y2 - y0) / L, ny = (x2 - x0) / L;
+    const w = 1.4 + 4.4 * Math.pow(Math.sin(Math.PI * Math.min(1, u * 0.9 + 0.06)), 0.6), j = i > 2 && i < TN - 1 ? [1.1, 0.98, 1.03, 0.96, 1.08][i % 5] : 1; /* plus épaisse au milieu, une bordure ébouriffée */
+    tup.push([x + nx * w * j, y + ny * w * j]); tdn.push([x - nx * w * 0.75, y - ny * w * 0.75]); }
+  const tail = () => { ctx.beginPath(); tup.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); const [tx, ty] = at(1); ctx.quadraticCurveTo(tx - 3.5, ty + 0.4, tdn[TN][0], tdn[TN][1]); for (let i = TN; i >= 0; i--) ctx.lineTo(tdn[i][0], tdn[i][1]); ctx.closePath(); };
   tail(); ctx.fillStyle = F1; ctx.fill();
-  ctx.save(); tail(); ctx.clip(); { const g = ctx.createLinearGradient(-54, 0, -30, 0); g.addColorStop(0, F4); g.addColorStop(1, rgba(94, 90, 104, 0)); ctx.fillStyle = g; ctx.fillRect(-56, -6, 26, 8); }
-  ctx.strokeStyle = F2; ctx.lineWidth = 0.7; for (const x of [-20, -6, 8, 22, 34]) { ctx.beginPath(); ctx.moveTo(x, -2.6); ctx.lineTo(x + 5, -0.4); ctx.stroke(); } ctx.restore();
+  ctx.save(); tail(); ctx.clip();
+  { const [tx] = at(1), g = ctx.createLinearGradient(tx - 2, 0, tx + 13, 0); g.addColorStop(0, F4); g.addColorStop(0.45, SH(0.55)); g.addColorStop(1, SH(0)); ctx.fillStyle = g; ctx.fillRect(tx - 6, -20, 22, 26); } /* le bout sombre */
+  { const g = ctx.createLinearGradient(0, -6, 0, 2); g.addColorStop(0, SH(0)); g.addColorStop(1, SH(0.35)); ctx.fillStyle = g; ctx.fillRect(-20, -20, 90, 24); } /* le dessous, dans l'ombre */
+  ctx.strokeStyle = F2; ctx.lineWidth = 0.6; for (let i = 5; i < TN - 3; i += 5) { const [x, y] = at(i / TN); ctx.beginPath(); ctx.moveTo(x, y - 1.5); ctx.lineTo(x - 3.5, y + 0.8); ctx.stroke(); } ctx.restore(); /* des mèches */
   tail(); ctx.strokeStyle = EDGE; ctx.lineWidth = 0.7; ctx.stroke();
   /* l'oreille proche, qui frémit (et se dresse au clic) */
   tri([[-33, -22.5], [-31.5 + tw, -33 - perk], [-27, -24.3]], F2); tri([[-32, -23], [-31.2 + tw, -30 - perk], [-28.6, -24]], F4);
