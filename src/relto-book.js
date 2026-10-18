@@ -147,7 +147,6 @@ class ReltoBookView extends obsidian.ItemView {
     const right = spread.createDiv({ cls: "age-book__page age-book__page--right age-rbook__right" });
 
     // à droite : la vitre (montée d'abord : la scène sert aussi au texte)
-    right.createDiv({ cls: "age-book__heading", text: t("rbook.hip") });
     let glass = null;
     try { glass = await mountGlass(plugin, right, f); } catch (e) { console.warn("[Age Writer ext] livre du Relto", e); }
     if (!el.contains(right)) { if (glass) glass.renderer.stop(); return; } // une autre page a été tournée entre-temps
