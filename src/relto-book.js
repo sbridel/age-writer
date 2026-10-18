@@ -86,25 +86,37 @@ class ReltoBookView extends obsidian.ItemView {
   getIcon() { return "book"; }
   async onOpen() {
     this.contentEl.setAttr("tabindex", "0");
-    this.registerDomEvent(this.contentEl, "keydown", (e) => { if (e.key === "ArrowLeft") this.turn(-1); else if (e.key === "ArrowRight") this.turn(1); });
+    this.registerDomEvent(this.contentEl, "keydown", (e) => {
+      if (this.cover) { if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") { e.preventDefault(); this.openCover(); } return; }
+      if (e.key === "ArrowLeft") this.turn(-1); else if (e.key === "ArrowRight") this.turn(1);
+    });
     await this.render();
   }
   async onClose() { this.stopGlass(); }
   stopGlass() { if (this.glass) { try { this.glass.renderer.stop(); } catch (e) { /* ignore */ } this.glass = null; } }
 
+  /**
+   * Tourner une page, comme dans un livre : la page s'abaisse sur la reliure, la suivante se relève. Avant le premier Relto, le
+   * livre se referme sur sa couverture (réglage « Cover tab ») ; après le dernier, rien.
+   */
   turn(d) {
-    const n = hubsOf(this.plugin).length, i = (this.idx || 0) + d;
-    if (i < 0 || i >= n) return;
-    this.idx = i;
-    if (this.plugin.ext.sound && this.plugin.ext.soundPage !== false) { try { sound.pageTurn(this.plugin.ext.volume, { quick: true }); } catch (e) { /* ignore */ } }
-    this.render();
+    if (this.turning) return;
+    const n = hubsOf(this.plugin).length, i = (this.idx || 0) + d, e = this.plugin.ext;
+    const toCover = i < 0 && e.coverTab !== false;
+    if (!toCover && (i < 0 || i >= n)) { const sp = this.contentEl.querySelector(".age-rbook__spread"); if (sp) { sp.removeClass("is-nudge"); void sp.offsetWidth; sp.addClass("is-nudge"); } return; } // le bout du livre : la page résiste
+    if (e.sound && e.soundPage !== false) { try { sound.pageTurn(e.volume, { quick: true }); } catch (err) { /* ignore */ } }
+    const sp = this.contentEl.querySelector(".age-rbook__spread"), reduced = reducedMotion();
+    const go = () => { this.turning = false; if (toCover) { this.cover = true; this.anim = 0; } else { this.idx = i; this.anim = d; } this.render(); };
+    if (!sp || reduced) return go();
+    this.turning = true; sp.addClass(d > 0 ? "is-flip-fwd" : "is-flip-back");
+    window.setTimeout(go, 190);
   }
 
   /** Ouvrir la couverture : le son du livre et du fermoir (réglages), puis la page du dernier Relto visité. */
   openCover() {
     const e = this.plugin.ext;
     if (e.sound && e.soundBook !== false) { try { sound.openSequence(e.volume, { book: true, clasp: e.soundClasp !== false, link: false }); } catch (err) { /* ignore */ } }
-    this.cover = false; this.render();
+    this.cover = false; this.anim = 1; this.render(); // la première page se relève
   }
 
   /** La couverture : le livre fermé, qu'on ouvre d'un clic (ou Entrée). */
@@ -169,16 +181,18 @@ class ReltoBookView extends obsidian.ItemView {
     }
     row(t("rbook.visit"), visitText(t, (plugin.ext.reltoVisits || {})[f.path]));
 
-    // tourner les pages (plusieurs Reltos)
-    const nav = book.createDiv({ cls: "age-book__leafnav age-rbook__nav" });
-    if (plugin.ext.coverTab !== false) { const cb = nav.createEl("button", { cls: "age-rbook__coverbtn", text: t("book.cover") }); cb.addEventListener("click", () => { this.cover = true; this.render(); }); } // revenir à la couverture
-    if (hubs.length > 1) {
-      const prev = nav.createEl("button", { cls: "age-rbook__turn", text: "‹" }); prev.setAttr("aria-label", t("rbook.prev")); prev.disabled = this.idx === 0;
-      prev.addEventListener("click", () => this.turn(-1));
-      hubs.forEach((h, i) => { const d = nav.createSpan({ cls: "age-book__dot" + (i === this.idx ? " is-on" : "") }); d.setAttr("aria-label", h.basename); d.addEventListener("click", () => { if (i !== this.idx) this.turn(i - this.idx); }); });
-      const next = nav.createEl("button", { cls: "age-rbook__turn", text: "›" }); next.setAttr("aria-label", t("rbook.next")); next.disabled = this.idx === hubs.length - 1;
-      next.addEventListener("click", () => this.turn(1));
-    }
+    // tourner les pages : la page de gauche ramène en arrière (puis à la couverture), celle de droite avance ; au doigt, glisser
+    left.createDiv({ cls: "age-rbook__folio", text: String(2 * this.idx + 1) }); right.createDiv({ cls: "age-rbook__folio", text: String(2 * this.idx + 2) });
+    const back = this.idx > 0 || plugin.ext.coverTab !== false, fwd = this.idx < hubs.length - 1;
+    left.toggleClass("is-turnable", back); right.toggleClass("is-turnable", fwd);
+    left.setAttr("title", back ? (this.idx > 0 ? t("rbook.prev") : t("book.cover")) : "");
+    right.setAttr("title", fwd ? t("rbook.next") : "");
+    left.addEventListener("click", (e) => { if (e.target.closest("a, button")) return; this.turn(-1); });
+    right.addEventListener("click", (e) => { if (e.target.closest(".age-rbook__glass, a, button")) return; this.turn(1); });
+    let x0 = null;
+    spread.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse") x0 = e.clientX; });
+    spread.addEventListener("pointerup", (e) => { if (x0 == null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 60) this.turn(dx < 0 ? 1 : -1); });
+    if (this.anim) { spread.addClass(this.anim > 0 ? "is-flip-in-fwd" : "is-flip-in-back"); this.anim = 0; }
   }
 }
 

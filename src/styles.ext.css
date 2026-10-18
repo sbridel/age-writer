@@ -878,11 +878,6 @@
 .age-rbook__glass.is-clickable, .age-rbook__inbook.is-clickable { cursor: pointer; }
 .age-rbook__glass.is-clickable:hover, .age-rbook__inbook.is-clickable:hover .age-rbook__glass { filter: brightness(1.1) drop-shadow(0 0 6px rgba(205, 189, 148, 0.5)); }
 .age-rbook__open { align-self: flex-end; margin-top: auto; padding-top: 8px; cursor: pointer; color: #5a4a30; text-decoration: underline dotted; }
-.age-rbook__nav { padding-top: 12px; }
-.age-rbook__nav .age-book__dot { cursor: pointer; }
-.age-rbook__turn { background: none; box-shadow: none; border: none; font: 26px/1 serif; color: #cdbd94; padding: 0 8px; cursor: pointer; }
-.age-rbook__turn:disabled { opacity: 0.2; cursor: default; }
-.age-rbook .age-book__dot { background: #cdbd94; }
 @media (max-width: 640px) {
   .age-rbook { padding: 8px 4px; }
   .age-rbook__spread { flex-direction: column-reverse; min-height: 0; }
@@ -893,6 +888,24 @@
 }
 .age-rbook__covercontainer { cursor: pointer; width: min(100%, clamp(280px, calc((100vh - 240px) * 0.65), 460px)); transition: transform .25s ease, filter .25s ease; }
 .age-rbook__covercontainer:hover { transform: translateY(-2px); filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.65)); }
-.age-rbook__coverbtn { font-size: 0.8em; padding: 2px 10px; margin-right: 12px; }
-.age-rbook__nav { justify-content: center; }
 @media (prefers-reduced-motion: reduce) { .age-rbook__covercontainer { transition: none; } }
+/* tourner les pages : la page s'abaisse sur la reliure, l'autre se relève ; un coin corné dit qu'on peut tourner */
+.age-rbook__spread { perspective: 1600px; }
+.age-rbook__text, .age-rbook__right { position: relative; }
+.age-rbook__text.is-turnable, .age-rbook__right.is-turnable { cursor: pointer; }
+.age-rbook__right.is-turnable::after, .age-rbook__text.is-turnable::after { content: ""; position: absolute; bottom: 0; width: 26px; height: 26px; pointer-events: none; opacity: 0.55; transition: width .2s, height .2s, opacity .2s; }
+.age-rbook__right.is-turnable::after { right: 0; background: linear-gradient(315deg, #2a1d12 0 48%, #cdbd94 50%, #e9dcb4 62%, transparent 63%); border-radius: 0 0 4px 0; }
+.age-rbook__text.is-turnable::after { left: 0; background: linear-gradient(45deg, #2a1d12 0 48%, #cdbd94 50%, #e9dcb4 62%, transparent 63%); border-radius: 0 0 0 4px; }
+.age-rbook__right.is-turnable:hover::after, .age-rbook__text.is-turnable:hover::after { width: 38px; height: 38px; opacity: 0.85; }
+.age-rbook__folio { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font: italic 0.8em var(--font-text, Georgia, serif); color: #8a7a5c; pointer-events: none; }
+.age-rbook__spread.is-flip-fwd .age-book__page--right { transform-origin: left center; animation: age-rb-out-r .19s ease-in forwards; }
+.age-rbook__spread.is-flip-back .age-book__page--left { transform-origin: right center; animation: age-rb-out-l .19s ease-in forwards; }
+.age-rbook__spread.is-flip-in-fwd .age-book__page--left { transform-origin: right center; animation: age-rb-in-l .22s ease-out; }
+.age-rbook__spread.is-flip-in-back .age-book__page--right { transform-origin: left center; animation: age-rb-in-r .22s ease-out; }
+@keyframes age-rb-out-r { to { transform: rotateY(-88deg); filter: brightness(0.6); } }
+@keyframes age-rb-out-l { to { transform: rotateY(88deg); filter: brightness(0.6); } }
+@keyframes age-rb-in-l { from { transform: rotateY(88deg); filter: brightness(0.6); } to { transform: none; filter: none; } }
+@keyframes age-rb-in-r { from { transform: rotateY(-88deg); filter: brightness(0.6); } to { transform: none; filter: none; } }
+.age-rbook__spread.is-nudge .age-book__page--right, .age-rbook__spread.is-nudge .age-book__page--left { animation: age-rb-nudge .3s ease; }
+@keyframes age-rb-nudge { 30% { transform: translateX(3px); } 60% { transform: translateX(-2px); } }
+@media (prefers-reduced-motion: reduce) { .age-rbook__spread * { animation: none !important; } }
