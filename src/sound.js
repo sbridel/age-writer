@@ -773,6 +773,19 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
         room.timers.push(setTimeout(drip, 160 + Math.random() * 900));
       };
       drip(); room.timers.push(setTimeout(drip, 420));
+    } else if (kind === "tap") {
+      // le robinet ouvert : un filet qui tombe dans un bac d'émail ; un ruissellement médium qui bouge sans cesse (le filet qui
+      // ondule), un souffle aigu, une résonance grave du bac, et de petites bulles serrées
+      loop((s) => { const bp = keep(c.createBiquadFilter()), g = keep(c.createGain()), lfo = keep(c.createOscillator()), lg = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 1700; bp.Q.value = 0.9; g.gain.value = 0.11; lfo.frequency.value = 3.3; lg.gain.value = 260; lfo.connect(lg); lg.connect(bp.frequency); lfo.start(); s.connect(bp); bp.connect(g); g.connect(out); });
+      loop((s) => { const hp = keep(c.createBiquadFilter()), g = keep(c.createGain()); hp.type = "highpass"; hp.frequency.value = 5200; g.gain.value = 0.035; s.connect(hp); hp.connect(g); g.connect(out); });
+      loop((s) => { const lp = keep(c.createBiquadFilter()), g = keep(c.createGain()); lp.type = "lowpass"; lp.frequency.value = 380; g.gain.value = 0.06; s.connect(lp); lp.connect(g); g.connect(out); });
+      const bubble = () => {
+        if (room.kind !== "tap" || room.out !== out) return;
+        const t = c.currentTime, o = c.createOscillator(), e = c.createGain(), f = 1100 + Math.random() * 2400, len = 0.015 + Math.random() * 0.03, a = 0.008 + Math.random() * 0.018;
+        o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * (1.4 + Math.random() * 0.6), t + len); e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(a, t + 0.003); e.gain.exponentialRampToValueAtTime(0.0003, t + len + 0.02); o.connect(e); e.connect(out); o.start(t); o.stop(t + len + 0.04);
+        room.timers.push(setTimeout(bubble, 25 + Math.random() * 110));
+      };
+      bubble();
     } else if (kind === "cat") {
       // ronronnement doux : bruit grave filtré dont le volume pulse de façon irrégulière (~25 Hz qui dérive) et respire lentement ; miaulements espacés
       if (bufs.main) fileLoop(bufs.main); else loop((s) => {
