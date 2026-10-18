@@ -52,6 +52,7 @@ function renderMany(host, ages) {
     { h: 15, t: 3.3, env: {}, pages: ["page_pine_trees", "page_maples", "page_ponderosa", "page_crystal_tree", "page_birches", "page_stalk_tree", "page_flowers", "page_butterflies", "page_grass"], view: "grove", label: "GROVE day" },
     { h: 14, t: 3.3, env: {}, pages: ["page_chimney"], view: "lounge", label: "LOUNGE day / the kitchen, the sofa, the Relto book on its pedestal" },
     { h: 22.5, t: 3.3, env: {}, pages: ["page_chimney"], view: "lounge", label: "LOUNGE night / the lantern, the stove, a candle by the book" },
+    { h: 15, t: 3.3, env: {}, pages: ["page_chimney"], view: "lounge", tap: true, label: "LOUNGE tap open / the water runs into the sink" },
     { h: 22.5, t: 3.3, env: {}, pages: ["page_castle"], view: "lounge", label: "LOUNGE castle night / stone, velvet, the red moon" },
     { h: 14, t: 3.3, env: {}, pages: ["page_glasshouse"], view: "lounge", label: "LOUNGE glasshouse day / glass, copper, mosaic" },
     { h: 22, t: 3.3, env: {}, pages: ["page_castle", "page_telescope", "page_mountain", "page_chimney"], view: "cabin", label: "CABIN castle night / the door's pinacle behind the small bookcase" },
@@ -100,7 +101,7 @@ function renderMany(host, ages) {
     const scene = M.buildScene(relto, pages, ages);
     const c = document.createElement("canvas"); const d = document.createElement("div"); d.textContent = v.label; host.appendChild(d); host.appendChild(c);
     c.style.width = "640px"; document.body.appendChild(host);
-    const r = new ReltoRenderer(c, dni, { tipDelay: 0, ...(v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}) }); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view;
+    const r = new ReltoRenderer(c, dni, { tipDelay: 0, ...(v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}) }); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view; if (v.tap) r.tapOn = true;
     if (v.now) { const DC = require("./dniclock"); if (v.now === "tahvo+1s") { const ms = 1791591000000, tv = DC.rings(ms).find((q) => q.key === "tahvo"); r.nowOverride = ms - tv.elapsed + 1000; } else r.nowOverride = v.now; } // l'horloge D'ni à un instant fixe
     if (v.ghost) ghostView(r); else if (v.unwritten) unwrittenView(r, v.unwritten);
     if (v.step2) step2(r, v.step2);

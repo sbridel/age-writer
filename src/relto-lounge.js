@@ -118,9 +118,18 @@ function kitchen(r, ctx, c, R, sky, t, fl, night, castle, glass, tr) {
   ctx.fillStyle = c(BR); ctx.beginPath(); ctx.arc(mx, my - 15.5, 1.8, 0, 6.283); ctx.fill();
   ctx.strokeStyle = c(BR); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(mx + 0.5, my - 13); ctx.quadraticCurveTo(mx + 9, my - 17, mx + 10, my - 9); ctx.stroke();
   R(BR, mx + 8.7, my - 9.5, 2.6, 3.2); R(BRL, mx + 8.9, my - 6.5, 2.2, 0.8);
-  const drip = (t * 0.9) % 1; ctx.fillStyle = rgba(170, 200, 225, 0.55); ctx.beginPath(); ctx.arc(mx + 10, my - 5 + drip * 13, 0.8, 0, 6.283); ctx.fill(); // une goutte, de temps en temps
+  const on = !!r.tapOn;
+  if (on) { // le robinet ouvert : un filet d'eau qui ondule un peu, plus clair au milieu
+    const wob = Math.sin(t * 23) * 0.15, sg = ctx.createLinearGradient(mx + 9, 0, mx + 11, 0); sg.addColorStop(0, rgba(150, 190, 220, 0.5)); sg.addColorStop(0.5, rgba(230, 245, 255, 0.85)); sg.addColorStop(1, rgba(150, 190, 220, 0.5));
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(mx + 9, my - 6); ctx.lineTo(mx + 11, my - 6); ctx.lineTo(mx + 10.7 + wob, my + 13.5); ctx.lineTo(mx + 9.3 + wob, my + 13.5); ctx.closePath(); ctx.fill();
+  } else { const drip = (t * 0.9) % 1; ctx.fillStyle = rgba(170, 200, 225, 0.55); ctx.beginPath(); ctx.arc(mx + 10, my - 5 + drip * 13, 0.8, 0, 6.283); ctx.fill(); } // fermé : une goutte, de temps en temps
   ctx.restore();
-  r.hot.push({ x: 10, y: 170, w: 100, h: 48, tip: tr("relto.lounge.sink") });
+  if (on) { // l'eau dans le bac : des cercles qui s'élargissent, un peu d'écume au point de chute
+    const sx = mx + 10 * 1.35, sy = 208.5;
+    for (let i = 0; i < 3; i++) { const p = ((t * 1.6 + i / 3) % 1); ctx.strokeStyle = rgba(225, 240, 250, 0.5 * (1 - p)); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.ellipse(sx, sy, 2 + p * 16, 0.8 + p * 2.6, 0, 0, 6.283); ctx.stroke(); }
+    ctx.fillStyle = rgba(240, 250, 255, 0.7); for (let i = 0; i < 4; i++) { const a = t * 9 + i * 1.7; ctx.beginPath(); ctx.arc(sx + Math.cos(a) * 2.2, sy - 0.8 - Math.abs(Math.sin(a * 1.3)) * 1.8, 0.6, 0, 6.283); ctx.fill(); }
+  }
+  r.hot.push({ x: 10, y: 170, w: 100, h: 48, tip: tr(on ? "relto.lounge.tap.off" : "relto.lounge.tap.on"), tap: true });
   // la niche de pierre (Château) ou la hotte de cuivre (Verrière) au-dessus du poêle
   if (castle) { ctx.strokeStyle = c(CASTLE.STONE_LO); ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(112, FLOOR + 2); ctx.lineTo(112, 150); ctx.quadraticCurveTo(150, 118, 188, 150); ctx.lineTo(188, FLOOR + 2); ctx.stroke(); }
   if (glass) { ctx.fillStyle = c(GLASS.COPPER); ctx.beginPath(); ctx.moveTo(112, 150); ctx.lineTo(188, 150); ctx.lineTo(176, 118); ctx.lineTo(124, 118); ctx.closePath(); ctx.fill(); R(GLASS.COPPER_HI, 112, 148, 76, 2); for (const x of [130, 150, 170]) R(GLASS.COPPER_LO, x, 121, 1.2, 27); }

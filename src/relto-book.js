@@ -79,20 +79,18 @@ async function linkTo(plugin, f, leaf) {
   await R.openHubFile(plugin, f, leaf);
 }
 
-class ReltoBookView extends obsidian.ItemView {
-  constructor(leaf, plugin) { super(leaf); this.plugin = plugin; this.idx = null; this.glass = null; this.cover = plugin.ext.coverTab !== false; } // le livre s'ouvre sur sa couverture (réglage « Cover tab » des livres)
-  getViewType() { return RELTO_BOOK_VIEW; }
-  getDisplayText() { return this.plugin.t("rbook.title"); }
-  getIcon() { return "book"; }
-  async onOpen() {
-    this.contentEl.setAttr("tabindex", "0");
-    this.registerDomEvent(this.contentEl, "keydown", (e) => {
-      if (this.cover) { if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") { e.preventDefault(); this.openCover(); } return; }
-      if (e.key === "ArrowLeft") this.turn(-1); else if (e.key === "ArrowRight") this.turn(1);
-    });
-    await this.render();
+/**
+ * Le livre lui-même, dessiné dans un conteneur : l'onglet du Livre du Relto, ou par-dessus le Relto (le livre pris sur le
+ * piédestal du salon). `onLink(f)` : toucher la vitre d'un Relto ; `cover` : s'ouvrir fermé ; `keepCover` : avant le premier
+ * Relto, toujours se refermer (par-dessus le Relto, comme un livre de liaison).
+ */
+class ReltoBook {
+  constructor(plugin, el, { onLink, cover = plugin.ext.coverTab !== false, keepCover = false, idx = null } = {}) { this.plugin = plugin; this.contentEl = el; this.onLink = onLink; this.idx = idx; this.glass = null; this.cover = cover; this.keepCover = keepCover; }
+  /** Les touches : Entrée ou → ouvre la couverture ; ← → tournent les pages. Renvoie vrai si la touche a servi. */
+  key(e) {
+    if (this.cover) { if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") { e.preventDefault(); this.openCover(); return true; } return false; }
+    if (e.key === "ArrowLeft") { this.turn(-1); return true; } if (e.key === "ArrowRight") { this.turn(1); return true; } return false;
   }
-  async onClose() { this.stopGlass(); }
   stopGlass() { if (this.glass) { try { this.glass.renderer.stop(); } catch (e) { /* ignore */ } this.glass = null; } }
 
   /**
@@ -102,7 +100,7 @@ class ReltoBookView extends obsidian.ItemView {
   turn(d) {
     if (this.turning) return;
     const n = hubsOf(this.plugin).length, i = (this.idx || 0) + d, e = this.plugin.ext;
-    const toCover = i < 0 && e.coverTab !== false;
+    const toCover = i < 0 && (this.keepCover || e.coverTab !== false);
     if (!toCover && (i < 0 || i >= n)) { const sp = this.contentEl.querySelector(".age-rbook__spread"); if (sp) { sp.removeClass("is-nudge"); void sp.offsetWidth; sp.addClass("is-nudge"); } return; } // le bout du livre : la page résiste
     if (e.sound && e.soundPage !== false) { try { sound.pageTurn(e.volume, { quick: true }); } catch (err) { /* ignore */ } }
     const sp = this.contentEl.querySelector(".age-rbook__spread"), reduced = reducedMotion();
@@ -154,10 +152,10 @@ class ReltoBookView extends obsidian.ItemView {
     const sc = glass ? glass.scene : null, name = f.basename;
     if (glass) {
       glass.box.addClass("is-clickable"); glass.box.setAttr("aria-label", t("rbook.through", { name }));
-      glass.box.addEventListener("click", () => linkTo(plugin, f, this.leaf));
+      glass.box.addEventListener("click", () => this.onLink(f));
     }
     // ni légende ni lien sous la vitre : c'est la vitre qu'on touche (Entrée aussi, quand elle a le focus)
-    if (glass) { glass.box.setAttr("tabindex", "0"); glass.box.setAttr("role", "link"); glass.box.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); linkTo(plugin, f, this.leaf); } }); }
+    if (glass) { glass.box.setAttr("tabindex", "0"); glass.box.setAttr("role", "link"); glass.box.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); this.onLink(f); } }); }
 
     // à gauche : le texte
     const story = R.isStoryHub(app, f);
@@ -181,7 +179,7 @@ class ReltoBookView extends obsidian.ItemView {
 
     // tourner les pages : la page de gauche ramène en arrière (puis à la couverture), celle de droite avance ; au doigt, glisser
     left.createDiv({ cls: "age-rbook__folio", text: String(2 * this.idx + 1) }); right.createDiv({ cls: "age-rbook__folio", text: String(2 * this.idx + 2) });
-    const back = this.idx > 0 || plugin.ext.coverTab !== false, fwd = this.idx < hubs.length - 1;
+    const back = this.idx > 0 || this.keepCover || plugin.ext.coverTab !== false, fwd = this.idx < hubs.length - 1;
     left.toggleClass("is-turnable", back); right.toggleClass("is-turnable", fwd);
     left.setAttr("title", back ? (this.idx > 0 ? t("rbook.prev") : t("book.cover")) : "");
     right.setAttr("title", fwd ? t("rbook.next") : "");
@@ -194,12 +192,55 @@ class ReltoBookView extends obsidian.ItemView {
   }
 }
 
+
+class ReltoBookView extends obsidian.ItemView {
+  constructor(leaf, plugin) { super(leaf); this.plugin = plugin; this.book = new ReltoBook(plugin, this.contentEl, { onLink: (f) => linkTo(plugin, f, this.leaf) }); } // le livre s'ouvre sur sa couverture (réglage « Cover tab » des livres)
+  getViewType() { return RELTO_BOOK_VIEW; }
+  getDisplayText() { return this.plugin.t("rbook.title"); }
+  getIcon() { return "book"; }
+  async onOpen() {
+    this.contentEl.setAttr("tabindex", "0");
+    this.registerDomEvent(this.contentEl, "keydown", (e) => this.book.key(e));
+    await this.book.render();
+  }
+  async onClose() { this.book.stopGlass(); }
+  /** Rouvert : de nouveau fermé, sur le dernier Relto visité. */
+  async reopen() { this.book.idx = null; this.book.cover = this.plugin.ext.coverTab !== false; await this.book.render(); }
+}
+
+/**
+ * Le Livre du Relto pris sur le piédestal du salon : il s'ouvre par-dessus le Relto, comme un livre de liaison, sans le quitter.
+ * Fermé d'abord (un clic l'ouvre, avec le son du livre et du fermoir) ; les pages se tournent ; toucher la vitre du Relto où l'on
+ * est ramène dehors, sur l'île (`onHere`) ; toucher celle d'un autre Relto y mène. Un clic à côté, ou Échap, repose le livre.
+ */
+function openInRelto(plugin, host, hereFile, { onHere } = {}) {
+  if (!host || !host.createDiv) return null;
+  const old = host.querySelector(":scope > .age-rbook-over"); if (old) old.remove();
+  if (window.getComputedStyle(host).position === "static") host.style.position = "relative";
+  const ov = host.createDiv({ cls: "age-rbook-over" }), stage = ov.createDiv({ cls: "age-rbook-over__stage" });
+  const hubs = hubsOf(plugin), here = hereFile ? hubs.findIndex((f) => f.path === hereFile.path) : -1;
+  let book = null;
+  const close = () => { document.removeEventListener("keydown", onKey, true); window.removeEventListener("resize", fit); if (book) book.stopGlass(); ov.remove(); };
+  const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); e.preventDefault(); close(); return; } if (book && book.key(e)) e.stopPropagation(); };
+  const fit = () => { const r = host.getBoundingClientRect(), k = Math.min((r.width * 0.96) / 1040, (r.height * 0.96) / (book && book.cover ? 640 : 600)); stage.style.transform = `translate(-50%, -50%) scale(${Math.max(0.2, k).toFixed(3)})`; };
+  book = new ReltoBook(plugin, stage, { cover: true, keepCover: true, idx: here >= 0 ? here : null, onLink: (f) => {
+    if (plugin.ext.sound && plugin.ext.soundLink !== false) { try { sound.linkSound(plugin.ext.volume); } catch (e) { /* ignore */ } }
+    ov.addClass("is-linking");
+    window.setTimeout(() => { close(); if (hereFile && f.path === hereFile.path) { if (onHere) onHere(); } else R.openHubFile(plugin, f); }, 900);
+  } });
+  const render0 = book.render.bind(book); book.render = async () => { await render0(); fit(); }; // la taille suit l'état (fermé, ouvert)
+  ov.addEventListener("click", (e) => { if (e.target === ov) close(); }); // un clic à côté du livre le repose
+  document.addEventListener("keydown", onKey, true); window.addEventListener("resize", fit);
+  book.render();
+  return { close };
+}
+
 /** Ouvrir le Livre du Relto : jamais deux onglets (le livre déjà ouvert est rouvert sur le dernier Relto visité). */
 async function openReltoBook(plugin) {
   const ws = plugin.app.workspace, ex = ws.getLeavesOfType ? ws.getLeavesOfType(RELTO_BOOK_VIEW)[0] : null;
   const leaf = ex || ws.getLeaf(false);
   if (!ex) await leaf.setViewState({ type: RELTO_BOOK_VIEW, active: true });
-  else if (ex.view && ex.view.render) { ex.view.idx = null; ex.view.cover = plugin.ext.coverTab !== false; await ex.view.render(); } // rouvert : de nouveau fermé, sur le dernier Relto visité
+  else if (ex.view && ex.view.reopen) await ex.view.reopen();
   if (ws.setActiveLeaf) ws.setActiveLeaf(leaf, { focus: true });
   if (ws.revealLeaf) await ws.revealLeaf(leaf);
 }
@@ -221,7 +262,7 @@ function toggleRibbon(plugin) {
   new obsidian.Notice(plugin.t(plugin.ext.reltoRibbon === "last" ? "rbook.ribbon.last" : "rbook.ribbon.book"));
 }
 
-module.exports = { RELTO_BOOK_VIEW, ReltoBookView, openReltoBook, ribbon, toggleRibbon, hubsOf, lastHub, noteVisit, visitText, mountGlass };
+module.exports = { RELTO_BOOK_VIEW, ReltoBookView, ReltoBook, openInRelto, openReltoBook, ribbon, toggleRibbon, hubsOf, lastHub, noteVisit, visitText, mountGlass };
 
 /** L'emblème frappé au médaillon du Livre du Relto : l'île flottante, ses deux pierres de liaison et l'anneau entre elles, au fer doré. */
 function islandEmblem(cx, cy, r, col) {

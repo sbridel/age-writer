@@ -908,3 +908,15 @@
 .age-rbook__spread.is-nudge .age-book__page--right, .age-rbook__spread.is-nudge .age-book__page--left { animation: age-rb-nudge .3s ease; }
 @keyframes age-rb-nudge { 30% { transform: translateX(3px); } 60% { transform: translateX(-2px); } }
 @media (prefers-reduced-motion: reduce) { .age-rbook__spread * { animation: none !important; } }
+/* le Livre du Relto pris sur le piédestal du salon : par-dessus le Relto, comme un livre de liaison (src/relto-book.js, openInRelto) */
+.age-rbook-over { position: absolute; inset: 0; z-index: 40; overflow: hidden; background: rgba(6, 5, 4, 0.72); cursor: pointer; animation: age-rbook-over-in .35s ease-out; }
+.age-rbook-over__stage { position: absolute; left: 50%; top: 50%; width: 1040px; transform-origin: center center; cursor: default; }
+.age-rbook-over .age-rbook { padding: 0; }
+.age-rbook-over .age-rbook__covercontainer { width: 400px; }
+.age-rbook-over.is-linking .age-rbook__glass { filter: brightness(1.8) saturate(0.6); transition: filter .8s ease-in; }
+.age-rbook-over.is-linking { animation: age-rbook-over-out .9s ease-in forwards; }
+@keyframes age-rbook-over-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes age-rbook-over-out { 60% { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .age-rbook-over, .age-rbook-over.is-linking { animation: none; } }
+.age-rbook-over .age-book__spread.is-cover { background: none; border: none; box-shadow: none; padding: 0; }
+.age-rbook-over .age-book__spread.is-cover .age-book__corner { display: none; }

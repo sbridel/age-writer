@@ -41,4 +41,11 @@ function run(host, lang, hour) {
   v.contentEl.className = "view-content"; v.contentEl.style.width = "1040px"; host.appendChild(v.contentEl);
   return v;
 }
-module.exports = { run };
+/** Le livre pris sur le piédestal : par-dessus un Relto de 640 × 360 (fermé, puis ouvert). */
+async function runOver(host, lang, open) {
+  const v = run(document.createElement("div"), lang, 15.5), box = document.createElement("div");
+  box.style.cssText = "width:640px;height:360px;position:relative;background:#334;margin:10px"; host.appendChild(box);
+  RBK.openInRelto(v.plugin, box, v.plugin.app.vault.getMarkdownFiles()[0], { onHere() {} });
+  if (open) { await new Promise((ok) => setTimeout(ok, 50)); box.querySelector(".age-rbook__covercontainer").click(); }
+}
+module.exports = { run, runOver };
