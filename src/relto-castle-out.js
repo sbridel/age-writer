@@ -235,7 +235,16 @@ function keep(r, ctx, M, sky, t, observatory) {
   for (const sx of [-1, 1]) { const px = sx < 0 ? a0 - 4 : a0 + aw + 4; ctx.fillStyle = grad(px - 3.5, px + 3.5, FRONT); ctx.fillRect(px - 3.5, top - 8, 7, 26); R(px - 4.5, px, top - 34, px + 4.5, top - 8, { rows: false }); // deux pinacles d'angle, qui encadrent la coupole
     ctx.fillStyle = c("#1c1a26"); for (let k = 1; k < 4; k++) { const y = top - 8 - k * 6.5, w = 4.5 * (1 - k / 4); ctx.fillRect(px - w - 1.4, y, 1.4, 1.2); ctx.fillRect(px + w, y, 1.4, 1.2); }
     strokeP(`M${px} ${top - 34} v-5`, c(GOLD), 0.9); ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(px, top - 39.5, 1.2, 0, 6.283); ctx.fill();
-    fillP(`M${px + sx * 3.5} ${top + 22} l ${sx * 8} -2 l ${sx * 1.5} 2.5 l ${-sx * 3} 1.5 l ${sx * 1} 2.5 l ${-sx * 7.5} -1.5 Z`, c("#5a5664")); } // et leurs gargouilles
+    { const gx = sx < 0 ? a0 : a0 + aw, gy = top + 22, X = (u) => gx + sx * u, D = c("#4a4552"), M = c("#6e6876"), L = c("#8a8494"); /* et leurs gargouilles : de profil, penchées dans le vide, sur une console qui sort de l'angle de la tour, sous la galerie */
+      ctx.fillStyle = D; ctx.beginPath(); ctx.moveTo(X(-1), gy - 1.6); ctx.lineTo(X(3), gy - 1.6); ctx.lineTo(X(3), gy + 1.5); ctx.lineTo(X(-1), gy + 5); ctx.closePath(); ctx.fill(); /* la console, prise dans l'angle de la tour */
+      ctx.fillStyle = M; ctx.beginPath(); ctx.moveTo(X(1), gy - 1.4); ctx.quadraticCurveTo(X(4), gy - 4.6, X(7), gy - 3.2); /* le dos voûté */
+      ctx.lineTo(X(8.4), gy - 4.6); ctx.lineTo(X(9), gy - 2.8); /* l'oreille */
+      ctx.quadraticCurveTo(X(10.6), gy - 2.6, X(11.4), gy - 1.6); ctx.lineTo(X(9.6), gy - 1); /* le museau, la gueule ouverte */
+      ctx.lineTo(X(11), gy + 0.2); ctx.quadraticCurveTo(X(9), gy + 1, X(7.4), gy + 0.4); /* la mâchoire */
+      ctx.lineTo(X(6.6), gy + 2); ctx.lineTo(X(5.6), gy + 0.6); ctx.lineTo(X(3), gy + 1.2); ctx.closePath(); ctx.fill(); /* la patte, agrippée à la console */
+      ctx.fillStyle = L; ctx.beginPath(); ctx.moveTo(X(1.4), gy - 1.6); ctx.quadraticCurveTo(X(4), gy - 4.2, X(6.6), gy - 3.2); ctx.lineTo(X(6.4), gy - 2.6); ctx.quadraticCurveTo(X(4), gy - 3.4, X(1.6), gy - 1); ctx.closePath(); ctx.fill(); /* le dos, éclairé */
+      ctx.fillStyle = D; ctx.beginPath(); ctx.moveTo(X(3.4), gy - 2.6); ctx.lineTo(X(2), gy - 6.4); ctx.lineTo(X(4.2), gy - 4.4); ctx.lineTo(X(4.6), gy - 6); ctx.lineTo(X(5.6), gy - 3.6); ctx.closePath(); ctx.fill(); /* une aile repliée */
+      ctx.fillStyle = c("#17141a"); ctx.fillRect(sx > 0 ? X(8.6) : X(9.4), gy - 2.4, 0.8, 0.8); } /* l'œil */ }
   ctx.restore();
   // le pied de l'ancienne montagne : un long corps de logis à contreforts et créneaux, d'un flanc à l'autre, une tour ronde à chaque bout
   { const x0 = cx - hw + 10, x1 = cx + hw - 10, top = GY - raise - 4;
