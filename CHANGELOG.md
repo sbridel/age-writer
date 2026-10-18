@@ -2,6 +2,16 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.41.4 — The Castle beyond the keep (2026-10-18)
+
+### Changed
+- **Behind the keep**, the old mountain's mass is no longer a regular row of teeth: two layers of uneven towers rise from it, with pepper-pot roofs, thin spires, broken-pitched roofs, chipped battlements, turrets corbelled out from their flanks, a tiered tower and a spire that leans, its tip broken off.
+- **A tall rose-window tower** stands at the back, its rose dark by day and burning at night, under a belfry with corner pinnacles and a short spire; two tiny turrets are tied to it, one on a footbridge, one hanging from a slender arm on its strut. It lights up on the side the sun is on.
+- The visitor by the fire has been redrawn.
+
+### Fixed
+- The lancets of the low curtain wall below the keep no longer run over the pale coping.
+
 ## 1.41.3 — The Castle under slate (2026-10-17)
 
 ### Changed

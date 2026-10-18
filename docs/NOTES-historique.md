@@ -607,3 +607,12 @@ Pour Halloween : attacher le Château, attendre la nuit, regarder la lune rouge 
 - Coffre : alcôves dans le mur (corniche, lanterneau au centre), rang du bas sur socle, cercueil agrandi, lueur de la lampe Tiffany limitée au livre.
 - Tests : golden inchangé ; `test/castle.test.js` inchangé (zones identiques).
 
+## 1.41.4 — le Château au-delà du donjon (18 oct. 2026)
+
+- Masse du fond (`relto-castle-out.js`, `keep`) : la crête régulière de l'ancienne montagne devient une silhouette chaotique sur deux plans (`skyline`, graines `0x91d2` lointain, plus clair, et `0x3a57` proche) : tours de largeurs et de hauteurs inégales, chacune le pied dans la masse (`yAt`), coiffées de poivrières, de flèches fines, de combles brisés à épi ou de créneaux ébréchés ; quelques tourelles en encorbellement ; les fenêtres posées sur les tours. Ajouts sans symétrie : une tour étagée à clochetons, une flèche brisée qui penche.
+- Tour à rosace, au fond : fût jusqu'à la masse, galerie à balustrade, beffroi aussi large que le fût, quatre clochetons, flèche courte à lucarne ; la rosace (réseau à huit rayons, lobes, anneau) dans le beffroi, au-dessus de la crête, pourpre le jour, embrasée la nuit ; deux baies en arc dessous ; côté éclairé qui suit le soleil. Deux tourelles minuscules (la distance) : une sur la masse et sa passerelle, une suspendue au bout d'un bras grêle sur sa jambe de force. Rien ne flotte.
+- Les tracés des corniches suivent le sens des fûts : au chevauchement, le remplissage (règle non nulle) ne s'annule plus et ne laisse plus voir le ciel.
+- Corps de logis au pied du mont : la hauteur des lancettes suit celle du mur, elles tiennent sous le bandeau.
+- Un hôte du Château retouché (zone `extra: true`).
+- Maquettes faites à part avant de coder (vue de l'île, matin, après-midi, nuit ; vue globale).
+- Tests : golden inchangé ; `test/castle.test.js` inchangé (zones identiques).

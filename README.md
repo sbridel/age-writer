@@ -41,7 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
-- **1.41 to 1.41.3, the Castle, for Halloween.** A romantic gothic disguise: the whole island becomes a castle around the old mountain, with a chapel, hanging towers and stone footbridges; the nights turn red under a great red moon; every room inside takes on stone, walnut and old gold; by day the stone takes the light; at night, a giant bat crosses the red moon; the roofs are slate, under a verdigris spire.
+- **1.41 to 1.41.4, the Castle, for Halloween.** A romantic gothic disguise: the whole island becomes a castle around the old mountain, with a chapel, hanging towers and stone footbridges; the nights turn red under a great red moon; every room inside takes on stone, walnut and old gold; by day the stone takes the light; at night, a giant bat crosses the red moon; the roofs are slate, under a verdigris spire; behind the keep, a chaotic mass of towers and a rose-window tower.
 - **1.40, lawn and lily of the valley.** The Grass page turns the island into a lawn; a new Lily of the valley page.
 - **1.39.1, the panel closes again.** Leaving the cabin puts the bookcase and the hidden panel back (a bug since 1.36).
 - **1.37 to 1.39, the Glasshouse and its close-ups.** An art nouveau disguise for the whole Relto (glass, copper, flowers, coloured lamplight; a page you attach or detach). The round window of the writing room opens up ringed by the D'ni numerals 0 to 24, and the calendar pinnacle opens on the full D'ni date.
