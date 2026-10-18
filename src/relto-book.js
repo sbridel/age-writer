@@ -157,9 +157,8 @@ class ReltoBookView extends obsidian.ItemView {
       glass.box.addClass("is-clickable"); glass.box.setAttr("aria-label", t("rbook.through", { name }));
       glass.box.addEventListener("click", () => linkTo(plugin, f, this.leaf));
     }
-    right.createDiv({ cls: "age-book__caption", text: t("rbook.through", { name }) });
-    const open = right.createEl("a", { cls: "age-book__open age-rbook__open", text: t("rbook.open") });
-    open.addEventListener("click", (e) => { e.preventDefault(); linkTo(plugin, f, this.leaf); });
+    // ni légende ni lien sous la vitre : c'est la vitre qu'on touche (Entrée aussi, quand elle a le focus)
+    if (glass) { glass.box.setAttr("tabindex", "0"); glass.box.setAttr("role", "link"); glass.box.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); linkTo(plugin, f, this.leaf); } }); }
 
     // à gauche : le texte
     const story = R.isStoryHub(app, f);

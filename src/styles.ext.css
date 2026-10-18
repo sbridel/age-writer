@@ -877,7 +877,6 @@
 .age-rbook__canvas { position: absolute; top: 0; left: 50%; height: 100%; width: auto; aspect-ratio: 16 / 9; transform: translateX(-50%); pointer-events: none; display: block; }
 .age-rbook__glass.is-clickable, .age-rbook__inbook.is-clickable { cursor: pointer; }
 .age-rbook__glass.is-clickable:hover, .age-rbook__inbook.is-clickable:hover .age-rbook__glass { filter: brightness(1.1) drop-shadow(0 0 6px rgba(205, 189, 148, 0.5)); }
-.age-rbook__open { align-self: flex-end; margin-top: auto; padding-top: 8px; cursor: pointer; color: #5a4a30; text-decoration: underline dotted; }
 @media (max-width: 640px) {
   .age-rbook { padding: 8px 4px; }
   .age-rbook__spread { flex-direction: column-reverse; min-height: 0; }
