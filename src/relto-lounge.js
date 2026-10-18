@@ -205,7 +205,7 @@ function pedestal(r, ctx, c, R, sky, fl, night, castle, glass, tr) {
   R(gold, px - 13, top + 60, 26, 2.5); R(gold, px - 13, FLOOR - 24, 26, 2.5);
   R(s2, px - 18, top + 32, 36, 8);
   ctx.strokeStyle = c(s2); ctx.lineWidth = 2.4; for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(px + s * 18, top + 38, 5, 0, 6.283); ctx.stroke(); }
-  if (castle) { ctx.fillStyle = c(CASTLE.GOLD); for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(px + s * 28, FLOOR - 16); ctx.lineTo(px + s * 25, FLOOR - 34); ctx.lineTo(px + s * 22, FLOOR - 16); ctx.fill(); } } // deux flammes d'or au pied
+  if (castle) { ctx.fillStyle = c(CASTLE.GOLD); for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(px + s * 26.5, FLOOR - 10); ctx.lineTo(px + s * 24, FLOOR - 28); ctx.lineTo(px + s * 21.5, FLOOR - 10); ctx.fill(); ctx.fillStyle = c(CASTLE.GOLD); } } // deux flammes d'or, posées sur la marche du milieu (devant la marche du haut)
   if (glass) { // une liane grimpe autour du fût
     ctx.strokeStyle = c("#3b8f6a"); ctx.lineWidth = 1.6; ctx.beginPath(); for (let y = FLOOR - 20; y > top + 42; y -= 4) { const x = px + Math.sin(y * 0.15) * 10; if (y === FLOOR - 20) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke();
     ctx.fillStyle = c("#4bb08a"); for (let y = FLOOR - 26; y > top + 46; y -= 14) { const x = px + Math.sin(y * 0.15) * 10; ctx.beginPath(); ctx.ellipse(x + 4, y, 4, 2, 0.6, 0, 6.283); ctx.fill(); }
