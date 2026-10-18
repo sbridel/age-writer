@@ -222,14 +222,14 @@ function openInRelto(plugin, host, hereFile, { onHere } = {}) {
   let book = null;
   const close = () => { document.removeEventListener("keydown", onKey, true); window.removeEventListener("resize", fit); if (book) book.stopGlass(); ov.remove(); };
   const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); e.preventDefault(); close(); return; } if (book && book.key(e)) e.stopPropagation(); };
-  const fit = () => { const r = host.getBoundingClientRect(), k = Math.min((r.width * 0.96) / 1040, (r.height * 0.96) / (book && book.cover ? 640 : 600)); stage.style.transform = `translate(-50%, -50%) scale(${Math.max(0.2, k).toFixed(3)})`; };
+  const fit = () => { const r = host.getBoundingClientRect(), k = Math.min((r.width * 0.84) / 1040, (r.height * 0.86) / (book && book.cover ? 640 : 600)); /* de la marge autour du livre : on clique à côté pour le reposer */ stage.style.transform = `translate(-50%, -50%) scale(${Math.max(0.2, k).toFixed(3)})`; };
   book = new ReltoBook(plugin, stage, { cover: true, keepCover: true, idx: here >= 0 ? here : null, onLink: (f) => {
     if (plugin.ext.sound && plugin.ext.soundLink !== false) { try { sound.linkSound(plugin.ext.volume); } catch (e) { /* ignore */ } }
     ov.addClass("is-linking");
     window.setTimeout(() => { close(); if (hereFile && f.path === hereFile.path) { if (onHere) onHere(); } else R.openHubFile(plugin, f); }, 900);
   } });
   const render0 = book.render.bind(book); book.render = async () => { await render0(); fit(); }; // la taille suit l'état (fermé, ouvert)
-  ov.addEventListener("click", (e) => { if (e.target === ov) close(); }); // un clic à côté du livre le repose
+  ov.addEventListener("click", (e) => { if (!e.target.closest(".age-book__spread:not(.is-cover), .age-rbook__covercontainer")) close(); }); // un clic à côté du livre (ouvert ou fermé) le repose
   document.addEventListener("keydown", onKey, true); window.addEventListener("resize", fit);
   book.render();
   return { close };

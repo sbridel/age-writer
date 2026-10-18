@@ -920,3 +920,4 @@
 @media (prefers-reduced-motion: reduce) { .age-rbook-over, .age-rbook-over.is-linking { animation: none; } }
 .age-rbook-over .age-book__spread.is-cover { background: none; border: none; box-shadow: none; padding: 0; }
 .age-rbook-over .age-book__spread.is-cover .age-book__corner { display: none; }
+.age-rbook-over .age-book__spread:not(.is-cover), .age-rbook-over .age-rbook__covercontainer { cursor: default; }
