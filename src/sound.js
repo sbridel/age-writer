@@ -776,11 +776,13 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
       };
       drip(); room.timers.push(setTimeout(drip, 420));
     } else if (kind === "tap") {
-      // le robinet ouvert : un mince filet, léger ; un ruissellement aigu et étroit qui tremble vite (le filet qui ondule, son
-      // débit qui frémit), un second plus doux en dessous, un souffle à peine ; ni bulles ni grave
-      loop((s) => { const bp = keep(c.createBiquadFilter()), g = keep(c.createGain()), lfo = keep(c.createOscillator()), lg = keep(c.createGain()), am = keep(c.createOscillator()), ag = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 4000; bp.Q.value = 3; g.gain.value = 0.028; lfo.frequency.value = 6.3; lg.gain.value = 350; lfo.connect(lg); lg.connect(bp.frequency); am.frequency.value = 9.1; ag.gain.value = 0.008; am.connect(ag); ag.connect(g.gain); lfo.start(); am.start(); s.connect(bp); bp.connect(g); g.connect(out); });
-      loop((s) => { const bp = keep(c.createBiquadFilter()), g = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 2400; bp.Q.value = 4; g.gain.value = 0.01; s.connect(bp); bp.connect(g); g.connect(out); });
-      loop((s) => { const hp = keep(c.createBiquadFilter()), g = keep(c.createGain()); hp.type = "highpass"; hp.frequency.value = 7000; g.gain.value = 0.006; s.connect(hp); hp.connect(g); g.connect(out); });
+      // le robinet ouvert : un mince filet qui coule, continu et doux. Aucune oscillation régulière (elle faisait arroseur) :
+      // le filet ne varie qu'au hasard, par un bruit très lent qui module à peine son grain ; ni bulles, ni grave, ni souffle
+      loop((s) => { const bp = keep(c.createBiquadFilter()), g = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 2100; bp.Q.value = 1.1; g.gain.value = 0.03; s.connect(bp); bp.connect(g); g.connect(out); });
+      loop((s) => {
+        const bp = keep(c.createBiquadFilter()), g = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 3400; bp.Q.value = 1.8; g.gain.value = 0.014; s.connect(bp); bp.connect(g); g.connect(out);
+        const m = keep(c.createBufferSource()), lp = keep(c.createBiquadFilter()), mg = keep(c.createGain()); m.buffer = noiseBuf(c, 4); m.loop = true; lp.type = "lowpass"; lp.frequency.value = 3; mg.gain.value = 0.02; m.connect(lp); lp.connect(mg); mg.connect(g.gain); m.start(); // le grain du filet bouge au hasard, lentement
+      });
     } else if (kind === "cat") {
       // ronronnement doux : bruit grave filtré dont le volume pulse de façon irrégulière (~25 Hz qui dérive) et respire lentement ; miaulements espacés
       if (bufs.main) fileLoop(bufs.main); else loop((s) => {
