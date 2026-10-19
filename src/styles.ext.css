@@ -867,8 +867,6 @@
 .age-rbook__name { font-family: var(--font-text, Georgia, serif); font-size: 1.9em; line-height: 1.15; color: #2a2418; margin: 4px 0 6px; overflow-wrap: anywhere; }
 .age-rbook__ins { font-style: italic; color: #5a4a30; font-size: 1.1em; margin-bottom: 18px; }
 .age-rbook__rows { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin-top: 14px; }
-/* chaque ligne : ses deux cases se rangent dans la grille */
-.age-rbook__row { display: contents; }
 .age-rbook__k { font-size: 0.72em; letter-spacing: 0.1em; text-transform: uppercase; color: #8a7a5c; padding-top: 0.25em; }
 .age-rbook__v { color: #3a2f22; font-size: 0.95em; }
 .age-rbook__right { display: flex; flex-direction: column; justify-content: center; padding: 26px 24px 30px; }
@@ -907,7 +905,7 @@
 @keyframes age-rb-in-r { from { transform: rotateY(-88deg); filter: brightness(0.6); } to { transform: none; filter: none; } }
 .age-rbook__spread.is-nudge .age-book__page--right, .age-rbook__spread.is-nudge .age-book__page--left { animation: age-rb-nudge .3s ease; }
 @keyframes age-rb-nudge { 30% { transform: translateX(3px); } 60% { transform: translateX(-2px); } }
-@media (prefers-reduced-motion: reduce) { .age-rbook__spread * { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .age-rbook__spread.is-flip-fwd .age-book__page--right, .age-rbook__spread.is-flip-back .age-book__page--left, .age-rbook__spread.is-flip-in-fwd .age-book__page--left, .age-rbook__spread.is-flip-in-back .age-book__page--right, .age-rbook__spread.is-nudge .age-book__page--right, .age-rbook__spread.is-nudge .age-book__page--left { animation: none; } } /* mêmes sélecteurs que les animations, plus loin dans le fichier : pas besoin de !important */
 /* le Livre du Relto pris sur le piédestal du salon : par-dessus le Relto, comme un livre de liaison (src/relto-book.js, openInRelto) */
 .age-rbook-over { position: absolute; inset: 0; z-index: 40; overflow: hidden; background: rgba(6, 5, 4, 0.72); cursor: pointer; animation: age-rbook-over-in .35s ease-out; }
 .age-rbook-over__stage { position: absolute; left: 50%; top: 50%; width: 1040px; transform-origin: center center; cursor: default; }

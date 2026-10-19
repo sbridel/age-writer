@@ -163,7 +163,7 @@ class ReltoBook {
     left.createDiv({ cls: "age-rbook__name", text: name });
     const ins = await inscriptionOf(app, f);
     if (ins) left.createDiv({ cls: "age-rbook__ins", text: `« ${ins} »` });
-    const rows = left.createDiv({ cls: "age-rbook__rows" }), row = (k, v) => { const r = rows.createDiv({ cls: "age-rbook__row" }); r.createSpan({ cls: "age-rbook__k", text: k }); r.createSpan({ cls: "age-rbook__v", text: v }); };
+    const rows = left.createDiv({ cls: "age-rbook__rows" }), row = (k, v) => { rows.createSpan({ cls: "age-rbook__k", text: k }); rows.createSpan({ cls: "age-rbook__v", text: v }); }; // deux cases par ligne, posées directement dans la grille (pas de display: contents, mal pris en charge par Obsidian)
     if (sc) {
       if (story) {
         const done = (sc.storyDone || []).filter((x) => x !== "end"), cur = ST.nextChapter(done);
