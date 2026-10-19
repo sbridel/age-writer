@@ -117,11 +117,11 @@ class ReltoBook {
     if (loud) { try { sound.openSequence(e.volume, { book: true, clasp: e.soundClasp !== false, link: false }); } catch (err) { /* ignore */ } }
     // le livre reste fermé tant que l'on entend le livre qu'on prend et les loquets qu'on défait (mêmes durées que openSequence
     // et que les livres de liaison du Relto) ; puis la couverture pivote sur le dos, et la première page se relève
-    const lead = loud ? 1350 : 0, swing = reducedMotion() ? 0 : 420;
+    const lead = loud ? Math.max(1350, (sound.openEndMs ? sound.openEndMs() : 0) + 350) : 0, swing = reducedMotion() ? 0 : 650; // jusqu'au dernier loquet (2 à 5, au hasard), et un souffle de plus
     const c = this.contentEl.querySelector(".age-rbook__covercontainer");
     this.opening = true; if (c) { c.addClass("is-held"); c.removeClass("is-clickable"); }
-    window.setTimeout(() => { if (c) c.addClass("is-opening"); }, Math.max(0, lead - swing));
-    window.setTimeout(() => { this.opening = false; this.cover = false; this.anim = 1; this.render(); }, Math.max(lead, swing));
+    window.setTimeout(() => { if (c) c.addClass("is-opening"); }, lead);
+    window.setTimeout(() => { this.opening = false; this.cover = false; this.anim = 1; this.render(); }, lead + swing); // la couverture pivote après les loquets, pas pendant
   }
 
   /** La couverture : le livre fermé, qu'on ouvre d'un clic (ou Entrée). */

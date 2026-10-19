@@ -921,6 +921,6 @@
 .age-rbook-over .age-book__spread:not(.is-cover), .age-rbook-over .age-rbook__covercontainer { cursor: default; }
 /* la couverture du Livre du Relto qu'on ouvre : tenue un instant (le son du livre, les loquets), puis elle pivote sur le dos */
 .age-rbook__covercontainer.is-held { cursor: default; transform: translateY(-3px); transition: transform .3s ease; }
-.age-rbook__covercontainer.is-opening { transform-origin: left center; animation: age-rb-cover-open .42s ease-in forwards; }
+.age-rbook__covercontainer.is-opening { transform-origin: left center; animation: age-rb-cover-open .65s ease-in-out forwards; }
 @keyframes age-rb-cover-open { to { transform: perspective(1400px) rotateY(-82deg); filter: brightness(0.55); } }
 @media (prefers-reduced-motion: reduce) { .age-rbook__covercontainer.is-held, .age-rbook__covercontainer.is-opening { animation: none; transition: none; transform: none; } }

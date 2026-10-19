@@ -370,6 +370,7 @@ function staticBurst(volume = 0.3, dur = 0.7) {
 }
 /** Livre qu'on ouvre : craquement de cuir, bruissement de pages, puis quelques clics de fermoir (nombre, timbre et rythme tirés au hasard). */
 function bookOpen(volume = 0.3, { clicks = true, book = true } = {}) {
+  bookOpen.endMs = 0;
   const n = clicks ? 2 + Math.floor(Math.random() * 4) : 0; // 2 à 5 clics
   if (!book && !n) return false;
   return oneShot((book ? 1.4 : 0.2) + (n ? 1 : 0), (c, out, noise) => {
@@ -390,6 +391,7 @@ function bookOpen(volume = 0.3, { clicks = true, book = true } = {}) {
       og.gain.setValueAtTime(0.0001, tt); og.gain.exponentialRampToValueAtTime(0.28, tt + 0.002); og.gain.exponentialRampToValueAtTime(0.0001, tt + 0.06); ob.connect(og); og.connect(out); ob.start(tt); ob.stop(tt + 0.08);
       tt += 0.07 + Math.random() * 0.11;
     }
+    bookOpen.endMs = Math.round(((n ? tt : t + (book ? 1.1 : 0.1)) - t) * 1000); // la fin du dernier loquet, en ms depuis le début : le livre attend jusque-là pour s'ouvrir
   });
 }
 // page tournée : un froissement de papier (bruit filtré qui monte puis retombe) et un léger « fff » de fin
@@ -801,4 +803,4 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { knock, creak, slideStone, slideWood, crystalChord, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), knock, creak, slideStone, slideWood, crystalChord, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
