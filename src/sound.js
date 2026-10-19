@@ -778,10 +778,10 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
     } else if (kind === "tap") {
       // le robinet ouvert : un mince filet qui coule, continu et doux. Aucune oscillation régulière (elle faisait arroseur) :
       // le filet ne varie qu'au hasard, par un bruit très lent qui module à peine son grain ; ni bulles, ni grave, ni souffle
-      loop((s) => { const bp = keep(c.createBiquadFilter()), g = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 2100; bp.Q.value = 1.1; g.gain.value = 0.03; s.connect(bp); bp.connect(g); g.connect(out); });
+      loop((s) => { const bp = keep(c.createBiquadFilter()), g = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 2100; bp.Q.value = 1.1; g.gain.value = 0.011; s.connect(bp); bp.connect(g); g.connect(out); });
       loop((s) => {
-        const bp = keep(c.createBiquadFilter()), g = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 3400; bp.Q.value = 1.8; g.gain.value = 0.014; s.connect(bp); bp.connect(g); g.connect(out);
-        const m = keep(c.createBufferSource()), lp = keep(c.createBiquadFilter()), mg = keep(c.createGain()); m.buffer = noiseBuf(c, 4); m.loop = true; lp.type = "lowpass"; lp.frequency.value = 3; mg.gain.value = 0.02; m.connect(lp); lp.connect(mg); mg.connect(g.gain); m.start(); // le grain du filet bouge au hasard, lentement
+        const bp = keep(c.createBiquadFilter()), g = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 3400; bp.Q.value = 1.8; g.gain.value = 0.005; s.connect(bp); bp.connect(g); g.connect(out);
+        const m = keep(c.createBufferSource()), lp = keep(c.createBiquadFilter()), mg = keep(c.createGain()); m.buffer = noiseBuf(c, 4); m.loop = true; lp.type = "lowpass"; lp.frequency.value = 3; mg.gain.value = 0.006; m.connect(lp); lp.connect(mg); mg.connect(g.gain); m.start(); // le grain du filet bouge au hasard, lentement
       });
     } else if (kind === "cat") {
       // ronronnement doux : bruit grave filtré dont le volume pulse de façon irrégulière (~25 Hz qui dérive) et respire lentement ; miaulements espacés
