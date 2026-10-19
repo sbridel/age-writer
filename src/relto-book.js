@@ -112,9 +112,16 @@ class ReltoBook {
 
   /** Ouvrir la couverture : le son du livre et du fermoir (réglages), puis la page du dernier Relto visité. */
   openCover() {
-    const e = this.plugin.ext;
-    if (e.sound && e.soundBook !== false) { try { sound.openSequence(e.volume, { book: true, clasp: e.soundClasp !== false, link: false }); } catch (err) { /* ignore */ } }
-    this.cover = false; this.anim = 1; this.render(); // la première page se relève
+    if (this.opening) return;
+    const e = this.plugin.ext, loud = !!e.sound && e.soundBook !== false;
+    if (loud) { try { sound.openSequence(e.volume, { book: true, clasp: e.soundClasp !== false, link: false }); } catch (err) { /* ignore */ } }
+    // le livre reste fermé tant que l'on entend le livre qu'on prend et les loquets qu'on défait (mêmes durées que openSequence
+    // et que les livres de liaison du Relto) ; puis la couverture pivote sur le dos, et la première page se relève
+    const lead = loud ? 1350 : 0, swing = reducedMotion() ? 0 : 420;
+    const c = this.contentEl.querySelector(".age-rbook__covercontainer");
+    this.opening = true; if (c) { c.addClass("is-held"); c.removeClass("is-clickable"); }
+    window.setTimeout(() => { if (c) c.addClass("is-opening"); }, Math.max(0, lead - swing));
+    window.setTimeout(() => { this.opening = false; this.cover = false; this.anim = 1; this.render(); }, Math.max(lead, swing));
   }
 
   /** La couverture : le livre fermé, qu'on ouvre d'un clic (ou Entrée). */
