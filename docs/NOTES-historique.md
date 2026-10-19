@@ -651,3 +651,8 @@ Pour Halloween : attacher le Château, attendre la nuit, regarder la lune rouge 
 - Le robinet a son propre son (`roomStart("tap")`, `sound.js`) : bruit filtré en bande autour de 1,7 kHz modulé (le filet qui ondule), souffle aigu, résonance grave du bac, petites bulles serrées. Il jouait le clapotis du bassin (`water`) ; le fichier d'eau des réglages reste au bassin.
 - Livre du Relto par-dessus le Relto : un clic hors du livre (ouvert ou fermé) le repose ; le livre est mis à l'échelle à 85 % de la scène (il la remplissait presque, il ne restait rien « à côté »).
 
+## 1.44.2 — des styles plus propres (19 oct. 2026)
+
+- Les deux avertissements du contrôle CSS d'Obsidian (revue des plugins) : `display: contents` (les lignes du texte du Livre du Relto : les cases sont posées directement dans la grille) et `!important` (le mouvement réduit : mêmes sélecteurs que les animations, plus loin dans le fichier). Rien ne change à l'écran.
+- `test/css-rules.test.js` : refuse désormais ces deux règles dans `styles.css` et `styles.ext.css` (fichier et ligne en cas d'échec) ; y ajouter toute autre règle que la revue signalera.
+

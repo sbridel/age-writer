@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.44.2 — Cleaner styles (2026-10-19)
+
+### Fixed
+- **Styles**: the Relto book no longer uses `display: contents` (only partly supported by Obsidian) nor `!important`; the reduced-motion rule now overrides the page animations by its own selectors. Nothing changes on screen.
+
 ## 1.44.1 — The tap's own voice (2026-10-18)
 
 ### Fixed
