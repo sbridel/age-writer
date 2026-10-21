@@ -117,9 +117,9 @@ class ReltoBook {
     if (loud) { try { sound.openSequence(e.volume, { book: true, clasp: e.soundClasp !== false, link: false }); } catch (err) { /* ignore */ } }
     // le livre reste fermé tant que l'on entend le livre qu'on prend et les loquets qu'on défait (mêmes durées que openSequence
     // et que les livres de liaison du Relto) ; puis la couverture pivote sur le dos, et la première page se relève
-    const lead = loud ? Math.max(1350, (sound.openEndMs ? sound.openEndMs() : 0) + 350) : 0, swing = reducedMotion() ? 0 : 650; // jusqu'au dernier loquet (2 à 5, au hasard), et un souffle de plus
+    const lead = loud ? Math.max(1350, (sound.openEndMs ? sound.openEndMs() : 0) + 350) : 0, swing = reducedMotion() ? 0 : 650 + 450; // jusqu'au dernier loquet (2 à 5, au hasard), et un souffle de plus ; la couverture pivote (0,65 s) puis on voit les pages un instant
     const c = this.contentEl.querySelector(".age-rbook__covercontainer");
-    this.opening = true; if (c) { c.addClass("is-held"); c.removeClass("is-clickable"); }
+    this.opening = true; if (c) { c.addClass("is-held"); c.removeClass("is-clickable"); if (c.parentElement) c.parentElement.addClass("is-held"); }
     window.setTimeout(() => { if (c) c.addClass("is-opening"); }, lead);
     window.setTimeout(() => { this.opening = false; this.cover = false; this.anim = 1; this.render(); }, lead + swing); // la couverture pivote après les loquets, pas pendant
   }
@@ -130,7 +130,9 @@ class ReltoBook {
     this.stopGlass(); el.empty();
     const book = el.createDiv({ cls: "age-book age-rbook" }); book.toggleClass("age-book--leather", plugin.ext.leather !== false);
     const spread = book.createDiv({ cls: "age-book__spread age-rbook__spread is-cover" });
-    const c = spread.createDiv({ cls: "age-book__covercontainer age-rbook__covercontainer is-clickable" });
+    const stack = spread.createDiv({ cls: "age-rbook__stack" }); /* sous la couverture, le bloc des pages : on le voit quand elle pivote */
+    stack.createDiv({ cls: "age-rbook__leaves" });
+    const c = stack.createDiv({ cls: "age-book__covercontainer age-rbook__covercontainer is-clickable" });
     setMarkup(c, reltoCoverSvg({ medal: "garnet" })); c.setAttr("aria-label", plugin.t("book.open")); c.setAttr("title", plugin.t("book.open"));
     c.addEventListener("click", () => this.openCover());
   }

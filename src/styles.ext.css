@@ -930,5 +930,9 @@
 /* la couverture du Livre du Relto qu'on ouvre : tenue un instant (le son du livre, les loquets), puis elle pivote sur le dos */
 .age-rbook__covercontainer.is-held { cursor: default; transform: translateY(-3px); transition: transform .3s ease; }
 .age-rbook__covercontainer.is-opening { transform-origin: left center; animation: age-rb-cover-open .65s ease-in-out forwards; }
-@keyframes age-rb-cover-open { to { transform: perspective(1400px) rotateY(-82deg); filter: brightness(0.55); } }
+@keyframes age-rb-cover-open { 70% { opacity: 1; } to { transform: perspective(1400px) rotateY(-100deg); filter: brightness(0.5); opacity: 0; } }
+.age-rbook__stack { position: relative; display: inline-block; }
+.age-rbook__leaves { position: absolute; top: 1.5%; bottom: 1.5%; left: 2%; right: 1%; border-radius: 2px 6px 6px 2px; opacity: 0; transition: opacity .2s ease;
+  background: linear-gradient(90deg, rgba(60, 40, 20, 0.45), rgba(60, 40, 20, 0) 9%), repeating-linear-gradient(0deg, rgba(120, 95, 60, 0) 0 3px, rgba(120, 95, 60, 0.18) 3px 4px) right / 3% 100% no-repeat, linear-gradient(90deg, #d8c9a0, #ece0bf 30%, #e6d8b2); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+.age-rbook__stack.is-held .age-rbook__leaves { opacity: 1; } /* le bloc des pages paraît dès que le livre est pris */
 @media (prefers-reduced-motion: reduce) { .age-rbook__covercontainer.is-held, .age-rbook__covercontainer.is-opening { animation: none; transition: none; transform: none; } }
