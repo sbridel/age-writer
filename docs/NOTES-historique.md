@@ -651,6 +651,15 @@ Pour Halloween : attacher le Château, attendre la nuit, regarder la lune rouge 
 - Le robinet a son propre son (`roomStart("tap")`, `sound.js`) : bruit filtré en bande autour de 1,7 kHz modulé (le filet qui ondule), souffle aigu, résonance grave du bac, petites bulles serrées. Il jouait le clapotis du bassin (`water`) ; le fichier d'eau des réglages reste au bassin.
 - Livre du Relto par-dessus le Relto : un clic hors du livre (ouvert ou fermé) le repose ; le livre est mis à l'échelle à 85 % de la scène (il la remplissait presque, il ne restait rien « à côté »).
 
+## 1.45.0 — les chiffres soudés (21 oct. 2026)
+
+- Chiffres D'ni soudés au-delà de 24 (`dni.js`) : procédural, pas de 92 % de la hauteur ; police ou contours, `layout_` pose chaque case sur la précédente d'après les montants mesurés hors écran (`frame_`, seuil relatif à la hauteur encrée, mis en cache par police et par chiffre ; une mesure ratée se refait). Un nombre se compose en une seule chaîne (`fontRun_`) seulement si la chasse de la police vaut l'écart des montants (Dnifont chevauche d'un cinquième : non). Un chiffre absent est recomposé de ses deux moitiés (`fontParts_`, 12 = 10 + 2 superposés). Le 12 est sur `@` (`FONT_CHARS`), le guillemet en secours (`ALT_CHARS`, `charOf`) : vérifié sur DniFont, D'ni Script, SLM et Angular (les trois dernières sont refusées par Chromium comme fichiers, `cmap` mal formée ; installées, elles marchent). En SVG, la boîte s'élargit à l'encre mesurée (`runInk_`). Commande `dni-numerals-report` (`Dni.report`).
+- Texte D'ni lisible en latin au survol ou au toucher (`latinOnHover`, `ui-extras.js` ; `data-latin`, `::after` en CSS, même place, même taille) : `dni:` en ligne, blocs `dni`, fiches, journal, nom de l'Âge sur le Relto. Le vailee en lettres D'ni (`Dni.writes`) : barre d'état, stèle, socle de l'horloge.
+- Livre du Relto : fermé jusqu'à la fin des loquets (`openEndMs`), puis la couverture s'ouvre avec les images-clés des pages (`age-rb-out-r`), garde marbrée dessinée (`reltoEndpaperSvg`, ex-libris), page de faux-titre (`halfTitle`) qui se tourne (`turnHalfTitle` : se lève jusqu'au chant, la page de texte se rabat, `is-flip-in-fwd`), signet grenat (`ribbonSvg`), plus de folios. Le livre pris sur l'étagère : couverture à l'échelle de `--page-h`.
+- Château : la lune est la photo de la pleine Lune (`relto-moon-photo.js`, 13 Ko, gris ; source à inscrire dans `NOTICE`), adoucie et teintée à l'exécution (`tintMoon`) ; les crochets de la stèle sur la courbe même de `CS.pointed`.
+- Salon : le robinet, un mince filet (gains bas, plus de LFO régulier ni de bulles).
+- Relto : devise masquée en plein écran ; nom D'ni centré sur toute la barre ; notice « police trouvée / introuvable » au réglage de police.
+
 ## 1.44.2 — des styles plus propres (19 oct. 2026)
 
 - Les deux avertissements du contrôle CSS d'Obsidian (revue des plugins) : `display: contents` (les lignes du texte du Livre du Relto : les cases sont posées directement dans la grille) et `!important` (le mouvement réduit : mêmes sélecteurs que les animations, plus loin dans le fichier). Rien ne change à l'écran.

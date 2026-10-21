@@ -2,6 +2,22 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.45.0 — Joined numerals (2026-10-21)
+
+### Added
+- **D'ni numerals are joined**: beyond 24, the digits of a number share their vertical posts, as in D'ni writing. With a font, the plugin measures where each glyph's posts sit and places the boxes on each other; a digit the font lacks is recomposed from its two halves (12 = the glyphs 10 and 2 overlaid). Procedural numerals and local glyph files are joined too.
+- **D'ni text reads in Latin on hover** (or on touch): `dni:…` inline, `dni` blocks, the names on Age sheets and in the journal, the Age's name over the Relto. The vailee's name is now written in D'ni letters when a font is there (status bar with Latin on hover, calendar stele, clock plinth).
+- **The Relto book, cared for**: it stays closed while you hear the book and its clasps, then the cover opens like a page turns; under it a marbled endpaper with an ex libris, a half-title page that turns to the first spread, a garnet ribbon bookmark; no page numbers. The book taken from the shelf is drawn at the scale of the page that opens.
+- **The Castle's moon** is now a photograph of the full Moon (a free image, 13 KB, greyscale), softened and tinted at runtime; the stele's crockets sit on its arch.
+- **The tap** of the lounge has its own, gentler voice (a thin trickle, no sprinkler, no geyser).
+- Command **"D'ni numerals: diagnostic report"**: mode, font, missing digits, measured posts.
+
+### Fixed
+- The 12 was looked for on `"`, which no D'ni font has: it is on `@` (Shift+2 on a US keyboard, like 10 = `)`, 11 = `!`). The year 9682 (15·12·7) was drawn with a procedural 12 in the middle of font digits.
+- Numerals in SVG (status bar, sheets, journal) no longer have their bars clipped: the box grows to the measured ink.
+- Relto in full screen: the motto is hidden (it sat under the time line); the Age's D'ni name is centred on the whole bar.
+- The numeral-font setting says whether the font was found.
+
 ## 1.44.2 — Cleaner styles (2026-10-19)
 
 ### Fixed

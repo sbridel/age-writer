@@ -41,6 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.45, joined numerals**. D'ni digits share their posts beyond 24; D'ni text reads in Latin on hover; the Relto book opens page by page (endpaper, half-title, ribbon); the Castle's moon is a photograph.
 - **1.44, running water** (1.44.1: the tap's own sound). The lounge's tap runs; the Relto book on its pedestal opens inside the Relto, like a linking book.
 - **1.43, the lounge.** Turn around in the cabin: a kitchen corner, a deep sofa under a great window, and the Relto book on its pedestal. The Relto book now turns its pages like a real book.
 - **1.42, the Relto book.** The ribbon icon opens a green gold-tooled book: one double page per Relto, the island alive in its glass; touch it to link. A setting and a command switch the button back to the last Relto visited.
