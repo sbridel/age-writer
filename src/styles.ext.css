@@ -929,9 +929,14 @@
 .age-rbook-over .age-book__spread:not(.is-cover), .age-rbook-over .age-rbook__covercontainer { cursor: default; }
 /* la couverture du Livre du Relto qu'on ouvre : tenue un instant (le son du livre, les loquets), puis elle pivote sur le dos */
 .age-rbook__covercontainer.is-held { cursor: default; transform: translateY(-3px); transition: transform .3s ease; }
-.age-rbook__covercontainer.is-opening { transform-origin: left center; animation: age-rb-cover-open .65s ease-in-out forwards; }
-@keyframes age-rb-cover-open { 70% { opacity: 1; } to { transform: perspective(1400px) rotateY(-100deg); filter: brightness(0.5); opacity: 0; } }
-.age-rbook__stack { position: relative; display: inline-block; }
+/* la couverture pivote sur son dos et se rabat à gauche, à plat : on voit son envers ; le livre glisse d'une demi-largeur pour rester centré */
+.age-rbook__covercontainer.is-opening { position: relative; z-index: 2; transform-origin: left center; transform-style: preserve-3d; animation: age-rb-cover-open .75s ease-in-out forwards; }
+.age-rbook__covercontainer.is-opening, .age-rbook__covercontainer.is-opening:hover, .age-rbook__covercontainer.is-held { filter: none; }
+.age-rbook__covercontainer > svg { backface-visibility: hidden; }
+.age-rbook__inside { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; border-radius: 6px 2px 2px 6px; background: linear-gradient(90deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0) 8%), linear-gradient(#0f2a1e, #0f2a1e) padding-box; border: 10px solid #163a29; box-shadow: inset 0 0 0 1px #c9a24e, inset 0 0 0 12px #e3d4ac, inset 0 0 30px 12px rgba(120, 90, 40, 0.35); }
+@keyframes age-rb-cover-open { to { transform: perspective(1800px) rotateY(-180deg); } } /* pas de filter ici : il aplatirait la 3D, et l'envers ne se verrait plus */
+.age-rbook__stack { position: relative; display: inline-block; transition: transform .75s ease-in-out; }
+.age-rbook__stack.is-opening { transform: translateX(50%); }
 .age-rbook__leaves { position: absolute; top: 1.5%; bottom: 1.5%; left: 2%; right: 1%; border-radius: 2px 6px 6px 2px; opacity: 0; transition: opacity .2s ease;
   background: linear-gradient(90deg, rgba(60, 40, 20, 0.45), rgba(60, 40, 20, 0) 9%), repeating-linear-gradient(0deg, rgba(120, 95, 60, 0) 0 3px, rgba(120, 95, 60, 0.18) 3px 4px) right / 3% 100% no-repeat, linear-gradient(90deg, #d8c9a0, #ece0bf 30%, #e6d8b2); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
 .age-rbook__stack.is-held .age-rbook__leaves { opacity: 1; } /* le bloc des pages paraît dès que le livre est pris */
