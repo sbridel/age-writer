@@ -938,7 +938,7 @@
 .age-rbook.is-from-cover { animation: age-rb-from-cover .3s ease-out both; } /* la double page se lève en fondu sur le livre ouvert (même géométrie : garde et faux-titre par-dessus, puis la page se tourne) */
 @keyframes age-rb-from-cover { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .age-rbook.is-from-cover { animation: none; } }
-@keyframes age-rb-cover-open { to { transform: rotateY(180deg); } } /* pas de filter ici : il aplatirait la 3D, et l'envers ne se verrait plus */
+@keyframes age-rb-cover-open { to { transform: rotateY(-180deg); } } /* pas de filter ici : il aplatirait la 3D, et l'envers ne se verrait plus */
 .age-rbook__stack { position: relative; display: inline-block; perspective: 1400px; perspective-origin: 60% 50%; transition: transform .9s cubic-bezier(.45, 0, .3, 1); }
 .age-rbook__stack.is-opening { transform: translateX(50%); }
 /* le signet : un ruban grenat qui sort du dos et pend sous le livre, fermé comme ouvert */
