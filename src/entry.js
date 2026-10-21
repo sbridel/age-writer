@@ -473,7 +473,7 @@ module.exports = function build(Base, core, AGEX) {
           if (c.closest("pre")) continue;
           const m = /^dni:\s*(.+)$/i.exec(c.textContent || ""); if (!m) continue;
           const span = document.createElement("span"); span.className = "age-dni age-dni--inline"; span.textContent = this.ext.dniText && this.dni.hasFont() ? this.dni.textFor(m[1]) : m[1];
-          if (this.ext.dniText && this.dni.hasFont()) span.style.fontFamily = this.dni.textStack(); else span.classList.add("is-latin");
+          if (this.ext.dniText && this.dni.hasFont()) { span.style.fontFamily = this.dni.textStack(); X.latinOnHover(span, m[1]); } else span.classList.add("is-latin");
           c.replaceWith(span);
         }
       }));

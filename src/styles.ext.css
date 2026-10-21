@@ -146,6 +146,12 @@
 .age-relto__inscription { margin-top: 8px; text-align: center; font-size: 1.6em; color: #cdbd94; letter-spacing: 0.08em; }
 .age-relto__inscription.is-latin { font-size: 0.9em; font-style: italic; opacity: 0.75; }
 .age-dni--inline { font-size: 1.15em; }
+/* au survol ou au toucher : la lecture latine par-dessus, le D'ni s'efface ; même place, même taille */
+.age-dni[data-latin] { position: relative; cursor: help; transition: -webkit-text-fill-color 0.18s ease; outline: none; }
+.age-dni[data-latin]::after { content: attr(data-latin); position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); white-space: nowrap; font-family: var(--font-text); font-size: 0.82em; font-style: italic; letter-spacing: 0; line-height: 1; -webkit-text-fill-color: currentColor; opacity: 0; transition: opacity 0.18s ease; pointer-events: none; }
+.age-dni[data-latin]:hover, .age-dni[data-latin]:focus { -webkit-text-fill-color: transparent; }
+.age-dni[data-latin]:hover::after, .age-dni[data-latin]:focus::after { opacity: 1; }
+.age-dniblock__row.age-dni[data-latin]::after { left: 0; transform: translateY(-50%); } /* une ligne de bloc : la lecture part du bord, comme le texte */
 .age-dni--inline.is-latin { font-size: 1em; font-style: italic; border-bottom: 1px dotted currentColor; }
 
 /* liaison incertaine / livre-piège */

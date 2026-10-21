@@ -385,7 +385,20 @@ function dniText(plugin, parent, text, cls) {
   if (!plugin.ext.dniText || !plugin.dni.hasFont()) return null;
   const s = parent.createSpan({ cls: "age-dni" + (cls ? " " + cls : ""), text: plugin.dni.textFor(text) });
   s.style.fontFamily = plugin.dni.textStack();
+  latinOnHover(s, text);
   return s;
+}
+
+/**
+ * Au survol (ou au toucher, par le focus), le texte D'ni se lit en lettres latines, à la même place et sans changer de
+ * taille : la version latine est posée par-dessus (::after, styles.ext.css) et le D'ni s'efface. Rien pour un texte vide
+ * (les noms d'Âge du Relto, qui ont déjà leur titre latin à côté).
+ */
+function latinOnHover(el, text) {
+  const t = String(text == null ? "" : text).trim();
+  if (!el || !t) return el;
+  el.setAttribute("data-latin", t); el.setAttribute("tabindex", "0"); el.setAttribute("aria-label", t);
+  return el;
 }
 
 // ---- bloc `dni` : chiffres en D'ni, texte dans la police si elle est là -----------------------
@@ -395,7 +408,7 @@ function renderDniBlock(plugin, source, el) {
     const line = raw.trim(); if (!line) continue;
     const row = root.createDiv({ cls: "age-dniblock__row" });
     if (/^\d+$/.test(line)) setMarkup(row, plugin.dni.numberSvg(line, { size: 36 }) + `<span class="age-dniblock__arabic">${esc(line)}</span>`);
-    else { row.setText(plugin.dni.hasFont() ? plugin.dni.textFor(line) : line); row.style.fontFamily = plugin.dni.textStack(); row.style.fontSize = "1.6em"; }
+    else { row.setText(plugin.dni.hasFont() ? plugin.dni.textFor(line) : line); row.style.fontFamily = plugin.dni.textStack(); row.style.fontSize = "1.6em"; if (plugin.dni.hasFont()) { row.addClass("age-dni"); latinOnHover(row, line); } }
   }
   if (!plugin.dni.hasFont()) root.createDiv({ cls: "age-dniblock__note", text: plugin.t("dni.nofont") });
 }
@@ -422,4 +435,4 @@ function inkFresh(plugin, el, name, targets = []) {
   tick(); el.__inkTimer = window.setInterval(tick, 10000);
 }
 
-module.exports = { inkFresh, dniText, renderExtras, tabifyPanel, renderJournal, renderDniBlock, ageNumber, calibrationOf, mechanismsFor, parseJournalSource };
+module.exports = { inkFresh, dniText, latinOnHover, renderExtras, tabifyPanel, renderJournal, renderDniBlock, ageNumber, calibrationOf, mechanismsFor, parseJournalSource };
