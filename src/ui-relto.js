@@ -623,6 +623,8 @@ async function renderRelto(plugin, source, el, ctx) {
     if (!X.dniText(plugin, ins, opt.inscription, "")) { ins.setText(opt.inscription); ins.addClass("is-latin"); }
   }
   paneView.appendChild(when);
+  /* en plein écran, la ligne de l'heure flotte en bas de l'image : la devise se pose juste au-dessus (sa hauteur suit la ligne) */
+  if (opt.inscription && typeof ResizeObserver !== "undefined") { try { const ro = new ResizeObserver(() => root.style.setProperty("--aw-when-h", when.offsetHeight + "px")); ro.observe(when); plugin.register && plugin.register(() => ro.disconnect()); } catch (e) { /* ignore */ } }
   // l'heure et le nom D'ni s'effacent seuls au bout de quelques secondes ; la souris sur la vue les ramène ; un clic sur l'heure les cache
   if (tabsOn) {
     const fadeEls = [when, dniName2].filter(Boolean); let timer = 0, suppressed = false;
@@ -959,7 +961,7 @@ async function renderRelto(plugin, source, el, ctx) {
       else if (!DC.synced(scene) && seen[k]) { delete seen[k]; plugin.saveExt(); } // horloge retirée ou Zéro oublié : le prochain recalage se verra de nouveau
     }
     slider.disabled = scene.skyCycle !== "system_time"; nowBtn.disabled = slider.disabled;
-    title.setText(scene.name); if (dniName) dniName.setText(plugin.dni.textFor(scene.name)); if (dniName2) dniName2.setText(plugin.dni.textFor(scene.name));
+    title.setText(scene.name); if (dniName) { dniName.setText(plugin.dni.textFor(scene.name)); X.latinOnHover(dniName, scene.name); } if (dniName2) { dniName2.setText(plugin.dni.textFor(scene.name)); X.latinOnHover(dniName2, scene.name); } /* le nom de l'Âge se lit en latin au survol (en plein écran, le titre latin n'est pas visible) */
     setMarkup(plate, plugin.dni.numberSvg(scene.seed, { size: 16 })); plate.setAttr("title", t("num.seed"));
     syncClock(); renderPages(); renderBooks();
     if (reduced) renderer.draw(0); else renderer.start();

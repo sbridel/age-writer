@@ -351,6 +351,7 @@
 .age-relto__dnioverlay { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: 1.15em; color: #e0d2a8; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); opacity: 0.85; pointer-events: none; transition: opacity 0.6s; }
 .age-relto__when { transition: opacity 0.6s; }
 .age-relto__when.is-faded, .age-relto__dnioverlay.is-faded { opacity: 0; }
+.age-relto__dnioverlay[data-latin] { pointer-events: auto; } /* le nom de l'Âge se survole pour se lire en latin */
 .age-relto__when { cursor: pointer; }
 
 /* nom D'ni dans la bande noire, au-dessus de l'image ; bande plus haute, icônes à gauche du bouton « code » */
@@ -401,6 +402,8 @@
 .age-reltoview:fullscreen .age-relto__stage { width: min(100vw, calc(100vh * 1.7778)); }
 .age-reltoview:fullscreen .age-relto__canvas { width: 100%; border: none; }
 .age-reltoview:fullscreen .age-relto__tabs { position: absolute; top: 0; left: 0; right: 0; z-index: 5; margin: 0; padding: 6px 14px; min-height: 34px; background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0)); }
+.age-reltoview:fullscreen .age-relto__inscription { position: absolute; left: 0; right: 0; bottom: var(--aw-when-h, 84px); z-index: 5; margin: 0; padding-bottom: 4px; pointer-events: none; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9); } /* la devise au-dessus de l'heure, plus dessous */
+.age-reltoview:fullscreen .age-relto__inscription > * { pointer-events: auto; }
 .age-reltoview:fullscreen .age-relto__when { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; margin: 0; padding: 22px 0 12px; background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.6)); }
 .age-reltoview:fullscreen .age-relto[data-tab="pages"] .age-relto__pane--pages, .age-reltoview:fullscreen .age-relto[data-tab="settings"] .age-relto__pane--settings { display: block; width: min(900px, 94vw); max-height: 88vh; overflow: auto; padding-top: 46px; }
 .age-reltoview:fullscreen .age-relto[data-tab="pages"] .age-relto__pane--view, .age-reltoview:fullscreen .age-relto[data-tab="settings"] .age-relto__pane--view,
