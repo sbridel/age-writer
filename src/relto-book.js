@@ -117,7 +117,7 @@ class ReltoBook {
     if (loud) { try { sound.openSequence(e.volume, { book: true, clasp: e.soundClasp !== false, link: false }); } catch (err) { /* ignore */ } }
     // le livre reste fermé tant que l'on entend le livre qu'on prend et les loquets qu'on défait (mêmes durées que openSequence
     // et que les livres de liaison du Relto) ; puis la couverture pivote sur le dos, et la première page se relève
-    const lead = loud ? Math.max(1350, (sound.openEndMs ? sound.openEndMs() : 0) + 350) : 0, swing = reducedMotion() ? 0 : 750 + 450; // jusqu'au dernier loquet (2 à 5, au hasard), et un souffle de plus ; la couverture se rabat (0,75 s) puis on voit le livre ouvert un instant
+    const lead = loud ? Math.max(1350, (sound.openEndMs ? sound.openEndMs() : 0) + 350) : 0, swing = reducedMotion() ? 0 : 320; // jusqu'au dernier loquet (2 à 5, au hasard), et un souffle de plus ; puis la couverture se lève jusqu'au chant (comme une page)
     const c = this.contentEl.querySelector(".age-rbook__covercontainer");
     this.opening = true; if (c) { c.addClass("is-held"); c.removeClass("is-clickable"); if (c.parentElement) c.parentElement.addClass("is-held"); }
     window.setTimeout(() => { if (c) { c.addClass("is-opening"); if (c.parentElement) c.parentElement.addClass("is-opening"); } }, lead);
@@ -126,19 +126,16 @@ class ReltoBook {
 
   /**
    * Juste après la couverture : par-dessus la double page toute faite, la garde marbrée à gauche et le faux-titre à droite
-   * (le livre ouvert, tel qu'on vient de le voir) ; puis le faux-titre se tourne, charnière à la gouttière, son verso est la
-   * page de texte, et il se pose dessus. On retire alors les deux calques : la double page est là, sans saut.
+   * (le livre ouvert, tel qu'on vient de le voir). Puis le faux-titre se tourne comme toute page de ce livre : il se lève
+   * jusqu'au chant, et la page de gauche (le texte) se rabat à sa place. On retire alors les deux calques : rien ne saute.
    */
   turnHalfTitle(spread, left, right) {
-    const back = left.innerHTML; /* le verso de la feuille : la page de texte, copiée (le texte est déjà rendu) */
     const endover = left.createDiv({ cls: "age-rbook__endover" }); setMarkup(endover, reltoEndpaperSvg({ pageOnly: true }));
     const leaf = spread.createDiv({ cls: "age-rbook__leaf" });
     const place = () => { leaf.style.left = right.offsetLeft + "px"; leaf.style.top = right.offsetTop + "px"; leaf.style.width = right.offsetWidth + "px"; leaf.style.height = right.offsetHeight + "px"; };
-    place();
-    setMarkup(leaf.createDiv({ cls: "age-rbook__leaf-front" }), halfTitle());
-    setMarkup(leaf.createDiv({ cls: "age-rbook__leaf-back" }), back);
-    const t1 = window.setTimeout(() => { place(); leaf.addClass("is-turning"); if (this.plugin.ext.sound && this.plugin.ext.soundBook !== false) { try { sound.pageTurn(this.plugin.ext.volume, { quick: false }); } catch (e) { /* ignore */ } } }, 520);
-    const t2 = window.setTimeout(() => { leaf.remove(); endover.remove(); }, 520 + 850);
+    place(); setMarkup(leaf, halfTitle());
+    const t1 = window.setTimeout(() => { place(); leaf.addClass("is-turning"); if (this.plugin.ext.sound && this.plugin.ext.soundBook !== false) { try { sound.pageTurn(this.plugin.ext.volume, { quick: false }); } catch (e) { /* ignore */ } } }, 420);
+    const t2 = window.setTimeout(() => { leaf.remove(); endover.remove(); spread.addClass("is-flip-in-fwd"); }, 420 + 190);
     this.turnTimers = [t1, t2];
   }
 
@@ -153,7 +150,6 @@ class ReltoBook {
     setMarkup(stack.createDiv({ cls: "age-rbook__ribbon" }), ribbonSvg());
     const c = stack.createDiv({ cls: "age-book__covercontainer age-rbook__covercontainer is-clickable" });
     setMarkup(c, reltoCoverSvg({ medal: "garnet" })); c.setAttr("aria-label", plugin.t("book.open")); c.setAttr("title", plugin.t("book.open"));
-    setMarkup(c.createDiv({ cls: "age-rbook__inside" }), reltoEndpaperSvg()); /* l'envers de la couverture (contre-garde) : on le voit quand elle s'est rabattue à gauche */
     c.addEventListener("click", () => this.openCover());
   }
 
@@ -168,7 +164,6 @@ class ReltoBook {
     this.stopGlass(); el.empty();
     const book = el.createDiv({ cls: "age-book age-rbook" }); book.toggleClass("age-book--leather", plugin.ext.leather !== false);
     const fromCover = this.fromCover; this.fromCover = false;
-    if (fromCover) book.addClass("is-from-cover"); /* juste ouvert : la double page se lève en fondu sur le livre ouvert, puis sa page de faux-titre se tourne */
     const spread = book.createDiv({ cls: "age-book__spread age-rbook__spread" });
     setMarkup(spread.createDiv({ cls: "age-rbook__ribbon" }), ribbonSvg());
     if (plugin.ext.leather !== false) for (const c of ["tl", "tr", "bl", "br"]) spread.createDiv({ cls: `age-book__corner age-book__corner--${c}` });
@@ -219,7 +214,7 @@ class ReltoBook {
     let x0 = null;
     spread.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse") x0 = e.clientX; });
     spread.addEventListener("pointerup", (e) => { if (x0 == null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 60) this.turn(dx < 0 ? 1 : -1); });
-    if (fromCover && !reducedMotion()) { this.anim = 0; this.turnHalfTitle(spread, left, right); } /* le texte est posé : son verso peut le copier */
+    if (fromCover && !reducedMotion()) { this.anim = 0; this.turnHalfTitle(spread, left, right); } /* le faux-titre se tournera par-dessus la double page toute faite */
     if (this.anim) { spread.addClass(this.anim > 0 ? "is-flip-in-fwd" : "is-flip-in-back"); this.anim = 0; }
   }
 }
