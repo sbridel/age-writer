@@ -191,7 +191,11 @@ class Dni {
    * chaîne, ou null si on n'est pas en police ou si un chiffre lui manque (on revient alors au placement case par case).
    */
   fontRun_(digits, mode = this.mode()) {
-    if (mode !== "font" || digits.some((d) => this.glyphMissing(d))) return null;
+    if (mode !== "font" || digits.length < 2 || digits.some((d) => this.glyphMissing(d))) return null;
+    /* la police soude-t-elle vraiment ? Sa chasse doit valoir l'écart entre les montants (mesuré) ; sinon (Dnifont : ses
+       cases se chevauchent d'un cinquième), on place case par case, comme pour les contours */
+    const f = this.frame_("font", 0), adv = (this.runWidth_(FONT_CHARS[0] + FONT_CHARS[0], 100) - this.runWidth_(FONT_CHARS[0], 100)) / 100;
+    if (Math.abs(adv - (f.r - f.l)) > 0.04) return null;
     return digits.map((d) => FONT_CHARS[d]).join("");
   }
   /** Largeur d'une chaîne composée dans la police, pour une hauteur de chiffre `size` (mesurée au canvas ; sinon estimée). */
@@ -217,13 +221,13 @@ class Dni {
   }
   /**
    * Les deux montants d'un chiffre ({ l, r } : bord gauche du montant gauche et du montant droit, en hauteurs, depuis
-   * l'ancrage). Procédural : connu (cadre de 4 à 96, trait de 7). Contours (dni-numerals.local.json) : chaque glyphe a sa
-   * largeur et ses barres débordantes ; on le trace hors écran et on cherche les colonnes encrées sur presque toute la hauteur. Mis en
-   * cache par chiffre ; une mesure ratée n'est pas gardée et se refait plus tard. (En police, voir fontRun_.)
+   * l'ancrage). Procédural : connu (cadre de 4 à 96, trait de 7). Police ou contours : chaque glyphe a sa largeur et ses
+   * barres débordantes ; on le trace hors écran et on cherche les colonnes encrées sur presque toute la hauteur. Mis en
+   * cache par police et par chiffre ; une mesure ratée (police pas encore chargée) n'est pas gardée et se refait plus tard.
    */
   frame_(mode, d) {
     const cell = this.cell(mode), guess = { l: (cell - 1) / 2 + 0.005, r: (cell - 1) / 2 + 0.925 };
-    if (mode !== "glyphs") return guess;
+    if (mode === "simple" || (mode === "font" && this.glyphMissing(d))) return guess;
     const key = mode + "|" + (mode === "font" ? this.textStack() : "glyphs") + "|" + d;
     this.frames = this.frames || new Map();
     const got = this.frames.get(key);
@@ -249,7 +253,8 @@ class Dni {
   report() {
     const mode = this.mode(), lines = [`mode : ${mode} (réglage : ${(this.o.getMode && this.o.getMode()) || "auto"})`, `police : ${this.fontFamily() || "aucune"}${this.vaultFace ? " (du coffre)" : ""}`, `contours : ${this.glyphs ? "oui, boîte " + this.glyphs.box.join(" ") : "non"}`];
     if (mode === "font") { const miss = []; for (let v = 0; v < 25; v++) if (this.glyphMissing(v)) miss.push(v); lines.push(`chiffres absents de la police : ${miss.length ? miss.join(" ") : "aucun"}`); lines.push(`largeur de « 1322 » composé : ${this.runWidth_(this.fontRun_(toBase25(1322)) || "", 100).toFixed(1)} pour 100 de haut (3 chiffres)`); }
-    if (mode === "glyphs") for (const v of [0, 1, 2]) { const f = this.frame_("glyphs", v), ok = this.frames && this.frames.get("glyphs|glyphs|" + v); lines.push(`chiffre ${v} : montants à ${f.l.toFixed(3)} et ${f.r.toFixed(3)}${ok && ok.ok ? "" : " (estimés, mesure ratée)"}`); }
+    if (mode !== "simple") for (const v of [0, 1, 2]) { const f = this.frame_(mode, v), ok = this.frames && this.frames.get(mode + "|" + (mode === "font" ? this.textStack() : "glyphs") + "|" + v); lines.push(`chiffre ${v} : montants à ${f.l.toFixed(3)} et ${f.r.toFixed(3)}${ok && ok.ok ? "" : " (estimés, mesure ratée)"}`); }
+    if (mode === "font") lines.push(`la police soude-t-elle seule : ${this.fontRun_([0, 0]) ? "oui" : "non, placement case par case"}`);
     return lines.join("\n");
   }
 

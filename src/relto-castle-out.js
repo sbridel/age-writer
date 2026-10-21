@@ -279,18 +279,25 @@ function moonTexture() {
   }
   return null;
 }
-/** La photo en gris devient une lune de sang : la lumière reste cuivre, l'ombre tire au pourpre ; le limbe s'assombrit. */
+/**
+ * La photo en gris devient une lune de sang au trait du plugin : d'abord adoucie (réduite à 28 px puis réagrandie : les
+ * cratères fondent, les mers restent), puis posée en QUATRE tons plats, du pourpre sombre au cuivre clair, comme le reste du
+ * Château est peint en aplats dégradés. Un fin liseré clair sur le limbe, l'ombre pourpre qui mord en bas à gauche.
+ */
 function tintMoon(img) {
   const S = 256, C = S / 2, R = S / 2 - 1, cv = document.createElement("canvas"); cv.width = S; cv.height = S;
   const g = cv.getContext("2d"); if (!g) return null;
+  const sm = document.createElement("canvas"); sm.width = sm.height = 28; const gs = sm.getContext("2d"); if (!gs) return null;
+  gs.drawImage(img, 0, 0, 28, 28);
   g.save(); g.beginPath(); g.arc(C, C, R, 0, 6.283); g.clip();
-  g.drawImage(img, 0, 0, S, S);
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high"; g.drawImage(sm, -4, -4, S + 8, S + 8);
   const px = g.getImageData(0, 0, S, S), d = px.data;
-  for (let i = 0; i < d.length; i += 4) { const v = d[i] / 255, w = Math.pow(v, 0.85); /* une rampe : noir pourpre → rouge sang → cuivre clair */
-    d[i] = Math.round(255 * Math.min(1, 0.25 + 0.95 * w)); d[i + 1] = Math.round(255 * Math.max(0, 0.02 + 0.62 * w * w)); d[i + 2] = Math.round(255 * Math.max(0, 0.08 + 0.2 * w * w * w)); }
+  const TONES = [[122, 24, 22], [186, 52, 30], [222, 98, 52], [244, 158, 104]], CUT = [0.42, 0.62, 0.84];
+  for (let i = 0; i < d.length; i += 4) { const v = d[i] / 255; let k = 0; while (k < CUT.length && v > CUT[k]) k++; const t = TONES[k]; d[i] = t[0]; d[i + 1] = t[1]; d[i + 2] = t[2]; }
   g.putImageData(px, 0, 0);
-  const umbra = g.createRadialGradient(C - R * 1.1, C + R * 1.1, R * 0.7, C - R * 1.1, C + R * 1.1, R * 2.4); umbra.addColorStop(0, "rgba(40,4,14,0.6)"); umbra.addColorStop(1, "rgba(40,4,14,0)"); g.fillStyle = umbra; g.fillRect(0, 0, S, S);
-  const limb = g.createRadialGradient(C, C, R * 0.8, C, C, R); limb.addColorStop(0, "rgba(30,2,6,0)"); limb.addColorStop(1, "rgba(30,2,6,0.45)"); g.fillStyle = limb; g.fillRect(0, 0, S, S);
+  const umbra = g.createRadialGradient(C - R * 1.1, C + R * 1.1, R * 0.7, C - R * 1.1, C + R * 1.1, R * 2.4); umbra.addColorStop(0, "rgba(40,4,14,0.55)"); umbra.addColorStop(1, "rgba(40,4,14,0)"); g.fillStyle = umbra; g.fillRect(0, 0, S, S);
+  const limb = g.createRadialGradient(C, C, R * 0.82, C, C, R); limb.addColorStop(0, "rgba(30,2,6,0)"); limb.addColorStop(1, "rgba(30,2,6,0.4)"); g.fillStyle = limb; g.fillRect(0, 0, S, S);
+  for (let i = 0; i < 24; i++) { const a0 = -2.2 + i * 0.12, f = Math.sin((i + 0.5) / 24 * Math.PI); g.strokeStyle = `rgba(255,214,170,${(0.45 * f).toFixed(3)})`; g.lineWidth = 2; g.beginPath(); g.arc(C, C, R - 1.1, a0, a0 + 0.125); g.stroke(); }
   g.restore();
   return cv;
 }
