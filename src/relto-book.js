@@ -121,7 +121,7 @@ class ReltoBook {
     const c = this.contentEl.querySelector(".age-rbook__covercontainer");
     this.opening = true; if (c) { c.addClass("is-held"); c.removeClass("is-clickable"); if (c.parentElement) c.parentElement.addClass("is-held"); }
     window.setTimeout(() => { if (c) { c.addClass("is-opening"); if (c.parentElement) c.parentElement.addClass("is-opening"); } }, lead);
-    window.setTimeout(() => { this.opening = false; this.cover = false; this.anim = 1; this.render(); }, lead + swing); // la couverture pivote après les loquets, pas pendant
+    window.setTimeout(() => { this.opening = false; this.cover = false; this.anim = 1; this.fromCover = true; this.render(); }, lead + swing); // la couverture pivote après les loquets, pas pendant
   }
 
   /** La couverture : le livre fermé, qu'on ouvre d'un clic (ou Entrée). */
@@ -131,10 +131,10 @@ class ReltoBook {
     const book = el.createDiv({ cls: "age-book age-rbook" }); book.toggleClass("age-book--leather", plugin.ext.leather !== false);
     const spread = book.createDiv({ cls: "age-book__spread age-rbook__spread is-cover" });
     const stack = spread.createDiv({ cls: "age-rbook__stack" }); /* sous la couverture, le bloc des pages : on le voit quand elle pivote */
-    stack.createDiv({ cls: "age-rbook__leaves" });
+    setMarkup(stack.createDiv({ cls: "age-rbook__leaves" }), `<div class="age-rbook__halftitle"><svg viewBox="0 0 80 70" aria-hidden="true">${islandEmblem(40, 30, 26, "#7a5a2c")}</svg><span>Relto</span></div>`); /* la page de faux-titre, sous la couverture */
     const c = stack.createDiv({ cls: "age-book__covercontainer age-rbook__covercontainer is-clickable" });
     setMarkup(c, reltoCoverSvg({ medal: "garnet" })); c.setAttr("aria-label", plugin.t("book.open")); c.setAttr("title", plugin.t("book.open"));
-    c.createDiv({ cls: "age-rbook__inside" }); /* l'envers de la couverture (contre-garde) : on le voit quand elle s'est rabattue à gauche */
+    setMarkup(c.createDiv({ cls: "age-rbook__inside" }), reltoEndpaperSvg()); /* l'envers de la couverture (contre-garde) : on le voit quand elle s'est rabattue à gauche */
     c.addEventListener("click", () => this.openCover());
   }
 
@@ -148,6 +148,7 @@ class ReltoBook {
     const f = hubs[this.idx]; if (!f) return;
     this.stopGlass(); el.empty();
     const book = el.createDiv({ cls: "age-book age-rbook" }); book.toggleClass("age-book--leather", plugin.ext.leather !== false);
+    if (this.fromCover) { book.addClass("is-from-cover"); this.fromCover = false; } /* juste ouvert : la double page se lève en fondu sur le livre ouvert */
     const spread = book.createDiv({ cls: "age-book__spread age-rbook__spread" });
     if (plugin.ext.leather !== false) for (const c of ["tl", "tr", "bl", "br"]) spread.createDiv({ cls: `age-book__corner age-book__corner--${c}` });
     const left = spread.createDiv({ cls: "age-book__page age-book__page--left age-rbook__text" });
@@ -188,7 +189,6 @@ class ReltoBook {
     row(t("rbook.visit"), visitText(t, (plugin.ext.reltoVisits || {})[f.path]));
 
     // tourner les pages : la page de gauche ramène en arrière (puis à la couverture), celle de droite avance ; au doigt, glisser
-    left.createDiv({ cls: "age-rbook__folio", text: String(2 * this.idx + 1) }); right.createDiv({ cls: "age-rbook__folio", text: String(2 * this.idx + 2) });
     const back = this.idx > 0 || this.keepCover || plugin.ext.coverTab !== false, fwd = this.idx < hubs.length - 1;
     left.toggleClass("is-turnable", back); right.toggleClass("is-turnable", fwd);
     left.setAttr("title", back ? (this.idx > 0 ? t("rbook.prev") : t("book.cover")) : "");
@@ -310,6 +310,41 @@ const MEDALS = { garnet: ["#6a1d27", "#2c0910", "#c79a8a"], teal: ["#1d4a50", "#
  * un double filet doré le long des bords, un fleuron à chaque coin ; au centre, un ovale doré au fer, une couronne de
  * feuilles, et le médaillon cerclé d'or où l'île du Relto (sa montagne, sa cabane) est gravée. Sans texte. De notre main.
  */
+/**
+ * L'envers de la couverture, vu une fois rabattue à gauche (le dos est alors à DROITE) : les rempli du cuir sur trois côtés,
+ * un filet doré, et la contre-garde en papier marbré (peigné, vert et or, dessiné ici, pas une image) ; dessus, un ex-libris
+ * crème à l'île du Relto. Même viewBox que la couverture : il la recouvre exactement.
+ */
+function reltoEndpaperSvg() {
+  const W = 300, H = 460, L = 16, T = 16, R = 7, u = "rbe", AU = "#d4b25a", x0 = L, y0 = T, x1 = W - R, y1 = H - T, pw = x1 - x0, ph = y1 - y0;
+  let seed = 0x5e1f0; const q = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  /* le marbre peigné : des bandes ondulées serrées, en quatre tons, puis quelques « pierres » claires */
+  const tones = ["#14382b", "#1f4d3a", "#2c6450", "#0d2a1f", "#b9a160", "#1a4433"];
+  let bands = "";
+  for (let y = y0 - 10, i = 0; y < y1 + 10; i++) { const h = 5 + q() * 9, a = 2 + q() * 4, f = 0.035 + q() * 0.02, ph0 = q() * 6.28, col = tones[i % 5 === 4 ? 4 : Math.floor(q() * 4)];
+    let d = `M${x0 - 4} ${y.toFixed(1)}`; for (let x = x0 - 4; x <= x1 + 4; x += 6) d += ` L${x} ${(y + Math.sin(x * f + ph0) * a).toFixed(1)}`;
+    for (let x = x1 + 4; x >= x0 - 4; x -= 6) d += ` L${x} ${(y + h + Math.sin(x * f + ph0 + 0.4) * a).toFixed(1)}`;
+    bands += `<path d="${d} Z" fill="${col}" opacity="${col === "#b9a160" ? 0.55 : 1}"/>`; y += h * 0.82; }
+  let stones = ""; for (let i = 0; i < 18; i++) { const sx = x0 + q() * pw, sy = y0 + q() * ph, r = 1.5 + q() * 4; stones += `<ellipse cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" rx="${(r * 1.8).toFixed(1)}" ry="${r.toFixed(1)}" fill="#cfe0c8" opacity="${(0.05 + q() * 0.07).toFixed(2)}"/>`; }
+  /* l'ex-libris, au centre de la contre-garde */
+  const ew = 116, eh = 132, ex = x0 + (pw - ew) / 2, ey = y0 + (ph - eh) / 2 - 8, ecx = ex + ew / 2;
+  const label = `<g><rect x="${ex}" y="${ey}" width="${ew}" height="${eh}" rx="3" fill="#efe3c2" stroke="${AU}" stroke-width="1.4"/>`
+    + `<rect x="${ex + 5}" y="${ey + 5}" width="${ew - 10}" height="${eh - 10}" rx="2" fill="none" stroke="#8a6a2e" stroke-width="0.7"/>`
+    + `<text x="${ecx}" y="${ey + 24}" text-anchor="middle" font-family="Georgia, serif" font-size="9" letter-spacing="2.5" fill="#6a4a22">EX LIBRIS</text>`
+    + `<g transform="translate(0 0)">${islandEmblem(ecx, ey + 70, 30, "#3a5a40")}</g>`
+    + `<path d="M${ecx - 26} ${ey + 104} H${ecx + 26}" stroke="${AU}" stroke-width="0.8"/><path d="M${ecx} ${ey + 101} l3 3 l-3 3 l-3 -3 Z" fill="${AU}"/>`
+    + `<text x="${ecx}" y="${ey + 121}" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="13" fill="#4a3626">Relto</text></g>`;
+  return `<svg class="age-rbook__endpaper" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="presentation">`
+    + `<defs><linearGradient id="${u}lt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d3d2c"/><stop offset="1" stop-color="#0c1f16"/></linearGradient>`
+    + `<linearGradient id="${u}sh" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0.45"/><stop offset="0.12" stop-color="#000" stop-opacity="0"/></linearGradient>`
+    + `<clipPath id="${u}cp"><rect x="${x0}" y="${y0}" width="${pw}" height="${ph}"/></clipPath></defs>`
+    + `<rect x="0" y="0" width="${W}" height="${H}" rx="6" fill="url(#${u}lt)"/>`
+    + `<rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="4" fill="none" stroke="${AU}" stroke-opacity="0.55" stroke-width="0.8"/>`
+    + `<g clip-path="url(#${u}cp)"><rect x="${x0}" y="${y0}" width="${pw}" height="${ph}" fill="#14382b"/>${bands}${stones}<rect x="${x0}" y="${y0}" width="${pw}" height="${ph}" fill="url(#${u}sh)"/></g>`
+    + `<rect x="${x0 - 2.5}" y="${y0 - 2.5}" width="${pw + 4}" height="${ph + 5}" fill="none" stroke="${AU}" stroke-width="1.1"/>`
+    + label + `</svg>`;
+}
+
 function reltoCoverSvg({ standalone = false, medal = "garnet" } = {}) {
   const W = 300, H = 460, fx0 = 34, fy0 = 18, fx1 = W - 16, fy1 = H - 18, cx = (fx0 + fx1) / 2, cy = (fy0 + fy1) / 2, R = 40, // tout le décor central est centré dans le cadre doré
     u = "rbc" + medal, AU = "#d4b25a", AU2 = "#a8862e", M = MEDALS[medal] || MEDALS.garnet;
