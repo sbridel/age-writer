@@ -226,6 +226,16 @@ class Dni {
     return str.length * size * this.cell("font");
   }
 
+  /** L'encre d'une chaîne composée, au-delà de sa chasse : { left, right, up, down } en unités de `size` (barres qui débordent). */
+  runInk_(str, size) {
+    try {
+      const c = this.probeCtx = this.probeCtx || document.createElement("canvas").getContext("2d");
+      if (c) { c.font = `${(size / FONT_CAP).toFixed(2)}px ${this.textStack()}`; c.textAlign = "left"; c.textBaseline = "alphabetic"; const m = c.measureText(str);
+        if (m && Number.isFinite(m.actualBoundingBoxLeft)) return { left: Math.max(0, m.actualBoundingBoxLeft) / size, right: Math.max(0, m.actualBoundingBoxRight - m.width) / size, up: Math.max(0, m.actualBoundingBoxAscent - size) / size, down: Math.max(0, m.actualBoundingBoxDescent) / size }; }
+    } catch (e) { /* pas de canvas */ }
+    return { left: 0.08, right: 0.08, up: 0.04, down: 0.04 };
+  }
+
   /**
    * Placement des chiffres d'un nombre (hors police, voir fontRun_) : `xs` = abscisse d'ancrage de chaque chiffre (coin haut-gauche de sa case), `width`.
    * Par défaut (`gap` absent) les cases sont SOUDÉES, comme dans l'écriture D'ni : au-delà de 24, chaque chiffre pose son
@@ -302,9 +312,11 @@ class Dni {
   numberSvg(num, { size = 28, color = "currentColor", gap = null, cls = "age-dni" } = {}) {
     const digits = toBase25(num), mode = this.mode(), pad = size * 0.04, ds = size - 2 * pad, run = gap == null ? this.fontRun_(digits, mode) : null;
     const L = run ? { width: this.runWidth_(run, ds) } : this.layout_(digits, ds, mode, gap);
-    const W = L.width + 2 * pad, H = size;
+    /* en police, les barres débordent de la chasse : la boîte s'élargit de l'encre mesurée, sinon elles sont rognées */
+    const ink = run ? this.runInk_(run, ds) : { left: 0, right: 0, up: 0, down: 0 }, ml = ink.left * ds, mr = ink.right * ds, mu = ink.up * ds, md = ink.down * ds;
+    const W = L.width + 2 * pad + ml + mr, H = size + mu + md;
     const inner = run
-      ? `<text x="${pad.toFixed(2)}" y="${(pad + ds).toFixed(2)}" font-family="${esc(this.textStack())}" font-size="${(ds / FONT_CAP).toFixed(2)}" fill="${color}">${esc(run)}</text>`
+      ? `<text x="${(pad + ml).toFixed(2)}" y="${(pad + mu + ds).toFixed(2)}" font-family="${esc(this.textStack())}" font-size="${(ds / FONT_CAP).toFixed(2)}" fill="${color}">${esc(run)}</text>`
       : digits.map((d, i) => this.digitInner(d, L.xs[i] + pad, pad, ds, color, mode)).join("");
     return `<svg class="${cls}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" width="${W.toFixed(1)}" height="${H.toFixed(1)}" role="img" aria-label="${esc(num)} (D'ni)">${inner}</svg>`;
   }
