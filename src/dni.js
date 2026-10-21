@@ -186,7 +186,25 @@ class Dni {
   }
 
   /**
-   * Placement des chiffres d'un nombre : `xs` = abscisse d'ancrage de chaque chiffre (coin haut-gauche de sa case), `width`.
+   * Avec une police : un nombre entier se compose comme un MOT, d'une seule chaîne, et c'est la police qui soude les cases
+   * (ses chasses sont dessinées pour ça : le montant droit d'un chiffre reçoit le montant gauche du suivant). Renvoie la
+   * chaîne, ou null si on n'est pas en police ou si un chiffre lui manque (on revient alors au placement case par case).
+   */
+  fontRun_(digits, mode = this.mode()) {
+    if (mode !== "font" || digits.some((d) => this.glyphMissing(d))) return null;
+    return digits.map((d) => FONT_CHARS[d]).join("");
+  }
+  /** Largeur d'une chaîne composée dans la police, pour une hauteur de chiffre `size` (mesurée au canvas ; sinon estimée). */
+  runWidth_(str, size) {
+    try {
+      const c = this.probeCtx = this.probeCtx || document.createElement("canvas").getContext("2d");
+      if (c) { c.font = `${(size / FONT_CAP).toFixed(2)}px ${this.textStack()}`; const w = c.measureText(str).width; if (w > 0) return w; }
+    } catch (e) { /* pas de canvas */ }
+    return str.length * size * this.cell("font");
+  }
+
+  /**
+   * Placement des chiffres d'un nombre (hors police, voir fontRun_) : `xs` = abscisse d'ancrage de chaque chiffre (coin haut-gauche de sa case), `width`.
    * Par défaut (`gap` absent) les cases sont SOUDÉES, comme dans l'écriture D'ni : au-delà de 24, chaque chiffre pose son
    * montant gauche sur le montant droit du précédent. Un `gap` numérique garde l'ancien écart (fraction de la hauteur).
    */
@@ -199,13 +217,13 @@ class Dni {
   }
   /**
    * Les deux montants d'un chiffre ({ l, r } : bord gauche du montant gauche et du montant droit, en hauteurs, depuis
-   * l'ancrage). Procédural : connu (cadre de 4 à 96, trait de 7). Police ou contours : chaque glyphe a sa largeur et ses
-   * barres débordantes ; on le trace hors écran et on cherche les colonnes encrées sur presque toute la hauteur. Mis en
-   * cache par police et par chiffre ; une mesure ratée (police pas encore chargée) n'est pas gardée et se refait plus tard.
+   * l'ancrage). Procédural : connu (cadre de 4 à 96, trait de 7). Contours (dni-numerals.local.json) : chaque glyphe a sa
+   * largeur et ses barres débordantes ; on le trace hors écran et on cherche les colonnes encrées sur presque toute la hauteur. Mis en
+   * cache par chiffre ; une mesure ratée n'est pas gardée et se refait plus tard. (En police, voir fontRun_.)
    */
   frame_(mode, d) {
     const cell = this.cell(mode), guess = { l: (cell - 1) / 2 + 0.005, r: (cell - 1) / 2 + 0.925 };
-    if (mode === "simple" || (mode === "font" && this.glyphMissing(d))) return guess;
+    if (mode !== "glyphs") return guess;
     const key = mode + "|" + (mode === "font" ? this.textStack() : "glyphs") + "|" + d;
     this.frames = this.frames || new Map();
     const got = this.frames.get(key);
@@ -248,25 +266,39 @@ class Dni {
 
   /** Un nombre entier en base 25, comme chaîne SVG complète. */
   numberSvg(num, { size = 28, color = "currentColor", gap = null, cls = "age-dni" } = {}) {
-    const digits = toBase25(num), mode = this.mode(), pad = size * 0.04, ds = size - 2 * pad, L = this.layout_(digits, ds, mode, gap);
+    const digits = toBase25(num), mode = this.mode(), pad = size * 0.04, ds = size - 2 * pad, run = gap == null ? this.fontRun_(digits, mode) : null;
+    const L = run ? { width: this.runWidth_(run, ds) } : this.layout_(digits, ds, mode, gap);
     const W = L.width + 2 * pad, H = size;
-    const inner = digits.map((d, i) => this.digitInner(d, L.xs[i] + pad, pad, ds, color, mode)).join("");
+    const inner = run
+      ? `<text x="${pad.toFixed(2)}" y="${(pad + ds).toFixed(2)}" font-family="${esc(this.textStack())}" font-size="${(ds / FONT_CAP).toFixed(2)}" fill="${color}">${esc(run)}</text>`
+      : digits.map((d, i) => this.digitInner(d, L.xs[i] + pad, pad, ds, color, mode)).join("");
     return `<svg class="${cls}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" width="${W.toFixed(1)}" height="${H.toFixed(1)}" role="img" aria-label="${esc(num)} (D'ni)">${inner}</svg>`;
   }
 
   /** Largeur qu'occuperait un nombre (mêmes unités que size). */
   widthOf(num, size = 28, gap = null) {
-    return this.layout_(toBase25(num), size, this.mode(), gap).width;
+    const digits = toBase25(num), mode = this.mode(), run = gap == null ? this.fontRun_(digits, mode) : null;
+    return run ? this.runWidth_(run, size) : this.layout_(digits, size, mode, gap).width;
   }
 
   /** Dessine un nombre sur un canvas 2D ; renvoie la largeur occupée. */
   drawNumber(ctx, num, x, y, size = 28, color = "#cdbd94", gap = null) {
-    const digits = toBase25(num), mode = this.mode(), cw = size * this.cell(mode), L = this.layout_(digits, size, mode, gap);
+    const digits = toBase25(num), mode = this.mode(), run = gap == null ? this.fontRun_(digits, mode) : null;
     ctx.save();
     ctx.fillStyle = color; ctx.strokeStyle = color;
-    digits.forEach((d, i) => this.drawDigit_(ctx, d, x + L.xs[i], y, size, mode, cw));
+    let w;
+    if (run) w = this.drawRun_(ctx, run, x, y, size);
+    else { const cw = size * this.cell(mode), L = this.layout_(digits, size, mode, gap); digits.forEach((d, i) => this.drawDigit_(ctx, d, x + L.xs[i], y, size, mode, cw)); w = L.width; }
     ctx.restore();
-    return L.width;
+    return w;
+  }
+
+  /** Une chaîne composée dans la police, coin haut-gauche (x, y) ; renvoie sa largeur. Couleurs déjà posées. */
+  drawRun_(ctx, run, x, y, size) {
+    ctx.font = `${(size / FONT_CAP).toFixed(1)}px ${this.textStack()}`;
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.fillText(run, x, y + size);
+    return ctx.measureText ? ctx.measureText(run).width : this.runWidth_(run, size);
   }
 
   /** Un chiffre 0..24 dans sa case (coin haut-gauche `dx`, `y`, largeur `cw`) ; couleurs déjà posées. */
@@ -301,7 +333,7 @@ class Dni {
     const fr = arr.slice(1).map((d) => Math.max(0, Math.min(24, Math.round(Number(d) || 0))));
     const cw = size * this.cell(), g = size * gap, pad = size * 0.14, cells = [];
     let x = 0;
-    if (whole > 0 || !fr.length) { const WL = this.layout_(toBase25(whole), size); toBase25(whole).forEach((d, i) => cells.push({ d, x: WL.xs[i], framed: false })); x = WL.width; if (fr.length) x += g; }
+    if (whole > 0 || !fr.length) { const wd = toBase25(whole), run = this.fontRun_(wd); if (run) { x = this.runWidth_(run, size); cells.push({ run, x: 0, framed: false }); } else { const WL = this.layout_(wd, size); wd.forEach((d, i) => cells.push({ d, x: WL.xs[i], framed: false })); x = WL.width; } if (fr.length) x += g; }
     fr.forEach((d, i) => { cells.push({ d, x: x + pad, framed: true }); x += cw + 2 * pad + (i < fr.length - 1 ? g * 0.5 : 0); });
     return { cells, width: x, cw, pad };
   }
@@ -313,7 +345,9 @@ class Dni {
     let inner = "";
     for (const c of L.cells) {
       if (c.framed) inner += `<rect x="${(c.x - L.pad + sw / 2).toFixed(2)}" y="${(sw / 2).toFixed(2)}" width="${(L.cw + 2 * L.pad - sw).toFixed(2)}" height="${(H - sw).toFixed(2)}" rx="${(size * 0.12).toFixed(2)}" fill="none" stroke="${color}" stroke-width="${sw.toFixed(2)}" opacity="0.7"/>`;
-      inner += this.digitInner(c.d, c.x + pad, L.pad + pad, size - 2 * pad, color, mode);
+      inner += c.run
+        ? `<text x="${(c.x + pad).toFixed(2)}" y="${(L.pad + size - pad).toFixed(2)}" font-family="${esc(this.textStack())}" font-size="${((size - 2 * pad) / FONT_CAP).toFixed(2)}" fill="${color}">${esc(c.run)}</text>`
+        : this.digitInner(c.d, c.x + pad, L.pad + pad, size - 2 * pad, color, mode);
     }
     const aria = label || (Array.isArray(digits) ? digits.join(" ") : "0");
     return `<svg class="${cls}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" width="${W.toFixed(1)}" height="${H.toFixed(1)}" role="img" aria-label="${esc(aria)} (D'ni)">${inner}</svg>`;
@@ -324,7 +358,7 @@ class Dni {
     ctx.save(); ctx.fillStyle = color; ctx.strokeStyle = color;
     for (const c of L.cells) {
       if (c.framed) { ctx.save(); ctx.globalAlpha *= 0.7; ctx.lineWidth = Math.max(0.6, size * 0.05); ctx.strokeRect(x + c.x - L.pad, y - L.pad, L.cw + 2 * L.pad, size + 2 * L.pad); ctx.restore(); }
-      this.drawDigit_(ctx, c.d, x + c.x, y, size, mode, L.cw);
+      if (c.run) this.drawRun_(ctx, c.run, x + c.x, y, size); else this.drawDigit_(ctx, c.d, x + c.x, y, size, mode, L.cw);
     }
     ctx.restore();
     return L.width;

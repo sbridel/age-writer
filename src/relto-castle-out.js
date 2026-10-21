@@ -263,9 +263,9 @@ function redNight(sky) {
 }
 
 /**
- * Le disque de la lune rouge, peint une fois hors écran (256 px) puis réduit : des mers aux bords flous, placées comme
- * celles de notre Lune (Procellarum à gauche, Imbrium, Serenitatis, Tranquillitatis, Nubium), un grain de régolithe, un
- * cratère clair à rayons au sud, et l'assombrissement du limbe. Plus de pastilles rondes : elles faisaient un biscuit.
+ * Le disque de la lune rouge, peint une fois hors écran (256 px) puis réduit. Une lune d'éclipse : le cuivre clair d'un
+ * côté, l'ombre pourpre qui gagne de l'autre ; quelques grandes mers aux bords fondus, placées comme celles de notre Lune ;
+ * un liseré de lumière sur le bord éclairé. Rien de piqueté : de loin, ce n'est qu'un disque de braise qui a des ombres.
  */
 let moonTex = null;
 function moonTexture() {
@@ -274,26 +274,25 @@ function moonTexture() {
   if (typeof document === "undefined") return null;
   const S = 256, C = S / 2, R = S / 2 - 1, cv = document.createElement("canvas"); cv.width = S; cv.height = S;
   const g = cv.getContext && cv.getContext("2d"); if (!g || !g.createRadialGradient) return null;
-  let seed = 0x6d00e; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
   g.save(); g.beginPath(); g.arc(C, C, R, 0, 6.283); g.clip();
-  const base = g.createRadialGradient(C - R * 0.2, C - R * 0.22, R * 0.05, C, C, R); base.addColorStop(0, "#f07a4c"); base.addColorStop(0.55, "#d4492c"); base.addColorStop(1, "#a42a1c");
+  /* la lumière vient du haut à droite ; l'ombre de la Terre mord en bas à gauche */
+  const base = g.createLinearGradient(C + R * 0.8, C - R * 0.8, C - R * 0.9, C + R * 0.9);
+  base.addColorStop(0, "#f4a070"); base.addColorStop(0.3, "#e4643a"); base.addColorStop(0.65, "#b82e22"); base.addColorStop(1, "#4e0c12");
   g.fillStyle = base; g.fillRect(0, 0, S, S);
-  /* les mers : chacune un nuage d'ellipses floues, sombres et peu opaques */
-  const blob = (cx, cy, rr, a) => { const gr = g.createRadialGradient(cx, cy, 0, cx, cy, rr); gr.addColorStop(0, `rgba(96,16,12,${a})`); gr.addColorStop(0.6, `rgba(96,16,12,${a * 0.7})`); gr.addColorStop(1, "rgba(96,16,12,0)"); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, rr, 0, 6.283); g.fill(); };
-  for (const [mx, my, mr, n, a] of [[-0.45, 0.0, 0.36, 9, 0.22], [-0.2, -0.38, 0.24, 6, 0.26], [0.22, -0.3, 0.16, 5, 0.28], [0.38, -0.02, 0.2, 6, 0.26], [0.55, -0.32, 0.09, 3, 0.3], [-0.1, 0.35, 0.16, 5, 0.2], [0.2, 0.22, 0.12, 4, 0.2]]) {
-    for (let i = 0; i < n; i++) { const ang = rnd() * 6.283, d = rnd() * mr * 0.8; blob(C + (mx * R) + Math.cos(ang) * d * R, C + (my * R) + Math.sin(ang) * d * R, (mr * 0.45 + rnd() * mr * 0.5) * R, a); }
-  }
-  /* le grain : petits cratères clairs et sombres */
-  for (let i = 0; i < 900; i++) { const ang = rnd() * 6.283, d = Math.sqrt(rnd()) * R, px = C + Math.cos(ang) * d, py = C + Math.sin(ang) * d, l = rnd() < 0.5;
-    g.fillStyle = l ? `rgba(255,190,150,${0.05 + rnd() * 0.07})` : `rgba(60,8,6,${0.05 + rnd() * 0.08})`; g.beginPath(); g.arc(px, py, 0.6 + rnd() * 1.6, 0, 6.283); g.fill(); }
-  for (let i = 0; i < 14; i++) { const ang = rnd() * 6.283, d = Math.sqrt(rnd()) * R * 0.9, px = C + Math.cos(ang) * d, py = C + Math.sin(ang) * d, rr = 2 + rnd() * 4;
-    g.strokeStyle = "rgba(60,8,6,0.18)"; g.lineWidth = 1; g.beginPath(); g.arc(px + 0.6, py + 0.6, rr, 0, 6.283); g.stroke(); g.strokeStyle = "rgba(255,190,150,0.14)"; g.beginPath(); g.arc(px - 0.4, py - 0.4, rr, 0, 6.283); g.stroke(); }
-  /* le cratère à rayons, au sud */
-  const tx = C - R * 0.08, ty = C + R * 0.62;
-  g.strokeStyle = "rgba(255,200,160,0.10)"; g.lineWidth = 1.4; for (let i = 0; i < 11; i++) { const ang = i / 11 * 6.283 + rnd() * 0.3, len = R * (0.25 + rnd() * 0.45); g.beginPath(); g.moveTo(tx, ty); g.lineTo(tx + Math.cos(ang) * len, ty + Math.sin(ang) * len); g.stroke(); }
-  const ts = g.createRadialGradient(tx, ty, 0, tx, ty, 7); ts.addColorStop(0, "rgba(255,214,180,0.55)"); ts.addColorStop(1, "rgba(255,214,180,0)"); g.fillStyle = ts; g.beginPath(); g.arc(tx, ty, 7, 0, 6.283); g.fill();
-  /* le limbe s'assombrit */
-  const limb = g.createRadialGradient(C, C, R * 0.55, C, C, R); limb.addColorStop(0, "rgba(40,4,4,0)"); limb.addColorStop(0.8, "rgba(40,4,4,0.18)"); limb.addColorStop(1, "rgba(40,4,4,0.55)"); g.fillStyle = limb; g.fillRect(0, 0, S, S);
+  /* les mers : grandes, douces, à peine plus sombres (Procellarum, Imbrium, Serenitatis, Tranquillitatis, Nubium, Crisium) */
+  const sea = (mx, my, rx, ry, rot, a) => { g.save(); g.translate(C + mx * R, C + my * R); g.rotate(rot); g.scale(rx * R, ry * R); const gr = g.createRadialGradient(0, 0, 0, 0, 0, 1); gr.addColorStop(0, `rgba(70,10,14,${a})`); gr.addColorStop(0.55, `rgba(70,10,14,${a * 0.75})`); gr.addColorStop(1, "rgba(70,10,14,0)"); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 1, 0, 6.283); g.fill(); g.restore(); };
+  sea(-0.42, 0.02, 0.4, 0.5, 0.3, 0.26); sea(-0.18, -0.4, 0.3, 0.24, -0.2, 0.3); sea(0.2, -0.34, 0.2, 0.17, 0.4, 0.32); sea(0.38, -0.05, 0.22, 0.2, 0, 0.3); sea(0.6, -0.36, 0.1, 0.08, 0, 0.34); sea(-0.1, 0.4, 0.2, 0.15, 0.2, 0.24); sea(0.24, 0.3, 0.14, 0.12, 0, 0.22);
+  /* trois cratères clairs, doux, dont Tycho et ses rayons à peine visibles */
+  const spot = (sx, sy, rr, a) => { const gr = g.createRadialGradient(C + sx * R, C + sy * R, 0, C + sx * R, C + sy * R, rr * R); gr.addColorStop(0, `rgba(255,220,190,${a})`); gr.addColorStop(1, "rgba(255,220,190,0)"); g.fillStyle = gr; g.beginPath(); g.arc(C + sx * R, C + sy * R, rr * R, 0, 6.283); g.fill(); };
+  spot(-0.1, 0.66, 0.07, 0.4); spot(-0.5, -0.45, 0.05, 0.22); spot(0.52, 0.42, 0.04, 0.2);
+  g.strokeStyle = "rgba(255,220,190,0.07)"; g.lineWidth = 1.2; for (let i = 0; i < 9; i++) { const ang = -1.1 + i * 0.52, len = R * (0.3 + (i % 3) * 0.18); g.beginPath(); g.moveTo(C - 0.1 * R, C + 0.66 * R); g.lineTo(C - 0.1 * R + Math.cos(ang) * len, C + 0.66 * R + Math.sin(ang) * len); g.stroke(); }
+  /* l'ombre qui gagne : un voile pourpre en bas à gauche, et le limbe qui s'assombrit tout autour */
+  const umbra = g.createRadialGradient(C - R * 1.1, C + R * 1.1, R * 0.6, C - R * 1.1, C + R * 1.1, R * 2.3); umbra.addColorStop(0, "rgba(40,4,14,0.75)"); umbra.addColorStop(1, "rgba(40,4,14,0)"); g.fillStyle = umbra; g.fillRect(0, 0, S, S);
+  const limb = g.createRadialGradient(C, C, R * 0.7, C, C, R); limb.addColorStop(0, "rgba(40,4,8,0)"); limb.addColorStop(1, "rgba(40,4,8,0.4)"); g.fillStyle = limb; g.fillRect(0, 0, S, S);
+  /* le liseré de lumière sur le bord éclairé */
+  for (let i = 0; i < 24; i++) { const a0 = -2.2 + i * 0.12, f = Math.sin((i + 0.5) / 24 * Math.PI); /* fondu aux deux bouts */
+    g.strokeStyle = `rgba(255,214,170,${(0.5 * f).toFixed(3)})`; g.lineWidth = 2; g.beginPath(); g.arc(C, C, R - 1.1, a0, a0 + 0.125); g.stroke();
+    g.strokeStyle = `rgba(255,214,170,${(0.16 * f).toFixed(3)})`; g.lineWidth = 5; g.beginPath(); g.arc(C, C, R - 3, a0, a0 + 0.125); g.stroke(); }
   g.restore();
   moonTex = cv;
   return cv;
