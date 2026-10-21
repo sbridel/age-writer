@@ -573,7 +573,8 @@ async function renderRelto(plugin, source, el, ctx) {
     const tickDni = () => {
       const d = DC.reltoDate(zero.scene()), n = (v) => plugin.dni.numberSvg(v, { size: tabsOn ? 24 : 13 });
       const caught = d.synced;
-      setMarkup(dniClock, `${n(d.hahr)}<i>${esc(d.name)}</i>${n(d.yahr)}` + (caught ? `<b>${n(d.gahrtahvo)}${n(d.tahvo)}${n(d.gorahn)}${n(d.prorahn)}</b>` : `<b class="age-relto__dnitime-silent">${esc(t("relto.dni.silent"))}</b>`));
+      const vailee = plugin.dni.writes() ? `<i class="age-dni age-relto__vailee" data-latin="${esc(d.name)}" tabindex="0" style="font-family:${esc(plugin.dni.textStack())}">${esc(plugin.dni.textFor(d.name))}</i>` : `<i>${esc(d.name)}</i>`; /* le vailee en lettres D'ni ; au survol, son nom latin */
+      setMarkup(dniClock, `${n(d.hahr)}${vailee}${n(d.yahr)}` + (caught ? `<b>${n(d.gahrtahvo)}${n(d.tahvo)}${n(d.gorahn)}${n(d.prorahn)}</b>` : `<b class="age-relto__dnitime-silent">${esc(t("relto.dni.silent"))}</b>`));
       dniClock.toggleClass("is-drifting", !caught); dniClock.setAttr("aria-label", caught ? DT.format(d) : t("relto.dni.silent.tip")); // l'infobulle d'Obsidian (aria-label) seule : `title` en ajoutait une seconde, grise
     };
     // la mise à jour reconstruit les chiffres toutes les ~1,4 s, ce qui fermait l'infobulle avant qu'elle n'apparaisse : on suspend tant que la souris est dessus

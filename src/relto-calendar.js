@@ -60,7 +60,8 @@ function drawCalendar(r, ctx, sc, sky, t) {
   const num = (v, cx, y, s) => { if (!r.dni) return; const w = r.dni.widthOf(v, s); r.dni.drawNumber(ctx, v, cx - w / 2 + dx, y + 0.7, s, lit); r.dni.drawNumber(ctx, v, cx - w / 2, y, s, ink); return w; };
   if (r.dni) {
     num(d.hahr, CX, 84, 32);
-    ctx.font = "italic 24px serif"; ctx.textAlign = "center"; ctx.fillStyle = lit; ctx.fillText(d.name, CX + dx, 142.7); ctx.fillStyle = ink; ctx.fillText(d.name, CX, 142); ctx.textAlign = "left";
+    const dn = r.dni.writes && r.dni.writes(), nm = dn ? r.dni.textFor(d.name) : d.name; /* le vailee en lettres D'ni quand une police est là (l'infobulle le dit en latin) */
+    ctx.font = dn ? `28px ${r.dni.textStack()}` : "italic 24px serif"; ctx.textAlign = "center"; ctx.fillStyle = lit; ctx.fillText(nm, CX + dx, 142.7); ctx.fillStyle = ink; ctx.fillText(nm, CX, 142); ctx.textAlign = "left";
     num(d.yahr, CX, 160, 66);
     ctx.strokeStyle = ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(CX - 56, 244); ctx.lineTo(CX + 56, 244); ctx.stroke(); ctx.fillStyle = ink; ctx.beginPath(); ctx.moveTo(CX, 239); ctx.lineTo(CX + 5, 244); ctx.lineTo(CX, 249); ctx.lineTo(CX - 5, 244); ctx.closePath(); ctx.fill();
     const parts = [d.gahrtahvo, d.tahvo, d.gorahn, d.prorahn], s2 = 22, gap = 12, ws = parts.map((v) => r.dni.widthOf(v, s2)), tot = ws.reduce((a, b) => a + b, 0) + gap * 3;

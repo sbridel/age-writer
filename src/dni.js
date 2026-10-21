@@ -156,6 +156,8 @@ class Dni {
   }
 
   hasFont() { return !!this.fontFamily(); }
+  /** Écrit-on les mots en lettres D'ni ? Une police, et le réglage « texte D'ni » (o.getDniText) qui ne l'interdit pas. */
+  writes() { return this.hasFont() && !(this.o.getDniText && this.o.getDniText() === false); }
 
   /**
    * Cette police dessine-t-elle vraiment le chiffre `v` ? Certaines polices D'ni n'ont pas tous les caractères

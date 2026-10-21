@@ -101,7 +101,7 @@ module.exports = function build(Base, core, AGEX) {
       });
       GEN_HOOKS.doom = (name) => this.law.doom(name);
       GEN_HOOKS.opening = (name) => this.law.opening(name, this.ext.fissureDays); // les fissures s'ouvrent avec le temps
-      this.dni = new Dni({ getMode: () => this.ext.numerals, adapter: this.app.vault.adapter, pluginDir: this.manifest.dir, getVaultFont: () => this.ext.vaultFont });
+      this.dni = new Dni({ getMode: () => this.ext.numerals, adapter: this.app.vault.adapter, pluginDir: this.manifest.dir, getVaultFont: () => this.ext.vaultFont, getDniText: () => this.ext.dniText });
       this.soundFactor = 1; this.sound = new Soundscape(() => this.ext.volume * (this.soundFactor == null ? 1 : this.soundFactor));
 
       // crochets du moteur (voir build.js) : altération de la stabilité, poids de la solitude

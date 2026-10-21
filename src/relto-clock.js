@@ -140,10 +140,11 @@ function plaque(r, ctx, d, c) {
   const t = tOf(r), cx = PLINTH.x + PLINTH.w / 2, ink = c("#2c2418"), lit = "rgba(255,240,205,0.25)";
   ctx.font = "italic 11px serif"; ctx.textAlign = "center";
   if (r.dni) {
-    const s = 11, wH = r.dni.widthOf(d.hahr, s), wY = r.dni.widthOf(d.yahr, s); ctx.font = "italic 12px serif"; const wN = ctx.measureText(d.name).width + 12;
+    const dn = r.dni.writes && r.dni.writes(), nm = dn ? r.dni.textFor(d.name) : d.name; /* le vailee en lettres D'ni quand une police est là */
+    const s = 11, wH = r.dni.widthOf(d.hahr, s), wY = r.dni.widthOf(d.yahr, s); ctx.font = dn ? `14px ${r.dni.textStack()}` : "italic 12px serif"; const wN = ctx.measureText(nm).width + 12;
     let x = cx - (wH + wN + wY) / 2; const y = PLINTH.y + 10;
     r.dni.drawNumber(ctx, d.hahr, x + 0.5, y + 0.6, s, lit); r.dni.drawNumber(ctx, d.hahr, x, y, s, ink); x += wH;
-    ctx.fillStyle = lit; ctx.fillText(d.name, x + wN / 2 + 0.5, y + s - 0.4); ctx.fillStyle = ink; ctx.fillText(d.name, x + wN / 2, y + s - 1); x += wN;
+    ctx.fillStyle = lit; ctx.fillText(nm, x + wN / 2 + 0.5, y + s - 0.4); ctx.fillStyle = ink; ctx.fillText(nm, x + wN / 2, y + s - 1); x += wN;
     r.dni.drawNumber(ctx, d.yahr, x + 0.5, y + 0.6, s, lit); r.dni.drawNumber(ctx, d.yahr, x, y, s, ink);
     const parts = [d.gahrtahvo, d.tahvo, d.gorahn, d.prorahn], s2 = 10, gap = 8, ws = parts.map((v) => r.dni.widthOf(v, s2)), tot = ws.reduce((a, b) => a + b, 0) + gap * 3;
     let x2 = cx - tot / 2; const y2 = PLINTH.y + 27;
