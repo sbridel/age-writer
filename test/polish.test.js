@@ -1,5 +1,5 @@
 "use strict";
-// Retouches du 8 oct. : chiffre D'ni absent de la police (le 12 = « " »), référence complète bilingue.
+// Retouches du 8 oct. : chiffre D'ni absent de la police (le 12 = « " », recomposé 10 + 2 depuis le 21 oct.), référence complète bilingue.
 const assert = require("assert"); let n = 0; const ok = (c, m) => { assert(c, m); n++; };
 // faux canvas : la police « Dni » n'a pas le caractère « " » (elle prend la largeur de la police de secours)
 const W = { serif: 40, "sans-serif": 44, monospace: 60 };
@@ -10,10 +10,12 @@ ok(FONT_CHARS[12] === '"', "le 12 est le guillemet");
 ok(d.glyphMissing(12) === true, "12 absent de la police → détecté");
 ok(d.glyphMissing(5) === false && d.glyphMissing(0) === false, "les autres chiffres sont présents");
 const svg12 = d.digitInner(12, 0, 0, 20, "#fff", "font"), svg5 = d.digitInner(5, 0, 0, 20, "#fff", "font");
-ok(!/<text/.test(svg12) && /<path/.test(svg12), "SVG : le 12 retombe sur le tracé procédural");
+ok(!/"/.test(svg12.replace(/"[^"]*"/g, "")) && (svg12.match(/<text/g) || []).length === 2 && /&quot;|\)/.test(svg12), "SVG : le 12 absent est recomposé avec les glyphes 10 et 2 de la police (jamais écrit comme un guillemet)");
+ok(/<path/.test(d.digitInner(0, 0, 0, 20, "#fff", "font")) === false, "SVG : le 0 présent reste en police");
 ok(/<text/.test(svg5), "SVG : un chiffre présent reste en police");
 const calls = []; const ctx = { save() {}, restore() {}, translate() {}, scale() {}, stroke() {}, fill() {}, fillText: (t) => calls.push(t), set font(v) {}, set textAlign(v) {}, set textBaseline(v) {}, set fillStyle(v) {}, set strokeStyle(v) {}, set lineWidth(v) {}, set lineCap(v) {}, set lineJoin(v) {} };
-global.Path2D = class {}; d.drawNumber(ctx, 12, 0, 0, 20); ok(!calls.length, "canvas : le 12 n'est pas écrit comme un guillemet");
+global.Path2D = class {}; d.drawNumber(ctx, 12, 0, 0, 20); ok(calls.length === 2 && !calls.includes('"') && calls.includes(")") && calls.includes("2"), "canvas : le 12 est recomposé (10 puis 2), jamais écrit comme un guillemet");
+calls.length = 0;
 d.drawNumber(ctx, 5, 0, 0, 20); ok(calls.length === 1 && calls[0] === "5", "canvas : le 5 s'écrit avec la police");
 // référence complète : même structure en français et en anglais
 const { REF_EN } = require("../src/guide-ref-en");
