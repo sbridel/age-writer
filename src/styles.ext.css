@@ -362,10 +362,10 @@
    il passe à la ligne au lieu de glisser sous les icônes */
 .age-relto[data-tab] .age-relto__tabs { flex-wrap: wrap; row-gap: 2px; }
 .age-relto__tabs > .age-relto__nav--bar { order: 0; margin-right: 0; }
-.age-relto__tabs .age-relto__dnioverlay { position: static; transform: none; order: 1; flex: 1 1 auto; min-width: 0; padding: 0 8px; text-align: center; white-space: nowrap; overflow: hidden; font-size: 1.2em; text-shadow: none; }
+.age-relto__tabs .age-relto__dnioverlay { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: 40%; padding: 0 8px; text-align: center; white-space: nowrap; overflow: hidden; font-size: 1.2em; text-shadow: none; } /* centré sur toute la barre, pas sur la place laissée entre les icônes */
 .age-relto__tabs > .age-relto__tab { order: 2; }
 .age-relto[data-tab] { container-type: inline-size; }
-@container (max-width: 600px) { .age-relto__tabs .age-relto__dnioverlay { order: -1; flex-basis: 100%; padding: 2px 0 0; } .age-relto__tabs > .age-relto__nav--bar { margin-right: auto; } } /* étroit : le nom au-dessus, les icônes et les onglets dessous */
+@container (max-width: 600px) { .age-relto__tabs .age-relto__dnioverlay { position: static; transform: none; max-width: none; order: -1; flex-basis: 100%; padding: 2px 0 0; } .age-relto__tabs > .age-relto__nav--bar { margin-right: auto; } } /* étroit : le nom au-dessus, les icônes et les onglets dessous */
 
 /* Vue Relto : marges réduites au minimum ; plein écran réel (bouton « expand ») */
 .age-reltoview { padding: 0; }
@@ -402,8 +402,7 @@
 .age-reltoview:fullscreen .age-relto__stage { width: min(100vw, calc(100vh * 1.7778)); }
 .age-reltoview:fullscreen .age-relto__canvas { width: 100%; border: none; }
 .age-reltoview:fullscreen .age-relto__tabs { position: absolute; top: 0; left: 0; right: 0; z-index: 5; margin: 0; padding: 6px 14px; min-height: 34px; background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0)); }
-.age-reltoview:fullscreen .age-relto__inscription { position: absolute; left: 0; right: 0; bottom: var(--aw-when-h, 84px); z-index: 5; margin: 0; padding-bottom: 4px; pointer-events: none; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9); } /* la devise au-dessus de l'heure, plus dessous */
-.age-reltoview:fullscreen .age-relto__inscription > * { pointer-events: auto; }
+.age-reltoview:fullscreen .age-relto__inscription { display: none; } /* en plein écran, rien que l'image : la devise se tait */
 .age-reltoview:fullscreen .age-relto__when { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; margin: 0; padding: 22px 0 12px; background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.6)); }
 .age-reltoview:fullscreen .age-relto[data-tab="pages"] .age-relto__pane--pages, .age-reltoview:fullscreen .age-relto[data-tab="settings"] .age-relto__pane--settings { display: block; width: min(900px, 94vw); max-height: 88vh; overflow: auto; padding-top: 46px; }
 .age-reltoview:fullscreen .age-relto[data-tab="pages"] .age-relto__pane--view, .age-reltoview:fullscreen .age-relto[data-tab="settings"] .age-relto__pane--view,

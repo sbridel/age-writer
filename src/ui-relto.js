@@ -623,8 +623,6 @@ async function renderRelto(plugin, source, el, ctx) {
     if (!X.dniText(plugin, ins, opt.inscription, "")) { ins.setText(opt.inscription); ins.addClass("is-latin"); }
   }
   paneView.appendChild(when);
-  /* en plein écran, la ligne de l'heure flotte en bas de l'image : la devise se pose juste au-dessus (sa hauteur suit la ligne) */
-  if (opt.inscription && typeof ResizeObserver !== "undefined") { try { const ro = new ResizeObserver(() => root.style.setProperty("--aw-when-h", when.offsetHeight + "px")); ro.observe(when); plugin.register && plugin.register(() => ro.disconnect()); } catch (e) { /* ignore */ } }
   // l'heure et le nom D'ni s'effacent seuls au bout de quelques secondes ; la souris sur la vue les ramène ; un clic sur l'heure les cache
   if (tabsOn) {
     const fadeEls = [when, dniName2].filter(Boolean); let timer = 0, suppressed = false;
