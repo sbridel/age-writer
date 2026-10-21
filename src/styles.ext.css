@@ -650,7 +650,7 @@
 .age-linkanim.is-ready .age-linkanim__panel { cursor: pointer; animation: age-linkanim-wait 1.6s ease-in-out infinite; }
 @keyframes age-linkanim-wait { 0%, 100% { box-shadow: 0 0 30px rgba(201, 162, 78, 0.3); } 50% { box-shadow: 0 0 60px rgba(240, 220, 160, 0.75); } }
 
-.age-linkanim__book.has-cover { padding: 0; background: none; border: 0; width: 170px; height: auto; }
+.age-linkanim__book.has-cover { padding: 0; background: none; border: 0; width: calc(var(--page-h, min(82vh, 640px)) * 0.62); height: auto; } /* la couverture à l'échelle de la page qui va s'ouvrir (170 px, c'était un timbre en plein écran) */
 .age-linkanim__book.has-cover svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.6)); }
 
 /* les pages qu'on tourne : des feuilles qui pivotent sur la reliure, à l'endroit où le panneau va apparaître */
