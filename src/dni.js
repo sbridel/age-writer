@@ -13,8 +13,11 @@
  */
 const { esc } = require("./util");
 
-// valeur 0..24 -> caractère de la famille Dni Script (vérifié sur les polices de Jehon)
-const FONT_CHARS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ")", "!", '"', "#", "$", "%", "^", "&", "*", "(", "[", "]", "{", "}", "\\"];
+// valeur 0..24 -> caractère de la famille Dni Script : les chiffres, puis les touches des chiffres avec Maj (clavier US :
+// 10 = Maj+0 « ) », 11 = Maj+1 « ! », 12 = Maj+2 « @ » …), puis [ ] { } \. Le 12 a longtemps été cherché sur « " »
+// (Maj+2 d'autres claviers) : aucune police ne l'y avait. ALT_CHARS garde cette ancienne place en secours.
+const FONT_CHARS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ")", "!", "@", "#", "$", "%", "^", "&", "*", "(", "[", "]", "{", "}", "\\"];
+const ALT_CHARS = { 12: '"' };
 const FAMILIES = ["D'ni Script", "D'ni Script LM", "D'ni Script Angular", "Dni Script", "DniScript", "Dnifont", "D'ni", "Dni"];
 const FONT_CAP = 1800 / 2048; // hauteur d'un chiffre / em, dans ces polices
 
@@ -84,7 +87,7 @@ class Dni {
   async init() {
     // repart de zéro : un réglage vidé ou changé ne doit pas garder l'ancienne police
     if (this.vaultFace && typeof document !== "undefined" && document.fonts) { try { document.fonts.delete(this.vaultFace); } catch (e) { /* ignore */ } }
-    this.vaultFace = null; this.glyphs = null; this.userFamily = null; this.missing = null; this.frames = null;
+    this.vaultFace = null; this.glyphs = null; this.userFamily = null; this.missing = null; this.chars = null; this.frames = null;
     this.family = this.detectInstalled();
     try { await this.loadVaultFont(); } catch (e) { console.warn("[Age Writer] police du coffre illisible", e); }
     try { await this.loadGlyphFile(); } catch (e) { /* facultatif */ }
@@ -167,13 +170,15 @@ class Dni {
     try {
       const c = this.probeCtx = this.probeCtx || document.createElement("canvas").getContext("2d");
       if (c) {
-        const w = (font) => { c.font = "100px " + font; return c.measureText(FONT_CHARS[v]).width; };
-        const mine = w(f);
-        miss = mine > 0 && (Math.abs(mine - w("serif")) < 0.01 || Math.abs(mine - w("sans-serif")) < 0.01);
+        const absent = (ch) => { const w = (font) => { c.font = "100px " + font; return c.measureText(ch).width; }; const mine = w(f); return mine > 0 && (Math.abs(mine - w("serif")) < 0.01 || Math.abs(mine - w("sans-serif")) < 0.01); };
+        miss = absent(FONT_CHARS[v]);
+        if (miss && ALT_CHARS[v] && !absent(ALT_CHARS[v])) { miss = false; this.chars = this.chars || new Map(); this.chars.set(key, ALT_CHARS[v]); } // la place de secours
       }
     } catch (e) { miss = false; }
     this.missing.set(key, miss); return miss;
   }
+  /** Le caractère qui dessine le chiffre `v` dans la police en service (sa place normale, ou celle de secours). */
+  charOf(v) { const k = this.chars && this.chars.get(this.fontFamily() + "|" + v); return k || FONT_CHARS[v]; }
 
   /**
    * Un chiffre absent de la police, recomposé avec ses deux moitiés : les chiffres D'ni sont additifs (12 = cadre + forme
@@ -208,9 +213,9 @@ class Dni {
     if (mode !== "font" || digits.length < 2 || digits.some((d) => this.glyphMissing(d))) return null;
     /* la police soude-t-elle vraiment ? Sa chasse doit valoir l'écart entre les montants (mesuré) ; sinon (Dnifont : ses
        cases se chevauchent d'un cinquième), on place case par case, comme pour les contours */
-    const f = this.frame_("font", 0), adv = (this.runWidth_(FONT_CHARS[0] + FONT_CHARS[0], 100) - this.runWidth_(FONT_CHARS[0], 100)) / 100;
+    const f = this.frame_("font", 0), adv = (this.runWidth_(this.charOf(0) + this.charOf(0), 100) - this.runWidth_(this.charOf(0), 100)) / 100;
     if (Math.abs(adv - (f.r - f.l)) > 0.04) return null;
-    return digits.map((d) => FONT_CHARS[d]).join("");
+    return digits.map((d) => this.charOf(d)).join("");
   }
   /** Largeur d'une chaîne composée dans la police, pour une hauteur de chiffre `size` (mesurée au canvas ; sinon estimée). */
   runWidth_(str, size) {
@@ -284,7 +289,7 @@ class Dni {
     }
     if (mode === "font" && this.fontDraws_(v)) {
       const cw = size * this.cell("font"), parts = this.fontParts_(v) || [v];
-      return parts.map((q) => `<text x="${(x + cw / 2).toFixed(2)}" y="${(y + size).toFixed(2)}" text-anchor="middle" font-family="${esc(this.textStack())}" font-size="${(size / FONT_CAP).toFixed(2)}" fill="${color}">${esc(FONT_CHARS[q])}</text>`).join("");
+      return parts.map((q) => `<text x="${(x + cw / 2).toFixed(2)}" y="${(y + size).toFixed(2)}" text-anchor="middle" font-family="${esc(this.textStack())}" font-size="${(size / FONT_CAP).toFixed(2)}" fill="${color}">${esc(this.charOf(q))}</text>`).join("");
     }
     const { stroke, fill } = simplePaths(v), s = size / 100;
     const sw = (7).toFixed(1);
@@ -346,7 +351,7 @@ class Dni {
     } else {
       ctx.font = `${(size / FONT_CAP).toFixed(1)}px ${this.textStack()}`;
       ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-      for (const q of this.fontParts_(d) || [d]) ctx.fillText(FONT_CHARS[q], dx + cw / 2, y + size);
+      for (const q of this.fontParts_(d) || [d]) ctx.fillText(this.charOf(q), dx + cw / 2, y + size);
     }
   }
 
@@ -394,4 +399,4 @@ class Dni {
   }
 }
 
-module.exports = { Dni, toBase25, fromBase25, simplePaths, FONT_CHARS, FAMILIES };
+module.exports = { Dni, toBase25, fromBase25, simplePaths, FONT_CHARS, ALT_CHARS, FAMILIES };

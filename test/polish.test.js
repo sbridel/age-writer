@@ -3,10 +3,10 @@
 const assert = require("assert"); let n = 0; const ok = (c, m) => { assert(c, m); n++; };
 // faux canvas : la police « Dni » n'a pas le caractère « " » (elle prend la largeur de la police de secours)
 const W = { serif: 40, "sans-serif": 44, monospace: 60 };
-global.document = { createElement: () => ({ getContext: () => { const c = { font: "", measureText(ch) { const fam = c.font.replace(/^\d+px\s+/, ""); return { width: fam === "Dni" ? (ch === '"' ? W.serif : 70) : (W[fam] || 50) }; } }; return c; } }) };
-const { Dni, FONT_CHARS } = require("../src/dni");
+global.document = { createElement: () => ({ getContext: () => { const c = { font: "", measureText(ch) { const fam = c.font.replace(/^\d+px\s+/, ""); return { width: fam === "Dni" ? (ch === '"' || ch === "@" ? W.serif : 70) : (W[fam] || 50) }; } }; return c; } }) };
+const { Dni, FONT_CHARS, ALT_CHARS } = require("../src/dni");
 const d = new Dni({ getMode: () => "font" }); d.fontFamily = () => "Dni"; d.mode = () => "font";
-ok(FONT_CHARS[12] === '"', "le 12 est le guillemet");
+ok(FONT_CHARS[12] === "@" && ALT_CHARS[12] === '"', "le 12 est Maj+2 du clavier US (@), le guillemet en secours");
 ok(d.glyphMissing(12) === true, "12 absent de la police → détecté");
 ok(d.glyphMissing(5) === false && d.glyphMissing(0) === false, "les autres chiffres sont présents");
 const svg12 = d.digitInner(12, 0, 0, 20, "#fff", "font"), svg5 = d.digitInner(5, 0, 0, 20, "#fff", "font");
