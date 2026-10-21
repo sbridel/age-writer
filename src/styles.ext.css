@@ -934,7 +934,7 @@
 .age-rbook__covercontainer.is-opening, .age-rbook__covercontainer.is-opening:hover, .age-rbook__covercontainer.is-held { filter: none; }
 .age-rbook__covercontainer > svg { backface-visibility: hidden; }
 .age-rbook__inside { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; border-radius: 6px 2px 2px 6px; background: linear-gradient(90deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0) 8%), linear-gradient(#0f2a1e, #0f2a1e) padding-box; border: 10px solid #163a29; box-shadow: inset 0 0 0 1px #c9a24e, inset 0 0 0 12px #e3d4ac, inset 0 0 30px 12px rgba(120, 90, 40, 0.35); }
-@keyframes age-rb-cover-open { to { transform: perspective(1800px) rotateY(-180deg); } } /* pas de filter ici : il aplatirait la 3D, et l'envers ne se verrait plus */
+@keyframes age-rb-cover-open { to { transform: perspective(1800px) rotateY(180deg); } } /* pas de filter ici : il aplatirait la 3D, et l'envers ne se verrait plus */
 .age-rbook__stack { position: relative; display: inline-block; transition: transform .75s ease-in-out; }
 .age-rbook__stack.is-opening { transform: translateX(50%); }
 .age-rbook__leaves { position: absolute; top: 1.5%; bottom: 1.5%; left: 2%; right: 1%; border-radius: 2px 6px 6px 2px; opacity: 0; transition: opacity .2s ease;
