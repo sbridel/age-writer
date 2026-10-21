@@ -928,18 +928,35 @@
 .age-rbook-over .age-book__spread:not(.is-cover), .age-rbook-over .age-rbook__covercontainer { cursor: default; }
 /* la couverture du Livre du Relto qu'on ouvre : tenue un instant (le son du livre, les loquets), puis elle pivote sur le dos */
 .age-rbook__covercontainer.is-held { cursor: default; transform: translateY(-3px); transition: transform .3s ease; }
-/* la couverture pivote sur son dos et se rabat à gauche, à plat : on voit son envers ; le livre glisse d'une demi-largeur pour rester centré */
-.age-rbook__covercontainer.is-opening { position: relative; z-index: 2; transform-origin: left center; transform-style: preserve-3d; animation: age-rb-cover-open .75s ease-in-out forwards; }
+/* la couverture pivote sur son dos et se rabat à gauche, à plat : on voit son envers ; le livre glisse d'une demi-largeur pour rester centré.
+   La perspective est sur le bloc (le point de fuite au milieu du livre), pas dans la transformation : sinon la couverture semblait s'enfoncer dans la charnière au lieu de se lever vers le lecteur */
+.age-rbook__covercontainer.is-opening { position: relative; z-index: 2; transform-origin: left center; transform-style: preserve-3d; animation: age-rb-cover-open .9s cubic-bezier(.45, 0, .3, 1) forwards; }
 .age-rbook__covercontainer.is-opening, .age-rbook__covercontainer.is-opening:hover, .age-rbook__covercontainer.is-held { filter: none; }
 .age-rbook__covercontainer > svg { backface-visibility: hidden; }
 .age-rbook__inside { position: absolute; inset: 0; transform: rotateY(180deg); backface-visibility: hidden; }
 .age-rbook__inside svg { display: block; width: 100%; height: 100%; }
-.age-rbook.is-from-cover { animation: age-rb-from-cover .35s ease-out both; } /* la double page se lève en fondu sur le livre ouvert */
+.age-rbook.is-from-cover { animation: age-rb-from-cover .3s ease-out both; } /* la double page se lève en fondu sur le livre ouvert (même géométrie : garde et faux-titre par-dessus, puis la page se tourne) */
 @keyframes age-rb-from-cover { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .age-rbook.is-from-cover { animation: none; } }
-@keyframes age-rb-cover-open { to { transform: perspective(1800px) rotateY(180deg); } } /* pas de filter ici : il aplatirait la 3D, et l'envers ne se verrait plus */
-.age-rbook__stack { position: relative; display: inline-block; transition: transform .75s ease-in-out; }
+@keyframes age-rb-cover-open { to { transform: rotateY(180deg); } } /* pas de filter ici : il aplatirait la 3D, et l'envers ne se verrait plus */
+.age-rbook__stack { position: relative; display: inline-block; perspective: 1400px; perspective-origin: 60% 50%; transition: transform .9s cubic-bezier(.45, 0, .3, 1); }
 .age-rbook__stack.is-opening { transform: translateX(50%); }
+/* le signet : un ruban grenat qui sort du dos et pend sous le livre, fermé comme ouvert */
+.age-rbook__ribbon { position: absolute; width: 16px; height: 72px; bottom: -46px; pointer-events: none; z-index: 1; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5)); }
+.age-rbook__ribbon svg { display: block; width: 100%; height: 100%; }
+.age-rbook__stack .age-rbook__ribbon { left: 9%; z-index: 0; }
+.age-rbook__spread:not(.is-cover) .age-rbook__ribbon { left: calc(50% - 8px); bottom: -44px; }
+/* la page de faux-titre qui se tourne pour découvrir la double page : recto le faux-titre, verso la page de texte, charnière à la gouttière */
+.age-rbook__endover { position: absolute; inset: 0; z-index: 3; border-radius: 4px 0 0 4px; overflow: hidden; }
+.age-rbook__endover svg { display: block; width: 100%; height: 100%; }
+.age-rbook__leaf { position: absolute; z-index: 4; transform-origin: left center; transform-style: preserve-3d; }
+.age-rbook__leaf > div { position: absolute; inset: 0; backface-visibility: hidden; overflow: hidden; border-radius: 0 4px 4px 0; box-shadow: inset 0 0 26px rgba(110, 80, 40, 0.35);
+  background: radial-gradient(ellipse at 30% 20%, rgba(255, 250, 230, 0.35), transparent 60%), repeating-linear-gradient(8deg, rgba(120, 90, 50, 0.05) 0 2px, transparent 2px 6px), #e4d4ab; }
+.age-rbook__leaf > .age-rbook__leaf-front { display: flex; align-items: center; justify-content: center; }
+.age-rbook__leaf > .age-rbook__leaf-back { transform: rotateY(180deg); border-radius: 4px 0 0 4px; padding: 18px 16px; color: #3a2f22; }
+.age-rbook__leaf.is-turning { animation: age-rb-leaf .85s cubic-bezier(.5, 0, .35, 1) forwards; }
+@keyframes age-rb-leaf { to { transform: rotateY(-180deg); } }
+@media (prefers-reduced-motion: reduce) { .age-rbook__leaf.is-turning { animation: none; transform: rotateY(-180deg); } }
 .age-rbook__leaves { position: absolute; top: 1.5%; bottom: 1.5%; left: 2%; right: 1%; border-radius: 2px 6px 6px 2px; opacity: 0; transition: opacity .2s ease;
   background: linear-gradient(90deg, rgba(60, 40, 20, 0.45), rgba(60, 40, 20, 0) 9%), repeating-linear-gradient(0deg, rgba(120, 95, 60, 0) 0 3px, rgba(120, 95, 60, 0.18) 3px 4px) right / 3% 100% no-repeat, linear-gradient(90deg, #d8c9a0, #ece0bf 30%, #e6d8b2); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
 .age-rbook__stack.is-held .age-rbook__leaves { opacity: 1; }

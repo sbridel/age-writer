@@ -91,7 +91,7 @@ class ReltoBook {
     if (this.cover) { if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") { e.preventDefault(); this.openCover(); return true; } return false; }
     if (e.key === "ArrowLeft") { this.turn(-1); return true; } if (e.key === "ArrowRight") { this.turn(1); return true; } return false;
   }
-  stopGlass() { if (this.glass) { try { this.glass.renderer.stop(); } catch (e) { /* ignore */ } this.glass = null; } }
+  stopGlass() { if (this.glass) { try { this.glass.renderer.stop(); } catch (e) { /* ignore */ } this.glass = null; } if (this.turnTimers) { this.turnTimers.forEach((t) => window.clearTimeout(t)); this.turnTimers = null; } }
 
   /**
    * Tourner une page, comme dans un livre : la page s'abaisse sur la reliure, la suivante se relève. Avant le premier Relto, le
@@ -124,6 +124,24 @@ class ReltoBook {
     window.setTimeout(() => { this.opening = false; this.cover = false; this.anim = 1; this.fromCover = true; this.render(); }, lead + swing); // la couverture pivote après les loquets, pas pendant
   }
 
+  /**
+   * Juste après la couverture : par-dessus la double page toute faite, la garde marbrée à gauche et le faux-titre à droite
+   * (le livre ouvert, tel qu'on vient de le voir) ; puis le faux-titre se tourne, charnière à la gouttière, son verso est la
+   * page de texte, et il se pose dessus. On retire alors les deux calques : la double page est là, sans saut.
+   */
+  turnHalfTitle(spread, left, right) {
+    const back = left.innerHTML; /* le verso de la feuille : la page de texte, copiée (le texte est déjà rendu) */
+    const endover = left.createDiv({ cls: "age-rbook__endover" }); setMarkup(endover, reltoEndpaperSvg({ pageOnly: true }));
+    const leaf = spread.createDiv({ cls: "age-rbook__leaf" });
+    const place = () => { leaf.style.left = right.offsetLeft + "px"; leaf.style.top = right.offsetTop + "px"; leaf.style.width = right.offsetWidth + "px"; leaf.style.height = right.offsetHeight + "px"; };
+    place();
+    setMarkup(leaf.createDiv({ cls: "age-rbook__leaf-front" }), halfTitle());
+    setMarkup(leaf.createDiv({ cls: "age-rbook__leaf-back" }), back);
+    const t1 = window.setTimeout(() => { place(); leaf.addClass("is-turning"); if (this.plugin.ext.sound && this.plugin.ext.soundBook !== false) { try { sound.pageTurn(this.plugin.ext.volume, { quick: false }); } catch (e) { /* ignore */ } } }, 520);
+    const t2 = window.setTimeout(() => { leaf.remove(); endover.remove(); }, 520 + 850);
+    this.turnTimers = [t1, t2];
+  }
+
   /** La couverture : le livre fermé, qu'on ouvre d'un clic (ou Entrée). */
   renderCover() {
     const { plugin } = this, el = this.contentEl;
@@ -131,7 +149,8 @@ class ReltoBook {
     const book = el.createDiv({ cls: "age-book age-rbook" }); book.toggleClass("age-book--leather", plugin.ext.leather !== false);
     const spread = book.createDiv({ cls: "age-book__spread age-rbook__spread is-cover" });
     const stack = spread.createDiv({ cls: "age-rbook__stack" }); /* sous la couverture, le bloc des pages : on le voit quand elle pivote */
-    setMarkup(stack.createDiv({ cls: "age-rbook__leaves" }), `<div class="age-rbook__halftitle"><svg viewBox="0 0 80 70" aria-hidden="true">${islandEmblem(40, 30, 26, "#7a5a2c")}</svg><span>Relto</span></div>`); /* la page de faux-titre, sous la couverture */
+    setMarkup(stack.createDiv({ cls: "age-rbook__leaves" }), halfTitle()); /* la page de faux-titre, sous la couverture */
+    setMarkup(stack.createDiv({ cls: "age-rbook__ribbon" }), ribbonSvg());
     const c = stack.createDiv({ cls: "age-book__covercontainer age-rbook__covercontainer is-clickable" });
     setMarkup(c, reltoCoverSvg({ medal: "garnet" })); c.setAttr("aria-label", plugin.t("book.open")); c.setAttr("title", plugin.t("book.open"));
     setMarkup(c.createDiv({ cls: "age-rbook__inside" }), reltoEndpaperSvg()); /* l'envers de la couverture (contre-garde) : on le voit quand elle s'est rabattue à gauche */
@@ -148,8 +167,10 @@ class ReltoBook {
     const f = hubs[this.idx]; if (!f) return;
     this.stopGlass(); el.empty();
     const book = el.createDiv({ cls: "age-book age-rbook" }); book.toggleClass("age-book--leather", plugin.ext.leather !== false);
-    if (this.fromCover) { book.addClass("is-from-cover"); this.fromCover = false; } /* juste ouvert : la double page se lève en fondu sur le livre ouvert */
+    const fromCover = this.fromCover; this.fromCover = false;
+    if (fromCover) book.addClass("is-from-cover"); /* juste ouvert : la double page se lève en fondu sur le livre ouvert, puis sa page de faux-titre se tourne */
     const spread = book.createDiv({ cls: "age-book__spread age-rbook__spread" });
+    setMarkup(spread.createDiv({ cls: "age-rbook__ribbon" }), ribbonSvg());
     if (plugin.ext.leather !== false) for (const c of ["tl", "tr", "bl", "br"]) spread.createDiv({ cls: `age-book__corner age-book__corner--${c}` });
     const left = spread.createDiv({ cls: "age-book__page age-book__page--left age-rbook__text" });
     spread.createDiv({ cls: "age-book__gutter" });
@@ -198,6 +219,7 @@ class ReltoBook {
     let x0 = null;
     spread.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse") x0 = e.clientX; });
     spread.addEventListener("pointerup", (e) => { if (x0 == null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 60) this.turn(dx < 0 ? 1 : -1); });
+    if (fromCover && !reducedMotion()) { this.anim = 0; this.turnHalfTitle(spread, left, right); } /* le texte est posé : son verso peut le copier */
     if (this.anim) { spread.addClass(this.anim > 0 ? "is-flip-in-fwd" : "is-flip-in-back"); this.anim = 0; }
   }
 }
@@ -315,8 +337,16 @@ const MEDALS = { garnet: ["#6a1d27", "#2c0910", "#c79a8a"], teal: ["#1d4a50", "#
  * un filet doré, et la contre-garde en papier marbré (peigné, vert et or, dessiné ici, pas une image) ; dessus, un ex-libris
  * crème à l'île du Relto. Même viewBox que la couverture : il la recouvre exactement.
  */
-function reltoEndpaperSvg() {
-  const W = 300, H = 460, L = 16, T = 16, R = 7, u = "rbe", AU = "#d4b25a", x0 = L, y0 = T, x1 = W - R, y1 = H - T, pw = x1 - x0, ph = y1 - y0;
+/** La page de faux-titre : l'île gravée et « Relto », au milieu d'une page crème. */
+function halfTitle() { return `<div class="age-rbook__halftitle"><svg viewBox="0 0 80 70" aria-hidden="true">${islandEmblem(40, 30, 26, "#7a5a2c")}</svg><span>Relto</span></div>`; }
+/** Le signet : un ruban grenat, coupé en queue d'aronde, un reflet le long. */
+function ribbonSvg() {
+  return `<svg viewBox="0 0 16 72" aria-hidden="true"><defs><linearGradient id="rbrib" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4a0c14"/><stop offset=".35" stop-color="#8a1c2a"/><stop offset=".6" stop-color="#6a1420"/><stop offset="1" stop-color="#3a0810"/></linearGradient></defs>`
+    + `<path d="M0 0 H16 V66 L8 58 L0 66 Z" fill="url(#rbrib)"/><path d="M5 0 V62" stroke="#b03a48" stroke-opacity=".35" stroke-width="1.2"/></svg>`;
+}
+
+function reltoEndpaperSvg({ pageOnly = false } = {}) {
+  const W = 300, H = 460, L = pageOnly ? 0 : 16, T = pageOnly ? 0 : 16, R = pageOnly ? 0 : 7, u = "rbe" + (pageOnly ? "p" : ""), AU = "#d4b25a", x0 = L, y0 = T, x1 = W - R, y1 = H - T, pw = x1 - x0, ph = y1 - y0;
   let seed = 0x5e1f0; const q = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
   /* le marbre peigné : des bandes ondulées serrées, en quatre tons, puis quelques « pierres » claires */
   const tones = ["#14382b", "#1f4d3a", "#2c6450", "#0d2a1f", "#b9a160", "#1a4433"];
@@ -338,10 +368,10 @@ function reltoEndpaperSvg() {
     + `<defs><linearGradient id="${u}lt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d3d2c"/><stop offset="1" stop-color="#0c1f16"/></linearGradient>`
     + `<linearGradient id="${u}sh" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0.45"/><stop offset="0.12" stop-color="#000" stop-opacity="0"/></linearGradient>`
     + `<clipPath id="${u}cp"><rect x="${x0}" y="${y0}" width="${pw}" height="${ph}"/></clipPath></defs>`
-    + `<rect x="0" y="0" width="${W}" height="${H}" rx="6" fill="url(#${u}lt)"/>`
-    + `<rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="4" fill="none" stroke="${AU}" stroke-opacity="0.55" stroke-width="0.8"/>`
+    + (pageOnly ? "" : `<rect x="0" y="0" width="${W}" height="${H}" rx="6" fill="url(#${u}lt)"/>`
+    + `<rect x="3" y="3" width="${W - 6}" height="${H - 6}" rx="4" fill="none" stroke="${AU}" stroke-opacity="0.55" stroke-width="0.8"/>`)
     + `<g clip-path="url(#${u}cp)"><rect x="${x0}" y="${y0}" width="${pw}" height="${ph}" fill="#14382b"/>${bands}${stones}<rect x="${x0}" y="${y0}" width="${pw}" height="${ph}" fill="url(#${u}sh)"/></g>`
-    + `<rect x="${x0 - 2.5}" y="${y0 - 2.5}" width="${pw + 4}" height="${ph + 5}" fill="none" stroke="${AU}" stroke-width="1.1"/>`
+    + (pageOnly ? "" : `<rect x="${x0 - 2.5}" y="${y0 - 2.5}" width="${pw + 4}" height="${ph + 5}" fill="none" stroke="${AU}" stroke-width="1.1"/>`)
     + label + `</svg>`;
 }
 
