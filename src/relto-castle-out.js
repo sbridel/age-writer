@@ -262,13 +262,51 @@ function redNight(sky) {
   return Object.assign({}, sky, { top: mix(sky.top, "#14060e", k), bottom: mix(sky.bottom, "#5e1a20", k), stars: sky.stars * (1 - 0.35 * k), red: k });
 }
 
-/** La lune rouge : pleine, grande, un halo de braise, des mers sombres ; et des chauves-souris qui passent devant. */
+/**
+ * Le disque de la lune rouge, peint une fois hors écran (256 px) puis réduit : des mers aux bords flous, placées comme
+ * celles de notre Lune (Procellarum à gauche, Imbrium, Serenitatis, Tranquillitatis, Nubium), un grain de régolithe, un
+ * cratère clair à rayons au sud, et l'assombrissement du limbe. Plus de pastilles rondes : elles faisaient un biscuit.
+ */
+let moonTex = null;
+function moonTexture() {
+  if (moonTex !== null) return moonTex || null;
+  moonTex = false;
+  if (typeof document === "undefined") return null;
+  const S = 256, C = S / 2, R = S / 2 - 1, cv = document.createElement("canvas"); cv.width = S; cv.height = S;
+  const g = cv.getContext && cv.getContext("2d"); if (!g || !g.createRadialGradient) return null;
+  let seed = 0x6d00e; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  g.save(); g.beginPath(); g.arc(C, C, R, 0, 6.283); g.clip();
+  const base = g.createRadialGradient(C - R * 0.2, C - R * 0.22, R * 0.05, C, C, R); base.addColorStop(0, "#f07a4c"); base.addColorStop(0.55, "#d4492c"); base.addColorStop(1, "#a42a1c");
+  g.fillStyle = base; g.fillRect(0, 0, S, S);
+  /* les mers : chacune un nuage d'ellipses floues, sombres et peu opaques */
+  const blob = (cx, cy, rr, a) => { const gr = g.createRadialGradient(cx, cy, 0, cx, cy, rr); gr.addColorStop(0, `rgba(96,16,12,${a})`); gr.addColorStop(0.6, `rgba(96,16,12,${a * 0.7})`); gr.addColorStop(1, "rgba(96,16,12,0)"); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, rr, 0, 6.283); g.fill(); };
+  for (const [mx, my, mr, n, a] of [[-0.45, 0.0, 0.36, 9, 0.22], [-0.2, -0.38, 0.24, 6, 0.26], [0.22, -0.3, 0.16, 5, 0.28], [0.38, -0.02, 0.2, 6, 0.26], [0.55, -0.32, 0.09, 3, 0.3], [-0.1, 0.35, 0.16, 5, 0.2], [0.2, 0.22, 0.12, 4, 0.2]]) {
+    for (let i = 0; i < n; i++) { const ang = rnd() * 6.283, d = rnd() * mr * 0.8; blob(C + (mx * R) + Math.cos(ang) * d * R, C + (my * R) + Math.sin(ang) * d * R, (mr * 0.45 + rnd() * mr * 0.5) * R, a); }
+  }
+  /* le grain : petits cratères clairs et sombres */
+  for (let i = 0; i < 900; i++) { const ang = rnd() * 6.283, d = Math.sqrt(rnd()) * R, px = C + Math.cos(ang) * d, py = C + Math.sin(ang) * d, l = rnd() < 0.5;
+    g.fillStyle = l ? `rgba(255,190,150,${0.05 + rnd() * 0.07})` : `rgba(60,8,6,${0.05 + rnd() * 0.08})`; g.beginPath(); g.arc(px, py, 0.6 + rnd() * 1.6, 0, 6.283); g.fill(); }
+  for (let i = 0; i < 14; i++) { const ang = rnd() * 6.283, d = Math.sqrt(rnd()) * R * 0.9, px = C + Math.cos(ang) * d, py = C + Math.sin(ang) * d, rr = 2 + rnd() * 4;
+    g.strokeStyle = "rgba(60,8,6,0.18)"; g.lineWidth = 1; g.beginPath(); g.arc(px + 0.6, py + 0.6, rr, 0, 6.283); g.stroke(); g.strokeStyle = "rgba(255,190,150,0.14)"; g.beginPath(); g.arc(px - 0.4, py - 0.4, rr, 0, 6.283); g.stroke(); }
+  /* le cratère à rayons, au sud */
+  const tx = C - R * 0.08, ty = C + R * 0.62;
+  g.strokeStyle = "rgba(255,200,160,0.10)"; g.lineWidth = 1.4; for (let i = 0; i < 11; i++) { const ang = i / 11 * 6.283 + rnd() * 0.3, len = R * (0.25 + rnd() * 0.45); g.beginPath(); g.moveTo(tx, ty); g.lineTo(tx + Math.cos(ang) * len, ty + Math.sin(ang) * len); g.stroke(); }
+  const ts = g.createRadialGradient(tx, ty, 0, tx, ty, 7); ts.addColorStop(0, "rgba(255,214,180,0.55)"); ts.addColorStop(1, "rgba(255,214,180,0)"); g.fillStyle = ts; g.beginPath(); g.arc(tx, ty, 7, 0, 6.283); g.fill();
+  /* le limbe s'assombrit */
+  const limb = g.createRadialGradient(C, C, R * 0.55, C, C, R); limb.addColorStop(0, "rgba(40,4,4,0)"); limb.addColorStop(0.8, "rgba(40,4,4,0.18)"); limb.addColorStop(1, "rgba(40,4,4,0.55)"); g.fillStyle = limb; g.fillRect(0, 0, S, S);
+  g.restore();
+  moonTex = cv;
+  return cv;
+}
+
+/** La lune rouge : pleine, grande, un halo de braise, des mers floues (moonTexture) ; et des chauves-souris qui passent devant. */
 function bloodMoon(ctx, sky, t, x, y) {
   const k = sky.red, R = 21;
   const halo = ctx.createRadialGradient(x, y, R * 0.6, x, y, R * 4); halo.addColorStop(0, rgba(255, 90, 48, 0.45 * k)); halo.addColorStop(1, rgba(255, 90, 48, 0)); ctx.fillStyle = halo; ctx.fillRect(x - R * 4, y - R * 4, R * 8, R * 8);
   ctx.save(); ctx.globalAlpha = k;
-  const g = ctx.createRadialGradient(x - R * 0.25, y - R * 0.25, R * 0.1, x, y, R); g.addColorStop(0, "#ff8a4a"); g.addColorStop(0.6, "#e03a22"); g.addColorStop(1, "#8a1a14"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, 6.283); ctx.fill();
-  ctx.fillStyle = "rgba(154,36,24,0.45)"; for (const [dx, dy, rr] of [[-0.37, -0.28, 0.14], [0.31, 0.28, 0.1], [0.47, -0.37, 0.07], [-0.19, 0.34, 0.08], [0.05, -0.05, 0.05]]) { ctx.beginPath(); ctx.arc(x + dx * R, y + dy * R, rr * R, 0, 6.283); ctx.fill(); }
+  const tex = moonTexture();
+  if (tex) ctx.drawImage(tex, x - R, y - R, R * 2, R * 2);
+  else { const g = ctx.createRadialGradient(x - R * 0.25, y - R * 0.25, R * 0.1, x, y, R); g.addColorStop(0, "#e8643c"); g.addColorStop(0.6, "#c03a24"); g.addColorStop(1, "#6e1610"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, 6.283); ctx.fill(); }
   ctx.restore();
   if (k > 0.3) { const a = (k - 0.3) / 0.7; ctx.fillStyle = rgba(26, 8, 12, 0.9 * a); // les chauves-souris
     for (let i = 0; i < 6; i++) { const bx = ((i * 137 + t * (7 + (i % 3) * 3)) % 700) - 30, by = 38 + i * 17 + Math.sin(t * 0.8 + i * 2) * 8, f = Math.sin(t * 10 + i * 1.7), s = 2.4 + (i % 2);
@@ -511,4 +549,4 @@ function globalCastle(ctx, c, sky, cx, y) {
   ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(cx + 3, y - 56); ctx.lineTo(cx + 3, y - 60); ctx.stroke();
 }
 
-module.exports = { castleOre, litStone, daylight, calendarStele, redNight, bloodMoon, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };
+module.exports = { castleOre, litStone, daylight, calendarStele, redNight, bloodMoon, moonTexture, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };

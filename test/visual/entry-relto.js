@@ -14,6 +14,8 @@ function renderMany(host, ages) {
     { h: 21.5, t: 3.1, env: {}, pages: ["page_telescope", "page_mountain", "page_waterfall"], label: "ISLAND dusk / observatory on the mountain" },
     { h: 21.5, t: 3.1, env: {}, zero: true, pages: ["page_telescope", "page_mountain", "page_dni_clock", "page_calendar", "page_dock"], label: "ISLAND dusk / D'ni clock and calendar pinnacle" },
     { h: 15, t: 3.1, env: {}, zero: true, pages: ["page_dni_clock", "page_calendar", "page_islets", "page_dock"], view: "global", label: "GLOBAL day / D'ni clock" },
+    { h: 23, t: 3.1, env: {}, zero: true, now: 1791591000000, pages: ["page_castle", "page_calendar", "page_dock"], view: "calendar", label: "CALENDAR castle night / the stele's crockets on the arch, joined D'ni numerals, the red moon" },
+    { h: 23, t: 3.1, env: {}, zero: true, now: 1791591000000, pages: ["page_calendar", "page_dock"], view: "calendar", label: "CALENDAR night / joined D'ni numerals" },
     { h: 21.5, t: 3.1, env: {}, zero: true, now: 1791591000000, pages: ["page_dni_clock", "page_calendar", "page_dock"], view: "clock", label: "CLOCK dusk / the armillary sphere up close, calendar pinnacle far off" },
     { h: 13, t: 3.1, env: {}, zero: true, now: "tahvo+1s", pages: ["page_dni_clock"], view: "clock", label: "CLOCK day / one second after a new tahvo: its digit glows" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "near", label: "TELESCOPE step 2 / an Age's book on the lectern, wheels near its clues" },

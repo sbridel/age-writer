@@ -33,7 +33,11 @@ function drawCalendar(r, ctx, sc, sky, t) {
     ctx.strokeStyle = rgba(0, 0, 0, 0.3); ctx.lineWidth = 1.4; CS.pointed(ctx, X0, X1, TOP, TOP + 70, BASE); ctx.stroke();
     ctx.strokeStyle = c("#b8b3c0"); ctx.lineWidth = 1; CS.pointed(ctx, X0 + 9, X1 - 9, TOP + 12, TOP + 74, BASE - 6); ctx.stroke(); // la moulure
     ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 0.8; CS.pointed(ctx, X0 + 13, X1 - 13, TOP + 18, TOP + 76, BASE - 10); ctx.stroke();
-    ctx.fillStyle = c("#5a5664"); for (let k = 1; k < 6; k++) { const u = k / 6, xl = X0 + (CX - X0) * u * 0.92, yy = TOP + 70 - (70 * Math.sin(u * Math.PI / 2)); for (const [xx, s2] of [[xl, -1], [X1 - (xl - X0), 1]]) { ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx + s2 * 5, yy - 3); ctx.lineTo(xx + s2 * 2, yy + 3); ctx.closePath(); ctx.fill(); } } // les crochets
+    ctx.fillStyle = c("#5a5664"); { const kq = (X1 - X0) * 0.12, P0 = [X0, TOP + 70], P1 = [X0 + kq, TOP + 17.5], P2 = [CX, TOP]; /* la courbe même de CS.pointed : les crochets s'y posent */
+      for (let k = 1; k < 6; k++) { const u = k / 6, v = 1 - u, px = v * v * P0[0] + 2 * v * u * P1[0] + u * u * P2[0], py = v * v * P0[1] + 2 * v * u * P1[1] + u * u * P2[1];
+        let tx = 2 * v * (P1[0] - P0[0]) + 2 * u * (P2[0] - P1[0]), ty = 2 * v * (P1[1] - P0[1]) + 2 * u * (P2[1] - P1[1]); const n = Math.hypot(tx, ty) || 1; tx /= n; ty /= n;
+        for (const s2 of [1, -1]) { const x0 = s2 > 0 ? px : X1 - (px - X0), ex = tx * s2, nx = ty * s2, ny = -tx; /* tangente vers le sommet, normale vers dehors */
+          ctx.beginPath(); ctx.moveTo(x0 - ex * 3, py - ty * 3 + 0.6 * ny); ctx.lineTo(x0 + nx * 6 + ex * 3, py + ny * 6 + ty * 3); ctx.lineTo(x0 + ex * 3, py + ty * 3 + 0.6 * ny); ctx.closePath(); ctx.fill(); } } } // les crochets, posés sur l'arc
     ctx.fillStyle = c(CS.GOLD); ctx.beginPath(); ctx.moveTo(CX, TOP - 14); ctx.lineTo(CX + 4, TOP - 2); ctx.lineTo(CX - 4, TOP - 2); ctx.closePath(); ctx.fill(); // le fleuron
     for (const x of [X0 - 14, X1 + 14]) { ctx.fillStyle = c("#7a7683"); ctx.fillRect(x - 6, TOP + 110, 12, BASE - TOP - 110); ctx.beginPath(); ctx.moveTo(x - 7, TOP + 110); ctx.lineTo(x, TOP + 78); ctx.lineTo(x + 7, TOP + 110); ctx.closePath(); ctx.fill(); ctx.fillStyle = c(CS.GOLD); ctx.beginPath(); ctx.arc(x, TOP + 76, 1.8, 0, 6.283); ctx.fill(); } // deux pinacles
   } else if (glass) {
