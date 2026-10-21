@@ -175,6 +175,20 @@ class Dni {
     this.missing.set(key, miss); return miss;
   }
 
+  /**
+   * Un chiffre absent de la police, recomposé avec ses deux moitiés : les chiffres D'ni sont additifs (12 = cadre + forme
+   * « dix » + forme « deux »), donc superposer les glyphes 10 et 2 de la police donne exactement le 12 qu'elle n'a pas,
+   * dans son dessin et dans son cadre (Dnifont n'a pas le 12, un guillemet). Renvoie [cinquaine, unité] ou null.
+   */
+  fontParts_(v) {
+    if (!this.glyphMissing(v)) return null;
+    const u = v % 5, f = v - u;
+    if (!u || !f || this.glyphMissing(f) || this.glyphMissing(u)) return null;
+    return [f, u];
+  }
+  /** Le chiffre `v` se dessine-t-il avec la police (tel quel ou recomposé) ? */
+  fontDraws_(v) { return !this.glyphMissing(v) || !!this.fontParts_(v); }
+
   /** Les polices D'ni n'ont que des minuscules : une majuscule retomberait dans une police ordinaire. */
   textFor(s) { return String(s == null ? "" : s).toLowerCase(); }
 
@@ -227,7 +241,7 @@ class Dni {
    */
   frame_(mode, d) {
     const cell = this.cell(mode), guess = { l: (cell - 1) / 2 + 0.005, r: (cell - 1) / 2 + 0.925 };
-    if (mode === "simple" || (mode === "font" && this.glyphMissing(d))) return guess;
+    if (mode === "simple" || (mode === "font" && !this.fontDraws_(d))) return guess;
     const key = mode + "|" + (mode === "font" ? this.textStack() : "glyphs") + "|" + d;
     this.frames = this.frames || new Map();
     const got = this.frames.get(key);
@@ -252,7 +266,7 @@ class Dni {
   /** Un compte rendu lisible de ce que fait le module (commande de diagnostic) : mode, police, cases mesurées. */
   report() {
     const mode = this.mode(), lines = [`mode : ${mode} (réglage : ${(this.o.getMode && this.o.getMode()) || "auto"})`, `police : ${this.fontFamily() || "aucune"}${this.vaultFace ? " (du coffre)" : ""}`, `contours : ${this.glyphs ? "oui, boîte " + this.glyphs.box.join(" ") : "non"}`];
-    if (mode === "font") { const miss = []; for (let v = 0; v < 25; v++) if (this.glyphMissing(v)) miss.push(v); lines.push(`chiffres absents de la police : ${miss.length ? miss.join(" ") : "aucun"}`); lines.push(`largeur de « 1322 » composé : ${this.runWidth_(this.fontRun_(toBase25(1322)) || "", 100).toFixed(1)} pour 100 de haut (3 chiffres)`); }
+    if (mode === "font") { const miss = []; for (let v = 0; v < 25; v++) if (this.glyphMissing(v)) miss.push(v); lines.push(`chiffres absents de la police : ${miss.length ? miss.map((v) => v + (this.fontParts_(v) ? " (recomposé " + this.fontParts_(v).join("+") + ")" : " (procédural)")).join(", ") : "aucun"}`); lines.push(`largeur de « 1322 » composé : ${this.runWidth_(this.fontRun_(toBase25(1322)) || "", 100).toFixed(1)} pour 100 de haut (3 chiffres)`); }
     if (mode !== "simple") for (const v of [0, 1, 2]) { const f = this.frame_(mode, v), ok = this.frames && this.frames.get(mode + "|" + (mode === "font" ? this.textStack() : "glyphs") + "|" + v); lines.push(`chiffre ${v} : montants à ${f.l.toFixed(3)} et ${f.r.toFixed(3)}${ok && ok.ok ? "" : " (estimés, mesure ratée)"}`); }
     if (mode === "font") lines.push(`la police soude-t-elle seule : ${this.fontRun_([0, 0]) ? "oui" : "non, placement case par case"}`);
     return lines.join("\n");
@@ -268,9 +282,9 @@ class Dni {
       const [bx, by, , bh] = this.glyphs.box, s = size / bh;
       return `<path transform="translate(${(x - bx * s).toFixed(2)} ${(y - by * s).toFixed(2)}) scale(${s.toFixed(5)})" d="${this.glyphs.paths[v]}" fill="${color}"/>`;
     }
-    if (mode === "font" && !this.glyphMissing(v)) {
-      const cw = size * this.cell("font");
-      return `<text x="${(x + cw / 2).toFixed(2)}" y="${(y + size).toFixed(2)}" text-anchor="middle" font-family="${esc(this.textStack())}" font-size="${(size / FONT_CAP).toFixed(2)}" fill="${color}">${esc(FONT_CHARS[v])}</text>`;
+    if (mode === "font" && this.fontDraws_(v)) {
+      const cw = size * this.cell("font"), parts = this.fontParts_(v) || [v];
+      return parts.map((q) => `<text x="${(x + cw / 2).toFixed(2)}" y="${(y + size).toFixed(2)}" text-anchor="middle" font-family="${esc(this.textStack())}" font-size="${(size / FONT_CAP).toFixed(2)}" fill="${color}">${esc(FONT_CHARS[q])}</text>`).join("");
     }
     const { stroke, fill } = simplePaths(v), s = size / 100;
     const sw = (7).toFixed(1);
@@ -318,7 +332,7 @@ class Dni {
 
   /** Un chiffre 0..24 dans sa case (coin haut-gauche `dx`, `y`, largeur `cw`) ; couleurs déjà posées. */
   drawDigit_(ctx, d, dx, y, size, mode, cw) {
-    if (mode === "simple" || (mode === "font" && this.glyphMissing(d))) { // tracé procédural (chiffre absent de la police : centré dans la case)
+    if (mode === "simple" || (mode === "font" && !this.fontDraws_(d))) { // tracé procédural (chiffre absent de la police : centré dans la case)
       const { stroke, fill } = simplePaths(d), s = size / 100;
       ctx.save(); ctx.translate(dx + (cw - size) / 2, y); ctx.scale(s, s);
       ctx.lineWidth = 7; ctx.lineCap = "square"; ctx.lineJoin = "miter";
@@ -332,7 +346,7 @@ class Dni {
     } else {
       ctx.font = `${(size / FONT_CAP).toFixed(1)}px ${this.textStack()}`;
       ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-      ctx.fillText(FONT_CHARS[d], dx + cw / 2, y + size);
+      for (const q of this.fontParts_(d) || [d]) ctx.fillText(FONT_CHARS[q], dx + cw / 2, y + size);
     }
   }
 
