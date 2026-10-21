@@ -170,11 +170,11 @@ function islets(ctx, r, d, sky, t) {
 }
 
 /** Pinacle du calendrier : une pierre dressée sur un îlot, qui porte le jour D'ni (en chiffres D'ni). */
-/** Un nombre D'ni sur un fût étroit (le pilier du calendrier) : à deux chiffres ou plus, ils s'empilent (le premier en haut) au lieu de déborder de la pierre. `yTop` : le haut du nombre. */
+/** Un nombre D'ni sur un fût étroit (le pilier du calendrier) : à deux chiffres ou plus, ils s'empilent (le premier en haut), cases soudées, au lieu de déborder de la pierre. `yTop` : le haut du nombre. */
 function pillarNumber(ctx, r, n, x, yTop, size, color) {
   if (!r.dni) return; const ds = []; for (let v = Math.max(0, Math.round(n)); ; v = Math.floor(v / 25)) { ds.unshift(v % 25); if (v < 25) break; }
   const sz = ds.length > 1 ? size * 0.82 : size;
-  ds.forEach((d, i) => { const w = r.dni.widthOf(d, sz); r.dni.drawNumber(ctx, d, x - w / 2, yTop + i * (sz + 1.5), sz, color); });
+  ds.forEach((d, i) => { const w = r.dni.widthOf(d, sz); r.dni.drawNumber(ctx, d, x - w / 2, yTop + i * (r.dni.joinStep ? r.dni.joinStep(sz) : sz + 1.5), sz, color); });
 }
 
 function calendar(ctx, r, sky, t) {

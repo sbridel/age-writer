@@ -185,6 +185,18 @@ class Dni {
     return 1;
   }
 
+  /**
+   * Pas entre deux chiffres d'un même nombre. Par défaut (`gap` absent) les cases sont SOUDÉES, comme dans l'écriture D'ni :
+   * au-delà de 24, chaque chiffre reprend le trait vertical de la case précédente (le cadre procédural va de 4 à 96 %,
+   * d'où 92 %). Un `gap` numérique garde l'ancien écart (fraction de la hauteur), pour qui le demande explicitement.
+   */
+  step_(size, cw, gap, mode = this.mode()) {
+    if (gap == null) return mode === "simple" ? size * 0.92 : mode === "font" ? size * 0.93 : cw - size * 0.08;
+    return cw + size * gap;
+  }
+  /** Pas vertical pour des chiffres empilés en cases soudées (pilier du calendrier). */
+  joinStep(size) { return size * 0.92; }
+
   /** Contenu SVG (sans balise <svg>) d'un chiffre dont le coin haut-gauche est (x,y). */
   digitInner(v, x, y, size, color, mode = this.mode()) {
     if (!(v >= 0 && v <= 24)) return "";
@@ -204,28 +216,27 @@ class Dni {
   }
 
   /** Un nombre entier en base 25, comme chaîne SVG complète. */
-  numberSvg(num, { size = 28, color = "currentColor", gap = 0.22, cls = "age-dni" } = {}) {
-    const digits = toBase25(num), mode = this.mode(), cw = size * this.cell(mode), g = size * gap;
-    const W = digits.length * cw + (digits.length - 1) * g, H = size;
-    const pad = size * 0.04;
-    const inner = digits.map((d, i) => this.digitInner(d, i * (cw + g) + pad, pad, size - 2 * pad, color, mode)).join("");
+  numberSvg(num, { size = 28, color = "currentColor", gap = null, cls = "age-dni" } = {}) {
+    const digits = toBase25(num), mode = this.mode(), pad = size * 0.04, ds = size - 2 * pad, cw = ds * this.cell(mode);
+    const st = this.step_(ds, cw, gap, mode), W = cw + (digits.length - 1) * st + 2 * pad, H = size;
+    const inner = digits.map((d, i) => this.digitInner(d, i * st + pad, pad, ds, color, mode)).join("");
     return `<svg class="${cls}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" width="${W.toFixed(1)}" height="${H.toFixed(1)}" role="img" aria-label="${esc(num)} (D'ni)">${inner}</svg>`;
   }
 
   /** Largeur qu'occuperait un nombre (mêmes unités que size). */
-  widthOf(num, size = 28, gap = 0.22) {
-    const n = toBase25(num).length;
-    return n * size * this.cell() + (n - 1) * size * gap;
+  widthOf(num, size = 28, gap = null) {
+    const n = toBase25(num).length, cw = size * this.cell();
+    return cw + (n - 1) * this.step_(size, cw, gap);
   }
 
   /** Dessine un nombre sur un canvas 2D ; renvoie la largeur occupée. */
-  drawNumber(ctx, num, x, y, size = 28, color = "#cdbd94", gap = 0.22) {
-    const digits = toBase25(num), mode = this.mode(), cw = size * this.cell(mode), g = size * gap;
+  drawNumber(ctx, num, x, y, size = 28, color = "#cdbd94", gap = null) {
+    const digits = toBase25(num), mode = this.mode(), cw = size * this.cell(mode), st = this.step_(size, cw, gap, mode);
     ctx.save();
     ctx.fillStyle = color; ctx.strokeStyle = color;
-    digits.forEach((d, i) => this.drawDigit_(ctx, d, x + i * (cw + g), y, size, mode, cw));
+    digits.forEach((d, i) => this.drawDigit_(ctx, d, x + i * st, y, size, mode, cw));
     ctx.restore();
-    return digits.length * cw + (digits.length - 1) * g;
+    return cw + (digits.length - 1) * st;
   }
 
   /** Un chiffre 0..24 dans sa case (coin haut-gauche `dx`, `y`, largeur `cw`) ; couleurs déjà posées. */
@@ -260,7 +271,7 @@ class Dni {
     const fr = arr.slice(1).map((d) => Math.max(0, Math.min(24, Math.round(Number(d) || 0))));
     const cw = size * this.cell(), g = size * gap, pad = size * 0.14, cells = [];
     let x = 0;
-    if (whole > 0 || !fr.length) { toBase25(whole).forEach((d) => { cells.push({ d, x, framed: false }); x += cw + size * 0.22; }); if (fr.length) x += g; }
+    if (whole > 0 || !fr.length) { const wd = toBase25(whole), st = this.step_(size, cw, null); wd.forEach((d, i) => { cells.push({ d, x, framed: false }); x += i < wd.length - 1 ? st : cw; }); if (fr.length) x += g; }
     fr.forEach((d, i) => { cells.push({ d, x: x + pad, framed: true }); x += cw + 2 * pad + (i < fr.length - 1 ? g * 0.5 : 0); });
     return { cells, width: x, cw, pad };
   }
