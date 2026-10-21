@@ -84,7 +84,7 @@ class Dni {
   async init() {
     // repart de zéro : un réglage vidé ou changé ne doit pas garder l'ancienne police
     if (this.vaultFace && typeof document !== "undefined" && document.fonts) { try { document.fonts.delete(this.vaultFace); } catch (e) { /* ignore */ } }
-    this.vaultFace = null; this.glyphs = null; this.userFamily = null; this.missing = null;
+    this.vaultFace = null; this.glyphs = null; this.userFamily = null; this.missing = null; this.steps = null;
     this.family = this.detectInstalled();
     try { await this.loadVaultFont(); } catch (e) { console.warn("[Age Writer] police du coffre illisible", e); }
     try { await this.loadGlyphFile(); } catch (e) { /* facultatif */ }
@@ -191,9 +191,36 @@ class Dni {
    * d'où 92 %). Un `gap` numérique garde l'ancien écart (fraction de la hauteur), pour qui le demande explicitement.
    */
   step_(size, cw, gap, mode = this.mode()) {
-    if (gap == null) return mode === "simple" ? size * 0.92 : mode === "font" ? size * 0.93 : cw - size * 0.08;
+    if (gap == null) return mode === "simple" ? size * 0.92 : size * this.frameStep_(mode);
     return cw + size * gap;
   }
+  /**
+   * Police ou contours : on ne connaît pas d'avance le dessin du cadre (barres débordantes, épaisseur…). On trace donc un
+   * chiffre hors écran et on cherche ses deux montants (les colonnes encrées sur presque toute la hauteur) : le pas qui
+   * pose le montant droit d'une case sur le montant gauche de la suivante, rapporté à la hauteur. Mis en cache par police.
+   */
+  frameStep_(mode) {
+    const key = mode + "|" + (mode === "font" ? this.textStack() : "glyphs");
+    this.steps = this.steps || new Map();
+    if (this.steps.has(key)) return this.steps.get(key);
+    let r = 0.93;
+    try {
+      const H = 160, W = 400, cv = document.createElement("canvas"); cv.width = W; cv.height = H + 80;
+      const ctx = cv.getContext("2d", { willReadFrequently: true }); ctx.fillStyle = "#000"; ctx.strokeStyle = "#000";
+      const v = [0, 5, 1].find((d) => mode !== "font" || !this.glyphMissing(d));
+      if (v != null) {
+        this.drawDigit_(ctx, v, 40, 40, H, mode, H * this.cell(mode));
+        const img = ctx.getImageData(0, 0, W, cv.height).data, tall = [];
+        for (let x = 0; x < W; x++) { let n = 0; for (let y = 0; y < cv.height; y++) if (img[(y * W + x) * 4 + 3] > 128) n++; tall.push(n >= H * 0.7); }
+        const first = tall.indexOf(true);
+        let last = tall.lastIndexOf(true); while (last > first && tall[last - 1]) last--;
+        if (first >= 0 && last > first + H * 0.3) r = (last - first) / H;
+      }
+    } catch (e) { /* pas de canvas : on garde l'estimation */ }
+    this.steps.set(key, r);
+    return r;
+  }
+
   /** Pas vertical pour des chiffres empilés en cases soudées (pilier du calendrier). */
   joinStep(size) { return size * 0.92; }
 
