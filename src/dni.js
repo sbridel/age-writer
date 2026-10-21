@@ -233,14 +233,24 @@ class Dni {
       const H = 160, W = Math.ceil(H * cell) + 160, Hc = H + 80, cv = document.createElement("canvas"); cv.width = W; cv.height = Hc;
       const ctx = cv.getContext("2d", { willReadFrequently: true }); ctx.fillStyle = "#000"; ctx.strokeStyle = "#000";
       this.drawDigit_(ctx, d, 80, 40, H, mode, H * cell);
-      const img = ctx.getImageData(0, 0, W, Hc).data, tall = [];
-      for (let x = 0; x < W; x++) { let n = 0; for (let y = 0; y < Hc; y++) if (img[(y * W + x) * 4 + 3] > 128) n++; tall.push(n >= H * 0.7); }
+      const img = ctx.getImageData(0, 0, W, Hc).data, tall = [], rows = [];
+      for (let y = 0; y < Hc; y++) { let any = false; for (let x = 0; x < W && !any; x++) if (img[(y * W + x) * 4 + 3] > 128) any = true; if (any) rows.push(y); }
+      const gh = rows.length ? rows[rows.length - 1] - rows[0] + 1 : H; /* hauteur encrée réelle : la boîte peut être plus haute que le cadre */
+      for (let x = 0; x < W; x++) { let n = 0; for (let y = 0; y < Hc; y++) if (img[(y * W + x) * 4 + 3] > 128) n++; tall.push(n >= gh * 0.7); }
       const first = tall.indexOf(true);
       let last = tall.lastIndexOf(true); while (last > first && tall[last - 1]) last--;
       if (first >= 0 && last > first + H * 0.3) f = { l: (first - 80) / H, r: (last - 80) / H };
     } catch (e) { /* pas de canvas */ }
     this.frames.set(key, { f: f || guess, ok: !!f, at: Date.now() });
     return f || guess;
+  }
+
+  /** Un compte rendu lisible de ce que fait le module (commande de diagnostic) : mode, police, cases mesurées. */
+  report() {
+    const mode = this.mode(), lines = [`mode : ${mode} (réglage : ${(this.o.getMode && this.o.getMode()) || "auto"})`, `police : ${this.fontFamily() || "aucune"}${this.vaultFace ? " (du coffre)" : ""}`, `contours : ${this.glyphs ? "oui, boîte " + this.glyphs.box.join(" ") : "non"}`];
+    if (mode === "font") { const miss = []; for (let v = 0; v < 25; v++) if (this.glyphMissing(v)) miss.push(v); lines.push(`chiffres absents de la police : ${miss.length ? miss.join(" ") : "aucun"}`); lines.push(`largeur de « 1322 » composé : ${this.runWidth_(this.fontRun_(toBase25(1322)) || "", 100).toFixed(1)} pour 100 de haut (3 chiffres)`); }
+    if (mode === "glyphs") for (const v of [0, 1, 2]) { const f = this.frame_("glyphs", v), ok = this.frames && this.frames.get("glyphs|glyphs|" + v); lines.push(`chiffre ${v} : montants à ${f.l.toFixed(3)} et ${f.r.toFixed(3)}${ok && ok.ok ? "" : " (estimés, mesure ratée)"}`); }
+    return lines.join("\n");
   }
 
   /** Pas vertical pour des chiffres empilés en cases soudées (pilier du calendrier). */

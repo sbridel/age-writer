@@ -5,6 +5,7 @@
 // des stèles. Le vivant (herbe, fleurs, arbres, chat, koï) ne change pas. Aucune zone cliquable ne bouge (test/castle.test.js).
 // Décisions et maquette : claude/DESIGN-chateau-gothique.md (Projet).
 const { rng, clamp, mix, rgba } = require("./util");
+const MOON_PHOTO = require("./relto-moon-photo");
 const GY = 208;
 
 const STONE = "#8a8591", STONE_D = "#5e5966", STONE_DD = "#3a3742", SLATE = "#3e4258", SLATE_D = "#24263a", GOLD = "#c9a24e";
@@ -263,38 +264,34 @@ function redNight(sky) {
 }
 
 /**
- * Le disque de la lune rouge, peint une fois hors écran (256 px) puis réduit. Une lune d'éclipse : le cuivre clair d'un
- * côté, l'ombre pourpre qui gagne de l'autre ; quelques grandes mers aux bords fondus, placées comme celles de notre Lune ;
- * un liseré de lumière sur le bord éclairé. Rien de piqueté : de loin, ce n'est qu'un disque de braise qui a des ombres.
+ * Le disque de la lune rouge : la photo de la pleine Lune (relto-moon-photo.js), teintée en braise une fois hors écran
+ * (256 px) puis réduite. Tant que la photo charge, un simple disque dégradé ; dès qu'elle est là, la vraie Lune, rouge.
  */
-let moonTex = null;
+let moonTex = null, moonImg = null;
 function moonTexture() {
-  if (moonTex !== null) return moonTex || null;
-  moonTex = false;
-  if (typeof document === "undefined") return null;
+  if (moonTex) return moonTex;
+  if (typeof document === "undefined" || typeof Image === "undefined") return null;
+  if (!moonImg) {
+    moonImg = new Image();
+    moonImg.onload = () => { try { moonTex = tintMoon(moonImg); } catch (e) { moonTex = null; } };
+    moonImg.onerror = () => { moonImg = { failed: true }; };
+    try { moonImg.src = MOON_PHOTO; } catch (e) { moonImg = { failed: true }; }
+  }
+  return null;
+}
+/** La photo en gris devient une lune de sang : la lumière reste cuivre, l'ombre tire au pourpre ; le limbe s'assombrit. */
+function tintMoon(img) {
   const S = 256, C = S / 2, R = S / 2 - 1, cv = document.createElement("canvas"); cv.width = S; cv.height = S;
-  const g = cv.getContext && cv.getContext("2d"); if (!g || !g.createRadialGradient) return null;
+  const g = cv.getContext("2d"); if (!g) return null;
   g.save(); g.beginPath(); g.arc(C, C, R, 0, 6.283); g.clip();
-  /* la lumière vient du haut à droite ; l'ombre de la Terre mord en bas à gauche */
-  const base = g.createLinearGradient(C + R * 0.8, C - R * 0.8, C - R * 0.9, C + R * 0.9);
-  base.addColorStop(0, "#f4a070"); base.addColorStop(0.3, "#e4643a"); base.addColorStop(0.65, "#b82e22"); base.addColorStop(1, "#4e0c12");
-  g.fillStyle = base; g.fillRect(0, 0, S, S);
-  /* les mers : grandes, douces, à peine plus sombres (Procellarum, Imbrium, Serenitatis, Tranquillitatis, Nubium, Crisium) */
-  const sea = (mx, my, rx, ry, rot, a) => { g.save(); g.translate(C + mx * R, C + my * R); g.rotate(rot); g.scale(rx * R, ry * R); const gr = g.createRadialGradient(0, 0, 0, 0, 0, 1); gr.addColorStop(0, `rgba(70,10,14,${a})`); gr.addColorStop(0.55, `rgba(70,10,14,${a * 0.75})`); gr.addColorStop(1, "rgba(70,10,14,0)"); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 1, 0, 6.283); g.fill(); g.restore(); };
-  sea(-0.42, 0.02, 0.4, 0.5, 0.3, 0.26); sea(-0.18, -0.4, 0.3, 0.24, -0.2, 0.3); sea(0.2, -0.34, 0.2, 0.17, 0.4, 0.32); sea(0.38, -0.05, 0.22, 0.2, 0, 0.3); sea(0.6, -0.36, 0.1, 0.08, 0, 0.34); sea(-0.1, 0.4, 0.2, 0.15, 0.2, 0.24); sea(0.24, 0.3, 0.14, 0.12, 0, 0.22);
-  /* trois cratères clairs, doux, dont Tycho et ses rayons à peine visibles */
-  const spot = (sx, sy, rr, a) => { const gr = g.createRadialGradient(C + sx * R, C + sy * R, 0, C + sx * R, C + sy * R, rr * R); gr.addColorStop(0, `rgba(255,220,190,${a})`); gr.addColorStop(1, "rgba(255,220,190,0)"); g.fillStyle = gr; g.beginPath(); g.arc(C + sx * R, C + sy * R, rr * R, 0, 6.283); g.fill(); };
-  spot(-0.1, 0.66, 0.07, 0.4); spot(-0.5, -0.45, 0.05, 0.22); spot(0.52, 0.42, 0.04, 0.2);
-  g.strokeStyle = "rgba(255,220,190,0.07)"; g.lineWidth = 1.2; for (let i = 0; i < 9; i++) { const ang = -1.1 + i * 0.52, len = R * (0.3 + (i % 3) * 0.18); g.beginPath(); g.moveTo(C - 0.1 * R, C + 0.66 * R); g.lineTo(C - 0.1 * R + Math.cos(ang) * len, C + 0.66 * R + Math.sin(ang) * len); g.stroke(); }
-  /* l'ombre qui gagne : un voile pourpre en bas à gauche, et le limbe qui s'assombrit tout autour */
-  const umbra = g.createRadialGradient(C - R * 1.1, C + R * 1.1, R * 0.6, C - R * 1.1, C + R * 1.1, R * 2.3); umbra.addColorStop(0, "rgba(40,4,14,0.75)"); umbra.addColorStop(1, "rgba(40,4,14,0)"); g.fillStyle = umbra; g.fillRect(0, 0, S, S);
-  const limb = g.createRadialGradient(C, C, R * 0.7, C, C, R); limb.addColorStop(0, "rgba(40,4,8,0)"); limb.addColorStop(1, "rgba(40,4,8,0.4)"); g.fillStyle = limb; g.fillRect(0, 0, S, S);
-  /* le liseré de lumière sur le bord éclairé */
-  for (let i = 0; i < 24; i++) { const a0 = -2.2 + i * 0.12, f = Math.sin((i + 0.5) / 24 * Math.PI); /* fondu aux deux bouts */
-    g.strokeStyle = `rgba(255,214,170,${(0.5 * f).toFixed(3)})`; g.lineWidth = 2; g.beginPath(); g.arc(C, C, R - 1.1, a0, a0 + 0.125); g.stroke();
-    g.strokeStyle = `rgba(255,214,170,${(0.16 * f).toFixed(3)})`; g.lineWidth = 5; g.beginPath(); g.arc(C, C, R - 3, a0, a0 + 0.125); g.stroke(); }
+  g.drawImage(img, 0, 0, S, S);
+  const px = g.getImageData(0, 0, S, S), d = px.data;
+  for (let i = 0; i < d.length; i += 4) { const v = d[i] / 255, w = Math.pow(v, 0.85); /* une rampe : noir pourpre → rouge sang → cuivre clair */
+    d[i] = Math.round(255 * Math.min(1, 0.25 + 0.95 * w)); d[i + 1] = Math.round(255 * Math.max(0, 0.02 + 0.62 * w * w)); d[i + 2] = Math.round(255 * Math.max(0, 0.08 + 0.2 * w * w * w)); }
+  g.putImageData(px, 0, 0);
+  const umbra = g.createRadialGradient(C - R * 1.1, C + R * 1.1, R * 0.7, C - R * 1.1, C + R * 1.1, R * 2.4); umbra.addColorStop(0, "rgba(40,4,14,0.6)"); umbra.addColorStop(1, "rgba(40,4,14,0)"); g.fillStyle = umbra; g.fillRect(0, 0, S, S);
+  const limb = g.createRadialGradient(C, C, R * 0.8, C, C, R); limb.addColorStop(0, "rgba(30,2,6,0)"); limb.addColorStop(1, "rgba(30,2,6,0.45)"); g.fillStyle = limb; g.fillRect(0, 0, S, S);
   g.restore();
-  moonTex = cv;
   return cv;
 }
 

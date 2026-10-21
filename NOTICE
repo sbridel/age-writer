@@ -5,7 +5,10 @@ Fan project. This product contains trademarks and/or copyrighted works of Cyan. 
 Not affiliated with, endorsed by or sponsored by Cyan Worlds, Inc.
 "Myst", "Riven", "D'ni" and related names are trademarks of Cyan Worlds, Inc.
 No asset from the games (font, image, sound, text) is included: every picture is
-drawn by code and every sound is synthesized at runtime.
+drawn by code and every sound is synthesized at runtime, with one exception: the
+Castle's red moon is a photograph of the full Moon (src/relto-moon-photo.js,
+256 px, greyscale), a free-licence image supplied by the author and tinted at
+runtime. Source to be recorded here: <URL / licence>.
 
 This software includes third-party code:
 

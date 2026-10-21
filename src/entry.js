@@ -486,6 +486,7 @@ module.exports = function build(Base, core, AGEX) {
       if (typeof this.registerView === "function") this.registerView(RBK.RELTO_BOOK_VIEW, (leaf) => new RBK.ReltoBookView(leaf, this));
       this.addCommand({ id: "open-relto-book", name: "Open the Relto book", callback: () => RBK.openReltoBook(this) });
       this.addCommand({ id: "toggle-relto-ribbon", name: "Relto button: switch between the Relto book and the last Relto visited", callback: () => RBK.toggleRibbon(this) });
+      this.addCommand({ id: "dni-numerals-report", name: "D'ni numerals: diagnostic report", callback: () => { const r = this.dni ? this.dni.report() : "no numerals module"; console.log("[Age Writer] D'ni numerals\n" + r); new Notice(r, 15000); } });
       this.addCommand({ id: "start-story", name: "Start the story (create or open the story Relto)", callback: () => R.startStory(this) });
     this.addCommand({ id: "story-hint", name: "Story: a hint for the current chapter", callback: () => R.storyHint(this) });
     this.addCommand({ id: "story-repair", name: "Story: repair chapter notes (names, properties)", callback: () => R.storyRepair(this) });
