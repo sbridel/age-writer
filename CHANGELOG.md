@@ -2,6 +2,14 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.46.1 — Not every world mutates (2026-10-22)
+
+### Changed
+- **Mutation is no longer systematic.** Only some Ages can mutate (about one in three, decided once and for all by their name). Even then it is never certain: when the pressure is full there is one chance in fifteen, otherwise it starts again (about two months on average). When a fissure is eating the Age, the world defends itself: one chance in four each day, and the union chosen is the one that helps most. Otherwise a union prefers a pair from Catherine's catalogue. The rare event still applies to every Age; the test command still forces a union.
+
+### Fixed
+- The accord and mutation tests now run with the rest of the suite.
+
 ## 1.46.0 — Two voices (2026-10-22)
 
 ### Added
