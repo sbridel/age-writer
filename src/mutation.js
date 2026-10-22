@@ -13,8 +13,8 @@
  *   (option A) : l'écrit, lui, achète de la capacité (src/capacity.js), jamais les deux sur la même paire.
  * - **La clef de voûte** (la pierre de vie de Serenia) : l'élément du ciel de la paire. Qu'un des deux manque, l'union tombe
  *   (loi 2, Couple : la fragilité) ; qu'il revienne, elle reprend.
- * - **Elle vieillit** (la chambre qui se fane, loi 14) : AGE_DAYS jours sans retouche de l'Âge, elle se fane (moitié du
- *   soutien) ; une retouche la ravive (`care`).
+ * - **Elle ne s'use pas** (décision du 11 oct., confirmée le 22 : « s'épuise » veut dire limité, pas qui disparaît avec le
+ *   temps) : une union nouée tient tant que ses deux éléments sont là ; rien à entretenir.
  * - **Fin par construction** : une union ne fait que rembourser une contradiction qui existe, le plafond est borné, une paire
  *   ne se noue qu'une fois : le nombre de mutations utiles est fini. Rien à nouer : pas de mutation.
  */
@@ -29,7 +29,6 @@ const STABLE_AT = 75;
 const PRESSURE_DAYS = 4;   // jours sous 75 pour remplir la pression
 const RARE_ODDS = 300;     // l'événement rarissime : une chance sur 300 par jour, une fois par Âge
 const CAP = 0.15;          // soutien total des symbioses d'un Âge (15 points)
-const AGE_DAYS = 25;       // une union laissée sans retouche se fane au bout de 25 jours
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const keyOf = (a, b) => [a, b].sort().join("|");
 
@@ -80,13 +79,12 @@ function applySymbioses(r, a, now) {
   let left = CAP, rank = 0;
   for (const s of list) {
     if (s.type !== "symbiosis") continue;
-    const c = live.get(keyOf(s.a, s.b)), withered = !!(s.cared > 0 && now - s.cared >= AGE_DAYS * DAY);
-    if (!c) { out.push({ a: s.a, b: s.b, keystone: s.keystone, axis: s.axis, active: false, withered, support: 0 }); continue; }
+    const c = live.get(keyOf(s.a, s.b));
+    if (!c) { out.push({ a: s.a, b: s.b, keystone: s.keystone, axis: s.axis, active: false, support: 0, since: s.at }); continue; }
     const axis = c.axis || s.axis || "cosmological";
-    let support = Math.min(c.cost, shareOf(rank), left) * (withered ? 0.5 : 1);
-    support = Math.max(0, support); left -= support; rank++;
+    const support = Math.max(0, Math.min(c.cost, shareOf(rank), left)); left -= support; rank++;
     if (axes[axis] != null) axes[axis] = Math.min(100, Math.round(axes[axis] + support * 100));
-    out.push({ a: s.a, b: s.b, keystone: s.keystone, axis, active: true, withered, support });
+    out.push({ a: s.a, b: s.b, keystone: s.keystone, axis, active: true, support, since: s.at });
   }
   const vals = Object.values(axes), min = vals.length ? Math.min(...vals) : r.stability;
   const stability = Math.min(100, Math.max(r.stability, min)); /* une union ne fait jamais baisser un Âge */
@@ -126,12 +124,9 @@ function tick(a, r, name, now) {
   if (!(m.pressure >= 1) && !rare) return null;
   const c = pickPair(r, a);
   if (!c) { if (m.pressure >= 1) m.pressure = 0; return null; } /* rien à nouer : la pression retombe sans rien changer */
-  const s = { type: "symbiosis", a: c.a, b: c.b, kind: c.kind, keystone: keystoneOf(c), axis: c.axis, at: now, cared: now, rare };
+  const s = { type: "symbiosis", a: c.a, b: c.b, kind: c.kind, keystone: keystoneOf(c), axis: c.axis, at: now, rare };
   m.list.push(s); m.pressure = 0; if (rare) m.rare = now;
   return s;
 }
 
-/** Une retouche de l'Âge (la loi du changement l'a vue) : ses unions sont ravivées. */
-function care(a, now) { if (a && a.mut && Array.isArray(a.mut.list)) for (const s of a.mut.list) s.cared = now; }
-
-module.exports = { applySymbioses, tick, care, tensionOf, bindable, keystoneOf, pickPair, stateOf, shareOf, CAP, PRESSURE_DAYS, RARE_ODDS, AGE_DAYS, DAY };
+module.exports = { applySymbioses, tick, tensionOf, bindable, keystoneOf, pickPair, stateOf, shareOf, CAP, PRESSURE_DAYS, RARE_ODDS, DAY };

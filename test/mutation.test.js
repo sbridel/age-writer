@@ -1,7 +1,7 @@
 "use strict";
 // La mutation et la symbiose (src/mutation.js) : sur des Âges tirés au hasard, simulés jour après jour.
 // Un Âge stable ne mute pas (sauf l'événement rarissime, une fois) ; chaque union fait baisser la tension ; le plafond tient ;
-// la suite est finie ; une union ne fait jamais baisser un Âge ; la clef de voûte retirée, l'union tombe ; sans retouche, elle se fane.
+// la suite est finie ; une union ne fait jamais baisser un Âge ; la clef de voûte retirée, l'union tombe ; rien ne s'use avec le temps.
 const assert = require("assert");
 const { analyseAgeBase } = require("../src/engine/analysis");
 const { BUILTIN_BLOCKS } = require("../src/engine/registry");
@@ -46,16 +46,14 @@ ok(r.stability < 75 && MUT.bindable(r).length > 0, `le cas a une contradiction �
 let s = null; for (let d = 0; d <= 6 && !s; d += 0.5) s = MUT.tick(a, MUT.applySymbioses(r, a, T0 + d * DAY), "Couple", T0 + d * DAY);
 ok(s && s.type === "symbiosis" && [s.a, s.b].includes(s.keystone), `la pression pleine noue une union : ${s && s.a} et ${s && s.b}, tenue par ${s && s.keystone}`);
 const held = MUT.applySymbioses(r, a, T0 + 6 * DAY);
-ok(held.stability > r.stability && held.symbioses[0].active && !held.symbioses[0].withered, `l'union soutient le monde : ${r.stability} → ${held.stability}`);
+ok(held.stability > r.stability && held.symbioses[0].active, `l'union soutient le monde : ${r.stability} → ${held.stability}`);
 // la fragilité : sans sa clef de voûte, l'union tombe
 const without = analyseAgeBase(lines.filter((x) => x !== s.keystone).join("\n"), { seed: "Couple", draw: false });
 const fell = MUT.applySymbioses(without, a, T0 + 6 * DAY);
 ok(fell.symbioses[0].active === false && fell.stability === without.stability, "la clef de voûte retirée, l'union tombe");
-// le vieillissement : 25 jours sans retouche, elle se fane (moitié du soutien) ; une retouche la ravive
-const old = MUT.applySymbioses(r, a, s.cared + (MUT.AGE_DAYS + 1) * DAY);
-ok(old.symbioses[0].withered && Math.abs(old.symbioses[0].support - held.symbioses[0].support / 2) < 1e-9, "sans retouche, l'union se fane");
-const tCare = s.cared + (MUT.AGE_DAYS + 1) * DAY; MUT.care(a, tCare);
-ok(!MUT.applySymbioses(r, a, tCare + DAY).symbioses[0].withered, "une retouche la ravive");
+// rien ne s'use : un an plus tard, le même soutien
+const old = MUT.applySymbioses(r, a, s.at + 365 * DAY);
+ok(old.symbioses[0].active && Math.abs(old.symbioses[0].support - held.symbioses[0].support) < 1e-9, "un an plus tard, l'union tient pareil : rien à entretenir");
 // sans état, rien ne change : les corpus et l'empreinte de rendu restent les mêmes
 ok(MUT.applySymbioses(r, {}, T0) === r && MUT.applySymbioses(r, null, T0) === r, "sans union, l'analyse est rendue telle quelle");
 console.log(`mutation.test.js ok (${n} vérifications)`);

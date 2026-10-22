@@ -218,7 +218,8 @@ module.exports = function build(Base, core, AGEX) {
       if (!Array.isArray(list) || !list.length) return "";
       const parts = list.map((s) => {
         const o = { a: this.wordOf(s.a), b: this.wordOf(s.b), k: this.wordOf(s.keystone || s.a) };
-        return !s.active ? this.t("mut.fallen", o) : s.withered ? this.t("mut.withered", o) : this.t("mut.held", o);
+        const old = s.since > 0 && this.law.now() - s.since > 90 * MUT.DAY; /* après trois mois, une vieille union : du sens, pas de l'entretien */
+        return !s.active ? this.t("mut.fallen", o) : old ? this.t("mut.old", o) : this.t("mut.held", o);
       });
       return this.t("mut.head") + " " + parts.join(" ");
     }
@@ -654,7 +655,6 @@ module.exports = function build(Base, core, AGEX) {
       });
       const ev = this.law.observe(f.basename, core.analyse(src, { seed, physics: false }), f.stat.mtime, guard("valeurs physiques", () => PH.parsePhysics(src).params), { retouch });
       this.lastAgeSrc.set(f.path, src);
-      if (ev) guard("symbiose", () => MUT.care(this.law.get(seed) || this.law.get(f.basename), this.law.now())); // une retouche ravive les unions de l'Âge
       this.saveExt();
       if (ev) {
         const how = ev.k > 1 ? "\n" + this.t("law.thread") : ev.k < 1 ? "\n" + this.t("law.deep") : "";
