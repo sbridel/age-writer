@@ -9,6 +9,7 @@
 const { rng, clamp, mix, rgba } = require("./util");
 const GLASS = require("./relto-glass");
 const CASTLE = require("./relto-castle");
+const MEM = () => require("./relto-memories"); /* paresseux : la chambre dépend de la fenêtre générative */
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 const W = 640, H = 360, FLOOR = 250;
 const flicker = (t) => 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1) + 0.06 * Math.sin(t * 17);
@@ -72,6 +73,7 @@ function drawLounge(r, ctx, sc, sky, t) {
     g = ctx.createRadialGradient(136, 226, 2, 136, 226, 95); g.addColorStop(0, rgba(255, 140, 60, 0.24 * night * fl)); g.addColorStop(1, rgba(255, 140, 60, 0)); ctx.fillStyle = g; ctx.fillRect(30, 130, 210, 160);
   }
 
+  MEM().loungeOrb(r, ctx, t); /* la porte de la chambre des souvenirs : un orbe, près du plafond */
   // ---- se retourner : les bords de la vue ramènent à la cabane ----
   turnEdges(r, ctx, "cabin", tr("relto.lounge.turn"));
   const v = ctx.createRadialGradient(W / 2, H / 2, 150, W / 2, H / 2, 420); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, rgba(0, 0, 0, 0.38)); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
