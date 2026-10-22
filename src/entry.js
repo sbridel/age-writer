@@ -199,11 +199,8 @@ module.exports = function build(Base, core, AGEX) {
 
     // ---- la mutation et la symbiose (src/mutation.js) ------------------------------------------------
     /** Le nom d'un élément dans une phrase : son premier mot descripteur, dans la langue de l'interface. */
-    wordOf(id) {
-      const b = core.blocks && core.blocks.get ? core.blocks.get(id) : null; /* core.blocks : la table id → bloc du moteur */
-      const w = (b && b.descriptors && b.descriptors[0]) || String(id).replace(/_/g, " ");
-      return this.lang() === "fr" ? DFR.tr(w) : w;
-    }
+    /** Le nom d'un bloc dans les phrases de la mutation : celui qu'on écrit dans le livre (`water`, `frozen_world`), choix de l'auteur (22 oct.). */
+    wordOf(id) { return String(id || ""); }
     /** Applique les unions d'un Âge ; si `live` (pas un essai), le temps passe : la pression monte ou retombe, une union peut se nouer. */
     symbiosesOf(seed, r, live) {
       const a = this.law.get(seed); if (!a) return r;
