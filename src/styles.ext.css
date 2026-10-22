@@ -958,8 +958,8 @@
 /* L'onglet Détails en accordéon : le monde, le ciel, l'Âge ; un seul ouvert à la fois */
 .age-acc { display: flex; flex-direction: column; margin-top: 4px; }
 .age-acc__sec { border-top: 0.5px solid rgba(205, 189, 148, 0.25); }
-.age-acc__head { display: flex; align-items: center; gap: 8px; width: 100%; height: auto; padding: 9px 2px; background: none; border: none; box-shadow: none; border-radius: 0; font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; color: #cdbd94; cursor: pointer; text-align: left; }
-.age-acc__head:hover { color: #e0d2a8; background: rgba(205, 189, 148, 0.06); }
+.age-acc button.age-acc__head { display: flex; align-items: center; justify-content: flex-start; gap: 8px; width: 100%; height: auto; padding: 9px 2px; background-color: transparent; border: none; box-shadow: none; border-radius: 0; font-size: 0.78em; font-weight: normal; letter-spacing: 0.12em; text-transform: uppercase; color: #cdbd94; cursor: pointer; text-align: left; }
+.age-acc button.age-acc__head:hover { color: #e0d2a8; background-color: rgba(205, 189, 148, 0.06); box-shadow: none; }
 .age-acc__chev { display: inline-block; width: 1em; transition: transform .2s ease; opacity: .7; }
 .age-acc__sec.is-open .age-acc__chev { transform: rotate(90deg); }
 .age-acc__body { display: none; flex-direction: column; gap: 8px; padding: 2px 2px 12px; }
