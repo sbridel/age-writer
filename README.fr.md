@@ -41,22 +41,14 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 ### Nouveautés récentes
 
-Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; les dernières versions en bref :
+Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; en bref :
 
 - **1.46, deux voix.** Entendre ensemble le ciel de deux Âges (♪♪, Art de la Guilde) ; les Âges instables mutent lentement, deux éléments qui se contredisent se lient pour tenir le monde ; l'onglet Détails se replie en monde, ciel et Âge.
-- **1.45, les chiffres soudés**. Les chiffres D'ni partagent leurs montants au-delà de 24 ; le texte D'ni se lit en latin au survol ; le Livre du Relto s'ouvre page à page (garde, faux-titre, signet) ; la lune du Château est une photographie.
-- **1.44, l'eau qui coule** (1.44.1 : le robinet a son propre son). Le robinet du salon s'ouvre ; le Livre du Relto du piédestal s'ouvre dans le Relto, comme un livre de liaison.
-- **1.43, le salon.** Dans la cabane, on se retourne : un coin cuisine, un grand canapé sous une grande fenêtre, et le Livre du Relto sur son piédestal. Le Livre du Relto tourne maintenant ses pages comme un vrai livre.
-- **1.42, le Livre du Relto.** L'icône du ruban ouvre un livre vert à reliure dorée : une double page par Relto, l'île vivante dans sa vitre ; la toucher, c'est se lier. Un réglage et une commande ramènent le bouton au dernier Relto visité.
-- **1.41 à 1.41.5, le Château, pour Halloween.** Un déguisement gothique romantique : l'île entière devient un château autour de l'ancienne montagne, avec une chapelle, des tours suspendues et des passerelles de pierre ; les nuits virent au rouge sous une grande lune rouge ; dedans, chaque pièce prend la pierre, le noyer et l'or patiné ; le jour, la pierre prend la lumière ; la nuit, une chauve-souris géante passe devant la lune rouge ; les toits sont d'ardoise, sous une flèche vert-de-gris ; derrière le donjon, une masse chaotique de tours et une tour à rosace.
-- **1.40, pelouse et muguet.** La page Herbe fait de l'île une pelouse ; une nouvelle page Muguet.
-- **1.39.1, le panneau se referme.** Quitter la cabane remet la bibliothèque et le panneau caché en place (un bug depuis la 1.36).
-- **1.37 à 1.39, la Verrière et ses gros plans.** Un déguisement art nouveau pour tout le Relto (verre, cuivre, fleurs, lumière colorée des lampes ; une page qu'on attache ou détache). La fenêtre ronde de l'atelier s'ouvre ceinte des chiffres D'ni de 0 à 24, et le pilier du calendrier s'ouvre sur la date D'ni complète.
-- **1.35 et 1.36, le Traité et la carte.** Un gros volume sous un fermoir de laiton porte toute la référence, lisible sans quitter le Relto ; la carte des étoiles se tire et se tourne autour du Zéro, et dans l'Art de la Guilde le télescope ne met plus des mots sur l'écho à ta place.
-- **1.30 à 1.34, un téléphone et un guide où l'on cherche.** Age Writer s'installe sur Obsidian mobile et le Relto se joue au doigt ; des mains qui prennent ; le guide s'ouvre depuis le Relto, avec un champ de recherche, un mini-sommaire et une mise en page pour écran étroit.
-- **1.28 et 1.29, un télescope qui montre tout.** En Art de la Guilde, une tourelle de verres, des balises qui prédisent où le Zéro devrait apparaître, une plaque qui grave une fausse distance sur un faux pouls ; les détails de stabilité nomment les pages tirées par l'Âge ; une caverne vue de l'intérieur, une lune réglable.
-- **1.25 à 1.27, rigueur et mondes vivants.** Quatre rigueurs et dosage par étendue ; vie, sols, cavernes et maladie d'une chaîne de vie tenue par une seule espèce ; la cohérence achète de la capacité ; un titre d'écrivain gagné en tenant un Âge stable, et un livre vierge pour écrire un Âge dans le Relto.
-- **1.24 et avant.** Le mode histoire (un mentor, neuf chapitres, chacun récompensé par un élément de ton Relto : « Start the story »), un Relto achevé, l'observatoire, l'Art de la Guilde, la météo vivante.
+- **1.42 à 1.45, le Livre du Relto.** Un livre vert à reliure dorée, une double page par Relto, l'île vivante dans sa vitre ; il s'ouvre comme un vrai livre (garde, faux-titre, signet) et, depuis son piédestal dans le nouveau salon, dans le Relto même. Les chiffres D'ni se soudent au-delà de 24 et le texte D'ni se lit en latin au survol.
+- **1.37 à 1.41, deux déguisements.** La Verrière art nouveau (verre, cuivre, fleurs) et le Château gothique (tours, lune rouge, pierre et or patiné dans chaque pièce) ; une pelouse et du muguet.
+- **1.28 à 1.36, les instruments.** Un télescope qui montre tout en Art de la Guilde, une carte des étoiles qu'on tire et qu'on tourne, et le Traité de l'Art lisible dans le Relto.
+- **1.25 à 1.34, des mondes vivants, partout.** Rigueur et dosage, vie, sols et cavernes, un titre d'écrivain ; Age Writer sur Obsidian mobile et un guide où l'on cherche.
+- **1.24 et avant.** Le mode histoire (un mentor, neuf chapitres : « Start the story »), le Relto, l'observatoire, l'Art de la Guilde, la météo vivante.
 ---
 
 ## Sommaire

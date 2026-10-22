@@ -39,22 +39,14 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 ### Recent changes
 
-The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
+The full list is in [`CHANGELOG.md`](CHANGELOG.md); in short:
 
 - **1.46, two voices.** Hear two Ages' skies together (♪♪, Art of the Guild); unstable Ages slowly mutate, two contradicting elements binding to hold the world; the Details tab folds into world, sky and Age.
-- **1.45, joined numerals**. D'ni digits share their posts beyond 24; D'ni text reads in Latin on hover; the Relto book opens page by page (endpaper, half-title, ribbon); the Castle's moon is a photograph.
-- **1.44, running water** (1.44.1: the tap's own sound). The lounge's tap runs; the Relto book on its pedestal opens inside the Relto, like a linking book.
-- **1.43, the lounge.** Turn around in the cabin: a kitchen corner, a deep sofa under a great window, and the Relto book on its pedestal. The Relto book now turns its pages like a real book.
-- **1.42, the Relto book.** The ribbon icon opens a green gold-tooled book: one double page per Relto, the island alive in its glass; touch it to link. A setting and a command switch the button back to the last Relto visited.
-- **1.41 to 1.41.5, the Castle, for Halloween.** A romantic gothic disguise: the whole island becomes a castle around the old mountain, with a chapel, hanging towers and stone footbridges; the nights turn red under a great red moon; every room inside takes on stone, walnut and old gold; by day the stone takes the light; at night, a giant bat crosses the red moon; the roofs are slate, under a verdigris spire; behind the keep, a chaotic mass of towers and a rose-window tower.
-- **1.40, lawn and lily of the valley.** The Grass page turns the island into a lawn; a new Lily of the valley page.
-- **1.39.1, the panel closes again.** Leaving the cabin puts the bookcase and the hidden panel back (a bug since 1.36).
-- **1.37 to 1.39, the Glasshouse and its close-ups.** An art nouveau disguise for the whole Relto (glass, copper, flowers, coloured lamplight; a page you attach or detach). The round window of the writing room opens up ringed by the D'ni numerals 0 to 24, and the calendar pinnacle opens on the full D'ni date.
-- **1.35 and 1.36, the Treatise and the chart.** A thick volume under a brass clasp holds the whole reference, readable without leaving the Relto; the star chart can be dragged and turned around the Zero, and in the Art of the Guild the telescope no longer words its echo for you.
-- **1.30 to 1.34, a phone and a guide you can search.** Age Writer installs on Obsidian mobile and the Relto is played with a finger; hands that take; the guide opens from the Relto, with a search field, a mini-contents and a narrow-screen layout.
-- **1.28 and 1.29, a telescope that shows everything.** In the Art of the Guild, a turret of lenses, beacons that predict where the Zero should appear, a plate that engraves a wrong distance on a false beat; the Age's stability details name the pages it drew; a cavern you look into, a tunable moon.
-- **1.25 to 1.27, rigour and living worlds.** Four rigours and dosing by extent; life, soils, caverns and the sickness of a chain of life held by a single species; coherence buys capacity; a writer's title earned by holding an Age stable, and a blank book to write an Age inside the Relto.
-- **1.24 and before.** Story mode (a mentor, nine chapters, each rewarded with a piece of your Relto: start it with “Start the story”), a finished Relto, the observatory, the Art of the Guild, living weather.
+- **1.42 to 1.45, the Relto book.** A green gold-tooled book, one double page per Relto, the island alive in its glass; it opens like a real book (endpaper, half-title, ribbon) and, from its pedestal in the new lounge, inside the Relto itself. D'ni numerals are joined beyond 24 and D'ni text reads in Latin on hover.
+- **1.37 to 1.41, two disguises.** The art nouveau Glasshouse (glass, copper, flowers) and the gothic Castle (towers, red moon, stone and old gold in every room); a lawn and lilies of the valley.
+- **1.28 to 1.36, the instruments.** A telescope that shows everything in the Art of the Guild, a star chart you drag and turn, and the Treatise of the Art readable inside the Relto.
+- **1.25 to 1.34, living worlds, everywhere.** Rigour and dosing, life, soils and caverns, a writer's title; Age Writer on Obsidian mobile and a searchable guide.
+- **1.24 and before.** Story mode (a mentor, nine chapters: “Start the story”), the Relto, the observatory, the Art of the Guild, living weather.
 ---
 
 ## Contents
