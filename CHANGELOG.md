@@ -2,6 +2,17 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.46.0 — Two voices (2026-10-22)
+
+### Added
+- **Two voices** (Art of the Guild): in an Age's Details tab, the ♪♪ button plays its sky beside another Age's, or its own. Each voice comes from the length of the day; the interval is said in words (unison, octave, third, tritone…) and heard: a purr when they sound as one, a chirp when they agree, a growl when they clash; opposed polarities are noted.
+- **Mutation and symbiosis**: an Age that stays under 75 % builds pressure over about four days; when full, two of its elements that contradict each other (a sky clash, or a harmful reaction such as water and lava) bind together. The union supports the world on its axis (15 points at most per Age, halving with each further union, four at most), never lowers stability, and holds as long as both elements are written; remove one and it falls, put it back and it resumes. Nothing wears out with time. A stable Age does not mutate, except, very rarely, once. A notice tells when a union forms; the unions are listed under stability in the Details tab, with the blocks named as you write them.
+- Command **"Mutation: advance four days on the open Age (test)"**: to try it without waiting; it says why nothing binds (a stable Age, nothing left free).
+
+### Changed
+- **The Details tab is an accordion**: stability stays on top, then *The world* (chain of causes, why, what does not hold; the figures folded), *The sky* (the Imager and the telescope side by side, values aligned) and *The Age*. One part open at a time; the one you opened stays open when the panel redraws.
+- Changing "Way of the instruments" redraws open panels at once.
+
 ## 1.45.0 — Joined numerals (2026-10-21)
 
 ### Added

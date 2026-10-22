@@ -43,6 +43,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; les dernières versions en bref :
 
+- **1.46, deux voix.** Entendre ensemble le ciel de deux Âges (♪♪, Art de la Guilde) ; les Âges instables mutent lentement, deux éléments qui se contredisent se lient pour tenir le monde ; l'onglet Détails se replie en monde, ciel et Âge.
 - **1.45, les chiffres soudés**. Les chiffres D'ni partagent leurs montants au-delà de 24 ; le texte D'ni se lit en latin au survol ; le Livre du Relto s'ouvre page à page (garde, faux-titre, signet) ; la lune du Château est une photographie.
 - **1.44, l'eau qui coule** (1.44.1 : le robinet a son propre son). Le robinet du salon s'ouvre ; le Livre du Relto du piédestal s'ouvre dans le Relto, comme un livre de liaison.
 - **1.43, le salon.** Dans la cabane, on se retourne : un coin cuisine, un grand canapé sous une grande fenêtre, et le Livre du Relto sur son piédestal. Le Livre du Relto tourne maintenant ses pages comme un vrai livre.

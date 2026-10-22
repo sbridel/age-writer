@@ -41,6 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); the latest versions in short:
 
+- **1.46, two voices.** Hear two Ages' skies together (♪♪, Art of the Guild); unstable Ages slowly mutate, two contradicting elements binding to hold the world; the Details tab folds into world, sky and Age.
 - **1.45, joined numerals**. D'ni digits share their posts beyond 24; D'ni text reads in Latin on hover; the Relto book opens page by page (endpaper, half-title, ribbon); the Castle's moon is a photograph.
 - **1.44, running water** (1.44.1: the tap's own sound). The lounge's tap runs; the Relto book on its pedestal opens inside the Relto, like a linking book.
 - **1.43, the lounge.** Turn around in the cabin: a kitchen corner, a deep sofa under a great window, and the Relto book on its pedestal. The Relto book now turns its pages like a real book.
