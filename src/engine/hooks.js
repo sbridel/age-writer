@@ -24,6 +24,7 @@ const hooks = {
   ghostSky: (category, phrase) => phrase, // l'indice d'un glyphe du ciel non appris, dans la langue de l'interface
   fissureNote: () => "", // la ligne du panneau quand la fissure abîme un monde instable (loi 14, Durée)
   lifeNote: () => "", // la ligne du panneau sur la vie et le sol (boucle, échelles, sol, énergie)
+  symbiosisNote: () => "", // la ligne du panneau sur les unions nouées par la mutation (src/mutation.js ; vide : aucune)
   dosageNote: () => "", // la ligne du panneau sur ce que le dosage a changé (vide : rien à dire)
   depthNote: () => "", // (texte du bloc, graine) → la phrase du panneau sur la profondeur de l'équilibre (test par retrait ; vide : rien à dire)
   seedName: null, // chemin d'une note d'Âge → sa graine (`age_seed`), ou null : le nom de la note

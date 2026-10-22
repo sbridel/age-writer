@@ -550,6 +550,8 @@ const AgeWriterPlugin = class AgeWriterPlugin extends obsidian.Plugin {
     strain && debug.createDiv({ cls: "age-panel__dosage", text: strain });
     const lifeLine = hooks.lifeNote(analysis.life);
     lifeLine && debug.createDiv({ cls: "age-panel__dosage", text: lifeLine });
+    const symLine = hooks.symbiosisNote(analysis.symbioses);
+    symLine && debug.createDiv({ cls: "age-panel__dosage", text: symLine });
     const depth = hooks.depthNote(ageSource, seedName(sourcePath));
     depth && debug.createDiv({ cls: "age-panel__depth", text: depth });
   }

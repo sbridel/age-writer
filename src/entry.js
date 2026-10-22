@@ -30,6 +30,7 @@ const AS = require("./ageseed");
 const UW = require("./unwritten");
 const WX = require("./weather");
 const DFR = require("./descriptors-fr");
+const MUT = require("./mutation");
 const DOSE = require("./dosage");
 const LIFE = require("./life");
 const RG = require("./rigor");
@@ -114,6 +115,7 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText) out = applyDamage(out, parseDamage(srcText));
         if (srcText) { const wx = guard("météo", () => WX.parseWeather(srcText)); if (wx) out = { ...out, weather: wx, resolved: out.resolved ? { ...out.resolved, weather: wx } : out.resolved }; } // météo vivante : lue par la fenêtre (sceneOf) et la description, sans effet sur la stabilité
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
+        if (this.ext.law && o && o.seed) out = guard("symbiose", () => this.symbiosesOf(o.seed, out, !o.probe)) || out; // la mutation et la symbiose (src/mutation.js) : les unions nouées soutiennent le monde ; le temps en noue d'autres
         if (this.ext.law && o && o.seed && !o.probe) out = guard("fissure", () => { // (un essai de retrait, `probe`, ne touche pas à l'état de la loi) // la fissure grandit : elle abîme un monde instable, et le condamne s'il n'est pas corrigé à temps
           const op = this.law.opening(o.seed, this.ext.fissureDays), bad = strainable(out);
           if (this.law.tend(o.seed, bad ? out.stability : 100, op)) { out.condemned = true; return bad || out.fissure === "open" || out.fissure === "submarine" ? forceAlteration(out, 10) : out; }
@@ -132,6 +134,7 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.dosageNote = (d) => DOSE.note(d, this.lang() === "fr");
       AGEX.fissureNote = () => (this.lang() === "fr" ? "Durée · la fissure s'ouvre et le monde s'effrite" : "Duration · the fissure opens and the world crumbles");
       AGEX.lifeNote = (l) => LIFE.note(l, this.lang() === "fr");
+      AGEX.symbiosisNote = (list) => guard("symbiose", () => this.symbiosisLine(list)) || "";
       this.depthCache = new Map();
       // la profondeur de l'équilibre : le test par retrait, à l'affichage du panneau (jamais à chaque frappe), mis en cache par texte, graine et rigueur
       AGEX.depthNote = (text, seed) => guard("profondeur", () => {
@@ -192,6 +195,32 @@ module.exports = function build(Base, core, AGEX) {
       if (typeof this.app.vault.process === "function") await this.app.vault.process(f, edit);
       else await this.app.vault.modify(f, edit(await this.app.vault.read(f)));
       new Notice(missed ? this.t("phys.notfound") : this.t("phys.written", { line: `${key}: ${PH.asLine(value)}` }));
+    }
+
+    // ---- la mutation et la symbiose (src/mutation.js) ------------------------------------------------
+    /** Le nom d'un élément dans une phrase : son premier mot descripteur, dans la langue de l'interface. */
+    wordOf(id) {
+      const b = core.blocks && core.blocks.get ? core.blocks.get(id) : null; /* core.blocks : la table id → bloc du moteur */
+      const w = (b && b.descriptors && b.descriptors[0]) || String(id).replace(/_/g, " ");
+      return this.lang() === "fr" ? DFR.tr(w) : w;
+    }
+    /** Applique les unions d'un Âge ; si `live` (pas un essai), le temps passe : la pression monte ou retombe, une union peut se nouer. */
+    symbiosesOf(seed, r, live) {
+      const a = this.law.get(seed); if (!a) return r;
+      if (live && this.ext.mutation !== false) {
+        const born = MUT.tick(a, MUT.applySymbioses(r, a, this.law.now()), seed, this.law.now());
+        if (born) { this.saveExt(); new Notice(this.t(born.rare ? "mut.rare" : "mut.born", { name: seed, a: this.wordOf(born.a), b: this.wordOf(born.b) }), 12000); }
+      }
+      return MUT.applySymbioses(r, a, this.law.now());
+    }
+    /** La ligne du panneau : chaque union, ce qui la tient, si elle est tombée ou fanée. */
+    symbiosisLine(list) {
+      if (!Array.isArray(list) || !list.length) return "";
+      const parts = list.map((s) => {
+        const o = { a: this.wordOf(s.a), b: this.wordOf(s.b), k: this.wordOf(s.keystone || s.a) };
+        return !s.active ? this.t("mut.fallen", o) : s.withered ? this.t("mut.withered", o) : this.t("mut.held", o);
+      });
+      return this.t("mut.head") + " " + parts.join(" ");
     }
 
     /** Le statut d'écrivain : un Âge qui reste stable sept jours donne un titre ; on l'annonce une fois (le Korfah d'abord, puis le palier). */
@@ -625,6 +654,7 @@ module.exports = function build(Base, core, AGEX) {
       });
       const ev = this.law.observe(f.basename, core.analyse(src, { seed, physics: false }), f.stat.mtime, guard("valeurs physiques", () => PH.parsePhysics(src).params), { retouch });
       this.lastAgeSrc.set(f.path, src);
+      if (ev) guard("symbiose", () => MUT.care(this.law.get(seed) || this.law.get(f.basename), this.law.now())); // une retouche ravive les unions de l'Âge
       this.saveExt();
       if (ev) {
         const how = ev.k > 1 ? "\n" + this.t("law.thread") : ev.k < 1 ? "\n" + this.t("law.deep") : "";
