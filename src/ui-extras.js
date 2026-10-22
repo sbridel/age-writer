@@ -50,6 +50,28 @@ function axisLabel(t, axis) {
 function sevLabel(t, sev) { return ({ light: t("sev.light"), medium: t("sev.medium"), strong: t("sev.strong") })[sev] || sev; }
 const heading = (box, text) => box.createDiv({ cls: "age-det__h", text });
 
+/**
+ * L'accordéon de l'onglet Détails : le monde, le ciel, l'Âge ; un seul ouvert à la fois. Celui qu'on a ouvert le reste
+ * quand le panneau se redessine (mémoire de la session, `plugin.detOpen`, jamais enregistrée).
+ */
+function accordion(plugin, box) {
+  const wrap = box.createDiv({ cls: "age-acc" }), parts = new Map();
+  const set = (id) => { plugin.detOpen = id; for (const [k, p] of parts) { const on = k === id; p.sec.toggleClass("is-open", on); p.head.setAttr("aria-expanded", on ? "true" : "false"); } };
+  return {
+    add(id, label) {
+      const sec = wrap.createDiv({ cls: "age-acc__sec" });
+      const head = sec.createEl("button", { cls: "age-acc__head", attr: { type: "button", "aria-expanded": "false" } });
+      head.createSpan({ cls: "age-acc__chev", text: "▸" }); head.createSpan({ text: label });
+      const body = sec.createDiv({ cls: "age-acc__body" });
+      head.addEventListener("click", () => set(id));
+      parts.set(id, { sec, head, body });
+      return body;
+    },
+    drop(id) { const p = parts.get(id); if (p) { p.sec.remove(); parts.delete(id); } },
+    open() { if (!parts.size) { wrap.remove(); return; } set(parts.has(plugin.detOpen) ? plugin.detOpen : parts.keys().next().value); },
+  };
+}
+
 /** Détails · stabilité : verdict et une barre par axe (remplace la ligne brute des coûts). */
 function renderStability(plugin, box, analysis) {
   const t = plugin.t, sec = box.createDiv({ cls: "age-det age-det--stab" });
@@ -100,13 +122,15 @@ function drawnBox(plugin, card, analysis, x, path, t) {
 }
 
 /** Détails · physique : fiche, chaîne des causes, pourquoi, ce qui ne tient pas (pistes cliquables). */
-function renderPhysics(plugin, box, analysis, { src, path }) {
-  const ph = analysis.physics; if (!ph) return;
+/**
+ * Le monde (la chaîne des causes, pourquoi, ce qui ne tient pas, la fiche chiffrée repliée) dans `box` ; le ciel (l'Imageur
+ * et le télescope, en deux colonnes) dans `skyBox`. Renvoie vrai si le ciel a reçu quelque chose.
+ */
+function renderPhysics(plugin, box, analysis, { src, path, skyBox }) {
+  const ph = analysis.physics; if (!ph) return false;
   const t = plugin.t, lang = plugin.lang() === "fr" ? "fr" : "en", sh = PH.sheet(ph, lang), w = ph.w, f = PH.fmt(lang);
   const sec = box.createDiv({ cls: "age-det age-det--phys" });
-  const top = sec.createDiv({ cls: "age-det__hrow" });
-  heading(top, t("det.physics"));
-  top.createSpan({ cls: "age-det__mode", text: ph.mode === "strict" ? t("det.mode.strict") : t("det.mode.easy") });
+  sec.createDiv({ cls: "age-det__mode", text: t("det.physics") + " · " + (ph.mode === "strict" ? t("det.mode.strict") : t("det.mode.easy")) });
   // chaîne des causes
   const chain = sec.createDiv({ cls: "age-det__chain" });
   const node = (label, value, state) => { const n = chain.createSpan({ cls: "age-det__node is-" + state }); n.createEl("b", { text: label }); n.createSpan({ text: " " + value }); };
@@ -123,26 +147,32 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
   node(t("chain.core"), w.liquidCore ? t("chain.liquid") : t("chain.frozen"), w.liquidCore ? "ok" : "warn"); arrow();
   node(t("chain.field"), w.field > 0.2 ? f(w.field) + "×" : t("chain.none"), w.field > 0.2 ? "ok" : "warn"); arrow();
   node(t("chain.air"), f(w.P) + " bar", w.P >= 0.05 ? "ok" : w.P >= 0.005 ? "warn" : "bad");
-  // fiche
-  const dl = sec.createEl("dl", { cls: "age-det__sheet" });
+  const whyHost = sec.createDiv(), tensHost = sec.createDiv();
+  // fiche chiffrée : repliée (des chiffres pour qui veut vérifier)
+  const det = sec.createEl("details", { cls: "age-det__more" });
+  det.createEl("summary", { text: t("det.sheet") });
+  const dl = det.createEl("dl", { cls: "age-det__sheet" });
   for (const [k, v] of sh.rows) { dl.createEl("dt", { text: k }); dl.createEl("dd", { text: v }); }
+  const cols = skyBox ? skyBox.createDiv({ cls: "age-det__skycols" }) : sec;
   // notes de l'arpenteur pour l'Imageur du Relto : ce que chante le ciel de l'Âge, trois valeurs en chiffres D'ni (la phase dérive : jamais notée)
   try {
     const notes = plugin.ext.imagerNotes === "off" || plugin.ext.imagerNotes === "full" || plugin.ext.imagerNotes === "words" ? plugin.ext.imagerNotes : "words";
     if (notes === "off") throw new Error("notes masquées");
     const tg = IMG.targetsOf(analysis, path ? seedOf(plugin, path, String(path).replace(/^.*\//, "").replace(/\.md$/i, "")) : ""), hn = IMG.hints(tg, lang);
-    const sky = sec.createDiv({ cls: "age-det__sky" });
-    sky.createEl("b", { text: t("det.sky") + " " });
-    sky.createSpan({ cls: "age-det__skyline", text: hn.line });
+    const sky = cols.createDiv({ cls: "age-det__sky" });
+    heading(sky, t("det.sky").replace(/\s*:\s*$/, "")).addClass("age-det__h--sub");
+    sky.createDiv({ cls: "age-det__skyline", text: hn.line });
+    const play = sky.createDiv({ cls: "age-det__play" });
     const chord = INS.isGuild(plugin.ext) && tg.crystals && tg.crystals.ids ? GI.chordOf(tg.crystals.ids) : []; // l'Art de la Guilde : l'accord de ses cristaux, à comparer à l'oreille
     if (chord.length && sound.crystalChord) {
-      const b = sky.createEl("button", { cls: "age-det__chord clickable-icon", text: "♪" }); b.setAttr("aria-label", t("det.sky.chord")); b.setAttr("title", t("det.sky.chord"));
+      const b = play.createEl("button", { cls: "age-det__chord clickable-icon", text: "♪" }); b.setAttr("aria-label", t("det.sky.chord")); b.setAttr("title", t("det.sky.chord"));
       b.onclick = () => sound.crystalChord(chord, 0, plugin.ext.volume == null ? 0.35 : plugin.ext.volume);
     }
     if (INS.isGuild(plugin.ext) && sound.twoVoices && path) { /* deux voix : ce ciel et celui d'un autre Âge, ensemble ; la fréquence du ciel suffit, les cristaux ne comptent pas */
-      const b2 = sky.createEl("button", { cls: "age-det__chord age-det__two clickable-icon", text: "♪♪" }); b2.setAttr("aria-label", t("two.title")); b2.setAttr("title", t("two.title"));
+      const b2 = play.createEl("button", { cls: "age-det__chord age-det__two clickable-icon", text: "♪♪" }); b2.setAttr("aria-label", t("two.title")); b2.setAttr("title", t("two.title"));
       b2.onclick = () => openTwoVoices(plugin, path, tg);
     }
+    if (!play.childElementCount) play.remove();
     const full = notes === "full"; // « mots seulement » : la phrase, sans aucun chiffre (les valeurs ne sont même pas créées, rien à révéler)
     if (full) {
       const nums = sky.createDiv({ cls: "age-det__skynums" });
@@ -157,15 +187,16 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
       }
     }
   } catch (e) { /* pas de notes */ }
-  try { renderStarNote(plugin, sec, { src, analysis, path }); } catch (e) { console.warn("[Age Writer ext] étoile", e); }
+  try { renderStarNote(plugin, cols, { src, analysis, path }); } catch (e) { console.warn("[Age Writer ext] étoile", e); }
+  const skyFilled = !!(skyBox && cols.childElementCount);
   if (sh.facts.length) {
-    heading(sec, t("det.why")).addClass("age-det__h--sub");
-    const ul = sec.createEl("ul", { cls: "age-det__facts" });
+    heading(whyHost, t("det.why")).addClass("age-det__h--sub");
+    const ul = whyHost.createEl("ul", { cls: "age-det__facts" });
     for (const x of sh.facts) ul.createEl("li", { text: x });
   }
-  heading(sec, t("det.tensions")).addClass("age-det__h--sub");
-  if (!sh.tensions.length) { sec.createDiv({ cls: "age-det__calm", text: t("det.calm") }); return; }
-  const list = sec.createDiv({ cls: "age-det__tensions" });
+  heading(tensHost, t("det.tensions")).addClass("age-det__h--sub");
+  if (!sh.tensions.length) { tensHost.createDiv({ cls: "age-det__calm", text: t("det.calm") }); return skyFilled; }
+  const list = tensHost.createDiv({ cls: "age-det__tensions" });
   sh.tensions.forEach((x, i) => {
     const raw = ph.tensions[i] || {}, card = list.createDiv({ cls: "age-det__tension is-" + x.severity });
     const tag = card.createDiv({ cls: "age-det__tag" });
@@ -187,7 +218,7 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
         });
       } else fixes.createSpan({ cls: "age-det__fixtxt", text: txt });
     });
-  });
+  });  return skyFilled;
 }
 
 /**
@@ -201,8 +232,8 @@ function renderStarNote(plugin, sec, { src, analysis, path }) {
   if (notes !== "off") {
     // ce que l'arpenteur perçoit (étape 3 : dévié par un trou noir, retard faussé par un faux pouls, boussole grossière sans nord magnétique)
     const guild = INS.isGuild(plugin.ext), w = SS.words(SS.surveyed(C.sys, guild), lang, { fx: C.sys.fx, compass: C.compass, easy: !guild, far: !(C.rec && C.rec.beats == null) }); // mode facile : les étoiles mortes ne faussent pas les notes
-    box.createEl("b", { text: t("sys.heading") + " " });
-    box.createSpan({ cls: "age-det__skyline", text: w.line });
+    heading(box, t("sys.heading").replace(/\s*:\s*$/, "")).addClass("age-det__h--sub");
+    box.createDiv({ cls: "age-det__skyline", text: w.line });
     if (w.pert) box.createDiv({ cls: "age-det__skyline age-det__pert", text: w.pert });
     if (notes === "full") {
       const nums = box.createDiv({ cls: "age-det__skynums" }), vals = [[t("sys.val.torahn"), w.values.torahn], [t("sys.val.elev"), w.values.elev], [t("sys.val.delay"), w.values.delay]];
@@ -235,14 +266,19 @@ function renderExtras(plugin, container, { src, analysis, name, compact, path })
   const box = container.createDiv({ cls: "age-ext" + (compact ? " age-ext--compact" : "") });
   const seed = seedOf(plugin, path, name), { list, unknown, world } = mechanismsFor(plugin, src, analysis, seed);
 
+  let host = box, acc = null;
   if (!compact) {
     try { renderStability(plugin, box, analysis); } catch (e) { console.warn("[Age Writer ext] stabilité", e); }
-    try { renderPhysics(plugin, box, analysis, { src, path }); } catch (e) { console.warn("[Age Writer ext] physique", e); }
-    if (ext.showNumbers || list.length || unknown.length) heading(box, t("det.age"));
+    acc = accordion(plugin, box); const worldBox = acc.add("world", t("det.sec.world")), sky = acc.add("sky", t("det.sec.sky"));
+    let skyFilled = false;
+    try { skyFilled = renderPhysics(plugin, worldBox, analysis, { src, path, skyBox: sky }); } catch (e) { console.warn("[Age Writer ext] physique", e); }
+    if (!worldBox.childElementCount) acc.drop("world");
+    if (!skyFilled) acc.drop("sky");
+    host = acc.add("age", t("det.age"));
   }
 
   if (ext.showNumbers) {
-    const plate = box.createDiv({ cls: "age-ext__plate" }); plate.setAttr("title", t("num.title"));
+    const plate = host.createDiv({ cls: "age-ext__plate" }); plate.setAttr("title", t("num.title"));
     const seedLine = /^\s*seed\s*:\s*(\d+)\s*$/im.exec(src);
     let kips = null; try { kips = calibrationOf(plugin, { src, analysis, name, path }).kips; } catch (e) { kips = null; } // étape 2 : les coordonnées KIPS, une fois l'Âge calibré
     dniText(plugin, plate, name, "age-ext__dniname");
@@ -253,7 +289,7 @@ function renderExtras(plugin, container, { src, analysis, name, compact, path })
   }
 
   if (list.length || unknown.length) {
-    const m = box.createDiv({ cls: "age-ext__mechs" });
+    const m = host.createDiv({ cls: "age-ext__mechs" });
     for (const x of list) {
       const row = m.createDiv({ cls: "age-ext__mech" + (x.written ? " is-written" : "") });
       setMarkup(row.createDiv({ cls: "age-ext__icon" }), `<svg viewBox="0 0 100 100"><path d="${mech.MECHS[x.id].icon}" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="miter"/></svg>`);
@@ -270,7 +306,7 @@ function renderExtras(plugin, container, { src, analysis, name, compact, path })
 
   const log = plugin.law.log(name), extra = plugin.law.effective(name);
   if (ext.law && (extra > 0.005 || log.length)) {
-    const l = box.createDiv({ cls: "age-ext__law" });
+    const l = host.createDiv({ cls: "age-ext__law" });
     if (log.length) {
       const last = log[log.length - 1];
       l.createDiv({ cls: "age-ext__lawhead", text: t("law.warning") });
@@ -279,7 +315,7 @@ function renderExtras(plugin, container, { src, analysis, name, compact, path })
     if (extra > 0.005) l.createDiv({ cls: "age-ext__lawmeter", text: t("law.meter", { n: Math.round(extra * 100) }) });
   }
   if (ext.law && plugin.law.condemned(name)) {
-    const d = box.createDiv({ cls: "age-ext__law age-ext__doom" });
+    const d = host.createDiv({ cls: "age-ext__law age-ext__doom" });
     if (plugin.law.destroyed(name)) d.createDiv({ cls: "age-ext__lawhead", text: t("doom.destroyed") });
     else if (plugin.law.burning(name)) d.createDiv({ cls: "age-ext__lawhead", text: t("doom.burning") });
     else {
@@ -289,18 +325,19 @@ function renderExtras(plugin, container, { src, analysis, name, compact, path })
     }
   }
   const strong = analysis.resolved.triggered.filter((x) => x.severity === "strong");
-  if (analysis.damage) box.createDiv({ cls: "age-ext__lawmeter", text: t("book.damage", { d: analysis.damage.damaged, r: analysis.damage.removed }) });
-  if (strong.length) box.createDiv({ cls: "age-ext__fissure", text: t("fissure.label", { a: words(strong[0].a), b: words(strong[0].b) }) });
+  if (analysis.damage) host.createDiv({ cls: "age-ext__lawmeter", text: t("book.damage", { d: analysis.damage.damaged, r: analysis.damage.removed }) });
+  if (strong.length) host.createDiv({ cls: "age-ext__fissure", text: t("fissure.label", { a: words(strong[0].a), b: words(strong[0].b) }) });
 
-  if (ext.solitude !== "off") box.createDiv({ cls: "age-ext__trace", text: mech.traceFor(seed, lang) });
+  if (ext.solitude !== "off") host.createDiv({ cls: "age-ext__trace", text: mech.traceFor(seed, lang) });
 
   if (ext.sound) {
     let layers = sound.mergeLayers(sound.layersForWorld(world), sound.layersForMechs(list.map((x) => x.id)));
     const u = typeof analysis.stability === "number" ? 1 - analysis.stability / 100 : 0;
     if (u > 0.5) layers = sound.mergeLayers(layers, { static: 0.1 + 0.4 * (u - 0.5) });
-    const btn = box.createEl("button", { cls: "age-ext__sound", text: "♪ " + t("sound.listen") });
+    const btn = host.createEl("button", { cls: "age-ext__sound", text: "♪ " + t("sound.listen") });
     btn.addEventListener("click", () => plugin.toggleSound(layers, btn, [], name));
   }
+  if (acc) { if (!host.childElementCount) acc.drop("age"); acc.open(); } /* l'accordéon : une partie vide disparaît ; s'ouvre celle de la dernière fois */
   return box;
 }
 

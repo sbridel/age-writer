@@ -444,13 +444,14 @@
 .age-det__h { font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; color: #cdbd94; opacity: 0.85; }
 .age-det__h--sub { margin-top: 6px; font-size: 0.72em; opacity: 0.7; }
 .age-det__hrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
-.age-det__mode { font-size: 0.85em; font-style: italic; opacity: 0.7; }
+.age-det__mode { font-size: 0.85em; opacity: 0.7; }
 .age-det__verdict { display: flex; align-items: baseline; gap: 6px; }
 .age-det__big { font-size: 2em; line-height: 1; font-variant-numeric: tabular-nums; color: #e0d2a8; }
 .age-det__verdict--unstable .age-det__big { color: #d9b25a; }
 .age-det__verdict--dying .age-det__big { color: #d98a6a; }
 .age-det__unit { opacity: 0.8; }
-.age-det__note, .age-det__calm { font-style: italic; opacity: 0.8; }
+.age-det__note { font-style: italic; opacity: 0.8; }
+.age-det__calm { opacity: 0.9; }
 .age-det__calm { color: #a9c79a; }
 .age-det__bars { display: flex; flex-direction: column; gap: 4px; }
 .age-det__bar { display: grid; grid-template-columns: 9.5em minmax(60px, 1fr) minmax(3em, max-content); gap: 10px; align-items: center; }
@@ -489,7 +490,7 @@
 .age-ext > .age-det__h { margin-top: 6px; padding-top: 10px; border-top: 0.5px solid rgba(205, 189, 148, 0.25); }
 
 /* Détails : note de l'arpenteur pour l'Imageur */
-.age-det__sky { margin: 8px 0 4px; font-size: var(--font-ui-small); color: var(--text-muted); }
+.age-det__sky { display: flex; flex-direction: column; gap: 5px; min-width: 0; font-size: var(--font-ui-small); color: var(--text-muted); }
 .age-det__sky b { color: var(--text-normal); font-weight: 600; }
 .age-det__skyline { font-style: italic; }
 .age-det__chord { display: inline-flex; margin-left: 6px; padding: 0 6px; height: 20px; font-size: 13px; vertical-align: middle; opacity: .7; }
@@ -953,3 +954,24 @@
 .age-rbook__halftitle { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: -8%; color: #5a4226; font-family: var(--font-text, Georgia, serif); font-style: italic; font-size: 1.15em; letter-spacing: 0.06em; opacity: 0.8; }
 .age-rbook__halftitle svg { width: 64px; height: auto; } /* le bloc des pages paraît dès que le livre est pris */
 @media (prefers-reduced-motion: reduce) { .age-rbook__covercontainer.is-held, .age-rbook__covercontainer.is-opening { animation: none; transition: none; transform: none; } }
+
+/* L'onglet Détails en accordéon : le monde, le ciel, l'Âge ; un seul ouvert à la fois */
+.age-acc { display: flex; flex-direction: column; margin-top: 4px; }
+.age-acc__sec { border-top: 0.5px solid rgba(205, 189, 148, 0.25); }
+.age-acc__head { display: flex; align-items: center; gap: 8px; width: 100%; height: auto; padding: 9px 2px; background: none; border: none; box-shadow: none; border-radius: 0; font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; color: #cdbd94; cursor: pointer; text-align: left; }
+.age-acc__head:hover { color: #e0d2a8; background: rgba(205, 189, 148, 0.06); }
+.age-acc__chev { display: inline-block; width: 1em; transition: transform .2s ease; opacity: .7; }
+.age-acc__sec.is-open .age-acc__chev { transform: rotate(90deg); }
+.age-acc__body { display: none; flex-direction: column; gap: 8px; padding: 2px 2px 12px; }
+.age-acc__sec.is-open .age-acc__body { display: flex; }
+.age-acc__body > .age-det + .age-det { border-top: none; margin-top: 0; padding-top: 0; }
+.age-det__more summary { cursor: pointer; font-size: 0.78em; letter-spacing: 0.1em; text-transform: uppercase; color: #cdbd94; opacity: 0.75; }
+.age-det__more[open] summary { margin-bottom: 6px; }
+.age-det__skycols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 24px; align-items: start; }
+.age-det__skycols > .age-det__sky { margin: 0; }
+.age-det__play { display: flex; gap: 6px; }
+.age-det__play .age-det__chord { margin-left: 0; }
+.age-det__chord:focus:not(:focus-visible) { box-shadow: none; outline: none; }
+.age-det__skynums { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 4px 12px; align-items: center; }
+.age-det__skynum { display: flex; align-items: center; gap: 8px; }
+.age-det__skynum > .age-det__skylabel { min-width: 6.5em; }
