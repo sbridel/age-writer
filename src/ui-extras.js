@@ -428,7 +428,7 @@ async function renderJournal(plugin, source, el, ctx) {
  */
 async function openTwoVoices(plugin, path, tgA) {
   const { app } = plugin, t = plugin.t.bind(plugin), obs = require("obsidian");
-  const files = app.vault.getMarkdownFiles().filter((f) => f.path !== path && ((app.metadataCache.getFileCache(f) || {}).sections || []).some((s) => s.type === "code"));
+  const files = app.vault.getMarkdownFiles().filter((f) => ((app.metadataCache.getFileCache(f) || {}).sections || []).some((s) => s.type === "code")).sort((a, b) => (b.path === path) - (a.path === path)); /* l'Âge lui-même en tête : avec lui-même, l'unisson */
   const ages = [];
   for (const f of files) { try { const src = plugin.core.extract(await app.vault.cachedRead(f)); if (src != null) ages.push({ f, src }); } catch (e) { /* ignore */ } }
   if (!ages.length) { new obs.Notice(t("two.none")); return; }
