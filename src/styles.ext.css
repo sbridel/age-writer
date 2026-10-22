@@ -492,8 +492,8 @@
 .age-det__sky { margin: 8px 0 4px; font-size: var(--font-ui-small); color: var(--text-muted); }
 .age-det__sky b { color: var(--text-normal); font-weight: 600; }
 .age-det__skyline { font-style: italic; }
-.age-det__chord { display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; padding: 0 9px; height: 24px; min-width: 30px; font-size: 14px; vertical-align: middle; color: var(--text-accent); background: var(--background-secondary-alt); border: 1px solid var(--background-modifier-border); border-radius: 12px; cursor: pointer; }
-.age-det__chord:hover { color: var(--text-on-accent); background: var(--interactive-accent); border-color: var(--interactive-accent); }
+.age-det__chord { display: inline-flex; margin-left: 6px; padding: 0 6px; height: 20px; font-size: 13px; vertical-align: middle; opacity: .7; }
+.age-det__chord:hover { opacity: 1; }
 .age-det__skynums { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; align-items: center; }
 .age-det__skynum { display: inline-flex; align-items: center; gap: 6px; color: var(--text-normal); }
 .age-det__skylabel { color: var(--text-faint); font-size: var(--font-ui-smaller); }
