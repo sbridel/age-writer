@@ -140,6 +140,26 @@ function noteOf(id) { return 220 * Math.pow(2, PENTA[fnv(String(id)) % PENTA.len
 function chordOf(ids) { return [...new Set((ids || []).filter(isId))].map(noteOf).sort((a, b) => a - b); }
 function beatOf(planet, target) { return planet ? 0 : Math.max(0.25, 1 - ((target && target.cryScore) || 0)); }
 
+// ---- l'accord de deux Âges ----------------------------------------------------------------------------------------
+/**
+ * Deux voix ensemble. La voix d'un Âge, c'est son jour : `freq` (src/imager.js, `targetsOf`) monte de six crans quand le
+ * jour raccourcit de moitié, donc six crans = une octave, et un cran = un ton entier : une gamme par tons. L'écart des deux
+ * jours se lit comme un intervalle : unisson, tierce (2), sixte (4), octave (6) sonnent ensemble ; seconde (1), triton (3),
+ * septième (5) dissonent. Au-delà d'une octave, on compte le reste. Un cristal partagé (une même page dans les deux ciels)
+ * rapproche les voix ; une polarité opposée ne dissone pas, elle renverse. Pur : rien que deux cibles `targetsOf`.
+ * Ne dit jamais de chiffre au joueur : `name` est un mot (src/i18n.js, `two.iv.*`).
+ */
+const INTERVALS = ["unison", "second", "third", "tritone", "sixth", "seventh"];
+function accordOf(a, b) {
+  if (!a || !b || !Number.isFinite(a.freq) || !Number.isFinite(b.freq)) return null;
+  const d = Math.abs(Math.round(a.freq) - Math.round(b.freq)), octaves = Math.floor(d / 6), rest = d % 6;
+  const name = rest === 0 ? (octaves ? "octave" : "unison") : INTERVALS[rest];
+  const consonant = rest % 2 === 0;
+  const ida = (a.crystals && a.crystals.ids) || [], idb = new Set((b.crystals && b.crystals.ids) || []);
+  const shared = [...new Set(ida)].filter((x) => idb.has(x));
+  return { steps: d, octaves, rest, name, consonant, octave: rest === 0 && octaves > 0, shared, inverse: !!(a.pol && b.pol && a.pol !== b.pol) };
+}
+
 // ---- le lien avec le télescope ------------------------------------------------------------------------------------
 /**
  * L'étoile que le télescope tient, telle qu'il la garde (`tel` = ext.telescope[relto]) : `aimedAt`, si le Zéro est trouvé
@@ -151,4 +171,4 @@ function aimedOf(tel) {
   return k && tel.systems && tel.systems[k] && Number.isFinite(tel.systems[k].at) ? k : null;
 }
 
-module.exports = { aimedOf, SLOTS, RACK, EXTRA, normCry, normalize, saved, rackOf, rackPage, pages, exact, score, slotsOf, choose, unwritten, full, lightOf, targetOf, place, starOf, crystalIds, noteOf, chordOf, beatOf };
+module.exports = { aimedOf, SLOTS, RACK, EXTRA, normCry, normalize, saved, rackOf, rackPage, pages, exact, score, slotsOf, choose, unwritten, full, lightOf, targetOf, place, starOf, crystalIds, noteOf, chordOf, beatOf, accordOf, INTERVALS };
