@@ -165,7 +165,7 @@ function addExtSettings(plugin, el) {
   new Setting(cur).setName(l.phs).setDesc(l.phsd).addSlider((s) => s.setLimits(0.5, 2, 0.1).setValue(e.physicsSeverity || 1).setDynamicTooltip().onChange((v) => { e.physicsSeverity = v; save(); if (e.physics === "strict") { reindex(); redraw(); } }));
 
   sub(l.ins);
-  new Setting(cur).setName(l.insm).setDesc(l.insd).addDropdown((d) => d.addOptions(plugin.lang() === "fr" ? { easy: "Facile", guild: "L'Art de la Guilde" } : { easy: "Easy", guild: "The Art of the Guild" }).setValue(INS.modeOf(e)).onChange((v) => { e.instrumentsMode = v; save(); }));
+  new Setting(cur).setName(l.insm).setDesc(l.insd).addDropdown((d) => d.addOptions(plugin.lang() === "fr" ? { easy: "Facile", guild: "L'Art de la Guilde" } : { easy: "Easy", guild: "The Art of the Guild" }).setValue(INS.modeOf(e)).onChange((v) => { e.instrumentsMode = v; save(); plugin.refreshLive(); })); /* les panneaux ouverts se redessinent : le ♪♪ apparaît ou disparaît tout de suite */
   dd(l.inn, l.innd, "imagerNotes", ["full", "words", "off"], () => plugin.refreshLive()); // les aides de l'Imageur, avec les instruments
   tg(l.lh, l.lhd, "lensHints", () => plugin.refreshLive());
 
