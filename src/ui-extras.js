@@ -138,10 +138,10 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
     if (chord.length && sound.crystalChord) {
       const b = sky.createEl("button", { cls: "age-det__chord clickable-icon", text: "♪" }); b.setAttr("aria-label", t("det.sky.chord")); b.setAttr("title", t("det.sky.chord"));
       b.onclick = () => sound.crystalChord(chord, 0, plugin.ext.volume == null ? 0.35 : plugin.ext.volume);
-      if (sound.twoVoices && path) { /* deux voix : ce ciel et celui d'un autre Âge, ensemble */
-        const b2 = sky.createEl("button", { cls: "age-det__chord age-det__two clickable-icon", text: "♪♪" }); b2.setAttr("aria-label", t("two.title")); b2.setAttr("title", t("two.title"));
-        b2.onclick = () => openTwoVoices(plugin, path, tg);
-      }
+    }
+    if (INS.isGuild(plugin.ext) && sound.twoVoices && path) { /* deux voix : ce ciel et celui d'un autre Âge, ensemble ; la fréquence du ciel suffit, les cristaux ne comptent pas */
+      const b2 = sky.createEl("button", { cls: "age-det__chord age-det__two clickable-icon", text: "♪♪" }); b2.setAttr("aria-label", t("two.title")); b2.setAttr("title", t("two.title"));
+      b2.onclick = () => openTwoVoices(plugin, path, tg);
     }
     const full = notes === "full"; // « mots seulement » : la phrase, sans aucun chiffre (les valeurs ne sont même pas créées, rien à révéler)
     if (full) {
