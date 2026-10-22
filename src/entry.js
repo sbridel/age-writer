@@ -31,6 +31,7 @@ const UW = require("./unwritten");
 const WX = require("./weather");
 const DFR = require("./descriptors-fr");
 const MUT = require("./mutation");
+const CAT = require("./catherine");
 const DOSE = require("./dosage");
 const LIFE = require("./life");
 const RG = require("./rigor");
@@ -115,7 +116,8 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText) out = applyDamage(out, parseDamage(srcText));
         if (srcText) { const wx = guard("météo", () => WX.parseWeather(srcText)); if (wx) out = { ...out, weather: wx, resolved: out.resolved ? { ...out.resolved, weather: wx } : out.resolved }; } // météo vivante : lue par la fenêtre (sceneOf) et la description, sans effet sur la stabilité
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
-        if (this.ext.law && o && o.seed) out = guard("symbiose", () => this.symbiosesOf(o.seed, out, !o.probe)) || out; // la mutation et la symbiose (src/mutation.js) : les unions nouées soutiennent le monde ; le temps en noue d'autres
+        if (this.ext.law && o && o.seed) out = guard("symbiose", () => this.symbiosesOf(o.seed, out, !o.probe)) || out;
+        if (o && o.seed && !o.probe && !(this.ext.law && this.law.get(o.seed))) guard("merveilles", () => this.seeWonders(o.seed, out)); /* la face écrite se voit aussi sans la loi */ // la mutation et la symbiose (src/mutation.js) : les unions nouées soutiennent le monde ; le temps en noue d'autres
         if (this.ext.law && o && o.seed && !o.probe) out = guard("fissure", () => { // (un essai de retrait, `probe`, ne touche pas à l'état de la loi) // la fissure grandit : elle abîme un monde instable, et le condamne s'il n'est pas corrigé à temps
           const op = this.law.opening(o.seed, this.ext.fissureDays), bad = strainable(out);
           if (this.law.tend(o.seed, bad ? out.stability : 100, op)) { out.condemned = true; return bad || out.fissure === "open" || out.fissure === "submarine" ? forceAlteration(out, 10) : out; }
@@ -206,9 +208,22 @@ module.exports = function build(Base, core, AGEX) {
       const a = this.law.get(seed); if (!a) return r;
       if (live && this.ext.mutation !== false) {
         const born = MUT.tick(a, MUT.applySymbioses(r, a, this.law.now()), seed, this.law.now(), { danger: (a.dose || 0) > 0 && !a.condemned }); /* rongé par la fissure : le monde se défend */
-        if (born) { this.saveExt(); new Notice(this.t(born.rare ? "mut.rare" : "mut.born", { name: seed, a: this.wordOf(born.a), b: this.wordOf(born.b) }), 12000); }
+        if (born) {
+          this.saveExt(); const w = CAT.compositeOf(born);
+          new Notice(this.t(born.rare ? "mut.rare" : "mut.born", { name: seed, a: this.wordOf(born.a), b: this.wordOf(born.b) }) + (w ? " " + this.t("mut.wonder", { w: CAT.nameOf(w, this.lang() === "fr") }) : ""), 12000);
+        }
       }
-      return MUT.applySymbioses(r, a, this.law.now());
+      const out = MUT.applySymbioses(r, a, this.law.now());
+      if (live) guard("merveilles", () => this.seeWonders(seed, out));
+      return out;
+    }
+    /** La chambre des souvenirs : chaque merveille vue une fois (nouée ou écrite) y entre, avec l'Âge et la date ; rien ne s'en efface. */
+    seeWonders(seed, r) {
+      const ids = CAT.wondersOf(r); if (!ids.length) return;
+      const box = this.ext.wonders && typeof this.ext.wonders === "object" ? this.ext.wonders : (this.ext.wonders = {});
+      let fresh = false;
+      for (const id of ids) if (!box[id]) { box[id] = { at: this.law.now(), age: String(seed) }; fresh = true; }
+      if (fresh) this.saveExt();
     }
     /** Commande d'essai : l'Âge ouvert reçoit d'un coup la pression de quatre jours ; s'il a une contradiction libre, une union se noue. */
     async advanceMutation() {
@@ -232,7 +247,8 @@ module.exports = function build(Base, core, AGEX) {
       const parts = list.map((s) => {
         const o = { a: this.wordOf(s.a), b: this.wordOf(s.b), k: this.wordOf(s.keystone || s.a) };
         const old = s.since > 0 && this.law.now() - s.since > 90 * MUT.DAY; /* après trois mois, une vieille union : du sens, pas de l'entretien */
-        return !s.active ? this.t("mut.fallen", o) : old ? this.t("mut.old", o) : this.t("mut.held", o);
+        const w = s.active && s.composite ? " " + this.t("mut.gives", { w: CAT.nameOf(s.composite, this.lang() === "fr") }) : "";
+        return (!s.active ? this.t("mut.fallen", o) : old ? this.t("mut.old", o) : this.t("mut.held", o)) + w;
       });
       return this.t("mut.head") + " " + parts.join(" ");
     }

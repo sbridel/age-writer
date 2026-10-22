@@ -368,6 +368,10 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random)) {
     const presence = String(sc.prose || blockById.get(sc.id)?.presence || "").trim(); // `prose` : une phrase propre à l'Âge (la maladie, l'Observation)
     if (presence) sentences.push(capitalize(presence) + ".");
   }
+  for (const id of resolved.wonders || []) { // les merveilles de Catherine nées d'une union (src/mutation.js, src/catherine.js)
+    const presence = String(blockById.get(id)?.presence ?? "").trim();
+    if (presence) sentences.push(capitalize(presence) + ".");
+  }
   for (const x of resolved.excess || []) sentences.push(capitalize(x.prose) + "."); // un bloc écrit en grande quantité (`many: X`, src/amounts.js)
   // ce qui ne réagit pas : par petits groupes, pas une phrase chacun
   const groups = [];

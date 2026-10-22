@@ -4,6 +4,7 @@ const GEOPHYS = require("../geophys");
 const SEA = require("../sea");
 const PLACES = require("../places");
 const LIFE = require("../life");
+const CATHERINE = require("../catherine");
 const {
   CATALYST_ID,
   FAUNA_BLOCKS,
@@ -37,6 +38,7 @@ const BUILTIN_BLOCKS = [
   ...SEA.MATTER_BLOCKS,
   ...PLACES.MATTER_BLOCKS,
   ...LIFE.MATTER_BLOCKS,
+  ...CATHERINE.MATTER_BLOCKS,
 ];
 
 const BUILTIN_REACTIONS = [
@@ -47,6 +49,7 @@ const BUILTIN_REACTIONS = [
   ...WEATHER_REACTIONS,
   ...SEA.REACTIONS,
   ...LIFE.REACTIONS,
+  ...CATHERINE.REACTIONS,
 ];
 
 const BUILTIN_VARIANTS = Object.entries({

@@ -35,9 +35,7 @@ const RARE_ODDS = 300;     // l'événement rarissime : une chance sur 300 par j
 const CAPABLE_ODDS = 3;    // un Âge sur trois sait muter (sa graine en décide)
 const FILL_ODDS = 15;      // pression pleine : une chance sur quinze, sinon elle repart de zéro
 const DANGER_ODDS = 4;     // rongé par une fissure : une chance sur quatre par jour
-/** Les paires du catalogue de Catherine (claude/CATALOGUE-catherine.md) : une mutation les préfère. */
-const CATALOGUE = new Set([["water", "lava"], ["heavy_world", "light_world"], ["wind", "sand"], ["drizzle", "acid"], ["cavern_world", "ocean_world"], ["flowers", "blight"], ["jungle_world", "desert_world"], ["great_tree", "lava"], ["frozen_world", "flowers"], ["bridge", "rust"], ["herd", "lava_world"], ["cavern_world", "thunderstorm"], ["ancient_world", "young_world"], ["moth", "heat"], ["auroras", "ash_cloud"]].map(([a, b]) => [a, b].sort().join("|")));
-const METALS = new Set(["gold", "silver", "copper"]), FLORA = new Set(["great_tree", "fern", "flowers", "grass", "vine"]);
+const CAT = require("./catherine"); /* le catalogue de Catherine : une mutation préfère ses paires */
 const CAP = 0.15;          // soutien total des symbioses d'un Âge (15 points)
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const keyOf = (a, b) => [a, b].sort().join("|");
@@ -64,12 +62,16 @@ function bindable(r) {
     const cost = x.cost != null ? x.cost : REACTION_COST[x.type], rb = blockById.get(x.result) || blockById.get(x.shown);
     if (cost > 0) out.push({ a: x.a, b: x.b, axis: (rb && rb.axis) || "geological", cost, kind: "reaction" });
   }
+  /* la maladie du vivant (src/life.js) : son hôte et elle se contredisent ; guérir l'Âge la retire, et l'union tombe */
+  const bl = r.life && Array.isArray(r.life.notes) ? r.life.notes.find((x) => x && x.id === "blight" && x.cost > 0 && x.host) : null;
+  if (bl && !drawn.has(bl.host)) out.push({ a: bl.host, b: "blight", axis: "ecological", cost: bl.cost, kind: "blight" });
   return out;
 }
 /** La clef de voûte d'une paire : l'élément du ciel s'il y en a un, sinon le plus lourd (à égalité, le premier) : c'est lui que la fragilité vise. */
 function keystoneOf(c) {
   const A = blockById.get(c.a), B = blockById.get(c.b);
   if (c.kind === "clash") return c.a;
+  if (c.kind === "blight") return "blight"; /* la clef de voûte est la maladie elle-même */
   return (B && A && (B.weight || 0) > (A.weight || 0)) ? c.b : c.a;
 }
 
@@ -90,15 +92,18 @@ function applySymbioses(r, a, now) {
   for (const s of list) {
     if (s.type !== "symbiosis") continue;
     const c = live.get(keyOf(s.a, s.b));
-    if (!c) { out.push({ a: s.a, b: s.b, keystone: s.keystone, axis: s.axis, active: false, support: 0, since: s.at }); continue; }
+    const composite = CAT.compositeOf(s); /* le catalogue de Catherine : ce que l'union fait naître (ou rien) */
+    if (!c) { out.push({ a: s.a, b: s.b, keystone: s.keystone, axis: s.axis, active: false, support: 0, since: s.at, composite }); continue; }
     const axis = c.axis || s.axis || "cosmological";
     const support = Math.max(0, Math.min(c.cost, shareOf(rank), left)); left -= support; rank++;
     if (axes[axis] != null) axes[axis] = Math.min(100, Math.round(axes[axis] + support * 100));
-    out.push({ a: s.a, b: s.b, keystone: s.keystone, axis, active: true, support, since: s.at });
+    out.push({ a: s.a, b: s.b, keystone: s.keystone, axis, active: true, support, since: s.at, composite });
   }
   const vals = Object.values(axes), min = vals.length ? Math.min(...vals) : r.stability;
   const stability = Math.min(100, Math.max(r.stability, min)); /* une union ne fait jamais baisser un Âge */
-  return { ...r, axisStability: axes, stability, verdict: stability >= STABLE_AT ? "stable" : stability >= 40 ? "unstable" : "dying", symbioses: out };
+  const composites = out.filter((x) => x.active && x.composite).map((x) => ({ id: x.composite, a: x.a, b: x.b })); /* les merveilles présentes : la fenêtre les dessine */
+  const resolved = composites.length && r.resolved ? { ...r.resolved, wonders: composites.map((c) => c.id) } : r.resolved; /* la description les dit (src/engine/prose.js) */
+  return { ...r, resolved, axisStability: axes, stability, verdict: stability >= STABLE_AT ? "stable" : stability >= 40 ? "unstable" : "dying", symbioses: out, ...(composites.length ? { composites } : {}) };
 }
 
 /** La tension d'un Âge : la somme des coûts de ses contradictions encore à nouer (celles qu'aucune union ne tient). */
@@ -108,13 +113,7 @@ function tensionOf(r, a) {
 }
 
 /** Une paire du catalogue de Catherine (un composite peut en naître) ? */
-function inCatalogue(c) {
-  if (!c) return false;
-  if (CATALOGUE.has(keyOf(c.a, c.b))) return true;
-  if ((METALS.has(c.a) && FLORA.has(c.b)) || (METALS.has(c.b) && FLORA.has(c.a))) return true;
-  const other = c.a === "black_sun" ? c.b : c.b === "black_sun" ? c.a : null;
-  return !!other && /_sun$/.test(other) && other !== "black_sun";
-}
+function inCatalogue(c) { return !!CAT.compositeOf(c); }
 /** Un tirage reproductible, une chance sur n : FNV, puis un brassage (les bits bas de FNV suivent trop la fin de la chaîne). */
 function roll(str, n) { let h = fnv(str) >>> 0; h ^= h >>> 16; h = Math.imul(h, 0x45d9f3b) >>> 0; h ^= h >>> 16; h = Math.imul(h, 0x45d9f3b) >>> 0; h ^= h >>> 16; return (h >>> 0) % n === 0; }
 /** Sait-il muter ? Un Âge sur CAPABLE_ODDS, décidé par son nom une fois pour toutes. */

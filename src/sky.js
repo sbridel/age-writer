@@ -52,6 +52,7 @@ const NOTES = {
   rock_field: ["one of the great stones overhead is a little closer each season", "something large drifts above, and the ground below has no say in where it lands"],
   rock_life: ["the green things grow in the shadow of falling stone", "the roots hold on beneath a sky that sometimes drops rock"],
   rock_lamp: ["a lamp still burns beneath a sky of falling stone"],
+  aurora_ash: ["the ash hides the sky where the auroras should be"],
   rock_sea: ["the water keeps the shape of every stone the sky has thrown into it"],
   pulsar_life: ["the living things here have learned to grow between the lashes of a dead star", "a hard light sweeps the sky, and what grows here keeps its head low"],  frozen_world: ["the cold here is older than anything written beside it", "a frozen world does not thaw for what is written upon it"],
   lava_world: ["the ground is still being made here, and will not wait for what stands on it", "a world of fire gives little thought to what it burns"],
@@ -66,7 +67,7 @@ const rule = (sky, withId, severity, axis, note) => ({ sky, with: withId, severi
 /** Ce que chaque monde-type ne supporte pas : [id, gravité, axe]. */
 const WORLD_CLASH = {
   frozen_world: [["lava", "strong", "geological"], ["heat", "medium", "weather"], ["wildfire", "medium", "ecological"], ["steam", "light", "weather"], ["sand", "light", "geological"], ["dust_storm", "light", "weather"], ["flowers", "light", "ecological"]],
-  lava_world: [["ice", "strong", "geological"], ["deep_cold", "strong", "weather"], ["black_ice", "medium", "geological"], ["hail", "medium", "weather"], ["rime", "medium", "weather"], ["meltwater", "light", "geological"], ["water", "light", "geological"], ["snow", "strong", "weather"], ["glaze", "medium", "weather"], ["flowers", "medium", "ecological"]],
+  lava_world: [["grazer", "medium", "ecological"], ["ice", "strong", "geological"], ["deep_cold", "strong", "weather"], ["black_ice", "medium", "geological"], ["hail", "medium", "weather"], ["rime", "medium", "weather"], ["meltwater", "light", "geological"], ["water", "light", "geological"], ["snow", "strong", "weather"], ["glaze", "medium", "weather"], ["flowers", "medium", "ecological"]],
   desert_world: [["water", "medium", "geological"], ["ice", "medium", "geological"], ["deep_cold", "light", "weather"], ["rain", "medium", "weather"], ["marsh_mist", "medium", "weather"], ["fog", "light", "weather"], ["drizzle", "medium", "weather"], ["snow", "light", "weather"]],
   ocean_world: [["sand", "medium", "geological"], ["lava", "medium", "geological"], ["dust_storm", "medium", "weather"], ["wildfire", "medium", "ecological"], ["glass", "light", "geological"]],
   cavern_world: [["rain", "strong", "weather"], ["thunderstorm", "strong", "weather"], ["lightning", "strong", "weather"], ["storm", "strong", "weather"], ["wind", "strong", "weather"], ["drizzle", "medium", "weather"], ["hail", "medium", "weather"], ["snow", "medium", "weather"], ["dust_storm", "medium", "weather"], ["ash_cloud", "medium", "weather"], ["deep_cold", "medium", "weather"], ["heat", "medium", "weather"], ["lava", "light", "geological"], ...["single_sun", "twin_suns", "green_sun", "red_sun", "white_sun", "blue_sun", "orange_sun", "violet_sun"].map((id) => [id, "medium", "cosmological"])],
@@ -75,6 +76,7 @@ const WORLD_CLASH = {
 /** Vie fragile selon le monde (gravité de la tension avec chaque bloc vivant). */
 const WORLD_LIFE = { frozen_world: "light", lava_world: "medium", desert_world: "light", cavern_world: "light" };
 const SKY_RULES = [
+  rule("auroras", "ash_cloud", "light", "weather", "aurora_ash"), /* la cendre voile le ciel où l'aurore devrait se voir (catalogue de Catherine, 19) */
   ...FRAGILE.map((w) => rule("asteroid_belt", w, "light", "geological", "rock_belt")),
   ...FRAGILE.map((w) => rule("asteroid_field", w, w === "bridge" || w === "fallen_bridge" ? "strong" : "medium", "geological", "rock_field")),
   ...LIFE.map((w) => rule("asteroid_belt", w, "light", "ecological", "rock_life")),

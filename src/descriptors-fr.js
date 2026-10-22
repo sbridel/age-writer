@@ -22,6 +22,13 @@ const FR = {
   buried: "enfoui", faint: "diffus", glittering: "scintillant", golden: "doré", keen: "perçant", layered: "stratifié", loose: "meuble", purple: "pourpre", shy: "craintif",
   silvery: "argenté", sleek: "lisse", slick: "visqueux", spongy: "spongieux", stubborn: "têtu", sweet: "sucré", teeming: "grouillant", thorny: "épineux", threading: "filant", tiny: "minuscule",
   unseen: "invisible", slimy: "gluant", compact: "compact", "wind-bent": "courbé par le vent", wiry: "noueux",
+  undecided: "indécis", "half-drawn": "à demi dessiné", sourceless: "sans source", even: "égal", shadowless: "sans ombre", breathing: "respirant",
+  hourly: "à l'heure", grounded: "posé", remembering: "qui se souvient", grooved: "creusé", walking: "en marche", etching: "graveur", literate: "lettré",
+  overhead: "suspendu", dripping: "ruisselant", "red-gold": "rouge et or", boneless: "sans os", squeezing: "qui se faufile", broken: "brisé", flamed: "flammé",
+  prized: "précieux", grained: "veiné", ringed: "cerné", growing: "croissant", gilded: "doré", chiming: "tintant", drinking: "buveur", feeding: "nourricier",
+  parting: "qui s'écarte", ashen: "cendré", lit: "allumé", rippling: "ondulant", crystalline: "cristallin", blooming: "fleurissant", brief: "bref",
+  rusted: "rouillé", woven: "tissé", holding: "qui tient", single: "unique", coiled: "enroulé", early: "en avance", muffled: "étouffé", rolling: "roulant",
+  singed: "roussi", fallen: "tombé", tarnished: "terni", stunted: "rabougri", metallic: "métallique",
   wary: "méfiant", yellowing: "jaunissant", tired: "las", watchful: "vigilant", weightless: "sans poids", white: "blanc", wrong: "dérangeant",
 };
 

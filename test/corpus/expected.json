@@ -754,7 +754,6 @@
    "verdict": "stable",
    "depth": "deep",
    "scars": [
-    "blight:light",
     "poisoned_air:light"
    ],
    "weakest": null
@@ -763,7 +762,6 @@
    "verdict": "stable",
    "depth": "deep",
    "scars": [
-    "blight:light",
     "poisoned_air:light"
    ],
    "weakest": null
