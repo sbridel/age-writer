@@ -7,6 +7,10 @@
  * - **La pression** : un Âge sous 75 l'accumule (pleine en PRESSURE_DAYS jours), un Âge stable la voit retomber (moitié
  *   par jour). Pleine, elle noue une **symbiose** : deux éléments qui se contredisent se lient et se soutiennent. Une longue
  *   absence ne compte que deux jours (comme la marge de vie de la loi 14).
+ * - **Pas systématique** (décision du 22 oct.) : seul un Âge sur CAPABLE_ODDS sait muter (sa graine en décide une fois pour
+ *   toutes) ; et même lui, pression pleine, n'a qu'une chance sur FILL_ODDS (sinon la pression repart de zéro : environ deux
+ *   mois en moyenne). **En danger** (une fissure le ronge, `opts.danger`), le monde se défend : une chance sur DANGER_ODDS
+ *   par jour. La commande d'essai force (`m.force`).
  * - **L'événement rarissime** : une chance sur RARE_ODDS par jour, une seule fois par Âge, même stable (seule exception).
  * - **La symbiose** rembourse le coût de sa contradiction sur son axe : plafond CAP par Âge, chaque union suivante compte
  *   moitié moins (rendement décroissant, jamais d'empilement). Seule la symbiose née d'une mutation donne ce soutien
@@ -28,6 +32,12 @@ const DAY = 86400000;
 const STABLE_AT = 75;
 const PRESSURE_DAYS = 4;   // jours sous 75 pour remplir la pression
 const RARE_ODDS = 300;     // l'événement rarissime : une chance sur 300 par jour, une fois par Âge
+const CAPABLE_ODDS = 3;    // un Âge sur trois sait muter (sa graine en décide)
+const FILL_ODDS = 15;      // pression pleine : une chance sur quinze, sinon elle repart de zéro
+const DANGER_ODDS = 4;     // rongé par une fissure : une chance sur quatre par jour
+/** Les paires du catalogue de Catherine (claude/CATALOGUE-catherine.md) : une mutation les préfère. */
+const CATALOGUE = new Set([["water", "lava"], ["heavy_world", "light_world"], ["wind", "sand"], ["drizzle", "acid"], ["cavern_world", "ocean_world"], ["flowers", "blight"], ["jungle_world", "desert_world"], ["great_tree", "lava"], ["frozen_world", "flowers"], ["bridge", "rust"], ["herd", "lava_world"], ["cavern_world", "thunderstorm"], ["ancient_world", "young_world"], ["moth", "heat"], ["auroras", "ash_cloud"]].map(([a, b]) => [a, b].sort().join("|")));
+const METALS = new Set(["gold", "silver", "copper"]), FLORA = new Set(["great_tree", "fern", "flowers", "grass", "vine"]);
 const CAP = 0.15;          // soutien total des symbioses d'un Âge (15 points)
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const keyOf = (a, b) => [a, b].sort().join("|");
@@ -97,36 +107,55 @@ function tensionOf(r, a) {
   return bindable(r).filter((c) => !tied.has(keyOf(c.a, c.b))).reduce((n, c) => n + c.cost, 0);
 }
 
-/** L'union à nouer : la contradiction encore libre la plus coûteuse (à égalité, la première par ordre alphabétique : reproductible). */
-function pickPair(r, a) {
+/** Une paire du catalogue de Catherine (un composite peut en naître) ? */
+function inCatalogue(c) {
+  if (!c) return false;
+  if (CATALOGUE.has(keyOf(c.a, c.b))) return true;
+  if ((METALS.has(c.a) && FLORA.has(c.b)) || (METALS.has(c.b) && FLORA.has(c.a))) return true;
+  const other = c.a === "black_sun" ? c.b : c.b === "black_sun" ? c.a : null;
+  return !!other && /_sun$/.test(other) && other !== "black_sun";
+}
+/** Un tirage reproductible, une chance sur n : FNV, puis un brassage (les bits bas de FNV suivent trop la fin de la chaîne). */
+function roll(str, n) { let h = fnv(str) >>> 0; h ^= h >>> 16; h = Math.imul(h, 0x45d9f3b) >>> 0; h ^= h >>> 16; h = Math.imul(h, 0x45d9f3b) >>> 0; h ^= h >>> 16; return (h >>> 0) % n === 0; }
+/** Sait-il muter ? Un Âge sur CAPABLE_ODDS, décidé par son nom une fois pour toutes. */
+function capable(name) { return roll(`${name}|capable`, CAPABLE_ODDS); }
+
+/**
+ * L'union à nouer : d'abord une paire du catalogue, puis la contradiction libre la plus coûteuse (à égalité, l'ordre
+ * alphabétique : reproductible). En danger (`rescue`), le monde se sauve d'abord : la plus coûteuse, catalogue ou non.
+ */
+function pickPair(r, a, rescue = false) {
   const tied = new Set(stateOf(a).list.map((s) => keyOf(s.a, s.b)));
   const free = bindable(r).filter((c) => !tied.has(keyOf(c.a, c.b)));
   if (!free.length) return null;
-  free.sort((x, y) => y.cost - x.cost || keyOf(x.a, x.b).localeCompare(keyOf(y.a, y.b)));
+  free.sort((x, y) => (rescue ? 0 : inCatalogue(y) - inCatalogue(x)) || y.cost - x.cost || keyOf(x.a, x.b).localeCompare(keyOf(y.a, y.b)));
   return free[0];
 }
 
 /**
- * Le temps passe pour un Âge (à chaque lecture qui n'est pas un essai) : la pression monte ou retombe ; pleine, ou à
- * l'événement rarissime, une symbiose se noue. `stability` : la stabilité du monde (avant les unions). Renvoie la mutation
- * née maintenant ({ type, a, b, keystone, axis, rare }) ou null. Le plafond atteint, plus rien ne se noue.
+ * Le temps passe pour un Âge (à chaque lecture qui n'est pas un essai) : la pression monte ou retombe ; pleine, et si l'Âge
+ * sait muter, une chance sur FILL_ODDS de nouer une union (sinon elle repart de zéro) ; en danger (`opts.danger` : une
+ * fissure le ronge), une chance sur DANGER_ODDS par jour ; l'événement rarissime, pour tous. `m.force` (la commande
+ * d'essai) noue à coup sûr. Renvoie la mutation née maintenant ({ type, a, b, keystone, axis, rare }) ou null.
  */
-function tick(a, r, name, now) {
+function tick(a, r, name, now, opts = {}) {
   if (!a || !r) return null;
   const m = stateOf(a), dt = m.at > 0 ? Math.min(2, Math.max(0, (now - m.at) / DAY)) : 0; m.at = now;
-  const stable = r.stability >= STABLE_AT;
+  const stable = r.stability >= STABLE_AT, force = !!m.force; delete m.force;
   m.pressure = stable ? (m.pressure || 0) * Math.pow(0.5, dt) : clamp((m.pressure || 0) + dt / PRESSURE_DAYS);
   const used = m.list.filter((s) => s.type === "symbiosis").length;
   if (used >= 4) return null; /* au-delà de quatre unions, la part de la suivante est négligeable : la suite est finie */
-  let rare = false;
-  const day = Math.floor(now / DAY);
-  if (m.rare == null && m.rareDay !== day) { m.rareDay = day; if (fnv(`${name}|rare|${day}`) % RARE_ODDS === 0) rare = true; }
-  if (!(m.pressure >= 1) && !rare) return null;
-  const c = pickPair(r, a);
+  const day = Math.floor(now / DAY), can = capable(name);
+  let rare = false, go = force, rescue = false;
+  if (m.rare == null && m.rareDay !== day) { m.rareDay = day; if (fnv(`${name}|rare|${day}`) % RARE_ODDS === 0) { rare = true; go = true; } }
+  if (!go && can && !stable && opts.danger && m.dangerDay !== day) { m.dangerDay = day; if (roll(`${name}|danger|${day}`, DANGER_ODDS)) go = rescue = true; } /* le monde se défend */
+  if (!go && can && m.pressure >= 1) { m.fills = (m.fills || 0) + 1; if (roll(`${name}|fill|${m.fills}`, FILL_ODDS)) go = true; else m.pressure = 0; }
+  if (!go) { if (!can && m.pressure >= 1) m.pressure = 0; return null; }
+  const c = pickPair(r, a, rescue);
   if (!c) { if (m.pressure >= 1) m.pressure = 0; return null; } /* rien à nouer : la pression retombe sans rien changer */
   const s = { type: "symbiosis", a: c.a, b: c.b, kind: c.kind, keystone: keystoneOf(c), axis: c.axis, at: now, rare };
   m.list.push(s); m.pressure = 0; if (rare) m.rare = now;
   return s;
 }
 
-module.exports = { applySymbioses, tick, tensionOf, bindable, keystoneOf, pickPair, stateOf, shareOf, CAP, PRESSURE_DAYS, RARE_ODDS, DAY };
+module.exports = { applySymbioses, tick, tensionOf, bindable, keystoneOf, pickPair, stateOf, shareOf, capable, inCatalogue, CAP, PRESSURE_DAYS, RARE_ODDS, CAPABLE_ODDS, FILL_ODDS, DANGER_ODDS, DAY };

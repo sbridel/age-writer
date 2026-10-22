@@ -205,7 +205,7 @@ module.exports = function build(Base, core, AGEX) {
     symbiosesOf(seed, r, live) {
       const a = this.law.get(seed); if (!a) return r;
       if (live && this.ext.mutation !== false) {
-        const born = MUT.tick(a, MUT.applySymbioses(r, a, this.law.now()), seed, this.law.now());
+        const born = MUT.tick(a, MUT.applySymbioses(r, a, this.law.now()), seed, this.law.now(), { danger: (a.dose || 0) > 0 && !a.condemned }); /* rongé par la fissure : le monde se défend */
         if (born) { this.saveExt(); new Notice(this.t(born.rare ? "mut.rare" : "mut.born", { name: seed, a: this.wordOf(born.a), b: this.wordOf(born.b) }), 12000); }
       }
       return MUT.applySymbioses(r, a, this.law.now());
@@ -222,7 +222,7 @@ module.exports = function build(Base, core, AGEX) {
       const r = core.analyse(src, { seed, probe: true });
       if (!r || r.stability >= 75) return new Notice(this.t("mut.test.stable", { n: r ? r.stability : "?" }), 9000);
       if (!MUT.pickPair(r, a)) return new Notice(this.t("mut.test.nothing"), 9000);
-      const m = MUT.stateOf(a); m.pressure = 1; m.at = this.law.now();
+      const m = MUT.stateOf(a); m.pressure = 1; m.at = this.law.now(); m.force = true; /* l'essai noue à coup sûr, même un Âge qui ne sait pas muter */
       core.analyse(src, { seed }); /* une lecture vivante : la pression est pleine, l'union se noue (et sa notice) */
       this.saveExt(); this.refreshLive();
     }
