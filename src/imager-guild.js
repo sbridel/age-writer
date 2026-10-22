@@ -157,7 +157,9 @@ function accordOf(a, b) {
   const consonant = rest % 2 === 0;
   const ida = (a.crystals && a.crystals.ids) || [], idb = new Set((b.crystals && b.crystals.ids) || []);
   const shared = [...new Set(ida)].filter((x) => idb.has(x));
-  return { steps: d, octaves, rest, name, consonant, octave: rest === 0 && octaves > 0, shared, inverse: !!(a.pol && b.pol && a.pol !== b.pol) };
+  /* le degré (22 oct.) : l'unisson et l'octave sonnent plein, la tierce et la sixte sonnent bien, la seconde et la septième frottent, le triton dissone */
+  const degree = rest === 0 ? "full" : rest === 3 ? "clash" : consonant ? "good" : "rub";
+  return { steps: d, octaves, rest, name, consonant, degree, octave: rest === 0 && octaves > 0, shared, inverse: !!(a.pol && b.pol && a.pol !== b.pol) };
 }
 
 // ---- le lien avec le télescope ------------------------------------------------------------------------------------

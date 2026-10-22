@@ -138,6 +138,10 @@ function renderPhysics(plugin, box, analysis, { src, path }) {
     if (chord.length && sound.crystalChord) {
       const b = sky.createEl("button", { cls: "age-det__chord clickable-icon", text: "♪" }); b.setAttr("aria-label", t("det.sky.chord")); b.setAttr("title", t("det.sky.chord"));
       b.onclick = () => sound.crystalChord(chord, 0, plugin.ext.volume == null ? 0.35 : plugin.ext.volume);
+      if (sound.twoVoices && path) { /* deux voix : ce ciel et celui d'un autre Âge, ensemble */
+        const b2 = sky.createEl("button", { cls: "age-det__chord age-det__two clickable-icon", text: "♪♪" }); b2.setAttr("aria-label", t("two.title")); b2.setAttr("title", t("two.title"));
+        b2.onclick = () => openTwoVoices(plugin, path, tg);
+      }
     }
     const full = notes === "full"; // « mots seulement » : la phrase, sans aucun chiffre (les valeurs ne sont même pas créées, rien à révéler)
     if (full) {
@@ -380,6 +384,40 @@ async function renderJournal(plugin, source, el, ctx) {
   });
 }
 
+/**
+ * Deux voix : on choisit un autre Âge du coffre, on entend les deux ciels ensemble (`sound.twoVoices`), une phrase dit
+ * l'intervalle en mots (jamais en chiffre). Les Âges : les notes qui ont un bloc de code (cache d'Obsidian) et dont le
+ * texte contient un bloc `age` ; lues une fois, à l'ouverture.
+ */
+async function openTwoVoices(plugin, path, tgA) {
+  const { app } = plugin, t = plugin.t.bind(plugin), obs = require("obsidian");
+  const files = app.vault.getMarkdownFiles().filter((f) => f.path !== path && ((app.metadataCache.getFileCache(f) || {}).sections || []).some((s) => s.type === "code"));
+  const ages = [];
+  for (const f of files) { try { const src = plugin.core.extract(await app.vault.cachedRead(f)); if (src != null) ages.push({ f, src }); } catch (e) { /* ignore */ } }
+  if (!ages.length) { new obs.Notice(t("two.none")); return; }
+  const vol = plugin.ext.volume == null ? 0.35 : plugin.ext.volume, nameA = String(path).replace(/^.*\//, "").replace(/\.md$/i, "");
+  class Pick extends obs.FuzzySuggestModal {
+    getItems() { return ages; }
+    getItemText(x) { return x.f.basename; }
+    onChooseItem(x) {
+      try {
+        const seed = plugin.core.seed(x.f.path), tgB = IMG.targetsOf(plugin.core.analyse(x.src, { seed }), seed), ac = GI.accordOf(tgA, tgB);
+        if (!ac) return;
+        sound.twoVoices(tgA.freq, tgB.freq, ac.degree, vol);
+        new obs.Notice(twoVoicesLine(t, nameA, x.f.basename, ac), 9000);
+      } catch (e) { console.warn("[Age Writer ext] deux voix", e); }
+    }
+  }
+  const m = new Pick(app); m.setPlaceholder(t("two.pick")); m.open();
+}
+/** La phrase des deux voix : l'intervalle et son degré, en mots ; au-delà de l'octave, on le dit ; une polarité opposée aussi. */
+function twoVoicesLine(t, a, b, ac) {
+  const IV = { unison: t("two.iv.unison"), octave: t("two.iv.octave"), third: t("two.iv.third"), sixth: t("two.iv.sixth"), second: t("two.iv.second"), seventh: t("two.iv.seventh"), tritone: t("two.iv.tritone") };
+  const iv = IV[ac.name] + (ac.octaves && ac.name !== "octave" ? t("two.beyond") : "");
+  const LINE = { full: () => t("two.line.full", { a, b, iv }), good: () => t("two.line.good", { a, b, iv }), rub: () => t("two.line.rub", { a, b, iv }), clash: () => t("two.line.clash", { a, b, iv }) };
+  return LINE[ac.degree]() + (ac.inverse ? " " + t("two.inverse") : "");
+}
+
 /** Texte en lettres D'ni : seulement si une police est installée et que le réglage est actif (jamais de faux D'ni). */
 function dniText(plugin, parent, text, cls) {
   if (!plugin.ext.dniText || !plugin.dni.hasFont()) return null;
@@ -435,4 +473,4 @@ function inkFresh(plugin, el, name, targets = []) {
   tick(); el.__inkTimer = window.setInterval(tick, 10000);
 }
 
-module.exports = { inkFresh, dniText, latinOnHover, renderExtras, tabifyPanel, renderJournal, renderDniBlock, ageNumber, calibrationOf, mechanismsFor, parseJournalSource };
+module.exports = { inkFresh, dniText, latinOnHover, twoVoicesLine, renderExtras, tabifyPanel, renderJournal, renderDniBlock, ageNumber, calibrationOf, mechanismsFor, parseJournalSource };

@@ -26,4 +26,16 @@ ok(GI.accordOf({ freq: 0 }, { freq: 24 }).name === "octave", "quatre octaves : t
 ok(GI.accordOf(null, day) === null && GI.accordOf({ freq: NaN }, day) === null, "rien sans deux voix");
 // les six intervalles, un pour chaque reste
 ok(GI.INTERVALS.length === 6 && [0, 1, 2, 3, 4, 5].map((r) => GI.accordOf({ freq: 6 }, { freq: 6 + r }).consonant).join() === "true,false,true,false,true,false", "pairs consonants, impairs dissonants");
+// le degré : plein, bien, frotte, dissone
+ok([0, 1, 2, 3, 4, 5, 6].map((r) => GI.accordOf({ freq: 6 }, { freq: 6 + r }).degree).join() === "full,rub,good,clash,good,rub,full", "degrés : unisson plein, seconde frotte, tierce bien, triton dissone, sixte bien, septième frotte, octave plein");
+// la phrase : des mots, jamais de chiffre, dans les deux langues
+const { makeT } = require("../src/i18n"), X = require("../src/ui-extras");
+for (const lang of ["en", "fr"]) {
+  const t = makeT(() => lang);
+  for (const r of [0, 1, 2, 3, 4, 5, 6, 7]) {
+    const ac = GI.accordOf({ freq: 6, pol: 1 }, { freq: 6 + r, pol: r === 6 ? -1 : 1 }), line = X.twoVoicesLine(t, "Brume", "Cendre", ac);
+    ok(line.includes("Brume") && line.includes("Cendre") && !/\d/.test(line) && !/two\./.test(line), `${lang} : « ${line} »`);
+  }
+}
+const S = require("../src/sound"); ok(typeof S.twoVoices === "function" && S.twoVoices(12, 14, "good", 0.3) === false, "sans contexte audio, deux voix se tait sans erreur");
 console.log(`accord.test.js ok (${n} vérifications)`);

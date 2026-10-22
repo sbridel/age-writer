@@ -658,6 +658,47 @@ function crystalChord(freqs, beat = 0, volume = 0.3) {
   });
 }
 /**
+ * Deux voix ensemble (src/imager-guild.js, `accordOf`) : la voix d'un Âge est son jour, une note qui monte d'une octave
+ * tous les six crans de `freq` ; on entend la première seule, puis la seconde la rejoint. L'intervalle s'entend tel qu'il
+ * est (un triton grince de lui-même). Puis, de loin, quelque chose répond selon le degré : un pépiement qui monte si les voix
+ * sonnent plein ou bien, un ronronnement en plus si elles sont à l'unisson ou à l'octave, rien si elles frottent, un
+ * grognement si elles dissonent. Tout synthétisé.
+ */
+function twoVoices(fa, fb, degree = "good", volume = 0.3) {
+  if (!Number.isFinite(fa) || !Number.isFinite(fb)) return false;
+  const pitch = (f) => 220 * Math.pow(2, (Math.max(0, Math.min(24, f)) - 12) / 6);
+  return oneShot(5.2, (c, out, noise) => {
+    const t = c.currentTime; out.gain.value = volume * 0.42;
+    const voice = (t0, t1, f) => { /* une voix : la note, une octave douce, un léger vibrato */
+      const o = c.createOscillator(), o2 = c.createOscillator(), e = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+      o.type = "sine"; o2.type = "sine"; o.frequency.value = f; o2.frequency.value = f * 2;
+      lfo.frequency.value = 4.6; lg.gain.value = f * 0.004; lfo.connect(lg); lg.connect(o.frequency); lg.connect(o2.frequency);
+      const g2 = c.createGain(); g2.gain.value = 0.18; o2.connect(g2); g2.connect(e); o.connect(e); e.connect(out);
+      e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(0.32, t0 + 0.25); e.gain.setValueAtTime(0.32, t1 - 0.6); e.gain.linearRampToValueAtTime(0, t1);
+      for (const x of [o, o2, lfo]) { x.start(t0); x.stop(t1 + 0.05); }
+    };
+    voice(t, t + 3.4, pitch(fa)); voice(t + 1.0, t + 3.4, pitch(fb));
+    const at = t + 3.6;
+    if (degree === "full" || degree === "good") { /* le pépiement : trois brèves notes qui montent */
+      for (let i = 0; i < 3; i++) { const o = c.createOscillator(), e = c.createGain(), t0 = at + i * 0.13; o.type = "sine"; o.frequency.setValueAtTime(1500 + i * 260, t0); o.frequency.exponentialRampToValueAtTime(2600 + i * 300, t0 + 0.07);
+        e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(0.3, t0 + 0.01); e.gain.exponentialRampToValueAtTime(0.0005, t0 + 0.09); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + 0.1); }
+    }
+    if (degree === "full") { /* le ronronnement : un souffle grave qui palpite */
+      const n = noise(1.2), lp = c.createBiquadFilter(), e = c.createGain(), am = c.createOscillator(), ag = c.createGain(), t0 = at + 0.5;
+      lp.type = "lowpass"; lp.frequency.value = 260; am.frequency.value = 24; ag.gain.value = 0.2; am.connect(ag); ag.connect(e.gain);
+      e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(0.25, t0 + 0.2); e.gain.linearRampToValueAtTime(0, t0 + 1.1);
+      n.connect(lp); lp.connect(e); e.connect(out); n.start(t0); n.stop(t0 + 1.15); am.start(t0); am.stop(t0 + 1.15);
+    }
+    if (degree === "clash") { /* le grognement : une scie grave, filtrée, qui tremble */
+      const o = c.createOscillator(), lp = c.createBiquadFilter(), e = c.createGain(), am = c.createOscillator(), ag = c.createGain(), t0 = at;
+      o.type = "sawtooth"; o.frequency.setValueAtTime(92, t0); o.frequency.linearRampToValueAtTime(70, t0 + 0.8); lp.type = "lowpass"; lp.frequency.value = 420;
+      am.frequency.value = 31; ag.gain.value = 0.16; am.connect(ag); ag.connect(e.gain);
+      e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(0.3, t0 + 0.12); e.gain.linearRampToValueAtTime(0, t0 + 0.9);
+      o.connect(lp); lp.connect(e); e.connect(out); for (const x of [o, am]) { x.start(t0); x.stop(t0 + 0.95); }
+    }
+  });
+}
+/**
  * Les bruits du télescope : le cran fin du moyeu (« tick »), le cliquet de la couronne (« turn »), et, après chaque geste,
  * le pouls du Zéro (« ping ») : deux notes proches qui battent l'une contre l'autre ; `s` (0 à 1, le signal) les accorde :
  * loin, un murmure grave qui tremble ; près, une note claire et posée. « found » : le Zéro trouvé, une quinte qui reste.
@@ -798,4 +839,4 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), knock, creak, slideStone, slideWood, crystalChord, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
