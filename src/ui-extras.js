@@ -93,6 +93,8 @@ function renderStability(plugin, box, analysis) {
     fill.style.width = Math.max(2, Math.min(100, v)) + "%";
     row.createSpan({ cls: "age-det__val", text: v + "%" + (pcost[axis] ? `  (${t("det.physpts", { n: Math.round(pcost[axis] * 100) })})` : "") });
   }
+  const sym = analysis.symbioses && analysis.symbioses.length && typeof plugin.symbiosisLine === "function" ? plugin.symbiosisLine(analysis.symbioses) : ""; /* les unions nouées par la mutation */
+  if (sym) sec.createDiv({ cls: "age-det__sym", text: sym });
 }
 
 /**

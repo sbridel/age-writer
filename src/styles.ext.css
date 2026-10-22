@@ -975,3 +975,4 @@
 .age-det__skynums { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 4px 12px; align-items: center; }
 .age-det__skynum { display: flex; align-items: center; gap: 8px; }
 .age-det__skynum > .age-det__skylabel { min-width: 6.5em; }
+.age-det__sym { margin-top: 2px; padding: 4px 8px; border-left: 2px solid #a9c79a; color: #cdbd94; font-style: italic; }

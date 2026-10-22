@@ -213,6 +213,22 @@ module.exports = function build(Base, core, AGEX) {
       }
       return MUT.applySymbioses(r, a, this.law.now());
     }
+    /** Commande d'essai : l'Âge ouvert reçoit d'un coup la pression de quatre jours ; s'il a une contradiction libre, une union se noue. */
+    async advanceMutation() {
+      const f = this.app.workspace.getActiveFile(); let src = null;
+      try { src = f ? core.extract(await this.app.vault.read(f)) : null; } catch (e) { src = null; }
+      if (src === null) return new Notice(this.t("mut.test.noage"));
+      const seed = core.seed(f.path);
+      if (!this.law.get(seed)) guard("loi", () => this.law.observe(seed, core.analyse(src, { seed, physics: false }), f.stat ? f.stat.mtime : this.law.now())); /* un Âge pas encore suivi par la loi : on le fait entrer */
+      const a = this.law.get(seed);
+      if (!a) return new Notice(this.t("mut.test.noage"));
+      const r = core.analyse(src, { seed, probe: true });
+      if (!r || r.stability >= 75) return new Notice(this.t("mut.test.stable", { n: r ? r.stability : "?" }), 9000);
+      if (!MUT.pickPair(r, a)) return new Notice(this.t("mut.test.nothing"), 9000);
+      const m = MUT.stateOf(a); m.pressure = 1; m.at = this.law.now();
+      core.analyse(src, { seed }); /* une lecture vivante : la pression est pleine, l'union se noue (et sa notice) */
+      this.saveExt(); this.refreshLive();
+    }
     /** La ligne du panneau : chaque union, ce qui la tient, si elle est tombée ou fanée. */
     symbiosisLine(list) {
       if (!Array.isArray(list) || !list.length) return "";
@@ -516,6 +532,7 @@ module.exports = function build(Base, core, AGEX) {
       if (typeof this.registerView === "function") this.registerView(RBK.RELTO_BOOK_VIEW, (leaf) => new RBK.ReltoBookView(leaf, this));
       this.addCommand({ id: "open-relto-book", name: "Open the Relto book", callback: () => RBK.openReltoBook(this) });
       this.addCommand({ id: "toggle-relto-ribbon", name: "Relto button: switch between the Relto book and the last Relto visited", callback: () => RBK.toggleRibbon(this) });
+      this.addCommand({ id: "mutation-advance", name: this.t("mut.test.cmd"), callback: () => this.advanceMutation() }); /* pour essayer : quatre jours de pression d'un coup sur l'Âge ouvert */
       this.addCommand({ id: "dni-numerals-report", name: "D'ni numerals: diagnostic report", callback: () => { const r = this.dni ? this.dni.report() : "no numerals module"; console.log("[Age Writer] D'ni numerals\n" + r); new Notice(r, 15000); } });
       this.addCommand({ id: "start-story", name: "Start the story (create or open the story Relto)", callback: () => R.startStory(this) });
     this.addCommand({ id: "story-hint", name: "Story: a hint for the current chapter", callback: () => R.storyHint(this) });
