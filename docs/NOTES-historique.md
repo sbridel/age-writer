@@ -690,3 +690,7 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 - Imageur : le diapason (`twoVoicesPlate`, `forkHolding`), logique dans `ui-relto.js` (`onTwoVoices` : il garde la voix jusqu'au prochain coup).
 - Correctif : `ageNameOfSeed` (table graine → nom, refaite au renommage, à la suppression et à `metadataCache` « resolved ») ; `AGEX.adjust` utilise ce nom pour la loi du changement, la fissure, le statut et les symbioses. Test d'intégration (pénalité 66 → 40 sur un Âge renommé).
 - Tests : `test/wonders.test.js` (96 vérifications) ; corpus : drawn-scar-lava perd sa maladie tirée (même verdict) ; bancs : composites, chambre, salon, diapason.
+
+## 1.47.1 — des noms (23 oct. 2026)
+
+- Demande de l'auteur : ne pas mêler un personnage du lore au plugin. « Catherine » retirée partout (guide « Les merveilles » / « Wonders », CHANGELOG, README, notes, commentaires) ; `src/catherine.js` → `src/wonders.js`, `test/catherine.test.js` → `test/wonders.test.js`. Le nom reste dans la liste des noms que `src/unwritten.js` évite. Rien ne change au jeu.

@@ -43,7 +43,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; en bref :
 
-- **1.47, les merveilles.** Dix-sept merveilles nées d'une union (les Miroirs qui respirent, les Cernes, la Mosaïque, l'Aurore de jour…), une chambre des souvenirs où elles flottent dans des orbes de verre, et un diapason à l'Imageur pour entendre deux ciels ensemble.
+- **1.47, les merveilles** (1.47.1 : des noms seulement). Dix-sept merveilles nées d'une union (les Miroirs qui respirent, les Cernes, la Mosaïque, l'Aurore de jour…), une chambre des souvenirs où elles flottent dans des orbes de verre, et un diapason à l'Imageur pour entendre deux ciels ensemble.
 - **1.46, deux voix.** Entendre ensemble le ciel de deux Âges (♪♪, Art de la Guilde) ; certains Âges instables mutent lentement (1.46.1 : pas tous, jamais à coup sûr), deux éléments qui se contredisent se lient pour tenir le monde ; l'onglet Détails se replie en monde, ciel et Âge.
 - **1.42 à 1.45, le Livre du Relto.** Un livre vert à reliure dorée, une double page par Relto, l'île vivante dans sa vitre ; il s'ouvre comme un vrai livre (garde, faux-titre, signet) et, depuis son piédestal dans le nouveau salon, dans le Relto même. Les chiffres D'ni se soudent au-delà de 24 et le texte D'ni se lit en latin au survol.
 - **1.37 à 1.41, deux déguisements.** La Verrière art nouveau (verre, cuivre, fleurs) et le Château gothique (tours, lune rouge, pierre et or patiné dans chaque pièce) ; une pelouse et du muguet.

@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.47.1 — Names (2026-10-23)
+
+### Changed
+- The wonders and their catalogue carry their own name in the guide and the notes; nothing in the plugin borrows a character's name from the lore any more. No change to play.
+
 ## 1.47.0 — Wonders (2026-10-23)
 
 ### Added
