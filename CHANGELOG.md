@@ -2,6 +2,13 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.48.1 — The book and the wrench (2026-10-23)
+
+### Changed
+- The Age Writer icon in the ribbon is a book; the mountain, which is the Relto, marks the menu's first entry (open the Relto).
+- **"Maintenance tools" setting** (off by default): the wrench icon only shows when it is on, so a player only sees the book. The commands stay in the palette.
+- The full reference's **Commands** topic describes both menus, section by section, with a word on the less obvious commands.
+
 ## 1.48.0 — Two menus (2026-10-23)
 
 ### Changed
