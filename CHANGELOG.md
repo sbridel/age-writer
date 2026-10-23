@@ -2,6 +2,17 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.47.0 — Catherine's wonders (2026-10-23)
+
+### Added
+- **Catherine's catalogue**: seventeen wonders, none of them written, each obeying another law. Most grow from a union that mutation ties on a pair from the catalogue (breathing mirrors from water and lava, the visiting weight, what the wind learned, the reading rain, the ceiling sea, the ones that fit through, the mosaic, the rings, what the roots drank, the day aurora, the blooming ice, what the rust holds, the many-one, the early echo, the unfinished, the orphan colour); one, the living mist, grows from fog and spores you write. The notice, the Symbiosis line and the description name it; the window draws it; it leaves if the union falls.
+- **New rules** so that the catalogue has pairs to tie: moths + heat (singed moths), gold, silver or copper beside plants (tarnished growth), both at a very small cost; fog + spores (the living mist); auroras × ash cloud; grazers on a lava world; the sickness of the living can be tied (the mosaic).
+- **The chamber of memories**: every wonder seen once (tied or written) floats in a glass orb with its own living window; you enter through the orb near the lounge ceiling. Click an orb to hear it and let it go (with a confirmation; a wonder still alive comes back); command "Empty the chamber of memories". An orb follows its Age's renaming, and turns pale when the Age no longer exists.
+- **Two voices at the Imager**: a tuning fork on the console. Strike it, it keeps the sky's voice; find another world and strike it again: the two skies sing together and the accord shows on the screen. Works in both instrument modes.
+
+### Fixed
+- A renamed Age escaped the law: the law of change, the fissure (wear and condemnation), the writer's status and its symbioses looked it up under its old seed. They now find it under its note's name. A renamed Age that was recently altered or whose fissure was widening gets its penalty back.
+
 ## 1.46.1 — Not every world mutates (2026-10-22)
 
 ### Changed

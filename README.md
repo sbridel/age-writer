@@ -41,6 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); in short:
 
+- **1.47, Catherine's wonders.** Seventeen wonders born of a union (breathing mirrors, the rings, the mosaic, the day aurora…), a chamber of memories where they float in glass orbs, and a tuning fork at the Imager to hear two skies together.
 - **1.46, two voices.** Hear two Ages' skies together (♪♪, Art of the Guild); some unstable Ages slowly mutate (1.46.1: not all, never for sure), two contradicting elements binding to hold the world; the Details tab folds into world, sky and Age.
 - **1.42 to 1.45, the Relto book.** A green gold-tooled book, one double page per Relto, the island alive in its glass; it opens like a real book (endpaper, half-title, ribbon) and, from its pedestal in the new lounge, inside the Relto itself. D'ni numerals are joined beyond 24 and D'ni text reads in Latin on hover.
 - **1.37 to 1.41, two disguises.** The art nouveau Glasshouse (glass, copper, flowers) and the gothic Castle (towers, red moon, stone and old gold in every room); a lawn and lilies of the valley.
