@@ -694,3 +694,7 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 ## 1.47.1 — des noms (23 oct. 2026)
 
 - Demande de l'auteur : ne pas mêler un personnage du lore au plugin. « Catherine » retirée partout (guide « Les merveilles » / « Wonders », CHANGELOG, README, notes, commentaires) ; `src/catherine.js` → `src/wonders.js`, `test/catherine.test.js` → `test/wonders.test.js`. Le nom reste dans la liste des noms que `src/unwritten.js` évite. Rien ne change au jeu.
+
+## 1.48.0 — deux menus (23 oct. 2026)
+
+Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.

@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.48.0 — Two menus (2026-10-23)
+
+### Changed
+- **The ribbon has two icons, each opening a menu**, instead of two buttons. The mountain, **Age Writer**: its first entry keeps the old gesture (the Relto book, or the last Relto visited), then the Relto, the open Age (book, journal, cover, GIF, data, random Age, map), the books and the guide, the story, the sound. The wrench, **maintenance and tests**: mutation test, D'ni numerals report, repairs (story chapter, former world, Great Zero, star chart, chamber of memories), the library, the Relto button setting. A command that does not apply here is greyed out, as in the palette; every command stays in the palette too.
+
 ## 1.47.1 — Names (2026-10-23)
 
 ### Changed
