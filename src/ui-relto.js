@@ -807,13 +807,13 @@ async function renderRelto(plugin, source, el, ctx) {
   const libReload = async () => { try { libData = { ages: await B.libraryLines(plugin, "ages"), relto: await B.libraryLines(plugin, "relto") }; } catch (e) { console.warn("[Age Writer ext] library book", e); } renderer._lbData = null; renderer.draw(0); };
   let forkHeld = null; /* la voix que le diapason garde (Imageur, deux voix) */
   const renderer = new ReltoRenderer(canvas, plugin.dni, { touch, wheelOk: () => !!root.closest(".age-reltoview") || !!root.ownerDocument.fullscreenElement, rotated: () => touch && root.hasClass("is-mobilefull") && !!(window.matchMedia && window.matchMedia("(orientation: portrait)").matches), onTip: tipCard ? (text) => { tipCard.setText(text || ""); tipCard.toggleClass("is-empty", !text); } : null, atelierDirect: () => plugin.ext.atelierDirect !== false, bookAnim: () => plugin.ext.bookAnim !== false, libraryData: () => libData, onLibraryOpen: () => { libReload(); },
-    /* le diapason : frappé une fois, il garde la voix du livre posé ; frappé de nouveau (douze secondes au plus) sur un autre livre, les deux chantent ensemble */
+    /* le diapason : frappé une fois, il garde la voix du livre posé, tant qu'on ne le refrappe pas (en Art de la Guilde, trouver un autre monde prend du temps) ; frappé de nouveau sur un autre livre, les deux chantent ensemble */
     onTwoVoices: (age, target, onLine) => {
-      if (!age || !target) return; const GI = require("./imager-guild"), vol = roomVol(), now = Date.now(), held = forkHeld && now - forkHeld.at < 12000 ? forkHeld : null;
-      if (!held) { forkHeld = { name: age.name, target, at: now }; if (roomSoundOn()) sound.twoVoices(target.freq, target.freq, "full", vol * 0.6); onLine(plugin.t("two.fork.ring", { a: age.name }), 12000); return; }
+      if (!age || !target) return; const GI = require("./imager-guild"), vol = roomVol(), now = Date.now(), held = forkHeld;
+      if (!held) { forkHeld = { name: age.name, target, at: now }; if (roomSoundOn()) sound.twoVoices(target.freq, target.freq, "full", vol * 0.6); onLine(plugin.t("two.fork.ring", { a: age.name }), true); return; }
       forkHeld = null; const ac = GI.accordOf(held.target, target); if (!ac) return;
       if (roomSoundOn()) sound.twoVoices(held.target.freq, target.freq, ac.degree, vol * 0.6);
-      onLine(X.twoVoicesLine(plugin.t.bind(plugin), held.name, age.name, ac), 0);
+      onLine(X.twoVoicesLine(plugin.t.bind(plugin), held.name, age.name, ac), false);
     },
     wonders: () => (plugin.wondersShown ? plugin.wondersShown() : plugin.ext.wonders || {}), onForget: (id, gone) => plugin.forgetWonders && plugin.forgetWonders(id, (ok) => { if (ok && gone) gone(); }), onWonder: () => { if (roomSoundOn() && sound.crystalChord) sound.crystalChord([523.25, 659.25, 783.99], 0, roomVol() * 0.5); },
     vaultAges: () => (scene ? (scene.ages || []) : []).map((a) => ({ name: a.name, path: a.path })), onDescMount, onLedger, onLibraryAdd: async (kind, text) => { const res = await B.addLibraryLines(plugin, kind, text); if (res.ok) { if (kind === "relto") plugin.refreshLive(); await libReload(); } return res; }, mailState: () => mailState(plugin, file), statusState: () => { const tier = plugin.status ? plugin.status.tier() : 0; return { tier, korfah: !!(plugin.status && plugin.status.korfah()), title: plugin.t("status.title." + tier) }; }, relicState: () => relicsOf(plugin, file),

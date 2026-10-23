@@ -621,7 +621,7 @@ function closeAtmo(r, ctx, st, cl, t, c, now) {
 function twoVoicesPlate(r, ctx, st, c, t) {
   if (!st.age || !st.target || !r.opts.onTwoVoices) return;
   /* le diapason, debout sur la console à gauche de l'écran : on le frappe, il vibre, et l'on choisit l'autre Âge */
-  const tr = tx(r).t, x = 154, base = 214, hov = r.hover && r.hover.twoVoices, ring = r.twoLine ? Math.max(0, 1 - (Date.now() - r.twoLine.at) / (r.twoLine.hold || 3000)) : 0; /* il garde une voix : il vibre jusqu'au bout */
+  const tr = tx(r).t, x = 154, base = 214, hov = r.hover && r.hover.twoVoices, ring = Math.max(r.forkHolding ? 0.3 : 0, r.twoLine ? Math.max(0, 1 - (Date.now() - r.twoLine.at) / 3000) : 0); /* il garde une voix : il vibre doucement jusqu'au prochain coup */
   const steel = hov ? "#f3e2b0" : c("#c9a24e"), dark = c("#5a4322");
   ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(x - 9, base - 7, 18, 7); ctx.fillStyle = c("#5a4322"); ctx.fillRect(x - 9, base - 7, 18, 2); /* le socle de bois */
   ctx.strokeStyle = steel; ctx.lineCap = "round"; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x, base - 7); ctx.lineTo(x, base - 17); ctx.stroke(); /* la tige */
