@@ -108,7 +108,9 @@ module.exports = function build(Base, core, AGEX) {
 
       // crochets du moteur (voir build.js) : altération de la stabilité, poids de la solitude
       AGEX.adjust = (r, o, srcText) => {
-        let out = guard("adjust", () => (this.ext.law && o && o.seed ? adjustAnalysis(r, this.law.effective(o.seed)) : r)) || r;
+        /* la loi et le statut connaissent un Âge sous le nom de sa note ; l'analyse, sous sa graine (`age_seed` après un renommage) */
+        const key = o && o.seed ? guard("graine", () => this.ageNameOfSeed(o.seed)) || o.seed : null;
+        let out = guard("adjust", () => (this.ext.law && key ? adjustAnalysis(r, this.law.effective(key)) : r)) || r;
         // livre-piège déclaré : ni livre de retour, ni fissure
         if (srcText && parseTrap(srcText)) out = { ...out, returnTo: null, stranded: true, fissure: null, trapped: true, home: "none" };
         if (srcText) out = guard("quantités", () => applyAmounts(out, parseAmounts(srcText), this.core && this.core.blocks, { weights: RG.weightsOf(this.ext), size: DOSE.worldSize(srcText), seed: o && o.seed })) || out;
@@ -117,13 +119,13 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText) { const wx = guard("météo", () => WX.parseWeather(srcText)); if (wx) out = { ...out, weather: wx, resolved: out.resolved ? { ...out.resolved, weather: wx } : out.resolved }; } // météo vivante : lue par la fenêtre (sceneOf) et la description, sans effet sur la stabilité
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
         if (this.ext.law && o && o.seed) out = guard("symbiose", () => this.symbiosesOf(o.seed, out, !o.probe)) || out;
-        if (o && o.seed && !o.probe && !(this.ext.law && this.law.get(o.seed))) guard("merveilles", () => this.seeWonders(o.seed, out)); /* la face écrite se voit aussi sans la loi */ // la mutation et la symbiose (src/mutation.js) : les unions nouées soutiennent le monde ; le temps en noue d'autres
+        if (o && o.seed && !o.probe && !(this.ext.law && this.law.get(key))) guard("merveilles", () => this.seeWonders(o.seed, out)); /* la face écrite se voit aussi sans la loi */ // la mutation et la symbiose (src/mutation.js) : les unions nouées soutiennent le monde ; le temps en noue d'autres
         if (this.ext.law && o && o.seed && !o.probe) out = guard("fissure", () => { // (un essai de retrait, `probe`, ne touche pas à l'état de la loi) // la fissure grandit : elle abîme un monde instable, et le condamne s'il n'est pas corrigé à temps
-          const op = this.law.opening(o.seed, this.ext.fissureDays), bad = strainable(out);
-          if (this.law.tend(o.seed, bad ? out.stability : 100, op)) { out.condemned = true; return bad || out.fissure === "open" || out.fissure === "submarine" ? forceAlteration(out, 10) : out; }
+          const op = this.law.opening(key, this.ext.fissureDays), bad = strainable(out);
+          if (this.law.tend(key, bad ? out.stability : 100, op)) { out.condemned = true; return bad || out.fissure === "open" || out.fissure === "submarine" ? forceAlteration(out, 10) : out; }
           return fissureStrain(out, op);
         }) || out;
-        if (o && o.seed && !o.probe) guard("statut", () => this.statusWatch(o.seed, out.stability));
+        if (o && o.seed && !o.probe) guard("statut", () => this.statusWatch(key, out.stability));
         return out;
       };
       // la graine d'un Âge renommé : sa propriété `age_seed` (posée au renommage), pour qu'il garde son monde et son étoile
@@ -686,6 +688,7 @@ module.exports = function build(Base, core, AGEX) {
       }));
       this.registerEvent(vault.on("rename", (f, old) => guard("rename", () => { R.resetStoryDraw(this); this.onRename(f, old); })));
       this.registerEvent(vault.on("create", () => R.resetStoryDraw(this)));
+      if (this.app.metadataCache && this.app.metadataCache.on) this.registerEvent(this.app.metadataCache.on("resolved", () => { this._seedNames = null; })); /* les graines se lisent dans les propriétés : refaire la table quand elles sont lues */
       this.registerEvent(vault.on("delete", (f) => { this._seedNames = null; R.resetStoryDraw(this); if (f instanceof TFile) { this.law.forget(f.basename); this.status.forget(f.basename); this.saveExt(); } }));
       this.registerEvent(metadataCache.on("changed", () => this.refreshLive()));
       this.registerEvent(this.app.workspace.on("file-open", (f) => { // ouvrir la note d'un Relto : le plein écran (src/ui-relto.js) ; si le Relto est déjà dessiné, tout de suite, sinon à la fin de son rendu

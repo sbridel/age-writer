@@ -509,6 +509,20 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
   // réglages
   const st = new p.core.SettingsTab(app, p); st.display(); ok(!!st.containerEl.querySelector(".age-ext-settings"), "réglages de l'extension ajoutés à l'onglet d'origine");
 
+  // un Âge renommé : la loi le connaît sous le nom de sa note, l'analyse sous sa graine (`age_seed`) ; la pénalité s'applique quand même
+  {
+    const src = "single_sun\nwater\nlava\nfern", gfc = p.app.metadataCache.getFileCache, law0 = p.ext.law;
+    files.set("Ages/Nouveau.md", new TFile("Ages/Nouveau.md", "```age\n" + src + "\n```\n"));
+    p.app.metadataCache.getFileCache = (f) => (f.path === "Ages/Nouveau.md" ? { frontmatter: { age_seed: "Ancien" }, sections: [{ type: "code" }] } : gfc(f));
+    p._seedNames = null; p.ext.law = true;
+    ok(p.ageNameOfSeed("Ancien") === "Nouveau", "renommage : la graine retrouve le nom actuel de la note");
+    p.law.observe("Nouveau", p.core.analyse(src, { seed: "Ancien", physics: false }), Date.now());
+    const la = p.law.get("Nouveau"); la.extra = 0.6; la.at = p.law.now();
+    const hit = p.core.analyse(src, { seed: "Ancien", probe: true }).stability; la.extra = 0; const free = p.core.analyse(src, { seed: "Ancien", probe: true }).stability;
+    ok(hit < free, `renommage : la loi du changement s'applique à l'Âge renommé (${hit} < ${free})`);
+    p.law.forget("Nouveau"); files.delete("Ages/Nouveau.md"); p.app.metadataCache.getFileCache = gfc; p._seedNames = null; p.ext.law = law0;
+  }
+
   // désactivation propre
   p.onunload(); ok(true, "onunload sans exception");
   const extWarns = warns.filter((w) => w.includes("Age Writer ext"));
