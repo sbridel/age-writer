@@ -50,7 +50,10 @@ function show(plugin, evt, groups, head = null) {
 function install(plugin, primary) {
   if (typeof plugin.addRibbonIcon !== "function") return;
   plugin.addRibbonIcon("mountain", "Age Writer", (evt) => show(plugin, evt, MAIN, { title: plugin.t("relto.ribbon"), icon: "sparkles", run: primary }));
-  plugin.addRibbonIcon("wrench", plugin.t("ribbon.dev"), (evt) => show(plugin, evt, DEV));
+  const dev = plugin.addRibbonIcon("wrench", plugin.t("ribbon.dev"), (evt) => show(plugin, evt, DEV));
+  /* la clé ne se montre qu'avec le réglage « Outils de maintenance » (désactivé par défaut : un joueur ne voit que la montagne) */
+  plugin.refreshDevRibbon = () => { if (dev && dev.style) dev.style.display = plugin.ext && plugin.ext.devTools ? "" : "none"; };
+  plugin.refreshDevRibbon();
 }
 
 module.exports = { install, entriesOf, MAIN, DEV, shortName };
