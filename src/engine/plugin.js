@@ -62,9 +62,6 @@ const AgeWriterPlugin = class AgeWriterPlugin extends obsidian.Plugin {
       this.addSettingTab(new AgeSettingTab(this.app, this)),
       this.registerView(BOOK_VIEW_TYPE, (leaf) => new BookView(leaf, this)),
       (this.currentAgeFile = this.app.workspace.getActiveFile()),
-      this.addRibbonIcon("book-open", "Open this Age as a book", () => {
-        this.openBook();
-      }),
       this.addCommand({
         id: "open-age-book",
         name: "Open this Age as a book",

@@ -579,7 +579,7 @@ module.exports = function build(Base, core, AGEX) {
 
     registerCommands() {
       this.addCommand({ id: "open-relto", name: "Open the Relto", callback: () => R.openRelto(this) });
-      if (typeof this.addRibbonIcon === "function") this.addRibbonIcon("mountain", this.t("relto.ribbon"), () => RBK.ribbon(this)); // le ruban : le Livre du Relto, ou droit au dernier Relto visité (réglage) ; sur téléphone, dans le menu de gauche
+      require("./ribbon-menu").install(this, () => RBK.ribbon(this)); /* le ruban : deux icônes à menu (Age Writer ; maintenance et essais) ; la première entrée garde l'ancien geste : le Livre du Relto, ou le dernier Relto visité (réglage) */
       if (typeof this.registerView === "function") this.registerView(RBK.RELTO_BOOK_VIEW, (leaf) => new RBK.ReltoBookView(leaf, this));
       this.addCommand({ id: "open-relto-book", name: "Open the Relto book", callback: () => RBK.openReltoBook(this) });
       this.addCommand({ id: "toggle-relto-ribbon", name: "Relto button: switch between the Relto book and the last Relto visited", callback: () => RBK.toggleRibbon(this) });
