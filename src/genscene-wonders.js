@@ -1,7 +1,7 @@
 "use strict";
 /**
- * Les merveilles de Catherine dans la fenêtre générative (src/genscene.js) : chaque composite du catalogue
- * (src/catherine.js) a son dessin. La géométrie est tirée d'une graine propre : un Âge sans merveille garde exactement son
+ * Les merveilles dans la fenêtre générative (src/genscene.js) : chaque composite du catalogue
+ * (src/wonders.js) a son dessin. La géométrie est tirée d'une graine propre : un Âge sans merveille garde exactement son
  * image. Les mouvements suivent la boucle de 8 s (`t` de 0 à 1, fréquences entières) : rien ne saute.
  *
  * Couches, appelées par `paint` et `paintCavern` : « ridges » (sur les crêtes), « sky », « ground » (le sol, avant les

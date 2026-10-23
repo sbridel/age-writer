@@ -35,7 +35,7 @@ const RARE_ODDS = 300;     // l'événement rarissime : une chance sur 300 par j
 const CAPABLE_ODDS = 3;    // un Âge sur trois sait muter (sa graine en décide)
 const FILL_ODDS = 15;      // pression pleine : une chance sur quinze, sinon elle repart de zéro
 const DANGER_ODDS = 4;     // rongé par une fissure : une chance sur quatre par jour
-const CAT = require("./catherine"); /* le catalogue de Catherine : une mutation préfère ses paires */
+const CAT = require("./wonders"); /* le catalogue des merveilles : une mutation préfère ses paires */
 const CAP = 0.15;          // soutien total des symbioses d'un Âge (15 points)
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const keyOf = (a, b) => [a, b].sort().join("|");
@@ -92,7 +92,7 @@ function applySymbioses(r, a, now) {
   for (const s of list) {
     if (s.type !== "symbiosis") continue;
     const c = live.get(keyOf(s.a, s.b));
-    const composite = CAT.compositeOf(s); /* le catalogue de Catherine : ce que l'union fait naître (ou rien) */
+    const composite = CAT.compositeOf(s); /* le catalogue des merveilles : ce que l'union fait naître (ou rien) */
     if (!c) { out.push({ a: s.a, b: s.b, keystone: s.keystone, axis: s.axis, active: false, support: 0, since: s.at, composite }); continue; }
     const axis = c.axis || s.axis || "cosmological";
     const support = Math.max(0, Math.min(c.cost, shareOf(rank), left)); left -= support; rank++;
@@ -112,7 +112,7 @@ function tensionOf(r, a) {
   return bindable(r).filter((c) => !tied.has(keyOf(c.a, c.b))).reduce((n, c) => n + c.cost, 0);
 }
 
-/** Une paire du catalogue de Catherine (un composite peut en naître) ? */
+/** Une paire du catalogue des merveilles (un composite peut en naître) ? */
 function inCatalogue(c) { return !!CAT.compositeOf(c); }
 /** Un tirage reproductible, une chance sur n : FNV, puis un brassage (les bits bas de FNV suivent trop la fin de la chaîne). */
 function roll(str, n) { let h = fnv(str) >>> 0; h ^= h >>> 16; h = Math.imul(h, 0x45d9f3b) >>> 0; h ^= h >>> 16; h = Math.imul(h, 0x45d9f3b) >>> 0; h ^= h >>> 16; return (h >>> 0) % n === 0; }

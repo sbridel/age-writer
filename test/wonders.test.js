@@ -1,9 +1,9 @@
 "use strict";
-// Le catalogue de Catherine (src/catherine.js) : chaque paire du catalogue fait naître son composite ; aucun composite ne
+// Le catalogue des merveilles (src/wonders.js) : chaque paire du catalogue fait naître son composite ; aucun composite ne
 // s'écrit ; une union fait apparaître le composite dans l'analyse et la description ; sans union, rien ne change ; la
 // fenêtre dessine chaque merveille sans planter, et un Âge sans merveille garde exactement son image.
 const assert = require("assert");
-const CAT = require("../src/catherine");
+const CAT = require("../src/wonders");
 const MUT = require("../src/mutation");
 const { blockById } = require("../src/engine/registry");
 const { analyseAgeBase } = require("../src/engine/analysis");
@@ -42,4 +42,4 @@ ok(G.build({ ...base, wonders: [] }, 320, 192).won === null, "un Âge sans merve
 { const r = { opts: { wonders: () => ({ mosaic: { at: 2, age: "B" }, breathing_mirrors: { at: 1, age: "A" }, nope: { at: 0 } }) } };
   const g = MEM.memoriesOf({ opts: { wonders: () => ({ mosaic: { at: 1, age: "X", gone: true } }) } }); ok(g[0].gone === true, "un monde qui n'est plus : l'orbe le sait");
   const L = MEM.memoriesOf(r); ok(L.length === 2 && L[0].id === "breathing_mirrors" && L[1].id === "mosaic", "la chambre : deux orbes, dans l'ordre où on les a vus"); }
-console.log(`catherine.test.js ok (${n} vérifications)`);
+console.log(`wonders.test.js ok (${n} vérifications)`);

@@ -1,13 +1,13 @@
 "use strict";
 /**
- * La chambre des souvenirs (claude/CATALOGUE-catherine.md : des orbes, comme à Serenia). Chaque merveille de Catherine vue
+ * La chambre des souvenirs (claude/CATALOGUE-merveilles.md : des orbes, comme à Serenia). Chaque merveille vue
  * une fois (nouée par une union, ou écrite : pluie de pétales, brume parfumée…) flotte ici dans un orbe de verre, et dans
  * l'orbe, sa propre fenêtre, vivante (src/genscene.js). Rien ne s'en efface ; il n'y a pas de place vide (pas de règle des
  * 25 places, décision de l'auteur). On y entre par l'orbe qui flotte dans le salon, dès la première merveille vue.
  */
 const { clamp, rgba, fnv } = require("./util");
 const G = require("./genscene");
-const CAT = require("./catherine");
+const CAT = require("./wonders");
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 const W = 640, H = 360, TAU = Math.PI * 2;
 

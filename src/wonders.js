@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Le catalogue de Catherine (claude/CATALOGUE-catherine.md, revue validée le 22 oct. 2026) : les composites, des blocs
+ * Le catalogue des merveilles (claude/CATALOGUE-merveilles.md, revue validée le 22 oct. 2026) : les composites, des blocs
  * jamais écrits. La plupart naissent d'une **union** nouée par la mutation (src/mutation.js) sur une paire qui se
  * contredit ; un seul (la Brume vivante) naît d'une paire qu'on écrit, comme la brume parfumée. Module pur.
  *

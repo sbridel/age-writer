@@ -76,7 +76,7 @@ const WORLD_CLASH = {
 /** Vie fragile selon le monde (gravité de la tension avec chaque bloc vivant). */
 const WORLD_LIFE = { frozen_world: "light", lava_world: "medium", desert_world: "light", cavern_world: "light" };
 const SKY_RULES = [
-  rule("auroras", "ash_cloud", "light", "weather", "aurora_ash"), /* la cendre voile le ciel où l'aurore devrait se voir (catalogue de Catherine, 19) */
+  rule("auroras", "ash_cloud", "light", "weather", "aurora_ash"), /* la cendre voile le ciel où l'aurore devrait se voir (catalogue des merveilles, 19) */
   ...FRAGILE.map((w) => rule("asteroid_belt", w, "light", "geological", "rock_belt")),
   ...FRAGILE.map((w) => rule("asteroid_field", w, w === "bridge" || w === "fallen_bridge" ? "strong" : "medium", "geological", "rock_field")),
   ...LIFE.map((w) => rule("asteroid_belt", w, "light", "ecological", "rock_life")),

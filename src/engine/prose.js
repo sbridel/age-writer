@@ -368,7 +368,7 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random)) {
     const presence = String(sc.prose || blockById.get(sc.id)?.presence || "").trim(); // `prose` : une phrase propre à l'Âge (la maladie, l'Observation)
     if (presence) sentences.push(capitalize(presence) + ".");
   }
-  for (const id of resolved.wonders || []) { // les merveilles de Catherine nées d'une union (src/mutation.js, src/catherine.js)
+  for (const id of resolved.wonders || []) { // les merveilles nées d'une union (src/mutation.js, src/wonders.js)
     const presence = String(blockById.get(id)?.presence ?? "").trim();
     if (presence) sentences.push(capitalize(presence) + ".");
   }

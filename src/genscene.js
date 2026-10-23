@@ -13,8 +13,8 @@ const SKY = require("./sky");
 const WT = require("./wealth"), AM = require("./amounts"), SEA = require("./sea"), TERRAIN = require("./terrain");
 const { crevasse } = require("./crevasse");
 const WX = require("./weather");
-const WON = require("./genscene-wonders"); /* les merveilles de Catherine (src/catherine.js) */
-const CAT = require("./catherine");
+const WON = require("./genscene-wonders"); /* les merveilles (src/wonders.js) */
+const CAT = require("./wonders");
 
 const TAU = Math.PI * 2, PERIOD = 8000;
 
@@ -77,7 +77,7 @@ function sceneOf(a, name = "", blocks = null) {
     if (S.phys.Ts > 318) { S.heat = true; always("heat", true); } // chaleur qui fait trembler l'air
   }
   // météo vivante : sources de chaque temps, parents de chaque produit (un orage né d'une pluie programmée vient et part avec elle), graine du tirage
-  // les merveilles de Catherine : nées d'une union (a.composites) ou écrites (la Brume vivante)
+  // les merveilles : nées d'une union (a.composites) ou écrites (la Brume vivante)
   S.wonders = [...new Set([...((a.composites || []).map((c) => c.id)), ...(ids.has("living_mist") ? ["living_mist"] : [])])];
   if (S.wonders.includes("drinking_roots")) { const u = (a.composites || []).find((c) => c.id === "drinking_roots"); S.wonderMetal = CAT.metalOf(u, ids); }
   if (S.wonders.includes("orphan_colour")) { S.orphanRGB = S.sunHues[0] || null; S.blackSun = false; S.blackDisc = false; } /* la Couleur orpheline : la couleur reste, le feu s'en va */

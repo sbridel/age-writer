@@ -73,7 +73,7 @@ const ROLES = {
 };
 /** Les rôles secondaires : l'espèce les tient, moins bien (polyvalents). */
 const SECONDARY = { moth: ["scavenger"], hunter: ["scavenger"], burrower: ["decomposer"], raptor: ["scavenger"], cave_stalker: ["decomposer"] };
-// ---- les échelles : micro < macro < géant (le géant viendra avec le catalogue de Catherine) --------------------------------
+// ---- les échelles : micro < macro < géant (le géant viendra avec le catalogue des merveilles) --------------------------------
 const MICRO = ["spore", "spore_cloud", "pale_fungus", "lichen", "singing_lichen", "moss", "plankton", "glow_algae", "microbial_mat", "mycelium", "mushroom", "soil_bacteria", "aeroplankton", "earth", "humus", "peat", "silt",
   // l'eau porte ses microbes : un monde mouillé n'est jamais sans petite vie
   "water", "brine", "meltwater", "marsh", "lake", "river", "delta", "fog", "marsh_mist", "rain"];
