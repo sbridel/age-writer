@@ -26,6 +26,7 @@ function renderMany(host, ages) {
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", hoverTip: /^The pulse comes/, label: "RAHNFEE / Delay wheel read in rahnfee, its words on hover" },
     { h: 14, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "telescope", step2: "located", hoverTip: /^Torahn, elevation \(above the plane reads negative\); below/, label: "RAHNFEE / day: Star of the Age plate, distance in rahnfee" },
     { h: 22, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain"], view: "starmap", step3: "map", hoverFrac: true, label: "RAHNFEE / star chart tooltip, distance along the beam" },
+    { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager", two: "Glass Marsh and Ash Tower sound well together: a third apart, beyond an octave.", label: "IMAGER two voices / the ♪♪ plate under the lectern, the accord on its ribbon" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager", label: "IMAGER step 2 / sync micrometer, in sync: local time and KIPS" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager", lens: true, label: "IMAGER lens hint / off by a few notches" },
     { h: 15, t: 3.3, env: {}, pages: ["page_telescope", "page_mountain", "page_imager"], view: "imager", step2: "imager", cry: true, label: "IMAGER crystals / two right (lit), a decoy, an empty socket" },
@@ -105,7 +106,7 @@ function renderMany(host, ages) {
     const scene = M.buildScene(relto, pages, ages);
     const c = document.createElement("canvas"); const d = document.createElement("div"); d.textContent = v.label; host.appendChild(d); host.appendChild(c);
     c.style.width = "640px"; document.body.appendChild(host);
-    const r = new ReltoRenderer(c, dni, { tipDelay: 0, ...(v.wonders ? { wonders: () => v.wonders } : {}), ...(v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}) }); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view; if (v.memSel) r.memSel = v.memSel; if (v.tap) r.tapOn = true;
+    const r = new ReltoRenderer(c, dni, { tipDelay: 0, ...(v.two ? { onTwoVoices: () => {} } : {}), ...(v.wonders ? { wonders: () => v.wonders } : {}), ...(v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}) }); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view; if (v.memSel) r.memSel = v.memSel; if (v.two) r.twoLine = { text: v.two, at: Date.now() }; if (v.tap) r.tapOn = true;
     if (v.now) { const DC = require("./dniclock"); if (v.now === "tahvo+1s") { const ms = 1791591000000, tv = DC.rings(ms).find((q) => q.key === "tahvo"); r.nowOverride = ms - tv.elapsed + 1000; } else r.nowOverride = v.now; } // l'horloge D'ni à un instant fixe
     if (v.ghost) ghostView(r); else if (v.unwritten) unwrittenView(r, v.unwritten);
     if (v.step2) step2(r, v.step2);

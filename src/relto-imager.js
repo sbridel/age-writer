@@ -614,6 +614,29 @@ function closeAtmo(r, ctx, st, cl, t, c, now) {
 }
 
 /** Petite plaque de laiton en bas à droite : couper le bourdon (haut-parleur) ou régler son volume (cinq crans). */
+/**
+ * Deux voix : une petite plaque de laiton « ♪♪ » sous le lutrin. On choisit un autre Âge ; les deux ciels chantent ensemble,
+ * et la phrase de l'accord se grave un moment sur un ruban au bas de l'écran (src/ui-extras.js, openTwoVoices).
+ */
+function twoVoicesPlate(r, ctx, st, c, t) {
+  if (!st.age || !st.target || !r.opts.onTwoVoices) return;
+  const tr = tx(r).t, x = 40, y = 252, w = 68, h = 18, hov = r.hover && r.hover.twoVoices;
+  plate(ctx, c, x, y, w, h, false);
+  const ink = hov ? "#000000" : "#2a1d13"; ctx.fillStyle = ink; ctx.strokeStyle = ink; ctx.lineWidth = 1.2; /* deux croches liées, dessinées (pas de glyphe : toutes les polices ne l'ont pas) */
+  for (const dx of [-7, 5]) { ctx.beginPath(); ctx.ellipse(x + w / 2 + dx, y + 13, 2.6, 1.9, -0.4, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.moveTo(x + w / 2 + dx + 2.3, y + 12.5); ctx.lineTo(x + w / 2 + dx + 2.3, y + 4); ctx.stroke(); }
+  ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + w / 2 - 4.7, y + 4); ctx.lineTo(x + w / 2 + 7.3, y + 4); ctx.stroke();
+  r.hot.push({ x, y, w, h, tip: tr("two.title"), twoVoices: true });
+  const L = r.twoLine; if (!L) return;
+  const k = (Date.now() - L.at) / 12000; if (k >= 1) { r.twoLine = null; return; }
+  const a = k < 0.85 ? 1 : (1 - k) / 0.15, S = SCREEN, ry = S.y + S.h - 52; /* au-dessus de la ligne de l'heure */
+  ctx.save(); ctx.globalAlpha = a; ctx.font = "italic 12px serif";
+  const words = String(L.text).split(" "), lines = []; let cur = "";
+  for (const wd of words) { const nx = cur ? cur + " " + wd : wd; if (ctx.measureText(nx).width > S.w - 24 && cur) { lines.push(cur); cur = wd; } else cur = nx; } if (cur) lines.push(cur);
+  const bh = 8 + lines.length * 14; ctx.fillStyle = "rgba(20,14,8,0.82)"; ctx.fillRect(S.x + 6, ry - bh + 22, S.w - 12, bh); ctx.strokeStyle = "rgba(201,162,78,0.7)"; ctx.strokeRect(S.x + 6, ry - bh + 22, S.w - 12, bh);
+  ctx.fillStyle = "#f2d27a"; lines.forEach((ln, i) => ctx.fillText(ln, S.x + 14, ry - bh + 36 + i * 14));
+  ctx.restore(); void t;
+}
+
 function humPlate(r, ctx, c, onConsole = false) {
   const h = r.opts.imagerHum ? r.opts.imagerHum() : { on: true, vol: 1 }, x = onConsole ? 528 : W - 100, y = onConsole ? 276 : 334, w = 92, hh = onConsole ? 18 : 22;
   plate(ctx, c, x, y, w, hh, false);
@@ -639,6 +662,7 @@ function drawImagerRoom(r, ctx, sc, sky, t) {
   else if (st.station === "lens") closeLens(r, ctx, st, cl, t, c);
   else if (st.station === "atmo") closeAtmo(r, ctx, st, cl, t, c, now);
   else overview(r, ctx, st, cl, t, c, now);
+  if (!st.station) twoVoicesPlate(r, ctx, st, c, t); /* le couple chanté (page 19 du Rehevkor) : entendre ce ciel à côté d'un autre ; devant le pied du lutrin */
   if (r.opts.onImagerTune && !(Math.abs(t - (r.imagerTunedAt || -9)) < 1)) { r.imagerTunedAt = t; r.opts.onImagerTune(st); } // la phase dérive : le bourdon suit, une fois par seconde
   if (r.ledgerOpen && st.age && !st.station && ledgerReadable(r, st)) { const LG = require("./relto-ledger"); LG.drawPanel(r, ctx, c, tx(r).t, LG.ensureRead(r, st.age), st.age.name); } else r.ledgerOpen = false;
   humPlate(r, ctx, c, !st.station); // vue d'ensemble : sur la console, avec le reste ; gros plans : en bas à droite

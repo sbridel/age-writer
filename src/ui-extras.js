@@ -428,7 +428,7 @@ async function renderJournal(plugin, source, el, ctx) {
  * l'intervalle en mots (jamais en chiffre). Les Âges : les notes qui ont un bloc de code (cache d'Obsidian) et dont le
  * texte contient un bloc `age` ; lues une fois, à l'ouverture.
  */
-async function openTwoVoices(plugin, path, tgA) {
+async function openTwoVoices(plugin, path, tgA, onLine = null) { /* `onLine(phrase)` : l'Imageur grave la phrase sur sa plaque (au lieu d'une notice) */
   const { app } = plugin, t = plugin.t.bind(plugin), obs = require("obsidian");
   const files = app.vault.getMarkdownFiles().filter((f) => ((app.metadataCache.getFileCache(f) || {}).sections || []).some((s) => s.type === "code")).sort((a, b) => (b.path === path) - (a.path === path)); /* l'Âge lui-même en tête : avec lui-même, l'unisson */
   const ages = [];
@@ -443,7 +443,8 @@ async function openTwoVoices(plugin, path, tgA) {
         const seed = plugin.core.seed(x.f.path), tgB = IMG.targetsOf(plugin.core.analyse(x.src, { seed }), seed), ac = GI.accordOf(tgA, tgB);
         if (!ac) return;
         sound.twoVoices(tgA.freq, tgB.freq, ac.degree, vol);
-        new obs.Notice(twoVoicesLine(t, nameA, x.f.basename, ac), 9000);
+        const line = twoVoicesLine(t, nameA, x.f.basename, ac);
+        if (onLine) onLine(line); else new obs.Notice(line, 9000);
       } catch (e) { console.warn("[Age Writer ext] deux voix", e); }
     }
   }
@@ -512,4 +513,4 @@ function inkFresh(plugin, el, name, targets = []) {
   tick(); el.__inkTimer = window.setInterval(tick, 10000);
 }
 
-module.exports = { inkFresh, dniText, latinOnHover, twoVoicesLine, renderExtras, tabifyPanel, renderJournal, renderDniBlock, ageNumber, calibrationOf, mechanismsFor, parseJournalSource };
+module.exports = { inkFresh, dniText, latinOnHover, twoVoicesLine, openTwoVoices, renderExtras, tabifyPanel, renderJournal, renderDniBlock, ageNumber, calibrationOf, mechanismsFor, parseJournalSource };
