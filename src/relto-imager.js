@@ -619,7 +619,8 @@ function closeAtmo(r, ctx, st, cl, t, c, now) {
  * et la phrase de l'accord se grave un moment sur un ruban au bas de l'écran (src/ui-extras.js, openTwoVoices).
  */
 function twoVoicesPlate(r, ctx, st, c, t) {
-  if (!st.age || !st.target || !r.opts.onTwoVoices) return;
+  if (!r.opts.onTwoVoices) return; /* le diapason reste sur la console : il garde sa voix pendant qu'on cherche l'autre monde */
+  const can = !!(st.age && st.target);
   /* le diapason, debout sur la console à gauche de l'écran : on le frappe, il vibre, et l'on choisit l'autre Âge */
   const tr = tx(r).t, x = 154, base = 214, hov = r.hover && r.hover.twoVoices, ring = Math.max(r.forkHolding ? 0.3 : 0, r.twoLine ? Math.max(0, 1 - (Date.now() - r.twoLine.at) / 3000) : 0); /* il garde une voix : il vibre doucement jusqu'au prochain coup */
   const steel = hov ? "#f3e2b0" : c("#c9a24e"), dark = c("#5a4322");
@@ -630,7 +631,7 @@ function twoVoicesPlate(r, ctx, st, c, t) {
   ctx.strokeStyle = dark; ctx.lineWidth = 0.8; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x + s * 6.4 + s * wob, base - 27); ctx.lineTo(x + s * 6.4 + s * wob, base - 43); ctx.stroke(); }
   ctx.lineCap = "butt";
   if (ring > 0) { ctx.strokeStyle = rgba(243, 220, 160, 0.5 * ring); ctx.lineWidth = 1; for (const k of [1, 2, 3]) { ctx.beginPath(); ctx.arc(x, base - 36, 8 + k * 5 + (1 - ring) * 6, -0.7, 0.7); ctx.stroke(); ctx.beginPath(); ctx.arc(x, base - 36, 8 + k * 5 + (1 - ring) * 6, Math.PI - 0.7, Math.PI + 0.7); ctx.stroke(); } }
-  r.hot.push({ x: x - 12, y: base - 48, w: 24, h: 48, tip: tr("two.fork"), twoVoices: true });
+  r.hot.push(can ? { x: x - 12, y: base - 48, w: 24, h: 48, tip: tr("two.fork"), twoVoices: true } : { x: x - 12, y: base - 48, w: 24, h: 48, tip: tr("two.fork.wait") });
   const L = r.twoLine; if (!L) return;
   const k = (Date.now() - L.at) / 12000; if (k >= 1) { r.twoLine = null; return; }
   const a = k < 0.85 ? 1 : (1 - k) / 0.15, S = SCREEN, ry = S.y + S.h - 52; /* au-dessus de la ligne de l'heure */
