@@ -620,12 +620,17 @@ function closeAtmo(r, ctx, st, cl, t, c, now) {
  */
 function twoVoicesPlate(r, ctx, st, c, t) {
   if (!st.age || !st.target || !r.opts.onTwoVoices) return;
-  const tr = tx(r).t, x = 40, y = 252, w = 68, h = 18, hov = r.hover && r.hover.twoVoices;
-  plate(ctx, c, x, y, w, h, false);
-  const ink = hov ? "#000000" : "#2a1d13"; ctx.fillStyle = ink; ctx.strokeStyle = ink; ctx.lineWidth = 1.2; /* deux croches liées, dessinées (pas de glyphe : toutes les polices ne l'ont pas) */
-  for (const dx of [-7, 5]) { ctx.beginPath(); ctx.ellipse(x + w / 2 + dx, y + 13, 2.6, 1.9, -0.4, 0, 6.283); ctx.fill(); ctx.beginPath(); ctx.moveTo(x + w / 2 + dx + 2.3, y + 12.5); ctx.lineTo(x + w / 2 + dx + 2.3, y + 4); ctx.stroke(); }
-  ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + w / 2 - 4.7, y + 4); ctx.lineTo(x + w / 2 + 7.3, y + 4); ctx.stroke();
-  r.hot.push({ x, y, w, h, tip: tr("two.title"), twoVoices: true });
+  /* le diapason, debout sur la console à gauche de l'écran : on le frappe, il vibre, et l'on choisit l'autre Âge */
+  const tr = tx(r).t, x = 154, base = 214, hov = r.hover && r.hover.twoVoices, ring = r.twoLine ? Math.max(0, 1 - (Date.now() - r.twoLine.at) / 3000) : 0;
+  const steel = hov ? "#f3e2b0" : c("#c9a24e"), dark = c("#5a4322");
+  ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(x - 9, base - 7, 18, 7); ctx.fillStyle = c("#5a4322"); ctx.fillRect(x - 9, base - 7, 18, 2); /* le socle de bois */
+  ctx.strokeStyle = steel; ctx.lineCap = "round"; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x, base - 7); ctx.lineTo(x, base - 17); ctx.stroke(); /* la tige */
+  const wob = ring * 1.6 * Math.sin(t * 90);
+  for (const s of [-1, 1]) { ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(x, base - 17); ctx.quadraticCurveTo(x + s * 5, base - 19, x + s * 5 + s * wob, base - 26); ctx.lineTo(x + s * 5 + s * wob, base - 44); ctx.stroke(); }
+  ctx.strokeStyle = dark; ctx.lineWidth = 0.8; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x + s * 6.4 + s * wob, base - 27); ctx.lineTo(x + s * 6.4 + s * wob, base - 43); ctx.stroke(); }
+  ctx.lineCap = "butt";
+  if (ring > 0) { ctx.strokeStyle = rgba(243, 220, 160, 0.5 * ring); ctx.lineWidth = 1; for (const k of [1, 2, 3]) { ctx.beginPath(); ctx.arc(x, base - 36, 8 + k * 5 + (1 - ring) * 6, -0.7, 0.7); ctx.stroke(); ctx.beginPath(); ctx.arc(x, base - 36, 8 + k * 5 + (1 - ring) * 6, Math.PI - 0.7, Math.PI + 0.7); ctx.stroke(); } }
+  r.hot.push({ x: x - 12, y: base - 48, w: 24, h: 48, tip: tr("two.fork"), twoVoices: true });
   const L = r.twoLine; if (!L) return;
   const k = (Date.now() - L.at) / 12000; if (k >= 1) { r.twoLine = null; return; }
   const a = k < 0.85 ? 1 : (1 - k) / 0.15, S = SCREEN, ry = S.y + S.h - 52; /* au-dessus de la ligne de l'heure */
