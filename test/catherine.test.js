@@ -40,5 +40,6 @@ for (const id of [...CAT.COMPOSITES.map((c) => c.id)]) {
 ok(G.build({ ...base, wonders: [] }, 320, 192).won === null, "un Âge sans merveille n'a pas de géométrie de merveille");
 // la chambre des souvenirs : un orbe par merveille vue, dans l'ordre ; rien pour une merveille inconnue
 { const r = { opts: { wonders: () => ({ mosaic: { at: 2, age: "B" }, breathing_mirrors: { at: 1, age: "A" }, nope: { at: 0 } }) } };
+  const g = MEM.memoriesOf({ opts: { wonders: () => ({ mosaic: { at: 1, age: "X", gone: true } }) } }); ok(g[0].gone === true, "un monde qui n'est plus : l'orbe le sait");
   const L = MEM.memoriesOf(r); ok(L.length === 2 && L[0].id === "breathing_mirrors" && L[1].id === "mosaic", "la chambre : deux orbes, dans l'ordre où on les a vus"); }
 console.log(`catherine.test.js ok (${n} vérifications)`);

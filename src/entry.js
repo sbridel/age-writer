@@ -205,7 +205,7 @@ module.exports = function build(Base, core, AGEX) {
     wordOf(id) { return String(id || ""); }
     /** Applique les unions d'un Âge ; si `live` (pas un essai), le temps passe : la pression monte ou retombe, une union peut se nouer. */
     symbiosesOf(seed, r, live) {
-      const a = this.law.get(seed); if (!a) return r;
+      const a = this.law.get(seed) || this.law.get(guard("graine", () => this.ageNameOfSeed(seed)) || ""); if (!a) return r; /* un Âge renommé : la loi le connaît sous son nom actuel, l'analyse sous sa graine */
       if (live && this.ext.mutation !== false) {
         const born = MUT.tick(a, MUT.applySymbioses(r, a, this.law.now()), seed, this.law.now(), { danger: (a.dose || 0) > 0 && !a.condemned }); /* rongé par la fissure : le monde se défend */
         if (born) {
@@ -216,6 +216,42 @@ module.exports = function build(Base, core, AGEX) {
       const out = MUT.applySymbioses(r, a, this.law.now());
       if (live) guard("merveilles", () => this.seeWonders(seed, out));
       return out;
+    }
+    /**
+     * Le nom actuel de la note d'un Âge, d'après sa graine (un Âge renommé garde son ancien nom en `age_seed`), ou null s'il n'existe
+     * plus. Table refaite au renommage et à la suppression.
+     */
+    ageNameOfSeed(seed) {
+      if (!seed) return null;
+      if (!this._seedNames) {
+        const map = new Map();
+        for (const f of this.app.vault.getMarkdownFiles()) { const fm = (this.app.metadataCache.getFileCache(f) || {}).frontmatter, s = fm && fm.age_seed != null && String(fm.age_seed).trim() ? String(fm.age_seed).trim() : f.basename; if (!map.has(s) || s === f.basename) map.set(s, f.basename); }
+        this._seedNames = map;
+      }
+      return this._seedNames.get(String(seed)) || null;
+    }
+    /** Les souvenirs de la chambre, avec le nom actuel de leur Âge et `gone` s'il n'existe plus. */
+    wondersShown() {
+      const box = this.ext.wonders && typeof this.ext.wonders === "object" ? this.ext.wonders : {}, out = {};
+      for (const [id, v] of Object.entries(box)) { const name = guard("souvenir", () => this.ageNameOfSeed(v && v.age)); out[id] = { ...v, age: name || (v && v.age) || "", gone: !name }; }
+      return out;
+    }
+    /** Laisser partir un souvenir (après confirmation) ; `id` absent : toute la chambre. Une merveille encore là reviendra quand on la reverra. */
+    forgetWonders(id, done) {
+      const fr = this.lang() === "fr", all = id == null, plugin = this;
+      const name = all ? "" : CAT.nameOf(id, fr);
+      class Ask extends obsidian.Modal {
+        onOpen() {
+          this.contentEl.createEl("p", { text: all ? plugin.t("mem.clear.ask") : plugin.t("mem.forget.ask", { w: name }) });
+          const row = this.contentEl.createDiv({ cls: "modal-button-container" });
+          const yes = row.createEl("button", { cls: "mod-warning", text: all ? plugin.t("mem.clear.yes") : plugin.t("mem.forget.yes") });
+          const no = row.createEl("button", { text: plugin.t("mem.no") });
+          yes.addEventListener("click", () => { if (plugin.ext.wonders) { if (all) plugin.ext.wonders = {}; else delete plugin.ext.wonders[id]; plugin.saveExt(); } this.close(); if (done) done(true); });
+          no.addEventListener("click", () => { this.close(); if (done) done(false); });
+        }
+        onClose() { this.contentEl.empty(); }
+      }
+      new Ask(this.app).open();
     }
     /** La chambre des souvenirs : chaque merveille vue une fois (nouée ou écrite) y entre, avec l'Âge et la date ; rien ne s'en efface. */
     seeWonders(seed, r) {
@@ -545,6 +581,7 @@ module.exports = function build(Base, core, AGEX) {
       if (typeof this.registerView === "function") this.registerView(RBK.RELTO_BOOK_VIEW, (leaf) => new RBK.ReltoBookView(leaf, this));
       this.addCommand({ id: "open-relto-book", name: "Open the Relto book", callback: () => RBK.openReltoBook(this) });
       this.addCommand({ id: "toggle-relto-ribbon", name: "Relto button: switch between the Relto book and the last Relto visited", callback: () => RBK.toggleRibbon(this) });
+      this.addCommand({ id: "memories-clear", name: this.t("mem.clear.cmd"), callback: () => this.forgetWonders(null, (ok) => { if (ok) this.refreshLive(); }) });
       this.addCommand({ id: "mutation-advance", name: this.t("mut.test.cmd"), callback: () => this.advanceMutation() }); /* pour essayer : quatre jours de pression d'un coup sur l'Âge ouvert */
       this.addCommand({ id: "dni-numerals-report", name: "D'ni numerals: diagnostic report", callback: () => { const r = this.dni ? this.dni.report() : "no numerals module"; console.log("[Age Writer] D'ni numerals\n" + r); new Notice(r, 15000); } });
       this.addCommand({ id: "start-story", name: "Start the story (create or open the story Relto)", callback: () => R.startStory(this) });
@@ -649,7 +686,7 @@ module.exports = function build(Base, core, AGEX) {
       }));
       this.registerEvent(vault.on("rename", (f, old) => guard("rename", () => { R.resetStoryDraw(this); this.onRename(f, old); })));
       this.registerEvent(vault.on("create", () => R.resetStoryDraw(this)));
-      this.registerEvent(vault.on("delete", (f) => { R.resetStoryDraw(this); if (f instanceof TFile) { this.law.forget(f.basename); this.status.forget(f.basename); this.saveExt(); } }));
+      this.registerEvent(vault.on("delete", (f) => { this._seedNames = null; R.resetStoryDraw(this); if (f instanceof TFile) { this.law.forget(f.basename); this.status.forget(f.basename); this.saveExt(); } }));
       this.registerEvent(metadataCache.on("changed", () => this.refreshLive()));
       this.registerEvent(this.app.workspace.on("file-open", (f) => { // ouvrir la note d'un Relto : le plein écran (src/ui-relto.js) ; si le Relto est déjà dessiné, tout de suite, sinon à la fin de son rendu
         if (!f || !R.isHubFile(this.app, f)) return;
@@ -695,6 +732,7 @@ module.exports = function build(Base, core, AGEX) {
 
     async onRename(f, old) {
       if (!(f instanceof TFile) || f.extension !== "md") return;
+      this._seedNames = null; /* la chambre des souvenirs suit le nouveau nom */
       const oldName = old.replace(/^.*\//, "").replace(/\.md$/i, "");
       const src = core.extract(await this.app.vault.read(f));
       if (src === null) { this.law.forget(oldName); this.status.forget(oldName); this.saveExt(); return; }

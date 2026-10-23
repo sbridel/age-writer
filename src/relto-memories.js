@@ -31,7 +31,7 @@ const OW = 96, OH = 58; /* la fenêtre peinte dans chaque orbe */
 /** La liste des souvenirs, dans l'ordre où ils ont été vus : [{ id, at, age }]. */
 function memoriesOf(r) {
   const box = r.opts && typeof r.opts.wonders === "function" ? r.opts.wonders() || {} : {};
-  return Object.entries(box).filter(([id]) => LOOK[id]).map(([id, v]) => ({ id, at: (v && v.at) || 0, age: (v && v.age) || "" })).sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
+  return Object.entries(box).filter(([id]) => LOOK[id]).map(([id, v]) => ({ id, at: (v && v.at) || 0, age: (v && v.age) || "", gone: !!(v && v.gone) })).sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
 }
 
 /** La fenêtre d'un souvenir : un petit canevas, repeint quelques fois par seconde (pas à chaque image). */
@@ -65,7 +65,8 @@ function drawMemories(r, ctx, sc, sky, t) {
   ctx.strokeStyle = rgba(140, 170, 230, 0.12); ctx.lineWidth = 1; for (const y of [304, 316, 334]) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
   if (!list.length) { ctx.fillStyle = rgba(220, 225, 240, 0.6); ctx.font = "italic 15px serif"; ctx.textAlign = "center"; ctx.fillText(tr("relto.memories.empty"), W / 2, H / 2); ctx.textAlign = "left"; }
   list.forEach((mem, i) => {
-    const p = at[i], bob = 5 * Math.sin(t * 0.7 + p.ph * TAU), x = p.x, y = p.y + bob, R = p.r, hov = r.hover && r.hover.wonder === mem.id;
+    const p = at[i], bob = 5 * Math.sin(t * 0.7 + p.ph * TAU), x = p.x, y = p.y + bob, R = p.r, hov = r.hover && r.hover.wonder === mem.id, sel = r.memSel === mem.id; (r._memPos = r._memPos || {})[mem.id] = { x, y, R };
+    ctx.save(); if (mem.gone) ctx.globalAlpha = 0.55; /* un monde qui n'est plus : l'orbe pâlit */
     const glow = ctx.createRadialGradient(x, y, R * 0.6, x, y, R * 1.8); glow.addColorStop(0, rgba(160, 190, 255, hov ? 0.3 : 0.14)); glow.addColorStop(1, rgba(160, 190, 255, 0)); ctx.fillStyle = glow; ctx.fillRect(x - R * 2, y - R * 2, R * 4, R * 4);
     const cv = orbCanvas(r, mem.id, t);
     ctx.save(); ctx.beginPath(); ctx.arc(x, y, R, 0, TAU); ctx.clip();
@@ -76,8 +77,17 @@ function drawMemories(r, ctx, sc, sky, t) {
     ctx.fillStyle = rgba(255, 255, 255, 0.6); ctx.beginPath(); ctx.ellipse(x - R * 0.4, y - R * 0.5, R * 0.18, R * 0.08, -0.6, 0, TAU); ctx.fill();
     ctx.fillStyle = rgba(180, 200, 255, 0.08 + 0.05 * night); ctx.beginPath(); ctx.ellipse(x, 318 + (y - 120) * 0.08, R * 0.8, 3, 0, 0, TAU); ctx.fill(); /* son reflet sur l'eau */
     const name = CAT.nameOf(mem.id, tr("relto.memories.lang") === "fr");
-    r.hot.push({ x: x - R, y: y - R, w: R * 2, h: R * 2, wonder: mem.id, tip: mem.age ? tr("relto.memories.tip", { w: name, age: mem.age }) : name });
+    ctx.restore();
+    r.hot.push({ x: x - R, y: y - R, w: R * 2, h: R * 2, wonder: mem.id, tip: !mem.age ? name : tr(mem.gone ? "relto.memories.tip.gone" : "relto.memories.tip", { w: name, age: mem.age }) });
+    if (sel) { /* l'orbe choisi : on peut le laisser partir */
+      const label = tr("relto.memories.forget"); ctx.font = "italic 12px serif"; const tw = ctx.measureText(label).width + 16, bx = Math.max(4, Math.min(W - tw - 4, x - tw / 2)), by = y + R + 10, fh = r.hover && r.hover.forgetWonder === mem.id;
+      ctx.fillStyle = rgba(20, 26, 46, 0.85); ctx.fillRect(bx, by, tw, 20); ctx.strokeStyle = rgba(210, 225, 255, fh ? 0.8 : 0.4); ctx.strokeRect(bx, by, tw, 20);
+      ctx.fillStyle = rgba(230, 236, 255, fh ? 1 : 0.8); ctx.fillText(label, bx + 8, by + 14);
+      r.hot.push({ x: bx, y: by, w: tw, h: 20, forgetWonder: mem.id, tip: label });
+    }
   });
+  const lv = r._memLeaving; /* un souvenir qu'on laisse partir : il monte, pâlit et se dissout */
+  if (lv) { const k = (Date.now() - lv.at) / 1600; if (k >= 1) r._memLeaving = null; else { const y = lv.y - k * 120, a = 1 - k; ctx.strokeStyle = rgba(210, 225, 255, 0.6 * a); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(lv.x, y, lv.R * (1 + 0.3 * k), 0, TAU); ctx.stroke(); const gg = ctx.createRadialGradient(lv.x, y, 1, lv.x, y, lv.R); gg.addColorStop(0, rgba(220, 230, 255, 0.4 * a)); gg.addColorStop(1, rgba(220, 230, 255, 0)); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(lv.x, y, lv.R, 0, TAU); ctx.fill(); } }
   /* se retourner : les bords ramènent au salon */
   for (const [x, ch] of [[0, "‹"], [W - 16, "›"]]) {
     const hov = r.hover && r.hover.go === "lounge" && r.hover.edge === ch;
