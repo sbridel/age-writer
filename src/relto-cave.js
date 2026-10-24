@@ -24,7 +24,7 @@ function phaseOf(drop, now) {
   if (!drop || !drop.at) return null;
   const k = now - drop.at - FALL_MS;
   if (k < 0) return { kind: "falling", k: now - drop.at };
-  if (k < LIGHT_MS) return { kind: drop.q === "good" ? "lit" : "fizz", k };
+  if (k < LIGHT_MS) return { kind: drop.q === "good" ? "lit" : drop.q === "amber" ? "feed" : "fizz", k };
   return null;
 }
 
@@ -124,19 +124,23 @@ function drawCaveTop(r, ctx, sc, sky, t) {
   ctx.fillStyle = hole; ctx.beginPath(); ctx.ellipse(320, 288, 90, 25, 0, 0, TAU); ctx.fill();
   ctx.fillStyle = rgba(150, 170, 160, 0.05); ctx.beginPath(); ctx.ellipse(320, 284, 60, 10, 0, 0, TAU); ctx.fill(); /* un peu de brume monte */
   for (let i = 0; i < 18; i++) { const a0 = (i / 18) * TAU, a1 = ((i + 0.86) / 18) * TAU; ctx.fillStyle = c(i % 3 ? "#4e4337" : "#433a2f"); ctx.beginPath(); ctx.ellipse(320, 287, 104, 32, 0, a0, a1); ctx.ellipse(320, 288, 91, 26, 0, a1, a0, true); ctx.closePath(); ctx.fill(); if (i % 3 === 0) { const mx = 320 + Math.cos((a0 + a1) / 2) * 98, my = 287 + Math.sin((a0 + a1) / 2) * 29; ctx.strokeStyle = rgba(20, 16, 12, 0.6); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(mx - 2, my - 1); ctx.lineTo(mx + 2, my + 1); ctx.stroke(); } }
-  if (ph && ph.kind === "falling" && ph.k < 1600) { const qq = ph.k / 1600, y = 230 + qq * 70, rad = 4 * (1 - qq * 0.8); ctx.save(); ctx.translate(320, y); ctx.rotate(qq * 5); ctx.globalAlpha = 0.95; require("./relto-oven").pill(ctx, 0, 0, st.drop.q === "good" ? "white" : "grey", Math.max(0.1, rad / 4)); ctx.restore(); } /* la pilule tombe en tournant */
+  if (ph && ph.kind === "falling" && ph.k < 1600) { const qq = ph.k / 1600, y = 230 + qq * 70, rad = 4 * (1 - qq * 0.8); ctx.save(); ctx.translate(320, y); ctx.rotate(qq * 5); ctx.globalAlpha = 0.95; require("./relto-oven").pill(ctx, 0, 0, st.drop.q === "good" ? "white" : st.drop.q === "amber" ? "amber" : "grey", Math.max(0.1, rad / 4)); ctx.restore(); } /* la pilule tombe en tournant */
   r.hot.push({ x: 216, y: 256, w: 208, h: 64, tip: tr("cave.hole") });
   /* la niche, creusée dans la paroi : les pilules y sont couchées ; dessous, les entailles qui les comptent */
   ctx.fillStyle = "#070605"; ctx.beginPath(); ctx.moveTo(38, 186); ctx.lineTo(38, 156); ctx.quadraticCurveTo(40, 140, 120, 138); ctx.quadraticCurveTo(200, 140, 202, 156); ctx.lineTo(202, 186); ctx.closePath(); ctx.fill();
   const nl = ctx.createLinearGradient(0, 140, 0, 186); nl.addColorStop(0, rgba(60, 50, 40, 0.0)); nl.addColorStop(1, rgba(60, 50, 40, 0.35)); ctx.fillStyle = nl; ctx.fill();
   ctx.strokeStyle = rgba(120, 100, 78, 0.35); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(38, 186); ctx.lineTo(38, 156); ctx.quadraticCurveTo(40, 140, 120, 138); ctx.quadraticCurveTo(200, 140, 202, 156); ctx.lineTo(202, 186); ctx.stroke();
   ctx.fillStyle = c("#4a3f33"); ctx.fillRect(34, 180, 172, 6); ctx.fillStyle = rgba(0, 0, 0, 0.45); ctx.fillRect(34, 186, 172, 3); /* le rebord */
-  const good = Math.max(0, st.good || 0), bad = Math.max(0, st.bad || 0), shown = [...Array(Math.min(good, 12)).fill("g"), ...Array(Math.min(bad, Math.max(0, 14 - Math.min(good, 12)))).fill("b")];
-  const PILL = require("./relto-oven").pill; /* des pilules, couchées en petits tas (deux dessous, une dessus) */
-  shown.forEach((k, i) => { const grp = Math.floor(i / 3), p3 = i % 3, gx = 50 + grp * 30; PILL(ctx, p3 === 2 ? gx + 6 : gx + p3 * 12, p3 === 2 ? 172 : 177.2, k === "g" ? "white" : "grey", 0.85); });
+  const good = Math.max(0, st.good || 0), amber = Math.max(0, st.amber || 0), bad = Math.max(0, st.bad || 0), PILL = require("./relto-oven").pill;
+  [["white", good, 54], ["amber", amber, 108], ["grey", bad, 160]].forEach(([kind, n, gx]) => { /* trois petits tas, un par sorte ; celui qu'on a choisi est éclairé */
+    if (!n) return;
+    if (st.pick === kind) { const hg = ctx.createRadialGradient(gx + 6, 176, 2, gx + 6, 176, 22); hg.addColorStop(0, rgba(230, 210, 160, 0.22)); hg.addColorStop(1, rgba(230, 210, 160, 0)); ctx.fillStyle = hg; ctx.fillRect(gx - 18, 156, 48, 30); }
+    for (let j = 0; j < Math.min(n, 6); j++) { const p3 = j % 3, row = Math.floor(j / 3); PILL(ctx, p3 === 2 ? gx + 6 : gx + p3 * 12, (p3 === 2 ? 172 : 177.2) - row * 9.5, kind, 0.85); }
+    r.hot.push({ x: gx - 10, y: 150, w: 34, h: 34, tip: tr("cave.pick." + kind, { n }) + (st.pick === kind ? "" : " " + tr("cave.pick.choose")), cavePick: kind });
+  });
   ctx.strokeStyle = rgba(200, 170, 120, 0.55); ctx.lineWidth = 1.4; /* les entailles Bahro, gravées dans la roche : une par granulé blanc, par cinq barrées */
   for (let i = 0; i < Math.min(good, 40); i++) { const grp = Math.floor(i / 5), j = i % 5, x = 44 + grp * 22 + j * 3.4, y = 198; if (j < 4) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 1, y + 12); ctx.stroke(); } else { ctx.beginPath(); ctx.moveTo(x - 14, y + 10); ctx.lineTo(x + 1, y + 2); ctx.stroke(); } }
-  r.hot.push({ x: 36, y: 160, w: 170, h: 54, tip: good || bad ? tr("cave.shelf", { g: good, b: bad }) : tr("cave.shelf.empty") });
+  r.hot.push({ x: 36, y: 160, w: 170, h: 54, tip: good || bad || amber ? tr("cave.shelf", { g: good, b: bad }) : tr("cave.shelf.empty") });
   /* le bouton : une colonne de pierre taillée, une pierre ronde marquée d'une main, enfoncée tant que le granulé tombe */
   const down = !!(ph && ph.kind === "falling"), hov = r.hover && r.hover.caveDrop;
   const col = ctx.createLinearGradient(488, 0, 528, 0); col.addColorStop(0, c("#2e2720")); col.addColorStop(0.45, c("#4a3f33")); col.addColorStop(1, c("#221d18")); ctx.fillStyle = col;
@@ -145,7 +149,7 @@ function drawCaveTop(r, ctx, sc, sky, t) {
   const by = 211 + (down ? 4 : 0), bg2 = ctx.createRadialGradient(504, by - 2, 1, 508, by, 15); bg2.addColorStop(0, hov && !down ? "#d8c49a" : "#a8946e"); bg2.addColorStop(1, "#4a3f33");
   ctx.fillStyle = bg2; ctx.beginPath(); ctx.ellipse(508, by, 15, down ? 4 : 7, 0, 0, TAU); ctx.fill();
   if (!down) { ctx.fillStyle = rgba(40, 30, 20, 0.55); ctx.beginPath(); ctx.ellipse(508, by + 1, 4, 2.2, 0, 0, TAU); ctx.fill(); for (let f = 0; f < 4; f++) { ctx.beginPath(); ctx.ellipse(502 + f * 4, by - 2.6 - (f === 1 || f === 2 ? 0.6 : 0), 0.9, 2.2, (f - 1.5) * 0.15, 0, TAU); ctx.fill(); } } /* une main gravée, aux doigts longs */
-  r.hot.push({ x: 478, y: 196, w: 60, h: 74, tip: down ? tr("cave.button.down") : good + bad > 0 ? tr("cave.button") : tr("cave.button.empty"), caveDrop: !down && good + bad > 0 });
+  r.hot.push({ x: 478, y: 196, w: 60, h: 74, tip: down ? tr("cave.button.down") : good + bad + amber > 0 ? tr("cave.button") : tr("cave.button.empty"), caveDrop: !down && good + bad + amber > 0 });
   /* la faille vers le bas, dans la paroi de droite : des bords déchirés, un peu de vert qui luit au fond */
   const fh = r.hover && r.hover.go === "cavebottom";
   const crack = () => { ctx.beginPath(); ctx.moveTo(584, 96); ctx.lineTo(592, 104); ctx.lineTo(604, 110); ctx.lineTo(600, 140); ctx.lineTo(598, 170); ctx.lineTo(606, 196); ctx.lineTo(612, 230); ctx.lineTo(604, 250); ctx.lineTo(600, 266); ctx.lineTo(572, 266); ctx.lineTo(578, 240); ctx.lineTo(582, 214); ctx.lineTo(576, 184); ctx.lineTo(574, 150); ctx.lineTo(580, 120); ctx.closePath(); };
@@ -207,10 +211,17 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
   /* le bassin, à peine deviné ; des gouttes qui tombent dans le noir */
   ctx.strokeStyle = "rgba(90,120,130,0.10)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(320, 300, 170, 30, 0, 0, TAU); ctx.stroke();
   for (let i = 0; i < 4; i++) { const k = fnv("drip" + i), x = 160 + (k % 320), q = ((t * 0.25 + i * 0.27) % 1); ctx.fillStyle = rgba(160, 190, 200, 0.25 * (1 - q)); ctx.fillRect(x, 40 + q * 250, 1, 3); }
+  /* le lac : chaque ambré y a laissé une colonie, jamais perdue ; nourries ces derniers jours elles pulsent, négligées elles restent des braises */
+  { const n = Math.min(240, st.colonies || 0), fresh = clamp(1 - (now - (st.fedAt || 0)) / (3 * 86400000)), q = (k) => (fnv("colony" + k) % 10000) / 10000;
+    for (let i = 0; i < n; i++) { const a = q("a" + i) * TAU, rr = Math.sqrt(q("r" + i)), x = 320 + Math.cos(a) * 160 * rr, y = 300 + Math.sin(a) * 26 * rr, s2 = 2 + q("s" + i) * 4, al = (0.22 + 0.45 * fresh) * (0.75 + 0.25 * Math.sin(t * (0.6 + q("p" + i)) + i));
+      const g = ctx.createRadialGradient(x, y, 0.5, x, y, s2 * 2.4); g.addColorStop(0, rgba(255, 170, 80, al)); g.addColorStop(1, rgba(255, 140, 60, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, s2 * 2.4, s2 * 0.9, 0, 0, TAU); ctx.fill(); } }
   let lit = 0, reveal = 0;
   if (ph && ph.kind === "lit") {
     const k = ph.k; lit = k < 2500 ? k / 2500 : k < 7500 ? 1 : Math.max(0, 1 - (k - 7500) / 2500); reveal = Math.min(H, (k / 3200) * H) * (k < 7500 ? 1 : lit); /* la lueur monte en 3 s, tient, puis retombe */
     const fx = (r._caveFx = r._caveFx || {}); if (!fx[st.drop.at]) { fx[st.drop.at] = true; if (r.opts.onCaveSfx) { r.opts.onCaveSfx("splash"); setTimeout(() => r.opts.onCaveSfx("scratch"), 1400); setTimeout(() => r.opts.onCaveSfx("cry"), 3200); } if (r.opts.onCaveSeen) r.opts.onCaveSeen(); }
+  } else if (ph && ph.kind === "feed") { /* l'ambré : pas d'éclair, il fond et l'eau s'éclaire d'orangé, doucement */
+    const fx = (r._caveFx = r._caveFx || {}); if (!fx[st.drop.at]) { fx[st.drop.at] = true; if (r.opts.onCaveSfx) r.opts.onCaveSfx("splash"); if (r.opts.onCaveSeen) r.opts.onCaveSeen(); }
+    const k = ph.k / LIGHT_MS, a = Math.sin(Math.PI * k), g = ctx.createRadialGradient(320, 300, 4, 320, 300, 170); g.addColorStop(0, rgba(255, 190, 110, 0.6 * a)); g.addColorStop(0.4, rgba(255, 150, 70, 0.25 * a)); g.addColorStop(1, rgba(255, 140, 60, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(320, 300, 175, 34, 0, 0, TAU); ctx.fill();
   } else if (ph && ph.kind === "fizz") {
     const fx = (r._caveFx = r._caveFx || {}); if (!fx[st.drop.at]) { fx[st.drop.at] = true; if (r.opts.onCaveSfx) r.opts.onCaveSfx("fizz"); }
   }

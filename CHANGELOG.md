@@ -9,6 +9,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **The machine**, in a lean-to that appears against the cabin with the first harvest (stone, a forge in the Castle's chapel stone, a glass half-dome in the Glasshouse): four glass hoppers, a mixing column, two bare sliders (time, temperature), a press with its gauge, a five-hollow tray. Cooking takes real time; one measure, one pellet. The recipes are not given: you learn them by failing. Settings can be set notch by notch (click, Shift, drag, wheel; the value in the tooltip).
 - **The cave**, under the island (a crack in the cellar, the crypt stairs in the Castle): a hole ringed with cut stones, a niche for the pellets, a stone to press. A pellet falls for a minute; be down by the water before it arrives.
 - **Glowing algae**: an Age whose written pellet feeds what grows sees its water glow at night.
+- **The lake**: amber pellets now sit in the cave niche too; click a kind to choose what the stone drops. An amber pellet does not flash: it feeds the pool, and leaves a glowing colony that never goes away — bright when fed lately, embers when neglected.
 - In the cave, a **chain** closes or opens the stone hatch over the crack (back to the dark). With the Gold, Silver and Gemstones pages, **veins and stones in the cave walls** catch the daylight, or the glow.
 - Maintenance menu: **Machine: tests** (fill the hoppers, give five pellets of a colour, finish the batch now, empty everything).
 
@@ -16,7 +17,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - The pellet's sentence in the description follows the law of life (it dissolves and feeds, it burns the roots, or it waits).
 - **The Glasshouse, from outside**: opaque art nouveau stained glass (sea green and soft orange), a cast-glass dome, a mosaic wall the full width of the dome with copper pilasters, cornice and base; you no longer see through it.
 - Four wonders redrawn: the breathing mirrors, the reading rain, what the rust holds, the ceiling sea.
-- The cellar: no more names written under the niches (each book still says it in its tooltip); the way down is a **trapdoor** (wood and iron, bronze in the Glasshouse; the crypt stairs in the Castle); in the Glasshouse, a wrought-iron art nouveau grille in front of the glass.
+- The cellar: no more names written under the niches (each book still says it in its tooltip); the way down is a **trapdoor** (wood and iron, bronze in the Glasshouse; the crypt stairs in the Castle); in the Glasshouse, shard glass and a Guimard-style grille on the skylight, copper tympanums, two red flower lamps by the lectern; every niche bears its number in D'ni.
 
 ## 1.48.1 — The book and the wrench (2026-10-23)
 

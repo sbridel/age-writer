@@ -632,7 +632,7 @@ function glassOnly(ctx, c, xa, xb, top, base, seed, teals, oranges) {
  */
 function shards(ctx, c, x0, x1, top, bottom, clip, lit = 0.4, seed = 1) {
   const L = clamp(lit), glow = (h, g) => mix(c(h), g, clamp(L * 0.9)), teals = [glow("#5fb8a8", "#a8f0e0"), glow("#2f7a70", "#6fd0c0"), glow("#1f5a52", "#4fb0a0"), glow("#7fc8b8", "#c0f8ec")], oranges = [glow("#d88a4a", "#ffc890"), glow("#b0602a", "#f0a060")];
-  const w = x1 - x0, h = bottom - top, q = rng(0x5a4d + seed * 97), cols = Math.max(3, Math.round(w / 22)), rows = Math.max(2, Math.round(h / 20)), pts = [];
+  const w = x1 - x0, h = bottom - top, q = rng(0x5a4d + seed * 97), cols = Math.max(4, Math.round(w / 12)), rows = Math.max(3, Math.round(h / 11)), pts = [];
   ctx.save(); clip(); ctx.clip();
   for (let r = 0; r <= rows; r++) { const row = []; for (let k = 0; k <= cols; k++) { const edge = k === 0 || k === cols || r === 0 || r === rows; row.push([x0 + (w * k) / cols + (edge ? 0 : (q() - 0.5) * (w / cols) * 0.7), top + (h * r) / rows + (edge ? 0 : (q() - 0.5) * (h / rows) * 0.7)]); } pts.push(row); }
   for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) {
@@ -648,17 +648,18 @@ function shards(ctx, c, x0, x1, top, bottom, clip, lit = 0.4, seed = 1) {
  * au milieu, un cartouche en écusson. `clip()` trace le contour de la vitre.
  */
 function guimardGrille(ctx, c, x0, x1, top, bottom, clip, seed = 1, cartouche = true) {
-  const q = rng(0x6a1d + seed * 53), iron = c("#1c2a24"), hi = rgba(150, 190, 160, 0.25), w = x1 - x0, h = bottom - top, n = Math.max(2, Math.round(w / 18));
+  const q = rng(0x6a1d + seed * 53), iron = c("#0c1410"), hi = rgba(170, 210, 180, 0.45), w = x1 - x0, h = bottom - top, n = Math.max(3, Math.round(w / 9));
   ctx.save(); clip(); ctx.clip(); ctx.lineCap = "round";
   const stroke = (fn, lw) => { ctx.strokeStyle = iron; ctx.lineWidth = lw; fn(); ctx.stroke(); ctx.strokeStyle = hi; ctx.lineWidth = Math.max(0.35, lw * 0.28); fn(); ctx.stroke(); };
   const bud = (x, y, a, s) => { ctx.fillStyle = iron; ctx.beginPath(); ctx.ellipse(x, y, s * 0.55, s, a, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = hi; ctx.beginPath(); ctx.ellipse(x - s * 0.15, y - s * 0.3, s * 0.15, s * 0.35, a, 0, Math.PI * 2); ctx.fill(); };
   for (let i = 0; i < n; i++) {
     const bx = x0 + (w * (i + 0.5)) / n + (q() - 0.5) * (w / n) * 0.6, lean = (q() - 0.5) * w * 0.25, ty = top + q() * h * 0.25, mx = bx + lean, my = top + h * (0.35 + q() * 0.3);
-    stroke(() => { ctx.beginPath(); ctx.moveTo(bx, bottom + 2); ctx.bezierCurveTo(bx - lean * 0.6, my + h * 0.2, mx + lean * 0.4, my, mx, ty); }, 2.2 - q() * 0.8); /* la tige, en coup de fouet */
+    stroke(() => { ctx.beginPath(); ctx.moveTo(bx, bottom + 2); ctx.bezierCurveTo(bx - lean * 0.6, my + h * 0.2, mx + lean * 0.4, my, mx, ty); }, 2.6 - q() * 0.6); /* la tige, en coup de fouet */
     if (q() < 0.8) { const sy = my + (bottom - my) * q() * 0.6, sx = bx + (mx - bx) * 0.5, dir = q() < 0.5 ? -1 : 1, ex = sx + dir * (6 + q() * 10), ey = sy - 6 - q() * 12;
       stroke(() => { ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx + dir * 2, sy - 8, ex, ey); }, 1.2); bud(ex, ey, dir * 0.5, 2.2 + q() * 1.2); } /* une branche, son bourgeon */
     bud(mx, ty, (q() - 0.5) * 0.6, 2.6 + q() * 1.6);
   }
+  for (const k of [0.3, 0.66]) { const yy = top + h * k; stroke(() => { ctx.beginPath(); ctx.moveTo(x0 - 2, yy); ctx.bezierCurveTo(x0 + w * 0.3, yy - h * 0.06, x0 + w * 0.7, yy + h * 0.06, x1 + 2, yy); }, 2.2); } /* deux traverses qui ondulent : une vraie grille */
   if (cartouche) { /* le cartouche, en écusson, au milieu en bas */
     const cx = (x0 + x1) / 2, cy = top + h * 0.7, rw = Math.min(14, w * 0.14), rh = Math.min(h * 0.32, rw * 1.3);
     ctx.fillStyle = iron; ctx.beginPath(); ctx.moveTo(cx, cy - rh); ctx.bezierCurveTo(cx + rw * 1.2, cy - rh, cx + rw, cy + rh * 0.4, cx, cy + rh); ctx.bezierCurveTo(cx - rw, cy + rh * 0.4, cx - rw * 1.2, cy - rh, cx, cy - rh); ctx.fill();
@@ -680,7 +681,8 @@ function guimardLamp(ctx, c, x, base, top, dir, glowK = 1) {
   const stem = () => { ctx.beginPath(); ctx.moveTo(x, base - 24); ctx.bezierCurveTo(x - dir * 5, base - (base - top) * 0.5, x - dir * 4, top - 14, x + dir * 6, top - 12); ctx.quadraticCurveTo(cx + dir * 4, top - 10, cx, cy - 2); };
   ctx.strokeStyle = iron2; ctx.lineWidth = 4.2; stem(); ctx.stroke(); ctx.strokeStyle = iron; ctx.lineWidth = 2.8; stem(); ctx.stroke(); ctx.strokeStyle = hi; ctx.lineWidth = 0.8; stem(); ctx.stroke(); /* la tige qui ploie */
   ctx.strokeStyle = iron; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x - dir * 2, base - (base - top) * 0.55); ctx.bezierCurveTo(x - dir * 12, base - (base - top) * 0.62, x - dir * 12, base - (base - top) * 0.78, x - dir * 5, base - (base - top) * 0.8); ctx.stroke(); /* une feuille, en volute */
-  const ly = cy + 9; /* la lampe pend sous le calice */
+  const ly = cy + 6; /* la lampe pend sous le calice, son col dedans */
+  ctx.fillStyle = iron; ctx.fillRect(cx - 1.6, cy - 2, 3.2, 6); /* le col de fonte, qui tient la lampe */
   const g = ctx.createRadialGradient(cx, ly, 1, cx, ly, 30); g.addColorStop(0, rgba(255, 110, 70, 0.5 * glowK)); g.addColorStop(1, rgba(255, 90, 60, 0)); ctx.fillStyle = g; ctx.fillRect(cx - 30, ly - 30, 60, 60);
   const bg = ctx.createRadialGradient(cx - dir * 1.5, ly + 1, 0.5, cx, ly, 8); bg.addColorStop(0, "#ffe0b8"); bg.addColorStop(0.3, "#ff6a3a"); bg.addColorStop(1, "#8a1a12"); ctx.fillStyle = bg;
   ctx.beginPath(); ctx.moveTo(cx - 6, ly - 4); ctx.bezierCurveTo(cx - 8, ly + 5, cx - 3, ly + 10, cx, ly + 10); ctx.bezierCurveTo(cx + 3, ly + 10, cx + 8, ly + 5, cx + 6, ly - 4); ctx.closePath(); ctx.fill(); /* le bouton de verre rouge, en tulipe renversée */

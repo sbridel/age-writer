@@ -67,6 +67,13 @@ function drawVault(r, ctx, sc, sky, t) {
   const fg = ctx.createLinearGradient(0, FLOOR, 0, H); fg.addColorStop(0, c("#34353a")); fg.addColorStop(1, c("#1c1d21")); ctx.fillStyle = fg; ctx.fillRect(0, FLOOR, W, H - FLOOR);
   ctx.fillStyle = c("#15161a"); ctx.fillRect(0, FLOOR - 4, W, 6);
   }
+  /** Le numéro de la niche, en chiffres D'ni : sur le tympan de cuivre (Verrière), gravé dans la clef de l'arc (Château), sur une petite plaque (ailleurs). */
+  const niNum = (nx, ny, v) => {
+    if (!r.dni || !r.dni.drawNumber) return;
+    const s2 = 10.5, w = r.dni.widthOf(v, s2), cx = nx + NW / 2, y = glass ? ny - 11 : castle ? ny - 15 : ny - 13;
+    if (!glass && !castle) { ctx.fillStyle = c("#6a5232"); ctx.fillRect(cx - w / 2 - 3, y - 1.5, w + 6, s2 + 3); ctx.fillStyle = c("#2a2014"); ctx.fillRect(cx - w / 2 - 2, y - 0.5, w + 4, s2 + 1); }
+    r.dni.drawNumber(ctx, v, cx - w / 2 + 0.6, y + 0.6, s2, glass ? rgba(255, 220, 170, 0.45) : rgba(0, 0, 0, 0.5)); r.dni.drawNumber(ctx, v, cx - w / 2, y, s2, glass ? c("#2a0c02") : castle ? c("#c8c3d2") : c("#e0c080")); /* gravé : un liseré de lumière, puis le trait */
+  };
   const frame = (nx, ny) => { // l'encadrement de chaque niche : un arc brisé de pierre (Château), un arc de cuivre et une lunette de verre (Verrière)
     const low = ny > 100, base = low ? FLOOR : ny + NH + 3; // le rang du bas : l'encadrement descend jusqu'au sol, sur un socle ; celui du haut s'arrête sur un appui
     if (castle) { ctx.fillStyle = c("#7a7683"); CS.pointed(ctx, nx - 6, nx + NW + 6, ny - 22, ny + 4, base); ctx.closePath(); ctx.fill(); ctx.fillStyle = c("#2a2630"); CS.pointed(ctx, nx - 1, nx + NW + 1, ny - 16, ny + 6, ny + NH); ctx.closePath(); ctx.fill(); ctx.fillStyle = c(CS.GOLD); ctx.beginPath(); ctx.arc(nx + NW / 2, ny - 24, 1.8, 0, 6.283); ctx.fill();
@@ -74,11 +81,11 @@ function drawVault(r, ctx, sc, sky, t) {
       if (low) { ctx.fillStyle = c("#5e5966"); ctx.fillRect(nx - 8, FLOOR - 10, NW + 16, 10); ctx.fillStyle = c("#9a95a3"); ctx.fillRect(nx - 8, FLOOR - 10, NW + 16, 1.4); } } // le socle
     else if (glass) { ctx.fillStyle = c(VR.COPPER_LO); ctx.beginPath(); ctx.moveTo(nx - 5, base); ctx.lineTo(nx - 5, ny); ctx.ellipse(nx + NW / 2, ny, NW / 2 + 5, 16, 0, Math.PI, 2 * Math.PI); ctx.lineTo(nx + NW + 5, base); ctx.closePath(); ctx.fill();
       ctx.fillStyle = c(VR.COPPER); ctx.fillRect(nx - 7, ny + NH + 1, NW + 14, 2.4); if (low) { ctx.fillStyle = c("#2a1a12"); ctx.fillRect(nx - 7, FLOOR - 9, NW + 14, 9); ctx.fillStyle = c(VR.COPPER); ctx.fillRect(nx - 7, FLOOR - 9, NW + 14, 1.2); } // l'appui de cuivre ; le socle
-      ctx.fillStyle = c("#14261f"); ctx.beginPath(); ctx.ellipse(nx + NW / 2, ny - 1, NW / 2 - 2, 12, 0, Math.PI, 2 * Math.PI); ctx.fill(); /* l'imposte : pleine (une chambre forte n'a pas de vitres au-dessus de ses niches) */
-      ctx.strokeStyle = c(VR.COPPER); ctx.lineWidth = 1; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(nx + NW / 2 - 14, ny - 1); ctx.quadraticCurveTo(nx + NW / 2 - 6, ny - 12, nx + NW / 2, ny - 7); ctx.quadraticCurveTo(nx + NW / 2 + 6, ny - 2, nx + NW / 2 + 12, ny - 9); ctx.stroke(); ctx.fillStyle = c(VR.COPPER); ctx.beginPath(); ctx.ellipse(nx + NW / 2 + 13, ny - 9.5, 2, 1, -0.6, 0, Math.PI * 2); ctx.fill(); /* une seule tige de cuivre, en coup de fouet */
+      { const tg = ctx.createLinearGradient(0, ny - 13, 0, ny); tg.addColorStop(0, c("#c67a3e")); tg.addColorStop(1, c("#6a3818")); ctx.fillStyle = tg; ctx.beginPath(); ctx.ellipse(nx + NW / 2, ny - 1, NW / 2 - 2, 12, 0, Math.PI, 2 * Math.PI); ctx.fill(); /* le tympan : une plaque de cuivre, où se lit le numéro de la niche */
+        ctx.strokeStyle = rgba(255, 220, 170, 0.35); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.ellipse(nx + NW / 2, ny - 1, NW / 2 - 5, 9.5, 0, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke(); }
       ctx.strokeStyle = c(VR.COPPER_HI); ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(nx + NW / 2, ny, NW / 2 + 3, 14, 0, Math.PI, 2 * Math.PI); ctx.stroke(); }
   };
-  for (let i = 0; i < PER; i++) { const nx = (i % 6 < 3 ? 28 : 392) + (i % 3) * 80, ny = 44 + (i < 6 ? 0 : 108); frame(nx, ny); } // les encadrements d'abord : ceux du bas ne recouvrent pas les écriteaux du haut
+  for (let i = 0; i < PER; i++) { const nx = (i % 6 < 3 ? 28 : 392) + (i % 3) * 80, ny = 44 + (i < 6 ? 0 : 108); frame(nx, ny); niNum(nx, ny, (r.vaultPage || 0) * PER + i + 1); } // les encadrements d'abord : ceux du bas ne recouvrent pas les écriteaux du haut
   // une niche garde plusieurs livres (cinq au plus), rangés par ordre alphabétique ; son écriteau dit d'où à où elle va
   const list = ((r.opts.vaultAges ? r.opts.vaultAges() : []) || []).slice().sort((x, y) => String(x.name).localeCompare(String(y.name))), niches = [];
   for (let i = 0; i < list.length; i += PER_NICHE) niches.push(list.slice(i, i + PER_NICHE));

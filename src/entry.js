@@ -298,19 +298,22 @@ module.exports = function build(Base, core, AGEX) {
     /** La caverne Bahro (src/relto-cave.js) : les granulés de l'étagère, le granulé qui tombe ; un granulé perdu (personne en bas) s'en va sans bruit. */
     caveState() {
       const P = HV.pelletsOf(this.ext), cv = (this.ext.cave = this.ext.cave && typeof this.ext.cave === "object" ? this.ext.cave : { drop: null, revealed: 0 }), CV = require("./relto-cave");
-      if (cv.drop && Date.now() > cv.drop.at + CV.FALL_MS + CV.LIGHT_MS) { cv.drop = null; this.saveExt(); }
-      return { good: P.white, bad: P.grey, drop: cv.drop, revealed: cv.revealed || 0, shut: !!cv.shut }; /* le puits reçoit les blancs (l'éclair) et les gris ; l'ambré est pour le lac */
+      if (cv.drop && Date.now() > cv.drop.at + CV.FALL_MS + CV.LIGHT_MS) { if (cv.drop.q === "amber" && !cv.drop.fed) { cv.colonies = (cv.colonies || 0) + 1; cv.fedAt = cv.drop.at + CV.FALL_MS; } cv.drop = null; this.saveExt(); } /* un ambré nourrit le bassin, qu'on soit en bas ou non */
+      const pick = cv.pick && P[cv.pick] > 0 ? cv.pick : P.white > 0 ? "white" : P.amber > 0 ? "amber" : P.grey > 0 ? "grey" : null;
+      return { good: P.white, amber: P.amber, bad: P.grey, pick, drop: cv.drop, revealed: cv.revealed || 0, shut: !!cv.shut, colonies: cv.colonies || 0, fedAt: cv.fedAt || 0 }; /* le blanc : l'éclair ; l'ambré : le lac ; le gris : rien */
     }
+    /** Choisir dans la niche la sorte de granulé que le bouton lâchera ("white", "amber", "grey"). */
+    cavePick(kind) { this.caveState(); if (["white", "amber", "grey"].includes(kind)) { this.ext.cave.pick = kind; this.saveExt(); } }
     /** La chaîne de la trappe : ferme ou rouvre la fente du plafond (la caverne retourne au noir). */
     caveHatch() { this.caveState(); this.ext.cave.shut = !this.ext.cave.shut; this.saveExt(); }
     /** Le bouton : lâche un granulé (un bon s'il y en a, sinon un gris). Renvoie sa qualité, ou null. */
     caveDrop() {
       const st = this.caveState(); if (st.drop) return null;
-      const P = HV.pelletsOf(this.ext), q = P.white > 0 ? "good" : P.grey > 0 ? "bad" : null; if (!q) return null;
-      P[q === "good" ? "white" : "grey"] -= 1; this.ext.cave.drop = { at: Date.now(), q, seen: false }; this.saveExt(); return q;
+      const P = HV.pelletsOf(this.ext), kind = st.pick; if (!kind) return null; const q = kind === "white" ? "good" : kind === "amber" ? "amber" : "bad";
+      P[kind] -= 1; this.ext.cave.drop = { at: Date.now(), q, seen: false }; this.saveExt(); return q;
     }
     /** On était en bas quand la lueur est montée : une révélation de plus (l'étape 4c y lira le code). */
-    caveSeen() { const cv = this.ext.cave; if (!cv || !cv.drop || cv.drop.seen) return; cv.drop.seen = true; cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); }
+    caveSeen() { const cv = this.ext.cave; if (!cv || !cv.drop || cv.drop.seen) return; cv.drop.seen = true; if (cv.drop.q === "amber") { cv.drop.fed = true; cv.colonies = (cv.colonies || 0) + 1; cv.fedAt = Date.now(); } else cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); } /* l'ambré : une colonie de plus ; le blanc : une révélation */
     /** La chambre des souvenirs : chaque merveille vue une fois (nouée ou écrite) y entre, avec l'Âge et la date ; rien ne s'en efface. */
     seeWonders(seed, r) {
       const ids = CAT.wondersOf(r); if (!ids.length) return;
