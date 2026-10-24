@@ -30,13 +30,10 @@ function phaseOf(drop, now) {
   return null;
 }
 
-/** Une faille dans le sol du cellier : quelques marches qui s'enfoncent dans le noir, un souffle froid. Au Château : l'escalier de la crypte. */
+/** Une trappe dans le sol du cellier, sur la caverne : de bois cerclé de fer (de bronze à la Verrière, de pierre à anneau de fer au Château). */
 function vaultCrack(r, ctx, c, castle, t) {
   const x = 60, y = 290, w = 120, h = 46, tr = TR(r), hov = r.hover && r.hover.go === "cavetop", glass = !castle && r.glassOn && r.glassOn();
-  if (castle) { /* le Château : l'escalier de la crypte, qui descend plus bas */
-    ctx.fillStyle = "rgba(0,0,0,0.92)"; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w - 14, y + h); ctx.lineTo(x + 14, y + h); ctx.closePath(); ctx.fill();
-    for (let i = 0; i < 4; i++) { const yy = y + 8 + i * 9, inset = 16 + i * 8; ctx.fillStyle = c("#4a4552"); ctx.globalAlpha = 0.8 - i * 0.18; ctx.fillRect(x + inset, yy, w - inset * 2, 3); }
-    ctx.globalAlpha = 1;
+  if (castle) { require("./relto-castle").stoneTrap(ctx, c, x + w / 2, y + h / 2, w * 0.86, h * 0.72); /* le Château : une trappe de pierre à anneau de fer, comme celle de la cabane */
   } else if (glass) { require("./relto-glass").bronzeTrap(ctx, c, x + w / 2, y + h / 2, w * 0.86, h * 0.72); } /* la Verrière : une trappe de bronze */
   else { /* une trappe de bois dans le sol, cerclée de fer, un anneau */
     const cx = x + w / 2, cy = y + h / 2, tw = w * 0.84, th = h * 0.7, sk = th * 0.35, quad = () => { ctx.beginPath(); ctx.moveTo(cx - tw / 2 + sk, cy - th / 2); ctx.lineTo(cx + tw / 2 - sk, cy - th / 2); ctx.lineTo(cx + tw / 2, cy + th / 2); ctx.lineTo(cx - tw / 2, cy + th / 2); ctx.closePath(); };
@@ -48,7 +45,7 @@ function vaultCrack(r, ctx, c, castle, t) {
     ctx.strokeStyle = c(hov ? "#8a8a90" : "#5a5a60"); ctx.lineWidth = 1.8; ctx.beginPath(); ctx.ellipse(cx, cy + 2, 6, 3, 0, 0, TAU); ctx.stroke(); /* l'anneau */
   }
   const g = ctx.createRadialGradient(x + w / 2, y + h * 0.7, 2, x + w / 2, y + h * 0.7, w * 0.6); g.addColorStop(0, rgba(120, 200, 170, (hov ? 0.14 : 0.0) * (0.7 + 0.3 * Math.sin(t * 0.8)))); g.addColorStop(1, rgba(120, 200, 170, 0)); ctx.fillStyle = g; ctx.fillRect(x - 20, y - 20, w + 40, h + 40);
-  r.hot.push({ x, y: y - 6, w, h: h + 6, tip: castle ? tr("cave.stairs") : tr("cave.trap"), go: "cavetop" });
+  r.hot.push({ x, y: y - 6, w, h: h + 6, tip: tr("cave.trap"), go: "cavetop" });
 }
 
 /**
