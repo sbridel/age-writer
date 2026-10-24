@@ -50,6 +50,8 @@ function carved(ctx, id, x, y, s, glow, seed) {
 
 /** La salle ronde. */
 const PILLARS = [-90, -18, -162, 54, 126].map((deg, i) => { const a = (deg * Math.PI) / 180, x = 320 + Math.cos(a) * 250, y = 262 + Math.sin(a) * 48; return { i, x, y, s: 0.58 + ((y - 214) / 87) * 0.95 }; });
+/** Où pend la vasque de chaque pilier (elle s'allume avec lui, mais ne se tient pas au-dessus) : x, hauteur de la coupe. */
+const BOWLS = [[380, 142], [540, 112], [118, 84], [452, 80], [206, 66]];
 const FISSURE_L = [[316, 222], [310, 236], [314, 250], [302, 268], [306, 286], [290, 306], [294, 326], [276, 344], [270, 360]];
 const FISSURE_R = [[324, 222], [330, 238], [326, 252], [338, 270], [334, 288], [352, 308], [346, 328], [366, 346], [372, 360]];
 
@@ -250,13 +252,13 @@ function drawStars(r, ctx, sc, sky, t) {
     const cyy = T.top;
     r.hot.push({ x: p.x - T.w * 2.4, y: cyy - 22 * p.s, w: T.w * 4.8, h: p.y - cyy + 22 * p.s, tip: on ? tr("stars.pillar.lit") : tr("stars.pillar"), pillar: p.i + 1 });
     /* la vasque, pendue à trois cordes sous la voûte, au-dessus du pilier : flamme bleu-violet */
-    const vr = 10 * p.s, vx = p.x, vy = Math.max(70, cyy - 30 - 34 * p.s);
+    const vr = 7 + 5 * p.s, [vx, vy] = BOWLS[p.i]; /* elles pendent où elles veulent : ni au-dessus de leur pilier ni à la même hauteur */
     ctx.strokeStyle = rgba(120, 110, 95, 0.5); ctx.lineWidth = 0.8; for (const dx of [-vr * 0.9, 0, vr * 0.9]) { ctx.beginPath(); ctx.moveTo(vx + dx * 0.15, 20); ctx.lineTo(vx + dx, vy - 2); ctx.stroke(); }
     if (on) { const H1 = PAL.halo[0], H2 = PAL.halo[1], [F1, F2, F3] = PAL.flame, hr = vr * PAL.hr, fg = ctx.createRadialGradient(vx, vy - 4, 1, vx, vy - 4, hr);
       fg.addColorStop(0, rgba(H1[0], H1[1], H1[2], PAL.ha)); fg.addColorStop(0.5, rgba(H2[0], H2[1], H2[2], PAL.ha * 0.43)); fg.addColorStop(1, rgba(H2[0], H2[1], H2[2], 0)); ctx.fillStyle = fg; ctx.fillRect(vx - hr, vy - hr, hr * 2, hr * 2);
       for (let k = 0; k < 3; k++) { const fl2 = Math.sin(t * 5 + k * 2 + p.i) * 0.2, C = [F1, F2, F3][k]; ctx.fillStyle = rgba(C[0], C[1], C[2], k === 2 ? 0.85 : 0.75); ctx.beginPath(); ctx.moveTo(vx - vr * (0.55 - k * 0.14), vy - 1); ctx.quadraticCurveTo(vx + fl2 * vr, vy - vr * (1.3 - k * 0.3), vx + vr * (0.55 - k * 0.14), vy - 1); ctx.closePath(); ctx.fill(); }
       /* la poussière coule de la vasque : un filet de grains qui descend jusqu'au sol, s'évase un peu, s'éteint en chemin */
-      const D = PAL.dust, fall = Math.max(30, p.y - vy - 4 * p.s), col = ctx.createLinearGradient(0, vy, 0, vy + fall); const D2 = PAL.dust2; col.addColorStop(0, rgba(D[0], D[1], D[2], 0.06)); col.addColorStop(0.55, rgba(D2[0], D2[1], D2[2], 0.045)); col.addColorStop(1, rgba(D2[0], D2[1], D2[2], 0)); ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(vx - vr * 0.45, vy + 3); ctx.lineTo(vx + vr * 0.45, vy + 3); ctx.lineTo(vx + vr * 1.1, vy + fall); ctx.lineTo(vx - vr * 1.1, vy + fall); ctx.closePath(); ctx.fill();
+      const D = PAL.dust, fall = Math.min(130, Math.max(30, p.y - vy - 4 * p.s)), col = ctx.createLinearGradient(0, vy, 0, vy + fall); const D2 = PAL.dust2; col.addColorStop(0, rgba(D[0], D[1], D[2], 0.06)); col.addColorStop(0.55, rgba(D2[0], D2[1], D2[2], 0.045)); col.addColorStop(1, rgba(D2[0], D2[1], D2[2], 0)); ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(vx - vr * 0.45, vy + 3); ctx.lineTo(vx + vr * 0.45, vy + 3); ctx.lineTo(vx + vr * 1.1, vy + fall); ctx.lineTo(vx - vr * 1.1, vy + fall); ctx.closePath(); ctx.fill();
       for (let k = 0; k < 52; k++) { const pp = (t * (0.07 + q("vv" + p.i + k) * 0.06) + q("vf" + p.i + k)) % 1, spread = (q("vx" + p.i + k) - 0.5) * vr * (0.8 + pp * 1.6), sway = Math.sin(t * 0.8 + k * 1.7) * 2.2 * pp * p.s, a = Math.pow(1 - pp, 0.9) * (0.45 + 0.55 * Math.abs(Math.sin(t * 2.1 + k)));
         const C = q("vd" + p.i + k) < PAL.d2 ? D2 : D; ctx.fillStyle = rgba(C[0], C[1], C[2], 0.95 * a); const gs = 1.1 + (k % 4 === 0 ? 0.9 : 0); ctx.fillRect(vx + spread + sway, vy + 4 + pp * fall, gs, gs); } }
     ctx.fillStyle = "#26262e"; ctx.beginPath(); ctx.ellipse(vx, vy, vr, vr * 0.32, 0, 0, Math.PI); ctx.quadraticCurveTo(vx, vy + vr * 1.1, vx + vr, vy); ctx.fill();
