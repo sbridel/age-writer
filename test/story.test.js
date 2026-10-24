@@ -75,7 +75,19 @@ ok(scene(["rest"]).pages.find((p) => p.id === mendPage.id).state === "locked" &&
 // ---- notes de chapitre
 const an = (text, nm) => analyseAgeBase(text, { seed: nm });
 const mend = ST.chapterById("mend"), restC = ST.chapterById("rest");
-ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]).id === "weather" && ST.nextChapter(["rest", "mend", "weather"]).id === "laws" && ST.nextChapter(["rest", "mend", "weather", "laws"]).id === "alter" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter"]).id === "zero" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero"]).id === "imager" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager"]).id === "hard" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard"]).id === "strange" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard", "strange"]) === null, "nextChapter : dans l'ordre, null à la fin");
+ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" && ST.nextChapter(["rest", "mend"]).id === "weather" && ST.nextChapter(["rest", "mend", "weather"]).id === "laws" && ST.nextChapter(["rest", "mend", "weather", "laws"]).id === "alter" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter"]).id === "zero" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero"]).id === "imager" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager"]).id === "hard" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard"]).id === "strange" && ST.nextChapter(["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard", "strange"]).id === "give" && ST.nextChapter(ST.CHAPTERS.map((c) => c.id)) === null, "nextChapter : dans l'ordre, le second livre après le 9, null à la fin");
+{ /* le second livre (section 19 de la fiche de la caverne) : la machine et la caverne */
+  const B1 = ["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard", "strange"], ev = (cave) => { const s = { k: { done: B1.slice() } }; ST.evaluate(s, "k", { ages: [], axisOf, cave }); return { done: ST.get(s, "k").done, why: ST.get(s, "k").why }; };
+  ok(ST.bookOneDone(B1) && !ST.bookOneDone(B1.slice(0, 8)) && ST.BOOK_ONE_END === "strange", "la fin du premier livre reste au chapitre 9");
+  ok(ST.CHAPTERS.slice(-4).map((c) => c.id).join() === "give,descend,lake,slab" && ST.CHAPTERS.slice(-4).every((c) => c.book === 2), "quatre chapitres au second livre");
+  ok(ev({}).why === "white" && ev({ cookedWhite: true }).why === "reveal" && ev({ cookedWhite: true, revealed: 1 }).why === "lake", "10 : un blanc cuit ; 11 : une révélation ; 12 : le lac");
+  ok(ev({ cookedWhite: true, revealed: 1, colonies: 1 }).why === "look" && ev({ cookedWhite: true, revealed: 1, colonies: 1, looked: true }).why === "slab", "12 : une colonie ne suffit pas, il faut regarder une goutte");
+  ok(ev({ cookedWhite: true, revealed: 1, colonies: 1, looked: true, slabOpen: true }).done.length === ST.CHAPTERS.length, "13 : la dalle ouverte, le second livre est fini");
+  ok(ST.kindOf(ST.chapterById("give")) === "write" && ["descend", "lake", "slab"].every((id) => ST.kindOf(ST.chapterById(id)) === "explore"), "le 10 s'écrit, les trois autres s'explorent");
+  ok(["page_gold", "page_silver", "page_gems"].every((pg) => ST.CHAPTERS.some((c) => c.page === pg && c.book === 2)) && !ST.chapterById("slab").page, "or, argent, gemmes ; la dalle n'a pas de page");
+  const hg = ST.HINTS.give; ok(hg.fr.length === 3 && hg.en.length === 3 && ![...hg.fr, ...hg.en].some((x) => /\d/.test(x)), "les indices du 10 : trois, sans un chiffre");
+  const n10 = ST.chapterNote(ST.chapterById("give"), "fr", "N"); ok(/`silt`/.test(n10) && /Guilde des Writers/.test(n10) && !/\b(40|20|38)\b/.test(n10), "la note du 10 : la feuille des quatre sols, et pas la recette");
+}
 ok(Object.keys(ST.get({}, "k").notes).length === 0, "get : normalise les notes de chapitre");
 let fair = 0, same = 0;
 for (let i = 0; i < 300; i++) {

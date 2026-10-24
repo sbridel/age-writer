@@ -96,7 +96,7 @@ async function buildScene(plugin, file, opt = {}) {
     const cave = { cookedWhite: !!X.cookedWhite, revealed: cv.revealed || 0, colonies: cv.colonies || 0, looked: !!cv.looked, slabOpen: !!slab.open };
     const done = ST.evaluate(store, key, { ages, axisOf, zeroFound: relto.zeroFound, tunings: plugin.ext.imagerTunings, guildLock: !!((plugin.ext.imagerTunings || {})["guild:" + key] || {}).lock, cave });
     if (done.length) { plugin.saveExt(); for (const c of done) { new obsidian.Notice(plugin.t("story.done", { title: plugin.lang() === "fr" ? c.title.fr : c.title.en })); markChapterDone(plugin, c, ST.get(store, key)); } }
-    relto.storyDone = ST.get(store, key).done.concat(ST.nextChapter(ST.get(store, key).done) ? [] : ["end"]); // « end » : tous les chapitres sont faits
+    relto.storyDone = ST.get(store, key).done.concat(ST.bookOneDone(ST.get(store, key).done) ? ["end"] : []); // « end » : la fin du premier livre (le chapitre 9 ; le second livre continue après)
   }
   // choix des livres : options du bloc (folders / exclude / books) ; à défaut, liste du refuge (relto_books)
   const fm = fmOf(app, file), rules = { folders: opt.folders || fm.relto_folders, exclude: opt.exclude || fm.relto_exclude, books: opt.books || fm.relto_books };
@@ -205,7 +205,7 @@ async function startStory(plugin) {
 }
 
 /** Ce qui manque au chapitre en cours, en une phrase (vide pour le chapitre final : il ne dit jamais ce qui manque). */
-const WHY = { noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all", hardstable: "story.why.hardstable", hardpages: "story.why.hardpages", hardaxes: "story.why.hardaxes" };
+const WHY = { white: "story.why.white", reveal: "story.why.reveal", lake: "story.why.lake", look: "story.why.look", slab: "story.why.slab", noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all", hardstable: "story.why.hardstable", hardpages: "story.why.hardpages", hardaxes: "story.why.hardaxes" };
 const whyText = (plugin, why) => (WHY[why] ? "\n" + plugin.t(WHY[why]) : "");
 
 /** Un chapitre réussi : la note reçoit la propriété `story_chapter: completed` et l'étiquette `completed`, et une fenêtre le dit sans qu'il faille revenir au Relto. */
@@ -218,7 +218,7 @@ function markChapterDone(plugin, ch, st) {
   }
   if (!obsidian.Modal) return;
   const preset = ch.page && M.PAGE_PRESETS[ch.page], next = ST.nextChapter(st.done);
-  if (!next) { // le dernier chapitre : la page de la fin se pose d'elle-même sur la table de la cabane
+  if (ch.id === ST.BOOK_ONE_END) { // la fin du premier livre : la page de la fin se pose d'elle-même sur la table de la cabane
     const hub = app.vault.getMarkdownFiles().find((f) => isStoryHub(app, f));
     if (hub) app.fileManager.processFrontMatter(hub, (fm) => { const a = Array.isArray(fm.relto_pages_active) ? fm.relto_pages_active : []; if (!a.includes(ST.ENDGAME.id)) a.push(ST.ENDGAME.id); fm.relto_pages_active = a; }).then(() => plugin.refreshLive()).catch(() => {});
   }
@@ -227,7 +227,8 @@ function markChapterDone(plugin, ch, st) {
       const { contentEl } = this; this.titleEl.setText(t("story.pop.title"));
       contentEl.createEl("p", { text: ch.title[lang] });
       if (preset) contentEl.createEl("p", { text: t("story.pop.page", { name: preset.label }) });
-      if (!next) contentEl.createEl("p", { text: t("story.pop.end") });
+      if (ch.id === ST.BOOK_ONE_END) contentEl.createEl("p", { text: t("story.pop.end") });
+      if (!next) contentEl.createEl("p", { text: t("story.pop.later") }); /* la suite n'est pas encore écrite */
       const row = contentEl.createDiv({ cls: "modal-button-container" });
       if (next) row.createEl("button", { cls: "mod-cta", text: t("story.pop.next") }).addEventListener("click", () => { this.close(); storyNext(plugin); });
       row.createEl("button", { text: t("story.pop.close") }).addEventListener("click", () => this.close());
@@ -451,7 +452,11 @@ async function storyNext(plugin, opts = {}) {
   await buildScene(plugin, hub); // évalue l'avancement (un chapitre réussi depuis la dernière fois est compté)
   const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, store = plugin.ext.story || (plugin.ext.story = {});
   const key = TEL.keyOf(relto.name, relto.seed), st = ST.get(store, key), ch = ST.nextChapter(st.done);
-  if (!ch) { letterPopup(plugin, [t("story.letter.hi"), t("story.end"), t("story.letter.more") + " " + t("atelier.clue"), "\u2014 Adrin Vesparath, seltahn"]); return null; }
+  if (!ch) { new obsidian.Notice(t("story.pop.later"), 8000); return null; } /* après le dernier chapitre écrit : la suite n'est pas encore écrite */
+  if (ST.chapterById(ch.id).book === 2 && ST.bookOneDone(st.done) && !st.bookOneLetter) { /* la fin du premier livre : sa lettre d'abord, une fois ; le second livre s'ouvre à l'appel suivant */
+    st.bookOneLetter = true; plugin.saveExt();
+    letterPopup(plugin, [t("story.letter.hi"), t("story.end"), t("story.letter.more") + " " + t("atelier.clue"), "\u2014 Adrin Vesparath, seltahn"]); return null;
+  }
   const lang = plugin.lang(), dir = ST.dirOf(hub.path), known = !opts.fresh && st.notes[ch.id] && app.vault.getAbstractFileByPath(st.notes[ch.id]);
   if (known) { await leaveFullscreenAsync(); new obsidian.Notice(t("story.reopen") + whyText(plugin, st.why)); await app.workspace.getLeaf(false).openFile(known); return known; }
   // « Age 1 », « Age 2 »… : court ; le nom ne doit exister nulle part dans le coffre (la Loi du Changement et l'avancement sont gardés par nom)

@@ -26,10 +26,30 @@ const CHAPTERS = [
   { id: "imager", page: "page_comets", title: { en: "Listening to the sky", fr: "Écouter le ciel" } },
   { id: "hard", page: "page_koi", title: { en: "The difficult world", fr: "Le monde difficile" } },
   { id: "strange", page: null, title: { en: "A strange and marvellous world", fr: "Un monde étrange et merveilleux" } }, // la récompense est la page de la fin
+  /* le second livre (claude/DESIGN-reve-et-caverne-bahro.md, section 19) : la machine et la caverne ; le mentor découvre avec l'apprenti */
+  { id: "give", page: "page_gold", book: 2, title: { en: "What a world gives", fr: "Ce que donne un monde" } },
+  { id: "descend", page: "page_silver", book: 2, title: { en: "Going down", fr: "Descendre" } },
+  { id: "lake", page: "page_gems", book: 2, title: { en: "The lake", fr: "Le lac" } },
+  { id: "slab", page: null, book: 2, title: { en: "The slab", fr: "La dalle" } }, // pas de page : la dalle ouverte est le prix
 ];
+/** Le dernier chapitre du premier livre : sa fin (la page de l'encrier, la lettre du tiroir) reste la sienne. */
+const BOOK_ONE_END = "strange";
+const bookOneDone = (done) => (done || []).includes(BOOK_ONE_END);
 
 /** Un indice facultatif, en mots, sans nommer de blocs (commande « Story: hint ») : seulement pour les chapitres dont la lettre ne dit pas la recette. */
 const HINTS = {
+  give: { // la recette n'est jamais dite : trois indices en mots, sans un chiffre (section 19.6)
+    en: [
+      "Light comes from what has burned, pressed hard; what feeds comes from what has rotted, pressed lightly.",
+      "What gives light wants only the mineral, a little more ash than silt; a gentle fire, a long cooking.",
+      "The time twice as long as the heat is high; the press almost all the way.",
+    ],
+    fr: [
+      "La lumière vient de ce qui a brûlé, pressé fort ; ce qui nourrit vient de ce qui a pourri, pressé peu.",
+      "Ce qui éclaire ne veut que du minéral, un peu plus de cendres que de limon ; un feu doux, une longue cuisson.",
+      "Le temps deux fois plus long que la chaleur n'est haute ; la presse presque à fond.",
+    ],
+  },
   strange: { // trois indices, de plus en plus précis (chaque appel à la commande en dévoile un de plus) ; les deux premiers ne nomment aucun bloc
     en: [
       "Some matters, set side by side, answer each other, and what they make is rarer than either. A strange stone changes what they answer. Not every sun is gold. And a world that has only earth and sky has never known what is written on a tablet.",
@@ -144,6 +164,10 @@ function check(chapter, ctx) {
     // l'Imageur de la Guilde (livre vierge) garde son verrou par Relto, pas par Âge : un verrou tenu sur l'un des Âges du dossier compte
     return ctx && ctx.guildLock && ages.length ? { ok: true, why: "" } : { ok: false, why: "lock" };
   }
+  if (chapter.id === "give") { const c = (ctx && ctx.cave) || {}; return c.cookedWhite ? { ok: true, why: "" } : { ok: false, why: "white" }; } // un granulé blanc cuit dans ce Relto
+  if (chapter.id === "descend") { const c = (ctx && ctx.cave) || {}; return c.revealed > 0 ? { ok: true, why: "" } : { ok: false, why: "reveal" }; } // une révélation vue d'en bas
+  if (chapter.id === "lake") { const c = (ctx && ctx.cave) || {}; return !(c.colonies > 0) ? { ok: false, why: "lake" } : c.looked ? { ok: true, why: "" } : { ok: false, why: "look" }; } // le lac vit, et une goutte a été regardée
+  if (chapter.id === "slab") { const c = (ctx && ctx.cave) || {}; return c.slabOpen ? { ok: true, why: "" } : { ok: false, why: "slab" }; } // la dalle ouverte (le Rêve viendra avec l'étape 4d)
   if (chapter.id === "alter") {
     // « modifier ce qui est écrit » : la note du chapitre a été modifiée après séchage de l'encre (Loi du Changement), et le monde tient encore
     const mine = ages.find((a) => a.path === ((ctx && ctx.notes) || {}).alter);
@@ -207,6 +231,10 @@ const WORLDS = {
   alter: { lines: ["single_sun", "steady_cycle", "water", "sand", "fern"], stable: true, margin: 15 }, // une marge large : la modification elle-même coûte (Loi du Changement)
   laws: { lines: ["single_sun", "steady_cycle", "water", "salt"], stable: true },
   weather: { lines: ["single_sun", "steady_cycle", "water", "rain"], stable: true }, // le monde de départ doit tenir : seule la météo reste à écrire
+  give: { lines: ["single_sun", "steady_cycle", "water"], stable: true }, // un monde qui tient ; ce qu'il donnera reste à écrire
+  descend: { lines: [] },
+  lake: { lines: [] },
+  slab: { lines: [] },
 };
 
 /**
@@ -272,6 +300,22 @@ const LETTERS = {
     en: ["Last of all, a thing I cannot teach.", "Write me a world nobody would expect, and that holds anyway.", ""],
     fr: ["Enfin, une chose que je ne peux pas t'enseigner.", "Écris-moi un monde que personne n'attendrait, et qui tienne quand même.", ""],
   },
+  give: {
+    en: ["I thought I had taught you everything. I was wrong: there is a door I have never opened.", "Against the cabin there is a lean-to, and in it a machine I found there long before you came. It does not bake bread. It waits for what worlds give: some grounds, when something grows in them, leave a measure every day. Write a world that gives, and learn what the machine makes of it. I never knew how to set it. Perhaps you will.", "Write a world that gives. Cook, fail, start again, until a white pellet comes out of the oven."],
+    fr: ["Je croyais t'avoir tout appris. Je me trompais : il reste une porte que je n'ai jamais ouverte.", "Contre la cabane, il y a un appentis, et dedans une machine que j'ai trouvée là bien avant toi. Elle ne cuit pas le pain. Elle attend ce que donnent les mondes : certains sols, quand quelque chose y pousse, en laissent une mesure chaque jour. Écris un monde qui donne, et apprends ce que la machine en fait. Je n'ai jamais su la régler. Toi, peut-être.", "Écris un monde qui donne. Cuis, rate, recommence, jusqu'à ce qu'un granulé blanc sorte du four."],
+  },
+  descend: {
+    en: ["The white pellet glows, even in a drawer. I did not dare keep it near me.", "Under the cellar there is a trapdoor. I have always felt it cold under my feet, and I never lifted it. They say there is a shaft below, and at the bottom of the shaft it is dark as before writing. Go down. What you see there, you will tell me.", "Drop a white pellet down the shaft, and be at the bottom when it touches the water."],
+    fr: ["Le granulé blanc luit, même dans le tiroir. Je n'ai pas osé le garder près de moi.", "Sous le cellier, il y a une trappe. Je l'ai toujours sentie froide sous mes pieds, et je ne l'ai jamais soulevée. On dit qu'en bas il y a un puits, et qu'au fond du puits il fait noir comme avant l'écriture. Descends. Ce que tu y verras, tu me le raconteras.", "Lâche un granulé blanc dans le puits, et sois en bas quand il touche l'eau."],
+  },
+  lake: {
+    en: ["You write that there are paintings, down there. I did not sleep.", "They last only a moment, you say, then the dark comes back. But the water at the bottom: is it dead, or only hungry? There is a microscope on your desk; I never understood what it was for. Perhaps this. Feed the water, and look at what lives in it.", "Bring the lake to life, then look at a drop of its water under the microscope in the writing room."],
+    fr: ["Tu m'écris qu'il y a des peintures, en bas. Je n'en ai pas dormi.", "Elles ne restent qu'un instant, dis-tu, puis le noir revient. Mais l'eau du fond : est-elle morte, ou seulement affamée ? Il y a sur ton bureau un microscope dont je n'ai jamais compris l'usage. Peut-être est-ce celui-là. Nourris l'eau, et regarde ce qui y vit.", "Fais vivre le lac, puis regarde une goutte de son eau au microscope de l'atelier."],
+  },
+  slab: {
+    en: ["The signs in the cartouche, the ones you described to me: I looked for them in all my books. They are not there.", "They are not words of the Guild. Someone else writes, down there, and has for longer than we have. The stone with the eyes, at the water's edge, is perhaps waiting for those signs. Open it. And tell me what it looks at.", "Remember the signs, and open the slab."],
+    fr: ["Les signes du cartouche, ceux que tu m'as décrits : je les ai cherchés dans tous mes livres. Ils n'y sont pas.", "Ce ne sont pas des mots de la Guilde. Quelqu'un d'autre écrit, là-dessous, et depuis plus longtemps que nous. La pierre aux yeux, au bord de l'eau, attend peut-être ces signes. Ouvre-la. Et dis-moi ce qu'elle regarde.", "Retiens les signes, et ouvre la dalle."],
+  },
   weather: {
     en: ["A world that never changes is a painting. Let us make it a day.", "Here the rain falls without end. Teach it manners: let it fall only sometimes, and only at dawn. A line can carry a frequency and a moment, after a colon.", "Rewrite the rain line as `rain: sometimes, dawn`, and keep the world stable."],
     fr: ["Un monde qui ne change jamais est un tableau. Faisons-en un jour.", "Ici la pluie tombe sans fin. Apprends-lui les manières : qu'elle ne tombe que parfois, et seulement à l'aube. Une ligne peut porter une fréquence et un moment, après deux-points.", "Récris la ligne de pluie ainsi : `rain: sometimes, dawn`, et garde le monde stable."],
@@ -287,6 +331,7 @@ const COURSE = {
   rest: [["single_sun", "one sun: the plain sky", "un seul soleil : le ciel simple"], ["steady_cycle", "day and night that keep their rhythm", "un jour et une nuit qui gardent leur rythme"], ["water", "water: ground that flows", "l'eau : une terre qui coule"], ["sand", "dry, shifting ground", "un sol sec et mouvant"], ["stone", "heavy, patient ground", "un sol lourd et patient"], ["fern", "something alive, in the damp", "du vivant, dans l'humide"], ["grass", "something alive, low and restless", "du vivant, bas et remuant"], ["moss", "something alive, soft and quiet", "du vivant, doux et silencieux"]],
   mend: [["lava", "searing, molten ground", "un sol brûlant, en fusion"], ["ice", "pale, brittle ground: cold", "un sol pâle et cassant : le froid"], ["twin_suns", "two suns: a heavier sky", "deux soleils : un ciel plus lourd"]],
   weather: [["rain", "steady rain", "une pluie continue"], ["drizzle", "fine rain, silver and hushed", "une bruine fine, argentée"], ["fog", "thick, pale, muffling", "épaisse, pâle, étouffante"], ["snow", "white and soundless", "blanche et sans bruit"], ["storm", "churning, dark, loud", "tourmentée, sombre, bruyante"], ["wind", "restless, thin, cold", "agité, mince, froid"]],
+  give: [["ash", "what is left of fire: a pale powder", "ce qui reste du feu : une poudre pâle"], ["humus", "loam: dark earth that crumbles", "le terreau : une terre sombre qui s'émiette"], ["silt", "silt: it is not written, it is born of water on ash", "le limon : il ne s'écrit pas, il naît de l'eau sur les cendres"], ["peat", "red-brown, fibrous ground, slow to rot", "un sol brun-roux, fibreux, lent à pourrir"]],
   laws: [["salt", "bitter, bright ground", "un sol amer et brillant"], ["mass", "a value, written with a colon: how heavy the world is", "une valeur, écrite avec deux-points : le poids du monde"], ["age", "a value, written with a colon: how old the world is", "une valeur, écrite avec deux-points : l'âge du monde"]],
 };
 const AXIS_WORD = { cosmological: { en: "sky", fr: "ciel" }, geological: { en: "ground", fr: "sol" }, ecological: { en: "living", fr: "vivant" }, weather: { en: "weather", fr: "météo" }, metaphysical: { en: "beyond", fr: "au-delà" } };
@@ -307,7 +352,7 @@ const COURSE_NOAXIS = new Set(["mass", "age"]);
 
 /** Le texte d'une note de chapitre : titre, lettre du mentor, ce qu'il faut faire, et le bloc `age` de départ. */
 /** Un chapitre d'écriture (un Âge à écrire) ou d'exploration (le Relto seul : télescope, Imageur). */
-const kindOf = (chapter) => (chapter.id === "zero" || chapter.id === "imager" ? "explore" : "write");
+const kindOf = (chapter) => (["zero", "imager", "descend", "lake", "slab"].includes(chapter.id) ? "explore" : "write");
 const KIND_LABEL = { write: { en: "Writing exercise", fr: "Exercice d'écriture" }, explore: { en: "Relto exploration", fr: "Exploration du Relto" } };
 /** Le nom de la note d'une exploration : le titre du chapitre (jamais « Age N », qui est réservé aux Âges à écrire). `taken` : noms déjà pris. */
 function exploreName(chapter, lang, taken) {
@@ -355,4 +400,4 @@ function knownBlocks(done, hintN) {
   return set;
 }
 
-module.exports = { KIND_LABEL, kindOf, exploreName, knownBlocks, REVIEW, reviewSheet, COURSE, courseSheet, drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
+module.exports = { BOOK_ONE_END, bookOneDone, KIND_LABEL, kindOf, exploreName, knownBlocks, REVIEW, reviewSheet, COURSE, courseSheet, drawsOn, MODE, CHAPTERS, isStory, chapterById, dirOf, inDirs, scopeAges, scopePaths, get, noteSeen, axesOf, check, evaluate, rewardPages, ENDGAME, strangeOk, HINTS, MENTOR, WORLDS, nextChapter, chapterName, chapterNote };
