@@ -71,6 +71,28 @@ const pitPath = (ctx) => { ctx.beginPath(); for (let x = PIT_X0; x <= PIT_X1; x 
 const vnoise = (k, t, hz) => { const x = t * hz, i = Math.floor(x), f = x - i, a = q("fk" + k + "_" + (i % 97)), b = q("fk" + k + "_" + ((i + 1) % 97)), sm = f * f * (3 - 2 * f); return a + (b - a) * sm; };
 /** La lumière d'une vasque à l'instant t : de 0,6 à 1,15, irrégulière (deux fréquences) ; `k` : la vasque. */
 const flicker = (k, t) => 0.6 + 0.55 * (0.6 * vnoise(k, t, 8) + 0.4 * vnoise(k + 9, t, 3.3));
+/**
+ * Une plateforme n'est pas un îlot : un pont de roche la relie au bord le plus proche de la fosse (devant, ou sur le côté), de la
+ * même pierre, pour que le pilier sorte bien de la caverne. Droit vers la lèvre quand elle est proche, ou à plat vers l'extrémité.
+ */
+function pier(ctx, p) {
+  const s = p.s, rx = 34 * s, ry = rx * 0.22, th = 11 * s, x0 = p.x, y0 = p.y + 1.5 * s;
+  const dDown = pitFront(x0) - y0, dRight = PIT_X1 + 14 - x0, dLeft = x0 - (PIT_X0 - 14);
+  const tg = ctx.createLinearGradient(x0 - rx, 0, x0 + rx, 0); tg.addColorStop(0, "#2a3048"); tg.addColorStop(0.5, "#323a58"); tg.addColorStop(1, "#1d2236");
+  const edge = rgba(PAL.edge[0], PAL.edge[1], PAL.edge[2], 0.4);
+  if (dDown <= dRight && dDown <= dLeft) { /* vers nous : une bande de roche jusqu'à la lèvre */
+    const y1 = pitFront(x0) + 4, w0 = rx * 0.5, w1 = rx * 0.74, quad = () => { ctx.beginPath(); ctx.moveTo(x0 - w0, y0); ctx.lineTo(x0 + w0, y0); ctx.lineTo(x0 + w1, y1); ctx.lineTo(x0 - w1, y1); ctx.closePath(); };
+    ctx.fillStyle = tg; quad(); ctx.fill(); ctx.strokeStyle = edge; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 - w0, y0); ctx.lineTo(x0 - w1, y1); ctx.moveTo(x0 + w0, y0); ctx.lineTo(x0 + w1, y1); ctx.stroke();
+    ctx.fillStyle = rgba(12, 14, 26, 0.35); for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.ellipse(x0 + (q("pie" + p.i + k) - 0.5) * w0, y0 + (0.25 + k * 0.25) * (y1 - y0), 2 + q("pir" + p.i + k) * 3, 1.2, 0, 0, TAU); ctx.fill(); }
+  } else { /* sur le côté : un pont à plat, sa tranche en dessous, éclairée par le vide */
+    const dir = dRight < dLeft ? 1 : -1, x1 = dir > 0 ? PIT_X1 + 14 : PIT_X0 - 14, h0 = ry * 0.75, h1 = ry * 0.95;
+    const sg = ctx.createLinearGradient(0, y0, 0, y0 + h0 + th); sg.addColorStop(0, "#1a1e31"); sg.addColorStop(0.6, "#12172b"); sg.addColorStop(1, rgba(44, 84, 170, 0.9));
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(x0, y0 + h0); ctx.lineTo(x1, y0 + h1); ctx.lineTo(x1, y0 + h1 + th); ctx.lineTo(x0, y0 + h0 + th); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = tg; ctx.beginPath(); ctx.moveTo(x0, y0 - h0); ctx.lineTo(x1, y0 - h1); ctx.lineTo(x1, y0 + h1); ctx.lineTo(x0, y0 + h0); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = edge; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y0 + h0); ctx.lineTo(x1, y0 + h1); ctx.stroke();
+  }
+}
+
 /** Une petite plateforme de roche, dans la fosse, sous un pilier : le dessus clair, la tranche éclairée d'en dessous par le vide. */
 function platform(ctx, p) {
   const s = p.s, rx = 34 * s, ry = rx * 0.22, th = 11 * s, x = p.x, y = p.y + 1.5 * s;
@@ -284,7 +306,7 @@ function drawStars(r, ctx, sc, sky, t) {
   /* les cinq piliers, du fond vers nous : un fût droit gravé de haut en bas, une coupe à deux cornes courtes ; les vasques au-dessus */
   const signs = F.itemsOf((r.scene && r.scene.ages) || [], {}).filter((it) => it.kind === "age").slice(-15).flatMap((it) => it.parts.slice(0, 1));
   for (const p of PILLARS.slice().sort((a, b) => a.y - b.y)) {
-    if (p.y > pitTop(p.x) + 6) platform(ctx, p); /* il se tient sur sa plateforme, dans la fosse */
+    if (p.y > pitTop(p.x) + 6) { platform(ctx, p); pier(ctx, p); } /* il se tient sur sa plateforme, que relie un pont de roche au bord de la fosse */
     const on = lit.includes(p.i), hov = r.hover && r.hover.pillar === p.i + 1, T = pillar(ctx, p, on, hov, t, signs);
     const cyy = T.top;
     r.hot.push({ x: p.x - T.w * 2.4, y: cyy - 22 * p.s, w: T.w * 4.8, h: p.y - cyy + 22 * p.s, tip: on ? tr("stars.pillar.lit") : tr("stars.pillar"), pillar: p.i + 1 });
