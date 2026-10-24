@@ -627,6 +627,66 @@ function glassOnly(ctx, c, xa, xb, top, base, seed, teals, oranges) {
 }
 
 /**
+ * Du verre en éclats sertis de plomb (comme dans la pièce de la machine), dans une forme quelconque : `clip()` trace le
+ * contour. Vert d'eau en quatre tons, quelques éclats orange doux. `lit` : 0 (le jour) à 1 (allumé).
+ */
+function shards(ctx, c, x0, x1, top, bottom, clip, lit = 0.4, seed = 1) {
+  const L = clamp(lit), glow = (h, g) => mix(c(h), g, clamp(L * 0.9)), teals = [glow("#5fb8a8", "#a8f0e0"), glow("#2f7a70", "#6fd0c0"), glow("#1f5a52", "#4fb0a0"), glow("#7fc8b8", "#c0f8ec")], oranges = [glow("#d88a4a", "#ffc890"), glow("#b0602a", "#f0a060")];
+  const w = x1 - x0, h = bottom - top, q = rng(0x5a4d + seed * 97), cols = Math.max(3, Math.round(w / 22)), rows = Math.max(2, Math.round(h / 20)), pts = [];
+  ctx.save(); clip(); ctx.clip();
+  for (let r = 0; r <= rows; r++) { const row = []; for (let k = 0; k <= cols; k++) { const edge = k === 0 || k === cols || r === 0 || r === rows; row.push([x0 + (w * k) / cols + (edge ? 0 : (q() - 0.5) * (w / cols) * 0.7), top + (h * r) / rows + (edge ? 0 : (q() - 0.5) * (h / rows) * 0.7)]); } pts.push(row); }
+  for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) {
+    const a = pts[r][k], b = pts[r][k + 1], d = pts[r + 1][k + 1], e = pts[r + 1][k], tris = q() < 0.5 ? [[a, b, d], [a, d, e]] : [[a, b, e], [b, d, e]];
+    for (const t of tris) { ctx.fillStyle = q() < 0.16 ? oranges[Math.floor(q() * 2)] : teals[Math.floor(q() * 4)]; ctx.beginPath(); ctx.moveTo(t[0][0], t[0][1]); ctx.lineTo(t[1][0], t[1][1]); ctx.lineTo(t[2][0], t[2][1]); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c(LEAD); ctx.lineWidth = 0.6; ctx.stroke(); }
+  }
+  ctx.restore();
+}
+
+/**
+ * Une grille dans l'esprit des entrées de métro de Guimard, posée devant une vitre : rien de régulier. Des tiges qui
+ * montent du bas en coup de fouet, s'épaississent et s'amincissent, se séparent en branches qui finissent en bourgeons ;
+ * au milieu, un cartouche en écusson. `clip()` trace le contour de la vitre.
+ */
+function guimardGrille(ctx, c, x0, x1, top, bottom, clip, seed = 1, cartouche = true) {
+  const q = rng(0x6a1d + seed * 53), iron = c("#1c2a24"), hi = rgba(150, 190, 160, 0.25), w = x1 - x0, h = bottom - top, n = Math.max(2, Math.round(w / 18));
+  ctx.save(); clip(); ctx.clip(); ctx.lineCap = "round";
+  const stroke = (fn, lw) => { ctx.strokeStyle = iron; ctx.lineWidth = lw; fn(); ctx.stroke(); ctx.strokeStyle = hi; ctx.lineWidth = Math.max(0.35, lw * 0.28); fn(); ctx.stroke(); };
+  const bud = (x, y, a, s) => { ctx.fillStyle = iron; ctx.beginPath(); ctx.ellipse(x, y, s * 0.55, s, a, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = hi; ctx.beginPath(); ctx.ellipse(x - s * 0.15, y - s * 0.3, s * 0.15, s * 0.35, a, 0, Math.PI * 2); ctx.fill(); };
+  for (let i = 0; i < n; i++) {
+    const bx = x0 + (w * (i + 0.5)) / n + (q() - 0.5) * (w / n) * 0.6, lean = (q() - 0.5) * w * 0.25, ty = top + q() * h * 0.25, mx = bx + lean, my = top + h * (0.35 + q() * 0.3);
+    stroke(() => { ctx.beginPath(); ctx.moveTo(bx, bottom + 2); ctx.bezierCurveTo(bx - lean * 0.6, my + h * 0.2, mx + lean * 0.4, my, mx, ty); }, 2.2 - q() * 0.8); /* la tige, en coup de fouet */
+    if (q() < 0.8) { const sy = my + (bottom - my) * q() * 0.6, sx = bx + (mx - bx) * 0.5, dir = q() < 0.5 ? -1 : 1, ex = sx + dir * (6 + q() * 10), ey = sy - 6 - q() * 12;
+      stroke(() => { ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx + dir * 2, sy - 8, ex, ey); }, 1.2); bud(ex, ey, dir * 0.5, 2.2 + q() * 1.2); } /* une branche, son bourgeon */
+    bud(mx, ty, (q() - 0.5) * 0.6, 2.6 + q() * 1.6);
+  }
+  if (cartouche) { /* le cartouche, en écusson, au milieu en bas */
+    const cx = (x0 + x1) / 2, cy = top + h * 0.7, rw = Math.min(14, w * 0.14), rh = Math.min(h * 0.32, rw * 1.3);
+    ctx.fillStyle = iron; ctx.beginPath(); ctx.moveTo(cx, cy - rh); ctx.bezierCurveTo(cx + rw * 1.2, cy - rh, cx + rw, cy + rh * 0.4, cx, cy + rh); ctx.bezierCurveTo(cx - rw, cy + rh * 0.4, cx - rw * 1.2, cy - rh, cx, cy - rh); ctx.fill();
+    ctx.fillStyle = c("#2f5a48"); ctx.beginPath(); ctx.ellipse(cx, cy - rh * 0.1, rw * 0.45, rh * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+    stroke(() => { ctx.beginPath(); ctx.moveTo(cx - rw * 1.6, cy - rh * 0.6); ctx.quadraticCurveTo(cx - rw * 1.2, cy - rh * 1.4, cx - rw * 0.3, cy - rh * 1.05); ctx.moveTo(cx + rw * 1.6, cy - rh * 0.6); ctx.quadraticCurveTo(cx + rw * 1.2, cy - rh * 1.4, cx + rw * 0.3, cy - rh * 1.05); }, 1.4);
+  }
+  ctx.restore();
+}
+
+/**
+ * Un lampadaire à la manière du métro de Guimard : une tige de fonte verte qui monte d'un socle évasé, se courbe comme une
+ * tige de fleur et porte une lampe rouge en bouton, qui luit. `dir` : vers où elle se penche (1 : à droite, −1 : à gauche).
+ */
+function guimardLamp(ctx, c, x, base, top, dir, glowK = 1) {
+  const iron = c("#24402f"), hi = rgba(160, 210, 170, 0.3), lx = x + dir * 22, ly = top + 8;
+  ctx.lineCap = "round";
+  ctx.fillStyle = iron; ctx.beginPath(); ctx.moveTo(x - 7, base); ctx.quadraticCurveTo(x - 3, base - 10, x - 2, base - 22); ctx.lineTo(x + 2, base - 22); ctx.quadraticCurveTo(x + 3, base - 10, x + 7, base); ctx.closePath(); ctx.fill(); /* le socle évasé */
+  const stem = () => { ctx.beginPath(); ctx.moveTo(x, base - 20); ctx.bezierCurveTo(x - dir * 4, base - (base - top) * 0.55, x - dir * 2, top - 4, lx, ly - 6); };
+  ctx.strokeStyle = iron; ctx.lineWidth = 3.2; stem(); ctx.stroke(); ctx.strokeStyle = hi; ctx.lineWidth = 0.9; stem(); ctx.stroke();
+  ctx.strokeStyle = iron; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x - dir * 1, base - (base - top) * 0.6); ctx.quadraticCurveTo(x - dir * 10, base - (base - top) * 0.7, x - dir * 8, base - (base - top) * 0.82); ctx.stroke(); /* une feuille-volute */
+  const g = ctx.createRadialGradient(lx, ly, 1, lx, ly, 26); g.addColorStop(0, rgba(255, 90, 60, 0.45 * glowK)); g.addColorStop(1, rgba(255, 90, 60, 0)); ctx.fillStyle = g; ctx.fillRect(lx - 26, ly - 26, 52, 52); /* la lueur */
+  ctx.fillStyle = iron; ctx.beginPath(); ctx.ellipse(lx, ly - 7, 4.5, 2.2, 0, 0, Math.PI * 2); ctx.fill(); /* la collerette */
+  const bg = ctx.createRadialGradient(lx - 1.5, ly - 1, 0.5, lx, ly, 6.5); bg.addColorStop(0, "#ffd0b0"); bg.addColorStop(0.35, "#ff5a3a"); bg.addColorStop(1, "#8a1a12"); ctx.fillStyle = bg;
+  ctx.beginPath(); ctx.moveTo(lx, ly - 6); ctx.bezierCurveTo(lx + 7, ly - 5, lx + 6, ly + 6, lx, ly + 8); ctx.bezierCurveTo(lx - 6, ly + 6, lx - 7, ly - 5, lx, ly - 6); ctx.fill(); /* le bouton de verre rouge */
+  ctx.strokeStyle = iron; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(lx, ly - 6); ctx.lineTo(lx, ly + 8); ctx.stroke();
+}
+
+/**
  * Une grille de fer forgé art nouveau, posée devant une vitre (le cellier : une chambre forte) : des barreaux qui ondulent
  * comme des tiges, une traverse, des volutes et quelques feuilles. `clip()` trace le contour de la vitre (déjà commencé).
  */
@@ -657,4 +717,4 @@ function frostedDome(ctx, c, x0, y0, x1, y1, lit, seed = 1) {
   ctx.fillStyle = rgba(255, 255, 255, 0.10 + L * 0.05); ctx.beginPath(); ctx.ellipse(x0 + w * 0.36, y0 + h * 0.3, w * 0.16, h * 0.08, -0.35, 0, Math.PI * 2); ctx.fill(); /* le reflet */
 }
 
-module.exports = { ironGrille, stainedBay, frostedDome,  atelierDoor, lampPool, lampGlow, cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+module.exports = { shards, guimardGrille, guimardLamp, ironGrille, stainedBay, frostedDome,  atelierDoor, lampPool, lampGlow, cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
