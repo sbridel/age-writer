@@ -9,8 +9,8 @@ const { rgba, clamp, fnv } = require("./util");
 const F = require("./fresco");
 const TAU = Math.PI * 2, OCHRE = "#c8702e", PALE = "#e8dcc0";
 /* la paroi : cinq bandes du joueur, la sixième aux Bahro ; le cartouche et la dalle à gauche, au bord de l'eau */
-const BAND_Y = (b) => 236 - b * 35, WALL_X0 = 150, WALL_X1 = 622;
-const CART = { x: 26, y: 208, w: 108, h: 34 }, SLAB = { x: 80, y: 300, r: 22, ring: 38, stone: 10 };
+const BAND_Y = (b) => 236 - b * 35, WALL_X0 = 150, WALL_X1 = 556; /* à droite, derrière le bassin : la paroi où s'ouvre le passage (section 15) */
+const CART = { x: 36, y: 186, w: 88, h: 60 }, SLAB = { x: 80, y: 300, r: 22, ring: 38, stone: 10 };
 
 /** Un pinceau tremblé : la graine fait le tremblement, l'échelle `k` ramène les épaisseurs en pixels. */
 function brush(ctx, seed, k) {
@@ -68,7 +68,7 @@ const SIGNS = {
   house: (b) => { b.shape([[-7, 8], [-7, -1], [0, -8], [7, -1], [7, 8]]); b.line([[-2, 8], [-2, 3], [2, 3], [2, 8]], 1.8); },
   link: (b) => { b.ring(-4, 0, 5); b.ring(4, 0, 5); },
   /* les merveilles, en scènes */
-  unfinished_horizon: (b) => { b.line([[-10, 5], [2, 5]]); b.ring(-2, 5, 7, 7, 2.6, Math.PI, Math.PI * 1.62); b.line([[-7, -5], [-9, -8]], 1.8); b.line([[-2, -4], [-2, -8]], 1.8); for (const [x, w] of [[5, 1.6], [7.5, 1.2], [9.6, 0.8]]) b.line([[x, 5], [x + 1, 5]], w * 1.6); },
+  unfinished_horizon: (b) => { b.line([[-10, 5], [1.5, 5]]); b.ring(-5, 5, 5.5, 5.5, 2.4, Math.PI, Math.PI * 1.5); for (const a of [1.62, 1.76, 1.9]) b.disc(-5 + Math.cos(Math.PI * a) * 5.5, 5 + Math.sin(Math.PI * a) * 5.5, 0.7); b.disc(6.5, -6, 1.8); b.line([[6.5, -4], [6.8, 3]], 2.3); b.line([[6.8, 3], [4.6, 9.5]], 2); b.line([[6.8, 3], [9, 9.5]], 2); b.line([[6.5, -2.5], [4, 1], [2, 4.6]], 2); b.line([[6.6, -2.5], [9.4, 0.5]], 1.8); },
   orphan_colour: (b, ctx) => { b.disc(-5, -5, 3.6); b.line([[-10, 8], [10, 8]], 2); figure(b, 4, 0, 0.9, "down"); ctx.fillStyle = PALE; b.disc(-5, -5, 1); },
   breathing_mirrors: (b) => { b.ring(-4, 3, 5, 2.4); b.ring(5, 4, 4, 2); b.ring(-4, 3, 7.5, 4, 1.4, Math.PI * 1.1, Math.PI * 1.9); b.ring(5, 4, 6, 3.4, 1.4, Math.PI * 1.1, Math.PI * 1.9); },
   visiting_weight: (b) => { b.shape([[-5, -9], [5, -9], [6, -4], [-6, -4]]); b.line([[0, -2], [0, 0]], 1.6); figure(b, 0, 3.5, 0.75, "up"); b.line([[-10, 9.5], [10, 9.5]], 1.8); },
@@ -95,9 +95,9 @@ const SIGNS = {
 };
 
 /** Un signe à (x, y), demi-largeur `s` px, opacité `a`. */
-function sign(ctx, id, x, y, s, a, seed) {
+function sign(ctx, id, x, y, s, a, seed, col) {
   const fn = SIGNS[id]; if (!fn || a <= 0.01) return;
-  const k = s / 10; ctx.save(); ctx.translate(x, y); ctx.scale(k, k); ctx.globalAlpha = a; ctx.strokeStyle = OCHRE; ctx.fillStyle = OCHRE; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const k = s / 10; ctx.save(); ctx.translate(x, y); ctx.scale(k, k); ctx.globalAlpha = a; ctx.strokeStyle = col || OCHRE; ctx.fillStyle = col || OCHRE; ctx.lineCap = "round"; ctx.lineJoin = "round";
   fn(brush(ctx, seed || id, k), ctx); ctx.restore();
 }
 /** Le signe d'un Âge : l'élément principal au centre, les autres petits autour. */
@@ -126,15 +126,25 @@ function drawFrescoes(ctx, items, vis, key) {
   F.BAHRO_ROW.forEach((id, i) => { const p = slot(F.BANDS - 1, i, F.BAHRO_ROW.length, key), a = vis(F.BANDS - 1, p.y) * 0.85; if (a > 0.01) sign(ctx, id, p.x, p.y, p.s, a, key + "bahro" + i); });
 }
 
-/** Le cartouche : six cases au-dessus de la dalle ; les glyphes trouvés y sont tous, les autres restent de la pierre nue. */
+/**
+ * Le cartouche : deux rangées de trois cases au-dessus de la dalle ; les glyphes trouvés y sont tous, les autres restent de la
+ * pierre nue. Un trait d'ocre relie les cases dans l'ordre de lecture (1-2-3, puis 4-5-6) : l'ordre des pierres de la dalle,
+ * qui commence à celle du haut (marquée d'une entaille) et suit le soleil.
+ */
+const cellOf = (i) => ({ x: CART.x + (CART.w * ((i % 3) + 0.5)) / 3, y: CART.y + (CART.h * (Math.floor(i / 3) + 0.5)) / 2 });
 function drawCartouche(ctx, code, found, a, key) {
   if (a <= 0.01) return;
   const { x, y, w, h } = CART, b = brush(ctx, key + "cart", 1);
   ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = OCHRE; ctx.lineCap = "round";
-  b.line([[x + 4, y], [x + w - 4, y], [x + w, y + 4], [x + w, y + h - 4], [x + w - 4, y + h], [x + 4, y + h], [x, y + h - 4], [x, y + 4], [x + 4, y]], 2.2);
-  for (let i = 1; i < 6; i++) { ctx.fillStyle = OCHRE; ctx.fillRect(x + (w * i) / 6 - 0.6, y + h / 2 - 1, 1.2, 2); }
+  b.line([[x + 5, y], [x + w - 5, y], [x + w, y + 5], [x + w, y + h - 5], [x + w - 5, y + h], [x + 5, y + h], [x, y + h - 5], [x, y + 5], [x + 5, y]], 2.2);
+  ctx.globalAlpha = a * 0.55; /* l'ordre de lecture : de case en case, sans toucher les glyphes */
+  for (let i = 0; i < 5; i++) {
+    const p = cellOf(i), q = cellOf(i + 1), dx = q.x - p.x, dy = q.y - p.y, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, gap = i === 2 ? 11 : 10.5;
+    b.line([[p.x + ux * gap, p.y + uy * gap], [q.x - ux * gap, q.y - uy * gap]], 1.2);
+    const tx = q.x - ux * gap, ty = q.y - uy * gap; b.line([[tx - ux * 3 - uy * 2, ty - uy * 3 + ux * 2], [tx, ty], [tx - ux * 3 + uy * 2, ty - uy * 3 - ux * 2]], 1.1);
+  }
   ctx.restore();
-  code.forEach((g, i) => { const cx = x + (w * (i + 0.5)) / 6, cy = y + h / 2; if (i < found) sign(ctx, F.ELEMENTS[g], cx, cy, 7.2, a, key + "c" + i); });
+  code.forEach((g, i) => { const c = cellOf(i); if (i < found) sign(ctx, F.ELEMENTS[g], c.x, c.y, 9.5, a, key + "c" + i); else { ctx.save(); ctx.globalAlpha = a * 0.5; ctx.fillStyle = OCHRE; ctx.beginPath(); ctx.arc(c.x, c.y, 1.3, 0, TAU); ctx.fill(); ctx.restore(); } });
 }
 
 /**
@@ -166,9 +176,17 @@ function drawSlab(r, ctx, st, now, t, tr) {
     const sg = ctx.createRadialGradient(-3, -3, 1, 0, 0, SLAB.stone); sg.addColorStop(0, hov ? "#5a5648" : "#45423a"); sg.addColorStop(1, "#1d1c17"); ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, SLAB.stone, 0, TAU); ctx.fill();
     ctx.strokeStyle = rgba(150, 130, 100, 0.45); ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
     if (st.stones) sign(ctx, F.ELEMENTS[st.stones[i]], sx, sy, 6.4, A * (st.open ? 1 : 0.95), "slab" + i);
+    if (i === 0) { ctx.save(); ctx.globalAlpha = A * 0.8; ctx.strokeStyle = OCHRE; ctx.lineWidth = 1.6; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(sx - 3, sy - SLAB.stone - 5); ctx.lineTo(sx, sy - SLAB.stone - 2); ctx.lineTo(sx + 3, sy - SLAB.stone - 5); ctx.stroke(); ctx.restore(); } /* l'entaille : on commence ici */
     if (st.seen && !st.open) r.hot.push({ x: sx - SLAB.stone - 2, y: sy - SLAB.stone - 2, w: SLAB.stone * 2 + 4, h: SLAB.stone * 2 + 4, tip: tr("cave.slab.stone"), caveSlab: i + 1 });
   }
   if (st.seen || st.lit > 0.2) r.hot.push({ x: x - SLAB.r, y: y - SLAB.r, w: SLAB.r * 2, h: SLAB.r * 2, tip: st.open ? tr("cave.slab.open") : tr("cave.slab") });
 }
 
-module.exports = { SIGNS, sign, ageSign, drawFrescoes, drawCartouche, drawSlab, BAND_Y, CART, SLAB, WALL_X0, WALL_X1 };
+/** Les mains mouillées (src/relto-cave.js, traces) : tout près du signe le plus récent, comme s'ils venaient de le peindre. */
+function handsNear(items, key) {
+  if (!items || !items.length) return null;
+  const p = slot(0, 0, F.PER_BAND, key);
+  return [[p.x - p.s - 9, p.y + 4, -0.35, 1.05], [p.x + p.s + 8, p.y - 3, 0.3, 1]];
+}
+
+module.exports = { handsNear, slot, SIGNS, sign, ageSign, drawFrescoes, drawCartouche, drawSlab, BAND_Y, CART, SLAB, WALL_X0, WALL_X1 };
