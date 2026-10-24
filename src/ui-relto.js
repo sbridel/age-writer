@@ -35,6 +35,16 @@ function parseOptions(src) {
 const fmOf = (app, f) => (app.metadataCache.getFileCache(f) || {}).frontmatter || {};
 const isHub = (app, f) => fmOf(app, f).age_type === "personal_hub";
 const isStoryHub = (app, f) => isHub(app, f) && ST.isStory(fmOf(app, f));
+/**
+ * La réserve (section 19.2 de la fiche de la caverne) d'une note : la clé du Relto histoire dont elle est dans le dossier
+ * (nom + graine, comme l'avancement), ou null (le bac à sable).
+ */
+function storyPoolOfPath(app, path) {
+  for (const f of app.vault.getMarkdownFiles()) { if (!isStoryHub(app, f)) continue; const d = ST.dirOf(f.path); if (d && ST.inDirs(path, [d])) return TEL.keyOf(f.basename, M.parseRelto(fmOf(app, f)).seed); }
+  return null;
+}
+/** La réserve d'une scène de Relto : la sienne si c'est un Relto histoire, sinon le bac à sable. */
+const poolOfScene = (sc) => (sc && sc.mode === "story" ? TEL.keyOf(sc.name, sc.seed) : null);
 /** Les dossiers de tous les Reltos histoire du coffre (leurs Âges et leurs pages ne se mêlent pas à ceux du bac à sable). */
 const storyDirsOf = (app) => app.vault.getMarkdownFiles().filter((f) => isStoryHub(app, f)).map((f) => ST.dirOf(f.path)).filter(Boolean);
 
@@ -82,7 +92,9 @@ async function buildScene(plugin, file, opt = {}) {
   if (story) { // l'avancement : évalué à chaque lecture de la scène (les Âges du dossier sont ceux d'ici)
     const store = plugin.ext.story || (plugin.ext.story = {}), key = TEL.keyOf(relto.name, relto.seed);
     const axisOf = (id) => { const b = plugin.core && plugin.core.blocks && plugin.core.blocks.get ? plugin.core.blocks.get(id) : null; return b ? b.axis : null; };
-    const done = ST.evaluate(store, key, { ages, axisOf, zeroFound: relto.zeroFound, tunings: plugin.ext.imagerTunings, guildLock: !!((plugin.ext.imagerTunings || {})["guild:" + key] || {}).lock });
+    const X = plugin.poolExt ? plugin.poolExt(key) : {}, cv = (X && X.cave) || {}, slab = (cv.slabs || {})[key] || {}; /* la réserve de ce Relto : ce que la machine et la caverne ont vu (chapitres 10 à 13) */
+    const cave = { cookedWhite: !!X.cookedWhite, revealed: cv.revealed || 0, colonies: cv.colonies || 0, looked: !!cv.looked, slabOpen: !!slab.open };
+    const done = ST.evaluate(store, key, { ages, axisOf, zeroFound: relto.zeroFound, tunings: plugin.ext.imagerTunings, guildLock: !!((plugin.ext.imagerTunings || {})["guild:" + key] || {}).lock, cave });
     if (done.length) { plugin.saveExt(); for (const c of done) { new obsidian.Notice(plugin.t("story.done", { title: plugin.lang() === "fr" ? c.title.fr : c.title.en })); markChapterDone(plugin, c, ST.get(store, key)); } }
     relto.storyDone = ST.get(store, key).done.concat(ST.nextChapter(ST.get(store, key).done) ? [] : ["end"]); // « end » : tous les chapitres sont faits
   }
@@ -806,19 +818,22 @@ async function renderRelto(plugin, source, el, ctx) {
   let libData = { ages: [], relto: [] };
   const libReload = async () => { try { libData = { ages: await B.libraryLines(plugin, "ages"), relto: await B.libraryLines(plugin, "relto") }; } catch (e) { console.warn("[Age Writer ext] library book", e); } renderer._lbData = null; renderer.draw(0); };
   let forkHeld = null; /* la voix que le diapason garde (Imageur, deux voix) */
+  const pool = () => poolOfScene(scene); /* la réserve de ce Relto (section 19.2) */
+  const storyLater = () => { if (scene && scene.mode === "story") window.setTimeout(() => refresh().catch((e) => console.warn("[Age Writer ext] relto", e)), 300); }; /* un geste de la caverne ou de la machine peut finir un chapitre */
   const renderer = new ReltoRenderer(canvas, plugin.dni, { touch, wheelOk: () => !!root.closest(".age-reltoview") || !!root.ownerDocument.fullscreenElement, rotated: () => touch && root.hasClass("is-mobilefull") && !!(window.matchMedia && window.matchMedia("(orientation: portrait)").matches), onTip: tipCard ? (text) => { tipCard.setText(text || ""); tipCard.toggleClass("is-empty", !text); } : null, atelierDirect: () => plugin.ext.atelierDirect !== false, bookAnim: () => plugin.ext.bookAnim !== false, libraryData: () => libData, onLibraryOpen: () => { libReload(); },
     /* le diapason : frappé une fois, il garde la voix du livre posé, tant qu'on ne le refrappe pas (en Art de la Guilde, trouver un autre monde prend du temps) ; frappé de nouveau sur un autre livre, les deux chantent ensemble */
-    caveState: () => (plugin.caveState ? plugin.caveState() : {}),
-    ovenState: (now) => (plugin.ovenState ? plugin.ovenState(now) : {}),
-    onOven: (act, arg) => { const msg = plugin.ovenAct ? plugin.ovenAct(act, arg) : null; if (roomSoundOn()) sound.ovenSfx(act === "door" && !msg ? "start" : act === "tray" ? "take" : act === "drain" ? "drain" : act === "burn" && plugin.ext.oven && plugin.ext.oven.burnt && Date.now() - plugin.ext.oven.burnt.at < 500 ? "burn" : "click", roomVol()); return msg; },
-    onCaveDrop: () => { if (plugin.caveDrop && plugin.caveDrop() && roomSoundOn()) sound.caveSfx("drop", roomVol()); },
-    onCaveSeen: () => { if (plugin.caveSeen) plugin.caveSeen(); },
-    scopeState: () => (plugin.scopeState ? plugin.scopeState() : {}),
-    onCaveSample: () => { const msg = plugin.caveSample ? plugin.caveSample() : null; if (roomSoundOn()) sound.ovenSfx("take", roomVol()); return msg; },
+    /* la machine et la caverne agissent sur la réserve de ce Relto (section 19.2) : le bac à sable, ou celle du Relto histoire */
+    caveState: () => (plugin.caveState ? plugin.caveState(pool()) : {}),
+    ovenState: (now) => (plugin.ovenState ? plugin.ovenState(now, pool()) : {}),
+    onOven: (act, arg) => { const msg = plugin.ovenAct ? plugin.ovenAct(act, arg, pool()) : null; if (act === "tray") storyLater(); if (roomSoundOn()) sound.ovenSfx(act === "door" && !msg ? "start" : act === "tray" ? "take" : act === "drain" ? "drain" : act === "burn" && plugin.ext.oven && plugin.ext.oven.burnt && Date.now() - plugin.ext.oven.burnt.at < 500 ? "burn" : "click", roomVol()); return msg; },
+    onCaveDrop: () => { if (plugin.caveDrop && plugin.caveDrop(pool()) && roomSoundOn()) sound.caveSfx("drop", roomVol()); },
+    onCaveSeen: () => { if (plugin.caveSeen) plugin.caveSeen(pool()); storyLater(); },
+    scopeState: () => (plugin.scopeState ? plugin.scopeState(pool()) : {}),
+    onCaveSample: () => { const msg = plugin.caveSample ? plugin.caveSample(pool()) : null; if (roomSoundOn()) sound.ovenSfx("take", roomVol()); return msg; },
     onScopeCrumb: () => { if (roomSoundOn()) sound.ovenSfx("click", roomVol()); },
-    onCavePick: (k) => { if (plugin.cavePick) plugin.cavePick(k); if (roomSoundOn()) sound.ovenSfx("click", roomVol()); },
-    onCaveSlab: (i) => { const res = plugin.caveSlab ? plugin.caveSlab(i, scene) : null; if (res && roomSoundOn()) { sound.slideStone(roomVol() * 0.7); if (res === "open") setTimeout(() => sound.caveSfx("cry", roomVol()), 500); } return res; },
-    onCaveHatch: () => { if (plugin.caveHatch) plugin.caveHatch(); if (roomSoundOn()) sound.slideStone(roomVol()); },
+    onCavePick: (k) => { if (plugin.cavePick) plugin.cavePick(k, pool()); if (roomSoundOn()) sound.ovenSfx("click", roomVol()); },
+    onCaveSlab: (i) => { const res = plugin.caveSlab ? plugin.caveSlab(i, scene, pool()) : null; if (res === "open") storyLater(); if (res && roomSoundOn()) { sound.slideStone(roomVol() * 0.7); if (res === "open") setTimeout(() => sound.caveSfx("cry", roomVol()), 500); } return res; },
+    onCaveHatch: () => { if (plugin.caveHatch) plugin.caveHatch(pool()); if (roomSoundOn()) sound.slideStone(roomVol()); },
     onCaveSfx: (kind) => { if (roomSoundOn()) sound.caveSfx(kind, roomVol()); },
     onTwoVoices: (age, target, onLine) => {
       if (!age || !target) return; const GI = require("./imager-guild"), vol = roomVol(), now = Date.now(), held = forkHeld;
@@ -990,7 +1005,8 @@ async function renderRelto(plugin, source, el, ctx) {
     root.toggleClass("age-quill", plugin.ext.cursorQuill !== false); // le curseur plume (réglage, activé par défaut)
     try { root.style.setProperty("--age-quill", `url("data:image/svg+xml;base64,${btoa(FLW.quillSvg(scene))}") 3 29, auto`); } catch (e) { /* la plume par défaut (styles.ext.css) */ } // la plume prend la teinte de la fleur de cristal
     scene.pagesActive = built.relto.pagesActive;
-    if (plugin.ovenShown && plugin.ovenShown() && Array.isArray(scene.structures) && !scene.structures.includes("oven")) scene.structures = [...scene.structures, "oven"]; /* l'appentis de la machine : il apparaît avec la première récolte */
+    plugin._lastPool = poolOfScene(scene); /* les commandes d'essai agissent sur la réserve du dernier Relto ouvert */
+    if (plugin.ovenShown && plugin.ovenShown(poolOfScene(scene)) && Array.isArray(scene.structures) && !scene.structures.includes("oven")) scene.structures = [...scene.structures, "oven"]; /* l'appentis de la machine : il apparaît avec la première récolte */
     renderer.setScene(scene); renderer.setHour(scene.skyCycle === "system_time" ? fixed : null); syncNav(scene);
     if (dniClock) dniClock.tick(); // la scène connue : l'heure D'ni sait si l'horloge est là
     { // la première fois que l'horloge est attachée : l'observatoire diffuse le faisceau dans tout le Relto, le calendrier se recale
@@ -1074,4 +1090,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { isHubFile: isHub, isStoryHub, openHubFile, leafShowing, cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyRepair, storyCheck, storyNext, storyRestart, storyNoDraw, storyNotes, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { storyPoolOfPath, poolOfScene, isHubFile: isHub, isStoryHub, openHubFile, leafShowing, cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyRepair, storyCheck, storyNext, storyRestart, storyNoDraw, storyNotes, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };

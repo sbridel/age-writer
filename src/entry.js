@@ -145,9 +145,10 @@ module.exports = function build(Base, core, AGEX) {
         if (o && o.seed && !o.probe) guard("statut", () => this.statusWatch(key, out.stability));
         if (o && o.seed) out = guard("récolte", () => { /* un Âge qui écrit cendres, terreau, limon ou tourbe, et où quelque chose pousse, en donne une mesure par jour (lu, pas un essai) */
           const mt = (out.resolved && out.resolved.matter) || {}, gives = HV.givesOf(mt.written || [], PH.idsOfAnalysis(out), (mt.reactions || []).map((x) => (x && x.result) || x)); if (!gives.length) return out;
-          const now = this.law.now(); if (!o.probe && HV.gather(this.ext, key, gives, now, HV.richOf(out))) this.saveExt(); /* riche ou pauvre : ce qu'est l'Âge à la première lecture du jour */
-          const today = HV.gatheredToday(this.ext, key, now);
-          return { ...out, harvest: { gives, today, rich: today ? HV.richToday(this.ext, key, now) : HV.richOf(out) } };
+          const pool = this.poolOfAge(o.seed); if (!this.poolOpen(pool)) return out; /* un Âge d'un Relto histoire remplit la réserve de ce Relto, à partir du chapitre 10 */
+          const X = this.poolExt(pool), now = this.law.now(); if (!o.probe && HV.gather(X, key, gives, now, HV.richOf(out))) this.saveExt(); /* riche ou pauvre : ce qu'est l'Âge à la première lecture du jour */
+          const today = HV.gatheredToday(X, key, now);
+          return { ...out, harvest: { gives, today, rich: today ? HV.richToday(X, key, now) : HV.richOf(out) } };
         }) || out;
         return out;
       };
@@ -250,11 +251,16 @@ module.exports = function build(Base, core, AGEX) {
       if (!seed) return null;
       if (!this._seedNames) {
         const map = new Map();
-        for (const f of this.app.vault.getMarkdownFiles()) { const fm = (this.app.metadataCache.getFileCache(f) || {}).frontmatter, s = fm && fm.age_seed != null && String(fm.age_seed).trim() ? String(fm.age_seed).trim() : f.basename; if (!map.has(s) || s === f.basename) map.set(s, f.basename); }
-        this._seedNames = map;
+        const paths = new Map();
+        for (const f of this.app.vault.getMarkdownFiles()) { const fm = (this.app.metadataCache.getFileCache(f) || {}).frontmatter, s = fm && fm.age_seed != null && String(fm.age_seed).trim() ? String(fm.age_seed).trim() : f.basename; if (!map.has(s) || s === f.basename) { map.set(s, f.basename); paths.set(s, f.path); } }
+        this._seedNames = map; this._seedPaths = paths;
       }
       return this._seedNames.get(String(seed)) || null;
     }
+    /** La note d'un Âge, d'après sa graine (le même parcours que son nom). */
+    agePathOfSeed(seed) { if (!seed) return null; this.ageNameOfSeed(seed); return (this._seedPaths && this._seedPaths.get(String(seed))) || null; }
+    /** La réserve d'un Âge (section 19.2) : celle du Relto histoire dont il est dans le dossier, ou le bac à sable (null). */
+    poolOfAge(seed) { const p = this.agePathOfSeed(seed); return p ? guard("réserve", () => R.storyPoolOfPath(this.app, p)) || null : null; }
     /** Les souvenirs de la chambre, avec le nom actuel de leur Âge et `gone` s'il n'existe plus. */
     wondersShown() {
       const box = this.ext.wonders && typeof this.ext.wonders === "object" ? this.ext.wonders : {}, out = {};
@@ -279,17 +285,32 @@ module.exports = function build(Base, core, AGEX) {
       new Ask(this.app).open();
     }
     /** L'appentis de la machine se montre dès que la récolte a commencé (un Âge a donné une première mesure). */
-    ovenShown() { return !!(this.ext.harvest && typeof this.ext.harvest === "object"); }
+    /**
+     * Les réserves (section 19.2) : la récolte, la machine, les granulés et la caverne existent une fois pour le bac à sable
+     * (`ext` lui-même : les données d'avant restent là) et une fois par Relto histoire (`ext.storyPools[clé]`, clé = nom +
+     * graine, comme l'avancement de l'histoire). `pool` : la clé d'un Relto histoire, ou rien (le bac à sable).
+     */
+    poolExt(pool) {
+      if (!pool) return this.ext;
+      const all = this.ext.storyPools && typeof this.ext.storyPools === "object" ? this.ext.storyPools : (this.ext.storyPools = {});
+      return all[pool] && typeof all[pool] === "object" ? all[pool] : (all[pool] = {});
+    }
+    /** La réserve du Relto où l'on a été en dernier (les commandes d'essai agissent sur elle). */
+    lastPool() { return this._lastPool || null; }
+    /** Dans un Relto histoire, la machine attend le chapitre 10 : la lettre du 9 doit avoir été reçue (section 19.3). */
+    poolOpen(pool) { if (!pool) return true; const st = this.ext.story && this.ext.story[pool]; return !!(st && Array.isArray(st.done) && st.done.includes("strange")); }
+    /** L'appentis de la machine se montre dès que la récolte a commencé (un Âge a donné une première mesure), dans cette réserve. */
+    ovenShown(pool) { const X = this.poolExt(pool); return this.poolOpen(pool) && !!(X.harvest && typeof X.harvest === "object"); }
     /** La machine (src/oven.js) : les réglages, la fournée, les trémies, l'étagère ; une fournée finie depuis longtemps attend sur le plateau. */
-    ovenState(now) { const OV = require("./oven"), t = now || Date.now(), o = OV.stateOf(this.ext); const h = HV.stateOf(this.ext); return { oven: o, phase: OV.phaseOf(o, t), stock: h.stock, rich: h.rich, pellets: HV.pelletsOf(this.ext) }; }
+    ovenState(now, pool) { const X = this.poolExt(pool), OV = require("./oven"), t = now || Date.now(), o = OV.stateOf(X); const h = HV.stateOf(X); return { oven: o, phase: OV.phaseOf(o, t), stock: h.stock, rich: h.rich, pellets: HV.pelletsOf(X) }; }
     /** Un geste sur la machine : "add" (i : une mesure dans la colonne), "empty" (vider la colonne), "time" / "temp" / "press" (valeur), "door" (cuire), "tray" (prendre la fournée), "drain" (la vidanger), "burn" (arg : jeter au feu une capsule de l'étagère). Renvoie un message à montrer, ou null. */
-    ovenAct(act, arg) {
-      const OV = require("./oven"), now = Date.now(), t = (k, v) => { const s = this.t ? this.t(k) : k; return v ? s.replace("{what}", v) : s; };
-      if (act === "door") { const why = OV.start(this.ext, now); if (why === "busy") return t("oven.door.busy"); if (why === "empty") return t("oven.door.empty"); if (why === "notime") return t("oven.door.notime"); this.saveExt(); return null; }
-      if (act === "tray") { const got = OV.collect(this.ext, now); if (!got) return null; this.saveExt(); return got.kind === "dust" ? t("oven.took.dust") : got.kind === "white" || got.kind === "amber" ? t(["oven", "q", got.kind, got.fine ? "fine" : "plain"].join(".")) : null; }
-      if (act === "drain") { const got = OV.drain(this.ext, now); if (!got) return null; this.saveExt(); return t("oven.drained"); }
-      if (act === "burn") { const why = OV.burn(this.ext, arg, now); if (why === "busy") return t("oven.burn.busy"); if (why) return null; this.saveExt(); return t(arg === "grey" ? "oven.burnt.grey" : arg === "amber" ? "oven.burnt.amber" : "oven.burnt"); }
-      const res = OV.set(this.ext, act, arg, now);
+    ovenAct(act, arg, pool) {
+      const X = this.poolExt(pool), OV = require("./oven"), now = Date.now(), t = (k, v) => { const s = this.t ? this.t(k) : k; return v ? s.replace("{what}", v) : s; };
+      if (act === "door") { const why = OV.start(X, now); if (why === "busy") return t("oven.door.busy"); if (why === "empty") return t("oven.door.empty"); if (why === "notime") return t("oven.door.notime"); this.saveExt(); return null; }
+      if (act === "tray") { const got = OV.collect(X, now); if (!got) return null; if (got.kind === "white") X.cookedWhite = true; /* le chapitre 10 */ this.saveExt(); return got.kind === "dust" ? t("oven.took.dust") : got.kind === "white" || got.kind === "amber" ? t(["oven", "q", got.kind, got.fine ? "fine" : "plain"].join(".")) : null; }
+      if (act === "drain") { const got = OV.drain(X, now); if (!got) return null; this.saveExt(); return t("oven.drained"); }
+      if (act === "burn") { const why = OV.burn(X, arg, now); if (why === "busy") return t("oven.burn.busy"); if (why) return null; this.saveExt(); return t(arg === "grey" ? "oven.burnt.grey" : arg === "amber" ? "oven.burnt.amber" : "oven.burnt"); }
+      const res = OV.set(X, act, arg, now);
       if (res === true) this.saveExt();
       if (res === "full") return t("oven.add.full");
       if (res === "max") return t("oven.add.max");
@@ -298,7 +319,7 @@ module.exports = function build(Base, core, AGEX) {
     }
     /** Les essais de la machine : "fill" (neuf mesures de chaque), "white" / "amber" / "grey" (cinq granulés), "finish" (la fournée sort), "empty" (tout à zéro). */
     ovenTest(v) {
-      const OV = require("./oven"), h = HV.stateOf(this.ext), P = HV.pelletsOf(this.ext), o = OV.stateOf(this.ext), t = (k) => (this.t ? this.t(k) : k);
+      const X = this.poolExt(this.lastPool()), OV = require("./oven"), h = HV.stateOf(X), P = HV.pelletsOf(X), o = OV.stateOf(X), t = (k) => (this.t ? this.t(k) : k);
       if (v === "fill") for (const id of HV.INGREDIENTS) { h.stock[id] = Math.max(h.stock[id], 9); h.rich[id] = h.stock[id]; }
       else if (v === "poor") for (const id of HV.INGREDIENTS) { h.stock[id] = Math.max(h.stock[id], 9); h.rich[id] = 0; } /* des Âges abîmés : tout ce qui est dans les trémies est pauvre */
       else if (v === "white" || v === "amber" || v === "grey") P[v] += 5;
@@ -308,31 +329,31 @@ module.exports = function build(Base, core, AGEX) {
       const k = "oven.test." + v; return t("oven.test.done") + " " + t(k) + (v === "fill" || v === "poor" ? " " + t("oven.test.reopen") : "");
     }
     /** La caverne Bahro (src/relto-cave.js) : les granulés de l'étagère, le granulé qui tombe ; un granulé perdu (personne en bas) s'en va sans bruit. */
-    caveState() {
-      const P = HV.pelletsOf(this.ext), cv = (this.ext.cave = this.ext.cave && typeof this.ext.cave === "object" ? this.ext.cave : { drop: null, revealed: 0 }), CV = require("./relto-cave");
+    caveState(pool) {
+      const X = this.poolExt(pool), P = HV.pelletsOf(X), cv = (X.cave = X.cave && typeof X.cave === "object" ? X.cave : { drop: null, revealed: 0 }), CV = require("./relto-cave");
       if (cv.drop && Date.now() > cv.drop.at + CV.FALL_MS + CV.LIGHT_MS) { if (cv.drop.q === "amber" && !cv.drop.fed) { cv.colonies = (cv.colonies || 0) + (cv.drop.fine ? 2 : 1); cv.fedAt = cv.drop.at + CV.FALL_MS; require("./scope").logFeed(cv, cv.fedAt); } cv.drop = null; this.saveExt(); } /* un ambré nourrit le bassin, qu'on soit en bas ou non */
       const pick = cv.pick && P[cv.pick] > 0 ? cv.pick : P.white > 0 ? "white" : P.amber > 0 ? "amber" : P.grey > 0 ? "grey" : null;
       return { good: P.white, amber: P.amber, bad: P.grey, pick, drop: cv.drop, revealed: cv.revealed || 0, shut: !!cv.shut, colonies: cv.colonies || 0, fedAt: cv.fedAt || 0, slabs: cv.slabs || {}, fine: { ...(P.fine || {}) } }; /* le blanc : l'éclair ; l'ambré : le lac ; le gris : rien */
     }
     /** Choisir dans la niche la sorte de granulé que le bouton lâchera ("white", "amber", "grey"). */
-    cavePick(kind) { this.caveState(); if (["white", "amber", "grey"].includes(kind)) { this.ext.cave.pick = kind; this.saveExt(); } }
+    cavePick(kind, pool) { const X = this.poolExt(pool); this.caveState(pool); if (["white", "amber", "grey"].includes(kind)) { X.cave.pick = kind; this.saveExt(); } }
     /** La chaîne de la trappe : ferme ou rouvre la fente du plafond (la caverne retourne au noir). */
-    caveHatch() { this.caveState(); this.ext.cave.shut = !this.ext.cave.shut; this.saveExt(); }
+    caveHatch(pool) { const X = this.poolExt(pool); this.caveState(pool); X.cave.shut = !X.cave.shut; this.saveExt(); }
     /** Le bouton : lâche un granulé (un bon s'il y en a, sinon un gris). Renvoie sa qualité, ou null. */
-    caveDrop() {
-      const st = this.caveState(); if (st.drop) return null;
-      const P = HV.pelletsOf(this.ext), kind = st.pick; if (!kind) return null; const q = kind === "white" ? "good" : kind === "amber" ? "amber" : "bad";
+    caveDrop(pool) {
+      const X = this.poolExt(pool), st = this.caveState(pool); if (st.drop) return null;
+      const P = HV.pelletsOf(X), kind = st.pick; if (!kind) return null; const q = kind === "white" ? "good" : kind === "amber" ? "amber" : "bad";
       const fine = !!(P.fine && P.fine[kind] > 0); if (fine) P.fine[kind] -= 1; /* le bouton lâche d'abord le meilleur */
-      P[kind] -= 1; HV.pelletsOf(this.ext); this.ext.cave.drop = { at: Date.now(), q, fine, seen: false }; this.saveExt(); return q;
+      P[kind] -= 1; HV.pelletsOf(X); X.cave.drop = { at: Date.now(), q, fine, seen: false }; this.saveExt(); return q;
     }
     /** On était en bas quand la lueur est montée : une révélation de plus (l'étape 4c y lira le code). */
-    caveSeen() { const cv = this.ext.cave; if (!cv || !cv.drop || cv.drop.seen) return; cv.drop.seen = true; if (cv.drop.q === "amber") { cv.drop.fed = true; cv.colonies = (cv.colonies || 0) + (cv.drop.fine ? 2 : 1); cv.fedAt = Date.now(); require("./scope").logFeed(cv, cv.fedAt); } else cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); } /* l'ambré : une colonie de plus ; le blanc : une révélation */
+    caveSeen(pool) { const X = this.poolExt(pool), cv = X.cave; if (!cv || !cv.drop || cv.drop.seen) return; cv.drop.seen = true; if (cv.drop.q === "amber") { cv.drop.fed = true; cv.colonies = (cv.colonies || 0) + (cv.drop.fine ? 2 : 1); cv.fedAt = Date.now(); require("./scope").logFeed(cv, cv.fedAt); } else cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); } /* l'ambré : une colonie de plus ; le blanc : une révélation */
     /**
      * La dalle aux yeux (étape 4c) : tourner la pierre `i` d'un cran, sur la dalle du Relto `rel` ({ name, seed }). Il faut
      * l'avoir vue à la lumière (une révélation). Les six justes : elle s'ouvre et le reste. Renvoie "turn", "open" ou null.
      */
-    caveSlab(i, rel) {
-      const cv = (this.caveState(), this.ext.cave), FC = require("./fresco"); if (!(cv.revealed > 0) || !(i >= 0 && i < FC.CODE_LEN)) return null;
+    caveSlab(i, rel, pool) {
+      const X = this.poolExt(pool), cv = (this.caveState(pool), X.cave), FC = require("./fresco"); if (!(cv.revealed > 0) || !(i >= 0 && i < FC.CODE_LEN)) return null;
       const name = (rel && rel.name) || "Relto", seed = (rel && rel.seed) || 0, key = require("./telescope").keyOf(name, seed), slabs = (cv.slabs = cv.slabs && typeof cv.slabs === "object" ? cv.slabs : {});
       const s = (slabs[key] = slabs[key] && typeof slabs[key] === "object" ? slabs[key] : { turns: [0, 0, 0, 0, 0, 0] }); if (s.open) return null;
       s.turns = Array.from({ length: FC.CODE_LEN }, (_, k) => (s.turns && s.turns[k]) || 0); s.turns[i] = (s.turns[i] + 1) % FC.RING;
@@ -340,12 +361,16 @@ module.exports = function build(Base, core, AGEX) {
       this.saveExt(); return s.open ? "open" : "turn";
     }
     /** Le flacon du microscope : on le remplit au bassin ; il garde l'eau de ce jour-là (src/scope.js). Renvoie un message. */
-    caveSample() { this.caveState(); require("./scope").sample(this.ext.cave, Date.now()); this.saveExt(); return this.t ? this.t("cave.sampled") : "cave.sampled"; }
+    caveSample(pool) { const X = this.poolExt(pool); this.caveState(pool); require("./scope").sample(X.cave, Date.now()); this.saveExt(); return this.t ? this.t("cave.sampled") : "cave.sampled"; }
     /** Ce que lit le microscope : le flacon, et les granulés de l'étagère (pour les coupelles). */
-    scopeState() { const cv = this.ext.cave && typeof this.ext.cave === "object" ? this.ext.cave : {}; return { flask: cv.flask || null, pellets: HV.pelletsOf(this.ext) }; }
+    scopeState(pool) {
+      const X = this.poolExt(pool), cv = X.cave && typeof X.cave === "object" ? X.cave : {};
+      if (cv.flask && cv.flask.colonies > 0 && !cv.looked) { cv.looked = true; this.saveExt(); } /* une goutte vivante regardée (le chapitre 12) */
+      return { flask: cv.flask || null, pellets: HV.pelletsOf(X) };
+    }
     /** Les essais de la caverne (menu de la clé) : "reset" (le lac à zéro), "few" / "many" (des colonies nourries), "asleep" (oubliées depuis une semaine), "gorge" (trois ambrés dans l'heure), "flask" (remplir le flacon). */
     caveTest(v) {
-      const SC = require("./scope"), cv = (this.caveState(), this.ext.cave), now = Date.now(), t = (k) => (this.t ? this.t(k) : k);
+      const pool = this.lastPool(), X = this.poolExt(pool), SC = require("./scope"), cv = (this.caveState(pool), X.cave), now = Date.now(), t = (k) => (this.t ? this.t(k) : k);
       if (v === "reset") { cv.colonies = 0; cv.fedAt = 0; cv.feeds = []; cv.revealed = 0; cv.flask = null; cv.drop = null; cv.slabs = {}; }
       else if (v === "reveal") { cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.reveal"); }
       else if (v === "slab") { cv.slabs = {}; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.slab"); }

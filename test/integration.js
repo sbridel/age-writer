@@ -63,6 +63,18 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
   await p.onload();
   ok(p.ext && p.ext.panelFx === "classic", "réglages par défaut fusionnés");
   ok(p.ext.instrumentsMode === "easy", "instruments : mode facile par défaut");
+  { /* les deux réserves (section 19.2) : le bac à sable et chaque Relto histoire ont leur récolte, leur machine, leur caverne */
+    const SK = "histoire#7";
+    ok(p.poolExt(null) === p.ext && p.poolExt(SK) !== p.ext && p.poolExt(SK) === p.poolExt(SK), "réserves : le bac à sable est ext, un Relto histoire a la sienne");
+    p.ext.harvest = { stock: { ash: 3, humus: 0, silt: 0, peat: 0 } }; p.ovenAct("add", 0, null);
+    ok(p.ext.harvest.stock.ash === 2 && !(p.poolExt(SK).harvest && p.poolExt(SK).harvest.stock.ash), "une mesure versée au bac à sable ne touche pas la réserve de l'histoire");
+    p.ovenAct("empty", null, null);
+    p.caveState(SK); p.poolExt(SK).cave.revealed = 2; ok((p.caveState(null).revealed || 0) === 0 && p.caveState(SK).revealed === 2, "les révélations de l'histoire restent à l'histoire");
+    ok(p.poolOpen(null) && !p.poolOpen(SK), "dans un Relto histoire, la machine attend le chapitre 10");
+    p.ext.story = p.ext.story || {}; p.ext.story[SK] = { done: ["strange"] }; ok(p.poolOpen(SK), "la lettre du 9 reçue : la machine s'ouvre");
+    p._lastPool = SK; p.ovenTest("white"); ok(p.poolExt(SK).pellets.white === 5 && !(p.ext.pellets && p.ext.pellets.white >= 5), "les essais agissent sur la réserve du dernier Relto ouvert");
+    p._lastPool = null; delete p.ext.storyPools; delete p.ext.story[SK]; delete p.ext.harvest; delete p.ext.cave; delete p.ext.oven; delete p.ext.pellets;
+  }
   ok(["age-journal", "relto", "dni"].every((n) => p.procs[n]), "blocs relto / age-journal / dni enregistrés");
   ok(["open-relto", "create-relto-page", "create-exploration-journal", "save-age-cover", "stop-soundscape"].every((id) => p.cmds.some((c) => c.id === id)), "commandes enregistrées");
 
