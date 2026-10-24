@@ -36,7 +36,7 @@ const make = (pages, view, hour) => {
   const c = dom.window.document.createElement("canvas"), r = new ReltoRenderer(c, dni, { t: (k) => k });
   r.nowOverride = FIXED; r.setScene(sc); r.setHour(hour); r.view = view; return r;
 };
-const VIEWS = ["island", "global", "cabin", "atelier", "atelierback", "desk", "loft", "roundwindow", "flower", "vault", "imager", "telescope", "starmap", "clock", "calendar", "pond", "pondplus", "cat", "grove", "pillars"];
+const VIEWS = ["island", "global", "cabin", "atelier", "atelierback", "desk", "loft", "roundwindow", "flower", "vault", "hall", "imager", "telescope", "starmap", "clock", "calendar", "pond", "pondplus", "cat", "grove", "pillars"];
 const STATIONS = ["cry", "lens", "atmo"];
 const print = (glass, view, hour, station) => {
   const pages = [...BASE, ...ROOMS, ...(glass ? ["page_glasshouse"] : [])], r = make(pages, view, hour);
