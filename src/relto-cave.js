@@ -191,20 +191,6 @@ function traces(ctx, k, a, seenAt, t) {
   }
 }
 
-/** Les peintures de la paroi (premier jet, étape 4b ; l'étape 4c y racontera l'histoire du joueur) : mains, spirales, entailles, ocre. */
-function paintings(ctx, reveal, seed) {
-  const marks = Array.from({ length: 14 }, (_, i) => { const k = fnv(seed + "|p" + i); return { x: 40 + (k % 560), y: 40 + ((k >>> 9) % 190), kind: (k >>> 17) % 4, s: 0.8 + ((k >>> 21) % 6) / 10 }; });
-  for (const m of marks) {
-    const vis = clamp((reveal - (H - m.y)) / 40); if (vis <= 0) continue; /* la lueur monte : on voit d'abord le bas */
-    ctx.save(); ctx.translate(m.x, m.y); ctx.scale(m.s, m.s); ctx.globalAlpha = 0.75 * vis; ctx.strokeStyle = "#c0703a"; ctx.fillStyle = "#b5602e"; ctx.lineWidth = 2.2; ctx.lineCap = "round";
-    if (m.kind === 0) { ctx.beginPath(); ctx.ellipse(0, 0, 7, 9, 0, 0, TAU); ctx.fill(); for (let f = 0; f < 5; f++) { const a = -2.4 + f * 0.42; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 7, Math.sin(a) * 8); ctx.lineTo(Math.cos(a) * 16, Math.sin(a) * 18); ctx.stroke(); } }
-    else if (m.kind === 1) { ctx.beginPath(); for (let a = 0; a < TAU * 2.5; a += 0.2) { const rr = 1.6 * a; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.stroke(); }
-    else if (m.kind === 2) { for (let j = 0; j < 5; j++) { ctx.beginPath(); ctx.moveTo(j * 5 - 10, -8); ctx.lineTo(j * 5 - 9, 8); ctx.stroke(); } }
-    else { ctx.beginPath(); ctx.arc(0, 0, 10, Math.PI * 0.15, Math.PI * 1.25); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-14, 12); ctx.lineTo(0, -2); ctx.lineTo(14, 12); ctx.stroke(); }
-    ctx.restore();
-  }
-}
-
 function drawCaveBottom(r, ctx, sc, sky, t) {
   const tr = TR(r), st = stateOf(r), now = nowOf(r), ph = phaseOf(st.drop, now), seed = "cave";
   ctx.fillStyle = "#010203"; ctx.fillRect(0, 0, W, H);
@@ -225,13 +211,29 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
   } else if (ph && ph.kind === "fizz") {
     const fx = (r._caveFx = r._caveFx || {}); if (!fx[st.drop.at]) { fx[st.drop.at] = true; if (r.opts.onCaveSfx) r.opts.onCaveSfx("fizz"); }
   }
+  /* 4c : jusqu'où monte la lueur (une bande de plus par révélation), et ce que le lac éclaire sans elle (ses degrés) */
+  const FR = require("./relto-fresco"), FC = require("./fresco"), name = (r.scene && r.scene.name) || "Relto", rseed = (r.scene && r.scene.seed) || 0, key = require("./telescope").keyOf(name, rseed);
+  const revealed = st.revealed || 0, degree = FC.lakeDegree(st.colonies, st.fedAt, now), nFlash = lit > 0 ? Math.max(1, FC.bandsLit(revealed, degree, true)) : 0, nPerm = FC.bandsLit(revealed, degree, false);
+  if (lit > 0) reveal = Math.min(reveal, H - FR.BAND_Y(nFlash - 1) + 24 + (nFlash >= FC.BANDS ? 40 : 0));
+  const permA = degree >= 3 ? 0.62 : degree >= 2 ? 0.42 : 0;
+  if (permA > 0) { /* le lac vivant éclaire le bas de la paroi, sans éclair ; rendu à sa lumière, toute la caverne */
+    const top = degree >= 3 ? 0 : FR.BAND_Y(0) - 40, gp = ctx.createLinearGradient(0, H, 0, top); gp.addColorStop(0, rgba(60, 200, 140, 0.30 * permA)); gp.addColorStop(1, rgba(40, 140, 110, 0));
+    ctx.save(); ctx.beginPath(); ctx.rect(0, top, W, H - top); ctx.clip(); ctx.globalAlpha = permA * 0.8; walls(ctx, "#1b2a24", seed); ctx.restore(); ctx.fillStyle = gp; ctx.fillRect(0, top, W, H - top);
+  }
   if (lit > 0) {
     const g = ctx.createLinearGradient(0, H, 0, H - reveal); g.addColorStop(0, rgba(60, 220, 150, 0.55 * lit)); g.addColorStop(0.7, rgba(40, 160, 120, 0.25 * lit)); g.addColorStop(1, rgba(20, 90, 70, 0)); /* la paroi, dans la lueur des algues */
     ctx.save(); ctx.beginPath(); ctx.rect(0, H - reveal, W, reveal); ctx.clip(); ctx.globalAlpha = lit; walls(ctx, "#1b2a24", seed); ctx.restore(); /* la paroi n'apparaît que là où la lueur est montée */
     ctx.fillStyle = g; ctx.fillRect(0, H - reveal, W, reveal);
-    for (let i = 0; i < 9; i++) { const kk = fnv("bstrata" + i); ctx.strokeStyle = rgba(30, 60, 50, 0.4 * lit); ctx.lineWidth = 1; ctx.beginPath(); for (let x = 0; x <= W; x += 16) { const y = 30 + i * 28 + 6 * Math.sin(x / 60 + kk); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); }
+    ctx.save(); ctx.beginPath(); ctx.rect(0, H - reveal, W, reveal); ctx.clip(); for (let i = 0; i < 9; i++) { const kk = fnv("bstrata" + i); ctx.strokeStyle = rgba(30, 60, 50, 0.4 * lit); ctx.lineWidth = 1; ctx.beginPath(); for (let x = 0; x <= W; x += 16) { const y = 30 + i * 28 + 6 * Math.sin(x / 60 + kk); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); } ctx.restore();
     caveOre(r, ctx, (x, y) => (y > H - reveal ? lit * clamp((y - (H - reveal)) / 40) : 0), t, [0.8, 1.15, 0.95]); /* l'or, l'argent, les gemmes s'allument dans la lueur verte */
-    paintings(ctx, reveal, seed);
+  }
+  const reached = (y) => (lit > 0 ? lit * clamp((reveal - (H - y)) / 40) : 0);
+  const wonders = r.opts && typeof r.opts.wonders === "function" ? r.opts.wonders() || {} : {};
+  FR.drawFrescoes(ctx, FC.itemsOf((r.scene && r.scene.ages) || [], wonders), (b, y) => Math.max(b < nFlash ? reached(y) : 0, b < nPerm ? permA * 1.3 : 0), key); /* l'histoire du joueur, la plus récente près de l'eau ; tout en haut, les Bahro */
+  const slabTurns = ((st.slabs || {})[key] || {}).turns, slab = FC.slabOf(name, rseed, slabTurns), open = !!((st.slabs || {})[key] || {}).open;
+  FR.drawCartouche(ctx, slab.code, FC.glyphsFound(revealed), Math.max(reached(FR.CART.y + FR.CART.h), degree >= 3 && revealed > 0 ? 0.6 : 0), key); /* le code : tout ce qui est trouvé, à chaque éclair */
+  FR.drawSlab(r, ctx, { lit: reached(FR.SLAB.y), seen: revealed > 0, open, stones: slab.stones, turnAt: r.slabTurnAt }, now, t, tr);
+  if (lit > 0) {
     const seen = (y) => clamp((reveal - (H - y + 20)) / 50); /* la lueur doit les avoir atteintes */
     traces(ctx, ph.k, lit, seen, t); /* les Bahro : leurs ombres qui fuient, leurs mains encore humides ; jamais eux */
     const pg = ctx.createRadialGradient(320, 300, 4, 320, 300, 180); pg.addColorStop(0, rgba(170, 255, 210, 0.9 * lit)); pg.addColorStop(0.3, rgba(80, 230, 160, 0.4 * lit)); pg.addColorStop(1, rgba(40, 160, 120, 0)); ctx.fillStyle = pg; ctx.beginPath(); ctx.ellipse(320, 300, 175, 32, 0, 0, TAU); ctx.fill();

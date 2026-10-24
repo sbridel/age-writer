@@ -64,7 +64,7 @@ module.exports = function build(Base, core, AGEX) {
   /** La caverne, pour essayer (menu de la clé) : remettre le lac à zéro, des colonies, les endormir, les gaver ; chaque essai remplit le flacon. */
   class CaveTestModal extends FuzzySuggestModal {
     constructor(app, plugin) { super(app); this.plugin = plugin; }
-    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask"]; }
+    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask", "reveal", "lit", "slab"]; }
     getItemText(v) { const k = "cave.test." + v; return this.plugin.t(k); }
     onChooseItem(v) { const msg = this.plugin.caveTest(v); if (msg) new Notice(msg); }
   }
@@ -310,7 +310,7 @@ module.exports = function build(Base, core, AGEX) {
       const P = HV.pelletsOf(this.ext), cv = (this.ext.cave = this.ext.cave && typeof this.ext.cave === "object" ? this.ext.cave : { drop: null, revealed: 0 }), CV = require("./relto-cave");
       if (cv.drop && Date.now() > cv.drop.at + CV.FALL_MS + CV.LIGHT_MS) { if (cv.drop.q === "amber" && !cv.drop.fed) { cv.colonies = (cv.colonies || 0) + 1; cv.fedAt = cv.drop.at + CV.FALL_MS; require("./scope").logFeed(cv, cv.fedAt); } cv.drop = null; this.saveExt(); } /* un ambré nourrit le bassin, qu'on soit en bas ou non */
       const pick = cv.pick && P[cv.pick] > 0 ? cv.pick : P.white > 0 ? "white" : P.amber > 0 ? "amber" : P.grey > 0 ? "grey" : null;
-      return { good: P.white, amber: P.amber, bad: P.grey, pick, drop: cv.drop, revealed: cv.revealed || 0, shut: !!cv.shut, colonies: cv.colonies || 0, fedAt: cv.fedAt || 0 }; /* le blanc : l'éclair ; l'ambré : le lac ; le gris : rien */
+      return { good: P.white, amber: P.amber, bad: P.grey, pick, drop: cv.drop, revealed: cv.revealed || 0, shut: !!cv.shut, colonies: cv.colonies || 0, fedAt: cv.fedAt || 0, slabs: cv.slabs || {} }; /* le blanc : l'éclair ; l'ambré : le lac ; le gris : rien */
     }
     /** Choisir dans la niche la sorte de granulé que le bouton lâchera ("white", "amber", "grey"). */
     cavePick(kind) { this.caveState(); if (["white", "amber", "grey"].includes(kind)) { this.ext.cave.pick = kind; this.saveExt(); } }
@@ -324,6 +324,18 @@ module.exports = function build(Base, core, AGEX) {
     }
     /** On était en bas quand la lueur est montée : une révélation de plus (l'étape 4c y lira le code). */
     caveSeen() { const cv = this.ext.cave; if (!cv || !cv.drop || cv.drop.seen) return; cv.drop.seen = true; if (cv.drop.q === "amber") { cv.drop.fed = true; cv.colonies = (cv.colonies || 0) + 1; cv.fedAt = Date.now(); require("./scope").logFeed(cv, cv.fedAt); } else cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); } /* l'ambré : une colonie de plus ; le blanc : une révélation */
+    /**
+     * La dalle aux yeux (étape 4c) : tourner la pierre `i` d'un cran, sur la dalle du Relto `rel` ({ name, seed }). Il faut
+     * l'avoir vue à la lumière (une révélation). Les six justes : elle s'ouvre et le reste. Renvoie "turn", "open" ou null.
+     */
+    caveSlab(i, rel) {
+      const cv = (this.caveState(), this.ext.cave), FC = require("./fresco"); if (!(cv.revealed > 0) || !(i >= 0 && i < FC.CODE_LEN)) return null;
+      const name = (rel && rel.name) || "Relto", seed = (rel && rel.seed) || 0, key = require("./telescope").keyOf(name, seed), slabs = (cv.slabs = cv.slabs && typeof cv.slabs === "object" ? cv.slabs : {});
+      const s = (slabs[key] = slabs[key] && typeof slabs[key] === "object" ? slabs[key] : { turns: [0, 0, 0, 0, 0, 0] }); if (s.open) return null;
+      s.turns = Array.from({ length: FC.CODE_LEN }, (_, k) => (s.turns && s.turns[k]) || 0); s.turns[i] = (s.turns[i] + 1) % FC.RING;
+      if (FC.slabOf(name, seed, s.turns).right) { s.open = true; s.openedAt = Date.now(); }
+      this.saveExt(); return s.open ? "open" : "turn";
+    }
     /** Le flacon du microscope : on le remplit au bassin ; il garde l'eau de ce jour-là (src/scope.js). Renvoie un message. */
     caveSample() { this.caveState(); require("./scope").sample(this.ext.cave, Date.now()); this.saveExt(); return this.t ? this.t("cave.sampled") : "cave.sampled"; }
     /** Ce que lit le microscope : le flacon, et les granulés de l'étagère (pour les coupelles). */
@@ -331,7 +343,10 @@ module.exports = function build(Base, core, AGEX) {
     /** Les essais de la caverne (menu de la clé) : "reset" (le lac à zéro), "few" / "many" (des colonies nourries), "asleep" (oubliées depuis une semaine), "gorge" (trois ambrés dans l'heure), "flask" (remplir le flacon). */
     caveTest(v) {
       const SC = require("./scope"), cv = (this.caveState(), this.ext.cave), now = Date.now(), t = (k) => (this.t ? this.t(k) : k);
-      if (v === "reset") { cv.colonies = 0; cv.fedAt = 0; cv.feeds = []; cv.revealed = 0; cv.flask = null; cv.drop = null; }
+      if (v === "reset") { cv.colonies = 0; cv.fedAt = 0; cv.feeds = []; cv.revealed = 0; cv.flask = null; cv.drop = null; cv.slabs = {}; }
+      else if (v === "reveal") { cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.reveal"); }
+      else if (v === "slab") { cv.slabs = {}; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.slab"); }
+      else if (v === "lit") { if (!(cv.revealed > 0)) cv.revealed = 1; cv.drop = { at: now - require("./relto-cave").FALL_MS - 200, q: "good", seen: true }; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.lit"); }
       else if (v === "few" || v === "many") { cv.colonies = v === "few" ? 3 : 200; cv.fedAt = now - 3600000; cv.feeds = [now - 3600000]; }
       else if (v === "asleep") { if (!(cv.colonies > 0)) cv.colonies = 30; cv.fedAt = now - 7 * SC.DAY; cv.feeds = [cv.fedAt]; }
       else if (v === "gorge") { if (!(cv.colonies > 0)) cv.colonies = 12; for (let i = 3; i >= 1; i--) SC.logFeed(cv, now - i * 600000); cv.fedAt = now - 600000; }
