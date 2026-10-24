@@ -301,9 +301,8 @@ function drawStars(r, ctx, sc, sky, t) {
     /* la vasque, pendue à trois cordes sous la voûte, au-dessus du pilier : flamme bleu-violet */
     const vr = 7 + 5 * p.s, [vx, vy, fromLamp] = BOWLS[p.i], fk = flicker(p.i, t); /* fk : le vacillement de sa flamme */ /* elles pendent où elles veulent : ni au-dessus de leur pilier ni à la même hauteur */
     ctx.strokeStyle = rgba(120, 110, 95, 0.5); ctx.lineWidth = 0.8; for (const dx of [-vr * 0.9, 0, vr * 0.9]) { ctx.beginPath(); ctx.moveTo(fromLamp ? 320 + dx * 0.1 : vx + dx * 0.15, fromLamp ? 92 : 20); ctx.lineTo(vx + dx, vy - 2); ctx.stroke(); }
-    if (on) { const H1 = PAL.halo[0], H2 = PAL.halo[1], [F1, F2, F3] = PAL.flame, hr = vr * PAL.hr * (0.88 + 0.16 * fk), fg = ctx.createRadialGradient(vx, vy - 4, 1, vx, vy - 4, hr);
+    if (on) { const H1 = PAL.halo[0], H2 = PAL.halo[1], hr = vr * PAL.hr * (0.88 + 0.16 * fk), fg = ctx.createRadialGradient(vx, vy - 4, 1, vx, vy - 4, hr);
       fg.addColorStop(0, rgba(H1[0], H1[1], H1[2], PAL.ha * fk)); fg.addColorStop(0.5, rgba(H2[0], H2[1], H2[2], PAL.ha * 0.43 * fk)); fg.addColorStop(1, rgba(H2[0], H2[1], H2[2], 0)); ctx.fillStyle = fg; ctx.fillRect(vx - hr, vy - hr, hr * 2, hr * 2);
-      for (let k = 0; k < 3; k++) { const fl2 = Math.sin(t * 5 + k * 2 + p.i) * 0.2 * (0.6 + fk), C = [F1, F2, F3][k]; ctx.fillStyle = rgba(C[0], C[1], C[2], k === 2 ? 0.85 : 0.75); ctx.beginPath(); ctx.moveTo(vx - vr * (0.55 - k * 0.14), vy - 1); ctx.quadraticCurveTo(vx + fl2 * vr, vy - vr * (1.3 - k * 0.3) * (0.72 + 0.34 * fk), vx + vr * (0.55 - k * 0.14), vy - 1); ctx.closePath(); ctx.fill(); }
       /* la poussière : un nuage dense contre la vasque, qui s'étire, s'éclaircit et se dissout en tombant (pas une cascade) */
       const D = PAL.dust, D2 = PAL.dust2, fall = Math.min(120, Math.max(40, p.y - vy - 4 * p.s));
       for (let k = 0; k < 16; k++) { /* de grosses bouffées floues, très serrées près de la flamme, plus larges et plus pâles plus bas */
@@ -314,6 +313,13 @@ function drawStars(r, ctx, sc, sky, t) {
         const C = q("vd" + p.i + k) < PAL.d2 ? D2 : D; ctx.fillStyle = rgba(C[0], C[1], C[2], 0.95 * a); const gs = 1 + (k % 5 === 0 ? 0.9 : 0); ctx.fillRect(vx + spread + sway, vy + 4 + pp * fall, gs, gs); } }
     ctx.fillStyle = "#26262e"; ctx.beginPath(); ctx.ellipse(vx, vy, vr, vr * 0.32, 0, 0, Math.PI); ctx.quadraticCurveTo(vx, vy + vr * 1.1, vx + vr, vy); ctx.fill();
     ctx.fillStyle = on ? "#3a3a62" : "#202128"; ctx.beginPath(); ctx.ellipse(vx, vy, vr, vr * 0.3, 0, 0, TAU); ctx.fill();
+    if (on) { /* dans la vasque, plus de flamme : un nuage très dense et lumineux, qui gonfle et se déforme, plein de lumière en son cœur */
+      const [F1, F2, F3] = PAL.flame; ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.beginPath(); ctx.ellipse(vx, vy - vr * 0.05, vr * 0.98, vr * 0.5, 0, 0, TAU); ctx.clip(); /* le nuage reste dans la coupe : il ne déborde que par le haut, un peu */
+      const og = ctx.createRadialGradient(vx, vy, 1, vx, vy, vr); og.addColorStop(0, rgba(F2[0], F2[1], F2[2], 0.7 * fk)); og.addColorStop(1, rgba(F1[0], F1[1], F1[2], 0.1)); ctx.fillStyle = og; ctx.beginPath(); ctx.ellipse(vx, vy, vr * 0.96, vr * 0.3, 0, 0, TAU); ctx.fill(); /* l'ouverture de la vasque, pleine de lumière */
+      for (let k = 0; k < 10; k++) { const ph = t * (0.7 + (k % 3) * 0.25) + k * 1.9 + p.i, px = vx + Math.sin(ph) * vr * 0.42, py = vy - vr * (0.1 + (k % 4) * 0.13) + Math.cos(ph * 0.8) * vr * 0.08, rr = vr * (0.5 + (k % 4) * 0.13 + 0.06 * Math.sin(ph * 1.3)) * (0.88 + 0.16 * fk), C = k % 3 === 0 ? F3 : k % 3 === 1 ? F2 : F1;
+        const g = ctx.createRadialGradient(px, py, 0, px, py, rr); g.addColorStop(0, rgba(C[0], C[1], C[2], 0.38 * fk)); g.addColorStop(0.55, rgba(C[0], C[1], C[2], 0.14 * fk)); g.addColorStop(1, rgba(C[0], C[1], C[2], 0)); ctx.fillStyle = g; ctx.fillRect(px - rr, py - rr, rr * 2, rr * 2); }
+      const cg = ctx.createRadialGradient(vx, vy - vr * 0.12, 0, vx, vy - vr * 0.12, vr * 0.42); cg.addColorStop(0, rgba(F3[0], F3[1], F3[2], 0.5 * Math.min(1, fk))); cg.addColorStop(1, rgba(F3[0], F3[1], F3[2], 0)); ctx.fillStyle = cg; ctx.fillRect(vx - vr, vy - vr * 0.8, vr * 2, vr * 1.4); /* le cœur : presque blanc */
+      ctx.restore(); }
     r.hot.push({ x: vx - vr, y: vy - vr * 0.6, w: vr * 2, h: vr * 1.4, tip: on ? tr("stars.basin.lit") : tr("stars.basin") });
   }
   /* le vacillement : la lumière des vasques éclaire la salle d'une lueur qui bat (chaque flamme à son rythme) et qui joue sur la roche et les piliers */
