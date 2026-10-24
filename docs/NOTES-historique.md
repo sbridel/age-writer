@@ -699,6 +699,22 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 1.50.0 — sous l'île (24 oct. 2026)
+
+Note : `claude/DESIGN-reve-et-caverne-bahro.md` (projet), sections 11 à 21. ⚠ Spoilers de la caverne : rien de ceci dans README, CHANGELOG ni guide.
+- Couloir (`src/relto-hall.js`, vue `hall`) : on y recule depuis la cabane ou le salon (`backEdge`, zone basse élargie qui dépasse de l'image) ; porte de la forge au fond (murée avant la récolte, lueur quand ça cuit), fenêtre, patères, lanterne, bottes, miroir (reflète la fenêtre d'en face ; au Château, personne), banc ; trois habits.
+- Microscope (`src/scope.js`, `src/relto-scope.js`, vue `scope`) : flacon de prélèvement, oculaire, miettes ; `cv.looked`.
+- Fresques, cartouche et dalle (`src/fresco.js` pur, `src/relto-fresco.js`) : bandes de signes (le plus récent près de l'eau), degrés du lac (`lakeDegree`), code du Relto (`codeOf`), dalle à six pierres (`slabOf`, `ext.cave.slabs[clé]`).
+- Chambre du dessous (`src/relto-stars.js`, vues `stars` et `fissure`) : ouverture au degré 2 ; fosse étoilée, piliers gravés, vasques à nuage lumineux qui vacillent (`flicker`), poussière qui tombe, lustre, voûte irrégulière, trois ambiances (`PALS`, une par jour selon la graine) ; vue rapprochée en ouverture large.
+- 4d (`src/dream.js` pur, `src/relto-dream.js`, vue `dream`) : porte (`gate` : dalle ouverte, Âge verrouillé sur l'Imageur, un par Âge et par jour, `dreams[graine]` dans la réserve), tirages voisins (`altSeeds`), fautes mûries (`faultsIn`), possibles (`possiblesIn`), autre face des merveilles (`wondersIn`), guide (`ext.dreamGuide`, `guided`), panneau du réveil (`dreamWoke`, `dreamAdopt` : `addLine` / `removeLine` / `ext.wonders[id].face`).
+- Qualité des granulés (section 18) : mesures riches / pauvres (`harvest.richOf`, `stock` + `rich`), trémies qui versent d'abord leurs riches, `oven.colRich`, net = toutes riches ; plus de règle « pile sur les crans ».
+- Instruments (section 18.6) : `valueParts` / `dniTip` ; facile = valeur D'ni + nom + mode d'emploi ; Guilde = valeur D'ni seule ; carte d'infobulle au doigt en SVG D'ni (`onTip(text, parts)`).
+- Deux réserves (section 19.2) : `poolExt(pool)`, `ext.storyPools[clé]`, `storyPoolOfPath`, `poolOfAge` ; la machine attend le chapitre 10 dans un Relto histoire.
+- Mode histoire : second livre, chapitres 10 à 13 (`story.js` : conditions, indices du 10, lettres, récompenses or / argent / gemmes) ; `BOOK_ONE_END`, `bookOneDone`.
+- Château : le cellier descend par une trappe de pierre à anneau de fer (`stoneTrap`) au lieu de l'escalier de la crypte.
+- Essais : « Caverne : essais » (`caveTest` : reset, few, many, asleep, gorge, flask, reveal, lit, slab, dream).
+- Tests : `fresco.test.js`, `dream.test.js`, réserves et rêve dans `integration.js` ; empreintes régénérées.
+
 ## 1.49.0 — la machine et la caverne (24 oct. 2026)
 
 Note : `claude/DESIGN-reve-et-caverne-bahro.md` (projet), sections 1, 2, 3 et 10.

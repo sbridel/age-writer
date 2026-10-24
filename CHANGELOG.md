@@ -2,6 +2,21 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.50.0 — Beneath the island (2026-10-24)
+
+### Added
+- **The hallway**: from the main room or the lounge, the chevron at the bottom steps back into a narrow hallway. At its end, the door of the machine's room (walled up until the first harvest, a glow beneath it while something cooks); a window on the island's sky, coats and boots, a lantern, a mirror and a bench. In the Castle, the mirror reflects no one.
+- **The cave goes deeper.** What the light shows, and what a living lake opens, is left for you to find.
+- **The story goes on**: a second book of exploration chapters opens after the ninth chapter, with its letters and its rewards.
+- **Two reserves**: each story Relto keeps its own harvest, machine, pellets and cave, filled only by the Ages of its folder; ordinary Reltos share one.
+- Maintenance menu: **Cave: tests** (reset the lake, give colonies, let them sleep or gorge them, and a few more).
+
+### Changed
+- **Pellet quality comes from the ingredients**: a measure is rich if its Age was stable and healthy on the day it gave it, poor otherwise; you can see it in the hoppers and the mixing column. A batch made only of rich measures gives a clean pellet (a white light that lasts longer, an amber that leaves two colonies); one poor measure, and it is approximate. The sliders decide the kind, the press decides whether it sinks.
+- **Instrument tooltips**: in easy mode, the machine's sliders and press show their value in D'ni numerals, with what the setting does; with the Guild's Art, only the value, in D'ni numerals. On a phone, the tooltip card draws them too.
+- In the Castle, the way down from the cellar is a stone trapdoor with an iron ring.
+- The bottom chevron (step back) is larger and easier to aim at.
+
 ## 1.49.0 — The machine and the cave (2026-10-24)
 
 ### Added

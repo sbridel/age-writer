@@ -41,6 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); in short:
 
+- **1.50, beneath the island.** A hallway in the house, a deeper cave (left for you to find), a second book for the story, pellet quality that comes from the ingredients, and the machine's values in D'ni numerals.
 - **1.49, the machine and the cave.** Ages give ash, loam, silt or peat; a machine in a lean-to cooks them into pellets (recipes to find), and a cave opens under the island. The Glasshouse becomes opaque stained glass.
 - **1.48, two menus.** The ribbon has a book icon with the Age Writer menu, and a wrench for maintenance and tests (1.48.1: shown only with the “Maintenance tools” setting).
 - **1.47, Wonders** (1.47.1: names only). Seventeen wonders born of a union (breathing mirrors, the rings, the mosaic, the day aurora…), a chamber of memories where they float in glass orbs, and a tuning fork at the Imager to hear two skies together.

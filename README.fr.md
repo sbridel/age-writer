@@ -43,6 +43,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; en bref :
 
+- **1.50, sous l'île.** Un couloir dans la maison, une caverne plus profonde (à découvrir), un second livre pour l'histoire, la qualité des granulés qui vient des ingrédients, et les valeurs de la machine en chiffres D'ni.
 - **1.49, la machine et la caverne.** Les Âges donnent cendres, terreau, limon ou tourbe ; une machine, dans un appentis, les cuit en granulés (recettes à trouver), et une caverne s'ouvre sous l'île. La Verrière devient un vitrail opaque.
 - **1.48, deux menus.** Le ruban a une icône de livre avec le menu d'Age Writer, et une clé pour la maintenance et les essais (1.48.1 : seulement avec le réglage « Outils de maintenance »).
 - **1.47, les merveilles** (1.47.1 : des noms seulement). Dix-sept merveilles nées d'une union (les Miroirs qui respirent, les Cernes, la Mosaïque, l'Aurore de jour…), une chambre des souvenirs où elles flottent dans des orbes de verre, et un diapason à l'Imageur pour entendre deux ciels ensemble.
