@@ -3,7 +3,7 @@
  * La caverne Bahro, sous le Relto (claude/DESIGN-reve-et-caverne-bahro.md, étape 4b ; modèle : la grotte aux granulés
  * d'Uru, The Path of the Shell). Deux niveaux, tout dessiné ici (aucun asset) :
  * - **le haut** (`cavetop`) : une salle sèche, à peine éclairée d'en haut ; un trou au centre ; l'étagère où s'accumulent
- *   les granulés cuits par les Âges (src/pellets.js), comptés en entailles ; un bouton de pierre qui en lâche un ; une
+ *   les granulés donnés par les Âges (src/pellets.js), comptés en entailles ; un bouton de pierre qui en lâche un ; une
  *   faille vers le bas ;
  * - **le bas** (`cavebottom`) : le noir complet, un bassin. Le granulé tombe pendant FALL_MS ; s'il est bon et qu'on est
  *   en bas quand il touche l'eau, la lueur des algues monte le long des parois pendant LIGHT_MS et révèle les peintures,

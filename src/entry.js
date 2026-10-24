@@ -127,7 +127,7 @@ module.exports = function build(Base, core, AGEX) {
           return fissureStrain(out, op);
         }) || out;
         if (o && o.seed && !o.probe) guard("statut", () => this.statusWatch(key, out.stability));
-        if (srcText && o && o.seed) out = guard("granulés", () => { /* un Âge qui nourrit bien son granulé en cuit un par jour pour le Relto (lu, pas un essai) */
+        if (srcText && o && o.seed) out = guard("granulés", () => { /* un Âge qui nourrit bien son granulé en donne un par jour pour le Relto (lu, pas un essai) */
           const amt = parseAmounts(srcText), q = PEL.qualityOf(PH.idsOfAnalysis(out), (id) => factorOf(id, amt)); if (!q) return out;
           if (!o.probe && PEL.cook(this.ext, key, q, this.law.now())) this.saveExt();
           return { ...out, pellet: { quality: q, today: !!PEL.cookedToday(this.ext, key, q, this.law.now()) } };

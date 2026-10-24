@@ -3,7 +3,7 @@
  * Les granulés pour la caverne (claude/DESIGN-reve-et-caverne-bahro.md, étape 4a). Pur.
  *
  * Deux usages du même granulé, bien séparés : le bloc `pellet` écrit dans un Âge nourrit sa vie (src/life.js : « le
- * granulé se dissout lentement et nourrit ce qui pousse autour ») ; et un Âge qui le nourrit bien **en cuit un de plus,
+ * granulé se dissout lentement et nourrit ce qui pousse autour ») ; et un Âge qui le nourrit bien **en donne un de plus,
  * par jour, pour le Relto** : celui qu'on lâchera dans le puits de la caverne.
  *
  * La recette, c'est l'Âge (les proportions de Noloben deviennent celles du sol) : un granulé est **bon** quand quelque
@@ -14,11 +14,11 @@
 const LF = require("./life");
 const DAY = 86400000;
 
-/** La qualité du granulé qu'un Âge cuit : "good", "bad" ou null. `present` : ses blocs ; `factor(id)` : la quantité écrite (1 par défaut). */
+/** La qualité du granulé qu'un Âge donne : "good", "bad" ou null. `present` : ses blocs ; `factor(id)` : la quantité écrite (1 par défaut). */
 function qualityOf(present, factor = () => 1) {
   if (!present || !present.has("pellet")) return null;
   if (!LF.ROLES.producer.some((id) => present.has(id))) return null; /* rien ne pousse : le granulé ne se dissout pas */
-  if (factor("pellet") > 1) return "bad"; /* trop dosé : il brûle les racines, et le granulé qu'il cuit est raté */
+  if (factor("pellet") > 1) return "bad"; /* trop dosé : il brûle les racines, et le granulé qu'il donne est raté */
   const soils = Object.keys(LF.SOIL).filter((id) => present.has(id)); if (!soils.length) return null;
   const sum = soils.reduce((a, id) => ({ sol: a.sol + LF.SOIL[id].sol, fer: a.fer + LF.SOIL[id].fer, hum: a.hum + LF.SOIL[id].hum }), { sol: 0, fer: 0, hum: 0 });
   const v = [sum.sol, sum.fer, sum.hum], lo = Math.min(...v), hi = Math.max(...v);
@@ -33,8 +33,8 @@ function stateOf(ext) {
 }
 
 /**
- * Un Âge est lu (pas un essai) : s'il cuit un granulé et n'en a pas déjà cuit aujourd'hui, il va sur l'étagère.
- * Renvoie "good", "bad" ou null (rien de neuf aujourd'hui). Jamais rétroactif : un jour sans lecture ne cuit rien.
+ * Un Âge est lu (pas un essai) : s'il donne un granulé et n'en a pas déjà donné aujourd'hui, il va sur l'étagère.
+ * Renvoie "good", "bad" ou null (rien de neuf aujourd'hui). Jamais rétroactif : un jour sans lecture ne donne rien.
  */
 function cook(ext, age, quality, now) {
   if (!quality || !age) return null;
@@ -43,7 +43,7 @@ function cook(ext, age, quality, now) {
   st.last[age] = day; st[quality] = (st[quality] || 0) + 1;
   return quality;
 }
-/** A-t-il cuit aujourd'hui ? (la ligne de l'onglet Détails) "good", "bad" ou null. */
+/** En a-t-il donné un aujourd'hui ? (la ligne de l'onglet Détails) "good", "bad" ou null. */
 function cookedToday(ext, age, quality, now) { const st = ext && ext.pellets; return st && st.last && st.last[age] === Math.floor(now / DAY) ? quality : null; }
 
 module.exports = { qualityOf, stateOf, cook, cookedToday, DAY };
