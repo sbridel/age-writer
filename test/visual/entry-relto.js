@@ -4,6 +4,8 @@ const { Dni } = require("./dni");
 const M = require("./relto-model");
 const { ReltoRenderer } = require("./relto-render");
 /* la machine du Relto, à quelques moments (src/relto-oven.js) */
+const SCOPE_T = Date.UTC(2026, 9, 24, 15), SCOPE_PEL = { white: 2, amber: 5, grey: 1 };
+const FLASK = (colonies, daysAgo, burst) => ({ flask: { at: SCOPE_T, colonies, fedAt: colonies ? SCOPE_T - daysAgo * 86400000 : 0, burst: !!burst }, pellets: SCOPE_PEL });
 const OVEN_SET = { levers: [2, 0, 1, 0], column: ["ash", "silt", "ash"], time: 40, temp: 20, press: 44 }, OVEN_RUN = { ...OVEN_SET, column: [] }, OVEN_STOCK = { ash: 7, humus: 3, silt: 2, peat: 5 }, OVEN_SHELF = { white: 4, amber: 2, grey: 1 };
 const OVEN_STATES = {
   set: { oven: OVEN_SET, phase: null, stock: OVEN_STOCK, pellets: OVEN_SHELF },
@@ -42,6 +44,17 @@ function renderMany(host, ages) {
     { h: 21, t: 3.1, env: {}, pages: [], view: "cavebottom", now: 1800000000000, cave: { good: 6, bad: 2, drop: { at: 1799999938800, q: "good" } }, label: "CAVE bottom / the glow rising" },
     { h: 21, t: 3.1, env: {}, pages: [], view: "cavebottom", now: 1800000000000, cave: { good: 6, bad: 1, drop: { at: 1799999937000, q: "bad" } }, label: "CAVE bottom / a grey pellet floats and fumes" },
     { h: 21, t: 3.1, env: {}, pages: [], view: "vault", label: "VAULT / the cellar under the trapdoor" },
+    { h: 14, t: 3.1, env: {}, pages: ["page_atelier"], view: "desk", oven: "set", scope: FLASK(40, 0.5), label: "DESK day / the microscope left of the lamp, its flask full" },
+    { h: 23, t: 3.1, env: {}, pages: ["page_atelier", "page_castle"], view: "desk", oven: "set", scope: { flask: null, pellets: SCOPE_PEL }, label: "DESK castle night / the microscope, the flask empty" },
+    { h: 14, t: 3.1, env: {}, pages: ["page_atelier"], view: "scope", oven: "set", scope: { flask: null, pellets: {} }, label: "SCOPE / no flask: a dry slide, empty dishes" },
+    { h: 14, t: 3.1, env: {}, pages: ["page_atelier"], view: "scope", oven: "set", scope: FLASK(0, 0), label: "SCOPE / an empty drop" },
+    { h: 14, t: 3.1, env: {}, pages: ["page_atelier"], view: "scope", oven: "set", scope: FLASK(4, 0.5), label: "SCOPE / a few cells, fed this morning: they divide" },
+    { h: 14, t: 3.1, env: {}, pages: ["page_atelier"], view: "scope", oven: "set", scope: FLASK(200, 0.5), label: "SCOPE / the field teems" },
+    { h: 14, t: 3.1, env: {}, pages: ["page_atelier"], view: "scope", oven: "set", scope: FLASK(30, 7), label: "SCOPE / forgotten for a week: embers" },
+    { h: 14, t: 3.1, env: {}, pages: ["page_atelier"], view: "scope", oven: "set", scope: FLASK(30, 0.05, true), label: "SCOPE / gorged: burst in a volley" },
+    { h: 14, t: 3.1, env: {}, pages: ["page_atelier"], view: "scope", oven: "set", scope: FLASK(12, 1), crumb: ["amber", 5], label: "SCOPE / an amber crumb: they eat and divide" },
+    { h: 14, t: 3.1, env: {}, pages: ["page_atelier"], view: "scope", oven: "set", scope: FLASK(12, 1), crumb: ["white", 0.5], label: "SCOPE / a white crumb: the flash" },
+    { h: 14, t: 3.1, env: {}, pages: ["page_atelier"], view: "scope", oven: "set", scope: FLASK(12, 1), crumb: ["grey", 4], label: "SCOPE / a grey crumb: they curl up" },
     { h: 14, t: 3.1, env: {}, pages: [], view: "hall", label: "HALL day / before the first harvest: the bricked-up arch" },
     { h: 14, t: 3.1, env: {}, pages: [], view: "hall", oven: "set", label: "HALL day / the forge door at the end" },
     { h: 23, t: 3.1, env: {}, pages: [], view: "hall", oven: "cook", label: "HALL night / it is cooking: the glow under the door" },
@@ -147,7 +160,7 @@ function renderMany(host, ages) {
     if (v.oven) scene.structures = [...scene.structures, "oven"]; /* the machine lean-to */
     const c = document.createElement("canvas"); const d = document.createElement("div"); d.textContent = v.label; host.appendChild(d); host.appendChild(c);
     c.style.width = "640px"; document.body.appendChild(host);
-    const r = new ReltoRenderer(c, dni, { tipDelay: 0, ...(v.oven ? { ovenState: () => OVEN_STATES[v.oven] } : {}), ...(v.cave ? { caveState: () => v.cave } : {}), ...(v.two ? { onTwoVoices: () => {} } : {}), ...(v.wonders ? { wonders: () => v.wonders } : {}), ...(v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}) }); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view; if (v.memSel) r.memSel = v.memSel; if (v.two) r.twoLine = { text: v.two, at: Date.now() }; if (v.tap) r.tapOn = true;
+    const r = new ReltoRenderer(c, dni, { tipDelay: 0, ...(v.oven ? { ovenState: () => OVEN_STATES[v.oven] } : {}), ...(v.cave ? { caveState: () => v.cave } : {}), ...(v.scope ? { scopeState: () => v.scope } : {}), ...(v.two ? { onTwoVoices: () => {} } : {}), ...(v.wonders ? { wonders: () => v.wonders } : {}), ...(v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}) }); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view; if (v.memSel) r.memSel = v.memSel; if (v.two) r.twoLine = { text: v.two, at: Date.now() }; if (v.tap) r.tapOn = true; if (v.crumb) { r.nowOverride = SCOPE_T; r.scopeCrumb = { kind: v.crumb[0], at: SCOPE_T - v.crumb[1] * 1000 }; } else if (v.scope) r.nowOverride = SCOPE_T;
     if (v.now) { const DC = require("./dniclock"); if (v.now === "tahvo+1s") { const ms = 1791591000000, tv = DC.rings(ms).find((q) => q.key === "tahvo"); r.nowOverride = ms - tv.elapsed + 1000; } else r.nowOverride = v.now; } // l'horloge D'ni à un instant fixe
     if (v.ghost) ghostView(r); else if (v.unwritten) unwrittenView(r, v.unwritten);
     if (v.step2) step2(r, v.step2);

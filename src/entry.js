@@ -61,6 +61,14 @@ module.exports = function build(Base, core, AGEX) {
     onChooseItem(v) { const msg = this.plugin.ovenTest(v); if (msg) new Notice(msg); }
   }
 
+  /** La caverne, pour essayer (menu de la clé) : remettre le lac à zéro, des colonies, les endormir, les gaver ; chaque essai remplit le flacon. */
+  class CaveTestModal extends FuzzySuggestModal {
+    constructor(app, plugin) { super(app); this.plugin = plugin; }
+    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask"]; }
+    getItemText(v) { const k = "cave.test." + v; return this.plugin.t(k); }
+    onChooseItem(v) { const msg = this.plugin.caveTest(v); if (msg) new Notice(msg); }
+  }
+
   /** Le nom d'origine d'un Âge renommé : les noms gravés à l'observatoire qui ne sont plus ceux d'une note, ou ce qu'on tape (classe créée à la demande). */
   const formerNameModal = (app, cands, placeholder, onChoose) => {
     class FormerNameModal extends obsidian.SuggestModal {
@@ -300,7 +308,7 @@ module.exports = function build(Base, core, AGEX) {
     /** La caverne Bahro (src/relto-cave.js) : les granulés de l'étagère, le granulé qui tombe ; un granulé perdu (personne en bas) s'en va sans bruit. */
     caveState() {
       const P = HV.pelletsOf(this.ext), cv = (this.ext.cave = this.ext.cave && typeof this.ext.cave === "object" ? this.ext.cave : { drop: null, revealed: 0 }), CV = require("./relto-cave");
-      if (cv.drop && Date.now() > cv.drop.at + CV.FALL_MS + CV.LIGHT_MS) { if (cv.drop.q === "amber" && !cv.drop.fed) { cv.colonies = (cv.colonies || 0) + 1; cv.fedAt = cv.drop.at + CV.FALL_MS; } cv.drop = null; this.saveExt(); } /* un ambré nourrit le bassin, qu'on soit en bas ou non */
+      if (cv.drop && Date.now() > cv.drop.at + CV.FALL_MS + CV.LIGHT_MS) { if (cv.drop.q === "amber" && !cv.drop.fed) { cv.colonies = (cv.colonies || 0) + 1; cv.fedAt = cv.drop.at + CV.FALL_MS; require("./scope").logFeed(cv, cv.fedAt); } cv.drop = null; this.saveExt(); } /* un ambré nourrit le bassin, qu'on soit en bas ou non */
       const pick = cv.pick && P[cv.pick] > 0 ? cv.pick : P.white > 0 ? "white" : P.amber > 0 ? "amber" : P.grey > 0 ? "grey" : null;
       return { good: P.white, amber: P.amber, bad: P.grey, pick, drop: cv.drop, revealed: cv.revealed || 0, shut: !!cv.shut, colonies: cv.colonies || 0, fedAt: cv.fedAt || 0 }; /* le blanc : l'éclair ; l'ambré : le lac ; le gris : rien */
     }
@@ -315,7 +323,22 @@ module.exports = function build(Base, core, AGEX) {
       P[kind] -= 1; this.ext.cave.drop = { at: Date.now(), q, seen: false }; this.saveExt(); return q;
     }
     /** On était en bas quand la lueur est montée : une révélation de plus (l'étape 4c y lira le code). */
-    caveSeen() { const cv = this.ext.cave; if (!cv || !cv.drop || cv.drop.seen) return; cv.drop.seen = true; if (cv.drop.q === "amber") { cv.drop.fed = true; cv.colonies = (cv.colonies || 0) + 1; cv.fedAt = Date.now(); } else cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); } /* l'ambré : une colonie de plus ; le blanc : une révélation */
+    caveSeen() { const cv = this.ext.cave; if (!cv || !cv.drop || cv.drop.seen) return; cv.drop.seen = true; if (cv.drop.q === "amber") { cv.drop.fed = true; cv.colonies = (cv.colonies || 0) + 1; cv.fedAt = Date.now(); require("./scope").logFeed(cv, cv.fedAt); } else cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); } /* l'ambré : une colonie de plus ; le blanc : une révélation */
+    /** Le flacon du microscope : on le remplit au bassin ; il garde l'eau de ce jour-là (src/scope.js). Renvoie un message. */
+    caveSample() { this.caveState(); require("./scope").sample(this.ext.cave, Date.now()); this.saveExt(); return this.t ? this.t("cave.sampled") : "cave.sampled"; }
+    /** Ce que lit le microscope : le flacon, et les granulés de l'étagère (pour les coupelles). */
+    scopeState() { const cv = this.ext.cave && typeof this.ext.cave === "object" ? this.ext.cave : {}; return { flask: cv.flask || null, pellets: HV.pelletsOf(this.ext) }; }
+    /** Les essais de la caverne (menu de la clé) : "reset" (le lac à zéro), "few" / "many" (des colonies nourries), "asleep" (oubliées depuis une semaine), "gorge" (trois ambrés dans l'heure), "flask" (remplir le flacon). */
+    caveTest(v) {
+      const SC = require("./scope"), cv = (this.caveState(), this.ext.cave), now = Date.now(), t = (k) => (this.t ? this.t(k) : k);
+      if (v === "reset") { cv.colonies = 0; cv.fedAt = 0; cv.feeds = []; cv.revealed = 0; cv.flask = null; cv.drop = null; }
+      else if (v === "few" || v === "many") { cv.colonies = v === "few" ? 3 : 200; cv.fedAt = now - 3600000; cv.feeds = [now - 3600000]; }
+      else if (v === "asleep") { if (!(cv.colonies > 0)) cv.colonies = 30; cv.fedAt = now - 7 * SC.DAY; cv.feeds = [cv.fedAt]; }
+      else if (v === "gorge") { if (!(cv.colonies > 0)) cv.colonies = 12; for (let i = 3; i >= 1; i--) SC.logFeed(cv, now - i * 600000); cv.fedAt = now - 600000; }
+      if (v !== "reset") SC.sample(cv, now);
+      this.saveExt();
+      const k = "cave.test." + v; return t("oven.test.done") + " " + t(k);
+    }
     /** La chambre des souvenirs : chaque merveille vue une fois (nouée ou écrite) y entre, avec l'Âge et la date ; rien ne s'en efface. */
     seeWonders(seed, r) {
       const ids = CAT.wondersOf(r); if (!ids.length) return;
@@ -645,6 +668,7 @@ module.exports = function build(Base, core, AGEX) {
       this.addCommand({ id: "open-relto-book", name: "Open the Relto book", callback: () => RBK.openReltoBook(this) });
       this.addCommand({ id: "toggle-relto-ribbon", name: "Relto button: switch between the Relto book and the last Relto visited", callback: () => RBK.toggleRibbon(this) });
       this.addCommand({ id: "memories-clear", name: this.t("mem.clear.cmd"), callback: () => this.forgetWonders(null, (ok) => { if (ok) this.refreshLive(); }) });
+      this.addCommand({ id: "cave-test", name: this.t("cave.test.cmd"), callback: () => new CaveTestModal(this.app, this).open() }); /* le lac, pour essayer le microscope sans attendre des jours */
       this.addCommand({ id: "oven-test", name: this.t("oven.test.cmd"), callback: () => new OvenTestModal(this.app, this).open() }); /* pour essayer la machine et la caverne sans attendre les récoltes */
       this.addCommand({ id: "mutation-advance", name: this.t("mut.test.cmd"), callback: () => this.advanceMutation() }); /* pour essayer : quatre jours de pression d'un coup sur l'Âge ouvert */
       this.addCommand({ id: "dni-numerals-report", name: "D'ni numerals: diagnostic report", callback: () => { const r = this.dni ? this.dni.report() : "no numerals module"; console.log("[Age Writer] D'ni numerals\n" + r); new Notice(r, 15000); } });
