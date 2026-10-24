@@ -231,6 +231,12 @@ function leanTo(r, ctx, col, sky, t, hx) {
     /* une petite demi-coupole contre la cabane, sur un socle : un mur bas de mosaïque sombre, puis le verre (vert d'eau
        foncé, nervures de cuivre en éventail) à travers lequel on devine la machine ; porte en ogive ambrée */
     const GL = require("./relto-glass"), rx = x1 - x0, ry = 17, cy = GY - 10 /* sa coupole reste sous la corniche de la Verrière */;
+    /* un tuyau de poêle fin, en cuivre, qui monte de derrière la coupole, contre le mur : il dépasse, se coude, un petit chapeau */
+    const px = x1 - 6, ptop = cy - ry - 9;
+    ctx.strokeStyle = col("#8a4a22"); ctx.lineWidth = 2.4; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(px, cy); ctx.lineTo(px, ptop); ctx.quadraticCurveTo(px, ptop - 3, px - 3, ptop - 4); ctx.lineTo(px - 6, ptop - 5); ctx.stroke();
+    ctx.strokeStyle = col(GL.COPPER_HI); ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(px - 0.6, cy - ry); ctx.lineTo(px - 0.6, ptop); ctx.stroke(); ctx.lineCap = "butt";
+    ctx.fillStyle = col(GL.COPPER); ctx.fillRect(px - 1.8, cy - ry - 4, 3.6, 1); ctx.beginPath(); ctx.moveTo(px - 10, ptop - 6); ctx.lineTo(px - 6, ptop - 9); ctx.lineTo(px - 2, ptop - 6); ctx.closePath(); ctx.fill();
+    const pipeAt = [px - 6, ptop - 10];
     ctx.save(); ctx.beginPath(); ctx.moveTo(x1, cy); ctx.ellipse(x1, cy, rx, ry, 0, Math.PI, 1.5 * Math.PI); ctx.closePath(); ctx.clip();
     GL.frostedDome(ctx, col, x0, cy - ry, x1, cy, night * (cooking ? 1 : 0.6), 3); /* le même verre dépoli que la coupole */
     ctx.fillStyle = rgba(8, 24, 22, 0.55); for (let i = 0; i < 3; i++) { const hx0 = x0 + 10 + i * 6; ctx.beginPath(); ctx.moveTo(hx0 - 2.5, cy - 12); ctx.lineTo(hx0 + 2.5, cy - 12); ctx.lineTo(hx0 + 0.8, cy - 6); ctx.lineTo(hx0 - 0.8, cy - 6); ctx.closePath(); ctx.fill(); } /* les trémies, en ombre derrière le verre */
@@ -246,12 +252,7 @@ function leanTo(r, ctx, col, sky, t, hx) {
     ctx.fillStyle = col(GL.COPPER); ctx.fillRect(x0 - 1, cy - 1, rx + 1, 1.6);
     ctx.fillStyle = cooking ? mix(col("#c98a32"), "#ffb14a", 0.4 + 0.5 * night) : col("#a8702a"); GL.ogive(ctx, x0 + 7, x0 + 16, GY - 15, GY); ctx.fill(); ctx.strokeStyle = col(GL.COPPER); ctx.lineWidth = 0.8; GL.ogive(ctx, x0 + 7, x0 + 16, GY - 15, GY); ctx.stroke();
     ctx.fillStyle = col(GL.COPPER); ctx.fillRect(x1 - 1.5, cy - ry, 2.5, GY - (cy - ry)); /* le pilier qui la porte contre la cabane */
-    /* un tuyau de poêle fin, en cuivre, coudé, avec un petit chapeau : il sort de la coupole et la fumée en sort */
-    const px = x0 + rx * 0.42, py = cy - ry * Math.sqrt(1 - Math.pow(1 - 0.42, 2)) + 1.5;
-    ctx.strokeStyle = col("#8a4a22"); ctx.lineWidth = 2.4; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py - 8); ctx.quadraticCurveTo(px, py - 11, px - 3, py - 12); ctx.lineTo(px - 6, py - 13); ctx.stroke();
-    ctx.strokeStyle = col(GL.COPPER_HI); ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(px - 0.6, py); ctx.lineTo(px - 0.6, py - 8); ctx.stroke(); ctx.lineCap = "butt";
-    ctx.fillStyle = col(GL.COPPER); ctx.fillRect(px - 1.8, py - 4, 3.6, 1); ctx.beginPath(); ctx.moveTo(px - 10, py - 14); ctx.lineTo(px - 6, py - 17); ctx.lineTo(px - 2, py - 14); ctx.closePath(); ctx.fill();
-    vent = [px - 6, py - 18];
+    vent = pipeAt; /* le tuyau, dessiné derrière la coupole (plus haut) */
   } else {
     ctx.fillStyle = col("#6e665c"); ctx.beginPath(); ctx.moveTo(x0, GY); ctx.lineTo(x0, low); ctx.lineTo(x1, top); ctx.lineTo(x1, GY); ctx.closePath(); ctx.fill();
     const rr = rng(3); for (let row = 0; row < 4; row++) for (let i = 0; i < 4; i++) { ctx.fillStyle = col(mix("#625b52", "#8a8278", rr())); ctx.fillRect(x0 + 1 + i * 8 + (row % 2) * 3, GY - 20 + row * 5, 7, 4); }
