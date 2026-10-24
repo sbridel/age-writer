@@ -127,8 +127,7 @@ function drawVault(r, ctx, sc, sky, t) {
       r.hot.push({ x: bx, y: by, w: sw - 1, h: bh, tip: a.name, go: "descbook", arg: a.path });
     });
     const first = grp[0].name, last = grp[grp.length - 1].name, abbr = (n) => (n.length > 7 ? n.slice(0, 6) + "…" : n), label = grp.length === 1 ? abbr(first) : `${abbr(first)} – ${abbr(last)}`;
-    ctx.fillStyle = c("#3a3326"); ctx.fillRect(nx, ny + NH + 4, NW, 12); ctx.fillStyle = c("#e0d4b0"); ctx.font = "8px serif"; ctx.textAlign = "center";
-    let lab = label; while (lab.length > 3 && ctx.measureText(lab).width > NW - 4) lab = lab.slice(0, -2); ctx.fillText(lab, nx + NW / 2, ny + NH + 13); ctx.textAlign = "left";
+    void label; /* plus de nom écrit sous la niche (il cassait l'ambiance) : chaque livre le dit dans son infobulle */
   });
   if (!list.length) { ctx.fillStyle = rgba(230, 220, 190, 0.5); ctx.font = "italic 13px serif"; ctx.textAlign = "center"; ctx.fillText(tr("vault.empty"), W / 2, 110); ctx.textAlign = "left"; }
   // le pupitre central et le livre vierge

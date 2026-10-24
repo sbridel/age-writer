@@ -15,6 +15,7 @@ function renderMany(host, ages) {
   host = host || document.body;
   const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
   const variants = [
+    { h: 21, t: 3.1, env: {}, pages: ["page_glasshouse"], view: "vault", label: "VAULT glasshouse / the bronze trapdoor" },
     { h: 13, t: 3.1, env: {}, pages: [], view: "cavetop", now: 1800000000000, cave: { good: 7, bad: 2, drop: null, shut: true }, label: "CAVE top / the hatch shut" },
     { h: 14, t: 3.1, env: {}, pages: [], oven: "cook", label: "ISLAND oven day / the lean-to against the cabin, its chimney smoking" },
     { h: 23, t: 3.1, env: {}, pages: ["page_castle"], oven: "cook", label: "ISLAND oven castle night / the forge against the chapel" },
