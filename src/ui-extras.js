@@ -191,6 +191,7 @@ function renderPhysics(plugin, box, analysis, { src, path, skyBox }) {
   } catch (e) { /* pas de notes */ }
   try { renderStarNote(plugin, cols, { src, analysis, path }); } catch (e) { console.warn("[Age Writer ext] étoile", e); }
   const skyFilled = !!(skyBox && cols.childElementCount);
+  if (analysis.pellet && analysis.pellet.today) whyHost.createDiv({ cls: "age-det__note age-det__pellet", text: analysis.pellet.quality === "good" ? t("pel.good") : t("pel.bad") }); /* le granulé du jour, pour la caverne */
   if (sh.facts.length) {
     heading(whyHost, t("det.why")).addClass("age-det__h--sub");
     const ul = whyHost.createEl("ul", { cls: "age-det__facts" });

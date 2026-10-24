@@ -16,7 +16,8 @@ const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
 const { sceneOf, HOOKS: GEN_HOOKS } = require("./genscene");
 const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, parseSky } = require("./sky");
-const { AMOUNT_RE, parseAmounts, applyAmounts } = require("./amounts");
+const { AMOUNT_RE, parseAmounts, applyAmounts, factorOf } = require("./amounts");
+const PEL = require("./pellets"); /* les granulés pour la caverne (étape 4a) */
 const { rollLink } = fx;
 const { makeT } = require("./i18n");
 const { AgeIndex } = require("./index");
@@ -126,6 +127,11 @@ module.exports = function build(Base, core, AGEX) {
           return fissureStrain(out, op);
         }) || out;
         if (o && o.seed && !o.probe) guard("statut", () => this.statusWatch(key, out.stability));
+        if (srcText && o && o.seed) out = guard("granulés", () => { /* un Âge qui nourrit bien son granulé en cuit un par jour pour le Relto (lu, pas un essai) */
+          const amt = parseAmounts(srcText), q = PEL.qualityOf(PH.idsOfAnalysis(out), (id) => factorOf(id, amt)); if (!q) return out;
+          if (!o.probe && PEL.cook(this.ext, key, q, this.law.now())) this.saveExt();
+          return { ...out, pellet: { quality: q, today: !!PEL.cookedToday(this.ext, key, q, this.law.now()) } };
+        }) || out;
         return out;
       };
       // la graine d'un Âge renommé : sa propriété `age_seed` (posée au renommage), pour qu'il garde son monde et son étoile

@@ -1,0 +1,23 @@
+"use strict";
+// Les granulés pour la caverne (src/pellets.js, étape 4a) : la recette (le sol équilibré), le raté (trop dosé), un par Âge et par jour.
+const assert = require("assert");
+const P = require("../src/pellets");
+let n = 0; const ok = (c, m) => { assert(c, m); n++; };
+const S = (...ids) => new Set(ids), many = (id) => (id === "pellet" ? 2 : 1);
+ok(P.qualityOf(S("pellet", "grass", "earth")) === "good", "terre + herbe + granulé : un bon granulé");
+ok(P.qualityOf(S("pellet", "fern", "humus")) === "good", "humus (solide, fertile, humide) : bon");
+ok(P.qualityOf(S("pellet", "grass", "earth"), many) === "bad", "trop dosé : raté (il flottera)");
+ok(P.qualityOf(S("pellet", "grass", "stone")) === null, "pierre seule : rien de fertile, pas de granulé");
+ok(P.qualityOf(S("pellet", "grass", "sand")) === null, "sable : trop peu de tout, pas de granulé");
+ok(P.qualityOf(S("pellet", "grass", "earth", "stone", "iron")) === null, "trop de solidité : une qualité écrase les autres");
+ok(P.qualityOf(S("pellet", "earth")) === null, "rien ne pousse : le granulé ne se dissout pas");
+ok(P.qualityOf(S("grass", "earth")) === null, "pas de granulé écrit : rien");
+ok(P.qualityOf(S("pellet", "grass")) === null, "pas de sol écrit : rien");
+const ext = {}, T0 = Date.UTC(2026, 9, 24, 9);
+ok(P.cook(ext, "A", "good", T0) === "good" && ext.pellets.good === 1, "le premier granulé du jour va sur l'étagère");
+ok(P.cook(ext, "A", "good", T0 + 3600000) === null && ext.pellets.good === 1, "un seul par Âge et par jour");
+ok(P.cook(ext, "B", "bad", T0) === "bad" && ext.pellets.bad === 1, "un autre Âge, un raté");
+ok(P.cook(ext, "A", "good", T0 + P.DAY) === "good" && ext.pellets.good === 2, "le lendemain, un de plus");
+ok(P.cookedToday(ext, "A", "good", T0 + P.DAY) === "good" && P.cookedToday(ext, "A", "good", T0 + 2 * P.DAY) === null, "cuit aujourd'hui : oui ; demain sans lecture : rien");
+ok(P.cook(ext, "C", null, T0) === null, "pas de recette : rien");
+console.log(`pellets.test.js ok (${n} vérifications)`);
