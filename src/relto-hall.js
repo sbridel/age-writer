@@ -24,8 +24,8 @@ const bbox = (pts, pad = 2) => { const xs = pts.map((p) => p[0]), ys = pts.map((
 /** Le bas de la vue : une bande où l'on recule (vers le couloir, ou du couloir vers la pièce), un chevron pâle qui s'éclaire au survol. Partagé avec la grande pièce et le salon. */
 function backEdge(r, ctx, go, tip) {
   const hov = r.hover && r.hover.go === go && r.hover.edge === "⌄";
-  ctx.fillStyle = rgba(230, 215, 180, hov ? 0.7 : 0.22); ctx.font = "22px serif"; ctx.textAlign = "center"; ctx.fillText("⌄", W / 2, H - 8); ctx.textAlign = "left";
-  r.hot.push({ x: W / 2 - 70, y: H - 26, w: 140, h: 26, tip, go, edge: "⌄" });
+  ctx.fillStyle = rgba(230, 215, 180, hov ? 0.8 : 0.32); ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.fillText("⌄", W / 2, H - 16); ctx.textAlign = "left";
+  r.hot.push({ x: W / 2 - 100, y: H - 52, w: 200, h: 52, tip, go, edge: "⌄" }); /* une bande large et haute : le bas de l'image peut être couvert par la barre du Relto (plein écran, téléphone) */
 }
 
 function drawHall(r, ctx, sc, sky, t) {
@@ -55,7 +55,7 @@ function drawHall(r, ctx, sc, sky, t) {
     ctx.strokeStyle = c("#2a2630"); ctx.lineWidth = 3; for (const k of [0.15, 0.45, 0.8]) { const [x0, y0] = L(k, 0), [x1] = Rr(k, 0); ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo((x0 + x1) / 2, y0 - 30 * (1 - f(k)) - 4, x1, y0); ctx.stroke(); }
   } else if (glass) { /* la mosaïque sombre : des pilastres de cuivre, une cimaise de cuivre ; au sol, un damier de tesselles */
     ctx.fillStyle = rgba(90, 160, 140, 0.06); for (const side of [0, 1]) { const P = side ? Rr : L; for (let i = 0; i < 14; i++) for (let j = 0; j < 7; j++) if ((i + j) % 2) { ctx.beginPath(); poly(ctx, [P(i / 14, j / 11), P((i + 1) / 14, j / 11), P((i + 1) / 14, (j + 1) / 11), P(i / 14, (j + 1) / 11)]); ctx.fill(); } }
-    ctx.strokeStyle = c(pal.trim); ctx.lineWidth = 2.5; for (const side of [0, 1]) { const P = side ? Rr : L; for (const k of [0.12, 0.38, 0.7]) { ctx.lineWidth = 3.5 * (1 - f(k)) + 1; ctx.beginPath(); ctx.moveTo(...P(k, 0)); ctx.lineTo(...P(k, 1)); ctx.stroke(); } ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(...P(0, 0.62)); ctx.lineTo(...P(1, 0.62)); ctx.stroke(); }
+    ctx.strokeStyle = c(pal.trim); ctx.lineWidth = 2.5; for (const side of [0, 1]) { const P = side ? Rr : L; for (const k of side ? [0.12, 0.53, 0.8] : [0.12, 0.47, 0.76]) { /* ils encadrent le miroir et la fenêtre, jamais ne les traversent */ ctx.lineWidth = 3.5 * (1 - f(k)) + 1; ctx.beginPath(); ctx.moveTo(...P(k, 0)); ctx.lineTo(...P(k, 1)); ctx.stroke(); } ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(...P(0, 0.62)); ctx.lineTo(...P(1, 0.62)); ctx.stroke(); }
     ctx.strokeStyle = rgba(90, 160, 140, 0.12); ctx.lineWidth = 1; for (let i = -6; i <= 6; i++) { ctx.beginPath(); ctx.moveTo(W / 2 + i * 56, H); ctx.lineTo(VX + i * 9.6, FY1); ctx.stroke(); } for (let k = 0.05; k < 1; k += 0.08) { const [x0, y] = L(k, 1), [x1] = Rr(k, 1); ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); }
     ctx.fillStyle = c(pal.trim); ctx.fillRect(FX0, FY0, FX1 - FX0, 2); ctx.fillRect(FX0, FY0 + (FY1 - FY0) * 0.62, FX1 - FX0, 1.5);
   } else { /* les planches : des lames verticales aux murs, une cimaise ; au sol des lames qui filent vers le fond ; des poutres au plafond */
@@ -128,19 +128,34 @@ function drawHall(r, ctx, sc, sky, t) {
     r.hot.push({ x: lx - 14, y: ly - 14, w: 28, h: 34, tip: tr("hall.lantern") }); }
   // ---- à droite : le miroir et le banc ----
   const mq = [Rr(0.26, 0.16), Rr(0.46, 0.2), Rr(0.46, 0.56), Rr(0.26, 0.56)], oval = (s) => { const pts = []; for (let i = 0; i < 32; i++) { const a = i * TAU / 32; pts.push(onQuad(mq, 0.5 + 0.5 * s * Math.cos(a), 0.5 + 0.5 * s * Math.sin(a))); } return pts; };
-  ctx.fillStyle = c(castle ? "#b08a3a" : glass ? "#b5652a" : "#8a6a28"); poly(ctx, oval(1)); ctx.fill();
-  { const inner = oval(0.84), [ax, ay] = onQuad(mq, 0.2, 0.1), [bx, by] = onQuad(mq, 0.8, 0.9), g = ctx.createLinearGradient(ax, ay, bx, by);
+  if (glass) { /* la Verrière : un cadre de cuivre fin, en coup de fouet, une tulipe en crête (il repose sur la cimaise : rien ne flotte) */
+    const cu = c("#b5652a"), cu2 = c("#e6a06a"); ctx.fillStyle = cu; poly(ctx, oval(1)); ctx.fill();
+    ctx.strokeStyle = cu; ctx.lineCap = "round"; const P = (u, v) => onQuad(mq, u, v);
+    ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(...P(0.5, -0.02)); ctx.quadraticCurveTo(...P(0.3, -0.12), ...P(0.22, -0.02)); ctx.moveTo(...P(0.5, -0.02)); ctx.quadraticCurveTo(...P(0.7, -0.12), ...P(0.78, -0.02)); ctx.stroke(); /* deux volutes */
+    ctx.fillStyle = cu2; ctx.beginPath(); ctx.moveTo(...P(0.5, -0.04)); ctx.quadraticCurveTo(...P(0.42, -0.14), ...P(0.46, -0.2)); ctx.quadraticCurveTo(...P(0.5, -0.15), ...P(0.54, -0.2)); ctx.quadraticCurveTo(...P(0.58, -0.14), ...P(0.5, -0.04)); ctx.fill(); /* la tulipe */
+    ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(...P(0.5, 1.0)); ctx.quadraticCurveTo(...P(0.42, 1.08), ...P(0.5, 1.13)); ctx.stroke(); ctx.beginPath(); ctx.moveTo(...P(0.5, 1.13)); ctx.lineTo(...P(0.5, 1.2)); ctx.stroke(); /* une vrille qui descend jusqu'à la cimaise */
+    ctx.lineCap = "butt";
+  } else { ctx.fillStyle = c(castle ? "#b08a3a" : "#8a6a28"); poly(ctx, oval(1)); ctx.fill(); }
+  { const inner = oval(glass ? 0.92 : 0.84), [ax, ay] = onQuad(mq, 0.2, 0.1), [bx, by] = onQuad(mq, 0.8, 0.9), g = ctx.createLinearGradient(ax, ay, bx, by);
     g.addColorStop(0, c(castle ? "#3a3a44" : "#9ab0b8")); g.addColorStop(1, c(castle ? "#16161c" : "#3a4a52")); ctx.fillStyle = g; poly(ctx, inner); ctx.fill();
-    if (!castle) { ctx.save(); poly(ctx, inner); ctx.clip(); ctx.fillStyle = rgba(255, 255, 255, 0.16); const [hx, hy] = onQuad(mq, 0.36, 0.3); ctx.beginPath(); ctx.ellipse(hx, hy, 5, 13, 0.2, 0, TAU); ctx.fill();
+    if (!castle) { ctx.save(); poly(ctx, inner); ctx.clip();
+      { const rq = [onQuad(mq, 0.12, 0.2), onQuad(mq, 0.42, 0.24), onQuad(mq, 0.42, 0.58), onQuad(mq, 0.12, 0.56)], rs = ctx.createLinearGradient(0, rq[0][1], 0, rq[3][1]); /* la fenêtre d'en face, dans le miroir : c'est un miroir, pas un hublot */
+        rs.addColorStop(0, mix("#05060c", mix("#a8c8e0", "#1a2a50", night), 0.45 + 0.4 * amb)); rs.addColorStop(1, mix("#05060c", mix("#dcebf4", "#24345a", night), 0.45 + 0.4 * amb)); ctx.fillStyle = rs; poly(ctx, rq); ctx.fill();
+        ctx.strokeStyle = c(glass ? "#b5652a" : "#2e2418"); ctx.lineWidth = 1.6; poly(ctx, rq); ctx.stroke(); ctx.beginPath(); ctx.moveTo(...onQuad(rq, 0.5, 0)); ctx.lineTo(...onQuad(rq, 0.5, 1)); ctx.moveTo(...onQuad(rq, 0, 0.45)); ctx.lineTo(...onQuad(rq, 1, 0.45)); ctx.stroke(); }
+      ctx.fillStyle = rgba(255, 255, 255, 0.16); const [hx, hy] = onQuad(mq, 0.36, 0.3); ctx.beginPath(); ctx.ellipse(hx, hy, 5, 13, 0.2, 0, TAU); ctx.fill();
       if (cooking) { ctx.fillStyle = rgba(255, 150, 60, 0.25 * fl); const [ox, oy] = onQuad(mq, 0.3, 0.75); ctx.beginPath(); ctx.ellipse(ox, oy, 4, 6, 0, 0, TAU); ctx.fill(); } /* la porte du fond, dans le miroir */
       ctx.restore(); } }
   r.hot.push({ ...bbox(oval(1)), tip: castle ? tr("hall.mirror.castle") : tr("hall.mirror") });
   { /* le banc, contre le mur : une assise épaisse qui avance dans le couloir, deux pieds courts */
     const k0 = 0.22, k1 = 0.5, sv = 0.8, out = (k) => 44 * (1 - f(k)) + 8, s0 = Rr(k0, sv), s1 = Rr(k1, sv), o0 = [s0[0] - out(k0), s0[1] + 4 * (1 - f(k0))], o1 = [s1[0] - out(k1), s1[1] + 4 * (1 - f(k1))];
     const wood = castle ? "#3a2a1e" : glass ? "#3a2418" : "#5a4028", th = (k) => 7 * (1 - f(k)) + 3, leg = (k) => Rr(k, 1)[1] - Rr(k, sv)[1];
+    ctx.fillStyle = c(mix(wood, "#000000", 0.5)); for (const k of [k0 + 0.02, k1 - 0.01]) { const [x, y] = Rr(k, sv); ctx.fillRect(x - 3, y, 3 * (1 - f(k)) + 1.5, Rr(k, 1)[1] - y); } /* les pieds arrière, contre le mur */
+    ctx.fillStyle = c(mix(wood, "#000000", 0.25)); poly(ctx, [Rr(k0, sv - 0.09), Rr(k1, sv - 0.09), Rr(k1, sv), Rr(k0, sv)]); ctx.fill(); /* un dossier bas, fixé au mur */
     ctx.fillStyle = c(mix(wood, "#000000", 0.35)); for (const [p, k] of [[o0, k0], [o1, k1]]) ctx.fillRect(p[0] + 3, p[1], 4 * (1 - f(k)) + 2, leg(k)); /* les pieds avant */
     ctx.fillStyle = c(mix(wood, "#ffffff", 0.08)); poly(ctx, [s0, s1, o1, o0]); ctx.fill();
-    ctx.fillStyle = c(mix(wood, "#000000", 0.2)); poly(ctx, [o0, o1, [o1[0], o1[1] + th(k1)], [o0[0], o0[1] + th(k0)]]); ctx.fill(); }
+    ctx.fillStyle = c(mix(wood, "#000000", 0.2)); poly(ctx, [o0, o1, [o1[0], o1[1] + th(k1)], [o0[0], o0[1] + th(k0)]]); ctx.fill();
+    { const cushion = castle ? "#6a1e24" : glass ? "#2e5a4e" : "#7a5a3a", m = (a, b, u) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u], q0 = m(s0, s1, 0.08), q1 = m(s0, s1, 0.62), r0 = m(o0, o1, 0.08), r1 = m(o0, o1, 0.62); /* un coussin long, posé : on lit une assise, pas une rampe */
+      ctx.fillStyle = c(cushion); poly(ctx, [[q0[0], q0[1] - 4], [q1[0], q1[1] - 3], [r1[0], r1[1] - 3], [r0[0], r0[1] - 5]]); ctx.fill(); ctx.fillStyle = c(mix(cushion, "#000000", 0.3)); poly(ctx, [[r0[0], r0[1] - 5], [r1[0], r1[1] - 3], r1, r0]); ctx.fill(); } }
   // ---- une ombre douce aux bords, et le chemin du retour ----
   const v = ctx.createRadialGradient(W / 2, H / 2, 140, W / 2, H / 2, 420); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, rgba(0, 0, 0, 0.4)); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
   backEdge(r, ctx, r.hallFrom || "lounge", tr("hall.back"));
