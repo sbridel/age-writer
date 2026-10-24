@@ -273,6 +273,8 @@ function drawStars(r, ctx, sc, sky, t) {
   for (let i = 0; i < 70; i++) { const x0 = PIT_X0 + 30 + q("fu" + i) * (PIT_X1 - PIT_X0 - 60), top = pitTop(x0), bot = pitFront(x0), pp = (t * (0.045 + q("fv" + i) * 0.05) + q("fw" + i)) % 1, y = top - 50 + pp * (50 + (bot - top) * 0.96), depth = Math.max(0, (y - top) / (bot - top)), x = x0 + (320 - x0) * depth * 0.14 + Math.sin(t * 0.7 + i) * 3 * pp;
     const a = (y < top ? Math.min(1, (y - (top - 50)) / 22) : 1 - depth) * (0.35 + 0.65 * Math.abs(Math.sin(t * 2 + i * 1.7))), C = q("fc" + i) < PAL.d2 ? PAL.dust2 : PAL.dust2 && q("fc" + i) < 0.7 ? PAL.dust : [215, 230, 255];
     ctx.fillStyle = rgba(C[0], C[1], C[2], 0.85 * a); ctx.beginPath(); ctx.arc(x, y, 0.5 + 1.1 * (1 - depth * 0.7), 0, TAU); ctx.fill(); }
+  /* au degré 3, deux d'entre eux, au fond, accroupis sur le rebord, tournés vers la fosse (des ombres : jamais de détail) */
+  if (degree >= 3) { bahroShadow(ctx, 226, 231, 0.66, 1, t, 0); bahroShadow(ctx, 510, 233, 0.58, -1, t + 2.1, 1); }
   /* les cinq piliers, du fond vers nous : un fût droit gravé de haut en bas, une coupe à deux cornes courtes ; les vasques au-dessus */
   const signs = F.itemsOf((r.scene && r.scene.ages) || [], {}).filter((it) => it.kind === "age").slice(-15).flatMap((it) => it.parts.slice(0, 1));
   for (const p of PILLARS.slice().sort((a, b) => a.y - b.y)) {
@@ -294,8 +296,6 @@ function drawStars(r, ctx, sc, sky, t) {
     ctx.fillStyle = on ? "#3a3a62" : "#202128"; ctx.beginPath(); ctx.ellipse(vx, vy, vr, vr * 0.3, 0, 0, TAU); ctx.fill();
     r.hot.push({ x: vx - vr, y: vy - vr * 0.6, w: vr * 2, h: vr * 1.4, tip: on ? tr("stars.basin.lit") : tr("stars.basin") });
   }
-  /* au degré 3, deux d'entre eux, de dos, accroupis au bord de la fosse, de part et d'autre de la flèche (des ombres : jamais de détail) */
-  if (degree >= 3) { bahroShadow(ctx, 234, 344, 1.15, 1, t, 0); bahroShadow(ctx, 410, 346, 1, -1, t + 2.1, 1); }
   /* le vacillement : la lumière des vasques éclaire la salle d'une lueur qui bat (chaque flamme à son rythme) et qui joue sur la roche et les piliers */
   ctx.save(); ctx.globalCompositeOperation = "lighter";
   for (const pl of PILLARS) { if (!lit.includes(pl.i)) continue; const [bx, by] = BOWLS[pl.i], fk = flicker(pl.i, t), H1 = PAL.halo[0], rr = 120 + 36 * pl.s, wob = Math.sin(t * 3 + pl.i * 2) * 2, g = ctx.createRadialGradient(bx + wob, by + 8, 4, bx + wob, by + 8, rr);
