@@ -155,6 +155,7 @@ function drawVault(r, ctx, sc, sky, t) {
     r.hot.push({ x: W / 2 - 54, y: 316, w: 30, h: 20, tip: "◀", vpage: -1 }); r.hot.push({ x: W / 2 + 24, y: 316, w: 30, h: 20, tip: "▶", vpage: 1 });
     ctx.fillStyle = "#c9a24e"; ctx.font = "14px serif"; ctx.fillText("◀", W / 2 - 46, 331); ctx.fillText("▶", W / 2 + 32, 331);
   }
+  require("./relto-cave").vaultCrack(r, ctx, c, castle, t); /* la faille (l'escalier de la crypte au Château) : vers la caverne */
   require("./relto-atelier").backButton(r, ctx, tr("vault.back"), r.vaultFrom || "cabin");
 }
 

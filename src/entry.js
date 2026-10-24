@@ -261,6 +261,20 @@ module.exports = function build(Base, core, AGEX) {
       }
       new Ask(this.app).open();
     }
+    /** La caverne Bahro (src/relto-cave.js) : les granulés de l'étagère, le granulé qui tombe ; un granulé perdu (personne en bas) s'en va sans bruit. */
+    caveState() {
+      const P = PEL.stateOf(this.ext), cv = (this.ext.cave = this.ext.cave && typeof this.ext.cave === "object" ? this.ext.cave : { drop: null, revealed: 0 }), CV = require("./relto-cave");
+      if (cv.drop && Date.now() > cv.drop.at + CV.FALL_MS + CV.LIGHT_MS) { cv.drop = null; this.saveExt(); }
+      return { good: P.good || 0, bad: P.bad || 0, drop: cv.drop, revealed: cv.revealed || 0 };
+    }
+    /** Le bouton : lâche un granulé (un bon s'il y en a, sinon un gris). Renvoie sa qualité, ou null. */
+    caveDrop() {
+      const st = this.caveState(); if (st.drop) return null;
+      const P = PEL.stateOf(this.ext), q = P.good > 0 ? "good" : P.bad > 0 ? "bad" : null; if (!q) return null;
+      P[q] -= 1; this.ext.cave.drop = { at: Date.now(), q, seen: false }; this.saveExt(); return q;
+    }
+    /** On était en bas quand la lueur est montée : une révélation de plus (l'étape 4c y lira le code). */
+    caveSeen() { const cv = this.ext.cave; if (!cv || !cv.drop || cv.drop.seen) return; cv.drop.seen = true; cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); }
     /** La chambre des souvenirs : chaque merveille vue une fois (nouée ou écrite) y entre, avec l'Âge et la date ; rien ne s'en efface. */
     seeWonders(seed, r) {
       const ids = CAT.wondersOf(r); if (!ids.length) return;

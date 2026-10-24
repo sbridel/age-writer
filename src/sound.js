@@ -839,4 +839,24 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
   } catch (e) { console.warn("[Age Writer ext] room sound", e); return false; }
 }
 
-module.exports = { openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+/**
+ * La caverne Bahro (étape 4b) : `kind` = "drop" (le granulé lâché dans le trou, un tintement qui s'éloigne), "splash"
+ * (il touche l'eau du bassin et la lueur monte : un plouf, puis un accord clair), "fizz" (un granulé raté : il flotte et
+ * fume, un sifflement), "cry" (un Bahro au loin : un appel qui glisse, un grognement, deux pépiements). Synthèse, aucun fichier.
+ */
+function caveSfx(kind, volume = 0.3) {
+  return oneShot(kind === "cry" ? 2.4 : 2.2, (c, out, noise) => {
+    const t = c.currentTime; out.gain.value = volume * 0.5;
+    const tone = (f0, f1, t0, d, type = "sine", g = 0.3) => { const o = c.createOscillator(), e = c.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + d); e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + 0.02); e.gain.exponentialRampToValueAtTime(0.0005, t0 + d); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + d + 0.05); };
+    const hiss = (t0, d, f, g) => { const n = noise(d), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 0.8; e.gain.setValueAtTime(g, t0); e.gain.linearRampToValueAtTime(0, t0 + d); n.connect(bp); bp.connect(e); e.connect(out); n.start(t0); n.stop(t0 + d); };
+    if (kind === "drop") { for (let i = 0; i < 4; i++) tone(2400 - i * 300, 1800 - i * 300, t + i * 0.28, 0.25, "sine", 0.18 / (i + 1)); }
+    else if (kind === "splash") { hiss(t, 0.5, 900, 0.45); tone(180, 70, t, 0.4, "sine", 0.35); for (const [i, f] of [392, 494, 587, 784].entries()) tone(f, f, t + 0.5 + i * 0.12, 1.4, "sine", 0.12); }
+    else if (kind === "fizz") { hiss(t, 1.8, 3200, 0.22); tone(140, 90, t, 0.3, "sine", 0.2); }
+    else { /* le cri : un appel qui monte et retombe, un grognement, deux pépiements */
+      tone(320, 520, t, 0.5, "sawtooth", 0.12); tone(520, 240, t + 0.5, 0.6, "sawtooth", 0.1);
+      const o = c.createOscillator(), lp = c.createBiquadFilter(), e = c.createGain(); o.type = "sawtooth"; o.frequency.value = 85; lp.type = "lowpass"; lp.frequency.value = 380; e.gain.setValueAtTime(0, t + 1.1); e.gain.linearRampToValueAtTime(0.2, t + 1.2); e.gain.linearRampToValueAtTime(0, t + 1.7); o.connect(lp); lp.connect(e); e.connect(out); o.start(t + 1.1); o.stop(t + 1.75);
+      tone(1700, 2300, t + 1.9, 0.08, "sine", 0.15); tone(1800, 2500, t + 2.05, 0.08, "sine", 0.15);
+    }
+  });
+}
+module.exports = { openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

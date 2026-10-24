@@ -9,6 +9,14 @@ function renderMany(host, ages) {
   const variants = [
     { h: 23, t: 68, env: {}, pages: ["page_comets", "page_mountain", "page_pine_trees", "page_mist"], label: "ISLAND night / comet" },
     { h: 13, t: 81.5, env: {}, pages: ["page_comets", "page_mountain", "page_pine_trees"], label: "ISLAND day / comet (faded)" },
+    { h: 21, t: 3.1, env: {}, pages: [], view: "cavetop", now: 1800000000000, cave: { good: 7, bad: 2, drop: null }, label: "CAVE top / the hole, the shelf of pellets, the button" },
+    { h: 21, t: 3.1, env: {}, pages: [], view: "cavetop", now: 1800000000000, cave: { good: 6, bad: 2, drop: { at: 1799999999200, q: "good" } }, label: "CAVE top / a pellet falls" },
+    { h: 21, t: 3.1, env: {}, pages: [], view: "cavebottom", now: 1800000000000, cave: { good: 6, bad: 2, drop: { at: 1799999970000, q: "good" } }, label: "CAVE bottom / the dark, waiting" },
+    { h: 21, t: 3.1, env: {}, pages: [], view: "cavebottom", now: 1800000000000, cave: { good: 6, bad: 2, drop: { at: 1799999905500, q: "good" } }, label: "CAVE bottom / the glow, the paintings, the Bahro" },
+    { h: 21, t: 3.1, env: {}, pages: [], view: "cavebottom", now: 1800000000000, cave: { good: 6, bad: 2, drop: { at: 1799999908800, q: "good" } }, label: "CAVE bottom / the glow rising" },
+    { h: 21, t: 3.1, env: {}, pages: [], view: "cavebottom", now: 1800000000000, cave: { good: 6, bad: 1, drop: { at: 1799999907000, q: "bad" } }, label: "CAVE bottom / a grey pellet floats and fumes" },
+    { h: 21, t: 3.1, env: {}, pages: [], view: "vault", label: "VAULT / the cellar under the trapdoor" },
+    { h: 21, t: 3.1, env: {}, pages: ["page_castle"], view: "vault", label: "VAULT castle / the crypt" },
     { h: 14, t: 3.1, env: {}, pages: [], view: "memories", memSel: "day_aurora", wonders: { breathing_mirrors: { at: 1, age: "Ash Tower" }, mosaic: { at: 2, age: "Pale Garden", gone: true }, day_aurora: { at: 3, age: "Ember Row" }, ringed_ground: { at: 4, age: "Moth Hall" }, petal_rain: { at: 5, age: "Glass Marsh" }, living_mist: { at: 6, age: "Salt Court" }, ceiling_sea: { at: 7, age: "Sunken Stair" } }, label: "MEMORIES / the chamber: one orb per wonder seen" },
     { h: 21, t: 3.1, env: {}, pages: [], view: "lounge", wonders: { breathing_mirrors: { at: 1, age: "Ash Tower" }, mosaic: { at: 2, age: "Pale Garden" }, day_aurora: { at: 3, age: "Ember Row" }, ringed_ground: { at: 4, age: "Moth Hall" }, petal_rain: { at: 5, age: "Glass Marsh" }, living_mist: { at: 6, age: "Salt Court" }, ceiling_sea: { at: 7, age: "Sunken Stair" } }, label: "LOUNGE / the orb near the ceiling leads to the chamber" },
     { h: 20.6, t: 70, env: {}, pages: ["page_comets", "page_islets", "page_calendar"], view: "global", label: "GLOBAL dusk / comet" },
@@ -106,7 +114,7 @@ function renderMany(host, ages) {
     const scene = M.buildScene(relto, pages, ages);
     const c = document.createElement("canvas"); const d = document.createElement("div"); d.textContent = v.label; host.appendChild(d); host.appendChild(c);
     c.style.width = "640px"; document.body.appendChild(host);
-    const r = new ReltoRenderer(c, dni, { tipDelay: 0, ...(v.two ? { onTwoVoices: () => {} } : {}), ...(v.wonders ? { wonders: () => v.wonders } : {}), ...(v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}) }); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view; if (v.memSel) r.memSel = v.memSel; if (v.two) r.twoLine = { text: v.two, at: Date.now() }; if (v.tap) r.tapOn = true;
+    const r = new ReltoRenderer(c, dni, { tipDelay: 0, ...(v.cave ? { caveState: () => v.cave } : {}), ...(v.two ? { onTwoVoices: () => {} } : {}), ...(v.wonders ? { wonders: () => v.wonders } : {}), ...(v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}) }); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view; if (v.memSel) r.memSel = v.memSel; if (v.two) r.twoLine = { text: v.two, at: Date.now() }; if (v.tap) r.tapOn = true;
     if (v.now) { const DC = require("./dniclock"); if (v.now === "tahvo+1s") { const ms = 1791591000000, tv = DC.rings(ms).find((q) => q.key === "tahvo"); r.nowOverride = ms - tv.elapsed + 1000; } else r.nowOverride = v.now; } // l'horloge D'ni à un instant fixe
     if (v.ghost) ghostView(r); else if (v.unwritten) unwrittenView(r, v.unwritten);
     if (v.step2) step2(r, v.step2);

@@ -78,6 +78,7 @@ function sceneOf(a, name = "", blocks = null) {
   }
   // météo vivante : sources de chaque temps, parents de chaque produit (un orage né d'une pluie programmée vient et part avec elle), graine du tirage
   // les merveilles : nées d'une union (a.composites) ou écrites (la Brume vivante)
+  S.fed = !!(a.pellet && a.pellet.quality === "good"); /* le lac de D'ni : un granulé qui nourrit avive les algues lumineuses de l'eau */
   S.wonders = [...new Set([...((a.composites || []).map((c) => c.id)), ...(ids.has("living_mist") ? ["living_mist"] : [])])];
   if (S.wonders.includes("drinking_roots")) { const u = (a.composites || []).find((c) => c.id === "drinking_roots"); S.wonderMetal = CAT.metalOf(u, ids); }
   if (S.wonders.includes("orphan_colour")) { S.orphanRGB = S.sunHues[0] || null; S.blackSun = false; S.blackDisc = false; } /* la Couleur orpheline : la couleur reste, le feu s'en va */
@@ -250,8 +251,9 @@ function build(S, W, H) {
   const wx = buildWeather(S, W, H); // météo vivante : graine propre, rien d'autre ne bouge dans l'image
   if (shore && shore.mode === "side" && S.fissure === "submarine") { const wx = lerp(shore.x0, shore.x1, 0.5); fis.x = shore.side < 0 ? lerp(wx, W, 0.45) : lerp(0, wx, 0.55); } // la fissure sous l'eau reste dans l'eau
   const cave = S.world === "cavern" ? buildCave(S, W, H, hz) : null; // la voûte : graine propre, les autres mondes ne bougent pas
+  const qf = rng((S.seed ^ 0xa16ae) >>> 0), fedGlow = S.fed ? Array.from({ length: 16 }, () => ({ x: W * qf(), y: hz + (H - hz) * (0.08 + 0.8 * qf()), r: H * (0.02 + 0.04 * qf()), p: qf() })) : null; /* graine propre */
   const won = WON.buildWonders(S, W, H, hz); /* les merveilles : graine propre, un Âge sans merveille ne bouge pas */
-  return { S, cave, won, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow };
+  return { S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow };
 }
 
 /**
@@ -602,6 +604,7 @@ function paint(g, m, t, o = {}) {
   for (const e of m.eyes) { const o = Math.sin(TAU * (t * 1 + e.p)); if (o > -0.7) { g.fillStyle = css([255, 200, 90], 0.8); g.fillRect(e.x - 3, e.y, 1.6, 1.6); g.fillRect(e.x + 2, e.y, 1.6, 1.6); } }
   if (m.shore) { g.save(); shorePath(g, m.shore.wet); g.clip(); reflect(g, m, t, 0.5); g.restore(); shoreEdge(g, m, t, night); } // le reflet ne couvre que l'eau ; l'écume par-dessus
   else if (S.ice) reflect(g, m, t, 0.34); else if (S.water) reflect(g, m, t, 0.5);
+  if (m.fedGlow && (m.shore || (S.water && !S.ice)) && night > 0.05) fedAlgae(g, m, t, night);
   extraAt(g, m, t, "air");
   WON.wonderPass(g, m, t, "air", k0);
   scarPass(g, m, () => { scarAir(g, m, t); scarHeld(g, m, t); });
@@ -620,6 +623,14 @@ function paint(g, m, t, o = {}) {
     }
   }
   if (dm > 0) doomFx(g, m, dm, sn);
+  g.restore();
+}
+
+/** Le lac de D'ni : les algues lumineuses, nourries par le granulé, luisent dans l'eau la nuit, et palpitent lentement (plus fort s'il y a des algues écrites). */
+function fedAlgae(g, m, t, night) {
+  const { S } = m, k = night * (S.algae ? 1 : 0.7);
+  g.save(); if (m.shore) { shorePath(g, m.shore.wet); g.clip(); } g.globalCompositeOperation = "lighter";
+  for (const b of m.fedGlow) { const pulse = 0.55 + 0.45 * Math.sin(TAU * (t + b.p)), gr = g.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r * 2.2); gr.addColorStop(0, css([110, 255, 190], 0.45 * k * pulse)); gr.addColorStop(0.4, css([60, 210, 160], 0.18 * k * pulse)); gr.addColorStop(1, css([40, 160, 120], 0)); g.fillStyle = gr; g.beginPath(); g.ellipse(b.x, b.y, b.r * 2.2, b.r * 0.8, 0, 0, TAU); g.fill(); }
   g.restore();
 }
 
