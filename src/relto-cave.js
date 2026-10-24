@@ -5,7 +5,7 @@
  * - **le haut** (`cavetop`) : une salle sèche, à peine éclairée d'en haut ; un trou au centre ; l'étagère où s'accumulent
  *   les granulés cuits par la machine du Relto (src/harvest.js, `ext.pellets` : blancs et gris), comptés en entailles ; un bouton de pierre qui en lâche un ; une
  *   faille vers le bas ;
- * - **le bas** (`cavebottom`) : le noir complet, un bassin. Le granulé tombe pendant FALL_MS ; s'il est bon et qu'on est
+ * - **le bas** (`cavebottom`) : le noir complet, un bassin. Le granulé tombe pendant FALL_MS (une minute) ; s'il est bon et qu'on est
  *   en bas quand il touche l'eau, la lueur des algues monte le long des parois pendant LIGHT_MS et révèle les peintures,
  *   et les Bahro, surpris en train de peindre, qui se fondent dans la roche quand elle baisse. Un granulé raté flotte et
  *   fume en vert. Trop tard : l'eau est déjà noire.
@@ -14,7 +14,7 @@
  */
 const { mix, rgba, clamp, fnv } = require("./util");
 const W = 640, H = 360, TAU = Math.PI * 2;
-const FALL_MS = 90000, LIGHT_MS = 10000;
+const FALL_MS = 60000, LIGHT_MS = 10000; /* la chute : une minute (90 s, c'était long) */
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 const nowOf = (r) => (r.nowOverride || Date.now());
 const stateOf = (r) => (r.opts && typeof r.opts.caveState === "function" ? r.opts.caveState() || {} : {});
@@ -59,12 +59,13 @@ function drawCaveTop(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#3a3128"); ctx.beginPath(); ctx.ellipse(320, 286, 104, 32, 0, 0, TAU); ctx.fill();
   ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(320, 288, 90, 25, 0, 0, TAU); ctx.fill();
   for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU, k = fnv("rim" + i) % 5; ctx.fillStyle = c(k % 2 ? "#4a3f33" : "#3e352b"); ctx.beginPath(); ctx.ellipse(320 + Math.cos(a) * 97, 288 + Math.sin(a) * 28, 9 + k, 5, a, 0, TAU); ctx.fill(); }
-  if (ph && ph.kind === "falling" && ph.k < 1600) { const q = ph.k / 1600, y = 230 + q * 70, rad = 4 * (1 - q * 0.8); ctx.fillStyle = st.drop.q === "good" ? "rgba(245,245,235,0.95)" : "rgba(150,150,140,0.95)"; ctx.beginPath(); ctx.arc(320, y, Math.max(0.6, rad), 0, TAU); ctx.fill(); }
+  if (ph && ph.kind === "falling" && ph.k < 1600) { const q = ph.k / 1600, y = 230 + q * 70, rad = 4 * (1 - q * 0.8); ctx.save(); ctx.translate(320, y); ctx.rotate(q * 5); ctx.globalAlpha = 0.95; require("./relto-oven").pill(ctx, 0, 0, st.drop.q === "good" ? "white" : "grey", Math.max(0.1, rad / 4)); ctx.restore(); } /* la pilule tombe en tournant */
   r.hot.push({ x: 216, y: 256, w: 208, h: 64, tip: tr("cave.hole") });
   /* l'étagère : les granulés, et les entailles qui les comptent */
   ctx.fillStyle = c("#3d3328"); ctx.fillRect(36, 176, 170, 9); ctx.fillStyle = rgba(0, 0, 0, 0.4); ctx.fillRect(36, 185, 170, 3);
   const good = Math.max(0, st.good || 0), bad = Math.max(0, st.bad || 0), shown = [...Array(Math.min(good, 12)).fill("g"), ...Array(Math.min(bad, Math.max(0, 14 - Math.min(good, 12)))).fill("b")];
-  shown.forEach((k, i) => { const x = 46 + (i % 14) * 11, y = 170; ctx.fillStyle = k === "g" ? "#eeeadf" : "#8a8a80"; ctx.beginPath(); ctx.arc(x, y, 4, 0, TAU); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, k === "g" ? 0.6 : 0.2); ctx.beginPath(); ctx.arc(x - 1.3, y - 1.3, 1.2, 0, TAU); ctx.fill(); });
+  const PILL = require("./relto-oven").pill; /* des pilules, couchées en petits tas (deux dessous, une dessus) */
+  shown.forEach((k, i) => { const grp = Math.floor(i / 3), p3 = i % 3, gx = 50 + grp * 30; PILL(ctx, p3 === 2 ? gx + 6 : gx + p3 * 12, p3 === 2 ? 168 : 173.2, k === "g" ? "white" : "grey", 0.85); });
   ctx.strokeStyle = rgba(200, 170, 120, 0.55); ctx.lineWidth = 1.4; /* les entailles Bahro : une par granulé blanc, par cinq barrées */
   for (let i = 0; i < Math.min(good, 40); i++) { const grp = Math.floor(i / 5), j = i % 5, x = 44 + grp * 22 + j * 3.4, y = 196; if (j < 4) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 1, y + 12); ctx.stroke(); } else { ctx.beginPath(); ctx.moveTo(x - 14, y + 10); ctx.lineTo(x + 1, y + 2); ctx.stroke(); } }
   r.hot.push({ x: 36, y: 160, w: 170, h: 54, tip: good || bad ? tr("cave.shelf", { g: good, b: bad }) : tr("cave.shelf.empty") });
@@ -144,7 +145,7 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
     const pg = ctx.createRadialGradient(320, 300, 4, 320, 300, 180); pg.addColorStop(0, rgba(170, 255, 210, 0.9 * lit)); pg.addColorStop(0.3, rgba(80, 230, 160, 0.4 * lit)); pg.addColorStop(1, rgba(40, 160, 120, 0)); ctx.fillStyle = pg; ctx.beginPath(); ctx.ellipse(320, 300, 175, 32, 0, 0, TAU); ctx.fill();
   }
   if (ph && ph.kind === "fizz") { /* le raté : il flotte, et fume en vert */
-    const k = ph.k / LIGHT_MS; ctx.fillStyle = "rgba(140,140,130,0.9)"; ctx.beginPath(); ctx.arc(320, 298 + Math.sin(t * 2) * 1.2, 4, 0, TAU); ctx.fill();
+    const k = ph.k / LIGHT_MS; ctx.save(); ctx.translate(320, 298 + Math.sin(t * 2) * 1.2); ctx.rotate(Math.sin(t * 0.7) * 0.15); require("./relto-oven").pill(ctx, 0, 0, "grey", 1); ctx.restore(); /* la pilule grise flotte, couchée */
     for (let i = 0; i < 6; i++) { const q = ((t * 0.4 + i / 6) % 1), x = 320 + Math.sin(i * 2 + t) * 8 * q; ctx.fillStyle = rgba(120, 200, 80, 0.25 * (1 - q) * (1 - k)); ctx.beginPath(); ctx.arc(x, 290 - q * 90, 6 + q * 14, 0, TAU); ctx.fill(); }
   }
   r.hot.push({ x: 150, y: 270, w: 340, h: 60, tip: lit > 0 ? tr("cave.pool.lit") : tr("cave.pool") });
