@@ -38,7 +38,8 @@ function layoutIsland(scene) {
   const st = new Set(scene.structures || []), has = (t) => (scene.additions || []).find((a) => a.type === t);
   const stones = has("pillars"), nStones = stones ? 3 + Math.round((stones.density == null ? 0.5 : clamp01(stones.density)) * 3) : 0, items = [];
   const add = (id, w, pri, extra) => items.push({ id, w, pri, ...extra });
-  if (st.has("hut")) add("hut", 72, 0);
+  const oven = st.has("hut") && st.has("oven"); /* l'appentis de la machine, à gauche de la cabane : elle prend sa place */
+  if (st.has("hut")) add("hut", oven ? 100 : 72, 0);
   if (has("koi")) add("koi", 58, 1);
   if (st.has("linking_pillars")) add("pillars", 52, 2);
   if (st.has("bookshelves") && !st.has("hut")) add("shelf", 68, 2.5);
@@ -54,7 +55,7 @@ function layoutIsland(scene) {
   const lay = { dropped, gap: g, items: {}, stones: [], x0: ISLAND_X0, x1: ISLAND_X1 };
   for (const it of seq) { const x0 = x, cx = x + it.w / 2; x += it.w + g; lay.items[it.id] = { x0, x1: x0 + it.w, cx, w: it.w }; }
   const I = lay.items;
-  if (I.hut) lay.hut = { x: I.hut.cx };
+  if (I.hut) lay.hut = { x: oven ? I.hut.x0 + 64 : I.hut.cx };
   if (I.koi) lay.koi = { x0: I.koi.x0 + 3, x1: I.koi.x0 + 55 };
   if (I.cat) lay.cat = { x: I.cat.cx };
   if (I.stalk) lay.stalk = { x: I.stalk.cx };
@@ -67,7 +68,7 @@ function layoutIsland(scene) {
   lay.mount = { x: Math.min(ISLAND_X1 - hw * 0.9, Math.max(ISLAND_X0 - 8 + hw, lay.hut ? lay.hut.x : 306)), hw, h };
   // zones occupées (le sol devant lequel on ne plante ni arbre ni fleur) : cabane, bassin, chat, piliers de liaison
   lay.solid = [];
-  if (lay.hut) lay.solid.push([lay.hut.x - 34, lay.hut.x + 34]);
+  if (lay.hut) lay.solid.push([lay.hut.x - (oven ? 64 : 34), lay.hut.x + 34]);
   if (lay.koi) lay.solid.push([lay.koi.x0 - 4, lay.koi.x1 + 4]);
   if (lay.cat) lay.solid.push([lay.cat.x - 14, lay.cat.x + 14]);
   if (lay.stalk) lay.solid.push([lay.stalk.x - 14, lay.stalk.x + 14]);

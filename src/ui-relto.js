@@ -809,6 +809,8 @@ async function renderRelto(plugin, source, el, ctx) {
   const renderer = new ReltoRenderer(canvas, plugin.dni, { touch, wheelOk: () => !!root.closest(".age-reltoview") || !!root.ownerDocument.fullscreenElement, rotated: () => touch && root.hasClass("is-mobilefull") && !!(window.matchMedia && window.matchMedia("(orientation: portrait)").matches), onTip: tipCard ? (text) => { tipCard.setText(text || ""); tipCard.toggleClass("is-empty", !text); } : null, atelierDirect: () => plugin.ext.atelierDirect !== false, bookAnim: () => plugin.ext.bookAnim !== false, libraryData: () => libData, onLibraryOpen: () => { libReload(); },
     /* le diapason : frappé une fois, il garde la voix du livre posé, tant qu'on ne le refrappe pas (en Art de la Guilde, trouver un autre monde prend du temps) ; frappé de nouveau sur un autre livre, les deux chantent ensemble */
     caveState: () => (plugin.caveState ? plugin.caveState() : {}),
+    ovenState: (now) => (plugin.ovenState ? plugin.ovenState(now) : {}),
+    onOven: (act, arg) => { const msg = plugin.ovenAct ? plugin.ovenAct(act, arg) : null; if (roomSoundOn()) sound.ovenSfx(act === "door" && !msg ? "start" : act === "tray" ? "take" : "click", roomVol()); return msg; },
     onCaveDrop: () => { if (plugin.caveDrop && plugin.caveDrop() && roomSoundOn()) sound.caveSfx("drop", roomVol()); },
     onCaveSeen: () => { if (plugin.caveSeen) plugin.caveSeen(); },
     onCaveSfx: (kind) => { if (roomSoundOn()) sound.caveSfx(kind, roomVol()); },
@@ -965,6 +967,7 @@ async function renderRelto(plugin, source, el, ctx) {
     root.toggleClass("age-quill", plugin.ext.cursorQuill !== false); // le curseur plume (réglage, activé par défaut)
     try { root.style.setProperty("--age-quill", `url("data:image/svg+xml;base64,${btoa(FLW.quillSvg(scene))}") 3 29, auto`); } catch (e) { /* la plume par défaut (styles.ext.css) */ } // la plume prend la teinte de la fleur de cristal
     scene.pagesActive = built.relto.pagesActive;
+    if (plugin.ovenShown && plugin.ovenShown() && Array.isArray(scene.structures) && !scene.structures.includes("oven")) scene.structures = [...scene.structures, "oven"]; /* l'appentis de la machine : il apparaît avec la première récolte */
     renderer.setScene(scene); renderer.setHour(scene.skyCycle === "system_time" ? fixed : null); syncNav(scene);
     if (dniClock) dniClock.tick(); // la scène connue : l'heure D'ni sait si l'horloge est là
     { // la première fois que l'horloge est attachée : l'observatoire diffuse le faisceau dans tout le Relto, le calendrier se recale

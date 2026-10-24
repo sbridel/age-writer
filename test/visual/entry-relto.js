@@ -3,10 +3,25 @@
 const { Dni } = require("./dni");
 const M = require("./relto-model");
 const { ReltoRenderer } = require("./relto-render");
+/* la machine du Relto, à quelques moments (src/relto-oven.js) */
+const OVEN_SET = { levers: [2, 0, 1, 0], time: 40, temp: 20, press: 44 }, OVEN_STOCK = { ash: 7, humus: 3, silt: 2, peat: 5 }, OVEN_SHELF = { white: 4, amber: 2, grey: 1 };
+const OVEN_STATES = {
+  set: { oven: OVEN_SET, phase: null, stock: OVEN_STOCK, pellets: OVEN_SHELF },
+  cook: { oven: OVEN_SET, phase: { phase: "cooking", k: 0.5, left: 300000, kind: "white", n: 3 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
+  done: { oven: OVEN_SET, phase: { phase: "done", kind: "white", n: 3 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
+  dust: { oven: { ...OVEN_SET, press: 4 }, phase: { phase: "done", kind: "dust", n: 3 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
+};
 function renderMany(host, ages) {
   host = host || document.body;
   const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
   const variants = [
+    { h: 14, t: 3.1, env: {}, pages: [], oven: "cook", label: "ISLAND oven day / the lean-to against the cabin, its chimney smoking" },
+    { h: 23, t: 3.1, env: {}, pages: ["page_castle"], oven: "cook", label: "ISLAND oven castle night / the forge against the chapel" },
+    { h: 21, t: 3.1, env: {}, pages: ["page_glasshouse"], oven: "cook", label: "ISLAND oven glasshouse dusk / the glass annex" },
+    { h: 14, t: 3.1, env: {}, pages: [], view: "oven", oven: "set", label: "OVEN day / set for a white batch: hoppers, levers, sliders, the press" },
+    { h: 14, t: 3.1, env: {}, pages: ["page_glasshouse"], view: "oven", oven: "cook", label: "OVEN glasshouse / cooking" },
+    { h: 23, t: 3.1, env: {}, pages: ["page_castle"], view: "oven", oven: "done", label: "OVEN castle night / three white capsules on the tray" },
+    { h: 14, t: 3.1, env: {}, pages: [], view: "oven", oven: "dust", label: "OVEN / not pressed enough: it crumbled" },
     { h: 23, t: 68, env: {}, pages: ["page_comets", "page_mountain", "page_pine_trees", "page_mist"], label: "ISLAND night / comet" },
     { h: 13, t: 81.5, env: {}, pages: ["page_comets", "page_mountain", "page_pine_trees"], label: "ISLAND day / comet (faded)" },
     { h: 21, t: 3.1, env: {}, pages: [], view: "cavetop", now: 1800000000000, cave: { good: 7, bad: 2, drop: null }, label: "CAVE top / the hole, the shelf of pellets, the button" },
@@ -112,9 +127,10 @@ function renderMany(host, ages) {
     if (v.tune) for (const pg of pages) for (const a of pg.additions) if (a.type === "cat") Object.assign(a, v.tune);
     if (v.tuneKoi) for (const pg of pages) for (const a of pg.additions) if (a.type === "koi") a.rare = v.tuneKoi;
     const scene = M.buildScene(relto, pages, ages);
+    if (v.oven) scene.structures = [...scene.structures, "oven"]; /* the machine lean-to */
     const c = document.createElement("canvas"); const d = document.createElement("div"); d.textContent = v.label; host.appendChild(d); host.appendChild(c);
     c.style.width = "640px"; document.body.appendChild(host);
-    const r = new ReltoRenderer(c, dni, { tipDelay: 0, ...(v.cave ? { caveState: () => v.cave } : {}), ...(v.two ? { onTwoVoices: () => {} } : {}), ...(v.wonders ? { wonders: () => v.wonders } : {}), ...(v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}) }); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view; if (v.memSel) r.memSel = v.memSel; if (v.two) r.twoLine = { text: v.two, at: Date.now() }; if (v.tap) r.tapOn = true;
+    const r = new ReltoRenderer(c, dni, { tipDelay: 0, ...(v.oven ? { ovenState: () => OVEN_STATES[v.oven] } : {}), ...(v.cave ? { caveState: () => v.cave } : {}), ...(v.two ? { onTwoVoices: () => {} } : {}), ...(v.wonders ? { wonders: () => v.wonders } : {}), ...(v.reduced ? { reducedMotion: true } : v.unwritten ? unwrittenOpts(v.unwritten) : {}) }); r.setScene(scene); r.setHour(v.h); if (v.view) r.view = v.view; if (v.memSel) r.memSel = v.memSel; if (v.two) r.twoLine = { text: v.two, at: Date.now() }; if (v.tap) r.tapOn = true;
     if (v.now) { const DC = require("./dniclock"); if (v.now === "tahvo+1s") { const ms = 1791591000000, tv = DC.rings(ms).find((q) => q.key === "tahvo"); r.nowOverride = ms - tv.elapsed + 1000; } else r.nowOverride = v.now; } // l'horloge D'ni à un instant fixe
     if (v.ghost) ghostView(r); else if (v.unwritten) unwrittenView(r, v.unwritten);
     if (v.step2) step2(r, v.step2);
