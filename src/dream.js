@@ -2,7 +2,7 @@
 /**
  * Le Rêve (claude/DESIGN-reve-et-caverne-bahro.md, sections 5, 14 C et 20 ; étape 4d). Pur : ni DOM, ni coffre, ni horloge.
  *
- * La dalle ouverte, un clic sur ses yeux, et l'on voit l'Âge posé sur l'Imageur « de l'autre côté ». Trois sortes de choses
+ * La dalle ouverte, un clic sur sa vasque, et l'on voit l'Âge posé sur l'Imageur « de l'autre côté ». Trois sortes de choses
  * s'y trouvent, et rien n'est dit d'abord :
  *   - **les fautes mûries** (loi 4) : les fautes légères que l'Observation fait mûrir (src/observe.js, `faultsOf`), montrées
  *     à leur dernière étape, la cause ; rien de plus que ce que la rigueur finirait par dire ;

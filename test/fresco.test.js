@@ -1,5 +1,5 @@
 "use strict";
-// Les fresques, le cartouche et la dalle (src/fresco.js, étape 4c) : l'ordre de la paroi, ce que la lumière montre, le code du Relto.
+// Les fresques, le code le long de la veine et la dalle (src/fresco.js, étape 4c, retouchée le 25 oct.) : l'ordre de la paroi, ce que la lumière montre, le code du Relto.
 const assert = require("assert");
 const F = require("../src/fresco");
 const FR = require("../src/relto-fresco");
@@ -82,5 +82,25 @@ const easy = OVR.valueParts({ imagerGuildOn: () => false }, trk, "time", 40), gu
 ok(guildP.length === 1 && guildP[0].n === 40, "Art de la Guilde : la valeur seule, en chiffres D'ni, sans nom ni durée");
 ok(easy.some((p) => p && p.n === 40) && easy.some((p) => p && p.n === 17) && !easy.some((p) => typeof p === "string" && /\d/.test(p)), "facile : 40, et dix minutes en dix-sept gorahntee, aucun chiffre en clair");
 ok(OVR.valueParts({ imagerGuildOn: () => false }, trk, "time", 1).some((p) => p && p.n === 11), "un cran : onze prorahntee");
+
+/* le code le long de la veine (25 oct.) : tout sur la paroi, jamais sur le sol ; chaque éclair en montre deux de plus */
+{ const { fnv } = require("../src/util"), foot = Math.min(...Array.from({ length: 8 }, (_, k) => 360 - 60 - (fnv("cave|" + k * 20) % 30))); /* le pied de la paroi, à gauche (src/relto-cave.js, walls) */
+  ok(FR.VEIN.every(([, y]) => y < foot), "la veine reste sur la paroi");
+  for (let i = 0; i < F.CODE_LEN; i++) { const p = FR.veinSlot(i); ok(p.y + 8.5 < foot, "glyphe " + (i + 1) + " : peint sur la paroi, pas sur le sol"); }
+  for (let i = 0; i < F.CODE_LEN; i++) { const n2 = Math.floor(i / 2), lit = FR.BAND_Y(n2) + 16; ok(FR.veinSlot(i).y >= lit, "glyphe " + (i + 1) + " : en pleine lumière dès la révélation " + (n2 + 1)); }
+  ok(FR.veinSlot(0).y > FR.veinSlot(5).y, "on lit en remontant : le premier près de l'eau"); }
+
+/* la dalle, dans la chambre des souvenirs : là dès la première révélation, ses six pierres ; ouverte, la vasque mène au rêve */
+{ const MEM = require("../src/relto-memories"), noop = () => {};
+  const ctx2 = new Proxy({}, { get: (o, k) => (k in o ? o[k] : k === "createLinearGradient" || k === "createRadialGradient" ? () => ({ addColorStop() {} }) : k === "measureText" ? () => ({ width: 10 }) : noop), set: (o, k, v) => ((o[k] = v), true) });
+  const room = (cave) => { const r = { hot: [], hover: null, scene: { name: "Relto", seed: 19991118 }, nowOverride: NOW, opts: { caveState: () => cave, wonders: () => ({}) }, dreamTip: () => "rêver" }; MEM.drawMemories(r, ctx2, {}, { night: 0.5 }, 1); return r.hot; };
+  ok(!room({ revealed: 0 }).some((h) => h.caveSlab), "avant le premier éclair : pas de dalle");
+  ok(!MEM.slabShown({ opts: { caveState: () => ({ revealed: 0 }) } }) && MEM.slabShown({ opts: { caveState: () => ({ revealed: 1 }) } }), "la chambre s'ouvre aussi par la dalle, sans merveille");
+  const h1 = room({ revealed: 1 }); ok(h1.filter((h) => h.caveSlab).length === 6 && !h1.some((h) => h.dreamGo), "une révélation : six pierres à tourner, la vasque encore sombre");
+  const code = F.codeOf("Relto", 19991118), k2 = "relto#19991118", turns = code.map((g, i) => { const { ring, start } = F.ringOf(code, i, k2); return (ring.indexOf(g) - start + 6) % 6; });
+  const key = require("../src/telescope").keyOf("Relto", 19991118), h2 = room({ revealed: 3, slabs: { [key]: { open: true, turns } } });
+  ok(!h2.some((h) => h.caveSlab) && h2.some((h) => h.dreamGo), "ouverte : on ne tourne plus rien, la vasque mène au rêve");
+  const CAVE = require("../src/relto-cave"), r3 = { hot: [], hover: null, scene: { name: "Relto", seed: 19991118, ages: [] }, nowOverride: NOW, opts: { caveState: () => ({ revealed: 3 }), wonders: () => ({}) }, available: () => ({}) };
+  CAVE.drawCaveBottom(r3, ctx2, {}, {}, 1); ok(!r3.hot.some((h) => h.caveSlab || h.dreamGo), "la caverne ne garde que le code : la dalle n'y est plus"); }
 
 console.log(`fresco : ${n} contrôles ✓`);

@@ -699,6 +699,12 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 1.50.1 — retouches sous l'île (25 oct. 2026)
+
+Note : `claude/DESIGN-art-bahro.md` (projet), section 11. ⚠ Spoilers : rien de plus précis dans README, CHANGELOG ni guide.
+- Sous l'île, demandes de l'auteur après la 1.50.0 : la lumière se lit mieux quand le lac vit (un creux au choc, puis une lumière froide qui monte en vague, sa crête, et qui retombe du haut) ; des sons de pierre brefs et discrets (`sound.slabSfx`) ; certaines choses ont changé de forme et de place, et ce que l'on lit en bas ne s'utilise plus au même endroit.
+- Tests : `fresco.test.js` (114 contrôles).
+
 ## 1.50.0 — sous l'île (24 oct. 2026)
 
 Note : `claude/DESIGN-reve-et-caverne-bahro.md` (projet), sections 11 à 21. ⚠ Spoilers de la caverne : rien de ceci dans README, CHANGELOG ni guide.

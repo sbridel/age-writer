@@ -196,9 +196,10 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
   /* le bassin, à peine deviné ; des gouttes qui tombent dans le noir */
   ctx.strokeStyle = "rgba(90,120,130,0.10)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(320, 300, 170, 30, 0, 0, TAU); ctx.stroke();
   for (let i = 0; i < 4; i++) { const k = fnv("drip" + i), x = 160 + (k % 320), q = ((t * 0.25 + i * 0.27) % 1); ctx.fillStyle = rgba(160, 190, 200, 0.25 * (1 - q)); ctx.fillRect(x, 40 + q * 250, 1, 3); }
+  const kLit = ph && ph.kind === "lit" ? ph.k : -1, dim = kLit < 0 ? 1 : 1 - 0.9 * (kLit < 120 ? kLit / 120 : kLit < 700 ? 1 : Math.max(0, 1 - (kLit - 700) / 2200)); /* le creux : le blanc chasse le vert, puis le lac revient */
   /* le lac : chaque ambré y a laissé une colonie, jamais perdue ; nourries ces derniers jours elles pulsent, négligées elles restent des braises */
   { const n = Math.min(240, st.colonies || 0), fresh = clamp(1 - (now - (st.fedAt || 0)) / (3 * 86400000)), q = (k) => (fnv("colony" + k) % 10000) / 10000;
-    for (let i = 0; i < n; i++) { const a = q("a" + i) * TAU, rr = Math.sqrt(q("r" + i)), x = 320 + Math.cos(a) * 160 * rr, y = 300 + Math.sin(a) * 26 * rr, s2 = 2 + q("s" + i) * 4, al = (0.22 + 0.45 * fresh) * (0.75 + 0.25 * Math.sin(t * (0.6 + q("p" + i)) + i));
+    for (let i = 0; i < n; i++) { const a = q("a" + i) * TAU, rr = Math.sqrt(q("r" + i)), x = 320 + Math.cos(a) * 160 * rr, y = 300 + Math.sin(a) * 26 * rr, s2 = 2 + q("s" + i) * 4, al = dim * (0.22 + 0.45 * fresh) * (0.75 + 0.25 * Math.sin(t * (0.6 + q("p" + i)) + i));
       const g = ctx.createRadialGradient(x, y, 0.5, x, y, s2 * 2.4); g.addColorStop(0, rgba(255, 170, 80, al)); g.addColorStop(1, rgba(255, 140, 60, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, s2 * 2.4, s2 * 0.9, 0, 0, TAU); ctx.fill(); } }
   let lit = 0, reveal = 0;
   if (ph && ph.kind === "lit") {
@@ -214,16 +215,18 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
   const FR = require("./relto-fresco"), FC = require("./fresco"), name = (r.scene && r.scene.name) || "Relto", rseed = (r.scene && r.scene.seed) || 0, key = require("./telescope").keyOf(name, rseed);
   const revealed = st.revealed || 0, degree = FC.lakeDegree(st.colonies, st.fedAt, now), nFlash = lit > 0 ? Math.max(1, FC.bandsLit(revealed, degree, true)) : 0, nPerm = FC.bandsLit(revealed, degree, false);
   if (lit > 0) reveal = Math.min(reveal, H - FR.BAND_Y(nFlash - 1) + 24 + (nFlash >= FC.BANDS ? 40 : 0));
-  const permA = degree >= 3 ? 0.62 : degree >= 2 ? 0.42 : 0;
+  const permA = (degree >= 3 ? 0.62 : degree >= 2 ? 0.42 : 0) * dim;
   if (permA > 0) { /* le lac vivant éclaire le bas de la paroi, sans éclair ; rendu à sa lumière, toute la caverne */
     const top = degree >= 3 ? 0 : FR.BAND_Y(0) - 40, gp = ctx.createLinearGradient(0, H, 0, top); gp.addColorStop(0, rgba(60, 200, 140, 0.30 * permA)); gp.addColorStop(1, rgba(40, 140, 110, 0));
     ctx.save(); ctx.beginPath(); ctx.rect(0, top, W, H - top); ctx.clip(); ctx.globalAlpha = permA * 0.8; walls(ctx, "#1b2a24", seed); ctx.restore(); ctx.fillStyle = gp; ctx.fillRect(0, top, W, H - top);
   }
   if (lit > 0) {
-    const g = ctx.createLinearGradient(0, H, 0, H - reveal); g.addColorStop(0, rgba(60, 220, 150, 0.55 * lit)); g.addColorStop(0.7, rgba(40, 160, 120, 0.25 * lit)); g.addColorStop(1, rgba(20, 90, 70, 0)); /* la paroi, dans la lueur des algues */
-    ctx.save(); ctx.beginPath(); ctx.rect(0, H - reveal, W, reveal); ctx.clip(); ctx.globalAlpha = lit; walls(ctx, "#1b2a24", seed); ctx.restore(); /* la paroi n'apparaît que là où la lueur est montée */
+    const g = ctx.createLinearGradient(0, H, 0, H - reveal); g.addColorStop(0, rgba(150, 205, 235, 0.5 * lit)); g.addColorStop(0.7, rgba(110, 160, 200, 0.24 * lit)); g.addColorStop(1, rgba(60, 90, 130, 0)); /* une lumière froide, blanc-bleu : pas le vert du lac */ /* la paroi, dans la lueur des algues */
+    ctx.save(); ctx.beginPath(); ctx.rect(0, H - reveal, W, reveal); ctx.clip(); ctx.globalAlpha = lit; walls(ctx, "#1e2630", seed); ctx.restore(); /* la paroi n'apparaît que là où la lueur est montée */
     ctx.fillStyle = g; ctx.fillRect(0, H - reveal, W, reveal);
     ctx.save(); ctx.beginPath(); ctx.rect(0, H - reveal, W, reveal); ctx.clip(); for (let i = 0; i < 9; i++) { const kk = fnv("bstrata" + i); ctx.strokeStyle = rgba(30, 60, 50, 0.4 * lit); ctx.lineWidth = 1; ctx.beginPath(); for (let x = 0; x <= W; x += 16) { const y = 30 + i * 28 + 6 * Math.sin(x / 60 + kk); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); } ctx.restore();
+    const rising = ph.k < ph.L - 2500 && reveal < H - 4; /* la crête de la vague, tant qu'elle monte */
+    if (rising) { const yc = H - reveal, cg = ctx.createLinearGradient(0, yc - 6, 0, yc + 34); cg.addColorStop(0, rgba(210, 235, 255, 0)); cg.addColorStop(0.25, rgba(210, 235, 255, 0.32 * lit)); cg.addColorStop(1, rgba(210, 235, 255, 0)); ctx.fillStyle = cg; ctx.fillRect(0, yc - 6, W, 40); }
     caveOre(r, ctx, (x, y) => (y > H - reveal ? lit * clamp((y - (H - reveal)) / 40) : 0), t, [0.8, 1.15, 0.95]); /* l'or, l'argent, les gemmes s'allument dans la lueur verte */
   }
   const reached = (y) => (lit > 0 ? lit * clamp((reveal - (H - y)) / 40) : 0);
@@ -231,13 +234,12 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
   const items = FC.itemsOf((r.scene && r.scene.ages) || [], wonders);
   FR.drawFrescoes(ctx, items, (b, y) => Math.max(b < nFlash ? reached(y) : 0, b < nPerm ? permA * 1.3 : 0), key); /* l'histoire du joueur, la plus récente près de l'eau ; tout en haut, les Bahro */
   require("./relto-stars").gate(r, ctx, degree, t); /* le lac vivant ouvre le chemin d'en bas (section 15) */
-  const slabTurns = ((st.slabs || {})[key] || {}).turns, slab = FC.slabOf(name, rseed, slabTurns), open = !!((st.slabs || {})[key] || {}).open;
-  FR.drawCartouche(ctx, slab.code, FC.glyphsFound(revealed), Math.max(reached(FR.CART.y + FR.CART.h), degree >= 3 && revealed > 0 ? 0.6 : 0), key); /* le code : tout ce qui est trouvé, à chaque éclair */
-  FR.drawSlab(r, ctx, { lit: reached(FR.SLAB.y), seen: revealed > 0, open, stones: slab.stones, turnAt: r.slabTurnAt, dreamTip: open && r.dreamTip ? r.dreamTip() : null }, now, t, tr); /* ouverte : ses yeux mènent au rêve */
+  const slab = FC.slabOf(name, rseed, ((st.slabs || {})[key] || {}).turns);
+  FR.drawVeinCode(ctx, slab.code, FC.glyphsFound(revealed), (y) => Math.max(reached(y), degree >= 3 && revealed > 0 ? 0.6 : 0), key); /* le code, le long de la veine : tout ce qui est trouvé, à chaque éclair ; la dalle est dans la chambre des souvenirs */
   if (lit > 0) {
     const seen = (y) => clamp((reveal - (H - y + 20)) / 50); /* la lueur doit les avoir atteintes */
     traces(ctx, ph.k, lit, seen, t, FR.handsNear(items, key)); /* les Bahro : leurs ombres qui fuient, leurs mains encore humides ; jamais eux */
-    const pg = ctx.createRadialGradient(320, 300, 4, 320, 300, 180); pg.addColorStop(0, rgba(170, 255, 210, 0.9 * lit)); pg.addColorStop(0.3, rgba(80, 230, 160, 0.4 * lit)); pg.addColorStop(1, rgba(40, 160, 120, 0)); ctx.fillStyle = pg; ctx.beginPath(); ctx.ellipse(320, 300, 175, 32, 0, 0, TAU); ctx.fill();
+    const pg = ctx.createRadialGradient(320, 300, 4, 320, 300, 180); pg.addColorStop(0, rgba(235, 248, 255, 0.95 * lit)); pg.addColorStop(0.3, rgba(150, 200, 240, 0.42 * lit)); pg.addColorStop(1, rgba(80, 120, 170, 0)); ctx.fillStyle = pg; ctx.beginPath(); ctx.ellipse(320, 300, 175, 32, 0, 0, TAU); ctx.fill();
   }
   if (ph && ph.kind === "fizz") { /* le raté : il flotte, et fume en vert */
     const k = ph.k / ph.L; ctx.save(); ctx.translate(320, 298 + Math.sin(t * 2) * 1.2); ctx.rotate(Math.sin(t * 0.7) * 0.15); require("./relto-oven").pill(ctx, 0, 0, "grey", 1); ctx.restore(); /* la pilule grise flotte, couchée */

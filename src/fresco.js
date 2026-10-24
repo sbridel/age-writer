@@ -1,7 +1,7 @@
 "use strict";
 /**
- * Les fresques de la caverne, le cartouche et la dalle aux yeux (claude/DESIGN-reve-et-caverne-bahro.md, section 13,
- * étape 4c). Pur : ce qui se peint, dans quel ordre, ce que la lumière en laisse voir, le code du Relto. Le dessin est
+ * Les fresques de la caverne, le code et la dalle (claude/DESIGN-reve-et-caverne-bahro.md, section 13, étape 4c ; retouchés
+ * le 25 oct., claude/DESIGN-art-bahro.md §11). Pur : ce qui se peint, dans quel ordre, ce que la lumière en laisse voir, le code du Relto. Le dessin est
  * dans src/relto-fresco.js.
  *
  * - Les fresques racontent le joueur en pictogrammes : un signe par Âge écrit (deux à quatre éléments tirés de ce qu'il a
@@ -11,9 +11,10 @@
  * - Le lac a des degrés (section 14 B) : 0 noir, 1 une lueur, 2 la bande du bas se voit sans éclair, 3 la caverne rendue
  *   à sa lumière (tout ce qui a été révélé se voit sans éclair).
  * - Le code : six glyphes tirés du nom et de la graine du Relto (donc de son Great Zero) ; deux de plus par révélation ; à
- *   chaque éclair le cartouche montre tout ce qui est déjà trouvé. Le plugin ne l'écrit nulle part.
- * - La dalle : six pierres autour des yeux, chacune sur un anneau de six glyphes ; un clic = un cran. Les six justes :
- *   elle s'ouvre et le reste.
+ *   chaque éclair, le long de la veine, tout ce qui est déjà trouvé (on lit à partir de la main, en remontant). Le plugin ne
+ *   l'écrit nulle part.
+ * - La dalle, dans la chambre des souvenirs (on lit le code en bas, on l'entre là-haut) : six pierres autour d'une vasque,
+ *   chacune sur un anneau de six glyphes ; un clic = un cran. Les six justes : elle s'ouvre et le reste.
  */
 const { fnv } = require("./util");
 const DAY = 86400000, BANDS = 6, PLAYER_BANDS = 5, PER_BAND = 7, CODE_LEN = 6, RING = 6;

@@ -857,7 +857,7 @@ async function renderRelto(plugin, source, el, ctx) {
     onCaveSample: () => { const msg = plugin.caveSample ? plugin.caveSample(pool()) : null; if (roomSoundOn()) sound.ovenSfx("take", roomVol()); return msg; },
     onScopeCrumb: () => { if (roomSoundOn()) sound.ovenSfx("click", roomVol()); },
     onCavePick: (k) => { if (plugin.cavePick) plugin.cavePick(k, pool()); if (roomSoundOn()) sound.ovenSfx("click", roomVol()); },
-    onCaveSlab: (i) => { const res = plugin.caveSlab ? plugin.caveSlab(i, scene, pool()) : null; if (res === "open") storyLater(); if (res && roomSoundOn()) { sound.slideStone(roomVol() * 0.7); if (res === "open") setTimeout(() => sound.caveSfx("cry", roomVol()), 500); } return res; },
+    onCaveSlab: (i) => { const res = plugin.caveSlab ? plugin.caveSlab(i, scene, pool()) : null; if (res === "open") storyLater(); if (res && roomSoundOn()) sound.slabSfx(res === "open" ? "open" : "notch", roomVol()); return res; }, /* un cran : un raclement bref ; les six justes : la pierre qui bascule, une fois */
     onCaveHatch: () => { if (plugin.caveHatch) plugin.caveHatch(pool()); if (roomSoundOn()) sound.slideStone(roomVol()); },
     onCaveSfx: (kind) => { if (roomSoundOn()) sound.caveSfx(kind, roomVol()); },
     dreamLast: (age) => (plugin.dreamLast ? plugin.dreamLast(age, pool()) : null),

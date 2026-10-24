@@ -860,6 +860,21 @@ function caveSfx(kind, volume = 0.3) {
     }
   });
 }
+/**
+ * La dalle de la chambre des souvenirs : "notch", une pierre qu'on tourne d'un cran (un raclement de pierre bref et sourd,
+ * moins d'un tiers de seconde) ; "open", les six justes (le grondement d'une pierre qui bascule, une fois). Discret : pas
+ * d'accord tenu, pas de cri (l'auteur, 25 oct. : c'était trop long et trop fort).
+ */
+function slabSfx(kind, volume = 0.3) {
+  const open = kind === "open";
+  return oneShot(open ? 1.1 : 0.32, (c, out, noise) => {
+    const t = c.currentTime, D = open ? 0.7 : 0.2; out.gain.value = volume * (open ? 0.55 : 0.4);
+    const n = noise(D + 0.05), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = open ? "lowpass" : "bandpass"; bp.frequency.setValueAtTime(open ? 200 : 420, t); bp.frequency.linearRampToValueAtTime(open ? 110 : 260, t + D); bp.Q.value = open ? 0.7 : 1.4;
+    e.gain.setValueAtTime(0.0001, t); e.gain.linearRampToValueAtTime(open ? 0.8 : 0.5, t + (open ? 0.12 : 0.03)); e.gain.exponentialRampToValueAtTime(0.0001, t + D); n.connect(bp); bp.connect(e); e.connect(out); n.start(t); /* le grain de la pierre qui frotte */
+    const o = c.createOscillator(), oe = c.createGain(), at = t + D * (open ? 0.85 : 0.9); o.type = "sine"; o.frequency.setValueAtTime(open ? 62 : 95, at); o.frequency.exponentialRampToValueAtTime(open ? 38 : 70, at + 0.18);
+    oe.gain.setValueAtTime(0.0001, at); oe.gain.linearRampToValueAtTime(open ? 0.7 : 0.35, at + 0.01); oe.gain.exponentialRampToValueAtTime(0.0001, at + (open ? 0.3 : 0.1)); o.connect(oe); oe.connect(out); o.start(at); o.stop(at + 0.35); /* la butée, sourde */
+  });
+}
 /** La machine du Relto : "click" (un levier, un cran, la presse), "start" (la porte se ferme, le feu prend), "take" (les capsules quittent le plateau), "drain" (la vidange), "burn" (une capsule au feu). */
 function ovenSfx(kind, volume = 0.3) {
   return oneShot(kind === "start" ? 1.6 : kind === "burn" ? 1.3 : kind === "drain" ? 0.8 : 0.6, (c, out, noise) => {
@@ -874,4 +889,4 @@ function ovenSfx(kind, volume = 0.3) {
   });
 }
 
-module.exports = { ovenSfx, openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { ovenSfx, slabSfx, openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

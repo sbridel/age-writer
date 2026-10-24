@@ -67,12 +67,12 @@ function sentence(tr, it) {
 function drawDream(r, ctx, sc, sky, t) {
   const tr = TR(r), d = r.dream;
   night(ctx, t);
-  if (!d) { r.setView && r.view === "dream" && r.setView("cavebottom"); return; }
+  if (!d) { r.setView && r.view === "dream" && r.setView("memories"); return; }
   const el = (Date.now() - d.at) / 1000, len = D.LENGTH / 1000;
-  if (el > len) { r.setView("cavebottom"); return; } /* le rêve s'éteint seul ; le réveil est fait par setView */
+  if (el > len) { r.setView("memories"); return; } /* le rêve s'éteint seul ; le réveil est fait par setView */
   if (!d.data) { /* il vient */
     ctx.fillStyle = rgba(200, 215, 255, 0.35 + 0.25 * Math.sin(t * 2)); ctx.font = "italic 15px serif"; ctx.textAlign = "center"; ctx.fillText(d.failed ? tr("dream.none") : "…", W / 2, H / 2); ctx.textAlign = "left";
-    if (d.failed && el > 3) r.setView("cavebottom");
+    if (d.failed && el > 3) r.setView("memories");
   } else {
     const fadeIn = clamp(el / 3), fadeOut = clamp((len - el) / 5), A = fadeIn * fadeOut, models = d.data.models || [];
     ctx.save(); ctx.translate(W / 2, H / 2); const br = 1.03 + 0.012 * Math.sin(t * 0.35); ctx.scale(-br, br); ctx.translate(-W / 2, -H / 2); /* de l'autre côté : en miroir ; elle respire */
@@ -101,7 +101,7 @@ function drawDream(r, ctx, sc, sky, t) {
       r.hot.push({ x: gx - 14, y: gy - 14, w: 28, h: 28, tip: tr("dream.guide.with") });
     }
   }
-  require("./relto-atelier").backButton(r, ctx, tr("dream.wake"), "cavebottom");
+  require("./relto-atelier").backButton(r, ctx, tr("dream.wake"), "memories");
   void sc; void sky;
 }
 

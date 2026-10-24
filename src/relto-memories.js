@@ -63,7 +63,7 @@ function drawMemories(r, ctx, sc, sky, t) {
   for (let i = 0; i < 70; i++) { const k = fnv("mst" + i), x = k % W, y = (k >>> 10) % 230, a = 0.15 + 0.35 * Math.sin(t * 0.8 + i) ** 2; ctx.fillStyle = rgba(200, 210, 255, a); ctx.fillRect(x, y, 1.2, 1.2); }
   ctx.fillStyle = rgba(40, 60, 100, 0.25); ctx.fillRect(0, 300, W, 60);
   ctx.strokeStyle = rgba(140, 170, 230, 0.12); ctx.lineWidth = 1; for (const y of [304, 316, 334]) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-  if (!list.length) { ctx.fillStyle = rgba(220, 225, 240, 0.6); ctx.font = "italic 15px serif"; ctx.textAlign = "center"; ctx.fillText(tr("relto.memories.empty"), W / 2, H / 2); ctx.textAlign = "left"; }
+  if (!list.length && !slabShown(r)) { ctx.fillStyle = rgba(220, 225, 240, 0.6); ctx.font = "italic 15px serif"; ctx.textAlign = "center"; ctx.fillText(tr("relto.memories.empty"), W / 2, H / 2); ctx.textAlign = "left"; }
   list.forEach((mem, i) => {
     const p = at[i], bob = 5 * Math.sin(t * 0.7 + p.ph * TAU), x = p.x, y = p.y + bob, R = p.r, hov = r.hover && r.hover.wonder === mem.id, sel = r.memSel === mem.id; (r._memPos = r._memPos || {})[mem.id] = { x, y, R };
     ctx.save(); if (mem.gone) ctx.globalAlpha = 0.55; /* un monde qui n'est plus : l'orbe pâlit */
@@ -93,6 +93,7 @@ function drawMemories(r, ctx, sc, sky, t) {
       }
     }
   });
+  slabHere(r, ctx, t, tr); /* la dalle, à fleur d'eau, dès la première révélation (le code se lit en bas, il s'entre ici) ; par-dessus les reflets des orbes */
   const lv = r._memLeaving; /* un souvenir qu'on laisse partir : il monte, pâlit et se dissout */
   if (lv) { const k = (Date.now() - lv.at) / 1600; if (k >= 1) r._memLeaving = null; else { const y = lv.y - k * 120, a = 1 - k; ctx.strokeStyle = rgba(210, 225, 255, 0.6 * a); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(lv.x, y, lv.R * (1 + 0.3 * k), 0, TAU); ctx.stroke(); const gg = ctx.createRadialGradient(lv.x, y, 1, lv.x, y, lv.R); gg.addColorStop(0, rgba(220, 230, 255, 0.4 * a)); gg.addColorStop(1, rgba(220, 230, 255, 0)); ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(lv.x, y, lv.R, 0, TAU); ctx.fill(); } }
   /* se retourner : les bords ramènent au salon */
@@ -103,9 +104,18 @@ function drawMemories(r, ctx, sc, sky, t) {
   }
 }
 
+/** La dalle de ce Relto, si la caverne a déjà montré un premier éclair. */
+function slabHere(r, ctx, t, tr) {
+  const st = r.opts && typeof r.opts.caveState === "function" ? r.opts.caveState() || {} : {}; if (!(st.revealed > 0)) return;
+  const FC = require("./fresco"), FR = require("./relto-fresco"), name = (r.scene && r.scene.name) || "Relto", seed = (r.scene && r.scene.seed) || 0, key = require("./telescope").keyOf(name, seed), s = (st.slabs || {})[key] || {};
+  const now = r.nowOverride || Date.now(), open = !!s.open, slab = FC.slabOf(name, seed, s.turns);
+  FR.drawSlab(r, ctx, { open, stones: slab.stones, turnAt: r.slabTurnAt, dreamTip: open && r.dreamTip ? r.dreamTip() : null }, now, t, tr);
+}
+const slabShown = (r) => { const st = r.opts && typeof r.opts.caveState === "function" ? r.opts.caveState() || {} : {}; return st.revealed > 0; };
+
 /** L'orbe du salon : la porte de la chambre, qui flotte près du plafond dès la première merveille vue. */
 function loungeOrb(r, ctx, t) {
-  const n = memoriesOf(r).length; if (!n) return;
+  const n = memoriesOf(r).length; if (!n && !slabShown(r)) return; /* une merveille vue, ou la dalle : la chambre a quelque chose à montrer */
   const tr = TR(r), x = 612, y = 74 + 4 * Math.sin(t * 0.9), R = 11, hov = r.hover && r.hover.go === "memories";
   const g = ctx.createRadialGradient(x, y, 2, x, y, R * 3); g.addColorStop(0, rgba(180, 205, 255, hov ? 0.5 : 0.3)); g.addColorStop(1, rgba(180, 205, 255, 0)); ctx.fillStyle = g; ctx.fillRect(x - R * 3, y - R * 3, R * 6, R * 6);
   const b = ctx.createRadialGradient(x - 3, y - 3, 1, x, y, R); b.addColorStop(0, "rgba(240,248,255,0.9)"); b.addColorStop(0.6, "rgba(120,150,220,0.55)"); b.addColorStop(1, "rgba(40,60,120,0.6)"); ctx.fillStyle = b; ctx.beginPath(); ctx.arc(x, y, R, 0, TAU); ctx.fill();
@@ -113,4 +123,4 @@ function loungeOrb(r, ctx, t) {
   r.hot.push({ x: x - R * 1.6, y: y - R * 1.6, w: R * 3.2, h: R * 3.2, go: "memories", tip: tr("relto.memories.go") });
 }
 
-module.exports = { drawMemories, loungeOrb, memoriesOf, LOOK };
+module.exports = { drawMemories, loungeOrb, memoriesOf, slabShown, LOOK };

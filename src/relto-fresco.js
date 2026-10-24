@@ -1,6 +1,7 @@
 "use strict";
 /**
- * Le dessin des fresques de la caverne, du cartouche et de la dalle aux yeux (étape 4c ; règles dans src/fresco.js).
+ * Le dessin des fresques de la caverne, du code le long de la veine et de la dalle de la chambre des souvenirs (étape 4c, retouchée
+ * le 25 oct. : claude/DESIGN-art-bahro.md §11 ; règles dans src/fresco.js).
  * Signes originaux, dans l'esprit des peintures rupestres : ocre sur pierre, traits tremblés au doigt, un clair pour les
  * détails ; rien des glyphes de Cyan. Chaque signe se dessine dans un carré de -10 à 10, au tracé légèrement tremblé
  * (déterministe : la même paroi à chaque descente).
@@ -10,7 +11,6 @@ const F = require("./fresco");
 const TAU = Math.PI * 2, OCHRE = "#c8702e", PALE = "#e8dcc0";
 /* la paroi : cinq bandes du joueur, la sixième aux Bahro ; le cartouche et la dalle à gauche, au bord de l'eau */
 const BAND_Y = (b) => 236 - b * 35, WALL_X0 = 150, WALL_X1 = 556; /* à droite, derrière le bassin : la paroi où s'ouvre le passage (section 15) */
-const CART = { x: 36, y: 186, w: 88, h: 60 }, SLAB = { x: 80, y: 300, r: 22, ring: 38, stone: 10 };
 
 /** Un pinceau tremblé : la graine fait le tremblement, l'échelle `k` ramène les épaisseurs en pixels. */
 function brush(ctx, seed, k) {
@@ -127,60 +127,100 @@ function drawFrescoes(ctx, items, vis, key) {
 }
 
 /**
- * Le cartouche : deux rangées de trois cases au-dessus de la dalle ; les glyphes trouvés y sont tous, les autres restent de la
- * pierre nue. Un trait d'ocre relie les cases dans l'ordre de lecture (1-2-3, puis 4-5-6) : l'ordre des pierres de la dalle,
- * qui commence à celle du haut (marquée d'une entaille) et suit le soleil.
+ * Le code, à gauche du bassin : peint le long d'une veine claire de la roche (du quartz) qui monte de l'eau en ondulant.
+ * Le départ est une main peinte au pied de la veine, la leur : on lit à partir de la main, en remontant la veine. Chaque
+ * éclair monte plus haut (une bande par révélation), donc chaque éclair montre deux glyphes de plus ; les places pas encore
+ * révélées sont dans le noir. Pas de cadre, pas de flèche, pas de serpent (l'auteur, 25 oct. : il leur fait peur).
+ * `vis(y)` : 0..1, ce que la lumière laisse voir à la hauteur y.
  */
-const cellOf = (i) => ({ x: CART.x + (CART.w * ((i % 3) + 0.5)) / 3, y: CART.y + (CART.h * (Math.floor(i / 3) + 0.5)) / 2 });
-function drawCartouche(ctx, code, found, a, key) {
-  if (a <= 0.01) return;
-  const { x, y, w, h } = CART, b = brush(ctx, key + "cart", 1);
-  ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = OCHRE; ctx.lineCap = "round";
-  b.line([[x + 5, y], [x + w - 5, y], [x + w, y + 5], [x + w, y + h - 5], [x + w - 5, y + h], [x + 5, y + h], [x, y + h - 5], [x, y + 5], [x + 5, y]], 2.2);
-  ctx.globalAlpha = a * 0.55; /* l'ordre de lecture : de case en case, sans toucher les glyphes */
-  for (let i = 0; i < 5; i++) {
-    const p = cellOf(i), q = cellOf(i + 1), dx = q.x - p.x, dy = q.y - p.y, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, gap = i === 2 ? 11 : 10.5;
-    b.line([[p.x + ux * gap, p.y + uy * gap], [q.x - ux * gap, q.y - uy * gap]], 1.2);
-    const tx = q.x - ux * gap, ty = q.y - uy * gap; b.line([[tx - ux * 3 - uy * 2, ty - uy * 3 + ux * 2], [tx, ty], [tx - ux * 3 + uy * 2, ty - uy * 3 - ux * 2]], 1.1);
+const VEIN = [[84, 280], [70, 266], [58, 250], [68, 234], [56, 216], [64, 200], [54, 186], [58, 176]]; /* tout sur la paroi : son pied (y 284 et plus) est le sol, rien n'y est peint */
+const VEIN_HAND = { x: 100, y: 274 };
+/** Un point de la veine, à la fraction u (0 au bord de l'eau, 1 en haut). */
+function veinAt(u) {
+  const n = VEIN.length - 1, f = clamp(u) * n, i = Math.min(n - 1, Math.floor(f)), k = f - i, [x0, y0] = VEIN[i], [x1, y1] = VEIN[i + 1];
+  return { x: x0 + (x1 - x0) * k, y: y0 + (y1 - y0) * k };
+}
+/** Où se peint le glyphe `i` du code : en remontant la veine, une fois d'un côté, une fois de l'autre. */
+function veinSlot(i) {
+  const p = veinAt([0.1, 0.26, 0.42, 0.56, 0.74, 0.88][i]), side = i % 2 ? 1 : -1;
+  return { x: p.x + 15 * side, y: p.y };
+}
+function drawVeinCode(ctx, code, found, vis, key) {
+  /* la veine : un filon de roche claire, irrégulier, qui accroche la lumière, segment par segment selon ce qui est éclairé */
+  ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const mid = (i) => [(VEIN[i][0] + VEIN[i + 1][0]) / 2, (VEIN[i][1] + VEIN[i + 1][1]) / 2], last = VEIN.length - 1;
+  for (let i = 0; i <= last; i++) { /* une courbe lisse par les milieux ; chaque morceau selon ce que la lumière en a atteint */
+    const [px, py] = VEIN[i], from = i === 0 ? VEIN[0] : mid(i - 1), to = i === last ? VEIN[last] : mid(i), a = vis(py); if (a <= 0.01) continue;
+    for (const [w, al, c] of [[7, 0.14, [196, 200, 188]], [3.2, 0.2, [214, 218, 206]], [1.1, 0.38, [236, 238, 228]]]) { ctx.strokeStyle = rgba(c[0], c[1], c[2], al * a); ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(from[0], from[1]); ctx.quadraticCurveTo(px, py, to[0], to[1]); ctx.stroke(); }
+    for (let k = 0; k < 2; k++) { const q = (fnv(key + "vs" + i + "|" + k) % 1000) / 1000; ctx.fillStyle = rgba(244, 248, 238, 0.55 * a); ctx.fillRect(from[0] + (to[0] - from[0]) * q - 0.6 + ((fnv(key + "vx" + i + k) % 5) - 2), from[1] + (to[1] - from[1]) * q - 0.6, 1.3, 1.3); } /* des grains qui brillent */
   }
   ctx.restore();
-  code.forEach((g, i) => { const c = cellOf(i); if (i < found) sign(ctx, F.ELEMENTS[g], c.x, c.y, 9.5, a, key + "c" + i); else { ctx.save(); ctx.globalAlpha = a * 0.5; ctx.fillStyle = OCHRE; ctx.beginPath(); ctx.arc(c.x, c.y, 1.3, 0, TAU); ctx.fill(); ctx.restore(); } });
+  const ha = vis(VEIN_HAND.y); /* la main, au pied de la veine : on commence ici */
+  if (ha > 0.01) { ctx.save(); ctx.translate(VEIN_HAND.x, VEIN_HAND.y); ctx.rotate(0.35); sign(ctx, "hand", 0, 0, 8, ha * 0.9, key + "veinhand"); ctx.restore(); }
+  code.forEach((g, i) => { if (i >= found) return; const p = veinSlot(i), a = vis(p.y); if (a > 0.01) sign(ctx, F.ELEMENTS[g], p.x, p.y, 8.5, a * 0.9, key + "c" + i); });
 }
 
 /**
- * La dalle aux yeux. `st` : { lit (0..1, la lueur), seen, open, stones (glyphes montrés), turnAt: { i, at } }. Les yeux
- * restent faiblement allumés une fois vus ; ils éclairent assez les pierres pour qu'on les tourne dans le noir.
+ * La dalle, dans la chambre des souvenirs (déménagée de la caverne le 25 oct. : on lit le code en bas, on l'entre ici).
+ * Une dalle couchée à fleur d'eau, vue un peu d'en haut ; six pierres taillées encastrées en anneau, chacune gravée en
+ * creux ; au centre une vasque d'eau immobile, noire, qui reflète les étoiles (le Rêve est le miroir de Serenia). Pas
+ * d'yeux, pas de visage (l'auteur, 25 oct.). Les six justes : l'eau de la vasque s'éclaire de bleu ; on y regarde pour
+ * rêver. `st` : { open, stones, turnAt: { i, at }, dreamTip }.
  */
+const SLAB = { x: 320, y: 290, rx: 140, ry: 50, ring: 96, ringY: 0.4, stone: 17, squash: 0.52, pool: 36 };
+/** Vue un peu d'en haut : x, z (z < 0 au fond) sur le plan de la dalle ; le fond se resserre un peu (la perspective). */
+const proj = (px, pz) => [px * (1 + 0.1 * (pz / 125)), pz * SLAB.ringY];
+/* une dalle carrée, posée de biais dans l'eau, un coin cassé au fond à droite, des bords à grands éclats */
+const DALLE = [[-138, -118], [-60, -126], [20, -122], [84, -128], [112, -104], [134, -84], [138, -10], [142, 70], [136, 122], [40, 128], [-50, 124], [-134, 120], [-140, 40], [-136, -40]].map(([px, pz]) => proj(px + ((fnv("dl" + px) % 7) - 3), pz));
+function stonePath(ctx, i, s) { /* une pierre taillée, à facettes, un peu de travers */
+  ctx.beginPath(); for (let k = 0; k < 7; k++) { const a = (k / 7) * TAU + (fnv("st" + i) % 100) / 100, rr = s * (0.86 + ((fnv("st" + i + "|" + k) % 100) / 100) * 0.22); k ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath();
+}
+function carved(ctx, id, x, y, s, a, seed) { /* un glyphe gravé en creux : le bord bas-droit prend la lumière, le fond est sombre */
+  sign(ctx, id, x + 0.7, y + 0.8, s, a * 0.55, seed, "rgb(176,184,200)");
+  sign(ctx, id, x, y, s, a * 0.95, seed, "#0b0c10");
+}
+const poly = (ctx, pts) => { ctx.beginPath(); pts.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.closePath(); };
 function drawSlab(r, ctx, st, now, t, tr) {
-  const { x, y } = SLAB, seenA = st.seen ? 1 : 0, A = Math.max(st.lit, st.open ? 0.75 : seenA * 0.38); if (A <= 0.01) return;
-  ctx.save(); ctx.globalAlpha = A;
-  const g = ctx.createRadialGradient(x - 6, y - 8, 2, x, y, SLAB.r + 4); g.addColorStop(0, "#3a3a34"); g.addColorStop(1, "#16170f"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, SLAB.r, 0, TAU); ctx.fill();
-  ctx.strokeStyle = rgba(150, 130, 100, 0.5); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(x, y, SLAB.r, 0, TAU); ctx.stroke();
-  if (st.open) { /* ouverte : la pierre s'est fendue, il en vient un souffle bleu */
-    const gap = 5; ctx.fillStyle = "#000"; ctx.beginPath(); ctx.moveTo(x - gap, y - SLAB.r + 2); ctx.lineTo(x + gap, y - SLAB.r + 2); ctx.lineTo(x + gap * 0.6, y + SLAB.r - 2); ctx.lineTo(x - gap * 0.6, y + SLAB.r - 2); ctx.closePath(); ctx.fill();
-    const bl = ctx.createLinearGradient(0, y - SLAB.r, 0, y + SLAB.r); bl.addColorStop(0, rgba(110, 160, 255, 0.0)); bl.addColorStop(0.5, rgba(110, 160, 255, 0.35 + 0.1 * Math.sin(t * 1.4))); bl.addColorStop(1, rgba(110, 160, 255, 0)); ctx.fillStyle = bl; ctx.fillRect(x - gap, y - SLAB.r, gap * 2, SLAB.r * 2);
-  }
+  const { x, y } = SLAB, open = !!st.open;
+  ctx.save(); ctx.translate(x, y);
+  /* l'épaisseur de la dalle, qui sort à peine de l'eau, puis son dessus */
+  ctx.save(); ctx.translate(0, 9); poly(ctx, DALLE); ctx.fillStyle = "#0e1016"; ctx.fill(); ctx.restore();
+  ctx.save(); ctx.translate(0, 4); ctx.scale(1.04, 1.12); poly(ctx, DALLE); ctx.fillStyle = rgba(140, 170, 230, 0.08); ctx.fill(); ctx.restore(); /* l'eau qui lèche le bord */
+  const g = ctx.createLinearGradient(0, -SLAB.ry, 0, SLAB.ry); g.addColorStop(0, "#3c414e"); g.addColorStop(1, "#22252d");
+  poly(ctx, DALLE); ctx.fillStyle = g; ctx.fill();
+  ctx.save(); poly(ctx, DALLE); ctx.clip();
+  for (let i = 0; i < 120; i++) { const k = fnv("grain" + i); ctx.fillStyle = k % 3 ? rgba(150, 160, 180, 0.10) : rgba(0, 0, 0, 0.22); ctx.fillRect((k % 280) - 140, ((k >>> 8) % 110) - 55, 1.3, 1); }
+  for (let i = 0; i < 4; i++) { const k = fnv("dcrack" + i), a0 = (k % 628) / 100; ctx.strokeStyle = rgba(8, 9, 12, 0.5); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(Math.cos(a0) * SLAB.rx, Math.sin(a0) * SLAB.ry); ctx.lineTo(Math.cos(a0) * SLAB.rx * 0.82 + ((k >>> 4) % 9) - 4, Math.sin(a0) * SLAB.ry * 0.8); ctx.stroke(); } /* des éclats au bord */
   ctx.restore();
-  /* les yeux : faibles une fois vus, vifs quand la dalle est ouverte */
-  const eye = clamp(st.open ? 1 : Math.max(st.lit * 0.8, seenA * 0.35)) * (0.85 + 0.15 * Math.sin(t * 0.9));
-  for (const dx of [-8, 8]) {
-    const ex = x + dx, ey = y - 6, gg = ctx.createRadialGradient(ex, ey, 0.5, ex, ey, 9); gg.addColorStop(0, rgba(200, 235, 255, 0.55 * eye)); gg.addColorStop(1, rgba(120, 180, 255, 0)); ctx.fillStyle = gg; ctx.fillRect(ex - 9, ey - 9, 18, 18);
-    ctx.save(); ctx.globalAlpha = Math.max(A, eye); ctx.strokeStyle = rgba(220, 200, 160, 0.8); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(ex - 6, ey); ctx.quadraticCurveTo(ex, ey - 4.5, ex + 6, ey); ctx.quadraticCurveTo(ex, ey + 4.5, ex - 6, ey); ctx.stroke();
-    ctx.fillStyle = rgba(210, 240, 255, 0.25 + 0.75 * eye); ctx.beginPath(); ctx.arc(ex, ey, 1.9, 0, TAU); ctx.fill(); ctx.restore();
-  }
-  /* les six pierres, chacune avec son glyphe ; celle qu'on vient de tourner tourne encore un peu */
+  ctx.strokeStyle = rgba(190, 205, 235, 0.24); ctx.lineWidth = 1; ctx.beginPath(); DALLE.slice(0, 6).forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.stroke(); /* l'arête du fond prend la lueur des orbes */
+  /* la vasque : une eau noire, immobile, qui reflète les étoiles ; ouverte, elle s'éclaire de bleu, et des poussières en montent */
+  const pr = SLAB.pool, pry = pr * SLAB.ringY;
+  ctx.fillStyle = "#07080c"; ctx.beginPath(); ctx.ellipse(0, 0, pr + 5, pry + 3, 0, 0, TAU); ctx.fill(); /* la margelle creusée */
+  const wg = ctx.createRadialGradient(-6, -3, 1, 0, 0, pr); wg.addColorStop(0, open ? rgba(170, 210, 255, 0.85) : "#1a2236"); wg.addColorStop(1, open ? rgba(60, 100, 190, 0.6) : "#0b0f1a"); /* fermée : l'eau sombre qui prend le bleu de la chambre */
+  ctx.fillStyle = wg; ctx.beginPath(); ctx.ellipse(0, 0, pr, pry, 0, 0, TAU); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.ellipse(0, 0, pr, pry, 0, 0, TAU); ctx.clip();
+  for (let i = 0; i < 14; i++) { const k = fnv("pstar" + i), a = 0.25 + 0.5 * Math.sin(t * 0.7 + i) ** 2; ctx.fillStyle = rgba(210, 225, 255, open ? a * 0.4 : a * 0.6); ctx.fillRect((k % (pr * 2)) - pr, ((k >>> 9) % Math.round(pry * 2)) - pry, 1, 1); } /* les étoiles de la chambre, dans l'eau */
+  ctx.strokeStyle = rgba(200, 220, 255, 0.12 + (open ? 0.1 : 0)); ctx.lineWidth = 0.8; const ph = (t * 0.25) % 1; ctx.beginPath(); ctx.ellipse(0, 0, pr * ph, pry * ph, 0, 0, TAU); ctx.stroke(); /* un cercle lent sur l'eau */
+  ctx.restore();
+  if (open) { const lg = ctx.createLinearGradient(0, 0, 0, -70); lg.addColorStop(0, rgba(140, 190, 255, 0.28 + 0.06 * Math.sin(t * 1.3))); lg.addColorStop(1, rgba(140, 190, 255, 0)); ctx.fillStyle = lg; ctx.beginPath(); ctx.moveTo(-pr * 0.9, 0); ctx.lineTo(pr * 0.9, 0); ctx.lineTo(pr * 0.5, -70); ctx.lineTo(-pr * 0.5, -70); ctx.closePath(); ctx.fill();
+    for (let i = 0; i < 9; i++) { const q = (t * 0.12 + i / 9) % 1, k = fnv("pdust" + i); ctx.fillStyle = rgba(210, 230, 255, 0.7 * (1 - q)); ctx.fillRect(((k % 60) - 30) * (1 - q * 0.4), -q * 80, 1.4, 1.4); } } /* des poussières qui montent, comme à la fissure */
+  /* l'entaille, devant la pierre du fond : on commence ici, et on suit le soleil */
+  { const ny = proj(0, -SLAB.ring)[1] - SLAB.stone * SLAB.squash - 5; ctx.strokeStyle = "#08090c"; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(-4, ny - 2); ctx.lineTo(0, ny + 1); ctx.lineTo(4, ny - 2); ctx.stroke(); ctx.strokeStyle = rgba(176, 184, 200, 0.5); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(-3.4, ny - 1); ctx.lineTo(0.5, ny + 1.8); ctx.stroke(); }
+  ctx.restore();
+  /* les six pierres : taillées, encastrées dans la dalle (un joint sombre autour), gravées ; vues un peu d'en haut */
   for (let i = 0; i < 6; i++) {
-    const a = -Math.PI / 2 + (i / 6) * TAU, sx = x + Math.cos(a) * SLAB.ring, sy = y + Math.sin(a) * SLAB.ring * 0.92, turning = st.turnAt && st.turnAt.i === i ? clamp((now - st.turnAt.at) / 350) : 1;
-    const hov = r.hover && r.hover.caveSlab === i + 1;
-    ctx.save(); ctx.globalAlpha = A; ctx.translate(sx, sy); ctx.rotate((1 - turning) * -1.05);
-    const sg = ctx.createRadialGradient(-3, -3, 1, 0, 0, SLAB.stone); sg.addColorStop(0, hov ? "#5a5648" : "#45423a"); sg.addColorStop(1, "#1d1c17"); ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, SLAB.stone, 0, TAU); ctx.fill();
-    ctx.strokeStyle = rgba(150, 130, 100, 0.45); ctx.lineWidth = 1; ctx.stroke(); ctx.restore();
-    if (st.stones) sign(ctx, F.ELEMENTS[st.stones[i]], sx, sy, 6.4, A * (st.open ? 1 : 0.95), "slab" + i);
-    if (i === 0) { ctx.save(); ctx.globalAlpha = A * 0.8; ctx.strokeStyle = OCHRE; ctx.lineWidth = 1.6; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(sx - 3, sy - SLAB.stone - 5); ctx.lineTo(sx, sy - SLAB.stone - 2); ctx.lineTo(sx + 3, sy - SLAB.stone - 5); ctx.stroke(); ctx.restore(); } /* l'entaille : on commence ici */
-    if (st.seen && !st.open) r.hot.push({ x: sx - SLAB.stone - 2, y: sy - SLAB.stone - 2, w: SLAB.stone * 2 + 4, h: SLAB.stone * 2 + 4, tip: tr("cave.slab.stone"), caveSlab: i + 1 });
+    const a = -Math.PI / 2 + (i / 6) * TAU, [ox, oy] = proj(Math.cos(a) * SLAB.ring, Math.sin(a) * SLAB.ring), sx = x + ox, sy = y + oy, turning = st.turnAt && st.turnAt.i === i ? clamp((now - st.turnAt.at) / 300) : 1, hov = r.hover && r.hover.caveSlab === i + 1, rot = (1 - turning) * -1.05;
+    ctx.save(); ctx.translate(sx, sy); ctx.scale(1, SLAB.squash);
+    ctx.save(); ctx.scale(1.12, 1.12); stonePath(ctx, i, SLAB.stone); ctx.fillStyle = "#08090c"; ctx.fill(); ctx.restore(); /* le logement, creusé dans la dalle */
+    ctx.rotate(rot);
+    const sg = ctx.createLinearGradient(-SLAB.stone, -SLAB.stone, SLAB.stone, SLAB.stone); sg.addColorStop(0, hov ? "#6a6f7c" : "#555a66"); sg.addColorStop(1, hov ? "#2c2f37" : "#22252c");
+    stonePath(ctx, i, SLAB.stone); ctx.fillStyle = sg; ctx.fill(); ctx.strokeStyle = rgba(190, 200, 220, 0.25); ctx.lineWidth = 1.2; ctx.stroke();
+    if (st.stones) carved(ctx, F.ELEMENTS[st.stones[i]], 0, 0, 10, 1, "slab" + i);
+    ctx.restore();
+    if (!open) r.hot.push({ x: sx - SLAB.stone - 2, y: sy - SLAB.stone * SLAB.squash - 3, w: SLAB.stone * 2 + 4, h: SLAB.stone * SLAB.squash * 2 + 6, tip: tr("cave.slab.stone"), caveSlab: i + 1 });
   }
-  if (st.seen || st.lit > 0.2) r.hot.push({ x: x - SLAB.r, y: y - SLAB.r, w: SLAB.r * 2, h: SLAB.r * 2, tip: st.open ? tr("cave.slab.open") : tr("cave.slab") });
-  if (st.open && st.dreamTip) r.hot.push({ x: x - 20, y: y - 16, w: 40, h: 20, tip: st.dreamTip, dreamGo: true }); /* les yeux : le rêve (étape 4d) */
+  r.hot.push({ x: x - SLAB.rx, y: y - SLAB.ry, w: SLAB.rx * 2, h: SLAB.ry * 2, tip: open ? tr("cave.slab.open") : tr("cave.slab") });
+  if (open && st.dreamTip) r.hot.push({ x: x - SLAB.pool, y: y - SLAB.pool * 0.5, w: SLAB.pool * 2, h: SLAB.pool, tip: st.dreamTip, dreamGo: true }); /* la vasque : le rêve (étape 4d) */
 }
 
 /** Les mains mouillées (src/relto-cave.js, traces) : tout près du signe le plus récent, comme s'ils venaient de le peindre. */
@@ -190,4 +230,4 @@ function handsNear(items, key) {
   return [[p.x - p.s - 9, p.y + 4, -0.35, 1.05], [p.x + p.s + 8, p.y - 3, 0.3, 1]];
 }
 
-module.exports = { handsNear, slot, SIGNS, sign, ageSign, drawFrescoes, drawCartouche, drawSlab, BAND_Y, CART, SLAB, WALL_X0, WALL_X1 };
+module.exports = { handsNear, slot, SIGNS, sign, ageSign, drawFrescoes, drawVeinCode, veinSlot, drawSlab, BAND_Y, VEIN, SLAB, WALL_X0, WALL_X1 };

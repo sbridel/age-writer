@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.50.1 — Touch-ups beneath the island (2026-10-25)
+
+### Changed
+- **Beneath the island**: the light reads better when the lake is alive, the sounds of stone are shorter and quieter, and a few things have moved to where they belong. What and where is left for you to find.
+
 ## 1.50.0 — Beneath the island (2026-10-24)
 
 ### Added
