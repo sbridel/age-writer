@@ -89,6 +89,20 @@ function walls(r, ctx, c, sky, skin, t) {
   ctx.fillStyle = c(skin === "castle" ? "#34323a" : skin === "glass" ? "#24382f" : "#2a241e"); for (let i = 0; i < 9; i++) ctx.fillRect(i * 74, 300, 70, 3);
 }
 
+/** La porte du mur de droite, vers le couloir de la maison (section 11) : des planches, une porte vitrée au cadre de cuivre, ou une ogive ferrée. */
+function hallDoor(r, ctx, c, skin, tr) {
+  const x = 536, w = 50, top = 186, bot = 300, rr = w / 2, path = (p = 0) => { ctx.beginPath(); ctx.moveTo(x - p, bot); if (skin === "castle") { ctx.lineTo(x - p, top + rr); ctx.quadraticCurveTo(x - p, top - p + 4, x + rr, top - p - 10); ctx.quadraticCurveTo(x + w + p, top - p + 4, x + w + p, top + rr); } else { ctx.lineTo(x - p, top + rr); ctx.arc(x + rr, top + rr, rr + p, Math.PI, 0); } ctx.lineTo(x + w + p, bot); ctx.closePath(); };
+  ctx.fillStyle = c(skin === "castle" ? "#24222a" : skin === "glass" ? "#2a1a12" : "#1a1410"); path(5); ctx.fill();
+  ctx.save(); path(); ctx.clip();
+  ctx.fillStyle = c(skin === "castle" ? "#3a2a1e" : skin === "glass" ? "#3a2418" : "#4e3622"); ctx.fillRect(x, top - 14, w, bot - top + 14);
+  if (skin === "glass") { ctx.fillStyle = c("#3a6a62"); ctx.fillRect(x + 6, top - 8, w - 12, 56); ctx.strokeStyle = c("#b5652a"); ctx.lineWidth = 2; ctx.strokeRect(x + 6, top - 8, w - 12, 56); ctx.beginPath(); ctx.moveTo(x + rr, top - 8); ctx.lineTo(x + rr, top + 48); ctx.stroke(); }
+  else { ctx.strokeStyle = rgba(0, 0, 0, 0.35); ctx.lineWidth = 1; for (let i = 1; i < 5; i++) { ctx.beginPath(); ctx.moveTo(x + i * w / 5, top - 14); ctx.lineTo(x + i * w / 5, bot); ctx.stroke(); } ctx.fillStyle = c("#22201e"); for (const y of [top + rr + 2, bot - 22]) ctx.fillRect(x + 2, y, w - 4, 4); }
+  ctx.restore();
+  ctx.strokeStyle = c(skin === "castle" ? "#6a6474" : skin === "glass" ? "#b5652a" : "#2e2418"); ctx.lineWidth = 2.5; path(1); ctx.stroke();
+  ctx.strokeStyle = c("#22201e"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(x + 9, top + (bot - top) * 0.58, 3, 0, TAU); ctx.stroke();
+  r.hot.push({ x: x - 6, y: top - 16, w: w + 12, h: bot - top + 16, tip: tr("oven.toHall"), go: "hall" });
+}
+
 /** Un curseur vertical façon Er'cana : 0 à 50, une grande ligne tous les 5. */
 function slider(ctx, c, trim, x, v) {
   const y = SL_Y, h = SL_H;
@@ -115,6 +129,7 @@ function drawOven(r, ctx, sc, sky, t) {
   const skin = skinOf(r), trim = TRIM[skin], night = clamp(sky.night == null ? 0 : sky.night), amb = 0.62 + 0.38 * clamp(sky.ambient == null ? 1 : sky.ambient), c = (h) => mix("#05060c", h, amb);
   const cooking = ph && ph.phase === "cooking", done = ph && ph.phase === "done";
   walls(r, ctx, c, sky, skin, t);
+  hallDoor(r, ctx, c, skin, tr);
   /* l'étagère des capsules cuites, à gauche */
   for (const y of [150, 210]) { /* deux planches, chacune sur deux consoles ; à la Verrière, des consoles de cuivre en volute */
     const board = skin === "glass" ? "#5a3a22" : skin === "castle" ? "#4a4044" : "#4a3624";
@@ -236,7 +251,7 @@ function drawOven(r, ctx, sc, sky, t) {
   /* la lumière du feu sur la pièce ; la nuit, une lanterne */
   if (cooking) { const gl = ctx.createRadialGradient(dx, dy, 10, dx, dy, 260); gl.addColorStop(0, rgba(255, 150, 60, 0.12 + hot * 0.18)); gl.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = gl; ctx.fillRect(0, 0, W, H); }
   if (night > 0.3) { const lx = skin === "castle" ? 112 : 134; ctx.fillStyle = "#e8b860"; ctx.fillRect(lx - 4, 60, 8, 12); const lg = ctx.createRadialGradient(lx, 66, 2, lx, 66, 110); lg.addColorStop(0, rgba(255, 200, 120, 0.35 * night)); lg.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H); }
-  require("./relto-atelier").backButton(r, ctx, tr("oven.back"), "island");
+  require("./relto-atelier").backButton(r, ctx, r.ovenFrom === "hall" ? tr("oven.back.hall") : tr("oven.back"), r.ovenFrom === "hall" ? "hall" : "island");
 }
 
 /**

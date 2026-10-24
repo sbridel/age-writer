@@ -202,6 +202,7 @@ function drawCabin(r, ctx, sc, sky, t) {
   g = ctx.createRadialGradient(cx + 3.5, ty - 19, 2, cx + 3.5, ty - 19, 70); g.addColorStop(0, rgba(255, 190, 90, (0.12 + 0.28 * night) * fl)); g.addColorStop(1, rgba(255, 190, 90, 0)); ctx.fillStyle = g; ctx.fillRect(cx - 80, ty - 90, 160, 140);
   g = ctx.createRadialGradient(W / 2, H / 2, 150, W / 2, H / 2, 420); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, rgba(0, 0, 0, 0.38)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   require("./relto-lounge").turnEdges(r, ctx, "lounge", TR(r)("relto.lounge.turn")); // se retourner : le salon, de l'autre côté de la pièce
+  require("./relto-hall").backEdge(r, ctx, "hall", TR(r)("hall.go")); /* reculer : le couloir, derrière soi */
 }
 
 /** Les piliers de liaison de près : la fenêtre de liaison s'allume quand des Âges y reviennent. */
