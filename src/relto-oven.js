@@ -17,7 +17,7 @@ const stateOf = (r) => (r.opts && typeof r.opts.ovenState === "function" ? r.opt
 const IDS = ["ash", "humus", "silt", "peat"];
 const ING = { ash: { base: "#c9c5bb", dark: "#9c988e", kind: "powder" }, humus: { base: "#3a2a1f", dark: "#22170f", kind: "lumps" }, silt: { base: "#5f6f5c", dark: "#3e4a3c", kind: "gloss" }, peat: { base: "#7a4a2b", dark: "#4e2e19", kind: "fibre" } };
 const FULL = 9; /* une trémie est pleine à neuf mesures */
-const HOP = (i) => 236 + i * 56, DOOR = [286, 214, 38], SLIDERS = { time: 362, temp: 396 }, SL_Y = 168, SL_H = 90, WHEEL = [494, 214], GAUGE = [498, 160], TRAY = [286, 312];
+const HOP = (i) => 236 + i * 56, DOOR = [286, 214, 38], SLIDERS = { time: 362, temp: 396 }, SL_Y = 162, SL_H = 104, WHEEL = [494, 214], GAUGE = [498, 160], TRAY = [286, 312];
 const HOLES = [[-40, 2], [-20, -5], [0, 4], [20, -5], [40, 2]];
 const skinOf = (r) => (r.castleOn && r.castleOn() ? "castle" : r.glassOn && r.glassOn() ? "glass" : "plain");
 const TRIM = { plain: ["#b8955a", "#8a6d3e", "#e0c27a"], glass: ["#c67a3e", "#8a4a22", "#e6a06a"], castle: ["#a8a39a", "#6c6872", "#d8c88a"] };
@@ -80,16 +80,20 @@ function walls(r, ctx, c, sky, skin, t) {
 }
 
 /** Un curseur vertical façon Er'cana : 0 à 50, une grande ligne tous les 5. */
-function slider(ctx, c, trim, x, v, flames) {
+function slider(ctx, c, trim, x, v) {
   const y = SL_Y, h = SL_H;
   ctx.fillStyle = c("#1a1b1e"); ctx.beginPath(); ctx.rect(x - 13, y - 6, 26, h + 12); ctx.fill(); ctx.strokeStyle = c(trim[1]); ctx.lineWidth = 1.5; ctx.stroke();
   for (let k = 0; k <= 50; k++) { const yy = y + h - k / 50 * h, big = k % 5 === 0; ctx.fillStyle = c(big ? "#e9dcc0" : "#7a6e5a"); ctx.fillRect(x - (big ? 10 : 6), yy, big ? 6 : 3, big ? 1.2 : 0.7); }
   ctx.fillStyle = "#0b0b0c"; ctx.fillRect(x - 1.5, y, 3, h);
   const vy = y + h - v / 50 * h; ctx.fillStyle = c(trim[0]); ctx.fillRect(x - 2, vy - 4, 13, 8); ctx.fillStyle = c(trim[2]); ctx.fillRect(x + 4, vy - 1, 6, 2);
-  if (flames) for (let k = 0; k < 5; k++) { /* la température : une flamme qui grandit le long de l'échelle (rien d'écrit) */
-    const fx = x + 18, fy = y + h - 9 - k * (h - 10) / 4, s = 0.55 + k * 0.14; ctx.fillStyle = c(mix("#7a3a1a", "#ff8a3a", k / 4));
-    ctx.beginPath(); ctx.moveTo(fx, fy - 6 * s); ctx.quadraticCurveTo(fx + 5 * s, fy, fx + 2.5 * s, fy + 5 * s); ctx.quadraticCurveTo(fx, fy + 6 * s, fx - 2.5 * s, fy + 5 * s); ctx.quadraticCurveTo(fx - 5 * s, fy, fx, fy - 6 * s); ctx.fill();
-  }
+}
+
+/** Ce que vaut un réglage, en clair (l'infobulle, et le mot qui s'affiche quand on le change) : le temps dit aussi la durée réelle. */
+function valueTip(tr, k, v) {
+  const s = tr("oven.val." + k).replace("{v}", v);
+  if (k !== "time") return s;
+  const sec = v * 15, d = sec < 60 ? sec + " s" : sec % 60 ? Math.floor(sec / 60) + " min " + (sec % 60) + " s" : sec / 60 + " min";
+  return s.replace("{d}", d);
 }
 
 /** Combien il reste dans une trémie, en mots (pas de chiffre : on le voit au verre). */
@@ -108,9 +112,16 @@ function drawOven(r, ctx, sc, sky, t) {
   rows.forEach(([k, n], i) => { const shown = Math.min(n, 6); for (let j = 0; j < shown; j++) capsule(ctx, 76 + i * 36 + (j % 3) * 9, j < 3 ? 150 : 210, k, 0.9, false, 0.7); });
   const total = (P.white || 0) + (P.amber || 0) + (P.grey || 0);
   r.hot.push({ x: 64, y: 120, w: 116, h: 96, tip: total ? tr("oven.shelf").replace("{w}", P.white || 0).replace("{a}", P.amber || 0).replace("{g}", P.grey || 0) : tr("oven.shelf.empty") });
-  /* la cheminée */
-  ctx.fillStyle = c(skin === "glass" ? "#3a2416" : "#1a1b1e"); ctx.fillRect(466, 34, 16, 100); ctx.fillRect(446, 120, 36, 16);
-  if (skin === "glass") { ctx.fillStyle = c(trim[0]); for (let y = 44; y < 130; y += 18) ctx.fillRect(464, y, 20, 2); }
+  /* le conduit : un tuyau rond qui sort du flanc du four, un coude, des colliers, une clé de tirage, et monte au plafond */
+  { const px = 455, r0 = 7, metal = skin === "glass" ? ["#5a2e12", "#c67a3e", "#3a1a0a"] : skin === "castle" ? ["#2a2a30", "#6c6c76", "#16161a"] : ["#26272b", "#5e6066", "#141518"];
+    const tube = (x0, y0, x1, y1) => { const vert = x0 === x1, g = vert ? ctx.createLinearGradient(x0 - r0, 0, x0 + r0, 0) : ctx.createLinearGradient(0, y0 - r0, 0, y0 + r0); g.addColorStop(0, c(metal[2])); g.addColorStop(0.35, c(metal[1])); g.addColorStop(1, c(metal[0])); ctx.fillStyle = g; if (vert) ctx.fillRect(x0 - r0, Math.min(y0, y1), 2 * r0, Math.abs(y1 - y0)); else ctx.fillRect(Math.min(x0, x1), y0 - r0, Math.abs(x1 - x0), 2 * r0); };
+    tube(px, 0, px, 168); tube(430, 176, px - r0 + 1, 176);
+    const eg = ctx.createRadialGradient(px - r0, 176 - r0, 1, px - r0, 176 - r0, 2 * r0); eg.addColorStop(0, c(metal[1])); eg.addColorStop(1, c(metal[0])); ctx.fillStyle = eg; ctx.beginPath(); ctx.moveTo(px - r0, 168); ctx.lineTo(px + r0, 168); ctx.arc(px - r0, 168, 2 * r0, 0, Math.PI / 2); ctx.closePath(); ctx.fill(); /* le coude */
+    ctx.fillStyle = c(trim[1]); for (const y of [30, 82, 134]) { ctx.fillRect(px - r0 - 1.5, y, 2 * r0 + 3, 3); ctx.fillStyle = c(trim[2]); ctx.fillRect(px - r0 - 1.5, y, 2 * r0 + 3, 0.8); ctx.fillStyle = c(trim[1]); } /* les colliers */
+    ctx.fillRect(432, 176 - r0 - 1.5, 3, 2 * r0 + 3);
+    /* la clé de tirage : un petit disque et sa poignée, sur le tuyau */
+    ctx.fillStyle = c(trim[0]); ctx.beginPath(); ctx.arc(px, 108, 3, 0, TAU); ctx.fill(); ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(px, 108); ctx.lineTo(px + 11, 104); ctx.stroke();
+    if (cooking) { ctx.fillStyle = rgba(255, 140, 60, 0.25 + 0.1 * Math.sin(t * 6)); ctx.fillRect(px - r0 + 2, 150, 2 * r0 - 4, 2); } }
   /* les trémies et leurs robinets */
   IDS.forEach((id, i) => {
     const cx = HOP(i), top = 44, bot = 112, n = Math.max(0, stock[id] || 0), fill = clamp(n / FULL);
@@ -159,8 +170,8 @@ function drawOven(r, ctx, sc, sky, t) {
   const mins = cooking ? Math.ceil(ph.left / 60000) : 0;
   r.hot.push({ x: dx - dr - 8, y: dy - dr - 8, w: 2 * dr + 16, h: 2 * dr + 16, tip: cooking ? (mins > 1 ? tr("oven.door.cooking").replace("{m}", mins) : tr("oven.door.soon")) : done ? tr("oven.door.done") : tr("oven.door"), oven: cooking || done ? null : "door" });
   /* les deux curseurs */
-  slider(ctx, c, trim, SLIDERS.time, o.time || 0, false); slider(ctx, c, trim, SLIDERS.temp, o.temp || 0, true);
-  for (const k of ["time", "temp"]) r.hot.push({ x: SLIDERS[k] - 14, y: SL_Y - 6, w: 28, h: SL_H + 12, tip: tr("oven." + k), oven: cooking || done ? null : k, slider: { y0: SL_Y, h: SL_H } });
+  slider(ctx, c, trim, SLIDERS.time, o.time || 0); slider(ctx, c, trim, SLIDERS.temp, o.temp || 0);
+  for (const k of ["time", "temp"]) { const v = o[k] || 0; r.hot.push({ x: SLIDERS[k] - 14, y: SL_Y - 8, w: 30, h: SL_H + 16, tip: valueTip(tr, k, v) + (cooking || done ? "" : " — " + tr("oven.slider.how")), oven: cooking || done ? null : k, slider: { y0: SL_Y, h: SL_H, knob: SL_Y + SL_H - v / 50 * SL_H }, val: v }); }
   /* la presse : le volant et son manomètre */
   const [wx, wy] = WHEEL, p = o.press || 0;
   ctx.fillStyle = c("#2a2b2f"); ctx.fillRect(430, wy - 6, 50, 12); ctx.fillStyle = c(trim[1]); ctx.fillRect(430, wy - 7, 50, 2);
@@ -172,9 +183,8 @@ function drawOven(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#e9dcc0"); ctx.beginPath(); ctx.arc(mx, my, mr, 0, TAU); ctx.fill(); ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 3; ctx.stroke();
   for (let k = 0; k <= 10; k++) { const a = Math.PI * 0.75 + k / 10 * Math.PI * 1.5, ins = k % 2 ? 6 : 8; ctx.strokeStyle = k >= 8 ? "#a8342a" : "#3a2a1a"; ctx.lineWidth = k % 2 ? 0.8 : 1.6; ctx.beginPath(); ctx.moveTo(mx + Math.cos(a) * (mr - 3), my + Math.sin(a) * (mr - 3)); ctx.lineTo(mx + Math.cos(a) * (mr - ins), my + Math.sin(a) * (mr - ins)); ctx.stroke(); }
   const na = Math.PI * 0.75 + p / 50 * Math.PI * 1.5; ctx.strokeStyle = "#1a0f08"; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx + Math.cos(na) * (mr - 5), my + Math.sin(na) * (mr - 5)); ctx.stroke(); ctx.fillStyle = "#1a0f08"; ctx.beginPath(); ctx.arc(mx, my, 2.2, 0, TAU); ctx.fill();
-  r.hot.push({ x: mx - mr, y: my - mr, w: 2 * mr, h: 2 * mr, tip: tr("oven.gauge") });
-  r.hot.push({ x: wx - 24, y: wy - 24, w: 24, h: 48, tip: tr("oven.press.less"), oven: cooking || done ? null : "press", arg: Math.max(0, p - 5) });
-  r.hot.push({ x: wx, y: wy - 24, w: 24, h: 48, tip: tr("oven.press.more"), oven: cooking || done ? null : "press", arg: Math.min(50, p + 5) });
+  r.hot.push({ x: mx - mr, y: my - mr, w: 2 * mr, h: 2 * mr, tip: valueTip(tr, "press", p) });
+  r.hot.push({ x: wx - 24, y: wy - 24, w: 48, h: 48, tip: valueTip(tr, "press", p) + (cooking || done ? "" : " — " + tr("oven.press.how")), oven: cooking || done ? null : "press", wheel: true, val: p });
   /* le plateau à cinq alvéoles */
   const [tx, ty] = TRAY;
   ctx.fillStyle = c("#1a1b1e"); ctx.fillRect(tx - 8, 280, 16, 12);
@@ -198,23 +208,26 @@ function leanTo(r, ctx, col, sky, t, hx) {
   const x0 = hx - 60, x1 = skin === "glass" ? hx - 31 : hx - 28, top = GY - 30, low = GY - 22;
   let vent = null; /* d'où sort la fumée */
   if (skin === "castle") {
-    /* une petite forge gothique : pignon d'ardoise raide, pinacle-cheminée au faîte, porte en lancette */
-    const L = require("./relto-castle-out").litStone(sky), CO = require("./relto-castle-out"), fx0 = x0 - 2, fx1 = hx - 22, ft = GY - 20, ax = (fx0 + fx1) / 2;
-    ctx.fillStyle = col(L("#7c7884")); ctx.fillRect(fx0, ft, fx1 - fx0, GY - ft);
-    const rr = rng(13); for (let row = 0; row < 4; row++) for (let i = 0; i < 5; i++) { ctx.fillStyle = col(L(mix("#5e5966", "#9a96a2", rr()))); ctx.fillRect(fx0 + 1 + i * 7.6 + (row % 2) * 3, ft + 2 + row * 4.6, 6.6, 3.6); }
-    ctx.fillStyle = col("#2e3249"); ctx.beginPath(); ctx.moveTo(fx0 - 3, ft + 1); ctx.lineTo(ax, ft - 18); ctx.lineTo(fx1 + 3, ft + 1); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = col("#6a7090"); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(fx0 - 3, ft + 1); ctx.lineTo(ax, ft - 18); ctx.lineTo(fx1 + 3, ft + 1); ctx.stroke();
-    ctx.fillStyle = col(L("#9a96a2")); ctx.fillRect(ax - 2.5, ft - 26, 5, 10); ctx.beginPath(); ctx.moveTo(ax - 3.5, ft - 26); ctx.lineTo(ax, ft - 32); ctx.lineTo(ax + 3.5, ft - 26); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = col("#1a1820"); ctx.fillRect(ax - 1.5, ft - 25, 3, 2);
-    CO.lancet(ctx, ax, GY, 9, 16, col("#1b1e2e")); if (cooking) CO.lancet(ctx, ax, GY - 1, 6, 12, mix(col("#3a1a10"), "#ff7a3a", 0.5 + 0.5 * night));
-    vent = [ax + 1, ft - 30];
+    /* une petite forge gothique, un peu plus petite que la chapelle et de la même pierre (grise et brune, moussue) :
+       pignon d'ardoise raide, pinacle-cheminée au faîte, porte en lancette */
+    const CO = require("./relto-castle-out"), fx0 = hx - 53, fx1 = hx - 21, fw = fx1 - fx0, ft = GY - 15, ax = (fx0 + fx1) / 2, ap = ft - 12;
+    CO.slateRoof(ctx, col, fx0 - 3, ax, ap - 2, fx1 + 3, ft + 1, { step: 3, lw: 0.4 });
+    const lg = ctx.createLinearGradient(fx0, 0, fx1, 0); ["#7c7771", "#5d5953", "#3f3c38"].forEach((h2, i) => lg.addColorStop(i / 2, col(h2)));
+    ctx.fillStyle = lg; ctx.beginPath(); ctx.moveTo(fx0, GY); ctx.lineTo(fx0, ft); ctx.lineTo(fx0 + 2, ft); ctx.lineTo(ax, ap + 3); ctx.lineTo(fx1 - 2, ft); ctx.lineTo(fx1, ft); ctx.lineTo(fx1, GY); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = rgba(0, 0, 0, 0.13); for (let y = ft + 3.6; y < GY; y += 3.6) ctx.fillRect(fx0, y, fw, 0.6);
+    ctx.fillStyle = col("#8c8780"); ctx.fillRect(fx0, ft - 1, fw, 1.2); /* le bandeau */
+    { const q = rng(0xf0e9); for (let i = 0; i < 10; i++) { const x = fx0 - 2 + q() * (fw + 4), y = i < 6 ? GY - q() * 4 : ft + q() * 1.2; ctx.fillStyle = col(q() < 0.5 ? "#4f5c34" : "#5e6a3c"); ctx.beginPath(); ctx.ellipse(x, y, 1.2 + q() * 2, 0.7 + q() * 0.9, 0, 0, TAU); ctx.fill(); } } /* la mousse */
+    /* le pinacle-cheminée, au faîte, dans la même pierre */
+    ctx.fillStyle = col("#6e6a64"); ctx.fillRect(ax - 2, ap - 7, 4, 9); ctx.fillStyle = col("#8c8780"); ctx.beginPath(); ctx.moveTo(ax - 3, ap - 7); ctx.lineTo(ax, ap - 12); ctx.lineTo(ax + 3, ap - 7); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = col("#1a1820"); ctx.fillRect(ax - 1.2, ap - 6, 2.4, 1.6);
+    CO.lancet(ctx, ax, GY, 8, 12, col("#1b1e2e")); if (cooking) CO.lancet(ctx, ax, GY - 1, 5.4, 9, mix(col("#3a1a10"), "#ff7a3a", 0.5 + 0.5 * night));
+    vent = [ax + 1, ap - 11];
   } else if (skin === "glass") {
     /* une petite demi-coupole contre la cabane, sur un socle : un mur bas de mosaïque sombre, puis le verre (vert d'eau
        foncé, nervures de cuivre en éventail) à travers lequel on devine la machine ; porte en ogive ambrée */
-    const GL = require("./relto-glass"), g = GL.glassTones(col, sky, cooking ? 0.6 : 0.1), rx = x1 - x0, ry = 21, cy = GY - 10;
-    const vg = ctx.createLinearGradient(0, cy - ry, 0, cy); vg.addColorStop(0, mix(g.teal2, g.teal, 0.55)); vg.addColorStop(1, g.teal2);
-    ctx.fillStyle = vg; ctx.beginPath(); ctx.moveTo(x1, cy); ctx.ellipse(x1, cy, rx, ry, 0, Math.PI, 1.5 * Math.PI); ctx.closePath(); ctx.fill();
+    const GL = require("./relto-glass"), rx = x1 - x0, ry = 21, cy = GY - 10;
     ctx.save(); ctx.beginPath(); ctx.moveTo(x1, cy); ctx.ellipse(x1, cy, rx, ry, 0, Math.PI, 1.5 * Math.PI); ctx.closePath(); ctx.clip();
+    GL.frostedDome(ctx, col, x0, cy - ry, x1, cy, night * (cooking ? 1 : 0.6), 3); /* le même verre dépoli que la coupole */
     ctx.fillStyle = rgba(8, 24, 22, 0.55); for (let i = 0; i < 3; i++) { const hx0 = x0 + 10 + i * 6; ctx.beginPath(); ctx.moveTo(hx0 - 2.5, cy - 12); ctx.lineTo(hx0 + 2.5, cy - 12); ctx.lineTo(hx0 + 0.8, cy - 6); ctx.lineTo(hx0 - 0.8, cy - 6); ctx.closePath(); ctx.fill(); } /* les trémies, en ombre derrière le verre */
     ctx.fillRect(x0 + 8, cy - 6, 16, 6);
     if (cooking) { const gl = ctx.createRadialGradient(x0 + 16, cy - 2, 1, x0 + 16, cy - 2, 16); gl.addColorStop(0, rgba(255, 160, 70, 0.55)); gl.addColorStop(1, rgba(255, 160, 70, 0)); ctx.fillStyle = gl; ctx.fillRect(x0, cy - ry, rx, ry); }
@@ -250,4 +263,4 @@ function leanTo(r, ctx, col, sky, t, hx) {
   r.hot.push({ x: hx - 62, y: GY - 34, w: 26, h: 34, tip: cooking ? tr("oven.out.cooking") : tr("oven.out"), go: "oven" });
 }
 
-module.exports = { drawOven, leanTo, capsule, HOP, SLIDERS, SL_Y, SL_H, DOOR, TRAY, WHEEL };
+module.exports = { valueTip, drawOven, leanTo, capsule, HOP, SLIDERS, SL_Y, SL_H, DOOR, TRAY, WHEEL };

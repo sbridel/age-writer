@@ -552,4 +552,4 @@ function globalCastle(ctx, c, sky, cx, y) {
   ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(cx + 3, y - 56); ctx.lineTo(cx + 3, y - 60); ctx.stroke();
 }
 
-module.exports = { castleOre, litStone, daylight, calendarStele, redNight, bloodMoon, moonTexture, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };
+module.exports = { slateRoof, castleOre, litStone, daylight, calendarStele, redNight, bloodMoon, moonTexture, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };

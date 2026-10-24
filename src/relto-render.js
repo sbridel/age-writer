@@ -1131,21 +1131,19 @@ class ReltoRenderer {
    */
   drawGlasshouse(ctx, sky, t, x0, y0, w, h, col) {
     const night = clamp(sky.night == null ? 0.3 : sky.night), hx = x0 + w / 2, fl = 0.82 + 0.18 * Math.sin(t * 7.3) * Math.sin(t * 3.1);
-    const lit = night * fl, glass = (day, glow) => mix(col(day), glow, clamp(lit * 0.85)); // le jour : le verre prend le ciel ; la nuit : il s'allume
-    const TEAL = glass("#4fae9e", "#9ff0dc"), TEAL2 = glass("#1f5f58", "#3fbfa8"), AMB = glass("#c98a32", "#ffd27a"), AMB2 = glass("#7a4a1e", "#e0a23a");
-    const CU = col("#b5652a"), CU2 = col("#e6a06a"), LEAD = mix(col("#0f2f2c"), "#0f2f2c", 0.5);
+    const lit = night * fl; /* la nuit, les vitraux et la coupole s'allument */
+    const CU = col("#b5652a"), CU2 = col("#e6a06a");
     // la lumière jetée au sol, la nuit (vert sur les côtés, ambre devant la porte)
     if (night > 0.15) {
       const g = ctx.createRadialGradient(hx, GY, 4, hx, GY, 70); g.addColorStop(0, rgba(127, 214, 200, 0.28 * lit)); g.addColorStop(0.45, rgba(224, 162, 58, 0.12 * lit)); g.addColorStop(1, rgba(224, 162, 58, 0));
       ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(hx, GY + 2, 72, 16, 0, 0, 6.283); ctx.fill();
     }
     const ogive = (xa, xb, top, base) => { const m = (xa + xb) / 2, k = (xb - xa) * 0.55; ctx.beginPath(); ctx.moveTo(xa, base); ctx.lineTo(xa, top + k); ctx.quadraticCurveTo(xa, top + k * 0.2, m, top); ctx.quadraticCurveTo(xb, top + k * 0.2, xb, top + k); ctx.lineTo(xb, base); ctx.closePath(); };
-    const vgrad = (top, c1, c2) => { const g = ctx.createLinearGradient(0, top, 0, GY); g.addColorStop(0, c1); g.addColorStop(1, c2); return g; };
     // le corps, derrière : vert profond
     ctx.fillStyle = col("#163c38"); ctx.fillRect(x0 + 3, y0 + 2, w - 6, h - 2);
     // la coupole : verre vert d'eau, nervures de cuivre, un fleuron
     const dr = w / 2 + 5, dh = 24;
-    ctx.fillStyle = vgrad(y0 - dh, mix(TEAL, "#d8fff5", 0.25), TEAL2); ctx.beginPath(); ctx.ellipse(hx, y0 + 3, dr, dh, 0, Math.PI, 2 * Math.PI); ctx.closePath(); ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.ellipse(hx, y0 + 3, dr, dh, 0, Math.PI, 2 * Math.PI); ctx.closePath(); ctx.clip(); GLASS.frostedDome(ctx, col, hx - dr, y0 + 3 - dh, hx + dr, y0 + 3, lit, 1); ctx.restore(); /* verre dépoli, patiné : on ne voit pas à travers */
     ctx.strokeStyle = CU; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(hx, y0 + 3, dr, dh, 0, Math.PI, 2 * Math.PI); ctx.stroke();
     ctx.lineWidth = 0.9; ctx.strokeStyle = CU2;
     for (const k of [-0.62, -0.25, 0.25, 0.62]) { ctx.beginPath(); ctx.moveTo(hx, y0 + 3 - dh); ctx.quadraticCurveTo(hx + k * dr * 0.9, y0 + 3 - dh * 0.75, hx + k * dr, y0 + 3); ctx.stroke(); }
@@ -1159,10 +1157,7 @@ class ReltoRenderer {
     // les deux baies en ogive (vert d'eau) et la porte (ambre), cerclées de cuivre
     const bays = [[x0 + 1, x0 + 19, y0 + 7], [x0 + w - 19, x0 + w - 1, y0 + 7]], door = [hx - 7, hx + 7, y0 - 4];
     for (const [xa, xb, top] of bays) {
-      ctx.fillStyle = vgrad(top, TEAL, TEAL2); ogive(xa, xb, top, GY); ctx.fill();
-      // le motif au plomb : une fleur différente dans chaque baie (src/relto-glass.js, motif)
-      ctx.save(); ogive(xa, xb, top, GY); ctx.clip(); ctx.strokeStyle = LEAD; ctx.lineWidth = 0.7; ctx.lineCap = "round";
-      GLASS.motif(ctx, xa < hx ? "tulip" : "iris", (xa + xb) / 2, top + 5, GY, 0.48); ctx.restore();
+      GLASS.stainedBay(ctx, col, xa, xb, top, GY, lit, xa < hx ? 1 : 2); /* un vitrail opaque (on ne voit pas à travers), qui s'allume la nuit */
       ctx.strokeStyle = CU; ctx.lineWidth = 1.4; ogive(xa, xb, top, GY); ctx.stroke();
     }
     { // la porte : deux battants en plein cintre (comme dedans) : bois irisé, un ovale de verre clair dans chaque battant, de petites fleurs
@@ -1395,12 +1390,19 @@ class ReltoRenderer {
     return `${Math.round(h.x)},${Math.round(h.y)},${Math.round(h.w)},${Math.round(h.h)}`;
   }
   /** Au doigt : un geste de molette (télescope ou Imageur), comme un clic sur son ±. */
+  /** Un geste sur la machine du Relto (src/relto-oven.js) : le message du plugin, ou la valeur réglée, s'affiche un instant. */
+  ovenSet(h, arg) {
+    const msg = this.opts.onOven(h.oven, arg), OVR = require("./relto-oven"), say = msg || (h.slider || h.wheel ? OVR.valueTip(this.imagerTr(), h.oven, arg) : null);
+    if (say) this.flash = { text: say, x: h.x + h.w / 2, y: h.y, until: Date.now() + (msg ? 2800 : 1400) };
+    if (!this.running) this.draw(0);
+  }
   wheelAct(a, kind) { if (kind === "imager") this.imagerAct(a); else if (kind === "map") SM.act(this, a); else TL.act(this, a); }
   /** Poser le doigt (ou presser la souris) sur une molette (une zone `wc`) commence à la tourner ; sur un rail de l'Imageur, à y glisser le verre. Au doigt, seulement une molette déjà lue. */
   onDown(e) {
     if (this.view === "starmap" && this.mapDown(e)) return;
     if (!this.touch && e.button != null && e.button !== 0) return;
     const [x, y] = this.toLogical(e), h = this.hit(x, y), ready = (q) => !this.touch || this.held === this.holdKey(q); this.dragged = false;
+    if (h && h.oven && h.slider && Math.abs(y - h.slider.knob) <= 8 && ready(h)) { this.slide = { oven: h, last: h.val }; try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } return; } /* le curseur de la machine : on le prend et on le glisse */
     if (h && h.imager && h.imager.value != null && h.imager.key && ready(h)) { this.slide = { key: h.imager.key, last: h.imager.value }; try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } return; } // un rail, l'arc de l'iris : on glisse le doigt le long
     if (!h || !h.wc || !ready(h)) return; // au doigt, une molette pas encore lue : le toucher la montre d'abord
     const wc = h.wc, r0 = Math.hypot(x - wc.x, y - wc.y);
@@ -1413,7 +1415,9 @@ class ReltoRenderer {
    */
   onWheel(e) {
     if (this.touch || !(this.opts.wheelOk && this.opts.wheelOk())) return;
-    const [x, y] = this.toLogical(e), h = this.hit(x, y); if (!h || !h.wc) { this.wheelAcc = 0; return; }
+    const [x, y] = this.toLogical(e), h = this.hit(x, y);
+    if (h && h.oven && (h.slider || h.wheel)) { e.preventDefault(); this.wheelAcc = (this.wheelAcc || 0) + e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1); if (Math.abs(this.wheelAcc) >= WHEEL_STEP) { const dir = this.wheelAcc < 0 ? 1 : -1; this.wheelAcc = 0; this.ovenSet(h, clamp(h.val + dir * (e.shiftKey ? 5 : 1), 0, 50)); } return; } /* la machine : un cran par cran de roulette */
+    if (!h || !h.wc) { this.wheelAcc = 0; return; }
     e.preventDefault();
     const dy = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1); this.wheelAcc = (this.wheelAcc || 0) + dy;
     const wc = h.wc, coarse = e.shiftKey && wc.coarse; let n = 0;
@@ -1425,6 +1429,7 @@ class ReltoRenderer {
     if (this.mapGest) { this.mapMove(e); return; }
     if (this.slide) { // le long d'un rail (ou de l'arc de l'iris) : le verre suit le doigt, cran par cran
       const [x, y] = this.toLogical(e), h = this.hit(x, y), sl = this.slide;
+      if (sl.oven) { const z = sl.oven, v = clamp(Math.round(((z.slider.y0 + z.slider.h - y) / z.slider.h) * 50), 0, 50); if (v !== sl.last) { sl.last = v; this.dragged = true; this.ovenSet(z, v); } return; }
       if (h && h.imager && h.imager.key === sl.key && h.imager.value != null && h.imager.value !== sl.last) { this.imagerAct(h.imager); this.dragged = true; if (!this.touch) this.canvas.style.cursor = "var(--age-grabbing, grabbing)"; sl.last = h.imager.value; if (!this.running) this.draw(0); }
       return;
     }
@@ -1540,7 +1545,11 @@ class ReltoRenderer {
     if (ok || K.length >= 3) this.knocks = [];
     if (ok) { this.panelAt = Date.now(); window.setTimeout(() => this.setView("atelier"), 1400); } // le panneau coulisse, puis on passe
   }
-  onClick(e) { if (this.dragged) { this.dragged = false; return; } const [x, y] = this.toLogical(e), h = this.hit(x, y); if (this.touch && this.touchHold(h)) return; if (!h) return; if (h.vpage) { this.vaultPage = (this.vaultPage || 0) + h.vpage; if (!this.running) this.draw(0); return; } if (h.mapPage) { this.mapPage = (this.mapPage || 0) + h.mapPage; if (!this.running) this.draw(0); return; } if (h.mapAct) { SM.act(this, h.mapAct, x, y, e); if (!this.running) this.draw(0); return; } if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.lamp) this.lampToggle(h); else if (h.tap) this.tapToggle(); else if (h.ward) this.wardAct(); else if (h.gbTurn) this.gbTurn(h.gbTurn); else if (h.gbGo != null) this.gbGo(h.gbGo); else if (h.stone) this.stoneTap(x, y); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.caveDrop && this.opts.onCaveDrop) { this.opts.onCaveDrop(); if (!this.running) this.draw(0); } else if (h.oven && this.opts.onOven) { const arg = h.slider ? clamp(Math.round(((h.slider.y0 + h.slider.h - y) / h.slider.h) * 50), 0, 50) : h.arg; const msg = this.opts.onOven(h.oven, arg); if (msg) this.flash = { text: msg, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } if (h.twoVoices && this.opts.onTwoVoices && this.imager) { const st = this.imager; this.opts.onTwoVoices(st.age, st.target, (line, holding) => { this.twoLine = { text: line, at: Date.now() }; this.forkHolding = !!holding; if (!this.running) this.draw(0); }); } if (h.wonder) { this.memSel = this.memSel === h.wonder ? null : h.wonder; if (this.opts.onWonder) this.opts.onWonder(h.wonder); if (!this.running) this.draw(0); } if (h.forgetWonder && this.opts.onForget) { const id = h.forgetWonder, p = (this._memPos || {})[id]; this.opts.onForget(id, () => { this._memLeaving = p ? { ...p, at: Date.now() } : null; this.memSel = null; if (this._memCache) delete this._memCache[id]; if (!this.running) this.draw(0); }); } if (h.go) { if (h.go === "descbook") this.descTarget = h.arg || null; this.setView(h.go); } else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); if (h.clasp && this.opts.onClasp) this.opts.onClasp(); if (h.sfx && this.opts.onKnock) this.opts.onKnock(h.sfx); if (h.wolf) this.wolfAt = Date.now(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
+  onClick(e) { if (this.dragged) { this.dragged = false; return; } const [x, y] = this.toLogical(e), h = this.hit(x, y); if (this.touch && this.touchHold(h)) return; if (!h) return; if (h.vpage) { this.vaultPage = (this.vaultPage || 0) + h.vpage; if (!this.running) this.draw(0); return; } if (h.mapPage) { this.mapPage = (this.mapPage || 0) + h.mapPage; if (!this.running) this.draw(0); return; } if (h.mapAct) { SM.act(this, h.mapAct, x, y, e); if (!this.running) this.draw(0); return; } if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.lamp) this.lampToggle(h); else if (h.tap) this.tapToggle(); else if (h.ward) this.wardAct(); else if (h.gbTurn) this.gbTurn(h.gbTurn); else if (h.gbGo != null) this.gbGo(h.gbGo); else if (h.stone) this.stoneTap(x, y); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.caveDrop && this.opts.onCaveDrop) { this.opts.onCaveDrop(); if (!this.running) this.draw(0); } else if (h.oven && this.opts.onOven) { /* la machine : un cran par clic (Maj : cinq) au-dessus ou au-dessous du curseur, à droite ou à gauche du volant */
+      const k = e.shiftKey ? 5 : 1; let arg = h.arg;
+      if (h.slider) { if (Math.abs(y - h.slider.knob) <= 5) return; arg = clamp(h.val + (y < h.slider.knob ? k : -k), 0, 50); }
+      else if (h.wheel) arg = clamp(h.val + (x >= h.x + h.w / 2 ? k : -k), 0, 50);
+      this.ovenSet(h, arg); } if (h.twoVoices && this.opts.onTwoVoices && this.imager) { const st = this.imager; this.opts.onTwoVoices(st.age, st.target, (line, holding) => { this.twoLine = { text: line, at: Date.now() }; this.forkHolding = !!holding; if (!this.running) this.draw(0); }); } if (h.wonder) { this.memSel = this.memSel === h.wonder ? null : h.wonder; if (this.opts.onWonder) this.opts.onWonder(h.wonder); if (!this.running) this.draw(0); } if (h.forgetWonder && this.opts.onForget) { const id = h.forgetWonder, p = (this._memPos || {})[id]; this.opts.onForget(id, () => { this._memLeaving = p ? { ...p, at: Date.now() } : null; this.memSel = null; if (this._memCache) delete this._memCache[id]; if (!this.running) this.draw(0); }); } if (h.go) { if (h.go === "descbook") this.descTarget = h.arg || null; this.setView(h.go); } else if (h.flash) { if (this.view === "cat" && this.opts.onMeow) this.opts.onMeow(); if (h.purr && this.opts.onPurr) this.opts.onPurr(); if (h.clasp && this.opts.onClasp) this.opts.onClasp(); if (h.sfx && this.opts.onKnock) this.opts.onKnock(h.sfx); if (h.wolf) this.wolfAt = Date.now(); this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 }; if (!this.running) this.draw(0); } }
 }
 
 module.exports = { ReltoRenderer, W, H, GY, TERRAIN, VERDICT };
