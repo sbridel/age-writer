@@ -4,12 +4,12 @@ const { Dni } = require("./dni");
 const M = require("./relto-model");
 const { ReltoRenderer } = require("./relto-render");
 /* la machine du Relto, à quelques moments (src/relto-oven.js) */
-const OVEN_SET = { levers: [2, 0, 1, 0], time: 40, temp: 20, press: 44 }, OVEN_STOCK = { ash: 7, humus: 3, silt: 2, peat: 5 }, OVEN_SHELF = { white: 4, amber: 2, grey: 1 };
+const OVEN_SET = { levers: [2, 0, 1, 0], column: ["ash", "silt", "ash"], time: 40, temp: 20, press: 44 }, OVEN_RUN = { ...OVEN_SET, column: [] }, OVEN_STOCK = { ash: 7, humus: 3, silt: 2, peat: 5 }, OVEN_SHELF = { white: 4, amber: 2, grey: 1 };
 const OVEN_STATES = {
   set: { oven: OVEN_SET, phase: null, stock: OVEN_STOCK, pellets: OVEN_SHELF },
-  cook: { oven: OVEN_SET, phase: { phase: "cooking", k: 0.5, left: 300000, kind: "white", n: 3 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
-  done: { oven: OVEN_SET, phase: { phase: "done", kind: "white", n: 3 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
-  dust: { oven: { ...OVEN_SET, press: 4 }, phase: { phase: "done", kind: "dust", n: 3 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
+  cook: { oven: OVEN_RUN, phase: { phase: "cooking", k: 0.5, left: 300000, kind: "white", n: 3 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
+  done: { oven: OVEN_RUN, phase: { phase: "done", kind: "white", n: 3 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
+  dust: { oven: { ...OVEN_RUN, press: 4 }, phase: { phase: "done", kind: "dust", n: 3 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
 };
 function renderMany(host, ages) {
   host = host || document.body;

@@ -2,10 +2,11 @@
 /**
  * La machine du Relto (claude/DESIGN-reve-et-caverne-bahro.md, section 2, étape 4a′) : le four d'Er'cana, contre la cabane. Pur.
  *
- * Sept réglages : quatre leviers (cendres, terreau, limon, tourbe : 0 à 3 mesures chacun, cinq au plus en tout, une mesure
- * donne une capsule), deux curseurs gradués comme à Er'cana (temps, température : 0 à 50) et la presse (0 à 50 : la densité
- * de la capsule, donc ce qu'elle fait dans l'eau). On ferme la porte : les mesures quittent les trémies, la cuisson prend
- * un vrai temps (un cran de temps = 15 s), puis la fournée attend sur le plateau à cinq alvéoles.
+ * Les doses : un clic sur une trémie fait tomber une mesure dans la colonne de mélange (cinq au plus, trois d'un même
+ * ingrédient au plus ; une mesure donne une capsule) ; un clic sur la colonne la vide dans les trémies. Puis deux curseurs
+ * gradués comme à Er'cana (temps, température : 0 à 50) et la presse (0 à 50 : la densité de la capsule, donc ce qu'elle
+ * fait dans l'eau). On ferme la porte : la colonne se vide dans le four, la cuisson prend un vrai temps (un cran de temps
+ * = 15 s), puis la fournée attend sur le plateau à cinq alvéoles.
  *
  * Les recettes ne sont dites nulle part dans le jeu (ni dans le guide) : on apprend en ratant. Le clin d'œil à Uru est gardé
  * sur les curseurs (40-20 pour le blanc, 30-30 ou 1,5-50 pour l'orange). Tolérance : deux crans.
@@ -25,7 +26,9 @@ const near = (v, target, tol = 2) => Math.abs(v - target) <= tol;
 /** Les réglages et la fournée (créés à la demande) : { levers: [4], time, temp, press, batch: { at, dur, kind, n } | null }. */
 function stateOf(ext) {
   const o = ext.oven && typeof ext.oven === "object" ? ext.oven : (ext.oven = {});
-  o.levers = Array.isArray(o.levers) && o.levers.length === 4 ? o.levers.map((v) => clampInt(v, 0, MAX_LEVER)) : [0, 0, 0, 0];
+  /* la colonne : les mesures dans l'ordre où elles sont tombées ; `levers` en est le compte par ingrédient (cendres, terreau, limon, tourbe) */
+  o.column = Array.isArray(o.column) ? o.column.filter((id) => H.INGREDIENTS.includes(id)).slice(0, MAX_TOTAL) : [];
+  o.levers = H.INGREDIENTS.map((id) => o.column.filter((x) => x === id).length);
   for (const k of ["time", "temp", "press"]) o[k] = clampInt(o[k], 0, SCALE);
   if (o.batch && (typeof o.batch !== "object" || !(o.batch.n > 0))) o.batch = null;
   if (!("batch" in o)) o.batch = null;
@@ -50,26 +53,32 @@ function phaseOf(o, now) {
   return k < 1 ? { phase: "cooking", k: Math.max(0, k), left: Math.max(0, b.at + b.dur - now), kind: b.kind, n: b.n } : { phase: "done", kind: b.kind, n: b.n };
 }
 
-/** Un réglage : "lever" (i : un cran de plus, 3 → 0 ; jamais plus de cinq en tout), "time" / "temp" / "press" (v : la valeur). Refusé pendant la cuisson. */
+/**
+ * Un réglage : "add" (i : une mesure de cette trémie tombe dans la colonne), "empty" (la colonne retourne aux trémies),
+ * "time" / "temp" / "press" (v : la valeur). Refusé pendant la cuisson et tant qu'une fournée attend. Renvoie true, ou la
+ * raison du refus ("full", "max", "none:<id>").
+ */
 function set(ext, what, arg, now) {
   const o = stateOf(ext); if (phaseOf(o, now)) return false;
-  if (what === "lever") {
-    const i = clampInt(arg, 0, 3), others = o.levers.reduce((t, v, j) => t + (j === i ? 0 : v), 0);
-    let v = o.levers[i] + 1; if (v > MAX_LEVER || others + v > MAX_TOTAL) v = 0;
-    o.levers[i] = v; return true;
+  const st = H.stateOf(ext).stock;
+  if (what === "add") {
+    const id = H.INGREDIENTS[clampInt(arg, 0, 3)];
+    if (o.column.length >= MAX_TOTAL) return "full";
+    if (o.column.filter((x) => x === id).length >= MAX_LEVER) return "max";
+    if (st[id] < 1) return "none:" + id;
+    st[id] -= 1; o.column.push(id); o.levers = H.INGREDIENTS.map((x) => o.column.filter((y) => y === x).length); return true;
   }
+  if (what === "empty") { for (const id of o.column) st[id] += 1; o.column = []; o.levers = [0, 0, 0, 0]; return true; }
   if (what === "time" || what === "temp" || what === "press") { o[what] = clampInt(arg, 0, SCALE); return true; }
   return false;
 }
 
-/** Fermer la porte : les mesures quittent les trémies et la cuisson commence. Renvoie null (c'est parti) ou la raison du refus. */
+/** Fermer la porte : la colonne se vide dans le four et la cuisson commence. Renvoie null (c'est parti) ou la raison du refus. */
 function start(ext, now) {
   const o = stateOf(ext); if (phaseOf(o, now)) return "busy";
-  const res = resultOf(o); if (!res) return o.levers.some((v) => v) ? "notime" : "empty";
-  const st = H.stateOf(ext).stock;
-  const short = H.INGREDIENTS.find((id, i) => st[id] < o.levers[i]); if (short) return "short:" + short;
-  H.INGREDIENTS.forEach((id, i) => { st[id] -= o.levers[i]; });
-  o.batch = { at: now, dur: o.time * STEP_MS, kind: res.kind, n: res.n };
+  const res = resultOf(o); if (!res) return o.column.length ? "notime" : "empty";
+  o.batch = { at: now, dur: o.time * STEP_MS, kind: res.kind, n: res.n, layers: o.column.slice() }; /* les mesures sont déjà sorties des trémies */
+  o.column = []; o.levers = [0, 0, 0, 0];
   return null;
 }
 

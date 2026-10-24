@@ -265,12 +265,16 @@ module.exports = function build(Base, core, AGEX) {
     ovenShown() { return !!(this.ext.harvest && typeof this.ext.harvest === "object"); }
     /** La machine (src/oven.js) : les réglages, la fournée, les trémies, l'étagère ; une fournée finie depuis longtemps attend sur le plateau. */
     ovenState(now) { const OV = require("./oven"), t = now || Date.now(), o = OV.stateOf(this.ext); return { oven: o, phase: OV.phaseOf(o, t), stock: HV.stateOf(this.ext).stock, pellets: HV.pelletsOf(this.ext) }; }
-    /** Un geste sur la machine : "lever" (i), "time" / "temp" / "press" (valeur), "door" (cuire), "tray" (prendre la fournée). Renvoie un message à montrer, ou null. */
+    /** Un geste sur la machine : "add" (i : une mesure dans la colonne), "empty" (vider la colonne), "time" / "temp" / "press" (valeur), "door" (cuire), "tray" (prendre la fournée). Renvoie un message à montrer, ou null. */
     ovenAct(act, arg) {
       const OV = require("./oven"), now = Date.now(), t = (k, v) => { const s = this.t ? this.t(k) : k; return v ? s.replace("{what}", v) : s; };
-      if (act === "door") { const why = OV.start(this.ext, now); if (why === "busy") return t("oven.door.busy"); if (why === "empty") return t("oven.door.empty"); if (why === "notime") return t("oven.door.notime"); if (why && why.startsWith("short:")) { const ing = "oven.ing." + why.slice(6); return t("oven.door.short", t(ing)); } this.saveExt(); return null; }
+      if (act === "door") { const why = OV.start(this.ext, now); if (why === "busy") return t("oven.door.busy"); if (why === "empty") return t("oven.door.empty"); if (why === "notime") return t("oven.door.notime"); this.saveExt(); return null; }
       if (act === "tray") { const got = OV.collect(this.ext, now); if (!got) return null; this.saveExt(); return got.kind === "dust" ? t("oven.took.dust") : null; }
-      if (OV.set(this.ext, act, arg, now)) this.saveExt();
+      const res = OV.set(this.ext, act, arg, now);
+      if (res === true) this.saveExt();
+      if (res === "full") return t("oven.add.full");
+      if (res === "max") return t("oven.add.max");
+      if (typeof res === "string" && res.startsWith("none:")) { const ing = "oven.ing." + res.slice(5); return t("oven.add.none", t(ing)); }
       return null;
     }
     /** La caverne Bahro (src/relto-cave.js) : les granulés de l'étagère, le granulé qui tombe ; un granulé perdu (personne en bas) s'en va sans bruit. */
