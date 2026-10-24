@@ -72,37 +72,25 @@ const vnoise = (k, t, hz) => { const x = t * hz, i = Math.floor(x), f = x - i, a
 /** La lumière d'une vasque à l'instant t : de 0,6 à 1,15, irrégulière (deux fréquences) ; `k` : la vasque. */
 const flicker = (k, t) => 0.6 + 0.55 * (0.6 * vnoise(k, t, 8) + 0.4 * vnoise(k + 9, t, 3.3));
 /**
- * Une plateforme n'est pas un îlot : un pont de roche la relie au bord le plus proche de la fosse (devant, ou sur le côté), de la
- * même pierre, pour que le pilier sorte bien de la caverne. Droit vers la lèvre quand elle est proche, ou à plat vers l'extrémité.
+ * Là où se tient un pilier, le sol avance dans la fosse : un promontoire de la même roche (le même dégradé que le sol, aucune
+ * couture), qui part de la lèvre la plus proche, devant ou au fond. Seuls les bords qui donnent sur le vide sont soulignés (la
+ * lumière d'en bas les frôle) ; au fond, la paroi du promontoire se voit sous lui, éclairée par le vide.
  */
-function pier(ctx, p) {
-  const s = p.s, rx = 34 * s, ry = rx * 0.22, th = 11 * s, x0 = p.x, y0 = p.y + 1.5 * s;
-  const dDown = pitFront(x0) - y0, dRight = PIT_X1 + 14 - x0, dLeft = x0 - (PIT_X0 - 14);
-  const tg = ctx.createLinearGradient(x0 - rx, 0, x0 + rx, 0); tg.addColorStop(0, "#2a3048"); tg.addColorStop(0.5, "#323a58"); tg.addColorStop(1, "#1d2236");
-  const edge = rgba(PAL.edge[0], PAL.edge[1], PAL.edge[2], 0.4);
-  if (dDown <= dRight && dDown <= dLeft) { /* vers nous : une bande de roche jusqu'à la lèvre */
-    const y1 = pitFront(x0) + 4, w0 = rx * 0.5, w1 = rx * 0.74, quad = () => { ctx.beginPath(); ctx.moveTo(x0 - w0, y0); ctx.lineTo(x0 + w0, y0); ctx.lineTo(x0 + w1, y1); ctx.lineTo(x0 - w1, y1); ctx.closePath(); };
-    ctx.fillStyle = tg; quad(); ctx.fill(); ctx.strokeStyle = edge; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 - w0, y0); ctx.lineTo(x0 - w1, y1); ctx.moveTo(x0 + w0, y0); ctx.lineTo(x0 + w1, y1); ctx.stroke();
-    ctx.fillStyle = rgba(12, 14, 26, 0.35); for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.ellipse(x0 + (q("pie" + p.i + k) - 0.5) * w0, y0 + (0.25 + k * 0.25) * (y1 - y0), 2 + q("pir" + p.i + k) * 3, 1.2, 0, 0, TAU); ctx.fill(); }
-  } else { /* sur le côté : un pont à plat, sa tranche en dessous, éclairée par le vide */
-    const dir = dRight < dLeft ? 1 : -1, x1 = dir > 0 ? PIT_X1 + 14 : PIT_X0 - 14, h0 = ry * 0.75, h1 = ry * 0.95;
-    const sg = ctx.createLinearGradient(0, y0, 0, y0 + h0 + th); sg.addColorStop(0, "#1a1e31"); sg.addColorStop(0.6, "#12172b"); sg.addColorStop(1, rgba(44, 84, 170, 0.9));
-    ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(x0, y0 + h0); ctx.lineTo(x1, y0 + h1); ctx.lineTo(x1, y0 + h1 + th); ctx.lineTo(x0, y0 + h0 + th); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = tg; ctx.beginPath(); ctx.moveTo(x0, y0 - h0); ctx.lineTo(x1, y0 - h1); ctx.lineTo(x1, y0 + h1); ctx.lineTo(x0, y0 + h0); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = edge; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y0 + h0); ctx.lineTo(x1, y0 + h1); ctx.stroke();
+function land(ctx, p) {
+  const s = p.s, rx = 36 * s, ry = rx * 0.24, x0 = p.x, y0 = p.y + 1.5 * s, th = 12 * s, lipY = pitFront(x0) + 6, upY = pitTop(x0) - 4, goUp = y0 - upY < lipY - y0;
+  const fl = ctx.createLinearGradient(0, 210, 0, H); fl.addColorStop(0, PAL.floor[0]); fl.addColorStop(1, PAL.floor[1]);
+  const edge = rgba(PAL.edge[0], PAL.edge[1], PAL.edge[2], 0.38);
+  if (goUp) { /* il part du fond : sa paroi, sous lui */
+    const wg = ctx.createLinearGradient(0, y0, 0, y0 + th + ry); wg.addColorStop(0, "#1a1e31"); wg.addColorStop(0.6, "#10142a"); wg.addColorStop(1, rgba(44, 84, 170, 0.95));
+    ctx.fillStyle = wg; ctx.beginPath(); ctx.moveTo(x0 - rx, y0); ctx.lineTo(x0 - rx * 0.9, y0 + th); ctx.ellipse(x0, y0 + th, rx * 0.9, ry * 0.9, 0, Math.PI, 0, true); ctx.lineTo(x0 + rx, y0); ctx.ellipse(x0, y0, rx, ry, 0, 0, Math.PI); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = rgba(4, 6, 14, 0.5); ctx.lineWidth = 1; for (let k = 0; k < 6; k++) { const xx = x0 - rx * 0.8 + (k / 5) * rx * 1.6; ctx.beginPath(); ctx.moveTo(xx, y0 + ry * 0.9); ctx.lineTo(xx + (q("lk" + p.i + k) - 0.5) * 3, y0 + th * (0.5 + q("ll" + p.i + k) * 0.5) + ry * 0.7); ctx.stroke(); }
+    ctx.fillStyle = fl; ctx.beginPath(); ctx.moveTo(x0 - rx * 1.12, upY); ctx.lineTo(x0 - rx, y0); ctx.ellipse(x0, y0, rx, ry, 0, Math.PI, 0, true); ctx.lineTo(x0 + rx * 1.12, upY); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = edge; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 - rx * 1.12, upY); ctx.lineTo(x0 - rx, y0); ctx.ellipse(x0, y0, rx, ry, 0, Math.PI, 0, true); ctx.lineTo(x0 + rx * 1.12, upY); ctx.stroke();
+  } else { /* il part de la lèvre devant : seulement son dessus et ses flancs */
+    ctx.fillStyle = fl; ctx.beginPath(); ctx.moveTo(x0 - rx * 1.14, lipY); ctx.lineTo(x0 - rx, y0); ctx.ellipse(x0, y0, rx, ry, 0, Math.PI, 0, false); ctx.lineTo(x0 + rx * 1.14, lipY); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = edge; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 - rx * 1.14, lipY); ctx.lineTo(x0 - rx, y0); ctx.ellipse(x0, y0, rx, ry, 0, Math.PI, 0, false); ctx.lineTo(x0 + rx * 1.14, lipY); ctx.stroke();
   }
-}
-
-/** Une petite plateforme de roche, dans la fosse, sous un pilier : le dessus clair, la tranche éclairée d'en dessous par le vide. */
-function platform(ctx, p) {
-  const s = p.s, rx = 34 * s, ry = rx * 0.22, th = 11 * s, x = p.x, y = p.y + 1.5 * s;
-  const gl = ctx.createRadialGradient(x, y + th + ry, 2, x, y + th + ry, rx * 1.5); gl.addColorStop(0, blue(0.22)); gl.addColorStop(1, blue(0)); ctx.fillStyle = gl; ctx.fillRect(x - rx * 1.6, y, rx * 3.2, th + ry * 4); /* la fosse la éclaire d'en dessous */
-  const sg = ctx.createLinearGradient(0, y, 0, y + th + ry); sg.addColorStop(0, "#1a1e31"); sg.addColorStop(0.6, "#12172b"); sg.addColorStop(1, rgba(44, 84, 170, 0.95));
-  ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(x - rx, y); ctx.lineTo(x - rx * 0.88, y + th); ctx.ellipse(x, y + th, rx * 0.88, ry * 0.9, 0, Math.PI, 0, true); ctx.lineTo(x + rx, y); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = rgba(4, 6, 14, 0.5); ctx.lineWidth = 1; for (let k = 0; k < 6; k++) { const xx = x - rx * 0.8 + (k / 5) * rx * 1.6 + (q("plk" + p.i + k) - 0.5) * 5; ctx.beginPath(); ctx.moveTo(xx, y + ry * 0.9); ctx.lineTo(xx + (q("plj" + p.i + k) - 0.5) * 3, y + th * (0.5 + q("pll" + p.i + k) * 0.5) + ry * 0.7); ctx.stroke(); } /* des cassures dans la tranche */
-  const tg = ctx.createLinearGradient(x - rx, 0, x + rx, 0); tg.addColorStop(0, "#2a3048"); tg.addColorStop(0.5, "#323a58"); tg.addColorStop(1, "#1d2236"); ctx.fillStyle = tg; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, TAU); ctx.fill();
-  ctx.strokeStyle = rgba(PAL.edge[0], PAL.edge[1], PAL.edge[2], 0.4); ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0.1, Math.PI - 0.1); ctx.stroke(); /* l'arête du bord, du côté de la lumière */
-  ctx.fillStyle = rgba(12, 14, 26, 0.5); for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.ellipse(x + (q("plx" + p.i + k) - 0.5) * rx * 1.5, y + (q("ply" + p.i + k) - 0.5) * ry, 2 + q("plr" + p.i + k) * 3, 1 + q("plr" + p.i + k), 0, 0, TAU); ctx.fill(); } /* des éclats sur le dessus */
+  ctx.fillStyle = rgba(PAL.bump[0], PAL.bump[1], PAL.bump[2], 0.16); for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.ellipse(x0 + (q("lx" + p.i + k) - 0.5) * rx * 1.7, y0 + (q("ly" + p.i + k) - 0.3) * ry * 2.4, 4 + q("lr" + p.i + k) * 8, 1.4 + q("lr" + p.i + k) * 1.4, 0, 0, TAU); ctx.fill(); } /* les mêmes bosses que le sol */
 }
 
 /** Le pied de la paroi : une ligne de roche irrégulière autour de la salle (y en fonction de x). */
@@ -306,7 +294,7 @@ function drawStars(r, ctx, sc, sky, t) {
   /* les cinq piliers, du fond vers nous : un fût droit gravé de haut en bas, une coupe à deux cornes courtes ; les vasques au-dessus */
   const signs = F.itemsOf((r.scene && r.scene.ages) || [], {}).filter((it) => it.kind === "age").slice(-15).flatMap((it) => it.parts.slice(0, 1));
   for (const p of PILLARS.slice().sort((a, b) => a.y - b.y)) {
-    if (p.y > pitTop(p.x) + 6) { platform(ctx, p); pier(ctx, p); } /* il se tient sur sa plateforme, que relie un pont de roche au bord de la fosse */
+    if (p.y > pitTop(p.x) + 6) land(ctx, p); /* le sol avance dans la fosse sous chaque pilier : un promontoire de la même roche */
     const on = lit.includes(p.i), hov = r.hover && r.hover.pillar === p.i + 1, T = pillar(ctx, p, on, hov, t, signs);
     const cyy = T.top;
     r.hot.push({ x: p.x - T.w * 2.4, y: cyy - 22 * p.s, w: T.w * 4.8, h: p.y - cyy + 22 * p.s, tip: on ? tr("stars.pillar.lit") : tr("stars.pillar"), pillar: p.i + 1 });
