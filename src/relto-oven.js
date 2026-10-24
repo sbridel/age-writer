@@ -39,10 +39,19 @@ function capsule(ctx, x, y, kind, s = 1, crumb = false, glow = 1) {
   const gr = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); gr.addColorStop(0, col[1]); gr.addColorStop(0.4, col[0]); gr.addColorStop(1, col[1]);
   ctx.fillStyle = gr; ctx.beginPath();
   if (crumb) { const hh = h * 0.55; ctx.moveTo(x - w / 2, y); ctx.lineTo(x - w / 2, y - hh); ctx.lineTo(x - w / 4, y - hh - w * 0.3); ctx.lineTo(x - w / 10, y - hh + w * 0.1); ctx.lineTo(x + w / 6, y - hh - w * 0.4); ctx.lineTo(x + w / 2, y - hh + w * 0.15); ctx.lineTo(x + w / 2, y); }
-  else { ctx.moveTo(x - w / 2, y); ctx.lineTo(x - w / 2, y - h + w / 2); ctx.arc(x, y - h + w / 2, w / 2, Math.PI, 0); ctx.lineTo(x + w / 2, y); }
+  else { ctx.moveTo(x - w / 2, y - w / 2); ctx.lineTo(x - w / 2, y - h + w / 2); ctx.arc(x, y - h + w / 2, w / 2, Math.PI, 0); ctx.lineTo(x + w / 2, y - w / 2); ctx.arc(x, y - w / 2, w / 2, 0, Math.PI); } /* une pilule : arrondie aux deux bouts */
   ctx.closePath(); ctx.fill();
   if (kind === "grey" && !crumb) { ctx.strokeStyle = "#3e3b38"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(x - 1, y - h + 3); ctx.lineTo(x + 1, y - h / 2); ctx.lineTo(x - 1.5, y - 2); ctx.stroke(); }
   if (crumb) { ctx.fillStyle = col[0]; const rr = rng(5 + Math.round(x)); for (let i = 0; i < 14; i++) { const d = 0.6 + rr() * 1.4; ctx.fillRect(x - w * 1.3 + rr() * w * 2.6, y - d - rr() * 2, d * s * 0.6, d * s * 0.5); } }
+}
+
+/** Une pilule couchée (un granulé sur l'étagère) : arrondie aux deux bouts. (x, y) : son centre. */
+function pill(ctx, x, y, kind, s = 1) {
+  const w = 12 * s, h = 6.4 * s, r = h / 2, col = kind === "white" ? ["#f2f1ea", "#c3c8cc", rgba(190, 225, 255, 0.3)] : kind === "amber" ? ["#e09a4a", "#9a5a22", rgba(240, 160, 70, 0.28)] : ["#8a8580", "#5a5652", null];
+  if (col[2]) { const g = ctx.createRadialGradient(x, y, 1, x, y, w * 0.8); g.addColorStop(0, col[2]); g.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = g; ctx.fillRect(x - w, y - w * 0.8, 2 * w, 1.6 * w); }
+  const gr = ctx.createLinearGradient(0, y - r, 0, y + r); gr.addColorStop(0, col[0]); gr.addColorStop(0.45, col[0]); gr.addColorStop(1, col[1]);
+  ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(x - w / 2 + r, y - r); ctx.lineTo(x + w / 2 - r, y - r); ctx.arc(x + w / 2 - r, y, r, -Math.PI / 2, Math.PI / 2); ctx.lineTo(x - w / 2 + r, y + r); ctx.arc(x - w / 2 + r, y, r, Math.PI / 2, Math.PI * 1.5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = rgba(255, 255, 255, 0.28); ctx.fillRect(x - w / 2 + r, y - r * 0.6, w - 2 * r, 0.8);
 }
 
 /** Les murs de la pièce, selon l'habit. */
@@ -116,7 +125,7 @@ function drawOven(r, ctx, sc, sky, t) {
     }
   }
   const rows = [["white", P.white || 0], ["amber", P.amber || 0], ["grey", P.grey || 0]];
-  rows.forEach(([k, n], i) => { const shown = Math.min(n, 6); for (let j = 0; j < shown; j++) capsule(ctx, 76 + i * 36 + (j % 3) * 9, j < 3 ? 150 : 210, k, 0.9, false, 0.7); });
+  rows.forEach(([k, n], i) => { const shown = Math.min(n, 6); for (let j = 0; j < shown; j++) { const shelf = j < 3 ? 150 : 210, p3 = j % 3, gx = 80 + i * 34; pill(ctx, p3 === 2 ? gx + 6.5 : gx + p3 * 13, p3 === 2 ? shelf - 8.6 : shelf - 3.4, k, 0.9); } }); /* couchées, en petits tas : deux dessous, une dessus */
   const total = (P.white || 0) + (P.amber || 0) + (P.grey || 0);
   r.hot.push({ x: 64, y: 120, w: 116, h: 96, tip: total ? tr("oven.shelf").replace("{w}", P.white || 0).replace("{a}", P.amber || 0).replace("{g}", P.grey || 0) : tr("oven.shelf.empty") });
   /* le conduit : un tuyau rond qui sort du flanc du four, un coude, des colliers, une clé de tirage, et monte au plafond */
@@ -278,4 +287,4 @@ function leanTo(r, ctx, col, sky, t, hx) {
   r.hot.push({ x: hx - 62, y: GY - 34, w: 26, h: 34, tip: cooking ? tr("oven.out.cooking") : tr("oven.out"), go: "oven" });
 }
 
-module.exports = { valueTip, drawOven, leanTo, capsule, HOP, SLIDERS, SL_Y, SL_H, DOOR, TRAY, WHEEL };
+module.exports = { valueTip, drawOven, leanTo, capsule, pill, HOP, SLIDERS, SL_Y, SL_H, DOOR, TRAY, WHEEL };
