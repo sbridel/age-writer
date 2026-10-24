@@ -209,15 +209,24 @@ function leanTo(r, ctx, col, sky, t, hx) {
     CO.lancet(ctx, ax, GY, 9, 16, col("#1b1e2e")); if (cooking) CO.lancet(ctx, ax, GY - 1, 6, 12, mix(col("#3a1a10"), "#ff7a3a", 0.5 + 0.5 * night));
     vent = [ax + 1, ft - 30];
   } else if (skin === "glass") {
-    /* une petite demi-coupole contre la cabane : verre vert d'eau, nervures de cuivre en éventail, porte en ogive ambrée */
-    const GL = require("./relto-glass"), g = GL.glassTones(col, sky, cooking ? 0.6 : 0.1), rx = x1 - x0, ry = 24, cy = GY - 4;
-    ctx.fillStyle = col("#163c38"); ctx.fillRect(x0, cy, rx, GY - cy);
-    const vg = ctx.createLinearGradient(0, cy - ry, 0, cy); vg.addColorStop(0, mix(g.teal, "#d8fff5", 0.25)); vg.addColorStop(1, g.teal2);
+    /* une petite demi-coupole contre la cabane, sur un socle : un mur bas de mosaïque sombre, puis le verre (vert d'eau
+       foncé, nervures de cuivre en éventail) à travers lequel on devine la machine ; porte en ogive ambrée */
+    const GL = require("./relto-glass"), g = GL.glassTones(col, sky, cooking ? 0.6 : 0.1), rx = x1 - x0, ry = 21, cy = GY - 10;
+    const vg = ctx.createLinearGradient(0, cy - ry, 0, cy); vg.addColorStop(0, mix(g.teal2, g.teal, 0.55)); vg.addColorStop(1, g.teal2);
     ctx.fillStyle = vg; ctx.beginPath(); ctx.moveTo(x1, cy); ctx.ellipse(x1, cy, rx, ry, 0, Math.PI, 1.5 * Math.PI); ctx.closePath(); ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.moveTo(x1, cy); ctx.ellipse(x1, cy, rx, ry, 0, Math.PI, 1.5 * Math.PI); ctx.closePath(); ctx.clip();
+    ctx.fillStyle = rgba(8, 24, 22, 0.55); for (let i = 0; i < 3; i++) { const hx0 = x0 + 10 + i * 6; ctx.beginPath(); ctx.moveTo(hx0 - 2.5, cy - 12); ctx.lineTo(hx0 + 2.5, cy - 12); ctx.lineTo(hx0 + 0.8, cy - 6); ctx.lineTo(hx0 - 0.8, cy - 6); ctx.closePath(); ctx.fill(); } /* les trémies, en ombre derrière le verre */
+    ctx.fillRect(x0 + 8, cy - 6, 16, 6);
+    if (cooking) { const gl = ctx.createRadialGradient(x0 + 16, cy - 2, 1, x0 + 16, cy - 2, 16); gl.addColorStop(0, rgba(255, 160, 70, 0.55)); gl.addColorStop(1, rgba(255, 160, 70, 0)); ctx.fillStyle = gl; ctx.fillRect(x0, cy - ry, rx, ry); }
+    ctx.fillStyle = rgba(255, 255, 255, 0.10); ctx.beginPath(); ctx.ellipse(x1 - rx * 0.35, cy - ry * 0.72, rx * 0.22, 2, -0.4, 0, TAU); ctx.fill(); /* un reflet */
+    ctx.restore();
     ctx.strokeStyle = col(GL.COPPER); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.ellipse(x1, cy, rx, ry, 0, Math.PI, 1.5 * Math.PI); ctx.stroke();
     ctx.strokeStyle = col(GL.COPPER_HI); ctx.lineWidth = 0.8; for (const k of [0.22, 0.45, 0.7]) { const a = Math.PI + k * Math.PI / 2; ctx.beginPath(); ctx.moveTo(x1, cy); ctx.lineTo(x1 + Math.cos(a) * rx, cy + Math.sin(a) * ry); ctx.stroke(); }
-    ctx.beginPath(); ctx.ellipse(x1, cy, rx * 0.6, ry * 0.6, 0, Math.PI * 1.02, Math.PI * 1.48); ctx.stroke();
-    ctx.fillStyle = cooking ? mix(g.amb, "#ffb14a", 0.5) : g.amb2; GL.ogive(ctx, x0 + 7, x0 + 16, GY - 15, GY); ctx.fill(); ctx.strokeStyle = col(GL.COPPER); ctx.lineWidth = 0.8; GL.ogive(ctx, x0 + 7, x0 + 16, GY - 15, GY); ctx.stroke();
+    /* le socle : un mur bas de mosaïque, une bande de cuivre */
+    ctx.fillStyle = col("#1c2a28"); ctx.fillRect(x0 - 1, cy, rx + 1, GY - cy);
+    const q = rng(0x5ec1e); for (let row = 0; row < 3; row++) for (let i = 0; i < 9; i++) { ctx.fillStyle = col(mix("#1f4a46", "#2f6a62", q())); ctx.fillRect(x0 + i * 3.4 + (row % 2) * 1.6, cy + 2 + row * 2.8, 2.8, 2.2); }
+    ctx.fillStyle = col(GL.COPPER); ctx.fillRect(x0 - 1, cy - 1, rx + 1, 1.6);
+    ctx.fillStyle = cooking ? mix(col("#c98a32"), "#ffb14a", 0.4 + 0.5 * night) : col("#a8702a"); GL.ogive(ctx, x0 + 7, x0 + 16, GY - 15, GY); ctx.fill(); ctx.strokeStyle = col(GL.COPPER); ctx.lineWidth = 0.8; GL.ogive(ctx, x0 + 7, x0 + 16, GY - 15, GY); ctx.stroke();
     /* le chapeau d'aération, en cuivre, sur la courbe */
     const vx = x0 + rx * 0.45, vy = cy - ry * Math.sqrt(1 - Math.pow(1 - 0.45, 2)) - 1;
     ctx.fillStyle = col(GL.COPPER); ctx.fillRect(vx - 2.5, vy - 3, 5, 3.5); ctx.beginPath(); ctx.moveTo(vx - 4, vy - 3); ctx.quadraticCurveTo(vx, vy - 7, vx + 4, vy - 3); ctx.closePath(); ctx.fill();
