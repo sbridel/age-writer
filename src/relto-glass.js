@@ -575,37 +575,43 @@ function atelierDoor(ctx, c, sky, dx, dy, dw, FLOOR) {
 }
 
 /**
- * Un vitrail opaque (la Verrière vue du dehors, comme les pavillons de verre d'Uru) : une ogive pleine de verres colorés
- * sertis de plomb, un médaillon bleu au cœur, des pétales verts, l'ambre en bas. On ne voit pas à travers ; la nuit, il
- * s'allume. `lit` : 0 (le jour) à 1 (allumé la nuit). `c` : la couleur de la scène.
+ * Un vitrail opaque (la Verrière vue du dehors, l'appentis de la machine) : une ogive de verres sertis de plomb, dans les
+ * couleurs du hublot de l'atelier — vert d'eau et orange doux — et un motif art nouveau : une bordure orangée qui suit
+ * l'ogive, une tige en coup de fouet, deux feuilles, une fleur en tulipe. On ne voit pas à travers ; la nuit, il s'allume.
+ * `lit` : 0 (le jour) à 1 (allumé la nuit). `c` : la couleur de la scène.
  */
 function stainedBay(ctx, c, xa, xb, top, base, lit, seed = 1) {
-  const m = (xa + xb) / 2, w = xb - xa, cy = top + (base - top) * 0.42, R = w * 0.3, glow = (h, g) => mix(c(h), g, clamp(lit * 0.9));
+  const m = (xa + xb) / 2, w = xb - xa, hgt = base - top, L = clamp(lit), glow = (h, g) => mix(c(h), g, clamp(L * 0.9)), dir = seed % 2 ? 1 : -1;
+  const TEAL = glow("#5fb8a8", "#a8f0e0"), TEAL2 = glow("#2f7a70", "#6fd0c0"), TEAL3 = glow("#1f5a52", "#4fb0a0"), ORA = glow("#d88a4a", "#ffc890"), ORA2 = glow("#b0602a", "#f0a060");
   ctx.save(); ogive(ctx, xa, xb, top, base); ctx.clip();
-  const bg = ctx.createLinearGradient(0, top, 0, base); bg.addColorStop(0, glow("#1d4a5a", "#5fb8d0")); bg.addColorStop(0.55, glow("#2a6a4a", "#7fe0a0")); bg.addColorStop(1, glow("#8a5a1e", "#ffc35a"));
-  ctx.fillStyle = bg; ctx.fillRect(xa - 1, top - 1, w + 2, base - top + 2);
-  /* les pétales autour du médaillon */
-  const q = rng(0x57a1 + seed);
-  for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2 + 0.2, px = m + Math.cos(a) * R * 1.35, py = cy + Math.sin(a) * R * 1.35; ctx.fillStyle = i % 2 ? glow("#2f7a5a", "#9ff0b8") : glow("#3a5a8a", "#8ac0ff"); ctx.beginPath(); ctx.ellipse(px, py, R * 0.62, R * 0.34, a, 0, Math.PI * 2); ctx.fill(); }
-  /* le bas : des éclats d'ambre et de rouge */
-  for (let i = 0; i < 6; i++) { const y0 = base - (base - top) * 0.32 + q() * (base - top) * 0.28; ctx.fillStyle = q() < 0.3 ? glow("#7a2a1e", "#ff7a5a") : glow("#9a6a1e", "#ffd27a"); ctx.beginPath(); ctx.moveTo(xa + q() * w, base); ctx.lineTo(m + (q() - 0.5) * w * 0.4, y0); ctx.lineTo(xa + q() * w, base); ctx.lineTo(xa + q() * w, base); ctx.closePath(); ctx.fill(); }
-  /* le médaillon */
-  ctx.fillStyle = glow("#1a3a8a", "#7aa8ff"); ctx.beginPath(); ctx.arc(m, cy, R, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = glow("#8a2a3a", "#ff8aa0"); ctx.beginPath(); ctx.arc(m, cy, R * 0.38, 0, Math.PI * 2); ctx.fill();
+  const bg = ctx.createLinearGradient(0, top, 0, base); bg.addColorStop(0, TEAL); bg.addColorStop(1, TEAL2); ctx.fillStyle = bg; ctx.fillRect(xa - 1, top - 1, w + 2, hgt + 2);
+  /* la bordure orangée, le long de l'ogive */
+  ctx.strokeStyle = ORA2; ctx.lineWidth = w * 0.16; ogive(ctx, xa, xb, top, base); ctx.stroke();
+  /* la tige, en coup de fouet, et deux feuilles */
+  const fy = top + hgt * 0.34, stem = () => { ctx.beginPath(); ctx.moveTo(m - dir * w * 0.1, base); ctx.bezierCurveTo(m + dir * w * 0.22, base - hgt * 0.3, m - dir * w * 0.2, fy + hgt * 0.25, m, fy + hgt * 0.06); };
+  for (const [k, s2] of [[0.62, 1], [0.44, -1]]) { const ly = top + hgt * k, lx = m + s2 * w * 0.05; ctx.fillStyle = TEAL3; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.quadraticCurveTo(lx + s2 * w * 0.28, ly - hgt * 0.1, lx + s2 * w * 0.34, ly - hgt * 0.2); ctx.quadraticCurveTo(lx + s2 * w * 0.08, ly - hgt * 0.12, lx, ly); ctx.fill(); }
+  /* la fleur, en tulipe */
+  ctx.fillStyle = ORA; ctx.beginPath(); ctx.moveTo(m - w * 0.2, fy - hgt * 0.06); ctx.quadraticCurveTo(m - w * 0.22, fy + hgt * 0.08, m, fy + hgt * 0.09); ctx.quadraticCurveTo(m + w * 0.22, fy + hgt * 0.08, m + w * 0.2, fy - hgt * 0.06); ctx.lineTo(m + w * 0.08, fy - hgt * 0.01); ctx.lineTo(m, fy - hgt * 0.1); ctx.lineTo(m - w * 0.08, fy - hgt * 0.01); ctx.closePath(); ctx.fill();
   /* le plomb */
   ctx.strokeStyle = c(LEAD); ctx.lineWidth = 0.6; ctx.lineCap = "round";
-  ctx.beginPath(); ctx.arc(m, cy, R, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.arc(m, cy, R * 0.38, 0, Math.PI * 2); ctx.stroke();
-  for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2 + 0.2 + Math.PI / 8; ctx.beginPath(); ctx.moveTo(m + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.lineTo(m + Math.cos(a) * w, cy + Math.sin(a) * w); ctx.stroke(); }
-  for (let i = 1; i < 4; i++) { const y = cy + R + (base - cy - R) * i / 4; ctx.beginPath(); ctx.moveTo(xa, y + (i % 2 ? 1 : -1)); ctx.lineTo(xb, y + (i % 2 ? -1 : 1)); ctx.stroke(); }
+  stem(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(m - w * 0.2, fy - hgt * 0.06); ctx.quadraticCurveTo(m - w * 0.22, fy + hgt * 0.08, m, fy + hgt * 0.09); ctx.quadraticCurveTo(m + w * 0.22, fy + hgt * 0.08, m + w * 0.2, fy - hgt * 0.06); ctx.lineTo(m + w * 0.08, fy - hgt * 0.01); ctx.lineTo(m, fy - hgt * 0.1); ctx.lineTo(m - w * 0.08, fy - hgt * 0.01); ctx.closePath(); ctx.stroke();
+  const inset = w * 0.08, k = (xb - xa - 2 * inset) * 0.55; ctx.beginPath(); ctx.moveTo(xa + inset, base); ctx.lineTo(xa + inset, top + inset + k); ctx.quadraticCurveTo(xa + inset, top + inset + k * 0.2, m, top + inset); ctx.quadraticCurveTo(xb - inset, top + inset + k * 0.2, xb - inset, top + inset + k); ctx.lineTo(xb - inset, base); ctx.stroke();
+  for (const y of [top + hgt * 0.78, top + hgt * 0.9]) { ctx.beginPath(); ctx.moveTo(xa, y); ctx.quadraticCurveTo(m, y - hgt * 0.03, xb, y); ctx.stroke(); }
   ctx.restore();
 }
 
-/** Le verre dépoli de la coupole, patiné (opaque, marbré de vert de gris et de clair), dans le chemin courant déjà découpé. */
+/** Le verre dépoli de la coupole, patiné vert-de-gris (opaque, veiné comme une pierre), dans le chemin courant déjà découpé. */
 function frostedDome(ctx, c, x0, y0, x1, y1, lit, seed = 1) {
-  const g = ctx.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, mix(c("#7a9a86"), "#c8f0dc", clamp(lit * 0.7))); g.addColorStop(1, mix(c("#2e4e44"), "#4f9a84", clamp(lit * 0.7)));
+  const L = clamp(lit), g = ctx.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, mix(c("#8ab8a6"), "#c8f0dc", L * 0.7)); g.addColorStop(0.6, mix(c("#4f8a7a"), "#7fd0b8", L * 0.7)); g.addColorStop(1, mix(c("#2f5a50"), "#4f9a84", L * 0.7));
   ctx.fillStyle = g; ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-  const q = rng(0xd0e + seed);
-  for (let i = 0; i < 40; i++) { const x = x0 + q() * (x1 - x0), y = y0 + q() * (y1 - y0), r = 1.5 + q() * 5; ctx.fillStyle = q() < 0.5 ? rgba(220, 245, 230, 0.12 + lit * 0.1) : rgba(10, 30, 26, 0.16); ctx.beginPath(); ctx.ellipse(x, y, r * 1.6, r, q() * 3, 0, Math.PI * 2); ctx.fill(); }
+  const q = rng(0xd0e + seed), w = x1 - x0, h = y1 - y0;
+  ctx.lineCap = "round";
+  for (let i = 0; i < 14; i++) { /* des veines, comme dans un verre coulé */
+    const x = x0 + q() * w, y = y0 + q() * h; ctx.strokeStyle = q() < 0.6 ? rgba(225, 250, 238, 0.16 + L * 0.08) : rgba(14, 40, 34, 0.18); ctx.lineWidth = 0.5 + q() * 0.8;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.bezierCurveTo(x + w * 0.1 * (q() - 0.3), y + h * 0.2 * (q() - 0.5), x + w * 0.2 * (q() - 0.2), y + h * 0.2 * (q() - 0.5), x + w * 0.25 * (q() - 0.1), y + h * 0.15 * (q() - 0.5)); ctx.stroke();
+  }
+  ctx.fillStyle = rgba(255, 255, 255, 0.10 + L * 0.05); ctx.beginPath(); ctx.ellipse(x0 + w * 0.36, y0 + h * 0.3, w * 0.16, h * 0.08, -0.35, 0, Math.PI * 2); ctx.fill(); /* le reflet */
 }
 
 module.exports = { stainedBay, frostedDome,  atelierDoor, lampPool, lampGlow, cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };

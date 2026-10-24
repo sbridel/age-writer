@@ -60,10 +60,11 @@ function walls(r, ctx, c, sky, skin, t) {
     const CO = require("./relto-castle-out"); CO.lancet(ctx, 560, 112, 26, 62, c(CO.STONE_D)); CO.lancet(ctx, 560, 108, 18, 54, night > 0.5 ? "#141a33" : mix("#9cc3e6", "#d8e4f0", 0.3));
     ctx.strokeStyle = c("#3a3742"); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(560, 54); ctx.lineTo(560, 108); ctx.stroke();
   } else if (skin === "glass") {
-    const GL = require("./relto-glass"), g = GL.glassTones(c, sky, 0.2);
+    const GL = require("./relto-glass");
     ctx.fillStyle = c("#10241f"); ctx.fillRect(0, 0, W, H);
     GL.darkMosaic(ctx, c, 300, W, H);
-    [[18, 92, "iris"], [102, 176, "whip"], [500, 562, "lily"], [574, 634, "fern"]].forEach(([xa, xb, kind]) => GL.pane(ctx, c, xa, xb, 20, 140, g.teal, g.teal2, kind, 3)); /* des baies sur les côtés ; derrière la machine, le mur */
+    const day = clamp(sky.ambient == null ? 0.6 : sky.ambient), litIn = 0.25 + 0.55 * day; /* le jour traverse les vitraux */
+    [[18, 92], [102, 176], [500, 562], [574, 634]].forEach(([xa, xb], i) => { GL.stainedBay(ctx, c, xa, xb, 20, 140, litIn, i + 1); ctx.strokeStyle = c(GL.COPPER); ctx.lineWidth = 3; GL.ogive(ctx, xa, xb, 20, 140); ctx.stroke(); }); /* des vitraux sur les côtés, comme dehors ; derrière la machine, le mur */
     ctx.fillStyle = c("#2a1a12"); ctx.fillRect(0, 150, W, 6); ctx.fillStyle = c(GL.COPPER); ctx.fillRect(0, 150, W, 2);
     GL.cornerVines(ctx, c, 0, 0, W, 300);
   } else {
@@ -163,7 +164,11 @@ function drawOven(r, ctx, sc, sky, t) {
   ctx.fillStyle = in1; ctx.beginPath(); ctx.arc(dx, dy, dr, 0, TAU); ctx.fill();
   if (cooking) {
     ctx.fillStyle = rgba(255, 200, 120, 0.6); for (let i = 0; i < 7; i++) { const fx = dx - 27 + i * 9, fh = 14 - hot * 16 - (i % 3) * 5 + Math.sin(t * 8 + i) * 3; ctx.beginPath(); ctx.moveTo(fx - 4, dy + 32); ctx.quadraticCurveTo(fx, dy + fh, fx + 4, dy + 32); ctx.fill(); }
-    const n = ph.n || 1; ctx.globalAlpha = 0.3 + clamp(ph.k) * 0.6; for (let j = 0; j < n; j++) capsule(ctx, dx - (n - 1) * 4 + j * 8, dy + 6, "grey", 0.8); ctx.globalAlpha = 1;
+    /* le moule, sur sa grille : les capsules prennent forme, sombres d'abord, puis elles rougeoient en cuisant */
+    const n = ph.n || 1, k = clamp(ph.k), gx0 = dx - 22, mw = 44; ctx.fillStyle = "#2a1a12"; ctx.fillRect(gx0, dy + 10, mw, 4); ctx.fillStyle = "#4a2a18"; for (let i = 0; i < 6; i++) ctx.fillRect(gx0 + 2 + i * 8, dy + 14, 2, 5);
+    for (let j = 0; j < n; j++) { const x = dx - (n - 1) * 4.5 + j * 9, y = dy + 10, w = 6, hh = 11, body = mix("#1a1210", "#ff7a3a", k * 0.8), rim = mix("#3a2418", "#ffd08a", k);
+      ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(x - w / 2, y); ctx.lineTo(x - w / 2, y - hh + w / 2); ctx.arc(x, y - hh + w / 2, w / 2, Math.PI, 0); ctx.lineTo(x + w / 2, y); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = rim; ctx.lineWidth = 0.8; ctx.stroke(); }
   }
   ctx.fillStyle = rgba(255, 255, 255, 0.10); ctx.beginPath(); ctx.ellipse(dx - 14, dy - 16, 14, 6, -0.6, 0, TAU); ctx.fill();
   ctx.fillStyle = c(trim[1]); ctx.fillRect(dx - dr - 14, dy - 14, 8, 28); ctx.fillStyle = c(trim[0]); ctx.fillRect(dx + dr + 4, dy - 4, 16, 8);
@@ -184,7 +189,7 @@ function drawOven(r, ctx, sc, sky, t) {
   for (let k = 0; k <= 10; k++) { const a = Math.PI * 0.75 + k / 10 * Math.PI * 1.5, ins = k % 2 ? 6 : 8; ctx.strokeStyle = k >= 8 ? "#a8342a" : "#3a2a1a"; ctx.lineWidth = k % 2 ? 0.8 : 1.6; ctx.beginPath(); ctx.moveTo(mx + Math.cos(a) * (mr - 3), my + Math.sin(a) * (mr - 3)); ctx.lineTo(mx + Math.cos(a) * (mr - ins), my + Math.sin(a) * (mr - ins)); ctx.stroke(); }
   const na = Math.PI * 0.75 + p / 50 * Math.PI * 1.5; ctx.strokeStyle = "#1a0f08"; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx + Math.cos(na) * (mr - 5), my + Math.sin(na) * (mr - 5)); ctx.stroke(); ctx.fillStyle = "#1a0f08"; ctx.beginPath(); ctx.arc(mx, my, 2.2, 0, TAU); ctx.fill();
   r.hot.push({ x: mx - mr, y: my - mr, w: 2 * mr, h: 2 * mr, tip: valueTip(tr, "press", p) });
-  r.hot.push({ x: wx - 24, y: wy - 24, w: 48, h: 48, tip: valueTip(tr, "press", p) + (cooking || done ? "" : " — " + tr("oven.press.how")), oven: cooking || done ? null : "press", wheel: true, val: p });
+  r.hot.push({ x: wx - 24, y: wy - 24, w: 48, h: 48, tip: valueTip(tr, "press", p) + (cooking || done ? "" : " — " + tr("oven.press.how")), oven: cooking || done ? null : "press", wheel: true, val: p, y0: wy });
   /* le plateau à cinq alvéoles */
   const [tx, ty] = TRAY;
   ctx.fillStyle = c("#1a1b1e"); ctx.fillRect(tx - 8, 280, 16, 12);
@@ -241,7 +246,8 @@ function leanTo(r, ctx, col, sky, t, hx) {
     ctx.fillStyle = col(GL.COPPER); ctx.fillRect(x0 - 1, cy - 1, rx + 1, 1.6);
     ctx.fillStyle = cooking ? mix(col("#c98a32"), "#ffb14a", 0.4 + 0.5 * night) : col("#a8702a"); GL.ogive(ctx, x0 + 7, x0 + 16, GY - 15, GY); ctx.fill(); ctx.strokeStyle = col(GL.COPPER); ctx.lineWidth = 0.8; GL.ogive(ctx, x0 + 7, x0 + 16, GY - 15, GY); ctx.stroke();
     /* le chapeau d'aération, en cuivre, sur la courbe */
-    const vx = x0 + rx * 0.45, vy = cy - ry * Math.sqrt(1 - Math.pow(1 - 0.45, 2)) - 1;
+    ctx.fillStyle = col(GL.COPPER); ctx.fillRect(x1 - 1.5, cy - ry, 2.5, GY - (cy - ry)); /* le pilier qui la porte contre la cabane */
+    const vx = x0 + rx * 0.45, vy = cy - ry * Math.sqrt(1 - Math.pow(1 - 0.45, 2)) + 1.5; /* posé sur la courbe */
     ctx.fillStyle = col(GL.COPPER); ctx.fillRect(vx - 2.5, vy - 3, 5, 3.5); ctx.beginPath(); ctx.moveTo(vx - 4, vy - 3); ctx.quadraticCurveTo(vx, vy - 7, vx + 4, vy - 3); ctx.closePath(); ctx.fill();
     vent = [vx + 1, vy - 7];
   } else {

@@ -1140,7 +1140,10 @@ class ReltoRenderer {
     }
     const ogive = (xa, xb, top, base) => { const m = (xa + xb) / 2, k = (xb - xa) * 0.55; ctx.beginPath(); ctx.moveTo(xa, base); ctx.lineTo(xa, top + k); ctx.quadraticCurveTo(xa, top + k * 0.2, m, top); ctx.quadraticCurveTo(xb, top + k * 0.2, xb, top + k); ctx.lineTo(xb, base); ctx.closePath(); };
     // le corps, derrière : vert profond
-    ctx.fillStyle = col("#163c38"); ctx.fillRect(x0 + 3, y0 + 2, w - 6, h - 2);
+    { /* le mur : de la mosaïque vert sombre sur toute la largeur de la coupole, deux pilastres de cuivre aux angles (on ne voit plus à travers) */
+      const wx0 = x0 - 5, wx1 = x0 + w + 5; ctx.fillStyle = col("#163c38"); ctx.fillRect(wx0, y0 + 2, wx1 - wx0, GY - y0 - 2);
+      const q = rng(0x3a1c); for (let row = 0; row < 9; row++) for (let i = 0; i < 22; i++) { ctx.fillStyle = col(mix("#1a4440", "#2a5e56", q())); ctx.fillRect(wx0 + i * 3.1 + (row % 2) * 1.5, y0 + 3 + row * 3.1, 2.6, 2.4); }
+      ctx.fillStyle = CU; ctx.fillRect(wx0, y0 + 2, 2.4, GY - y0 - 2); ctx.fillRect(wx1 - 2.4, y0 + 2, 2.4, GY - y0 - 2); }
     // la coupole : verre vert d'eau, nervures de cuivre, un fleuron
     const dr = w / 2 + 5, dh = 24;
     ctx.save(); ctx.beginPath(); ctx.ellipse(hx, y0 + 3, dr, dh, 0, Math.PI, 2 * Math.PI); ctx.closePath(); ctx.clip(); GLASS.frostedDome(ctx, col, hx - dr, y0 + 3 - dh, hx + dr, y0 + 3, lit, 1); ctx.restore(); /* verre dépoli, patiné : on ne voit pas à travers */
@@ -1148,6 +1151,7 @@ class ReltoRenderer {
     ctx.lineWidth = 0.9; ctx.strokeStyle = CU2;
     for (const k of [-0.62, -0.25, 0.25, 0.62]) { ctx.beginPath(); ctx.moveTo(hx, y0 + 3 - dh); ctx.quadraticCurveTo(hx + k * dr * 0.9, y0 + 3 - dh * 0.75, hx + k * dr, y0 + 3); ctx.stroke(); }
     ctx.beginPath(); ctx.ellipse(hx, y0 + 3, dr * 0.72, dh * 0.42, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke(); // une bague à mi-hauteur
+    ctx.fillStyle = CU; ctx.fillRect(hx - dr - 1, y0 + 2, 2 * dr + 2, 2.4); ctx.fillStyle = CU2; ctx.fillRect(hx - dr - 1, y0 + 2, 2 * dr + 2, 0.7); /* la corniche, sous la coupole */
     // le lanternon au sommet : un petit tambour de cuivre ajouré sous un chapeau, par où le poêle respire (la fumée en sort)
     const ly = y0 + 3 - dh; ctx.fillStyle = CU; ctx.fillRect(hx - 3.5, ly - 5, 7, 5.5);
     ctx.fillStyle = mix(col("#2a1a10"), "#ffb14a", clamp(lit * 0.9)); ctx.fillRect(hx - 2.5, ly - 4, 1.4, 3); ctx.fillRect(hx - 0.7, ly - 4, 1.4, 3); ctx.fillRect(hx + 1.1, ly - 4, 1.4, 3); // les jours du tambour
@@ -1402,6 +1406,7 @@ class ReltoRenderer {
     if (this.view === "starmap" && this.mapDown(e)) return;
     if (!this.touch && e.button != null && e.button !== 0) return;
     const [x, y] = this.toLogical(e), h = this.hit(x, y), ready = (q) => !this.touch || this.held === this.holdKey(q); this.dragged = false;
+    if (h && h.oven && h.wheel && ready(h)) { this.slide = { oven: h, wheelY: y, base: h.val, last: h.val }; try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } return; } /* le volant de la presse : glisser vers le haut serre, vers le bas desserre (au doigt, sans Maj) */
     if (h && h.oven && h.slider && Math.abs(y - h.slider.knob) <= 8 && ready(h)) { this.slide = { oven: h, last: h.val }; try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } return; } /* le curseur de la machine : on le prend et on le glisse */
     if (h && h.imager && h.imager.value != null && h.imager.key && ready(h)) { this.slide = { key: h.imager.key, last: h.imager.value }; try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } return; } // un rail, l'arc de l'iris : on glisse le doigt le long
     if (!h || !h.wc || !ready(h)) return; // au doigt, une molette pas encore lue : le toucher la montre d'abord
@@ -1429,7 +1434,7 @@ class ReltoRenderer {
     if (this.mapGest) { this.mapMove(e); return; }
     if (this.slide) { // le long d'un rail (ou de l'arc de l'iris) : le verre suit le doigt, cran par cran
       const [x, y] = this.toLogical(e), h = this.hit(x, y), sl = this.slide;
-      if (sl.oven) { const z = sl.oven, v = clamp(Math.round(((z.slider.y0 + z.slider.h - y) / z.slider.h) * 50), 0, 50); if (v !== sl.last) { sl.last = v; this.dragged = true; this.ovenSet(z, v); } return; }
+      if (sl.oven) { const z = sl.oven, v = z.wheel ? clamp(sl.base + Math.round((sl.wheelY - y) / 3), 0, 50) : clamp(Math.round(((z.slider.y0 + z.slider.h - y) / z.slider.h) * 50), 0, 50); if (v !== sl.last) { sl.last = v; this.dragged = true; this.ovenSet(z, v); } return; }
       if (h && h.imager && h.imager.key === sl.key && h.imager.value != null && h.imager.value !== sl.last) { this.imagerAct(h.imager); this.dragged = true; if (!this.touch) this.canvas.style.cursor = "var(--age-grabbing, grabbing)"; sl.last = h.imager.value; if (!this.running) this.draw(0); }
       return;
     }
