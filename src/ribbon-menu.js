@@ -14,7 +14,7 @@ const MAIN = [
   [["stop-soundscape", "volume-x"]],
 ];
 const DEV = [
-  [["mutation-advance", "flask-conical"], ["oven-test", "flame"], ["dni-numerals-report", "binary"]],
+  [["mutation-advance", "flask-conical"], ["oven-test", "flame"], ["cave-test", "microscope"], ["dni-numerals-report", "binary"]],
   [["story-repair", "wrench"], ["story-restart", "rotate-ccw"], ["keep-world-former-name", "history"], ["forget-great-zero", "telescope"], ["clean-star-chart", "eraser"], ["memories-clear", "trash-2"]],
   [["update-age-data-all", "refresh-ccw"], ["create-age-library", "file-plus-2"], ["export-builtin-library", "copy"], ["reload-age-library", "rotate-cw"]],
   [["toggle-relto-ribbon", "toggle-left"]],

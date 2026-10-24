@@ -240,7 +240,7 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
     const k = ph.k / LIGHT_MS; ctx.save(); ctx.translate(320, 298 + Math.sin(t * 2) * 1.2); ctx.rotate(Math.sin(t * 0.7) * 0.15); require("./relto-oven").pill(ctx, 0, 0, "grey", 1); ctx.restore(); /* la pilule grise flotte, couchée */
     for (let i = 0; i < 6; i++) { const q = ((t * 0.4 + i / 6) % 1), x = 320 + Math.sin(i * 2 + t) * 8 * q; ctx.fillStyle = rgba(120, 200, 80, 0.25 * (1 - q) * (1 - k)); ctx.beginPath(); ctx.arc(x, 290 - q * 90, 6 + q * 14, 0, TAU); ctx.fill(); }
   }
-  r.hot.push({ x: 150, y: 270, w: 340, h: 60, tip: lit > 0 ? tr("cave.pool.lit") : tr("cave.pool") });
+  { const canSample = !!(r.available && r.available().scope); r.hot.push({ x: 150, y: 270, w: 340, h: 60, tip: (lit > 0 ? tr("cave.pool.lit") : tr("cave.pool")) + (canSample ? " — " + tr("cave.pool.sample") : ""), ...(canSample ? { caveSample: true } : {}) }); } /* le flacon du microscope se remplit ici */
   require("./relto-atelier").backButton(r, ctx, tr("cave.up"), "cavetop");
   void sc; void sky;
 }

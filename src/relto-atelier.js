@@ -315,6 +315,7 @@ function drawDesk(r, ctx, sc, sky, t) {
     const g = 0.35 + 0.35 * Math.sin(t * 1.1); ctx.fillStyle = c("#b98f3c"); ctx.beginPath(); ctx.arc(612, 292, 2.6, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(255, 240, 190, g); ctx.fillRect(611, 290.5, 1.6, 1.6);
     r.hot.push({ x: 600, y: 280, w: 24, h: 24, tip: "", desk: "drawer", secret: true });
   }
+  if (r.available && r.available().scope) { const st = (r.opts.scopeState && r.opts.scopeState()) || {}; require("./relto-scope").drawMicroscope(r, ctx, c, castle ? "castle" : glass ? "glass" : "plain", 62, 222, st.flask); } /* le microscope, à gauche de la lampe, et son flacon */
   if (glass && !r.lampOff) require("./relto-glass").lampPool(ctx, 150, 214, 40, fl); // la flaque colorée, sur le plateau ET sur ce qui y est posé
   backButton(r, ctx, TRr("atelier.stand.tip"), "atelier"); // se lever
   if (ui.held) { // la tablette entre les mains : on la regarde de près, un clic la rend au tiroir
