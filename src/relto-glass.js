@@ -626,6 +626,24 @@ function glassOnly(ctx, c, xa, xb, top, base, seed, teals, oranges) {
   ctx.restore();
 }
 
+/**
+ * Une grille de fer forgé art nouveau, posée devant une vitre (le cellier : une chambre forte) : des barreaux qui ondulent
+ * comme des tiges, une traverse, des volutes et quelques feuilles. `clip()` trace le contour de la vitre (déjà commencé).
+ */
+function ironGrille(ctx, c, x0, x1, top, bottom, clip, seed = 1) {
+  const q = rng(0x1f0 + seed * 17), iron = c("#14110f"), hi = rgba(150, 130, 100, 0.35), w = x1 - x0, h = bottom - top, n = Math.max(3, Math.round(w / 9));
+  ctx.save(); clip(); ctx.clip(); ctx.lineCap = "round";
+  const bar = (fn, lw) => { ctx.strokeStyle = iron; ctx.lineWidth = lw; fn(); ctx.stroke(); ctx.strokeStyle = hi; ctx.lineWidth = Math.max(0.4, lw * 0.3); fn(); ctx.stroke(); };
+  for (let i = 1; i < n; i++) { const x = x0 + (w * i) / n, sway = (i % 2 ? 1 : -1) * w * 0.035; bar(() => { ctx.beginPath(); ctx.moveTo(x, bottom + 2); ctx.bezierCurveTo(x + sway, bottom - h * 0.35, x - sway, top + h * 0.35, x, top - 2); }, 1.6); }
+  const ty = top + h * 0.62; bar(() => { ctx.beginPath(); ctx.moveTo(x0 - 2, ty); ctx.quadraticCurveTo((x0 + x1) / 2, ty - h * 0.08, x1 + 2, ty); }, 1.8); /* la traverse */
+  for (let i = 0; i < n - 1; i++) { /* des volutes sur la traverse, une sur deux vers le haut */
+    const x = x0 + (w * (i + 0.5)) / n, up = i % 2 ? -1 : 1, rr = Math.min(w / n, h * 0.25) * 0.45;
+    bar(() => { ctx.beginPath(); for (let a = 0; a < Math.PI * 2.2; a += 0.25) { const k = rr * (1 - a / (Math.PI * 2.6)); const px = x + Math.cos(a) * k, py = ty - up * (rr + Math.sin(a) * k); a ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } }, 1.1);
+  }
+  for (let i = 0; i < Math.max(2, n - 2); i++) { const x = x0 + q() * w, y = top + q() * h * 0.5, a = q() * Math.PI; ctx.fillStyle = iron; ctx.beginPath(); ctx.ellipse(x, y, 3, 1.3, a, 0, Math.PI * 2); ctx.fill(); } /* quelques feuilles */
+  ctx.restore();
+}
+
 /** Le verre dépoli de la coupole, patiné vert-de-gris (opaque, veiné comme une pierre), dans le chemin courant déjà découpé. */
 function frostedDome(ctx, c, x0, y0, x1, y1, lit, seed = 1) {
   const L = clamp(lit), g = ctx.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, mix(c("#8ab8a6"), "#c8f0dc", L * 0.7)); g.addColorStop(0.6, mix(c("#4f8a7a"), "#7fd0b8", L * 0.7)); g.addColorStop(1, mix(c("#2f5a50"), "#4f9a84", L * 0.7));
@@ -639,4 +657,4 @@ function frostedDome(ctx, c, x0, y0, x1, y1, lit, seed = 1) {
   ctx.fillStyle = rgba(255, 255, 255, 0.10 + L * 0.05); ctx.beginPath(); ctx.ellipse(x0 + w * 0.36, y0 + h * 0.3, w * 0.16, h * 0.08, -0.35, 0, Math.PI * 2); ctx.fill(); /* le reflet */
 }
 
-module.exports = { stainedBay, frostedDome,  atelierDoor, lampPool, lampGlow, cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+module.exports = { ironGrille, stainedBay, frostedDome,  atelierDoor, lampPool, lampGlow, cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };

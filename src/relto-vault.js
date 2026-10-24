@@ -57,6 +57,7 @@ function drawVault(r, ctx, sc, sky, t) {
     const lx0 = 264, lx1 = 376; ctx.fillStyle = c("#1a120c"); ctx.beginPath(); ctx.moveTo(lx0 - 6, 16); ctx.lineTo(lx0 - 6, 70); ctx.quadraticCurveTo(320, 52, lx1 + 6, 70); ctx.lineTo(lx1 + 6, 16); ctx.closePath(); ctx.fill(); // un lanterneau, au-dessus du lutrin, entre les deux rangs de niches
     ctx.save(); ctx.beginPath(); ctx.moveTo(lx0, 16); ctx.lineTo(lx0, 66); ctx.quadraticCurveTo(320, 50, lx1, 66); ctx.lineTo(lx1, 16); ctx.closePath(); ctx.clip(); const vg = ctx.createLinearGradient(0, 16, 0, 66); vg.addColorStop(0, G.teal); vg.addColorStop(1, G.amb); ctx.fillStyle = vg; ctx.fillRect(lx0, 16, lx1 - lx0, 54);
     ctx.strokeStyle = c(VR.LEAD); ctx.lineWidth = 1.2; for (let x = lx0 + 14; x < lx1; x += 14) { ctx.beginPath(); ctx.moveTo(x, 16); ctx.lineTo(x, 70); ctx.stroke(); } ctx.beginPath(); ctx.moveTo(lx0, 40); ctx.lineTo(lx1, 40); ctx.stroke(); ctx.restore(); // ses plombs
+    VR.ironGrille(ctx, c, lx0, lx1, 16, 66, () => { ctx.beginPath(); ctx.moveTo(lx0, 16); ctx.lineTo(lx0, 66); ctx.quadraticCurveTo(320, 50, lx1, 66); ctx.lineTo(lx1, 16); ctx.closePath(); }, 9); /* une grille de fer forgé devant le lanterneau : c'est une chambre forte */
     ctx.strokeStyle = c(VR.COPPER); ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(lx0, 16); ctx.lineTo(lx0, 66); ctx.quadraticCurveTo(320, 50, lx1, 66); ctx.lineTo(lx1, 16); ctx.stroke();
     VR.darkMosaic(ctx, c, FLOOR, W, H); ctx.fillStyle = c(VR.COPPER_LO); ctx.fillRect(0, FLOOR - 4, W, 5);
   } else {
@@ -74,6 +75,7 @@ function drawVault(r, ctx, sc, sky, t) {
     else if (glass) { const G = VR.glassTones(c, sky, 0.3); ctx.fillStyle = c(VR.COPPER_LO); ctx.beginPath(); ctx.moveTo(nx - 5, base); ctx.lineTo(nx - 5, ny); ctx.ellipse(nx + NW / 2, ny, NW / 2 + 5, 16, 0, Math.PI, 2 * Math.PI); ctx.lineTo(nx + NW + 5, base); ctx.closePath(); ctx.fill();
       ctx.fillStyle = c(VR.COPPER); ctx.fillRect(nx - 7, ny + NH + 1, NW + 14, 2.4); if (low) { ctx.fillStyle = c("#2a1a12"); ctx.fillRect(nx - 7, FLOOR - 9, NW + 14, 9); ctx.fillStyle = c(VR.COPPER); ctx.fillRect(nx - 7, FLOOR - 9, NW + 14, 1.2); } // l'appui de cuivre ; le socle
       ctx.fillStyle = G.amb; ctx.beginPath(); ctx.ellipse(nx + NW / 2, ny - 1, NW / 2 - 2, 12, 0, Math.PI, 2 * Math.PI); ctx.fill(); ctx.strokeStyle = c(VR.LEAD); ctx.lineWidth = 1; for (let k = 1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(nx + NW / 2, ny - 1); ctx.lineTo(nx + NW / 2 + Math.cos(Math.PI + k * Math.PI / 4) * (NW / 2 - 2), ny - 1 + Math.sin(Math.PI + k * Math.PI / 4) * 12); ctx.stroke(); }
+      VR.ironGrille(ctx, c, nx, nx + NW, ny - 13, ny, () => { ctx.beginPath(); ctx.ellipse(nx + NW / 2, ny - 1, NW / 2 - 2, 12, 0, Math.PI, 2 * Math.PI); ctx.closePath(); }, Math.round(nx)); /* la grille, devant l'imposte */
       ctx.strokeStyle = c(VR.COPPER_HI); ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(nx + NW / 2, ny, NW / 2 + 3, 14, 0, Math.PI, 2 * Math.PI); ctx.stroke(); }
   };
   for (let i = 0; i < PER; i++) { const nx = (i % 6 < 3 ? 28 : 392) + (i % 3) * 80, ny = 44 + (i < 6 ? 0 : 108); frame(nx, ny); } // les encadrements d'abord : ceux du bas ne recouvrent pas les écriteaux du haut
