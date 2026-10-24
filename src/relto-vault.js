@@ -54,7 +54,7 @@ function drawVault(r, ctx, sc, sky, t) {
     for (let y = 20; y < FLOOR; y += 9) for (let x = ((y / 9) % 2) * 4.5; x < W; x += 9) { ctx.fillStyle = rgba(q() < 0.5 ? 90 : 40, 160, 140, 0.05 + q() * 0.06); ctx.fillRect(x, y, 8, 8); } // les tesselles
     ctx.strokeStyle = rgba(200, 170, 90, 0.12); ctx.lineWidth = 0.9; ctx.lineCap = "round"; for (const x of [140, 320, 500]) VR.motif(ctx, ["iris", "lily", "tulip"][(x / 180) | 0], x, 200, FLOOR - 6, 0.6); ctx.lineCap = "butt"; // des fleurs au trait dans la mosaïque
     ctx.fillStyle = c("#1a120c"); ctx.fillRect(0, 0, W, 16); ctx.fillStyle = c(VR.COPPER); ctx.fillRect(0, 14, W, 3); ctx.fillStyle = c(VR.COPPER_HI); ctx.fillRect(0, 14, W, 0.8); // la corniche de cuivre : le mur commence dessous
-    VR.roundGrille(ctx, c, 320, 42, 26, 4); // un œil-de-bœuf grillagé au-dessus du lutrin : du noir derrière, du fer devant (c'est une chambre forte)
+    VR.roundGrille(ctx, c, 320, 46, 26, 4); // un œil-de-bœuf grillagé au-dessus du lutrin : du noir derrière, du fer devant (c'est une chambre forte)
     VR.darkMosaic(ctx, c, FLOOR, W, H); ctx.fillStyle = c(VR.COPPER_LO); ctx.fillRect(0, FLOOR - 4, W, 5);
   } else {
   ctx.fillStyle = c("#2a2c30"); ctx.fillRect(0, 0, W, FLOOR);

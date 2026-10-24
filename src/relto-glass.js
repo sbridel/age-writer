@@ -728,11 +728,11 @@ function frostedDome(ctx, c, x0, y0, x1, y1, lit, seed = 1) {
 
 /**
  * L'œil-de-bœuf grillagé de la chambre forte (maquette 4a) : un rond noir (rien derrière, la pierre), une toile dans un coin,
- * sept rayons de fer en spirale avec leurs bourgeons et des volutes, un moyeu, une goutte ; une bague de cuivre rivetée et
+ * sept rayons de fer en spirale avec leurs bourgeons et des volutes, un moyeu ; une bague de cuivre rivetée et
  * deux volutes de cuivre de part et d'autre.
  */
 function roundGrille(ctx, c, cx, cy, R, seed = 4) {
-  const TAU = Math.PI * 2, iron = c("#0c1410"), hi = rgba(170, 210, 180, 0.45), q = rng(seed);
+  const TAU = Math.PI * 2, iron = c("#24342c"), hi = rgba(180, 220, 190, 0.6), q = rng(seed);
   ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.clip();
   ctx.fillStyle = c("#03060a"); ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
   const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, R); g.addColorStop(0, rgba(40, 70, 60, 0.18)); g.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = g; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
@@ -750,7 +750,6 @@ function roundGrille(ctx, c, cx, cy, R, seed = 4) {
     if (i % 2) { const sx = cx + Math.cos(a0 + 0.25) * R * 0.3, sy = cy + Math.sin(a0 + 0.25) * R * 0.3; st(() => { ctx.beginPath(); ctx.moveTo(sx, sy); for (let t = 0; t < Math.PI * 1.8; t += 0.3) { const k = 5 * (1 - t / (Math.PI * 2.2)); ctx.lineTo(sx + Math.cos(a0 - t) * k, sy + Math.sin(a0 - t) * k); } }, 1.2); }
   }
   ctx.fillStyle = iron; ctx.beginPath(); ctx.arc(cx, cy, 3.2, 0, TAU); ctx.fill(); ctx.fillStyle = hi; ctx.beginPath(); ctx.arc(cx - 1, cy - 1, 1, 0, TAU); ctx.fill();
-  ctx.fillStyle = rgba(170, 200, 210, 0.7); ctx.fillRect(cx - 6, cy + 10, 1, 3); /* une goutte */
   ctx.restore();
   ctx.strokeStyle = c(COPPER); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, TAU); ctx.stroke();
   ctx.strokeStyle = c(COPPER_HI); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(cx, cy, R - 1.5, 0, TAU); ctx.stroke();

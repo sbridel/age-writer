@@ -132,6 +132,7 @@ function drawCaveTop(r, ctx, sc, sky, t) {
   ctx.strokeStyle = rgba(120, 100, 78, 0.35); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(38, 186); ctx.lineTo(38, 156); ctx.quadraticCurveTo(40, 140, 120, 138); ctx.quadraticCurveTo(200, 140, 202, 156); ctx.lineTo(202, 186); ctx.stroke();
   ctx.fillStyle = c("#4a3f33"); ctx.fillRect(34, 180, 172, 6); ctx.fillStyle = rgba(0, 0, 0, 0.45); ctx.fillRect(34, 186, 172, 3); /* le rebord */
   const good = Math.max(0, st.good || 0), amber = Math.max(0, st.amber || 0), bad = Math.max(0, st.bad || 0), PILL = require("./relto-oven").pill;
+  r.hot.push({ x: 36, y: 138, w: 170, h: 76, tip: good || bad || amber ? tr("cave.shelf", { g: good, a: amber, b: bad }) : tr("cave.shelf.empty") }); /* sous les tas : chaque tas a sa zone, par-dessus */
   [["white", good, 54], ["amber", amber, 108], ["grey", bad, 160]].forEach(([kind, n, gx]) => { /* trois petits tas, un par sorte ; celui qu'on a choisi est éclairé */
     if (!n) return;
     if (st.pick === kind) { const hg = ctx.createRadialGradient(gx + 6, 176, 2, gx + 6, 176, 22); hg.addColorStop(0, rgba(230, 210, 160, 0.22)); hg.addColorStop(1, rgba(230, 210, 160, 0)); ctx.fillStyle = hg; ctx.fillRect(gx - 18, 156, 48, 30); }
@@ -140,7 +141,6 @@ function drawCaveTop(r, ctx, sc, sky, t) {
   });
   ctx.strokeStyle = rgba(200, 170, 120, 0.55); ctx.lineWidth = 1.4; /* les entailles Bahro, gravées dans la roche : une par granulé blanc, par cinq barrées */
   for (let i = 0; i < Math.min(good, 40); i++) { const grp = Math.floor(i / 5), j = i % 5, x = 44 + grp * 22 + j * 3.4, y = 198; if (j < 4) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 1, y + 12); ctx.stroke(); } else { ctx.beginPath(); ctx.moveTo(x - 14, y + 10); ctx.lineTo(x + 1, y + 2); ctx.stroke(); } }
-  r.hot.push({ x: 36, y: 160, w: 170, h: 54, tip: good || bad || amber ? tr("cave.shelf", { g: good, b: bad }) : tr("cave.shelf.empty") });
   /* le bouton : une colonne de pierre taillée, une pierre ronde marquée d'une main, enfoncée tant que le granulé tombe */
   const down = !!(ph && ph.kind === "falling"), hov = r.hover && r.hover.caveDrop;
   const col = ctx.createLinearGradient(488, 0, 528, 0); col.addColorStop(0, c("#2e2720")); col.addColorStop(0.45, c("#4a3f33")); col.addColorStop(1, c("#221d18")); ctx.fillStyle = col;
