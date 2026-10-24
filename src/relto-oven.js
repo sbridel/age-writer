@@ -128,19 +128,20 @@ function slider(ctx, c, trim, x, v) {
 }
 
 /**
- * Ce que vaut un réglage, gravé en chiffres D'ni (section 18, l'auteur) : seulement avec les instruments faciles ; à l'Art de
- * la Guilde, rien (les graduations nues d'Er'cana, le manomètre à l'aiguille). Des morceaux : du texte et des nombres
- * ({ n }), que l'infobulle et le mot éphémère dessinent en ligne. Le temps dit aussi sa durée, en gorahntee (ou en
- * prorahntee sous un gorahn). Renvoie null en Art de la Guilde.
+ * Ce que vaut un réglage, gravé en chiffres D'ni, jamais en clair (section 18, l'auteur). Des morceaux : du texte et des
+ * nombres ({ n }), que l'infobulle et le mot éphémère dessinent en ligne. Instruments faciles : « Temps : » et la valeur, et
+ * pour le temps sa durée en gorahntee (ou en prorahntee sous un gorahn). Art de la Guilde : **la valeur seule**, sans nom ni
+ * durée (l'auteur, 24 oct., 21 h).
  */
 const PRO_S = require("./dniclock").PRO_MS / 1000; /* un prorahn, en secondes (≈ 1,39) */
 function valueParts(r, tr, k, v) {
-  const guild = !!(r && r.imagerGuildOn && r.imagerGuildOn()); if (guild) return null;
+  const guild = !!(r && r.imagerGuildOn && r.imagerGuildOn()); if (guild) return [{ n: Math.round(v) }];
   const parts = [tr("oven.val." + k + ".dni") + " ", { n: Math.round(v) }];
   if (k === "time" && v > 0) { const pro = (v * 15) / PRO_S, go = Math.round(pro / 25); parts.push(" — ", go >= 1 ? { n: go } : { n: Math.round(pro) }, " " + tr(go >= 1 ? "oven.val.gorahn" : "oven.val.prorahn")); }
   return parts;
 }
-/** Le nom du réglage, sans valeur (l'infobulle en Art de la Guilde, et la carte d'infobulle au doigt). */
+/** Le nom du réglage, sans valeur (l'infobulle des instruments faciles, et la carte d'infobulle au doigt). */
+const guildOf = (r) => !!(r && r.imagerGuildOn && r.imagerGuildOn());
 const NAME = { time: "oven.slider.time", temp: "oven.slider.temp", press: "oven.press.name" };
 
 /** Ce que vaut un réglage, en clair (gardé pour les essais et la console ; le jeu ne l'affiche plus). */
@@ -249,7 +250,7 @@ function drawOven(r, ctx, sc, sky, t) {
   }
   /* les deux curseurs */
   slider(ctx, c, trim, SLIDERS.time, o.time || 0); slider(ctx, c, trim, SLIDERS.temp, o.temp || 0);
-  for (const k of ["time", "temp"]) { const v = o[k] || 0; r.hot.push({ x: SLIDERS[k] - 14, y: SL_Y - 8, w: 30, h: SL_H + 16, tip: tr(NAME[k]) + (cooking || done ? "" : " — " + tr("oven.slider.how")), dniTip: valueParts(r, tr, k, v), oven: cooking || done ? null : k, slider: { y0: SL_Y, h: SL_H, knob: SL_Y + SL_H - v / 50 * SL_H }, val: v }); }
+  for (const k of ["time", "temp"]) { const v = o[k] || 0; r.hot.push({ x: SLIDERS[k] - 14, y: SL_Y - 8, w: 30, h: SL_H + 16, tip: guildOf(r) ? "" : tr(NAME[k]) + (cooking || done ? "" : " — " + tr("oven.slider.how")), dniTip: valueParts(r, tr, k, v), /* à l'Art de la Guilde : la valeur seule */ oven: cooking || done ? null : k, slider: { y0: SL_Y, h: SL_H, knob: SL_Y + SL_H - v / 50 * SL_H }, val: v }); }
   /* la presse : le volant et son manomètre */
   const [wx, wy] = WHEEL, p = o.press || 0;
   ctx.fillStyle = c("#2a2b2f"); ctx.fillRect(430, wy - 6, 50, 12); ctx.fillStyle = c(trim[1]); ctx.fillRect(430, wy - 7, 50, 2);
@@ -261,8 +262,8 @@ function drawOven(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#e9dcc0"); ctx.beginPath(); ctx.arc(mx, my, mr, 0, TAU); ctx.fill(); ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 3; ctx.stroke();
   for (let k = 0; k <= 10; k++) { const a = Math.PI * 0.75 + k / 10 * Math.PI * 1.5, ins = k % 2 ? 6 : 8; ctx.strokeStyle = k >= 8 ? "#a8342a" : "#3a2a1a"; ctx.lineWidth = k % 2 ? 0.8 : 1.6; ctx.beginPath(); ctx.moveTo(mx + Math.cos(a) * (mr - 3), my + Math.sin(a) * (mr - 3)); ctx.lineTo(mx + Math.cos(a) * (mr - ins), my + Math.sin(a) * (mr - ins)); ctx.stroke(); }
   const na = Math.PI * 0.75 + p / 50 * Math.PI * 1.5; ctx.strokeStyle = "#1a0f08"; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx + Math.cos(na) * (mr - 5), my + Math.sin(na) * (mr - 5)); ctx.stroke(); ctx.fillStyle = "#1a0f08"; ctx.beginPath(); ctx.arc(mx, my, 2.2, 0, TAU); ctx.fill();
-  r.hot.push({ x: mx - mr, y: my - mr, w: 2 * mr, h: 2 * mr, tip: tr("oven.press.name"), dniTip: valueParts(r, tr, "press", p) });
-  r.hot.push({ x: wx - 24, y: wy - 24, w: 48, h: 48, tip: tr("oven.press.name") + (cooking || done ? "" : " — " + tr("oven.press.how")), dniTip: valueParts(r, tr, "press", p), oven: cooking || done ? null : "press", wheel: true, val: p, y0: wy });
+  r.hot.push({ x: mx - mr, y: my - mr, w: 2 * mr, h: 2 * mr, tip: guildOf(r) ? "" : tr("oven.press.name"), dniTip: valueParts(r, tr, "press", p) });
+  r.hot.push({ x: wx - 24, y: wy - 24, w: 48, h: 48, tip: guildOf(r) ? "" : tr("oven.press.name") + (cooking || done ? "" : " — " + tr("oven.press.how")), dniTip: valueParts(r, tr, "press", p), oven: cooking || done ? null : "press", wheel: true, val: p, y0: wy });
   /* le plateau à cinq alvéoles */
   const [tx, ty] = TRAY;
   ctx.fillStyle = c("#1a1b1e"); ctx.fillRect(tx - 8, 280, 16, 12);

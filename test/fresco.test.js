@@ -79,7 +79,7 @@ ST.gate(fake, ctx, 2, 0); ok(hot.some((h) => h.go === "stars"), "degré 2 : on d
 /* les infobulles de la machine : la valeur en chiffres D'ni aux instruments faciles ; rien à l'Art de la Guilde */
 const OVR = require("../src/relto-oven"), trk = (k) => k;
 const easy = OVR.valueParts({ imagerGuildOn: () => false }, trk, "time", 40), guildP = OVR.valueParts({ imagerGuildOn: () => true }, trk, "time", 40);
-ok(guildP === null, "Art de la Guilde : pas de valeur");
+ok(guildP.length === 1 && guildP[0].n === 40, "Art de la Guilde : la valeur seule, en chiffres D'ni, sans nom ni durée");
 ok(easy.some((p) => p && p.n === 40) && easy.some((p) => p && p.n === 17) && !easy.some((p) => typeof p === "string" && /\d/.test(p)), "facile : 40, et dix minutes en dix-sept gorahntee, aucun chiffre en clair");
 ok(OVR.valueParts({ imagerGuildOn: () => false }, trk, "time", 1).some((p) => p && p.n === 11), "un cran : onze prorahntee");
 

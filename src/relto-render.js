@@ -1313,17 +1313,17 @@ class ReltoRenderer {
     const k = `${Math.round(h.x)},${Math.round(h.y)},${h.tip}`; if (k !== this.tipKey) { this.tipKey = k; this.tipAt = Date.now(); const delay = this.opts.tipDelay != null ? this.opts.tipDelay : TIP_DELAY; if (!this.running && delay > 0) window.setTimeout(() => { if (this.tipKey === k) this.draw(0); }, delay + 20); }
     const late = Date.now() - this.tipAt >= (this.opts.tipDelay != null ? this.opts.tipDelay : TIP_DELAY);
     if (this.opts.hoverFrame !== false && !h.secret) { ctx.strokeStyle = "rgba(255,240,200,0.9)"; ctx.lineWidth = 1; ctx.strokeRect(h.x - 1, h.y - 1, h.w + 2, h.h + 2); } // cadre : réglage « Cadre des zones cliquables »
-    if (!late || !h.tip || h.secret) { this.tipOut(null); return; }
-    if (this.opts.onTip) { this.tipOut(h.tip); return; } // la carte d'infobulle (mode tactile) : le texte va sous l'image, lisible
+    if (!late || !(h.tip || h.dniTip) || h.secret) { this.tipOut(null); return; } /* une infobulle peut n'être qu'une valeur en chiffres D'ni (la machine, à l'Art de la Guilde) */
+    if (this.opts.onTip) { this.tipOut(h.tip || null); return; } // la carte d'infobulle (mode tactile) : le texte va sous l'image, lisible
     const [vx0, vx1, vy0] = this.visible_();
     // `h.frac` (facultatif) : une longueur de faisceau en rahnfee (src/beam.js), gravée en chiffres D'ni après le texte
     const fs = 10, fw = h.frac && this.dni && this.dni.fractionWidth ? this.dni.fractionWidth(h.frac, fs) + 6 : 0;
     // une infobulle longue passe à la ligne : jamais plus large que TIP_MAX (le texte complet, sur deux ou trois lignes)
-    ctx.font = "11px serif"; const lines = [], words = String(h.tip).split(" "); let cur = "";
+    ctx.font = "11px serif"; const lines = [], words = h.tip ? String(h.tip).split(" ") : []; let cur = "";
     for (const w0 of words) { const t2 = cur ? cur + " " + w0 : w0; if (cur && ctx.measureText(t2).width > TIP_MAX) { lines.push(cur); cur = w0; } else cur = t2; }
     if (cur) lines.push(cur);
-    const dp = h.dniTip && this.dni ? h.dniTip : null, dpw = dp ? this.partsWidth_(ctx, dp, 11) : 0, dph = dp ? 15 : 0; /* une ligne de valeur en chiffres D'ni, au-dessus du texte */
-    const tw = Math.max(dpw, ...lines.map((l) => ctx.measureText(l).width)) + (lines.length === 1 ? fw : 0), bh = 18 + 13 * (lines.length - 1) + dph;
+    const dp = h.dniTip && this.dni ? h.dniTip : null, dpw = dp ? this.partsWidth_(ctx, dp, 11) : 0, dph = dp ? (lines.length ? 15 : 2) : 0; /* une ligne de valeur en chiffres D'ni, au-dessus du texte (ou seule) */
+    const tw = Math.max(dpw, ...lines.map((l) => ctx.measureText(l).width)) + (lines.length === 1 ? fw : 0), bh = 18 + 13 * Math.max(0, lines.length - 1) + dph;
     const bx = clamp(h.x + h.w / 2 - tw / 2 - 6, vx0 + 4, Math.max(vx0 + 4, vx1 - tw - 16)), by = h.tipBelow ? Math.min(H - bh - 4, h.y + h.h + 6) : Math.max(vy0 + 4, h.y - bh - 6);
     ctx.fillStyle = "rgba(16,13,9,0.92)"; ctx.fillRect(bx, by, tw + 12, bh); ctx.strokeStyle = "rgba(205,189,148,0.8)"; ctx.strokeRect(bx, by, tw + 12, bh);
     if (dp) this.drawParts_(ctx, dp, bx + 6, by + 3, 11, "#e9dcb8", "#e0c27a");
