@@ -2,6 +2,20 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.49.0 — The machine and the cave (2026-10-24)
+
+### Added
+- **The harvest**: some Ages give, once a day when read, a measure of ash, loam (humus), silt (born of water on ash) or peat — only if written (or born of what is written) and something grows. The Details tab says what the Age gave today.
+- **The machine**, in a lean-to that appears against the cabin with the first harvest (stone, a forge in the Castle's chapel stone, a glass half-dome in the Glasshouse): four glass hoppers, a mixing column, two bare sliders (time, temperature), a press with its gauge, a five-hollow tray. Cooking takes real time; one measure, one pellet. The recipes are not given: you learn them by failing. Settings can be set notch by notch (click, Shift, drag, wheel; the value in the tooltip).
+- **The cave**, under the island (a crack in the cellar, the crypt stairs in the Castle): a hole ringed with cut stones, a niche for the pellets, a stone to press. A pellet falls for a minute; be down by the water before it arrives.
+- **Glowing algae**: an Age whose written pellet feeds what grows sees its water glow at night.
+- Maintenance menu: **Machine: tests** (fill the hoppers, give five pellets of a colour, finish the batch now, empty everything).
+
+### Changed
+- The pellet's sentence in the description follows the law of life (it dissolves and feeds, it burns the roots, or it waits).
+- **The Glasshouse, from outside**: opaque art nouveau stained glass (sea green and soft orange), a cast-glass dome, a mosaic wall the full width of the dome with copper pilasters, cornice and base; you no longer see through it.
+- Four wonders redrawn: the breathing mirrors, the reading rain, what the rust holds, the ceiling sea.
+
 ## 1.48.1 — The book and the wrench (2026-10-23)
 
 ### Changed

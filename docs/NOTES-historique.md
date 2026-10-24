@@ -699,6 +699,18 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 1.49.0 — la machine et la caverne (24 oct. 2026)
+
+Note : `claude/DESIGN-reve-et-caverne-bahro.md` (projet), sections 1, 2, 3 et 10.
+- `src/harvest.js` : `givesOf(written, present, made)` (ash, humus, silt, peat ; écrits ou nés d'une réaction ; il faut un producteur) ; `ext.harvest = { stock, last }` (une fois par Âge et par jour, jamais rétroactif) ; `pelletsOf` (`ext.pellets = { white, amber, grey }`, reprend l'ancienne étagère good/bad). `src/entry.js` : garde « récolte » dans `adjust` (`out.harvest`), `ovenShown`, `ovenState`, `ovenAct` ; ligne de l'onglet Détails `hv.today`.
+- `src/oven.js` : la colonne (`column`, `levers` en est le compte), `time`/`temp`/`press` (0–50), `resultOf` (blanc / ambré / gris / poussière, tolérance deux crans), `start` (un cran de temps = 15 s), `phaseOf`, `collect`. Les recettes sont dans le code et dans la note de conception, nulle part dans le jeu.
+- `src/relto-oven.js` : la vue `oven` (trémies, robinets, collecteur, colonne, curseurs, presse et manomètre, porte, plateau à cinq alvéoles, étagères, tuyau) en trois habits ; `leanTo` (l'appentis sur l'île, structure `oven` ajoutée par `ui-relto` dès la première récolte ; `layoutIsland` élargit la cabane de 28 px). `src/relto-render.js` : `ovenSet`, clic au cran (Maj : cinq), glisser (curseurs, volant), roulette. Sons `ovenSfx`.
+- `src/relto-cave.js` (4b) : le haut (roche, stalactites, ciel par la fente, cercle de pierres, niche, main gravée, faille) et le bas (le bassin, la lueur, les peintures provisoires, les traces : ombres et mains humides) ; chute `FALL_MS` = 60 s, lumière 10 s. Accès par `vaultCrack` (cellier, crypte). Sons `caveSfx` (drop, splash, fizz, scratch, cry).
+- `src/relto-glass.js` : `stainedBay` (vitrail art nouveau, ou verre seul avec `plain`), `glassOnly`, `frostedDome` ; la Verrière dehors (mur de mosaïque pleine largeur, pilastres, corniche, soubassement, épi rattaché).
+- `src/genscene.js` : algues avivées (`S.fed` = note de vie `fedPellet`). `src/amounts.js` : `resolved.presence` (la phrase du granulé suit la loi de la vie). `src/genscene-wonders.js` : quatre merveilles redessinées.
+- Commande `oven-test` (menu de la clé, `OvenTestModal`, `ovenTest`) : remplir les trémies, cinq granulés d'une couleur, finir la fournée, tout vider.
+- Tests : `harvest.test.js`, `oven.test.js` ; banc visuel (île, pièce, caverne) ; empreintes de la Verrière régénérées.
+
 ## 1.48.1 — le livre et la clé (23 oct. 2026)
 
 - Ruban : l'icône d'Age Writer est `book-open` (l'auteur : « la montagne, c'est le Relto ») ; la montagne marque la première entrée du menu.
