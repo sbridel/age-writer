@@ -901,14 +901,19 @@ async function renderRelto(plugin, source, el, ctx) {
     for (const [key, st] of [["active", "active"], ["available", "available"], ["locked", "locked"]]) {
       const list = scene.pages.filter((p) => p.state === st); if (!list.length) continue;
       const box = section(key, t("relto.state." + st), list.length);
+      /* repliées par défaut ; un bouton les déplie ou les replie toutes d'un coup */
+      const bar = box.createDiv({ cls: "age-relto__fambar" }), all = bar.createEl("button", { cls: "age-relto__pbtn" }), fams = [];
+      const label = () => { all.setText(fams.some((x) => x.d.open) ? t("relto.fam.foldall") : t("relto.fam.unfoldall")); };
+      all.addEventListener("click", () => { const open = !fams.some((x) => x.d.open); for (const x of fams) { x.d.open = open; famOpen[x.fk] = open; } label(); plugin.saveExt(); });
       colHead(box, [t("relto.col.page"), st === "locked" ? t("relto.col.why") : t("relto.col.adds"), ""]);
       for (const f of [...PAGE_FAMILIES.map((x) => x[0]), "other"]) {
         const fl = list.filter((p) => famOf(p) === f); if (!fl.length) continue;
-        const fk = key + ":" + f, d = box.createEl("details", { cls: "age-relto__fam" }); if (famOpen[fk] !== false) d.setAttr("open", "");
+        const fk = key + ":" + f, d = box.createEl("details", { cls: "age-relto__fam" }); if (famOpen[fk] === true) d.setAttr("open", ""); fams.push({ d, fk });
         const sm = d.createEl("summary", { cls: "age-relto__famhead" }); const fkey = "relto.fam." + f; sm.createSpan({ text: t(fkey) }); sm.createSpan({ cls: "age-relto__secn", text: String(fl.length) });
-        d.addEventListener("toggle", () => { famOpen[fk] = d.open; plugin.saveExt(); });
+        d.addEventListener("toggle", () => { famOpen[fk] = d.open; label(); plugin.saveExt(); });
         for (const p of fl) row(d, p);
       }
+      label();
     }
     if (scene.missingPages.length) {
       const box = section("missing", t("relto.state.missing"), scene.missingPages.length);

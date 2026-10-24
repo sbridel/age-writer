@@ -11,12 +11,13 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **Glowing algae**: an Age whose written pellet feeds what grows sees its water glow at night.
 - **The lake**: amber pellets now sit in the cave niche too; click a kind to choose what the stone drops. An amber pellet does not flash: it feeds the pool, and leaves a glowing colony that never goes away — bright when fed lately, embers when neglected.
 - In the cave, a **chain** closes or opens the stone hatch over the crack (back to the dark). With the Gold, Silver and Gemstones pages, **veins and stones in the cave walls** catch the daylight, or the glow.
-- **Getting rid of pellets**: a drain lever to the right of the tray sends a finished batch through a floor grate, past the shelf; click a pile on the shelf to throw one pellet into the fire (not while cooking; a grey one smokes green).
+- **Getting rid of pellets**: a drain lever to the right of the tray sends a finished batch through a floor grate, past the shelf; click a pile on the shelf to throw one pellet into the fire (not while cooking; each kind has its own smoke: pale, amber, and green for grey).
 - Maintenance menu: **Machine: tests** (fill the hoppers, give five pellets of a colour, finish the batch now, empty everything).
 
 ### Changed
 - The pellet's sentence in the description follows the law of life (it dissolves and feeds, it burns the roots, or it waits).
 - **The Glasshouse, from outside**: opaque art nouveau stained glass (sea green and soft orange), a cast-glass dome, a mosaic wall the full width of the dome with copper pilasters, cornice and base; you no longer see through it.
+- **The Relto's pages panel**: pages are grouped by family (disguises, trees and plants, water, sky, creatures, rock and ores…), folded by default, with a **Fold all / Unfold all** button.
 - Four wonders redrawn: the breathing mirrors, the reading rain, what the rust holds, the ceiling sea.
 - The cellar: no more names written under the niches (each book still says it in its tooltip); the way down is a **trapdoor** (wood and iron, bronze in the Glasshouse; the crypt stairs in the Castle); in the Glasshouse, a round grilled oculus (seven spiral iron rays with buds, a copper ring, black behind) instead of a skylight, copper tympanums, two red flower lamps by the lectern; every niche bears its number in D'ni.
 

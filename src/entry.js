@@ -279,7 +279,7 @@ module.exports = function build(Base, core, AGEX) {
       if (act === "door") { const why = OV.start(this.ext, now); if (why === "busy") return t("oven.door.busy"); if (why === "empty") return t("oven.door.empty"); if (why === "notime") return t("oven.door.notime"); this.saveExt(); return null; }
       if (act === "tray") { const got = OV.collect(this.ext, now); if (!got) return null; this.saveExt(); return got.kind === "dust" ? t("oven.took.dust") : null; }
       if (act === "drain") { const got = OV.drain(this.ext, now); if (!got) return null; this.saveExt(); return t("oven.drained"); }
-      if (act === "burn") { const why = OV.burn(this.ext, arg, now); if (why === "busy") return t("oven.burn.busy"); if (why) return null; this.saveExt(); return t(arg === "grey" ? "oven.burnt.grey" : "oven.burnt"); }
+      if (act === "burn") { const why = OV.burn(this.ext, arg, now); if (why === "busy") return t("oven.burn.busy"); if (why) return null; this.saveExt(); return t(arg === "grey" ? "oven.burnt.grey" : arg === "amber" ? "oven.burnt.amber" : "oven.burnt"); }
       const res = OV.set(this.ext, act, arg, now);
       if (res === true) this.saveExt();
       if (res === "full") return t("oven.add.full");

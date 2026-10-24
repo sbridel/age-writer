@@ -190,14 +190,14 @@ function drawOven(r, ctx, sc, sky, t) {
   ctx.fillStyle = c(trim[1]); ctx.fillRect(dx - dr - 14, dy - 14, 8, 28); ctx.fillStyle = c(trim[0]); ctx.fillRect(dx + dr + 4, dy - 4, 16, 8);
   const mins = cooking ? Math.ceil(ph.left / 60000) : 0;
   r.hot.push({ x: dx - dr - 8, y: dy - dr - 8, w: 2 * dr + 16, h: 2 * dr + 16, tip: cooking ? (mins > 1 ? tr("oven.door.cooking").replace("{m}", mins) : tr("oven.door.soon")) : done ? tr("oven.door.done") : tr("oven.door"), oven: cooking || done ? null : "door" });
-  /* le feu : une capsule jetée au four flambe (le gris fume vert), et la fumée monte vers le conduit */
+  /* le feu : une capsule jetée au four flambe (chaque sorte sa fumée : pâle pour le blanc, ambrée pour l'ambré, verte pour le gris), et la fumée monte vers le conduit */
   const bt = o.burnt && !o.burnt.drain ? (nowOf(r) - o.burnt.at) / 3000 : -1;
   if (bt >= 0 && bt < 1) {
     const grey = o.burnt.kind === "grey", f = Math.sin(Math.PI * Math.min(1, bt * 3)) * (1 - bt);
     const fg = ctx.createRadialGradient(dx, dy + 8, 2, dx, dy, dr); fg.addColorStop(0, grey ? rgba(150, 220, 120, 0.8 * f) : o.burnt.kind === "amber" ? rgba(255, 190, 90, 0.85 * f) : rgba(225, 240, 255, 0.9 * f)); fg.addColorStop(1, rgba(0, 0, 0, 0));
     ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(dx, dy, dr, 0, TAU); ctx.fill();
     for (let i = 0; i < 9; i++) { const k = bt * 1.3 - i * 0.07; if (k <= 0 || k >= 1) continue; const px = dx + Math.sin(i * 2.1 + k * 5) * (6 + k * 18), py = dy - dr + 6 - k * 120, rr = 5 + k * 16;
-      const sg = ctx.createRadialGradient(px, py, 1, px, py, rr); sg.addColorStop(0, grey ? rgba(120, 170, 105, 0.7 * (1 - k)) : rgba(200, 195, 185, 0.55 * (1 - k))); sg.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(px, py, rr, 0, TAU); ctx.fill(); }
+      const sg = ctx.createRadialGradient(px, py, 1, px, py, rr); sg.addColorStop(0, grey ? rgba(120, 170, 105, 0.7 * (1 - k)) : o.burnt.kind === "amber" ? rgba(225, 150, 80, 0.6 * (1 - k)) : rgba(215, 225, 240, 0.6 * (1 - k))); sg.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(px, py, rr, 0, TAU); ctx.fill(); }
   }
   /* les deux curseurs */
   slider(ctx, c, trim, SLIDERS.time, o.time || 0); slider(ctx, c, trim, SLIDERS.temp, o.temp || 0);

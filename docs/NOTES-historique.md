@@ -711,8 +711,9 @@ Note : `claude/DESIGN-reve-et-caverne-bahro.md` (projet), sections 1, 2, 3 et 10
 - Caverne : `caveHatch` (`ext.cave.shut`, la chaîne), `caveOre` (filons et gemmes des pages gold/silver/gems, visibles là où la lumière les touche) ; cellier : `vaultCrack` devient une trappe (bois, bronze), plus de nom sous les niches ; `ironGrille` (relto-glass) devant le lanterneau et les impostes de la Verrière.
 - Commande `oven-test` (menu de la clé, `OvenTestModal`, `ovenTest`) : remplir les trémies, cinq granulés d'une couleur, finir la fournée, tout vider.
 - Tests : `harvest.test.js`, `oven.test.js` ; banc visuel (île, pièce, caverne) ; empreintes de la Verrière régénérées.
-- Détruire des granulés (`src/oven.js`) : `drain` (le levier de vidange à droite du plateau : une fournée finie part par la grille, sans l'étagère) et `burn` (un clic sur un tas de l'étagère : une capsule au feu, refusé pendant la cuisson) ; `o.burnt { at, kind, drain? }` garde l'instant pour la flambée et la fumée (verte pour le gris) ou les capsules qui glissent vers la grille. `ovenSfx` "drain" et "burn".
+- Détruire des granulés (`src/oven.js`) : `drain` (le levier de vidange à droite du plateau : une fournée finie part par la grille, sans l'étagère) et `burn` (un clic sur un tas de l'étagère : une capsule au feu, refusé pendant la cuisson) ; `o.burnt { at, kind, drain? }` garde l'instant pour la flambée et la fumée (pâle pour le blanc, ambrée pour l'ambré, verte pour le gris) ou les capsules qui glissent vers la grille. `ovenSfx` "drain" et "burn".
 - Le cellier de la Verrière : un œil-de-bœuf grillagé (`GLASS.roundGrille`, maquette 4a : sept rayons de fer en spirale, bourgeons, volutes, une toile, une goutte ; bague de cuivre rivetée) remplace le lanterneau de verre et sa grille Guimard.
+- Panneau des pages (`src/ui-relto.js`, `PAGE_FAMILIES`) : familles repliées par défaut (`ui.reltoFamOpen[fk] === true` pour ouvrir), bouton « Tout replier / Tout déplier » par groupe (`.age-relto__fambar`).
 
 ## 1.48.1 — le livre et la clé (23 oct. 2026)
 
