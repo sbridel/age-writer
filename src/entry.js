@@ -285,7 +285,7 @@ module.exports = function build(Base, core, AGEX) {
     ovenAct(act, arg) {
       const OV = require("./oven"), now = Date.now(), t = (k, v) => { const s = this.t ? this.t(k) : k; return v ? s.replace("{what}", v) : s; };
       if (act === "door") { const why = OV.start(this.ext, now); if (why === "busy") return t("oven.door.busy"); if (why === "empty") return t("oven.door.empty"); if (why === "notime") return t("oven.door.notime"); this.saveExt(); return null; }
-      if (act === "tray") { const got = OV.collect(this.ext, now); if (!got) return null; this.saveExt(); return got.kind === "dust" ? t("oven.took.dust") : null; }
+      if (act === "tray") { const got = OV.collect(this.ext, now); if (!got) return null; this.saveExt(); return got.kind === "dust" ? t("oven.took.dust") : got.kind === "white" || got.kind === "amber" ? t(["oven", "q", got.kind, got.fine ? "fine" : "plain"].join(".")) : null; }
       if (act === "drain") { const got = OV.drain(this.ext, now); if (!got) return null; this.saveExt(); return t("oven.drained"); }
       if (act === "burn") { const why = OV.burn(this.ext, arg, now); if (why === "busy") return t("oven.burn.busy"); if (why) return null; this.saveExt(); return t(arg === "grey" ? "oven.burnt.grey" : arg === "amber" ? "oven.burnt.amber" : "oven.burnt"); }
       const res = OV.set(this.ext, act, arg, now);
@@ -308,9 +308,9 @@ module.exports = function build(Base, core, AGEX) {
     /** La caverne Bahro (src/relto-cave.js) : les granulés de l'étagère, le granulé qui tombe ; un granulé perdu (personne en bas) s'en va sans bruit. */
     caveState() {
       const P = HV.pelletsOf(this.ext), cv = (this.ext.cave = this.ext.cave && typeof this.ext.cave === "object" ? this.ext.cave : { drop: null, revealed: 0 }), CV = require("./relto-cave");
-      if (cv.drop && Date.now() > cv.drop.at + CV.FALL_MS + CV.LIGHT_MS) { if (cv.drop.q === "amber" && !cv.drop.fed) { cv.colonies = (cv.colonies || 0) + 1; cv.fedAt = cv.drop.at + CV.FALL_MS; require("./scope").logFeed(cv, cv.fedAt); } cv.drop = null; this.saveExt(); } /* un ambré nourrit le bassin, qu'on soit en bas ou non */
+      if (cv.drop && Date.now() > cv.drop.at + CV.FALL_MS + CV.LIGHT_MS) { if (cv.drop.q === "amber" && !cv.drop.fed) { cv.colonies = (cv.colonies || 0) + (cv.drop.fine ? 2 : 1); cv.fedAt = cv.drop.at + CV.FALL_MS; require("./scope").logFeed(cv, cv.fedAt); } cv.drop = null; this.saveExt(); } /* un ambré nourrit le bassin, qu'on soit en bas ou non */
       const pick = cv.pick && P[cv.pick] > 0 ? cv.pick : P.white > 0 ? "white" : P.amber > 0 ? "amber" : P.grey > 0 ? "grey" : null;
-      return { good: P.white, amber: P.amber, bad: P.grey, pick, drop: cv.drop, revealed: cv.revealed || 0, shut: !!cv.shut, colonies: cv.colonies || 0, fedAt: cv.fedAt || 0, slabs: cv.slabs || {} }; /* le blanc : l'éclair ; l'ambré : le lac ; le gris : rien */
+      return { good: P.white, amber: P.amber, bad: P.grey, pick, drop: cv.drop, revealed: cv.revealed || 0, shut: !!cv.shut, colonies: cv.colonies || 0, fedAt: cv.fedAt || 0, slabs: cv.slabs || {}, fine: { ...(P.fine || {}) } }; /* le blanc : l'éclair ; l'ambré : le lac ; le gris : rien */
     }
     /** Choisir dans la niche la sorte de granulé que le bouton lâchera ("white", "amber", "grey"). */
     cavePick(kind) { this.caveState(); if (["white", "amber", "grey"].includes(kind)) { this.ext.cave.pick = kind; this.saveExt(); } }
@@ -320,10 +320,11 @@ module.exports = function build(Base, core, AGEX) {
     caveDrop() {
       const st = this.caveState(); if (st.drop) return null;
       const P = HV.pelletsOf(this.ext), kind = st.pick; if (!kind) return null; const q = kind === "white" ? "good" : kind === "amber" ? "amber" : "bad";
-      P[kind] -= 1; this.ext.cave.drop = { at: Date.now(), q, seen: false }; this.saveExt(); return q;
+      const fine = !!(P.fine && P.fine[kind] > 0); if (fine) P.fine[kind] -= 1; /* le bouton lâche d'abord le meilleur */
+      P[kind] -= 1; HV.pelletsOf(this.ext); this.ext.cave.drop = { at: Date.now(), q, fine, seen: false }; this.saveExt(); return q;
     }
     /** On était en bas quand la lueur est montée : une révélation de plus (l'étape 4c y lira le code). */
-    caveSeen() { const cv = this.ext.cave; if (!cv || !cv.drop || cv.drop.seen) return; cv.drop.seen = true; if (cv.drop.q === "amber") { cv.drop.fed = true; cv.colonies = (cv.colonies || 0) + 1; cv.fedAt = Date.now(); require("./scope").logFeed(cv, cv.fedAt); } else cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); } /* l'ambré : une colonie de plus ; le blanc : une révélation */
+    caveSeen() { const cv = this.ext.cave; if (!cv || !cv.drop || cv.drop.seen) return; cv.drop.seen = true; if (cv.drop.q === "amber") { cv.drop.fed = true; cv.colonies = (cv.colonies || 0) + (cv.drop.fine ? 2 : 1); cv.fedAt = Date.now(); require("./scope").logFeed(cv, cv.fedAt); } else cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); } /* l'ambré : une colonie de plus ; le blanc : une révélation */
     /**
      * La dalle aux yeux (étape 4c) : tourner la pierre `i` d'un cran, sur la dalle du Relto `rel` ({ name, seed }). Il faut
      * l'avoir vue à la lumière (une révélation). Les six justes : elle s'ouvre et le reste. Renvoie "turn", "open" ou null.
@@ -346,7 +347,7 @@ module.exports = function build(Base, core, AGEX) {
       if (v === "reset") { cv.colonies = 0; cv.fedAt = 0; cv.feeds = []; cv.revealed = 0; cv.flask = null; cv.drop = null; cv.slabs = {}; }
       else if (v === "reveal") { cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.reveal"); }
       else if (v === "slab") { cv.slabs = {}; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.slab"); }
-      else if (v === "lit") { if (!(cv.revealed > 0)) cv.revealed = 1; cv.drop = { at: now - require("./relto-cave").FALL_MS - 200, q: "good", seen: true }; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.lit"); }
+      else if (v === "lit") { if (!(cv.revealed > 0)) cv.revealed = 1; cv.drop = { at: now - require("./relto-cave").FALL_MS - 200, q: "good", fine: true, seen: true }; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.lit"); }
       else if (v === "few" || v === "many") { cv.colonies = v === "few" ? 3 : 200; cv.fedAt = now - 3600000; cv.feeds = [now - 3600000]; }
       else if (v === "asleep") { if (!(cv.colonies > 0)) cv.colonies = 30; cv.fedAt = now - 7 * SC.DAY; cv.feeds = [cv.fedAt]; }
       else if (v === "gorge") { if (!(cv.colonies > 0)) cv.colonies = 12; for (let i = 3; i >= 1; i--) SC.logFeed(cv, now - i * 600000); cv.fedAt = now - 600000; }

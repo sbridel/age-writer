@@ -52,6 +52,8 @@ function pelletsOf(ext) {
   const p = ext.pellets && typeof ext.pellets === "object" ? ext.pellets : (ext.pellets = {});
   if ("good" in p || "bad" in p || "last" in p) { p.white = (p.white || 0) + (p.good || 0); p.grey = (p.grey || 0) + (p.bad || 0); delete p.good; delete p.bad; delete p.last; }
   for (const k of KINDS) p[k] = Math.max(0, Math.floor(Number(p[k]) || 0));
+  /* la qualité (section 16.1) : parmi les blancs et les ambrés, ceux qui sont tombés pile ; jamais plus que le tas */
+  const f = p.fine && typeof p.fine === "object" ? p.fine : (p.fine = {}); for (const k of ["white", "amber"]) f[k] = Math.min(p[k], Math.max(0, Math.floor(Number(f[k]) || 0)));
   return p;
 }
 

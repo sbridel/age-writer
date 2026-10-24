@@ -44,4 +44,27 @@ ok(F.slabOf("Relto", 19991118, turns.map((t) => t + F.RING)).right, "un tour com
 for (const id of [...F.ELEMENTS, ...F.WONDER_SCENES, ...F.BAHRO_ROW]) ok(typeof FR.SIGNS[id] === "function", "un dessin pour " + id);
 for (const parts of Object.values(F.WRITTEN_SIGNS)) ok(parts.every((p) => F.ELEMENTS.includes(p)), "les merveilles écrites se peignent en éléments");
 
+/* la qualité des granulés (section 16.1) : pile sur les crans, « net » ; dans la tolérance, « approximatif » */
+const OV = require("../src/oven"), HV = require("../src/harvest"), CV = require("../src/relto-cave");
+const bake = (column, time, temp, press) => OV.resultOf({ levers: HV.INGREDIENTS.map((id) => column.filter((x) => x === id).length), time, temp, press });
+ok(bake(["ash", "ash", "silt"], 40, 20, 40).fine === true && bake(["ash", "ash", "silt"], 41, 20, 40).fine === false && bake(["ash", "ash", "silt"], 41, 20, 40).kind === "white", "blanc : 40-20 net, 41-20 approximatif");
+ok(bake(["humus", "humus", "peat"], 30, 30, 15).fine === true && bake(["humus", "humus", "peat"], 29, 31, 15).fine === false, "ambré : 30-30 net, à côté approximatif");
+ok(bake(["humus", "humus", "humus", "peat", "peat"], 1, 50, 15).fine === true && bake(["humus", "humus", "humus", "peat", "peat"], 3, 48, 15).fine === false, "ambré vite : fournée pleine, temps 1, feu 50 : net");
+ok(bake(["humus", "peat"], 30, 30, 15).fine === undefined, "le gris n'a pas de qualité");
+const ext = { pellets: { white: 3, fine: { white: 9, amber: -2 } } }, P = HV.pelletsOf(ext);
+ok(P.fine.white === 3 && P.fine.amber === 0, "jamais plus de nets que le tas");
+ext.oven = { column: [], time: 40, temp: 20, press: 40, batch: { at: 0, dur: 1, kind: "white", n: 2, fine: true } }; OV.collect(ext, 10);
+ok(P.white === 5 && P.fine.white === 5, "une fournée nette va sur l'étagère avec sa qualité");
+P.fine.white = 1; OV.burn(ext, "white", 20); ok(P.white === 4 && P.fine.white === 1, "le feu prend d'abord un approximatif");
+ok(CV.lightOf({ q: "good", fine: true }) === 15000 && CV.lightOf({ q: "good" }) === 8000 && CV.lightOf({ q: "amber" }) === 10000 && CV.LIGHT_MS >= 15000, "la lumière : 15 s nette, 8 s approximative");
+ok(CV.phaseOf({ at: 1, q: "good" }, CV.FALL_MS + 9001) === null && CV.phaseOf({ at: 1, q: "good", fine: true }, CV.FALL_MS + 9001).kind === "lit", "un blanc approximatif s'éteint avant un net");
+
+/* la chambre aux étoiles : cinq piliers, l'ouverture au fond du lac seulement au degré 2 */
+const ST = require("../src/relto-stars");
+ok(ST.PILLARS.length === 5, "cinq piliers");
+const hot = [], fake = { hot, hover: null };
+const ctx = new Proxy({}, { get: (o, k) => (k in o ? o[k] : k === "createLinearGradient" || k === "createRadialGradient" ? () => ({ addColorStop() {} }) : () => {}), set: (o, k, v) => ((o[k] = v), true) });
+ST.gate(fake, ctx, 1, 0); ok(!hot.some((h) => h.go === "stars"), "degré 1 : le mur est plein");
+ST.gate(fake, ctx, 2, 0); ok(hot.some((h) => h.go === "stars"), "degré 2 : on descend");
+
 console.log(`fresco : ${n} contrôles ✓`);
