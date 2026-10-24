@@ -273,11 +273,13 @@ module.exports = function build(Base, core, AGEX) {
     ovenShown() { return !!(this.ext.harvest && typeof this.ext.harvest === "object"); }
     /** La machine (src/oven.js) : les réglages, la fournée, les trémies, l'étagère ; une fournée finie depuis longtemps attend sur le plateau. */
     ovenState(now) { const OV = require("./oven"), t = now || Date.now(), o = OV.stateOf(this.ext); return { oven: o, phase: OV.phaseOf(o, t), stock: HV.stateOf(this.ext).stock, pellets: HV.pelletsOf(this.ext) }; }
-    /** Un geste sur la machine : "add" (i : une mesure dans la colonne), "empty" (vider la colonne), "time" / "temp" / "press" (valeur), "door" (cuire), "tray" (prendre la fournée). Renvoie un message à montrer, ou null. */
+    /** Un geste sur la machine : "add" (i : une mesure dans la colonne), "empty" (vider la colonne), "time" / "temp" / "press" (valeur), "door" (cuire), "tray" (prendre la fournée), "drain" (la vidanger), "burn" (arg : jeter au feu une capsule de l'étagère). Renvoie un message à montrer, ou null. */
     ovenAct(act, arg) {
       const OV = require("./oven"), now = Date.now(), t = (k, v) => { const s = this.t ? this.t(k) : k; return v ? s.replace("{what}", v) : s; };
       if (act === "door") { const why = OV.start(this.ext, now); if (why === "busy") return t("oven.door.busy"); if (why === "empty") return t("oven.door.empty"); if (why === "notime") return t("oven.door.notime"); this.saveExt(); return null; }
       if (act === "tray") { const got = OV.collect(this.ext, now); if (!got) return null; this.saveExt(); return got.kind === "dust" ? t("oven.took.dust") : null; }
+      if (act === "drain") { const got = OV.drain(this.ext, now); if (!got) return null; this.saveExt(); return t("oven.drained"); }
+      if (act === "burn") { const why = OV.burn(this.ext, arg, now); if (why === "busy") return t("oven.burn.busy"); if (why) return null; this.saveExt(); return t(arg === "grey" ? "oven.burnt.grey" : "oven.burnt"); }
       const res = OV.set(this.ext, act, arg, now);
       if (res === true) this.saveExt();
       if (res === "full") return t("oven.add.full");

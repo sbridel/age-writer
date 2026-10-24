@@ -32,6 +32,7 @@ function stateOf(ext) {
   for (const k of ["time", "temp", "press"]) o[k] = clampInt(o[k], 0, SCALE);
   if (o.batch && (typeof o.batch !== "object" || !(o.batch.n > 0))) o.batch = null;
   if (!("batch" in o)) o.batch = null;
+  if (o.burnt && (typeof o.burnt !== "object" || !(o.burnt.at > 0))) delete o.burnt;
   return o;
 }
 
@@ -89,4 +90,20 @@ function collect(ext, now) {
   o.batch = null; return { kind: ph.kind, n: ph.n };
 }
 
-module.exports = { STEP_MS, MAX_LEVER, MAX_TOTAL, SCALE, stateOf, resultOf, phaseOf, set, start, collect };
+/** La vidange, sous le plateau : la fournée finie part par la grille sans toucher l'étagère (pour une fournée ratée). Renvoie { kind, n } ou null. */
+function drain(ext, now) {
+  const o = stateOf(ext), ph = phaseOf(o, now); if (!ph || ph.phase !== "done") return null;
+  o.batch = null; o.burnt = { at: now, kind: ph.kind, drain: true }; return { kind: ph.kind, n: ph.n };
+}
+
+/**
+ * Le feu : jeter au four une capsule de l'étagère ("white", "amber", "grey"). Pas pendant la cuisson (la porte est fermée).
+ * Renvoie null (elle brûle ; `o.burnt` garde l'instant et la sorte, pour la fumée) ou la raison du refus ("busy", "none").
+ */
+function burn(ext, kind, now) {
+  const o = stateOf(ext), ph = phaseOf(o, now); if (ph && ph.phase === "cooking") return "busy";
+  const P = H.pelletsOf(ext); if (!["white", "amber", "grey"].includes(kind) || !(P[kind] > 0)) return "none";
+  P[kind] -= 1; o.burnt = { at: now, kind }; return null;
+}
+
+module.exports = { STEP_MS, MAX_LEVER, MAX_TOTAL, SCALE, stateOf, resultOf, phaseOf, set, start, collect, drain, burn };

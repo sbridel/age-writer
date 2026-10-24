@@ -810,7 +810,7 @@ async function renderRelto(plugin, source, el, ctx) {
     /* le diapason : frappé une fois, il garde la voix du livre posé, tant qu'on ne le refrappe pas (en Art de la Guilde, trouver un autre monde prend du temps) ; frappé de nouveau sur un autre livre, les deux chantent ensemble */
     caveState: () => (plugin.caveState ? plugin.caveState() : {}),
     ovenState: (now) => (plugin.ovenState ? plugin.ovenState(now) : {}),
-    onOven: (act, arg) => { const msg = plugin.ovenAct ? plugin.ovenAct(act, arg) : null; if (roomSoundOn()) sound.ovenSfx(act === "door" && !msg ? "start" : act === "tray" ? "take" : "click", roomVol()); return msg; },
+    onOven: (act, arg) => { const msg = plugin.ovenAct ? plugin.ovenAct(act, arg) : null; if (roomSoundOn()) sound.ovenSfx(act === "door" && !msg ? "start" : act === "tray" ? "take" : act === "drain" ? "drain" : act === "burn" && plugin.ext.oven && plugin.ext.oven.burnt && Date.now() - plugin.ext.oven.burnt.at < 500 ? "burn" : "click", roomVol()); return msg; },
     onCaveDrop: () => { if (plugin.caveDrop && plugin.caveDrop() && roomSoundOn()) sound.caveSfx("drop", roomVol()); },
     onCaveSeen: () => { if (plugin.caveSeen) plugin.caveSeen(); },
     onCavePick: (k) => { if (plugin.cavePick) plugin.cavePick(k); if (roomSoundOn()) sound.ovenSfx("click", roomVol()); },

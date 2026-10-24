@@ -43,4 +43,13 @@ ok(O.collect(ext, T + 60000) === null, "on ne prend pas une fournée qui cuit");
 const got = O.collect(ext, T + 40 * O.STEP_MS);
 ok(got && got.kind === "white" && got.n === 3 && ext.pellets.white === 3 && ext.oven.batch === null, "fini : trois capsules blanches sur l'étagère");
 ok(O.start(ext, T + 40 * O.STEP_MS) === "empty", "la colonne est vide : rien à cuire");
+// détruire : la vidange (une fournée finie, sans l'étagère) et le feu (une capsule de l'étagère)
+const ext2 = { harvest: { stock: { ash: 0, humus: 3, silt: 0, peat: 2 }, last: {} }, pellets: { white: 0, amber: 0, grey: 2 } };
+for (const i of [1, 1, 3]) O.set(ext2, "add", i, T); O.set(ext2, "time", 10, T); O.set(ext2, "temp", 10, T); O.set(ext2, "press", 30, T);
+O.start(ext2, T);
+ok(O.drain(ext2, T + 1000) === null && O.burn(ext2, "grey", T + 1000) === "busy", "pendant la cuisson : ni vidange, ni feu");
+const gone = O.drain(ext2, T + 10 * O.STEP_MS);
+ok(gone && gone.kind === "grey" && gone.n === 3 && ext2.oven.batch === null && ext2.pellets.grey === 2, "la vidange : la fournée grise part sans toucher l'étagère");
+ok(O.burn(ext2, "grey", T + 10 * O.STEP_MS) === null && ext2.pellets.grey === 1 && ext2.oven.burnt.kind === "grey", "au feu : une capsule grise de moins");
+ok(O.burn(ext2, "white", T) === "none" && O.burn(ext2, "rien", T) === "none", "rien à jeter : refusé");
 console.log(`oven.test.js ok (${n} vérifications)`);

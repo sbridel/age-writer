@@ -726,4 +726,38 @@ function frostedDome(ctx, c, x0, y0, x1, y1, lit, seed = 1) {
   ctx.fillStyle = rgba(255, 255, 255, 0.10 + L * 0.05); ctx.beginPath(); ctx.ellipse(x0 + w * 0.36, y0 + h * 0.3, w * 0.16, h * 0.08, -0.35, 0, Math.PI * 2); ctx.fill(); /* le reflet */
 }
 
-module.exports = { shards, guimardGrille, guimardLamp, ironGrille, stainedBay, frostedDome,  atelierDoor, lampPool, lampGlow, cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };
+/**
+ * L'œil-de-bœuf grillagé de la chambre forte (maquette 4a) : un rond noir (rien derrière, la pierre), une toile dans un coin,
+ * sept rayons de fer en spirale avec leurs bourgeons et des volutes, un moyeu, une goutte ; une bague de cuivre rivetée et
+ * deux volutes de cuivre de part et d'autre.
+ */
+function roundGrille(ctx, c, cx, cy, R, seed = 4) {
+  const TAU = Math.PI * 2, iron = c("#0c1410"), hi = rgba(170, 210, 180, 0.45), q = rng(seed);
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.clip();
+  ctx.fillStyle = c("#03060a"); ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+  const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, R); g.addColorStop(0, rgba(40, 70, 60, 0.18)); g.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = g; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+  ctx.strokeStyle = rgba(200, 210, 215, 0.35); ctx.lineWidth = 0.5; /* la toile */
+  for (let i = 0; i < 6; i++) { const a = Math.PI * 1.05 + i * 0.11; ctx.beginPath(); ctx.moveTo(cx + R - 1, cy - R + 1); ctx.lineTo(cx + R - 1 + Math.cos(a) * 20, cy - R + 1 + Math.sin(a) * 20); ctx.stroke(); }
+  for (let r = 5; r < 20; r += 4.5) { ctx.beginPath(); ctx.arc(cx + R - 1, cy - R + 1, r, Math.PI * 1.05, Math.PI * 1.6); ctx.stroke(); }
+  ctx.lineCap = "round";
+  const st = (fn, lw) => { ctx.strokeStyle = iron; ctx.lineWidth = lw; fn(); ctx.stroke(); ctx.strokeStyle = hi; ctx.lineWidth = lw * 0.3; fn(); ctx.stroke(); };
+  const bud = (x, y, a, s) => { ctx.fillStyle = iron; ctx.beginPath(); ctx.ellipse(x, y, s * 0.55, s, a, 0, TAU); ctx.fill(); };
+  const n = 7, tw = 0.9;
+  for (let i = 0; i < n; i++) {
+    const a0 = i * TAU / n + 0.3, a1 = a0 + tw * 0.5, a2 = a0 + tw;
+    st(() => { ctx.beginPath(); ctx.moveTo(cx + Math.cos(a0) * 3, cy + Math.sin(a0) * 3); ctx.bezierCurveTo(cx + Math.cos(a1) * R * 0.45, cy + Math.sin(a1) * R * 0.45, cx + Math.cos(a2) * R * 0.8, cy + Math.sin(a2) * R * 0.8, cx + Math.cos(a2 + 0.15) * (R + 2), cy + Math.sin(a2 + 0.15) * (R + 2)); }, 2.2);
+    bud(cx + Math.cos(a0 + tw * 0.7) * R * 0.62, cy + Math.sin(a0 + tw * 0.7) * R * 0.62, a0 + tw, 2.2 + q());
+    if (i % 2) { const sx = cx + Math.cos(a0 + 0.25) * R * 0.3, sy = cy + Math.sin(a0 + 0.25) * R * 0.3; st(() => { ctx.beginPath(); ctx.moveTo(sx, sy); for (let t = 0; t < Math.PI * 1.8; t += 0.3) { const k = 5 * (1 - t / (Math.PI * 2.2)); ctx.lineTo(sx + Math.cos(a0 - t) * k, sy + Math.sin(a0 - t) * k); } }, 1.2); }
+  }
+  ctx.fillStyle = iron; ctx.beginPath(); ctx.arc(cx, cy, 3.2, 0, TAU); ctx.fill(); ctx.fillStyle = hi; ctx.beginPath(); ctx.arc(cx - 1, cy - 1, 1, 0, TAU); ctx.fill();
+  ctx.fillStyle = rgba(170, 200, 210, 0.7); ctx.fillRect(cx - 6, cy + 10, 1, 3); /* une goutte */
+  ctx.restore();
+  ctx.strokeStyle = c(COPPER); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, TAU); ctx.stroke();
+  ctx.strokeStyle = c(COPPER_HI); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(cx, cy, R - 1.5, 0, TAU); ctx.stroke();
+  ctx.fillStyle = c(COPPER); for (let i = 0; i < 8; i++) { const a = i * TAU / 8 + 0.2; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * (R + 1), cy + Math.sin(a) * (R + 1), 1.6, 0, TAU); ctx.fill(); }
+  ctx.strokeStyle = c(COPPER); ctx.lineWidth = 1.4; ctx.lineCap = "round";
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(cx + s * (R + 2), cy + 6); ctx.quadraticCurveTo(cx + s * (R + 16), cy + 2, cx + s * (R + 14), cy - 10); ctx.quadraticCurveTo(cx + s * (R + 10), cy - 14, cx + s * (R + 8), cy - 8); ctx.stroke(); ctx.beginPath(); ctx.ellipse(cx + s * (R + 8), cy - 9, 2.4, 1.1, s * 0.8, 0, TAU); ctx.fill(); }
+  ctx.lineCap = "butt";
+}
+
+module.exports = { roundGrille, shards, guimardGrille, guimardLamp, ironGrille, stainedBay, frostedDome,  atelierDoor, lampPool, lampGlow, cabinDoorNouveau, setDoorStyle, cabinDoorSingle, tiffanyLamp, ornateRug, bronzeTrap, armchair, roundWindowRing, pillarVine, darkMosaic, cornerVines, imagerRoom, imagerBench, cabinOculus, MOTIFS, motif, copperPlate, copperEdge, shelfCrest, tableLegs,  ogive, glassTones, pane, vine, hangingPot, cabinWalls, cabinFloor, cabinWindowFrame, cabinWindowClip, cabinDoor, lightPatches, cabinPlants, COPPER, COPPER_HI, COPPER_LO, LEAD };

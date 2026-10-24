@@ -128,6 +128,7 @@ function drawOven(r, ctx, sc, sky, t) {
   rows.forEach(([k, n], i) => { const shown = Math.min(n, 6); for (let j = 0; j < shown; j++) { const shelf = j < 3 ? 150 : 210, p3 = j % 3, gx = 80 + i * 34; pill(ctx, p3 === 2 ? gx + 6.5 : gx + p3 * 13, p3 === 2 ? shelf - 8.6 : shelf - 3.4, k, 0.9); } }); /* couchées, en petits tas : deux dessous, une dessus */
   const total = (P.white || 0) + (P.amber || 0) + (P.grey || 0);
   r.hot.push({ x: 64, y: 120, w: 116, h: 96, tip: total ? tr("oven.shelf").replace("{w}", P.white || 0).replace("{a}", P.amber || 0).replace("{g}", P.grey || 0) : tr("oven.shelf.empty") });
+  rows.forEach(([k, n], i) => { if (n > 0) r.hot.push({ x: 72 + i * 34, y: 126, w: 34, h: 90, tip: tr("oven.pile." + k).replace("{n}", n) + (cooking ? "" : " — " + tr("oven.burn.how")), oven: cooking ? null : "burn", arg: k }); }); /* un tas : un clic en jette une au feu */
   /* le conduit : un tuyau rond qui sort du flanc du four, un coude, des colliers, une clé de tirage, et monte au plafond */
   { const px = 455, r0 = 7, metal = skin === "glass" ? ["#5a2e12", "#c67a3e", "#3a1a0a"] : skin === "castle" ? ["#2a2a30", "#6c6c76", "#16161a"] : ["#26272b", "#5e6066", "#141518"];
     const tube = (x0, y0, x1, y1) => { const vert = x0 === x1, g = vert ? ctx.createLinearGradient(x0 - r0, 0, x0 + r0, 0) : ctx.createLinearGradient(0, y0 - r0, 0, y0 + r0); g.addColorStop(0, c(metal[2])); g.addColorStop(0.35, c(metal[1])); g.addColorStop(1, c(metal[0])); ctx.fillStyle = g; if (vert) ctx.fillRect(x0 - r0, Math.min(y0, y1), 2 * r0, Math.abs(y1 - y0)); else ctx.fillRect(Math.min(x0, x1), y0 - r0, Math.abs(x1 - x0), 2 * r0); };
@@ -189,6 +190,15 @@ function drawOven(r, ctx, sc, sky, t) {
   ctx.fillStyle = c(trim[1]); ctx.fillRect(dx - dr - 14, dy - 14, 8, 28); ctx.fillStyle = c(trim[0]); ctx.fillRect(dx + dr + 4, dy - 4, 16, 8);
   const mins = cooking ? Math.ceil(ph.left / 60000) : 0;
   r.hot.push({ x: dx - dr - 8, y: dy - dr - 8, w: 2 * dr + 16, h: 2 * dr + 16, tip: cooking ? (mins > 1 ? tr("oven.door.cooking").replace("{m}", mins) : tr("oven.door.soon")) : done ? tr("oven.door.done") : tr("oven.door"), oven: cooking || done ? null : "door" });
+  /* le feu : une capsule jetée au four flambe (le gris fume vert), et la fumée monte vers le conduit */
+  const bt = o.burnt && !o.burnt.drain ? (nowOf(r) - o.burnt.at) / 3000 : -1;
+  if (bt >= 0 && bt < 1) {
+    const grey = o.burnt.kind === "grey", f = Math.sin(Math.PI * Math.min(1, bt * 3)) * (1 - bt);
+    const fg = ctx.createRadialGradient(dx, dy + 8, 2, dx, dy, dr); fg.addColorStop(0, grey ? rgba(150, 220, 120, 0.8 * f) : o.burnt.kind === "amber" ? rgba(255, 190, 90, 0.85 * f) : rgba(225, 240, 255, 0.9 * f)); fg.addColorStop(1, rgba(0, 0, 0, 0));
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(dx, dy, dr, 0, TAU); ctx.fill();
+    for (let i = 0; i < 9; i++) { const k = bt * 1.3 - i * 0.07; if (k <= 0 || k >= 1) continue; const px = dx + Math.sin(i * 2.1 + k * 5) * (6 + k * 18), py = dy - dr + 6 - k * 120, rr = 5 + k * 16;
+      const sg = ctx.createRadialGradient(px, py, 1, px, py, rr); sg.addColorStop(0, grey ? rgba(120, 170, 105, 0.7 * (1 - k)) : rgba(200, 195, 185, 0.55 * (1 - k))); sg.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(px, py, rr, 0, TAU); ctx.fill(); }
+  }
   /* les deux curseurs */
   slider(ctx, c, trim, SLIDERS.time, o.time || 0); slider(ctx, c, trim, SLIDERS.temp, o.temp || 0);
   for (const k of ["time", "temp"]) { const v = o[k] || 0; r.hot.push({ x: SLIDERS[k] - 14, y: SL_Y - 8, w: 30, h: SL_H + 16, tip: valueTip(tr, k, v) + (cooking || done ? "" : " — " + tr("oven.slider.how")), oven: cooking || done ? null : k, slider: { y0: SL_Y, h: SL_H, knob: SL_Y + SL_H - v / 50 * SL_H }, val: v }); }
@@ -212,7 +222,17 @@ function drawOven(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#57514a"); ctx.beginPath(); ctx.ellipse(tx, ty - 3, 58, 14, 0, 0, TAU); ctx.fill();
   const outN = done ? ph.n : 0, outK = done ? ph.kind : null;
   HOLES.forEach(([hx, hy], j) => { ctx.fillStyle = "#121110"; ctx.beginPath(); ctx.ellipse(tx + hx, ty - 3 + hy, 6, 2.6, 0, 0, TAU); ctx.fill(); if (j < outN) capsule(ctx, tx + hx, ty - 3 + hy, outK === "dust" ? "grey" : outK, 1, outK === "dust"); });
+  /* la grille de vidange, au sol sous le plateau, et son levier à droite : on y jette une fournée ratée */
+  ctx.fillStyle = c("#141312"); ctx.beginPath(); ctx.ellipse(tx, ty + 26, 30, 5, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = c(trim[1]); ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.strokeStyle = c("#2e2b28"); ctx.lineWidth = 1.4; for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(tx + i * 7.5, ty + 22 + Math.abs(i) * 0.3); ctx.lineTo(tx + i * 7.5, ty + 30 - Math.abs(i) * 0.3); ctx.stroke(); }
+  const dt = o.burnt && o.burnt.drain ? (nowOf(r) - o.burnt.at) / 1400 : -1;
+  if (dt >= 0 && dt < 1) for (let j = 0; j < 5; j++) { const k = clamp(dt * 1.6 - j * 0.12); if (k <= 0 || k >= 1) continue; capsule(ctx, tx + HOLES[j][0] * (1 - k * 0.8), ty - 3 + HOLES[j][1] + k * 30, o.burnt.kind === "dust" ? "grey" : o.burnt.kind, 1 - k * 0.6, o.burnt.kind === "dust", 1 - k); } /* elles glissent vers la grille */
+  const lx = tx + 84, lb = ty + 22, up = done ? 1 : 0, la = -Math.PI / 2 + (up ? -0.35 : 0.7);
+  ctx.fillStyle = c("#2a2b2f"); ctx.fillRect(lx - 9, lb - 4, 18, 8); ctx.fillStyle = c(trim[1]); ctx.fillRect(lx - 9, lb - 5, 18, 1.6);
+  ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(lx, lb - 2); ctx.lineTo(lx + Math.cos(la) * 30, lb - 2 + Math.sin(la) * 30); ctx.stroke(); ctx.lineCap = "butt";
+  ctx.fillStyle = up ? "#8a2a22" : c("#3a2420"); ctx.beginPath(); ctx.arc(lx + Math.cos(la) * 32, lb - 2 + Math.sin(la) * 32, 4.2, 0, TAU); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, 0.25); ctx.beginPath(); ctx.arc(lx + Math.cos(la) * 32 - 1.2, lb - 3.2 + Math.sin(la) * 32, 1.3, 0, TAU); ctx.fill();
   r.hot.push({ x: tx - 66, y: ty - 26, w: 132, h: 46, tip: done ? (outK === "dust" ? tr("oven.tray.dust") : tr("oven.tray.take")) : tr("oven.tray"), oven: done ? "tray" : null });
+  r.hot.push({ x: lx - 16, y: lb - 40, w: 40, h: 46, tip: done ? tr("oven.drain.go") : tr("oven.drain"), oven: done ? "drain" : null });
   /* la lumière du feu sur la pièce ; la nuit, une lanterne */
   if (cooking) { const gl = ctx.createRadialGradient(dx, dy, 10, dx, dy, 260); gl.addColorStop(0, rgba(255, 150, 60, 0.12 + hot * 0.18)); gl.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = gl; ctx.fillRect(0, 0, W, H); }
   if (night > 0.3) { const lx = skin === "castle" ? 112 : 134; ctx.fillStyle = "#e8b860"; ctx.fillRect(lx - 4, 60, 8, 12); const lg = ctx.createRadialGradient(lx, 66, 2, lx, 66, 110); lg.addColorStop(0, rgba(255, 200, 120, 0.35 * night)); lg.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H); }

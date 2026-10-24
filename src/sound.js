@@ -860,13 +860,15 @@ function caveSfx(kind, volume = 0.3) {
     }
   });
 }
-/** La machine du Relto : "click" (un levier, un cran, la presse), "start" (la porte se ferme, le feu prend), "take" (les capsules quittent le plateau). */
+/** La machine du Relto : "click" (un levier, un cran, la presse), "start" (la porte se ferme, le feu prend), "take" (les capsules quittent le plateau), "drain" (la vidange), "burn" (une capsule au feu). */
 function ovenSfx(kind, volume = 0.3) {
-  return oneShot(kind === "start" ? 1.6 : 0.6, (c, out, noise) => {
+  return oneShot(kind === "start" ? 1.6 : kind === "burn" ? 1.3 : kind === "drain" ? 0.8 : 0.6, (c, out, noise) => {
     const t = c.currentTime; out.gain.value = volume * 0.5;
     const tone = (f0, f1, t0, d, type = "sine", g = 0.3) => { const o = c.createOscillator(), e = c.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + d); e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + 0.005); e.gain.exponentialRampToValueAtTime(0.0005, t0 + d); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + d + 0.05); };
     const hiss = (t0, d, f, g) => { const n = noise(d), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 0.7; e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + 0.2); e.gain.linearRampToValueAtTime(0, t0 + d); n.connect(bp); bp.connect(e); e.connect(out); n.start(t0); n.stop(t0 + d); };
     if (kind === "start") { tone(140, 60, t, 0.25, "square", 0.25); tone(900, 500, t + 0.02, 0.08, "square", 0.08); hiss(t + 0.2, 1.3, 600, 0.3); } /* la porte qui claque, le feu qui prend */
+    else if (kind === "drain") { tone(320, 120, t, 0.18, "square", 0.12); for (let i = 0; i < 4; i++) tone(900 - i * 120, 500 - i * 60, t + 0.12 + i * 0.07, 0.1, "triangle", 0.08); hiss(t + 0.1, 0.5, 300, 0.15); } /* le levier, les capsules qui roulent dans la grille */
+    else if (kind === "burn") { tone(700, 300, t, 0.05, "square", 0.06); hiss(t + 0.02, 1.1, 900, 0.35); hiss(t + 0.1, 1.0, 250, 0.2); } /* la porte, la flambée */
     else if (kind === "take") { for (let i = 0; i < 3; i++) tone(1400 + i * 180, 1200 + i * 180, t + i * 0.09, 0.12, "triangle", 0.12); }
     else tone(1800, 1400, t, 0.04, "square", 0.1);
   });

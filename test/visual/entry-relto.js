@@ -9,6 +9,8 @@ const OVEN_STATES = {
   set: { oven: OVEN_SET, phase: null, stock: OVEN_STOCK, pellets: OVEN_SHELF },
   cook: { oven: OVEN_RUN, phase: { phase: "cooking", k: 0.5, left: 300000, kind: "white", n: 3 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
   done: { oven: OVEN_RUN, phase: { phase: "done", kind: "white", n: 3 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
+  grey: { oven: OVEN_RUN, phase: { phase: "done", kind: "grey", n: 4 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
+  get burn() { return { oven: { ...OVEN_SET, burnt: { at: Date.now() - 700, kind: "grey" } }, phase: null, stock: OVEN_STOCK, pellets: OVEN_SHELF }; },
   dust: { oven: { ...OVEN_RUN, press: 4 }, phase: { phase: "done", kind: "dust", n: 3 }, stock: { ash: 5, humus: 3, silt: 1, peat: 5 }, pellets: OVEN_SHELF },
 };
 function renderMany(host, ages) {
@@ -28,6 +30,8 @@ function renderMany(host, ages) {
     { h: 14, t: 3.1, env: {}, pages: [], view: "oven", oven: "set", label: "OVEN day / set for a white batch: hoppers, levers, sliders, the press" },
     { h: 14, t: 3.1, env: {}, pages: ["page_glasshouse"], view: "oven", oven: "cook", label: "OVEN glasshouse / cooking" },
     { h: 23, t: 3.1, env: {}, pages: ["page_castle"], view: "oven", oven: "done", label: "OVEN castle night / three white capsules on the tray" },
+    { h: 21, t: 3.1, env: {}, pages: ["page_glasshouse"], view: "oven", oven: "grey", label: "OVEN glasshouse / a grey batch: the drain lever is up" },
+    { h: 14, t: 3.1, env: {}, pages: [], view: "oven", oven: "burn", label: "OVEN / a grey pellet thrown into the fire smokes green" },
     { h: 14, t: 3.1, env: {}, pages: [], view: "oven", oven: "dust", label: "OVEN / not pressed enough: it crumbled" },
     { h: 23, t: 68, env: {}, pages: ["page_comets", "page_mountain", "page_pine_trees", "page_mist"], label: "ISLAND night / comet" },
     { h: 13, t: 81.5, env: {}, pages: ["page_comets", "page_mountain", "page_pine_trees"], label: "ISLAND day / comet (faded)" },
