@@ -16,8 +16,8 @@ const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
 const { sceneOf, HOOKS: GEN_HOOKS } = require("./genscene");
 const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, parseSky } = require("./sky");
-const { AMOUNT_RE, parseAmounts, applyAmounts, factorOf } = require("./amounts");
-const PEL = require("./pellets"); /* les granulés pour la caverne (étape 4a) */
+const { AMOUNT_RE, parseAmounts, applyAmounts } = require("./amounts");
+const HV = require("./harvest"); /* la récolte pour la machine du Relto, et les granulés cuits (étape 4a′) */
 const { rollLink } = fx;
 const { makeT } = require("./i18n");
 const { AgeIndex } = require("./index");
@@ -127,10 +127,10 @@ module.exports = function build(Base, core, AGEX) {
           return fissureStrain(out, op);
         }) || out;
         if (o && o.seed && !o.probe) guard("statut", () => this.statusWatch(key, out.stability));
-        if (srcText && o && o.seed) out = guard("granulés", () => { /* un Âge qui nourrit bien son granulé en donne un par jour pour le Relto (lu, pas un essai) */
-          const amt = parseAmounts(srcText), q = PEL.qualityOf(PH.idsOfAnalysis(out), (id) => factorOf(id, amt)); if (!q) return out;
-          if (!o.probe && PEL.cook(this.ext, key, q, this.law.now())) this.saveExt();
-          return { ...out, pellet: { quality: q, today: !!PEL.cookedToday(this.ext, key, q, this.law.now()) } };
+        if (o && o.seed) out = guard("récolte", () => { /* un Âge qui écrit cendres, terreau, limon ou tourbe, et où quelque chose pousse, en donne une mesure par jour (lu, pas un essai) */
+          const mt = (out.resolved && out.resolved.matter) || {}, gives = HV.givesOf(mt.written || [], PH.idsOfAnalysis(out), (mt.reactions || []).map((x) => (x && x.result) || x)); if (!gives.length) return out;
+          if (!o.probe && HV.gather(this.ext, key, gives, this.law.now())) this.saveExt();
+          return { ...out, harvest: { gives, today: HV.gatheredToday(this.ext, key, this.law.now()) } };
         }) || out;
         return out;
       };
@@ -263,15 +263,15 @@ module.exports = function build(Base, core, AGEX) {
     }
     /** La caverne Bahro (src/relto-cave.js) : les granulés de l'étagère, le granulé qui tombe ; un granulé perdu (personne en bas) s'en va sans bruit. */
     caveState() {
-      const P = PEL.stateOf(this.ext), cv = (this.ext.cave = this.ext.cave && typeof this.ext.cave === "object" ? this.ext.cave : { drop: null, revealed: 0 }), CV = require("./relto-cave");
+      const P = HV.pelletsOf(this.ext), cv = (this.ext.cave = this.ext.cave && typeof this.ext.cave === "object" ? this.ext.cave : { drop: null, revealed: 0 }), CV = require("./relto-cave");
       if (cv.drop && Date.now() > cv.drop.at + CV.FALL_MS + CV.LIGHT_MS) { cv.drop = null; this.saveExt(); }
-      return { good: P.good || 0, bad: P.bad || 0, drop: cv.drop, revealed: cv.revealed || 0 };
+      return { good: P.white, bad: P.grey, drop: cv.drop, revealed: cv.revealed || 0 }; /* le puits reçoit les blancs (l'éclair) et les gris ; l'ambré est pour le lac */
     }
     /** Le bouton : lâche un granulé (un bon s'il y en a, sinon un gris). Renvoie sa qualité, ou null. */
     caveDrop() {
       const st = this.caveState(); if (st.drop) return null;
-      const P = PEL.stateOf(this.ext), q = P.good > 0 ? "good" : P.bad > 0 ? "bad" : null; if (!q) return null;
-      P[q] -= 1; this.ext.cave.drop = { at: Date.now(), q, seen: false }; this.saveExt(); return q;
+      const P = HV.pelletsOf(this.ext), q = P.white > 0 ? "good" : P.grey > 0 ? "bad" : null; if (!q) return null;
+      P[q === "good" ? "white" : "grey"] -= 1; this.ext.cave.drop = { at: Date.now(), q, seen: false }; this.saveExt(); return q;
     }
     /** On était en bas quand la lueur est montée : une révélation de plus (l'étape 4c y lira le code). */
     caveSeen() { const cv = this.ext.cave; if (!cv || !cv.drop || cv.drop.seen) return; cv.drop.seen = true; cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); }

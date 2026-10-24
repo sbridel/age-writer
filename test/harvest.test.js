@@ -1,0 +1,23 @@
+"use strict";
+// La récolte (src/harvest.js, étape 4a′) : quatre ingrédients écrits, si quelque chose pousse, une fois par Âge et par jour.
+const assert = require("assert");
+const H = require("../src/harvest");
+let n = 0; const ok = (c, m) => { assert(c, m); n++; };
+const S = (...ids) => new Set(ids);
+ok(H.givesOf(["ash", "grass"], S("ash", "grass")).join() === "ash", "cendres et herbe : une mesure de cendres");
+ok(H.givesOf(["peat", "humus", "silt", "ash", "fern"]).join() === "ash,humus,silt,peat", "les quatre, dans l'ordre des trémies");
+ok(H.givesOf(["humus", "stone"], S("humus", "stone")).length === 0, "rien ne pousse : un sol mort ne donne rien");
+ok(H.givesOf(["humus"], S("humus", "fern")).join() === "humus", "ce qui pousse peut être tiré");
+ok(H.givesOf(["earth", "sand", "stone", "grass"]).length === 0, "terre, sable, pierre : rien pour la machine");
+ok(H.givesOf(["grass"], S("grass", "silt")).length === 0, "le limon tiré ne compte pas : la recette commence dans l'écriture");
+ok(H.givesOf(["ash", "water", "grass"], null, ["silt"]).join() === "ash,silt", "le limon né de l'eau sur les cendres compte (loi 11)");
+const ext = {}, T0 = Date.UTC(2026, 9, 24, 9);
+ok(H.gather(ext, "A", ["ash", "silt"], T0).join() === "ash,silt" && ext.harvest.stock.ash === 1 && ext.harvest.stock.silt === 1, "la première lecture du jour remplit les trémies");
+ok(H.gather(ext, "A", ["ash", "silt"], T0 + 3600000) === null && ext.harvest.stock.ash === 1, "une fois par Âge et par jour");
+ok(H.gather(ext, "B", ["ash"], T0).join() === "ash" && ext.harvest.stock.ash === 2, "un autre Âge, une mesure de plus");
+ok(H.gather(ext, "A", ["ash", "silt"], T0 + H.DAY) && ext.harvest.stock.ash === 3, "le lendemain, encore");
+ok(H.gatheredToday(ext, "A", T0 + H.DAY) && !H.gatheredToday(ext, "A", T0 + 2 * H.DAY), "donné aujourd'hui : oui ; demain sans lecture : non");
+ok(H.gather(ext, "C", [], T0) === null, "rien à donner : rien");
+const old = { pellets: { good: 3, bad: 1, last: { A: 1 } } }, p = H.pelletsOf(old);
+ok(p.white === 3 && p.grey === 1 && p.amber === 0 && !("good" in p) && !("last" in p), "l'étagère de l'ancienne étape 4a passe aux granulés blancs et gris");
+console.log(`harvest.test.js ok (${n} vérifications)`);

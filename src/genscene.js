@@ -78,7 +78,7 @@ function sceneOf(a, name = "", blocks = null) {
   }
   // météo vivante : sources de chaque temps, parents de chaque produit (un orage né d'une pluie programmée vient et part avec elle), graine du tirage
   // les merveilles : nées d'une union (a.composites) ou écrites (la Brume vivante)
-  S.fed = !!(a.pellet && a.pellet.quality === "good"); /* le lac de D'ni : un granulé qui nourrit avive les algues lumineuses de l'eau */
+  S.fed = !!(a.life && Array.isArray(a.life.notes) && a.life.notes.some((x) => x.id === "fedPellet")); /* le granulé écrit qui nourrit (loi de la vie) avive les algues lumineuses de l'eau */
   S.wonders = [...new Set([...((a.composites || []).map((c) => c.id)), ...(ids.has("living_mist") ? ["living_mist"] : [])])];
   if (S.wonders.includes("drinking_roots")) { const u = (a.composites || []).find((c) => c.id === "drinking_roots"); S.wonderMetal = CAT.metalOf(u, ids); }
   if (S.wonders.includes("orphan_colour")) { S.orphanRGB = S.sunHues[0] || null; S.blackSun = false; S.blackDisc = false; } /* la Couleur orpheline : la couleur reste, le feu s'en va */
