@@ -299,8 +299,10 @@ module.exports = function build(Base, core, AGEX) {
     caveState() {
       const P = HV.pelletsOf(this.ext), cv = (this.ext.cave = this.ext.cave && typeof this.ext.cave === "object" ? this.ext.cave : { drop: null, revealed: 0 }), CV = require("./relto-cave");
       if (cv.drop && Date.now() > cv.drop.at + CV.FALL_MS + CV.LIGHT_MS) { cv.drop = null; this.saveExt(); }
-      return { good: P.white, bad: P.grey, drop: cv.drop, revealed: cv.revealed || 0 }; /* le puits reçoit les blancs (l'éclair) et les gris ; l'ambré est pour le lac */
+      return { good: P.white, bad: P.grey, drop: cv.drop, revealed: cv.revealed || 0, shut: !!cv.shut }; /* le puits reçoit les blancs (l'éclair) et les gris ; l'ambré est pour le lac */
     }
+    /** La chaîne de la trappe : ferme ou rouvre la fente du plafond (la caverne retourne au noir). */
+    caveHatch() { this.caveState(); this.ext.cave.shut = !this.ext.cave.shut; this.saveExt(); }
     /** Le bouton : lâche un granulé (un bon s'il y en a, sinon un gris). Renvoie sa qualité, ou null. */
     caveDrop() {
       const st = this.caveState(); if (st.drop) return null;

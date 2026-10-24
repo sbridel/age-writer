@@ -61,13 +61,19 @@ function drawCaveTop(r, ctx, sc, sky, t) {
   for (let i = 0; i < 7; i++) { const k = fnv("strata" + i); ctx.strokeStyle = rgba(110, 92, 72, 0.14); ctx.lineWidth = 1; ctx.beginPath(); for (let x = 0; x <= W; x += 14) { const y = 46 + i * 30 + 6 * Math.sin(x / 60 + k) + 3 * Math.sin(x / 23 + k * 2); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); }
   /* le plafond, ses stalactites, et la fente par où tombe le jour (le ciel suit l'heure) */
   const sk = mix(mix("#0a1020", "#9cc3e6", day), "#ff9a5a", clamp((sky && sky.dusk) || 0) * 0.4);
-  ctx.fillStyle = sk; ctx.beginPath(); ctx.moveTo(296, 0); ctx.lineTo(344, 0); ctx.lineTo(334, 14); ctx.lineTo(306, 12); ctx.closePath(); ctx.fill();
-  if (night > 0.6) { ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.fillRect(318, 5, 1, 1); }
+  const shut = !!st.shut; /* la trappe de pierre, sur la fente du plafond : fermée, plus un rai de jour */
+  ctx.fillStyle = shut ? "#16120e" : sk; ctx.beginPath(); ctx.moveTo(296, 0); ctx.lineTo(344, 0); ctx.lineTo(334, 14); ctx.lineTo(306, 12); ctx.closePath(); ctx.fill();
+  if (shut) { ctx.fillStyle = rgba(220, 215, 190, 0.18 * (0.3 + day)); ctx.fillRect(300, 12, 32, 0.8); } /* un fil de jour sous la dalle */
+  else if (night > 0.6) { ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.fillRect(318, 5, 1, 1); }
   ctx.fillStyle = "#0a0806"; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(296, 0); ctx.lineTo(306, 12); ctx.lineTo(334, 14); ctx.lineTo(344, 0); ctx.lineTo(W, 0); ctx.lineTo(W, 30);
   for (let x = W; x >= 0; x -= 12) { const deep = q("st" + x) > 0.72 ? 18 + q("sd" + x) * 30 : 4 + q("se" + x) * 10; ctx.lineTo(x - 3, 26 + deep * 0.3); ctx.lineTo(x - 6, 24 + deep); ctx.lineTo(x - 9, 26 + deep * 0.3); }
   ctx.lineTo(0, 30); ctx.closePath(); ctx.fill();
   const shaft = ctx.createLinearGradient(320, 0, 320, 270), sa = 0.08 + 0.14 * day; shaft.addColorStop(0, rgba(220, 215, 190, sa)); shaft.addColorStop(1, rgba(220, 215, 190, 0));
-  ctx.fillStyle = shaft; ctx.beginPath(); ctx.moveTo(304, 10); ctx.lineTo(336, 10); ctx.lineTo(420, 270); ctx.lineTo(220, 270); ctx.closePath(); ctx.fill();
+  if (!shut) { ctx.fillStyle = shaft; ctx.beginPath(); ctx.moveTo(304, 10); ctx.lineTo(336, 10); ctx.lineTo(420, 270); ctx.lineTo(220, 270); ctx.closePath(); ctx.fill(); }
+  /* la chaîne de la trappe, qui pend du plafond, et son anneau */
+  { const cx = 356, sway = Math.sin(t * 0.6) * 1.2; ctx.strokeStyle = rgba(120, 104, 84, 0.85); ctx.lineWidth = 1.2; for (let y = 14; y < 112; y += 5) { ctx.beginPath(); ctx.ellipse(cx + sway * (y / 112), y, 1.4, 2.4, 0, 0, TAU); ctx.stroke(); }
+    ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(cx + sway, 118 + (shut ? 4 : 0), 5, 0, TAU); ctx.stroke(); }
+  r.hot.push({ x: 344, y: 60, w: 24, h: 70, tip: shut ? tr("cave.hatch.open") : tr("cave.hatch.shut"), caveHatch: true });
   /* des gouttes qui tombent des stalactites, de loin en loin */
   for (let i = 0; i < 3; i++) { const x = [140, 452, 560][i], p = ((t * 0.35 + i * 0.37) % 1); if (p < 0.6) { const y = 50 + (p / 0.6) * 210; ctx.fillStyle = rgba(170, 200, 210, 0.5); ctx.fillRect(x, y, 1, 3); } }
   /* le sol : inégal, humide, des cailloux ; la lumière s'y pose autour du trou */
@@ -109,6 +115,7 @@ function drawCaveTop(r, ctx, sc, sky, t) {
   ctx.fillStyle = "#000"; crack(); ctx.fill();
   const gl = ctx.createLinearGradient(0, 266, 0, 160); gl.addColorStop(0, rgba(90, 200, 150, fh ? 0.28 : 0.12 + 0.04 * Math.sin(t * 1.3))); gl.addColorStop(1, rgba(90, 200, 150, 0)); ctx.save(); crack(); ctx.clip(); ctx.fillStyle = gl; ctx.fillRect(560, 150, 60, 120); ctx.restore();
   r.hot.push({ x: 566, y: 96, w: 52, h: 172, tip: tr("cave.down"), go: "cavebottom" });
+  if (shut) { ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, 0, W, H); } /* la trappe fermée : la caverne retourne au noir */
   /* des taches de mousse qui luit, çà et là */
   for (let i = 0; i < 9; i++) { const x = q("gx" + i) * W, y = 60 + q("gy" + i) * 190, a = 0.18 + 0.1 * Math.sin(t * 0.8 + i); ctx.fillStyle = rgba(110, 210, 160, a); ctx.beginPath(); ctx.arc(x, y, 1 + q("gr" + i) * 1.4, 0, TAU); ctx.fill(); }
   const v = ctx.createRadialGradient(W / 2, H / 2, 140, W / 2, H / 2, 420); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.55)"); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);

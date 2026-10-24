@@ -813,6 +813,7 @@ async function renderRelto(plugin, source, el, ctx) {
     onOven: (act, arg) => { const msg = plugin.ovenAct ? plugin.ovenAct(act, arg) : null; if (roomSoundOn()) sound.ovenSfx(act === "door" && !msg ? "start" : act === "tray" ? "take" : "click", roomVol()); return msg; },
     onCaveDrop: () => { if (plugin.caveDrop && plugin.caveDrop() && roomSoundOn()) sound.caveSfx("drop", roomVol()); },
     onCaveSeen: () => { if (plugin.caveSeen) plugin.caveSeen(); },
+    onCaveHatch: () => { if (plugin.caveHatch) plugin.caveHatch(); if (roomSoundOn()) sound.slideStone(roomVol()); },
     onCaveSfx: (kind) => { if (roomSoundOn()) sound.caveSfx(kind, roomVol()); },
     onTwoVoices: (age, target, onLine) => {
       if (!age || !target) return; const GI = require("./imager-guild"), vol = roomVol(), now = Date.now(), held = forkHeld;
