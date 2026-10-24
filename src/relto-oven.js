@@ -23,13 +23,28 @@ const skinOf = (r) => (r.castleOn && r.castleOn() ? "castle" : r.glassOn && r.gl
 const TRIM = { plain: ["#b8955a", "#8a6d3e", "#e0c27a"], glass: ["#c67a3e", "#8a4a22", "#e6a06a"], castle: ["#a8a39a", "#6c6872", "#d8c88a"] };
 
 /** Un tas d'ingrédient (la forme se voit) dans le rectangle donné, déjà découpé par l'appelant. */
-function stuff(ctx, c, id, x, y, w, h, seed) {
-  const g = ING[id], r = rng(seed);
+/**
+ * Un ingrédient vu au verre, dans le rectangle (x, y, w, h). `poor` : une mesure pauvre (section 18), qui se voit sans chiffre :
+ * des cendres grises et grossières, un terreau pâle et sec, un limon mat, une tourbe effilochée.
+ */
+const POOR = { ash: { base: "#a9a59c", dark: "#77736b" }, humus: { base: "#76624f", dark: "#5a4a3b" }, silt: { base: "#6c726a", dark: "#555b53" }, peat: { base: "#9a7a5e", dark: "#6e5640" } };
+function stuff(ctx, c, id, x, y, w, h, seed, poor = false) {
+  const g = poor ? { ...ING[id], ...POOR[id] } : ING[id], r = rng(seed);
   ctx.fillStyle = c(g.base); ctx.fillRect(x, y, w, h);
-  if (g.kind === "powder") { ctx.globalAlpha = 0.5; for (let i = 0; i < 120; i++) { ctx.fillStyle = c(r() < 0.5 ? "#e4e0d6" : g.dark); ctx.fillRect(x + r() * w, y + r() * h, 1, 1); } ctx.globalAlpha = 1; ctx.fillStyle = rgba(255, 255, 255, 0.18); ctx.fillRect(x, y, w, 2); }
-  if (g.kind === "lumps") for (let i = 0; i < 26; i++) { const cx = x + r() * w, cy = y + r() * h, rr = 1.2 + r() * 2.4; ctx.fillStyle = c(r() < 0.5 ? "#5a4030" : g.dark); ctx.beginPath(); ctx.ellipse(cx, cy, rr, rr * 0.8, r() * 3, 0, TAU); ctx.fill(); }
-  if (g.kind === "gloss") { ctx.fillStyle = c(g.dark); for (let i = 0; i < 6; i++) ctx.fillRect(x, y + (i + 0.5) * h / 6, w, 1); ctx.fillStyle = rgba(190, 215, 190, 0.35); for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.ellipse(x + r() * w, y + r() * h, 3 + r() * 4, 0.9, 0, 0, TAU); ctx.fill(); } }
-  if (g.kind === "fibre") { ctx.strokeStyle = c("#a8683a"); ctx.lineWidth = 0.8; for (let i = 0; i < 22; i++) { const sx = x + r() * w, sy = y + r() * h; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx + 3, sy - 2, sx + 5 + r() * 4, sy - 4 + r() * 3); ctx.stroke(); } ctx.fillStyle = c(g.dark); for (let i = 0; i < 20; i++) ctx.fillRect(x + r() * w, y + r() * h, 1.5, 1.5); }
+  if (g.kind === "powder") {
+    if (poor) { for (let i = 0; i < 34; i++) { ctx.fillStyle = c(r() < 0.6 ? g.dark : "#c4c0b6"); const d = 1.6 + r() * 1.6; ctx.fillRect(x + r() * w, y + r() * h, d, d * 0.8); } } /* grossières, en grains */
+    else { ctx.globalAlpha = 0.5; for (let i = 0; i < 120; i++) { ctx.fillStyle = c(r() < 0.5 ? "#e4e0d6" : g.dark); ctx.fillRect(x + r() * w, y + r() * h, 1, 1); } ctx.globalAlpha = 1; ctx.fillStyle = rgba(255, 255, 255, 0.18); ctx.fillRect(x, y, w, 2); } /* fines, et le haut qui prend la lumière */
+  }
+  if (g.kind === "lumps") {
+    if (poor) { for (let i = 0; i < 12; i++) { const cx = x + r() * w, cy = y + r() * h, rr = 0.8 + r() * 1.2; ctx.fillStyle = c(g.dark); ctx.beginPath(); ctx.ellipse(cx, cy, rr, rr * 0.7, r() * 3, 0, TAU); ctx.fill(); } ctx.strokeStyle = c("#5e4c3c"); ctx.lineWidth = 0.6; for (let i = 0; i < 6; i++) { const sx = x + r() * w, sy = y + r() * h; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + 3 + r() * 4, sy + (r() - 0.5) * 3); ctx.stroke(); } } /* sec : des miettes, des craquelures */
+    else for (let i = 0; i < 26; i++) { const cx = x + r() * w, cy = y + r() * h, rr = 1.2 + r() * 2.4; ctx.fillStyle = c(r() < 0.5 ? "#5a4030" : g.dark); ctx.beginPath(); ctx.ellipse(cx, cy, rr, rr * 0.8, r() * 3, 0, TAU); ctx.fill(); }
+  }
+  if (g.kind === "gloss") { ctx.fillStyle = c(g.dark); for (let i = 0; i < 6; i++) ctx.fillRect(x, y + (i + 0.5) * h / 6, w, 1); if (!poor) { ctx.fillStyle = rgba(190, 215, 190, 0.35); for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.ellipse(x + r() * w, y + r() * h, 3 + r() * 4, 0.9, 0, 0, TAU); ctx.fill(); } } } /* mat : pas un reflet */
+  if (g.kind === "fibre") {
+    ctx.strokeStyle = c(poor ? "#b89a7a" : "#a8683a"); ctx.lineWidth = poor ? 0.6 : 0.8;
+    for (let i = 0; i < 22; i++) { const sx = x + r() * w, sy = y + r() * h; ctx.beginPath(); ctx.moveTo(sx, sy); if (poor) ctx.lineTo(sx + 1.5 + r() * 2, sy - 1 + r() * 2); else ctx.quadraticCurveTo(sx + 3, sy - 2, sx + 5 + r() * 4, sy - 4 + r() * 3); ctx.stroke(); } /* effilochée : des bouts cassés */
+    ctx.fillStyle = c(g.dark); for (let i = 0; i < 20; i++) ctx.fillRect(x + r() * w, y + r() * h, 1.5, 1.5);
+  }
 }
 
 /** Une capsule d'Er'cana, debout : un petit cylindre à bout arrondi. `crumb` : elle s'est effritée. */
@@ -112,7 +127,23 @@ function slider(ctx, c, trim, x, v) {
   const vy = y + h - v / 50 * h; ctx.fillStyle = c(trim[0]); ctx.fillRect(x - 2, vy - 4, 13, 8); ctx.fillStyle = c(trim[2]); ctx.fillRect(x + 4, vy - 1, 6, 2);
 }
 
-/** Ce que vaut un réglage, en clair (l'infobulle, et le mot qui s'affiche quand on le change) : le temps dit aussi la durée réelle. */
+/**
+ * Ce que vaut un réglage, gravé en chiffres D'ni (section 18, l'auteur) : seulement avec les instruments faciles ; à l'Art de
+ * la Guilde, rien (les graduations nues d'Er'cana, le manomètre à l'aiguille). Des morceaux : du texte et des nombres
+ * ({ n }), que l'infobulle et le mot éphémère dessinent en ligne. Le temps dit aussi sa durée, en gorahntee (ou en
+ * prorahntee sous un gorahn). Renvoie null en Art de la Guilde.
+ */
+const PRO_S = require("./dniclock").PRO_MS / 1000; /* un prorahn, en secondes (≈ 1,39) */
+function valueParts(r, tr, k, v) {
+  const guild = !!(r && r.imagerGuildOn && r.imagerGuildOn()); if (guild) return null;
+  const parts = [tr("oven.val." + k + ".dni") + " ", { n: Math.round(v) }];
+  if (k === "time" && v > 0) { const pro = (v * 15) / PRO_S, go = Math.round(pro / 25); parts.push(" — ", go >= 1 ? { n: go } : { n: Math.round(pro) }, " " + tr(go >= 1 ? "oven.val.gorahn" : "oven.val.prorahn")); }
+  return parts;
+}
+/** Le nom du réglage, sans valeur (l'infobulle en Art de la Guilde, et la carte d'infobulle au doigt). */
+const NAME = { time: "oven.slider.time", temp: "oven.slider.temp", press: "oven.press.name" };
+
+/** Ce que vaut un réglage, en clair (gardé pour les essais et la console ; le jeu ne l'affiche plus). */
 function valueTip(tr, k, v) {
   const s = tr("oven.val." + k).replace("{v}", v);
   if (k !== "time") return s;
@@ -125,7 +156,7 @@ function amountWord(tr, n) { return tr(n <= 0 ? "oven.hop.empty" : n < 3 ? "oven
 
 /** La vue rapprochée : la machine. */
 function drawOven(r, ctx, sc, sky, t) {
-  const tr = TR(r), st = stateOf(r), o = st.oven || { levers: [0, 0, 0, 0], time: 0, temp: 0, press: 0 }, ph = st.phase || null, stock = st.stock || {}, P = st.pellets || {};
+  const tr = TR(r), st = stateOf(r), o = st.oven || { levers: [0, 0, 0, 0], time: 0, temp: 0, press: 0 }, ph = st.phase || null, stock = st.stock || {}, rich = st.rich || {}, P = st.pellets || {};
   const skin = skinOf(r), trim = TRIM[skin], night = clamp(sky.night == null ? 0 : sky.night), amb = 0.62 + 0.38 * clamp(sky.ambient == null ? 1 : sky.ambient), c = (h) => mix("#05060c", h, amb);
   const cooking = ph && ph.phase === "cooking", done = ph && ph.phase === "done";
   walls(r, ctx, c, sky, skin, t);
@@ -159,13 +190,15 @@ function drawOven(r, ctx, sc, sky, t) {
     const cx = HOP(i), top = 44, bot = 112, n = Math.max(0, stock[id] || 0), fill = clamp(n / FULL);
     const funnel = () => { ctx.beginPath(); ctx.moveTo(cx - 22, top); ctx.lineTo(cx + 22, top); ctx.lineTo(cx + 22, top + 40); ctx.lineTo(cx + 5, bot); ctx.lineTo(cx - 5, bot); ctx.lineTo(cx - 22, top + 40); ctx.closePath(); };
     ctx.save(); funnel(); ctx.fillStyle = rgba(160, 190, 200, 0.10); ctx.fill(); ctx.clip();
-    if (n > 0) { const lvl = top + 4 + (1 - fill) * 64; stuff(ctx, c, id, cx - 24, lvl, 48, bot - lvl, 11 + i * 17); }
+    if (n > 0) { const lvl = top + 4 + (1 - fill) * 64, rn = Math.min(n, Math.max(0, rich[id] == null ? n : rich[id])), split = lvl + (bot - lvl) * (1 - rn / n); /* les riches au fond (elles coulent d'abord), les pauvres par-dessus */
+      if (rn < n) stuff(ctx, c, id, cx - 24, lvl, 48, split - lvl + 1, 11 + i * 17, true);
+      if (rn > 0) { stuff(ctx, c, id, cx - 24, split, 48, bot - split, 13 + i * 17); if (rn < n) { ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(cx - 24, split, 48, 0.8); } } }
     ctx.fillStyle = rgba(255, 255, 255, 0.10); ctx.fillRect(cx - 18, top, 4, 60); ctx.restore();
     funnel(); ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 2; ctx.stroke();
     ctx.fillStyle = c(trim[1]); ctx.fillRect(cx - 24, top - 4, 48, 5); ctx.fillStyle = c(mix(trim[1], "#000", 0.25)); ctx.fillRect(cx - 4, bot, 8, 16);
     /* le robinet : une petite roue de laiton */
     ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx + 10, bot + 9, 4, 0, TAU); ctx.moveTo(cx + 6, bot + 9); ctx.lineTo(cx + 14, bot + 9); ctx.moveTo(cx + 10, bot + 5); ctx.lineTo(cx + 10, bot + 13); ctx.stroke();
-    r.hot.push({ x: cx - 24, y: top - 6, w: 48, h: bot - top + 26, tip: tr("oven.hop." + id) + " — " + amountWord(tr, n) + (cooking || done ? "" : ". " + tr("oven.hop.click")), oven: cooking || done ? null : "add", arg: i });
+    r.hot.push({ x: cx - 24, y: top - 6, w: 48, h: bot - top + 26, tip: tr("oven.hop." + id) + " — " + amountWord(tr, n) + (n > 0 && (rich[id] == null ? n : rich[id]) < n ? ", " + tr((rich[id] || 0) > 0 ? "oven.poor.some." + id : "oven.poor.all." + id) : "") + (cooking || done ? "" : ". " + tr("oven.hop.click")), oven: cooking || done ? null : "add", arg: i });
   });
   /* le corps du four */
   const bx = 200, by = 152, bw = 230, bh = 128;
@@ -180,7 +213,7 @@ function drawOven(r, ctx, sc, sky, t) {
   ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(HOP(3) + 2.5, 133.5); ctx.lineTo(CX + 2.5, 133.5); ctx.stroke();
   /* la colonne de verre : les mesures en couches, dans l'ordre où elles sont tombées ; cinq traits sur le verre */
   ctx.fillStyle = rgba(200, 220, 230, 0.10); ctx.fillRect(CX - 10, CT, 20, CH);
-  col.forEach((id, k) => { const y = CT + CH - (k + 1) * LH; ctx.save(); ctx.beginPath(); ctx.rect(CX - 9, y, 18, LH); ctx.clip(); stuff(ctx, c, id, CX - 9, y, 18, LH, 31 + k * 7); ctx.restore(); ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(CX - 9, y, 18, 0.8); });
+  col.forEach((id, k) => { const y = CT + CH - (k + 1) * LH; ctx.save(); ctx.beginPath(); ctx.rect(CX - 9, y, 18, LH); ctx.clip(); stuff(ctx, c, id, CX - 9, y, 18, LH, 31 + k * 7, (o.colRich || [])[k] === false); /* chaque couche garde son aspect : on voit d'où vient la faute */ ctx.restore(); ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(CX - 9, y, 18, 0.8); });
   for (let k = 1; k <= 5; k++) { ctx.fillStyle = rgba(220, 230, 240, 0.4); ctx.fillRect(CX + 5, CT + CH - k * LH, 4, 0.7); }
   ctx.fillStyle = rgba(255, 255, 255, 0.12); ctx.fillRect(CX - 8, CT + 2, 3, CH - 4);
   ctx.strokeStyle = rgba(220, 230, 240, 0.55); ctx.lineWidth = 1; ctx.strokeRect(CX - 10, CT, 20, CH);
@@ -216,7 +249,7 @@ function drawOven(r, ctx, sc, sky, t) {
   }
   /* les deux curseurs */
   slider(ctx, c, trim, SLIDERS.time, o.time || 0); slider(ctx, c, trim, SLIDERS.temp, o.temp || 0);
-  for (const k of ["time", "temp"]) { const v = o[k] || 0; r.hot.push({ x: SLIDERS[k] - 14, y: SL_Y - 8, w: 30, h: SL_H + 16, tip: valueTip(tr, k, v) + (cooking || done ? "" : " — " + tr("oven.slider.how")), oven: cooking || done ? null : k, slider: { y0: SL_Y, h: SL_H, knob: SL_Y + SL_H - v / 50 * SL_H }, val: v }); }
+  for (const k of ["time", "temp"]) { const v = o[k] || 0; r.hot.push({ x: SLIDERS[k] - 14, y: SL_Y - 8, w: 30, h: SL_H + 16, tip: tr(NAME[k]) + (cooking || done ? "" : " — " + tr("oven.slider.how")), dniTip: valueParts(r, tr, k, v), oven: cooking || done ? null : k, slider: { y0: SL_Y, h: SL_H, knob: SL_Y + SL_H - v / 50 * SL_H }, val: v }); }
   /* la presse : le volant et son manomètre */
   const [wx, wy] = WHEEL, p = o.press || 0;
   ctx.fillStyle = c("#2a2b2f"); ctx.fillRect(430, wy - 6, 50, 12); ctx.fillStyle = c(trim[1]); ctx.fillRect(430, wy - 7, 50, 2);
@@ -228,8 +261,8 @@ function drawOven(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#e9dcc0"); ctx.beginPath(); ctx.arc(mx, my, mr, 0, TAU); ctx.fill(); ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 3; ctx.stroke();
   for (let k = 0; k <= 10; k++) { const a = Math.PI * 0.75 + k / 10 * Math.PI * 1.5, ins = k % 2 ? 6 : 8; ctx.strokeStyle = k >= 8 ? "#a8342a" : "#3a2a1a"; ctx.lineWidth = k % 2 ? 0.8 : 1.6; ctx.beginPath(); ctx.moveTo(mx + Math.cos(a) * (mr - 3), my + Math.sin(a) * (mr - 3)); ctx.lineTo(mx + Math.cos(a) * (mr - ins), my + Math.sin(a) * (mr - ins)); ctx.stroke(); }
   const na = Math.PI * 0.75 + p / 50 * Math.PI * 1.5; ctx.strokeStyle = "#1a0f08"; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx + Math.cos(na) * (mr - 5), my + Math.sin(na) * (mr - 5)); ctx.stroke(); ctx.fillStyle = "#1a0f08"; ctx.beginPath(); ctx.arc(mx, my, 2.2, 0, TAU); ctx.fill();
-  r.hot.push({ x: mx - mr, y: my - mr, w: 2 * mr, h: 2 * mr, tip: valueTip(tr, "press", p) });
-  r.hot.push({ x: wx - 24, y: wy - 24, w: 48, h: 48, tip: valueTip(tr, "press", p) + (cooking || done ? "" : " — " + tr("oven.press.how")), oven: cooking || done ? null : "press", wheel: true, val: p, y0: wy });
+  r.hot.push({ x: mx - mr, y: my - mr, w: 2 * mr, h: 2 * mr, tip: tr("oven.press.name"), dniTip: valueParts(r, tr, "press", p) });
+  r.hot.push({ x: wx - 24, y: wy - 24, w: 48, h: 48, tip: tr("oven.press.name") + (cooking || done ? "" : " — " + tr("oven.press.how")), dniTip: valueParts(r, tr, "press", p), oven: cooking || done ? null : "press", wheel: true, val: p, y0: wy });
   /* le plateau à cinq alvéoles */
   const [tx, ty] = TRAY;
   ctx.fillStyle = c("#1a1b1e"); ctx.fillRect(tx - 8, 280, 16, 12);
@@ -322,4 +355,4 @@ function leanTo(r, ctx, col, sky, t, hx) {
   r.hot.push({ x: hx - 62, y: GY - 34, w: 26, h: 34, tip: cooking ? tr("oven.out.cooking") : tr("oven.out"), go: "oven" });
 }
 
-module.exports = { valueTip, drawOven, leanTo, capsule, pill, HOP, SLIDERS, SL_Y, SL_H, DOOR, TRAY, WHEEL };
+module.exports = { valueTip, valueParts, drawOven, leanTo, capsule, pill, HOP, SLIDERS, SL_Y, SL_H, DOOR, TRAY, WHEEL };

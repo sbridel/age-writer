@@ -17,9 +17,11 @@
  *   temps 3 au plus, température 47 et plus : on paie la vitesse en matière) ;
  * - pas assez pressé (moins de 8) : la fournée s'effrite, il ne reste qu'une poussière ;
  * - tout le reste : gris (il flotte et fume).
- * La qualité (section 16.1) : dans la tolérance, le blanc ou l'ambré sont « approximatifs » ; pile sur les crans de temps et de
- * température (40-20 ; 30-30, ou la fournée pleine à temps 1 au plus, température 50), ils sont « nets » : un blanc net
- * éclaire 15 s au lieu de 8, un ambré net laisse deux colonies au lieu d'une. Rien ne le chiffre : la fournée le dit en phrases.
+ * La qualité (section 18) vient des ingrédients, pas des curseurs : chaque mesure de la colonne est riche ou pauvre (l'Âge
+ * qui l'a donnée était-il sain ce jour-là ?) ; un blanc ou un ambré est **net** si toutes ses mesures sont riches,
+ * **approximatif** sinon. Un blanc net éclaire 15 s au lieu de 8, un ambré net laisse deux colonies au lieu d'une. Rien ne le
+ * chiffre : la fournée le dit en phrases. Trois leviers, trois rôles : les curseurs font la sorte, les ingrédients la
+ * qualité, la presse décide si elle coule ou flotte.
  */
 const H = require("./harvest");
 const STEP_MS = 15000, MAX_LEVER = 3, MAX_TOTAL = 5, SCALE = 50;
@@ -31,6 +33,8 @@ function stateOf(ext) {
   const o = ext.oven && typeof ext.oven === "object" ? ext.oven : (ext.oven = {});
   /* la colonne : les mesures dans l'ordre où elles sont tombées ; `levers` en est le compte par ingrédient (cendres, terreau, limon, tourbe) */
   o.column = Array.isArray(o.column) ? o.column.filter((id) => H.INGREDIENTS.includes(id)).slice(0, MAX_TOTAL) : [];
+  /* la qualité de chaque couche, dans le même ordre (une colonne d'avant la qualité : riche) */
+  o.colRich = o.column.map((_, k) => !(Array.isArray(o.colRich) && o.colRich[k] === false));
   o.levers = H.INGREDIENTS.map((id) => o.column.filter((x) => x === id).length);
   for (const k of ["time", "temp", "press"]) o[k] = clampInt(o[k], 0, SCALE);
   if (o.batch && (typeof o.batch !== "object" || !(o.batch.n > 0))) o.batch = null;
@@ -39,14 +43,15 @@ function stateOf(ext) {
   return o;
 }
 
-/** Ce que donnent ces réglages : { kind: "white" | "amber" | "grey" | "dust", n, fine? } ou null (rien à cuire). */
+/** Ce que donnent ces réglages : { kind: "white" | "amber" | "grey" | "dust", n, fine? } ou null (rien à cuire). `s.colRich` : la qualité des couches. */
 function resultOf(s) {
   const [a, h, si, p] = s.levers, n = a + h + si + p, { time, temp, press } = s;
   if (n < 1 || n > MAX_TOTAL || !(time > 0)) return null;
   if (press < 8) return { kind: "dust", n };
   const mineral = h === 0 && p === 0 && a > si && si > 0 && a / n <= 0.8, organic = a === 0 && si === 0 && h > p && p > 0 && h / n <= 0.8;
-  if (mineral && near(time, 40) && near(temp, 20) && press >= 38) return { kind: "white", n, fine: time === 40 && temp === 20 };
-  if (organic && press >= 10 && press <= 22 && ((near(time, 30) && near(temp, 30)) || (n === MAX_TOTAL && time <= 3 && temp >= 47))) return { kind: "amber", n, fine: (time === 30 && temp === 30) || (n === MAX_TOTAL && time <= 1 && temp === SCALE) };
+  const fine = !Array.isArray(s.colRich) || (s.colRich.length >= n && s.colRich.slice(0, n).every((x) => x !== false)); /* nette : toutes les mesures riches */
+  if (mineral && near(time, 40) && near(temp, 20) && press >= 38) return { kind: "white", n, fine };
+  if (organic && press >= 10 && press <= 22 && ((near(time, 30) && near(temp, 30)) || (n === MAX_TOTAL && time <= 3 && temp >= 47))) return { kind: "amber", n, fine };
   return { kind: "grey", n };
 }
 
@@ -70,9 +75,10 @@ function set(ext, what, arg, now) {
     if (o.column.length >= MAX_TOTAL) return "full";
     if (o.column.filter((x) => x === id).length >= MAX_LEVER) return "max";
     if (st[id] < 1) return "none:" + id;
-    st[id] -= 1; o.column.push(id); o.levers = H.INGREDIENTS.map((x) => o.column.filter((y) => y === x).length); return true;
+    const rich = H.take(ext, id); /* la trémie verse d'abord ses riches */
+    o.column.push(id); o.colRich.push(rich !== false); o.levers = H.INGREDIENTS.map((x) => o.column.filter((y) => y === x).length); return true;
   }
-  if (what === "empty") { for (const id of o.column) st[id] += 1; o.column = []; o.levers = [0, 0, 0, 0]; return true; }
+  if (what === "empty") { o.column.forEach((id, k) => H.giveBack(ext, id, o.colRich[k] !== false)); o.column = []; o.colRich = []; o.levers = [0, 0, 0, 0]; return true; }
   if (what === "time" || what === "temp" || what === "press") { o[what] = clampInt(arg, 0, SCALE); return true; }
   return false;
 }
@@ -81,8 +87,8 @@ function set(ext, what, arg, now) {
 function start(ext, now) {
   const o = stateOf(ext); if (phaseOf(o, now)) return "busy";
   const res = resultOf(o); if (!res) return o.column.length ? "notime" : "empty";
-  o.batch = { at: now, dur: o.time * STEP_MS, kind: res.kind, n: res.n, fine: !!res.fine, layers: o.column.slice() }; /* les mesures sont déjà sorties des trémies */
-  o.column = []; o.levers = [0, 0, 0, 0];
+  o.batch = { at: now, dur: o.time * STEP_MS, kind: res.kind, n: res.n, fine: !!res.fine, layers: o.column.slice(), rich: o.colRich.slice() }; /* les mesures sont déjà sorties des trémies */
+  o.column = []; o.colRich = []; o.levers = [0, 0, 0, 0];
   return null;
 }
 

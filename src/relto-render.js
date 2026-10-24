@@ -955,8 +955,22 @@ class ReltoRenderer {
   /** étiquette brève (nom du chat, de la koï) affichée après un clic */
   /** partie visible du monde (x0, x1, y0) : la caméra de l'île recadre les bords, la vue globale montre tout */
   visible_() { return this.view && this.view !== "island" ? [0, W, 0] : [CAM_X - CAM_X / CAM, CAM_X + (W - CAM_X) / CAM, CAM_Y - CAM_OY / CAM]; }
+  /** La largeur d'une ligne faite de texte et de nombres D'ni ({ n }), à la taille `fs` (police déjà posée). */
+  partsWidth_(ctx, parts, fs) { let w = 0; for (const p of parts) w += typeof p === "string" ? ctx.measureText(p).width : this.dni.widthOf(p.n, fs * 1.15) + 2; return w; }
+  /** Dessine une ligne de texte et de nombres D'ni, coin haut-gauche (x, y) ; le texte en `col`, les chiffres en `dcol`. */
+  drawParts_(ctx, parts, x, y, fs, col, dcol) {
+    let cx = x; ctx.save(); ctx.textBaseline = "top";
+    for (const p of parts) { if (typeof p === "string") { ctx.fillStyle = col; ctx.fillText(p, cx, y + 1); cx += ctx.measureText(p).width; } else { cx += this.dni.drawNumber(ctx, p.n, cx + 1, y - 1, fs * 1.15, dcol) + 2; } }
+    ctx.restore(); return cx - x;
+  }
   drawFlash(ctx) {
     const f = this.flash; if (!f) return;
+    if (f.parts && this.dni) { /* une valeur en chiffres D'ni (la machine) */
+      if (Date.now() > f.until) { this.flash = null; return; }
+      ctx.save(); const [vx0, vx1, vy0] = this.visible_(), fs = 13; ctx.font = `${fs}px serif`; const tw = this.partsWidth_(ctx, f.parts, fs), w = tw + 12, fh = fs + 8, x = clamp(f.x - w / 2, vx0 + 4, Math.max(vx0 + 4, vx1 - w - 4)), y = Math.max(vy0 + 4, f.y - fh - 4);
+      ctx.fillStyle = "rgba(14,12,10,0.82)"; ctx.fillRect(x, y, w, fh); ctx.strokeStyle = "rgba(205,189,148,0.7)"; ctx.lineWidth = 0.7; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, fh - 1);
+      this.drawParts_(ctx, f.parts, x + 6, y + 3, fs, "#eadfb8", "#e0c27a"); ctx.restore(); return;
+    }
     if (Date.now() > f.until) { this.flash = null; return; }
     ctx.save(); const [vx0, vx1, vy0] = this.visible_(); const big = this.view && this.view !== "island", fs = big ? 14 : 8, fh = fs + 4; ctx.font = `${fs}px serif`; const tw = ctx.measureText(f.text).width, w = tw + 10, x = clamp(f.x - w / 2, vx0 + 4, Math.max(vx0 + 4, vx1 - w - 4)), y = Math.max(vy0 + 2, f.y - fh);
     ctx.fillStyle = "rgba(14,12,10,0.82)"; ctx.fillRect(x, y, w, fh); ctx.strokeStyle = "rgba(205,189,148,0.7)"; ctx.lineWidth = 0.7; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, fh - 1);
@@ -1308,10 +1322,12 @@ class ReltoRenderer {
     ctx.font = "11px serif"; const lines = [], words = String(h.tip).split(" "); let cur = "";
     for (const w0 of words) { const t2 = cur ? cur + " " + w0 : w0; if (cur && ctx.measureText(t2).width > TIP_MAX) { lines.push(cur); cur = w0; } else cur = t2; }
     if (cur) lines.push(cur);
-    const tw = Math.max(...lines.map((l) => ctx.measureText(l).width)) + (lines.length === 1 ? fw : 0), bh = 18 + 13 * (lines.length - 1);
+    const dp = h.dniTip && this.dni ? h.dniTip : null, dpw = dp ? this.partsWidth_(ctx, dp, 11) : 0, dph = dp ? 15 : 0; /* une ligne de valeur en chiffres D'ni, au-dessus du texte */
+    const tw = Math.max(dpw, ...lines.map((l) => ctx.measureText(l).width)) + (lines.length === 1 ? fw : 0), bh = 18 + 13 * (lines.length - 1) + dph;
     const bx = clamp(h.x + h.w / 2 - tw / 2 - 6, vx0 + 4, Math.max(vx0 + 4, vx1 - tw - 16)), by = h.tipBelow ? Math.min(H - bh - 4, h.y + h.h + 6) : Math.max(vy0 + 4, h.y - bh - 6);
     ctx.fillStyle = "rgba(16,13,9,0.92)"; ctx.fillRect(bx, by, tw + 12, bh); ctx.strokeStyle = "rgba(205,189,148,0.8)"; ctx.strokeRect(bx, by, tw + 12, bh);
-    ctx.fillStyle = "#e9dcb8"; lines.forEach((l, n) => ctx.fillText(l, bx + 6, by + 13 + 13 * n));
+    if (dp) this.drawParts_(ctx, dp, bx + 6, by + 3, 11, "#e9dcb8", "#e0c27a");
+    ctx.fillStyle = "#e9dcb8"; lines.forEach((l, n) => ctx.fillText(l, bx + 6, by + 13 + dph + 13 * n));
     if (fw && lines.length === 1) this.dni.drawFraction(ctx, h.frac, bx + 6 + tw - fw + 6, by + 4, fs, "#e0c27a");
   }
 
@@ -1403,8 +1419,9 @@ class ReltoRenderer {
   /** Au doigt : un geste de molette (télescope ou Imageur), comme un clic sur son ±. */
   /** Un geste sur la machine du Relto (src/relto-oven.js) : le message du plugin, ou la valeur réglée, s'affiche un instant. */
   ovenSet(h, arg) {
-    const msg = this.opts.onOven(h.oven, arg), OVR = require("./relto-oven"), say = msg || (h.slider || h.wheel ? OVR.valueTip(this.imagerTr(), h.oven, arg) : null);
-    if (say) this.flash = { text: say, x: h.x + h.w / 2, y: h.y, until: Date.now() + (msg ? 2800 : 1400) };
+    const msg = this.opts.onOven(h.oven, arg), OVR = require("./relto-oven"), parts = !msg && (h.slider || h.wheel) ? OVR.valueParts(this, this.imagerTr(), h.oven, arg) : null; /* la valeur, en chiffres D'ni ; rien à l'Art de la Guilde */
+    if (msg) this.flash = { text: msg, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2800 };
+    else if (parts) this.flash = { text: "", parts, x: h.x + h.w / 2, y: h.y, until: Date.now() + 1400 };
     if (!this.running) this.draw(0);
   }
   wheelAct(a, kind) { if (kind === "imager") this.imagerAct(a); else if (kind === "map") SM.act(this, a); else TL.act(this, a); }

@@ -72,6 +72,7 @@ function drawScope(r, ctx, sc, sky, t) {
   } else {
     for (let i = 0; i < 70; i++) { ctx.fillStyle = rgba(180, 200, 190, 0.04 + q() * 0.08); ctx.beginPath(); ctx.arc(cx + (q() - 0.5) * 2 * R + Math.sin(t * 0.2 + i) * 3, cy + (q() - 0.5) * 2 * R, 0.6 + q() * 1.6, 0, TAU); ctx.fill(); } /* des poussières d'eau */
     const rh = S.rhythm(now), crumb = r.scopeCrumb, e = crumb ? (now - crumb.at) / 1000 : -1, mx = cx - 8, my = cy + 10;
+    const weak = !!(crumb && crumb.kind === "amber" && !(((pel.fine || {}).amber || 0) > 0)); /* la miette vient du meilleur ambré qu'on ait ; s'ils sont tous approximatifs, elles mangent mollement (section 18) */
     /* la miette : un éclat de granulé au milieu de la goutte */
     if (crumb) {
       const col = PEL[crumb.kind] || PEL.grey, rad = crumb.kind === "amber" ? Math.max(3, 10 - e * 0.9) : crumb.kind === "white" ? 9 : 8;
@@ -88,7 +89,7 @@ function drawScope(r, ctx, sc, sky, t) {
       let rad = (P.cells > 40 ? 5 : 7) + cq() * 5, k = cq() * 3, glow = clamp(glowBase * (0.75 + 0.25 * Math.sin(t * 1.3 + ph))), pale = false, dead = P.burst && cq() < 0.45, twin = !dead && i < n * P.divide;
       if (crumb && e >= 0) {
         const dx = x - mx, dy = y - my, dist = Math.hypot(dx, dy);
-        if (crumb.kind === "amber" && dist < 120) { const pull = clamp(e / 6) * 0.45; x -= dx * pull; y -= dy * pull; glow = Math.max(glow, clamp(e / 3) * 0.95); if (e > 3 && i % 2 === 0) twin = true; } /* elles mangent, et se divisent */
+        if (crumb.kind === "amber" && dist < (weak ? 70 : 120)) { const pull = clamp(e / (weak ? 10 : 6)) * (weak ? 0.18 : 0.45); x -= dx * pull; y -= dy * pull; glow = Math.max(glow, clamp(e / 3) * (weak ? 0.45 : 0.95)); if (!weak && e > 3 && i % 2 === 0) twin = true; } /* elles mangent, et se divisent */
         if (crumb.kind === "white") { if (dist < 85 && e > 0.6) dead = true; else glow = Math.max(glow, Math.max(0, 1 - e / 2)); } /* un flash : celles qui sont près s'ouvrent et meurent */
         if (crumb.kind === "grey" && dist < 110) { const k2 = clamp(e / 3); rad *= 1 - 0.45 * k2; glow *= 1 - k2; pale = k2 > 0.6; } /* elles se recroquevillent */
       }

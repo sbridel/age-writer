@@ -44,18 +44,27 @@ ok(F.slabOf("Relto", 19991118, turns.map((t) => t + F.RING)).right, "un tour com
 for (const id of [...F.ELEMENTS, ...F.WONDER_SCENES, ...F.BAHRO_ROW]) ok(typeof FR.SIGNS[id] === "function", "un dessin pour " + id);
 for (const parts of Object.values(F.WRITTEN_SIGNS)) ok(parts.every((p) => F.ELEMENTS.includes(p)), "les merveilles écrites se peignent en éléments");
 
-/* la qualité des granulés (section 16.1) : pile sur les crans, « net » ; dans la tolérance, « approximatif » */
+/* la qualité des granulés (section 18) : elle vient des ingrédients ; riches si l'Âge est sain le jour de la récolte */
 const OV = require("../src/oven"), HV = require("../src/harvest"), CV = require("../src/relto-cave");
-const bake = (column, time, temp, press) => OV.resultOf({ levers: HV.INGREDIENTS.map((id) => column.filter((x) => x === id).length), time, temp, press });
-ok(bake(["ash", "ash", "silt"], 40, 20, 40).fine === true && bake(["ash", "ash", "silt"], 41, 20, 40).fine === false && bake(["ash", "ash", "silt"], 41, 20, 40).kind === "white", "blanc : 40-20 net, 41-20 approximatif");
-ok(bake(["humus", "humus", "peat"], 30, 30, 15).fine === true && bake(["humus", "humus", "peat"], 29, 31, 15).fine === false, "ambré : 30-30 net, à côté approximatif");
-ok(bake(["humus", "humus", "humus", "peat", "peat"], 1, 50, 15).fine === true && bake(["humus", "humus", "humus", "peat", "peat"], 3, 48, 15).fine === false, "ambré vite : fournée pleine, temps 1, feu 50 : net");
-ok(bake(["humus", "peat"], 30, 30, 15).fine === undefined, "le gris n'a pas de qualité");
+ok(HV.richOf({ verdict: "stable" }) && !HV.richOf({ verdict: "unstable" }) && !HV.richOf({ verdict: "stable", scars: [{ id: "rift" }] }) && !HV.richOf({ verdict: "stable", resolved: { scars: [{ id: "blight" }] } }) && !HV.richOf({ verdict: "stable", condemned: true }), "riche : stable, sans cicatrice, sans maladie, pas condamné");
+const ex = {}, D0 = 20000 * HV.DAY;
+HV.gather(ex, "Ash Tower", ["ash", "silt"], D0, true); HV.gather(ex, "Pale Garden", ["ash"], D0, false); HV.gather(ex, "Pale Garden", ["ash"], D0 + 1000, true);
+ok(ex.harvest.stock.ash === 2 && ex.harvest.rich.ash === 1 && ex.harvest.rich.silt === 1, "deux cendres, une riche ; la qualité du jour ne change plus");
+ok(HV.richToday(ex, "Pale Garden", D0 + 2000) === false && HV.richToday(ex, "Ash Tower", D0) === true && HV.richToday(ex, "Nobody", D0) === null, "ce que chaque Âge a donné aujourd'hui");
+ok(HV.stateOf({ harvest: { stock: { ash: 4 } } }).rich.ash === 4, "une récolte d'avant la qualité compte comme riche");
+const ov = { harvest: { stock: { ash: 3, humus: 0, silt: 2, peat: 0 }, rich: { ash: 1, humus: 0, silt: 2, peat: 0 } } };
+OV.set(ov, "add", 0, 0); OV.set(ov, "add", 0, 0); OV.set(ov, "add", 2, 0);
+ok(JSON.stringify(ov.oven.colRich) === "[true,false,true]" && ov.harvest.rich.ash === 0, "la trémie verse d'abord ses riches");
+ov.oven.time = 40; ov.oven.temp = 20; ov.oven.press = 40;
+ok(OV.resultOf(ov.oven).kind === "white" && OV.resultOf(ov.oven).fine === false, "une seule mesure pauvre : un blanc approximatif");
+OV.set(ov, "empty", null, 0); ok(ov.harvest.stock.ash === 3 && ov.harvest.rich.ash === 1 && ov.oven.colRich.length === 0, "la colonne reversée rend chaque mesure avec sa qualité");
+const fine = { harvest: { stock: { ash: 3, humus: 0, silt: 2, peat: 0 } } }; OV.set(fine, "add", 0, 0); OV.set(fine, "add", 0, 0); OV.set(fine, "add", 2, 0); Object.assign(fine.oven, { time: 41, temp: 19, press: 40 });
+ok(OV.resultOf(fine.oven).fine === true, "toutes riches : net, même à un cran de la recette (les curseurs ne font que la sorte)");
+ok(OV.start(fine, 0) === null && fine.oven.batch.fine === true && fine.oven.colRich.length === 0, "la fournée garde sa qualité");
+const P0 = HV.pelletsOf(fine); fine.oven.batch.at = -1e9; OV.collect(fine, 0); ok(P0.white === 3 && P0.fine.white === 3, "nette sur l'étagère");
 const ext = { pellets: { white: 3, fine: { white: 9, amber: -2 } } }, P = HV.pelletsOf(ext);
 ok(P.fine.white === 3 && P.fine.amber === 0, "jamais plus de nets que le tas");
-ext.oven = { column: [], time: 40, temp: 20, press: 40, batch: { at: 0, dur: 1, kind: "white", n: 2, fine: true } }; OV.collect(ext, 10);
-ok(P.white === 5 && P.fine.white === 5, "une fournée nette va sur l'étagère avec sa qualité");
-P.fine.white = 1; OV.burn(ext, "white", 20); ok(P.white === 4 && P.fine.white === 1, "le feu prend d'abord un approximatif");
+P.fine.white = 1; ext.oven = {}; OV.burn(ext, "white", 20); ok(P.white === 2 && P.fine.white === 1, "le feu prend d'abord un approximatif");
 ok(CV.lightOf({ q: "good", fine: true }) === 15000 && CV.lightOf({ q: "good" }) === 8000 && CV.lightOf({ q: "amber" }) === 10000 && CV.LIGHT_MS >= 15000, "la lumière : 15 s nette, 8 s approximative");
 ok(CV.phaseOf({ at: 1, q: "good" }, CV.FALL_MS + 9001) === null && CV.phaseOf({ at: 1, q: "good", fine: true }, CV.FALL_MS + 9001).kind === "lit", "un blanc approximatif s'éteint avant un net");
 
@@ -66,5 +75,12 @@ const hot = [], fake = { hot, hover: null };
 const ctx = new Proxy({}, { get: (o, k) => (k in o ? o[k] : k === "createLinearGradient" || k === "createRadialGradient" ? () => ({ addColorStop() {} }) : () => {}), set: (o, k, v) => ((o[k] = v), true) });
 ST.gate(fake, ctx, 1, 0); ok(!hot.some((h) => h.go === "stars"), "degré 1 : le mur est plein");
 ST.gate(fake, ctx, 2, 0); ok(hot.some((h) => h.go === "stars"), "degré 2 : on descend");
+
+/* les infobulles de la machine : la valeur en chiffres D'ni aux instruments faciles ; rien à l'Art de la Guilde */
+const OVR = require("../src/relto-oven"), trk = (k) => k;
+const easy = OVR.valueParts({ imagerGuildOn: () => false }, trk, "time", 40), guildP = OVR.valueParts({ imagerGuildOn: () => true }, trk, "time", 40);
+ok(guildP === null, "Art de la Guilde : pas de valeur");
+ok(easy.some((p) => p && p.n === 40) && easy.some((p) => p && p.n === 17) && !easy.some((p) => typeof p === "string" && /\d/.test(p)), "facile : 40, et dix minutes en dix-sept gorahntee, aucun chiffre en clair");
+ok(OVR.valueParts({ imagerGuildOn: () => false }, trk, "time", 1).some((p) => p && p.n === 11), "un cran : onze prorahntee");
 
 console.log(`fresco : ${n} contrôles ✓`);

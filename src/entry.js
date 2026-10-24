@@ -56,7 +56,7 @@ module.exports = function build(Base, core, AGEX) {
   /** La machine, pour essayer (menu de la clé) : remplir les trémies, donner des granulés, finir la cuisson, vider. */
   class OvenTestModal extends FuzzySuggestModal {
     constructor(app, plugin) { super(app); this.plugin = plugin; }
-    getItems() { return ["fill", "white", "amber", "grey", "finish", "empty"]; }
+    getItems() { return ["fill", "poor", "white", "amber", "grey", "finish", "empty"]; }
     getItemText(v) { const k = "oven.test." + v; return this.plugin.t(k); }
     onChooseItem(v) { const msg = this.plugin.ovenTest(v); if (msg) new Notice(msg); }
   }
@@ -145,8 +145,9 @@ module.exports = function build(Base, core, AGEX) {
         if (o && o.seed && !o.probe) guard("statut", () => this.statusWatch(key, out.stability));
         if (o && o.seed) out = guard("récolte", () => { /* un Âge qui écrit cendres, terreau, limon ou tourbe, et où quelque chose pousse, en donne une mesure par jour (lu, pas un essai) */
           const mt = (out.resolved && out.resolved.matter) || {}, gives = HV.givesOf(mt.written || [], PH.idsOfAnalysis(out), (mt.reactions || []).map((x) => (x && x.result) || x)); if (!gives.length) return out;
-          if (!o.probe && HV.gather(this.ext, key, gives, this.law.now())) this.saveExt();
-          return { ...out, harvest: { gives, today: HV.gatheredToday(this.ext, key, this.law.now()) } };
+          const now = this.law.now(); if (!o.probe && HV.gather(this.ext, key, gives, now, HV.richOf(out))) this.saveExt(); /* riche ou pauvre : ce qu'est l'Âge à la première lecture du jour */
+          const today = HV.gatheredToday(this.ext, key, now);
+          return { ...out, harvest: { gives, today, rich: today ? HV.richToday(this.ext, key, now) : HV.richOf(out) } };
         }) || out;
         return out;
       };
@@ -280,7 +281,7 @@ module.exports = function build(Base, core, AGEX) {
     /** L'appentis de la machine se montre dès que la récolte a commencé (un Âge a donné une première mesure). */
     ovenShown() { return !!(this.ext.harvest && typeof this.ext.harvest === "object"); }
     /** La machine (src/oven.js) : les réglages, la fournée, les trémies, l'étagère ; une fournée finie depuis longtemps attend sur le plateau. */
-    ovenState(now) { const OV = require("./oven"), t = now || Date.now(), o = OV.stateOf(this.ext); return { oven: o, phase: OV.phaseOf(o, t), stock: HV.stateOf(this.ext).stock, pellets: HV.pelletsOf(this.ext) }; }
+    ovenState(now) { const OV = require("./oven"), t = now || Date.now(), o = OV.stateOf(this.ext); const h = HV.stateOf(this.ext); return { oven: o, phase: OV.phaseOf(o, t), stock: h.stock, rich: h.rich, pellets: HV.pelletsOf(this.ext) }; }
     /** Un geste sur la machine : "add" (i : une mesure dans la colonne), "empty" (vider la colonne), "time" / "temp" / "press" (valeur), "door" (cuire), "tray" (prendre la fournée), "drain" (la vidanger), "burn" (arg : jeter au feu une capsule de l'étagère). Renvoie un message à montrer, ou null. */
     ovenAct(act, arg) {
       const OV = require("./oven"), now = Date.now(), t = (k, v) => { const s = this.t ? this.t(k) : k; return v ? s.replace("{what}", v) : s; };
@@ -298,12 +299,13 @@ module.exports = function build(Base, core, AGEX) {
     /** Les essais de la machine : "fill" (neuf mesures de chaque), "white" / "amber" / "grey" (cinq granulés), "finish" (la fournée sort), "empty" (tout à zéro). */
     ovenTest(v) {
       const OV = require("./oven"), h = HV.stateOf(this.ext), P = HV.pelletsOf(this.ext), o = OV.stateOf(this.ext), t = (k) => (this.t ? this.t(k) : k);
-      if (v === "fill") for (const id of HV.INGREDIENTS) h.stock[id] = Math.max(h.stock[id], 9);
+      if (v === "fill") for (const id of HV.INGREDIENTS) { h.stock[id] = Math.max(h.stock[id], 9); h.rich[id] = h.stock[id]; }
+      else if (v === "poor") for (const id of HV.INGREDIENTS) { h.stock[id] = Math.max(h.stock[id], 9); h.rich[id] = 0; } /* des Âges abîmés : tout ce qui est dans les trémies est pauvre */
       else if (v === "white" || v === "amber" || v === "grey") P[v] += 5;
       else if (v === "finish") { if (!o.batch) return t("oven.test.nobatch"); o.batch.at = Date.now() - o.batch.dur - 1; }
-      else if (v === "empty") { for (const id of HV.INGREDIENTS) h.stock[id] = 0; P.white = P.amber = P.grey = 0; o.column = []; o.levers = [0, 0, 0, 0]; o.batch = null; }
+      else if (v === "empty") { for (const id of HV.INGREDIENTS) { h.stock[id] = 0; h.rich[id] = 0; } P.white = P.amber = P.grey = 0; P.fine = { white: 0, amber: 0 }; o.column = []; o.colRich = []; o.levers = [0, 0, 0, 0]; o.batch = null; }
       this.saveExt();
-      const k = "oven.test." + v; return t("oven.test.done") + " " + t(k) + (v === "fill" ? " " + t("oven.test.reopen") : "");
+      const k = "oven.test." + v; return t("oven.test.done") + " " + t(k) + (v === "fill" || v === "poor" ? " " + t("oven.test.reopen") : "");
     }
     /** La caverne Bahro (src/relto-cave.js) : les granulés de l'étagère, le granulé qui tombe ; un granulé perdu (personne en bas) s'en va sans bruit. */
     caveState() {

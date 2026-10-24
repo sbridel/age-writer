@@ -191,7 +191,10 @@ function renderPhysics(plugin, box, analysis, { src, path, skyBox }) {
   } catch (e) { /* pas de notes */ }
   try { renderStarNote(plugin, cols, { src, analysis, path }); } catch (e) { console.warn("[Age Writer ext] étoile", e); }
   const skyFilled = !!(skyBox && cols.childElementCount);
-  if (analysis.harvest && analysis.harvest.today) whyHost.createDiv({ cls: "age-det__note age-det__pellet", text: t("hv.today", { list: analysis.harvest.gives.map((id) => t("hv." + id)).join(", ") }) }); /* la récolte du jour, pour la machine du Relto */
+  if (analysis.harvest && analysis.harvest.today) { /* la récolte du jour, pour la machine du Relto : la matière se dit avec son aspect (section 18) */
+    const rich = analysis.harvest.rich !== false, list = analysis.harvest.gives.map((id) => t(["hv", rich ? "rich" : "poor", id].join("."))).join(", ");
+    whyHost.createDiv({ cls: "age-det__note age-det__pellet", text: t("hv.today", { list }) + (rich ? "" : " " + t("hv.poor.why")) });
+  }
   if (sh.facts.length) {
     heading(whyHost, t("det.why")).addClass("age-det__h--sub");
     const ul = whyHost.createEl("ul", { cls: "age-det__facts" });
