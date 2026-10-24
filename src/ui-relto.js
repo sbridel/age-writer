@@ -856,6 +856,8 @@ async function renderRelto(plugin, source, el, ctx) {
   const factor = () => (plugin.ext.reltoVolume == null ? 0.6 : plugin.ext.reltoVolume);
   const liveSound = () => { if (soundBtn && plugin.soundBtn === soundBtn && soundBtn.classList.contains("is-on")) plugin.restartSound(reltoLayers().layers, scene ? scene.name : ""); };
 
+  /** Les familles de pages, dans l'ordre où elles s'affichent (selon ce que la page ajoute au Relto). */
+  const PAGE_FAMILIES = [["disguise", ["glasshouse", "castle"]], ["plants", ["vegetation", "flowers", "grass", "stalktree"]], ["water", ["waterfall", "koi", "ponddecor", "dock"]], ["sky", ["aurora", "moons", "comet", "snow", "rain", "storm", "mist", "fireworks"]], ["creatures", ["cat", "cattoys", "marcel", "birds", "butterflies", "fireflies"]], ["stone", ["mountain", "pillars", "islets", "gems", "gold", "silver"]], ["places", ["lanterns", "chimney", "bench"]], ["instruments", ["imager", "telescope", "dniclock", "calendar"]], ["atelier", ["atelier", "inkwell"]]];
   function renderPages() {
     pagesEl.empty();
     const ui = (plugin.ext.state.ui = plugin.ext.state.ui || {});
@@ -892,10 +894,20 @@ async function renderRelto(plugin, source, el, ctx) {
       if (p.state === "available") act.createEl("button", { cls: "age-relto__pbtn", text: t("relto.attach") }).addEventListener("click", async () => { await reltoEdit((l) => M.attachPage(l, p.id)); plugin.refreshLive(); /* un déguisement détache l'autre */ });
       else if (listed) act.createEl("button", { cls: "age-relto__pbtn", text: t("relto.detach") }).addEventListener("click", async () => { await reltoEdit((l) => l.filter((x) => x !== p.id)); plugin.refreshLive(); });
     };
+    /* rangées par famille (habits, arbres et plantes, eau, ciel, bêtes, roche et minerais, lieux, instruments, atelier), chacune repliable */
+    const famOf = (p) => { const ty = (p.additions && p.additions[0] && p.additions[0].type) || ""; for (const [f, types] of PAGE_FAMILIES) if (types.includes(ty)) return f; return "other"; };
+    const famOpen = (ui.reltoFamOpen = ui.reltoFamOpen || {});
     for (const [key, st] of [["active", "active"], ["available", "available"], ["locked", "locked"]]) {
       const list = scene.pages.filter((p) => p.state === st); if (!list.length) continue;
       const box = section(key, t("relto.state." + st), list.length);
-      colHead(box, [t("relto.col.page"), st === "locked" ? t("relto.col.why") : t("relto.col.adds"), ""]); for (const p of list) row(box, p);
+      colHead(box, [t("relto.col.page"), st === "locked" ? t("relto.col.why") : t("relto.col.adds"), ""]);
+      for (const f of [...PAGE_FAMILIES.map((x) => x[0]), "other"]) {
+        const fl = list.filter((p) => famOf(p) === f); if (!fl.length) continue;
+        const fk = key + ":" + f, d = box.createEl("details", { cls: "age-relto__fam" }); if (famOpen[fk] !== false) d.setAttr("open", "");
+        const sm = d.createEl("summary", { cls: "age-relto__famhead" }); const fkey = "relto.fam." + f; sm.createSpan({ text: t(fkey) }); sm.createSpan({ cls: "age-relto__secn", text: String(fl.length) });
+        d.addEventListener("toggle", () => { famOpen[fk] = d.open; plugin.saveExt(); });
+        for (const p of fl) row(d, p);
+      }
     }
     if (scene.missingPages.length) {
       const box = section("missing", t("relto.state.missing"), scene.missingPages.length);

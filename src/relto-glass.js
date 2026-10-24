@@ -669,21 +669,28 @@ function guimardGrille(ctx, c, x0, x1, top, bottom, clip, seed = 1, cartouche = 
 }
 
 /**
- * Un lampadaire à la manière du métro de Guimard : une tige de fonte verte qui monte d'un socle évasé, se courbe comme une
- * tige de fleur et porte une lampe rouge en bouton, qui luit. `dir` : vers où elle se penche (1 : à droite, −1 : à gauche).
+ * Un lampadaire à la manière du métro de Guimard : une tige de fonte verte qui monte d'un socle évasé, se recourbe comme
+ * une tige de fleur qui ploie, et porte, sous un calice de feuilles de fonte, une lampe rouge en bouton qui pend et luit.
+ * `dir` : vers où elle se penche (1 : à droite, −1 : à gauche).
  */
 function guimardLamp(ctx, c, x, base, top, dir, glowK = 1) {
-  const iron = c("#24402f"), hi = rgba(160, 210, 170, 0.3), lx = x + dir * 22, ly = top + 8;
-  ctx.lineCap = "round";
-  ctx.fillStyle = iron; ctx.beginPath(); ctx.moveTo(x - 7, base); ctx.quadraticCurveTo(x - 3, base - 10, x - 2, base - 22); ctx.lineTo(x + 2, base - 22); ctx.quadraticCurveTo(x + 3, base - 10, x + 7, base); ctx.closePath(); ctx.fill(); /* le socle évasé */
-  const stem = () => { ctx.beginPath(); ctx.moveTo(x, base - 20); ctx.bezierCurveTo(x - dir * 4, base - (base - top) * 0.55, x - dir * 2, top - 4, lx, ly - 6); };
-  ctx.strokeStyle = iron; ctx.lineWidth = 3.2; stem(); ctx.stroke(); ctx.strokeStyle = hi; ctx.lineWidth = 0.9; stem(); ctx.stroke();
-  ctx.strokeStyle = iron; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x - dir * 1, base - (base - top) * 0.6); ctx.quadraticCurveTo(x - dir * 10, base - (base - top) * 0.7, x - dir * 8, base - (base - top) * 0.82); ctx.stroke(); /* une feuille-volute */
-  const g = ctx.createRadialGradient(lx, ly, 1, lx, ly, 26); g.addColorStop(0, rgba(255, 90, 60, 0.45 * glowK)); g.addColorStop(1, rgba(255, 90, 60, 0)); ctx.fillStyle = g; ctx.fillRect(lx - 26, ly - 26, 52, 52); /* la lueur */
-  ctx.fillStyle = iron; ctx.beginPath(); ctx.ellipse(lx, ly - 7, 4.5, 2.2, 0, 0, Math.PI * 2); ctx.fill(); /* la collerette */
-  const bg = ctx.createRadialGradient(lx - 1.5, ly - 1, 0.5, lx, ly, 6.5); bg.addColorStop(0, "#ffd0b0"); bg.addColorStop(0.35, "#ff5a3a"); bg.addColorStop(1, "#8a1a12"); ctx.fillStyle = bg;
-  ctx.beginPath(); ctx.moveTo(lx, ly - 6); ctx.bezierCurveTo(lx + 7, ly - 5, lx + 6, ly + 6, lx, ly + 8); ctx.bezierCurveTo(lx - 6, ly + 6, lx - 7, ly - 5, lx, ly - 6); ctx.fill(); /* le bouton de verre rouge */
-  ctx.strokeStyle = iron; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(lx, ly - 6); ctx.lineTo(lx, ly + 8); ctx.stroke();
+  const iron = c("#2a4632"), iron2 = c("#1a2e22"), hi = rgba(170, 220, 180, 0.35), cx = x + dir * 16, cy = top + 4; /* le calice, au bout de la crosse */
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.fillStyle = iron; ctx.beginPath(); ctx.moveTo(x - 8, base); ctx.quadraticCurveTo(x - 3, base - 12, x - 2.2, base - 26); ctx.lineTo(x + 2.2, base - 26); ctx.quadraticCurveTo(x + 3, base - 12, x + 8, base); ctx.closePath(); ctx.fill(); /* le socle évasé, comme une racine */
+  const stem = () => { ctx.beginPath(); ctx.moveTo(x, base - 24); ctx.bezierCurveTo(x - dir * 5, base - (base - top) * 0.5, x - dir * 4, top - 14, x + dir * 6, top - 12); ctx.quadraticCurveTo(cx + dir * 4, top - 10, cx, cy - 2); };
+  ctx.strokeStyle = iron2; ctx.lineWidth = 4.2; stem(); ctx.stroke(); ctx.strokeStyle = iron; ctx.lineWidth = 2.8; stem(); ctx.stroke(); ctx.strokeStyle = hi; ctx.lineWidth = 0.8; stem(); ctx.stroke(); /* la tige qui ploie */
+  ctx.strokeStyle = iron; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x - dir * 2, base - (base - top) * 0.55); ctx.bezierCurveTo(x - dir * 12, base - (base - top) * 0.62, x - dir * 12, base - (base - top) * 0.78, x - dir * 5, base - (base - top) * 0.8); ctx.stroke(); /* une feuille, en volute */
+  const ly = cy + 9; /* la lampe pend sous le calice */
+  const g = ctx.createRadialGradient(cx, ly, 1, cx, ly, 30); g.addColorStop(0, rgba(255, 110, 70, 0.5 * glowK)); g.addColorStop(1, rgba(255, 90, 60, 0)); ctx.fillStyle = g; ctx.fillRect(cx - 30, ly - 30, 60, 60);
+  const bg = ctx.createRadialGradient(cx - dir * 1.5, ly + 1, 0.5, cx, ly, 8); bg.addColorStop(0, "#ffe0b8"); bg.addColorStop(0.3, "#ff6a3a"); bg.addColorStop(1, "#8a1a12"); ctx.fillStyle = bg;
+  ctx.beginPath(); ctx.moveTo(cx - 6, ly - 4); ctx.bezierCurveTo(cx - 8, ly + 5, cx - 3, ly + 10, cx, ly + 10); ctx.bezierCurveTo(cx + 3, ly + 10, cx + 8, ly + 5, cx + 6, ly - 4); ctx.closePath(); ctx.fill(); /* le bouton de verre rouge, en tulipe renversée */
+  ctx.strokeStyle = rgba(120, 20, 10, 0.5); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(cx - 2.5, ly - 3); ctx.quadraticCurveTo(cx - 3, ly + 5, cx - 0.5, ly + 9.5); ctx.moveTo(cx + 2.5, ly - 3); ctx.quadraticCurveTo(cx + 3, ly + 5, cx + 0.5, ly + 9.5); ctx.stroke(); /* les côtes du verre */
+  /* le calice : trois feuilles de fonte qui enveloppent le haut de la lampe et se recourbent */
+  for (const [ox, sp] of [[-1, -1], [0, 0], [1, 1]]) {
+    ctx.fillStyle = sp ? iron : iron2; ctx.beginPath(); ctx.moveTo(cx + ox * 1.5, cy - 3); ctx.bezierCurveTo(cx + sp * 9, cy - 3, cx + sp * 10, cy + 5, cx + sp * 7.5, cy + 9); ctx.quadraticCurveTo(cx + sp * 4, cy + 4, cx + ox * 1.5 - sp * 1, cy - 1); ctx.closePath(); ctx.fill();
+    if (sp) { ctx.strokeStyle = hi; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(cx + ox * 1.5, cy - 2); ctx.quadraticCurveTo(cx + sp * 8, cy - 1, cx + sp * 7.5, cy + 8); ctx.stroke(); }
+  }
+  ctx.fillStyle = iron; ctx.beginPath(); ctx.ellipse(cx, cy - 3, 4, 2.2, 0, 0, Math.PI * 2); ctx.fill();
 }
 
 /**

@@ -74,8 +74,8 @@ function drawVault(r, ctx, sc, sky, t) {
       if (low) { ctx.fillStyle = c("#5e5966"); ctx.fillRect(nx - 8, FLOOR - 10, NW + 16, 10); ctx.fillStyle = c("#9a95a3"); ctx.fillRect(nx - 8, FLOOR - 10, NW + 16, 1.4); } } // le socle
     else if (glass) { ctx.fillStyle = c(VR.COPPER_LO); ctx.beginPath(); ctx.moveTo(nx - 5, base); ctx.lineTo(nx - 5, ny); ctx.ellipse(nx + NW / 2, ny, NW / 2 + 5, 16, 0, Math.PI, 2 * Math.PI); ctx.lineTo(nx + NW + 5, base); ctx.closePath(); ctx.fill();
       ctx.fillStyle = c(VR.COPPER); ctx.fillRect(nx - 7, ny + NH + 1, NW + 14, 2.4); if (low) { ctx.fillStyle = c("#2a1a12"); ctx.fillRect(nx - 7, FLOOR - 9, NW + 14, 9); ctx.fillStyle = c(VR.COPPER); ctx.fillRect(nx - 7, FLOOR - 9, NW + 14, 1.2); } // l'appui de cuivre ; le socle
-      const fan = () => { ctx.beginPath(); ctx.ellipse(nx + NW / 2, ny - 1, NW / 2 - 2, 12, 0, Math.PI, 2 * Math.PI); ctx.closePath(); }; VR.shards(ctx, c, nx, nx + NW, ny - 13, ny, fan, 0.35, Math.round(nx)); /* l'imposte : du verre en éclats */
-      VR.guimardGrille(ctx, c, nx, nx + NW, ny - 13, ny, fan, Math.round(nx), false); /* la grille, devant l'imposte */
+      ctx.fillStyle = c("#14261f"); ctx.beginPath(); ctx.ellipse(nx + NW / 2, ny - 1, NW / 2 - 2, 12, 0, Math.PI, 2 * Math.PI); ctx.fill(); /* l'imposte : pleine (une chambre forte n'a pas de vitres au-dessus de ses niches) */
+      ctx.strokeStyle = c(VR.COPPER); ctx.lineWidth = 1; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(nx + NW / 2 - 14, ny - 1); ctx.quadraticCurveTo(nx + NW / 2 - 6, ny - 12, nx + NW / 2, ny - 7); ctx.quadraticCurveTo(nx + NW / 2 + 6, ny - 2, nx + NW / 2 + 12, ny - 9); ctx.stroke(); ctx.fillStyle = c(VR.COPPER); ctx.beginPath(); ctx.ellipse(nx + NW / 2 + 13, ny - 9.5, 2, 1, -0.6, 0, Math.PI * 2); ctx.fill(); /* une seule tige de cuivre, en coup de fouet */
       ctx.strokeStyle = c(VR.COPPER_HI); ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(nx + NW / 2, ny, NW / 2 + 3, 14, 0, Math.PI, 2 * Math.PI); ctx.stroke(); }
   };
   for (let i = 0; i < PER; i++) { const nx = (i % 6 < 3 ? 28 : 392) + (i % 3) * 80, ny = 44 + (i < 6 ? 0 : 108); frame(nx, ny); } // les encadrements d'abord : ceux du bas ne recouvrent pas les écriteaux du haut
@@ -131,13 +131,13 @@ function drawVault(r, ctx, sc, sky, t) {
     const first = grp[0].name, last = grp[grp.length - 1].name, abbr = (n) => (n.length > 7 ? n.slice(0, 6) + "…" : n), label = grp.length === 1 ? abbr(first) : `${abbr(first)} – ${abbr(last)}`;
     void label; /* plus de nom écrit sous la niche (il cassait l'ambiance) : chaque livre le dit dans son infobulle */
   });
-  if (!list.length) { ctx.fillStyle = rgba(230, 220, 190, 0.5); ctx.font = "italic 13px serif"; ctx.textAlign = "center"; ctx.fillText(tr("vault.empty"), W / 2, 110); ctx.textAlign = "left"; }
+  if (!list.length) { ctx.fillStyle = rgba(230, 220, 190, 0.5); ctx.font = "italic 13px serif"; ctx.textAlign = "center"; ctx.fillText(tr("vault.empty"), W / 2, 88); ctx.textAlign = "left"; }
   // le pupitre central et le livre vierge
   const px = 288, pw = 64;
   ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(px - 6, FLOOR - 2, pw + 12, 8);
   ctx.fillStyle = c(castle ? CS.WALNUT_LO : glass ? "#3a2a1a" : "#4b3a28"); ctx.fillRect(px + 8, 176, pw - 16, FLOOR - 176); ctx.fillStyle = c(castle ? CS.WALNUT : glass ? "#5a3e24" : "#6a4f33"); ctx.fillRect(px, 168, pw, 12);
   if (castle) { ctx.fillStyle = c(CS.GOLD); ctx.fillRect(px, 179, pw, 1.2); ctx.fillRect(px + 8, FLOOR - 12, pw - 16, 1.2); CS.lys(ctx, px + pw / 2, 206, 4, false); for (const x of [px - 26, px + pw + 26]) { CS.candlestand(ctx, c, x, 150, FLOOR, true, fl, 1); CS.candleGlow(ctx, x, 140, 60, fl, 0.6); } } // le Château : un lutrin de noyer filet d'or, deux chandeliers de fer
-  if (glass) { VR.guimardLamp(ctx, c, 270, FLOOR, 112, 1); VR.guimardLamp(ctx, c, 370, FLOOR, 112, -1); } /* deux lampadaires à la Guimard, de part et d'autre du lutrin : des boutons de verre rouge */
+  if (glass) { for (const [lx, d] of [[262, 1], [384, -1]]) { ctx.save(); ctx.translate(lx, FLOOR); ctx.scale(1.4, 1.4); ctx.translate(-lx, -FLOOR); VR.guimardLamp(ctx, c, lx, FLOOR, 166, d); ctx.restore(); } } /* deux lampadaires à la Guimard, de part et d'autre du lutrin : des boutons de verre rouge */
   if (glass) { VR.copperEdge(ctx, c, px, 168, pw, 3); VR.cornerVines(ctx, c, px + 10, 184, pw - 20, FLOOR - 196); VR.tiffanyLamp(ctx, c, px + pw - 9, 132, 144, 10, 168, 0.5, true, fl); ctx.save(); ctx.beginPath(); ctx.rect(px, 150, pw, 20); ctx.clip(); const lg = ctx.createRadialGradient(px + pw - 9, 160, 1, px + pw - 9, 160, 34); lg.addColorStop(0, rgba(255, 210, 130, 0.3 * fl)); lg.addColorStop(1, rgba(255, 210, 130, 0)); ctx.fillStyle = lg; ctx.fillRect(px, 150, pw, 20); ctx.restore(); /* sa lumière tombe sur le livre et le plateau, pas dans le vide */ } // la Verrière : un pupitre aux rinceaux de cuivre, une lampe de verre au plomb
   ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(px + 6, 154, 25, 15); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(px + 33, 154, 25, 15); ctx.fillStyle = c("#3d3a2a"); ctx.fillRect(px + 30, 152, 4, 18);
   ctx.fillStyle = rgba(255, 200, 110, 0.07 * fl); ctx.beginPath(); ctx.arc(px + pw / 2, 150, 70, 0, 6.283); ctx.fill();
