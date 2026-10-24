@@ -58,9 +58,15 @@ const BOWLS = [[320, 152, 1], [540, 112], [118, 84], [452, 80], [206, 66]]; /* l
  * deux bords en y.
  */
 const PIT_X0 = 44, PIT_X1 = 596, U = (x) => (x - 320) / 360;
-const pitTop = (x) => 300 - 86 * Math.sqrt(Math.max(0, 1 - U(x) ** 2)) + 12;
-const pitFront = (x) => 322 + 14 * U(x) ** 2;
-const pitPath = (ctx) => { ctx.beginPath(); for (let x = PIT_X0; x <= PIT_X1; x += 14) (x === PIT_X0 ? ctx.moveTo(x, pitTop(x)) : ctx.lineTo(x, pitTop(x))); ctx.quadraticCurveTo(PIT_X1 + 30, (pitTop(PIT_X1) + pitFront(PIT_X1)) / 2, PIT_X1, pitFront(PIT_X1)); for (let x = PIT_X1; x >= PIT_X0; x -= 14) ctx.lineTo(x, pitFront(x)); ctx.quadraticCurveTo(PIT_X0 - 30, (pitTop(PIT_X0) + pitFront(PIT_X0)) / 2, PIT_X0, pitTop(PIT_X0)); ctx.closePath(); }; /* aux deux bouts, un arrondi */
+/** Un bord qui ne se répète pas : quelques ondulations de longueurs différentes et un grain de roche (déterministe). */
+const nz = (x, k) => Math.sin(x * 0.021 + k * 1.7) * 3.5 + Math.sin(x * 0.057 + k * 3.1) * 2.5 + Math.sin(x * 0.13 + k * 5.3) * 1.5 + (q("pz" + k + "_" + Math.round(x / 12)) - 0.5) * 6;
+const pitTop = (x) => 300 - 86 * Math.sqrt(Math.max(0, 1 - U(x) ** 2)) + 12 + nz(x, 1) + 5 * Math.sin(x * 0.012 + 0.8);
+const pitFront = (x) => 322 + 14 * U(x) ** 2 + nz(x, 2) * 1.3 + 8 * Math.sin(x * 0.014 + 2.2) + (x > 430 && x < 520 ? 7 : 0) - (x > 170 && x < 250 ? 6 : 0);
+const pitPath = (ctx) => { ctx.beginPath(); for (let x = PIT_X0; x <= PIT_X1; x += 12) (x === PIT_X0 ? ctx.moveTo(x, pitTop(x)) : ctx.lineTo(x, pitTop(x)));
+  const mR = (pitTop(PIT_X1) + pitFront(PIT_X1)) / 2, mL = (pitTop(PIT_X0) + pitFront(PIT_X0)) / 2; /* aux deux bouts, des éclats et non un arrondi */
+  for (const [dx, dy] of [[10, 12], [24, -6], [16, 16], [3, -2]]) ctx.lineTo(PIT_X1 + dx, dy < 0 ? mR + dy : dy > 14 ? mR + dy : pitTop(PIT_X1) + dy); ctx.lineTo(PIT_X1, pitFront(PIT_X1));
+  for (let x = PIT_X1; x >= PIT_X0; x -= 12) ctx.lineTo(x, pitFront(x));
+  for (const [dx, dy] of [[-4, -4], [-18, 8], [-27, -10], [-12, -22]]) ctx.lineTo(PIT_X0 + dx, mL + dy); ctx.closePath(); };
 /** Un bruit doux (une valeur qui flotte entre 0 et 1, `hz` changements par seconde) : le vacillement d'une flamme. */
 const vnoise = (k, t, hz) => { const x = t * hz, i = Math.floor(x), f = x - i, a = q("fk" + k + "_" + (i % 97)), b = q("fk" + k + "_" + ((i + 1) % 97)), sm = f * f * (3 - 2 * f); return a + (b - a) * sm; };
 /** La lumière d'une vasque à l'instant t : de 0,6 à 1,15, irrégulière (deux fréquences) ; `k` : la vasque. */
@@ -274,7 +280,7 @@ function drawStars(r, ctx, sc, sky, t) {
     const a = (y < top ? Math.min(1, (y - (top - 50)) / 22) : 1 - depth) * (0.35 + 0.65 * Math.abs(Math.sin(t * 2 + i * 1.7))), C = q("fc" + i) < PAL.d2 ? PAL.dust2 : PAL.dust2 && q("fc" + i) < 0.7 ? PAL.dust : [215, 230, 255];
     ctx.fillStyle = rgba(C[0], C[1], C[2], 0.85 * a); ctx.beginPath(); ctx.arc(x, y, 0.5 + 1.1 * (1 - depth * 0.7), 0, TAU); ctx.fill(); }
   /* au degré 3, deux d'entre eux, au fond, accroupis sur le rebord, tournés vers la fosse (des ombres : jamais de détail) */
-  if (degree >= 3) { bahroShadow(ctx, 226, 231, 0.66, 1, t, 0); bahroShadow(ctx, 510, 233, 0.58, -1, t + 2.1, 1); }
+  if (degree >= 3) { bahroShadow(ctx, 226, pitTop(226) - 1, 0.66, 1, t, 0); bahroShadow(ctx, 510, pitTop(510) - 1, 0.58, -1, t + 2.1, 1); }
   /* les cinq piliers, du fond vers nous : un fût droit gravé de haut en bas, une coupe à deux cornes courtes ; les vasques au-dessus */
   const signs = F.itemsOf((r.scene && r.scene.ages) || [], {}).filter((it) => it.kind === "age").slice(-15).flatMap((it) => it.parts.slice(0, 1));
   for (const p of PILLARS.slice().sort((a, b) => a.y - b.y)) {
@@ -318,7 +324,7 @@ function drawFissure(r, ctx, sc, sky, t) {
     ctx.fillStyle = rgba(215, 230, 255, Math.min(1, p * 8) * Math.min(1, near * 2.2) * 0.9); ctx.beginPath(); ctx.arc(x, y, s, 0, TAU); ctx.fill(); }
   r.hot.push({ x: 240, y: 30, w: 180, h: 260, tip: tr("fissure.void") });
   /* les bords de roche, en silhouette tout autour ; la lumière bleue d'en bas sur leurs arêtes */
-  const rim = [[0, 0], [W, 0], [W, H], [0, H], [0, 0], [306, -4], [330, 10], [346, 4], [356, 36], [376, 58], [372, 96], [404, 128], [398, 168], [432, 206], [424, 250], [456, 290], [420, 330], [404, 368], [262, 368], [234, 326], [196, 292], [220, 254], [212, 214], [242, 176], [238, 138], [266, 104], [262, 66], [286, 40], [284, 8], [306, -4]];
+  const rim = [[0, 0], [W, 0], [W, H], [0, H], [0, 0], [38, -6], [98, 10], [172, -2], [252, 14], [324, 0], [400, 12], [472, -4], [548, 10], [610, -6], [622, 66], [602, 126], [628, 196], [598, 258], [612, 312], [572, 344], [506, 330], [458, 352], [402, 328], [332, 346], [262, 328], [212, 352], [152, 332], [98, 354], [46, 320], [24, 256], [50, 198], [16, 132], [44, 70], [38, -6]];
   const rock = ctx.createLinearGradient(0, 0, 0, H); rock.addColorStop(0, "#07080d"); rock.addColorStop(1, "#11131b"); ctx.fillStyle = rock;
   ctx.beginPath(); rim.slice(0, 5).forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); for (let i = rim.length - 1; i >= 5; i--) ctx.lineTo(rim[i][0], rim[i][1]); ctx.closePath(); ctx.fill("evenodd");
   ctx.save(); ctx.beginPath(); rim.slice(0, 5).forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); for (let i = rim.length - 1; i >= 5; i--) ctx.lineTo(rim[i][0], rim[i][1]); ctx.closePath(); ctx.clip("evenodd");
