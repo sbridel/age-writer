@@ -51,7 +51,7 @@ function carved(ctx, id, x, y, s, glow, seed) {
 /** La salle ronde. */
 const PILLARS = [-90, -18, -162, 54, 126].map((deg, i) => { const a = (deg * Math.PI) / 180, x = 320 + Math.cos(a) * 250, y = 262 + Math.sin(a) * 48; return { i, x, y, s: 0.58 + ((y - 214) / 87) * 0.95 }; });
 /** Où pend la vasque de chaque pilier (elle s'allume avec lui, mais ne se tient pas au-dessus) : x, hauteur de la coupe. */
-const BOWLS = [[380, 142], [540, 112], [118, 84], [452, 80], [206, 66]];
+const BOWLS = [[418, 148], [540, 112], [118, 84], [452, 80], [206, 66]];
 const FISSURE_L = [[316, 222], [310, 236], [314, 250], [302, 268], [306, 286], [290, 306], [294, 326], [276, 344], [270, 360]];
 const FISSURE_R = [[324, 222], [330, 238], [326, 252], [338, 270], [334, 288], [352, 308], [346, 328], [366, 346], [372, 360]];
 
