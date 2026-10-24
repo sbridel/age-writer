@@ -232,7 +232,7 @@ function leanTo(r, ctx, col, sky, t, hx) {
        foncé, nervures de cuivre en éventail) à travers lequel on devine la machine ; porte en ogive ambrée */
     const GL = require("./relto-glass"), rx = x1 - x0, ry = 17, cy = GY - 10 /* sa coupole reste sous la corniche de la Verrière */;
     /* un tuyau de poêle fin, en cuivre, qui monte de derrière la coupole, contre le mur : il dépasse, se coude, un petit chapeau */
-    const px = x1 - 6, ptop = cy - ry - 9;
+    const px = x1 - 6, ptop = cy - ry - 3; /* court : il dépasse à peine */
     ctx.strokeStyle = col("#8a4a22"); ctx.lineWidth = 2.4; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(px, cy); ctx.lineTo(px, ptop); ctx.quadraticCurveTo(px, ptop - 3, px - 3, ptop - 4); ctx.lineTo(px - 6, ptop - 5); ctx.stroke();
     ctx.strokeStyle = col(GL.COPPER_HI); ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(px - 0.6, cy - ry); ctx.lineTo(px - 0.6, ptop); ctx.stroke(); ctx.lineCap = "butt";
     ctx.fillStyle = col(GL.COPPER); ctx.fillRect(px - 1.8, cy - ry - 4, 3.6, 1); ctx.beginPath(); ctx.moveTo(px - 10, ptop - 6); ctx.lineTo(px - 6, ptop - 9); ctx.lineTo(px - 2, ptop - 6); ctx.closePath(); ctx.fill();

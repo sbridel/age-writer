@@ -1157,7 +1157,8 @@ class ReltoRenderer {
     const ly = y0 + 3 - dh; ctx.fillStyle = CU; ctx.fillRect(hx - 3.5, ly - 5, 7, 5.5);
     ctx.fillStyle = mix(col("#2a1a10"), "#ffb14a", clamp(lit * 0.9)); ctx.fillRect(hx - 2.5, ly - 4, 1.4, 3); ctx.fillRect(hx - 0.7, ly - 4, 1.4, 3); ctx.fillRect(hx + 1.1, ly - 4, 1.4, 3); // les jours du tambour
     ctx.fillStyle = CU; ctx.beginPath(); ctx.moveTo(hx - 5, ly - 5); ctx.quadraticCurveTo(hx, ly - 10, hx + 5, ly - 5); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = CU2; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(hx, ly - 8.5); ctx.lineTo(hx, ly - 12); ctx.stroke();
+    ctx.strokeStyle = CU2; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(hx, ly - 7); ctx.lineTo(hx, ly - 12); ctx.stroke(); /* l'épi part du chapeau (il ne flotte pas) */
+    ctx.fillStyle = CU; ctx.beginPath(); ctx.ellipse(hx, ly - 7.4, 1.4, 0.7, 0, 0, 6.283); ctx.fill();
     ctx.fillStyle = mix(col("#c98a32"), "#ffd27a", clamp(lit)); ctx.beginPath(); ctx.arc(hx, ly - 12.6, 1, 0, 6.283); ctx.fill();
     // les deux baies en ogive (vert d'eau) et la porte (ambre), cerclées de cuivre
     const bays = [[x0 + 1, x0 + 19, y0 + 7], [x0 + w - 19, x0 + w - 1, y0 + 7]], door = [hx - 7, hx + 7, y0 - 4];
