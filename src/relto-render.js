@@ -1143,7 +1143,8 @@ class ReltoRenderer {
     { /* le mur : de la mosaïque vert sombre sur toute la largeur de la coupole, deux pilastres de cuivre aux angles (on ne voit plus à travers) */
       const wx0 = x0 - 5, wx1 = x0 + w + 5; ctx.fillStyle = col("#163c38"); ctx.fillRect(wx0, y0 + 2, wx1 - wx0, GY - y0 - 2);
       const q = rng(0x3a1c); for (let row = 0; row < 9; row++) for (let i = 0; i < 22; i++) { ctx.fillStyle = col(mix("#1a4440", "#2a5e56", q())); ctx.fillRect(wx0 + i * 3.1 + (row % 2) * 1.5, y0 + 3 + row * 3.1, 2.6, 2.4); }
-      ctx.fillStyle = CU; ctx.fillRect(wx0, y0 + 2, 2.4, GY - y0 - 2); ctx.fillRect(wx1 - 2.4, y0 + 2, 2.4, GY - y0 - 2); }
+      ctx.fillStyle = CU; ctx.fillRect(wx0, y0 + 2, 2.4, GY - y0 - 2); ctx.fillRect(wx1 - 2.4, y0 + 2, 2.4, GY - y0 - 2);
+      ctx.fillStyle = col("#3a3026"); ctx.fillRect(wx0 - 2, GY - 3, wx1 - wx0 + 4, 3); ctx.fillStyle = CU; ctx.fillRect(wx0 - 2, GY - 3, wx1 - wx0 + 4, 0.8); } /* un soubassement : la Verrière est posée sur le sol */
     // la coupole : verre vert d'eau, nervures de cuivre, un fleuron
     const dr = w / 2 + 5, dh = 24;
     ctx.save(); ctx.beginPath(); ctx.ellipse(hx, y0 + 3, dr, dh, 0, Math.PI, 2 * Math.PI); ctx.closePath(); ctx.clip(); GLASS.frostedDome(ctx, col, hx - dr, y0 + 3 - dh, hx + dr, y0 + 3, lit, 1); ctx.restore(); /* verre dépoli, patiné : on ne voit pas à travers */
