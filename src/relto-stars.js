@@ -64,7 +64,7 @@ const pitTop = (x) => 300 - 86 * Math.sqrt(Math.max(0, 1 - U(x) ** 2)) + 12 + nz
 /** La lèvre de devant contourne les deux piliers de devant : elle recule derrière eux, en deux anses, pour qu'ils se tiennent sur le sol même. */
 const FRONT = [146, 437];
 const pitFront = (x) => 322 + 14 * U(x) ** 2 + nz(x, 2) * 1.3 + 8 * Math.sin(x * 0.014 + 2.2) + (x > 300 && x < 400 ? 5 : 0) - FRONT.reduce((m, fx) => m + 46 * Math.exp(-(((x - fx) / 44) ** 2)), 0);
-const pitPath = (ctx) => { ctx.beginPath(); for (let x = PIT_X0; x <= PIT_X1; x += 12) (x === PIT_X0 ? ctx.moveTo(x, pitTop(x)) : ctx.lineTo(x, pitTop(x)));
+const pitPath = (ctx, fresh = true) => { if (fresh) ctx.beginPath(); for (let x = PIT_X0; x <= PIT_X1; x += 12) (x === PIT_X0 ? ctx.moveTo(x, pitTop(x)) : ctx.lineTo(x, pitTop(x)));
   const mR = (pitTop(PIT_X1) + pitFront(PIT_X1)) / 2, mL = (pitTop(PIT_X0) + pitFront(PIT_X0)) / 2; /* aux deux bouts, des éclats et non un arrondi */
   for (const [dx, dy] of [[10, 12], [24, -6], [16, 16], [3, -2]]) ctx.lineTo(PIT_X1 + dx, dy < 0 ? mR + dy : dy > 14 ? mR + dy : pitTop(PIT_X1) + dy); ctx.lineTo(PIT_X1, pitFront(PIT_X1));
   for (let x = PIT_X1; x >= PIT_X0; x -= 12) ctx.lineTo(x, pitFront(x));
@@ -142,7 +142,8 @@ function pillar(ctx, p, on, hov, t, signs) {
   const wd = (v) => w * (1 - 0.14 * v + 0.07 * Math.sin(Math.min(1, v * 1.5) * Math.PI)) + jit(Math.round(v * 24)) * w * 0.07; /* un fût qui s'amincit à peine, renflé au premier tiers, aux bords un peu rugueux */
   const N = 24, Lp = [], Rp = []; for (let k = 0; k <= N; k++) { const v = k / N, y = p.y - v * hgt, flare = v < 0.1 ? (0.1 - v) * 4 * w : 0; Lp.push([p.x - wd(v) - flare, y]); Rp.push([p.x + wd(v) + flare, y]); }
   const body = () => { ctx.beginPath(); Lp.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); for (let k = Rp.length - 1; k >= 0; k--) ctx.lineTo(Rp[k][0], Rp[k][1]); ctx.closePath(); };
-  ctx.fillStyle = rgba(10, 12, 22, 0.45); for (let k = 0; k < 6; k++) { const dx = (k - 2.5) * w * 0.8 + jit(k) * w * 0.5; ctx.beginPath(); ctx.ellipse(p.x + dx, p.y + 1.5 * s, w * (0.5 + q("pr" + p.i + k) * 0.5), 2.6 * s, 0, 0, TAU); ctx.fill(); } /* le pied fond dans la roche du sol */
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); pitPath(ctx, false); ctx.clip("evenodd"); /* le pied ne déborde jamais sur le vide */
+  ctx.fillStyle = rgba(10, 12, 22, 0.4); for (let k = 0; k < 5; k++) { const dx = (k - 2) * w * 0.5 + jit(k) * w * 0.3; ctx.beginPath(); ctx.ellipse(p.x + dx, p.y + 1.5 * s, w * (0.4 + q("pr" + p.i + k) * 0.3), 2.2 * s, 0, 0, TAU); ctx.fill(); } ctx.restore(); /* le pied fond dans la roche du sol */
   const pg = ctx.createLinearGradient(p.x - w * 1.1, 0, p.x + w * 1.1, 0); pg.addColorStop(0, side > 0 ? "#13161f" : "#1d2131"); pg.addColorStop(0.5, hov ? "#383d52" : "#282c3e"); pg.addColorStop(1, side < 0 ? "#13161f" : "#1d2131"); ctx.fillStyle = pg; body(); ctx.fill();
   ctx.save(); body(); ctx.clip();
   const lb = ctx.createLinearGradient(p.x - side * w, 0, p.x + side * w * 1.2, 0); lb.addColorStop(0, blue(0)); lb.addColorStop(1, blue(0.26)); ctx.fillStyle = lb; ctx.fillRect(p.x - w * 2, p.y - hgt, w * 4, hgt); /* la fissure éclaire le flanc qui la regarde */
