@@ -65,7 +65,7 @@ function walls(r, ctx, c, sky, skin, t) {
     GL.darkMosaic(ctx, c, 300, W, H);
     const day = clamp(sky.ambient == null ? 0.6 : sky.ambient), litIn = 0.25 + 0.55 * day; /* le jour traverse les vitraux */
     [[18, 92], [102, 176], [500, 562], [574, 634]].forEach(([xa, xb], i) => { GL.stainedBay(ctx, c, xa, xb, 20, 140, litIn, i + 1, true); ctx.strokeStyle = c(GL.COPPER); ctx.lineWidth = 3; GL.ogive(ctx, xa, xb, 20, 140); ctx.stroke(); }); /* des vitraux sans dessin, seulement du verre, sur les côtés ; derrière la machine, le mur */
-    ctx.fillStyle = c("#2a1a12"); ctx.fillRect(0, 150, W, 6); ctx.fillStyle = c(GL.COPPER); ctx.fillRect(0, 150, W, 2);
+    ctx.fillStyle = c("#2a1a12"); ctx.fillRect(0, 141, W, 4); ctx.fillStyle = c(GL.COPPER); ctx.fillRect(0, 141, W, 1.5); /* la bande sous les vitraux (au-dessus des étagères) */
     GL.cornerVines(ctx, c, 0, 0, W, 300);
   } else {
     ctx.fillStyle = c("#2b2824"); ctx.fillRect(0, 0, W, H);
@@ -107,8 +107,14 @@ function drawOven(r, ctx, sc, sky, t) {
   const cooking = ph && ph.phase === "cooking", done = ph && ph.phase === "done";
   walls(r, ctx, c, sky, skin, t);
   /* l'étagère des capsules cuites, à gauche */
-  ctx.fillStyle = c(skin === "glass" ? "#3a2416" : "#4a3624"); ctx.fillRect(66, 150, 110, 6); ctx.fillRect(66, 210, 110, 6);
-  if (skin === "glass") { ctx.fillStyle = c(trim[0]); ctx.fillRect(66, 150, 110, 1.5); ctx.fillRect(66, 210, 110, 1.5); }
+  for (const y of [150, 210]) { /* deux planches, chacune sur deux consoles ; à la Verrière, des consoles de cuivre en volute */
+    const board = skin === "glass" ? "#5a3a22" : skin === "castle" ? "#4a4044" : "#4a3624";
+    ctx.fillStyle = c(mix(board, "#ffffff", 0.12)); ctx.fillRect(64, y - 1, 114, 2); ctx.fillStyle = c(board); ctx.fillRect(64, y + 1, 114, 5); ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(64, y + 6, 114, 2);
+    for (const bx of [74, 166]) {
+      if (skin === "glass") { ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(bx, y + 6); ctx.lineTo(bx, y + 14); ctx.quadraticCurveTo(bx, y + 20, bx + (bx < 120 ? 6 : -6), y + 18); ctx.stroke(); ctx.beginPath(); ctx.moveTo(bx, y + 7); ctx.quadraticCurveTo(bx + (bx < 120 ? 9 : -9), y + 7, bx + (bx < 120 ? 10 : -10), y + 12); ctx.stroke(); }
+      else { ctx.fillStyle = c(mix(board, "#000000", 0.2)); ctx.beginPath(); ctx.moveTo(bx - 2, y + 6); ctx.lineTo(bx + 2, y + 6); ctx.lineTo(bx + 2, y + 18); ctx.closePath(); ctx.fill(); ctx.fillRect(bx - 2, y + 6, 2, 12); }
+    }
+  }
   const rows = [["white", P.white || 0], ["amber", P.amber || 0], ["grey", P.grey || 0]];
   rows.forEach(([k, n], i) => { const shown = Math.min(n, 6); for (let j = 0; j < shown; j++) capsule(ctx, 76 + i * 36 + (j % 3) * 9, j < 3 ? 150 : 210, k, 0.9, false, 0.7); });
   const total = (P.white || 0) + (P.amber || 0) + (P.grey || 0);
