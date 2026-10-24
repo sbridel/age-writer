@@ -580,9 +580,10 @@ function atelierDoor(ctx, c, sky, dx, dy, dw, FLOOR) {
  * l'ogive, une tige en coup de fouet, deux feuilles, une fleur en tulipe. On ne voit pas à travers ; la nuit, il s'allume.
  * `lit` : 0 (le jour) à 1 (allumé la nuit). `c` : la couleur de la scène.
  */
-function stainedBay(ctx, c, xa, xb, top, base, lit, seed = 1) {
+function stainedBay(ctx, c, xa, xb, top, base, lit, seed = 1, plain = false) {
   const m = (xa + xb) / 2, w = xb - xa, hgt = base - top, L = clamp(lit), glow = (h, g) => mix(c(h), g, clamp(L * 0.9)), dir = seed % 2 ? 1 : -1;
   const TEAL = glow("#5fb8a8", "#a8f0e0"), TEAL2 = glow("#2f7a70", "#6fd0c0"), TEAL3 = glow("#1f5a52", "#4fb0a0"), ORA = glow("#d88a4a", "#ffc890"), ORA2 = glow("#b0602a", "#f0a060");
+  if (plain) { glassOnly(ctx, c, xa, xb, top, base, seed, [TEAL, TEAL2, TEAL3, glow("#7fc8b8", "#c0f8ec")], [ORA, ORA2]); return; }
   ctx.save(); ogive(ctx, xa, xb, top, base); ctx.clip();
   const bg = ctx.createLinearGradient(0, top, 0, base); bg.addColorStop(0, TEAL); bg.addColorStop(1, TEAL2); ctx.fillStyle = bg; ctx.fillRect(xa - 1, top - 1, w + 2, hgt + 2);
   /* la bordure orangée, le long de l'ogive */
@@ -598,6 +599,30 @@ function stainedBay(ctx, c, xa, xb, top, base, lit, seed = 1) {
   ctx.beginPath(); ctx.moveTo(m - w * 0.2, fy - hgt * 0.06); ctx.quadraticCurveTo(m - w * 0.22, fy + hgt * 0.08, m, fy + hgt * 0.09); ctx.quadraticCurveTo(m + w * 0.22, fy + hgt * 0.08, m + w * 0.2, fy - hgt * 0.06); ctx.lineTo(m + w * 0.08, fy - hgt * 0.01); ctx.lineTo(m, fy - hgt * 0.1); ctx.lineTo(m - w * 0.08, fy - hgt * 0.01); ctx.closePath(); ctx.stroke();
   const inset = w * 0.08, k = (xb - xa - 2 * inset) * 0.55; ctx.beginPath(); ctx.moveTo(xa + inset, base); ctx.lineTo(xa + inset, top + inset + k); ctx.quadraticCurveTo(xa + inset, top + inset + k * 0.2, m, top + inset); ctx.quadraticCurveTo(xb - inset, top + inset + k * 0.2, xb - inset, top + inset + k); ctx.lineTo(xb - inset, base); ctx.stroke();
   for (const y of [top + hgt * 0.78, top + hgt * 0.9]) { ctx.beginPath(); ctx.moveTo(xa, y); ctx.quadraticCurveTo(m, y - hgt * 0.03, xb, y); ctx.stroke(); }
+  ctx.restore();
+}
+
+/**
+ * Un vitrail sans dessin : seulement du verre, en morceaux sertis de plomb. Des bandes qui suivent l'ogive, recoupées en
+ * éclats irréguliers, presque tous vert d'eau (quatre tons), quelques-uns orange doux ; une pierre ronde au sommet.
+ */
+function glassOnly(ctx, c, xa, xb, top, base, seed, teals, oranges) {
+  const m = (xa + xb) / 2, w = xb - xa, hgt = base - top, q = rng(0x9a55 + seed * 131);
+  ctx.save(); ogive(ctx, xa, xb, top, base); ctx.clip();
+  const rows = Math.max(5, Math.round(hgt / (w * 0.42))), cols = 3, pts = [];
+  for (let r = 0; r <= rows; r++) { const row = []; for (let k = 0; k <= cols; k++) { const edge = k === 0 || k === cols || r === 0 || r === rows; row.push([xa + (w * k) / cols + (edge ? 0 : (q() - 0.5) * w * 0.22), top + (hgt * r) / rows + (edge ? 0 : (q() - 0.5) * hgt / rows * 0.5)]); } pts.push(row); }
+  const lead = c(LEAD);
+  for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) {
+    const a = pts[r][k], b = pts[r][k + 1], d = pts[r + 1][k + 1], e = pts[r + 1][k], split = q() < 0.5;
+    const tris = split ? [[a, b, d], [a, d, e]] : [[a, b, e], [b, d, e]];
+    for (const t of tris) { ctx.fillStyle = q() < 0.16 ? oranges[Math.floor(q() * oranges.length)] : teals[Math.floor(q() * teals.length)]; ctx.beginPath(); ctx.moveTo(t[0][0], t[0][1]); ctx.lineTo(t[1][0], t[1][1]); ctx.lineTo(t[2][0], t[2][1]); ctx.closePath(); ctx.fill(); ctx.strokeStyle = lead; ctx.lineWidth = 0.6; ctx.stroke(); }
+  }
+  /* un léger éclat, comme un verre ancien qui n'est pas plan */
+  ctx.fillStyle = rgba(255, 255, 255, 0.08); for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.ellipse(xa + q() * w, top + q() * hgt, w * 0.08, 1.2, q() * 3, 0, Math.PI * 2); ctx.fill(); }
+  /* la bordure : une bande d'orange doux le long de l'ogive, et la pierre ronde au sommet */
+  ctx.strokeStyle = oranges[1]; ctx.lineWidth = w * 0.1; ogive(ctx, xa, xb, top, base); ctx.stroke();
+  const inset = w * 0.1, kk = (w - 2 * inset) * 0.55; ctx.strokeStyle = lead; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(xa + inset, base); ctx.lineTo(xa + inset, top + inset + kk); ctx.quadraticCurveTo(xa + inset, top + inset + kk * 0.2, m, top + inset); ctx.quadraticCurveTo(xb - inset, top + inset + kk * 0.2, xb - inset, top + inset + kk); ctx.lineTo(xb - inset, base); ctx.stroke();
+  const jy = top + w * 0.38, jr = w * 0.09; ctx.fillStyle = oranges[0]; ctx.beginPath(); ctx.arc(m, jy, jr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.restore();
 }
 

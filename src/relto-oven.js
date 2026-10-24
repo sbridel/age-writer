@@ -64,7 +64,7 @@ function walls(r, ctx, c, sky, skin, t) {
     ctx.fillStyle = c("#10241f"); ctx.fillRect(0, 0, W, H);
     GL.darkMosaic(ctx, c, 300, W, H);
     const day = clamp(sky.ambient == null ? 0.6 : sky.ambient), litIn = 0.25 + 0.55 * day; /* le jour traverse les vitraux */
-    [[18, 92], [102, 176], [500, 562], [574, 634]].forEach(([xa, xb], i) => { GL.stainedBay(ctx, c, xa, xb, 20, 140, litIn, i + 1); ctx.strokeStyle = c(GL.COPPER); ctx.lineWidth = 3; GL.ogive(ctx, xa, xb, 20, 140); ctx.stroke(); }); /* des vitraux sur les côtés, comme dehors ; derrière la machine, le mur */
+    [[18, 92], [102, 176], [500, 562], [574, 634]].forEach(([xa, xb], i) => { GL.stainedBay(ctx, c, xa, xb, 20, 140, litIn, i + 1, true); ctx.strokeStyle = c(GL.COPPER); ctx.lineWidth = 3; GL.ogive(ctx, xa, xb, 20, 140); ctx.stroke(); }); /* des vitraux sans dessin, seulement du verre, sur les côtés ; derrière la machine, le mur */
     ctx.fillStyle = c("#2a1a12"); ctx.fillRect(0, 150, W, 6); ctx.fillStyle = c(GL.COPPER); ctx.fillRect(0, 150, W, 2);
     GL.cornerVines(ctx, c, 0, 0, W, 300);
   } else {
