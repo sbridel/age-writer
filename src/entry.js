@@ -53,6 +53,14 @@ module.exports = function build(Base, core, AGEX) {
     onChooseItem(v) { this.onChoose(v); }
   }
 
+  /** La machine, pour essayer (menu de la clé) : remplir les trémies, donner des granulés, finir la cuisson, vider. */
+  class OvenTestModal extends FuzzySuggestModal {
+    constructor(app, plugin) { super(app); this.plugin = plugin; }
+    getItems() { return ["fill", "white", "amber", "grey", "finish", "empty"]; }
+    getItemText(v) { const k = "oven.test." + v; return this.plugin.t(k); }
+    onChooseItem(v) { const msg = this.plugin.ovenTest(v); if (msg) new Notice(msg); }
+  }
+
   /** Le nom d'origine d'un Âge renommé : les noms gravés à l'observatoire qui ne sont plus ceux d'une note, ou ce qu'on tape (classe créée à la demande). */
   const formerNameModal = (app, cands, placeholder, onChoose) => {
     class FormerNameModal extends obsidian.SuggestModal {
@@ -276,6 +284,16 @@ module.exports = function build(Base, core, AGEX) {
       if (res === "max") return t("oven.add.max");
       if (typeof res === "string" && res.startsWith("none:")) { const ing = "oven.ing." + res.slice(5); return t("oven.add.none", t(ing)); }
       return null;
+    }
+    /** Les essais de la machine : "fill" (neuf mesures de chaque), "white" / "amber" / "grey" (cinq granulés), "finish" (la fournée sort), "empty" (tout à zéro). */
+    ovenTest(v) {
+      const OV = require("./oven"), h = HV.stateOf(this.ext), P = HV.pelletsOf(this.ext), o = OV.stateOf(this.ext), t = (k) => (this.t ? this.t(k) : k);
+      if (v === "fill") for (const id of HV.INGREDIENTS) h.stock[id] = Math.max(h.stock[id], 9);
+      else if (v === "white" || v === "amber" || v === "grey") P[v] += 5;
+      else if (v === "finish") { if (!o.batch) return t("oven.test.nobatch"); o.batch.at = Date.now() - o.batch.dur - 1; }
+      else if (v === "empty") { for (const id of HV.INGREDIENTS) h.stock[id] = 0; P.white = P.amber = P.grey = 0; o.column = []; o.levers = [0, 0, 0, 0]; o.batch = null; }
+      this.saveExt();
+      const k = "oven.test." + v; return t("oven.test.done") + " " + t(k) + (v === "fill" ? " " + t("oven.test.reopen") : "");
     }
     /** La caverne Bahro (src/relto-cave.js) : les granulés de l'étagère, le granulé qui tombe ; un granulé perdu (personne en bas) s'en va sans bruit. */
     caveState() {
@@ -620,6 +638,7 @@ module.exports = function build(Base, core, AGEX) {
       this.addCommand({ id: "open-relto-book", name: "Open the Relto book", callback: () => RBK.openReltoBook(this) });
       this.addCommand({ id: "toggle-relto-ribbon", name: "Relto button: switch between the Relto book and the last Relto visited", callback: () => RBK.toggleRibbon(this) });
       this.addCommand({ id: "memories-clear", name: this.t("mem.clear.cmd"), callback: () => this.forgetWonders(null, (ok) => { if (ok) this.refreshLive(); }) });
+      this.addCommand({ id: "oven-test", name: this.t("oven.test.cmd"), callback: () => new OvenTestModal(this.app, this).open() }); /* pour essayer la machine et la caverne sans attendre les récoltes */
       this.addCommand({ id: "mutation-advance", name: this.t("mut.test.cmd"), callback: () => this.advanceMutation() }); /* pour essayer : quatre jours de pression d'un coup sur l'Âge ouvert */
       this.addCommand({ id: "dni-numerals-report", name: "D'ni numerals: diagnostic report", callback: () => { const r = this.dni ? this.dni.report() : "no numerals module"; console.log("[Age Writer] D'ni numerals\n" + r); new Notice(r, 15000); } });
       this.addCommand({ id: "start-story", name: "Start the story (create or open the story Relto)", callback: () => R.startStory(this) });

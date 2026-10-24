@@ -225,7 +225,7 @@ function drawOven(r, ctx, sc, sky, t) {
  */
 function leanTo(r, ctx, col, sky, t, hx) {
   const tr = TR(r), skin = skinOf(r), st = stateOf(r), ph = st.phase, cooking = ph && ph.phase === "cooking", night = clamp(sky.night == null ? 0 : sky.night);
-  const x0 = hx - 60, x1 = skin === "glass" ? hx - 31 : hx - 28, top = GY - 30, low = GY - 22;
+  const x0 = hx - 60, x1 = skin === "glass" ? hx - 29 : hx - 28, top = GY - 30, low = GY - 22;
   let vent = null; /* d'où sort la fumée */
   if (skin === "castle") {
     /* une petite forge gothique, un peu plus petite que la chapelle et de la même pierre (grise et brune, moussue) :
