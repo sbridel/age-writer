@@ -49,6 +49,36 @@ function vaultCrack(r, ctx, c, castle, t) {
   r.hot.push({ x, y: y - 6, w, h: h + 6, tip: castle ? tr("cave.stairs") : tr("cave.trap"), go: "cavetop" });
 }
 
+/**
+ * L'or, l'argent et les gemmes dans les parois (pages « gold », « silver », « gems ») : des filons et des pierres serties
+ * dans la roche, qui ne se voient que là où la lumière les touche. `light(x, y)` : 0 (le noir) à 1 (en pleine lumière).
+ * `tint` : la couleur de la lumière (le jour, ou le vert des algues). Déterministe : la graine du Relto.
+ */
+function caveOre(r, ctx, light, t, tint) {
+  const adds = (r.scene && r.scene.additions) || [], seed = (r.scene && r.scene.seed) || 1;
+  const free = (x, y) => !(x > 30 && x < 210 && y > 132 && y < 214) && !(x > 560 && x < 624 && y > 90) && !(x > 470 && x < 545 && y > 190) && !(x > 340 && x < 372 && y < 135);
+  for (const kind of ["gold", "silver", "gems"]) {
+    const a = adds.find((x) => x.type === kind); if (!a) continue;
+    const d = clamp(a.density == null ? 0.6 : a.density), q = (k) => (fnv(seed + kind + k) % 10000) / 10000, n = Math.round(4 + d * 8);
+    for (let i = 0; i < n; i++) {
+      let x = 24 + q("x" + i) * (W - 48), y = 44 + q("y" + i) * 200; if (!free(x, y)) continue;
+      const L = light(x, y); if (L <= 0.02) continue;
+      if (kind === "gems") {
+        const PAL = [[214, 60, 80], [60, 190, 120], [70, 120, 220], [170, 90, 210], [240, 190, 70]], col = PAL[Math.floor(q("c" + i) * PAL.length)], sz = 2.2 + q("s" + i) * 2.8, pulse = 0.6 + 0.4 * Math.sin(t * 1.3 + i * 2.1);
+        const g = ctx.createRadialGradient(x, y, 0.5, x, y, sz * 3); g.addColorStop(0, rgba(col[0], col[1], col[2], 0.35 * L * pulse)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0)); ctx.fillStyle = g; ctx.fillRect(x - sz * 3, y - sz * 3, sz * 6, sz * 6);
+        ctx.fillStyle = rgba(col[0], col[1], col[2], 0.9 * L); ctx.beginPath(); ctx.moveTo(x, y - sz); ctx.lineTo(x + sz * 0.8, y - sz * 0.2); ctx.lineTo(x + sz * 0.5, y + sz * 0.8); ctx.lineTo(x - sz * 0.6, y + sz * 0.7); ctx.lineTo(x - sz * 0.8, y - sz * 0.3); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = rgba(255, 255, 255, 0.6 * L * pulse); ctx.fillRect(x - sz * 0.3, y - sz * 0.6, 1, 1);
+      } else {
+        const base = kind === "gold" ? [214, 170, 60] : [200, 210, 224], pts = [[x, y]], len = 6 + Math.floor(q("l" + i) * 4), dir = q("dir" + i) < 0.5 ? 1 : -1, slope = (q("sl" + i) - 0.5) * 0.8;
+        for (let k = 0; k < len; k++) { x += dir * (7 + q("dx" + i + k) * 7); y += (slope + (q("dy" + i + k) - 0.5) * 0.5) * 8; pts.push([x, y]); } /* un filon suit la roche : une longue ligne souple */
+        const line = (rgb, w, al) => { ctx.strokeStyle = rgba(Math.min(255, rgb[0] * tint[0]), Math.min(255, rgb[1] * tint[1]), Math.min(255, rgb[2] * tint[2]), al); ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let j = 1; j < pts.length - 1; j++) { const mx = (pts[j][0] + pts[j + 1][0]) / 2, my = (pts[j][1] + pts[j + 1][1]) / 2; ctx.quadraticCurveTo(pts[j][0], pts[j][1], mx, my); } ctx.lineTo(pts[pts.length - 1][0], pts[pts.length - 1][1]); ctx.stroke(); };
+        ctx.lineCap = "round"; line(base.map((v) => v * 0.5), 3, 0.5 * L); line(base, 1.3, 0.95 * L);
+        const tw = 0.5 + 0.5 * Math.sin(t * 1.7 + i * 2.3), [gx, gy] = pts[Math.floor(pts.length / 2)]; if (tw > 0.65) { ctx.fillStyle = rgba(255, 250, 225, (tw - 0.65) * 2.4 * L); ctx.beginPath(); ctx.arc(gx, gy, 1.5, 0, TAU); ctx.fill(); } /* un éclat qui prend la lumière */
+      }
+    }
+  }
+}
+
 /** Le relief des parois : une silhouette de caverne, au gré d'une graine. */
 function walls(ctx, fill, seed) {
   ctx.fillStyle = fill; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(W, 0); ctx.lineTo(W, H);
@@ -123,6 +153,7 @@ function drawCaveTop(r, ctx, sc, sky, t) {
   ctx.fillStyle = "#000"; crack(); ctx.fill();
   const gl = ctx.createLinearGradient(0, 266, 0, 160); gl.addColorStop(0, rgba(90, 200, 150, fh ? 0.28 : 0.12 + 0.04 * Math.sin(t * 1.3))); gl.addColorStop(1, rgba(90, 200, 150, 0)); ctx.save(); crack(); ctx.clip(); ctx.fillStyle = gl; ctx.fillRect(560, 150, 60, 120); ctx.restore();
   r.hot.push({ x: 566, y: 96, w: 52, h: 172, tip: tr("cave.down"), go: "cavebottom" });
+  caveOre(r, ctx, (x, y) => { const cone = clamp(1 - Math.abs(x - 320) / (18 + (y / 270) * 105)); return shut ? 0.12 : 0.22 + 0.78 * cone; }, t, [1, 1, 0.95]); /* les minerais des pages, dans la roche : ils prennent le rai de jour */
   if (shut) { ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(0, 0, W, H); } /* la trappe fermée : la caverne retourne au noir */
   /* des taches de mousse qui luit, çà et là */
   for (let i = 0; i < 9; i++) { const x = q("gx" + i) * W, y = 60 + q("gy" + i) * 190, a = 0.18 + 0.1 * Math.sin(t * 0.8 + i); ctx.fillStyle = rgba(110, 210, 160, a); ctx.beginPath(); ctx.arc(x, y, 1 + q("gr" + i) * 1.4, 0, TAU); ctx.fill(); }
@@ -188,6 +219,7 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
     ctx.save(); ctx.beginPath(); ctx.rect(0, H - reveal, W, reveal); ctx.clip(); ctx.globalAlpha = lit; walls(ctx, "#1b2a24", seed); ctx.restore(); /* la paroi n'apparaît que là où la lueur est montée */
     ctx.fillStyle = g; ctx.fillRect(0, H - reveal, W, reveal);
     for (let i = 0; i < 9; i++) { const kk = fnv("bstrata" + i); ctx.strokeStyle = rgba(30, 60, 50, 0.4 * lit); ctx.lineWidth = 1; ctx.beginPath(); for (let x = 0; x <= W; x += 16) { const y = 30 + i * 28 + 6 * Math.sin(x / 60 + kk); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); }
+    caveOre(r, ctx, (x, y) => (y > H - reveal ? lit * clamp((y - (H - reveal)) / 40) : 0), t, [0.8, 1.15, 0.95]); /* l'or, l'argent, les gemmes s'allument dans la lueur verte */
     paintings(ctx, reveal, seed);
     const seen = (y) => clamp((reveal - (H - y + 20)) / 50); /* la lueur doit les avoir atteintes */
     traces(ctx, ph.k, lit, seen, t); /* les Bahro : leurs ombres qui fuient, leurs mains encore humides ; jamais eux */

@@ -15,6 +15,8 @@ function renderMany(host, ages) {
   host = host || document.body;
   const dni = new Dni({ getMode: () => "auto" }); dni.ready = true;
   const variants = [
+    { h: 13, t: 3.1, env: {}, pages: ["page_gold", "page_silver", "page_gems"], view: "cavetop", now: 1800000000000, cave: { good: 7, bad: 2, drop: null }, label: "CAVE top / gold, silver and gems in the rock" },
+    { h: 21, t: 3.1, env: {}, pages: ["page_gold", "page_silver", "page_gems"], view: "cavebottom", now: 1800000000000, cave: { good: 6, bad: 2, drop: { at: 1799999935500, q: "good" } }, label: "CAVE bottom / the ores light up in the glow" },
     { h: 21, t: 3.1, env: {}, pages: ["page_glasshouse"], view: "vault", label: "VAULT glasshouse / the bronze trapdoor" },
     { h: 13, t: 3.1, env: {}, pages: [], view: "cavetop", now: 1800000000000, cave: { good: 7, bad: 2, drop: null, shut: true }, label: "CAVE top / the hatch shut" },
     { h: 14, t: 3.1, env: {}, pages: [], oven: "cook", label: "ISLAND oven day / the lean-to against the cabin, its chimney smoking" },

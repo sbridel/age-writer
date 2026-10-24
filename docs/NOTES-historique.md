@@ -708,6 +708,7 @@ Note : `claude/DESIGN-reve-et-caverne-bahro.md` (projet), sections 1, 2, 3 et 10
 - `src/relto-cave.js` (4b) : le haut (roche, stalactites, ciel par la fente, cercle de pierres, niche, main gravée, faille) et le bas (le bassin, la lueur, les peintures provisoires, les traces : ombres et mains humides) ; chute `FALL_MS` = 60 s, lumière 10 s. Accès par `vaultCrack` (cellier, crypte). Sons `caveSfx` (drop, splash, fizz, scratch, cry).
 - `src/relto-glass.js` : `stainedBay` (vitrail art nouveau, ou verre seul avec `plain`), `glassOnly`, `frostedDome` ; la Verrière dehors (mur de mosaïque pleine largeur, pilastres, corniche, soubassement, épi rattaché).
 - `src/genscene.js` : algues avivées (`S.fed` = note de vie `fedPellet`). `src/amounts.js` : `resolved.presence` (la phrase du granulé suit la loi de la vie). `src/genscene-wonders.js` : quatre merveilles redessinées.
+- Caverne : `caveHatch` (`ext.cave.shut`, la chaîne), `caveOre` (filons et gemmes des pages gold/silver/gems, visibles là où la lumière les touche) ; cellier : `vaultCrack` devient une trappe (bois, bronze), plus de nom sous les niches ; `ironGrille` (relto-glass) devant le lanterneau et les impostes de la Verrière.
 - Commande `oven-test` (menu de la clé, `OvenTestModal`, `ovenTest`) : remplir les trémies, cinq granulés d'une couleur, finir la fournée, tout vider.
 - Tests : `harvest.test.js`, `oven.test.js` ; banc visuel (île, pièce, caverne) ; empreintes de la Verrière régénérées.
 
