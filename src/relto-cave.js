@@ -7,7 +7,7 @@
  *   faille vers le bas ;
  * - **le bas** (`cavebottom`) : le noir complet, un bassin. Le granulé tombe pendant FALL_MS (une minute) ; s'il est bon et qu'on est
  *   en bas quand il touche l'eau, la lueur des algues monte le long des parois pendant LIGHT_MS et révèle les peintures,
- *   et les Bahro, surpris en train de peindre, qui se fondent dans la roche quand elle baisse. Un granulé raté flotte et
+ *   et les traces des Bahro (on ne les voit jamais) : leurs ombres qui fuient sur la paroi, leurs mains encore humides. Un granulé raté flotte et
  *   fume en vert. Trop tard : l'eau est déjà noire.
  * On y descend par une faille dans le sol du cellier (l'escalier de la crypte au Château).
  * État (dans le plugin, `ext.pellets`, `ext.cave`) : r.opts.caveState(), onCaveDrop(), onCaveSeen(), onCaveSfx(kind).
@@ -117,24 +117,28 @@ function drawCaveTop(r, ctx, sc, sky, t) {
 }
 
 /**
- * Un Bahro accroupi contre la paroi, le bras levé vers ce qu'il peint : une silhouette longue et voûtée (crâne allongé
- * vers l'arrière, épaules hautes, membres longs et maigres, jambes repliées), bordée de la lueur des algues.
+ * Les Bahro ne se montrent pas : on voit leurs traces. Quand la lueur monte, de grandes ombres glissent sur la paroi
+ * (portées par ce qui se tient entre l'eau et la roche, qu'on ne voit jamais) et s'éloignent ; à côté des peintures,
+ * des empreintes de mains fraîches, ocre et humides, luisent, coulent un peu, et pâlissent quand la lumière baisse.
+ * `k` : ms depuis le choc ; `a` : l'intensité (la lueur, et ce qu'elle a atteint).
  */
-function bahro(ctx, x, y, s, flip, a, t) {
+function traces(ctx, k, a, seenAt, t) {
   if (a <= 0.01) return;
-  ctx.save(); ctx.translate(x, y); ctx.scale(flip ? -s : s, s); ctx.globalAlpha = a;
-  const body = "#07090b", rim = "rgba(140,230,190,0.55)", lw = 1 / s, reach = 2 * Math.sin(t * 1.3);
-  const limb = (pts, w) => { ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = body; ctx.lineWidth = w; ctx.beginPath(); pts.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.stroke(); ctx.strokeStyle = rim; ctx.lineWidth = lw; ctx.stroke(); };
-  limb([[-6, -14], [-18, -4], [-8, 0], [-2, 0]], 5); /* la jambe arrière, repliée */
-  limb([[4, -14], [-4, -6], [6, 0], [12, 0]], 5.5); /* la jambe avant */
-  ctx.fillStyle = body; ctx.strokeStyle = rim; ctx.lineWidth = lw; /* le torse, penché vers la paroi, les épaules hautes */
-  ctx.beginPath(); ctx.moveTo(-8, -12); ctx.quadraticCurveTo(-12, -30, -2, -40); ctx.quadraticCurveTo(8, -46, 16, -40); ctx.quadraticCurveTo(14, -26, 8, -12); ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(10, -44); ctx.quadraticCurveTo(12, -54, 22, -54); ctx.quadraticCurveTo(30, -53, 32, -48); ctx.quadraticCurveTo(24, -45, 18, -40); ctx.quadraticCurveTo(10, -38, 10, -44); ctx.closePath(); ctx.fill(); ctx.stroke(); /* la tête, allongée */
-  ctx.beginPath(); ctx.moveTo(12, -50); ctx.quadraticCurveTo(2, -58, -6, -54); ctx.lineWidth = 2.4 / s; ctx.strokeStyle = body; ctx.stroke(); ctx.lineWidth = lw; ctx.strokeStyle = rim; ctx.stroke(); /* le crâne qui file vers l'arrière */
-  limb([[12, -36], [26, -48 + reach], [36, -70 + reach], [40, -74 + reach]], 3.2); /* le bras levé, qui peint */
-  limb([[4, -30], [12, -18], [20, -6]], 3); /* l'autre bras, appuyé */
-  ctx.fillStyle = "rgba(230,200,120,0.9)"; ctx.beginPath(); ctx.arc(26, -50, 1.1, 0, TAU); ctx.fill(); /* l'œil, qui prend la lumière */
-  ctx.restore();
+  const go = clamp(k / 6500); /* elles fuient : à 6,5 s, elles ont quitté la lumière */
+  for (const [x0, dir, y, hgt, sp] of [[150, -1, 190, 150, 120], [470, 1, 175, 170, 150], [560, 1, 205, 120, 90]]) {
+    const x = x0 + dir * go * go * sp, al = a * seenAt(y + hgt / 2) * (1 - go) * 0.8; if (al <= 0.01) continue;
+    const g = ctx.createRadialGradient(x, y, 4, x, y, hgt * 0.55); g.addColorStop(0, rgba(2, 8, 6, al)); g.addColorStop(0.6, rgba(2, 8, 6, al * 0.6)); g.addColorStop(1, rgba(2, 8, 6, 0));
+    ctx.save(); ctx.translate(x, y); ctx.rotate(dir * 0.12 + Math.sin(t * 0.9 + x0) * 0.03); ctx.scale(0.42, 1); ctx.translate(-x, -y); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, hgt * 0.55, 0, TAU); ctx.fill(); ctx.restore();
+  }
+  for (const [x, y, rot, s2] of [[214, 200, -0.3, 1.1], [236, 214, 0.15, 1], [432, 182, 0.4, 1.15]]) { /* les mains, encore humides */
+    const al = a * seenAt(y); if (al <= 0.01) continue;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s2, s2); ctx.globalAlpha = al;
+    ctx.fillStyle = "#d8803e"; ctx.beginPath(); ctx.ellipse(0, 0, 6.5, 8, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = "#d8803e"; ctx.lineWidth = 3; ctx.lineCap = "round"; for (let f = 0; f < 5; f++) { const an = -2.5 + f * 0.4, len = f === 0 ? 11 : 16; ctx.beginPath(); ctx.moveTo(Math.cos(an) * 6, Math.sin(an) * 7); ctx.lineTo(Math.cos(an) * len, Math.sin(an) * (len + 2)); ctx.stroke(); }
+    ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(2, 7); ctx.lineTo(2.4, 7 + 6 * go + 3); ctx.stroke(); /* une coulure */
+    ctx.fillStyle = "rgba(255,230,190,0.55)"; ctx.beginPath(); ctx.ellipse(-2, -3, 2.2, 1, -0.5, 0, TAU); ctx.fill(); /* le mouillé, qui prend la lumière */
+    ctx.restore();
+  }
 }
 
 /** Les peintures de la paroi (premier jet, étape 4b ; l'étape 4c y racontera l'histoire du joueur) : mains, spirales, entailles, ocre. */
@@ -160,7 +164,7 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
   let lit = 0, reveal = 0;
   if (ph && ph.kind === "lit") {
     const k = ph.k; lit = k < 2500 ? k / 2500 : k < 7500 ? 1 : Math.max(0, 1 - (k - 7500) / 2500); reveal = Math.min(H, (k / 3200) * H) * (k < 7500 ? 1 : lit); /* la lueur monte en 3 s, tient, puis retombe */
-    const fx = (r._caveFx = r._caveFx || {}); if (!fx[st.drop.at]) { fx[st.drop.at] = true; if (r.opts.onCaveSfx) { r.opts.onCaveSfx("splash"); setTimeout(() => r.opts.onCaveSfx("cry"), 2600); } if (r.opts.onCaveSeen) r.opts.onCaveSeen(); }
+    const fx = (r._caveFx = r._caveFx || {}); if (!fx[st.drop.at]) { fx[st.drop.at] = true; if (r.opts.onCaveSfx) { r.opts.onCaveSfx("splash"); setTimeout(() => r.opts.onCaveSfx("scratch"), 1400); setTimeout(() => r.opts.onCaveSfx("cry"), 3200); } if (r.opts.onCaveSeen) r.opts.onCaveSeen(); }
   } else if (ph && ph.kind === "fizz") {
     const fx = (r._caveFx = r._caveFx || {}); if (!fx[st.drop.at]) { fx[st.drop.at] = true; if (r.opts.onCaveSfx) r.opts.onCaveSfx("fizz"); }
   }
@@ -170,9 +174,8 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
     ctx.fillStyle = g; ctx.fillRect(0, H - reveal, W, reveal);
     for (let i = 0; i < 9; i++) { const kk = fnv("bstrata" + i); ctx.strokeStyle = rgba(30, 60, 50, 0.4 * lit); ctx.lineWidth = 1; ctx.beginPath(); for (let x = 0; x <= W; x += 16) { const y = 30 + i * 28 + 6 * Math.sin(x / 60 + kk); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); }
     paintings(ctx, reveal, seed);
-    const shy = ph.k < 6000 ? lit : lit * Math.max(0, 1 - (ph.k - 6000) / 1800); /* les Bahro se fondent dans la roche avant que la lueur baisse */
-    const seen = (y) => clamp((reveal - (H - y + 60)) / 50); /* la lueur doit les avoir atteints */
-    bahro(ctx, 104, 262, 1.5, false, shy * seen(262), t); bahro(ctx, 516, 252, 1.3, true, shy * seen(252), t + 1); bahro(ctx, 582, 270, 1.05, true, shy * 0.8 * seen(270), t + 2);
+    const seen = (y) => clamp((reveal - (H - y + 20)) / 50); /* la lueur doit les avoir atteintes */
+    traces(ctx, ph.k, lit, seen, t); /* les Bahro : leurs ombres qui fuient, leurs mains encore humides ; jamais eux */
     const pg = ctx.createRadialGradient(320, 300, 4, 320, 300, 180); pg.addColorStop(0, rgba(170, 255, 210, 0.9 * lit)); pg.addColorStop(0.3, rgba(80, 230, 160, 0.4 * lit)); pg.addColorStop(1, rgba(40, 160, 120, 0)); ctx.fillStyle = pg; ctx.beginPath(); ctx.ellipse(320, 300, 175, 32, 0, 0, TAU); ctx.fill();
   }
   if (ph && ph.kind === "fizz") { /* le raté : il flotte, et fume en vert */

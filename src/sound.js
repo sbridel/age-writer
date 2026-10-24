@@ -852,6 +852,7 @@ function caveSfx(kind, volume = 0.3) {
     if (kind === "drop") { for (let i = 0; i < 4; i++) tone(2400 - i * 300, 1800 - i * 300, t + i * 0.28, 0.25, "sine", 0.18 / (i + 1)); }
     else if (kind === "splash") { hiss(t, 0.5, 900, 0.45); tone(180, 70, t, 0.4, "sine", 0.35); for (const [i, f] of [392, 494, 587, 784].entries()) tone(f, f, t + 0.5 + i * 0.12, 1.4, "sine", 0.12); }
     else if (kind === "fizz") { hiss(t, 1.8, 3200, 0.22); tone(140, 90, t, 0.3, "sine", 0.2); }
+    else if (kind === "scratch") { for (let i = 0; i < 5; i++) hiss(t + i * 0.13 + (i % 2) * 0.04, 0.09, 2400 + i * 300, 0.3); hiss(t + 0.9, 0.3, 1600, 0.18); } /* des griffes sur la roche, dans le noir */
     else { /* le cri : un appel qui monte et retombe, un grognement, deux pépiements */
       tone(320, 520, t, 0.5, "sawtooth", 0.12); tone(520, 240, t + 0.5, 0.6, "sawtooth", 0.1);
       const o = c.createOscillator(), lp = c.createBiquadFilter(), e = c.createGain(); o.type = "sawtooth"; o.frequency.value = 85; lp.type = "lowpass"; lp.frequency.value = 380; e.gain.setValueAtTime(0, t + 1.1); e.gain.linearRampToValueAtTime(0.2, t + 1.2); e.gain.linearRampToValueAtTime(0, t + 1.7); o.connect(lp); lp.connect(e); e.connect(out); o.start(t + 1.1); o.stop(t + 1.75);
