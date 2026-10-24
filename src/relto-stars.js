@@ -86,6 +86,65 @@ function bahroShadow(ctx, x, y, s, lean, t) {
   ctx.restore(); void L;
 }
 
+/**
+ * Un pilier vivant (l'auteur : « plus organique », sans rien copier) : un tronc qui ondule comme une racine ou une vertèbre,
+ * se renfle et s'étrangle, s'étale au sol en racines, et porte au sommet une coupe en bouton entre deux cornes recourbées.
+ * Les gravures suivent ses courbes : deux rubans qui s'enroulent, des points, une spirale ; et deux de nos signes, à l'ocre.
+ * Elles luisent bleu quand la vasque au-dessus est allumée. Renvoie { top (le haut de la coupe), w }.
+ */
+function totem(ctx, p, on, hov, t, signs) {
+  const s = p.s, hgt = 80 * s, w = 9 * s, key = "tot" + p.i, ph = q(key + "ph") * TAU, side = p.x < 320 ? 1 : p.x > 320 ? -1 : 0;
+  const cx = (v) => p.x + Math.sin(v * Math.PI * 1.3 + ph) * w * 0.35; /* l'axe ondule */
+  const wd = (v) => w * (1.05 - 0.3 * v + 0.16 * Math.sin(v * Math.PI * 3.2 + ph) + (v < 0.12 ? (0.12 - v) * 5 : 0)); /* renflements, étranglements ; le pied s'évase */
+  const N = 18, Lp = [], Rp = []; for (let k = 0; k <= N; k++) { const v = k / N, y = p.y - v * hgt; Lp.push([cx(v) - wd(v), y]); Rp.push([cx(v) + wd(v), y]); }
+  const body = () => { ctx.beginPath(); Lp.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); for (let k = Rp.length - 1; k >= 0; k--) ctx.lineTo(Rp[k][0], Rp[k][1]); ctx.closePath(); };
+  /* les racines : trois langues de pierre qui s'étalent au sol */
+  ctx.fillStyle = "#151824"; for (const [dx, len] of [[-1, 1], [1, 0.9], [-0.2, 0.6]]) { ctx.beginPath(); ctx.moveTo(p.x - w * 0.8, p.y - 2 * s); ctx.quadraticCurveTo(p.x + dx * w * 1.6, p.y + 1 * s, p.x + dx * w * (2 + len), p.y + 3 * s); ctx.quadraticCurveTo(p.x + dx * w * 1.2, p.y + 4 * s, p.x + w * 0.8, p.y); ctx.closePath(); ctx.fill(); }
+  const pg = ctx.createLinearGradient(p.x - w * 1.2, 0, p.x + w * 1.2, 0); pg.addColorStop(0, side > 0 ? "#13161f" : "#1d2131"); pg.addColorStop(0.5, hov ? "#383d52" : "#282c3e"); pg.addColorStop(1, side < 0 ? "#13161f" : "#1d2131"); ctx.fillStyle = pg; body(); ctx.fill();
+  ctx.save(); body(); ctx.clip();
+  const lb = ctx.createLinearGradient(p.x - side * w, 0, p.x + side * w * 1.2, 0); lb.addColorStop(0, blue(0)); lb.addColorStop(1, blue(0.24)); ctx.fillStyle = lb; ctx.fillRect(p.x - w * 2, p.y - hgt, w * 4, hgt); /* la fissure éclaire le flanc qui la regarde */
+  for (let k = 0; k < 5; k++) { const v = 0.15 + k * 0.17, y = p.y - v * hgt; ctx.strokeStyle = rgba(0, 0, 0, 0.18); ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(cx(v), y, wd(v), 1.6 * s, 0, 0, Math.PI); ctx.stroke(); } /* les anneaux de croissance, comme sur une corne */
+  const ink = on ? rgba(170, 200, 255, 0.9) : rgba(150, 160, 190, 0.3); ctx.strokeStyle = ink; ctx.lineWidth = Math.max(0.8, 1.05 * s); ctx.lineCap = "round";
+  { /* un seul ruban qui serpente, une crosse enroulée à chaque courbe (des rinceaux), des points entre ses boucles */
+    const rib = (v) => [cx(v) + Math.sin(v * Math.PI * 4 + ph) * wd(v) * 0.6, p.y - v * hgt];
+    ctx.beginPath(); for (let k = 0; k <= 40; k++) { const [x, y] = rib(0.08 + (k / 40) * 0.68); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
+    for (let k = 0; k < 4; k++) { const v = (((k + 0.5) - ph / Math.PI) / 4) % 1, vv = 0.08 + ((v + 1) % 1) * 0.66, [x, y] = rib(vv), sg = Math.sin(vv * Math.PI * 4 + ph) > 0 ? -1 : 1, rr = wd(vv) * 0.32;
+      ctx.beginPath(); for (let a = 0; a < TAU * 1.2; a += 0.35) { const r2 = rr * (1 - a / (TAU * 1.4)); ctx.lineTo(x + sg * (rr - Math.cos(a) * r2), y - Math.sin(a) * r2); } ctx.stroke(); } /* les crosses */
+    ctx.fillStyle = ink; for (let k = 0; k < 5; k++) { const v = 0.14 + k * 0.13, [x] = rib(v), y = p.y - v * hgt, ox = x < cx(v) ? 1 : -1; ctx.beginPath(); ctx.arc(cx(v) + ox * wd(v) * 0.45, y, 0.9 * s, 0, TAU); ctx.fill(); } }
+  if (on) { const g = ctx.createLinearGradient(0, p.y, 0, p.y - hgt); g.addColorStop(0, blue(0.18)); g.addColorStop(1, blue(0)); ctx.fillStyle = g; ctx.fillRect(p.x - w * 2, p.y - hgt, w * 4, hgt); }
+  ctx.restore();
+  for (let k = 0; k < 2; k++) { const id = signs.length ? signs[(p.i * 2 + k) % signs.length] : F.ELEMENTS[(p.i * 5 + k * 7) % F.ELEMENTS.length], v = 0.84 - k * 0.07; carved(ctx, id, cx(v) + (k ? 1 : -1) * wd(v) * 0.15, p.y - v * hgt, 3.6 * s, on ? 0.8 + 0.2 * Math.sin(t * 1.1 + k) : 0, "pil" + p.i + k); }
+  /* le sommet : une coupe en bouton, deux cornes qui s'ouvrent */
+  const tx = cx(1), ty = p.y - hgt, cw = w * 1.15;
+  ctx.fillStyle = "#1c2030"; ctx.beginPath(); ctx.moveTo(tx - wd(1), ty + 1); ctx.bezierCurveTo(tx - cw * 1.4, ty - 4 * s, tx - cw * 1.2, ty - 9 * s, tx - cw, ty - 10 * s); ctx.lineTo(tx + cw, ty - 10 * s); ctx.bezierCurveTo(tx + cw * 1.2, ty - 9 * s, tx + cw * 1.4, ty - 4 * s, tx + wd(1), ty + 1); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = on ? "#2c3658" : "#0b0d15"; ctx.beginPath(); ctx.ellipse(tx, ty - 10 * s, cw * 0.95, 2.4 * s, 0, 0, TAU); ctx.fill();
+  if (on) { const eg = ctx.createRadialGradient(tx, ty - 11 * s, 1, tx, ty - 11 * s, cw * 2); eg.addColorStop(0, violet(0.45)); eg.addColorStop(1, violet(0)); ctx.fillStyle = eg; ctx.fillRect(tx - cw * 2, ty - 11 * s - cw * 2, cw * 4, cw * 4); } /* une braise violette dans la coupe */
+  for (const sg of [-1, 1]) { const hg = ctx.createLinearGradient(tx, ty, tx + sg * cw * 2.4, ty - 20 * s); hg.addColorStop(0, "#1c2030"); hg.addColorStop(1, "#8a8678"); ctx.strokeStyle = hg; ctx.lineCap = "round";
+    ctx.lineWidth = 3 * s; ctx.beginPath(); ctx.moveTo(tx + sg * cw * 0.7, ty - 7 * s); ctx.quadraticCurveTo(tx + sg * cw * 2.2, ty - 6 * s, tx + sg * cw * 2.1, ty - 16 * s); ctx.stroke();
+    ctx.lineWidth = 1.8 * s; ctx.beginPath(); ctx.moveTo(tx + sg * cw * 2.1, ty - 16 * s); ctx.quadraticCurveTo(tx + sg * cw * 2.05, ty - 20 * s, tx + sg * cw * 1.7, ty - 22 * s); ctx.stroke(); } /* deux cornes, pâles au bout */
+  return { top: ty - 10 * s, w };
+}
+
+/**
+ * Le lustre (l'auteur l'aime, dans ses images ; rien de copié) : sous la voûte, au-dessus de la fissure, une couronne de pointes
+ * recourbées, pâles comme de l'os, autour d'un globe de lumière bleue, pendue à une chaîne. Il s'allume quand quelqu'un vient
+ * (le lac au degré 2 et plus) ; éteint, un globe noir et des pointes dans l'ombre.
+ */
+function chandelier(ctx, degree, t) {
+  const x = 320, y = 76, on = degree >= 2 ? (degree >= 3 ? 1 : 0.6) : 0, pulse = 0.88 + 0.12 * Math.sin(t * 0.9);
+  ctx.strokeStyle = rgba(90, 90, 100, 0.8); ctx.lineWidth = 1; for (let yy = 40; yy < y - 10; yy += 4) { ctx.beginPath(); ctx.ellipse(x, yy, 1, 2, 0, 0, TAU); ctx.stroke(); } /* la chaîne, depuis la voûte */
+  if (on) { const g = ctx.createRadialGradient(x, y, 2, x, y, 120); g.addColorStop(0, rgba(200, 225, 255, 0.35 * on * pulse)); g.addColorStop(0.4, blue(0.12 * on)); g.addColorStop(1, blue(0)); ctx.fillStyle = g; ctx.fillRect(x - 120, y - 120, 240, 240); }
+  for (let i = 0; i < 16; i++) { /* un éclat de pointes effilées, dans tous les sens : sombres comme de la pierre, la lumière au bout */
+    const a = (i / 16) * TAU + q("cha" + i) * 0.3, up = -Math.sin(a), len = (16 + q("chl" + i) * 22) * (up > 0 ? 1.15 : 0.85), dx = Math.cos(a), dy = Math.sin(a) * 0.75, back = (i % 3) === 1;
+    const tx = x + dx * len, ty = y + dy * len, nx = -dy, ny = dx, b0 = 2.4;
+    ctx.globalAlpha = back ? 0.6 : 1; ctx.fillStyle = "#1e1f28"; ctx.beginPath(); ctx.moveTo(x + nx * b0, y + ny * b0); ctx.lineTo(tx, ty); ctx.lineTo(x - nx * b0, y - ny * b0); ctx.closePath(); ctx.fill();
+    if (on) { const tg = ctx.createLinearGradient(x, y, tx, ty); tg.addColorStop(0.55, blue(0)); tg.addColorStop(1, rgba(220, 235, 255, 0.85 * on)); ctx.strokeStyle = tg; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + dx * len * 0.5, y + dy * len * 0.5); ctx.lineTo(tx, ty); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = on ? rgba(225, 240, 255, 0.95 * on * pulse) : "#0a0b12"; ctx.beginPath(); ctx.arc(x, y, 6.5, 0, TAU); ctx.fill(); /* le globe */
+  if (on) { ctx.fillStyle = rgba(255, 255, 255, 0.9 * on); ctx.beginPath(); ctx.arc(x - 1.5, y - 1.5, 2.2, 0, TAU); ctx.fill(); }
+}
+
 function drawStars(r, ctx, sc, sky, t) {
   const tr = TR(r), degree = degreeOf(r), lit = degree >= 3 ? [0, 1, 2, 3, 4] : degree >= 2 ? [0, 2] : [], FR = require("./relto-fresco");
   /* la paroi : de la roche en masses, une caverne qui se referme autour de nous ; la lumière monte de la fissure */
@@ -96,6 +155,7 @@ function drawStars(r, ctx, sc, sky, t) {
   ctx.fillStyle = "#05050b"; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(W, 0); ctx.lineTo(W, 24);
   for (let x = W; x >= 0; x -= 14) { const near = 1 - Math.min(1, Math.abs(x - 320) / 170), len = 8 + near * 46 + q("st" + x) * (14 + near * 30); ctx.lineTo(x - 3, 22 + near * 18); ctx.lineTo(x - 7, 22 + len); ctx.lineTo(x - 11, 22 + near * 18); }
   ctx.lineTo(0, 24); ctx.closePath(); ctx.fill();
+  chandelier(ctx, degree, t); /* le lustre, sous la voûte */
   /* la bouche sombre, dans un angle : là d'où l'on vient */
   ctx.fillStyle = "#000"; ctx.beginPath(); ctx.moveTo(52, 64); ctx.quadraticCurveTo(70, 40, 98, 52); ctx.lineTo(110, 112); ctx.quadraticCurveTo(84, 124, 56, 112); ctx.closePath(); ctx.fill();
   /* ce qu'ils ont peint : des figures à l'ocre, à demi effacées ; et les mains soufflées */
@@ -131,23 +191,9 @@ function drawStars(r, ctx, sc, sky, t) {
   /* les cinq totems, du fond vers nous : un tronc de pierre irrégulier, gravé de bandes et de nos signes, une coupe à deux cornes au sommet ; les vasques au-dessus */
   const signs = F.itemsOf((r.scene && r.scene.ages) || [], {}).filter((it) => it.kind === "age").slice(-15).flatMap((it) => it.parts.slice(0, 1));
   for (const p of PILLARS.slice().sort((a, b) => a.y - b.y)) {
-    const on = lit.includes(p.i), hgt = 76 * p.s, w = 10 * p.s, top = p.y - hgt, hov = r.hover && r.hover.pillar === p.i + 1, side = p.x < 320 ? 1 : p.x > 320 ? -1 : 0, key = "tot" + p.i;
-    const edge = (sgn) => { const pts = []; for (let k = 0; k <= 6; k++) { const v = k / 6, ww = w * (1.08 - 0.22 * v) * (0.9 + q(key + sgn + k) * 0.2); pts.push([p.x + sgn * ww, p.y - v * hgt]); } return pts; };
-    const L0 = edge(-1), R0 = edge(1), body = () => { ctx.beginPath(); L0.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); for (let k = R0.length - 1; k >= 0; k--) ctx.lineTo(R0[k][0], R0[k][1]); ctx.closePath(); };
-    const pg = ctx.createLinearGradient(p.x - w, 0, p.x + w, 0); pg.addColorStop(0, side > 0 ? "#141722" : "#1c2030"); pg.addColorStop(0.5, hov ? "#363b4e" : "#272b3c"); pg.addColorStop(1, side < 0 ? "#141722" : "#1c2030"); ctx.fillStyle = pg; body(); ctx.fill();
-    ctx.save(); body(); ctx.clip();
-    const lb = ctx.createLinearGradient(p.x - side * w, 0, p.x + side * w, 0); lb.addColorStop(0, blue(0)); lb.addColorStop(1, blue(0.22)); ctx.fillStyle = lb; ctx.fillRect(p.x - w * 1.3, top, w * 2.6, hgt); /* la fissure éclaire le flanc qui la regarde */
-    const ink = on ? rgba(180, 205, 255, 0.85) : rgba(150, 160, 190, 0.32); ctx.strokeStyle = ink; ctx.lineWidth = Math.max(0.8, 1.1 * p.s); ctx.lineCap = "round";
-    for (const v of [0.12, 0.55]) { const y = p.y - v * hgt; ctx.beginPath(); for (let k = 0; k <= 8; k++) { const x = p.x - w * 1.1 + (k / 8) * w * 2.2, yy = y + (k % 2 ? -3 : 3) * p.s; k ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy); } ctx.stroke(); } /* deux bandes en zigzag */
-    { const cy = p.y - 0.34 * hgt; ctx.beginPath(); for (let a = 0; a < TAU * 2.2; a += 0.3) { const rr = (a / (TAU * 2.2)) * w * 0.7; ctx.lineTo(p.x + Math.cos(a) * rr, cy + Math.sin(a) * rr * 0.8); } ctx.stroke(); } /* une spirale */
-    ctx.restore();
-    for (let k = 0; k < 2; k++) { const id = signs.length ? signs[(p.i * 2 + k) % signs.length] : F.ELEMENTS[(p.i * 5 + k * 7) % F.ELEMENTS.length]; carved(ctx, id, p.x, p.y - hgt * (0.72 + k * 0.14) + (k ? -2 : 0) * p.s, 4.6 * p.s, on ? 0.8 + 0.2 * Math.sin(t * 1.1 + k) : 0, "pil" + p.i + k); }
-    /* la coupe au sommet, et ses deux cornes */
-    const cw = w * 1.5, cyy = top - 2 * p.s; ctx.fillStyle = "#1a1d2a"; ctx.beginPath(); ctx.moveTo(p.x - w * 0.7, top + 2 * p.s); ctx.quadraticCurveTo(p.x - cw, cyy, p.x - cw, cyy - 3 * p.s); ctx.lineTo(p.x + cw, cyy - 3 * p.s); ctx.quadraticCurveTo(p.x + cw, cyy, p.x + w * 0.7, top + 2 * p.s); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = on ? "#2e3a58" : "#0c0e16"; ctx.beginPath(); ctx.ellipse(p.x, cyy - 3 * p.s, cw * 0.92, 2.6 * p.s, 0, 0, TAU); ctx.fill();
-    if (on) { const eg = ctx.createRadialGradient(p.x, cyy - 4 * p.s, 1, p.x, cyy - 4 * p.s, cw * 1.6); eg.addColorStop(0, violet(0.45)); eg.addColorStop(1, violet(0)); ctx.fillStyle = eg; ctx.fillRect(p.x - cw * 1.6, cyy - cw * 1.6, cw * 3.2, cw * 3.2); } /* une braise violette dans la coupe */
-    ctx.strokeStyle = "#1a1d2a"; ctx.lineWidth = 2.4 * p.s; ctx.lineCap = "round"; for (const sg of [-1, 1]) { ctx.beginPath(); ctx.moveTo(p.x + sg * cw * 0.9, cyy - 3 * p.s); ctx.quadraticCurveTo(p.x + sg * cw * 1.5, cyy - 10 * p.s, p.x + sg * cw * 1.1, cyy - 18 * p.s); ctx.stroke(); }
-    r.hot.push({ x: p.x - cw * 1.4, y: cyy - 20 * p.s, w: cw * 2.8, h: p.y - cyy + 20 * p.s, tip: on ? tr("stars.pillar.lit") : tr("stars.pillar"), pillar: p.i + 1 });
+    const on = lit.includes(p.i), hov = r.hover && r.hover.pillar === p.i + 1, T = totem(ctx, p, on, hov, t, signs);
+    const cyy = T.top;
+    r.hot.push({ x: p.x - T.w * 2.4, y: cyy - 22 * p.s, w: T.w * 4.8, h: p.y - cyy + 22 * p.s, tip: on ? tr("stars.pillar.lit") : tr("stars.pillar"), pillar: p.i + 1 });
     /* la vasque, pendue à trois cordes sous la voûte, au-dessus du totem : flamme bleu-violet */
     const vr = 10 * p.s, vx = p.x, vy = Math.max(70, cyy - 30 - 34 * p.s);
     ctx.strokeStyle = rgba(120, 110, 95, 0.5); ctx.lineWidth = 0.8; for (const dx of [-vr * 0.9, 0, vr * 0.9]) { ctx.beginPath(); ctx.moveTo(vx + dx * 0.15, 20); ctx.lineTo(vx + dx, vy - 2); ctx.stroke(); }
