@@ -42,12 +42,12 @@ const HINTS = {
     en: [
       "Light comes from what has burned, pressed hard; what feeds comes from what has rotted, pressed lightly.",
       "What gives light wants only the mineral, a little more ash than silt; a gentle fire, a long cooking.",
-      "The time twice as long as the heat is high; the press almost all the way.",
+      "Read your failures: dust means it was not pressed enough; grey means the mix or the fire is wrong. Change one thing at a time.",
     ],
     fr: [
       "La lumière vient de ce qui a brûlé, pressé fort ; ce qui nourrit vient de ce qui a pourri, pressé peu.",
       "Ce qui éclaire ne veut que du minéral, un peu plus de cendres que de limon ; un feu doux, une longue cuisson.",
-      "Le temps deux fois plus long que la chaleur n'est haute ; la presse presque à fond.",
+      "Lis tes ratés : une poussière, c'est qu'on n'a pas assez pressé ; un gris, c'est le mélange ou le feu. Ne change qu'une chose à la fois.",
     ],
   },
   strange: { // trois indices, de plus en plus précis (chaque appel à la commande en dévoile un de plus) ; les deux premiers ne nomment aucun bloc

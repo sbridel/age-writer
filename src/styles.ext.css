@@ -984,3 +984,7 @@
 .age-det__skynum { display: flex; align-items: center; gap: 8px; }
 .age-det__skynum > .age-det__skylabel { min-width: 6.5em; }
 .age-det__sym { margin-top: 2px; padding: 4px 8px; border-left: 2px solid #a9c79a; color: #cdbd94; font-style: italic; }
+/* la carte d'infobulle, au doigt : une valeur de la machine en chiffres D'ni (SVG), sur sa ligne */
+.age-relto__tipdni { display: flex; align-items: center; flex-wrap: wrap; color: #e0c27a; }
+.age-relto__tipnum { display: inline-flex; align-items: center; margin: 0 3px; }
+.age-relto__tipnum svg { height: 1.4em; width: auto; }

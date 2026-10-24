@@ -1314,7 +1314,7 @@ class ReltoRenderer {
     const late = Date.now() - this.tipAt >= (this.opts.tipDelay != null ? this.opts.tipDelay : TIP_DELAY);
     if (this.opts.hoverFrame !== false && !h.secret) { ctx.strokeStyle = "rgba(255,240,200,0.9)"; ctx.lineWidth = 1; ctx.strokeRect(h.x - 1, h.y - 1, h.w + 2, h.h + 2); } // cadre : réglage « Cadre des zones cliquables »
     if (!late || !(h.tip || h.dniTip) || h.secret) { this.tipOut(null); return; } /* une infobulle peut n'être qu'une valeur en chiffres D'ni (la machine, à l'Art de la Guilde) */
-    if (this.opts.onTip) { this.tipOut(h.tip || null); return; } // la carte d'infobulle (mode tactile) : le texte va sous l'image, lisible
+    if (this.opts.onTip) { this.tipOut(h.tip || null, h.dniTip || null); return; } // la carte d'infobulle (mode tactile) : le texte va sous l'image, lisible
     const [vx0, vx1, vy0] = this.visible_();
     // `h.frac` (facultatif) : une longueur de faisceau en rahnfee (src/beam.js), gravée en chiffres D'ni après le texte
     const fs = 10, fw = h.frac && this.dni && this.dni.fractionWidth ? this.dni.fractionWidth(h.frac, fs) + 6 : 0;
@@ -1332,7 +1332,7 @@ class ReltoRenderer {
   }
 
   /** La carte d'infobulle (mode tactile, `opts.onTip`) : appelée seulement quand le texte change. */
-  tipOut(text) { if (!this.opts.onTip || text === this.tipShown) return; this.tipShown = text; try { this.opts.onTip(text); } catch (e) { /* ignore */ } }
+  tipOut(text, parts = null) { if (!this.opts.onTip) return; const k = (text || "") + "|" + (parts ? JSON.stringify(parts) : ""); if (k === this.tipShown) return; this.tipShown = k; try { this.opts.onTip(text, parts); } catch (e) { /* ignore */ } } /* `parts` : une valeur en chiffres D'ni (la machine), que la carte dessine en SVG */
 
   // ---- vues ----------------------------------------------------------------------------
   /** « island » (vue de l'île, par défaut) ou « global » (le Relto vu de loin) ; un fondu léger marque le passage. */

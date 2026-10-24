@@ -825,7 +825,11 @@ async function renderRelto(plugin, source, el, ctx) {
   let forkHeld = null; /* la voix que le diapason garde (Imageur, deux voix) */
   const pool = () => poolOfScene(scene); /* la réserve de ce Relto (section 19.2) */
   const storyLater = () => { if (scene && scene.mode === "story") window.setTimeout(() => refresh().catch((e) => console.warn("[Age Writer ext] relto", e)), 300); }; /* un geste de la caverne ou de la machine peut finir un chapitre */
-  const renderer = new ReltoRenderer(canvas, plugin.dni, { touch, wheelOk: () => !!root.closest(".age-reltoview") || !!root.ownerDocument.fullscreenElement, rotated: () => touch && root.hasClass("is-mobilefull") && !!(window.matchMedia && window.matchMedia("(orientation: portrait)").matches), onTip: tipCard ? (text) => { tipCard.setText(text || ""); tipCard.toggleClass("is-empty", !text); } : null, atelierDirect: () => plugin.ext.atelierDirect !== false, bookAnim: () => plugin.ext.bookAnim !== false, libraryData: () => libData, onLibraryOpen: () => { libReload(); },
+  const renderer = new ReltoRenderer(canvas, plugin.dni, { touch, wheelOk: () => !!root.closest(".age-reltoview") || !!root.ownerDocument.fullscreenElement, rotated: () => touch && root.hasClass("is-mobilefull") && !!(window.matchMedia && window.matchMedia("(orientation: portrait)").matches), onTip: tipCard ? (text, parts) => { /* la carte d'infobulle, au doigt : le texte, et une ligne de valeur en chiffres D'ni (la machine) */
+      tipCard.empty(); tipCard.toggleClass("is-empty", !text && !(parts && parts.length));
+      if (parts && parts.length) { const line = tipCard.createDiv({ cls: "age-relto__tipdni" }); for (const p of parts) { if (typeof p === "string") line.createSpan({ text: p }); else setMarkup(line.createSpan({ cls: "age-relto__tipnum" }), plugin.dni.numberSvg(p.n, { size: 18 })); } }
+      if (text) tipCard.createDiv({ text });
+    } : null, atelierDirect: () => plugin.ext.atelierDirect !== false, bookAnim: () => plugin.ext.bookAnim !== false, libraryData: () => libData, onLibraryOpen: () => { libReload(); },
     /* le diapason : frappé une fois, il garde la voix du livre posé, tant qu'on ne le refrappe pas (en Art de la Guilde, trouver un autre monde prend du temps) ; frappé de nouveau sur un autre livre, les deux chantent ensemble */
     /* la machine et la caverne agissent sur la réserve de ce Relto (section 19.2) : le bac à sable, ou celle du Relto histoire */
     caveState: () => (plugin.caveState ? plugin.caveState(pool()) : {}),
