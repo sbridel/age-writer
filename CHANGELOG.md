@@ -2,6 +2,12 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 1.50.2 — The guide (2026-10-25)
+
+### Changed
+- **Guide**: the `pellet` block you write is a capsule of nutrients for that world, and has nothing to do with the Relto's machine (Ages give its ingredients, not pellets).
+- **Guide, spoilers**: the hidden section now covers what lies beneath the island, the second book of the story, and an easter egg. It stays behind its checkbox.
+
 ## 1.50.1 — Touch-ups beneath the island (2026-10-25)
 
 ### Changed

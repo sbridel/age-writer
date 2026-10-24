@@ -699,6 +699,11 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 1.50.2 — le guide (25 oct. 2026)
+
+- Guide (`src/guide-ref-en.js`, `src/guide-ref-fr.js`) : le bloc `pellet` qu'on écrit est une capsule de nutriments pour ce monde, sans rapport avec la machine du Relto (les Âges en donnent les ingrédients, pas des granulés). Remarque de l'auteur.
+- Guide, rubrique des spoilers (derrière sa case, hors de la recherche) : ce qui se trouve sous l'île, le second livre de l'histoire, et une catégorie « Easter eggs ». Les recettes y sont en mots seulement, sans un chiffre (choix de l'auteur).
+
 ## 1.50.1 — retouches sous l'île (25 oct. 2026)
 
 Note : `claude/DESIGN-art-bahro.md` (projet), section 11. ⚠ Spoilers : rien de plus précis dans README, CHANGELOG ni guide.
