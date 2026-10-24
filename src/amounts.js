@@ -70,6 +70,10 @@ function shift(r, byAxis) {
  * @param blocks la table des blocs du moteur (id → bloc)
  * @param opts   { weights: poids des familles de lois (src/rigor.js), size: taille du monde } ; sans lui, plein poids et monde moyen
  */
+const PELLET_PROSE = {
+  fedPellet: "a dull, dense pellet dissolves slowly in the ground, and everything around it grows greener",
+  overdose: "there is far too much pellet in the ground, and the roots around it are burnt", /* « too much » : la règle des quantités (test/sentences.test.js) */
+};
 function applyAmounts(r, amt, blocks, opts) {
   if (!r || !r.axisStability || !r.resolved || !r.resolved.matter) return r;
   const written = r.resolved.matter.written || [], get = (id) => (blocks && blocks.get ? blocks.get(id) : null);
@@ -107,10 +111,14 @@ function applyAmounts(r, amt, blocks, opts) {
     bl.paid = cost;
   }
   if (bl) scars.push({ id: "blight", axis: "ecological", level: bl.level, role: bl.role, host: bl.host, key: bl.key, prose: LF.blightProse(bl), from: [] });
-  if (!Object.keys(delta).length && !life && !scars.length && !excess.length) return r;
+  // le granulé : sa phrase suit la loi de la vie (bien dosé il se dissout et nourrit, trop il brûle les racines, rien ne pousse : il attend)
+  const pel = life && life.notes.find((n) => n.id === "fedPellet" || n.id === "overdose"), presence = pel ? { pellet: PELLET_PROSE[pel.id] } : null;
+  if (pel && pel.id === "overdose") { const i = excess.findIndex((x) => x.id === "pellet"); if (i >= 0) excess.splice(i, 1); } /* la phrase du granulé dit déjà le trop */
+  if (!Object.keys(delta).length && !life && !scars.length && !excess.length && !presence) return r;
   const out = Object.keys(delta).length ? shift(r, delta) : { ...r }; if (rich > 0) out.compensation = { riches: rich, relief };
   if (scars.length) { out.scars = scars; out.resolved = { ...out.resolved, scars }; } // lues par la description, le livre et la fenêtre
   if (excess.length) { out.excess = excess; out.resolved = { ...out.resolved, excess }; } // lu par la description
+  if (presence) out.resolved = { ...out.resolved, presence: { ...(out.resolved.presence || {}), ...presence } }; // une phrase propre à l'Âge pour un bloc écrit (lue par la description)
   if (sc && sc.forgiven.length) out.forgiven = sc.forgiven;
   if (life) out.life = life;
   if (dose && (dose.softened.length || dose.natural.length || Object.keys(dose.richness).length)) out.dosage = { softened: dose.softened, natural: dose.natural, richness: dose.richness, capacity: dose.capacity };

@@ -360,7 +360,7 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random)) {
   const loose = [];
   for (const id of resolved.matter.written) {
     if (used.has(id) || (resolved.weather && resolved.weather[id])) continue; // météo programmée : sa phrase datée la dit (describeAge)
-    const presence = String(blockById.get(id)?.presence ?? "").trim();
+    const presence = String((resolved.presence && resolved.presence[id]) ?? blockById.get(id)?.presence ?? "").trim();
     if (presence) sentences.push(capitalize(presence) + ".");
     else loose.push(id);
   }
