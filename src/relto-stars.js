@@ -61,7 +61,9 @@ const PIT_X0 = 44, PIT_X1 = 596, U = (x) => (x - 320) / 360;
 /** Un bord qui ne se répète pas : quelques ondulations de longueurs différentes et un grain de roche (déterministe). */
 const nz = (x, k) => Math.sin(x * 0.021 + k * 1.7) * 3.5 + Math.sin(x * 0.057 + k * 3.1) * 2.5 + Math.sin(x * 0.13 + k * 5.3) * 1.5 + (q("pz" + k + "_" + Math.round(x / 12)) - 0.5) * 6;
 const pitTop = (x) => 300 - 86 * Math.sqrt(Math.max(0, 1 - U(x) ** 2)) + 12 + nz(x, 1) + 5 * Math.sin(x * 0.012 + 0.8);
-const pitFront = (x) => 322 + 14 * U(x) ** 2 + nz(x, 2) * 1.3 + 8 * Math.sin(x * 0.014 + 2.2) + (x > 430 && x < 520 ? 7 : 0) - (x > 170 && x < 250 ? 6 : 0);
+/** La lèvre de devant contourne les deux piliers de devant : elle recule derrière eux, en deux anses, pour qu'ils se tiennent sur le sol même. */
+const FRONT = [146, 437];
+const pitFront = (x) => 322 + 14 * U(x) ** 2 + nz(x, 2) * 1.3 + 8 * Math.sin(x * 0.014 + 2.2) + (x > 300 && x < 400 ? 5 : 0) - FRONT.reduce((m, fx) => m + 46 * Math.exp(-(((x - fx) / 44) ** 2)), 0);
 const pitPath = (ctx) => { ctx.beginPath(); for (let x = PIT_X0; x <= PIT_X1; x += 12) (x === PIT_X0 ? ctx.moveTo(x, pitTop(x)) : ctx.lineTo(x, pitTop(x)));
   const mR = (pitTop(PIT_X1) + pitFront(PIT_X1)) / 2, mL = (pitTop(PIT_X0) + pitFront(PIT_X0)) / 2; /* aux deux bouts, des éclats et non un arrondi */
   for (const [dx, dy] of [[10, 12], [24, -6], [16, 16], [3, -2]]) ctx.lineTo(PIT_X1 + dx, dy < 0 ? mR + dy : dy > 14 ? mR + dy : pitTop(PIT_X1) + dy); ctx.lineTo(PIT_X1, pitFront(PIT_X1));
@@ -71,28 +73,6 @@ const pitPath = (ctx) => { ctx.beginPath(); for (let x = PIT_X0; x <= PIT_X1; x 
 const vnoise = (k, t, hz) => { const x = t * hz, i = Math.floor(x), f = x - i, a = q("fk" + k + "_" + (i % 97)), b = q("fk" + k + "_" + ((i + 1) % 97)), sm = f * f * (3 - 2 * f); return a + (b - a) * sm; };
 /** La lumière d'une vasque à l'instant t : de 0,6 à 1,15, irrégulière (deux fréquences) ; `k` : la vasque. */
 const flicker = (k, t) => 0.6 + 0.55 * (0.6 * vnoise(k, t, 8) + 0.4 * vnoise(k + 9, t, 3.3));
-/**
- * Là où se tient un pilier, le sol avance dans la fosse : un promontoire de la même roche (le même dégradé que le sol, aucune
- * couture), qui part de la lèvre la plus proche, devant ou au fond. Seuls les bords qui donnent sur le vide sont soulignés (la
- * lumière d'en bas les frôle) ; au fond, la paroi du promontoire se voit sous lui, éclairée par le vide.
- */
-function land(ctx, p) {
-  const s = p.s, rx = 36 * s, ry = rx * 0.24, x0 = p.x, y0 = p.y + 1.5 * s, th = 12 * s, lipY = pitFront(x0) + 6, upY = pitTop(x0) - 4, goUp = y0 - upY < lipY - y0;
-  const fl = ctx.createLinearGradient(0, 210, 0, H); fl.addColorStop(0, PAL.floor[0]); fl.addColorStop(1, PAL.floor[1]);
-  const edge = rgba(PAL.edge[0], PAL.edge[1], PAL.edge[2], 0.38);
-  if (goUp) { /* il part du fond : sa paroi, sous lui */
-    const wg = ctx.createLinearGradient(0, y0, 0, y0 + th + ry); wg.addColorStop(0, "#1a1e31"); wg.addColorStop(0.6, "#10142a"); wg.addColorStop(1, rgba(44, 84, 170, 0.95));
-    ctx.fillStyle = wg; ctx.beginPath(); ctx.moveTo(x0 - rx, y0); ctx.lineTo(x0 - rx * 0.9, y0 + th); ctx.ellipse(x0, y0 + th, rx * 0.9, ry * 0.9, 0, Math.PI, 0, true); ctx.lineTo(x0 + rx, y0); ctx.ellipse(x0, y0, rx, ry, 0, 0, Math.PI); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = rgba(4, 6, 14, 0.5); ctx.lineWidth = 1; for (let k = 0; k < 6; k++) { const xx = x0 - rx * 0.8 + (k / 5) * rx * 1.6; ctx.beginPath(); ctx.moveTo(xx, y0 + ry * 0.9); ctx.lineTo(xx + (q("lk" + p.i + k) - 0.5) * 3, y0 + th * (0.5 + q("ll" + p.i + k) * 0.5) + ry * 0.7); ctx.stroke(); }
-    ctx.fillStyle = fl; ctx.beginPath(); ctx.moveTo(x0 - rx * 1.12, upY); ctx.lineTo(x0 - rx, y0); ctx.ellipse(x0, y0, rx, ry, 0, Math.PI, 0, true); ctx.lineTo(x0 + rx * 1.12, upY); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = edge; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 - rx * 1.12, upY); ctx.lineTo(x0 - rx, y0); ctx.ellipse(x0, y0, rx, ry, 0, Math.PI, 0, true); ctx.lineTo(x0 + rx * 1.12, upY); ctx.stroke();
-  } else { /* il part de la lèvre devant : seulement son dessus et ses flancs */
-    ctx.fillStyle = fl; ctx.beginPath(); ctx.moveTo(x0 - rx * 1.14, lipY); ctx.lineTo(x0 - rx, y0); ctx.ellipse(x0, y0, rx, ry, 0, Math.PI, 0, false); ctx.lineTo(x0 + rx * 1.14, lipY); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = edge; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 - rx * 1.14, lipY); ctx.lineTo(x0 - rx, y0); ctx.ellipse(x0, y0, rx, ry, 0, Math.PI, 0, false); ctx.lineTo(x0 + rx * 1.14, lipY); ctx.stroke();
-  }
-  ctx.fillStyle = rgba(PAL.bump[0], PAL.bump[1], PAL.bump[2], 0.16); for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.ellipse(x0 + (q("lx" + p.i + k) - 0.5) * rx * 1.7, y0 + (q("ly" + p.i + k) - 0.3) * ry * 2.4, 4 + q("lr" + p.i + k) * 8, 1.4 + q("lr" + p.i + k) * 1.4, 0, 0, TAU); ctx.fill(); } /* les mêmes bosses que le sol */
-}
-
 /** Le pied de la paroi : une ligne de roche irrégulière autour de la salle (y en fonction de x). */
 const footY = (x) => { const u = (x - 320) / 360; return 300 - 86 * Math.sqrt(Math.max(0, 1 - u * u)) + (q("ft" + Math.round(x / 16)) - 0.5) * 9; };
 /**
@@ -162,7 +142,7 @@ function pillar(ctx, p, on, hov, t, signs) {
   const wd = (v) => w * (1 - 0.14 * v + 0.07 * Math.sin(Math.min(1, v * 1.5) * Math.PI)) + jit(Math.round(v * 24)) * w * 0.07; /* un fût qui s'amincit à peine, renflé au premier tiers, aux bords un peu rugueux */
   const N = 24, Lp = [], Rp = []; for (let k = 0; k <= N; k++) { const v = k / N, y = p.y - v * hgt, flare = v < 0.1 ? (0.1 - v) * 4 * w : 0; Lp.push([p.x - wd(v) - flare, y]); Rp.push([p.x + wd(v) + flare, y]); }
   const body = () => { ctx.beginPath(); Lp.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); for (let k = Rp.length - 1; k >= 0; k--) ctx.lineTo(Rp[k][0], Rp[k][1]); ctx.closePath(); };
-  ctx.fillStyle = "#151824"; for (let k = 0; k < 6; k++) { const dx = (k - 2.5) * w * 0.8 + jit(k) * w * 0.5; ctx.beginPath(); ctx.ellipse(p.x + dx, p.y + 1.5 * s, w * (0.5 + q("pr" + p.i + k) * 0.5), 2.6 * s, 0, 0, TAU); ctx.fill(); } /* le pied fond dans la roche du sol */
+  ctx.fillStyle = rgba(10, 12, 22, 0.45); for (let k = 0; k < 6; k++) { const dx = (k - 2.5) * w * 0.8 + jit(k) * w * 0.5; ctx.beginPath(); ctx.ellipse(p.x + dx, p.y + 1.5 * s, w * (0.5 + q("pr" + p.i + k) * 0.5), 2.6 * s, 0, 0, TAU); ctx.fill(); } /* le pied fond dans la roche du sol */
   const pg = ctx.createLinearGradient(p.x - w * 1.1, 0, p.x + w * 1.1, 0); pg.addColorStop(0, side > 0 ? "#13161f" : "#1d2131"); pg.addColorStop(0.5, hov ? "#383d52" : "#282c3e"); pg.addColorStop(1, side < 0 ? "#13161f" : "#1d2131"); ctx.fillStyle = pg; body(); ctx.fill();
   ctx.save(); body(); ctx.clip();
   const lb = ctx.createLinearGradient(p.x - side * w, 0, p.x + side * w * 1.2, 0); lb.addColorStop(0, blue(0)); lb.addColorStop(1, blue(0.26)); ctx.fillStyle = lb; ctx.fillRect(p.x - w * 2, p.y - hgt, w * 4, hgt); /* la fissure éclaire le flanc qui la regarde */
@@ -294,7 +274,6 @@ function drawStars(r, ctx, sc, sky, t) {
   /* les cinq piliers, du fond vers nous : un fût droit gravé de haut en bas, une coupe à deux cornes courtes ; les vasques au-dessus */
   const signs = F.itemsOf((r.scene && r.scene.ages) || [], {}).filter((it) => it.kind === "age").slice(-15).flatMap((it) => it.parts.slice(0, 1));
   for (const p of PILLARS.slice().sort((a, b) => a.y - b.y)) {
-    if (p.y > pitTop(p.x) + 6) land(ctx, p); /* le sol avance dans la fosse sous chaque pilier : un promontoire de la même roche */
     const on = lit.includes(p.i), hov = r.hover && r.hover.pillar === p.i + 1, T = pillar(ctx, p, on, hov, t, signs);
     const cyy = T.top;
     r.hot.push({ x: p.x - T.w * 2.4, y: cyy - 22 * p.s, w: T.w * 4.8, h: p.y - cyy + 22 * p.s, tip: on ? tr("stars.pillar.lit") : tr("stars.pillar"), pillar: p.i + 1 });
@@ -317,8 +296,8 @@ function drawStars(r, ctx, sc, sky, t) {
       const [F1, F2, F3] = PAL.flame; ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.beginPath(); ctx.ellipse(vx, vy - vr * 0.05, vr * 0.98, vr * 0.5, 0, 0, TAU); ctx.clip(); /* le nuage reste dans la coupe : il ne déborde que par le haut, un peu */
       const og = ctx.createRadialGradient(vx, vy, 1, vx, vy, vr); og.addColorStop(0, rgba(F2[0], F2[1], F2[2], 0.7 * fk)); og.addColorStop(1, rgba(F1[0], F1[1], F1[2], 0.1)); ctx.fillStyle = og; ctx.beginPath(); ctx.ellipse(vx, vy, vr * 0.96, vr * 0.3, 0, 0, TAU); ctx.fill(); /* l'ouverture de la vasque, pleine de lumière */
       for (let k = 0; k < 10; k++) { const ph = t * (0.7 + (k % 3) * 0.25) + k * 1.9 + p.i, px = vx + Math.sin(ph) * vr * 0.42, py = vy - vr * (0.1 + (k % 4) * 0.13) + Math.cos(ph * 0.8) * vr * 0.08, rr = vr * (0.5 + (k % 4) * 0.13 + 0.06 * Math.sin(ph * 1.3)) * (0.88 + 0.16 * fk), C = k % 3 === 0 ? F3 : k % 3 === 1 ? F2 : F1;
-        const g = ctx.createRadialGradient(px, py, 0, px, py, rr); g.addColorStop(0, rgba(C[0], C[1], C[2], 0.38 * fk)); g.addColorStop(0.55, rgba(C[0], C[1], C[2], 0.14 * fk)); g.addColorStop(1, rgba(C[0], C[1], C[2], 0)); ctx.fillStyle = g; ctx.fillRect(px - rr, py - rr, rr * 2, rr * 2); }
-      const cg = ctx.createRadialGradient(vx, vy - vr * 0.12, 0, vx, vy - vr * 0.12, vr * 0.42); cg.addColorStop(0, rgba(F3[0], F3[1], F3[2], 0.5 * Math.min(1, fk))); cg.addColorStop(1, rgba(F3[0], F3[1], F3[2], 0)); ctx.fillStyle = cg; ctx.fillRect(vx - vr, vy - vr * 0.8, vr * 2, vr * 1.4); /* le cœur : presque blanc */
+        const g = ctx.createRadialGradient(px, py, 0, px, py, rr); g.addColorStop(0, rgba(C[0], C[1], C[2], (C === F3 ? 0.22 : 0.38) * fk)); g.addColorStop(0.55, rgba(C[0], C[1], C[2], 0.14 * fk)); g.addColorStop(1, rgba(C[0], C[1], C[2], 0)); ctx.fillStyle = g; ctx.fillRect(px - rr, py - rr, rr * 2, rr * 2); }
+      const cg = ctx.createRadialGradient(vx, vy - vr * 0.12, 0, vx, vy - vr * 0.12, vr * 0.42); cg.addColorStop(0, rgba(F3[0], F3[1], F3[2], 0.28 * Math.min(1, fk))); cg.addColorStop(1, rgba(F3[0], F3[1], F3[2], 0)); ctx.fillStyle = cg; ctx.fillRect(vx - vr, vy - vr * 0.8, vr * 2, vr * 1.4); /* le cœur : presque blanc */
       ctx.restore(); }
     r.hot.push({ x: vx - vr, y: vy - vr * 0.6, w: vr * 2, h: vr * 1.4, tip: on ? tr("stars.basin.lit") : tr("stars.basin") });
   }
