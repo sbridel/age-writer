@@ -233,7 +233,7 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
   require("./relto-stars").gate(r, ctx, degree, t); /* le lac vivant ouvre le chemin d'en bas (section 15) */
   const slabTurns = ((st.slabs || {})[key] || {}).turns, slab = FC.slabOf(name, rseed, slabTurns), open = !!((st.slabs || {})[key] || {}).open;
   FR.drawCartouche(ctx, slab.code, FC.glyphsFound(revealed), Math.max(reached(FR.CART.y + FR.CART.h), degree >= 3 && revealed > 0 ? 0.6 : 0), key); /* le code : tout ce qui est trouvé, à chaque éclair */
-  FR.drawSlab(r, ctx, { lit: reached(FR.SLAB.y), seen: revealed > 0, open, stones: slab.stones, turnAt: r.slabTurnAt }, now, t, tr);
+  FR.drawSlab(r, ctx, { lit: reached(FR.SLAB.y), seen: revealed > 0, open, stones: slab.stones, turnAt: r.slabTurnAt, dreamTip: open && r.dreamTip ? r.dreamTip() : null }, now, t, tr); /* ouverte : ses yeux mènent au rêve */
   if (lit > 0) {
     const seen = (y) => clamp((reveal - (H - y + 20)) / 50); /* la lueur doit les avoir atteintes */
     traces(ctx, ph.k, lit, seen, t, FR.handsNear(items, key)); /* les Bahro : leurs ombres qui fuient, leurs mains encore humides ; jamais eux */

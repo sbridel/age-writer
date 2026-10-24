@@ -988,3 +988,9 @@
 .age-relto__tipdni { display: flex; align-items: center; flex-wrap: wrap; color: #e0c27a; }
 .age-relto__tipnum { display: inline-flex; align-items: center; margin: 0 3px; }
 .age-relto__tipnum svg { height: 1.4em; width: auto; }
+
+/* Le Rêve : le panneau du réveil (une ligne par chose regardée ; rien ne s'écrit sans clic) */
+.age-dream-panel__intro { color: var(--text-muted); font-size: var(--font-ui-small); }
+.age-dream-panel__row { border-top: 1px solid var(--background-modifier-border); padding: 8px 0; }
+.age-dream-panel__kind { color: var(--text-muted); font-size: var(--font-ui-smaller); }
+.age-dream-panel__text { margin: 2px 0 6px; font-style: italic; }

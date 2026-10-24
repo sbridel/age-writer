@@ -75,6 +75,23 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     p._lastPool = SK; p.ovenTest("white"); ok(p.poolExt(SK).pellets.white === 5 && !(p.ext.pellets && p.ext.pellets.white >= 5), "les essais agissent sur la réserve du dernier Relto ouvert");
     p._lastPool = null; delete p.ext.storyPools; delete p.ext.story[SK]; delete p.ext.harvest; delete p.ext.cave; delete p.ext.oven; delete p.ext.pellets;
   }
+  { /* le Rêve (étape 4d) : un par Âge et par jour ; le guide ; adopter n'écrit qu'au clic, et ce qu'on a choisi */
+    const age = { name: "Alpha", path: "Ages/Alpha.md" }, SK = "histoire#9";
+    ok(p.dreamLast(age, null) === null, "rêve : jamais rêvé");
+    p.dreamMark(age, null); ok(typeof p.dreamLast(age, null) === "number" && p.dreamLast(age, SK) === null, "rêve : compté dans la réserve du Relto, pas ailleurs");
+    p.ext.wonders = { mosaic: { at: 1, age: "4242" } };
+    ok(/suivra|follow/.test(p.toggleDreamGuide("mosaic")) && p.ext.dreamGuide === "mosaic" && /place/.test(p.toggleDreamGuide("mosaic")) && !p.ext.dreamGuide, "rêve : emporter l'orbe, le reposer");
+    const before = files.get("Ages/Alpha.md").content;
+    ok(await p.dreamAdopt("Ages/Alpha.md", { line: { add: "fern" } }, "") && /\nfern\n/.test(files.get("Ages/Alpha.md").content), "rêve : adopter un possible écrit son bloc");
+    ok(await p.dreamAdopt("Ages/Alpha.md", { line: { remove: "fern" } }, "") && files.get("Ages/Alpha.md").content === before, "rêve : retirer la ligne qui cause une faute");
+    ok(!(await p.dreamAdopt("Ages/Alpha.md", { line: { remove: "nothing_here" } }, "")), "rêve : rien à retirer, rien ne change");
+    ok(await p.dreamAdopt("", { line: { face: "mosaic" } }, "it holds") && p.ext.wonders.mosaic.face === "it holds", "rêve : la phrase d'une merveille va sur son orbe");
+    p.ext.dreamGuide = "mosaic"; const n0 = notices.length; p.dreamWoke({ data: { name: "Alpha" }, guided: false, seen: [] });
+    ok(!p.ext.dreamGuide && notices.length === n0 + 1, "rêve : au réveil le guide reprend sa place ; sans guide, une phrase, rien d'autre");
+    { const src = p.core.extract(files.get("Ages/Alpha.md").content), seeds = ["4242~a", "4242~b"], main = p.core.analyse(src, { seed: "4242", probe: true }), alts = seeds.map((s2) => p.core.analyse(src, { seed: s2, probe: true }));
+      ok(main && alts.every((x) => x && x.resolved && Array.isArray(x.resolved.drawn)) && !p.ext.harvest, "rêve : les tirages voisins s'analysent sans rien récolter ni toucher à la loi"); }
+    delete p.ext.dreams; delete p.ext.wonders;
+  }
   ok(["age-journal", "relto", "dni"].every((n) => p.procs[n]), "blocs relto / age-journal / dni enregistrés");
   ok(["open-relto", "create-relto-page", "create-exploration-journal", "save-age-cover", "stop-soundscape"].every((id) => p.cmds.some((c) => c.id === id)), "commandes enregistrées");
 

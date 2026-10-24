@@ -10,6 +10,7 @@ const MAIL = require("./story-mail");
 const { setMarkup, esc, leaveFullscreen, leaveFullscreenAsync } = require("./util");
 const G = require("./genscene");
 const SKY = require("./sky");
+const DR = require("./dream");
 const IM = require("./imager");
 const X = require("./ui-extras");
 const DT = require("./dnitime");
@@ -757,6 +758,21 @@ async function renderRelto(plugin, source, el, ctx) {
       return { target: IM.targetsOf(a, name), model: S ? G.build(S, 300, 176) : null, system, orbit: CAL.orbitOf(a, name, sky, system.near) };
     } catch (e) { console.warn("[Age Writer ext] imageur", e); return null; }
   };
+  // le Rêve (étape 4d) : l'Âge verrouillé sur l'Imageur, son tirage et deux tirages voisins (graine, Great Zero, jour), et ce qu'ils montrent
+  const dreamAge = async (age, gz) => {
+    try {
+      const f = app.vault.getAbstractFileByPath(age.path); if (!f) return null;
+      const src = plugin.core.extract(await app.vault.cachedRead(f)); if (src == null) return null;
+      const seed = plugin.core.seed(f.path), now = Date.now(), day = DR.dayOf(now, new Date(now).getTimezoneOffset());
+      const main = plugin.core.analyse(src, { seed, probe: true }); if (!main) return null;
+      const seeds = DR.altSeeds(seed, gz, day), alts = seeds.map((s) => { try { return plugin.core.analyse(src, { seed: s, probe: true }); } catch (e) { return null; } });
+      const sky = SKY.parseSky(src), sceneOf = (a, nm) => { if (!a) return null; const S = G.sceneOf(a, nm, plugin.core.blocks); if (!S) return null; Object.assign(S, sky); return G.build(S, 640, 360); };
+      const models = [sceneOf(main, seed), ...alts.map((a, k) => sceneOf(a, seeds[k]))]; if (!models[0]) return null;
+      const { blockById } = require("./engine/registry"), MUT = require("./mutation"), LF = require("./life");
+      const items = DR.contentOf(main, alts.filter(Boolean), { seed, axisOf: (id) => (blockById.get(id) || {}).axis, keystoneOf: MUT.keystoneOf, prose: LF.blightProse }).items;
+      return { seed, name: age.name, path: age.path, models: models.map((m) => m || models[0]), items };
+    } catch (e) { console.warn("[Age Writer ext] rêve", e); return null; }
+  };
   // mode Guilde : un monde que personne n'a écrit (src/unwritten.js), analysé et peint comme un Âge de l'étagère ; son nom
   // (jamais celui d'une note du coffre) est celui qu'aura la note si on le transcrit
   const taken = (nm) => !!app.vault.getMarkdownFiles().some((f) => f.basename === nm);
@@ -844,6 +860,12 @@ async function renderRelto(plugin, source, el, ctx) {
     onCaveSlab: (i) => { const res = plugin.caveSlab ? plugin.caveSlab(i, scene, pool()) : null; if (res === "open") storyLater(); if (res && roomSoundOn()) { sound.slideStone(roomVol() * 0.7); if (res === "open") setTimeout(() => sound.caveSfx("cry", roomVol()), 500); } return res; },
     onCaveHatch: () => { if (plugin.caveHatch) plugin.caveHatch(pool()); if (roomSoundOn()) sound.slideStone(roomVol()); },
     onCaveSfx: (kind) => { if (roomSoundOn()) sound.caveSfx(kind, roomVol()); },
+    dreamLast: (age) => (plugin.dreamLast ? plugin.dreamLast(age, pool()) : null),
+    onDreamStart: (age) => { if (plugin.dreamMark) plugin.dreamMark(age, pool()); if (roomSoundOn()) sound.caveSfx("cry", roomVol() * 0.4); },
+    onDreamAge: (age, gz) => dreamAge(age, gz),
+    dreamGuide: () => plugin.ext.dreamGuide || null,
+    onDreamGuide: (id) => (plugin.toggleDreamGuide ? plugin.toggleDreamGuide(id) : null),
+    onDreamWake: (res) => { if (plugin.dreamWoke) plugin.dreamWoke(res); },
     onTwoVoices: (age, target, onLine) => {
       if (!age || !target) return; const GI = require("./imager-guild"), vol = roomVol(), now = Date.now(), held = forkHeld;
       if (!held) { forkHeld = { name: age.name, target, at: now }; if (roomSoundOn()) sound.twoVoices(target.freq, target.freq, "full", vol * 0.6); onLine(plugin.t("two.fork.ring", { a: age.name }), true); return; }

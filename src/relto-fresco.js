@@ -180,6 +180,7 @@ function drawSlab(r, ctx, st, now, t, tr) {
     if (st.seen && !st.open) r.hot.push({ x: sx - SLAB.stone - 2, y: sy - SLAB.stone - 2, w: SLAB.stone * 2 + 4, h: SLAB.stone * 2 + 4, tip: tr("cave.slab.stone"), caveSlab: i + 1 });
   }
   if (st.seen || st.lit > 0.2) r.hot.push({ x: x - SLAB.r, y: y - SLAB.r, w: SLAB.r * 2, h: SLAB.r * 2, tip: st.open ? tr("cave.slab.open") : tr("cave.slab") });
+  if (st.open && st.dreamTip) r.hot.push({ x: x - 20, y: y - 16, w: 40, h: 20, tip: st.dreamTip, dreamGo: true }); /* les yeux : le rêve (étape 4d) */
 }
 
 /** Les mains mouillées (src/relto-cave.js, traces) : tout près du signe le plus récent, comme s'ils venaient de le peindre. */

@@ -74,16 +74,23 @@ function drawMemories(r, ctx, sc, sky, t) {
     const sh = ctx.createRadialGradient(x - R * 0.35, y - R * 0.4, 1, x, y, R); sh.addColorStop(0, rgba(255, 255, 255, 0.22)); sh.addColorStop(0.5, rgba(255, 255, 255, 0)); sh.addColorStop(1, rgba(10, 20, 40, 0.45)); ctx.fillStyle = sh; ctx.fillRect(x - R, y - R, R * 2, R * 2);
     ctx.restore();
     ctx.strokeStyle = rgba(210, 225, 255, hov ? 0.85 : 0.45); ctx.lineWidth = hov ? 1.6 : 1; ctx.beginPath(); ctx.arc(x, y, R, 0, TAU); ctx.stroke();
+    if (r.opts && r.opts.dreamGuide && r.opts.dreamGuide() === mem.id) { ctx.strokeStyle = rgba(150, 190, 255, 0.5 + 0.3 * Math.sin(t * 1.5)); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, R + 5, 0, TAU); ctx.stroke(); } /* le guide choisi : un second cercle qui bat */
     ctx.fillStyle = rgba(255, 255, 255, 0.6); ctx.beginPath(); ctx.ellipse(x - R * 0.4, y - R * 0.5, R * 0.18, R * 0.08, -0.6, 0, TAU); ctx.fill();
     ctx.fillStyle = rgba(180, 200, 255, 0.08 + 0.05 * night); ctx.beginPath(); ctx.ellipse(x, 318 + (y - 120) * 0.08, R * 0.8, 3, 0, 0, TAU); ctx.fill(); /* son reflet sur l'eau */
     const name = CAT.nameOf(mem.id, tr("relto.memories.lang") === "fr");
     ctx.restore();
-    r.hot.push({ x: x - R, y: y - R, w: R * 2, h: R * 2, wonder: mem.id, tip: !mem.age ? name : tr(mem.gone ? "relto.memories.tip.gone" : "relto.memories.tip", { w: name, age: mem.age }) });
+    r.hot.push({ x: x - R, y: y - R, w: R * 2, h: R * 2, wonder: mem.id, tip: (!mem.age ? name : tr(mem.gone ? "relto.memories.tip.gone" : "relto.memories.tip", { w: name, age: mem.age })) + (mem.face ? " — " + tr("dream.face", { f: mem.face }) : "") }); /* l'autre face, si un rêve l'a laissée */
     if (sel) { /* l'orbe choisi : on peut le laisser partir */
       const label = tr("relto.memories.forget"); ctx.font = "italic 12px serif"; const tw = ctx.measureText(label).width + 16, bx = Math.max(4, Math.min(W - tw - 4, x - tw / 2)), by = y + R + 10, fh = r.hover && r.hover.forgetWonder === mem.id;
       ctx.fillStyle = rgba(20, 26, 46, 0.85); ctx.fillRect(bx, by, tw, 20); ctx.strokeStyle = rgba(210, 225, 255, fh ? 0.8 : 0.4); ctx.strokeRect(bx, by, tw, 20);
       ctx.fillStyle = rgba(230, 236, 255, fh ? 1 : 0.8); ctx.fillText(label, bx + 8, by + 14);
       r.hot.push({ x: bx, y: by, w: tw, h: 20, forgetWonder: mem.id, tip: label });
+      if (!mem.gone && r.opts && r.opts.dreamGuide) { /* l'emporter en rêve : le guide (étape 4d) ; un seul à la fois */
+        const carried = r.opts.dreamGuide() === mem.id, gl = tr(carried ? "dream.guide.leave" : "dream.guide.take"), gw = ctx.measureText(gl).width + 16, gx = Math.max(4, Math.min(W - gw - 4, x - gw / 2)), gy = by + 26, gh = r.hover && r.hover.takeGuide === mem.id;
+        ctx.fillStyle = rgba(20, 26, 46, 0.85); ctx.fillRect(gx, gy, gw, 20); ctx.strokeStyle = rgba(210, 225, 255, gh ? 0.8 : 0.4); ctx.strokeRect(gx, gy, gw, 20);
+        ctx.fillStyle = rgba(230, 236, 255, gh ? 1 : 0.8); ctx.fillText(gl, gx + 8, gy + 14);
+        r.hot.push({ x: gx, y: gy, w: gw, h: 20, takeGuide: mem.id, tip: gl });
+      }
     }
   });
   const lv = r._memLeaving; /* un souvenir qu'on laisse partir : il monte, pâlit et se dissout */

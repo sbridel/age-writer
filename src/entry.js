@@ -33,6 +33,8 @@ const WX = require("./weather");
 const DFR = require("./descriptors-fr");
 const MUT = require("./mutation");
 const CAT = require("./wonders");
+const DR = require("./dream");
+const AT = require("./engine/age-text");
 const DOSE = require("./dosage");
 const LIFE = require("./life");
 const RG = require("./rigor");
@@ -64,7 +66,7 @@ module.exports = function build(Base, core, AGEX) {
   /** La caverne, pour essayer (menu de la clé) : remettre le lac à zéro, des colonies, les endormir, les gaver ; chaque essai remplit le flacon. */
   class CaveTestModal extends FuzzySuggestModal {
     constructor(app, plugin) { super(app); this.plugin = plugin; }
-    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask", "reveal", "lit", "slab"]; }
+    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask", "reveal", "lit", "slab", "dream"]; }
     getItemText(v) { const k = "cave.test." + v; return this.plugin.t(k); }
     onChooseItem(v) { const msg = this.plugin.caveTest(v); if (msg) new Notice(msg); }
   }
@@ -374,6 +376,7 @@ module.exports = function build(Base, core, AGEX) {
       if (v === "reset") { cv.colonies = 0; cv.fedAt = 0; cv.feeds = []; cv.revealed = 0; cv.flask = null; cv.drop = null; cv.slabs = {}; }
       else if (v === "reveal") { cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.reveal"); }
       else if (v === "slab") { cv.slabs = {}; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.slab"); }
+      else if (v === "dream") { delete X.dreams; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.dream"); } /* on peut rêver à nouveau aujourd'hui */
       else if (v === "lit") { if (!(cv.revealed > 0)) cv.revealed = 1; cv.drop = { at: now - require("./relto-cave").FALL_MS - 200, q: "good", fine: true, seen: true }; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.lit"); }
       else if (v === "few" || v === "many") { cv.colonies = v === "few" ? 3 : 200; cv.fedAt = now - 3600000; cv.feeds = [now - 3600000]; }
       else if (v === "asleep") { if (!(cv.colonies > 0)) cv.colonies = 30; cv.fedAt = now - 7 * SC.DAY; cv.feeds = [cv.fedAt]; }
@@ -381,6 +384,54 @@ module.exports = function build(Base, core, AGEX) {
       if (v !== "reset") SC.sample(cv, now);
       this.saveExt();
       const k = "cave.test." + v; return t("oven.test.done") + " " + t(k);
+    }
+    // ---- le Rêve (étape 4d ; src/dream.js) -------------------------------------------------------------
+    /** La clé d'un Âge pour le compte des rêves : sa graine (un Âge renommé garde la sienne). */
+    dreamKey(age) { return age ? String(guard("graine", () => core.seed(age.path)) || age.path || age.name) : ""; }
+    /** Le jour du dernier rêve de cet Âge, dans la réserve du Relto (bac à sable ou Relto histoire), ou null. */
+    dreamLast(age, pool) { const X = this.poolExt(pool), v = X.dreams && X.dreams[this.dreamKey(age)]; return typeof v === "number" ? v : null; }
+    /** Un rêve est compté dès qu'on entre : un par Âge et par jour. */
+    dreamMark(age, pool) { const X = this.poolExt(pool), now = Date.now(); (X.dreams = X.dreams && typeof X.dreams === "object" ? X.dreams : {})[this.dreamKey(age)] = DR.dayOf(now, new Date(now).getTimezoneOffset()); this.saveExt(); }
+    /** Emporter un orbe en rêve (ou le reposer) : un seul guide à la fois ; il revient dans la chambre au réveil. */
+    toggleDreamGuide(id) { const back = this.ext.dreamGuide === id; this.ext.dreamGuide = back ? null : id; this.saveExt(); return this.t(back ? "dream.guide.left" : "dream.guide.taken"); }
+    /** Adopter une chose vue en rêve : écrire son bloc, retirer la ligne qui cause la faute, ou garder la phrase sur l'orbe. Seulement au clic. */
+    async dreamAdopt(path, it, text) {
+      try {
+        if (it.line && it.line.face) { const w = this.ext.wonders && this.ext.wonders[it.line.face]; if (!w) return false; w.face = text; this.saveExt(); return true; }
+        const f = this.app.vault.getAbstractFileByPath(path); if (!(f instanceof TFile) || !it.line) return false;
+        let done = false; const edit = (txt) => { const out = it.line.add ? AT.addLine(txt, it.line.add) : it.line.remove ? AT.removeLine(txt, it.line.remove) : null; if (out == null || out === txt) return txt; done = true; return out; };
+        if (typeof this.app.vault.process === "function") await this.app.vault.process(f, edit); else await this.app.vault.modify(f, edit(await this.app.vault.read(f)));
+        return done;
+      } catch (e) { console.warn("[Age Writer ext] rêve, adopter", e); return false; }
+    }
+    /** Le réveil : le guide reprend sa place ; sans guide rien ne reste ; avec lui, le panneau propose une ligne par chose regardée. */
+    dreamWoke(res) {
+      if (!res) return;
+      if (this.ext.dreamGuide) { this.ext.dreamGuide = null; this.saveExt(); }
+      if (!res.data) return;
+      if (!res.guided) return void new Notice(this.t("dream.woke.alone"));
+      if (!res.seen || !res.seen.length) return void new Notice(this.t("dream.woke.nothing"));
+      const plugin = this, t = (k, v) => plugin.t(k, v), fr = this.lang() === "fr";
+      const textOf = (it) => (it.kind === "fault" ? it.text : it.kind === "possible" ? t("dream.possible", { b: it.id }) : t("dream.wonder", { w: CAT.nameOf(it.id, fr), a: it.a, b: it.b, k: it.keystone || it.a }));
+      class Panel extends obsidian.Modal {
+        onOpen() {
+          const el = this.contentEl; el.addClass("age-dream-panel");
+          el.createEl("h3", { text: t("dream.panel.title", { a: res.data.name }) });
+          el.createEl("p", { cls: "age-dream-panel__intro", text: t("dream.panel.intro") });
+          for (const it of res.seen) {
+            const row = el.createDiv({ cls: "age-dream-panel__row" }), text = textOf(it);
+            row.createDiv({ cls: "age-dream-panel__kind", text: t(["dream", "panel", it.kind].join(".")) });
+            row.createDiv({ cls: "age-dream-panel__text", text });
+            const act = !it.line ? null : it.line.add ? t("dream.panel.add", { b: it.line.add }) : it.line.remove ? t("dream.panel.remove", { b: it.line.remove }) : it.line.face ? t("dream.panel.face") : null;
+            if (!act) continue;
+            const btn = row.createEl("button", { text: act });
+            btn.addEventListener("click", async () => { btn.disabled = true; const ok = await plugin.dreamAdopt(res.data.path, it, text); if (ok) btn.setText(t("dream.panel.done")); else btn.disabled = false; });
+          }
+          const bar = el.createDiv({ cls: "modal-button-container" }); bar.createEl("button", { text: t("dream.panel.close") }).addEventListener("click", () => this.close());
+        }
+        onClose() { this.contentEl.empty(); }
+      }
+      new Panel(this.app).open();
     }
     /** La chambre des souvenirs : chaque merveille vue une fois (nouée ou écrite) y entre, avec l'Âge et la date ; rien ne s'en efface. */
     seeWonders(seed, r) {
