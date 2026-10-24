@@ -817,6 +817,7 @@ async function renderRelto(plugin, source, el, ctx) {
     onCaveSample: () => { const msg = plugin.caveSample ? plugin.caveSample() : null; if (roomSoundOn()) sound.ovenSfx("take", roomVol()); return msg; },
     onScopeCrumb: () => { if (roomSoundOn()) sound.ovenSfx("click", roomVol()); },
     onCavePick: (k) => { if (plugin.cavePick) plugin.cavePick(k); if (roomSoundOn()) sound.ovenSfx("click", roomVol()); },
+    onCaveSlab: (i) => { const res = plugin.caveSlab ? plugin.caveSlab(i, scene) : null; if (res && roomSoundOn()) { sound.slideStone(roomVol() * 0.7); if (res === "open") setTimeout(() => sound.caveSfx("cry", roomVol()), 500); } return res; },
     onCaveHatch: () => { if (plugin.caveHatch) plugin.caveHatch(); if (roomSoundOn()) sound.slideStone(roomVol()); },
     onCaveSfx: (kind) => { if (roomSoundOn()) sound.caveSfx(kind, roomVol()); },
     onTwoVoices: (age, target, onLine) => {

@@ -42,6 +42,8 @@ function renderMany(host, ages) {
     { h: 21, t: 3.1, env: {}, pages: [], view: "cavebottom", now: 1800000000000, cave: { good: 6, bad: 2, drop: { at: 1799999970000, q: "good" } }, label: "CAVE bottom / the dark, waiting" },
     { h: 21, t: 3.1, env: {}, pages: [], view: "cavebottom", now: 1800000000000, cave: { good: 6, bad: 2, drop: { at: 1799999935500, q: "good" } }, label: "CAVE bottom / the glow, the paintings, the Bahro" },
     { h: 21, t: 3.1, env: {}, pages: [], view: "cavebottom", now: 1800000000000, cave: { good: 6, bad: 2, drop: { at: 1799999938800, q: "good" } }, label: "CAVE bottom / the glow rising" },
+    { h: 21, t: 3.1, env: {}, pages: [], view: "cavebottom", now: 1800000000000, cave: { good: 6, revealed: 3, drop: { at: 1799999935500, q: "good", seen: true } }, wonders: { mosaic: { at: 1799000000000 }, early_echo: { at: 1799500000000 } }, label: "CAVE bottom / third revelation: three bands of frescoes, the whole code, the slab" },
+    { h: 21, t: 3.1, env: {}, pages: [], view: "cavebottom", now: 1800000000000, cave: { revealed: 3, colonies: 40, fedAt: 1799950000000, drop: null }, label: "CAVE bottom / the lake at degree 2: the lowest band without a flash, the slab's eyes" },
     { h: 21, t: 3.1, env: {}, pages: [], view: "cavebottom", now: 1800000000000, cave: { good: 6, bad: 1, drop: { at: 1799999937000, q: "bad" } }, label: "CAVE bottom / a grey pellet floats and fumes" },
     { h: 21, t: 3.1, env: {}, pages: [], view: "vault", label: "VAULT / the cellar under the trapdoor" },
     { h: 14, t: 3.1, env: {}, pages: ["page_atelier"], view: "desk", oven: "set", scope: FLASK(40, 0.5), label: "DESK day / the microscope left of the lamp, its flask full" },
