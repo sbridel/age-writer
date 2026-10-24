@@ -49,40 +49,71 @@ function walls(ctx, fill, seed) {
 }
 
 function drawCaveTop(r, ctx, sc, sky, t) {
-  const tr = TR(r), st = stateOf(r), now = nowOf(r), ph = phaseOf(st.drop, now), c = (h) => mix("#05060c", h, 0.75);
-  const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#14110e"); bg.addColorStop(0.6, "#221c16"); bg.addColorStop(1, "#0c0a08"); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-  const shaft = ctx.createLinearGradient(320, 0, 320, 260); shaft.addColorStop(0, "rgba(220,210,180,0.16)"); shaft.addColorStop(1, "rgba(220,210,180,0)"); /* un peu de jour, tombé d'une fente du plafond */
-  ctx.fillStyle = shaft; ctx.beginPath(); ctx.moveTo(300, 0); ctx.lineTo(340, 0); ctx.lineTo(420, 260); ctx.lineTo(220, 260); ctx.closePath(); ctx.fill();
-  for (let i = 0; i < 9; i++) { const k = fnv("strata" + i); ctx.strokeStyle = rgba(90, 76, 60, 0.18); ctx.lineWidth = 1; ctx.beginPath(); for (let x = 0; x <= W; x += 16) { const y = 30 + i * 26 + 5 * Math.sin(x / 70 + k); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); }
-  ctx.fillStyle = c("#2a231c"); ctx.fillRect(0, 262, W, H - 262); /* le sol */
-  /* le trou, au centre */
-  ctx.fillStyle = c("#3a3128"); ctx.beginPath(); ctx.ellipse(320, 286, 104, 32, 0, 0, TAU); ctx.fill();
-  ctx.fillStyle = "#000"; ctx.beginPath(); ctx.ellipse(320, 288, 90, 25, 0, 0, TAU); ctx.fill();
-  for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU, k = fnv("rim" + i) % 5; ctx.fillStyle = c(k % 2 ? "#4a3f33" : "#3e352b"); ctx.beginPath(); ctx.ellipse(320 + Math.cos(a) * 97, 288 + Math.sin(a) * 28, 9 + k, 5, a, 0, TAU); ctx.fill(); }
-  if (ph && ph.kind === "falling" && ph.k < 1600) { const q = ph.k / 1600, y = 230 + q * 70, rad = 4 * (1 - q * 0.8); ctx.save(); ctx.translate(320, y); ctx.rotate(q * 5); ctx.globalAlpha = 0.95; require("./relto-oven").pill(ctx, 0, 0, st.drop.q === "good" ? "white" : "grey", Math.max(0.1, rad / 4)); ctx.restore(); } /* la pilule tombe en tournant */
+  const tr = TR(r), st = stateOf(r), now = nowOf(r), ph = phaseOf(st.drop, now), c = (h) => mix("#05060c", h, 0.75), q = (k) => (fnv("cavetop" + k) % 1000) / 1000;
+  const day = clamp(sky && sky.ambient != null ? sky.ambient : 0.6), night = clamp(sky && sky.night != null ? sky.night : 0.3);
+  /* la paroi du fond : de la roche en masses, pas un mur */
+  const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#100d0b"); bg.addColorStop(0.55, "#1e1813"); bg.addColorStop(1, "#0b0907"); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 22; i++) { /* des pans de roche, chacun sa teinte, éclairés par le haut */
+    const x = q("m" + i) * W, y = 20 + q("n" + i) * 220, w = 60 + q("o" + i) * 120, h = 40 + q("p" + i) * 70, g = ctx.createLinearGradient(0, y - h / 2, 0, y + h / 2);
+    g.addColorStop(0, rgba(70, 58, 46, 0.35)); g.addColorStop(1, rgba(10, 8, 6, 0.35)); ctx.fillStyle = g; ctx.beginPath();
+    for (let k = 0; k < 7; k++) { const a = (k / 7) * TAU, rr = 0.75 + q("r" + i + k) * 0.35, px = x + Math.cos(a) * w / 2 * rr, py = y + Math.sin(a) * h / 2 * rr; k ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.closePath(); ctx.fill();
+  }
+  for (let i = 0; i < 7; i++) { const k = fnv("strata" + i); ctx.strokeStyle = rgba(110, 92, 72, 0.14); ctx.lineWidth = 1; ctx.beginPath(); for (let x = 0; x <= W; x += 14) { const y = 46 + i * 30 + 6 * Math.sin(x / 60 + k) + 3 * Math.sin(x / 23 + k * 2); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); }
+  /* le plafond, ses stalactites, et la fente par où tombe le jour (le ciel suit l'heure) */
+  const sk = mix(mix("#0a1020", "#9cc3e6", day), "#ff9a5a", clamp((sky && sky.dusk) || 0) * 0.4);
+  ctx.fillStyle = sk; ctx.beginPath(); ctx.moveTo(296, 0); ctx.lineTo(344, 0); ctx.lineTo(334, 14); ctx.lineTo(306, 12); ctx.closePath(); ctx.fill();
+  if (night > 0.6) { ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.fillRect(318, 5, 1, 1); }
+  ctx.fillStyle = "#0a0806"; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(296, 0); ctx.lineTo(306, 12); ctx.lineTo(334, 14); ctx.lineTo(344, 0); ctx.lineTo(W, 0); ctx.lineTo(W, 30);
+  for (let x = W; x >= 0; x -= 12) { const deep = q("st" + x) > 0.72 ? 18 + q("sd" + x) * 30 : 4 + q("se" + x) * 10; ctx.lineTo(x - 3, 26 + deep * 0.3); ctx.lineTo(x - 6, 24 + deep); ctx.lineTo(x - 9, 26 + deep * 0.3); }
+  ctx.lineTo(0, 30); ctx.closePath(); ctx.fill();
+  const shaft = ctx.createLinearGradient(320, 0, 320, 270), sa = 0.08 + 0.14 * day; shaft.addColorStop(0, rgba(220, 215, 190, sa)); shaft.addColorStop(1, rgba(220, 215, 190, 0));
+  ctx.fillStyle = shaft; ctx.beginPath(); ctx.moveTo(304, 10); ctx.lineTo(336, 10); ctx.lineTo(420, 270); ctx.lineTo(220, 270); ctx.closePath(); ctx.fill();
+  /* des gouttes qui tombent des stalactites, de loin en loin */
+  for (let i = 0; i < 3; i++) { const x = [140, 452, 560][i], p = ((t * 0.35 + i * 0.37) % 1); if (p < 0.6) { const y = 50 + (p / 0.6) * 210; ctx.fillStyle = rgba(170, 200, 210, 0.5); ctx.fillRect(x, y, 1, 3); } }
+  /* le sol : inégal, humide, des cailloux ; la lumière s'y pose autour du trou */
+  ctx.fillStyle = c("#2a231c"); ctx.beginPath(); ctx.moveTo(0, 268); for (let x = 0; x <= W; x += 32) ctx.lineTo(x, 262 + q("f" + x) * 8); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+  const pool = ctx.createRadialGradient(320, 290, 20, 320, 290, 200); pool.addColorStop(0, rgba(200, 190, 160, 0.10 * (0.4 + day))); pool.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = pool; ctx.fillRect(100, 240, 440, 120);
+  for (let i = 0; i < 26; i++) { const x = q("pb" + i) * W, y = 272 + q("pc" + i) * 80; if (Math.abs(x - 320) < 120 && y < 330) continue; ctx.fillStyle = c(q("pd" + i) < 0.5 ? "#3a3128" : "#2e2720"); ctx.beginPath(); ctx.ellipse(x, y, 3 + q("pe" + i) * 6, 1.6 + q("pf" + i) * 2, 0, 0, TAU); ctx.fill(); }
+  /* le trou : un cercle de pierres taillées (ce n'est pas un trou naturel) */
+  const hole = ctx.createRadialGradient(320, 292, 10, 320, 288, 92); hole.addColorStop(0, "#000"); hole.addColorStop(0.75, "#020203"); hole.addColorStop(1, "#0d0b09");
+  ctx.fillStyle = c("#3a3128"); ctx.beginPath(); ctx.ellipse(320, 286, 106, 33, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = hole; ctx.beginPath(); ctx.ellipse(320, 288, 90, 25, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = rgba(150, 170, 160, 0.05); ctx.beginPath(); ctx.ellipse(320, 284, 60, 10, 0, 0, TAU); ctx.fill(); /* un peu de brume monte */
+  for (let i = 0; i < 18; i++) { const a0 = (i / 18) * TAU, a1 = ((i + 0.86) / 18) * TAU; ctx.fillStyle = c(i % 3 ? "#4e4337" : "#433a2f"); ctx.beginPath(); ctx.ellipse(320, 287, 104, 32, 0, a0, a1); ctx.ellipse(320, 288, 91, 26, 0, a1, a0, true); ctx.closePath(); ctx.fill(); if (i % 3 === 0) { const mx = 320 + Math.cos((a0 + a1) / 2) * 98, my = 287 + Math.sin((a0 + a1) / 2) * 29; ctx.strokeStyle = rgba(20, 16, 12, 0.6); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(mx - 2, my - 1); ctx.lineTo(mx + 2, my + 1); ctx.stroke(); } }
+  if (ph && ph.kind === "falling" && ph.k < 1600) { const qq = ph.k / 1600, y = 230 + qq * 70, rad = 4 * (1 - qq * 0.8); ctx.save(); ctx.translate(320, y); ctx.rotate(qq * 5); ctx.globalAlpha = 0.95; require("./relto-oven").pill(ctx, 0, 0, st.drop.q === "good" ? "white" : "grey", Math.max(0.1, rad / 4)); ctx.restore(); } /* la pilule tombe en tournant */
   r.hot.push({ x: 216, y: 256, w: 208, h: 64, tip: tr("cave.hole") });
-  /* l'étagère : les granulés, et les entailles qui les comptent */
-  ctx.fillStyle = c("#3d3328"); ctx.fillRect(36, 176, 170, 9); ctx.fillStyle = rgba(0, 0, 0, 0.4); ctx.fillRect(36, 185, 170, 3);
+  /* la niche, creusée dans la paroi : les pilules y sont couchées ; dessous, les entailles qui les comptent */
+  ctx.fillStyle = "#070605"; ctx.beginPath(); ctx.moveTo(38, 186); ctx.lineTo(38, 156); ctx.quadraticCurveTo(40, 140, 120, 138); ctx.quadraticCurveTo(200, 140, 202, 156); ctx.lineTo(202, 186); ctx.closePath(); ctx.fill();
+  const nl = ctx.createLinearGradient(0, 140, 0, 186); nl.addColorStop(0, rgba(60, 50, 40, 0.0)); nl.addColorStop(1, rgba(60, 50, 40, 0.35)); ctx.fillStyle = nl; ctx.fill();
+  ctx.strokeStyle = rgba(120, 100, 78, 0.35); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(38, 186); ctx.lineTo(38, 156); ctx.quadraticCurveTo(40, 140, 120, 138); ctx.quadraticCurveTo(200, 140, 202, 156); ctx.lineTo(202, 186); ctx.stroke();
+  ctx.fillStyle = c("#4a3f33"); ctx.fillRect(34, 180, 172, 6); ctx.fillStyle = rgba(0, 0, 0, 0.45); ctx.fillRect(34, 186, 172, 3); /* le rebord */
   const good = Math.max(0, st.good || 0), bad = Math.max(0, st.bad || 0), shown = [...Array(Math.min(good, 12)).fill("g"), ...Array(Math.min(bad, Math.max(0, 14 - Math.min(good, 12)))).fill("b")];
   const PILL = require("./relto-oven").pill; /* des pilules, couchées en petits tas (deux dessous, une dessus) */
-  shown.forEach((k, i) => { const grp = Math.floor(i / 3), p3 = i % 3, gx = 50 + grp * 30; PILL(ctx, p3 === 2 ? gx + 6 : gx + p3 * 12, p3 === 2 ? 168 : 173.2, k === "g" ? "white" : "grey", 0.85); });
-  ctx.strokeStyle = rgba(200, 170, 120, 0.55); ctx.lineWidth = 1.4; /* les entailles Bahro : une par granulé blanc, par cinq barrées */
-  for (let i = 0; i < Math.min(good, 40); i++) { const grp = Math.floor(i / 5), j = i % 5, x = 44 + grp * 22 + j * 3.4, y = 196; if (j < 4) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 1, y + 12); ctx.stroke(); } else { ctx.beginPath(); ctx.moveTo(x - 14, y + 10); ctx.lineTo(x + 1, y + 2); ctx.stroke(); } }
+  shown.forEach((k, i) => { const grp = Math.floor(i / 3), p3 = i % 3, gx = 50 + grp * 30; PILL(ctx, p3 === 2 ? gx + 6 : gx + p3 * 12, p3 === 2 ? 172 : 177.2, k === "g" ? "white" : "grey", 0.85); });
+  ctx.strokeStyle = rgba(200, 170, 120, 0.55); ctx.lineWidth = 1.4; /* les entailles Bahro, gravées dans la roche : une par granulé blanc, par cinq barrées */
+  for (let i = 0; i < Math.min(good, 40); i++) { const grp = Math.floor(i / 5), j = i % 5, x = 44 + grp * 22 + j * 3.4, y = 198; if (j < 4) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 1, y + 12); ctx.stroke(); } else { ctx.beginPath(); ctx.moveTo(x - 14, y + 10); ctx.lineTo(x + 1, y + 2); ctx.stroke(); } }
   r.hot.push({ x: 36, y: 160, w: 170, h: 54, tip: good || bad ? tr("cave.shelf", { g: good, b: bad }) : tr("cave.shelf.empty") });
-  /* le bouton : une pierre ronde sur un socle, enfoncée tant que le granulé tombe */
+  /* le bouton : une colonne de pierre taillée, une pierre ronde marquée d'une main, enfoncée tant que le granulé tombe */
   const down = !!(ph && ph.kind === "falling"), hov = r.hover && r.hover.caveDrop;
-  ctx.fillStyle = c("#3a3128"); ctx.fillRect(486, 218, 44, 50); ctx.fillStyle = c("#4a3f33"); ctx.fillRect(482, 214, 52, 8);
-  const bg2 = ctx.createRadialGradient(506, 207 + (down ? 4 : 0), 1, 508, 210 + (down ? 4 : 0), 13); bg2.addColorStop(0, hov && !down ? "#cdb88a" : "#9c8a66"); bg2.addColorStop(1, "#4a3f33");
-  ctx.fillStyle = bg2; ctx.beginPath(); ctx.ellipse(508, 210 + (down ? 4 : 0), 14, down ? 4 : 7, 0, 0, TAU); ctx.fill();
+  const col = ctx.createLinearGradient(488, 0, 528, 0); col.addColorStop(0, c("#2e2720")); col.addColorStop(0.45, c("#4a3f33")); col.addColorStop(1, c("#221d18")); ctx.fillStyle = col;
+  ctx.beginPath(); ctx.moveTo(484, 268); ctx.lineTo(490, 226); ctx.quadraticCurveTo(508, 220, 526, 226); ctx.lineTo(532, 268); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = c("#54483a"); ctx.beginPath(); ctx.ellipse(508, 220, 26, 7, 0, 0, TAU); ctx.fill(); ctx.fillStyle = c("#3a3128"); ctx.beginPath(); ctx.ellipse(508, 222, 26, 7, 0, 0, Math.PI); ctx.fill();
+  const by = 211 + (down ? 4 : 0), bg2 = ctx.createRadialGradient(504, by - 2, 1, 508, by, 15); bg2.addColorStop(0, hov && !down ? "#d8c49a" : "#a8946e"); bg2.addColorStop(1, "#4a3f33");
+  ctx.fillStyle = bg2; ctx.beginPath(); ctx.ellipse(508, by, 15, down ? 4 : 7, 0, 0, TAU); ctx.fill();
+  if (!down) { ctx.fillStyle = rgba(40, 30, 20, 0.55); ctx.beginPath(); ctx.ellipse(508, by + 1, 4, 2.2, 0, 0, TAU); ctx.fill(); for (let f = 0; f < 4; f++) { ctx.beginPath(); ctx.ellipse(502 + f * 4, by - 2.6 - (f === 1 || f === 2 ? 0.6 : 0), 0.9, 2.2, (f - 1.5) * 0.15, 0, TAU); ctx.fill(); } } /* une main gravée, aux doigts longs */
   r.hot.push({ x: 478, y: 196, w: 60, h: 74, tip: down ? tr("cave.button.down") : good + bad > 0 ? tr("cave.button") : tr("cave.button.empty"), caveDrop: !down && good + bad > 0 });
-  /* la faille vers le bas, dans la paroi de droite */
+  /* la faille vers le bas, dans la paroi de droite : des bords déchirés, un peu de vert qui luit au fond */
   const fh = r.hover && r.hover.go === "cavebottom";
-  ctx.fillStyle = "#000"; ctx.beginPath(); ctx.moveTo(584, 96); ctx.lineTo(604, 110); ctx.lineTo(598, 170); ctx.lineTo(612, 230); ctx.lineTo(600, 266); ctx.lineTo(572, 266); ctx.lineTo(582, 214); ctx.lineTo(574, 150); ctx.closePath(); ctx.fill();
-  if (fh) { ctx.strokeStyle = rgba(120, 200, 170, 0.35); ctx.lineWidth = 1; ctx.stroke(); }
+  const crack = () => { ctx.beginPath(); ctx.moveTo(584, 96); ctx.lineTo(592, 104); ctx.lineTo(604, 110); ctx.lineTo(600, 140); ctx.lineTo(598, 170); ctx.lineTo(606, 196); ctx.lineTo(612, 230); ctx.lineTo(604, 250); ctx.lineTo(600, 266); ctx.lineTo(572, 266); ctx.lineTo(578, 240); ctx.lineTo(582, 214); ctx.lineTo(576, 184); ctx.lineTo(574, 150); ctx.lineTo(580, 120); ctx.closePath(); };
+  ctx.strokeStyle = rgba(120, 100, 80, 0.3); ctx.lineWidth = 3; crack(); ctx.stroke();
+  ctx.fillStyle = "#000"; crack(); ctx.fill();
+  const gl = ctx.createLinearGradient(0, 266, 0, 160); gl.addColorStop(0, rgba(90, 200, 150, fh ? 0.28 : 0.12 + 0.04 * Math.sin(t * 1.3))); gl.addColorStop(1, rgba(90, 200, 150, 0)); ctx.save(); crack(); ctx.clip(); ctx.fillStyle = gl; ctx.fillRect(560, 150, 60, 120); ctx.restore();
   r.hot.push({ x: 566, y: 96, w: 52, h: 172, tip: tr("cave.down"), go: "cavebottom" });
-  const v = ctx.createRadialGradient(W / 2, H / 2, 140, W / 2, H / 2, 420); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.5)"); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  /* des taches de mousse qui luit, çà et là */
+  for (let i = 0; i < 9; i++) { const x = q("gx" + i) * W, y = 60 + q("gy" + i) * 190, a = 0.18 + 0.1 * Math.sin(t * 0.8 + i); ctx.fillStyle = rgba(110, 210, 160, a); ctx.beginPath(); ctx.arc(x, y, 1 + q("gr" + i) * 1.4, 0, TAU); ctx.fill(); }
+  const v = ctx.createRadialGradient(W / 2, H / 2, 140, W / 2, H / 2, 420); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.55)"); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
   require("./relto-atelier").backButton(r, ctx, tr("cave.back.vault"), "vault");
-  void sc; void sky; void t; void clamp;
+  void sc;
 }
 
 /**
