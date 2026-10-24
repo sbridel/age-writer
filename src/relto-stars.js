@@ -52,8 +52,30 @@ function carved(ctx, id, x, y, s, glow, seed) {
 const PILLARS = [-82, -10, -154, 62, 134].map((deg, i) => { const a = (deg * Math.PI) / 180, x = 320 + Math.cos(a) * 250, y = 262 + Math.sin(a) * 48; return { i, x, y, s: 0.58 + ((y - 214) / 87) * 0.95 }; });
 /** Où pend la vasque de chaque pilier (elle s'allume avec lui, mais ne se tient pas au-dessus) : x, hauteur de la coupe. */
 const BOWLS = [[320, 152, 1], [540, 112], [118, 84], [452, 80], [206, 66]]; /* la première, au centre, pend du lustre (3e valeur) */
-const FISSURE_L = [[316, 222], [310, 236], [314, 250], [302, 268], [306, 286], [290, 306], [294, 326], [276, 344], [270, 360]];
-const FISSURE_R = [[324, 222], [330, 238], [326, 252], [338, 270], [334, 288], [352, 308], [346, 328], [366, 346], [372, 360]];
+/**
+ * Le sol est une fosse (l'auteur : les piliers sont sur de petites plateformes, la fissure d'étoiles « couvre » le sol) : un rebord
+ * de roche au fond, un autre devant, des bords à gauche et à droite, et entre eux le vide étoilé. `pitTop(x)` / `pitFront(x)` : ses
+ * deux bords en y.
+ */
+const PIT_X0 = 44, PIT_X1 = 596, U = (x) => (x - 320) / 360;
+const pitTop = (x) => 300 - 86 * Math.sqrt(Math.max(0, 1 - U(x) ** 2)) + 12;
+const pitFront = (x) => 322 + 14 * U(x) ** 2;
+const pitPath = (ctx) => { ctx.beginPath(); for (let x = PIT_X0; x <= PIT_X1; x += 14) (x === PIT_X0 ? ctx.moveTo(x, pitTop(x)) : ctx.lineTo(x, pitTop(x))); ctx.quadraticCurveTo(PIT_X1 + 30, (pitTop(PIT_X1) + pitFront(PIT_X1)) / 2, PIT_X1, pitFront(PIT_X1)); for (let x = PIT_X1; x >= PIT_X0; x -= 14) ctx.lineTo(x, pitFront(x)); ctx.quadraticCurveTo(PIT_X0 - 30, (pitTop(PIT_X0) + pitFront(PIT_X0)) / 2, PIT_X0, pitTop(PIT_X0)); ctx.closePath(); }; /* aux deux bouts, un arrondi */
+/** Un bruit doux (une valeur qui flotte entre 0 et 1, `hz` changements par seconde) : le vacillement d'une flamme. */
+const vnoise = (k, t, hz) => { const x = t * hz, i = Math.floor(x), f = x - i, a = q("fk" + k + "_" + (i % 97)), b = q("fk" + k + "_" + ((i + 1) % 97)), sm = f * f * (3 - 2 * f); return a + (b - a) * sm; };
+/** La lumière d'une vasque à l'instant t : de 0,6 à 1,15, irrégulière (deux fréquences) ; `k` : la vasque. */
+const flicker = (k, t) => 0.6 + 0.55 * (0.6 * vnoise(k, t, 8) + 0.4 * vnoise(k + 9, t, 3.3));
+/** Une petite plateforme de roche, dans la fosse, sous un pilier : le dessus clair, la tranche éclairée d'en dessous par le vide. */
+function platform(ctx, p) {
+  const s = p.s, rx = 34 * s, ry = rx * 0.22, th = 11 * s, x = p.x, y = p.y + 1.5 * s;
+  const gl = ctx.createRadialGradient(x, y + th + ry, 2, x, y + th + ry, rx * 1.5); gl.addColorStop(0, blue(0.22)); gl.addColorStop(1, blue(0)); ctx.fillStyle = gl; ctx.fillRect(x - rx * 1.6, y, rx * 3.2, th + ry * 4); /* la fosse la éclaire d'en dessous */
+  const sg = ctx.createLinearGradient(0, y, 0, y + th + ry); sg.addColorStop(0, "#1a1e31"); sg.addColorStop(0.6, "#12172b"); sg.addColorStop(1, rgba(44, 84, 170, 0.95));
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(x - rx, y); ctx.lineTo(x - rx * 0.88, y + th); ctx.ellipse(x, y + th, rx * 0.88, ry * 0.9, 0, Math.PI, 0, true); ctx.lineTo(x + rx, y); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = rgba(4, 6, 14, 0.5); ctx.lineWidth = 1; for (let k = 0; k < 6; k++) { const xx = x - rx * 0.8 + (k / 5) * rx * 1.6 + (q("plk" + p.i + k) - 0.5) * 5; ctx.beginPath(); ctx.moveTo(xx, y + ry * 0.9); ctx.lineTo(xx + (q("plj" + p.i + k) - 0.5) * 3, y + th * (0.5 + q("pll" + p.i + k) * 0.5) + ry * 0.7); ctx.stroke(); } /* des cassures dans la tranche */
+  const tg = ctx.createLinearGradient(x - rx, 0, x + rx, 0); tg.addColorStop(0, "#2a3048"); tg.addColorStop(0.5, "#323a58"); tg.addColorStop(1, "#1d2236"); ctx.fillStyle = tg; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, TAU); ctx.fill();
+  ctx.strokeStyle = rgba(PAL.edge[0], PAL.edge[1], PAL.edge[2], 0.4); ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0.1, Math.PI - 0.1); ctx.stroke(); /* l'arête du bord, du côté de la lumière */
+  ctx.fillStyle = rgba(12, 14, 26, 0.5); for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.ellipse(x + (q("plx" + p.i + k) - 0.5) * rx * 1.5, y + (q("ply" + p.i + k) - 0.5) * ry, 2 + q("plr" + p.i + k) * 3, 1 + q("plr" + p.i + k), 0, 0, TAU); ctx.fill(); } /* des éclats sur le dessus */
+}
 
 /** Le pied de la paroi : une ligne de roche irrégulière autour de la salle (y en fonction de x). */
 const footY = (x) => { const u = (x - 320) / 360; return 300 - 86 * Math.sqrt(Math.max(0, 1 - u * u)) + (q("ft" + Math.round(x / 16)) - 0.5) * 9; };
@@ -234,30 +256,36 @@ function drawStars(r, ctx, sc, sky, t) {
     g.addColorStop(0, rgba(PAL.bump[0], PAL.bump[1], PAL.bump[2], 0.22)); g.addColorStop(1, rgba(4, 6, 12, 0.35)); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, w / 2, h / 2, toward * 0.08, 0, TAU); ctx.fill(); } /* des bosses de roche, éclairées du côté de la fissure */
   ctx.strokeStyle = rgba(4, 6, 12, 0.55); ctx.lineWidth = 1.1; for (let i = 0; i < 18; i++) { let x = q("cx" + i) * W, y = 240 + q("cy" + i) * 110; if (Math.abs(x - 320) < 60) continue; ctx.beginPath(); ctx.moveTo(x, y); for (let k = 0; k < 5; k++) { x += (x < 320 ? -1 : 1) * (8 + q("cs" + i + k) * 14); y += (q("cv" + i + k) - 0.3) * 9; ctx.lineTo(x, y); } ctx.stroke(); } /* des fêlures qui partent de la fissure */
   ctx.restore();
-  /* la fissure, au sol : large devant, étroite au fond ; la lumière bleue et les poussières d'étoiles en montent */
-  const glow = ctx.createRadialGradient(320, 300, 10, 320, 300, 240); glow.addColorStop(0, blue(0.32)); glow.addColorStop(1, blue(0)); ctx.fillStyle = glow; ctx.fillRect(0, 160, W, H - 160);
-  const crack = () => { ctx.beginPath(); FISSURE_L.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); for (let i = FISSURE_R.length - 1; i >= 0; i--) ctx.lineTo(FISSURE_R[i][0], FISSURE_R[i][1]); ctx.closePath(); };
-  const cg = ctx.createLinearGradient(320, 222, 320, H); cg.addColorStop(0, blue(0.9, 1.3)); cg.addColorStop(0.4, blue(0.85)); cg.addColorStop(1, "#0a1630"); ctx.fillStyle = cg; crack(); ctx.fill();
-  ctx.save(); crack(); ctx.clip(); for (let i = 0; i < 40; i++) { const x = 270 + q("cs" + i) * 100, y = 222 + q("ct" + i) * 140; ctx.fillStyle = rgba(230, 240, 255, 0.4 + 0.5 * Math.abs(Math.sin(t * 1.3 + i))); ctx.fillRect(x, y, 1, 1); } ctx.restore(); /* le vide, en bas */
-  ctx.strokeStyle = blue(0.55, 1.2); ctx.lineWidth = 1; crack(); ctx.stroke();
-  r.hot.push({ x: 268, y: 222, w: 106, h: 138, tip: tr("stars.crack") });
-  /* au degré 3, deux d'entre eux, de dos, accroupis au bord de la fissure (des ombres : jamais de détail) */
-  if (degree >= 3) { bahroShadow(ctx, 238, 278, 1, 1, t, 0); bahroShadow(ctx, 374, 254, 0.78, -1, t + 2.1, 1); }
-  /* les poussières d'étoiles qui montent de la fissure */
-  for (let i = 0; i < 70; i++) { const u = q("du" + i), p = (t * (0.05 + q("dv" + i) * 0.06) + q("dw" + i)) % 1, yb = 222 + u * 138, half = 4 + u * 46, x = 320 + (q("dx" + i) - 0.5) * 2 * half + Math.sin(t * 0.7 + i) * 6 * p, y = yb - p * (120 + u * 140), a = (1 - p) * (0.4 + 0.6 * Math.abs(Math.sin(t * 2 + i * 1.7)));
-    ctx.fillStyle = rgba(215, 230, 255, 0.85 * a); ctx.beginPath(); ctx.arc(x, y, 0.6 + u * 1.1, 0, TAU); ctx.fill(); }
+  /* le sol est une fosse : le vide étoilé entre un rebord au fond et un rebord devant ; la lumière bleue d'en bas ; les poussières y tombent */
+  const glow = ctx.createRadialGradient(320, 285, 10, 320, 285, 290); glow.addColorStop(0, blue(0.3)); glow.addColorStop(1, blue(0)); ctx.fillStyle = glow; ctx.fillRect(0, 160, W, H - 160);
+  const pg = ctx.createRadialGradient(320, 292, 8, 320, 292, 320); pg.addColorStop(0, "#2a5cc8"); pg.addColorStop(0.3, "#12307a"); pg.addColorStop(0.7, "#071240"); pg.addColorStop(1, "#03051a"); ctx.fillStyle = pg; pitPath(ctx); ctx.fill();
+  ctx.save(); pitPath(ctx); ctx.clip();
+  for (const [x, y, rr, col] of [[410, 278, 110, [120, 80, 200]], [240, 298, 90, [70, 130, 230]], [330, 288, 54, [220, 170, 255]]]) { const g = ctx.createRadialGradient(x, y, 2, x, y, rr); g.addColorStop(0, rgba(col[0], col[1], col[2], 0.24)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0)); ctx.fillStyle = g; ctx.fillRect(x - rr, y - rr, rr * 2, rr * 2); } /* la nébuleuse, au fond */
+  for (let i = 0; i < 150; i++) { const x = PIT_X0 + q("ps" + i) * (PIT_X1 - PIT_X0), y = pitTop(x) + q("pt" + i) * (pitFront(x) - pitTop(x)), sz = q("pz" + i), tw = 0.5 + 0.5 * Math.sin(t * (0.7 + sz * 2) + i); ctx.fillStyle = rgba(225, 235, 255, (0.25 + 0.6 * sz) * tw); ctx.fillRect(x, y, sz > 0.9 ? 1.6 : 1, sz > 0.9 ? 1.6 : 1); } /* des étoiles, en bas */
+  for (let x = PIT_X0; x < PIT_X1; x += 14) { const ty = pitTop(x), fg = ctx.createLinearGradient(0, ty, 0, ty + 24); fg.addColorStop(0, rgba(4, 5, 12, 0.96)); fg.addColorStop(1, rgba(6, 12, 40, 0)); ctx.fillStyle = fg; ctx.fillRect(x, ty, 15, 24); } /* la paroi du fond, qui plonge dans le vide */
+  ctx.strokeStyle = rgba(2, 3, 9, 0.5); ctx.lineWidth = 1; for (let i = 0; i < 60; i++) { const x = PIT_X0 + q("pw" + i) * (PIT_X1 - PIT_X0), ty = pitTop(x); ctx.beginPath(); ctx.moveTo(x, ty); ctx.lineTo(x + (q("pj" + i) - 0.5) * 3, ty + 6 + q("pl" + i) * 16); ctx.stroke(); } /* ses stries */
+  ctx.restore();
+  ctx.strokeStyle = rgba(PAL.edge[0], PAL.edge[1], PAL.edge[2], 0.32); ctx.lineWidth = 1; ctx.beginPath(); for (let x = PIT_X0; x <= PIT_X1; x += 14) (x === PIT_X0 ? ctx.moveTo(x, pitTop(x)) : ctx.lineTo(x, pitTop(x))); ctx.stroke(); /* l'arête du fond */
+  ctx.strokeStyle = blue(0.5, 1.15); ctx.lineWidth = 1.4; ctx.beginPath(); for (let x = PIT_X0; x <= PIT_X1; x += 14) (x === PIT_X0 ? ctx.moveTo(x, pitFront(x)) : ctx.lineTo(x, pitFront(x))); ctx.stroke(); /* la lèvre devant : la lumière d'en bas la frôle */
+  ctx.fillStyle = rgba(PAL.edge[0], PAL.edge[1], PAL.edge[2], 0.1); for (let i = 0; i < 24; i++) { const x = PIT_X0 + 8 + q("pm" + i) * (PIT_X1 - PIT_X0 - 16); ctx.beginPath(); ctx.ellipse(x, pitFront(x) + 1.5, 6 + q("pn" + i) * 12, 1.8 + q("po" + i) * 1.6, 0, 0, TAU); ctx.fill(); } /* des bosses sur la lèvre */
+  r.hot.push({ x: PIT_X0, y: 232, w: PIT_X1 - PIT_X0, h: 92, tip: tr("stars.crack") });
+  /* les poussières tombent dans la fosse : elles viennent d'en haut, passent le bord et s'enfoncent en rapetissant jusqu'à s'éteindre */
+  for (let i = 0; i < 70; i++) { const x0 = PIT_X0 + 30 + q("fu" + i) * (PIT_X1 - PIT_X0 - 60), top = pitTop(x0), bot = pitFront(x0), pp = (t * (0.045 + q("fv" + i) * 0.05) + q("fw" + i)) % 1, y = top - 50 + pp * (50 + (bot - top) * 0.96), depth = Math.max(0, (y - top) / (bot - top)), x = x0 + (320 - x0) * depth * 0.14 + Math.sin(t * 0.7 + i) * 3 * pp;
+    const a = (y < top ? Math.min(1, (y - (top - 50)) / 22) : 1 - depth) * (0.35 + 0.65 * Math.abs(Math.sin(t * 2 + i * 1.7))), C = q("fc" + i) < PAL.d2 ? PAL.dust2 : PAL.dust2 && q("fc" + i) < 0.7 ? PAL.dust : [215, 230, 255];
+    ctx.fillStyle = rgba(C[0], C[1], C[2], 0.85 * a); ctx.beginPath(); ctx.arc(x, y, 0.5 + 1.1 * (1 - depth * 0.7), 0, TAU); ctx.fill(); }
   /* les cinq piliers, du fond vers nous : un fût droit gravé de haut en bas, une coupe à deux cornes courtes ; les vasques au-dessus */
   const signs = F.itemsOf((r.scene && r.scene.ages) || [], {}).filter((it) => it.kind === "age").slice(-15).flatMap((it) => it.parts.slice(0, 1));
   for (const p of PILLARS.slice().sort((a, b) => a.y - b.y)) {
+    if (p.y > pitTop(p.x) + 6) platform(ctx, p); /* il se tient sur sa plateforme, dans la fosse */
     const on = lit.includes(p.i), hov = r.hover && r.hover.pillar === p.i + 1, T = pillar(ctx, p, on, hov, t, signs);
     const cyy = T.top;
     r.hot.push({ x: p.x - T.w * 2.4, y: cyy - 22 * p.s, w: T.w * 4.8, h: p.y - cyy + 22 * p.s, tip: on ? tr("stars.pillar.lit") : tr("stars.pillar"), pillar: p.i + 1 });
     /* la vasque, pendue à trois cordes sous la voûte, au-dessus du pilier : flamme bleu-violet */
-    const vr = 7 + 5 * p.s, [vx, vy, fromLamp] = BOWLS[p.i]; /* elles pendent où elles veulent : ni au-dessus de leur pilier ni à la même hauteur */
+    const vr = 7 + 5 * p.s, [vx, vy, fromLamp] = BOWLS[p.i], fk = flicker(p.i, t); /* fk : le vacillement de sa flamme */ /* elles pendent où elles veulent : ni au-dessus de leur pilier ni à la même hauteur */
     ctx.strokeStyle = rgba(120, 110, 95, 0.5); ctx.lineWidth = 0.8; for (const dx of [-vr * 0.9, 0, vr * 0.9]) { ctx.beginPath(); ctx.moveTo(fromLamp ? 320 + dx * 0.1 : vx + dx * 0.15, fromLamp ? 92 : 20); ctx.lineTo(vx + dx, vy - 2); ctx.stroke(); }
-    if (on) { const H1 = PAL.halo[0], H2 = PAL.halo[1], [F1, F2, F3] = PAL.flame, hr = vr * PAL.hr, fg = ctx.createRadialGradient(vx, vy - 4, 1, vx, vy - 4, hr);
-      fg.addColorStop(0, rgba(H1[0], H1[1], H1[2], PAL.ha)); fg.addColorStop(0.5, rgba(H2[0], H2[1], H2[2], PAL.ha * 0.43)); fg.addColorStop(1, rgba(H2[0], H2[1], H2[2], 0)); ctx.fillStyle = fg; ctx.fillRect(vx - hr, vy - hr, hr * 2, hr * 2);
-      for (let k = 0; k < 3; k++) { const fl2 = Math.sin(t * 5 + k * 2 + p.i) * 0.2, C = [F1, F2, F3][k]; ctx.fillStyle = rgba(C[0], C[1], C[2], k === 2 ? 0.85 : 0.75); ctx.beginPath(); ctx.moveTo(vx - vr * (0.55 - k * 0.14), vy - 1); ctx.quadraticCurveTo(vx + fl2 * vr, vy - vr * (1.3 - k * 0.3), vx + vr * (0.55 - k * 0.14), vy - 1); ctx.closePath(); ctx.fill(); }
+    if (on) { const H1 = PAL.halo[0], H2 = PAL.halo[1], [F1, F2, F3] = PAL.flame, hr = vr * PAL.hr * (0.88 + 0.16 * fk), fg = ctx.createRadialGradient(vx, vy - 4, 1, vx, vy - 4, hr);
+      fg.addColorStop(0, rgba(H1[0], H1[1], H1[2], PAL.ha * fk)); fg.addColorStop(0.5, rgba(H2[0], H2[1], H2[2], PAL.ha * 0.43 * fk)); fg.addColorStop(1, rgba(H2[0], H2[1], H2[2], 0)); ctx.fillStyle = fg; ctx.fillRect(vx - hr, vy - hr, hr * 2, hr * 2);
+      for (let k = 0; k < 3; k++) { const fl2 = Math.sin(t * 5 + k * 2 + p.i) * 0.2 * (0.6 + fk), C = [F1, F2, F3][k]; ctx.fillStyle = rgba(C[0], C[1], C[2], k === 2 ? 0.85 : 0.75); ctx.beginPath(); ctx.moveTo(vx - vr * (0.55 - k * 0.14), vy - 1); ctx.quadraticCurveTo(vx + fl2 * vr, vy - vr * (1.3 - k * 0.3) * (0.72 + 0.34 * fk), vx + vr * (0.55 - k * 0.14), vy - 1); ctx.closePath(); ctx.fill(); }
       /* la poussière coule de la vasque : un filet de grains qui descend jusqu'au sol, s'évase un peu, s'éteint en chemin */
       const D = PAL.dust, fall = Math.min(130, Math.max(30, p.y - vy - 4 * p.s)), col = ctx.createLinearGradient(0, vy, 0, vy + fall); const D2 = PAL.dust2; col.addColorStop(0, rgba(D[0], D[1], D[2], 0.06)); col.addColorStop(0.55, rgba(D2[0], D2[1], D2[2], 0.045)); col.addColorStop(1, rgba(D2[0], D2[1], D2[2], 0)); ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(vx - vr * 0.45, vy + 3); ctx.lineTo(vx + vr * 0.45, vy + 3); ctx.lineTo(vx + vr * 1.1, vy + fall); ctx.lineTo(vx - vr * 1.1, vy + fall); ctx.closePath(); ctx.fill();
       for (let k = 0; k < 52; k++) { const pp = (t * (0.07 + q("vv" + p.i + k) * 0.06) + q("vf" + p.i + k)) % 1, spread = (q("vx" + p.i + k) - 0.5) * vr * (0.8 + pp * 1.6), sway = Math.sin(t * 0.8 + k * 1.7) * 2.2 * pp * p.s, a = Math.pow(1 - pp, 0.9) * (0.45 + 0.55 * Math.abs(Math.sin(t * 2.1 + k)));
@@ -266,6 +294,13 @@ function drawStars(r, ctx, sc, sky, t) {
     ctx.fillStyle = on ? "#3a3a62" : "#202128"; ctx.beginPath(); ctx.ellipse(vx, vy, vr, vr * 0.3, 0, 0, TAU); ctx.fill();
     r.hot.push({ x: vx - vr, y: vy - vr * 0.6, w: vr * 2, h: vr * 1.4, tip: on ? tr("stars.basin.lit") : tr("stars.basin") });
   }
+  /* au degré 3, deux d'entre eux, de dos, accroupis au bord de la fosse, de part et d'autre de la flèche (des ombres : jamais de détail) */
+  if (degree >= 3) { bahroShadow(ctx, 234, 344, 1.15, 1, t, 0); bahroShadow(ctx, 410, 346, 1, -1, t + 2.1, 1); }
+  /* le vacillement : la lumière des vasques éclaire la salle d'une lueur qui bat (chaque flamme à son rythme) et qui joue sur la roche et les piliers */
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  for (const pl of PILLARS) { if (!lit.includes(pl.i)) continue; const [bx, by] = BOWLS[pl.i], fk = flicker(pl.i, t), H1 = PAL.halo[0], rr = 120 + 36 * pl.s, wob = Math.sin(t * 3 + pl.i * 2) * 2, g = ctx.createRadialGradient(bx + wob, by + 8, 4, bx + wob, by + 8, rr);
+    g.addColorStop(0, rgba(H1[0], H1[1], H1[2], 0.17 * fk)); g.addColorStop(0.5, rgba(H1[0], H1[1], H1[2], 0.05 * fk)); g.addColorStop(1, rgba(H1[0], H1[1], H1[2], 0)); ctx.fillStyle = g; ctx.fillRect(bx - rr, by + 8 - rr, rr * 2, rr * 2); }
+  ctx.restore();
   const v = ctx.createRadialGradient(W / 2, H * 0.6, 160, W / 2, H * 0.6, 420); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.6)"); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
   require("./relto-atelier").backButton(r, ctx, tr("stars.back"), "cavebottom");
   require("./relto-hall").backEdge(r, ctx, "fissure", tr("stars.floor"));

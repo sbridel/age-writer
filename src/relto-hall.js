@@ -24,8 +24,8 @@ const bbox = (pts, pad = 2) => { const xs = pts.map((p) => p[0]), ys = pts.map((
 /** Le bas de la vue : une bande où l'on recule (vers le couloir, ou du couloir vers la pièce), un chevron pâle qui s'éclaire au survol. Partagé avec la grande pièce et le salon. */
 function backEdge(r, ctx, go, tip) {
   const hov = r.hover && r.hover.go === go && r.hover.edge === "⌄";
-  ctx.fillStyle = rgba(230, 215, 180, hov ? 0.8 : 0.32); ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.fillText("⌄", W / 2, H - 16); ctx.textAlign = "left";
-  r.hot.push({ x: W / 2 - 100, y: H - 52, w: 200, h: 52, tip, go, edge: "⌄" }); /* une bande large et haute : le bas de l'image peut être couvert par la barre du Relto (plein écran, téléphone) */
+  ctx.fillStyle = rgba(230, 215, 180, hov ? 0.85 : 0.34); ctx.font = "30px serif"; ctx.textAlign = "center"; ctx.fillText("⌄", W / 2, H - 22); ctx.textAlign = "left";
+  r.hot.push({ x: W / 2 - 110, y: H - 62, w: 220, h: 130, tip, go, edge: "⌄" }); /* la zone dépasse du bas de l'image : un curseur qui vise la flèche l'atteint même si l'affichage décale un peu */ /* une bande large et haute : le bas de l'image peut être couvert par la barre du Relto (plein écran, téléphone) */
 }
 
 function drawHall(r, ctx, sc, sky, t) {
