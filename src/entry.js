@@ -273,11 +273,15 @@ module.exports = function build(Base, core, AGEX) {
     carryExpand(text, o) {
       const lines = CARRY.parseAll(text); if (!lines.length || !o || !o.seed || !this.carryOpen(o.seed)) return null;
       const core = this.core, me = guard("graine", () => this.ageNameOfSeed(o.seed)) || String(o.seed), chain = [...this._carryStack, me];
-      const info = { fragments: [], refused: [], lines: lines.map((l) => l.raw), ids: [] }, done = [], lifeTaken = new Set();
+      const info = { fragments: [], refused: [], lines: lines.map((l) => l.raw), ids: [], loop: false }, done = [], lifeTaken = new Set();
+      /* la voix de cet Âge, sans ce qu'il porte : son jour à lui (l'accord se juge entre deux Âges d'origine ; le contre-sens demande l'octave) */
+      const own = text.split("\n").filter((l) => !CARRY.isCarryLine(l)).join("\n"), ok0 = `own|${o.seed}|${own}`;
+      let ownFreq = this._carryCache.get(ok0);
+      if (ownFreq == null) { const a0 = core.analyse(own, { seed: o.seed, probe: true, draw: false }); ownFreq = this.carryVoice(a0, own, o.seed); this._carryCache.set(ok0, ownFreq); }
+      info.ownFreq = ownFreq;
       for (const c of lines) {
         const refuse = (why) => info.refused.push({ raw: c.raw, why, what: c.what, from: c.from });
-        if (!c.known) { refuse("what"); continue; }
-        if (c.contra) { refuse("contra"); continue; } /* à contre-sens : l'étape C (le chapitre 16) */
+        if (!c.known || (c.contra && c.what === "sky")) { refuse("what"); continue; }
         const f = this.carryFind(c.from, o.seed); if (!f) { refuse("missing"); continue; }
         const g = CARRY.guardOf(chain, f.basename); if (g) { refuse(g); continue; }
         if (this.ext.law && !this.law.get(f.basename)) { refuse("untouched"); continue; } /* on ne porte que d'un Livre ouvert (une note déjà lue ; §12.2) */
@@ -289,13 +293,15 @@ module.exports = function build(Base, core, AGEX) {
           try { a = core.analyse(src, { seed, probe: true, draw: false }); } finally { this._carryStack.pop(); }
           a = { a, freq: this.carryVoice(a, src, seed) }; this._carryCache.set(ck, a); if (this._carryCache.size > 200) this._carryCache.delete(this._carryCache.keys().next().value);
         }
+        if (c.contra) { const ac = require("./imager-guild").accordOf({ freq: ownFreq }, { freq: a.freq }); if (!ac || !ac.octave) { refuse("octave"); continue; } } /* la clause de Torus : à contre-sens, seulement à l'octave */
         const life = c.what !== "sky" && !lifeTaken.has(f.path);
         const ids = CARRY.fragmentOf(a.a, c.what, (id) => this.blockAxis(id), { life }); if (!ids.length) { refuse("empty"); continue; }
         if (life) lifeTaken.add(f.path);
-        done.push({ index: c.index, what: c.what, ids });
-        info.fragments.push({ what: c.what, from: f.basename, path: f.path, ids, srcStability: a.a.stability, srcFreq: a.freq });
+        const loop = CARRY.carriesFrom(src, me); if (loop) info.loop = true; /* deux Âges qui se portent l'un l'autre : la boucle */
+        done.push({ index: c.index, what: c.what, contra: c.contra, ids });
+        info.fragments.push({ what: c.what, contra: c.contra, loop, from: f.basename, path: f.path, ids, srcStability: a.a.stability, srcFreq: a.freq });
         for (const id of ids) if (!info.ids.includes(id)) info.ids.push(id);
-        const by = this._carriedFrom.get(f.basename) || new Map(); by.set(me, CARRY.axisOf(c.what)); this._carriedFrom.set(f.basename, by); /* la couture, chez la source aussi */
+        const by = this._carriedFrom.get(f.basename) || new Map(); by.set(me, CARRY.axisOf(c.what)); this._carriedFrom.set(f.basename, by); /* la couture, chez la source aussi (la source perd un lieu, jamais un ciel, même à contre-sens) */
       }
       const out = done.length ? CARRY.expandText(text, done, (id) => this.blockAxis(id), (l) => AGEX.norm(l.trim())) : text;
       return { text: out, info };
@@ -304,7 +310,7 @@ module.exports = function build(Base, core, AGEX) {
     carryAdjust(out, o, srcText, key) {
       let r = out; const c = o.carry ? { ...o.carry, fragments: o.carry.fragments.map((f) => ({ ...f })) } : null;
       if (c && c.fragments.length) {
-        const rf = this.carryVoice(r, srcText, o.seed), GI = require("./imager-guild");
+        const rf = Number.isFinite(c.ownFreq) ? c.ownFreq : this.carryVoice(r, srcText, o.seed), GI = require("./imager-guild");
         for (const f of c.fragments) { const ac = GI.accordOf({ freq: rf }, { freq: f.srcFreq }); f.degree = ac ? ac.degree : "rub"; f.interval = ac ? ac.name : ""; f.beyond = !!(ac && ac.octaves && ac.name !== "octave"); }
         r = CARRY.applyCosts(r, c.fragments, null);
       }
@@ -317,7 +323,8 @@ module.exports = function build(Base, core, AGEX) {
     carryLine(c) {
       if (!c) return "";
       const t = this.t, out = [], what = (w) => t(["carry.what", w].join(".")), deg = (d) => t(["carry.deg", d || "rub"].join("."));
-      for (const f of c.fragments || []) out.push(t("carry.frag", { what: what(f.what), from: f.from, deg: deg(f.degree) }) + (f.srcStability < 75 ? " " + t("carry.sick") : ""));
+      for (const f of c.fragments || []) out.push(t(f.contra ? "carry.frag.contra" : "carry.frag", { what: what(f.what), from: f.from, deg: deg(f.degree) }) + (f.srcStability < 75 ? " " + t("carry.sick") : ""));
+      if (c.loop) out.push(t("carry.loop"));
       for (const x of c.refused || []) if (x.why !== "pending") out.push(t(["carry.why", x.why].join("."), { from: x.from, what: x.what }));
       if ((c.takenBy || []).length) out.push(t("carry.taken", { names: c.takenBy.join(", ") }));
       return out.length ? t("carry.head") + " " + out.join(" ") : "";

@@ -28,7 +28,7 @@ const STABLE_AT = 75;
 /** L'axe que touche un fragment : le ciel pour un ciel, le sol pour un lieu. */
 const axisOf = (what) => (what === "sky" ? "cosmological" : "geological");
 
-/** Une ligne `carry:` → { what, from, contra, raw } (what : sky ou une famille ; contra : « as sky », à contre-sens, étape C), ou null. */
+/** Une ligne `carry:` → { what, from, contra, raw } (what : sky ou une famille ; contra : « as sky », un lieu posé à la place du ciel), ou null. */
 function parseLine(line) {
   const m = CARRY_RE.exec(String(line || "")); if (!m) return null;
   let from = m[2], contra = false;
@@ -36,6 +36,8 @@ function parseLine(line) {
   const what = m[1].toLowerCase();
   return { what, from: from.trim(), contra, raw: String(line).trim(), known: WHATS.includes(what) };
 }
+/** Une source porte-t-elle depuis cet Âge ? (la boucle : deux Âges qui se portent l'un l'autre, la forme de Torus) */
+const carriesFrom = (srcText, name) => parseAll(srcText).some((l) => l.from.toLowerCase() === String(name || "").toLowerCase());
 /** Toutes les lignes `carry:` d'un bloc, avec leur numéro de ligne. */
 function parseAll(text) {
   const out = [];
@@ -80,19 +82,21 @@ function fragmentOf(src, what, blockAxis, o = {}) {
  * @param blockAxis (id) → axe ; `norm` (ligne) → identifiant (météo vivante, etc.)
  */
 function expandText(text, done, blockAxis, norm = (l) => l.trim()) {
-  const lines = String(text || "").split("\n"), drop = new Set(done.map((d) => d.index)), sky = done.some((d) => d.what === "sky");
+  const lines = String(text || "").split("\n"), drop = new Set(done.map((d) => d.index)), sky = done.some((d) => d.what === "sky" || d.contra); /* un lieu à contre-sens prend aussi la place du ciel */
   const kept = lines.filter((l, i) => !drop.has(i) && !(sky && blockAxis(norm(l)) === "cosmological"));
   const add = [];
   for (const d of done) for (const id of d.ids) if (!add.includes(id)) add.push(id);
   return kept.concat(add).join("\n");
 }
 
-/** Le prix d'un fragment, sur son axe : la couture, la dissonance graduée, et le manque d'une source malade. */
-function costOf(degree, srcStability) {
-  const dis = DISSONANCE * (DEGREE_FACTOR[degree] == null ? 1 : DEGREE_FACTOR[degree]);
+/** Le prix d'un fragment, sur son axe : la couture (deux à contre-sens : « une couture de plus »), la dissonance graduée, et le manque d'une source malade. */
+function costOf(degree, srcStability, contra) {
+  const dis = DISSONANCE * (DEGREE_FACTOR[degree] == null ? 1 : DEGREE_FACTOR[degree]), seam = SEAM * (contra ? 2 : 1);
   const sick = Number.isFinite(srcStability) && srcStability < STABLE_AT ? ((STABLE_AT - srcStability) / 100) * SICK_SHARE : 0;
-  return { seam: SEAM, dissonance: dis, sick, total: SEAM + dis + sick };
+  return { seam, dissonance: dis, sick, total: seam + dis + sick };
 }
+/** L'axe que touche un fragment porté : un lieu à contre-sens est posé à la place du ciel. */
+const axisOfFragment = (f) => (f && f.contra ? "cosmological" : axisOf(f && f.what));
 
 /**
  * Applique les prix à une analyse (une copie) : chaque fragment retire de la stabilité sur son axe ; la stabilité et le verdict suivent.
@@ -103,7 +107,7 @@ function costOf(degree, srcStability) {
 function applyCosts(r, frags, sourceSeams) {
   if (!r || (!(frags && frags.length) && !sourceSeams)) return r;
   const ax = { ...(r.axisStability || {}) }, hit = (axis, c) => { ax[axis] = Math.max(0, Math.min(ax[axis] == null ? 100 : ax[axis], Math.round((ax[axis] == null ? 100 : ax[axis]) - c * 100))); };
-  for (const f of frags || []) hit(axisOf(f.what), costOf(f.degree, f.srcStability).total);
+  for (const f of frags || []) hit(axisOfFragment(f), costOf(f.degree, f.srcStability, f.contra).total);
   for (const [axis, n] of Object.entries(sourceSeams || {})) if (n > 0) hit(axis, SEAM_SOURCE * Math.min(3, n));
   const vals = Object.values(ax), stability = vals.length ? Math.min(...vals) : r.stability;
   return { ...r, axisStability: ax, stability, verdict: stability >= 75 ? "stable" : stability >= 40 ? "unstable" : "dying" };
@@ -120,4 +124,4 @@ function guardOf(chain, name) {
   return "";
 }
 
-module.exports = { PLACES, WHATS, CARRY_RE, MAX_DEPTH, SEAM, SEAM_SOURCE, DISSONANCE, DEGREE_FACTOR, SICK_SHARE, axisOf, parseLine, parseAll, isCarryLine, fragmentOf, expandText, costOf, applyCosts, guardOf };
+module.exports = { PLACES, WHATS, CARRY_RE, MAX_DEPTH, SEAM, SEAM_SOURCE, DISSONANCE, DEGREE_FACTOR, SICK_SHARE, axisOf, axisOfFragment, parseLine, parseAll, carriesFrom, isCarryLine, fragmentOf, expandText, costOf, applyCosts, guardOf };

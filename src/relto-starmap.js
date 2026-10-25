@@ -102,6 +102,16 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   // la constellation : chaque étoile reliée à sa plus proche voisine
   ctx.strokeStyle = rgba(59, 42, 27, 0.35); ctx.lineWidth = 0.8;
   for (const s of map.stars) { let best = null, bd = Infinity; for (const o of map.stars) { if (o === s) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < bd) { bd = d; best = o; } } if (best && s.key < best.key || (best && map.stars.length === 2)) { const [ax, ay] = P.at(s.x, s.y, s.z), [bx, by] = P.at(best.x, best.y, best.z); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); } }
+  if ((sc.ages || []).some((a) => a && (a.carryFrom || []).length)) { /* porter (claude/DESIGN-art-bahro.md §12) : un Âge porté n'est pas une étoile seule, c'est une constellation ; ses sources lui sont reliées par des fils ténus */
+    const starOf = (name) => map.stars.find((x) => (x.ages || []).includes(name));
+    ctx.save(); ctx.strokeStyle = rgba(96, 70, 150, 0.8); ctx.lineWidth = 0.9; ctx.setLineDash && ctx.setLineDash([1.2, 2.4]);
+    for (const a of sc.ages || []) {
+      const me = (a.carryFrom || []).length ? starOf(a.name) : null; if (!me) continue;
+      const [mx, my] = P.at(me.x, me.y, me.z);
+      for (const src of a.carryFrom) { const o = starOf(src); if (!o || o === me) continue; const [ox, oy] = P.at(o.x, o.y, o.z); ctx.beginPath(); ctx.moveTo(mx, my); ctx.quadraticCurveTo((mx + ox) / 2, Math.min(my, oy) - 10, ox, oy); ctx.stroke(); }
+    }
+    ctx.setLineDash && ctx.setLineDash([]); ctx.restore();
+  }
   // le Great Zero : une rose des vents à huit pointes
   ctx.save(); ctx.translate(zx, zy); ctx.scale(1, Math.min(1, TI * 1.6)); ctx.rotate(P.turn || 0); // couchée avec le plan, tournée avec la carte
   for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, L = i % 2 ? 7 : 12; ctx.fillStyle = i % 2 ? SIG2 : SIG; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.sin(a - 0.25) * 3, -Math.cos(a - 0.25) * 3); ctx.lineTo(Math.sin(a) * L, -Math.cos(a) * L); ctx.lineTo(Math.sin(a + 0.25) * 3, -Math.cos(a + 0.25) * 3); ctx.closePath(); ctx.fill(); }

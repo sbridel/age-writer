@@ -53,6 +53,14 @@ const r3 = C.applyCosts(base, [{ what: "water", degree: "rub" }, { what: "stone"
 ok(r3.stability < 75 && r3.verdict === "unstable", "deux lieux qui frottent : le monde ne tient plus");
 ok(C.applyCosts(base, [], { cosmological: 1 }).axisStability.cosmological === 97, "la source porte aussi une couture, plus petite");
 
+/* à contre-sens (la clause de Torus) et la boucle */
+const exc = C.expandText(["single_sun", "steady_cycle", "water", "carry: forest from Night as sky"].join("\n"), [{ index: 3, what: "forest", contra: true, ids: ["fern", "grass"] }], axis).split("\n");
+ok(!exc.includes("single_sun") && exc.includes("water") && exc.includes("fern"), "un lieu à contre-sens prend la place du ciel");
+ok(C.costOf("full", 90, true).seam === 2 * C.SEAM && C.costOf("full", 90, false).seam === C.SEAM, "à contre-sens, une couture de plus");
+const rc = C.applyCosts(base, [{ what: "forest", contra: true, degree: "full", srcStability: 90 }]);
+ok(rc.axisStability.cosmological === 100 - Math.round(2 * C.SEAM * 100) && rc.axisStability.geological === 92, "à contre-sens, le prix se paie sur le ciel");
+ok(C.carriesFrom("water\ncarry: sky from Day Side", "day side") && !C.carriesFrom("water\ncarry: sky from Other", "Day Side"), "la boucle : la source porte-t-elle depuis cet Âge ?");
+
 /* la pile */
 ok(C.guardOf(["R"], "S") === "" && C.guardOf(["R", "S"], "X") === "" && C.guardOf(["R", "S", "X"], "Y") === "deep", "R porte de S qui porte de X ; X ne porte plus");
 ok(C.guardOf(["R"], "r") === "cycle" && C.guardOf(["R", "S"], "R") === "cycle", "un monde ne se porte pas lui-même, même par un détour");

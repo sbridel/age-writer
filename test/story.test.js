@@ -269,7 +269,7 @@ console.log(`story.test.js : ${n} vérifications ok`);
 { /* chapitre 15 « Porter » (claude/DESIGN-art-bahro.md §12.5) */
   const B3 = ["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard", "strange", "give", "descend", "lake", "slab", "hear"];
   const cc = ST.chapterById("carry");
-  ok(cc && cc.page === null && cc.law === 20 && ST.nextChapter(B3).id === "carry" && ST.CHAPTERS.slice(-2).map((c) => c.id).join() === "hear,carry", "le 15 suit le 14 ; son prix est la page 20");
+  ok(cc && cc.page === null && cc.law === 20 && ST.nextChapter(B3).id === "carry" && ST.CHAPTERS.slice(-3, -1).map((c) => c.id).join() === "hear,carry", "le 15 suit le 14 ; son prix est la page 20");
   ok(ST.kindOf(cc) === "write" && /```age\nsingle_sun/.test(ST.chapterNote(cc, "fr", "Age 20")) && ST.WORLDS.carry.stable, "le 15 s'écrit : un monde de départ qui tient");
   const n15 = ST.chapterNote(cc, "fr", "Age 20"), e15 = ST.chapterNote(cc, "en", "Age 20");
   ok(/une pierre sombre/.test(n15) && /on peut porter/.test(n15) && /a dark stone/.test(e15) && /carry: sky from/.test(n15), "la lettre du 15 et sa feuille de cours, en deux langues");
@@ -279,4 +279,17 @@ console.log(`story.test.js : ${n} vérifications ok`);
   ok(!ck([{ name: "A", path: "S/A.md", stability: 90, carried: 0 }]).ok && ck([{ name: "A", path: "S/A.md", stability: 90, carried: 0 }]).why === "carry", "15 : sans fragment, rien");
   ok(!ck([{ name: "A", path: "S/A.md", stability: 70, carried: 1 }]).ok, "15 : un monde porté qui ne tient pas, non");
   ok(ck([{ name: "A", path: "S/A.md", stability: 80, carried: 1 }]).ok && ck([{ name: "A", path: "S/A.md", stability: 80, carried: 1 }]).path === "S/A.md", "15 : un monde porté qui tient");
+}
+
+{ /* chapitre 16 « L'accord » : trois morceaux, dont un à contre-sens */
+  const B4 = ["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard", "strange", "give", "descend", "lake", "slab", "hear", "carry"];
+  const ac = ST.chapterById("accord");
+  ok(ac && ac.law === 19 && ac.page === null && ST.nextChapter(B4).id === "accord" && ST.CHAPTERS.slice(-1)[0].id === "accord", "le 16 suit le 15 ; son prix est la page 19");
+  const n16 = ST.chapterNote(ac, "fr", "Age 21"), e16 = ST.chapterNote(ac, "en", "Age 21");
+  ok(/ne pas prononcer son nom/.test(n16) && /une hauteur plus haut/.test(n16) && /one height up/.test(e16) && /as sky/.test(n16), "la lettre du 16 et la forme à contre-sens");
+  ok(!/Catherine|Bahro|Torus/i.test(n16 + e16), "le 16 ne nomme personne (ni le monde dont il parle)");
+  const ck = (a) => ST.check(ac, { ages: [a] });
+  ok(!ck({ path: "S/A.md", stability: 90, carried: 2, contra: 0 }).ok && ck({ path: "S/A.md", stability: 90, carried: 2, contra: 0 }).why === "accord", "16 : sans contre-sens, non");
+  ok(!ck({ path: "S/A.md", stability: 90, carried: 1, contra: 1 }).ok && !ck({ path: "S/A.md", stability: 70, carried: 2, contra: 1 }).ok, "16 : un seul morceau porté, ou un monde qui ne tient pas, non");
+  ok(ck({ path: "S/A.md", stability: 80, carried: 2, contra: 1 }).ok, "16 : deux morceaux portés dont un à contre-sens, et il tient");
 }

@@ -485,6 +485,16 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
       ok(why === "untouched,what,missing,empty", "porter : jamais ouvert, mot inconnu, Livre absent, rien à donner (" + why + ")");
       const loop = age("Boucle", ["single_sun", "steady_cycle", "water", "carry: sky from Boucle"], dir); p.law.observe("Boucle", an(loop), loop.stat.mtime);
       ok((an(loop).carry.refused || [])[0].why === "cycle", "porter : un monde ne se porte pas lui-même");
+      { /* à contre-sens : seulement à l'octave (24 h ici, 12 h là-bas) ; la boucle : deux Âges qui se portent l'un l'autre */
+        const day = age("Face Jour", ["single_sun", "steady_cycle", "water", "fern", "rotation: 24", "carry: forest from Face Nuit as sky"], dir), night = age("Face Nuit", ["single_sun", "steady_cycle", "grass", "fern", "stone", "rotation: 12", "carry: water from Face Jour"], dir), odd = age("Face Autre", ["single_sun", "steady_cycle", "grass", "fern", "rotation: 17"], dir);
+        for (const f of [day, night, odd]) { p.carrySource(f, p.core.extract(f.content)); p.law.observe(f.basename, an(f), f.stat.mtime); }
+        const rd = an(day), fr = (rd.carry && rd.carry.fragments) || [];
+        ok(fr.length === 1 && fr[0].contra && fr[0].degree === "full", "contre-sens : à l'octave, la forêt de l'autre face est posée à la place du ciel (" + JSON.stringify((rd.carry || {}).refused) + ")");
+        ok(!(rd.resolved.lines || []).some((l) => l.entry && l.entry.id === "single_sun" && !l.autoFilled), "contre-sens : le ciel écrit tombe (le tirage peut en remettre un)");
+        ok(rd.carry.loop && /each other|l'un l'autre/.test(p.carryLine(rd.carry)), "la boucle : les deux faces se portent l'une l'autre, et le panneau le dit");
+        day.content = day.content.replace("Face Nuit as sky", "Face Autre as sky"); day.stat.mtime++; p.carrySource(day, p.core.extract(day.content));
+        const ro = an(day); ok((ro.carry.refused || []).some((x) => x.why === "octave"), "contre-sens : hors de l'octave, refusé en une phrase");
+        for (const f of [day, night, odd]) files.delete(f.path); }
       const ids = require("../src/law").worldIds(an(recv)); ok(ids.some((x) => x.startsWith("carry|")) && !ids.some((x) => /^\?carry/.test(x)), "porter : la loi du changement voit la ligne, pas le fragment");
       for (const f of [srcA, recv, far, loop]) files.delete(f.path); delete p.ext.story[SKc]; p.index.invalidate(); }
     p.app.metadataCache.getFileCache = gfcS; for (const f of [sf, inside, outside]) files.delete(f.path); delete p.ext.story; p.index.invalidate(); }

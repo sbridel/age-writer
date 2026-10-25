@@ -84,7 +84,8 @@ function sceneOf(a, name = "", blocks = null) {
   if (S.wonders.includes("orphan_colour")) { S.orphanRGB = S.sunHues[0] || null; S.blackSun = false; S.blackDisc = false; } /* la Couleur orpheline : la couleur reste, le feu s'en va */
   S.wxSrc = wxSrc; S.wxParents = {}; S.wxKey = WX.seedKey(name, res.seed); S.weather = a.weather || null;
   for (const x of res.matter.reactions || []) if (!S.wxParents[x.result]) S.wxParents[x.result] = [x.a, x.b];
-  S.seams = ((a.carry && a.carry.fragments) || []).map((f) => ({ what: f.what, from: f.from })); /* porter : une couture par fragment (src/carry.js) */
+  S.seams = ((a.carry && a.carry.fragments) || []).map((f) => ({ what: f.what, from: f.from, contra: !!f.contra })); /* porter : une couture par fragment (src/carry.js) */
+  S.loop = !!(a.carry && a.carry.loop) && ids.has("water"); /* la boucle de Torus : deux Âges qui se portent l'un l'autre, et de l'eau */
   return S;
 }
 
@@ -560,6 +561,7 @@ function paint(g, m, t, o = {}) {
   skyBodies(g, m, cs, day, hzc, sn);
   extraAt(g, m, t, "sky");
   WON.wonderPass(g, m, t, "sky", k0);
+  if (S.seams && S.seams.some((f) => f.contra)) m.contraEdge = contraFx(g, m, t, S.seams.find((f) => f.contra), hzc); /* à contre-sens : une terre au-dessus de la tête, derrière les crêtes */
   // crêtes, de la plus lointaine à la plus proche (perspective atmosphérique : plus claires et plus proches de l'horizon au loin)
   m.ridges.forEach((rg) => {
     let c = mixc(mixc(pal.rock, pal.ground, 0.4 + 0.3 * rg.d), hzc, (1 - rg.d) * 0.45 * (0.3 + day * 0.7));
@@ -624,27 +626,68 @@ function paint(g, m, t, o = {}) {
     }
   }
   if (dm > 0) doomFx(g, m, dm, sn);
-  if (S.seams && S.seams.length) seamsFx(g, m, t); /* porter : la couture, un trait de lumière à la bordure du fragment */
+  if ((S.seams && S.seams.length) || S.loop) seamsFx(g, m, t); /* porter : la couture, la coupe, la colonne d'eau */
   g.restore();
 }
-/** Les coutures d'un Âge porté (claude/DESIGN-art-bahro.md §12.6) : un ciel porté, un fil de lumière le long de l'horizon ; un lieu porté, une entaille
- *  claire qui descend de l'horizon, comme une route coupée net. Rien d'autre : la terre renversée et la colonne d'eau viendront après. */
+/* la couleur d'une famille de sol vue de loin : [sombre, clair] */
+const FAM_RGB = { forest: [[46, 92, 58], [92, 140, 86]], desert: [[176, 132, 82], [222, 186, 128]], ice: [[176, 196, 214], [236, 244, 250]], water: [[40, 86, 120], [96, 150, 182]], stone: [[86, 88, 96], [140, 142, 150]], fire: [[70, 30, 24], [200, 86, 40]], salt: [[206, 190, 196], [244, 236, 238]] };
+/**
+ * Un lieu porté à contre-sens (claude/DESIGN-art-bahro.md §12, la clause de Torus) : sa terre au-dessus de la tête, haute et lointaine, mangée par l'air
+ * (choix de l'auteur : « plus haute, plus loin ») ; la forme vient des crêtes de la fenêtre, renversées ; un fil de lumière au bord. Renvoie le bord.
+ */
+function contraFx(g, m, t, f, air) {
+  const { W, hz } = m, [lo, hi] = FAM_RGB[f.what] || FAM_RGB.stone, base = hz * 0.1, N = 96, edge = [], rel = [];
+  const ridgeY = (x) => m.ridges.reduce((lo2, rg) => { const n = rg.xs.length - 1, k = Math.max(0, Math.min(n, (x / W) * n)), i = Math.floor(k), y = rg.xs[i] + (rg.xs[Math.min(n, i + 1)] - rg.xs[i]) * (k - i); return Math.min(lo2, y); }, hz);
+  const sh = fnv(String(f.from)) % W;
+  for (let i = 0; i <= N; i++) { const x = (i / N) * W; rel.push([x, hz - ridgeY(W - ((x + sh) % W))]); }
+  const mx = Math.max(...rel.map((e) => e[1])), mn = Math.min(...rel.map((e) => e[1]));
+  for (const [x, r] of rel) edge.push([x, base + ((r - mn) / Math.max(1, mx - mn)) * hz * 0.16]);
+  const deep = Math.max(...edge.map((e) => e[1])), gr = g.createLinearGradient(0, 0, 0, deep);
+  gr.addColorStop(0, css(mixc(lo, air, 0.45))); gr.addColorStop(0.7, css(mixc(lo, air, 0.62))); gr.addColorStop(1, css(mixc(hi, air, 0.8)));
+  g.save(); g.fillStyle = gr; g.beginPath(); g.moveTo(0, 0); for (const [x, y] of edge) g.lineTo(x, y); g.lineTo(W, 0); g.closePath(); g.fill();
+  g.fillStyle = css(mixc(lo, air, 0.5), 0.5); g.beginPath(); g.moveTo(0, 0); for (const [x, y] of edge) g.lineTo(x, base * 0.6 + (y - base) * 0.45); g.lineTo(W, 0); g.closePath(); g.fill(); /* un plan plus loin */
+  if (f.what === "forest") { const q = rng(fnv("trees" + f.from)); g.fillStyle = css(mixc(lo, air, 0.55), 0.8); for (let i = 0; i < 40; i++) { const [x, e] = edge[Math.floor(q() * N)], h = 2 + q() * 3; g.beginPath(); g.moveTo(x - 1.4, e - 1); g.lineTo(x, e + h); g.lineTo(x + 1.4, e - 1); g.fill(); } } /* des arbres, pointe en bas */
+  const p = 0.75 + 0.25 * Math.sin(TAU * t * 0.4);
+  g.globalCompositeOperation = "lighter"; g.strokeStyle = `rgba(235,245,255,${0.4 * p})`; g.lineWidth = 0.7; g.beginPath(); edge.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke();
+  g.strokeStyle = `rgba(200,230,255,${0.1 * p})`; g.lineWidth = 3; g.stroke();
+  g.restore();
+  return edge;
+}
+/**
+ * Les coutures d'un Âge porté (claude/DESIGN-art-bahro.md §12.6) : un ciel porté, un fil de lumière le long de l'horizon ; un lieu porté, une coupe nette
+ * qui descend de l'horizon, la terre de l'autre monde d'un côté (la route coupée d'Obduction, choix de l'auteur) ; la boucle, une colonne d'eau qui monte
+ * vers l'autre terre et un anneau de nuages là où elle la touche. Le lieu à contre-sens est peint plus tôt (contraFx), derrière les crêtes.
+ */
 function seamsFx(g, m, t) {
   const { S, W, H, hz } = m, pulse = 0.75 + 0.25 * Math.sin(TAU * t * 0.4);
-  g.save(); g.globalCompositeOperation = "lighter"; g.lineCap = "round";
   S.seams.forEach((f, k) => {
+    if (f.contra) return;
+    g.save();
     if (f.what === "sky") {
+      g.globalCompositeOperation = "lighter";
       const gr = g.createLinearGradient(0, hz - 3, 0, hz + 3); gr.addColorStop(0, "rgba(200,230,255,0)"); gr.addColorStop(0.5, `rgba(220,240,255,${0.35 * pulse})`); gr.addColorStop(1, "rgba(200,230,255,0)");
       g.fillStyle = gr; g.fillRect(0, hz - 3, W, 6);
       g.strokeStyle = `rgba(240,250,255,${0.55 * pulse})`; g.lineWidth = 0.8; g.beginPath(); for (let x = 0; x <= W; x += 8) { const y = hz - 0.5 + 0.8 * Math.sin(x * 0.11 + k); x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke();
     } else {
-      const x0 = W * (0.3 + 0.4 * ((fnv(String(f.from) + f.what) % 100) / 100)), q = rng(fnv("seam" + f.from + f.what));
-      g.strokeStyle = `rgba(235,245,255,${0.5 * pulse})`; g.lineWidth = 1; g.beginPath(); g.moveTo(x0, hz);
-      for (let y = hz; y <= H; y += 6) g.lineTo(x0 + (y - hz) * 0.18 + (q() - 0.5) * 3, y); g.stroke();
-      g.strokeStyle = `rgba(200,230,255,${0.18 * pulse})`; g.lineWidth = 4; g.stroke();
+      const x0 = W * (0.42 + 0.2 * ((fnv(String(f.from) + f.what) % 100) / 100)), lean = 0.22, [lo, hi] = FAM_RGB[f.what] || FAM_RGB.stone;
+      g.save(); g.beginPath(); g.moveTo(x0, hz); g.lineTo(x0 + (H - hz) * lean, H); g.lineTo(W, H); g.lineTo(W, hz); g.closePath(); g.clip();
+      const gr = g.createLinearGradient(0, hz, 0, H); gr.addColorStop(0, css(mixc(hi, [200, 210, 220], 0.4), 0.5)); gr.addColorStop(1, css(lo, 0.6)); g.fillStyle = gr; g.fillRect(0, hz - 1, W, H - hz + 1);
+      g.restore();
+      g.globalCompositeOperation = "lighter"; g.strokeStyle = `rgba(235,245,255,${0.6 * pulse})`; g.lineWidth = 0.9; g.beginPath(); g.moveTo(x0, hz); g.lineTo(x0 + (H - hz) * lean, H); g.stroke();
+      g.strokeStyle = `rgba(200,230,255,${0.15 * pulse})`; g.lineWidth = 4; g.stroke();
     }
+    g.restore();
   });
-  g.restore();
+  if (S.loop) { /* la colonne d'eau, et l'anneau de nuages */
+    const e = m.contraEdge, x0 = W * 0.62, top = e ? e[Math.round((x0 / W) * (e.length - 1))][1] : hz * 0.2, bot = hz + (H - hz) * 0.35, w = 3.5;
+    g.save();
+    const gr = g.createLinearGradient(0, bot, 0, top); gr.addColorStop(0, "rgba(170,210,235,0.75)"); gr.addColorStop(1, "rgba(230,245,255,0.35)");
+    g.fillStyle = gr; g.beginPath(); g.moveTo(x0 - w * 1.4, bot); g.quadraticCurveTo(x0 - w * 0.6, (bot + top) / 2, x0 - w * 0.5, top); g.lineTo(x0 + w * 0.5, top); g.quadraticCurveTo(x0 + w * 0.6, (bot + top) / 2, x0 + w * 1.4, bot); g.closePath(); g.fill();
+    g.strokeStyle = "rgba(255,255,255,0.55)"; g.lineWidth = 0.6; for (let k = 0; k < 6; k++) { const y = bot - (bot - top) * ((t * 0.8 + k / 6) % 1); g.beginPath(); g.moveTo(x0 - w * 0.5, y); g.lineTo(x0 + w * 0.3, y - 4); g.stroke(); }
+    g.fillStyle = "rgba(230,240,250,0.35)"; g.beginPath(); g.ellipse(x0, bot, w * 4, 1.6, 0, 0, TAU); g.fill();
+    for (let k = 0; k < 14; k++) { const a = (k / 14) * TAU + t * 0.6, x = x0 + Math.cos(a) * 26, y = top + 8 + Math.sin(a) * 5; g.fillStyle = `rgba(240,245,250,${0.2 + 0.18 * Math.sin(a)})`; g.beginPath(); g.ellipse(x, y, 7, 3, 0, 0, TAU); g.fill(); }
+    g.restore();
+  }
 }
 
 /** Le lac de D'ni : les algues lumineuses, nourries par le granulé, luisent dans l'eau la nuit, et palpitent lentement (plus fort s'il y a des algues écrites). */

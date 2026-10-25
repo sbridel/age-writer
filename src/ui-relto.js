@@ -207,7 +207,7 @@ async function startStory(plugin) {
 }
 
 /** Ce qui manque au chapitre en cours, en une phrase (vide pour le chapitre final : il ne dit jamais ce qui manque). */
-const WHY = { white: "story.why.white", reveal: "story.why.reveal", lake: "story.why.lake", look: "story.why.look", slab: "story.why.slab", hear: "story.why.hear", carry: "story.why.carry", noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all", hardstable: "story.why.hardstable", hardpages: "story.why.hardpages", hardaxes: "story.why.hardaxes" };
+const WHY = { white: "story.why.white", reveal: "story.why.reveal", lake: "story.why.lake", look: "story.why.look", slab: "story.why.slab", hear: "story.why.hear", carry: "story.why.carry", accord: "story.why.accord", noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all", hardstable: "story.why.hardstable", hardpages: "story.why.hardpages", hardaxes: "story.why.hardaxes" };
 const whyText = (plugin, why) => (WHY[why] ? "\n" + plugin.t(WHY[why]) : "");
 
 /** Un chapitre réussi : la note reçoit la propriété `story_chapter: completed` et l'étiquette `completed`, et une fenêtre le dit sans qu'il faille revenir au Relto. */

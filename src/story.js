@@ -35,6 +35,7 @@ const CHAPTERS = [
   /* la seconde série (claude/DESIGN-art-bahro.md §2) : entendre, porter, l'accord, la pierre ; le prix est une page du livre des lois, pas une page du Relto */
   { id: "hear", page: null, law: 21, book: 3, title: { en: "Hearing", fr: "Entendre" } },
   { id: "carry", page: null, law: 20, book: 3, title: { en: "Carrying", fr: "Porter" } },
+  { id: "accord", page: null, law: 19, book: 3, title: { en: "The accord", fr: "L'accord" } },
 ];
 /** Le dernier chapitre du premier livre : sa fin (la page de l'encrier, la lettre du tiroir) reste la sienne. */
 const BOOK_ONE_END = "strange";
@@ -172,6 +173,7 @@ function check(chapter, ctx) {
   if (chapter.id === "descend") { const c = (ctx && ctx.cave) || {}; return c.revealed > 0 ? { ok: true, why: "" } : { ok: false, why: "reveal" }; } // une révélation vue d'en bas
   if (chapter.id === "lake") { const c = (ctx && ctx.cave) || {}; return !(c.colonies > 0) ? { ok: false, why: "lake" } : c.looked ? { ok: true, why: "" } : { ok: false, why: "look" }; } // le lac vit, et une goutte a été regardée
   if (chapter.id === "slab") { const c = (ctx && ctx.cave) || {}; return c.slabOpen ? { ok: true, why: "" } : { ok: false, why: "slab" }; } // la dalle ouverte (le Rêve viendra avec l'étape 4d)
+  if (chapter.id === "accord") { const a = ages.find((x) => x.carried >= 2 && x.contra >= 1 && x.stability >= STABLE_AT); return a ? { ok: true, why: "", path: a.path } : { ok: false, why: "accord" }; } /* trois morceaux : le sien, et deux portés dont un à contre-sens ; et il tient */
   if (chapter.id === "carry") { const a = ages.find((x) => x.carried > 0 && x.stability >= STABLE_AT); return a ? { ok: true, why: "", path: a.path } : { ok: false, why: "carry" }; } /* un Âge du dossier porte un fragment, et il tient */
   if (chapter.id === "hear") { const p = HEAR.answered((ctx && ctx.st) || {}, ages); return p ? { ok: true, why: "", path: p } : { ok: false, why: "hear" }; } /* les deux voix entre le monde étrange et un Âge qui s'accorde avec lui, à la tierce au moins */
   if (chapter.id === "alter") {
@@ -243,6 +245,7 @@ const WORLDS = {
   slab: { lines: [] },
   hear: { lines: [] },
   carry: { lines: ["single_sun", "steady_cycle", "water", "fern"], stable: true, margin: 10 }, // un monde qui tient avec de la marge : la couture coûte
+  accord: { lines: ["water", "fern"] }, // pas de ciel : celui qui viendra sera porté
 };
 
 /**
@@ -324,6 +327,10 @@ const LETTERS = {
     en: ["The signs along the vein, the ones you described to me: I looked for them in all my books. They are not there.", "They are not words of the Guild. Someone else writes, down there, and has for longer than we have. You tell me a slab rose from the water in the room where you keep your memories, the evening you first went down. Perhaps it is waiting for those signs. What you read below, carry it up there. Open it, and tell me what its water shows.", "Remember the signs, and open the slab."],
     fr: ["Les signes de la veine, ceux que tu m'as décrits : je les ai cherchés dans tous mes livres. Ils n'y sont pas.", "Ce ne sont pas des mots de la Guilde. Quelqu'un d'autre écrit, là-dessous, et depuis plus longtemps que nous. Tu me dis qu'une dalle est sortie de l'eau dans la chambre où tu gardes tes souvenirs, le soir de ta première descente. Elle attend peut-être ces signes. Ce que tu as lu en bas, rapporte-le là-haut. Ouvre-la, et dis-moi ce que montre son eau.", "Retiens les signes, et ouvre la dalle."],
   },
+  accord: {
+    en: ["There was, before us, a writer whose masters said her worlds could not hold. They held. I was taught not to speak her name; I will not. But I think I understand, at last, what she was doing.", "She did not write against the laws. She tuned. A world made of pieces of several others holds if their voices agree, and best when two pieces carry each other, like water that falls on one side and rises on the other. And there is one carrying the Guild holds impossible: a place set where the sky should be, the ground above your head. It holds on one condition only, and you have already heard it: the same note, one height up.", "Write a carried world of three pieces, one of them set against the grain, and let it hold."],
+    fr: ["Il y a eu, avant nous, une écrivaine dont les maîtres disaient que ses mondes ne pouvaient pas tenir. Ils tenaient. On m'a appris à ne pas prononcer son nom ; je ne le prononcerai pas. Mais je crois comprendre, enfin, ce qu'elle faisait.", "Elle n'écrivait pas contre les lois. Elle accordait. Un monde fait de morceaux de plusieurs autres tient si leurs voix s'accordent, et le mieux quand deux morceaux se portent l'un l'autre, comme l'eau qui tombe d'un côté et remonte de l'autre. Et il y a un portage que la Guilde tient pour impossible : un lieu posé à la place du ciel, la terre au-dessus de la tête. Il ne tient qu'à une condition, que tu as déjà entendue : la même note, une hauteur plus haut.", "Écris un monde porté de trois morceaux, dont un à contre-sens, et qu'il tienne."],
+  },
   carry: {
     en: ["You tell me there was a cry in the night, and that in the morning a dark stone lay on your desk, by the inkwell. I do not know who brought it. I know it is not the Guild's.", "Since it has been there, a line the Book did not understand can be read: one can carry. Not write a sky, but take the sky of a world you have linked to, and set it in another. The Book describes; this describes nothing, it moves. There will be a seam, on both sides; a carried world will never stand quite true. Begin with a sky: it is what carries most simply.", "Carry the sky of one of your Ages into another, and let that world hold."],
     fr: ["Tu me dis qu'il y a eu un cri, la nuit, et qu'au matin une pierre sombre était posée sur ton bureau, près de l'encrier. Je ne sais pas qui l'a apportée. Je sais qu'elle n'est pas de la Guilde.", "Depuis qu'elle est là, une ligne que le Livre ne comprenait pas se laisse lire : on peut porter. Non pas écrire un ciel, mais prendre celui d'un monde où tu t'es lié, et le poser dans un autre. Le Livre décrit ; ceci ne décrit rien, cela déplace. Il y aura une couture, des deux côtés ; un monde porté ne sera jamais tout à fait d'aplomb. Commence par un ciel : c'est ce qui se porte le plus simplement.", "Porte le ciel d'un de tes Âges dans un autre, et que ce monde tienne."],
@@ -348,6 +355,7 @@ const COURSE = {
   mend: [["lava", "searing, molten ground", "un sol brûlant, en fusion"], ["ice", "pale, brittle ground: cold", "un sol pâle et cassant : le froid"], ["twin_suns", "two suns: a heavier sky", "deux soleils : un ciel plus lourd"]],
   weather: [["rain", "steady rain", "une pluie continue"], ["drizzle", "fine rain, silver and hushed", "une bruine fine, argentée"], ["fog", "thick, pale, muffling", "épaisse, pâle, étouffante"], ["snow", "white and soundless", "blanche et sans bruit"], ["storm", "churning, dark, loud", "tourmentée, sombre, bruyante"], ["wind", "restless, thin, cold", "agité, mince, froid"]],
   give: [["ash", "what is left of fire: a pale powder", "ce qui reste du feu : une poudre pâle"], ["humus", "loam: dark earth that crumbles", "le terreau : une terre sombre qui s'émiette"], ["silt", "silt: it is not written, it is born of water on ash", "le limon : il ne s'écrit pas, il naît de l'eau sur les cendres"], ["peat", "red-brown, fibrous ground, slow to rot", "un sol brun-roux, fibreux, lent à pourrir"]],
+  accord: [["carry: forest from … as sky", "a ground set where the sky should be, its earth above your head", "un sol posé à la place du ciel, sa terre au-dessus de la tête"]],
   carry: [["carry: sky from …", "the sky of a world you have linked to: its suns, its cycle, its moons", "le ciel d'un monde où tu t'es lié : ses soleils, son cycle, ses lunes"], ["carry: forest from …", "a ground and what lives on it (also: desert, ice, water, fire, stone, salt)", "un sol et ce qui y vit (aussi : desert, ice, water, fire, stone, salt)"]],
   laws: [["salt", "bitter, bright ground", "un sol amer et brillant"], ["mass", "a value, written with a colon: how heavy the world is", "une valeur, écrite avec deux-points : le poids du monde"], ["age", "a value, written with a colon: how old the world is", "une valeur, écrite avec deux-points : l'âge du monde"]],
 };
@@ -365,7 +373,7 @@ function reviewSheet(id, lang) {
   const hint = (w) => (rv.level === 1 ? `\`${w[0]}${"_".repeat(w.length - 1)}\`` : "?");
   return `\n\n---\n**${l === "fr" ? "Révision · Guilde des Writers" : "Review · the Writers' Guild"}**\n${l === "fr" ? "Retrouve le mot, de mémoire." : "Find the word, from memory."}\n\n| ${l === "fr" ? "Mot" : "Word"} | ${l === "fr" ? "Sens" : "Meaning"} |\n|---|---|\n${rows.map((r) => `| ${hint(r[0])} | ${r[l === "fr" ? 2 : 1]} |`).join("\n")}\n`;
 }
-const COURSE_NOAXIS = new Set(["mass", "age", "carry: sky from …", "carry: forest from …"]);
+const COURSE_NOAXIS = new Set(["mass", "age", "carry: sky from …", "carry: forest from …", "carry: forest from … as sky"]);
 
 /** Le texte d'une note de chapitre : titre, lettre du mentor, ce qu'il faut faire, et le bloc `age` de départ. */
 /** Un chapitre d'écriture (un Âge à écrire) ou d'exploration (le Relto seul : télescope, Imageur). */
