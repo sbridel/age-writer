@@ -225,7 +225,6 @@ function drawAtelier(r, ctx, sc, sky, t) {
     item(bx - 2, top - 12, 58, 14, "atelier.book.tip", "atelier.book.flash");
     const ix = bx + 70, HS = (r.opts.hearState && r.opts.hearState()) || {}, hum = HS.hum || 0, HR = require("./relto-hear"); /* le chapitre 14 : l'encrier frémit, la pierre de liaison est posée à côté */
     ctx.fillStyle = c("#14202a"); ctx.beginPath(); ctx.ellipse(ix + 6, top - 4, 7, 4, 0, 0, 6.283); ctx.fill(); ctx.fillRect(ix + 3, top - 10, 6, 6); ctx.strokeStyle = c("#e8dcc0"); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(ix + 7, top - 10); ctx.lineTo(ix + 15 + (hum > 0 ? hum * Math.sin(t * 70) : 0), top - 26); ctx.stroke();
-    if (hum > 0) HR.voiceArcs(ctx, ix + 6, top - 12, 7, hum, t);
     item(ix - 2, top - 28, 22, 30, "atelier.ink.tip", hum > 0 ? "atelier.ink.hum" : "atelier.ink.flash");
     if (HS.stone) { HR.linkStone(ctx, c, ix - 9, top - 1, 6, t); item(ix - 17, top - 9, 16, 12, "atelier.link.tip", "atelier.link.flash"); } }
   // un sablier et un cristal étrange qui respire
@@ -293,10 +292,9 @@ function drawDesk(r, ctx, sc, sky, t) {
   // l'encrier et la plume, à droite
   const HS = (r.opts.hearState && r.opts.hearState()) || {}, hum = HS.hum || 0, HR = require("./relto-hear"); /* le chapitre 14 : l'encrier qui frémit, la pierre de liaison */
   { const ix = 470, iy = 300; ctx.fillStyle = c("#14202a"); ctx.beginPath(); ctx.ellipse(ix, iy, 26, 12, 0, 0, 6.283); ctx.fill(); ctx.fillRect(ix - 10, iy - 22, 20, 18); ctx.fillStyle = c("#2d4a5c"); ctx.fillRect(ix - 12, iy - 24, 24, 5);
-    if (hum > 0) { /* l'encre se voit : des cercles qui s'élargissent, la plume qui tremble, des ondes comme celles du diapason */
+    if (hum > 0) { /* l'encre se voit : des cercles qui s'élargissent, la plume qui tremble */
       ctx.fillStyle = c("#2d4a5c"); ctx.beginPath(); ctx.ellipse(ix, iy - 24, 12, 3.6, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#070b10"); ctx.beginPath(); ctx.ellipse(ix, iy - 24, 9.5, 2.6, 0, 0, 6.283); ctx.fill(); HR.inkRipples(ctx, ix, iy - 24, 9.5, 2.6, hum, t);
       ctx.strokeStyle = c("#e8dcc0"); ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(ix + 6, iy - 24); ctx.quadraticCurveTo(ix + 30, iy - 52, ix + 52 + hum * 1.8 * Math.sin(t * 70), iy - 78); ctx.stroke();
-      HR.voiceArcs(ctx, ix, iy - 30, 22, hum, t);
     } else { ctx.strokeStyle = c("#e8dcc0"); ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(ix + 6, iy - 24); ctx.lineTo(ix + 52, iy - 78); ctx.stroke(); }
     r.hot.push({ x: ix - 28, y: iy - 80, w: 84, h: 94, tip: TRr("atelier.ink.tip"), flash: TRr(hum > 0 ? "atelier.ink.hum" : "atelier.ink.flash") }); }
   if (HS.stone) { HR.linkStone(ctx, c, 514, 300, 17, t); r.hot.push({ x: 494, y: 286, w: 40, h: 28, tip: TRr("atelier.link.tip"), desk: "link" }); } /* la pierre de liaison, posée la nuit à côté de l'encrier */

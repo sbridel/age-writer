@@ -64,15 +64,4 @@ function inkRipples(ctx, x, y, rx, ry, k, t) {
   }
   ctx.restore();
 }
-/** Les ondes dans l'air, comme celles du diapason de l'Imageur : la seconde voix. */
-function voiceArcs(ctx, x, y, r0, k, t) {
-  if (!(k > 0.01)) return;
-  for (let i = 1; i <= 3; i++) {
-    const p = (t * 0.5 + i / 3) % 1, rr = r0 + p * r0 * 1.4;
-    ctx.strokeStyle = rgba(243, 220, 160, 0.42 * k * (1 - p)); ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(x, y, rr, -0.75, 0.75); ctx.stroke();
-    ctx.beginPath(); ctx.arc(x, y, rr, Math.PI - 0.75, Math.PI + 0.75); ctx.stroke();
-  }
-}
-
-module.exports = { linkStone, inkRipples, voiceArcs, GLOW };
+module.exports = { linkStone, inkRipples, GLOW };
