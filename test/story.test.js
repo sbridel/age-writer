@@ -79,10 +79,10 @@ ok(ST.nextChapter([]).id === "rest" && ST.nextChapter(["rest"]).id === "mend" &&
 { /* le second livre (section 19 de la fiche de la caverne) : la machine et la caverne */
   const B1 = ["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard", "strange"], ev = (cave) => { const s = { k: { done: B1.slice() } }; ST.evaluate(s, "k", { ages: [], axisOf, cave }); return { done: ST.get(s, "k").done, why: ST.get(s, "k").why }; };
   ok(ST.bookOneDone(B1) && !ST.bookOneDone(B1.slice(0, 8)) && ST.BOOK_ONE_END === "strange", "la fin du premier livre reste au chapitre 9");
-  ok(ST.CHAPTERS.slice(-4).map((c) => c.id).join() === "give,descend,lake,slab" && ST.CHAPTERS.slice(-4).every((c) => c.book === 2), "quatre chapitres au second livre");
+  ok(ST.CHAPTERS.filter((c) => c.book === 2).map((c) => c.id).join() === "give,descend,lake,slab", "quatre chapitres au second livre");
   ok(ev({}).why === "white" && ev({ cookedWhite: true }).why === "reveal" && ev({ cookedWhite: true, revealed: 1 }).why === "lake", "10 : un blanc cuit ; 11 : une révélation ; 12 : le lac");
   ok(ev({ cookedWhite: true, revealed: 1, colonies: 1 }).why === "look" && ev({ cookedWhite: true, revealed: 1, colonies: 1, looked: true }).why === "slab", "12 : une colonie ne suffit pas, il faut regarder une goutte");
-  ok(ev({ cookedWhite: true, revealed: 1, colonies: 1, looked: true, slabOpen: true }).done.length === ST.CHAPTERS.length, "13 : la dalle ouverte, le second livre est fini");
+  ok(ev({ cookedWhite: true, revealed: 1, colonies: 1, looked: true, slabOpen: true }).done.slice(-1)[0] === "slab" && ev({ cookedWhite: true, revealed: 1, colonies: 1, looked: true, slabOpen: true }).why === "hear", "13 : la dalle ouverte, le second livre est fini ; le 14 attend");
   ok(ST.kindOf(ST.chapterById("give")) === "write" && ["descend", "lake", "slab"].every((id) => ST.kindOf(ST.chapterById(id)) === "explore"), "le 10 s'écrit, les trois autres s'explorent");
   ok(["page_gold", "page_silver", "page_gems"].every((pg) => ST.CHAPTERS.some((c) => c.page === pg && c.book === 2)) && !ST.chapterById("slab").page, "or, argent, gemmes ; la dalle n'a pas de page");
   const hg = ST.HINTS.give; ok(hg.fr.length === 3 && hg.en.length === 3 && ![...hg.fr, ...hg.en].some((x) => /\d/.test(x)), "les indices du 10 : trois, sans un chiffre");
@@ -228,3 +228,40 @@ ok(ST.check(ST.chapterById("imager"), { ages: [{ path: "a.md", stability: 80 }],
 }
 console.log(`story.test.js : ${n} vérifications ok`);
 
+
+{ /* la seconde série, chapitre 14 « Entendre » (claude/DESIGN-art-bahro.md §2) : les deux voix, l'encrier, l'encre, la visite */
+  const HEAR = require("../src/story-hear");
+  const B2 = ["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard", "strange", "give", "descend", "lake", "slab"];
+  const hc = ST.chapterById("hear");
+  ok(hc && hc.page === null && hc.law === 21 && ST.CHAPTERS.slice(-1)[0].id === "hear" && ST.nextChapter(B2).id === "hear", "le 14 suit le 13 ; son prix est la page 21 du livre des lois, pas une page du Relto");
+  ok(ST.kindOf(hc) === "explore" && !/```age/.test(ST.chapterNote(hc, "fr", "Entendre")), "le 14 s'explore : pas de monde de départ");
+  const n14 = ST.chapterNote(hc, "fr", "Entendre"), e14 = ST.chapterNote(hc, "en", "Hearing");
+  ok(/Ton encre ne sèche pas/.test(n14) && /vingt-cinq/.test(n14) && /Your ink does not dry/.test(e14) && /seltahn/.test(n14), "la lettre du 14, en deux langues, signée seltahn");
+  ok(!/Bahro|serpent|ardoise|slate|Catherine/i.test(n14 + e14), "la lettre du 14 ne nomme ni les Bahro ni personne du lore");
+  const mk = () => ({ done: B2.slice(), seen: {}, notes: { strange: "Story/Age 9.md" }, by: { strange: "Story/Age 9.md" } });
+  const ages = [{ name: "Age 9", path: "Story/Age 9.md" }, { name: "Age 10", path: "Story/Age 10.md" }, { name: "Age 11", path: "Story/Age 11.md" }];
+  const T0 = new Date(2026, 9, 25, 14, 0, 0).getTime();
+  { const st = mk(); ok(!ST.check(hc, { ages, st }).ok && ST.check(hc, { ages, st }).why === "hear", "14 : rien d'entendu, rien de réussi"); }
+  { const st = mk(); HEAR.heard(st, "Story/Age 10.md", "Story/Age 11.md", "good", 10, 13, T0); ok(!st.hear && !ST.check(hc, { ages, st }).ok, "14 : deux voix sans le monde étrange ne comptent pas"); }
+  { const st = mk(); HEAR.heard(st, "Story/Age 9.md", "Story/Age 10.md", "rub", 10, 11, T0); ok(!ST.check(hc, { ages, st }).ok && HEAR.humOf(st, T0) === 1, "14 : une seconde qui frotte ne s'accorde pas, mais l'encrier frémit"); }
+  { const st = mk(); HEAR.heard(st, "Story/Age 9.md", "Story/Age 10.md", "clash", 10, 13, T0); ok(!ST.check(hc, { ages, st }).ok, "14 : le triton non plus"); }
+  { const st = mk(); HEAR.heard(st, "Story/Age 9.md", "Story/Age 9.md", "full", 10, 10, T0); ok(!ST.check(hc, { ages, st }).ok, "14 : le monde étrange avec lui-même (l'unisson) ne compte pas"); }
+  { const st = mk(); HEAR.heard(st, "Elsewhere/Far.md", "Story/Age 9.md", "good", 13, 10, T0); ok(!ST.check(hc, { ages, st }).ok, "14 : un Âge hors du dossier ne compte pas"); }
+  { const st = mk(); HEAR.heard(st, "Story/Age 11.md", "Story/Age 9.md", "good", 13, 10, T0); const r = ST.check(hc, { ages, st }); ok(r.ok && r.path === "Story/Age 11.md" && st.hear.freq === 10, "14 : à la tierce avec un Âge du dossier, dans un sens ou dans l'autre ; la voix retenue est celle du monde étrange"); }
+  { const st = mk(); HEAR.heard(st, "Age 9", "Age 10", "full", 10, 16, T0); ok(ST.check(hc, { ages, st }).ok, "14 : l'octave aussi ; un Âge nommé seulement par son nom se reconnaît"); }
+  { const st = { ...mk(), by: {} }; HEAR.heard(st, "Story/Age 9.md", "Story/Age 10.md", "good", 10, 13, T0); ok(ST.check(hc, { ages, st }).ok, "14 : sans `by`, le monde étrange est la note du chapitre 9"); }
+  { const st = mk(); st.done = B2.slice(0, 12); ok(!HEAR.heard(st, "Story/Age 9.md", "Story/Age 10.md", "good", 10, 13, T0) && HEAR.humOf(st, T0) === 0 && HEAR.wetName(st) === null, "avant le 14 : rien n'est retenu, l'encre sèche comme ailleurs"); }
+  { const st = mk(); ok(HEAR.wetName(st) === "Age 9", "dès que le 14 est ouvert, l'encre du monde étrange ne sèche plus"); }
+  { const st = mk(); HEAR.struck(st, 10, T0); ok(HEAR.humOf(st, T0 + 60000) > 0.9 && Math.abs(HEAR.humOf(st, T0 + HEAR.HUM_MS + 1) - HEAR.HUM_LOW) < 1e-9, "l'encrier : fort tout de suite, puis faible tant que le chapitre dure"); st.done.push("hear"); ok(HEAR.humOf(st, T0) === 0, "l'encrier se tait quand le 14 est réussi"); }
+  { /* la visite : le chapitre réussi à 14 h, le cri entre 22 h et 6 h, la pierre au matin */
+    const st = mk(); st.done.push("hear"); HEAR.visitFrom(st, T0);
+    const at = (d, h) => new Date(2026, 9, 25 + d, h, 0, 0).getTime();
+    ok(!HEAR.stoneHere(st, at(0, 21)) && !HEAR.cryNow(st, at(0, 21)), "la visite : rien avant la nuit");
+    ok(HEAR.cryNow(st, at(0, 23)) && !HEAR.cryNow(st, at(1, 2)), "la nuit : un cri, une seule fois");
+    ok(!HEAR.stoneHere(st, at(1, 5)) && HEAR.stoneHere(st, at(1, 6)) && HEAR.stoneHere(st, at(9, 12)), "au matin, la pierre est sur le bureau, et elle y reste");
+    const st2 = mk(); st2.done.push("hear"); HEAR.visitFrom(st2, at(1, 3)); ok(HEAR.morningAfter(at(1, 3)) === at(1, 6) && HEAR.cryNow(st2, at(1, 4)), "réussi en pleine nuit : le cri tout de suite, la pierre ce matin même");
+    const st3 = mk(); st3.done.push("hear"); HEAR.visitFrom(st3, T0); ok(!HEAR.cryNow(st3, at(1, 7)) && HEAR.stoneHere(st3, at(1, 7)), "absent la nuit : pas de cri, la pierre quand même");
+    const v0 = st.hear.visit; HEAR.visitFrom(st, at(3, 12)); ok(st.hear.visit === v0, "la visite ne se refait pas");
+  }
+  const I18N = require("../src/i18n"); ok(["en", "fr"].every((l) => { const t = I18N.makeT(() => l); return t("story.why.hear") !== "story.why.hear" && t("story.done.nopage") !== "story.done.nopage"; }), "les phrases du 14, en deux langues");
+}

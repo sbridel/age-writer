@@ -1569,6 +1569,8 @@ class ReltoRenderer {
     if (k === "drawer") { if (ui.held) return; ui.open = !ui.open; ui.at = now; if (this.opts.onRelic) this.opts.onRelic(ui.open ? "open" : "close"); }
     else if (k === "hold" && !ui.held) { ui.held = true; ui.heldAt = now; ui.relAt = 0; if (this.opts.onRelic) this.opts.onRelic("hold"); }
     else if (k === "release" && ui.held && !ui.relAt && now - ui.heldAt > 500) { ui.relAt = now; if (this.opts.onRelic) this.opts.onRelic("put"); }
+    else if (k === "link" && !ui.link && !ui.held) { ui.link = now; ui.linkRel = 0; if (this.opts.onRelic) this.opts.onRelic("hold"); } /* la pierre de liaison, prise de près (chapitre 14) */
+    else if (k === "unlink" && ui.link && !ui.linkRel && now - ui.link > 450) { ui.linkRel = now; if (this.opts.onRelic) this.opts.onRelic("put"); }
     if (!this.running) this.draw(0);
   }
   /** L'armoire du fond de l'atelier : elle s'ouvre, ou se referme toute seule. */

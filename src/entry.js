@@ -66,7 +66,7 @@ module.exports = function build(Base, core, AGEX) {
   /** La caverne, pour essayer (menu de la clé) : remettre le lac à zéro, des colonies, les endormir, les gaver ; chaque essai remplit le flacon. */
   class CaveTestModal extends FuzzySuggestModal {
     constructor(app, plugin) { super(app); this.plugin = plugin; }
-    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask", "reveal", "lit", "slab", "dream"]; }
+    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask", "reveal", "lit", "slab", "dream", "ink", "night"]; }
     getItemText(v) { const k = "cave.test." + v; return this.plugin.t(k); }
     onChooseItem(v) { const msg = this.plugin.caveTest(v); if (msg) new Notice(msg); }
   }
@@ -112,7 +112,7 @@ module.exports = function build(Base, core, AGEX) {
       this.live = new Set(); this.lawTimers = new Map(); this.fileAudios = []; this.soundBtn = null;
       this.index = new AgeIndex(this);
       // la note du chapitre « Modifier ce qui est écrit » : l'encre y sèche en 2 min au plus (ailleurs, un délai court ferait des altérations)
-      this.law = new Law(this.ext.state.law, { dryMinutes: (name) => (R.storyNotes(this).has(name) ? Math.min(2, this.ext.inkDry) : this.ext.inkDry), healPerDay: () => this.ext.heal, ignored: (raw) => PH.isPhysicsLine(raw) || PH.isPhysicsStub(raw) });
+      this.law = new Law(this.ext.state.law, { dryMinutes: (name) => (R.storyWet(this).has(name) ? 0 : R.storyNotes(this).has(name) ? Math.min(2, this.ext.inkDry) : this.ext.inkDry), /* le monde étrange de l'histoire : son encre ne sèche plus (chapitre 14) */ healPerDay: () => this.ext.heal, ignored: (raw) => PH.isPhysicsLine(raw) || PH.isPhysicsStub(raw) });
       this.status = new STAT.Status(this.ext.state.status || (this.ext.state.status = {})); // le statut d'écrivain : le titre et les jours tenus par Âge
       guard("modal plein écran", () => { // les fenêtres modales (livre des glyphes, carnet de l'arpenteur…) restent visibles quand le Relto est en plein écran
         const mp = obsidian.Modal && obsidian.Modal.prototype, orig = mp && mp.open; if (!orig) return;
@@ -373,6 +373,12 @@ module.exports = function build(Base, core, AGEX) {
     /** Les essais de la caverne (menu de la clé) : "reset" (le lac à zéro), "few" / "many" (des colonies nourries), "asleep" (oubliées depuis une semaine), "gorge" (trois ambrés dans l'heure), "flask" (remplir le flacon). */
     caveTest(v) {
       const pool = this.lastPool(), X = this.poolExt(pool), SC = require("./scope"), cv = (this.caveState(pool), X.cave), now = Date.now(), t = (k) => (this.t ? this.t(k) : k);
+      if (v === "ink" || v === "night") { /* le chapitre 14, pour essayer sans attendre : la clé de la réserve est celle de l'avancement du Relto histoire */
+        if (!pool) return t("cave.test.nostory");
+        const HEAR = require("./story-hear"), h = HEAR.stateOf(require("./story").get(this.ext.story || (this.ext.story = {}), pool));
+        if (v === "ink") { h.inkAt = now; if (!Number.isFinite(h.freq)) h.freq = 12; } else { h.visit = now - HEAR.DAY - 1000; h.cried = h.cried || now; }
+        this._hearCache = null; this.saveExt(); return t("oven.test.done") + " " + t(["cave.test", v].join("."));
+      }
       if (v === "reset") { cv.colonies = 0; cv.fedAt = 0; cv.feeds = []; cv.revealed = 0; cv.flask = null; cv.drop = null; cv.slabs = {}; }
       else if (v === "reveal") { cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.reveal"); }
       else if (v === "slab") { cv.slabs = {}; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.slab"); }

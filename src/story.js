@@ -4,6 +4,7 @@
 // les autres Reltos, ses pages sont les récompenses des chapitres, et son avancement est gardé par Relto (même clé que
 // l'état du télescope : nom + graine). Modèle pur : aucune dépendance à Obsidian, testable seul.
 const M = require("./relto-model");
+const HEAR = require("./story-hear");
 const { STABLE_AT } = require("./engine/analysis");
 const { SKY_ENTRIES } = require("./engine/data/sky");
 const { BUILTIN_BLOCKS } = require("./engine/registry");
@@ -31,6 +32,8 @@ const CHAPTERS = [
   { id: "descend", page: "page_silver", book: 2, title: { en: "Going down", fr: "Descendre" } },
   { id: "lake", page: "page_gems", book: 2, title: { en: "The lake", fr: "Le lac" } },
   { id: "slab", page: null, book: 2, title: { en: "The slab", fr: "La dalle" } }, // pas de page : la dalle ouverte est le prix
+  /* la seconde série (claude/DESIGN-art-bahro.md §2) : entendre, porter, l'accord, la pierre ; le prix est une page du livre des lois, pas une page du Relto */
+  { id: "hear", page: null, law: 21, book: 3, title: { en: "Hearing", fr: "Entendre" } },
 ];
 /** Le dernier chapitre du premier livre : sa fin (la page de l'encrier, la lettre du tiroir) reste la sienne. */
 const BOOK_ONE_END = "strange";
@@ -168,6 +171,7 @@ function check(chapter, ctx) {
   if (chapter.id === "descend") { const c = (ctx && ctx.cave) || {}; return c.revealed > 0 ? { ok: true, why: "" } : { ok: false, why: "reveal" }; } // une révélation vue d'en bas
   if (chapter.id === "lake") { const c = (ctx && ctx.cave) || {}; return !(c.colonies > 0) ? { ok: false, why: "lake" } : c.looked ? { ok: true, why: "" } : { ok: false, why: "look" }; } // le lac vit, et une goutte a été regardée
   if (chapter.id === "slab") { const c = (ctx && ctx.cave) || {}; return c.slabOpen ? { ok: true, why: "" } : { ok: false, why: "slab" }; } // la dalle ouverte (le Rêve viendra avec l'étape 4d)
+  if (chapter.id === "hear") { const p = HEAR.answered((ctx && ctx.st) || {}, ages); return p ? { ok: true, why: "", path: p } : { ok: false, why: "hear" }; } /* les deux voix entre le monde étrange et un Âge qui s'accorde avec lui, à la tierce au moins */
   if (chapter.id === "alter") {
     // « modifier ce qui est écrit » : la note du chapitre a été modifiée après séchage de l'encre (Loi du Changement), et le monde tient encore
     const mine = ages.find((a) => a.path === ((ctx && ctx.notes) || {}).alter);
@@ -185,7 +189,7 @@ function evaluate(store, key, ctx) {
   const st = get(store, key), newly = [];
   for (const c of CHAPTERS) {
     if (st.done.includes(c.id)) continue;
-    const r = check(c, { ...ctx, seen: st.seen, notes: st.notes });
+    const r = check(c, { ...ctx, seen: st.seen, notes: st.notes, st });
     if (!r.ok) { st.why = r.why; st.missing = r.missing || null; break; }
     // (st.why : ce qui manque au chapitre en cours, une clé dont le plugin fait une phrase)
     if (r.path) (st.by || (st.by = {}))[c.id] = r.path; // l'Âge qui a réussi le chapitre (il reçoit l'étiquette)
@@ -235,6 +239,7 @@ const WORLDS = {
   descend: { lines: [] },
   lake: { lines: [] },
   slab: { lines: [] },
+  hear: { lines: [] },
 };
 
 /**
@@ -316,6 +321,10 @@ const LETTERS = {
     en: ["The signs along the vein, the ones you described to me: I looked for them in all my books. They are not there.", "They are not words of the Guild. Someone else writes, down there, and has for longer than we have. You tell me a slab rose from the water in the room where you keep your memories, the evening you first went down. Perhaps it is waiting for those signs. What you read below, carry it up there. Open it, and tell me what its water shows.", "Remember the signs, and open the slab."],
     fr: ["Les signes de la veine, ceux que tu m'as décrits : je les ai cherchés dans tous mes livres. Ils n'y sont pas.", "Ce ne sont pas des mots de la Guilde. Quelqu'un d'autre écrit, là-dessous, et depuis plus longtemps que nous. Tu me dis qu'une dalle est sortie de l'eau dans la chambre où tu gardes tes souvenirs, le soir de ta première descente. Elle attend peut-être ces signes. Ce que tu as lu en bas, rapporte-le là-haut. Ouvre-la, et dis-moi ce que montre son eau.", "Retiens les signes, et ouvre la dalle."],
   },
+  hear: {
+    en: ["Your ink does not dry. I saw it on the seal of that strange world you wrote me: it stays wet, and your changes cost you nothing. Neither did mine, long ago, on a single Book. I never knew why.", "I must confess something. The eighteen laws I taught you are the Guild's; the book counts twenty-five, and the other pages I cannot read. I was told they are not read: they are heard. So listen. Set that world on the Imager and play its chord. Then look, among your Ages, for the one that answers it; if none does, write it a day that agrees with that one's.", "Play the two voices between the strange world and an Age that agrees with it."],
+    fr: ["Ton encre ne sèche pas. Je l'ai vu sur la pastille de ce monde étrange que tu m'as écrit : elle reste humide, et tes retouches ne te coûtent rien. La mienne non plus, autrefois, sur un seul Livre. Je n'ai jamais su pourquoi.", "Il faut que je t'avoue une chose. Les dix-huit lois que je t'ai apprises sont celles de la Guilde ; le livre en compte vingt-cinq, et les autres pages, je ne sais pas les lire. On m'a dit qu'elles ne se lisent pas : qu'elles s'entendent. Alors écoute. Pose ce monde sur l'Imageur et joue son accord. Puis cherche, parmi tes Âges, celui qui lui répond ; s'il n'en est aucun, écris-lui un jour qui s'accorde au sien.", "Joue les deux voix entre le monde étrange et un Âge qui s'accorde avec lui."],
+  },
   weather: {
     en: ["A world that never changes is a painting. Let us make it a day.", "Here the rain falls without end. Teach it manners: let it fall only sometimes, and only at dawn. A line can carry a frequency and a moment, after a colon.", "Rewrite the rain line as `rain: sometimes, dawn`, and keep the world stable."],
     fr: ["Un monde qui ne change jamais est un tableau. Faisons-en un jour.", "Ici la pluie tombe sans fin. Apprends-lui les manières : qu'elle ne tombe que parfois, et seulement à l'aube. Une ligne peut porter une fréquence et un moment, après deux-points.", "Récris la ligne de pluie ainsi : `rain: sometimes, dawn`, et garde le monde stable."],
@@ -352,7 +361,7 @@ const COURSE_NOAXIS = new Set(["mass", "age"]);
 
 /** Le texte d'une note de chapitre : titre, lettre du mentor, ce qu'il faut faire, et le bloc `age` de départ. */
 /** Un chapitre d'écriture (un Âge à écrire) ou d'exploration (le Relto seul : télescope, Imageur). */
-const kindOf = (chapter) => (["zero", "imager", "descend", "lake", "slab"].includes(chapter.id) ? "explore" : "write");
+const kindOf = (chapter) => (["zero", "imager", "descend", "lake", "slab", "hear"].includes(chapter.id) ? "explore" : "write");
 const KIND_LABEL = { write: { en: "Writing exercise", fr: "Exercice d'écriture" }, explore: { en: "Relto exploration", fr: "Exploration du Relto" } };
 /** Le nom de la note d'une exploration : le titre du chapitre (jamais « Age N », qui est réservé aux Âges à écrire). `taken` : noms déjà pris. */
 function exploreName(chapter, lang, taken) {

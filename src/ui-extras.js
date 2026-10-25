@@ -447,6 +447,7 @@ async function openTwoVoices(plugin, path, tgA, onLine = null) { /* `onLine(phra
         const seed = plugin.core.seed(x.f.path), tgB = IMG.targetsOf(plugin.core.analyse(x.src, { seed }), seed), ac = GI.accordOf(tgA, tgB);
         if (!ac) return;
         sound.twoVoices(tgA.freq, tgB.freq, ac.degree, vol);
+        try { require("./ui-relto").storyHeard(plugin, path, x.f.path, ac.degree, tgA.freq, tgB.freq); } catch (e) { /* le chapitre 14 : sans histoire, rien */ }
         const line = twoVoicesLine(t, nameA, x.f.basename, ac);
         if (onLine) onLine(line); else new obs.Notice(line, 9000);
       } catch (e) { console.warn("[Age Writer ext] deux voix", e); }
@@ -509,10 +510,11 @@ function inkFresh(plugin, el, name, targets = []) {
     if (el.isConnected) el.__inkSeen = true;
     const k = plugin.law.ink(name); if (!k) return;
     el.addClass("age-ink"); el.style.setProperty("--aw-ink", k.fresh.toFixed(3)); el.toggleClass("is-wet", k.fresh > 0.02);
-    const tip = k.left === Infinity ? t("ink.never") : k.fresh > 0 ? t("ink.fresh", { n: Math.max(1, Math.ceil(k.left / 60000)) }) : t("ink.dry");
+    const wet = k.left === Infinity && plugin.ext.inkDry > 0; /* une encre qui ne sèche plus alors que le réglage la fait sécher : on le montre, sans l'expliquer */
+    const tip = wet ? t("ink.wet") : k.left === Infinity ? t("ink.never") : k.fresh > 0 ? t("ink.fresh", { n: Math.max(1, Math.ceil(k.left / 60000)) }) : t("ink.dry");
     for (const x of targets) if (x) x.setAttr("title", tip);
     const chip = el.querySelector(".age-tabs__ink");
-    if (chip) { chip.setText(k.left === Infinity ? "" : k.fresh > 0 ? "✒ " + t("ink.chip.wet", { n: Math.max(1, Math.ceil(k.left / 60000)) }) : "✒ " + t("ink.chip.dry")); chip.setAttr("title", tip); chip.toggleClass("is-wet", k.fresh > 0); }
+    if (chip) { chip.setText(wet ? "✒ " + t("ink.chip.wetonly") : k.left === Infinity ? "" : k.fresh > 0 ? "✒ " + t("ink.chip.wet", { n: Math.max(1, Math.ceil(k.left / 60000)) }) : "✒ " + t("ink.chip.dry")); chip.setAttr("title", tip); chip.toggleClass("is-wet", k.fresh > 0); }
   };
   tick(); el.__inkTimer = window.setInterval(tick, 10000);
 }

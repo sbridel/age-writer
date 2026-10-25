@@ -22,6 +22,7 @@ const SS = require("./starsystem");
 const CAL = require("./calibration");
 const UW = require("./unwritten");
 const ST = require("./story");
+const HEAR = require("./story-hear");
 const DB = require("./relto-descbook");
 const LEC = require("./lectern");
 
@@ -96,7 +97,7 @@ async function buildScene(plugin, file, opt = {}) {
     const X = plugin.poolExt ? plugin.poolExt(key) : {}, cv = (X && X.cave) || {}, slab = (cv.slabs || {})[key] || {}; /* la réserve de ce Relto : ce que la machine et la caverne ont vu (chapitres 10 à 13) */
     const cave = { cookedWhite: !!X.cookedWhite, revealed: cv.revealed || 0, colonies: cv.colonies || 0, looked: !!cv.looked, slabOpen: !!slab.open };
     const done = ST.evaluate(store, key, { ages, axisOf, zeroFound: relto.zeroFound, tunings: plugin.ext.imagerTunings, guildLock: !!((plugin.ext.imagerTunings || {})["guild:" + key] || {}).lock, cave });
-    if (done.length) { plugin.saveExt(); for (const c of done) { new obsidian.Notice(plugin.t("story.done", { title: plugin.lang() === "fr" ? c.title.fr : c.title.en })); markChapterDone(plugin, c, ST.get(store, key)); } }
+    if (done.length) { for (const c of done) if (c.id === "hear") HEAR.visitFrom(ST.get(store, key), Date.now()); /* la nuit qui vient, la visite */ resetStoryDraw(plugin); /* l'encre du monde étrange (le 14 s'ouvre) */ plugin.saveExt(); for (const c of done) { new obsidian.Notice(plugin.t(c.page || c.id === ST.BOOK_ONE_END ? "story.done" : "story.done.nopage", { title: plugin.lang() === "fr" ? c.title.fr : c.title.en })); markChapterDone(plugin, c, ST.get(store, key)); } }
     relto.storyDone = ST.get(store, key).done.concat(ST.bookOneDone(ST.get(store, key).done) ? ["end"] : []); // « end » : la fin du premier livre (le chapitre 9 ; le second livre continue après)
   }
   // choix des livres : options du bloc (folders / exclude / books) ; à défaut, liste du refuge (relto_books)
@@ -206,7 +207,7 @@ async function startStory(plugin) {
 }
 
 /** Ce qui manque au chapitre en cours, en une phrase (vide pour le chapitre final : il ne dit jamais ce qui manque). */
-const WHY = { white: "story.why.white", reveal: "story.why.reveal", lake: "story.why.lake", look: "story.why.look", slab: "story.why.slab", noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all", hardstable: "story.why.hardstable", hardpages: "story.why.hardpages", hardaxes: "story.why.hardaxes" };
+const WHY = { white: "story.why.white", reveal: "story.why.reveal", lake: "story.why.lake", look: "story.why.look", slab: "story.why.slab", hear: "story.why.hear", noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all", hardstable: "story.why.hardstable", hardpages: "story.why.hardpages", hardaxes: "story.why.hardaxes" };
 const whyText = (plugin, why) => (WHY[why] ? "\n" + plugin.t(WHY[why]) : "");
 
 /** Un chapitre réussi : la note reçoit la propriété `story_chapter: completed` et l'étiquette `completed`, et une fenêtre le dit sans qu'il faille revenir au Relto. */
@@ -357,6 +358,19 @@ const relicsOf = (plugin, hub) => {
   return store[key] || (store[key] = { seen: false, drawer: false, stone: false });
 };
 
+/**
+ * Le chapitre 14, pour le dessin (src/relto-atelier.js) : l'encrier qui frémit (`hum`, 0 à 1), la pierre sur le bureau (`stone`),
+ * la voix du monde étrange (`freq`). Relto histoire seulement. Le cri de la nuit se joue ici, une fois, si l'on est là. Revu toutes les 2 s.
+ */
+function hearStateOf(plugin, hub, scene) {
+  if (!hub || !scene || scene.mode !== "story") return { hum: 0, stone: false };
+  const now = Date.now(), cache = (plugin._hearCache = plugin._hearCache || {}), c = cache[hub.path]; if (c && now - c.at < 2000) return c.v;
+  const relto = { ...M.parseRelto(fmOf(plugin.app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed));
+  if (HEAR.cryNow(st, now)) { plugin.saveExt(); if (plugin.ext.sound && plugin.ext.soundRooms !== false) sound.caveSfx("cry", (plugin.ext.volume == null ? 0.35 : plugin.ext.volume) * 0.5); } /* la nuit de la visite : un cri, au loin */
+  const v = { hum: HEAR.humOf(st, now), stone: HEAR.stoneHere(st, now), freq: st.hear && st.hear.freq };
+  cache[hub.path] = { at: now, v }; return v;
+}
+
 /** Le courrier du mentor (src/story-mail.js) : l'état à dessiner, l'arrivée d'une lettre, l'ouverture de la note. */
 const mailState = (plugin, hub) => {
   if (!hub || !isStoryHub(plugin.app, hub)) return { unread: false, has: false };
@@ -418,7 +432,41 @@ function storyNotes(plugin) {
   } catch (e) { console.warn("[Age Writer ext] histoire", e); }
   return (plugin._storySet = set);
 }
-const resetStoryDraw = (plugin) => { plugin._noDraw = null; plugin._storySet = null; };
+/** Les notes dont l'encre ne sèche plus : le monde étrange du chapitre 9, dès que le 14 est ouvert (claude/DESIGN-art-bahro.md §2, sans explication). */
+function storyWet(plugin) {
+  if (plugin._wetSet) return plugin._wetSet;
+  const set = new Set(), { app } = plugin;
+  try {
+    for (const hub of app.vault.getMarkdownFiles().filter((f) => isStoryHub(app, f))) {
+      const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed)), n = HEAR.wetName(st);
+      if (n) set.add(n);
+    }
+  } catch (e) { console.warn("[Age Writer ext] histoire", e); }
+  return (plugin._wetSet = set);
+}
+const resetStoryDraw = (plugin) => { plugin._noDraw = null; plugin._storySet = null; plugin._wetSet = null; };
+
+/** L'avancement du Relto histoire dont le dossier contient cette note (ou null). */
+function storyStateOfPath(plugin, path) {
+  const { app } = plugin;
+  for (const hub of app.vault.getMarkdownFiles().filter((f) => isStoryHub(app, f))) {
+    const d = ST.dirOf(hub.path); if (!d || !ST.inDirs(path, [d])) continue;
+    const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename };
+    return ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed));
+  }
+  return null;
+}
+/** Deux voix jouées (diapason de l'Imageur, ou ♪♪ du panneau) : le chapitre 14 les retient si l'une est celle du monde étrange. */
+function storyHeard(plugin, a, b, degree, fa, fb) {
+  try {
+    const st = storyStateOfPath(plugin, a) || storyStateOfPath(plugin, b); if (!st) return;
+    if (HEAR.heard(st, a, b, degree, fa, fb, Date.now())) { plugin.saveExt(); clearTimeout(plugin._hearTick); plugin._hearTick = window.setTimeout(() => storyTick(plugin), 400); }
+  } catch (e) { console.warn("[Age Writer ext] deux voix", e); }
+}
+/** La voix du monde étrange seule (le diapason frappé une fois, l'accord de ses cristaux) : l'encrier de l'atelier frémit. */
+function storyStruck(plugin, path, freq) {
+  try { const st = storyStateOfPath(plugin, path); if (st && HEAR.isStrange(st, path) && HEAR.struck(st, freq, Date.now())) plugin.saveExt(); } catch (e) { console.warn("[Age Writer ext] encrier", e); }
+}
 
 /** Un message du mentor en fenêtre (visible aussi en plein écran, contrairement à une notification). */
 function storyPopup(plugin, text) {
@@ -868,15 +916,16 @@ async function renderRelto(plugin, source, el, ctx) {
     onDreamWake: (res) => { if (plugin.dreamWoke) plugin.dreamWoke(res); },
     onTwoVoices: (age, target, onLine) => {
       if (!age || !target) return; const GI = require("./imager-guild"), vol = roomVol(), now = Date.now(), held = forkHeld;
-      if (!held) { forkHeld = { name: age.name, target, at: now }; if (roomSoundOn()) sound.twoVoices(target.freq, target.freq, "full", vol * 0.6); onLine(plugin.t("two.fork.ring", { a: age.name }), true); return; }
+      if (!held) { forkHeld = { name: age.name, path: age.path, target, at: now }; if (roomSoundOn()) sound.twoVoices(target.freq, target.freq, "full", vol * 0.6); onLine(plugin.t("two.fork.ring", { a: age.name }), true); if (scene && scene.mode === "story") storyStruck(plugin, age.path, target.freq); return; }
       forkHeld = null; const ac = GI.accordOf(held.target, target); if (!ac) return;
+      if (scene && scene.mode === "story") storyHeard(plugin, held.path || held.name, age.path || age.name, ac.degree, held.target.freq, target.freq); /* le chapitre 14 */
       if (roomSoundOn()) sound.twoVoices(held.target.freq, target.freq, ac.degree, vol * 0.6);
       onLine(X.twoVoicesLine(plugin.t.bind(plugin), held.name, age.name, ac), false);
     },
     wonders: () => (plugin.wondersShown ? plugin.wondersShown() : plugin.ext.wonders || {}), onForget: (id, gone) => plugin.forgetWonders && plugin.forgetWonders(id, (ok) => { if (ok && gone) gone(); }), onWonder: () => { if (roomSoundOn() && sound.crystalChord) sound.crystalChord([523.25, 659.25, 783.99], 0, roomVol() * 0.5); },
-    vaultAges: () => (scene ? (scene.ages || []) : []).map((a) => ({ name: a.name, path: a.path })), onDescMount, onLedger, onLibraryAdd: async (kind, text) => { const res = await B.addLibraryLines(plugin, kind, text); if (res.ok) { if (kind === "relto") plugin.refreshLive(); await libReload(); } return res; }, mailState: () => mailState(plugin, file), statusState: () => { const tier = plugin.status ? plugin.status.tier() : 0; return { tier, korfah: !!(plugin.status && plugin.status.korfah()), title: plugin.t("status.title." + tier) }; }, relicState: () => relicsOf(plugin, file),
+    vaultAges: () => (scene ? (scene.ages || []) : []).map((a) => ({ name: a.name, path: a.path })), onDescMount, onLedger, onLibraryAdd: async (kind, text) => { const res = await B.addLibraryLines(plugin, kind, text); if (res.ok) { if (kind === "relto") plugin.refreshLive(); await libReload(); } return res; }, mailState: () => mailState(plugin, file), statusState: () => { const tier = plugin.status ? plugin.status.tier() : 0; return { tier, korfah: !!(plugin.status && plugin.status.korfah()), title: plugin.t("status.title." + tier) }; }, relicState: () => relicsOf(plugin, file), hearState: () => hearStateOf(plugin, file, scene),
     onKnock: (k) => { if (roomSoundOn()) { if (k === "sword") return sound.jingle(roomVol() * 0.7); if (k === "coffin") { sound.knock(roomVol() * 0.5, { hollow: true }); window.setTimeout(() => sound.slideStone(roomVol() * 0.9), 220); return; } sound.knock(roomVol() * (k === "stone" ? 0.55 : k === "press" ? 0.8 : k === "book" ? 0.9 : 1.6), { hollow: k !== "press" && k !== "stone" }); if (k === "book") window.setTimeout(() => sound.slideStone(roomVol() * 1.5), 250); else if (k === "open") window.setTimeout(() => sound.slideWood(roomVol() * 1.5, { open: true }), 300); } },
-    glyphSvg: (id) => { try { return plugin.core.glyphSvg(id, 0, 0, 100, "none"); } catch (e) { return ""; } }, onFlip: () => { if (roomSoundOn()) sound.pageTurn(roomVol() * 1.2, { quick: true }); }, onRelic: (k) => { if (!roomSoundOn()) return; if (k === "open" || k === "close") sound.slideWood(roomVol() * 1.3, { open: k === "open" }); else sound.knock(roomVol() * 0.9, { hollow: false }); }, telescopeGen: () => plugin.telescopeGen || 0, instrumentsMode: () => INS.modeOf(plugin.ext), lensHints: () => plugin.ext.lensHints !== false,hoverFrame: plugin.ext.hoverFrame === true, imagerHum: () => ({ on: plugin.ext.soundImagerHum !== false, vol: humVol() }), onImagerHum: (a) => { if (a.toggle) plugin.ext.soundImagerHum = plugin.ext.soundImagerHum === false; else plugin.ext.imagerHumVol = Math.round(Math.max(0, Math.min(1, humVol() + a.delta * 0.2)) * 10) / 10; if (a.delta && plugin.ext.soundImagerHum === false && plugin.ext.imagerHumVol > 0) plugin.ext.soundImagerHum = true; plugin.saveExt(); roomAudio("imager"); }, notes: plugin.ext.imagerNotes || "words", onImagerAge: imagerAge, unwrittenFind, onTranscribe, imagerGet, imagerSet, glyphImage, t, telescopeGet, telescopeSet, onTelescopeSound, onImagerTune: () => { const cl = renderer.imagerClarity(); if (sound.imagerTune) sound.imagerTune(cl.atmo, cl.total, !!(renderer.imager && renderer.imager.settings && renderer.imager.settings.lock)); }, onImagerSound: (k) => { if (roomSoundOn() && sound.imagerSfx) sound.imagerSfx(k, roomVol()); }, onImagerChord: (fs, beat) => { if (roomSoundOn() && sound.crystalChord) sound.crystalChord(fs, beat, roomVol()); }, reducedMotion: reduced, onView: (v) => { syncView(v); if (v === "atelier") { const rs = relicsOf(plugin, file); if (!rs.seen) { rs.seen = true; plugin.saveExt(); } syncKey(); } }, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onPurr: () => { if (roomSoundOn()) roomBuf("roomPurrFile").then((b) => sound.purr(roomVol(), b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onPageToggle: async (id) => { const on = scene && scene.pagesActive.includes(id); await reltoEdit((l) => (on ? l.filter((x) => x !== id) : M.attachPage(l, id))); plugin.refreshLive(); }, onClasp: () => { if (roomSoundOn()) sound.bookOpen(roomVol() * 0.9, { clicks: true, book: false }); }, onTap: () => roomAudio(renderer.view), onSpecial: (kind) => { if (kind === "reltobook") { require("./relto-book").openInRelto(plugin, canvas.parentElement || root, file, { onHere: () => renderer.setView("island") }); return; } /* le Livre du Relto, pris sur le piédestal : par-dessus le Relto, comme un livre de liaison */ if (kind === "story") storyNext(plugin); else if (kind === "treatise") require("./guide").openGuide(plugin, null, "full", { over: root, book: { title: t("guide.treatise"), dni: plugin.ext.dniText && plugin.dni.hasFont() ? plugin.dni.textFor(t("guide.treatise")) : "", font: plugin.dni.textStack ? plugin.dni.textStack() : "", onFlip: () => { if (roomSoundOn()) sound.pageTurn(roomVol() * 1.2, { quick: true }); } } }); else if (kind === "mail") openMail(plugin, file).then(() => renderer.draw(0)); else if (kind === "surveyor") B.openSurveyorBook(plugin, scene ? scene.ages : []); else if (kind === "glyphs") { if (renderer.available().glyphbook) renderer.setView("glyphbook"); else B.openGlyphBook(plugin, scene ? scene.ages : []); } else if (renderer.available().librarybook) renderer.setView("librarybook"); else B.openLibraryBook(plugin); }, onOpen: (age) => playLinkAnim(plugin, age, canvas.parentElement || document.body, () => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); }, () => app.workspace.openLinkText(age.path, "", false)) });
+    glyphSvg: (id) => { try { return plugin.core.glyphSvg(id, 0, 0, 100, "none"); } catch (e) { return ""; } }, onFlip: () => { if (roomSoundOn()) sound.pageTurn(roomVol() * 1.2, { quick: true }); }, onRelic: (k) => { if (!roomSoundOn()) return; if (k === "open" || k === "close") sound.slideWood(roomVol() * 1.3, { open: k === "open" }); else sound.knock(roomVol() * 0.9, { hollow: false }); }, telescopeGen: () => plugin.telescopeGen || 0, instrumentsMode: () => INS.modeOf(plugin.ext), lensHints: () => plugin.ext.lensHints !== false,hoverFrame: plugin.ext.hoverFrame === true, imagerHum: () => ({ on: plugin.ext.soundImagerHum !== false, vol: humVol() }), onImagerHum: (a) => { if (a.toggle) plugin.ext.soundImagerHum = plugin.ext.soundImagerHum === false; else plugin.ext.imagerHumVol = Math.round(Math.max(0, Math.min(1, humVol() + a.delta * 0.2)) * 10) / 10; if (a.delta && plugin.ext.soundImagerHum === false && plugin.ext.imagerHumVol > 0) plugin.ext.soundImagerHum = true; plugin.saveExt(); roomAudio("imager"); }, notes: plugin.ext.imagerNotes || "words", onImagerAge: imagerAge, unwrittenFind, onTranscribe, imagerGet, imagerSet, glyphImage, t, telescopeGet, telescopeSet, onTelescopeSound, onImagerTune: () => { const cl = renderer.imagerClarity(); if (sound.imagerTune) sound.imagerTune(cl.atmo, cl.total, !!(renderer.imager && renderer.imager.settings && renderer.imager.settings.lock)); }, onImagerSound: (k) => { if (roomSoundOn() && sound.imagerSfx) sound.imagerSfx(k, roomVol()); }, onImagerChord: (fs, beat) => { if (roomSoundOn() && sound.crystalChord) sound.crystalChord(fs, beat, roomVol()); const im = renderer.imager; if (scene && scene.mode === "story" && im && im.age && im.target) storyStruck(plugin, im.age.path, im.target.freq); }, reducedMotion: reduced, onView: (v) => { syncView(v); if ((v === "atelier" || v === "desk") && roomSoundOn()) { const hs = hearStateOf(plugin, file, scene); if (hs.hum > 0 && Number.isFinite(hs.freq)) sound.twoVoices(hs.freq, hs.freq, "full", roomVol() * 0.25 * hs.hum); } /* l'encrier répond à la voix du monde étrange : une seconde voix, très basse */ if (v === "atelier") { const rs = relicsOf(plugin, file); if (!rs.seen) { rs.seen = true; plugin.saveExt(); } syncKey(); } }, onMeow: () => { if (roomSoundOn()) roomBuf("roomMeowFile").then((b) => sound.meow(roomVol() * 1.4, b)); }, onPurr: () => { if (roomSoundOn()) roomBuf("roomPurrFile").then((b) => sound.purr(roomVol(), b)); }, onToy: (k) => { if (!roomSoundOn()) return; if (k === "bell") sound.jingle(roomVol()); else if (k === "mouse") sound.squeak(roomVol()); }, onPageToggle: async (id) => { const on = scene && scene.pagesActive.includes(id); await reltoEdit((l) => (on ? l.filter((x) => x !== id) : M.attachPage(l, id))); plugin.refreshLive(); }, onClasp: () => { if (roomSoundOn()) sound.bookOpen(roomVol() * 0.9, { clicks: true, book: false }); }, onTap: () => roomAudio(renderer.view), onSpecial: (kind) => { if (kind === "reltobook") { require("./relto-book").openInRelto(plugin, canvas.parentElement || root, file, { onHere: () => renderer.setView("island") }); return; } /* le Livre du Relto, pris sur le piédestal : par-dessus le Relto, comme un livre de liaison */ if (kind === "story") storyNext(plugin); else if (kind === "treatise") require("./guide").openGuide(plugin, null, "full", { over: root, book: { title: t("guide.treatise"), dni: plugin.ext.dniText && plugin.dni.hasFont() ? plugin.dni.textFor(t("guide.treatise")) : "", font: plugin.dni.textStack ? plugin.dni.textStack() : "", onFlip: () => { if (roomSoundOn()) sound.pageTurn(roomVol() * 1.2, { quick: true }); } } }); else if (kind === "mail") openMail(plugin, file).then(() => renderer.draw(0)); else if (kind === "surveyor") B.openSurveyorBook(plugin, scene ? scene.ages : []); else if (kind === "glyphs") { if (renderer.available().glyphbook) renderer.setView("glyphbook"); else B.openGlyphBook(plugin, scene ? scene.ages : []); } else if (renderer.available().librarybook) renderer.setView("librarybook"); else B.openLibraryBook(plugin); }, onOpen: (age) => playLinkAnim(plugin, age, canvas.parentElement || document.body, () => { if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume); }, () => app.workspace.openLinkText(age.path, "", false)) });
   let scene = null, fixed = opt.time != null && !isNaN(Number(opt.time)) ? Number(opt.time) : null;
 
   const fmt = (h) => { const m = Math.round(Number(h) * 60) % 1440; return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; };
@@ -1121,4 +1170,4 @@ function renderReltoLibrary(plugin, source, el) {
   for (const x of res.problems.slice(0, 30)) { const r = box.createDiv({ cls: "age-library__problem age-library__problem--error" }); r.createSpan({ cls: "age-library__where", text: `line ${x.line}` }); r.createSpan({ cls: "age-library__message", text: x.message }); r.createEl("code", { text: x.text }); }
 }
 
-module.exports = { storyPoolOfPath, poolOfScene, isHubFile: isHub, isStoryHub, openHubFile, leafShowing, cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyRepair, storyCheck, storyNext, storyRestart, storyNoDraw, storyNotes, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
+module.exports = { storyPoolOfPath, poolOfScene, isHubFile: isHub, isStoryHub, openHubFile, leafShowing, cleanStarChart, ReltoView, RELTO_VIEW, openReltoView, renderReltoLibrary, libraryPages, renderRelto, openRelto, startStory, storyRepair, storyCheck, storyNext, storyRestart, storyNoDraw, storyNotes, storyWet, storyHeard, storyStruck, storyKnown, resetStoryDraw, storyHint, storyTick, createReltoNote, createReltoPage, buildScene, parseOptions, findReltoFile };
