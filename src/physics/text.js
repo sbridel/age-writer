@@ -3,7 +3,7 @@
  * Couche physique : la FICHE du monde, en français ou en anglais.
  * `sheet(phys, lang)` → { rows: [[section, libellé, valeur]], facts: [phrases], tensions: [{ severity, why, fix[] }] }.
  */
-const { REQUIREMENTS, ASSERTIONS, GLOBAL, HINTS } = require("./rules");
+const R = require("./rules"), { REQUIREMENTS, ASSERTIONS, GLOBAL, HINTS } = R;
 const { HEAT, WATER_TRIPLE_BAR, FIELD_SHIELD } = require("./model");
 
 /** Nombre lisible : 2 chiffres utiles sous 10, 1 sous 100, 0 au-delà ; virgule en français. */
@@ -91,6 +91,13 @@ function facts(w, lang, f) {
     else push("Assez de chaleur pour un océan de magma sous une croûte mince.", "Enough heat for a magma ocean beneath a thin crust.");
   }
   if (w.stars === 0 && w.water === "ice" && w.heat >= 0.3) push("Sous la glace, la chaleur du sol peut garder un océan caché.", "Beneath the ice, the ground's heat may keep a hidden ocean.");
+  if (w.seasonAmp >= R.SEASON_MARKED && w.Twinter < 273.15 && w.ids) { /* le vivant sur l'année (palier 2) : les relais qui passent l'hiver */
+    const has = (l) => l.some((id) => w.ids.has(id)), tw = f(w.Twinter - 273.15, 0);
+    if (has(R.GREEN) && w.Twinter >= 255 && w.Ts >= 255 && w.Ts <= 325) push(`L'hiver descend à ${tw} °C : la vie verte le passe en graines et en bourgeons, et repart au printemps.`, `Winter drops to ${tw} °C: green life sleeps through it as seeds and buds, and starts again in spring.`);
+    if (has(["burrower", "warren", "humming_warren"])) push("Les fouisseurs hibernent sous terre ; ils restent quand tout le reste dort.", "The burrowers hibernate underground; they stay when everything else sleeps.");
+    if (has(["spore", "lichen", "singing_lichen", "pale_fungus", "moss"])) push("Spores, mousses et lichens attendent la saison sans rien demander.", "Spores, mosses and lichens wait out the season and ask for nothing.");
+    if (has(R.MIGRANTS) && has(R.STAYERS)) push("Les troupeaux descendent l'hiver ; d'autres restent, et le rôle tient toute l'année.", "The herds go down in winter; others stay, and the role holds all year.");
+  }
   if (w.g > 1.5) push(`Sous ${f(w.g)} g, les montagnes restent basses et les êtres trapus.`, `Under ${f(w.g)} g, mountains stay low and creatures squat.`);
   if (w.g < 0.5) push(`Sous ${f(w.g)} g, les montagnes s'élèvent haut et les pas sont longs.`, `Under ${f(w.g)} g, mountains rise tall and strides are long.`);
   return out;

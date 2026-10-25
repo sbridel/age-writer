@@ -19,6 +19,11 @@ const { HEAT, WATER_TRIPLE_BAR, FIELD_SHIELD, boilingPoint } = require("./model"
 const { FLORA, PREY, SOIL, BUILDERS } = require("./blocks");
 
 const has = (w, list) => list.some((id) => w.ids.has(id));
+/* les saisons (palier 2) : le seuil des saisons marquées, la vie verte qui dort l'hiver, les brouteurs qui migrent, et ceux qui restent */
+const SEASON_MARKED = 8;
+const GREEN = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "grass", "meadow", "flowers", "berry_shrub", "thorn_bush", "heath_shrub", "cinderbloom", "withered_fern"];
+const MIGRANTS = ["grazer", "herd", "watching_herd"];
+const STAYERS = ["burrower", "warren", "humming_warren", "shoal"];
 const tip = (fr, en) => ({ fr, en });
 
 const REQUIREMENTS = {
@@ -362,6 +367,28 @@ const GLOBAL = {
     why: { fr: (w, f) => `Un cycle déréglé demande un axe qui bascule ; écrit à ${f(w.tilt, 0)}°, il tient presque droit.`, en: (w, f) => `An erratic cycle wants an axis that tips over; written at ${f(w.tilt, 0)}°, it stands almost straight.` },
     fix: () => [tip("incliner l'axe davantage (tilt: 30 ou plus)", "tilt the axis further (tilt: 30 or more)")],
   },
+  /* le vivant sur l'année (DESIGN-physique §12 bis, palier 2) : jugé sur la saison la plus dure, seulement quand les saisons sont marquées (≥ 8 K).
+     Relais gratuits : le fouisseur hiberne, spores et lichens attendent (aucune règle ici pour eux) ; les verts dorment jusqu'à −18 °C. */
+  winterGreen: {
+    law: "L7", axis: "ecological", sev: "light", search: ["tilt", "atmosphere", "insolation"],
+    applies: (w) => w.seasonAmp >= SEASON_MARKED && has(w, GREEN) && w.Ts >= 255 && w.Ts <= 325, /* la moyenne tient (sinon temperateLife le dit déjà) */
+    test: (w) => w.Twinter >= 255 && w.Tsummer <= 325,
+    why: {
+      fr: (w, f) => (w.Tsummer > 325 ? `En moyenne la vie verte tient, mais l'été monte à ${f(w.Tsummer - 273.15, 0)} °C : au-delà de 50 °C, rien de vert ne passe la saison.` : `En moyenne la vie verte tient, mais l'hiver descend à ${f(w.Twinter - 273.15, 0)} °C : sous −18 °C, même endormies, graines et racines gèlent.`),
+      en: (w, f) => (w.Tsummer > 325 ? `On average green life holds, but summer climbs to ${f(w.Tsummer - 273.15, 0)} °C: above 50 °C nothing green lasts the season.` : `On average green life holds, but winter drops to ${f(w.Twinter - 273.15, 0)} °C: below −18 °C, even asleep, seeds and roots freeze.`),
+    },
+    fix: () => [tip("une vie plus rude, qui attend la saison (lichen, moss, spore)", "hardier life that waits out the season (lichen, moss, spore)")],
+  },
+  herdWinter: {
+    law: "L8", axis: "ecological", sev: "light", search: ["tilt", "atmosphere", "insolation"],
+    applies: (w) => w.seasonAmp >= SEASON_MARKED && has(w, MIGRANTS) && w.Ts >= 255 && w.Ts <= 325, /* la moyenne tient : sinon les lois du vivant le disent déjà */
+    test: (w) => w.Twinter >= 273.15 || has(w, STAYERS), /* un hiver sans gel garde de quoi brouter ; ou une espèce qui reste tient le rôle */
+    why: {
+      fr: (w, f) => `L'hiver descend à ${f(w.Twinter - 273.15, 0)} °C et la flore dort : les troupeaux descendent vers des terres que le livre ne décrit pas. Le rôle des brouteurs n'est tenu que l'été, à demi vide.`,
+      en: (w, f) => `Winter drops to ${f(w.Twinter - 273.15, 0)} °C and the plants sleep: the herds go down to lands the book does not describe. The grazers' role is held only in summer, half empty.`,
+    },
+    fix: () => [tip("une espèce qui reste l'hiver : un fouisseur, qui hiberne (burrower)", "a species that stays through winter: a burrower, which hibernates (burrower)")],
+  },
   // une lune lointaine ne reste liée que dans la sphère de Hill de sa planète (sa « prise ») : rayon ∝ a · (M / M★)^(1/3).
   // Celle de la Terre (1 UA, 1 M⊕, 1 M☉) garde une lune deux fois plus loin que la nôtre : c'est la mesure 1.
   moonReach: {
@@ -411,4 +438,4 @@ const HINTS = {
   tilt: { up: tip("un axe plus incliné", "a more tilted axis"), down: tip("un axe plus droit", "a straighter axis") },
 };
 
-module.exports = { REQUIREMENTS, ASSERTIONS, GLOBAL, HINTS };
+module.exports = { REQUIREMENTS, ASSERTIONS, GLOBAL, HINTS, SEASON_MARKED, GREEN, MIGRANTS, STAYERS };

@@ -190,5 +190,26 @@ console.log(`physics.test.js : ${n} vérifications, tout passe`);
   ok(cold.w.water !== "liquid" || cold.w.seasonAmp < 8 || cold.w.Twinter >= 268 || cold.tensions.some((x) => x.id === "winterFreeze"), "de l'eau liquide en moyenne mais gelée l'hiver : la tension se dit (ou le cas ne se présente pas)");
   const strictBefore = P.applyPhysics(analyseAgeBase("single_sun\nsteady_cycle\nwater\nfern", { seed: "Z", draw: false }), seeded("single_sun\nsteady_cycle\nwater\nfern"), "easy");
   ok(strictBefore.stability === analyseAgeBase("single_sun\nsteady_cycle\nwater\nfern", { seed: "Z", draw: false }).stability, "facile ne coûte jamais");
+  /* palier 2 : le vivant jugé sur la saison la plus dure, avec ses relais */
+  const life = (extra) => seeded("single_sun\nwater\nfern\nseed\ngrazer\nhunter\nspore\ninsolation: 0.88\natmosphere: 1\nmass: 1\nrotation: 24\ntilt: 30" + extra);
+  const e1 = life(""), ids1 = e1.tensions.map((x) => x.id);
+  ok(e1.w.Ts > 273.15 && e1.w.Twinter < 273.15 && e1.w.Twinter >= 255 && e1.w.seasonAmp >= 8, "le cas d'essai : moyenne douce, hiver qui gèle sans passer −18 °C");
+  ok(ids1.includes("herdWinter") && !ids1.includes("winterGreen"), "les verts dorment l'hiver (pas de tension) ; les troupeaux migrent (tension légère)");
+  const hw = P.sheet(e1, "fr").tensions.find((x) => x.id === "herdWinter");
+  ok(hw.severity === "light" && hw.axis === "ecological" && /à demi vide/.test(hw.why) && /burrower/.test(hw.fix.join(" ")), "la migration : légère, écologique, dite en une phrase, avec son remède");
+  const f1 = P.sheet(e1, "fr").facts.join(" ");
+  ok(/graines et en bourgeons/.test(f1) && /Spores, mousses et lichens/.test(f1), "la fiche dit les relais : la dormance des verts, l'attente des spores");
+  const e2 = life("\nburrower\nstone"), f2 = P.sheet(e2, "fr").facts.join(" ");
+  ok(!e2.tensions.some((x) => x.id === "herdWinter") && /hibernent/.test(f2) && /le rôle tient toute l'année/.test(f2), "un fouisseur qui reste l'hiver tient le rôle : plus de migration à demi vide");
+  const e3 = e1, mild = seeded("single_sun\nwater\nfern\nseed\ngrazer\ninsolation: 0.88\natmosphere: 1\nmass: 1\nrotation: 24\ntilt: 6");
+  ok(e3.w.seasonAmp >= 8 && mild.w.seasonAmp < 8 && !mild.tensions.some((x) => x.id === "herdWinter" || x.id === "winterGreen"), "saisons douces : le vivant n'est pas jugé sur l'hiver");
+  const hot = seeded("single_sun\nfern\nseed\ninsolation: 1.6\natmosphere: 0.3\nmass: 1\nrotation: 24\ntilt: 45");
+  const hotT = P.sheet(hot, "fr").tensions.find((x) => x.id === "winterGreen");
+  ok(hot.w.Tsummer > 325 && hot.w.Ts <= 325 && hotT && /l'été monte/.test(hotT.why), "un été au-delà de 50 °C : la saison la plus dure peut être l'été");
+  const hotFix = hotT.fix.join(" ");
+  ok(/tilt: \d/.test(hotFix), "la piste chiffrée redresse l'axe (" + hotFix + ")");
+  const frozen = seeded("single_sun\nwater\nfern\ngrazer\ninsolation: 0.8\natmosphere: 1\nmass: 1\ntilt: 30");
+  ok(frozen.w.Ts < 255 && frozen.tensions.some((x) => x.id === "temperateLife") && !frozen.tensions.some((x) => x.id === "herdWinter" || x.id === "winterGreen"), "une moyenne déjà gelée : la loi de toujours le dit, les saisons n'ajoutent rien par-dessus");
+  ok(P.applyPhysics(analyseAgeBase("single_sun\nwater\nfern\nseed\ngrazer", { seed: "Saisons", draw: false }), e1, "easy").stability === analyseAgeBase("single_sun\nwater\nfern\nseed\ngrazer", { seed: "Saisons", draw: false }).stability, "facile : la migration ne coûte rien");
 }
 console.log("physics.test.js : saisons ok");
