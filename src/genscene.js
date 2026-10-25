@@ -15,6 +15,7 @@ const { crevasse } = require("./crevasse");
 const WX = require("./weather");
 const WON = require("./genscene-wonders"); /* les merveilles (src/wonders.js) */
 const CAT = require("./wonders");
+const TOR = require("./torus"); /* le tore : deux Âges qui se portent l'un l'autre */
 
 const TAU = Math.PI * 2, PERIOD = 8000;
 
@@ -85,7 +86,9 @@ function sceneOf(a, name = "", blocks = null) {
   S.wxSrc = wxSrc; S.wxParents = {}; S.wxKey = WX.seedKey(name, res.seed); S.weather = a.weather || null;
   for (const x of res.matter.reactions || []) if (!S.wxParents[x.result]) S.wxParents[x.result] = [x.a, x.b];
   S.seams = ((a.carry && a.carry.fragments) || []).map((f) => ({ what: f.what, from: f.from, contra: !!f.contra })); /* porter : une couture par fragment (src/carry.js) */
-  S.loop = !!(a.carry && a.carry.loop) && ids.has("water"); /* la boucle de Torus : deux Âges qui se portent l'un l'autre, et de l'eau */
+  const loops = ((a.carry && a.carry.fragments) || []).filter((f) => f.loop), lp = loops.find((f) => f.what !== "sky") || loops[0];
+  S.loop = !!(a.carry && a.carry.loop); /* la boucle de Torus : deux Âges qui se portent l'un l'autre forment un monde en anneau (src/torus.js) */
+  if (S.loop) { S.loopFam = lp && lp.what !== "sky" ? lp.what : "stone"; S.loopKey = String(name) + "|" + String((lp && lp.from) || ""); S.torus = TOR.formOf(S.loopKey); }
   return S;
 }
 
@@ -540,6 +543,7 @@ function paint(g, m, t, o = {}) {
     if (S.cycle === "frozen") { const fz = rng((S.seed ^ 0x10c4) >>> 0); fz(); const sfx = 0.25 + 0.5 * fz(), mx = 0.1 + 0.8 * frac(sfx - 0.1 + 0.5 + mo.off * 0.3 + mi * 0.12); mp = { x: W * mx, y: H * mo.fy }; } // à l'opposé du soleil immobile else { const p = frac(td * mo.sp - 0.6 + mo.off); if (p <= 0.7) { const q = p / 0.7; mp = { x: W * (0.06 + 0.88 * q), y: hz - Math.sin(Math.PI * q) * (hz - H * (0.2 + 0.1 * mo.off)) }; } }
     if (mp) { g.fillStyle = css(mo.tint); g.beginPath(); g.arc(mp.x, mp.y, rad, 0, TAU); g.fill(); g.fillStyle = "rgba(10,12,20,0.5)"; g.beginPath(); g.arc(mp.x + rad * mo.ph * 1.6, mp.y - rad * 0.2, rad * 0.9, 0, TAU); g.fill(); }
   }
+  if (S.loop) TOR.paintTorus(g, m, t, { fam: S.loopFam, key: S.loopKey, form: S.torus, night, air: mixc(hzc, top, 0.3) }); /* l'autre côté de l'anneau : devant les étoiles, derrière nos nuages et le soleil */
   // nuages (dérive lente, boucle)
   for (const c of air.thin > 0.85 ? [] : m.clouds) { // presque pas d'air : pas de nuages
     const x = frac((c.x / W) + t * c.sp) * (W + c.w * 2) - c.w; g.fillStyle = css(mixc(mixc(hzc, [255, 255, 255], 0.35), [30, 34, 44], L.storm), lerp(c.a * (0.4 + day), 0.55, L.storm));
@@ -626,11 +630,11 @@ function paint(g, m, t, o = {}) {
     }
   }
   if (dm > 0) doomFx(g, m, dm, sn);
-  if ((S.seams && S.seams.length) || S.loop) seamsFx(g, m, t); /* porter : la couture, la coupe, la colonne d'eau */
+  if (S.seams && S.seams.length) seamsFx(g, m, t); /* porter : la couture, la coupe */
   g.restore();
 }
-/* la couleur d'une famille de sol vue de loin : [sombre, clair] */
-const FAM_RGB = { forest: [[46, 92, 58], [92, 140, 86]], desert: [[176, 132, 82], [222, 186, 128]], ice: [[176, 196, 214], [236, 244, 250]], water: [[40, 86, 120], [96, 150, 182]], stone: [[86, 88, 96], [140, 142, 150]], fire: [[70, 30, 24], [200, 86, 40]], salt: [[206, 190, 196], [244, 236, 238]] };
+/* la couleur d'une famille de sol vue de loin : [sombre, clair] (src/torus.js) */
+const FAM_RGB = TOR.FAM_RGB;
 /**
  * Un lieu porté à contre-sens (claude/DESIGN-art-bahro.md §12, la clause de Torus) : sa terre au-dessus de la tête, haute et lointaine, mangée par l'air
  * (choix de l'auteur : « plus haute, plus loin ») ; la forme vient des crêtes de la fenêtre, renversées ; un fil de lumière au bord. Renvoie le bord.
@@ -655,8 +659,8 @@ function contraFx(g, m, t, f, air) {
 }
 /**
  * Les coutures d'un Âge porté (claude/DESIGN-art-bahro.md §12.6) : un ciel porté, un fil de lumière le long de l'horizon ; un lieu porté, une coupe nette
- * qui descend de l'horizon, la terre de l'autre monde d'un côté (la route coupée d'Obduction, choix de l'auteur) ; la boucle, une colonne d'eau qui monte
- * vers l'autre terre et un anneau de nuages là où elle la touche. Le lieu à contre-sens est peint plus tôt (contraFx), derrière les crêtes.
+ * qui descend de l'horizon, la terre de l'autre monde d'un côté (la route coupée d'Obduction, choix de l'auteur). La boucle est un tore, peint dans le ciel
+ * (src/torus.js) ; le lieu à contre-sens est peint plus tôt (contraFx), derrière les crêtes.
  */
 function seamsFx(g, m, t) {
   const { S, W, H, hz } = m, pulse = 0.75 + 0.25 * Math.sin(TAU * t * 0.4);
@@ -678,16 +682,6 @@ function seamsFx(g, m, t) {
     }
     g.restore();
   });
-  if (S.loop) { /* la colonne d'eau, et l'anneau de nuages */
-    const e = m.contraEdge, x0 = W * 0.62, top = e ? e[Math.round((x0 / W) * (e.length - 1))][1] : hz * 0.2, bot = hz + (H - hz) * 0.35, w = 3.5;
-    g.save();
-    const gr = g.createLinearGradient(0, bot, 0, top); gr.addColorStop(0, "rgba(170,210,235,0.75)"); gr.addColorStop(1, "rgba(230,245,255,0.35)");
-    g.fillStyle = gr; g.beginPath(); g.moveTo(x0 - w * 1.4, bot); g.quadraticCurveTo(x0 - w * 0.6, (bot + top) / 2, x0 - w * 0.5, top); g.lineTo(x0 + w * 0.5, top); g.quadraticCurveTo(x0 + w * 0.6, (bot + top) / 2, x0 + w * 1.4, bot); g.closePath(); g.fill();
-    g.strokeStyle = "rgba(255,255,255,0.55)"; g.lineWidth = 0.6; for (let k = 0; k < 6; k++) { const y = bot - (bot - top) * ((t * 0.8 + k / 6) % 1); g.beginPath(); g.moveTo(x0 - w * 0.5, y); g.lineTo(x0 + w * 0.3, y - 4); g.stroke(); }
-    g.fillStyle = "rgba(230,240,250,0.35)"; g.beginPath(); g.ellipse(x0, bot, w * 4, 1.6, 0, 0, TAU); g.fill();
-    for (let k = 0; k < 14; k++) { const a = (k / 14) * TAU + t * 0.6, x = x0 + Math.cos(a) * 26, y = top + 8 + Math.sin(a) * 5; g.fillStyle = `rgba(240,245,250,${0.2 + 0.18 * Math.sin(a)})`; g.beginPath(); g.ellipse(x, y, 7, 3, 0, 0, TAU); g.fill(); }
-    g.restore();
-  }
 }
 
 /** Le lac de D'ni : les algues lumineuses, nourries par le granulé, luisent dans l'eau la nuit, et palpitent lentement (plus fort s'il y a des algues écrites). */
