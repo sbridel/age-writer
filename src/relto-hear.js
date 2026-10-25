@@ -162,4 +162,23 @@ function dipPen(ctx, c, x, y, len, a, o = {}) {
   ctx.strokeStyle = rgba(255, 255, 255, 0.28); ctx.lineWidth = Math.max(0.4, w * 0.14); ctx.beginPath(); ctx.moveTo(hx + hl * 0.04, -w * 0.4); ctx.bezierCurveTo(hx + hl * 0.3, -w * 0.48, hx + hl * 0.65, -w * 0.28, len - w, -w * 0.05); ctx.stroke();
   ctx.restore();
 }
-module.exports = { linkStone, inkRipples, scarab, dipPen, GLOW };
+/** Le scarabée vu de profil (la vue de la pièce) : (x, y) le point où il touche le bureau, sous son ventre ; `s` sa demi-longueur ; la tête à gauche. */
+function scarabSide(ctx, c, x, y, s, t, o = {}) {
+  const K = SKINS[o.skin || "plain"], hum = o.hum || 0, lw = (k) => Math.max(0.5, s * k), tr = hum > 0 ? hum * s * 0.02 * Math.sin(t * 61) : 0;
+  ctx.save(); ctx.translate(x, y);
+  ctx.fillStyle = rgba(0, 0, 0, 0.32); ctx.beginPath(); ctx.ellipse(0, s * 0.06, s * 1.15, s * 0.16, 0, 0, TAU); ctx.fill(); /* l'ombre */
+  ctx.strokeStyle = c(K.lo); ctx.lineCap = "round"; ctx.lineWidth = lw(0.09); /* les pattes : trois visibles, pliées, qui touchent le bureau */
+  for (const [ax, kx, fx] of [[-0.55, -0.8, -0.72], [-0.1, -0.2, -0.05], [0.4, 0.62, 0.78]]) { ctx.beginPath(); ctx.moveTo(ax * s, -s * 0.22); ctx.lineTo(kx * s, -s * 0.08); ctx.lineTo(fx * s, 0); ctx.stroke(); }
+  ctx.lineCap = "butt";
+  const dome = (x0, x1, h, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x0, -s * 0.2); ctx.bezierCurveTo(x0, -s * (0.2 + h * 0.9), x1, -s * (0.2 + h * 0.9), x1, -s * 0.2); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c(K.edge); ctx.lineWidth = lw(0.03); ctx.stroke(); };
+  /* la tête, devant, avec le chaperon qui avance ; puis le corselet ; puis le dos bombé, qui tremble à peine quand l'encre frémit */
+  dome(-s * 1.05, -s * 0.62, 0.38, c(K.mid));
+  ctx.fillStyle = c(K.lo); ctx.beginPath(); ctx.ellipse(-s * 0.9, -s * 0.38, s * 0.04, s * 0.05, 0, 0, TAU); ctx.fill(); /* l'œil */
+  dome(-s * 0.68, -s * 0.18, 0.62, c(K.hi));
+  const g = ctx.createLinearGradient(0, -s * 1.1, 0, -s * 0.2); if (K.enamel) { g.addColorStop(0, c(K.enamel[2])); g.addColorStop(0.5, c(K.enamel[1])); g.addColorStop(1, c(K.enamel[0])); } else { g.addColorStop(0, c(K.hi)); g.addColorStop(0.5, c(K.mid)); g.addColorStop(1, c(K.lo)); }
+  ctx.save(); ctx.translate(0, tr); dome(-s * 0.24, s * 1.0, 0.92, g);
+  ctx.strokeStyle = rgba(0, 0, 0, 0.28); ctx.lineWidth = lw(0.016); for (const k of [0.1, 0.4, 0.7]) { ctx.beginPath(); ctx.moveTo(-s * 0.24 + s * 1.24 * k, -s * 0.2); ctx.quadraticCurveTo(-s * 0.2 + s * 1.2 * k, -s * 0.75, -s * 0.05 + s * 0.9 * k, -s * 1.0); ctx.stroke(); } /* les stries */
+  ctx.fillStyle = rgba(255, 245, 220, K.enamel ? 0.22 : 0.16); ctx.beginPath(); ctx.ellipse(s * 0.15, -s * 0.85, s * 0.22, s * 0.08, -0.15, 0, TAU); ctx.fill(); ctx.restore();
+  ctx.restore();
+}
+module.exports = { linkStone, inkRipples, scarab, scarabSide, dipPen, GLOW };

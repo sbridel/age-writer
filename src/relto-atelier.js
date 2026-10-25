@@ -224,7 +224,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
   { const bx = tx + 108; ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 1, top - 6, 56, 6); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx + 1, top - 9, 26, 5); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 28, top - 9, 26, 5); ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 3; k++) { ctx.fillRect(bx + 4, top - 8 + k * 1.4, 20, 0.6); ctx.fillRect(bx + 31, top - 8 + k * 1.4, 20, 0.6); }
     item(bx - 2, top - 12, 58, 14, "atelier.book.tip", "atelier.book.flash");
     const ix = bx + 70, HS = (r.opts.hearState && r.opts.hearState()) || {}, hum = HS.hum || 0, HR = require("./relto-hear"); /* le chapitre 14 : l'encrier frémit, la pierre de liaison est posée à côté */
-    HR.scarab(ctx, c, ix + 6, top - 5, 7, t, { skin: castle ? "castle" : glass ? "glass" : "plain", hum }); /* l'encrier en scarabée, fermé : on s'assoit au bureau pour l'ouvrir */
+    HR.scarabSide(ctx, c, ix + 6, top - 1, 8, t, { skin: castle ? "castle" : glass ? "glass" : "plain", hum }); /* l'encrier en scarabée, de profil (la pièce est vue de face) : on s'assoit au bureau pour l'ouvrir */
     HR.dipPen(ctx, c, ix + 18, top - 2, 26, -0.25, { skin: castle ? "castle" : glass ? "glass" : "plain", w: 1.6 });
     item(ix - 2, top - 14, 46, 16, "atelier.ink.tip", hum > 0 ? "atelier.ink.hum" : "atelier.ink.flash");
     if (HS.stone) { HR.linkStone(ctx, c, ix - 9, top - 1, 6, t); item(ix - 17, top - 9, 16, 12, "atelier.link.tip", "atelier.link.flash"); } }
