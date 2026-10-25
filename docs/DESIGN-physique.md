@@ -319,8 +319,20 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 - Une `atmosphere:` écrite en nombre n'est pas confrontée à ce que la planète peut retenir (on pourrait signaler « 3 bar sur un monde de 0,02 M⊕, l'air fuit »).
 - Les pistes chiffrées ne font varier qu'un paramètre à la fois (elles n'aggravent jamais le total, mais n'explorent pas les combinaisons).
 - Les réactions du moteur (eau + lave → obsidienne) ne sont pas encore pesées par la physique (l'obsidienne exige du volcanisme, c'est tout).
-- Pas de saisons, pas de climat par latitude : une seule température moyenne (sauf l'estimation jour / nuit d'un monde figé).
+- Pas de saisons, pas de climat par latitude : une seule température moyenne (sauf l'estimation jour / nuit d'un monde figé). **Piste retenue le 25 oct. 2026 : les saisons** (voir §12 bis).
 - Les textes sont en français et en anglais dans le code (`rules.js`, `text.js`), pas encore dans `i18n.js`.
+
+---
+
+## 12 bis. Les saisons (`tilt:`) — piste retenue le 25 oct. 2026, rien n'est codé
+
+Idée : enrichir **ensemble** la géophysique et le vivant par un seul paramètre, l'**inclinaison de l'axe** (`tilt:`, alias `inclinaison:`, `obliquity:`, en degrés, 0–90 ; tirée modérée quand rien n'est écrit, comme les autres). Le monde a déjà une année, un jour et une orbite ; il manque ce qui fait les saisons. Trois paliers, le premier faisable seul, les deux autres à concevoir (Fable) avant de coder.
+
+1. **La fiche et les tensions** (petit, isolé ; `solve.js` : KEYS, plage, tirage, pistes ; `model.js` ; `rules.js` ; `text.js`). Amplitude été/hiver calculée à partir de l'inclinaison, de l'excentricité et de l'air (l'air épais lisse, l'air mince exagère ; l'océan lisse aussi). Un monde figé par marée n'a pas de saisons quoi qu'on écrive. La fiche dit « saisons marquées : −15 °C à 30 °C » ou « sans saisons » au lieu d'un seul chiffre. Une ou deux tensions : eau liquide en moyenne mais gelée l'hiver ; `erratic_cycle` (axe chaotique) et une forte inclinaison qui vont ensemble. Rien ne bouge pour les Âges existants (facile ne coûte rien ; strict : nouvelles tensions légères seulement).
+2. **Le vivant sur l'année** (`life.js`, lois de la vie) : les exigences du vivant s'évaluent sur la **saison la plus dure**, pas sur la moyenne, avec des relais : dormance et graines pour les producteurs, hibernation (le `burrower` le fait de nature), **migration** des troupeaux (un comportement, pas un bloc), symbiose fleurs-abeilles saisonnière. Un rôle tenu seulement l'été est un rôle à demi vide : lien direct avec les polyvalents et la maladie du vivant.
+3. **Le rendu et le jeu** : la saison du jour dans la fenêtre de liaison (neige, floraison) ; la récolte (limon, cendres, terreau, tourbe) qui varie avec la saison, comme les paires de l'ardoise la font varier au jour près (`claude/DESIGN-art-bahro.md` §6). Il faut décider à quel jour de son année un Âge est « aujourd'hui » (graine + date réelle, comme le reste). Fil avec la seconde série : « le jour d'un monde est sa note », l'année en est le rythme long.
+
+Autre piste, plus petite et plus géologique : **le relief déduit de l'intérieur** (chaleur, plaques → montagnes, rifts, îles volcaniques, dans la description et la fenêtre ; usé et plat sur un monde vieux, hérissé sur un monde jeune ; le vivant suit : altitude, versants, grottes).
 
 ---
 
