@@ -195,6 +195,7 @@ function drawOven(r, ctx, sc, sky, t) {
     /* la clé de tirage : un petit disque et sa poignée, sur le tuyau */
     ctx.fillStyle = c(trim[0]); ctx.beginPath(); ctx.arc(px, 108, 3, 0, TAU); ctx.fill(); ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(px, 108); ctx.lineTo(px + 11, 104); ctx.stroke();
     if (cooking) { ctx.fillStyle = rgba(255, 140, 60, 0.25 + 0.1 * Math.sin(t * 6)); ctx.fillRect(px - r0 + 2, 150, 2 * r0 - 4, 2); } }
+  const cel = r.opts && typeof r.opts.cellarState === "function" ? r.opts.cellarState() : null, below = (id) => !!(cel && cel.jars && cel.jars[id] && Object.values(cel.jars[id]).some((j) => j && j.n > 0)); /* une trémie vide dont la matière attend à la cave */
   /* les trémies et leurs robinets */
   IDS.forEach((id, i) => {
     const cx = HOP(i), top = 44, bot = 112, n = Math.max(0, stock[id] || 0), fill = clamp(n / FULL);
@@ -208,7 +209,7 @@ function drawOven(r, ctx, sc, sky, t) {
     ctx.fillStyle = c(trim[1]); ctx.fillRect(cx - 24, top - 4, 48, 5); ctx.fillStyle = c(mix(trim[1], "#000", 0.25)); ctx.fillRect(cx - 4, bot, 8, 16);
     /* le robinet : une petite roue de laiton */
     ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx + 10, bot + 9, 4, 0, TAU); ctx.moveTo(cx + 6, bot + 9); ctx.lineTo(cx + 14, bot + 9); ctx.moveTo(cx + 10, bot + 5); ctx.lineTo(cx + 10, bot + 13); ctx.stroke();
-    r.hot.push({ x: cx - 24, y: top - 6, w: 48, h: bot - top + 26, tip: tr("oven.hop." + id) + " — " + amountWord(tr, n) + (n > 0 && (rich[id] == null ? n : rich[id]) < n ? ", " + tr((rich[id] || 0) > 0 ? "oven.poor.some." + id : "oven.poor.all." + id) : "") + (cooking || done ? "" : ". " + tr("oven.hop.click")), oven: cooking || done ? null : "add", arg: i });
+    r.hot.push({ x: cx - 24, y: top - 6, w: 48, h: bot - top + 26, tip: tr("oven.hop." + id) + " — " + amountWord(tr, n) + (n <= 0 && below(id) ? ", " + tr("oven.hop.below") : "") + (n > 0 && (rich[id] == null ? n : rich[id]) < n ? ", " + tr((rich[id] || 0) > 0 ? "oven.poor.some." + id : "oven.poor.all." + id) : "") + (cooking || done ? "" : ". " + tr("oven.hop.click")), oven: cooking || done ? null : "add", arg: i });
   });
   /* le corps du four */
   const bx = 200, by = 152, bw = 230, bh = 128;
