@@ -207,7 +207,7 @@ async function startStory(plugin) {
 }
 
 /** Ce qui manque au chapitre en cours, en une phrase (vide pour le chapitre final : il ne dit jamais ce qui manque). */
-const WHY = { white: "story.why.white", reveal: "story.why.reveal", lake: "story.why.lake", look: "story.why.look", slab: "story.why.slab", hear: "story.why.hear", noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all", hardstable: "story.why.hardstable", hardpages: "story.why.hardpages", hardaxes: "story.why.hardaxes" };
+const WHY = { white: "story.why.white", reveal: "story.why.reveal", lake: "story.why.lake", look: "story.why.look", slab: "story.why.slab", hear: "story.why.hear", carry: "story.why.carry", noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all", hardstable: "story.why.hardstable", hardpages: "story.why.hardpages", hardaxes: "story.why.hardaxes" };
 const whyText = (plugin, why) => (WHY[why] ? "\n" + plugin.t(WHY[why]) : "");
 
 /** Un chapitre réussi : la note reçoit la propriété `story_chapter: completed` et l'étiquette `completed`, et une fenêtre le dit sans qu'il faille revenir au Relto. */
@@ -502,6 +502,7 @@ async function storyNext(plugin, opts = {}) {
   const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, store = plugin.ext.story || (plugin.ext.story = {});
   const key = TEL.keyOf(relto.name, relto.seed), st = ST.get(store, key), ch = ST.nextChapter(st.done);
   if (!ch) { new obsidian.Notice(t("story.pop.later"), 8000); return null; } /* après le dernier chapitre écrit : la suite n'est pas encore écrite */
+  if (ch.id === "carry" && !HEAR.stoneHere(st, Date.now())) { new obsidian.Notice(t("story.wait.night"), 8000); return null; } /* le 15 commence au matin de la visite : pas de lettre avant la pierre */
   if (ST.chapterById(ch.id).book === 2 && ST.bookOneDone(st.done) && !st.bookOneLetter) { /* la fin du premier livre : sa lettre d'abord, une fois ; le second livre s'ouvre à l'appel suivant */
     st.bookOneLetter = true; plugin.saveExt();
     letterPopup(plugin, [t("story.letter.hi"), t("story.end"), t("story.letter.more") + " " + t("atelier.clue"), "\u2014 Adrin Vesparath, seltahn"]); return null;

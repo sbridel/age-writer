@@ -95,11 +95,15 @@ function verdictOf(stability) {
 
 /** Analyse d'un bloc `age` : le moteur d'origine, puis le retraitement de l'extension (hooks.adjust). */
 function analyseAge(source, options) {
-  hooks.src = source;
+  const prev = hooks.src;
+  /* porter (src/carry.js) : les lignes `carry:` comprises deviennent leurs fragments avant la lecture ; la lecture d'une source peut en lire une autre */
+  const ex = hooks.expand(source, options);
+  const text = ex ? ex.text : source, opts = ex ? { ...(options || {}), carry: ex.info } : options;
+  hooks.src = text;
   try {
-    return hooks.adjust(analyseAgeBase(source, options), options, source);
+    return hooks.adjust(analyseAgeBase(text, opts), opts, text);
   } finally {
-    hooks.src = null;
+    hooks.src = prev;
   }
 }
 

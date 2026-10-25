@@ -40,6 +40,7 @@ const LIFE = require("./life");
 const RG = require("./rigor");
 const OB = require("./observe");
 const STAT = require("./status");
+const CARRY = require("./carry");
 const DEPTH = require("./depth");
 const { SYSTEM_RE } = require("./starsystem");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
@@ -137,6 +138,7 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText) out = applyDamage(out, parseDamage(srcText));
         if (srcText) { const wx = guard("météo", () => WX.parseWeather(srcText)); if (wx) out = { ...out, weather: wx, resolved: out.resolved ? { ...out.resolved, weather: wx } : out.resolved }; } // météo vivante : lue par la fenêtre (sceneOf) et la description, sans effet sur la stabilité
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
+        if (o && o.seed) out = guard("portage", () => this.carryAdjust(out, o, srcText, key)) || out; /* porter (src/carry.js) : la couture, la dissonance, la source malade ; et la couture d'une source dont on porte */
         if (this.ext.law && o && o.seed) out = guard("symbiose", () => this.symbiosesOf(o.seed, out, !o.probe)) || out;
         if (o && o.seed && !o.probe && !(this.ext.law && this.law.get(key))) guard("merveilles", () => this.seeWonders(o.seed, out)); /* la face écrite se voit aussi sans la loi */ // la mutation et la symbiose (src/mutation.js) : les unions nouées soutiennent le monde ; le temps en noue d'autres
         if (this.ext.law && o && o.seed && !o.probe) out = guard("fissure", () => { // (un essai de retrait, `probe`, ne touche pas à l'état de la loi) // la fissure grandit : elle abîme un monde instable, et le condamne s'il n'est pas corrigé à temps
@@ -165,9 +167,13 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.fissureNote = () => (this.lang() === "fr" ? "Durée · la fissure s'ouvre et le monde s'effrite" : "Duration · the fissure opens and the world crumbles");
       AGEX.lifeNote = (l) => LIFE.note(l, this.lang() === "fr");
       AGEX.symbiosisNote = (list) => guard("symbiose", () => this.symbiosisLine(list)) || "";
+      this._carrySrc = new Map(); this._carryCache = new Map(); this._carryStack = []; this._carriedFrom = new Map();
+      AGEX.expand = (text, o) => guard("portage", () => this.carryExpand(text, o)) || null;
+      AGEX.carryNote = (c) => guard("portage", () => this.carryLine(c)) || "";
       this.depthCache = new Map();
       // la profondeur de l'équilibre : le test par retrait, à l'affichage du panneau (jamais à chaque frappe), mis en cache par texte, graine et rigueur
       AGEX.depthNote = (text, seed) => guard("profondeur", () => {
+        if (CARRY.parseAll(text).length && this.carryOpen(seed)) return this.t("carry.depth"); /* un monde porté est toujours sur le fil (loi 1) */
         const key = `${RG.levelOf(this.ext)}|${RG.familiesOf(this.ext).join(",")}|${this.ext.physics}|${seed}|${text}`;
         let d = this.depthCache.get(key);
         if (d === undefined) {
@@ -227,6 +233,96 @@ module.exports = function build(Base, core, AGEX) {
       new Notice(missed ? this.t("phys.notfound") : this.t("phys.written", { line: `${key}: ${PH.asLine(value)}` }));
     }
 
+    // ---- porter (src/carry.js ; claude/DESIGN-art-bahro.md §12) ------------------------------------------------
+    /** La ligne `carry:` est-elle comprise pour cet Âge ? Dans un Relto histoire, quand la pierre de liaison est sur le bureau ; ailleurs, pas encore. */
+    carryOpen(seed) {
+      const pool = this.poolOfAge(seed); if (!pool) return false;
+      return require("./story-hear").stoneHere(require("./story").get(this.ext.story || (this.ext.story = {}), pool), Date.now());
+    }
+    /** L'index donne le texte des Âges qu'il lit : une source se relit sans attendre une lecture du disque. */
+    carrySource(f, src) { if (this._carrySrc) this._carrySrc.set(f.path, { mtime: f.stat ? f.stat.mtime : 0, src }); }
+    /** Le texte d'une source, s'il est connu ; sinon il est lu (une fois) et les vues se redessinent quand il arrive. */
+    carryText(f) {
+      const hit = this._carrySrc.get(f.path), mtime = f.stat ? f.stat.mtime : 0;
+      if (hit && hit.mtime === mtime) return hit.src;
+      if (!this._carryReading) this._carryReading = new Set();
+      if (!this._carryReading.has(f.path)) {
+        this._carryReading.add(f.path);
+        this.app.vault.cachedRead(f).then((t) => { this._carrySrc.set(f.path, { mtime, src: this.core.extract(t) }); this._carryReading.delete(f.path); clearTimeout(this._carryTick); this._carryTick = window.setTimeout(() => { this.index.invalidate(); this.refreshLive(); }, 300); }).catch(() => this._carryReading.delete(f.path));
+      }
+      return hit ? hit.src : null;
+    }
+    /** La note d'une source, d'après son nom : le lien d'Obsidian, sinon la note de ce nom (d'abord dans le dossier de l'Âge qui porte). */
+    carryFind(name, seed) {
+      let f = null; try { f = this.app.metadataCache.getFirstLinkpathDest(name, this.agePathOfSeed(seed) || ""); } catch (e) { f = null; }
+      if (f && f.extension === "md") return f;
+      const n = String(name).trim().toLowerCase(), here = String(this.agePathOfSeed(seed) || "").replace(/[^/]*$/, ""), all = this.app.vault.getMarkdownFiles().filter((x) => x.basename.toLowerCase() === n);
+      return all.find((x) => here && x.path.startsWith(here)) || all[0] || null;
+    }
+    /** L'axe d'un bloc (ciel, sol, vivant…), pour découper un fragment. */
+    blockAxis(id) { const b = this.core && this.core.blocks && this.core.blocks.get ? this.core.blocks.get(id) : null; if (b && b.axis) return b.axis; if (!this._skyAxis) this._skyAxis = new Map(require("./engine/data/sky").SKY_ENTRIES.map((e) => [e.id, e.axis])); return this._skyAxis.get(id) || null; }
+    /** La voix d'un Âge (src/imager.js) : son jour ; la physique facile est calculée au besoin (l'index la saute). */
+    carryVoice(a, text, seed) {
+      const w = a && a.physics ? a : guard("voix", () => PH.applyPhysics(a, PH.physicsOf(a, text, seed, "easy"), "easy")) || a;
+      return require("./imager").targetsOf(w, seed).freq;
+    }
+    /**
+     * Le texte que lit le moteur (hooks.expand) : chaque ligne `carry:` comprise devient son fragment, relu dans la source (il respire).
+     * Une ligne refusée reste telle quelle, parmi celles que le moteur ne comprend pas, et le panneau dit pourquoi en une phrase.
+     */
+    carryExpand(text, o) {
+      const lines = CARRY.parseAll(text); if (!lines.length || !o || !o.seed || !this.carryOpen(o.seed)) return null;
+      const core = this.core, me = guard("graine", () => this.ageNameOfSeed(o.seed)) || String(o.seed), chain = [...this._carryStack, me];
+      const info = { fragments: [], refused: [], lines: lines.map((l) => l.raw), ids: [] }, done = [], lifeTaken = new Set();
+      for (const c of lines) {
+        const refuse = (why) => info.refused.push({ raw: c.raw, why, what: c.what, from: c.from });
+        if (!c.known) { refuse("what"); continue; }
+        if (c.contra) { refuse("contra"); continue; } /* à contre-sens : l'étape C (le chapitre 16) */
+        const f = this.carryFind(c.from, o.seed); if (!f) { refuse("missing"); continue; }
+        const g = CARRY.guardOf(chain, f.basename); if (g) { refuse(g); continue; }
+        if (this.ext.law && !this.law.get(f.basename)) { refuse("untouched"); continue; } /* on ne porte que d'un Livre ouvert (une note déjà lue ; §12.2) */
+        const src = this.carryText(f); if (src == null) { refuse("pending"); continue; }
+        const seed = core.seed(f.path), ck = `${f.path}|${f.stat ? f.stat.mtime : 0}|${chain.length}|${Math.floor(Date.now() / 60000)}`;
+        let a = this._carryCache.get(ck);
+        if (!a) {
+          this._carryStack.push(me);
+          try { a = core.analyse(src, { seed, probe: true, draw: false }); } finally { this._carryStack.pop(); }
+          a = { a, freq: this.carryVoice(a, src, seed) }; this._carryCache.set(ck, a); if (this._carryCache.size > 200) this._carryCache.delete(this._carryCache.keys().next().value);
+        }
+        const life = c.what !== "sky" && !lifeTaken.has(f.path);
+        const ids = CARRY.fragmentOf(a.a, c.what, (id) => this.blockAxis(id), { life }); if (!ids.length) { refuse("empty"); continue; }
+        if (life) lifeTaken.add(f.path);
+        done.push({ index: c.index, what: c.what, ids });
+        info.fragments.push({ what: c.what, from: f.basename, path: f.path, ids, srcStability: a.a.stability, srcFreq: a.freq });
+        for (const id of ids) if (!info.ids.includes(id)) info.ids.push(id);
+        const by = this._carriedFrom.get(f.basename) || new Map(); by.set(me, CARRY.axisOf(c.what)); this._carriedFrom.set(f.basename, by); /* la couture, chez la source aussi */
+      }
+      const out = done.length ? CARRY.expandText(text, done, (id) => this.blockAxis(id), (l) => AGEX.norm(l.trim())) : text;
+      return { text: out, info };
+    }
+    /** Les prix du portage, dans l'analyse (hooks.adjust) ; l'accord de chaque fragment se dit en mots, jamais en chiffre. */
+    carryAdjust(out, o, srcText, key) {
+      let r = out; const c = o.carry ? { ...o.carry, fragments: o.carry.fragments.map((f) => ({ ...f })) } : null;
+      if (c && c.fragments.length) {
+        const rf = this.carryVoice(r, srcText, o.seed), GI = require("./imager-guild");
+        for (const f of c.fragments) { const ac = GI.accordOf({ freq: rf }, { freq: f.srcFreq }); f.degree = ac ? ac.degree : "rub"; f.interval = ac ? ac.name : ""; f.beyond = !!(ac && ac.octaves && ac.name !== "octave"); }
+        r = CARRY.applyCosts(r, c.fragments, null);
+      }
+      const by = key ? this._carriedFrom.get(key) : null, takenBy = by ? [...by.keys()] : [];
+      if (takenBy.length) { const seams = {}; for (const axis of by.values()) seams[axis] = (seams[axis] || 0) + 1; r = CARRY.applyCosts(r, [], seams); }
+      if (c || takenBy.length) r = { ...r, carry: { ...(c || { fragments: [], refused: [], lines: [], ids: [] }), takenBy } };
+      return r;
+    }
+    /** La ligne du panneau : ce que l'Âge porte, l'accord de chaque fragment, ce qui est refusé, et ce qu'on a pris chez lui. */
+    carryLine(c) {
+      if (!c) return "";
+      const t = this.t, out = [], what = (w) => t(["carry.what", w].join(".")), deg = (d) => t(["carry.deg", d || "rub"].join("."));
+      for (const f of c.fragments || []) out.push(t("carry.frag", { what: what(f.what), from: f.from, deg: deg(f.degree) }) + (f.srcStability < 75 ? " " + t("carry.sick") : ""));
+      for (const x of c.refused || []) if (x.why !== "pending") out.push(t(["carry.why", x.why].join("."), { from: x.from, what: x.what }));
+      if ((c.takenBy || []).length) out.push(t("carry.taken", { names: c.takenBy.join(", ") }));
+      return out.length ? t("carry.head") + " " + out.join(" ") : "";
+    }
+
     // ---- la mutation et la symbiose (src/mutation.js) ------------------------------------------------
     /** Le nom d'un élément dans une phrase : son premier mot descripteur, dans la langue de l'interface. */
     /** Le nom d'un bloc dans les phrases de la mutation : celui qu'on écrit dans le livre (`water`, `frozen_world`), choix de l'auteur (22 oct.). */
@@ -251,10 +347,11 @@ module.exports = function build(Base, core, AGEX) {
      */
     ageNameOfSeed(seed) {
       if (!seed) return null;
-      if (!this._seedNames) {
+      const all = this.app.vault.getMarkdownFiles();
+      if (!this._seedNames || this._seedCount !== all.length) { /* une note créée ou supprimée depuis : la table se refait */
         const map = new Map();
-        const paths = new Map();
-        for (const f of this.app.vault.getMarkdownFiles()) { const fm = (this.app.metadataCache.getFileCache(f) || {}).frontmatter, s = fm && fm.age_seed != null && String(fm.age_seed).trim() ? String(fm.age_seed).trim() : f.basename; if (!map.has(s) || s === f.basename) { map.set(s, f.basename); paths.set(s, f.path); } }
+        const paths = new Map(); this._seedCount = all.length;
+        for (const f of all) { const fm = (this.app.metadataCache.getFileCache(f) || {}).frontmatter, s = fm && fm.age_seed != null && String(fm.age_seed).trim() ? String(fm.age_seed).trim() : f.basename; if (!map.has(s) || s === f.basename) { map.set(s, f.basename); paths.set(s, f.path); } }
         this._seedNames = map; this._seedPaths = paths;
       }
       return this._seedNames.get(String(seed)) || null;

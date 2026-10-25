@@ -35,11 +35,14 @@ function physChange(oldP, newP) {
 }
 
 /** Éléments qui composent le monde résolu (indépendants de la façon dont ils ont été écrits). */
+const CARRY_LINE = /^\s*carry\s*:/i;
 function worldIds(analysis) {
-  const r = analysis.resolved, s = new Set();
-  for (const l of r.lines) { if (l.entry) s.add(l.entry.id); else if (l.unknown) { const k = squash("?" + l.raw); if (k.length > 1) s.add(k); } }
-  for (const id of r.matter.written) s.add(id);
-  for (const x of r.matter.reactions) s.add(x.result);
+  /* porter (src/carry.js) : la ligne `carry:` est ce que le joueur a écrit ; le fragment vient de la source et change avec elle, ce n'est pas une retouche */
+  const r = analysis.resolved, s = new Set(), c = analysis.carry || null, carried = new Set((c && c.ids) || []), mark = (raw) => s.add("carry|" + squash("?" + raw).slice(1));
+  for (const l of r.lines) { if (l.entry) { if (!carried.has(l.entry.id)) s.add(l.entry.id); } else if (l.unknown) { if (CARRY_LINE.test(l.raw)) { mark(l.raw); continue; } const k = squash("?" + l.raw); if (k.length > 1) s.add(k); } }
+  for (const raw of (c && c.lines) || []) mark(raw);
+  for (const id of r.matter.written) if (!carried.has(id)) s.add(id);
+  for (const x of r.matter.reactions) if (!carried.has(x.a) && !carried.has(x.b)) s.add(x.result);
   return [...s].sort();
 }
 

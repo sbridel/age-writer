@@ -101,7 +101,7 @@ ok(ST.chapterName(restC, "X", an) === "X", "chapitre 1 : le nom ne change pas");
 for (const lang of ["en", "fr"]) for (const c of ST.CHAPTERS) {
   const t = ST.chapterNote(c, lang, "Nom"), blk = t.match(/```age\n([\s\S]*?)\n```/);
   ok(/^---\nstory_kind: [a-z-]+\n---\n# Nom/.test(t) && t.includes(ST.MENTOR) && (ST.WORLDS[c.id].lines.length ? blk && blk[1].split("\n").length === ST.WORLDS[c.id].lines.length : !blk), "note de chapitre " + c.id + "/" + lang + " : titre, mentor, bloc age");
-  ok(!/bahro|encrier|inkwell|endgame/i.test(t), "note de chapitre " + c.id + "/" + lang + " : rien de réservé");
+  ok(!(c.book === 3 ? /bahro|endgame/i : /bahro|encrier|inkwell|endgame/i).test(t), "note de chapitre " + c.id + "/" + lang + " : rien de réservé"); /* la seconde série se lit après la fin du premier livre : elle peut nommer l'encrier (l'auteur, 25 oct.) */
 }
 
 // ---- chapitre 3 : la météo programmée
@@ -233,7 +233,7 @@ console.log(`story.test.js : ${n} vérifications ok`);
   const HEAR = require("../src/story-hear");
   const B2 = ["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard", "strange", "give", "descend", "lake", "slab"];
   const hc = ST.chapterById("hear");
-  ok(hc && hc.page === null && hc.law === 21 && ST.CHAPTERS.slice(-1)[0].id === "hear" && ST.nextChapter(B2).id === "hear", "le 14 suit le 13 ; son prix est la page 21 du livre des lois, pas une page du Relto");
+  ok(hc && hc.page === null && hc.law === 21 && ST.nextChapter(B2).id === "hear", "le 14 suit le 13 ; son prix est la page 21 du livre des lois, pas une page du Relto");
   ok(ST.kindOf(hc) === "explore" && !/```age/.test(ST.chapterNote(hc, "fr", "Entendre")), "le 14 s'explore : pas de monde de départ");
   const n14 = ST.chapterNote(hc, "fr", "Entendre"), e14 = ST.chapterNote(hc, "en", "Hearing");
   ok(/Ton encre ne sèche pas/.test(n14) && /vingt-cinq/.test(n14) && /Your ink does not dry/.test(e14) && /seltahn/.test(n14), "la lettre du 14, en deux langues, signée seltahn");
@@ -264,4 +264,19 @@ console.log(`story.test.js : ${n} vérifications ok`);
     const v0 = st.hear.visit; HEAR.visitFrom(st, at(3, 12)); ok(st.hear.visit === v0, "la visite ne se refait pas");
   }
   const I18N = require("../src/i18n"); ok(["en", "fr"].every((l) => { const t = I18N.makeT(() => l); return t("story.why.hear") !== "story.why.hear" && t("story.done.nopage") !== "story.done.nopage"; }), "les phrases du 14, en deux langues");
+}
+
+{ /* chapitre 15 « Porter » (claude/DESIGN-art-bahro.md §12.5) */
+  const B3 = ["rest", "mend", "weather", "laws", "alter", "zero", "imager", "hard", "strange", "give", "descend", "lake", "slab", "hear"];
+  const cc = ST.chapterById("carry");
+  ok(cc && cc.page === null && cc.law === 20 && ST.nextChapter(B3).id === "carry" && ST.CHAPTERS.slice(-2).map((c) => c.id).join() === "hear,carry", "le 15 suit le 14 ; son prix est la page 20");
+  ok(ST.kindOf(cc) === "write" && /```age\nsingle_sun/.test(ST.chapterNote(cc, "fr", "Age 20")) && ST.WORLDS.carry.stable, "le 15 s'écrit : un monde de départ qui tient");
+  const n15 = ST.chapterNote(cc, "fr", "Age 20"), e15 = ST.chapterNote(cc, "en", "Age 20");
+  ok(/une pierre sombre/.test(n15) && /on peut porter/.test(n15) && /a dark stone/.test(e15) && /carry: sky from/.test(n15), "la lettre du 15 et sa feuille de cours, en deux langues");
+  ok(!/Bahro|serpent|ardoise|slate|Catherine/i.test(n15 + e15), "la lettre du 15 ne nomme ni les Bahro ni personne du lore");
+  ok(!ST.knownBlocks(B3).has("carry: sky from …") && !ST.knownBlocks(B3).has("sky"), "la palette du livre ne prend pas les mots de la feuille du 15 pour des blocs");
+  const ck = (ages) => ST.check(cc, { ages });
+  ok(!ck([{ name: "A", path: "S/A.md", stability: 90, carried: 0 }]).ok && ck([{ name: "A", path: "S/A.md", stability: 90, carried: 0 }]).why === "carry", "15 : sans fragment, rien");
+  ok(!ck([{ name: "A", path: "S/A.md", stability: 70, carried: 1 }]).ok, "15 : un monde porté qui ne tient pas, non");
+  ok(ck([{ name: "A", path: "S/A.md", stability: 80, carried: 1 }]).ok && ck([{ name: "A", path: "S/A.md", stability: 80, carried: 1 }]).path === "S/A.md", "15 : un monde porté qui tient");
 }

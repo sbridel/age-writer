@@ -84,6 +84,7 @@ function sceneOf(a, name = "", blocks = null) {
   if (S.wonders.includes("orphan_colour")) { S.orphanRGB = S.sunHues[0] || null; S.blackSun = false; S.blackDisc = false; } /* la Couleur orpheline : la couleur reste, le feu s'en va */
   S.wxSrc = wxSrc; S.wxParents = {}; S.wxKey = WX.seedKey(name, res.seed); S.weather = a.weather || null;
   for (const x of res.matter.reactions || []) if (!S.wxParents[x.result]) S.wxParents[x.result] = [x.a, x.b];
+  S.seams = ((a.carry && a.carry.fragments) || []).map((f) => ({ what: f.what, from: f.from })); /* porter : une couture par fragment (src/carry.js) */
   return S;
 }
 
@@ -623,6 +624,26 @@ function paint(g, m, t, o = {}) {
     }
   }
   if (dm > 0) doomFx(g, m, dm, sn);
+  if (S.seams && S.seams.length) seamsFx(g, m, t); /* porter : la couture, un trait de lumière à la bordure du fragment */
+  g.restore();
+}
+/** Les coutures d'un Âge porté (claude/DESIGN-art-bahro.md §12.6) : un ciel porté, un fil de lumière le long de l'horizon ; un lieu porté, une entaille
+ *  claire qui descend de l'horizon, comme une route coupée net. Rien d'autre : la terre renversée et la colonne d'eau viendront après. */
+function seamsFx(g, m, t) {
+  const { S, W, H, hz } = m, pulse = 0.75 + 0.25 * Math.sin(TAU * t * 0.4);
+  g.save(); g.globalCompositeOperation = "lighter"; g.lineCap = "round";
+  S.seams.forEach((f, k) => {
+    if (f.what === "sky") {
+      const gr = g.createLinearGradient(0, hz - 3, 0, hz + 3); gr.addColorStop(0, "rgba(200,230,255,0)"); gr.addColorStop(0.5, `rgba(220,240,255,${0.35 * pulse})`); gr.addColorStop(1, "rgba(200,230,255,0)");
+      g.fillStyle = gr; g.fillRect(0, hz - 3, W, 6);
+      g.strokeStyle = `rgba(240,250,255,${0.55 * pulse})`; g.lineWidth = 0.8; g.beginPath(); for (let x = 0; x <= W; x += 8) { const y = hz - 0.5 + 0.8 * Math.sin(x * 0.11 + k); x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke();
+    } else {
+      const x0 = W * (0.3 + 0.4 * ((fnv(String(f.from) + f.what) % 100) / 100)), q = rng(fnv("seam" + f.from + f.what));
+      g.strokeStyle = `rgba(235,245,255,${0.5 * pulse})`; g.lineWidth = 1; g.beginPath(); g.moveTo(x0, hz);
+      for (let y = hz; y <= H; y += 6) g.lineTo(x0 + (y - hz) * 0.18 + (q() - 0.5) * 3, y); g.stroke();
+      g.strokeStyle = `rgba(200,230,255,${0.18 * pulse})`; g.lineWidth = 4; g.stroke();
+    }
+  });
   g.restore();
 }
 

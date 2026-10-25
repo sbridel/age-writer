@@ -463,6 +463,30 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     ok(!row(sb, "Chimney fire") && !row(sb, "Lanterns"), "mode histoire : les pages-récompenses n'existent pas dans le bac à sable");
     const n0 = files.size; notices.length = 0; await cmd.callback();
     ok(files.size === n0 && notices.some((n) => /already exists|existe déjà/.test(n)), "mode histoire : relancer la commande rouvre le Relto histoire sans en créer un autre");
+    { /* porter (src/carry.js ; DESIGN-art-bahro §12) : compris seulement quand la pierre de liaison est sur le bureau ; le fragment respire ; les refus se disent */
+      const SKc = sf.basename.toLowerCase().trim() + "#" + sfm.seed, srcA = age("Source Ciel", ["twin_suns", "steady_cycle", "water", "fern", "rotation: 24"], dir), recv = age("Porteur", ["single_sun", "steady_cycle", "sand", "grass", "rotation: 24", "carry: sky from Source Ciel"], dir), far = age("Jamais Lu", ["single_sun", "steady_cycle", "stone"], dir);
+      const an = (f) => p.core.analyse(p.core.extract(f.content), { seed: p.core.seed(f.path) });
+      p.ext.story = p.ext.story || {}; p.ext.story[SKc] = { done: ["slab"], seen: {}, notes: {} }; p.index.invalidate();
+      await p.index.list();
+      let r = an(recv);
+      ok(!r.carry && (r.resolved.lines || []).some((l) => l.unknown && /carry/.test(l.raw)), "porter : sans la pierre, la ligne est de celles que le moteur ne comprend pas");
+      p.ext.story[SKc].hear = { heard: [], visit: Date.now() - 3 * 86400000 };
+      p.law.observe("Source Ciel", an(srcA), srcA.stat.mtime);
+      r = an(recv);
+      ok(r.carry && r.carry.fragments.length === 1 && r.carry.fragments[0].from === "Source Ciel", "porter : la pierre sur le bureau, le ciel de la source est porté");
+      ok((r.resolved.lines || []).some((l) => l.entry && l.entry.id === "twin_suns") && !(r.resolved.lines || []).some((l) => l.entry && l.entry.id === "single_sun"), "porter : le ciel porté remplace le ciel écrit");
+      ok(r.carry.fragments[0].degree === "full" && r.axisStability.cosmological <= 95, "porter : deux jours de 24 h sonnent à l'unisson ; la couture se paie quand même");
+      ok(/Carried|Porté/.test(p.carryLine(r.carry)), "porter : la ligne du panneau le dit");
+      const back = an(srcA); ok(back.carry && back.carry.takenBy.includes("Porteur") && back.axisStability.cosmological < 100, "porter : la source porte une couture, plus petite");
+      srcA.content = "```age\nred_sun\nsteady_cycle\nwater\nfern\n```\n"; srcA.stat.mtime++; p.carrySource(srcA, p.core.extract(srcA.content));
+      r = an(recv); ok((r.resolved.lines || []).some((l) => l.entry && l.entry.id === "red_sun"), "porter : la source change, le fragment change (il respire)");
+      recv.content = "```age\nsingle_sun\nsteady_cycle\nsand\ncarry: sky from Jamais Lu\ncarry: moor from Source Ciel\ncarry: sky from Personne\ncarry: desert from Source Ciel\n```\n"; recv.stat.mtime++;
+      r = an(recv); const why = (r.carry.refused || []).map((x) => x.why).join();
+      ok(why === "untouched,what,missing,empty", "porter : jamais ouvert, mot inconnu, Livre absent, rien à donner (" + why + ")");
+      const loop = age("Boucle", ["single_sun", "steady_cycle", "water", "carry: sky from Boucle"], dir); p.law.observe("Boucle", an(loop), loop.stat.mtime);
+      ok((an(loop).carry.refused || [])[0].why === "cycle", "porter : un monde ne se porte pas lui-même");
+      const ids = require("../src/law").worldIds(an(recv)); ok(ids.some((x) => x.startsWith("carry|")) && !ids.some((x) => /^\?carry/.test(x)), "porter : la loi du changement voit la ligne, pas le fragment");
+      for (const f of [srcA, recv, far, loop]) files.delete(f.path); delete p.ext.story[SKc]; p.index.invalidate(); }
     p.app.metadataCache.getFileCache = gfcS; for (const f of [sf, inside, outside]) files.delete(f.path); delete p.ext.story; p.index.invalidate(); }
   { const rt = document.createElement("div"); await p.procs.relto("", rt, { sourcePath: "x.md", addChild() {} });
     const root = rt.querySelector(".age-relto"), tb = [...rt.querySelectorAll(".age-relto__tab:not(.age-relto__tab--expand):not(.age-relto__tab--full):not(.age-relto__tab--guide)")];
