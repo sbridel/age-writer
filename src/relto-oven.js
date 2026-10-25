@@ -294,7 +294,21 @@ function drawOven(r, ctx, sc, sky, t) {
   r.hot.push({ x: lx - 16, y: lb - 40, w: 40, h: 46, tip: done ? tr("oven.drain.go") : tr("oven.drain"), oven: done ? "drain" : null });
   /* la lumière du feu sur la pièce ; la nuit, une lanterne */
   if (cooking) { const gl = ctx.createRadialGradient(dx, dy, 10, dx, dy, 260); gl.addColorStop(0, rgba(255, 150, 60, 0.12 + hot * 0.18)); gl.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = gl; ctx.fillRect(0, 0, W, H); }
-  if (night > 0.3) { const lx = skin === "castle" ? 112 : 134; ctx.fillStyle = "#e8b860"; ctx.fillRect(lx - 4, 60, 8, 12); const lg = ctx.createRadialGradient(lx, 66, 2, lx, 66, 110); lg.addColorStop(0, rgba(255, 200, 120, 0.35 * night)); lg.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H); }
+  { /* la lanterne de l'appentis : une potence au mur, une cage de métal ; éteinte le jour, sa flamme vacille la nuit (à la Verrière, sur le mur entre le vitrail et les trémies) */
+    const lx = skin === "castle" ? 112 : skin === "glass" ? 194 : 134, ly = 66, fl = 0.85 + 0.15 * Math.sin(t * 7) * Math.sin(t * 3.3), metal = c(trim[1]), lit = c(trim[2]), on = night > 0.3 ? clamp((night - 0.3) / 0.3) : 0;
+    if (on > 0) { const lg = ctx.createRadialGradient(lx, ly, 2, lx, ly, 120); lg.addColorStop(0, rgba(255, 200, 120, 0.35 * night * fl * on)); lg.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H); }
+    ctx.strokeStyle = metal; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(lx - 16, ly - 18); ctx.lineTo(lx - 16, ly - 10); ctx.moveTo(lx - 16, ly - 14); ctx.quadraticCurveTo(lx - 6, ly - 22, lx, ly - 18); ctx.lineTo(lx, ly - 13); ctx.stroke(); /* la potence, fixée au mur, et son crochet */
+    ctx.fillStyle = metal; ctx.fillRect(lx - 18, ly - 20, 4, 12);
+    ctx.fillStyle = on > 0 ? rgba(255, 210, 140, (0.18 + 0.12 * night) * on) : rgba(170, 190, 200, 0.14); ctx.fillRect(lx - 5, ly - 9, 10, 15); /* le verre : froid le jour, chaud la nuit */
+    if (on > 0) {
+      ctx.fillStyle = `rgba(255,${Math.round(190 + 30 * fl)},110,${0.95 * on})`; ctx.beginPath(); ctx.ellipse(lx, ly + 1, 2.4 * fl, 4.6 * fl, 0, 0, TAU); ctx.fill(); /* la flamme */
+      ctx.fillStyle = `rgba(255,250,220,${0.9 * on})`; ctx.beginPath(); ctx.ellipse(lx, ly + 2, 1, 2, 0, 0, TAU); ctx.fill();
+    } else { ctx.strokeStyle = c("#2a2420"); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(lx, ly + 5); ctx.lineTo(lx, ly + 1); ctx.stroke(); } /* éteinte : la mèche */
+    ctx.strokeStyle = metal; ctx.lineWidth = 1.2; ctx.strokeRect(lx - 5, ly - 9, 10, 15); ctx.beginPath(); ctx.moveTo(lx, ly - 9); ctx.lineTo(lx, ly + 6); ctx.stroke(); /* la cage : le cadre et un montant */
+    ctx.fillStyle = metal; ctx.beginPath(); ctx.moveTo(lx - 7, ly - 9); ctx.lineTo(lx, ly - 14); ctx.lineTo(lx + 7, ly - 9); ctx.closePath(); ctx.fill(); ctx.fillRect(lx - 6, ly + 6, 12, 2.5); /* le chapeau et le socle */
+    ctx.fillStyle = lit; ctx.fillRect(lx - 6, ly + 6, 12, 0.8);
+  }
+
   require("./relto-atelier").backButton(r, ctx, r.ovenFrom === "hall" ? tr("oven.back.hall") : tr("oven.back"), r.ovenFrom === "hall" ? "hall" : "island");
 }
 
