@@ -319,18 +319,39 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 - Une `atmosphere:` écrite en nombre n'est pas confrontée à ce que la planète peut retenir (on pourrait signaler « 3 bar sur un monde de 0,02 M⊕, l'air fuit »).
 - Les pistes chiffrées ne font varier qu'un paramètre à la fois (elles n'aggravent jamais le total, mais n'explorent pas les combinaisons).
 - Les réactions du moteur (eau + lave → obsidienne) ne sont pas encore pesées par la physique (l'obsidienne exige du volcanisme, c'est tout).
-- Pas de saisons, pas de climat par latitude : une seule température moyenne (sauf l'estimation jour / nuit d'un monde figé). **Piste retenue le 25 oct. 2026 : les saisons** (voir §12 bis).
+- Pas de climat par latitude : une seule température moyenne, encadrée depuis le 25 oct. 2026 par une amplitude été/hiver (§12 bis, palier 1) ; le vivant et le rendu ne lisent pas encore les saisons (paliers 2 et 3).
 - Les textes sont en français et en anglais dans le code (`rules.js`, `text.js`), pas encore dans `i18n.js`.
 
 ---
 
-## 12 bis. Les saisons (`tilt:`) — piste retenue le 25 oct. 2026, rien n'est codé
+## 12 bis. Les saisons (`tilt:`) — palier 1 codé le 25 oct. 2026 (`assembly`, 95e6a0e, non publié)
 
-Idée : enrichir **ensemble** la géophysique et le vivant par un seul paramètre, l'**inclinaison de l'axe** (`tilt:`, alias `inclinaison:`, `obliquity:`, en degrés, 0–90 ; tirée modérée quand rien n'est écrit, comme les autres). Le monde a déjà une année, un jour et une orbite ; il manque ce qui fait les saisons. Trois paliers, le premier faisable seul, les deux autres à concevoir (Fable) avant de coder.
+Idée : enrichir **ensemble** la géophysique et le vivant par un seul paramètre, l'**inclinaison de l'axe** (`tilt:`, alias `inclinaison:`, `obliquity:`, `obliquité:`, en degrés, 0–90 ; tirée modérée quand rien n'est écrit, comme les autres). Le monde a déjà une année, un jour et une orbite ; il manque ce qui fait les saisons. Trois paliers : le premier est fait, les deux autres sont à concevoir avec l'auteur avant de coder.
 
-1. **La fiche et les tensions** (petit, isolé ; `solve.js` : KEYS, plage, tirage, pistes ; `model.js` ; `rules.js` ; `text.js`). Amplitude été/hiver calculée à partir de l'inclinaison, de l'excentricité et de l'air (l'air épais lisse, l'air mince exagère ; l'océan lisse aussi). Un monde figé par marée n'a pas de saisons quoi qu'on écrive. La fiche dit « saisons marquées : −15 °C à 30 °C » ou « sans saisons » au lieu d'un seul chiffre. Une ou deux tensions : eau liquide en moyenne mais gelée l'hiver ; `erratic_cycle` (axe chaotique) et une forte inclinaison qui vont ensemble. Rien ne bouge pour les Âges existants (facile ne coûte rien ; strict : nouvelles tensions légères seulement).
-2. **Le vivant sur l'année** (`life.js`, lois de la vie) : les exigences du vivant s'évaluent sur la **saison la plus dure**, pas sur la moyenne, avec des relais : dormance et graines pour les producteurs, hibernation (le `burrower` le fait de nature), **migration** des troupeaux (un comportement, pas un bloc), symbiose fleurs-abeilles saisonnière. Un rôle tenu seulement l'été est un rôle à demi vide : lien direct avec les polyvalents et la maladie du vivant.
-3. **Le rendu et le jeu** : la saison du jour dans la fenêtre de liaison (neige, floraison) ; la récolte (limon, cendres, terreau, tourbe) qui varie avec la saison, comme les paires de l'ardoise la font varier au jour près (`claude/DESIGN-art-bahro.md` §6). Il faut décider à quel jour de son année un Âge est « aujourd'hui » (graine + date réelle, comme le reste). Fil avec la seconde série : « le jour d'un monde est sa note », l'année en est le rythme long.
+### Palier 1 — la fiche et les tensions ✅
+
+Ce qui est codé, et comment :
+
+- **La ligne** `tilt:` (et ses alias), bornée 0–90°, dans `solve.js` (KEYS, LIMITS) ; elle entre dans la grille des pistes (0,5–90°), comme `mass:` ou `age:`.
+- **Le tirage** : 18° ± 9° (gaussien, borné 0–45°) quand rien n'est écrit ; 20–80°, sans règle, quand l'axe est chaotique (`erratic_cycle`). Un dé de plus en **fin** de liste : l'ordre des dés existants ne bouge pas, donc rien ne change pour les Âges écrits (`tools/equiv.js` contre la 1.50.2 : **600 Âges, 0 différence**).
+- **La loi** (`model.js`, `seasonAmplitude`) : amplitude été/hiver aux latitudes moyennes, en kelvins,
+  `A = 0,12 · T_s · sin(tilt) / sin(23,4°) · 1 / (1 + 0,6 P) · (1 − 0,5 · eau)`
+  où P est la pression (bar) et *eau* la part d'eau liquide (0–1 ; l'océan lisse). Un monde **figé par marée** ou **sans étoile** n'a pas de saisons quoi qu'on écrive. La Terre : base ≈ 35 K, lissée par l'air et la mer (eau ≈ 0,7) → ≈ 14 K (réel : ~10–15 K aux latitudes moyennes) ; Mars, air mince et sans mer : ≈ 26 K. Les mots : *sans saisons* (< 2 K), *douces* (< 8), *marquées* (< 20), *extrêmes*.
+- **La fiche** (`text.js`) : une huitième ligne, **Saisons** — « marquées : −6 °C à 20 °C aux latitudes moyennes · axe incliné de 24° », ou « sans saisons : la face figée », ou « sans saisons : aucune étoile ».
+- **Deux tensions légères** (`rules.js`) :
+  - `winterFreeze` (L6, géologique) : eau liquide en moyenne, saisons ≥ 8 K et une rivière, un lac, un marais, un delta… → l'hiver doit rester au-dessus de −5 °C (268 K), sinon « rivières et lacs gèlent une saison » ; pistes sur `tilt:`, `insolation:`, `atmosphere:`.
+  - `tiltChaos` (L2, cosmologique) : un `erratic_cycle` avec un axe écrit presque droit (< 10°) « tient presque droit » ; piste : incliner l'axe (`tilt: 30` ou plus).
+- Les pistes en mots (« un axe plus incliné / plus droit »), la référence du guide (ligne `tilt:` en FR et EN), les tests (`test/physics.test.js`, bloc saisons ; la fiche compte huit lignes).
+
+Non modélisé, à dessein : l'**excentricité** de l'orbite (pas de paramètre `ecc:` ; les saisons sont symétriques) ; le climat **par latitude** (une seule amplitude, dite « aux latitudes moyennes »). En facile, rien ne coûte ; en strict, deux tensions légères seulement, et seulement sur des blocs qui les appellent.
+
+### Palier 2 — le vivant sur l'année (à concevoir)
+
+Les exigences du vivant (`life.js`, lois de la vie) s'évalueraient sur la **saison la plus dure**, pas sur la moyenne, avec des relais : dormance et graines pour les producteurs, hibernation (le `burrower` le fait de nature), **migration** des troupeaux (un comportement, pas un bloc), symbiose fleurs-abeilles saisonnière. Un rôle tenu seulement l'été est un rôle à demi vide : lien direct avec les polyvalents et la maladie du vivant. Questions pour l'auteur : quels blocs savent passer l'hiver sans rien écrire (le fouisseur, la spore, le lichen ?) ; la migration est-elle un relais gratuit ou un signe d'instabilité ; faut-il que `Twinter` passe sous un seuil (le gel, −18 °C de la vie verte) pour que le palier parle, ou que toute saison marquée compte un peu.
+
+### Palier 3 — le rendu et le jeu (à concevoir)
+
+La saison du jour dans la fenêtre de liaison (neige, floraison, feuillages roux) ; la récolte (limon, cendres, terreau, tourbe) qui varie avec la saison, comme les paires de l'ardoise la font varier au jour près (`claude/DESIGN-art-bahro.md` §6). Il faut décider à quel jour de son année un Âge est « aujourd'hui » : graine + date réelle, comme le reste, avec l'année de l'Âge en jours réels (une année de 161 jours tourne vite ; une année de 900 jours met deux ans et demi à faire ses saisons — est-ce voulu ?). Fil avec la seconde série : « le jour d'un monde est sa note », l'année en est le rythme long.
 
 Autre piste, plus petite et plus géologique : **le relief déduit de l'intérieur** (chaleur, plaques → montagnes, rifts, îles volcaniques, dans la description et la fenêtre ; usé et plat sur un monde vieux, hérissé sur un monde jeune ; le vivant suit : altitude, versants, grottes).
 
@@ -367,7 +388,8 @@ Autre piste, plus petite et plus géologique : **le relief déduit de l'intérie
 | 3. Strict ✅ (sauf frontmatter) | barème × sévérité, déduplication avec le moteur, mondes-types vérifiés sans orienter le tirage | fait en 1.16.0 ; frontmatter `age_gravity`… à faire |
 | 4. Rendu | soleil noir fait ; reste : couleur du soleil d'après sa température, ciel selon l'air, gravité, face figée dans `genscene` | pages de `test/visual` |
 | 5. Pistes cliquables ✅ | une piste s'écrit dans le bloc (mot de l'auteur gardé, CRLF, encadrés) | fait en 1.16.0 |
-| 6. Hardcore ++ | §11, au choix | — |
+| 6. Saisons | palier 1 fait (fiche, tensions, `tilt:`) ; paliers 2 (vivant sur l'année) et 3 (rendu, récolte) à concevoir | §12 bis |
+| 7. Hardcore ++ | §11, au choix | — |
 
 ---
 
