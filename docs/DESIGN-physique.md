@@ -319,14 +319,14 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 - Une `atmosphere:` écrite en nombre n'est pas confrontée à ce que la planète peut retenir (on pourrait signaler « 3 bar sur un monde de 0,02 M⊕, l'air fuit »).
 - Les pistes chiffrées ne font varier qu'un paramètre à la fois (elles n'aggravent jamais le total, mais n'explorent pas les combinaisons).
 - Les réactions du moteur (eau + lave → obsidienne) ne sont pas encore pesées par la physique (l'obsidienne exige du volcanisme, c'est tout).
-- Pas de climat par latitude : une seule température moyenne, encadrée depuis le 25 oct. 2026 par une amplitude été/hiver (§12 bis, palier 1) ; le vivant et le rendu ne lisent pas encore les saisons (paliers 2 et 3).
+- Pas de climat par latitude : une seule température moyenne, encadrée depuis le 25 oct. 2026 par une amplitude été/hiver que le vivant, la fenêtre et la récolte lisent (§12 bis).
 - Les textes sont en français et en anglais dans le code (`rules.js`, `text.js`), pas encore dans `i18n.js`.
 
 ---
 
-## 12 bis. Les saisons (`tilt:`) — paliers 1 et 3 codés le 25 oct. 2026 (`assembly`, 95e6a0e et 1ea3dc1, non publiés)
+## 12 bis. Les saisons (`tilt:`) — les trois paliers codés le 25 oct. 2026 (`assembly`, 95e6a0e, 1ea3dc1, 2b09086, non publiés)
 
-Idée : enrichir **ensemble** la géophysique et le vivant par un seul paramètre, l'**inclinaison de l'axe** (`tilt:`, alias `inclinaison:`, `obliquity:`, `obliquité:`, en degrés, 0–90 ; tirée modérée quand rien n'est écrit, comme les autres). Le monde a déjà une année, un jour et une orbite ; il manque ce qui fait les saisons. Trois paliers : le premier (fiche, tensions) et le troisième (fenêtre, récolte) sont faits ; le deuxième (le vivant sur l'année) reste à concevoir avec l'auteur. Ordre choisi : 3 avant 2, parce que le rendu se voit sans rien coûter et permet de vérifier le calendrier avant d'en faire dépendre la stabilité du vivant.
+Idée : enrichir **ensemble** la géophysique et le vivant par un seul paramètre, l'**inclinaison de l'axe** (`tilt:`, alias `inclinaison:`, `obliquity:`, `obliquité:`, en degrés, 0–90 ; tirée modérée quand rien n'est écrit, comme les autres). Le monde a déjà une année, un jour et une orbite ; il manque ce qui fait les saisons. Trois paliers, tous faits : la fiche et les tensions (1), le vivant sur l'année (2), la fenêtre et la récolte (3). Ordre suivi : 1, 3, 2 — le rendu se voit sans rien coûter et a permis de vérifier le calendrier avant d'en faire dépendre la stabilité du vivant. L'auteur veut tout publier en un seul paquet.
 
 ### Palier 1 — la fiche et les tensions ✅
 
@@ -345,9 +345,18 @@ Ce qui est codé, et comment :
 
 Non modélisé, à dessein : l'**excentricité** de l'orbite (pas de paramètre `ecc:` ; les saisons sont symétriques) ; le climat **par latitude** (une seule amplitude, dite « aux latitudes moyennes »). En facile, rien ne coûte ; en strict, deux tensions légères seulement, et seulement sur des blocs qui les appellent.
 
-### Palier 2 — le vivant sur l'année (à concevoir)
+### Palier 2 — le vivant sur l'année ✅ (`rules.js`, `text.js`)
 
-Les exigences du vivant (`life.js`, lois de la vie) s'évalueraient sur la **saison la plus dure**, pas sur la moyenne, avec des relais : dormance et graines pour les producteurs, hibernation (le `burrower` le fait de nature), **migration** des troupeaux (un comportement, pas un bloc), symbiose fleurs-abeilles saisonnière. Un rôle tenu seulement l'été est un rôle à demi vide : lien direct avec les polyvalents et la maladie du vivant. Questions pour l'auteur : quels blocs savent passer l'hiver sans rien écrire (le fouisseur, la spore, le lichen ?) ; la migration est-elle un relais gratuit ou un signe d'instabilité ; faut-il que `Twinter` passe sous un seuil (le gel, −18 °C de la vie verte) pour que le palier parle, ou que toute saison marquée compte un peu.
+Proposition validée par l'auteur le 25 oct. (« go le code »). La règle : *le vivant est jugé sur la saison la plus dure, sauf s'il sait l'attendre* — et seulement quand les saisons sont **marquées** (≥ 8 K), et que la **moyenne tient** (entre −18 et 52 °C) : quand la moyenne elle-même gèle ou cuit, les lois de toujours (`temperateLife`) le disent déjà, les saisons n'ajoutent rien par-dessus.
+
+Pourquoi dans la couche physique et pas dans `life.js` : la loi du vivant tourne avant la physique, sans températures ; y brancher la saison voudrait dire réordonner toute la chaîne. Le lien avec les polyvalents et la maladie du vivant passe par le **relais** : une seconde espèce qui reste l'hiver tient le rôle, comme une seconde espèce guérit la maladie.
+
+- **Relais gratuits**, sans règle : le **fouisseur** hiberne (`burrower`, `warren`, `humming_warren`), **spores, mousses, lichens, champignons** attendent. La fiche le dit : « Les fouisseurs hibernent sous terre ; ils restent quand tout le reste dort. » ; « Spores, mousses et lichens attendent la saison sans rien demander. »
+- **Dormance des verts** (graines, fougères, lianes, arbres, herbe, arbustes) jusqu'à **−18 °C** : la fiche le dit (« L'hiver descend à −8 °C : la vie verte le passe en graines et en bourgeons, et repart au printemps. »). Au-delà, ou si l'été passe **52 °C**, tension `winterGreen` (L7, écologique, légère) : « En moyenne la vie verte tient, mais l'hiver descend à −30 °C : sous −18 °C, même endormies, graines et racines gèlent. » / « … mais l'été monte à 69 °C : au-delà de 50 °C, rien de vert ne passe la saison. » Pistes chiffrées sur `tilt:`, `atmosphere:`, `insolation:` (ex. « un axe plus droit (`tilt: 25`) »), et « une vie plus rude, qui attend la saison (lichen, moss, spore) ».
+- **Migration** des troupeaux (`grazer`, `herd`, `watching_herd`) : ni gratuite ni une faute — tension `herdWinter` (L8, écologique, **légère**) quand l'hiver gèle (< 0 °C) et que personne ne reste : « L'hiver descend à −8 °C et la flore dort : les troupeaux descendent vers des terres que le livre ne décrit pas. Le rôle des brouteurs n'est tenu que l'été, à demi vide. » Remède : « une espèce qui reste l'hiver : un fouisseur, qui hiberne (`burrower`) » ; avec lui (ou un banc de poissons, `shoal`), la fiche dit « Les troupeaux descendent l'hiver ; d'autres restent, et le rôle tient toute l'année. » Les chasseurs suivent sans rien de plus.
+- Écartée : la symbiose fleurs-abeilles saisonnière (trop fine pour les blocs qu'on a).
+
+En facile, rien ne coûte ; en strict, 10 points par tension légère. Sur 2 000 Âges tirés au hasard (plutôt chauds), la migration touche 1 % des Âges à brouteurs, la saison dure 1 % des Âges à verts : ces tensions se montrent surtout sur les mondes tempérés-froids écrits exprès. Équivalence : 600 Âges, 0 différence contre la 1.50.2. Tests : bloc saisons de `test/physics.test.js` (palier 2 : 10 vérifications).
 
 ### Palier 3 — la fenêtre et la récolte ✅ (`src/seasons.js`)
 
@@ -407,7 +416,7 @@ Autre piste, plus petite et plus géologique : **le relief déduit de l'intérie
 | 3. Strict ✅ (sauf frontmatter) | barème × sévérité, déduplication avec le moteur, mondes-types vérifiés sans orienter le tirage | fait en 1.16.0 ; frontmatter `age_gravity`… à faire |
 | 4. Rendu | soleil noir fait ; reste : couleur du soleil d'après sa température, ciel selon l'air, gravité, face figée dans `genscene` | pages de `test/visual` |
 | 5. Pistes cliquables ✅ | une piste s'écrit dans le bloc (mot de l'auteur gardé, CRLF, encadrés) | fait en 1.16.0 |
-| 6. Saisons | paliers 1 (fiche, tensions, `tilt:`) et 3 (fenêtre, récolte) faits ; palier 2 (vivant sur l'année) à concevoir | §12 bis |
+| 6. Saisons ✅ | paliers 1 (fiche, tensions, `tilt:`), 2 (vivant sur l'année) et 3 (fenêtre, récolte) faits ; à publier en un paquet | §12 bis |
 | 7. Hardcore ++ | §11, au choix | — |
 
 ---
