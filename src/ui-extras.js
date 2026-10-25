@@ -191,9 +191,10 @@ function renderPhysics(plugin, box, analysis, { src, path, skyBox }) {
   } catch (e) { /* pas de notes */ }
   try { renderStarNote(plugin, cols, { src, analysis, path }); } catch (e) { console.warn("[Age Writer ext] étoile", e); }
   const skyFilled = !!(skyBox && cols.childElementCount);
+  if (analysis.slateAct) { const sa = analysis.slateAct; whyHost.createDiv({ cls: "age-det__note age-det__slate", text: t([sa.gift ? "slate.gift" : "slate.act", sa.effect].join(".")) + (sa.fertile ? "" : " " + t("slate.sterile")) }); } /* l'ardoise : ce qu'ils ont apporté aujourd'hui */
   if (analysis.harvest && analysis.harvest.today) { /* la récolte du jour, pour la machine du Relto : la matière se dit avec son aspect (section 18) */
     const rich = analysis.harvest.rich !== false, list = analysis.harvest.gives.map((id) => t(["hv", rich ? "rich" : "poor", id].join("."))).join(", ");
-    whyHost.createDiv({ cls: "age-det__note age-det__pellet", text: t("hv.today", { list }) + (rich ? "" : " " + t("hv.poor.why")) });
+    whyHost.createDiv({ cls: "age-det__note age-det__pellet", text: t("hv.today", { list }) + (analysis.harvest.slate ? " " + t("slate.harvest") : "") + (rich ? "" : " " + t("hv.poor.why")) });
   }
   if (sh.facts.length) {
     heading(whyHost, t("det.why")).addClass("age-det__h--sub");

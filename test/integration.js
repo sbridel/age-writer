@@ -505,6 +505,23 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         srcA.content = "```age\nred_sun\nsteady_cycle\nwater\nfern\n```\n"; srcA.stat.mtime++; p.carrySource(srcA, p.core.extract(srcA.content));
         r = an(recv); ok((r.resolved.lines || []).some((l) => l.entry && l.entry.id === "twin_suns") && !(r.resolved.lines || []).some((l) => l.entry && l.entry.id === "red_sun"), "le commandement : la source change, la copie ne bouge pas");
         delete p.ext.story[SKc].stone; files.delete(sick.path); files.delete(taker.path); }
+      { /* l'ardoise (src/slate.js ; DESIGN-art-bahro §16) : tracée, elle part au prochain Livre ouvert ; il y pleut ce jour-là ; la récolte change dans l'accord */
+        const SL = require("../src/slate"), G = require("../src/genscene"), DAY = SL.DAY, now = Date.now();
+        p.ext.story[SKc].stone = { ending: "accord", endedAt: now - 2 * DAY };
+        const wet = age("Cendres Mouillees", ["single_sun", "steady_cycle", "water", "ash", "grass", "rotation: 24"], dir), dry = age("Sable Sec", ["single_sun", "steady_cycle", "sand", "rotation: 24"], dir);
+        const X = p.poolExt(p.poolOfAge(p.core.seed(wet.path))), rain = SL.strokesOf("rain").map((st) => st.map(([x, y]) => [300 + x * 8, 170 + y * 8]));
+        ok(X && SL.arrived(p.bahroSt(p.poolOfAge(p.core.seed(wet.path))), now), "l'ardoise : arrivée au matin après le 17");
+        ok(SL.trace(X, rain, now).effect === "rain", "l'ardoise : la pluie tracée, reconnue");
+        const before = an(wet); ok(!before.slateAct && (before.harvest || {}).gives.includes("ash"), "avant : pas d'acte, l'Âge donne des cendres");
+        await p.slateOnOpen(dry); ok(X.slate.sent && X.slate.sent.outcome === "refused", "l'accord : la pluie sur un monde sans eau ne découle de rien, refusée (" + JSON.stringify(X.slate.sent) + ")");
+        X.slate.sent = null; SL.trace(X, rain, now);
+        await p.slateOnOpen(wet); ok(X.slate.sent && X.slate.sent.outcome === "done" && X.slate.sent.name === "Cendres Mouillees", "le prochain Livre ouvert : l'ardoise part pour lui");
+        const after = an(wet); ok(after.slateAct && after.slateAct.effect === "rain" && after.slateAct.fertile, "il pleut aujourd'hui dans cet Âge");
+        ok(G.sceneOf(after, "Cendres Mouillees").rain, "la fenêtre : la pluie");
+        ok(after.harvest.gives.includes("silt") && !after.harvest.gives.includes("ash") && after.harvest.slate, "l'accord : la pluie sur les cendres donne du limon (" + after.harvest.gives.join() + ")");
+        p.ext.story[SKc].stone.ending = "command"; const cmd = an(wet);
+        ok(cmd.slateAct && !cmd.slateAct.fertile && cmd.harvest.gives.includes("ash") && G.sceneOf(cmd, "Cendres Mouillees").rain, "le commandement : la pluie peinte, la récolte inchangée");
+        delete p.ext.story[SKc].stone; delete X.slate; files.delete(wet.path); files.delete(dry.path); }
       recv.content = "```age\nsingle_sun\nsteady_cycle\nsand\ncarry: sky from Jamais Lu\ncarry: moor from Source Ciel\ncarry: sky from Personne\ncarry: desert from Source Ciel\n```\n"; recv.stat.mtime++;
       r = an(recv); const why = (r.carry.refused || []).map((x) => x.why).join();
       ok(why === "untouched,what,missing,empty", "porter : jamais ouvert, mot inconnu, Livre absent, rien à donner (" + why + ")");

@@ -37,8 +37,9 @@ const MEM = require("./relto-memories");
 const CAVE = require("./relto-cave");
 const OV = require("./relto-oven"); /* la machine du Relto, dans l'appentis (étape 4a′) */
 const DREAM = require("./dream");
+const SLV = require("./relto-slate"); /* l'ardoise (étape F) */
 const HEAR = require("./relto-hear"); /* les objets Bahro : le serpent et le cachet en main (src/ward.js) */
-const ROOMS = { dream: require("./relto-dream").drawDream, stars: require("./relto-stars").drawStars, fissure: require("./relto-stars").drawFissure, scope: SCOPE.drawScope, hall: HALL.drawHall, oven: OV.drawOven, cavetop: CAVE.drawCaveTop, cavebottom: CAVE.drawCaveBottom, memories: MEM.drawMemories, lounge: LG.drawLounge, vault: VT.drawVault, flower: AT.drawFlowerView, librarybook: LB.drawLibraryBook, descbook: DV.drawDescBook, atelierback: AB.drawBackroom, roundwindow: RW.drawRoundWindow, calendar: CALV.drawCalendar, glyphbook: GB.drawGlyphBook, letter: AT.drawLetter, atelier: AT.drawAtelier, desk: AT.drawDesk, loft: AT.drawLoft, cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom, book: PB.drawBookRoom, telescope: TL.drawTelescopeRoom, starmap: SM.drawStarMap, clock: CK.drawClockRoom };
+const ROOMS = { dream: require("./relto-dream").drawDream, stars: require("./relto-stars").drawStars, fissure: require("./relto-stars").drawFissure, scope: SCOPE.drawScope, hall: HALL.drawHall, oven: OV.drawOven, cavetop: CAVE.drawCaveTop, cavebottom: CAVE.drawCaveBottom, memories: MEM.drawMemories, lounge: LG.drawLounge, vault: VT.drawVault, flower: AT.drawFlowerView, librarybook: LB.drawLibraryBook, descbook: DV.drawDescBook, atelierback: AB.drawBackroom, roundwindow: RW.drawRoundWindow, calendar: CALV.drawCalendar, glyphbook: GB.drawGlyphBook, letter: AT.drawLetter, atelier: AT.drawAtelier, desk: AT.drawDesk, slate: SLV.drawSlateView, loft: AT.drawLoft, cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom, book: PB.drawBookRoom, telescope: TL.drawTelescopeRoom, starmap: SM.drawStarMap, clock: CK.drawClockRoom };
 
 const W = 640, H = 360, GY = 208; // largeur, hauteur logiques ; ligne de sol
 
@@ -138,12 +139,12 @@ class ReltoRenderer {
     // les petites cibles s'élargissent (`hit`) ; les molettes se tournent au doigt (`onDown`, glisser autour du centre)
     this.touch = !!this.opts.touch; this.held = null; this.drag = null; this.dragged = false;
     if (this.touch && this.opts.tipDelay == null) this.opts.tipDelay = 0;
-    canvas.addEventListener("pointermove", (e) => (this.touch || this.drag || this.slide || this.mapGest ? this.onDragMove(e) : this.onMove(e)));
+    canvas.addEventListener("pointermove", (e) => (this.touch || this.drag || this.slide || this.mapGest || this.chalk ? this.onDragMove(e) : this.onMove(e)));
     canvas.addEventListener("wheel", (e) => this.onWheel(e), { passive: false }); // la roulette sur une molette (grande vue et plein écran)
     canvas.addEventListener("pointerleave", () => { if (this.touch) return; this.hover = null; this.pointer = null; this.canvas.style.cursor = ""; });
     canvas.addEventListener("pointerdown", (e) => this.onDown(e));
-    canvas.addEventListener("pointerup", (e) => { if ((this.drag || this.slide) && !this.touch) this.canvas.style.cursor = "var(--age-grab, grab)"; if (this.mapGest && !this.touch) this.canvas.style.cursor = ""; this.drag = null; this.slide = null; this.mapUp(e); });
-    canvas.addEventListener("pointercancel", (e) => { this.drag = null; this.slide = null; this.mapUp(e); });
+    canvas.addEventListener("pointerup", (e) => { if (this.chalk) SLV.up(this); if ((this.drag || this.slide) && !this.touch) this.canvas.style.cursor = "var(--age-grab, grab)"; if (this.mapGest && !this.touch) this.canvas.style.cursor = ""; this.drag = null; this.slide = null; this.mapUp(e); });
+    canvas.addEventListener("pointercancel", (e) => { if (this.chalk) SLV.up(this); this.drag = null; this.slide = null; this.mapUp(e); });
     // la carte des étoiles se tourne aussi au bouton droit : pas de menu contextuel sur elle
     canvas.addEventListener("contextmenu", (e) => { if (this.view === "starmap") e.preventDefault(); });
     canvas.addEventListener("click", (e) => this.onClick(e));
@@ -1341,6 +1342,7 @@ class ReltoRenderer {
   // ---- vues ----------------------------------------------------------------------------
   /** « island » (vue de l'île, par défaut) ou « global » (le Relto vu de loin) ; un fondu léger marque le passage. */
   setView(view) {
+    if (this.view === "slate" && this.slateUI && this.slateUI.dueAt) SLV.relire(this); /* on quitte l'ardoise avant la pause : elle relit quand même */ this.slateUI = null; this.chalk = false;
     if (this.view === "dream" && view !== "dream") this.dreamWake(); /* quitter le rêve, c'est se réveiller (la flèche, ou la fin) */
     if (view !== "global" && !(ROOMS[view] && this.available()[view])) view = "island";
     if (view === "cat" && this.catAsleep()) view = "cabin"; // il dort au coin du feu : on le trouve dans la cabane
@@ -1403,7 +1405,7 @@ class ReltoRenderer {
   /** vues possibles selon les pages et structures de ce Relto (l'île et la vue globale existent toujours) */
   available() {
     const sc = this.scene, a = (t) => sc.additions.some((x) => x.type === t);
-    return { island: true, global: true, cabin: sc.structures.includes("hut"), lounge: sc.structures.includes("hut"), hall: sc.structures.includes("hut"), memories: sc.structures.includes("hut") && (MEM.memoriesOf(this).length > 0 || MEM.slabShown(this)), oven: sc.structures.includes("hut") && sc.structures.includes("oven"), cavetop: sc.structures.includes("hut"), cavebottom: sc.structures.includes("hut"), stars: sc.structures.includes("hut"), fissure: sc.structures.includes("hut"), dream: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies"), imager: a("imager"), book: sc.structures.includes("hut"), telescope: a("telescope"), starmap: a("telescope"), clock: a("dniclock"), atelier: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), letter: sc.structures.includes("hut") && ((sc.mode === "story" && (sc.storyDone || []).includes("end")) || (sc.mode !== "story" && a("inkwell"))), desk: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), scope: sc.structures.includes("hut") && sc.structures.includes("oven") && (a("atelier") || a("inkwell")), loft: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), glyphbook: sc.structures.includes("hut"), librarybook: sc.structures.includes("hut"), descbook: sc.structures.includes("hut"), vault: sc.structures.includes("hut"), atelierback: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), flower: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), roundwindow: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), calendar: a("calendar") };
+    return { island: true, global: true, cabin: sc.structures.includes("hut"), lounge: sc.structures.includes("hut"), hall: sc.structures.includes("hut"), memories: sc.structures.includes("hut") && (MEM.memoriesOf(this).length > 0 || MEM.slabShown(this)), oven: sc.structures.includes("hut") && sc.structures.includes("oven"), cavetop: sc.structures.includes("hut"), cavebottom: sc.structures.includes("hut"), stars: sc.structures.includes("hut"), fissure: sc.structures.includes("hut"), dream: sc.structures.includes("hut"), pillars: sc.structures.includes("linking_pillars"), pond: a("koi"), pondplus: a("koi") && a("ponddecor"), cat: a("cat"), grove: a("vegetation") || a("flowers") || a("grass") || a("stalktree") || a("butterflies"), imager: a("imager"), book: sc.structures.includes("hut"), telescope: a("telescope"), starmap: a("telescope"), clock: a("dniclock"), atelier: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), letter: sc.structures.includes("hut") && ((sc.mode === "story" && (sc.storyDone || []).includes("end")) || (sc.mode !== "story" && a("inkwell"))), desk: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), slate: sc.structures.includes("hut") && (a("atelier") || a("inkwell")) && !!(this.opts.slateState && (this.opts.slateState() || {}).here), scope: sc.structures.includes("hut") && sc.structures.includes("oven") && (a("atelier") || a("inkwell")), loft: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), glyphbook: sc.structures.includes("hut"), librarybook: sc.structures.includes("hut"), descbook: sc.structures.includes("hut"), vault: sc.structures.includes("hut"), atelierback: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), flower: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), roundwindow: sc.structures.includes("hut") && (a("atelier") || a("inkwell")), calendar: a("calendar") };
   }
   /** dessine `fn` (en coordonnées de l'île) agrandi dans une vue rapprochée et reporte les zones cliquables qu'il crée à l'écran */
   withView(ctx, { S, ox, oy, fx, fy }, fn) {
@@ -1472,6 +1474,7 @@ class ReltoRenderer {
   wheelAct(a, kind) { if (kind === "imager") this.imagerAct(a); else if (kind === "map") SM.act(this, a); else TL.act(this, a); }
   /** Poser le doigt (ou presser la souris) sur une molette (une zone `wc`) commence à la tourner ; sur un rail de l'Imageur, à y glisser le verre. Au doigt, seulement une molette déjà lue. */
   onDown(e) {
+    if (this.view === "slate" && (this.touch || e.button == null || e.button === 0)) { const [sx, sy] = this.toLogical(e); if (SLV.down(this, e, sx, sy)) return; } /* tracer sur l'ardoise */
     if (this.view === "starmap" && this.mapDown(e)) return;
     if (!this.touch && e.button != null && e.button !== 0) return;
     const [x, y] = this.toLogical(e), h = this.hit(x, y), ready = (q) => !this.touch || this.held === this.holdKey(q); this.dragged = false;
@@ -1500,6 +1503,7 @@ class ReltoRenderer {
   }
   /** Le doigt (ou la souris pressée) tourne autour du centre de la molette ; un cran par `deg` degrés (fin au moyeu, gros à la couronne). */
   onDragMove(e) {
+    if (this.chalk) { const [cx, cy] = this.toLogical(e); SLV.move(this, cx, cy); return; } /* la craie sur l'ardoise */
     if (this.mapGest) { this.mapMove(e); return; }
     if (this.slide) { // le long d'un rail (ou de l'arc de l'iris) : le verre suit le doigt, cran par cran
       const [x, y] = this.toLogical(e), h = this.hit(x, y), sl = this.slide;

@@ -87,6 +87,9 @@ function sceneOf(a, name = "", blocks = null) {
   for (const x of res.matter.reactions || []) if (!S.wxParents[x.result]) S.wxParents[x.result] = [x.a, x.b];
   S.seams = ((a.carry && a.carry.fragments) || []).map((f) => ({ what: f.what, from: f.from, contra: !!f.contra })); /* porter : une couture par fragment (src/carry.js) */
   const loops = ((a.carry && a.carry.fragments) || []).filter((f) => f.loop), lp = loops.find((f) => f.what !== "sky") || loops[0];
+  if (a.slateAct) { const e = a.slateAct.effect; /* l'ardoise (src/slate.js) : ce qu'ils ont apporté aujourd'hui ; dans le commandement, peint sans réaction */
+    if (e === "rain" || e === "steam") S.rain = always("rain", true); if (e === "heat" || e === "steam" || e === "summer") S.heat = always("heat", true); if (e === "steam") S.steam = always("steam", true);
+    if (e === "mist") S.fog = always("fog", true); if (e === "summer") S.petals = always("petals", true); if (e === "night" || e === "longnight") S.forceNight = e === "longnight" ? 2 : 1; }
   S.loop = !!(a.carry && a.carry.loop); /* la boucle de Torus : deux Âges qui se portent l'un l'autre forment un monde en anneau (src/torus.js) */
   if (S.loop) { S.loopFam = lp && lp.what !== "sky" ? lp.what : "stone"; S.loopKey = String(name) + "|" + String((lp && lp.from) || ""); S.torus = TOR.formOf(S.loopKey); }
   return S;
@@ -401,9 +404,9 @@ function suns(m, t, season = 0) {
  * `m.sunFrom` : un autre modèle dont on prend les soleils (les autres directions du périscope de l'Imageur).
  */
 function skyState(m, t, o = {}) {
-  t = frac(t); const { S, pal } = m, sm = m.sunFrom || m, td = o.day != null ? frac(o.day) : t, cs = o.clock != null ? o.clock : t * 8, sn = suns(sm, td, o.season || 0);
-  const d = S.suns === 0 ? 0 : S.cycle === "frozen" ? (sn.length ? Math.max(...sn.map((s) => s.e)) * 0.8 : 0.2) : S.cycle === "erratic" ? 0.2 + 0.6 * rng(sm.S.seed + Math.floor(td * 6))() : Math.max(0, ...sn.map((s) => s.e));
-  const night = 1 - smooth(d * 3), day = smooth((d - 0.25) / 0.75);
+  t = frac(t); const { S, pal } = m, sm = m.sunFrom || m, td = o.day != null ? frac(o.day) : t, cs = o.clock != null ? o.clock : t * 8, sn = S.forceNight ? [] : suns(sm, td, o.season || 0);
+  const d = S.forceNight ? 0 : S.suns === 0 ? 0 : S.cycle === "frozen" ? (sn.length ? Math.max(...sn.map((s) => s.e)) * 0.8 : 0.2) : S.cycle === "erratic" ? 0.2 + 0.6 * rng(sm.S.seed + Math.floor(td * 6))() : Math.max(0, ...sn.map((s) => s.e));
+  const night = 1 - smooth(d * 3), day = smooth((d - 0.25) / 0.75); /* l'ardoise, la nuit (S.forceNight) : d = 0, à contre-horloge */
   let top = mixc(mixc(pal.nightTop, pal.dawnTop, smooth(d * 3)), pal.dayTop, day), hzc = mixc(mixc(pal.nightHz, pal.dawnHz, smooth(d * 3)), pal.dayHz, day);
   const hues = S.sunHues || []; if (hues[0]) { hzc = mixc(hzc, hues[0], 0.3 * day); top = mixc(top, hues[0], 0.14 * day); } // soleil coloré : la lumière du jour prend sa teinte
   const air = S.phys ? { thin: clamp((0.5 - S.phys.P) / 0.45), thick: S.phys.P > 1.5 ? clamp(Math.log2(S.phys.P / 1.5) / 4) : 0 } : { thin: 0, thick: 0 };

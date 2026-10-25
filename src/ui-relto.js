@@ -25,6 +25,7 @@ const ST = require("./story");
 const HEAR = require("./story-hear");
 const WARD = require("./ward"); /* le cachet et la garde (étape D) */
 const STONE = require("./story-stone"); /* le chapitre 17, la pierre (étape E) */
+const SLATE = require("./slate"); /* l'ardoise (étape F) */
 const DB = require("./relto-descbook");
 const LEC = require("./lectern");
 
@@ -907,6 +908,10 @@ async function renderRelto(plugin, source, el, ctx) {
     stoneState: () => { if (!scene || scene.mode !== "story" || !pool()) return {}; const st = ST.get(plugin.ext.story || (plugin.ext.story = {}), pool()); return { canTake: STONE.canTake(st), ending: STONE.endingOf(st), place: STONE.placeOf(st), dark: STONE.chamberDark(st), traces: STONE.tracesOn(st), cut: STONE.frescoCut(st) }; },
     onStoneGive: () => { const pl = pool(); if (!pl) return false; const st = ST.get(plugin.ext.story || (plugin.ext.story = {}), pl); if (!STONE.give(st, Date.now())) return false; plugin.saveExt(); clearTimeout(plugin._stoneTick); plugin._stoneTick = window.setTimeout(() => storyTick(plugin), 7500); return true; },
     onStoneCry: () => { if (plugin.ext.sound && plugin.ext.soundRooms !== false) sound.caveSfx("cry", (plugin.ext.volume == null ? 0.35 : plugin.ext.volume) * 0.6); },
+    /* l'ardoise (src/slate.js) : arrivée au matin après le 17, dans le Relto histoire comme au bac à sable ; ce qu'on y trace reste jusqu'au Livre suivant */
+    slateState: () => { const pl = pool(), st = plugin.bahroSt ? plugin.bahroSt(pl) : null, now = Date.now(); if (!st || !SLATE.arrived(st, now)) return {}; const X = plugin.poolExt(pl), sl = SLATE.stateOf(X, now); if (SLATE.morningWipe(X, now)) { plugin.saveExt(); new obsidian.Notice(t("slate.wiped"), 8000); } return { here: !sl.sent, strokes: sl.strokes, signs: sl.signs }; },
+    onSlateTrace: (strokes) => { const X = plugin.poolExt(pool()), out = SLATE.trace(X, strokes, Date.now()); plugin.saveExt(); return out; },
+    onSlateErase: () => { if (SLATE.erase(plugin.poolExt(pool()), Date.now())) plugin.saveExt(); },
     sealState: () => (scene && scene.mode === "story" && plugin.caveState ? { here: WARD.sealHere(plugin.caveState(pool())) } : {}),
     wardOf: (age) => { const pl = pool(); return !!(pl && age && age.path && WARD.isWarded(plugin.poolExt(pl), plugin.core.seed(age.path))); },
     onWard: (age) => { const pl = pool(); if (!pl || !age || !age.path) return ""; const on = WARD.toggle(plugin.poolExt(pl), plugin.core.seed(age.path)); plugin.saveExt(); if (plugin.index) plugin.index.invalidate(); plugin.refreshLive(); return t(on ? "ward.on" : "ward.off", { name: age.name }); },

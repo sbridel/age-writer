@@ -64,7 +64,8 @@ function gather(ext, age, list, now, rich = true) {
   if (!age || !list || !list.length) return null;
   const h = stateOf(ext), day = Math.floor(now / DAY);
   if (h.last[age] === day) return null;
-  h.last[age] = day; h.lastRich[age] = !!rich; for (const id of list) { h.stock[id] += 1; if (rich) h.rich[id] += 1; }
+  const rk = (id) => (rich && typeof rich === "object" ? !!rich[id] : !!rich); /* riche ou pauvre, par mesure (la brume de l'ardoise : le terreau compte riche) */
+  h.last[age] = day; h.lastRich[age] = list.every(rk); for (const id of list) { h.stock[id] += 1; if (rk(id)) h.rich[id] += 1; }
   return list.slice();
 }
 /** A-t-il donné aujourd'hui ? (la ligne de l'onglet Détails) */

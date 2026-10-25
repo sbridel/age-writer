@@ -67,7 +67,7 @@ module.exports = function build(Base, core, AGEX) {
   /** La caverne, pour essayer (menu de la clé) : remettre le lac à zéro, des colonies, les endormir, les gaver ; chaque essai remplit le flacon. */
   class CaveTestModal extends FuzzySuggestModal {
     constructor(app, plugin) { super(app); this.plugin = plugin; }
-    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask", "reveal", "lit", "slab", "dream", "ink", "night"]; }
+    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask", "reveal", "lit", "slab", "dream", "ink", "night", "slate", "slateback"]; }
     getItemText(v) { const k = "cave.test." + v; return this.plugin.t(k); }
     onChooseItem(v) { const msg = this.plugin.caveTest(v); if (msg) new Notice(msg); }
   }
@@ -147,12 +147,15 @@ module.exports = function build(Base, core, AGEX) {
           return fissureStrain(out, op);
         }) || out;
         if (o && o.seed && !o.probe) guard("statut", () => this.statusWatch(key, out.stability));
+        if (o && o.seed) out = guard("ardoise", () => this.slateAdjust(out, o)) || out; /* l'ardoise (src/slate.js) : ce qu'ils ont apporté aujourd'hui dans cet Âge */
         if (o && o.seed) out = guard("récolte", () => { /* un Âge qui écrit cendres, terreau, limon ou tourbe, et où quelque chose pousse, en donne une mesure par jour (lu, pas un essai) */
           const mt = (out.resolved && out.resolved.matter) || {}, gives = HV.givesOf(mt.written || [], PH.idsOfAnalysis(out), (mt.reactions || []).map((x) => (x && x.result) || x)); if (!gives.length) return out;
           const pool = this.poolOfAge(o.seed); if (!this.poolOpen(pool)) return out; /* un Âge d'un Relto histoire remplit la réserve de ce Relto, à partir du chapitre 10 */
-          const X = this.poolExt(pool), now = this.law.now(); if (!o.probe && HV.gather(X, key, gives, now, HV.richOf(out))) this.saveExt(); /* riche ou pauvre : ce qu'est l'Âge à la première lecture du jour */
+          const X = this.poolExt(pool), now = this.law.now(), act = out.slateAct, hv = act && act.fertile ? require("./slate").harvestOf(gives, act.effect) : { list: gives, richFor: {} }; /* l'accord : la sorte du jour change (la brume : le terreau compte riche) ; le commandement n'engendre rien */
+          const r0 = HV.richOf(out), richArg = Object.keys(hv.richFor).length ? Object.fromEntries(hv.list.map((id) => [id, !!(hv.richFor[id] || r0)])) : r0;
+          if (!o.probe && HV.gather(X, key, hv.list, now, richArg)) this.saveExt(); /* riche ou pauvre : ce qu'est l'Âge à la première lecture du jour */
           const today = HV.gatheredToday(X, key, now);
-          return { ...out, harvest: { gives, today, rich: today ? HV.richToday(X, key, now) : HV.richOf(out) } };
+          return { ...out, harvest: { gives: hv.list, today, rich: today ? HV.richToday(X, key, now) : r0, slate: hv.list.join() !== gives.join() || Object.keys(hv.richFor).length > 0 } };
         }) || out;
         return out;
       };
@@ -236,8 +239,43 @@ module.exports = function build(Base, core, AGEX) {
     // ---- porter (src/carry.js ; claude/DESIGN-art-bahro.md §12) ------------------------------------------------
     /** La ligne `carry:` est-elle comprise pour cet Âge ? Dans un Relto histoire, quand la pierre de liaison est sur le bureau ; ailleurs, pas encore. */
     carryOpen(seed) {
-      const pool = this.poolOfAge(seed); if (!pool) return false;
+      const pool = this.poolOfAge(seed); if (!pool) return !!this.bahroSt(null); /* le bac à sable : l'Art Bahro s'y ouvre après le 17 (§2) */
       return require("./story-hear").stoneHere(require("./story").get(this.ext.story || (this.ext.story = {}), pool), Date.now());
+    }
+    /**
+     * L'état d'histoire qui décide de l'Art Bahro pour une réserve : celui de ce Relto histoire ; pour le bac à sable (pool null), celui d'un Relto
+     * histoire dont le 17 est fini (sa fin vaut pour le bac à sable), ou null. (claude/DESIGN-art-bahro.md §2, §16)
+     */
+    bahroSt(pool) {
+      const store = this.ext.story || (this.ext.story = {});
+      if (pool) return require("./story").get(store, pool);
+      for (const [k, v] of Object.entries(store)) if (v && v.stone && v.stone.ending) return require("./story").get(store, k);
+      return null;
+    }
+    /** Ce que l'Âge a : de l'eau, du feu, quelque chose qui vit (l'intention de l'ardoise doit découler de lui, loi 11). */
+    slateHas(a) {
+      const { BIOMES } = require("./dosage"), ids = PH.idsOfAnalysis(a), has = (list) => list.some((id) => ids.has(id));
+      return { water: has(BIOMES.water), fire: has(BIOMES.fire), living: [...ids].some((id) => this.blockAxis(id) === "ecological") };
+    }
+    /** L'acte du jour dans cet Âge (une intention envoyée, ou un don de l'accord), posé sur l'analyse pour la fenêtre et l'onglet Détails. */
+    slateAdjust(out, o) {
+      const pool = this.poolOfAge(o.seed), st = this.bahroSt(pool), SL = require("./slate"), now = this.law ? this.law.now() : Date.now();
+      if (!st || !st.stone || !st.stone.ending) return out;
+      let act = SL.actOf(this.poolExt(pool), o.seed, st.stone.ending, now);
+      if (!act && st.stone.ending === "accord") { const g = SL.giftFor(pool || "sandbox", o.seed, this.slateHas(out), now); if (g) act = { effect: g, fertile: true, gift: true }; } /* un don, sans qu'on ait rien demandé */
+      return act ? { ...out, slateAct: act } : out;
+    }
+    /** Un Livre s'ouvre : si l'ardoise attend, elle part pour cet Âge (le prochain Livre de ce Relto qu'on ouvre ; §16). */
+    async slateOnOpen(f) {
+      const now = Date.now(), seed = this.core.seed(f.path), pool = this.poolOfAge(seed), st = this.bahroSt(pool), SL = require("./slate");
+      if (!st || !SL.arrived(st, now)) return;
+      const X = this.poolExt(pool), sl = SL.stateOf(X, now); if (sl.sent || !SL.effectOf(sl.signs)) return;
+      const text = this.core.extract(await this.app.vault.cachedRead(f)); if (text == null) return; /* une note sans bloc age n'est pas un Livre */
+      const a = this.core.analyse(text, { seed, probe: true, draw: false }), warded = require("./ward").isWarded(this.wardExt(seed), seed);
+      const out = SL.send(X, { seed, name: f.basename, warded, has: this.slateHas(a) }, st.stone.ending, now);
+      if (out === "none" || out === "wait") return;
+      this.saveExt(); if (out !== "stay") { this.index.invalidate(); this.refreshLive(); }
+      new Notice(this.t(["slate.sent", out].join("."), { name: f.basename }), 8000);
     }
     /** La réserve du Relto d'un Âge, où vivent sa garde et ses fragments retenus (src/ward.js), ou null hors d'un Relto histoire. */
     wardExt(seed) { const pool = this.poolOfAge(seed); return pool ? this.poolExt(pool) : null; }
@@ -266,7 +304,8 @@ module.exports = function build(Base, core, AGEX) {
     /** La voix d'un Âge (src/imager.js) : son jour ; la physique facile est calculée au besoin (l'index la saute). */
     carryVoice(a, text, seed) {
       const w = a && a.physics ? a : guard("voix", () => PH.applyPhysics(a, PH.physicsOf(a, text, seed, "easy"), "easy")) || a;
-      return require("./imager").targetsOf(w, seed).freq;
+      const f = require("./imager").targetsOf(w, seed).freq;
+      return a && a.slateAct && a.slateAct.effect === "time" && Number.isFinite(f) ? f * 2 : f; /* l'ardoise, le temps : ce jour-là, la voix de l'Âge sonne à l'autre octave */
     }
     /**
      * Le texte que lit le moteur (hooks.expand) : chaque ligne `carry:` comprise devient son fragment, relu dans la source (il respire).
@@ -497,6 +536,13 @@ module.exports = function build(Base, core, AGEX) {
         const HEAR = require("./story-hear"), h = HEAR.stateOf(require("./story").get(this.ext.story || (this.ext.story = {}), pool));
         if (v === "ink") { h.inkAt = now; if (!Number.isFinite(h.freq)) h.freq = 12; } else { h.visit = now - HEAR.DAY - 1000; h.cried = h.cried || now; }
         this._hearCache = null; this.saveExt(); return t("oven.test.done") + " " + t(["cave.test", v].join("."));
+      }
+      if (v === "slate" || v === "slateback") { /* l'ardoise, pour essayer sans refaire l'histoire : le 17 fini dans l'accord, depuis hier ; ou l'ardoise revenue, effacée */
+        if (!pool) return t("cave.test.nostory");
+        const st = require("./story").get(this.ext.story || (this.ext.story = {}), pool);
+        if (v === "slate") { st.stone = st.stone && st.stone.ending ? st.stone : { ending: "accord", endedAt: now - 2 * 86400000 }; if (!st.done.includes("stone")) st.done.push("stone"); }
+        else delete X.slate;
+        this.saveExt(); this.refreshLive(); return t("oven.test.done") + " " + t(["cave.test", v].join("."));
       }
       if (v === "reset") { cv.colonies = 0; cv.fedAt = 0; cv.feeds = []; cv.revealed = 0; cv.flask = null; cv.drop = null; cv.slabs = {}; }
       else if (v === "reveal") { cv.revealed = (cv.revealed || 0) + 1; this.saveExt(); return t("oven.test.done") + " " + t("cave.test.reveal"); }
@@ -997,6 +1043,7 @@ module.exports = function build(Base, core, AGEX) {
       if (this.app.metadataCache && this.app.metadataCache.on) this.registerEvent(this.app.metadataCache.on("resolved", () => { this._seedNames = null; })); /* les graines se lisent dans les propriétés : refaire la table quand elles sont lues */
       this.registerEvent(vault.on("delete", (f) => { this._seedNames = null; R.resetStoryDraw(this); if (f instanceof TFile) { this.law.forget(f.basename); this.status.forget(f.basename); this.saveExt(); } }));
       this.registerEvent(metadataCache.on("changed", () => this.refreshLive()));
+      this.registerEvent(this.app.workspace.on("file-open", (f) => { if (f instanceof TFile && f.extension === "md" && !R.isHubFile(this.app, f)) guard("ardoise", () => { this.slateOnOpen(f).catch(() => {}); }); })); /* l'ardoise part pour le prochain Livre qu'on ouvre */
       this.registerEvent(this.app.workspace.on("file-open", (f) => { // ouvrir la note d'un Relto : le plein écran (src/ui-relto.js) ; si le Relto est déjà dessiné, tout de suite, sinon à la fin de son rendu
         if (!f || !R.isHubFile(this.app, f)) return;
         RBK.noteVisit(this, f); // le dernier Relto visité : là où mène le bouton du ruban (réglage), et la ligne « dernière visite » du Livre du Relto
