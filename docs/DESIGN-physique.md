@@ -324,9 +324,9 @@ La fenêtre générative (`src/genscene.js`) pourrait lire la fiche :
 
 ---
 
-## 12 bis. Les saisons (`tilt:`) — palier 1 codé le 25 oct. 2026 (`assembly`, 95e6a0e, non publié)
+## 12 bis. Les saisons (`tilt:`) — paliers 1 et 3 codés le 25 oct. 2026 (`assembly`, 95e6a0e et 1ea3dc1, non publiés)
 
-Idée : enrichir **ensemble** la géophysique et le vivant par un seul paramètre, l'**inclinaison de l'axe** (`tilt:`, alias `inclinaison:`, `obliquity:`, `obliquité:`, en degrés, 0–90 ; tirée modérée quand rien n'est écrit, comme les autres). Le monde a déjà une année, un jour et une orbite ; il manque ce qui fait les saisons. Trois paliers : le premier est fait, les deux autres sont à concevoir avec l'auteur avant de coder.
+Idée : enrichir **ensemble** la géophysique et le vivant par un seul paramètre, l'**inclinaison de l'axe** (`tilt:`, alias `inclinaison:`, `obliquity:`, `obliquité:`, en degrés, 0–90 ; tirée modérée quand rien n'est écrit, comme les autres). Le monde a déjà une année, un jour et une orbite ; il manque ce qui fait les saisons. Trois paliers : le premier (fiche, tensions) et le troisième (fenêtre, récolte) sont faits ; le deuxième (le vivant sur l'année) reste à concevoir avec l'auteur. Ordre choisi : 3 avant 2, parce que le rendu se voit sans rien coûter et permet de vérifier le calendrier avant d'en faire dépendre la stabilité du vivant.
 
 ### Palier 1 — la fiche et les tensions ✅
 
@@ -349,9 +349,28 @@ Non modélisé, à dessein : l'**excentricité** de l'orbite (pas de paramètre 
 
 Les exigences du vivant (`life.js`, lois de la vie) s'évalueraient sur la **saison la plus dure**, pas sur la moyenne, avec des relais : dormance et graines pour les producteurs, hibernation (le `burrower` le fait de nature), **migration** des troupeaux (un comportement, pas un bloc), symbiose fleurs-abeilles saisonnière. Un rôle tenu seulement l'été est un rôle à demi vide : lien direct avec les polyvalents et la maladie du vivant. Questions pour l'auteur : quels blocs savent passer l'hiver sans rien écrire (le fouisseur, la spore, le lichen ?) ; la migration est-elle un relais gratuit ou un signe d'instabilité ; faut-il que `Twinter` passe sous un seuil (le gel, −18 °C de la vie verte) pour que le palier parle, ou que toute saison marquée compte un peu.
 
-### Palier 3 — le rendu et le jeu (à concevoir)
+### Palier 3 — la fenêtre et la récolte ✅ (`src/seasons.js`)
 
-La saison du jour dans la fenêtre de liaison (neige, floraison, feuillages roux) ; la récolte (limon, cendres, terreau, tourbe) qui varie avec la saison, comme les paires de l'ardoise la font varier au jour près (`claude/DESIGN-art-bahro.md` §6). Il faut décider à quel jour de son année un Âge est « aujourd'hui » : graine + date réelle, comme le reste, avec l'année de l'Âge en jours réels (une année de 161 jours tourne vite ; une année de 900 jours met deux ans et demi à faire ses saisons — est-ce voulu ?). Fil avec la seconde série : « le jour d'un monde est sa note », l'année en est le rythme long.
+**Qui a des saisons.** Décidé par la physique seule : le seuil est *marquées* (amplitude ≥ 8 K) ; en dessous (douces, sans saisons), face figée par marée, sans étoile, ou sans jour fourni, rien ne change, l'image est celle d'aujourd'hui. Sur 600 Âges tirés au hasard : 25 % sans saisons, 13 % douces, 43 % marquées, 19 % extrêmes — six sur dix environ montreront des saisons. L'auteur a le dernier mot (`tilt: 0`, `tilt: 40`). Validé par l'auteur le 25 oct.
+
+**Le jour de l'année** (`phaseOf`) : date réelle + décalage tiré de la graine (`fnv("season|" + graine)`), l'année de l'Âge (`periodDays`) comptée en **jours réels** : une année de 161 jours tourne en cinq mois, une année de 900 jours met deux ans et demi — un monde lent est lent (validé par l'auteur). Phase 0 = plein hiver, 0,25 printemps, 0,5 plein été, 0,75 automne. Posé sur l'analyse par `entry.js` (`seasonAdjust`, après la physique) : `seasonU` et `season`.
+
+**Ce que fait le jour** (`lookOf(w, u)`) : la température du jour `T = T_s − A·cos(2πu)` ; `cold`/`warm`, `vig` (vigueur du vivant, nulle au cœur de l'hiver), `bloom` (cloche au printemps), `fall` (cloche à l'automne), `snow` (quand le jour reste sous zéro, s'il y a de l'eau et de l'air), `sun` (le soleil plus haut l'été) ; le contraste `k` monte de 0,6 à 1 entre 8 et 20 K.
+
+**La fenêtre** (`genscene.js`, `S.season`) — la règle : *la saison ne touche que ce qui est déjà dans l'image*, rien n'est ajouté qui n'était pas écrit :
+- hiver : ciel plus pâle et gris, crêtes blanchies, neige au sol (et qui tombe, quand le jour reste sous zéro) ; la **pluie écrite tombe en neige** ; l'herbe passe à la paille, les fleurs s'éteignent ; les feuillus (parasols) se dégarnissent, les conifères et les palmes restent ; la branche du bord devient nue, ou enneigée ;
+- printemps : des pétales (ceux de l'ardoise), la branche du bord en fleur ;
+- été : le soleil plus haut ; au-delà de 45 °C, l'air tremble ;
+- automne : feuillus et herbe roussis, des feuilles qui tombent (les pétales, en ocre), la branche du bord rousse.
+Maquette validée par l'auteur le 25 oct. (quatre saisons sur trois Âges : tempéré −11/20 °C, axe à 45° −3/34 °C, air mince −7/58 °C ; un Âge figé inchangé).
+
+**La fiche** (onglet Détails) : « L'hiver, ici, aujourd'hui : −11 °C. Le sol dort. » (`season.now.*`).
+
+**La récolte** (`richFor`) : une saison **favorise** une matière, n'en interdit aucune — elle compte *riche* ce jour-là : printemps → terreau ; été → cendres ; automne → tourbe et limon ; hiver → rien de plus. La ligne de récolte ajoute « (la saison la favorise) ». Même mécanisme que les paires de l'ardoise (`claude/DESIGN-art-bahro.md` §6), à la saison près ; l'ardoise passe avant.
+
+**Ce qui ne bouge pas** : en mode physique *off*, pas de saison (elle vient avec la fiche) ; le test d'intégration le vérifie sur 300 Âges (seules la fiche, la saison et le drapeau de récolte s'ajoutent en facile). Les goldens visuels n'ont pas changé (ils ne fournissent pas de jour). Tests : `test/seasons.test.js` (31).
+
+**Trouvaille en route** : `steady_cycle`, `stable_orbit`, `shifting_orbit` manquaient à la liste des blocs que la fenêtre connaît ; un Âge qui les tirait se dessinait avec des dômes verts de « bloc inconnu ». Corrigé (1ea3dc1).
 
 Autre piste, plus petite et plus géologique : **le relief déduit de l'intérieur** (chaleur, plaques → montagnes, rifts, îles volcaniques, dans la description et la fenêtre ; usé et plat sur un monde vieux, hérissé sur un monde jeune ; le vivant suit : altitude, versants, grottes).
 
@@ -388,7 +407,7 @@ Autre piste, plus petite et plus géologique : **le relief déduit de l'intérie
 | 3. Strict ✅ (sauf frontmatter) | barème × sévérité, déduplication avec le moteur, mondes-types vérifiés sans orienter le tirage | fait en 1.16.0 ; frontmatter `age_gravity`… à faire |
 | 4. Rendu | soleil noir fait ; reste : couleur du soleil d'après sa température, ciel selon l'air, gravité, face figée dans `genscene` | pages de `test/visual` |
 | 5. Pistes cliquables ✅ | une piste s'écrit dans le bloc (mot de l'auteur gardé, CRLF, encadrés) | fait en 1.16.0 |
-| 6. Saisons | palier 1 fait (fiche, tensions, `tilt:`) ; paliers 2 (vivant sur l'année) et 3 (rendu, récolte) à concevoir | §12 bis |
+| 6. Saisons | paliers 1 (fiche, tensions, `tilt:`) et 3 (fenêtre, récolte) faits ; palier 2 (vivant sur l'année) à concevoir | §12 bis |
 | 7. Hardcore ++ | §11, au choix | — |
 
 ---
