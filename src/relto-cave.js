@@ -231,14 +231,15 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
   }
   const reached = (y) => (lit > 0 ? lit * clamp((reveal - (H - y)) / 40) : 0);
   const wonders = r.opts && typeof r.opts.wonders === "function" ? r.opts.wonders() || {} : {};
-  const items = FC.itemsOf((r.scene && r.scene.ages) || [], wonders);
+  const SK = (r.opts && typeof r.opts.stoneState === "function" && r.opts.stoneState()) || {}; /* après le 17 (src/story-stone.js) : dans le commandement, plus une fresque nouvelle, plus une trace */
+  const items = FC.itemsOf((r.scene && r.scene.ages) || [], wonders).filter((it) => SK.cut == null || !(it.at > SK.cut));
   FR.drawFrescoes(ctx, items, (b, y) => Math.max(b < nFlash ? reached(y) : 0, b < nPerm ? permA * 1.3 : 0), key); /* l'histoire du joueur, la plus récente près de l'eau ; tout en haut, les Bahro */
   require("./relto-stars").gate(r, ctx, degree, t); /* le lac vivant ouvre le chemin d'en bas (section 15) */
   const slab = FC.slabOf(name, rseed, ((st.slabs || {})[key] || {}).turns);
   FR.drawVeinCode(ctx, slab.code, FC.glyphsFound(revealed), (y) => Math.max(reached(y), degree >= 3 && revealed > 0 ? 0.6 : 0), key); /* le code, le long de la veine : tout ce qui est trouvé, à chaque éclair ; la dalle est dans la chambre des souvenirs */
   if (lit > 0) {
     const seen = (y) => clamp((reveal - (H - y + 20)) / 50); /* la lueur doit les avoir atteintes */
-    traces(ctx, ph.k, lit, seen, t, FR.handsNear(items, key)); /* les Bahro : leurs ombres qui fuient, leurs mains encore humides ; jamais eux */
+    if (SK.traces !== false) traces(ctx, ph.k, lit, seen, t, FR.handsNear(items, key)); /* les Bahro : leurs ombres qui fuient, leurs mains encore humides ; jamais eux */
     const pg = ctx.createRadialGradient(320, 300, 4, 320, 300, 180); pg.addColorStop(0, rgba(235, 248, 255, 0.95 * lit)); pg.addColorStop(0.3, rgba(150, 200, 240, 0.42 * lit)); pg.addColorStop(1, rgba(80, 120, 170, 0)); ctx.fillStyle = pg; ctx.beginPath(); ctx.ellipse(320, 300, 175, 32, 0, 0, TAU); ctx.fill();
   }
   if (ph && ph.kind === "fizz") { /* le raté : il flotte, et fume en vert */

@@ -223,7 +223,8 @@ function vault(ctx, t) {
 }
 
 function drawStars(r, ctx, sc, sky, t) {
-  const tr = TR(r), degree = degreeOf(r), lit = degree >= 3 ? [0, 1, 2, 3, 4] : degree >= 2 ? [0, 2] : [], FR = require("./relto-fresco");
+  const SK = (r.opts && typeof r.opts.stoneState === "function" && r.opts.stoneState()) || {}; /* après le 17, la chambre est éteinte : ils lient ailleurs, ou personne ne vient plus (src/story-stone.js) */
+  const tr = TR(r), degree = degreeOf(r), lit = SK.dark ? [] : degree >= 3 ? [0, 1, 2, 3, 4] : degree >= 2 ? [0, 2] : [], FR = require("./relto-fresco");
   PAL = paletteOf(r);
   /* la paroi : de la roche en masses, une caverne qui se referme autour de nous ; la lumière monte de la fissure */
   const bg = ctx.createLinearGradient(0, 0, 0, 260); bg.addColorStop(0, PAL.wall[0]); bg.addColorStop(1, PAL.wall[1]); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
@@ -271,7 +272,7 @@ function drawStars(r, ctx, sc, sky, t) {
     const a = (y < top ? Math.min(1, (y - (top - 50)) / 22) : 1 - depth) * (0.35 + 0.65 * Math.abs(Math.sin(t * 2 + i * 1.7))), C = q("fc" + i) < PAL.d2 ? PAL.dust2 : PAL.dust2 && q("fc" + i) < 0.7 ? PAL.dust : [215, 230, 255];
     ctx.fillStyle = rgba(C[0], C[1], C[2], 0.85 * a); ctx.beginPath(); ctx.arc(x, y, 0.5 + 1.1 * (1 - depth * 0.7), 0, TAU); ctx.fill(); }
   /* au degré 3, deux d'entre eux, au fond, accroupis sur le rebord, tournés vers la fosse (des ombres : jamais de détail) */
-  if (degree >= 3) { bahroShadow(ctx, 226, pitTop(226) - 1, 0.66, 1, t, 0); bahroShadow(ctx, 510, pitTop(510) - 1, 0.58, -1, t + 2.1, 1); }
+  if (degree >= 3 && !SK.dark) { bahroShadow(ctx, 226, pitTop(226) - 1, 0.66, 1, t, 0); bahroShadow(ctx, 510, pitTop(510) - 1, 0.58, -1, t + 2.1, 1); }
   /* les cinq piliers, du fond vers nous : un fût droit gravé de haut en bas, une coupe à deux cornes courtes ; les vasques au-dessus */
   const signs = F.itemsOf((r.scene && r.scene.ages) || [], {}).filter((it) => it.kind === "age").slice(-15).flatMap((it) => it.parts.slice(0, 1));
   for (const p of PILLARS.slice().sort((a, b) => a.y - b.y)) {
@@ -313,6 +314,22 @@ function drawStars(r, ctx, sc, sky, t) {
   void sc; void sky;
 }
 
+/**
+ * La pierre lâchée (le 17, l'accord) : elle tombe dans les étoiles en tournant et en rapetissant, s'arrête, suspendue, puis disparaît ; un cri au loin.
+ * On ne les voit jamais (l'auteur : comme le livre qui tombe dans Myst).
+ */
+function stoneFall(r, ctx, cx, cy) {
+  const f = r.stoneFall; if (!f) return;
+  const e = (Date.now() - f.at) / 1000, FALL = 3.2, HANG = 5.0, END = 6.2;
+  if (e >= END) { r.stoneFall = null; r.flash = { text: TR(r)("stone.gone"), x: cx, y: cy + 120, until: Date.now() + 5000 }; return; }
+  const p = Math.min(1, e / FALL), ease = 1 - Math.pow(1 - p, 2.2), x = 330 + (cx - 330) * ease + Math.sin(e * 1.7) * 6 * (1 - p), y = 300 + (cy + 4 - 300) * ease;
+  const s = 18 * Math.pow(1 - 0.7 * ease, 1.1) * (e > HANG ? 1 - (e - HANG) / (END - HANG) * 0.3 : 1), rot = 0.2 + (e < FALL ? e * 2.4 : FALL * 2.4) + (e > FALL ? Math.sin((e - FALL) * 1.6) * 0.05 : 0);
+  const fade = e > HANG ? Math.max(0, 1 - (e - HANG) / (END - HANG)) : 1, bob = e > FALL ? Math.sin((e - FALL) * 2.2) * 1.2 : 0, glow = e > FALL ? 1 + Math.min(1, (e - FALL) / 1.2) * 0.8 : 1;
+  ctx.save(); ctx.globalAlpha = fade; require("./relto-hear").tablet(ctx, (h) => h, x, y + bob, s, Date.now() / 1000, rot, glow); ctx.restore();
+  if (e > HANG) { const k = (e - HANG) / (END - HANG), rr = 6 + k * 70; ctx.strokeStyle = blue(0.5 * (1 - k), 1.3); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.ellipse(x, y, rr, rr * 0.62, 0, 0, TAU); ctx.stroke();
+    if (!f.cried) { f.cried = true; if (r.opts && r.opts.onStoneCry) r.opts.onStoneCry(); } } /* elle disparaît : un cri, au loin */
+}
+
 /** Regarder le sol : penché au bord de la fissure. */
 function drawFissure(r, ctx, sc, sky, t) {
   const tr = TR(r), cx = 330, cy = 140;
@@ -322,7 +339,8 @@ function drawFissure(r, ctx, sc, sky, t) {
   /* les poussières tombent : elles naissent près de nous, au bord, et s'éloignent vers le fond en rapetissant, jusqu'à s'éteindre */
   for (let i = 0; i < 90; i++) { const a = q("pa" + i) * TAU, p = (t * (0.04 + q("pv" + i) * 0.05) + q("pw" + i)) % 1, near = 1 - p, d = near * near * 420, x = cx + Math.cos(a) * d * (0.6 + q("pr" + i) * 0.5), y = cy + Math.sin(a) * d * 0.62, s = 0.4 + near * 2.6;
     ctx.fillStyle = rgba(215, 230, 255, Math.min(1, p * 8) * Math.min(1, near * 2.2) * 0.9); ctx.beginPath(); ctx.arc(x, y, s, 0, TAU); ctx.fill(); }
-  r.hot.push({ x: 240, y: 30, w: 180, h: 260, tip: tr("fissure.void") });
+  r.hot.push({ x: 240, y: 30, w: 180, h: 260, tip: tr(r.stoneHeld ? "fissure.give" : "fissure.void"), fissureVoid: !!r.stoneHeld }); /* la pierre en main : un clic la lâche */
+  stoneFall(r, ctx, cx, cy);
   /* les bords de roche, en silhouette tout autour ; la lumière bleue d'en bas sur leurs arêtes */
   const rim = [[0, 0], [W, 0], [W, H], [0, H], [0, 0], [38, -6], [98, 10], [172, -2], [252, 14], [324, 0], [400, 12], [472, -4], [548, 10], [610, -6], [622, 66], [602, 126], [628, 196], [598, 258], [612, 312], [572, 344], [506, 330], [458, 352], [402, 328], [332, 346], [262, 328], [212, 352], [152, 332], [98, 354], [46, 320], [24, 256], [50, 198], [16, 132], [44, 70], [38, -6]];
   const rock = ctx.createLinearGradient(0, 0, 0, H); rock.addColorStop(0, "#07080d"); rock.addColorStop(1, "#11131b"); ctx.fillStyle = rock;

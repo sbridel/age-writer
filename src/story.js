@@ -36,6 +36,7 @@ const CHAPTERS = [
   { id: "hear", page: null, law: 21, book: 3, title: { en: "Hearing", fr: "Entendre" } },
   { id: "carry", page: null, law: 20, book: 3, title: { en: "Carrying", fr: "Porter" } },
   { id: "accord", page: null, law: 19, book: 3, title: { en: "The accord", fr: "L'accord" } },
+  { id: "stone", page: null, book: 3, title: { en: "The stone", fr: "La pierre" } }, // pas de page : la fin (l'ardoise viendra au matin, étape F)
 ];
 /** Le dernier chapitre du premier livre : sa fin (la page de l'encrier, la lettre du tiroir) reste la sienne. */
 const BOOK_ONE_END = "strange";
@@ -175,6 +176,7 @@ function check(chapter, ctx) {
   if (chapter.id === "slab") { const c = (ctx && ctx.cave) || {}; return c.slabOpen ? { ok: true, why: "" } : { ok: false, why: "slab" }; } // la dalle ouverte (le Rêve viendra avec l'étape 4d)
   if (chapter.id === "accord") { const a = ages.find((x) => x.carried >= 2 && x.contra >= 1 && x.stability >= STABLE_AT); return a ? { ok: true, why: "", path: a.path } : { ok: false, why: "accord" }; } /* trois morceaux : le sien, et deux portés dont un à contre-sens ; et il tient */
   if (chapter.id === "carry") { const a = ages.find((x) => x.carried > 0 && x.stability >= STABLE_AT); return a ? { ok: true, why: "", path: a.path } : { ok: false, why: "carry" }; } /* un Âge du dossier porte un fragment, et il tient */
+  if (chapter.id === "stone") return require("./story-stone").endingOf((ctx && ctx.st) || {}) ? { ok: true, why: "" } : { ok: false, why: (ctx && ctx.cave && ctx.cave.degree >= 2) ? "stone" : "stonepath" }; /* la pierre lâchée dans la fissure (l'accord), ou restée au bureau un jour après le chemin ouvert (le commandement) */
   if (chapter.id === "hear") { const p = HEAR.answered((ctx && ctx.st) || {}, ages); return p ? { ok: true, why: "", path: p } : { ok: false, why: "hear" }; } /* les deux voix entre le monde étrange et un Âge qui s'accorde avec lui, à la tierce au moins */
   if (chapter.id === "alter") {
     // « modifier ce qui est écrit » : la note du chapitre a été modifiée après séchage de l'encre (Loi du Changement), et le monde tient encore
@@ -244,6 +246,7 @@ const WORLDS = {
   lake: { lines: [] },
   slab: { lines: [] },
   hear: { lines: [] },
+  stone: { lines: [] },
   carry: { lines: ["single_sun", "steady_cycle", "water", "fern"], stable: true, margin: 10 }, // un monde qui tient avec de la marge : la couture coûte
   accord: { lines: ["water", "fern"] }, // pas de ciel : celui qui viendra sera porté
 };
@@ -335,6 +338,10 @@ const LETTERS = {
     en: ["You tell me there was a cry in the night, and that in the morning a dark stone lay on your desk, by the inkwell. I do not know who brought it. I know it is not the Guild's.", "Since it has been there, a line the Book did not understand can be read: one can carry. Not write a sky, but take the sky of a world you have linked to, and set it in another. The Book describes; this describes nothing, it moves. There will be a seam, on both sides; a carried world will never stand quite true. Begin with a sky: it is what carries most simply.", "Carry the sky of one of your Ages into another, and let that world hold."],
     fr: ["Tu me dis qu'il y a eu un cri, la nuit, et qu'au matin une pierre sombre était posée sur ton bureau, près de l'encrier. Je ne sais pas qui l'a apportée. Je sais qu'elle n'est pas de la Guilde.", "Depuis qu'elle est là, une ligne que le Livre ne comprenait pas se laisse lire : on peut porter. Non pas écrire un ciel, mais prendre celui d'un monde où tu t'es lié, et le poser dans un autre. Le Livre décrit ; ceci ne décrit rien, cela déplace. Il y aura une couture, des deux côtés ; un monde porté ne sera jamais tout à fait d'aplomb. Commence par un ciel : c'est ce qui se porte le plus simplement.", "Porte le ciel d'un de tes Âges dans un autre, et que ce monde tienne."],
   },
+  stone: {
+    en: ["You wrote the impossible, and it holds. I should be proud. I do not sleep.", "The black stone in the drawer, the one I left you without daring to say what it was: I did not know. I know now, because you described to me the paintings at the top, and the sign that returns there, and it is carved on the stone. Everything you have carried, you carried with it on your desk. Nothing was ever refused you. Understand why. We wrote worlds with their blood, and we took them for beasts. Beneath the lake, when it lives enough, there is a chamber where they go. Take the stone, and go down. What you will do with it there, I will not tell you; I never did it myself.", "Bring the lake to life until it opens the way below, and go down with the stone. After that, it is yours."],
+    fr: ["Tu as écrit l'impossible, et il tient. Je devrais être fier. Je ne dors pas.", "La pierre noire du tiroir, celle que je t'ai laissée sans oser te dire ce qu'elle était : je ne le savais pas. Je le sais maintenant, parce que tu m'as décrit les peintures du haut, et le signe qui y revient, et qu'il est gravé sur elle. Tout ce que tu as porté, tu l'as porté avec elle sur ton bureau. Rien ne t'a jamais été refusé. Comprends pourquoi. Nous avons écrit des mondes avec leur sang, et nous les avons tenus pour des bêtes. Il y a sous le lac, quand il vit assez, une chambre où ils vont. Prends la pierre, et descends-y. Ce que tu en feras là-bas, je ne te le dirai pas ; je ne l'ai jamais fait moi-même.", "Fais vivre le lac jusqu'à ce qu'il ouvre le chemin d'en bas, et descends avec la pierre. Ensuite, c'est à toi."],
+  },
   hear: {
     en: ["Your ink does not dry. I saw it on the seal of that strange world you wrote me: it stays wet, and your changes cost you nothing. Neither did mine, long ago, on a single Book. I never knew why.", "I must confess something. The eighteen laws I taught you are the Guild's; the book counts twenty-five, and the other pages I cannot read. I was told they are not read: they are heard. So listen. Set that world on the Imager and play its chord. Then look, among your Ages, for the one that answers it; if none does, write it a day that agrees with that one's.", "Play the two voices between the strange world and an Age that agrees with it."],
     fr: ["Ton encre ne sèche pas. Je l'ai vu sur la pastille de ce monde étrange que tu m'as écrit : elle reste humide, et tes retouches ne te coûtent rien. La mienne non plus, autrefois, sur un seul Livre. Je n'ai jamais su pourquoi.", "Il faut que je t'avoue une chose. Les dix-huit lois que je t'ai apprises sont celles de la Guilde ; le livre en compte vingt-cinq, et les autres pages, je ne sais pas les lire. On m'a dit qu'elles ne se lisent pas : qu'elles s'entendent. Alors écoute. Pose ce monde sur l'Imageur et joue son accord. Puis cherche, parmi tes Âges, celui qui lui répond ; s'il n'en est aucun, écris-lui un jour qui s'accorde au sien.", "Joue les deux voix entre le monde étrange et un Âge qui s'accorde avec lui."],
@@ -377,7 +384,7 @@ const COURSE_NOAXIS = new Set(["mass", "age", "carry: sky from …", "carry: for
 
 /** Le texte d'une note de chapitre : titre, lettre du mentor, ce qu'il faut faire, et le bloc `age` de départ. */
 /** Un chapitre d'écriture (un Âge à écrire) ou d'exploration (le Relto seul : télescope, Imageur). */
-const kindOf = (chapter) => (["zero", "imager", "descend", "lake", "slab", "hear"].includes(chapter.id) ? "explore" : "write");
+const kindOf = (chapter) => (["zero", "imager", "descend", "lake", "slab", "hear", "stone"].includes(chapter.id) ? "explore" : "write");
 const KIND_LABEL = { write: { en: "Writing exercise", fr: "Exercice d'écriture" }, explore: { en: "Relto exploration", fr: "Exploration du Relto" } };
 /** Le nom de la note d'une exploration : le titre du chapitre (jamais « Age N », qui est réservé aux Âges à écrire). `taken` : noms déjà pris. */
 function exploreName(chapter, lang, taken) {

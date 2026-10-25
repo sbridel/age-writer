@@ -182,6 +182,20 @@ function scarabSide(ctx, c, x, y, s, t, o = {}) {
   ctx.restore();
 }
 
+/* ---- la pierre secrète (étape E, src/story-stone.js) ---- */
+/** La tablette du tiroir : une pierre noire, taillée et droite ; le signe des parois gravé dessus (cercle barré, point clair), qui luit violet. */
+function tablet(ctx, c, x, y, s, t, rot = -0.12, glow = 1) {
+  const w = s * 1.5, h = s * 2, k = s / 14, cy = -h * 0.1, p = (0.5 + 0.3 * Math.sin(t * 1.4)) * glow;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+  ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(-w + 2, -h * 0.5 + 3, w * 2, h); /* l'ombre */
+  ctx.fillStyle = c("#1a1820"); ctx.fillRect(-w, -h * 0.6, w * 2, h); ctx.fillStyle = c("#2a2733"); ctx.fillRect(-w, -h * 0.6, w * 2, Math.max(1, 2 * k)); ctx.fillRect(-w, -h * 0.6, Math.max(1, 2 * k), h);
+  ctx.strokeStyle = `rgba(170,130,240,${p.toFixed(3)})`; ctx.lineCap = "round"; ctx.lineWidth = Math.max(0.7, 1.6 * k);
+  ctx.beginPath(); ctx.arc(0, cy, 8 * k, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, cy - 10 * k); ctx.lineTo(0, cy + 10 * k); ctx.moveTo(-7 * k, cy + 7 * k); ctx.lineTo(7 * k, cy - 7 * k); ctx.stroke();
+  ctx.fillStyle = `rgba(240,230,255,${Math.min(1, 0.4 + p).toFixed(3)})`; ctx.beginPath(); ctx.arc(0, cy, Math.max(0.6, 1.4 * k), 0, TAU); ctx.fill();
+  ctx.restore();
+}
+
 /* ---- le cachet (étape D, claude/DESIGN-art-bahro.md §4 ; src/ward.js) ---- */
 /** Le serpent, du même trait que la planche des fresques (relto-fresco.js), pour une taille `s` (20 = la planche). */
 function serpent(ctx, x, y, s, col, w) {
@@ -221,4 +235,4 @@ function sealFace(ctx, c, x, y, s) {
   ctx.restore();
 }
 
-module.exports = { linkStone, inkRipples, scarab, scarabSide, dipPen, serpent, seal, sealFace, GLOW };
+module.exports = { linkStone, inkRipples, scarab, scarabSide, dipPen, serpent, seal, sealFace, tablet, GLOW };

@@ -9,15 +9,7 @@ const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 const flick = (t) => 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1) + 0.06 * Math.sin(t * 17);
 
 /** La tablette : une dalle de pierre noire, des lignes gravées qui luisent faiblement. `s` : sa demi-largeur. */
-function stone(ctx, c, x, y, s, t) {
-  const w = s * 1.5, h = s * 2; ctx.save(); ctx.translate(x, y); ctx.rotate(-0.12);
-  ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.fillRect(-w + 2, -h * 0.5 + 3, w * 2, h); // l'ombre
-  ctx.fillStyle = c("#1a1820"); ctx.fillRect(-w, -h * 0.6, w * 2, h); ctx.fillStyle = c("#2a2733"); ctx.fillRect(-w, -h * 0.6, w * 2, 2); ctx.fillRect(-w, -h * 0.6, 2, h);
-  ctx.strokeStyle = rgba(150, 110, 230, 0.4 + 0.3 * Math.sin(t * 1.4)); ctx.lineWidth = 1;
-  for (let k = 0; k < 4; k++) { const ly = -h * 0.6 + h * (0.2 + k * 0.2); ctx.beginPath(); ctx.moveTo(-w * 0.7, ly); ctx.lineTo(-w * 0.1 + (k % 2) * w * 0.2, ly); ctx.moveTo(w * 0.05, ly); ctx.lineTo(w * 0.7 - (k % 3) * w * 0.15, ly); ctx.stroke(); }
-  ctx.beginPath(); ctx.moveTo(-w * 0.2, -h * 0.5); ctx.lineTo(0, -h * 0.4); ctx.lineTo(w * 0.2, -h * 0.5); ctx.stroke();
-  ctx.restore();
-}
+function stone(ctx, c, x, y, s, t) { require("./relto-hear").tablet(ctx, c, x, y, s, t); } /* la pierre secrète : le signe des parois gravé dessus (src/relto-hear.js) */
 /** Un bouton « retour » en haut à gauche d'une vue rapprochée (on s'y retrouvait coincé) : un rond de laiton et sa flèche. */
 function backButton(r, ctx, label, go) {
   ctx.fillStyle = "rgba(20,14,8,0.72)"; ctx.beginPath(); ctx.arc(28, 28, 17, 0, 6.283); ctx.fill(); ctx.strokeStyle = "#c9a24e"; ctx.lineWidth = 1.6; ctx.stroke();
@@ -300,6 +292,7 @@ function drawDesk(r, ctx, sc, sky, t) {
     HR.scarab(ctx, c, 462, 286, 30, t, { skin: castle ? "castle" : glass ? "glass" : "plain", hum, open: op });
     r.hot.push({ x: 432, y: 250, w: 62, h: 64, tip: TRr(ui0.wing ? "atelier.scarab.close" : "atelier.scarab.tip"), desk: "wings" }); }
   if (HS.stone) { HR.linkStone(ctx, c, 440, 318, 17, t); r.hot.push({ x: 420, y: 304, w: 40, h: 28, tip: TRr("atelier.link.tip"), desk: "link" }); } /* la pierre de liaison, posée la nuit à côté de l'encrier */
+  { const SK = (r.opts.stoneState && r.opts.stoneState()) || {}; if (SK.place === "desk") { stone(ctx, c, 530, 326, 8, t); r.hot.push({ x: 516, y: 308, w: 28, h: 30, tip: TRr("atelier.stone.kept") }); } } /* le commandement : la pierre est restée, posée à côté de la pierre de liaison */
   { const SS = (r.opts.sealState && r.opts.sealState()) || {}; /* le cachet (étape D, src/ward.js) : petit, discret, à droite de l'encrier ; un clic le prend */
     if (SS.here && !r.sealHeld) { HR.seal(ctx, c, 497, 314, 16); r.hot.push({ x: 484, y: 300, w: 28, h: 26, tip: TRr("atelier.seal.tip"), desk: "seal" }); } }
   // la corbeille à lettres, à gauche : un panier de laiton ; une enveloppe cachetée dépasse quand du courrier est arrivé
@@ -318,9 +311,10 @@ function drawDesk(r, ctx, sc, sky, t) {
     ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.fillRect(534, dy - 4, 106, 8); ctx.fillStyle = c("#2a1c12"); ctx.fillRect(536, dy, 100, 66); ctx.fillStyle = c("#0f0a07"); ctx.fillRect(542, dy + 4, 88, 36); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.strokeRect(536, dy, 100, 66);
     ctx.fillStyle = c("#4a3322"); ctx.fillRect(536, dy + 44, 100, 22); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(586, dy + 55, 4, 0, 6.283); ctx.fill();
     const hold = ui.held ? (ui.relAt ? 1 - ease((now - ui.relAt) / 550) : ease((now - ui.heldAt) / 600)) : 0; // la tablette quitte le tiroir pour les mains, puis y revient
-    if (!ui.held || hold < 0.999) stone(ctx, c, 586, dy + 22, 14, t);
+    const SK = (r.opts.stoneState && r.opts.stoneState()) || {}, inDrawer = !r.stoneHeld && (SK.place || "drawer") === "drawer"; /* la pierre : dans le tiroir, emportée, partie (l'accord) ou posée sur le bureau (le commandement) */
+    if (inDrawer && (!ui.held || hold < 0.999)) stone(ctx, c, 586, dy + 22, 14, t);
     ctx.restore();
-    if (ui.open && now - ui.at > 600 && !ui.held) r.hot.push({ x: 548, y: yb - 62, w: 76, h: 42, tip: TRr("atelier.stone.tip"), desk: "hold" });
+    if (inDrawer && ui.open && now - ui.at > 600 && !ui.held) r.hot.push({ x: 548, y: yb - 62, w: 76, h: 42, tip: TRr("atelier.stone.tip"), desk: "hold" });
     if (ui.open && now - ui.at > 400) r.hot.push({ x: 536, y: yb - 22, w: 100, h: 22, tip: TRr("atelier.drawer.close"), desk: "drawer" });
   }
   if (!ui.open || dp < 0.05) { // un clou de laiton qui brille un peu trop : c'est le bouton du tiroir
@@ -335,7 +329,9 @@ function drawDesk(r, ctx, sc, sky, t) {
     if (ui.relAt && now - ui.relAt > 560) { ui.held = false; ui.relAt = 0; } else {
       ctx.fillStyle = rgba(0, 0, 0, 0.62 * hp); ctx.fillRect(0, 0, W, H);
       const sx = 586 + (320 - 586) * hp, sy = 290 + (172 - 290) * hp, sz = 14 + 66 * hp; ctx.save(); ctx.translate(sx, sy); ctx.rotate(Math.sin(t * 0.7) * 0.06 * hp); ctx.translate(-sx, -sy); stone(ctx, c, sx, sy, sz, t); ctx.restore();
-      if (hp > 0.9) { ctx.font = "italic 15px serif"; ctx.textAlign = "center"; ctx.fillStyle = rgba(233, 220, 184, 0.85); ctx.fillText(TRr("atelier.stone.flash"), W / 2, 312); ctx.textAlign = "left"; }
+      if (hp > 0.9) { ctx.font = "italic 15px serif"; ctx.textAlign = "center"; ctx.fillStyle = rgba(233, 220, 184, 0.85); ctx.fillText(TRr(((r.opts.stoneState && r.opts.stoneState()) || {}).canTake ? "atelier.stone.flash17" : "atelier.stone.flash"), W / 2, 312); ctx.textAlign = "left"; }
+      const SK2 = (r.opts.stoneState && r.opts.stoneState()) || {};
+      if (SK2.canTake && hp > 0.9) r.hot.push({ x: sx - sz * 1.6, y: sy - sz * 1.3, w: sz * 3.2, h: sz * 2.2, tip: TRr("atelier.stone.carry"), desk: "carry" }); /* le 17 : on peut l'emporter (un clic sur elle) ; ailleurs, on la rend au tiroir */
       r.hot.push({ x: 0, y: 0, w: W, h: H, tip: "", desk: "release" });
     }
   }

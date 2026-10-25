@@ -24,6 +24,7 @@ const UW = require("./unwritten");
 const ST = require("./story");
 const HEAR = require("./story-hear");
 const WARD = require("./ward"); /* le cachet et la garde (étape D) */
+const STONE = require("./story-stone"); /* le chapitre 17, la pierre (étape E) */
 const DB = require("./relto-descbook");
 const LEC = require("./lectern");
 
@@ -96,7 +97,9 @@ async function buildScene(plugin, file, opt = {}) {
     const store = plugin.ext.story || (plugin.ext.story = {}), key = TEL.keyOf(relto.name, relto.seed);
     const axisOf = (id) => { const b = plugin.core && plugin.core.blocks && plugin.core.blocks.get ? plugin.core.blocks.get(id) : null; return b ? b.axis : null; };
     const X = plugin.poolExt ? plugin.poolExt(key) : {}, cv = (X && X.cave) || {}, slab = (cv.slabs || {})[key] || {}; /* la réserve de ce Relto : ce que la machine et la caverne ont vu (chapitres 10 à 13) */
-    const cave = { cookedWhite: !!X.cookedWhite, revealed: cv.revealed || 0, colonies: cv.colonies || 0, looked: !!cv.looked, slabOpen: !!slab.open };
+    const cave = { cookedWhite: !!X.cookedWhite, revealed: cv.revealed || 0, colonies: cv.colonies || 0, looked: !!cv.looked, slabOpen: !!slab.open, degree: require("./fresco").lakeDegree(cv.colonies || 0, cv.fedAt || 0, Date.now()) };
+    if (STONE.watch(ST.get(store, key), cave.degree, Date.now())) plugin.saveExt(); /* le 17 : le chemin d'en bas s'ouvre ; un jour plus tard, sans la pierre lâchée, le commandement */
+    if (STONE.tellCommand(ST.get(store, key))) { plugin.saveExt(); new obsidian.Notice(plugin.t("stone.command"), 12000); }
     const done = ST.evaluate(store, key, { ages, axisOf, zeroFound: relto.zeroFound, tunings: plugin.ext.imagerTunings, guildLock: !!((plugin.ext.imagerTunings || {})["guild:" + key] || {}).lock, cave });
     if (done.length) { for (const c of done) if (c.id === "hear") HEAR.visitFrom(ST.get(store, key), Date.now()); /* la nuit qui vient, la visite */ resetStoryDraw(plugin); /* l'encre du monde étrange (le 14 s'ouvre) */ plugin.saveExt(); for (const c of done) { new obsidian.Notice(plugin.t(c.page || c.id === ST.BOOK_ONE_END ? "story.done" : "story.done.nopage", { title: plugin.lang() === "fr" ? c.title.fr : c.title.en })); markChapterDone(plugin, c, ST.get(store, key)); } }
     relto.storyDone = ST.get(store, key).done.concat(ST.bookOneDone(ST.get(store, key).done) ? ["end"] : []); // « end » : la fin du premier livre (le chapitre 9 ; le second livre continue après)
@@ -208,7 +211,7 @@ async function startStory(plugin) {
 }
 
 /** Ce qui manque au chapitre en cours, en une phrase (vide pour le chapitre final : il ne dit jamais ce qui manque). */
-const WHY = { white: "story.why.white", reveal: "story.why.reveal", lake: "story.why.lake", look: "story.why.look", slab: "story.why.slab", hear: "story.why.hear", carry: "story.why.carry", accord: "story.why.accord", noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all", hardstable: "story.why.hardstable", hardpages: "story.why.hardpages", hardaxes: "story.why.hardaxes" };
+const WHY = { white: "story.why.white", reveal: "story.why.reveal", lake: "story.why.lake", look: "story.why.look", slab: "story.why.slab", hear: "story.why.hear", carry: "story.why.carry", accord: "story.why.accord", stone: "story.why.stone", stonepath: "story.why.stonepath", noage: "story.why.noage", stable: "story.why.stable", pages: "story.why.pages", axes: "story.why.axes", mend: "story.why.mend", program: "story.why.program", physics: "story.why.physics", dry: "story.why.dry", zero: "story.why.zero", lock: "story.why.lock", all: "story.why.all", hardstable: "story.why.hardstable", hardpages: "story.why.hardpages", hardaxes: "story.why.hardaxes" };
 const whyText = (plugin, why) => (WHY[why] ? "\n" + plugin.t(WHY[why]) : "");
 
 /** Un chapitre réussi : la note reçoit la propriété `story_chapter: completed` et l'étiquette `completed`, et une fenêtre le dit sans qu'il faille revenir au Relto. */
@@ -900,6 +903,10 @@ async function renderRelto(plugin, source, el, ctx) {
     /* la machine et la caverne agissent sur la réserve de ce Relto (section 19.2) : le bac à sable, ou celle du Relto histoire */
     caveState: () => (plugin.caveState ? plugin.caveState(pool()) : {}),
     /* le cachet (src/ward.js) : sur le bureau quand la bande du haut des fresques a été vue ; un Livre scellé garde le serpent */
+    /* le 17 (src/story-stone.js) : emporter la pierre, la lâcher dans la fissure ; ce qui change ensuite dans la caverne */
+    stoneState: () => { if (!scene || scene.mode !== "story" || !pool()) return {}; const st = ST.get(plugin.ext.story || (plugin.ext.story = {}), pool()); return { canTake: STONE.canTake(st), ending: STONE.endingOf(st), place: STONE.placeOf(st), dark: STONE.chamberDark(st), traces: STONE.tracesOn(st), cut: STONE.frescoCut(st) }; },
+    onStoneGive: () => { const pl = pool(); if (!pl) return false; const st = ST.get(plugin.ext.story || (plugin.ext.story = {}), pl); if (!STONE.give(st, Date.now())) return false; plugin.saveExt(); clearTimeout(plugin._stoneTick); plugin._stoneTick = window.setTimeout(() => storyTick(plugin), 7500); return true; },
+    onStoneCry: () => { if (plugin.ext.sound && plugin.ext.soundRooms !== false) sound.caveSfx("cry", (plugin.ext.volume == null ? 0.35 : plugin.ext.volume) * 0.6); },
     sealState: () => (scene && scene.mode === "story" && plugin.caveState ? { here: WARD.sealHere(plugin.caveState(pool())) } : {}),
     wardOf: (age) => { const pl = pool(); return !!(pl && age && age.path && WARD.isWarded(plugin.poolExt(pl), plugin.core.seed(age.path))); },
     onWard: (age) => { const pl = pool(); if (!pl || !age || !age.path) return ""; const on = WARD.toggle(plugin.poolExt(pl), plugin.core.seed(age.path)); plugin.saveExt(); if (plugin.index) plugin.index.invalidate(); plugin.refreshLive(); return t(on ? "ward.on" : "ward.off", { name: age.name }); },
@@ -913,7 +920,7 @@ async function renderRelto(plugin, source, el, ctx) {
     onCavePick: (k) => { if (plugin.cavePick) plugin.cavePick(k, pool()); if (roomSoundOn()) sound.ovenSfx("click", roomVol()); },
     onCaveSlab: (i) => { const res = plugin.caveSlab ? plugin.caveSlab(i, scene, pool()) : null; if (res === "open") storyLater(); if (res && roomSoundOn()) sound.slabSfx(res === "open" ? "open" : "notch", roomVol()); return res; }, /* un cran : un raclement bref ; les six justes : la pierre qui bascule, une fois */
     onCaveHatch: () => { if (plugin.caveHatch) plugin.caveHatch(pool()); if (roomSoundOn()) sound.slideStone(roomVol()); },
-    onCaveSfx: (kind) => { if (roomSoundOn()) sound.caveSfx(kind, roomVol()); },
+    onCaveSfx: (kind) => { if (kind === "cry" && pool() && !STONE.tracesOn(ST.get(plugin.ext.story || (plugin.ext.story = {}), pool()))) return; /* le commandement : plus un cri */ if (roomSoundOn()) sound.caveSfx(kind, roomVol()); },
     dreamLast: (age) => (plugin.dreamLast ? plugin.dreamLast(age, pool()) : null),
     onDreamStart: (age) => { if (plugin.dreamMark) plugin.dreamMark(age, pool()); if (roomSoundOn()) sound.caveSfx("cry", roomVol() * 0.4); },
     onDreamAge: (age, gz) => dreamAge(age, gz),

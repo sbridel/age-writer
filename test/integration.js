@@ -493,6 +493,18 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         WARD.toggle(X, sSeed); r = an(recv);
         ok(!r.carry.fragments[0].kept && (r.resolved.lines || []).some((l) => l.entry && l.entry.id === "twin_suns"), "garde levée : le fragment respire de nouveau");
         files.delete(fresh.path); }
+      { /* après le 17 (src/story-stone.js ; DESIGN-art-bahro §7) : l'accord refuse la source qui ne tient pas ; le commandement copie, sans respirer */
+        const sick = age("Source Malade", ["single_sun", "frozen_cycle", "lava", "snow", "fern", "water", "acid", "rotation: 24"], dir); p.carrySource(sick, p.core.extract(sick.content)); p.law.observe("Source Malade", an(sick), sick.stat.mtime);
+        const taker = age("Preneur", ["single_sun", "steady_cycle", "sand", "grass", "rotation: 24", "carry: sky from Source Malade"], dir);
+        const sickSt = an(sick).stability, before = an(taker);
+        ok(sickSt < 75 && before.carry.fragments.length === 1, "avant le 17 : on porte même depuis un monde qui ne tient pas (" + sickSt + ")");
+        p.ext.story[SKc].stone = { ending: "accord", endedAt: Date.now() }; taker.stat.mtime++;
+        const after = an(taker); ok(!after.carry.fragments.length && (after.carry.refused || []).some((x) => x.why === "sick17"), "l'accord : ils ne portent plus depuis un monde qui tombe");
+        p.ext.story[SKc].stone = { ending: "command", endedAt: Date.now() }; recv.stat.mtime++;
+        r = an(recv); ok(r.carry.fragments.length === 1 && r.carry.fragments[0].copied && /not breathe|ne respire pas/.test(p.carryLine(r.carry)), "le commandement : copié, pas lié");
+        srcA.content = "```age\nred_sun\nsteady_cycle\nwater\nfern\n```\n"; srcA.stat.mtime++; p.carrySource(srcA, p.core.extract(srcA.content));
+        r = an(recv); ok((r.resolved.lines || []).some((l) => l.entry && l.entry.id === "twin_suns") && !(r.resolved.lines || []).some((l) => l.entry && l.entry.id === "red_sun"), "le commandement : la source change, la copie ne bouge pas");
+        delete p.ext.story[SKc].stone; files.delete(sick.path); files.delete(taker.path); }
       recv.content = "```age\nsingle_sun\nsteady_cycle\nsand\ncarry: sky from Jamais Lu\ncarry: moor from Source Ciel\ncarry: sky from Personne\ncarry: desert from Source Ciel\n```\n"; recv.stat.mtime++;
       r = an(recv); const why = (r.carry.refused || []).map((x) => x.why).join();
       ok(why === "untouched,what,missing,empty", "porter : jamais ouvert, mot inconnu, Livre absent, rien à donner (" + why + ")");
