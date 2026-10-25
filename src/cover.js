@@ -93,6 +93,7 @@ const tbl = (c, i) => c.map((x) => (hex2(x)[i] / 255).toFixed(3)).join(" ");
  * @param {string} o.name           nom de l'Âge
  * @param {number} o.number         numéro d'Âge (affiché en D'ni)
  * @param {number} [o.seedNumber]   graine numérique (affichée en petit)
+ * @param {boolean} [o.ward]        un Livre gardé (src/ward.js) : le serpent au médaillon, ou sous le nom
  * @param {import('./dni').Dni} o.dni
  * @param {(id:string,x:number,y:number,size:number)=>string} [o.glyph]  fe() du moteur
  * @param {string[]} [o.glyphIds]
@@ -102,6 +103,11 @@ const tbl = (c, i) => c.map((x) => (hex2(x)[i] / 255).toFixed(3)).join(" ");
  * @param {string} [o.label]        « Descriptive book »
  * @param {boolean} [o.standalone]  ajoute xmlns (export de fichier)
  */
+/** Le serpent du cachet (DESIGN-art-bahro §4), du trait de la planche des fresques : un Livre gardé le porte au médaillon. */
+function serpentSvg(cx, cy, size, col) {
+  const k = size / 20, P = [[-10, 6], [-6, 2], [-2, 6], [2, 2], [5, -2], [3, -6], [6, -8]].map(([x, y]) => `${(cx + x * k).toFixed(1)},${(cy + y * k).toFixed(1)}`).join(" ");
+  return `<g fill="none" stroke="${col}" stroke-linecap="round" stroke-linejoin="round"><polyline points="${P}" stroke-width="${(2.8 * k).toFixed(2)}"/><circle cx="${(cx + 7 * k).toFixed(1)}" cy="${(cy - 8.5 * k).toFixed(1)}" r="${(2 * k).toFixed(1)}" fill="${col}" stroke="none"/><polyline points="${(cx + 9 * k).toFixed(1)},${(cy - 9 * k).toFixed(1)} ${(cx + 10.5 * k).toFixed(1)},${(cy - 8 * k).toFixed(1)} ${(cx + 9 * k).toFixed(1)},${(cy - 7.5 * k).toFixed(1)}" stroke-width="${k.toFixed(2)}"/></g>`;
+}
 function coverSvg(o) {
   const h = fnv(o.name), u = "c" + (h % 100000), R = rng(h ^ 0x9e3779b9);
   const sob = o.sobriety != null && !isNaN(o.sobriety) ? clamp01(o.sobriety) : autoSobriety(h);
@@ -210,7 +216,8 @@ function coverSvg(o) {
     const my = 262, r = o.medal || 40 - 6 * (sob - 0.55); // `medal` : un médaillon plus grand (le Livre du Relto)
     s += `<circle cx="${CX}" cy="${my}" r="${r + 4}" fill="#000" opacity="0.28"/><circle cx="${CX}" cy="${my}" r="${r}" fill="${GOLD}" stroke="#000" stroke-opacity="0.5" stroke-width="1.2"/>`;
     s += `<circle cx="${CX}" cy="${my}" r="${r - 6}" fill="${mix(lb, "#000", 0.55)}" stroke="${b2}" stroke-opacity="0.8" stroke-width="1"/>`;
-    if (typeof o.emblem === "function") s += o.emblem(CX, my, r - 6, b2); else s += numG(o.number, 20, my - 10, b2); // un emblème frappé (le Livre du Relto : l'île) à la place du numéro
+    if (o.ward) s += serpentSvg(CX, my + 2, (r - 6) * 1.5, "#c47a3c"); /* un Livre gardé : le serpent à la place du numéro */
+    else if (typeof o.emblem === "function") s += o.emblem(CX, my, r - 6, b2); else s += numG(o.number, 20, my - 10, b2); // un emblème frappé (le Livre du Relto : l'île) à la place du numéro
     if (dniName) s += `<text x="${CX}" y="${my + r + 40}" text-anchor="middle" font-family="${fam}" font-size="24" fill="${mix(lb, "#e8cfa0", 0.55)}" opacity="0.85">${dniName}</text>`;
     const ly = my + r + (dniName ? 66 : 44);
     s += `<text x="${CX}" y="${ly}" text-anchor="middle" font-family="${serif}" font-style="italic" font-size="17" fill="${mix(lb, "#e8cfa0", 0.6)}" opacity="0.9">${esc(o.name)}</text>`;
@@ -219,6 +226,7 @@ function coverSvg(o) {
     ids.forEach((id, i) => { const sz = 17, x = CX + (i - (ids.length - 1) / 2) * 30 - sz / 2; s += `<g color="${mix(lb, "#e8cfa0", 0.5)}" opacity="0.7">${o.glyph(id, x, ly + 24, sz)}</g>`; });
   }
   if (o.seedNumber != null && !medallion) s += numG(o.seedNumber, 15, 506, b1);
+  if (o.ward && !medallion) s += `<circle cx="${CX}" cy="470" r="22" fill="#000" opacity="0.35"/>` + serpentSvg(CX, 472, 34, "#c47a3c"); /* sans médaillon : le serpent frappé sous le nom */
   if (o.verdict) s += `<text x="${CX}" y="${medallion ? 560 : 548}" text-anchor="middle" font-family="Georgia, serif" font-size="10.5" letter-spacing="3" fill="${medallion ? mix(verdictCol, lb, 0.35) : verdictCol}">${esc(o.verdict.toUpperCase())}</text>`;
   // usure : éraflures s'il vacille, fentes s'il se meurt
   if (o.verdict === "unstable" || o.verdict === "dying") {
@@ -252,4 +260,4 @@ function coverSvg(o) {
   return s;
 }
 
-module.exports = { coverSvg, materialFor, MATERIALS, LEVELS, autoSobriety };
+module.exports = { coverSvg, serpentSvg, materialFor, MATERIALS, LEVELS, autoSobriety };

@@ -480,6 +480,19 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
       const back = an(srcA); ok(back.carry && back.carry.takenBy.includes("Porteur") && back.axisStability.cosmological < 100, "porter : la source porte une couture, plus petite");
       srcA.content = "```age\nred_sun\nsteady_cycle\nwater\nfern\n```\n"; srcA.stat.mtime++; p.carrySource(srcA, p.core.extract(srcA.content));
       r = an(recv); ok((r.resolved.lines || []).some((l) => l.entry && l.entry.id === "red_sun"), "porter : la source change, le fragment change (il respire)");
+      { /* la garde (src/ward.js ; DESIGN-art-bahro §4) : le serpent sur la source ; ce qui était porté reste tel quel, rien de neuf ne sort */
+        const WARD = require("../src/ward"), sSeed = p.core.seed(srcA.path), X = p.wardExt(sSeed);
+        ok(X && !WARD.isWarded(X, sSeed), "garde : la réserve du Relto histoire, aucun Livre gardé");
+        WARD.toggle(X, sSeed);
+        srcA.content = "```age\ntwin_suns\nsteady_cycle\nwater\nfern\n```\n"; srcA.stat.mtime++; p.carrySource(srcA, p.core.extract(srcA.content));
+        r = an(recv); const has = (id) => (r.resolved.lines || []).some((l) => l.entry && l.entry.id === id);
+        ok(r.carry.fragments.length === 1 && r.carry.fragments[0].kept && has("red_sun") && !has("twin_suns"), "garde : la source scellée change, le fragment reste tel qu'il était (encre sèche)");
+        ok(/no longer breathes|ne respire plus/.test(p.carryLine(r.carry)), "garde : le panneau dit qu'il ne respire plus");
+        const fresh = age("Porteur Neuf", ["single_sun", "steady_cycle", "sand", "rotation: 24", "carry: sky from Source Ciel"], dir);
+        ok(((an(fresh).carry || {}).refused || []).some((x) => x.why === "ward"), "garde : rien de neuf ne sort d'un Livre gardé");
+        WARD.toggle(X, sSeed); r = an(recv);
+        ok(!r.carry.fragments[0].kept && (r.resolved.lines || []).some((l) => l.entry && l.entry.id === "twin_suns"), "garde levée : le fragment respire de nouveau");
+        files.delete(fresh.path); }
       recv.content = "```age\nsingle_sun\nsteady_cycle\nsand\ncarry: sky from Jamais Lu\ncarry: moor from Source Ciel\ncarry: sky from Personne\ncarry: desert from Source Ciel\n```\n"; recv.stat.mtime++;
       r = an(recv); const why = (r.carry.refused || []).map((x) => x.why).join();
       ok(why === "untouched,what,missing,empty", "porter : jamais ouvert, mot inconnu, Livre absent, rien à donner (" + why + ")");

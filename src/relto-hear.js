@@ -181,4 +181,44 @@ function scarabSide(ctx, c, x, y, s, t, o = {}) {
   ctx.fillStyle = rgba(255, 245, 220, K.enamel ? 0.22 : 0.16); ctx.beginPath(); ctx.ellipse(s * 0.15, -s * 0.85, s * 0.22, s * 0.08, -0.15, 0, TAU); ctx.fill(); ctx.restore();
   ctx.restore();
 }
-module.exports = { linkStone, inkRipples, scarab, scarabSide, dipPen, GLOW };
+
+/* ---- le cachet (étape D, claude/DESIGN-art-bahro.md §4 ; src/ward.js) ---- */
+/** Le serpent, du même trait que la planche des fresques (relto-fresco.js), pour une taille `s` (20 = la planche). */
+function serpent(ctx, x, y, s, col, w) {
+  const k = s / 20, pts = [[-10, 6], [-6, 2], [-2, 6], [2, 2], [5, -2], [3, -6], [6, -8]];
+  ctx.save(); ctx.translate(x, y); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.lineWidth = Math.max(0.6, (w || 2.8) * k);
+  ctx.beginPath(); pts.forEach(([px, py], i) => (i ? ctx.lineTo(px * k, py * k) : ctx.moveTo(px * k, py * k))); ctx.stroke();
+  ctx.beginPath(); ctx.arc(7 * k, -8.5 * k, 2 * k, 0, TAU); ctx.fill();
+  ctx.lineWidth = Math.max(0.4, k); ctx.beginPath(); ctx.moveTo(9 * k, -9 * k); ctx.lineTo(10.5 * k, -8 * k); ctx.lineTo(9 * k, -7.5 * k); ctx.stroke();
+  ctx.restore();
+}
+/** Le cachet posé, vu d'en haut : une petite pierre sombre, irrégulière, polie par l'usage ; une poignée taillée, deux anneaux gravés ; le serpent est dessous. */
+function seal(ctx, c, x, y, s) {
+  const base = (k) => { ctx.beginPath(); for (let i = 0; i <= 24; i++) { const a = (i / 24) * TAU, r = 1 + 0.06 * Math.sin(a * 3 + 1) + 0.04 * Math.sin(a * 5); ctx.lineTo(Math.cos(a) * s * 0.55 * r, k + Math.sin(a) * s * 0.22 * r); } ctx.closePath(); };
+  ctx.save(); ctx.translate(x, y);
+  ctx.fillStyle = "rgba(0,0,0,0.38)"; ctx.beginPath(); ctx.ellipse(s * 0.14, s * 0.5, s * 0.66, s * 0.22, 0, 0, TAU); ctx.fill(); /* l'ombre */
+  ctx.fillStyle = c("#232226"); base(s * 0.3); ctx.fill(); ctx.fillRect(-s * 0.55, s * 0.12, s * 1.1, s * 0.18); /* la tranche */
+  const g1 = ctx.createLinearGradient(-s * 0.5, 0, s * 0.5, 0); g1.addColorStop(0, c("#47454b")); g1.addColorStop(1, c("#2f2e33"));
+  ctx.fillStyle = g1; base(s * 0.12); ctx.fill();
+  const g2 = ctx.createLinearGradient(-s * 0.16, 0, s * 0.16, 0); g2.addColorStop(0, c("#5a565e")); g2.addColorStop(0.5, c("#3c393f")); g2.addColorStop(1, c("#262428"));
+  ctx.fillStyle = g2; ctx.beginPath(); ctx.moveTo(-s * 0.2, s * 0.14); ctx.lineTo(-s * 0.1, -s * 0.28); ctx.lineTo(s * 0.1, -s * 0.28); ctx.lineTo(s * 0.2, s * 0.14); ctx.closePath(); ctx.fill();
+  const g3 = ctx.createRadialGradient(-s * 0.07, -s * 0.44, 0.5, 0, -s * 0.36, s * 0.22); g3.addColorStop(0, c("#8a858e")); g3.addColorStop(1, c("#2b292e"));
+  ctx.fillStyle = g3; ctx.beginPath(); ctx.ellipse(0, -s * 0.36, s * 0.17, s * 0.15, 0, 0, TAU); ctx.fill();
+  ctx.strokeStyle = "rgba(15,14,18,0.7)"; ctx.lineWidth = Math.max(0.6, s * 0.03); for (const k of [-0.1, 0.02]) { ctx.beginPath(); ctx.ellipse(0, s * k, s * (0.15 + 0.24 * (k + 0.1)), s * 0.04, 0, 0, Math.PI); ctx.stroke(); }
+  ctx.fillStyle = "rgba(176,104,52,0.6)"; ctx.beginPath(); ctx.ellipse(s * 0.32, s * 0.24, s * 0.08, s * 0.03, 0.3, 0, TAU); ctx.fill(); /* une trace d'ocre sur la tranche : il a servi */
+  ctx.restore();
+}
+/** Le cachet en main, face gravée vers le bas : on voit le serpent en creux, de l'ocre dans le creux (il suit le curseur). */
+function sealFace(ctx, c, x, y, s) {
+  const edge = (r0) => { ctx.beginPath(); for (let i = 0; i <= 32; i++) { const a = (i / 32) * TAU, r = r0 * (1 + 0.05 * Math.sin(a * 3 + 1) + 0.03 * Math.sin(a * 5)); ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r * 0.96); } ctx.closePath(); };
+  ctx.save(); ctx.translate(x, y);
+  ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.beginPath(); ctx.ellipse(s * 0.25, s * 1.05, s * 0.8, s * 0.2, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = c("#1f1e22"); ctx.save(); ctx.translate(0, s * 0.1); edge(s * 0.8); ctx.fill(); ctx.restore();
+  const gr = ctx.createRadialGradient(-s * 0.25, -s * 0.25, 1, 0, 0, s * 0.8); gr.addColorStop(0, c("#4c4a51")); gr.addColorStop(1, c("#2c2b30"));
+  ctx.fillStyle = gr; edge(s * 0.78); ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.07)"; ctx.lineWidth = 1; edge(s * 0.66); ctx.stroke();
+  serpent(ctx, s * 0.02, s * 0.1, s * 0.62, "#121116", 4.2); serpent(ctx, 0, s * 0.08, s * 0.62, "rgba(176,104,52,0.92)", 2.4);
+  ctx.restore();
+}
+
+module.exports = { linkStone, inkRipples, scarab, scarabSide, dipPen, serpent, seal, sealFace, GLOW };

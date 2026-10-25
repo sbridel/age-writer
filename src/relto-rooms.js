@@ -133,6 +133,7 @@ function drawCabin(r, ctx, sc, sky, t) {
       ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(bx + bw - 3, by + 5, 3, bh - 5);
       const held = r.opts.imagerGet && sc.additions.some((a) => a.type === "imager") && (r.opts.imagerGet(b.age.path) || {}).lock; // tenu par l'Imageur : une petite étiquette de laiton
       if (held) { ctx.fillStyle = c("#c9a24e"); ctx.fillRect(bx + bw / 2 - 2.5, by + 8, 5, 8); ctx.fillStyle = rgba(127, 214, 200, 0.8); ctx.fillRect(bx + bw / 2 - 1, by + 10, 2, 2); }
+      if (r.opts.wardOf && r.opts.wardOf(b.age)) { ctx.fillStyle = rgba(20, 16, 14, 0.5); ctx.fillRect(bx + 1, by + bh * 0.38, bw - 2, bh * 0.26); require("./relto-hear").serpent(ctx, bx + bw / 2, by + bh / 2, bw * 0.85, c("#c47a3c"), 3.2); } /* un Livre gardé : le serpent au dos, sur une bande sombre */
       r.hot.push({ x: bx, y: by, w: bw, h: bh, tip: `${b.age.name} — ${b.age.verdict || "?"}${b.age.stability != null ? ` ${b.age.stability}%` : ""}${held ? " · held by the Imager" : ""}`, age: b.age, book: true });
     }
     if (sc.ages.length > 30) { ctx.fillStyle = rgba(230, 220, 190, 0.75); ctx.font = "11px serif"; ctx.fillText(`+${sc.ages.length - 30}`, x0 + w - 28, y0 - 14); }

@@ -37,6 +37,7 @@ const MEM = require("./relto-memories");
 const CAVE = require("./relto-cave");
 const OV = require("./relto-oven"); /* la machine du Relto, dans l'appentis (étape 4a′) */
 const DREAM = require("./dream");
+const HEAR = require("./relto-hear"); /* les objets Bahro : le serpent et le cachet en main (src/ward.js) */
 const ROOMS = { dream: require("./relto-dream").drawDream, stars: require("./relto-stars").drawStars, fissure: require("./relto-stars").drawFissure, scope: SCOPE.drawScope, hall: HALL.drawHall, oven: OV.drawOven, cavetop: CAVE.drawCaveTop, cavebottom: CAVE.drawCaveBottom, memories: MEM.drawMemories, lounge: LG.drawLounge, vault: VT.drawVault, flower: AT.drawFlowerView, librarybook: LB.drawLibraryBook, descbook: DV.drawDescBook, atelierback: AB.drawBackroom, roundwindow: RW.drawRoundWindow, calendar: CALV.drawCalendar, glyphbook: GB.drawGlyphBook, letter: AT.drawLetter, atelier: AT.drawAtelier, desk: AT.drawDesk, loft: AT.drawLoft, cabin: RM.drawCabin, pillars: RM.drawPillarsRoom, pond: RM.drawPondRoom, pondplus: RM.drawPondPlusRoom, cat: RM.drawCatRoom, grove: RM.drawGroveRoom, imager: RI.drawImagerRoom, book: PB.drawBookRoom, telescope: TL.drawTelescopeRoom, starmap: SM.drawStarMap, clock: CK.drawClockRoom };
 
 const W = 640, H = 360, GY = 208; // largeur, hauteur logiques ; ligne de sol
@@ -265,6 +266,7 @@ class ReltoRenderer {
     this.drawGrade(ctx, sky);
     ctx.save(); ctx.translate(CAM_X, CAM_OY); ctx.scale(CAM, CAM); ctx.translate(-CAM_X, -CAM_Y);
     this.drawHover(ctx);
+    this.drawHeld(ctx);
     this.drawFlash(ctx);
     ctx.restore();
     this.drawFade(ctx, sky);
@@ -1029,6 +1031,7 @@ class ReltoRenderer {
       const bx = x0 + 4 + b.col * 5.6, by = y0 + 14 + b.row * 14 - 2.5 - b.h;
       ctx.fillStyle = col(b.color); ctx.fillRect(bx, by, b.w, b.h);
       ctx.fillStyle = col(VERDICT[b.age.verdict] || VERDICT.unknown); ctx.fillRect(bx, by, b.w, 1.6);
+      if (this.opts.wardOf && this.opts.wardOf(b.age)) HEAR.serpent(ctx, bx + b.w / 2, by + b.h / 2, b.w * 0.9, col("#c47a3c"), 3); /* un Livre gardé : le serpent au dos */
       hot.push({ x: bx - 0.5, y: by, w: b.w + 1, h: b.h, tip: `${b.age.name} — ${b.age.verdict || "?"}${b.age.stability != null ? ` ${b.age.stability}%` : ""}`, age: b.age, book: true });
     }
     if (this.scene.ages.length > 30) { ctx.fillStyle = rgba(230, 220, 190, 0.7); ctx.font = "7px serif"; ctx.fillText(`+${this.scene.ages.length - 30}`, x0 + w - 16, y0 + 12); }
@@ -1425,9 +1428,11 @@ class ReltoRenderer {
   drawFullView(ctx, sky, fn) {
     ctx.save(); ctx.setTransform(this.scale, 0, 0, this.scale, 0, 0); ctx.clearRect(0, 0, W, H);
     fn();
-    this.drawGrade(ctx, sky); this.drawHover(ctx); this.drawFlash(ctx); this.drawFade(ctx, sky);
+    this.drawGrade(ctx, sky); this.drawHover(ctx); this.drawHeld(ctx); this.drawFlash(ctx); this.drawFade(ctx, sky);
     ctx.restore();
   }
+  /** Le cachet en main : sa face gravée suit le curseur, d'une pièce à l'autre. */
+  drawHeld(ctx) { if (!this.sealHeld || !this.pointer) return; const [x, y] = this.pointer; HEAR.sealFace(ctx, (h) => h, x + 11, y + 13, 9); }
   drawFade(ctx, sky) {
     if (!this.fadeAt || this.opts.reducedMotion) return;
     const p = (Date.now() - this.fadeAt) / 520; if (p >= 1) { this.fadeAt = 0; return; }
@@ -1515,7 +1520,7 @@ class ReltoRenderer {
     if (n) { this.dragged = true; if (!this.touch) this.canvas.style.cursor = "var(--age-grabbing, grabbing)"; else try { if (navigator.vibrate) navigator.vibrate(6); } catch (err) { /* ignore */ } if (!this.running) this.draw(0); }
   }
   onMove(e) {
-    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.pointer = [x, y]; /* gardé : le loup de l'atelier suit le curseur des yeux */ this.canvas.style.cursor = this.hover && !this.hover.secret && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go || this.hover.imager || this.hover.tel || this.hover.purr || this.hover.pageToggle || this.hover.pbook || this.hover.gbTurn || this.hover.lamp || this.hover.gbGo != null || this.hover.vpage || this.hover.mapPage || this.hover.shelf != null || this.hover.stone || this.hover.knock || this.hover.desk || this.hover.toy || this.hover.ward) ? "var(--age-hand, pointer)" : ""; // la main dessinée du Relto (styles.ext.css), la main du système à défaut
+    const [x, y] = this.toLogical(e), prev = this.hover; this.hover = this.hit(x, y); this.pointer = [x, y]; /* gardé : le loup de l'atelier suit le curseur des yeux */ if (this.sealHeld && !this.running) this.draw(0); /* le cachet suit la main */ this.canvas.style.cursor = this.hover && !this.hover.secret && (this.hover.book || this.hover.special || this.hover.flash || this.hover.go || this.hover.imager || this.hover.tel || this.hover.purr || this.hover.pageToggle || this.hover.pbook || this.hover.gbTurn || this.hover.lamp || this.hover.gbGo != null || this.hover.vpage || this.hover.mapPage || this.hover.shelf != null || this.hover.stone || this.hover.knock || this.hover.desk || this.hover.toy || this.hover.ward) ? "var(--age-hand, pointer)" : ""; // la main dessinée du Relto (styles.ext.css), la main du système à défaut
     if (this.hover && (this.hover.wc || this.hover.book || (this.hover.imager && this.hover.imager.value != null)) && !(this.hover.imager && this.hover.tip && /held by the lock/.test(this.hover.tip))) this.canvas.style.cursor = "var(--age-grab, grab)"; // une molette, un rail, un livre de l'étagère : ça se prend à pleine main (styles.ext.css)
     if (!this.running && this.hover !== prev) this.draw(0); // mouvement réduit : pas de boucle, on redessine pour l'infobulle
   }
@@ -1565,6 +1570,7 @@ class ReltoRenderer {
   }
   /** Le bureau : le tiroir (clou de laiton), la tablette qu'on prend entre les mains et qui revient toujours au tiroir. Rien n'est gardé : en s'en allant, le tiroir se ferme. */
   deskAct(k) {
+    if (k === "seal") { this.sealHeld = true; this.flash = { text: this.imagerTr()("atelier.seal.take"), x: 497, y: 292, until: Date.now() + 2400 }; if (!this.running) this.draw(0); return; } /* le cachet : on le prend ; il suit la main jusqu'à une couverture (src/ward.js) */
     const ui = (this.deskUI = this.deskUI || { open: false, at: 0, held: false, heldAt: 0, relAt: 0 }), now = Date.now();
     if (k === "drawer") { if (ui.held) return; ui.open = !ui.open; ui.at = now; if (this.opts.onRelic) this.opts.onRelic(ui.open ? "open" : "close"); }
     else if (k === "hold" && !ui.held) { ui.held = true; ui.heldAt = now; ui.relAt = 0; if (this.opts.onRelic) this.opts.onRelic("hold"); }
@@ -1575,6 +1581,16 @@ class ReltoRenderer {
     if (!this.running) this.draw(0);
   }
   /** L'armoire du fond de l'atelier : elle s'ouvre, ou se referme toute seule. */
+  /**
+   * Un clic, le cachet en main (DESIGN-art-bahro §4) : sur un Livre, il le scelle ou le descelle ; sur un passage, on l'emporte ; ailleurs, on le repose.
+   * Jamais deux sens au même clic : sans le cachet, un Livre s'ouvre comme toujours. Renvoie vrai si le clic est pris.
+   */
+  sealClick(h, x, y) {
+    const done = () => { if (!this.running) this.draw(0); return true; };
+    if (h && h.book && h.age && this.opts.onWard) { const msg = this.opts.onWard(h.age); if (msg) this.flash = { text: msg, x: h.x + h.w / 2, y: h.y, until: Date.now() + 3200 }; if (this.opts.onRelic) this.opts.onRelic("stamp"); return done(); }
+    if (h && h.go) return false;
+    this.sealHeld = false; this.flash = { text: this.imagerTr()("atelier.seal.back"), x, y, until: Date.now() + 2200 }; return done();
+  }
   wardAct() { this.wardOpen = !this.wardOpen; this.wardAt = Date.now(); this.flash = { text: this.imagerTr()(this.wardOpen ? "back.ward.open" : "back.ward.shut"), x: 347, y: 70, until: Date.now() + 2800 }; if (this.opts.onRelic) this.opts.onRelic(this.wardOpen ? "open" : "close"); if (!this.running) this.draw(0); }
   /** La chaîne de la lampe : on la tire, la lampe s'éteint ou se rallume (partagé entre l'atelier et le bureau). */
   /** Le robinet du salon : un tour de croisillon, l'eau coule (ou s'arrête) ; le son de la pièce suit (`onTap`). */
@@ -1617,7 +1633,7 @@ class ReltoRenderer {
     if (ok || K.length >= 3) this.knocks = [];
     if (ok) { this.panelAt = Date.now(); window.setTimeout(() => this.setView("atelier"), 1400); } // le panneau coulisse, puis on passe
   }
-  onClick(e) { if (this.dragged) { this.dragged = false; return; } const [x, y] = this.toLogical(e), h = this.hit(x, y); if (this.touch && this.touchHold(h)) return; if (!h) return; if (h.dreamGo) { this.dreamEnter(); return; } if (h.takeGuide && this.opts.onDreamGuide) { const msg = this.opts.onDreamGuide(h.takeGuide); if (msg) this.flash = { text: msg, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2600 }; if (!this.running) this.draw(0); return; } if (h.vpage) { this.vaultPage = (this.vaultPage || 0) + h.vpage; if (!this.running) this.draw(0); return; } if (h.mapPage) { this.mapPage = (this.mapPage || 0) + h.mapPage; if (!this.running) this.draw(0); return; } if (h.mapAct) { SM.act(this, h.mapAct, x, y, e); if (!this.running) this.draw(0); return; } if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.lamp) this.lampToggle(h); else if (h.tap) this.tapToggle(); else if (h.ward) this.wardAct(); else if (h.gbTurn) this.gbTurn(h.gbTurn); else if (h.gbGo != null) this.gbGo(h.gbGo); else if (h.stone) this.stoneTap(x, y); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.caveDrop && this.opts.onCaveDrop) { this.opts.onCaveDrop(); if (!this.running) this.draw(0); } else if (h.caveHatch && this.opts.onCaveHatch) { this.opts.onCaveHatch(); if (!this.running) this.draw(0); } else if (h.caveSlab && this.opts.onCaveSlab) { this.slabTurnAt = { i: h.caveSlab - 1, at: Date.now() }; this.opts.onCaveSlab(h.caveSlab - 1); if (!this.running) this.draw(0); } else if (h.cavePick && this.opts.onCavePick) { this.opts.onCavePick(h.cavePick); if (!this.running) this.draw(0); } if (h.caveSample && this.opts.onCaveSample) { const msg = this.opts.onCaveSample(); if (msg) this.flash = { text: msg, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2600 }; if (!this.running) this.draw(0); } if (h.scopeCrumb) { this.scopeCrumb = { kind: h.scopeCrumb, at: Date.now() }; if (this.opts.onScopeCrumb) this.opts.onScopeCrumb(h.scopeCrumb); if (!this.running) this.draw(0); } else if (h.oven && this.opts.onOven) { /* la machine : un cran par clic (Maj : cinq) au-dessus ou au-dessous du curseur, à droite ou à gauche du volant */
+  onClick(e) { if (this.dragged) { this.dragged = false; return; } const [x, y] = this.toLogical(e), h = this.hit(x, y); if (this.touch && this.touchHold(h)) return; if (this.sealHeld && this.sealClick(h, x, y)) return; if (!h) return; if (h.dreamGo) { this.dreamEnter(); return; } if (h.takeGuide && this.opts.onDreamGuide) { const msg = this.opts.onDreamGuide(h.takeGuide); if (msg) this.flash = { text: msg, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2600 }; if (!this.running) this.draw(0); return; } if (h.vpage) { this.vaultPage = (this.vaultPage || 0) + h.vpage; if (!this.running) this.draw(0); return; } if (h.mapPage) { this.mapPage = (this.mapPage || 0) + h.mapPage; if (!this.running) this.draw(0); return; } if (h.mapAct) { SM.act(this, h.mapAct, x, y, e); if (!this.running) this.draw(0); return; } if (h.pageToggle) { if (this.opts.onPageToggle) this.opts.onPageToggle(h.pageToggle); return; } if (h.pbook) { this.pageBook = this.pageBook || { spread: 0 }; this.pageBook.spread += h.pbook; if (!this.running) this.draw(0); return; } if (h.imager) { this.imagerAct(h.imager); if (!this.running) this.draw(0); return; } if (h.tel) { TL.act(this, h.tel); if (!this.running) this.draw(0); return; } if (h.toy) { this.toyAt = this.toyAt || {}; this.toyAt[h.toy] = Date.now(); if (this.opts.onToy) this.opts.onToy(h.toy); if (h.flash) this.flash = { text: h.flash, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2200 }; if (!this.running) this.draw(0); } else if (h.book && this.opts.onOpen) this.opts.onOpen(h.age, e); else if (h.special && this.opts.onSpecial) this.opts.onSpecial(h.special, e); else if (h.lamp) this.lampToggle(h); else if (h.tap) this.tapToggle(); else if (h.ward) this.wardAct(); else if (h.gbTurn) this.gbTurn(h.gbTurn); else if (h.gbGo != null) this.gbGo(h.gbGo); else if (h.stone) this.stoneTap(x, y); else if (h.shelf != null) this.shelfBook(h.shelf); else if (h.knock) this.knockBeat(); else if (h.desk) this.deskAct(h.desk); else if (h.caveDrop && this.opts.onCaveDrop) { this.opts.onCaveDrop(); if (!this.running) this.draw(0); } else if (h.caveHatch && this.opts.onCaveHatch) { this.opts.onCaveHatch(); if (!this.running) this.draw(0); } else if (h.caveSlab && this.opts.onCaveSlab) { this.slabTurnAt = { i: h.caveSlab - 1, at: Date.now() }; this.opts.onCaveSlab(h.caveSlab - 1); if (!this.running) this.draw(0); } else if (h.cavePick && this.opts.onCavePick) { this.opts.onCavePick(h.cavePick); if (!this.running) this.draw(0); } if (h.caveSample && this.opts.onCaveSample) { const msg = this.opts.onCaveSample(); if (msg) this.flash = { text: msg, x: h.x + h.w / 2, y: h.y, until: Date.now() + 2600 }; if (!this.running) this.draw(0); } if (h.scopeCrumb) { this.scopeCrumb = { kind: h.scopeCrumb, at: Date.now() }; if (this.opts.onScopeCrumb) this.opts.onScopeCrumb(h.scopeCrumb); if (!this.running) this.draw(0); } else if (h.oven && this.opts.onOven) { /* la machine : un cran par clic (Maj : cinq) au-dessus ou au-dessous du curseur, à droite ou à gauche du volant */
       const k = e.shiftKey ? 5 : 1; let arg = h.arg;
       if (h.slider) { if (Math.abs(y - h.slider.knob) <= 5) return; arg = clamp(h.val + (y < h.slider.knob ? k : -k), 0, 50); }
       else if (h.wheel) arg = clamp(h.val + (x >= h.x + h.w / 2 ? k : -k), 0, 50);

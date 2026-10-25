@@ -239,6 +239,8 @@ module.exports = function build(Base, core, AGEX) {
       const pool = this.poolOfAge(seed); if (!pool) return false;
       return require("./story-hear").stoneHere(require("./story").get(this.ext.story || (this.ext.story = {}), pool), Date.now());
     }
+    /** La réserve du Relto d'un Âge, où vivent sa garde et ses fragments retenus (src/ward.js), ou null hors d'un Relto histoire. */
+    wardExt(seed) { const pool = this.poolOfAge(seed); return pool ? this.poolExt(pool) : null; }
     /** L'index donne le texte des Âges qu'il lit : une source se relit sans attendre une lecture du disque. */
     carrySource(f, src) { if (this._carrySrc) this._carrySrc.set(f.path, { mtime: f.stat ? f.stat.mtime : 0, src }); }
     /** Le texte d'une source, s'il est connu ; sinon il est lu (une fois) et les vues se redessinent quand il arrive. */
@@ -279,11 +281,17 @@ module.exports = function build(Base, core, AGEX) {
       let ownFreq = this._carryCache.get(ok0);
       if (ownFreq == null) { const a0 = core.analyse(own, { seed: o.seed, probe: true, draw: false }); ownFreq = this.carryVoice(a0, own, o.seed); this._carryCache.set(ok0, ownFreq); }
       info.ownFreq = ownFreq;
+      const X0 = this.wardExt(o.seed), WARD = require("./ward"), meWarded = WARD.isWarded(X0, o.seed); /* un Livre gardé : rien n'en sort, rien n'y entre (§4) */
       for (const c of lines) {
         const refuse = (why) => info.refused.push({ raw: c.raw, why, what: c.what, from: c.from });
         if (!c.known || (c.contra && c.what === "sky")) { refuse("what"); continue; }
         const f = this.carryFind(c.from, o.seed); if (!f) { refuse("missing"); continue; }
         const g = CARRY.guardOf(chain, f.basename); if (g) { refuse(g); continue; }
+        if (meWarded || WARD.isWarded(this.wardExt(core.seed(f.path)), core.seed(f.path))) { /* le sceau : ce qui était déjà porté reste tel quel (encre sèche, loi 15), il ne respire plus ; rien de neuf n'entre */
+          const k = X0 && WARD.kept(X0, o.seed, c.raw); if (!k) { refuse("ward"); continue; }
+          done.push({ index: c.index, what: k.what, contra: !!k.contra, ids: k.ids }); info.fragments.push({ ...k, contra: !!k.contra, loop: false, from: f.basename, kept: true });
+          for (const id of k.ids) if (!info.ids.includes(id)) info.ids.push(id);
+          const byK = this._carriedFrom.get(f.basename) || new Map(); byK.set(me, CARRY.axisOf(k.what)); this._carriedFrom.set(f.basename, byK); continue; }
         if (this.ext.law && !this.law.get(f.basename)) { refuse("untouched"); continue; } /* on ne porte que d'un Livre ouvert (une note déjà lue ; §12.2) */
         const src = this.carryText(f); if (src == null) { refuse("pending"); continue; }
         const seed = core.seed(f.path), ck = `${f.path}|${f.stat ? f.stat.mtime : 0}|${chain.length}|${Math.floor(Date.now() / 60000)}`;
@@ -299,7 +307,8 @@ module.exports = function build(Base, core, AGEX) {
         if (life) lifeTaken.add(f.path);
         const loop = CARRY.carriesFrom(src, me); if (loop) info.loop = true; /* deux Âges qui se portent l'un l'autre : la boucle */
         done.push({ index: c.index, what: c.what, contra: c.contra, ids });
-        info.fragments.push({ what: c.what, contra: c.contra, loop, from: f.basename, path: f.path, ids, srcStability: a.a.stability, srcFreq: a.freq });
+        const frag = { what: c.what, contra: c.contra, loop, from: f.basename, path: f.path, ids, srcStability: a.a.stability, srcFreq: a.freq }; info.fragments.push(frag);
+        if (X0 && WARD.keep(X0, o.seed, c.raw, frag)) this.saveExt(); /* retenu : si un sceau tombe ensuite, ce fragment reste tel quel */
         for (const id of ids) if (!info.ids.includes(id)) info.ids.push(id);
         const by = this._carriedFrom.get(f.basename) || new Map(); by.set(me, CARRY.axisOf(c.what)); this._carriedFrom.set(f.basename, by); /* la couture, chez la source aussi (la source perd un lieu, jamais un ciel, même à contre-sens) */
       }
@@ -323,7 +332,7 @@ module.exports = function build(Base, core, AGEX) {
     carryLine(c) {
       if (!c) return "";
       const t = this.t, out = [], what = (w) => t(["carry.what", w].join(".")), deg = (d) => t(["carry.deg", d || "rub"].join("."));
-      for (const f of c.fragments || []) out.push(t(f.contra ? "carry.frag.contra" : "carry.frag", { what: what(f.what), from: f.from, deg: deg(f.degree) }) + (f.srcStability < 75 ? " " + t("carry.sick") : ""));
+      for (const f of c.fragments || []) out.push(t(f.contra ? "carry.frag.contra" : "carry.frag", { what: what(f.what), from: f.from, deg: deg(f.degree) }) + (f.srcStability < 75 ? " " + t("carry.sick") : "") + (f.kept ? " " + t("carry.kept", { from: f.from }) : ""));
       if (c.loop) out.push(t("carry.loop"));
       for (const x of c.refused || []) if (x.why !== "pending") out.push(t(["carry.why", x.why].join("."), { from: x.from, what: x.what }));
       if ((c.takenBy || []).length) out.push(t("carry.taken", { names: c.takenBy.join(", ") }));
@@ -746,6 +755,7 @@ module.exports = function build(Base, core, AGEX) {
         name, number: X.ageNumber(core.seed(file.path)), seedNumber: seed ? Number(seed[1]) : null, dni: this.dni, standalone,
         glyph: (id, x, y, s) => core.glyphSvg(id, x, y, s, "none"), glyphIds: core.glyphs(analysis).filter((g) => !g.blot).map((g) => g.id), world: guard("cover world", () => worldIds(analysis)) || [], sobriety: parseCover(src) ?? ({ ornate: 0.05, classic: 0.35, sober: 0.7, plain: 1 })[this.ext.coverStyle],
         verdict: analysis.verdict, burnt: !!(this.law && this.law.destroyed(name)), label: this.t("book.descriptive"),
+        ward: !!guard("garde", () => require("./ward").isWarded(this.wardExt(core.seed(file.path)), core.seed(file.path))), /* un Livre gardé : le serpent au médaillon */
       });
     }
 

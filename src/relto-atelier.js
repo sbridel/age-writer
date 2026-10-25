@@ -227,7 +227,8 @@ function drawAtelier(r, ctx, sc, sky, t) {
     HR.scarabSide(ctx, c, ix + 6, top - 1, 8, t, { skin: castle ? "castle" : glass ? "glass" : "plain", hum }); /* l'encrier en scarabée, de profil (la pièce est vue de face) : on s'assoit au bureau pour l'ouvrir */
     HR.dipPen(ctx, c, ix + 18, top - 2, 26, -0.25, { skin: castle ? "castle" : glass ? "glass" : "plain", w: 1.6 });
     item(ix - 2, top - 14, 46, 16, "atelier.ink.tip", hum > 0 ? "atelier.ink.hum" : "atelier.ink.flash");
-    if (HS.stone) { HR.linkStone(ctx, c, ix - 9, top - 1, 6, t); item(ix - 17, top - 9, 16, 12, "atelier.link.tip", "atelier.link.flash"); } }
+    if (HS.stone) { HR.linkStone(ctx, c, ix - 9, top - 1, 6, t); item(ix - 17, top - 9, 16, 12, "atelier.link.tip", "atelier.link.flash"); }
+    const SS = (r.opts.sealState && r.opts.sealState()) || {}; if (SS.here && !r.sealHeld) HR.seal(ctx, c, ix - 22, top - 2, 5); } /* le cachet, tout petit, de l'autre côté de la pierre de liaison */
   // un sablier et un cristal étrange qui respire
   { const hx = tx + 218; ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.4; ctx.strokeRect(hx - 8, top - 28, 16, 26); ctx.fillStyle = c("#e6d9a8"); ctx.beginPath(); ctx.moveTo(hx - 6, top - 26); ctx.lineTo(hx + 6, top - 26); ctx.lineTo(hx, top - 15); ctx.fill(); ctx.beginPath(); ctx.moveTo(hx, top - 15); ctx.lineTo(hx + 6, top - 4); ctx.lineTo(hx - 6, top - 4); ctx.fill(); item(hx - 10, top - 30, 20, 30, "atelier.hourglass.tip", "atelier.hourglass.flash");
     const kx = tx + 246, p = 0.5 + 0.5 * Math.sin(t * 1.3); ctx.fillStyle = rgba(140, 90, 220, 0.12 + 0.12 * p); ctx.beginPath(); ctx.arc(kx, top - 14, 15, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#8d5fd6"); ctx.beginPath(); ctx.moveTo(kx, top - 30); ctx.lineTo(kx + 7, top - 14); ctx.lineTo(kx, top - 2); ctx.lineTo(kx - 7, top - 14); ctx.closePath(); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, 0.35); ctx.fillRect(kx - 2, top - 24, 2, 8); item(kx - 9, top - 32, 18, 32, "atelier.crystal.tip", "atelier.crystal.flash"); }
@@ -299,6 +300,8 @@ function drawDesk(r, ctx, sc, sky, t) {
     HR.scarab(ctx, c, 462, 286, 30, t, { skin: castle ? "castle" : glass ? "glass" : "plain", hum, open: op });
     r.hot.push({ x: 432, y: 250, w: 62, h: 64, tip: TRr(ui0.wing ? "atelier.scarab.close" : "atelier.scarab.tip"), desk: "wings" }); }
   if (HS.stone) { HR.linkStone(ctx, c, 440, 318, 17, t); r.hot.push({ x: 420, y: 304, w: 40, h: 28, tip: TRr("atelier.link.tip"), desk: "link" }); } /* la pierre de liaison, posée la nuit à côté de l'encrier */
+  { const SS = (r.opts.sealState && r.opts.sealState()) || {}; /* le cachet (étape D, src/ward.js) : petit, discret, à droite de l'encrier ; un clic le prend */
+    if (SS.here && !r.sealHeld) { HR.seal(ctx, c, 497, 314, 16); r.hot.push({ x: 484, y: 300, w: 28, h: 26, tip: TRr("atelier.seal.tip"), desk: "seal" }); } }
   // la corbeille à lettres, à gauche : un panier de laiton ; une enveloppe cachetée dépasse quand du courrier est arrivé
   { const cx = 70, cy = 262, cw = 110, ch = 64; ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.beginPath(); ctx.ellipse(cx + cw / 2, cy + ch + 4, cw / 2 + 6, 8, 0, 0, 6.283); ctx.fill();
     const env = (x, y, a, col) => { ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.fillStyle = c(col); ctx.fillRect(-30, -18, 60, 36); ctx.strokeStyle = rgba(120, 90, 50, 0.5); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-30, -18); ctx.lineTo(0, 4); ctx.lineTo(30, -18); ctx.stroke(); ctx.restore(); };

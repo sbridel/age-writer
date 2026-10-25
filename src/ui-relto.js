@@ -23,6 +23,7 @@ const CAL = require("./calibration");
 const UW = require("./unwritten");
 const ST = require("./story");
 const HEAR = require("./story-hear");
+const WARD = require("./ward"); /* le cachet et la garde (étape D) */
 const DB = require("./relto-descbook");
 const LEC = require("./lectern");
 
@@ -898,6 +899,10 @@ async function renderRelto(plugin, source, el, ctx) {
     /* le diapason : frappé une fois, il garde la voix du livre posé, tant qu'on ne le refrappe pas (en Art de la Guilde, trouver un autre monde prend du temps) ; frappé de nouveau sur un autre livre, les deux chantent ensemble */
     /* la machine et la caverne agissent sur la réserve de ce Relto (section 19.2) : le bac à sable, ou celle du Relto histoire */
     caveState: () => (plugin.caveState ? plugin.caveState(pool()) : {}),
+    /* le cachet (src/ward.js) : sur le bureau quand la bande du haut des fresques a été vue ; un Livre scellé garde le serpent */
+    sealState: () => (scene && scene.mode === "story" && plugin.caveState ? { here: WARD.sealHere(plugin.caveState(pool())) } : {}),
+    wardOf: (age) => { const pl = pool(); return !!(pl && age && age.path && WARD.isWarded(plugin.poolExt(pl), plugin.core.seed(age.path))); },
+    onWard: (age) => { const pl = pool(); if (!pl || !age || !age.path) return ""; const on = WARD.toggle(plugin.poolExt(pl), plugin.core.seed(age.path)); plugin.saveExt(); if (plugin.index) plugin.index.invalidate(); plugin.refreshLive(); return t(on ? "ward.on" : "ward.off", { name: age.name }); },
     ovenState: (now) => (plugin.ovenState ? plugin.ovenState(now, pool()) : {}),
     onOven: (act, arg) => { const msg = plugin.ovenAct ? plugin.ovenAct(act, arg, pool()) : null; if (act === "tray") storyLater(); if (roomSoundOn()) sound.ovenSfx(act === "door" && !msg ? "start" : act === "tray" ? "take" : act === "drain" ? "drain" : act === "burn" && plugin.ext.oven && plugin.ext.oven.burnt && Date.now() - plugin.ext.oven.burnt.at < 500 ? "burn" : "click", roomVol()); return msg; },
     onCaveDrop: () => { if (plugin.caveDrop && plugin.caveDrop(pool()) && roomSoundOn()) sound.caveSfx("drop", roomVol()); },
