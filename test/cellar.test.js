@@ -65,6 +65,8 @@ const R = { hot: [], opts: { cellarState: () => C.stateOf(ve), onCellar: (act, i
 CV.drawCellar(R, ctx, {}, { night: 0, ambient: 1 }, 0.3);
 ok(calls > 400, "la cave se dessine (" + calls + " appels)");
 const zones = R.hot.filter((h) => h.cellar === "take");
+const zonesOf = (sk) => { const rr = { ...R, hot: [], glassOn: () => sk === "glass", castleOn: () => sk === "castle" }; calls = 0; CV.drawCellar(rr, ctx, {}, { night: 0, ambient: 1 }, 0.3); ok(calls > 400, sk + " : la cave se dessine (" + calls + " appels)"); return JSON.stringify(rr.hot.map((h) => [h.x, h.y, h.w, h.h, h.cellar || h.go || ""])); };
+const zPlain = zonesOf("plain"); ok(zonesOf("glass") === zPlain && zonesOf("castle") === zPlain, "trois habits, les mêmes zones cliquables");
 ok(zones.length === 3 && zones.some((h) => h.id === "ash" && h.slot === "winter") && zones.some((h) => h.id === "peat" && h.slot === "good"), "seuls les bocaux pleins se prennent");
 ok(R.hot.some((h) => h.go === "oven"), "l'échelle remonte à la machine");
 const { ReltoRenderer } = require("../src/relto-render");

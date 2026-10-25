@@ -16,8 +16,6 @@ function phaseOf(key, now, yearDays) {
   const y = Number.isFinite(yearDays) && yearDays > 1 ? yearDays : 365.25, off = (fnv("season|" + String(key)) >>> 0) / 4294967296;
   return frac(now / DAY / y + off);
 }
-/** Une cloche autour de `c`, de largeur `w`, sur le cercle de l'année. */
-const bell = (u, c, w) => { let d = Math.abs(frac(u - c + 0.5) - 0.5); return clamp(1 - d / w); };
 /** Une saison sur le cercle de l'année : 1 en son cœur `c`, ~0,7 à ses bords, 0 à la saison opposée. */
 const wave = (u, c) => clamp(Math.cos(TAU * (u - c)));
 /** Le nom de la saison, pour la fiche et le journal. */
