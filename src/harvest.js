@@ -41,6 +41,10 @@ function stateOf(ext) {
   for (const id of INGREDIENTS) h.stock[id] = Math.max(0, Math.floor(Number(h.stock[id]) || 0));
   if (!h.rich || typeof h.rich !== "object") h.rich = { ...h.stock }; /* avant la qualité : le bénéfice du doute */
   for (const id of INGREDIENTS) h.rich[id] = Math.min(h.stock[id], Math.max(0, Math.floor(Number(h.rich[id]) || 0)));
+  /* la file de chaque trémie (la cave, src/cellar.js) : ce qui est monté d'en bas, dans l'ordre où on l'a versé (vrai = riche) ;
+     le reste du stock (d'avant la cave) se verse comme avant, riches d'abord, avant la file */
+  if (!h.queue || typeof h.queue !== "object") h.queue = {};
+  for (const id of INGREDIENTS) { const q = Array.isArray(h.queue[id]) ? h.queue[id].map((x) => x === true) : []; h.queue[id] = q.slice(Math.max(0, q.length - h.stock[id])); }
   if (!h.last || typeof h.last !== "object") h.last = {};
   if (!h.lastRich || typeof h.lastRich !== "object") h.lastRich = {};
   return h;
@@ -60,12 +64,13 @@ function richOf(a) {
  * Un Âge est lu (pas un essai) : s'il donne et n'a pas déjà donné aujourd'hui, ses mesures vont aux trémies, riches ou
  * pauvres selon `rich` (ce qu'il est à la première lecture du jour : la qualité du jour ne change plus). Renvoie la liste, ou null.
  */
-function gather(ext, age, list, now, rich = true) {
+function gather(ext, age, list, now, rich = true, into = null) {
   if (!age || !list || !list.length) return null;
   const h = stateOf(ext), day = Math.floor(now / DAY);
   if (h.last[age] === day) return null;
   const rk = (id) => (rich && typeof rich === "object" ? !!rich[id] : !!rich); /* riche ou pauvre, par mesure (la brume de l'ardoise : le terreau compte riche) */
-  h.last[age] = day; h.lastRich[age] = list.every(rk); for (const id of list) { h.stock[id] += 1; if (rk(id)) h.rich[id] += 1; }
+  h.last[age] = day; h.lastRich[age] = list.every(rk);
+  for (const id of list) { if (into) into(id, rk(id)); else { h.stock[id] += 1; if (rk(id)) h.rich[id] += 1; } } /* `into` : la cave (src/cellar.js) reçoit la mesure au lieu de la trémie */
   return list.slice();
 }
 /** A-t-il donné aujourd'hui ? (la ligne de l'onglet Détails) */
@@ -75,10 +80,14 @@ function richToday(ext, age, now) { if (!gatheredToday(ext, age, now)) return nu
 /** Prendre une mesure de `id` au stock : d'abord une riche. Renvoie true (riche), false (pauvre) ou null (vide). */
 function take(ext, id) {
   const h = stateOf(ext); if (!(h.stock[id] > 0)) return null;
-  h.stock[id] -= 1; if (h.rich[id] > 0) { h.rich[id] -= 1; return true; } return false;
+  const q = h.queue[id], qRich = q.filter(Boolean).length, old = h.stock[id] - q.length;
+  if (old > 0) { h.stock[id] -= 1; if (h.rich[id] - qRich > 0) { h.rich[id] -= 1; return true; } return false; } /* d'avant la cave : riches d'abord, comme toujours */
+  const r = q.shift() === true; h.stock[id] -= 1; if (r) h.rich[id] = Math.max(0, h.rich[id] - 1); return r; /* monté de la cave : dans l'ordre */
 }
-/** Rendre une mesure au stock (la colonne reversée). */
-function giveBack(ext, id, rich) { const h = stateOf(ext); h.stock[id] += 1; if (rich) h.rich[id] += 1; }
+/** Rendre une mesure au stock (la colonne reversée) : elle retourne en tête de la file, elle ressortira la première. */
+function giveBack(ext, id, rich) { const h = stateOf(ext); h.stock[id] += 1; if (rich) h.rich[id] += 1; h.queue[id].unshift(!!rich); }
+/** Le monte-charge de la cave verse dans la trémie, dans cet ordre (vrai = riche). */
+function pour(ext, id, order) { const h = stateOf(ext); for (const r of order || []) { h.stock[id] += 1; if (r) h.rich[id] += 1; h.queue[id].push(!!r); } }
 
 /** Les granulés cuits (créés à la demande) : { white, amber, grey }. Reprend l'étagère de l'ancienne étape 4a (good → white, bad → grey). */
 function pelletsOf(ext) {
@@ -90,4 +99,4 @@ function pelletsOf(ext) {
   return p;
 }
 
-module.exports = { INGREDIENTS, KINDS, DAY, givesOf, stateOf, richOf, gather, gatheredToday, richToday, take, giveBack, pelletsOf };
+module.exports = { INGREDIENTS, KINDS, DAY, givesOf, stateOf, richOf, gather, gatheredToday, richToday, take, giveBack, pour, pelletsOf };

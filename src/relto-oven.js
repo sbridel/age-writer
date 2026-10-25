@@ -162,6 +162,15 @@ function drawOven(r, ctx, sc, sky, t) {
   const cooking = ph && ph.phase === "cooking", done = ph && ph.phase === "done";
   walls(r, ctx, c, sky, skin, t);
   hallDoor(r, ctx, c, skin, tr);
+  if (r.opts && typeof r.opts.cellarState === "function" && r.opts.cellarState()) { /* la trappe de la cave (src/relto-cellar.js), au sol, sous l'étagère des capsules : des planches cerclées de fer, un anneau */
+    const tx = 70, ty = 314, tw = 92, th = 30;
+    ctx.fillStyle = c("#0e0b09"); ctx.fillRect(tx - 2, ty - 2, tw + 4, th + 4);
+    ctx.fillStyle = c(skin === "castle" ? "#3a2a1e" : "#4a3624"); ctx.fillRect(tx, ty, tw, th);
+    ctx.strokeStyle = rgba(0, 0, 0, 0.4); ctx.lineWidth = 1; for (let i = 1; i < 5; i++) { ctx.beginPath(); ctx.moveTo(tx + (i * tw) / 5, ty); ctx.lineTo(tx + (i * tw) / 5, ty + th); ctx.stroke(); }
+    ctx.fillStyle = c(trim[1]); ctx.fillRect(tx, ty + 5, tw, 2.5); ctx.fillRect(tx, ty + th - 7, tw, 2.5);
+    ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(tx + tw / 2, ty + th / 2, 4.5, 0, TAU); ctx.stroke();
+    r.hot.push({ x: tx - 4, y: ty - 4, w: tw + 8, h: th + 8, tip: tr("oven.cellar"), go: "cellar" });
+  }
   /* l'étagère des capsules cuites, à gauche */
   for (const y of [150, 210]) { /* deux planches, chacune sur deux consoles ; à la Verrière, des consoles de cuivre en volute */
     const board = skin === "glass" ? "#5a3a22" : skin === "castle" ? "#4a4044" : "#4a3624";
@@ -356,4 +365,4 @@ function leanTo(r, ctx, col, sky, t, hx) {
   r.hot.push({ x: hx - 62, y: GY - 34, w: 26, h: 34, tip: cooking ? tr("oven.out.cooking") : tr("oven.out"), go: "oven" });
 }
 
-module.exports = { valueTip, valueParts, drawOven, leanTo, capsule, pill, HOP, SLIDERS, SL_Y, SL_H, DOOR, TRAY, WHEEL };
+module.exports = { valueTip, valueParts, drawOven, leanTo, capsule, pill, stuff, ING, HOP, SLIDERS, SL_Y, SL_H, DOOR, TRAY, WHEEL };

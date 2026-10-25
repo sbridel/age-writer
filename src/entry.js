@@ -28,6 +28,7 @@ const RB = require("./relto-books");
 const G = require("./guide");
 const PH = require("./physics/index");
 const SSN = require("./seasons");
+const CEL = require("./cellar");
 const AS = require("./ageseed");
 const UW = require("./unwritten");
 const WX = require("./weather");
@@ -60,7 +61,7 @@ module.exports = function build(Base, core, AGEX) {
   /** La machine, pour essayer (menu de la clé) : remplir les trémies, donner des granulés, finir la cuisson, vider. */
   class OvenTestModal extends FuzzySuggestModal {
     constructor(app, plugin) { super(app); this.plugin = plugin; }
-    getItems() { return ["fill", "poor", "white", "amber", "grey", "finish", "empty"]; }
+    getItems() { return ["fill", "poor", "cellar", "white", "amber", "grey", "finish", "empty"]; }
     getItemText(v) { const k = "oven.test." + v; return this.plugin.t(k); }
     onChooseItem(v) { const msg = this.plugin.ovenTest(v); if (msg) new Notice(msg); }
   }
@@ -156,7 +157,7 @@ module.exports = function build(Base, core, AGEX) {
           const X = this.poolExt(pool), now = this.law.now(), act = out.slateAct, hv = act && act.fertile ? require("./slate").harvestOf(gives, act.effect) : { list: gives, richFor: {} };
           const sr = SSN.richFor(hv.list, out.season); if (Object.keys(sr).length) hv.richFor = { ...sr, ...hv.richFor }; /* la saison favorise une matière (src/seasons.js) */ /* l'accord : la sorte du jour change (la brume : le terreau compte riche) ; le commandement n'engendre rien */
           const r0 = HV.richOf(out), richArg = Object.keys(hv.richFor).length ? Object.fromEntries(hv.list.map((id) => [id, !!(hv.richFor[id] || r0)])) : r0;
-          if (!o.probe && HV.gather(X, key, hv.list, now, richArg)) this.saveExt(); /* riche ou pauvre : ce qu'est l'Âge à la première lecture du jour */
+          if (!o.probe && HV.gather(X, key, hv.list, now, richArg, (id, rich) => CEL.store(X, id, out.season ? out.season.name : null, rich))) this.saveExt(); /* la récolte descend à la cave, dans le bocal de sa saison (src/cellar.js) */ /* riche ou pauvre : ce qu'est l'Âge à la première lecture du jour */
           const today = HV.gatheredToday(X, key, now);
           return { ...out, harvest: { gives: hv.list, today, rich: today ? HV.richToday(X, key, now) : r0, slate: hv.list.join() !== gives.join() || Object.keys(hv.richFor).length > Object.keys(sr).length, season: Object.keys(sr).length > 0 } };
         }) || out;
@@ -472,6 +473,17 @@ module.exports = function build(Base, core, AGEX) {
     /** La machine (src/oven.js) : les réglages, la fournée, les trémies, l'étagère ; une fournée finie depuis longtemps attend sur le plateau. */
     ovenState(now, pool) { const X = this.poolExt(pool), OV = require("./oven"), t = now || Date.now(), o = OV.stateOf(X); const h = HV.stateOf(X); return { oven: o, phase: OV.phaseOf(o, t), stock: h.stock, rich: h.rich, pellets: HV.pelletsOf(X) }; }
     /** Un geste sur la machine : "add" (i : une mesure dans la colonne), "empty" (vider la colonne), "time" / "temp" / "press" (valeur), "door" (cuire), "tray" (prendre la fournée), "drain" (la vidanger), "burn" (arg : jeter au feu une capsule de l'étagère). Renvoie un message à montrer, ou null. */
+    /** La cave sous la machine (src/cellar.js) : elle existe dès que l'appentis est là ; null sinon. */
+    cellarState(pool) { if (!this.ovenShown(pool)) return null; return CEL.stateOf(this.poolExt(pool)); }
+    /** Un geste dans la cave : prendre (rien à dire), tamiser, composter, monter ; une phrase, ou rien. */
+    cellarAct(act, id, slot, pool) {
+      const X = this.poolExt(pool), t = (k) => (this.t ? this.t(k) : k); if (!this.ovenShown(pool)) return null;
+      const humus = (r) => (r && r.humus > 0 ? " " + t("cellar.said.humus") : "");
+      if (act === "sieve") { if (slot === "good") return t("cellar.sieve.good"); const r = CEL.sieve(X, id, slot); if (!r) return t("cellar.said.empty"); this.saveExt(); return t(!r.bad ? "cellar.said.sieve.allgood" : !r.good ? "cellar.said.sieve.allbad" : "cellar.said.sieve") + humus(r); }
+      if (act === "compost") { const r = CEL.toCompost(X, id, slot); if (!r) return t("cellar.said.empty"); this.saveExt(); return t("cellar.said.compost") + humus(r); }
+      if (act === "lift") { const n = CEL.lift(X, id, slot); if (!n) return t("cellar.said.empty"); this.saveExt(); return t("cellar.said.lift").replace("{hop}", t(["oven.hop", id].join(".")).toLowerCase()); }
+      return null;
+    }
     ovenAct(act, arg, pool) {
       const X = this.poolExt(pool), OV = require("./oven"), now = Date.now(), t = (k, v) => { const s = this.t ? this.t(k) : k; return v ? s.replace("{what}", v) : s; };
       if (act === "door") { const why = OV.start(X, now); if (why === "busy") return t("oven.door.busy"); if (why === "empty") return t("oven.door.empty"); if (why === "notime") return t("oven.door.notime"); this.saveExt(); return null; }
@@ -490,11 +502,15 @@ module.exports = function build(Base, core, AGEX) {
       const X = this.poolExt(this.lastPool()), OV = require("./oven"), h = HV.stateOf(X), P = HV.pelletsOf(X), o = OV.stateOf(X), t = (k) => (this.t ? this.t(k) : k);
       if (v === "fill") for (const id of HV.INGREDIENTS) { h.stock[id] = Math.max(h.stock[id], 9); h.rich[id] = h.stock[id]; }
       else if (v === "poor") for (const id of HV.INGREDIENTS) { h.stock[id] = Math.max(h.stock[id], 9); h.rich[id] = 0; } /* des Âges abîmés : tout ce qui est dans les trémies est pauvre */
+      else if (v === "cellar") { /* la cave : des bocaux de chaque saison, riches et pauvres mêlés (deux sur cinq pauvres), pour essayer le tamis sans attendre la récolte */
+        if (!(X.harvest && typeof X.harvest === "object")) HV.stateOf(X); const c = CEL.stateOf(X);
+        CEL.SEASONS.forEach((se, k) => HV.INGREDIENTS.forEach((id, j) => { const j0 = c.jars[id][se], n = 3 + ((k * 3 + j * 5) % 6); j0.n += n; j0.rich += se === "none" ? 0 : (k + j) % 3 === 0 ? n : Math.ceil((n * 3) / 5); }));
+      }
       else if (v === "white" || v === "amber" || v === "grey") P[v] += 5;
       else if (v === "finish") { if (!o.batch) return t("oven.test.nobatch"); o.batch.at = Date.now() - o.batch.dur - 1; }
-      else if (v === "empty") { for (const id of HV.INGREDIENTS) { h.stock[id] = 0; h.rich[id] = 0; } P.white = P.amber = P.grey = 0; P.fine = { white: 0, amber: 0 }; o.column = []; o.colRich = []; o.levers = [0, 0, 0, 0]; o.batch = null; }
+      else if (v === "empty") { delete X.cellar; for (const id of HV.INGREDIENTS) { h.stock[id] = 0; h.rich[id] = 0; h.queue[id] = []; } P.white = P.amber = P.grey = 0; P.fine = { white: 0, amber: 0 }; o.column = []; o.colRich = []; o.levers = [0, 0, 0, 0]; o.batch = null; }
       this.saveExt();
-      const k = "oven.test." + v; return t("oven.test.done") + " " + t(k) + (v === "fill" || v === "poor" ? " " + t("oven.test.reopen") : "");
+      const k = "oven.test." + v; return t("oven.test.done") + " " + t(k) + (v === "fill" || v === "poor" || v === "cellar" ? " " + t("oven.test.reopen") : "");
     }
     /** La caverne Bahro (src/relto-cave.js) : les granulés de l'étagère, le granulé qui tombe ; un granulé perdu (personne en bas) s'en va sans bruit. */
     caveState(pool) {

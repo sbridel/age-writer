@@ -535,6 +535,21 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
           if (extra.length) ok(!ids.includes("herdWinter") && /hibernent/.test(facts) && /le rôle tient toute l'année/.test(facts), "scénario : avec un fouisseur, plus de migration ; la fiche le dit");
           else ok(ids.includes("herdWinter") && /graines et en bourgeons/.test(facts) && az.season, "scénario : l'Âge tempéré a ses saisons, la migration, et la dormance des verts dite");
           files.delete(z.path); }
+        { /* la cave sous la machine (src/cellar.js) : la récolte y descend par saison ; tamis, compost, monte-charge, par le plugin */
+          const CL = require("../src/cellar"), keep = p.ext.seasonForce; p.ext.seasonForce = 2; /* l'été */
+          const z = age("Cave Essai", ["single_sun", "water", "ash", "humus", "peat", "fern", "seed", "grass", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 1"], dir), pl = p.poolOfAge(p.core.seed(z.path)), X = p.poolExt(pl);
+          const before = (X.harvest && X.harvest.stock && X.harvest.stock.ash) || 0; an(z);
+          const jar = CL.jarOf(X, "ash", "summer");
+          ok(jar && jar.n >= 1 && jar.rich >= 1 && ((X.harvest.stock.ash || 0) === before), "la récolte d'été descend dans le bocal « cendres · été » (riche : l'été favorise les cendres), pas dans la trémie");
+          ok(p.cellarState(pl) && p.cellarState(pl).jars.ash.summer.n === jar.n, "la cave existe dès que l'appentis est là");
+          p.cellarAct("sieve", "ash", "spring", pl); ok(/vide|empty/i.test(p.cellarAct("sieve", "ash", "spring", pl)), "un bocal vide au tamis : une phrase");
+          const msgS = p.cellarAct("sieve", "ash", "summer", pl); ok(CL.jarOf(X, "ash", "good").n >= 1 && CL.jarOf(X, "ash", "summer").n === 0 && /bon grain|good grain|Tout passe|Everything passes/.test(msgS), "le tamis : le bon grain au bocal scellé (" + msgS + ")");
+          const nGood = CL.jarOf(X, "ash", "good").n, msgL = p.cellarAct("lift", "ash", "good", pl);
+          ok(X.harvest.stock.ash === before + nGood && /trémie|hopper/.test(msgL), "le monte-charge : le bon grain monte dans la trémie des cendres (" + msgL + ")");
+          CL.store(X, "peat", "winter", false); CL.store(X, "peat", "winter", false); CL.store(X, "peat", "winter", false); const c0 = CL.stateOf(X).compost, h0 = CL.jarOf(X, "humus", "none").n;
+          const msgC = p.cellarAct("compost", "peat", "winter", pl); ok(CL.jarOf(X, "humus", "none").n === h0 + Math.floor((c0 + 3) / 3) && /compost/i.test(msgC), "le compost : trois mauvaises mesures font un terreau (" + msgC + ")");
+          ok(p.ovenTest("cellar") && CL.totals(X).silt > 0, "l'essai : remplir la cave");
+          p.ext.seasonForce = keep; files.delete(z.path); }
         { /* l'Âge de récolte du scénario : chaque saison favorise sa matière (src/seasons.js, richFor) */
           const z = age("Recolte Saisons", ["single_sun", "water", "ash", "humus", "peat", "fern", "seed", "grass", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 1"], dir), keep = p.ext.seasonForce, got = {};
           for (const f of [0, 1, 2, 3]) { p.ext.seasonForce = f; z.stat.mtime++; const h = an(z).harvest || {}; got[["winter", "spring", "summer", "autumn"][f]] = { gives: (h.gives || []).join(","), season: !!h.season }; }

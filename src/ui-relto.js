@@ -918,6 +918,8 @@ async function renderRelto(plugin, source, el, ctx) {
     wardOf: (age) => { const pl = pool(); return !!(pl && age && age.path && WARD.isWarded(plugin.poolExt(pl), plugin.core.seed(age.path))); },
     onWard: (age) => { const pl = pool(); if (!pl || !age || !age.path) return ""; const on = WARD.toggle(plugin.poolExt(pl), plugin.core.seed(age.path)); plugin.saveExt(); if (plugin.index) plugin.index.invalidate(); plugin.refreshLive(); return t(on ? "ward.on" : "ward.off", { name: age.name }); },
     ovenState: (now) => (plugin.ovenState ? plugin.ovenState(now, pool()) : {}),
+    cellarState: () => (plugin.cellarState ? plugin.cellarState(pool()) : null), /* la cave sous la machine (src/cellar.js) : null tant que la machine n'est pas là */
+    onCellar: (act, id, slot) => { const msg = plugin.cellarAct ? plugin.cellarAct(act, id, slot, pool()) : null; if (roomSoundOn() && act !== "take") sound.ovenSfx(act === "lift" ? "take" : act === "sieve" ? "drain" : "click", roomVol()); return msg; },
     onOven: (act, arg) => { const msg = plugin.ovenAct ? plugin.ovenAct(act, arg, pool()) : null; if (act === "tray") storyLater(); if (roomSoundOn()) sound.ovenSfx(act === "door" && !msg ? "start" : act === "tray" ? "take" : act === "drain" ? "drain" : act === "burn" && plugin.ext.oven && plugin.ext.oven.burnt && Date.now() - plugin.ext.oven.burnt.at < 500 ? "burn" : "click", roomVol()); return msg; },
     onCaveDrop: () => { if (plugin.caveDrop && plugin.caveDrop(pool()) && roomSoundOn()) sound.caveSfx("drop", roomVol()); },
     onCaveSeen: () => { if (plugin.caveSeen) plugin.caveSeen(pool()); storyLater(); },
