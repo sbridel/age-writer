@@ -530,6 +530,11 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         p.caveTest("command"); ok(STONE.watch(st, 0, Date.now()) && STONE.endingOf(st) === "command", "raccourci : le chemin ouvert hier, la pierre restée au bureau → le commandement");
         delete st.stone; st.done = keepDone; p._lastPool = keepPool;
         const sea = age("Quatre Saisons", ["single_sun", "water", "fern", "seed", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30"], dir);
+        for (const extra of [[], ["burrower", "stone"]]) { /* l'Âge du scénario de test (claude/TEST-paquet-2.0.md §2), graine fixée : la migration, puis le fouisseur qui tient le rôle */
+          const z = age("Scenario", ["single_sun", "water", "grass", "flowers", "great_tree", "fern", "seed", "grazer", "hunter", "spore", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 2", ...extra], dir), az = an(z), sh = require("../src/physics").sheet(az.physics, "fr"), ids = sh.tensions.map((x) => x.id), facts = sh.facts.join(" ");
+          if (extra.length) ok(!ids.includes("herdWinter") && /hibernent/.test(facts) && /le rôle tient toute l'année/.test(facts), "scénario : avec un fouisseur, plus de migration ; la fiche le dit");
+          else ok(ids.includes("herdWinter") && /graines et en bourgeons/.test(facts) && az.season, "scénario : l'Âge tempéré a ses saisons, la migration, et la dormance des verts dite");
+          files.delete(z.path); }
         const s0 = an(sea).season; p.caveTest("season"); sea.stat.mtime++; const s1 = an(sea).season;
         ok(s0 && s1 && s0.name !== s1.name && p.ext.seasonShift === 0.25, "raccourci : un quart d'année plus tard, la saison change (" + (s0 && s0.name) + " → " + (s1 && s1.name) + ")");
         p.caveTest("seasonreset"); sea.stat.mtime++; ok(p.ext.seasonShift === 0 && an(sea).season.name === s0.name, "raccourci : retour au calendrier vrai");
