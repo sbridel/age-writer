@@ -41,4 +41,13 @@ function lookOf(w, u) {
   };
 }
 
-module.exports = { MIN_AMP, DAY, phaseOf, lookOf, nameOf };
+/** La récolte et la saison (palier 3) : une saison **favorise** une matière sans en interdire aucune — elle compte riche ce jour-là.
+ *  Printemps : le terreau ; été : les cendres ; automne : la tourbe et le limon ; hiver : rien de plus. Renvoie { id: true } pour les matières données. */
+const FAVOURS = { spring: ["humus"], summer: ["ash"], autumn: ["peat", "silt"], winter: [] };
+function richFor(gives, season) {
+  const out = {}; if (!season) return out;
+  for (const id of FAVOURS[season.name] || []) if ((gives || []).includes(id)) out[id] = true;
+  return out;
+}
+
+module.exports = { MIN_AMP, DAY, FAVOURS, phaseOf, lookOf, nameOf, richFor };

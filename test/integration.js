@@ -229,13 +229,14 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     ok(strict.axisStability.geological === off.axisStability.geological - 20, "mode strict : −20 sur l'axe géologique");
     p.ext.physicsSeverity = 2; ok(p.core.analyse(lava, { seed: "Braise" }).axisStability.geological === off.axisStability.geological - 40, "sévérité 2 : −40");
     p.ext.physicsSeverity = 1; p.ext.physics = was;
-    { // 300 Âges au hasard : en facile, rien ne bouge par rapport à « désactivée » (seule la fiche s'ajoute)
+    { // 300 Âges au hasard : en facile, rien ne bouge par rapport à « désactivée » (seules la fiche et la saison du jour s'ajoutent)
       const SY = ["single_sun", "twin_suns", "starless", "water", "lava", "rain", "fern", "great_tree", "grazer", "desert_world", "frozen_world", "auroras", "tablet", "sand", "wind", "deep_cold", "asteroid_field", "gold"];
       let x = 9, diff = 0; const r = () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296);
       for (let i = 0; i < 300; i++) {
         const src = Array.from({ length: 1 + Math.floor(r() * 6) }, () => SY[Math.floor(r() * SY.length)]).join("\n");
         p.ext.physics = "off"; const a = p.core.analyse(src, { seed: "R" + i }); p.ext.physics = "easy"; const b = p.core.analyse(src, { seed: "R" + i });
-        const { physics, ...rest } = b; if (!physics || JSON.stringify(rest) !== JSON.stringify(a)) diff++;
+        const { physics, season, seasonU, ...rest } = b; void season; void seasonU; if (rest.harvest) rest.harvest = { ...rest.harvest, season: false }; /* la saison du jour vient avec la physique (src/seasons.js) : sans elle, pas de saison, et la récolte n'en est pas favorisée */
+        if (!physics || JSON.stringify(rest) !== JSON.stringify(a)) diff++;
       }
       ok(diff === 0, `mode facile : 300 Âges identiques au mode désactivé (${diff} différence(s))`);
     }

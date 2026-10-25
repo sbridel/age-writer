@@ -27,6 +27,7 @@ const RBK = require("./relto-book");
 const RB = require("./relto-books");
 const G = require("./guide");
 const PH = require("./physics/index");
+const SSN = require("./seasons");
 const AS = require("./ageseed");
 const UW = require("./unwritten");
 const WX = require("./weather");
@@ -138,6 +139,7 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText) out = applyDamage(out, parseDamage(srcText));
         if (srcText) { const wx = guard("météo", () => WX.parseWeather(srcText)); if (wx) out = { ...out, weather: wx, resolved: out.resolved ? { ...out.resolved, weather: wx } : out.resolved }; } // météo vivante : lue par la fenêtre (sceneOf) et la description, sans effet sur la stabilité
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
+        if (o && o.seed && out.physics && out.physics.w) out = guard("saison", () => this.seasonAdjust(out, o.seed)) || out; /* la saison du jour (src/seasons.js) : le jour de l'année de ce monde, pour la fenêtre, la fiche et la récolte */
         if (o && o.seed) out = guard("portage", () => this.carryAdjust(out, o, srcText, key)) || out; /* porter (src/carry.js) : la couture, la dissonance, la source malade ; et la couture d'une source dont on porte */
         if (this.ext.law && o && o.seed) out = guard("symbiose", () => this.symbiosesOf(o.seed, out, !o.probe)) || out;
         if (o && o.seed && !o.probe && !(this.ext.law && this.law.get(key))) guard("merveilles", () => this.seeWonders(o.seed, out)); /* la face écrite se voit aussi sans la loi */ // la mutation et la symbiose (src/mutation.js) : les unions nouées soutiennent le monde ; le temps en noue d'autres
@@ -151,11 +153,12 @@ module.exports = function build(Base, core, AGEX) {
         if (o && o.seed) out = guard("récolte", () => { /* un Âge qui écrit cendres, terreau, limon ou tourbe, et où quelque chose pousse, en donne une mesure par jour (lu, pas un essai) */
           const mt = (out.resolved && out.resolved.matter) || {}, gives = HV.givesOf(mt.written || [], PH.idsOfAnalysis(out), (mt.reactions || []).map((x) => (x && x.result) || x)); if (!gives.length) return out;
           const pool = this.poolOfAge(o.seed); if (!this.poolOpen(pool)) return out; /* un Âge d'un Relto histoire remplit la réserve de ce Relto, à partir du chapitre 10 */
-          const X = this.poolExt(pool), now = this.law.now(), act = out.slateAct, hv = act && act.fertile ? require("./slate").harvestOf(gives, act.effect) : { list: gives, richFor: {} }; /* l'accord : la sorte du jour change (la brume : le terreau compte riche) ; le commandement n'engendre rien */
+          const X = this.poolExt(pool), now = this.law.now(), act = out.slateAct, hv = act && act.fertile ? require("./slate").harvestOf(gives, act.effect) : { list: gives, richFor: {} };
+          const sr = SSN.richFor(hv.list, out.season); if (Object.keys(sr).length) hv.richFor = { ...sr, ...hv.richFor }; /* la saison favorise une matière (src/seasons.js) */ /* l'accord : la sorte du jour change (la brume : le terreau compte riche) ; le commandement n'engendre rien */
           const r0 = HV.richOf(out), richArg = Object.keys(hv.richFor).length ? Object.fromEntries(hv.list.map((id) => [id, !!(hv.richFor[id] || r0)])) : r0;
           if (!o.probe && HV.gather(X, key, hv.list, now, richArg)) this.saveExt(); /* riche ou pauvre : ce qu'est l'Âge à la première lecture du jour */
           const today = HV.gatheredToday(X, key, now);
-          return { ...out, harvest: { gives: hv.list, today, rich: today ? HV.richToday(X, key, now) : r0, slate: hv.list.join() !== gives.join() || Object.keys(hv.richFor).length > 0 } };
+          return { ...out, harvest: { gives: hv.list, today, rich: today ? HV.richToday(X, key, now) : r0, slate: hv.list.join() !== gives.join() || Object.keys(hv.richFor).length > Object.keys(sr).length, season: Object.keys(sr).length > 0 } };
         }) || out;
         return out;
       };
@@ -256,6 +259,11 @@ module.exports = function build(Base, core, AGEX) {
     slateHas(a) {
       const { BIOMES } = require("./dosage"), ids = PH.idsOfAnalysis(a), has = (list) => list.some((id) => ids.has(id));
       return { water: has(BIOMES.water), fire: has(BIOMES.fire), living: [...ids].some((id) => this.blockAxis(id) === "ecological") };
+    }
+    /** La saison du jour de cet Âge (docs/DESIGN-physique.md §12 bis, palier 3) : le jour de son année, et ce qu'il fait au décor ; rien sans saisons marquées. */
+    seasonAdjust(out, seed) {
+      const w = out.physics.w, now = this.law ? this.law.now() : Date.now(), u = SSN.phaseOf(seed, now, w.periodDays), season = SSN.lookOf(w, u);
+      return season ? { ...out, seasonU: u, season } : out;
     }
     /** L'acte du jour dans cet Âge (une intention envoyée, ou un don de l'accord), posé sur l'analyse pour la fenêtre et l'onglet Détails. */
     slateAdjust(out, o) {
