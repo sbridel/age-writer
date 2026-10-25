@@ -262,7 +262,7 @@ module.exports = function build(Base, core, AGEX) {
     }
     /** La saison du jour de cet Âge (docs/DESIGN-physique.md §12 bis, palier 3) : le jour de son année, et ce qu'il fait au décor ; rien sans saisons marquées. */
     seasonAdjust(out, seed) {
-      const w = out.physics.w, now = this.law ? this.law.now() : Date.now(), u = (SSN.phaseOf(seed, now, w.periodDays) + (Number(this.ext.seasonShift) || 0)) % 1, season = SSN.lookOf(w, u); /* seasonShift : la commande de test fait tourner l'année */
+      const w = out.physics.w, now = this.law ? this.law.now() : Date.now(), u = Number.isInteger(this.ext.seasonForce) ? this.ext.seasonForce * 0.25 : SSN.phaseOf(seed, now, w.periodDays), season = SSN.lookOf(w, u); /* seasonForce : la commande de test pose tous les Âges au cœur d'une saison */
       return season ? { ...out, seasonU: u, season } : out;
     }
     /** L'acte du jour dans cet Âge (une intention envoyée, ou un don de l'accord), posé sur l'analyse pour la fenêtre et l'onglet Détails. */
@@ -546,8 +546,8 @@ module.exports = function build(Base, core, AGEX) {
         this._hearCache = null; this.saveExt(); return t("oven.test.done") + " " + t(["cave.test", v].join("."));
       }
       if (v === "season" || v === "seasonreset") { /* les saisons (src/seasons.js), pour essayer sans attendre : un quart d'année de plus pour tous les Âges, ou retour au calendrier vrai */
-        this.ext.seasonShift = v === "season" ? ((Number(this.ext.seasonShift) || 0) + 0.25) % 1 : 0;
-        this.saveExt(); this.refreshLive(); return t("oven.test.done") + " " + t(["cave.test", v].join("."));
+        const f = Number.isInteger(this.ext.seasonForce) ? this.ext.seasonForce : -1; this.ext.seasonForce = v === "season" ? (f + 1) % 4 : null; delete this.ext.seasonShift;
+        this.saveExt(); this.refreshLive(); return t("oven.test.done") + " " + t(["cave.test", v].join(".")) + (v === "season" ? " → " + t(["season.label", SSN.nameOf(this.ext.seasonForce * 0.25)].join(".")) : "");
       }
       if (v === "to14" || v === "to17" || v === "command") { /* la seconde série, pour essayer sans refaire les treize premiers chapitres ; la fin du commandement sans attendre un jour */
         if (!pool) return t("cave.test.nostory");

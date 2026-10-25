@@ -18,6 +18,8 @@ function phaseOf(key, now, yearDays) {
 }
 /** Une cloche autour de `c`, de largeur `w`, sur le cercle de l'année. */
 const bell = (u, c, w) => { let d = Math.abs(frac(u - c + 0.5) - 0.5); return clamp(1 - d / w); };
+/** Une saison sur le cercle de l'année : 1 en son cœur `c`, ~0,7 à ses bords, 0 à la saison opposée. */
+const wave = (u, c) => clamp(Math.cos(TAU * (u - c)));
 /** Le nom de la saison, pour la fiche et le journal. */
 const nameOf = (u) => (u < 0.125 || u >= 0.875 ? "winter" : u < 0.375 ? "spring" : u < 0.625 ? "summer" : "autumn");
 
@@ -36,7 +38,8 @@ function lookOf(w, u) {
     cold: clamp(c) * k, warm: clamp(-c) * k,
     snow: wet && air ? clamp((273.15 - T) / 8) * k : 0, /* la neige tient quand le jour reste sous zéro */
     vig: clamp(0.5 - 0.5 * c), /* la vigueur du vivant : nulle au cœur de l'hiver */
-    bloom: bell(u, 0.25, 0.1) * k, fall: bell(u, 0.75, 0.1) * k,
+    bloom: wave(u, 0.25) * k, fall: wave(u, 0.75) * k, /* toute leur saison : pleins en son cœur, encore aux trois quarts à ses bords */
+    rainToSnow: clamp((275.15 - T) / 2), /* la pluie écrite : toute en neige sous zéro, mêlée jusqu'à +2 °C */
     sun: 0.5 - 0.5 * c, /* le soleil plus haut l'été */
   };
 }

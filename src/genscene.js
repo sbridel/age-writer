@@ -406,7 +406,7 @@ function suns(m, t, season = 0) {
  * `m.sunFrom` : un autre modèle dont on prend les soleils (les autres directions du périscope de l'Imageur).
  */
 function skyState(m, t, o = {}) {
-  t = frac(t); const { S, pal } = m, sm = m.sunFrom || m, td = o.day != null ? frac(o.day) : t, cs = o.clock != null ? o.clock : t * 8, sn = S.forceNight ? [] : suns(sm, td, o.season != null ? o.season : S.season ? S.season.sun : 0);
+  t = frac(t); const { S, pal } = m, sm = m.sunFrom || m, td = o.day != null ? frac(o.day) : t, cs = o.clock != null ? o.clock : t * 8, sn = S.forceNight ? [] : suns(sm, td, o.season != null ? o.season : S.season ? -2 + 3.5 * S.season.sun : 0); /* la saison : le soleil bas l'hiver (sommet de sa course vers 26 % de la hauteur), haut l'été (12 %) ; sans saison, 18 % comme toujours */
   const d = S.forceNight ? 0 : S.suns === 0 ? 0 : S.cycle === "frozen" ? (sn.length ? Math.max(...sn.map((s) => s.e)) * 0.8 : 0.2) : S.cycle === "erratic" ? 0.2 + 0.6 * rng(sm.S.seed + Math.floor(td * 6))() : Math.max(0, ...sn.map((s) => s.e));
   const night = 1 - smooth(d * 3), day = smooth((d - 0.25) / 0.75); /* l'ardoise, la nuit (S.forceNight) : d = 0, à contre-horloge */
   let top = mixc(mixc(pal.nightTop, pal.dawnTop, smooth(d * 3)), pal.dayTop, day), hzc = mixc(mixc(pal.nightHz, pal.dawnHz, smooth(d * 3)), pal.dayHz, day);
@@ -518,7 +518,7 @@ function paint(g, m, t, o = {}) {
   const dm = doomOf(S);
   if (dm > 0.1 && dm < 0.9) { const a = (dm - 0.1) * 3.2, T = Date.now() / 1000; g.translate(Math.sin(T * 61) * a, Math.cos(T * 47) * a * 0.7); } // la terre tremble
   if (m.cave) { paintCavern(g, m, t); g.restore(); return; } // monde-caverne : une voûte fermée, éclairée par ce qui luit
-  const L = m.lv = weatherLevels(m, k0.td, o), sw = S.season ? S.season.snow : 0; if (sw > 0.3) { L.snow = Math.max(L.snow, 0.5 * (sw - 0.3), L.rain * sw); L.rain *= 1 - sw; } if (S.season && S.season.T > 318) L.heat = Math.max(L.heat, clamp((S.season.T - 318) / 15)); /* l'hiver : la pluie écrite tombe en neige ; l'été brûlant : l'air tremble */ // météo vivante : présence de chaque temps à cette heure (1 partout sans ligne programmée)
+  const L = m.lv = weatherLevels(m, k0.td, o), sw = S.season ? S.season.snow : 0, rs = S.season ? S.season.rainToSnow : 0; if (rs > 0) { L.snow = Math.max(L.snow, L.rain * rs, L.drizzle * rs); L.rain *= 1 - rs; L.drizzle *= 1 - rs; } if (sw > 0.3) L.snow = Math.max(L.snow, 0.5 * (sw - 0.3)); if (S.season && S.season.T > 318) L.heat = Math.max(L.heat, clamp((S.season.T - 318) / 15)); /* l'hiver : la pluie écrite tombe en neige ; l'été brûlant : l'air tremble */ // météo vivante : présence de chaque temps à cette heure (1 partout sans ligne programmée)
   const sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, css(top)); sky.addColorStop(1, css(hzc)); g.fillStyle = sky; g.fillRect(0, 0, W, H);
   if (L.storm > 0.005) { g.fillStyle = css([14, 17, 24], 0.5 * L.storm); g.fillRect(0, 0, W, H); }
   const grey = Math.max(L.drizzle * 0.55, L.snow * 0.6, L.ashRain * 0.7, L.acidRain * 0.5); // ciel couvert : un voile gris-perle, plus chaud sous la cendre
@@ -706,7 +706,7 @@ function meadowGround(g, m, t, night, L, hzc) {
   if (S.world === "lava" || S.world === "desert" || (S.ice && !shore)) return;
   g.save(); if (shore) { shorePath(g, shore.land); g.clip(); }
   const se = S.season, dk = [6, 7, 12], lit = 1 - 0.6 * night, tint = (c) => (se ? mixc(mixc(c, [150, 138, 96], (1 - se.vig) * 0.75), [168, 112, 48], se.fall * 0.6) : c); /* l'herbe : paille l'hiver, rousse à l'automne */
-  const base = tint(md.tall ? [86, 120, 58] : [74, 108, 54]), fl = se ? clamp((se.vig - 0.35) / 0.4) : 1;
+  const base = tint(md.tall ? [86, 120, 58] : [74, 108, 54]), fl = se ? Math.max(clamp((se.vig - 0.35) / 0.4), se.bloom) : 1;
   const lg = g.createLinearGradient(0, hz, 0, H); lg.addColorStop(0, css(mixc(mixc(base, hzc || base, 0.3), dk, 0.3 + 0.5 * night), 0.55)); lg.addColorStop(1, css(mixc(base, dk, 0.35 + 0.5 * night), 0.7));
   g.fillStyle = lg; g.fillRect(0, hz, W, H - hz);
   const gust = 0.8 + ((L && L.wind) || (S.wind ? 1 : 0)) * 1.6, D = H - hz;
@@ -1135,10 +1135,11 @@ function groundWeather(g, m, t, night, L) {
   if (S.water && !shore) return; // une mer : rien ne s'y pose
   g.save(); if (shore) { shorePath(g, shore.land); g.clip(); }
   const lit = 1 - 0.6 * night;
-  if (S.flowers && wx.blooms) for (const b of wx.blooms) { // fleurs : des touches de couleur, serrées au loin, plus grandes devant ; la neige les éteint
+  const fv = S.season ? Math.max(clamp((S.season.vig - 0.35) / 0.4), S.season.bloom) : 1; /* la saison : les fleurs dorment l'hiver, reviennent au printemps */
+  if (S.flowers && wx.blooms && fv > 0.01) for (const b of wx.blooms) { // fleurs : des touches de couleur, serrées au loin, plus grandes devant ; la neige les éteint
     const y = hz + (H - hz) * b.u * b.u + 1, k = 0.35 + 1.1 * b.u, x = b.x + Math.sin(TAU * t + b.p) * k * 0.8;
     g.strokeStyle = css(mixc([70, 100, 60], [8, 10, 12], 0.3 + 0.5 * night), 0.6); g.lineWidth = 0.7; g.beginPath(); g.moveTo(b.x, y); g.lineTo(x, y - 3 * k); g.stroke();
-    g.fillStyle = css(mixc(hsl(b.h, 0.55 + 0.2 * b.s, 0.66), [10, 12, 20], clamp(0.15 + 0.6 * night + 0.5 * snow)), 0.9 * lit + 0.1); g.beginPath(); g.arc(x, y - 3 * k, 0.9 + 1.1 * k * (0.6 + 0.4 * b.s), 0, TAU); g.fill();
+    g.fillStyle = css(mixc(hsl(b.h, 0.55 + 0.2 * b.s, 0.66), [10, 12, 20], clamp(0.15 + 0.6 * night + 0.5 * snow)), (0.9 * lit + 0.1) * fv); g.beginPath(); g.arc(x, y - 3 * k, 0.9 + 1.1 * k * (0.6 + 0.4 * b.s), 0, TAU); g.fill();
   }
   if (snow > 0.005) { const sg = g.createLinearGradient(0, hz, 0, H); sg.addColorStop(0, css([232, 238, 246], 0.55 * snow * lit)); sg.addColorStop(1, css([214, 224, 238], 0.35 * snow * lit)); g.fillStyle = sg; g.fillRect(0, hz, W, H - hz); }
   if (ash > 0.005) { g.fillStyle = css([60, 58, 56], 0.3 * ash); g.fillRect(0, hz, W, H - hz); }

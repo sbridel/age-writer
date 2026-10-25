@@ -26,6 +26,8 @@ const wi = SSN.lookOf(W(), 0), sp = SSN.lookOf(W(), 0.25), su = SSN.lookOf(W(), 
 ok(wi.name === "winter" && Math.abs(wi.T - 273) < 0.01 && wi.cold > 0.5 && wi.vig < 0.01 && wi.sun < 0.01, "plein hiver : froid, rien ne pousse, soleil bas");
 ok(su.name === "summer" && Math.abs(su.T - 303) < 0.01 && su.warm > 0.5 && su.vig > 0.99 && su.sun > 0.99 && su.snow === 0, "plein été");
 ok(sp.bloom > 0.5 && sp.fall === 0 && au.fall > 0.5 && au.bloom === 0, "le printemps fleurit, l'automne défeuille");
+ok(SSN.lookOf(W(), 0.13).bloom > 0.4 && SSN.lookOf(W(), 0.37).bloom > 0.4 && SSN.lookOf(W(), 0.63).fall > 0.4 && SSN.lookOf(W(), 0.87).fall > 0.4, "pétales et feuilles couvrent toute leur saison, pas seulement son cœur");
+ok(SSN.lookOf(W(), 0).rainToSnow === 1 && SSN.lookOf(W({ Ts: 300 }), 0).rainToSnow === 0, "sous zéro la pluie est toute neige ; à +12 °C, rien ne change");
 ok(SSN.lookOf(W({ Ts: 280 }), 0).snow > 0.5, "hiver à −8 °C : la neige tient");
 ok(SSN.lookOf(W({ Ts: 280, water: "dry" }), 0).snow === 0, "sans eau : pas de neige");
 ok(SSN.lookOf(W({ Ts: 280, P: 0 }), 0).snow === 0, "sans air : pas de neige");

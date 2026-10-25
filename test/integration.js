@@ -538,8 +538,10 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         { const z = age("Air Mince", ["single_sun", "fern", "seed", "insolation: 1.6", "atmosphere: 0.3", "mass: 1", "rotation: 24", "tilt: 45", "seed: 1"], dir), tz = require("../src/physics").sheet(an(z).physics, "fr").tensions.find((x) => x.id === "winterGreen");
           ok(tz && /l'été monte/.test(tz.why) && /tilt: \d/.test(tz.fix.join(" ")), "scénario : l'air mince, l'été qui cuit, la piste qui redresse l'axe"); files.delete(z.path); }
         const s0 = an(sea).season; p.caveTest("season"); sea.stat.mtime++; const s1 = an(sea).season;
-        ok(s0 && s1 && s0.name !== s1.name && p.ext.seasonShift === 0.25, "raccourci : un quart d'année plus tard, la saison change (" + (s0 && s0.name) + " → " + (s1 && s1.name) + ")");
-        p.caveTest("seasonreset"); sea.stat.mtime++; ok(p.ext.seasonShift === 0 && an(sea).season.name === s0.name, "raccourci : retour au calendrier vrai");
+        ok(s1 && s1.name === "winter" && s1.u === 0 && p.ext.seasonForce === 0, "raccourci : la première fois, tous les Âges au cœur de l'hiver (" + (s1 && s1.name) + ")");
+        const seen = [s1.name]; for (let k = 0; k < 4; k++) { const msg = p.caveTest("season"); sea.stat.mtime++; seen.push(an(sea).season.name); if (k === 0) ok(/printemps|spring/.test(msg), "raccourci : la notice dit la saison posée (" + msg + ")"); }
+        ok(seen.join(",") === "winter,spring,summer,autumn,winter", "raccourci : hiver, printemps, été, automne, et on recommence (" + seen.join(",") + ")");
+        p.caveTest("seasonreset"); sea.stat.mtime++; ok(p.ext.seasonForce === null && an(sea).season.name === s0.name, "raccourci : retour au calendrier vrai");
         files.delete(sea.path); }
       recv.content = "```age\nsingle_sun\nsteady_cycle\nsand\ncarry: sky from Jamais Lu\ncarry: moor from Source Ciel\ncarry: sky from Personne\ncarry: desert from Source Ciel\n```\n"; recv.stat.mtime++;
       r = an(recv); const why = (r.carry.refused || []).map((x) => x.why).join();
