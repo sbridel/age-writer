@@ -15,7 +15,7 @@ const OV = require("./relto-oven");
 const W = 640, H = 360, TAU = Math.PI * 2;
 const IDS = ["ash", "humus", "silt", "peat"], SLOTS = ["winter", "spring", "summer", "autumn", "none", "good"];
 const SHELF_Y = [118, 176, 234, 292], JAR_X = (k) => (k < 5 ? 112 + k * 52 : 112 + 5 * 52 + 18), JW = 30, JH = 38;
-const SIEVE = [528, 206], BIN = [480, 252, 124, 48], LIFT = [572, 52, 52, 128], LADDER = [20, 64];
+const SIEVE = [528, 206], BIN = [480, 252, 124, 48], LIFT = [572, 94, 52, 112], LADDER = [20, 64];
 const FULL = 12, FX_MS = 1400;
 /* trois habits, comme l'appentis (normal, Verrière, Château) ; aucune zone cliquable ne change de l'un à l'autre */
 const skinOf = (r) => (r.castleOn && r.castleOn() ? "castle" : r.glassOn && r.glassOn() ? "glass" : "plain");
@@ -162,6 +162,7 @@ function bench(r, ctx, c, st, tr, held, now, skin) {
   r.hot.push({ x: bx - 2, y: by - 6, w: bw + 4, h: bh + 6, tip: held ? tr("cellar.compost.drop") : tr("cellar.compost") + " — " + tr(parts ? "cellar.compost.some" : "cellar.compost.none"), cellar: held ? "compost" : null });
   /* le monte-charge : une gaine de planches dans le mur, une poulie, un panier sur sa corde */
   const [lx, ly, lw, lh] = LIFT;
+  ctx.fillStyle = c(skin === "castle" ? "#5e5966" : skin === "glass" ? "#5a2e12" : "#3a2a1c"); ctx.fillRect(lx - 6, ly - 8, lw + 12, 6); /* le linteau de la gaine, pris dans le mur */
   ctx.fillStyle = c("#0e0b09"); ctx.fillRect(lx, ly, lw, lh); ctx.strokeStyle = c(skin === "glass" ? "#b5652a" : skin === "castle" ? "#5e5966" : K.wood); ctx.lineWidth = 4; ctx.strokeRect(lx, ly, lw, lh);
   ctx.fillStyle = c("#6a5a48"); ctx.beginPath(); ctx.arc(lx + lw / 2, ly + 10, 6, 0, TAU); ctx.fill(); ctx.fillStyle = c("#2a2018"); ctx.beginPath(); ctx.arc(lx + lw / 2, ly + 10, 2, 0, TAU); ctx.fill();
   const fx = r.cellarFx, up = fx && fx.kind === "lift" ? clamp((now - fx.at) / FX_MS) : 0, basketY = ly + lh - 30 - up * (lh - 44);
