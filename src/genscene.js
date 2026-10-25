@@ -16,11 +16,12 @@ const WX = require("./weather");
 const WON = require("./genscene-wonders"); /* les merveilles (src/wonders.js) */
 const CAT = require("./wonders");
 const TOR = require("./torus"); /* le tore : deux Âges qui se portent l'un l'autre */
+const SSN = require("./seasons"); /* la saison du jour */
 
 const TAU = Math.PI * 2, PERIOD = 8000;
 
 /** Identifiants que le peintre connaît (tout le reste passe par le peintre générique, d'après l'axe et les adjectifs du bloc). */
-const KNOWN = new Set((CAT.COMPOSITES.map((c) => c.id).join(" ") + " scorched_moths tarnished_growth " + "door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon frozen_cycle erratic_cycle chaotic_orbit " +
+const KNOWN = new Set((CAT.COMPOSITES.map((c) => c.id).join(" ") + " scorched_moths tarnished_growth " + "door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon steady_cycle frozen_cycle erratic_cycle chaotic_orbit stable_orbit shifting_orbit " +
   "permanent_veil auroras recurring_eclipses starfall rain storm thunderstorm whispering_storm waiting_thunder wind dust_storm ash_cloud spore_cloud fog marsh_mist rime watching_mist lightning heat " +
   "hail black_hail steam lava obsidian whispering_obsidian water brine meltwater crying_obsidian ice black_ice deep_cold sand glass singing_glass fulgurite grove great_tree ironwood charred_grove " +
   "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " +
@@ -90,6 +91,7 @@ function sceneOf(a, name = "", blocks = null) {
   if (a.slateAct) { const e = a.slateAct.effect; /* l'ardoise (src/slate.js) : ce qu'ils ont apporté aujourd'hui ; dans le commandement, peint sans réaction */
     if (e === "rain" || e === "steam") S.rain = always("rain", true); if (e === "heat" || e === "steam" || e === "summer") S.heat = always("heat", true); if (e === "steam") S.steam = always("steam", true);
     if (e === "mist") S.fog = always("fog", true); if (e === "summer") S.petals = always("petals", true); if (e === "night" || e === "longnight") S.forceNight = e === "longnight" ? 2 : 1; }
+  S.season = SSN.lookOf(a.physics && a.physics.w, a.seasonU); /* la saison du jour (src/seasons.js) : null sans saisons marquées, ou sans jour fourni */
   S.loop = !!(a.carry && a.carry.loop); /* la boucle de Torus : deux Âges qui se portent l'un l'autre forment un monde en anneau (src/torus.js) */
   if (S.loop) { S.loopFam = lp && lp.what !== "sky" ? lp.what : "stone"; S.loopKey = String(name) + "|" + String((lp && lp.from) || ""); S.torus = TOR.formOf(S.loopKey); }
   return S;
@@ -272,12 +274,12 @@ function build(S, W, H) {
 function buildWeather(S, W, H) {
   const q = rng((S.seed ^ 0x3a7e5) >>> 0), out = {};
   if (S.drizzle || S.acidRain || S.crystalRain) out.mist = Array.from({ length: 150 }, () => ({ x: q() * W, y: q(), v: 1 + Math.floor(q() * 2), l: 0.012 + q() * 0.016, a: 0.5 + q() * 0.5 }));
-  if (S.snow || S.ashRain) out.flakes = Array.from({ length: 120 }, () => ({ x: q() * W, y: q(), s: 0.7 + q() * q() * 1.8, p: q(), k: 1 + Math.floor(q() * 2) }));
-  if (S.flowers || S.petals || S.scent) {
+  if (S.snow || S.ashRain || S.season) out.flakes = Array.from({ length: 120 }, () => ({ x: q() * W, y: q(), s: 0.7 + q() * q() * 1.8, p: q(), k: 1 + Math.floor(q() * 2) }));
+  if (S.flowers || S.petals || S.scent || S.season) {
     const base = [340, 352, 12, 45, 285, 205][Math.floor(q() * 6)]; out.hue = base;
     out.blooms = Array.from({ length: 110 }, () => ({ x: q() * W, u: q(), h: base + (q() - 0.5) * 50 + (q() < 0.22 ? 160 : 0), s: q(), p: q() * TAU }));
   }
-  if (S.petals) out.petals = Array.from({ length: 46 }, () => ({ x: q(), y: q(), s: 1.6 + q() * 2.2, p: q(), k: 1 + Math.floor(q() * 2), r: q() < 0.5 ? 1 : 2, h: (q() - 0.5) * 30 }));
+  if (S.petals || S.season) out.petals = Array.from({ length: 46 }, () => ({ x: q(), y: q(), s: 1.6 + q() * 2.2, p: q(), k: 1 + Math.floor(q() * 2), r: q() < 0.5 ? 1 : 2, h: (q() - 0.5) * 30 }));
   if (S.scent || S.glaze) out.motes = Array.from({ length: 30 }, () => ({ x: q(), y: q(), p: q(), s: 0.8 + q() * 1.2 }));
   if (S.rainbow) out.bow = { x: W * (q() < 0.5 ? 0.24 + 0.12 * q() : 0.64 + 0.12 * q()), R: H * (0.5 + 0.14 * q()), drop: H * (0.06 + 0.08 * q()) };
   if (S.tornado) out.twister = { x: W * (0.14 + 0.72 * q()), lean: (q() - 0.5) * 0.12, w: 0.8 + 0.5 * q(), p: q() * TAU, debris: Array.from({ length: 18 }, () => ({ p: q(), r: 0.4 + q(), k: 1 + Math.floor(q() * 2) })) };
@@ -404,7 +406,7 @@ function suns(m, t, season = 0) {
  * `m.sunFrom` : un autre modèle dont on prend les soleils (les autres directions du périscope de l'Imageur).
  */
 function skyState(m, t, o = {}) {
-  t = frac(t); const { S, pal } = m, sm = m.sunFrom || m, td = o.day != null ? frac(o.day) : t, cs = o.clock != null ? o.clock : t * 8, sn = S.forceNight ? [] : suns(sm, td, o.season || 0);
+  t = frac(t); const { S, pal } = m, sm = m.sunFrom || m, td = o.day != null ? frac(o.day) : t, cs = o.clock != null ? o.clock : t * 8, sn = S.forceNight ? [] : suns(sm, td, o.season != null ? o.season : S.season ? S.season.sun : 0);
   const d = S.forceNight ? 0 : S.suns === 0 ? 0 : S.cycle === "frozen" ? (sn.length ? Math.max(...sn.map((s) => s.e)) * 0.8 : 0.2) : S.cycle === "erratic" ? 0.2 + 0.6 * rng(sm.S.seed + Math.floor(td * 6))() : Math.max(0, ...sn.map((s) => s.e));
   const night = 1 - smooth(d * 3), day = smooth((d - 0.25) / 0.75); /* l'ardoise, la nuit (S.forceNight) : d = 0, à contre-horloge */
   let top = mixc(mixc(pal.nightTop, pal.dawnTop, smooth(d * 3)), pal.dayTop, day), hzc = mixc(mixc(pal.nightHz, pal.dawnHz, smooth(d * 3)), pal.dayHz, day);
@@ -412,6 +414,7 @@ function skyState(m, t, o = {}) {
   const air = S.phys ? { thin: clamp((0.5 - S.phys.P) / 0.45), thick: S.phys.P > 1.5 ? clamp(Math.log2(S.phys.P / 1.5) / 4) : 0 } : { thin: 0, thick: 0 };
   if (air.thin) { top = mixc(top, [4, 5, 12], 0.9 * air.thin); hzc = mixc(hzc, mixc(hzc, [10, 12, 24], 0.5), air.thin); } // air mince : ciel sombre même à midi
   if (air.thick) { top = mixc(top, mixc(hzc, [235, 230, 215], 0.3), 0.65 * air.thick); } // air épais : ciel laiteux, sans profondeur
+  if (S.season && S.season.cold > 0.01) { top = mixc(top, [196, 206, 222], 0.2 * S.season.cold * day); hzc = mixc(hzc, [214, 218, 226], 0.28 * S.season.cold * day); } /* l'hiver : un ciel plus pâle, plus gris */
   if (m.won && m.won.orphan) ({ top, hzc } = WON.skyTint(m, top, hzc, day)); /* la Couleur orpheline : un ciel égal, sans source */
   if (S.blackSun) { const gray = (c) => { const v = (c[0] + c[1] + c[2]) / 3; return [v, v, v]; }; top = mixc(gray(top), [12, 8, 10], 0.55); hzc = mixc(gray(hzc), [60, 26, 26], 0.45); } // soleil noir : jour gris et sombre, horizon rouge éteint
   return { t, td, cs, sn, d, night, day, top, hzc, hues, air };
@@ -515,7 +518,7 @@ function paint(g, m, t, o = {}) {
   const dm = doomOf(S);
   if (dm > 0.1 && dm < 0.9) { const a = (dm - 0.1) * 3.2, T = Date.now() / 1000; g.translate(Math.sin(T * 61) * a, Math.cos(T * 47) * a * 0.7); } // la terre tremble
   if (m.cave) { paintCavern(g, m, t); g.restore(); return; } // monde-caverne : une voûte fermée, éclairée par ce qui luit
-  const L = m.lv = weatherLevels(m, k0.td, o); // météo vivante : présence de chaque temps à cette heure (1 partout sans ligne programmée)
+  const L = m.lv = weatherLevels(m, k0.td, o), sw = S.season ? S.season.snow : 0; if (sw > 0.3) { L.snow = Math.max(L.snow, 0.5 * (sw - 0.3), L.rain * sw); L.rain *= 1 - sw; } if (S.season && S.season.T > 318) L.heat = Math.max(L.heat, clamp((S.season.T - 318) / 15)); /* l'hiver : la pluie écrite tombe en neige ; l'été brûlant : l'air tremble */ // météo vivante : présence de chaque temps à cette heure (1 partout sans ligne programmée)
   const sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, css(top)); sky.addColorStop(1, css(hzc)); g.fillStyle = sky; g.fillRect(0, 0, W, H);
   if (L.storm > 0.005) { g.fillStyle = css([14, 17, 24], 0.5 * L.storm); g.fillRect(0, 0, W, H); }
   const grey = Math.max(L.drizzle * 0.55, L.snow * 0.6, L.ashRain * 0.7, L.acidRain * 0.5); // ciel couvert : un voile gris-perle, plus chaud sous la cendre
@@ -573,6 +576,7 @@ function paint(g, m, t, o = {}) {
   m.ridges.forEach((rg) => {
     let c = mixc(mixc(pal.rock, pal.ground, 0.4 + 0.3 * rg.d), hzc, (1 - rg.d) * 0.45 * (0.3 + day * 0.7));
     if (S.ice) c = mixc(c, [214, 232, 248], (0.42 + 0.2 * day) * (1 - 0.6 * night)); // neige et glace sur les crêtes
+    else if (sw > 0.01) c = mixc(c, [214, 232, 248], sw * (0.3 + 0.2 * day) * (1 - 0.6 * night)); // l'hiver : les crêtes blanchissent
     g.fillStyle = css(c); g.beginPath(); g.moveTo(0, hz); const n = rg.xs.length - 1;
     for (let k = 0; k <= n; k++) g.lineTo((k / n) * W, rg.xs[k]); g.lineTo(W, hz + 1); g.closePath(); g.fill();
     if (S.ice) { g.strokeStyle = css([240, 250, 255], (0.35 + 0.35 * day) * (1 - 0.5 * night)); g.lineWidth = 1.2; g.beginPath(); for (let k = 0; k <= n; k++) k ? g.lineTo((k / n) * W, rg.xs[k]) : g.moveTo(0, rg.xs[0]); g.stroke(); } // arête givrée
@@ -701,19 +705,20 @@ function meadowGround(g, m, t, night, L, hzc) {
   if (S.water && !shore) return; // une mer : pas d'herbe
   if (S.world === "lava" || S.world === "desert" || (S.ice && !shore)) return;
   g.save(); if (shore) { shorePath(g, shore.land); g.clip(); }
-  const dk = [6, 7, 12], lit = 1 - 0.6 * night, base = md.tall ? [86, 120, 58] : [74, 108, 54];
+  const se = S.season, dk = [6, 7, 12], lit = 1 - 0.6 * night, tint = (c) => (se ? mixc(mixc(c, [150, 138, 96], (1 - se.vig) * 0.75), [168, 112, 48], se.fall * 0.6) : c); /* l'herbe : paille l'hiver, rousse à l'automne */
+  const base = tint(md.tall ? [86, 120, 58] : [74, 108, 54]), fl = se ? clamp((se.vig - 0.35) / 0.4) : 1;
   const lg = g.createLinearGradient(0, hz, 0, H); lg.addColorStop(0, css(mixc(mixc(base, hzc || base, 0.3), dk, 0.3 + 0.5 * night), 0.55)); lg.addColorStop(1, css(mixc(base, dk, 0.35 + 0.5 * night), 0.7));
   g.fillStyle = lg; g.fillRect(0, hz, W, H - hz);
   const gust = 0.8 + ((L && L.wind) || (S.wind ? 1 : 0)) * 1.6, D = H - hz;
   g.lineWidth = 0.8; g.lineCap = "round";
   for (const b of md.blades) {
     const y = hz + D * b.u * b.u, k = 0.35 + b.u * 1.1, wave = Math.sin(TAU * t - (b.x / W) * 5 + b.u * 2), sw = (wave * 0.8 + Math.sin(TAU * t * 2 + b.p) * 0.25) * gust * k;
-    const col = mixc(mixc([92, 134, 66], [158, 160, 88], b.dry * (md.tall ? 0.6 : 0.35)), dk, 0.3 + 0.5 * night);
+    const col = mixc(tint(mixc([92, 134, 66], [158, 160, 88], b.dry * (md.tall ? 0.6 : 0.35))), dk, 0.3 + 0.5 * night);
     g.strokeStyle = css(col, (0.45 + 0.4 * b.u) * lit + 0.15); g.beginPath(); g.moveTo(b.x, y); g.quadraticCurveTo(b.x + sw * 0.4, y - b.h * k * 0.6, b.x + sw, y - b.h * k); g.stroke();
   }
   for (const f of md.flowers) { // prairie : des fleurs dans les herbes hautes, qui bougent avec elles
     const y = hz + D * f.u * f.u, k = 0.35 + f.u * 1.1, wave = Math.sin(TAU * t - (f.x / W) * 5 + f.u * 2) * gust * k, r = (0.8 + f.s) * k;
-    g.fillStyle = css(mixc(hsl(f.hue, 0.55, 0.72), dk, 0.2 + 0.6 * night), 0.85 * lit); g.beginPath(); g.arc(f.x + wave, y - 9 * k, r, 0, TAU); g.fill();
+    if (fl <= 0.01) break; g.fillStyle = css(mixc(hsl(f.hue, 0.55, 0.72), dk, 0.2 + 0.6 * night), 0.85 * lit * fl); g.beginPath(); g.arc(f.x + wave, y - 9 * k, r, 0, TAU); g.fill();
   }
   g.restore();
 }
@@ -1005,7 +1010,7 @@ function fissure(g, m, t) {
 }
 
 function trees(g, m, t) {
-  const { S, hz } = m, col = S.burnt ? "#0a0909" : "#070b08";
+  const { S, hz } = m, se = S.season, col = S.burnt ? "#0a0909" : se && se.fall > 0.01 ? css(mixc([7, 11, 8], [120, 58, 18], se.fall * 0.7)) : "#070b08", bare = se ? 0.45 + 0.55 * se.vig : 1; /* l'automne roussit les feuillages ; l'hiver les dégarnit */
   for (const [i, tr] of m.trees.entries()) {
     const sw = 1.6 * Math.sin(TAU * t + tr.p), x = tr.x, top = hz - tr.h; g.fillStyle = col; g.strokeStyle = col;
     if (S.burnt || m.treeKind === "spire") { // flèche nue ou tronc brûlé aux branches cassées
@@ -1014,7 +1019,7 @@ function trees(g, m, t) {
       else { g.lineWidth = 1; for (let k = 1; k < 4; k++) { const y = hz - tr.h * (0.3 + k * 0.17); g.beginPath(); g.moveTo(x, y); g.lineTo(x + (k % 2 ? 1 : -1) * tr.h * 0.18 + sw, y - tr.h * 0.07); g.stroke(); } }
     } else if (m.treeKind === "umbrella") { // tronc fin + canopée plate
       g.lineWidth = 2; g.beginPath(); g.moveTo(x, hz + 3); g.quadraticCurveTo(x + tr.lean * 8, hz - tr.h * 0.5, x + sw * 0.5, top); g.stroke();
-      g.beginPath(); g.ellipse(x + sw, top, tr.h * 0.5, tr.h * 0.12, 0, 0, TAU); g.fill();
+      g.beginPath(); g.ellipse(x + sw, top, tr.h * 0.5 * bare, tr.h * 0.12 * bare, 0, 0, TAU); g.fill();
     } else if (m.treeKind === "frond") { // palme
       g.lineWidth = 1.6; g.beginPath(); g.moveTo(x, hz + 3); g.quadraticCurveTo(x + tr.lean * 10, hz - tr.h * 0.5, x + sw * 0.4, top); g.stroke();
       for (let k = 0; k < 6; k++) { const a = -Math.PI * (0.1 + 0.16 * k) + sw * 0.03; g.beginPath(); g.moveTo(x + sw * 0.4, top); g.quadraticCurveTo(x + Math.cos(a) * tr.h * 0.3, top + Math.sin(a) * tr.h * 0.35 - 3, x + Math.cos(a) * tr.h * 0.5, top + Math.sin(a) * tr.h * 0.3 + 6); g.stroke(); }
@@ -1051,6 +1056,7 @@ function weather(g, m, t) {
   if (L.drizzle > 0.005 || L.acidRain > 0.005 || L.crystalRain > 0.005) drizzle(g, m, t, L);
   if (L.snow > 0.005 || L.ashRain > 0.005) flakes(g, m, t, L);
   if (L.petals > 0.005) petals(g, m, t, L.petals);
+  else if (S.season) { if (S.season.bloom > 0.01) petals(g, m, t, 0.8 * S.season.bloom); if (S.season.fall > 0.01) petals(g, m, t, 0.9 * S.season.fall, true); } /* le printemps sème des pétales, l'automne des feuilles */
   if (L.hail > 0.005) { g.fillStyle = css([230, 240, 255], 0.7 * L.hail); for (const d of m.drops) { const y = frac(d.y + t * d.v * 1.5) * H; g.fillRect((d.x + y * 0.05) % W, y, 1.6, 1.6); } }
   if (L.lightning > 0.005) {
     const q = Math.floor(t * 4), g2 = rng(S.seed + q * 101), on = g2() < 0.35 && frac(t * 4) < 0.18;
@@ -1088,11 +1094,11 @@ function flakes(g, m, t, L) {
   }
 }
 /** Pluie de pétales : des pétales qui tournoient en descendant de biais, de la couleur des fleurs. */
-function petals(g, m, t, lv) {
+function petals(g, m, t, lv, leaf) {
   const { W, H, wx } = m; if (!wx.petals) return;
   for (const p of wx.petals) {
     const x = frac(p.x + t * p.k) * (W + 20) - 10, y = frac(p.y + t * p.r) * (H + 10) - 5 + 6 * Math.sin(TAU * (t * 2 + p.p)), spin = TAU * (t * 2 * p.k + p.p);
-    g.fillStyle = css(hsl((wx.hue != null ? wx.hue : 340) + p.h, 0.55, 0.8), 0.85 * lv); g.beginPath(); g.ellipse(x, y, p.s, p.s * (0.25 + 0.35 * Math.abs(Math.sin(spin))), spin, 0, TAU); g.fill();
+    g.fillStyle = leaf ? css(hsl(22 + p.h * 0.6, 0.65, 0.42), 0.85 * lv) : css(hsl((wx.hue != null ? wx.hue : 340) + p.h, 0.55, 0.8), 0.85 * lv); g.beginPath(); g.ellipse(x, y, p.s, p.s * (0.25 + 0.35 * Math.abs(Math.sin(spin))), spin, 0, TAU); g.fill();
   }
 }
 /** Brume parfumée : un voile rose et doré au ras du sol, et du pollen qui monte en luisant. */
@@ -1124,7 +1130,7 @@ function rainbow(g, m, t, sn, day, lv) {
 }
 /** Le sol sous la neige, le verglas ou la cendre ; les fleurs. Sur la terre seulement (avec un rivage, pas sur l'eau). */
 function groundWeather(g, m, t, night, L) {
-  const { S, W, H, hz, wx, shore } = m, snow = L.snow, glaze = L.glaze, ash = L.ashRain;
+  const { S, W, H, hz, wx, shore } = m, snow = Math.max(L.snow, S.season ? S.season.snow : 0), glaze = L.glaze, ash = L.ashRain;
   if (!(snow > 0.005 || glaze > 0.005 || ash > 0.005 || (S.flowers && wx.blooms))) return;
   if (S.water && !shore) return; // une mer : rien ne s'y pose
   g.save(); if (shore) { shorePath(g, shore.land); g.clip(); }
@@ -1267,7 +1273,7 @@ function foreground(g, m, t, hzc) {
       g.lineTo(X(W * wd), H + 2); g.closePath(); g.fill(); g.stroke();
     }
   } else if (fg.kind === "branches") {
-    const b = fg.branch, sway = (d) => wind * (0.6 + d * 0.9);
+    const b0 = fg.branch, se = m.S.season, b = se && (b0.style === "leafy" || b0.style === "blossom") ? { ...b0, style: se.snow > 0.3 ? "snowy" : se.vig < 0.3 ? "bare" : se.bloom > 0.5 ? "blossom" : se.fall > 0.5 ? "rust" : b0.style, hue: b0.hue != null ? b0.hue : 340 } : b0, sway = (d) => wind * (0.6 + d * 0.9); /* la branche du bord suit la saison */
     for (const s of b.segs) { // les branches, de la plus épaisse à la plus fine ; les bouts bougent plus que la base
       const o0 = sway(s.d - 1) * (s.d > 0 ? 1 : 0), o1 = sway(s.d);
       g.strokeStyle = b.style === "charred" ? "#060505" : col; g.lineWidth = Math.max(0.8, s.w); g.beginPath(); g.moveTo(X(s.x + o0), s.y + o0 * 0.3); g.quadraticCurveTo(X(s.cx + (o0 + o1) / 2), s.cy, X(s.x2 + o1), s.y2 + o1 * 0.3); g.stroke();
@@ -1275,7 +1281,7 @@ function foreground(g, m, t, hzc) {
     }
     for (const s of b.segs) {
       if (!s.tip) continue; const x = s.x2 + sway(s.d), y = s.y2 + sway(s.d) * 0.3, k = (s.x2 * 7 + s.y2 * 13) % 1;
-      if (b.style === "leafy") { g.fillStyle = col; for (let i = 0; i < 4; i++) { g.beginPath(); g.ellipse(X(x + (i - 1.5) * 4), y + (i % 2) * 4 + 2, 2.4, 6, (i - 1.5) * 0.5 * sd, 0, TAU); g.fill(); } }
+      if (b.style === "leafy" || b.style === "rust") { g.fillStyle = b.style === "rust" ? css(mixc(pal.rock, [150, 70, 20], 0.6)) : col; for (let i = 0; i < 4; i++) { g.beginPath(); g.ellipse(X(x + (i - 1.5) * 4), y + (i % 2) * 4 + 2, 2.4, 6, (i - 1.5) * 0.5 * sd, 0, TAU); g.fill(); } }
       else if (b.style === "needles") { g.strokeStyle = col; g.lineWidth = 0.9; g.beginPath(); for (let i = -3; i <= 3; i++) { g.moveTo(X(x), y); g.lineTo(X(x + i * 2.2), y + 7 - Math.abs(i)); } g.stroke(); }
       else if (b.style === "blossom") { g.fillStyle = css(hsl(b.hue, 0.6, 0.78), 0.9); for (let i = 0; i < 6; i++) { const a = i * 1.05 + k * 6; g.beginPath(); g.arc(X(x + Math.cos(a) * 3.4), y + Math.sin(a) * 3.4, 1.9, 0, TAU); g.fill(); } g.fillStyle = css(hsl(b.hue + 30, 0.7, 0.88), 0.95); g.beginPath(); g.arc(X(x), y, 1.3, 0, TAU); g.fill(); }
       else if (b.style === "moss") { g.strokeStyle = css(mixc(pal.rock, [90, 110, 80], 0.4), 0.55); g.lineWidth = 0.8; g.beginPath(); for (let i = 0; i < 3; i++) { const len = 8 + 14 * ((k + i * 0.37) % 1); g.moveTo(X(x + i * 2 - 2), y); g.quadraticCurveTo(X(x + i * 2 - 2 + wind * 2), y + len * 0.5, X(x + i * 2 - 2 + wind * 3), y + len); } g.stroke(); }
