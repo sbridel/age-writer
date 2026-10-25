@@ -535,6 +535,11 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
           if (extra.length) ok(!ids.includes("herdWinter") && /hibernent/.test(facts) && /le rôle tient toute l'année/.test(facts), "scénario : avec un fouisseur, plus de migration ; la fiche le dit");
           else ok(ids.includes("herdWinter") && /graines et en bourgeons/.test(facts) && az.season, "scénario : l'Âge tempéré a ses saisons, la migration, et la dormance des verts dite");
           files.delete(z.path); }
+        { /* l'Âge de récolte du scénario : chaque saison favorise sa matière (src/seasons.js, richFor) */
+          const z = age("Recolte Saisons", ["single_sun", "water", "ash", "humus", "peat", "fern", "seed", "grass", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 1"], dir), keep = p.ext.seasonForce, got = {};
+          for (const f of [0, 1, 2, 3]) { p.ext.seasonForce = f; z.stat.mtime++; const h = an(z).harvest || {}; got[["winter", "spring", "summer", "autumn"][f]] = { gives: (h.gives || []).join(","), season: !!h.season }; }
+          ok(got.winter.season === false && got.spring.season && got.summer.season && got.autumn.season && /ash/.test(got.summer.gives) && /humus/.test(got.spring.gives) && /peat/.test(got.autumn.gives), "scénario : la récolte, favorisée au printemps, en été, en automne ; rien de plus l'hiver (" + JSON.stringify(got) + ")");
+          p.ext.seasonForce = keep; files.delete(z.path); }
         { const z = age("Air Mince", ["single_sun", "fern", "seed", "insolation: 1.6", "atmosphere: 0.3", "mass: 1", "rotation: 24", "tilt: 45", "seed: 1"], dir), tz = require("../src/physics").sheet(an(z).physics, "fr").tensions.find((x) => x.id === "winterGreen");
           ok(tz && /l'été monte/.test(tz.why) && /tilt: \d/.test(tz.fix.join(" ")), "scénario : l'air mince, l'été qui cuit, la piste qui redresse l'axe"); files.delete(z.path); }
         const s0 = an(sea).season; p.caveTest("season"); sea.stat.mtime++; const s1 = an(sea).season;
