@@ -224,8 +224,9 @@ function drawAtelier(r, ctx, sc, sky, t) {
   { const bx = tx + 108; ctx.fillStyle = c("#4a2a22"); ctx.fillRect(bx - 1, top - 6, 56, 6); ctx.fillStyle = c("#e6d9b8"); ctx.fillRect(bx + 1, top - 9, 26, 5); ctx.fillStyle = c("#eadfc0"); ctx.fillRect(bx + 28, top - 9, 26, 5); ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 3; k++) { ctx.fillRect(bx + 4, top - 8 + k * 1.4, 20, 0.6); ctx.fillRect(bx + 31, top - 8 + k * 1.4, 20, 0.6); }
     item(bx - 2, top - 12, 58, 14, "atelier.book.tip", "atelier.book.flash");
     const ix = bx + 70, HS = (r.opts.hearState && r.opts.hearState()) || {}, hum = HS.hum || 0, HR = require("./relto-hear"); /* le chapitre 14 : l'encrier frémit, la pierre de liaison est posée à côté */
-    ctx.fillStyle = c("#14202a"); ctx.beginPath(); ctx.ellipse(ix + 6, top - 4, 7, 4, 0, 0, 6.283); ctx.fill(); ctx.fillRect(ix + 3, top - 10, 6, 6); ctx.strokeStyle = c("#e8dcc0"); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(ix + 7, top - 10); ctx.lineTo(ix + 15 + (hum > 0 ? hum * Math.sin(t * 70) : 0), top - 26); ctx.stroke();
-    item(ix - 2, top - 28, 22, 30, "atelier.ink.tip", hum > 0 ? "atelier.ink.hum" : "atelier.ink.flash");
+    HR.scarab(ctx, c, ix + 6, top - 5, 7, t, { skin: castle ? "castle" : glass ? "glass" : "plain", hum }); /* l'encrier en scarabée, fermé : on s'assoit au bureau pour l'ouvrir */
+    HR.dipPen(ctx, c, ix + 18, top - 2, 26, -0.25, { skin: castle ? "castle" : glass ? "glass" : "plain", w: 1.6 });
+    item(ix - 2, top - 14, 46, 16, "atelier.ink.tip", hum > 0 ? "atelier.ink.hum" : "atelier.ink.flash");
     if (HS.stone) { HR.linkStone(ctx, c, ix - 9, top - 1, 6, t); item(ix - 17, top - 9, 16, 12, "atelier.link.tip", "atelier.link.flash"); } }
   // un sablier et un cristal étrange qui respire
   { const hx = tx + 218; ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.4; ctx.strokeRect(hx - 8, top - 28, 16, 26); ctx.fillStyle = c("#e6d9a8"); ctx.beginPath(); ctx.moveTo(hx - 6, top - 26); ctx.lineTo(hx + 6, top - 26); ctx.lineTo(hx, top - 15); ctx.fill(); ctx.beginPath(); ctx.moveTo(hx, top - 15); ctx.lineTo(hx + 6, top - 4); ctx.lineTo(hx - 6, top - 4); ctx.fill(); item(hx - 10, top - 30, 20, 30, "atelier.hourglass.tip", "atelier.hourglass.flash");
@@ -289,15 +290,15 @@ function drawDesk(r, ctx, sc, sky, t) {
     ctx.strokeStyle = c("#d8c07a"); ctx.lineWidth = 1.2; ctx.strokeRect(-22, -36, 48, 72);
     ctx.fillStyle = c("#d8c07a"); for (const [px, py] of [[-37, -49], [33, -49], [-37, 44], [33, 44]]) ctx.fillRect(px, py, 5, 5);
     ctx.restore(); r.hot.push({ x: 534, y: 172, w: 82, h: 108, tip: TRr("agebook.tip"), go: "descbook" }); }
+  require("./relto-hear").dipPen(ctx, c, 545, 270, 122, -0.92, { skin: castle ? "castle" : glass ? "glass" : "plain", w: 4 }); /* le porte-plume, posé en travers du livre noir */
   // l'encrier et la plume, à droite
   const HS = (r.opts.hearState && r.opts.hearState()) || {}, hum = HS.hum || 0, HR = require("./relto-hear"); /* le chapitre 14 : l'encrier qui frémit, la pierre de liaison */
-  { const ix = 470, iy = 300; ctx.fillStyle = c("#14202a"); ctx.beginPath(); ctx.ellipse(ix, iy, 26, 12, 0, 0, 6.283); ctx.fill(); ctx.fillRect(ix - 10, iy - 22, 20, 18); ctx.fillStyle = c("#2d4a5c"); ctx.fillRect(ix - 12, iy - 24, 24, 5);
-    if (hum > 0) { /* l'encre se voit : des cercles qui s'élargissent, la plume qui tremble */
-      ctx.fillStyle = c("#2d4a5c"); ctx.beginPath(); ctx.ellipse(ix, iy - 24, 12, 3.6, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = c("#070b10"); ctx.beginPath(); ctx.ellipse(ix, iy - 24, 9.5, 2.6, 0, 0, 6.283); ctx.fill(); HR.inkRipples(ctx, ix, iy - 24, 9.5, 2.6, hum, t);
-      ctx.strokeStyle = c("#e8dcc0"); ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(ix + 6, iy - 24); ctx.quadraticCurveTo(ix + 30, iy - 52, ix + 52 + hum * 1.8 * Math.sin(t * 70), iy - 78); ctx.stroke();
-    } else { ctx.strokeStyle = c("#e8dcc0"); ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(ix + 6, iy - 24); ctx.lineTo(ix + 52, iy - 78); ctx.stroke(); }
-    r.hot.push({ x: ix - 28, y: iy - 80, w: 84, h: 94, tip: TRr("atelier.ink.tip"), flash: TRr(hum > 0 ? "atelier.ink.hum" : "atelier.ink.flash") }); }
-  if (HS.stone) { HR.linkStone(ctx, c, 514, 300, 17, t); r.hot.push({ x: 494, y: 286, w: 40, h: 28, tip: TRr("atelier.link.tip"), desk: "link" }); } /* la pierre de liaison, posée la nuit à côté de l'encrier */
+  { /* l'encrier en scarabée : un clic écarte ses ailes (les élytres), l'encre est dessous ; elles se referment quand on se lève */
+    const ui0 = (r.deskUI = r.deskUI || { open: false, at: 0, held: false, heldAt: 0, relAt: 0 }), now0 = Date.now(), e0 = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+    const op = ui0.wing ? e0((now0 - ui0.wingAt) / 500) : ui0.wingAt ? 1 - e0((now0 - ui0.wingAt) / 400) : 0;
+    HR.scarab(ctx, c, 462, 286, 30, t, { skin: castle ? "castle" : glass ? "glass" : "plain", hum, open: op });
+    r.hot.push({ x: 432, y: 250, w: 62, h: 64, tip: TRr(ui0.wing ? "atelier.scarab.close" : "atelier.scarab.tip"), desk: "wings" }); }
+  if (HS.stone) { HR.linkStone(ctx, c, 440, 318, 17, t); r.hot.push({ x: 420, y: 304, w: 40, h: 28, tip: TRr("atelier.link.tip"), desk: "link" }); } /* la pierre de liaison, posée la nuit à côté de l'encrier */
   // la corbeille à lettres, à gauche : un panier de laiton ; une enveloppe cachetée dépasse quand du courrier est arrivé
   { const cx = 70, cy = 262, cw = 110, ch = 64; ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.beginPath(); ctx.ellipse(cx + cw / 2, cy + ch + 4, cw / 2 + 6, 8, 0, 0, 6.283); ctx.fill();
     const env = (x, y, a, col) => { ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.fillStyle = c(col); ctx.fillRect(-30, -18, 60, 36); ctx.strokeStyle = rgba(120, 90, 50, 0.5); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-30, -18); ctx.lineTo(0, 4); ctx.lineTo(30, -18); ctx.stroke(); ctx.restore(); };
@@ -339,7 +340,7 @@ function drawDesk(r, ctx, sc, sky, t) {
     const lp = ui.linkRel ? 1 - ease((now - ui.linkRel) / 450) : ease((now - ui.link) / 550);
     if (ui.linkRel && now - ui.linkRel > 460) { ui.link = 0; ui.linkRel = 0; } else {
       ctx.fillStyle = rgba(0, 0, 0, 0.62 * lp); ctx.fillRect(0, 0, W, H);
-      HR.linkStone(ctx, c, 514 + (320 - 514) * lp, 300 + (168 - 300) * lp, 17 + 79 * lp, t, { sq: 0.55 + 0.25 * lp, rot: 0.08 - 0.04 * lp, thick: 0.28 - 0.1 * lp });
+      HR.linkStone(ctx, c, 440 + (320 - 440) * lp, 318 + (168 - 318) * lp, 17 + 79 * lp, t, { sq: 0.55 + 0.25 * lp, rot: 0.08 - 0.04 * lp, thick: 0.28 - 0.1 * lp });
       if (lp > 0.9) { ctx.font = "italic 15px serif"; ctx.textAlign = "center"; ctx.fillStyle = rgba(233, 220, 184, 0.85); ctx.fillText(TRr("atelier.link.flash"), W / 2, 316); ctx.textAlign = "left"; }
       r.hot.push({ x: 0, y: 0, w: W, h: H, tip: "", desk: "unlink" });
     }

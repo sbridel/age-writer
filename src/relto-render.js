@@ -1569,6 +1569,7 @@ class ReltoRenderer {
     if (k === "drawer") { if (ui.held) return; ui.open = !ui.open; ui.at = now; if (this.opts.onRelic) this.opts.onRelic(ui.open ? "open" : "close"); }
     else if (k === "hold" && !ui.held) { ui.held = true; ui.heldAt = now; ui.relAt = 0; if (this.opts.onRelic) this.opts.onRelic("hold"); }
     else if (k === "release" && ui.held && !ui.relAt && now - ui.heldAt > 500) { ui.relAt = now; if (this.opts.onRelic) this.opts.onRelic("put"); }
+    else if (k === "wings" && !ui.held && !ui.link) { ui.wing = !ui.wing; ui.wingAt = now; if (this.opts.onKnock) this.opts.onKnock("press"); const HSw = (this.opts.hearState && this.opts.hearState()) || {}; if (ui.wing) { const TRr = this.imagerTr ? this.imagerTr() : (q) => q; this.flash = { text: TRr(HSw.hum > 0 ? "atelier.ink.hum" : "atelier.ink.flash"), x: 462, y: 250, until: now + 2600 }; } } /* l'encrier en scarabée : écarter ses ailes, ou les refermer */
     else if (k === "link" && !ui.link && !ui.held) { ui.link = now; ui.linkRel = 0; if (this.opts.onRelic) this.opts.onRelic("hold"); } /* la pierre de liaison, prise de près (chapitre 14) */
     else if (k === "unlink" && ui.link && !ui.linkRel && now - ui.link > 450) { ui.linkRel = now; if (this.opts.onRelic) this.opts.onRelic("put"); }
     if (!this.running) this.draw(0);
