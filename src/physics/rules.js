@@ -346,6 +346,22 @@ const REQUIREMENTS = {
 
 /** Exigences qui valent pour tout monde, quels que soient les blocs (`applies` : quand les vérifier). */
 const GLOBAL = {
+  /* les saisons (DESIGN-physique §12 bis) : de l'eau liquide en moyenne, mais gelée l'hiver ; et un axe chaotique qui tient droit */
+  winterFreeze: {
+    law: "L6", axis: "geological", sev: "light", search: ["tilt", "insolation", "atmosphere"], applies: (w) => w.water === "liquid" && w.seasonAmp >= 8 && has(w, ["river", "lake", "marsh", "delta", "ocean_world", "kelp", "coral"]),
+    test: (w) => w.Twinter >= 268,
+    why: {
+      fr: (w, f) => `L'eau est liquide en moyenne (${f(w.Ts - 273.15, 0)} °C), mais l'hiver descend à ${f(w.Twinter - 273.15, 0)} °C avec un axe incliné de ${f(w.tilt, 0)}° : rivières et lacs gèlent une saison.`,
+      en: (w, f) => `Water is liquid on average (${f(w.Ts - 273.15, 0)} °C), but winter drops to ${f(w.Twinter - 273.15, 0)} °C under a ${f(w.tilt, 0)}° tilt: rivers and lakes freeze for a season.`,
+    },
+    fix: () => [tip("écrire la glace, ou l'hiver (frozen_world, snow)", "write the ice, or the winter (frozen_world, snow)")],
+  },
+  tiltChaos: {
+    law: "L2", axis: "cosmological", sev: "light", search: ["tilt"], applies: (w) => w.chaoticAxis,
+    test: (w) => w.tilt >= 10,
+    why: { fr: (w, f) => `Un cycle déréglé demande un axe qui bascule ; écrit à ${f(w.tilt, 0)}°, il tient presque droit.`, en: (w, f) => `An erratic cycle wants an axis that tips over; written at ${f(w.tilt, 0)}°, it stands almost straight.` },
+    fix: () => [tip("incliner l'axe davantage (tilt: 30 ou plus)", "tilt the axis further (tilt: 30 or more)")],
+  },
   // une lune lointaine ne reste liée que dans la sphère de Hill de sa planète (sa « prise ») : rayon ∝ a · (M / M★)^(1/3).
   // Celle de la Terre (1 UA, 1 M⊕, 1 M☉) garde une lune deux fois plus loin que la nôtre : c'est la mesure 1.
   moonReach: {
@@ -392,6 +408,7 @@ const HINTS = {
   atmosphere: { up: tip("un air plus épais", "thicker air"), down: tip("un air plus mince", "thinner air") },
   water: { up: tip("plus d'eau", "more water"), down: tip("moins d'eau", "less water") },
   rotation: { up: tip("une rotation plus lente", "a slower spin"), down: tip("une rotation plus rapide", "a faster spin") },
+  tilt: { up: tip("un axe plus incliné", "a more tilted axis"), down: tip("un axe plus droit", "a straighter axis") },
 };
 
 module.exports = { REQUIREMENTS, ASSERTIONS, GLOBAL, HINTS };

@@ -236,7 +236,21 @@ function waterState(Ts, P, inventory) {
   return "liquid";
 }
 
-module.exports = {
+/**
+ * Les saisons (DESIGN-physique §12 bis) : l'amplitude été/hiver, en kelvins, aux latitudes moyennes. Elle vient de l'inclinaison de l'axe
+ * (la Terre, 23,4° : la mesure 1), et l'air épais la lisse comme l'océan ; l'air mince l'exagère. Un monde figé par marée n'a pas de saisons.
+ * @param Ts surface (K) ; tilt degrés ; P bar ; waterFrac part d'eau (0..1, l'océan lisse) ; locked face figée
+ */
+function seasonAmplitude(Ts, tilt, P, waterFrac, locked) {
+  if (locked || !(tilt > 0) || !(Ts > 0)) return 0;
+  const base = 0.12 * Ts * (Math.sin((Math.min(90, tilt) * Math.PI) / 180) / Math.sin((23.4 * Math.PI) / 180)); /* la Terre sans air ni mer : ~35 K */
+  const air = 1 / (1 + 0.6 * Math.max(0, P)), sea = 1 - 0.5 * clamp(waterFrac || 0, 0, 1);
+  return base * air * sea;
+}
+/** Le mot des saisons : "none" (< 2 K), "mild" (< 8), "marked" (< 20), "extreme". */
+const seasonKind = (amp) => (amp < 2 ? "none" : amp < 8 ? "mild" : amp < 20 ? "marked" : "extreme");
+
+module.exports = { seasonAmplitude, seasonKind,
   T_SUN, WATER_TRIPLE_BAR, HABITABLE, HEAT, clamp,
   starLuminosity, starRadius, starTemperature, starLifetime, brownDwarf, planckFraction, visibleRatio, uvRatio,
   insolation, distanceFor, orbitalPeriodDays, tidalLockTime,

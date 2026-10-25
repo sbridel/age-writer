@@ -37,6 +37,7 @@ const KEYS = {
   volatiles: "volatiles",
   albedo: "albedo", "albédo": "albedo",
   tides: "tides", "marées": "tides", marees: "tides",
+  tilt: "tilt", inclinaison: "tilt", obliquity: "tilt", "obliquité": "tilt", obliquite: "tilt",
 };
 const PHYS_RE = new RegExp(`^\\s*(${Object.keys(KEYS).join("|")})\\s*[:=]\\s*(.+?)\\s*$`, "i");
 const WORDS = {
@@ -47,7 +48,7 @@ const WORDS = {
 const LIMITS = {
   mass: [0.01, 20, true], radius: [0.05, 4, true], age: [0.001, 13.8, true], orbit: [0.005, 1000, true], insolation: [0.0001, 5000, true],
   starMass: [0.08, 60, true], rotation: [1, 1e5, true], atmosphere: [0, 1000, false], water: [0, 10, false], volatiles: [0, 10, false],
-  albedo: [0, 0.95, false], tides: [0, 50, false],
+  albedo: [0, 0.95, false], tides: [0, 50, false], tilt: [0, 90, false],
 };
 
 const NUM_RE = /^(-?\d+(?:[.,]\d+)?)\s*([a-zé]*)$/i;
@@ -139,6 +140,7 @@ function candidate(r, set, written) {
     S: logN(r, 1, 0.35, 0.2, 3), M: logN(r, 1, 0.5, 0.05, 8), cmf: M.clamp(0.33 + 0.06 * gauss(r) + set.coreAdd, 0.05, 0.75),
     ageRoll: r(), rotation: logN(r, 24, 0.45, 6, 120), giantDays: logU(r, 1.5, 8), giantTides: logU(r, 0.1, 5), volatiles: logN(r, 1, 0.5, 0.1, 5),
     uS: r(), uM: r(), uAge: r(), // dés des blocs de géophysique (orbite, masse, âge), jetés en dernier
+    tilt: M.clamp(18 + 9 * gauss(r), 0, 45), tiltChaos: 20 + r() * 60, // l'inclinaison de l'axe : modérée d'ordinaire ; forte et sans règle quand l'axe est chaotique (DESIGN-physique §12 bis)
   };
   const inRange = (u, [a, b]) => Math.exp(Math.log(a) + u * (Math.log(b) - Math.log(a)));
   if (set.sRange) roll.S = inRange(roll.uS, set.sRange);
@@ -156,6 +158,7 @@ function candidate(r, set, written) {
     giantTides: roll.giantTides,
     volatiles: written.volatiles != null ? written.volatiles : roll.volatiles,
     water: written.water != null ? written.water : set.water != null ? set.water : 0.3,
+    tilt: written.tilt != null ? written.tilt : set.chaoticAxis ? roll.tiltChaos : roll.tilt,
   };
 }
 
@@ -230,6 +233,10 @@ function derive(p, set, written, ids) {
   Object.assign(w, { albedo: a.albedo, Teq: a.Teq, keep: a.keep, P: a.P, tau: a.tau, Ts: a.Ts, water: a.water, regime: a.regime, regimeStable: a.ok });
   w.airFrozen = written.atmosphere == null && M.airFreeze(a.Teq) < 1;
   w.boil = M.boilingPoint(a.P);
+  /* les saisons (§12 bis) : l'inclinaison de l'axe, et ce que l'air et la mer en lissent ; une face figée n'en a pas */
+  w.tilt = p.tilt != null ? p.tilt : 0; w.chaoticAxis = !!set.chaoticAxis;
+  w.seasonAmp = M.seasonAmplitude(w.Ts, w.tilt, a.P, w.water === "liquid" ? Math.min(1, p.water) : 0, w.locked || set.stars === 0);
+  w.Tsummer = w.Ts + w.seasonAmp; w.Twinter = w.Ts - w.seasonAmp; w.seasons = M.seasonKind(w.seasonAmp);
   // la tectonique des plaques demande de l'eau pour lubrifier la croûte (Vénus, chaude mais sèche, n'en a pas)
   w.tectonics = w.heat >= M.HEAT.tectonics && w.M >= 0.5 && w.water === "liquid";
   // L7 lumière au sol (voile, nuages épais)
@@ -291,9 +298,9 @@ function solve({ ids, src = "", seed = "", mode = "easy" }) {
 
 // ---- pistes chiffrées : « écris plutôt insolation: 1,4 » ------------------------------------------------
 const GRID = {
-  insolation: [0.005, 2000], age: [0.02, 13], mass: [0.02, 15], atmosphere: [0.001, 300], water: [0.01, 5], rotation: [4, 240],
+  insolation: [0.005, 2000], age: [0.02, 13], mass: [0.02, 15], atmosphere: [0.001, 300], water: [0.01, 5], rotation: [4, 240], tilt: [0.5, 90],
 };
-const current = (key, w) => ({ insolation: w.S, age: w.age, mass: w.M, atmosphere: w.P, water: w.waterInv, rotation: w.rotation }[key]);
+const current = (key, w) => ({ insolation: w.S, age: w.age, mass: w.M, atmosphere: w.P, water: w.waterInv, rotation: w.rotation, tilt: w.tilt }[key]);
 /** Arrondi à deux chiffres significatifs (ce que l'on écrirait à la main). */
 const round2 = (v) => { const e = Math.pow(10, Math.floor(Math.log10(v)) - 1); return Math.round(v / e) * e; };
 const roundN = (v, n) => Number(v.toPrecision(n));
@@ -307,6 +314,7 @@ function variant(best, ctx, key, v) {
   else if (key === "atmosphere") wr.atmosphere = v;
   else if (key === "water") p.water = v;
   else if (key === "rotation") p.rotation = v;
+  else if (key === "tilt") p.tilt = v;
   return derive(p, ctx.set, wr, ctx.ids);
 }
 

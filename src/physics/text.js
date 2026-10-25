@@ -26,7 +26,8 @@ function plain(lang) {
 
 const L = {
   fr: {
-    star: "Étoile", stars: "Étoiles", none: "aucune", orbit: "Orbite", planet: "Planète", interior: "Intérieur", air: "Atmosphère", water: "Eau", life: "Vivant",
+    star: "Étoile", stars: "Étoiles", none: "aucune", orbit: "Orbite", planet: "Planète", interior: "Intérieur", air: "Atmosphère", water: "Eau", life: "Vivant", seasons: "Saisons",
+    seasonsV: (w, f) => (w.stars === 0 ? "sans saisons : aucune étoile" : w.locked ? "sans saisons : la face figée" : w.seasons === "none" ? `sans saisons (axe incliné de ${f(w.tilt, 0)}°)` : `${{ mild: "douces", marked: "marquées", extreme: "extrêmes" }[w.seasons]} : ${f(w.Twinter - 273.15, 0)} °C à ${f(w.Tsummer - 273.15, 0)} °C aux latitudes moyennes · axe incliné de ${f(w.tilt, 0)}°`),
     starV: (w, f) => (w.stars === 0 ? "aucune : seule la chaleur du sol" : w.starMasses.map((m, i) => `${f(m)} M☉ (${f(w.starTemps[i], 0)} K)`).join(" + ") + ` · lumière ${f(w.L)} L☉ · ` + (isFinite(w.starLife) ? `vit ${f(w.starLife)} Ga` : "ne brûle pas : se refroidit lentement")),
     orbitV: (w, f) => (w.stars === 0 ? "errante, sans étoile" : `${f(w.a)} UA · flux reçu ${f(w.S)} × Terre · année de ${f(w.periodDays)} jour${w.periodDays >= 2 ? "s" : ""}`),
     spinV: (w, f) => (w.locked ? `face fixe (jour = ${f(w.rotation / 24)} jours terrestres)` : `jour de ${f(w.rotation)} h`),
@@ -37,7 +38,8 @@ const L = {
     lifeV: (w, f) => `lumière au sol ${f(w.light)} × Terre`,
   },
   en: {
-    star: "Star", stars: "Stars", none: "none", orbit: "Orbit", planet: "Planet", interior: "Interior", air: "Atmosphere", water: "Water", life: "Life",
+    star: "Star", stars: "Stars", none: "none", orbit: "Orbit", planet: "Planet", interior: "Interior", air: "Atmosphere", water: "Water", life: "Life", seasons: "Seasons",
+    seasonsV: (w, f) => (w.stars === 0 ? "no seasons: no star" : w.locked ? "no seasons: the fixed face" : w.seasons === "none" ? `no seasons (axis tilted ${f(w.tilt, 0)}°)` : `${{ mild: "mild", marked: "marked", extreme: "extreme" }[w.seasons]}: ${f(w.Twinter - 273.15, 0)} °C to ${f(w.Tsummer - 273.15, 0)} °C at middle latitudes · axis tilted ${f(w.tilt, 0)}°`),
     starV: (w, f) => (w.stars === 0 ? "none: only the ground's own heat" : w.starMasses.map((m, i) => `${f(m)} M☉ (${f(w.starTemps[i], 0)} K)`).join(" + ") + ` · light ${f(w.L)} L☉ · ` + (isFinite(w.starLife) ? `lives ${f(w.starLife)} Gyr` : "does not burn: cools slowly")),
     orbitV: (w, f) => (w.stars === 0 ? "rogue, starless" : `${f(w.a)} AU · receives ${f(w.S)} × Earth · ${f(w.periodDays)}-day year`),
     spinV: (w, f) => (w.locked ? `one face fixed (day = ${f(w.rotation / 24)} Earth days)` : `${f(w.rotation)} h day`),
@@ -103,6 +105,7 @@ function sheet(phys, lang = "fr") {
     [t.interior, t.interiorV(w, f)],
     [t.air, t.airV(w, f)],
     [t.water, t.waterV(w, f)],
+    [t.seasons, t.seasonsV(w, f)],
     [t.life, t.lifeV(w, f)],
   ];
   const tensions = phys.tensions.map((x) => {

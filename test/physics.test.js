@@ -86,7 +86,7 @@ for (let i = 0; i < 300; i++) {
   const a = analyseAgeBase(s, { seed: "R" + i }), p = P.physicsOf(a, s, "R" + i);
   for (const lang of ["fr", "en"]) {
     const sh = P.sheet(p, lang), text = JSON.stringify(sh);
-    if (/NaN|undefined/.test(text) || sh.rows.length !== 7) assert.fail(`fiche illisible (R${i}, ${lang}) : ${text.slice(0, 300)}`);
+    if (/NaN|undefined/.test(text) || sh.rows.length !== 8) assert.fail(`fiche illisible (R${i}, ${lang}) : ${text.slice(0, 300)}`);
   }
   if (!(p.w.Ts > 0 && isFinite(p.w.P))) assert.fail(`monde absurde (R${i})`);
 }
@@ -168,3 +168,27 @@ console.log(`physics.test.js : ${n} vérifications, tout passe`);
   a2.ok(!isPhysicsStub("rain") && !isPhysicsStub("water") && !isPhysicsStub("core") && !isPhysicsStub("spin") && !isPhysicsStub("spinning") && !isPhysicsStub("spin : 20") && !isPhysicsStub("sp"), "un bloc ou une ligne finie n'est pas une ligne commencée");
   a2.ok(isPhysicsLine("spin : 20") && !isPhysicsLine("spin :"), "la ligne finie reste une ligne de valeur, la commencée non");
 }
+
+{ /* les saisons (DESIGN-physique §12 bis, palier 1) : la ligne tilt:, le tirage, l'amplitude, la fiche, deux tensions */
+  const { seasonAmplitude, seasonKind } = M;
+  const amp = seasonAmplitude(288, 23.4, 1, 0.7, false);
+  near(amp, 10, 18, "la Terre : des saisons de l'ordre de ±10 à 18 K aux latitudes moyennes");
+  ok(seasonAmplitude(288, 23.4, 0.01, 0.7, false) > amp * 1.4 && seasonAmplitude(288, 23.4, 10, 0.7, false) < amp * 0.4, "l'air mince exagère les saisons, l'air épais les lisse");
+  ok(seasonAmplitude(288, 23.4, 1, 0, false) > amp && seasonAmplitude(288, 0, 1, 0.7, false) === 0 && seasonAmplitude(288, 23.4, 1, 0.7, true) === 0, "sans mer, plus marquées ; sans inclinaison ou face figée, aucune saison");
+  ok(seasonKind(1) === "none" && seasonKind(5) === "mild" && seasonKind(12) === "marked" && seasonKind(30) === "extreme", "les quatre mots des saisons");
+  ok(parsePhysics("tilt: 30").params.tilt === 30 && parsePhysics("inclinaison: 12").params.tilt === 12 && parsePhysics("obliquity: 200").params.tilt === 90 && PHYS_RE.test("obliquité: 5"), "la ligne tilt:, ses alias, sa plage");
+  const w0 = planet({ M: 1, cmf: 0.33, S: 1, A: 0.3, rot: 24, water: 1 });
+  ok(w0.tilt === 0 && w0.seasons === "none", "sans tilt donné à derive : pas de saisons (les tests d'avant ne bougent pas)");
+  const seeded = (t) => { const a = analyseAgeBase(t, { seed: "Saisons", draw: false }); return P.physicsOf(a, t, "Saisons", "easy"); };
+  const p1 = seeded("single_sun\nsteady_cycle\nwater\nriver\nfern"), p2 = seeded("single_sun\nsteady_cycle\nwater\nriver\nfern\ntilt: 60");
+  ok(p1.w.tilt > 0 && p1.w.tilt <= 45 && p2.w.tilt === 60 && p2.w.seasonAmp > p1.w.seasonAmp, "tiré modéré quand rien n'est écrit ; écrit, il a le dernier mot");
+  ok(P.sheet(p2, "fr").rows.some((r) => r[0] === "Saisons" && /°C à .*°C/.test(r[1])) && P.sheet(p2, "en").rows.some((r) => r[0] === "Seasons" && /axis tilted 60°/.test(r[1])), "la fiche dit les saisons, en deux langues");
+  const locked = seeded("single_sun\nsteady_cycle\nwater\nriver\ntidal_lock\ntilt: 40"), chaos = seeded("single_sun\nerratic_cycle\nwater\ntilt: 3"), chaos2 = seeded("single_sun\nerratic_cycle\nwater");
+  ok(!locked.w.locked || locked.w.seasonAmp === 0, "une face figée par la marée n'a pas de saisons, quoi qu'on écrive");
+  ok(chaos.tensions.some((x) => x.id === "tiltChaos") && !chaos2.tensions.some((x) => x.id === "tiltChaos") && chaos2.w.tilt >= 20, "un cycle déréglé demande un axe qui bascule ; tiré, il bascule");
+  const cold = seeded("single_sun\nsteady_cycle\nwater\nriver\nfern\ninsolation: 0.9\natmosphere: 0.3\ntilt: 50");
+  ok(cold.w.water !== "liquid" || cold.w.seasonAmp < 8 || cold.w.Twinter >= 268 || cold.tensions.some((x) => x.id === "winterFreeze"), "de l'eau liquide en moyenne mais gelée l'hiver : la tension se dit (ou le cas ne se présente pas)");
+  const strictBefore = P.applyPhysics(analyseAgeBase("single_sun\nsteady_cycle\nwater\nfern", { seed: "Z", draw: false }), seeded("single_sun\nsteady_cycle\nwater\nfern"), "easy");
+  ok(strictBefore.stability === analyseAgeBase("single_sun\nsteady_cycle\nwater\nfern", { seed: "Z", draw: false }).stability, "facile ne coûte jamais");
+}
+console.log("physics.test.js : saisons ok");
