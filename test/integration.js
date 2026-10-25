@@ -513,7 +513,7 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         const X = p.poolExt(p.poolOfAge(p.core.seed(wet.path))), rain = SL.strokesOf("rain").map((st) => st.map(([x, y]) => [300 + x * 8, 170 + y * 8]));
         ok(X && SL.arrived(p.bahroSt(p.poolOfAge(p.core.seed(wet.path))), now), "l'ardoise : arrivée au matin après le 17");
         ok(SL.trace(X, rain, now).effect === "rain", "l'ardoise : la pluie tracée, reconnue");
-        const before = an(wet); ok(!before.slateAct && (before.harvest || {}).gives.includes("ash"), "avant : pas d'acte, l'Âge donne des cendres");
+        const before = an(wet);  ok(!before.slateAct && (before.harvest || {}).gives.includes("ash"), "avant : pas d'acte, l'Âge donne des cendres");
         await p.slateOnOpen(dry); ok(X.slate.sent && X.slate.sent.outcome === "refused", "l'accord : la pluie sur un monde sans eau ne découle de rien, refusée (" + JSON.stringify(X.slate.sent) + ")");
         X.slate.sent = null; SL.trace(X, rain, now);
         await p.slateOnOpen(wet); ok(X.slate.sent && X.slate.sent.outcome === "done" && X.slate.sent.name === "Cendres Mouillees", "le prochain Livre ouvert : l'ardoise part pour lui");
@@ -523,6 +523,17 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         p.ext.story[SKc].stone.ending = "command"; const cmd = an(wet);
         ok(cmd.slateAct && !cmd.slateAct.fertile && cmd.harvest.gives.includes("ash") && G.sceneOf(cmd, "Cendres Mouillees").rain, "le commandement : la pluie peinte, la récolte inchangée");
         delete p.ext.story[SKc].stone; delete X.slate; files.delete(wet.path); files.delete(dry.path); }
+      { /* les raccourcis de test (commande « cave-test ») : sauter au 17, le commandement sans attendre un jour, faire tourner les saisons */
+        const st = p.ext.story[SKc], keepDone = (st.done || []).slice(), keepPool = p._lastPool, ST = require("../src/story"), STONE = require("../src/story-stone");
+        p._lastPool = SKc; p.caveTest("to17");
+        ok(STONE.current(st) && !st.done.includes("stone") && ST.CHAPTERS.slice(0, ST.CHAPTERS.findIndex((c) => c.id === "stone")).every((c) => st.done.includes(c.id)), "raccourci : le 17 devient le chapitre en cours");
+        p.caveTest("command"); ok(STONE.watch(st, 0, Date.now()) && STONE.endingOf(st) === "command", "raccourci : le chemin ouvert hier, la pierre restée au bureau → le commandement");
+        delete st.stone; st.done = keepDone; p._lastPool = keepPool;
+        const sea = age("Quatre Saisons", ["single_sun", "water", "fern", "seed", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30"], dir);
+        const s0 = an(sea).season; p.caveTest("season"); sea.stat.mtime++; const s1 = an(sea).season;
+        ok(s0 && s1 && s0.name !== s1.name && p.ext.seasonShift === 0.25, "raccourci : un quart d'année plus tard, la saison change (" + (s0 && s0.name) + " → " + (s1 && s1.name) + ")");
+        p.caveTest("seasonreset"); sea.stat.mtime++; ok(p.ext.seasonShift === 0 && an(sea).season.name === s0.name, "raccourci : retour au calendrier vrai");
+        files.delete(sea.path); }
       recv.content = "```age\nsingle_sun\nsteady_cycle\nsand\ncarry: sky from Jamais Lu\ncarry: moor from Source Ciel\ncarry: sky from Personne\ncarry: desert from Source Ciel\n```\n"; recv.stat.mtime++;
       r = an(recv); const why = (r.carry.refused || []).map((x) => x.why).join();
       ok(why === "untouched,what,missing,empty", "porter : jamais ouvert, mot inconnu, Livre absent, rien à donner (" + why + ")");

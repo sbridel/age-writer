@@ -68,7 +68,7 @@ module.exports = function build(Base, core, AGEX) {
   /** La caverne, pour essayer (menu de la clé) : remettre le lac à zéro, des colonies, les endormir, les gaver ; chaque essai remplit le flacon. */
   class CaveTestModal extends FuzzySuggestModal {
     constructor(app, plugin) { super(app); this.plugin = plugin; }
-    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask", "reveal", "lit", "slab", "dream", "ink", "night", "slate", "slateback"]; }
+    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask", "reveal", "lit", "slab", "dream", "to14", "to17", "ink", "night", "command", "slate", "slateback", "season", "seasonreset"]; }
     getItemText(v) { const k = "cave.test." + v; return this.plugin.t(k); }
     onChooseItem(v) { const msg = this.plugin.caveTest(v); if (msg) new Notice(msg); }
   }
@@ -262,7 +262,7 @@ module.exports = function build(Base, core, AGEX) {
     }
     /** La saison du jour de cet Âge (docs/DESIGN-physique.md §12 bis, palier 3) : le jour de son année, et ce qu'il fait au décor ; rien sans saisons marquées. */
     seasonAdjust(out, seed) {
-      const w = out.physics.w, now = this.law ? this.law.now() : Date.now(), u = SSN.phaseOf(seed, now, w.periodDays), season = SSN.lookOf(w, u);
+      const w = out.physics.w, now = this.law ? this.law.now() : Date.now(), u = (SSN.phaseOf(seed, now, w.periodDays) + (Number(this.ext.seasonShift) || 0)) % 1, season = SSN.lookOf(w, u); /* seasonShift : la commande de test fait tourner l'année */
       return season ? { ...out, seasonU: u, season } : out;
     }
     /** L'acte du jour dans cet Âge (une intention envoyée, ou un don de l'accord), posé sur l'analyse pour la fenêtre et l'onglet Détails. */
@@ -544,6 +544,17 @@ module.exports = function build(Base, core, AGEX) {
         const HEAR = require("./story-hear"), h = HEAR.stateOf(require("./story").get(this.ext.story || (this.ext.story = {}), pool));
         if (v === "ink") { h.inkAt = now; if (!Number.isFinite(h.freq)) h.freq = 12; } else { h.visit = now - HEAR.DAY - 1000; h.cried = h.cried || now; }
         this._hearCache = null; this.saveExt(); return t("oven.test.done") + " " + t(["cave.test", v].join("."));
+      }
+      if (v === "season" || v === "seasonreset") { /* les saisons (src/seasons.js), pour essayer sans attendre : un quart d'année de plus pour tous les Âges, ou retour au calendrier vrai */
+        this.ext.seasonShift = v === "season" ? ((Number(this.ext.seasonShift) || 0) + 0.25) % 1 : 0;
+        this.saveExt(); this.refreshLive(); return t("oven.test.done") + " " + t(["cave.test", v].join("."));
+      }
+      if (v === "to14" || v === "to17" || v === "command") { /* la seconde série, pour essayer sans refaire les treize premiers chapitres ; la fin du commandement sans attendre un jour */
+        if (!pool) return t("cave.test.nostory");
+        const ST = require("./story"), st = ST.get(this.ext.story || (this.ext.story = {}), pool), ids = ST.CHAPTERS.map((c) => c.id);
+        if (v === "command") { const s = st.stone && typeof st.stone === "object" ? st.stone : (st.stone = {}); if (!s.ending) s.pathAt = now - 86400000 - 1000; }
+        else { const upto = ids.indexOf(v === "to14" ? "hear" : "stone"); st.done = [...new Set([...(st.done || []), ...ids.slice(0, upto)])]; }
+        this._hearCache = null; this.saveExt(); this.refreshLive(); return t("oven.test.done") + " " + t(["cave.test", v].join("."));
       }
       if (v === "slate" || v === "slateback") { /* l'ardoise, pour essayer sans refaire l'histoire : le 17 fini dans l'accord, depuis hier ; ou l'ardoise revenue, effacée */
         if (!pool) return t("cave.test.nostory");
