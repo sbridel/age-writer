@@ -172,7 +172,7 @@ function grassOver(ctx, t, pos) {
 /** La voûte du Château : un treillis de losanges au plomb sur tout le verre, et çà et là un losange teinté (rouge, bleu, or, violet), pâle : on colore la lumière, pas un damier. */
 function gothicVault(ctx, S, ptOn, day) {
   const L = Math.log(S[S.length - 1]), P = (u, v) => ptOn(Math.exp(v * L), u), nu = 56, nv = 26;
-  { ctx.save(); ctx.fillStyle = `rgba(150,130,150,${0.1 + 0.06 * day})`; ctx.beginPath(); for (let m = 0; m <= 30; m++) ctx.lineTo(...P(m / 30, 1)); ctx.lineTo(...P(1, 0)); for (let m = 30; m >= 0; m--) ctx.lineTo(...P(m / 30, 0)); ctx.closePath(); ctx.fill(); ctx.restore(); } /* la grisaille : un verre à peine blond partout */
+  { ctx.save(); ctx.fillStyle = `rgba(36,34,44,${0.42 - 0.1 * day})`; ctx.beginPath(); for (let m = 0; m <= 30; m++) ctx.lineTo(...P(m / 30, 1)); ctx.lineTo(...P(1, 0)); for (let m = 30; m >= 0; m--) ctx.lineTo(...P(m / 30, 0)); ctx.closePath(); ctx.fill(); ctx.restore(); } /* le verre fumé, noir-gris, partout où il n'y a pas de couleur */
   ctx.strokeStyle = "rgba(20,18,24,0.42)"; ctx.lineWidth = 0.55;
   for (let d = -nv; d <= nu; d++) for (const sgn of [1, -1]) { ctx.beginPath(); let started = false; for (let m = 0; m <= 40; m++) { const v = m / 40, u = (d + sgn * v * nv) / nu; if (u < 0 || u > 1) { started = false; continue; } const [x, y] = P(u, v); if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y); } ctx.stroke(); } /* le plomb en petits losanges */
   const cols = [[122, 31, 43], [92, 40, 112], [74, 24, 48], [201, 162, 78]]; /* les couleurs du Château : bordeaux, violet, lie-de-vin, et un rare éclat d'or */
@@ -181,19 +181,21 @@ function gothicVault(ctx, S, ptOn, day) {
 }
 /** Le pignon du Château : deux lancettes et une rose de vitrail, rouge, bleu et violet, sertis de pierre ; derrière l'arbre. */
 function gothicGable(ctx, A, VP, day, t) {
+  ctx.save(); ctx.beginPath(); ctx.moveTo(VP.x - A.hw, A.base); ctx.quadraticCurveTo(VP.x, A.apex - (A.base - A.apex), VP.x + A.hw, A.base); ctx.closePath(); ctx.clip(); /* rien ne déborde du pignon */
+  ctx.fillStyle = `rgba(36,34,44,${0.45 - 0.1 * day})`; ctx.fillRect(VP.x - A.hw, 0, 2 * A.hw, A.base); /* le pignon aussi, en verre fumé */
   const base = A.base - 40, al = 0.5 + 0.35 * day, glass = (c) => `rgba(${c[0]},${c[1]},${c[2]},${al})`, R = [[122, 31, 43], [74, 24, 60], [92, 40, 112], [201, 162, 78]]; /* bordeaux, lie-de-vin violacée, violet, or */
   const lancet = (x0, x1, top) => { const m = (x0 + x1) / 2, k = (x1 - x0) * 0.9; ctx.beginPath(); ctx.moveTo(x0, base); ctx.lineTo(x0, top + k); ctx.quadraticCurveTo(x0, top + k * 0.2, m, top); ctx.quadraticCurveTo(x1, top + k * 0.2, x1, top + k); ctx.lineTo(x1, base); ctx.closePath(); };
   for (const [x0, x1] of [[VP.x - 84, VP.x - 36], [VP.x + 36, VP.x + 84]]) {
-    ctx.save(); lancet(x0, x1, base - 112); ctx.clip(); ctx.fillStyle = glass(R[1]); ctx.fillRect(x0, base - 112, x1 - x0, 112); /* le fond bleu */
-    const m = (x0 + x1) / 2, rr = (x1 - x0) * 0.32; for (const cy of [base - 22, base - 52, base - 82]) { ctx.fillStyle = glass(R[0]); ctx.beginPath(); ctx.arc(m, cy, rr, 0, TAU); ctx.fill(); ctx.fillStyle = glass(R[3]); ctx.beginPath(); ctx.arc(m, cy, rr * 0.4, 0, TAU); ctx.fill(); ctx.strokeStyle = "rgba(20,18,24,0.75)"; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.arc(m, cy, rr, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.arc(m, cy, rr * 0.4, 0, TAU); ctx.stroke(); for (let a = 0; a < 6; a++) { ctx.beginPath(); ctx.moveTo(m + Math.cos(a) * rr * 0.4, cy + Math.sin(a) * rr * 0.4); ctx.lineTo(m + Math.cos(a) * rr, cy + Math.sin(a) * rr); ctx.stroke(); } } /* trois médaillons rouges */
-    ctx.strokeStyle = glass(R[3]); ctx.lineWidth = 1.2; lancet(x0 + 1.5, x1 - 1.5, base - 110); ctx.stroke(); ctx.strokeStyle = "rgba(20,18,24,0.7)"; ctx.lineWidth = 0.6; lancet(x0 + 3.5, x1 - 3.5, base - 107); ctx.stroke(); ctx.restore(); /* la bordure d'or */
-    ctx.strokeStyle = "#23212a"; ctx.lineWidth = 3; lancet(x0, x1, base - 112); ctx.stroke(); ctx.strokeStyle = "#c9a24e"; ctx.lineWidth = 0.7; ctx.stroke(); }
-  const rx = VP.x, ry = base - 128, rr = 30; /* la rose */
+    ctx.save(); lancet(x0, x1, base - 96); ctx.clip(); ctx.fillStyle = glass(R[1]); ctx.fillRect(x0, base - 96, x1 - x0, 96); /* le fond */
+    const m = (x0 + x1) / 2, rr = (x1 - x0) * 0.32; for (const cy of [base - 20, base - 46, base - 72]) { ctx.fillStyle = glass(R[0]); ctx.beginPath(); ctx.arc(m, cy, rr, 0, TAU); ctx.fill(); ctx.fillStyle = glass(R[3]); ctx.beginPath(); ctx.arc(m, cy, rr * 0.4, 0, TAU); ctx.fill(); ctx.strokeStyle = "rgba(20,18,24,0.75)"; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.arc(m, cy, rr, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.arc(m, cy, rr * 0.4, 0, TAU); ctx.stroke(); for (let a = 0; a < 6; a++) { ctx.beginPath(); ctx.moveTo(m + Math.cos(a) * rr * 0.4, cy + Math.sin(a) * rr * 0.4); ctx.lineTo(m + Math.cos(a) * rr, cy + Math.sin(a) * rr); ctx.stroke(); } } /* trois médaillons rouges */
+    ctx.strokeStyle = glass(R[3]); ctx.lineWidth = 1.2; lancet(x0 + 1.5, x1 - 1.5, base - 94); ctx.stroke(); ctx.strokeStyle = "rgba(20,18,24,0.7)"; ctx.lineWidth = 0.6; lancet(x0 + 3.5, x1 - 3.5, base - 91); ctx.stroke(); ctx.restore(); /* la bordure d'or */
+    ctx.strokeStyle = "#23212a"; ctx.lineWidth = 3; lancet(x0, x1, base - 96); ctx.stroke(); ctx.strokeStyle = "#c9a24e"; ctx.lineWidth = 0.7; ctx.stroke(); }
+  const rx = VP.x, ry = base - 100, rr = 22; /* la rose, sous la pointe du pignon */
   for (let i = 0; i < 12; i++) { const a0 = (i / 12) * TAU, a1 = ((i + 1) / 12) * TAU; ctx.fillStyle = glass(R[[0, 2, 1][i % 3]]); ctx.beginPath(); ctx.moveTo(rx, ry); ctx.arc(rx, ry, rr, a0, a1); ctx.closePath(); ctx.fill(); }
   ctx.fillStyle = glass(R[3]); ctx.beginPath(); ctx.arc(rx, ry, 9, 0, TAU); ctx.fill();
   ctx.strokeStyle = "#23212a"; ctx.lineWidth = 2; for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU; ctx.beginPath(); ctx.moveTo(rx + Math.cos(a) * 9, ry + Math.sin(a) * 9); ctx.lineTo(rx + Math.cos(a) * rr, ry + Math.sin(a) * rr); ctx.stroke(); }
   ctx.lineWidth = 3.4; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(rx, ry, 9, 0, TAU); ctx.stroke(); ctx.strokeStyle = "#c9a24e"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.arc(rx, ry, rr + 2, 0, TAU); ctx.stroke();
-  void t;
+  ctx.restore(); void t;
 }
 /** La frise de la Verrière : sur chaque arc, une bande de verre (ambre au sommet, vert d'eau aux reins) sertie de plomb, où court une liane en coup de fouet ; des iris violets et des lys blancs y fleurissent. */
 function nouveauFrieze(ctx, S, arch, ptOn, day, t) {
