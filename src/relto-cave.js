@@ -228,6 +228,13 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
     const rising = ph.k < ph.L - 2500 && reveal < H - 4; /* la crête de la vague, tant qu'elle monte */
     if (rising) { const yc = H - reveal, cg = ctx.createLinearGradient(0, yc - 6, 0, yc + 34); cg.addColorStop(0, rgba(210, 235, 255, 0)); cg.addColorStop(0.25, rgba(210, 235, 255, 0.32 * lit)); cg.addColorStop(1, rgba(210, 235, 255, 0)); ctx.fillStyle = cg; ctx.fillRect(0, yc - 6, W, 40); }
     caveOre(r, ctx, (x, y) => (y > H - reveal ? lit * clamp((y - (H - reveal)) / 40) : 0), t, [0.8, 1.15, 0.95]); /* l'or, l'argent, les gemmes s'allument dans la lueur verte */
+    /* l'éclair, quand le lac vit déjà (26 oct. 2026) : la caverne est éclairée, la lueur qui monte ne révèle plus rien ; le blanc doit se voir quand même :
+     * un éclat à l'impact qui s'ouvre sur l'eau, puis un blanc froid qui sature toute la salle et retombe avec la lueur */
+    const boost = degree >= 3 ? 1 : degree >= 2 ? 0.6 : 0;
+    if (boost > 0) {
+      const kb = ph.k / 1400; if (kb < 1) { const rb = 20 + 320 * kb, gb = ctx.createRadialGradient(320, 300, 2, 320, 300, rb); gb.addColorStop(0, rgba(245, 250, 255, 0.85 * (1 - kb))); gb.addColorStop(0.35, rgba(220, 238, 255, 0.45 * (1 - kb))); gb.addColorStop(1, rgba(200, 225, 255, 0)); ctx.fillStyle = gb; ctx.fillRect(0, 0, W, H); }
+      ctx.fillStyle = rgba(215, 232, 255, 0.24 * boost * lit); ctx.fillRect(0, 0, W, H);
+    }
   }
   const reached = (y) => (lit > 0 ? lit * clamp((reveal - (H - y)) / 40) : 0);
   const wonders = r.opts && typeof r.opts.wonders === "function" ? r.opts.wonders() || {} : {};
