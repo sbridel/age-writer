@@ -34,7 +34,7 @@ ok(S.placeOf(a) === "desk" && S.chamberDark(a) && !S.tracesOn(a) && S.frescoCut(
 const b = mk(); S.watch(b, 2, T0);
 ok(S.give(b, T0 + 3600000) && S.endingOf(b) === "accord" && !S.give(b, T0 + 7200000), "la pierre lâchée dans la fissure : l'accord, une fois");
 ok(!S.watch(b, 2, T0 + 2 * DAY) && S.endingOf(b) === "accord" && !S.tellCommand(b), "l'accord ne devient jamais le commandement");
-ok(S.placeOf(b) === "gone" && S.chamberDark(b) && S.tracesOn(b) && S.frescoCut(b) === null, "l'accord : la pierre partie, la chambre éteinte (ils lient ailleurs), les traces et les fresques continuent");
+ok(S.placeOf(b) === "gone" && !S.chamberDark(b) && S.tracesOn(b) && S.frescoCut(b) === null, "l'accord : la pierre partie, la chambre habitée (ils y reviennent, libres), les traces et les fresques continuent");
 
 /* le chapitre se clôt par l'une ou l'autre fin */
 ok(!ST.check(ch, { st: mk(), cave: { degree: 1 } }).ok && ST.check(ch, { st: mk(), cave: { degree: 1 } }).why === "stonepath" && ST.check(ch, { st: mk(), cave: { degree: 2 } }).why === "stone", "17 : sans fin, ce qui manque se dit (le chemin, puis la pierre)");

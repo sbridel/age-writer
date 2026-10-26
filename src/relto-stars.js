@@ -224,7 +224,10 @@ function vault(ctx, t) {
 
 function drawStars(r, ctx, sc, sky, t) {
   const SK = (r.opts && typeof r.opts.stoneState === "function" && r.opts.stoneState()) || {}; /* après le 17, la chambre est éteinte : ils lient ailleurs, ou personne ne vient plus (src/story-stone.js) */
-  const tr = TR(r), degree = degreeOf(r), lit = SK.dark ? [] : degree >= 3 ? [0, 1, 2, 3, 4] : degree >= 2 ? [0, 2] : [], FR = require("./relto-fresco");
+  /* après le 17 (choix de l'auteur, 26 oct. 2026) : l'accord, ils sont libres et reviennent habiter la chambre, toute allumée quel que soit le lac ;
+   * le commandement, personne ne vient plus : la chambre s'éteint, plus noire que jamais */
+  const home = SK.ending === "accord", gone = SK.ending === "command";
+  const tr = TR(r), degree = home ? 3 : gone ? 0 : degreeOf(r), lit = gone ? [] : degree >= 3 ? [0, 1, 2, 3, 4] : degree >= 2 ? [0, 2] : [], FR = require("./relto-fresco");
   PAL = paletteOf(r);
   /* la paroi : de la roche en masses, une caverne qui se referme autour de nous ; la lumière monte de la fissure */
   const bg = ctx.createLinearGradient(0, 0, 0, 260); bg.addColorStop(0, PAL.wall[0]); bg.addColorStop(1, PAL.wall[1]); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
@@ -272,7 +275,7 @@ function drawStars(r, ctx, sc, sky, t) {
     const a = (y < top ? Math.min(1, (y - (top - 50)) / 22) : 1 - depth) * (0.35 + 0.65 * Math.abs(Math.sin(t * 2 + i * 1.7))), C = q("fc" + i) < PAL.d2 ? PAL.dust2 : PAL.dust2 && q("fc" + i) < 0.7 ? PAL.dust : [215, 230, 255];
     ctx.fillStyle = rgba(C[0], C[1], C[2], 0.85 * a); ctx.beginPath(); ctx.arc(x, y, 0.5 + 1.1 * (1 - depth * 0.7), 0, TAU); ctx.fill(); }
   /* au degré 3, deux d'entre eux, au fond, accroupis sur le rebord, tournés vers la fosse (des ombres : jamais de détail) */
-  if (degree >= 3 && !SK.dark) { bahroShadow(ctx, 226, pitTop(226) - 1, 0.66, 1, t, 0); bahroShadow(ctx, 510, pitTop(510) - 1, 0.58, -1, t + 2.1, 1); }
+  if (degree >= 3 && !gone) { bahroShadow(ctx, 226, pitTop(226) - 1, 0.66, 1, t, 0); bahroShadow(ctx, 510, pitTop(510) - 1, 0.58, -1, t + 2.1, 1); }
   /* les cinq piliers, du fond vers nous : un fût droit gravé de haut en bas, une coupe à deux cornes courtes ; les vasques au-dessus */
   const signs = F.itemsOf((r.scene && r.scene.ages) || [], {}).filter((it) => it.kind === "age").slice(-15).flatMap((it) => it.parts.slice(0, 1));
   for (const p of PILLARS.slice().sort((a, b) => a.y - b.y)) {
@@ -309,6 +312,10 @@ function drawStars(r, ctx, sc, sky, t) {
     g.addColorStop(0, rgba(H1[0], H1[1], H1[2], 0.17 * fk)); g.addColorStop(0.5, rgba(H1[0], H1[1], H1[2], 0.05 * fk)); g.addColorStop(1, rgba(H1[0], H1[1], H1[2], 0)); ctx.fillStyle = g; ctx.fillRect(bx - rr, by + 8 - rr, rr * 2, rr * 2); }
   ctx.restore();
   const v = ctx.createRadialGradient(W / 2, H * 0.6, 160, W / 2, H * 0.6, 420); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.6)"); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  if (gone) { /* le commandement : la nuit tombe sur la chambre ; seule l'eau garde ses étoiles, de loin */
+    ctx.fillStyle = "rgba(0,0,0,0.62)"; ctx.fillRect(0, 0, W, H);
+    const wv = ctx.createRadialGradient(W / 2, H * 0.78, 20, W / 2, H * 0.78, 260); wv.addColorStop(0, "rgba(70,90,170,0.10)"); wv.addColorStop(1, "rgba(70,90,170,0)"); ctx.fillStyle = wv; ctx.fillRect(0, 0, W, H);
+  }
   require("./relto-atelier").backButton(r, ctx, tr("stars.back"), "cavebottom");
   require("./relto-hall").backEdge(r, ctx, "fissure", tr("stars.floor"));
   void sc; void sky;

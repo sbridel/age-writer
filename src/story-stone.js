@@ -45,7 +45,7 @@ function tellCommand(st) {
 
 /* ce qui change ensuite dans la caverne (la fiche, choix de l'auteur) */
 /** La chambre aux étoiles : vasques et ombres éteintes après l'une ou l'autre fin (ils lient ailleurs ; ou personne ne vient plus). */
-const chamberDark = (st) => !!endingOf(st);
+const chamberDark = (st) => endingOf(st) === "command"; /* le commandement seul éteint la chambre ; dans l'accord ils y reviennent (26 oct. 2026) */
 /** Les traces (ombres qui fuient, mains humides) et les cris : seulement dans l'accord. */
 const tracesOn = (st) => endingOf(st) !== "command";
 /** Les fresques : dans le commandement, plus une peinture nouvelle après la fin (la date de coupe), sinon null. */
