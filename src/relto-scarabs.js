@@ -63,33 +63,52 @@ function hangingPot(ctx, x, y, len, t, k) {
   }
 }
 
+/** Les trois salons d'hiver, un par habillage (26 oct. 2026, d'après les photos de l'auteur) :
+ *  sans habillage, un salon d'hiver de fer peint vert-de-gris sur des dalles claires, un olivier en pot ; le Château, une orangerie gothique de fer noir
+ *  fileté d'or, arcs brisés, dallage sombre, un lustre de fer ; la Verrière, une nef Art nouveau de cuivre aux carreaux de vitrail, sol de mosaïque, des palmes. */
+const STYLES = {
+  plain: { frame: "#5f7f6c", hi: "#9fbfa8", round: true, pane: [[170, 210, 190, 0.1], [255, 255, 255, 0.05]], wall: "#8a8476", wallTop: "#aaa496", floor: ["#6e685c", "#3a362f"], flags: "rgba(0,0,0,0.18)", sky: ["#b8d6d2", "#eef2e2"] },
+  castle: { frame: "#23212a", hi: "#c9a24e", round: false, pane: [[150, 170, 190, 0.08], [255, 255, 255, 0.04]], wall: "#4a4552", wallTop: "#6e6876", floor: ["#3e3a46", "#1a1820"], flags: "rgba(0,0,0,0.3)", sky: ["#8fb0bc", "#cdd8d4"] },
+  glass: { frame: "#b5652a", hi: "#e6a06a", round: true, stained: true, pane: [[230, 170, 80, 0.2], [110, 190, 140, 0.2], [210, 120, 150, 0.16], [120, 160, 210, 0.16]], wall: "#1f3a34", wallTop: "#b5652a", floor: ["#2a3a34", "#121c18"], flags: "rgba(200,170,90,0.1)", sky: ["#c8d6c0", "#efe6cc"] },
+};
+const styleOf = (r) => (r && r.castleOn && r.castleOn() ? STYLES.castle : r && r.glassOn && r.glassOn() ? STYLES.glass : STYLES.plain);
+
 /** La serre (l'accord) : une verrière en arc sur un muret de pierre, des pots suspendus, des fougères, un massif en fleurs, des roseaux et une mare
  *  à nénuphars, un banc de pierre, une table de rempotage ; les scarabées y vivent, l'un d'eux grimpe une fronde. La nuit, leur dos luit. */
 function drawSerre(r, ctx, sc, sky, t) {
-  const night = sky.night || 0, day = 1 - night;
-  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, night > 0.5 ? "#0e1a24" : "#a8cdd2"); g.addColorStop(1, night > 0.5 ? "#16262a" : "#e0ecd8"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const night = sky.night || 0, day = 1 - night, ST = styleOf(r);
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, night > 0.5 ? "#0e1a24" : ST.sky[0]); g.addColorStop(1, night > 0.5 ? "#16262a" : ST.sky[1]); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = "rgba(40,80,60,0.14)"; ctx.fillRect(0, 0, W, H);
-  /* au loin, à travers le verre : des feuillages flous */
-  for (let i = 0; i < 14; i++) { ctx.fillStyle = `rgba(${60 + q("bg" + i) * 30},${110 + q("bh" + i) * 40},80,${0.22 * day + 0.08})`; ctx.beginPath(); ctx.ellipse(q("bx" + i) * W, 200 + q("by" + i) * 30, 40 + q("bw" + i) * 50, 26 + q("bv" + i) * 20, 0, 0, TAU); ctx.fill(); }
-  /* la verrière : l'arc de cuivre, les montants, les traverses, des carreaux un peu verts, de la buée */
-  ctx.strokeStyle = "#7a4a22"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(20, 230); ctx.quadraticCurveTo(320, -130, 620, 230); ctx.stroke();
-  ctx.lineWidth = 2; const top = (x) => 230 - (1 - Math.pow((x - 320) / 300, 2)) * 180;
-  for (let k = 1; k < 10; k++) { const x = 20 + (600 * k) / 10; ctx.beginPath(); ctx.moveTo(x, 230); ctx.lineTo(x, top(x)); ctx.stroke(); }
-  for (const yy of [190, 140, 92]) { ctx.beginPath(); let first = true; for (let x = 20; x <= 620; x += 10) { if (top(x) > yy) continue; first ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy); first = false; } ctx.stroke(); }
-  for (let k = 0; k < 10; k++) if (q("pane" + k) < 0.4) { const x = 20 + 60 * k; ctx.fillStyle = "rgba(120,180,140,0.12)"; ctx.fillRect(x + 1, Math.max(top(x + 30), 140), 58, 48); }
-  ctx.fillStyle = "rgba(255,255,255,0.18)"; for (let i = 0; i < 40; i++) { ctx.beginPath(); ctx.arc(q("dx" + i) * W, 120 + q("dy" + i) * 100, 0.8 + q("ds" + i) * 1.2, 0, TAU); ctx.fill(); } /* la buée */
-  if (day > 0.3) { /* les rais de lumière : sous le verre seulement, doux, qui s'effacent avant le sol */
-    ctx.save(); ctx.beginPath(); ctx.moveTo(20, 230); ctx.quadraticCurveTo(320, -130, 620, 230); ctx.closePath(); ctx.clip(); ctx.globalCompositeOperation = "lighter";
-    for (const sx of [200, 380]) { const lg = ctx.createLinearGradient(0, top(sx), 0, 240); lg.addColorStop(0, `rgba(255,240,200,${0.07 * day})`); lg.addColorStop(1, "rgba(255,240,200,0)"); ctx.fillStyle = lg; ctx.beginPath(); ctx.moveTo(sx, top(sx)); ctx.lineTo(sx + 40, top(sx + 40)); ctx.lineTo(sx + 110, 240); ctx.lineTo(sx + 50, 240); ctx.closePath(); ctx.fill(); }
-    ctx.restore(); }
-  /* le muret de pierre sous le verre */
-  ctx.fillStyle = "#4a4640"; ctx.fillRect(0, 226, W, 22); ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 1; for (let x = 0; x < W; x += 34) { ctx.strokeRect(x + ((x / 34) % 2) * 17, 226, 34, 11); ctx.strokeRect(x, 237, 34, 11); }
-  ctx.fillStyle = "#6a655c"; ctx.fillRect(0, 224, W, 3);
+  /* on est dessous : une nef de verre vue de l'intérieur ; des arcs de cuivre qui passent au-dessus de nous et rapetissent vers le fond, des pannes qui filent au point de fuite */
+  const VP = { x: 320, y: 150 }, arch = (sc) => ({ hw: 150 * sc, base: VP.y + 82 * sc, apex: VP.y - 92 * sc });
+  const ptOn = (sc, u) => { const A = arch(sc); if (ST.round) { const th = Math.PI * (1 - u); return [VP.x + A.hw * Math.cos(th), A.base - (A.base - A.apex) * Math.sin(th)]; } const x = VP.x - A.hw + 2 * A.hw * u, yy = A.base - (A.base - A.apex) * (1 - Math.pow(2 * u - 1, 2)); return [x, yy]; }; /* plein cintre, ou arc brisé au Château */
+  /* au fond, à travers le verre du pignon : des feuillages flous */
+  for (let i = 0; i < 10; i++) { ctx.fillStyle = `rgba(${60 + q("bg" + i) * 30},${110 + q("bh" + i) * 40},80,${0.25 * day + 0.08})`; ctx.beginPath(); ctx.ellipse(VP.x - 140 + q("bx" + i) * 280, 200 + q("by" + i) * 26, 30 + q("bw" + i) * 40, 22 + q("bv" + i) * 16, 0, 0, TAU); ctx.fill(); }
+  const S = [1, 1.5, 2.25, 3.4, 5.1]; /* les arcs, du fond vers nous */
+  for (let k = S.length - 1; k > 0; k--) { /* entre deux arcs, des carreaux de verre un peu verts, plus clairs vers le haut */
+    for (let m = 0; m < 6; m++) { const u0 = m / 6, u1 = (m + 1) / 6, a = ptOn(S[k], u0), b = ptOn(S[k], u1), c2 = ptOn(S[k - 1], u1), d = ptOn(S[k - 1], u0);
+      const P = ST.pane[(m * 3 + k) % ST.pane.length], al = P[3] * (0.6 + 0.6 * day); ctx.fillStyle = `rgba(${P[0]},${P[1]},${P[2]},${al})`; ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.lineTo(...c2); ctx.lineTo(...d); ctx.closePath(); ctx.fill();
+      if (ST.stained) { const cx = (a[0] + b[0] + c2[0] + d[0]) / 4, cy = (a[1] + b[1] + c2[1] + d[1]) / 4, rr = Math.max(3, Math.abs(b[0] - a[0]) * 0.18); ctx.strokeStyle = "rgba(60,40,20,0.35)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.ellipse(cx, cy, rr, rr * 0.55, (m - 3) * 0.3, 0, TAU); ctx.moveTo(cx - rr, cy); ctx.quadraticCurveTo(cx, cy - rr, cx + rr, cy); ctx.stroke(); } } /* la Verrière : un vitrail à feuille dans chaque carreau */
+  }
+  ctx.strokeStyle = ST.frame; ctx.lineCap = "round";
+  for (let m = 0; m <= 6; m++) { const u = m / 6, a = ptOn(S[0], u), b = ptOn(S[S.length - 1], u); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke(); } /* les pannes, vers le point de fuite */
+  const archPath = (sc) => { const A = arch(sc); ctx.beginPath(); if (ST.round) ctx.ellipse(VP.x, A.base, A.hw, A.base - A.apex, 0, Math.PI, TAU); else { ctx.moveTo(VP.x - A.hw, A.base); ctx.quadraticCurveTo(VP.x, A.apex - (A.base - A.apex), VP.x + A.hw, A.base); } };
+  S.forEach((sc, k) => { ctx.strokeStyle = ST.frame; ctx.lineWidth = 1.5 + k * 1.6; archPath(sc); ctx.stroke(); if (ST.hi) { ctx.strokeStyle = ST.hi; ctx.globalAlpha = 0.35; ctx.lineWidth = Math.max(0.6, 0.3 + k * 0.35); archPath(sc); ctx.stroke(); ctx.globalAlpha = 1; } }); /* les arcs, et leur filet clair (or au Château) */
+  ctx.strokeStyle = ST.frame;
+  { const A = arch(1); ctx.lineWidth = 1.2; for (const u of [0.25, 0.5, 0.75]) { const [x] = ptOn(1, u); ctx.beginPath(); ctx.moveTo(x, A.base); ctx.lineTo(x, ptOn(1, u)[1]); ctx.stroke(); } ctx.beginPath(); ctx.moveTo(VP.x - A.hw * 0.9, A.base - 40); ctx.lineTo(VP.x + A.hw * 0.9, A.base - 40); ctx.stroke(); } /* le pignon du fond, ses montants */
+  ctx.lineCap = "butt";
+  ctx.fillStyle = "rgba(255,255,255,0.16)"; for (let i = 0; i < 40; i++) { ctx.beginPath(); ctx.arc(q("dx" + i) * W, 30 + q("dy" + i) * 150, 0.8 + q("ds" + i) * 1.2, 0, TAU); ctx.fill(); } /* la buée */
+  if (day > 0.3) { /* la lumière qui tombe du toit, douce, en nappes */
+    ctx.save(); ctx.globalCompositeOperation = "lighter"; for (const [x0, w0] of [[180, 60], [380, 50]]) { const lg = ctx.createLinearGradient(0, 0, 0, 300); lg.addColorStop(0, `rgba(255,240,200,${0.06 * day})`); lg.addColorStop(1, "rgba(255,240,200,0)"); ctx.fillStyle = lg; ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x0 + w0, 0); ctx.lineTo(x0 + w0 + 60, 300); ctx.lineTo(x0 + 30, 300); ctx.closePath(); ctx.fill(); } ctx.restore(); }
+  /* les murets de pierre, de chaque côté, qui filent vers le fond */
+  { const A0 = arch(1), A1 = arch(S[S.length - 1]); for (const sd of [-1, 1]) { ctx.fillStyle = ST.wall; ctx.beginPath(); ctx.moveTo(VP.x + sd * A0.hw, A0.base); ctx.lineTo(VP.x + sd * A0.hw, A0.base - 14); ctx.lineTo(VP.x + sd * A1.hw, A1.base - 70); ctx.lineTo(VP.x + sd * A1.hw, A1.base); ctx.closePath(); ctx.fill(); ctx.fillStyle = ST.wallTop; ctx.beginPath(); ctx.moveTo(VP.x + sd * A0.hw, A0.base - 14); ctx.lineTo(VP.x + sd * A1.hw, A1.base - 70); ctx.lineTo(VP.x + sd * A1.hw, A1.base - 78); ctx.lineTo(VP.x + sd * A0.hw, A0.base - 16); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle = ST.wall; ctx.fillRect(VP.x - A0.hw, A0.base - 14, 2 * A0.hw, 14); ctx.fillStyle = ST.wallTop; ctx.fillRect(VP.x - A0.hw, A0.base - 16, 2 * A0.hw, 2.5); }
   /* les pots suspendus */
-  hangingPot(ctx, 140, 92, 30, t, 1); hangingPot(ctx, 320, 52, 42, t, 2); hangingPot(ctx, 500, 92, 30, t, 3);
+  hangingPot(ctx, 120, 0, 60, t, 1); hangingPot(ctx, 320, 0, 34, t, 2); hangingPot(ctx, 520, 0, 60, t, 3); /* accrochés aux arcs au-dessus de nous */
   /* le sol : terre, mousse, un chemin de dalles */
-  const sg = ctx.createLinearGradient(0, 246, 0, H); sg.addColorStop(0, "#2e2619"); sg.addColorStop(1, "#15110b"); ctx.fillStyle = sg; ctx.fillRect(0, 246, W, H - 246);
-  for (let i = 0; i < 70; i++) { const x = q("mx" + i) * W, y = 256 + q("my" + i) * 90, rr = 8 + q("mr" + i) * 22; ctx.fillStyle = `rgba(${55 + q("mc" + i) * 35},${100 + q("md" + i) * 45},50,0.55)`; ctx.beginPath(); ctx.ellipse(x, y, rr, rr * 0.4, 0, 0, TAU); ctx.fill(); }
+  const sg = ctx.createLinearGradient(0, 230, 0, H); sg.addColorStop(0, ST.floor[0]); sg.addColorStop(1, ST.floor[1]); ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(170, 232); ctx.lineTo(470, 232); ctx.lineTo(W + 200, H); ctx.lineTo(-200, H); ctx.closePath(); ctx.fill(); /* le sol, qui s'élargit vers nous */
+  ctx.strokeStyle = ST.flags; ctx.lineWidth = 1; for (let k = -8; k <= 8; k++) { ctx.beginPath(); ctx.moveTo(VP.x + k * 18, 232); ctx.lineTo(VP.x + k * 90, H); ctx.stroke(); } for (const yy of [242, 258, 280, 310, 350]) { ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(W, yy); ctx.stroke(); } /* les dalles (ou la mosaïque), en perspective */
+  for (let i = 0; i < 40; i++) { const x = q("mx" + i) * W, y = 256 + q("my" + i) * 90, rr = 8 + q("mr" + i) * 22; ctx.fillStyle = `rgba(${55 + q("mc" + i) * 35},${100 + q("md" + i) * 45},50,0.55)`; ctx.beginPath(); ctx.ellipse(x, y, rr, rr * 0.4, 0, 0, TAU); ctx.fill(); }
   for (let k = 0; k < 6; k++) { const x = 250 + k * 22 + (k % 2) * 6, y = 350 - k * 14; ctx.fillStyle = "#6a655c"; ctx.beginPath(); ctx.ellipse(x, y, 16 - k, 5 - k * 0.4, 0, 0, TAU); ctx.fill(); ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.fillRect(x - 10, y + 2, 20 - k, 1.4); } /* le chemin de dalles */
   /* la mare, ses roseaux, ses nénuphars */
   ctx.fillStyle = "#1c2e30"; ctx.beginPath(); ctx.ellipse(460, 312, 84, 17, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = "rgba(160,210,220,0.25)"; ctx.lineWidth = 1; ctx.stroke();
@@ -107,6 +126,18 @@ function drawSerre(r, ctx, sc, sky, t) {
   ctx.fillStyle = "#4a3422"; ctx.fillRect(560, 268, 76, 6); ctx.fillRect(566, 274, 5, 40); ctx.fillRect(626, 274, 5, 40);
   for (const [px, ph] of [[572, 10], [588, 8], [602, 11]]) { ctx.fillStyle = "#a85a3a"; ctx.beginPath(); ctx.moveTo(px - 6, 268); ctx.lineTo(px + 6, 268); ctx.lineTo(px + 4, 268 - ph); ctx.lineTo(px - 4, 268 - ph); ctx.closePath(); ctx.fill(); ctx.fillStyle = "#4b8a4a"; ctx.beginPath(); ctx.arc(px, 266 - ph, 4, 0, TAU); ctx.fill(); }
   ctx.fillStyle = "#6a7a7a"; ctx.beginPath(); ctx.ellipse(622, 262, 8, 6, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = "#6a7a7a"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(614, 262); ctx.lineTo(604, 252); ctx.stroke(); /* l'arrosoir */
+  if (ST === STYLES.plain) { /* un olivier en pot de pierre, comme sur la photo */
+    ctx.fillStyle = "#b8b0a0"; ctx.beginPath(); ctx.moveTo(258, 300); ctx.lineTo(290, 300); ctx.lineTo(286, 330); ctx.lineTo(262, 330); ctx.closePath(); ctx.fill(); ctx.fillStyle = "rgba(0,0,0,0.15)"; ctx.fillRect(262, 314, 24, 2);
+    ctx.strokeStyle = "#5a4a3a"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(274, 300); ctx.quadraticCurveTo(270, 270, 276, 236); ctx.stroke();
+    for (let i = 0; i < 40; i++) { const a = q("ol" + i) * TAU, rr = q("or" + i) * 26; ctx.fillStyle = i % 2 ? "#7a8f5a" : "#5f7a4a"; ctx.beginPath(); ctx.ellipse(276 + Math.cos(a) * rr, 228 + Math.sin(a) * rr * 0.7, 4, 1.4, a, 0, TAU); ctx.fill(); } }
+  else if (ST === STYLES.castle) { /* un lustre de fer, au-dessus de l'allée */
+    ctx.strokeStyle = "#23212a"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(320, 0); ctx.lineTo(320, 70); ctx.stroke(); ctx.beginPath(); ctx.ellipse(320, 76, 34, 6, 0, 0, TAU); ctx.stroke();
+    for (const dx of [-30, -15, 0, 15, 30]) { ctx.fillStyle = "#e8dcc0"; ctx.fillRect(320 + dx - 1.5, 64, 3, 9); const f = 0.8 + 0.2 * Math.sin(t * 7 + dx); ctx.fillStyle = `rgba(255,200,110,${0.9 * f})`; ctx.beginPath(); ctx.ellipse(320 + dx, 61, 1.6, 3 * f, 0, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = `rgba(255,200,120,${0.06 + 0.1 * night})`; ctx.beginPath(); ctx.arc(320, 66, 80, 0, TAU); ctx.fill(); }
+  else { /* la Verrière : deux palmes dans des pots de cuivre */
+    for (const [px, sd] of [[46, 1], [596, -1]]) { ctx.fillStyle = "#b5652a"; ctx.beginPath(); ctx.moveTo(px - 16, 300); ctx.lineTo(px + 16, 300); ctx.lineTo(px + 12, 330); ctx.lineTo(px - 12, 330); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "#3b7a4a"; ctx.lineWidth = 2; for (let k = 0; k < 6; k++) { const a = -Math.PI / 2 + (k - 2.5) * 0.4 + sd * 0.2, L = 70 + (k % 2) * 14, ex = px + Math.cos(a) * L, ey = 300 + Math.sin(a) * L; ctx.beginPath(); ctx.moveTo(px, 300); ctx.quadraticCurveTo(px + Math.cos(a) * L * 0.5, 300 + Math.sin(a) * L * 0.4 - 10, ex, ey + 10); ctx.stroke();
+        ctx.lineWidth = 1; for (let j = 2; j < 10; j++) { const u = j / 10, xx = px + (ex - px) * u, yy = 300 + (ey + 10 - 300) * u - 6 * Math.sin(Math.PI * u); ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx + 7, yy + 8); ctx.moveTo(xx, yy); ctx.lineTo(xx - 7, yy + 8); ctx.stroke(); } ctx.lineWidth = 2; } } }
   /* les scarabées : sept qui marchent, s'arrêtent et repartent ; un huitième sur le banc ; un neuvième qui grimpe une fronde */
   const spots = [[150, 330, 40, 8], [270, 330, 46, 8], [350, 296, 30, 6], [420, 340, 30, 6], [600, 336, 20, 5], [70, 334, 26, 5], [520, 282, 26, 4]];
   const pos = spots.map(([cx, cy, rx, ry], i) => pathOf(i, t, cx, cy, rx, ry));
