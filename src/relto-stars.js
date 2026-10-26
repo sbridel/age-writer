@@ -236,7 +236,7 @@ function drawStars(r, ctx, sc, sky, t) {
   /* la bouche sombre, dans un angle : là d'où l'on vient */
   ctx.fillStyle = "#000"; ctx.beginPath(); ctx.moveTo(52, 64); ctx.quadraticCurveTo(70, 40, 98, 52); ctx.lineTo(110, 112); ctx.quadraticCurveTo(84, 124, 56, 112); ctx.closePath(); ctx.fill();
   /* ce qu'ils ont peint : des figures à l'ocre, à demi effacées ; et les mains soufflées */
-  for (const [id, x, y, s] of [["chained", 150, 148, 13], ["cry", 506, 132, 14], ["eye", 402, 104, 11], ["serpent", 236, 176, 12], ["stonesign", 586, 176, 11]]) FR.sign(ctx, id, x, y, s, 0.38, "starspaint" + id);
+  for (const [id, x, y, s] of [["chained", 150, 148, 13], ["cry", 506, 132, 14], ["eye", 402, 104, 11], ["stonesign", 586, 176, 11]] /* pas de serpent ici (choix de l'auteur, 26 oct. 2026) : il est au cachet, pas dans la chambre */) FR.sign(ctx, id, x, y, s, 0.38, "starspaint" + id);
   for (const [x, y, rot] of [[214, 124, -0.25], [446, 150, 0.2], [262, 98, 0.1]]) {
     const g = ctx.createRadialGradient(x, y, 4, x, y, 24); g.addColorStop(0, rgba(200, 112, 46, 0.42)); g.addColorStop(0.65, rgba(200, 112, 46, 0.2)); g.addColorStop(1, rgba(200, 112, 46, 0)); ctx.fillStyle = g; ctx.fillRect(x - 26, y - 26, 52, 52);
     ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.fillStyle = "#0a0c16"; ctx.beginPath(); ctx.ellipse(0, 3, 6, 7, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = "#0a0c16"; ctx.lineWidth = 3.4; ctx.lineCap = "round"; for (let f = 0; f < 5; f++) { const a = -2.6 + f * 0.43, l = f === 0 ? 11 : 15; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 5, 3 + Math.sin(a) * 5); ctx.lineTo(Math.cos(a) * l, 3 + Math.sin(a) * l); ctx.stroke(); } ctx.restore();

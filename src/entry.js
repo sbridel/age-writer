@@ -588,7 +588,7 @@ module.exports = function build(Base, core, AGEX) {
       if (v === "slate" || v === "slateback") { /* l'ardoise, pour essayer sans refaire l'histoire : le 17 fini dans l'accord, depuis hier ; ou l'ardoise revenue, effacée */
         if (!pool) return t("cave.test.nostory");
         const st = require("./story").get(this.ext.story || (this.ext.story = {}), pool);
-        if (v === "slate") { st.stone = st.stone && st.stone.ending ? st.stone : { ending: "accord", endedAt: now - 2 * 86400000 }; if (!st.done.includes("stone")) st.done.push("stone"); }
+        if (v === "slate") { st.stone = st.stone && st.stone.ending ? { ...st.stone, endedAt: Math.min(st.stone.endedAt || now, now - 2 * 86400000) } : { ending: "accord", endedAt: now - 2 * 86400000 }; if (!st.done.includes("stone")) st.done.push("stone"); } /* la fin gardée (accord ou commandement), mais d'avant-hier : l'ardoise est arrivée */
         else delete X.slate;
         this.saveExt(); this.refreshLive(); return t("oven.test.done") + " " + t(["cave.test", v].join("."));
       }
