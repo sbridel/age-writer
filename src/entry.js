@@ -155,14 +155,17 @@ module.exports = function build(Base, core, AGEX) {
           const mt = (out.resolved && out.resolved.matter) || {}, gives = HV.givesOf(mt.written || [], PH.idsOfAnalysis(out), (mt.reactions || []).map((x) => (x && x.result) || x)); if (!gives.length) return out;
           const pool = this.poolOfAge(o.seed); if (!this.poolOpen(pool)) return out; /* un Âge d'un Relto histoire remplit la réserve de ce Relto, à partir du chapitre 10 */
           const X = this.poolExt(pool), now = this.law.now(), act = out.slateAct, hv = act && act.fertile ? require("./slate").harvestOf(gives, act.effect) : { list: gives, richFor: {} };
-          const sr = SSN.richFor(hv.list, out.season); if (Object.keys(sr).length) hv.richFor = { ...sr, ...hv.richFor }; /* la saison favorise une matière (src/seasons.js) */ /* l'accord : la sorte du jour change (la brume : le terreau compte riche) ; le commandement n'engendre rien */
+          /* la saison de l'Âge ce jour-là : celle de l'analyse ; ou, quand la lecture s'est faite sans physique (l'index des Âges, en mode facile), calculée ici, une fois par jour, pour que la récolte ait sa saison */
+          let sea = out.season || null;
+          if (!sea && !(out.physics && out.physics.w) && this.physicsMode() !== "off" && srcText && !o.probe && !HV.gatheredToday(X, key, now)) { const ph = guard("saison de récolte", () => PH.physicsOf(out, srcText, o.seed, "easy")); if (ph && ph.w) sea = (this.seasonAdjust({ ...out, physics: ph }, o.seed) || {}).season || null; }
+          const sr = SSN.richFor(hv.list, sea); if (Object.keys(sr).length) hv.richFor = { ...sr, ...hv.richFor }; /* la saison favorise une matière (src/seasons.js) */ /* l'accord : la sorte du jour change (la brume : le terreau compte riche) ; le commandement n'engendre rien */
           /* la genèse (src/harvest.js) : la sorte de chaque mesure ; une cendre sans volcan ni feu reste pauvre */
           const gen = HV.genesisOf(PH.idsOfAnalysis(out)), r0 = HV.richOf(out), noGen = hv.list.includes("ash") && !gen.ashBorn;
           const richMap = Object.fromEntries(hv.list.map((id) => [id, !!(hv.richFor[id] || r0) && !(id === "ash" && noGen)]));
           /* combien de mesures (choix de l'auteur, 26 oct.) : une ; une de plus si la quantité écrite est forte (`many ash`) ; une de plus si la saison la favorise ; trois au plus */
-          const amt = srcText ? guard("quantités de récolte", () => parseAmounts(srcText)) : null, fav = out.season ? SSN.FAVOURS[out.season.name] || [] : [], uniq = [...new Set(hv.list)];
+          const amt = srcText ? guard("quantités de récolte", () => parseAmounts(srcText)) : null, fav = sea ? SSN.FAVOURS[sea.name] || [] : [], uniq = [...new Set(hv.list)];
           const count = (id) => Math.min(3, hv.list.filter((x) => x === id).length + (factorOf(id, amt) > 1 ? 1 : 0) + (fav.includes(id) ? 1 : 0)), counts = Object.fromEntries(uniq.map((id) => [id, count(id)]));
-          const list = uniq.flatMap((id) => Array.from({ length: counts[id] }, () => id)), seasonName = out.season ? out.season.name : null;
+          const list = uniq.flatMap((id) => Array.from({ length: counts[id] }, () => id)), seasonName = sea ? sea.name : null;
           if (!o.probe && HV.gather(X, key, list, now, richMap, (id, rich) => CEL.store(X, id, seasonName, rich, HV.sortOf(id, gen)))) this.saveExt(); /* la récolte descend à la cave, dans le bocal de sa saison, avec sa sorte (src/cellar.js) ; riche ou pauvre : ce qu'est l'Âge à la première lecture du jour */
           const today = HV.gatheredToday(X, key, now);
           return { ...out, harvest: { gives: uniq, counts, sorts: Object.fromEntries(uniq.map((id) => [id, HV.sortOf(id, gen)])), noGenesis: noGen, today, rich: today ? HV.richToday(X, key, now) : r0, slate: hv.list.join() !== gives.join() || Object.keys(hv.richFor).length > Object.keys(sr).length, season: Object.keys(sr).length > 0 } };

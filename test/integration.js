@@ -559,6 +559,11 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
           const z3 = age("Roche Eau", ["single_sun", "water", "stone", "fern", "seed", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 1"], "Mondes"), h3 = an(z3).harvest;
           ok(h3 && h3.gives.includes("silt") && h3.sorts.silt === "quartz", "l'eau qui broie la pierre : un limon de quartz");
           files.delete(z2.path); files.delete(z3.path);
+          { /* la lecture de l'index (sans physique, en mode facile) récolte la première : la saison et ses mesures doivent y être quand même */
+            p.ext.seasonForce = 2; const zi = age("Index Ete", ["single_sun", "water", "lava", "ash", "fern", "seed", "grass", "many: ash", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 1"], "Mondes"), si = (CL.jarOf(X, "ash", "summer").by.volcanic || { n: 0 }).n, ni = (CL.jarOf(X, "ash", "none").by.volcanic || { n: 0 }).n;
+            const srcI = p.core.extract(zi.content); const ai = p.core.analyse(srcI, { seed: p.core.seed(zi.path), physics: false }); void ai;
+            ok((CL.jarOf(X, "ash", "summer").by.volcanic || { n: 0 }).n === si + 3 && (CL.jarOf(X, "ash", "none").by.volcanic || { n: 0 }).n === ni, "lue d'abord par l'index (sans physique) : la cendre d'été va au bocal d'été, trois mesures (une, la quantité, l'été)");
+            files.delete(zi.path); }
           p.ext.seasonForce = keep; files.delete(z.path); }
         { /* l'Âge de récolte du scénario : chaque saison favorise sa matière (src/seasons.js, richFor) */
           const z = age("Recolte Saisons", ["single_sun", "water", "lava", "ash", "humus", "peat", "fern", "seed", "grass", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 1"], "Mondes"), keep = p.ext.seasonForce, got = {};

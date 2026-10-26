@@ -238,12 +238,14 @@ function drawOven(r, ctx, sc, sky, t) {
   else { in1.addColorStop(0, "#2a2620"); in1.addColorStop(1, "#0e0d0c"); }
   ctx.fillStyle = in1; ctx.beginPath(); ctx.arc(dx, dy, dr, 0, TAU); ctx.fill();
   if (cooking) {
-    ctx.fillStyle = rgba(255, 200, 120, 0.6); for (let i = 0; i < 7; i++) { const fx = dx - 27 + i * 9, fh = 14 - hot * 16 - (i % 3) * 5 + Math.sin(t * 8 + i) * 3; ctx.beginPath(); ctx.moveTo(fx - 4, dy + 32); ctx.quadraticCurveTo(fx, dy + fh, fx + 4, dy + 32); ctx.fill(); }
+    ctx.save(); ctx.beginPath(); ctx.arc(dx, dy, dr - 1, 0, TAU); ctx.clip(); /* tout ce qui brûle reste derrière la vitre ronde */
+    ctx.fillStyle = rgba(255, 200, 120, 0.6); for (let i = 0; i < 7; i++) { const fx = dx - 21 + i * 7, fh = 14 - hot * 16 - (i % 3) * 5 + Math.sin(t * 8 + i) * 3; ctx.beginPath(); ctx.moveTo(fx - 3.5, dy + 30); ctx.quadraticCurveTo(fx, dy + fh, fx + 3.5, dy + 30); ctx.fill(); } /* les flammes, serrées dans le bas du hublot */
     /* le moule, sur sa grille : les capsules prennent forme, sombres d'abord, puis elles rougeoient en cuisant */
     const n = ph.n || 1, k = clamp(ph.k), gx0 = dx - 22, mw = 44; ctx.fillStyle = "#2a1a12"; ctx.fillRect(gx0, dy + 10, mw, 4); ctx.fillStyle = "#4a2a18"; for (let i = 0; i < 6; i++) ctx.fillRect(gx0 + 2 + i * 8, dy + 14, 2, 5);
     for (let j = 0; j < n; j++) { const x = dx - (n - 1) * 4.5 + j * 9, y = dy + 10, w = 6, hh = 11, body = mix("#1a1210", "#ff7a3a", k * 0.8), rim = mix("#3a2418", "#ffd08a", k);
       ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(x - w / 2, y); ctx.lineTo(x - w / 2, y - hh + w / 2); ctx.arc(x, y - hh + w / 2, w / 2, Math.PI, 0); ctx.lineTo(x + w / 2, y); ctx.closePath(); ctx.fill();
       ctx.strokeStyle = rim; ctx.lineWidth = 0.8; ctx.stroke(); }
+    ctx.restore();
   }
   ctx.fillStyle = rgba(255, 255, 255, 0.10); ctx.beginPath(); ctx.ellipse(dx - 14, dy - 16, 14, 6, -0.6, 0, TAU); ctx.fill();
   ctx.fillStyle = c(trim[1]); ctx.fillRect(dx - dr - 14, dy - 14, 8, 28); ctx.fillStyle = c(trim[0]); ctx.fillRect(dx + dr + 4, dy - 4, 16, 8);
