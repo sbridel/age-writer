@@ -332,8 +332,8 @@ function drawDesk(r, ctx, sc, sky, t) {
       const sx = 586 + (320 - 586) * hp, sy = 290 + (172 - 290) * hp, sz = 14 + 66 * hp; ctx.save(); ctx.translate(sx, sy); ctx.rotate(Math.sin(t * 0.7) * 0.06 * hp); ctx.translate(-sx, -sy); stone(ctx, c, sx, sy, sz, t); ctx.restore();
       if (hp > 0.9) { ctx.font = "italic 15px serif"; ctx.textAlign = "center"; ctx.fillStyle = rgba(233, 220, 184, 0.85); ctx.fillText(TRr(((r.opts.stoneState && r.opts.stoneState()) || {}).canTake ? "atelier.stone.flash17" : "atelier.stone.flash"), W / 2, 312); ctx.textAlign = "left"; }
       const SK2 = (r.opts.stoneState && r.opts.stoneState()) || {};
+      r.hot.push({ x: 0, y: 0, w: W, h: H, tip: "", desk: "release" }); /* d'abord le fond (un clic à côté la rend au tiroir) : la pierre, déclarée après, gagne le clic (la dernière zone l'emporte ; 26 oct. 2026) */
       if (SK2.canTake && hp > 0.9) r.hot.push({ x: sx - sz * 1.6, y: sy - sz * 1.3, w: sz * 3.2, h: sz * 2.2, tip: TRr("atelier.stone.carry"), desk: "carry" }); /* le 17 : on peut l'emporter (un clic sur elle) ; ailleurs, on la rend au tiroir */
-      r.hot.push({ x: 0, y: 0, w: W, h: H, tip: "", desk: "release" });
     }
   }
   if (ui.link && HS.stone) { /* la pierre de liaison, de près : elle quitte le bureau pour les mains, un clic la repose */

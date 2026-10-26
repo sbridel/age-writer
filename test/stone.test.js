@@ -41,4 +41,14 @@ ok(!ST.check(ch, { st: mk(), cave: { degree: 1 } }).ok && ST.check(ch, { st: mk(
 ok(ST.check(ch, { st: a }).ok && ST.check(ch, { st: b }).ok, "17 : les deux fins closent");
 const I18N = require("../src/i18n"); ok(["en", "fr"].every((l) => { const t = I18N.makeT(() => l); return ["story.why.stone", "story.why.stonepath", "stone.gone", "stone.command", "fissure.give", "atelier.stone.carry", "carry.why.tritone", "carry.why.sick17", "carry.copied"].every((k) => t(k) !== k); }), "les phrases du 17, en deux langues");
 
+/* la pierre en main, au 17 : un clic sur elle l'emporte (la zone du fond, qui la rend au tiroir, ne la couvre pas ; 26 oct. 2026) */
+{ const AT = require("../src/relto-atelier"), { ReltoRenderer } = require("../src/relto-render"), noop = () => {};
+  const ctx = new Proxy({}, { get: (o, k) => (k in o ? o[k] : k === "createLinearGradient" || k === "createRadialGradient" || k === "createPattern" ? () => ({ addColorStop() {} }) : k === "measureText" ? () => ({ width: 10 }) : k === "getImageData" ? () => ({ data: [] }) : noop), set: (o, k, v) => ((o[k] = v), true) });
+  const held = (canTake) => { const r = { hot: [], hover: null, scene: { name: "Relto", seed: 1, ages: [], structures: ["hut"] }, opts: { stoneState: () => ({ canTake, place: "drawer" }), t: I18N.makeT(() => "fr") }, deskUI: { open: true, at: Date.now() - 5000, held: true, heldAt: Date.now() - 5000, relAt: 0 }, available: () => ({}) };
+    AT.drawDesk(r, ctx, {}, { ambient: 1, night: 0 }, 1); return r.hot; };
+  const hitOf = (hot, x, y) => ReltoRenderer.prototype.hit.call({ hot }, x, y);
+  const h17 = held(true), st = h17.find((h) => h.desk === "carry");
+  ok(st && hitOf(h17, st.x + st.w / 2, st.y + st.h / 2).desk === "carry", "au 17 : un clic sur la pierre en main l'emporte");
+  ok(hitOf(h17, 10, 10).desk === "release", "un clic à côté la rend au tiroir");
+  const h0 = held(false); ok(!h0.some((h) => h.desk === "carry") && hitOf(h0, 320, 172).desk === "release", "hors du 17 : un clic sur elle la rend au tiroir"); }
 console.log(`stone.test.js : ${n} vérifications ok`);
