@@ -181,30 +181,29 @@ function gothicVault(ctx, S, ptOn, day) {
 }
 /** Le pignon du Château : deux lancettes et une rose de vitrail, rouge, bleu et violet, sertis de pierre ; derrière l'arbre. */
 function gothicGable(ctx, A, VP, day, t) {
-  ctx.save(); ctx.beginPath(); ctx.moveTo(VP.x - A.hw, A.base); ctx.quadraticCurveTo(VP.x, A.apex - (A.base - A.apex), VP.x + A.hw, A.base); ctx.closePath(); ctx.clip(); /* rien ne déborde du pignon */
+  const gable = () => { ctx.beginPath(); ctx.moveTo(VP.x - A.hw, A.base); ctx.quadraticCurveTo(VP.x, A.apex - (A.base - A.apex), VP.x + A.hw, A.base); };
+  for (const [w, a] of [[26, 0.1], [16, 0.12], [8, 0.14]]) { ctx.strokeStyle = `rgba(22,20,28,${a})`; ctx.lineWidth = w; gable(); ctx.stroke(); } /* un passage doux entre la voûte et le pignon, pas une coupure */
+  ctx.save(); gable(); ctx.closePath(); ctx.clip(); /* rien ne déborde du pignon */
   ctx.fillStyle = `rgba(22,20,28,${0.72 - 0.06 * day})`; ctx.fillRect(VP.x - A.hw, 0, 2 * A.hw, A.base); /* le pignon, en verre fumé presque noir : les vitraux y brillent comme dans une église */
   const base = A.base - 40, al = 0.5 + 0.35 * day, glass = (c) => `rgba(${c[0]},${c[1]},${c[2]},${al})`, R = [[122, 31, 43], [74, 24, 60], [92, 40, 112], [201, 162, 78]]; /* bordeaux, lie-de-vin violacée, violet, or */
-  const lancet = (x0, x1, top) => { const m = (x0 + x1) / 2, k = (x1 - x0) * 0.9; ctx.beginPath(); ctx.moveTo(x0, base); ctx.lineTo(x0, top + k); ctx.quadraticCurveTo(x0, top + k * 0.2, m, top); ctx.quadraticCurveTo(x1, top + k * 0.2, x1, top + k); ctx.lineTo(x1, base); ctx.closePath(); };
-  for (const [x0, x1] of [[VP.x - 84, VP.x - 36], [VP.x + 36, VP.x + 84]]) {
-    ctx.save(); lancet(x0, x1, base - 96); ctx.clip(); ctx.fillStyle = glass(R[1]); ctx.fillRect(x0, base - 96, x1 - x0, 96); /* le fond */
-    const m = (x0 + x1) / 2, rr = (x1 - x0) * 0.28; ctx.fillStyle = glass(R[3]); ctx.beginPath(); ctx.arc(m, base - 82, 4, 0, TAU); ctx.fill(); for (const cy of [base - 22, base - 56]) /* deux médaillons bien séparés, un point d'or dans la pointe */ { ctx.fillStyle = glass(R[0]); ctx.beginPath(); ctx.arc(m, cy, rr, 0, TAU); ctx.fill(); ctx.fillStyle = glass(R[3]); ctx.beginPath(); ctx.arc(m, cy, rr * 0.4, 0, TAU); ctx.fill(); ctx.strokeStyle = "rgba(20,18,24,0.75)"; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.arc(m, cy, rr, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.arc(m, cy, rr * 0.4, 0, TAU); ctx.stroke(); for (let a = 0; a < 6; a++) { ctx.beginPath(); ctx.moveTo(m + Math.cos(a) * rr * 0.4, cy + Math.sin(a) * rr * 0.4); ctx.lineTo(m + Math.cos(a) * rr, cy + Math.sin(a) * rr); ctx.stroke(); } } /* trois médaillons rouges */
-    ctx.strokeStyle = glass(R[3]); ctx.lineWidth = 1.2; lancet(x0 + 1.5, x1 - 1.5, base - 94); ctx.stroke(); ctx.strokeStyle = "rgba(20,18,24,0.7)"; ctx.lineWidth = 0.6; lancet(x0 + 3.5, x1 - 3.5, base - 91); ctx.stroke(); ctx.restore(); /* la bordure d'or */
-    ctx.strokeStyle = "#23212a"; ctx.lineWidth = 3; lancet(x0, x1, base - 96); ctx.stroke(); ctx.strokeStyle = "#c9a24e"; ctx.lineWidth = 0.7; ctx.stroke(); }
-  const rx = VP.x, ry = base - 100, rr = 22; /* la rose, sous la pointe du pignon */
-  for (let i = 0; i < 12; i++) { const a0 = (i / 12) * TAU, a1 = ((i + 1) / 12) * TAU; ctx.fillStyle = glass(R[[0, 2, 1][i % 3]]); ctx.beginPath(); ctx.moveTo(rx, ry); ctx.arc(rx, ry, rr, a0, a1); ctx.closePath(); ctx.fill(); }
+  const IRON = "#1c1a22", archY = (x) => { const u = (x - (VP.x - A.hw)) / (2 * A.hw); return A.base - (A.base - (A.apex - (A.base - A.apex))) * 2 * u * (1 - u); };
+  const rx = VP.x, ry = 100, rr = 32; /* la grande rose, tout en haut, au-dessus de la ramure */
+  for (let i = 0; i < 16; i++) { const a0 = (i / 16) * TAU, a1 = ((i + 1) / 16) * TAU; ctx.fillStyle = glass(R[[0, 2, 1, 2][i % 4]]); ctx.beginPath(); ctx.moveTo(rx, ry); ctx.arc(rx, ry, rr, a0, a1); ctx.closePath(); ctx.fill(); }
+  for (let i = 0; i < 8; i++) { const a = ((i + 0.5) / 8) * TAU, px = rx + Math.cos(a) * rr * 0.62, py = ry + Math.sin(a) * rr * 0.62; ctx.fillStyle = glass(R[0]); ctx.beginPath(); ctx.arc(px, py, 5, 0, TAU); ctx.fill(); ctx.strokeStyle = IRON; ctx.lineWidth = 1; ctx.stroke(); } /* huit médaillons dans la couronne */
   ctx.fillStyle = glass(R[3]); ctx.beginPath(); ctx.arc(rx, ry, 9, 0, TAU); ctx.fill();
-  ctx.strokeStyle = "#23212a"; ctx.lineWidth = 2; for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU; ctx.beginPath(); ctx.moveTo(rx + Math.cos(a) * 9, ry + Math.sin(a) * 9); ctx.lineTo(rx + Math.cos(a) * rr, ry + Math.sin(a) * rr); ctx.stroke(); }
-  ctx.lineWidth = 3.4; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(rx, ry, 9, 0, TAU); ctx.stroke(); ctx.strokeStyle = "#c9a24e"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.arc(rx, ry, rr + 2, 0, TAU); ctx.stroke();
-  { /* le remplage de fonte noire qui tient tout : des meneaux du sol jusqu'à l'arc, la traverse, le cadre des lancettes, l'anneau de la rose et ses tirants */
-    const IRON = "#1c1a22", archY = (x) => { const u = (x - (VP.x - A.hw)) / (2 * A.hw); return A.base - (A.base - (A.apex - (A.base - A.apex))) * 2 * u * (1 - u); };
+  ctx.strokeStyle = IRON; ctx.lineWidth = 1.6; for (let i = 0; i < 16; i++) { const a = (i / 16) * TAU; ctx.beginPath(); ctx.moveTo(rx + Math.cos(a) * 9, ry + Math.sin(a) * 9); ctx.lineTo(rx + Math.cos(a) * rr, ry + Math.sin(a) * rr); ctx.stroke(); }
+  ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(rx, ry, 9, 0, TAU); ctx.stroke();
+  /* sous la traverse, de part et d'autre du tronc : une arcade de petites baies en arc brisé, chacune son verre */
+  const lights = []; for (const sd of [-1, 1]) for (let k = 0; k < 4; k++) { const x0 = VP.x + sd * (18 + k * 26), x1 = x0 + sd * 20; lights.push([Math.min(x0, x1), Math.max(x0, x1), k]); }
+  const pointedLight = (x0, x1, top, bot) => { const m = (x0 + x1) / 2; ctx.beginPath(); ctx.moveTo(x0, bot); ctx.lineTo(x0, top + 10); ctx.quadraticCurveTo(x0, top + 2, m, top); ctx.quadraticCurveTo(x1, top + 2, x1, top + 10); ctx.lineTo(x1, bot); ctx.closePath(); };
+  for (const [x0, x1, k] of lights) { ctx.fillStyle = glass(R[[0, 2, 1, 0][k]]); pointedLight(x0, x1, base + 6, A.base - 3); ctx.fill(); ctx.fillStyle = glass(R[3]); ctx.beginPath(); ctx.arc((x0 + x1) / 2, base + 16, 2.4, 0, TAU); ctx.fill(); ctx.strokeStyle = IRON; ctx.lineWidth = 2; pointedLight(x0, x1, base + 6, A.base - 3); ctx.stroke(); }
+  { /* le remplage de fonte noire qui tient tout : la traverse, des meneaux jusqu'à l'arc, l'anneau de la rose et ses rayons qui la tiennent à l'arc */
     ctx.strokeStyle = IRON; ctx.lineCap = "round";
-    for (const x of [VP.x - 88, VP.x - 32, VP.x + 32, VP.x + 88]) { ctx.lineWidth = 3.2; ctx.beginPath(); ctx.moveTo(x, A.base); ctx.lineTo(x, archY(x)); ctx.stroke(); }
     ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(VP.x - A.hw, base + 2); ctx.lineTo(VP.x + A.hw, base + 2); ctx.stroke();
-    for (const [x0, x1] of [[VP.x - 84, VP.x - 36], [VP.x + 36, VP.x + 84]]) { ctx.lineWidth = 3; lancet(x0, x1, base - 96); ctx.stroke(); }
+    for (const x of [VP.x - 70, VP.x + 70]) { ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(x, base + 2); ctx.lineTo(x, archY(x)); ctx.stroke(); }
     ctx.lineWidth = 3.4; ctx.beginPath(); ctx.arc(rx, ry, rr + 1, 0, TAU); ctx.stroke();
-    ctx.lineWidth = 2.2; for (const a of [-Math.PI / 2, -Math.PI / 4, -3 * Math.PI / 4]) { const x = rx + Math.cos(a) * (rr + 1), y = ry + Math.sin(a) * (rr + 1), L = 60; let ex = x + Math.cos(a) * L, ey = y + Math.sin(a) * L; ey = Math.max(ey, archY(ex)); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); ctx.stroke(); } /* les tirants qui pendent la rose à l'arc */
-    ctx.beginPath(); ctx.moveTo(rx, ry + rr + 1); ctx.lineTo(rx, base + 2); ctx.stroke(); /* le meneau du milieu, sous la rose */
-    ctx.strokeStyle = "rgba(201,162,78,0.55)"; ctx.lineWidth = 0.6; for (const [x0, x1] of [[VP.x - 84, VP.x - 36], [VP.x + 36, VP.x + 84]]) { lancet(x0 - 1.6, x1 + 1.6, base - 98); ctx.stroke(); } ctx.beginPath(); ctx.arc(rx, ry, rr + 2.8, 0, TAU); ctx.stroke(); ctx.lineCap = "butt"; }
+    ctx.lineWidth = 2.2; for (const a of [-Math.PI / 2, -0.35, -Math.PI + 0.35, 0.5, Math.PI - 0.5]) { const x = rx + Math.cos(a) * (rr + 1), y = ry + Math.sin(a) * (rr + 1); let L = 0; while (L < 200 && y + Math.sin(a) * L < archY(x + Math.cos(a) * L) && y + Math.sin(a) * L < base) L += 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L); ctx.stroke(); } /* les rayons qui tiennent la rose */
+    ctx.strokeStyle = "rgba(201,162,78,0.55)"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.arc(rx, ry, rr + 3, 0, TAU); ctx.stroke(); ctx.lineCap = "butt"; }
   ctx.restore(); void t;
 }
 /** La frise de la Verrière : sur chaque arc, une bande de verre (ambre au sommet, vert d'eau aux reins) sertie de plomb, où court une liane en coup de fouet ; des iris violets et des lys blancs y fleurissent. */
@@ -337,7 +336,7 @@ function drawSerre(r, ctx, sc, sky, t) {
         ctx.fillRect(Math.min(xc, xl) - 3 * sc2, wallTop - 4 * sc2, Math.abs(xl - xc) + 6 * sc2, 4 * sc2); /* la base */
         ctx.strokeStyle = ST.frame; ctx.lineWidth = 0.8 + sc2 * 0.5; scroll(ctx, xc - sd * 9 * sc2, yc - 9 * sc2, 7 * sc2, -sd, sd > 0 ? Math.PI : 0); /* la volute, dans l'angle */
         ctx.beginPath(); ctx.moveTo(xc, yc - 3 * sc2); ctx.quadraticCurveTo(xc - sd * 4 * sc2, yc - 18 * sc2, xc - sd * 18 * sc2, yc - 24 * sc2); ctx.stroke(); } } }
-  bigTree(ctx, VP.x + 6, 236, t, ST.sky[1], night); /* au fond de la nef, au bout de l'allée : un grand arbre planté en pleine terre */
+  if (ST === STYLES.castle) { ctx.save(); ctx.translate(VP.x + 6, 236); ctx.scale(0.78, 0.72); ctx.translate(-VP.x - 6, -236); } bigTree(ctx, VP.x + 6, 236, t, ST.sky[1], night); if (ST === STYLES.castle) ctx.restore(); /* au Château, plus petit : la rose du pignon se voit au-dessus */ /* au fond de la nef, au bout de l'allée : un grand arbre planté en pleine terre */
   if (day > 0.3) { /* la lumière qui tombe du toit, douce, en nappes */
     ctx.save(); ctx.globalCompositeOperation = "lighter"; for (const [x0, w0] of [[160, 70], [360, 60], [470, 30]]) { const lg = ctx.createLinearGradient(0, 0, 0, 320); lg.addColorStop(0, `rgba(255,240,200,${0.07 * day})`); lg.addColorStop(1, "rgba(255,240,200,0)"); ctx.fillStyle = lg; ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x0 + w0, 0); ctx.lineTo(x0 + w0 + 70, 320); ctx.lineTo(x0 + 40, 320); ctx.closePath(); ctx.fill(); } ctx.restore(); }
   /* les murets de pierre, de chaque côté, qui filent vers le fond ; un appareil de pierres */
@@ -418,9 +417,9 @@ function drawSerre(r, ctx, sc, sky, t) {
     ctx.strokeStyle = "#5a4a3a"; ctx.lineWidth = 3.2; ctx.beginPath(); ctx.moveTo(ox, oy - 48); ctx.bezierCurveTo(ox - 8, oy - 70, ox + 10, oy - 82, ox + 2, oy - 104); ctx.stroke(); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(ox + 1, oy - 80); ctx.quadraticCurveTo(ox + 18, oy - 92, ox + 22, oy - 112); ctx.moveTo(ox - 2, oy - 74); ctx.quadraticCurveTo(ox - 16, oy - 86, ox - 20, oy - 104); ctx.stroke();
     for (let i = 0; i < 220; i++) { const cl = [[ox + 2, oy - 112], [ox + 22, oy - 118], [ox - 20, oy - 110], [ox + 10, oy - 128]][i % 4], a = q("ol" + i) * TAU, rr = Math.sqrt(q("or" + i)) * 22; leaf(ctx, cl[0] + Math.cos(a) * rr, cl[1] + Math.sin(a) * rr * 0.6, 9, 1.8, a, i % 2 ? "#8a9f6a" : "#6f8a5a", "#4f6a4a"); } }
   else if (ST === STYLES.castle) { /* un lustre de fer, au-dessus de l'allée */
-    ctx.strokeStyle = "#23212a"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(320, 0); ctx.lineTo(320, 70); ctx.stroke(); ctx.beginPath(); ctx.ellipse(320, 76, 34, 6, 0, 0, TAU); ctx.stroke();
-    for (const dx of [-30, -15, 0, 15, 30]) { ctx.fillStyle = "#e8dcc0"; ctx.fillRect(320 + dx - 1.5, 64, 3, 9); const f = 0.8 + 0.2 * Math.sin(t * 7 + dx); ctx.fillStyle = `rgba(255,200,110,${0.9 * f})`; ctx.beginPath(); ctx.ellipse(320 + dx, 61, 1.6, 3 * f, 0, 0, TAU); ctx.fill(); }
-    ctx.fillStyle = `rgba(255,200,120,${0.06 + 0.1 * night})`; ctx.beginPath(); ctx.arc(320, 66, 80, 0, TAU); ctx.fill(); }
+    ctx.strokeStyle = "#23212a"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(320, 0); ctx.lineTo(320, 34); ctx.stroke(); ctx.beginPath(); ctx.ellipse(320, 40, 34, 6, 0, 0, TAU); ctx.stroke();
+    for (const dx of [-30, -15, 0, 15, 30]) { ctx.fillStyle = "#e8dcc0"; ctx.fillRect(320 + dx - 1.5, 28, 3, 9); const f = 0.8 + 0.2 * Math.sin(t * 7 + dx); ctx.fillStyle = `rgba(255,200,110,${0.9 * f})`; ctx.beginPath(); ctx.ellipse(320 + dx, 25, 1.6, 3 * f, 0, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = `rgba(255,200,120,${0.06 + 0.1 * night})`; ctx.beginPath(); ctx.arc(320, 30, 80, 0, TAU); ctx.fill(); }
   else { /* la Verrière : deux palmes dans des pots de cuivre */
     for (const [px, sd] of [[46, 1], [596, -1]]) { ctx.fillStyle = "#b5652a"; ctx.beginPath(); ctx.moveTo(px - 16, 300); ctx.lineTo(px + 16, 300); ctx.lineTo(px + 12, 330); ctx.lineTo(px - 12, 330); ctx.closePath(); ctx.fill();
       for (let k = 0; k < 6; k++) frond(ctx, px, 300, -Math.PI / 2 + (k - 2.5) * 0.45 + sd * 0.2, 76, (k - 2.5) * 0.06, "#3b7a4a", "#24503a", { n: 12, fl: 16, droop: 0.5 }); } }
