@@ -196,17 +196,32 @@ function drawOven(r, ctx, sc, sky, t) {
     ctx.fillStyle = c(trim[0]); ctx.beginPath(); ctx.arc(px, 108, 3, 0, TAU); ctx.fill(); ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(px, 108); ctx.lineTo(px + 11, 104); ctx.stroke();
     if (cooking) { ctx.fillStyle = rgba(255, 140, 60, 0.25 + 0.1 * Math.sin(t * 6)); ctx.fillRect(px - r0 + 2, 150, 2 * r0 - 4, 2); } }
   const cel = r.opts && typeof r.opts.cellarState === "function" ? r.opts.cellarState() : null, below = (id) => !!(cel && cel.jars && cel.jars[id] && Object.values(cel.jars[id]).some((j) => j && j.n > 0)); /* une trémie vide dont la matière attend à la cave */
+  /* la traverse qui porte les trémies : fixée au mur par trois platines boulonnées ; son ombre sur le mur dit qu'elle est tout contre */
+  { const x0 = HOP(0) - 34, x1 = HOP(3) + 34, ry = 28, rh = 8, beam = skin === "glass" ? trim[0] : skin === "castle" ? "#2a2a30" : "#4a3624", beamHi = skin === "glass" ? trim[2] : skin === "castle" ? "#5a5a64" : "#6a5038";
+    ctx.fillStyle = rgba(0, 0, 0, 0.28); ctx.fillRect(x0 + 3, ry + 4, x1 - x0, rh + 2); /* l'ombre portée sur le mur */
+    for (const px of [x0 + 8, (x0 + x1) / 2, x1 - 8]) { /* les platines : une plaque au mur, deux boulons, et la console sous la traverse */
+      ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(px - 5, ry - 2, 12, 30);
+      ctx.fillStyle = c(skin === "glass" ? "#5a2e12" : skin === "castle" ? "#3a3a42" : trim[1]); ctx.fillRect(px - 6, ry - 4, 12, 28);
+      ctx.fillStyle = c(trim[2]); for (const by of [ry - 1, ry + 19]) { ctx.beginPath(); ctx.arc(px, by, 1.6, 0, TAU); ctx.fill(); }
+      ctx.fillStyle = c(skin === "glass" ? trim[0] : skin === "castle" ? "#2a2a30" : trim[1]); ctx.beginPath(); ctx.moveTo(px - 6, ry + rh); ctx.lineTo(px + 6, ry + rh); ctx.lineTo(px, ry + rh + 12); ctx.closePath(); ctx.fill(); /* la console, en pointe vers le bas */
+    }
+    ctx.fillStyle = c(beam); ctx.fillRect(x0, ry, x1 - x0, rh); ctx.fillStyle = c(beamHi); ctx.fillRect(x0, ry, x1 - x0, 1.5); ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.fillRect(x0, ry + rh - 1.5, x1 - x0, 1.5);
+    if (skin === "glass") { ctx.fillStyle = c(trim[2]); for (let x = x0 + 14; x < x1 - 10; x += 22) { ctx.beginPath(); ctx.arc(x, ry + rh / 2, 1.2, 0, TAU); ctx.fill(); } } /* des rivets de cuivre */
+  }
   /* les trémies et leurs robinets */
   IDS.forEach((id, i) => {
     const cx = HOP(i), top = 44, bot = 112, n = Math.max(0, stock[id] || 0), fill = clamp(n / FULL);
     const funnel = () => { ctx.beginPath(); ctx.moveTo(cx - 22, top); ctx.lineTo(cx + 22, top); ctx.lineTo(cx + 22, top + 40); ctx.lineTo(cx + 5, bot); ctx.lineTo(cx - 5, bot); ctx.lineTo(cx - 22, top + 40); ctx.closePath(); };
+    ctx.save(); ctx.translate(4, 3); funnel(); ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fill(); ctx.restore(); /* l'ombre de la trémie sur le mur, tout près */
+    ctx.strokeStyle = c(skin === "castle" ? "#2a2a30" : trim[1]); ctx.lineWidth = 2; for (const hx of [cx - 17, cx + 17]) { ctx.beginPath(); ctx.moveTo(hx, 36); ctx.lineTo(hx, top - 3); ctx.stroke(); } /* deux tiges : la trémie pend à la traverse */
     ctx.save(); funnel(); ctx.fillStyle = rgba(160, 190, 200, 0.10); ctx.fill(); ctx.clip();
     if (n > 0) { const lvl = top + 4 + (1 - fill) * 64, rn = Math.min(n, Math.max(0, rich[id] == null ? n : rich[id])), split = lvl + (bot - lvl) * (1 - rn / n); /* les riches au fond (elles coulent d'abord), les pauvres par-dessus */
       if (rn < n) stuff(ctx, c, id, cx - 24, lvl, 48, split - lvl + 1, 11 + i * 17, true);
       if (rn > 0) { stuff(ctx, c, id, cx - 24, split, 48, bot - split, 13 + i * 17); if (rn < n) { ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(cx - 24, split, 48, 0.8); } } }
     ctx.fillStyle = rgba(255, 255, 255, 0.10); ctx.fillRect(cx - 18, top, 4, 60); ctx.restore();
     funnel(); ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = c(trim[1]); ctx.fillRect(cx - 24, top - 4, 48, 5); ctx.fillStyle = c(mix(trim[1], "#000", 0.25)); ctx.fillRect(cx - 4, bot, 8, 16);
+    ctx.fillStyle = c(trim[1]); ctx.fillRect(cx - 24, top - 4, 48, 5);
+    ctx.fillStyle = c(skin === "castle" ? "#3a3a42" : trim[1]); ctx.fillRect(cx - 23, top + 22, 46, 3.5); ctx.fillStyle = c(trim[2]); ctx.fillRect(cx - 23, top + 22, 46, 0.8); for (const bx2 of [cx - 21, cx + 21]) { ctx.beginPath(); ctx.arc(bx2, top + 23.8, 1.3, 0, TAU); ctx.fill(); } /* le collier qui serre le verre, et ses deux vis */ ctx.fillStyle = c(mix(trim[1], "#000", 0.25)); ctx.fillRect(cx - 4, bot, 8, 16);
     /* le robinet : une petite roue de laiton */
     ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx + 10, bot + 9, 4, 0, TAU); ctx.moveTo(cx + 6, bot + 9); ctx.lineTo(cx + 14, bot + 9); ctx.moveTo(cx + 10, bot + 5); ctx.lineTo(cx + 10, bot + 13); ctx.stroke();
     r.hot.push({ x: cx - 24, y: top - 6, w: 48, h: bot - top + 26, tip: tr("oven.hop." + id) + " — " + amountWord(tr, n) + (n <= 0 && below(id) ? ", " + tr("oven.hop.below") : "") + (n > 0 && (rich[id] == null ? n : rich[id]) < n ? ", " + tr((rich[id] || 0) > 0 ? "oven.poor.some." + id : "oven.poor.all." + id) : "") + (cooking || done ? "" : ". " + tr("oven.hop.click")), oven: cooking || done ? null : "add", arg: i });
