@@ -182,7 +182,7 @@ function gothicVault(ctx, S, ptOn, day) {
 /** Le pignon du Château : deux lancettes et une rose de vitrail, rouge, bleu et violet, sertis de pierre ; derrière l'arbre. */
 function gothicGable(ctx, A, VP, day, t) {
   ctx.save(); ctx.beginPath(); ctx.moveTo(VP.x - A.hw, A.base); ctx.quadraticCurveTo(VP.x, A.apex - (A.base - A.apex), VP.x + A.hw, A.base); ctx.closePath(); ctx.clip(); /* rien ne déborde du pignon */
-  ctx.fillStyle = `rgba(36,34,44,${0.45 - 0.1 * day})`; ctx.fillRect(VP.x - A.hw, 0, 2 * A.hw, A.base); /* le pignon, en verre fumé */
+  ctx.fillStyle = `rgba(22,20,28,${0.72 - 0.06 * day})`; ctx.fillRect(VP.x - A.hw, 0, 2 * A.hw, A.base); /* le pignon, en verre fumé presque noir : les vitraux y brillent comme dans une église */
   const base = A.base - 40, al = 0.5 + 0.35 * day, glass = (c) => `rgba(${c[0]},${c[1]},${c[2]},${al})`, R = [[122, 31, 43], [74, 24, 60], [92, 40, 112], [201, 162, 78]]; /* bordeaux, lie-de-vin violacée, violet, or */
   const lancet = (x0, x1, top) => { const m = (x0 + x1) / 2, k = (x1 - x0) * 0.9; ctx.beginPath(); ctx.moveTo(x0, base); ctx.lineTo(x0, top + k); ctx.quadraticCurveTo(x0, top + k * 0.2, m, top); ctx.quadraticCurveTo(x1, top + k * 0.2, x1, top + k); ctx.lineTo(x1, base); ctx.closePath(); };
   for (const [x0, x1] of [[VP.x - 84, VP.x - 36], [VP.x + 36, VP.x + 84]]) {
