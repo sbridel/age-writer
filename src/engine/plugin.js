@@ -540,7 +540,7 @@ const AgeWriterPlugin = class AgeWriterPlugin extends obsidian.Plugin {
         .filter(([, cost]) => cost > 0)
         .map(([axis, cost]) => `${axis} ${cost.toFixed(2)}`)
         .join(" \xB7 ");
-    debug.setText(costs || "no measurable instability yet");
+    debug.createSpan({ cls: "age-panel__costs", text: costs || "no measurable instability yet" }); /* les chiffres bruts, à part : l'onglet Détails les masque, pas les lignes qui suivent (le portage, la vie, les dosages) */
     const dose = hooks.dosageNote(analysis.dosage);
     dose && debug.createDiv({ cls: "age-panel__dosage", text: dose });
     const strain = analysis.strained && hooks.fissureNote(analysis);

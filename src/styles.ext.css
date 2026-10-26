@@ -438,7 +438,7 @@
 .age-relto[data-tab]:not([data-tab="view"]) .age-relto__nav--bar { display: none; }
 
 /* ---- Détails retravaillé : stabilité par axe, physique du monde (1.16) ---- */
-.age-panel--stab .age-panel__debug { display: none; } /* classe posée par ui-extras (pas de :has) */
+.age-panel--stab .age-panel__costs { display: none; } /* classe posée par ui-extras (pas de :has) ; seuls les chiffres bruts disparaissent : « Porté », la vie, les dosages restent lisibles (26 oct. 2026) */
 .age-det { display: flex; flex-direction: column; gap: 6px; }
 .age-det + .age-det, .age-det + .age-det__h { margin-top: 6px; padding-top: 10px; border-top: 0.5px solid rgba(205, 189, 148, 0.25); }
 .age-det__h { font-size: 0.78em; letter-spacing: 0.12em; text-transform: uppercase; color: #cdbd94; opacity: 0.85; }

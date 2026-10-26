@@ -12,4 +12,8 @@ for (const f of ["styles.css", "styles.ext.css"]) {
   const lines = fs.readFileSync(path.join(__dirname, "../src", f), "utf8").split("\n");
   lines.forEach((l, i) => { const code = l.replace(/\/\*.*?\*\//g, ""); for (const [re, why] of RULES) { assert(!re.test(code), `src/${f}:${i + 1} : ${why}`); n++; } });
 }
+/* l'onglet Détails ne masque que les chiffres bruts : la ligne « Porté », la vie et les dosages vivent dans le même bloc (26 oct. 2026 : le joueur ne voyait pas « Porté ») */
+{ const ext = fs.readFileSync(path.join(__dirname, "../src/styles.ext.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  assert(!/\.age-panel--stab\s+\.age-panel__debug\s*\{[^}]*display\s*:\s*none/.test(ext), "le bloc des lignes du panneau reste visible dans Détails"); n++;
+  assert(/\.age-panel--stab\s+\.age-panel__costs\s*\{[^}]*display\s*:\s*none/.test(ext), "seuls les chiffres bruts sont masqués"); n++; }
 console.log(`css-rules.test.js : ${n} vérifications, tout passe`);
