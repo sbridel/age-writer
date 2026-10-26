@@ -14,6 +14,7 @@ ok(coverSvg({ ...base, world: ["water"] }) !== coverSvg({ ...base, world: ["lava
 const svg = coverSvg({ ...base, world: ["water"], standalone: true });
 ok(/^<svg xmlns=/.test(svg) && /<\/svg>$/.test(svg) && (svg.match(/<svg/g) || []).length === 1, "SVG autonome, un seul élément racine");
 ok(!/NaN|undefined/.test(svg), "aucune valeur invalide dans le SVG");
+ok(!/>(STABLE|UNSTABLE|DYING)</.test(coverSvg({ ...base })) && !/>(STABLE|UNSTABLE|DYING)</.test(coverSvg({ ...base, verdict: "dying" })), "le verdict ne s'écrit pas sur la couverture : seule l'usure le dit");
 ok(!/stroke="#050403"/.test(coverSvg({ ...base })) && /stroke="#050403"/.test(coverSvg({ ...base, verdict: "dying" })), "fentes seulement quand l'Âge se meurt");
 const ids = [...svg.matchAll(/id="(c\d+[a-z]+)"/g)].map((x) => x[1]);
 ok(new Set(ids).size === ids.length && ids.length >= 8, "identifiants uniques (" + ids.length + ")");

@@ -120,7 +120,6 @@ function coverSvg(o) {
   const motifList = MOTIF_BY_MATERIAL[mat.key], motif = MOTIFS[motifList[(h >>> 4) % motifList.length]];
   const frameFn = FRAMES[(h >>> 7) % FRAMES.length], cornerKind = (h >>> 3) % 4, rings = 1 + ((h >>> 5) % 2), vertBand = ((h >>> 11) & 1) === 1 && sob < 0.2;
   const ribs = 3 + ((h >>> 13) % 3), seed = h % 997;
-  const verdictCol = { stable: "#8fae6a", unstable: "#d9a24a", dying: "#c0553f" }[o.verdict] || b1;
   const fx = (0.004 + R() * 0.006).toFixed(4), fy = (0.008 + R() * 0.009).toFixed(4), vx = (0.003 + R() * 0.004).toFixed(4), vy = (0.007 + R() * 0.006).toFixed(4);
   const L = SP + 24, T = 24, FW = W - L - 24, FH = H - 2 * T; // cadre de la face
   const GOLD = `url(#${u}au)`, vein = hex2(pal[3]).map((v) => (v / 255).toFixed(3));
@@ -227,7 +226,7 @@ function coverSvg(o) {
   }
   if (o.seedNumber != null && !medallion) s += numG(o.seedNumber, 15, 506, b1);
   if (o.ward && !medallion) s += `<circle cx="${CX}" cy="470" r="22" fill="#000" opacity="0.35"/>` + serpentSvg(CX, 472, 34, "#c47a3c"); /* sans médaillon : le serpent frappé sous le nom */
-  if (o.verdict) s += `<text x="${CX}" y="${medallion ? 560 : 548}" text-anchor="middle" font-family="Georgia, serif" font-size="10.5" letter-spacing="3" fill="${medallion ? mix(verdictCol, lb, 0.35) : verdictCol}">${esc(o.verdict.toUpperCase())}</text>`;
+  /* le verdict (stable, instable…) ne s'écrit plus sur la couverture (26 oct. 2026, pas diégétique) : l'usure ci-dessous le dit sans un mot */
   // usure : éraflures s'il vacille, fentes s'il se meurt
   if (o.verdict === "unstable" || o.verdict === "dying") {
     const n = o.verdict === "dying" ? 16 : 9;
