@@ -845,12 +845,12 @@ module.exports = function build(Base, core, AGEX) {
       };
     }
 
-    coverFor(src, analysis, file, standalone) {
+    coverFor(src, analysis, file, standalone, kind = "descriptive") { /* `kind` : « linking » pour un livre de liaison (l'étagère du Relto), sinon le Livre descriptif */
       const name = file.basename, seed = /^\s*seed\s*:\s*(\d+)\s*$/im.exec(src);
       return coverSvg({
         name, number: X.ageNumber(core.seed(file.path)), seedNumber: seed ? Number(seed[1]) : null, dni: this.dni, standalone,
         glyph: (id, x, y, s) => core.glyphSvg(id, x, y, s, "none"), glyphIds: core.glyphs(analysis).filter((g) => !g.blot).map((g) => g.id), world: guard("cover world", () => worldIds(analysis)) || [], sobriety: parseCover(src) ?? ({ ornate: 0.05, classic: 0.35, sober: 0.7, plain: 1 })[this.ext.coverStyle],
-        verdict: analysis.verdict, burnt: !!(this.law && this.law.destroyed(name)), label: this.t("book.descriptive"),
+        verdict: analysis.verdict, burnt: !!(this.law && this.law.destroyed(name)), label: this.t(kind === "linking" ? "book.linking" : "book.descriptive"),
         ward: !!guard("garde", () => require("./ward").isWarded(this.wardExt(core.seed(file.path)), core.seed(file.path))), /* un Livre gardé : le serpent au médaillon */
       });
     }

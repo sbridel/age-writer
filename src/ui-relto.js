@@ -320,7 +320,7 @@ async function playLinkAnim(plugin, age, host, snd, open) {
   if (window.getComputedStyle(host).position === "static") host.style.position = "relative";
   const ov = host.createDiv({ cls: "age-linkanim" }), book = ov.createDiv({ cls: "age-linkanim__book" });
   let cover = ""; // la couverture du livre de liaison (celle du livre ouvert), si on sait la dessiner
-  try { const src = f && plugin.core.extract(await plugin.app.vault.cachedRead(f)); cover = src != null && analysis && plugin.coverFor ? plugin.coverFor(src, analysis, f, false) : ""; } catch (e) { cover = ""; }
+  try { const src = f && plugin.core.extract(await plugin.app.vault.cachedRead(f)); cover = src != null && analysis && plugin.coverFor ? plugin.coverFor(src, analysis, f, false, "linking") : ""; } catch (e) { cover = ""; } /* l'étagère du Relto ne garde que des livres de liaison */
   if (cover) { book.addClass("has-cover"); setMarkup(book, cover); } else book.createDiv({ cls: "age-linkanim__title", text: age.name || f.basename });
   const page = ov.createDiv({ cls: "age-linkanim__page" }), panel = page.createDiv({ cls: "age-linkanim__panel" }); // le panneau est collé sur une page du livre
   if (analysis) { try { plugin.mountGenerated(panel, analysis, age.path); } catch (e) { console.warn("[Age Writer ext] panneau", e); } }
@@ -888,11 +888,14 @@ async function renderRelto(plugin, source, el, ctx) {
     if (nSys(s) > nSys(old)) plugin.refreshLive(); // un système situé : les Détails des Âges le disent
   };
   zero.scene = () => scene;
+  { const fk = forkGet(); if (fk && fk.name) renderer.forkHeld = { name: fk.name, path: fk.path, snap: fk.snap || null }; } /* le Livre d'hier est encore dans la fente */
   const onTelescopeSound = (k, s) => { if (roomSoundOn() && sound.telescopeSfx) sound.telescopeSfx(k, s, roomVol()); };
   // le livre de la bibliothèque : les lignes lues dans les notes (relues à l'ouverture et après chaque ajout), et l'écriture sans ouvrir la note
   let libData = { ages: [], relto: [] };
   const libReload = async () => { try { libData = { ages: await B.libraryLines(plugin, "ages"), relto: await B.libraryLines(plugin, "relto") }; } catch (e) { console.warn("[Age Writer ext] library book", e); } renderer._lbData = null; renderer.draw(0); };
-  let forkHeld = null; /* la voix que le diapason garde (Imageur, deux voix) */
+  /* la voix que le diapason garde (Imageur, deux voix) : gardée dans la réserve du plugin, par Relto ; le Livre reste dans la fente jusqu'à l'étouffoir */
+  const forkGet = () => (plugin.ext.fork && typeof plugin.ext.fork === "object" && plugin.ext.fork[file.path]) || null;
+  const forkPut = (v) => { const m = { ...(plugin.ext.fork && typeof plugin.ext.fork === "object" ? plugin.ext.fork : {}) }; if (v) m[file.path] = v; else delete m[file.path]; plugin.ext.fork = m; plugin.saveExt(); };
   const pool = () => poolOfScene(scene); /* la réserve de ce Relto (section 19.2) */
   const storyLater = () => { if (scene && scene.mode === "story") window.setTimeout(() => refresh().catch((e) => console.warn("[Age Writer ext] relto", e)), 300); }; /* un geste de la caverne ou de la machine peut finir un chapitre */
   const renderer = new ReltoRenderer(canvas, plugin.dni, { touch, wheelOk: () => !!root.closest(".age-reltoview") || !!root.ownerDocument.fullscreenElement, rotated: () => touch && root.hasClass("is-mobilefull") && !!(window.matchMedia && window.matchMedia("(orientation: portrait)").matches), onTip: tipCard ? (text, parts) => { /* la carte d'infobulle, au doigt : le texte, et une ligne de valeur en chiffres D'ni (la machine) */
@@ -936,10 +939,10 @@ async function renderRelto(plugin, source, el, ctx) {
     dreamGuide: () => plugin.ext.dreamGuide || null,
     onDreamGuide: (id) => (plugin.toggleDreamGuide ? plugin.toggleDreamGuide(id) : null),
     onDreamWake: (res) => { if (plugin.dreamWoke) plugin.dreamWoke(res); },
-    onForkDamp: () => { forkHeld = null; },
+    onForkDamp: () => forkPut(null), onForkKeep: (snap) => { const f = forkGet(); if (f) forkPut({ ...f, snap }); },
     onTwoVoices: (age, target, onLine) => {
-      if (!age || !target) return; const GI = require("./imager-guild"), vol = roomVol(), now = Date.now(), held = forkHeld;
-      if (!held) { forkHeld = { name: age.name, path: age.path, target, at: now }; if (roomSoundOn()) sound.twoVoices(target.freq, target.freq, "full", vol * 0.6); onLine(plugin.t("two.fork.ring", { a: age.name }), true); if (scene && scene.mode === "story") storyStruck(plugin, age.path, target.freq); return; }
+      if (!age || !target) return; const GI = require("./imager-guild"), vol = roomVol(), now = Date.now(), held = forkGet();
+      if (!held) { forkPut({ name: age.name, path: age.path, target, at: now }); if (roomSoundOn()) sound.twoVoices(target.freq, target.freq, "full", vol * 0.6); onLine(plugin.t("two.fork.ring", { a: age.name }), true); if (scene && scene.mode === "story") storyStruck(plugin, age.path, target.freq); return; }
       const ac = GI.accordOf(held.target, target); if (!ac) return; /* le diapason garde sa voix : on essaie un autre monde, puis un autre ; l'étouffoir seul la lui fait oublier */
       if (scene && scene.mode === "story") storyHeard(plugin, held.path || held.name, age.path || age.name, ac.degree, held.target.freq, target.freq); /* le chapitre 14 */
       if (roomSoundOn()) sound.twoVoices(held.target.freq, target.freq, ac.degree, vol * 0.6);

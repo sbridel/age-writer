@@ -48,6 +48,18 @@ function wavePath(ctx, s, phase, b) {
   }
 }
 
+/** Les midis d'une trace : une perle par jour, là où le jour culmine (u ≡ π/2). Une onde renversée et décalée d'une demi-journée
+ *  dessine presque la même courbe, mais ses perles tombent dans les creux : on voit que ce n'est pas le même ciel (26 oct. 2026). */
+function noonBeads(ctx, s, phase, b, R, fill) {
+  const cycles = 0.75 + s.freq * 0.25, A = (6 + s.amp * 2.4) * (b.h / 156), h = s.harm / 24, ph = (phase / I.TURN) * Math.PI * 2, cy = b.y + b.h / 2, span = Math.PI * 2 * cycles;
+  ctx.fillStyle = fill;
+  for (let k = Math.ceil((ph - Math.PI / 2) / (Math.PI * 2)) - 1; ; k++) {
+    const u = Math.PI / 2 + k * Math.PI * 2, f = (u - ph) / span; if (f > 1) break; if (f < 0) continue;
+    const x = b.x + f * b.w, y = cy - s.pol * (A * Math.sin(u) + A * 0.35 * h * Math.sin(3 * u + ph));
+    ctx.beginPath(); ctx.arc(x, y, R, 0, 6.283); ctx.fill();
+  }
+}
+
 /** Valeur en chiffres D'ni (ou en chiffres, faute de mieux). */
 function number(r, ctx, v, x, y, size = 13) {
   if (r.dni && r.dni.drawNumber) r.dni.drawNumber(ctx, Math.floor(v), x - size * 0.6, y, size, "#e0c27a");
@@ -589,8 +601,8 @@ function closeAtmo(r, ctx, st, cl, t, c, now) {
   ctx.strokeStyle = "rgba(60,140,100,0.25)"; ctx.lineWidth = 1; for (let i = 1; i < 8; i++) { ctx.beginPath(); ctx.moveTo(T.x + (i * T.w) / 8, T.y); ctx.lineTo(T.x + (i * T.w) / 8, T.y + T.h); ctx.stroke(); } for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(T.x, T.y + (i * T.h) / 4); ctx.lineTo(T.x + T.w, T.y + (i * T.h) / 4); ctx.stroke(); }
   ctx.lineCap = "round";
   const asleep = st.guild && !st.planet, searching = asleep && GI.full(st.g.cry); // mode Guilde : la trace du ciel n'apparaît qu'une planète tenue ; quatre cristaux posés, le régulateur cherche
-  if (tg && !asleep) { wavePath(ctx, tg, I.phaseAt(tg, now), T); ctx.strokeStyle = "rgba(90,220,150,0.28)"; ctx.lineWidth = 6; ctx.stroke(); ctx.strokeStyle = "rgba(120,255,170,0.35)"; ctx.lineWidth = 2.5; ctx.stroke(); }
-  const e = tg ? I.effective(s, tg, now) : s; wavePath(ctx, e, e.phase, T); ctx.strokeStyle = "rgba(190,255,210,0.95)"; ctx.lineWidth = 1.4; ctx.stroke();
+  if (tg && !asleep) { wavePath(ctx, tg, I.phaseAt(tg, now), T); ctx.strokeStyle = "rgba(90,220,150,0.28)"; ctx.lineWidth = 6; ctx.stroke(); ctx.strokeStyle = "rgba(120,255,170,0.35)"; ctx.lineWidth = 2.5; ctx.stroke(); noonBeads(ctx, tg, I.phaseAt(tg, now), T, 5.5, "rgba(150,255,190,0.4)"); }
+  const e = tg ? I.effective(s, tg, now) : s; wavePath(ctx, e, e.phase, T); ctx.strokeStyle = "rgba(190,255,210,0.95)"; ctx.lineWidth = 1.4; ctx.stroke(); noonBeads(ctx, e, e.phase, T, 2.4, "rgba(235,255,240,1)"); /* les midis : une perle large et pâle pour le ciel, une perle vive pour le réglage */
   const gl = ctx.createRadialGradient(T.x + T.w * 0.3, T.y + T.h * 0.2, 4, T.x + T.w / 2, T.y + T.h / 2, T.w * 0.7); gl.addColorStop(0, "rgba(255,255,255,0.07)"); gl.addColorStop(1, "rgba(0,0,0,0.35)"); ctx.fillStyle = gl; ctx.fillRect(T.x, T.y, T.w, T.h);
   ctx.restore();
   if (asleep) { ctx.fillStyle = "rgba(120,255,170,0.45)"; ctx.font = "italic 12px serif"; ctx.textAlign = "center"; ctx.fillText(tx(r).t(searching ? "guild.tube.search" : "guild.tube.asleep"), T.x + T.w / 2, T.y + T.h - 14, T.w - 30); ctx.textAlign = "left"; }
@@ -715,4 +727,4 @@ function paintView(canvas, model, target, t, now, look = null, sq = null) {
   return canvas;
 }
 
-module.exports = { drawImagerRoom, paintView, wavePath, formed, STATIONS, SCREEN, MINI, LOCK, CRANK, TILT, TRANSCRIBE, W, H };
+module.exports = { drawImagerRoom, paintView, wavePath, noonBeads, formed, STATIONS, SCREEN, MINI, LOCK, CRANK, TILT, TRANSCRIBE, W, H };
