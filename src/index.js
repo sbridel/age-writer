@@ -13,14 +13,19 @@ class AgeIndex {
 
   async list() {
     const { app } = this.p, core = this.p.core, out = [], bucket = Math.floor(Date.now() / 3600000);
-    for (const f of app.vault.getMarkdownFiles()) {
-      const c = app.metadataCache.getFileCache(f);
-      if (c && !(c.sections || []).some((s) => s.type === "code")) continue;
+    const files = app.vault.getMarkdownFiles().filter((f) => { const c = app.metadataCache.getFileCache(f); return !c || (c.sections || []).some((s) => s.type === "code"); });
+    /* porter : toutes les sources d'abord, puis les analyses ; sans quoi un Âge lu avant sa source garde un fragment « en attente » jusqu'à l'heure suivante (26 oct. 2026, le chapitre 16 ne se validait pas) */
+    const srcs = new Map();
+    for (const f of files) {
+      const hit = this.cache.get(f.path); if (hit && hit.mtime === f.stat.mtime && hit.bucket === bucket) continue;
+      let src = null; try { src = core.extract(await app.vault.cachedRead(f)); } catch (e) { /* illisible */ }
+      srcs.set(f.path, src); if (src !== null && this.p.carrySource) this.p.carrySource(f, src);
+    }
+    for (const f of files) {
       let hit = this.cache.get(f.path);
       if (!hit || hit.mtime !== f.stat.mtime || hit.bucket !== bucket) {
         hit = { mtime: f.stat.mtime, bucket, info: null };
-        let src = null; try { src = core.extract(await app.vault.cachedRead(f)); } catch (e) { /* illisible */ }
-        if (src !== null && this.p.carrySource) this.p.carrySource(f, src); /* porter : la source d'un fragment se relit sans attendre */
+        const src = srcs.has(f.path) ? srcs.get(f.path) : null;
         if (src !== null) try {
           const a = core.analyse(src, { seed: core.seed(f.path), physics: this.p.physicsMode && this.p.physicsMode() === "strict" }); // en facile la physique ne change rien à la stabilité : inutile de la calculer pour toute la bibliothèque
           const back = a.returnTo ? app.metadataCache.getFirstLinkpathDest(a.returnTo, f.path) : null;

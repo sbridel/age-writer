@@ -597,6 +597,12 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
           files.delete(c16.path); }
         day.content = day.content.replace("Face Nuit as sky", "Face Autre as sky"); day.stat.mtime++; p.carrySource(day, p.core.extract(day.content));
         const ro = an(day); ok((ro.carry.refused || []).some((x) => x.why === "octave"), "contre-sens : hors de l'octave, refusé en une phrase");
+        { /* l'index lit toutes les sources avant d'analyser : un Âge lu avant sa source porte quand même (le chapitre 16 se valide sans attendre l'heure suivante) */
+          const carrier = age("Porteur Avant", ["water", "fern", "carry: water from Source Apres"], dir), srcA2 = age("Source Apres", ["single_sun", "steady_cycle", "water", "fern"], dir);
+          p.law.observe(srcA2.basename, an(srcA2), srcA2.stat.mtime); p._carrySrc.delete(srcA2.path); p.index.invalidate();
+          const it = (await p.index.list()).find((x) => x.name === "Porteur Avant");
+          ok(it && it.carried === 1, "index : la source lue après l'Âge qui porte, le fragment est compté quand même (" + (it && it.carried) + ")");
+          files.delete(carrier.path); files.delete(srcA2.path); p.index.invalidate(); }
         for (const f of [day, night, odd]) files.delete(f.path); }
       const ids = require("../src/law").worldIds(an(recv)); ok(ids.some((x) => x.startsWith("carry|")) && !ids.some((x) => /^\?carry/.test(x)), "porter : la loi du changement voit la ligne, pas le fragment");
       for (const f of [srcA, recv, far, loop]) files.delete(f.path); delete p.ext.story[SKc]; p.index.invalidate(); }
