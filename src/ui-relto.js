@@ -372,7 +372,8 @@ function hearStateOf(plugin, hub, scene) {
   const now = Date.now(), cache = (plugin._hearCache = plugin._hearCache || {}), c = cache[hub.path]; if (c && now - c.at < 2000) return c.v;
   const relto = { ...M.parseRelto(fmOf(plugin.app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed));
   if (HEAR.cryNow(st, now)) { plugin.saveExt(); if (plugin.ext.sound && plugin.ext.soundRooms !== false) sound.caveSfx("cry", (plugin.ext.volume == null ? 0.35 : plugin.ext.volume) * 0.5); } /* la nuit de la visite : un cri, au loin */
-  const v = { hum: HEAR.humOf(st, now), stone: HEAR.stoneHere(st, now), freq: st.hear && st.hear.freq };
+  const ht = Number(plugin.ext.humTest) || 0, test = now - ht < 60000 ? 1 - 0.7 * ((now - ht) / 60000) : 0; /* le raccourci d'essai : une minute de frémissement, sans toucher à l'histoire */
+  const v = { hum: Math.max(HEAR.humOf(st, now), test), stone: HEAR.stoneHere(st, now), freq: (st.hear && st.hear.freq) || (test ? 220 : undefined) };
   cache[hub.path] = { at: now, v }; return v;
 }
 

@@ -354,7 +354,22 @@ function drawLoft(r, ctx, sc, sky, t) {
   for (let row = 0; row < 3; row++) { // les étagères du fond
     const y0 = 18 + row * 62; ctx.fillStyle = c("#1d140e"); ctx.fillRect(0, y0, W, 56); ctx.fillStyle = c(castle ? CS.WALNUT_HI : "#4b3626"); ctx.fillRect(0, y0 + 56, W, 5); if (glass) { ctx.fillStyle = c("#b5652a"); ctx.fillRect(0, y0 + 56, W, 1.6); } if (castle) { ctx.fillStyle = c(CS.GOLD); ctx.fillRect(0, y0 + 56, W, 1); }
     let bx = 6; const g = rng(0x600 + row * 11);
-    while (bx < W - 10) { const bw = 6 + Math.floor(g() * 8), bh = 28 + Math.floor(g() * 22), ci = Math.floor(g() * 7); const blank = g() < 0.55; require("./relto-spines").spine(ctx, c, bx, y0 + 56 - bh, bw, bh, [...require("./relto-spines").NEUTRAL, "#3a2f2a"][ci], { key: "loft" + row + "|" + bx, blank }); bx += bw + 1; if (g() < 0.06) bx += 14; } /* la même reliure que partout (src/relto-spines.js) */
+    const SP = require("./relto-spines"), PAL = [...SP.NEUTRAL, "#3a2f2a"], base = y0 + 56;
+    while (bx < W - 10) { /* une vraie bibliothèque (26 oct. 2026) : des trous, des livres penchés, de petites piles couchées, des hauteurs et des largeurs inégales */
+      const roll = g();
+      if (roll < 0.06) { bx += 10 + Math.floor(g() * 26); continue; } /* un trou */
+      if (roll < 0.11) { /* une petite pile couchée */
+        const n = 2 + Math.floor(g() * 3); let cy = base, mw = 0;
+        for (let k = 0; k < n; k++) { const fw = 24 + Math.floor(g() * 14), fh = 5 + Math.floor(g() * 3); SP.flatBook(ctx, c, bx + Math.floor(g() * 4), cy, fw, fh, PAL[Math.floor(g() * PAL.length)], "", 0, "lie" + row + bx + k); cy -= fh; mw = Math.max(mw, fw + 4); }
+        bx += mw + 2; continue;
+      }
+      const bw = 5 + Math.floor(g() * 11), bh = 24 + Math.floor(g() * 28), col = PAL[Math.floor(g() * PAL.length)], blank = g() < 0.5;
+      if (g() < 0.07 && bx > 20) { /* un livre penché, appuyé sur son voisin */
+        const a = -0.2 - g() * 0.12; ctx.save(); ctx.translate(bx + bw, base); ctx.rotate(a); SP.spine(ctx, c, -bw, -bh, bw, bh, col, { key: "lean" + row + bx, blank }); ctx.restore();
+        bx += bw + Math.ceil(Math.sin(-a) * bh) + 2; continue;
+      }
+      SP.spine(ctx, c, bx, base - bh, bw, bh, col, { key: "loft" + row + "|" + bx, blank }); bx += bw + (g() < 0.15 ? 2 : 1);
+    }
   }
   if (castle) for (let sx = 0; sx < W; sx += 128) { ctx.fillStyle = c("#140c08"); ctx.fillRect(sx, 0, 8, 214); ctx.fillStyle = c(CS.WALNUT_HI); ctx.fillRect(sx, 0, 1.4, 214); ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 1; CS.pointed(ctx, sx + 12, sx + 124, 4, 22, 200); ctx.stroke(); } // des arcs brisés sur les rayonnages
   ctx.fillStyle = rgba(255, 190, 90, 0.05 * fl); ctx.fillRect(0, 0, W, 220);
