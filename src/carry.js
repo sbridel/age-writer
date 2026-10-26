@@ -24,6 +24,13 @@ const DEGREE_FACTOR = { full: 0, good: 0.25, rub: 1, clash: 1 };
 /** Une source qui ne tient pas (< 75) se porte quand même pendant la contrainte cachée : le manque se paie, à moitié. */
 const SICK_SHARE = 0.5;
 const STABLE_AT = 75;
+/** Les cases du tirage qui font le ciel : fermées sous une terre renversée (hooks.closedSlots). */
+const SKY_SLOTS = ["stars", "cycle", "moon", "phenomena"];
+/** Les cases que le tirage n'ouvre pas pour cet Âge : le ciel, quand un lieu est porté à contre-sens (et qu'aucun ciel n'est porté). */
+function closedSlots(info) {
+  const fr = (info && info.fragments) || []; if (!fr.some((f) => f.contra) || fr.some((f) => f.what === "sky")) return null;
+  return SKY_SLOTS;
+}
 
 /** L'axe que touche un fragment : le ciel pour un ciel, le sol pour un lieu. */
 const axisOf = (what) => (what === "sky" ? "cosmological" : "geological");
@@ -82,7 +89,8 @@ function fragmentOf(src, what, blockAxis, o = {}) {
  * @param blockAxis (id) → axe ; `norm` (ligne) → identifiant (météo vivante, etc.)
  */
 function expandText(text, done, blockAxis, norm = (l) => l.trim()) {
-  const lines = String(text || "").split("\n"), drop = new Set(done.map((d) => d.index)), sky = done.some((d) => d.what === "sky" || d.contra); /* un lieu à contre-sens prend aussi la place du ciel */
+  /* un ciel porté remplace les pages de ciel écrites ; un lieu à contre-sens occupe la voûte seulement : les astres écrits restent, et rien ne se tire par-dessus (SKY_SLOTS ; 26 oct. 2026) */
+  const lines = String(text || "").split("\n"), drop = new Set(done.map((d) => d.index)), sky = done.some((d) => d.what === "sky");
   const kept = lines.filter((l, i) => !drop.has(i) && !(sky && blockAxis(norm(l)) === "cosmological"));
   const add = [];
   for (const d of done) for (const id of d.ids) if (!add.includes(id)) add.push(id);
@@ -124,4 +132,4 @@ function guardOf(chain, name) {
   return "";
 }
 
-module.exports = { PLACES, WHATS, CARRY_RE, MAX_DEPTH, SEAM, SEAM_SOURCE, DISSONANCE, DEGREE_FACTOR, SICK_SHARE, axisOf, axisOfFragment, parseLine, parseAll, carriesFrom, isCarryLine, fragmentOf, expandText, costOf, applyCosts, guardOf };
+module.exports = { PLACES, WHATS, SKY_SLOTS, closedSlots, CARRY_RE, MAX_DEPTH, SEAM, SEAM_SOURCE, DISSONANCE, DEGREE_FACTOR, SICK_SHARE, axisOf, axisOfFragment, parseLine, parseAll, carriesFrom, isCarryLine, fragmentOf, expandText, costOf, applyCosts, guardOf };

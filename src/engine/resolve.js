@@ -83,6 +83,7 @@ function resolveAge(source, options = {}) {
         seed: `${options.seed ?? ""}#${seedLine ?? ""}`,
         pull,
         amount,
+        closed: hooks.closedSlots(options),
       });
     for (let pick of picks) {
       let pickEntry = skyEntryById.get(pick.id);

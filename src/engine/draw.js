@@ -153,10 +153,11 @@ function marginalClash(ids, addedId) {
 }
 
 function drawOpenSlots(params) {
-  let { written, seed, pull, amount = 1 } = params,
+  let { written, seed, pull, amount = 1, closed = null } = params,
     taken = new Set(written),
     drawn = [];
   for (let slotDef of DRAW_SLOTS) {
+    if (closed && closed.includes(slotDef.name)) continue; /* une voûte occupée (un lieu porté à contre-sens) : le ciel ne se tire pas */
     let random = rng(hashSeed(`${seed}|${slotDef.name}`)),
       others = new Set(taken);
     for (let option of slotDef.options) option.id !== null && others.delete(option.id);

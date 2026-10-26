@@ -185,6 +185,7 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.symbiosisNote = (list) => guard("symbiose", () => this.symbiosisLine(list)) || "";
       this._carrySrc = new Map(); this._carryCache = new Map(); this._carryStack = []; this._carriedFrom = new Map();
       AGEX.expand = (text, o) => guard("portage", () => this.carryExpand(text, o)) || null;
+      AGEX.closedSlots = (o) => (o && o.carry ? CARRY.closedSlots(o.carry) : null); /* sous une terre renversée, le livre ne tire pas de ciel */
       AGEX.carryNote = (c) => guard("portage", () => this.carryLine(c)) || "";
       this.depthCache = new Map();
       // la profondeur de l'équilibre : le test par retrait, à l'affichage du panneau (jamais à chaque frappe), mis en cache par texte, graine et rigueur

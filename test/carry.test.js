@@ -55,7 +55,8 @@ ok(C.applyCosts(base, [], { cosmological: 1 }).axisStability.cosmological === 97
 
 /* à contre-sens (la clause de Torus) et la boucle */
 const exc = C.expandText(["single_sun", "steady_cycle", "water", "carry: forest from Night as sky"].join("\n"), [{ index: 3, what: "forest", contra: true, ids: ["fern", "grass"] }], axis).split("\n");
-ok(!exc.includes("single_sun") && exc.includes("water") && exc.includes("fern"), "un lieu à contre-sens prend la place du ciel");
+ok(exc.includes("single_sun") && exc.includes("steady_cycle") && exc.includes("water") && exc.includes("fern"), "un lieu à contre-sens occupe la voûte : les astres écrits restent");
+ok(C.closedSlots({ fragments: [{ what: "forest", contra: true }] }) === C.SKY_SLOTS && C.closedSlots({ fragments: [{ what: "forest", contra: false }] }) === null && C.closedSlots({ fragments: [{ what: "forest", contra: true }, { what: "sky" }] }) === null, "sous la terre renversée, le livre ne tire pas de ciel (sauf si un ciel est porté aussi)");
 ok(C.costOf("full", 90, true).seam === C.SEAM && C.costOf("full", 90, false).seam === C.SEAM, "à contre-sens, une seule couture : l'octave exigée est son prix");
 const rc = C.applyCosts(base, [{ what: "forest", contra: true, degree: "full", srcStability: 90 }]);
 ok(rc.axisStability.cosmological === 100 - Math.round(C.SEAM * 100) && rc.axisStability.geological === 92, "à contre-sens, le prix se paie sur le ciel");
