@@ -2,6 +2,24 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.0.0 — Seasons, and the end of the story (2026-10-26)
+
+### Added
+- **The story ends.** A third book of four chapters closes the story, with its letters, its rewards and a choice at the end. What it teaches, and what each ending leaves in the Relto, is left for you to find. Test shortcuts in the maintenance menu jump to its first and last chapters.
+- **Seasons.** With physics on, a tilted axis (`tilt:`) gives an Age its seasons: the Details tab says how hot or cold each one gets and which season it is today there; the window shows it (winter snow on the ground and crests, rain turned to snow below zero, spring petals, a higher summer sun, red autumn leaves). Life is judged on its hardest season and on what waits it out (seeds, spores, burrowers that hibernate); a role held only one season is a light tension, *migration*. A shortcut turns the seasons for testing.
+- **The cellar under the machine.** The harvest now goes down by season into labelled jars; a sieve sorts the good grain into sealed jars, the rest goes to the compost, which makes potting soil; a lift brings a jar up to its hopper.
+- **Matters have a genesis**: volcanic or hearth ash, quartz or volcanic silt. The sieve keeps them apart, and the recipes care.
+- **The Imager's tuning fork keeps a world**: a slot holds the book you struck, a click recalls it with its settings, a felt damper releases it. Noon beads on the tube tell two half-turns apart.
+- **Stained glass casts its light**: in the Castle and the Glasshouse, the cabin and writing-room windows lay their colours on the floor by day, long and slanted in the morning, short at noon, warm in the evening.
+
+### Changed
+- **One binding for every book** in the Relto: tight rows of muted leather with their own raised bands, plain, simple or ornate; descriptive books more ornate, linking books sober. No cover says stable or unstable any more: wear tells.
+- **The book of the laws** fits as many laws as a page holds, with rubricated titles, lapis numbers and red initials.
+- **The Guild's Art**: every telescope engraving and every Imager sync needs a three-beat exposure.
+- In the Castle, the hidden panel is a walnut panel of the same wainscot. The vault's trapdoor is real wood in a stone frame; the cave's lake has an uneven shore.
+- The Relto's animation keeps a steadier pace (snow no longer judders).
+- The Details tab shows the life, dosage and carried lines again (only the raw costs are hidden).
+
 ## 1.50.2 — The guide (2026-10-25)
 
 ### Changed

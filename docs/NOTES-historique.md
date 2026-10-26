@@ -699,6 +699,22 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.0.0 — les saisons, et la fin de l'histoire (26 oct. 2026)
+
+Note : `claude/DESIGN-art-bahro.md`, `claude/TEST-paquet-2.0.md` (projet). ⚠ Spoilers : rien de plus précis dans README, CHANGELOG ni guide.
+- **L'histoire se termine** : un troisième livre de quatre chapitres, ses lettres, ses récompenses et un choix à la fin. Ce qu'il apprend, et ce que chaque fin laisse dans le Relto, reste à découvrir. Raccourcis d'essai dans le menu de maintenance.
+- **Les saisons** (physique, `tilt:`) : l'onglet Détails dit le froid et le chaud de chaque saison et la saison du jour ; la fenêtre la montre (neige l'hiver, la pluie en neige sous zéro, pétales au printemps, soleil plus haut l'été, feuillus roux l'automne). La vie se juge sur sa saison la plus dure et sur ce qui l'attend (graines, spores, fouisseurs qui hibernent) ; un rôle tenu une seule saison est une tension légère, la *migration* (10 points en strict). Environ six Âges sur dix ont des saisons visibles (choix de l'auteur).
+- **La cave sous la machine** : la récolte descend par saison dans des bocaux étiquetés ; le tamis trie le bon grain dans des bocaux scellés, le reste va au compost, qui donne du terreau ; le monte-charge remonte un bocal à sa trémie.
+- **La genèse des matières** : cendre volcanique ou de foyer, limon de quartz ou volcanique ; le tamis les sépare, les recettes y tiennent.
+- **Le diapason de l'Imageur garde un monde** : une fente tient le Livre frappé, un clic le rappelle avec ses réglages, un feutre le libère ; des perles de midi sur le tube distinguent deux demi-tours.
+- **La lumière des vitraux** (`src/relto-light.js`) : sous le Château et la Verrière, les fenêtres de la cabane et de l'atelier posent leurs couleurs au sol le jour, longues et penchées le matin, courtes à midi, chaudes le soir.
+- **Une seule reliure pour tous les livres du Relto** (`src/relto-spines.js`) : rangs serrés, cuirs éteints, nerfs propres à chaque livre, sobre, simple ou orné ; plus aucune couverture ne dit stable ou instable, l'usure le dit.
+- **Le livre des lois** : autant de lois qu'une page en tient, titres rubriqués, numéros de lapis, lettrines rouges.
+- **Art de la Guilde** : chaque gravure du télescope et chaque synchronisation de l'Imageur demandent une pose de trois battements.
+- Château : le panneau secret est un panneau de noyer du même lambris ; la trappe du coffre est en vrai bois dans un cadre de pierre ; le lac de la caverne a une rive irrégulière.
+- Boucle du Relto : le seuil d'image passe de 33 à 28 ms (une image arrivée un poil tôt n'est plus sautée : la neige ne saccade plus).
+- Onglet Détails : seuls les coûts bruts se cachent ; les lignes de vie, de dosage et de portage se revoient.
+
 ## 1.50.2 — le guide (25 oct. 2026)
 
 - Guide (`src/guide-ref-en.js`, `src/guide-ref-fr.js`) : le bloc `pellet` qu'on écrit est une capsule de nutriments pour ce monde, sans rapport avec la machine du Relto (les Âges en donnent les ingrédients, pas des granulés). Remarque de l'auteur.
