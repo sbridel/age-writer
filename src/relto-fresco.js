@@ -207,6 +207,8 @@ function drawSlab(r, ctx, st, now, t, tr) {
   /* l'entaille, devant la pierre du fond : on commence ici, et on suit le soleil */
   { const ny = proj(0, -SLAB.ring)[1] - SLAB.stone * SLAB.squash - 5; ctx.strokeStyle = "#08090c"; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(-4, ny - 2); ctx.lineTo(0, ny + 1); ctx.lineTo(4, ny - 2); ctx.stroke(); ctx.strokeStyle = rgba(176, 184, 200, 0.5); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(-3.4, ny - 1); ctx.lineTo(0.5, ny + 1.8); ctx.stroke(); }
   ctx.restore();
+  /* la dalle entière d'abord : ses pierres et sa vasque, déclarées après, passent devant elle au clic (la dernière zone déclarée l'emporte) */
+  r.hot.push({ x: x - SLAB.rx, y: y - SLAB.ry, w: SLAB.rx * 2, h: SLAB.ry * 2, tip: open ? tr("cave.slab.open") : tr("cave.slab") });
   /* les six pierres : taillées, encastrées dans la dalle (un joint sombre autour), gravées ; vues un peu d'en haut */
   for (let i = 0; i < 6; i++) {
     const a = -Math.PI / 2 + (i / 6) * TAU, [ox, oy] = proj(Math.cos(a) * SLAB.ring, Math.sin(a) * SLAB.ring), sx = x + ox, sy = y + oy, turning = st.turnAt && st.turnAt.i === i ? clamp((now - st.turnAt.at) / 300) : 1, hov = r.hover && r.hover.caveSlab === i + 1, rot = (1 - turning) * -1.05;
@@ -219,7 +221,6 @@ function drawSlab(r, ctx, st, now, t, tr) {
     ctx.restore();
     if (!open) r.hot.push({ x: sx - SLAB.stone - 2, y: sy - SLAB.stone * SLAB.squash - 3, w: SLAB.stone * 2 + 4, h: SLAB.stone * SLAB.squash * 2 + 6, tip: tr("cave.slab.stone"), caveSlab: i + 1 });
   }
-  r.hot.push({ x: x - SLAB.rx, y: y - SLAB.ry, w: SLAB.rx * 2, h: SLAB.ry * 2, tip: open ? tr("cave.slab.open") : tr("cave.slab") });
   if (open && st.dreamTip) r.hot.push({ x: x - SLAB.pool, y: y - SLAB.pool * 0.5, w: SLAB.pool * 2, h: SLAB.pool, tip: st.dreamTip, dreamGo: true }); /* la vasque : le rêve (étape 4d) */
 }
 

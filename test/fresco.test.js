@@ -97,6 +97,8 @@ ok(OVR.valueParts({ imagerGuildOn: () => false }, trk, "time", 1).some((p) => p 
   ok(!room({ revealed: 0 }).some((h) => h.caveSlab), "avant le premier éclair : pas de dalle");
   ok(!MEM.slabShown({ opts: { caveState: () => ({ revealed: 0 }) } }) && MEM.slabShown({ opts: { caveState: () => ({ revealed: 1 }) } }), "la chambre s'ouvre aussi par la dalle, sans merveille");
   const h1 = room({ revealed: 1 }); ok(h1.filter((h) => h.caveSlab).length === 6 && !h1.some((h) => h.dreamGo), "une révélation : six pierres à tourner, la vasque encore sombre");
+  { const { ReltoRenderer } = require("../src/relto-render"), hitOf = (hot, x, y) => ReltoRenderer.prototype.hit.call({ hot }, x, y); /* la dernière zone déclarée l'emporte : la dalle entière ne doit pas couvrir ses pierres */
+    for (const st of h1.filter((h) => h.caveSlab)) { const got = hitOf(h1, st.x + st.w / 2, st.y + st.h / 2); ok(got && got.caveSlab === st.caveSlab, "pierre " + st.caveSlab + " : elle répond au clic, la dalle ne la couvre pas"); } }
   const code = F.codeOf("Relto", 19991118), k2 = "relto#19991118", turns = code.map((g, i) => { const { ring, start } = F.ringOf(code, i, k2); return (ring.indexOf(g) - start + 6) % 6; });
   const key = require("../src/telescope").keyOf("Relto", 19991118), h2 = room({ revealed: 3, slabs: { [key]: { open: true, turns } } });
   ok(!h2.some((h) => h.caveSlab) && h2.some((h) => h.dreamGo), "ouverte : on ne tourne plus rien, la vasque mène au rêve");
