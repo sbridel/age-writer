@@ -38,4 +38,21 @@ for (const lang of ["en", "fr"]) {
   }
 }
 const S = require("../src/sound"); ok(typeof S.twoVoices === "function" && S.twoVoices(12, 14, "good", 0.3) === false, "sans contexte audio, deux voix se tait sans erreur");
+/* le diapason retient un monde (26 oct. 2026) : le Livre dans la fente revient sur la machine avec ses réglages d'alors ; l'étouffoir seul le fait oublier */
+{ const { ReltoRenderer } = require("../src/relto-render"), R = ReltoRenderer.prototype, IM = require("../src/imager");
+  const ages = [{ name: "Brume", path: "Ages/Brume.md" }, { name: "Cendre", path: "Ages/Cendre.md" }, { name: "Givre", path: "Ages/Givre.md" }];
+  const easy = { idx: 0, age: ages[0], settings: IM.normalize({ freq: 7, amp: 3 }) }, saved = {};
+  const me = { scene: { ages }, opts: { imagerSet: (k, v) => { saved[k] = v; } }, running: true, imager: easy, imagerState() { return this.imager; }, imagerLoad(i) { easy.idx = i; easy.age = ages[i]; easy.settings = IM.normalize(null); }, imagerSave: R.imagerSave };
+  me.forkHeld = { name: "Brume", path: ages[0].path, snap: R.forkSnap.call(me, easy) };
+  me.imagerLoad(2); easy.settings = IM.normalize({ freq: 1 }); /* on cherche un troisième monde */
+  R.forkRecall.call(me);
+  ok(easy.age.path === ages[0].path && easy.settings.freq === 7 && easy.settings.amp === 3 && saved[ages[0].path].freq === 7, "rappel : Brume revient sur le lutrin, réglée comme quand le diapason l'a retenue");
+  ok(me.forkHeld && me.forkHeld.name === "Brume", "le diapason la retient toujours après le rappel");
+  const g = { guild: true, gkey: "guild:x", settings: IM.normalize({ freq: 9, phase: 2 }), g: { cry: ["a", "b", null, "c"], page: 0 } }, found = [];
+  const mg = { scene: { ages }, opts: {}, running: true, imager: g, imagerState() { return this.imager; }, imagerFind() { found.push(this.imager.g.cry.join()); }, imagerSave() {} };
+  mg.forkHeld = { name: "Brume", snap: R.forkSnap.call(mg, g) };
+  g.settings = IM.normalize({ freq: 2 }); g.g = { ...g.g, cry: [null, null, null, null] }; /* les cristaux ôtés, les boutons tournés */
+  R.forkRecall.call(mg);
+  ok(g.settings.freq === 9 && g.settings.phase === 2 && g.g.cry.join() === "a,b,,c" && found.length === 1, "Guilde : le rappel remet les quatre cristaux et chaque bouton, l'image se reforme");
+}
 console.log(`accord.test.js ok (${n} vérifications)`);

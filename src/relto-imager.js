@@ -622,7 +622,7 @@ function twoVoicesPlate(r, ctx, st, c, t) {
   if (!r.opts.onTwoVoices) return; /* le diapason reste sur la console : il garde sa voix pendant qu'on cherche l'autre monde */
   const can = !!(st.age && st.target);
   /* le diapason, debout sur la console à gauche de l'écran : on le frappe, il vibre, et l'on choisit l'autre Âge */
-  const tr = tx(r).t, x = 154, base = 214, hov = r.hover && r.hover.twoVoices, ring = Math.max(r.forkHolding ? 0.3 : 0, r.twoLine ? Math.max(0, 1 - (Date.now() - r.twoLine.at) / 3000) : 0); /* il garde une voix : il vibre doucement jusqu'au prochain coup */
+  const tr = tx(r).t, x = 154, base = 214, hov = r.hover && r.hover.twoVoices, ring = Math.max(r.forkHeld ? 0.3 : 0, r.twoLine ? Math.max(0, 1 - (Date.now() - r.twoLine.at) / 3000) : 0); /* il garde une voix : il vibre doucement jusqu'au prochain coup */
   const steel = hov ? "#f3e2b0" : c("#c9a24e"), dark = c("#5a4322");
   ctx.fillStyle = c("#3b2a1b"); ctx.fillRect(x - 9, base - 7, 18, 7); ctx.fillStyle = c("#5a4322"); ctx.fillRect(x - 9, base - 7, 18, 2); /* le socle de bois */
   ctx.strokeStyle = steel; ctx.lineCap = "round"; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x, base - 7); ctx.lineTo(x, base - 17); ctx.stroke(); /* la tige */
@@ -630,8 +630,9 @@ function twoVoicesPlate(r, ctx, st, c, t) {
   for (const s of [-1, 1]) { ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(x, base - 17); ctx.quadraticCurveTo(x + s * 5, base - 19, x + s * 5 + s * wob, base - 26); ctx.lineTo(x + s * 5 + s * wob, base - 44); ctx.stroke(); }
   ctx.strokeStyle = dark; ctx.lineWidth = 0.8; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x + s * 6.4 + s * wob, base - 27); ctx.lineTo(x + s * 6.4 + s * wob, base - 43); ctx.stroke(); }
   ctx.lineCap = "butt";
-  if (ring > 0) { ctx.strokeStyle = rgba(243, 220, 160, 0.5 * ring); ctx.lineWidth = 1; for (const k of [1, 2, 3]) { ctx.beginPath(); ctx.arc(x, base - 36, 8 + k * 5 + (1 - ring) * 6, -0.7, 0.7); ctx.stroke(); ctx.beginPath(); ctx.arc(x, base - 36, 8 + k * 5 + (1 - ring) * 6, Math.PI - 0.7, Math.PI + 0.7); ctx.stroke(); } }
+  /* pas d'ondes dessinées autour : ce sont les branches qui tremblent (choix du 26 oct. 2026) */
   r.hot.push(can ? { x: x - 12, y: base - 48, w: 24, h: 48, tip: tr("two.fork"), twoVoices: true } : { x: x - 12, y: base - 48, w: 24, h: 48, tip: tr("two.fork.wait") });
+  forkTag(r, ctx, x, base, c, tr);
   const L = r.twoLine; if (!L) return;
   const k = (Date.now() - L.at) / 12000; if (k >= 1) { r.twoLine = null; return; }
   const a = k < 0.85 ? 1 : (1 - k) / 0.15, S = SCREEN, ry = S.y + S.h - 52; /* au-dessus de la ligne de l'heure */
@@ -643,6 +644,28 @@ function twoVoicesPlate(r, ctx, st, c, t) {
   ctx.restore(); void t;
 }
 
+/** Ce que le diapason retient : une étiquette de parchemin pendue au socle (le nom court, le nom entier au survol ; un clic remet ce monde
+ *  sur la machine) et un petit étouffoir de feutre (un clic : le diapason se tait, il oublie). */
+function forkTag(r, ctx, x, base, c, tr) {
+  /* la fente de la machine, sous le diapason : elle ne garde qu'un seul Livre, celui du monde que le diapason retient (le dos tourné vers nous,
+   * le signet qui pend) ; vide, elle reste visible, bordée de laiton. Un clic sur le Livre : le monde revient sur le lutrin. */
+  const held = r.forkHeld, full = held ? String(held.name || "") : "", hovT = r.hover && r.hover.twoRecall, hovD = r.hover && r.hover.twoDamp;
+  const sx = x - 11, sy = base + 14, sw = 14, sh = 34;
+  ctx.fillStyle = c("#5a4322"); ctx.fillRect(sx - 2, sy - 2, sw + 4, sh + 4); ctx.fillStyle = c("#c9a24e"); ctx.fillRect(sx - 1, sy - 1, sw + 2, sh + 2); /* le cadre de laiton */
+  ctx.fillStyle = "#120c07"; ctx.fillRect(sx, sy, sw, sh); /* le fond de la fente */
+  if (held) {
+    ctx.fillStyle = hovT ? "#8a5a3a" : c("#6b3f2a"); ctx.fillRect(sx + 2, sy + 1, sw - 4, sh - 2); /* le dos du Livre, cuir */
+    ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 0.7; ctx.beginPath(); for (const k of [6, 12, sh - 12, sh - 6]) { ctx.moveTo(sx + 3, sy + k); ctx.lineTo(sx + sw - 3, sy + k); } ctx.stroke(); /* les nerfs dorés */
+    ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(sx + 2, sy + 1, 2, sh - 2); /* l'ombre du bord */
+    ctx.fillStyle = c("#a8322a"); ctx.fillRect(sx + sw / 2 - 0.8, sy + sh - 3, 1.6, 9); /* le signet qui pend sous la fente */
+  }
+  r.hot.push(held ? { x: sx - 3, y: sy - 3, w: sw + 6, h: sh + 12, tip: tr("two.fork.recall", { a: full }), twoRecall: true } : { x: sx - 3, y: sy - 3, w: sw + 6, h: sh + 6, tip: tr("two.slot.empty") });
+  const dx = x + 13, dy = base - 6; /* l'étouffoir : un tampon de feutre sur son manche, couché près du socle, toujours là */
+  ctx.strokeStyle = c("#5a4322"); ctx.lineWidth = 1.6; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(dx + 4, dy + 1); ctx.lineTo(dx + 15, dy - 3); ctx.stroke(); ctx.lineCap = "butt";
+  ctx.fillStyle = hovD ? "#9a4040" : c("#6e2a2a"); ctx.beginPath(); ctx.ellipse(dx + 1, dy + 2, 5, 3.4, -0.3, 0, 6.283); ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.lineWidth = 0.6; ctx.stroke();
+  r.hot.push(held ? { x: dx - 6, y: dy - 7, w: 24, h: 14, tip: tr("two.fork.damp", { a: full }), twoDamp: true } : { x: dx - 6, y: dy - 7, w: 24, h: 14, tip: tr("two.damp.idle") });
+}
 function humPlate(r, ctx, c, onConsole = false) {
   const h = r.opts.imagerHum ? r.opts.imagerHum() : { on: true, vol: 1 }, x = onConsole ? 528 : W - 100, y = onConsole ? 276 : 334, w = 92, hh = onConsole ? 18 : 22;
   plate(ctx, c, x, y, w, hh, false);

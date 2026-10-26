@@ -936,10 +936,11 @@ async function renderRelto(plugin, source, el, ctx) {
     dreamGuide: () => plugin.ext.dreamGuide || null,
     onDreamGuide: (id) => (plugin.toggleDreamGuide ? plugin.toggleDreamGuide(id) : null),
     onDreamWake: (res) => { if (plugin.dreamWoke) plugin.dreamWoke(res); },
+    onForkDamp: () => { forkHeld = null; },
     onTwoVoices: (age, target, onLine) => {
       if (!age || !target) return; const GI = require("./imager-guild"), vol = roomVol(), now = Date.now(), held = forkHeld;
       if (!held) { forkHeld = { name: age.name, path: age.path, target, at: now }; if (roomSoundOn()) sound.twoVoices(target.freq, target.freq, "full", vol * 0.6); onLine(plugin.t("two.fork.ring", { a: age.name }), true); if (scene && scene.mode === "story") storyStruck(plugin, age.path, target.freq); return; }
-      forkHeld = null; const ac = GI.accordOf(held.target, target); if (!ac) return;
+      const ac = GI.accordOf(held.target, target); if (!ac) return; /* le diapason garde sa voix : on essaie un autre monde, puis un autre ; l'étouffoir seul la lui fait oublier */
       if (scene && scene.mode === "story") storyHeard(plugin, held.path || held.name, age.path || age.name, ac.degree, held.target.freq, target.freq); /* le chapitre 14 */
       if (roomSoundOn()) sound.twoVoices(held.target.freq, target.freq, ac.degree, vol * 0.6);
       onLine(X.twoVoicesLine(plugin.t.bind(plugin), held.name, age.name, ac), false);
