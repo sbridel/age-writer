@@ -549,13 +549,7 @@ function paint(g, m, t, o = {}) {
     if (S.cycle === "frozen") { const fz = rng((S.seed ^ 0x10c4) >>> 0); fz(); const sfx = 0.25 + 0.5 * fz(), mx = 0.1 + 0.8 * frac(sfx - 0.1 + 0.5 + mo.off * 0.3 + mi * 0.12); mp = { x: W * mx, y: H * mo.fy }; } // à l'opposé du soleil immobile else { const p = frac(td * mo.sp - 0.6 + mo.off); if (p <= 0.7) { const q = p / 0.7; mp = { x: W * (0.06 + 0.88 * q), y: hz - Math.sin(Math.PI * q) * (hz - H * (0.2 + 0.1 * mo.off)) }; } }
     if (mp) { g.fillStyle = css(mo.tint); g.beginPath(); g.arc(mp.x, mp.y, rad, 0, TAU); g.fill(); g.fillStyle = "rgba(10,12,20,0.5)"; g.beginPath(); g.arc(mp.x + rad * mo.ph * 1.6, mp.y - rad * 0.2, rad * 0.9, 0, TAU); g.fill(); }
   }
-  if (S.loop) TOR.paintTorus(g, m, t, { fam: S.loopFam, key: S.loopKey, form: S.torus, night, air: mixc(hzc, top, 0.3) }); /* l'autre côté de l'anneau : devant les étoiles, derrière nos nuages et le soleil */
-  // nuages (dérive lente, boucle)
-  for (const c of air.thin > 0.85 ? [] : m.clouds) { // presque pas d'air : pas de nuages
-    const x = frac((c.x / W) + t * c.sp) * (W + c.w * 2) - c.w; g.fillStyle = css(mixc(mixc(hzc, [255, 255, 255], 0.35), [30, 34, 44], L.storm), lerp(c.a * (0.4 + day), 0.55, L.storm));
-    c.lump.forEach((l, k) => { g.beginPath(); g.ellipse(x + (k / 7) * c.w, c.y + (l - 0.5) * c.h * 0.6, c.w * 0.13, c.h * (0.3 + l * 0.3), 0, 0, TAU); g.fill(); });
-  }
-  // soleils
+  const drawSuns = () => {
   for (const s of sn) {
     const gl = g.createRadialGradient(s.x, s.y, s.r * 0.5, s.x, s.y, s.r * 5), b = 0.5 * Math.max(Math.pow(Math.max(0, s.e), 0.6), S.cycle === "frozen" ? 0.7 : 0);
     const hc = hues[s.i] || hues[0] && S.suns < 2 && s.i === 0 && hues[0] || null; // 1er soleil : 1re couleur ; 2e soleil : 2e couleur
@@ -566,6 +560,16 @@ function paint(g, m, t, o = {}) {
     }
     g.fillStyle = hc ? css(mixc(hc, [255, 255, 255], 0.35)) : s.i === 0 ? "#f6e0a8" : "#cfe0f4"; g.beginPath(); g.arc(s.x, s.y, s.r, 0, TAU); g.fill();
   }
+  };
+  if (S.loop) drawSuns(); /* le soleil est plus loin que l'autre côté de l'anneau : il passe derrière, et ne se montre que dans le trou (26 oct. 2026) */
+  if (S.loop) TOR.paintTorus(g, m, t, { fam: S.loopFam, key: S.loopKey, form: S.torus, night, air: mixc(hzc, top, 0.3) }); /* l'autre côté de l'anneau : devant les étoiles et le soleil, derrière nos nuages */
+  // nuages (dérive lente, boucle)
+  for (const c of air.thin > 0.85 ? [] : m.clouds) { // presque pas d'air : pas de nuages
+    const x = frac((c.x / W) + t * c.sp) * (W + c.w * 2) - c.w; g.fillStyle = css(mixc(mixc(hzc, [255, 255, 255], 0.35), [30, 34, 44], L.storm), lerp(c.a * (0.4 + day), 0.55, L.storm));
+    c.lump.forEach((l, k) => { g.beginPath(); g.ellipse(x + (k / 7) * c.w, c.y + (l - 0.5) * c.h * 0.6, c.w * 0.13, c.h * (0.3 + l * 0.3), 0, 0, TAU); g.fill(); });
+  }
+  // soleils (sous un anneau : déjà peints, derrière lui)
+  if (!S.loop) drawSuns();
   const s0 = sn.find((s) => s.i === 0);
   if (S.eclipses && s0) { g.fillStyle = "#05060a"; g.beginPath(); g.arc(s0.x + s0.r * 2.4 * Math.cos(TAU * t), s0.y + s0.r * 0.15 * Math.sin(TAU * t), s0.r * 1.02, 0, TAU); g.fill(); }
   skyBodies(g, m, cs, day, hzc, sn);
