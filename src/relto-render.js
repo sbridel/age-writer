@@ -206,7 +206,7 @@ class ReltoRenderer {
       else if (!seen ? ++wait > 240 : ts - (goneAt = goneAt || ts) > 120000) { this.running = false; return; }
       else { this.raf = requestAnimationFrame(loop); return; }
       const shown = this.visible && !(typeof document !== "undefined" && document.hidden);
-      if (shown && ts - this.last >= 33) { this.last = ts; try { this.draw(ts / 1000); } catch (e) { console.warn("[Age Writer ext] relto draw", e); this.running = false; return; } }
+      if (shown && ts - this.last >= 28) { this.last = ts; try { /* ~30 images par seconde ; le seuil sous 33 ms laisse passer une image arrivée un poil tôt (sinon on en saute une : saccade) */ this.draw(ts / 1000); } catch (e) { console.warn("[Age Writer ext] relto draw", e); this.running = false; return; } }
       this.raf = requestAnimationFrame(loop);
     };
     this.raf = requestAnimationFrame(loop);
