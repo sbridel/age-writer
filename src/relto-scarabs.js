@@ -78,7 +78,10 @@ function drawSerre(r, ctx, sc, sky, t) {
   for (const yy of [190, 140, 92]) { ctx.beginPath(); let first = true; for (let x = 20; x <= 620; x += 10) { if (top(x) > yy) continue; first ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy); first = false; } ctx.stroke(); }
   for (let k = 0; k < 10; k++) if (q("pane" + k) < 0.4) { const x = 20 + 60 * k; ctx.fillStyle = "rgba(120,180,140,0.12)"; ctx.fillRect(x + 1, Math.max(top(x + 30), 140), 58, 48); }
   ctx.fillStyle = "rgba(255,255,255,0.18)"; for (let i = 0; i < 40; i++) { ctx.beginPath(); ctx.arc(q("dx" + i) * W, 120 + q("dy" + i) * 100, 0.8 + q("ds" + i) * 1.2, 0, TAU); ctx.fill(); } /* la buée */
-  if (day > 0.3) { ctx.save(); ctx.globalCompositeOperation = "lighter"; for (const sx of [180, 360, 470]) { const lg = ctx.createLinearGradient(sx, 40, sx + 80, 300); lg.addColorStop(0, `rgba(255,240,200,${0.12 * day})`); lg.addColorStop(1, "rgba(255,240,200,0)"); ctx.fillStyle = lg; ctx.beginPath(); ctx.moveTo(sx, 40); ctx.lineTo(sx + 26, 40); ctx.lineTo(sx + 110, 300); ctx.lineTo(sx + 60, 300); ctx.closePath(); ctx.fill(); } ctx.restore(); } /* les rais de lumière */
+  if (day > 0.3) { /* les rais de lumière : sous le verre seulement, doux, qui s'effacent avant le sol */
+    ctx.save(); ctx.beginPath(); ctx.moveTo(20, 230); ctx.quadraticCurveTo(320, -130, 620, 230); ctx.closePath(); ctx.clip(); ctx.globalCompositeOperation = "lighter";
+    for (const sx of [200, 380]) { const lg = ctx.createLinearGradient(0, top(sx), 0, 240); lg.addColorStop(0, `rgba(255,240,200,${0.07 * day})`); lg.addColorStop(1, "rgba(255,240,200,0)"); ctx.fillStyle = lg; ctx.beginPath(); ctx.moveTo(sx, top(sx)); ctx.lineTo(sx + 40, top(sx + 40)); ctx.lineTo(sx + 110, 240); ctx.lineTo(sx + 50, 240); ctx.closePath(); ctx.fill(); }
+    ctx.restore(); }
   /* le muret de pierre sous le verre */
   ctx.fillStyle = "#4a4640"; ctx.fillRect(0, 226, W, 22); ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 1; for (let x = 0; x < W; x += 34) { ctx.strokeRect(x + ((x / 34) % 2) * 17, 226, 34, 11); ctx.strokeRect(x, 237, 34, 11); }
   ctx.fillStyle = "#6a655c"; ctx.fillRect(0, 224, W, 3);
