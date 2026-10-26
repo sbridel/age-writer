@@ -19,8 +19,8 @@ function spine(ctx, c, x, y, w, h, color, verdict, key) {
   ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
   const k = [...String(key || color)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7), top = 3 + (k % 3), nb = 1 + ((k >>> 3) % 3), bot = h * (0.7 + ((k >>> 6) % 5) * 0.045), gap = 3 + ((k >>> 9) % 2);
   const bands = []; for (let i = 0; i < nb; i++) bands.push(y + top + i * gap); for (let i = 0; i < 1 + ((k >>> 11) % 2); i++) bands.push(y + bot + i * gap); /* chaque reliure ses nerfs : leur nombre et leur hauteur varient d'un livre à l'autre */
-  for (const yy of bands) { ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.fillRect(x, yy + 1, w, 1); ctx.fillStyle = c("#c9a24e"); ctx.fillRect(x, yy, w, 1); } /* les nerfs, filetés d'or */
-  ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(x + 2, y + h * 0.3, w - 4, h * 0.22); ctx.fillStyle = rgba(201, 162, 78, 0.45); ctx.fillRect(x + 3, y + h * 0.3 + 2, w - 6, 0.8); ctx.fillRect(x + 3, y + h * 0.52 - 3, w - 6, 0.8); /* la pièce de titre */
+  for (const yy of bands) { ctx.fillStyle = rgba(0, 0, 0, 0.4); ctx.fillRect(x, yy + 1, w, 1); ctx.fillStyle = rgba(176, 150, 98, 0.55); ctx.fillRect(x, yy, w, 0.8); } /* les nerfs, d'un or passé, presque éteint (26 oct. 2026) */
+  ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(x + 2, y + h * 0.3, w - 4, h * 0.22); ctx.fillStyle = rgba(176, 150, 98, 0.3); ctx.fillRect(x + 3, y + h * 0.3 + 2, w - 6, 0.8); ctx.fillRect(x + 3, y + h * 0.52 - 3, w - 6, 0.8); /* la pièce de titre */
   if (verdict === "unstable" || verdict === "dying") { ctx.fillStyle = rgba(210, 200, 180, verdict === "dying" ? 0.22 : 0.12); for (let k = 0; k < (verdict === "dying" ? 5 : 3); k++) ctx.fillRect(x + ((k * 37) % Math.max(1, w - 2)), y + 12 + ((k * 53) % Math.max(1, h - 24)), 1.2, 3 + (k % 3)); } /* le cuir éraflé */
 }
 /** Une couleur hexadécimale éclaircie (t > 0) ou assombrie (t < 0). */
