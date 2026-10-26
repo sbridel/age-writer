@@ -1,4 +1,5 @@
 "use strict";
+const BK = require("./relto-spines");
 // Sous-vues « point-and-click » du Relto : l'intérieur de la cabane (cheminée, étagère des Âges, livres à part) et les piliers de liaison de près.
 // Plein cadre, sans zoom de caméra ; tout est dessiné ici (aucun asset). Les zones `go: "island"` ramènent à la vue de l'île.
 const PS = require("./relto-passages");
@@ -10,21 +11,6 @@ const ATELIER = require("./relto-atelier");
 const GLASS = require("./relto-glass");
 const CASTLE = require("./relto-castle");
 const W = 640, H = 360, FLOOR = 250, GY = 208;
-/** Un dos de livre de liaison sur l'étagère (comme ceux du coffre) : le cuir arrondi (plus clair au milieu), deux nerfs dorés en haut et en bas,
- *  une pièce de titre ; les pages ne dépassent pas de la reliure ; un monde qui va mal se lit à l'usure du cuir, jamais à une couleur de code. */
-const NEUTRAL = ["#4b3a26", "#33442f", "#2f3e4f", "#3d3a2a", "#4a2f3a", "#2b3a45"]; /* la palette du coffre (src/relto-vault.js) */
-function spine(ctx, c, x, y, w, h, color, verdict, key) {
-  color = NEUTRAL[["#7a3b2a", "#2f4a3a", "#3a3f6a", "#6a5a2a", "#5a2f4a", "#2f5a5a"].indexOf(color)] || color; /* des reliures ternes, comme au coffre : jamais vives */
-  const g = ctx.createLinearGradient(x, 0, x + w, 0); g.addColorStop(0, c(shadeHex(color, -0.35))); g.addColorStop(0.45, c(shadeHex(color, 0.06))); g.addColorStop(1, c(shadeHex(color, -0.45)));
-  ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
-  const k = [...String(key || color)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7), top = 3 + (k % 3), nb = 1 + ((k >>> 3) % 3), bot = h * (0.7 + ((k >>> 6) % 5) * 0.045), gap = 3 + ((k >>> 9) % 2);
-  const bands = []; for (let i = 0; i < nb; i++) bands.push(y + top + i * gap); for (let i = 0; i < 1 + ((k >>> 11) % 2); i++) bands.push(y + bot + i * gap); /* chaque reliure ses nerfs : leur nombre et leur hauteur varient d'un livre à l'autre */
-  for (const yy of bands) { ctx.fillStyle = rgba(0, 0, 0, 0.4); ctx.fillRect(x, yy + 1, w, 1); ctx.fillStyle = rgba(176, 150, 98, 0.55); ctx.fillRect(x, yy, w, 0.8); } /* les nerfs, d'un or passé, presque éteint (26 oct. 2026) */
-  ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(x + 2, y + h * 0.3, w - 4, h * 0.22); ctx.fillStyle = rgba(176, 150, 98, 0.3); ctx.fillRect(x + 3, y + h * 0.3 + 2, w - 6, 0.8); ctx.fillRect(x + 3, y + h * 0.52 - 3, w - 6, 0.8); /* la pièce de titre */
-  if (verdict === "unstable" || verdict === "dying") { ctx.fillStyle = rgba(210, 200, 180, verdict === "dying" ? 0.22 : 0.12); for (let k = 0; k < (verdict === "dying" ? 5 : 3); k++) ctx.fillRect(x + ((k * 37) % Math.max(1, w - 2)), y + 12 + ((k * 53) % Math.max(1, h - 24)), 1.2, 3 + (k % 3)); } /* le cuir éraflé */
-}
-/** Une couleur hexadécimale éclaircie (t > 0) ou assombrie (t < 0). */
-function shadeHex(h, t) { const v = [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16)).map((x) => Math.round(t > 0 ? x + (255 - x) * t : x * (1 + t))); return "#" + v.map((x) => Math.max(0, Math.min(255, x)).toString(16).padStart(2, "0")).join(""); }
 
 const flicker = (t) => 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1) + 0.06 * Math.sin(t * 17);
 
@@ -143,7 +129,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     for (const b of r.geo.books) {
       const bw = b.w * S * 0.72, bh = b.h * S * 1.08, bx = (rowX[b.row] = rowX[b.row] == null ? x0 + 12 : rowX[b.row]), by = y0 + RH * (b.row + 1) - 3 - bh; rowX[b.row] = bx + bw + 1;
       if (gone && b.age.path === gone.path) { ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.fillRect(bx, by + bh * 0.08, bw, bh * 0.92); continue; }
-      spine(ctx, c, bx, by, bw, bh, b.color, b.age.verdict, b.age.name);
+      BK.spine(ctx, c, bx, by, bw, bh, BK.NEUTRAL[["#7a3b2a", "#2f4a3a", "#3a3f6a", "#6a5a2a", "#5a2f4a", "#2f5a5a"].indexOf(b.color)] || BK.muted(b.color), { verdict: b.age.verdict, key: b.age.name }); /* src/relto-spines.js */
       const held = r.opts.imagerGet && sc.additions.some((a) => a.type === "imager") && (r.opts.imagerGet(b.age.path) || {}).lock; // tenu par l'Imageur : une petite étiquette de laiton
       if (held) { ctx.fillStyle = c("#c9a24e"); ctx.fillRect(bx + bw / 2 - 2.5, by + 8, 5, 8); ctx.fillStyle = rgba(127, 214, 200, 0.8); ctx.fillRect(bx + bw / 2 - 1, by + 10, 2, 2); }
       if (r.opts.wardOf && r.opts.wardOf(b.age)) { ctx.fillStyle = rgba(20, 16, 14, 0.5); ctx.fillRect(bx + 1, by + bh * 0.38, bw - 2, bh * 0.26); require("./relto-hear").serpent(ctx, bx + bw / 2, by + bh / 2, bw * 0.85, c("#c47a3c"), 3.2); } /* un Livre gardé : le serpent au dos, sur une bande sombre */

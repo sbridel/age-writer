@@ -43,10 +43,7 @@ function drawBookcase(r, ctx, c, gone, decoy) {
     const base = S.y + rowH * (row + 1) - 3; let x = S.x + 3;
     for (let k = 0; k < 6; k++) {
       const i = row * 6 + k, b = SHELF[i], pressed = sh.seq.includes(i), by = base - b.h + (pressed ? 2.5 : 0);
-      ctx.fillStyle = c(b.col); ctx.fillRect(x, by, b.w, b.h);
-      ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x + b.w - 3, by, 3, b.h);
-      if (!b.blank) { ctx.fillStyle = c("#c9a24e"); ctx.fillRect(x, by + 4, b.w, 2.5); ctx.fillRect(x, by + b.h - 8, b.w, 1.6); ctx.fillStyle = rgba(236, 222, 180, 0.55); ctx.fillRect(x + 2.5, by + 11, b.w - 5, 6); }
-      if (pressed) { ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(x, by, b.w, b.h); }
+      require("./relto-spines").spine(ctx, c, x, by, b.w, b.h, require("./relto-spines").muted(b.col, 0.22), { key: "case" + i, blank: b.blank, pressed }); /* la même reliure que partout ; le bleu reste bleu, le rouge rouge, le dos sans titre sans titre (l'énigme) */
       if (decoy) { const TRd = TR(r); r.hot.push({ x, y: by, w: b.w, h: b.h, tip: TRd("cabin.case.tip"), flash: TRd("cabin.case.flash" + (i % 3)) }); } // un décor : on peut les toucher, il ne se passe rien
       else if (!gone) r.hot.push({ x, y: by, w: b.w, h: b.h, tip: "", shelf: i, secret: true });
       x += b.w + 1;
@@ -103,7 +100,7 @@ function drawAtelier(r, ctx, sc, sky, t) {
     for (let row = 0; row < 2; row++) {
       const y0 = 10 + row * 40; ctx.fillStyle = c("#4b3626"); ctx.fillRect(sx, y0 + 33, 118, 4);
       let bx = sx + 4; const g = rng(0x4000 + sx + row * 7);
-      while (bx < sx + 112) { const bw = 5 + Math.floor(g() * 6), bh = 18 + Math.floor(g() * 14), col = ["#27555a", "#5b2b2b", "#3b3560", "#4c5a2c", "#6a4a2a", "#2f3e4f"][Math.floor(g() * 6)]; ctx.fillStyle = c(col); ctx.fillRect(bx, y0 + 33 - bh, bw, bh); ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(bx + bw - 1.5, y0 + 33 - bh, 1.5, bh); if (g() < 0.4) { ctx.fillStyle = c("#c9a24e"); ctx.fillRect(bx, y0 + 33 - bh + 4, bw, 1.5); } bx += bw + 1; }
+      while (bx < sx + 112) { const bw = 5 + Math.floor(g() * 6), bh = 18 + Math.floor(g() * 14), ci = Math.floor(g() * 6); const blank = g() < 0.6; require("./relto-spines").spine(ctx, c, bx, y0 + 33 - bh, bw, bh, require("./relto-spines").NEUTRAL[ci], { key: "atl" + sx + "|" + bx, blank }); bx += bw + 1; } /* la même reliure que partout (src/relto-spines.js) */
     }
   }
   if (castle) CS.balustrade(ctx, c, W, GALLERY); else {
@@ -357,7 +354,7 @@ function drawLoft(r, ctx, sc, sky, t) {
   for (let row = 0; row < 3; row++) { // les étagères du fond
     const y0 = 18 + row * 62; ctx.fillStyle = c("#1d140e"); ctx.fillRect(0, y0, W, 56); ctx.fillStyle = c(castle ? CS.WALNUT_HI : "#4b3626"); ctx.fillRect(0, y0 + 56, W, 5); if (glass) { ctx.fillStyle = c("#b5652a"); ctx.fillRect(0, y0 + 56, W, 1.6); } if (castle) { ctx.fillStyle = c(CS.GOLD); ctx.fillRect(0, y0 + 56, W, 1); }
     let bx = 6; const g = rng(0x600 + row * 11);
-    while (bx < W - 10) { const bw = 6 + Math.floor(g() * 8), bh = 28 + Math.floor(g() * 22), col = ["#27555a", "#5b2b2b", "#3b3560", "#4c5a2c", "#6a4a2a", "#2f3e4f", "#5a3a52"][Math.floor(g() * 7)]; ctx.fillStyle = c(col); ctx.fillRect(bx, y0 + 56 - bh, bw, bh); ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(bx + bw - 2, y0 + 56 - bh, 2, bh); if (g() < 0.45) { ctx.fillStyle = c("#c9a24e"); ctx.fillRect(bx, y0 + 56 - bh + 5, bw, 2); } bx += bw + 1; if (g() < 0.06) bx += 14; }
+    while (bx < W - 10) { const bw = 6 + Math.floor(g() * 8), bh = 28 + Math.floor(g() * 22), ci = Math.floor(g() * 7); const blank = g() < 0.55; require("./relto-spines").spine(ctx, c, bx, y0 + 56 - bh, bw, bh, [...require("./relto-spines").NEUTRAL, "#3a2f2a"][ci], { key: "loft" + row + "|" + bx, blank }); bx += bw + 1; if (g() < 0.06) bx += 14; } /* la même reliure que partout (src/relto-spines.js) */
   }
   if (castle) for (let sx = 0; sx < W; sx += 128) { ctx.fillStyle = c("#140c08"); ctx.fillRect(sx, 0, 8, 214); ctx.fillStyle = c(CS.WALNUT_HI); ctx.fillRect(sx, 0, 1.4, 214); ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 1; CS.pointed(ctx, sx + 12, sx + 124, 4, 22, 200); ctx.stroke(); } // des arcs brisés sur les rayonnages
   ctx.fillStyle = rgba(255, 190, 90, 0.05 * fl); ctx.fillRect(0, 0, W, 220);

@@ -1063,8 +1063,7 @@ class ReltoRenderer {
     for (let r = 0; r < 3; r++) ctx.fillRect(x0, y0 + 14 + r * 14 - 2, w, 2.5);
     for (const b of this.geo.books) {
       const bx = x0 + 4 + b.col * 5.6, by = y0 + 14 + b.row * 14 - 2.5 - b.h;
-      ctx.fillStyle = col(b.color); ctx.fillRect(bx, by, b.w, b.h);
-      ctx.fillStyle = col(VERDICT[b.age.verdict] || VERDICT.unknown); ctx.fillRect(bx, by, b.w, 1.6);
+      { const BKS = require("./relto-spines"); BKS.spine(ctx, col, bx, by, b.w, b.h, BKS.NEUTRAL[BOOKS.indexOf(b.color)] || BKS.muted(b.color), { key: b.age.name, verdict: b.age.verdict, blank: true }); } /* de loin, la même reliure que dans la cabane : l'usure, pas une couleur de code */
       if (this.opts.wardOf && this.opts.wardOf(b.age)) HEAR.serpent(ctx, bx + b.w / 2, by + b.h / 2, b.w * 0.9, col("#c47a3c"), 3); /* un Livre gardé : le serpent au dos */
       hot.push({ x: bx - 0.5, y: by, w: b.w + 1, h: b.h, tip: `${b.age.name} — ${b.age.verdict || "?"}${b.age.stability != null ? ` ${b.age.stability}%` : ""}`, age: b.age, book: true });
     }
@@ -1083,11 +1082,9 @@ class ReltoRenderer {
     ];
     for (const b of defs) {
       const y = GY - b.h;
-      ctx.fillStyle = col(b.body); ctx.fillRect(b.x, y, bw, b.h);
-      ctx.fillStyle = col(b.band); ctx.fillRect(b.x, y + 2, bw, 1.4); ctx.fillRect(b.x, y + b.h - 3.4, bw, 1.4);
-      ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(b.x + bw - 1.6, y, 1.6, b.h);
-      if (b.kind === "glyphs") { ctx.fillStyle = col(b.band); ctx.beginPath(); ctx.moveTo(b.x + bw / 2, y + 5.5); ctx.lineTo(b.x + bw / 2 + 2, y + 8.5); ctx.lineTo(b.x + bw / 2, y + 11.5); ctx.lineTo(b.x + bw / 2 - 2, y + 8.5); ctx.closePath(); ctx.fill(); }
-      else { ctx.fillStyle = col(b.band); ctx.fillRect(b.x + bw / 2 - 1.2, y + 5.5, 2.4, 3.6); ctx.fillStyle = col(b.body); ctx.fillRect(b.x + bw / 2 - 0.5, y + 6.4, 1, 1.6); }
+      const BKS = require("./relto-spines"); BKS.spine(ctx, col, b.x, y, bw, b.h, BKS.muted(b.body, 0.2), { key: b.kind, blank: true }); /* la même reliure que l'étagère */
+      if (b.kind === "glyphs") { ctx.fillStyle = rgba(BKS.GILT[0], BKS.GILT[1], BKS.GILT[2], 0.8); ctx.beginPath(); ctx.moveTo(b.x + bw / 2, y + 5.5); ctx.lineTo(b.x + bw / 2 + 2, y + 8.5); ctx.lineTo(b.x + bw / 2, y + 11.5); ctx.lineTo(b.x + bw / 2 - 2, y + 8.5); ctx.closePath(); ctx.fill(); }
+      else { ctx.fillStyle = rgba(BKS.GILT[0], BKS.GILT[1], BKS.GILT[2], 0.8); ctx.fillRect(b.x + bw / 2 - 1.2, y + 5.5, 2.4, 3.6); ctx.fillStyle = col(BKS.muted(b.body, 0.2)); ctx.fillRect(b.x + bw / 2 - 0.5, y + 6.4, 1, 1.6); }
       this.hot.push({ x: b.x - 1, y: y - 1, w: bw + 2, h: b.h + 2, tip: b.tip, special: b.kind });
     }
   }

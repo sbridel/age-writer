@@ -22,21 +22,9 @@ function trapDoor(r, ctx, c, cx, cy, w, h, tip) {
   r.hot.push({ x: cx - w / 2 - 4, y: cy - h / 2 - 4, w: w + 8, h: h + 8, tip, go: "vault" });
 }
 
-/** Un livre posé à plat, vu de la tranche : le dos porte son titre. Se range en pile (voir `pile`). */
-function flatBook(ctx, c, x, y, w, h, body, band, title, fontPx) {
-  ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(x + 1, y - 1, w, 2);
-  ctx.fillStyle = c(body); ctx.fillRect(x, y - h, w, h);
-  ctx.fillStyle = c(band); ctx.fillRect(x + 4, y - h, 1.8, h); ctx.fillRect(x + w - 9, y - h, 1.8, h); // les nerfs du dos
-  ctx.fillStyle = rgba(0, 0, 0, 0.22); ctx.fillRect(x, y - 1.6, w, 1.6);
-  if (title) { ctx.font = `${fontPx}px serif`; let t = title; while (t.length > 2 && ctx.measureText(t).width > w - 20) t = t.slice(0, -2) + "…"; ctx.fillStyle = c(band); ctx.textAlign = "center"; ctx.fillText(t, x + w / 2 - 1, y - h / 2 + fontPx * 0.35); ctx.textAlign = "left"; }
-}
-
-/** Une pile de livres à plat, du bas vers le haut ; renvoie les zones à pousser. books : [{x?, w, h, body, band, title, ...reste}] */
-function pile(ctx, c, x, y, books, fontPx) {
-  const out = []; let cy = y;
-  books.forEach((b, i) => { const bx = x + (b.dx != null ? b.dx : [0, 3, -2, 2][i % 4]); flatBook(ctx, c, bx, cy, b.w, b.h, b.body, b.band, b.title, fontPx); out.push({ b, x: bx - 1, y: cy - b.h - 1, w: b.w + 2, h: b.h + 2 }); cy -= b.h; });
-  return out;
-}
+/** Les livres couchés : le même dessin que partout (src/relto-spines.js). */
+const flatBook = (ctx, c, x, y, w, h, body, band, title, fontPx) => require("./relto-spines").flatBook(ctx, c, x, y, w, h, body, title, fontPx);
+const pile = (ctx, c, x, y, books, fontPx) => require("./relto-spines").pile(ctx, c, x, y, books, fontPx);
 
 function drawVault(r, ctx, sc, sky, t) {
   const amb = 0.55 + 0.45 * sky.ambient, c = (h) => mix("#05060c", h, amb), tr = TR(r), q = rng(0x70a1), fl = 0.85 + 0.15 * Math.sin(t * 6.1) * Math.sin(t * 2.7);
@@ -128,7 +116,7 @@ function drawVault(r, ctx, sc, sky, t) {
     const sw = 11, x0 = nx + 4 + Math.floor((NW - 8 - grp.length * sw) / 2);
     grp.forEach((a, k) => { // un dos par livre, debout, tous différents de hauteur
       const hh = hash(a.path), bh = 46 + (hh % 28), bx = x0 + k * sw, by = ny + NH - 4 - bh;
-      ctx.fillStyle = c(COLS[hh % COLS.length]); ctx.fillRect(bx, by, sw - 1, bh); ctx.fillStyle = c("#b8a878"); ctx.fillRect(bx, by + 5, sw - 1, 1.6); ctx.fillRect(bx, by + bh - 8, sw - 1, 1.6); ctx.fillStyle = rgba(0, 0, 0, 0.24); ctx.fillRect(bx + sw - 4, by, 3, bh);
+      require("./relto-spines").spine(ctx, c, bx, by, sw - 1, bh, COLS[hh % COLS.length], { ornate: true, key: a.path }); /* un Livre descriptif : la même reliure, plus ornée (coiffes, fleuron, filet) */
       r.hot.push({ x: bx, y: by, w: sw - 1, h: bh, tip: a.name, go: "descbook", arg: a.path });
     });
     const first = grp[0].name, last = grp[grp.length - 1].name, abbr = (n) => (n.length > 7 ? n.slice(0, 6) + "…" : n), label = grp.length === 1 ? abbr(first) : `${abbr(first)} – ${abbr(last)}`;
