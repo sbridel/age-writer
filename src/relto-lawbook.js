@@ -7,7 +7,7 @@
  */
 const { rgba } = require("./util");
 const RK = require("./rehevkor");
-const W = 640, H = 360, LX = 62, RX = 320, PW = 258, PT = 40, PH = 276, TURN_MS = 520, INK = "#3a2a1a", FAINT = "#8a7458";
+const W = 640, H = 360, LX = 62, RX = 320, PW = 258, PT = 40, PH = 276, TURN_MS = 520, INK = "#3a2a1a", FAINT = "#8a7458", RUBRIC = "#9a3322", LAPIS = "#2c3f74", OCHRE = "#a86a3a";
 const mix = (a, b, k) => { const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(",")})`; };
 
 /** Coupe un texte en lignes qui tiennent dans `w` (la police courante). */
@@ -16,10 +16,19 @@ function wrap(ctx, text, w) {
   for (const word of String(text).split(" ")) { const t = line ? line + " " + word : word; if (ctx.measureText(t).width > w && line) { out.push(line); line = word; } else line = t; }
   if (line) out.push(line); return out;
 }
-/** Les feuillets, dans la langue du jeu : la page de titre, le fahsee, puis les lois deux par feuillet, la ligne des pages blanches, la fermeture. */
+/** Les feuillets, dans la langue du jeu : la page de titre, le fahsee, puis les lois, autant qu'il en tient sur un feuillet (de une à quatre ;
+ *  26 oct. 2026 : deux par feuillet laissaient la moitié de la page vide), la ligne des pages blanches, la fermeture. */
+const LINE_CH = 48, ROOM = 226; /* environ 42 lettres par ligne de verset ; la hauteur d'écriture d'un feuillet, flèches comprises */
+const lines = (txt) => Math.max(1, Math.ceil(String(txt || "").length / LINE_CH));
+function heightOf(p, done, lang) {
+  if (p.kind === "read" || p.kind === "heard") return 18 + lines(p.verse) * 13 + (p.kind === "heard" ? 13 : 0) + 14;
+  return 46 + (p.n === firstMissing(done) ? 20 + lines(RK.blankLine(done, lang)) * 13 : 0);
+}
 function sheetsOf(done, lang) {
   const pages = RK.pagesOf(done, lang), out = [{ kind: "front" }, { kind: "lien" }];
-  for (let i = 0; i < pages.length; i += 2) out.push({ kind: "laws", laws: pages.slice(i, i + 2) });
+  let cur = [], h = 0;
+  for (const p of pages) { const hp = heightOf(p, done, lang); if (cur.length && (h + hp > ROOM || cur.length >= 4)) { out.push({ kind: "laws", laws: cur }); cur = []; h = 0; } cur.push(p); h += hp; }
+  if (cur.length) out.push({ kind: "laws", laws: cur });
   out.push({ kind: "close" });
   return out;
 }
@@ -28,12 +37,13 @@ function drawSheet(r, ctx, sh, side, c, tr, lang, done, t) {
   ctx.fillStyle = c(left ? "#e6d9b8" : "#eadfc0"); ctx.fillRect(x0, PT, PW, PH);
   const sp = ctx.createLinearGradient(left ? RX - 30 : RX, 0, left ? RX : RX + 30, 0); sp.addColorStop(0, left ? "rgba(60,40,20,0)" : "rgba(60,40,20,0.35)"); sp.addColorStop(1, left ? "rgba(60,40,20,0.35)" : "rgba(60,40,20,0)"); ctx.fillStyle = sp; ctx.fillRect(left ? RX - 30 : RX, PT, 30, PH);
   if (!sh) return;
-  const ink = c(INK), faint = c(FAINT), cx = x0 + PW / 2, m = 22;
+  const ink = c(INK), faint = c(FAINT), cx = x0 + PW / 2, m = 22, rubric = c(RUBRIC), lapis = c(LAPIS); /* un manuscrit rubriqué (26 oct. 2026) : les titres au vermillon, les nombres au lapis */
   ctx.textAlign = "center";
   if (sh.kind === "front") {
-    ctx.fillStyle = ink; ctx.font = "italic 22px serif"; ctx.fillText(tr("lawbook.title"), cx, PT + 96);
+    ctx.fillStyle = rubric; ctx.font = "italic 22px serif"; ctx.fillText(tr("lawbook.title"), cx, PT + 96);
+    ctx.strokeStyle = c(OCHRE); ctx.lineWidth = 0.8; for (const dy of [62, 70]) { ctx.beginPath(); ctx.moveTo(cx - 70, PT + dy); ctx.lineTo(cx + 70, PT + dy); ctx.stroke(); } ctx.fillStyle = lapis; ctx.beginPath(); ctx.moveTo(cx, PT + 61); ctx.lineTo(cx + 4, PT + 66); ctx.lineTo(cx, PT + 71); ctx.lineTo(cx - 4, PT + 66); ctx.closePath(); ctx.fill(); /* un filet double à l'ocre, un losange au lapis */
     ctx.font = "italic 10px serif"; ctx.fillStyle = faint; ctx.fillText(tr("lawbook.sub"), cx, PT + 114);
-    if (r.dni) { const s = 13, w = r.dni.widthOf(25, s); r.dni.drawNumber(ctx, 25, cx - w / 2, PT + 136, s, faint); } /* fahsee : vingt-cinq */
+    if (r.dni) { const s = 13, w = r.dni.widthOf(25, s); r.dni.drawNumber(ctx, 25, cx - w / 2, PT + 136, s, lapis); } /* fahsee : vingt-cinq */
     ctx.font = "italic 11px serif"; ctx.fillStyle = ink; wrap(ctx, RK.open(lang), PW - 2 * m).forEach((l, i) => ctx.fillText(l, cx, PT + 196 + i * 15));
   } else if (sh.kind === "lien") {
     ctx.fillStyle = faint; ctx.font = "italic 9px serif"; ctx.fillText(tr("lawbook.lien"), cx, PT + 20);
@@ -45,11 +55,11 @@ function drawSheet(r, ctx, sh, side, c, tr, lang, done, t) {
       if (p.kind === "read" || p.kind === "heard") {
         const heard = p.kind === "heard";
         if (heard) require("./relto-fresco").sign(ctx, p.sign, x0 + m + 8, y + 2, 7, 0.9, "law" + p.n, c("#a86a3a")); /* une page entendue : le signe de la planche, pas le nombre */
-        else if (r.dni) r.dni.drawNumber(ctx, p.n, x0 + m, y - 6, 10, ink); else { ctx.textAlign = "left"; ctx.font = "10px serif"; ctx.fillStyle = ink; ctx.fillText(String(p.n), x0 + m, y + 2); }
+        else if (r.dni) r.dni.drawNumber(ctx, p.n, x0 + m, y - 6, 10, lapis); else { ctx.textAlign = "left"; ctx.font = "10px serif"; ctx.fillStyle = lapis; ctx.fillText(String(p.n), x0 + m, y + 2); }
         ctx.textAlign = "left"; ctx.font = "italic 10px serif"; ctx.fillStyle = faint; ctx.fillText(p.name, x0 + m + 26, y + 2);
-        ctx.textAlign = "right"; ctx.font = (heard ? "italic " : "") + "11px serif"; ctx.fillStyle = ink; ctx.fillText(p.title, x0 + PW - m, y + 2);
+        ctx.textAlign = "right"; ctx.font = (heard ? "italic " : "") + "11px serif"; ctx.fillStyle = heard ? c(OCHRE) : rubric; ctx.fillText(p.title, x0 + PW - m, y + 2);
         ctx.textAlign = "left"; ctx.font = (heard ? "italic " : "") + "10.5px serif"; y += 18;
-        for (const l of wrap(ctx, p.verse, PW - 2 * m)) { ctx.fillText(l, x0 + m, y); y += 13; }
+        wrap(ctx, p.verse, PW - 2 * m).forEach((l, li) => { if (li === 0 && !heard) { ctx.fillStyle = rubric; ctx.font = "bold 12px serif"; ctx.fillText(l[0], x0 + m, y); const w0 = ctx.measureText(l[0]).width; ctx.fillStyle = ink; ctx.font = "10.5px serif"; ctx.fillText(l.slice(1), x0 + m + w0, y); } else { ctx.fillStyle = heard ? c("#5a3a22") : ink; ctx.fillText(l, x0 + m, y); } y += 13; }); /* la lettrine au vermillon ; une page entendue, à l'encre brune */
         if (heard) { ctx.fillStyle = faint; ctx.font = "italic 9px serif"; ctx.fillText(tr("lawbook.heard", { n: RK.NAMES[p.mirror - 1] }), x0 + m, y + 1); y += 13; }
         y += 14;
       } else { /* blanche pour le joueur : le nombre à peine visible */

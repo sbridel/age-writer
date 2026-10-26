@@ -27,7 +27,7 @@ ok(!/Bahro|serpent|Catherine|Esher|Yeesha|ardoise|slate|Torus/i.test(all), "les 
 
 /* les feuillets du livre */
 const sh = LB.sheetsOf(d16, "fr");
-ok(sh[0].kind === "front" && sh[1].kind === "lien" && sh[sh.length - 1].kind === "close" && sh.filter((s) => s.kind === "laws").length === 13, "les feuillets : titre, fahsee, treize feuillets de deux lois, la fermeture");
+ok(sh[0].kind === "front" && sh[1].kind === "lien" && sh[sh.length - 1].kind === "close" && sh.filter((s) => s.kind === "laws").length < 13 && sh.filter((s) => s.kind === "laws").reduce((n, s) => n + s.laws.length, 0) === 25 && sh.every((s) => s.kind !== "laws" || (s.laws.length >= 1 && s.laws.length <= 4)), "les feuillets : titre, fahsee, les vingt-cinq lois en feuillets de une à quatre (plus de deux par page), la fermeture");
 const ctx = { font: "", measureText: (s) => ({ width: s.length * 5 }) };
 ok(LB.wrap(ctx, "un deux trois quatre cinq six", 60).length >= 2 && LB.wrap(ctx, "court", 60).join() === "court", "le texte se coupe en lignes qui tiennent");
 

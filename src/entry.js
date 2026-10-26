@@ -69,7 +69,7 @@ module.exports = function build(Base, core, AGEX) {
   /** La caverne, pour essayer (menu de la clé) : remettre le lac à zéro, des colonies, les endormir, les gaver ; chaque essai remplit le flacon. */
   class CaveTestModal extends FuzzySuggestModal {
     constructor(app, plugin) { super(app); this.plugin = plugin; }
-    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask", "reveal", "lit", "slab", "dream", "to14", "to17", "ink", "night", "command", "slate", "slateback", "season", "seasonreset"]; }
+    getItems() { return ["reset", "few", "many", "asleep", "gorge", "flask", "reveal", "lit", "slab", "dream", "to14", "to17", "ink", "night", "command", "slate", "slateback", "ending", "season", "seasonreset"]; }
     getItemText(v) { const k = "cave.test." + v; return this.plugin.t(k); }
     onChooseItem(v) { const msg = this.plugin.caveTest(v); if (msg) new Notice(msg); }
   }
@@ -584,6 +584,12 @@ module.exports = function build(Base, core, AGEX) {
         if (v === "command") { const s = st.stone && typeof st.stone === "object" ? st.stone : (st.stone = {}); if (!s.ending) s.pathAt = now - 86400000 - 1000; }
         else { const upto = ids.indexOf(v === "to14" ? "hear" : "stone"); st.done = [...new Set([...(st.done || []), ...ids.slice(0, upto)])]; }
         this._hearCache = null; this.saveExt(); this.refreshLive(); return t("oven.test.done") + " " + t(["cave.test", v].join("."));
+      }
+      if (v === "ending") { /* revenir au choix de la fin du 17 : la pierre au tiroir, aucune fin prise, l'ardoise repartie (essai) */
+        if (!pool) return t("cave.test.nostory");
+        const st = require("./story").get(this.ext.story || (this.ext.story = {}), pool);
+        st.stone = {}; st.done = (st.done || []).filter((x) => x !== "stone"); delete X.slate;
+        this.saveExt(); this.refreshLive(); return t("oven.test.done") + " " + t("cave.test.ending");
       }
       if (v === "slate" || v === "slateback") { /* l'ardoise, pour essayer sans refaire l'histoire : le 17 fini dans l'accord, depuis hier ; ou l'ardoise revenue, effacée */
         if (!pool) return t("cave.test.nostory");
