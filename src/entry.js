@@ -16,7 +16,7 @@ const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
 const { sceneOf, HOOKS: GEN_HOOKS } = require("./genscene");
 const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, parseSky } = require("./sky");
-const { AMOUNT_RE, parseAmounts, applyAmounts } = require("./amounts");
+const { AMOUNT_RE, parseAmounts, applyAmounts, factorOf } = require("./amounts");
 const HV = require("./harvest"); /* la récolte pour la machine du Relto, et les granulés cuits (étape 4a′) */
 const { rollLink } = fx;
 const { makeT } = require("./i18n");
@@ -156,10 +156,16 @@ module.exports = function build(Base, core, AGEX) {
           const pool = this.poolOfAge(o.seed); if (!this.poolOpen(pool)) return out; /* un Âge d'un Relto histoire remplit la réserve de ce Relto, à partir du chapitre 10 */
           const X = this.poolExt(pool), now = this.law.now(), act = out.slateAct, hv = act && act.fertile ? require("./slate").harvestOf(gives, act.effect) : { list: gives, richFor: {} };
           const sr = SSN.richFor(hv.list, out.season); if (Object.keys(sr).length) hv.richFor = { ...sr, ...hv.richFor }; /* la saison favorise une matière (src/seasons.js) */ /* l'accord : la sorte du jour change (la brume : le terreau compte riche) ; le commandement n'engendre rien */
-          const r0 = HV.richOf(out), richArg = Object.keys(hv.richFor).length ? Object.fromEntries(hv.list.map((id) => [id, !!(hv.richFor[id] || r0)])) : r0;
-          if (!o.probe && HV.gather(X, key, hv.list, now, richArg, (id, rich) => CEL.store(X, id, out.season ? out.season.name : null, rich))) this.saveExt(); /* la récolte descend à la cave, dans le bocal de sa saison (src/cellar.js) */ /* riche ou pauvre : ce qu'est l'Âge à la première lecture du jour */
+          /* la genèse (src/harvest.js) : la sorte de chaque mesure ; une cendre sans volcan ni feu reste pauvre */
+          const gen = HV.genesisOf(PH.idsOfAnalysis(out)), r0 = HV.richOf(out), noGen = hv.list.includes("ash") && !gen.ashBorn;
+          const richMap = Object.fromEntries(hv.list.map((id) => [id, !!(hv.richFor[id] || r0) && !(id === "ash" && noGen)]));
+          /* combien de mesures (choix de l'auteur, 26 oct.) : une ; une de plus si la quantité écrite est forte (`many ash`) ; une de plus si la saison la favorise ; trois au plus */
+          const amt = srcText ? guard("quantités de récolte", () => parseAmounts(srcText)) : null, fav = out.season ? SSN.FAVOURS[out.season.name] || [] : [], uniq = [...new Set(hv.list)];
+          const count = (id) => Math.min(3, hv.list.filter((x) => x === id).length + (factorOf(id, amt) > 1 ? 1 : 0) + (fav.includes(id) ? 1 : 0)), counts = Object.fromEntries(uniq.map((id) => [id, count(id)]));
+          const list = uniq.flatMap((id) => Array.from({ length: counts[id] }, () => id)), seasonName = out.season ? out.season.name : null;
+          if (!o.probe && HV.gather(X, key, list, now, richMap, (id, rich) => CEL.store(X, id, seasonName, rich, HV.sortOf(id, gen)))) this.saveExt(); /* la récolte descend à la cave, dans le bocal de sa saison, avec sa sorte (src/cellar.js) ; riche ou pauvre : ce qu'est l'Âge à la première lecture du jour */
           const today = HV.gatheredToday(X, key, now);
-          return { ...out, harvest: { gives: hv.list, today, rich: today ? HV.richToday(X, key, now) : r0, slate: hv.list.join() !== gives.join() || Object.keys(hv.richFor).length > Object.keys(sr).length, season: Object.keys(sr).length > 0 } };
+          return { ...out, harvest: { gives: uniq, counts, sorts: Object.fromEntries(uniq.map((id) => [id, HV.sortOf(id, gen)])), noGenesis: noGen, today, rich: today ? HV.richToday(X, key, now) : r0, slate: hv.list.join() !== gives.join() || Object.keys(hv.richFor).length > Object.keys(sr).length, season: Object.keys(sr).length > 0 } };
         }) || out;
         return out;
       };
@@ -479,7 +485,7 @@ module.exports = function build(Base, core, AGEX) {
     cellarAct(act, id, slot, pool) {
       const X = this.poolExt(pool), t = (k) => (this.t ? this.t(k) : k); if (!this.ovenShown(pool)) return null;
       const humus = (r) => (r && r.humus > 0 ? " " + t("cellar.said.humus") : "");
-      if (act === "sieve") { if (slot === "good") return t("cellar.sieve.good"); const r = CEL.sieve(X, id, slot); if (!r) return t("cellar.said.empty"); this.saveExt(); return t(!r.bad ? "cellar.said.sieve.allgood" : !r.good ? "cellar.said.sieve.allbad" : "cellar.said.sieve") + humus(r); }
+      if (act === "sieve") { if (slot === "good" || CEL.sortOfSlot(slot)) return t("cellar.sieve.good"); const r = CEL.sieve(X, id, slot); if (!r) return t("cellar.said.empty"); this.saveExt(); return t(!r.bad ? "cellar.said.sieve.allgood" : !r.good ? "cellar.said.sieve.allbad" : "cellar.said.sieve") + humus(r); }
       if (act === "compost") { const r = CEL.toCompost(X, id, slot); if (!r) return t("cellar.said.empty"); this.saveExt(); return t("cellar.said.compost") + humus(r); }
       if (act === "lift") { const n = CEL.lift(X, id, slot); if (!n) return t("cellar.said.empty"); this.saveExt(); return t("cellar.said.lift").replace("{hop}", t(["oven.hop", id].join(".")).toLowerCase()); }
       return null;
@@ -504,7 +510,7 @@ module.exports = function build(Base, core, AGEX) {
       else if (v === "poor") for (const id of HV.INGREDIENTS) { h.stock[id] = Math.max(h.stock[id], 9); h.rich[id] = 0; } /* des Âges abîmés : tout ce qui est dans les trémies est pauvre */
       else if (v === "cellar") { /* la cave : des bocaux de chaque saison, riches et pauvres mêlés (deux sur cinq pauvres), pour essayer le tamis sans attendre la récolte */
         if (!(X.harvest && typeof X.harvest === "object")) HV.stateOf(X); const c = CEL.stateOf(X);
-        CEL.SEASONS.forEach((se, k) => HV.INGREDIENTS.forEach((id, j) => { const j0 = c.jars[id][se], n = 3 + ((k * 3 + j * 5) % 6); j0.n += n; j0.rich += se === "none" ? 0 : (k + j) % 3 === 0 ? n : Math.ceil((n * 3) / 5); }));
+        void c; CEL.SEASONS.forEach((se, k) => HV.INGREDIENTS.forEach((id, j) => { const n = 3 + ((k * 3 + j * 5) % 6), sorts = CEL.SORTS[id]; for (let i = 0; i < n; i++) CEL.store(X, id, se, se !== "none" && ((k + j) % 3 === 0 || i % 5 < 3), sorts[(i + k) % sorts.length]); })); /* les sortes mêlées, deux mesures sur cinq pauvres */
       }
       else if (v === "white" || v === "amber" || v === "grey") P[v] += 5;
       else if (v === "finish") { if (!o.batch) return t("oven.test.nobatch"); o.batch.at = Date.now() - o.batch.dur - 1; }

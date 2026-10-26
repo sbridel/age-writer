@@ -235,8 +235,8 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
       for (let i = 0; i < 300; i++) {
         const src = Array.from({ length: 1 + Math.floor(r() * 6) }, () => SY[Math.floor(r() * SY.length)]).join("\n");
         p.ext.physics = "off"; const a = p.core.analyse(src, { seed: "R" + i }); p.ext.physics = "easy"; const b = p.core.analyse(src, { seed: "R" + i });
-        const { physics, season, seasonU, ...rest } = b; void season; void seasonU; if (rest.harvest) rest.harvest = { ...rest.harvest, season: false }; /* la saison du jour vient avec la physique (src/seasons.js) : sans elle, pas de saison, et la récolte n'en est pas favorisée */
-        if (!physics || JSON.stringify(rest) !== JSON.stringify(a)) diff++;
+        const { physics, season, seasonU, ...rest } = b; void season; void seasonU; if (rest.harvest) rest.harvest = { ...rest.harvest, season: false, counts: null }; const a0 = a.harvest ? { ...a, harvest: { ...a.harvest, counts: null } } : a; /* la saison ajoute une mesure à ce qu'elle favorise : seulement avec la physique */ /* la saison du jour vient avec la physique (src/seasons.js) : sans elle, pas de saison, et la récolte n'en est pas favorisée */
+        if (!physics || JSON.stringify(rest) !== JSON.stringify(a0)) diff++;
       }
       ok(diff === 0, `mode facile : 300 Âges identiques au mode désactivé (${diff} différence(s))`);
     }
@@ -537,21 +537,31 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
           files.delete(z.path); }
         { /* la cave sous la machine (src/cellar.js) : la récolte y descend par saison ; tamis, compost, monte-charge, par le plugin */
           const CL = require("../src/cellar"), keep = p.ext.seasonForce; p.ext.seasonForce = 2; /* l'été */
-          const z = age("Cave Essai", ["single_sun", "water", "ash", "humus", "peat", "fern", "seed", "grass", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 1"], dir), pl = p.poolOfAge(p.core.seed(z.path)), X = p.poolExt(pl);
-          const before = (X.harvest && X.harvest.stock && X.harvest.stock.ash) || 0; an(z);
+          const z = age("Cave Essai", ["single_sun", "water", "lava", "ash", "humus", "peat", "fern", "seed", "grass", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 1"], "Mondes"), pl = p.poolOfAge(p.core.seed(z.path)), X = p.poolExt(pl);
+          const before = (X.harvest && X.harvest.stock && X.harvest.stock.ash) || 0, nBefore = (CL.jarOf(X, "ash", "summer") || { n: 0 }).n, vBefore = ((CL.jarOf(X, "ash", "summer") || { by: {} }).by.volcanic || { n: 0 }).n, za = an(z);
           const jar = CL.jarOf(X, "ash", "summer");
+          ok(za.harvest.sorts.ash === "volcanic" && za.harvest.sorts.silt === "volcanic" && za.harvest.counts.ash === 2 && za.harvest.counts.humus === 1 && !za.harvest.noGenesis, "la lave : cendre et limon volcaniques ; l'été favorise les cendres, deux mesures (" + JSON.stringify(za.harvest.counts) + ")");
+          ok(jar.n === nBefore + 2 && jar.by.volcanic.n === vBefore + 2, "les deux mesures de cendre volcanique descendent dans le bocal d'été");
           ok(jar && jar.n >= 1 && jar.rich >= 1 && ((X.harvest.stock.ash || 0) === before), "la récolte d'été descend dans le bocal « cendres · été » (riche : l'été favorise les cendres), pas dans la trémie");
           ok(p.cellarState(pl) && p.cellarState(pl).jars.ash.summer.n === jar.n, "la cave existe dès que l'appentis est là");
           p.cellarAct("sieve", "ash", "spring", pl); ok(/vide|empty/i.test(p.cellarAct("sieve", "ash", "spring", pl)), "un bocal vide au tamis : une phrase");
-          const msgS = p.cellarAct("sieve", "ash", "summer", pl); ok(CL.jarOf(X, "ash", "good").n >= 1 && CL.jarOf(X, "ash", "summer").n === 0 && /bon grain|good grain|Tout passe|Everything passes/.test(msgS), "le tamis : le bon grain au bocal scellé (" + msgS + ")");
-          const nGood = CL.jarOf(X, "ash", "good").n, msgL = p.cellarAct("lift", "ash", "good", pl);
+          const msgS = p.cellarAct("sieve", "ash", "summer", pl); ok(CL.jarOf(X, "ash", "good:volcanic").n >= 1 && CL.jarOf(X, "ash", "summer").n === 0 && /bon grain|good grain|Tout passe|Everything passes/.test(msgS), "le tamis : le bon grain au bocal scellé (" + msgS + ")");
+          const nGood = CL.jarOf(X, "ash", "good:volcanic").n, msgL = p.cellarAct("lift", "ash", "good:volcanic", pl);
           ok(X.harvest.stock.ash === before + nGood && /trémie|hopper/.test(msgL), "le monte-charge : le bon grain monte dans la trémie des cendres (" + msgL + ")");
           CL.store(X, "peat", "winter", false); CL.store(X, "peat", "winter", false); CL.store(X, "peat", "winter", false); const c0 = CL.stateOf(X).compost, h0 = CL.jarOf(X, "humus", "none").n;
           const msgC = p.cellarAct("compost", "peat", "winter", pl); ok(CL.jarOf(X, "humus", "none").n === h0 + Math.floor((c0 + 3) / 3) && /compost/i.test(msgC), "le compost : trois mauvaises mesures font un terreau (" + msgC + ")");
-          ok(p.ovenTest("cellar") && CL.totals(X).silt > 0, "l'essai : remplir la cave");
+          ok(p.ovenTest("cellar") && CL.totals(X).silt > 0 && CL.jarOf(X, "silt", "summer").by.quartz && CL.jarOf(X, "silt", "summer").by.volcanic, "l'essai : remplir la cave, les sortes mêlées");
+          p.ext.seasonForce = 0; /* l'hiver : rien de favorisé */
+          const hb = (CL.jarOf(X, "ash", "winter").by.hearth || { n: 0, rich: 0 }), hb0 = { n: hb.n, rich: hb.rich };
+          const z2 = age("Cendre Seule", ["single_sun", "water", "ash", "fern", "seed", "many: ash", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 1"], "Mondes"), h2 = an(z2).harvest; 
+          ok(h2 && h2.noGenesis && h2.counts.ash === 2 && h2.sorts.silt === "quartz", "une cendre sans volcan ni feu : sans genèse (pauvre) ; « many: ash » : deux mesures ; le limon d'un monde sans volcan est de quartz (" + JSON.stringify(h2 && h2.counts) + ")");
+          const w2 = CL.jarOf(X, "ash", "winter").by.hearth; ok(w2 && w2.n === hb0.n + 2 && w2.rich === hb0.rich, "la cendre sans genèse descend pauvre (deux mesures, aucune riche)");
+          const z3 = age("Roche Eau", ["single_sun", "water", "stone", "fern", "seed", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 1"], "Mondes"), h3 = an(z3).harvest;
+          ok(h3 && h3.gives.includes("silt") && h3.sorts.silt === "quartz", "l'eau qui broie la pierre : un limon de quartz");
+          files.delete(z2.path); files.delete(z3.path);
           p.ext.seasonForce = keep; files.delete(z.path); }
         { /* l'Âge de récolte du scénario : chaque saison favorise sa matière (src/seasons.js, richFor) */
-          const z = age("Recolte Saisons", ["single_sun", "water", "ash", "humus", "peat", "fern", "seed", "grass", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 1"], dir), keep = p.ext.seasonForce, got = {};
+          const z = age("Recolte Saisons", ["single_sun", "water", "lava", "ash", "humus", "peat", "fern", "seed", "grass", "insolation: 0.88", "atmosphere: 1", "mass: 1", "rotation: 24", "tilt: 30", "seed: 1"], "Mondes"), keep = p.ext.seasonForce, got = {};
           for (const f of [0, 1, 2, 3]) { p.ext.seasonForce = f; z.stat.mtime++; const h = an(z).harvest || {}; got[["winter", "spring", "summer", "autumn"][f]] = { gives: (h.gives || []).join(","), season: !!h.season }; }
           ok(got.winter.season === false && got.spring.season && got.summer.season && got.autumn.season && /ash/.test(got.summer.gives) && /humus/.test(got.spring.gives) && /peat/.test(got.autumn.gives), "scénario : la récolte, favorisée au printemps, en été, en automne ; rien de plus l'hiver (" + JSON.stringify(got) + ")");
           p.ext.seasonForce = keep; files.delete(z.path); }

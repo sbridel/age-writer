@@ -13,8 +13,15 @@
 const { mix, rgba, clamp, rng } = require("./util");
 const OV = require("./relto-oven");
 const W = 640, H = 360, TAU = Math.PI * 2;
-const IDS = ["ash", "humus", "silt", "peat"], SLOTS = ["winter", "spring", "summer", "autumn", "none", "good"];
-const SHELF_Y = [118, 176, 234, 292], JAR_X = (k) => (k < 5 ? 112 + k * 52 : 112 + 5 * 52 + 18), JW = 30, JH = 38;
+const CM = require("./cellar");
+const IDS = ["ash", "humus", "silt", "peat"], SEASONS = ["winter", "spring", "summer", "autumn", "none"];
+/** Les bocaux d'une rangée : cinq de saison, puis un bocal scellé par sorte (« good:volcanic »…). */
+const rowSlots = (id) => [...SEASONS, ...CM.SORTS[id].map((s) => "good:" + s)];
+const SLOTS = [...SEASONS, "good"];
+const SHELF_Y = [118, 176, 234, 292], JAR_X = (k) => (k < 5 ? 106 + k * 46 : 106 + 5 * 46 + 18 + (k - 5) * 42), JW = 30, JH = 38;
+/* le scellé de chaque sorte : la couleur de la cire et le signe gravé */
+const SEAL = { volcanic: ["#4a1c1c", "mountain"], hearth: ["#b8742a", "flame"], quartz: ["#6f8ea6", "crystal"], humus: ["#3f5a2c", "leaf"], peat: ["#6a3a1c", "tuft"] };
+const sortOf = (slot) => (String(slot).startsWith("good:") ? String(slot).slice(5) : null);
 const SIEVE = [528, 206], BIN = [480, 252, 124, 48], LIFT = [572, 94, 52, 112], LADDER = [20, 64];
 const FULL = 12, FX_MS = 1400;
 /* trois habits, comme l'appentis (normal, Verrière, Château) ; aucune zone cliquable ne change de l'un à l'autre */
@@ -40,17 +47,52 @@ function tag(ctx, c, x, y, slot) {
 }
 
 /**
+ * Une matière selon sa sorte : la cendre volcanique (noire, vitreuse, des éclats), le limon de quartz (pâle, pailleté) ;
+ * la cendre de foyer et le limon volcanique gardent l'aspect de toujours (relto-oven, stuff).
+ */
+function matter(ctx, c, id, sort, x, y, w, h, seed, poor) {
+  const r = rng(seed);
+  if (id === "ash" && sort === "volcanic") {
+    ctx.fillStyle = c(poor ? "#3c3b40" : "#232328"); ctx.fillRect(x, y, w, h);
+    for (let i = 0; i < (poor ? 14 : 22); i++) { const sx = x + r() * w, sy = y + r() * h, d = poor ? 2.2 : 1.6 + r() * 1.8; ctx.fillStyle = c(poor ? "#55535a" : r() < 0.5 ? "#4a4a56" : "#2e2e36"); ctx.beginPath(); ctx.moveTo(sx, sy - d); ctx.lineTo(sx + d, sy + d * 0.6); ctx.lineTo(sx - d * 0.8, sy + d * 0.4); ctx.closePath(); ctx.fill(); } /* des éclats de verre */
+    if (!poor) { ctx.fillStyle = rgba(230, 235, 245, 0.7); for (let i = 0; i < 10; i++) ctx.fillRect(x + r() * w, y + r() * h, 1, 1); } /* des reflets */
+    return;
+  }
+  if (id === "silt" && sort === "quartz") {
+    ctx.fillStyle = c(poor ? "#a39d8e" : "#beb6a1"); ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = c(poor ? "#8f897b" : "#a89f88"); for (let i = 0; i < 5; i++) ctx.fillRect(x, y + (i + 0.5) * h / 5, w, 0.8); /* de fines couches */
+    if (!poor) { for (let i = 0; i < 16; i++) { ctx.fillStyle = rgba(255, 255, 250, 0.5 + 0.4 * r()); ctx.fillRect(x + r() * w, y + r() * h, 1, 1); } } /* paillettes de quartz et de mica */
+    return;
+  }
+  OV.stuff(ctx, c, id, x, y, w, h, seed, poor);
+}
+
+/** Le signe gravé dans la cire d'un scellé. */
+function sealSign(ctx, kind, x, y) {
+  ctx.strokeStyle = "rgba(255,235,200,0.75)"; ctx.fillStyle = "rgba(255,235,200,0.75)"; ctx.lineWidth = 0.8; ctx.beginPath();
+  if (kind === "mountain") { ctx.moveTo(x - 2.6, y + 1.8); ctx.lineTo(x - 0.6, y - 1.6); ctx.lineTo(x + 0.4, y); ctx.lineTo(x + 1.2, y - 1); ctx.lineTo(x + 2.6, y + 1.8); ctx.stroke(); }
+  else if (kind === "flame") { ctx.moveTo(x + 0.4, y - 3); ctx.bezierCurveTo(x + 2.8, y - 0.6, x + 2.4, y + 2.4, x, y + 2.4); ctx.bezierCurveTo(x - 2.4, y + 2.4, x - 2.4, y - 0.2, x - 0.8, y - 1.2); ctx.quadraticCurveTo(x - 0.6, y + 0.2, x + 0.2, y + 0.4); ctx.quadraticCurveTo(x + 0.8, y - 1.2, x + 0.4, y - 3); ctx.fill(); } /* une flamme pleine, sa pointe qui se recourbe */
+  else if (kind === "crystal") { ctx.moveTo(x, y - 2.6); ctx.lineTo(x + 1.8, y); ctx.lineTo(x, y + 2.6); ctx.lineTo(x - 1.8, y); ctx.closePath(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x - 1.8, y); ctx.lineTo(x + 1.8, y); ctx.stroke(); }
+  else if (kind === "leaf") { ctx.ellipse(x, y, 1.4, 2.6, 0.5, 0, TAU); ctx.stroke(); }
+  else { for (const dx of [-1.4, 0, 1.4]) { ctx.moveTo(x + dx, y + 2.2); ctx.lineTo(x + dx * 1.4, y - 2.2); } ctx.stroke(); }
+}
+
+/**
  * Un bocal de verre, debout, le fond en (x, y). `jar` : { n, rich } (saison) ou { n } (bon grain). Un bocal mêlé se voit en
  * veines, riche et pauvre en bandes égales, sans dire la part de chacun ; tout riche ou tout pauvre se voit uni.
  */
 function jarDraw(ctx, c, id, slot, x, y, jar, seed, lit = 1) {
-  const n = Math.max(0, (jar && jar.n) || 0), good = slot === "good", rich = good ? n : Math.min(n, (jar && jar.rich) || 0);
+  const n = Math.max(0, (jar && jar.n) || 0), sort = sortOf(slot), good = slot === "good" || !!sort, rich = good ? n : Math.min(n, (jar && jar.rich) || 0);
   const x0 = x - JW / 2, top = y - JH, body = () => { ctx.beginPath(); ctx.moveTo(x0 + 3, top + 6); ctx.lineTo(x0 + JW - 3, top + 6); ctx.quadraticCurveTo(x0 + JW, top + 7, x0 + JW, top + 12); ctx.lineTo(x0 + JW, y - 3); ctx.quadraticCurveTo(x0 + JW, y, x0 + JW - 3, y); ctx.lineTo(x0 + 3, y); ctx.quadraticCurveTo(x0, y, x0, y - 3); ctx.lineTo(x0, top + 12); ctx.quadraticCurveTo(x0, top + 7, x0 + 3, top + 6); ctx.closePath(); };
   ctx.save(); body(); ctx.fillStyle = rgba(150, 175, 185, 0.10 * lit); ctx.fill(); ctx.clip();
   if (n > 0) {
     const lvl = y - 2 - (JH - 10) * clamp(n / FULL), hh = y - lvl;
-    if (rich === n || rich === 0) OV.stuff(ctx, c, id, x0, lvl, JW, hh + 1, seed, rich === 0);
-    else { const bands = 4; for (let i = 0; i < bands; i++) { const by = lvl + (i * hh) / bands; OV.stuff(ctx, c, id, x0, by, JW, hh / bands + 1, seed + i, i % 2 === 1); } } /* mêlé : des veines */
+    /* les parts du bocal : chaque sorte présente, riche et pauvre ; un bocal mêlé se voit en veines, sans dire la part de chacune */
+    const by = jar && jar.by && typeof jar.by === "object" ? jar.by : { [sort || CM.SORTS[id][0]]: { n, rich } }, parts = [];
+    for (const s0 of CM.SORTS[id]) { const b = by[s0]; if (!b || !(b.n > 0)) continue; const rk = good ? b.n : Math.min(b.n, b.rich || 0); if (rk > 0) parts.push([s0, false]); if (b.n - rk > 0) parts.push([s0, true]); }
+    if (!parts.length) parts.push([sort || CM.SORTS[id][0], !good && rich === 0]);
+    const bands = parts.length === 1 ? 1 : Math.max(4, parts.length * 2);
+    for (let i = 0; i < bands; i++) { const [s0, poor] = parts[i % parts.length], y1 = lvl + (i * hh) / bands; matter(ctx, c, id, s0, x0, y1, JW, hh / bands + 1, seed + i, poor); }
     ctx.fillStyle = rgba(0, 0, 0, 0.18); ctx.fillRect(x0, lvl, JW, 1);
   }
   ctx.fillStyle = rgba(255, 255, 255, 0.12 * lit); ctx.fillRect(x0 + 4, top + 10, 3, JH - 16);
@@ -58,7 +100,7 @@ function jarDraw(ctx, c, id, slot, x, y, jar, seed, lit = 1) {
   body(); ctx.strokeStyle = c(mix("#8aa0a6", "#000000", 0.35)); ctx.lineWidth = 1.1; ctx.stroke();
   /* le col et le couvercle : bois pour la saison, cire et ficelle pour le bon grain */
   ctx.fillStyle = c(good ? "#5a3020" : "#6a4a2a"); ctx.fillRect(x0 + 4, top + 1, JW - 8, 6); ctx.fillStyle = c(good ? "#7a4028" : "#8a6a3e"); ctx.fillRect(x0 + 4, top + 1, JW - 8, 1.5);
-  if (good) { ctx.fillStyle = c("#a8382a"); ctx.beginPath(); ctx.arc(x, top + 4, 4.2, 0, TAU); ctx.fill(); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x - 6, top + 9); ctx.quadraticCurveTo(x, top + 12, x + 6, top + 9); ctx.stroke(); ctx.fillStyle = c("#e0b070"); ctx.beginPath(); ctx.arc(x, top + 4, 1.4, 0, TAU); ctx.fill(); }
+  if (good) { const [wax, sign] = SEAL[sort || CM.SORTS[id][0]] || ["#a8382a", "mountain"]; ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x - 6, top + 9); ctx.quadraticCurveTo(x, top + 12, x + 6, top + 9); ctx.stroke(); ctx.fillStyle = c(wax); ctx.beginPath(); ctx.arc(x, top + 4, 5, 0, TAU); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, 0.18); ctx.beginPath(); ctx.arc(x - 1.6, top + 2.4, 1.6, 0, TAU); ctx.fill(); sealSign(ctx, sign, x, top + 4.2); } /* la cire de sa sorte, son signe gravé */
   else tag(ctx, c, x + JW / 2 - 1, top + 8, slot);
 }
 
@@ -127,16 +169,16 @@ function shelves(r, ctx, c, st, tr, held, skin) {
     const y = SHELF_Y[row];
     /* la plaque de la rangée, sur le montant : la matière, en petit */
     ctx.fillStyle = c(K.plate); ctx.fillRect(98, y - 30, 4, 22);
-    SLOTS.forEach((slot, k) => {
+    rowSlots(id).forEach((slot, k) => {
       const x = JAR_X(k), jar = (jars[id] || {})[slot] || { n: 0, rich: 0 }, isHeld = held && held.id === id && held.slot === slot;
       if (isHeld) { ctx.strokeStyle = rgba(201, 162, 78, 0.35); ctx.setLineDash([2, 2]); ctx.strokeRect(x - JW / 2, y - JH, JW, JH); ctx.setLineDash([]); return; } /* sa place vide, en pointillé */
       jarDraw(ctx, c, id, slot, x, y, jar, 31 + row * 13 + k * 7, jar.n > 0 ? 1 : 0.6);
-      const name = tr("cellar.jar." + id) + " · " + tr("cellar.slot." + slot), amt = tr(jar.n <= 0 ? "cellar.amt.empty" : jar.n < 4 ? "cellar.amt.low" : jar.n < FULL ? "cellar.amt.half" : "cellar.amt.full");
+      const so = sortOf(slot), name = tr("cellar.jar." + id) + " · " + (so ? tr("cellar.slot.good") + (CM.SORTS[id].length > 1 ? ", " + tr(["cellar.sort", so].join(".")) : "") : tr("cellar.slot." + slot)), amt = tr(jar.n <= 0 ? "cellar.amt.empty" : jar.n < 4 ? "cellar.amt.low" : jar.n < FULL ? "cellar.amt.half" : "cellar.amt.full");
       r.hot.push({ x: x - JW / 2 - 4, y: y - JH - 4, w: JW + 8, h: JH + 6, tip: name + " — " + amt + (held ? "" : jar.n > 0 ? ". " + tr("cellar.take") : ""), cellar: held ? "back" : jar.n > 0 ? "take" : null, id, slot });
     });
   });
   /* la séparation du bon grain : un filet d'ocre entre les saisons et le bocal scellé */
-  ctx.fillStyle = c(K.rule); ctx.fillRect(JAR_X(4) + 26, 74, 1.5, 222);
+  ctx.fillStyle = c(K.rule); ctx.fillRect((JAR_X(4) + JAR_X(5)) / 2, 74, 1.5, 222);
 }
 
 function bench(r, ctx, c, st, tr, held, now, skin) {
@@ -151,7 +193,7 @@ function bench(r, ctx, c, st, tr, held, now, skin) {
   ctx.save(); ctx.beginPath(); ctx.ellipse(sx, sy, 32, 8, 0, 0, TAU); ctx.clip(); ctx.strokeStyle = rgba(160, 140, 110, 0.5); ctx.lineWidth = 0.6;
   for (let i = -34; i <= 34; i += 4) { ctx.beginPath(); ctx.moveTo(sx + i, sy - 10); ctx.lineTo(sx + i, sy + 10); ctx.stroke(); ctx.beginPath(); ctx.moveTo(sx - 36, sy + i * 0.3); ctx.lineTo(sx + 36, sy + i * 0.3); ctx.stroke(); }
   ctx.restore(); ctx.strokeStyle = c(K.rim); ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(sx, sy, 36, 10, 0, 0, TAU); ctx.stroke();
-  r.hot.push({ x: sx - 40, y: sy - 16, w: 80, h: 30, tip: held ? tr(held.slot === "good" ? "cellar.sieve.good" : "cellar.sieve.drop") : tr("cellar.sieve"), cellar: held ? "sieve" : null });
+  r.hot.push({ x: sx - 40, y: sy - 16, w: 80, h: 30, tip: held ? tr(held.slot === "good" || sortOf(held.slot) ? "cellar.sieve.good" : "cellar.sieve.drop") : tr("cellar.sieve"), cellar: held ? "sieve" : null });
   /* le compost : une caisse de planches, sa terre noire, plus haute à chaque mesure */
   const [bx, by, bw, bh] = BIN, parts = Math.max(0, st.compost || 0);
   ctx.fillStyle = c("#120e0b"); ctx.fillRect(bx + 4, by + 6, bw - 8, bh - 6);
@@ -197,4 +239,4 @@ function drawCellar(r, ctx, sc, sky, t) {
   void sc;
 }
 
-module.exports = { drawCellar, drawHeldJar, jarDraw, SLOTS, SIEVE, LIFT, BIN, FX_MS };
+module.exports = { drawCellar, drawHeldJar, jarDraw, rowSlots, SLOTS, SIEVE, LIFT, BIN, FX_MS };

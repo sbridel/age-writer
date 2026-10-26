@@ -28,8 +28,24 @@ const KINDS = ["white", "amber", "grey"];
 function givesOf(written, present, made) {
   const w = new Set([...(written || []), ...(made || [])]), p = present || w;
   if (!LF.ROLES.producer.some((id) => p.has(id))) return [];
+  if (w.has("water") && ROCK.some((id) => w.has(id))) w.add("silt"); /* l'eau qui broie la roche écrite : un limon de quartz (choix de l'auteur, 26 oct.) */
   return INGREDIENTS.filter((id) => w.has(id));
 }
+/*
+ * La genèse (choix de l'auteur, 26 oct. 2026) : une matière dépend de ce qui l'a faite, et l'Âge le sait déjà ; rien ne s'écrit de plus.
+ * - la cendre est **volcanique** (verre, silice : minéral pur) si l'Âge a de la lave ou ce qui en naît ; **de foyer** (potasse, calcium :
+ *   le squelette du vivant brûlé) sinon ; sans volcan ni feu, elle n'a pas de genèse et reste pauvre ;
+ * - le limon est **volcanique** (argiles, fertile) dans un Âge volcanique ; **de quartz** (l'eau qui broie la roche) sinon.
+ */
+const VOLCANIC = ["lava", "lava_world", "obsidian", "crying_obsidian", "whispering_obsidian", "ash_cloud", "ashen_sky", "molten_core", "glass", "singing_glass"];
+const BURNT = ["wildfire", "charred_grove", "scorched_surface", "cinderbloom", "scorched_moths"];
+const ROCK = ["stone", "sand", "crystal"];
+function genesisOf(present) {
+  const p = present instanceof Set ? present : new Set(present || []), has = (l) => l.some((id) => p.has(id)), volcanic = has(VOLCANIC);
+  return { ash: volcanic ? "volcanic" : "hearth", ashBorn: volcanic || has(BURNT), silt: volcanic ? "volcanic" : "quartz" };
+}
+/** La sorte d'une mesure de cette matière, dans un Âge de cette genèse. */
+const sortOf = (id, g) => (id === "ash" ? g.ash : id === "silt" ? g.silt : id);
 
 /**
  * L'état de la récolte (créé à la demande) : { stock: { ash, humus, silt, peat }, rich: { idem, ≤ stock }, last: { [Âge]: jour },
@@ -44,7 +60,7 @@ function stateOf(ext) {
   /* la file de chaque trémie (la cave, src/cellar.js) : ce qui est monté d'en bas, dans l'ordre où on l'a versé (vrai = riche) ;
      le reste du stock (d'avant la cave) se verse comme avant, riches d'abord, avant la file */
   if (!h.queue || typeof h.queue !== "object") h.queue = {};
-  for (const id of INGREDIENTS) { const q = Array.isArray(h.queue[id]) ? h.queue[id].map((x) => x === true) : []; h.queue[id] = q.slice(Math.max(0, q.length - h.stock[id])); }
+  for (const id of INGREDIENTS) { const q = Array.isArray(h.queue[id]) ? h.queue[id].map(item) : []; h.queue[id] = q.slice(Math.max(0, q.length - h.stock[id])); } /* chaque mesure : { r: riche, s: sa sorte } */
   if (!h.last || typeof h.last !== "object") h.last = {};
   if (!h.lastRich || typeof h.lastRich !== "object") h.lastRich = {};
   return h;
@@ -78,16 +94,21 @@ function gatheredToday(ext, age, now) { const h = ext && ext.harvest; return !!(
 /** Ce qu'il a donné aujourd'hui était-il riche ? (null s'il n'a rien donné) */
 function richToday(ext, age, now) { if (!gatheredToday(ext, age, now)) return null; const h = ext.harvest; return !(h.lastRich && h.lastRich[age] === false); }
 /** Prendre une mesure de `id` au stock : d'abord une riche. Renvoie true (riche), false (pauvre) ou null (vide). */
-function take(ext, id) {
+/** Une mesure de la file : { r: riche, s: sa sorte (null : d'avant la genèse) } ; un booléen d'hier en devient une. */
+const item = (x) => (x && typeof x === "object" ? { r: x.r === true, s: typeof x.s === "string" ? x.s : null } : { r: x === true, s: null });
+/** Prendre une mesure : { rich, sort }, ou null. D'avant la cave : riches d'abord, sorte inconnue ; montée de la cave : dans l'ordre, avec sa sorte. */
+function takeOne(ext, id) {
   const h = stateOf(ext); if (!(h.stock[id] > 0)) return null;
-  const q = h.queue[id], qRich = q.filter(Boolean).length, old = h.stock[id] - q.length;
-  if (old > 0) { h.stock[id] -= 1; if (h.rich[id] - qRich > 0) { h.rich[id] -= 1; return true; } return false; } /* d'avant la cave : riches d'abord, comme toujours */
-  const r = q.shift() === true; h.stock[id] -= 1; if (r) h.rich[id] = Math.max(0, h.rich[id] - 1); return r; /* monté de la cave : dans l'ordre */
+  const q = h.queue[id], qRich = q.filter((x) => x.r).length, old = h.stock[id] - q.length;
+  if (old > 0) { h.stock[id] -= 1; if (h.rich[id] - qRich > 0) { h.rich[id] -= 1; return { rich: true, sort: null }; } return { rich: false, sort: null }; }
+  const m = q.shift(); h.stock[id] -= 1; if (m.r) h.rich[id] = Math.max(0, h.rich[id] - 1); return { rich: m.r, sort: m.s };
 }
-/** Rendre une mesure au stock (la colonne reversée) : elle retourne en tête de la file, elle ressortira la première. */
-function giveBack(ext, id, rich) { const h = stateOf(ext); h.stock[id] += 1; if (rich) h.rich[id] += 1; h.queue[id].unshift(!!rich); }
-/** Le monte-charge de la cave verse dans la trémie, dans cet ordre (vrai = riche). */
-function pour(ext, id, order) { const h = stateOf(ext); for (const r of order || []) { h.stock[id] += 1; if (r) h.rich[id] += 1; h.queue[id].push(!!r); } }
+/** Prendre une mesure : riche ou pauvre (null : la trémie est vide). */
+function take(ext, id) { const m = takeOne(ext, id); return m ? m.rich : null; }
+/** Rendre une mesure au stock (la colonne reversée) : elle retourne en tête de la file, avec sa sorte, elle ressortira la première. */
+function giveBack(ext, id, rich, sort = null) { const h = stateOf(ext); h.stock[id] += 1; if (rich) h.rich[id] += 1; h.queue[id].unshift({ r: !!rich, s: sort || null }); }
+/** Le monte-charge de la cave verse dans la trémie, dans cet ordre ({ r, s }, ou vrai = riche). */
+function pour(ext, id, order) { const h = stateOf(ext); for (const x of order || []) { const m = item(x); h.stock[id] += 1; if (m.r) h.rich[id] += 1; h.queue[id].push(m); } }
 
 /** Les granulés cuits (créés à la demande) : { white, amber, grey }. Reprend l'étagère de l'ancienne étape 4a (good → white, bad → grey). */
 function pelletsOf(ext) {
@@ -99,4 +120,4 @@ function pelletsOf(ext) {
   return p;
 }
 
-module.exports = { INGREDIENTS, KINDS, DAY, givesOf, stateOf, richOf, gather, gatheredToday, richToday, take, giveBack, pour, pelletsOf };
+module.exports = { INGREDIENTS, KINDS, DAY, VOLCANIC, BURNT, ROCK, givesOf, genesisOf, sortOf, stateOf, richOf, gather, gatheredToday, richToday, take, takeOne, giveBack, pour, pelletsOf };

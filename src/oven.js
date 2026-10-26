@@ -35,6 +35,8 @@ function stateOf(ext) {
   o.column = Array.isArray(o.column) ? o.column.filter((id) => H.INGREDIENTS.includes(id)).slice(0, MAX_TOTAL) : [];
   /* la qualité de chaque couche, dans le même ordre (une colonne d'avant la qualité : riche) */
   o.colRich = o.column.map((_, k) => !(Array.isArray(o.colRich) && o.colRich[k] === false));
+  /* la sorte de chaque couche (src/harvest.js, la genèse) : null pour une mesure d'avant la cave */
+  o.colSort = o.column.map((_, k) => (Array.isArray(o.colSort) && typeof o.colSort[k] === "string" ? o.colSort[k] : null));
   o.levers = H.INGREDIENTS.map((id) => o.column.filter((x) => x === id).length);
   for (const k of ["time", "temp", "press"]) o[k] = clampInt(o[k], 0, SCALE);
   if (o.batch && (typeof o.batch !== "object" || !(o.batch.n > 0))) o.batch = null;
@@ -48,9 +50,14 @@ function resultOf(s) {
   const [a, h, si, p] = s.levers, n = a + h + si + p, { time, temp, press } = s;
   if (n < 1 || n > MAX_TOTAL || !(time > 0)) return null;
   if (press < 8) return { kind: "dust", n };
-  const mineral = h === 0 && p === 0 && a > si && si > 0 && a / n <= 0.8, organic = a === 0 && si === 0 && h > p && p > 0 && h / n <= 0.8;
+  /* les sortes (choix de l'auteur, 26 oct.) : la lumière veut le minéral pur (la cendre volcanique, le limon de quartz) ; la potasse de la
+     cendre de foyer et l'argile du limon volcanique nourrissent, et l'ambré en accepte une mesure. Une mesure sans sorte (d'avant la cave) ne gêne rien. */
+  const col = s.column || [], sorts = Array.isArray(s.colSort) ? s.colSort : [], sortAt = (k) => sorts[k] || null;
+  const pure = col.every((id, k) => (id === "ash" ? sortAt(k) !== "hearth" : id === "silt" ? sortAt(k) !== "volcanic" : true));
+  const feeds = col.every((id, k) => (id === "ash" ? sortAt(k) === "hearth" : id === "silt" ? sortAt(k) === "volcanic" : true));
+  const mineral = h === 0 && p === 0 && a > si && si > 0 && a / n <= 0.8, organic = a + si <= 1 && (a + si === 0 || feeds) && h > p && p > 0 && h / (h + p) <= 0.8;
   const fine = !Array.isArray(s.colRich) || (s.colRich.length >= n && s.colRich.slice(0, n).every((x) => x !== false)); /* nette : toutes les mesures riches */
-  if (mineral && near(time, 40) && near(temp, 20) && press >= 38) return { kind: "white", n, fine };
+  if (mineral && near(time, 40) && near(temp, 20) && press >= 38) return { kind: "white", n, fine: fine && pure }; /* un blanc de cendre de foyer : approximatif */
   if (organic && press >= 10 && press <= 22 && ((near(time, 30) && near(temp, 30)) || (n === MAX_TOTAL && time <= 3 && temp >= 47))) return { kind: "amber", n, fine };
   return { kind: "grey", n };
 }
@@ -75,10 +82,10 @@ function set(ext, what, arg, now) {
     if (o.column.length >= MAX_TOTAL) return "full";
     if (o.column.filter((x) => x === id).length >= MAX_LEVER) return "max";
     if (st[id] < 1) return "none:" + id;
-    const rich = H.take(ext, id); /* la trémie verse d'abord ses riches */
-    o.column.push(id); o.colRich.push(rich !== false); o.levers = H.INGREDIENTS.map((x) => o.column.filter((y) => y === x).length); return true;
+    const m = H.takeOne(ext, id); /* d'avant la cave : riches d'abord ; montée de la cave : dans l'ordre, avec sa sorte */
+    o.column.push(id); o.colRich.push(!m || m.rich !== false); o.colSort.push((m && m.sort) || null); o.levers = H.INGREDIENTS.map((x) => o.column.filter((y) => y === x).length); return true;
   }
-  if (what === "empty") { o.column.forEach((id, k) => H.giveBack(ext, id, o.colRich[k] !== false)); o.column = []; o.colRich = []; o.levers = [0, 0, 0, 0]; return true; }
+  if (what === "empty") { for (let k = o.column.length - 1; k >= 0; k--) H.giveBack(ext, o.column[k], o.colRich[k] !== false, o.colSort[k]); o.column = []; o.colRich = []; o.colSort = []; o.levers = [0, 0, 0, 0]; return true; } /* à rebours : la file retrouve son ordre */
   if (what === "time" || what === "temp" || what === "press") { o[what] = clampInt(arg, 0, SCALE); return true; }
   return false;
 }
@@ -87,8 +94,8 @@ function set(ext, what, arg, now) {
 function start(ext, now) {
   const o = stateOf(ext); if (phaseOf(o, now)) return "busy";
   const res = resultOf(o); if (!res) return o.column.length ? "notime" : "empty";
-  o.batch = { at: now, dur: o.time * STEP_MS, kind: res.kind, n: res.n, fine: !!res.fine, layers: o.column.slice(), rich: o.colRich.slice() }; /* les mesures sont déjà sorties des trémies */
-  o.column = []; o.colRich = []; o.levers = [0, 0, 0, 0];
+  o.batch = { at: now, dur: o.time * STEP_MS, kind: res.kind, n: res.n, fine: !!res.fine, layers: o.column.slice(), rich: o.colRich.slice(), sorts: o.colSort.slice() }; /* les mesures sont déjà sorties des trémies */
+  o.column = []; o.colRich = []; o.colSort = []; o.levers = [0, 0, 0, 0];
   return null;
 }
 
