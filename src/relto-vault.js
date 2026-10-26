@@ -76,9 +76,11 @@ function drawVault(r, ctx, sc, sky, t) {
   const pages = Math.max(1, Math.ceil(niches.length / PER)); r.vaultPage = Math.min(Math.max(0, r.vaultPage || 0), pages - 1);
   const spot = (i) => { const side = i % 6 < 3 ? 0 : 1, col = i % 3, row = i < 6 ? 0 : 1; return [side ? 392 + col * 80 : 28 + col * 80, 44 + row * 108]; }; // trois colonnes à gauche, trois à droite, deux rangées
   const shownN = niches.slice(r.vaultPage * PER, r.vaultPage * PER + PER);
+  const SK = (r.opts.stoneState && r.opts.stoneState()) || {}, caged = SK.ending === "command" && r.vaultPage === pages - 1, cageAt = PER - 1; /* le commandement : la dernière niche de la dernière page garde la vitrine */
   for (let i = shownN.length; i < PER; i++) { // les niches vides ne le restent pas tout à fait : une bougie, une araignée sur sa toile, un vase de fleurs sèches
     const [nx, ny] = spot(i); ctx.fillStyle = c("#0e0f12"); ctx.fillRect(nx - 3, ny - 3, NW + 6, NH + 6); ctx.fillStyle = c("#17181c"); ctx.fillRect(nx, ny, NW, NH);
     const kind = (i * 5 + r.vaultPage * 7) % 9, bx = nx + NW / 2, by = ny + NH - 4, flip = (i + r.vaultPage) % 2 ? 1 : -1;
+    if (caged && i === cageAt) { require("./relto-scarabs").vitrine(ctx, c, nx + 6, by - 42, NW - 12, 42, t); r.hot.push({ x: nx, y: ny, w: NW, h: NH, tip: TR(r)("scarab.case") }); continue; } /* le commandement : la vitrine, parmi les curiosités */
     const glow = (x, y, rad, a, col) => { ctx.fillStyle = rgba(col[0], col[1], col[2], a); ctx.beginPath(); ctx.arc(x, y, rad, 0, 6.283); ctx.fill(); };
     if (kind === 0) { // une bougie, dont la flamme vacille et éclaire la niche
       const f = 0.8 + 0.2 * Math.sin(t * 7 + i) * Math.sin(t * 3.1 + i); glow(bx, by - 26, 34, 0.1 * f, [255, 190, 90]);

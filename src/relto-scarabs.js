@@ -66,7 +66,8 @@ function drawSerre(r, ctx, sc, sky, t) {
   const spots = [[150, 300, 40, 10], [260, 318, 50, 8], [370, 286, 30, 8], [520, 300, 36, 12], [600, 330, 20, 6], [90, 330, 28, 6]];
   spots.forEach(([cx, cy, rx, ry], i) => { const p = pathOf(i, t, cx, cy, rx, ry); beetle(ctx, p.x, p.y, 11 + q("s" + i) * 5, p.a, t, { walk: p.walk, glow: night }); });
   if (night > 0.3) { ctx.fillStyle = rgba(0, 0, 0, 0.45 * night); ctx.fillRect(0, 0, W, H); spots.forEach(([cx, cy, rx, ry], i) => { const p = pathOf(i, t, cx, cy, rx, ry); const gl = ctx.createRadialGradient(p.x, p.y, 1, p.x, p.y, 16); gl.addColorStop(0, rgba(140, 230, 200, 0.5 * night)); gl.addColorStop(1, rgba(140, 230, 200, 0)); ctx.fillStyle = gl; ctx.fillRect(p.x - 16, p.y - 16, 32, 32); }); } /* la nuit, leur dos luit */
-  void r; void sc; void amb;
+  if (r && r.hot) { const tr = r.imagerTr ? r.imagerTr() : (k) => k; require("./relto-atelier").backButton(r, ctx, tr("scarab.back"), "loft"); }
+  void sc; void amb;
 }
 
 /** La vitrine (le commandement) : une boîte de verre et de laiton posée sur le bureau, des scarabées immobiles sur un lit de feutre, le couvercle scellé du serpent. (x, y) : le coin haut gauche ; w, h : la boîte. */

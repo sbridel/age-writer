@@ -362,6 +362,16 @@ function drawLoft(r, ctx, sc, sky, t) {
       bx += bw + 1; if (g() < 0.04) bx += 12;
     }
   }
+  { const SK = (r.opts.stoneState && r.opts.stoneState()) || {}; if (SK.ending === "accord") { /* l'accord : au bout des rayonnages, une porte vitrée mène à la serre (src/relto-scarabs.js) */
+    const dx = 584, dy = 22, dw = 44, dh = 190, hov = r.hover && r.hover.go === "serre";
+    ctx.fillStyle = c("#2a1c12"); ctx.fillRect(dx - 6, dy - 6, dw + 12, dh + 8); ctx.fillStyle = c("#7a4a22"); ctx.fillRect(dx - 3, dy - 3, dw + 6, dh + 3);
+    const lg = ctx.createLinearGradient(0, dy, 0, dy + dh); lg.addColorStop(0, rgba(150, 200, 170, hov ? 0.65 : 0.5)); lg.addColorStop(1, rgba(70, 120, 90, hov ? 0.6 : 0.45)); ctx.fillStyle = lg; ctx.fillRect(dx, dy, dw, dh);
+    ctx.strokeStyle = "rgba(60,110,70,0.6)"; ctx.lineWidth = 1.2; for (let k = 0; k < 5; k++) { const fx = dx + 6 + k * 9, fy = dy + dh - 8; ctx.beginPath(); ctx.moveTo(fx, fy); ctx.quadraticCurveTo(fx + 4, fy - 30 - k * 6, fx + 10, fy - 50 - k * 8); ctx.stroke(); } /* des fougères, de l'autre côté du verre */
+    ctx.strokeStyle = c("#7a4a22"); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(dx + dw / 2, dy); ctx.lineTo(dx + dw / 2, dy + dh); for (const yy of [dy + 48, dy + 96, dy + 144]) { ctx.moveTo(dx, yy); ctx.lineTo(dx + dw, yy); } ctx.stroke(); /* les petits bois de cuivre */
+    ctx.fillStyle = rgba(255, 255, 255, 0.1); ctx.fillRect(dx + 3, dy + 4, 4, dh - 10);
+    ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(dx + 6, dy + dh / 2 + 6, 2.2, 0, 6.283); ctx.fill(); /* la poignée */
+    r.hot.push({ x: dx - 4, y: dy - 4, w: dw + 8, h: dh + 6, tip: TRr("scarab.door"), go: "serre" });
+  } }
   if (castle) for (let sx = 0; sx < W; sx += 128) { ctx.fillStyle = c("#140c08"); ctx.fillRect(sx, 0, 8, 214); ctx.fillStyle = c(CS.WALNUT_HI); ctx.fillRect(sx, 0, 1.4, 214); ctx.strokeStyle = c(CS.GOLD); ctx.lineWidth = 1; CS.pointed(ctx, sx + 12, sx + 124, 4, 22, 200); ctx.stroke(); } // des arcs brisés sur les rayonnages
   ctx.fillStyle = rgba(255, 190, 90, 0.05 * fl); ctx.fillRect(0, 0, W, 220);
   const g = ctx.createLinearGradient(0, 214, 0, H); g.addColorStop(0, c(castle ? "#3a2e28" : "#6d4c31")); g.addColorStop(1, c(castle ? "#17110e" : "#35241a")); ctx.fillStyle = g; ctx.fillRect(0, 214, W, H - 214); // la longue table
