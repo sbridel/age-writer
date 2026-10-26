@@ -57,4 +57,4 @@ function drawCloseup(ctx, c, sc, t, W, H) {
   ctx.save(); ctx.translate(W / 2, H / 2 + 4); ctx.scale(5.5, 5.5); ctx.translate(-141, -158); drawPortrait(ctx, c, sc, t); ctx.restore();
 }
 
-module.exports = { drawPortrait, drawCloseup, flowerOverride, flowerTone, quillSvg };
+module.exports = { drawPortrait, drawCloseup, flowerOverride, flowerTone, quillSvg, hsl };

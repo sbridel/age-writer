@@ -42,7 +42,6 @@ function drawCabin(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#5b2b2b"); ctx.beginPath(); ctx.ellipse(262, 322, 170, 24, 0, 0, 6.283); ctx.fill();
   ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(262, 322, 156, 19, 0, 0, 6.283); ctx.stroke();
   }
-  if (glass) GLASS.lightPatches(ctx, sky, r.hour(), FLOOR); // le jour, les taches colorées des vitraux glissent sur le sol
   // fenêtre : le ciel de l'île
   const wx = 104, wy = 70, ww = 78, wh = 92;
   ctx.save(); ctx.beginPath(); if (castle) CASTLE.cabinWindowClip(ctx, wx, wy, ww, wh); else if (glass) GLASS.cabinWindowClip(ctx, wx, wy, ww, wh); else ctx.rect(wx, wy, ww, wh); ctx.clip();
@@ -52,6 +51,7 @@ function drawCabin(r, ctx, sc, sky, t) {
   ctx.drawImage(r.sprite, wx - 10 + ((t * 4) % 120), wy + wh * 0.45, 60, 26);
   ctx.fillStyle = r.cloudColor(sky); ctx.globalAlpha = 0.5; ctx.fillRect(wx, wy + wh - 16, ww, 16); ctx.globalAlpha = 1;
   ctx.restore();
+  if (castle) require("./relto-light").castleCabin(ctx, sky, r.hour(), wx, wy, ww, wh, FLOOR); else if (glass) require("./relto-light").glassCabin(ctx, sky, r.hour(), wx, wy, ww, wh, FLOOR); /* le jour, le vitrail pose son image au sol, et elle glisse avec l'heure */
   if (castle) { CASTLE.cabinWindowFrame(ctx, c, sky, wx, wy, ww, wh); CASTLE.moonPatch(ctx, sky, wx, wy, ww, wh, FLOOR); } else if (glass) GLASS.cabinWindowFrame(ctx, c, sky, wx, wy, ww, wh); else {
   ctx.strokeStyle = c("#2a1c14"); ctx.lineWidth = 5; ctx.strokeRect(wx, wy, ww, wh);
   ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(wx + ww / 2, wy); ctx.lineTo(wx + ww / 2, wy + wh); ctx.moveTo(wx, wy + wh / 2); ctx.lineTo(wx + ww, wy + wh / 2); ctx.stroke();
