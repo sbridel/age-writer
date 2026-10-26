@@ -228,6 +228,21 @@ function slab(ctx, c, x, y, w, h) {
   ctx.strokeStyle = c(IRON); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x + w / 2, y + h / 2 + 4, 6, 0, 6.283); ctx.stroke(); ctx.fillStyle = c(IRON); ctx.fillRect(x + w / 2 - 2.5, y + h / 2 - 4, 5, 4);
 }
 
+/** Le panneau secret du Château (26 oct. 2026 : plus une dalle grise posée sur le bois) : un panneau de noyer de la même boiserie, cadre mouluré,
+ *  table saillante, un losange sculpté, et en son cœur une petite rosace d'or terni ; seul un joint un peu plus franc le trahit. */
+function walnutPanel(ctx, c, x, y, w, h) {
+  const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, c(WALNUT_HI)); g.addColorStop(1, c(WALNUT)); ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = rgba(0, 0, 0, 0.5); ctx.lineWidth = 1.4; ctx.strokeRect(x + 0.7, y + 0.7, w - 1.4, h - 1.4); /* le joint, un peu trop franc */
+  ctx.strokeStyle = rgba(0, 0, 0, 0.4); ctx.lineWidth = 2; ctx.strokeRect(x + 7, y + 7, w - 14, h - 14);
+  ctx.strokeStyle = rgba(255, 220, 170, 0.08); ctx.lineWidth = 1; ctx.strokeRect(x + 11, y + 11, w - 22, h - 22);
+  const g2 = ctx.createLinearGradient(x, y, x + w, y + h); g2.addColorStop(0, rgba(255, 220, 170, 0.05)); g2.addColorStop(1, rgba(0, 0, 0, 0.18)); ctx.fillStyle = g2; ctx.fillRect(x + 12, y + 12, w - 24, h - 24); /* la table saillante */
+  const cx = x + w / 2, cy = y + h / 2, lw = Math.min(16, w * 0.18), lh = Math.min(34, h * 0.3);
+  ctx.strokeStyle = rgba(0, 0, 0, 0.32); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(cx, cy - lh); ctx.lineTo(cx - lw, cy); ctx.lineTo(cx, cy + lh); ctx.lineTo(cx + lw, cy); ctx.closePath(); ctx.stroke(); /* le losange sculpté, comme ses voisins */
+  ctx.strokeStyle = rgba(255, 220, 170, 0.07); ctx.beginPath(); ctx.moveTo(cx, cy - lh + 2); ctx.lineTo(cx - lw + 2, cy); ctx.stroke();
+  for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2; ctx.fillStyle = c(k % 2 ? "#8a6f3a" : GOLD); ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * 2.6, cy + Math.sin(a) * 2.6, 1.6, 0.9, a, 0, Math.PI * 2); ctx.fill(); } /* la rosace, d'or terni */
+  ctx.fillStyle = c(WALNUT_LO); ctx.beginPath(); ctx.arc(cx, cy, 1.2, 0, Math.PI * 2); ctx.fill();
+}
+
 /** Le manteau de la cheminée : pierre claire moulurée, un écusson pourpre à lys d'or sur le conduit. */
 function mantel(ctx, c, x, y, w, h, crest = null) {
   ctx.fillStyle = c("#7a7683"); ctx.fillRect(x, y, w, h); ctx.fillStyle = c(STONE_HI); ctx.fillRect(x, y, w, 1.6); ctx.fillStyle = rgba(0, 0, 0, 0.28); ctx.fillRect(x, y + h - 2, w, 2);
@@ -423,4 +438,4 @@ function narrowDoor(ctx, c, x, top, w, base) {
   ctx.fillStyle = c(IRON); ctx.fillRect(x, top + 30, w - 4, 3); ctx.fillRect(x, base - 26, w - 4, 3); ctx.fillStyle = c(GOLD); ctx.beginPath(); ctx.arc(x + w - 6, (top + base) / 2 + 6, 1.6, 0, 6.283); ctx.fill();
 }
 
-module.exports = { setFloorStyle, STONE, STONE_HI, STONE_LO, WALNUT, WALNUT_HI, WALNUT_LO, IRON, GOLD, GOLD_HI, VELVET, VELVET_LO, PURPLE, pointed, ashlar, wainscot, lys, cabinWalls, cabinFloor, rug, cabinWindowClip, cabinWindowFrame, cabinDoor, flamboyantDoor, slab, mantel, andirons, shelf, table, candelabrum, sconce, moonPatch, atelierWalls, galleryBays, balustrade, spiralStair, rosette, throne, candlestand, chainLink, candleGlow, goldFrame, stoneTrap, imagerRoom, imagerBench, narrowDoor };
+module.exports = { walnutPanel, setFloorStyle, STONE, STONE_HI, STONE_LO, WALNUT, WALNUT_HI, WALNUT_LO, IRON, GOLD, GOLD_HI, VELVET, VELVET_LO, PURPLE, pointed, ashlar, wainscot, lys, cabinWalls, cabinFloor, rug, cabinWindowClip, cabinWindowFrame, cabinDoor, flamboyantDoor, slab, mantel, andirons, shelf, table, candelabrum, sconce, moonPatch, atelierWalls, galleryBays, balustrade, spiralStair, rosette, throne, candlestand, chainLink, candleGlow, goldFrame, stoneTrap, imagerRoom, imagerBench, narrowDoor };
