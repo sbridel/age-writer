@@ -91,7 +91,7 @@ function expandText(text, done, blockAxis, norm = (l) => l.trim()) {
 
 /** Le prix d'un fragment, sur son axe : la couture (deux à contre-sens : « une couture de plus »), la dissonance graduée, et le manque d'une source malade. */
 function costOf(degree, srcStability, contra) {
-  const dis = DISSONANCE * (DEGREE_FACTOR[degree] == null ? 1 : DEGREE_FACTOR[degree]), seam = SEAM * (contra ? 2 : 1);
+  const dis = DISSONANCE * (DEGREE_FACTOR[degree] == null ? 1 : DEGREE_FACTOR[degree]), seam = SEAM; /* à contre-sens : une seule couture, l'octave exigée est son prix (26 oct. 2026 : deux coutures rendaient le chapitre 16 impossible) */
   const sick = Number.isFinite(srcStability) && srcStability < STABLE_AT ? ((STABLE_AT - srcStability) / 100) * SICK_SHARE : 0;
   return { seam, dissonance: dis, sick, total: seam + dis + sick };
 }

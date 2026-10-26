@@ -590,6 +590,11 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         ok(fr.length === 1 && fr[0].contra && fr[0].degree === "full", "contre-sens : à l'octave, la forêt de l'autre face est posée à la place du ciel (" + JSON.stringify((rd.carry || {}).refused) + ")");
         ok(!(rd.resolved.lines || []).some((l) => l.entry && l.entry.id === "single_sun" && !l.autoFilled), "contre-sens : le ciel écrit tombe (le tirage peut en remettre un)");
         ok(rd.carry.loop && /each other|l'un l'autre/.test(p.carryLine(rd.carry)), "la boucle : les deux faces se portent l'une l'autre, et le panneau le dit");
+        { /* le chapitre 16 doit pouvoir se gagner : un monde de départ sans ciel, un lieu à contre-sens à l'octave et un second fragment, et il tient (26 oct. 2026) */
+          const c16 = age("Accord Essai", ["water", "fern", "moss", "rotation: 24", "carry: forest from Face Nuit as sky", "carry: stone from Face Nuit"], dir); p.carrySource(c16, p.core.extract(c16.content)); p.law.observe(c16.basename, an(c16), c16.stat.mtime);
+          const r16 = an(c16), f16 = (r16.carry && r16.carry.fragments) || [];
+          ok(f16.length === 2 && f16.some((f) => f.contra) && r16.stability >= 75, "chapitre 16 : deux fragments dont un à contre-sens, et le monde tient (" + r16.stability + " %, " + JSON.stringify((r16.carry || {}).refused) + ")");
+          files.delete(c16.path); }
         day.content = day.content.replace("Face Nuit as sky", "Face Autre as sky"); day.stat.mtime++; p.carrySource(day, p.core.extract(day.content));
         const ro = an(day); ok((ro.carry.refused || []).some((x) => x.why === "octave"), "contre-sens : hors de l'octave, refusé en une phrase");
         for (const f of [day, night, odd]) files.delete(f.path); }

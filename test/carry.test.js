@@ -56,9 +56,9 @@ ok(C.applyCosts(base, [], { cosmological: 1 }).axisStability.cosmological === 97
 /* à contre-sens (la clause de Torus) et la boucle */
 const exc = C.expandText(["single_sun", "steady_cycle", "water", "carry: forest from Night as sky"].join("\n"), [{ index: 3, what: "forest", contra: true, ids: ["fern", "grass"] }], axis).split("\n");
 ok(!exc.includes("single_sun") && exc.includes("water") && exc.includes("fern"), "un lieu à contre-sens prend la place du ciel");
-ok(C.costOf("full", 90, true).seam === 2 * C.SEAM && C.costOf("full", 90, false).seam === C.SEAM, "à contre-sens, une couture de plus");
+ok(C.costOf("full", 90, true).seam === C.SEAM && C.costOf("full", 90, false).seam === C.SEAM, "à contre-sens, une seule couture : l'octave exigée est son prix");
 const rc = C.applyCosts(base, [{ what: "forest", contra: true, degree: "full", srcStability: 90 }]);
-ok(rc.axisStability.cosmological === 100 - Math.round(2 * C.SEAM * 100) && rc.axisStability.geological === 92, "à contre-sens, le prix se paie sur le ciel");
+ok(rc.axisStability.cosmological === 100 - Math.round(C.SEAM * 100) && rc.axisStability.geological === 92, "à contre-sens, le prix se paie sur le ciel");
 ok(C.carriesFrom("water\ncarry: sky from Day Side", "day side") && !C.carriesFrom("water\ncarry: sky from Other", "Day Side"), "la boucle : la source porte-t-elle depuis cet Âge ?");
 
 /* la pile */
