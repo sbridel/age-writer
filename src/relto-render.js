@@ -755,7 +755,9 @@ class ReltoRenderer {
   }
   /** Le monde que les réglages approchent, et ce qui en découle (cible, vue, système, lumière renvoyée par le télescope). */
   imagerFind() {
-    const st = this.imager, now = this.imagerNow(), star = TL.aimedOf(this), s = st.settings, g = st.g;
+    const st = this.imager, now = this.imagerNow(), s = st.settings, g = st.g;
+    let star = TL.aimedOf(this);
+    if (st.recall) { if (st.recall.sig === this.forkSig(st)) star = st.recall.star; else st.recall = null; } /* le Livre rappelé de la fente garde son étoile tant qu'on ne touche à rien ; le premier geste rend la main au télescope */
     st.star = star; st.light = GI.lightOf(st.cands, star);
     let pick = GI.choose(st.cands, g.cry, s, now, star, st.loading || st.sig == null ? null : this.imagerFinder()); // les mondes jamais écrits : une fois l'étagère lue (un Âge écrit l'emporte toujours)
     if (s.lock && g.lockOn) { const held = st.cands.find((c) => c.age.path === g.lockOn); if (held) pick = { world: held, planet: true }; } // verrouillé : la machine tient son monde
@@ -853,12 +855,14 @@ class ReltoRenderer {
     return { ...c, sys, system: st.system, lt: CAL.localTime(st.orbit, c, now + CAL.lineShift(st.orbit, sys.line)) }; // étape 3 : gravée sur la fausse ligne, l'heure là-bas est fausse
   }
   /** Ce que le diapason garde de la machine quand on le frappe : le livre du lutrin, et en mode Guilde le réglage entier (cristaux, boutons). */
-  forkSnap(st) { return st && st.guild ? { settings: { ...st.settings }, g: { ...st.g, cry: [...(st.g.cry || [])] } } : { path: st && st.age ? st.age.path : null, settings: st ? { ...st.settings } : null }; }
+  forkSnap(st) { return st && st.guild ? { settings: { ...st.settings }, g: { ...st.g, cry: [...(st.g.cry || [])] }, star: TL.aimedOf(this) } : { path: st && st.age ? st.age.path : null, settings: st ? { ...st.settings } : null }; }
+  /** L'empreinte du réglage (boutons et cristaux) : tant qu'elle ne change pas, le monde rappelé reste celui du Livre. */
+  forkSig(st) { return JSON.stringify([st.settings, st.g && st.g.cry]); }
   /** Le Livre de la fente revient sur la machine : le même monde, tel qu'il était quand le diapason l'a retenu. */
   forkRecall() {
     const f = this.forkHeld, st = this.imagerState(); if (!f || !st) return;
     const sfx = (k) => { if (this.opts.onImagerSound) this.opts.onImagerSound(k); };
-    if (st.guild && f.snap && f.snap.g) { st.settings = IM.normalize({ ...f.snap.settings }); st.g = { ...st.g, ...f.snap.g, cry: [...f.snap.g.cry] }; st.hand = null; st.station = null; this.imagerFind(); this.imagerSave(); if (this.opts.onImagerTune) this.opts.onImagerTune(st); }
+    if (st.guild && f.snap && f.snap.g) { st.settings = IM.normalize({ ...f.snap.settings }); st.g = { ...st.g, ...f.snap.g, cry: [...f.snap.g.cry] }; st.hand = null; st.station = null; st.recall = { star: f.snap.star || null, sig: this.forkSig(st) }; this.imagerFind(); this.imagerSave(); if (this.opts.onImagerTune) this.opts.onImagerTune(st); }
     else if (!st.guild) { const ages = (this.scene && this.scene.ages) || [], i = ages.findIndex((a) => a.path === f.path); if (i < 0) { this.forkHeld = null; return; } if (!st.age || st.age.path !== f.path) this.imagerLoad(i); if (f.snap && f.snap.settings) { st.settings = IM.normalize({ ...f.snap.settings }); this.imagerSave(); } st.station = null; }
     sfx("page"); if (!this.running) this.draw(0);
   }
