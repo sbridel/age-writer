@@ -584,12 +584,21 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
       const loop = age("Boucle", ["single_sun", "steady_cycle", "water", "carry: sky from Boucle"], dir); p.law.observe("Boucle", an(loop), loop.stat.mtime);
       ok((an(loop).carry.refused || [])[0].why === "cycle", "porter : un monde ne se porte pas lui-même");
       { /* à contre-sens : seulement à l'octave (24 h ici, 12 h là-bas) ; la boucle : deux Âges qui se portent l'un l'autre */
-        const day = age("Face Jour", ["single_sun", "steady_cycle", "water", "fern", "rotation: 24", "carry: forest from Face Nuit as sky"], dir), night = age("Face Nuit", ["single_sun", "steady_cycle", "grass", "fern", "stone", "rotation: 12", "carry: water from Face Jour"], dir), odd = age("Face Autre", ["single_sun", "steady_cycle", "grass", "fern", "rotation: 17"], dir);
+        const day = age("Face Jour", ["single_sun", "steady_cycle", "water", "fern", "rotation: 24", "carry: forest from Face Nuit as sky"], dir), night = age("Face Nuit", ["single_sun", "steady_cycle", "grass", "fern", "stone", "rotation: 12"], dir), odd = age("Face Autre", ["single_sun", "steady_cycle", "grass", "fern", "rotation: 17"], dir);
         for (const f of [day, night, odd]) { p.carrySource(f, p.core.extract(f.content)); p.law.observe(f.basename, an(f), f.stat.mtime); }
         const rd = an(day), fr = (rd.carry && rd.carry.fragments) || [];
         ok(fr.length === 1 && fr[0].contra && fr[0].degree === "full", "contre-sens : à l'octave, la forêt de l'autre face est posée à la place du ciel (" + JSON.stringify((rd.carry || {}).refused) + ")");
         ok((rd.resolved.lines || []).some((l) => l.entry && l.entry.id === "single_sun" && !l.autoFilled) && !(rd.resolved.lines || []).some((l) => l.autoFilled && ["stars", "cycle", "moon", "phenomena"].includes(l.slot)), "contre-sens : le ciel écrit reste, et le livre n'en tire pas par-dessus");
-        ok(rd.carry.loop && /each other|l'un l'autre/.test(p.carryLine(rd.carry)), "la boucle : les deux faces se portent l'une l'autre, et le panneau le dit");
+        { /* la boucle (le tore) : un anneau n'a qu'un ciel ; les mêmes astres et le même jour des deux côtés, sinon refusé en une phrase (26 oct. 2026) */
+          const mkR = (n, l) => { const f = age(n, l, dir); p.carrySource(f, p.core.extract(f.content)); p.law.observe(f.basename, an(f), f.stat.mtime); return f; };
+          const ra = mkR("Anneau Est", ["single_sun", "steady_cycle", "rotation: 24", "water", "fern", "moss", "carry: forest from Anneau Ouest"]), rb = mkR("Anneau Ouest", ["single_sun", "steady_cycle", "rotation: 24", "forest", "fern", "grass", "stone", "carry: water from Anneau Est"]);
+          for (const f of [ra, rb]) p.law.observe(f.basename, an(f), f.stat.mtime);
+          const rA = an(ra); ok(rA.carry.loop && /each other|l'un l'autre/.test(p.carryLine(rA.carry)), "la boucle : même ciel, même jour, les deux Âges forment un anneau, et le panneau le dit");
+          rb.content = rb.content.replace("single_sun", "twin_suns"); rb.stat.mtime++; p.carrySource(rb, p.core.extract(rb.content)); p.law.observe(rb.basename, an(rb), rb.stat.mtime);
+          const rA2 = an(ra); ok(!rA2.carry.loop && (rA2.carry.refused || []).some((x) => x.why === "ring") && /one sky|qu'un ciel/.test(p.carryLine(rA2.carry)), "la boucle : deux ciels différents, pas d'anneau, et la phrase le dit");
+          rb.content = rb.content.replace("twin_suns", "single_sun").replace("rotation: 24", "rotation: 12"); rb.stat.mtime++; p.carrySource(rb, p.core.extract(rb.content)); p.law.observe(rb.basename, an(rb), rb.stat.mtime);
+          ok((an(ra).carry.refused || []).some((x) => x.why === "ring"), "la boucle : les mêmes astres mais pas le même jour, pas d'anneau non plus");
+          for (const f of [ra, rb]) files.delete(f.path); }
         { /* le chapitre 16 doit pouvoir se gagner : un monde de départ sans ciel, un lieu à contre-sens à l'octave et un second fragment, et il tient (26 oct. 2026) */
           const c16 = age("Accord Essai", ["water", "fern", "moss", "rotation: 24", "carry: forest from Face Nuit as sky", "carry: stone from Face Nuit"], dir); p.carrySource(c16, p.core.extract(c16.content)); p.law.observe(c16.basename, an(c16), c16.stat.mtime);
           const r16 = an(c16), f16 = (r16.carry && r16.carry.fragments) || [];

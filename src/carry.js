@@ -24,6 +24,18 @@ const DEGREE_FACTOR = { full: 0, good: 0.25, rub: 1, clash: 1 };
 /** Une source qui ne tient pas (< 75) se porte quand même pendant la contrainte cachée : le manque se paie, à moitié. */
 const SICK_SHARE = 0.5;
 const STABLE_AT = 75;
+/** Le ciel écrit d'un texte d'Âge : ses pages de ciel (soleils, lunes, cycle…), triées ; les lignes `carry:` n'en font pas partie. */
+function writtenSky(text, blockAxis, norm = (l) => l.trim()) {
+  const out = new Set();
+  for (const l of String(text || "").split("\n")) { if (isCarryLine(l)) continue; const id = norm(l); if (id && blockAxis(id) === "cosmological") out.add(id); }
+  return [...out].sort();
+}
+/** La boucle (le tore) : un anneau n'a qu'un ciel. Les deux Âges doivent écrire les mêmes astres et tourner au même jour (l'unisson). "" si l'anneau tient, sinon "ring". */
+function ringOf(skyA, skyB, freqA, freqB) {
+  if (skyA.join("|") !== skyB.join("|")) return "ring";
+  if (!Number.isFinite(freqA) || !Number.isFinite(freqB) || Math.round(freqA) !== Math.round(freqB)) return "ring";
+  return "";
+}
 /** Les cases du tirage qui font le ciel : fermées sous une terre renversée (hooks.closedSlots). */
 const SKY_SLOTS = ["stars", "cycle", "moon", "phenomena"];
 /** Les cases que le tirage n'ouvre pas pour cet Âge : le ciel, quand un lieu est porté à contre-sens (et qu'aucun ciel n'est porté). */
@@ -132,4 +144,4 @@ function guardOf(chain, name) {
   return "";
 }
 
-module.exports = { PLACES, WHATS, SKY_SLOTS, closedSlots, CARRY_RE, MAX_DEPTH, SEAM, SEAM_SOURCE, DISSONANCE, DEGREE_FACTOR, SICK_SHARE, axisOf, axisOfFragment, parseLine, parseAll, carriesFrom, isCarryLine, fragmentOf, expandText, costOf, applyCosts, guardOf };
+module.exports = { PLACES, WHATS, SKY_SLOTS, closedSlots, writtenSky, ringOf, CARRY_RE, MAX_DEPTH, SEAM, SEAM_SOURCE, DISSONANCE, DEGREE_FACTOR, SICK_SHARE, axisOf, axisOfFragment, parseLine, parseAll, carriesFrom, isCarryLine, fragmentOf, expandText, costOf, applyCosts, guardOf };

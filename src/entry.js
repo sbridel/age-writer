@@ -366,6 +366,9 @@ module.exports = function build(Base, core, AGEX) {
         if (end17 === "accord") { /* l'accord : ils peuvent refuser (la contrainte rendait tout facile) */
           if (!(a.a.stability >= 75)) { refuse("sick17"); continue; }
           const ac3 = require("./imager-guild").accordOf({ freq: ownFreq }, { freq: a.freq }); if (ac3 && ac3.degree === "clash") { refuse("tritone"); continue; } }
+        if (CARRY.carriesFrom(src, me)) { /* la boucle : un seul monde en anneau, donc un seul ciel (les mêmes astres, le même jour) ; sinon pas d'anneau (26 oct. 2026, choix de l'auteur) */
+          const ax = (id) => this.blockAxis(id), nm = (l) => AGEX.norm(l.trim());
+          if (CARRY.ringOf(CARRY.writtenSky(text, ax, nm), CARRY.writtenSky(src, ax, nm), ownFreq, a.freq)) { refuse("ring"); continue; } }
         const life = c.what !== "sky" && !lifeTaken.has(f.path);
         const ids = CARRY.fragmentOf(a.a, c.what, (id) => this.blockAxis(id), { life }); if (!ids.length) { refuse("empty"); continue; }
         if (life) lifeTaken.add(f.path);

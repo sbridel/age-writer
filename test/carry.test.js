@@ -60,6 +60,8 @@ ok(C.closedSlots({ fragments: [{ what: "forest", contra: true }] }) === C.SKY_SL
 ok(C.costOf("full", 90, true).seam === C.SEAM && C.costOf("full", 90, false).seam === C.SEAM, "à contre-sens, une seule couture : l'octave exigée est son prix");
 const rc = C.applyCosts(base, [{ what: "forest", contra: true, degree: "full", srcStability: 90 }]);
 ok(rc.axisStability.cosmological === 100 - Math.round(C.SEAM * 100) && rc.axisStability.geological === 92, "à contre-sens, le prix se paie sur le ciel");
+ok(C.writtenSky("single_sun\nwater\nsteady_cycle\ncarry: sky from X", axis).join() === "single_sun,steady_cycle", "le ciel écrit : ses pages de ciel, sans les lignes carry");
+ok(C.ringOf(["single_sun", "steady_cycle"], ["single_sun", "steady_cycle"], 12, 12) === "" && C.ringOf(["single_sun"], ["twin_suns"], 12, 12) === "ring" && C.ringOf(["single_sun"], ["single_sun"], 12, 18) === "ring", "un anneau n'a qu'un ciel : les mêmes astres, le même jour");
 ok(C.carriesFrom("water\ncarry: sky from Day Side", "day side") && !C.carriesFrom("water\ncarry: sky from Other", "Day Side"), "la boucle : la source porte-t-elle depuis cet Âge ?");
 
 /* la pile */
