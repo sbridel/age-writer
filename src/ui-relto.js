@@ -368,12 +368,14 @@ const relicsOf = (plugin, hub) => {
  * la voix du monde étrange (`freq`). Relto histoire seulement. Le cri de la nuit se joue ici, une fois, si l'on est là. Revu toutes les 2 s.
  */
 function hearStateOf(plugin, hub, scene) {
-  if (!hub || !scene || scene.mode !== "story") return { hum: 0, stone: false };
+  /* l'accord (26 oct. 2026) : les scarabées sont libres, et l'encrier, scarabée lui-même, leur répond parfois : un frémissement de sept secondes, toutes les minute et demie */
+  const greet = (now) => { const P = 90000, k = (((now % P) + P) % P) / P; return k < 0.08 ? 0.45 * Math.sin((Math.PI * k) / 0.08) : 0; };
+  if (!hub || !scene || scene.mode !== "story") { const any = plugin.bahroSt ? plugin.bahroSt(null) : null; return { hum: any && STONE.endingOf(any) === "accord" ? greet(Date.now()) : 0, stone: false }; }
   const now = Date.now(), cache = (plugin._hearCache = plugin._hearCache || {}), c = cache[hub.path]; if (c && now - c.at < 2000) return c.v;
   const relto = { ...M.parseRelto(fmOf(plugin.app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed));
   if (HEAR.cryNow(st, now)) { plugin.saveExt(); if (plugin.ext.sound && plugin.ext.soundRooms !== false) sound.caveSfx("cry", (plugin.ext.volume == null ? 0.35 : plugin.ext.volume) * 0.5); } /* la nuit de la visite : un cri, au loin */
   const ht = Number(plugin.ext.humTest) || 0, test = now - ht < 60000 ? 1 - 0.7 * ((now - ht) / 60000) : 0; /* le raccourci d'essai : une minute de frémissement, sans toucher à l'histoire */
-  const v = { hum: Math.max(HEAR.humOf(st, now), test), stone: HEAR.stoneHere(st, now), freq: (st.hear && st.hear.freq) || (test ? 220 : undefined) };
+  const v = { hum: Math.max(HEAR.humOf(st, now), test, STONE.endingOf(st) === "accord" ? greet(now) : 0), stone: HEAR.stoneHere(st, now), freq: (st.hear && st.hear.freq) || (test ? 220 : undefined) };
   cache[hub.path] = { at: now, v }; return v;
 }
 
@@ -908,7 +910,7 @@ async function renderRelto(plugin, source, el, ctx) {
     caveState: () => (plugin.caveState ? plugin.caveState(pool()) : {}),
     /* le cachet (src/ward.js) : sur le bureau quand la bande du haut des fresques a été vue ; un Livre scellé garde le serpent */
     /* le 17 (src/story-stone.js) : emporter la pierre, la lâcher dans la fissure ; ce qui change ensuite dans la caverne */
-    stoneState: () => { if (!scene || scene.mode !== "story" || !pool()) return {}; const st = ST.get(plugin.ext.story || (plugin.ext.story = {}), pool()); return { canTake: STONE.canTake(st), ending: STONE.endingOf(st), place: STONE.placeOf(st), dark: STONE.chamberDark(st), traces: STONE.tracesOn(st), cut: STONE.frescoCut(st) }; },
+    stoneState: () => { if (!scene || scene.mode !== "story" || !pool()) { const any = plugin.bahroSt ? plugin.bahroSt(null) : null; return { scarabs: any ? STONE.endingOf(any) : null }; } /* le bac à sable : seulement les scarabées de la fin prise dans l'histoire */ const st = ST.get(plugin.ext.story || (plugin.ext.story = {}), pool()); return { canTake: STONE.canTake(st), ending: STONE.endingOf(st), scarabs: STONE.endingOf(st), place: STONE.placeOf(st), dark: STONE.chamberDark(st), traces: STONE.tracesOn(st), cut: STONE.frescoCut(st) }; },
     onStoneGive: () => { const pl = pool(); if (!pl) return false; const st = ST.get(plugin.ext.story || (plugin.ext.story = {}), pl); if (!STONE.give(st, Date.now())) return false; plugin.saveExt(); clearTimeout(plugin._stoneTick); plugin._stoneTick = window.setTimeout(() => storyTick(plugin), 7500); return true; },
     onStoneCry: () => { if (plugin.ext.sound && plugin.ext.soundRooms !== false) sound.caveSfx("cry", (plugin.ext.volume == null ? 0.35 : plugin.ext.volume) * 0.6); },
     /* l'ardoise (src/slate.js) : arrivée au matin après le 17, dans le Relto histoire comme au bac à sable ; ce qu'on y trace reste jusqu'au Livre suivant */

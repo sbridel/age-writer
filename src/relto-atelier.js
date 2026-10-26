@@ -362,7 +362,7 @@ function drawLoft(r, ctx, sc, sky, t) {
       bx += bw + 1; if (g() < 0.04) bx += 12;
     }
   }
-  { const SK = (r.opts.stoneState && r.opts.stoneState()) || {}; if (SK.ending === "accord") { /* l'accord : au bout des rayonnages, une porte vitrée mène à la serre (src/relto-scarabs.js) */
+  { const SK = (r.opts.stoneState && r.opts.stoneState()) || {}; if (SK.scarabs === "accord") { /* l'accord : au bout des rayonnages, une porte vitrée mène à la serre (src/relto-scarabs.js) */
     const dx = 584, dy = 22, dw = 44, dh = 190, hov = r.hover && r.hover.go === "serre";
     ctx.fillStyle = c("#2a1c12"); ctx.fillRect(dx - 6, dy - 6, dw + 12, dh + 8); ctx.fillStyle = c("#7a4a22"); ctx.fillRect(dx - 3, dy - 3, dw + 6, dh + 3);
     const lg = ctx.createLinearGradient(0, dy, 0, dy + dh); lg.addColorStop(0, rgba(150, 200, 170, hov ? 0.65 : 0.5)); lg.addColorStop(1, rgba(70, 120, 90, hov ? 0.6 : 0.45)); ctx.fillStyle = lg; ctx.fillRect(dx, dy, dw, dh);

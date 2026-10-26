@@ -76,7 +76,7 @@ function drawVault(r, ctx, sc, sky, t) {
   const pages = Math.max(1, Math.ceil(niches.length / PER)); r.vaultPage = Math.min(Math.max(0, r.vaultPage || 0), pages - 1);
   const spot = (i) => { const side = i % 6 < 3 ? 0 : 1, col = i % 3, row = i < 6 ? 0 : 1; return [side ? 392 + col * 80 : 28 + col * 80, 44 + row * 108]; }; // trois colonnes à gauche, trois à droite, deux rangées
   const shownN = niches.slice(r.vaultPage * PER, r.vaultPage * PER + PER);
-  const SK = (r.opts.stoneState && r.opts.stoneState()) || {}, caged = SK.ending === "command" && r.vaultPage === pages - 1, cageAt = PER - 1; /* le commandement : la dernière niche de la dernière page garde la vitrine */
+  const SK = (r.opts.stoneState && r.opts.stoneState()) || {}, caged = SK.scarabs === "command" && r.vaultPage === pages - 1, cageAt = PER - 1; /* le commandement : la dernière niche de la dernière page garde la vitrine */
   for (let i = shownN.length; i < PER; i++) { // les niches vides ne le restent pas tout à fait : une bougie, une araignée sur sa toile, un vase de fleurs sèches
     const [nx, ny] = spot(i); ctx.fillStyle = c("#0e0f12"); ctx.fillRect(nx - 3, ny - 3, NW + 6, NH + 6); ctx.fillStyle = c("#17181c"); ctx.fillRect(nx, ny, NW, NH);
     const kind = (i * 5 + r.vaultPage * 7) % 9, bx = nx + NW / 2, by = ny + NH - 4, flip = (i + r.vaultPage) % 2 ? 1 : -1;
