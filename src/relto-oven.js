@@ -235,8 +235,19 @@ function drawOven(r, ctx, sc, sky, t) {
   ctx.fillStyle = c("#1b1c1f"); ctx.beginPath(); ctx.arc(dx, dy, dr + 8, 0, TAU); ctx.fill(); ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 4; ctx.stroke();
   const in1 = ctx.createRadialGradient(dx, dy + 10, 2, dx, dy, dr);
   if (cooking) { const fl = 0.9 + 0.1 * Math.sin(t * 9) * Math.sin(t * 5.3); in1.addColorStop(0, `hsl(${40 - hot * 10}, 100%, ${(62 + hot * 26) * fl}%)`); in1.addColorStop(0.5, `hsl(${22 - hot * 6}, 90%, ${(34 + hot * 18) * fl}%)`); in1.addColorStop(1, "#3a1006"); }
-  else { in1.addColorStop(0, "#2a2620"); in1.addColorStop(1, "#0e0d0c"); }
+  else { in1.addColorStop(0, "#1a1714"); in1.addColorStop(1, "#060505"); }
   ctx.fillStyle = in1; ctx.beginPath(); ctx.arc(dx, dy, dr, 0, TAU); ctx.fill();
+  /* la porte : abattue vers l'avant quand le four ne cuit pas (on voit la bouche et sa grille vide) ; elle se relève et se ferme quand la cuisson part */
+  const shutAt = cooking && o.batch && o.batch.at ? o.batch.at : 0, swing = cooking ? clamp((nowOf(r) - shutAt) / 450) : 0, closed = cooking && swing >= 1;
+  if (!closed) {
+    if (!cooking) { ctx.fillStyle = "#2a1a12"; ctx.fillRect(dx - 22, dy + 10, 44, 3); ctx.fillStyle = "#3a2418"; for (let i = 0; i < 6; i++) ctx.fillRect(dx - 20 + i * 8, dy + 13, 2, 5); ctx.strokeStyle = rgba(120, 100, 80, 0.35); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(dx, dy, dr - 3, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); } /* la grille, vide, au fond de la bouche */
+    const lift = swing, ry = 7 + (dr - 7) * lift, cy = dy + (dr + 10) * (1 - lift); /* abattue : un disque vu presque de chant, sous la bouche ; il se relève */
+    ctx.fillStyle = c("#1b1c1f"); ctx.beginPath(); ctx.ellipse(dx, cy, dr + 8, ry + 2, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = c(trim[0]); ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(dx, cy, dr + 6, ry + 1, 0, 0, TAU); ctx.stroke();
+    ctx.fillStyle = rgba(150, 175, 190, 0.22); ctx.beginPath(); ctx.ellipse(dx, cy, dr - 2, Math.max(2, ry - 3), 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = rgba(255, 255, 255, 0.12); ctx.beginPath(); ctx.ellipse(dx - 12, cy - ry * 0.3, 10, Math.max(1, ry * 0.25), 0, 0, TAU); ctx.fill();
+    if (lift < 0.5) { ctx.fillStyle = c(trim[0]); ctx.fillRect(dx - 16, cy + ry + 2, 32, 3); ctx.fillStyle = c(trim[2]); ctx.fillRect(dx - 16, cy + ry + 2, 32, 0.8); } /* la poignée, au bord qui pend */
+  }
   if (cooking) {
     ctx.save(); ctx.beginPath(); ctx.arc(dx, dy, dr - 1, 0, TAU); ctx.clip(); /* tout ce qui brûle reste derrière la vitre ronde */
     ctx.fillStyle = rgba(255, 200, 120, 0.6); for (let i = 0; i < 7; i++) { const fx = dx - 21 + i * 7, fh = 14 - hot * 16 - (i % 3) * 5 + Math.sin(t * 8 + i) * 3; ctx.beginPath(); ctx.moveTo(fx - 3.5, dy + 30); ctx.quadraticCurveTo(fx, dy + fh, fx + 3.5, dy + 30); ctx.fill(); } /* les flammes, serrées dans le bas du hublot */
@@ -247,10 +258,17 @@ function drawOven(r, ctx, sc, sky, t) {
       ctx.strokeStyle = rim; ctx.lineWidth = 0.8; ctx.stroke(); }
     ctx.restore();
   }
-  ctx.fillStyle = rgba(255, 255, 255, 0.10); ctx.beginPath(); ctx.ellipse(dx - 14, dy - 16, 14, 6, -0.6, 0, TAU); ctx.fill();
-  ctx.fillStyle = c(trim[1]); ctx.fillRect(dx - dr - 14, dy - 14, 8, 28); ctx.fillStyle = c(trim[0]); ctx.fillRect(dx + dr + 4, dy - 4, 16, 8);
+  if (closed) { ctx.fillStyle = rgba(255, 255, 255, 0.10); ctx.beginPath(); ctx.ellipse(dx - 14, dy - 16, 14, 6, -0.6, 0, TAU); ctx.fill(); } /* le reflet de la vitre, porte fermée */
+  ctx.fillStyle = c(trim[1]); ctx.fillRect(dx - dr - 14, dy - 14, 8, 28); if (closed) { ctx.fillStyle = c(trim[0]); ctx.fillRect(dx + dr + 4, dy - 4, 16, 8); } /* le loquet ; la poignée, porte fermée */
   const mins = cooking ? Math.ceil(ph.left / 60000) : 0;
   r.hot.push({ x: dx - dr - 8, y: dy - dr - 8, w: 2 * dr + 16, h: 2 * dr + 16, tip: cooking ? (mins > 1 ? tr("oven.door.cooking").replace("{m}", mins) : tr("oven.door.soon")) : done ? tr("oven.door.done") : tr("oven.door"), oven: cooking || done ? null : "door" });
+  { /* le bouton du four : du laiton, un voyant rouge qui s'allume pendant la cuisson ; le presser ferme la porte et lance la cuisson (comme la porte) */
+    const bxq = 419, byq = 266, on = cooking;
+    ctx.fillStyle = c(trim[1]); ctx.beginPath(); ctx.arc(bxq, byq, 7.5, 0, TAU); ctx.fill(); ctx.fillStyle = c(trim[0]); ctx.beginPath(); ctx.arc(bxq, byq, 6, 0, TAU); ctx.fill();
+    if (on) { const g = ctx.createRadialGradient(bxq, byq, 1, bxq, byq, 14); g.addColorStop(0, rgba(255, 90, 50, 0.6)); g.addColorStop(1, rgba(255, 60, 30, 0)); ctx.fillStyle = g; ctx.fillRect(bxq - 14, byq - 14, 28, 28); }
+    ctx.fillStyle = on ? "#ff5a32" : c("#5a1a12"); ctx.beginPath(); ctx.arc(bxq, byq, 3.6, 0, TAU); ctx.fill(); ctx.fillStyle = rgba(255, 255, 255, on ? 0.6 : 0.25); ctx.beginPath(); ctx.arc(bxq - 1.2, byq - 1.3, 1.1, 0, TAU); ctx.fill();
+    r.hot.push({ x: bxq - 9, y: byq - 9, w: 18, h: 18, tip: on ? tr("oven.start.on") : done ? tr("oven.door.done") : tr("oven.start"), oven: cooking || done ? null : "door" });
+  }
   /* le feu : une capsule jetée au four flambe (chaque sorte sa fumée : pâle pour le blanc, ambrée pour l'ambré, verte pour le gris), et la fumée monte vers le conduit */
   const bt = o.burnt && !o.burnt.drain ? (nowOf(r) - o.burnt.at) / 3000 : -1;
   if (bt >= 0 && bt < 1) {
