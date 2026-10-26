@@ -25,7 +25,7 @@ const keyOf = (s) => [...String(s || "")].reduce((a, ch) => (a * 31 + ch.charCod
 
 /** Un livre debout, vu de dos. o : { verdict, key, ornate, blank (sans pièce de titre), pressed } */
 function spine(ctx, c, x, y, w, h, color, o = {}) {
-  const k = keyOf(o.key || color);
+  const k = keyOf(o.key || color), plain = o.style === "plain"; o = o.style === "ornate" ? { ...o, ornate: true } : o; /* style : "plain" (cuir nu, sans nerfs), "simple" (par défaut), "ornate" */
   const g = ctx.createLinearGradient(x, 0, x + w, 0); g.addColorStop(0, c(shade(color, -0.35))); g.addColorStop(0.45, c(shade(color, 0.06))); g.addColorStop(1, c(shade(color, -0.45)));
   ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
   if (o.ornate) { /* les coiffes, en haut et en bas : un bourrelet de cuir plus sombre */
@@ -34,6 +34,7 @@ function spine(ctx, c, x, y, w, h, color, o = {}) {
   const top = 3 + (k % 3) + (o.ornate ? 2 : 0), nb = 1 + ((k >>> 3) % 3), bot = h * (0.7 + ((k >>> 6) % 5) * 0.045), gap = 3 + ((k >>> 9) % 2), bands = [];
   for (let i = 0; i < nb; i++) bands.push(y + top + i * gap);
   for (let i = 0; i < 1 + ((k >>> 11) % 2); i++) bands.push(Math.min(y + h - 4, y + bot + i * gap));
+  if (plain) bands.length = 0; /* le cuir nu : pas de nerfs, au plus une pièce de titre */
   for (const yy of bands) { ctx.fillStyle = rgba(0, 0, 0, 0.4); ctx.fillRect(x, yy + 1, w, 1); ctx.fillStyle = rgba(GILT[0], GILT[1], GILT[2], 0.55); ctx.fillRect(x, yy, w, 0.8); } /* les nerfs, d'un or passé */
   if (!o.blank) {
     const ty = y + h * 0.3, th = h * 0.22;
