@@ -30,20 +30,55 @@ function phaseOf(drop, now) {
   return null;
 }
 
+/** La trappe de bois (sans habillage, 26 oct. 2026) : un cadre de pierres scellées dans le sol, des planches inégales qui ont du relief,
+ *  deux pentures de fer cloutées qui finissent en fer de lance, une platine et un anneau de fer qui pend, avec son ombre ; vue en perspective. */
+function woodTrap(ctx, c, cx, cy, w, h, hov) {
+  const sk = h * 0.32, P = (u, v) => [cx - w / 2 + sk * (1 - v) + u * (w - 2 * sk * (1 - v)), cy - h / 2 + v * h]; /* (u, v) dans la trappe : 0..1 de gauche à droite, du fond vers nous */
+  const poly = (pts) => { ctx.beginPath(); pts.forEach(([px, py], k) => (k ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.closePath(); };
+  const rim = (d) => { const s2 = sk + d * 0.5; return [[cx - w / 2 + s2 - d, cy - h / 2 - d * 0.55], [cx + w / 2 - s2 + d, cy - h / 2 - d * 0.55], [cx + w / 2 + d, cy + h / 2 + d * 0.7], [cx - w / 2 - d, cy + h / 2 + d * 0.7]]; };
+  /* le cadre de pierre, et ses joints */
+  ctx.fillStyle = "rgba(0,0,0,0.4)"; poly(rim(9).map(([a, b]) => [a + 2, b + 3])); ctx.fill();
+  const gs = ctx.createLinearGradient(0, cy - h / 2 - 6, 0, cy + h / 2 + 7); gs.addColorStop(0, c("#4c4a4a")); gs.addColorStop(1, c("#2f2d2d")); ctx.fillStyle = gs; poly(rim(8)); ctx.fill();
+  ctx.strokeStyle = c("#1d1b1b"); ctx.lineWidth = 0.9; poly(rim(8)); ctx.stroke();
+  ctx.strokeStyle = c("#232121"); ctx.lineWidth = 0.8; const R8 = rim(8), R0 = rim(1);
+  for (const k of [0.22, 0.5, 0.78]) { for (const [a, b] of [[0, 1], [3, 2]]) { const ox = R8[a][0] + (R8[b][0] - R8[a][0]) * k, oy = R8[a][1] + (R8[b][1] - R8[a][1]) * k, ix = R0[a][0] + (R0[b][0] - R0[a][0]) * k, iy = R0[a][1] + (R0[b][1] - R0[a][1]) * k; ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ix, iy); ctx.stroke(); } }
+  ctx.fillStyle = "#0b0807"; poly(rim(1)); ctx.fill(); /* le creux entre la pierre et le bois */
+  /* les planches : six, chacune son ton, ses fibres, un bord éclairé */
+  const tones = ["#4b3521", "#56402a", "#4f3824", "#5b432b", "#4a3420", "#553d27"];
+  for (let k = 0; k < 6; k++) {
+    const u0 = k / 6 + 0.004, u1 = (k + 1) / 6 - 0.004, q = [P(u0, 0), P(u1, 0), P(u1, 1), P(u0, 1)];
+    const gp = ctx.createLinearGradient(0, cy - h / 2, 0, cy + h / 2); gp.addColorStop(0, c(tones[k])); gp.addColorStop(1, mixHex(tones[k], "#1c130b", 0.35, c)); ctx.fillStyle = gp; poly(q); ctx.fill();
+    ctx.save(); poly(q); ctx.clip(); ctx.strokeStyle = "rgba(20,12,6,0.35)"; ctx.lineWidth = 0.6;
+    for (let f = 1; f < 4; f++) { const u = u0 + (u1 - u0) * (f / 4) + 0.006 * Math.sin(k * 3 + f); const [ax, ay] = P(u, 0), [bx, by] = P(u, 1); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo((ax + bx) / 2 + 1.2 * Math.sin(k + f), (ay + by) / 2, bx, by); ctx.stroke(); }
+    if (k === 2) { const [kx, ky] = P(u0 + (u1 - u0) * 0.55, 0.62); ctx.fillStyle = "rgba(25,15,8,0.55)"; ctx.beginPath(); ctx.ellipse(kx, ky, 2.2, 1.2, 0, 0, TAU); ctx.fill(); } /* un nœud */
+    ctx.restore();
+    ctx.strokeStyle = "rgba(255,220,170,0.12)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(...P(u0, 0)); ctx.lineTo(...P(u0, 1)); ctx.stroke();
+  }
+  /* deux pentures de fer, cloutées, en fer de lance vers la droite */
+  for (const v of [0.24, 0.72]) {
+    const t0 = 0.03, t1 = 0.86, hh = 0.11, [ax, ay] = P(t0, v - hh / 2), [bx, by] = P(t1, v - hh / 2), [dx, dy] = P(t0, v + hh / 2), [ex, ey] = P(t1, v + hh / 2), [px, py] = P(t1 + 0.07, v);
+    ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.beginPath(); ctx.moveTo(ax, ay + 1.5); ctx.lineTo(bx, by + 1.5); ctx.lineTo(px, py + 1.5); ctx.lineTo(ex, ey + 1.5); ctx.lineTo(dx, dy + 1.5); ctx.closePath(); ctx.fill();
+    const gi = ctx.createLinearGradient(0, ay, 0, dy); gi.addColorStop(0, c("#5c5c62")); gi.addColorStop(1, c("#2c2c31")); ctx.fillStyle = gi;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.lineTo(px, py); ctx.lineTo(ex, ey); ctx.lineTo(dx, dy); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = c("#1a1a1e"); ctx.lineWidth = 0.7; ctx.stroke();
+    for (const u of [0.1, 0.3, 0.5, 0.7]) { const [nx, ny] = P(u, v); ctx.fillStyle = c("#77777e"); ctx.beginPath(); ctx.arc(nx, ny, 1.1, 0, TAU); ctx.fill(); ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(nx - 0.2, ny + 0.6, 1.2, 0.6); }
+  }
+  /* la platine et l'anneau qui pend, couché sur le bois, avec son ombre */
+  const [rx, ry] = P(0.5, 0.5);
+  ctx.fillStyle = c("#38383e"); ctx.beginPath(); ctx.ellipse(rx, ry - 1, 4.2, 2.2, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = c("#1a1a1e"); ctx.lineWidth = 0.6; ctx.stroke();
+  ctx.strokeStyle = "rgba(0,0,0,0.45)"; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.ellipse(rx + 1, ry + 6, 6.5, 3.2, 0, 0, TAU); ctx.stroke(); /* l'ombre de l'anneau */
+  ctx.strokeStyle = c(hov ? "#9a9aa2" : "#66666d"); ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(rx, ry + 4.5, 6.5, 3.2, 0, 0, TAU); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.18)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.ellipse(rx, ry + 4.5, 6.5, 3.2, 0, Math.PI * 1.1, Math.PI * 1.7); ctx.stroke();
+}
+/** Mélange de deux couleurs hexadécimales (t de 0 à 1), passé par la lumière de la pièce `c`. */
+function mixHex(a, b, t, c) { const p = (h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16)), A = p(a), B = p(b), m = A.map((v, k) => Math.round(v + (B[k] - v) * t)); return c("#" + m.map((v) => v.toString(16).padStart(2, "0")).join("")); }
+
 /** Une trappe dans le sol du cellier, sur la caverne : de bois cerclé de fer (de bronze à la Verrière, de pierre à anneau de fer au Château). */
 function vaultCrack(r, ctx, c, castle, t) {
   const x = 60, y = 290, w = 120, h = 46, tr = TR(r), hov = r.hover && r.hover.go === "cavetop", glass = !castle && r.glassOn && r.glassOn();
   if (castle) { require("./relto-castle").stoneTrap(ctx, c, x + w / 2, y + h / 2, w * 0.86, h * 0.72); /* le Château : une trappe de pierre à anneau de fer, comme celle de la cabane */
   } else if (glass) { require("./relto-glass").bronzeTrap(ctx, c, x + w / 2, y + h / 2, w * 0.86, h * 0.72); } /* la Verrière : une trappe de bronze */
-  else { /* une trappe de bois dans le sol, cerclée de fer, un anneau */
-    const cx = x + w / 2, cy = y + h / 2, tw = w * 0.84, th = h * 0.7, sk = th * 0.35, quad = () => { ctx.beginPath(); ctx.moveTo(cx - tw / 2 + sk, cy - th / 2); ctx.lineTo(cx + tw / 2 - sk, cy - th / 2); ctx.lineTo(cx + tw / 2, cy + th / 2); ctx.lineTo(cx - tw / 2, cy + th / 2); ctx.closePath(); };
-    ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(cx - tw / 2 - 3, cy - th / 2 - 2, tw + 6, th + 5);
-    const g = ctx.createLinearGradient(cx - tw / 2, 0, cx + tw / 2, 0); g.addColorStop(0, c("#3e2c1c")); g.addColorStop(0.5, c("#5a4028")); g.addColorStop(1, c("#34251a")); ctx.fillStyle = g; quad(); ctx.fill();
-    ctx.save(); quad(); ctx.clip(); ctx.strokeStyle = c("#22180f"); ctx.lineWidth = 1; for (let i = 1; i < 6; i++) { const xx = cx - tw / 2 + (tw * i) / 6; ctx.beginPath(); ctx.moveTo(xx + sk * (1 - i / 3), cy - th / 2); ctx.lineTo(xx, cy + th / 2); ctx.stroke(); }
-    ctx.fillStyle = c("#2a2a2e"); ctx.fillRect(cx - tw / 2, cy - th * 0.18, tw, 3); ctx.fillRect(cx - tw / 2, cy + th * 0.22, tw, 3); ctx.restore();
-    ctx.strokeStyle = c("#1a1410"); ctx.lineWidth = 1.4; quad(); ctx.stroke();
-    ctx.strokeStyle = c(hov ? "#8a8a90" : "#5a5a60"); ctx.lineWidth = 1.8; ctx.beginPath(); ctx.ellipse(cx, cy + 2, 6, 3, 0, 0, TAU); ctx.stroke(); /* l'anneau */
-  }
+  else woodTrap(ctx, c, x + w / 2, y + h / 2, w * 0.86, h * 0.74, hov); /* une trappe de bois dans le sol, dans son cadre de pierre, ferrée, un anneau */
   const g = ctx.createRadialGradient(x + w / 2, y + h * 0.7, 2, x + w / 2, y + h * 0.7, w * 0.6); g.addColorStop(0, rgba(120, 200, 170, (hov ? 0.14 : 0.0) * (0.7 + 0.3 * Math.sin(t * 0.8)))); g.addColorStop(1, rgba(120, 200, 170, 0)); ctx.fillStyle = g; ctx.fillRect(x - 20, y - 20, w + 40, h + 40);
   r.hot.push({ x, y: y - 6, w, h: h + 6, tip: tr("cave.trap"), go: "cavetop" });
 }
@@ -190,17 +225,35 @@ function traces(ctx, k, a, seenAt, t, hands) {
   }
 }
 
+/** La berge du lac : un ovale bosselé (deux harmoniques fixes), centré en (320, 300). */
+function lakePath(ctx, fresh = true) {
+  if (fresh) ctx.beginPath();
+  for (let i = 0; i <= 72; i++) { const a = (i / 72) * TAU, k = 1 + 0.07 * Math.sin(3 * a + 0.6) + 0.045 * Math.sin(7 * a + 2.1) + 0.03 * Math.sin(11 * a + 0.3), x = 320 + Math.cos(a) * 172 * k, y = 300 + Math.sin(a) * 30 * (0.92 + 0.08 * k); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.closePath();
+}
+/** Hors de l'eau : la paroi se peint partout sauf sur le lac (elle ne passe plus par-dessus). */
+function clipOutLake(ctx) { ctx.beginPath(); ctx.rect(0, 0, W, H); lakePath(ctx, false); ctx.clip("evenodd"); }
+/** Trois rochers sombres qui avancent dans l'eau, sur la berge : le lac n'est plus un plat posé au sol. */
+function lakeRocks(ctx) {
+  for (const [x, y, w, h] of [[178, 294, 22, 7], [458, 310, 26, 7]]) {
+    ctx.fillStyle = "#06090a"; ctx.beginPath(); ctx.moveTo(x - w / 2, y + h / 2); ctx.quadraticCurveTo(x - w * 0.4, y - h * 0.4, x - w * 0.05, y - h / 2); ctx.quadraticCurveTo(x + w * 0.35, y - h * 0.45, x + w / 2, y + h / 2); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(120,150,150,0.10)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x - w * 0.35, y - h * 0.15); ctx.quadraticCurveTo(x - w * 0.05, y - h * 0.55, x + w * 0.3, y - h * 0.2); ctx.stroke();
+  }
+}
 function drawCaveBottom(r, ctx, sc, sky, t) {
   const tr = TR(r), st = stateOf(r), now = nowOf(r), ph = phaseOf(st.drop, now), seed = "cave";
   ctx.fillStyle = "#010203"; ctx.fillRect(0, 0, W, H);
   /* le bassin, à peine deviné ; des gouttes qui tombent dans le noir */
-  ctx.strokeStyle = "rgba(90,120,130,0.10)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(320, 300, 170, 30, 0, 0, TAU); ctx.stroke();
+  lakePath(ctx); ctx.fillStyle = "#020506"; ctx.fill(); ctx.strokeStyle = "rgba(90,120,130,0.12)"; ctx.lineWidth = 1; ctx.stroke(); /* une berge irrégulière (26 oct. 2026 : plus un ovale parfait) */
   for (let i = 0; i < 4; i++) { const k = fnv("drip" + i), x = 160 + (k % 320), q = ((t * 0.25 + i * 0.27) % 1); ctx.fillStyle = rgba(160, 190, 200, 0.25 * (1 - q)); ctx.fillRect(x, 40 + q * 250, 1, 3); }
   const kLit = ph && ph.kind === "lit" ? ph.k : -1, dim = kLit < 0 ? 1 : 1 - 0.9 * (kLit < 120 ? kLit / 120 : kLit < 700 ? 1 : Math.max(0, 1 - (kLit - 700) / 2200)); /* le creux : le blanc chasse le vert, puis le lac revient */
   /* le lac : chaque ambré y a laissé une colonie, jamais perdue ; nourries ces derniers jours elles pulsent, négligées elles restent des braises */
+  ctx.save(); lakePath(ctx); ctx.clip(); /* les colonies restent dans l'eau : rien ne déborde sur la paroi */
   { const n = Math.min(240, st.colonies || 0), fresh = clamp(1 - (now - (st.fedAt || 0)) / (3 * 86400000)), q = (k) => (fnv("colony" + k) % 10000) / 10000;
     for (let i = 0; i < n; i++) { const a = q("a" + i) * TAU, rr = Math.sqrt(q("r" + i)), x = 320 + Math.cos(a) * 160 * rr, y = 300 + Math.sin(a) * 26 * rr, s2 = 2 + q("s" + i) * 4, al = dim * (0.22 + 0.45 * fresh) * (0.75 + 0.25 * Math.sin(t * (0.6 + q("p" + i)) + i));
       const g = ctx.createRadialGradient(x, y, 0.5, x, y, s2 * 2.4); g.addColorStop(0, rgba(255, 170, 80, al)); g.addColorStop(1, rgba(255, 140, 60, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, s2 * 2.4, s2 * 0.9, 0, 0, TAU); ctx.fill(); } }
+  ctx.restore();
+  lakeRocks(ctx); /* des rochers qui avancent dans l'eau, par-dessus le bord */
   let lit = 0, reveal = 0;
   if (ph && ph.kind === "lit") {
     const k = ph.k, hold = ph.L - 2500; lit = k < 2500 ? k / 2500 : k < hold ? 1 : Math.max(0, 1 - (k - hold) / 2500); reveal = Math.min(H, (k / 3200) * H) * (k < hold ? 1 : lit); /* la lueur monte en 3 s, tient, puis retombe */
@@ -218,11 +271,11 @@ function drawCaveBottom(r, ctx, sc, sky, t) {
   const permA = (degree >= 3 ? 0.62 : degree >= 2 ? 0.42 : 0) * dim;
   if (permA > 0) { /* le lac vivant éclaire le bas de la paroi, sans éclair ; rendu à sa lumière, toute la caverne */
     const top = degree >= 3 ? 0 : FR.BAND_Y(0) - 40, gp = ctx.createLinearGradient(0, H, 0, top); gp.addColorStop(0, rgba(60, 200, 140, 0.30 * permA)); gp.addColorStop(1, rgba(40, 140, 110, 0));
-    ctx.save(); ctx.beginPath(); ctx.rect(0, top, W, H - top); ctx.clip(); ctx.globalAlpha = permA * 0.8; walls(ctx, "#1b2a24", seed); ctx.restore(); ctx.fillStyle = gp; ctx.fillRect(0, top, W, H - top);
+    ctx.save(); clipOutLake(ctx); ctx.beginPath(); ctx.rect(0, top, W, H - top); ctx.clip(); ctx.globalAlpha = permA * 0.8; walls(ctx, "#1b2a24", seed); ctx.restore(); ctx.fillStyle = gp; ctx.fillRect(0, top, W, H - top);
   }
   if (lit > 0) {
     const g = ctx.createLinearGradient(0, H, 0, H - reveal); g.addColorStop(0, rgba(150, 205, 235, 0.5 * lit)); g.addColorStop(0.7, rgba(110, 160, 200, 0.24 * lit)); g.addColorStop(1, rgba(60, 90, 130, 0)); /* une lumière froide, blanc-bleu : pas le vert du lac */ /* la paroi, dans la lueur des algues */
-    ctx.save(); ctx.beginPath(); ctx.rect(0, H - reveal, W, reveal); ctx.clip(); ctx.globalAlpha = lit; walls(ctx, "#1e2630", seed); ctx.restore(); /* la paroi n'apparaît que là où la lueur est montée */
+    ctx.save(); clipOutLake(ctx); ctx.beginPath(); ctx.rect(0, H - reveal, W, reveal); ctx.clip(); ctx.globalAlpha = lit; walls(ctx, "#1e2630", seed); ctx.restore(); /* la paroi n'apparaît que là où la lueur est montée */
     ctx.fillStyle = g; ctx.fillRect(0, H - reveal, W, reveal);
     ctx.save(); ctx.beginPath(); ctx.rect(0, H - reveal, W, reveal); ctx.clip(); for (let i = 0; i < 9; i++) { const kk = fnv("bstrata" + i); ctx.strokeStyle = rgba(30, 60, 50, 0.4 * lit); ctx.lineWidth = 1; ctx.beginPath(); for (let x = 0; x <= W; x += 16) { const y = 30 + i * 28 + 6 * Math.sin(x / 60 + kk); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); } ctx.restore();
     const rising = ph.k < ph.L - 2500 && reveal < H - 4; /* la crête de la vague, tant qu'elle monte */
