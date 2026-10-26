@@ -177,7 +177,10 @@ const relDone = (async () => {
   clickOn(ri, (a) => a.key === "az" && a.delta > 0, "manivelle"); ok(st.settings.az === 1, "le périscope tourne");
   // étape 2 : la synchro trouve la planète dans son système
   ok(ri.imagerCal() && ri.hot.some((h) => h.imager && h.imager.sync != null), "Kerath située : le micromètre de synchro");
-  let k = 0; while (!ri.imagerCal().synced && k++ < 80) { const g = ri.imagerCal().gap, d = Math.abs(g) > 5 ? 10 : 1; ri.imagerAct({ sync: Math.sign(g || 1) * d }); }
+  let k = 0; while (!ri.imagerCal().synced && !st.syncHold && k++ < 80) { const g = ri.imagerCal().gap, d = Math.abs(g) > 5 ? 10 : 1; ri.imagerAct({ sync: Math.sign(g || 1) * d }); }
+  ok(!ri.imagerCal().synced && st.syncHold, "Art de la Guilde : la planète trouvée, la synchro attend la pose");
+  ri.nowOverride += TL.HOLD_BEATS * TL.PULSE_MS - 200; ri.draw(9.4); ok(!ri.imagerCal().synced && st.syncHold, "pas encore trois battements : rien ne prend");
+  ri.nowOverride += 400; ri.draw(9.5);
   ok(ri.imagerCal().synced && ri.imagerCal().lt.known && st.g.syncFor === "Ages/Brume.md", `synchronisé (${k} gestes) : l'heure là-bas`);
   ok(tunings["Ages/Brume.md"] && tunings["Ages/Brume.md"].syncAt === ri.nowOverride, "la synchro est aussi écrite pour Brume (son onglet Détails dit l'heure)");
   ri.draw(10); ok(ri.hot.some((h) => /KIPS/.test(h.tip)), "les coordonnées KIPS");

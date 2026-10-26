@@ -206,12 +206,12 @@ function actSystem(r, st, a, sfx) {
   // le piège qui mord : la pose sur le FAUX pouls (la direction juste, le retard sur le faux) grave une étoile à une fausse distance
   const bite = needHold(r, sc) && sc.falseLock && after.found && !after.located ? st.dial.delay - clue.delay : 0;
   if ((after.located || bite) && (!rec || (rec.line || 0) !== st.line || (rec.beatErr || 0) !== beatErr || (rec.bite || 0) !== bite)) {
-    if (needHold(r, sc)) st.hold = { key: sys.key, t0: now(r), bite }; // deux pouls emmêlés : rien ne se grave avant la pose
+    if (guildOf(r)) st.hold = { key: sys.key, t0: now(r), bite }; // Art de la Guilde : rien ne se grave avant la pose, trois battements immobiles (26 oct. 2026 : partout, plus seulement près d'un faux pouls)
     else chart(r, st, sys, sfx);
   }
   if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st));
 }
-const needHold = (r, sc) => guildOf(r) && !!sc.beat; // la pose : la plaque a toujours besoin d'exposition près d'un faux pouls (les balises ne l'en dispensent pas)
+const needHold = (r, sc) => guildOf(r) && !!sc.beat; // deux pouls emmêlés près d'un faux pouls : le vrai écho pâlit, et la pose peut mordre (la pose elle-même vaut pour toute la Guilde)
 /** Grave l'étoile située sur la ligne où l'instrument est calé (une étoile gravée sur une autre ligne, ou au mauvais battement, est regravée). */
 function chart(r, st, sys, sfx, bite = 0) {
   const rec = st.systems[sys.key], tri = st.triFor === sys.key, name = st.book && st.book.age ? st.book.age.name : null;
@@ -760,4 +760,4 @@ function aimedOf(r) {
   return GI.aimedOf(r.opts && r.opts.telescopeGet ? r.opts.telescopeGet(key) : null);
 }
 
-module.exports = { coarseBand, drawTelescopeRoom, drawOnIsland, state, act, systemsOf, aimedOf, aimedKey, bookLoad, EYE, WHEELS, PLATE, SPLATE, DELAY, LECTERN, FIELD, PULSE_MS };
+module.exports = { HOLD_BEATS, coarseBand, drawTelescopeRoom, drawOnIsland, state, act, systemsOf, aimedOf, aimedKey, bookLoad, EYE, WHEELS, PLATE, SPLATE, DELAY, LECTERN, FIELD, PULSE_MS };

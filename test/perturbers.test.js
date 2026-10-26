@@ -211,6 +211,7 @@ const relDone = (async () => {
   click((a) => a.book === 1, "livre suivant"); await tick(); r.draw(4);
   const sysB = st.book.data.system, c = sysB.clue; st.dial = { torahn: (c.torahn + 300) % T.TURN, elev: c.elevation, delay: c.delay };
   click((a) => a.axis === "torahn" && a.delta === -T.STEP.torahn.hub, "Torahn −1"); click((a) => a.axis === "torahn" && a.delta === -T.STEP.torahn.hub, "Torahn −1"); click((a) => a.axis === "torahn" && a.delta === -T.STEP.torahn.hub, "Torahn −1");
+  if (st.hold) { r.nowOverride = st.hold.t0 + 4500; r.draw(4.5); r.nowOverride = t0; } /* Art de la Guilde : la pose, partout (26 oct.) */
   const recB = st.systems[sysB.key]; ok(recB && recB.line === old.L && angle(recB.torahn, sysB.pos.torahn) === Math.abs(old.L) && recB.ages.includes("Brume"), "Brume située sur la ligne ancienne : gravée de travers, son nom noté");
   // la carte le montre
   click((a) => a.go === "starmap", "le rouleau de la carte"); ok(r.view === "starmap", "la carte s'ouvre depuis l'observatoire");
@@ -227,6 +228,7 @@ const relDone = (async () => {
   click((a) => a.book === 1, "Brume"); await tick(); r.draw(10); ok(r.hot.some((h) => h.tel && h.tel.unchart), "sa plaque a un coin à gratter");
   // regraver en visant : la carte se referme
   st.dial = { torahn: (c.torahn + 300) % T.TURN, elev: c.elevation, delay: c.delay }; click((a) => a.axis === "torahn" && a.delta === -T.STEP.torahn.hub, "Torahn −1"); click((a) => a.axis === "torahn" && a.delta === -T.STEP.torahn.hub, "Torahn −1"); click((a) => a.axis === "torahn" && a.delta === -T.STEP.torahn.hub, "Torahn −1");
+  if (st.hold) { r.nowOverride = st.hold.t0 + 4500; r.draw(10.5); r.nowOverride = t0; }
   ok(!("line" in st.systems[sysB.key]) && st.systems[sysB.key].torahn === sysB.pos.torahn && st.systems[sysB.key].ages.join() === "Brume,Cendre", "regravée sur la vraie ligne : juste, ses Âges gardés");
   ok(MAP.layout(st.zero, st.systems, st.line).stars.every((q) => q.miss === 0), "la carte se referme");
   click((a) => a.unchart, "gratter"); ok(!st.systems[sysB.key] && !(store[st.key].systems || {})[sysB.key], "gratter l'étoile : elle n'est plus située");

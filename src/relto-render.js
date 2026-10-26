@@ -749,9 +749,22 @@ class ReltoRenderer {
         if (!this.running) this.draw(0);
       });
     }
-    this.imagerFind();
+    this.imagerFind(); this.imagerPose(st);
     this.imagerRemember((text) => { this.flash = { text, x: W / 2, y: 120, until: Date.now() + 3200 }; }); // l'image peut se former d'elle-même (la phase dérive)
     return st;
+  }
+  /** La pose de la synchro (Art de la Guilde) : le micromètre tenu sur la planète trois battements ; bougé, ou la planète sortie de la tolérance, rien ne prend. */
+  imagerPose(st) {
+    const h = st.syncHold; if (!h) return;
+    const now = this.imagerNow(), cal = this.imagerCal();
+    if (!st.system || st.system.key !== h.sysKey || st.settings.sync !== h.sync || !cal || cal.slip || !CAL.turnSync(st.settings, 0, st.orbit, true, now, h.sync).synced) { st.syncHold = null; return; }
+    if (now - h.t0 < TL.HOLD_BEATS * TL.PULSE_MS) return;
+    st.syncHold = null; st.settings = IM.normalize({ ...st.settings, syncAt: now, sysKey: h.sysKey });
+    st.g = { ...st.g, syncFor: st.world ? st.world.age.path : null };
+    if (st.world && this.opts.imagerGet && this.opts.imagerSet) { const p = st.world.age.path, s = st.settings; this.opts.imagerSet(p, { ...(this.opts.imagerGet(p) || {}), sync: s.sync, syncAt: s.syncAt, sysKey: s.sysKey }); }
+    if (this.opts.onImagerSound) this.opts.onImagerSound("lock");
+    const tt = this.opts && typeof this.opts.t === "function" ? this.opts.t : null; if (tt) this.flash = { text: tt("cal.synced"), x: W / 2, y: 120, until: Date.now() + 2400 };
+    this.imagerSave(); if (this.opts.onImagerTune) this.opts.onImagerTune(st);
   }
   /** Le monde que les réglages approchent, et ce qui en découle (cible, vue, système, lumière renvoyée par le télescope). */
   imagerFind() {
@@ -875,7 +888,11 @@ class ReltoRenderer {
     if (a.sync != null) { // le micromètre de synchro : seulement quand le système de l'Âge est situé
       const cal = this.imagerCal(), tt = this.opts && typeof this.opts.t === "function" ? this.opts.t : null; if (!cal) return;
       if (cal.slip) { st.settings = IM.normalize({ ...before, sync: CAL.turnSync(before, a.sync, st.orbit, true, now).s.sync, syncAt: null }); sfx("click"); if (tt) say(tt("cal.slip")); this.imagerSave(); return; } // le mauvais battement : la planète glisse
-      const res = CAL.turnSync(before, a.sync, st.orbit, true, now); st.settings = IM.normalize(res.synced ? { ...res.s, sysKey: st.system.key } : res.s);
+      const res = CAL.turnSync(before, a.sync, st.orbit, true, now); st.syncHold = null;
+      if (st.guild && res.synced && !(cal.synced && cal.certain && cal.q >= 1)) { /* Art de la Guilde : la synchro ne prend qu'après la pose, trois battements sans toucher au micromètre (26 oct. 2026) */
+        st.settings = IM.normalize({ ...res.s, syncAt: null }); st.syncHold = { t0: now, sync: st.settings.sync, sysKey: st.system.key }; sfx("click"); if (tt) this.flash = { text: tt("cal.pose"), x: W / 2, y: 120, until: Date.now() + TL.HOLD_BEATS * TL.PULSE_MS }; this.imagerSave(); return;
+      }
+      st.settings = IM.normalize(res.synced ? { ...res.s, sysKey: st.system.key } : res.s);
       if (st.guild) {
         st.g = { ...st.g, syncFor: res.synced && st.world ? st.world.age.path : null };
         if (res.synced && st.world && this.opts.imagerGet && this.opts.imagerSet) { const p = st.world.age.path, s = st.settings; this.opts.imagerSet(p, { ...(this.opts.imagerGet(p) || {}), sync: s.sync, syncAt: s.syncAt, sysKey: s.sysKey }); } // l'onglet Détails de l'Âge dit l'heure là-bas

@@ -194,8 +194,12 @@ const relDone = (async () => {
   ok(!st.systems[sysB.key], "direction et hauteur justes, retard faux : pas encore situé");
   r.draw(5); ok(r.hot.length > 0, "dessin pendant la mesure"); // la ligne de l'écho
   reach("delay", clue.delay, () => st.dial.delay);
-  ok(st.systems[sysB.key] && store[st.key].systems[sysB.key] && sounds.includes("found"), "les trois indices reportés : le système est situé, gardé, avec la quinte");
-  const rec = st.systems[sysB.key]; ok(rec.torahn === sysB.pos.torahn && rec.distance === sysB.pos.distance && rec.at === t0, "la plaque grave la position GZCS de l'étoile");
+  ok(!st.systems[sysB.key] && st.hold, "Art de la Guilde : le bon réglage ne grave rien tout de suite, la pose commence");
+  const POSE = require("../src/relto-telescope").HOLD_BEATS * require("../src/relto-telescope").PULSE_MS + 1;
+  r.nowOverride = t0 + POSE; r.draw(5.5); /* trois battements immobiles */
+  ok(st.systems[sysB.key] && store[st.key].systems[sysB.key] && sounds.includes("found"), "les trois indices reportés, la pose tenue : le système est situé, gardé, avec la quinte");
+  const rec = st.systems[sysB.key]; ok(rec.torahn === sysB.pos.torahn && rec.distance === sysB.pos.distance && rec.at === Math.round(t0 + POSE), "la plaque grave la position GZCS de l'étoile");
+  r.nowOverride = t0;
   r.draw(6); ok(r.hot.some((h) => h.tel && h.tel.setSystem), "la plaque de l'étoile est cliquable");
   // Cendre partage l'étoile de Brume : déjà située
   click((a) => a.book === 1, "livre suivant"); await tick(); r.draw(7);
