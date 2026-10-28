@@ -14,6 +14,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **What physics refuses is drawn poorly**: a written block the physics refuses is pale and faded, more so as the tension is heavier; refused grazers are gaunt, and a skeleton lies in the grass when the refusal is strong. The window no longer invents contradictions: no green without light, no river on lava, no ice floes in hot water, trees in their climate, land beasts only on land.
 - Water makes the ground only when it strictly dominates; otherwise it is a river or a lake on another soil.
 - Peat burns to ash in a wildfire.
+- **Guide** read through against the code: the window, the new soils, the tuning fork (slot, recall, damper), the study key's setting, the settings that were missing, the cave tests, the eight scars, `year_length` versus `tilt:`, ground made by life, seasons in the laws of life, stained-glass light.
 
 ## 2.0.0 — Seasons, and the end of the story (2026-10-26)
 
