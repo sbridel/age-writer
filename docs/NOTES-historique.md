@@ -83,7 +83,7 @@ unlock:                            # facultatif
 - **Instabilité visible** : sur la fenêtre de liaison, tremblements, ciel qui vire au violet/rouge, textures raturées, fissures, désaturation, selon la stabilité et les contradictions fortes. Contradiction forte → ligne « Fissure spatiale ». Modes : classique / statique / ondulation / balayage / aucun, intensité réglable. `prefers-reduced-motion` respecté.
 - **Page de garde** : onglet *Couverture* dans la vue livre ; bordure octogonale à méandres, cartouche, anneau de glyphes, chiffres ; commande *Save the Age cover* (SVG).
 - **Thème cuir** : cuir sombre, parchemin, coins en laiton avec rivets (réglage).
-- **Journal d'exploration** : commande *Create the exploration journal for this Age* (voix Atrus / Gehn / Miller, en/fr) → bloc `age-journal` qui s'écrit au fil des notes qui renvoient vers l'Âge (extrait de chaque note, croquis de glyphe en marge, altérations, mécanismes).
+- **Journal d'exploration** : commande *Create the exploration journal for this Age* (trois voix inventées, en/fr) → bloc `age-journal` qui s'écrit au fil des notes qui renvoient vers l'Âge (extrait de chaque note, croquis de glyphe en marge, altérations, mécanismes).
 - **Mécanismes** : écrire `dnie_mechanism: steam_powered_elevator` (ou `puzzle_type: sound_lock`) dans le bloc `age`. 11 mécanismes : ascenseur à vapeur, vanne, télescope, serrure sonore, réseau de fréquences, générateur à vapeur, imageur holofatique, planétaire, écluse, orgue à vent, réseau de lentilles. Chacun a un état (rouillé, envahi…) et une énigme (valeurs en chiffres, fréquences). Réglage *Mécanismes* : « dessinés » = l'Âge en invente selon son contenu.
 - **Solitude** : pondère le tirage (ruines ×2,2, flore ×1,3, vent/brume plus fréquents, chasseurs ×0,5 ; « forte » : ruines ×3,5, chasseurs ×0,25). **Change les mondes tirés** par rapport à la 1.3 (réglage *Équilibrée* par défaut ; *Aucune* restitue l'ancien tirage).
 - **Sons** : synthèse Web Audio (vent, pins, eau, cascade, pluie, bourdon, résonance métallique, feu, grillons, tonnerre), aucun fichier. **Démarre sur un clic** (bouton ♪).
@@ -698,6 +698,15 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 ## 1.48.0 — deux menus (23 oct. 2026)
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
+
+## 2.3.0 — le jardin et le vent (28 oct. 2026)
+
+Note : `claude/DESIGN-meteo-et-mesure.md` (projet) ; les Âges d'Opus (Vespertine, Ethanoic, Schism, Noumena) ont servi de banc d'essai.
+- **`sky:` / `ciel:`** (`src/sky.js`, `SKYC_RE`, `skyColourOf` ; `AGEX.skip` dans `src/entry.js`) : la teinte (ou gris, blanc) du ciel de jour remplace celle de la marque dans la palette (`build`), sans changer l'ordre des tirages.
+- **Jardin** (`buildGarden`, `gardenGround`) et **étang** (`buildPond`, `pondWater`) : graines propres ; `lake` sans mer remplace le ruban de rivière. `offWater` : la flore, la prairie, les fleurs, les blocs du sol ne poussent ni sur la rivière (`m.riverPoly`) ni sur l'étang. `bloom` : des fleurs à cinq pétales, hors du filtre du feuillage.
+- **Coriolis** (`src/physics/model.js` `coriolis`, `w.coriolis`, `w.winds` ; règle `spin` dans `src/physics/rules.js`, exigée par `tornado` ; une phrase dans `src/physics/text.js`) ; fenêtre : nuages en bandes, bras de spirale dans la masse de l'orage (sens selon l'hémisphère, tiré de la graine). Test : `coriolis.test.js`.
+- **L'Âge du mentor** (`src/story-mentor.js` ; `mentorWrite`, `storyHint`, l'évaluation dans `src/ui-relto.js`) : rest, weather, laws, hard, strange ; vérifié sur 12 noms par chapitre. Test : `mentor.test.js`.
+- **Journal** (`src/journal.js`) : voix `archivist`, `master`, `traveller` (`voiceOf`, `labelOf`) ; les anciennes valeurs restent comprises.
 
 ## 2.2.2 — le pli reste (28 oct. 2026)
 

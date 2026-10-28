@@ -41,6 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); in short:
 
+- **2.3, the garden and the wind.** A sky in the colour you write (`sky: red`), gardens and ponds in the window, flowers that look like flowers, winds that follow the spin of the world (Coriolis), and in the story the mentor's own Age under each chapter letter.
 - **2.2, where you arrive.** Every Book links to a place of its own (a hollow, a height, a slope, a forest edge, the mouth of a cave), the sky turns with it (the sun's course, the moon's phases, the star's light), storms come from their own side, and a line that contradicts nothing is free to add. A letter from the Guild tells what changed after each update (2.2.1: rings after the accord, the letter itself; 2.2.2: the letter stays until picked up).
 - **2.1, more worlds.** Four soils that follow the genesis (clay, chalk, basalt, granite), crystal trees and flowers, and a linking window that shows many more worlds: a face for each soil, rivers, relief, climate, trees, young worlds with their first giants, and what the physics refuses drawn poorly.
 - **2.0, seasons and the end of the story.** A third book that closes the story (left for you to find), seasons from a tilted axis, a cellar under the machine, matters with a genesis, a tuning fork that keeps a world, stained-glass light on the floor, and one binding for every book.
@@ -545,7 +546,7 @@ When the book is already open, clicking a window only replays the linking sound.
 - **D'ni numerals** in base 25 (Age number, seed, puzzles, clock). Levels: installed font (not provided), local glyph file, numerals drawn by the plugin. **D'ni time** in the Relto from the computer's clock.
 - **Mechanisms**: eleven (steam-powered elevator, water valve, telescope, sound lock, frequency array, steam generator, holofatic imager, orrery, tide gate, wind organ, lens array; not to be confused with the Relto's telescope page), each with a state and a puzzle.
 - **Solitude**: weights the draw toward deserted worlds.
-- **Exploration journal**: an `age-journal` block written as you go through linked notes; voices inspired by various characters from the games.
+- **Exploration journal**: an `age-journal` block written as you go through linked notes; three voices of its own: the archivist, the master, the traveller.
 - **Personal library**: `age-library` blocks define your own blocks, products, reactions and variants.
 
 ---

@@ -43,6 +43,7 @@ Deux endroits sortent exprès de la fiction : l'onglet **Détails** (stabilité 
 
 Le détail est dans [`CHANGELOG.md`](CHANGELOG.md) ; en bref :
 
+- **2.3, le jardin et le vent.** Un ciel de la couleur qu'on écrit (`ciel: rouge`), des jardins et des étangs dans la fenêtre, des fleurs qui ressemblent à des fleurs, des vents qui suivent la rotation du monde (Coriolis), et dans l'histoire l'Âge du mentor sous chaque lettre de chapitre.
 - **2.2, là où l'on arrive.** Chaque Livre relie à un lieu qui lui est propre (un creux, une hauteur, une pente, une lisière, l'entrée d'une grotte), le ciel y tourne (la course du soleil, les phases de la lune, la lumière de l'étoile), l'orage arrive de son côté, et une ligne qui ne contredit rien s'ajoute gratuitement. Un pli de la Guilde dit ce qui a changé après chaque mise à jour (2.2.1 : les anneaux après l'accord, le pli lui-même ; 2.2.2 : le pli reste jusqu'à ce qu'on le prenne).
 - **2.1, plus de mondes.** Quatre sols qui suivent la genèse (argile, craie, basalte, granite), arbres et fleurs de cristal, et une fenêtre de liaison qui montre bien plus de mondes : un visage par sol, des rivières, du relief, le climat, des arbres, les mondes jeunes et leurs premiers géants, et ce que la physique refuse, mal tiré.
 - **2.0, les saisons et la fin de l'histoire.** Un troisième livre qui clôt l'histoire (à découvrir), les saisons d'un axe incliné, une cave sous la machine, la genèse des matières, un diapason qui garde un monde, la lumière des vitraux au sol, et une seule reliure pour tous les livres.
@@ -540,7 +541,7 @@ Quand le livre est déjà ouvert, cliquer une vitre ne rejoue que le son de liai
 - **Chiffres D'ni** en base 25 (numéro d'Âge, graine, énigmes, horloge). Niveaux : police installée (non fournie), fichier de glyphes local, chiffres dessinés par le plugin. **Heure D'ni** du Relto d'après l'horloge de l'ordinateur.
 - **Mécanismes** : onze (ascenseur à vapeur, vanne, télescope, serrure sonore, réseau de fréquences, générateur à vapeur, imageur holofatique, planétaire, porte de marée, orgue à vent, réseau de lentilles ; à ne pas confondre avec la page télescope du Relto), chacun avec un état et une énigme.
 - **Solitude** : pondère le tirage vers des mondes déserts.
-- **Journal d'exploration** : un bloc `age-journal` qui s'écrit au fil des notes liées ; voix inspirées de divers personnages des jeux.
+- **Journal d'exploration** : un bloc `age-journal` qui s'écrit au fil des notes liées ; trois voix qui lui sont propres : l'archiviste, le maître, le voyageur.
 - **Bibliothèque personnelle** : des blocs `age-library` définissent tes propres blocs, produits, réactions et variantes.
 
 ---

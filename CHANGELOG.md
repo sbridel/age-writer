@@ -2,6 +2,19 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.3.0 — The garden and the wind (2026-10-28)
+
+### Added
+- **`sky: red`** (also `ciel: rouge`, or an angle of hue): the colour of the daytime sky, instead of the one the Book's mark draws. It is not an ink blot and costs nothing.
+- **The garden is drawn**: `garden` gives the window a clipped hedge before the horizon, pierced with openings, its alleys coming towards you, and flower beds.
+- **The pond**: `lake`, without a sea, lays a pond at the foot of the view instead of the river ribbon; it takes the colour of the sky, carries water lilies when plants grow, and koi swim under its surface with `shoal`.
+- **The Coriolis force**: the spin arranges the winds. A day of 12 h or less lays them in bands and coils storms into cyclones (banded clouds, spiralling storms in the window); a day of 4 days or more leaves a single loop of air; the Details tab says which. In strict physics, a tornado on a world too slow (or with one face fixed) is refused.
+- **The mentor's Age** (story mode): for the chapters where you write a world, Adrin writes under the chapter letter how he would have written it, as a quotation (it never counts as an Age of the folder). Always after you succeed; as a last resort if you ask for a hint again after the last one, or once three different Books, their ink dried, have not succeeded and two days have passed.
+
+### Changed
+- **Flowers are drawn as flowers** (petals around a heart) and keep their colours under any star; grass, flowers and low plants no longer grow on the river or the pond.
+- **The exploration journal's voices** are its own: the archivist, the master, the traveller. Journals already written keep their voice.
+
 ## 2.2.2 — The Guild letter stays (2026-10-28)
 
 ### Fixed
