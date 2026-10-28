@@ -208,6 +208,7 @@ function derive(p, set, written, ids) {
   w.volcanism = w.heat >= M.HEAT.volcanism;
   w.liquidCore = w.heat >= M.HEAT.liquidCore;
   w.field = M.dynamo(w.heat, w.rotation, w.cmf);
+  { const c = M.coriolis(w.rotation, w.locked); w.coriolis = c.k; w.winds = c.regime; } /* ESSAI : Coriolis */
   // L5 atmosphère : on essaie les trois régimes de l'eau (liquide, glace, sec) et l'on garde le premier
   // qui se confirme lui-même (supposer l'eau liquide donne bien une surface où elle est liquide, etc.)
   w.waterInv = p.water; w.volatiles = p.volatiles;

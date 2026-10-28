@@ -15,7 +15,7 @@ const { Soundscape, staticBurst, openSequence, linkSound, pageTurn } = require("
 const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
 const { sceneOf, HOOKS: GEN_HOOKS } = require("./genscene");
-const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, parseSky } = require("./sky");
+const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, SKYC_RE, parseSky } = require("./sky");
 const { AMOUNT_RE, parseAmounts, applyAmounts, factorOf } = require("./amounts");
 const HV = require("./harvest"); /* la récolte pour la machine du Relto, et les granulés cuits (étape 4a′) */
 const { rollLink } = fx;
@@ -53,8 +53,8 @@ module.exports = function build(Base, core, AGEX) {
 
   class VoiceModal extends FuzzySuggestModal {
     constructor(app, onChoose) { super(app); this.onChoose = onChoose; }
-    getItems() { return ["atrus", "gehn", "miller"]; }
-    getItemText(v) { return v[0].toUpperCase() + v.slice(1); }
+    getItems() { return ["archivist", "master", "traveller"]; }
+    getItemText(v) { return require("./journal").labelOf(v, this.lang || "en"); }
     onChooseItem(v) { this.onChoose(v); }
   }
 
@@ -203,7 +203,7 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.ghostSky = (category, phrase) => (this.lang() === "fr" ? DFR.skyPhrase(category) : phrase);
       AGEX.noDraw = (seed) => seed != null && R.storyNoDraw(this).has(String(seed));
       AGEX.norm = (line) => guard("météo", () => WX.normalize(line)) || line; // `rain: sometimes, dawn` : pour le moteur, c'est `rain`
-      AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || MOONS_RE.test(line) || MOON_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || DOSE.WORLD_SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line) || SYSTEM_RE.test(line); // `system: Kerath` : la graine d'étoile partagée (télescope, étape 2)
+      AGEX.skip = (line) => PH.isPhysicsLine(line) || PH.isPhysicsStub(line) || KEY_RE.test(line) || FX_RE.test(line) || STYLE_RE.test(line) || DAY_RE.test(line) || SKYC_RE.test(line) || MOONS_RE.test(line) || MOON_RE.test(line) || YEAR_RE.test(line) || SIZE_RE.test(line) || DOSE.WORLD_SIZE_RE.test(line) || AMOUNT_RE.test(line) || TRAP_RE.test(line) || DMG_RE.test(line) || COVER_RE.test(line) || SYSTEM_RE.test(line); // `system: Kerath` : la graine d'étoile partagée (télescope, étape 2)
       // livre-piège : « pas de fissure » est une réponse donnée d'avance, le tirage n'en dessine pas une que le pied de bloc nierait
       AGEX.written = (set) => { if (!AGEX.src || !guard("trap draw", () => parseTrap(AGEX.src))) return set; const s = new Set(set); s.add("no_fissure"); return s; };
       AGEX.w = (slot, opt) => { const f = guard("solitude", () => solitudeFactor(this.ext.solitude, slot, opt.id)); return opt.weight * (f == null ? 1 : f); };
@@ -974,7 +974,7 @@ module.exports = function build(Base, core, AGEX) {
       this.registerMarkdownCodeBlockProcessor("relto", (src, el, ctx) => Promise.resolve(guard("relto", () => R.renderRelto(this, src, el, ctx))).catch((e) => console.warn("[Age Writer ext] relto", e)));
       this.registerMarkdownCodeBlockProcessor("relto-library", (src, el) => { guard("relto-library", () => R.renderReltoLibrary(this, src, el)); });
       this.registerMarkdownCodeBlockProcessor("age-journal", (src, el, ctx) => live(src, el, ctx, () => X.renderJournal(this, src, el, ctx).catch((e) => console.warn("[Age Writer ext] journal", e))));
-      // texte D'ni en ligne : `dni:Atrus` (vue de lecture)
+      // texte D'ni en ligne : `dni:Relto` (vue de lecture)
       this.registerMarkdownPostProcessor((el) => guard("dni inline", () => {
         for (const c of Array.from(el.querySelectorAll("code"))) {
           if (c.closest("pre")) continue;
@@ -1113,14 +1113,14 @@ module.exports = function build(Base, core, AGEX) {
     async createJournal(file) {
       const src = core.extract(await this.app.vault.read(file));
       if (src === null) return new Notice(this.t("journal.noageblock"));
-      new VoiceModal(this.app, async (voice) => {
+      const vm = new VoiceModal(this.app, async (voice) => {
         const folder = (this.ext.journalFolder || "").replace(/^\/+|\/+$/g, "") || (file.parent && file.parent.path !== "/" ? file.parent.path : "");
         if (folder && !this.app.vault.getAbstractFileByPath(folder)) await this.app.vault.createFolder(folder);
         const path = `${folder ? folder + "/" : ""}Journal — ${file.basename}.md`;
         const ex = this.app.vault.getAbstractFileByPath(path);
         const f = ex instanceof TFile ? ex : await this.app.vault.create(path, `---\n${obsidian.stringifyYaml({ journal_of: `[[${file.basename}]]`, journal_voice: voice })}---\n# Journal — ${file.basename}\n\n\`\`\`age-journal\nage: [[${file.basename}]]\nvoice: ${voice}\n\`\`\`\n`);
         await this.app.workspace.getLeaf(false).openFile(f);
-      }).open();
+      }); vm.lang = this.lang() === "fr" ? "fr" : "en"; vm.open();
     }
 
     registerEvents() {

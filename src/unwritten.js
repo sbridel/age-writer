@@ -14,7 +14,7 @@
  *     tension forte, et son propre ciel retombe dans la même clé (on peut l'accorder sans le perdre) ;
  *   - le bloc (`linesOf`) : les quatre pages, puis l'étoile et le ciel en lignes de valeurs (`star_mass:`, `insolation:`,
  *     `rotation:`, `atmosphere:` ; ce ne sont pas des pages) et `seed:` tirée de la clé ; le nom (`nameOf`) aussi : des
- *     syllabes à la manière d'Atrus, jamais le nom d'un Âge des jeux (`AVOID`).
+ *     syllabes à la manière des noms d'Âges D'ni, jamais le nom d'un Âge des jeux (`AVOID`).
  * Mêmes réglages → même monde, ou rien. Un Âge écrit qui répond exactement l'emporte toujours (src/imager-guild.js, `choose`).
  * Testé dans test/unwritten.test.js.
  */

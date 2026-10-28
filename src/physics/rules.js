@@ -193,6 +193,11 @@ const REQUIREMENTS = {
       en: (w, f) => (w.P < 0.05 ? `Too little air (${f(w.P)} bar) to make clouds.` : w.water === "ice" ? "The water is frozen: it snows, it does not rain." : w.water === "none" ? "No water to evaporate: where would rain come from?" : "Nothing lifts the water: no sun, no warm ground."),
     },
   },
+  spin: { /* ESSAI (Coriolis) : un tourbillon prend son élan dans la rotation du monde */
+    law: "L5", axis: "weather", sev: "medium", search: ["rotation"],
+    test: (w) => !w.locked && w.rotation <= 96,
+    why: { fr: (w, f) => (w.locked ? "Une face figée : le monde ne tourne pas sur lui-même, rien n'enroule l'air en tourbillon." : `Un jour de ${f(w.rotation, 0)} h : le monde tourne trop lentement pour enrouler l'air en tourbillon.`), en: (w, f) => (w.locked ? "One face fixed: the world does not spin, nothing winds the air into a vortex." : `A ${f(w.rotation, 0)} h day: the world spins too slowly to wind the air into a vortex.`) },
+  },
   convection: {
     law: "L5", axis: "weather", sev: "light", search: ["atmosphere", "insolation"],
     test: (w) => w.P >= 0.1 && (w.S >= 0.2 || w.heat >= 1.5),

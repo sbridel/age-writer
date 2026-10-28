@@ -161,6 +161,16 @@ function dynamo(heat, rotationHours, coreFraction) {
   const spin = clamp(Math.sqrt(24 / Math.max(rotationHours, 4)), 0.05, 2);
   return clamp(spin * (coreFraction / 0.33) * Math.min(1.5, heat), 0, 3);
 }
+/**
+ * ESSAI (Coriolis) : la force qui fait tourner les vents vient de la rotation (2Ω sin φ). Relative à la Terre (jour de 24 h = 1) ;
+ * 0 pour une face figée (la rotation suit l'orbite : l'air monte sur le jour et retombe sur la nuit). Régimes : `still` (figée),
+ * `slow` (jour de 4 jours et plus : une seule boucle d'air de l'équateur aux pôles), `earth`, `fast` (jour de 12 h et moins : vents en bandes, cyclones).
+ */
+function coriolis(rotationHours, locked) {
+  if (locked) return { k: 0, regime: "still" };
+  const k = 24 / Math.max(rotationHours, 1);
+  return { k, regime: k <= 0.25 ? "slow" : k >= 2 ? "fast" : "earth" };
+}
 /** Seuil d'un « vrai » bouclier magnétique (en dessous : champ faible, aurores pâles). */
 const FIELD_SHIELD = 0.2;
 
@@ -255,7 +265,7 @@ module.exports = { seasonAmplitude, seasonKind,
   starLuminosity, starRadius, starTemperature, starLifetime, brownDwarf, planckFraction, visibleRatio, uvRatio,
   insolation, distanceFor, orbitalPeriodDays, tidalLockTime,
   planetRadius, gravity, escapeVelocity, density,
-  internalHeat, ageForHeatLevel, dynamo, FIELD_SHIELD, airFreeze,
+  internalHeat, ageForHeatLevel, dynamo, coriolis, FIELD_SHIELD, airFreeze,
   equilibriumTemperature, retention, surfacePressure, greenhouse,
   boilingPoint, waterState,
 };

@@ -22,6 +22,7 @@ const SS = require("./starsystem");
 const CAL = require("./calibration");
 const UW = require("./unwritten");
 const ST = require("./story");
+const MEN = require("./story-mentor"); /* ESSAI : l'Âge du mentor */
 const HEAR = require("./story-hear");
 const WARD = require("./ward"); /* le cachet et la garde (étape D) */
 const STONE = require("./story-stone"); /* le chapitre 17, la pierre (étape E) */
@@ -103,6 +104,12 @@ async function buildScene(plugin, file, opt = {}) {
     if (STONE.tellCommand(ST.get(store, key))) { plugin.saveExt(); new obsidian.Notice(plugin.t("stone.command"), 12000); }
     const done = ST.evaluate(store, key, { ages, axisOf, zeroFound: relto.zeroFound, tunings: plugin.ext.imagerTunings, guildLock: !!((plugin.ext.imagerTunings || {})["guild:" + key] || {}).lock, cave });
     if (done.length) { for (const c of done) if (c.id === "hear") HEAR.visitFrom(ST.get(store, key), Date.now()); /* la nuit qui vient, la visite */ resetStoryDraw(plugin); /* l'encre du monde étrange (le 14 s'ouvre) */ plugin.saveExt(); for (const c of done) { new obsidian.Notice(plugin.t(c.page || c.id === ST.BOOK_ONE_END ? "story.done" : "story.done.nopage", { title: plugin.lang() === "fr" ? c.title.fr : c.title.en })); markChapterDone(plugin, c, ST.get(store, key)); } }
+    { /* ESSAI : l'Âge du mentor : après la réussite ; en recours (trois Livres ratés, l'encre sèche, et deux jours) */
+      const sm = ST.get(store, key), now = Date.now(), dry = Math.min(2, plugin.ext.inkDry || 15) * 60000;
+      for (const c of done) if (MEN.has(c.id) && !MEN.given(sm, c.id)) mentorWrite(plugin, sm, c.id, "after");
+      const cur = ST.nextChapter(sm.done);
+      if (cur && MEN.has(cur.id)) { if (MEN.track(sm, cur.id, ages, now, dry)) plugin.saveExt(); if (MEN.rescueDue(sm, cur.id, now)) mentorWrite(plugin, sm, cur.id, "rescue"); }
+    }
     relto.storyDone = ST.get(store, key).done.concat(ST.bookOneDone(ST.get(store, key).done) ? ["end"] : []); // « end » : la fin du premier livre (le chapitre 9 ; le second livre continue après)
   }
   // choix des livres : options du bloc (folders / exclude / books) ; à défaut, liste du refuge (relto_books)
@@ -534,6 +541,13 @@ async function storyNext(plugin, opts = {}) {
   return f;
 }
 
+/** ESSAI : écrit l'Âge du mentor sous la lettre du chapitre (la note du chapitre), une seule fois, et le dit. */
+async function mentorWrite(plugin, st, id, kind) {
+  if (MEN.given(st, id)) return; MEN.give(st, id, kind); plugin.saveExt();
+  const { app, t } = plugin, f = st.notes && st.notes[id] && app.vault.getAbstractFileByPath(st.notes[id]); if (!f) return;
+  try { await app.vault.process(f, (d) => d + MEN.section(id, plugin.lang() === "fr" ? "fr" : "en", kind)); } catch (e) { console.warn("[Age Writer ext] mentor", e); return; }
+  new obsidian.Notice(t(kind === "after" ? "story.mentor.after" : "story.mentor.rescue"), 10000);
+}
 /** Relancer le chapitre en cours : une nouvelle note neuve (l'ancienne reste dans le dossier, intacte). */
 const storyRestart = (plugin) => storyNext(plugin, { fresh: true });
 
@@ -543,6 +557,10 @@ function storyHint(plugin) {
   if (!hub) { new obsidian.Notice(t("story.nohub")); return; }
   const relto = { ...M.parseRelto(fmOf(app, hub)), name: hub.basename }, st = ST.get(plugin.ext.story || (plugin.ext.story = {}), TEL.keyOf(relto.name, relto.seed)), ch = ST.nextChapter(st.done);
   const h = ch && ST.HINTS[ch.id], L = h && h[plugin.lang() === "fr" ? "fr" : "en"];
+  { /* ESSAI : l'Âge du mentor en recours : un indice redemandé après le dernier (ou une seconde fois, quand le chapitre n'a pas d'indice) */
+    const prev = st.hintN && st.hintN[ch && ch.id] != null ? st.hintN[ch.id] : -1, left = !!L && prev < L.length - 1;
+    if (ch && MEN.has(ch.id) && !MEN.given(st, ch.id)) { if (MEN.askAgain(st, ch.id, left, !!L)) { plugin.saveExt(); mentorWrite(plugin, st, ch.id, "rescue"); return; } if (!L) { plugin.saveExt(); new obsidian.Notice(t("story.mentor.once"), 8000); return; } }
+  }
   if (!L) { new obsidian.Notice(t("story.nohint"), 4000); return; }
   const n = Math.min(L.length - 1, st.hintN && st.hintN[ch.id] != null ? st.hintN[ch.id] + 1 : 0); // chaque appel en dévoile un de plus (le dernier se répète ensuite)
   (st.hintN || (st.hintN = {}))[ch.id] = n; plugin.saveExt();

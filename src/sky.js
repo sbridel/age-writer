@@ -133,6 +133,10 @@ function moonOf(src) {
   }
   return null;
 }
+/** `sky: red` (alias `ciel: rouge`, ou un angle `sky: 15`) : la couleur du ciel de jour, au lieu de celle que tire la marque. Gris et blanc : un ciel sans couleur. */
+const SKYC_RE = /^\s*(?:sky|ciel|sky_colou?r|couleur_du_ciel)\s*[:=]\s*([a-zàâçéèêëîïôûùüÿ\- ]+|\d{1,3})\s*$/i;
+const SKY_HUES = { red: 4, rouge: 4, pink: 340, rose: 340, orange: 24, amber: 38, ambre: 38, gold: 46, golden: 46, or: 46, "doré": 46, yellow: 54, jaune: 54, green: 110, vert: 110, teal: 172, turquoise: 178, sarcelle: 172, cyan: 188, blue: 212, bleu: 212, indigo: 238, violet: 272, purple: 285, pourpre: 285, mauve: 300, magenta: 315, white: -1, blanc: -1, pale: -1, "pâle": -1, grey: -2, gray: -2, gris: -2 };
+function skyColourOf(v) { v = String(v).trim().toLowerCase(); if (/^\d+$/.test(v)) return { hue: Number(v) % 360 }; const h = SKY_HUES[v]; return h == null ? null : h === -1 ? { hue: 210, sat: 0.08, light: 0.12 } : h === -2 ? { hue: 220, sat: 0.04, light: 0 } : { hue: h }; }
 const YEAR_RE = /^\s*(?:year_length|year|revolution)\s*[:=]\s*(\d+(?:[.,]\d+)?)\s*(?:days?|jours?)?\s*$/i;
 /** `day_length: 40` (minutes réelles par jour, 0,2 à 1440) ; `year_length: 12` (jours par année, 1 à 365). Hors bornes : ignoré. */
 function parseSky(src) {
@@ -142,6 +146,7 @@ function parseSky(src) {
     m = line.match(SIZE_RE); if (m) { const v = m[1].toLowerCase(); if (/^\d+$/.test(v)) { const px = Number(v); if (px >= 200 && px <= 800) out.size = px; } else out.size = v === "small" ? "normal" : v === "big" ? "large" : v === "xxl" ? "xl" : v; continue; }
     m = line.match(MOONS_RE); if (m) { out.moons = Math.min(5, Number(m[1])); continue; } // au-delà de cinq : cinq
     if (MOON_RE.test(line)) { const mo = moonOf(line); out.moonScale = (mo.size === "small" ? 0.55 : mo.size === "large" ? 1.6 : 1) * (mo.dist === "distant" ? 0.6 : mo.dist === "close" ? 1.45 : 1); continue; }
+    m = line.match(SKYC_RE); if (m) { const c = skyColourOf(m[1]); if (c) out.skyColour = c; continue; }
     m = line.match(YEAR_RE); if (m) { const v = Number(m[1].replace(",", ".")); if (v >= 1 && v <= 365) out.yearLen = v; }
   }
   const amt = parseAmounts(src); if (amt) out.amt = amt; // quantités : beaucoup / peu / normal
@@ -156,4 +161,4 @@ function clockPhases(sky, now = Date.now()) {
   return { day: day < 0 ? day + 1 : day, season: yr };
 }
 
-module.exports = { MOON_RE, moonOf, MOONS_RE, SIZE_RE, WORLD_IDS, HUES, HUE_IDS, SKY_BLOCKS, SKY_RULES, SKY_PROSE, NOTES, sunColors, DAY_RE, YEAR_RE, parseSky, clockPhases };
+module.exports = { SKYC_RE, skyColourOf, MOON_RE, moonOf, MOONS_RE, SIZE_RE, WORLD_IDS, HUES, HUE_IDS, SKY_BLOCKS, SKY_RULES, SKY_PROSE, NOTES, sunColors, DAY_RE, YEAR_RE, parseSky, clockPhases };

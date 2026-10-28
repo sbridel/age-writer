@@ -6,6 +6,37 @@
  */
 const NEWS = [
   {
+    v: "2.3.0",
+    fr: {
+      title: "Le jardin et le vent",
+      letter: "La Guilde a appris à écrire un jardin. Un ciel peut maintenant porter la couleur qu'on lui donne, un lac s'étale en étang au pied de la vue, et la haie d'un jardin se taille devant l'horizon. Le vent, lui, apprend la rotation du monde. Et pour ceux qui suivent les lettres d'Adrin : il montre désormais comment il aurait écrit chaque monde qu'il demande.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**`ciel: rouge`** : la couleur du ciel de jour, au lieu de celle que tire la marque (une couleur ou un angle de teinte). Elle ne coûte rien.",
+        "**Le jardin** : `garden` dessine une haie taillée percée d'entrées, ses allées, des massifs de fleurs.",
+        "**L'étang** : `lake` pose un étang au pied de la vue ; nénuphars quand des plantes poussent, carpes sous la surface avec `shoal`.",
+        "**Les fleurs** se dessinent en fleurs et gardent leurs couleurs ; rien ne pousse plus sur la rivière ni sur l'étang.",
+        "**La force de Coriolis** : un monde qui tourne vite range ses vents en bandes et enroule ses orages ; un monde trop lent ne porte pas de tornade (physique stricte). L'onglet Détails le dit.",
+        "**L'Âge du mentor** : Adrin écrit sous la lettre de chaque chapitre comment il aurait écrit le monde demandé : toujours après la réussite, et en recours si l'on cherche longtemps.",
+        "**Le journal** : trois voix qui lui sont propres, l'archiviste, le maître, le voyageur (les journaux déjà écrits gardent la leur).",
+      ],
+    },
+    en: {
+      title: "The garden and the wind",
+      letter: "The Guild has learned to write a garden. A sky can now wear the colour it is given, a lake spreads into a pond at the foot of the view, and a garden's hedge is clipped before the horizon. The wind, for its part, learns the spin of the world. And for those who follow Adrin's letters: he now shows how he would have written each world he asks for.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**`sky: red`**: the colour of the daytime sky, instead of the one the mark draws (a colour or an angle of hue). It costs nothing.",
+        "**The garden**: `garden` draws a clipped hedge pierced with openings, its alleys, flower beds.",
+        "**The pond**: `lake` lays a pond at the foot of the view; water lilies when plants grow, koi under the surface with `shoal`.",
+        "**Flowers** are drawn as flowers and keep their colours; nothing grows on the river or the pond any more.",
+        "**The Coriolis force**: a fast-spinning world lays its winds in bands and coils its storms; a world too slow carries no tornado (strict physics). The Details tab says so.",
+        "**The mentor's Age**: Adrin writes under each chapter letter how he would have written the world he asked for: always after success, and as a last resort if you search a long while.",
+        "**The journal**: three voices of its own, the archivist, the master, the traveller (journals already written keep theirs).",
+      ],
+    },
+  },
+  {
     v: "2.2.0",
     fr: {
       title: "Ce que la Guilde a appris",

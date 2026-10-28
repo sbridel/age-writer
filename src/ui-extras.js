@@ -396,7 +396,7 @@ async function renderJournal(plugin, source, el, ctx) {
   const file = app.metadataCache.getFirstLinkpathDest(link, ctx.sourcePath);
   const src = file ? core.extract(await app.vault.cachedRead(file)) : null;
   if (!file || src === null) { root.createDiv({ cls: "age-journal__empty", text: t("journal.notfound", { name: link }) }); return; }
-  const lang = opt.lang || plugin.lang(), voice = (opt.voice || "atrus").toLowerCase();
+  const lang = opt.lang || plugin.lang(), voice = require("./journal").voiceOf(opt.voice);
   const analysis = core.analyse(src, { seed: core.seed(file.path) });
   const { list: mechs, world } = mechanismsFor(plugin, src, analysis, core.seed(file.path));
   const ids = [...world].filter((i) => !i.startsWith("?"));
@@ -418,7 +418,7 @@ async function renderJournal(plugin, source, el, ctx) {
   const head = root.createDiv({ cls: "age-journal__head" });
   head.createSpan({ cls: "age-journal__title", text: t("journal.title", { name: file.basename }) });
   dniText(plugin, head, file.basename, "age-journal__dniname");
-  head.createSpan({ cls: "age-journal__voice", text: `— ${voice[0].toUpperCase() + voice.slice(1)}` });
+  head.createSpan({ cls: "age-journal__voice", text: `— ${require("./journal").labelOf(voice, lang)}` });
   entries.forEach((e, i) => {
     const row = root.createDiv({ cls: `age-journal__entry age-journal__entry--${e.kind}` });
     const marg = row.createDiv({ cls: "age-journal__margin" });

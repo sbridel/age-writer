@@ -112,6 +112,7 @@ function sceneOf(a, name = "", blocks = null) {
   S.lit = S.suns > 0 || !!S.glow; if (!S.lit) S.primeval = false; /* pas de verdure ni de Prototaxites sans soleil ni lueur */
   S.brine = !!S.water && (ids.has("brine") || ids.has("bitter_water") || ids.has("salt")); S.glacial = !!S.water && (S.ice || ids.has("meltwater") || ids.has("deep_cold") || wd === "frozen") && !S.lava && !S.heat && wd !== "lava"; /* la chimie de l'eau ; pas de glaçons dans une eau chaude */
   if (S.water && S.waterGround === false) { S.shore = null; S.river = !S.lava && wd !== "lava"; } /* l'eau en trait est une rivière, pas une mer */
+  S.garden = r("garden"); S.lake = r("lake") && !S.lava && wd !== "lava" && !(S.water && S.waterGround !== false) && !S.shore; if (S.lake) S.river = false; /* ESSAI : un étang au pied de la vue (le lac), au lieu du ruban de rivière ; un jardin dessiné */
   S.graniteHue = ["grey", "ochre", "pink"][(S.seed >>> 7) % 3]; /* la variété du granite, tirée de la graine */
   S.rock = S.soil === "stone" ? (ids.has("basalt") || ids.has("basalt_columns") ? "basalt" : ids.has("granite") ? "granite" : null) : null; /* un visage pour la pierre, la forêt et le sel (src/dosage.js, BIOMES) */
   const cycleWritten = res.lines.some((l) => l.entry && l.entry.category === "cycle" && !l.autoFilled);
@@ -188,7 +189,7 @@ function physLook(w, cycleWritten) {
   const disc = clamp((Math.sqrt(Math.max(1e-6, L)) / Math.pow(T0 / 5772, 2)) / a, 0.45, 3); // rayon angulaire relatif au Soleil vu de la Terre
   return {
     sunRGB: brown ? [] : temps.slice(0, 2).map(blackbody), disc, P: Math.max(0, w.P), g: Number.isFinite(w.g) ? w.g : 1,
-    locked: !!w.locked, light: Number.isFinite(w.light) ? w.light : 1, Ts: Number.isFinite(w.Ts) ? w.Ts : 288, cycleWritten: !!cycleWritten, T: brown ? 0 : T0, T2: brown ? 0 : temps[1] || 0,
+    coriolis: Number.isFinite(w.coriolis) ? w.coriolis : 1, /* ESSAI : Coriolis */ locked: !!w.locked, light: Number.isFinite(w.light) ? w.light : 1, Ts: Number.isFinite(w.Ts) ? w.Ts : 288, cycleWritten: !!cycleWritten, T: brown ? 0 : T0, T2: brown ? 0 : temps[1] || 0,
   };
 }
 
@@ -254,11 +255,12 @@ function traits(words) {
 function build(S, W, H) {
   const r = rng(S.seed ^ 0x9e3779b9), hz = H * (S.view ? S.view.hz : 0.7), A = (k) => (S.amt && S.amt[k] != null ? S.amt[k] : 1), nA = (n, k, lo, hi) => Math.round(clamp(n * A(k), lo, hi)); // quantités : beaucoup / peu / normal
   const hue = r() * 360, sat = 0.28 + r() * 0.35, warm = 20 + r() * 40, cool = 190 + r() * 60;
-  const skyHue = S.world === "jungle" ? 95 + r() * 40 : S.world === "cavern" ? 215 + r() * 30 : S.lava ? 8 + r() * 20 : S.sand ? 28 + r() * 16 : S.ice ? 200 + r() * 25 : hue;
+  const SC = S.skyColour || null; /* ESSAI : `sky: red` : la couleur écrite passe avant celle de la marque (les tirages restent les mêmes) */
+  const skyHue0 = S.world === "jungle" ? 95 + r() * 40 : S.world === "cavern" ? 215 + r() * 30 : S.lava ? 8 + r() * 20 : S.sand ? 28 + r() * 16 : S.ice ? 200 + r() * 25 : hue, skyHue = SC ? SC.hue : skyHue0, skyS = SC && SC.sat != null ? SC.sat : null;
   const pal = {
     nightTop: hsl(skyHue + 230, 0.45, 0.05), nightHz: hsl(skyHue + 240, 0.35, 0.12),
     dawnTop: hsl(skyHue + 250, 0.4, 0.2), dawnHz: hsl(warm, 0.65, 0.5),
-    dayTop: hsl(S.skyStated || r() < 0.7 ? skyHue : cool, sat + 0.1, 0.38), dayHz: hsl(skyHue + (r() < 0.5 ? 25 : -25), sat * 0.7, 0.72),
+    dayTop: hsl((S.skyStated || r() < 0.7 || SC) ? skyHue : cool, skyS != null ? skyS : sat + 0.1 + (SC ? 0.12 : 0), 0.38 + (SC ? 0.08 + (SC.light || 0) : 0)), dayHz: hsl(skyHue + (r() < 0.5 ? 25 : -25) * (SC ? 0.4 : 1), skyS != null ? skyS : sat * 0.7 + (SC ? 0.1 : 0), 0.72),
     ground: S.lava ? hsl(8, 0.45, 0.07) : S.sand ? hsl(34, 0.35, 0.2) : S.ice ? hsl(205, 0.25, 0.2) : S.waterGround ? hsl(skyHue + 170, 0.25, 0.1) : S.soil === "salt" ? hsl(200, 0.06, 0.8) : S.soil === "chalk" ? hsl(45, 0.14, 0.7) : S.rock === "basalt" ? hsl(220, 0.08, 0.07) : S.rock === "granite" ? (S.graniteHue === "ochre" ? hsl(34, 0.28, 0.3) : S.graniteHue === "pink" ? hsl(10, 0.13, 0.37) : hsl(30, 0.03, 0.3)) : S.soil === "stone" ? hsl(220, 0.07, 0.17) : S.soil === "earth" ? hsl(24, 0.38, 0.13) : S.soil === "forest" ? hsl(95, 0.3, 0.12) : hsl(skyHue + 90, 0.25, 0.09),
     rock: hsl(skyHue + 200, 0.2, 0.07),
   };
@@ -321,11 +323,12 @@ function build(S, W, H) {
   const meadow = S.grass ? buildMeadow(S, W, H, hz) : null; // herbe, prairie : graine propre
   const wx = buildWeather(S, W, H); // météo vivante : graine propre, rien d'autre ne bouge dans l'image
   const front = buildFront(S, W, H, hz); /* ESSAI : l'orage a un côté, l'averse est au loin */
+  const pond = S.lake ? buildPond(S, W, H, hz) : null, garden = S.garden ? buildGarden(S, W, H, hz) : null; /* ESSAI : l'étang, le jardin ; graines propres */
   if (shore && shore.mode === "side" && S.fissure === "submarine") { const wx = lerp(shore.x0, shore.x1, 0.5); fis.x = shore.side < 0 ? lerp(wx, W, 0.45) : lerp(0, wx, 0.55); } // la fissure sous l'eau reste dans l'eau
   const cave = S.world === "cavern" ? buildCave(S, W, H, hz) : null; // la voûte : graine propre, les autres mondes ne bougent pas
   const qf = rng((S.seed ^ 0xa16ae) >>> 0), fedGlow = S.fed ? Array.from({ length: 16 }, () => ({ x: W * qf(), y: hz + (H - hz) * (0.08 + 0.8 * qf()), r: H * (0.02 + 0.04 * qf()), p: qf() })) : null; /* graine propre */
   const won = WON.buildWonders(S, W, H, hz); /* les merveilles : graine propre, un Âge sans merveille ne bouge pas */
-  return { S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front };
+  return { S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
 }
 
 /**
@@ -363,6 +366,24 @@ function buildFront(S, W, H, hz) {
   if (q() < 0.5) return null; // la pluie tombe ici (comme avant)
   const n = q() < 0.6 ? 1 : 2, cells = Array.from({ length: n }, (_, i) => ({ x: W * (n === 1 ? 0.2 + 0.6 * q() : i ? 0.6 + 0.25 * q() : 0.15 + 0.25 * q()), w: W * (0.16 + 0.12 * q()), h: H * (0.09 + 0.06 * q()), base: hz - H * (0.17 + 0.08 * q()), lean: (q() - 0.5) * 0.25, lumps: Array.from({ length: 9 }, () => q()) }));
   return { mode: "shower", cells, lumps, bolts };
+}
+
+/** ESSAI : l'étang (`lake` sans mer) : une eau ronde au pied de la vue, des nénuphars s'il y a des plantes, des carpes s'il y a des poissons (`shoal`). */
+function buildPond(S, W, H, hz) {
+  const q = rng((S.seed ^ 0x9011d) >>> 0), D = H - hz, side = S.view && S.view.side ? S.view.side : 1;
+  const cx = W * (0.5 + side * (0.08 + 0.14 * q())), cy = hz + D * (0.58 + 0.12 * q()), rx = W * (0.16 + 0.06 * q()), ry = D * (0.11 + 0.035 * q());
+  const leafy = S.flowers || S.grass || S.garden || S.alive, fish = (S.extras || []).some((e) => e.id === "shoal");
+  const pads = leafy ? Array.from({ length: 6 + Math.floor(q() * 5) }, () => { const a = q() * TAU, d = 0.35 + 0.55 * Math.sqrt(q()); return { u: Math.cos(a) * d, v: Math.sin(a) * d, s: 0.6 + 0.6 * q(), r: q() * TAU, bloom: S.flowers && q() < 0.35, hue: [330, 345, 50, 0][Math.floor(q() * 4)] }; }) : [];
+  const koi = fish ? Array.from({ length: 4 + Math.floor(q() * 3) }, () => ({ a: q() * TAU, d: 0.25 + 0.5 * q(), sp: (q() < 0.5 ? -1 : 1) * (1 + Math.floor(q() * 2)), c: [[236, 120, 48], [240, 236, 228], [196, 204, 214], [226, 90, 40]][Math.floor(q() * 4)], spot: q() < 0.6 })) : [];
+  return { cx, cy, rx, ry, pads, koi, ph: q() * TAU };
+}
+/** ESSAI : le jardin (`garden`) : une haie taillée devant l'horizon, percée d'entrées (le labyrinthe), des allées de haie qui viennent vers nous, des massifs de fleurs. */
+function buildGarden(S, W, H, hz) {
+  const q = rng((S.seed ^ 0x6a2de) >>> 0), D = H - hz, gaps = [];
+  for (let i = 0, n = 3 + Math.floor(q() * 3); i < n; i++) gaps.push({ x: W * (0.08 + 0.84 * q()), w: W * (0.02 + 0.02 * q()) });
+  const walls = Array.from({ length: 2 + Math.floor(q() * 2) }, () => ({ x: W * (0.1 + 0.8 * q()), lean: (q() - 0.5) * 1.2, len: 0.25 + 0.3 * q() }));
+  const beds = Array.from({ length: 3 + Math.floor(q() * 2) }, () => ({ x: W * (0.1 + 0.8 * q()), u: 0.35 + 0.45 * q(), w: 0.6 + 0.6 * q(), hue: [330, 350, 12, 48, 280, 205][Math.floor(q() * 6)], n: 14 + Math.floor(q() * 10), seed: Math.floor(q() * 1e9) }));
+  return { y: hz + D * (0.07 + 0.05 * q()), h: H * (0.055 + 0.02 * q()), gaps, walls, beds, D, bumps: Array.from({ length: 64 }, () => q()) };
 }
 
 /** L'herbe (`grass`) ou la prairie (`meadow`, plus haute et fleurie) : des brins sur toute la terre, serrés au loin. */
@@ -759,7 +780,8 @@ function paint(g, m, t, o = {}) {
   if (cst === "stratus" && air.thin <= 0.85) for (let k = 0; k < 3; k++) { const y = hz * (0.35 + k * 0.15), x = frac(t * 0.3 + k * 0.37) * W; g.fillStyle = css(mixc(hzc, [255, 255, 255], 0.3), 0.18 * (0.4 + day)); g.fillRect(0, y, W, H * 0.025); g.fillRect(x - W * 0.3, y - H * 0.012, W * 0.6, H * 0.012); }
   for (const c of air.thin > 0.85 || cst !== "cumulus" ? [] : m.clouds) { // presque pas d'air : pas de nuages
     const x = frac((c.x / W) + t * c.sp) * (W + c.w * 2) - c.w, ks = m.front && m.front.mode !== "shower" ? L.storm * stormCov(m, x + c.w * 0.5, c.y) : L.storm; g.fillStyle = css(mixc(mixc(hzc, [255, 255, 255], 0.35), [30, 34, 44], ks), lerp(c.a * (0.4 + day), 0.55, ks));
-    c.lump.forEach((l, k) => { g.beginPath(); g.ellipse(x + (k / 7) * c.w, c.y + (l - 0.5) * c.h * 0.6, c.w * 0.13, c.h * (0.3 + l * 0.3), 0, 0, TAU); g.fill(); });
+    const band = S.phys && !S.phys.locked ? clamp((S.phys.coriolis - 1.5) / 2.5) : 0; /* ESSAI (Coriolis) : un monde qui tourne vite étire ses nuages en bandes */
+    c.lump.forEach((l, k) => { g.beginPath(); g.ellipse(x + (k / 7) * c.w * (1 + 0.6 * band), c.y + (l - 0.5) * c.h * 0.6 * (1 - 0.6 * band), c.w * 0.13 * (1 + 1.4 * band), c.h * (0.3 + l * 0.3) * (1 - 0.5 * band), 0, 0, TAU); g.fill(); });
   }
   // soleils (sous un anneau : déjà peints, derrière lui)
   if (!S.loop) drawSuns();
@@ -802,6 +824,7 @@ function paint(g, m, t, o = {}) {
     if (!S.sand && !S.ice && !S.lava && !(S.water && S.waterGround !== false)) { if (S.soil === "salt") saltFlat(g, m, t, day, night, hzc); else if (S.rock === "basalt") blackSand(g, m, t, day, night, hzc); }
     if (S.view && S.view.kind === "high") valleyPlanes(g, m, t, day, night, hzc); /* ESSAI : vu d'en haut, la vallée s'étage */
     if (S.river) riverRibbon(g, m, t, sn, day, night, hzc, top);
+    if (m.pond) pondWater(g, m, t, day, night, hzc, top); /* ESSAI : l'étang */
  /* les formes des sols */
   }
   midRelief(g, m, t, day, night, hzc); /* le relief du milieu, selon le sol (loi 7), avec ou sans rive */
@@ -810,6 +833,7 @@ function paint(g, m, t, o = {}) {
   m._moonlight = 0; /* ESSAI : un monde sans soleil montre ce qui l'éclaire */
   if (m.airK && m.airK.thick > 0.05) { const D = H - hz, hg = g.createLinearGradient(0, hz, 0, hz + D * 0.45); hg.addColorStop(0, css(mixc(hzc, [240, 235, 220], 0.3), 0.55 * m.airK.thick)); hg.addColorStop(1, css(hzc, 0)); g.fillStyle = hg; g.fillRect(0, hz, W, D * 0.45); } /* ESSAI : un air épais écrase la profondeur : le lointain se noie */
   WON.wonderPass(g, m, t, "relief", k0); /* ESSAI : ce qui se dessine par-dessus le relief du milieu (l'Inachevé) */
+  const offW = offWater(g, m); /* ESSAI : rien ne pousse sur la rivière ni sur l'étang */
   if (S.primeval) primeval(g, m, t, day, night); /* un monde trop jeune pour les arbres : des Prototaxites */
   else if (S.alive && !S.trees) lowFlora(g, m, t, day, night); /* la flore basse du climat, pour les Âges vivants sans arbres */
   if (S.columns || S.rock === "basalt" || (S.extras || []).some((e) => e.id === "basalt")) basaltColumns(g, m, t, day, night, hzc); /* l'escarpement d'orgues, au loin (aussi au bord de la mer) */
@@ -819,6 +843,8 @@ function paint(g, m, t, o = {}) {
   richGlints(g, m, t, night);
   extraAt(g, m, t, "ground");
   WON.wonderPass(g, m, t, "ground", k0);
+  if (m.garden) gardenGround(g, m, t, day, night, hzc); /* ESSAI : le jardin */
+  if (offW) g.restore();
   seaLife(g, m, t, night);
   // fissure
   if (S.fissure) { const wet = m.shore && S.fissure === "submarine"; if (wet) { g.save(); shorePath(g, m.shore.wet); g.clip(); } fissure(g, m, t); if (wet) g.restore(); }
@@ -933,11 +959,75 @@ function meadowGround(g, m, t, night, L, hzc) {
     const col = mixc(tint(mixc([92, 134, 66], [158, 160, 88], b.dry * (md.tall ? 0.6 : 0.35))), dk, 0.3 + 0.5 * night);
     g.strokeStyle = css(col, (0.45 + 0.4 * b.u) * lit + 0.15); g.beginPath(); g.moveTo(b.x, y); g.quadraticCurveTo(b.x + sw * 0.4, y - b.h * k * 0.6, b.x + sw, y - b.h * k); g.stroke();
   }
+  const ff = g.filter; if (ff && ff !== "none") g.filter = "none"; /* ESSAI : les fleurs gardent leurs couleurs (le feuillage, lui, suit l'étoile) */
   for (const f of md.flowers) { // prairie : des fleurs dans les herbes hautes, qui bougent avec elles
     const y = hz + D * f.u * f.u, k = 0.35 + f.u * 1.1, wave = Math.sin(TAU * t - (f.x / W) * 5 + f.u * 2) * gust * k, r = (0.8 + f.s) * k;
-    if (fl <= 0.01) break; g.fillStyle = css(mixc(hsl(f.hue, 0.55, 0.72), dk, 0.2 + 0.6 * night), 0.85 * lit * fl); g.beginPath(); g.arc(f.x + wave, y - 9 * k, r, 0, TAU); g.fill();
+    if (fl <= 0.01) break; bloom(g, f.x + wave, y - 9 * k, r * 1.3, mixc(hsl(f.hue, 0.55, 0.72), dk, 0.2 + 0.6 * night), 0.85 * lit * fl, f.p);
   }
   g.restore();
+}
+
+/** ESSAI : une fleur qu'on lit comme une fleur : cinq pétales autour d'un cœur clair quand elle est assez grande, un point au loin. */
+function bloom(g, x, y, r, col, a, rot = 0, heart = [250, 226, 120]) {
+  g.fillStyle = css(col, a);
+  if (r < 1.6) { g.beginPath(); g.arc(x, y, Math.max(0.6, r), 0, TAU); g.fill(); return; }
+  g.beginPath(); for (let k = 0; k < 5; k++) { const an = rot + (k * TAU) / 5, px = x + Math.cos(an) * r * 0.62, py = y + Math.sin(an) * r * 0.5; g.moveTo(px + r * 0.48, py); g.ellipse(px, py, r * 0.48, r * 0.36, an, 0, TAU); } g.fill();
+  g.fillStyle = css(heart, a); g.beginPath(); g.arc(x, y, r * 0.24, 0, TAU); g.fill();
+}
+/** ESSAI : ce qui pousse sur la terre ne pousse pas sur l'eau : le chemin de découpe de tout, moins la rivière et l'étang. */
+function offWater(g, m) {
+  const rp = m.riverPoly, pd = m.pond; if (!(rp && rp.length) && !pd) return false;
+  g.save(); g.beginPath(); g.rect(0, 0, m.W, m.H);
+  if (rp && rp.length) { rp.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); }
+  if (pd) { g.moveTo(pd.cx + pd.rx * 1.04, pd.cy); g.ellipse(pd.cx, pd.cy, pd.rx * 1.04, pd.ry * 1.08, 0, 0, TAU); }
+  g.clip("evenodd"); return true;
+}
+/** ESSAI : l'étang : la berge, l'eau qui prend le ciel, les rides, les nénuphars, les carpes qui tournent sous la surface. */
+function pondWater(g, m, t, day, night, hzc, top) {
+  const P = m.pond, lit = 1 - 0.6 * night, { cx, cy, rx, ry } = P;
+  g.fillStyle = css(mixc(m.pal.ground, [20, 16, 10], 0.4)); g.beginPath(); g.ellipse(cx, cy + ry * 0.06, rx * 1.06, ry * 1.16, 0, 0, TAU); g.fill(); // la berge
+  const water = mixc(mixc(hzc, top, 0.45), [16, 40, 46], 0.3 + 0.45 * night), wg = g.createLinearGradient(0, cy - ry, 0, cy + ry);
+  wg.addColorStop(0, css(mixc(water, [8, 18, 20], 0.35))); wg.addColorStop(0.45, css(mixc(water, hzc, 0.35 * lit))); wg.addColorStop(1, css(water));
+  g.fillStyle = wg; g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, TAU); g.fill();
+  g.save(); g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, TAU); g.clip();
+  for (const k of P.koi) { const a = k.a + TAU * t * k.sp * 0.25, x = cx + Math.cos(a) * rx * k.d, y = cy + Math.sin(a) * ry * k.d, dir = a + (k.sp > 0 ? Math.PI / 2 : -Math.PI / 2), L = rx * 0.07; // les carpes, sous la surface
+    g.save(); g.translate(x, y); g.rotate(Math.atan2(Math.sin(dir) * ry, Math.cos(dir) * rx)); g.globalAlpha = 0.78;
+    g.fillStyle = css(mixc(k.c, water, 0.25 + 0.4 * night)); g.beginPath(); g.ellipse(0, 0, L, L * 0.32, 0, 0, TAU); g.fill();
+    g.beginPath(); g.moveTo(-L * 0.9, 0); g.lineTo(-L * 1.5, -L * 0.3 * (1 + 0.4 * Math.sin(TAU * t * 3 + k.a))); g.lineTo(-L * 1.5, L * 0.3); g.closePath(); g.fill();
+    if (k.spot) { g.fillStyle = css(mixc([226, 70, 30], water, 0.3)); g.beginPath(); g.arc(L * 0.25, 0, L * 0.18, 0, TAU); g.fill(); }
+    g.restore(); }
+  g.strokeStyle = css(mixc(hzc, [255, 255, 255], 0.4), 0.25 * lit); g.lineWidth = 0.8; for (let i = 0; i < 3; i++) { const f = frac(t * 0.5 + i / 3); g.globalAlpha = 1 - f; g.beginPath(); g.ellipse(cx + rx * 0.25 * Math.sin(P.ph + i * 2), cy + ry * 0.2 * Math.cos(P.ph + i), rx * 0.06 + rx * 0.22 * f, ry * 0.06 + ry * 0.22 * f, 0, 0, TAU); g.stroke(); } g.globalAlpha = 1;
+  g.fillStyle = css(mixc(hzc, [255, 255, 255], 0.5), 0.18 * lit); g.fillRect(cx - rx * 0.6, cy - ry * 0.35, rx * 1.2, Math.max(1, ry * 0.05)); // le reflet du ciel
+  g.restore();
+  const lf = leafFilter(m.S); if (lf) { g.save(); g.filter = lf; }
+  for (const p of P.pads) { const x = cx + p.u * rx * 0.92, y = cy + p.v * ry * 0.92, s = rx * 0.065 * p.s * (0.8 + 0.4 * (p.v + 1) / 2); // les nénuphars : une feuille ronde fendue
+    g.fillStyle = css(mixc([58, 104, 52], [8, 12, 10], 0.25 + 0.5 * night)); g.beginPath(); g.moveTo(x, y); g.ellipse(x, y, s, s * 0.42, 0, p.r, p.r + TAU * 0.9); g.closePath(); g.fill();
+    g.strokeStyle = css([120, 160, 90], 0.3 * lit); g.lineWidth = 0.6; g.beginPath(); g.ellipse(x, y, s, s * 0.42, 0, p.r, p.r + TAU * 0.9); g.stroke(); }
+  if (lf) g.restore();
+  for (const p of P.pads) if (p.bloom) { const x = cx + p.u * rx * 0.92, y = cy + p.v * ry * 0.92, s = rx * 0.065 * p.s; bloom(g, x + s * 0.2, y - s * 0.25, s * 0.7, mixc(hsl(p.hue, 0.6, 0.78), [10, 12, 20], 0.5 * night), 0.95, p.r); }
+}
+/** ESSAI : le jardin : la haie taillée et ses entrées, les allées de haie, les massifs de fleurs. */
+function gardenGround(g, m, t, day, night, hzc) {
+  const Gd = m.garden, { W, H, hz } = m, lit = 1 - 0.6 * night, leaf = mixc([62, 108, 56], [6, 8, 10], 0.25 + 0.5 * night), top = mixc(leaf, [170, 210, 120], 0.35 * lit * (0.4 + 0.6 * day) + 0.05), D = H - hz;
+  const lf = leafFilter(m.S); if (lf) { g.save(); g.filter = lf; }
+  const h = Gd.h, y = Gd.y;
+  g.fillStyle = css(leaf); g.beginPath(); let x = 0;
+  const gaps = Gd.gaps.slice().sort((a, b) => a.x - b.x);
+  for (const gp of gaps) { if (gp.x - gp.w / 2 > x) g.rect(x, y - h, gp.x - gp.w / 2 - x, h); x = gp.x + gp.w / 2; } if (x < W) g.rect(x, y - h, W - x, h); g.fill();
+  g.fillStyle = css(top); x = 0; for (const gp of gaps) { if (gp.x - gp.w / 2 > x) g.fillRect(x, y - h, gp.x - gp.w / 2 - x, Math.max(1, h * 0.16)); x = gp.x + gp.w / 2; } if (x < W) g.fillRect(x, y - h, W - x, Math.max(1, h * 0.16));
+  { const inGap = (xx) => gaps.some((gp) => Math.abs(xx - gp.x) < gp.w / 2); g.fillStyle = css(mixc(leaf, top, 0.5), 0.8); for (let i = 0; i < 64; i++) { const xx = (i + 0.5) * W / 64; if (inGap(xx)) continue; const b = Gd.bumps[i]; g.beginPath(); g.ellipse(xx, y - h * (0.55 + 0.3 * b), W / 128 * (0.8 + b), h * 0.12, 0, 0, TAU); g.fill(); } /* le feuillage taillé */
+    g.fillStyle = css([0, 0, 0], 0.25); x = 0; for (const gp of gaps) { if (gp.x - gp.w / 2 > x) g.fillRect(x, y - h * 0.18, gp.x - gp.w / 2 - x, h * 0.18); x = gp.x + gp.w / 2; } if (x < W) g.fillRect(x, y - h * 0.18, W - x, h * 0.18); } /* l'ombre au pied */
+  for (const w of Gd.walls) { // une allée de haie qui vient vers nous : plus haute et plus large de près
+    const u1 = w.len, y1 = hz + D * u1 * u1 + D * 0.12, k0 = 1, k1 = 1 + 4 * u1, x0 = w.x, x1 = w.x + w.lean * W * 0.2 * u1, w0 = W * 0.006, w1 = W * 0.006 * k1;
+    g.fillStyle = css(mixc(leaf, [0, 0, 0], 0.15)); g.beginPath(); g.moveTo(x0 - w0, y); g.lineTo(x0 + w0, y); g.lineTo(x1 + w1, y1); g.lineTo(x1 - w1, y1); g.lineTo(x1 - w1, y1 - h * k1); g.lineTo(x0 - w0, y - h * k0); g.closePath(); g.fill();
+    g.fillStyle = css(top); g.beginPath(); g.moveTo(x0 - w0, y - h); g.lineTo(x0 + w0, y - h); g.lineTo(x1 + w1, y1 - h * k1); g.lineTo(x1 - w1, y1 - h * k1); g.closePath(); g.fill(); }
+  if (lf) g.restore();
+  for (const b of Gd.beds) { // les massifs : une terre sombre, des fleurs serrées
+    const q = rng(b.seed), yb = hz + D * b.u * b.u + D * 0.1, k = 0.4 + b.u * 1.2, rw = W * 0.06 * b.w * k, rh = rw * 0.28;
+    g.fillStyle = css(mixc(m.pal.ground, [10, 8, 6], 0.4)); g.beginPath(); g.ellipse(b.x, yb, rw, rh, 0, 0, TAU); g.fill();
+    for (let i = 0; i < b.n; i++) { const a = q() * TAU, d = Math.sqrt(q()), fx = b.x + Math.cos(a) * rw * d * 0.9, fy = yb + Math.sin(a) * rh * d * 0.8 - 1.5 * k, hue = b.hue + (q() - 0.5) * 30;
+      bloom(g, fx, fy, (1.2 + 1.6 * q()) * k, mixc(hsl(hue, 0.62, 0.7), [10, 12, 20], 0.15 + 0.6 * night), 0.92 * lit + 0.08, q() * TAU); }
+  }
 }
 
 /** Dunes de sable (sol entier, ou rive de sable). */
@@ -1056,7 +1146,7 @@ function basaltColumns(g, m, t, day, night, hzc) {
 function riverRibbon(g, m, t, sn, day, night, hzc, top) {
   const { H, hz, S } = m, q = rng((S.seed ^ 0x51a7e) >>> 0), ph = q() * 6.28, amp = 0.5 + q() * 0.6, wid = 0.16 + q() * 0.1, u0 = (q() - 0.5) * 0.6, pts = [];
   for (let z = 30; z >= 1.02; z *= 0.94) { const u = u0 + amp * Math.sin(ph + z * 0.55) * Math.min(1, z * 0.3); pts.push({ z, u }); }
-  const L = pts.map((p) => proj(m, p.u - wid, p.z)), R = pts.map((p) => proj(m, p.u + wid, p.z)), water = mixc(mixc(hzc, top, 0.35), [20, 50, 60], 0.35 + 0.4 * night);
+  const L = pts.map((p) => proj(m, p.u - wid, p.z)), R = pts.map((p) => proj(m, p.u + wid, p.z)); m.riverPoly = L.concat(R.slice().reverse()); const water = mixc(mixc(hzc, top, 0.35), [20, 50, 60], 0.35 + 0.4 * night);
   g.beginPath(); L.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y))); for (let k = R.length - 1; k >= 0; k--) g.lineTo(R[k][0], R[k][1]); g.closePath();
   const wg = g.createLinearGradient(0, hz, 0, H); wg.addColorStop(0, css(mixc(water, hzc, 0.5))); wg.addColorStop(1, css(water)); g.fillStyle = wg; g.fill();
   g.strokeStyle = css([0, 0, 0], 0.35); g.lineWidth = 1; g.stroke();
@@ -1566,6 +1656,18 @@ function stormSky(g, m, t, L, day, night, hzc, sn) {
     if (day > 0.05) { const yb = frontEdge(m, 0.5), lg = g.createLinearGradient(0, yb, 0, hz); lg.addColorStop(0, css([255, 214, 160], 0)); lg.addColorStop(1, css([255, 214, 160], 0.22 * k * day)); g.fillStyle = lg; g.fillRect(0, yb, W, hz - yb); } // sous le bord, la lumière d'avant l'orage
   }
   g.restore();
+  /* ESSAI (Coriolis) : sur un monde qui tourne vite, l'orage s'enroule : des bandes en spirale dans sa masse, qui tournent dans le sens de l'hémisphère */
+  const cor = S.phys && !S.phys.locked ? S.phys.coriolis : 0, sw = clamp((cor - 1.3) / 1.7);
+  if (sw > 0.02) {
+    const hemi = (S.seed >>> 3) & 1 ? -1 : 1, cx = F.mode === "right" ? W * 0.95 : F.mode === "left" ? W * 0.05 : W * (0.5 + 0.15 * hemi), cy = F.mode === "ahead" ? hz - hz * 0.95 * (m.frontF || 0.5) * 0.6 : F.mode === "over" ? -H * 0.15 : hz * 0.25;
+    g.lineWidth = H * 0.016; g.lineCap = "round";
+    g.strokeStyle = css(mixc(pale, [255, 248, 236], 0.2 * day), 0.16 * sw * k);
+    for (let arm = 0; arm < 3; arm++) { let open = false; g.beginPath(); /* un trait continu par bras, tant qu'il reste dans la masse de l'orage */
+      for (let s2 = 0; s2 <= 60; s2++) { const u = s2 / 60, a = hemi * (u * 4.2 + arm * 2.09 + t * 0.6), rr = H * (0.06 + 0.55 * u) * (F.mode === "ahead" ? 0.5 : 1), x = cx + Math.cos(a) * rr * 1.4, y = cy + Math.sin(a) * rr * (F.mode === "over" ? 0.5 : 0.8);
+        const inside = stormCov(m, x, y) > 0.6 && (F.mode !== "ahead" || y < hz) && u < 0.85;
+        if (inside) { if (open) g.lineTo(x, y); else { g.moveTo(x, y); open = true; } } else open = false; }
+      g.stroke(); }
+  }
 }
 /** ESSAI : l'ombre de l'orage sur le sol, du côté d'où il vient ; le reste du paysage garde son soleil. */
 function stormShade(g, m, L) {
@@ -1650,7 +1752,7 @@ function groundWeather(g, m, t, night, L) {
   if (S.flowers && wx.blooms && fv > 0.01) for (const b of wx.blooms) { // fleurs : des touches de couleur, serrées au loin, plus grandes devant ; la neige les éteint
     const y = hz + (H - hz) * b.u * b.u + 1, k = 0.35 + 1.1 * b.u, x = b.x + Math.sin(TAU * t + b.p) * k * 0.8;
     g.strokeStyle = css(mixc([70, 100, 60], [8, 10, 12], 0.3 + 0.5 * night), 0.6); g.lineWidth = 0.7; g.beginPath(); g.moveTo(b.x, y); g.lineTo(x, y - 3 * k); g.stroke();
-    g.fillStyle = css(mixc(hsl(b.h, 0.55 + 0.2 * b.s, 0.66), [10, 12, 20], clamp(0.15 + 0.6 * night + 0.5 * snow)), (0.9 * lit + 0.1) * fv); g.beginPath(); g.arc(x, y - 3 * k, 0.9 + 1.1 * k * (0.6 + 0.4 * b.s), 0, TAU); g.fill();
+    g.fillStyle = css(mixc(hsl(b.h, 0.55 + 0.2 * b.s, 0.66), [10, 12, 20], clamp(0.15 + 0.6 * night + 0.5 * snow)), (0.9 * lit + 0.1) * fv); bloom(g, x, y - 3 * k, 0.9 + 1.5 * k * (0.6 + 0.4 * b.s), mixc(hsl(b.h, 0.55 + 0.2 * b.s, 0.66), [10, 12, 20], clamp(0.15 + 0.6 * night + 0.5 * snow)), (0.9 * lit + 0.1) * fv, b.p);
   }
   if (mfl) g.restore();
   if (snow > 0.005) { const sg = g.createLinearGradient(0, hz, 0, H); sg.addColorStop(0, css([232, 238, 246], 0.55 * snow * lit)); sg.addColorStop(1, css([214, 224, 238], 0.35 * snow * lit)); g.fillStyle = sg; g.fillRect(0, hz, W, H - hz); }

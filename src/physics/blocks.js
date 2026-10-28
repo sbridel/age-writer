@@ -85,7 +85,7 @@ def(["drizzle", "crystal_rain", "acid_rain"], { needs: [["rainCycle", "light"]] 
 def("ash_rain", { needs: [["rainCycle", "light"], ["volcanism", "light"]] });
 def(["snow", "glaze"], { needs: [["coldSomewhere", "light"]] });
 def("rainbow", { needs: [["rainCycle", "light"], ["sunlight", "light"]] });
-def("tornado", { needs: [["convection", "medium"], ["someAir", "medium"]] });
+def("tornado", { needs: [["convection", "medium"], ["someAir", "medium"], ["spin", "medium"]] }); /* ESSAI : Coriolis */
 def("scented_mist", { needs: [["moistAir", "light"]] });
 def("petal_rain", { needs: [["someAir", "light"]] });
 

@@ -70,6 +70,9 @@ function facts(w, lang, f) {
       `The star's tide has frozen its spin: the day side climbs toward ${f(day - 273.15, 0)} °C, the night side sinks toward ${f(night - 273.15, 0)} °C, and life holds the twilight band.`);
   }
   if (w.giantHost) push("Ce monde est la lune d'une géante annelée : elle emplit son ciel et le pétrit par ses marées.", "This world is the moon of a ringed giant: it fills the sky and kneads it with tides.");
+  if (w.P >= 0.05 && w.winds === "fast") push(`Un jour de ${f(w.rotation, 0)} h : la force de Coriolis range les vents en bandes serrées, et les tempêtes s'enroulent en cyclones.`, `A ${f(w.rotation, 0)} h day: the Coriolis force lays the winds out in tight bands, and storms coil into cyclones.`); /* ESSAI : Coriolis */
+  else if (w.P >= 0.05 && w.winds === "slow") push(`Un jour de ${f(w.rotation, 0)} h : presque pas de force de Coriolis ; l'air monte à l'équateur et redescend aux pôles d'une seule boucle, sans bandes ni cyclones.`, `A ${f(w.rotation, 0)} h day: almost no Coriolis force; the air rises at the equator and sinks at the poles in a single loop, with no bands and no cyclones.`);
+  else if (w.P >= 0.05 && w.winds === "still" && !w.giantHost) push("Une face figée : l'air monte sur la face de jour et retombe sur la nuit ; aucun vent ne s'y enroule.", "One face fixed: the air rises on the day side and sinks on the night side; no wind coils there.");
   if (w.liquidCore && w.field > FIELD_SHIELD) {
     if (w.stars > 0) push(`Noyau liquide et rotation de ${f(w.rotation, 0)} h : une dynamo, donc un champ magnétique qui dévie le vent de l'étoile.`, `Liquid core and a ${f(w.rotation, 0)} h spin: a dynamo, hence a magnetic field turning aside the stellar wind.`);
     else push(`Noyau liquide et rotation de ${f(w.rotation, 0)} h : un champ magnétique, que nul vent d'étoile ne vient éprouver.`, `Liquid core and a ${f(w.rotation, 0)} h spin: a magnetic field that no stellar wind ever tests.`);
