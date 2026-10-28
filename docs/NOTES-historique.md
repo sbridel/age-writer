@@ -699,6 +699,12 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.4.1 — l'orage a du volume (28 oct. 2026)
+
+Remarques de l'auteur (« c'est un nuage tout plat ? » ; la porte de l'appentis « déborde sur le toit et c'est tout petit par rapport à la porte principale » ; « la coupole c'est le toit » ; « moins arrondi, moins art nouveau »).
+- **Orage de côté** (`stormSky`, modes `right`/`left`) : enclume plus large, bord effiloché ; mur de pluie sous la base en dégradé horizontal, penché (plus de `fillRect`) ; dans la masse, des taches douces (dégradés radiaux) claires et sombres ; quatorze lobes de bord qui gonflent à mi-hauteur ; une base bosselée (vingt-deux ellipses) au lieu de la ligne nette.
+- **Appentis de la Verrière** (`relto-oven.js`, `leanTo`, peau `glass`) : `cy = GY - 15`, `ry = 13` (la coupole reste ronde, sous la corniche) ; cinq rangs de mosaïque ; trémies abaissées ; la porte (`x1 - 17` à `x1 - 6`) en plein cintre outrepassé, toute dans le mur sous la bande de cuivre, deux battants, vitrail ambre, éventail, poignées, deux coups de fouet de cuivre.
+
 ## 2.4.0 — la pierre et les aurores (28 oct. 2026)
 
 Remarques de l'auteur sur les fenêtres (« les petits points on dirait des bugs, les troncs sont minuscules et tout lisses », « c'est horrible ce truc noir », « l'étang déborde sur le chemin », « l'arbre et l'escalier flottent sur la haie », « la boucle est trop rapide », les aurores du Relto d'après photos).

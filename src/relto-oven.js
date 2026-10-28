@@ -373,7 +373,7 @@ function leanTo(r, ctx, col, sky, t, hx) {
   } else if (skin === "glass") {
     /* une petite demi-coupole contre la cabane, sur un socle : un mur bas de mosaïque sombre, puis le verre (vert d'eau
        foncé, nervures de cuivre en éventail) à travers lequel on devine la machine ; porte en ogive ambrée */
-    const GL = require("./relto-glass"), rx = x1 - x0, ry = 17, cy = GY - 10 /* sa coupole reste sous la corniche de la Verrière */;
+    const GL = require("./relto-glass"), rx = x1 - x0, ry = 13, cy = GY - 15 /* ESSAI (28 oct. soir) : un mur un peu plus haut (la porte y tient, sous le toit), la coupole bien ronde ; elle reste sous la corniche de la Verrière */;
     /* un tuyau de poêle fin, en cuivre, qui monte de derrière la coupole, contre le mur : il dépasse, se coude, un petit chapeau */
     const px = x1 - 6, ptop = cy - ry - 3; /* court : il dépasse à peine */
     ctx.strokeStyle = col("#8a4a22"); ctx.lineWidth = 2.4; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(px, cy); ctx.lineTo(px, ptop); ctx.quadraticCurveTo(px, ptop - 3, px - 3, ptop - 4); ctx.lineTo(px - 6, ptop - 5); ctx.stroke();
@@ -382,8 +382,8 @@ function leanTo(r, ctx, col, sky, t, hx) {
     const pipeAt = [px - 6, ptop - 10];
     ctx.save(); ctx.beginPath(); ctx.moveTo(x1, cy); ctx.ellipse(x1, cy, rx, ry, 0, Math.PI, 1.5 * Math.PI); ctx.closePath(); ctx.clip();
     GL.frostedDome(ctx, col, x0, cy - ry, x1, cy, night * (cooking ? 1 : 0.6), 3); /* le même verre dépoli que la coupole */
-    ctx.fillStyle = rgba(8, 24, 22, 0.55); for (let i = 0; i < 3; i++) { const hx0 = x0 + 10 + i * 6; ctx.beginPath(); ctx.moveTo(hx0 - 2.5, cy - 12); ctx.lineTo(hx0 + 2.5, cy - 12); ctx.lineTo(hx0 + 0.8, cy - 6); ctx.lineTo(hx0 - 0.8, cy - 6); ctx.closePath(); ctx.fill(); } /* les trémies, en ombre derrière le verre */
-    ctx.fillRect(x0 + 8, cy - 6, 16, 6);
+    ctx.fillStyle = rgba(8, 24, 22, 0.55); for (let i = 0; i < 3; i++) { const hx0 = x0 + 10 + i * 6; ctx.beginPath(); ctx.moveTo(hx0 - 2.5, cy - 7); ctx.lineTo(hx0 + 2.5, cy - 7); ctx.lineTo(hx0 + 0.8, cy - 2); ctx.lineTo(hx0 - 0.8, cy - 2); ctx.closePath(); ctx.fill(); } /* les trémies, en ombre derrière le verre */
+    ctx.fillRect(x0 + 8, cy - 2, 16, 2);
     if (cooking) { const gl = ctx.createRadialGradient(x0 + 16, cy - 2, 1, x0 + 16, cy - 2, 16); gl.addColorStop(0, rgba(255, 160, 70, 0.55)); gl.addColorStop(1, rgba(255, 160, 70, 0)); ctx.fillStyle = gl; ctx.fillRect(x0, cy - ry, rx, ry); }
     ctx.fillStyle = rgba(255, 255, 255, 0.10); ctx.beginPath(); ctx.ellipse(x1 - rx * 0.35, cy - ry * 0.72, rx * 0.22, 2, -0.4, 0, TAU); ctx.fill(); /* un reflet */
     ctx.restore();
@@ -391,9 +391,22 @@ function leanTo(r, ctx, col, sky, t, hx) {
     ctx.strokeStyle = col(GL.COPPER_HI); ctx.lineWidth = 0.8; for (const k of [0.22, 0.45, 0.7]) { const a = Math.PI + k * Math.PI / 2; ctx.beginPath(); ctx.moveTo(x1, cy); ctx.lineTo(x1 + Math.cos(a) * rx, cy + Math.sin(a) * ry); ctx.stroke(); }
     /* le socle : un mur bas de mosaïque, une bande de cuivre */
     ctx.fillStyle = col("#1c2a28"); ctx.fillRect(x0 - 1, cy, rx + 1, GY - cy);
-    const q = rng(0x5ec1e); for (let row = 0; row < 3; row++) for (let i = 0; i < 9; i++) { ctx.fillStyle = col(mix("#1f4a46", "#2f6a62", q())); ctx.fillRect(x0 + i * 3.4 + (row % 2) * 1.6, cy + 2 + row * 2.8, 2.8, 2.2); }
+    const q = rng(0x5ec1e); for (let row = 0; row < 5; row++) for (let i = 0; i < 9; i++) { ctx.fillStyle = col(mix("#1f4a46", "#2f6a62", q())); ctx.fillRect(x0 + i * 3.4 + (row % 2) * 1.6, cy + 2 + row * 2.8, 2.8, 2.2); }
     ctx.fillStyle = col(GL.COPPER); ctx.fillRect(x0 - 1, cy - 1, rx + 1, 1.6);
-    ctx.fillStyle = cooking ? mix(col("#c98a32"), "#ffb14a", 0.4 + 0.5 * night) : col("#a8702a"); GL.ogive(ctx, x0 + 7, x0 + 16, GY - 15, GY); ctx.fill(); ctx.strokeStyle = col(GL.COPPER); ctx.lineWidth = 0.8; GL.ogive(ctx, x0 + 7, x0 + 16, GY - 15, GY); ctx.stroke();
+    { /* ESSAI (28 oct. soir) : la porte à la mesure de celle de la Verrière : plus haute et plus large, du côté où la coupole est haute ;
+         elle coupe le socle et monte dans le verre, sous la coupole (elle ne déborde plus sur la bande de cuivre), un cadre de cuivre, un vitrail ambre */
+      const dx0 = x1 - 17, dx1 = x1 - 6, dtop = cy + 1.6, mx = (dx0 + dx1) / 2, R = (dx1 - dx0) / 2; /* toute dans le mur, sous la bande de cuivre (le toit, c'est la coupole) ; un plein cintre outrepassé, art nouveau */
+      const arch = (grow) => { ctx.beginPath(); ctx.moveTo(dx0 - grow, GY); ctx.lineTo(dx0 - grow, dtop + R + 1); ctx.arc(mx, dtop + R + 1, R + grow, Math.PI * 0.92, Math.PI * 2.08); ctx.lineTo(dx1 + grow, GY); ctx.closePath(); };
+      ctx.fillStyle = col("#1b1410"); arch(1.2); ctx.fill(); /* l'embrasure */
+      ctx.fillStyle = cooking ? mix(col("#c98a32"), "#ffb14a", 0.4 + 0.5 * night) : col("#a8702a"); arch(0); ctx.fill();
+      ctx.save(); arch(0); ctx.clip();
+        ctx.fillStyle = cooking ? rgba(255, 210, 120, 0.25 + 0.3 * night) : rgba(255, 220, 150, 0.18); ctx.fillRect(dx0, dtop, dx1 - dx0, (GY - dtop) * 0.5); /* le vitrail du haut, plus clair */
+        ctx.strokeStyle = col("#5a3414"); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(mx, dtop + R); ctx.lineTo(mx, GY); ctx.moveTo(dx0, GY - (GY - dtop) * 0.5); ctx.lineTo(dx1, GY - (GY - dtop) * 0.5); ctx.stroke(); /* les deux battants, la traverse */
+        ctx.beginPath(); ctx.arc(mx, dtop + R + 1, R * 0.55, Math.PI, TAU); ctx.stroke(); /* l'éventail du cintre */
+      ctx.restore();
+      ctx.strokeStyle = col(GL.COPPER); ctx.lineWidth = 1; arch(0); ctx.stroke();
+      ctx.fillStyle = col(GL.COPPER_HI); ctx.beginPath(); ctx.arc(mx + 2.2, GY - 6, 0.6, 0, TAU); ctx.arc(mx - 2.2, GY - 6, 0.6, 0, TAU); ctx.fill(); /* les poignées */
+      ctx.strokeStyle = col(GL.COPPER); ctx.lineWidth = 0.7; ctx.lineCap = "round"; for (const sd of [-1, 1]) { const ex = sd < 0 ? dx0 - 1.5 : dx1 + 1.5; ctx.beginPath(); ctx.moveTo(ex, dtop + R + 3); ctx.bezierCurveTo(ex + sd * 2.5, dtop + R, ex + sd * 3.5, dtop + 2, ex + sd * 1.2, dtop + 0.8); ctx.arc(ex + sd * 1.9, dtop + 1.6, 0.9, sd < 0 ? 0 : Math.PI, sd < 0 ? Math.PI * 1.6 : -Math.PI * 0.6, sd > 0); ctx.stroke(); } ctx.lineCap = "butt"; /* deux coups de fouet de cuivre, de part et d'autre */ }
     ctx.fillStyle = col(GL.COPPER); ctx.fillRect(x1 - 1.5, cy - ry, 2.5, GY - (cy - ry)); /* le pilier qui la porte contre la cabane */
     vent = pipeAt; /* le tuyau, dessiné derrière la coupole (plus haut) */
   } else {

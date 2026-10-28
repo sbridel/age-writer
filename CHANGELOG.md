@@ -2,6 +2,12 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.4.1 — The storm has volume (2026-10-28)
+
+### Changed
+- **A storm seen from the side has volume**: a cauliflower edge that swells halfway up, brighter towers and darker hollows in its mass, a lumpy base instead of a sharp line, an anvil spreading far over the clear sky with a frayed edge, and beneath it a wall of rain with a soft, leaning edge instead of a rectangle.
+- **The Glasshouse lean-to** has a higher mosaic wall under its round dome, and a door to the measure of the main one, entirely in the wall under the copper band: a horseshoe arch, two leaves, an amber light, two copper whiplash scrolls.
+
 ## 2.4.0 — Stone and auroras (2026-10-28)
 
 ### Changed

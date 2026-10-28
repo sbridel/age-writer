@@ -6,6 +6,29 @@
  */
 const NEWS = [
   {
+    v: "2.4.1",
+    fr: {
+      title: "L'orage a du volume",
+      letter: "Un graveur de la Guilde a passé l'après-midi à regarder monter un orage. Il en a rapporté des tours, une base lourde et une enclume qui s'étire ; et au passage, il a refait la porte de l'appentis de la Verrière.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**L'orage vu de côté** a du volume : un bord qui bourgeonne, des tours et des creux dans sa masse, une base bosselée, une enclume qui déborde sur le ciel clair.",
+        "**Sous l'orage**, la pluie tombe en un mur au bord doux et penché.",
+        "**L'appentis de la Verrière** a un mur plus haut sous sa coupole ronde, et une porte art nouveau à sa mesure, toute dans le mur.",
+      ],
+    },
+    en: {
+      title: "The storm has volume",
+      letter: "A Guild engraver spent the afternoon watching a storm rise. He came back with towers, a heavy base and a stretching anvil; and on the way, he redid the door of the Glasshouse lean-to.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**A storm seen from the side** has volume: a billowing edge, towers and hollows in its mass, a lumpy base, an anvil spreading over the clear sky.",
+        "**Beneath the storm**, the rain falls as a wall with a soft, leaning edge.",
+        "**The Glasshouse lean-to** has a higher wall under its round dome, and an art nouveau door to its measure, entirely in the wall.",
+      ],
+    },
+  },
+  {
     v: "2.4.0",
     fr: {
       title: "La pierre et les aurores",
