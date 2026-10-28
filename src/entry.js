@@ -108,6 +108,7 @@ module.exports = function build(Base, core, AGEX) {
       await super.onload();
       this.core = core;
       const saved = this.settings.ext || {};
+      this.hadData = !!(saved && saved.state && Object.keys(saved.state).length); /* des données d'avant : ce n'est pas une installation neuve (les nouveautés) */
       this.ext = this.settings.ext = { ...DEFAULTS, ...saved, state: { ...(saved.state || {}), law: { ages: {}, ...((saved.state || {}).law || {}) } } };
       if (saved.openSound && saved.soundBook === undefined) { const m = saved.openSound; this.ext.soundLink = m === "openseq"; if (m === "off") { this.ext.soundBook = false; this.ext.soundClasp = false; } delete this.ext.openSound; } // ancien menu → trois interrupteurs
       this.t = makeT(() => this.lang());
@@ -345,7 +346,11 @@ module.exports = function build(Base, core, AGEX) {
         const refuse = (why) => info.refused.push({ raw: c.raw, why, what: c.what, from: c.from });
         if (!c.known || (c.contra && c.what === "sky")) { refuse("what"); continue; }
         const f = this.carryFind(c.from, o.seed); if (!f) { refuse("missing"); continue; }
-        const g = CARRY.guardOf(chain, f.basename); if (g) { refuse(g); continue; }
+        const g = CARRY.guardOf(chain, f.basename); if (g) {
+          /* une boucle vue de l'intérieur : l'autre Âge, relu pendant qu'on le porte, porte de nous ; ce qu'il en tire est nous-mêmes, résolu plus haut.
+             La ligne s'efface au lieu de rester une tache d'encre (−10 qui faisait tomber la source sous 75 et refuser la boucle après l'accord ; 2.2.1) */
+          if (g === "cycle" && String(f.basename).toLowerCase() !== String(me).toLowerCase()) done.push({ index: c.index, what: "cycle", ids: [] });
+          refuse(g); continue; }
         const useKept = (k, flag) => { done.push({ index: c.index, what: k.what, contra: !!k.contra, ids: k.ids }); info.fragments.push({ ...k, contra: !!k.contra, loop: false, from: f.basename, [flag]: true });
           for (const id of k.ids) if (!info.ids.includes(id)) info.ids.push(id);
           const byK = this._carriedFrom.get(f.basename) || new Map(); byK.set(me, CARRY.axisOf(k.what)); this._carriedFrom.set(f.basename, byK); };
@@ -1064,8 +1069,8 @@ module.exports = function build(Base, core, AGEX) {
     /** Premier lancement : une note de bienvenue avec un Âge d'exemple (une seule fois, jamais chez un coffre qui a déjà des Âges). */
     /** Les nouveautés (src/whatsnew.js) : au premier lancement après une mise à jour, une fenêtre, et un pli de la Guilde sur la table de la cabane. Rien à l'installation. */
     newsOnStart() {
-      const WN = require("./whatsnew"), st = this.ext.state, cur = this.manifest && this.manifest.version, r = WN.onStart(st.seenVersion, cur);
-      if (r.seen !== st.seenVersion) { st.seenVersion = r.seen; this.saveExt(); }
+      const WN = require("./whatsnew"), st = this.ext.state, cur = this.manifest && this.manifest.version, r = WN.onStart(st.newsSeen, cur, this.hadData); /* `newsSeen` (2.2.1) : la 2.2.0 notait `seenVersion` dès le premier lancement et ne montrait rien à qui mettait à jour */
+      if (r.seen !== st.newsSeen) { st.newsSeen = r.seen; this.saveExt(); }
       if (!r.show) return;
       st.newsFrom = r.from; st.newsUnread = true; this.saveExt(); this.refreshLive();
       if (this.ext.whatsNew !== false) this.showWhatsNew(false);

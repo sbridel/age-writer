@@ -501,6 +501,12 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
         ok(sickSt < 75 && before.carry.fragments.length === 1, "avant le 17 : on porte même depuis un monde qui ne tient pas (" + sickSt + ")");
         p.ext.story[SKc].stone = { ending: "accord", endedAt: Date.now() }; taker.stat.mtime++;
         const after = an(taker); ok(!after.carry.fragments.length && (after.carry.refused || []).some((x) => x.why === "sick17"), "l'accord : ils ne portent plus depuis un monde qui tombe");
+        { /* 2.2.1 : une boucle tient après l'accord (relu de l'intérieur, l'autre Âge ne garde pas sa ligne vers nous en tache d'encre, qui le faisait tomber sous 75) */
+          const E = age("Anneau Est", ["single_sun", "steady_cycle", "rotation: 24", "water", "fern", "moss", "carry: forest from Anneau Ouest"], dir), O = age("Anneau Ouest", ["single_sun", "steady_cycle", "rotation: 24", "forest", "fern", "grass", "stone", "carry: water from Anneau Est"], dir);
+          await p.index.list(); p.law.observe("Anneau Est", an(E), E.stat.mtime); p.law.observe("Anneau Ouest", an(O), O.stat.mtime); E.stat.mtime++; O.stat.mtime++;
+          const re = an(E), ro = an(O);
+          ok(re.carry && re.carry.loop && !(re.carry.refused || []).length && ro.carry && ro.carry.loop, "l'accord : deux Âges qui se portent l'un l'autre forment toujours l'anneau");
+          ok(require("../src/genscene").sceneOf(re, p.core.seed(E.path), p.core.blocks).loop, "l'accord : la fenêtre montre le tore"); }
         p.ext.story[SKc].stone = { ending: "command", endedAt: Date.now() }; recv.stat.mtime++;
         r = an(recv); ok(r.carry.fragments.length === 1 && r.carry.fragments[0].copied && /not breathe|ne respire pas/.test(p.carryLine(r.carry)), "le commandement : copié, pas lié");
         srcA.content = "```age\nred_sun\nsteady_cycle\nwater\nfern\n```\n"; srcA.stat.mtime++; p.carrySource(srcA, p.core.extract(srcA.content));

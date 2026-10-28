@@ -50,9 +50,9 @@ function cmp(a, b) {
 }
 /** Les nouveautés plus récentes que `seen`, jusqu'à `current` comprise, de la plus récente à la plus ancienne. */
 function since(seen, current) { return NEWS.filter((n) => cmp(n.v, seen) > 0 && cmp(n.v, current) <= 0).sort((a, b) => cmp(b.v, a.v)); }
-/** Que faire au lancement : rien la première fois (une installation neuve n'a pas de nouveautés), la fenêtre si la version a monté et qu'il y a des nouvelles. */
-function onStart(seen, current) {
-  if (!seen) return { show: false, seen: current };
+/** Que faire au lancement : rien sur une installation neuve, la fenêtre si la version a monté (ou si l'on vient d'une version qui ne notait pas la version vue) et qu'il y a des nouvelles. */
+function onStart(seen, current, known) {
+  if (!seen) return known ? { show: since("0", current).length > 0, seen: current, from: "0" } : { show: false, seen: current }; // `known` : le plugin avait déjà des données (une mise à jour depuis une version qui ne notait rien)
   if (cmp(current, seen) <= 0) return { show: false, seen };
   return { show: since(seen, current).length > 0, seen: current, from: seen };
 }

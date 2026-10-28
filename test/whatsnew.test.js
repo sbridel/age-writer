@@ -5,6 +5,7 @@ const WN = require("../src/whatsnew");
 let n = 0; const ok = (c, m) => { assert(c, m); n++; };
 ok(WN.cmp("2.2.0", "2.1.0") === 1 && WN.cmp("2.1.0", "2.10.0") === -1 && WN.cmp("2.2.0", "2.2.0") === 0, "comparaison de versions");
 ok(!WN.onStart(undefined, "2.2.0").show && WN.onStart(undefined, "2.2.0").seen === "2.2.0", "installation neuve : rien, on note la version");
+ok(WN.onStart(undefined, "2.2.0", true).show && WN.onStart(undefined, "2.2.0", true).from === "0", "rien de noté mais des données d'avant : une mise à jour, la fenêtre");
 ok(WN.onStart("2.1.0", "2.2.0").show && WN.onStart("2.1.0", "2.2.0").from === "2.1.0", "mise à jour : la fenêtre, depuis la version d'avant");
 ok(!WN.onStart("2.2.0", "2.2.0").show, "même version : rien");
 ok(!WN.onStart("2.2.0", "2.1.0").show, "retour en arrière : rien");
