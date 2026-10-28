@@ -699,6 +699,16 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.4.0 — la pierre et les aurores (28 oct. 2026)
+
+Remarques de l'auteur sur les fenêtres (« les petits points on dirait des bugs, les troncs sont minuscules et tout lisses », « c'est horrible ce truc noir », « l'étang déborde sur le chemin », « l'arbre et l'escalier flottent sur la haie », « la boucle est trop rapide », les aurores du Relto d'après photos).
+- **Aurores** (`src/aurora.js`, `curtains`) : rideaux de rayons peints au quart de la taille puis agrandis (flou doux), un seul dégradé par rideau étiré à chaque rayon ; ourlet vert, haut rose-magenta (`pink`, tiré de la graine ou imposé), lueur verte basse. Utilisé par `genscene.js` (`auroraCurtains`) et par le ciel du Relto (`relto-render.js`, `drawSky` : `top: 0.42, gain: 1.3, pink: 0.75`).
+- **Pierre** (`stoneOf`, `ruinsPass` dans `src/genscene.js`) : les ruines sont peintes sur un calque, appareillées en `source-atop` (dégradé, lits et joints, pierres inégales), puis posées ; sans calque, en aplat de pierre. Les lueurs (lampe, tablette) vont dans l'image (`fx`). L'étrangeté de l'horizon (`detail`) prend la même pierre. Le pont à l'arche tombée garde ses naissances d'arche et des blocs au pied.
+- **Jardin** (`gardenGround(…, part)`) : `"ground"` (allées de gravier bordées de buis, arrêtées à l'étang) sous les arbres ; `"hedge"` (haie taillée, massifs bordés) après les arbres, les ruines et l'étrangeté. Les pans de haie en parallélogramme ne sont plus dessinés (leur tirage reste). Au jardin, l'étang a une margelle (`pondWater`).
+- **Troncs** (`trunk`, `boughs`) : largeur selon la hauteur, effilés, pied évasé, face d'ombre, fentes d'écorce ; branches maîtresses (feuillu, érable), marques du bouleau.
+- **`humming_blooms`** : des touffes (feuilles, tiges, fleurs `bloom`) au lieu de rangées de points.
+- **Boucle** : `PERIOD` 8000 → 16000 ms.
+
 ## 2.3.1 — le livre des lois, relu (28 oct. 2026)
 
 Demande de l'auteur (« qu'à qui ? », puis « retravaille les poèmes ») : `src/rehevkor.js`. Le fahsee *Lien* retravaillé vers à vers pour la clarté (douze vers en français ; 5 | 5, ABABA, mots de lien Shorah → va → relit/Relis → leste/Lesté → novice → Shorah) ; l'anglais devient un fahsee rimé (go → Go, rereads → Reread, pressed → Pressed, new → New). Versets 15 (heebor, le Changement : l'ajout qui ne dément rien ne blesse pas) et 17 (heegabree, le Nom : la marque, graine et lieu ; renommer en emportant la marque) suivent les lois. Texte et raisons : `claude/POEMES-rehevkor.md` (projet). Rien ne change au jeu.

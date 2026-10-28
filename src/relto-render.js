@@ -302,16 +302,7 @@ class ReltoRenderer {
       ctx.restore();
     }
     const ak = clamp(((sky.night == null ? 0 : sky.night) - 0.3) / 0.45); // les aurores ne se voient que la nuit (invisibles de jour, elles se lèvent au crépuscule)
-    if (aurora && ak > 0.01) {
-      ctx.save(); ctx.globalCompositeOperation = "lighter";
-      const cols = [[80, 220, 160], [150, 120, 230], [90, 190, 220]];
-      cols.forEach((c, i) => {
-        ctx.strokeStyle = rgba(c[0], c[1], c[2], 0.26 * ak); ctx.lineWidth = 16; ctx.lineCap = "round"; ctx.beginPath();
-        for (let x = 0; x <= W; x += 8) { const y = 44 + i * 26 + 14 * Math.sin(x / W * 6.28 * (1 + i * 0.4) + t * (i % 2 ? -0.5 : 0.4)) + 5 * Math.sin(x / 40 + t); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
-        ctx.stroke();
-      });
-      ctx.restore();
-    }
+    if (aurora && ak > 0.01) require("./aurora").curtains(ctx, { W, H, hz: 250, seed: 0x5e170, t: t / 16, ak, top: 0.42, gain: 1.3, pink: 0.75 }); /* ESSAI (28 oct. soir) : des rideaux, comme dans la fenêtre de liaison (src/aurora.js) */
   }
 
   cloudColor(sky) {

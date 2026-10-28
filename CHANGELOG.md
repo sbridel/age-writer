@@ -2,6 +2,16 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.4.0 — Stone and auroras (2026-10-28)
+
+### Changed
+- **Auroras are drawn as curtains**, in the linking window and in the Relto sky: soft vertical rays over a bright green hem, turning pink or magenta towards the top (more or less depending on the Age), a wide green glow above the horizon. They used to be three wavy bands.
+- **Ruins and the strange things on the horizon are made of stone**, in the colour of the world's rock (chalk, basalt, sandstone…), laid in courses, lighter at the top and fading at night; a fallen bridge keeps the springing of its arch. They used to be flat black silhouettes.
+- **The garden reads as a garden**: a clipped green hedge, gravel alleys edged with box that come towards you through its openings and stop at the pond, edged flower beds where the flowers can be seen; in a garden, the pond is a basin with a stone rim. Trees and ruins stand behind the hedge instead of floating on it.
+- **Tree trunks have body**: their width follows the size of the tree, tapered, with a flared foot, a shaded side and bark; broadleaf trees and maples have main branches, birches their black marks.
+- **Humming blooms** are tufts of flowers with leaves and stems, instead of rows of coloured dots.
+- **The window's loop is twice as slow** (16 seconds instead of 8): clouds, water, flowers and bees move more calmly.
+
 ## 2.3.1 — The book of laws, reread (2026-10-28)
 
 ### Changed

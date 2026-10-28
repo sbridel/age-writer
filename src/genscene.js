@@ -18,7 +18,7 @@ const CAT = require("./wonders");
 const TOR = require("./torus"); /* le tore : deux Âges qui se portent l'un l'autre */
 const SSN = require("./seasons"); /* la saison du jour */
 
-const TAU = Math.PI * 2, PERIOD = 8000;
+const TAU = Math.PI * 2, PERIOD = 16000; /* ESSAI (28 oct. soir) : la boucle de la fenêtre deux fois plus lente (8 s avant) */
 
 /** Identifiants que le peintre connaît (tout le reste passe par le peintre générique, d'après l'axe et les adjectifs du bloc). */
 const KNOWN = new Set((CAT.COMPOSITES.map((c) => c.id).join(" ") + " scorched_moths tarnished_growth " + "door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon steady_cycle frozen_cycle erratic_cycle chaotic_orbit stable_orbit shifting_orbit " +
@@ -697,7 +697,7 @@ function paintCavern(g, m, t) {
   if (S.fissure) { // la bouche de la fissure, dans la pénombre de la caverne
     g.save(); g.globalAlpha = 0.4; fissure(g, m, t); g.restore();
   }
-  for (const rn of m.ruins) ruin(g, m, rn, t);
+  ruinsPass(g, m, t);
   for (const e of m.eyes) { const o = Math.sin(TAU * (t + e.p)); if (o > -0.7) { g.fillStyle = css([255, 200, 90], 0.8); g.fillRect(e.x - 3, e.y, 1.6, 1.6); g.fillRect(e.x + 2, e.y, 1.6, 1.6); } }
   extraAt(g, m, t, "ground");
   WON.wonderPass(g, m, t, "cave", null);
@@ -733,15 +733,7 @@ function paint(g, m, t, o = {}) {
   if (sv > 0.02 && m.night) nightSky(g, m, t, sv);
   // aurores
   const ak = Math.max(0, Math.min(1, (night - 0.3) / 0.45)); // aurores : nuit seulement
-  if (S.auroras && ak > 0.01) {
-    g.save(); g.globalCompositeOperation = "lighter";
-    [[80, 220, 160], [150, 120, 230], [90, 190, 220]].forEach((c, y) => {
-      const b = H * (0.14 + 0.08 * y), v = H * 0.05; g.strokeStyle = css(c, 0.32 * ak); g.lineWidth = H * 0.045; g.lineCap = "round"; g.beginPath();
-      for (let x = 0; x <= W; x += 6) { const yy = b + v * Math.sin(x / W * TAU * ((2 + y) / 2) + TAU * t * (y % 2 ? -1 : 1)) + v * 0.4 * Math.sin(x / W * TAU * 3 + TAU * t * 2); x === 0 ? g.moveTo(x, yy) : g.lineTo(x, yy); }
-      g.stroke();
-    });
-    g.restore();
-  }
+  if (S.auroras && ak > 0.01) auroraCurtains(g, m, t, ak);
   if (S.starfall) for (let p = 0; p < 3; p++) {
     const q = frac(t + p / 3); if (q > 0.3) continue; const k = q / 0.3, x = (rng(S.seed + p)() * W * 0.7), y = rng(S.seed + p + 9)() * hz * 0.4;
     g.strokeStyle = css([255, 255, 255], 0.8 * (1 - k)); g.lineWidth = 1.3; g.beginPath(); g.moveTo(x + k * W * 0.28, y + k * H * 0.24); g.lineTo(x + k * W * 0.28 - H * 0.18, y + k * H * 0.24 - H * 0.13); g.stroke();
@@ -852,8 +844,9 @@ function paint(g, m, t, o = {}) {
   // arbres
   m.dayK = day; m.nightK = night; if (S.trees) { const mf = metalFilter(S); if (mf && S.wonderMetal && metalLayer(g, m, t, mf, day)) { /* dessinés en métal poli */ } else { if (mf) { g.save(); g.filter = mf; } trees(g, m, t); if (mf) g.restore(); } } /* ESSAI : l'arbre fait du métal qu'il a bu, ou terni */
   // ruines
-  for (const rn of m.ruins) ruin(g, m, rn, t);
+  ruinsPass(g, m, t);
   detail(g, m, t, night);
+  if (m.garden) gardenGround(g, m, t, day, night, hzc, "hedge"); /* ESSAI : la haie devant les arbres et les ruines de l'horizon : leur pied est derrière elle */
   if (S.glow || S.moths) for (let p = 0, np = Math.round(clamp(12 * (S.amt ? (S.moths ? (S.amt.moths != null ? S.amt.moths : 1) : (S.amt.glow != null ? S.amt.glow : 1)) : 1), 3, 40)); p < np; p++) { const q = rng(S.seed + p * 13), x = q() * W, y = hz - q() * H * 0.12, a = 0.35 + 0.5 * Math.sin(TAU * (t * (S.moths ? 2 : 1) + q())); g.fillStyle = css(S.glow ? [140, 255, 190] : [255, 230, 160], Math.max(0, a) * 0.8); g.beginPath(); g.arc(x + (S.moths ? 5 * Math.sin(TAU * (t * 2 + q())) : 0), y + (S.moths ? 3 * Math.cos(TAU * (t * 3 + q())) : 0), 1.4, 0, TAU); g.fill(); }
   for (const e of m.eyes) { const o = Math.sin(TAU * (t * 1 + e.p)); if (o > -0.7) { g.fillStyle = css([255, 200, 90], 0.8); g.fillRect(e.x - 3, e.y, 1.6, 1.6); g.fillRect(e.x + 2, e.y, 1.6, 1.6); } }
   if (m.shore) { g.save(); shorePath(g, m.shore.wet); g.clip(); reflect(g, m, t, 0.5); g.restore(); shoreEdge(g, m, t, night); } // le reflet ne couvre que l'eau ; l'écume par-dessus
@@ -985,7 +978,8 @@ function offWater(g, m) {
 /** ESSAI : l'étang : la berge, l'eau qui prend le ciel, les rides, les nénuphars, les carpes qui tournent sous la surface. */
 function pondWater(g, m, t, day, night, hzc, top) {
   const P = m.pond, lit = 1 - 0.6 * night, { cx, cy, rx, ry } = P;
-  g.fillStyle = css(mixc(m.pal.ground, [20, 16, 10], 0.4)); g.beginPath(); g.ellipse(cx, cy + ry * 0.06, rx * 1.06, ry * 1.16, 0, 0, TAU); g.fill(); // la berge
+  if (m.S.garden) { const st = stoneOf(m); g.fillStyle = css(st.low); g.beginPath(); g.ellipse(cx, cy + ry * 0.12, rx * 1.1, ry * 1.28, 0, 0, TAU); g.fill(); g.fillStyle = css(st.top); g.beginPath(); g.ellipse(cx, cy, rx * 1.08, ry * 1.2, 0, 0, TAU); g.fill(); g.strokeStyle = css(st.joint, 0.5); g.lineWidth = Math.max(0.6, m.W / 800); for (let k = 0; k < 18; k++) { const a = (k / 18) * TAU; g.beginPath(); g.moveTo(cx + Math.cos(a) * rx * 1.0, cy + Math.sin(a) * ry * 1.04); g.lineTo(cx + Math.cos(a) * rx * 1.08, cy + Math.sin(a) * ry * 1.2); g.stroke(); } } /* ESSAI : au jardin, un bassin cerclé d'une margelle */
+  else { g.fillStyle = css(mixc(m.pal.ground, [20, 16, 10], 0.4)); g.beginPath(); g.ellipse(cx, cy + ry * 0.06, rx * 1.06, ry * 1.16, 0, 0, TAU); g.fill(); } // la berge
   const water = mixc(mixc(hzc, top, 0.45), [16, 40, 46], 0.3 + 0.45 * night), wg = g.createLinearGradient(0, cy - ry, 0, cy + ry);
   wg.addColorStop(0, css(mixc(water, [8, 18, 20], 0.35))); wg.addColorStop(0.45, css(mixc(water, hzc, 0.35 * lit))); wg.addColorStop(1, css(water));
   g.fillStyle = wg; g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, TAU); g.fill();
@@ -1007,26 +1001,43 @@ function pondWater(g, m, t, day, night, hzc, top) {
   for (const p of P.pads) if (p.bloom) { const x = cx + p.u * rx * 0.92, y = cy + p.v * ry * 0.92, s = rx * 0.065 * p.s; bloom(g, x + s * 0.2, y - s * 0.25, s * 0.7, mixc(hsl(p.hue, 0.6, 0.78), [10, 12, 20], 0.5 * night), 0.95, p.r); }
 }
 /** ESSAI : le jardin : la haie taillée et ses entrées, les allées de haie, les massifs de fleurs. */
-function gardenGround(g, m, t, day, night, hzc) {
-  const Gd = m.garden, { W, H, hz } = m, lit = 1 - 0.6 * night, leaf = mixc([62, 108, 56], [6, 8, 10], 0.25 + 0.5 * night), top = mixc(leaf, [170, 210, 120], 0.35 * lit * (0.4 + 0.6 * day) + 0.05), D = H - hz;
-  const lf = leafFilter(m.S); if (lf) { g.save(); g.filter = lf; }
-  const h = Gd.h, y = Gd.y;
-  g.fillStyle = css(leaf); g.beginPath(); let x = 0;
-  const gaps = Gd.gaps.slice().sort((a, b) => a.x - b.x);
-  for (const gp of gaps) { if (gp.x - gp.w / 2 > x) g.rect(x, y - h, gp.x - gp.w / 2 - x, h); x = gp.x + gp.w / 2; } if (x < W) g.rect(x, y - h, W - x, h); g.fill();
-  g.fillStyle = css(top); x = 0; for (const gp of gaps) { if (gp.x - gp.w / 2 > x) g.fillRect(x, y - h, gp.x - gp.w / 2 - x, Math.max(1, h * 0.16)); x = gp.x + gp.w / 2; } if (x < W) g.fillRect(x, y - h, W - x, Math.max(1, h * 0.16));
-  { const inGap = (xx) => gaps.some((gp) => Math.abs(xx - gp.x) < gp.w / 2); g.fillStyle = css(mixc(leaf, top, 0.5), 0.8); for (let i = 0; i < 64; i++) { const xx = (i + 0.5) * W / 64; if (inGap(xx)) continue; const b = Gd.bumps[i]; g.beginPath(); g.ellipse(xx, y - h * (0.55 + 0.3 * b), W / 128 * (0.8 + b), h * 0.12, 0, 0, TAU); g.fill(); } /* le feuillage taillé */
-    g.fillStyle = css([0, 0, 0], 0.25); x = 0; for (const gp of gaps) { if (gp.x - gp.w / 2 > x) g.fillRect(x, y - h * 0.18, gp.x - gp.w / 2 - x, h * 0.18); x = gp.x + gp.w / 2; } if (x < W) g.fillRect(x, y - h * 0.18, W - x, h * 0.18); } /* l'ombre au pied */
-  for (const w of Gd.walls) { // une allée de haie qui vient vers nous : plus haute et plus large de près
-    const u1 = w.len, y1 = hz + D * u1 * u1 + D * 0.12, k0 = 1, k1 = 1 + 4 * u1, x0 = w.x, x1 = w.x + w.lean * W * 0.2 * u1, w0 = W * 0.006, w1 = W * 0.006 * k1;
-    g.fillStyle = css(mixc(leaf, [0, 0, 0], 0.15)); g.beginPath(); g.moveTo(x0 - w0, y); g.lineTo(x0 + w0, y); g.lineTo(x1 + w1, y1); g.lineTo(x1 - w1, y1); g.lineTo(x1 - w1, y1 - h * k1); g.lineTo(x0 - w0, y - h * k0); g.closePath(); g.fill();
-    g.fillStyle = css(top); g.beginPath(); g.moveTo(x0 - w0, y - h); g.lineTo(x0 + w0, y - h); g.lineTo(x1 + w1, y1 - h * k1); g.lineTo(x1 - w1, y1 - h * k1); g.closePath(); g.fill(); }
-  if (lf) g.restore();
-  for (const b of Gd.beds) { // les massifs : une terre sombre, des fleurs serrées
-    const q = rng(b.seed), yb = hz + D * b.u * b.u + D * 0.1, k = 0.4 + b.u * 1.2, rw = W * 0.06 * b.w * k, rh = rw * 0.28;
-    g.fillStyle = css(mixc(m.pal.ground, [10, 8, 6], 0.4)); g.beginPath(); g.ellipse(b.x, yb, rw, rh, 0, 0, TAU); g.fill();
-    for (let i = 0; i < b.n; i++) { const a = q() * TAU, d = Math.sqrt(q()), fx = b.x + Math.cos(a) * rw * d * 0.9, fy = yb + Math.sin(a) * rh * d * 0.8 - 1.5 * k, hue = b.hue + (q() - 0.5) * 30;
-      bloom(g, fx, fy, (1.2 + 1.6 * q()) * k, mixc(hsl(hue, 0.62, 0.7), [10, 12, 20], 0.15 + 0.6 * night), 0.92 * lit + 0.08, q() * TAU); }
+function gardenGround(g, m, t, day, night, hzc, part = "ground") { /* part : "ground" (les allées, sous les arbres) ou "hedge" (la haie et les massifs, devant les arbres, les ruines et l'étrangeté de l'horizon) */
+  /* ESSAI (28 oct. soir) : une haie verte taillée (la couleur du feuillage suit l'étoile, comme les arbres), des allées de gravier qui passent par ses ouvertures
+     et viennent vers nous, bordées de buis ; des massifs bordés où l'on voit les fleurs. Plus de pans de haie en parallélogramme. */
+  const Gd = m.garden, { W, H, hz, S } = m, sc = W / 560, lit = 1 - 0.6 * night, D = H - hz, q = rng((S.seed ^ 0x9a7de) >>> 0);
+  const shadeN = (c) => mixc(c, [6, 8, 12], 0.2 + 0.55 * night), leaf = shadeN(leafC(S, [46, 90, 44])), lite = shadeN(mixc(leafC(S, [92, 140, 70]), [200, 220, 150], 0.25 * (0.4 + 0.6 * day))), deep = shadeN(leafC(S, [24, 50, 26]));
+  const h = Gd.h, y = Gd.y, gaps = Gd.gaps.slice().sort((a, b) => a.x - b.x), segs = []; let x = 0;
+  for (const gp of gaps) { if (gp.x - gp.w / 2 > x + 2) segs.push([x, gp.x - gp.w / 2]); x = gp.x + gp.w / 2; } if (x < W) segs.push([x, W]);
+  /* les allées : du seuil de chaque ouverture jusqu'au pied de la vue, en s'élargissant */
+  const gravel = shadeN(mixc(mixc(m.pal.ground, [206, 192, 156], 0.6), [0, 0, 0], 0.08)), edge = shadeN(mixc(gravel, [0, 0, 0], 0.35));
+  const P = m.pond;
+  if (part === "ground") { /* ESSAI : une allée qui rencontre le bassin s'arrête à sa margelle (on y mène), au lieu de passer dessous */
+  for (const gp of gaps) { let x0 = gp.x, w0 = gp.w * 0.9, x1 = x0 + (x0 - W / 2) * 0.9, w1 = gp.w * 6, yEnd = H;
+    if (P) { for (let k = 1; k <= 40; k++) { const u = k / 40, yy = y + (H - y) * u, xc = x0 + (x1 - x0) * u, ww = (w0 + (w1 - w0) * u) / 2, dy = (yy - P.cy) / (P.ry * 1.2); if (Math.abs(dy) < 1) { const half = P.rx * 1.08 * Math.sqrt(1 - dy * dy); if (Math.abs(xc - P.cx) < half + ww) { yEnd = Math.min(H, P.cy); break; } } } }
+    if (yEnd < H) { const u = (yEnd - y) / (H - y); x1 = x0 + (x1 - x0) * u; w1 = w0 + (w1 - w0) * u; } const Hy = yEnd;
+    g.fillStyle = css(gravel); g.beginPath(); g.moveTo(x0 - w0 / 2, y); g.lineTo(x0 + w0 / 2, y); g.lineTo(x1 + w1 / 2, Hy); g.lineTo(x1 - w1 / 2, Hy); g.closePath(); g.fill();
+    g.fillStyle = css([255, 255, 255], 0.06 * lit); for (let k = 0; k < 40; k++) { const u = q(), yy = y + (Hy - y) * u * u, xc = x0 + (x1 - x0) * u * u, ww = (w0 + (w1 - w0) * u * u) / 2; g.fillRect(xc + (q() - 0.5) * 2 * ww, yy, 1.2 * sc, 0.8 * sc); } /* le grain du gravier */
+    const bw = 7 * sc * (Hy - y) / (H - y); for (const sd of [-1, 1]) { g.fillStyle = css(deep); g.beginPath(); g.moveTo(x0 + sd * w0 / 2, y); g.lineTo(x1 + sd * w1 / 2, Hy); g.lineTo(x1 + sd * (w1 / 2 + bw), Hy); g.lineTo(x0 + sd * (w0 / 2 + 1 * sc), y); g.closePath(); g.fill();
+      g.fillStyle = css(leaf); g.beginPath(); g.moveTo(x0 + sd * w0 / 2, y - 0.6 * sc); g.lineTo(x1 + sd * w1 / 2, Hy - bw * 0.85); g.lineTo(x1 + sd * (w1 / 2 + bw), Hy - bw * 0.85); g.lineTo(x0 + sd * (w0 / 2 + 1 * sc), y - 0.6 * sc); g.closePath(); g.fill(); } /* les bordures de buis */
+    g.strokeStyle = css(edge, 0.5); g.lineWidth = 0.8 * sc; g.beginPath(); g.moveTo(x0 - w0 / 2, y); g.lineTo(x1 - w1 / 2, Hy); g.moveTo(x0 + w0 / 2, y); g.lineTo(x1 + w1 / 2, Hy); g.stroke(); }
+  return; }
+  /* la haie : un corps dense, le dessus taillé en petites bosses, une lumière sur le dessus, une ombre au pied, le grain des feuilles */
+  for (const [a, b] of segs) {
+    g.fillStyle = css(leaf); g.beginPath(); g.moveTo(a, y); g.lineTo(a, y - h * 0.85); g.quadraticCurveTo(a, y - h, a + h * 0.15, y - h); g.lineTo(b - h * 0.15, y - h); g.quadraticCurveTo(b, y - h, b, y - h * 0.85); g.lineTo(b, y); g.closePath(); g.fill();
+    g.fillStyle = css(lite); const r = Math.max(1.2, h * 0.16); for (let xx = a + r; xx < b - r * 0.5; xx += r * 1.6) { g.beginPath(); g.ellipse(xx, y - h + r * 0.3, r, r * 0.55, 0, Math.PI, TAU); g.fill(); } g.fillRect(a + h * 0.1, y - h + r * 0.25, b - a - h * 0.2, Math.max(1, h * 0.12)); /* le dessus taillé, au soleil */
+    const n = Math.round((b - a) * h / (14 * sc * sc)); for (let k = 0; k < n; k++) { const xx = a + q() * (b - a), yy = y - h * (0.1 + 0.72 * q()), dk = q() < 0.55; g.fillStyle = css(dk ? deep : lite, dk ? 0.55 : 0.35); g.beginPath(); g.ellipse(xx, yy, (1.4 + q() * 1.6) * sc, (0.9 + q()) * sc, q() * 3, 0, TAU); g.fill(); } /* le grain des feuilles */
+    g.fillStyle = css([0, 0, 0], 0.28); g.fillRect(a, y - h * 0.14, b - a, h * 0.14); g.fillStyle = css([0, 0, 0], 0.18); g.fillRect(a, y, b - a, Math.max(1, h * 0.12)); /* l'ombre au pied */
+  }
+  /* les massifs : une terre sombre bordée de buis, des fleurs qu'on voit */
+  for (const b of Gd.beds) {
+    const qb = rng(b.seed), yb = hz + D * b.u * b.u + D * 0.12, k = (0.45 + b.u * 1.25) * sc, rw = W * 0.07 * b.w * k / sc, rh = rw * 0.3;
+    if (gaps.some((gp) => { const u = (yb - y) / (H - y), xc = gp.x + (gp.x - W / 2) * 0.9 * u, ww = (gp.w * 0.9 + (gp.w * 6 - gp.w * 0.9) * u) / 2; return Math.abs(b.x - xc) < ww + rw; }) || (P && Math.abs(yb - P.cy) < P.ry * 1.3 + rh && Math.abs(b.x - P.cx) < P.rx * 1.1 + rw)) continue; /* pas sur une allée, ni sur le bassin */
+    g.fillStyle = css(deep); g.beginPath(); g.ellipse(b.x, yb + 1.2 * k, rw + 2.4 * k, rh + 1.6 * k, 0, 0, TAU); g.fill(); /* la bordure, dans l'ombre */
+    g.fillStyle = css(leaf); g.beginPath(); g.ellipse(b.x, yb, rw + 2.4 * k, rh + 1.4 * k, 0, 0, TAU); g.fill();
+    g.fillStyle = css(shadeN(mixc(m.pal.ground, [40, 26, 18], 0.5))); g.beginPath(); g.ellipse(b.x, yb, rw, rh, 0, 0, TAU); g.fill();
+    const nf = Math.round(b.n * 1.4); for (let i = 0; i < nf; i++) { const a = qb() * TAU, d = Math.sqrt(qb()), fx = b.x + Math.cos(a) * rw * d * 0.85, fy = yb + Math.sin(a) * rh * d * 0.75, hue = b.hue + (qb() - 0.5) * 30, hh = (2 + 2.5 * qb()) * k;
+      g.strokeStyle = css(leaf); g.lineWidth = Math.max(0.5, 0.6 * k); g.beginPath(); g.moveTo(fx, fy); g.lineTo(fx, fy - hh); g.stroke();
+      bloom(g, fx, fy - hh, (2 + 1.6 * qb()) * k, mixc(hsl(hue, 0.66, 0.68), [10, 12, 20], 0.15 + 0.6 * night), 0.92 * lit + 0.08, qb() * TAU); }
   }
 }
 
@@ -1436,6 +1447,20 @@ function fissure(g, m, t) {
   if (sub) for (const b of fis.bubbles) { const q = frac(t * 2 + b.p); g.strokeStyle = css([205, 235, 248], 0.5 * (1 - q)); g.lineWidth = 0.9; g.beginPath(); g.arc(fis.x + b.dx, H - 4 - q * (H - y0 - 8), 1 + 1.4 * b.p, 0, TAU); g.stroke(); }
 }
 
+/** ESSAI : un tronc qui a de la matière : large au pied (évasé), effilé vers la couronne, une face d'ombre et quelques fentes d'écorce.
+ *  P0 le pied, C le point de contrôle, P1 le haut ; w0 et w1 les largeurs ; fill et shade des couleurs css. Renvoie le point à u (pour les branches). */
+function trunk(g, P0, C, P1, w0, w1, fill, shade, flare = 0.7) {
+  const N = 14, L = [], R = [], at = (u) => [(1 - u) * (1 - u) * P0[0] + 2 * (1 - u) * u * C[0] + u * u * P1[0], (1 - u) * (1 - u) * P0[1] + 2 * (1 - u) * u * C[1] + u * u * P1[1]];
+  for (let i = 0; i <= N; i++) { const u = i / N, [x, y] = at(u), dx = 2 * (1 - u) * (C[0] - P0[0]) + 2 * u * (P1[0] - C[0]), dy = 2 * (1 - u) * (C[1] - P0[1]) + 2 * u * (P1[1] - C[1]), l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l, fl = Math.max(0, 1 - u * 5), w = (w0 + (w1 - w0) * u) * (1 + flare * fl * fl) / 2;
+    L.push([x + nx * w, y + ny * w]); R.push([x - nx * w, y - ny * w, x, y]); }
+  g.fillStyle = fill; g.beginPath(); g.moveTo(L[0][0], L[0][1]); for (const p of L) g.lineTo(p[0], p[1]); for (let i = R.length - 1; i >= 0; i--) g.lineTo(R[i][0], R[i][1]); g.closePath(); g.fill();
+  g.fillStyle = shade; g.beginPath(); g.moveTo(R[0][2], R[0][3]); for (const p of R) g.lineTo(p[2] + (p[0] - p[2]) * 0.1, p[3] + (p[1] - p[3]) * 0.1); for (let i = R.length - 1; i >= 0; i--) g.lineTo(R[i][0], R[i][1]); g.closePath(); g.fill(); /* la face d'ombre */
+  if (w0 > 3) { g.strokeStyle = shade; g.lineWidth = Math.max(0.5, w0 * 0.07); for (let j = 0; j < 4; j++) { const u0 = 0.08 + 0.18 * j, o = (j % 2 ? 0.25 : -0.15); const a = at(u0), b = at(u0 + 0.12); g.beginPath(); g.moveTo(a[0] + o * w0 * 0.5, a[1]); g.lineTo(b[0] + o * w0 * 0.4, b[1]); g.stroke(); } } /* des fentes d'écorce */
+  return at;
+}
+/** ESSAI : des branches maîtresses, du tronc vers la couronne. */
+function boughs(g, at, h, w, fill, shade, ends) { for (const [u, ex, ey] of ends) { const [bx, by] = at(u); trunk(g, [bx, by], [(bx + ex) / 2, by - (by - ey) * 0.25], [ex, ey], w, w * 0.35, fill, shade, 0); } }
+
 function trees(g, m, t) {
   /* les arbres du Relto (src/relto-render.js, drawPlants) repris dans la fenêtre, et quelques espèces de plus dans le même style : des couleurs, que la nuit éteint */
   const { S, hz } = m, se = S.season, fall = se && se.fall > 0.01 ? se.fall : 0, bare = se ? 0.45 + 0.55 * se.vig : 1;
@@ -1460,11 +1485,11 @@ function trees(g, m, t) {
     if (kind === "spire") { g.fillStyle = dark("#0a0909"); g.strokeStyle = g.fillStyle; g.beginPath(); g.moveTo(x - 2.5, y); g.lineTo(x + sw * 0.4 + tr.lean * 4, top); g.lineTo(x + 2.5, y); g.fill();
       if (S.burnt) { g.lineWidth = 1.4; for (const s2 of [-1, 1]) { g.beginPath(); g.moveTo(x + sw * 0.3, hz - h * 0.7); g.lineTo(x + s2 * h * 0.3 + sw, hz - h * 0.95); g.stroke(); } }
       else { g.lineWidth = 1; for (let k = 1; k < 4; k++) { const yy = hz - h * (0.3 + k * 0.17); g.beginPath(); g.moveTo(x, yy); g.lineTo(x + (k % 2 ? 1 : -1) * h * 0.18 + sw, yy - h * 0.07); g.stroke(); } } }
-    else if (kind === "conifer") { g.fillStyle = col("#3a2a1c"); g.fillRect(x - 1, y - h * 0.22, 2, h * 0.22); g.fillStyle = col(i % 2 ? "#1f4a30" : "#1a3a28"); for (let k = 0; k < 3; k++) { const w = h * (0.42 - k * 0.1) * (0.6 + 0.4 * bare), yy = y - h * (0.18 + k * 0.28); g.beginPath(); g.moveTo(x - w + sw * k * 0.3, yy); g.lineTo(x + sw * (k + 1) * 0.5, yy - h * 0.38); g.lineTo(x + w + sw * k * 0.3, yy); g.closePath(); g.fill(); } } /* Relto : conifère */
-    else if (kind === "birch") { g.strokeStyle = dark("#e8e6dc"); g.lineWidth = 2; g.beginPath(); g.moveTo(x, y); g.lineTo(x + sw * 0.4, y - h * 0.8); g.stroke(); g.fillStyle = col("#8fb057"); const r0 = h * 0.12 * bare; for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(x + sw * 0.5 + (k - 1.5) * r0 * 0.8, y - h * (0.7 + (k % 2) * 0.15), r0 * (1 - 0.2 * (k % 2)), 0, TAU); g.fill(); } } /* Relto : bouleau */
+    else if (kind === "conifer") { const cw = Math.max(1, h * 0.03); g.fillStyle = col("#3a2a1c"); g.fillRect(x - cw, y - h * 0.22, cw * 2, h * 0.22); g.fillStyle = col(i % 2 ? "#1f4a30" : "#1a3a28"); for (let k = 0; k < 3; k++) { const w = h * (0.42 - k * 0.1) * (0.6 + 0.4 * bare), yy = y - h * (0.18 + k * 0.28); g.beginPath(); g.moveTo(x - w + sw * k * 0.3, yy); g.lineTo(x + sw * (k + 1) * 0.5, yy - h * 0.38); g.lineTo(x + w + sw * k * 0.3, yy); g.closePath(); g.fill(); } } /* Relto : conifère */
+    else if (kind === "birch") { const w0 = Math.max(2, h * 0.06), at = trunk(g, [x, y], [x + tr.lean * 3, y - h * 0.4], [x + sw * 0.4, y - h * 0.8], w0, w0 * 0.5, dark("#e8e6dc"), dark("#a8a498"), 0.4); g.fillStyle = dark("#2a2620"); for (let k = 0; k < 6; k++) { const [bx, by] = at(0.08 + 0.13 * k); g.fillRect(bx - w0 * (k % 2 ? 0.1 : 0.45), by, w0 * 0.45, Math.max(0.8, w0 * 0.18)); } /* les marques noires du bouleau */ g.fillStyle = col("#8fb057"); const r0 = h * 0.12 * bare; for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(x + sw * 0.5 + (k - 1.5) * r0 * 0.8, y - h * (0.7 + (k % 2) * 0.15), r0 * (1 - 0.2 * (k % 2)), 0, TAU); g.fill(); } } /* Relto : bouleau */
     else if (kind === "frond") { g.strokeStyle = col("#6a5438"); g.lineWidth = 2; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 4, y - h * 0.5, x + 2 + sw * 0.4, y - h * 0.9); g.stroke(); g.strokeStyle = col("#3d7a3a"); g.lineWidth = 1.6; const R = h * 0.35; for (let k = 0; k < 6; k++) { const a = -2.6 + k * 0.5 + sw * 0.02; g.beginPath(); g.moveTo(x + 2 + sw * 0.4, y - h * 0.9); g.quadraticCurveTo(x + 2 + Math.cos(a) * R * 0.6, y - h * 0.9 + Math.sin(a) * R * 0.6 - 4, x + 2 + Math.cos(a) * R, y - h * 0.9 + Math.sin(a) * R * 0.6 + 6); g.stroke(); } } /* Relto : palmier */
-    else if (kind === "ponderosa") { g.strokeStyle = col("#6b3f26"); g.lineWidth = 3; g.beginPath(); g.moveTo(x, y); g.lineTo(x + sw * 0.3, y - h * 0.9); g.stroke(); g.fillStyle = col("#264a2c"); const W0 = h * 0.3 * (0.6 + 0.4 * bare); for (let k = 0; k < 5; k++) { const yy = y - h * (0.5 + k * 0.11), w = W0 * (1 - k * 0.13), o = (k % 2 ? 1 : -1) * W0 * 0.25; g.beginPath(); g.ellipse(x + o + sw * (0.2 + k * 0.1), yy, w, h * 0.085, 0, 0, TAU); g.fill(); } } /* Relto : pin ponderosa */
-    else if (kind === "maple") { g.strokeStyle = col("#5a4030"); g.lineWidth = 2.6; g.beginPath(); g.moveTo(x, y); g.lineTo(x + sw * 0.3, y - h * 0.6); g.stroke(); const LEAF = ["#c4552a", "#d98a2b", "#b83a2a"], b0 = Math.floor(x) % 3, R = h * 0.2 * bare; for (let k = 0; k < 6; k++) { g.fillStyle = dark(LEAF[(b0 + (k % 2)) % 3]); g.beginPath(); g.arc(x + Math.cos(k * 1.05) * R + sw * 0.4, y - h * 0.72 + Math.sin(k * 1.6) * R * 0.75, R * (1 + (k % 3) * 0.12), 0, TAU); g.fill(); } } /* Relto : érable */
+    else if (kind === "ponderosa") { const w0 = Math.max(3, h * 0.08); trunk(g, [x, y], [x + sw * 0.15, y - h * 0.45], [x + sw * 0.3, y - h * 0.9], w0, w0 * 0.35, col("#6b3f26"), col("#3a2014")); g.fillStyle = col("#264a2c"); const W0 = h * 0.3 * (0.6 + 0.4 * bare); for (let k = 0; k < 5; k++) { const yy = y - h * (0.5 + k * 0.11), w = W0 * (1 - k * 0.13), o = (k % 2 ? 1 : -1) * W0 * 0.25; g.beginPath(); g.ellipse(x + o + sw * (0.2 + k * 0.1), yy, w, h * 0.085, 0, 0, TAU); g.fill(); } } /* Relto : pin ponderosa */
+    else if (kind === "maple") { const w0 = Math.max(2.6, h * 0.085), fill = col("#5a4030"), shade = col("#2a1c14"), at = trunk(g, [x, y], [x + tr.lean * 4, y - h * 0.3], [x + sw * 0.3, y - h * 0.6], w0, w0 * 0.5, fill, shade); boughs(g, at, h, w0 * 0.45, fill, shade, [[0.85, x - h * 0.16 + sw * 0.3, y - h * 0.74], [0.9, x + h * 0.17 + sw * 0.3, y - h * 0.78]]); const LEAF = ["#c4552a", "#d98a2b", "#b83a2a"], b0 = Math.floor(x) % 3, R = h * 0.2 * bare; for (let k = 0; k < 6; k++) { g.fillStyle = dark(LEAF[(b0 + (k % 2)) % 3]); g.beginPath(); g.arc(x + Math.cos(k * 1.05) * R + sw * 0.4, y - h * 0.72 + Math.sin(k * 1.6) * R * 0.75, R * (1 + (k % 3) * 0.12), 0, TAU); g.fill(); } } /* Relto : érable */
     else if (kind === "crystaltree") { /* l'arbre de cristal : un tronc-prisme translucide qui se ramifie en branches cristallines, chaque prisme à deux faces, des grappes d'éclats au bout ; sa lumière est la sienne */
       const ct = crystalToneOf(S), HUE = hsl(ct.hue + ct.spread * 0.5, ct.fsat, 0.6), lum = (c, a) => css(mixc(mixc([5, 6, 12], c, amb), c, 0.6 * night), a);
       const light = hsl(ct.hue + ct.spread, ct.fsat * 0.8, 0.78), deep = hsl(ct.hue, ct.fsat, 0.32), tipC = hsl(ct.hue + 150, 0.6, 0.74), H2 = h * 1.15;
@@ -1492,17 +1517,17 @@ function trees(g, m, t) {
     else if (kind === "ginkgo") { /* le ginkgo (d'après photo) : un grand arbre, couronne ovale et dense faite d'éventails, branches qui montent ; vert l'été, or à l'automne */
       const gold = se ? Math.min(1, (se.fall || 0) * 1.4) : 0, H2 = h * 1.25, cw = H2 * 0.3, cyc = y - H2 * 0.6;
       const tone = (k) => css(mixc([5, 6, 12], mixc(mixc([86, 132, 50], [120, 168, 70], k), mixc([214, 160, 20], [250, 214, 70], k), gold), amb));
-      g.strokeStyle = col("#3e3026"); g.lineWidth = 3; g.beginPath(); g.moveTo(x, y); g.lineTo(x + sw * 0.3, y - H2 * 0.85); g.stroke(); g.lineWidth = 1.3;
+      trunk(g, [x, y], [x + sw * 0.15, y - H2 * 0.42], [x + sw * 0.3, y - H2 * 0.85], Math.max(3, h * 0.08), Math.max(1.4, h * 0.025), col("#3e3026"), col("#1e1610")); g.strokeStyle = col("#3e3026"); g.lineWidth = Math.max(1.3, h * 0.02);
       for (let k = 0; k < 9; k++) { const by = y - H2 * (0.22 + 0.07 * k), d = k % 2 ? 1 : -1, L = cw * (0.9 - 0.06 * k); g.beginPath(); g.moveTo(x + sw * 0.2, by); g.quadraticCurveTo(x + d * L * 0.5, by - L * 0.2, x + d * L * 0.85 + sw * 0.5, by - L * 0.75); g.stroke(); }
       const fan = (fx, fy, r, a, c) => { g.fillStyle = c; g.beginPath(); g.moveTo(fx, fy); g.arc(fx, fy, r, a - 0.75, a + 0.75); g.closePath(); g.fill(); };
       for (let k = 0; k < 320; k++) { const u = v(), w2 = (v() - 0.5) * 2, ey = cyc + (u - 0.5) * H2 * 0.78, half = cw * Math.sqrt(Math.max(0, 1 - Math.pow((ey - cyc) / (H2 * 0.42), 2))) * (ey < cyc ? 0.85 : 1), ex = x + sw * 0.6 + w2 * half; const shade = 0.25 + 0.75 * (0.5 - w2 * 0.35 - (ey - cyc) / H2 * 0.5); fan(ex, ey, h * (0.045 + 0.025 * v()) * (0.5 + 0.5 * bare), -Math.PI / 2 + (v() - 0.5) * 1.6, tone(Math.max(0, Math.min(1, shade)))); }
       if (gold > 0.3) { g.fillStyle = css(mixc([5, 6, 12], [236, 196, 48], amb), 0.85); for (let k = 0; k < 18; k++) { g.beginPath(); g.ellipse(x + (v() - 0.5) * h * 0.9, y - 1 - v() * 2, 1.6, 0.8, 0, 0, TAU); g.fill(); } } }
-    else if (kind === "umbrella") { g.strokeStyle = col("#4a3826"); g.lineWidth = 2; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + tr.lean * 8, hz - h * 0.5, x + sw * 0.5, top + h * 0.15); g.stroke(); g.lineWidth = 1; g.beginPath(); g.moveTo(x + sw * 0.5, top + h * 0.3); g.lineTo(x - h * 0.25 + sw, top + h * 0.14); g.moveTo(x + sw * 0.5, top + h * 0.3); g.lineTo(x + h * 0.25 + sw, top + h * 0.14); g.stroke(); g.fillStyle = col("#5c6a2e"); g.beginPath(); g.ellipse(x + sw, top + h * 0.12, h * 0.5 * bare, h * 0.1 * bare, 0, 0, TAU); g.fill(); } /* acacia */
-    else if (kind === "broadleaf") { g.strokeStyle = col("#4a3424"); g.lineWidth = 2.6; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + tr.lean * 6, hz - h * 0.5, x + sw * 0.5, top + h * 0.3); g.stroke(); const R = h * 0.26 * bare; for (let k = 0; k < 7; k++) { g.fillStyle = col(k % 3 ? "#2f6a34" : "#3f8040"); g.beginPath(); g.arc(x + sw + (v() - 0.5) * R * 1.6, top + h * 0.22 + (v() - 0.5) * R * 0.9, R * (0.55 + 0.35 * v()), 0, TAU); g.fill(); } } /* feuillu */
-    else if (kind === "willow") { g.strokeStyle = col("#4e3a28"); g.lineWidth = 2.4; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + tr.lean * 6, hz - h * 0.5, x + sw * 0.5, top + h * 0.15); g.stroke(); g.strokeStyle = col("#7aa04a"); g.lineWidth = 1; const R = h * 0.32; for (let k = 0; k < 13; k++) { const a = Math.PI * (0.1 + 0.8 * k / 12), sx = x + sw + Math.cos(a) * R * 0.6, sy = top + h * 0.15 - Math.sin(a) * R * 0.25; g.beginPath(); g.moveTo(sx, sy); g.quadraticCurveTo(sx + Math.cos(a) * R * 0.3, sy + h * 0.1, sx + Math.cos(a) * R * 0.35 + sw * 0.6, sy + h * (0.35 + 0.15 * v()) * bare); g.stroke(); } } /* saule */
+    else if (kind === "umbrella") { trunk(g, [x, y], [x + tr.lean * 8, hz - h * 0.5], [x + sw * 0.5, top + h * 0.15], Math.max(2.2, h * 0.07), Math.max(1.2, h * 0.025), col("#4a3826"), col("#241a10")); g.strokeStyle = col("#4a3826"); g.lineWidth = Math.max(1, h * 0.022); g.beginPath(); g.moveTo(x + sw * 0.5, top + h * 0.3); g.lineTo(x - h * 0.25 + sw, top + h * 0.14); g.moveTo(x + sw * 0.5, top + h * 0.3); g.lineTo(x + h * 0.25 + sw, top + h * 0.14); g.stroke(); g.fillStyle = col("#5c6a2e"); g.beginPath(); g.ellipse(x + sw, top + h * 0.12, h * 0.5 * bare, h * 0.1 * bare, 0, 0, TAU); g.fill(); } /* acacia */
+    else if (kind === "broadleaf") { const w0 = Math.max(2.6, h * 0.085), fill = col("#4a3424"), shade = col("#24180f"), at = trunk(g, [x, y], [x + tr.lean * 6, hz - h * 0.5], [x + sw * 0.5, top + h * 0.3], w0, w0 * 0.45, fill, shade); const R = h * 0.26 * bare; boughs(g, at, h, w0 * 0.45, fill, shade, [[0.78, x + sw - R * 0.6, top + h * 0.24], [0.84, x + sw + R * 0.55, top + h * 0.2]]); for (let k = 0; k < 7; k++) { g.fillStyle = col(k % 3 ? "#2f6a34" : "#3f8040"); g.beginPath(); g.arc(x + sw + (v() - 0.5) * R * 1.6, top + h * 0.22 + (v() - 0.5) * R * 0.9, R * (0.55 + 0.35 * v()), 0, TAU); g.fill(); } } /* feuillu */
+    else if (kind === "willow") { const w0 = Math.max(2.6, h * 0.09); trunk(g, [x, y], [x + tr.lean * 6, hz - h * 0.5], [x + sw * 0.5, top + h * 0.15], w0, w0 * 0.4, col("#4e3a28"), col("#261a10")); g.strokeStyle = col("#7aa04a"); g.lineWidth = 1; const R = h * 0.32; for (let k = 0; k < 13; k++) { const a = Math.PI * (0.1 + 0.8 * k / 12), sx = x + sw + Math.cos(a) * R * 0.6, sy = top + h * 0.15 - Math.sin(a) * R * 0.25; g.beginPath(); g.moveTo(sx, sy); g.quadraticCurveTo(sx + Math.cos(a) * R * 0.3, sy + h * 0.1, sx + Math.cos(a) * R * 0.35 + sw * 0.6, sy + h * (0.35 + 0.15 * v()) * bare); g.stroke(); } } /* saule */
     else if (kind === "cypress") { g.fillStyle = col("#1c3a26"); g.beginPath(); g.moveTo(x - h * 0.08, y); g.quadraticCurveTo(x - h * 0.13, hz - h * 0.5, x + sw * 0.6, top); g.quadraticCurveTo(x + h * 0.13, hz - h * 0.5, x + h * 0.08, y); g.closePath(); g.fill(); } /* cyprès */
     else if (kind === "baobab") { const tw = h * 0.12; g.fillStyle = col("#6e5a48"); g.beginPath(); g.moveTo(x - tw, y); g.quadraticCurveTo(x - tw * 1.2, hz - h * 0.5, x - tw * 0.6, top + h * 0.25); g.lineTo(x + tw * 0.6, top + h * 0.25); g.quadraticCurveTo(x + tw * 1.2, hz - h * 0.5, x + tw, y); g.closePath(); g.fill(); g.strokeStyle = g.fillStyle; g.lineWidth = 1.4; for (let k = 0; k < 6; k++) { const a = -Math.PI * (0.15 + 0.7 * k / 5); g.beginPath(); g.moveTo(x, top + h * 0.27); g.lineTo(x + Math.cos(a) * h * 0.3 + sw, top + h * 0.27 + Math.sin(a) * h * 0.22); g.stroke(); } g.fillStyle = col("#5c7a34"); for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(x + (k - 1.5) * h * 0.16 + sw, top + h * 0.06, h * 0.07 * bare, 0, TAU); g.fill(); } } /* baobab */
-    else if (kind === "twisted") { const d = tr.lean > 0 ? 1 : -1; g.strokeStyle = col("#3e2e22"); g.lineWidth = 2.2; g.beginPath(); g.moveTo(x, y); g.bezierCurveTo(x - d * h * 0.15, hz - h * 0.35, x + d * h * 0.35, hz - h * 0.55, x + d * h * 0.3 + sw, top + h * 0.2); g.stroke(); g.fillStyle = col("#2c4a2e"); for (let k = 0; k < 3; k++) { g.beginPath(); g.ellipse(x + d * h * (0.15 + 0.2 * k) + sw, top + h * (0.18 + 0.05 * k), h * 0.16 * bare, h * 0.05, 0, 0, TAU); g.fill(); } } /* arbre tordu par le vent */
+    else if (kind === "twisted") { const d = tr.lean > 0 ? 1 : -1; g.strokeStyle = col("#3e2e22"); g.lineWidth = Math.max(2.2, h * 0.07); g.lineCap = "round"; g.beginPath(); g.moveTo(x, y); g.bezierCurveTo(x - d * h * 0.15, hz - h * 0.35, x + d * h * 0.35, hz - h * 0.55, x + d * h * 0.3 + sw, top + h * 0.2); g.stroke(); g.lineCap = "butt"; g.fillStyle = col("#2c4a2e"); for (let k = 0; k < 3; k++) { g.beginPath(); g.ellipse(x + d * h * (0.15 + 0.2 * k) + sw, top + h * (0.18 + 0.05 * k), h * 0.16 * bare, h * 0.05, 0, 0, TAU); g.fill(); } } /* arbre tordu par le vent */
     else { /* arbre-champignon géant, à la Teledahn : tronc en bouteille cerclé de collerettes, chapeau en cloche taché et rouillé, frange dessous ; des bulbes au pied */
       const vr = v(), sort = vr < 0.5 ? "rust" : vr < 0.8 ? "bone" : "glow", H2 = h * (1.2 + 0.4 * v()), base = h * 0.16, neck = base * 0.42, cx = x + tr.lean * 3 + sw * 0.4, capY = y - H2, R = h * (0.26 + 0.1 * v());
       const P = { rust: { stem: [120, 96, 62], cap: [128, 74, 38], spot: [190, 120, 60], dark: [52, 32, 20] }, bone: { stem: [176, 160, 128], cap: [168, 148, 110], spot: [110, 82, 50], dark: [70, 56, 40] }, glow: { stem: [70, 82, 84], cap: [40, 66, 72], spot: [90, 170, 160], dark: [16, 26, 30] } }[sort];
@@ -1522,8 +1547,30 @@ function trees(g, m, t) {
   }
 }
 
-function ruin(g, m, rn, t) {
-  const { S, W, H, hz } = m, b = rn.x; g.fillStyle = "#08080d"; g.strokeStyle = "#2c2a36"; g.lineWidth = 1;
+function auroraCurtains(g, m, t, ak) { require("./aurora").curtains(g, { W: m.W, H: m.H, hz: m.hz, seed: m.S.seed, t, ak }); } /* ESSAI : les aurores en rideaux (src/aurora.js) */
+/** ESSAI (28 oct. soir) : la pierre des ruines, au lieu d'un noir de silhouette : la roche du monde, éteinte la nuit, un peu de la brume de l'horizon. */
+function stoneOf(m) {
+  const S = m.S, night = m.nightK || 0, day = m.dayK != null ? m.dayK : 1;
+  const base = S.lava || S.world === "lava" ? [52, 42, 38] : S.rock === "basalt" ? [78, 80, 86] : S.soil === "chalk" ? [196, 188, 164] : S.rock === "granite" ? [150, 138, 132] : S.sand || S.world === "desert" ? [172, 146, 108] : S.ice || S.world === "frozen" ? [150, 168, 182] : [132, 124, 112];
+  const hazed = mixc(base, m.pal.dayHz, 0.22 * day), lit = mixc(hazed, [6, 8, 12], 0.12 + 0.72 * night);
+  return { lit, top: mixc(lit, [255, 248, 230], 0.16 * day * (1 - night)), low: mixc(lit, [0, 0, 0], 0.4), edge: mixc(lit, [0, 0, 0], 0.55), joint: mixc(lit, [0, 0, 0], 0.5) };
+}
+/** les ruines, peintes à part puis appareillées (lits de pierre, ombre au pied) et posées dans l'image ; sans calque possible, en aplat de pierre. */
+function ruinsPass(g, m, t) {
+  if (!m.ruins.length) return; const st = stoneOf(m), { W, H, hz } = m;
+  let L = null; if (typeof document !== "undefined") { try { const c = m._rl || (m._rl = document.createElement("canvas")); if (c.width !== W) c.width = W; if (c.height !== H) c.height = H; L = c.getContext("2d"); if (!L || typeof L.clearRect !== "function" || typeof g.drawImage !== "function") L = null; } catch (e) { L = null; } }
+  if (!L) { for (const rn of m.ruins) ruin(g, m, rn, t, g, st); return; }
+  L.setTransform(1, 0, 0, 1, 0, 0); L.globalCompositeOperation = "source-over"; L.clearRect(0, 0, W, H);
+  for (const rn of m.ruins) ruin(L, m, rn, t, g, st);
+  L.globalCompositeOperation = "source-atop";
+  const gr = L.createLinearGradient(0, hz - H * 0.35, 0, hz + 2); gr.addColorStop(0, css(st.top)); gr.addColorStop(0.55, css(st.lit)); gr.addColorStop(1, css(st.low)); L.fillStyle = gr; L.fillRect(0, 0, W, H); /* plus clair en haut, sombre au pied */
+  const sc = W / 560, row = Math.max(3, 5 * sc); L.strokeStyle = css(st.joint, 0.45); L.lineWidth = Math.max(0.6, 0.7 * sc); L.beginPath();
+  for (let y = hz + 1, i = 0; y > hz - H * 0.45; y -= row, i++) { L.moveTo(0, y); L.lineTo(W, y); for (let x = (i % 2) * row * 1.3; x < W; x += row * 2.6) { L.moveTo(x, y); L.lineTo(x, y - row); } } L.stroke(); /* les lits et les joints de l'appareil */
+  const q = rng((m.S.seed ^ 0x51a7e) >>> 0); for (let k = 0; k < 120; k++) { L.fillStyle = css(q() < 0.5 ? st.low : st.top, 0.25); L.fillRect(q() * W, hz - q() * H * 0.45, (2 + 4 * q()) * sc, (1 + 2 * q()) * sc); } /* les pierres inégales */
+  L.globalCompositeOperation = "source-over"; g.drawImage(L.canvas, 0, 0);
+}
+function ruin(g, m, rn, t, fx = g, st = stoneOf(m)) {
+  const { S, W, H, hz } = m, b = rn.x; g.fillStyle = css(st.lit); g.strokeStyle = css(st.edge); g.lineWidth = 1;
   const v8 = rng((S.seed ^ Math.imul(Math.round(b * 13) + 7, 2654435761)) >>> 0); /* chaque ruine a sa forme, d'un tirage à part (le reste de l'image ne bouge pas) */
   const RS = ["massive", "arched", "gothic", "fallen"][Math.floor(rng((S.seed ^ 0x5717) >>> 0)() * 4)]; /* un style par Âge : toutes les ruines d'un Âge viennent d'une même main */
   if (rn.k === "door") { const f0 = v8(), f = RS === "massive" ? 0.1 : RS === "arched" ? 0.4 : RS === "gothic" ? 0.7 : 0.9 + 0 * f0, v = H * (0.07 + 0.05 * v8()), h = H * (0.18 + 0.1 * v8());
@@ -1533,15 +1580,19 @@ function ruin(g, m, rn, t) {
     else { const cut = 0.35 + 0.3 * v8(); g.beginPath(); g.moveTo(b - v, hz + 2); g.lineTo(b - v, hz - h * 0.7); g.lineTo(b - v * 0.2, hz - h * 0.95); g.lineTo(b + v * 0.1, hz - h * 0.78); g.lineTo(b + v * 0.45, hz - h * (0.7 - cut * 0.5)); g.lineTo(b + v, hz - h * (0.7 - cut)); g.lineTo(b + v, hz + 2); g.closePath(); g.fill(); g.stroke(); for (let k = 0; k < 4; k++) { const bw = 2 + v8() * 4; g.fillRect(b + v * (0.9 + v8() * 0.8), hz - bw + 2, bw, bw); } } /* effondrée d'un côté, les blocs au pied */
   }
   else if (rn.k === "bridge") { const v = W * (0.14 + 0.1 * v8()), na = RS === "massive" ? 1 : RS === "arched" ? 3 : 2, gap = RS === "fallen" || v8() < 0.2 ? Math.floor(v8() * na) : -1, deck = 4 + v8() * 4, rise = H * (0.12 + 0.1 * v8()), aw = (2 * v) / na;
-    for (let a = 0; a < na; a++) { const x0 = b - v + a * aw; if (a === gap) { g.fillRect(x0, hz - rise - deck, aw * 0.22, rise + deck + 2); g.fillRect(x0 + aw * 0.78, hz - rise - deck, aw * 0.22, rise + deck + 2); g.fillRect(x0 + aw * 0.3, hz - 3, aw * 0.12, 4); g.fillRect(x0 + aw * 0.55, hz - 4, aw * 0.1, 5); continue; } /* l'arche tombée : deux moignons et des blocs */
+    for (let a = 0; a < na; a++) { const x0 = b - v + a * aw; if (a === gap) { /* ESSAI (28 oct. soir) : l'arche tombée, lisible : chaque pile garde la naissance de l'arche et un bout de tablier cassé (avant : deux rectangles noirs) */
+        for (const sd of [0, 1]) { const px = sd ? x0 + aw : x0, dir = sd ? -1 : 1, pw = aw * 0.2, top = hz - rise - deck, reach = aw * (0.3 + 0.08 * v8());
+          g.beginPath(); g.moveTo(px, hz + 2); g.lineTo(px, top); g.lineTo(px + dir * reach, top); g.lineTo(px + dir * reach * 0.9, top + deck * 0.6); g.lineTo(px + dir * reach * 1.02, top + deck * 1.1); g.lineTo(px + dir * reach * 0.8, top + deck + rise * 0.18); /* le bord cassé */
+          g.quadraticCurveTo(px + dir * pw * 1.05, top + deck + rise * 0.3, px + dir * pw, hz + 2); g.closePath(); g.fill(); g.stroke(); }
+        for (let k = 0; k < 4; k++) { const bx = x0 + aw * (0.3 + 0.12 * k + 0.05 * v8()), bw = aw * (0.06 + 0.05 * v8()), bh = deck * (0.5 + 0.6 * v8()); g.save(); g.translate(bx, hz + 1); g.rotate((v8() - 0.5) * 0.6); g.fillRect(-bw / 2, -bh, bw, bh); g.restore(); } continue; } /* les pierres tombées au pied */
       g.beginPath(); g.moveTo(x0, hz + 2); g.lineTo(x0, hz - rise - deck); g.lineTo(x0 + aw, hz - rise - deck); g.lineTo(x0 + aw, hz + 2); g.lineTo(x0 + aw * 0.88, hz + 2); g.quadraticCurveTo(x0 + aw / 2, hz - rise * 1.6, x0 + aw * 0.12, hz + 2); g.closePath(); g.fill(); g.stroke(); }
   }
   else if (rn.k === "tablet") { const v = H * (0.05 + 0.03 * v8()), h = H * (0.14 + 0.1 * v8()), tilt = (v8() - 0.5) * 0.35, round = RS === "arched" || (RS !== "massive" && v8() < 0.3), chip = RS === "fallen" || v8() < 0.3; g.save(); g.translate(b, hz + 2); g.rotate(tilt);
     g.beginPath(); g.moveTo(-v, 0); if (round) { g.lineTo(-v, -h + v); g.arc(0, -h + v, v, Math.PI, 0); } else { g.lineTo(-v, -h); if (chip) { g.lineTo(v * 0.3, -h); g.lineTo(v, -h * 0.78); } else g.lineTo(v, -h); } g.lineTo(v, 0); g.closePath(); g.fill(); g.stroke(); g.restore(); /* stèle ronde ou dalle, penchée, parfois écornée */
-    const vv = v, hh = h; void vv; void hh; if (S.tabletAwake) { g.fillStyle = css([255, 190, 110], 0.35 + 0.3 * Math.sin(TAU * t * 2)); g.fillRect(b - v + 3, hz - h + 6, v * 2 - 6, 1.4); g.fillRect(b - v + 3, hz - h + 12, v * 2 - 10, 1.4); } }
+    const vv = v, hh = h; void vv; void hh; if (S.tabletAwake) { fx.fillStyle = css([255, 190, 110], 0.35 + 0.3 * Math.sin(TAU * t * 2)); fx.fillRect(b - v + 3, hz - h + 6, v * 2 - 6, 1.4); fx.fillRect(b - v + 3, hz - h + 12, v * 2 - 10, 1.4); } }
   else { g.fillRect(b - 1.2, hz - H * 0.16, 2.4, H * 0.16 + 2);
-    if (S.lampLit) { const lg = g.createRadialGradient(b, hz - H * 0.17, 1, b, hz - H * 0.17, H * 0.2); lg.addColorStop(0, css([140, 190, 255], 0.55 + 0.15 * Math.sin(TAU * t * 3))); lg.addColorStop(1, css([140, 190, 255], 0)); g.fillStyle = lg; g.fillRect(0, 0, W, H); g.fillStyle = "#cfe3ff"; g.beginPath(); g.arc(b, hz - H * 0.17, 2.4, 0, TAU); g.fill(); }
-    else { g.fillStyle = "#2c2a36"; g.beginPath(); g.arc(b, hz - H * 0.17, 2.2, 0, TAU); g.fill(); } }
+    if (S.lampLit) { const lg = fx.createRadialGradient(b, hz - H * 0.17, 1, b, hz - H * 0.17, H * 0.2); lg.addColorStop(0, css([140, 190, 255], 0.55 + 0.15 * Math.sin(TAU * t * 3))); lg.addColorStop(1, css([140, 190, 255], 0)); fx.fillStyle = lg; fx.fillRect(0, 0, W, H); fx.fillStyle = "#cfe3ff"; fx.beginPath(); fx.arc(b, hz - H * 0.17, 2.4, 0, TAU); fx.fill(); }
+    else { g.fillStyle = css(st.edge); g.beginPath(); g.arc(b, hz - H * 0.17, 2.2, 0, TAU); g.fill(); } }
 }
 
 /** Le temps qu'il fait, chaque élément à sa présence du moment (`m.lv`, posé par paint ; 1 partout pour un Âge sans ligne programmée). */
@@ -1845,7 +1896,7 @@ function reflect(g, m, t, a) {
 // ---- détail habité : une structure sans usage évident -------------------------------------------------
 function detail(g, m, t, night) {
   if (!m.det) return; // les autres directions du périscope n'en ont pas : il est unique
-  const { W, H, hz, det: d, pal } = m, x = d.x, s = d.s, dark = css(mixc(pal.rock, [0, 0, 0], 0.55)), rim = css(mixc(pal.rock, [220, 200, 170], 0.4), 0.5);
+  const { W, H, hz, det: d, pal } = m, x = d.x, s = d.s, st0 = stoneOf(m), dark = css(mixc(st0.lit, [0, 0, 0], 0.3)), rim = css(st0.top, 0.7); /* ESSAI (28 oct. soir) : l'étrangeté est de pierre, comme les ruines, plus un noir de silhouette */
   const blink = night * (0.35 + 0.65 * Math.max(0, Math.sin(TAU * (t * 2) + d.p))), glow = css(hsl(d.hue, 0.8, 0.6), 1);
   g.fillStyle = dark; g.strokeStyle = rim; g.lineWidth = 1;
   if (d.kind === "pylon") {
@@ -2253,7 +2304,12 @@ Object.assign(ART, {
   withered_fern: { layer: "ground", draw(g, m, t, e) { g.save(); g.filter = "sepia(1) saturate(1.6) brightness(0.8)"; ART.fern.draw(g, m, t, e); g.restore(); } },
   herd: { layer: "ground", draw(g, m, t, e) { const e2 = { ...e, items: [...e.items, ...e.items.map((it) => ({ ...it, x: it.x + 18, y: Math.min(1, it.y + 0.05), p: it.p + 1 }))] }; ART.grazer.draw(g, m, t, e2); } },
   sapling: { layer: "ground", draw(g, m, t, e) { for (const P of byDepth(m, e, 1.5, 5)) { const h = 22 * P.k; g.strokeStyle = css([45, 35, 28]); g.lineWidth = Math.max(0.7, P.k); g.beginPath(); g.moveTo(P.x, P.y); g.lineTo(P.x, P.y - h); g.stroke(); g.fillStyle = css(hsl(100, 0.45, 0.32)); g.beginPath(); g.ellipse(P.x, P.y - h, 5 * P.k, 7 * P.k, 0, 0, TAU); g.fill(); } } },
-  humming_blooms: { layer: "ground", draw(g, m, t, e) { for (const P of byDepth(m, e, 1.3, 4).filter((P) => onLand(m, P))) for (let k = 0; k < 6; k++) { const x = P.x + (k - 3) * 4 * P.k, y = P.y - (3 + (k % 3) * 2) * P.k; g.fillStyle = css(hsl(40 + k * 50, 0.7, 0.62)); g.beginPath(); g.arc(x, y, 1.6 * P.k, 0, TAU); g.fill(); } ART.bee.draw(g, m, t, e); } },
+  humming_blooms: { layer: "ground", draw(g, m, t, e) { const sc = m.W / 560; for (const P of byDepth(m, e, 1.3, 4).filter((P) => onLand(m, P))) { const q = rng(((P.it.p * 1e6) | 0) ^ 0x6b1), k = P.k * sc, hue0 = q() * 360; /* ESSAI : une touffe de fleurs qui frémit (le bourdonnement), non une rangée de points */
+      g.fillStyle = css(leafC(m.S, [58, 104, 48])); for (let j = 0; j < 4; j++) { g.beginPath(); g.ellipse(P.x + (j - 1.5) * 3.2 * k, P.y - 1.2 * k, 3.4 * k, 1.3 * k, (j - 1.5) * 0.5, 0, TAU); g.fill(); } /* les feuilles au pied */
+      for (let j = 0; j < 7; j++) { const dx = (q() - 0.5) * 14 * k, hh = (5 + q() * 6) * k, sway = Math.sin(TAU * (t * 2 + j * 0.3 + P.it.p)) * 0.8 * k, fx = P.x + dx + sway, fy = P.y - hh;
+        g.strokeStyle = css(leafC(m.S, [70, 112, 52])); g.lineWidth = Math.max(0.6, 0.7 * k); g.beginPath(); g.moveTo(P.x + dx * 0.6, P.y - 0.5 * k); g.quadraticCurveTo(P.x + dx * 0.8, P.y - hh * 0.5, fx, fy); g.stroke();
+        bloom(g, fx, fy, (2.4 + 1.2 * q()) * k, hsl(hue0 + (q() - 0.5) * 70, 0.68, 0.66), 0.95, q() * TAU); } }
+      ART.bee.draw(g, m, t, e); } },
   cinderbloom: { layer: "ground", draw(g, m, t, e) { for (const P of byDepth(m, e, 1.3, 4)) for (let k = 0; k < 5; k++) { const x = P.x + (k - 2.5) * 5 * P.k, y = P.y - (4 + (k % 2) * 3) * P.k; g.strokeStyle = css([30, 20, 18]); g.lineWidth = 0.7; g.beginPath(); g.moveTo(x, P.y); g.lineTo(x, y); g.stroke(); glowAt(g, x, y, 4 * P.k, [255, 90, 40], 0.35); g.fillStyle = css([230, 60, 30]); g.beginPath(); g.arc(x, y, 1.8 * P.k, 0, TAU); g.fill(); } } },
   diamond: { layer: "ground", draw(g, m, t, e) { for (const P of byDepth(m, e, 1.3, 6)) { const a = Math.max(0, Math.sin(TAU * t * 2 + P.it.p)); g.strokeStyle = css([255, 255, 255], 0.3 + 0.6 * a); g.lineWidth = 0.8; const r = (2 + 4 * a) * P.k; g.beginPath(); g.moveTo(P.x - r, P.y - 2); g.lineTo(P.x + r, P.y - 2); g.moveTo(P.x, P.y - 2 - r); g.lineTo(P.x, P.y - 2 + r); g.stroke(); } } },
   charged_crystal: { layer: "ground", draw(g, m, t, e) { ART.crystal.draw(g, m, t, e); for (const P of byDepth(m, e)) glowAt(g, P.x, P.y - 12 * P.k, 20 * P.k, [140, 190, 255], 0.2 + 0.15 * Math.sin(TAU * t * 3 + P.it.p)); } },

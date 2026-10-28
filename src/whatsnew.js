@@ -6,6 +6,33 @@
  */
 const NEWS = [
   {
+    v: "2.4.0",
+    fr: {
+      title: "La pierre et les aurores",
+      letter: "Les graveurs de la Guilde ont repris leurs fenêtres. Les ruines ont retrouvé leur pierre, les jardins leurs allées, les arbres leur écorce ; et les nuits d'aurores ressemblent enfin à ce que racontent ceux qui les ont vues.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**Les aurores** tombent en rideaux de rayons doux, vertes en bas, roses ou pourpres en haut, dans la fenêtre comme dans le ciel du Relto.",
+        "**Les ruines** et les étrangetés de l'horizon sont de pierre, de la roche du monde, au lieu de silhouettes noires.",
+        "**Le jardin** a sa haie verte, ses allées de gravier qui mènent au bassin, ses massifs fleuris ; les arbres se tiennent derrière la haie.",
+        "**Les arbres** ont des troncs à leur taille, avec leur écorce et leurs branches ; les fleurs bourdonnantes sont des touffes de fleurs.",
+        "**La fenêtre** bouge deux fois plus lentement.",
+      ],
+    },
+    en: {
+      title: "Stone and auroras",
+      letter: "The Guild's engravers have taken up their windows again. Ruins have found their stone, gardens their alleys, trees their bark; and nights of aurora at last look like what those who saw them tell.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**Auroras** fall in curtains of soft rays, green below, pink or purple above, in the window and in the Relto sky alike.",
+        "**Ruins** and the strange things on the horizon are made of stone, the world's own rock, instead of black silhouettes.",
+        "**The garden** has its green hedge, gravel alleys leading to the basin, flower beds; trees stand behind the hedge.",
+        "**Trees** have trunks to their size, with bark and branches; humming blooms are tufts of flowers.",
+        "**The window** moves twice as slowly.",
+      ],
+    },
+  },
+  {
     v: "2.3.1",
     fr: {
       title: "Le livre des lois, relu",
