@@ -57,6 +57,7 @@ function wonderPass(g, m, t, layer, k) {
     if (layer === "ridges") ridges(g, m, t, o, { day, hzc, top });
     else if (layer === "sky") sky(g, m, t, o, { day, night });
     else if (layer === "ground") ground(g, m, t, o, { day, night });
+    else if (layer === "relief") relief(g, m, t, o, { day, night, hzc, top });
     else if (layer === "air") air(g, m, t, o, { day, night });
     else if (layer === "cave") cave(g, m, t, o);
   } finally { g.restore(); }
@@ -65,23 +66,26 @@ function wonderPass(g, m, t, layer, k) {
 
 function ridges(g, m, t, o, { day, hzc, top }) {
   const { W, H, hz } = m;
-  if (o.unfinished) { /* l'Inachevé : la crête lointaine s'arrête en esquisse ; chaque jour un peu plus d'encre */
-    const x0 = o.unfinished.x0 + (W - o.unfinished.x0) * 0.25 * frac(Date.now() / 86400000 / 30 + o.unfinished.ink);
-    const yTop = Math.min(...Array.from({ length: 12 }, (_, i) => ridgeY(m, lerp(x0, W, i / 11)))) - 4;
-    const sg = g.createLinearGradient(0, 0, 0, hz); sg.addColorStop(0, css(top)); sg.addColorStop(1, css(hzc));
-    g.fillStyle = sg; g.beginPath(); g.moveTo(x0, yTop); g.lineTo(W, yTop);
-    for (let i = 24; i >= 0; i--) { const x = lerp(x0, W, i / 24); g.lineTo(x, Math.min(hz, ridgeY(m, x) + 2)); }
-    g.closePath(); g.fill();
-    g.strokeStyle = css([255, 250, 230], 0.75 + 0.2 * day); g.lineWidth = 1.4; g.setLineDash([3, 4]); g.beginPath();
-    for (let i = 0; i <= 40; i++) { const x = lerp(x0, W, i / 40); i ? g.lineTo(x, ridgeY(m, x)) : g.moveTo(x, ridgeY(m, x)); } g.stroke(); g.setLineDash([]);
-    g.fillStyle = css([255, 250, 230], 0.6); g.beginPath(); g.arc(x0, ridgeY(m, x0), 1.8, 0, TAU); g.fill(); /* la plume, là où l'encre s'arrête */
-  }
   if (o.rings) { /* les Cernes : les crêtes sont de bois, veinées */
     for (const rg of m.ridges) { const n = rg.xs.length - 1; g.strokeStyle = css([60, 36, 20], 0.35); g.lineWidth = 1;
       for (let j = 1; j <= 3; j++) { g.beginPath(); for (let i = 0; i <= n; i += 2) { const x = (i / n) * W, y = rg.xs[i] + j * H * 0.012 * (1 + rg.d); i ? g.lineTo(x, Math.min(hz, y)) : g.moveTo(x, Math.min(hz, y)); } g.stroke(); } }
   }
 }
 
+function relief(g, m, t, o, { day, hzc, top }) {
+  const { W, H, hz } = m;
+  if (o.unfinished) { /* l'Inachevé : à droite de la plume, le monde n'est pas encore décidé : le ciel seul, et l'esquisse des crêtes à l'encre ; chaque jour un peu plus d'encre */
+    const sc = W / 320, x0 = o.unfinished.x0 + (W - o.unfinished.x0) * 0.25 * frac(Date.now() / 86400000 / 30 + o.unfinished.ink);
+    let yTop = hz; for (const rg of m.ridges) { const n = rg.xs.length - 1; for (let k = 0; k <= n; k++) if ((k / n) * W >= x0) yTop = Math.min(yTop, rg.xs[k]); } yTop -= H * 0.08; /* ne recouvre que la bande des crêtes, pas le ciel au-dessus */
+    const sg = g.createLinearGradient(0, yTop, 0, hz); sg.addColorStop(0, css(mixc(top, hzc, clamp(yTop / hz)), 0)); sg.addColorStop(0.35, css(mixc(top, hzc, clamp((yTop + (hz - yTop) * 0.35) / hz)))); sg.addColorStop(1, css(hzc)); const ramp = W * 0.08;
+    g.save(); g.fillStyle = sg; for (let k = 0; k < 12; k++) { const xa = x0 + (k / 12) * ramp; g.globalAlpha = (k + 1) / 12; g.fillRect(xa, yTop, ramp / 12 + 1, hz - yTop + 1); } g.globalAlpha = 1; g.fillRect(x0 + ramp, yTop, W - x0 - ramp, hz - yTop + 1); g.restore(); /* le ciel, là où rien n'est encore écrit ; le bord s'efface comme un dessin qu'on gomme */
+    g.strokeStyle = css([60, 52, 44], 0.55 + 0.2 * day); g.lineWidth = 1.1 * sc; g.setLineDash([4 * sc, 3 * sc]);
+    for (const rg of m.ridges) { const n = rg.xs.length - 1; g.beginPath(); let st = false; for (let k = 0; k <= n; k++) { const x = (k / n) * W; if (x < x0) continue; st ? g.lineTo(x, rg.xs[k]) : g.moveTo(x, rg.xs[k]); st = true; } g.stroke(); } /* chaque crête, à l'encre, en pointillé */
+    g.setLineDash([]); g.strokeStyle = css([60, 52, 44], 0.25 + 0.1 * day); g.lineWidth = 0.8 * sc;
+    for (let k = 0; k < 26; k++) { const x = x0 + W * 0.02 + (k / 26) * (W - x0), rg = m.ridges[k % m.ridges.length], n = rg.xs.length - 1, y = rg.xs[Math.min(n, Math.round((x / W) * n))]; g.beginPath(); g.moveTo(x, y + 2 * sc); g.lineTo(x - 5 * sc, y + 9 * sc); g.stroke(); } /* des hachures sous les crêtes, comme un croquis */
+    g.fillStyle = css([40, 34, 28], 0.85); g.beginPath(); g.moveTo(x0, ridgeY(m, x0) - 14 * sc); g.lineTo(x0 + 2 * sc, ridgeY(m, x0) - 1); g.lineTo(x0 - 1 * sc, ridgeY(m, x0) - 2); g.closePath(); g.fill(); /* la plume, là où l'encre s'arrête */
+  }
+}
 function sky(g, m, t, o, { day }) {
   const { W, H, hz } = m;
   if (o.aurora) { /* l'Aurore de jour : la cendre grise, allumée par en dessous */
@@ -118,7 +122,7 @@ function ground(g, m, t, o, { day, night }) {
   }
   if (o.steps) { /* ce que le vent a appris : des pas frais, sans personne, qui avancent */
     const front = frac(t), n = o.steps.length;
-    o.steps.forEach((s, i) => { const age = frac(front - s.u); if (age > 0.85) return; const a = (1 - age / 0.85) * 0.7 + 0.15; g.fillStyle = css([40, 30, 20], a * 0.8); g.beginPath(); g.ellipse(s.x, s.y + s.side * H * 0.008, 2.6, 1.4, -0.2, 0, TAU); g.fill(); void n; });
+    o.steps.forEach((s, i) => { const age = frac(front - s.u); if (age > 0.85) return; const a = (1 - age / 0.85) * 0.7 + 0.15; const sc = W / 320; g.fillStyle = css([40, 30, 20], Math.min(1, a * 1.1)); g.beginPath(); g.ellipse(s.x, s.y + s.side * H * 0.01, 4.2 * sc, 2.2 * sc, -0.2, 0, TAU); g.fill(); g.fillStyle = css([255, 240, 210], a * 0.35); g.beginPath(); g.ellipse(s.x + 0.8 * sc, s.y + s.side * H * 0.01 - 1.6 * sc, 4 * sc, 1 * sc, -0.2, Math.PI, TAU); g.fill(); void n; }); /* des pas creusés : l'ombre au fond, la lèvre de sable éclairée */
   }
   if (o.slabs) { /* la Pluie qui lit : les lignes s'écrivent sous la bruine, une à une, et pâlissent quand elle cesse */
     const rain = m.lv ? Math.max(m.lv.drizzle || 0, m.lv.rain || 0) : 1, writing = frac(t), lit = 0.15 + 0.7 * rain;
@@ -136,8 +140,8 @@ function ground(g, m, t, o, { day, night }) {
   }
   if (o.frostFlowers) { /* la Glace qui fleurit : le givre s'ouvre en pétales aux heures froides, disparaît à midi */
     const open = clamp(1 - day * 1.2 + night * 0.4);
-    if (open > 0.03) for (const f of o.frostFlowers) { g.strokeStyle = css([230, 245, 255], 0.65 * open); g.fillStyle = css([210, 235, 255], 0.22 * open); g.lineWidth = 0.9;
-      for (let i = 0; i < f.n; i++) { const a = (i / f.n) * TAU + f.p, r = f.r * (0.4 + 0.6 * open); g.beginPath(); g.ellipse(f.x + Math.cos(a) * r * 0.6, f.y + Math.sin(a) * r * 0.3, r * 0.55, r * 0.22, a, 0, TAU); g.fill(); g.stroke(); } }
+    if (open > 0.03) for (const f of o.frostFlowers) { g.strokeStyle = css([240, 250, 255], 0.9 * open); g.fillStyle = css([215, 238, 255], 0.42 * open); g.lineWidth = 1.1 * W / 320;
+      for (let i = 0; i < f.n; i++) { const a = (i / f.n) * TAU + f.p, r = f.r * 1.7 * (0.4 + 0.6 * open); g.beginPath(); g.ellipse(f.x + Math.cos(a) * r * 0.6, f.y + Math.sin(a) * r * 0.3, r * 0.55, r * 0.22, a, 0, TAU); g.fill(); g.stroke(); } }
   }
   if (o.tulips) tulips(g, m, t, o.tulips, S);
 }
@@ -190,10 +194,10 @@ function air(g, m, t, o, { day, night }) {
   if (o.herd) { /* l'Un-plusieurs : toutes les têtes tournent ensemble ; la nuit, une seule spirale */
     const h = o.herd, turn = Math.sin(TAU * t), coil = clamp(night * 1.4 - 0.2);
     for (let i = 0; i < h.n; i++) {
-      const a = i * 0.9, sx = h.x + Math.cos(a) * (6 + i * 4) * 1.4, sy = h.y + Math.sin(a) * (6 + i * 4) * 0.45, lx = h.x + (i - h.n / 2) * 15 + 8 * turn, ly = h.y + (i % 3) * 3;
+      const sc = W / 320 * 1.3, a = i * 0.9, sx = h.x + Math.cos(a) * (6 + i * 4) * 1.4 * sc, sy = h.y + Math.sin(a) * (6 + i * 4) * 0.45 * sc, lx = h.x + (i - h.n / 2) * 15 * sc + 8 * turn * sc, ly = h.y + (i % 3) * 3 * sc;
       const x = lerp(lx, sx, coil), y = lerp(ly, sy, coil), dir = turn >= 0 ? 1 : -1;
-      g.fillStyle = "rgba(30,24,22,0.98)"; g.strokeStyle = "rgba(255,140,60,0.55)"; g.lineWidth = 0.8; g.beginPath(); g.ellipse(x, y, 8, 4, 0, 0, TAU); g.fill(); g.stroke(); /* le bord éclairé par la lave */
-      if (coil < 0.8) { g.beginPath(); g.ellipse(x + dir * 8, y - 3.5, 3.2, 2.3, 0, 0, TAU); g.fill(); g.stroke(); g.fillRect(x - 5, y + 2, 1.4, 5); g.fillRect(x + 4, y + 2, 1.4, 5); }
+      g.fillStyle = "rgba(30,24,22,0.98)"; g.strokeStyle = "rgba(255,140,60,0.55)"; g.lineWidth = 0.8; g.beginPath(); g.ellipse(x, y, 8 * sc, 4 * sc, 0, 0, TAU); g.fill(); g.stroke(); /* le bord éclairé par la lave */
+      if (coil < 0.8) { g.beginPath(); g.ellipse(x + dir * 8 * sc, y - 3.5 * sc, 3.2 * sc, 2.3 * sc, 0, 0, TAU); g.fill(); g.stroke(); g.fillRect(x - 5 * sc, y + 2 * sc, 1.4 * sc, 5 * sc); g.fillRect(x + 4 * sc, y + 2 * sc, 1.4 * sc, 5 * sc); }
     }
   }
   if (o.mist) { /* la Brume vivante : elle va contre le vent ; des vies montent et redescendent dedans */
@@ -203,10 +207,10 @@ function air(g, m, t, o, { day, night }) {
     g.globalCompositeOperation = "source-over";
   }
   if (o.blobs) { /* celles qui passent : des lueurs rouge et or qui s'étirent dans les failles et se referment */
-    g.globalCompositeOperation = "lighter"; const vis = 0.35 + 0.65 * night;
+    g.globalCompositeOperation = "lighter"; const vis = 0.55 + 0.45 * night, sc = W / 320 * 1.5;
     for (const b of o.blobs) { const ph = TAU * (t * b.k + b.p), x = b.x + b.rx * Math.sin(ph), y = b.y + b.ry * Math.sin(ph * 2), stretch = 1 + 1.6 * Math.max(0, Math.sin(ph * 2 + 1)) ** 4;
-      const gr = g.createRadialGradient(x, y, 0, x, y, 7 * stretch); gr.addColorStop(0, css([255, 214, 120], 0.85 * vis)); gr.addColorStop(0.5, css([230, 90, 40], 0.4 * vis)); gr.addColorStop(1, css([200, 50, 30], 0));
-      g.fillStyle = gr; g.beginPath(); g.ellipse(x, y, 3.2 * stretch, 3.2 / Math.sqrt(stretch), 0.6, 0, TAU); g.fill(); }
+      const gr = g.createRadialGradient(x, y, 0, x, y, 7 * stretch * sc); gr.addColorStop(0, css([255, 214, 120], 0.85 * vis)); gr.addColorStop(0.5, css([230, 90, 40], 0.4 * vis)); gr.addColorStop(1, css([200, 50, 30], 0));
+      g.fillStyle = gr; g.beginPath(); g.ellipse(x, y, 3.2 * stretch * sc, 3.2 * sc / Math.sqrt(stretch), 0.6, 0, TAU); g.fill(); }
     g.globalCompositeOperation = "source-over";
   }
   void S;
@@ -243,8 +247,8 @@ function cave(g, m, t, o) {
     g.fillStyle = "rgba(200,240,255,0.9)"; g.beginPath(); g.arc(sx + sw * 1.5, surf(sx) + sl + 1, 1.6, 0, TAU); g.fill();
   }
   if (o.echo) { /* l'Écho d'avance : l'éclair traverse la roche après le tonnerre (le son vient d'abord) */
-    const q = frac(t - o.echo.at), flash = q < 0.06 ? 1 - q / 0.06 : 0;
-    if (flash > 0) for (const c of o.echo.cracks) { g.strokeStyle = css([240, 245, 255], 0.9 * flash); g.lineWidth = 1.4; g.beginPath(); let x = c.x, y = 0; g.moveTo(x, y); for (const p of c.pts) { x += p * 18; y += H * 0.06; g.lineTo(x, y); } g.stroke(); }
+    const q = frac(t - o.echo.at), flash = q < 0.1 ? 1 - q / 0.1 : 0, sc = W / 320;
+    if (flash > 0) for (const c of o.echo.cracks) { g.strokeStyle = css([240, 245, 255], 0.9 * flash); g.lineWidth = 1.6 * sc; g.beginPath(); let x = c.x, y = 0; g.moveTo(x, y); for (const p of c.pts) { x += p * 18 * sc; y += H * 0.06; g.lineTo(x, y); } g.stroke(); }
     if (flash > 0) { g.fillStyle = css([200, 210, 240], 0.12 * flash); g.fillRect(0, 0, W, H); }
   }
 }

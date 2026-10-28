@@ -8,14 +8,22 @@ now += 60000; assert.strictEqual(law.observe("Marsh", A(["rain", "stone"]), now)
 assert.strictEqual(law.effective("Marsh"), 0);
 now += 20 * 60000;                                                                 // l'encre a séché
 const ev = law.observe("Marsh", A(["heat", "stone"]), now);
-assert.ok(ev && ev.cost > 0.1 && ev.cost < 0.13, "coût deux éléments");
+assert.ok(ev && ev.cost > 0.05 && ev.cost < 0.07, "rain retiré : une altération ; heat ajouté sans contradiction : gratuit (les Livres descriptifs)"); assert.deepStrictEqual(ev.free, ["heat"]);
 assert.deepStrictEqual(ev.added, ["heat"]); assert.deepStrictEqual(ev.removed, ["rain"]);
-assert.ok(Math.abs(law.effective("Marsh") - 0.12) < 1e-9);
-now += 2 * 86400000; assert.ok(Math.abs(law.effective("Marsh") - 0.02) < 1e-6, "guérison");
+assert.ok(Math.abs(law.effective("Marsh") - 0.06) < 1e-9);
+now += 1 * 86400000; assert.ok(Math.abs(law.effective("Marsh") - 0.01) < 1e-6, "guérison");
 now += 5 * 86400000; assert.strictEqual(law.effective("Marsh"), 0);
 assert.strictEqual(law.observe("Marsh", A(["heat", "stone"]), now), null);        // inchangé
 // plafond par édition + total
-now += 20 * 60000; const big = law.observe("Marsh", A(["a", "b", "c", "d", "e", "f", "g"]), now); assert.strictEqual(big.cost, 0.3);
+now += 20 * 60000; law.observe("Marsh", A(["a", "b", "c", "d", "e", "f", "g"]), now); now += 20 * 60000; const big = law.observe("Marsh", A(["x"]), now); assert.strictEqual(big.cost, 0.3); // sept retraits : plafonné
+{ // les Livres descriptifs : un ajout qui ne contredit rien est gratuit ; un ajout qui contredit paie
+  let n4 = 1e12; const l4 = new Law({}, { dryMinutes: () => 1, healPerDay: () => 0, now: () => n4 });
+  const C = (ids, triggered = [], reactions = []) => ({ resolved: { lines: ids.map((id) => ({ entry: { id } })), triggered, matter: { written: [], reactions } } });
+  l4.observe("D", C(["water", "stone"]), n4); n4 += 3600000;
+  const add = l4.observe("D", C(["water", "stone", "fern"]), n4); assert.ok(add && add.cost === 0 && add.free.includes("fern") && l4.effective("D") === 0, "ajout cohérent : gratuit");
+  n4 += 3600000; const bad = l4.observe("D", C(["water", "stone", "fern", "lava"], [], [{ a: "water", b: "lava", type: "violent", result: "obsidian" }]), n4); assert.ok(bad && bad.cost > 0.05 && !(bad.free || []).includes("lava"), "ajout qui détruit (réaction violente) : payant");
+  n4 += 3600000; const clash = l4.observe("D", C(["water", "stone", "fern", "lava", "desert_world"], [{ a: "desert_world", b: "water" }]), n4); assert.ok(clash && clash.cost > 0.05, "ajout qui contredit (clash) : payant");
+}
 // ajustement du verdict
 const r = { axisStability: { weather: 90 }, stability: 90, verdict: "stable" };
 adjustAnalysis(r, 0.3); assert.strictEqual(r.axisStability.alteration, 70); assert.strictEqual(r.stability, 70); assert.strictEqual(r.verdict, "unstable");
@@ -113,7 +121,7 @@ console.log("law: ok");
   c += 60000; assert.strictEqual(l.observe("Phys", A(["stone"]), c, { rotation: 24 }), null, "puis encre fraîche : gratuit");
   const l2 = new Law({}, { dryMinutes: () => 15, healPerDay: () => 0.05, now: () => c }); l2.observe("Old", A(["stone"]), c); delete l2.state.ages.Old.phys; c += 99 * 60000; // ancien état
   assert.strictEqual(l2.observe("Old", A(["stone"]), c, { rotation: 20 }), null, "ancien état sans valeurs mémorisées : les valeurs d'aujourd'hui servent de référence, sans frais");
-  c += 99 * 60000; const ev4 = l2.observe("Old", A(["stone", "heat"]), c, { rotation: 20 }); assert.ok(ev4 && Math.abs(ev4.cost - 0.06) < 1e-9, "et les éléments coûtent comme avant");
+  c += 99 * 60000; const ev4 = l2.observe("Old", A(["heat"]), c, { rotation: 20 }); assert.ok(ev4 && Math.abs(ev4.cost - 0.06) < 1e-9, "et les éléments retirés coûtent comme avant (stone retiré ; heat ajouté sans contradiction, gratuit)");
 }
 
 // le coût des retouches selon la profondeur (chantier 3) : au poids de la famille « équilibre »
@@ -128,12 +136,12 @@ console.log("law: ok");
   lw.observe("Fil", A(["heat", "stone"]), t); t += 20 * 60000;
   let asked = 0;
   const e1 = lw.observe("Fil", A(["rain", "stone"]), t, null, { retouch: () => { asked++; return { k: 1.5, depth: "thread" }; } });
-  assert.ok(Math.abs(e1.cost - 0.18) < 1e-9 && e1.depth === "thread" && e1.k === 1.5, "sur le fil : 0,12 × 1,5");
+  assert.ok(Math.abs(e1.cost - 0.09) < 1e-9 && e1.depth === "thread" && e1.k === 1.5, "sur le fil : 0,06 × 1,5 (heat retiré ; rain ajouté sans contradiction, gratuit)");
   assert.strictEqual(lw.log("Fil").slice(-1)[0].depth, "thread", "le journal garde la profondeur");
-  t += 60000; lw.observe("Fil", A(["fog", "stone"]), t, null, { retouch: () => { asked++; return { k: 2, depth: "thread" }; } });
+  t += 60000; lw.observe("Fil", A(["a", "b", "c", "d", "e", "f", "g"]), t, null, { retouch: () => { asked++; return { k: 2, depth: "thread" }; } });
   assert.strictEqual(asked, 1, "encre fraîche : la profondeur n'est même pas lue");
-  t += 20 * 60000; const e2 = lw.observe("Fil", A(["a", "b", "c", "d", "e", "f", "g"]), t, null, { retouch: () => ({ k: 0.75, depth: "deep" }) });
+  t += 20 * 60000; const e2 = lw.observe("Fil", A(["x"]), t, null, { retouch: () => ({ k: 0.75, depth: "deep" }) });
   assert.ok(Math.abs(e2.cost - 0.225) < 1e-9, "le plafond par retouche suit le facteur");
-  t += 20 * 60000; const e3 = lw.observe("Fil", A(["x"]), t, null, { retouch: () => null });
+  t += 20 * 60000; const e3 = lw.observe("Fil", A(["y"]), t, null, { retouch: () => null });
   assert.ok(e3 && e3.k === undefined, "sans profondeur connue : prix normal");
 }

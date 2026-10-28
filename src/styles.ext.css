@@ -994,3 +994,8 @@
 .age-dream-panel__row { border-top: 1px solid var(--background-modifier-border); padding: 8px 0; }
 .age-dream-panel__kind { color: var(--text-muted); font-size: var(--font-ui-smaller); }
 .age-dream-panel__text { margin: 2px 0 6px; font-style: italic; }
+
+/* Les nouveautés (src/whatsnew.js) : la lettre de la Guilde, puis la liste */
+.age-news .age-news__letter { background: var(--background-secondary); border-left: 3px solid var(--interactive-accent); border-radius: 4px; padding: 10px 14px; margin: 6px 0 12px; font-family: var(--font-text); font-style: italic; }
+.age-news .age-news__sign { text-align: right; color: var(--text-muted); font-style: normal; margin-top: 4px; }
+.age-news .age-news__list li { margin: 4px 0; }

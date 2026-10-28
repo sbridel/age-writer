@@ -187,6 +187,13 @@ function drawCabin(r, ctx, sc, sky, t) {
     ctx.fillStyle = rgba(120, 90, 50, 0.6); for (let k = 0; k < 3; k++) { ctx.fillRect(bx + 3, by - 1 + k * 1.4 - 0.6, 9, 0.5); ctx.fillRect(bx + 17, by - 1 + k * 1.4 - 0.6, 9, 0.5); }
     r.hot.push({ x: bx - 3, y: by - 6, w: 36, h: 14, tip: "Book of pages — click to open", go: "book" });
   }
+  if (r.opts.newsUnread && r.opts.newsUnread()) { /* un pli de la Guilde, après une mise à jour : papier crème, cachet bleu-vert, posé en travers du livre des pages (dessiné après lui : par-dessus, et cliqué d'abord) ; un clic l'ouvre (src/whatsnew.js) */
+    const gx = tx + 62, gy = ty - 9, pulse = 0.5 + 0.5 * Math.sin(t * 1.6);
+    ctx.save(); ctx.translate(gx + 9, gy); ctx.rotate(-0.16); ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(-8, 3, 18, 2); ctx.fillStyle = c("#efe5cb"); ctx.fillRect(-9, -3, 18, 7); ctx.fillStyle = c("#ddd0ad"); ctx.fillRect(-9, 1, 18, 1.1);
+    ctx.strokeStyle = rgba(110, 90, 60, 0.45); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(-9, -3); ctx.lineTo(0, 1); ctx.lineTo(9, -3); ctx.stroke();
+    ctx.fillStyle = c("#2f6f73"); ctx.beginPath(); ctx.arc(0, 1, 2.3, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(150, 230, 225, 0.12 + 0.16 * pulse); ctx.beginPath(); ctx.arc(0, 1, 5.5, 0, 6.283); ctx.fill(); ctx.restore();
+    r.hot.push({ x: gx - 2, y: gy - 6, w: 22, h: 12, tip: TR(r)("news.tip"), special: "news" });
+  }
   const cx = tx + tw - 18;
   if (castle) CASTLE.candelabrum(ctx, c, cx, ty, fl); // un chandelier de fer à trois branches
   else if (glass) { ctx.fillStyle = c(GLASS.COPPER); ctx.beginPath(); ctx.ellipse(cx + 3.5, ty - 1, 7, 2, 0, 0, 6.283); ctx.fill(); ctx.fillRect(cx - 1, ty - 4, 9, 3); } // un bougeoir de cuivre

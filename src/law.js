@@ -36,6 +36,14 @@ function physChange(oldP, newP) {
 
 /** Éléments qui composent le monde résolu (indépendants de la façon dont ils ont été écrits). */
 const CARRY_LINE = /^\s*carry\s*:/i;
+/** ESSAI (les Livres descriptifs, 28 oct.) : les blocs pris dans une contradiction (un clash, une réaction qui détruit ou qui pourrit). Un ajout qui n'y est pas
+ *  ne contredit rien : le Livre décrit un peu plus le même monde, et c'est gratuit ; une altération (retirer, changer une valeur) reste payante (loi 15). */
+function contradicted(analysis) {
+  const r = (analysis && analysis.resolved) || {}, s = new Set();
+  for (const c of r.triggered || []) { s.add(c.a); s.add(c.b); }
+  for (const x of (r.matter && r.matter.reactions) || []) if (x.type === "violent" || x.type === "decaying") { s.add(x.a); s.add(x.b); }
+  return s;
+}
 function worldIds(analysis) {
   /* porter (src/carry.js) : la ligne `carry:` est ce que le joueur a écrit ; le fragment vient de la source et change avec elle, ce n'est pas une retouche */
   const r = analysis.resolved, s = new Set(), c = analysis.carry || null, carried = new Set((c && c.ids) || []), mark = (raw) => s.add("carry|" + squash("?" + raw).slice(1));
@@ -131,17 +139,17 @@ class Law {
     if (same && !(pc.cost > 0)) return null;
     const dry = this.o.dryMinutes(name);
     const wasDry = dry > 0 && now - a.changedAt >= dry * 60000;
-    const idAdded = ids.filter((x) => !a.ids.includes(x)), idRemoved = a.ids.filter((x) => !ids.includes(x));
+    const idAdded = ids.filter((x) => !a.ids.includes(x)), idRemoved = a.ids.filter((x) => !ids.includes(x)), contra = contradicted(analysis), paidAdded = idAdded.filter((x) => contra.has(x)), freeAdded = idAdded.filter((x) => !contra.has(x));
     const added = [...idAdded, ...pc.added], removed = [...idRemoved, ...pc.removed];
     let out = null;
     if (wasDry) {
       const rt = (o && o.retouch && o.retouch()) || null, k = rt && rt.k > 0 ? rt.k : 1;
-      const cost = k * Math.min(COST_CAP_PER_EDIT, COST_PER_ELEMENT * (idAdded.length + idRemoved.length) + pc.cost);
+      const cost = k * Math.min(COST_CAP_PER_EDIT, COST_PER_ELEMENT * (paidAdded.length + idRemoved.length) + pc.cost); /* un ajout qui ne contredit rien ne coûte rien */
       const before = this.effective(name);
       a.extra = clamp(before + cost); a.at = now;
-      a.log.push({ t: now, added, removed, cost, ...(k !== 1 ? { depth: rt.depth, k } : {}) });
+      a.log.push({ t: now, added, removed, cost, ...(freeAdded.length ? { free: freeAdded } : {}), ...(k !== 1 ? { depth: rt.depth, k } : {}) });
       if (a.log.length > 20) a.log.shift();
-      out = { added, removed, cost, extra: a.extra, ...(k !== 1 ? { depth: rt.depth, k } : {}) };
+      out = { added, removed, cost, extra: a.extra, ...(freeAdded.length ? { free: freeAdded } : {}), ...(k !== 1 ? { depth: rt.depth, k } : {}) };
     }
     a.ids = ids; a.changedAt = now; if (pn) a.phys = pn;
     return out;

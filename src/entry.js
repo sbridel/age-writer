@@ -213,7 +213,7 @@ module.exports = function build(Base, core, AGEX) {
       this.registerProcessors();
       this.registerCommands();
       this.registerEvents();
-      this.app.workspace.onLayoutReady(() => { guard("scan", () => this.initialScan()); window.setTimeout(() => guard("welcome", () => this.welcomeOnce()), 2500); });
+      this.app.workspace.onLayoutReady(() => { guard("scan", () => this.initialScan()); window.setTimeout(() => guard("welcome", () => this.welcomeOnce()), 2500); window.setTimeout(() => guard("nouveautés", () => this.newsOnStart()), 3500); });
     }
 
     onunload() {
@@ -988,6 +988,7 @@ module.exports = function build(Base, core, AGEX) {
       if (typeof this.registerView === "function") this.registerView(RBK.RELTO_BOOK_VIEW, (leaf) => new RBK.ReltoBookView(leaf, this));
       this.addCommand({ id: "open-relto-book", name: "Open the Relto book", callback: () => RBK.openReltoBook(this) });
       this.addCommand({ id: "toggle-relto-ribbon", name: "Relto button: switch between the Relto book and the last Relto visited", callback: () => RBK.toggleRibbon(this) });
+      this.addCommand({ id: "whats-new", name: this.t("news.cmd"), callback: () => this.showWhatsNew(true) });
       this.addCommand({ id: "memories-clear", name: this.t("mem.clear.cmd"), callback: () => this.forgetWonders(null, (ok) => { if (ok) this.refreshLive(); }) });
       this.addCommand({ id: "cave-test", name: this.t("cave.test.cmd"), callback: () => new CaveTestModal(this.app, this).open() }); /* le lac, pour essayer le microscope sans attendre des jours */
       this.addCommand({ id: "oven-test", name: this.t("oven.test.cmd"), callback: () => new OvenTestModal(this.app, this).open() }); /* pour essayer la machine et la caverne sans attendre les récoltes */
@@ -1061,6 +1062,36 @@ module.exports = function build(Base, core, AGEX) {
     }
 
     /** Premier lancement : une note de bienvenue avec un Âge d'exemple (une seule fois, jamais chez un coffre qui a déjà des Âges). */
+    /** Les nouveautés (src/whatsnew.js) : au premier lancement après une mise à jour, une fenêtre, et un pli de la Guilde sur la table de la cabane. Rien à l'installation. */
+    newsOnStart() {
+      const WN = require("./whatsnew"), st = this.ext.state, cur = this.manifest && this.manifest.version, r = WN.onStart(st.seenVersion, cur);
+      if (r.seen !== st.seenVersion) { st.seenVersion = r.seen; this.saveExt(); }
+      if (!r.show) return;
+      st.newsFrom = r.from; st.newsUnread = true; this.saveExt(); this.refreshLive();
+      if (this.ext.whatsNew !== false) this.showWhatsNew(false);
+    }
+    /** La fenêtre des nouveautés : la lettre de la Guilde, puis la liste. `all` : depuis la version précédente si rien n'est en attente. */
+    showWhatsNew(all) {
+      const WN = require("./whatsnew"), st = this.ext.state, cur = this.manifest && this.manifest.version, lang = this.lang() === "fr" ? "fr" : "en", t = (k) => this.t(k);
+      let list = WN.since(st.newsFrom || "0", cur); if (!list.length && all) list = WN.NEWS.slice(0, 1);
+      if (!list.length) { new Notice(t("news.none")); return; }
+      const inline = (el, txt) => { for (const part of String(txt).split(/(\*\*[^*]+\*\*|`[^`]+`)/)) { if (!part) continue; if (part.startsWith("**")) el.createEl("strong", { text: part.slice(2, -2) }); else if (part.startsWith("`")) el.createEl("code", { text: part.slice(1, -1) }); else el.appendText(part); } };
+      const plugin = this;
+      class News extends obsidian.Modal {
+        onOpen() {
+          const el = this.contentEl; el.addClass("age-news");
+          for (const n of list) { const d = n[lang];
+            el.createEl("h3", { text: `${d.title} · ${n.v}` });
+            const lt = el.createDiv({ cls: "age-news__letter" }); lt.createEl("p", { text: d.letter }); lt.createEl("p", { cls: "age-news__sign", text: d.sign });
+            const ul = el.createEl("ul", { cls: "age-news__list" }); for (const it of d.items) inline(ul.createEl("li"), it);
+          }
+          const bar = el.createDiv({ cls: "modal-button-container" }); bar.createEl("button", { text: t("news.close"), cls: "mod-cta" }).addEventListener("click", () => this.close());
+        }
+        onClose() { this.contentEl.empty(); if (st.newsUnread) { st.newsUnread = false; plugin.saveExt(); plugin.refreshLive(); } }
+      }
+      new News(this.app).open();
+    }
+
     async welcomeOnce() {
       const st = this.ext.state; if (st.welcomed) return;
       st.welcomed = true; this.saveExt();
@@ -1134,7 +1165,8 @@ module.exports = function build(Base, core, AGEX) {
       const ev = this.law.observe(f.basename, core.analyse(src, { seed, physics: false }), f.stat.mtime, guard("valeurs physiques", () => PH.parsePhysics(src).params), { retouch });
       this.lastAgeSrc.set(f.path, src);
       this.saveExt();
-      if (ev) {
+      if (ev && !(ev.cost > 0)) new Notice(this.t("law.free"), 6000); /* ESSAI (les Livres descriptifs) : un ajout qui ne contredit rien n'altère pas l'Âge */
+      else if (ev) {
         const how = ev.k > 1 ? "\n" + this.t("law.thread") : ev.k < 1 ? "\n" + this.t("law.deep") : "";
         new Notice(`${this.t("law.warning")}\n${describeChange(ev, this.t)}${how}`, 9000);
         this.redrawEverything();

@@ -21,9 +21,15 @@ function heading(m0, k) {
   // (pulsar, étoile à neutrons, trou noir), et les ruines quand le livre n'en écrit pas beaucoup (ruins > 1 : un champ de ruines, partout)
   const S0 = m0.S, many = !!(S0.amt && S0.amt.ruins > 1);
   const S = { ...S0, seed: (S0.seed ^ Math.imul(k, 0x9e3779b1)) >>> 0, fissure: null, tornado: false, rainbow: false, remnants: [], ruins: many ? S0.ruins : [], lampLit: many && S0.lampLit, tabletAwake: many && S0.tabletAwake };
+  /* ESSAI : le périscope tourne avec le point de liaison : chaque direction regarde ailleurs (équateur → couchant → pôle → levant), le soleil et les lunes
+     y suivent leur course vue de ce côté ; le cadre (grotte, lisière, pente, élément proche) n'est que de face, la hauteur des yeux reste la même */
+  const FACES = ["eq", "west", "pole", "east"], V0 = S0.view, turn = V0 && V0.face && S0.cycle !== "frozen" && S0.cycle !== "erratic";
+  if (V0) S.view = { ...V0, kind: V0.kind === "high" || V0.kind === "low" ? V0.kind : "plain", near: null, face: V0.face ? FACES[(FACES.indexOf(V0.face) + k) % 4] : V0.face };
   const m = G.build(S, m0.W, m0.H);
-  m.pal = m0.pal; m.sunFrom = m0; m.noSun = true; m.ringsP = null; m.cometP = null; m.det = null; // le soleil, les anneaux, la comète, la structure « habitée » : de face seulement
-  m.night = { ...m.night, moons: [] };
+  if (!S0.storm && m0.front && m0.front.mode === "shower") { if (!m.front) m.front = { ...m0.front, cells: [] }; } else if (!S0.storm) m.front = null; /* ESSAI : s'il pleut ici, il pleut de tous côtés ; si l'averse est au loin, on n'est pas mouillé en se retournant (d'autres averses, peut-être) */
+  m.pal = m0.pal; m.ringsP = null; m.cometP = null; m.det = null; // les anneaux, la comète, la structure « habitée » : de face seulement
+  if (turn) m.night = { ...m.night, moons: m0.night ? m0.night.moons : [] }; /* les mêmes lunes, vues d'ailleurs */
+  else { m.sunFrom = m0; m.noSun = true; m.night = { ...m.night, moons: [] }; } // soleil figé ou erratique : de face seulement
   return (m0.headings[k] = m);
 }
 

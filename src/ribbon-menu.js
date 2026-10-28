@@ -9,7 +9,7 @@
 const MAIN = [
   [["open-relto-book", "book-open"], ["open-relto", "mountain"], ["open-relto-view", "maximize-2"], ["create-relto-page", "file-plus"]],
   [["open-age-book", "book"], ["create-exploration-journal", "notebook-pen"], ["save-age-cover", "image"], ["save-age-window-gif", "film"], ["update-age-data", "refresh-cw"], ["random-age", "dices"], ["generate-age-map", "map"]],
-  [["open-guide", "help-circle"], ["open-reference", "library"], ["open-glyph-book", "languages"], ["open-library-book", "book-copy"]],
+  [["open-guide", "help-circle"], ["open-reference", "library"], ["open-glyph-book", "languages"], ["open-library-book", "book-copy"], ["whats-new", "mail"]],
   [["start-story", "scroll-text"], ["story-hint", "lightbulb"], ["story-check", "check-circle"], ["story-next", "skip-forward"]],
   [["stop-soundscape", "volume-x"]],
 ];

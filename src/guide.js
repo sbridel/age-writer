@@ -38,7 +38,7 @@ const GUIDE = {
       { p: "Quand le livre est déjà ouvert, cliquer une vitre ne rejoue que le son de liaison. Les ambiances (Relto, Âge) se lancent avec le bouton ♪." },
     ] },
     { id: "law", icon: "scale", title: "Loi du changement", body: [
-      { p: "Écrire un Âge, c'est le fixer. Tant que l'encre est fraîche (15 minutes par défaut), tu peux le retoucher. Après, modifier le monde (ajouter ou retirer une page) l'abîme : son instabilité monte, puis redescend si on le laisse en paix. Espaces, sauts de ligne, majuscules ou renommage ne comptent pas." },
+      { p: "Écrire un Âge, c'est le fixer. Tant que l'encre est fraîche (15 minutes par défaut), tu peux le retoucher. Après, modifier le monde l'abîme : son instabilité monte, puis redescend si on le laisse en paix. Mais un Livre descriptif peut être complété : **une page ajoutée qui ne contredit rien** (aucun clash, aucune réaction qui détruit ou qui pourrit) décrit un peu plus le même monde, sans rien abîmer ; le paysage reste le même, et ce qui est écrit y apparaît. Retirer une page, changer une valeur, ou ajouter ce qui contredit, c'est une altération, et elle se paie. Espaces, sauts de ligne, majuscules ou renommage ne comptent pas." },
       { p: "Réglages : « Loi du changement », « Minutes avant que l'encre sèche », « Guérison par jour »." },
     ] },
     { id: "settings", icon: "settings", title: "Réglages et commandes", body: [
@@ -83,7 +83,7 @@ const GUIDE = {
       { p: "When the book is already open, clicking a glass replays only the linking sound. Ambiences (Relto, Age) start with the ♪ button." },
     ] },
     { id: "law", icon: "scale", title: "Law of change", body: [
-      { p: "Writing an Age fixes it. While the ink is fresh (15 minutes by default) you can edit freely. After that, changing the world (adding or removing a page) damages it: instability rises, then slowly heals if left alone. Whitespace, line breaks, capitals or renaming don't count." },
+      { p: "Writing an Age fixes it. While the ink is fresh (15 minutes by default) you can edit freely. After that, changing the world damages it: instability rises, then slowly heals if left alone. But a descriptive Book can be completed: **a page added that contradicts nothing** (no clash, no reaction that destroys or rots) describes a little more of the same world and harms nothing; the landscape stays the same and what you wrote appears in it. Removing a page, changing a value, or adding something that contradicts is an alteration, and it costs. Whitespace, line breaks, capitals or renaming don't count." },
       { p: "Settings: “Law of change”, “Minutes before the ink dries”, “Healing per day”." },
     ] },
     { id: "settings", icon: "settings", title: "Settings & commands", body: [

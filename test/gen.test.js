@@ -154,7 +154,7 @@ for (const w of [[], ["a"], ["vast", "immense", "giant", "huge"], ["tiny", "tiny
   { const near = rc({ ...sc, comet: true, belt: null, rings: false }, 0.3, { clock: 30 }), far = rc({ ...sc, comet: true, belt: null, rings: false }, 0.3, { clock: 60 }); ok(near.length !== far.length || near.join() !== far.join(), "comète : elle passe, puis disparaît"); }
   const sig3 = (o) => rc(sc, 0.3, o).join("|");
   ok(sig3({ day: 0.1 }) !== sig3({ day: 0.5 }), "l'heure du jour change le ciel");
-  ok(sig3({ day: 0.3, season: -1 }) !== sig3({ day: 0.3, season: 1 }), "la saison change la trajectoire du soleil");
+  { const eq = { ...sc, view: { ...(sc.view || {}), face: "eq" } }, sg = (o) => rc(eq, 0.3, o).join("|"); ok(sg({ day: 0.3, season: -1 }) !== sg({ day: 0.3, season: 1 }), "la saison change la trajectoire du soleil (face à l'équateur)"); }
   ok(sig3({ day: 0.3, clock: 1 }) !== sig3({ day: 0.3, clock: 2 }), "les astéroïdes dérivent avec l'horloge");
   ok(rc({ ...sc, sunHues: [[150, 255, 150]] }, 0.3, { day: 0.4 }).join() !== rc({ ...sc, sunHues: [] }, 0.3, { day: 0.4 }).join(), "soleil coloré : autre teinte");
   for (let i = 0; i < 40; i++) rc({ ...sc, seed: i * 31 + 5, suns: i % 3, cycle: ["steady", "frozen", "erratic"][i % 3] }, (i % 7) / 7, { day: (i % 11) / 11, season: ((i % 5) - 2) / 2, clock: i * 13.7 });
@@ -298,7 +298,7 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   ok(G.sceneOf(anP(["single_sun", "steady_cycle"], { ...W0, locked: true }, [{ entry: { id: "steady_cycle", category: "cycle" }, autoFilled: false }]), "P").cycle !== "frozen", "un cycle écrit passe avant la marée");
   const amp = (g) => { const S = G.sceneOf(anP(["single_sun"], { ...W0, g }), "Relief"); const m = G.build(S, 320, 192); return Math.max(...m.ridges.map((r) => Math.max(...r.xs) - Math.min(...r.xs))); };
   ok(amp(0.3) > amp(1) && amp(1) > amp(3), "relief : plus haut sur un monde léger, plus bas sur un monde lourd");
-  const clouds = (P) => { const S = G.sceneOf(anP(["single_sun"], { ...W0, P }), "Air"); const l = []; G.paint(fakeCtx(l), G.build(S, 320, 192), 0.3, { day: 0.35 }); return l.filter((x) => x.startsWith("ellipse")).length; };
+  const clouds = (P) => ["Air", "Air 2", "Air 3", "Air 4", "Air 5"].reduce((sum, nm) => { const S = G.sceneOf(anP(["single_sun"], { ...W0, P }), nm); const l = []; G.paint(fakeCtx(l), G.build(S, 320, 192), 0.3, { day: 0.35 }); return sum + l.filter((x) => x.startsWith("ellipse")).length; }, 0); /* plusieurs lieux : un seul peut n'avoir que des cirrus */
   ok(clouds(0.01) < clouds(1), "presque pas d'air : pas de nuages");
   for (const w of [{ ...W0, P: 0 }, { ...W0, P: 300, Ts: 700 }, { ...W0, light: 0.05 }, { ...W0, starTemps: [] }, { ...W0, blackSun: true, starTemps: [1500] }]) { const l = []; G.paint(fakeCtx(l), G.build(G.sceneOf(anP(["single_sun"], w), "Q"), 320, 192), 0.6); ok(l.length > 50, "physique extrême : rendu fini"); }
 }
@@ -351,7 +351,7 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
   const m0 = G.build(G.sceneOf(an(["single_sun", "water", "sand", "kelp", "coral", "fissure", "grove", "auroras"]), "Lagon"), 300, 176);
   const h1 = V.heading(m0, 1), h2 = V.heading(m0, 2);
   ok(V.heading(m0, 0) === m0 && V.heading(m0, 4) === m0 && V.heading(m0, 1) === h1, "direction 0 : la vue de face ; les autres gardées");
-  ok(h1.pal === m0.pal && h1.noSun && h1.sunFrom === m0 && JSON.stringify(h1.ridges[0].xs) !== JSON.stringify(m0.ridges[0].xs) && JSON.stringify(h1.ridges[0].xs) !== JSON.stringify(h2.ridges[0].xs), "une direction : le même ciel, un autre décor");
+  ok(h1.pal === m0.pal && (m0.S.view && m0.S.view.face ? !h1.noSun && h1.S.view.face !== m0.S.view.face : h1.noSun && h1.sunFrom === m0) && JSON.stringify(h1.ridges[0].xs) !== JSON.stringify(m0.ridges[0].xs) && JSON.stringify(h1.ridges[0].xs) !== JSON.stringify(h2.ridges[0].xs), "une direction : le même ciel (le soleil y suit sa course vue de ce côté), un autre décor");
   const k0 = G.skyState(m0, 0.3, { day: 0.3 }), k1 = G.skyState(h1, 0.3, { day: 0.3 }); ok(k0.d === k1.d && JSON.stringify(k0.top) === JSON.stringify(k1.top), "même heure, même lumière dans toutes les directions");
   const l = []; G.paint(fakeCtx(l), h1, 0.3, { day: 0.3 }); ok(l.length > 50, "une autre direction se peint");
   ok(V.hasUnder(m0) && !V.hasUnder(G.build(G.sceneOf(an(["single_sun", "stone"]), "Roc"), 300, 176)), "sous l'eau : seulement s'il y a de l'eau");
