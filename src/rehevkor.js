@@ -32,9 +32,9 @@ const VERSES = {
     "La terre se souvient d'une vie ; sur un monde né d'hier, elle ment.",
     "Le vivant tient par ses rôles, non par ses noms ; le rôle vide, un autre le tient un temps, et moins bien.",
     "L'Âge vit dans le temps : ce qui penche se creuse et se boit ; ce qui tient se répare à chaque aube.",
-    "Quand l'encre a séché, chaque mot déplacé blesse ; effacer n'est pas revenir.",
+    "Quand l'encre a séché, chaque mot déplacé blesse, et effacer n'est pas revenir ; mais le mot ajouté qui ne dément rien ne blesse pas : il décrit un peu plus le même monde.",
     "Ce que les mains ont fait ne porte rien et n'achète rien ; le monde l'accueille et ne lui doit rien.",
-    "Le nom que tu donnes est la graine de ce que tu n'écris pas. Deux Livres au même texte, sous deux noms, ouvrent deux mondes ; renommer, c'est écrire ailleurs.",
+    "Ta marque est la graine de ce que tu n'écris pas, et du lieu où tu arrives. Deux Livres au même texte, sous deux marques, ouvrent deux mondes ; renommer, c'est écrire ailleurs, à moins d'emporter la marque.",
     "Ce qui couvre un monde l'abrite du ciel, et le ciel s'y souvient moins ; mais la voûte ne tient que par ce qui la porte, et plus la salle est vaste, plus elle demande.",
     "Ce qui tient par deux attend le troisième ; mais ce que le monde a noué de lui-même n'attend personne : il tient, et rien d'autre ne le porte. Ôte l'un des deux, et tu verras ce qui le tenait.",
     "Le Livre décrit ; le signe veut. Ce qu'on ne sait pas écrire, on le porte : un morceau d'un monde qui est, posé dans un monde qui est, avec sa coupe. Ils ne créent rien, et sans le Livre ils ne peuvent rien ; mais ce qu'ils font, l'histoire le peint.",
@@ -55,9 +55,9 @@ const VERSES = {
     "The ground remembers a life; on a world born yesterday, it lies.",
     "Living things hold by their roles, not by their names; an empty role, another holds for a time, and less well.",
     "An Age lives in time: what leans digs itself in and drinks; what holds mends itself with each dawn.",
-    "Once the ink has dried, every word moved wounds; to erase is not to go back.",
+    "Once the ink has dried, every word moved wounds, and to erase is not to go back; but a word added that belies nothing wounds nothing: it describes a little more of the same world.",
     "What hands have made carries nothing and buys nothing; the world takes it in and owes it nothing.",
-    "The name you give is the seed of what you do not write. Two Books of the same text, under two names, open two worlds; to rename is to write elsewhere.",
+    "Your mark is the seed of what you do not write, and of the place where you arrive. Two Books of the same text, under two marks, open two worlds; to rename is to write elsewhere, unless you carry the mark.",
     "What covers a world shelters it from the sky, and the sky remembers it less; but the vault holds only by what carries it, and the wider the hall, the more it asks.",
     "What holds by two waits for a third; but what the world has knotted of itself waits for no one: it holds, and nothing else carries it. Take away one of the two, and you will see what held it.",
     "The Book describes; the sign wants. What one cannot write, one carries: a piece of a world that is, set in a world that is, with its cut. They create nothing, and without the Book they can do nothing; but what they do, the story paints.",
@@ -71,20 +71,20 @@ const BLANK = {
   en: (from, heard) => `The pages ${from} to fahsee are blank. The Rehevkor counts twenty-five; the Guild has read eighteen${heard ? `, and ${heard === 1 ? "one" : heard === 2 ? "two" : "three"} ${heard === 1 ? "has" : "have"} been heard` : ""}.`,
 };
 /** Le fahsee « Lien » : vingt-cinq vers, cinq strophes, le mot de lien d'une strophe à l'autre, Shorah ouvre et ferme. */
-const LIEN = {
+const LIEN = { /* 28 oct. : les deux fahsee retravaillés pour la clarté (5 | 5, ABABA, mots de lien, retour Shorah) */
   fr: [
-    ["Shorah, écrivain. Ce qu'on cherche est là :", "non le haut : le creux qui prend ce qu'on pousse", "et le rend sans main à sa place, en bas.", "Ce qui tient par deux attend la secousse ;", "le creux garde tout quand le haut s'en va."],
-    ["Va, dis ce qui est ; le Livre décrit,", "le reste est écrit par un Autre ; il tient ;", "le nom choisit tout ce qui n'est pas dit ;", "regarde longtemps : le vrai se retient,", "il ne vient qu'à qui revient, et relit."],
-    ["Relis le ciel : lui porte tout le reste ;", "ce qu'il faute en haut descend dans la pierre ;", "le haut permet tout, le bas seul atteste ;", "sous un toit de roc, le ciel est derrière ;", "la guerre des mots, l'excès : tout te leste."],
-    ["Leste, le vivant tient par ses offices ;", "ce qui suit son cours n'est jamais en faute ;", "le sol se souvient, ou ment : c'est l'indice ;", "ce qui est seul meurt, et rien ne l'en ôte ;", "le rôle vacant vit par un novice."],
-    ["Novice, l'instable, ouvert, se boit là ;", "chaque aube, le droit sans aide guérit ;", "l'encre sèche mord ce qu'on rajouta ;", "effacer n'y fait rien ; et l'œuvre fuit,", "hors de toute loi. Va, et vois. Shorah."],
+    ["Shorah, écrivain. Ce qu'on cherche est là :", "non le haut : le creux qui prend ce qu'on pousse", "et le rend tout seul à sa place, en bas.", "Ce qui tient par deux attend la secousse ;", "le creux garde tout quand le haut s'en va."],
+    ["Va, dis ce qui est ; le Livre décrit,", "le reste est écrit par un Autre, et tient ;", "la marque choisit ce qui n'est pas dit ;", "regarde longtemps : le vrai se retient,", "il attend celui qui revient, relit."],
+    ["Relis le ciel, lui qui porte le reste ;", "la faute du ciel tombe sur la terre ;", "le haut permet tout ; le bas le conteste ;", "sous un toit de roc, le ciel est de pierre ;", "la guerre des mots, l'excès : tout te leste."],
+    ["Lesté, le vivant tient par ses offices ;", "ce qui suit son cours n'est jamais en faute ;", "le sol se souvient, ou ment : c'est l'indice ;", "la place vidée appelle un autre hôte ;", "il la tient un temps, et mal : en novice."],
+    ["Novice, qui ploie un jour cédera ;", "chaque aube, qui tient se refait, guérit ;", "l'encre sèche mord ce qu'on déplaça ;", "on n'efface rien ; et ce qu'on bâtit", "ne porte aucun ciel. Va, et vois. Shorah."],
   ],
   en: [
-    ["Shorah, writer. What you seek is here:", "not the height: the hollow that takes what is pushed", "and gives it back, unhanded, to its place below.", "What holds by two is waiting for the shake;", "the hollow keeps all when the height is gone."],
-    ["Gone to say what is; the Book describes,", "the rest is written by Another; it holds;", "the name decides all that is left unsaid;", "look long: the true keeps itself back,", "it comes only to one who comes back, and rereads."],
-    ["Reread the sky: it carries all the rest;", "what fails up there comes down into the stone;", "the height permits all, the ground alone attests;", "under a roof of rock, the sky stays behind;", "the war of words, excess: all of it weighs you down."],
-    ["Weighed down, the living holds by its offices;", "what follows its course is never at fault;", "the ground remembers, or lies: that is the clue;", "what stands alone dies, and nothing spares it;", "the vacant role lives on through a novice."],
-    ["Novice, the unsteady, left open, drinks itself there;", "each dawn, the upright heals with no one's help;", "dry ink bites whatever was added;", "erasing does nothing; and the work slips away,", "outside every law. Go, and see. Shorah."],
+    ["Shorah, writer. Seek not height: look below;", "the hollow takes in whatever you push,", "and sets it back home, alone, sure and slow;", "what holds by two waits for the shove, the crush;", "the hollow keeps all when the heights let go."],
+    ["Go, say what is here; the Book never leads;", "the rest, Another has written; it holds;", "your mark chooses what no written line heeds;", "look long: what is true keeps back, and withholds;", "it waits for the one who comes back, rereads."],
+    ["Reread the sky: it carries all the rest;", "the sky's fault comes down and bides in the stone;", "the height permits all; the low ground contests;", "under a rock roof, the weight is your own;", "the words' war, excess: by these you are pressed."],
+    ["Pressed, the living holds by what it must do;", "what keeps its own course is never to blame;", "the ground remembers, or lies: there's the clue;", "the place left empty, another will claim;", "he holds it a while, and badly: as new."],
+    ["New, what leans sinks in, and drinks down its flaw;", "each dawn, what stands true mends itself again;", "dry ink bites the word you move or withdraw;", "to erase mends none; what you build, in vain,", "holds up no sky. Go now, and see. Shorah."],
   ],
 };
 

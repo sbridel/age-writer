@@ -6,6 +6,29 @@
  */
 const NEWS = [
   {
+    v: "2.3.1",
+    fr: {
+      title: "Le livre des lois, relu",
+      letter: "Un copiste de la Guilde a relu le Rehevkor de près. Le poème qui ouvre le livre se lit mieux, et deux versets disent enfin les lois telles qu'on les connaît aujourd'hui.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**Le fahsee qui ouvre le livre des lois** est retravaillé pour la clarté : chaque vers dit plus nettement la loi qu'il désigne.",
+        "**En anglais**, le fahsee rime à son tour, de la même forme : cinq strophes de cinq vers coupés au milieu.",
+        "**Deux versets suivent les lois** : le Changement (un mot ajouté qui ne contredit rien ne blesse pas) et le Nom (la marque, graine de ce qu'on n'écrit pas et du lieu où l'on arrive).",
+      ],
+    },
+    en: {
+      title: "The book of laws, reread",
+      letter: "A Guild copyist has reread the Rehevkor closely. The poem that opens the book reads better, and two verses at last tell the laws as they are known today.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**The fahsee that opens the book of laws** is reworked for clarity: each line says more plainly the law it points to.",
+        "**In English**, the fahsee now rhymes as well, in the same form: five verses of five lines cut in the middle.",
+        "**Two verses follow the laws**: Change (a word added that contradicts nothing does no harm) and The Name (the mark, seed of what you do not write and of the place where you arrive).",
+      ],
+    },
+  },
+  {
     v: "2.3.0",
     fr: {
       title: "Le jardin et le vent",

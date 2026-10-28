@@ -699,6 +699,10 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.3.1 — le livre des lois, relu (28 oct. 2026)
+
+Demande de l'auteur (« qu'à qui ? », puis « retravaille les poèmes ») : `src/rehevkor.js`. Le fahsee *Lien* retravaillé vers à vers pour la clarté (douze vers en français ; 5 | 5, ABABA, mots de lien Shorah → va → relit/Relis → leste/Lesté → novice → Shorah) ; l'anglais devient un fahsee rimé (go → Go, rereads → Reread, pressed → Pressed, new → New). Versets 15 (heebor, le Changement : l'ajout qui ne dément rien ne blesse pas) et 17 (heegabree, le Nom : la marque, graine et lieu ; renommer en emportant la marque) suivent les lois. Texte et raisons : `claude/POEMES-rehevkor.md` (projet). Rien ne change au jeu.
+
 ## 2.3.0 — le jardin et le vent (28 oct. 2026)
 
 Note : `claude/DESIGN-meteo-et-mesure.md` (projet) ; les Âges d'Opus (Vespertine, Ethanoic, Schism, Noumena) ont servi de banc d'essai.

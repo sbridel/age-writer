@@ -2,6 +2,12 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.3.1 — The book of laws, reread (2026-10-28)
+
+### Changed
+- **The poem that opens the book of laws** is reworked for clarity, in French and English; the English one now rhymes like the French (same form: five verses of five lines, cut in the middle).
+- **Two verses follow the laws as they now stand**: Change (a word added that contradicts nothing does no harm) and The Name (the mark is the seed of what you do not write, and of the place where you arrive).
+
 ## 2.3.0 — The garden and the wind (2026-10-28)
 
 ### Added
