@@ -1070,9 +1070,11 @@ module.exports = function build(Base, core, AGEX) {
     /** Les nouveautés (src/whatsnew.js) : au premier lancement après une mise à jour, une fenêtre, et un pli de la Guilde sur la table de la cabane. Rien à l'installation. */
     newsOnStart() {
       const WN = require("./whatsnew"), st = this.ext.state, cur = this.manifest && this.manifest.version, r = WN.onStart(st.newsSeen, cur, this.hadData); /* `newsSeen` (2.2.1) : la 2.2.0 notait `seenVersion` dès le premier lancement et ne montrait rien à qui mettait à jour */
-      if (r.seen !== st.newsSeen) { st.newsSeen = r.seen; this.saveExt(); }
+      if (st.newsLetter === undefined) st.newsLetter = !!st.newsSeen; /* 2.2.2 : le pli ne partait qu'avec la fenêtre ; qui l'a déjà vue en 2.2.1 le retrouve sur la table, une fois */
+      if (r.seen !== st.newsSeen) st.newsSeen = r.seen;
+      if (r.show) { st.newsFrom = r.from; st.newsUnread = true; st.newsLetter = true; }
+      this.saveExt(); this.refreshLive();
       if (!r.show) return;
-      st.newsFrom = r.from; st.newsUnread = true; this.saveExt(); this.refreshLive();
       if (this.ext.whatsNew !== false) this.showWhatsNew(false);
     }
     /** La fenêtre des nouveautés : la lettre de la Guilde, puis la liste. `all` : depuis la version précédente si rien n'est en attente. */

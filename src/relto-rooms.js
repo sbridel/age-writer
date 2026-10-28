@@ -188,7 +188,7 @@ function drawCabin(r, ctx, sc, sky, t) {
     r.hot.push({ x: bx - 3, y: by - 6, w: 36, h: 14, tip: "Book of pages — click to open", go: "book" });
   }
   if (r.opts.newsUnread && r.opts.newsUnread()) { /* un pli de la Guilde, après une mise à jour : papier crème, cachet bleu-vert, posé en travers du livre des pages (dessiné après lui : par-dessus, et cliqué d'abord) ; un clic l'ouvre (src/whatsnew.js) */
-    const gx = tx + 62, gy = ty - 9, pulse = 0.5 + 0.5 * Math.sin(t * 1.6);
+    const gx = tx + 62, gy = ty - (moved ? 4 : 9), /* sur le livre des pages, ou sur la table quand l'atelier l'a pris */ pulse = 0.5 + 0.5 * Math.sin(t * 1.6);
     ctx.save(); ctx.translate(gx + 9, gy); ctx.rotate(-0.16); ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(-8, 3, 18, 2); ctx.fillStyle = c("#efe5cb"); ctx.fillRect(-9, -3, 18, 7); ctx.fillStyle = c("#ddd0ad"); ctx.fillRect(-9, 1, 18, 1.1);
     ctx.strokeStyle = rgba(110, 90, 60, 0.45); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(-9, -3); ctx.lineTo(0, 1); ctx.lineTo(9, -3); ctx.stroke();
     ctx.fillStyle = c("#2f6f73"); ctx.beginPath(); ctx.arc(0, 1, 2.3, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(150, 230, 225, 0.12 + 0.16 * pulse); ctx.beginPath(); ctx.arc(0, 1, 5.5, 0, 6.283); ctx.fill(); ctx.restore();
