@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.2.2 — The Guild letter stays (2026-10-28)
+
+### Fixed
+- **The Guild letter stays on the cabin table until you pick it up**, in the story Relto and the sandbox alike (and in the Castle and the Glasshouse). Closing the What's new window used to take it away with it. Those who already closed the window in 2.2.1 find the letter waiting.
+
 ## 2.2.1 — Fixes (2026-10-28)
 
 ### Fixed

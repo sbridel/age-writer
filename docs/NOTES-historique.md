@@ -699,6 +699,10 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.2.2 — le pli reste (28 oct. 2026)
+
+- **Le pli de la Guilde** (`src/entry.js`, `src/ui-relto.js`, `src/relto-rooms.js`) : il dépendait de `newsUnread`, que la fermeture de la fenêtre effaçait ; il a maintenant son drapeau `newsLetter`, effacé seulement quand on le prend sur la table (histoire et bac à sable, Château et Verrière). Qui a fermé la fenêtre en 2.2.1 le retrouve une fois. Posé sur la table nue quand l'atelier a pris le livre des pages. Planches : `test/visual/entry-relto.js` (atelier ouvert, Château, Verrière).
+
 ## 2.2.1 — corrections (28 oct. 2026)
 
 - **Les anneaux après l'accord** (`src/entry.js`, `carryExpand`) : relu de l'intérieur d'une boucle, l'autre Âge gardait sa ligne `carry:` vers nous en tache d'encre (−10) ; il tombait sous 75 et l'accord (fin du 17) le refusait (« ils ne portent plus depuis un monde qui tombe »). La ligne refusée pour cycle (vers un autre que soi) s'efface maintenant. Test : `integration.js` (l'anneau tient après l'accord ; il échouait avant la correction).
