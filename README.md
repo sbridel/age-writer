@@ -41,6 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); in short:
 
+- **2.1, more worlds.** Four soils that follow the genesis (clay, chalk, basalt, granite), crystal trees and flowers, and a linking window that shows many more worlds: a face for each soil, rivers, relief, climate, trees, young worlds with their first giants, and what the physics refuses drawn poorly.
 - **2.0, seasons and the end of the story.** A third book that closes the story (left for you to find), seasons from a tilted axis, a cellar under the machine, matters with a genesis, a tuning fork that keeps a world, stained-glass light on the floor, and one binding for every book.
 - **1.50, beneath the island.** A hallway in the house, a deeper cave (left for you to find), a second book for the story, pellet quality that comes from the ingredients, and the machine's values in D'ni numerals (1.50.1: touch-ups; 1.50.2: the guide).
 - **1.49, the machine and the cave.** Ages give ash, loam, silt or peat; a machine in a lean-to cooks them into pellets (recipes to find), and a cave opens under the island. The Glasshouse becomes opaque stained glass.

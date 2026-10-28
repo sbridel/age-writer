@@ -2,7 +2,7 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## Unreleased — More worlds
+## 2.1.0 — More worlds (2026-10-28)
 
 ### Added
 - **Four soils that follow the genesis**: `clay` (with lava, fired clay), `chalk` (with acid, karst; it wants water and an old enough world), `basalt` (with deep cold, basalt columns), `granite` (an old world with moving plates). Basalt and clay feed the harvest with silt of the Age's kind; granite gives quartz silt. Earth and chalk are two new soil families (and two new places to carry).

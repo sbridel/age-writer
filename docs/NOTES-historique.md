@@ -699,6 +699,15 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.1.0 — plus de mondes (28 oct. 2026)
+
+Note : `claude/DESIGN-nouveaux-sols.md`, `claude/MESURE-diversite-toutes-pistes.md`, `claude/AUDIT-coherence-fenetre.md` (projet).
+- **Quatre sols qui suivent la genèse** (`src/engine/data/matter.js`, `src/physics/blocks.js`, `src/life.js`) : `clay` (+ lave → `fired_clay`), `chalk` (eau et monde assez vieux ; + acide → `karst`), `basalt` (volcanisme ; + grand froid → `basalt_columns`), `granite` (plaques et monde vieux). Familles de sol `earth` et `chalk` (`src/dosage.js`), donc deux lieux de plus à porter. Récolte (`src/harvest.js`) : basalte et argile donnent un limon de la sorte de l'Âge, granite un limon de quartz. La tourbe brûle en cendres de foyer (`wildfire`).
+- **Arbres et fleurs de cristal** : grand arbre ou fleurs + cristal, sur un monde assez vieux (loi 12), teinte tirée de la graine.
+- **La fenêtre générative** (`src/genscene.js`) : un visage par famille de sol, l'eau en rivière sauf si elle domine strictement (loi 10), relief du milieu et crêtes selon le sol, flore basse, nuages et chimie de l'eau selon le climat, styles de ruines et nouveaux détails (cairn, dolmen, obélisque, cromlech, tour), les arbres du Relto dans la fenêtre (avec ginkgo, arbres-champignons, arbre à tige, arbres de cristal), Prototaxites sur les mondes trop jeunes, un dessin pour chaque bloc visible et un signe pour l'invisible. Mesure : les fenêtres avec une quasi-jumelle passent de 98 % à 34 %.
+- **Cohérence (lois 3, 4, 12)** : un bloc écrit que la physique refuse est mal tiré (pâle selon la gravité ; brouteurs faméliques, squelette quand le refus est fort ; arbre trop tôt gris et à demi formé). La fenêtre n'invente plus de contradiction : pas de verdure sans lumière, pas de rivière sur la lave, pas de glaçons dans l'eau chaude, des arbres dans leur climat, les bêtes de terre seulement sur la terre, les cimes des îlots sur leur profil.
+- Guide FR/EN : la fenêtre, les nouveaux sols et leurs réactions, l'origine du limon.
+
 ## 2.0.0 — les saisons, et la fin de l'histoire (26 oct. 2026)
 
 Note : `claude/DESIGN-art-bahro.md`, `claude/TEST-paquet-2.0.md` (projet). ⚠ Spoilers : rien de plus précis dans README, CHANGELOG ni guide.
