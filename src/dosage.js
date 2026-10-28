@@ -35,9 +35,11 @@ const BIOMES = {
   ice: ["deep_cold", "snow", "frozen_world"],
   water: ["water", "ocean_world", "kelp", "coral", "subsurface_ocean", "bitter_water", "submarine_fissure", "river", "delta", "lake", "marsh"],
   fire: ["lava", "lava_world", "molten_core", "geysers", "ash"],
-  stone: ["stone", "iron", "crystal", "strange_stone", "hollowed_ground", "mountains", "canyon", "cavern_world"],
+  stone: ["stone", "iron", "crystal", "strange_stone", "hollowed_ground", "mountains", "canyon", "cavern_world", "basalt", "basalt_columns", "granite"],
   forest: ["great_tree", "vine", "fern", "grass", "flowers", "garden", "jungle_world"],
   salt: ["salt"],
+  earth: ["earth", "humus", "peat", "silt", "clay", "fired_clay"],
+  chalk: ["chalk", "karst"],
 };
 /** Nombre de biomes d'un Âge : les familles distinctes parmi ce qui est écrit (au moins 1). */
 function biomeCount(written) {

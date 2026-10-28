@@ -53,6 +53,7 @@ const REACTIONS = [
   { a: "lichen", b: "soil_bacteria", result: "earth", type: "growing" },
   { a: "earth", b: "mycelium", result: "humus", type: "growing" },
   { a: "moss", b: "marsh", result: "peat", type: "growing" },
+  { a: "peat", b: "wildfire", result: "ash", type: "decaying" }, /* la tourbe qui brûle donne une cendre de foyer */
   { a: "bee", b: "flowers", result: "humming_blooms", type: "growing" },
 ];
 /** Les variantes rares du champignon : lumineux avec `strange_stone` (comme toutes les variantes du moteur), chantant avec un cristal. */
@@ -82,6 +83,7 @@ const BIG_TREES = ["great_tree", "grove", "ironwood"];
 const SOIL = {
   stone: { sol: 3, fer: 0, hum: 1 }, sand: { sol: 1, fer: 1, hum: 0 }, salt: { sol: 2, fer: 0, hum: 0 }, ash: { sol: 1, fer: 3, hum: 1 }, silt: { sol: 2, fer: 3, hum: 3 },
   earth: { sol: 2, fer: 2, hum: 2 }, humus: { sol: 3, fer: 3, hum: 2 }, peat: { sol: 1, fer: 2, hum: 3 }, iron: { sol: 3, fer: 0, hum: 1 }, crystal: { sol: 3, fer: 0, hum: 0 },
+  clay: { sol: 2, fer: 2, hum: 3 }, chalk: { sol: 2, fer: 1, hum: 1 }, basalt: { sol: 3, fer: 1, hum: 0 }, granite: { sol: 3, fer: 0, hum: 1 },
 };
 // ---- l'énergie : plusieurs sources ----------------------------------------------------------------------------------------
 const VAULT = require("./vault");

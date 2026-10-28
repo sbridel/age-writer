@@ -29,6 +29,7 @@ function givesOf(written, present, made) {
   const w = new Set([...(written || []), ...(made || [])]), p = present || w;
   if (!LF.ROLES.producer.some((id) => p.has(id))) return [];
   if (w.has("water") && ROCK.some((id) => w.has(id))) w.add("silt"); /* l'eau qui broie la roche écrite : un limon de quartz (choix de l'auteur, 26 oct.) */
+  if (w.has("clay")) w.add("silt"); /* l'argile donne un limon, de la sorte de l'Âge (genèse) */
   return INGREDIENTS.filter((id) => w.has(id));
 }
 /*
@@ -37,9 +38,9 @@ function givesOf(written, present, made) {
  *   le squelette du vivant brûlé) sinon ; sans volcan ni feu, elle n'a pas de genèse et reste pauvre ;
  * - le limon est **volcanique** (argiles, fertile) dans un Âge volcanique ; **de quartz** (l'eau qui broie la roche) sinon.
  */
-const VOLCANIC = ["lava", "lava_world", "obsidian", "crying_obsidian", "whispering_obsidian", "ash_cloud", "ashen_sky", "molten_core", "glass", "singing_glass"];
+const VOLCANIC = ["lava", "lava_world", "obsidian", "crying_obsidian", "whispering_obsidian", "ash_cloud", "ashen_sky", "molten_core", "glass", "singing_glass", "basalt", "basalt_columns"];
 const BURNT = ["wildfire", "charred_grove", "scorched_surface", "cinderbloom", "scorched_moths"];
-const ROCK = ["stone", "sand", "crystal"];
+const ROCK = ["stone", "sand", "crystal", "granite", "basalt"];
 function genesisOf(present) {
   const p = present instanceof Set ? present : new Set(present || []), has = (l) => l.some((id) => p.has(id)), volcanic = has(VOLCANIC);
   return { ash: volcanic ? "volcanic" : "hearth", ashBorn: volcanic || has(BURNT), silt: volcanic ? "volcanic" : "quartz" };

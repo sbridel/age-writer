@@ -81,7 +81,7 @@ function randomAge() {
 /** Ce que l'œil voit dans la fenêtre, à deux grains : la famille (ce qu'un joueur nommerait) et le détail (ce qu'on distingue côte à côte). */
 const WXV = ["storm", "rain", "snow", "fog", "dust", "ash", "hail", "drizzle", "tornado", "rainbow", "crystalRain", "acidRain", "ashRain", "steam", "petals", "glaze", "lightning", "wind"];
 function looks(S) {
-  const ground = S.world || (S.lava ? "lava" : S.ice ? "ice" : S.sand ? "sand" : S.water ? "water" : "land"), relief = S.terrain || "flat";
+  const ground = S.world || (S.lava ? "lava" : S.ice ? "ice" : S.sand ? "sand" : S.waterGround ? "water" : S.rock || S.soil || "land"), relief = S.terrain || "flat";
   const veg = S.trees >= 5 ? "jungle" : S.trees ? "trees" : S.grass || S.flowers ? "meadow" : S.glow ? "glow" : "bare";
   const sun = S.suns === 0 ? "nosun" : S.suns + "sun" + ((S.sunHues || []).length ? "-" + S.sunHues.map((h) => (Array.isArray(h) ? h.join("") : String(h))).join("") : "") + (S.blackDisc ? "-black" : "");
   const orn = [S.moon || (S.moons > 0) ? "moon" : "", S.rings ? "rings" : "", S.belt || "", S.auroras ? "aurora" : "", S.eclipses ? "eclipse" : "", S.veil ? "veil" : "", (S.remnants || []).length ? "remnant" : "", S.comet ? "comet" : ""].filter(Boolean);

@@ -8,7 +8,7 @@
  */
 const { BIOMES } = require("./dosage");
 
-const PLACES = Object.keys(BIOMES); /* desert, ice, water, fire, stone, forest, salt */
+const PLACES = Object.keys(BIOMES); /* desert, ice, water, fire, stone, forest, salt, earth, chalk */
 const WHATS = ["sky", ...PLACES];
 const CARRY_RE = /^\s*carry\s*:\s*(\S+)\s+from\s+(.+?)\s*$/i;
 const AS_SKY_RE = /\s+as\s+sky$/i;

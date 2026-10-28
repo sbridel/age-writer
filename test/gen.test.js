@@ -84,11 +84,11 @@ for (const w of [[], ["a"], ["vast", "immense", "giant", "huge"], ["tiny", "tiny
 
 // reflets, premier plan, détail habité, brume
 {
-  const W = 320, H = 192, mk = (o, seed = 5) => G.build({ ...G.sceneOf(an(["single_sun"]), "R"), seed, ...o }, W, H);
+  const W = 320, H = 192, mk = (o, seed = 5) => G.build({ ...G.sceneOf(an(["single_sun"]), "R"), seed, ...(o.water ? { waterGround: true } : {}), ...o }, W, H); /* `water: true` : l'eau qui fait le sol (une mer), pas une rivière */
   const rec = (m, t = 0.3) => { const l = []; G.paint(fakeCtx(l), m, t); return l; };
   const dr = (l) => l.filter((x) => x.startsWith("drawImage")).length;
   const rows = Math.floor(H - H * 0.7);
-  ok(dr(rec(mk({ water: true }))) >= rows - 2, "reflets : une bande par ligne d'eau");
+  ok(dr(rec(mk({ water: true, waterGround: true }))) >= rows - 2, "reflets : une bande par ligne d'eau (l'eau qui fait le sol)");
   ok(dr(rec(mk({ water: false, ice: false }))) === 0, "pas d'eau, pas de reflet");
   ok(dr(rec(mk({ ice: true }))) >= rows - 2, "la glace reflète aussi (moins)");
   // reflets : l'opacité diminue avec la profondeur
@@ -103,7 +103,7 @@ for (const w of [[], ["a"], ["vast", "immense", "giant", "huge"], ["tiny", "tiny
   ok(!kinds({ ice: false }).has("icicles") && kinds({ ice: true }).has("icicles"), "glaçons seulement s'il gèle");
   const shapes = new Set(); let nb = 0;
   for (let i = 0; i < 300 && nb < 25; i++) { const m = mk({ trees: 3 }, i * 15485863 + 11); if (m.fg.kind !== "branches") continue; nb++; const sg = m.fg.branch.segs; ok(sg.length >= 4 && sg.every((x) => [x.x, x.y, x.cx, x.cy, x.x2, x.y2, x.w].every(Number.isFinite)), "branche : segments finis"); shapes.add(sg.length + ":" + Math.round(sg[sg.length - 1].x2)); }
-  ok(nb >= 10 && shapes.size >= nb - 2, `branches : une forme par Âge (${shapes.size}/${nb})`); ok(dets.size === 5, "cinq détails : " + [...dets]);
+  ok(nb >= 10 && shapes.size >= nb - 2, `branches : une forme par Âge (${shapes.size}/${nb})`); ok(dets.size === 10, "dix détails : " + [...dets]);
   // déterministe
   ok(JSON.stringify(mk({}, 9).det) === JSON.stringify(mk({}, 9).det) && JSON.stringify(mk({}, 9).fg) === JSON.stringify(mk({}, 9).fg), "premier plan et détail déterministes");
   // le détail est posé loin des ruines et des arbres
@@ -113,11 +113,11 @@ for (const w of [[], ["a"], ["vast", "immense", "giant", "huge"], ["tiny", "tiny
   const byKind = {}; // un Âge pour chaque premier plan (graines au hasard, contenus qui les permettent tous)
   for (let i = 0; i < 600 && Object.keys(byKind).length < 9; i++) { const m = mk(i % 2 ? { water: true, trees: 3, ruins: ["door"], fog: true } : { ice: true, ruins: ["door"] }, i * 7 + 1); byKind[m.fg.kind] = byKind[m.fg.kind] || i; }
   ok(Object.keys(byKind).length === 9, "neuf premiers plans possibles : " + Object.keys(byKind));
-  for (const kind of ["pylon", "ring", "stair", "dish", "piers"]) for (const [fk, i] of Object.entries(byKind)) for (const side of [-1, 1]) {
+  for (const kind of ["pylon", "ring", "stair", "dish", "piers", "cairn", "dolmen", "obelisk", "cromlech", "tower"]) for (const [fk, i] of Object.entries(byKind)) for (const side of [-1, 1]) {
     const m = mk(i % 2 ? { water: true, trees: 3, ruins: ["door"], fog: true } : { ice: true, ruins: ["door"] }, i * 7 + 1); m.det.kind = kind; m.fg.side = side;
     for (const t of [0, 0.4, 0.8]) ok(rec(m, t).length > 100, "dessine " + kind + "/" + fk);
   }
-  { const m = mk({}); m.det.kind = "ring"; ok(rec(m, 0.5).some((x) => x.startsWith("clip")), "l'anneau est coupé à l'horizon (à demi enfoui)"); m.det.kind = "pylon"; ok(!rec(m, 0.5).some((x) => x.startsWith("clip")), "pas de découpe pour un pylône"); }
+  { const m = mk({}), clips = (k) => { m.det.kind = k; return rec(m, 0.5).filter((x) => x.startsWith("clip")).length; }; ok(clips("ring") === clips("pylon") + 1, "l'anneau est coupé à l'horizon (à demi enfoui), pas le pylône"); } /* le relief et les sols ont leurs propres découpes : on compte celle du détail */
 }
 
 // ciel étendu : lignes, horloge, scène, peinture
@@ -267,12 +267,14 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
 // rivage (1.16.1) : eau + terre → une rive, dont la nature suit ce qui est écrit ; les mondes-types gardent leur décor
 {
   const sh = (ids) => G.sceneOf(an(ids), "Rive").shore;
-  ok(sh(["water", "sand"]) === "sand" && sh(["water", "lava"]) === "lava" && sh(["water", "ice"]) === "ice" && sh(["water", "stone"]) === "rock" && sh(["water", "door"]) === "rock" && sh(["water", "great_tree"]) === "grass", "nature de la rive");
+  const W2 = ["water", "lake"]; /* l'eau fait le sol seulement si elle domine (loi 10) */
+  ok(sh([...W2, "sand"]) === "sand" && sh([...W2, "lava"]) === "lava" && sh([...W2, "ice"]) === "ice" && sh([...W2, "stone"]) === "rock" && sh(["water", "door"]) === "rock" && sh([...W2, "great_tree"]) === "grass", "nature de la rive");
+  { const S2 = G.sceneOf(an(["water", "sand"]), "Rive"); ok(S2.shore === null && S2.river === true && S2.waterGround === false, "à égalité, l'eau n'est qu'une rivière sur l'autre sol"); }
   ok(sh(["water"]) === null && sh(["sand"]) === null, "eau seule ou terre seule : pas de rivage");
   ok(sh(["ocean_world", "water", "stone"]) === null && sh(["frozen_world", "water", "stone"]) === null, "monde-océan, monde gelé : pas de rivage");
   const modes = new Set(), kinds = ["sand", "lava", "ice", "stone", "great_tree"];
   for (let i = 0; i < 90; i++) {
-    const S = G.sceneOf(an(["single_sun", "water", kinds[i % 5], i % 7 === 0 ? "fissure" : "fog"]), "Rive" + i), m = G.build(S, 320, 192);
+    const S = G.sceneOf(an(["single_sun", "water", "lake", kinds[i % 5], i % 7 === 0 ? "fissure" : "fog"]), "Rive" + i), m = G.build(S, 320, 192);
     ok(m.shore && m.shore.line.length > 10 && m.shore.land.length > 3 && m.shore.wet.length > 3, "rive : ligne et polygones");
     ok(m.shore.line.every(([x, y]) => Number.isFinite(x) && y >= m.hz - 0.01 && y <= 192.01), "ligne d'eau sous l'horizon");
     modes.add(m.shore.mode);

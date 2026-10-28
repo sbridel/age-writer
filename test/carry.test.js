@@ -17,7 +17,7 @@ ok(C.parseLine("  Carry:  forest  from  Glass Marsh  ").from === "Glass Marsh" &
 ok(C.parseLine("carry: moor from Ash Tower as sky").contra && C.parseLine("carry: moor from Ash Tower as sky").from === "Ash Tower" && !C.parseLine("carry: moor from X").known, "à contre-sens (étape C), et un mot inconnu");
 ok(!C.parseLine("water") && !C.parseLine("carry sky from X") && C.isCarryLine("carry: sky from X"), "le reste n'est pas une ligne de portage");
 ok(C.parseAll("water\ncarry: sky from A\nfern\ncarry: water from B").map((x) => x.index).join() === "1,3", "toutes les lignes, avec leur rang");
-ok(C.WHATS.join() === "sky,desert,ice,water,fire,stone,forest,salt", "un ciel, ou l'une des sept familles de sol");
+ok(C.WHATS.join() === "sky,desert,ice,water,fire,stone,forest,salt,earth,chalk", "un ciel, ou l'une des neuf familles de sol");
 
 /* le fragment */
 const marsh = A(["single_sun", "steady_cycle", "water", "marsh", "grass", "fern", "stone"], "Glass Marsh");

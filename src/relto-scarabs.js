@@ -454,4 +454,4 @@ function vitrine(ctx, c, x, y, w, h, t) {
   ctx.strokeStyle = c("#c44a3a"); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(sx - 4, sy + 4); ctx.quadraticCurveTo(sx - 1, sy - 2, sx + 1, sy + 3); ctx.quadraticCurveTo(sx + 3, sy + 7, sx + 4, sy); ctx.stroke(); /* le serpent */
 }
 
-module.exports = { beetle, pathOf, drawSerre, vitrine };
+module.exports = { beetle, pathOf, drawSerre, vitrine, crystalFlower };

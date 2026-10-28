@@ -61,6 +61,14 @@ const GEOLOGY_BLOCKS = [
     axis: "geological",
     writable: !0,
   },
+  /* quatre sols neufs */
+  { id: "clay", descriptors: ["smooth", "ochre", "patient"], weight: 0.02, axis: "geological", writable: !0 },
+  { id: "chalk", descriptors: ["pale", "soft", "layered"], weight: 0.02, axis: "geological", writable: !0 },
+  { id: "basalt", descriptors: ["dark", "cold", "upright"], weight: 0.03, axis: "geological", writable: !0 },
+  { id: "granite", descriptors: ["rosy", "grained", "ancient"], weight: 0.03, axis: "geological", writable: !0 },
+  { id: "fired_clay", descriptors: ["red", "cracked", "baked"], weight: 0, axis: "geological", writable: !1 },
+  { id: "karst", descriptors: ["white", "hollowed", "quiet"], weight: 0, axis: "geological", writable: !1 },
+  { id: "basalt_columns", descriptors: ["black", "hexagonal", "ordered"], weight: 0, axis: "geological", writable: !1 },
   { id: "obsidian", descriptors: ["black", "glassy", "sharp"], weight: 0, axis: "geological", writable: !1 },
   { id: "ice", descriptors: ["pale", "blue", "brittle"], weight: 0, axis: "geological", writable: !1 },
   { id: "glass", descriptors: ["smooth", "clear", "ringing"], weight: 0, axis: "geological", writable: !1 },
@@ -123,6 +131,9 @@ const GEOLOGY_REACTIONS = [
   { a: "water", b: "ash", result: "silt", type: "soothing" },
   { a: "ash", b: "pressure", result: "diamond", type: "crystallizing" },
   { a: "crystal", b: "strange_stone", result: "humming_shard", type: "transmuting" },
+  { a: "clay", b: "lava", result: "fired_clay", type: "crystallizing" },
+  { a: "chalk", b: "acid", result: "karst", type: "soothing" },
+  { a: "basalt", b: "deep_cold", result: "basalt_columns", type: "crystallizing" },
   {
     a: "salt",
     b: "obsidian",
@@ -178,6 +189,8 @@ const FLORA_BLOCKS = [
     writable: !1,
   },
   { id: "grove", descriptors: ["deep", "green", "sheltering"], weight: 0, axis: FLORA_AXIS, writable: !1 },
+  { id: "crystal_flower", descriptors: ["faceted", "glowing", "still"], weight: 0, axis: FLORA_AXIS, writable: !1, presence: "flowers of faceted crystal open in the grass, and glow faintly as if breathing" },
+  { id: "crystal_tree", descriptors: ["clear", "branching", "humming"], weight: 0, axis: FLORA_AXIS, writable: !1, presence: "trees of clear crystal branch toward the light, and hum when the wind passes through them" },
   {
     id: "singing_lichen",
     descriptors: ["grey", "ringing", "strange"],
@@ -232,6 +245,8 @@ const FLORA_REACTIONS = [
   { a: "fern", b: "salt", result: "withered_fern", type: "decaying" },
   { a: "great_tree", b: "lava", result: "charred_grove", type: "violent" },
   { a: "great_tree", b: "water", result: "grove", type: "growing" },
+  { a: "great_tree", b: "crystal", result: "crystal_tree", type: "transmuting" },
+  { a: "flowers", b: "crystal", result: "crystal_flower", type: "transmuting" }, /* les fleurs gagnées par le cristal, comme au tableau de l'atelier */ /* le grand arbre gagné par le cristal */
 ];
 
 const FLORA_VARIANTS = { lichen: "singing_lichen", glowvine: "wrong_glowvine" };

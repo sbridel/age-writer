@@ -19,7 +19,7 @@ const FR = {
   sudden: "soudain", swaying: "ondoyant", tall: "haut", thick: "épais", thin: "ténu", tireless: "infatigable", translucent: "translucide",
   trembling: "tremblant", turning: "tournant", unread: "non lu", vast: "vaste", violet: "violet", waiting: "en attente", warm: "tiède",
   ancient: "ancien", cool: "frais", singing: "chantant", circling: "tournoyant", airborne: "aérien", bearing: "fructifère", brown: "brun", busy: "affairé", capped: "coiffé", crumbling: "friable", darting: "vif", distant: "lointain", dutiful: "appliqué",
-  buried: "enfoui", faint: "diffus", glittering: "scintillant", golden: "doré", keen: "perçant", layered: "stratifié", loose: "meuble", purple: "pourpre", shy: "craintif",
+  buried: "enfoui", faint: "diffus", glittering: "scintillant", golden: "doré", keen: "perçant", layered: "stratifié", smooth: "lisse", ochre: "ocre", upright: "dressé", rosy: "rosé", loose: "meuble", purple: "pourpre", shy: "craintif",
   silvery: "argenté", sleek: "lisse", slick: "visqueux", spongy: "spongieux", stubborn: "têtu", sweet: "sucré", teeming: "grouillant", thorny: "épineux", threading: "filant", tiny: "minuscule",
   unseen: "invisible", slimy: "gluant", compact: "compact", "wind-bent": "courbé par le vent", wiry: "noueux",
   undecided: "indécis", "half-drawn": "à demi dessiné", sourceless: "sans source", even: "égal", shadowless: "sans ombre", breathing: "respirant",

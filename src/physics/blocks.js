@@ -57,6 +57,11 @@ def(["ash", "obsidian", "whispering_obsidian", "crying_obsidian", "glass", "sing
 def("iron", { set: { coreAdd: 0.12 } });
 def("deep_cold", { needs: [["coldSomewhere", "light"]] });
 def("sand", { needs: [["erosion", "light"]] });
+def("clay", { needs: [["erosion", "light"], ["liquidWater", "light"]] });
+def("chalk", { needs: [["liquidWater", "light"], ["oldEnoughSimple", "light"]] });
+def(["basalt", "basalt_columns", "fired_clay"], { needs: [["volcanism", "light"]] });
+def("granite", { needs: [["plateTectonics", "light"], ["oldEnoughComplex", "light"]] });
+def(["crystal_tree", "crystal_flower"], { needs: [["oldEnoughComplex", "light"]] }); /* (loi 12) le cristal gagne un arbre, il faut d'abord qu'il y ait des arbres */
 def("kelp", { needs: [["liquidWater", "medium"], ["sunlight", "light"], ["oldEnoughSimple", "light"]] });
 def("coral", { needs: [["liquidWater", "medium"], ["warmClimate", "light"], ["sunlight", "light"], ["oldEnoughSimple", "light"]] });
 def("acid", { needs: [["volcanism", "light"]] });
@@ -136,7 +141,7 @@ def("spiders", { needs: [["prey", "light"], ["breathableAir", "light"], ["temper
 /** Groupes utiles aux exigences « écologiques » (chaîne alimentaire). */
 const FLORA = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "moss", "lichen", "singing_lichen", "pale_fungus", "spore", "glowvine", "wrong_glowvine", "cinderbloom", "withered_fern", "charred_grove", "flowers", "grass", "meadow", "berry_shrub", "thorn_bush", "heath_shrub", "glow_algae"];
 const PREY = ["shoal", "grazer", "herd", "watching_herd", "burrower", "warren", "humming_warren", "drifter", "moth", "lantern_moths", "whispering_moths"];
-const SOIL = ["sand", "silt", "stone", "ash", "salt", "earth", "humus", "peat"];
+const SOIL = ["sand", "silt", "stone", "ash", "salt", "earth", "humus", "peat", "clay", "chalk", "basalt", "granite"];
 /** Bâtisseurs : leurs traces disent que quelqu'un a pu apporter ce que la nature n'aurait pas fait. */
 const BUILDERS = ["tablet", "lamp", "bridge", "door", "book", "worn_tablet", "lit_lamp", "sealed_door", "blurred_book", "fallen_bridge", "speaking_tablet", ...require("../places").BUILT_IDS];
 

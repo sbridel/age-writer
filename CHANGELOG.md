@@ -2,6 +2,19 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## Unreleased — More worlds
+
+### Added
+- **Four soils that follow the genesis**: `clay` (with lava, fired clay), `chalk` (with acid, karst; it wants water and an old enough world), `basalt` (with deep cold, basalt columns), `granite` (an old world with moving plates). Basalt and clay feed the harvest with silt of the Age's kind; granite gives quartz silt. Earth and chalk are two new soil families (and two new places to carry).
+- **Crystal trees and crystal flowers**: a great tree or flowers meeting crystal, on a world old enough. Their colour follows the Age's seed.
+- **The linking window shows many more worlds**: a face for each soil (salt flats, black sand and distant basalt columns, grey, ochre or rosy granite domes, chalk cliffs, earth), water as a river or a lake when it does not dominate, relief in the middle distance, ridges, clouds and low flora that follow the climate, water chemistry (acid, brine, glacial, mirror), ruins and standing stones with their own style, and the Relto's trees in the window (with ginkgo, mushroom trees, stalk trees, crystal trees). Blocks that had no picture now have one; what cannot be seen from a window leaves only a sign.
+- **Young worlds**: a world too young for trees shows Prototaxites; a tree written there stands grey and half-formed.
+
+### Changed
+- **What physics refuses is drawn poorly**: a written block the physics refuses is pale and faded, more so as the tension is heavier; refused grazers are gaunt, and a skeleton lies in the grass when the refusal is strong. The window no longer invents contradictions: no green without light, no river on lava, no ice floes in hot water, trees in their climate, land beasts only on land.
+- Water makes the ground only when it strictly dominates; otherwise it is a river or a lake on another soil.
+- Peat burns to ash in a wildfire.
+
 ## 2.0.0 — Seasons, and the end of the story (2026-10-26)
 
 ### Added
