@@ -699,6 +699,11 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.2.1 — corrections (28 oct. 2026)
+
+- **Les anneaux après l'accord** (`src/entry.js`, `carryExpand`) : relu de l'intérieur d'une boucle, l'autre Âge gardait sa ligne `carry:` vers nous en tache d'encre (−10) ; il tombait sous 75 et l'accord (fin du 17) le refusait (« ils ne portent plus depuis un monde qui tombe »). La ligne refusée pour cycle (vers un autre que soi) s'efface maintenant. Test : `integration.js` (l'anneau tient après l'accord ; il échouait avant la correction).
+- **Quoi de neuf** (`src/whatsnew.js`, `src/entry.js`) : la 2.2.0 notait la version vue dès le premier lancement et prenait toute mise à jour pour une installation neuve (aucune version d'avant ne notait rien). On regarde maintenant s'il y avait des données d'avant (`hadData`), sous une nouvelle clé (`newsSeen`), si bien que ceux qui sont déjà passés en 2.2.0 voient la fenêtre une fois.
+
 ## 2.2.0 — là où l'on arrive (28 oct. 2026)
 
 Note : `claude/DESIGN-points-de-liaison.md`, `claude/DESIGN-meteo-et-mesure.md`, `claude/LOIS-DE-L-ECRITURE-DNI.md` (lois 15 et 17) (projet).

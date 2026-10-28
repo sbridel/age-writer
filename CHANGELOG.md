@@ -2,6 +2,12 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.2.1 — Fixes (2026-10-28)
+
+### Fixed
+- **Rings hold again after the accord**: two Ages that carry each other form their ring again once the story has ended in the accord. Seen from inside the loop, the other Age's line back to you counted as an ink blot, which dropped it below 75 and made the accord refuse it.
+- **What's new now shows after an update**: 2.2.0 took everyone who updated for a new install, so the window and the Guild letter never appeared. They appear once with this update (the **What's new** command always shows them).
+
 ## 2.2.0 — Where you arrive (2026-10-28)
 
 ### Added
