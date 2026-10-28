@@ -2,6 +2,22 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.2.0 — Where you arrive (2026-10-28)
+
+### Added
+- **Linking points**: every Book links to a place of its own, chosen by its mark (its name, `seed:` or `age_seed`) among what the world allows, and always the same: on level ground, down in a hollow, on the edge of a height with the valley below in layers, on a slope, under cover (a forest edge or a ruined arch), or at the mouth of a cave whose rock is the world's own. Sometimes something of the world stands very close: a trunk, a broken column, a boulder. The Imager and the library show the same place.
+- **The sky moves with the place**: the place faces a direction, and the sun crosses, rises or sets accordingly; the moon has its own month and real phases, and a full moon lights the ground; the landscape takes the colour of its star, and plants adapt to it.
+- **Weather has a side**: a storm comes from the west, so it stands on the right, on the left, overhead or as a wall on the horizon depending on where the place faces; it hides the sun, casts its shadow on its side and rains only beneath it. Rain without a storm sometimes falls far away, with a piece of rainbow when the sun is low behind you.
+- **What's new**: after an update, a window lists the changes once (never on a first install), and a letter from the Guild waits on the Relto cabin table. A **What's new** command shows them at any time; a setting turns the window off.
+
+### Changed
+- **Descriptive Books**: a line added that contradicts nothing is free, even once the ink has dried, and no longer redraws the landscape. Removing, changing a value or contradicting is still an alteration. The place now comes from the Book's mark, so **every existing window changes once** with this update.
+- **Extreme climates**: a world without a sun shows what lights it (its nebula, lava, glowing life, crystals); a black sun keeps a tone of its own; ice has tabular icebergs and sastrugi.
+- **The Imager's periscope** turns with the place: each direction looks elsewhere, and the sun and moons follow their course as seen from that side.
+- **Wonders** that barely showed are now visible at the window's size, among them the trees made of the metal they drank.
+- Touch-ups: every tree has its own build; canyons, striped buttes and cave stalactites redrawn.
+- Guide: where you arrive, the moving sky, weather, the Descriptive Books rule, the new setting and command.
+
 ## 2.1.0 — More worlds (2026-10-28)
 
 ### Added

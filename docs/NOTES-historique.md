@@ -699,6 +699,19 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.2.0 — là où l'on arrive (28 oct. 2026)
+
+Note : `claude/DESIGN-points-de-liaison.md`, `claude/DESIGN-meteo-et-mesure.md`, `claude/LOIS-DE-L-ECRITURE-DNI.md` (lois 15 et 17) (projet).
+- **Points de liaison** (`src/genscene.js`, `viewOf`) : plain-pied (parfois un élément proche : tronc, colonne, rocher), contrebas, surplomb (la vallée par plans), pente, couvert (lisière ou arche), entrée de grotte (matière du monde). Tiré par la graine d'abord, le monde ne fait que l'interdire (repli vers le plus proche possible).
+- **Le lieu vient de la marque** (loi 17 : nom, `seed:` ou `age_seed`) et non plus de tout ce qui est écrit : toutes les fenêtres changent une fois.
+- **Le ciel tourne avec le lieu** : orientation (équateur, pôle, levant, couchant) et latitude ; phases de la lune ; lumière de l'étoile (multiplication) ; feuillage selon la température de l'étoile.
+- **La météo a un côté** (`buildFront`, `stormSky`, `stormShade`) : l'orage de profil à droite ou à gauche, au-dessus, ou en muraille devant ; il cache le soleil, son ombre, la pluie et les éclairs sous lui ; la pluie sans orage tombe une fois sur deux au loin, avec un morceau d'arc quand le soleil est bas dans le dos. Le périscope suit (`src/genviews.js`).
+- **Loi du changement** (`src/law.js`) : un ajout qui ne contredit rien (ni réaction violente ou de déclin) est gratuit, même à l'encre sèche (lois 15 et 17, le lore des Livres descriptifs).
+- **Climats extrêmes**, **merveilles** remises à l'échelle (l'Inachevé, le vent appris, celles qui passent, la glace qui fleurit, l'Un-plusieurs, l'écho d'avance), **arbres de métal** (merveille 16 : calque métal poli), carrure des arbres, canyons, buttes rayées, stalactites accrochées.
+- **Quoi de neuf** (`src/whatsnew.js`) : fenêtre une fois après une mise à jour (jamais à l'installation), pli de la Guilde sur la table de la cabane, commande et réglage. Rien sur l'histoire (testé).
+- Mesure (700 Âges, un par nom, jour 0,4) : fenêtres avec une voisine proche, silhouette 50 % → 34 %, image entière 50 % → 46 % (référence 2.1.0).
+- Tests : `front.test.js`, `whatsnew.test.js`, périscope, saisons, loi du changement.
+
 ## 2.1.0 — plus de mondes (28 oct. 2026)
 
 Note : `claude/DESIGN-nouveaux-sols.md`, `claude/MESURE-diversite-toutes-pistes.md`, `claude/AUDIT-coherence-fenetre.md` (projet).
