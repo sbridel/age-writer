@@ -30,10 +30,10 @@ const WORDS = [
   [/grass|meadow|moss|flower|petal|bloom|spore|garden/, "grass"], [/cloud|fog|mist|haze|smoke/, "cloud"], [/wind|breeze|gust|air/, "wind"],
   [/snow|ice|glacier|frost|frozen|cold/, "snow"], [/cave|cavern|vault|under|deep/, "cave"], [/island|archipelago|islet|atoll/, "island"],
 ];
-/** Les merveilles de la face écrite, en éléments (les dix-sept composites ont leur scène dans la planche). */
-const WRITTEN_SIGNS = { petal_rain: ["rain", "grass"], scented_mist: ["cloud", "grass"], crystal_rain: ["rain", "stone"], spore_cloud: ["cloud", "grass"], glowvine: ["tree", "sun"], lantern_moths: ["beast", "fire"], cinderbloom: ["grass", "fire"], ironwood: ["tree", "stone"], humming_shard: ["stone", "wind"], singing_glass: ["stone", "wind"], speaking_tablet: ["stone", "bird"], charged_crystal: ["stone", "rain"], fulgurite: ["rain", "stone"] };
-/** Les dix-sept merveilles qui ont leur scène. */
-const WONDER_SCENES = ["unfinished_horizon", "orphan_colour", "breathing_mirrors", "visiting_weight", "wind_learned", "reading_rain", "ceiling_sea", "fit_through_moths", "mosaic", "ringed_ground", "drinking_roots", "living_mist", "day_aurora", "blooming_ice", "rust_held_bridge", "many_one", "early_echo"];
+/** Les merveilles de la face écrite, en éléments (les composites ont leur scène dans la planche ; 2.5 : la Pluie qui reste aussi). */
+const WRITTEN_SIGNS = { held_water: ["water", "stone"], petal_rain: ["rain", "grass"], scented_mist: ["cloud", "grass"], crystal_rain: ["rain", "stone"], spore_cloud: ["cloud", "grass"], glowvine: ["tree", "sun"], lantern_moths: ["beast", "fire"], cinderbloom: ["grass", "fire"], ironwood: ["tree", "stone"], humming_shard: ["stone", "wind"], singing_glass: ["stone", "wind"], speaking_tablet: ["stone", "bird"], charged_crystal: ["stone", "rain"], fulgurite: ["rain", "stone"] };
+/** Les merveilles qui ont leur scène (dix-sept, puis la Pluie qui reste en 2.5). */
+const WONDER_SCENES = ["unfinished_horizon", "orphan_colour", "breathing_mirrors", "visiting_weight", "wind_learned", "reading_rain", "ceiling_sea", "fit_through_moths", "mosaic", "ringed_ground", "drinking_roots", "living_mist", "day_aurora", "blooming_ice", "rust_held_bridge", "many_one", "early_echo", "lingering_rain"];
 /** L'histoire des Bahro, tout en haut (avant le joueur) : l'enchaîné, le serpent, le signe répété (celui de la pierre), l'œil, le cri, les mains. */
 const BAHRO_ROW = ["chained", "serpent", "stonesign", "eye", "stonesign", "cry", "chained", "hands", "stonesign"];
 

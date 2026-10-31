@@ -303,7 +303,7 @@ module.exports = function build(Base, core, AGEX) {
       }
       const pillars = li ? li.pillars : CAT.heldPillars(written); /* ce qui est écrit : l'eau et le cristal chargé, ou l'éclair et le cristal qui le font */
       if (li) { res = { ...res, wonders: [...new Set([...((res && res.wonders) || []), li.id])] }; }
-      return { ...out, resolved: res, axisStability: axes, stability, verdict, ...(li ? { composites: [...(out.composites || []).filter((c) => c.id !== li.id), { id: li.id, born: "physics" }] } : {}), suspended: { pillars, id: li ? li.id : "held_water" } };
+      return { ...out, resolved: res, axisStability: axes, stability, verdict, ...(li ? { composites: [...(out.composites || []).filter((c) => c.id !== li.id), { id: li.id, a: li.pillars[0], b: li.pillars[1] || li.pillars[2], born: "physics" }] } : {}), suspended: { pillars, id: li ? li.id : "held_water" } };
     }
     /** La saison du jour de cet Âge (docs/DESIGN-physique.md §12 bis, palier 3) : le jour de son année, et ce qu'il fait au décor ; rien sans saisons marquées. */
     seasonAdjust(out, seed) {
