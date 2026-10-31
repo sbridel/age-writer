@@ -33,7 +33,12 @@ function slateRoof(ctx, col, x0, ax, ay, x1, by, o = {}) {
 }
 
 /** La couleur d'une fenêtre : sombre le jour (un reflet du ciel), rouge orangé et chaude la nuit. */
-function winColor(night, k = 1) { const n = clamp(night * 1.25); return mix(mix("#05060c", "#2e2a3a", 0.7 + 0.3 * k), n > 0.5 ? "#ff6a3a" : "#e0743a", n); }
+let TINT = null; /* ESSAI (toutes les fenêtres) : la lumière du feu, posée pour la frame (setWinTint) */
+function setWinTint(f) { TINT = f || null; }
+function winColor(night, k = 1) { const n = clamp(night * 1.25), base = mix("#05060c", "#2e2a3a", 0.7 + 0.3 * k), warm = n > 0.5 ? "#ff6a3a" : "#e0743a";
+  if (!TINT) return mix(base, warm, n);
+  const sp = TINT.spread || 0; if (sp <= 0 || TINT.ordinary) return mix(base, warm, n); /* le feu ne gagne les autres fenêtres que quand il a du bois */
+  const hot = mix(warm, "#" + TINT.c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join(""), sp); return mix(base, hot, n); }
 
 /** Une lancette (fenêtre étroite en arc brisé) de largeur w, de hauteur h, le bas à (x, y). */
 function lancet(ctx, x, y, w, h, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x - w / 2, y); ctx.lineTo(x - w / 2, y - h + w * 0.6); ctx.quadraticCurveTo(x - w / 2, y - h + w * 0.1, x, y - h); ctx.quadraticCurveTo(x + w / 2, y - h + w * 0.1, x + w / 2, y - h + w * 0.6); ctx.lineTo(x + w / 2, y); ctx.closePath(); ctx.fill(); }
@@ -391,9 +396,9 @@ function gargoyle(ctx, c, x, y) {
 /** La chapelle, à la place de la cabane (même empreinte : x0..x0+w, toit jusqu'à y0 − 24) : pignon d'ardoise raide, une flèche, une lancette qui s'allume, une porte en arc brisé. */
 /** La chapelle est plus petite que l'ancienne cabane (CHAPEL_K) : à côté du donjon, elle doit rester une chapelle. Sa zone cliquable, elle, ne change pas. */
 const CHAPEL_K = 0.72;
-function chapel(ctx, col, sky, t, x0, y0, w, h, hutX) {
+function chapel(ctx, col, sky, t, x0, y0, w, h, hutX, fire) {
   ctx.save(); ctx.translate(hutX, GY); ctx.scale(CHAPEL_K, CHAPEL_K); ctx.translate(-hutX, -GY); /* réduite, posée au même pied */
-  const night = clamp(sky.night == null ? 0 : sky.night), fl = 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1), x1 = x0 + w, ap = y0 - 34, glow = (k) => winColor(night * fl, k);
+  const night = clamp(sky.night == null ? 0 : sky.night), fl = 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1), x1 = x0 + w, ap = y0 - 34, fc = fire && !fire.ordinary ? fire.c : [255, 110, 70], fk = fire ? fire.k : 1, glow = (k) => (fire ? mix(mix("#05060c", "#2e2a3a", 0.7 + 0.3 * k), fire.ordinary ? (night * fl > 0.4 ? "#ff6a3a" : "#e0743a") : "#" + fc.map((v) => Math.round(v).toString(16).padStart(2, "0")).join(""), clamp(night * fl * 1.25) * (0.35 + 0.65 * fk)) : winColor(night * fl, k)); /* ESSAI : la chapelle est la pièce du feu : ses vitraux en prennent la couleur */
   const LIME = ["#7c7771", "#5d5953", "#3f3c38"] /* une pierre plus vieille que le château : grise et brune, moussue */, lime = (a, b) => { const g = ctx.createLinearGradient(a, 0, b, 0); LIME.forEach((h2, i) => g.addColorStop(i / 2, col(h2))); return g; };
   // la cheminée, derrière le pignon (la fumée en sort : drawChimney)
   ctx.fillStyle = col(STONE_D); ctx.fillRect(x1 - 12, y0 - 18, 6, 16); ctx.fillStyle = col(STONE); ctx.fillRect(x1 - 13, y0 - 19, 8, 2);
@@ -424,10 +429,10 @@ function chapel(ctx, col, sky, t, x0, y0, w, h, hutX) {
     ctx.fillStyle = col("#3a2c22"); ctx.fillRect(hutX - pw / 2 + 0.8, pt + 6, pw - 1.6, GY - pt - 6); ctx.strokeStyle = col("#17110c"); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(hutX, pt + 6); ctx.lineTo(hutX, GY); ctx.stroke(); // les deux battants
     ctx.fillStyle = col("#1c1820"); for (const yy of [pt + 10, GY - 5]) ctx.fillRect(hutX - pw / 2 + 0.8, yy, pw - 1.6, 1.1); // les pentures
     ctx.fillStyle = col(GOLD); ctx.beginPath(); ctx.arc(hutX - 1.6, GY - 9, 0.8, 0, 6.283); ctx.arc(hutX + 1.6, GY - 9, 0.8, 0, 6.283); ctx.fill();
-    if (night > 0.3) { ctx.fillStyle = rgba(255, 150, 80, 0.7 * night * fl); ctx.fillRect(hutX - 0.5, pt + 7, 1, GY - pt - 7); } }
+    if (night > 0.3) { ctx.fillStyle = rgba(fc[0], fc[1], fc[2], 0.7 * night * fl * fk); ctx.fillRect(hutX - 0.5, pt + 7, 1, GY - pt - 7); } }
   // deux lancettes de part et d'autre du portail
   for (const lx of [hutX - 18, hutX + 18]) { lancet(ctx, lx, GY - 9, 5, 13, glow(1)); ctx.strokeStyle = col("#938e86"); ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(lx - 3.2, GY - 9); ctx.lineTo(lx - 3.2, GY - 18); ctx.quadraticCurveTo(lx - 3.2, GY - 22, lx, GY - 23.2); ctx.quadraticCurveTo(lx + 3.2, GY - 22, lx + 3.2, GY - 18); ctx.lineTo(lx + 3.2, GY - 9); ctx.stroke(); }
-  if (night > 0.3) { const gl = ctx.createRadialGradient(hutX, GY - 14, 2, hutX, GY - 14, 40); gl.addColorStop(0, rgba(255, 110, 70, 0.28 * night * fl)); gl.addColorStop(1, rgba(255, 110, 70, 0)); ctx.fillStyle = gl; ctx.fillRect(hutX - 42, GY - 56, 84, 60); }
+  if (night > 0.3) { const gl = ctx.createRadialGradient(hutX, GY - 14, 2, hutX, GY - 14, 40); gl.addColorStop(0, rgba(fc[0], fc[1], fc[2], 0.28 * night * fl * fk)); gl.addColorStop(1, rgba(fc[0], fc[1], fc[2], 0)); ctx.fillStyle = gl; ctx.fillRect(hutX - 42, GY - 56, 84, 60); }
   // deux contreforts d'angle, à pinacle
   for (const x of [x0 - 4, x1]) { ctx.fillStyle = lime(x, x + 4); ctx.fillRect(x, y0 + 2, 4, GY - y0 - 2); ctx.fillStyle = col("#4e483f"); ctx.fillRect(x - 0.5, y0 + 12, 5, 1.2);
     ctx.fillStyle = col(SLATE_D); ctx.beginPath(); ctx.moveTo(x - 0.6, y0 + 2); ctx.lineTo(x + 2, y0 - 9); ctx.lineTo(x + 4.6, y0 + 2); ctx.closePath(); ctx.fill(); ctx.fillStyle = col(GOLD); ctx.fillRect(x + 1.6, y0 - 11, 0.9, 2); }
@@ -552,4 +557,4 @@ function globalCastle(ctx, c, sky, cx, y) {
   ctx.strokeStyle = c(GOLD); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(cx + 3, y - 56); ctx.lineTo(cx + 3, y - 60); ctx.stroke();
 }
 
-module.exports = { slateRoof, castleOre, litStone, daylight, calendarStele, redNight, bloodMoon, moonTexture, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };
+module.exports = { setWinTint, slateRoof, castleOre, litStone, daylight, calendarStele, redNight, bloodMoon, moonTexture, bloodFog, winColor, lancet, keep, gargoyle, chapel, chimneyAt, foundations, parapet, stoneBridge, isletTower, castleIslet, corbel, stelePath, bench, globalCastle, STONE, STONE_D, STONE_DD, SLATE, GOLD };
