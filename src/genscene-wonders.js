@@ -29,6 +29,11 @@ function buildWonders(S, W, H, hz) {
   if (has.has("mosaic")) { const motif = ["feathered", "flamed", "margined", "fine"][fnv(S.name + "|mosaic") % 4]; o.tulips = { motif, base: [[214, 60, 70], [240, 200, 80], [236, 236, 228], [150, 70, 160]][Math.floor(q() * 4)], flame: [[150, 20, 40], [200, 60, 30], [120, 40, 110], [230, 120, 60]][Math.floor(q() * 4)], items: Array.from({ length: 9 }, () => ({ x: W * (0.05 + 0.9 * q()), y: hz + H * (0.12 + 0.17 * q()), s: 0.7 + 0.6 * q(), lean: (q() - 0.5) * 0.4, p: q() })) }; }
   if (has.has("ringed_ground")) o.rings = { cx: W * (0.3 + 0.4 * q()), knots: Array.from({ length: 4 }, () => ({ x: W * q(), y: hz + H * (0.05 + 0.22 * q()), r: H * (0.012 + 0.02 * q()) })) };
   if (has.has("drinking_roots")) o.leaves = Array.from({ length: 28 }, () => ({ u: q(), v: q(), p: q(), s: 0.6 + 0.8 * q() }));
+  if (has.has("lingering_rain") || has.has("held_water")) { /* 2.5 (F) : l'eau suspendue ; la Pluie qui reste en nappes à mi-hauteur, l'Eau tenue autour de cristaux posés au sol */
+    const held = !has.has("lingering_rain"), n = held ? 3 : 5;
+    o.sheets = { held, list: Array.from({ length: n }, (_, i) => { const x = W * (0.1 + 0.8 * ((i + 0.2 + 0.6 * q()) / n)), y = held ? hz + H * (0.04 + 0.12 * q()) : hz - H * (0.1 + 0.32 * q()), w = W * (held ? 0.07 + 0.05 * q() : 0.12 + 0.1 * q());
+      return { x, y, w, h: H * (held ? 0.03 : 0.02 + 0.015 * q()), p: q(), lift: held ? H * (0.07 + 0.06 * q()) : 0, wav: Array.from({ length: 9 }, () => q()), drops: Array.from({ length: held ? 6 : 9 }, () => ({ u: q(), d: q(), p: q() })) }; }) };
+  }
   if (has.has("living_mist")) o.mist = { bands: Array.from({ length: 4 }, () => ({ y: hz - H * (0.02 - 0.12 * q()), h: H * (0.05 + 0.05 * q()), p: q() })), lives: Array.from({ length: 30 }, () => ({ x: W * q(), y: hz + H * (-0.08 + 0.2 * q()), p: q(), k: 1 + Math.floor(q() * 2) })) };
   if (has.has("day_aurora")) o.aurora = true;
   if (has.has("blooming_ice")) o.frostFlowers = Array.from({ length: 12 }, () => ({ x: W * (0.05 + 0.9 * q()), y: hz + H * (0.04 + 0.24 * q()), r: H * (0.012 + 0.018 * q()), n: 5 + Math.floor(q() * 3), p: q() }));
@@ -165,6 +170,25 @@ function tulips(g, m, t, T) {
   }
 }
 
+/** 2.5 (F) : l'eau suspendue. Chaque nappe : une lentille d'eau qui ondule, claire au bord haut (la lumière la traverse), plus sombre dessous ;
+ *  des gouttes pendues dessous, qui ne tombent pas ; quelques fils de pluie qui s'arrêtent en chemin. L'Eau tenue : la nappe flotte au-dessus d'un cristal. */
+function suspendedWater(g, m, t, sh, day, night) {
+  const { hz } = m, lit = 0.35 + 0.65 * day, water = [150, 196, 230], deep = [60, 96, 140];
+  for (const s of sh.list) {
+    const bob = Math.sin(TAU * (t + s.p)) * s.h * 0.35, cy = s.y - s.lift + bob, n = s.wav.length - 1;
+    const edge = (side) => Array.from({ length: n + 1 }, (_, k) => { const u = k / n, x = s.x - s.w / 2 + u * s.w, env = Math.sin(Math.PI * u), wob = (s.wav[k] - 0.5) * s.h * 0.5 + Math.sin(TAU * (t * 0.5 + u + s.p)) * s.h * 0.25; return [x, cy + side * env * s.h + wob * env]; });
+    const top = edge(-1), bot = edge(1);
+    if (sh.held) { const cx = s.x, by = s.y + s.h * 3.2, ch = s.lift * 0.9; g.fillStyle = css(mixc([120, 110, 200], [200, 210, 255], 0.3 * day), 0.85); g.beginPath(); g.moveTo(cx - 5, by); g.lineTo(cx - 2, by - ch); g.lineTo(cx + 2, by - ch * 1.08); g.lineTo(cx + 5, by); g.closePath(); g.fill();
+      g.strokeStyle = css([230, 236, 255], 0.5 + 0.4 * Math.sin(TAU * (t * 3 + s.p)) ** 2); g.lineWidth = 1; g.beginPath(); g.moveTo(cx - 1, by - 2); g.lineTo(cx + 1, by - ch * 0.9); g.stroke();
+      for (let k = 0; k < 4; k++) { const a = TAU * (t * 0.7 + k / 4 + s.p), r = s.w * 0.55; g.fillStyle = css([200, 220, 255], 0.25 * lit); g.beginPath(); g.arc(cx + Math.cos(a) * r, cy + Math.sin(a) * s.h * 1.6, 1.2, 0, TAU); g.fill(); } } /* le cristal chargé qui la tient, et ses étincelles qui tournent */
+    g.beginPath(); top.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y))); for (let k = n; k >= 0; k--) g.lineTo(bot[k][0], bot[k][1]); g.closePath();
+    const gr = g.createLinearGradient(0, cy - s.h, 0, cy + s.h); gr.addColorStop(0, css(mixc(water, [255, 255, 255], 0.5 * day), 0.55 * lit)); gr.addColorStop(0.5, css(water, 0.32 * lit + 0.08)); gr.addColorStop(1, css(deep, 0.45 * lit + 0.1)); g.fillStyle = gr; g.fill();
+    g.strokeStyle = css(mixc(water, [255, 255, 255], 0.6), (0.5 + 0.3 * day) * (1 - 0.5 * night)); g.lineWidth = 1; g.beginPath(); top.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke(); /* le bord haut, que la lumière traverse */
+    for (const d of s.drops) { const k = Math.min(n - 1, Math.floor(d.u * n)), a = d.u * n - k, x = lerp(bot[k][0], bot[k + 1][0], a), y0 = lerp(bot[k][1], bot[k + 1][1], a), y = y0 + 2 + d.d * s.h * 1.6 + Math.sin(TAU * (t * 0.8 + d.p)) * 1.2; /* les gouttes pendues : elles ne tombent pas */
+      g.strokeStyle = css(water, 0.35 * lit); g.lineWidth = 0.6; g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y - 1.5); g.stroke(); g.fillStyle = css(mixc(water, [255, 255, 255], 0.4), 0.7 * lit + 0.1); g.beginPath(); g.arc(x, y, 1.3, 0, TAU); g.fill(); }
+    if (!sh.held) for (let k = 0; k < 4; k++) { const u = (k + 0.5) / 4, x = s.x - s.w / 2 + u * s.w, y0 = cy + s.h * 1.3, len = (hz - y0) * (0.25 + 0.3 * ((s.wav[k] + t * 0.3) % 1)), fg = g.createLinearGradient(0, y0, 0, y0 + len); fg.addColorStop(0, css(water, 0.4 * lit)); fg.addColorStop(1, css(water, 0)); g.strokeStyle = fg; g.lineWidth = 0.8; g.beginPath(); g.moveTo(x, y0); g.lineTo(x + 1, y0 + len); g.stroke(); } /* des fils de pluie qui s'arrêtent en chemin */
+  }
+}
 function air(g, m, t, o, { day, night }) {
   const { S, W, H, hz } = m;
   if (o.stones) for (const st of o.stones) { /* la Pesanteur en visite : les pierres flottent le jour, se posent la nuit */
@@ -200,6 +224,7 @@ function air(g, m, t, o, { day, night }) {
       if (coil < 0.8) { g.beginPath(); g.ellipse(x + dir * 8 * sc, y - 3.5 * sc, 3.2 * sc, 2.3 * sc, 0, 0, TAU); g.fill(); g.stroke(); g.fillRect(x - 5 * sc, y + 2 * sc, 1.4 * sc, 5 * sc); g.fillRect(x + 4 * sc, y + 2 * sc, 1.4 * sc, 5 * sc); }
     }
   }
+  if (o.sheets) suspendedWater(g, m, t, o.sheets, day, night);
   if (o.mist) { /* la Brume vivante : elle va contre le vent ; des vies montent et redescendent dedans */
     for (const b of o.mist.bands) { const x = -frac(t + b.p) * W; const mg = g.createLinearGradient(0, b.y - b.h, 0, b.y + b.h); mg.addColorStop(0, "rgba(220,228,236,0)"); mg.addColorStop(0.5, css([222, 230, 238], 0.22 + 0.1 * day)); mg.addColorStop(1, "rgba(220,228,236,0)"); g.fillStyle = mg; g.fillRect(x, b.y - b.h, W * 2, b.h * 2); }
     g.globalCompositeOperation = "lighter";

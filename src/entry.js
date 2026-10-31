@@ -44,6 +44,7 @@ const OB = require("./observe");
 const STAT = require("./status");
 const CARRY = require("./carry");
 const DEPTH = require("./depth");
+const SCAR = require("./scarring"); /* 2.5 (F) : le coût d'une cicatrice, rendu quand l'eau suspendue la remplace */
 const { SYSTEM_RE } = require("./starsystem");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
 
@@ -142,6 +143,7 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText) { const wx = guard("météo", () => WX.parseWeather(srcText)); if (wx) out = { ...out, weather: wx, resolved: out.resolved ? { ...out.resolved, weather: wx } : out.resolved }; } // météo vivante : lue par la fenêtre (sceneOf) et la description, sans effet sur la stabilité
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
         if (o && o.seed && out.physics && out.physics.w) out = guard("saison", () => this.seasonAdjust(out, o.seed)) || out; /* la saison du jour (src/seasons.js) : le jour de l'année de ce monde, pour la fenêtre, la fiche et la récolte */
+        out = guard("eau suspendue", () => this.lingerAdjust(out, srcText)) || out; /* 2.5 (F) : la Pluie qui reste (née de la physique) et l'Eau tenue (face écrite) : la cicatrice de pluie retenue devient la merveille */
         if (o && o.seed) out = guard("portage", () => this.carryAdjust(out, o, srcText, key)) || out; /* porter (src/carry.js) : la couture, la dissonance, la source malade ; et la couture d'une source dont on porte */
         if (this.ext.law && o && o.seed) out = guard("symbiose", () => this.symbiosesOf(o.seed, out, !o.probe)) || out;
         if (o && o.seed && !o.probe && !(this.ext.law && this.law.get(key))) guard("merveilles", () => this.seeWonders(o.seed, out)); /* la face écrite se voit aussi sans la loi */ // la mutation et la symbiose (src/mutation.js) : les unions nouées soutiennent le monde ; le temps en noue d'autres
@@ -192,6 +194,7 @@ module.exports = function build(Base, core, AGEX) {
       // la profondeur de l'équilibre : le test par retrait, à l'affichage du panneau (jamais à chaque frappe), mis en cache par texte, graine et rigueur
       AGEX.depthNote = (text, seed) => guard("profondeur", () => {
         if (CARRY.parseAll(text).length && this.carryOpen(seed)) return this.t("carry.depth"); /* un monde porté est toujours sur le fil (loi 1) */
+        { const a = core.analyse(text, { seed, probe: true }); if (a && a.suspended) return CAT.threadNote(a.suspended.pillars, this.lang() === "fr"); } /* 2.5 (F) : l'eau suspendue tient toujours sur le fil */
         const key = `${RG.levelOf(this.ext)}|${RG.familiesOf(this.ext).join(",")}|${this.ext.physics}|${seed}|${text}`;
         let d = this.depthCache.get(key);
         if (d === undefined) {
@@ -271,6 +274,23 @@ module.exports = function build(Base, core, AGEX) {
     slateHas(a) {
       const { BIOMES } = require("./dosage"), ids = PH.idsOfAnalysis(a), has = (list) => list.some((id) => ids.has(id));
       return { water: has(BIOMES.water), fire: has(BIOMES.fire), living: [...ids].some((id) => this.blockAxis(id) === "ecological") };
+    }
+    /** 2.5 (F) : l'eau suspendue. La Pluie qui reste naît de la physique ; l'Eau tenue d'une réaction écrite. Quand l'une est là, la cicatrice
+     *  `held_rain` (des nuages qui retiennent leur pluie) n'en est plus une : son coût est rendu, et la fenêtre dessine l'eau qui tient. */
+    lingerAdjust(out, srcText) {
+      const mt = (out.resolved && out.resolved.matter) || {}, written = new Set(mt.written || []), made = new Set((mt.reactions || []).map((x) => (x && x.result) || x));
+      const li = out.physics && out.physics.w && srcText ? CAT.lingeringOf(written, out.physics.w, srcText.split("\n")) : null, held = made.has("held_water");
+      if (!li && !held) return out;
+      let res = out.resolved, axes = out.axisStability, stability = out.stability, verdict = out.verdict;
+      const scar = ((res && res.scars) || []).find((s) => s.id === "held_rain");
+      if (scar) { /* la cicatrice devient la merveille : son coût est rendu (src/scarring.js, TAX) */
+        axes = { ...(axes || {}) }; if (axes.weather != null) axes.weather = Math.min(100, axes.weather + Math.round((SCAR.TAX[scar.level] || 0) * 100));
+        const vals = Object.values(axes); stability = Math.max(stability, vals.length ? Math.min(...vals) : stability); verdict = stability >= DEPTH.STABLE_AT ? "stable" : stability >= 40 ? "unstable" : "dying";
+        res = { ...res, scars: res.scars.filter((s) => s !== scar) };
+      }
+      const pillars = li ? li.pillars : CAT.heldPillars(written); /* ce qui est écrit : l'eau et le cristal chargé, ou l'éclair et le cristal qui le font */
+      if (li) { res = { ...res, wonders: [...new Set([...((res && res.wonders) || []), li.id])] }; }
+      return { ...out, resolved: res, axisStability: axes, stability, verdict, ...(li ? { composites: [...(out.composites || []).filter((c) => c.id !== li.id), { id: li.id, born: "physics" }] } : {}), suspended: { pillars, id: li ? li.id : "held_water" } };
     }
     /** La saison du jour de cet Âge (docs/DESIGN-physique.md §12 bis, palier 3) : le jour de son année, et ce qu'il fait au décor ; rien sans saisons marquées. */
     seasonAdjust(out, seed) {

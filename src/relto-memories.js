@@ -21,6 +21,7 @@ const LOOK = {
   mosaic: { wonders: ["mosaic"], grass: true }, ringed_ground: { wonders: ["ringed_ground"], trees: 4 }, drinking_roots: { wonders: ["drinking_roots"], wonderMetal: "gold", trees: 3 },
   living_mist: { wonders: ["living_mist"], fog: true }, day_aurora: { wonders: ["day_aurora"], auroras: true }, blooming_ice: { wonders: ["blooming_ice"], ice: true, world: "frozen" },
   rust_held_bridge: { wonders: ["rust_held_bridge"], ruins: ["bridge"] }, many_one: { wonders: ["many_one"], lava: true, world: "lava" }, early_echo: { wonders: ["early_echo"], world: "cavern", suns: 0, glow: true },
+  lingering_rain: { wonders: ["lingering_rain"], rain: true }, held_water: { wonders: ["held_water"], water: true }, /* 2.5 (F) */
   petal_rain: { petals: true, flowers: true, wind: true }, scented_mist: { scent: true, flowers: true, fog: true }, crystal_rain: { crystalRain: true },
   spore_cloud: { wind: true, fog: true }, glowvine: { glow: true, world: "jungle" }, lantern_moths: { moths: true, glow: true },
   cinderbloom: { lava: true, flowers: true }, ironwood: { trees: 4 }, humming_shard: { ruins: ["tablet"] }, singing_glass: { sand: true },

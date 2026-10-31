@@ -30,6 +30,8 @@ const COMPOSITES = [
   { id: "blooming_ice", en: "the blooming ice", fr: "la Glace qui fleurit", n: 20, d: ["crystalline", "blooming", "brief"], axis: "ecological", p: "it is not flowers in the ice: it is the ice that flowers; the frost grows into petals every night and is gone by noon" },
   { id: "rust_held_bridge", en: "what the rust holds", fr: "ce que tient la rouille", n: 21, d: ["rusted", "woven", "holding"], axis: "metaphysical", p: "the rust no longer eats the bridge, it holds it: the deck has fallen, but threads of rust have grown like a web and keep it in the air" },
   { id: "many_one", en: "the many-one", fr: "l'Un-plusieurs", n: 23, d: ["single", "turning", "coiled"], axis: "ecological", p: "the herd has become a single beast: every head turns at once, it parts and joins again, and at night it lies down in one spiral" },
+  { id: "lingering_rain", en: "the rain that stays", fr: "la Pluie qui reste", n: 28, d: ["hanging", "slow", "lit"], axis: "weather", p: "the rain does not finish falling: under so little weight and so thick an air, its sheets hang halfway down the sky and the light passes through them" }, /* 2.5 (F) : née de la physique (faible gravité, air épais) */
+  { id: "held_water", en: "the held water", fr: "l'Eau tenue", n: 29, d: ["held", "charged", "trembling"], axis: "weather", written: true, p: "the charged crystal holds the water up: it gathers in trembling sheets around the stone and does not fall" }, /* 2.5 (F) : face écrite, eau + cristal chargé */
   { id: "early_echo", en: "the early echo", fr: "l'Écho d'avance", n: 26, d: ["early", "muffled", "rolling"], axis: "weather", p: "under the vault the storm is heard before it happens: the thunder rolls, and only then does the lightning cross the rock" },
 ];
 const BY_ID = new Map(COMPOSITES.map((c) => [c.id, c]));
@@ -46,6 +48,7 @@ const REACTIONS = [
   { a: "moth", b: "heat", result: "scorched_moths", type: "decaying", cost: 0.03, verbs: ["singes them into"] }, /* un petit coût : assez pour que la symbiose ait quelque chose à nouer, pas assez pour faire tomber un Âge */
   ...METALS.flatMap((m) => FLORA.map((f) => ({ a: m, b: f, result: "tarnished_growth", type: "decaying", cost: 0.02, verbs: ["poisons its roots into"] }))),
   { a: "fog", b: "spore", result: "living_mist", type: "soothing", verbs: ["fills with life and becomes"] },
+  { a: "water", b: "charged_crystal", result: "held_water", type: "soothing", verbs: ["holds it up, and it becomes"] }, /* 2.5 (F) : l'Eau tenue */
 ];
 
 /** La face écrite (rappel de l'auteur, 22 oct.) : nés d'une paire qu'on écrit ; ils entrent aussi dans la chambre des souvenirs. */
@@ -54,7 +57,7 @@ const WRITTEN = [
   ["spore_cloud", "spore cloud", "le nuage de spores"], ["glowvine", "glowvine", "la liane lumineuse"], ["lantern_moths", "lantern moths", "les phalènes-lanternes"],
   ["cinderbloom", "cinderbloom", "la fleur de cendre"], ["ironwood", "ironwood", "le bois de fer"], ["humming_shard", "humming shard", "l'éclat qui bourdonne"],
   ["singing_glass", "singing glass", "le verre qui chante"], ["speaking_tablet", "speaking tablet", "la tablette qui parle"], ["charged_crystal", "charged crystal", "le cristal chargé"],
-  ["fulgurite", "fulgurite", "la fulgurite"], ["living_mist", "the living mist", "la Brume vivante"],
+  ["fulgurite", "fulgurite", "la fulgurite"], ["living_mist", "the living mist", "la Brume vivante"], ["held_water", "the held water", "l'Eau tenue"],
 ].map(([id, en, fr]) => ({ id, en, fr }));
 const WRITTEN_BY_ID = new Map(WRITTEN.map((w) => [w.id, w]));
 
@@ -85,10 +88,27 @@ function wondersOf(r) {
   for (const x of (r && r.resolved && r.resolved.matter && r.resolved.matter.reactions) || []) if (x && WRITTEN_BY_ID.has(x.result)) ids.add(x.result);
   return [...ids];
 }
+/** 2.5 (F) : la Pluie qui reste, née de la physique (loi 1, Équilibre ; loi 2, Couple) : de la pluie ou de la bruine écrite, sur un monde
+ *  où elle tombe trop lentement (gravité ≤ 0,6 g et air ≥ 2 bar). Renvoie ses piliers (ce qui, retiré, la fait tomber), ou null. */
+const LINGER = { g: 0.6, P: 2 };
+function lingeringOf(written, w, lines) {
+  if (!w || !(w.g <= LINGER.g) || !(w.P >= LINGER.P)) return null;
+  const rain = ["rain", "drizzle"].find((id) => written.has(id)); if (!rain) return null;
+  const L = (lines || []).map((l) => String(l).trim()), find = (re, ids) => L.find((l) => re.test(l)) || ids.find((id) => written.has(id)) || null;
+  const pillars = [rain, find(/^(mass|masse|radius|rayon)\s*[:=]/i, ["light_world"]), find(/^(atmosphere|atmosphère|pressure|pression)\s*[:=]/i, ["thick_air"])].filter(Boolean);
+  return { id: "lingering_rain", pillars };
+}
 /** Le métal qu'un composite « ce que les racines ont bu » a bu (pour la teinte), d'après l'union et ce qui est écrit. */
 function metalOf(u, present) {
   const m = [u && u.a, u && u.b].find((x) => METALS.includes(x)); if (m) return m;
   return METALS.find((x) => present && present.has && present.has(x)) || "iron";
 }
 
-module.exports = { COMPOSITES, BY_ID, DAMAGED, MATTER_BLOCKS, REACTIONS, METALS, FLORA, compositeOf, metalOf, nameOf, wondersOf, WRITTEN };
+/** 2.5 (F) : l'eau suspendue tient toujours sur le fil (décision de l'auteur, 31 oct.) : la phrase nomme ce qui la tient. */
+function threadNote(pillars, fr) {
+  const q = (x) => `« ${x} »`, list = pillars.map(q), last = list.pop(), names = list.length ? list.join(", ") + (fr ? " ou " : " or ") + last : last;
+  return fr ? `Il tient sur le fil : sans ${names}, l'eau tombe.` : `It holds by a thread: without ${names}, the water falls.`;
+}
+/** Les piliers de l'Eau tenue : l'eau et le cristal chargé, ou ce qui l'a fait (l'éclair et le cristal). */
+function heldPillars(written) { return ["water", ...(written.has("charged_crystal") ? ["charged_crystal"] : ["lightning", "crystal"].filter((id) => written.has(id)))]; }
+module.exports = { threadNote, heldPillars, LINGER, lingeringOf, COMPOSITES, BY_ID, DAMAGED, MATTER_BLOCKS, REACTIONS, METALS, FLORA, compositeOf, metalOf, nameOf, wondersOf, WRITTEN };

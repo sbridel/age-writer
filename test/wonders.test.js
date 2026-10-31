@@ -18,7 +18,7 @@ const PAIRS = [["water", "lava", "breathing_mirrors"], ["heavy_world", "light_wo
 for (const [a, b, id] of PAIRS) { ok(CAT.compositeOf({ a, b }) === id && CAT.compositeOf({ a: b, b: a }) === id, `${a} + ${b} → ${id}`); }
 ok(CAT.compositeOf({ a: "rain", b: "wind" }) === null, "une paire hors catalogue ne fait rien naître");
 for (const c of CAT.COMPOSITES) { const b = blockById.get(c.id); ok(b && b.writable === false && b.weight === 0 && b.descriptors.length === 3, `${c.id} : non écrivable, trois mots`); ok(c.en && c.fr, `${c.id} : un nom en anglais et en français`); }
-ok(CAT.COMPOSITES.length === 17, "17 composites (la revue du 22 oct.)");
+ok(CAT.COMPOSITES.length === 19, "19 composites (la revue du 22 oct., et l'eau suspendue de la 2.5)");
 // la face écrite : la Brume vivante se lit dans les réactions
 { const r = analyseAgeBase("single_sun\nfog\nspore", { seed: "Brume", draw: false }); ok((r.resolved.matter.reactions || []).some((x) => x.result === "living_mist"), "brume + spores → la Brume vivante (face écrite)"); ok(CAT.wondersOf(r).includes("living_mist"), "la Brume vivante est une merveille vue"); }
 // une union du catalogue : le composite apparaît dans l'analyse et la description
