@@ -260,7 +260,20 @@ function seasonAmplitude(Ts, tilt, P, waterFrac, locked) {
 /** Le mot des saisons : "none" (< 2 K), "mild" (< 8), "marked" (< 20), "extreme". */
 const seasonKind = (amp) => (amp < 2 ? "none" : amp < 8 ? "mild" : amp < 20 ? "marked" : "extreme");
 
-module.exports = { seasonAmplitude, seasonKind,
+/** 2.5 (C) : la forme du relief, lue dans l'intérieur, l'âge, l'air et l'eau (lois 5 et 12). Ce n'est pas le lieu (il vient de la marque),
+ *  c'est l'allure de ce qu'on voit : craters (ni air ni eau, rien n'use), young (jeune ou brûlant : arêtes, cônes), plates (les plaques bougent :
+ *  chaînes, rifts, îles), worn (vieux et froid : croupes et plateaux), carved (l'eau a eu le temps : vallées) ; null : rien de marqué. */
+function reliefOf(w) {
+  if (!w || !Number.isFinite(w.heat)) return null;
+  const P = Number.isFinite(w.P) ? w.P : 1, age = Number.isFinite(w.age) ? w.age : 4.5, liquid = w.water === "liquid";
+  if (P < 0.005 && !liquid) return "craters";
+  if (w.heat >= 2.5 || age < 1) return "young";
+  if (w.tectonics) return "plates";
+  if (age >= 5 && w.heat < 0.6) return "worn";
+  if (liquid && P >= 0.05 && age >= 1.5) return "carved";
+  return null;
+}
+module.exports = { reliefOf, seasonAmplitude, seasonKind,
   T_SUN, WATER_TRIPLE_BAR, HABITABLE, HEAT, clamp,
   starLuminosity, starRadius, starTemperature, starLifetime, brownDwarf, planckFraction, visibleRatio, uvRatio,
   insolation, distanceFor, orbitalPeriodDays, tidalLockTime,

@@ -4,7 +4,7 @@
  * `sheet(phys, lang)` → { rows: [[section, libellé, valeur]], facts: [phrases], tensions: [{ severity, why, fix[] }] }.
  */
 const R = require("./rules"), { REQUIREMENTS, ASSERTIONS, GLOBAL, HINTS } = R;
-const { HEAT, WATER_TRIPLE_BAR, FIELD_SHIELD } = require("./model");
+const { HEAT, WATER_TRIPLE_BAR, FIELD_SHIELD, reliefOf } = require("./model");
 
 /** Nombre lisible : 2 chiffres utiles sous 10, 1 sous 100, 0 au-delà ; virgule en français. */
 function fmt(lang) {
@@ -101,6 +101,12 @@ function facts(w, lang, f) {
     if (has(["spore", "lichen", "singing_lichen", "pale_fungus", "moss"])) push("Spores, mousses et lichens attendent la saison sans rien demander.", "Spores, mosses and lichens wait out the season and ask for nothing.");
     if (has(R.MIGRANTS) && has(R.STAYERS)) push("Les troupeaux descendent l'hiver ; d'autres restent, et le rôle tient toute l'année.", "The herds go down in winter; others stay, and the role holds all year.");
   }
+  { const rl = reliefOf(w); /* 2.5 (C) : le relief sort de l'intérieur */
+    if (rl === "craters") push("Ni air ni eau : rien n'use ce monde. Ses cratères restent, ses arêtes gardent leur tranchant.", "Neither air nor water: nothing wears this world down. Its craters stay, its ridges keep their edge.");
+    else if (rl === "young") push("Un monde jeune et chaud : ses montagnes ont des arêtes, ses volcans des cônes neufs.", "A young, hot world: its mountains have edges, its volcanoes fresh cones.");
+    else if (rl === "plates") push("Les plaques bougent : elles dressent des chaînes, ouvrent des rifts, font naître des îles.", "The plates move: they raise ranges, open rifts, give birth to islands.");
+    else if (rl === "worn") push("Un monde vieux et froid : ses montagnes se sont usées en croupes et en plateaux.", "An old, cold world: its mountains have worn down to rounded hills and plateaus.");
+    else if (rl === "carved") push("L'eau a eu le temps : elle a creusé des vallées.", "Water has had time: it has carved valleys."); }
   if (w.g > 1.5) push(`Sous ${f(w.g)} g, les montagnes restent basses et les êtres trapus.`, `Under ${f(w.g)} g, mountains stay low and creatures squat.`);
   if (w.g < 0.5) push(`Sous ${f(w.g)} g, les montagnes s'élèvent haut et les pas sont longs.`, `Under ${f(w.g)} g, mountains rise tall and strides are long.`);
   return out;

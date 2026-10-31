@@ -9,6 +9,7 @@
  *   paint(ctx, model, t)    → dessine l'image à la phase t (0..1, boucle de 8 s)
  */
 const { rng, fnv, clamp, lerp, smooth, frac } = require("./util");
+const PM = require("./physics/model"); /* 2.5 (C) : la forme du relief */
 const SKY = require("./sky");
 const WT = require("./wealth"), AM = require("./amounts"), SEA = require("./sea"), TERRAIN = require("./terrain");
 const { crevasse } = require("./crevasse");
@@ -43,7 +44,7 @@ function viewOf(S, ids, wd) {
   const slope = !sea && (relief || S.terrain === "hills" || S.alive || S.sand || S.ice);
   /* le lieu est tiré d'abord, sans regarder le monde : une ligne ajoutée qui ne contredit rien ne déplace pas le point de liaison (un Livre descriptif
      peut recevoir des ajouts tant qu'ils ne contredisent pas le texte) ; seul ce qui rend ce lieu impossible le fait changer, pour le plus proche possible */
-  const W8 = [["plain", 28], ["low", 18], ["high", 18], ["slope", 10], ["cover", 16], ["cave", 10]], ok = { plain: true, low: true, high: relief, slope, cover, cave };
+  const W8 = [["plain", 28], ["low", 18], ["high", 18], ["slope", 10], ["cover", 16], ["cave", 10]], ok = { plain: true, low: true, high: relief && !(S.phys && S.phys.relief === "worn" && !S.terrain), slope, cover, cave }; /* 2.5 (C) : un monde vieux et usé n'a pas de surplomb, sauf s'il écrit son relief */
   let x = q() * 100, want = "plain"; for (const [k, v] of W8) { if (x < v) { want = k; break; } x -= v; }
   const r2 = q(), r3 = q(), r4 = q(), r5 = q(), r6 = q(); /* toujours tirés, dans le même ordre : le reste du lieu ne bouge pas */
   const NEXT = { high: ["slope", "low"], slope: ["high", "plain"], cover: ["plain"], cave: ["cover", "plain"], plain: [], low: [] };
@@ -189,7 +190,7 @@ function physLook(w, cycleWritten) {
   const disc = clamp((Math.sqrt(Math.max(1e-6, L)) / Math.pow(T0 / 5772, 2)) / a, 0.45, 3); // rayon angulaire relatif au Soleil vu de la Terre
   return {
     sunRGB: brown ? [] : temps.slice(0, 2).map(blackbody), disc, P: Math.max(0, w.P), g: Number.isFinite(w.g) ? w.g : 1,
-    coriolis: Number.isFinite(w.coriolis) ? w.coriolis : 1, /* ESSAI : Coriolis */ locked: !!w.locked, light: Number.isFinite(w.light) ? w.light : 1, Ts: Number.isFinite(w.Ts) ? w.Ts : 288, cycleWritten: !!cycleWritten, T: brown ? 0 : T0, T2: brown ? 0 : temps[1] || 0,
+    coriolis: Number.isFinite(w.coriolis) ? w.coriolis : 1, /* ESSAI : Coriolis */ relief: PM.reliefOf(w), carve: w.water === "liquid" && w.P >= 0.05 && w.age >= 1.5, /* 2.5 (C) : la forme du relief ; les plaques gardent aussi leurs vallées quand l'eau a eu le temps */ locked: !!w.locked, light: Number.isFinite(w.light) ? w.light : 1, Ts: Number.isFinite(w.Ts) ? w.Ts : 288, cycleWritten: !!cycleWritten, T: brown ? 0 : T0, T2: brown ? 0 : temps[1] || 0,
   };
 }
 
@@ -278,6 +279,7 @@ function build(S, W, H) {
     return { xs, d };
   });
   restyleRidges(S, ridges, W, H, hz); /* les crêtes suivent le monde (tirage à part) */
+  const craters = reliefRidges(S, ridges, W, H, hz); /* 2.5 (C) : leur forme suit l'intérieur, l'âge, l'air et l'eau (tirage à part) */
   const cones = [];
   if (S.lava) for (let i = 0, n = 1 + Math.floor(r() * 2); i < n; i++) cones.push({ x: W * (0.15 + 0.7 * r()), h: H * (0.2 + 0.14 * r()), w: W * (0.12 + 0.08 * r()) });
   if (cones.length && S.view && S.view.kind !== "plain") cones[0].x = W * (0.5 - S.view.side * (0.16 + 0.08 * S.view.pts[0])); /* ESSAI : le sujet sur un tiers, à l'opposé du cadre */
@@ -329,7 +331,7 @@ function build(S, W, H) {
   const cave = S.world === "cavern" ? buildCave(S, W, H, hz) : null; // la voûte : graine propre, les autres mondes ne bougent pas
   const qf = rng((S.seed ^ 0xa16ae) >>> 0), fedGlow = S.fed ? Array.from({ length: 16 }, () => ({ x: W * qf(), y: hz + (H - hz) * (0.08 + 0.8 * qf()), r: H * (0.02 + 0.04 * qf()), p: qf() })) : null; /* graine propre */
   const won = WON.buildWonders(S, W, H, hz); /* les merveilles : graine propre, un Âge sans merveille ne bouge pas */
-  return { wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
+  return { craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
 }
 
 /**
@@ -459,6 +461,30 @@ function detKindOf(S) { const q = rng((S.seed ^ 0xde7a11) >>> 0), tot = Object.v
 function cloudStyleOf(S, L) { if (S.storm || S.rain || (L && (L.rain > 0.3 || L.storm > 0.1))) return "cumulus"; const q = rng((S.seed ^ 0xc10d) >>> 0), x = q(); return x < 0.18 ? "none" : x < 0.45 ? "cumulus" : x < 0.65 ? "cirrus" : x < 0.82 ? (S.terrain === "mountains" || S.ice ? "lenticular" : "stratus") : "stratus"; }
 /** les crêtes du fond suivent le monde : pitons (craie), tables (basalte), dômes (granite), volcans (lave), pics (glace), collines rondes (terre, forêt), horizon presque plat (sel, mer). */
 function ridgeStyleOf(S) { if (S.terrain === "canyon") return "canyon"; const q = rng((S.seed ^ 0x2c0e) >>> 0)(); return S.rock === "basalt" ? "tables" : S.rock === "granite" ? "domes" : S.soil === "chalk" ? "karst" : S.lava ? "volcano" : S.ice || S.world === "frozen" ? "glacier" : S.soil === "earth" || S.soil === "forest" ? "rolling" : S.soil === "salt" ? "flat" : S.soil === "stone" ? (q < 0.34 ? "cuesta" : q < 0.67 ? "buttes" : null) : S.sand || S.world === "desert" ? "erg" : S.water && S.waterGround !== false ? (q < 0.55 ? "coast" : "flat") : null; }
+/** 2.5 (C) : le relief sort de l'intérieur. Le sol choisit le style des crêtes (`ridgeStyleOf`) ; la physique en règle l'allure.
+ *  Tirage à part : rien d'autre ne bouge dans l'image. Renvoie les cratères du sol (monde sans air ni eau), ou null. */
+function reliefRidges(S, ridges, W, H, hz) {
+  const kind = S.phys && S.phys.relief; if (!kind || !ridges.length) return null;
+  const q = rng((S.seed ^ 0x2e11ef) >>> 0), style = ridgeStyleOf(S), soft = style === "erg"; /* les dunes suivent le vent, pas l'intérieur */
+  for (const rg of ridges) { const xs = rg.xs, n = xs.length, lo = Math.max(...xs), hi = Math.min(...xs), amp = Math.max(4, lo - hi), v = (k) => (lo - xs[k]) / amp;
+    if (kind === "young" && !soft) for (let k = 0; k < n; k++) xs[k] = lo - Math.pow(v(k), 1.6) * amp * 1.4; /* des arêtes : les pics montent, les cols se creusent */
+    else if (kind === "plates" && !soft) for (let k = 0; k < n; k++) xs[k] = lo - Math.pow(v(k), 1.25) * amp * (1.35 + 0.2 * (1 - rg.d)); /* des chaînes plus hautes, plus nettes */
+    else if (kind === "worn") { const w = Math.max(4, Math.round(n / 9)), sm = xs.map((_, k) => { let a = 0, c = 0; for (let j = k - w; j <= k + w; j++) if (j >= 0 && j < n) { a += xs[j]; c++; } return a / c; }); const slo = Math.max(...sm), sa = Math.max(1, slo - Math.min(...sm)); for (let k = 0; k < n; k++) { const u = Math.min(0.66, (slo - sm[k]) / sa); xs[k] = lo - u * amp * 0.52; } } /* des croupes usées, des plateaux aux sommets tranchés */
+    if ((kind === "carved" || (kind === "plates" && S.phys.carve)) && !soft) { const N = 1 + Math.floor(q() * 2); for (let j = 0; j < N; j++) { const c = (0.15 + 0.7 * q()) * n, w = n * (0.07 + 0.06 * q()); for (let k = 0; k < n; k++) { const u = Math.abs(k - c) / w; if (u < 1) xs[k] = lo - (lo - xs[k]) * (0.08 + 0.92 * Math.pow(u, 1.2)); } } } /* des vallées en V entaillées dans les crêtes */
+    else if (kind === "craters") { for (let k = 0; k < n; k++) xs[k] = lo - Math.pow(v(k), 1.3) * amp; const N = 1 + Math.floor(q() * 2); for (let j = 0; j < N; j++) { const c = q() * n, w = n * (0.06 + 0.06 * q()), rim = amp * (0.25 + 0.2 * q()); for (let k = 0; k < n; k++) { const u = Math.abs(k - c) / w; if (u < 1.35) { const r = rim * Math.exp(-Math.pow((u - 1) / 0.18, 2)), bowl = u < 1 ? rim * 0.5 * (1 - u * u) : 0; xs[k] = Math.min(lo, xs[k] - r + bowl); } } } } /* des remparts de cratères, nets */
+  }
+  if (kind === "plates" && S.waterGround && !S.shore) { const rg = ridges[0], n = rg.xs.length, lo = Math.max(...rg.xs); for (let j = 0, N = 1 + Math.floor(q() * 2); j < N; j++) { const c = (0.1 + 0.8 * q()) * n, w = n * (0.03 + 0.03 * q()), h = H * (0.03 + 0.03 * q()); for (let k = 0; k < n; k++) { const u = Math.abs(k - c) / w; if (u < 1) rg.xs[k] = Math.min(rg.xs[k], lo - h * (1 - u) * (u < 0.12 ? 0.92 : 1)); } } } /* des îles volcaniques au large */
+  if (kind !== "craters") return null;
+  return Array.from({ length: 4 + Math.floor(q() * 4) }, () => ({ u: q(), v: q(), s: 0.4 + q() * 0.9 })); /* les cratères du sol, en perspective */
+}
+/** Les cratères au sol : une cuvette sombre, son rempart éclairé du côté du soleil. */
+function craterGround(g, m, day, night) {
+  const { W, H, hz } = m; if (!m.craters) return; const D = H - hz;
+  for (const c of m.craters) { const y = hz + D * (0.12 + 0.75 * c.v * c.v), k = (y - hz) / D, rx = W * (0.03 + 0.07 * c.s) * (0.3 + 0.9 * k), ry = rx * (0.18 + 0.12 * k), x = W * (0.06 + 0.88 * c.u);
+    g.fillStyle = css([0, 0, 0], 0.3 * (0.5 + 0.5 * day)); g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, TAU); g.fill();
+    g.strokeStyle = css([255, 245, 230], (0.18 + 0.25 * day) * (1 - 0.7 * night)); g.lineWidth = Math.max(0.8, rx * 0.06); g.beginPath(); g.ellipse(x, y, rx, ry, 0, Math.PI * 1.05, Math.PI * 1.95); g.stroke();
+    g.strokeStyle = css([0, 0, 0], 0.25); g.beginPath(); g.ellipse(x, y + ry * 0.12, rx * 0.98, ry, 0, Math.PI * 0.05, Math.PI * 0.95); g.stroke(); }
+}
 function restyleRidges(S, ridges, W, H, hz) {
   const style = ridgeStyleOf(S); if (!style) return; const q = rng((S.seed ^ 0x51d6e) >>> 0); if (style === "flat" && q() < 0.35) return;
   for (const rg of ridges) { const xs = rg.xs, n = xs.length, lo = Math.max(...xs), hi = Math.min(...xs), amp = Math.max(4, lo - hi), ph = q() * 6;
@@ -885,6 +911,7 @@ function paint(g, m, t, o = {}) {
  /* les formes des sols */
   }
   midRelief(g, m, t, day, night, hzc); /* le relief du milieu, selon le sol (loi 7), avec ou sans rive */
+  craterGround(g, m, day, night); /* 2.5 (C) : un monde sans air ni eau garde ses cratères */
   if (S.suns === 0 && S.world !== "cavern" && m.night) darkLight(g, m, t, hzc);
   if (m._moonlight && night > 0.3) { const ml = Math.min(1, m._moonlight) * (night - 0.3) / 0.7, gg = g.createLinearGradient(0, hz, 0, H); gg.addColorStop(0, css([180, 196, 232], 0.2 * ml)); gg.addColorStop(1, css([180, 196, 232], 0.06 * ml)); g.fillStyle = gg; g.fillRect(0, hz, W, H - hz); } /* ESSAI : une nuit de pleine lune éclaire le sol d'une lumière froide */
   m._moonlight = 0; /* ESSAI : un monde sans soleil montre ce qui l'éclaire */
