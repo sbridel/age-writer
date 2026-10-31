@@ -48,7 +48,7 @@ function viewOf(S, ids, wd) {
   const r2 = q(), r3 = q(), r4 = q(), r5 = q(), r6 = q(); /* toujours tirés, dans le même ordre : le reste du lieu ne bouge pas */
   const NEXT = { high: ["slope", "low"], slope: ["high", "plain"], cover: ["plain"], cave: ["cover", "plain"], plain: [], low: [] };
   let kind = ok[want] ? want : (NEXT[want].find((k) => ok[k]) || "plain");
-  if (has("cave_fissure") && cave && r6 < 0.55) kind = "cave"; /* la fissure du retour est au fond d'une caverne : on y arrive */
+  if (has("cave_fissure") && cave && r6 < 0.3) kind = "cave"; /* la fissure du retour est au fond d'une caverne : on y arrive (une fois sur trois : 2.5, la grotte pesait 16 % des fenêtres, 11 % maintenant) */
   const span = { low: [0.76, 0.12], high: [0.42, 0.16], cave: [0.55, 0.17], cover: [0.62, 0.14], slope: [0.52, 0.2], plain: [0.6, 0.16] }[kind], hz = span[0] + span[1] * r2; /* des plages larges : deux vues du même genre se ressemblent moins */
   const near = kind === "plain" && !sea && r3 < 0.35 ? (S.trees > 0 ? "trunk" : S.ruins.length ? "column" : "boulder") : null; /* de plain-pied, parfois un élément du monde tout proche */
   void r4; void r5;
@@ -601,6 +601,56 @@ function suns(m, t, season = 0) {
   return out;
 }
 
+/* 2.5, « ce que le cadre ne montre pas » : quand le soleil n'est pas dans l'image, la lumière dit où il est.
+   Au-dessus du cadre : une lueur au bord haut, du côté où il est. Dans le dos (face au pôle à midi, au levant le soir, au couchant le matin) :
+   l'horizon d'en face s'éclaire, le sol est pris de face, et ce qui cadre la vue (tronc, pilier, lèvre de roche) porte son ombre devant soi. */
+function sunWhere(m, sn) {
+  const { W, H } = m, out = [];
+  for (const s of sn) { if (s.e <= 0.02) continue;
+    if (s.x < 0 && s.x <= -W * 0.5) out.push({ s, where: "behind", k: 1 });
+    else if (s.y <= -H * 0.6) out.push({ s, where: "behind", k: clamp((-s.y - H * 0.6) / (H * 0.3)) });
+    else if (s.y < -s.r) out.push({ s, where: "above", k: clamp(1 + (s.y + s.r) / (H * 0.6)) });
+  }
+  return out;
+}
+function sunSignSky(g, m, sn, day, hzc, hues) {
+  const { W, H, hz } = m, warm = hues[0] ? mixc(hues[0], [255, 255, 255], 0.4) : [255, 232, 190];
+  for (const { s, where, k } of sunWhere(m, sn)) {
+    if (where === "above") { /* la lueur au bord haut, centrée sur lui */
+      const gl = g.createRadialGradient(s.x, 0, 0, s.x, 0, H * 0.8); const lum = clamp(s.e * 1.6) * (1 - 0.5 * (1 - day)); gl.addColorStop(0, css(warm, 0.85 * k * lum)); gl.addColorStop(0.35, css(warm, 0.4 * k * lum)); gl.addColorStop(1, css(warm, 0)); g.fillStyle = gl; g.fillRect(0, 0, W, hz);
+      const rim = g.createLinearGradient(0, 0, 0, H * 0.14); rim.addColorStop(0, css(mixc(warm, [255, 255, 255], 0.6), 0.7 * k * lum)); rim.addColorStop(1, css(warm, 0)); g.fillStyle = rim; g.fillRect(Math.max(0, s.x - W * 0.6), 0, W * 1.2, H * 0.14);
+    } else { /* dans le dos : l'horizon d'en face est pris de face, clair et chaud */
+      const hg = g.createLinearGradient(0, hz - H * 0.3, 0, hz); hg.addColorStop(0, css(warm, 0)); hg.addColorStop(1, css(mixc(warm, hzc, 0.2), 0.6 * k * clamp(s.e * 1.6))); g.fillStyle = hg; g.fillRect(0, hz - H * 0.3, W, H * 0.3);
+    }
+  }
+}
+/* 2.5 : la lune hors cadre, la nuit : la même lueur que le soleil, froide et faible, selon sa phase */
+function moonSignSky(g, m, night) {
+  const { W, H, hz } = m; if (night < 0.3 || !m._moonOff || !m._moonOff.length) return; const nk = (night - 0.3) / 0.7;
+  for (const { s, where, k } of sunWhere(m, m._moonOff)) {
+    const c = mixc(s.tint || [220, 226, 240], [255, 255, 255], 0.3), a = k * nk * (0.2 + 0.8 * s.lit) * clamp(s.e * 1.6);
+    if (a < 0.01) continue;
+    if (where === "above") { const gl = g.createRadialGradient(s.x, 0, 0, s.x, 0, H * 0.6); gl.addColorStop(0, css(c, 0.55 * a)); gl.addColorStop(0.4, css(c, 0.22 * a)); gl.addColorStop(1, css(c, 0)); g.fillStyle = gl; g.fillRect(0, 0, W, hz); }
+    else { const hg = g.createLinearGradient(0, hz - H * 0.25, 0, hz); hg.addColorStop(0, css(c, 0)); hg.addColorStop(1, css(c, 0.38 * a)); g.fillStyle = hg; g.fillRect(0, hz - H * 0.25, W, H * 0.25); }
+  }
+}
+function sunSignGround(g, m, sn, day, night, hzc) {
+  const { W, H, hz, S } = m, V = S.view || {}, P = V.pts || [], sd = V.side || 1, X = (x) => (sd < 0 ? x : W - x), hues = S.sunHues || [], warm = hues[0] ? mixc(hues[0], [255, 255, 255], 0.4) : [255, 232, 190];
+  for (const { s, where, k } of sunWhere(m, sn)) {
+    if (where !== "behind") continue; const a = k * clamp(s.e * 1.6) * (1 - 0.7 * night); if (a < 0.01) continue;
+    /* le sol pris de face : plus clair devant, la lumière vient de derrière nous */
+    const lg = g.createLinearGradient(0, H, 0, hz); lg.addColorStop(0, css(warm, 0.3 * a)); lg.addColorStop(1, css(warm, 0)); g.fillStyle = lg; g.fillRect(0, hz, W, H - hz);
+    const vp = [W * 0.5, hz + (H - hz) * 0.08], wedge = (x0, x1, len = 1) => { const sh = g.createLinearGradient(0, H, 0, vp[1]); sh.addColorStop(0, css([6, 6, 14], 0.5 * a)); sh.addColorStop(Math.min(1, 0.55 * len), css([6, 6, 14], 0.18 * a)); sh.addColorStop(Math.min(1, 0.9 * len), css([6, 6, 14], 0)); g.fillStyle = sh; g.beginPath(); g.moveTo(x0, H + 2); g.lineTo(x1, H + 2); g.lineTo(vp[0] + (x1 - vp[0]) * 0.08, vp[1]); g.lineTo(vp[0] + (x0 - vp[0]) * 0.08, vp[1]); g.closePath(); g.fill(); };
+    if (V.near === "trunk") { const x = W * (0.05 + 0.1 * P[0]), w = W * (0.06 + 0.07 * P[1]); wedge(X(x - w * 1.0), X(x + w * 1.1), 0.9); }
+    else if (V.near === "column") { const x = W * (0.06 + 0.12 * P[0]), w = W * (0.05 + 0.05 * P[1]); wedge(X(x - w * 0.6), X(x + w * 0.6), 0.8); }
+    else if (V.near === "boulder") { const cx = W * (0.06 + 0.14 * P[0]), rx = W * (0.14 + 0.14 * P[1]); wedge(X(cx - rx), X(cx + rx), 0.5); }
+    else if (V.kind === "cover" && V.frame === "trees") { const w1 = W * (0.07 + 0.03 * P[0]), x1 = W * (0.06 + 0.06 * P[1]), w2 = W * (0.03 + 0.02 * P[2]), x2 = x1 + W * (0.14 + 0.06 * P[3]); wedge(X(x1 - w1 / 2), X(x1 + w1 / 2), 0.9); wedge(X(x2 - w2 / 2), X(x2 + w2 / 2), 0.9); }
+    else if (V.kind === "cover") { const pw = W * (0.12 + 0.05 * P[0]); wedge(X(0), X(pw + W * 0.02), 1); }
+    else if (V.kind === "high") { const y0 = H * (0.84 + 0.05 * P[0]); const sh = g.createLinearGradient(0, y0 - H * 0.02, 0, y0 - H * 0.22); sh.addColorStop(0, css([6, 6, 14], 0.78 * a)); sh.addColorStop(1, css([6, 6, 14], 0)); g.fillStyle = sh; g.fillRect(0, y0 - H * 0.22, W, H * 0.22); } /* la lèvre de roche porte son ombre sur la vallée */
+    else if (V.kind === "cave") { const lg2 = g.createLinearGradient(0, H, 0, hz); lg2.addColorStop(0, css(warm, 0.4 * a)); lg2.addColorStop(1, css(warm, 0)); g.fillStyle = lg2; g.fillRect(0, hz, W, H - hz); } /* la lumière entre dans la grotte avec nous */
+  }
+}
+
 // ---- dessin ----------------------------------------------------------------------------------------
 /**
  * La lumière du ciel à l'instant `t` : soleils, hauteur du jour, couleurs du zénith et de l'horizon, air mince ou épais.
@@ -739,11 +789,12 @@ function paint(g, m, t, o = {}) {
     g.strokeStyle = css([255, 255, 255], 0.8 * (1 - k)); g.lineWidth = 1.3; g.beginPath(); g.moveTo(x + k * W * 0.28, y + k * H * 0.24); g.lineTo(x + k * W * 0.28 - H * 0.18, y + k * H * 0.24 - H * 0.13); g.stroke();
   }
   // lune
+  m._moonOff = [];
   for (const [mi, mo] of ((m.night && m.night.moons) || []).entries()) { // les lunes : chacune sa taille, sa teinte, sa phase et son pas
     const rad = mo.r; let mp = null;
     if (S.cycle === "frozen") { const fz = rng((S.seed ^ 0x10c4) >>> 0); fz(); const sfx = 0.25 + 0.5 * fz(), mx = 0.1 + 0.8 * frac(sfx - 0.1 + 0.5 + mo.off * 0.3 + mi * 0.12); mp = { x: W * mx, y: H * mo.fy }; } // à l'opposé du soleil immobile else { const p = frac(td * mo.sp - 0.6 + mo.off); if (p <= 0.7) { const q = p / 0.7; mp = { x: W * (0.06 + 0.88 * q), y: hz - Math.sin(Math.PI * q) * (hz - H * (0.2 + 0.1 * mo.off)) }; } }
     if (S.cycle !== "frozen" && S.cycle !== "erratic") { /* ESSAI : la phase suit les jours de l'Âge ; la lune se lève d'autant plus tard qu'elle est vieille */
-      const td = k0.td, ph = moonPhase(S, mo, mi, td), mtop = H * (0.14 + 0.06 * mi); mp = skyPath(m, frac(td - ph), mtop); mo._ph = ph;
+      const td = k0.td, ph = moonPhase(S, mo, mi, td), mtop = H * (0.14 + 0.06 * mi); mp = skyPath(m, frac(td - ph), mtop); mo._ph = ph; if (mp) m._moonOff.push({ x: mp.x, y: mp.y, e: mp.e, r: rad, lit: (1 - Math.cos(TAU * ph)) / 2, tint: mo.tint }); /* 2.5 : où est la lune, pour son signe hors cadre */
       if (mp) { const sp = skyPath(m, frac(td), H * 0.14), sx = sp ? sp.x : W * 0.5, sy = sp ? sp.y : H * 1.6, ang = Math.atan2(sy - mp.y, sx - mp.x), c = Math.cos(TAU * ph); /* le côté éclairé regarde le soleil */
         g.fillStyle = css(mixc(mo.tint, [10, 12, 20], 0.82), 0.85); g.beginPath(); g.arc(mp.x, mp.y, rad, 0, TAU); g.fill(); /* la part sombre, à peine visible */
         if (c < 0.98) { g.save(); g.translate(mp.x, mp.y); g.rotate(ang); g.fillStyle = css(mo.tint); g.beginPath(); g.arc(0, 0, rad, -Math.PI / 2, Math.PI / 2, false); g.ellipse(0, 0, rad * Math.abs(c), rad, 0, Math.PI / 2, -Math.PI / 2, c > 0); g.closePath(); g.fill(); g.restore(); }
@@ -777,6 +828,8 @@ function paint(g, m, t, o = {}) {
   }
   // soleils (sous un anneau : déjà peints, derrière lui)
   if (!S.loop) drawSuns();
+  sunSignSky(g, m, sn, day, hzc, hues); /* 2.5 : le signe du soleil hors cadre */
+  moonSignSky(g, m, night); /* 2.5 : et de la lune, la nuit */
   const s0 = sn.find((s) => s.i === 0);
   if (S.eclipses && s0) { g.fillStyle = "#05060a"; g.beginPath(); g.arc(s0.x + s0.r * 2.4 * Math.cos(TAU * t), s0.y + s0.r * 0.15 * Math.sin(TAU * t), s0.r * 1.02, 0, TAU); g.fill(); }
   skyBodies(g, m, cs, day, hzc, sn);
@@ -856,6 +909,7 @@ function paint(g, m, t, o = {}) {
   WON.wonderPass(g, m, t, "air", k0);
   scarPass(g, m, () => { scarAir(g, m, t); scarHeld(g, m, t); });
   weather(g, m, t);
+  sunSignGround(g, m, sn, day, night, hzc); /* 2.5 : l'ombre de ce qui cadre, quand le soleil est dans le dos */
   const framed = S.view && ((S.view.kind !== "plain" && S.view.kind !== "low") || S.view.near);
   if (framed) { if (S.ice) frost(g, m, t, night); viewFrame(g, m, t, hzc, day, night); } /* ESSAI : le point de liaison cadre la vue (le givre est dehors, pas sur la roche) */
   else { const lf = ['leaves', 'vines', 'tallgrass', 'branches'].includes(m.fg.kind) && (metalFilter(S) || (m.fg.kind !== 'branches' && leafFilter(S))); if (lf) { g.save(); g.filter = lf; } foreground(g, m, t, hzc); if (lf) g.restore(); if (S.ice) frost(g, m, t, night); }
@@ -2321,4 +2375,4 @@ Object.assign(ART, {
   aeroplankton: { layer: "air", draw(g, m, t, e) { const { W, H, hz } = m; for (const it of e.items) for (let k = 0; k < 6; k++) { const x = (it.x + k * 41) % W, y = hz - H * (0.05 + 0.3 * frac(it.y + k * 0.17)); g.fillStyle = css([220, 240, 255], 0.2 + 0.4 * Math.max(0, Math.sin(TAU * t * 2 + k + it.p))); g.fillRect(x, y, 1, 1); } } },
 });
 
-module.exports = { buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
+module.exports = { sunWhere, viewOfForTest: viewOf, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
