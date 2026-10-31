@@ -373,6 +373,7 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random)) {
     if (presence) sentences.push(capitalize(presence) + ".");
   }
   for (const x of resolved.excess || []) sentences.push(capitalize(x.prose) + "."); // un bloc écrit en grande quantité (`many: X`, src/amounts.js)
+  for (const x of resolved.readings || []) sentences.push(capitalize(x) + "."); // 2.5 (E) : la lecture du monde qui mûrit avec le temps (src/succession.js)
   // ce qui ne réagit pas : par petits groupes, pas une phrase chacun
   const groups = [];
   for (let i = 0; i < loose.length;) {

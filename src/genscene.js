@@ -126,6 +126,7 @@ function sceneOf(a, name = "", blocks = null) {
   // météo vivante : sources de chaque temps, parents de chaque produit (un orage né d'une pluie programmée vient et part avec elle), graine du tirage
   // les merveilles : nées d'une union (a.composites) ou écrites (la Brume vivante)
   S.fed = !!(a.life && Array.isArray(a.life.notes) && a.life.notes.some((x) => x.id === "fedPellet")); /* le granulé écrit qui nourrit (loi de la vie) avive les algues lumineuses de l'eau */
+  if (a.succession) { const sc = a.succession; S.succ = sc; if (sc.kind === "regime") S.fire = sc.burning; if (sc.kind === "bare" && sc.t > 0) S.alive = true; } /* 2.5 (E) : la succession (src/succession.js) */
   S.wonders = [...new Set([...((a.composites || []).map((c) => c.id)), ...(ids.has("living_mist") ? ["living_mist"] : []), ...(ids.has("held_water") ? ["held_water"] : [])])]; /* 2.5 (F) : l'Eau tenue, face écrite */
   S.tarnished = ids.has("tarnished_growth") && !S.wonders.includes("drinking_roots"); /* ESSAI : la végétation ternie, le métal qui empoisonne */
   if (S.wonders.includes("drinking_roots")) { const u = (a.composites || []).find((c) => c.id === "drinking_roots"); S.wonderMetal = CAT.metalOf(u, ids); }
@@ -919,7 +920,8 @@ function paint(g, m, t, o = {}) {
   WON.wonderPass(g, m, t, "relief", k0); /* ESSAI : ce qui se dessine par-dessus le relief du milieu (l'Inachevé) */
   const offW = offWater(g, m); /* ESSAI : rien ne pousse sur la rivière ni sur l'étang */
   if (S.primeval) primeval(g, m, t, day, night); /* un monde trop jeune pour les arbres : des Prototaxites */
-  else if (S.alive && !S.trees) lowFlora(g, m, t, day, night); /* la flore basse du climat, pour les Âges vivants sans arbres */
+  else if (S.alive && !S.trees && !(S.succ && S.succ.kind === "bare")) lowFlora(g, m, t, day, night); /* la flore basse du climat, pour les Âges vivants sans arbres */
+  if (S.succ) succession(g, m, t, day, night); /* 2.5 (E) : le sol nu qui se couvre, le brûlé qui gagne */
   if (S.columns || S.rock === "basalt" || (S.extras || []).some((e) => e.id === "basalt")) basaltColumns(g, m, t, day, night, hzc); /* l'escarpement d'orgues, au loin (aussi au bord de la mer) */
   if (m.meadow) { const lf = metalFilter(S) || leafFilter(S); if (lf) { g.save(); g.filter = lf; } meadowGround(g, m, t, night, L, hzc); if (lf) g.restore(); }
   scarPass(g, m, () => scarGround(g, m, t, night));
@@ -1183,6 +1185,18 @@ function primeval(g, m, t, day, night) {
 }
 /** la flore basse d'un monde vivant sans arbres, selon son climat (loi 7) : cactus, lichen et mousse, toundra, herbiers, salicornes, prairie, touffes de braise. */
 function floraKindOf(S) { return S.lit === false ? "pale" : S.lava ? "cinder" : S.sand || S.world === "desert" ? "cactus" : S.ice || S.world === "frozen" ? "tundra" : S.soil === "salt" ? "salicorn" : S.water && S.waterGround !== false && !S.shore ? "seagrass" : S.soil === "chalk" ? "poppies" : S.soil === "stone" || S.rock ? "lichen" : "scrub"; }
+/** 2.5 (E) : ce que la succession pose au sol. Le sol nu : lichen, puis mousse, puis herbe, de plus en plus dense ; le brûlé qui gagne : des plaques de cendre. */
+function succession(g, m, t, day, night) {
+  const { W, H, hz, S } = m, sc = S.succ, q = rng((S.seed ^ 0x5ecce) >>> 0), amb = (0.3 + 0.7 * day) * (1 - 0.3 * night), C = (c, a) => css(mixc([5, 6, 12], c, amb), a), D = H - hz;
+  if (sc.spread > 0) for (let k = 0, n = Math.round(4 + 14 * sc.spread); k < n; k++) { const z = 1.1 + q() * 4, y = hz + D / z, x = q() * W, r = (W * 0.05 * (0.6 + q())) / z; g.fillStyle = C([40, 36, 34], 0.85); g.beginPath(); g.ellipse(x, y, r * 2.6, r * 0.5, 0, 0, TAU); g.fill(); g.fillStyle = C([150, 144, 136], 0.55); g.beginPath(); g.ellipse(x + r * 0.4, y - r * 0.1, r * 0.7, r * 0.15, 0, 0, TAU); g.fill(); }
+  if (sc.kind !== "bare" || !(sc.t > 0)) return;
+  const n = Math.round(10 + 50 * sc.t), lichen = [[150, 158, 120], [196, 150, 80]], moss = [[64, 102, 52], [84, 124, 60]], reach = sc.stage === "lichen" ? 0 : sc.stage === "moss" ? 1 : 2;
+  for (let k = 0; k < n; k++) { const z = 1.1 + q() * 4.5, y = hz + D / z, x = q() * W, kk = 3.4 / z, f = Math.min(reach, Math.floor(q() * (reach + 1)));
+    if (f === 0) { g.fillStyle = C(lichen[k % 2], 0.85); for (let j = 0; j < 4; j++) { g.beginPath(); g.ellipse(x + (j - 1.5) * 4 * kk, y - 0.4, 3.6 * kk, 1.5 * kk, 0, 0, TAU); g.fill(); } continue; } /* le lichen, en croûtes grises et rousses */
+    if (f === 1) { g.fillStyle = C(moss[k % 2], 0.95); g.beginPath(); g.ellipse(x, y - 1.5 * kk, 9 * kk, 4 * kk, 0, Math.PI, TAU); g.fill(); continue; } /* la mousse, en coussins */
+    g.strokeStyle = C([96, 140, 64], 0.9); g.lineWidth = Math.max(0.6, 0.7 * kk); for (let j = 0; j < 5; j++) { const sw = Math.sin(TAU * t * 0.4 + j + x) * 1.2 * kk; g.beginPath(); g.moveTo(x + (j - 2) * 1.6 * kk, y); g.lineTo(x + (j - 2) * 2.4 * kk + sw, y - (8 + (j % 2) * 4) * kk); g.stroke(); } /* l'herbe, en touffes */
+  }
+}
 function lowFlora(g, m, t, day, night) {
   const { W, H, hz, S } = m, kind = floraKindOf(S), q = rng((S.seed ^ 0xf10a) >>> 0), amb = 0.3 + 0.7 * day, C = (c, a) => css(mixc([5, 6, 12], leafC(S, c), amb), a), n = 10 + Math.floor(q() * 10);
   const pts = Array.from({ length: n }, () => { const z = 1.15 + q() * 4, y = hz + (H - hz) / z; return { x: q() * W, y, k: 3.4 / z, z, r: q() }; }).sort((a, b) => b.z - a.z);
@@ -1561,8 +1575,10 @@ function trees(g, m, t) {
   const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
   const col = (c) => css(mixc([5, 6, 12], mixc(leafC(S, typeof c === "string" ? hex(c) : c), [150, 78, 26], S.wonderMetal ? 0 : fall * 0.6), amb)), dark = (c) => css(mixc([5, 6, 12], leafC(S, typeof c === "string" ? hex(c) : c), amb));
   let stalkDone = false; /* l'arbre à tige : un seul par fenêtre, comme au Relto */
+  const B0 = S.burnt, nT = m.trees.length, SC = S.succ && S.succ.kind !== "bare" ? S.succ : null, back = SC ? SC.t * nT : 0; /* 2.5 (E) : les arbres repoussent un à un, les premiers d'abord ; le dernier en jeune pousse */
   for (const [i, tr] of m.trees.entries()) {
-    const v = rng((S.seed ^ (0x7e11 + i * 7919)) >>> 0); let kind = S.burnt || S.lava || S.world === "lava" ? "spire" : v() < 0.32 ? TK.second : TK.main; if (kind === "stalktree") { if (stalkDone) kind = TK.main === "stalktree" ? (TK.second === "stalktree" ? "broadleaf" : TK.second) : TK.main; else stalkDone = true; }
+    const gr = SC && !SC.burning && B0 && i < Math.ceil(back - 1e-9) ? clamp(back - i) : 0; S.burnt = B0 && !(gr > 0);
+    const v = rng((S.seed ^ (0x7e11 + i * 7919)) >>> 0); let kind = S.burnt || ((S.lava || S.world === "lava") && !(gr > 0)) ? "spire" : /* 2.5 (E) : ce qui repousse est un arbre vivant, même près de la lave */ v() < 0.32 ? TK.second : TK.main; if (kind === "stalktree") { if (stalkDone) kind = TK.main === "stalktree" ? (TK.second === "stalktree" ? "broadleaf" : TK.second) : TK.main; else stalkDone = true; }
     if (S.youngTrees) { /* l'anachronisme : un tronc gris, nu, à demi formé, fendu ; plus le monde est jeune, plus il est abîmé */
       const sev = S.youngTrees, hh = tr.h * 1.9 * (1.05 - 0.15 * sev) * (0.85 + 0.3 * v()), x = tr.x, y = hz + 3, lean = tr.lean * 6 + (v() - 0.5) * 14 * sev, broken = v() < 0.2 + 0.35 * sev, topY = y - hh * (broken ? 0.75 + 0.15 * v() : 1), tx = x + lean * (topY < y ? (y - topY) / hh : 1);
       const bark = mixc([5, 6, 12], mixc([168, 162, 150], [128, 120, 112], sev * 0.5), amb) /* du bois mort, blanchi */, fade = g.createLinearGradient(0, y, 0, topY); fade.addColorStop(0, css(bark, 1)); fade.addColorStop(1, css(bark, 0.9 - 0.45 * sev));
@@ -1572,7 +1588,7 @@ function trees(g, m, t) {
       g.strokeStyle = fade; g.lineWidth = 1.6; for (let b = 0; b < 5 - Math.round(1 * sev); b++) { const u = 0.45 + 0.15 * b, bx = x + lean * u * 0.6, by = y - hh * u, d = b % 2 ? 1 : -1, L = hh * (0.22 - 0.03 * b) * (1 - 0.4 * sev); if (by < topY) break; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + d * L, by - L * 0.5); g.lineTo(bx + d * L * 1.2, by - L * (0.5 + 0.3 * v())); g.stroke(); if (sev < 0.6) { g.fillStyle = css(mixc([5, 6, 12], [150, 156, 96], amb), 0.75); for (let f2 = 0; f2 < 3; f2++) { g.beginPath(); g.ellipse(bx + d * L * (0.7 + 0.2 * f2), by - L * (0.45 + 0.1 * f2), 2.6, 1.6, 0, 0, TAU); g.fill(); } } } /* des branches nues, quelques feuilles pâles s'il est moins abîmé */
       g.fillStyle = css(bark, 0.7); for (let k2 = 0; k2 < 3; k2++) g.fillRect(x + (v() - 0.5) * 14, y - 1, 2 + v() * 3, 1.5); /* des débris au pied */
       continue; }
-    const sz = 1.0 + 0.55 * v();
+    const sz = (1.0 + 0.55 * v()) * (gr > 0 ? 0.35 + 0.65 * gr : 1); /* une jeune pousse est petite */
     const h = tr.h * sz, sw = 1.6 * Math.sin(TAU * t + tr.p), x = tr.x, y = hz + 3, top = hz - h;
     { const tv = rng((S.seed ^ (0x5ca1e + i * 131)) >>> 0), sx = (tv() < 0.5 ? -1 : 1) * (0.7 + 0.65 * tv()), sy = 0.82 + 0.4 * tv(), rot = (tv() - 0.5) * 0.14; g.save(); g.translate(x, y); g.rotate(rot); g.scale(sx, sy); g.translate(-x, -y); } /* ESSAI : chaque arbre a sa carrure : plus large ou plus élancé, penché, retourné ; pas deux têtes pareilles */
     if (kind === "spire") { g.fillStyle = dark("#0a0909"); g.strokeStyle = g.fillStyle; g.beginPath(); g.moveTo(x - 2.5, y); g.lineTo(x + sw * 0.4 + tr.lean * 4, top); g.lineTo(x + 2.5, y); g.fill();
@@ -1640,6 +1656,7 @@ function trees(g, m, t) {
     if (S.fire && !ox) for (let k = 0; k < 3; k++) { const p = 0.5 + 0.5 * Math.sin(TAU * (t * 0.6 + k * 0.31 + i * 0.2)), fx = x + (k - 1) * 4 + sw; g.fillStyle = css([120 + 30 * p, 40, 28], 0.55); g.beginPath(); g.arc(fx, hz - h * 0.68, 1.4, 0, TAU); g.fill(); }
     if (S.fire && ox) for (let k = 0; k < 3; k++) { const p = 0.5 + 0.5 * Math.sin(TAU * (t * 3 + k * 0.31 + i * 0.2)), fx = x + (k - 1) * 4 + sw; g.fillStyle = css([255, 140 + 60 * p, 40], 0.8); g.beginPath(); g.moveTo(fx - 2, hz - h * 0.7); g.lineTo(fx, hz - h * (0.9 + 0.25 * p)); g.lineTo(fx + 2, hz - h * 0.7); g.closePath(); g.fill(); }
   }
+  S.burnt = B0;
 }
 
 function auroraCurtains(g, m, t, ak) { require("./aurora").curtains(g, { W: m.W, H: m.H, hz: m.hz, seed: m.S.seed, t, ak }); } /* ESSAI : les aurores en rideaux (src/aurora.js) */

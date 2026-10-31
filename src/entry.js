@@ -44,7 +44,8 @@ const OB = require("./observe");
 const STAT = require("./status");
 const CARRY = require("./carry");
 const DEPTH = require("./depth");
-const SCAR = require("./scarring"); /* 2.5 (F) : le coût d'une cicatrice, rendu quand l'eau suspendue la remplace */
+const SCAR = require("./scarring");
+const SUCC = require("./succession"); /* 2.5 (E) : le monde se relit */ /* 2.5 (F) : le coût d'une cicatrice, rendu quand l'eau suspendue la remplace */
 const { SYSTEM_RE } = require("./starsystem");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
 
@@ -143,7 +144,8 @@ module.exports = function build(Base, core, AGEX) {
         if (srcText) { const wx = guard("météo", () => WX.parseWeather(srcText)); if (wx) out = { ...out, weather: wx, resolved: out.resolved ? { ...out.resolved, weather: wx } : out.resolved }; } // météo vivante : lue par la fenêtre (sceneOf) et la description, sans effet sur la stabilité
         if (srcText) out = guard("physique", () => this.applyPhysicsTo(out, srcText, o)) || out;
         if (o && o.seed && out.physics && out.physics.w) out = guard("saison", () => this.seasonAdjust(out, o.seed)) || out; /* la saison du jour (src/seasons.js) : le jour de l'année de ce monde, pour la fenêtre, la fiche et la récolte */
-        out = guard("eau suspendue", () => this.lingerAdjust(out, srcText)) || out; /* 2.5 (F) : la Pluie qui reste (née de la physique) et l'Eau tenue (face écrite) : la cicatrice de pluie retenue devient la merveille */
+        out = guard("eau suspendue", () => this.lingerAdjust(out, srcText)) || out;
+        if (o && o.seed) out = guard("succession", () => this.successionAdjust(out, o)) || out; /* 2.5 (E) : le bois brûlé repousse, le sol nu se couvre, selon l'équilibre et le temps */ /* 2.5 (F) : la Pluie qui reste (née de la physique) et l'Eau tenue (face écrite) : la cicatrice de pluie retenue devient la merveille */
         if (o && o.seed) out = guard("portage", () => this.carryAdjust(out, o, srcText, key)) || out; /* porter (src/carry.js) : la couture, la dissonance, la source malade ; et la couture d'une source dont on porte */
         if (this.ext.law && o && o.seed) out = guard("symbiose", () => this.symbiosesOf(o.seed, out, !o.probe)) || out;
         if (o && o.seed && !o.probe && !(this.ext.law && this.law.get(key))) guard("merveilles", () => this.seeWonders(o.seed, out)); /* la face écrite se voit aussi sans la loi */ // la mutation et la symbiose (src/mutation.js) : les unions nouées soutiennent le monde ; le temps en noue d'autres
@@ -277,6 +279,17 @@ module.exports = function build(Base, core, AGEX) {
     }
     /** 2.5 (F) : l'eau suspendue. La Pluie qui reste naît de la physique ; l'Eau tenue d'une réaction écrite. Quand l'une est là, la cicatrice
      *  `held_rain` (des nuages qui retiennent leur pluie) n'en est plus une : son coût est rendu, et la fenêtre dessine l'eau qui tient. */
+    /** 2.5 (E) : la succession. L'horloge est la propriété `age_written:` de la note ; absente, elle est posée (une fois, et seulement
+     *  pour un Âge où une succession a lieu). Rien ne coûte ; la fenêtre, la fiche et une phrase de la description la disent. */
+    successionAdjust(out, o) {
+      const ids = PH.idsOfAnalysis(out), age = out.physics && out.physics.w ? out.physics.w.age : null, kind = SUCC.kindOf(ids, age); if (!kind) return out;
+      const path = this.agePathOfSeed(o.seed), f = path ? this.app.vault.getAbstractFileByPath(path) : null, fm = f ? (this.app.metadataCache.getFileCache(f) || {}).frontmatter : null;
+      let written = SUCC.dateOf(fm && fm.age_written);
+      if (written == null && f && !o.probe) { this._writtenPending = this._writtenPending || new Set(); if (!this._writtenPending.has(f.path)) { this._writtenPending.add(f.path); const day = new Date(this.law ? this.law.now() : Date.now()).toISOString().slice(0, 10); guard("age_written", () => this.app.fileManager.processFrontMatter(f, (p) => { if (p.age_written == null || !String(p.age_written).trim()) p.age_written = day; })); } }
+      const st = SUCC.stateOf(kind, out.verdict, SUCC.daysSince(written, this.law ? this.law.now() : Date.now())), phrase = SUCC.phraseOf(st);
+      const res = out.resolved && phrase ? { ...out.resolved, readings: [...(out.resolved.readings || []), phrase] } : out.resolved;
+      return { ...out, resolved: res, succession: st };
+    }
     lingerAdjust(out, srcText) {
       const mt = (out.resolved && out.resolved.matter) || {}, written = new Set(mt.written || []), made = new Set((mt.reactions || []).map((x) => (x && x.result) || x));
       const li = out.physics && out.physics.w && srcText ? CAT.lingeringOf(written, out.physics.w, srcText.split("\n")) : null, held = made.has("held_water");

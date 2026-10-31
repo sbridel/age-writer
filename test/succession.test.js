@@ -1,0 +1,24 @@
+"use strict";
+// 2.5 (E) : le monde se relit (lois 14, 13, 11) — la cicatrice du feu se referme, la foudre rebrûle, le sol nu se couvre ; la vitesse suit le verdict.
+const assert = require("assert");
+const SU = require("../src/succession");
+let n = 0; const ok = (c, m) => { assert(c, m); n++; };
+const S = (...ids) => new Set(ids);
+ok(SU.kindOf(S("great_tree", "lava", "charred_grove")) === "scar", "la lave a brûlé le bois : une cicatrice");
+ok(SU.kindOf(S("great_tree", "lightning", "wildfire")) === "regime", "la foudre : un régime");
+ok(SU.kindOf(S("stone", "hills", "wind", "spore")) === "bare", "un sol nu sous un vent qui porte des spores");
+ok(SU.kindOf(S("stone", "wind", "spore", "moss")) === null, "déjà couvert : rien à coloniser");
+ok(SU.kindOf(S("stone", "spore")) === null, "sans vent, les spores ne voyagent pas");
+ok(SU.kindOf(S("stone", "wind", "spore"), 0.1) === null, "un monde trop jeune : rien");
+ok(SU.kindOf(S("ocean_world", "wind", "spore", "stone")) === null, "pas de sol nu sur un monde-océan");
+const st = (k, v, d) => SU.stateOf(k, v, d);
+ok(st("scar", "stable", 0).t === 0 && st("scar", "stable", 21).t === 0.5 && st("scar", "stable", 42).t === 1 && st("scar", "stable", 100).t === 1, "stable : la cicatrice se referme en six semaines");
+ok(st("scar", "unstable", 21).t === 0.25 && st("scar", "unstable", 300).t === 0.5, "instable : deux fois plus lent, et ça s'arrête à mi-chemin");
+ok(st("scar", "dying", 100).t === 0 && st("scar", "dying", 21).spread === 0.5, "mourant : rien ne repousse, le brûlé gagne");
+ok(st("regime", "stable", 3).burning && !st("regime", "stable", 10).burning && st("regime", "stable", 57).burning, "la foudre : ça brûle une semaine, ça repousse, ça rebrûle");
+ok(st("bare", "stable", 5).stage === "lichen" && st("bare", "stable", 20).stage === "moss" && st("bare", "stable", 40).stage === "grass", "le sol nu : lichen, mousse, herbe");
+ok(st("bare", "dying", 40).stage === "bare", "sur un monde mourant, le sol reste nu");
+ok(SU.dateOf("2026-10-31") > 0 && SU.dateOf("") === null && SU.dateOf("n'importe quoi") === null, "la propriété age_written se lit, ou rien");
+ok(!/\d/.test(SU.noteOf(st("scar", "stable", 21), true)) && !/\d/.test(SU.phraseOf(st("scar", "stable", 21))), "jamais de chiffre : tout se dit en phrases");
+ok(SU.phraseOf(st("scar", "stable", 0)) !== SU.phraseOf(st("scar", "stable", 42)), "la phrase mûrit avec le monde");
+console.log(`succession.test.js : ${n} vérifications ok`);

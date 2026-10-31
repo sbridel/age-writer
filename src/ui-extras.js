@@ -192,6 +192,7 @@ function renderPhysics(plugin, box, analysis, { src, path, skyBox }) {
   try { renderStarNote(plugin, cols, { src, analysis, path }); } catch (e) { console.warn("[Age Writer ext] étoile", e); }
   const skyFilled = !!(skyBox && cols.childElementCount);
   if (analysis.season) { const se = analysis.season; whyHost.createDiv({ cls: "age-det__note age-det__season", text: t(["season.now", se.name].join("."), { t: Math.round(se.T - 273.15) }) }); } /* la saison du jour (src/seasons.js) */
+  if (analysis.succession) { const fr = plugin.lang && plugin.lang() === "fr"; whyHost.createDiv({ cls: "age-det__note age-det__season", text: require("./succession").noteOf(analysis.succession, fr) }); } /* 2.5 (E) : la succession */
   if (analysis.slateAct) { const sa = analysis.slateAct; whyHost.createDiv({ cls: "age-det__note age-det__slate", text: t([sa.gift ? "slate.gift" : "slate.act", sa.effect].join(".")) + (sa.fertile ? "" : " " + t("slate.sterile")) }); } /* l'ardoise : ce qu'ils ont apporté aujourd'hui */
   if (analysis.harvest && analysis.harvest.today) { /* la récolte du jour, pour la machine du Relto : la matière se dit avec son aspect (section 18) */
     const hv = analysis.harvest, rich = hv.rich !== false, sorts = hv.sorts || {}, counts = hv.counts || {};
