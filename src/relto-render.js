@@ -1179,7 +1179,7 @@ class ReltoRenderer {
     const CU = col("#b5652a"), CU2 = col("#e6a06a");
     // la lumière jetée au sol, la nuit (vert sur les côtés, ambre devant la porte)
     if (night > 0.15) {
-      const g = ctx.createRadialGradient(hx, GY, 4, hx, GY, 70); g.addColorStop(0, rgba(127, 214, 200, 0.28 * lit)); g.addColorStop(0.45, rgba(224, 162, 58, 0.12 * lit)); g.addColorStop(1, rgba(224, 162, 58, 0));
+      const g = ctx.createRadialGradient(hx, GY, 4, hx, GY, 70), H3 = FIRE.hutLight(this), sp3 = H3 && !H3.ordinary ? H3.k * (H3.spread || 0) : 0, m3 = (c, i) => c + ((H3 ? H3.c[i] : c) - c) * sp3; g.addColorStop(0, rgba(m3(127, 0), m3(214, 1), m3(200, 2), 0.28 * lit * (1 + 0.4 * sp3))); g.addColorStop(0.45, rgba(m3(224, 0), m3(162, 1), m3(58, 2), 0.12 * lit * (1 + 0.6 * sp3))); g.addColorStop(1, rgba(224, 162, 58, 0)); /* 2.5 (I) : la lueur au sol prend la couleur du feu qui gagne */
       ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(hx, GY + 2, 72, 16, 0, 0, 6.283); ctx.fill();
     }
     const ogive = (xa, xb, top, base) => { const m = (xa + xb) / 2, k = (xb - xa) * 0.55; ctx.beginPath(); ctx.moveTo(xa, base); ctx.lineTo(xa, top + k); ctx.quadraticCurveTo(xa, top + k * 0.2, m, top); ctx.quadraticCurveTo(xb, top + k * 0.2, xb, top + k); ctx.lineTo(xb, base); ctx.closePath(); };
@@ -1229,9 +1229,15 @@ class ReltoRenderer {
       for (const [ly, s] of [[GY - 6, 1], [GY - 13, -1], [GY - 20, 1]]) { ctx.beginPath(); ctx.ellipse(bx + dir * s * 2.4, ly, 2.2, 1.2, dir * s * 0.6, 0, 6.283); ctx.fill(); }
     }
     // la nuit : une lueur douce autour du verre
-    if (night > 0.3) { const HL = FIRE.hutLight(this), gc = HL ? [160 + (HL.c[0] - 160) * 0.55 * HL.k, 240 + (HL.c[1] - 240) * 0.55 * HL.k, 220 + (HL.c[2] - 220) * 0.55 * HL.k] : [160, 240, 220]; /* 2.5 (I) : le feu teinte la lueur du verre */
-      const g = ctx.createRadialGradient(hx, y0 + 6, 4, hx, y0 + 6, 46); g.addColorStop(0, rgba(gc[0], gc[1], gc[2], 0.18 * lit)); g.addColorStop(1, rgba(gc[0], gc[1], gc[2], 0)); ctx.fillStyle = g; ctx.fillRect(hx - 50, y0 - 40, 100, 90); }
-    { const HL = FIRE.hutLight(this); if (HL && !HL.ordinary && HL.spread > 0 && night > 0.3) { ctx.save(); ctx.globalCompositeOperation = "color"; ctx.globalAlpha = clamp((night - 0.3) * 1.4) * 0.75 * HL.k * HL.spread; ctx.fillStyle = rgba(HL.c[0], HL.c[1], HL.c[2], 1); ctx.beginPath(); ctx.rect(x0 - 2, y0 - 34, w + 4, h + 34); ctx.fill(); ctx.restore(); } } /* 2.5 (I) : tout le verre prend la couleur du feu */
+    if (night > 0.3) { const HL = FIRE.hutLight(this), gk = HL && !HL.ordinary ? Math.max(0.55, HL.spread || 0) : 0.55, gc = HL ? [160 + (HL.c[0] - 160) * gk * HL.k, 240 + (HL.c[1] - 240) * gk * HL.k, 220 + (HL.c[2] - 220) * gk * HL.k] : [160, 240, 220]; /* 2.5 (I) : le feu teinte la lueur du verre */
+      const g = ctx.createRadialGradient(hx, y0 + 6, 4, hx, y0 + 6, 46); g.addColorStop(0, rgba(gc[0], gc[1], gc[2], (HL && !HL.ordinary ? 0.18 + 0.17 * (HL.spread || 0) : 0.18) * lit)); g.addColorStop(1, rgba(gc[0], gc[1], gc[2], 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, y0 + 6, 46, 0, 6.283); ctx.fill(); }
+    { const HL = FIRE.hutLight(this); if (HL && !HL.ordinary && HL.spread > 0 && night > 0.3) { ctx.save(); ctx.globalCompositeOperation = "color"; ctx.globalAlpha = clamp((night - 0.3) * 1.4) * 0.75 * HL.k * HL.spread; ctx.fillStyle = rgba(HL.c[0], HL.c[1], HL.c[2], 1); ctx.beginPath();
+      { /* le verre seul (coupole, baies, ovales de la porte) : le cuivre, le mur et le bois gardent leurs couleurs */
+        ctx.ellipse(hx, y0 + 3, dr, dh, 0, Math.PI, 2 * Math.PI); ctx.closePath();
+        for (const [xa, xb, top] of [[x0 + 1, x0 + 19, y0 + 7], [x0 + w - 19, x0 + w - 1, y0 + 7]]) { const m = (xa + xb) / 2, k = (xb - xa) * 0.55; ctx.moveTo(xa, GY); ctx.lineTo(xa, top + k); ctx.quadraticCurveTo(xa, top + k * 0.2, m, top); ctx.quadraticCurveTo(xb, top + k * 0.2, xb, top + k); ctx.lineTo(xb, GY); ctx.closePath(); }
+        const top = y0 - 2, rr = 7; for (const m2 of [hx - rr / 2, hx + rr / 2]) { ctx.moveTo(m2 + rr * 0.28, (top + GY) / 2 - 1); ctx.ellipse(m2, (top + GY) / 2 - 1, rr * 0.28, (GY - top) * 0.28, 0, 0, 6.283); }
+      }
+      ctx.fill("nonzero"); ctx.restore(); } } /* 2.5 (I) : le verre prend la couleur du feu, et la lueur au sol la suit */
   }
   /** menhirs et colonnes brisées : ils s'allument de runes la nuit */
   /** cheminée allumée : fumée chaude et dense, lueur vacillante, étincelles, fenêtre éclairée */
