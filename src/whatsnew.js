@@ -6,6 +6,37 @@
  */
 const NEWS = [
   {
+    v: "2.5.0",
+    fr: {
+      title: "Le monde a un côté",
+      letter: "Les arpenteurs de la Guilde sont revenus avec du sable dans les plis de leurs carnets. Les mondes ont un vent, un matin, un âge qui se lit dans leurs pics ; le bois qu'on croyait perdu repousse. Et chez vous, le feu attend qu'on y remette une bûche.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**Le vent du lieu** : la tempête de sable, le grain de neige et l'orage arrivent de son côté ; le brouillard dort le matin dans les vallées.",
+        "**Hors du cadre**, un soleil ou une lune se devine encore à sa lumière.",
+        "**Le relief** dit l'âge et la chaleur du monde : pics vifs, sommets usés, crêtes, vallées, cratères.",
+        "**L'oxygène** est fabriqué par la vie ; le feu, la rouille et les bêtes en ont besoin (`oxygen:` pour l'écrire).",
+        "**La lave suit sa roche** (coulée noire du basalte, dôme gris du granite), et son soufre brûle bleu la nuit.",
+        "**Le monde se relit** : le bois brûlé repousse, la foudre rebrûle, le sol nu se couvre ; deux merveilles d'eau qui ne tombe pas.",
+        "**Le feu du Relto** brûle le bois qu'on y met, prend la couleur du dernier Âge relié (ou celle de la page Couleur du feu) et, bien nourri, la répand sur toutes les fenêtres ; celles du Château sont finies.",
+      ],
+    },
+    en: {
+      title: "The world has a side",
+      letter: "The Guild's surveyors have come back with sand in the folds of their notebooks. Worlds have a wind, a morning, an age you can read in their peaks; the wood thought lost grows back. And at home, the fire is waiting for another log.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**The wind of the place**: sandstorms, snow squalls and storms arrive from its side; fog lies in the valleys in the morning.",
+        "**Beyond the frame**, a sun or a moon still shows by its light.",
+        "**Relief** tells the world's age and heat: sharp peaks, worn summits, ridges, valleys, craters.",
+        "**Oxygen** is made by life; fire, rust and animals need it (`oxygen:` to write it).",
+        "**Lava follows its rock** (the black flow of basalt, the grey dome of granite), and its sulfur burns blue at night.",
+        "**The world rereads itself**: burnt wood grows back, lightning burns again, bare ground fills in; two wonders of water that does not fall.",
+        "**The Relto fire** burns the wood you add, takes the colour of the last Age you linked to (or the one of the Fire colour page) and, well fed, spreads it to every window; the Castle's windows are finished.",
+      ],
+    },
+  },
+  {
     v: "2.4.1",
     fr: {
       title: "L'orage a du volume",
