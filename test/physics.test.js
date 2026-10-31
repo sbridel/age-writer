@@ -86,7 +86,7 @@ for (let i = 0; i < 300; i++) {
   const a = analyseAgeBase(s, { seed: "R" + i }), p = P.physicsOf(a, s, "R" + i);
   for (const lang of ["fr", "en"]) {
     const sh = P.sheet(p, lang), text = JSON.stringify(sh);
-    if (/NaN|undefined/.test(text) || sh.rows.length !== 8) assert.fail(`fiche illisible (R${i}, ${lang}) : ${text.slice(0, 300)}`);
+    if (/NaN|undefined/.test(text) || sh.rows.length !== 9) assert.fail(`fiche illisible (R${i}, ${lang}) : ${text.slice(0, 300)}`);
   }
   if (!(p.w.Ts > 0 && isFinite(p.w.P))) assert.fail(`monde absurde (R${i})`);
 }

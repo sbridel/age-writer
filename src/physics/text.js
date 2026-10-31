@@ -26,7 +26,7 @@ function plain(lang) {
 
 const L = {
   fr: {
-    star: "Étoile", stars: "Étoiles", none: "aucune", orbit: "Orbite", planet: "Planète", interior: "Intérieur", air: "Atmosphère", water: "Eau", life: "Vivant", seasons: "Saisons",
+    star: "Étoile", stars: "Étoiles", none: "aucune", orbit: "Orbite", planet: "Planète", interior: "Intérieur", air: "Atmosphère", oxygen: "Oxygène", water: "Eau", life: "Vivant", seasons: "Saisons",
     seasonsV: (w, f) => (w.stars === 0 ? "sans saisons : aucune étoile" : w.locked ? "sans saisons : la face figée" : w.seasons === "none" ? `sans saisons (axe incliné de ${f(w.tilt, 0)}°)` : `${{ mild: "douces", marked: "marquées", extreme: "extrêmes" }[w.seasons]} : ${f(w.Twinter - 273.15, 0)} °C à ${f(w.Tsummer - 273.15, 0)} °C aux latitudes moyennes · axe incliné de ${f(w.tilt, 0)}°`),
     starV: (w, f) => (w.stars === 0 ? "aucune : seule la chaleur du sol" : w.starMasses.map((m, i) => `${f(m)} M☉ (${f(w.starTemps[i], 0)} K)`).join(" + ") + ` · lumière ${f(w.L)} L☉ · ` + (isFinite(w.starLife) ? `vit ${f(w.starLife)} Ga` : "ne brûle pas : se refroidit lentement")),
     orbitV: (w, f) => (w.stars === 0 ? "errante, sans étoile" : `${f(w.a)} UA · flux reçu ${f(w.S)} × Terre · année de ${f(w.periodDays)} jour${w.periodDays >= 2 ? "s" : ""}`),
@@ -38,7 +38,7 @@ const L = {
     lifeV: (w, f) => `lumière au sol ${f(w.light)} × Terre`,
   },
   en: {
-    star: "Star", stars: "Stars", none: "none", orbit: "Orbit", planet: "Planet", interior: "Interior", air: "Atmosphere", water: "Water", life: "Life", seasons: "Seasons",
+    star: "Star", stars: "Stars", none: "none", orbit: "Orbit", planet: "Planet", interior: "Interior", air: "Atmosphere", oxygen: "Oxygen", water: "Water", life: "Life", seasons: "Seasons",
     seasonsV: (w, f) => (w.stars === 0 ? "no seasons: no star" : w.locked ? "no seasons: the fixed face" : w.seasons === "none" ? `no seasons (axis tilted ${f(w.tilt, 0)}°)` : `${{ mild: "mild", marked: "marked", extreme: "extreme" }[w.seasons]}: ${f(w.Twinter - 273.15, 0)} °C to ${f(w.Tsummer - 273.15, 0)} °C at middle latitudes · axis tilted ${f(w.tilt, 0)}°`),
     starV: (w, f) => (w.stars === 0 ? "none: only the ground's own heat" : w.starMasses.map((m, i) => `${f(m)} M☉ (${f(w.starTemps[i], 0)} K)`).join(" + ") + ` · light ${f(w.L)} L☉ · ` + (isFinite(w.starLife) ? `lives ${f(w.starLife)} Gyr` : "does not burn: cools slowly")),
     orbitV: (w, f) => (w.stars === 0 ? "rogue, starless" : `${f(w.a)} AU · receives ${f(w.S)} × Earth · ${f(w.periodDays)}-day year`),
@@ -112,6 +112,14 @@ function facts(w, lang, f) {
   return out;
 }
 
+/** 2.5 (D) : la ligne de l'oxygène, en mots. */
+function oxygenV(w, f, lang) {
+  const fr = lang !== "en", o = Number.isFinite(w.oxygen) ? w.oxygen : 0;
+  if (o >= 1) return w.oxygenSince != null && w.oxygenSince >= 0.05 ? (fr ? `riche, depuis ${f(w.oxygenSince)} milliard${w.oxygenSince >= 2 ? "s" : ""} d'années : le feu y prend, le fer y rouille` : `rich, for ${f(w.oxygenSince)} billion years: fire takes, iron rusts`) : (fr ? "riche : le feu y prend, le fer y rouille" : "rich: fire takes, iron rusts");
+  if (o >= 0.3) return fr ? "un peu, pas encore beaucoup : le feu prend mal, le fer rouille lentement" : "some, not much yet: fire takes poorly, iron rusts slowly";
+  if (o > 0.01) return fr ? "presque pas : rien n'y brûle, rien n'y rouille" : "almost none: nothing burns, nothing rusts";
+  return fr ? "aucun : rien n'y brûle, rien n'y rouille" : "none: nothing burns, nothing rusts";
+}
 function sheet(phys, lang = "fr") {
   const t = L[lang] || L.fr, f = fmt(lang), w = phys.w, num = plain(lang);
   const rows = [
@@ -120,6 +128,7 @@ function sheet(phys, lang = "fr") {
     [t.planet, t.planetV(w, f)],
     [t.interior, t.interiorV(w, f)],
     [t.air, t.airV(w, f)],
+    [t.oxygen, oxygenV(w, f, lang)], /* 2.5 (D) */
     [t.water, t.waterV(w, f)],
     [t.seasons, t.seasonsV(w, f)],
     [t.life, t.lifeV(w, f)],

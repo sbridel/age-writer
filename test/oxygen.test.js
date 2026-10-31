@@ -1,0 +1,21 @@
+"use strict";
+// 2.5 (D) : l'air que la vie fabrique (lois 11, 12, 7) — l'oxygène, et ce qui en dépend : le feu, la rouille, les bêtes.
+const assert = require("assert");
+const M = require("../src/physics/model"), { solve, parsePhysics } = require("../src/physics/solve"), T = require("../src/physics/text");
+let n = 0; const ok = (c, m) => { assert(c, m); n++; };
+const ox = (o) => M.oxygenOf({ age: 4.5, light: 1, green: true, hardy: false, ...o });
+ok(ox({}).level === 1 && ox({}).since > 2.5, "un monde de 4,5 Ga avec une vie verte : riche, depuis longtemps");
+ok(ox({ age: 1.8 }).level === 1 && ox({ age: 1.2 }).level < 1 && ox({ age: 1.2 }).level > 0.5, "la vie verte enrichit l'air en un milliard et demi d'années après son apparition");
+ok(ox({ green: false, hardy: true, age: 2 }).level < 0.6 && ox({ green: false, hardy: true, age: 3.3 }).level === 1, "la vie rude seule : deux fois plus lentement");
+ok(ox({ green: false, hardy: false }).level === 0, "sans vie : pas d'oxygène");
+ok(ox({ light: 0 }).level === 0, "sans lumière, rien ne le fabrique");
+ok(parsePhysics("oxygen: 0.4").params.oxygen === 0.4 && parsePhysics("oxygène: 2").params.oxygen === 1, "la ligne `oxygen:` (et `oxygène:`), bornée à 1");
+const tens = (ids, src) => solve({ ids: new Set(ids), src, seed: "ox" }).tensions.map((t) => t.id);
+ok(tens(["great_tree", "fern", "wildfire", "water"], "age: 4.5").indexOf("fireAir") < 0, "une forêt ancienne : le feu y prend");
+ok(tens(["wildfire", "stone"], "age: 4.5\noxygen: 0").includes("fireAir"), "sans oxygène : le feu ne prend pas (une tension)");
+ok(tens(["rust", "iron", "water"], "oxygen: 0").includes("rustAir"), "sans oxygène : pas de rouille");
+ok(tens(["grazer", "fern", "water"], "age: 4.5\noxygen: 0").includes("animalAir"), "sans oxygène : les bêtes ne respirent pas");
+ok(!tens(["cave_stalker", "burrower", "pale_fungus", "water"], "age: 4.5\noxygen: 0").includes("animalAir"), "les bêtes des grottes et les fouisseurs en sont dispensés");
+const w = solve({ ids: new Set(["fern", "water"]), src: "age: 4.5", seed: "ox" }), sh = T.sheet(w, "fr");
+ok(sh.rows.some(([k, v]) => k === "Oxygène" && /riche/.test(v)), "la fiche a sa ligne Oxygène");
+console.log(`oxygen.test.js : ${n} vérifications ok`);

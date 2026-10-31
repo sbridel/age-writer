@@ -17,6 +17,10 @@ const { BLOCKS, HUE_MASS, WORLDS } = require("./blocks");
 const { REQUIREMENTS, ASSERTIONS, GLOBAL } = require("./rules");
 const { hashSeed, rng } = require("../engine/draw");
 
+/* 2.5 (D) : qui fabrique l'oxygène. À plein : ce qui vit de lumière (plantes, algues, plancton) ; à demi : la vie rude (spores, lichens, mousses, tapis) */
+const OX_GREEN = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "withered_fern", "cinderbloom", "flowers", "grass", "meadow", "berry_shrub", "thorn_bush", "heath_shrub", "garden", "kelp", "plankton", "coral"];
+const OX_HARDY = ["spore", "lichen", "singing_lichen", "moss", "microbial_mat", "pale_fungus", "aeroplankton"];
+const has = (ids, list) => list.some((id) => ids.has(id));
 const SEV_COST = { light: 0.1, medium: 0.2, strong: 0.35 };
 const WORLD_SET = new Set(WORLDS);
 const SEV_RANK = { light: 1, medium: 2, strong: 3 };
@@ -38,6 +42,7 @@ const KEYS = {
   albedo: "albedo", "albédo": "albedo",
   tides: "tides", "marées": "tides", marees: "tides",
   tilt: "tilt", inclinaison: "tilt", obliquity: "tilt", "obliquité": "tilt", obliquite: "tilt",
+  oxygen: "oxygen", "oxygène": "oxygen", oxygene: "oxygen", /* 2.5 (D) : avoir le dernier mot sur l'air que la vie a fabriqué */
 };
 const PHYS_RE = new RegExp(`^\\s*(${Object.keys(KEYS).join("|")})\\s*[:=]\\s*(.+?)\\s*$`, "i");
 const WORDS = {
@@ -48,7 +53,7 @@ const WORDS = {
 const LIMITS = {
   mass: [0.01, 20, true], radius: [0.05, 4, true], age: [0.001, 13.8, true], orbit: [0.005, 1000, true], insolation: [0.0001, 5000, true],
   starMass: [0.08, 60, true], rotation: [1, 1e5, true], atmosphere: [0, 1000, false], water: [0, 10, false], volatiles: [0, 10, false],
-  albedo: [0, 0.95, false], tides: [0, 50, false], tilt: [0, 90, false],
+  albedo: [0, 0.95, false], tides: [0, 50, false], tilt: [0, 90, false], oxygen: [0, 1, false],
 };
 
 const NUM_RE = /^(-?\d+(?:[.,]\d+)?)\s*([a-zé]*)$/i;
@@ -244,6 +249,8 @@ function derive(p, set, written, ids) {
   // lumière au sol : la part VISIBLE du flux (une naine rouge chauffe mais éclaire peu ; un soleil noir presque pas)
   w.light = w.S * w.visRatio * set.veil * (a.P > 10 ? 0.5 : 1);
   w.uv = (w.S * w.uvRatio * (w.field > M.FIELD_SHIELD ? 0.8 : 1)) / (1 + 0.8 * a.P); // l'air (et sa couche d'ozone) filtre peu à peu
+  /* 2.5 (D) : l'oxygène, l'air que la vie fabrique (lois 11, 12) : la vie verte à plein, la vie rude à demi, avec le temps et la lumière */
+  { const o = M.oxygenOf({ age: w.age, light: w.light, green: has(ids, OX_GREEN), hardy: has(ids, OX_HARDY) }); w.oxygen = written.oxygen != null ? written.oxygen : o.level; w.oxygenSince = written.oxygen != null ? null : o.since; w.oxygenWritten = written.oxygen != null; }
   return w;
 }
 

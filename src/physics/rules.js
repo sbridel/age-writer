@@ -303,6 +303,25 @@ const REQUIREMENTS = {
     why: { fr: (w, f) => `Presque pas d'air (${f(w.P)} bar) : rien de vivant ne tient à découvert.`, en: (w, f) => `Almost no air (${f(w.P)} bar): nothing living survives in the open.` },
     fix: () => [tip("ou la vie sous l'eau, à l'abri", "or life under water, sheltered")],
   },
+  /* 2.5 (D) : ce que l'oxygène permet — le feu, la rouille, l'air des bêtes (un air respirable est un air fabriqué) */
+  fireAir: {
+    law: "L5", axis: "ecological", sev: "light", search: ["age"],
+    test: (w) => !(w.oxygen < 0.3),
+    why: { fr: (w) => `Trop peu d'oxygène${w.oxygen > 0.01 ? "" : " (aucune vie verte ne l'a encore fabriqué)"} : le bois ne brûle pas, il charbonne à peine.`, en: (w) => `Too little oxygen${w.oxygen > 0.01 ? "" : " (no green life has made any yet)"}: wood does not burn, it barely chars.` },
+    fix: () => [tip("une vie verte qui fabrique l'air, depuis longtemps (fern, seed, plankton)", "green life that has been making the air for a long time (fern, seed, plankton)")],
+  },
+  rustAir: {
+    law: "L5", axis: "geological", sev: "light", search: ["age"],
+    test: (w) => !(w.oxygen < 0.3) && w.water !== "dry" && w.waterInv > 0.05,
+    why: { fr: (w) => (w.oxygen < 0.3 ? "Sans oxygène dans l'air, le fer ne rouille pas : il reste gris." : "Sans eau, le fer ne rouille pas : il reste gris."), en: (w) => (w.oxygen < 0.3 ? "With no oxygen in the air, iron does not rust: it stays grey." : "Without water, iron does not rust: it stays grey.") },
+    fix: () => [tip("une vie verte qui fabrique l'air (fern, seed, plankton)", "green life that makes the air (fern, seed, plankton)")],
+  },
+  animalAir: {
+    law: "L7", axis: "ecological", sev: "light", search: ["age", "atmosphere"],
+    test: (w) => w.P >= 0.05 && !(w.oxygen < 0.3),
+    why: { fr: (w, f) => (w.P < 0.05 ? `Presque pas d'air (${f(w.P)} bar) : aucune bête ne respire à découvert.` : "Un air que rien n'a encore fabriqué : sans oxygène, aucune bête n'y respire."), en: (w, f) => (w.P < 0.05 ? `Almost no air (${f(w.P)} bar): no beast breathes in the open.` : "An air nothing has made yet: without oxygen, no beast breathes it.") },
+    fix: () => [tip("une vie verte qui fabrique l'air, depuis longtemps (fern, seed, plankton)", "green life that has been making the air for a long time (fern, seed, plankton)")],
+  },
   oldEnoughSimple: {
     law: "L7", axis: "ecological", sev: "light", search: ["age"],
     test: (w) => w.age >= 0.3 || has(w, BUILDERS),

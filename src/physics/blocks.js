@@ -70,6 +70,9 @@ def(["gold", "silver", "copper"], { needs: [["hydrothermalPast", "light"]] });
 def(["poisoned_air", "ashen_sky"], { needs: [["volcanism", "light"]] });
 def("scorched_surface", { needs: [["scorching", "light"]] });
 
+def(["wildfire", "charred_grove"], { needs: [["fireAir", "light"]] }); /* 2.5 (D) : le feu demande de l'oxygène */
+def(["rust", "living_rust"], { needs: [["rustAir", "light"]] }); /* 2.5 (D) : la rouille, de l'oxygène et de l'eau */
+
 // ---- météo ----------------------------------------------------------------------------------------
 def(["wind", "dust_storm"], { needs: [["someAir", "medium"]] });
 def(["rain", "marsh_mist", "watching_mist"], { needs: [["rainCycle", "light"]] });
@@ -94,9 +97,9 @@ const PHOTO = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwo
 def(PHOTO, { needs: [["sunlight", "light"], ["breathableAir", "light"], ["temperateLife", "light"], ["oldEnoughSimple", "light"], ["uvShield", "light"]] });
 def(["great_tree", "grove", "ironwood"], { needs: [["oldEnoughComplex", "light"], ["tallTrees", "light"]] });
 def(["spore", "pale_fungus", "lichen", "singing_lichen"], { needs: [["oldEnoughSimple", "light"], ["hardyLife", "light"]] });
-def(["grazer", "herd", "watching_herd"], { needs: [["foodPlants", "light"], ["oldEnoughComplex", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
-def(["hunter", "stalking_pack"], { needs: [["prey", "light"], ["oldEnoughComplex", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
-def(["burrower", "warren", "humming_warren"], { needs: [["soil", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
+def(["grazer", "herd", "watching_herd"], { needs: [["foodPlants", "light"], ["oldEnoughComplex", "light"], ["animalAir", "light"], ["temperateLife", "light"]] });
+def(["hunter", "stalking_pack"], { needs: [["prey", "light"], ["oldEnoughComplex", "light"], ["animalAir", "light"], ["temperateLife", "light"]] });
+def(["burrower", "warren", "humming_warren"], { needs: [["soil", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] }); /* 2.5 (D) : les fouisseurs vivent sous terre, d'autre chose que l'air fabriqué (décision de l'auteur) */
 def(["moth", "lantern_moths", "whispering_moths"], { needs: [["foodPlants", "light"]] });
 def(["drifter"], { needs: [["buoyancy", "light"]] });
 // ---- vie et sol (src/life.js) : micro-vie, mycélium, faune par milieu, sols nés de la vie
@@ -106,10 +109,11 @@ def("microbial_mat", { needs: [["liquidWater", "light"], ["oldEnoughSimple", "li
 def(["mycelium", "mushroom", "soil_bacteria"], { needs: [["oldEnoughSimple", "light"], ["hardyLife", "light"]] });
 def("aeroplankton", { needs: [["oldEnoughSimple", "light"], ["moistAir", "light"]] });
 def("shoal", { needs: [["liquidWater", "medium"], ["oldEnoughComplex", "light"]] });
-def(["raptor", "cave_stalker"], { needs: [["prey", "light"], ["oldEnoughComplex", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
+def("raptor", { needs: [["prey", "light"], ["oldEnoughComplex", "light"], ["animalAir", "light"], ["temperateLife", "light"]] });
+def("cave_stalker", { needs: [["prey", "light"], ["oldEnoughComplex", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] }); /* 2.5 (D) : le rôdeur des grottes est dispensé d'oxygène, comme les fouisseurs */
 def("deep_hunter", { needs: [["liquidWater", "medium"], ["prey", "light"], ["oldEnoughComplex", "light"]] });
-def("carrion_beetle", { needs: [["soil", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
-def(["bee", "humming_blooms"], { needs: [["foodPlants", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
+def("carrion_beetle", { needs: [["soil", "light"], ["animalAir", "light"], ["temperateLife", "light"]] });
+def(["bee", "humming_blooms"], { needs: [["foodPlants", "light"], ["animalAir", "light"], ["temperateLife", "light"]] });
 def("earth", { needs: [["oldEnoughSimple", "light"]] });
 def("humus", { needs: [["oldEnoughComplex", "light"]] });
 def("peat", { needs: [["liquidWater", "light"], ["moistAir", "light"], ["oldEnoughSimple", "light"]] });
@@ -136,7 +140,7 @@ def(["river", "delta"], { set: { water: 1 }, needs: [["liquidWater", "medium"], 
 def("delta", { needs: [["erosion", "light"]] });
 def("lake", { set: { water: 1 }, needs: [["liquidWater", "medium"]] });
 def("marsh", { set: { water: 1 }, needs: [["liquidWater", "medium"], ["moistAir", "light"]] });
-def("spiders", { needs: [["prey", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] });
+def("spiders", { needs: [["prey", "light"], ["animalAir", "light"], ["temperateLife", "light"]] });
 
 /** Groupes utiles aux exigences « écologiques » (chaîne alimentaire). */
 const FLORA = ["seed", "sapling", "fern", "vine", "great_tree", "grove", "ironwood", "moss", "lichen", "singing_lichen", "pale_fungus", "spore", "glowvine", "wrong_glowvine", "cinderbloom", "withered_fern", "charred_grove", "flowers", "grass", "meadow", "berry_shrub", "thorn_bush", "heath_shrub", "glow_algae"];

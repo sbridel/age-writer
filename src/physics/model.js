@@ -263,6 +263,14 @@ const seasonKind = (amp) => (amp < 2 ? "none" : amp < 8 ? "mild" : amp < 20 ? "m
 /** 2.5 (C) : la forme du relief, lue dans l'intérieur, l'âge, l'air et l'eau (lois 5 et 12). Ce n'est pas le lieu (il vient de la marque),
  *  c'est l'allure de ce qu'on voit : craters (ni air ni eau, rien n'use), young (jeune ou brûlant : arêtes, cônes), plates (les plaques bougent :
  *  chaînes, rifts, îles), worn (vieux et froid : croupes et plateaux), carved (l'eau a eu le temps : vallées) ; null : rien de marqué. */
+/** 2.5 (D) : l'oxygène (0–1, Terre = 1). La vie commence vers 0,3 Ga ; la vie verte enrichit l'air en 1,5 Ga, la vie rude seule en 3 Ga
+ *  (sur Terre, la grande oxydation vient environ deux milliards d'années après la vie). Sans lumière, rien ne le fabrique.
+ *  `since` : depuis combien de milliards d'années l'air est riche (null s'il ne l'est pas). */
+function oxygenOf({ age, light, green, hardy }) {
+  if (!(light > 0.01) || (!green && !hardy) || !Number.isFinite(age)) return { level: 0, since: null };
+  const life = Math.max(0, age - 0.3), full = green ? 1.5 : 3, level = clamp(life / full, 0, 1);
+  return { level, since: level >= 1 ? life - full : null };
+}
 function reliefOf(w) {
   if (!w || !Number.isFinite(w.heat)) return null;
   const P = Number.isFinite(w.P) ? w.P : 1, age = Number.isFinite(w.age) ? w.age : 4.5, liquid = w.water === "liquid";
@@ -273,7 +281,7 @@ function reliefOf(w) {
   if (liquid && P >= 0.05 && age >= 1.5) return "carved";
   return null;
 }
-module.exports = { reliefOf, seasonAmplitude, seasonKind,
+module.exports = { oxygenOf, reliefOf, seasonAmplitude, seasonKind,
   T_SUN, WATER_TRIPLE_BAR, HABITABLE, HEAT, clamp,
   starLuminosity, starRadius, starTemperature, starLifetime, brownDwarf, planckFraction, visibleRatio, uvRatio,
   insolation, distanceFor, orbitalPeriodDays, tidalLockTime,
