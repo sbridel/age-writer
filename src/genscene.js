@@ -84,7 +84,7 @@ function sceneOf(a, name = "", blocks = null) {
     drizzle: rw("drizzle", "drizzle"), snow: rw("snow", "snow"), rainbow: rw("rainbow", "rainbow"), tornado: rw("tornado", "tornado"), scent: rw("scent", "scented_mist"), petals: rw("petals", "petal_rain"),
     glaze: rw("glaze", "glaze"), crystalRain: rw("crystalRain", "crystal_rain"), ashRain: rw("ashRain", "ash_rain"), acidRain: rw("acidRain", "acid_rain"), grass: r("grass", "meadow"), meadow: r("meadow"), flowers: r("flowers", "scented_mist", "petal_rain"),
     lava: r("lava", "obsidian", "whispering_obsidian") || wd === "lava", water: (r("water", "marsh_mist", "brine", "meltwater", "crying_obsidian", ...TERRAIN.WATER_IDS) || wd === "ocean") && wd !== "lava" && wd !== "desert",
-    ice: r("ice", "black_ice", "deep_cold", "hail", "rime") || wd === "frozen", sand: r("sand", "dust_storm", "glass", "singing_glass", "fulgurite") || wd === "desert",
+    ice: r("ice", "black_ice", "deep_cold", "hail", "rime") || wd === "frozen", rime: r("rime"), sand: r("sand", "dust_storm", "glass", "singing_glass", "fulgurite") || wd === "desert",
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove", "crystal_tree") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
     moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine", "glow_algae") || wd === "jungle" || wd === "cavern", eyes: r("hunter", "stalking_pack"), algae: r("glow_algae"),
     ruins, lampLit: r("lit_lamp"), tabletAwake: r("speaking_tablet"),
@@ -323,12 +323,13 @@ function build(S, W, H) {
   const meadow = S.grass ? buildMeadow(S, W, H, hz) : null; // herbe, prairie : graine propre
   const wx = buildWeather(S, W, H); // météo vivante : graine propre, rien d'autre ne bouge dans l'image
   const front = buildFront(S, W, H, hz); /* ESSAI : l'orage a un côté, l'averse est au loin */
+  const wind = windMode(S), qw = rng((S.seed ^ 0xd057) >>> 0), wallLumps = Array.from({ length: 16 }, () => qw()); /* 2.5 (B) : le vent du lieu ; les bosses des murailles (sable, neige) : graine propre */
   const pond = S.lake ? buildPond(S, W, H, hz) : null, garden = S.garden ? buildGarden(S, W, H, hz) : null; /* ESSAI : l'étang, le jardin ; graines propres */
   if (shore && shore.mode === "side" && S.fissure === "submarine") { const wx = lerp(shore.x0, shore.x1, 0.5); fis.x = shore.side < 0 ? lerp(wx, W, 0.45) : lerp(0, wx, 0.55); } // la fissure sous l'eau reste dans l'eau
   const cave = S.world === "cavern" ? buildCave(S, W, H, hz) : null; // la voûte : graine propre, les autres mondes ne bougent pas
   const qf = rng((S.seed ^ 0xa16ae) >>> 0), fedGlow = S.fed ? Array.from({ length: 16 }, () => ({ x: W * qf(), y: hz + (H - hz) * (0.08 + 0.8 * qf()), r: H * (0.02 + 0.04 * qf()), p: qf() })) : null; /* graine propre */
   const won = WON.buildWonders(S, W, H, hz); /* les merveilles : graine propre, un Âge sans merveille ne bouge pas */
-  return { S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
+  return { wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
 }
 
 /**
@@ -357,11 +358,20 @@ function buildWeather(S, W, H) {
  * (face au levant : il vient de dans le dos) ou monte en muraille sur l'horizon (face au couchant). Sans orage, une pluie écrite tombe
  * une fois sur deux au loin : une averse sous un nuage isolé, sur l'horizon. Graine propre : rien d'autre ne bouge dans l'image.
  */
+/** 2.5 (B) : d'où vient le vent du lieu. Avec la physique : Coriolis et la latitude du point de liaison (hémisphère nord par convention) ;
+ *  un monde figé ou lent n'a qu'une cellule, le vent vient du pôle ; sinon alizés de l'est (basses latitudes), vents d'ouest (moyennes), vents d'est polaires.
+ *  Sans physique : de l'ouest, comme avant. Rendu en mode, selon l'orientation : de face (ahead), de dos (over), de profil (left, right). */
+function windMode(S) {
+  const V = S.view || {}, face = V.face || "eq", P = S.phys, lat = V.lat != null ? V.lat : 0.5;
+  const from = !P ? "west" : P.locked || !(P.coriolis > 0.25) ? "pole" : lat < 0.3 || lat > 0.7 ? "east" : "west";
+  const T = { eq: { west: "right", east: "left", pole: "over" }, pole: { west: "left", east: "right", pole: "ahead" }, east: { east: "ahead", west: "over", pole: "left" }, west: { west: "ahead", east: "over", pole: "right" } };
+  return { from, mode: (T[face] || T.eq)[from] };
+}
 function buildFront(S, W, H, hz) {
   if (!S.storm && !S.rain) return null; if (S.world === "cavern" || S.loop) return null;
-  const q = rng((S.seed ^ 0x570f2) >>> 0), face = (S.view && S.view.face) || "eq";
+  const q = rng((S.seed ^ 0x570f2) >>> 0), face = (S.view && S.view.face) || "eq"; void face;
   const lumps = Array.from({ length: 18 }, () => q()), bolts = Array.from({ length: 6 }, () => q());
-  if (S.storm) return { mode: face === "pole" ? "left" : face === "east" ? "over" : face === "west" ? "ahead" : "right", lumps, bolts, reach: 0.36 + 0.2 * q(),
+  if (S.storm) return { mode: windMode(S).mode, lumps, bolts, reach: 0.36 + 0.2 * q(),
     curtains: Array.from({ length: 5 }, () => ({ u: q(), w: 0.03 + 0.06 * q(), a: 0.5 + 0.5 * q(), lean: (q() - 0.5) * 0.06 })) };
   if (q() < 0.5) return null; // la pluie tombe ici (comme avant)
   const n = q() < 0.6 ? 1 : 2, cells = Array.from({ length: n }, (_, i) => ({ x: W * (n === 1 ? 0.2 + 0.6 * q() : i ? 0.6 + 0.25 * q() : 0.15 + 0.25 * q()), w: W * (0.16 + 0.12 * q()), h: H * (0.09 + 0.06 * q()), base: hz - H * (0.17 + 0.08 * q()), lean: (q() - 0.5) * 0.25, lumps: Array.from({ length: 9 }, () => q()) }));
@@ -771,6 +781,7 @@ function paint(g, m, t, o = {}) {
   if (dm > 0.1 && dm < 0.9) { const a = (dm - 0.1) * 3.2, T = Date.now() / 1000; g.translate(Math.sin(T * 61) * a, Math.cos(T * 47) * a * 0.7); } // la terre tremble
   if (m.cave) { paintCavern(g, m, t); g.restore(); return; } // monde-caverne : une voûte fermée, éclairée par ce qui luit
   const L = m.lv = weatherLevels(m, k0.td, o), sw = S.season ? S.season.snow : 0, rs = S.season ? S.season.rainToSnow : 0; if (rs > 0) { L.snow = Math.max(L.snow, L.rain * rs, L.drizzle * rs); L.rain *= 1 - rs; L.drizzle *= 1 - rs; } if (sw > 0.3) L.snow = Math.max(L.snow, 0.5 * (sw - 0.3)); if (S.season && S.season.T > 318) L.heat = Math.max(L.heat, clamp((S.season.T - 318) / 15)); /* l'hiver : la pluie écrite tombe en neige ; l'été brûlant : l'air tremble */ // météo vivante : présence de chaque temps à cette heure (1 partout sans ligne programmée)
+  if (L.fog > 0.005 && !fogWritten(S)) L.fog *= fogHour(k0.td); /* 2.5 (B) : le brouillard est un état du matin, sauf si une ligne écrite dit autrement */
   const sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, css(top)); sky.addColorStop(1, css(hzc)); g.fillStyle = sky; g.fillRect(0, 0, W, H);
   m.frontF = m.front ? (m.front.reach || 0.5) * (0.45 + 0.55 * L.storm) : 0; /* ESSAI : le front s'avance avec l'orage */
   if (L.storm > 0.005) { g.fillStyle = css([14, 17, 24], (m.front ? 0.12 : 0.5) * L.storm); g.fillRect(0, 0, W, H); }
@@ -851,6 +862,7 @@ function paint(g, m, t, o = {}) {
     }
   });
   WON.wonderPass(g, m, t, "ridges", k0);
+  wallSky(g, m, t, L, day, night, hzc, sn); /* 2.5 (B) : la muraille de sable ou de neige, du côté du vent */
 
   if (air.thick > 0.05) { const hg = g.createLinearGradient(0, 0, 0, hz); hg.addColorStop(0, css(hzc, 0.05 * air.thick)); hg.addColorStop(1, css(mixc(hzc, [240, 235, 220], 0.3), 0.45 * air.thick)); g.fillStyle = hg; g.fillRect(0, 0, W, hz); } // brume d'un air épais sur le relief
   for (const cn of m.cones) { // volcans : cône sombre + lueur du cratère
@@ -1655,7 +1667,8 @@ function weather(g, m, t) {
   const fk = S.amt && S.amt.fog != null ? S.amt.fog : 1;
   stormShade(g, m, L);
   const F = m.front, side = F && (F.mode === "right" || F.mode === "left"), far = F && (F.mode === "ahead" || F.mode === "shower");
-  if (L.fog > 0.005) for (let i = 0; i < 3; i++) { const y = hz - H * (0.02 + 0.07 * i), x = frac(t * (1 + i % 2) + i * 0.3) * W; const gr = g.createLinearGradient(0, y - H * 0.1, 0, y + H * 0.08); gr.addColorStop(0, "rgba(190,200,210,0)"); gr.addColorStop(0.5, css([190, 200, 210], clamp((0.2 - i * 0.04) * fk, 0, 0.75) * L.fog)); gr.addColorStop(1, "rgba(190,200,210,0)"); g.fillStyle = gr; g.fillRect(-x * 0.1, y - H * 0.1, W + 20, H * 0.18); }
+  if (L.fog > 0.005) fogLaid(g, m, t, clamp(fk, 0, 3.75) * L.fog); /* 2.5 (B) : couché selon le point de liaison */
+  wallGround(g, m, t, m.nightK || 0); /* 2.5 (B) : la brume de la muraille au sol, le sable couché */
   if (L.scent > 0.005) scentedMist(g, m, t, L.scent);
   if (L.heat > 0.005) { g.fillStyle = css([255, 160, 90], 0.05 * L.heat); for (let y = hz - H * 0.05; y < hz + H * 0.1; y += 4) g.fillRect(2 * Math.sin(TAU * t * 2 + y), y, W, 1); }
   if (L.steam > 0.005) for (let i = 0; i < 6; i++) { const q = frac(t * 2 + i / 6); g.fillStyle = css([220, 225, 230], 0.25 * (1 - q) * L.steam); g.beginPath(); g.arc(W * (0.15 + 0.14 * i) + 5 * Math.sin(TAU * (q + i)), hz - q * H * 0.4, 2 + q * 5, 0, TAU); g.fill(); }
@@ -1787,6 +1800,88 @@ function stormShade(g, m, L) {
   gr.addColorStop(0, css(c, 0)); gr.addColorStop(1, css(c, 0.42 * k)); g.fillStyle = gr; g.fillRect(0, hz, W, H - hz);
 }
 
+// ---- 2.5 (B) : la météo a un côté, suite ------------------------------------------------------------
+/** Le brouillard est un état du matin : plein à l'aube, il se lève jusqu'au milieu de la matinée, revient au crépuscule et tient la nuit.
+ *  Une ligne de météo écrite pour lui (`fog: always`, `fog: often, noon`) garde le dernier mot. `td` : 0 lever, 0,35 midi, 0,7 coucher. */
+function fogHour(td) { td = frac(td); return td < 0.1 ? 1 : td < 0.3 ? 1 - smooth((td - 0.1) / 0.2) : td < 0.6 ? 0 : td < 0.7 ? smooth((td - 0.6) / 0.1) : 1; }
+function fogWritten(S) { const w = S.weather; return !!(w && ((S.wxSrc && S.wxSrc.fog) || []).some((id) => w[id])); }
+/** Le niveau des murailles à cet instant : la tempête de sable (`dust_storm`), le grain de neige (la neige de l'hiver, ou le givre, avec du vent). */
+function wallLevels(m, L) {
+  const S = m.S, dust = S.dust ? L.dust : 0, sq = L.wind > 0.005 ? Math.max(L.snow > 0.15 ? L.snow : 0, S.rime ? 0.6 * Math.max(L.fog, 0.4) : 0) * Math.min(1, L.wind * 1.2) : 0;
+  return { dust, snow: dust > 0.005 ? 0 : sq };
+}
+/** La muraille vue du lieu : `top(x)` (de face : le haut du mur), `edge(y)` (de profil : le bord du mur), `ceil(x)` (de dos : le bas du plafond). */
+function wallShape(m, lv) {
+  const { W, H, hz, wallLumps: P } = m, lump = (u) => { const n = P.length - 1, k = clamp(u) * n, i = Math.min(n - 1, Math.floor(k)), a = k - i; return P[i] * (1 - a) + P[i + 1] * a; }, mode = m.wind.mode;
+  const reach = 0.28 + 0.22 * lv;
+  return { mode, lump,
+    top: (x) => hz - H * (0.16 + 0.24 * lv) * (0.62 + 0.38 * lump(x / W)),
+    edge: (y) => { const e = W * reach * (0.5 + 0.5 * (y / hz)) * (0.82 + 0.18 * lump(y / hz)); return mode === "right" ? W - e : e; }, /* de profil : le front penche, plus avancé au pied qu'en haut */
+    ceil: (x) => H * (0.1 + 0.22 * lv) * (0.6 + 0.4 * lump(x / W)),
+    inside(x, y) { return mode === "ahead" ? y > this.top(x) && y < hz : mode === "over" ? y < this.ceil(x) : mode === "right" ? x > this.edge(y) && y < hz : x < this.edge(y) && y < hz; } };
+}
+function wallColors(kind, hzc, day, night) {
+  const lit = kind === "dust" ? [214, 170, 112] : [214, 220, 230], deep = kind === "dust" ? [122, 82, 50] : [128, 136, 150], k = 0.35 + 0.65 * day;
+  const dk = (c) => mixc(mixc(c, hzc, 0.2), [10, 10, 16], (1 - k) * 0.85 + 0.15 * night);
+  return { lit: dk(lit), deep: dk(deep) };
+}
+/** La muraille dans le ciel : devant les crêtes, derrière le sol. Une seule silhouette (corps + bourgeons), peinte à part puis posée d'un coup,
+ *  éclairée au bord qui avance, sombre vers le fond. Le sable voile sans éteindre : le soleil reste un disque pâle dedans ; le grain de neige le cache. */
+function wallSky(g, m, t, L, day, night, hzc, sn) {
+  const { W, H, hz } = m, lvs = m.walls = wallLevels(m, L), kind = lvs.dust > 0.005 ? "dust" : lvs.snow > 0.005 ? "snow" : null; if (!kind) return;
+  const lv = lvs[kind], sh = m.wallShape = wallShape(m, lv), { lit, deep } = wallColors(kind, hzc, day, night), a = (kind === "dust" ? 0.9 : 0.78) * Math.min(1, 0.35 + lv);
+  g.fillStyle = css(lit, (kind === "dust" ? 0.2 : 0.14) * lv); g.fillRect(0, 0, W, hz); /* tout le ciel se voile un peu */
+  let o = null; if (typeof document !== "undefined") { try { const c = m._wl || (m._wl = document.createElement("canvas")); if (c.width !== W) c.width = W; if (c.height !== H) c.height = H; o = c.getContext("2d"); if (!o || typeof o.clearRect !== "function" || typeof g.drawImage !== "function") o = null; } catch (e) { o = null; } }
+  const L2 = o || g; if (o) { o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = "source-over"; o.clearRect(0, 0, W, H); } else { g.save(); g.globalAlpha = a; }
+  const drift = Math.sin(TAU * t) * W * 0.008, buds = [], mode = sh.mode, side = mode === "right" ? 1 : -1;
+  L2.fillStyle = css(lit); L2.beginPath();
+  if (mode === "ahead") { L2.moveTo(0, hz + 1); for (let i = 0; i <= 40; i++) { const x = (i / 40) * W; L2.lineTo(x, sh.top(x)); } L2.lineTo(W, hz + 1); for (let i = 0; i <= 44; i++) { const u = i / 44, x = u * W + drift, r = H * (0.03 + 0.05 * sh.lump(frac(u * 3.7 + 0.1))); buds.push([x, sh.top(x) + r * 0.45, r]); } }
+  else if (mode === "over") { L2.moveTo(0, -1); L2.lineTo(W, -1); for (let i = 40; i >= 0; i--) { const x = (i / 40) * W; L2.lineTo(x, sh.ceil(x)); } for (let i = 0; i <= 40; i++) { const u = i / 40, x = u * W + drift, r = H * (0.025 + 0.04 * sh.lump(frac(u * 3.1 + 0.3))); buds.push([x, sh.ceil(x) - r * 0.45, r]); } }
+  else { const x0 = side > 0 ? W + 1 : -1; L2.moveTo(x0, -1); for (let i = 0; i <= 30; i++) { const y = (i / 30) * hz; L2.lineTo(sh.edge(y), y); } L2.lineTo(x0, hz + 1); for (let i = 0; i <= 30; i++) { const u = i / 30, y = u * hz, r = H * (0.025 + 0.04 * sh.lump(frac(u * 2.9 + 0.2))) * (0.7 + 0.6 * u); buds.push([sh.edge(y) + drift * side - side * r * 0.45, y, r]); } }
+  L2.closePath(); L2.fill(); for (const [x, y, r] of buds) { L2.beginPath(); L2.arc(x, y, r, 0, TAU); L2.fill(); }
+  if (o) {
+    o.globalCompositeOperation = "source-atop"; /* la couleur : claire au bord qui avance, sombre vers le fond */
+    const gr = mode === "ahead" ? o.createLinearGradient(0, hz - H * (0.45 * lv + 0.2), 0, hz) : mode === "over" ? o.createLinearGradient(0, H * 0.4, 0, 0) : o.createLinearGradient(sh.edge(hz * 0.5) - side * H * 0.06, 0, side > 0 ? W : 0, 0);
+    gr.addColorStop(0, css(mixc(lit, [255, 248, 236], 0.12 * day))); gr.addColorStop(0.5, css(mixc(lit, deep, 0.4))); gr.addColorStop(1, css(deep)); o.fillStyle = gr; o.fillRect(0, 0, W, H);
+    const dx = mode === "ahead" || mode === "over" ? 0 : side * 0.35, dy = mode === "over" ? -0.35 : 0.35; /* chaque bourgeon : son ombre vers l'intérieur, sa lumière vers le dehors */
+    for (const [x, y, r] of buds) { o.fillStyle = css(deep, 0.32); o.beginPath(); o.arc(x + dx * r, y + dy * r, r * 0.8, 0, TAU); o.fill(); }
+    for (const [x, y, r] of buds) { o.fillStyle = css(mixc(lit, [255, 250, 240], 0.25), 0.3 * (0.3 + 0.7 * day)); o.beginPath(); o.arc(x - dx * r * 0.8, y - dy * r * 0.8, r * 0.55, 0, TAU); o.fill(); }
+    g.save(); g.globalAlpha = a; g.drawImage(o.canvas, 0, 0); g.restore();
+  } else g.restore();
+  const shade = kind === "snow"; /* le grain est un nuage épais : comme l'orage, il cache le soleil et pose son ombre ; le sable, lui, ne fait que voiler (décision de l'auteur, 31 oct.) */ m.wallShade = shade ? lv : 0;
+  for (const s of sn) { if (s.e <= 0.02 || s.y > hz || !sh.inside(s.x, s.y)) continue; /* le soleil dans la muraille : un disque pâle, sans éclat (ou caché, si le grain fait de l'ombre) */
+    if (shade) continue; g.fillStyle = css(mixc(lit, [255, 250, 236], 0.55), 0.55 * (0.4 + 0.6 * day)); g.beginPath(); g.arc(s.x, s.y, s.r * 0.95, 0, TAU); g.fill(); }
+}
+/** Au sol, du côté du vent : la brume de sable ou de neige, et le sable couché en stries vers le sous-le-vent. */
+function wallGround(g, m, t, night) {
+  const { W, H, hz } = m, lvs = m.walls, sh = m.wallShape; if (!lvs || !sh) return; const kind = lvs.dust > 0.005 ? "dust" : lvs.snow > 0.005 ? "snow" : null; if (!kind) return;
+  const lv = lvs[kind], { lit } = wallColors(kind, m.lastHzc || [180, 180, 180], m.dayK || 0.5, m.nightK || 0), a = 0.4 * lv;
+  let gr;
+  if (sh.mode === "right" || sh.mode === "left") { const x0 = sh.mode === "right" ? W : 0, x1 = sh.mode === "right" ? W * 0.25 : W * 0.75; gr = g.createLinearGradient(x0, 0, x1, 0); gr.addColorStop(0, css(lit, a)); gr.addColorStop(1, css(lit, 0)); }
+  else if (sh.mode === "ahead") { gr = g.createLinearGradient(0, hz, 0, hz + (H - hz) * 0.6); gr.addColorStop(0, css(lit, a * 1.1)); gr.addColorStop(1, css(lit, 0)); }
+  else { gr = g.createLinearGradient(0, hz, 0, H); gr.addColorStop(0, css(lit, a * 0.6)); gr.addColorStop(1, css(lit, a * 0.3)); }
+  g.fillStyle = gr; g.fillRect(0, hz, W, H - hz);
+  if (m.wallShade) { let sg; if (sh.mode === "right" || sh.mode === "left") { const x0 = sh.mode === "right" ? W : 0, x1 = sh.mode === "right" ? W * 0.3 : W * 0.7; sg = g.createLinearGradient(x0, 0, x1, 0); sg.addColorStop(0, css([12, 14, 22], 0.55 * lv)); sg.addColorStop(1, css([12, 14, 22], 0)); } else { sg = g.createLinearGradient(0, sh.mode === "over" ? H : hz, 0, sh.mode === "over" ? hz : H); sg.addColorStop(0, css([12, 14, 22], 0.5 * lv)); sg.addColorStop(1, css([12, 14, 22], 0.18 * lv)); } g.fillStyle = sg; g.fillRect(0, hz, W, H - hz); } /* l'ombre du grain, comme l'orage */
+  if (kind === "dust") { /* le sable couché par le vent : des stries vers le sous-le-vent */
+    const dir = sh.mode === "right" ? -1 : sh.mode === "left" ? 1 : 0, q = rng((m.S.seed ^ 0x5a2d) >>> 0); g.strokeStyle = css(mixc(lit, [255, 240, 210], 0.3), 0.45 * lv * (1 - 0.6 * night)); g.lineWidth = 0.9;
+    for (let i = 0; i < 26; i++) { const u = q(), v = q(), y = hz + (H - hz) * (0.08 + 0.85 * v), len = W * (0.03 + 0.06 * v), x = frac(u + t * (0.6 + v) * (dir || 0.3)) * (W + len) - len * 0.5;
+      g.beginPath(); if (dir) { g.moveTo(x, y); g.lineTo(x + dir * len, y + len * 0.04); } else { g.moveTo(x, y); g.lineTo(x + len * 0.2 * (u - 0.5), y + len * 0.5); } g.stroke(); }
+  }
+}
+/** Le brouillard couché, selon le point de liaison : il remplit la vallée vue d'en haut, il nous noie en contrebas, il rampe au ras du sol ailleurs. */
+function fogLaid(g, m, t, lv) {
+  const { W, H, hz, S } = m, kind = (S.view && S.view.kind) || "plain", c = [196, 204, 214], D = H - hz;
+  if (kind === "high") { const y0 = hz + D * 0.02, y1 = hz + D * 0.5, gr = g.createLinearGradient(0, y0 - D * 0.05, 0, y1); gr.addColorStop(0, css(c, 0)); gr.addColorStop(0.2, css(c, 0.55 * lv)); gr.addColorStop(0.6, css(c, 0.82 * lv)); gr.addColorStop(1, css(c, 0.7 * lv)); g.fillStyle = gr; g.fillRect(0, y0 - D * 0.05, W, y1 - y0 + D * 0.05 + D * 0.5);
+    for (let i = 0; i < 14; i++) { const x = frac(i / 14 + t * 0.12) * (W + 160) - 80, r = D * (0.05 + 0.03 * Math.sin(i * 2.3)), gw = g.createRadialGradient(x, y0 + r * 0.4, 0, x, y0 + r * 0.4, r * 3.2); gw.addColorStop(0, css([226, 230, 236], 0.35 * lv)); gw.addColorStop(1, css([226, 230, 236], 0)); g.fillStyle = gw; g.beginPath(); g.ellipse(x, y0 + r * 0.4, r * 3.2, r * 1.1, 0, 0, TAU); g.fill(); } return; } /* la mer de nuages au fond de la vallée */
+  if (kind === "low") { const gr = g.createLinearGradient(0, H, 0, hz - H * 0.3); gr.addColorStop(0, css(c, 0.62 * lv)); gr.addColorStop(0.55, css(c, 0.4 * lv)); gr.addColorStop(1, css(c, 0)); g.fillStyle = gr; g.fillRect(0, hz - H * 0.3, W, H - hz + H * 0.3); }
+  for (let i = 0; i < 3; i++) { const y = hz - H * (0.02 + 0.07 * i), x = frac(t * (1 + i % 2) + i * 0.3) * W; const gr = g.createLinearGradient(0, y - H * 0.1, 0, y + H * 0.08); gr.addColorStop(0, css(c, 0)); gr.addColorStop(0.5, css(c, clamp(0.2 - i * 0.04, 0, 0.75) * lv)); gr.addColorStop(1, css(c, 0)); g.fillStyle = gr; g.fillRect(-x * 0.1, y - H * 0.1, W + 20, H * 0.18); } /* les bandes d'avant */
+  const rp = m.riverPoly; if (rp && rp.length > 3) { /* il longe la rivière : une traîne qui suit l'eau, plus large de près */
+    const n = rp.length / 2;
+    for (let k = 0; k < n; k += 2) { const Lp = rp[k], Rp = rp[rp.length - 1 - k]; if (!Lp || !Rp) continue; const x = (Lp[0] + Rp[0]) / 2 + Math.sin(TAU * t + k) * 3, y = (Lp[1] + Rp[1]) / 2, w = Math.max(6, Math.abs(Rp[0] - Lp[0])) * 1.5, h = Math.max(3, w * 0.22);
+      const gw = g.createRadialGradient(x, y - h * 0.4, 0, x, y - h * 0.4, w); gw.addColorStop(0, css(c, 0.42 * lv)); gw.addColorStop(1, css(c, 0)); g.fillStyle = gw; g.beginPath(); g.ellipse(x, y - h * 0.4, w, h, 0, 0, TAU); g.fill(); } }
+  const pd = m.pond; if (pd) { const gw = g.createRadialGradient(pd.cx, pd.cy - pd.ry * 0.3, 0, pd.cx, pd.cy - pd.ry * 0.3, pd.rx * 1.3); gw.addColorStop(0, css(c, 0.5 * lv)); gw.addColorStop(1, css(c, 0)); g.fillStyle = gw; g.beginPath(); g.ellipse(pd.cx, pd.cy - pd.ry * 0.3, pd.rx * 1.3, pd.ry * 1.5, 0, 0, TAU); g.fill(); } /* et il dort sur l'étang */
+  if (kind !== "low") { const gr = g.createLinearGradient(0, hz - H * 0.02, 0, hz + D * 0.35); gr.addColorStop(0, css(c, 0)); gr.addColorStop(0.35, css(c, 0.38 * lv)); gr.addColorStop(1, css(c, 0)); g.fillStyle = gr; g.fillRect(0, hz - H * 0.02, W, D * 0.37); } /* la nappe au ras du sol */
+}
 // ---- météo vivante : les nouveaux temps -------------------------------------------------------------------------
 /** Bruine : des fils très fins et serrés, presque droits, et une brume d'eau qui voile le lointain. Teintée par l'acide, irisée par le cristal. */
 function drizzle(g, m, t, L) {
@@ -1808,7 +1903,7 @@ function flakes(g, m, t, L) {
   const { H, wx } = m; if (!wx.flakes) return;
   for (const [i, f] of wx.flakes.entries()) {
     const ash = L.ashRain > 0.005 && (i % 2 === 1 || L.snow <= 0.005), lv = ash ? L.ashRain : L.snow; if (lv <= 0.005) continue;
-    const y = frac(f.y + t * f.k) * (H + 6) - 3, x = f.x + 6 * Math.sin(TAU * (t * 2 + f.p)) + y * 0.05;
+    const y = frac(f.y + t * f.k) * (H + 6) - 3, sl = m.walls && m.walls.snow > 0.005 && m.wind ? (m.wind.mode === "right" ? -0.45 : m.wind.mode === "left" ? 0.45 : 0.05) : 0.05, x = f.x + 6 * Math.sin(TAU * (t * 2 + f.p)) + y * sl; /* 2.5 (B) : le grain pousse les flocons vers le sous-le-vent */
     g.fillStyle = ash ? css(f.p < 0.3 ? [150, 144, 136] : [70, 66, 62], 0.75 * lv) : css([246, 248, 252], (0.55 + 0.4 * f.p) * lv); // la cendre : grise, parfois plus pâle
     g.beginPath(); if (ash) g.ellipse(x, y, f.s * 1.2, f.s * 0.7, f.p * 3, 0, TAU); else g.arc(x, y, f.s, 0, TAU); g.fill();
   }
@@ -2375,4 +2470,4 @@ Object.assign(ART, {
   aeroplankton: { layer: "air", draw(g, m, t, e) { const { W, H, hz } = m; for (const it of e.items) for (let k = 0; k < 6; k++) { const x = (it.x + k * 41) % W, y = hz - H * (0.05 + 0.3 * frac(it.y + k * 0.17)); g.fillStyle = css([220, 240, 255], 0.2 + 0.4 * Math.max(0, Math.sin(TAU * t * 2 + k + it.p))); g.fillRect(x, y, 1, 1); } } },
 });
 
-module.exports = { sunWhere, viewOfForTest: viewOf, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
+module.exports = { sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
