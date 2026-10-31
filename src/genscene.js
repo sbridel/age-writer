@@ -115,6 +115,8 @@ function sceneOf(a, name = "", blocks = null) {
   if (S.water && S.waterGround === false) { S.shore = null; S.river = !S.lava && wd !== "lava"; } /* l'eau en trait est une rivière, pas une mer */
   S.garden = r("garden"); S.lake = r("lake") && !S.lava && wd !== "lava" && !(S.water && S.waterGround !== false) && !S.shore; if (S.lake) S.river = false; /* ESSAI : un étang au pied de la vue (le lac), au lieu du ruban de rivière ; un jardin dessiné */
   S.graniteHue = ["grey", "ochre", "pink"][(S.seed >>> 7) % 3]; /* la variété du granite, tirée de la graine */
+  { const kindIn = (set) => (set.has("basalt") || set.has("basalt_columns") || set.has("iron") ? "mafic" : set.has("granite") ? "felsic" : null), drawnIds = new Set((res.drawn || []).map((p) => p.id)), mine = new Set((res.matter.written || []).filter((id) => !drawnIds.has(id))); S.lavaKind = S.lava ? kindIn(mine) || kindIn(new Set(res.matter.written || [])) : null; } /* la roche que l'auteur a écrite décide ; sinon celle que le monde a tirée */ /* 2.5 (G) : la lave suit la roche ; mafique (fer, magnésium) : croûte noire fendue de rouge ; felsique (silice) : grise, en dômes, et le volcan explose */
+  if (S.lavaKind === "felsic") S.ash = true; /* la cendre vient seule */
   S.rock = S.soil === "stone" ? (ids.has("basalt") || ids.has("basalt_columns") ? "basalt" : ids.has("granite") ? "granite" : null) : null; /* un visage pour la pierre, la forêt et le sel (src/dosage.js, BIOMES) */
   const cycleWritten = res.lines.some((l) => l.entry && l.entry.category === "cycle" && !l.autoFilled);
   S.phys = physLook(a.physics && a.physics.w, cycleWritten);
@@ -263,7 +265,7 @@ function build(S, W, H) {
     nightTop: hsl(skyHue + 230, 0.45, 0.05), nightHz: hsl(skyHue + 240, 0.35, 0.12),
     dawnTop: hsl(skyHue + 250, 0.4, 0.2), dawnHz: hsl(warm, 0.65, 0.5),
     dayTop: hsl((S.skyStated || r() < 0.7 || SC) ? skyHue : cool, skyS != null ? skyS : sat + 0.1 + (SC ? 0.12 : 0), 0.38 + (SC ? 0.08 + (SC.light || 0) : 0)), dayHz: hsl(skyHue + (r() < 0.5 ? 25 : -25) * (SC ? 0.4 : 1), skyS != null ? skyS : sat * 0.7 + (SC ? 0.1 : 0), 0.72),
-    ground: S.lava ? hsl(8, 0.45, 0.07) : S.sand ? hsl(34, 0.35, 0.2) : S.ice ? hsl(205, 0.25, 0.2) : S.waterGround ? hsl(skyHue + 170, 0.25, 0.1) : S.soil === "salt" ? hsl(200, 0.06, 0.8) : S.soil === "chalk" ? hsl(45, 0.14, 0.7) : S.rock === "basalt" ? hsl(220, 0.08, 0.07) : S.rock === "granite" ? (S.graniteHue === "ochre" ? hsl(34, 0.28, 0.3) : S.graniteHue === "pink" ? hsl(10, 0.13, 0.37) : hsl(30, 0.03, 0.3)) : S.soil === "stone" ? hsl(220, 0.07, 0.17) : S.soil === "earth" ? hsl(24, 0.38, 0.13) : S.soil === "forest" ? hsl(95, 0.3, 0.12) : hsl(skyHue + 90, 0.25, 0.09),
+    ground: S.lavaKind === "mafic" ? hsl(10, 0.12, 0.035) : S.lavaKind === "felsic" ? hsl(28, 0.05, 0.3) : S.lava ? hsl(8, 0.45, 0.07) : S.sand ? hsl(34, 0.35, 0.2) : S.ice ? hsl(205, 0.25, 0.2) : S.waterGround ? hsl(skyHue + 170, 0.25, 0.1) : S.soil === "salt" ? hsl(200, 0.06, 0.8) : S.soil === "chalk" ? hsl(45, 0.14, 0.7) : S.rock === "basalt" ? hsl(220, 0.08, 0.07) : S.rock === "granite" ? (S.graniteHue === "ochre" ? hsl(34, 0.28, 0.3) : S.graniteHue === "pink" ? hsl(10, 0.13, 0.37) : hsl(30, 0.03, 0.3)) : S.soil === "stone" ? hsl(220, 0.07, 0.17) : S.soil === "earth" ? hsl(24, 0.38, 0.13) : S.soil === "forest" ? hsl(95, 0.3, 0.12) : hsl(skyHue + 90, 0.25, 0.09),
     rock: hsl(skyHue + 200, 0.2, 0.07),
   };
   const RL = S.terrain ? TERRAIN.RELIEF[S.terrain] : null; // blocs de terrain : nombre, hauteur et allure des chaînes
@@ -893,6 +895,7 @@ function paint(g, m, t, o = {}) {
 
   if (air.thick > 0.05) { const hg = g.createLinearGradient(0, 0, 0, hz); hg.addColorStop(0, css(hzc, 0.05 * air.thick)); hg.addColorStop(1, css(mixc(hzc, [240, 235, 220], 0.3), 0.45 * air.thick)); g.fillStyle = hg; g.fillRect(0, 0, W, hz); } // brume d'un air épais sur le relief
   for (const cn of m.cones) { // volcans : cône sombre + lueur du cratère
+    if (S.lavaKind) { volcanoOf(g, m, t, cn, day, night, hzc); continue; } /* 2.5 (G) : un volcan bouclier noir, ou un dôme gris qui fume */
     g.fillStyle = css(pal.rock); g.beginPath(); g.moveTo(cn.x - cn.w, hz); g.lineTo(cn.x - cn.w * 0.12, hz - cn.h); g.lineTo(cn.x + cn.w * 0.12, hz - cn.h); g.lineTo(cn.x + cn.w, hz); g.closePath(); g.fill();
     const f = 0.5 + 0.5 * Math.sin(TAU * (t * 2) + cn.x), lg = g.createRadialGradient(cn.x, hz - cn.h, 1, cn.x, hz - cn.h, cn.h * 0.9); lg.addColorStop(0, css([255, 130, 50], 0.5 + 0.25 * f)); lg.addColorStop(1, css([255, 90, 30], 0)); g.fillStyle = lg; g.fillRect(0, 0, W, H);
   }
@@ -904,7 +907,7 @@ function paint(g, m, t, o = {}) {
     if (S.sand) dunes(g, m);
     if (S.ice) iceSheet(g, m, t, sn, day, night, hzc);
     else if (S.water && S.waterGround !== false) waterSurface(g, m, t, sn, hzc); /* l'eau en trait ne peint plus la mer */
-    if (S.lava) lavaVeins(g, m, t);
+    if (S.lava) { if (S.lavaKind === "mafic") lavaFlow(g, m, t); lavaVeins(g, m, t); } /* 2.5 (G) : une vraie coulée sur un monde mafique */
     if (!S.sand && !S.ice && !S.lava && !(S.water && S.waterGround !== false)) { if (S.soil === "salt") saltFlat(g, m, t, day, night, hzc); else if (S.rock === "basalt") blackSand(g, m, t, day, night, hzc); }
     if (S.view && S.view.kind === "high") valleyPlanes(g, m, t, day, night, hzc); /* ESSAI : vu d'en haut, la vallée s'étage */
     if (S.river) riverRibbon(g, m, t, sn, day, night, hzc, top);
@@ -1281,10 +1284,94 @@ function waterSurface(g, m, t, sn, hzc) {
   const s = sn.find((q) => q.e > 0.15); if (s) for (let b = 0; b < 6; b++) { g.fillStyle = css([255, 220, 160], (0.28 - b * 0.03) * Math.min(1, s.e * 2)); g.fillRect(s.x - (14 - b * 2) / 2 + 3 * Math.sin(TAU * (t * 2 + b * 0.2)), hz + H * (0.05 + 0.045 * b), 14 - b * 2, 1.5); }
 }
 /** Veines de lave et étincelles. */
+/** 2.5 (G) : le volcan selon sa lave. Mafique : un bouclier large et bas, noir, des coulées rouges qui descendent ses flancs.
+ *  Felsique : un dôme gris, raide et arrondi, une lueur faible au sommet, une colonne de cendre (il explose). */
+function volcanoOf(g, m, t, cn, day, night, hzc) {
+  const { W, H, hz } = m, lit = 0.3 + 0.7 * day;
+  if (m.S.lavaKind === "mafic") {
+    const w = cn.w * 1.7, h = cn.h * 0.6, rock = mixc([16, 13, 12], hzc, 0.12 * day);
+    g.fillStyle = css(rock); g.beginPath(); g.moveTo(cn.x - w, hz + 1); g.quadraticCurveTo(cn.x - w * 0.35, hz - h * 1.02, cn.x - w * 0.08, hz - h); g.lineTo(cn.x + w * 0.08, hz - h); g.quadraticCurveTo(cn.x + w * 0.35, hz - h * 1.02, cn.x + w, hz + 1); g.closePath(); g.fill();
+    g.strokeStyle = css(mixc(hzc, [255, 240, 220], 0.2), 0.25 * lit); g.lineWidth = 1; g.beginPath(); g.moveTo(cn.x - w * 0.7, hz - h * 0.45); g.quadraticCurveTo(cn.x - w * 0.3, hz - h * 1.0, cn.x - w * 0.08, hz - h); g.stroke(); /* l'arête claire du bouclier */
+    for (let k = 0; k < 4; k++) { const sd = k % 2 ? 1 : -1, u0 = 0.06 + 0.04 * k, f = 0.55 + 0.45 * Math.sin(TAU * (t * 1.5 + k * 0.3)); g.strokeStyle = css([255, 70 + 50 * f, 30], 0.75 * f + 0.15); g.lineWidth = 1.4; g.beginPath(); g.moveTo(cn.x + sd * w * u0, hz - h * 0.98); for (let j = 1; j <= 6; j++) { const u = u0 + (0.7 - u0) * (j / 6); g.lineTo(cn.x + sd * w * u + Math.sin(j * 1.7 + k) * 3, hz - h * (1 - Math.pow(u, 1.3)) + 1); } g.stroke(); } /* les coulées : du rouge vif dans la croûte noire */
+    const lg = g.createRadialGradient(cn.x, hz - h, 1, cn.x, hz - h, h * 1.2); lg.addColorStop(0, css([255, 90, 30], 0.55)); lg.addColorStop(1, css([255, 60, 20], 0)); g.fillStyle = lg; g.fillRect(0, 0, W, H);
+    return;
+  }
+  const q = rng(((m.S.seed ^ 0xd03e) + Math.round(cn.x)) >>> 0), w = cn.w * (0.6 + 0.2 * q()), h = cn.h * (0.6 + 0.2 * q()), rock = mixc(mixc([98, 92, 88], [30, 28, 27], 1 - lit), hzc, 0.12), n = 22;
+  const prof = Array.from({ length: n + 1 }, (_, k) => { const u = k / n, a = Math.PI * u, bump = (q() - 0.5) * 0.16 + (k % 4 === 0 ? -0.06 : 0); return [cn.x - w * Math.cos(a), hz + 1 - h * Math.pow(Math.sin(a), 0.7) * (1 + bump)]; }); /* un dôme bosselé, en blocs : la lave trop épaisse s'empile et se fend */
+  g.fillStyle = css(rock); g.beginPath(); prof.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill();
+  g.fillStyle = css(mixc(rock, [255, 250, 240], 0.12 * lit)); for (let k = 0; k < 7; k++) { const [x, y] = prof[2 + Math.floor(q() * (n - 4))]; g.beginPath(); g.ellipse(x, y + 3, 3 + q() * 3, 2, 0, 0, TAU); g.fill(); } /* des blocs clairs sur la carapace */
+  g.fillStyle = css(mixc(rock, [10, 10, 10], 0.3)); for (let k = 0; k < 9; k++) { const x = cn.x + (q() - 0.5) * w * 2.2; g.beginPath(); g.ellipse(x, hz + 1, 3 + q() * 4, 2, 0, Math.PI, TAU); g.fill(); } /* l'éboulis au pied */
+  for (let k = 0; k < 6; k++) { const u = (k - 2.5) / 3, f = 0.6 + 0.4 * Math.sin(TAU * (t * 0.8 + k * 0.37)), x0 = cn.x + u * w * 0.35, y0 = hz - h * (0.95 - 0.08 * Math.abs(u)), x1 = cn.x + u * w * 0.85, y1 = hz - h * 0.25; g.strokeStyle = css([255, 90 + 60 * f, 30], (0.35 + 0.35 * night) * f); g.lineWidth = 2.2; g.beginPath(); g.moveTo(x0, y0); g.lineTo((x0 + x1) / 2 + (q() - 0.5) * 6, (y0 + y1) / 2); g.lineTo(x1, y1); g.stroke(); g.strokeStyle = css([255, 220, 120], 0.5 * f * (0.4 + 0.6 * night)); g.lineWidth = 0.8; g.stroke(); } /* les fentes du dôme : la lave épaisse y rougeoie */
+  for (let k = 0; k < 3; k++) { const f = frac(t * 0.35 + k / 3), sd = k % 2 ? 1 : -1, x = cn.x + sd * w * (0.15 + 0.75 * f), y = hz - h * (0.9 - 0.85 * Math.pow(f, 0.8)); g.fillStyle = css([255, 120, 40], 0.8 * (1 - f * 0.6)); g.beginPath(); g.arc(x, y, 2 + 1.5 * (1 - f), 0, TAU); g.fill(); } /* des blocs brûlants qui roulent sur ses flancs */
+  const gl = g.createRadialGradient(cn.x, hz - h, 1, cn.x, hz - h, h * 0.35); gl.addColorStop(0, css([255, 120, 50], 0.35 + 0.2 * night)); gl.addColorStop(1, css([255, 100, 40], 0)); g.fillStyle = gl; g.fillRect(cn.x - h, hz - h * 1.4, h * 2, h * 0.8); /* une lueur faible au sommet */
+  for (let k = 0; k < 9; k++) { const q = frac(t * 0.25 + k / 9), y = hz - h - q * H * 0.45, r = h * (0.12 + 0.35 * q), x = cn.x + Math.sin(k * 2.1 + t * TAU * 0.2) * r * 0.4 + q * W * 0.04; g.fillStyle = css(mixc([96, 90, 86], hzc, 0.25), (0.55 - 0.45 * q) * (0.6 + 0.4 * lit)); g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); } /* la colonne de cendre : il explose */
+}
+/** 2.5 (G) : la coulée d'une lave mafique, en perspective. Un cœur jaune-orangé, des bords rouges, des plaques de croûte noire qui dérivent
+ *  lentement vers nous, des joints incandescents entre elles ; la lueur monte sur le sol autour. */
+/* 2.5 (G) : la coulée mafique, une seule géométrie (dessin et placement des choses du sol la partagent) */
+function flowGeom(m) {
+  if (m._flow) return m._flow;
+  const q = rng((m.S.seed ^ 0x1a7af) >>> 0), ph = q() * 6.28, amp = 0.35 + q() * 0.4, wid = 0.2 + q() * 0.08, u0 = (q() - 0.5) * 0.5;
+  const mid = (z) => u0 + amp * Math.sin(ph + z * 0.45) * Math.min(1, z * 0.3);
+  return (m._flow = { q, ph, amp, wid, u0, mid, half: (z) => wid * (0.8 + 0.2 * Math.abs(Math.sin(z))) });
+}
+/** Une chose posée au sol ne pousse pas dans la coulée : elle est poussée sur la rive de roche refroidie, du côté le plus proche. */
+function offFlow(m, x, z) {
+  if (!(m.S.lava && m.S.lavaKind === "mafic")) return x;
+  const F = flowGeom(m), u = ((x - m.W / 2) * z) / (m.W * 0.55), c = F.mid(z), h = F.half(z) + 0.15;
+  if (Math.abs(u - c) >= h) return x;
+  const u2 = u < c ? c - h : c + h; return m.W / 2 + (u2 * m.W * 0.55) / z;
+}
+function lavaFlow(g, m, t) {
+  const { W, H, hz } = m, F = flowGeom(m), q = rng((m.S.seed ^ 0x2b8e1) >>> 0), pts = [];
+  for (let z = 26; z >= 1.02; z *= 0.93) pts.push({ z, u: F.mid(z) });
+  const L = pts.map((p) => proj(m, p.u - F.half(p.z), p.z)), R = pts.map((p) => proj(m, p.u + F.half(p.z), p.z)), poly = L.concat(R.slice().reverse());
+  const glow = g.createLinearGradient(0, hz, 0, H); glow.addColorStop(0, css([255, 60, 20], 0.05)); glow.addColorStop(1, css([255, 80, 20], 0.22)); g.fillStyle = glow; g.fillRect(0, hz, W, H - hz); /* la lueur sur le sol */
+  g.save(); polyPath(g, poly);
+  const mg = g.createLinearGradient(0, hz, 0, H); mg.addColorStop(0, "#7a1408"); mg.addColorStop(0.35, "#d8400e"); mg.addColorStop(1, "#ffb22e"); g.fillStyle = mg; g.fill(); g.clip(); /* le fondu : rouge sombre au loin, jaune-orangé tout près */
+  const drift = t * 0.5;
+  for (let k = 0; k < 70; k++) { const zz = 1.04 * Math.pow(26 / 1.04, frac(q() + drift * (0.6 + 0.4 * ((k % 3) / 3)))), uu = (q() - 0.5) * F.wid * 1.5, P = proj(m, F.mid(zz) + uu, zz), sz = (W * (0.025 + 0.02 * q())) / zz;
+    const n = 5 + Math.floor(q() * 3), shape = Array.from({ length: n }, (_, i) => { const a = (i / n) * TAU + q() * 0.6, r = sz * (0.7 + 0.4 * q()); return [P[0] + Math.cos(a) * r * 1.6, P[1] + Math.sin(a) * r * 0.45]; });
+    g.fillStyle = css([20, 12, 10], 0.92); polyPath(g, shape); g.fill(); g.strokeStyle = css([255, 150, 40], 0.5); g.lineWidth = Math.max(0.4, 1.2 / zz); g.stroke(); } /* les plaques de croûte, cernées de feu */
+  g.restore();
+  g.strokeStyle = css([40, 14, 8], 0.9); g.lineWidth = 1.4; for (const side of [L, R]) { g.beginPath(); side.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke(); } /* les levées noires des bords, la lave refroidie */
+  for (let k = 0; k < 8; k++) { const P = pts[Math.floor(q() * pts.length)], X = proj(m, P.u, P.z), f = frac(t * 0.3 + k / 8); g.fillStyle = css([220, 180, 160], 0.25 * (1 - f)); g.beginPath(); g.arc(X[0] + (q() - 0.5) * 20, X[1] - f * H * 0.12, (2 + f * 10) / Math.sqrt(P.z), 0, TAU); g.fill(); } /* un peu de fumée qui monte */
+}
+/** 2.5 (G) : la lave du sol se lit en fentes de la croûte, posées en perspective et éparses (plus de bande en travers du sol où les choses semblaient pousser). */
 function lavaVeins(g, m, t) {
-  const { W, H, hz } = m;
-  for (const v of m.lava.veins) { const y = hz + H * 0.08 + v.w * H * 0.14; g.strokeStyle = css([255, 122, 48], 0.55 + 0.4 * Math.sin(TAU * (t * 2 + v.w))); g.lineWidth = 1.6; g.beginPath(); g.moveTo(v.x, y); v.pts.forEach((q, k) => g.lineTo(((k + 1) / 6) * W * 0.9, y + q * H * 0.05)); g.stroke(); }
-  for (const sp of m.lava.sparks) { const q = frac(t * 3 + sp.p); g.fillStyle = css([255, 150, 70], 1 - q); g.fillRect(sp.x + 6 * Math.sin(TAU * (q + sp.p)), hz + H * 0.1 - q * H * 0.45, 1.5, 1.5); }
+  const { H, hz, S } = m, LK = S.lavaKind, q = rng((S.seed ^ 0x5e1a) >>> 0), col = LK === "felsic" ? [255, 120, 40] : LK === "mafic" ? [255, 70, 25] : [255, 122, 48];
+  if (LK === "felsic") felsicFields(g, m, t);
+  for (let k = 0; k < 16; k++) {
+    const z = 1.3 + Math.pow(q(), 0.8) * 9, u = (q() - 0.5) * 1.9 * Math.min(1, 0.5 + z * 0.12), len = 0.12 + q() * 0.22, ph = q(), n = 5, pts = [];
+    for (let i = 0; i < n; i++) { const uu = u + (i / (n - 1) - 0.5) * len, zz = z * (1 + (q() - 0.5) * 0.12); pts.push(proj(m, uu, zz)); }
+    const pulse = 0.55 + 0.4 * Math.sin(TAU * (t * 2 + ph)), a = LK === "felsic" ? 0.45 + 0.3 * pulse : pulse, w = Math.max(0.5, 2.2 / Math.pow(z, 0.8));
+    const line = () => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); };
+    g.lineCap = "round"; g.lineJoin = "round";
+    g.strokeStyle = css(col, 0.18 * a); g.lineWidth = w * 3.5; line(); g.stroke(); /* le halo de la fente */
+    g.strokeStyle = css(col, a); g.lineWidth = w; line(); g.stroke();
+    if (LK === "mafic") { g.strokeStyle = css([255, 200, 90], 0.6 * a); g.lineWidth = w * 0.35; line(); g.stroke(); } /* le fil jaune au fond */
+  }
+  g.lineCap = "butt"; g.lineJoin = "miter";
+  for (const sp of m.lava.sparks) { const qq = frac(t * 3 + sp.p); g.fillStyle = css([255, 150, 70], 1 - qq); g.fillRect(sp.x + 6 * Math.sin(TAU * (qq + sp.p)), hz + H * 0.1 - qq * H * 0.45, 1.5, 1.5); }
+}
+/** 2.5 (G) : la lave felsique est trop épaisse pour couler loin ; elle s'avance en champs de blocs, gris dehors, rouges entre les blocs. */
+function felsicFields(g, m, t) {
+  const q = rng((m.S.seed ^ 0x7f3c) >>> 0), n = 3 + Math.floor(q() * 2), rq = rng((m.S.seed ^ 0x51a7e) >>> 0), rph = rq() * 6.28, ramp = 0.5 + rq() * 0.6, rwid = 0.16 + rq() * 0.1, ru0 = (rq() - 0.5) * 0.6;
+  const riverU = (z) => ru0 + ramp * Math.sin(rph + z * 0.55) * Math.min(1, z * 0.3), placed = []; /* la même rivière que riverRibbon : les blocs ne s'y posent pas */
+  for (let f = 0, tries = 0; f < n && tries < 40; tries++) {
+    const z = 1.6 + q() * 4.5, u = (q() - 0.5) * 1.7;
+    if (Math.abs(u - riverU(z)) < rwid + 0.4 || placed.some((o) => Math.abs(o.u - u) < 0.5 && Math.abs(o.z - z) < 1.5)) continue;
+    const P = proj(m, u, z), R = (m.W * 0.2) / z;
+    if (m.S.fissure && m.S.fissure !== "cave" && m.fis && Math.abs(P[0] - m.fis.x) < R * 1.4 + m.W * 0.06) continue; /* ni sur la fissure */
+    placed.push({ u, z }); f++;
+    const ph = q(), pulse = 0.7 + 0.3 * Math.sin(TAU * (t * 1.5 + ph));
+    const gl = g.createRadialGradient(P[0], P[1], 1, P[0], P[1], R * 1.3); gl.addColorStop(0, css([255, 110, 30], 0.75 * pulse)); gl.addColorStop(0.6, css([220, 60, 20], 0.35 * pulse)); gl.addColorStop(1, css([200, 50, 20], 0));
+    g.fillStyle = gl; g.save(); g.translate(P[0], P[1]); g.scale(1, 0.32); g.beginPath(); g.arc(0, 0, R * 1.3, 0, TAU); g.restore(); g.fill(); /* le rouge entre les blocs */
+    const blocks = [];
+    for (let k = 0; k < 9; k++) { const bx = P[0] + (q() - 0.5) * R * 1.8, by = P[1] + (q() - 0.5) * R * 0.45, s = R * (0.16 + 0.14 * q()); blocks.push({ bx, by, s, sh: Array.from({ length: 5 }, (_, i) => { const a = (i / 5) * TAU + q() * 0.7, r = s * (0.7 + 0.4 * q()); return [Math.cos(a) * r, Math.sin(a) * r * 0.75 - s * 0.35]; }) }); }
+    blocks.sort((a, b) => a.by - b.by);
+    for (const b of blocks) { const sh = b.sh.map(([x, y]) => [b.bx + x, b.by + y]); g.fillStyle = css([92, 88, 86]); polyPath(g, sh); g.fill(); g.strokeStyle = css([255, 130, 40], 0.7 * pulse); g.lineWidth = Math.max(0.6, 1.6 / Math.sqrt(z)); g.stroke(); g.fillStyle = css([130, 124, 120], 0.6); g.beginPath(); g.moveTo(sh[2][0], sh[2][1]); g.lineTo(sh[3][0], sh[3][1]); g.lineTo(b.bx, b.by - b.s * 0.35); g.closePath(); g.fill(); } /* des blocs gris aux arêtes rougeoyantes */
+  }
 }
 
 // ---- rivage ------------------------------------------------------------------------------------------------
@@ -2410,7 +2497,7 @@ function extraAt(g, m, t, layer) {
 
 // ---- un dessin propre pour les blocs les plus écrits, au lieu des dômes et des tiges de repli ----
 /* un point du sol, en profondeur : z de 1,4 (près) à 7 (loin) ; k = l'échelle */
-const gpt = (m, it, zNear = 1.4, zFar = 7) => { const z = zNear + it.y * (zFar - zNear), y = m.hz + (m.H - m.hz) / z; return { x: it.x, y, k: 2.4 / z, z }; };
+const gpt = (m, it, zNear = 1.4, zFar = 7) => { const z = zNear + it.y * (zFar - zNear), y = m.hz + (m.H - m.hz) / z; return { x: offFlow(m, it.x, z), y, k: 2.4 / z, z }; };
 const byDepth = (m, e, zn, zf) => e.items.map((it) => ({ it, ...gpt(m, it, zn, zf) })).sort((a, b) => b.z - a.z);
 const shadeOf = (m, c, f) => mixc(c, m.pal.ground, f);
 const seaHere = (m) => m.S.water && m.S.waterGround !== false && !m.S.ice;
