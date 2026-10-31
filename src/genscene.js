@@ -117,6 +117,7 @@ function sceneOf(a, name = "", blocks = null) {
   S.graniteHue = ["grey", "ochre", "pink"][(S.seed >>> 7) % 3]; /* la variété du granite, tirée de la graine */
   { const kindIn = (set) => (set.has("basalt") || set.has("basalt_columns") || set.has("iron") ? "mafic" : set.has("granite") ? "felsic" : null), drawnIds = new Set((res.drawn || []).map((p) => p.id)), mine = new Set((res.matter.written || []).filter((id) => !drawnIds.has(id))); S.lavaKind = S.lava ? kindIn(mine) || kindIn(new Set(res.matter.written || [])) : null; } /* la roche que l'auteur a écrite décide ; sinon celle que le monde a tirée */ /* 2.5 (G) : la lave suit la roche ; mafique (fer, magnésium) : croûte noire fendue de rouge ; felsique (silice) : grise, en dômes, et le volcan explose */
   if (S.lavaKind === "felsic") S.ash = true; /* la cendre vient seule */
+  S.sulfur = !!S.lava && (S.acid || ids.has("poisoned_air")) && !(S.phys && S.phys.oxygen < 0.3); /* 2.5 (H) : le soufre de la lave brûle bleu, s'il y a de l'oxygène pour brûler */
   S.rock = S.soil === "stone" ? (ids.has("basalt") || ids.has("basalt_columns") ? "basalt" : ids.has("granite") ? "granite" : null) : null; /* un visage pour la pierre, la forêt et le sel (src/dosage.js, BIOMES) */
   const cycleWritten = res.lines.some((l) => l.entry && l.entry.category === "cycle" && !l.autoFilled);
   S.phys = physLook(a.physics && a.physics.w, cycleWritten);
@@ -895,9 +896,10 @@ function paint(g, m, t, o = {}) {
 
   if (air.thick > 0.05) { const hg = g.createLinearGradient(0, 0, 0, hz); hg.addColorStop(0, css(hzc, 0.05 * air.thick)); hg.addColorStop(1, css(mixc(hzc, [240, 235, 220], 0.3), 0.45 * air.thick)); g.fillStyle = hg; g.fillRect(0, 0, W, hz); } // brume d'un air épais sur le relief
   for (const cn of m.cones) { // volcans : cône sombre + lueur du cratère
-    if (S.lavaKind) { volcanoOf(g, m, t, cn, day, night, hzc); continue; } /* 2.5 (G) : un volcan bouclier noir, ou un dôme gris qui fume */
+    if (S.lavaKind) { const top = volcanoOf(g, m, t, cn, day, night, hzc); if (S.sulfur) sulfurFlames(g, m, t, day, [top]); continue; } /* 2.5 (G) : un volcan bouclier noir, ou un dôme gris qui fume */
     g.fillStyle = css(pal.rock); g.beginPath(); g.moveTo(cn.x - cn.w, hz); g.lineTo(cn.x - cn.w * 0.12, hz - cn.h); g.lineTo(cn.x + cn.w * 0.12, hz - cn.h); g.lineTo(cn.x + cn.w, hz); g.closePath(); g.fill();
     const f = 0.5 + 0.5 * Math.sin(TAU * (t * 2) + cn.x), lg = g.createRadialGradient(cn.x, hz - cn.h, 1, cn.x, hz - cn.h, cn.h * 0.9); lg.addColorStop(0, css([255, 130, 50], 0.5 + 0.25 * f)); lg.addColorStop(1, css([255, 90, 30], 0)); g.fillStyle = lg; g.fillRect(0, 0, W, H);
+    if (S.sulfur) sulfurFlames(g, m, t, day, [{ x: cn.x, y: hz - cn.h, w: cn.w * 0.12 }]);
   }
   if (L.rainbow > 0.005) rainbow(g, m, t, sn, day, L.rainbow); // l'arc posé sur les crêtes, derrière le sol
   // sol
@@ -907,7 +909,7 @@ function paint(g, m, t, o = {}) {
     if (S.sand) dunes(g, m);
     if (S.ice) iceSheet(g, m, t, sn, day, night, hzc);
     else if (S.water && S.waterGround !== false) waterSurface(g, m, t, sn, hzc); /* l'eau en trait ne peint plus la mer */
-    if (S.lava) { if (S.lavaKind === "mafic") lavaFlow(g, m, t); lavaVeins(g, m, t); } /* 2.5 (G) : une vraie coulée sur un monde mafique */
+    if (S.lava) { if (S.lavaKind === "mafic") lavaFlow(g, m, t); lavaVeins(g, m, t); if (S.sulfur) sulfurFlames(g, m, t, day, null); } /* 2.5 (G) : une vraie coulée sur un monde mafique */
     if (!S.sand && !S.ice && !S.lava && !(S.water && S.waterGround !== false)) { if (S.soil === "salt") saltFlat(g, m, t, day, night, hzc); else if (S.rock === "basalt") blackSand(g, m, t, day, night, hzc); }
     if (S.view && S.view.kind === "high") valleyPlanes(g, m, t, day, night, hzc); /* ESSAI : vu d'en haut, la vallée s'étage */
     if (S.river) riverRibbon(g, m, t, sn, day, night, hzc, top);
@@ -1294,7 +1296,7 @@ function volcanoOf(g, m, t, cn, day, night, hzc) {
     g.strokeStyle = css(mixc(hzc, [255, 240, 220], 0.2), 0.25 * lit); g.lineWidth = 1; g.beginPath(); g.moveTo(cn.x - w * 0.7, hz - h * 0.45); g.quadraticCurveTo(cn.x - w * 0.3, hz - h * 1.0, cn.x - w * 0.08, hz - h); g.stroke(); /* l'arête claire du bouclier */
     for (let k = 0; k < 4; k++) { const sd = k % 2 ? 1 : -1, u0 = 0.06 + 0.04 * k, f = 0.55 + 0.45 * Math.sin(TAU * (t * 1.5 + k * 0.3)); g.strokeStyle = css([255, 70 + 50 * f, 30], 0.75 * f + 0.15); g.lineWidth = 1.4; g.beginPath(); g.moveTo(cn.x + sd * w * u0, hz - h * 0.98); for (let j = 1; j <= 6; j++) { const u = u0 + (0.7 - u0) * (j / 6); g.lineTo(cn.x + sd * w * u + Math.sin(j * 1.7 + k) * 3, hz - h * (1 - Math.pow(u, 1.3)) + 1); } g.stroke(); } /* les coulées : du rouge vif dans la croûte noire */
     const lg = g.createRadialGradient(cn.x, hz - h, 1, cn.x, hz - h, h * 1.2); lg.addColorStop(0, css([255, 90, 30], 0.55)); lg.addColorStop(1, css([255, 60, 20], 0)); g.fillStyle = lg; g.fillRect(0, 0, W, H);
-    return;
+    return { x: cn.x, y: hz - h, w: w * 0.1 };
   }
   const q = rng(((m.S.seed ^ 0xd03e) + Math.round(cn.x)) >>> 0), w = cn.w * (0.6 + 0.2 * q()), h = cn.h * (0.6 + 0.2 * q()), rock = mixc(mixc([98, 92, 88], [30, 28, 27], 1 - lit), hzc, 0.12), n = 22;
   const prof = Array.from({ length: n + 1 }, (_, k) => { const u = k / n, a = Math.PI * u, bump = (q() - 0.5) * 0.16 + (k % 4 === 0 ? -0.06 : 0); return [cn.x - w * Math.cos(a), hz + 1 - h * Math.pow(Math.sin(a), 0.7) * (1 + bump)]; }); /* un dôme bosselé, en blocs : la lave trop épaisse s'empile et se fend */
@@ -1305,6 +1307,7 @@ function volcanoOf(g, m, t, cn, day, night, hzc) {
   for (let k = 0; k < 3; k++) { const f = frac(t * 0.35 + k / 3), sd = k % 2 ? 1 : -1, x = cn.x + sd * w * (0.15 + 0.75 * f), y = hz - h * (0.9 - 0.85 * Math.pow(f, 0.8)); g.fillStyle = css([255, 120, 40], 0.8 * (1 - f * 0.6)); g.beginPath(); g.arc(x, y, 2 + 1.5 * (1 - f), 0, TAU); g.fill(); } /* des blocs brûlants qui roulent sur ses flancs */
   const gl = g.createRadialGradient(cn.x, hz - h, 1, cn.x, hz - h, h * 0.35); gl.addColorStop(0, css([255, 120, 50], 0.35 + 0.2 * night)); gl.addColorStop(1, css([255, 100, 40], 0)); g.fillStyle = gl; g.fillRect(cn.x - h, hz - h * 1.4, h * 2, h * 0.8); /* une lueur faible au sommet */
   for (let k = 0; k < 9; k++) { const q = frac(t * 0.25 + k / 9), y = hz - h - q * H * 0.45, r = h * (0.12 + 0.35 * q), x = cn.x + Math.sin(k * 2.1 + t * TAU * 0.2) * r * 0.4 + q * W * 0.04; g.fillStyle = css(mixc([96, 90, 86], hzc, 0.25), (0.55 - 0.45 * q) * (0.6 + 0.4 * lit)); g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); } /* la colonne de cendre : il explose */
+  return { x: cn.x, y: hz - h, w: w * 0.22 };
 }
 /** 2.5 (G) : la coulée d'une lave mafique, en perspective. Un cœur jaune-orangé, des bords rouges, des plaques de croûte noire qui dérivent
  *  lentement vers nous, des joints incandescents entre elles ; la lueur monte sur le sol autour. */
@@ -1371,6 +1374,36 @@ function felsicFields(g, m, t) {
     for (let k = 0; k < 9; k++) { const bx = P[0] + (q() - 0.5) * R * 1.8, by = P[1] + (q() - 0.5) * R * 0.45, s = R * (0.16 + 0.14 * q()); blocks.push({ bx, by, s, sh: Array.from({ length: 5 }, (_, i) => { const a = (i / 5) * TAU + q() * 0.7, r = s * (0.7 + 0.4 * q()); return [Math.cos(a) * r, Math.sin(a) * r * 0.75 - s * 0.35]; }) }); }
     blocks.sort((a, b) => a.by - b.by);
     for (const b of blocks) { const sh = b.sh.map(([x, y]) => [b.bx + x, b.by + y]); g.fillStyle = css([92, 88, 86]); polyPath(g, sh); g.fill(); g.strokeStyle = css([255, 130, 40], 0.7 * pulse); g.lineWidth = Math.max(0.6, 1.6 / Math.sqrt(z)); g.stroke(); g.fillStyle = css([130, 124, 120], 0.6); g.beginPath(); g.moveTo(sh[2][0], sh[2][1]); g.lineTo(sh[3][0], sh[3][1]); g.lineTo(b.bx, b.by - b.s * 0.35); g.closePath(); g.fill(); } /* des blocs gris aux arêtes rougeoyantes */
+  }
+}
+
+/**
+ * 2.5 (H) : les flammes de soufre (Kawah Ijen) : un cœur bleu électrique bordé de violet. Elles ne se voient que la nuit et au
+ * crépuscule ; en plein jour, presque rien. `tops` : les cratères ; null : le sol (les bords de la coulée, des évents sur la croûte).
+ */
+function sulfurFlames(g, m, t, day, tops) {
+  const vis = 0.08 + 0.92 * Math.pow(1 - day, 1.4); if (vis < 0.1) return;
+  const { S } = m, q = rng((S.seed ^ (tops ? 0x50f1 : 0x50f2)) >>> 0), spots = [];
+  if (tops) for (const c of tops) for (let k = 0, n = 2 + Math.floor(q() * 3); k < n; k++) spots.push({ x: c.x + (q() - 0.5) * c.w * 2.4, y: c.y + 1 + q() * 2, s: 0.45 + 0.8 * q(), ph: q() }); /* quelques langues inégales au bord du cratère */
+  else {
+    if (S.lavaKind === "mafic") { const F = flowGeom(m); for (let z = 1.3; z < 12; z *= 1.16) for (const sd of [-1, 1]) if (q() < 0.65) { const P = proj(m, F.mid(z) + sd * F.half(z), z); spots.push({ x: P[0], y: P[1], s: 2.4 / z, ph: q() }); } } /* le soufre fondu brûle le long des bords de la coulée */
+    for (let k = 0; k < 7; k++) { const z = 1.6 + q() * 7, P = proj(m, (q() - 0.5) * 1.8, z); spots.push({ x: offFlow(m, P[0], z), y: P[1], s: 2.4 / z, ph: q() }); } /* des évents sur la croûte */
+  }
+  for (const p of spots) {
+    const f = 0.8 + 0.2 * Math.sin(TAU * (t * 3 + p.ph)) * Math.sin(TAU * (t * 1.7 + p.ph * 2)), h = 22 * p.s * f, w = 4.4 * p.s;
+    g.save(); g.globalCompositeOperation = "lighter";
+    const halo = g.createRadialGradient(p.x, p.y - h * 0.35, 0, p.x, p.y - h * 0.35, h * 1.4); halo.addColorStop(0, css([50, 90, 255], 0.32 * vis)); halo.addColorStop(1, css([60, 40, 255], 0)); g.fillStyle = halo; g.fillRect(p.x - h * 1.4, p.y - h * 1.8, h * 2.8, h * 2.8); /* la lueur bleue */
+    const ground = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, w * 3); ground.addColorStop(0, css([120, 170, 255], 0.35 * vis)); ground.addColorStop(1, css([60, 80, 255], 0)); g.fillStyle = ground; g.save(); g.translate(p.x, p.y); g.scale(1, 0.3); g.beginPath(); g.arc(0, 0, w * 3, 0, TAU); g.restore(); g.fill(); /* la flaque de lumière au pied */
+    g.restore(); /* les langues se peignent par-dessus, sans s'additionner : elles restent bleues sur la lave */
+    for (const L of [{ dx: -0.55, hh: 0.62, ww: 0.6, ph: 0.37 }, { dx: 0.6, hh: 0.5, ww: 0.55, ph: 0.71 }, { dx: 0, hh: 1, ww: 1, ph: 0 }]) { /* trois langues : deux petites, une grande */
+      const x0 = p.x + L.dx * w, H0 = h * L.hh, W0 = w * L.ww, ph = p.ph + L.ph, n = 12, left = [], right = [];
+      for (let i = 0; i <= n; i++) { const u = i / n, cx = x0 + Math.pow(u, 1.6) * W0 * 1.6 * Math.sin(TAU * (t * 2.3 + ph) - u * 3.2) + u * W0 * 0.4 * Math.sin(TAU * (t * 0.7 + ph)), cy = p.y - u * H0, hw = W0 * Math.pow(1 - u, 0.9) * Math.min(1, 0.35 + u * 4); left.push([cx - hw, cy]); right.push([cx + hw, cy]); }
+      const scaled = (k, hk) => { g.beginPath(); const pt = (P) => [x0 + (P[0] - x0) * k, p.y - (p.y - P[1]) * hk]; g.moveTo(...pt(left[0])); for (const P of left) g.lineTo(...pt(P)); for (let i = right.length - 1; i >= 0; i--) g.lineTo(...pt(right[i])); g.closePath(); };
+      const og = g.createLinearGradient(0, p.y, 0, p.y - H0); og.addColorStop(0, css([90, 110, 255], 0.75 * vis)); og.addColorStop(0.55, css([130, 70, 255], 0.55 * vis)); og.addColorStop(1, css([170, 60, 255], 0)); g.fillStyle = og; scaled(1, 1); g.fill(); /* le voile violet, qui s'efface en haut */
+      const mg = g.createLinearGradient(0, p.y, 0, p.y - H0 * 0.75); mg.addColorStop(0, css([80, 170, 255], 0.9 * vis)); mg.addColorStop(0.6, css([40, 90, 255], 0.5 * vis)); mg.addColorStop(1, css([40, 60, 255], 0)); g.fillStyle = mg; scaled(0.6, 0.75); g.fill(); /* le bleu */
+      const cg = g.createLinearGradient(0, p.y, 0, p.y - H0 * 0.35); cg.addColorStop(0, css([170, 225, 255], 0.8 * vis)); cg.addColorStop(1, css([140, 210, 255], 0)); g.fillStyle = cg; scaled(0.28, 0.35); g.fill(); /* le cœur presque blanc, au pied */
+    }
+    for (let k = 0; k < 2; k++) { const qq = frac(t * 0.9 + p.ph + k * 0.5), y = p.y - h * (0.8 + qq * 1.4), x = p.x + Math.sin(TAU * (qq + p.ph)) * w * 1.2; g.fillStyle = css([150, 120, 255], 0.6 * (1 - qq) * vis); g.beginPath(); g.arc(x, y, Math.max(0.5, 0.9 * p.s), 0, TAU); g.fill(); } /* une étincelle bleue qui monte */
   }
 }
 
