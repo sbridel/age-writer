@@ -12,7 +12,7 @@ const TERRAINS = ["volcanic_plateau", "mossy_plateau", "sand_island", "glacier",
 const SURROUNDINGS = ["cloud_sea", "fog_sea", "ocean", "void", "lava_sea"];
 const SKY_CYCLES = ["system_time", "frozen_dawn", "frozen_day", "frozen_dusk", "frozen_night"];
 const STRUCTURES = ["hut", "bookshelves", "linking_pillars"];
-const EFFECT_TYPES = ["marcel", "vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager", "telescope", "dniclock", "comet", "inkwell", "atelier", "glasshouse", "castle"];
+const EFFECT_TYPES = ["marcel", "vegetation", "waterfall", "fireflies", "lanterns", "snow", "aurora", "mist", "fireworks", "mountain", "pillars", "chimney", "firecolour", "gems", "gold", "silver", "koi", "cat", "rain", "storm", "birds", "butterflies", "moons", "dock", "bench", "stalktree", "cattoys", "ponddecor", "islets", "calendar", "flowers", "grass", "imager", "telescope", "dniclock", "comet", "inkwell", "atelier", "glasshouse", "castle"];
 /** Options propres à certains effets (texte court) : couleur et nom du chat, variété du koï rare. */
 const optsOf = (a) => { const o = {}; for (const k of ["color", "name", "rare", "sleep", "flower"]) if (a && a[k] != null && String(a[k]).trim()) o[k] = String(a[k]).trim().slice(0, 40); return o; };
 const ASSETS = { vegetation: ["conifer", "birch", "palm", "fern", "ponderosa", "maple", "crystal"], flowers: ["blue", "red", "yellow", "white", "pink", "lily"] };
@@ -154,6 +154,7 @@ const PAGE_PRESETS = {
   // (claude/DESIGN-verriere-art-nouveau.md) ; bac à sable seulement
   page_glasshouse: { label: "Glasshouse", effects: { canvas_additions: [{ type: "glasshouse" }] }, sandbox: true },
   page_castle: { label: "Castle", effects: { canvas_additions: [{ type: "castle" }] }, sandbox: true }, // le Château : gothique romantique (claude/DESIGN-chateau-gothique.md)
+  page_fire_colour: { label: "Fire colour", effects: { canvas_additions: [{ type: "firecolour" }] } }, // 2.5 (I) : un clic sur le feu passe à la couleur suivante (src/relto-fire.js)
   page_mist: { label: "Mist", effects: { canvas_additions: [{ type: "mist", density: 0.6 }], ambiance_audio: "wind" } },
 };
 

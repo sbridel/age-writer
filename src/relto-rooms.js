@@ -10,6 +10,7 @@ const PILE = require("./relto-vault");
 const ATELIER = require("./relto-atelier");
 const GLASS = require("./relto-glass");
 const CASTLE = require("./relto-castle");
+const FIRE = require("./relto-fire"); /* 2.5 (I) : le feu du Relto (bois, couleur) */
 const W = 640, H = 360, FLOOR = 250, GY = 208;
 
 const flicker = (t) => 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1) + 0.06 * Math.sin(t * 17);
@@ -95,16 +96,22 @@ function drawCabin(r, ctx, sc, sky, t) {
   // feu
   const mx = ox + ow / 2, by = FLOOR - 10;
   if (castle) CASTLE.andirons(ctx, c, ox + 10, ox + ow - 10, FLOOR - 1);
-  ctx.fillStyle = "#2b1c12"; ctx.fillRect(mx - 34, by - 6, 68, 8); ctx.fillStyle = "#3a2618"; ctx.fillRect(mx - 28, by - 12, 56, 7);
-  const n = Math.round(3 + 4 * d);
-  for (let i = 0; i < n; i++) {
-    const ph = t * (2.2 + i * 0.37) + i * 1.9, h = (12 + 36 * d) * (0.65 + 0.35 * Math.sin(ph)) * (1 - Math.abs(i - (n - 1) / 2) * 0.12), x = mx + (i - (n - 1) / 2) * 11 * (0.7 + 0.3 * d), sw = Math.sin(ph * 1.3) * 3;
-    for (const [col, k] of [["rgba(255,110,30,0.85)", 1], ["rgba(255,190,70,0.9)", 0.62], ["rgba(255,240,170,0.9)", 0.3]]) {
-      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x - 7 * k - 1, by - 8); ctx.quadraticCurveTo(x - 5 * k + sw, by - h * k * 0.6, x + sw, by - h * k - 6); ctx.quadraticCurveTo(x + 5 * k + sw, by - h * k * 0.6, x + 7 * k + 1, by - 8); ctx.closePath(); ctx.fill();
+  const F = lit ? FIRE.fireFor(r, "cabin") : null; /* 2.5 (I) : avec la page de la cheminée, le feu a son bois et sa couleur ; sans elle, le petit feu d'avant */
+  if (F) { FIRE.drawFire(ctx, { mx, by: by - 6, w: ow - 8, size: 26 + 36 * d, st: F.st, col: F.col, t }); FIRE.fireGlow(ctx, mx, by - 24, 170, F.st, F.col, fl); }
+  else {
+    ctx.fillStyle = "#2b1c12"; ctx.fillRect(mx - 34, by - 6, 68, 8); ctx.fillStyle = "#3a2618"; ctx.fillRect(mx - 28, by - 12, 56, 7);
+    const n = Math.round(3 + 4 * d);
+    for (let i = 0; i < n; i++) {
+      const ph = t * (2.2 + i * 0.37) + i * 1.9, h = (12 + 36 * d) * (0.65 + 0.35 * Math.sin(ph)) * (1 - Math.abs(i - (n - 1) / 2) * 0.12), x = mx + (i - (n - 1) / 2) * 11 * (0.7 + 0.3 * d), sw = Math.sin(ph * 1.3) * 3;
+      for (const [col, k] of [["rgba(255,110,30,0.85)", 1], ["rgba(255,190,70,0.9)", 0.62], ["rgba(255,240,170,0.9)", 0.3]]) {
+        ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x - 7 * k - 1, by - 8); ctx.quadraticCurveTo(x - 5 * k + sw, by - h * k * 0.6, x + sw, by - h * k - 6); ctx.quadraticCurveTo(x + 5 * k + sw, by - h * k * 0.6, x + 7 * k + 1, by - 8); ctx.closePath(); ctx.fill();
+      }
     }
+    if (lit) for (let i = 0; i < 7; i++) { const p = ((t * 0.5 + i * 0.19) % 1), x = mx + Math.sin(p * 9 + i * 3) * 18, y = by - 20 - p * 70; ctx.fillStyle = rgba(255, 190 - p * 90, 80, (1 - p) * 0.9); ctx.fillRect(x, y, 1.6, 1.6); }
   }
-  if (lit) for (let i = 0; i < 7; i++) { const p = ((t * 0.5 + i * 0.19) % 1), x = mx + Math.sin(p * 9 + i * 3) * 18, y = by - 20 - p * 70; ctx.fillStyle = rgba(255, 190 - p * 90, 80, (1 - p) * 0.9); ctx.fillRect(x, y, 1.6, 1.6); }
   r.hot.push({ x: fx - 12, y: 104, w: fw + 24, h: FLOOR - 104, tip: lit ? "Fireplace" : "Cold hearth (add the chimney page to light it)" });
+  if (F) { const TRc = TR(r); if (F.page) r.hot.push({ x: ox + 8, y: oy + 20, w: ow - 16, h: FLOOR - oy - 20, tip: TRc("relto.fire.colour"), fire: { hearth: "cabin", kind: "colour" } });
+    FIRE.drawWoodpile(ctx, fx + fw - 36, FLOOR + 38, 32, c); r.hot.push({ x: fx + fw - 40, y: FLOOR + 6, w: 40, h: 34, tip: TRc(F.full ? "relto.fire.full" : "relto.fire.log"), fire: { hearth: "cabin", kind: "log" } }); } /* le bûcher */
   if (r.available && r.available().atelier) { // un leurre : les pierres de la cheminée s'enfoncent un instant quand on les touche, et il ne se passe rien
     const stone = (x, y, w, h) => r.hot.push({ x, y, w, h, tip: "", stone: true, secret: true });
     stone(fx + 20, 24, fw - 40, 90); stone(fx, 114, ox - fx, FLOOR - 114); stone(ox + ow, 114, fx + fw - ox - ow, FLOOR - 114); stone(ox, 114, ow, 22);
@@ -205,7 +212,8 @@ function drawCabin(r, ctx, sc, sky, t) {
   if (glass) GLASS.cabinPlants(ctx, c, t);
   if (castle) CASTLE.sconce(ctx, c, 452, 70, fl, night); // une applique de fer entre l'étagère et le conduit
   // lumière : lueur de l'âtre et de la chandelle, puis pénombre du soir
-  let g = ctx.createRadialGradient(mx, FLOOR - 24, 6, mx, FLOOR - 24, 300); g.addColorStop(0, rgba(255, 150, 60, (0.18 + 0.2 * night) * fl * d)); g.addColorStop(1, rgba(255, 130, 40, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const hk = F ? (F.st.phase === "flame" ? 0.3 + 0.7 * F.st.level : F.st.phase === "embers" ? 0.25 * F.st.glow : 0) * (F.col.ghost ? 0.5 : 1) : 1, hc = F ? FIRE.glowColor(F.col) : [255, 150, 60]; /* 2.5 (I) : la pièce s'assombrit quand le feu baisse ; elle prend sa couleur */
+  let g = ctx.createRadialGradient(mx, FLOOR - 24, 6, mx, FLOOR - 24, 300); g.addColorStop(0, rgba(hc[0], hc[1], hc[2], (0.18 + 0.2 * night) * fl * d * hk)); g.addColorStop(1, rgba(hc[0], hc[1], hc[2], 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   g = ctx.createRadialGradient(cx + 3.5, ty - 19, 2, cx + 3.5, ty - 19, 70); g.addColorStop(0, rgba(255, 190, 90, (0.12 + 0.28 * night) * fl)); g.addColorStop(1, rgba(255, 190, 90, 0)); ctx.fillStyle = g; ctx.fillRect(cx - 80, ty - 90, 160, 140);
   g = ctx.createRadialGradient(W / 2, H / 2, 150, W / 2, H / 2, 420); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, rgba(0, 0, 0, 0.38)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   require("./relto-lounge").turnEdges(r, ctx, "lounge", TR(r)("relto.lounge.turn")); // se retourner : le salon, de l'autre côté de la pièce

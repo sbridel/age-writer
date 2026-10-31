@@ -9,6 +9,7 @@
 const { rng, clamp, mix, rgba } = require("./util");
 const GLASS = require("./relto-glass");
 const CASTLE = require("./relto-castle");
+const FIRE = require("./relto-fire"); /* 2.5 (I) : le feu du Relto (bois, couleur) */
 const MEM = () => require("./relto-memories"); /* paresseux : la chambre dépend de la fenêtre générative */
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 const W = 640, H = 360, FLOOR = 250;
@@ -70,7 +71,8 @@ function drawLounge(r, ctx, sc, sky, t) {
   }
   if (night > 0.2) { // la nuit : la lanterne (ou le lustre) éclaire le canapé ; le poêle, le coin cuisine
     let g = ctx.createRadialGradient(lx, 64, 2, lx, 64, 140); g.addColorStop(0, rgba(255, 190, 100, 0.28 * night * fl)); g.addColorStop(1, rgba(255, 190, 100, 0)); ctx.fillStyle = g; ctx.fillRect(lx - 160, 0, 320, 260);
-    g = ctx.createRadialGradient(136, 226, 2, 136, 226, 95); g.addColorStop(0, rgba(255, 140, 60, 0.24 * night * fl)); g.addColorStop(1, rgba(255, 140, 60, 0)); ctx.fillStyle = g; ctx.fillRect(30, 130, 210, 160);
+    const F = FIRE.fireFor(r, "lounge"), C = F.col.c[1], a = (F.st.phase === "flame" ? 0.1 + 0.14 * F.st.level : F.st.phase === "embers" ? 0.06 * F.st.glow : 0) * (F.col.ghost ? 0.5 : 1); /* 2.5 (I) : la lueur du poêle suit son bois et sa couleur */
+    if (a > 0) { g = ctx.createRadialGradient(136, 226, 2, 136, 226, 95); g.addColorStop(0, rgba(C[0], C[1], C[2], a * night * fl)); g.addColorStop(1, rgba(C[0], C[1], C[2], 0)); ctx.fillStyle = g; ctx.fillRect(30, 130, 210, 160); }
   }
 
   MEM().loungeOrb(r, ctx, t); /* la porte de la chambre des souvenirs : un orbe, près du plafond */
@@ -138,13 +140,16 @@ function kitchen(r, ctx, c, R, sky, t, fl, night, castle, glass, tr) {
   if (glass) { ctx.fillStyle = c(GLASS.COPPER); ctx.beginPath(); ctx.moveTo(112, 150); ctx.lineTo(188, 150); ctx.lineTo(176, 118); ctx.lineTo(124, 118); ctx.closePath(); ctx.fill(); R(GLASS.COPPER_HI, 112, 148, 76, 2); for (const x of [130, 150, 170]) R(GLASS.COPPER_LO, x, 121, 1.2, 27); }
   // le poêle à bois pour cuire : fonte, la porte du foyer, une marmite qui fume, une bouilloire, le tuyau qui monte
   R("#26221f", 118, 196, 64, 56); R("#3a3430", 114, 190, 72, 8); R("#1a1715", 124, 214, 24, 20); R("#1a1715", 154, 214, 22, 14);
-  const fire = ctx.createRadialGradient(136, 226, 1, 136, 226, 12); fire.addColorStop(0, rgba(255, 160, 70, 0.75 + 0.25 * fl)); fire.addColorStop(1, rgba(255, 90, 20, 0)); ctx.fillStyle = fire; ctx.fillRect(124, 214, 24, 20);
+  { const F = FIRE.fireFor(r, "lounge"); ctx.save(); ctx.beginPath(); ctx.rect(124, 214, 24, 20); ctx.clip(); FIRE.drawFire(ctx, { mx: 136, by: 230, w: 22, size: 15, st: F.st, col: F.col, t }); ctx.restore(); /* 2.5 (I) : le feu derrière la porte du foyer */
+    R("#2a2420", 124, 214, 24, 1.5); ctx.strokeStyle = rgba(0, 0, 0, 0.55); ctx.lineWidth = 1; for (const x of [130, 136, 142]) { ctx.beginPath(); ctx.moveTo(x, 215); ctx.lineTo(x, 234); ctx.stroke(); } /* les barreaux de la grille */
+    FIRE.drawWoodpile(ctx, 84, FLOOR + 2, 26, c); }
   R("#1a1715", 120, 250, 6, 2); R("#1a1715", 174, 250, 6, 2);
   ctx.fillStyle = c("#2c2a2a"); ctx.beginPath(); ctx.moveTo(126, 190); ctx.lineTo(154, 190); ctx.lineTo(152, 172); ctx.lineTo(128, 172); ctx.closePath(); ctx.fill(); R("#3a3836", 124, 169, 32, 4);
   ctx.fillStyle = c("#6a4a30"); ctx.beginPath(); ctx.ellipse(170, 183, 9, 7, 0, 0, 6.283); ctx.fill(); ctx.fillRect(168, 173, 4, 4); ctx.strokeStyle = c("#6a4a30"); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(178, 181); ctx.lineTo(184, 175); ctx.stroke();
   for (let i = 0; i < 5; i++) { const p = ((t * 0.18 + i / 5) % 1); ctx.fillStyle = rgba(220, 220, 220, 0.2 * (1 - p)); ctx.beginPath(); ctx.arc(140 + Math.sin(p * 5 + i) * 4, 166 - p * 46, 2.5 + p * 6, 0, 6.283); ctx.fill(); } // la vapeur
   if (!glass) { R("#2a2622", 166, 24, 9, 146); R("#3a3430", 164, 96, 13, 4); } else R("#2a2622", 166, 24, 9, 94); // le tuyau (sous la hotte, à la Verrière)
   r.hot.push({ x: 114, y: 166, w: 74, h: 86, tip: tr("relto.lounge.stove") });
+  { const F = FIRE.fireFor(r, "lounge"); if (F.page) r.hot.push({ x: 124, y: 214, w: 24, h: 20, tip: tr("relto.fire.colour"), fire: { hearth: "lounge", kind: "colour" } }); r.hot.push({ x: 82, y: FLOOR - 22, w: 30, h: 26, tip: tr(F.full ? "relto.fire.full" : "relto.fire.log"), fire: { hearth: "lounge", kind: "log" } }); } /* 2.5 (I) : le feu, le bûcher */
 }
 
 function windowAndSky(r, ctx, c, R, sky, t, castle, glass) {

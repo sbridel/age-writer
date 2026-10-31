@@ -45,6 +45,7 @@ const STAT = require("./status");
 const CARRY = require("./carry");
 const DEPTH = require("./depth");
 const SCAR = require("./scarring");
+const FIRE = require("./relto-fire");
 const SUCC = require("./succession"); /* 2.5 (E) : le monde se relit */ /* 2.5 (F) : le coût d'une cicatrice, rendu quand l'eau suspendue la remplace */
 const { SYSTEM_RE } = require("./starsystem");
 const { addExtSettings, DEFAULTS } = require("./settings-ui");
@@ -877,6 +878,7 @@ module.exports = function build(Base, core, AGEX) {
             if (!a) return;
             if (plugin.law.destroyed(i.name)) { e.stopImmediatePropagation(); e.preventDefault(); row.addClass("is-flicker"); window.setTimeout(() => row.removeClass("is-flicker"), 700); new Notice(plugin.t("doom.gone")); return; } // le livre est brûlé : rien ne s'ouvre plus
             view.__quietUntil = Date.now() + 4000; // déjà dans le livre : pas de bruit d'ouverture
+            guard("fire colour", () => { FIRE.rememberAge(plugin.ext, i.analysis); plugin.saveExt(); }); /* 2.5 (I) : le feu du Relto prend la couleur du dernier Âge visité */
             if (plugin.ext.uncertainLinks === false) { if (plugin.ext.sound && plugin.ext.soundLink !== false) linkSound(plugin.ext.volume); return; }
             const others = [...view.contentEl.querySelectorAll(".age-book__book")].map((r) => r.__item).filter((x) => x && x.file && x.file !== i.file);
             const res = rollLink(fx.unrestOf(i.analysis), Math.random(), others.length, i.analysis.damage);
@@ -886,6 +888,7 @@ module.exports = function build(Base, core, AGEX) {
             if (plugin.ext.sound) staticBurst(plugin.ext.volume * 0.8);
             if (res.kind === "astray") {
               const o = others[res.pick % others.length];
+              guard("fire colour", () => { if (o.analysis) { FIRE.rememberAge(plugin.ext, o.analysis); plugin.saveExt(); } });
               new Notice(plugin.t("link.astray", { a: i.name, b: o.name }));
               plugin.app.workspace.openLinkText(o.name, srcFile.path, false);
             } else new Notice(plugin.t("link.flicker"));

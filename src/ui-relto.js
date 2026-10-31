@@ -4,6 +4,7 @@ const obsidian = require("obsidian");
 /** Un écran tactile (Obsidian mobile, ou un pointeur grossier : tablette, téléphone). */
 function isTouch() { try { if (obsidian.Platform && obsidian.Platform.isMobile) return true; return !!(typeof window !== "undefined" && window.matchMedia && window.matchMedia("(pointer: coarse)").matches && !window.matchMedia("(pointer: fine)").matches); } catch (e) { return false; } }
 const M = require("./relto-model");
+const FIRE = require("./relto-fire");
 const { ReltoRenderer } = require("./relto-render");
 const sound = require("./sound");
 const MAIL = require("./story-mail");
@@ -918,7 +919,17 @@ async function renderRelto(plugin, source, el, ctx) {
   const forkPut = (v) => { const m = { ...(plugin.ext.fork && typeof plugin.ext.fork === "object" ? plugin.ext.fork : {}) }; if (v) m[file.path] = v; else delete m[file.path]; plugin.ext.fork = m; plugin.saveExt(); };
   const pool = () => poolOfScene(scene); /* la réserve de ce Relto (section 19.2) */
   const storyLater = () => { if (scene && scene.mode === "story") window.setTimeout(() => refresh().catch((e) => console.warn("[Age Writer ext] relto", e)), 300); }; /* un geste de la caverne ou de la machine peut finir un chapitre */
-  const renderer = new ReltoRenderer(canvas, plugin.dni, { touch, wheelOk: () => !!root.closest(".age-reltoview") || !!root.ownerDocument.fullscreenElement, rotated: () => touch && root.hasClass("is-mobilefull") && !!(window.matchMedia && window.matchMedia("(orientation: portrait)").matches), onTip: tipCard ? (text, parts) => { /* la carte d'infobulle, au doigt : le texte, et une ligne de valeur en chiffres D'ni (la machine) */
+  /* 2.5 (I) : le feu du Relto : le bois de chaque foyer (l'heure où il finit), la couleur choisie, celle du dernier Âge visité */
+  const fireSt = () => { const f = (plugin.ext.reltoFire = plugin.ext.reltoFire || {}); f.until = f.until || {}; const now = Date.now(); let fresh = false; for (const k of FIRE.HEARTHS) if (f.until[k] == null) { f.until[k] = now + 2 * FIRE.HOUR; fresh = true; } if (fresh) plugin.saveExt(); return f; };
+  const onFire = (h) => {
+    const f = fireSt(), now = Date.now();
+    if (h.kind === "log") { if (FIRE.isFull(f.until[h.hearth], now)) return plugin.t("relto.fire.fullmsg"); f.until[h.hearth] = FIRE.addLog(f.until[h.hearth], now); plugin.saveExt(); if (roomSoundOn()) { try { sound.slideWood(roomVol()); } catch (e) { /* pas de son */ } } liveSound(); return plugin.t("relto.fire.added"); }
+    if (h.kind === "colour") { f.pick = FIRE.nextPick(f); plugin.saveExt(); return FIRE.COLORS[f.pick][plugin.lang() === "fr" ? "fr" : "en"]; }
+    return null;
+  };
+  /** Le crépitement suit le feu le plus vif des trois foyers (éteint : plus rien). */
+  const fireSound = () => { const f = plugin.ext.reltoFire || {}, now = Date.now(); let best = 0; for (const k of FIRE.HEARTHS) { const st = FIRE.hearthOf((f.until || {})[k], now); best = Math.max(best, st.phase === "flame" ? 0.35 + 0.65 * st.level : st.phase === "embers" ? 0.25 * st.glow : 0); } return best; };
+  const renderer = new ReltoRenderer(canvas, plugin.dni, { touch, fireState: fireSt, onFire: (h) => onFire(h), wheelOk: () => !!root.closest(".age-reltoview") || !!root.ownerDocument.fullscreenElement, rotated: () => touch && root.hasClass("is-mobilefull") && !!(window.matchMedia && window.matchMedia("(orientation: portrait)").matches), onTip: tipCard ? (text, parts) => { /* la carte d'infobulle, au doigt : le texte, et une ligne de valeur en chiffres D'ni (la machine) */
       tipCard.empty(); tipCard.toggleClass("is-empty", !text && !(parts && parts.length));
       if (parts && parts.length) { const line = tipCard.createDiv({ cls: "age-relto__tipdni" }); for (const p of parts) { if (typeof p === "string") line.createSpan({ text: p }); else setMarkup(line.createSpan({ cls: "age-relto__tipnum" }), plugin.dni.numberSvg(p.n, { size: 18 })); } }
       if (text) tipCard.createDiv({ text });
@@ -992,7 +1003,7 @@ async function renderRelto(plugin, source, el, ctx) {
     for (const p of act) for (const n of p.audio) {
       const c = soundCfg(n); if (c.on === false) continue;
       const v = c.vol == null ? 1 : c.vol, pl = sound.layersForNames([n]);
-      for (const k in pl) L[k] = Math.max(L[k] || 0, pl[k] * v);
+      for (const k in pl) L[k] = Math.max(L[k] || 0, pl[k] * v * (k === "hearth" ? fireSound() : 1)); /* 2.5 (I) : le crépitement suit le feu */
       if (!names.includes(n)) names.push(n);
     }
     if (!act.length) L = { wind: 0.25, drone: 0.15, pad: 0.2 };

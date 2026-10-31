@@ -3,6 +3,7 @@
 // un fauteuil (le chat s'y repose) et, en haut, une galerie de livres. Tout est dessiné ici (aucun asset).
 const { rng, clamp, mix, rgba, fnv } = require("./util");
 const EMB = require("./emblem");
+const FIRE = require("./relto-fire"); /* 2.5 (I) : le feu du Relto (bois, couleur) */
 const FL = require("./relto-flower");
 const W = 640, H = 360, FLOOR = 250, GALLERY = 100;
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
@@ -147,11 +148,12 @@ function drawAtelier(r, ctx, sc, sky, t) {
   const ox = fx + 20, ow = fw - 40; ctx.fillStyle = "#0e0907"; ctx.beginPath(); ctx.moveTo(ox, FLOOR); ctx.lineTo(ox, 188); ctx.quadraticCurveTo(ox + ow / 2, 160, ox + ow, 188); ctx.lineTo(ox + ow, FLOOR); ctx.closePath(); ctx.fill();
   const mx = ox + ow / 2, by = FLOOR - 9, n = Math.round(3 + 3 * d);
   if (castle) CS.andirons(ctx, c, ox + 8, ox + ow - 8, FLOOR - 1);
-  ctx.fillStyle = "#2b1c12"; ctx.fillRect(mx - 28, by - 5, 56, 7);
-  for (let i = 0; i < n; i++) { const ph = t * (2.2 + i * 0.37) + i * 1.9, h = (10 + 30 * d) * (0.65 + 0.35 * Math.sin(ph)), x = mx + (i - (n - 1) / 2) * 10, sw = Math.sin(ph * 1.3) * 3;
-    for (const [col, k] of [["rgba(255,110,30,0.85)", 1], ["rgba(255,190,70,0.9)", 0.62], ["rgba(255,240,170,0.9)", 0.3]]) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x - 6 * k - 1, by - 7); ctx.quadraticCurveTo(x - 4 * k + sw, by - h * k * 0.6, x + sw, by - h * k - 5); ctx.quadraticCurveTo(x + 4 * k + sw, by - h * k * 0.6, x + 6 * k + 1, by - 7); ctx.fill(); } }
-  ctx.fillStyle = rgba(255, 160, 70, 0.07 * fl * (0.5 + d)); ctx.beginPath(); ctx.arc(mx, by - 20, 150, 0, 6.283); ctx.fill();
+  const F = FIRE.fireFor(r, "atelier"); void n; /* 2.5 (I) : le feu suit son bois et sa couleur ; la page de la cheminée le fait plus haut */
+  FIRE.drawFire(ctx, { mx, by: by - 4, w: ow - 8, size: 22 + 30 * d, st: F.st, col: F.col, t });
+  FIRE.fireGlow(ctx, mx, by - 20, 150, F.st, F.col, fl);
   r.hot.push({ x: fx - 10, y: 140, w: fw + 20, h: FLOOR - 140, tip: TRr("atelier.fire.tip"), flash: TRr("atelier.fire.flash") });
+  if (F.page) r.hot.push({ x: ox + 6, y: 176, w: ow - 12, h: FLOOR - 176, tip: TRr("relto.fire.colour"), fire: { hearth: "atelier", kind: "colour" } });
+  FIRE.drawWoodpile(ctx, fx + fw - 30, FLOOR + 36, 30, c); r.hot.push({ x: fx + fw - 34, y: FLOOR + 6, w: 38, h: 32, tip: TRr(F.full ? "relto.fire.full" : "relto.fire.log"), fire: { hearth: "atelier", kind: "log" } }); /* le bûcher */
   // fauteuil devant le feu ; le chat s'y roule en boule
   const ax = 396, ay = 262;
   const cover = coverOf(r); // la housse du jour : une étoffe sourde, qui change chaque jour (le même jour, la même toute la journée)
