@@ -699,6 +699,15 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.5.1 — le verre de la Verrière (31 oct. 2026)
+
+Remarques de l'auteur sur une capture de nuit (« pour le glasshouse, la lueur fait une sorte de rectangle », puis « est-ce que l'effet de couleur n'est pas dramatique sur le glasshouse ? »). Planche de quatre pistes (voile plein, le verre seul, voile léger, la lueur seule) ; choix de l'auteur : le verre seul, avec la lueur qui suit (1 + 3).
+- **Le voile de couleur** (`drawGlasshouse`, mélange `color`) : il couvrait la boîte `x0 - 2, y0 - 34, w + 4, h + 34`, ciel et montagne compris. Il ne tombe plus que sur le verre : la coupole (demi-ellipse), les deux baies en ogive et les deux ovales de la porte. Le cuivre, le mur de mosaïque et le bois de la porte gardent leurs couleurs, comme les fenêtres du Château.
+- **La lueur autour du verre** : teintée par le feu à `max(0,55, spread)` et plus forte quand le feu gagne (`0,18 + 0,17 × spread`) ; dessinée en disque (elle se coupait au bord de son rectangle).
+- **La lumière au sol** suit la couleur du feu selon `k × spread`.
+- En braises et feu froid, `hutLight` n'a pas de `spread` : pris pour 0 (sinon une couleur invalide arrêtait le dessin).
+- Planche de contrôle : 1 h, 2 h 30, quatre bûches, braises, en rouge et en turquoise ; feu ordinaire, jour, crépuscule, cabane. Empreinte `glass/island/23` régénérée après avoir regardé le rendu.
+
 ## 2.5.0 — le monde a un côté (31 oct. 2026)
 
 Plan de l'auteur (décisions prises d'abord, puis un chantier à la fois : essai, planches, accord, commit). Neuf chantiers, de A à I, puis deux retouches.

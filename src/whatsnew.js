@@ -6,6 +6,29 @@
  */
 const NEWS = [
   {
+    v: "2.5.1",
+    fr: {
+      title: "Le verre de la Verrière",
+      letter: "Un verrier de la Guilde est passé de nuit devant la Verrière. Il a trouvé que le feu la repeignait tout entière, cuivre compris ; il n'a laissé la couleur qu'au verre.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**La Verrière, la nuit** : la couleur du feu ne déborde plus en rectangle sur le ciel ; elle ne tombe que sur le verre, et le cuivre garde le sien.",
+        "**Sa lueur et la lumière au sol** prennent la couleur du feu à mesure qu'il gagne.",
+        "**Un feu ordinaire, ou des braises**, la laissent dans son vert d'eau.",
+      ],
+    },
+    en: {
+      title: "The Glasshouse glass",
+      letter: "A glazier of the Guild walked past the Glasshouse at night. He found the fire repainting all of it, copper included; he left the colour to the glass alone.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**The Glasshouse at night**: the fire's colour no longer spills in a rectangle over the sky; it falls on the glass alone, and the copper keeps its own.",
+        "**Its glow and the light on the ground** take the fire's colour as it spreads.",
+        "**An ordinary fire, or embers**, leave it in its water green.",
+      ],
+    },
+  },
+  {
     v: "2.5.0",
     fr: {
       title: "Le monde a un côté",

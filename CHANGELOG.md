@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.5.1 — The Glasshouse glass (2026-10-31)
+
+### Fixed
+- **The Glasshouse at night, with a coloured fire**: the colour no longer spreads in a rectangle over the sky and the mountain above the dome. It falls on the glass alone (the dome, the two bays, the door's ovals); the copper, the wall and the door's wood keep their colours, like the Castle's windows. The glow around the glass and the light on the ground take the fire's colour as it spreads with the wood.
+
 ## 2.5.0 — The world has a side (2026-10-31)
 
 ### Added
