@@ -13,7 +13,7 @@ const PB = require("./relto-pagebook");
 const TL = require("./relto-telescope");
 const SM = require("./relto-starmap");
 const GLASS = require("./relto-glass");
-const FIRE = require("./relto-fire"); /* ESSAI : les fenêtres de la pièce du feu */
+const FIRE = require("./relto-fire"); /* 2.5 (I) : les fenêtres de la pièce du feu */
 const CO = require("./relto-castle-out"); // le Château, dehors : l'île entière devient le château
 const CK = require("./relto-clock");
 const IM = require("./imager");
@@ -219,7 +219,7 @@ class ReltoRenderer {
     const ctx = this.ctx, sc = this.scene; if (!sc) return;
     if (this.opts.reducedMotion) t = 0;
     const sky = this.castleOn() ? CO.redNight(skyAt(this.hour())) : skyAt(this.hour()); /* le Château : la nuit est rouge */
-    CO.setWinTint(this.castleOn() ? FIRE.hutLight(this) : null); /* ESSAI (toutes les fenêtres) */
+    CO.setWinTint(this.castleOn() ? FIRE.hutLight(this) : null); /* 2.5 (I) : toutes les fenêtres */
     const has = (type) => sc.additions.find((a) => a.type === type);
     this.hot = [];
     if (this.view && this.view !== "island" && this.view !== "global" && !this.available()[this.view]) this.view = "island"; // la page de cette vue a été retirée
@@ -1229,9 +1229,9 @@ class ReltoRenderer {
       for (const [ly, s] of [[GY - 6, 1], [GY - 13, -1], [GY - 20, 1]]) { ctx.beginPath(); ctx.ellipse(bx + dir * s * 2.4, ly, 2.2, 1.2, dir * s * 0.6, 0, 6.283); ctx.fill(); }
     }
     // la nuit : une lueur douce autour du verre
-    if (night > 0.3) { const HL = FIRE.hutLight(this), gc = HL ? [160 + (HL.c[0] - 160) * 0.55 * HL.k, 240 + (HL.c[1] - 240) * 0.55 * HL.k, 220 + (HL.c[2] - 220) * 0.55 * HL.k] : [160, 240, 220]; /* ESSAI : le feu teinte la lueur du verre */
+    if (night > 0.3) { const HL = FIRE.hutLight(this), gc = HL ? [160 + (HL.c[0] - 160) * 0.55 * HL.k, 240 + (HL.c[1] - 240) * 0.55 * HL.k, 220 + (HL.c[2] - 220) * 0.55 * HL.k] : [160, 240, 220]; /* 2.5 (I) : le feu teinte la lueur du verre */
       const g = ctx.createRadialGradient(hx, y0 + 6, 4, hx, y0 + 6, 46); g.addColorStop(0, rgba(gc[0], gc[1], gc[2], 0.18 * lit)); g.addColorStop(1, rgba(gc[0], gc[1], gc[2], 0)); ctx.fillStyle = g; ctx.fillRect(hx - 50, y0 - 40, 100, 90); }
-    { const HL = FIRE.hutLight(this); if (HL && !HL.ordinary && HL.spread > 0 && night > 0.3) { ctx.save(); ctx.globalCompositeOperation = "color"; ctx.globalAlpha = clamp((night - 0.3) * 1.4) * 0.75 * HL.k * HL.spread; ctx.fillStyle = rgba(HL.c[0], HL.c[1], HL.c[2], 1); ctx.beginPath(); ctx.rect(x0 - 2, y0 - 34, w + 4, h + 34); ctx.fill(); ctx.restore(); } } /* ESSAI (toutes les fenêtres) : tout le verre prend la couleur du feu */
+    { const HL = FIRE.hutLight(this); if (HL && !HL.ordinary && HL.spread > 0 && night > 0.3) { ctx.save(); ctx.globalCompositeOperation = "color"; ctx.globalAlpha = clamp((night - 0.3) * 1.4) * 0.75 * HL.k * HL.spread; ctx.fillStyle = rgba(HL.c[0], HL.c[1], HL.c[2], 1); ctx.beginPath(); ctx.rect(x0 - 2, y0 - 34, w + 4, h + 34); ctx.fill(); ctx.restore(); } } /* 2.5 (I) : tout le verre prend la couleur du feu */
   }
   /** menhirs et colonnes brisées : ils s'allument de runes la nuit */
   /** cheminée allumée : fumée chaude et dense, lueur vacillante, étincelles, fenêtre éclairée */
@@ -1240,7 +1240,7 @@ class ReltoRenderer {
     const fl = 0.75 + 0.25 * Math.sin(t * 9.1) * Math.sin(t * 5.3 + 1) + 0.1 * Math.sin(t * 17);
     // fenêtre et lueur de l'âtre
     const wx = castle ? this.hutX : x0 + 56 - 14, wy = castle ? GY - 12 : y0 + 13; /* le Château : la lueur sort du portail de la chapelle, à peine visible le jour */
-    const HL = FIRE.hutLight(this) || { c: [255, 170, 70], k: 1 }, hk = 0.35 + 0.65 * HL.k; /* ESSAI : la couleur du feu, mêlée aux chandelles, et sa force */
+    const HL = FIRE.hutLight(this) || { c: [255, 170, 70], k: 1 }, hk = 0.35 + 0.65 * HL.k; /* 2.5 (I) : la couleur du feu, mêlée aux chandelles, et sa force */
     let g = ctx.createRadialGradient(wx, wy, 1, wx, wy, 34 + 10 * d); g.addColorStop(0, rgba(HL.c[0], HL.c[1], HL.c[2], (castle ? 0.06 + 0.4 * night : 0.35 + 0.25 * night) * fl * d * hk)); g.addColorStop(1, rgba(HL.c[0], HL.c[1], HL.c[2], 0));
     ctx.fillStyle = g; ctx.fillRect(wx - 50, wy - 50, 100, 100);
     if (!this.glassOn() && !castle) { ctx.fillStyle = rgba(HL.c[0], HL.c[1], HL.c[2], (0.5 + 0.4 * night) * fl * hk); ctx.fillRect(wx - 5, wy - 5, 11, 10); } // la Verrière s'allume d'elle-même
@@ -1249,14 +1249,14 @@ class ReltoRenderer {
     // fumée : volutes qui s'élargissent, dérivent avec le vent
     const n = Math.round(8 + 8 * d);
     for (let i = 0; i < n; i++) {
-      const p = frac(t * 0.1 + i / n), sway = Math.sin(p * 5 + i * 1.7) * (3 + p * 8), a = 0.34 * (1 - p) * Math.min(1, p * 6) * (0.6 + 0.4 * d) * (HL.phase === "cold" ? 0.15 : HL.phase === "embers" ? 0.45 : 1); /* ESSAI : un feu froid ne fume presque plus */
+      const p = frac(t * 0.1 + i / n), sway = Math.sin(p * 5 + i * 1.7) * (3 + p * 8), a = 0.34 * (1 - p) * Math.min(1, p * 6) * (0.6 + 0.4 * d) * (HL.phase === "cold" ? 0.15 : HL.phase === "embers" ? 0.45 : 1); /* 2.5 (I) : un feu froid ne fume presque plus */
       const gr = 150 - 40 * (1 - p) - 60 * night;
       ctx.fillStyle = rgba(gr, gr, gr + 8, a); ctx.beginPath(); ctx.arc(cx + sway + p * 26, cy - 3 - p * 70, 2.4 + p * 9, 0, 6.283); ctx.fill();
     }
     // étincelles
     for (let i = 0; i < 5; i++) {
       const p = frac(t * 0.45 + i * 0.213), x = cx + Math.sin(p * 9 + i * 3) * 4 + p * 9, y = cy - 2 - p * 30;
-      if (HL.phase && HL.phase !== "flame") break; const sc = HL.spark || [255, 190 - p * 80, 80]; /* ESSAI : les étincelles ont la couleur du feu, et cessent avec lui */
+      if (HL.phase && HL.phase !== "flame") break; const sc = HL.spark || [255, 190 - p * 80, 80]; /* 2.5 (I) : les étincelles ont la couleur du feu, et cessent avec lui */
       ctx.fillStyle = rgba(sc[0], sc[1], sc[2], (1 - p) * 0.9 * d * (0.4 + 0.6 * night + 0.2)); ctx.fillRect(x, y, 1.2, 1.2);
     }
   }

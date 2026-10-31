@@ -181,7 +181,7 @@ function fireFor(r, hearth, now = Date.now()) {
 }
 
 /**
- * ESSAI : la lumière que la pièce du feu jette par ses fenêtres, la nuit (la cabane, la chapelle du Château, la Verrière). Le feu y
+ * 2.5 (I) : la lumière que la pièce du feu jette par ses fenêtres, la nuit (la cabane, la chapelle du Château, la Verrière). Le feu y
  * mêle sa couleur à celle des chandelles, et faiblit avec lui : en braises, une lueur sombre ; en cendre froide, la chandelle seule.
  * null : pas de cheminée (le Relto garde sa lumière d'avant). Renvoie { c : [r, g, b], k : la force, 0 à 1 }.
  */
@@ -192,7 +192,7 @@ function hutLight(r, now = Date.now()) {
   if (st.phase === "cold") return { c: CANDLE, k: 0.3, phase: "cold" };
   if (st.phase === "embers") return { c: mixc(mixc(CANDLE, fc, 0.5), [200, 50, 20], 0.35), k: 0.3 + 0.25 * st.glow, phase: "embers" };
   const fs = r.opts && typeof r.opts.fireState === "function" ? r.opts.fireState() || {} : {}, u = (fs.until || {}).cabin, rem = u == null ? FIRST : u - now;
-  const spread = Math.max(0, Math.min(1, (rem - 2 * LOG) / LOG)); /* ESSAI : le feu répand sa couleur avec le bois : moins de deux heures, sa pièce seule ; trois heures et plus, tout le Relto */
+  const spread = Math.max(0, Math.min(1, (rem - 2 * LOG) / LOG)); /* 2.5 (I) : le feu répand sa couleur avec le bois : moins de deux heures, sa pièce seule ; trois heures et plus, tout le Relto */
   return { c: mixc(CANDLE, fc, F.col.id === "ordinary" ? 0 : 0.7), k: (0.55 + 0.45 * st.level) * (F.col.ghost ? 0.6 : 1), ordinary: F.col.id === "ordinary", phase: "flame", spark: mixc(fc, [255, 240, 200], 0.3), spread };
 }
 const hexOf = (c) => "#" + c.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");

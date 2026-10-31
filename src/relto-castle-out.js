@@ -33,15 +33,40 @@ function slateRoof(ctx, col, x0, ax, ay, x1, by, o = {}) {
 }
 
 /** La couleur d'une fenêtre : sombre le jour (un reflet du ciel), rouge orangé et chaude la nuit. */
-let TINT = null; /* ESSAI (toutes les fenêtres) : la lumière du feu, posée pour la frame (setWinTint) */
+let TINT = null; /* 2.5 (I) : la lumière du feu, posée pour la frame (setWinTint) */
 function setWinTint(f) { TINT = f || null; }
-function winColor(night, k = 1) { const n = clamp(night * 1.25), base = mix("#05060c", "#2e2a3a", 0.7 + 0.3 * k), warm = n > 0.5 ? "#ff6a3a" : "#e0743a";
+function winColor(night, k = 1) { LAST_NIGHT = Math.max(0, Math.min(1, night)); const n = clamp(night * 1.25), base = mix("#05060c", "#2e2a3a", 0.7 + 0.3 * k), warm = n > 0.5 ? "#ff6a3a" : "#e0743a";
   if (!TINT) return mix(base, warm, n);
   const sp = TINT.spread || 0; if (sp <= 0 || TINT.ordinary) return mix(base, warm, n); /* le feu ne gagne les autres fenêtres que quand il a du bois */
   const hot = mix(warm, "#" + TINT.c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join(""), sp); return mix(base, hot, n); }
 
 /** Une lancette (fenêtre étroite en arc brisé) de largeur w, de hauteur h, le bas à (x, y). */
-function lancet(ctx, x, y, w, h, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x - w / 2, y); ctx.lineTo(x - w / 2, y - h + w * 0.6); ctx.quadraticCurveTo(x - w / 2, y - h + w * 0.1, x, y - h); ctx.quadraticCurveTo(x + w / 2, y - h + w * 0.1, x + w / 2, y - h + w * 0.6); ctx.lineTo(x + w / 2, y); ctx.closePath(); ctx.fill(); }
+/**
+ * 2.5 : une fenêtre finie. Le verre plus vif en bas qu'en haut (la lumière vient de dedans), des petits carreaux en losanges et, sur les grandes baies, un meneau et une traverse de plomb,
+ * qui viennent toucher l'encadrement de pierre, l'appui ; la nuit, un léger halo. `path` : la forme (Path2D ou
+ * une fonction qui la trace), `b` : son cadre [x0, y0, x1, y1], `col` : la couleur du verre (winColor).
+ */
+function finishWin(ctx, path, b, col, o = {}) {
+  const [x0, y0, x1, y1] = b, w = x1 - x0, h = y1 - y0, fillIt = () => (typeof path === "function" ? (path(), ctx.fill()) : ctx.fill(path)), strokeIt = () => (typeof path === "function" ? (path(), ctx.stroke()) : ctx.stroke(path));
+  const night = o.night || 0;
+  if (night > 0.3 && w > 1.5) { ctx.save(); ctx.shadowColor = col; ctx.shadowBlur = 3 + 5 * night; ctx.fillStyle = col; fillIt(); ctx.restore(); } /* le halo */
+  const g = ctx.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, mix(col, "#05060c", 0.38)); g.addColorStop(0.55, col); g.addColorStop(1, mix(col, "#fff2d0", 0.18 * night)); ctx.fillStyle = g; fillIt();
+  ctx.strokeStyle = o.frame || "rgba(150,142,160,0.55)"; ctx.lineWidth = Math.max(0.4, Math.min(0.9, w * 0.12)); strokeIt(); /* l'encadrement, d'abord : les plombs viennent le toucher */
+  if (w >= 2.6 && h >= 5) { ctx.save(); if (typeof path === "function") { path(); ctx.clip(); } else ctx.clip(path);
+    const lead = "rgba(18,14,24,0.7)", step = Math.max(1.6, w * 0.45); ctx.strokeStyle = lead; ctx.lineWidth = 0.3; ctx.beginPath();
+    for (let d = -h; d < w + h; d += step) { ctx.moveTo(x0 + d, y0); ctx.lineTo(x0 + d + h, y1); ctx.moveTo(x0 + d, y1); ctx.lineTo(x0 + d + h, y0); } ctx.stroke(); /* des losanges plombés */
+    if (w >= 5 && h >= 9) { ctx.strokeStyle = "rgba(18,14,24,0.9)"; ctx.lineWidth = Math.max(0.5, w * 0.1); ctx.beginPath(); const mx = (x0 + x1) / 2, ty = y0 + h * 0.5;
+      ctx.moveTo(mx, y0 + w * 0.7); ctx.lineTo(mx, y1 + 2); ctx.moveTo(x0 - 2, ty); ctx.lineTo(x1 + 2, ty); ctx.stroke(); } /* un meneau et une traverse sur les grandes baies, jusqu'au cadre (le clip les coupe) */
+    ctx.restore(); }
+  if (h > 4) { ctx.fillStyle = o.sill || "rgba(160,152,170,0.6)"; ctx.fillRect(x0 - 0.6, y1 - 0.2, w + 1.2, Math.max(0.6, w * 0.12)); } /* l'appui */
+}
+/** Le cadre d'un chemin SVG (les nombres pris deux à deux). */
+const boxOf = (d) => { const m = /^M\s*(-?[\d.]+)\s+(-?[\d.]+)\s*v\s*(-?[\d.]+)\s*q\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+0/.exec(d); if (!m) return null; const x = +m[1], y = +m[2], v = +m[3], c = +m[5], w = +m[6]; return [x, y + v + c, x + w, y]; }; /* une lancette « M x y v-h q w/2 -c w 0 v h Z » : son cadre */
+function lancet(ctx, x, y, w, h, col, night) {
+  const path = () => { ctx.beginPath(); ctx.moveTo(x - w / 2, y); ctx.lineTo(x - w / 2, y - h + w * 0.6); ctx.quadraticCurveTo(x - w / 2, y - h + w * 0.1, x, y - h); ctx.quadraticCurveTo(x + w / 2, y - h + w * 0.1, x + w / 2, y - h + w * 0.6); ctx.lineTo(x + w / 2, y); ctx.closePath(); };
+  finishWin(ctx, path, [x - w / 2, y - h, x + w / 2, y], col, { night: night == null ? LAST_NIGHT : night });
+}
+let LAST_NIGHT = 0; /* 2.5 (I) : la nuit de la frame, pour les lancettes appelées sans elle */
 
 /**
  * Le donjon, à la place de la montagne : la maquette (claude/DESIGN-chateau-gothique.md), dessinée dans son propre repère (le sol à y = 208)
@@ -63,7 +88,7 @@ function keep(r, ctx, M, sky, t, observatory) {
   const fillP = (d, f) => { ctx.fillStyle = f; ctx.fill(P(d)); }, strokeP = (d, col, w) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke(P(d)); };
   const courses = (x, y, w, h) => { ctx.fillStyle = rgba(0, 0, 0, 0.22); for (let yy = y + 4.5, k = 0; yy < y + h; yy += 4.5, k++) { ctx.fillRect(x, yy, w, 0.7); for (let xx = x + (k % 2 ? 11 : 5.5); xx < x + w; xx += 11) ctx.fillRect(xx, yy, 0.6, 4.5); } };
   const box = (x, y, w, h, stops) => { ctx.fillStyle = grad(x, x + w, stops); ctx.fillRect(x, y, w, h); courses(x, y, w, h); };
-  const lancets = (ds, k) => { for (const d of ds) fillP(d, W(k)); };
+  const lancets = (ds, k) => { for (const d of ds) { const b = boxOf(d); if (b) finishWin(ctx, P(d), b, W(k), { night, frame: c("#8a8494"), sill: c("#9a94a2") }); else fillP(d, W(k)); } }; /* 2.5 (I) : des fenêtres finies */
   // la lueur rouge des fenêtres, la nuit
   if (night > 0.2) { const g = ctx.createRadialGradient(ax - 40, GY - 90, 4, ax - 40, GY - 90, 120); g.addColorStop(0, rgba(255, 90, 60, 0.18 * night)); g.addColorStop(1, rgba(255, 90, 60, 0)); ctx.fillStyle = g; ctx.fillRect(ax - 170, GY - 210, 260, 220); }
   // la courtine : un mur crénelé au fond de la cour, d'un bord à l'autre de l'île, et une tour d'angle à chaque bout (le donjon passe devant)
@@ -398,7 +423,7 @@ function gargoyle(ctx, c, x, y) {
 const CHAPEL_K = 0.72;
 function chapel(ctx, col, sky, t, x0, y0, w, h, hutX, fire) {
   ctx.save(); ctx.translate(hutX, GY); ctx.scale(CHAPEL_K, CHAPEL_K); ctx.translate(-hutX, -GY); /* réduite, posée au même pied */
-  const night = clamp(sky.night == null ? 0 : sky.night), fl = 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1), x1 = x0 + w, ap = y0 - 34, fc = fire && !fire.ordinary ? fire.c : [255, 110, 70], fk = fire ? fire.k : 1, glow = (k) => (fire ? mix(mix("#05060c", "#2e2a3a", 0.7 + 0.3 * k), fire.ordinary ? (night * fl > 0.4 ? "#ff6a3a" : "#e0743a") : "#" + fc.map((v) => Math.round(v).toString(16).padStart(2, "0")).join(""), clamp(night * fl * 1.25) * (0.35 + 0.65 * fk)) : winColor(night * fl, k)); /* ESSAI : la chapelle est la pièce du feu : ses vitraux en prennent la couleur */
+  const night = clamp(sky.night == null ? 0 : sky.night), fl = 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1), x1 = x0 + w, ap = y0 - 34, fc = fire && !fire.ordinary ? fire.c : [255, 110, 70], fk = fire ? fire.k : 1, glow = (k) => (fire ? mix(mix("#05060c", "#2e2a3a", 0.7 + 0.3 * k), fire.ordinary ? (night * fl > 0.4 ? "#ff6a3a" : "#e0743a") : "#" + fc.map((v) => Math.round(v).toString(16).padStart(2, "0")).join(""), clamp(night * fl * 1.25) * (0.35 + 0.65 * fk)) : winColor(night * fl, k)); /* 2.5 (I) : la chapelle est la pièce du feu : ses vitraux en prennent la couleur */
   const LIME = ["#7c7771", "#5d5953", "#3f3c38"] /* une pierre plus vieille que le château : grise et brune, moussue */, lime = (a, b) => { const g = ctx.createLinearGradient(a, 0, b, 0); LIME.forEach((h2, i) => g.addColorStop(i / 2, col(h2))); return g; };
   // la cheminée, derrière le pignon (la fumée en sort : drawChimney)
   ctx.fillStyle = col(STONE_D); ctx.fillRect(x1 - 12, y0 - 18, 6, 16); ctx.fillStyle = col(STONE); ctx.fillRect(x1 - 13, y0 - 19, 8, 2);
