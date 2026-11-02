@@ -806,16 +806,19 @@ async function renderRelto(plugin, source, el, ctx) {
     } catch (e) { console.warn("[Age Writer ext] fichier son", e); return null; }
   };
   const fireLit = () => (renderer.scene ? renderer.scene.additions.find((x) => x.type === "chimney") : null) || null; // le feu ne crépite que si la page cheminée est active
+  /** 2.5.2 : la force du crépitement d'un foyer (flamme : selon le bois ; braises : un souffle ; éteint : rien). */
+  const hearthK = (h) => FIRE.soundOf(((plugin.ext.reltoFire || {}).until || {})[h], Date.now());
+  const hearthOfView = (v) => (v === "cabin" ? "cabin" : v === "atelier" || v === "atelierback" ? "atelier" : v === "lounge" && !renderer.tapOn ? "lounge" : null);
   const humVol = () => { const v = Number(plugin.ext.imagerHumVol); return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };
   let roomSeq = 0;
   const roomAudio = async (v) => {
     const my = ++roomSeq;
     try {
-      if (!(roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat" || v === "lounge" || ((v === "cabin" || v === "atelier" || v === "atelierback") && fireLit()) || (v === "imager" && plugin.ext.soundImagerHum !== false)) && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages")) { sound.roomStop(); return; }
+      if (!(roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat" || (v === "lounge" && (renderer.tapOn || hearthK("lounge") > 0)) || ((v === "cabin" || v === "atelier" || v === "atelierback") && fireLit() && hearthK(hearthOfView(v)) > 0) || (v === "imager" && plugin.ext.soundImagerHum !== false)) && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages")) { sound.roomStop(); return; }
       const tap = v === "lounge" && !!renderer.tapOn, stove = v === "lounge" && !tap; // le salon : le poêle crépite ; le robinet ouvert, l'eau coule
       const bufs = stove ? { main: await roomBuf("roomFireFile"), d: 0.45 } : v === "imager" ? { k: renderer.imagerClarity().atmo, total: renderer.imagerClarity().total, locked: !!(renderer.imager && renderer.imager.settings && renderer.imager.settings.lock) } : v === "cat" ? { main: await roomBuf("roomPurrFile"), meow: await roomBuf("roomMeowFile") } : (v === "cabin" || v === "atelier" || v === "atelierback") ? { main: await roomBuf("roomFireFile"), d: fireLit().density } : tap ? {} : { main: await roomBuf("roomWaterFile") }; // le robinet a son propre son (synthétisé), pas celui du bassin
       if (my !== roomSeq) return; // on a changé de vue pendant le chargement
-      sound.roomStart(v === "imager" ? "imager" : v === "cat" ? "cat" : tap ? "tap" : (stove || v === "cabin" || v === "atelier" || v === "atelierback") ? "fire" : "water", roomVol() * (v === "imager" ? humVol() : tap ? 1 : 1), bufs); /* le robinet : ses gains sont déjà bas (un petit filet, pas un geyser) */
+      sound.roomStart(v === "imager" ? "imager" : v === "cat" ? "cat" : tap ? "tap" : (stove || v === "cabin" || v === "atelier" || v === "atelierback") ? "fire" : "water", roomVol() * (v === "imager" ? humVol() : hearthOfView(v) ? hearthK(hearthOfView(v)) : 1), bufs); /* le robinet : ses gains sont déjà bas (un petit filet, pas un geyser) */
     } catch (e) { /* ignore */ }
   };
   const syncView = (v) => { const cur = v || "island"; for (const [id, b] of [...Object.entries(navBtns), ...Object.entries(quickBtns)]) b.toggleClass("is-active", id === cur); here.toggleClass("is-hidden", cur === "island" || !iconOf[cur]); if (iconOf[cur] && cur !== "island") { try { obsidian.setIcon(here, iconOf[cur]); } catch (e) { /* ignore */ } here.setAttr("aria-label", t(NAV.find((d) => d[0] === cur)[2])); }  roomAudio(v); };
@@ -923,12 +926,23 @@ async function renderRelto(plugin, source, el, ctx) {
   const fireSt = () => { const f = (plugin.ext.reltoFire = plugin.ext.reltoFire || {}); f.until = f.until || {}; const now = Date.now(); let fresh = false; for (const k of FIRE.HEARTHS) if (f.until[k] == null) { f.until[k] = now + 2 * FIRE.HOUR; fresh = true; } if (fresh) plugin.saveExt(); return f; };
   const onFire = (h) => {
     const f = fireSt(), now = Date.now();
-    if (h.kind === "log") { if (FIRE.isFull(f.until[h.hearth], now)) return plugin.t("relto.fire.fullmsg"); f.until[h.hearth] = FIRE.addLog(f.until[h.hearth], now); plugin.saveExt(); if (roomSoundOn()) { try { sound.slideWood(roomVol()); } catch (e) { /* pas de son */ } } liveSound(); return plugin.t("relto.fire.added"); }
+    if (h.kind === "log") { if (FIRE.isFull(f.until[h.hearth], now)) return plugin.t("relto.fire.fullmsg"); f.until[h.hearth] = FIRE.addLog(f.until[h.hearth], now); plugin.saveExt(); if (roomSoundOn()) { try { sound.slideWood(roomVol()); } catch (e) { /* pas de son */ } } liveSound(); fireTick(true); return plugin.t("relto.fire.added"); }
     if (h.kind === "colour") { f.pick = FIRE.nextPick(f); plugin.saveExt(); return FIRE.COLORS[f.pick][plugin.lang() === "fr" ? "fr" : "en"]; }
     return null;
   };
+  /**
+   * 2.5.2 : le son suit le feu pendant qu'on écoute. Toutes les 20 s : le crépitement de la pièce baisse avec le bois
+   * (sans relance), il s'arrête quand le foyer s'éteint et revient avec une bûche ; le paysage sonore se recompose
+   * quand le feu change d'état (flamme, braises, éteint) ou d'un quart de sa force.
+   */
+  let fireKey = null;
+  const fireTick = (force) => {
+    const v = renderer.view, h = hearthOfView(v), k = h ? hearthK(h) : 0, key = (h ? h + ":" + (k > 0 ? "on" : "off") : "-") + "|" + Math.round(fireSound() * 4);
+    if (force || key !== fireKey) { const was = fireKey; fireKey = key; if (was !== null || force) { if (root.getAttribute("data-tab") === "view") roomAudio(v); liveSound(); } return; }
+    if (h && k > 0 && roomSoundOn()) { try { sound.roomLevel("fire", roomVol() * k); } catch (e) { /* pas de son */ } }
+  };
   /** Le crépitement suit le feu le plus vif des trois foyers (éteint : plus rien). */
-  const fireSound = () => { const f = plugin.ext.reltoFire || {}, now = Date.now(); let best = 0; for (const k of FIRE.HEARTHS) { const st = FIRE.hearthOf((f.until || {})[k], now); best = Math.max(best, st.phase === "flame" ? 0.35 + 0.65 * st.level : st.phase === "embers" ? 0.25 * st.glow : 0); } return best; };
+  const fireSound = () => { const f = plugin.ext.reltoFire || {}, now = Date.now(); let best = 0; for (const k of FIRE.HEARTHS) best = Math.max(best, FIRE.soundOf((f.until || {})[k], now)); return best; };
   const renderer = new ReltoRenderer(canvas, plugin.dni, { touch, fireState: fireSt, onFire: (h) => onFire(h), wheelOk: () => !!root.closest(".age-reltoview") || !!root.ownerDocument.fullscreenElement, rotated: () => touch && root.hasClass("is-mobilefull") && !!(window.matchMedia && window.matchMedia("(orientation: portrait)").matches), onTip: tipCard ? (text, parts) => { /* la carte d'infobulle, au doigt : le texte, et une ligne de valeur en chiffres D'ni (la machine) */
       tipCard.empty(); tipCard.toggleClass("is-empty", !text && !(parts && parts.length));
       if (parts && parts.length) { const line = tipCard.createDiv({ cls: "age-relto__tipdni" }); for (const p of parts) { if (typeof p === "string") line.createSpan({ text: p }); else setMarkup(line.createSpan({ cls: "age-relto__tipnum" }), plugin.dni.numberSvg(p.n, { size: 18 })); } }
@@ -1178,7 +1192,8 @@ async function renderRelto(plugin, source, el, ctx) {
     const cur = plugin.soundBtn;
     if (cur && cur !== soundBtn && !cur.isConnected && cur.dataset && cur.dataset.key === soundBtn.dataset.key && plugin.sound.playing) { plugin.soundBtn = soundBtn; soundBtn.addClass("is-on"); }
   }
-  const child = new obsidian.MarkdownRenderChild(el); child.onunload = () => { try { sound.roomStop(); } catch (e) { /* ignore */ } renderer.stop(); plugin.live.delete(inst); }; ctx.addChild(child);
+  const fireTimer = setInterval(() => { try { fireTick(false); } catch (e) { /* ignore */ } }, 20000); /* 2.5.2 : le son suit le feu */
+  const child = new obsidian.MarkdownRenderChild(el); child.onunload = () => { clearInterval(fireTimer); try { sound.roomStop(); } catch (e) { /* ignore */ } renderer.stop(); plugin.live.delete(inst); }; ctx.addChild(child);
   await refresh();
   { // ouvrir le Relto (sa note, ou la commande) le met en plein écran (réglage, activé par défaut) : une fois par ouverture, jamais dans un aperçu au survol.
     // Le plein écran exige un geste récent (le clic ou la commande qui a ouvert la note) ; trop tard, le navigateur refuse, sans bruit.

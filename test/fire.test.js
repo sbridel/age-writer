@@ -32,4 +32,8 @@ ok(F.nextPick({ pick: 14 }) === 0, "après le fantôme, l'ordinaire");
 
 const a = { verdict: "stable", resolved: { lines: [{ entry: { id: "lava" } }, { entry: { id: "salt" } }], matter: { written: [], reactions: [] }, scars: [] } };
 const ext = {}; ok(F.rememberAge(ext, a) === "sodium" && ext.reltoFire.last === "sodium", "le dernier Âge visité est retenu");
+/* 2.5.2 : le son suit le feu */
+ok(F.soundOf(now + 4 * H, now) === 1 && Math.abs(F.soundOf(now + H, now) - 0.675) < 1e-9, "le crépitement suit le bois");
+ok(F.soundOf(now - H / 4, now) > 0 && F.soundOf(now - H / 4, now) < 0.25, "en braises, un souffle");
+ok(F.soundOf(now - 2 * H, now) === 0, "éteint : plus de crépitement");
 console.log(`✓ fire.test.js (${n} contrôles)`);

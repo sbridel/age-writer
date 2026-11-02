@@ -74,6 +74,8 @@ function hearthOf(until, now) {
   if (out < EMBERS) return { phase: "embers", level: 0, logs: 1, glow: 1 - out / EMBERS };
   return { phase: "cold", level: 0, logs: 0, glow: 0 };
 }
+/** 2.5.2 : la force du crépitement d'un foyer : en flamme, selon le bois (0,35 à 1) ; en braises, un souffle qui s'éteint ; froid, rien. */
+function soundOf(until, now) { const st = hearthOf(until, now); return st.phase === "flame" ? 0.35 + 0.65 * st.level : st.phase === "embers" ? 0.25 * st.glow : 0; }
 /** Une bûche de plus : une heure de feu, quatre au plus. Renvoie le nouvel `until` (le même si le foyer est plein). */
 function addLog(until, now) {
   const base = until == null ? now + FIRST : Math.max(until, now);
@@ -197,4 +199,4 @@ function hutLight(r, now = Date.now()) {
 }
 const hexOf = (c) => "#" + c.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
 
-module.exports = { hutLight, hexOf, glowColor, fireFor, idsOfAnalysis, rememberAge, HOUR, LOG, MAX_LOGS, EMBERS, HEARTHS, COLORS, colorById, colorOfAge, hearthOf, addLog, isFull, shownColor, nextPick, drawFire, drawLogs, fireGlow, drawWoodpile };
+module.exports = { soundOf, hutLight, hexOf, glowColor, fireFor, idsOfAnalysis, rememberAge, HOUR, LOG, MAX_LOGS, EMBERS, HEARTHS, COLORS, colorById, colorOfAge, hearthOf, addLog, isFull, shownColor, nextPick, drawFire, drawLogs, fireGlow, drawWoodpile };

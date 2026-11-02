@@ -6,6 +6,29 @@
  */
 const NEWS = [
   {
+    v: "2.5.2",
+    fr: {
+      title: "Le feu se tait",
+      letter: "Un veilleur de la Guilde jurait entendre crépiter un âtre froid depuis des heures. On a vérifié : il avait raison. Désormais, le feu ne parle que tant qu'il brûle.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**Un feu éteint ne crépite plus** : ni dans la pièce, ni dans le paysage sonore du Relto.",
+        "**Le crépitement baisse avec le bois** pendant qu'on écoute, et n'est plus qu'un souffle dans les braises.",
+        "**Une bûche sur un foyer froid** le fait crépiter de nouveau tout de suite.",
+      ],
+    },
+    en: {
+      title: "The fire goes quiet",
+      letter: "A watchman of the Guild swore he had heard a cold hearth crackling for hours. We checked: he was right. From now on, the fire speaks only while it burns.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**A dead fire no longer crackles**: neither in the room nor in the Relto soundscape.",
+        "**The crackle fades with the wood** while you listen, and is only a breath in the embers.",
+        "**A log on a cold hearth** makes it crackle again at once.",
+      ],
+    },
+  },
+  {
     v: "2.5.1",
     fr: {
       title: "Le verre de la Verrière",

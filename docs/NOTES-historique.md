@@ -699,6 +699,15 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.5.2 — le feu se tait (2 nov. 2026)
+
+Remarque de l'auteur : « quand le feu est éteint on entend encore le feu ».
+- **Deux sons, aucun ne suivait le feu en temps réel.** Le son de pièce (`roomAudio`, cabane, atelier, poêle du salon) ne regardait que la page Cheminée (`fireLit`) ; le paysage sonore réglait la couche `hearth` au démarrage seulement (`reltoLayers`, `fireSound`).
+- **`FIRE.soundOf(until, now)`** (`src/relto-fire.js`) : en flamme `0,35 + 0,65 × level`, en braises `0,25 × glow`, froid 0 ; partagé par le son de pièce (`hearthK`, foyer de la vue : cabane, atelier, salon sans le robinet) et le paysage sonore (le plus vif des trois foyers).
+- **Le son de pièce** ne démarre plus sur un foyer froid ; son volume est multiplié par `soundOf`. **`sound.roomLevel(kind, volume)`** change le volume d'un son de pièce qui joue, en douceur, sans le relancer.
+- **`fireTick`**, toutes les 20 s (`setInterval`, arrêté au démontage) : si le foyer de la vue passe d'allumé à éteint, ou si la force du feu change d'un quart, le son de pièce et le paysage sonore sont recomposés ; sinon, seul le volume du crépitement suit le bois. Une bûche force la recomposition (un foyer froid se rallume tout de suite).
+- `test/fire.test.js` : trois contrôles (le crépitement suit le bois, souffle en braises, silence éteint). Pas écouté hors d'Obsidian.
+
 ## 2.5.1 — le verre de la Verrière (31 oct. 2026)
 
 Remarques de l'auteur sur une capture de nuit (« pour le glasshouse, la lueur fait une sorte de rectangle », puis « est-ce que l'effet de couleur n'est pas dramatique sur le glasshouse ? »). Planche de quatre pistes (voile plein, le verre seul, voile léger, la lueur seule) ; choix de l'auteur : le verre seul, avec la lueur qui suit (1 + 3).

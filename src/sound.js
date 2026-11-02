@@ -527,6 +527,11 @@ function imagerTune(k, total = k, locked = false) {
   const im = room.kind === "imager" && room.imager; if (!im) return;
   try { const t = im.c.currentTime, kk = Math.max(0, Math.min(1, k || 0)); im.o2.frequency.setTargetAtTime(im.f0 + (1 - kk) * 4, t, 0.4); im.g.gain.setTargetAtTime(locked ? 0.025 : 0.1, t, 0.8); /* verrouillé : le bourdon s'efface presque, la machine suit seule */ const tt = Math.max(0, Math.min(1, total || 0)); im.g3.gain.setTargetAtTime(tt > 0.9 ? (locked ? 0.012 : 0.03) * (tt - 0.9) * 10 : 0, t, 0.6); } catch (e) { /* ignore */ }
 }
+/** 2.5.2 : le volume d'un son de pièce qui joue, changé en douceur (le feu baisse) ; rien si un autre son a pris sa place. */
+function roomLevel(kind, volume) {
+  if (!room.out || room.kind !== kind) return false;
+  try { const c = room.out.context; room.out.gain.setTargetAtTime(Math.max(0, volume), c.currentTime, 1.5); return true; } catch (e) { return false; }
+}
 function roomStop() {
   room.imager = null;
   for (const t of room.timers) clearTimeout(t); room.timers = [];
@@ -889,4 +894,4 @@ function ovenSfx(kind, volume = 0.3) {
   });
 }
 
-module.exports = { ovenSfx, slabSfx, openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { ovenSfx, slabSfx, openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, roomLevel, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.5.2 — The fire goes quiet (2026-11-02)
+
+### Fixed
+- **A dead fire no longer crackles**: the crackle of the room (the cabin, the writing room, the lounge stove) and the hearth in the Relto soundscape follow the fire while you listen. It fades as the wood burns, becomes a faint breath in the embers and stops when the hearth goes cold; a log put on a cold hearth brings it back at once.
+
 ## 2.5.1 — The Glasshouse glass (2026-10-31)
 
 ### Fixed
