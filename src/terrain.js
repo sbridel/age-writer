@@ -29,6 +29,10 @@ const SKY_BLOCKS = [
   block("beach", "A beach", 0.02, [["frozen_world", "medium"], ["lava_world", "medium"]]),
   block("lagoon", "A lagoon", 0.02, [["desert_world", "strong"], ["frozen_world", "medium"], ["lava_world", "medium"]]),
   block("sea_arch", "A sea arch", 0.02, [["desert_world", "strong"], ["lava_world", "light"]]),
+  /* 2.6 : la couleur de l'eau */
+  block("red_water", "Red water", 0.02, [["frozen_world", "light"], ["milky_water", "medium"], ["black_water", "medium"]]),
+  block("milky_water", "Milky water", 0.02, [["black_water", "medium"]]),
+  block("black_water", "Black water", 0.02, [["lagoon", "light"]]),
   block("waterfall", "A waterfall", 0.02, [["desert_world", "medium"], ["lava_world", "medium"], ["plains", "light"]]),
 ];
 
@@ -43,7 +47,7 @@ const RELIEF = {
 };
 const WATER_IDS = ["river", "delta", "lake", "marsh"];
 /** ESSAI 2.6 : les formes de l'eau et de la terre ; celles de la mer allument la mer. */
-const FORM_IDS = ["island", "cliff", "waterfall", "beach", "lagoon", "sea_arch"], SEA_FORMS = ["island", "waterfall", "beach", "lagoon", "sea_arch"], SEA_GROUND = ["island", "beach", "lagoon", "sea_arch", "pier"]; /* (le ponton aussi suppose la mer) */
+const FORM_IDS = ["island", "cliff", "waterfall", "beach", "lagoon", "sea_arch"], TINT_IDS = ["red_water", "milky_water", "black_water"], SEA_FORMS = ["island", "waterfall", "beach", "lagoon", "sea_arch", "red_water", "milky_water", "black_water"], SEA_GROUND = ["island", "beach", "lagoon", "sea_arch", "pier", "red_water", "milky_water", "black_water"]; /* (le ponton aussi suppose la mer) */
 
 const SKY_PROSE = {
   plains: ["the land lies wide and low, and the horizon is all there is to look at", "a plain runs flat to the edge of sight, and the wind has nothing to stop it", "everything here is open: a low, long country under a very large sky"],
@@ -56,10 +60,13 @@ const SKY_PROSE = {
   island: ["an island stands offshore, its cliffs pale in the distance", "out on the water, an island holds its own small country of rock and green", "a lone island waits across the sea, near enough to want, too far to swim"],
   cliff: ["a cliff rises sheer from the ground, its layers laid bare to the weather", "a wall of rock stands over the land, and birds keep to its ledges", "the land breaks off in a cliff, tall and pale, and the wind climbs it"],
   waterfall: ["a waterfall drops from the cliff and the air below it is all mist", "water spills over a lip of stone and falls a long way, loud and white", "a falling river hangs from the rock, and its roar fills the valley"],
+  red_water: ["the water is red as old wine, stained by iron and by something that lives in it", "a red sea laps at the shore, and the foam comes up pink", "the water runs the colour of rust, and the light goes strange in it"],
+  milky_water: ["the water is milky and pale blue, thick with fine white stone", "a milk-white sea lies still, opaque as jade", "the water is clouded white, warm, and it hides its depth"],
+  black_water: ["the water is black and perfectly still, a mirror with nothing under it", "a dark, peat-stained water holds the sky better than the sky does", "the sea is black as ink, and the stars float in it"],
   beach: ["a pale beach curves along the water, and the waves keep rewriting its edge", "sand runs down to the sea in a long bright strip", "the shore is a beach of fine sand, warm underfoot, wet where the sea reaches"],
   lagoon: ["a reef holds the sea back, and inside it the water lies clear and green", "a lagoon sleeps behind a ring of breaking surf", "the water inside the reef is shallow and bright, and the open sea booms beyond it"],
   sea_arch: ["the sea has bored an arch through a stack of rock, and the waves pass under it", "a great arch of stone stands in the water, a door with no house", "offshore, a rock arch frames a piece of sky and a piece of sea"],
   marsh: ["the ground is half water, and every step is a negotiation", "a marsh breathes mist and green, neither land nor lake", "reeds and standing water blur the line between earth and pool"],
 };
 
-module.exports = { SKY_BLOCKS, SKY_PROSE, IDS, RELIEF, WATER_IDS, FORM_IDS, SEA_FORMS, SEA_GROUND };
+module.exports = { SKY_BLOCKS, SKY_PROSE, IDS, RELIEF, WATER_IDS, FORM_IDS, TINT_IDS, SEA_FORMS, SEA_GROUND };
