@@ -30,7 +30,7 @@ function full() {
 const stableKey = (S) => JSON.stringify(S, (k, v) => (typeof v === "function" || k === "seed" || k === "extras" ? undefined : typeof v === "number" ? Math.round(v * 1000) / 1000 : v));
 
 (async () => {
-  const p = new H.Plug(H.app, { dir: "plugins/age", version: "census" }); await p.onload();
+  const p = new H.Plug(H.app, { dir: "plugins/age", version: "census" }); await p.onload(); await new Promise((r) => setTimeout(r, 50)); if (process.env.NOSIG) p.ext.signature = false; /* 2.6 : avec ou sans le tirage des nouveaux Âges */
   let n = 0;
   const mk = (lines, name) => { const f = new H.TFile(`Cen/${name}${n++}.md`, "```age\n" + lines.join("\n") + "\n```\n"); H.files.set(f.path, f); return f; };
   const scene = (f) => { const a = p.core.analyse(p.core.extract(f.content), { seed: p.core.seed(f.path) }), S = G.sceneOf(a, p.core.seed(f.path), p.core.blocks); if (S) Object.assign(S, SKY.parseSky(p.core.extract(f.content))); return { a, S }; };
