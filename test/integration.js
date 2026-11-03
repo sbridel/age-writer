@@ -67,8 +67,12 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
     ok(p._sigOld && p._sigOld.has(p.core.seed("Ages/Alpha.md")), "signature : l'Âge présent au premier passage est rangé parmi les anciens");
     const sig = (seed) => p.core.analyse("single_sun", { seed }).resolved.drawn, old = sig(p.core.seed("Ages/Alpha.md"));
     ok(!old.some((d) => d.slot === "signature"), "signature : un Âge ancien n'en tire pas");
-    let got = 0, same = 0; for (let i = 0; i < 60; i++) { const s = "neuf" + i, a = sig(s); if (a.some((d) => d.slot === "signature")) got++; p.ext.signature = false; const b = sig(s); p.ext.signature = true; if (JSON.stringify(b) === JSON.stringify(a.filter((d) => d.slot !== "signature"))) same++; }
-    ok(got > 45, "signature : un Âge nouveau en tire une le plus souvent (" + got + "/60)"); ok(same === 60, "signature : les autres cases ne bougent pas");
+    const D = require("../src/engine/draw"); let got = 0, same = 0; for (let i = 0; i < 60; i++) { const s = "neuf" + i, a = sig(s); if (a.some((d) => d.slot === "signature")) got++; }
+    ok(got > 45, "signature : un Âge nouveau en tire une le plus souvent (" + got + "/60)");
+    for (let i = 0; i < 60; i++) { const w = new Set(["single_sun"]), a = D.drawOpenSlots({ written: w, seed: "ancien" + i, pull: 3 }), b = D.drawOpenSlots({ written: w, seed: "ancien" + i, pull: 3, signature: false }); if (JSON.stringify(a) === JSON.stringify(b)) same++; }
+    ok(same === 60 && old.length > 0, "signature : le tirage d'un Âge ancien est celui d'avant la 2.6");
+    let rich = 0; for (let i = 0; i < 200; i++) if (sig("neuf" + i).some((d) => ["mycelium", "berry_shrub", "thorn_bush", "heath_shrub", "glow_algae", "plankton", "raptor", "bee", "spiders", "shoal", "deep_hunter", "cave_stalker", "strange_stone", "basalt", "granite", "chalk", "snow", "drizzle", "rainbow"].includes(d.id))) rich++;
+    ok(rich > 40, "un Âge nouveau tire aussi dans les blocs peints d'avant jamais tirés (" + rich + "/200)");
     p.ext.signature = false; /* la suite des tests parle du tirage d'avant */
   }
   ok(p.ext.instrumentsMode === "easy", "instruments : mode facile par défaut");

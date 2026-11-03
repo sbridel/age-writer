@@ -113,17 +113,40 @@ const SIGNATURE_SLOT = {
     slot("island", 30, "water"),
     slot("lagoon", 18, "water"),
     slot("sea_arch", 18, "water"),
-    slot("waterfall", 9, "solid"),
-    slot("cliff", 8, "solid"),
-    slot("geysers", 10, "dry"),
-    slot("gas_giant", 9),
+    slot("lighthouse", 8, "water"),
     slot("red_water", 5, "water"),
     slot("milky_water", 5, "water"),
     slot("black_water", 4, "water"),
+    slot("waterfall", 7, "solid"),
+    slot("cliff", 6, "solid"),
+    slot("stairs", 4, "solid"),
+    slot("tower", 4),
+    slot("geysers", 6, "dry"),
+    slot("gas_giant", 4),
     slot(null, 4),
   ],
-  answeredBy: ["island", "lagoon", "sea_arch", "waterfall", "cliff", "beach", "geysers", "gas_giant", "red_water", "milky_water", "black_water"],
+  answeredBy: ["island", "lagoon", "sea_arch", "waterfall", "cliff", "beach", "geysers", "gas_giant", "red_water", "milky_water", "black_water", "lighthouse", "tower", "stairs"],
 };
+
+/** 2.6 : le tirage des Âges nés après la 2.6 (les mêmes que la signature) : le fond commun baisse (vent, pluie, spores, fissures),
+ *  et des blocs déjà peints mais jamais tirés entrent avec de petites chances. Les Âges d'avant gardent DRAW_SLOTS, inchangé. */
+const RICHER = {
+  weights: { wind: 0.14, rain: 0.13, spore: 0.11, fern: 0.09, companion_moon: 0.26 },
+  nullFissure: 90,
+  extra: {
+    flora: [slot("mycelium", 0.05), slot("berry_shrub", 0.05), slot("thorn_bush", 0.04), slot("heath_shrub", 0.05), slot("glow_algae", 0.06, "water"), slot("plankton", 0.04, "water")],
+    fauna: [slot("raptor", 0.06), slot("bee", 0.05), slot("spiders", 0.03), slot("shoal", 0.07, "water"), slot("deep_hunter", 0.03, "water"), slot("cave_stalker", 0.03)],
+    minerals: [slot("strange_stone", 0.04), slot("basalt", 0.05), slot("granite", 0.05), slot("chalk", 0.04)],
+    weather: [slot("snow", 0.05, "dry"), slot("drizzle", 0.06), slot("rainbow", 0.03)],
+  },
+};
+const RICH_SLOTS = DRAW_SLOTS.map((sl) => ({
+  ...sl,
+  options: [
+    ...sl.options.map((o) => (o.id && RICHER.weights[o.id] != null ? { ...o, weight: RICHER.weights[o.id] } : o.id === null && sl.name === "fissure" ? { ...o, weight: RICHER.nullFissure } : o)),
+    ...(RICHER.extra[sl.name] || []),
+  ],
+}));
 
 const PULL_STRENGTH = { none: 0, gentle: 3, moderate: 6, strong: 12 };
 
@@ -178,7 +201,7 @@ function drawOpenSlots(params) {
   let { written, seed, pull, amount = 1, closed = null, signature = false } = params,
     taken = new Set(written),
     drawn = [];
-  for (let slotDef of signature ? [...DRAW_SLOTS, SIGNATURE_SLOT] : DRAW_SLOTS) {
+  for (let slotDef of signature ? [...RICH_SLOTS, SIGNATURE_SLOT] : DRAW_SLOTS) {
     if (closed && closed.includes(slotDef.name)) continue; /* une voûte occupée (un lieu porté à contre-sens) : le ciel ne se tire pas */
     let random = rng(hashSeed(`${seed}|${slotDef.name}`)),
       others = new Set(taken);
@@ -214,6 +237,7 @@ function drawOpenSlots(params) {
       for (let option of slotDef.options) {
         let roll = random();
         if (taken.has(option.id)) continue;
+        if ((option.when === "water" && !others.has("water") && !taken.has("water")) || (option.when === "dry" && (others.has("water") || taken.has("water")))) continue; /* 2.6 : le banc de poissons veut de l'eau */
         let chance = Math.min(1, hooks.w(slotDef.name, option) * clashFactor(option.id) * amount);
         roll < chance &&
           (taken.add(option.id), drawn.push({ id: option.id, slot: slotDef.name, chance: chance }));
@@ -228,6 +252,7 @@ module.exports = {
   DEFAULTED_SLOT_COST,
   DRAW_SLOTS,
   SIGNATURE_SLOT,
+  RICH_SLOTS,
   PULL_STRENGTH,
   DRAW_AMOUNT,
   clashCost,
