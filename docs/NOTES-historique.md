@@ -699,6 +699,18 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.6.0 — chaque monde le sien (3 nov. 2026)
+
+Demande de l'auteur : des Âges « le plus uniques possible », qui « fassent vraiment Myst ». Recensement d'abord (`tools/census.js`, `tools/harness.js`, `claude/RECENSEMENT-tirages.md`) : le tirage ne puisait que dans 43 blocs, 58 écrivables sur 90 jamais tirés, 21 blocs peints jamais tirés.
+- **Formes de l'eau et de la terre** (`src/terrain.js`, `FORM_IDS`, `SEA_FORMS`, `SEA_GROUND`) : `island` (`islandOffshore`, côté libre de la vue, couleur minérale, tour si ruines), `cliff` et `waterfall` (`cliffWall`, `cliffGeom` partagé avec le placement des ruines), `beach` (rive `beach`), `lagoon` (eau claire, `lagoonReef` après le reflet), `sea_arch` (`seaArch`). Une forme de mer écrite répond à la case du sol et l'emporte sur un sable tiré.
+- **Couleur de l'eau** : `red_water`, `milky_water`, `black_water` (`TINT_IDS`, `waterSurface`, reflet atténué, l'eau noire en miroir).
+- **Ciel** (`src/sky.js`) : `gas_giant` (`giantPlanet`, `giantP` d'un tirage à part ; avec `planet_rings`, l'anneau est le sien ; physique `giantHost`), `nebula` écrite (`writtenNebula`).
+- **Bâti** (`RUINS_BLOCKS`, `builtRuin`, `pierOnWater`) : `tower`, `lighthouse`, `pier` (amène la mer), `stairs`.
+- **Signature et tirage des nouveaux Âges** (`SIGNATURE_SLOT`, `RICH_SLOTS`, `hooks.signature`) : au premier passage de la 2.6, `ext.sigOld` garde les graines des Âges présents ; eux tirent `DRAW_SLOTS` comme avant (testé). Les autres tirent `RICH_SLOTS` (fond commun abaissé, 19 blocs peints ajoutés, `when` respecté dans les cases « each ») et une signature en dernière case. Recensement sur 700 Âges : 40 → 72 blocs tirés ; `tools/variety.js` (Chao1 des familles) : 4 323 → 5 191.
+- **Geysers** (`geyserField`) : cône de geysérite, cycle d'éruption, sur la terre seulement. **Ponts** (`bridgeForm`, `bridgeOther`) : suspendu, dalle, aqueduc, chevalets, cordes.
+- **Relto, saisons et météo** (`src/relto-season.js`, `RSEA.reltoSeason`) : calendrier réel (nord/sud), temps par demi-heure d'après la graine, fondu de 6 minutes ; feuillus roux puis nus, neige sur les sapins et au sol, fleurs, feuilles qui tombent, ciel couvert, brouillard, pluie, neige, orage. Coupé par défaut dans le moteur de rendu (l'image de référence ne bouge pas), allumé par les réglages.
+- README condensé (« Recent changes » en sept lignes). Tests : `relto-season.test.js`, signature et tirage dans `integration.js`, glyphes et référence.
+
 ## 2.5.2 — le feu se tait (2 nov. 2026)
 
 Remarque de l'auteur : « quand le feu est éteint on entend encore le feu ».

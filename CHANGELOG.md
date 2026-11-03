@@ -2,6 +2,20 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.6.0 — Every world its own (2026-11-03)
+
+### Added
+- **The shapes of water and land**: `island` (an island offshore, its cliff, its beach, sometimes a tower), `cliff`, `waterfall`, `beach`, `lagoon` (clear water behind a breaking reef) and `sea_arch`. A written sea shape brings the sea, and wins over a drawn sand.
+- **The colour of water**: `red_water`, `milky_water`, `black_water` (a perfect mirror).
+- **The sky**: `gas_giant`, a banded giant planet holding a third of the sky (with `planet_rings`, the ring is its own), and a written `nebula`, seen from dusk on.
+- **The built**: `tower`, `lighthouse` (a beam sweeping the sky at night), `pier` (a wooden jetty into the water) and `stairs`, in the hand of the Age (massive, arched, gothic, fallen).
+- **The signature of new Ages**: an Age written after 2.6 draws one rare thing of its own (an island, a lagoon, a sea arch, a coloured sea, a waterfall, a cliff, geysers, a gas giant, a tower, a lighthouse, stairs), and its draw is richer: less wind, rain and spores, and nineteen blocks that were painted but never drawn (shoals, raptors, bees, mycelium, heath, glowing algae, basalt, chalk, rainbow…). Ages that existed before 2.6 never change. Setting *Signature of new Ages*.
+- **Seasons and weather in the Relto**: the Relto follows the real calendar (snow on the pines and bare birches in winter, blossoms in spring, red and gold leaves falling in autumn) and its weather changes every half hour (cloud, overcast, drizzle, rain, morning fog, snow in winter, storms); written pages add to it. Settings *Seasons and weather in the Relto* and *Hemisphere*.
+
+### Changed
+- **Geysers** are a real field: a terraced sinter cone around a turquoise pool that boils, erupts, rains back and lets its plume drift with the wind. They stand on land only.
+- **Bridges** take five new forms besides the stone arches: suspension, single slab, aqueduct, wooden trestle, rope bridge. Existing bridges may change their drawing (not their world).
+
 ## 2.5.2 — The fire goes quiet (2026-11-02)
 
 ### Fixed
