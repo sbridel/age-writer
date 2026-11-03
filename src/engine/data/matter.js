@@ -329,6 +329,11 @@ const RUINS_BLOCKS = [
   { id: "bridge", descriptors: ["narrow", "arched", "old"], weight: 0.03, axis: RUINS_AXIS, writable: !0 },
   { id: "door", descriptors: ["tall", "shut", "patient"], weight: 0.04, axis: RUINS_AXIS, writable: !0 },
   { id: "book", descriptors: ["bound", "dry", "unread"], weight: 0.04, axis: RUINS_AXIS, writable: !0 },
+  /* 2.6 : le bâti, ce que quelqu'un a construit et laissé */
+  { id: "tower", descriptors: ["tall", "silent", "old"], weight: 0.03, axis: RUINS_AXIS, writable: !0 },
+  { id: "lighthouse", descriptors: ["tall", "bright", "turning"], weight: 0.03, axis: RUINS_AXIS, writable: !0 },
+  { id: "pier", descriptors: ["narrow", "damp", "old"], weight: 0.02, axis: RUINS_AXIS, writable: !0 },
+  { id: "stairs", descriptors: ["tall", "cold", "patient"], weight: 0.03, axis: RUINS_AXIS, writable: !0 },
   {
     id: "worn_tablet",
     descriptors: ["smooth", "faded", "silent"],

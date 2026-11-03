@@ -22,7 +22,7 @@ const SSN = require("./seasons"); /* la saison du jour */
 const TAU = Math.PI * 2, PERIOD = 16000; /* ESSAI (28 oct. soir) : la boucle de la fenêtre deux fois plus lente (8 s avant) */
 
 /** Identifiants que le peintre connaît (tout le reste passe par le peintre générique, d'après l'axe et les adjectifs du bloc). */
-const KNOWN = new Set((CAT.COMPOSITES.map((c) => c.id).join(" ") + " scorched_moths tarnished_growth " + "door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon steady_cycle frozen_cycle erratic_cycle chaotic_orbit stable_orbit shifting_orbit " +
+const KNOWN = new Set((CAT.COMPOSITES.map((c) => c.id).join(" ") + " scorched_moths tarnished_growth " + "tower lighthouse pier stairs door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon steady_cycle frozen_cycle erratic_cycle chaotic_orbit stable_orbit shifting_orbit " +
   "permanent_veil auroras recurring_eclipses starfall rain storm thunderstorm whispering_storm waiting_thunder wind dust_storm ash_cloud spore_cloud fog marsh_mist rime watching_mist lightning heat " +
   "hail black_hail steam lava obsidian whispering_obsidian water brine meltwater crying_obsidian ice black_ice deep_cold sand glass singing_glass fulgurite grove great_tree ironwood charred_grove " +
   "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " +
@@ -72,6 +72,7 @@ function sceneOf(a, name = "", blocks = null) {
   const ruins = [];
   if (r("door", "sealed_door")) ruins.push("door"); if (r("bridge", "fallen_bridge")) ruins.push("bridge");
   if (r("tablet", "worn_tablet", "speaking_tablet")) ruins.push("tablet"); if (r("lamp", "lit_lamp")) ruins.push("lamp");
+  for (const id of ["tower", "lighthouse", "stairs"]) if (r(id)) ruins.push(id); /* 2.6 : le bâti (le ponton se dessine à part, sur l'eau) */
   const S = {
     name, seed: fnv(name + "|" + (res.seed != null ? String(res.seed) : "")), cseed: fnv(name + "|" + [...ids].sort().join(",")), /* ESSAI (les Livres descriptifs, loi 17) : le lieu vient du nom (et de la ligne `seed:`), pas de ce qui est écrit ; une ligne ajoutée ne redessine pas le monde */ verdict: a.verdict, unrest: clamp(1 - (a.stability == null ? 100 : a.stability) / 100),
     suns: wd === "cavern" ? 0 : r("twin_suns") ? 2 : r("single_sun") ? 1 : 0, skyStated: r("twin_suns", "single_sun", "starless"), moon: r("companion_moon"),
@@ -84,7 +85,7 @@ function sceneOf(a, name = "", blocks = null) {
     // nouveaux temps (météo vivante) et fleurs
     drizzle: rw("drizzle", "drizzle"), snow: rw("snow", "snow"), rainbow: rw("rainbow", "rainbow"), tornado: rw("tornado", "tornado"), scent: rw("scent", "scented_mist"), petals: rw("petals", "petal_rain"),
     glaze: rw("glaze", "glaze"), crystalRain: rw("crystalRain", "crystal_rain"), ashRain: rw("ashRain", "ash_rain"), acidRain: rw("acidRain", "acid_rain"), grass: r("grass", "meadow"), meadow: r("meadow"), flowers: r("flowers", "scented_mist", "petal_rain"),
-    lava: r("lava", "obsidian", "whispering_obsidian") || wd === "lava", water: (r("water", "marsh_mist", "brine", "meltwater", "crying_obsidian", ...TERRAIN.WATER_IDS, ...TERRAIN.SEA_FORMS) || wd === "ocean") && wd !== "lava" && wd !== "desert",
+    lava: r("lava", "obsidian", "whispering_obsidian") || wd === "lava", water: (r("water", "marsh_mist", "brine", "meltwater", "crying_obsidian", ...TERRAIN.WATER_IDS, ...TERRAIN.SEA_FORMS, "pier") || wd === "ocean") && wd !== "lava" && wd !== "desert",
     ice: r("ice", "black_ice", "deep_cold", "hail", "rime") || wd === "frozen", rime: r("rime"), sand: r("sand", "dust_storm", "glass", "singing_glass", "fulgurite") || wd === "desert",
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove", "crystal_tree") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
     moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine", "glow_algae") || wd === "jungle" || wd === "cavern", eyes: r("hunter", "stalking_pack"), algae: r("glow_algae"),
@@ -96,6 +97,7 @@ function sceneOf(a, name = "", blocks = null) {
     }),
     fissure: r("no_fissure") ? null : r("cave_fissure") ? "cave" : r("submarine_fissure", "fissure") ? (r("water") ? "submarine" : "open") : null,
   };
+  S.pier = r("pier"); /* 2.6 */
   S.kelp = r("kelp"); S.coral = r("coral"); S.acid = r("acid");
   S.forms = {}; for (const id of TERRAIN.FORM_IDS) if (r(id)) S.forms[id] = true; /* ESSAI 2.6 : les formes de l'eau et de la terre */
   S.terrain = ["mountains", "canyon", "plains", "hills"].find((id) => r(id)) || null; // relief écrit : règle les chaînes de la fenêtre (src/terrain.js)
@@ -300,6 +302,7 @@ function build(S, W, H) {
   const nTrees = S.trees ? nA(S.trees, "trees", 1, 10) : 0, trees = Array.from({ length: nTrees }, (_, i) => ({ x: W * (0.06 + 0.88 * ((i + r() * 0.7) / Math.max(1, nTrees))), h: H * (0.2 + r() * 0.14), lean: r() - 0.5, p: r() * TAU }));
   const rf = A("ruins"), kinds = !S.ruins.length ? [] : rf > 1 ? Array.from({ length: Math.min(7, Math.ceil(S.ruins.length * rf)) }, (_, i) => S.ruins[i % S.ruins.length]) : S.ruins.slice(0, Math.max(1, Math.round(S.ruins.length * rf)));
   const ruins = kinds.map((k, i) => ({ k, x: W * (0.2 + 0.6 * ((i + r()) / Math.max(1, kinds.length))) }));
+  if (S.forms && (S.forms.cliff || S.forms.waterfall) && !S.lava) { const cg = cliffGeom(S, W); for (const rn of ruins) { const mg = W * (rn.k === "bridge" ? 0.22 : 0.06); rn.x = cg.side > 0 ? Math.min(rn.x, W - cg.wid - mg) : Math.max(rn.x, cg.wid + mg); } } /* 2.6 : les ruines quittent l'emprise de la falaise (sinon un pont y entre) */
   const eyes = S.eyes ? Array.from({ length: 3 }, () => ({ x: W * (0.1 + 0.8 * r()), y: hz + H * (0.04 + 0.2 * r()), p: r() * TAU })) : [];
   const water = { lines: Array.from({ length: nA(10, "water", 3, 30) }, () => ({ y: hz + H * (0.04 + 0.22 * r()), w: W * (0.06 + 0.12 * r()), p: r() })) };
   const fis = { x: W * (0.2 + 0.6 * r()), pts: Array.from({ length: 7 }, () => r() - 0.5), bubbles: Array.from({ length: 7 }, () => ({ p: r(), dx: (r() - 0.5) * 9 })) };
@@ -958,6 +961,7 @@ function paint(g, m, t, o = {}) {
   if (m.shore) { g.save(); shorePath(g, m.shore.wet); g.clip(); reflect(g, m, t, 0.5); g.restore(); shoreEdge(g, m, t, night); } // le reflet ne couvre que l'eau ; l'écume par-dessus
   else if (S.ice) reflect(g, m, t, 0.34); else if (S.water && S.waterGround !== false) reflect(g, m, t, m.mirror ? 0.78 : 0.5); else if (S.soil === "salt" && !S.sand) reflect(g, m, t, 0.18); /* le sel luit comme un miroir terne */
   if (S.forms && S.forms.lagoon) lagoonReef(g, m, t, day, night, hzc); /* ESSAI 2.6 : le récif par-dessus le reflet */
+  if (S.pier) pierOnWater(g, m, t, day, night, hzc); /* 2.6 : le ponton, par-dessus le reflet */
   if (m.fedGlow && (m.shore || (S.water && !S.ice)) && night > 0.05) fedAlgae(g, m, t, night);
   extraAt(g, m, t, "air");
   WON.wonderPass(g, m, t, "air", k0);
@@ -1283,11 +1287,15 @@ function islandOffshore(g, m, t, day, night, hzc) {
 }
 /** ESSAI 2.6 : la falaise. Un mur de roche sur un côté de la vue, à mi-distance : strates, ombres verticales, une frange verte si le monde vit,
  *  des éboulis au pied. Avec `waterfall`, une chute tombe de sa lèvre : des filets blancs qui descendent, une vasque, un nuage d'embruns. */
+/** le côté et la largeur de la falaise, d'un tirage à part : la peinture et le placement des ruines (build) les partagent. */
+function cliffGeom(S, W) {
+  const q = rng((S.seed ^ 0xc11ff) >>> 0), V = S.view || {}, side = V.kind === "slope" || V.kind === "cover" ? -(V.side || 1) : q() < 0.5 ? -1 : 1; /* la falaise prend le côté que la vue laisse libre */
+  return { q, side, wid: W * (0.22 + 0.1 * q()) };
+}
 function cliffWall(g, m, t, day, night, hzc) {
-  const { W, H, hz, S } = m, q = rng((S.seed ^ 0xc11ff) >>> 0), V = S.view || {}, D = H - hz;
+  const { W, H, hz, S } = m, D = H - hz;
   if (S.lava || m.cave) return;
-  const side = V.kind === "slope" || V.kind === "cover" ? -(V.side || 1) : q() < 0.5 ? -1 : 1; /* la falaise prend le côté que la vue laisse libre */
-  const wid = W * (0.22 + 0.1 * q()), inner = side > 0 ? W - wid : wid, top = hz - H * (0.26 + 0.12 * q()), base = hz + D * (0.18 + 0.1 * q());
+  const { q, side, wid } = cliffGeom(S, W), inner = side > 0 ? W - wid : wid, top = hz - H * (0.26 + 0.12 * q()), base = hz + D * (0.18 + 0.1 * q());
   const MIN = [[214, 206, 188], [188, 146, 98], [164, 100, 78], [140, 136, 132], [200, 180, 146]];
   const rock = S.rock === "basalt" ? [66, 64, 72] : S.soil === "chalk" ? [230, 226, 212] : S.rock === "granite" ? [176, 160, 146] : MIN[Math.floor(q() * MIN.length)];
   const shade = (c, k) => mixc(mixc(c, hzc, 0.06 * k * (0.5 + day)), [0, 0, 0], 0.08 + 0.7 * night);
@@ -1321,6 +1329,26 @@ function cliffWall(g, m, t, day, night, hzc) {
   g.fillStyle = css([255, 255, 255], 0.5 + 0.3 * day); g.fillRect(fx - fw * 0.55, y0 - 1, fw * 1.1, 2);
   g.fillStyle = css(shade(wc, 0.4), 0.6); g.beginPath(); g.ellipse(fx, y1 + D * 0.015, fw * 2.4, D * 0.02, 0, 0, TAU); g.fill();
   for (let k = 0; k < 7; k++) { const a = frac(t * 0.8 + k / 7), r = fw * (0.8 + 1.8 * a); g.fillStyle = css([250, 252, 255], 0.22 * (1 - a) * (0.4 + 0.6 * day)); g.beginPath(); g.arc(fx + (k - 3) * fw * 0.35, y1 - (y1 - y0) * 0.04 * a - fw * 0.4, r, 0, TAU); g.fill(); }
+}
+/** 2.6 : le ponton. Des planches sur des pieux qui s'avancent dans l'eau, en perspective, depuis le rivage (ou depuis nos pieds, sur une mer
+ *  sans rive) ; un poteau d'amarrage au bout, une lanterne la nuit, les pieux qui se reflètent. */
+function pierOnWater(g, m, t, day, night, hzc) {
+  const { W, H, hz, S } = m, D = H - hz, q = rng((S.seed ^ 0x9e7) >>> 0), sh = m.shore;
+  if (!S.water || S.ice || S.lava || (S.waterGround !== true && !sh)) return;
+  let x0, y0, x1, y1;
+  if (sh && sh.mode === "side") { const k = Math.floor(sh.line.length * (0.55 + 0.25 * q())), [lx, ly] = sh.line[k]; x0 = lx; y0 = ly; x1 = lx - sh.side * W * (0.14 + 0.1 * q()); y1 = hz + (ly - hz) * 0.45; }
+  else if (sh && sh.mode === "near") { const k = Math.floor(sh.line.length * (0.3 + 0.4 * q())), [lx, ly] = sh.line[k]; x0 = lx; y0 = ly + 2; x1 = lx + (q() - 0.5) * W * 0.12; y1 = hz + (ly - hz) * 0.35; }
+  else if (sh) return; /* la terre tient l'horizon : l'eau est à nos pieds, pas de ponton */
+  else { x0 = W * (0.35 + 0.3 * q()); y0 = H + 4; x1 = x0 + (q() - 0.5) * W * 0.18; y1 = hz + D * (0.18 + 0.1 * q()); }
+  const wd = (y) => W * 0.018 + W * 0.11 * clamp((y - hz) / D), wood = mixc(mixc([112, 82, 56], hzc, 0.1), [6, 6, 10], 0.15 + 0.65 * night), dark = mixc(wood, [0, 0, 0], 0.45);
+  const at = (u) => [lerp(x0, x1, u), lerp(y0, y1, u)], N = 14;
+  for (let k = 0; k <= 6; k++) { const [x, y] = at(k / 6), w = wd(y), ph = D * 0.05 * clamp((y - hz) / D) + 2; g.fillStyle = css(dark); for (const sd of [-1, 1]) { g.fillRect(x + sd * w * 0.45 - 1, y, Math.max(1.5, w * 0.06), ph); g.fillStyle = css(dark, 0.3); g.fillRect(x + sd * w * 0.45 - 1, y + ph, Math.max(1.5, w * 0.06), ph * 0.8); g.fillStyle = css(dark); } } /* les pieux et leur reflet */
+  g.fillStyle = css(wood); g.beginPath(); const L = [], R = []; for (let k = 0; k <= N; k++) { const [x, y] = at(k / N), w = wd(y) / 2; L.push([x - w, y]); R.push([x + w, y]); }
+  g.moveTo(L[0][0], L[0][1]); for (const P of L) g.lineTo(P[0], P[1]); for (const P of R.reverse()) g.lineTo(P[0], P[1]); g.closePath(); g.fill();
+  g.strokeStyle = css(dark, 0.6); g.lineWidth = Math.max(0.6, W / 900); for (let k = 0; k <= 28; k++) { const [x, y] = at(k / 28), w = wd(y) / 2; g.beginPath(); g.moveTo(x - w, y); g.lineTo(x + w, y); g.stroke(); } /* les planches */
+  const [ex, ey] = at(1), pw = Math.max(1.5, wd(ey) * 0.12), ph = D * 0.05 + 3; g.fillStyle = css(dark); g.fillRect(ex - pw / 2, ey - ph, pw, ph); /* le poteau d'amarrage */
+  if (night > 0.3) { g.fillStyle = css([255, 200, 120], 0.9); g.fillRect(ex - pw, ey - ph - pw * 1.5, pw * 2, pw * 1.5); const lg = g.createRadialGradient(ex, ey - ph, 1, ex, ey - ph, D * 0.15); lg.addColorStop(0, css([255, 200, 120], 0.35 * night)); lg.addColorStop(1, css([255, 200, 120], 0)); g.fillStyle = lg; g.fillRect(ex - D * 0.15, ey - ph - D * 0.15, D * 0.3, D * 0.3);
+    g.fillStyle = css([255, 200, 120], 0.25 * night); g.fillRect(ex - 1, ey, 2, D * 0.12); } /* la lanterne, et son reflet en trait */
 }
 /** ESSAI 2.6 : le lagon. L'eau claire (voir waterSurface) et, au large, la barrière de corail où la mer casse : une ligne blanche
  *  qui bat, des pointes de récif, et au-delà la mer plus sombre. */
@@ -1986,6 +2014,36 @@ function bridgeOther(g, m, rn, form, st) {
     g.fillStyle = wood; for (let x = L + 3; x < R - 2; x += 3.2) { const y = deckY(x); if (q() < 0.08) continue; g.fillRect(x, y - 1, 2.2, 2); } /* les planches, il en manque */
     for (let x = L + 8; x < R - 4; x += 9) { g.beginPath(); g.moveTo(x, deckY(x)); g.lineTo(x, deckY(x) - 8 + sag * 0.15); g.stroke(); } }
 }
+/** 2.6 : le bâti. La tour (ronde ou carrée, crénelée ou coiffée selon la main de l'Âge, une fenêtre qui s'allume la nuit),
+ *  le phare (fût effilé, galerie, lanterne ; la nuit, un faisceau qui balaie le ciel), l'escalier monumental (une volée de marches
+ *  entre deux murs, jusqu'à une terrasse ; une main effondrée y laisse des marches tombées). Forme d'un tirage à part. */
+function builtRuin(g, m, rn, t, fx, st, RS) {
+  const { S, W, H, hz } = m, b = rn.x, q = rng((S.seed ^ Math.imul(Math.round(b * 13) + 23, 2654435761) ^ 0x7043e) >>> 0), night = m.nightK || 0;
+  const win = (x, y, w, h) => { const on = night > 0.35 && q() < 0.75; if (on) { fx.fillStyle = css([255, 200, 120], 0.25 * night); fx.beginPath(); fx.arc(x + w / 2, y + h / 2, h * 2.2, 0, TAU); fx.fill(); } g.save(); g.globalCompositeOperation = "destination-out"; g.fillRect(x, y, w, h); g.restore(); if (on) { fx.fillStyle = css([255, 206, 130], 0.9); fx.fillRect(x, y, w, h); } };
+  if (rn.k === "tower") { const h = H * (0.26 + 0.14 * q()), w = W * (0.025 + 0.015 * q()), round = RS === "arched" || RS === "gothic" || q() < 0.3, top = hz - h;
+    g.fillRect(b - w, top, w * 2, h + 2);
+    if (RS === "gothic") { g.beginPath(); g.moveTo(b - w * 1.15, top); g.lineTo(b, top - h * 0.32); g.lineTo(b + w * 1.15, top); g.closePath(); g.fill(); } /* la flèche */
+    else if (round && RS !== "massive") { g.beginPath(); g.moveTo(b - w * 1.2, top + 1); g.lineTo(b, top - w * 1.6); g.lineTo(b + w * 1.2, top + 1); g.closePath(); g.fill(); } /* le toit en poivrière */
+    else { g.fillRect(b - w * 1.15, top - w * 0.3, w * 2.3, w * 0.5); for (let k = 0; k < 4; k++) g.fillRect(b - w * 1.15 + k * w * 0.66, top - w * 0.8, w * 0.36, w * 0.55); } /* les créneaux */
+    if (RS === "fallen") { g.save(); g.globalCompositeOperation = "destination-out"; g.beginPath(); g.moveTo(b + w * 0.1, top - w * 2); g.lineTo(b + w * 1.3, top - w * 2); g.lineTo(b + w * 1.3, top + h * 0.35); g.lineTo(b + w * 0.4, top + h * 0.12); g.closePath(); g.fill(); g.restore(); } /* le sommet effondré */
+    for (let k = 0; k < 3; k++) win(b - w * 0.18, top + h * (0.15 + 0.22 * k), w * 0.36, Math.max(2, h * 0.05)); }
+  else if (rn.k === "lighthouse") { const h = H * (0.3 + 0.12 * q()), w0 = W * 0.028, w1 = W * 0.017, top = hz - h, lw = w1 * 1.4, lh = h * 0.1;
+    g.beginPath(); g.moveTo(b - w0, hz + 2); g.lineTo(b - w1, top); g.lineTo(b + w1, top); g.lineTo(b + w0, hz + 2); g.closePath(); g.fill();
+    g.fillRect(b - lw * 1.3, top - 2, lw * 2.6, 3); /* la galerie */
+    g.fillRect(b - lw, top - lh, lw * 0.25, lh); g.fillRect(b + lw * 0.75, top - lh, lw * 0.25, lh); /* les montants de la lanterne */
+    g.beginPath(); g.moveTo(b - lw * 1.1, top - lh); g.lineTo(b, top - lh - lw * 1.2); g.lineTo(b + lw * 1.1, top - lh); g.closePath(); g.fill(); /* le dôme */
+    const L0 = top - lh * 0.5, on = 0.25 + 0.75 * night; fx.fillStyle = css([255, 228, 160], 0.55 + 0.45 * on); fx.fillRect(b - lw * 0.75, top - lh, lw * 1.5, lh);
+    if (night > 0.2) { const a = TAU * t * 0.5 + q() * TAU, len = W * 0.9, sp = 0.07, dir = Math.cos(a); fx.save(); fx.globalCompositeOperation = "lighter"; for (const sgn of [1, -1]) { const ang = sgn > 0 ? a : a + Math.PI, x1 = b + Math.cos(ang) * len, y1 = L0 - Math.abs(Math.sin(ang)) * len * 0.12, gr = fx.createLinearGradient(b, L0, x1, y1);
+        gr.addColorStop(0, css([255, 236, 190], 0.32 * night * (0.4 + 0.6 * Math.abs(Math.cos(ang))))); gr.addColorStop(1, css([255, 236, 190], 0)); fx.fillStyle = gr; fx.beginPath(); fx.moveTo(b, L0); fx.lineTo(x1, y1 - len * sp); fx.lineTo(x1, y1 + len * sp); fx.closePath(); fx.fill(); } void dir; fx.restore();
+      const hg = fx.createRadialGradient(b, L0, 0, b, L0, lw * 5); hg.addColorStop(0, css([255, 236, 190], 0.5 * night)); hg.addColorStop(1, css([255, 236, 190], 0)); fx.fillStyle = hg; fx.fillRect(b - lw * 5, L0 - lw * 5, lw * 10, lw * 10); }
+    if (q() < 0.5 && RS !== "massive") { fx.fillStyle = css([170, 40, 34], 0.55 * (1 - 0.7 * night)); for (let k = 1; k < 4; k += 2) { const y0 = top + h * (k / 4), y1 = top + h * ((k + 0.5) / 4); fx.beginPath(); fx.moveTo(b - lerp(w1, w0, (y0 - top) / h), y0); fx.lineTo(b + lerp(w1, w0, (y0 - top) / h), y0); fx.lineTo(b + lerp(w1, w0, (y1 - top) / h), y1); fx.lineTo(b - lerp(w1, w0, (y1 - top) / h), y1); fx.closePath(); fx.fill(); } } } /* les bandes rouges, peintes */
+  else { const n = 9 + Math.floor(q() * 7), rise = H * (0.16 + 0.1 * q()), run = W * (0.12 + 0.08 * q()), dir = q() < 0.5 ? -1 : 1, sx = b - dir * run / 2, st0 = rise / n, sw = run / n, wall = Math.max(2, W * 0.006), broken = RS === "fallen" ? 2 + Math.floor(q() * 3) : -1;
+    g.beginPath(); g.moveTo(sx, hz + 2); for (let k = 0; k < n; k++) { if (k === broken) { g.lineTo(sx + dir * sw * (k + 0.3), hz - st0 * (k - 1.5)); continue; } g.lineTo(sx + dir * sw * k, hz - st0 * (k + 1)); g.lineTo(sx + dir * sw * (k + 1), hz - st0 * (k + 1)); } /* les marches */
+    const ex = sx + dir * run, top = hz - rise; g.lineTo(ex + dir * run * 0.25, top); g.lineTo(ex + dir * run * 0.25, hz + 2); g.closePath(); g.fill(); /* la terrasse */
+    g.beginPath(); g.moveTo(sx - dir * wall, hz + 2); g.lineTo(sx - dir * wall, hz - st0 * 2.5); g.lineTo(ex, top - st0 * 2); g.lineTo(ex, top); g.lineTo(sx, hz - st0); g.closePath(); g.fill(); /* le mur de rampe */
+    for (const off of [0.05, 0.2]) { const x = ex + dir * run * off, ph = H * (0.05 + 0.03 * q()); g.fillRect(x - wall, top - ph, wall * 2, ph); } /* deux montants sur la terrasse */
+    if (broken >= 0) for (let k = 0; k < 4; k++) { const bx = sx + dir * sw * (broken + 0.5) + (q() - 0.5) * sw * 3, bw = sw * (0.4 + 0.4 * q()); g.fillRect(bx, hz - bw, bw, bw); } }
+}
 function ruin(g, m, rn, t, fx = g, st = stoneOf(m)) {
   const { S, W, H, hz } = m, b = rn.x; g.fillStyle = css(st.lit); g.strokeStyle = css(st.edge); g.lineWidth = 1;
   const v8 = rng((S.seed ^ Math.imul(Math.round(b * 13) + 7, 2654435761)) >>> 0); /* chaque ruine a sa forme, d'un tirage à part (le reste de l'image ne bouge pas) */
@@ -2005,6 +2063,7 @@ function ruin(g, m, rn, t, fx = g, st = stoneOf(m)) {
         for (let k = 0; k < 4; k++) { const bx = x0 + aw * (0.3 + 0.12 * k + 0.05 * v8()), bw = aw * (0.06 + 0.05 * v8()), bh = deck * (0.5 + 0.6 * v8()); g.save(); g.translate(bx, hz + 1); g.rotate((v8() - 0.5) * 0.6); g.fillRect(-bw / 2, -bh, bw, bh); g.restore(); } continue; } /* les pierres tombées au pied */
       g.beginPath(); g.moveTo(x0, hz + 2); g.lineTo(x0, hz - rise - deck); g.lineTo(x0 + aw, hz - rise - deck); g.lineTo(x0 + aw, hz + 2); g.lineTo(x0 + aw * 0.88, hz + 2); g.quadraticCurveTo(x0 + aw / 2, hz - rise * 1.6, x0 + aw * 0.12, hz + 2); g.closePath(); g.fill(); g.stroke(); }
   }
+  else if (rn.k === "tower" || rn.k === "lighthouse" || rn.k === "stairs") builtRuin(g, m, rn, t, fx, st, RS);
   else if (rn.k === "tablet") { const v = H * (0.05 + 0.03 * v8()), h = H * (0.14 + 0.1 * v8()), tilt = (v8() - 0.5) * 0.35, round = RS === "arched" || (RS !== "massive" && v8() < 0.3), chip = RS === "fallen" || v8() < 0.3; g.save(); g.translate(b, hz + 2); g.rotate(tilt);
     g.beginPath(); g.moveTo(-v, 0); if (round) { g.lineTo(-v, -h + v); g.arc(0, -h + v, v, Math.PI, 0); } else { g.lineTo(-v, -h); if (chip) { g.lineTo(v * 0.3, -h); g.lineTo(v, -h * 0.78); } else g.lineTo(v, -h); } g.lineTo(v, 0); g.closePath(); g.fill(); g.stroke(); g.restore(); /* stèle ronde ou dalle, penchée, parfois écornée */
     const vv = v, hh = h; void vv; void hh; if (S.tabletAwake) { fx.fillStyle = css([255, 190, 110], 0.35 + 0.3 * Math.sin(TAU * t * 2)); fx.fillRect(b - v + 3, hz - h + 6, v * 2 - 6, 1.4); fx.fillRect(b - v + 3, hz - h + 12, v * 2 - 10, 1.4); } }
