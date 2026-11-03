@@ -99,7 +99,8 @@ function sceneOf(a, name = "", blocks = null) {
   };
   S.pier = r("pier"); /* 2.6 */
   S.kelp = r("kelp"); S.coral = r("coral"); S.acid = r("acid");
-  S.forms = {}; for (const id of TERRAIN.FORM_IDS) if (r(id)) S.forms[id] = true; /* ESSAI 2.6 : les formes de l'eau et de la terre */
+  S.forms = {}; for (const id of TERRAIN.FORM_IDS) if (r(id)) S.forms[id] = true;
+  S.tintW = TERRAIN.TINT_IDS.find((id) => r(id)) || null; /* 2.6 : la couleur de l'eau, écrite */ /* ESSAI 2.6 : les formes de l'eau et de la terre */
   S.terrain = ["mountains", "canyon", "plains", "hills"].find((id) => r(id)) || null; // relief écrit : règle les chaînes de la fenêtre (src/terrain.js)
   { const dr = new Set((res.drawn || []).map((p) => p.id)), mine = (id) => ids.has(id) && !dr.has(id); /* ESSAI 2.6 : une forme d'eau écrite l'emporte sur un sable tiré (l'écrit gagne sur le tirage) */
     if (S.sand && wd !== "desert" && TERRAIN.SEA_GROUND.some(mine) && !["sand", "dust_storm", "glass", "singing_glass", "fulgurite"].some(mine)) S.sand = false; }
@@ -958,8 +959,8 @@ function paint(g, m, t, o = {}) {
   if (m.garden) gardenGround(g, m, t, day, night, hzc, "hedge"); /* ESSAI : la haie devant les arbres et les ruines de l'horizon : leur pied est derrière elle */
   if (S.glow || S.moths) for (let p = 0, np = Math.round(clamp(12 * (S.amt ? (S.moths ? (S.amt.moths != null ? S.amt.moths : 1) : (S.amt.glow != null ? S.amt.glow : 1)) : 1), 3, 40)); p < np; p++) { const q = rng(S.seed + p * 13), x = q() * W, y = hz - q() * H * 0.12, a = 0.35 + 0.5 * Math.sin(TAU * (t * (S.moths ? 2 : 1) + q())); g.fillStyle = css(S.glow ? [140, 255, 190] : [255, 230, 160], Math.max(0, a) * 0.8); g.beginPath(); g.arc(x + (S.moths ? 5 * Math.sin(TAU * (t * 2 + q())) : 0), y + (S.moths ? 3 * Math.cos(TAU * (t * 3 + q())) : 0), 1.4, 0, TAU); g.fill(); }
   for (const e of m.eyes) { const o = Math.sin(TAU * (t * 1 + e.p)); if (o > -0.7) { g.fillStyle = css([255, 200, 90], 0.8); g.fillRect(e.x - 3, e.y, 1.6, 1.6); g.fillRect(e.x + 2, e.y, 1.6, 1.6); } }
-  if (m.shore) { g.save(); shorePath(g, m.shore.wet); g.clip(); reflect(g, m, t, 0.5); g.restore(); shoreEdge(g, m, t, night); } // le reflet ne couvre que l'eau ; l'écume par-dessus
-  else if (S.ice) reflect(g, m, t, 0.34); else if (S.water && S.waterGround !== false) reflect(g, m, t, m.mirror ? 0.78 : 0.5); else if (S.soil === "salt" && !S.sand) reflect(g, m, t, 0.18); /* le sel luit comme un miroir terne */
+  if (m.shore) { g.save(); shorePath(g, m.shore.wet); g.clip(); reflect(g, m, t, 0.5 * (m.tintK || 1)); g.restore(); shoreEdge(g, m, t, night); } // le reflet ne couvre que l'eau ; l'écume par-dessus
+  else if (S.ice) reflect(g, m, t, 0.34); else if (S.water && S.waterGround !== false) reflect(g, m, t, (m.mirror ? 0.78 : 0.5) * (m.tintK || 1)); else if (S.soil === "salt" && !S.sand) reflect(g, m, t, 0.18); /* le sel luit comme un miroir terne */
   if (S.forms && S.forms.lagoon) lagoonReef(g, m, t, day, night, hzc); /* ESSAI 2.6 : le récif par-dessus le reflet */
   if (S.pier) pierOnWater(g, m, t, day, night, hzc); /* 2.6 : le ponton, par-dessus le reflet */
   if (m.fedGlow && (m.shore || (S.water && !S.ice)) && night > 0.05) fedAlgae(g, m, t, night);
@@ -1452,10 +1453,10 @@ function riverRibbon(g, m, t, sn, day, night, hzc, top) {
 /** Surface de l'eau : dégradé, rides qui glissent, reflet du soleil. */
 function waterSurface(g, m, t, sn, hzc) {
   const { W, H, hz } = m;
-  const S = m.S, chem = S.forms && S.forms.lagoon && !S.acid && !S.brine ? [[70, 190, 180], [12, 70, 78]] : S.acid ? [[120, 150, 40], [18, 34, 10]] : S.brine ? [[176, 96, 112], [56, 22, 34]] : S.glacial ? [[64, 168, 176], [8, 38, 48]] : null, calm = !S.wind && !S.rain && !S.storm; /* la chimie de l'eau, et le miroir quand rien ne bouge */
-  const wg = g.createLinearGradient(0, hz, 0, H); wg.addColorStop(0, css(chem ? mixc(hzc, chem[0], 0.6) : calm ? mixc(hzc, [20, 60, 70], 0.4) : mixc(hzc, [20, 60, 70], 0.7))); wg.addColorStop(1, css(chem ? chem[1] : [11, 24, 28])); g.fillStyle = wg; g.fillRect(0, hz, W, H - hz);
+  const TW = { red_water: [[172, 52, 40], [44, 10, 8]], milky_water: [[188, 214, 212], [96, 138, 146]], black_water: [[22, 22, 24], [3, 3, 5]] }, S = m.S, chem = S.tintW ? TW[S.tintW] : S.forms && S.forms.lagoon && !S.acid && !S.brine ? [[70, 190, 180], [12, 70, 78]] : S.acid ? [[120, 150, 40], [18, 34, 10]] : S.brine ? [[176, 96, 112], [56, 22, 34]] : S.glacial ? [[64, 168, 176], [8, 38, 48]] : null, calm = !S.wind && !S.rain && !S.storm; /* la chimie de l'eau, et le miroir quand rien ne bouge */
+  const wg = g.createLinearGradient(0, hz, 0, H); wg.addColorStop(0, css(chem ? mixc(hzc, chem[0], S.tintW ? 0.78 : 0.6) : calm ? mixc(hzc, [20, 60, 70], 0.4) : mixc(hzc, [20, 60, 70], 0.7))); wg.addColorStop(1, css(chem ? chem[1] : [11, 24, 28])); g.fillStyle = wg; g.fillRect(0, hz, W, H - hz);
   if (S.glacial) { const q = rng((S.seed ^ 0x1cef) >>> 0); for (let k = 0; k < 14; k++) { const z = 1.3 + q() * 7, y = hz + (H - hz) / z, x = W * q(), w = (22 + q() * 30) / z, h2 = (5 + q() * 6) / z; g.fillStyle = css([226, 238, 246], 0.85); g.beginPath(); g.moveTo(x - w, y); g.lineTo(x - w * 0.6, y - h2); g.lineTo(x + w * 0.5, y - h2 * 0.8); g.lineTo(x + w, y); g.lineTo(x + w * 0.3, y + h2 * 0.4); g.closePath(); g.fill(); g.fillStyle = css([120, 170, 200], 0.4); g.fillRect(x - w * 0.8, y, w * 1.6, Math.max(0.6, h2 * 0.3)); } } /* des glaçons qui flottent */
-  m.mirror = calm && !chem;
+  m.mirror = (calm && !chem) || S.tintW === "black_water"; /* l'eau noire est un miroir parfait */ m.tintK = S.tintW && S.tintW !== "black_water" ? 0.55 : 1;
   for (const l of m.water.lines) { const x = frac(l.p + t) * (W + l.w) - l.w; g.fillStyle = "rgba(200,225,235,0.22)"; g.fillRect(x, l.y, l.w, 1.2); }
   const s = sn.find((q) => q.e > 0.15); if (s) for (let b = 0; b < 6; b++) { g.fillStyle = css([255, 220, 160], (0.28 - b * 0.03) * Math.min(1, s.e * 2)); g.fillRect(s.x - (14 - b * 2) / 2 + 3 * Math.sin(TAU * (t * 2 + b * 0.2)), hz + H * (0.05 + 0.045 * b), 14 - b * 2, 1.5); }
 }
@@ -2808,7 +2809,7 @@ const gpt = (m, it, zNear = 1.4, zFar = 7) => { const z = zNear + it.y * (zFar -
  *  turquoise ; il souffle par intervalles (la vapeur monte, puis la colonne jaillit, retombe en pluie, et le nuage s'en va avec le vent).
  *  Les autres sont des fumerolles qui fument sans cesse. */
 function geyserField(g, m, t, e) {
-  const { H, S } = m, night = m.lastNight || 0, Ps = byDepth(m, e, 1.6, 6).slice(0, 4), main = Ps[Ps.length - 1]; if (!main) return;
+  const { H, S } = m, night = m.lastNight || 0, Ps = byDepth(m, e, 1.6, 6).filter((P) => onLand(m, P)).slice(0, 4), main = Ps[Ps.length - 1]; if (!main) return; /* sur la terre seulement : jamais un geyser au milieu de la mer */
   const lit = 1 - 0.65 * night, wind = S.wind ? 1 : 0.35;
   const mound = (P, big) => { const k = big ? clamp(P.k, 1.3, 2) : Math.min(1.8, P.k), w = (big ? 40 : 14) * k, h = (big ? 11 : 3) * k;
     g.fillStyle = css(mixc([196, 120, 60], [0, 0, 0], 0.5 * night), 0.55); g.beginPath(); g.ellipse(P.x, P.y + 1, w * 1.5, h * 0.9, 0, 0, TAU); g.fill(); /* les tapis orangés */
@@ -2823,7 +2824,7 @@ function geyserField(g, m, t, e) {
     const lg = g.createLinearGradient(0, v.y, 0, v.y - hh); lg.addColorStop(0, css([248, 250, 252], 0.95 * lit)); lg.addColorStop(1, css([240, 244, 248], 0.25 * lit));
     g.fillStyle = lg; g.beginPath(); g.moveTo(v.x - cw * 0.6, v.y); g.quadraticCurveTo(v.x - cw * 0.4, v.y - hh * 0.6, v.x - cw * 1.4 + wind * hh * 0.08, v.y - hh); g.lineTo(v.x + cw * 1.4 + wind * hh * 0.1, v.y - hh); g.quadraticCurveTo(v.x + cw * 0.4, v.y - hh * 0.6, v.x + cw * 0.6, v.y); g.closePath(); g.fill(); /* la colonne */
     for (let j = 0; j < 9; j++) { const q = frac(u * 3 + j / 9), side = j % 2 ? 1 : -1, x = v.x + side * (cw + q * 22 * v.k) + wind * hh * 0.1, y = v.y - hh + q * q * hh * 0.9; puff(x, y, (1 + 1.5 * (1 - q)) * v.k, 0.6 * (1 - q)); } /* la pluie qui retombe */
-    for (let j = 0; j < 6; j++) { const q = j / 5; puff(v.x + wind * (hh * 0.12 + q * 30 * v.k), v.y - hh - q * 10 * v.k, (8 + 10 * q) * v.k, 0.45 * (1 - 0.5 * q)); } } /* le panache en tête */
+    for (let j = 0; j < 10; j++) { const q = j / 9, sd = j % 2 ? 1 : -1; puff(v.x + sd * q * cw * 2.2 + wind * (hh * 0.1 + q * 26 * v.k), v.y - hh * (0.86 + 0.14 * q) - q * 6 * v.k, (4 + 9 * q) * v.k, 0.32 * (1 - 0.45 * q)); } } /* le panache en tête : une gerbe qui s'ouvre, pas une boule */
   else { const u = (ph - 0.55) / 0.45; for (let j = 0; j < 7; j++) { const q = j / 6; puff(v.x + wind * (top * 0.12 + u * 60 * v.k + q * 26 * v.k), v.y - top * (0.7 + 0.3 * q) - u * 14 * v.k, (10 + 12 * q + 10 * u) * v.k, 0.4 * (1 - u) * (1 - 0.4 * q)); } /* le nuage qui s'en va */
     for (let j = 0; j < 3; j++) { const q = frac(t * 0.8 + j / 3), r = (2 + 5 * q) * v.k; puff(v.x + wind * q * 8, v.y - q * 18 * v.k, r, 0.3 * (1 - q)); } }
 }

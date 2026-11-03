@@ -86,7 +86,7 @@ function looks(S) {
   const sun = S.suns === 0 ? "nosun" : S.suns + "sun" + ((S.sunHues || []).length ? "-" + S.sunHues.map((h) => (Array.isArray(h) ? h.join("") : String(h))).join("") : "") + (S.blackDisc ? "-black" : "");
   const orn = [S.moon || (S.moons > 0) ? "moon" : "", S.rings ? "rings" : "", S.belt || "", S.auroras ? "aurora" : "", S.eclipses ? "eclipse" : "", S.veil ? "veil" : "", (S.remnants || []).length ? "remnant" : "", S.comet ? "comet" : ""].filter(Boolean);
   const wx = WXV.filter((k) => S[k]), mainWx = ["storm", "snow", "ash", "dust", "fog", "rain", "hail", "tornado"].find((k) => S[k]) || (wx.length ? "light" : "clear");
-  const special = [...(S.wonders || []), ...(S.loop ? ["ring:" + (S.loopFam || "")] : []), ...((S.seams || []).some((f) => f.contra) ? ["upturned:" + (S.seams.find((f) => f.contra).what)] : [])];
+  const special = [...(S.wonders || []), ...Object.keys(S.forms || {}), ...(S.giant ? ["gas_giant"] : []), ...(S.nebulaW ? ["nebula"] : []), /* 2.6 : les formes et le ciel comptent */ ...(S.loop ? ["ring:" + (S.loopFam || "")] : []), ...((S.seams || []).some((f) => f.contra) ? ["upturned:" + (S.seams.find((f) => f.contra).what)] : [])];
   const fam = [ground, relief === "flat" ? "flat" : "relief", S.water ? "w" : "", veg, sun.replace(/-.*/, ""), orn.length ? "orn" : "", mainWx, special.length ? special.map((x) => x.split(":")[0]).sort().join("+") : ""].join("|");
   const fine = [ground, relief, S.water ? "water" : "", S.ice ? "ice" : "", S.lava ? "lava" : "", veg, S.burnt ? "burnt" : "", sun, orn.sort().join("+"), S.cycle, wx.sort().join("+"), special.sort().join("+"), (S.seams || []).length ? "seam" : ""].join("|");
   const kind = [ground, veg === "bare" ? "bare" : "green", sun.replace(/-.*/, ""), special.length ? "special" : ""].join("|"); /* ce qu'un joueur nommerait : « un désert nu à deux soleils » */
@@ -98,6 +98,7 @@ const tally = (list, key) => { const m = new Map(); for (const x of list) m.set(
 
 (async () => {
   const p = new Plug(app, { dir: "plugins/age", version: "variety" }); await p.onload();
+  await new Promise((r) => setTimeout(r, 50)); if (process.env.NOSIG) p.ext.signature = false; /* 2.6 : mesurer avec et sans la signature */
   const an = (f) => p.core.analyse(p.core.extract(f.content), { seed: p.core.seed(f.path) });
   const sceneOf = (a, f) => { const S = G.sceneOf(a, p.core.seed(f.path), p.core.blocks); if (S) Object.assign(S, SKY.parseSky(p.core.extract(f.content))); return S; };
   const mkFile = (name, lines) => { const pth = `Var/${name}.md`, f = new TFile(pth, "```age\n" + lines.join("\n") + "\n```\n"); files.set(pth, f); return f; };

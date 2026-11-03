@@ -40,7 +40,7 @@ const DRAW_SLOTS = [
       slot("lava", 5),
       slot(null, 23),
     ],
-    answeredBy: ["island", "beach", "lagoon", "sea_arch", "pier"] /* ESSAI 2.6 : une forme de mer écrite dit déjà le sol */,
+    answeredBy: ["island", "beach", "lagoon", "sea_arch", "pier", "red_water", "milky_water", "black_water"] /* ESSAI 2.6 : une forme de mer écrite dit déjà le sol */,
   },
   {
     name: "minerals",
@@ -117,9 +117,12 @@ const SIGNATURE_SLOT = {
     slot("cliff", 8, "solid"),
     slot("geysers", 10, "dry"),
     slot("gas_giant", 9),
+    slot("red_water", 5, "water"),
+    slot("milky_water", 5, "water"),
+    slot("black_water", 4, "water"),
     slot(null, 4),
   ],
-  answeredBy: ["island", "lagoon", "sea_arch", "waterfall", "cliff", "beach", "geysers", "gas_giant"],
+  answeredBy: ["island", "lagoon", "sea_arch", "waterfall", "cliff", "beach", "geysers", "gas_giant", "red_water", "milky_water", "black_water"],
 };
 
 const PULL_STRENGTH = { none: 0, gentle: 3, moderate: 6, strong: 12 };
