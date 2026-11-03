@@ -62,6 +62,15 @@ let fail = 0; const REAL = true; const ok = (c, msg) => { if (!REAL && /analyseu
   const p = new Plug(app, { dir: "plugins/age", version: "1.4.0" });
   await p.onload();
   ok(p.ext && p.ext.panelFx === "classic", "réglages par défaut fusionnés");
+  { /* ESSAI 2.6 : la signature. Les Âges d'avant (vus au premier passage) n'en tirent pas ; un Âge nouveau en tire une, en dernière case, sans bouger les autres */
+    for (let k = 0; k < 40 && !p._sigOld; k++) await new Promise((r) => setTimeout(r, 5));
+    ok(p._sigOld && p._sigOld.has(p.core.seed("Ages/Alpha.md")), "signature : l'Âge présent au premier passage est rangé parmi les anciens");
+    const sig = (seed) => p.core.analyse("single_sun", { seed }).resolved.drawn, old = sig(p.core.seed("Ages/Alpha.md"));
+    ok(!old.some((d) => d.slot === "signature"), "signature : un Âge ancien n'en tire pas");
+    let got = 0, same = 0; for (let i = 0; i < 60; i++) { const s = "neuf" + i, a = sig(s); if (a.some((d) => d.slot === "signature")) got++; p.ext.signature = false; const b = sig(s); p.ext.signature = true; if (JSON.stringify(b) === JSON.stringify(a.filter((d) => d.slot !== "signature"))) same++; }
+    ok(got > 45, "signature : un Âge nouveau en tire une le plus souvent (" + got + "/60)"); ok(same === 60, "signature : les autres cases ne bougent pas");
+    p.ext.signature = false; /* la suite des tests parle du tirage d'avant */
+  }
   ok(p.ext.instrumentsMode === "easy", "instruments : mode facile par défaut");
   { /* les deux réserves (section 19.2) : le bac à sable et chaque Relto histoire ont leur récolte, leur machine, leur caverne */
     const SK = "histoire#7";

@@ -84,6 +84,7 @@ function resolveAge(source, options = {}) {
         pull,
         amount,
         closed: hooks.closedSlots(options),
+        signature: hooks.signature(options),
       });
     for (let pick of picks) {
       let pickEntry = skyEntryById.get(pick.id);

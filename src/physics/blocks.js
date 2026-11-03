@@ -138,6 +138,9 @@ def("mountains", { needs: [["plateTectonics", "light"]] });
 def(["hills", "canyon"], { needs: [["erosion", "light"]] });
 def(["river", "delta"], { set: { water: 1 }, needs: [["liquidWater", "medium"], ["rainCycle", "light"]] });
 def("delta", { needs: [["erosion", "light"]] });
+def("island", { set: { water: 1 }, needs: [["liquidWater", "medium"]] }); /* ESSAI 2.6 */
+def(["beach", "lagoon", "sea_arch"], { set: { water: 1 }, needs: [["liquidWater", "medium"]] });
+def("waterfall", { set: { water: 1 }, needs: [["liquidWater", "medium"], ["rainCycle", "light"]] });
 def("lake", { set: { water: 1 }, needs: [["liquidWater", "medium"]] });
 def("marsh", { set: { water: 1 }, needs: [["liquidWater", "medium"], ["moistAir", "light"]] });
 def("spiders", { needs: [["prey", "light"], ["animalAir", "light"], ["temperateLife", "light"]] });
