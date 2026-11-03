@@ -116,9 +116,10 @@ const SIGNATURE_SLOT = {
     slot("waterfall", 9, "solid"),
     slot("cliff", 8, "solid"),
     slot("geysers", 10, "dry"),
+    slot("gas_giant", 9),
     slot(null, 4),
   ],
-  answeredBy: ["island", "lagoon", "sea_arch", "waterfall", "cliff", "beach", "geysers"],
+  answeredBy: ["island", "lagoon", "sea_arch", "waterfall", "cliff", "beach", "geysers", "gas_giant"],
 };
 
 const PULL_STRENGTH = { none: 0, gentle: 3, moderate: 6, strong: 12 };
