@@ -6,6 +6,33 @@
  */
 const NEWS = [
   {
+    v: "2.6.0",
+    fr: {
+      title: "Chaque monde le sien",
+      letter: "Les éclaireurs de la Guilde se plaignaient de revenir de trop de mondes semblables : une plaine, un peu de vent, une fissure. L'encre a appris de nouveaux mots. Désormais, chaque Âge qu'on écrit garde quelque chose qui n'est qu'à lui.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**Les formes de l'eau et de la terre** : une île au large, une falaise, une cascade, une plage, un lagon, une arche marine ; et l'eau rouge, laiteuse ou noire.",
+        "**Le ciel et le bâti** : une géante gazeuse, une nébuleuse ; une tour, un phare, un ponton, un escalier.",
+        "**La signature des nouveaux Âges** : chaque Âge écrit après la 2.6 tire une chose rare à lui, et un tirage plus varié. Les Âges d'avant ne changent pas.",
+        "**Le Relto vit au rythme de l'année** : neige en hiver, fleurs au printemps, feuilles qui tombent en automne, et un temps qui change toutes les demi-heures.",
+        "**Des geysers qui jaillissent** et des ponts de toutes sortes : suspendus, de bois, de cordes, en aqueduc.",
+      ],
+    },
+    en: {
+      title: "Every world its own",
+      letter: "The Guild's scouts complained of coming back from too many worlds alike: a plain, a little wind, a fissure. The ink has learned new words. From now on, every Age you write keeps something that is its own alone.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**The shapes of water and land**: an island offshore, a cliff, a waterfall, a beach, a lagoon, a sea arch; and red, milky or black water.",
+        "**The sky and the built**: a gas giant, a nebula; a tower, a lighthouse, a pier, stairs.",
+        "**The signature of new Ages**: every Age written after 2.6 draws one rare thing of its own, and a richer draw. Ages from before do not change.",
+        "**The Relto lives with the year**: snow in winter, blossoms in spring, leaves falling in autumn, and weather that changes every half hour.",
+        "**Geysers that erupt** and bridges of every kind: suspended, wooden, rope, aqueduct.",
+      ],
+    },
+  },
+  {
     v: "2.5.2",
     fr: {
       title: "Le feu se tait",
