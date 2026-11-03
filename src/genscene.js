@@ -89,7 +89,7 @@ function sceneOf(a, name = "", blocks = null) {
     trees: r("barren_soil") ? 0 : r("grove") || wd === "jungle" ? 5 : r("great_tree", "ironwood", "charred_grove", "crystal_tree") ? 3 : 0, burnt: r("charred_grove", "wildfire", "scorched_surface"), fire: r("wildfire"),
     moths: r("moth", "lantern_moths", "whispering_moths"), glow: r("glowvine", "wrong_glowvine", "glow_algae") || wd === "jungle" || wd === "cavern", eyes: r("hunter", "stalking_pack"), algae: r("glow_algae"),
     ruins, lampLit: r("lit_lamp"), tabletAwake: r("speaking_tablet"),
-    world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), scarLevel, blight: ids.has("blight"), belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), comet: r("comet"), remnants: ["pulsar", "neutron_star", "black_hole"].filter((id) => ids.has(id)), sunHues: SKY.sunColors([...ids]), blackDisc: [...ids].find((i) => SKY.HUES[i]) === "black_sun", blackSun: [...ids].find((i) => SKY.HUES[i]) === "black_sun" && !r("twin_suns"),
+    world: wd, riches: WT.RICH_IDS.filter((id) => ids.has(id)), scars: WT.SCAR_IDS.filter((id) => ids.has(id)), scarLevel, blight: ids.has("blight"), belt: r("asteroid_field") ? "field" : r("asteroid_belt") ? "belt" : null, rings: r("planet_rings"), giant: r("gas_giant"), nebulaW: r("nebula"), comet: r("comet"), remnants: ["pulsar", "neutron_star", "black_hole"].filter((id) => ids.has(id)), sunHues: SKY.sunColors([...ids]), blackDisc: [...ids].find((i) => SKY.HUES[i]) === "black_sun", blackSun: [...ids].find((i) => SKY.HUES[i]) === "black_sun" && !r("twin_suns"),
     extras: [...ids].filter((id) => !KNOWN.has(id) && !id.startsWith("?")).sort().slice(0, 8).map((id) => {
       const b = blocks && typeof blocks.get === "function" ? blocks.get(id) : null, ax = b && typeof b.axis === "string" ? b.axis.toLowerCase() : "";
       return { id, axis: AXES.find((x) => ax.startsWith(x.slice(0, 5))) || AXES[fnv(id) % 5], words: b && Array.isArray(b.descriptors) && b.descriptors.length ? b.descriptors.map(String) : id.split("_") };
@@ -312,6 +312,8 @@ function build(S, W, H) {
   const belt = S.belt === "belt" ? { rocks: Array.from({ length: 260 }, () => ({ u: q2(), off: (q2() + q2() - 1), r: 0.8 + q2() * q2() * 3.2, ph: q2() * TAU, k: 0.8 + q2() * 0.4 })), lift: 0.18 + 0.1 * q2(), tilt: (q2() - 0.5) * 0.25 } : null;
   const field = S.belt === "field" ? { rocks: Array.from({ length: 7 }, () => ({ u: q2(), y: q2(), r: 0.025 + q2() * 0.04, rot: (q2() - 0.5) * 0.5, ph: q2() * TAU, pts: Array.from({ length: 8 }, () => 0.65 + q2() * 0.55) })) } : null;
   const ringsP = S.rings ? { x: W * (0.2 + 0.55 * q2()), y: H * (0.16 + 0.14 * q2()), R: H * (0.09 + 0.06 * q2()), tilt: (q2() - 0.5) * 0.7, hue: q2() * 60 + 20, sat: 0.2 + q2() * 0.3 } : null;
+  const giantP = S.giant ? (() => { const qg = rng((S.seed ^ 0x6a5f1) >>> 0), PAL = [[[214, 180, 132], [176, 112, 72], [236, 218, 186]], [[120, 160, 210], [70, 100, 170], [190, 210, 236]], [[220, 206, 160], [190, 160, 110], [244, 236, 206]], [[180, 140, 200], [120, 80, 150], [224, 200, 230]], [[200, 120, 100], [140, 70, 60], [236, 190, 170]]];
+    const pal = PAL[Math.floor(qg() * PAL.length)], R = H * (0.42 + 0.22 * qg()); return { x: W * (0.22 + 0.56 * qg()), y: hz - R * (0.25 + 0.4 * qg()), R, tilt: (qg() - 0.5) * 0.35, pal, bands: Array.from({ length: 9 + Math.floor(qg() * 6) }, () => ({ y: qg() * 2 - 1, w: 0.04 + 0.1 * qg(), c: Math.floor(qg() * 3), a: 0.35 + 0.4 * qg() })), spot: qg() < 0.55 ? { u: (qg() - 0.5) * 0.9, v: (qg() - 0.5) * 0.8, r: 0.07 + 0.06 * qg() } : null, lit: qg() < 0.5 ? -1 : 1 }; })() : null; /* 2.6 : la géante gazeuse, d'un tirage à part */
   const cometP = S.comet ? { ph: q2(), y0: 0.12 + 0.25 * q2(), y1: 0.25 + 0.3 * q2(), dir: q2() < 0.5 ? 1 : -1 } : null;
   const q8 = rng((S.seed ^ 0x9e3779b1) >>> 0); // perturbateurs écrits (étape 3) : graine propre, rien d'autre ne bouge dans l'image
   const remn = (S.remnants || []).map((kind, i) => ({ kind, x: W * (0.12 + 0.76 * ((i + q8()) / Math.max(1, S.remnants.length))), y: H * (0.08 + 0.22 * q8()), ph: q8(), spin: 0.5 + q8() * 0.5, tilt: q8() * Math.PI, R: H * (0.025 + 0.015 * q8()) }));
@@ -340,7 +342,7 @@ function build(S, W, H) {
   const cave = S.world === "cavern" ? buildCave(S, W, H, hz) : null; // la voûte : graine propre, les autres mondes ne bougent pas
   const qf = rng((S.seed ^ 0xa16ae) >>> 0), fedGlow = S.fed ? Array.from({ length: 16 }, () => ({ x: W * qf(), y: hz + (H - hz) * (0.08 + 0.8 * qf()), r: H * (0.02 + 0.04 * qf()), p: qf() })) : null; /* graine propre */
   const won = WON.buildWonders(S, W, H, hz); /* les merveilles : graine propre, un Âge sans merveille ne bouge pas */
-  return { craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
+  return { craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, giantP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
 }
 
 /**
@@ -454,7 +456,7 @@ function buildNight(S, W, H, hz) {
     pts.sort((a, b) => a.x - b.x); // un tracé qui se lit de gauche à droite
     return { pts, lines: q() < 0.45, tint: q() < 0.3 ? [255, 210, 170] : q() < 0.5 ? [190, 210, 255] : [240, 240, 255] };
   });
-  const dark0 = S.suns === 0 && S.world !== "cavern", nebula = q() < (dark0 ? 0.85 : 0.35) ? { x: W * (0.15 + 0.7 * q()), y: hz * (0.15 + 0.4 * q()), R: H * (0.14 + 0.16 * q()), hue: [300, 200, 20, 160, 260][Math.floor(q() * 5)], blobs: Array.from({ length: 7 }, () => ({ dx: (q() - 0.5) * 1.6, dy: (q() - 0.5) * 0.9, r: 0.35 + q() * 0.6 })) } : null;
+  const dark0 = S.suns === 0 && S.world !== "cavern", nebula = q() < (dark0 || S.nebulaW ? 0.85 : 0.35) || S.nebulaW ? { x: W * (0.15 + 0.7 * q()), y: hz * (0.15 + 0.4 * q()), R: H * (0.14 + 0.16 * q()), hue: [300, 200, 20, 160, 260][Math.floor(q() * 5)], blobs: Array.from({ length: 7 }, () => ({ dx: (q() - 0.5) * 1.6, dy: (q() - 0.5) * 0.9, r: 0.35 + q() * 0.6 })) } : null;
   const band = q() < (dark0 ? 0.8 : 0.4) ? { a: (q() - 0.5) * 1.2, y: hz * (0.25 + 0.3 * q()), w: H * (0.05 + 0.05 * q()), pts: Array.from({ length: 160 }, () => ({ u: q(), v: (q() + q() + q() - 1.5) / 1.5, b: q() })) } : null;
   const n = S.moons != null ? clamp(Math.round(S.moons), 0, 5) : S.moon ? 1 : 0;
   const moons = Array.from({ length: n }, (_, i) => ({ r: H * (i === 0 ? 0.045 * (S.moonScale || 1) : 0.015 + 0.03 * q()), ph: i === 0 ? 0.28 : q() * 0.8 - 0.4, off: i === 0 ? 0 : q(), sp: i === 0 ? 1 : 0.6 + q() * 1.6, tint: i === 0 ? [207, 214, 226] : [[220, 200, 180], [190, 210, 230], [230, 190, 170], [210, 215, 200]][Math.floor(q() * 4)], fx: 0.15 + 0.7 * q(), fy: 0.15 + 0.3 * q() }));
@@ -2319,9 +2321,37 @@ function groundWeather(g, m, t, night, L) {
 
 // ---- corps célestes : ceinture, champ d'astéroïdes, planète à anneaux, comète (mouvements lents, horloge continue en secondes) ----
 function arcY(m, u, lift) { return m.hz * 0.92 - Math.sin(Math.PI * u) * m.H * (0.2 + lift); }
+/** 2.6 : la géante gazeuse. Un disque immense posé derrière l'horizon, en bandes qui glissent, éclairé d'un côté, un liseré d'atmosphère ;
+ *  parfois une grande tache. Si l'Âge écrit aussi `planet_rings`, l'anneau est le sien. Le jour, l'air la pâlit sans l'effacer. */
+function giantPlanet(g, m, day, hzc) {
+  const { S, W, hz } = m, p = m.giantP, T = Date.now() / 1000, haze = 0.15 + 0.4 * day, k = (c) => mixc(c, hzc, haze);
+  const ring = (a0, a1, w, al) => { g.strokeStyle = css(k(mixc(p.pal[2], [255, 255, 255], 0.2)), al); g.lineWidth = w; g.beginPath(); g.ellipse(p.x, p.y, p.R * 1.9, p.R * 0.36, p.tilt, a0, a1); g.stroke(); };
+  if (S.rings) { ring(Math.PI, TAU, p.R * 0.16, 0.45); ring(Math.PI, TAU, p.R * 0.04, 0.6); }
+  g.save(); g.beginPath(); g.rect(0, 0, W, hz + 1); g.clip(); g.beginPath(); g.arc(p.x, p.y, p.R, 0, TAU); g.clip();
+  g.fillStyle = css(k(p.pal[0])); g.fillRect(p.x - p.R, p.y - p.R, p.R * 2, p.R * 2);
+  g.save(); g.translate(p.x, p.y); g.rotate(p.tilt);
+  for (const b of p.bands) { const y = b.y * p.R, w = b.w * p.R, drift = Math.sin(T * 0.01 + b.y * 4) * p.R * 0.02; g.fillStyle = css(k(p.pal[b.c]), b.a); g.beginPath(); g.moveTo(-p.R * 1.1, y - w / 2); for (let x = -p.R * 1.1; x <= p.R * 1.1; x += p.R * 0.1) g.lineTo(x, y - w / 2 + Math.sin(x / p.R * 6 + b.y * 9 + T * 0.02) * w * 0.25 + drift * 0.1); g.lineTo(p.R * 1.1, y + w / 2); g.lineTo(-p.R * 1.1, y + w / 2); g.closePath(); g.fill(); }
+  if (p.spot) { g.fillStyle = css(k(mixc(p.pal[1], [160, 60, 40], 0.4)), 0.7); g.beginPath(); g.ellipse(p.spot.u * p.R + Math.sin(T * 0.005) * p.R * 0.05, p.spot.v * p.R, p.spot.r * p.R * 1.6, p.spot.r * p.R, 0, 0, TAU); g.fill(); }
+  g.restore();
+  const sh = g.createLinearGradient(p.x - p.lit * p.R, 0, p.x + p.lit * p.R, 0); sh.addColorStop(0, "rgba(0,0,0,0)"); sh.addColorStop(0.55, "rgba(0,0,0,0.15)"); sh.addColorStop(1, css([4, 4, 12], 0.75)); g.fillStyle = sh; g.fillRect(p.x - p.R, p.y - p.R, p.R * 2, p.R * 2); /* le terminateur */
+  g.restore();
+  g.save(); g.beginPath(); g.rect(0, 0, W, hz + 1); g.clip();
+  g.strokeStyle = css(k(mixc(p.pal[2], [255, 255, 255], 0.4)), 0.25 + 0.15 * (1 - day)); g.lineWidth = Math.max(1.5, p.R * 0.02); g.beginPath(); g.arc(p.x, p.y, p.R, 0, TAU); g.stroke(); /* le liseré d'atmosphère */
+  if (S.rings) { ring(0, Math.PI, p.R * 0.16, 0.5); ring(0, Math.PI, p.R * 0.04, 0.65); }
+  g.restore();
+}
+/** 2.6 : la nébuleuse écrite : plus grande que celle que la nuit tire, elle se voit dès le crépuscule, et pâlement de jour. */
+function writtenNebula(g, m, day) {
+  const nb = m.night.nebula, a = 0.05 + 0.1 * (1 - day); if (day > 0.85) return;
+  g.save(); g.globalCompositeOperation = "lighter";
+  for (const b of nb.blobs) { const x = nb.x + b.dx * nb.R * 1.5, y = nb.y + b.dy * nb.R * 1.3, R = nb.R * b.r * 1.7, gr = g.createRadialGradient(x, y, 0, x, y, R); gr.addColorStop(0, css(hsl(nb.hue + b.dx * 70, 0.65, 0.6), a)); gr.addColorStop(1, css(hsl(nb.hue, 0.6, 0.5), 0)); g.fillStyle = gr; g.fillRect(x - R, y - R, R * 2, R * 2); }
+  g.restore();
+}
 function skyBodies(g, m, cs, day, hzc, sn) {
   const { S, W, H, hz } = m, lum = 0.55 + 0.45 * (1 - day * 0.4);
-  if (m.ringsP) { // planète à anneaux : moitié arrière de l'anneau, disque ombré, moitié avant
+  if (m.giantP) giantPlanet(g, m, day, hzc); /* 2.6 */
+  if (m.S.nebulaW && m.night && m.night.nebula) writtenNebula(g, m, day); /* 2.6 : la nébuleuse écrite se voit au crépuscule, et un peu de jour */
+  if (m.ringsP && !m.giantP) { // planète à anneaux : moitié arrière de l'anneau, disque ombré, moitié avant
     const p = m.ringsP, col = hsl(p.hue, p.sat, 0.62), ring = (a0, a1, w, al) => { g.strokeStyle = css(mixc(col, [255, 255, 255], 0.25), al); g.lineWidth = w; g.beginPath(); g.ellipse(p.x, p.y, p.R * 2.1, p.R * 0.5, p.tilt, a0, a1); g.stroke(); };
     ring(Math.PI, TAU, p.R * 0.22, 0.5); ring(Math.PI, TAU, p.R * 0.06, 0.7);
     const sh = g.createRadialGradient(p.x - p.R * 0.4, p.y - p.R * 0.4, p.R * 0.1, p.x, p.y, p.R * 1.1); sh.addColorStop(0, css(mixc(col, [255, 255, 255], 0.3))); sh.addColorStop(1, css(mixc(col, [10, 8, 20], 0.7))); g.fillStyle = sh; g.beginPath(); g.arc(p.x, p.y, p.R, 0, TAU); g.fill();

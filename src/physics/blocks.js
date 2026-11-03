@@ -33,7 +33,7 @@ def("frozen_cycle", { set: { locked: true }, needs: [["lockPlausible"]] });
 def("erratic_cycle", { set: { chaoticAxis: true }, needs: [["axisChaos"]] });
 def("auroras", { needs: [["magneticField"]] });
 def("permanent_veil", { set: { veil: 0.3, albedoAdd: 0.15 } });
-def("planet_rings", { set: { giantHost: true } }); // le ciel montre une géante annelée toute proche : ce monde est l'une de ses lunes
+def(["planet_rings", "gas_giant"], { set: { giantHost: true } }); // le ciel montre une géante annelée toute proche : ce monde est l'une de ses lunes
 def("close_binary_orbit", { set: { binary: "S" } });
 def("wide_binary_orbit", { set: { binary: "P" } });
 for (const [hue, range] of Object.entries(HUE_MASS)) def(hue, { set: { hue, starMassRange: range } });
