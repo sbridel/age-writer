@@ -28,6 +28,7 @@ const hooks = {
   dosageNote: () => "", // la ligne du panneau sur ce que le dosage a changé (vide : rien à dire)
   depthNote: () => "", // (texte du bloc, graine) → la phrase du panneau sur la profondeur de l'équilibre (test par retrait ; vide : rien à dire)
   seedName: null, // chemin d'une note d'Âge → sa graine (`age_seed`), ou null : le nom de la note
+  signature: () => false, // ESSAI 2.6 : (options) → vrai si l'Âge tire une signature (une forme rare, la sienne) ; faux : le tirage d'avant, inchangé
   closedSlots: () => null, // (options) → les noms des cases du tirage qui ne se tirent pas (src/carry.js : sous une terre renversée, le ciel) ; null : toutes
   expand: () => null, // (texte, options) → { text, info } : le texte que lit le moteur quand des lignes `carry:` sont comprises (src/carry.js) ; null : inchangé
   carryNote: () => "", // la ligne du panneau sur ce qu'un Âge porte (vide : rien)

@@ -67,7 +67,7 @@ async function mountGlass(plugin, host, file) {
   const box = host.createDiv({ cls: "age-rbook__glass" });
   const canvas = box.createEl("canvas", { cls: "age-rbook__canvas" });
   const reduced = reducedMotion();
-  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, t: plugin.t, instrumentsMode: () => plugin.ext.instrumentsMode || "easy" });
+  const renderer = new ReltoRenderer(canvas, plugin.dni, { reducedMotion: reduced, seasons: () => plugin.ext.reltoSeasons !== false, hemisphere: () => plugin.ext.reltoHemisphere, t: plugin.t, instrumentsMode: () => plugin.ext.instrumentsMode || "easy" });
   renderer.setScene(scene); renderer.setHour(null);
   if (reduced) renderer.draw(0); else renderer.start();
   return { renderer, scene, box };

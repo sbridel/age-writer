@@ -23,6 +23,13 @@ const SKY_BLOCKS = [
   block("delta", "A river delta", 0.03, [["desert_world", "medium"], ["lava_world", "light"], ["frozen_world", "light"]]),
   block("lake", "A lake", 0.02, [["desert_world", "medium"], ["lava_world", "light"]]),
   block("marsh", "A marsh", 0.02, [["desert_world", "medium"], ["lava_world", "medium"], ["frozen_world", "light"]]),
+  /* ESSAI 2.6 : les formes de l'eau et de la terre (ce que Myst montre : une île, une falaise, une cascade) */
+  block("island", "An island offshore", 0.02, [["desert_world", "strong"], ["lava_world", "medium"], ["frozen_world", "light"]]),
+  block("cliff", "A cliff", 0.02, [["plains", "medium"]]),
+  block("beach", "A beach", 0.02, [["frozen_world", "medium"], ["lava_world", "medium"]]),
+  block("lagoon", "A lagoon", 0.02, [["desert_world", "strong"], ["frozen_world", "medium"], ["lava_world", "medium"]]),
+  block("sea_arch", "A sea arch", 0.02, [["desert_world", "strong"], ["lava_world", "light"]]),
+  block("waterfall", "A waterfall", 0.02, [["desert_world", "medium"], ["lava_world", "medium"], ["plains", "light"]]),
 ];
 
 const IDS = SKY_BLOCKS.map((b) => b.id);
@@ -35,6 +42,8 @@ const RELIEF = {
   canyon: { ridges: 2, amp: 1.2, ridged: true },
 };
 const WATER_IDS = ["river", "delta", "lake", "marsh"];
+/** ESSAI 2.6 : les formes de l'eau et de la terre ; celles de la mer allument la mer. */
+const FORM_IDS = ["island", "cliff", "waterfall", "beach", "lagoon", "sea_arch"], SEA_FORMS = ["island", "waterfall", "beach", "lagoon", "sea_arch"], SEA_GROUND = ["island", "beach", "lagoon", "sea_arch"];
 
 const SKY_PROSE = {
   plains: ["the land lies wide and low, and the horizon is all there is to look at", "a plain runs flat to the edge of sight, and the wind has nothing to stop it", "everything here is open: a low, long country under a very large sky"],
@@ -44,7 +53,13 @@ const SKY_PROSE = {
   river: ["a river winds through the land, clear and in no hurry", "water finds its long way downhill, and a river follows it", "a slow river keeps a thread of light across the country"],
   delta: ["the river splits into a hundred channels before it reaches the sea", "silt fans out in braided streams, and the land is still being made", "the water spreads into a wide, patient delta of mud and green"],
   lake: ["a lake lies still in its hollow, holding the whole sky", "a deep, quiet lake keeps its own counsel", "the water gathers in a bowl of land and does not move on"],
+  island: ["an island stands offshore, its cliffs pale in the distance", "out on the water, an island holds its own small country of rock and green", "a lone island waits across the sea, near enough to want, too far to swim"],
+  cliff: ["a cliff rises sheer from the ground, its layers laid bare to the weather", "a wall of rock stands over the land, and birds keep to its ledges", "the land breaks off in a cliff, tall and pale, and the wind climbs it"],
+  waterfall: ["a waterfall drops from the cliff and the air below it is all mist", "water spills over a lip of stone and falls a long way, loud and white", "a falling river hangs from the rock, and its roar fills the valley"],
+  beach: ["a pale beach curves along the water, and the waves keep rewriting its edge", "sand runs down to the sea in a long bright strip", "the shore is a beach of fine sand, warm underfoot, wet where the sea reaches"],
+  lagoon: ["a reef holds the sea back, and inside it the water lies clear and green", "a lagoon sleeps behind a ring of breaking surf", "the water inside the reef is shallow and bright, and the open sea booms beyond it"],
+  sea_arch: ["the sea has bored an arch through a stack of rock, and the waves pass under it", "a great arch of stone stands in the water, a door with no house", "offshore, a rock arch frames a piece of sky and a piece of sea"],
   marsh: ["the ground is half water, and every step is a negotiation", "a marsh breathes mist and green, neither land nor lake", "reeds and standing water blur the line between earth and pool"],
 };
 
-module.exports = { SKY_BLOCKS, SKY_PROSE, IDS, RELIEF, WATER_IDS };
+module.exports = { SKY_BLOCKS, SKY_PROSE, IDS, RELIEF, WATER_IDS, FORM_IDS, SEA_FORMS, SEA_GROUND };

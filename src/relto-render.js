@@ -5,6 +5,7 @@
  */
 const { rng, clamp, lerp, frac, mix, rgba, hexa, fnv } = require("./util");
 const { skyAt, hourFor, placePlants, layoutIsland } = require("./relto-model");
+const RSEA = require("./relto-season"); /* ESSAI 2.6 : saisons et météo du Relto */
 const SC = require("./relto-scenery");
 const GL = require("./relto-global");
 const RM = require("./relto-rooms");
@@ -194,6 +195,15 @@ class ReltoRenderer {
 
   setHour(h) { this.hourOverride = h; }
   hour() { return this.hourOverride != null ? this.hourOverride : hourFor(this.scene.skyCycle); }
+  /** ESSAI 2.6 : la saison et le temps qu'il fait au Relto (null : réglage coupé, ou le Château, qui a sa propre nuit). */
+  setSeasonNow(ms) { this.seasonNow = ms; }
+  season() {
+    const on = typeof this.opts.seasons === "function" ? this.opts.seasons() : this.opts.seasons === true; /* coupé par défaut : les tests et les images de référence ne dépendent pas de la date */
+    if (!on || this.castleOn()) return null;
+    const now = this.seasonNow != null ? this.seasonNow : Date.now(), key = Math.floor(now / 60000);
+    if (!this._se || this._seKey !== key) { this._se = RSEA.reltoSeason(this.scene.seed, now, { south: (typeof this.opts.hemisphere === "function" ? this.opts.hemisphere() : this.opts.hemisphere) === "south" }); this._seKey = key; }
+    return this._se;
+  }
 
   // ---- boucle --------------------------------------------------------------------------
   start() {
@@ -230,6 +240,8 @@ class ReltoRenderer {
     ctx.clearRect(0, 0, W, H);
     ctx.save(); ctx.translate(CAM_X, CAM_OY); ctx.scale(CAM, CAM); ctx.translate(-CAM_X, -CAM_Y);
     this.drawSky(ctx, sky, t, has("aurora"));
+    const SE = this.SE = this.season(), WX = SE ? SE.wx : null;
+    if (WX && WX.grey > 0.01) { ctx.fillStyle = rgba(118, 124, 136, 0.42 * WX.grey * (0.4 + 0.6 * sky.ambient)); ctx.fillRect(0, 0, W, H); } /* ESSAI 2.6 : le ciel couvert */
     const mo = has("moons"); if (mo) SC.moons(ctx, sky);
     const cm = has("comet"); if (cm) SC.comet(ctx, this, cm.density, sky, t); // devant les étoiles, derrière les nuages
     this.drawClouds(ctx, 0, sky, t);
@@ -264,9 +276,11 @@ class ReltoRenderer {
     const ms = has("mist"); if (ms) this.drawMist(ctx, ms.density, sky, t); else if (sky.red > 0.05) this.drawMist(ctx, 0.5 * sky.red, sky, t); // le Château : la nuit, une brume rase sur la cour
     this.drawClouds(ctx, 1, sky, t);
     this.drawClouds(ctx, 2, sky, t);
-    const sn = has("snow"); if (sn) this.drawSnow(ctx, sn.density, t);
-    const rn = has("rain"); if (rn) SC.rain(ctx, rn.density, sky, t, false);
-    const st = has("storm"); if (st) SC.storm(ctx, st.density, sky, t);
+    if (SE && (SE.leaves > 0.05 || SE.petals > 0.05)) this.drawFalling(ctx, SE, sky, t); /* ESSAI 2.6 : les feuilles d'automne, les pétales du printemps */
+    if (WX && WX.fog > 0.05) this.drawFog(ctx, WX.fog, sky, t);
+    const sn = has("snow"), snD = Math.max(sn ? sn.density : 0, WX ? WX.snow : 0); if (snD > 0.02) this.drawSnow(ctx, snD, t);
+    const rn = has("rain"), st = has("storm"), rnD = Math.max(rn ? rn.density : 0, WX ? WX.rain : 0), stD = Math.max(st ? st.density : 0, WX ? WX.storm : 0);
+    if (stD > 0.02) SC.storm(ctx, stD, sky, t); else if (rnD > 0.02) SC.rain(ctx, rnD, sky, t, false); /* les pages écrites s'ajoutent à la météo du jour */
     ctx.restore();
     this.drawGrade(ctx, sky);
     ctx.save(); ctx.translate(CAM_X, CAM_OY); ctx.scale(CAM, CAM); ctx.translate(-CAM_X, -CAM_Y);
@@ -321,11 +335,12 @@ class ReltoRenderer {
     const speed = [3, 6, 11][L], list = this.geo.clouds[L];
     for (const c of list) {
       const x = ((c.x + t * speed) % (W + 120)) - 60;
-      g.globalAlpha = c.a * [0.55, 0.8, 0.95][L];
+      g.globalAlpha = Math.min(1, c.a * [0.55, 0.8, 0.95][L] * (1 + 0.8 * ((this.SE && this.SE.wx.clouds) || 0)));
       g.drawImage(this.sprite, x - c.s, c.y - c.s * 0.45, c.s * 2, c.s * 0.9);
     }
     g.globalAlpha = 1; g.globalCompositeOperation = "source-atop";
     let col = this.cloudColor(sky);
+    if (this.SE && this.SE.wx.grey > 0.01) col = mix(col, "#7c828c", 0.6 * this.SE.wx.grey); /* ESSAI 2.6 : nuages gris sous un ciel couvert */
     if (sur === "fog_sea") col = mix(col, "#8a929c", 0.55);
     if (sur === "lava_sea") col = mix("#3a1410", "#ff6a2a", 0.35 + 0.2 * Math.sin(t * 0.7 + L));
     g.fillStyle = col; g.fillRect(0, 0, W, 140);
@@ -383,6 +398,11 @@ class ReltoRenderer {
     }
     ctx.fillStyle = shade(deep(T.tuft));
     for (const [x, h] of g.tufts) { ctx.beginPath(); ctx.moveTo(x - 2, GY + 1); ctx.lineTo(x, GY - h); ctx.lineTo(x + 2, GY + 1); ctx.fill(); }
+    const SN = this.SE ? this.SE.snowCover : 0;
+    if (SN > 0.02) { /* ESSAI 2.6 : la neige tient sur l'île, en couche et en congères ; elle bleuit la nuit */
+      const sc0 = mix("#5a6478", "#eef2f6", amb); ctx.fillStyle = hexa(sc0.length === 7 ? sc0 : "#eef2f6", 0.92 * SN);
+      ctx.beginPath(); ctx.moveTo(128, GY - 0.5); ctx.lineTo(472, GY - 0.5); ctx.lineTo(466, GY + 5); ctx.quadraticCurveTo(300, GY + 10 * SN, 134, GY + 5); ctx.closePath(); ctx.fill();
+      for (const [x, h] of g.tufts) { ctx.beginPath(); ctx.moveTo(x - 2.4, GY + 0.5); ctx.lineTo(x, GY - h * (1 - 0.7 * SN)); ctx.lineTo(x + 2.4, GY + 0.5); ctx.fill(); } }
     if (this.castleOn()) { const L = CO.litStone(sky); CO.parapet(ctx, (h) => shade(L(h))); } // le Château : l'enceinte, un parapet à arcatures sur le bord
   }
 
@@ -423,14 +443,19 @@ class ReltoRenderer {
       if (p.row !== row) continue;
       const y = GY + (row ? 6 : 2), sw = Math.sin(t * 0.9 + p.sw) * (1.2 + p.h / 20), h = p.h;
       const col = castleT ? (c) => mix("#05060c", mix(c, "#10201a", 0.35), amb) : (c) => mix("#05060c", c, amb); // le Château : des arbres plus sombres, comme la cour
+      const SE = this.SE, AUT = ["#c8742c", "#d9a13a", "#b5482a"], leaf = (c) => (SE && SE.tint > 0.01 ? col(mix(c, AUT[Math.floor(p.x) % 3], 0.85 * SE.tint * (1 - SE.bare))) : col(c)); /* ESSAI 2.6 : les feuillus roussissent */
+      const snowy = SE ? SE.snowCover : 0, bare = SE ? SE.bare : 0, bloom = SE ? SE.blossom : 0;
       if (p.kind === "conifer") {
         ctx.fillStyle = col("#3a2a1c"); ctx.fillRect(p.x - 1, y - h * 0.22, 2, h * 0.22);
         ctx.fillStyle = col(row ? "#1f4a30" : "#1a3a28");
         for (let i = 0; i < 3; i++) { const w = h * (0.42 - i * 0.1), yy = y - h * (0.18 + i * 0.28); ctx.beginPath(); ctx.moveTo(p.x - w + sw * i * 0.3, yy); ctx.lineTo(p.x + sw * (i + 1) * 0.5, yy - h * 0.38); ctx.lineTo(p.x + w + sw * i * 0.3, yy); ctx.closePath(); ctx.fill(); }
+        if (snowy > 0.05) { ctx.fillStyle = col("#eef2f6"); ctx.globalAlpha = Math.min(1, snowy * 1.3); for (let i = 0; i < 3; i++) { const w = h * (0.42 - i * 0.1), yy = y - h * (0.18 + i * 0.28), tx = p.x + sw * (i + 1) * 0.5, ty = yy - h * 0.38; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx - w * 0.45, ty + h * 0.2); ctx.lineTo(tx + w * 0.45, ty + h * 0.2); ctx.closePath(); ctx.fill(); ctx.fillRect(p.x - w + sw * i * 0.3, yy - 1.2, 2 * w, 1.4); } ctx.globalAlpha = 1; } /* ESSAI 2.6 : la neige sur les branches */
       } else if (p.kind === "birch") {
         ctx.strokeStyle = col("#e8e6dc"); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, y); ctx.lineTo(p.x + sw * 0.4, y - h * 0.8); ctx.stroke();
-        ctx.fillStyle = col("#8fb057");
-        for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(p.x + sw * 0.5 + (i - 1.5) * 4, y - h * (0.7 + (i % 2) * 0.15), 5 - (i % 2), 0, 6.283); ctx.fill(); }
+        if (bare > 0.5) { ctx.strokeStyle = col("#d8d4c8"); ctx.lineWidth = 0.8; for (let i = 0; i < 5; i++) { const yy = y - h * (0.45 + i * 0.08), s2 = i % 2 ? 1 : -1; ctx.beginPath(); ctx.moveTo(p.x + sw * 0.3, yy); ctx.lineTo(p.x + s2 * (5 + i), yy - 6); ctx.stroke(); } } /* l'hiver : des branches nues */
+        else { ctx.fillStyle = leaf("#8fb057"); if (bare > 0) ctx.globalAlpha = 1 - bare * 1.6;
+          for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(p.x + sw * 0.5 + (i - 1.5) * 4, y - h * (0.7 + (i % 2) * 0.15), 5 - (i % 2), 0, 6.283); ctx.fill(); } if (bare > 0) ctx.globalAlpha = 1;
+          if (bloom > 0.05) { ctx.fillStyle = col("#f2c6d6"); for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.arc(p.x + sw * 0.5 + Math.cos(i * 2.1) * 6, y - h * 0.76 + Math.sin(i * 1.3) * 5, 1.3 * bloom + 0.3, 0, 6.283); ctx.fill(); } } }
       } else if (p.kind === "palm") {
         ctx.strokeStyle = col("#6a5438"); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, y); ctx.quadraticCurveTo(p.x + 4, y - h * 0.5, p.x + 2 + sw * 0.4, y - h * 0.9); ctx.stroke();
         ctx.strokeStyle = col("#3d7a3a"); ctx.lineWidth = 1.6;
@@ -442,13 +467,14 @@ class ReltoRenderer {
       } else if (p.kind === "maple") {
         ctx.strokeStyle = col("#5a4030"); ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(p.x, y); ctx.lineTo(p.x + sw * 0.3, y - h * 0.6); ctx.stroke();
         const LEAF = ["#c4552a", "#d98a2b", "#b83a2a"], base = LEAF[Math.floor(p.x) % 3];
-        for (let i = 0; i < 6; i++) { ctx.fillStyle = col(i % 2 ? base : LEAF[(Math.floor(p.x) + 1) % 3]); ctx.beginPath(); ctx.arc(p.x + Math.cos(i * 1.05) * 8 + sw * 0.4, y - h * 0.72 + Math.sin(i * 1.6) * 6, 8 + (i % 3), 0, 6.283); ctx.fill(); }
+        if (bare > 0.5) { ctx.strokeStyle = col("#5a4030"); ctx.lineWidth = 1; for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + (i - 2.5) * 0.45; ctx.beginPath(); ctx.moveTo(p.x + sw * 0.3, y - h * 0.58); ctx.lineTo(p.x + Math.cos(a) * 12 + sw * 0.4, y - h * 0.6 + Math.sin(a) * 10); ctx.stroke(); } } else
+        for (let i = 0; i < 6; i++) { ctx.fillStyle = SE && (SE.summer > 0.3 || SE.spring > 0.4) ? col(mix(i % 2 ? base : LEAF[(Math.floor(p.x) + 1) % 3], "#4f7a3a", 0.75 * Math.max(SE.summer, SE.spring))) : col(i % 2 ? base : LEAF[(Math.floor(p.x) + 1) % 3]); ctx.beginPath(); ctx.arc(p.x + Math.cos(i * 1.05) * 8 + sw * 0.4, y - h * 0.72 + Math.sin(i * 1.6) * 6, 8 + (i % 3), 0, 6.283); ctx.fill(); }
       } else if (p.kind === "crystal") {
         const gl = 0.5 + 0.5 * sky.night; ctx.fillStyle = col("#5fc7b5"); ctx.beginPath(); ctx.moveTo(p.x - 3, y); ctx.lineTo(p.x - 1.4, y - h * 0.8); ctx.lineTo(p.x + 1.4, y - h * 0.8); ctx.lineTo(p.x + 3, y); ctx.closePath(); ctx.fill();
         for (let i = 0; i < 7; i++) { const yy = y - h * (0.38 + i * 0.09), s = i % 2 ? 1 : -1, len = 11 - i * 0.9; ctx.fillStyle = col(i % 2 ? "#8ff0d8" : "#6fd6e8"); ctx.beginPath(); ctx.moveTo(p.x, yy); ctx.lineTo(p.x + s * len, yy - 7 - i); ctx.lineTo(p.x + s * (len - 3.5), yy + 1.5); ctx.closePath(); ctx.fill(); }
         if (gl > 0.55) { const g2 = ctx.createRadialGradient(p.x, y - h * 0.7, 2, p.x, y - h * 0.7, 26); g2.addColorStop(0, rgba(140, 240, 215, 0.35 * (gl - 0.5))); g2.addColorStop(1, rgba(140, 240, 215, 0)); ctx.fillStyle = g2; ctx.fillRect(p.x - 26, y - h * 0.7 - 26, 52, 52); }
       } else { // fern
-        ctx.strokeStyle = col("#4f8a45"); ctx.lineWidth = 1.2;
+        ctx.strokeStyle = bare > 0.4 ? col("#7a6a4a") : leaf("#4f8a45"); ctx.lineWidth = 1.2;
         for (let i = 0; i < 7; i++) { const a = -Math.PI / 2 + (i - 3) * 0.32 + sw * 0.01; ctx.beginPath(); ctx.moveTo(p.x, y); ctx.quadraticCurveTo(p.x + Math.cos(a) * h * 0.3, y + Math.sin(a) * h * 0.4, p.x + Math.cos(a) * h * 0.42 + 3 * Math.sign(Math.cos(a)), y + Math.sin(a) * h * 0.38 + 5); ctx.stroke(); }
       }
     }
@@ -1316,6 +1342,23 @@ class ReltoRenderer {
       g.addColorStop(0, hexa(c, 0)); g.addColorStop(0.5, hexa(c, 0.2 * d + 0.05)); g.addColorStop(1, hexa(c, 0));
       ctx.fillStyle = g; ctx.fillRect(160 + off, y - 12, 320, 24);
     }
+  }
+
+  /** ESSAI 2.6 : ce qui tombe des arbres : des feuilles rousses en automne, des pétales au printemps. Le vent les pousse vers la droite. */
+  drawFalling(ctx, SE, sky, t) {
+    const amb = 0.4 + 0.6 * sky.ambient, n = Math.round(6 + 26 * Math.max(SE.leaves, SE.petals)), petal = SE.petals > SE.leaves;
+    const COL = petal ? ["#f4cfdc", "#fbe6ee"] : ["#c8742c", "#d9a13a", "#b5482a", "#9a6a2a"];
+    for (let i = 0; i < n; i++) { const f = this.geo.flakes[(i * 7) % this.geo.flakes.length], sp = 0.35 + (f.sp % 1), tt = t * sp * 9 + f.y;
+      const y = GY - 70 + (tt % 120), x = 150 + ((f.x + tt * 2.2) % 300), a = t * 2 + f.dr * 3; if (y > GY + 6) continue;
+      ctx.save(); ctx.translate(x + Math.sin(a) * 5, y); ctx.rotate(a); ctx.fillStyle = mix("#05060c", COL[i % COL.length], amb); ctx.beginPath(); ctx.ellipse(0, 0, petal ? 1.4 : 2.2, petal ? 1 : 1.2, 0, 0, 6.283); ctx.fill(); ctx.restore(); }
+  }
+
+  /** ESSAI 2.6 : le brouillard du matin : des nappes sur toute la largeur, qui noient le pied des arbres et voilent le reste. */
+  drawFog(ctx, d, sky, t) {
+    const c = mix(this.cloudColor(sky), "#9aa0a8", 0.35), cc = c.length === 7 ? c : "#c8ccd2";
+    for (let i = 0; i < 5; i++) { const y = GY - 34 + i * 12 + Math.sin(t * 0.15 + i) * 3, h = 26 + i * 4, g = ctx.createLinearGradient(0, y - h / 2, 0, y + h / 2);
+      g.addColorStop(0, hexa(cc, 0)); g.addColorStop(0.5, hexa(cc, (0.18 + 0.06 * i) * d)); g.addColorStop(1, hexa(cc, 0)); ctx.fillStyle = g; ctx.fillRect(0, y - h / 2, W, h); }
+    ctx.fillStyle = hexa(cc, 0.18 * d); ctx.fillRect(0, 0, W, H);
   }
 
   drawSnow(ctx, d, t) {

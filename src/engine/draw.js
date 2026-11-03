@@ -40,6 +40,7 @@ const DRAW_SLOTS = [
       slot("lava", 5),
       slot(null, 23),
     ],
+    answeredBy: ["island", "beach", "lagoon", "sea_arch"] /* ESSAI 2.6 : une forme de mer écrite dit déjà le sol */,
   },
   {
     name: "minerals",
@@ -103,6 +104,23 @@ const DRAW_SLOTS = [
   },
 ];
 
+/** ESSAI 2.6 : la signature. Une case de plus, tirée seulement pour les Âges écrits après la 2.6 (hooks.signature) : une forme rare
+ *  qui donne son nom au monde. Elle se tire en dernier, avec sa propre graine : les autres cases ne bougent pas. */
+const SIGNATURE_SLOT = {
+  name: "signature",
+  pick: "one",
+  options: [
+    slot("island", 30, "water"),
+    slot("lagoon", 18, "water"),
+    slot("sea_arch", 18, "water"),
+    slot("waterfall", 9, "solid"),
+    slot("cliff", 8, "solid"),
+    slot("geysers", 10, "dry"),
+    slot(null, 4),
+  ],
+  answeredBy: ["island", "lagoon", "sea_arch", "waterfall", "cliff", "beach", "geysers"],
+};
+
 const PULL_STRENGTH = { none: 0, gentle: 3, moderate: 6, strong: 12 };
 
 // How much the book draws at all: 1 = as before. Below 1, whole slots are skipped and each-slot chances shrink;
@@ -153,10 +171,10 @@ function marginalClash(ids, addedId) {
 }
 
 function drawOpenSlots(params) {
-  let { written, seed, pull, amount = 1, closed = null } = params,
+  let { written, seed, pull, amount = 1, closed = null, signature = false } = params,
     taken = new Set(written),
     drawn = [];
-  for (let slotDef of DRAW_SLOTS) {
+  for (let slotDef of signature ? [...DRAW_SLOTS, SIGNATURE_SLOT] : DRAW_SLOTS) {
     if (closed && closed.includes(slotDef.name)) continue; /* une voûte occupée (un lieu porté à contre-sens) : le ciel ne se tire pas */
     let random = rng(hashSeed(`${seed}|${slotDef.name}`)),
       others = new Set(taken);
@@ -171,7 +189,7 @@ function drawOpenSlots(params) {
       )
         continue;
       let hasWater = others.has("water"),
-        allowed = (option) => !(option.when === "water" && !hasWater) && !(option.when === "dry" && hasWater),
+        allowed = (option) => !(option.when === "water" && !hasWater) && !(option.when === "dry" && hasWater) && !(option.when === "solid" && others.has("lava")),
         weights = slotDef.options.map((option) =>
           allowed(option) ? hooks.w(slotDef.name, option) * clashFactor(option.id) : 0,
         ),
@@ -205,6 +223,7 @@ const DEFAULTED_SLOT_COST = 0.05;
 module.exports = {
   DEFAULTED_SLOT_COST,
   DRAW_SLOTS,
+  SIGNATURE_SLOT,
   PULL_STRENGTH,
   DRAW_AMOUNT,
   clashCost,

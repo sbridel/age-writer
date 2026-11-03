@@ -192,6 +192,7 @@ module.exports = function build(Base, core, AGEX) {
       this._carrySrc = new Map(); this._carryCache = new Map(); this._carryStack = []; this._carriedFrom = new Map();
       AGEX.expand = (text, o) => guard("portage", () => this.carryExpand(text, o)) || null;
       AGEX.closedSlots = (o) => (o && o.carry ? CARRY.closedSlots(o.carry) : null); /* sous une terre renversée, le livre ne tire pas de ciel */
+      AGEX.signature = (o) => !!(this.ext.signature !== false && this._sigOld && o && o.seed != null && !this._sigOld.has(o.seed)); /* ESSAI 2.6 : seuls les Âges nés après la 2.6 tirent une signature */
       AGEX.carryNote = (c) => guard("portage", () => this.carryLine(c)) || "";
       this.depthCache = new Map();
       // la profondeur de l'équilibre : le test par retrait, à l'affichage du panneau (jamais à chaque frappe), mis en cache par texte, graine et rigueur
@@ -1260,15 +1261,18 @@ module.exports = function build(Base, core, AGEX) {
     }
 
     async initialScan() {
-      let n = 0;
+      let n = 0; const sigOld = Array.isArray(this.ext.sigOld) ? null : []; /* ESSAI 2.6 : au premier passage, la liste des Âges d'avant (ils ne changent pas) */
       for (const f of this.app.vault.getMarkdownFiles()) {
         const c = this.app.metadataCache.getFileCache(f);
         if (c && !(c.sections || []).some((s) => s.type === "code")) continue;
         const src = core.extract(await this.app.vault.cachedRead(f)); if (src === null) continue;
         (this.lastAgeSrc || (this.lastAgeSrc = new Map())).set(f.path, src); // l'Âge tel qu'il est : sa profondeur comptera à la prochaine retouche
+        if (sigOld) sigOld.push(core.seed(f.path));
         if (!this.law.get(f.basename)) this.law.observe(f.basename, core.analyse(src, { seed: core.seed(f.path), physics: false }), f.stat.mtime);
         if (++n % 25 === 0) await new Promise((r) => setTimeout(r, 0));
       }
+      if (sigOld) this.ext.sigOld = sigOld;
+      this._sigOld = new Set(this.ext.sigOld);
       this.saveExt();
     }
 
