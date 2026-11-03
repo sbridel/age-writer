@@ -40,7 +40,7 @@ const DRAW_SLOTS = [
       slot("lava", 5),
       slot(null, 23),
     ],
-    answeredBy: ["island", "beach", "lagoon", "sea_arch"] /* ESSAI 2.6 : une forme de mer écrite dit déjà le sol */,
+    answeredBy: ["island", "beach", "lagoon", "sea_arch", "pier"] /* ESSAI 2.6 : une forme de mer écrite dit déjà le sol */,
   },
   {
     name: "minerals",

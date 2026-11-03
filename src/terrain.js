@@ -43,7 +43,7 @@ const RELIEF = {
 };
 const WATER_IDS = ["river", "delta", "lake", "marsh"];
 /** ESSAI 2.6 : les formes de l'eau et de la terre ; celles de la mer allument la mer. */
-const FORM_IDS = ["island", "cliff", "waterfall", "beach", "lagoon", "sea_arch"], SEA_FORMS = ["island", "waterfall", "beach", "lagoon", "sea_arch"], SEA_GROUND = ["island", "beach", "lagoon", "sea_arch"];
+const FORM_IDS = ["island", "cliff", "waterfall", "beach", "lagoon", "sea_arch"], SEA_FORMS = ["island", "waterfall", "beach", "lagoon", "sea_arch"], SEA_GROUND = ["island", "beach", "lagoon", "sea_arch", "pier"]; /* (le ponton aussi suppose la mer) */
 
 const SKY_PROSE = {
   plains: ["the land lies wide and low, and the horizon is all there is to look at", "a plain runs flat to the edge of sight, and the wind has nothing to stop it", "everything here is open: a low, long country under a very large sky"],
