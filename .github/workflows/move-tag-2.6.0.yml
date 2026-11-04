@@ -1,0 +1,20 @@
+# Une fois : déplace le tag 2.6.0 sur le commit réécrit (sans ligne de session). À supprimer après usage.
+name: Move tag 2.6.0
+on:
+  push:
+    branches: [assembly]
+    paths: [.github/workflows/move-tag-2.6.0.yml]
+permissions:
+  contents: write
+jobs:
+  move:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          git fetch --tags --force
+          git cat-file -e 88b03993f04bacbfc5e32f804f56db6bc1aae69f
+          git push --force origin 88b03993f04bacbfc5e32f804f56db6bc1aae69f:refs/tags/2.6.0
+          git ls-remote origin refs/tags/2.6.0
