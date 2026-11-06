@@ -531,15 +531,16 @@ function swallowBuilt(S, W, H, hz, fis, ruins) {
  * Étape 1 : de plain-pied, en contrebas, à couvert, à flanc de pente ; le surplomb et la grotte viennent à l'étape 3.
  */
 const BEASTS = new Set(["grazer", "herd", "cave_stalker", "raptor"]);
-function buildPath(m) {
+function buildPath(m, via) {
   const { S, W, H, hz, ruins, det, extras } = m, V = S.view || {}, D = H - hz;
   if (V.kind === "high" || V.kind === "cave" || S.world === "cavern" || S.torus) return null;
   const works = ruins.filter((rn) => rn.k !== "bridge" || rn.spans), beasts = (extras || []).some((e) => BEASTS.has(e.id));
   const detOn = det && !det.gone; if (!works.length && !detOn && !beasts && !ruins.length) return null; /* un monde vierge */
   const q = rng((S.seed ^ 0x9a7e) >>> 0), side = V.side || (q() < 0.5 ? -1 : 1), sided = V.side && (V.kind === "slope" || V.kind === "cover");
-  const xs = W * (sided ? 0.5 - side * (0.14 + 0.08 * q()) : 0.32 + 0.36 * q()), ys = H + 6;
+  let xs = W * (sided ? 0.5 - side * (0.14 + 0.08 * q()) : 0.32 + 0.36 * q()); const ys = H + 6;
+  if (!dryAt(m, xs, H - 4)) for (let d = W / 64; d < W / 2; d += W / 64) { const x = [xs - d, xs + d].find((x) => x > W * 0.05 && x < W * 0.95 && dryAt(m, x, H - 4) && dryAt(m, x, H - D * 0.15)); if (x != null) { xs = x; break; } } /* on part du sec, jamais de l'eau */
   let kind = works.length || detOn || ruins.length ? "built" : "trail", xe, ye, fade = false;
-  const BUILTK = new Set(["tower", "lighthouse", "stairs"]), target = works.find((rn) => BUILTK.has(rn.k)) || works.find((rn) => rn.k !== "bridge") || works[0] || ruins[0];
+  const BUILTK = new Set(["tower", "lighthouse", "stairs"]), target = via || works.find((rn) => BUILTK.has(rn.k)) || works.find((rn) => rn.k !== "bridge") || works[0] || ruins[0];
   if (target) { const half = W * 0.03 * (target.k3 || 1); xe = target.x + (xs < target.x ? -half : half) * 0.6; ye = (target.by || hz) + 2 + D * 0.01; if (target.k === "bridge") { xe = target.x - W * 0.19 * (target.k3 || 1) * (xs < target.x ? 1 : -1) * 0.8; ye = (target.by || hz) + 2; } }
   else if (detOn) { xe = det.x; ye = hz + D * 0.06 + 2; }
   else { /* la sente : à l'eau, sinon elle traverse */
@@ -550,23 +551,43 @@ function buildPath(m) {
   const c1 = [xs + (q() - 0.5) * W * 0.12, lerp(ys, ye, 0.42)], c2 = [xe + (xs - xe) * (0.25 + 0.3 * q()) + (q() - 0.5) * W * 0.1, lerp(ys, ye, 0.8)];
   const bez = (u) => { const a = 1 - u; return [a * a * a * xs + 3 * a * a * u * c1[0] + 3 * a * u * u * c2[0] + u * u * u * xe, a * a * a * ys + 3 * a * a * u * c1[1] + 3 * a * u * u * c2[1] + u * u * u * ye]; };
   const Wp = W * (kind === "built" ? 0.12 : 0.085), N = 70, fold = q() < 0.55 ? [0.48 + 0.12 * q(), 0] : null; if (fold) fold[1] = fold[0] + 0.06 + 0.05 * q(); /* il disparaît derrière un pli, et reparaît */
+  const pts = []; for (let i = 0; i <= N; i++) { const u = i / N, [x, y] = bez(u); pts.push({ x, y, u, w: Math.max(0.6, (Wp * (y - hz)) / D), a: fade ? clamp((1 - u) * 3) : 1, wet: !dryAt(m, x, Math.min(H - 1, y)), hid: !!(fold && u > fold[0] && u < fold[1]) }); }
+  /* étape 2 : l'eau se franchit (un gué pour la sente, une passerelle pour le chemin bâti) ; une traversée trop longue (plus d'un tiers du chemin) n'est pas tentée : le chemin s'arrête à la rive */
+  let run = 0; for (let i = 0; i < pts.length; i++) { if (pts[i].wet) run++; else run = 0; if (run > N / 3) { pts.length = Math.max(0, i - run + 1); break; } }
+  while (pts.length && pts[pts.length - 1].wet) pts.pop();
+  const span = !via && ruins.find((rn) => rn.k === "bridge" && (rn.spans === "river" || rn.spans === "pond")); /* un pont enjambe déjà cette eau : le chemin va au pont plutôt que de poser sa passerelle à côté */
+  if (span && pts.some((p) => p.wet && p.y > hz + 2)) return buildPath(m, span);
   const segs = []; let cur = [];
-  for (let i = 0; i <= N; i++) { const u = i / N, [x, y] = bez(u), w = Math.max(0.6, (Wp * (y - hz)) / D), hidden = (fold && u > fold[0] && u < fold[1]) || !dryAt(m, x, Math.min(H - 1, y));
-    if (hidden) { if (cur.length > 1) segs.push(cur); cur = []; continue; } cur.push({ x, y, w, a: fade ? clamp((1 - u) * 3) : 1 }); }
+  for (const p of pts) { if (p.hid || (cur.length && cur[cur.length - 1].wet !== p.wet)) { if (cur.length > 1) segs.push(cur); cur = p.hid ? [] : [cur[cur.length - 1], p].filter(Boolean); if (!p.hid && cur.length === 2) cur = [{ ...cur[0], wet: p.wet }, p]; continue; } cur.push(p); }
   if (cur.length > 1) segs.push(cur); if (!segs.length) return null;
-  return { kind, segs, soil: solEn(m, xs, H - 4).k, seed: (S.seed ^ 0x9a7e) >>> 0 };
+  const soil = solEn(m, xs, H - 4).k, mat = kind === "trail" ? "trail" : soil === "earth" || soil === "forest" || soil === "lava" ? "slabs" : soil === "sand" ? "posts" : soil === "ice" ? "icesteps" : soil === "salt" || soil === "chalk" ? "bollards" : "steps";
+  return { kind, mat, segs, soil, seed: (S.seed ^ 0x9a7e) >>> 0 };
 }
 /** la couleur de la trace, selon le sol : battue (plus sombre) sur la terre, poussière claire sur la roche, damée sur la glace */
 const TRAIL_TONE = { earth: [[84, 62, 42], 0.5], forest: [[78, 58, 40], 0.5], sand: [[150, 120, 84], 0.35], ice: [[236, 242, 248], 0.5], salt: [[238, 234, 224], 0.45], chalk: [[236, 232, 220], 0.4], lava: [[24, 18, 16], 0.55], stone: [[176, 166, 148], 0.4], basalt: [[120, 114, 108], 0.4], granite: [[186, 172, 160], 0.4], rock: [[170, 160, 142], 0.4] };
 function pathPass(g, m, t, day, night) {
   const P = m.path; if (!P) return; const { pal } = m, [tone, mixK] = TRAIL_TONE[P.soil] || TRAIL_TONE.rock, amb = 0.3 + 0.7 * day, base = mixc([6, 6, 10], mixc(pal.ground, tone, mixK + 0.15), amb), edge = mixc(base, pal.ground, 0.5), q = rng(P.seed ^ 0x51);
   const ribbon = (seg, k) => { g.beginPath(); seg.forEach((p, i) => (i ? g.lineTo(p.x - p.w * k, p.y) : g.moveTo(p.x - p.w * k, p.y))); for (let i = seg.length - 1; i >= 0; i--) g.lineTo(seg[i].x + seg[i].w * k, seg[i].y); g.closePath(); };
+  const stone = mixc([6, 6, 10], mixc(mixc(pal.rock, [196, 186, 166], 0.45), P.soil === "lava" ? [40, 34, 30] : [196, 186, 166], P.soil === "lava" ? 0.6 : 0), amb), stoneD = mixc(stone, [0, 0, 0], 0.45), stoneL = mixc(stone, [255, 250, 236], 0.25 * (1 - night));
+  const wood = mixc([6, 6, 10], [118, 86, 56], amb), woodD = mixc(wood, [0, 0, 0], 0.45), lw = Math.max(0.6, m.W / 900);
+  const every = (seg, k, fn) => { let acc = 0; for (let i = 1; i < seg.length; i++) { const a = seg[i - 1], b = seg[i]; acc += Math.hypot(b.x - a.x, b.y - a.y); if (acc >= b.w * k) { acc = 0; fn(b, i); } } }; /* un pas à l'échelle de la profondeur */
   g.save();
-  for (const seg of P.segs) { const al = seg.reduce((a, p) => Math.min(a, p.a), 1);
+  for (const seg of P.segs) { const al = seg.reduce((a, p) => Math.min(a, p.a), 1), wet = seg[seg.length - 1].wet && seg[0].wet !== undefined && seg.slice(1).every((p) => p.wet);
+    if (wet) { /* franchir l'eau */
+      if (P.kind === "trail") every(seg, 0.55, (p) => { const r = p.w * 0.22; g.fillStyle = css(stoneD, 0.9 * al); g.beginPath(); g.ellipse(p.x + (q() - 0.5) * p.w * 0.3, p.y + 1, r * 1.2, r * 0.45, 0, 0, TAU); g.fill(); g.fillStyle = css(stoneL, 0.8 * al); g.beginPath(); g.ellipse(p.x + (q() - 0.5) * p.w * 0.3, p.y, r, r * 0.32, 0, 0, TAU); g.fill(); }); /* le gué : des pierres qui affleurent */
+      else { g.fillStyle = css(woodD, 0.9 * al); ribbon(seg, 0.3); g.fill(); every(seg, 0.22, (p) => { g.fillStyle = css(wood, 0.95 * al); g.fillRect(p.x - p.w * 0.3, p.y - Math.max(0.6, p.w * 0.04), p.w * 0.6, Math.max(0.8, p.w * 0.07)); }); /* la passerelle : des planches */
+        every(seg, 1.1, (p) => { g.fillStyle = css(woodD, al); for (const sx of [-0.3, 0.3]) g.fillRect(p.x + sx * p.w - lw, p.y, lw * 2, Math.max(1.5, p.w * 0.25)); g.fillRect(p.x + 0.3 * p.w - lw * 0.5, p.y - p.w * 0.22, lw, p.w * 0.22); }); } /* les pieux dans l'eau, la main courante */
+      continue; }
     g.fillStyle = css(edge, 0.45 * al); ribbon(seg, 0.62); g.fill(); /* le bord, fondu dans le sol */
-    g.fillStyle = css(base, 0.75 * al); ribbon(seg, 0.42); g.fill(); /* la trace */
-    for (let i = 2; i < seg.length - 1; i += 2) { const p = seg[i]; if (q() < 0.5) continue; const r = Math.max(0.5, p.w * 0.06 * (0.6 + q())); g.fillStyle = css(mixc(base, q() < 0.5 ? [255, 250, 240] : [0, 0, 0], 0.25), 0.7 * al); g.beginPath(); g.ellipse(p.x + (q() - 0.5) * p.w * 0.7, p.y + (q() - 0.5) * 2, r * 1.6, r, 0, 0, TAU); g.fill(); } /* des cailloux, des empreintes */
-    if (night > 0.4 && m._moonlight) { /* rien : la nuit éteint la trace avec le sol */ } }
+    g.fillStyle = css(base, (P.kind === "trail" ? 0.75 : 0.55) * al); ribbon(seg, 0.42); g.fill(); /* la trace */
+    if (P.mat === "trail" || P.mat === "posts" || P.mat === "bollards") for (let i = 2; i < seg.length - 1; i += 2) { const p = seg[i]; if (q() < 0.5) continue; const r = Math.max(0.5, p.w * 0.06 * (0.6 + q())); g.fillStyle = css(mixc(base, q() < 0.5 ? [255, 250, 240] : [0, 0, 0], 0.25), 0.7 * al); g.beginPath(); g.ellipse(p.x + (q() - 0.5) * p.w * 0.7, p.y + (q() - 0.5) * 2, r * 1.6, r, 0, 0, TAU); g.fill(); } /* des cailloux, des empreintes */
+    if (P.mat === "slabs") every(seg, 0.38, (p) => { const sw = p.w * (0.32 + 0.08 * q()), sh = Math.max(0.8, p.w * 0.11), ox = (q() - 0.5) * p.w * 0.1; g.fillStyle = css(stoneD, 0.85 * al); g.beginPath(); g.ellipse(p.x + ox, p.y + sh * 0.35, sw, sh, 0, 0, TAU); g.fill(); g.fillStyle = css(stone, 0.95 * al); g.beginPath(); g.ellipse(p.x + ox, p.y, sw * 0.94, sh * 0.85, 0, 0, TAU); g.fill(); g.fillStyle = css(stoneL, 0.5 * al); g.beginPath(); g.ellipse(p.x + ox - sw * 0.15, p.y - sh * 0.25, sw * 0.5, sh * 0.35, 0, 0, TAU); g.fill(); }); /* des dalles espacées, usées */
+    if (P.mat === "steps" || P.mat === "icesteps") every(seg, 0.3, (p) => { const sw = p.w * 0.4, th = Math.max(0.8, p.w * 0.07); g.fillStyle = css(stoneD, 0.8 * al); g.fillRect(p.x - sw, p.y, sw * 2, th); g.fillStyle = css(P.mat === "icesteps" ? mixc(stoneL, [235, 245, 255], 0.5) : stoneL, 0.75 * al); g.fillRect(p.x - sw, p.y - th * 0.5, sw * 2, th * 0.5); }); /* des marches taillées : l'arête éclairée, l'ombre dessous */
+    if (P.mat === "icesteps") { every(seg, 1.4, (p) => { g.strokeStyle = css(woodD, 0.7 * al); g.lineWidth = lw; g.beginPath(); g.moveTo(p.x + p.w * 0.46, p.y); g.lineTo(p.x + p.w * 0.46, p.y - p.w * 0.25); g.stroke(); }); /* la corde et ses piquets */
+      g.strokeStyle = css(woodD, 0.5 * al); g.lineWidth = lw * 0.8; g.beginPath(); seg.forEach((p, i) => (i ? g.lineTo(p.x + p.w * 0.46, p.y - p.w * 0.22) : g.moveTo(p.x + p.w * 0.46, p.y - p.w * 0.22))); g.stroke(); }
+    if (P.mat === "posts") every(seg, 0.5, (p) => { g.fillStyle = css(woodD, 0.95 * al); for (const sx of [-0.42, 0.42]) { const h = Math.max(1.5, p.w * 0.2); g.fillRect(p.x + sx * p.w - lw, p.y - h, lw * 2.2, h); } }); /* une rangée de pieux de chaque côté */
+    if (P.mat === "bollards") every(seg, 1.2, (p) => { const h = Math.max(1.5, p.w * 0.18), bw = Math.max(1, p.w * 0.05); for (const sx of [-0.45, 0.45]) { g.fillStyle = css(stoneD, al); g.fillRect(p.x + sx * p.w - bw, p.y - h, bw * 2, h); g.fillStyle = css(stoneL, 0.8 * al); g.fillRect(p.x + sx * p.w - bw, p.y - h, bw * 2, h * 0.25); } }); /* des bornes */
+  }
   g.restore();
 }
 /** 1 : l'îlot de roche sous un bâti posé sur l'eau (peint sous la maçonnerie, dans le repère du bâti). */
@@ -1190,8 +1211,8 @@ function paint(g, m, t, o = {}) {
   m._moonlight = 0; /* ESSAI : un monde sans soleil montre ce qui l'éclaire */
   if (m.airK && m.airK.thick > 0.05) { const D = H - hz, hg = g.createLinearGradient(0, hz, 0, hz + D * 0.45); hg.addColorStop(0, css(mixc(hzc, [240, 235, 220], 0.3), 0.55 * m.airK.thick)); hg.addColorStop(1, css(hzc, 0)); g.fillStyle = hg; g.fillRect(0, hz, W, D * 0.45); } /* ESSAI : un air épais écrase la profondeur : le lointain se noie */
   WON.wonderPass(g, m, t, "relief", k0); /* ESSAI : ce qui se dessine par-dessus le relief du milieu (l'Inachevé) */
+  pathPass(g, m, t, day, night); /* ESSAI (6 nov.) : le chemin, dans le sol, sous la flore ; avant la découpe de l'eau, pour que gués et passerelles la franchissent */
   const offW = offWater(g, m); /* ESSAI : rien ne pousse sur la rivière ni sur l'étang */
-  pathPass(g, m, t, day, night); /* ESSAI (6 nov.) : le chemin, dans le sol, sous la flore */
   const wetScene = !!(m.shore || (S.water && S.waterGround !== false && !S.ice)); /* ESSAI (6 nov.) : sur une scène d'eau, les Prototaxites (debout sur la rive) se peignent après le reflet, sinon le reflet les efface */
   if (S.primeval && !wetScene) primeval(g, m, t, day, night); /* un monde trop jeune pour les arbres : des Prototaxites */
   else if (!S.primeval && S.alive && !S.trees && !(S.succ && S.succ.kind === "bare")) lowFlora(g, m, t, day, night); /* la flore basse du climat, pour les Âges vivants sans arbres */
