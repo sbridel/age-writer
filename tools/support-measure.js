@@ -27,14 +27,14 @@ const BUILT = new Set(["tower", "lighthouse", "stairs"]);
     Object.assign(S, SKY.parseSky(txt)); n++;
     const m = G.build(S, 640, 360), hz = m.hz, D = m.H - hz, writ = new Set((a.resolved && a.resolved.matter && a.resolved.matter.written) || []), drawnIds = new Set((a.drawn || []).map((d) => d.id)); let bad = 0;
     const check = (kind, x, y, id) => { const sp = G.supportOf(kind); if (!sp) return; const sol = G.solEn(m, x, y), ok = sol.k === "far" || sp.on.has(sol.k), how = ok ? "ok" : fate(kind, sol.k, S); soils.set(sol.k, (soils.get(sol.k) || 0) + 1); tally(kind, sol.k + (sol.form ? "/" + sol.form : ""), ok, how, id && writ.has(id) && !drawnIds.has(id)); if (!ok && how === "visible") bad++; };
-    for (const rn of m.ruins) check(BUILT.has(rn.k) ? "built" : rn.k === "bridge" ? "bridge" : "ruin", rn.x, (rn.by || hz) + 2);
+    for (const rn of m.ruins) if (rn.foot !== "islet") check(BUILT.has(rn.k) ? "built" : rn.k === "bridge" ? "bridge" : "ruin", rn.x, (rn.by || hz) + 2); /* l'îlot porte le bâti posé sur la mer */
     for (const tr of m.trees) check("tree", tr.x, hz + 2);
-    if (m.det) check("detail", m.det.x, hz + D * 0.06);
+    if (m.det && !m.det.gone) check("detail", m.det.x, hz + D * 0.06);
     for (const e of m.extras || []) if (G.supportOf(e.id)) for (const P of G.byDepthForTest(m, e)) check(e.id, P.x, P.y, e.id);
     if (bad) { windowsWrong++; if (examples.length < 12) examples.push({ i, lines: [...new Set(L)], bad }); }
   }
   const pct = (a, b) => (b ? ((100 * a) / b).toFixed(1) + " %" : "—");
-  const out = [`# Carte du sol, étape 2 : ce qui est mal porté aujourd'hui (${n} Âges tirés, graine ${SEED0})`, "", `Fenêtres avec au moins une chose mal portée **et visible** : **${windowsWrong} (${pct(windowsWrong, n)})**`, "",
+  const out = [`# Carte du sol : ce qui est mal porté (${n} Âges tirés, graine ${SEED0})`, "", `Fenêtres avec au moins une chose mal portée **et visible** : **${windowsWrong} (${pct(windowsWrong, n)})**`, "",
     "« Mal portées » : selon la table des supports (proposition de la fiche). « Visibles » : le peintre ne les efface pas ni ne les découpe déjà. « Écrites » : parmi les visibles, celles que l'auteur a écrites (décision C) ; les autres sont tirées.", "",
     "| Sorte | Posées | Mal portées | Visibles | dont écrites | % visibles |", "|---|---|---|---|---|---|"];
   for (const [k, b] of [...by.entries()].sort((x, y) => y[1].vis - x[1].vis)) out.push(`| ${k} | ${b.n} | ${b.bad} | ${b.vis} | ${b.wr} | ${pct(b.vis, b.n)} |`);

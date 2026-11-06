@@ -122,6 +122,7 @@ function sceneOf(a, name = "", blocks = null) {
   S.garden = r("garden"); S.lake = r("lake") && !S.lava && wd !== "lava" && !(S.water && S.waterGround !== false) && !S.shore; if (S.lake) S.river = false; /* ESSAI : un étang au pied de la vue (le lac), au lieu du ruban de rivière ; un jardin dessiné */
   S.graniteHue = ["grey", "ochre", "pink"][(S.seed >>> 7) % 3]; /* la variété du granite, tirée de la graine */
   { const kindIn = (set) => (set.has("basalt") || set.has("basalt_columns") || set.has("iron") ? "mafic" : set.has("granite") ? "felsic" : null), drawnIds = new Set((res.drawn || []).map((p) => p.id)), mine = new Set((res.matter.written || []).filter((id) => !drawnIds.has(id))); S.lavaKind = S.lava ? kindIn(mine) || kindIn(new Set(res.matter.written || [])) : null; } /* la roche que l'auteur a écrite décide ; sinon celle que le monde a tirée */ /* 2.5 (G) : la lave suit la roche ; mafique (fer, magnésium) : croûte noire fendue de rouge ; felsique (silice) : grise, en dômes, et le volcan explose */
+  { const dIds = (res.drawn || []).map((p) => p.id), dSet = new Set(dIds); S.drawnIds = dIds; S.writtenIds = (res.matter.written || []).filter((id) => !dSet.has(id)); } /* ESSAI (6 nov., carte du sol, décision C) : ce que l'auteur a écrit, ce que le monde a tiré */
   if (S.lavaKind === "felsic") S.ash = true; /* la cendre vient seule */
   S.sulfur = !!S.lava && (S.acid || ids.has("poisoned_air")) && !(S.phys && S.phys.oxygen < 0.3); /* 2.5 (H) : le soufre de la lave brûle bleu, s'il y a de l'oxygène pour brûler */
   S.rock = S.soil === "stone" ? (ids.has("basalt") || ids.has("basalt_columns") ? "basalt" : ids.has("granite") ? "granite" : null) : null; /* un visage pour la pierre, la forêt et le sel (src/dosage.js, BIOMES) */
@@ -346,7 +347,7 @@ function build(S, W, H) {
   const cave = S.world === "cavern" ? buildCave(S, W, H, hz) : null; // la voûte : graine propre, les autres mondes ne bougent pas
   const qf = rng((S.seed ^ 0xa16ae) >>> 0), fedGlow = S.fed ? Array.from({ length: 16 }, () => ({ x: W * qf(), y: hz + (H - hz) * (0.08 + 0.8 * qf()), r: H * (0.02 + 0.04 * qf()), p: qf() })) : null; /* graine propre */
   const won = WON.buildWonders(S, W, H, hz); /* les merveilles : graine propre, un Âge sans merveille ne bouge pas */
-  const keep = placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond); /* ESSAI (6 nov.) : la grammaire du placement (claude/DESIGN-grammaire-du-placement.md) */
+  const keep = placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave); /* ESSAI (6 nov.) : la grammaire du placement (claude/DESIGN-grammaire-du-placement.md) */
   return { keep, riverGeo: riverGeo(S), craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, giantP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
 }
 
@@ -400,48 +401,48 @@ function solEn(m, x, y) {
 /* la table des supports (décision A, proposition de la fiche) : ce qui porte chaque sorte de chose. Les familles : */
 const SOL = { wet: ["sea", "river", "pond"], dry: ["sand", "ice", "lava", "salt", "chalk", "stone", "basalt", "granite", "earth", "forest", "rock"], soilT: ["earth", "forest"], rockT: ["stone", "basalt", "granite", "chalk", "rock"] };
 const ON = (...fams) => new Set(fams.flatMap((f) => SOL[f] || [f]));
-const SUPPORT = {
+const SUPPORT = { /* décision A (tranchée le 6 nov., 11 h 25 : claude/DESIGN-carte-du-sol.md) */
   built: { half: 0.05, on: ON("rockT", "soilT", "sand", "ice", "salt"), rank: 2 },
   ruin: { half: 0.03, on: ON("dry"), rank: 3 },
   bridge: { half: 0.14, on: ON("dry", "wet"), rank: 2 },
   detail: { half: 0.03, on: ON("dry"), rank: 3 },
   tree: { half: 0.025, on: ON("soilT", "rockT", "sand", "ice"), rank: 4 }, /* l'espèce est déjà choisie par le sol (treeKindsOf) ; la table ne garde que le sec qui porte des racines (ni lave ni sel) */
   prototaxite: { half: 0.02, on: ON("soilT", "rockT"), rank: 4 },
-  shrub: { half: 0.01, on: ON("soilT", "rockT"), rank: 5 }, thorn_bush: { half: 0.01, on: ON("soilT", "rockT", "sand"), rank: 5 },
+  shrub: { half: 0.01, on: ON("soilT", "rockT"), rank: 5 }, /* fougère, graine, mousse, jeune arbre, baies : l'humide, ni sable ni glace */
+  dry_shrub: { half: 0.01, on: ON("soilT", "rockT", "sand"), rank: 5 }, /* épineux, bruyère : aussi le sable (maquis, garrigue) */
+  ember_flower: { half: 0.01, on: ON("lava", "rockT"), rank: 5 }, /* la fleur de braise pousse sur la lave refroidie */
   fungus: { half: 0.01, on: ON("soilT", "rockT"), rank: 5 }, pale_fungus: { half: 0.01, on: ON("soilT", "rockT", "ice"), rank: 5 },
   mineral: { half: 0.01, on: ON("dry"), rank: 5 },
-  land_beast: { half: 0.015, on: ON("dry"), rank: 5 }, burrower: { half: 0.015, on: ON("soilT", "sand"), rank: 5 },
+  land_beast: { half: 0.015, on: ON("dry"), rank: 5 }, burrower: { half: 0.015, on: ON("soilT", "sand", "rockT"), rank: 5 }, /* le fouisseur creuse la terre, le sable, la pierre ; pas la glace, la lave, le sel */
   water_life: { half: 0, on: ON("wet"), rank: 5 },
-  geysers: { half: 0.06, on: ON("rockT", "soilT"), rank: 3 },
+  geysers: { half: 0.06, on: ON("rockT", "soilT", "sand", "lava", "salt"), rank: 3 }, /* de l'eau chauffée par le sous-sol : un désert géothermique, le pied d'un volcan ; pas la glace */
 };
-const SUPPORT_OF = { fern: "shrub", seed: "shrub", moss: "shrub", berry_shrub: "shrub", heath_shrub: "shrub", sapling: "shrub", withered_fern: "shrub", cinderbloom: "shrub", humming_blooms: "shrub", crystal_flower: "mineral", thorn_bush: "thorn_bush",
+const SUPPORT_OF = { fern: "shrub", seed: "shrub", moss: "shrub", berry_shrub: "shrub", sapling: "shrub", withered_fern: "shrub", humming_blooms: "shrub", heath_shrub: "dry_shrub", thorn_bush: "dry_shrub", cinderbloom: "ember_flower", crystal_flower: "mineral",
   mushroom: "fungus", mycelium: "fungus", pale_fungus: "pale_fungus", stone: "mineral", iron: "mineral", crystal: "mineral", salt: "mineral", ash: "mineral", strange_stone: "mineral", diamond: "mineral", charged_crystal: "mineral", humming_shard: "mineral", rust: "mineral", book: "ruin", blurred_book: "ruin",
   grazer: "land_beast", herd: "land_beast", cave_stalker: "land_beast", burrower: "burrower", shoal: "water_life", deep_hunter: "water_life", plankton: "water_life", glow_algae: "water_life", geysers: "geysers" };
 /** la règle de support pour une chose (sa sorte dans la table), ou null si elle ne se pose pas au sol */
 function supportOf(kind) { return SUPPORT[kind] || SUPPORT[SUPPORT_OF[kind]] || null; }
 /** la chose est-elle portée en (x, y) ? « far » (le lointain) porte toujours : c'est la côte d'en face */
 function carried(m, kind, x, y) { const sp = supportOf(kind); if (!sp) return true; const s = solEn(m, x, y); return s.k === "far" || sp.on.has(s.k); }
-/** la place sèche la plus proche de x, à la hauteur y, pour une emprise de demi-largeur half ; x s'il n'y en a pas */
-function dryNear(m, x, y, half) {
-  const W = m.W, ok = (c) => dryAt(m, c - half, y) && dryAt(m, c, y) && dryAt(m, c + half, y); if (ok(x)) return x;
-  for (let d = W / 64; d < W; d += W / 64) { const L = x - d, R = x + d, okL = L - half > W * 0.03 && ok(L), okR = R + half < W * 0.97 && ok(R); if (okL || okR) return okL ? L : R; }
-  return x;
-}
-function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond) {
-  const keep = [], built = ruins.filter((rn) => BUILT.has(rn.k)), m = { S, W, H, hz, shore, pond, riverGeo: riverGeo(S) }, D = H - hz;
-  const seaFoot = (x, y) => (shore ? inPoly(shore.wet, x, y) : !!(S.water && S.waterGround !== false && !S.ice && !S.lava && !S.sand));
-  /* 1, pour tout ce qui se pose au sol : les arbres, les ruines (sauf le pont, qui enjambe), le détail habité vont à la place sèche la plus proche ; sur une mer sans rive, ce qui tient l'horizon reste (c'est la côte d'en face) */
-  for (const tr of trees) tr.x = dryNear(m, tr.x, hz + 2, W * 0.02);
-  for (const rn of ruins) if (!BUILT.has(rn.k) && rn.k !== "bridge" && (shore || S.river || pond)) rn.x = dryNear(m, rn.x, hz + 2, W * 0.03);
-  if (det) det.x = dryNear(m, det.x, hz + D * 0.06, W * 0.03);
-  if (!built.length) return keep;
+function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave) {
+  const keep = [], built = ruins.filter((rn) => BUILT.has(rn.k)), m = { S, W, H, hz, shore, pond, cones, cave, riverGeo: riverGeo(S) }, D = H - hz;
+  const wetAt = (x, y) => (shore ? inPoly(shore.wet, x, y) : !!(S.water && S.waterGround !== false && !S.ice && !S.lava && !S.sand));
+  const openSea = !shore && !!(S.water && S.waterGround !== false && !S.ice && !S.lava && !S.sand);
+  const footY = (y) => (openSea && y <= hz + 3 ? hz : y); /* sur une mer sans rive, ce qui tient l'horizon est sur la côte d'en face : le lointain porte */
+  const ok = (kind, x, y, half) => [x - half, x, x + half].every((c) => carried(m, kind, clamp(c, 1, W - 1), footY(y)));
+  const free = (x, half, zones) => !zones.some((o) => x + half > o.x0 && x - half < o.x1);
+  /* la carte du sol (étape 3) : la place la plus proche où la chose est portée et ne heurte rien de ce qui est déjà posé ; à défaut, portée seulement ; null si rien ne porte (décision B) */
+  const place = (kind, x, y, half, hard, soft = []) => { /* hard : les zones réservées (jamais) ; soft : ce qui est déjà posé (évité si possible) */
+    for (const strict of [true, false]) { const fits = (c) => c - half > W * 0.02 && c + half < W * 0.98 && ok(kind, c, y, half) && free(c, half, hard) && (!strict || free(c, half, soft));
+      if (fits(x)) return x; for (let d = W / 96; d < W; d += W / 96) { const L = x - d, R = x + d, a = fits(L), b = fits(R); if (a || b) return a ? L : R; } }
+    return null; };
+  const wr = new Set(S.writtenIds || []), dr = new Set(S.drawnIds || []), kin = (k) => (id) => id === k || id.endsWith("_" + k);
+  const drawnOnly = (k) => [...dr].some(kin(k)) && ![...wr].some(kin(k)); /* décision C : ce qui n'est que tiré se corrige en silence ; ce qui est écrit reste (étape 5 : il se verra malade) */
   const q = rng((S.seed ^ 0x6a7a3) >>> 0), V = S.view || {};
-  const wetAt = seaFoot;
-  const dryZones = (y) => { const z = [], rb = riverBand(m, y); if (rb) z.push({ x0: rb.x0 - W * 0.03, x1: rb.x1 + W * 0.03 }); if (pond && y > pond.cy - pond.ry * 1.2 && y < pond.cy + pond.ry * 1.2) z.push({ x0: pond.cx - pond.rx * 1.15, x1: pond.cx + pond.rx * 1.15 }); return z; }; /* 1 : un pied ne se pose ni sur la rivière ni sur l'étang */
   const formsHold = !!(S.forms && (S.forms.island || S.forms.sea_arch)); /* l'île ou l'arche tiennent déjà le tiers libre */
   const sided = V.side && (V.kind === "slope" || V.kind === "cover" || V.kind === "high" || V.kind === "cave");
   const third = sided ? (V.side > 0 ? 0.3 : 0.7) : (q() < 0.5 ? 1 / 3 : 2 / 3), jit = (q() - 0.5) * 0.06;
-  const subj = formsHold ? null : built[0];
+  const subj = formsHold || !built.length ? null : built[0];
   if (subj) subj.x = W * (third + jit);
   const slide = (x, zones, half) => { /* hors des zones, au plus près ; dans le cadre */
     for (let pass = 0; pass < 3; pass++) { const z = zones.find((o) => x + half > o.x0 && x - half < o.x1); if (!z) return x;
@@ -452,18 +453,25 @@ function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond) {
     if (wet) { rn.k3 = main ? 0.62 : 0.5; rn.by = hz; rn.foot = "islet"; }
     else if (main && !wetAt(rn.x, hz + D * 0.08)) { rn.k3 = 0.85; rn.by = hz + D * 0.07; }
     else { rn.k3 = 0.6; rn.by = hz; }
-    if (!wet) rn.x = slide(rn.x, dryZones(rn.by + 1), W * (rn.k === "stairs" ? 0.24 : 0.05) * rn.k3); /* 1 : hors de la rivière et de l'étang, à la hauteur de son pied (l'escalier a une emprise large : marches et terrasse) */
+    if (!wet) { const nx = place("built", rn.x, rn.by + 1, W * (rn.k === "stairs" ? 0.24 : 0.05) * rn.k3, []); if (nx != null) rn.x = nx; } /* 1 : portée par le sol, à la hauteur de son pied (l'escalier a une emprise large : marches et terrasse) ; un bâti n'est jamais effacé */
   }
   if (subj) keep.push({ x0: subj.x - W * 0.11, x1: subj.x + W * 0.11, subj: true });
   if (S.forms && S.forms.island && S.water && S.waterGround === true && !S.ice && !S.lava && !S.sand) { /* l'île tient son tiers : même tirage que islandOffshore */
     const qi = rng((S.seed ^ 0x15a1d) >>> 0), cx = islandWhere({ W, S, shore }, qi), w = W * (0.2 + 0.12 * qi()); if (cx != null) keep.push({ x0: cx - w * 0.75, x1: cx + w * 0.75, subj: true }); }
+  if (S.forms && (S.forms.cliff || S.forms.waterfall) && !S.lava && !cave) { const cg = cliffGeom(S, W); keep.push(cg.side > 0 ? { x0: W - cg.wid - W * 0.04, x1: W * 2 } : { x0: -W, x1: cg.wid + W * 0.04 }); } /* 2 : la falaise et sa cascade sont un mur, pas un sol : rien ne se pose devant (règle de la 2.6, pour tout ce que pose le placeur) */
   const frame = sided ? [{ x0: V.side > 0 ? W * 0.64 : -W, x1: V.side > 0 ? W * 2 : W * 0.36 }] : []; /* 2 : le côté du cadre (pente, arche, voûte) cacherait le pied d'un bâti */
-  for (const rn of ruins) { /* 3 : rien d'autre dans le tiers du sujet */
-    if (rn === subj) continue; const half = W * (BUILT.has(rn.k) ? 0.04 : rn.k === "bridge" ? 0.12 : 0.03); rn.x = slide(rn.x, BUILT.has(rn.k) ? keep.concat(frame) : keep, half);
-  }
+  for (const rn of built) if (rn !== subj) rn.x = slide(rn.x, keep.concat(frame), W * 0.04); /* 3 : rien d'autre dans le tiers du sujet */
   for (const rn of built) if (rn !== subj) keep.push({ x0: rn.x - W * 0.05 * rn.k3 * 1.6, x1: rn.x + W * 0.05 * rn.k3 * 1.6 });
-  for (const tr of trees) tr.x = slide(tr.x, keep, W * 0.025); /* 2 : un pied ne se cache pas */
-  if (det) det.x = slide(det.x, keep, W * 0.03);
+  const posed = []; /* les emprises des choses de rang 3 déjà posées (ruines, détail) : elles ne se heurtent pas */
+  for (let i = ruins.length - 1; i >= 0; i--) { const rn = ruins[i]; if (BUILT.has(rn.k)) continue;
+    if (rn.k === "bridge") { rn.x = slide(rn.x, keep, W * 0.12); continue; } /* le pont enjambe : il ne quitte que les zones réservées (à venir : l'obliger à enjamber quelque chose) */
+    const half = W * 0.03, nx = place("ruin", rn.x, hz + 2, half, keep, posed);
+    if (nx == null) { if (drawnOnly(rn.k)) { ruins.splice(i, 1); continue; } rn.x = slide(rn.x, keep, half); } else rn.x = nx; /* B : rien ne porte nulle part ; tirée : effacée ; écrite : elle reste */
+    posed.push({ x0: rn.x - half, x1: rn.x + half }); }
+  if (det) { const half = W * 0.03, nx = place("detail", det.x, hz + D * 0.06, half, keep, posed); if (nx == null) det.gone = true; else { det.x = nx; posed.push({ x0: nx - half, x1: nx + half }); } } /* le détail habité n'est jamais écrit : effacé si rien ne le porte */
+  const treesDrawn = ["grove", "great_tree", "ironwood", "charred_grove", "crystal_tree"].every((id) => !wr.has(id) || dr.has(id));
+  for (let i = trees.length - 1; i >= 0; i--) { const tr = trees[i], nx = place("tree", tr.x, hz + 2, W * 0.02, keep); /* 2 et la carte du sol : portés, hors des zones réservées (les arbres, eux, peuvent se serrer : une forêt) */
+    if (nx != null) tr.x = nx; else if (treesDrawn) trees.splice(i, 1); else tr.x = slide(tr.x, keep, W * 0.025); }
   return keep;
 }
 /** 1 : l'îlot de roche sous un bâti posé sur l'eau (peint sous la maçonnerie, dans le repère du bâti). */
@@ -1327,8 +1335,10 @@ function saltFlat(g, m, t, day, night, hzc) {
 function primeval(g, m, t, day, night) {
   const { W, H, hz, S } = m, q = rng((S.seed ^ 0x9e70) >>> 0), amb = 0.3 + 0.7 * day, hzc = m.lastHzc || [180, 180, 190], n = 5 + Math.floor(q() * 6);
   const cols = Array.from({ length: n }, () => { const z = 1.2 + q() * 6, y = hz + (H - hz) / z; return { x: W * (0.04 + 0.92 * q()), y, k: 2.6 / z, z, h: (46 + q() * 76) * (2.6 / z), w: (4.5 + q() * 3) * (2.6 / z), tone: q(), lean: (q() - 0.5) * 0.08 }; }).sort((a, b) => b.z - a.z);
-  const wetFoot = (x, y) => (m.shore ? inPoly(m.shore.wet, x, y) : !!(S.water && S.waterGround !== false && !S.ice)); /* ESSAI (6 nov.), règle 1 : rien de grand ne se tient sur l'eau */
-  for (let i = cols.length - 1; i >= 0; i--) if (wetFoot(cols[i].x, cols[i].y)) cols.splice(i, 1);
+  const wetFoot = (x, y) => !carried(m, "shrub", x, y); /* les petites plantes primitives : la table des supports (carte du sol) */
+  for (let i = cols.length - 1; i >= 0; i--) { const P = cols[i], half = P.w * 1.1, at = (c) => [c - half, c, c + half].every((u) => carried(m, "prototaxite", clamp(u, 1, W - 1), P.y)); /* ESSAI (6 nov., carte du sol) : porté par la terre ou la roche ; sinon la place la plus proche qui porte ; sinon effacé (décision B : les Prototaxites ne sont jamais écrits) */
+    if (at(P.x)) continue; let nx = null; for (let d = W / 96; d < W && nx == null; d += W / 96) { if (P.x - d > half && at(P.x - d)) nx = P.x - d; else if (P.x + d < W - half && at(P.x + d)) nx = P.x + d; }
+    if (nx == null) cols.splice(i, 1); else P.x = nx; }
   if (m.keep && m.keep.length) for (const P of cols) { /* ESSAI (6 nov.), règle 2 : un pied ne se cache pas ; la colonne glisse hors de la zone réservée */
     for (let pass = 0; pass < 3; pass++) { const half = P.w * 1.3, z = m.keep.find((o) => P.x + half > o.x0 && P.x - half < o.x1); if (!z) break; const L = z.x0 - half - 1, R = z.x1 + half + 1; P.x = L > W * 0.03 && (R > W * 0.97 || P.x - L < R - P.x) ? L : R; } }
   /* ESSAI (6 nov.) : peints comme le reste de la fenêtre : un aplat doux, un seul modelé, et l'air qui les fond dans l'horizon au loin (plus de fibres tracées) */
@@ -2641,6 +2651,7 @@ function reflect(g, m, t, a) {
 
 // ---- détail habité : une structure sans usage évident -------------------------------------------------
 function detail(g, m, t, night) {
+  if (m.det && m.det.gone) return; /* ESSAI (6 nov., carte du sol, décision B) : rien ne le porte */
   if (!m.det) return; // les autres directions du périscope n'en ont pas : il est unique
   const { W, H, hz, det: d, pal } = m, x = d.x, s = d.s, st0 = stoneOf(m), dark = css(mixc(st0.lit, [0, 0, 0], 0.3)), rim = css(st0.top, 0.7); /* ESSAI (28 oct. soir) : l'étrangeté est de pierre, comme les ruines, plus un noir de silhouette */
   const blink = night * (0.35 + 0.65 * Math.max(0, Math.sin(TAU * (t * 2) + d.p))), glow = css(hsl(d.hue, 0.8, 0.6), 1);
