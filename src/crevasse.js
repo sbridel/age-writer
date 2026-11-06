@@ -54,10 +54,47 @@ function crevasse(g, o) {
   }
   g.restore();
 
+  if (o.rock) walls(g, o, L, R, path, t, seed, ease); // ESSAI (6 nov.) : la faille a des parois, des lèvres qui s'effritent, de l'air dedans
+
   // les lèvres : une ombre dehors, un fil de lumière dessus
   path(); g.strokeStyle = "rgba(0,0,0,0.6)"; g.lineWidth = 2.6; g.lineJoin = "miter"; g.stroke();
-  g.strokeStyle = rgba(tint, 0.32 + 0.22 * pulse); g.lineWidth = 0.9;
+  g.strokeStyle = rgba(tint, (o.rock ? 0.18 : 0.32) + (o.rock ? 0.12 : 0.22) * pulse); g.lineWidth = 0.9;
   for (const side of [L, R]) { g.beginPath(); side.forEach(([px, py], i) => (i ? g.lineTo(px, py) : g.moveTo(px, py))); g.stroke(); }
+}
+
+/**
+ * ESSAI (6 nov., l'auteur : « tu pourrais améliorer le rendu de la fissure ») : ce qu'on voit d'une faille ouverte dans le sol, d'en haut.
+ *  - les parois : de chaque lèvre, la roche descend avant le vide ; la paroi d'en face (celle qui fait face au regard) se voit plus large,
+ *    avec ses strates, éclairée en haut, noire en bas ; le vide étoilé ne commence qu'au fond ;
+ *  - de l'air dedans : une brume bleutée à mi-profondeur, qui sépare la roche des étoiles ;
+ *  - les lèvres : un bord de sol qui s'effrite (des éclats, un liseré clair côté jour) ;
+ *  - des cailloux qui se détachent et tombent, de temps en temps.
+ *  o.rock : la couleur de la roche ; o.soil : la couleur du sol au bord ; o.light : 0 (nuit) à 1 (jour) ; o.facing : -1 / 1, la paroi qui fait face au regard.
+ */
+function walls(g, o, L, R, path, t, seed, ease) {
+  const rock = o.rock, soil = o.soil || rock, light = o.light == null ? 1 : o.light, facing = o.facing || 1, n = L.length;
+  const shade = (c, k) => [Math.round(c[0] * k), Math.round(c[1] * k), Math.round(c[2] * k)];
+  g.save(); path(); g.clip();
+  for (const [side, far] of [[L, facing < 0], [R, facing > 0]]) { // la paroi : une bande qui part de la lèvre vers l'intérieur ; plus large en face
+    const other = side === L ? R : L;
+    for (let i = 1; i < n; i++) {
+      const [x0, y0] = side[i - 1], [x1, y1] = side[i], [ox0] = other[i - 1], [ox1] = other[i], wd0 = Math.abs(ox0 - x0), wd1 = Math.abs(ox1 - x1), f = far ? 0.55 : 0.22, d0 = wd0 * f, d1 = wd1 * f, dir = side === L ? 1 : -1;
+      const gr = g.createLinearGradient(x0, y0, x0 + dir * d0, y0); gr.addColorStop(0, rgba(shade(rock, 0.55 + 0.35 * light), 1)); gr.addColorStop(0.55, rgba(shade(rock, 0.25 + 0.15 * light), 1)); gr.addColorStop(1, rgba(shade(rock, 0.06), 0));
+      g.fillStyle = gr; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.lineTo(x1 + dir * d1, y1 + 1); g.lineTo(x0 + dir * d0, y0 + 1); g.closePath(); g.fill();
+      if (far && i % 2 === 0) { g.strokeStyle = rgba(shade(rock, 0.18), 0.5); g.lineWidth = 0.7; for (let k = 1; k <= 3; k++) { const u = k / 4; g.beginPath(); g.moveTo(x0 + dir * d0 * u, y0); g.lineTo(x1 + dir * d1 * u, y1); g.stroke(); } } // les strates
+    }
+  }
+  const top = L[0][1], bot = L[n - 1][1], minX = Math.min(...L.map((q) => q[0])), maxX = Math.max(...R.map((q) => q[0]));
+  const mist = g.createLinearGradient(0, top, 0, bot); mist.addColorStop(0, "rgba(120,140,170,0)"); mist.addColorStop(0.5, `rgba(120,140,170,${0.12 + 0.08 * light})`); mist.addColorStop(1, "rgba(120,140,170,0)"); // l'air dedans
+  g.fillStyle = mist; g.fillRect(minX, top, maxX - minX, bot - top);
+  for (let k = 0; k < 4; k++) { const ph = (t * 0.35 + hash(seed + k * 4.1)) % 1, i = 1 + Math.floor(hash(seed + k * 9.3) * (n - 2)), side = k % 2 ? R : L, [px, py] = side[i], dir = side === L ? 1 : -1; // un caillou qui se détache et tombe
+    g.fillStyle = rgba(shade(rock, 0.4 + 0.3 * light), 0.9 * (1 - ph) * ease); g.fillRect(px + dir * (2 + ph * 4), py + ph * (bot - top) * 0.35, 1.6, 1.6); }
+  g.restore();
+  g.save(); g.lineJoin = "round"; // les lèvres qui s'effritent : des éclats de sol au bord, un liseré clair côté jour
+  for (const side of [L, R]) for (let i = 1; i < n - 1; i++) { const [px, py] = side[i], dir = side === L ? -1 : 1, s = 1.2 + 2.2 * hash(seed + i * 3.7 + (side === L ? 0 : 50)); if (hash(seed + i * 1.9 + (side === L ? 7 : 0)) < 0.45) continue;
+    g.fillStyle = rgba(shade(soil, 0.5 + 0.4 * light), 0.9); g.beginPath(); g.moveTo(px, py - s * 0.5); g.lineTo(px + dir * s * 1.4, py - s * 0.2); g.lineTo(px + dir * s * 0.6, py + s * 0.7); g.closePath(); g.fill(); }
+  g.strokeStyle = rgba(shade(soil, 1.15), 0.35 * light); g.lineWidth = 1; for (const side of [L, R]) { g.beginPath(); side.forEach(([px, py], i) => (i ? g.lineTo(px + (side === L ? -1 : 1), py - 0.5) : g.moveTo(px, py))); g.stroke(); }
+  g.restore();
 }
 
 module.exports = { crevasse, outline };

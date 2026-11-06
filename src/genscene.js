@@ -347,11 +347,6 @@ function build(S, W, H) {
   const cave = S.world === "cavern" ? buildCave(S, W, H, hz) : null; // la voûte : graine propre, les autres mondes ne bougent pas
   const qf = rng((S.seed ^ 0xa16ae) >>> 0), fedGlow = S.fed ? Array.from({ length: 16 }, () => ({ x: W * qf(), y: hz + (H - hz) * (0.08 + 0.8 * qf()), r: H * (0.02 + 0.04 * qf()), p: qf() })) : null; /* graine propre */
   const won = WON.buildWonders(S, W, H, hz); /* les merveilles : graine propre, un Âge sans merveille ne bouge pas */
-  if (S.river && S.fissure && S.fissure !== "cave" && S.fissure !== "submarine") { /* ESSAI (6 nov., l'auteur : « sur la rivière, j'aime pas ») : la faille ne s'ouvre jamais sur la rivière ; elle va dans la berge, à côté ; si le gouffre n'y tient pas, il s'ouvre moins grand (la lave, elle, peut y tomber) */
-    const mm = { S, W, H, hz, riverGeo: riverGeo(S) }, gf0 = chasmOf(S);
-    const clearAt = (x, gf) => { const sp = fisSpan(mm, gf), hw = W * 0.04 * (1 + 2.5 * gf) * 1.3 + W * 0.045; for (let y = sp.y0; y <= sp.y1; y += 4) { const rb = riverBand(mm, y); if (rb && x + hw > rb.x0 && x - hw < rb.x1) return false; } return x - hw > W * 0.04 && x + hw < W * 0.96; };
-    let done = false; for (const gf of [gf0, gf0 * 0.66, gf0 * 0.33, 0]) { if (clearAt(fis.x, gf)) { fis.gfCap = gf; done = true; break; }
-      for (let d = W / 64; d < W && !done; d += W / 64) { if (clearAt(fis.x - d, gf)) { fis.x -= d; fis.gfCap = gf; done = true; } else if (clearAt(fis.x + d, gf)) { fis.x += d; fis.gfCap = gf; done = true; } } if (done) break; } }
   const keep = placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave, fis);
   return { keep, riverGeo: riverGeo(S), craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, giantP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
 }
@@ -467,6 +462,7 @@ function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave, 
   const frame = sided ? [{ x0: V.side > 0 ? W * 0.64 : -W, x1: V.side > 0 ? W * 2 : W * 0.36 }] : []; /* 2 : le côté du cadre (pente, arche, voûte) cacherait le pied d'un bâti */
   for (const rn of built) if (rn !== subj) rn.x = slide(rn.x, keep.concat(frame), W * 0.04); /* 3 : rien d'autre dans le tiers du sujet */
   for (const rn of built) if (rn !== subj) keep.push({ x0: rn.x - W * 0.05 * rn.k3 * 1.6, x1: rn.x + W * 0.05 * rn.k3 * 1.6 });
+  if (fis) placeFissure(S, W, H, hz, fis, keep.concat(built.filter((rn) => rn === subj).map((rn) => ({ x0: rn.x - W * 0.06, x1: rn.x + W * 0.06 })))); /* la faille s'ouvre à l'écart des bâtis ; le gouffre, lui, s'élargit sur place */
   if (S.forms && S.forms.sea_arch && S.water && S.waterGround === true && !S.ice && !S.lava && !(shore && shore.mode === "far")) { /* 2 : l'arche marine tient sa place (même tirage que seaArch) */
     const qa = rng((S.seed ^ 0x5eaa7) >>> 0), free = V.kind === "slope" || V.kind === "cover" ? (V.side > 0 ? [0.12, 0.42] : [0.58, 0.88]) : [0.15, 0.85]; let cx = W * lerp(free[0], free[1], qa());
     if (shore && shore.mode === "side") { const e0 = shore.line[0][0]; cx = shore.side < 0 ? Math.max(cx, e0 + W * 0.12) : Math.min(cx, e0 - W * 0.12); }
@@ -485,6 +481,7 @@ function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave, 
   const treesDrawn = ["grove", "great_tree", "ironwood", "charred_grove", "crystal_tree"].every((id) => !wr.has(id) || dr.has(id));
   for (let i = trees.length - 1; i >= 0; i--) { const tr = trees[i], nx = place("tree", tr.x, tr.by + 2, W * 0.02 * tr.k3, keep); /* 2 et la carte du sol : portés, hors des zones réservées (les arbres, eux, peuvent se serrer : une forêt) */
     if (nx != null) tr.x = nx; else if (treesDrawn) trees.splice(i, 1); else { tr.x = slide(tr.x, keep, W * 0.025); tr.sick = 0.6; } } /* étape 5 (décision C) : écrit, rien ne le porte : il reste, malade */
+  if (fis) swallowBuilt(S, W, H, hz, fis, ruins);
   return keep;
 }
 /**
@@ -498,6 +495,31 @@ function bridgeSpan(m, fis) {
     return { x: (xL + xR) / 2, by: L[i][1], k3: clamp((((xR - xL) / 2) * 2.4) / V, 0.4, 1), spans: "fissure" }; }
   if (pond) return { x: pond.cx, by: pond.cy, k3: clamp((pond.rx * 1.25) / V, 0.3, 1), spans: "pond" };
   return null;
+}
+/**
+ * ESSAI (6 nov.) : où s'ouvre la faille. Jamais sur la rivière (elle va dans la berge) ; à l'écart des bâtis et des zones réservées, à la largeur d'une fente.
+ * Sa place ne dépend pas de l'état de l'Âge : quand l'Âge se dégrade, elle s'élargit sur place, et le gouffre avale ce qui est bâti à côté (comme à la fin de Riven).
+ * Si un gouffre ne tient pas à côté de la rivière, il s'ouvre moins grand (`fis.gfCap`).
+ */
+function placeFissure(S, W, H, hz, fis, zones) {
+  if (!S.fissure || S.fissure === "cave" || S.fissure === "submarine") return;
+  const mm = { S, W, H, hz, riverGeo: riverGeo(S) }, gf0 = chasmOf(S), off = W * 0.045;
+  const riverOk = (x, gf) => { if (!S.river) return true; const sp = fisSpan(mm, gf), hw = W * 0.04 * (1 + 2.5 * gf) * 1.3 + off; for (let y = sp.y0; y <= sp.y1; y += 4) { const rb = riverBand(mm, y); if (rb && x + hw > rb.x0 && x - hw < rb.x1) return false; } return true; };
+  const zonesOk = (x) => { const hw = W * 0.04 * 1.3 + off; return !zones.some((o) => x + hw > o.x0 && x - hw < o.x1); }; /* à la largeur d'une fente */
+  const inFrame = (x, gf) => { const hw = W * 0.04 * (1 + 2.5 * gf) * 1.3 + off; return x - hw > W * 0.04 && x + hw < W * 0.96; };
+  const ok = (x, gf, strict) => riverOk(x, gf) && inFrame(x, gf) && (!strict || zonesOk(x));
+  for (const strict of [true, false]) for (const gf of [gf0, gf0 * 0.66, gf0 * 0.33, 0]) {
+    if (ok(fis.x, gf, strict)) { fis.gfCap = gf; return; }
+    for (let d = W / 64; d < W; d += W / 64) { if (ok(fis.x - d, gf, strict)) { fis.x -= d; fis.gfCap = gf; return; } if (ok(fis.x + d, gf, strict)) { fis.x += d; fis.gfCap = gf; return; } } }
+}
+/** le gouffre avale les bâtis qui sont sur son chemin : penchés vers le vide, enfoncés, coupés par la lèvre */
+function swallowBuilt(S, W, H, hz, fis, ruins) {
+  if (!S.fissure || S.fissure === "cave" || S.fissure === "submarine") return; const gf = Math.min(chasmOf(S), fis.gfCap == null ? 1 : fis.gfCap); if (gf < 0.2) return;
+  const { L, R } = fissureLips({ S, W, H, hz, fis }, gf);
+  for (const rn of ruins) { if (rn.k === "bridge") continue; const by = rn.by || hz, k = rn.k3 || 1, half = W * (BUILT.has(rn.k) ? 0.05 : 0.03) * k;
+    let i = 0; while (i < L.length - 1 && L[i][1] < by) i++; if (L[i][1] < by - 2 && i === L.length - 1) continue; if (i === 0 && L[0][1] > by + 6) continue; /* la faille ne passe pas à cette hauteur */
+    const xL = L[i][0], xR = R[i][0]; if (rn.x + half < xL - 2 || rn.x - half > xR + 2) continue;
+    const toward = rn.x < (xL + xR) / 2 ? 1 : -1; rn.chasm = { tilt: toward * (0.12 + 0.25 * gf), sink: H * (0.05 + 0.12 * gf) * k }; }
 }
 /** 1 : l'îlot de roche sous un bâti posé sur l'eau (peint sous la maçonnerie, dans le repère du bâti). */
 function isletFoot(g, m, rn) {
@@ -515,7 +537,8 @@ function placedRuin(L, g, m, rn, t, st) {
   if (!rn.k3) { ruin(L, m, rn, t, g, st); return; }
   if (rn.foot === "islet") isletFoot(g, m, rn);
   const sink = rn.lava === "taken" ? m.H * 0.09 * rn.k3 : 0; /* ESSAI (6 nov., étape 7) : pris par la lave, il s'enfonce ; le sol le coupe à sa ligne */
-  const tf = (c) => { c.save(); if (sink) { c.beginPath(); c.rect(0, 0, m.W, rn.by + 1); c.clip(); } c.translate(rn.x, rn.by + sink); c.scale(rn.k3, rn.k3); c.translate(-rn.x, -m.hz); };
+  const ch = rn.chasm; /* le gouffre l'avale : penché vers le vide, enfoncé, coupé à la lèvre */
+  const tf = (c) => { c.save(); if (sink || ch) { c.beginPath(); c.rect(0, 0, m.W, rn.by + 1); c.clip(); } c.translate(rn.x, rn.by + sink + (ch ? ch.sink : 0)); if (ch) c.rotate(ch.tilt); c.scale(rn.k3, rn.k3); c.translate(-rn.x, -m.hz); };
   tf(L); if (g !== L) tf(g); ruin(L, m, rn, t, g, st); if (g !== L) g.restore(); L.restore();
 }
 /**
@@ -2052,7 +2075,8 @@ function fissure(g, m, t) {
   }
   const sub = S.fissure === "submarine", gf = Math.min(chasmOf(S), fis.gfCap == null ? 1 : fis.gfCap), sp = fisSpan(m, gf), y0 = sub ? hz + (H - hz) * 0.3 : sp.y0, yEnd = sub ? H - 2 : sp.y1;
   if (gf > 0 && !sub) chasmSwallow(g, m, t, gf); /* ESSAI (6 nov., étape 6) : le gouffre boit tout ce qui coule ; en aval, plus rien */
-  crevasse(g, { x: fis.x, y0, y1: yEnd, w: W * 0.04 * (1 + 2.5 * gf), jit: chasmJit(fis.pts, gf), t, water: sub, open: openingOf(S), seed: 1 + ((S.seed >>> 0) % 89) });
+  const look = sub ? {} : { rock: mixc(m.pal.rock, [96, 90, 84], 0.4), soil: m.pal.ground, light: 1 - (m.nightK || 0), facing: fis.x < W / 2 ? -1 : 1 }; /* ESSAI (6 nov.) : des parois, des lèvres, de l'air (src/crevasse.js, walls) */
+  crevasse(g, { x: fis.x, y0, y1: yEnd, w: W * 0.04 * (1 + 2.5 * gf), jit: chasmJit(fis.pts, gf), t, water: sub, open: openingOf(S), seed: 1 + ((S.seed >>> 0) % 89), ...look });
   if (!sub) fallsInto(g, m, t, gf); /* ESSAI (6 nov., étape 6) : ce qui coule y tombe */
   if (sub && gf > 0) seaFunnel(g, m, t, gf); /* sous la mer, le gouffre aspire : un entonnoir à la surface */
   if (sub) for (const b of fis.bubbles) { const q = frac(t * 2 + b.p); g.strokeStyle = css([205, 235, 248], 0.5 * (1 - q)); g.lineWidth = 0.9; g.beginPath(); g.arc(fis.x + b.dx, H - 4 - q * (H - y0 - 8), 1 + 1.4 * b.p, 0, TAU); g.stroke(); }
@@ -2106,8 +2130,9 @@ function chasmSwallow(g, m, t, gf) {
   const lip = yIn + (H - yIn) * (0.15 + 0.2 * (1 - gf)); /* là où le cours bascule */
   const Lp = [], Rp = []; for (let y = lip; y <= H + 4; y += 2) { const f = flowAt(m, y); if (!f) continue; Lp.push([f.x0 - 2, y]); Rp.push([f.x1 + 2, y]); } if (Lp.length < 2) return;
   g.save(); g.beginPath(); Lp.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); for (let i = Rp.length - 1; i >= 0; i--) g.lineTo(Rp[i][0], Rp[i][1]); g.closePath(); g.clip();
-  g.fillStyle = css(mixc(pal.ground, [40, 34, 30], 0.35)); g.fillRect(0, lip, W, H - lip);
-  g.globalAlpha = 0.5 * gf; g.fillStyle = css(mixc(pal.ground, [0, 0, 0], 0.4)); for (let y = lip; y < H; y += 6) g.fillRect(0, y, W, 1.2); /* le lit asséché, ses rides */
+  const crust = mixc(mixc(pal.ground, [22, 16, 14], 0.75), [0, 0, 0], 0.2), fade = g.createLinearGradient(0, lip - 6, 0, lip + 18); fade.addColorStop(0, css(crust, 0)); fade.addColorStop(1, css(crust, 0.92));
+  g.fillStyle = fade; g.fillRect(0, lip - 6, W, 24); g.fillStyle = css(crust, 0.92); g.fillRect(0, lip + 18, W, H - lip); /* la coulée s'est arrêtée : la croûte noire, qui se fond dans le reste */
+  g.globalAlpha = 0.35 * gf; g.strokeStyle = css([255, 110, 40]); g.lineWidth = 0.8; for (let y = lip + 10; y < H; y += 9) { g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= W; x += 14) g.lineTo(x, y + Math.sin(x * 0.07 + y) * 2); g.stroke(); } /* les dernières veines de feu sous la croûte */
   g.restore();
 }
 /** sous la mer, le gouffre aspire : un entonnoir à la surface, au-dessus de la fente */
