@@ -347,12 +347,12 @@ function build(S, W, H) {
   const cave = S.world === "cavern" ? buildCave(S, W, H, hz) : null; // la voûte : graine propre, les autres mondes ne bougent pas
   const qf = rng((S.seed ^ 0xa16ae) >>> 0), fedGlow = S.fed ? Array.from({ length: 16 }, () => ({ x: W * qf(), y: hz + (H - hz) * (0.08 + 0.8 * qf()), r: H * (0.02 + 0.04 * qf()), p: qf() })) : null; /* graine propre */
   const won = WON.buildWonders(S, W, H, hz); /* les merveilles : graine propre, un Âge sans merveille ne bouge pas */
-  const keep = placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave);
   if (S.river && S.fissure && S.fissure !== "cave" && S.fissure !== "submarine") { /* ESSAI (6 nov., l'auteur : « sur la rivière, j'aime pas ») : la faille ne s'ouvre jamais sur la rivière ; elle va dans la berge, à côté ; si le gouffre n'y tient pas, il s'ouvre moins grand (la lave, elle, peut y tomber) */
     const mm = { S, W, H, hz, riverGeo: riverGeo(S) }, gf0 = chasmOf(S);
     const clearAt = (x, gf) => { const sp = fisSpan(mm, gf), hw = W * 0.04 * (1 + 2.5 * gf) * 1.3 + W * 0.045; for (let y = sp.y0; y <= sp.y1; y += 4) { const rb = riverBand(mm, y); if (rb && x + hw > rb.x0 && x - hw < rb.x1) return false; } return x - hw > W * 0.04 && x + hw < W * 0.96; };
     let done = false; for (const gf of [gf0, gf0 * 0.66, gf0 * 0.33, 0]) { if (clearAt(fis.x, gf)) { fis.gfCap = gf; done = true; break; }
       for (let d = W / 64; d < W && !done; d += W / 64) { if (clearAt(fis.x - d, gf)) { fis.x -= d; fis.gfCap = gf; done = true; } else if (clearAt(fis.x + d, gf)) { fis.x += d; fis.gfCap = gf; done = true; } } if (done) break; } }
+  const keep = placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave, fis);
   return { keep, riverGeo: riverGeo(S), craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, giantP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
 }
 
@@ -429,7 +429,7 @@ const SUPPORT_OF = { fern: "shrub", seed: "shrub", moss: "shrub", berry_shrub: "
 function supportOf(kind) { return SUPPORT[kind] || SUPPORT[SUPPORT_OF[kind]] || null; }
 /** la chose est-elle portée en (x, y) ? « far » (le lointain) porte toujours : c'est la côte d'en face */
 function carried(m, kind, x, y) { const sp = supportOf(kind); if (!sp) return true; const s = solEn(m, x, y); return s.k === "far" || sp.on.has(s.k); }
-function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave) {
+function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave, fis) {
   const keep = [], built = ruins.filter((rn) => BUILT.has(rn.k)), m = { S, W, H, hz, shore, pond, cones, cave, riverGeo: riverGeo(S) }, D = H - hz;
   const wetAt = (x, y) => (shore ? inPoly(shore.wet, x, y) : !!(S.water && S.waterGround !== false && !S.ice && !S.lava && !S.sand));
   const openSea = !shore && !!(S.water && S.waterGround !== false && !S.ice && !S.lava && !S.sand);
@@ -467,17 +467,37 @@ function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave) 
   const frame = sided ? [{ x0: V.side > 0 ? W * 0.64 : -W, x1: V.side > 0 ? W * 2 : W * 0.36 }] : []; /* 2 : le côté du cadre (pente, arche, voûte) cacherait le pied d'un bâti */
   for (const rn of built) if (rn !== subj) rn.x = slide(rn.x, keep.concat(frame), W * 0.04); /* 3 : rien d'autre dans le tiers du sujet */
   for (const rn of built) if (rn !== subj) keep.push({ x0: rn.x - W * 0.05 * rn.k3 * 1.6, x1: rn.x + W * 0.05 * rn.k3 * 1.6 });
+  if (S.forms && S.forms.sea_arch && S.water && S.waterGround === true && !S.ice && !S.lava && !(shore && shore.mode === "far")) { /* 2 : l'arche marine tient sa place (même tirage que seaArch) */
+    const qa = rng((S.seed ^ 0x5eaa7) >>> 0), free = V.kind === "slope" || V.kind === "cover" ? (V.side > 0 ? [0.12, 0.42] : [0.58, 0.88]) : [0.15, 0.85]; let cx = W * lerp(free[0], free[1], qa());
+    if (shore && shore.mode === "side") { const e0 = shore.line[0][0]; cx = shore.side < 0 ? Math.max(cx, e0 + W * 0.12) : Math.min(cx, e0 - W * 0.12); }
+    qa(); const w = W * (0.11 + 0.06 * qa()); keep.push({ x0: cx - w * 1.1, x1: cx + w * 1.1, subj: true }); }
+  const qd = rng((S.seed ^ 0xde97) >>> 0); /* 4 étendue : les petites ruines et les arbres ont une profondeur ; plus loin, plus petits et plus haut ; tirage à part */
+  for (const rn of ruins) if (!BUILT.has(rn.k) && rn.k !== "bridge") { const u = qd(); rn.k3 = 0.72 + 0.26 * u; rn.by = hz + D * 0.05 * u; }
+  for (const tr of trees) { const u = qd(); tr.k3 = 0.7 + 0.3 * u; tr.by = hz + D * 0.06 * u; }
+  trees.sort((p, q2) => p.by - q2.by); /* le plus loin d'abord */
   const posed = []; /* les emprises des choses de rang 3 déjà posées (ruines, détail) : elles ne se heurtent pas */
   for (let i = ruins.length - 1; i >= 0; i--) { const rn = ruins[i]; if (BUILT.has(rn.k)) continue;
-    if (rn.k === "bridge") { rn.x = slide(rn.x, keep, W * 0.12); continue; } /* le pont enjambe : il ne quitte que les zones réservées (à venir : l'obliger à enjamber quelque chose) */
-    const half = W * 0.03, nx = place("ruin", rn.x, hz + 2, half, keep, posed);
+    if (rn.k === "bridge") { const sp = bridgeSpan(m, fis); if (sp) Object.assign(rn, sp); else rn.x = slide(rn.x, keep, W * 0.12); continue; } /* ESSAI (6 nov.) : le pont enjambe ce qui se présente (la rivière, la faille, l'étang), à la profondeur qui lui va ; sinon il reste au loin, hors des zones réservées */
+    const half = W * 0.03 * rn.k3, nx = place("ruin", rn.x, rn.by + 2, half, keep, posed);
     if (nx == null) { if (drawnOnly(rn.k)) { ruins.splice(i, 1); continue; } rn.x = slide(rn.x, keep, half); } else rn.x = nx; /* B : rien ne porte nulle part ; tirée : effacée ; écrite : elle reste */
     posed.push({ x0: rn.x - half, x1: rn.x + half }); }
   if (det) { const half = W * 0.03, nx = place("detail", det.x, hz + D * 0.06, half, keep, posed); if (nx == null) det.gone = true; else { det.x = nx; posed.push({ x0: nx - half, x1: nx + half }); } } /* le détail habité n'est jamais écrit : effacé si rien ne le porte */
   const treesDrawn = ["grove", "great_tree", "ironwood", "charred_grove", "crystal_tree"].every((id) => !wr.has(id) || dr.has(id));
-  for (let i = trees.length - 1; i >= 0; i--) { const tr = trees[i], nx = place("tree", tr.x, hz + 2, W * 0.02, keep); /* 2 et la carte du sol : portés, hors des zones réservées (les arbres, eux, peuvent se serrer : une forêt) */
+  for (let i = trees.length - 1; i >= 0; i--) { const tr = trees[i], nx = place("tree", tr.x, tr.by + 2, W * 0.02 * tr.k3, keep); /* 2 et la carte du sol : portés, hors des zones réservées (les arbres, eux, peuvent se serrer : une forêt) */
     if (nx != null) tr.x = nx; else if (treesDrawn) trees.splice(i, 1); else { tr.x = slide(tr.x, keep, W * 0.025); tr.sick = 0.6; } } /* étape 5 (décision C) : écrit, rien ne le porte : il reste, malade */
   return keep;
+}
+/**
+ * ESSAI (6 nov.) : le pont enjambe quelque chose. Dans l'ordre : la rivière, la faille ouverte, l'étang. Il se pose à la profondeur où ce qu'il enjambe
+ * a la largeur qui lui va, et sa taille suit cette profondeur (règle 4). Renvoie { x, by, k3, spans } ou null (rien à enjamber : il reste au loin).
+ */
+function bridgeSpan(m, fis) {
+  const { S, W, H, hz, pond } = m, D = H - hz, V = W * 0.19; /* la demi-portée moyenne d'un pont, dessiné à l'échelle 1 */
+  if (S.river && m.riverGeo) { const y = hz + D / 2.6, rb = riverBand(m, y); if (rb) { const half = (rb.x1 - rb.x0) / 2; return { x: (rb.x0 + rb.x1) / 2, by: y, k3: clamp((half * 1.5) / V, 0.3, 1), spans: "river" }; } }
+  if (S.fissure && S.fissure !== "cave" && S.fissure !== "submarine" && fis) { const gf = Math.min(chasmOf(S), fis.gfCap == null ? 1 : fis.gfCap), { L, R } = fissureLips({ S, W, H, hz, fis }, gf), i = Math.floor(L.length * 0.6), xL = L[i][0], xR = R[i][0];
+    return { x: (xL + xR) / 2, by: L[i][1], k3: clamp((((xR - xL) / 2) * 2.4) / V, 0.4, 1), spans: "fissure" }; }
+  if (pond) return { x: pond.cx, by: pond.cy, k3: clamp((pond.rx * 1.25) / V, 0.3, 1), spans: "pond" };
+  return null;
 }
 /** 1 : l'îlot de roche sous un bâti posé sur l'eau (peint sous la maçonnerie, dans le repère du bâti). */
 function isletFoot(g, m, rn) {
@@ -2120,6 +2140,8 @@ function trees(g, m, t) {
   let stalkDone = false; /* l'arbre à tige : un seul par fenêtre, comme au Relto */
   const B0 = S.burnt, nT = m.trees.length, SC = S.succ && S.succ.kind !== "bare" ? S.succ : null, back = SC ? SC.t * nT : 0; /* 2.5 (E) : les arbres repoussent un à un, les premiers d'abord ; le dernier en jeune pousse */
   for (const [i, tr] of m.trees.entries()) {
+    const tz = !!tr.k3; if (tz) { g.save(); g.translate(tr.x, tr.by); g.scale(tr.k3, tr.k3); g.translate(-tr.x, -hz); } /* ESSAI (6 nov.), règle 4 étendue : l'arbre dans son plan */
+    try {
     const gr = SC && !SC.burning && B0 && i < Math.ceil(back - 1e-9) ? clamp(back - i) : 0; S.burnt = B0 && !(gr > 0);
     const v = rng((S.seed ^ (0x7e11 + i * 7919)) >>> 0); let kind = S.burnt || ((S.lava || S.world === "lava") && !(gr > 0)) ? "spire" : /* 2.5 (E) : ce qui repousse est un arbre vivant, même près de la lave */ v() < 0.32 ? TK.second : TK.main; if (kind === "stalktree") { if (stalkDone) kind = TK.main === "stalktree" ? (TK.second === "stalktree" ? "broadleaf" : TK.second) : TK.main; else stalkDone = true; }
     if (S.youngTrees || tr.sick) { /* l'anachronisme : un tronc gris, nu, à demi formé, fendu ; plus le monde est jeune, plus il est abîmé ; ESSAI (6 nov., carte du sol, étape 5) : aussi l'arbre écrit que le sol ne porte pas */
@@ -2198,6 +2220,7 @@ function trees(g, m, t) {
     const ox = !(S.phys && S.phys.oxygen < 0.3); /* 2.5 (D) : sans oxygène, le feu ne prend pas : des braises mortes, à peine rouges */
     if (S.fire && !ox) for (let k = 0; k < 3; k++) { const p = 0.5 + 0.5 * Math.sin(TAU * (t * 0.6 + k * 0.31 + i * 0.2)), fx = x + (k - 1) * 4 + sw; g.fillStyle = css([120 + 30 * p, 40, 28], 0.55); g.beginPath(); g.arc(fx, hz - h * 0.68, 1.4, 0, TAU); g.fill(); }
     if (S.fire && ox) for (let k = 0; k < 3; k++) { const p = 0.5 + 0.5 * Math.sin(TAU * (t * 3 + k * 0.31 + i * 0.2)), fx = x + (k - 1) * 4 + sw; g.fillStyle = css([255, 140 + 60 * p, 40], 0.8); g.beginPath(); g.moveTo(fx - 2, hz - h * 0.7); g.lineTo(fx, hz - h * (0.9 + 0.25 * p)); g.lineTo(fx + 2, hz - h * 0.7); g.closePath(); g.fill(); }
+    } finally { if (tz) g.restore(); }
   }
   S.burnt = B0;
 }
@@ -3083,7 +3106,8 @@ function geyserField(g, m, t, e) {
  */
 function fixPoints(m, e, zn, zf) {
   const sp = supportOf(e.id), W = m.W, half = Math.max(1, sp.half * W), S = m.S, written = (S.writtenIds || []).includes(e.id);
-  const fits = (x, y) => x - half > W * 0.02 && x + half < W * 0.98 && carried(m, e.id, x, y) && carried(m, e.id, x - half, y) && carried(m, e.id, x + half, y);
+  const hard = sp.rank <= 3 ? m.keep || [] : []; /* 2 : ce qui est grand (les geysers) quitte les zones réservées */
+  const fits = (x, y) => x - half > W * 0.02 && x + half < W * 0.98 && carried(m, e.id, x, y) && carried(m, e.id, x - half, y) && carried(m, e.id, x + half, y) && !hard.some((o) => x + half > o.x0 && x - half < o.x1);
   const along = (P) => { if (fits(P.x, P.y)) return P; for (let d = W / 96; d < W; d += W / 96) { if (fits(P.x - d, P.y)) return { ...P, x: P.x - d }; if (fits(P.x + d, P.y)) return { ...P, x: P.x + d }; } return null; };
   return e.items.map((it) => { const P0 = gpt(m, it, zn, zf), a = along(P0); if (a) return a;
     for (let k = 1; k <= 10; k++) { const u = (it.y + k * 0.1) % 1, b = along(gpt(m, { ...it, y: u }, zn, zf)); if (b) return b; } /* une autre profondeur */
