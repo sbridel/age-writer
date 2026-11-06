@@ -369,6 +369,58 @@ function dryAt(m, x, y) {
   const pd = m.pond; if (pd && ((x - pd.cx) / (pd.rx * 1.04)) ** 2 + ((y - pd.cy) / (pd.ry * 1.08)) ** 2 < 1) return false;
   return true;
 }
+/**
+ * ESSAI (6 nov.) : la carte du sol (claude/DESIGN-carte-du-sol.md, version légère). Ce qu'il y a en (x, y), recalculé à partir des géométries que
+ * les peintres tirent déjà (graines propres), sans rien peindre : { k: sorte de sol, form: forme qui le porte ou null }.
+ * Sortes : far (au-dessus de l'horizon : le lointain), sea, river, pond, sand, ice, lava, salt, chalk, stone, basalt, granite, earth, forest, rock.
+ */
+function solEn(m, x, y) {
+  const { S, W, H, hz } = m; if (y <= hz + 0.5) return { k: "far", form: null };
+  const D = H - hz, V = S.view || {}, forms = S.forms || {};
+  if (forms.island && S.water && S.waterGround === true && !S.ice && !S.lava && !S.sand) { /* l'île : le même tirage que islandOffshore */
+    const qi = rng((S.seed ^ 0x15a1d) >>> 0), cx = islandWhere(m, qi), w = W * (0.2 + 0.12 * qi()); if (cx != null && Math.abs(x - cx) < w * 0.5 && y < hz + D * 0.05) return { k: "rock", form: "island" }; }
+  if (forms.sea_arch && S.water && S.waterGround === true && !S.ice && !S.lava && !(m.shore && m.shore.mode === "far")) { /* l'arche : le même tirage que seaArch */
+    const qa = rng((S.seed ^ 0x5eaa7) >>> 0), free = V.kind === "slope" || V.kind === "cover" ? (V.side > 0 ? [0.12, 0.42] : [0.58, 0.88]) : [0.15, 0.85]; let cx = W * lerp(free[0], free[1], qa());
+    if (m.shore && m.shore.mode === "side") { const e = m.shore.line[0][0]; cx = m.shore.side < 0 ? Math.max(cx, e + W * 0.12) : Math.min(cx, e - W * 0.12); }
+    const yb = hz + D * (0.04 + 0.06 * qa()), w = W * (0.11 + 0.06 * qa()); if (Math.abs(x - cx) < w && Math.abs(y - yb) < D * 0.03) return { k: "rock", form: "sea_arch" }; }
+  if ((forms.cliff || forms.waterfall) && !S.lava && !m.cave) { const cg = cliffGeom(S, W), inCliff = cg.side > 0 ? x > W - cg.wid : x < cg.wid; if (inCliff) return { k: "rock", form: forms.waterfall ? "waterfall" : "cliff" }; }
+  for (const cn of m.cones || []) if (Math.abs(x - cn.x) < cn.w * 0.5 && y < hz + D * 0.04) return { k: S.lava ? "lava" : "rock", form: "cone" };
+  if (m.shore ? inPoly(m.shore.wet, x, y) : (S.water && S.waterGround !== false && !S.ice && !S.lava && !S.sand)) return { k: "sea", form: null };
+  const rb = riverBand(m, y); if (rb && x > rb.x0 && x < rb.x1) return { k: "river", form: null };
+  const pd = m.pond; if (pd && ((x - pd.cx) / (pd.rx * 1.04)) ** 2 + ((y - pd.cy) / (pd.ry * 1.08)) ** 2 < 1) return { k: "pond", form: null };
+  if (S.lava) return { k: "lava", form: null };
+  if (S.ice || S.world === "frozen") return { k: "ice", form: null };
+  if (S.sand || S.world === "desert") return { k: "sand", form: m.shore ? "beach" : null };
+  if (S.soil === "salt" || S.soil === "chalk" || S.soil === "earth" || S.soil === "forest") return { k: S.soil, form: null };
+  if (S.rock === "basalt" || S.rock === "granite") return { k: S.rock, form: null };
+  if (S.soil === "stone") return { k: "stone", form: null };
+  if (S.alive || S.trees || S.grass || S.world === "jungle") return { k: "earth", form: null }; /* un monde vivant sans famille de sol écrite : de la terre */
+  return { k: "rock", form: null };
+}
+/* la table des supports (décision A, proposition de la fiche) : ce qui porte chaque sorte de chose. Les familles : */
+const SOL = { wet: ["sea", "river", "pond"], dry: ["sand", "ice", "lava", "salt", "chalk", "stone", "basalt", "granite", "earth", "forest", "rock"], soilT: ["earth", "forest"], rockT: ["stone", "basalt", "granite", "chalk", "rock"] };
+const ON = (...fams) => new Set(fams.flatMap((f) => SOL[f] || [f]));
+const SUPPORT = {
+  built: { half: 0.05, on: ON("rockT", "soilT", "sand", "ice", "salt"), rank: 2 },
+  ruin: { half: 0.03, on: ON("dry"), rank: 3 },
+  bridge: { half: 0.14, on: ON("dry", "wet"), rank: 2 },
+  detail: { half: 0.03, on: ON("dry"), rank: 3 },
+  tree: { half: 0.025, on: ON("soilT", "rockT", "sand", "ice"), rank: 4 }, /* l'espèce est déjà choisie par le sol (treeKindsOf) ; la table ne garde que le sec qui porte des racines (ni lave ni sel) */
+  prototaxite: { half: 0.02, on: ON("soilT", "rockT"), rank: 4 },
+  shrub: { half: 0.01, on: ON("soilT", "rockT"), rank: 5 }, thorn_bush: { half: 0.01, on: ON("soilT", "rockT", "sand"), rank: 5 },
+  fungus: { half: 0.01, on: ON("soilT", "rockT"), rank: 5 }, pale_fungus: { half: 0.01, on: ON("soilT", "rockT", "ice"), rank: 5 },
+  mineral: { half: 0.01, on: ON("dry"), rank: 5 },
+  land_beast: { half: 0.015, on: ON("dry"), rank: 5 }, burrower: { half: 0.015, on: ON("soilT", "sand"), rank: 5 },
+  water_life: { half: 0, on: ON("wet"), rank: 5 },
+  geysers: { half: 0.06, on: ON("rockT", "soilT"), rank: 3 },
+};
+const SUPPORT_OF = { fern: "shrub", seed: "shrub", moss: "shrub", berry_shrub: "shrub", heath_shrub: "shrub", sapling: "shrub", withered_fern: "shrub", cinderbloom: "shrub", humming_blooms: "shrub", crystal_flower: "mineral", thorn_bush: "thorn_bush",
+  mushroom: "fungus", mycelium: "fungus", pale_fungus: "pale_fungus", stone: "mineral", iron: "mineral", crystal: "mineral", salt: "mineral", ash: "mineral", strange_stone: "mineral", diamond: "mineral", charged_crystal: "mineral", humming_shard: "mineral", rust: "mineral", book: "ruin", blurred_book: "ruin",
+  grazer: "land_beast", herd: "land_beast", cave_stalker: "land_beast", burrower: "burrower", shoal: "water_life", deep_hunter: "water_life", plankton: "water_life", glow_algae: "water_life", geysers: "geysers" };
+/** la règle de support pour une chose (sa sorte dans la table), ou null si elle ne se pose pas au sol */
+function supportOf(kind) { return SUPPORT[kind] || SUPPORT[SUPPORT_OF[kind]] || null; }
+/** la chose est-elle portée en (x, y) ? « far » (le lointain) porte toujours : c'est la côte d'en face */
+function carried(m, kind, x, y) { const sp = supportOf(kind); if (!sp) return true; const s = solEn(m, x, y); return s.k === "far" || sp.on.has(s.k); }
 /** la place sèche la plus proche de x, à la hauteur y, pour une emprise de demi-largeur half ; x s'il n'y en a pas */
 function dryNear(m, x, y, half) {
   const W = m.W, ok = (c) => dryAt(m, c - half, y) && dryAt(m, c, y) && dryAt(m, c + half, y); if (ok(x)) return x;
@@ -3035,4 +3087,4 @@ Object.assign(ART, {
   aeroplankton: { layer: "air", draw(g, m, t, e) { const { W, H, hz } = m; for (const it of e.items) for (let k = 0; k < 6; k++) { const x = (it.x + k * 41) % W, y = hz - H * (0.05 + 0.3 * frac(it.y + k * 0.17)); g.fillStyle = css([220, 240, 255], 0.2 + 0.4 * Math.max(0, Math.sin(TAU * t * 2 + k + it.p))); g.fillRect(x, y, 1, 1); } } },
 });
 
-module.exports = { sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
+module.exports = { solEn, supportOf, carried, SUPPORT, SUPPORT_OF, byDepthForTest: (m, e, a, b) => byDepth(m, e, a, b), sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
