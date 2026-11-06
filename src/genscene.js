@@ -346,7 +346,91 @@ function build(S, W, H) {
   const cave = S.world === "cavern" ? buildCave(S, W, H, hz) : null; // la voûte : graine propre, les autres mondes ne bougent pas
   const qf = rng((S.seed ^ 0xa16ae) >>> 0), fedGlow = S.fed ? Array.from({ length: 16 }, () => ({ x: W * qf(), y: hz + (H - hz) * (0.08 + 0.8 * qf()), r: H * (0.02 + 0.04 * qf()), p: qf() })) : null; /* graine propre */
   const won = WON.buildWonders(S, W, H, hz); /* les merveilles : graine propre, un Âge sans merveille ne bouge pas */
-  return { craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, giantP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
+  const keep = placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond); /* ESSAI (6 nov.) : la grammaire du placement (claude/DESIGN-grammaire-du-placement.md) */
+  return { keep, riverGeo: riverGeo(S), craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, giantP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
+}
+
+/**
+ * ESSAI (6 nov.) : la grammaire du placement (loi 7, Support : une chose tient sur ce qui la porte, et ce qui la porte se voit).
+ *  1. un bâti a un pied : sur l'eau, il reçoit son îlot ;
+ *  3. un sujet par tiers : le premier bâti (s'il n'y a ni île ni arche marine) va sur le tiers libre, à l'opposé du cadre ;
+ *  2. un pied ne se cache pas : des zones réservées que les grandes choses tirées (arbres, Prototaxites, ruines, le détail) quittent ;
+ *  4. la taille suit la profondeur : sur l'eau, au loin, sur l'horizon (le reflet reste juste) ; sur la terre, le sujet au plan moyen, les autres au loin.
+ * Tirage à part (graine propre) : rien d'autre ne bouge. Renvoie les zones réservées [{ x0, x1 }].
+ */
+const BUILT = new Set(["tower", "lighthouse", "stairs"]);
+/** ESSAI (6 nov.), règle 1 généralisée : où est l'eau à cette hauteur (la mer et sa rive, le ruban de rivière, l'étang), pour tout ce qui se pose au sol. */
+function riverGeo(S) { if (!S.river) return null; const q = rng((S.seed ^ 0x51a7e) >>> 0); return { ph: q() * 6.28, amp: 0.5 + q() * 0.6, wid: 0.16 + q() * 0.1, u0: (q() - 0.5) * 0.6 }; } /* le même tirage que riverRibbon */
+function riverBand(m, y) { const R = m.riverGeo; if (!R) return null; const { W, H, hz } = m, D = H - hz, z = clamp(D / Math.max(1, y - hz), 1.02, 30), u = R.u0 + R.amp * Math.sin(R.ph + z * 0.55) * Math.min(1, z * 0.3), k = (W * 0.55) / z; return { x0: W / 2 + (u - R.wid) * k, x1: W / 2 + (u + R.wid) * k }; }
+function dryAt(m, x, y) {
+  const { S } = m; if (y <= m.hz) return true; /* au-dessus de l'horizon : le lointain */
+  if (m.shore ? inPoly(m.shore.wet, x, y) : (S.water && S.waterGround !== false && !S.ice && !S.lava && !S.sand)) return false;
+  const rb = riverBand(m, y); if (rb && x > rb.x0 && x < rb.x1) return false;
+  const pd = m.pond; if (pd && ((x - pd.cx) / (pd.rx * 1.04)) ** 2 + ((y - pd.cy) / (pd.ry * 1.08)) ** 2 < 1) return false;
+  return true;
+}
+/** la place sèche la plus proche de x, à la hauteur y, pour une emprise de demi-largeur half ; x s'il n'y en a pas */
+function dryNear(m, x, y, half) {
+  const W = m.W, ok = (c) => dryAt(m, c - half, y) && dryAt(m, c, y) && dryAt(m, c + half, y); if (ok(x)) return x;
+  for (let d = W / 64; d < W; d += W / 64) { const L = x - d, R = x + d, okL = L - half > W * 0.03 && ok(L), okR = R + half < W * 0.97 && ok(R); if (okL || okR) return okL ? L : R; }
+  return x;
+}
+function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond) {
+  const keep = [], built = ruins.filter((rn) => BUILT.has(rn.k)), m = { S, W, H, hz, shore, pond, riverGeo: riverGeo(S) }, D = H - hz;
+  const seaFoot = (x, y) => (shore ? inPoly(shore.wet, x, y) : !!(S.water && S.waterGround !== false && !S.ice && !S.lava && !S.sand));
+  /* 1, pour tout ce qui se pose au sol : les arbres, les ruines (sauf le pont, qui enjambe), le détail habité vont à la place sèche la plus proche ; sur une mer sans rive, ce qui tient l'horizon reste (c'est la côte d'en face) */
+  for (const tr of trees) tr.x = dryNear(m, tr.x, hz + 2, W * 0.02);
+  for (const rn of ruins) if (!BUILT.has(rn.k) && rn.k !== "bridge" && (shore || S.river || pond)) rn.x = dryNear(m, rn.x, hz + 2, W * 0.03);
+  if (det) det.x = dryNear(m, det.x, hz + D * 0.06, W * 0.03);
+  if (!built.length) return keep;
+  const q = rng((S.seed ^ 0x6a7a3) >>> 0), V = S.view || {};
+  const wetAt = seaFoot;
+  const dryZones = (y) => { const z = [], rb = riverBand(m, y); if (rb) z.push({ x0: rb.x0 - W * 0.03, x1: rb.x1 + W * 0.03 }); if (pond && y > pond.cy - pond.ry * 1.2 && y < pond.cy + pond.ry * 1.2) z.push({ x0: pond.cx - pond.rx * 1.15, x1: pond.cx + pond.rx * 1.15 }); return z; }; /* 1 : un pied ne se pose ni sur la rivière ni sur l'étang */
+  const formsHold = !!(S.forms && (S.forms.island || S.forms.sea_arch)); /* l'île ou l'arche tiennent déjà le tiers libre */
+  const sided = V.side && (V.kind === "slope" || V.kind === "cover" || V.kind === "high" || V.kind === "cave");
+  const third = sided ? (V.side > 0 ? 0.3 : 0.7) : (q() < 0.5 ? 1 / 3 : 2 / 3), jit = (q() - 0.5) * 0.06;
+  const subj = formsHold ? null : built[0];
+  if (subj) subj.x = W * (third + jit);
+  const slide = (x, zones, half) => { /* hors des zones, au plus près ; dans le cadre */
+    for (let pass = 0; pass < 3; pass++) { const z = zones.find((o) => x + half > o.x0 && x - half < o.x1); if (!z) return x;
+      const L = z.x0 - half - 1, R = z.x1 + half + 1, okL = L > W * 0.05, okR = R < W * 0.95; x = okL && (!okR || x - L < R - x) ? L : okR ? R : x; }
+    return x; };
+  for (const rn of built) { /* 4 et 1 : la profondeur et le pied */
+    const wet = wetAt(rn.x, hz + 3), main = rn === subj;
+    if (wet) { rn.k3 = main ? 0.62 : 0.5; rn.by = hz; rn.foot = "islet"; }
+    else if (main && !wetAt(rn.x, hz + D * 0.08)) { rn.k3 = 0.85; rn.by = hz + D * 0.07; }
+    else { rn.k3 = 0.6; rn.by = hz; }
+    if (!wet) rn.x = slide(rn.x, dryZones(rn.by + 1), W * (rn.k === "stairs" ? 0.24 : 0.05) * rn.k3); /* 1 : hors de la rivière et de l'étang, à la hauteur de son pied (l'escalier a une emprise large : marches et terrasse) */
+  }
+  if (subj) keep.push({ x0: subj.x - W * 0.11, x1: subj.x + W * 0.11, subj: true });
+  if (S.forms && S.forms.island && S.water && S.waterGround === true && !S.ice && !S.lava && !S.sand) { /* l'île tient son tiers : même tirage que islandOffshore */
+    const qi = rng((S.seed ^ 0x15a1d) >>> 0), cx = islandWhere({ W, S, shore }, qi), w = W * (0.2 + 0.12 * qi()); if (cx != null) keep.push({ x0: cx - w * 0.75, x1: cx + w * 0.75, subj: true }); }
+  const frame = sided ? [{ x0: V.side > 0 ? W * 0.64 : -W, x1: V.side > 0 ? W * 2 : W * 0.36 }] : []; /* 2 : le côté du cadre (pente, arche, voûte) cacherait le pied d'un bâti */
+  for (const rn of ruins) { /* 3 : rien d'autre dans le tiers du sujet */
+    if (rn === subj) continue; const half = W * (BUILT.has(rn.k) ? 0.04 : rn.k === "bridge" ? 0.12 : 0.03); rn.x = slide(rn.x, BUILT.has(rn.k) ? keep.concat(frame) : keep, half);
+  }
+  for (const rn of built) if (rn !== subj) keep.push({ x0: rn.x - W * 0.05 * rn.k3 * 1.6, x1: rn.x + W * 0.05 * rn.k3 * 1.6 });
+  for (const tr of trees) tr.x = slide(tr.x, keep, W * 0.025); /* 2 : un pied ne se cache pas */
+  if (det) det.x = slide(det.x, keep, W * 0.03);
+  return keep;
+}
+/** 1 : l'îlot de roche sous un bâti posé sur l'eau (peint sous la maçonnerie, dans le repère du bâti). */
+function isletFoot(g, m, rn) {
+  const { W, H, pal } = m, b = rn.x, by = rn.by, k = rn.k3 || 1, night = m.nightK || 0, hzc = m.lastHzc || [180, 180, 190], q = rng((m.S.seed ^ Math.imul(Math.round(b * 13) + 31, 2654435761) ^ 0x151e7) >>> 0);
+  const w = W * (0.11 + 0.04 * q()) * k, h = H * (0.06 + 0.025 * q()) * k, base = mixc(mixc(pal.rock, [104, 100, 92], 0.7), hzc, 0.38), lit = mixc(base, [235, 228, 210], 0.22 * (1 - night)), dark = mixc(base, [0, 0, 0], 0.35 + 0.4 * night);
+  g.save(); g.fillStyle = css(mixc(dark, [0, 0, 0], 0.2)); g.beginPath(); g.moveTo(b - w, by + 1.5); /* la masse, à peine plus large sous l'eau */
+  const N = 9; for (let i = 0; i <= N; i++) { const u = i / N, x = b - w + 2 * w * u, bump = Math.sin(Math.PI * u), y = by - h * Math.pow(bump, 0.7) * (0.75 + 0.35 * q()); g.lineTo(x, y); }
+  g.lineTo(b + w, by + 1.5); g.closePath(); g.fill();
+  g.fillStyle = css(lit, 0.85); g.beginPath(); g.moveTo(b - w * 0.55, by - h * 0.82); g.quadraticCurveTo(b - w * 0.1, by - h * 1.08, b + w * 0.35, by - h * 0.86); g.quadraticCurveTo(b, by - h * 0.7, b - w * 0.55, by - h * 0.82); g.fill(); /* le haut, éclairé */
+  g.fillStyle = css(mixc(hzc, [255, 255, 255], 0.5), 0.45 * (1 - 0.6 * night)); g.fillRect(b - w * 1.05, by, w * 2.1, Math.max(1, H * 0.003)); /* l'écume au pied */
+  g.restore();
+}
+/** 4 : dessine une ruine dans son plan (échelle et pied), sur la couche de pierre et sur la couche de lumière à la fois. */
+function placedRuin(L, g, m, rn, t, st) {
+  if (!rn.k3) { ruin(L, m, rn, t, g, st); return; }
+  if (rn.foot === "islet") isletFoot(g, m, rn);
+  const tf = (c) => { c.save(); c.translate(rn.x, rn.by); c.scale(rn.k3, rn.k3); c.translate(-rn.x, -m.hz); };
+  tf(L); if (g !== L) tf(g); ruin(L, m, rn, t, g, st); if (g !== L) g.restore(); L.restore();
 }
 
 /**
@@ -935,8 +1019,9 @@ function paint(g, m, t, o = {}) {
   if (m.airK && m.airK.thick > 0.05) { const D = H - hz, hg = g.createLinearGradient(0, hz, 0, hz + D * 0.45); hg.addColorStop(0, css(mixc(hzc, [240, 235, 220], 0.3), 0.55 * m.airK.thick)); hg.addColorStop(1, css(hzc, 0)); g.fillStyle = hg; g.fillRect(0, hz, W, D * 0.45); } /* ESSAI : un air épais écrase la profondeur : le lointain se noie */
   WON.wonderPass(g, m, t, "relief", k0); /* ESSAI : ce qui se dessine par-dessus le relief du milieu (l'Inachevé) */
   const offW = offWater(g, m); /* ESSAI : rien ne pousse sur la rivière ni sur l'étang */
-  if (S.primeval) primeval(g, m, t, day, night); /* un monde trop jeune pour les arbres : des Prototaxites */
-  else if (S.alive && !S.trees && !(S.succ && S.succ.kind === "bare")) lowFlora(g, m, t, day, night); /* la flore basse du climat, pour les Âges vivants sans arbres */
+  const wetScene = !!(m.shore || (S.water && S.waterGround !== false && !S.ice)); /* ESSAI (6 nov.) : sur une scène d'eau, les Prototaxites (debout sur la rive) se peignent après le reflet, sinon le reflet les efface */
+  if (S.primeval && !wetScene) primeval(g, m, t, day, night); /* un monde trop jeune pour les arbres : des Prototaxites */
+  else if (!S.primeval && S.alive && !S.trees && !(S.succ && S.succ.kind === "bare")) lowFlora(g, m, t, day, night); /* la flore basse du climat, pour les Âges vivants sans arbres */
   if (S.succ) succession(g, m, t, day, night); /* 2.5 (E) : le sol nu qui se couvre, le brûlé qui gagne */
   if (S.columns || S.rock === "basalt" || (S.extras || []).some((e) => e.id === "basalt")) basaltColumns(g, m, t, day, night, hzc); /* l'escarpement d'orgues, au loin (aussi au bord de la mer) */
   if (m.meadow) { const lf = metalFilter(S) || leafFilter(S); if (lf) { g.save(); g.filter = lf; } meadowGround(g, m, t, night, L, hzc); if (lf) g.restore(); }
@@ -962,6 +1047,7 @@ function paint(g, m, t, o = {}) {
   if (m.shore) { g.save(); shorePath(g, m.shore.wet); g.clip(); reflect(g, m, t, 0.5 * (m.tintK || 1)); g.restore(); shoreEdge(g, m, t, night); } // le reflet ne couvre que l'eau ; l'écume par-dessus
   else if (S.ice) reflect(g, m, t, 0.34); else if (S.water && S.waterGround !== false) reflect(g, m, t, (m.mirror ? 0.78 : 0.5) * (m.tintK || 1)); else if (S.soil === "salt" && !S.sand) reflect(g, m, t, 0.18); /* le sel luit comme un miroir terne */
   if (S.forms && S.forms.lagoon) lagoonReef(g, m, t, day, night, hzc); /* ESSAI 2.6 : le récif par-dessus le reflet */
+  if (S.primeval && wetScene) primeval(g, m, t, day, night);
   if (S.pier) pierOnWater(g, m, t, day, night, hzc); /* 2.6 : le ponton, par-dessus le reflet */
   if (m.fedGlow && (m.shore || (S.water && !S.ice)) && night > 0.05) fedAlgae(g, m, t, night);
   extraAt(g, m, t, "air");
@@ -1187,19 +1273,35 @@ function saltFlat(g, m, t, day, night, hzc) {
 }
 /** les Prototaxites d'un monde jeune (loi 12) : des colonnes fibreuses au sommet arrondi, gris-brun, de hauteurs inégales, et au pied des plantes primitives aux tiges fourchues et aux capsules jaunes. */
 function primeval(g, m, t, day, night) {
-  const { W, H, hz, S } = m, q = rng((S.seed ^ 0x9e70) >>> 0), amb = 0.3 + 0.7 * day, C = (c, a) => css(mixc([5, 6, 12], leafC(S, c), amb), a), n = 5 + Math.floor(q() * 6);
-  const cols = Array.from({ length: n }, () => { const z = 1.2 + q() * 6, y = hz + (H - hz) / z; return { x: W * (0.04 + 0.92 * q()), y, k: 2.6 / z, z, h: (40 + q() * 70) * (2.6 / z), w: (4 + q() * 3) * (2.6 / z), tone: q(), lean: (q() - 0.5) * 0.08 }; }).sort((a, b) => b.z - a.z);
-  const tufts = (P, cnt) => { for (let j = 0; j < cnt; j++) { const bx = P.x + (q() - 0.5) * 40 * P.k, by = P.y + q() * 4 * P.k, hh = (5 + q() * 6) * P.k; g.strokeStyle = C([84, 128, 60]); g.lineWidth = Math.max(0.5, 0.7 * P.k); g.beginPath(); g.moveTo(bx, by); g.lineTo(bx, by - hh * 0.6); g.lineTo(bx - 2 * P.k, by - hh); g.moveTo(bx, by - hh * 0.6); g.lineTo(bx + 2 * P.k, by - hh * 0.95); g.stroke(); g.fillStyle = C([214, 180, 70]); g.beginPath(); g.ellipse(bx - 2 * P.k, by - hh - 0.8 * P.k, 0.7 * P.k + 0.3, 1.1 * P.k + 0.3, 0, 0, TAU); g.ellipse(bx + 2 * P.k, by - hh * 0.95 - 0.8 * P.k, 0.7 * P.k + 0.3, 1.1 * P.k + 0.3, 0, 0, TAU); g.fill(); } };
-  for (const P of cols) {
-    const base = mixc([118, 108, 88], [96, 104, 84], P.tone), hiC = mixc(base, [235, 228, 205], 0.35), loC = mixc(base, [20, 18, 14], 0.5), top = P.y - P.h, cx = P.x + P.lean * P.h;
-    g.save(); g.beginPath(); g.moveTo(P.x - P.w * 1.15, P.y + 1); g.bezierCurveTo(P.x - P.w * 1.05, P.y - P.h * 0.4, cx - P.w * 0.95, top + P.w * 1.6, cx - P.w * 0.75, top + P.w * 0.6); g.quadraticCurveTo(cx, top - P.w * 0.55, cx + P.w * 0.75, top + P.w * 0.6); g.bezierCurveTo(cx + P.w * 0.95, top + P.w * 1.6, P.x + P.w * 1.05, P.y - P.h * 0.4, P.x + P.w * 1.15, P.y + 1); g.closePath();
-    const gr = g.createLinearGradient(P.x - P.w, 0, P.x + P.w, 0); gr.addColorStop(0, C(loC)); gr.addColorStop(0.3, C(hiC)); gr.addColorStop(1, C(mixc(loC, [0, 0, 0], 0.3))); g.fillStyle = gr; g.fill(); g.clip();
-    g.strokeStyle = C(mixc(loC, [0, 0, 0], 0.2), 0.55); g.lineWidth = Math.max(0.4, 0.5 * P.k); for (let j = -3; j <= 3; j++) { g.beginPath(); g.moveTo(P.x + j * P.w * 0.3, P.y); g.quadraticCurveTo(P.x + j * P.w * 0.28 + P.lean * P.h * 0.5, P.y - P.h * 0.5, cx + j * P.w * 0.22, top); g.stroke(); } /* les fibres */
+  const { W, H, hz, S } = m, q = rng((S.seed ^ 0x9e70) >>> 0), amb = 0.3 + 0.7 * day, hzc = m.lastHzc || [180, 180, 190], n = 5 + Math.floor(q() * 6);
+  const cols = Array.from({ length: n }, () => { const z = 1.2 + q() * 6, y = hz + (H - hz) / z; return { x: W * (0.04 + 0.92 * q()), y, k: 2.6 / z, z, h: (46 + q() * 76) * (2.6 / z), w: (4.5 + q() * 3) * (2.6 / z), tone: q(), lean: (q() - 0.5) * 0.08 }; }).sort((a, b) => b.z - a.z);
+  const wetFoot = (x, y) => (m.shore ? inPoly(m.shore.wet, x, y) : !!(S.water && S.waterGround !== false && !S.ice)); /* ESSAI (6 nov.), règle 1 : rien de grand ne se tient sur l'eau */
+  for (let i = cols.length - 1; i >= 0; i--) if (wetFoot(cols[i].x, cols[i].y)) cols.splice(i, 1);
+  if (m.keep && m.keep.length) for (const P of cols) { /* ESSAI (6 nov.), règle 2 : un pied ne se cache pas ; la colonne glisse hors de la zone réservée */
+    for (let pass = 0; pass < 3; pass++) { const half = P.w * 1.3, z = m.keep.find((o) => P.x + half > o.x0 && P.x - half < o.x1); if (!z) break; const L = z.x0 - half - 1, R = z.x1 + half + 1; P.x = L > W * 0.03 && (R > W * 0.97 || P.x - L < R - P.x) ? L : R; } }
+  /* ESSAI (6 nov.) : peints comme le reste de la fenêtre : un aplat doux, un seul modelé, et l'air qui les fond dans l'horizon au loin (plus de fibres tracées) */
+  const tufts = (P, cnt, haze) => { for (let j = 0; j < cnt; j++) { const bx = P.x + (q() - 0.5) * 40 * P.k, by = P.y + q() * 4 * P.k, hh = (5 + q() * 6) * P.k; if (wetFoot(bx, by)) continue; const stem = mixc(mixc([5, 6, 12], leafC(S, [84, 128, 60]), amb), hzc, haze), cap = mixc(mixc([5, 6, 12], [200, 172, 84], amb), hzc, haze);
+      g.strokeStyle = css(stem, 0.75); g.lineWidth = Math.max(0.6, 0.8 * P.k); g.lineCap = "round"; g.beginPath(); g.moveTo(bx, by); g.quadraticCurveTo(bx - 0.6 * P.k, by - hh * 0.6, bx - 1.8 * P.k, by - hh); g.moveTo(bx, by - hh * 0.5); g.quadraticCurveTo(bx + 1.2 * P.k, by - hh * 0.75, bx + 1.8 * P.k, by - hh * 0.95); g.stroke();
+      g.fillStyle = css(cap, 0.7); g.beginPath(); g.ellipse(bx - 1.8 * P.k, by - hh - 0.6 * P.k, 0.9 * P.k + 0.3, 1.2 * P.k + 0.3, 0, 0, TAU); g.ellipse(bx + 1.8 * P.k, by - hh * 0.95 - 0.6 * P.k, 0.9 * P.k + 0.3, 1.2 * P.k + 0.3, 0, 0, TAU); g.fill(); } g.lineCap = "butt"; };
+  for (const P of cols) { /* un Prototaxite : un fût sans branches, évasé au pied, qui s'amincit vers un bourgeon ; des couches de croissance en bandes douces ; des consoles au pied ; les spores s'échappent du sommet */
+    const haze = clamp(0.1 + (P.z - 1.2) * 0.08, 0, 0.5) * (0.45 + 0.55 * day), K = (c) => mixc(mixc([5, 6, 12], leafC(S, c), amb), hzc, haze);
+    const body = K(mixc([152, 118, 76], [128, 112, 70], P.tone)), shade = K(mixc([74, 52, 34], [60, 56, 36], P.tone)), light = K([216, 190, 140]), top = P.y - P.h, cx = P.x + P.lean * P.h, wt = P.w * 0.42, wb = P.w * 1.35;
+    const wAt = (u) => lerp(wb, wt, Math.pow(u, 0.55)), xAt = (u) => P.x + P.lean * P.h * u, yAt = (u) => P.y - P.h * u; /* u : 0 au pied, 1 au sommet */
+    const shape = () => { g.beginPath(); g.moveTo(P.x - wb * 1.25, P.y + 1); g.quadraticCurveTo(P.x - wb * 0.95, P.y - P.h * 0.08, xAt(0.18) - wAt(0.18), yAt(0.18)); for (let i = 2; i <= 9; i++) { const u = i / 10; g.lineTo(xAt(u) - wAt(u), yAt(u)); }
+      g.quadraticCurveTo(cx - wt * 0.9, top - wt * 0.9, cx, top - wt * 1.1); g.quadraticCurveTo(cx + wt * 0.9, top - wt * 0.9, cx + wt, top); for (let i = 9; i >= 2; i--) { const u = i / 10; g.lineTo(xAt(u) + wAt(u), yAt(u)); } g.quadraticCurveTo(P.x + wb * 0.95, P.y - P.h * 0.08, P.x + wb * 1.25, P.y + 1); g.closePath(); };
+    g.fillStyle = css(K([60, 90, 50]), 0.55); g.beginPath(); g.ellipse(P.x, P.y + 1, wb * 2.4, wb * 0.5, 0, 0, TAU); g.fill(); /* la mousse au pied, fondue */
+    g.save(); shape(); g.fillStyle = css(body); g.fill(); g.clip();
+    const gv = g.createLinearGradient(P.x - wb, 0, P.x + wb * 1.1, 0); gv.addColorStop(0, css(shade, 0.55)); gv.addColorStop(0.3, css(light, 0.35)); gv.addColorStop(0.6, css(shade, 0)); gv.addColorStop(1, css(shade, 0.85)); g.fillStyle = gv; g.fillRect(P.x - P.w * 3, top - P.w * 3, P.w * 6 + P.h * 0.3, P.h + P.w * 6); /* la lumière d'un côté, l'ombre de l'autre, en dégradé */
+    const nb = 2 + Math.floor(q() * 2); for (let i = 0; i < nb; i++) { const u = 0.22 + (0.6 * (i + 0.5)) / nb + (q() - 0.5) * 0.08, bh = Math.max(1.2, P.h * 0.03), bg = g.createLinearGradient(0, yAt(u) - bh * 2, 0, yAt(u) + bh); bg.addColorStop(0, css(shade, 0)); bg.addColorStop(0.7, css(shade, 0.35)); bg.addColorStop(1, css(light, 0.2)); g.fillStyle = bg; g.fillRect(P.x - P.w * 3, yAt(u) - bh * 2, P.w * 6 + P.h * 0.3, bh * 3); } /* les couches de croissance : des bandes douces */
+    const lg = g.createLinearGradient(0, top - wt, 0, top + P.h * 0.25); lg.addColorStop(0, css(mixc(light, [255, 246, 220], 0.3 * (1 - night)), 0.85)); lg.addColorStop(1, css(light, 0)); g.fillStyle = lg; g.fillRect(P.x - P.w * 3, top - P.w * 3, P.w * 6 + P.h * 0.3, P.h * 0.4); /* le bourgeon prend le jour */
     g.restore();
-    g.fillStyle = C([60, 90, 50], 0.8); g.beginPath(); g.ellipse(P.x, P.y + 1, P.w * 2, P.w * 0.45, 0, 0, TAU); g.fill(); /* la mousse au pied */
-    tufts(P, 4);
+    const nc = 1 + Math.floor(q() * 3), side = q() < 0.5 ? -1 : 1; for (let i = 0; i < nc; i++) { const u = 0.06 + 0.16 * i + q() * 0.04, x0 = xAt(u) + side * wAt(u) * 0.9, y0 = yAt(u), cw = wAt(u) * (0.9 + 0.5 * q()), ch = cw * 0.32; /* les consoles au pied, en escalier */
+      g.fillStyle = css(K(mixc([190, 160, 110], [150, 120, 80], q())), 0.9); g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo(x0 + side * cw * 0.7, y0 - ch * 1.3, x0 + side * cw, y0 - ch * 0.3); g.quadraticCurveTo(x0 + side * cw * 0.6, y0 + ch * 0.4, x0, y0 + ch * 0.25); g.closePath(); g.fill();
+      g.fillStyle = css(shade, 0.45); g.beginPath(); g.moveTo(x0, y0 + ch * 0.25); g.quadraticCurveTo(x0 + side * cw * 0.6, y0 + ch * 0.4, x0 + side * cw, y0 - ch * 0.3); g.quadraticCurveTo(x0 + side * cw * 0.5, y0 + ch * 0.05, x0, y0 + ch * 0.25); g.fill(); } /* le dessous, dans l'ombre */
+    if (P.z < 4) for (let k = 0; k < 6; k++) { const ph = frac(t * 0.12 + P.tone + k * 0.17), sx = cx + Math.sin(TAU * (ph * 0.8 + k)) * wt * (1 + 2.5 * ph), sy = top - wt - ph * P.h * 0.5; g.fillStyle = css([236, 226, 196], 0.3 * (1 - ph)); g.beginPath(); g.arc(sx, sy, 0.8 + 0.6 * P.k, 0, TAU); g.fill(); } /* les spores qui s'échappent du sommet */
+    tufts(P, 4, haze);
   }
-  for (let j = 0; j < 8; j++) { const z = 1.1 + q() * 2.5; tufts({ x: W * q(), y: hz + (H - hz) / z, k: 2.6 / z }, 3); } /* les plantes primitives du premier plan */
+  for (let j = 0; j < 8; j++) { const z = 1.1 + q() * 2.5; tufts({ x: W * q(), y: hz + (H - hz) / z, k: 2.6 / z }, 3, clamp(0.12 + (z - 1.2) * 0.1, 0, 0.5) * (0.45 + 0.55 * day)); } /* les plantes primitives du premier plan */
 }
 /** la flore basse d'un monde vivant sans arbres, selon son climat (loi 7) : cactus, lichen et mousse, toundra, herbiers, salicornes, prairie, touffes de braise. */
 function floraKindOf(S) { return S.lit === false ? "pale" : S.lava ? "cinder" : S.sand || S.world === "desert" ? "cactus" : S.ice || S.world === "frozen" ? "tundra" : S.soil === "salt" ? "salicorn" : S.water && S.waterGround !== false && !S.shore ? "seagrass" : S.soil === "chalk" ? "poppies" : S.soil === "stone" || S.rock ? "lichen" : "scrub"; }
@@ -1967,9 +2069,9 @@ function stoneOf(m) {
 function ruinsPass(g, m, t) {
   if (!m.ruins.length) return; const st = stoneOf(m), { W, H, hz } = m;
   let L = null; if (typeof document !== "undefined") { try { const c = m._rl || (m._rl = document.createElement("canvas")); if (c.width !== W) c.width = W; if (c.height !== H) c.height = H; L = c.getContext("2d"); if (!L || typeof L.clearRect !== "function" || typeof g.drawImage !== "function") L = null; } catch (e) { L = null; } }
-  if (!L) { for (const rn of m.ruins) ruin(g, m, rn, t, g, st); return; }
+  if (!L) { for (const rn of m.ruins) placedRuin(g, g, m, rn, t, st); return; }
   L.setTransform(1, 0, 0, 1, 0, 0); L.globalCompositeOperation = "source-over"; L.clearRect(0, 0, W, H);
-  for (const rn of m.ruins) ruin(L, m, rn, t, g, st);
+  for (const rn of m.ruins) placedRuin(L, g, m, rn, t, st);
   L.globalCompositeOperation = "source-atop";
   const gr = L.createLinearGradient(0, hz - H * 0.35, 0, hz + 2); gr.addColorStop(0, css(st.top)); gr.addColorStop(0.55, css(st.lit)); gr.addColorStop(1, css(st.low)); L.fillStyle = gr; L.fillRect(0, 0, W, H); /* plus clair en haut, sombre au pied */
   const sc = W / 560, row = Math.max(3, 5 * sc); L.strokeStyle = css(st.joint, 0.45); L.lineWidth = Math.max(0.6, 0.7 * sc); L.beginPath();
@@ -2832,7 +2934,7 @@ const byDepth = (m, e, zn, zf) => e.items.map((it) => ({ it, ...gpt(m, it, zn, z
 const shadeOf = (m, c, f) => mixc(c, m.pal.ground, f);
 const seaHere = (m) => m.S.water && m.S.waterGround !== false && !m.S.ice;
 /** une bête de terre ne marche que sur la terre : sur la rive s'il y en a une, nulle part sur une mer sans rive. */
-const onLand = (m, P) => !seaHere(m) || (!!m.shore && m.shore.land && m.shore.land.length > 2 && inPoly(m.shore.land, P.x, P.y));
+const onLand = (m, P) => (!seaHere(m) || (!!m.shore && m.shore.land && m.shore.land.length > 2 && inPoly(m.shore.land, P.x, P.y))) && dryAt(m, P.x, P.y); /* ESSAI (6 nov.) : ni sur la rivière ni sur l'étang */
 function boulder(g, m, P, w, h, col, pts) { g.fillStyle = css(col); g.beginPath(); const n = 9; for (let k = 0; k <= n; k++) { const a = Math.PI + (k / n) * Math.PI, r = 0.8 + 0.35 * (pts[k % 5] + 0.5), x = P.x + Math.cos(a) * w * r, y = P.y + Math.sin(a) * h * r; k ? g.lineTo(x, y) : g.moveTo(x, y); } g.closePath(); g.fill(); }
 const ART = {
   stone: { layer: "ground", draw(g, m, t, e) { for (const P of byDepth(m, e)) { const w = 14 * P.k * P.it.w, h = 9 * P.k * (0.7 + P.it.w * 0.5), c = shadeOf(m, mixc(m.pal.rock, [150, 150, 145], 0.35), Math.min(0.5, P.z / 14)); boulder(g, m, P, w, h, c, P.it.pts); g.fillStyle = css([230, 230, 225], 0.18); g.beginPath(); g.ellipse(P.x - w * 0.25, P.y - h * 0.75, w * 0.35, h * 0.18, -0.2, 0, TAU); g.fill(); } } },
