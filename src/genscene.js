@@ -471,7 +471,7 @@ function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave) 
   if (det) { const half = W * 0.03, nx = place("detail", det.x, hz + D * 0.06, half, keep, posed); if (nx == null) det.gone = true; else { det.x = nx; posed.push({ x0: nx - half, x1: nx + half }); } } /* le détail habité n'est jamais écrit : effacé si rien ne le porte */
   const treesDrawn = ["grove", "great_tree", "ironwood", "charred_grove", "crystal_tree"].every((id) => !wr.has(id) || dr.has(id));
   for (let i = trees.length - 1; i >= 0; i--) { const tr = trees[i], nx = place("tree", tr.x, hz + 2, W * 0.02, keep); /* 2 et la carte du sol : portés, hors des zones réservées (les arbres, eux, peuvent se serrer : une forêt) */
-    if (nx != null) tr.x = nx; else if (treesDrawn) trees.splice(i, 1); else tr.x = slide(tr.x, keep, W * 0.025); }
+    if (nx != null) tr.x = nx; else if (treesDrawn) trees.splice(i, 1); else { tr.x = slide(tr.x, keep, W * 0.025); tr.sick = 0.6; } } /* étape 5 (décision C) : écrit, rien ne le porte : il reste, malade */
   return keep;
 }
 /** 1 : l'îlot de roche sous un bâti posé sur l'eau (peint sous la maçonnerie, dans le repère du bâti). */
@@ -2039,8 +2039,8 @@ function trees(g, m, t) {
   for (const [i, tr] of m.trees.entries()) {
     const gr = SC && !SC.burning && B0 && i < Math.ceil(back - 1e-9) ? clamp(back - i) : 0; S.burnt = B0 && !(gr > 0);
     const v = rng((S.seed ^ (0x7e11 + i * 7919)) >>> 0); let kind = S.burnt || ((S.lava || S.world === "lava") && !(gr > 0)) ? "spire" : /* 2.5 (E) : ce qui repousse est un arbre vivant, même près de la lave */ v() < 0.32 ? TK.second : TK.main; if (kind === "stalktree") { if (stalkDone) kind = TK.main === "stalktree" ? (TK.second === "stalktree" ? "broadleaf" : TK.second) : TK.main; else stalkDone = true; }
-    if (S.youngTrees) { /* l'anachronisme : un tronc gris, nu, à demi formé, fendu ; plus le monde est jeune, plus il est abîmé */
-      const sev = S.youngTrees, hh = tr.h * 1.9 * (1.05 - 0.15 * sev) * (0.85 + 0.3 * v()), x = tr.x, y = hz + 3, lean = tr.lean * 6 + (v() - 0.5) * 14 * sev, broken = v() < 0.2 + 0.35 * sev, topY = y - hh * (broken ? 0.75 + 0.15 * v() : 1), tx = x + lean * (topY < y ? (y - topY) / hh : 1);
+    if (S.youngTrees || tr.sick) { /* l'anachronisme : un tronc gris, nu, à demi formé, fendu ; plus le monde est jeune, plus il est abîmé ; ESSAI (6 nov., carte du sol, étape 5) : aussi l'arbre écrit que le sol ne porte pas */
+      const sev = Math.max(S.youngTrees || 0, tr.sick || 0), hh = tr.h * 1.9 * (1.05 - 0.15 * sev) * (0.85 + 0.3 * v()), x = tr.x, y = hz + 3, lean = tr.lean * 6 + (v() - 0.5) * 14 * sev, broken = v() < 0.2 + 0.35 * sev, topY = y - hh * (broken ? 0.75 + 0.15 * v() : 1), tx = x + lean * (topY < y ? (y - topY) / hh : 1);
       const bark = mixc([5, 6, 12], mixc([168, 162, 150], [128, 120, 112], sev * 0.5), amb) /* du bois mort, blanchi */, fade = g.createLinearGradient(0, y, 0, topY); fade.addColorStop(0, css(bark, 1)); fade.addColorStop(1, css(bark, 0.9 - 0.45 * sev));
       g.strokeStyle = fade; g.lineWidth = 4.2; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + lean * 0.3, y - hh * 0.5, tx, topY); g.stroke(); /* le tronc s'efface vers le haut : mal tiré */
       if (broken) { g.fillStyle = css(bark, 0.9); g.beginPath(); g.moveTo(tx - 2, topY); g.lineTo(tx - 0.5, topY - 4); g.lineTo(tx + 0.6, topY - 1.5); g.lineTo(tx + 2, topY - 3.5); g.lineTo(tx + 1.5, topY + 1); g.closePath(); g.fill(); }
@@ -2932,7 +2932,7 @@ const LAYER = { cosmological: "sky", geological: "ground", ecological: "ground",
 function extraAt(g, m, t, layer) {
   const { W, H, hz } = m;
   for (const e of m.extras) {
-    const art = ART[e.id]; if (art) { if (art.layer === layer) { const sev = (m.S.tense || {})[e.id] || 0, lf = (LEAFY.has(e.id) || e.id === "flowers" || e.id === "grass") && (metalFilter(m.S) || (LEAFY.has(e.id) && leafFilter(m.S))); if (!sev && lf) { g.save(); g.filter = lf; art.draw(g, m, t, e); g.restore(); } else if (!sev) art.draw(g, m, t, e); else if (!SIGNS.has(e.id) || sev < 0.6) { g.save(); g.globalAlpha = SIGNS.has(e.id) ? 0.25 : GAUNT.has(e.id) ? 1 - 0.25 * sev : 1 - 0.7 * sev; g.filter = "grayscale(" + Math.min(1, sev * 1.2).toFixed(2) + ") sepia(" + (0.35 * sev).toFixed(2) + ") brightness(" + (1 - 0.2 * sev).toFixed(2) + ")"; art.draw(g, m, t, e); g.restore(); } } continue; } /* mal tiré, un bloc que la physique refuse ; le signe d'un invisible refusé s'efface */ /* un dessin propre au bloc */
+    const art = ART[e.id]; if (art) { if (art.layer === layer) { const sev = Math.max((m.S.tense || {})[e.id] || 0, unsupportedSev(m, e)), /* la physique refuse, ou le sol ne porte pas (étape 5) : le même dessin, la plus forte des deux */ lf = (LEAFY.has(e.id) || e.id === "flowers" || e.id === "grass") && (metalFilter(m.S) || (LEAFY.has(e.id) && leafFilter(m.S))); if (!sev && lf) { g.save(); g.filter = lf; art.draw(g, m, t, e); g.restore(); } else if (!sev) art.draw(g, m, t, e); else if (!SIGNS.has(e.id) || sev < 0.6) { g.save(); g.globalAlpha = SIGNS.has(e.id) ? 0.25 : GAUNT.has(e.id) ? 1 - 0.25 * sev : 1 - 0.7 * sev; g.filter = "grayscale(" + Math.min(1, sev * 1.2).toFixed(2) + ") sepia(" + (0.35 * sev).toFixed(2) + ") brightness(" + (1 - 0.2 * sev).toFixed(2) + ")"; art.draw(g, m, t, e); g.restore(); } } continue; } /* mal tiré, un bloc que la physique refuse ; le signe d'un invisible refusé s'efface */ /* un dessin propre au bloc */
     if (LAYER[e.axis] !== layer) continue;
     const tr = e.tr, col = (a, l = tr.l) => css(hsl(tr.h, tr.s, l), a), ph = TAU * t * Math.max(1, Math.round(tr.v * 2)) / 2, beat = tr.p ? 0.55 + 0.45 * Math.sin(ph * 2 + e.items[0].p) : 1;
     if (e.axis === "cosmological") { // halo, anneau et petit compagnon en orbite
@@ -3005,6 +3005,12 @@ function fixPoints(m, e, zn, zf) {
   return e.items.map((it) => { const P0 = gpt(m, it, zn, zf), a = along(P0); if (a) return a;
     for (let k = 1; k <= 10; k++) { const u = (it.y + k * 0.1) % 1, b = along(gpt(m, { ...it, y: u }, zn, zf)); if (b) return b; } /* une autre profondeur */
     return written ? P0 : null; });
+}
+/** étape 5 (décision C) : un bloc écrit que rien dans la fenêtre ne porte (aucun point d'une grille du sol) ; calculé une fois par modèle. Sa gravité : moyenne (0,6), jamais cumulée avec le refus de la physique (on prend la plus forte). */
+function unsupportedSev(m, e) {
+  if (e._unsup != null) return e._unsup; e._unsup = 0; const S = m.S; if (!S || !supportOf(e.id) || !(S.writtenIds || []).includes(e.id)) return 0;
+  const { W, H, hz } = m, D = H - hz; for (const z of [1.2, 1.5, 2, 2.8, 4, 5.5, 7]) { const y = hz + D / z; for (let x = W * 0.03; x < W * 0.97; x += W / 48) if (carried(m, e.id, x, y)) return 0; }
+  return (e._unsup = 0.6);
 }
 const byDepth = (m, e, zn, zf) => {
   if (!m.S || !supportOf(e.id)) return e.items.map((it) => ({ it, ...gpt(m, it, zn, zf) })).sort((a, b) => b.z - a.z);
