@@ -2993,7 +2993,24 @@ function geyserField(g, m, t, e) {
   else { const u = (ph - 0.55) / 0.45; for (let j = 0; j < 7; j++) { const q = j / 6; puff(v.x + wind * (top * 0.12 + u * 60 * v.k + q * 26 * v.k), v.y - top * (0.7 + 0.3 * q) - u * 14 * v.k, (10 + 12 * q + 10 * u) * v.k, 0.4 * (1 - u) * (1 - 0.4 * q)); } /* le nuage qui s'en va */
     for (let j = 0; j < 3; j++) { const q = frac(t * 0.8 + j / 3), r = (2 + 5 * q) * v.k; puff(v.x + wind * q * 8, v.y - q * 18 * v.k, r, 0.3 * (1 - q)); } }
 }
-const byDepth = (m, e, zn, zf) => e.items.map((it) => ({ it, ...gpt(m, it, zn, zf) })).sort((a, b) => b.z - a.z);
+/**
+ * ESSAI (6 nov., carte du sol, étape 4) : les blocs du sol et les bêtes se posent où le sol les porte (claude/DESIGN-carte-du-sol.md).
+ * Un exemplaire mal porté glisse à la place la plus proche qui le porte, sur sa rangée, sinon à une autre profondeur ; si rien dans la fenêtre ne le porte :
+ * tiré, il n'est pas peint (décision B) ; écrit, il reste à sa place (décision C : l'étape 5 le montrera malade). Calculé une fois par modèle et par plage de profondeur.
+ */
+function fixPoints(m, e, zn, zf) {
+  const sp = supportOf(e.id), W = m.W, half = Math.max(1, sp.half * W), S = m.S, written = (S.writtenIds || []).includes(e.id);
+  const fits = (x, y) => x - half > W * 0.02 && x + half < W * 0.98 && carried(m, e.id, x, y) && carried(m, e.id, x - half, y) && carried(m, e.id, x + half, y);
+  const along = (P) => { if (fits(P.x, P.y)) return P; for (let d = W / 96; d < W; d += W / 96) { if (fits(P.x - d, P.y)) return { ...P, x: P.x - d }; if (fits(P.x + d, P.y)) return { ...P, x: P.x + d }; } return null; };
+  return e.items.map((it) => { const P0 = gpt(m, it, zn, zf), a = along(P0); if (a) return a;
+    for (let k = 1; k <= 10; k++) { const u = (it.y + k * 0.1) % 1, b = along(gpt(m, { ...it, y: u }, zn, zf)); if (b) return b; } /* une autre profondeur */
+    return written ? P0 : null; });
+}
+const byDepth = (m, e, zn, zf) => {
+  if (!m.S || !supportOf(e.id)) return e.items.map((it) => ({ it, ...gpt(m, it, zn, zf) })).sort((a, b) => b.z - a.z);
+  const key = (zn == null ? 1.4 : zn) + "|" + (zf == null ? 7 : zf), memo = e._bd || (e._bd = {}), fix = memo[key] || (memo[key] = fixPoints(m, e, zn, zf));
+  return e.items.map((it, i) => (fix[i] ? { it, ...fix[i] } : null)).filter(Boolean).sort((a, b) => b.z - a.z);
+};
 const shadeOf = (m, c, f) => mixc(c, m.pal.ground, f);
 const seaHere = (m) => m.S.water && m.S.waterGround !== false && !m.S.ice;
 /** une bête de terre ne marche que sur la terre : sur la rive s'il y en a une, nulle part sur une mer sans rive. */
