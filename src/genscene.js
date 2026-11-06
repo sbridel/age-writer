@@ -2060,10 +2060,12 @@ function fallsInto(g, m, t, gf) {
     const [x, y] = side[i], [xp, yp] = side[i - 1], f = flowAt(m, y); if (!f || x < f.x0 || x > f.x1) continue; hit++;
     const inward = side === L ? 1 : -1, dy = y - yp, len = Math.max(3, dy * (1.2 + 1.2 * gf)), isLava = f.kind === "lava", ph = frac(t * 0.8 + i * 0.137 + (side === L ? 0 : 0.5));
     g.save(); g.globalCompositeOperation = isLava ? "lighter" : "source-over";
-    const gr = g.createLinearGradient(x, y, x + inward * len * 0.35, y + len); /* la nappe qui passe la lèvre et plonge */
-    if (isLava) { gr.addColorStop(0, lavaA(0.7, 0.45)); gr.addColorStop(0.6, lavaA(0.3, 0.18)); gr.addColorStop(1, lavaA(0, 0)); } else { gr.addColorStop(0, water(0.45)); gr.addColorStop(1, water(0)); }
-    g.fillStyle = gr; g.beginPath(); g.moveTo(xp, yp); g.lineTo(x, y); g.lineTo(x + inward * len * 0.35, y + len); g.lineTo(xp + inward * len * 0.3, yp + len * 0.9); g.closePath(); g.fill();
-    g.strokeStyle = isLava ? lavaA(0.6, 0.55) : water(0.6); g.lineWidth = Math.max(0.8, dy * 0.07); g.beginPath(); g.moveTo(xp, yp); g.lineTo(x, y); g.stroke(); /* la lèvre baignée */
+    if (isLava) { const gr = g.createLinearGradient(x, y, x + inward * len * 0.35, y + len); /* la nappe de lave qui passe la lèvre et plonge */
+      gr.addColorStop(0, lavaA(0.7, 0.45)); gr.addColorStop(0.6, lavaA(0.3, 0.18)); gr.addColorStop(1, lavaA(0, 0));
+      g.fillStyle = gr; g.beginPath(); g.moveTo(xp, yp); g.lineTo(x, y); g.lineTo(x + inward * len * 0.35, y + len); g.lineTo(xp + inward * len * 0.3, yp + len * 0.9); g.closePath(); g.fill();
+      g.strokeStyle = lavaA(0.6, 0.55); g.lineWidth = Math.max(0.8, dy * 0.07); g.beginPath(); g.moveTo(xp, yp); g.lineTo(x, y); g.stroke(); } /* la lèvre baignée */
+    else { const mx = (x + xp) / 2, my = (y + yp) / 2, mist = g.createRadialGradient(mx, my, 0, mx, my, dy * 1.4); mist.addColorStop(0, water(0.22)); mist.addColorStop(1, water(0)); g.fillStyle = mist; g.fillRect(mx - dy * 1.4, my - dy * 1.4, dy * 2.8, dy * 2.8); /* l'eau : pas une nappe pleine, des filets qui tombent et un peu de brume à la lèvre */
+      g.lineCap = "round"; for (let k = 0; k < 3; k++) { const u = (k + 0.5) / 3, sx = xp + (x - xp) * u, sy = yp + (y - yp) * u, fl = len * (0.6 + 0.5 * frac(ph + k * 0.31)), fg = g.createLinearGradient(sx, sy, sx, sy + fl); fg.addColorStop(0, water(0.4)); fg.addColorStop(1, water(0)); g.strokeStyle = fg; g.lineWidth = Math.max(0.6, dy * 0.05); g.beginPath(); g.moveTo(sx, sy); g.quadraticCurveTo(sx + inward * fl * 0.12, sy + fl * 0.4, sx + inward * fl * 0.18, sy + fl); g.stroke(); } g.lineCap = "butt"; }
     const px = x + inward * len * (0.15 + 0.3 * ph), py = y + len * ph * 1.4; /* une braise, ou une goutte, qui descend */
     g.fillStyle = isLava ? lavaA(1 - ph, 0.9 * (1 - ph)) : water(0.7 * (1 - ph)); g.beginPath(); g.arc(px, py, 0.8 + 0.8 * (1 - ph), 0, TAU); g.fill();
     g.restore();
