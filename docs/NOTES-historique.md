@@ -699,6 +699,15 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.7.0 — un lieu où l'on va (6 nov. 2026)
+
+Demande de l'auteur : « des mondes qui fassent vraiment Myst ». Chantier « mise en scène », fiches du projet : `claude/DESIGN-grammaire-du-placement.md`, `claude/DESIGN-carte-du-sol.md`, `claude/MESURE-carte-du-sol.md`, `claude/DESIGN-le-chemin.md`.
+- **Grammaire du placement** (`placeGrammar`, `BUILT`, `isletFoot`, `placedRuin`) : zones dures (`keep` : falaise, grotte, cônes, fissure) et zones souples ; décision B (déplacer, sinon effacer) ; décision C (le tiré se corrige en silence, l'écrit reste et se dessine souffrant, `S.writtenIds` / `S.drawnIds`).
+- **Carte du sol** (`solEn`, `SUPPORT`, `SUPPORT_OF`, `supportOf`, `carried`, `dryAt`, `riverGeo`/`riverBand`) ; les blocs au sol passent par `byDepth` → `fixPoints` ; `unsupportedSev`. Mesure `tools/support-measure.js` : fenêtres avec une chose mal portée et visible, 46 % → 8 % (le reste est écrit par l'auteur).
+- **Fissure** (`fisSpan`, `chasmOf` d'après `doomOf` : loi 14, `chasmJit`, `fissureLips`, `fallsInto`, `chasmSwallow`, `seaFunnel`, `placeFissure`, `swallowBuilt`) ; `src/crevasse.js` : `walls` (roche, lèvres, lumière). Bâti sur la lave (`rn.lava`, `lavaMarks`). Pont (`bridgeSpan` : rivière > fissure > étang). Profondeur `k3`/`by` des arbres et petites ruines. Prototaxites redessinés (`primeval`).
+- **Le chemin** (`buildPath`, `pathPass`, `TRAIL_TONE`, `BEASTS`, `carvedSteps`) : trace de présence (œuvres → chemin bâti ; bêtes → sente ; sinon rien) ; matière selon le sol ; gués, passerelles, raccord au pont, départ toujours du sec, arrêt à la coulée ; par point de vue (marches en contrebas, marches taillées et lacets du surplomb, pied de la pente, marches de la grotte) ; périscope : pas de chemin bâti vers un côté sans œuvre (`genviews.js`). Le détail habité devient rare (35 %, graine `0xde7a5`).
+- Guide FR/EN : « Le chemin ».
+
 ## 2.6.0 — chaque monde le sien (3 nov. 2026)
 
 Demande de l'auteur : des Âges « le plus uniques possible », qui « fassent vraiment Myst ». Recensement d'abord (`tools/census.js`, `tools/harness.js`, `claude/RECENSEMENT-tirages.md`) : le tirage ne puisait que dans 43 blocs, 58 écrivables sur 90 jamais tirés, 21 blocs peints jamais tirés.

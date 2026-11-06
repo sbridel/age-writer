@@ -28,6 +28,7 @@ function heading(m0, k) {
   const m = G.build(S, m0.W, m0.H);
   if (!S0.storm && m0.front && m0.front.mode === "shower") { if (!m.front) m.front = { ...m0.front, cells: [] }; } else if (!S0.storm) m.front = null; /* ESSAI : s'il pleut ici, il pleut de tous côtés ; si l'averse est au loin, on n'est pas mouillé en se retournant (d'autres averses, peut-être) */
   m.pal = m0.pal; m.ringsP = null; m.cometP = null; m.det = null; // les anneaux, la comète, la structure « habitée » : de face seulement
+  if (m.path && m.path.kind === "built" && !m.ruins.length) m.path = null; /* ESSAI (6 nov.) : le chemin bâti mène à une œuvre ; s'il n'y en a pas de ce côté (le détail habité n'est que de face), pas de chemin vers rien */
   if (turn) m.night = { ...m.night, moons: m0.night ? m0.night.moons : [] }; /* les mêmes lunes, vues d'ailleurs */
   else { m.sunFrom = m0; m.noSun = true; m.night = { ...m.night, moons: [] }; } // soleil figé ou erratique : de face seulement
   return (m0.headings[k] = m);

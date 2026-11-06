@@ -2,6 +2,21 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.7.0 — A place you go (2026-11-06)
+
+### Added
+- **The path**: where hands have built (ruins, towers, a bridge, the inhabited detail), a path leaves from your feet and leads there, made of what the ground gives: slabs on earth and lava crust, steps cut in rock, steps and a rope on ice, stakes in sand, markers on salt and chalk. It crosses water on a footbridge, goes to the bridge if there is one, stops at the bank of water too wide and at the edge of a lava flow. Where only beasts live, a trail goes to the water over stepping stones, or crosses and fades behind a fold of the ground. A world no one has walked has no path.
+- **The path follows the place**: it climbs in steps from a hollow, goes down by steps cut in the lip of a height and winds into the valley, runs along the foot of a slope, and in a cave steps rise towards the light.
+- **The chasm**: as an Age degrades, its fissure opens into a chasm, like Riven's: it swallows the lava that flows into it (the bed below goes dark), tilts and sinks the buildings at its lips; under the sea, it draws a whirlpool on the surface.
+
+### Changed
+- **Everything stands on something**: the window reads the ground under each thing (sea, river, pond, sand, rock, ice, lava, salt…) before placing it. Trees, ruins, towers, stairs, beasts and ground plants no longer float on water or stand on what cannot carry them; what does not fit is moved, or left out. A thing you wrote and nothing can carry is still there, drawn ailing. Buildings never overlap the cliff, the cave, the cones or each other.
+- **Depth**: trees and small ruins take their size from where they stand; a bridge always spans something (the river, the fissure, the pond).
+- **The fissure** is shorter, opens in the middle ground, never on the river; its walls have rock, lips and air. Water falls into it as thin streams and mist, lava as a glowing sheet.
+- **Buildings on lava** stand on a crust, or are being taken by it.
+- **Prototaxites** are drawn as tall tapering trunks, banded, with brackets and spores.
+- Existing windows may change their drawing (not their world).
+
 ## 2.6.0 — Every world its own (2026-11-03)
 
 ### Added

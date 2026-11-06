@@ -6,6 +6,31 @@
  */
 const NEWS = [
   {
+    v: "2.7.0",
+    fr: {
+      title: "Un lieu où l'on va",
+      letter: "Les éclaireurs revenaient avec des paysages ; on leur demandait où ils avaient marché. L'encre a appris à poser chaque chose sur ce qui la porte, et à laisser la trace de ceux qui sont passés.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**Le chemin** : là où des mains ont bâti, un chemin part de vos pieds et y mène, fait de ce que le sol donne (dalles, marches taillées, pieux, bornes), avec ses gués et ses passerelles. Là où ne vivent que des bêtes, une sente va à l'eau. Un monde que personne n'a parcouru n'en a pas.",
+        "**Il suit le lieu** : il monte depuis un creux, descend en lacets depuis une hauteur, longe une pente, et dans une grotte des marches montent vers la lumière.",
+        "**Chaque chose tient sur quelque chose** : rien ne flotte plus sur l'eau ni ne se pose sur ce qui ne le porte pas ; ce que vous avez écrit et que rien ne porte reste, mais souffrant.",
+        "**Le gouffre** : quand un Âge se dégrade, sa fissure s'ouvre en gouffre, boit la lave et avale ce qui est bâti au bord ; sous la mer, un tourbillon.",
+      ],
+    },
+    en: {
+      title: "A place you go",
+      letter: "The scouts came back with landscapes; they were asked where they had walked. The ink has learned to set each thing on what carries it, and to keep the trace of those who passed.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**The path**: where hands have built, a path leaves from your feet and leads there, made of what the ground gives (slabs, cut steps, stakes, markers), with its fords and footbridges. Where only beasts live, a trail goes to the water. A world no one has walked has none.",
+        "**It follows the place**: it climbs from a hollow, winds down from a height, runs along a slope, and in a cave steps rise towards the light.",
+        "**Everything stands on something**: nothing floats on water or rests on what cannot carry it any more; what you wrote and nothing carries is still there, but ailing.",
+        "**The chasm**: as an Age degrades, its fissure opens into a chasm, drinks the lava and swallows what is built at its edge; under the sea, a whirlpool.",
+      ],
+    },
+  },
+  {
     v: "2.6.0",
     fr: {
       title: "Chaque monde le sien",
