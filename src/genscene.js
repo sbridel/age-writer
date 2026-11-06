@@ -533,12 +533,18 @@ function swallowBuilt(S, W, H, hz, fis, ruins) {
 const BEASTS = new Set(["grazer", "herd", "cave_stalker", "raptor"]);
 function buildPath(m, via) {
   const { S, W, H, hz, ruins, det, extras } = m, V = S.view || {}, D = H - hz;
-  if (V.kind === "high" || V.kind === "cave" || S.world === "cavern" || S.torus) return null;
+  if (S.world === "cavern" || S.torus) return null;
   const works = ruins.filter((rn) => rn.k !== "bridge" || rn.spans), beasts = (extras || []).some((e) => BEASTS.has(e.id));
   const detOn = det && !det.gone; if (!works.length && !detOn && !beasts && !ruins.length) return null; /* un monde vierge */
+  const PV = V.pts || [], hi = V.kind === "high", cv = V.kind === "cave"; if ((hi || cv) && !works.length && !ruins.length) return null; /* étape 3 : du surplomb, de la grotte, seules des mains ont taillé un passage ; les bêtes n'y font pas de sente */
   const q = rng((S.seed ^ 0x9a7e) >>> 0), side = V.side || (q() < 0.5 ? -1 : 1), sided = V.side && (V.kind === "slope" || V.kind === "cover");
-  let xs = W * (sided ? 0.5 - side * (0.14 + 0.08 * q()) : 0.32 + 0.36 * q()); const ys = H + 6;
-  if (!dryAt(m, xs, H - 4)) for (let d = W / 64; d < W / 2; d += W / 64) { const x = [xs - d, xs + d].find((x) => x > W * 0.05 && x < W * 0.95 && dryAt(m, x, H - 4) && dryAt(m, x, H - D * 0.15)); if (x != null) { xs = x; break; } } /* on part du sec, jamais de l'eau */
+  let xs = W * (sided ? 0.5 - side * (0.14 + 0.08 * q()) : 0.32 + 0.36 * q()), ys = H + 6, lip = null;
+  /* étape 3, par point de vue : à flanc de pente, il part du pied de la pente et la longe en diagonale ; du surplomb, il descend de la lèvre de roche (des marches taillées) ;
+     de la grotte, des marches montent vers l'ouverture et le chemin reprend dehors (les mêmes tirages que viewFrame) */
+  if (V.kind === "slope") { const footX = W * (0.4 + 0.4 * (PV[1] || 0.5)); xs = side < 0 ? Math.min(W * 0.9, footX + W * 0.03) : Math.max(W * 0.1, W - footX - W * 0.03); }
+  if (hi) { const y0 = H * (0.84 + 0.05 * (PV[0] || 0.5)), u = clamp(xs / W), xl = xs; ys = y0 - (side < 0 ? 1 - u : u) * H * 0.06 + 2; lip = { x0: xl, y0: H + 2, x1: xl + (q() - 0.5) * W * 0.04, y1: ys }; }
+  if (cv) { const cx = W * (0.5 + 0.08 * side * (PV[0] || 0.5)), yb = H * (0.86 + 0.06 * (PV[4] || 0.5)); xs = cx + (q() - 0.5) * W * 0.12; ys = yb - 1; lip = { x0: cx + (xs - cx) * 0.3, y0: H + 2, x1: xs, y1: yb + 1 }; }
+  { const y0 = Math.min(H - 4, ys), lim = cv ? W * 0.32 : W / 2; if (!hi && !dryAt(m, xs, y0)) for (let d = W / 64; d < lim; d += W / 64) { const x = [xs - d, xs + d].find((x) => x > W * 0.05 && x < W * 0.95 && dryAt(m, x, y0) && dryAt(m, x, y0 - (cv ? D * 0.05 : D * 0.15))); if (x != null) { xs = x; if (cv) lip.x1 = x; break; } } if (cv) lip.x0 = lip.x1 + (W / 2 - lip.x1) * 0.25; } /* on part du sec, jamais de l'eau (de la grotte : on sort sur la rive) */
   let kind = works.length || detOn || ruins.length ? "built" : "trail", xe, ye, fade = false;
   const BUILTK = new Set(["tower", "lighthouse", "stairs"]), target = via || works.find((rn) => BUILTK.has(rn.k)) || works.find((rn) => rn.k !== "bridge") || works[0] || ruins[0];
   if (target) { const half = W * 0.03 * (target.k3 || 1); xe = target.x + (xs < target.x ? -half : half) * 0.6; ye = (target.by || hz) + 2 + D * 0.01; if (target.k === "bridge") { xe = target.x - W * 0.19 * (target.k3 || 1) * (xs < target.x ? 1 : -1) * 0.8; ye = (target.by || hz) + 2; } }
@@ -550,9 +556,10 @@ function buildPath(m, via) {
   }
   const c1 = [xs + (q() - 0.5) * W * 0.12, lerp(ys, ye, 0.42)], c2 = [xe + (xs - xe) * (0.25 + 0.3 * q()) + (q() - 0.5) * W * 0.1, lerp(ys, ye, 0.8)];
   const bez = (u) => { const a = 1 - u; return [a * a * a * xs + 3 * a * a * u * c1[0] + 3 * a * u * u * c2[0] + u * u * u * xe, a * a * a * ys + 3 * a * a * u * c1[1] + 3 * a * u * u * c2[1] + u * u * u * ye]; };
-  const Wp = W * (kind === "built" ? 0.12 : 0.085), N = 70, fold = q() < 0.55 ? [0.48 + 0.12 * q(), 0] : null; if (fold) fold[1] = fold[0] + 0.06 + 0.05 * q(); /* il disparaît derrière un pli, et reparaît */
+  const Wp = W * (kind === "built" ? 0.12 : 0.085) * (V.kind === "low" ? 1.35 : 1), N = 70, fold = q() < 0.55 ? [0.48 + 0.12 * q(), 0] : null; if (fold) fold[1] = fold[0] + 0.06 + 0.05 * q(); /* il disparaît derrière un pli, et reparaît */
   const pts = []; for (let i = 0; i <= N; i++) { const u = i / N, [x, y] = bez(u); pts.push({ x, y, u, w: Math.max(0.6, (Wp * (y - hz)) / D), a: fade ? clamp((1 - u) * 3) : 1, wet: !dryAt(m, x, Math.min(H - 1, y)), hid: !!(fold && u > fold[0] && u < fold[1]) }); }
   /* étape 2 : l'eau se franchit (un gué pour la sente, une passerelle pour le chemin bâti) ; une traversée trop longue (plus d'un tiers du chemin) n'est pas tentée : le chemin s'arrête à la rive */
+  if (S.lava && S.lavaKind === "mafic") { const i = pts.findIndex((p) => { const fb = flowAt(m, p.y); return p.y > hz + 1 && fb && p.x > fb.x0 && p.x < fb.x1; }); if (i >= 0) pts.length = i; } /* la coulée ne se franchit pas : le chemin s'arrête au bord */
   let run = 0; for (let i = 0; i < pts.length; i++) { if (pts[i].wet) run++; else run = 0; if (run > N / 3) { pts.length = Math.max(0, i - run + 1); break; } }
   while (pts.length && pts[pts.length - 1].wet) pts.pop();
   const span = !via && ruins.find((rn) => rn.k === "bridge" && (rn.spans === "river" || rn.spans === "pond")); /* un pont enjambe déjà cette eau : le chemin va au pont plutôt que de poser sa passerelle à côté */
@@ -560,8 +567,8 @@ function buildPath(m, via) {
   const segs = []; let cur = [];
   for (const p of pts) { if (p.hid || (cur.length && cur[cur.length - 1].wet !== p.wet)) { if (cur.length > 1) segs.push(cur); cur = p.hid ? [] : [cur[cur.length - 1], p].filter(Boolean); if (!p.hid && cur.length === 2) cur = [{ ...cur[0], wet: p.wet }, p]; continue; } cur.push(p); }
   if (cur.length > 1) segs.push(cur); if (!segs.length) return null;
-  const soil = solEn(m, xs, H - 4).k, mat = kind === "trail" ? "trail" : soil === "earth" || soil === "forest" || soil === "lava" ? "slabs" : soil === "sand" ? "posts" : soil === "ice" ? "icesteps" : soil === "salt" || soil === "chalk" ? "bollards" : "steps";
-  return { kind, mat, segs, soil, seed: (S.seed ^ 0x9a7e) >>> 0 };
+  const soil = solEn(m, xs, Math.min(H - 4, ys)).k, mat = kind === "trail" ? "trail" : V.kind === "low" || hi ? (soil === "ice" ? "icesteps" : "steps") : soil === "earth" || soil === "forest" || soil === "lava" ? "slabs" : soil === "sand" ? "posts" : soil === "ice" ? "icesteps" : soil === "salt" || soil === "chalk" ? "bollards" : "steps";
+  return { kind, mat, segs, soil, lip, view: V.kind, seed: (S.seed ^ 0x9a7e) >>> 0 }; /* en contrebas, il monte : des marches ; du surplomb aussi, il descend par des marches */
 }
 /** la couleur de la trace, selon le sol : battue (plus sombre) sur la terre, poussière claire sur la roche, damée sur la glace */
 const TRAIL_TONE = { earth: [[84, 62, 42], 0.5], forest: [[78, 58, 40], 0.5], sand: [[150, 120, 84], 0.35], ice: [[236, 242, 248], 0.5], salt: [[238, 234, 224], 0.45], chalk: [[236, 232, 220], 0.4], lava: [[24, 18, 16], 0.55], stone: [[176, 166, 148], 0.4], basalt: [[120, 114, 108], 0.4], granite: [[186, 172, 160], 0.4], rock: [[170, 160, 142], 0.4] };
@@ -2952,6 +2959,12 @@ function valleyPlanes(g, m, t, day, night, hzc) {
     }
   }
 }
+/** ESSAI (6 nov.), chemin étape 3 : des marches taillées dans le premier plan (la lèvre du surplomb, le sol de la grotte), du bas de la fenêtre au départ du chemin. */
+function carvedSteps(g, m, L, rock, hzc, day) {
+  const { W } = m, n = 6, w0 = W * 0.075, w1 = W * 0.03, cut = mixc(rock, [0, 0, 0], 0.5), lit = mixc(rock, mixc(hzc, [255, 244, 226], 0.4), 0.35 + 0.3 * day), at = (u) => [lerp(L.x0, L.x1, u), lerp(L.y0, L.y1, u), lerp(w0, w1, u)];
+  { const [a, b] = [at(0), at(1)]; g.fillStyle = css(cut, 0.85); g.beginPath(); g.moveTo(a[0] - a[2], a[1]); g.lineTo(b[0] - b[2], b[1]); g.lineTo(b[0] + b[2], b[1]); g.lineTo(a[0] + a[2], a[1]); g.closePath(); g.fill(); } /* l'entaille */
+  for (let k = 0; k < n; k++) { const u = (k + 0.5) / n, [x, y, w] = at(u), th = Math.max(1, (L.y0 - L.y1) / n * 0.45); g.fillStyle = css(rock); g.fillRect(x - w * 0.92, y, w * 1.84, th); g.fillStyle = css(lit, 0.85); g.fillRect(x - w * 0.92, y, w * 1.84, Math.max(0.8, th * 0.3)); } /* chaque marche : le plat, l'arête éclairée */
+}
 function viewFrame(g, m, t, hzc, day, night) {
   const { W, H, hz, S, pal } = m, V = S.view, P = V.pts, sd = V.side, X = (x) => (sd < 0 ? x : W - x), lit = 0.2 + 0.8 * day * (1 - 0.7 * night);
   const dk = (c, k = 1) => mixc([4, 5, 9], c, lit * k), path = (pts) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); };
@@ -2962,6 +2975,7 @@ function viewFrame(g, m, t, hzc, day, night) {
     g.save(); path(pts); g.clip(); const tf = g.createLinearGradient(0, y0 - H * 0.08, 0, y0 + H * 0.06); tf.addColorStop(0, css(mixc(base, hzc, 0.45 * (0.3 + 0.7 * day)))); tf.addColorStop(1, css(base, 0)); g.fillStyle = tf; g.fillRect(0, 0, W, H); g.restore(); /* le dessus de la roche, éclairé */
     g.strokeStyle = css(mixc(hzc, [255, 240, 220], 0.3), 0.5); g.lineWidth = 1.2; g.beginPath(); pts.slice(1, -1).forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke();
     const hz2 = g.createLinearGradient(0, hz, 0, y0); hz2.addColorStop(0, css(hzc, 0)); hz2.addColorStop(1, css(hzc, 0.12 * (0.4 + 0.6 * day))); g.fillStyle = hz2; g.fillRect(0, hz, W, y0 - hz); /* l'air entre nous et le fond de la vallée */
+    if (m.path && m.path.lip) carvedSteps(g, m, m.path.lip, base, hzc, day); /* chemin étape 3 : on descend du surplomb par des marches taillées dans la lèvre */
     g.fillStyle = css(dk([60, 80, 46], 0.7), 0.9); for (let k = 0; k < 9; k++) { const u = P[(k * 5) % 24], x = u * W, y = y0 - (sd < 0 ? 1 - u : u) * H * 0.06 + 1; for (let j = 0; j < 4; j++) { g.beginPath(); g.moveTo(x + j * 2, y + 2); g.lineTo(x + j * 2 + 1, y - 4 - (j % 2) * 2); g.lineTo(x + j * 2 + 2, y + 2); g.fill(); } }
     return;
   }
@@ -3042,6 +3056,7 @@ function viewFrame(g, m, t, hzc, day, night) {
   const edge = (k) => mixc(hzc, [255, 244, 228], 0.3 + 0.2 * k); g.strokeStyle = css(V.mat === "lava" ? [255, 110, 40] : edge(day), V.mat === "lava" ? 0.6 : 0.3 + 0.25 * day); g.lineWidth = 1.4; g.beginPath(); open.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.stroke(); /* le bord que la lumière du dehors accroche */
   if (V.mat === "ice" || V.mat === "chalk" || V.mat === "rock") { const sc = V.mat === "ice" ? [210, 236, 250] : dk(M, 0.7); for (let k = 0; k < 9; k++) { const idx = 24 + 4 + Math.floor(P[(k * 7) % 24] * 16), x = open[idx][0], y = open[idx][1] + 1, L = H * (0.03 + 0.07 * P[(k + 3) % 24]); g.fillStyle = css(sc, V.mat === "ice" ? 0.85 : 1); g.beginPath(); g.moveTo(x - 3, y - 6); g.lineTo(x + 3, y - 6); g.lineTo(x + 0.3, y + L); g.closePath(); g.fill(); } } /* stalactites ou glaçons au linteau */
   const fl = g.createLinearGradient(0, cy + ryB * 0.7, 0, H); fl.addColorStop(0, css(mixc(hzc, [255, 240, 220], 0.2), 0.28 * (0.3 + 0.7 * day))); fl.addColorStop(1, css(hzc, 0)); g.fillStyle = fl; g.beginPath(); g.ellipse(cx, H, rx * 0.9, H - cy - ryB * 0.7, 0, Math.PI, TAU); g.fill(); /* la lumière du dehors sur le sol de la grotte */
+  if (m.path && m.path.lip) carvedSteps(g, m, m.path.lip, mixc(rockC, hzc, 0.15 * day), hzc, day); /* chemin étape 3 : des marches montent vers la lumière */
 }
 function foreground(g, m, t, hzc) {
   const { W, H, fg, pal } = m, col = css(mixc(pal.rock, [0, 0, 0], 0.7)), rim = css(mixc(hzc, [255, 230, 190], 0.2), 0.22), sd = fg.side, X = (x) => (sd < 0 ? x : W - x);
