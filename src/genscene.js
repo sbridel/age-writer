@@ -348,7 +348,8 @@ function build(S, W, H) {
   const qf = rng((S.seed ^ 0xa16ae) >>> 0), fedGlow = S.fed ? Array.from({ length: 16 }, () => ({ x: W * qf(), y: hz + (H - hz) * (0.08 + 0.8 * qf()), r: H * (0.02 + 0.04 * qf()), p: qf() })) : null; /* graine propre */
   const won = WON.buildWonders(S, W, H, hz); /* les merveilles : graine propre, un Âge sans merveille ne bouge pas */
   const keep = placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave, fis);
-  return { keep, riverGeo: riverGeo(S), craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, giantP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
+  const path = buildPath({ S, W, H, hz, shore, pond, cones, cave, riverGeo: riverGeo(S), ruins, det, extras }); /* ESSAI (6 nov.) : le chemin (claude/DESIGN-le-chemin.md) */
+  return { keep, path, riverGeo: riverGeo(S), craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, giantP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
 }
 
 /**
@@ -477,7 +478,8 @@ function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave, 
     const half = W * 0.03 * rn.k3, nx = place("ruin", rn.x, rn.by + 2, half, keep, posed);
     if (nx == null) { if (drawnOnly(rn.k)) { ruins.splice(i, 1); continue; } rn.x = slide(rn.x, keep, half); } else rn.x = nx; /* B : rien ne porte nulle part ; tirée : effacée ; écrite : elle reste */
     posed.push({ x0: rn.x - half, x1: rn.x + half }); }
-  if (det) { const half = W * 0.03, nx = place("detail", det.x, hz + D * 0.06, half, keep, posed); if (nx == null) det.gone = true; else { det.x = nx; posed.push({ x0: nx - half, x1: nx + half }); } } /* le détail habité n'est jamais écrit : effacé si rien ne le porte */
+  if (det && rng((S.seed ^ 0xde7a5) >>> 0)() > 0.35) det.gone = true; /* ESSAI (6 nov., le chemin, l'auteur) : le détail habité devient rare (une fenêtre sur trois) ; quand il est là, un chemin y mène */
+  if (det && !det.gone) { const half = W * 0.03, nx = place("detail", det.x, hz + D * 0.06, half, keep, posed); if (nx == null) det.gone = true; else { det.x = nx; posed.push({ x0: nx - half, x1: nx + half }); } } /* le détail habité n'est jamais écrit : effacé si rien ne le porte */
   const treesDrawn = ["grove", "great_tree", "ironwood", "charred_grove", "crystal_tree"].every((id) => !wr.has(id) || dr.has(id));
   for (let i = trees.length - 1; i >= 0; i--) { const tr = trees[i], nx = place("tree", tr.x, tr.by + 2, W * 0.02 * tr.k3, keep); /* 2 et la carte du sol : portés, hors des zones réservées (les arbres, eux, peuvent se serrer : une forêt) */
     if (nx != null) tr.x = nx; else if (treesDrawn) trees.splice(i, 1); else { tr.x = slide(tr.x, keep, W * 0.025); tr.sick = 0.6; } } /* étape 5 (décision C) : écrit, rien ne le porte : il reste, malade */
@@ -520,6 +522,52 @@ function swallowBuilt(S, W, H, hz, fis, ruins) {
     let i = 0; while (i < L.length - 1 && L[i][1] < by) i++; if (L[i][1] < by - 2 && i === L.length - 1) continue; if (i === 0 && L[0][1] > by + 6) continue; /* la faille ne passe pas à cette hauteur */
     const xL = L[i][0], xR = R[i][0]; if (rn.x + half < xL - 2 || rn.x - half > xR + 2) continue;
     const toward = rn.x < (xL + xR) / 2 ? 1 : -1; rn.chasm = { tilt: toward * (0.12 + 0.25 * gf), sink: H * (0.05 + 0.12 * gf) * k }; }
+}
+/**
+ * ESSAI (6 nov., claude/DESIGN-le-chemin.md, étape 1). Le chemin est une trace de présence : des œuvres (ruines, bâtis, pont, ponton, le détail habité)
+ * ou des bêtes de terre. Sans elles, pas de chemin : un monde vierge. Il part des pieds du spectateur, du côté libre, et mène à l'œuvre (le sujet d'abord) ;
+ * la sente des bêtes mène à l'eau, sinon elle traverse et disparaît derrière un pli. Il suit la carte du sol : là où il y a de l'eau, il s'interrompt
+ * (les gués et passerelles viendront à l'étape 2). Graine propre : rien d'autre ne bouge. Renvoie { kind, segs: [[{x, y, w}…]…], soil } ou null.
+ * Étape 1 : de plain-pied, en contrebas, à couvert, à flanc de pente ; le surplomb et la grotte viennent à l'étape 3.
+ */
+const BEASTS = new Set(["grazer", "herd", "cave_stalker", "raptor"]);
+function buildPath(m) {
+  const { S, W, H, hz, ruins, det, extras } = m, V = S.view || {}, D = H - hz;
+  if (V.kind === "high" || V.kind === "cave" || S.world === "cavern" || S.torus) return null;
+  const works = ruins.filter((rn) => rn.k !== "bridge" || rn.spans), beasts = (extras || []).some((e) => BEASTS.has(e.id));
+  const detOn = det && !det.gone; if (!works.length && !detOn && !beasts && !ruins.length) return null; /* un monde vierge */
+  const q = rng((S.seed ^ 0x9a7e) >>> 0), side = V.side || (q() < 0.5 ? -1 : 1), sided = V.side && (V.kind === "slope" || V.kind === "cover");
+  const xs = W * (sided ? 0.5 - side * (0.14 + 0.08 * q()) : 0.32 + 0.36 * q()), ys = H + 6;
+  let kind = works.length || detOn || ruins.length ? "built" : "trail", xe, ye, fade = false;
+  const BUILTK = new Set(["tower", "lighthouse", "stairs"]), target = works.find((rn) => BUILTK.has(rn.k)) || works.find((rn) => rn.k !== "bridge") || works[0] || ruins[0];
+  if (target) { const half = W * 0.03 * (target.k3 || 1); xe = target.x + (xs < target.x ? -half : half) * 0.6; ye = (target.by || hz) + 2 + D * 0.01; if (target.k === "bridge") { xe = target.x - W * 0.19 * (target.k3 || 1) * (xs < target.x ? 1 : -1) * 0.8; ye = (target.by || hz) + 2; } }
+  else if (detOn) { xe = det.x; ye = hz + D * 0.06 + 2; }
+  else { /* la sente : à l'eau, sinon elle traverse */
+    const yw = hz + D * (0.3 + 0.15 * q()); let wx = null;
+    for (let d = 0; d < W && wx == null; d += W / 64) for (const x of [xs + d, xs - d]) if (x > 0 && x < W && !dryAt(m, x, yw)) { wx = x; break; }
+    if (wx != null) { xe = wx; ye = yw; } else { xe = W * (sided ? 0.5 + side * 0.1 : xs < W / 2 ? 0.62 + 0.2 * q() : 0.18 + 0.2 * q()); ye = hz + D * (0.22 + 0.12 * q()); fade = true; }
+  }
+  const c1 = [xs + (q() - 0.5) * W * 0.12, lerp(ys, ye, 0.42)], c2 = [xe + (xs - xe) * (0.25 + 0.3 * q()) + (q() - 0.5) * W * 0.1, lerp(ys, ye, 0.8)];
+  const bez = (u) => { const a = 1 - u; return [a * a * a * xs + 3 * a * a * u * c1[0] + 3 * a * u * u * c2[0] + u * u * u * xe, a * a * a * ys + 3 * a * a * u * c1[1] + 3 * a * u * u * c2[1] + u * u * u * ye]; };
+  const Wp = W * (kind === "built" ? 0.12 : 0.085), N = 70, fold = q() < 0.55 ? [0.48 + 0.12 * q(), 0] : null; if (fold) fold[1] = fold[0] + 0.06 + 0.05 * q(); /* il disparaît derrière un pli, et reparaît */
+  const segs = []; let cur = [];
+  for (let i = 0; i <= N; i++) { const u = i / N, [x, y] = bez(u), w = Math.max(0.6, (Wp * (y - hz)) / D), hidden = (fold && u > fold[0] && u < fold[1]) || !dryAt(m, x, Math.min(H - 1, y));
+    if (hidden) { if (cur.length > 1) segs.push(cur); cur = []; continue; } cur.push({ x, y, w, a: fade ? clamp((1 - u) * 3) : 1 }); }
+  if (cur.length > 1) segs.push(cur); if (!segs.length) return null;
+  return { kind, segs, soil: solEn(m, xs, H - 4).k, seed: (S.seed ^ 0x9a7e) >>> 0 };
+}
+/** la couleur de la trace, selon le sol : battue (plus sombre) sur la terre, poussière claire sur la roche, damée sur la glace */
+const TRAIL_TONE = { earth: [[84, 62, 42], 0.5], forest: [[78, 58, 40], 0.5], sand: [[150, 120, 84], 0.35], ice: [[236, 242, 248], 0.5], salt: [[238, 234, 224], 0.45], chalk: [[236, 232, 220], 0.4], lava: [[24, 18, 16], 0.55], stone: [[176, 166, 148], 0.4], basalt: [[120, 114, 108], 0.4], granite: [[186, 172, 160], 0.4], rock: [[170, 160, 142], 0.4] };
+function pathPass(g, m, t, day, night) {
+  const P = m.path; if (!P) return; const { pal } = m, [tone, mixK] = TRAIL_TONE[P.soil] || TRAIL_TONE.rock, amb = 0.3 + 0.7 * day, base = mixc([6, 6, 10], mixc(pal.ground, tone, mixK + 0.15), amb), edge = mixc(base, pal.ground, 0.5), q = rng(P.seed ^ 0x51);
+  const ribbon = (seg, k) => { g.beginPath(); seg.forEach((p, i) => (i ? g.lineTo(p.x - p.w * k, p.y) : g.moveTo(p.x - p.w * k, p.y))); for (let i = seg.length - 1; i >= 0; i--) g.lineTo(seg[i].x + seg[i].w * k, seg[i].y); g.closePath(); };
+  g.save();
+  for (const seg of P.segs) { const al = seg.reduce((a, p) => Math.min(a, p.a), 1);
+    g.fillStyle = css(edge, 0.45 * al); ribbon(seg, 0.62); g.fill(); /* le bord, fondu dans le sol */
+    g.fillStyle = css(base, 0.75 * al); ribbon(seg, 0.42); g.fill(); /* la trace */
+    for (let i = 2; i < seg.length - 1; i += 2) { const p = seg[i]; if (q() < 0.5) continue; const r = Math.max(0.5, p.w * 0.06 * (0.6 + q())); g.fillStyle = css(mixc(base, q() < 0.5 ? [255, 250, 240] : [0, 0, 0], 0.25), 0.7 * al); g.beginPath(); g.ellipse(p.x + (q() - 0.5) * p.w * 0.7, p.y + (q() - 0.5) * 2, r * 1.6, r, 0, 0, TAU); g.fill(); } /* des cailloux, des empreintes */
+    if (night > 0.4 && m._moonlight) { /* rien : la nuit éteint la trace avec le sol */ } }
+  g.restore();
 }
 /** 1 : l'îlot de roche sous un bâti posé sur l'eau (peint sous la maçonnerie, dans le repère du bâti). */
 function isletFoot(g, m, rn) {
@@ -1143,6 +1191,7 @@ function paint(g, m, t, o = {}) {
   if (m.airK && m.airK.thick > 0.05) { const D = H - hz, hg = g.createLinearGradient(0, hz, 0, hz + D * 0.45); hg.addColorStop(0, css(mixc(hzc, [240, 235, 220], 0.3), 0.55 * m.airK.thick)); hg.addColorStop(1, css(hzc, 0)); g.fillStyle = hg; g.fillRect(0, hz, W, D * 0.45); } /* ESSAI : un air épais écrase la profondeur : le lointain se noie */
   WON.wonderPass(g, m, t, "relief", k0); /* ESSAI : ce qui se dessine par-dessus le relief du milieu (l'Inachevé) */
   const offW = offWater(g, m); /* ESSAI : rien ne pousse sur la rivière ni sur l'étang */
+  pathPass(g, m, t, day, night); /* ESSAI (6 nov.) : le chemin, dans le sol, sous la flore */
   const wetScene = !!(m.shore || (S.water && S.waterGround !== false && !S.ice)); /* ESSAI (6 nov.) : sur une scène d'eau, les Prototaxites (debout sur la rive) se peignent après le reflet, sinon le reflet les efface */
   if (S.primeval && !wetScene) primeval(g, m, t, day, night); /* un monde trop jeune pour les arbres : des Prototaxites */
   else if (!S.primeval && S.alive && !S.trees && !(S.succ && S.succ.kind === "bare")) lowFlora(g, m, t, day, night); /* la flore basse du climat, pour les Âges vivants sans arbres */
