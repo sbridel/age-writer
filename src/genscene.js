@@ -347,7 +347,12 @@ function build(S, W, H) {
   const cave = S.world === "cavern" ? buildCave(S, W, H, hz) : null; // la voûte : graine propre, les autres mondes ne bougent pas
   const qf = rng((S.seed ^ 0xa16ae) >>> 0), fedGlow = S.fed ? Array.from({ length: 16 }, () => ({ x: W * qf(), y: hz + (H - hz) * (0.08 + 0.8 * qf()), r: H * (0.02 + 0.04 * qf()), p: qf() })) : null; /* graine propre */
   const won = WON.buildWonders(S, W, H, hz); /* les merveilles : graine propre, un Âge sans merveille ne bouge pas */
-  const keep = placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave); /* ESSAI (6 nov.) : la grammaire du placement (claude/DESIGN-grammaire-du-placement.md) */
+  const keep = placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave);
+  if (S.river && S.fissure && S.fissure !== "cave" && S.fissure !== "submarine") { /* ESSAI (6 nov., l'auteur : « sur la rivière, j'aime pas ») : la faille ne s'ouvre jamais sur la rivière ; elle va dans la berge, à côté ; si le gouffre n'y tient pas, il s'ouvre moins grand (la lave, elle, peut y tomber) */
+    const mm = { S, W, H, hz, riverGeo: riverGeo(S) }, gf0 = chasmOf(S);
+    const clearAt = (x, gf) => { const sp = fisSpan(mm, gf), hw = W * 0.04 * (1 + 2.5 * gf) * 1.3 + W * 0.045; for (let y = sp.y0; y <= sp.y1; y += 4) { const rb = riverBand(mm, y); if (rb && x + hw > rb.x0 && x - hw < rb.x1) return false; } return x - hw > W * 0.04 && x + hw < W * 0.96; };
+    let done = false; for (const gf of [gf0, gf0 * 0.66, gf0 * 0.33, 0]) { if (clearAt(fis.x, gf)) { fis.gfCap = gf; done = true; break; }
+      for (let d = W / 64; d < W && !done; d += W / 64) { if (clearAt(fis.x - d, gf)) { fis.x -= d; fis.gfCap = gf; done = true; } else if (clearAt(fis.x + d, gf)) { fis.x += d; fis.gfCap = gf; done = true; } } if (done) break; } }
   return { keep, riverGeo: riverGeo(S), craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, giantP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
 }
 
@@ -2025,9 +2030,9 @@ function fissure(g, m, t) {
     g.restore();
     return;
   }
-  const sub = S.fissure === "submarine", y0 = sub ? hz + (H - hz) * 0.3 : hz + 2, gf = chasmOf(S);
+  const sub = S.fissure === "submarine", gf = Math.min(chasmOf(S), fis.gfCap == null ? 1 : fis.gfCap), sp = fisSpan(m, gf), y0 = sub ? hz + (H - hz) * 0.3 : sp.y0, yEnd = sub ? H - 2 : sp.y1;
   if (gf > 0 && !sub) chasmSwallow(g, m, t, gf); /* ESSAI (6 nov., étape 6) : le gouffre boit tout ce qui coule ; en aval, plus rien */
-  crevasse(g, { x: fis.x, y0, y1: H - 2, w: W * 0.04 * (1 + 2.5 * gf), jit: chasmJit(fis.pts, gf), t, water: sub, open: openingOf(S), seed: 1 + ((S.seed >>> 0) % 89) });
+  crevasse(g, { x: fis.x, y0, y1: yEnd, w: W * 0.04 * (1 + 2.5 * gf), jit: chasmJit(fis.pts, gf), t, water: sub, open: openingOf(S), seed: 1 + ((S.seed >>> 0) % 89) });
   if (!sub) fallsInto(g, m, t, gf); /* ESSAI (6 nov., étape 6) : ce qui coule y tombe */
   if (sub && gf > 0) seaFunnel(g, m, t, gf); /* sous la mer, le gouffre aspire : un entonnoir à la surface */
   if (sub) for (const b of fis.bubbles) { const q = frac(t * 2 + b.p); g.strokeStyle = css([205, 235, 248], 0.5 * (1 - q)); g.lineWidth = 0.9; g.beginPath(); g.arc(fis.x + b.dx, H - 4 - q * (H - y0 - 8), 1 + 1.4 * b.p, 0, TAU); g.stroke(); }
@@ -2039,6 +2044,8 @@ function fissure(g, m, t) {
  * gouffre quand l'Âge se dégrade (tout s'y engouffre). `chasmOf` : 0 = fente, 1 = gouffre, d'après l'effondrement (`doomOf`).
  */
 const chasmOf = (S) => smooth(clamp((doomOf(S) - 0.06) / 0.3));
+/** ESSAI (6 nov., l'auteur : « la faille est trop longue ») : la faille ne court plus de l'horizon au bas de la fenêtre ; elle s'ouvre au plan moyen, sur une part de la profondeur (plus longue en gouffre) */
+const fisSpan = (m, gf) => { const D = m.H - m.hz, y0 = m.hz + D * 0.12, y1 = m.hz + D * (0.62 + 0.18 * gf); return { y0, y1 }; };
 /** le tracé de la fissure ne se tord pas plus quand elle s'élargit (crevasse multiplie le tracé par la largeur) */
 const chasmJit = (pts, gf) => pts.map((v) => v / (1 + 2.5 * gf));
 /** ce qui coule, à la hauteur y : { x0, x1, kind } ou null (la coulée de lave mafique, le ruban de rivière) */
@@ -2049,7 +2056,7 @@ function flowAt(m, y) {
 }
 /** les lèvres de la fissure, telles que crevasse les trace */
 function fissureLips(m, gf) {
-  const { S, W, H, hz, fis } = m, open = openingOf(S), ease = open * open * (3 - 2 * open), w = W * 0.04 * (1 + 2.5 * gf) * (0.1 + 0.9 * ease), y0 = hz + 2, y1 = y0 + (H - 2 - y0) * (0.4 + 0.6 * ease);
+  const { S, W, fis } = m, open = openingOf(S), ease = open * open * (3 - 2 * open), w = W * 0.04 * (1 + 2.5 * gf) * (0.1 + 0.9 * ease), sp = fisSpan(m, gf), y0 = sp.y0, y1 = y0 + (sp.y1 - y0) * (0.4 + 0.6 * ease);
   return crevasseOutline({ x: fis.x, y0, y1, w, jit: chasmJit(fis.pts, gf), shape: "wedge", seed: 1 + ((S.seed >>> 0) % 89) });
 }
 /** ce qui coule tombe dans la fente : à chaque lèvre baignée par le liquide, il se déverse ; des braises (ou de l'écume) descendent parmi les étoiles */
@@ -2075,7 +2082,7 @@ function fallsInto(g, m, t, gf) {
 /** le gouffre : en aval de la lèvre, le lit est vide ; on repeint le sol par-dessus le cours (le sol nu, un peu de cendre ou de limon) */
 function chasmSwallow(g, m, t, gf) {
   const { W, H, fis, pal } = m, { L } = fissureLips(m, gf); let yIn = null;
-  for (const [, y] of L) { const f = flowAt(m, y); if (f && fis.x > f.x0 - W * 0.04 && fis.x < f.x1 + W * 0.04) { yIn = y; break; } } if (yIn == null) return;
+  for (const [, y] of L) { const f = flowAt(m, y); if (f && f.kind === "lava" && fis.x > f.x0 - W * 0.04 && fis.x < f.x1 + W * 0.04) { yIn = y; break; } } if (yIn == null) return; /* la rivière ne passe jamais sur la faille : seule la lave s'y engouffre */
   const lip = yIn + (H - yIn) * (0.15 + 0.2 * (1 - gf)); /* là où le cours bascule */
   const Lp = [], Rp = []; for (let y = lip; y <= H + 4; y += 2) { const f = flowAt(m, y); if (!f) continue; Lp.push([f.x0 - 2, y]); Rp.push([f.x1 + 2, y]); } if (Lp.length < 2) return;
   g.save(); g.beginPath(); Lp.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); for (let i = Rp.length - 1; i >= 0; i--) g.lineTo(Rp[i][0], Rp[i][1]); g.closePath(); g.clip();
