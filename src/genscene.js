@@ -12,7 +12,7 @@ const { rng, fnv, clamp, lerp, smooth, frac } = require("./util");
 const PM = require("./physics/model"); /* 2.5 (C) : la forme du relief */
 const SKY = require("./sky");
 const WT = require("./wealth"), AM = require("./amounts"), SEA = require("./sea"), TERRAIN = require("./terrain");
-const { crevasse } = require("./crevasse");
+const { crevasse, outline: crevasseOutline } = require("./crevasse");
 const WX = require("./weather");
 const WON = require("./genscene-wonders"); /* les merveilles (src/wonders.js) */
 const CAT = require("./wonders");
@@ -453,7 +453,7 @@ function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave) 
     if (wet) { rn.k3 = main ? 0.62 : 0.5; rn.by = hz; rn.foot = "islet"; }
     else if (main && !wetAt(rn.x, hz + D * 0.08)) { rn.k3 = 0.85; rn.by = hz + D * 0.07; }
     else { rn.k3 = 0.6; rn.by = hz; }
-    if (!wet) { const nx = place("built", rn.x, rn.by + 1, W * (rn.k === "stairs" ? 0.24 : 0.05) * rn.k3, []); if (nx != null) rn.x = nx; } /* 1 : portée par le sol, à la hauteur de son pied (l'escalier a une emprise large : marches et terrasse) ; un bâti n'est jamais effacé */
+    if (!wet) { const nx = place("built", rn.x, rn.by + 1, W * (rn.k === "stairs" ? 0.24 : 0.05) * rn.k3, []); if (nx != null) rn.x = nx; else if (solEn(m, rn.x, rn.by + 1).k === "lava") { const ql = rng((S.seed ^ Math.imul(Math.round(rn.x) + 41, 2654435761) ^ 0x1a7a) >>> 0), un = S.unrest || 0, p = doomOf(S) > 0.06 ? 1 : 0.08 + 0.85 * smooth(clamp((un - 0.2) / 0.5)); rn.lava = ql() < p ? "taken" : "crust"; } } /* 1 : portée par le sol, à la hauteur de son pied (l'escalier a une emprise large : marches et terrasse) ; un bâti n'est jamais effacé */
   }
   if (subj) keep.push({ x0: subj.x - W * 0.11, x1: subj.x + W * 0.11, subj: true });
   if (S.forms && S.forms.island && S.water && S.waterGround === true && !S.ice && !S.lava && !S.sand) { /* l'île tient son tiers : même tirage que islandOffshore */
@@ -489,8 +489,24 @@ function isletFoot(g, m, rn) {
 function placedRuin(L, g, m, rn, t, st) {
   if (!rn.k3) { ruin(L, m, rn, t, g, st); return; }
   if (rn.foot === "islet") isletFoot(g, m, rn);
-  const tf = (c) => { c.save(); c.translate(rn.x, rn.by); c.scale(rn.k3, rn.k3); c.translate(-rn.x, -m.hz); };
+  const sink = rn.lava === "taken" ? m.H * 0.09 * rn.k3 : 0; /* ESSAI (6 nov., étape 7) : pris par la lave, il s'enfonce ; le sol le coupe à sa ligne */
+  const tf = (c) => { c.save(); if (sink) { c.beginPath(); c.rect(0, 0, m.W, rn.by + 1); c.clip(); } c.translate(rn.x, rn.by + sink); c.scale(rn.k3, rn.k3); c.translate(-rn.x, -m.hz); };
   tf(L); if (g !== L) tf(g); ruin(L, m, rn, t, g, st); if (g !== L) g.restore(); L.restore();
+}
+/**
+ * ESSAI (6 nov., carte du sol, étape 7 : claude/DESIGN-carte-du-sol.md, point 7). Un bâti écrit sur la lave : sur la croûte refroidie, noirci par la chaleur ;
+ * ou pris par la lave, enfoncé, la lueur sur sa pierre, des braises à son pied. La graine choisit ; ses chances penchent avec l'état de l'Âge (loi 1, loi 4).
+ * Peint après la pierre (par-dessus la couche des ruines) : la suie monte du pied ; la lueur vient du bas.
+ */
+function lavaMarks(L, g, m, t) {
+  const { W, H } = m, night = m.nightK || 0;
+  for (const rn of m.ruins) { if (!rn.lava) continue; const k = rn.k3 || 1, w = W * 0.07 * k, h = H * 0.42 * k, by = rn.by, taken = rn.lava === "taken";
+    L.save(); L.globalCompositeOperation = "source-atop"; const sg = L.createLinearGradient(0, by, 0, by - h * (taken ? 0.7 : 0.45)); sg.addColorStop(0, css([12, 8, 6], taken ? 0.85 : 0.7)); sg.addColorStop(1, css([12, 8, 6], 0)); L.fillStyle = sg; L.fillRect(rn.x - w, by - h, w * 2, h + 2); /* la suie, du pied vers le haut */
+    if (taken) { const lg = L.createLinearGradient(0, by, 0, by - h * 0.3); lg.addColorStop(0, css([255, 120, 40], 0.7)); lg.addColorStop(1, css([255, 90, 30], 0)); L.fillStyle = lg; L.fillRect(rn.x - w, by - h * 0.3, w * 2, h * 0.3 + 2); } /* la lueur du feu sur la pierre */
+    L.restore();
+    if (taken) { g.save(); g.globalCompositeOperation = "lighter"; const rg = g.createRadialGradient(rn.x, by, 1, rn.x, by, w * 1.6); rg.addColorStop(0, css([255, 130, 40], 0.45 + 0.15 * night)); rg.addColorStop(1, css([255, 90, 20], 0)); g.fillStyle = rg; g.fillRect(rn.x - w * 1.6, by - w * 1.6, w * 3.2, w * 3.2); /* le pied dans la lave */
+      for (let i = 0; i < 6; i++) { const ph = frac(t * 0.6 + i / 6), ex = rn.x + (i - 2.5) * w * 0.25 + Math.sin(TAU * (ph + i)) * 2, ey = by - ph * h * 0.5; g.fillStyle = css([255, 160, 70], 0.8 * (1 - ph)); g.fillRect(ex, ey, 1.4, 1.4); } /* des braises qui montent */
+      g.restore(); } }
 }
 
 /**
@@ -2009,9 +2025,67 @@ function fissure(g, m, t) {
     g.restore();
     return;
   }
-  const sub = S.fissure === "submarine", y0 = sub ? hz + (H - hz) * 0.3 : hz + 2;
-  crevasse(g, { x: fis.x, y0, y1: H - 2, w: W * 0.04, jit: fis.pts, t, water: sub, open: openingOf(S), seed: 1 + ((S.seed >>> 0) % 89) });
+  const sub = S.fissure === "submarine", y0 = sub ? hz + (H - hz) * 0.3 : hz + 2, gf = chasmOf(S);
+  if (gf > 0 && !sub) chasmSwallow(g, m, t, gf); /* ESSAI (6 nov., étape 6) : le gouffre boit tout ce qui coule ; en aval, plus rien */
+  crevasse(g, { x: fis.x, y0, y1: H - 2, w: W * 0.04 * (1 + 2.5 * gf), jit: chasmJit(fis.pts, gf), t, water: sub, open: openingOf(S), seed: 1 + ((S.seed >>> 0) % 89) });
+  if (!sub) fallsInto(g, m, t, gf); /* ESSAI (6 nov., étape 6) : ce qui coule y tombe */
+  if (sub && gf > 0) seaFunnel(g, m, t, gf); /* sous la mer, le gouffre aspire : un entonnoir à la surface */
   if (sub) for (const b of fis.bubbles) { const q = frac(t * 2 + b.p); g.strokeStyle = css([205, 235, 248], 0.5 * (1 - q)); g.lineWidth = 0.9; g.beginPath(); g.arc(fis.x + b.dx, H - 4 - q * (H - y0 - 8), 1 + 1.4 * b.p, 0, TAU); g.stroke(); }
+}
+
+/**
+ * ESSAI (6 nov., carte du sol, étape 6 : claude/DESIGN-carte-du-sol.md, « La fissure et ce qui coule »). La fissure est ouverte dans le lit ;
+ * ce qui coule (la coulée de lave, la rivière) y tombe. Sa grandeur suit la loi 14 : fente sur un Âge stable (le cours continue en aval),
+ * gouffre quand l'Âge se dégrade (tout s'y engouffre). `chasmOf` : 0 = fente, 1 = gouffre, d'après l'effondrement (`doomOf`).
+ */
+const chasmOf = (S) => smooth(clamp((doomOf(S) - 0.06) / 0.3));
+/** le tracé de la fissure ne se tord pas plus quand elle s'élargit (crevasse multiplie le tracé par la largeur) */
+const chasmJit = (pts, gf) => pts.map((v) => v / (1 + 2.5 * gf));
+/** ce qui coule, à la hauteur y : { x0, x1, kind } ou null (la coulée de lave mafique, le ruban de rivière) */
+function flowAt(m, y) {
+  const { S, W, H, hz } = m; if (y <= hz + 1) return null;
+  if (S.lava && S.lavaKind === "mafic") { const F = flowGeom(m), z = clamp((H - hz) / (y - hz), 1.02, 26), u = F.mid(z), h = F.half(z), k = (W * 0.55) / z; return { x0: W / 2 + (u - h) * k, x1: W / 2 + (u + h) * k, kind: "lava" }; }
+  const rb = riverBand(m, y); return rb ? { ...rb, kind: "water" } : null;
+}
+/** les lèvres de la fissure, telles que crevasse les trace */
+function fissureLips(m, gf) {
+  const { S, W, H, hz, fis } = m, open = openingOf(S), ease = open * open * (3 - 2 * open), w = W * 0.04 * (1 + 2.5 * gf) * (0.1 + 0.9 * ease), y0 = hz + 2, y1 = y0 + (H - 2 - y0) * (0.4 + 0.6 * ease);
+  return crevasseOutline({ x: fis.x, y0, y1, w, jit: chasmJit(fis.pts, gf), shape: "wedge", seed: 1 + ((S.seed >>> 0) % 89) });
+}
+/** ce qui coule tombe dans la fente : à chaque lèvre baignée par le liquide, il se déverse ; des braises (ou de l'écume) descendent parmi les étoiles */
+function fallsInto(g, m, t, gf) {
+  const { L, R } = fissureLips(m, gf), night = m.nightK || 0; let hit = 0;
+  const lavaA = (a, al) => css([255, 120 + 80 * a, 40 * a], al), water = (al) => css(mixc([200, 230, 240], m.lastHzc || [200, 210, 220], 0.3), al);
+  for (const side of [L, R]) for (let i = 1; i < side.length; i++) {
+    const [x, y] = side[i], [xp, yp] = side[i - 1], f = flowAt(m, y); if (!f || x < f.x0 || x > f.x1) continue; hit++;
+    const inward = side === L ? 1 : -1, dy = y - yp, len = Math.max(3, dy * (1.2 + 1.2 * gf)), isLava = f.kind === "lava", ph = frac(t * 0.8 + i * 0.137 + (side === L ? 0 : 0.5));
+    g.save(); g.globalCompositeOperation = isLava ? "lighter" : "source-over";
+    const gr = g.createLinearGradient(x, y, x + inward * len * 0.35, y + len); /* la nappe qui passe la lèvre et plonge */
+    if (isLava) { gr.addColorStop(0, lavaA(0.7, 0.45)); gr.addColorStop(0.6, lavaA(0.3, 0.18)); gr.addColorStop(1, lavaA(0, 0)); } else { gr.addColorStop(0, water(0.45)); gr.addColorStop(1, water(0)); }
+    g.fillStyle = gr; g.beginPath(); g.moveTo(xp, yp); g.lineTo(x, y); g.lineTo(x + inward * len * 0.35, y + len); g.lineTo(xp + inward * len * 0.3, yp + len * 0.9); g.closePath(); g.fill();
+    g.strokeStyle = isLava ? lavaA(0.6, 0.55) : water(0.6); g.lineWidth = Math.max(0.8, dy * 0.07); g.beginPath(); g.moveTo(xp, yp); g.lineTo(x, y); g.stroke(); /* la lèvre baignée */
+    const px = x + inward * len * (0.15 + 0.3 * ph), py = y + len * ph * 1.4; /* une braise, ou une goutte, qui descend */
+    g.fillStyle = isLava ? lavaA(1 - ph, 0.9 * (1 - ph)) : water(0.7 * (1 - ph)); g.beginPath(); g.arc(px, py, 0.8 + 0.8 * (1 - ph), 0, TAU); g.fill();
+    g.restore();
+  }
+  if (hit) { const cx = m.fis.x, top = L[0][1], f0 = flowAt(m, top + 6); if (f0 && f0.kind === "lava") { const lg = g.createRadialGradient(cx, top + 30, 2, cx, top + 30, 60 + 80 * gf); lg.addColorStop(0, css([255, 110, 40], 0.18 + 0.1 * (1 - night))); lg.addColorStop(1, css([255, 80, 20], 0)); g.save(); g.globalCompositeOperation = "lighter"; g.fillStyle = lg; g.fillRect(cx - 160, top - 20, 320, 260); g.restore(); } } /* la lueur du feu sur les bords */
+}
+/** le gouffre : en aval de la lèvre, le lit est vide ; on repeint le sol par-dessus le cours (le sol nu, un peu de cendre ou de limon) */
+function chasmSwallow(g, m, t, gf) {
+  const { W, H, fis, pal } = m, { L } = fissureLips(m, gf); let yIn = null;
+  for (const [, y] of L) { const f = flowAt(m, y); if (f && fis.x > f.x0 - W * 0.04 && fis.x < f.x1 + W * 0.04) { yIn = y; break; } } if (yIn == null) return;
+  const lip = yIn + (H - yIn) * (0.15 + 0.2 * (1 - gf)); /* là où le cours bascule */
+  const Lp = [], Rp = []; for (let y = lip; y <= H + 4; y += 2) { const f = flowAt(m, y); if (!f) continue; Lp.push([f.x0 - 2, y]); Rp.push([f.x1 + 2, y]); } if (Lp.length < 2) return;
+  g.save(); g.beginPath(); Lp.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); for (let i = Rp.length - 1; i >= 0; i--) g.lineTo(Rp[i][0], Rp[i][1]); g.closePath(); g.clip();
+  g.fillStyle = css(mixc(pal.ground, [40, 34, 30], 0.35)); g.fillRect(0, lip, W, H - lip);
+  g.globalAlpha = 0.5 * gf; g.fillStyle = css(mixc(pal.ground, [0, 0, 0], 0.4)); for (let y = lip; y < H; y += 6) g.fillRect(0, y, W, 1.2); /* le lit asséché, ses rides */
+  g.restore();
+}
+/** sous la mer, le gouffre aspire : un entonnoir à la surface, au-dessus de la fente */
+function seaFunnel(g, m, t, gf) {
+  const { H, hz, fis } = m, cy = hz + (H - hz) * 0.42, rx = 30 + 60 * gf, ry = rx * 0.22;
+  g.save(); for (let k = 0; k < 5; k++) { const a = TAU * (t * 0.5) + k * 1.2, r = 1 - k * 0.18; g.strokeStyle = css([210, 236, 246], (0.18 + 0.1 * k) * gf); g.lineWidth = 1.2; g.beginPath(); g.ellipse(fis.x, cy, rx * r, ry * r, 0, a, a + Math.PI * 1.4); g.stroke(); }
+  const dg = g.createRadialGradient(fis.x, cy, 1, fis.x, cy, rx * 0.5); dg.addColorStop(0, css([2, 10, 18], 0.75 * gf)); dg.addColorStop(1, css([2, 10, 18], 0)); g.fillStyle = dg; g.beginPath(); g.ellipse(fis.x, cy, rx * 0.55, ry * 0.6, 0, 0, TAU); g.fill(); g.restore();
 }
 
 /** ESSAI : un tronc qui a de la matière : large au pied (évasé), effilé vers la couronne, une face d'ombre et quelques fentes d'écorce.
@@ -2139,7 +2213,7 @@ function ruinsPass(g, m, t) {
   const sc = W / 560, row = Math.max(3, 5 * sc); L.strokeStyle = css(st.joint, 0.45); L.lineWidth = Math.max(0.6, 0.7 * sc); L.beginPath();
   for (let y = hz + 1, i = 0; y > hz - H * 0.45; y -= row, i++) { L.moveTo(0, y); L.lineTo(W, y); for (let x = (i % 2) * row * 1.3; x < W; x += row * 2.6) { L.moveTo(x, y); L.lineTo(x, y - row); } } L.stroke(); /* les lits et les joints de l'appareil */
   const q = rng((m.S.seed ^ 0x51a7e) >>> 0); for (let k = 0; k < 120; k++) { L.fillStyle = css(q() < 0.5 ? st.low : st.top, 0.25); L.fillRect(q() * W, hz - q() * H * 0.45, (2 + 4 * q()) * sc, (1 + 2 * q()) * sc); } /* les pierres inégales */
-  L.globalCompositeOperation = "source-over"; g.drawImage(L.canvas, 0, 0);
+  L.globalCompositeOperation = "source-over"; lavaMarks(L, g, m, t); g.drawImage(L.canvas, 0, 0);
 }
 /** 2.6 : la forme d'un pont, d'un tirage à part (le reste de la ruine ne bouge pas). Les arches de pierre restent la forme la plus
  *  courante ; un monde boisé y ajoute la passerelle sur chevalets et le pont de cordes, une main massive la dalle unique,
