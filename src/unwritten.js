@@ -153,7 +153,7 @@ function find(cry, s, dep = {}, key0 = null) {
   const j = judge(key, dep); if (!j) return null;
   const { a, name, seed, lines, text, target } = j;
   let model = null; try { model = dep.scene ? dep.scene(a, name, text) : null; } catch (e) { model = null; }
-  let words = ""; try { words = dep.prose ? String(dep.prose(a.resolved, { seed: name }) || "") : ""; } catch (e) { words = ""; }
+  let words = ""; try { words = dep.prose ? String(dep.prose(a.resolved, { seed: name, analysis: a }) || "") : ""; } catch (e) { words = ""; }
   return { age: { name, path: "unwritten:" + key, unwritten: true }, data: { target, model, system: null, orbit: null },
     unwritten: { key, seed, name, lines, text, words: snippet(words), verdict: a.verdict } };
 }

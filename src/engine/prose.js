@@ -3,6 +3,7 @@ const EXTRA_SKY = require("../sky");
 const WEATHER = require("../weather");
 const { blockById } = require("./registry");
 const { SEVERITY_ORDER } = require("./rules");
+const { hooks } = require("./hooks");
 
 const tracery = require("./vendor/tracery");
 
@@ -338,7 +339,35 @@ function listOf(parts) {
   return parts.length < 2 ? parts.join("") : parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1];
 }
 
-function matterSentences(resolved, grammar, teller = makeTeller(Math.random)) {
+// ---- le parcours (claude/DESIGN-grammaire-de-la-description.md, décision A) --------------------------------
+/** La description regarde le lieu comme la fenêtre : où l'on est, le ciel, le lointain, le proche, ce que des mains ont fait, le doute. */
+const STATIONS = ["place", "sky", "far", "near", "hands", "doubt"];
+const SKY_IDS = new Set(["thick_air", "thin_air", "ashen_sky", "poisoned_air", "raptor", "aeroplankton"]);
+const LOW_WEATHER = new Set(["fog", "marsh_mist", "watching_mist", "living_mist", "scented_mist", "steam", "meltwater", "rime", "glaze", "held_water"]);
+const FAR_GEO = new Set(["fissure", "cave_fissure", "submarine_fissure", "no_fissure", "water", "lava", "geysers", "rifts", "basalt_columns", "karst", "subsurface_ocean", "ceiling_sea", "molten_core", "dead_core", "deep_cold", "pressure", "brine", "scorched_surface", "hollowed_ground", "ringed_ground", "breathing_mirrors", "acid", "bitter_water", "obsidian"]);
+const FAR_LIFE = new Set(["kelp", "coral", "shoal", "plankton", "deep_hunter", "glow_algae"]);
+/** La station d'un bloc : d'après son axe, avec quelques exceptions (l'air est au ciel ; la brume, la mer et ses bêtes, la fissure qui ramène au loin). */
+function stationOf(id) {
+  if (SKY_IDS.has(id)) return "sky";
+  const axis = String(blockById.get(id)?.axis || "");
+  if (axis === "weather") return LOW_WEATHER.has(id) ? "far" : "sky";
+  if (axis === "cosmological") return "sky";
+  if (axis === "metaphysical") return "hands";
+  if (axis === "geological") return FAR_GEO.has(id) ? "far" : "near";
+  if (axis === "ecological") return FAR_LIFE.has(id) ? "far" : "near";
+  return "near";
+}
+/** Où l'on arrive : le point de liaison de la fenêtre (src/genscene.js, viewOf), dit par la description. */
+const PLACE_PROSE = {
+  plain: ["you stand on open ground, the place laid out level before you", "the link sets you down on even ground, with nothing between you and the rest"],
+  low: ["you arrive in a hollow, the land rising all around", "the link sets you down low, in a fold of the ground, the world above its rim"],
+  high: ["you arrive on a height, the land spread out below", "the link sets you on a ledge of rock, and everything else lies beneath"],
+  slope: ["you arrive on a slope, the ground falling away to one side", "the link sets you halfway up a hillside, the land tilting away"],
+  cover: ["you arrive under cover, looking out from the shade", "the link sets you in the shelter of what stands around you, looking out"],
+  cave: ["you arrive at the mouth of a cave, the light ahead", "the link sets you in the shadow of a cave mouth, looking out"],
+};
+
+function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at = null) {
   const sentences = [],
     used = new Set(),
     name = makeNamer(teller);
@@ -355,39 +384,43 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random)) {
     const A = name(reaction.a),
       B = name(reaction.b);
     sentences.push(capitalize(form.make(A, B, verb, spaced(reaction.shown), teller)) + ".");
+    if (at) at.push(blockById.has(reaction.shown) ? stationOf(reaction.shown) : stationOf(reaction.a)); // une réaction se dit là où est son produit
     name.seen.add(reaction.shown); // le produit est nommé : la prochaine fois, « the … »
   }
   const loose = [];
   for (const id of resolved.matter.written) {
     if (used.has(id) || (resolved.weather && resolved.weather[id])) continue; // météo programmée : sa phrase datée la dit (describeAge)
     const presence = String((resolved.presence && resolved.presence[id]) ?? blockById.get(id)?.presence ?? "").trim();
-    if (presence) sentences.push(capitalize(presence) + ".");
+    if (presence) { sentences.push(capitalize(presence) + "."); if (at) at.push(stationOf(id)); }
     else loose.push(id);
   }
   for (const sc of resolved.scars || []) { // les cicatrices que le monde a gardées de son tirage (src/scarring.js)
     const presence = String(sc.prose || blockById.get(sc.id)?.presence || "").trim(); // `prose` : une phrase propre à l'Âge (la maladie, l'Observation)
-    if (presence) sentences.push(capitalize(presence) + ".");
+    if (presence) { sentences.push(capitalize(presence) + "."); if (at) at.push(stationOf(sc.id)); }
   }
   for (const id of resolved.wonders || []) { // les merveilles nées d'une union (src/mutation.js, src/wonders.js)
     const presence = String(blockById.get(id)?.presence ?? "").trim();
-    if (presence) sentences.push(capitalize(presence) + ".");
+    if (presence) { sentences.push(capitalize(presence) + "."); if (at) at.push(stationOf(id)); }
   }
-  for (const x of resolved.excess || []) sentences.push(capitalize(x.prose) + "."); // un bloc écrit en grande quantité (`many: X`, src/amounts.js)
-  for (const x of resolved.readings || []) sentences.push(capitalize(x) + "."); // 2.5 (E) : la lecture du monde qui mûrit avec le temps (src/succession.js)
+  for (const x of resolved.excess || []) { sentences.push(capitalize(x.prose) + "."); if (at) at.push(stationOf(x.id)); } // un bloc écrit en grande quantité (`many: X`, src/amounts.js)
+  for (const x of resolved.readings || []) { sentences.push(capitalize(x) + "."); if (at) at.push("near"); } // 2.5 (E) : la lecture du monde qui mûrit avec le temps (src/succession.js)
   // ce qui ne réagit pas : par petits groupes, pas une phrase chacun
   const groups = [];
-  for (let i = 0; i < loose.length;) {
-    const rest = loose.length - i,
-      size = rest <= 3 ? rest : rest === 4 ? 2 : 3;
-    groups.push(loose.slice(i, i + size));
-    i += size;
-  }
+  const byStation = at ? STATIONS.map((st) => loose.filter((id) => stationOf(id) === st)).filter((l) => l.length) : [loose]; // chaque reste à sa station
+  for (const part of byStation)
+    for (let i = 0; i < part.length;) {
+      const rest = part.length - i,
+        size = rest <= 3 ? rest : rest === 4 ? 2 : 3;
+      groups.push(part.slice(i, i + size));
+      i += size;
+    }
   for (const group of groups) {
     const text =
       group.length === 1
-        ? (teller.fresh(ALONE) || ALONE[0])(name(group[0]))
+        ? (teller.fresh(ALONE) || ALONE[0])(name(group[0], 1)) // un seul adjectif : les restes, rangés par station, sont plus souvent seuls
         : (teller.fresh(GROUPED) || GROUPED[0])(listOf(group.map((id) => name(id, 1))));
     sentences.push(capitalize(text) + ".");
+    if (at) at.push(stationOf(group[0]));
   }
   return sentences;
 }
@@ -403,35 +436,46 @@ function startOf(text) {
  */
 function describeAge(resolved, options = {}) {
   const random = seededRandom(seedOf(resolved, options.seed));
+  let place = options.place;
+  if (place === undefined && options.analysis) try { place = hooks.place(options.analysis, options.seed); } catch (e) { place = null; } // le point de liaison de la fenêtre (src/entry.js)
   return withRandom(random, () => {
     const grammar = tracery.createGrammar(PROSE_GRAMMAR);
     grammar.addModifiers(tracery.baseEngModifiers);
     const teller = makeTeller(random);
     const sky = skySentences(resolved, grammar, teller);
-    if (sky.length === 0) {
-      const matterOnly = matterSentences(resolved, grammar, teller);
-      return matterOnly.length ? matterOnly.join(" ") : "The page holds no readable symbol yet.";
-    }
+    const at = [], matterLines = matterSentences(resolved, grammar, teller, at);
+    if (sky.length === 0 && !matterLines.length) return "The page holds no readable symbol yet.";
     // deux phrases qui commencent pareil (« The book… The book… ») : on prend une autre tournure quand il y en a une
     const starts = new Set(sky.map(startOf));
+    matterLines.forEach((x) => starts.add(startOf(x)));
     const unlike = (list) => {
       const free = list.filter((x) => !starts.has(startOf(x)));
       const x = teller.pick(free.length ? free : list);
       starts.add(startOf(x));
       return x;
     };
-    const contradictionSentences = resolved.triggered
+    /* le parcours (décision A) : chaque phrase à sa station ; dans une station, l'ordre d'avant */
+    const by = Object.fromEntries(STATIONS.map((st) => [st, []]));
+    const placeText = place && PLACE_PROSE[place] && sky.length ? capitalize(teller.pick(PLACE_PROSE[place])) + "." : null;
+    if (placeText) by.place.push(placeText);
+    by.sky.push(...sky);
+    matterLines.forEach((x, i) => by[at[i] || "near"].push(x));
+    // les contradictions : une note propre à un bloc se dit à sa station ; la plus grave des autres, une seule, ferme la description (le doute)
+    const notes = resolved.triggered
       .filter((c, i, all) => !c.note || all.findIndex((o) => o.note === c.note) === i) // une phrase par note, même si plusieurs règles la partagent
-      .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity))
-      .map((c) => capitalize(unlike(Array.isArray(c.note) && c.note.length ? c.note : typeof c.note === "string" && c.note ? [c.note] : SKY_PROSE_GRAMMAR[`${c.severity}_contradiction`] || SKY_PROSE_GRAMMAR.light_contradiction)) + ".");
-    const matterLines = matterSentences(resolved, grammar, teller);
-    matterLines.forEach((x) => starts.add(startOf(x)));
-    const drawnNote = resolved.drawn.some((pick) => blockById.has(pick.id))
-      ? [capitalize(unlike(SKY_PROSE_GRAMMAR.drawn_matter_note))]
-      : [];
-    // météo vivante : une phrase par ligne programmée (`drizzle: often, dawn`), seulement s'il y en a (les autres Âges gardent leur texte)
-    const weatherLines = resolved.weather ? WEATHER.sentences(resolved.weather, teller.pick) : [];
-    return [...sky, ...contradictionSentences, ...matterLines, ...weatherLines, ...drawnNote].join(" ");
+      .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity));
+    let doubt = null;
+    for (const c of notes) {
+      const own = Array.isArray(c.note) && c.note.length ? c.note : typeof c.note === "string" && c.note ? [c.note] : null;
+      if (own) by[c.with && blockById.has(c.with) ? stationOf(c.with) : "sky"].push(capitalize(unlike(own)) + ".");
+      else if (!doubt) doubt = capitalize(unlike(SKY_PROSE_GRAMMAR[`${c.severity}_contradiction`] || SKY_PROSE_GRAMMAR.light_contradiction)) + ".";
+    }
+    // météo vivante : une phrase par ligne programmée (`drizzle: often, dawn`), au ciel
+    if (resolved.weather) by.sky.push(...WEATHER.sentences(resolved.weather, teller.pick));
+    if (resolved.drawn.some((pick) => blockById.has(pick.id))) by.hands.push(capitalize(unlike(SKY_PROSE_GRAMMAR.drawn_matter_note))); // ce que le livre n'a pas dit : après ce qu'on a vu
+    if (doubt) by.doubt.push(doubt);
+    const seen = new Set(); // une même phrase ne se dit pas deux fois (deux règles qui partagent une note sous deux formes)
+    return STATIONS.flatMap((st) => by[st]).filter((x) => (seen.has(x) ? false : (seen.add(x), true))).join(" ");
   });
 }
 
@@ -444,5 +488,7 @@ module.exports = {
   describeAge,
   descriptorsFor,
   matterSentences,
+  stationOf,
+  PLACE_PROSE,
   spaced,
 };

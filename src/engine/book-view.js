@@ -132,7 +132,7 @@ const BookView = class extends obsidian.ItemView {
   proseFor(path, source, analysis) {
     let cached = this.proseCache.get(path);
     if (cached && cached.source === source) return cached.text;
-    let text = describeAge(analysis.resolved, { seed: seedName(path) });
+    let text = describeAge(analysis.resolved, { seed: seedName(path), analysis });
     return (this.proseCache.set(path, { source: source, text: text }), text);
   }
   descriptive(leftPage, rightPage, analysis, ageSource, file) {

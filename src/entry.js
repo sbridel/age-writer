@@ -194,6 +194,7 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.closedSlots = (o) => (o && o.carry ? CARRY.closedSlots(o.carry) : null); /* sous une terre renversée, le livre ne tire pas de ciel */
       AGEX.signature = (o) => !!(this.ext.signature !== false && this._sigOld && o && o.seed != null && !this._sigOld.has(o.seed)); /* ESSAI 2.6 : seuls les Âges nés après la 2.6 tirent une signature */
       AGEX.carryNote = (c) => guard("portage", () => this.carryLine(c)) || "";
+      AGEX.place = (a, seed) => guard("lieu", () => { const S = sceneOf(a, seed, core.blocks); return S && S.view && S.world !== "cavern" && !S.torus ? S.view.kind : null; }) || null; /* la description dit d'abord où la fenêtre pose (claude/DESIGN-grammaire-de-la-description.md) */
       this.depthCache = new Map();
       // la profondeur de l'équilibre : le test par retrait, à l'affichage du panneau (jamais à chaque frappe), mis en cache par texte, graine et rigueur
       AGEX.depthNote = (text, seed) => guard("profondeur", () => {

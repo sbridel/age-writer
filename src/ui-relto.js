@@ -898,7 +898,7 @@ async function renderRelto(plugin, source, el, ctx) {
       const src = plugin.core.extract(await app.vault.cachedRead(f)); if (src == null) return null;
       const seed = plugin.core.seed(f.path), a = plugin.core.analyse(src, { seed }); if (!a) return null;
       const fr = plugin.lang() === "fr", tier = plugin.status ? plugin.status.tier() : 0, H = require("./engine/hooks").hooks;
-      let prose = ""; try { prose = String(plugin.core.prose(a.resolved, { seed }) || ""); } catch (e) { prose = ""; }
+      let prose = ""; try { prose = String(plugin.core.prose(a.resolved, { seed, analysis: a }) || ""); } catch (e) { prose = ""; }
       return LEC.readOut(a, { tier, fr, prose, dosage: H.dosageNote(a.dosage), depth: tier >= 2 ? H.depthNote(src, seed) : "" });
     } catch (e) { console.warn("[Age Writer ext] registre", e); return null; }
   };
