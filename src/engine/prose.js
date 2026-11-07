@@ -95,19 +95,19 @@ const SKY_PROSE_GRAMMAR = {
     "a malformed word, taking root nowhere",
   ],
   strong_contradiction: [
-    "the sky contradicts itself, openly",
+    "the world contradicts itself, openly",
     "something here cannot coexist, and yet does",
-    "a blatant incoherence cracks the description",
+    "the world argues with itself, and neither side gives way",
   ],
   medium_contradiction: [
-    "a quiet tension troubles this sky's coherence",
+    "a quiet strain runs through the place, like a held breath",
     "two truths rub against each other here, never quite agreeing",
     "something is off, though it's hard to say what",
   ],
   light_contradiction: [
     "a minor oddity, almost charming",
     "a slight mismatch, lending the place its character",
-    "an irregularity barely noticed",
+    "something small is out of place, and the eye keeps returning to it",
   ],
   link: [
     "Beyond that, ",
@@ -138,9 +138,9 @@ const SKY_PROSE_GRAMMAR = {
 
 const MATTER_PROSE_GRAMMAR = {
   meets: ["meets", "touches", "runs into", "settles against"],
-  verb_violent: ["shatters into", "flash-hardens into", "erupts, then freezes into"],
+  verb_violent: ["shatters into", "cracks and hardens into", "erupts, then freezes into"],
   verb_crystallizing: ["slowly settles into", "locks into", "gathers itself into"],
-  verb_corrosive: ["eats away into", "gnaws toward", "slowly turns to"],
+  verb_corrosive: ["wears away into", "gnaws toward", "slowly turns to"],
   verb_soothing: ["dissolves into", "yields to", "softens into"],
   verb_transmuting: ["turns into", "quietly becomes", "is changed into"],
   nearby: ["{d} {n} lingers nearby", "{d} {n} waits at the edge of it", "{d} {n} rests close by"],

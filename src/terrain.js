@@ -56,7 +56,7 @@ const SKY_PROSE = {
   canyon: ["a canyon cuts deep into the land, and its walls remember every flood", "the ground splits into a gorge, its strata stacked like the pages of a closed book", "a deep, carved gorge runs through the stone, and the echo comes back late"],
   river: ["a river winds through the land, clear and in no hurry", "water finds its long way downhill, and a river follows it", "a slow river keeps a thread of light across the country"],
   delta: ["the river splits into a hundred channels before it reaches the sea", "silt fans out in braided streams, and the land is still being made", "the water spreads into a wide, patient delta of mud and green"],
-  lake: ["a lake lies still in its hollow, holding the whole sky", "a deep, quiet lake keeps its own counsel", "the water gathers in a bowl of land and does not move on"],
+  lake: ["a lake lies still in its hollow, holding the whole sky", "a deep lake lies quiet, and no wind disturbs it", "the water gathers in a bowl of land and does not move on"],
   island: ["an island stands offshore, its cliffs pale in the distance", "out on the water, an island holds its own small country of rock and green", "a lone island waits across the sea, near enough to want, too far to swim"],
   cliff: ["a cliff rises sheer from the ground, its layers laid bare to the weather", "a wall of rock stands over the land, and birds keep to its ledges", "the land breaks off in a cliff, tall and pale, and the wind climbs it"],
   waterfall: ["a waterfall drops from the cliff and the air below it is all mist", "water spills over a lip of stone and falls a long way, loud and white", "a falling river hangs from the rock, and its roar fills the valley"],
