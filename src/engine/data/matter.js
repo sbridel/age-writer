@@ -334,6 +334,7 @@ const RUINS_BLOCKS = [
   { id: "lighthouse", descriptors: ["tall", "bright", "turning"], weight: 0.03, axis: RUINS_AXIS, writable: !0 },
   { id: "pier", descriptors: ["narrow", "damp", "old"], weight: 0.02, axis: RUINS_AXIS, writable: !0 },
   { id: "stairs", descriptors: ["tall", "cold", "patient"], weight: 0.03, axis: RUINS_AXIS, writable: !0 },
+  { id: "oasis", descriptors: ["hidden", "green", "still"], weight: 0.02, axis: FLORA_AXIS, writable: !0, presence: "water lies in a hollow of the sand, and palms stand around it like a secret kept" }, /* 2.8 : l'oasis (claude/DESIGN-quatre-blocs.md, § 3) ; sa phrase suit son état (OASIS_PROSE) */
   { id: "mill", descriptors: ["patient", "creaking", "turning"], weight: 0.03, axis: RUINS_AXIS, writable: !0, presence: "a mill stands here, built to be turned by whatever moves in this world" }, /* 2.8 : le moulin (claude/DESIGN-quatre-blocs.md, § 4) ; sa phrase suit son état (src/engine/prose.js, MILL_PROSE) */
   {
     id: "worn_tablet",

@@ -85,4 +85,8 @@ for (const [state, re] of [["water", /wheel turns|wheel patient/], ["wind", /win
   const t = describeAge(A("single_sun\nmill\ngrass"), { seed: "Moulin", place: { kind: "plain", ground: "grass", mill: state } });
   assert.ok(re.test(t), "le moulin (" + state + ") : " + t);
 }
+for (const [state, re] of [["clear", /oasis|palms/], ["salt", /salt|brackish/], ["heat", /heat|drawn back/]]) {
+  const t = describeAge(A("single_sun\nsand\noasis"), { seed: "Oasis", place: { kind: "plain", ground: "sand", oasis: state } });
+  assert.ok(re.test(t), "l'oasis (" + state + ") : " + t);
+}
 console.log("prose : ok");

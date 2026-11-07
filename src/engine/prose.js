@@ -434,6 +434,12 @@ const MILL_PROSE = {
   wind: ["a windmill turns on the high ground when the wind remembers to come", "a windmill keeps its sails to the wind, and creaks as they go round"],
   broken: ["a mill stands still, one sail fallen at its foot, built for a wind that has gone", "a windmill with broken sails waits for a wind that no longer comes"],
 };
+/** 2.8 : l'oasis, selon le monde (src/genscene.js, oasisOf) : claire, saumâtre (le sel), bue par la chaleur. */
+const OASIS_PROSE = {
+  clear: ["water lies in a hollow of the sand, and palms stand around it like a secret kept", "everything alive for a day's walk knows where the oasis is"],
+  salt: ["an oasis lies in the sand, its water brackish and its bank white with salt", "palms stand around a pool too salt to drink, and the bank shines white"],
+  heat: ["an oasis shrinks under the heat, its old bank left in cracked mud", "the oasis has drawn back from its shore, and the palms stand a little further from the water"],
+};
 function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at = null) {
   const sentences = [],
     used = new Set(),
@@ -475,7 +481,7 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at
   const loose = [];
   for (const id of resolved.matter.written) {
     if (used.has(id) || (resolved.weather && resolved.weather[id])) continue; // météo programmée : sa phrase datée la dit (describeAge)
-    const own = id === "mill" && at && at.mill && MILL_PROSE[at.mill] ? teller.pick(MILL_PROSE[at.mill]) : null; // le moulin : sa phrase suit ce que le monde en a fait
+    const own = id === "mill" && at && at.mill && MILL_PROSE[at.mill] ? teller.pick(MILL_PROSE[at.mill]) : id === "oasis" && at && at.oasis && OASIS_PROSE[at.oasis] ? teller.pick(OASIS_PROSE[at.oasis]) : null; // le moulin, l'oasis : leur phrase suit ce que le monde en a fait
     const presence = String(own ?? (resolved.presence && resolved.presence[id]) ?? blockById.get(id)?.presence ?? "").trim();
     if (presence) { sentences.push(capitalize(presence) + "."); if (at) at.push(stationOf(id)); }
     else loose.push(id);
@@ -582,6 +588,7 @@ function describeAge(resolved, options = {}) {
     const at = [];
     at.skyText = sky.join(" ").toLowerCase();
     at.mill = place && typeof place === "object" ? place.mill : null;
+    at.oasis = place && typeof place === "object" ? place.oasis : null;
     const matterLines = matterSentences(resolved, grammar, teller, at);
     if (sky.length === 0 && !matterLines.length) return "The page holds no readable symbol yet.";
     // deux phrases qui commencent pareil (« The book… The book… ») : on prend une autre tournure quand il y en a une

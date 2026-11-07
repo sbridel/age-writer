@@ -379,4 +379,8 @@ ok(G.millOf({ river: true }).kind === "water" && G.millOf({ river: true }).speed
 ok(G.millOf({ wind: true }).kind === "wind" && G.millOf({ storm: true }).speed > G.millOf({ wind: true }).speed, "le vent : un moulin à vent, plus vite dans la tempête");
 ok(G.millOf({ view: { kind: "plain" } }).kind === "broken", "ni eau ni vent ni hauteur : le moulin arrêté");
 ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau sur la lave");
+{ /* 2.8 : l'oasis remplace l'étang, plus petite ; la chaleur la boit ; aucun pont ne l'enjambe */
+  const base = { seed: 7, view: { kind: "plain" }, oasis: true, extras: [], writtenIds: ["oasis"] }, a = G.buildPondForTest(base, 640, 360, 200), b = G.buildPondForTest({ ...base, heat: true }, 640, 360, 200);
+  ok(a.oasis && a.oasis.palms.length >= 4 && !a.pads.length, "l'oasis : des palmiers, pas de nénuphars");
+  ok(b.rx < a.rx && b.oasis.shrink < 1, "sous la chaleur, l'eau a reculé"); }
 console.log(`gen.test.js : ${n} vérifications OK`);
