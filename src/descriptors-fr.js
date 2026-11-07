@@ -5,7 +5,7 @@
 // qu'aucun descripteur d'un bloc écrivable ne manque : un bloc de plus avec des mots nouveaux, c'est ici qu'on les ajoute.
 const FR = {
   absolute: "absolu", arched: "arqué", beautiful: "beau", biting: "mordant", bitter: "amer", black: "noir", blind: "aveugle", bound: "relié",
-  branching: "ramifié", bright: "éclatant", brittle: "cassant", carved: "gravé", pulling: "attirant", returning: "qui revient", creaking: "grinçant", clear: "limpide", closed: "fermé", cold: "froid", cracked: "craquelé",
+  branching: "ramifié", bright: "éclatant", brittle: "cassant", carved: "gravé", pulling: "attirant", returning: "qui revient", seasonal: "saisonnier", creaking: "grinçant", clear: "limpide", closed: "fermé", cold: "froid", cracked: "craquelé",
   damp: "humide", dark: "sombre", deep: "profond", dense: "dense", drawn: "attiré", drifting: "dérivant", dry: "sec", dull: "terne",
   echoing: "résonnant", falling: "tombant", fine: "fin", flat: "plat", fleeting: "fugace", fluid: "fluide", folded: "replié", fragrant: "parfumé",
   green: "vert", grey: "gris", hard: "dur", heavy: "lourd", hidden: "caché", hissing: "sifflant", hollow: "creux", hot: "chaud",

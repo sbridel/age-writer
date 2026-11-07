@@ -76,6 +76,7 @@ def(["rust", "living_rust"], { needs: [["rustAir", "light"]] }); /* 2.5 (D) : la
 // ---- météo ----------------------------------------------------------------------------------------
 def(["wind", "dust_storm"], { needs: [["someAir", "medium"]] });
 def(["rain", "marsh_mist", "watching_mist"], { needs: [["rainCycle", "light"]] });
+def("monsoon", { needs: [["monsoonSeasons", "medium"], ["monsoonWarm", "medium"]] }); /* 2.8 : la mousson veut une année marquée, chaude et humide (claude/DESIGN-quatre-blocs.md, § 2) */
 def(["fog"], { needs: [["moistAir", "light"]] });
 def(["storm", "whispering_storm", "thunderstorm", "waiting_thunder", "hail", "black_hail"], { needs: [["convection", "light"]] });
 def("lightning", { needs: [["convection", "light"]] });

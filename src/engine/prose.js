@@ -440,6 +440,16 @@ const TIDE_PROSE = {
   salt: ["the sea comes and goes, and leaves the sand white with salt", "at low water the salt stays behind, in shallow pans that hold the sky"],
   still: ["the sea lies flat; nothing in the sky pulls at it", "the tides are written, but no moon rises to draw them"],
 };
+/** 2.8 : la mousson, selon la saison du jour : les pluies, le sec, l'entre-deux ; sans saisons (ou sur un monde froid), rien ne vient. */
+const MONSOON_PROSE = {
+  rains: ["the rains have come with the warm season, and the river forgets its banks", "it is the season of rain: the sky hangs low, and every hollow is full"],
+  dry: ["these are the dry months; the river shrinks to a thread between its stones", "the rains are far off now, and the land waits, pale and thirsty"],
+  between: ["the rains keep to their season here, and the rivers keep time with them", "the land is between rains, and remembers both"],
+  rains_land: ["the rains have come with the warm season, and every hollow is full", "it is the season of rain: the sky hangs low, and the ground drinks"],
+  dry_land: ["these are the dry months; the water has shrunk back into the lowest ground", "the rains are far off now, and the land waits, pale and thirsty"],
+  between_land: ["the rains keep to their season here, and the land keeps time with them", "the land is between rains, and remembers both"],
+  still: ["the rains are written, but the year has no season to bring them", "a season of rain is promised, and the sky never keeps it"],
+};
 /** 2.8 : l'oasis, selon le monde (src/genscene.js, oasisOf) : claire, saumâtre (le sel), bue par la chaleur. */
 const OASIS_PROSE = {
   clear: ["water lies in a hollow of the sand, and palms stand around it like a secret kept", "everything alive for a day's walk knows where the oasis is"],
@@ -487,7 +497,7 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at
   const loose = [];
   for (const id of resolved.matter.written) {
     if (used.has(id) || (resolved.weather && resolved.weather[id])) continue; // météo programmée : sa phrase datée la dit (describeAge)
-    const own = id === "mill" && at && at.mill && MILL_PROSE[at.mill] ? teller.pick(MILL_PROSE[at.mill]) : id === "oasis" && at && at.oasis && OASIS_PROSE[at.oasis] ? teller.pick(OASIS_PROSE[at.oasis]) : id === "tides" && at && at.tides && TIDE_PROSE[at.tides] ? teller.pick(TIDE_PROSE[at.tides]) : null; // le moulin, l'oasis : leur phrase suit ce que le monde en a fait
+    const own = id === "mill" && at && at.mill && MILL_PROSE[at.mill] ? teller.pick(MILL_PROSE[at.mill]) : id === "oasis" && at && at.oasis && OASIS_PROSE[at.oasis] ? teller.pick(OASIS_PROSE[at.oasis]) : id === "tides" && at && at.tides && TIDE_PROSE[at.tides] ? teller.pick(TIDE_PROSE[at.tides]) : id === "monsoon" && at && at.monsoon && MONSOON_PROSE[at.monsoon] ? teller.pick(MONSOON_PROSE[at.monsoon]) : null; // le moulin, l'oasis : leur phrase suit ce que le monde en a fait
     const presence = String(own ?? (resolved.presence && resolved.presence[id]) ?? blockById.get(id)?.presence ?? "").trim();
     if (presence) { sentences.push(capitalize(presence) + "."); if (at) at.push(stationOf(id)); }
     else loose.push(id);
@@ -596,6 +606,7 @@ function describeAge(resolved, options = {}) {
     at.mill = place && typeof place === "object" ? place.mill : null;
     at.oasis = place && typeof place === "object" ? place.oasis : null;
     at.tides = place && typeof place === "object" ? place.tides : null;
+    at.monsoon = place && typeof place === "object" ? place.monsoon : null;
     const matterLines = matterSentences(resolved, grammar, teller, at);
     if (sky.length === 0 && !matterLines.length) return "The page holds no readable symbol yet.";
     // deux phrases qui commencent pareil (« The book… The book… ») : on prend une autre tournure quand il y en a une

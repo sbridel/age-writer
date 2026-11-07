@@ -391,6 +391,7 @@ const WEATHER_AXIS = "weather";
 const WEATHER_BLOCKS = [
   { id: "wind", descriptors: ["restless", "thin", "cold"], weight: 0.03, axis: WEATHER_AXIS, writable: !0 },
   { id: "rain", descriptors: ["steady", "grey", "soft"], weight: 0.03, axis: WEATHER_AXIS, writable: !0 },
+  { id: "monsoon", descriptors: ["heavy", "seasonal", "returning"], weight: 0.02, axis: WEATHER_AXIS, writable: !0, presence: "the rains keep to their season here, and the rivers keep time with them" }, /* 2.8 : la mousson (claude/DESIGN-quatre-blocs.md, § 2) ; sa phrase suit la saison (MONSOON_PROSE) */
   { id: "fog", descriptors: ["thick", "pale", "muffling"], weight: 0.03, axis: WEATHER_AXIS, writable: !0 },
   {
     id: "lightning",

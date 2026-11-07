@@ -388,4 +388,12 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
   const S = { seed: 3, cycle: "steady", moon: true }, lv = Array.from({ length: 24 }, (_, i) => G.tideOf(S, i / 24).level);
   ok(Math.min(...lv) < -0.8 && Math.max(...lv) > 0.8, "avec une lune : la mer monte et descend dans la journée");
   ok(G.tideOf({ ...S, cycle: "frozen" }, 0.1).level === G.tideOf({ ...S, cycle: "frozen" }, 0.6).level, "un cycle figé fige la marée"); }
+{ /* 2.8 : la mousson suit l'année ; rien sans saisons, ni sur un monde froid */
+  const se = (u) => ({ u, snow: 0 }), M = (u, x = {}) => G.monsoonOf({ monsoon: true, season: se(u), ...x });
+  ok(M(0.5).name === "rains" && M(0).name === "dry" && M(0.25).name === "between", "les pluies l'été, le sec l'hiver, l'entre-deux");
+  ok(G.monsoonOf({ monsoon: true, season: null }) === null, "sans saisons, pas de mousson");
+  ok(M(0.5, { ice: true }) === null && M(0.5, { world: "frozen" }) === null, "un monde froid ne connaît pas la mousson");
+  const { solve } = require("../src/physics/solve"), T = (src) => solve({ ids: ["single_sun", "water", "monsoon"], src, seed: "m" }).tensions.map((t) => t.id);
+  ok(T("tilt: 0").includes("monsoonSeasons"), "un axe droit : les pluies n'ont pas de saison (contradiction)");
+  ok(!T("tilt: 28").includes("monsoonSeasons"), "un axe incliné : la mousson a son année"); }
 console.log(`gen.test.js : ${n} vérifications OK`);

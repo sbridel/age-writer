@@ -193,6 +193,23 @@ const REQUIREMENTS = {
       en: (w, f) => (w.P < 0.05 ? `Too little air (${f(w.P)} bar) to make clouds.` : w.water === "ice" ? "The water is frozen: it snows, it does not rain." : w.water === "none" ? "No water to evaporate: where would rain come from?" : "Nothing lifts the water: no sun, no warm ground."),
     },
   },
+  monsoonSeasons: { /* 2.8 : la mousson suit l'année ; sans saisons marquées, rien ne l'amène */
+    law: "L6", axis: "weather", sev: "medium", search: ["tilt"],
+    test: (w) => w.seasonAmp >= SEASON_MARKED && !w.locked && w.stars > 0,
+    why: {
+      fr: (w, f) => (w.locked || !(w.stars > 0) ? "Une mousson sans année : le monde ne tourne pas autour d'un soleil qui ferait les saisons." : `Les pluies n'ont pas de saison où venir : l'été et l'hiver ne diffèrent que de ${f(w.seasonAmp, 0)} K (il en faut ${SEASON_MARKED}).`),
+      en: (w, f) => (w.locked || !(w.stars > 0) ? "A monsoon with no year: nothing turns this world through seasons." : `The rains have no season to come in: summer and winter differ by only ${f(w.seasonAmp, 0)} K (${SEASON_MARKED} are needed).`),
+    },
+    fix: () => [tip("incliner l'axe (tilt: 25)", "tilt the axis (tilt: 25)")],
+  },
+  monsoonWarm: { /* 2.8 : un monde froid ne connaît pas la mousson ; il lui faut de l'air, de l'eau et un hiver sans gel */
+    law: "L6", axis: "weather", sev: "medium", search: ["insolation", "atmosphere"],
+    test: (w) => w.P >= 0.3 && w.water !== "none" && w.water !== "ice" && w.Twinter >= 278 && w.Tsummer >= 293,
+    why: {
+      fr: (w, f) => (w.P < 0.3 ? `Trop peu d'air (${f(w.P)} bar) pour porter les pluies d'une saison.` : w.water === "ice" || w.water === "none" ? "Pas d'eau liquide à soulever : la mousson n'a rien à verser." : `Trop froid pour la mousson : l'été monte à ${f(w.Tsummer - 273.15, 0)} °C, l'hiver descend à ${f(w.Twinter - 273.15, 0)} °C ; elle veut un été chaud et un hiver sans gel.`),
+      en: (w, f) => (w.P < 0.3 ? `Too little air (${f(w.P)} bar) to carry a season of rain.` : w.water === "ice" || w.water === "none" ? "No liquid water to lift: the monsoon has nothing to pour." : `Too cold for a monsoon: summer reaches ${f(w.Tsummer - 273.15, 0)} °C, winter drops to ${f(w.Twinter - 273.15, 0)} °C; it wants a warm summer and a winter without frost.`),
+    },
+  },
   spin: { /* ESSAI (Coriolis) : un tourbillon prend son élan dans la rotation du monde */
     law: "L5", axis: "weather", sev: "medium", search: ["rotation"],
     test: (w) => !w.locked && w.rotation <= 96,
