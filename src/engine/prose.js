@@ -12,7 +12,7 @@ const SKY_PROSE_GRAMMAR = {
   lone_star: [
     "a single star holds the sky, unrivaled",
     "one sun traces its familiar course",
-    "a steady light, without competition",
+    "a single light, and no rival to it",
   ],
   twin_star: [
     "two stars answer each other overhead",
@@ -22,41 +22,41 @@ const SKY_PROSE_GRAMMAR = {
   no_star: [
     "no light pierces the veil above",
     "the sky stays empty, unreadable",
-    "no source warms this place",
+    "nothing up there gives warmth",
   ],
   companion_moon: [
-    "a pale companion trails the main star",
+    "a pale companion follows the sun",
     "a quiet moon keeps its distance",
     "a second, colder body rides alongside",
   ],
   steady_cycle: [
     "day yields to night without surprise",
-    "time passes here with quiet regularity",
+    "the days come and go as they always have",
     "an old rhythm, never once broken",
   ],
   erratic_cycle: [
     "day and night jostle with no logic",
-    "time seems to hesitate, more than elsewhere",
-    "the alternation surprises, resists habit",
+    "the days hesitate, as if unsure of their turn",
+    "night comes when it likes, and day as well",
   ],
   frozen_cycle: [
     "the sky never changes, caught in its moment",
-    "a motionless light bathes the place, endlessly",
+    "the light never moves, and no shadow turns",
     "time seems to have stopped, somewhere overhead",
   ],
   stable_orbit: [
     "the stars keep an old, steady round",
-    "their dance never varies, predictable",
-    "a sure orbit binds them together",
+    "the year turns the same way, every year",
+    "the seasons keep their order",
   ],
   shifting_orbit: [
-    "their position drifts, slow and noticeable",
-    "eclipses return, each one different",
+    "the sky drifts a little from one year to the next",
+    "no two years begin under the same sky",
     "the stars' round shifts with time",
   ],
   chaotic_orbit: [
     "the stars move by no rule at all",
-    "their round defies any prediction",
+    "no almanac would last a year here",
     "a celestial disorder, almost hypnotic",
   ],
   close_binary_orbit: [
@@ -71,16 +71,16 @@ const SKY_PROSE_GRAMMAR = {
   ],
   auroras: [
     "coloured veils ripple, high in the sky",
-    "an aurora lingers, faint but real",
+    "an aurora hangs at the edge of night, faint and green",
     "shifting lights tint the horizon",
   ],
   recurring_eclipses: [
-    "a shadow returns, periodically, to veil the light",
+    "now and then a shadow crosses the sun, and noon goes dark",
     "the stars cross paths at regular intervals",
     "a darkening marks the passage of time",
   ],
   permanent_veil: [
-    "a constant veil hides what happens above",
+    "a lid of cloud never lifts",
     "one senses more than sees, here",
     "the sky stays overcast, its details only ever reported",
   ],
