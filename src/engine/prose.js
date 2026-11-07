@@ -323,7 +323,7 @@ const IRREGULAR = { is: "are", has: "have", does: "do", goes: "go" };
 /** Le verbe d'une réaction à la 3e personne du pluriel : chaque verbe conjugué de la tournure (« erupts, then freezes into » → « erupt, then freeze into »). */
 function pluralVerb(phrase) {
   const one = (w) => IRREGULAR[w] || (/(ss|sh|ch|x|zz)es$/.test(w) ? w.slice(0, -2) : /[^aeiou]ies$/.test(w) ? w.slice(0, -3) + "y" : /[^s]s$/.test(w) ? w.slice(0, -1) : w);
-  return phrase.replace(/(^|, then |, and | and |, )([a-z]+)/g, (m, lead, w) => (lead === ", " && !/s$/.test(w) ? m : lead + one(w))).replace(/\bitself\b/g, "themselves");
+  return phrase.replace(/(^|, then |, and | and |, )([a-z]+ly )?([a-z]+)/g, (m, lead, adv = "", w) => (lead === ", " && !/s$/.test(w) ? m : lead + adv + one(w))).replace(/\bitself\b/g, "themselves"); // « quietly becomes » → « quietly become »
 }
 /** Les grands blocs du lointain ont une phrase à eux quand le ciel ne les a pas déjà dits (la cible : « Lava runs through the lowland »). */
 const SETTING = {
