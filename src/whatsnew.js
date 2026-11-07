@@ -6,6 +6,29 @@
  */
 const NEWS = [
   {
+    v: "2.8.0",
+    fr: {
+      title: "Le monde a ses heures",
+      letter: "On rapportait des mondes immobiles, comme peints. L'encre a appris que la mer revient, que la pluie a sa saison, que l'eau et le vent font tourner ce que des mains ont bâti ; et à dire ce qu'on voit dans l'ordre où l'on marche.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**Quatre blocs à écrire** : `mill`, un moulin que le monde fait tourner (à eau sur la rivière, à vent sur la hauteur, ou arrêté, une aile tombée) ; `oasis`, de l'eau au creux du sable, des palmiers autour ; `tides`, la mer qui monte et descend avec la lune, l'estran, le gué et le ponton à sec à marée basse ; `monsoon`, les pluies et la saison sèche, la rivière en crue puis en filet, le désert qui verdit.",
+        "**La description se lit comme une marche** : où l'on arrive, le ciel, le lointain, le proche, ce que des mains ont fait, le doute en dernier ; des phrases cousues et qui s'accordent. Celle de chaque Âge change, pas son monde.",
+        "**Le Château baisse avec le feu** : ses fenêtres vives avec la flamme, rouges dans les braises ; feu froid, une fenêtre sur quatre garde une chandelle.",
+      ],
+    },
+    en: {
+      title: "The world keeps time",
+      letter: "Worlds came back still, as if painted. The ink has learned that the sea returns, that rain keeps its season, that water and wind turn what hands have built; and to tell what is seen in the order one walks.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**Four blocks to write**: `mill`, a mill the world turns (by water on the river, by wind on the height, or standing still, one sail fallen); `oasis`, water in a hollow of the sand, palms around it; `tides`, the sea rising and falling with the moon, the wet sand, the ford and the pier's legs bare at low water; `monsoon`, the rains and the dry season, the river in flood and then a thread, the desert greening.",
+        "**The description reads as a walk**: where you arrive, the sky, the far, the near, what hands have made, the doubt last; sentences sewn together, and in agreement. Every Age's description changes, not its world.",
+        "**The Castle dims with the fire**: its windows bright with the flame, red in embers; when the fire is cold, one window in four keeps a candle.",
+      ],
+    },
+  },
+  {
     v: "2.7.0",
     fr: {
       title: "Un lieu où l'on va",

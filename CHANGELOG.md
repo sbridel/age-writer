@@ -2,6 +2,23 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.8.0 — The world keeps time (2026-11-07)
+
+### Added
+- **Four new blocks you can write** (never drawn by chance):
+  - `mill`: a mill by the same hands as the ruins, in their style. The world decides which: a water mill on the river, its wheel turning with the current; a windmill on the height, its sails turning with the wind of the place, racing in a storm; with neither, a mill standing still, one sail fallen, built for a wind that has gone.
+  - `oasis`: water in a hollow of the sand, very blue, ringed with green and palms. The dry world tolerates it (it comes from below). With salt it turns brackish and white-rimmed; under heat it draws back and leaves its old bank. The path bends around it.
+  - `tides`: the sea rises and falls twice a day of the Age, pulled by the moon or a gas giant; with no moon it stays still, a frozen cycle holds it. At low water the wet sand shows, with pools and bare rocks, salt pans if the world is brackish or salt is written, a ford of stepping stones at the end of the path, and the pier's legs bare.
+  - `monsoon`: a season of rain and a dry season, following the Age's year. In the rains the sky stays low and grey, the river floods (the ford is gone, the bridge holds), the pond and the oasis rise, the grass turns a heavy green and the desert greens. In the dry months the river shrinks to a thread over its stones (cracked mud with `clay`), the pond to a puddle, the grass yellows. The mill's wheel follows the river. It needs marked seasons and a warm world.
+- **The Castle dims with the fire**: its windows burn bright with the flame, a dull red in embers; when the fire is cold, one window in four keeps a candle.
+
+### Changed
+- **The description reads as a walk**: where you arrive (on what ground, in what place), then the sky, the far, the near, what hands have made, and the doubt last. Sentences are sewn together, nouns and verbs agree, a thing is named before it is referred to. Every Age's description changes (not its world).
+- Many sentences rewritten, in British spelling throughout.
+
+### Fixed
+- A window could fail to draw when the ground left no place to set a thing on (a strange stone, a book…).
+
 ## 2.7.0 — A place you go (2026-11-06)
 
 ### Added
