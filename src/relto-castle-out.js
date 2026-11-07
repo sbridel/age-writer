@@ -34,9 +34,13 @@ function slateRoof(ctx, col, x0, ax, ay, x1, by, o = {}) {
 
 /** La couleur d'une fenêtre : sombre le jour (un reflet du ciel), rouge orangé et chaude la nuit. */
 let TINT = null; /* 2.5 (I) : la lumière du feu, posée pour la frame (setWinTint) */
-function setWinTint(f) { TINT = f || null; }
+let CANDLE_I = 0; /* le Château baisse avec le feu (7 nov.) : en cendre froide, une fenêtre sur quatre garde une chandelle */
+function setWinTint(f) { TINT = f || null; CANDLE_I = 0; }
 function winColor(night, k = 1) { LAST_NIGHT = Math.max(0, Math.min(1, night)); const n = clamp(night * 1.25), base = mix("#05060c", "#2e2a3a", 0.7 + 0.3 * k), warm = n > 0.5 ? "#ff6a3a" : "#e0743a";
   if (!TINT) return mix(base, warm, n);
+  if (TINT.phase === "cold") { const lit = CANDLE_I++ % 4 === 0; return lit ? mix(base, "#d8903e", n * 0.6) : mix(base, "#241a1c", n * 0.6); } /* le feu est froid, le Château dort ; ici et là une chandelle */
+  if (TINT.phase === "embers") { const g = clamp((TINT.k - 0.3) / 0.25); return mix(base, mix("#6e2412", warm, 0.2 + 0.2 * g), n * (0.35 + 0.3 * g)); } /* en braises, un rouge sourd qui s'éteint */
+  if (TINT.phase === "flame") { const f = clamp(TINT.k), nn = n * (0.5 + 0.5 * f); if ((TINT.spread || 0) <= 0 || TINT.ordinary) return mix(base, warm, nn); return mix(base, mix(warm, "#" + TINT.c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join(""), TINT.spread), nn); } /* la flamme qui baisse baisse les fenêtres */
   const sp = TINT.spread || 0; if (sp <= 0 || TINT.ordinary) return mix(base, warm, n); /* le feu ne gagne les autres fenêtres que quand il a du bois */
   const hot = mix(warm, "#" + TINT.c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join(""), sp); return mix(base, hot, n); }
 
