@@ -128,7 +128,7 @@ const NEWS = [
         "**Beyond the frame**, a sun or a moon still shows by its light.",
         "**Relief** tells the world's age and heat: sharp peaks, worn summits, ridges, valleys, craters.",
         "**Oxygen** is made by life; fire, rust and animals need it (`oxygen:` to write it).",
-        "**Lava follows its rock** (the black flow of basalt, the grey dome of granite), and its sulfur burns blue at night.",
+        "**Lava follows its rock** (the black flow of basalt, the grey dome of granite), and its sulphur burns blue at night.",
         "**The world rereads itself**: burnt wood grows back, lightning burns again, bare ground fills in; two wonders of water that does not fall.",
         "**The Relto fire** burns the wood you add, takes the colour of the last Age you linked to (or the one of the Fire colour page) and, well fed, spreads it to every window; the Castle's windows are finished.",
       ],

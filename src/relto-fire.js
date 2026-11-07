@@ -27,7 +27,7 @@ const COLORS = [
   { id: "copper", fr: "turquoise (cuivre)", en: "turquoise (copper)", c: [[15, 160, 150], [55, 215, 190], [200, 255, 240]] },
   { id: "iron", fr: "or (fer)", en: "gold (iron)", c: [[225, 140, 25], [250, 188, 70], [255, 236, 175]] },
   { id: "boron", fr: "vert (bore)", en: "green (boron)", c: [[30, 185, 55], [95, 238, 100], [210, 255, 200]] },
-  { id: "blue", fr: "bleu (soufre, sélénium)", en: "blue (sulfur, selenium)", c: [[45, 75, 250], [80, 150, 255], [205, 232, 255]] },
+  { id: "blue", fr: "bleu (soufre, sélénium)", en: "blue (sulphur, selenium)", c: [[45, 75, 250], [80, 150, 255], [205, 232, 255]] },
   { id: "magnesium", fr: "blanc (magnésium)", en: "white (magnesium)", c: [[195, 205, 228], [232, 238, 250], [255, 255, 255]] },
   { id: "ghost", fr: "fantôme", en: "ghost", c: [[120, 150, 170], [170, 198, 210], [228, 240, 245]], ghost: true },
 ];

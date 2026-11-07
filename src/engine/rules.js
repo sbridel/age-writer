@@ -84,7 +84,7 @@ const SKY_WEATHER_RULES = [
     with: "rainbow",
     severity: "medium",
     axis: "weather",
-    note: ["a rainbow hangs in a sky that has no sun to make it", "the colors bend through a light that is not there"],
+    note: ["a rainbow hangs in a sky that has no sun to make it", "the colours bend through a light that is not there"],
   },
   {
     sky: "starless",

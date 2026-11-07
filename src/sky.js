@@ -104,19 +104,19 @@ const SKY_PROSE = {
   neutron_star: ["a small, heavy star burns blue-white in the dark, no bigger than a spark and heavier than worlds", "the ember of a dead sun hangs in the sky, dense and slow, keeping its own heavy time", "a pale, crushed star sits among the others, and its light seems to weigh more than theirs"],
   black_hole: ["near the horizon, the stars bend around a place where there is nothing at all", "a ring of light circles an empty dark, and everything that passes too close is drawn in", "something unseen swallows a patch of sky, and the stars at its edge are smeared into arcs"],
   comet: ["a comet trails its pale tail across the sky, in no hurry", "a long-haired star passes, and the night remembers it", "a slow streak of ice and light crosses overhead"],
-  green_sun: ["the sun burns green, and the light has a leaf's patience", "a green star holds the sky, and everything under it is tinted", "a green sun, bright and strange, sets the colors of this place"],
+  green_sun: ["the sun burns green, and the light has a leaf's patience", "a green star holds the sky, and everything under it is tinted", "a green sun, bright and strange, sets the colours of this place"],
   red_sun: ["a red sun hangs heavy, its light low and warm", "the sun burns red, and shadows lean long", "a swollen red star keeps a slow, embered watch"],
   white_sun: ["a white sun fills the sky with hard, clean light", "the sun burns white, leaving no corner kind", "a pale, steady star bleaches the hours"],
-  blue_sun: ["a blue sun burns cold and bright overhead", "the sun is blue, and its warmth is only a rumor", "a hot, blue star colors the day with ice"],
+  blue_sun: ["a blue sun burns cold and bright overhead", "the sun is blue, and its warmth is only a rumour", "a hot, blue star colours the day with ice"],
   orange_sun: ["an orange sun sets the whole day to late afternoon", "the sun burns amber, kind to everything under it", "a gold-orange star keeps a gentle hour"],
   frozen_world: ["the whole world lies under ice, patient and bright", "a frozen world, where even the light moves slowly", "everything here has been still for a very long time, and the cold is its only memory"],
-  lava_world: ["the world is a slow river of fire under a thin black crust", "a world of lava, where the ground itself is the weather", "molten rock glows under every step, and the sky is the color of embers"],
+  lava_world: ["the world is a slow river of fire under a thin black crust", "a world of lava, where the ground itself is the weather", "molten rock glows under every step, and the sky is the colour of embers"],
   desert_world: ["the world is dry to its bones, a wide and patient desert", "a desert world, where the horizon is the only thing that moves", "sand and silence, to the edge of what the sky can hold"],
   ocean_world: ["the world is water to the horizon, and the horizon is the only land", "an ocean world, deep and without a single shore", "everything here floats, or sinks, or waits beneath the surface"],
   jungle_world: ["the world is a single green hunger, dense and loud", "a jungle world, where every surface is alive with something", "leaf over leaf, to the edge of the sky, and nothing lies still beneath it"],
   cavern_world: ["the world is a hollow in the rock, and the dark is its only sky", "a world under stone, where the roof is the horizon", "everything here lives beneath a lid of rock, and learns to make its own light"],
   black_sun: ["a black sun hangs overhead, a dark coin rimmed with dull fire, and the day comes as warmth more than light", "the sun is black, and the world beneath it is drawn in greys", "under a black sun, colours drain away and every shadow is soft and red at the edges"],
-  violet_sun: ["a violet sun burns at the edge of what the eye can hold", "the sun is violet, and the day has the color of a bruise at dusk", "a violet star, strangely bright, tints the sky with dusk"],
+  violet_sun: ["a violet sun burns at the edge of what the eye can hold", "the sun is violet, and the day has the colour of a bruise at dusk", "a violet star, strangely bright, tints the sky with dusk"],
 };
 
 /** Couleur de soleil écrite dans le bloc (les deux premières, dans l'ordre d'apparition). */

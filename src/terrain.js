@@ -53,7 +53,7 @@ const SKY_PROSE = {
   plains: ["the land lies wide and low, and the horizon is all there is to look at", "a plain runs flat to the edge of sight, and the wind has nothing to stop it", "everything here is open: a low, long country under a very large sky"],
   hills: ["soft hills roll away in long, unhurried waves", "the land swells and settles, hill after green hill", "low ridges fold into one another, none in a hurry to become mountains"],
   mountains: ["mountains stand tall and sharp, and the sky has to go around them", "great peaks hold the horizon, cold and patient", "the land climbs in ridges toward summits that keep their own weather"],
-  canyon: ["a canyon cuts deep into the land, and its walls remember every flood", "the ground splits into a gorge, its layers laid bare like pages", "a deep, carved gorge runs through the stone, and the echo comes back late"],
+  canyon: ["a canyon cuts deep into the land, and its walls remember every flood", "the ground splits into a gorge, its strata stacked like the pages of a closed book", "a deep, carved gorge runs through the stone, and the echo comes back late"],
   river: ["a river winds through the land, clear and in no hurry", "water finds its long way downhill, and a river follows it", "a slow river keeps a thread of light across the country"],
   delta: ["the river splits into a hundred channels before it reaches the sea", "silt fans out in braided streams, and the land is still being made", "the water spreads into a wide, patient delta of mud and green"],
   lake: ["a lake lies still in its hollow, holding the whole sky", "a deep, quiet lake keeps its own counsel", "the water gathers in a bowl of land and does not move on"],
@@ -66,7 +66,7 @@ const SKY_PROSE = {
   beach: ["a pale beach curves along the water, and the waves keep rewriting its edge", "sand runs down to the sea in a long bright strip", "the shore is a beach of fine sand, warm underfoot, wet where the sea reaches"],
   lagoon: ["a reef holds the sea back, and inside it the water lies clear and green", "a lagoon sleeps behind a ring of breaking surf", "the water inside the reef is shallow and bright, and the open sea booms beyond it"],
   sea_arch: ["the sea has bored an arch through a stack of rock, and the waves pass under it", "a great arch of stone stands in the water, a door with no house", "offshore, a rock arch frames a piece of sky and a piece of sea"],
-  marsh: ["the ground is half water, and every step is a negotiation", "a marsh breathes mist and green, neither land nor lake", "reeds and standing water blur the line between earth and pool"],
+  marsh: ["the ground is half water, and the reeds decide where you can stand", "a marsh breathes mist and green, neither land nor lake", "reeds and standing water blur the line between earth and pool"],
 };
 
 module.exports = { SKY_BLOCKS, SKY_PROSE, IDS, RELIEF, WATER_IDS, FORM_IDS, TINT_IDS, SEA_FORMS, SEA_GROUND };

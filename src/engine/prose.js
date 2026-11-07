@@ -70,7 +70,7 @@ const SKY_PROSE_GRAMMAR = {
     "it keeps its distance from the twin dance below, and so endures",
   ],
   auroras: [
-    "colored veils ripple, high in the sky",
+    "coloured veils ripple, high in the sky",
     "an aurora lingers, faint but real",
     "shifting lights tint the horizon",
   ],
@@ -117,11 +117,11 @@ const SKY_PROSE_GRAMMAR = {
     "Not far off, ",
   ],
   default_stars: [
-    "lacking any stated choice, a star imposed itself",
+    "nothing was written of the sky, so a sun rose anyway",
     "the sky filled its own silence with a sun",
   ],
   default_cycle: [
-    "lacking any written rhythm, a cycle settled in on its own",
+    "no rhythm was written, and the days found one of their own",
     "time chose its own cadence, unwritten",
   ],
   drawn_lead: [
