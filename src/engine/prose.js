@@ -17,7 +17,7 @@ const SKY_PROSE_GRAMMAR = {
   twin_star: [
     "two stars answer each other overhead",
     "a double sun casts twinned shadows",
-    "two lights vie, never quite merging",
+    "two suns vie for the sky, never quite merging",
   ],
   no_star: [
     "no light pierces the veil above",
