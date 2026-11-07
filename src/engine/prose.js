@@ -131,7 +131,7 @@ const SKY_PROSE_GRAMMAR = {
   ],
   drawn_matter_note: [
     "the book said nothing of what lies beneath it, and the place had answers of its own.",
-    "what the pages left unsaid, the place supplied.",
+    "what the pages left unwritten, the place supplied.",
     "the rest was not written; it was simply what this place held.",
   ],
 };
