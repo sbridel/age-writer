@@ -406,12 +406,12 @@ function stationOf(id) {
 }
 /** Où l'on arrive : le point de liaison de la fenêtre (src/genscene.js, viewOf), dit par la description, dans la matière du lieu (le sol que la fenêtre peint). */
 const PLACE_PROSE = {
-  plain: ["you stand on {open}, the place laid out level before you", "the link sets you down on {open}, with nothing between you and the rest"],
-  low: ["you arrive in {hollow}, the land rising all around", "the link sets you down low, in {hollow}, the world above its rim"],
-  high: ["you arrive on {height}, the land spread out below", "the link sets you on {height}, and everything else lies beneath"],
-  slope: ["you arrive {slope}, the ground falling away to one side", "the link sets you {slope}, the land tilting away"],
-  cover: ["you arrive {cover}, looking out from the shade", "the link sets you {cover}, looking out"],
-  cave: ["you arrive at the mouth of {cave}, the light ahead", "the link sets you just inside {cave}, looking out"],
+  plain: ["you stand on {open}, the place laid out level before you", "the link sets you down on {open}, with nothing to stop the eye"],
+  low: ["you arrive in {hollow}, the land rising all around", "the link leaves you low, in {hollow}, the world above its rim"],
+  high: ["you arrive on {height}, the land spread out below", "the link sets you on {height}, with the whole place at your feet"],
+  slope: ["you arrive {slope}, the ground falling away to one side", "you come through {slope}, where the land leans and you lean with it"],
+  cover: ["you arrive {cover}, looking out from the shade", "the link sets you {cover}, half hidden, the place bright beyond"],
+  cave: ["you arrive at the mouth of {cave}, the light ahead", "the link leaves you just inside {cave}, the dark at your back"],
 };
 const GROUND_WORDS = {
   open: { sand: "open sand", ice: "a flat of ice", lava: "a crust of cooled lava", grass: "open grass", rock: "bare, level rock" },
