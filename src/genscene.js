@@ -22,7 +22,7 @@ const SSN = require("./seasons"); /* la saison du jour */
 const TAU = Math.PI * 2, PERIOD = 16000; /* ESSAI (28 oct. soir) : la boucle de la fenêtre deux fois plus lente (8 s avant) */
 
 /** Identifiants que le peintre connaît (tout le reste passe par le peintre générique, d'après l'axe et les adjectifs du bloc). */
-const KNOWN = new Set((CAT.COMPOSITES.map((c) => c.id).join(" ") + " scorched_moths tarnished_growth " + "tower lighthouse pier stairs door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon steady_cycle frozen_cycle erratic_cycle chaotic_orbit stable_orbit shifting_orbit " +
+const KNOWN = new Set((CAT.COMPOSITES.map((c) => c.id).join(" ") + " scorched_moths tarnished_growth " + "tower lighthouse pier stairs mill door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon steady_cycle frozen_cycle erratic_cycle chaotic_orbit stable_orbit shifting_orbit " +
   "permanent_veil auroras recurring_eclipses starfall rain storm thunderstorm whispering_storm waiting_thunder wind dust_storm ash_cloud spore_cloud fog marsh_mist rime watching_mist lightning heat " +
   "hail black_hail steam lava obsidian whispering_obsidian water brine meltwater crying_obsidian ice black_ice deep_cold sand glass singing_glass fulgurite grove great_tree ironwood charred_grove " +
   "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " +
@@ -72,7 +72,7 @@ function sceneOf(a, name = "", blocks = null) {
   const ruins = [];
   if (r("door", "sealed_door")) ruins.push("door"); if (r("bridge", "fallen_bridge")) ruins.push("bridge");
   if (r("tablet", "worn_tablet", "speaking_tablet")) ruins.push("tablet"); if (r("lamp", "lit_lamp")) ruins.push("lamp");
-  for (const id of ["tower", "lighthouse", "stairs"]) if (r(id)) ruins.push(id); /* 2.6 : le bâti (le ponton se dessine à part, sur l'eau) */
+  for (const id of ["tower", "lighthouse", "stairs", "mill"]) if (r(id)) ruins.push(id); /* 2.6 : le bâti (le ponton se dessine à part, sur l'eau) */
   const S = {
     name, seed: fnv(name + "|" + (res.seed != null ? String(res.seed) : "")), cseed: fnv(name + "|" + [...ids].sort().join(",")), /* ESSAI (les Livres descriptifs, loi 17) : le lieu vient du nom (et de la ligne `seed:`), pas de ce qui est écrit ; une ligne ajoutée ne redessine pas le monde */ verdict: a.verdict, unrest: clamp(1 - (a.stability == null ? 100 : a.stability) / 100),
     suns: wd === "cavern" ? 0 : r("twin_suns") ? 2 : r("single_sun") ? 1 : 0, skyStated: r("twin_suns", "single_sun", "starless"), moon: r("companion_moon"),
@@ -360,7 +360,7 @@ function build(S, W, H) {
  *  4. la taille suit la profondeur : sur l'eau, au loin, sur l'horizon (le reflet reste juste) ; sur la terre, le sujet au plan moyen, les autres au loin.
  * Tirage à part (graine propre) : rien d'autre ne bouge. Renvoie les zones réservées [{ x0, x1 }].
  */
-const BUILT = new Set(["tower", "lighthouse", "stairs"]);
+const BUILT = new Set(["tower", "lighthouse", "stairs", "mill"]);
 /** ESSAI (6 nov.), règle 1 généralisée : où est l'eau à cette hauteur (la mer et sa rive, le ruban de rivière, l'étang), pour tout ce qui se pose au sol. */
 function riverGeo(S) { if (!S.river) return null; const q = rng((S.seed ^ 0x51a7e) >>> 0); return { ph: q() * 6.28, amp: 0.5 + q() * 0.6, wid: 0.16 + q() * 0.1, u0: (q() - 0.5) * 0.6 }; } /* le même tirage que riverRibbon */
 function riverBand(m, y) { const R = m.riverGeo; if (!R) return null; const { W, H, hz } = m, D = H - hz, z = clamp(D / Math.max(1, y - hz), 1.02, 30), u = R.u0 + R.amp * Math.sin(R.ph + z * 0.55) * Math.min(1, z * 0.3), k = (W * 0.55) / z; return { x0: W / 2 + (u - R.wid) * k, x1: W / 2 + (u + R.wid) * k }; }
@@ -456,6 +456,7 @@ function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave, 
     else { rn.k3 = 0.6; rn.by = hz; }
     if (!wet) { const nx = place("built", rn.x, rn.by + 1, W * (rn.k === "stairs" ? 0.24 : 0.05) * rn.k3, []); if (nx != null) rn.x = nx; else if (solEn(m, rn.x, rn.by + 1).k === "lava") { const ql = rng((S.seed ^ Math.imul(Math.round(rn.x) + 41, 2654435761) ^ 0x1a7a) >>> 0), un = S.unrest || 0, p = doomOf(S) > 0.06 ? 1 : 0.08 + 0.85 * smooth(clamp((un - 0.2) / 0.5)); rn.lava = ql() < p ? "taken" : "crust"; } } /* 1 : portée par le sol, à la hauteur de son pied (l'escalier a une emprise large : marches et terrasse) ; un bâti n'est jamais effacé */
   }
+  for (const rn of built) if (rn.k === "mill") millPlace(m, rn, V); /* 2.8 : le moulin à eau se pose sur la berge, la roue dans le courant */
   if (subj) keep.push({ x0: subj.x - W * 0.11, x1: subj.x + W * 0.11, subj: true });
   if (S.forms && S.forms.island && S.water && S.waterGround === true && !S.ice && !S.lava && !S.sand) { /* l'île tient son tiers : même tirage que islandOffshore */
     const qi = rng((S.seed ^ 0x15a1d) >>> 0), cx = islandWhere({ W, S, shore }, qi), w = W * (0.2 + 0.12 * qi()); if (cx != null) keep.push({ x0: cx - w * 0.75, x1: cx + w * 0.75, subj: true }); }
@@ -490,6 +491,26 @@ function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave, 
  * ESSAI (6 nov.) : le pont enjambe quelque chose. Dans l'ordre : la rivière, la faille ouverte, l'étang. Il se pose à la profondeur où ce qu'il enjambe
  * a la largeur qui lui va, et sa taille suit cette profondeur (règle 4). Renvoie { x, by, k3, spans } ou null (rien à enjamber : il reste au loin).
  */
+/**
+ * 2.8 (claude/DESIGN-quatre-blocs.md § 4) : le monde décide quel moulin. Une rivière qui coule : un moulin à eau sur la berge ;
+ * sinon du vent (écrit, ou une tempête) ou une hauteur : un moulin à vent ; ni l'un ni l'autre : un moulin arrêté, ailes brisées.
+ * La vitesse : la roue avec l'eau, les ailes avec le vent.
+ */
+function millOf(S) {
+  const V = S.view || {};
+  if (S.river && !S.lava) return { kind: "water", speed: 1 }; /* la rivière de la fenêtre coule toujours (elle n'est jamais dessinée gelée) : la roue tourne */
+  const wind = S.wind || S.storm || S.dust, height = V.kind === "high" || V.kind === "slope" || S.terrain === "hills" || S.terrain === "mountains" || S.terrain === "plains";
+  if (wind || height) return { kind: "wind", speed: S.storm ? 2.2 : wind ? 1 : 0.45 };
+  return { kind: "broken", speed: 0 };
+}
+function millPlace(m, rn, V) {
+  const { S, W, H, hz } = m, mo = (rn.mill = millOf(S)), D = H - hz;
+  if (mo.kind !== "water" || !m.riverGeo) return;
+  const y = hz + D * 0.32, rb = riverBand(m, y); if (!rb) { mo.kind = "wind"; return; }
+  const side = V.side ? -V.side : (rb.x0 + rb.x1) / 2 < W / 2 ? 1 : -1; /* sur la berge du côté libre */
+  rn.k3 = 0.55 + 0.35 * ((y - hz) / D); rn.by = y; mo.side = side;
+  rn.x = side > 0 ? rb.x1 + W * 0.045 * rn.k3 : rb.x0 - W * 0.045 * rn.k3; /* la maison sur la berge, la roue au bord de l'eau */
+}
 function bridgeSpan(m, fis) {
   const { S, W, H, hz, pond } = m, D = H - hz, V = W * 0.19; /* la demi-portée moyenne d'un pont, dessiné à l'échelle 1 */
   if (S.river && m.riverGeo) { const y = hz + D / 2.6, rb = riverBand(m, y); if (rb) { const half = (rb.x1 - rb.x0) / 2; return { x: (rb.x0 + rb.x1) / 2, by: y, k3: clamp((half * 1.5) / V, 0.3, 1), spans: "river" }; } }
@@ -546,7 +567,7 @@ function buildPath(m, via) {
   if (cv) { const cx = W * (0.5 + 0.08 * side * (PV[0] || 0.5)), yb = H * (0.86 + 0.06 * (PV[4] || 0.5)); xs = cx + (q() - 0.5) * W * 0.12; ys = yb - 1; lip = { x0: cx + (xs - cx) * 0.3, y0: H + 2, x1: xs, y1: yb + 1 }; }
   { const y0 = Math.min(H - 4, ys), lim = cv ? W * 0.32 : W / 2; if (!hi && !dryAt(m, xs, y0)) for (let d = W / 64; d < lim; d += W / 64) { const x = [xs - d, xs + d].find((x) => x > W * 0.05 && x < W * 0.95 && dryAt(m, x, y0) && dryAt(m, x, y0 - (cv ? D * 0.05 : D * 0.15))); if (x != null) { xs = x; if (cv) lip.x1 = x; break; } } if (cv) lip.x0 = lip.x1 + (W / 2 - lip.x1) * 0.25; } /* on part du sec, jamais de l'eau (de la grotte : on sort sur la rive) */
   let kind = works.length || detOn || ruins.length ? "built" : "trail", xe, ye, fade = false;
-  const BUILTK = new Set(["tower", "lighthouse", "stairs"]), target = via || works.find((rn) => BUILTK.has(rn.k)) || works.find((rn) => rn.k !== "bridge") || works[0] || ruins[0];
+  const BUILTK = new Set(["tower", "lighthouse", "stairs", "mill"]), target = via || works.find((rn) => BUILTK.has(rn.k)) || works.find((rn) => rn.k !== "bridge") || works[0] || ruins[0];
   if (target) { const half = W * 0.03 * (target.k3 || 1); xe = target.x + (xs < target.x ? -half : half) * 0.6; ye = (target.by || hz) + 2 + D * 0.01; if (target.k === "bridge") { xe = target.x - W * 0.19 * (target.k3 || 1) * (xs < target.x ? 1 : -1) * 0.8; ye = (target.by || hz) + 2; } }
   else if (detOn) { xe = det.x; ye = hz + D * 0.06 + 2; }
   else { /* la sente : à l'eau, sinon elle traverse */
@@ -2344,7 +2365,9 @@ function stoneOf(m) {
 function ruinsPass(g, m, t) {
   if (!m.ruins.length) return; const st = stoneOf(m), { W, H, hz } = m;
   let L = null; if (typeof document !== "undefined") { try { const c = m._rl || (m._rl = document.createElement("canvas")); if (c.width !== W) c.width = W; if (c.height !== H) c.height = H; L = c.getContext("2d"); if (!L || typeof L.clearRect !== "function" || typeof g.drawImage !== "function") L = null; } catch (e) { L = null; } }
-  if (!L) { for (const rn of m.ruins) placedRuin(g, g, m, rn, t, st); return; }
+  m._late = []; /* 2.8 : ce qui n'est pas de pierre (le bois du moulin) se peint par-dessus l'appareil, à sa place */
+  const late = () => { for (const f of m._late) f(); m._late = []; };
+  if (!L) { for (const rn of m.ruins) placedRuin(g, g, m, rn, t, st); late(); return; }
   L.setTransform(1, 0, 0, 1, 0, 0); L.globalCompositeOperation = "source-over"; L.clearRect(0, 0, W, H);
   for (const rn of m.ruins) placedRuin(L, g, m, rn, t, st);
   L.globalCompositeOperation = "source-atop";
@@ -2352,7 +2375,7 @@ function ruinsPass(g, m, t) {
   const sc = W / 560, row = Math.max(3, 5 * sc); L.strokeStyle = css(st.joint, 0.45); L.lineWidth = Math.max(0.6, 0.7 * sc); L.beginPath();
   for (let y = hz + 1, i = 0; y > hz - H * 0.45; y -= row, i++) { L.moveTo(0, y); L.lineTo(W, y); for (let x = (i % 2) * row * 1.3; x < W; x += row * 2.6) { L.moveTo(x, y); L.lineTo(x, y - row); } } L.stroke(); /* les lits et les joints de l'appareil */
   const q = rng((m.S.seed ^ 0x51a7e) >>> 0); for (let k = 0; k < 120; k++) { L.fillStyle = css(q() < 0.5 ? st.low : st.top, 0.25); L.fillRect(q() * W, hz - q() * H * 0.45, (2 + 4 * q()) * sc, (1 + 2 * q()) * sc); } /* les pierres inégales */
-  L.globalCompositeOperation = "source-over"; lavaMarks(L, g, m, t); g.drawImage(L.canvas, 0, 0);
+  L.globalCompositeOperation = "source-over"; lavaMarks(L, g, m, t); g.drawImage(L.canvas, 0, 0); late();
 }
 /** 2.6 : la forme d'un pont, d'un tirage à part (le reste de la ruine ne bouge pas). Les arches de pierre restent la forme la plus
  *  courante ; un monde boisé y ajoute la passerelle sur chevalets et le pont de cordes, une main massive la dalle unique,
@@ -2415,12 +2438,55 @@ function builtRuin(g, m, rn, t, fx, st, RS) {
         gr.addColorStop(0, css([255, 236, 190], 0.32 * night * (0.4 + 0.6 * Math.abs(Math.cos(ang))))); gr.addColorStop(1, css([255, 236, 190], 0)); fx.fillStyle = gr; fx.beginPath(); fx.moveTo(b, L0); fx.lineTo(x1, y1 - len * sp); fx.lineTo(x1, y1 + len * sp); fx.closePath(); fx.fill(); } void dir; fx.restore();
       const hg = fx.createRadialGradient(b, L0, 0, b, L0, lw * 5); hg.addColorStop(0, css([255, 236, 190], 0.5 * night)); hg.addColorStop(1, css([255, 236, 190], 0)); fx.fillStyle = hg; fx.fillRect(b - lw * 5, L0 - lw * 5, lw * 10, lw * 10); }
     if (q() < 0.5 && RS !== "massive") { fx.fillStyle = css([170, 40, 34], 0.55 * (1 - 0.7 * night)); for (let k = 1; k < 4; k += 2) { const y0 = top + h * (k / 4), y1 = top + h * ((k + 0.5) / 4); fx.beginPath(); fx.moveTo(b - lerp(w1, w0, (y0 - top) / h), y0); fx.lineTo(b + lerp(w1, w0, (y0 - top) / h), y0); fx.lineTo(b + lerp(w1, w0, (y1 - top) / h), y1); fx.lineTo(b - lerp(w1, w0, (y1 - top) / h), y1); fx.closePath(); fx.fill(); } } } /* les bandes rouges, peintes */
+  else if (rn.k === "mill") millDraw(g, m, rn, t, fx, q, win, RS);
   else { const n = 9 + Math.floor(q() * 7), rise = H * (0.16 + 0.1 * q()), run = W * (0.12 + 0.08 * q()), dir = q() < 0.5 ? -1 : 1, sx = b - dir * run / 2, st0 = rise / n, sw = run / n, wall = Math.max(2, W * 0.006), broken = RS === "fallen" ? 2 + Math.floor(q() * 3) : -1;
     g.beginPath(); g.moveTo(sx, hz + 2); for (let k = 0; k < n; k++) { if (k === broken) { g.lineTo(sx + dir * sw * (k + 0.3), hz - st0 * (k - 1.5)); continue; } g.lineTo(sx + dir * sw * k, hz - st0 * (k + 1)); g.lineTo(sx + dir * sw * (k + 1), hz - st0 * (k + 1)); } /* les marches */
     const ex = sx + dir * run, top = hz - rise; g.lineTo(ex + dir * run * 0.25, top); g.lineTo(ex + dir * run * 0.25, hz + 2); g.closePath(); g.fill(); /* la terrasse */
     g.beginPath(); g.moveTo(sx - dir * wall, hz + 2); g.lineTo(sx - dir * wall, hz - st0 * 2.5); g.lineTo(ex, top - st0 * 2); g.lineTo(ex, top); g.lineTo(sx, hz - st0); g.closePath(); g.fill(); /* le mur de rampe */
     for (const off of [0.05, 0.2]) { const x = ex + dir * run * off, ph = H * (0.05 + 0.03 * q()); g.fillRect(x - wall, top - ph, wall * 2, ph); } /* deux montants sur la terrasse */
     if (broken >= 0) for (let k = 0; k < 4; k++) { const bx = sx + dir * sw * (broken + 0.5) + (q() - 0.5) * sw * 3, bw = sw * (0.4 + 0.4 * q()); g.fillRect(bx, hz - bw, bw, bw); } }
+}
+/** 2.8 : le moulin, dessiné à l'échelle 1 au pied de l'horizon (placedRuin le pose à sa profondeur). La pierre dans la couleur des ruines, le bois à part. */
+function millDraw(g, m, rn, t, fx, q, win, RS) {
+  const { S, W, H, hz } = m, b = rn.x, mo = rn.mill || millOf(S), night = m.nightK || 0, amb = 1 - 0.75 * night;
+  const wood = css(mixc([10, 10, 14], [112, 80, 54], amb)), woodD = css(mixc([6, 6, 10], [66, 45, 30], amb)), cloth = css(mixc([10, 10, 14], [226, 214, 190], amb), 0.55), lw = Math.max(1, W * 0.0022);
+  const broken = mo.kind === "broken" || RS === "fallen", spin = TAU * t * 0.18 * (broken ? 0 : mo.speed) + q() * TAU;
+  const T = typeof fx.getTransform === "function" ? fx.getTransform() : null, later = (draw) => { const run = () => { fx.save(); if (T && fx.setTransform) fx.setTransform(T); draw(fx); fx.restore(); }; if (m._late) m._late.push(run); else run(); }; /* le bois, par-dessus la pierre */
+  if (mo.kind === "water") { /* la maison de pierre, le toit de bois, la roue à aubes contre le mur côté rivière */
+    const w = W * (RS === "massive" ? 0.055 : 0.045), h = H * (RS === "massive" ? 0.1 : 0.12), sd = mo.side || 1, top = hz - h, pk = h * (RS === "gothic" ? 0.75 : 0.45);
+    g.fillRect(b - w, top, w * 2, h + 2);
+    win(b - w * 0.4, top + h * 0.3, w * 0.3, Math.max(2, h * 0.16)); win(b + w * 0.1, top + h * 0.3, w * 0.3, Math.max(2, h * 0.16));
+    const R = h * 0.62, cx = b - sd * (w + R * 0.55), cy = hz - R * 0.5; /* la roue : son bas dans l'eau */
+    later((c) => {
+      c.fillStyle = woodD; c.beginPath(); c.moveTo(b - w * 1.15, top + 1); c.lineTo(b, top - pk); c.lineTo(b + w * 1.15, top + 1); c.closePath(); c.fill(); /* le toit de bois */
+      c.strokeStyle = wood; c.lineWidth = lw * 1.6; c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.stroke(); c.beginPath(); c.arc(cx, cy, R * 0.22, 0, TAU); c.stroke();
+      c.lineWidth = lw; for (let k = 0; k < 8; k++) { const a = spin + (k * TAU) / 8, ca = Math.cos(a), sa = Math.sin(a); c.beginPath(); c.moveTo(cx + ca * R * 0.22, cy + sa * R * 0.22); c.lineTo(cx + ca * R, cy + sa * R); c.stroke();
+        c.fillStyle = woodD; c.save(); c.translate(cx + ca * R, cy + sa * R); c.rotate(a); c.fillRect(-lw, -R * 0.15, lw * 2.4, R * 0.3); c.restore(); } /* les rayons, les aubes */
+      c.fillStyle = woodD; c.fillRect(cx + sd * R * 0.1 - lw, cy - lw, sd * (w * 0.2 + R * 0.45), lw * 2); /* l'arbre qui entre dans le mur */
+      if (mo.speed > 0) { c.strokeStyle = css([235, 244, 248], 0.5 * amb + 0.2); c.lineWidth = lw; for (let k = 0; k < 5; k++) { const ph = frac(t * 0.9 * mo.speed + k * 0.21), x = cx - R * 0.9 + k * R * 0.45, y = hz + 1 + ph * 3; c.globalAlpha = 1 - ph; c.beginPath(); c.moveTo(x - R * 0.2, y); c.quadraticCurveTo(x, y - 2, x + R * 0.2, y); c.stroke(); } c.globalAlpha = 1; } /* l'écume au pied de la roue */
+    });
+    return; }
+  /* le moulin à vent : une tour qui s'affine, une calotte de bois, quatre ailes à lattes autour du moyeu */
+  const sq = RS === "massive" ? 0.8 : 1, h = H * 0.2 * sq, w0 = (W * 0.032) / sq, w1 = (W * 0.021) / sq, top = hz - h;
+  g.beginPath(); g.moveTo(b - w0, hz + 2); g.lineTo(b - w1, top); g.lineTo(b + w1, top); g.lineTo(b + w0, hz + 2); g.closePath(); g.fill();
+  if (RS === "gothic") win(b - w0 * 0.2, top + h * 0.35, w0 * 0.4, h * 0.14); else win(b - w0 * 0.2, top + h * 0.4, w0 * 0.4, Math.max(2, h * 0.08));
+  const hx = b, hy = top - w1 * 0.55, L = h * 0.82;
+  later((c) => {
+    c.save(); if (broken) { c.beginPath(); c.moveTo(b - w1 * 2, top - w1 * 3); c.lineTo(b + w1 * 0.2, top - w1 * 3); c.lineTo(b + w1 * 0.55, top - w1 * 0.4); c.lineTo(b + w1 * 1.6, top + 2); c.lineTo(b - w1 * 2, top + 2); c.closePath(); c.clip(); } /* la calotte crevée : un pan manque, le ciel passe */
+    c.fillStyle = woodD; c.beginPath(); c.moveTo(b - w1 * 1.25, top + 1); c.quadraticCurveTo(b, top - w1 * 2.2, b + w1 * 1.25, top + 1); c.closePath(); c.fill(); c.restore(); /* la calotte */
+    if (broken) { c.strokeStyle = woodD; c.lineWidth = lw; c.beginPath(); for (const u of [0.25, 0.6]) { c.moveTo(b + w1 * u, top); c.lineTo(b + w1 * (u - 0.15), top - w1 * 1.6); } c.stroke(); } /* les chevrons à nu */
+    c.strokeStyle = wood; c.fillStyle = cloth;
+    for (let k = 0; k < 4; k++) {
+      if (broken && k === 1) continue; /* une aile tombée */
+      const a = (broken ? 0.4 : spin) + (k * TAU) / 4, len = broken && k === 3 ? L * 0.4 : L, ca = Math.cos(a), sa = Math.sin(a), nx = -sa, ny = ca, sw = L * 0.17, s0 = 0.2;
+      const x0 = hx + ca * len * s0, y0 = hy + sa * len * s0, x1 = hx + ca * len, y1 = hy + sa * len;
+      if (!broken && mo.speed > 0.6) { c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0 + nx * sw, y0 + ny * sw); c.lineTo(x1 + nx * sw, y1 + ny * sw); c.lineTo(x1, y1); c.closePath(); c.fill(); } /* la toile tendue quand il y a du vent */
+      c.lineWidth = lw * 1.5; c.beginPath(); c.moveTo(hx, hy); c.lineTo(x1, y1); c.stroke(); /* le bras */
+      c.lineWidth = lw * 0.75; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0 + nx * sw, y0 + ny * sw); c.lineTo(x1 + nx * sw, y1 + ny * sw); c.lineTo(x1, y1);
+      for (let j = 1; j < 6; j++) { const u = s0 + ((1 - s0) * j) / 6, x = hx + ca * len * u, y = hy + sa * len * u; c.moveTo(x, y); c.lineTo(x + nx * sw, y + ny * sw); } c.stroke(); } /* le cadre et les lattes */
+    if (broken) { c.lineWidth = lw * 1.3; c.beginPath(); c.moveTo(b + w0 * 0.9, hz + 1); c.lineTo(b + w0 * 0.9 + L * 0.55, hz - L * 0.12); c.stroke(); } /* l'aile tombée, au pied */
+    c.fillStyle = woodD; c.beginPath(); c.arc(hx, hy, w1 * 0.4, 0, TAU); c.fill(); /* le moyeu */
+  });
 }
 function ruin(g, m, rn, t, fx = g, st = stoneOf(m)) {
   const { S, W, H, hz } = m, b = rn.x; g.fillStyle = css(st.lit); g.strokeStyle = css(st.edge); g.lineWidth = 1;
@@ -2441,7 +2507,7 @@ function ruin(g, m, rn, t, fx = g, st = stoneOf(m)) {
         for (let k = 0; k < 4; k++) { const bx = x0 + aw * (0.3 + 0.12 * k + 0.05 * v8()), bw = aw * (0.06 + 0.05 * v8()), bh = deck * (0.5 + 0.6 * v8()); g.save(); g.translate(bx, hz + 1); g.rotate((v8() - 0.5) * 0.6); g.fillRect(-bw / 2, -bh, bw, bh); g.restore(); } continue; } /* les pierres tombées au pied */
       g.beginPath(); g.moveTo(x0, hz + 2); g.lineTo(x0, hz - rise - deck); g.lineTo(x0 + aw, hz - rise - deck); g.lineTo(x0 + aw, hz + 2); g.lineTo(x0 + aw * 0.88, hz + 2); g.quadraticCurveTo(x0 + aw / 2, hz - rise * 1.6, x0 + aw * 0.12, hz + 2); g.closePath(); g.fill(); g.stroke(); }
   }
-  else if (rn.k === "tower" || rn.k === "lighthouse" || rn.k === "stairs") builtRuin(g, m, rn, t, fx, st, RS);
+  else if (rn.k === "tower" || rn.k === "lighthouse" || rn.k === "stairs" || rn.k === "mill") builtRuin(g, m, rn, t, fx, st, RS);
   else if (rn.k === "tablet") { const v = H * (0.05 + 0.03 * v8()), h = H * (0.14 + 0.1 * v8()), tilt = (v8() - 0.5) * 0.35, round = RS === "arched" || (RS !== "massive" && v8() < 0.3), chip = RS === "fallen" || v8() < 0.3; g.save(); g.translate(b, hz + 2); g.rotate(tilt);
     g.beginPath(); g.moveTo(-v, 0); if (round) { g.lineTo(-v, -h + v); g.arc(0, -h + v, v, Math.PI, 0); } else { g.lineTo(-v, -h); if (chip) { g.lineTo(v * 0.3, -h); g.lineTo(v, -h * 0.78); } else g.lineTo(v, -h); } g.lineTo(v, 0); g.closePath(); g.fill(); g.stroke(); g.restore(); /* stèle ronde ou dalle, penchée, parfois écornée */
     const vv = v, hh = h; void vv; void hh; if (S.tabletAwake) { fx.fillStyle = css([255, 190, 110], 0.35 + 0.3 * Math.sin(TAU * t * 2)); fx.fillRect(b - v + 3, hz - h + 6, v * 2 - 6, 1.4); fx.fillRect(b - v + 3, hz - h + 12, v * 2 - 10, 1.4); } }
@@ -3343,4 +3409,4 @@ Object.assign(ART, {
   aeroplankton: { layer: "air", draw(g, m, t, e) { const { W, H, hz } = m; for (const it of e.items) for (let k = 0; k < 6; k++) { const x = (it.x + k * 41) % W, y = hz - H * (0.05 + 0.3 * frac(it.y + k * 0.17)); g.fillStyle = css([220, 240, 255], 0.2 + 0.4 * Math.max(0, Math.sin(TAU * t * 2 + k + it.p))); g.fillRect(x, y, 1, 1); } } },
 });
 
-module.exports = { solEn, supportOf, carried, SUPPORT, SUPPORT_OF, byDepthForTest: (m, e, a, b) => byDepth(m, e, a, b), sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
+module.exports = { millOf, solEn, supportOf, carried, SUPPORT, SUPPORT_OF, byDepthForTest: (m, e, a, b) => byDepth(m, e, a, b), sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };

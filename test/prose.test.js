@@ -80,4 +80,9 @@ assert.ok(!/^(You arrive|The link)/.test(describeAge(A("sand\nstone"), { seed: "
 for (const t of many) assert.ok(!/around it all:|wait at the edges|keep their distance|waits at the edge of it all|lingers nearby/i.test(t), "plus de sac de restes : " + t);
 const order = describeAge(A("single_sun\nwater\nlava\nseed\ndoor\nrain"), { seed: "Ordre" });
 assert.ok(order.indexOf("door") > order.indexOf("seed") && order.indexOf("seed") > order.search(/lava/), "le parcours : le lointain, puis le proche, puis les mains : " + order);
+// 2.8 : le moulin dit ce que le monde en a fait
+for (const [state, re] of [["water", /wheel turns|wheel patient/], ["wind", /windmill/], ["broken", /fallen|broken/]]) {
+  const t = describeAge(A("single_sun\nmill\ngrass"), { seed: "Moulin", place: { kind: "plain", ground: "grass", mill: state } });
+  assert.ok(re.test(t), "le moulin (" + state + ") : " + t);
+}
 console.log("prose : ok");

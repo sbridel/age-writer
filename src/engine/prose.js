@@ -428,6 +428,12 @@ function placeSentence(place, teller) {
   return capitalize(teller.pick(list).replace(/\{(\w+)\}/g, (_, k) => (k === "cover" ? cover : GROUND_WORDS[k][ground]))) + ".";
 }
 
+/** 2.8 : le moulin, selon le monde (src/genscene.js, millOf) : à eau, à vent, arrêté. */
+const MILL_PROSE = {
+  water: ["a mill stands on the river, and its wheel turns with the water", "a water mill leans over the current, its wheel patient and loud"],
+  wind: ["a windmill turns on the high ground when the wind remembers to come", "a windmill keeps its sails to the wind, and creaks as they go round"],
+  broken: ["a mill stands still, one sail fallen at its foot, built for a wind that has gone", "a windmill with broken sails waits for a wind that no longer comes"],
+};
 function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at = null) {
   const sentences = [],
     used = new Set(),
@@ -469,7 +475,8 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at
   const loose = [];
   for (const id of resolved.matter.written) {
     if (used.has(id) || (resolved.weather && resolved.weather[id])) continue; // météo programmée : sa phrase datée la dit (describeAge)
-    const presence = String((resolved.presence && resolved.presence[id]) ?? blockById.get(id)?.presence ?? "").trim();
+    const own = id === "mill" && at && at.mill && MILL_PROSE[at.mill] ? teller.pick(MILL_PROSE[at.mill]) : null; // le moulin : sa phrase suit ce que le monde en a fait
+    const presence = String(own ?? (resolved.presence && resolved.presence[id]) ?? blockById.get(id)?.presence ?? "").trim();
     if (presence) { sentences.push(capitalize(presence) + "."); if (at) at.push(stationOf(id)); }
     else loose.push(id);
   }
@@ -574,6 +581,7 @@ function describeAge(resolved, options = {}) {
     const sky = skySentences(resolved, grammar, teller);
     const at = [];
     at.skyText = sky.join(" ").toLowerCase();
+    at.mill = place && typeof place === "object" ? place.mill : null;
     const matterLines = matterSentences(resolved, grammar, teller, at);
     if (sky.length === 0 && !matterLines.length) return "The page holds no readable symbol yet.";
     // deux phrases qui commencent pareil (« The book… The book… ») : on prend une autre tournure quand il y en a une

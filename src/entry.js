@@ -14,7 +14,7 @@ const { solitudeFactor, COVER_RE, parseCover, KEY_RE, FX_RE, STYLE_RE, TRAP_RE, 
 const { Soundscape, staticBurst, openSequence, linkSound, pageTurn } = require("./sound");
 const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
-const { sceneOf, HOOKS: GEN_HOOKS } = require("./genscene");
+const { sceneOf, millOf, HOOKS: GEN_HOOKS } = require("./genscene");
 const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, SKYC_RE, parseSky } = require("./sky");
 const { AMOUNT_RE, parseAmounts, applyAmounts, factorOf } = require("./amounts");
 const HV = require("./harvest"); /* la récolte pour la machine du Relto, et les granulés cuits (étape 4a′) */
@@ -194,7 +194,7 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.closedSlots = (o) => (o && o.carry ? CARRY.closedSlots(o.carry) : null); /* sous une terre renversée, le livre ne tire pas de ciel */
       AGEX.signature = (o) => !!(this.ext.signature !== false && this._sigOld && o && o.seed != null && !this._sigOld.has(o.seed)); /* ESSAI 2.6 : seuls les Âges nés après la 2.6 tirent une signature */
       AGEX.carryNote = (c) => guard("portage", () => this.carryLine(c)) || "";
-      AGEX.place = (a, seed) => guard("lieu", () => { const S = sceneOf(a, seed, core.blocks); if (!S || !S.view || S.world === "cavern" || S.torus) return null; const V = S.view; return { kind: V.kind, frame: V.frame, ground: S.ice || S.world === "frozen" ? "ice" : S.sand || S.world === "desert" ? "sand" : S.lava ? "lava" : S.alive || S.trees ? "grass" : "rock" }; }) /* le sol comme la fenêtre peint la pente */ || null; /* la description dit d'abord où la fenêtre pose (claude/DESIGN-grammaire-de-la-description.md) */
+      AGEX.place = (a, seed) => guard("lieu", () => { const S = sceneOf(a, seed, core.blocks); if (!S || !S.view || S.world === "cavern" || S.torus) return null; const V = S.view; const mo = S.ruins && S.ruins.includes("mill") ? millOf(S) : null; return { mill: mo ? mo.kind : null, kind: V.kind, frame: V.frame, ground: S.ice || S.world === "frozen" ? "ice" : S.sand || S.world === "desert" ? "sand" : S.lava ? "lava" : S.alive || S.trees ? "grass" : "rock" }; }) /* le sol comme la fenêtre peint la pente */ || null; /* la description dit d'abord où la fenêtre pose (claude/DESIGN-grammaire-de-la-description.md) */
       this.depthCache = new Map();
       // la profondeur de l'équilibre : le test par retrait, à l'affichage du panneau (jamais à chaque frappe), mis en cache par texte, graine et rigueur
       AGEX.depthNote = (text, seed) => guard("profondeur", () => {

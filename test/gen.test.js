@@ -374,4 +374,9 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
     G.HOOKS.doom = () => 0.2; ok(G.openingOf(S) === 1, "un Âge qui s'effondre : fissures grandes ouvertes");
   } finally { G.HOOKS.doom = () => 0; }
 }
+// 2.8 : le moulin, selon le monde
+ok(G.millOf({ river: true }).kind === "water" && G.millOf({ river: true }).speed > 0, "une rivière : un moulin à eau qui tourne");
+ok(G.millOf({ wind: true }).kind === "wind" && G.millOf({ storm: true }).speed > G.millOf({ wind: true }).speed, "le vent : un moulin à vent, plus vite dans la tempête");
+ok(G.millOf({ view: { kind: "plain" } }).kind === "broken", "ni eau ni vent ni hauteur : le moulin arrêté");
+ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau sur la lave");
 console.log(`gen.test.js : ${n} vérifications OK`);
