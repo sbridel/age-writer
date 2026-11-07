@@ -310,12 +310,26 @@ const MEETS = ["meets", "touches", "runs into", "settles against"];
 const MEETING = { meets: "meeting", touches: "touching", "runs into": "running into", "settles against": "settling against" };
 const AGAINST = ["Touched by", "Against", "In contact with"];
 /** Tournures d'une réaction : A, B, le verbe (3e personne), le résultat. Celles qui disent « it » refusent un verbe qui le dit déjà. */
+/** `pl` : le verbe accordé au sujet (pluriel : « lantern moths meet… and gather »), `it` : le pronom du sujet. */
 const REACTION_FORMS = [
-  { id: "and", make: (A, B, v, C, t) => `${A} ${t.pick(MEETS)} ${B} and ${v} ${C}` },
-  { id: "where", noIt: true, make: (A, B, v, C, t) => `where ${A} ${t.pick(MEETS)} ${B}, it ${v} ${C}` },
-  { id: "meeting", make: (A, B, v, C, t) => `${A}, ${MEETING[t.pick(MEETS)]} ${B}, ${v} ${C}` },
-  { id: "against", make: (A, B, v, C, t) => `${t.pick(AGAINST)} ${B}, ${A} ${v} ${C}` },
+  { id: "and", make: (A, B, v, C, t, pl = (x) => x) => `${A} ${pl(t.pick(MEETS))} ${B} and ${pl(v)} ${C}` },
+  { id: "where", noIt: true, make: (A, B, v, C, t, pl = (x) => x, it = "it") => `where ${A} ${pl(t.pick(MEETS))} ${B}, ${it} ${pl(v)} ${C}` },
+  { id: "meeting", make: (A, B, v, C, t, pl = (x) => x) => `${A}, ${MEETING[t.pick(MEETS)]} ${B}, ${pl(v)} ${C}` },
+  { id: "against", make: (A, B, v, C, t, pl = (x) => x) => `${t.pick(AGAINST)} ${B}, ${A} ${pl(v)} ${C}` },
 ];
+/** Un nom déjà au pluriel (« lantern_moths », « flowers », « mute_ruins ») prend un verbe au pluriel. */
+const pluralId = (id) => /s$/.test(id) && !/(ss|us)$/.test(id);
+const IRREGULAR = { is: "are", has: "have", does: "do", goes: "go" };
+/** Le verbe d'une réaction à la 3e personne du pluriel : chaque verbe conjugué de la tournure (« erupts, then freezes into » → « erupt, then freeze into »). */
+function pluralVerb(phrase) {
+  const one = (w) => IRREGULAR[w] || (/(ss|sh|ch|x|zz)es$/.test(w) ? w.slice(0, -2) : /[^aeiou]ies$/.test(w) ? w.slice(0, -3) + "y" : /[^s]s$/.test(w) ? w.slice(0, -1) : w);
+  return phrase.replace(/(^|, then |, and | and |, )([a-z]+)/g, (m, lead, w) => (lead === ", " && !/s$/.test(w) ? m : lead + one(w))).replace(/\bitself\b/g, "themselves");
+}
+/** Les grands blocs du lointain ont une phrase à eux quand le ciel ne les a pas déjà dits (la cible : « Lava runs through the lowland »). */
+const SETTING = {
+  lava: { said: /\b(lava|molten|fire)\b/, prose: ["lava runs through the lowland, glowing under its crust", "a slow flow of lava crawls across the low ground"] },
+  water: { said: /\b(water|river|lake|sea|ocean|shore|lagoon|beach|delta|marsh|surface|waves?|tide|floats?)\b/, prose: ["water gathers in the low ground and holds the light", "there is water here, and the land bends toward it"] },
+};
 const ALONE = [
   (x) => `${x} lingers nearby`,
   (x) => `${x} waits at the edge of it all`,
@@ -347,6 +361,8 @@ function countable(id) {
 const articled = (id, phrase) => (countable(id) ? (/^[aeiou]/i.test(phrase) ? "an " : "a ") + phrase : phrase);
 
 /** Groupes nominaux : un adjectif au plus, à la première mention, avec l'article ; « the … » ensuite ; un adjectif ne sert qu'une fois. */
+/** « a drawn moth » se lit « une phalène tirée » (le tirage) et non « attirée » : ce descripteur reste aux glyphes, pas à la description. */
+const AMBIGUOUS_ADJ = new Set(["drawn"]);
 function makeNamer(teller, articles = false) {
   const seen = new Set(),
     adjectives = new Set();
@@ -354,7 +370,7 @@ function makeNamer(teller, articles = false) {
     const noun = spaced(id);
     if (seen.has(id)) return "the " + noun;
     seen.add(id);
-    const pool = (blockById.get(id)?.descriptors ?? []).filter((d) => !adjectives.has(d));
+    const pool = (blockById.get(id)?.descriptors ?? []).filter((d) => !adjectives.has(d) && !(articles && AMBIGUOUS_ADJ.has(d)));
     const count = Math.min(pool.length, articles ? (teller.random() < 0.75 ? 1 : 0) : most === 1 || teller.random() < 0.4 ? 1 : 2); // étape 3 : un adjectif (parfois aucun), plus jamais deux
     const picked = [];
     while (picked.length < count) picked.push(pool.splice(Math.floor(teller.random() * pool.length), 1)[0]);
@@ -417,6 +433,13 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at
     used = new Set(),
     name = makeNamer(teller, !!at);
   let last = null, prev = null;
+  if (at) for (const [id, S] of Object.entries(SETTING)) // la lave, l'eau : posées d'abord au lointain, puis « the lava » dans les réactions
+    if ((resolved.matter.written || []).includes(id) && !S.said.test(at.skyText || "")) {
+      sentences.push(capitalize(teller.pick(S.prose)) + ".");
+      at.push("far");
+      name.seen.add(id);
+      used.add(id);
+    }
   const stOf = (r) => STATIONS.indexOf(blockById.has(r.shown) ? stationOf(r.shown) : stationOf(r.a));
   const reactions = at ? resolved.matter.reactions.map((r, i) => [r, i]).sort((x, y) => stOf(x[0]) - stOf(y[0]) || x[1] - y[1]).map((x) => x[0]) : resolved.matter.reactions; // dans l'ordre du parcours : la première mention garde ses adjectifs, les suivantes disent « the … »
   for (const reaction of reactions) {
@@ -431,7 +454,8 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at
     const A = name(reaction.a),
       B = name(reaction.b);
     const C = at ? (name.seen.has(reaction.shown) ? "the " + spaced(reaction.shown) : articled(reaction.shown, spaced(reaction.shown))) : spaced(reaction.shown),
-      said = form.make(A, B, verb, C, teller), st = blockById.has(reaction.shown) ? stationOf(reaction.shown) : stationOf(reaction.a);
+      many = at && pluralId(reaction.a),
+      said = form.make(A, B, verb, C, teller, many ? pluralVerb : undefined, many ? "they" : "it"), st = blockById.has(reaction.shown) ? stationOf(reaction.shown) : stationOf(reaction.a);
     // étape 2 : une chaîne (le produit de l'une entre dans la suivante) est une même histoire, dite d'une phrase
     const chained = at && prev && (reaction.a === prev.shown || reaction.b === prev.shown) && sentences[sentences.length - 1].length + said.length < 230;
     if (chained) sentences[sentences.length - 1] = sentences[sentences.length - 1].slice(0, -1) + ", and " + said + ".";
@@ -548,7 +572,9 @@ function describeAge(resolved, options = {}) {
     grammar.addModifiers(tracery.baseEngModifiers);
     const teller = makeTeller(random);
     const sky = skySentences(resolved, grammar, teller);
-    const at = [], matterLines = matterSentences(resolved, grammar, teller, at);
+    const at = [];
+    at.skyText = sky.join(" ").toLowerCase();
+    const matterLines = matterSentences(resolved, grammar, teller, at);
     if (sky.length === 0 && !matterLines.length) return "The page holds no readable symbol yet.";
     // deux phrases qui commencent pareil (« The book… The book… ») : on prend une autre tournure quand il y en a une
     const starts = new Set(sky.map(startOf));
