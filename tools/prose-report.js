@@ -47,7 +47,7 @@ function metrics(text) {
   for (let i = 0; i + 3 < w.length; i++) { const g = w.slice(i, i + 4).join(" "); grams.set(g, (grams.get(g) || 0) + 1); }
   const rep4 = [...grams.values()].filter((v) => v > 1).length;
   // « adjectif, adjectif nom » : la tournure à deux descripteurs, comptée par description
-  const pairs = (text.match(/\b[A-Za-z]+, [a-z]+ [a-z_]+ (meets|touches|runs into|settles against|lingers|waits|rests)\b/g) || []).length;
+  const pairs = (text.match(/\b[A-Za-z]+, [a-z]+ [a-z_]+ (meets|touches|runs into|settles against|lingers|waits|rests)\b/g) || []).filter((x) => !/^[A-Za-z]+, (the|a|an) /.test(x) && !/^(Above|off|this|hand|sky|Outside|distance|Closer|Further|Here)\b/.test(x)).length; // un connecteur suivi d'un nom n'est pas un double adjectif
   // les connecteurs de lieu en tête de phrase (claude/DESIGN-grammaire-de-la-description.md, décision C : deux ou trois au plus)
   const links = (text.match(/(^|[.:] )(All around|Everywhere you look|Overhead|High above|In the sky|Above it all|Here|In this place|For this world|Further out|Far overhead|Out in the dark|Above|Meanwhile|Down below|Through it all|Across the sky|Higher still|At the edge of sight|Further off|In the distance|Closer|Nearer at hand|Among all this|Not far from you|Outside), /g) || []).length;
   return { n: st.length, dupStart, rep4, pairs, len: w.length, links };

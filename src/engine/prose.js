@@ -331,8 +331,23 @@ const GROUPED = [
   (l) => `here and there, ${l}`,
 ];
 
-/** Groupes nominaux : des descripteurs à la première mention seulement, « the … » ensuite ; un adjectif ne sert qu'une fois. */
-function makeNamer(teller) {
+// ---- les accords (étape 3, décision D) -------------------------------------------------------------------
+/** Ce qui se compte prend « a/an » ; une matière, un temps, une foule n'en prennent pas (« lava », « grey rain », « lantern moths »). */
+const COUNT_WEATHER = new Set(["storm", "thunderstorm", "dust_storm", "ash_cloud", "spore_cloud", "rainbow", "tornado", "whispering_storm", "early_echo"]);
+const MASS_LIFE = new Set(["spore", "moss", "lichen", "pale_fungus", "cinderbloom", "singing_lichen", "grass", "meadow", "wildfire", "kelp", "coral", "plankton", "microbial_mat", "mycelium", "glow_algae", "aeroplankton", "soil_bacteria", "blight", "tarnished_growth", "many_one", "blooming_ice", "drinking_roots", "mosaic", "heath_shrub"]);
+const COUNT_GEO = new Set(["fissure", "cave_fissure", "submarine_fissure", "humming_shard", "geysers", "rifts", "fulgurite"]);
+function countable(id) {
+  const axis = String(blockById.get(id)?.axis || "");
+  if (/s$/.test(id) && !/(ss|us)$/.test(id)) return false; // « flowers », « lantern_moths », « basalt_columns », « mute_ruins » : déjà un pluriel
+  if (axis === "weather") return COUNT_WEATHER.has(id);
+  if (axis === "geological") return COUNT_GEO.has(id);
+  if (axis === "ecological") return !MASS_LIFE.has(id);
+  return axis === "metaphysical" || axis === "cosmological" || !axis ? !/^(crystal|ash|stone|water)/.test(id) : false;
+}
+const articled = (id, phrase) => (countable(id) ? (/^[aeiou]/i.test(phrase) ? "an " : "a ") + phrase : phrase);
+
+/** Groupes nominaux : un adjectif au plus, à la première mention, avec l'article ; « the … » ensuite ; un adjectif ne sert qu'une fois. */
+function makeNamer(teller, articles = false) {
   const seen = new Set(),
     adjectives = new Set();
   const name = (id, most = 2) => {
@@ -340,11 +355,12 @@ function makeNamer(teller) {
     if (seen.has(id)) return "the " + noun;
     seen.add(id);
     const pool = (blockById.get(id)?.descriptors ?? []).filter((d) => !adjectives.has(d));
-    const count = Math.min(pool.length, most === 1 || teller.random() < 0.4 ? 1 : 2);
+    const count = Math.min(pool.length, articles ? (teller.random() < 0.75 ? 1 : 0) : most === 1 || teller.random() < 0.4 ? 1 : 2); // étape 3 : un adjectif (parfois aucun), plus jamais deux
     const picked = [];
     while (picked.length < count) picked.push(pool.splice(Math.floor(teller.random() * pool.length), 1)[0]);
     picked.forEach((d) => adjectives.add(d));
-    return picked.length ? `${picked.join(", ")} ${noun}` : noun;
+    const phrase = picked.length ? `${picked.join(", ")} ${noun}` : noun;
+    return articles ? articled(id, phrase) : phrase;
   };
   name.seen = seen;
   return name;
@@ -399,7 +415,7 @@ function placeSentence(place, teller) {
 function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at = null) {
   const sentences = [],
     used = new Set(),
-    name = makeNamer(teller);
+    name = makeNamer(teller, !!at);
   let last = null, prev = null;
   const stOf = (r) => STATIONS.indexOf(blockById.has(r.shown) ? stationOf(r.shown) : stationOf(r.a));
   const reactions = at ? resolved.matter.reactions.map((r, i) => [r, i]).sort((x, y) => stOf(x[0]) - stOf(y[0]) || x[1] - y[1]).map((x) => x[0]) : resolved.matter.reactions; // dans l'ordre du parcours : la première mention garde ses adjectifs, les suivantes disent « the … »
@@ -407,14 +423,15 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at
     used.add(reaction.a);
     used.add(reaction.b);
     const verb = reaction.verbs ? teller.pick(reaction.verbs) : grammar.flatten(`#verb_${reaction.type}#`);
-    const fits = REACTION_FORMS.filter((f) => f.id !== last && !(f.noIt && /\bit\b/.test(verb)));
+    const fits = REACTION_FORMS.filter((f) => f.id !== last && !(f.noIt && /\bit\b/.test(verb)) && !(f.id === "and" && /\band\b/.test(verb))); // pas « …meets the spore and fills with life and becomes… »
     const fresh = fits.filter((f) => !teller.used.has("form:" + f.id));
     const form = teller.pick(fresh.length ? fresh : fits);
     teller.used.add("form:" + form.id);
     last = form.id;
     const A = name(reaction.a),
       B = name(reaction.b);
-    const said = form.make(A, B, verb, spaced(reaction.shown), teller), st = blockById.has(reaction.shown) ? stationOf(reaction.shown) : stationOf(reaction.a);
+    const C = at ? (name.seen.has(reaction.shown) ? "the " + spaced(reaction.shown) : articled(reaction.shown, spaced(reaction.shown))) : spaced(reaction.shown),
+      said = form.make(A, B, verb, C, teller), st = blockById.has(reaction.shown) ? stationOf(reaction.shown) : stationOf(reaction.a);
     // étape 2 : une chaîne (le produit de l'une entre dans la suivante) est une même histoire, dite d'une phrase
     const chained = at && prev && (reaction.a === prev.shown || reaction.b === prev.shown) && sentences[sentences.length - 1].length + said.length < 230;
     if (chained) sentences[sentences.length - 1] = sentences[sentences.length - 1].slice(0, -1) + ", and " + said + ".";
@@ -478,12 +495,14 @@ const CLAUSE = {
   near: ["close by, {l}", "around it, {l}", "underfoot and around, {l}"],
   hands: ["here and there, {l}", "not far off, {l}"],
 };
+const CLAUSE_ONE = { hands: ["not far off, {l}", "nearby, {l}"] };
 const ALONE_AT = {
   sky: ["the air carries {l}", "overhead there is {l}"],
   far: ["further off {v} {l}", "beyond {v} {l}", "in the distance {v} {l}"],
   near: ["close by {v} {l}", "around {v} {l}", "underfoot and around {v} {l}"],
   hands: ["here and there {w} {l}", "not far off {w} {l}"],
 };
+const ALONE_ONE = { hands: ["not far off {w} {l}", "nearby {w} {l}"] }; // une seule chose n'est pas « here and there »
 /** Un connecteur à l'entrée d'une station, seulement si le regard y bouge vraiment ; trois connecteurs au plus dans tout le texte. */
 const STATION_LINKS = { far: ["Further off, ", "In the distance, "], near: ["Closer, ", "Nearer at hand, "], hands: ["Among all this, ", "Not far from you, "] };
 const LOCATIVE = /^(deep|far|further|in |under|high|over|close|here|there|around|beneath|below|above|across|at |out |outside|all around|everywhere|overhead|through|not far|a little|nearer|closer|among)/i;
@@ -497,8 +516,8 @@ function sew(by, loose, place, teller) {
     const parts = names.length > 4 ? [names.slice(0, 3), names.slice(3)] : [names];
     parts.forEach((part, k) => {
       const l = listOf(part), host = by[st][by[st].length - 1];
-      if (k === 0 && host && host.length < 160 && !host.includes(";") && !/:/.test(host)) by[st][by[st].length - 1] = host.slice(0, -1) + "; " + fresh(CLAUSE[st]).replace("{l}", l) + ".";
-      else by[st].push(capitalize(fresh(ALONE_AT[st]).replace("{l}", l).replace("{v}", part.length > 1 ? "lie" : "lies").replace("{w}", part.length > 1 ? "stand" : "stands")) + ".");
+      if (k === 0 && host && host.length < 160 && !host.includes(";") && !/:/.test(host)) by[st][by[st].length - 1] = host.slice(0, -1) + "; " + fresh(part.length === 1 && CLAUSE_ONE[st] ? CLAUSE_ONE[st] : CLAUSE[st]).replace("{l}", l) + ".";
+      else by[st].push(capitalize(fresh(part.length === 1 && ALONE_ONE[st] ? ALONE_ONE[st] : ALONE_AT[st]).replace("{l}", l).replace("{v}", part.length > 1 ? "lie" : "lies").replace("{w}", part.length > 1 ? "stand" : "stands")) + ".");
     });
   }
   let links = by.sky.filter((x) => SKY_LINK_RE.test(x)).length;
