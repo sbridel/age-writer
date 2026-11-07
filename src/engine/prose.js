@@ -220,14 +220,15 @@ function makeTeller(random) {
 /** Ordre de lecture : le monde, puis ses soleils, le corps, l'orbite, le temps, puis ce qui traverse le ciel. */
 const SKY_ORDER = { world: 0, stars: 1, hue: 1, body: 2, terrain: 2, orbit: 3, cycle: 4, belt: 5, phenomenon: 6 };
 /** Connecteurs par famille : tous adverbiaux, ils vont devant une proposition comme devant un groupe nominal. */
+/* étape 2 (décision C) : plus de « Higher still », « Down below », « Meanwhile » tirés au hasard : un connecteur du ciel ne prétend pas monter ni descendre */
 const SKY_LINKS = {
   world: ["All around, ", "Everywhere you look, "],
   stars: ["Overhead, ", "High above, ", "In the sky, ", "Above it all, "],
   body: ["Here, ", "In this place, ", "For this world, "],
-  orbit: ["Further out, ", "Far overhead, ", "Out in the dark, ", "Above, "],
-  cycle: ["Here, ", "Meanwhile, ", "Down below, ", "Through it all, "],
-  belt: ["Further out, ", "Across the sky, ", "Higher still, "],
-  phenomenon: ["Higher still, ", "Above, ", "At the edge of sight, ", "Across the sky, "],
+  orbit: ["Far overhead, ", "Out in the dark, ", "Above, "],
+  cycle: ["Here, ", "Through it all, "],
+  belt: ["Across the sky, ", "Out in the dark, "],
+  phenomenon: ["Above, ", "At the edge of sight, ", "Across the sky, "],
   unknown: ["Somewhere in the text, ", "Between the lines, "],
 };
 SKY_LINKS.hue = SKY_LINKS.stars;
@@ -239,6 +240,17 @@ function echoes(link, text) {
   return (link.toLowerCase().match(/[a-z]+/g) || []).some((w) => !LINK_STOP.has(w) && words.has(w));
 }
 
+/** Sans étoile, l'orbite se dit du monde lui-même (l'auteur : « starless, mais they move ? »). */
+const DARK_ORBIT = {
+  stable_orbit: ["the world keeps an old, steady round through the dark", "its path through the dark never varies"],
+  shifting_orbit: ["the world's path through the dark drifts, slow and noticeable", "its round through the dark shifts with time"],
+  chaotic_orbit: ["the world wanders through the dark by no rule at all", "its path through the dark defies any prediction"],
+};
+const LONE_ORBIT = {
+  stable_orbit: ["the world keeps an old, steady round about its sun", "its round about the sun never varies"],
+  shifting_orbit: ["the world's path about its sun drifts, slow and noticeable", "its round about the sun shifts with time"],
+  chaotic_orbit: ["the world swings about its sun by no rule at all", "its path about the sun defies any prediction"],
+};
 function skySentences(resolved, grammar, teller) {
   const lines = resolved.lines.map((line, index) => ({ line, index }));
   const familyOf = (line) => (line.unknown ? "unknown" : line.entry.category in SKY_ORDER ? line.entry.category : "phenomenon");
@@ -246,6 +258,8 @@ function skySentences(resolved, grammar, teller) {
   lines.sort((a, b) => rank(a.line) - rank(b.line) || a.index - b.index);
   // une couleur de soleil écrite dit déjà « un soleil » : l'étoile unique ajoutée d'office ne se répète pas
   const hasHue = lines.some(({ line }) => !line.unknown && line.entry.category === "hue");
+  const has = (id) => lines.some(({ line }) => !line.unknown && line.entry.id === id);
+  const dark = has("starless"), lone = !dark && !has("twin_suns") && !has("companion_moon"); // sans étoile, c'est le monde qui erre ; un seul soleil : le monde tourne autour de lui, pas « les étoiles »
   const items = [];
   let leadDone = false;
   for (const { line } of lines) {
@@ -262,10 +276,10 @@ function skySentences(resolved, grammar, teller) {
     } else if (line.autoFilled) {
       if (hasHue && entry.category === "stars") continue;
       items.push({ family: familyOf(line), text: grammar.flatten(`#${entry.category === "stars" ? "default_stars" : "default_cycle"}#`) });
-    } else items.push({ family: familyOf(line), text: grammar.flatten(entry.proseTag) });
+    } else items.push({ family: familyOf(line), text: dark && DARK_ORBIT[entry.id] ? teller.pick(DARK_ORBIT[entry.id]) : lone && LONE_ORBIT[entry.id] ? teller.pick(LONE_ORBIT[entry.id]) : grammar.flatten(entry.proseTag) });
   }
   const out = [];
-  let glued = false;
+  let glued = false, links = 0;
   items.forEach((item, i) => {
     if (i === 0) {
       out.push(capitalize((item.lead || "") + item.text));
@@ -284,7 +298,8 @@ function skySentences(resolved, grammar, teller) {
       return;
     }
     glued = false;
-    const link = teller.random() < 0.55 ? teller.fresh((SKY_LINKS[item.family] || SKY_LINKS.phenomenon).filter((l) => !echoes(l, item.text))) : null;
+    const link = links < 1 && teller.random() < 0.4 ? teller.fresh((SKY_LINKS[item.family] || SKY_LINKS.phenomenon).filter((l) => !echoes(l, item.text))) : null;
+    if (link) links++;
     out.push(link ? link + item.text : capitalize(item.text));
   });
   return out.map((s) => s + ".");
@@ -357,22 +372,38 @@ function stationOf(id) {
   if (axis === "ecological") return FAR_LIFE.has(id) ? "far" : "near";
   return "near";
 }
-/** Où l'on arrive : le point de liaison de la fenêtre (src/genscene.js, viewOf), dit par la description. */
+/** Où l'on arrive : le point de liaison de la fenêtre (src/genscene.js, viewOf), dit par la description, dans la matière du lieu (le sol que la fenêtre peint). */
 const PLACE_PROSE = {
-  plain: ["you stand on open ground, the place laid out level before you", "the link sets you down on even ground, with nothing between you and the rest"],
-  low: ["you arrive in a hollow, the land rising all around", "the link sets you down low, in a fold of the ground, the world above its rim"],
-  high: ["you arrive on a height, the land spread out below", "the link sets you on a ledge of rock, and everything else lies beneath"],
-  slope: ["you arrive on a slope, the ground falling away to one side", "the link sets you halfway up a hillside, the land tilting away"],
-  cover: ["you arrive under cover, looking out from the shade", "the link sets you in the shelter of what stands around you, looking out"],
-  cave: ["you arrive at the mouth of a cave, the light ahead", "the link sets you in the shadow of a cave mouth, looking out"],
+  plain: ["you stand on {open}, the place laid out level before you", "the link sets you down on {open}, with nothing between you and the rest"],
+  low: ["you arrive in {hollow}, the land rising all around", "the link sets you down low, in {hollow}, the world above its rim"],
+  high: ["you arrive on {height}, the land spread out below", "the link sets you on {height}, and everything else lies beneath"],
+  slope: ["you arrive {slope}, the ground falling away to one side", "the link sets you {slope}, the land tilting away"],
+  cover: ["you arrive {cover}, looking out from the shade", "the link sets you {cover}, looking out"],
+  cave: ["you arrive at the mouth of {cave}, the light ahead", "the link sets you just inside {cave}, looking out"],
 };
+const GROUND_WORDS = {
+  open: { sand: "open sand", ice: "a flat of ice", lava: "a crust of cooled lava", grass: "open grass", rock: "bare, level rock" },
+  hollow: { sand: "a hollow between dunes", ice: "a hollow of ice", lava: "a hollow of black rock", grass: "a grassy hollow", rock: "a hollow of the rock" },
+  height: { sand: "the crest of a high dune", ice: "a ridge of ice", lava: "a height of black rock", grass: "a grassy height", rock: "a ledge of rock" },
+  slope: { sand: "halfway up a dune", ice: "on a slope of ice", lava: "on a slope of cooled lava", grass: "on a grassy hillside", rock: "on a rocky slope" },
+  cave: { sand: "a cave", ice: "an ice cave", lava: "a lava tube", grass: "a cave", rock: "a cave" },
+};
+/** `place` : une sorte (« slope ») ou { kind, ground, frame } (src/entry.js, hooks.place). */
+function placeSentence(place, teller) {
+  const P = typeof place === "string" ? { kind: place } : place || {}, list = PLACE_PROSE[P.kind];
+  if (!list) return null;
+  const ground = GROUND_WORDS.open[P.ground] ? P.ground : "rock", cover = P.frame === "trees" ? "under the trees" : "under an old arch";
+  return capitalize(teller.pick(list).replace(/\{(\w+)\}/g, (_, k) => (k === "cover" ? cover : GROUND_WORDS[k][ground]))) + ".";
+}
 
 function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at = null) {
   const sentences = [],
     used = new Set(),
     name = makeNamer(teller);
-  let last = null;
-  for (const reaction of resolved.matter.reactions) {
+  let last = null, prev = null;
+  const stOf = (r) => STATIONS.indexOf(blockById.has(r.shown) ? stationOf(r.shown) : stationOf(r.a));
+  const reactions = at ? resolved.matter.reactions.map((r, i) => [r, i]).sort((x, y) => stOf(x[0]) - stOf(y[0]) || x[1] - y[1]).map((x) => x[0]) : resolved.matter.reactions; // dans l'ordre du parcours : la première mention garde ses adjectifs, les suivantes disent « the … »
+  for (const reaction of reactions) {
     used.add(reaction.a);
     used.add(reaction.b);
     const verb = reaction.verbs ? teller.pick(reaction.verbs) : grammar.flatten(`#verb_${reaction.type}#`);
@@ -383,8 +414,15 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at
     last = form.id;
     const A = name(reaction.a),
       B = name(reaction.b);
-    sentences.push(capitalize(form.make(A, B, verb, spaced(reaction.shown), teller)) + ".");
-    if (at) at.push(blockById.has(reaction.shown) ? stationOf(reaction.shown) : stationOf(reaction.a)); // une réaction se dit là où est son produit
+    const said = form.make(A, B, verb, spaced(reaction.shown), teller), st = blockById.has(reaction.shown) ? stationOf(reaction.shown) : stationOf(reaction.a);
+    // étape 2 : une chaîne (le produit de l'une entre dans la suivante) est une même histoire, dite d'une phrase
+    const chained = at && prev && (reaction.a === prev.shown || reaction.b === prev.shown) && sentences[sentences.length - 1].length + said.length < 230;
+    if (chained) sentences[sentences.length - 1] = sentences[sentences.length - 1].slice(0, -1) + ", and " + said + ".";
+    else {
+      sentences.push(capitalize(said) + ".");
+      if (at) at.push(st); // une réaction se dit là où est son produit
+    }
+    prev = reaction;
     name.seen.add(reaction.shown); // le produit est nommé : la prochaine fois, « the … »
   }
   const loose = [];
@@ -405,22 +443,24 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at
   for (const x of resolved.excess || []) { sentences.push(capitalize(x.prose) + "."); if (at) at.push(stationOf(x.id)); } // un bloc écrit en grande quantité (`many: X`, src/amounts.js)
   for (const x of resolved.readings || []) { sentences.push(capitalize(x) + "."); if (at) at.push("near"); } // 2.5 (E) : la lecture du monde qui mûrit avec le temps (src/succession.js)
   // ce qui ne réagit pas : par petits groupes, pas une phrase chacun
+  if (at) { // étape 2 (décision B) : plus de sac ; chaque reste rejoint sa station, nommé d'un adjectif, et describeAge l'accroche à une phrase voisine
+    at.loose = {};
+    for (const id of loose) (at.loose[stationOf(id)] = at.loose[stationOf(id)] || []).push(name(id, 1));
+    return sentences;
+  }
   const groups = [];
-  const byStation = at ? STATIONS.map((st) => loose.filter((id) => stationOf(id) === st)).filter((l) => l.length) : [loose]; // chaque reste à sa station
-  for (const part of byStation)
-    for (let i = 0; i < part.length;) {
-      const rest = part.length - i,
-        size = rest <= 3 ? rest : rest === 4 ? 2 : 3;
-      groups.push(part.slice(i, i + size));
-      i += size;
-    }
+  for (let i = 0; i < loose.length;) {
+    const rest = loose.length - i,
+      size = rest <= 3 ? rest : rest === 4 ? 2 : 3;
+    groups.push(loose.slice(i, i + size));
+    i += size;
+  }
   for (const group of groups) {
     const text =
       group.length === 1
-        ? (teller.fresh(ALONE) || ALONE[0])(name(group[0], 1)) // un seul adjectif : les restes, rangés par station, sont plus souvent seuls
+        ? (teller.fresh(ALONE) || ALONE[0])(name(group[0]))
         : (teller.fresh(GROUPED) || GROUPED[0])(listOf(group.map((id) => name(id, 1))));
     sentences.push(capitalize(text) + ".");
-    if (at) at.push(stationOf(group[0]));
   }
   return sentences;
 }
@@ -428,6 +468,52 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at
 /** Les deux premiers mots d'une phrase, pour repérer les débuts répétés. */
 function startOf(text) {
   return (text.toLowerCase().match(/[a-z']+/g) || []).slice(0, 2).join(" ");
+}
+
+// ---- les coutures (étape 2 : décisions B et C) -----------------------------------------------------------
+/** Un reste s'accroche à la dernière phrase de sa station (« ; the air carries grey rain ») ; seul à sa station, il fait une phrase courte. */
+const CLAUSE = {
+  sky: ["the air carries {l}", "overhead there is {l}"],
+  far: ["further off, {l}", "beyond, {l}", "and in the distance, {l}"],
+  near: ["close by, {l}", "around it, {l}", "underfoot and around, {l}"],
+  hands: ["here and there, {l}", "not far off, {l}"],
+};
+const ALONE_AT = {
+  sky: ["the air carries {l}", "overhead there is {l}"],
+  far: ["further off {v} {l}", "beyond {v} {l}", "in the distance {v} {l}"],
+  near: ["close by {v} {l}", "around {v} {l}", "underfoot and around {v} {l}"],
+  hands: ["here and there {w} {l}", "not far off {w} {l}"],
+};
+/** Un connecteur à l'entrée d'une station, seulement si le regard y bouge vraiment ; trois connecteurs au plus dans tout le texte. */
+const STATION_LINKS = { far: ["Further off, ", "In the distance, "], near: ["Closer, ", "Nearer at hand, "], hands: ["Among all this, ", "Not far from you, "] };
+const LOCATIVE = /^(deep|far|further|in |under|high|over|close|here|there|around|beneath|below|above|across|at |out |outside|all around|everywhere|overhead|through|not far|a little|nearer|closer|among)/i;
+const SKY_LINK_RE = new RegExp("^(" + Object.values(SKY_LINKS).flat().map((l) => l.replace(/[, ]+$/, "")).join("|") + "),");
+function sew(by, loose, place, teller) {
+  const opened = new Set(STATIONS.flatMap((st) => by[st]).flatMap((x) => x.split(/(?<=[.;:])\s+/)).map(startOf)); // les débuts déjà pris (phrases et propositions)
+  const fresh = (list) => { const x = list.find((c) => !opened.has(startOf(c.replace(/\{\w\}\s*/g, "")))) || list[0]; opened.add(startOf(x.replace(/\{\w\}\s*/g, ""))); return x; };
+  for (const st of ["sky", "far", "near", "hands"]) {
+    const names = loose[st];
+    if (!names || !names.length) continue;
+    const parts = names.length > 4 ? [names.slice(0, 3), names.slice(3)] : [names];
+    parts.forEach((part, k) => {
+      const l = listOf(part), host = by[st][by[st].length - 1];
+      if (k === 0 && host && host.length < 160 && !host.includes(";") && !/:/.test(host)) by[st][by[st].length - 1] = host.slice(0, -1) + "; " + fresh(CLAUSE[st]).replace("{l}", l) + ".";
+      else by[st].push(capitalize(fresh(ALONE_AT[st]).replace("{l}", l).replace("{v}", part.length > 1 ? "lie" : "lies").replace("{w}", part.length > 1 ? "stand" : "stands")) + ".");
+    });
+  }
+  let links = by.sky.filter((x) => SKY_LINK_RE.test(x)).length;
+  const P = typeof place === "string" ? { kind: place } : place || {};
+  if (P.kind === "cave" && by.place.length && by.sky.length && !LOCATIVE.test(by.sky[0])) { by.sky[0] = "Outside, " + by.sky[0][0].toLowerCase() + by.sky[0].slice(1); links++; } // de la grotte, on regarde dehors
+  for (const st of ["far", "near", "hands"]) {
+    const first = by[st][0];
+    if (!first || links >= 3 || LOCATIVE.test(first) || teller.random() > 0.7) continue;
+    const prevSt = STATIONS[STATIONS.indexOf(st) - 1];
+    if (!by[prevSt] || !by[prevSt].length) continue; // le regard ne bouge que s'il venait d'ailleurs
+    const choice = STATION_LINKS[st].filter((l) => !echoes(l, by[st].join(" ")) && !opened.has(startOf(l))); // pas « Further off, … ; further off, … »
+    if (!choice.length) continue;
+    by[st][0] = teller.pick(choice) + first[0].toLowerCase() + first.slice(1);
+    links++;
+  }
 }
 
 // ---- la description --------------------------------------------------------------------------------------
@@ -456,7 +542,7 @@ function describeAge(resolved, options = {}) {
     };
     /* le parcours (décision A) : chaque phrase à sa station ; dans une station, l'ordre d'avant */
     const by = Object.fromEntries(STATIONS.map((st) => [st, []]));
-    const placeText = place && PLACE_PROSE[place] && sky.length ? capitalize(teller.pick(PLACE_PROSE[place])) + "." : null;
+    const placeText = place && sky.length ? placeSentence(place, teller) : null;
     if (placeText) by.place.push(placeText);
     by.sky.push(...sky);
     matterLines.forEach((x, i) => by[at[i] || "near"].push(x));
@@ -467,15 +553,18 @@ function describeAge(resolved, options = {}) {
     let doubt = null;
     for (const c of notes) {
       const own = Array.isArray(c.note) && c.note.length ? c.note : typeof c.note === "string" && c.note ? [c.note] : null;
-      if (own) by[c.with && blockById.has(c.with) ? stationOf(c.with) : "sky"].push(capitalize(unlike(own)) + ".");
+      const host = [c.b, c.with, c.a].find((id) => id && blockById.has(id)); // la règle nomme le ciel (a) et la chose (b) : la note se dit avec la chose
+      if (own) by[host ? stationOf(host) : "sky"].push(capitalize(unlike(own)) + ".");
       else if (!doubt) doubt = capitalize(unlike(SKY_PROSE_GRAMMAR[`${c.severity}_contradiction`] || SKY_PROSE_GRAMMAR.light_contradiction)) + ".";
     }
     // météo vivante : une phrase par ligne programmée (`drizzle: often, dawn`), au ciel
     if (resolved.weather) by.sky.push(...WEATHER.sentences(resolved.weather, teller.pick));
-    if (resolved.drawn.some((pick) => blockById.has(pick.id))) by.hands.push(capitalize(unlike(SKY_PROSE_GRAMMAR.drawn_matter_note))); // ce que le livre n'a pas dit : après ce qu'on a vu
+    const said = new Set(); // une même phrase ne se dit pas deux fois (deux règles qui partagent une note sous deux formes)
+    for (const st of STATIONS) by[st] = by[st].filter((x) => (said.has(x) ? false : (said.add(x), true)));
+    sew(by, at.loose || {}, place, teller);
+    if (resolved.drawn.some((pick) => blockById.has(pick.id))) by.hands.push(capitalize(unlike(SKY_PROSE_GRAMMAR.drawn_matter_note))); // ce que le livre n'a pas dit : après ce qu'on a vu, rien ne s'y accroche
     if (doubt) by.doubt.push(doubt);
-    const seen = new Set(); // une même phrase ne se dit pas deux fois (deux règles qui partagent une note sous deux formes)
-    return STATIONS.flatMap((st) => by[st]).filter((x) => (seen.has(x) ? false : (seen.add(x), true))).join(" ");
+    return STATIONS.flatMap((st) => by[st]).join(" ");
   });
 }
 

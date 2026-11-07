@@ -52,7 +52,7 @@ assert.ok(rep4 / many.length < 0.1, `tournures répétées : ${rep4}/${many.leng
 
 // un nom n'a ses adjectifs qu'à la première mention, ensuite « the … »
 const wet = describeAge(A("water\nsalt\niron\nspore\nseed"), { seed: "Eau" });
-assert.ok((wet.match(/\b[a-z]+(, [a-z]+)? water\b/gi) || []).filter((x) => !/^the /i.test(x)).length <= 1, "l'eau : décrite une fois, puis « the water » : " + wet);
+assert.ok((wet.match(/\b[a-z]+(, [a-z]+)? water\b/gi) || []).filter((x) => !/(^|, )the water$/i.test(x)).length <= 1, "l'eau : décrite une fois, puis « the water » : " + wet);
 
 // une couleur de soleil écrite remplace l'étoile unique ajoutée d'office
 const hue = describeAge(A("white_sun\nwater"), { seed: "Blanc" });
@@ -67,4 +67,17 @@ const obs = describeAge(A("water\nlava\nsalt", "O"), { seed: "O" });
 assert.ok(/\bthe obsidian\b/i.test(obs), "obsidienne : « the obsidian » à la seconde mention : " + obs);
 const ink = describeAge(A("zorgle\nblah\nfoo", "I"), { seed: "I" });
 assert.ok(new Set(SKY_PROSE_GRAMMAR.ink_blot.filter((x) => ink.toLowerCase().includes(x))).size === SKY_PROSE_GRAMMAR.ink_blot.filter((x) => ink.toLowerCase().includes(x)).length && SKY_PROSE_GRAMMAR.ink_blot.every((x) => ink.toLowerCase().split(x).length <= 2), "taches d'encre toutes différentes : " + ink);
+// la grammaire de la description (claude/DESIGN-grammaire-de-la-description.md) : le parcours, les coutures
+const dark = describeAge(A("starless\nchaotic_orbit\nwater"), { seed: "Noir" });
+assert.ok(!/the stars move|their round|the stars keep/i.test(dark), "sans étoile, l'orbite ne parle pas des étoiles : " + dark);
+for (let i = 0; i < 20; i++) { // un seul soleil (sans lune compagne tirée) : pas « les étoiles »
+  const lone = describeAge(A("single_sun\nchaotic_orbit\nwater", "S" + i), { seed: "S" + i });
+  if (!/moon|companion|second, colder body|two (stars|lights|suns)/i.test(lone)) assert.ok(!/the stars move|their round defies/i.test(lone), "un seul soleil : pas « les étoiles » : " + lone);
+}
+const dune = describeAge(A("sand\nstone\nwind"), { seed: "Dune", place: { kind: "slope", ground: "sand" } });
+assert.ok(/^(You arrive|The link sets you) halfway up a dune/.test(dune), "la description commence par le lieu de la fenêtre, dans sa matière : " + dune);
+assert.ok(!/^(You arrive|The link)/.test(describeAge(A("sand\nstone"), { seed: "Dune" })), "sans point de liaison connu, pas de phrase de lieu");
+for (const t of many) assert.ok(!/around it all:|wait at the edges|keep their distance|waits at the edge of it all|lingers nearby/i.test(t), "plus de sac de restes : " + t);
+const order = describeAge(A("single_sun\nwater\nlava\nseed\ndoor\nrain"), { seed: "Ordre" });
+assert.ok(order.indexOf("door") > order.indexOf("seed") && order.indexOf("seed") > order.search(/lava/), "le parcours : le lointain, puis le proche, puis les mains : " + order);
 console.log("prose : ok");
