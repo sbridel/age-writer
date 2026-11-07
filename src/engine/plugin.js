@@ -464,7 +464,7 @@ const AgeWriterPlugin = class AgeWriterPlugin extends obsidian.Plugin {
   renderAgePanel(ageSource, container, sourcePath) {
     let analysis = analyseAge(ageSource, { seed: seedName(sourcePath) }),
       resolved = analysis.resolved,
-      journal = describeAge(resolved, { seed: seedName(sourcePath) }),
+      journal = describeAge(resolved, { seed: seedName(sourcePath), analysis }),
       panel = container.createDiv({ cls: `age-panel age-panel--${analysis.verdict}` });
     panel.createDiv({ cls: "age-panel__journal" }).setText(journal);
     let visual = panel.createDiv({ cls: "age-panel__visual" }),

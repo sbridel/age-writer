@@ -47,19 +47,21 @@ function metrics(text) {
   for (let i = 0; i + 3 < w.length; i++) { const g = w.slice(i, i + 4).join(" "); grams.set(g, (grams.get(g) || 0) + 1); }
   const rep4 = [...grams.values()].filter((v) => v > 1).length;
   // « adjectif, adjectif nom » : la tournure à deux descripteurs, comptée par description
-  const pairs = (text.match(/\b[A-Za-z]+, [a-z]+ [a-z_]+ (meets|touches|runs into|settles against|lingers|waits|rests)\b/g) || []).length;
-  return { n: st.length, dupStart, rep4, pairs, len: w.length };
+  const pairs = (text.match(/\b[A-Za-z]+, [a-z]+ [a-z_]+ (meets|touches|runs into|settles against|lingers|waits|rests)\b/g) || []).filter((x) => !/^[A-Za-z]+, (the|a|an) /.test(x) && !/^(Above|off|this|hand|sky|Outside|distance|Closer|Further|Here)\b/.test(x)).length; // un connecteur suivi d'un nom n'est pas un double adjectif
+  // les connecteurs de lieu en tête de phrase (claude/DESIGN-grammaire-de-la-description.md, décision C : deux ou trois au plus)
+  const links = (text.match(/(^|[.:] )(All around|Everywhere you look|Overhead|High above|In the sky|Above it all|Here|In this place|For this world|Further out|Far overhead|Out in the dark|Above|Meanwhile|Down below|Through it all|Across the sky|Higher still|At the edge of sight|Further off|In the distance|Closer|Nearer at hand|Among all this|Not far from you|Outside), /g) || []).length;
+  return { n: st.length, dupStart, rep4, pairs, len: w.length, links };
 }
 
 function run(describe) {
-  const tot = { n: 0, dupStart: 0, rep4: 0, pairs: 0, len: 0, withDupStart: 0, withRep4: 0 }, samples = [];
+  const tot = { n: 0, dupStart: 0, rep4: 0, pairs: 0, len: 0, links: 0, withDupStart: 0, withRep4: 0 }, samples = [];
   s = 12345;
   for (let i = 0; i < N; i++) {
     const { name, src } = makeAge(i);
     const a = analyseAgeBase(src, { seed: name });
     const text = describe(a.resolved, name);
     const m = metrics(text);
-    for (const k of ["n", "dupStart", "rep4", "pairs", "len"]) tot[k] += m[k];
+    for (const k of ["n", "dupStart", "rep4", "pairs", "len", "links"]) tot[k] += m[k];
     if (m.dupStart) tot.withDupStart++;
     if (m.rep4) tot.withRep4++;
     if (samples.length < SAMPLES) samples.push({ src, text });
@@ -74,4 +76,5 @@ console.log(`  phrases par description           ${(tot.n / N).toFixed(1)}  (mot
 console.log(`  descriptions avec un début répété  ${pct(tot.withDupStart)}  (${(tot.dupStart / N).toFixed(2)} par description)`);
 console.log(`  descriptions avec une tournure de 4 mots répétée  ${pct(tot.withRep4)}  (${(tot.rep4 / N).toFixed(2)} par description)`);
 console.log(`  tournures « adj, adj nom verbe »   ${(tot.pairs / N).toFixed(2)} par description`);
+console.log(`  connecteurs de lieu                ${(tot.links / N).toFixed(2)} par description`);
 for (const x of samples) console.log("\n```age\n" + x.src + "\n```\n" + x.text);

@@ -8,7 +8,7 @@
 const BLOCKS = [
   { id: "kelp", d: ["swaying", "green", "tall"], w: 0.02, axis: "ecological", p: "kelp forests sway in the deep water, tall as towers and twice as patient" },
   { id: "coral", d: ["branching", "bright", "slow"], w: 0.03, axis: "ecological", p: "coral builds its slow, bright cities in the warm shallows" },
-  { id: "acid", d: ["sour", "clear", "biting"], w: 0.05, axis: "geological", p: "an acid pools in the hollows, and the stone softens wherever it lies" },
+  { id: "acid", d: ["sour", "clear", "biting"], w: 0.05, axis: "geological", p: "acid pools in the hollows, and the stone softens wherever it lies" },
 ];
 const MATTER_BLOCKS = BLOCKS.map((b) => ({ id: b.id, descriptors: b.d, weight: b.w, axis: b.axis, writable: true, presence: b.p }));
 /** Ce que l'acide ronge : la pierre se creuse, le fer rouille, l'eau devient amère, le corail blanchit en calcaire nu (sel). */

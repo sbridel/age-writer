@@ -2,6 +2,23 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.8.0 — The world keeps time (2026-11-07)
+
+### Added
+- **Four new blocks you can write** (never drawn by chance):
+  - `mill`: a mill by the same hands as the ruins, in their style. The world decides which: a water mill on the river, its wheel turning with the current; a windmill on the height, its sails turning with the wind of the place, racing in a storm; with neither, a mill standing still, one sail fallen, built for a wind that has gone.
+  - `oasis`: water in a hollow of the sand, very blue, ringed with green and palms. The dry world tolerates it (it comes from below). With salt it turns brackish and white-rimmed; under heat it draws back and leaves its old bank. The path bends around it.
+  - `tides`: the sea rises and falls twice a day of the Age, pulled by the moon or a gas giant; with no moon it stays still, a frozen cycle holds it. At low water the wet sand shows, with pools and bare rocks, salt pans if the world is brackish or salt is written, a ford of stepping stones at the end of the path, and the pier's legs bare.
+  - `monsoon`: a season of rain and a dry season, following the Age's year. In the rains the sky stays low and grey, the river floods (the ford is gone, the bridge holds), the pond and the oasis rise, the grass turns a heavy green and the desert greens. In the dry months the river shrinks to a thread over its stones (cracked mud with `clay`), the pond to a puddle, the grass yellows. The mill's wheel follows the river. It needs marked seasons and a warm world.
+- **The Castle dims with the fire**: its windows burn bright with the flame, a dull red in embers; when the fire is cold, one window in four keeps a candle.
+
+### Changed
+- **The description reads as a walk**: where you arrive (on what ground, in what place), then the sky, the far, the near, what hands have made, and the doubt last. Sentences are sewn together, nouns and verbs agree, a thing is named before it is referred to. Every Age's description changes (not its world).
+- Many sentences rewritten, in British spelling throughout.
+
+### Fixed
+- A window could fail to draw when the ground left no place to set a thing on (a strange stone, a book…).
+
 ## 2.7.0 — A place you go (2026-11-06)
 
 ### Added
@@ -47,7 +64,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **Oxygen is made by life**: `oxygen:` (also `oxygène:`) from 0 to 1, or worked out from the world: green life fills the air in a billion and a half years, hardy life (spores, lichens, moss) in three, nothing without light. Fire, rust and animals need it (burrowers and cave dwellers do without); the sheet has a ninth row, *Oxygen*. In strict physics, a few Books gain a light tension; easy mode is unchanged.
 - **Two new wonders, water that does not fall**: *The rain that stays* is born of the physics (rain or drizzle written on a light world under thick air) and replaces the held-rain scar; *Held water* comes from `water` + `charged_crystal`. The linking panel says they hang by a thread, and names what holds them.
 - **The world rereads itself**: a wood burnt by lava grows back; lightning burns a wood again and again; bare ground under a wind that carries spores is covered with lichen, then moss, then grass. The clock is the `age_written:` property, set in the note the first time (only where this happens). A stable world closes up in six weeks, an unstable one twice as slowly and only halfway; in a dying world the black spreads instead. The window, the Details tab and a sentence of the description follow it, in words, never in numbers.
-- **Sulfur flames**: lava with `acid` or `poisoned_air`, in air that can burn, burns blue at the crater rims, along the flow and on vents; barely visible by day, plain at night.
+- **Sulphur flames**: lava with `acid` or `poisoned_air`, in air that can burn, burns blue at the crater rims, along the flow and on vents; barely visible by day, plain at night.
 - **The fire of the Relto has wood and colour**: every hearth burns logs, one hour each, four at most, then embers, then cold ash; a click on the woodpile beside it adds one, and the room darkens as the fire sinks. The fire takes the colour of the last Age you linked to, by the real chemistry of flames (salt yellow, copper turquoise, ash lilac, chalk orange, iron gold, acid blue; a dying Age gives a ghost fire). The **Fire colour** page lets you choose among fifteen with a click on the fire. At night, the windows of the room with the hearth take its colour; with more than three hours of wood, it spreads to every window of the Relto.
 
 ### Changed

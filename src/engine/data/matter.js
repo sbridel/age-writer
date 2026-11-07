@@ -334,6 +334,9 @@ const RUINS_BLOCKS = [
   { id: "lighthouse", descriptors: ["tall", "bright", "turning"], weight: 0.03, axis: RUINS_AXIS, writable: !0 },
   { id: "pier", descriptors: ["narrow", "damp", "old"], weight: 0.02, axis: RUINS_AXIS, writable: !0 },
   { id: "stairs", descriptors: ["tall", "cold", "patient"], weight: 0.03, axis: RUINS_AXIS, writable: !0 },
+  { id: "tides", descriptors: ["slow", "pulling", "returning"], weight: 0.02, axis: "geological", writable: !0, presence: "the sea comes and goes twice a day, and leaves the sand shining" }, /* 2.8 : les marées (claude/DESIGN-quatre-blocs.md, § 1) ; leur phrase suit le ciel et le sel (TIDE_PROSE) */
+  { id: "oasis", descriptors: ["hidden", "green", "still"], weight: 0.02, axis: FLORA_AXIS, writable: !0, presence: "water lies in a hollow of the sand, and palms stand around it like a secret kept" }, /* 2.8 : l'oasis (claude/DESIGN-quatre-blocs.md, § 3) ; sa phrase suit son état (OASIS_PROSE) */
+  { id: "mill", descriptors: ["patient", "creaking", "turning"], weight: 0.03, axis: RUINS_AXIS, writable: !0, presence: "a mill stands here, built to be turned by whatever moves in this world" }, /* 2.8 : le moulin (claude/DESIGN-quatre-blocs.md, § 4) ; sa phrase suit son état (src/engine/prose.js, MILL_PROSE) */
   {
     id: "worn_tablet",
     descriptors: ["smooth", "faded", "silent"],
@@ -388,6 +391,7 @@ const WEATHER_AXIS = "weather";
 const WEATHER_BLOCKS = [
   { id: "wind", descriptors: ["restless", "thin", "cold"], weight: 0.03, axis: WEATHER_AXIS, writable: !0 },
   { id: "rain", descriptors: ["steady", "grey", "soft"], weight: 0.03, axis: WEATHER_AXIS, writable: !0 },
+  { id: "monsoon", descriptors: ["heavy", "seasonal", "returning"], weight: 0.02, axis: WEATHER_AXIS, writable: !0, presence: "the rains keep to their season here, and the rivers keep time with them" }, /* 2.8 : la mousson (claude/DESIGN-quatre-blocs.md, § 2) ; sa phrase suit la saison (MONSOON_PROSE) */
   { id: "fog", descriptors: ["thick", "pale", "muffling"], weight: 0.03, axis: WEATHER_AXIS, writable: !0 },
   {
     id: "lightning",

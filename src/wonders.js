@@ -45,7 +45,7 @@ const DAMAGED = [
 const MATTER_BLOCKS = [...COMPOSITES, ...DAMAGED].map((b) => ({ id: b.id, descriptors: b.d, weight: 0, axis: b.axis, writable: false, presence: b.p }));
 
 const REACTIONS = [
-  { a: "moth", b: "heat", result: "scorched_moths", type: "decaying", cost: 0.03, verbs: ["singes them into"] }, /* un petit coût : assez pour que la symbiose ait quelque chose à nouer, pas assez pour faire tomber un Âge */
+  { a: "moth", b: "heat", result: "scorched_moths", type: "decaying", cost: 0.03, verbs: ["is singed into"] }, /* un petit coût : assez pour que la symbiose ait quelque chose à nouer, pas assez pour faire tomber un Âge */
   ...METALS.flatMap((m) => FLORA.map((f) => ({ a: m, b: f, result: "tarnished_growth", type: "decaying", cost: 0.02, verbs: ["poisons its roots into"] }))),
   { a: "fog", b: "spore", result: "living_mist", type: "soothing", verbs: ["fills with life and becomes"] },
   { a: "water", b: "charged_crystal", result: "held_water", type: "soothing", verbs: ["holds it up, and it becomes"] }, /* 2.5 (F) : l'Eau tenue */

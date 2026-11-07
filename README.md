@@ -41,6 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); in short:
 
+- **2.8, the world keeps time.** Four blocks you can write: a mill that the world turns (water, wind, or standing still), an oasis in the sand, tides that rise and fall with the moon, a monsoon that floods and dries the land with the year; a description that reads as a walk; a Castle that dims with the fire.
 - **2.7, a place you go.** A path from your feet to what hands have built, made of what the ground gives (slabs, cut steps, stakes, footbridges, fords), or a beasts' trail to the water, following the place you arrive at; everything stands on what carries it; a fissure that opens into a chasm as the Age degrades.
 - **2.6, every world its own.** Islands, cliffs, waterfalls, beaches, lagoons and sea arches; red, milky or black water; a gas giant and a nebula; towers, lighthouses, piers and stairs; every Age written after 2.6 draws one rare thing of its own and a richer draw (older Ages do not change); geysers that erupt, bridges of every kind, and a Relto that lives with the seasons and the weather.
 - **2.5, the world has a side.** Weather comes from the wind of the place, fog lies in the morning, a sun beyond the frame shows by its light; relief, oxygen and lava come from the world itself, burnt woods grow back with time, water that does not fall; the Relto fire burns the wood you add, takes the colour of the last Age you linked to, and goes quiet when it dies.

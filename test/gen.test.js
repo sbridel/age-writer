@@ -374,4 +374,26 @@ ok(M.STYLE_RE.test("window_style: generative") && !M.STYLE_RE.test("water"), "ST
     G.HOOKS.doom = () => 0.2; ok(G.openingOf(S) === 1, "un Âge qui s'effondre : fissures grandes ouvertes");
   } finally { G.HOOKS.doom = () => 0; }
 }
+// 2.8 : le moulin, selon le monde
+ok(G.millOf({ river: true }).kind === "water" && G.millOf({ river: true }).speed > 0, "une rivière : un moulin à eau qui tourne");
+ok(G.millOf({ wind: true }).kind === "wind" && G.millOf({ storm: true }).speed > G.millOf({ wind: true }).speed, "le vent : un moulin à vent, plus vite dans la tempête");
+ok(G.millOf({ view: { kind: "plain" } }).kind === "broken", "ni eau ni vent ni hauteur : le moulin arrêté");
+ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau sur la lave");
+{ /* 2.8 : l'oasis remplace l'étang, plus petite ; la chaleur la boit ; aucun pont ne l'enjambe */
+  const base = { seed: 7, view: { kind: "plain" }, oasis: true, extras: [], writtenIds: ["oasis"] }, a = G.buildPondForTest(base, 640, 360, 200), b = G.buildPondForTest({ ...base, heat: true }, 640, 360, 200);
+  ok(a.oasis && a.oasis.palms.length >= 4 && !a.pads.length, "l'oasis : des palmiers, pas de nénuphars");
+  ok(b.rx < a.rx && b.oasis.shrink < 1, "sous la chaleur, l'eau a reculé"); }
+{ /* 2.8 : les marées */
+  ok(G.tideOf({ seed: 3, cycle: "steady" }, 0.2).amp === 0, "sans lune, la mer reste étale");
+  const S = { seed: 3, cycle: "steady", moon: true }, lv = Array.from({ length: 24 }, (_, i) => G.tideOf(S, i / 24).level);
+  ok(Math.min(...lv) < -0.8 && Math.max(...lv) > 0.8, "avec une lune : la mer monte et descend dans la journée");
+  ok(G.tideOf({ ...S, cycle: "frozen" }, 0.1).level === G.tideOf({ ...S, cycle: "frozen" }, 0.6).level, "un cycle figé fige la marée"); }
+{ /* 2.8 : la mousson suit l'année ; rien sans saisons, ni sur un monde froid */
+  const se = (u) => ({ u, snow: 0 }), M = (u, x = {}) => G.monsoonOf({ monsoon: true, season: se(u), ...x });
+  ok(M(0.5).name === "rains" && M(0).name === "dry" && M(0.25).name === "between", "les pluies l'été, le sec l'hiver, l'entre-deux");
+  ok(G.monsoonOf({ monsoon: true, season: null }) === null, "sans saisons, pas de mousson");
+  ok(M(0.5, { ice: true }) === null && M(0.5, { world: "frozen" }) === null, "un monde froid ne connaît pas la mousson");
+  const { solve } = require("../src/physics/solve"), T = (src) => solve({ ids: ["single_sun", "water", "monsoon"], src, seed: "m" }).tensions.map((t) => t.id);
+  ok(T("tilt: 0").includes("monsoonSeasons"), "un axe droit : les pluies n'ont pas de saison (contradiction)");
+  ok(!T("tilt: 28").includes("monsoonSeasons"), "un axe incliné : la mousson a son année"); }
 console.log(`gen.test.js : ${n} vérifications OK`);

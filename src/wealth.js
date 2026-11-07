@@ -15,8 +15,8 @@ const RICH = [
   { id: "rare_ore", d: ["dense", "violet", "humming"], w: 0.08, p: "a dense ore hums in the dark, worth more than the ground can bear", c: [190, 140, 255] },
 ];
 const SCARS = [
-  { id: "scorched_surface", d: ["black", "brittle", "still"], p: "the ground is scorched, and quiet for it" },
-  { id: "poisoned_air", d: ["thin", "sour", "still"], p: "the air is thin and sour, and nothing lingers in it" },
+  { id: "scorched_surface", d: ["black", "brittle", "still"], p: "the ground is scorched black, and nothing has come back to it" },
+  { id: "poisoned_air", d: ["thin", "sour", "still"], p: "the air is sour, and nothing lingers in it" },
   { id: "barren_soil", d: ["pale", "cracked", "silent"], p: "the soil is barren, and keeps nothing it is given" },
   { id: "bitter_water", d: ["cold", "green", "bitter"], p: "the water is bitter, and no one has drunk it twice" },
   { id: "hollowed_ground", d: ["hollow", "dark", "echoing"], p: "the ground sounds hollow, as if something had already been taken from it" },

@@ -699,6 +699,15 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.8.0 — le monde a ses heures (7 nov. 2026)
+
+Fiches du projet : `claude/DESIGN-grammaire-de-la-description.md`, `claude/DESIGN-quatre-blocs.md`, `claude/AVANCEMENT-2.8.md`.
+- **Château** (`src/relto-castle-out.js`, `winColor`) : phases du feu d'après `FIRE.hutLight` (flamme, braises, froid) ; feu froid : une fenêtre sur quatre garde une chandelle (`CANDLE_I`), choix de l'auteur.
+- **Grammaire de la description** (`src/engine/prose.js`) : stations (`place`, `sky`, `far`, `near`, `hands`, `doubt`, `stationOf`), `PLACE_PROSE` + `GROUND_WORDS` + `placeSentence` (hook `place`, `src/engine/hooks.js` ; `AGEX.place` dans `src/entry.js`), coutures (`sew`), accords (`countable`, `articled`, `pluralVerb`, `pluralId`, `AMBIGUOUS_ADJ`), `SETTING`, `DARK_ORBIT`/`LONE_ORBIT`. Relecture avec l'auteur : orthographe britannique seulement, dix-sept phrases du ciel, le doute, les douze phrases d'arrivée. Mesure `tools/prose-report.js`.
+- **Moulin** (`millOf`, `millPlace`, `millDraw`, bois peint par `m._late` au-dessus de la pierre), **oasis** (`oasisOf`, `oasisGround`, `oasisPalms`, le chemin la contourne), **marées** (`tideOf`, `tidePass`, rive tirée de côté ou proche, pieds du ponton, gué, marais salants), **mousson** (`monsoonOf`, `riverGeo.wid0`, `riverBand(m, y, bed)`, `pondBed`, `bedMarks`, `desertBloom`, ciel gris, `S.wx0` pour que les nuages ne bougent pas avec la saison ; physique : `monsoonSeasons`, `monsoonWarm`). Phrases `MILL_PROSE`, `OASIS_PROSE`, `TIDE_PROSE`, `MONSOON_PROSE`. Blocs écrits seulement, jamais tirés.
+- Correction : `byDepth(...)[0]` sans point porteur (plantage de la 2.7.0).
+- Vérification : 4 500 Âges au hasard (analyse, description, scène aux quatre saisons, trois heures), 400 sur un vrai canevas : aucun plantage.
+
 ## 2.7.0 — un lieu où l'on va (6 nov. 2026)
 
 Demande de l'auteur : « des mondes qui fassent vraiment Myst ». Chantier « mise en scène », fiches du projet : `claude/DESIGN-grammaire-du-placement.md`, `claude/DESIGN-carte-du-sol.md`, `claude/MESURE-carte-du-sol.md`, `claude/DESIGN-le-chemin.md`.

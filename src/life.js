@@ -30,8 +30,8 @@ const BLOCKS = [
 ];
 // la caverne : l'algue qui s'éclaire seule, et la capsule de nutriments (un amendement qui se dose)
 BLOCKS.push(
-  { id: "glow_algae", d: ["luminous", "slimy", "cold"], w: 0.02, axis: "ecological", p: "a cold, slimy algae glows in the water, the only lamp for a long way" },
-  { id: "pellet", d: ["compact", "dull", "dense"], w: 0.02, axis: "ecological", p: "a dull, dense pellet of nutrients lies in the ground, waiting to be dissolved" },
+  { id: "glow_algae", d: ["luminous", "slimy", "cold"], w: 0.02, axis: "ecological", p: "cold algae glow in the water, the only lamp for a long way" },
+  { id: "pellet", d: ["compact", "dull", "dense"], w: 0.02, axis: "ecological", p: "a dense grey pellet lies in the soil, slowly giving itself to the roots" },
 );
 const MATTER_BLOCKS = BLOCKS.map((b) => ({ id: b.id, descriptors: b.d, weight: b.w, axis: b.axis, writable: true, presence: b.p }));
 /** Ce qui naît de la rencontre : jamais écrit, toujours produit (poids 0). */
@@ -43,7 +43,7 @@ const PRODUCED = [
   { id: "glowing_mushroom", d: ["luminous", "cool", "patient"], axis: "ecological", p: "mushrooms glow in the dark, cool and patient, lighting nothing but themselves" },
   { id: "singing_mushroom", d: ["singing", "thin", "clear"], axis: "ecological", p: "the mushrooms sing, thin and clear, a note for each cap" },
   // la maladie du vivant : une cicatrice, jamais écrite (sa phrase réelle vient de `blightProse`, selon ce que le monde laisse voir)
-  { id: "blight", d: ["yellowing", "thin", "tired"], axis: "ecological", p: "a blight spreads through the living, where one species carries too much" },
+  { id: "blight", d: ["yellowing", "thin", "tired"], axis: "ecological", p: "a blight runs through the living, carried by the one kind that has grown too many" },
 ].map((b) => ({ id: b.id, descriptors: b.d, weight: 0, axis: b.axis, writable: false, presence: b.p }));
 MATTER_BLOCKS.push(...PRODUCED);
 const REACTIONS = [

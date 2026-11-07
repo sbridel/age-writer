@@ -32,6 +32,7 @@ const hooks = {
   closedSlots: () => null, // (options) → les noms des cases du tirage qui ne se tirent pas (src/carry.js : sous une terre renversée, le ciel) ; null : toutes
   expand: () => null, // (texte, options) → { text, info } : le texte que lit le moteur quand des lignes `carry:` sont comprises (src/carry.js) ; null : inchangé
   carryNote: () => "", // la ligne du panneau sur ce qu'un Âge porte (vide : rien)
+  place: () => null, // (analyse, graine) → le point de liaison de la fenêtre (« plain », « low », « high », « slope », « cover », « cave ») que la description dit en premier ; null : rien
 };
 
 module.exports = { hooks };

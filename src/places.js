@@ -9,7 +9,7 @@
 const BLOCKS = [
   { id: "ruined_library", d: ["ruined", "open", "poor"], w: 0.04, axis: "metaphysical", p: "a library with no roof, its shelves open to the sky" },
   { id: "library", d: ["rich", "closed", "hushed"], w: 0.03, axis: "metaphysical", p: "a library of linking books, shut and full" },
-  { id: "garden", d: ["beautiful", "fragrant", "labyrinthine"], w: 0.03, axis: "metaphysical", p: "many kinds of flowers grow here, a good place to wander and lose oneself" },
+  { id: "garden", d: ["beautiful", "fragrant", "labyrinthine"], w: 0.03, axis: "metaphysical", p: "a garden grows here, laid out by someone who meant to come back" },
   { id: "spiders", d: ["patient", "silken", "light-shy"], w: 0.03, axis: "ecological", p: "pale threads gather in the dark, and the light sends them away" },
 ];
 const MATTER_BLOCKS = BLOCKS.map((b) => ({ id: b.id, descriptors: b.d, weight: b.w, axis: b.axis, writable: true, presence: b.p }));
