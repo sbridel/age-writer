@@ -391,7 +391,7 @@ function listOf(parts) {
 const STATIONS = ["place", "sky", "far", "near", "hands", "doubt"];
 const SKY_IDS = new Set(["thick_air", "thin_air", "ashen_sky", "poisoned_air", "raptor", "aeroplankton"]);
 const LOW_WEATHER = new Set(["fog", "marsh_mist", "watching_mist", "living_mist", "scented_mist", "steam", "meltwater", "rime", "glaze", "held_water"]);
-const FAR_GEO = new Set(["fissure", "cave_fissure", "submarine_fissure", "no_fissure", "water", "lava", "geysers", "rifts", "basalt_columns", "karst", "subsurface_ocean", "ceiling_sea", "molten_core", "dead_core", "deep_cold", "pressure", "brine", "scorched_surface", "hollowed_ground", "ringed_ground", "breathing_mirrors", "acid", "bitter_water", "obsidian"]);
+const FAR_GEO = new Set(["tides", "fissure", "cave_fissure", "submarine_fissure", "no_fissure", "water", "lava", "geysers", "rifts", "basalt_columns", "karst", "subsurface_ocean", "ceiling_sea", "molten_core", "dead_core", "deep_cold", "pressure", "brine", "scorched_surface", "hollowed_ground", "ringed_ground", "breathing_mirrors", "acid", "bitter_water", "obsidian"]);
 const FAR_LIFE = new Set(["kelp", "coral", "shoal", "plankton", "deep_hunter", "glow_algae"]);
 /** La station d'un bloc : d'après son axe, avec quelques exceptions (l'air est au ciel ; la brume, la mer et ses bêtes, la fissure qui ramène au loin). */
 function stationOf(id) {
@@ -433,6 +433,12 @@ const MILL_PROSE = {
   water: ["a mill stands on the river, and its wheel turns with the water", "a water mill leans over the current, its wheel patient and loud"],
   wind: ["a windmill turns on the high ground when the wind remembers to come", "a windmill keeps its sails to the wind, and creaks as they go round"],
   broken: ["a mill stands still, one sail fallen at its foot, built for a wind that has gone", "a windmill with broken sails waits for a wind that no longer comes"],
+};
+/** 2.8 : les marées : avec une lune, sans lune (étale), avec le sel (les marais). */
+const TIDE_PROSE = {
+  moon: ["the sea comes and goes twice a day, and leaves the sand shining", "at low water the rocks stand bare, and the pools hold the sky"],
+  salt: ["the sea comes and goes, and leaves the sand white with salt", "at low water the salt stays behind, in shallow pans that hold the sky"],
+  still: ["the sea lies flat; nothing in the sky pulls at it", "the tides are written, but no moon rises to draw them"],
 };
 /** 2.8 : l'oasis, selon le monde (src/genscene.js, oasisOf) : claire, saumâtre (le sel), bue par la chaleur. */
 const OASIS_PROSE = {
@@ -481,7 +487,7 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at
   const loose = [];
   for (const id of resolved.matter.written) {
     if (used.has(id) || (resolved.weather && resolved.weather[id])) continue; // météo programmée : sa phrase datée la dit (describeAge)
-    const own = id === "mill" && at && at.mill && MILL_PROSE[at.mill] ? teller.pick(MILL_PROSE[at.mill]) : id === "oasis" && at && at.oasis && OASIS_PROSE[at.oasis] ? teller.pick(OASIS_PROSE[at.oasis]) : null; // le moulin, l'oasis : leur phrase suit ce que le monde en a fait
+    const own = id === "mill" && at && at.mill && MILL_PROSE[at.mill] ? teller.pick(MILL_PROSE[at.mill]) : id === "oasis" && at && at.oasis && OASIS_PROSE[at.oasis] ? teller.pick(OASIS_PROSE[at.oasis]) : id === "tides" && at && at.tides && TIDE_PROSE[at.tides] ? teller.pick(TIDE_PROSE[at.tides]) : null; // le moulin, l'oasis : leur phrase suit ce que le monde en a fait
     const presence = String(own ?? (resolved.presence && resolved.presence[id]) ?? blockById.get(id)?.presence ?? "").trim();
     if (presence) { sentences.push(capitalize(presence) + "."); if (at) at.push(stationOf(id)); }
     else loose.push(id);
@@ -589,6 +595,7 @@ function describeAge(resolved, options = {}) {
     at.skyText = sky.join(" ").toLowerCase();
     at.mill = place && typeof place === "object" ? place.mill : null;
     at.oasis = place && typeof place === "object" ? place.oasis : null;
+    at.tides = place && typeof place === "object" ? place.tides : null;
     const matterLines = matterSentences(resolved, grammar, teller, at);
     if (sky.length === 0 && !matterLines.length) return "The page holds no readable symbol yet.";
     // deux phrases qui commencent pareil (« The book… The book… ») : on prend une autre tournure quand il y en a une

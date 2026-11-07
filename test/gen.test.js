@@ -383,4 +383,9 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
   const base = { seed: 7, view: { kind: "plain" }, oasis: true, extras: [], writtenIds: ["oasis"] }, a = G.buildPondForTest(base, 640, 360, 200), b = G.buildPondForTest({ ...base, heat: true }, 640, 360, 200);
   ok(a.oasis && a.oasis.palms.length >= 4 && !a.pads.length, "l'oasis : des palmiers, pas de nénuphars");
   ok(b.rx < a.rx && b.oasis.shrink < 1, "sous la chaleur, l'eau a reculé"); }
+{ /* 2.8 : les marées */
+  ok(G.tideOf({ seed: 3, cycle: "steady" }, 0.2).amp === 0, "sans lune, la mer reste étale");
+  const S = { seed: 3, cycle: "steady", moon: true }, lv = Array.from({ length: 24 }, (_, i) => G.tideOf(S, i / 24).level);
+  ok(Math.min(...lv) < -0.8 && Math.max(...lv) > 0.8, "avec une lune : la mer monte et descend dans la journée");
+  ok(G.tideOf({ ...S, cycle: "frozen" }, 0.1).level === G.tideOf({ ...S, cycle: "frozen" }, 0.6).level, "un cycle figé fige la marée"); }
 console.log(`gen.test.js : ${n} vérifications OK`);
