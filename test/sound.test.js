@@ -47,3 +47,11 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   assert(contexts.length - before <= 1, "effets ponctuels : un seul contexte (" + (contexts.length - before) + ")");
   console.log("sound ok"); process.exit(0);
 })().catch((e) => { console.error("FAIL", e); process.exit(1); });
+
+// 2.10.1 : la liaison « à la manière de » (src/linksynth.js) : les modèles se décodent, la synthèse donne un son fini, borné, de la bonne durée ; les variantes suivent l'Âge
+{ const LS = require("../src/linksynth"), M = require("../src/link-models");
+  for (const k of ["myst", "uru", "riven"]) { const r = LS.synth(M[k], { seed: 3, iters: 2 }); let pk = 0, bad = 0, e = 0; for (const v of r.samples) { if (!Number.isFinite(v)) bad++; pk = Math.max(pk, Math.abs(v)); e += v * v; }
+    assert(bad === 0 && pk <= 0.81 && pk > 0.3 && e / r.samples.length > 1e-4, "liaison " + k + " : un son fini et borné"); assert(Math.abs(r.samples.length / r.sr - (M[k].n * M[k].hop) / M[k].sr) < 0.2, "liaison " + k + " : la durée du modèle"); }
+  const r2 = LS.synth(M.myst, { seed: 3, iters: 2, stretch: 1.2 }), r1 = LS.synth(M.myst, { seed: 3, iters: 2 }); assert(r2.samples.length > r1.samples.length * 1.15, "plus lent : plus long");
+  const rnd = () => 0.5; assert(LS.variantFor({ lava: 1 }, rnd).model === "riven" && LS.variantFor({ cold: 1 }, rnd).model === "uru" && LS.variantFor({}, rnd).model === "myst", "le modèle suit l'Âge");
+  console.log("sound.test.js : la liaison à la manière de OK"); }

@@ -6,6 +6,25 @@
  */
 const NEWS = [
   {
+    v: "2.10.1",
+    fr: {
+      title: "Le son de liaison",
+      letter: "On nous a reproché, à raison, que la liaison ne sonnait pas comme dans les vieux livres. Nous avons écouté les anciens, relevé la forme de leur souffle, et appris à l'encre à la refaire sans la copier. Vous choisissez : l'ancienne manière, la nôtre, les deux, ou votre propre enregistrement.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**Trois voies pour le son de liaison** (Réglages → Son) : classique ; à l'ancienne, une synthèse nouvelle qui suit l'Âge où l'on va et ne se répète jamais ; les deux au hasard ; ou votre fichier, joué avec l'écho des cavernes et l'étouffement de l'eau.",
+      ],
+    },
+    en: {
+      title: "The linking sound",
+      letter: "We were told, rightly, that the link did not sound as it did in the old books. We listened to the old ones, took down the shape of their breath, and taught the ink to make it again without copying it. You choose: the old manner, ours, both, or your own recording.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**Three ways to sound the link** (Settings → Sound): classic; in the old manner, a new synthesis that follows the Age you go to and never repeats; both at random; or your own file, played with the echo of caves and the muffling of water.",
+      ],
+    },
+  },
+  {
     v: "2.10.0",
     fr: {
       title: "Étoiles mortes",
