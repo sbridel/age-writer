@@ -699,6 +699,11 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.10.9 — la référence rattrape (9 nov. 2026, nuit)
+
+- Référence complète (FR et EN, en miroir) : le choix du son de liaison (réglages, sons), les trois commandes d'estampe et de carte postale, la carte de l'Âge (onglet Carte et livre du Relto ; l'ancienne « Carte » devient « Carte des liaisons »), la fenêtre qui se souvient (arrivée par l'eau, gel, mémoire du temps, ombres, heures des bêtes et oiseaux, bête de la mer, soleil), « Pages trouvées » dans Pages du Relto (les treize `page_found_*`, un clic ramasse), « La pierre » au télescope avec la plaque qui grave, le relevé sur la carte des étoiles ; dans les secrets, « Où sont les pages », en indices.
+- Demande de l'auteur : plus de repas pour la naine blanche. Elle ne mange, n'avale ni ne digère plus ses mondes ; elle les brûle ou les brise, ou l'on dit « ce qui en reste » : description (`prose.js`), lecture de la pierre (`spec.holds.*`), règles et leurs explications, nouveautés, README, CHANGELOG, commentaires. `gen.test.js` cherche `burnt` au lieu de `eaten`.
+
 ## 2.10.8 — le soleil noir (8 nov. 2026, nuit)
 
 - `lightTint` : le soleil noir prend `HUES.black_sun` (bordeaux presque noir) au lieu de `blackbody(1500)` (la braise).

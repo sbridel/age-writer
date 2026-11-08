@@ -93,11 +93,11 @@ const REQUIREMENTS = {
   },
 
   // ---- L1 : étoiles ---------------------------------------------------------------------------------
-  /* 2.9 : une naine blanche n'a sa couleur que par sa chaleur (son âge) ou par son repas (les débris) ; une autre couleur écrite sur elle est de l'Art */
+  /* 2.9 : une naine blanche n'a sa couleur que par sa chaleur (son âge) ou par ses débris ; une autre couleur écrite sur elle est de l'Art */
   deadStarColour: {
     law: "L1", axis: "metaphysical", sev: "light",
     test: (w) => !(w.hues || [])[0] || !!w.wdKind || w.hues[0] === "violet_sun",
-    why: { fr: () => "Une étoile morte n'a que deux façons d'avoir une couleur : sa chaleur, qui est son âge (bleue jeune, blanche, orange très vieille), et ce qu'elle a mangé (verte ou bleue par le sel, rouge par le carbone, avec les débris de ses mondes). Cette couleur-ci tient de l'Art.", en: () => "A dead star has only two ways to a colour: its heat, which is its age (blue when young, white, orange when very old), and what it ate (green or blue from salt, red from carbon, with the debris of its worlds). This colour comes from the Art." },
+    why: { fr: () => "Une étoile morte n'a que deux façons d'avoir une couleur : sa chaleur, qui est son âge (bleue jeune, blanche, orange très vieille), et ce qui reste de ses mondes (verte ou bleue par le sel, rouge par le carbone, avec les débris de ses mondes). Cette couleur-ci tient de l'Art.", en: () => "A dead star has only two ways to a colour: its heat, which is its age (blue when young, white, orange when very old), and what is left of its worlds (green or blue from salt, red from carbon, with the debris of its worlds). This colour comes from the Art." },
     fix: () => [tip("sans débris : blue_sun (jeune) ou orange_sun (très vieille) ; avec asteroid_belt, asteroid_field ou planet_rings : green_sun, blue_sun ou red_sun", "without debris: blue_sun (young) or orange_sun (very old); with asteroid_belt, asteroid_field or planet_rings: green_sun, blue_sun or red_sun"), tip("garder cette couleur, en connaissance de cause : elle coûte un peu d'Art", "keep this colour knowingly: it costs a little Art")],
   },
   /* 2.9 : un monde né des débris d'une étoile morte est jeune (claude/DESIGN-pistes-8-nov.md, § 32 bis) : rassemblé après, il ne peut pas être plus vieux que la mort de son étoile */
@@ -110,7 +110,7 @@ const REQUIREMENTS = {
   realStar: {
     law: "L1", axis: "metaphysical", sev: "light",
     test: (w) => !!w.whiteDwarf && !!w.wdKind, /* 2.9 : une naine blanche nourrie de ses mondes peut être verte (WD J1330+6435) */
-    why: { fr: () => "Aucune étoile ne brille vert ou violet par sa chaleur seule : une étoile qui émet surtout du vert nous paraît blanche. Une naine blanche qui a avalé ses planètes, elle, peut être verte, bleue ou rouge : ce qu'elle a mangé choisit ce qu'elle garde de sa lumière. Sans cela, ce ciel tient de l'Art, pas de la nature.", en: () => "No star shines green or violet by its heat alone: a star peaking in green looks white to us. A white dwarf that has swallowed its planets can be green, blue or red, though: what it ate chooses what it keeps of its light. Short of that, this sky comes from the Art, not from nature." },
+    why: { fr: () => "Aucune étoile ne brille vert ou violet par sa chaleur seule : une étoile qui émet surtout du vert nous paraît blanche. Une naine blanche qui a brisé ses planètes, elle, peut être verte, bleue ou rouge : ce qui en reste choisit ce qu'elle garde de sa lumière. Sans cela, ce ciel tient de l'Art, pas de la nature.", en: () => "No star shines green or violet by its heat alone: a star peaking in green looks white to us. A white dwarf that has broken its planets can be green, blue or red, though: what is left of them chooses what it keeps of its light. Short of that, this sky comes from the Art, not from nature." },
     fix: () => [tip("garder ce soleil, en connaissance de cause : il coûte un peu d'Art", "keep this sun knowingly: it costs a little Art"), tip("pour un soleil vert, bleu ou rouge sans Art : écrire une naine blanche et ce qui reste de ses mondes (white_dwarf, et asteroid_belt, asteroid_field ou planet_rings)", "for a green, blue or red sun without Art: write a white dwarf and what is left of its worlds (white_dwarf, plus asteroid_belt, asteroid_field or planet_rings)")],
   },
 

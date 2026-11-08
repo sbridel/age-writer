@@ -41,7 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); in short:
 
-- **2.10, dead stars.** The white dwarf's colours (its age, or what it ate), worlds born of debris, the sun drawn as a sun; a cut stone at the telescope that unfolds a star's light, a plate that engraves it, a star map that keeps the record; the linking sound in the old manner, or your own; the map of each Age in the Relto's book.
+- **2.10, dead stars.** The white dwarf's colours (its age, or what is left of its worlds), worlds born of debris, the sun drawn as a sun; a cut stone at the telescope that unfolds a star's light, a plate that engraves it, a star map that keeps the record; the linking sound in the old manner, or your own; the map of each Age in the Relto's book.
 - **2.9, the world remembers.** Arriving at the end of a pier; ice on ponds and rivers; puddles and fallen branches after the weather; a herd that keeps the hours, birds, and something rare in the sea; shadows and tracks; a map of each Age; prints and postcards; pages to find for your Relto.
 - **2.8, the world keeps time.** Four blocks you can write: a mill that the world turns (water, wind, or standing still), an oasis in the sand, tides that rise and fall with the moon, a monsoon that floods and dries the land with the year; a description that reads as a walk; a Castle that dims with the fire.
 - **2.7, a place you go.** A path from your feet to what hands have built, made of what the ground gives (slabs, cut steps, stakes, footbridges, fords), or a beasts' trail to the water, following the place you arrive at; everything stands on what carries it; a fissure that opens into a chasm as the Age degrades.

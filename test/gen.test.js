@@ -480,7 +480,7 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
   ok(!ten(T(["white_dwarf", "green_sun", "asteroid_belt"], "age: 0.6")).includes("rebornWorld"), "un âge écrit jeune : rien à redire"); }
 { const { analyseAgeBase } = require("../src/engine/analysis"), P = require("../src/engine/prose");
   const txt = (ids, place) => P.describeAge(analyseAgeBase(ids.join("\n"), { seed: "x" }).resolved, { seed: "x", place });
-  ok(/salt|eaten|digested/.test(txt(["white_dwarf", "green_sun"], { wdKind: "salt", reborn: false })), "la phrase du sel");
+  ok(/salt|burnt/.test(txt(["white_dwarf", "green_sun"], { wdKind: "salt", reborn: false })), "la phrase du sel");
   ok(/rubble|wreck|formed again/.test(txt(["white_dwarf", "green_sun"], { wdKind: "salt", reborn: true })), "la phrase du monde né des débris");
   ok(!/white point|white ember/.test(txt(["white_dwarf", "red_sun"], { wdKind: "carbon", reborn: false })), "la naine blanche ne se dit plus blanche quand elle est rouge"); }
 console.log(`gen.test.js : ${n} vérifications OK`);

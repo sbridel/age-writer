@@ -2,18 +2,22 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.10 — Dead stars (2.10.0 to 2.10.8, 2026-11-08)
+## 2.10 — Dead stars (2.10.0 to 2.10.9, 2026-11-08 and 09)
 
 ### Added
-- **The white dwarf has a colour, and it means something.** Without debris, the colour is its age: `blue_sun` young and burning, nothing written white, `orange_sun` very old and ochre. With what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), the colour is what it ate: `green_sun` the salt (chartreuse), `blue_sun` the salt to the extreme (pale blue, and cold), `red_sun` the carbon (pink when warm, red when cooled). None costs Art; any other colour written on a white dwarf costs a little. The tints are the real ones, pale.
+- **The white dwarf has a colour, and it means something.** Without debris, the colour is its age: `blue_sun` young and burning, nothing written white, `orange_sun` very old and ochre. With what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), the colour is what is left of them: `green_sun` the salt (chartreuse), `blue_sun` the salt to the extreme (pale blue, and cold), `red_sun` the carbon (pink when warm, red when cooled). None costs Art; any other colour written on a white dwarf costs a little. The tints are the real ones, pale.
 - **A world born of debris is young.** With a white dwarf and debris, the world's age is drawn between 0.1 and 1 Gyr; a greater written age is a light contradiction. Its life is simple, its air poor in oxygen, its trees young.
 - **The sun is drawn as a sun**: a core burnt to white, a corona that melts the edge and breathes slowly, a warmer glow at noon, orange when low, a hard point in thin air, a smear in thick air; the second sun smaller and cooler.
 - **The stone, at the telescope.** A cut stone in a ring, at the end of a brass arm hinged on the eyepiece mount. With a book on the lectern whose star is charted and aimed, swing the stone in front of the glass: the star's light unfolds into its band of colours, with its shadows, and the Guild reads it in words: its heat, what it holds, what that means. A green or violet sun that is merely written shows a whole light: "that green is written".
 - **The plate engraves the light.** With the stone in front of the glass, a click on the star's plate engraves what the stone shows (a small dry-point sign stays on the plate), kept with your Relto.
-- **The star map keeps the record.** A star whose light is engraved takes its colour on the map (the written one, or the one born of its meal, its age or its heat), edged in ink; a click pins a record in the corner of the parchment: the Age's name, the curve drawn in ink before your eyes the first time, then coloured in under the line with a chalk, and the Guild's reading.
+- **The star map keeps the record.** A star whose light is engraved takes its colour on the map (the written one, or the one born of its debris, its age or its heat), edged in ink; a click pins a record in the corner of the parchment: the Age's name, the curve drawn in ink before your eyes the first time, then coloured in under the line with a chalk, and the Guild's reading.
 - **Three ways to sound the link** (Settings → Sound → Linking sound): *Classic*, the synthesized sounds of earlier versions; *In the old manner*, a new synthesis learnt from the shape of the linking sounds of the old games (never their recordings: three small models, 68 KB in all), varied by the Age you go to and never twice the same; *Both*; *My own file*, an audio file from your vault (mp3, ogg, wav, m4a, flac), which may hold several linking sounds one after another (cut at its silences, one drawn each time), played at a slightly varying pitch with the same echo and muffling.
 - **The map of the Age in the Relto's book**, after the description, before the free page.
 - **The Relto postcard** shows the time there in D'ni numerals, as the island's plate does.
+
+### Changed
+- The full reference now covers 2.9 and 2.10: the stone, the plate and the star chart's record, the linking sound modes, the map of the Age, prints and postcards, found pages (where to find them is in the secrets), and what the window remembers (2.10.9).
+- A white dwarf's colour comes from what is left of the worlds it broke; nothing in the text says it ate them any more (2.10.9).
 
 ### Fixed
 - Leaving fullscreen with the button could leave the interface deaf to clicks until Escape.
@@ -35,7 +39,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **Pages to find**: one Age in three hides a page on the ground, held down by a stone. Picking it up adds a keepsake to your Relto (a weather vane, a glass globe, a millstone…). In sandbox mode the command still works.
 - **Shadows**: works and trees cast a shadow for each sun, long in the morning and evening, short at noon; a pale one under a full moon. Rain, fog and snow wash them out.
 - **Tracks**: the herd leaves its trail on sand, on snow, and in mud after rain.
-- **A new block, `white_dwarf`**: the sun is the cooled heart of a dead star, small, white and hard, and the world keeps very close to it. With `green_sun` and what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), its green is natural and costs no Art: like WD J1330+6435, the first green star ever seen, it is green because of the planets it swallowed.
+- **A new block, `white_dwarf`**: the sun is the cooled heart of a dead star, small, white and hard, and the world keeps very close to it. With `green_sun` and what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), its green is natural and costs no Art: like WD J1330+6435, the first green star ever seen, it is green because of the planets it burnt.
 
 ### Changed
 - The periscope follows the shore you face: one coastline, not an hourglass of water.

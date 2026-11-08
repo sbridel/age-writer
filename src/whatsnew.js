@@ -6,31 +6,33 @@
  */
 const NEWS = [
   {
-    v: "2.10.8",
+    v: "2.10.9",
     fr: {
       title: "Étoiles mortes",
-      letter: "Un correspondant nous l'avait dit : une étoile peut être verte d'avoir avalé ses mondes. Nous avons regardé de plus près. Elle peut aussi être bleue de jeunesse ou de sel, rouge de charbon, ocre d'âge ; et ce qui tourne autour d'elle est fait de ce qu'elle a brisé. Une pierre taillée, au télescope, déplie sa lumière ; la plaque la grave ; la carte des étoiles la garde. Et la liaison a retrouvé son souffle d'autrefois.",
+      letter: "Un correspondant nous l'avait dit : une étoile peut être verte d'avoir brûlé ses mondes. Nous avons regardé de plus près. Elle peut aussi être bleue de jeunesse ou de sel, rouge de charbon, ocre d'âge ; et ce qui tourne autour d'elle est fait de ce qu'elle a brisé. Une pierre taillée, au télescope, déplie sa lumière ; la plaque la grave ; la carte des étoiles la garde. Et la liaison a retrouvé son souffle d'autrefois.",
       sign: "— pour la Guilde des Écrivains",
       items: [
-        "**La naine blanche a une couleur, et elle veut dire quelque chose** : sans débris, son âge (`blue_sun` jeune, `orange_sun` très vieille) ; avec ce qui reste de ses mondes, son repas (`green_sun` le sel, `blue_sun` le sel à l'extrême, `red_sun` le carbone). Aucune ne coûte d'Art. **Un monde né des débris est jeune** : vie simple, peu d'oxygène.",
+        "**La naine blanche a une couleur, et elle veut dire quelque chose** : sans débris, son âge (`blue_sun` jeune, `orange_sun` très vieille) ; avec ce qui reste de ses mondes, ses débris (`green_sun` le sel, `blue_sun` le sel à l'extrême, `red_sun` le carbone). Aucune ne coûte d'Art. **Un monde né des débris est jeune** : vie simple, peu d'oxygène.",
         "**Le soleil est dessiné comme un soleil** : un cœur blanc, une couronne qui respire, l'orangé du soir.",
         "**Une pierre taillée au télescope**, au bout d'un bras de laiton : pivotée devant le verre, si l'étoile du livre est située et visée, sa lumière se déplie en bande, avec ses ombres, et la Guilde la lit : sa chaleur, ce qu'elle contient, ce que cela veut dire. Un soleil vert seulement écrit montre une lumière entière.",
         "**La plaque grave la lumière, la carte des étoiles la garde** : la pierre devant le verre, un clic sur la plaque de l'étoile ; sur la carte, l'étoile prend sa couleur, et un clic épingle le relevé : la courbe à la plume, puis la craie qui colorie dessous, et la lecture.",
         "**Trois voies pour le son de liaison** (Réglages → Son) : classique ; à l'ancienne, une synthèse nouvelle qui suit l'Âge où l'on va et ne se répète jamais ; les deux ; ou votre propre enregistrement, qui peut contenir plusieurs liaisons à la suite.",
         "**La carte de l'Âge dans le livre du Relto**, après la description ; un seul étang sur la carte, et des blancs seulement quand l'Âge vacille. La carte postale du Relto en chiffres D'ni ; la sortie du plein écran par le bouton ne bloque plus les clics.",
+        "**La référence complète rattrape la 2.9 et la 2.10** : la pierre, la plaque et la carte des étoiles, les quatre sons de liaison, la carte de l'Âge, les estampes et cartes postales, les pages trouvées (avec, dans les secrets, où les chercher), et tout ce que la fenêtre garde.",
       ],
     },
     en: {
       title: "Dead stars",
-      letter: "A correspondent had told us: a star can be green from swallowing its worlds. We looked closer. It can also be blue with youth or with salt, red with carbon, ochre with age; and what turns around it is made of what it broke. A cut stone at the telescope unfolds its light; the plate engraves it; the star map keeps it. And the link has found its old breath again.",
+      letter: "A correspondent had told us: a star can be green from burning its worlds. We looked closer. It can also be blue with youth or with salt, red with carbon, ochre with age; and what turns around it is made of what it broke. A cut stone at the telescope unfolds its light; the plate engraves it; the star map keeps it. And the link has found its old breath again.",
       sign: "— for the Guild of Writers",
       items: [
-        "**The white dwarf has a colour, and it means something**: without debris, its age (`blue_sun` young, `orange_sun` very old); with what is left of its worlds, its meal (`green_sun` the salt, `blue_sun` the salt to the extreme, `red_sun` the carbon). None costs Art. **A world born of debris is young**: simple life, little oxygen.",
+        "**The white dwarf has a colour, and it means something**: without debris, its age (`blue_sun` young, `orange_sun` very old); with what is left of its worlds, its debris (`green_sun` the salt, `blue_sun` the salt to the extreme, `red_sun` the carbon). None costs Art. **A world born of debris is young**: simple life, little oxygen.",
         "**The sun is drawn as a sun**: a white core, a breathing corona, the orange of evening.",
         "**A cut stone at the telescope**, at the end of a brass arm: swung in front of the glass, if the book's star is charted and aimed, its light unfolds into a band, with its shadows, and the Guild reads it: its heat, what it holds, what that means. A green sun that is merely written shows a whole light.",
         "**The plate engraves the light, the star map keeps it**: with the stone in front of the glass, a click on the star's plate; on the map, the star takes its colour, and a click pins the record: the curve in ink, then a chalk colouring under it, and the reading.",
         "**Three ways to sound the link** (Settings → Sound): classic; in the old manner, a new synthesis that follows the Age you go to and never repeats; both; or your own recording, which may hold several linking sounds in a row.",
         "**The map of the Age in the Relto's book**, after the description; one pond on the map, and blanks only when the Age wavers. The Relto postcard in D'ni numerals; leaving fullscreen with the button no longer blocks clicks.",
+        "**The full reference catches up with 2.9 and 2.10**: the stone, the plate and the star chart, the four linking sounds, the map of the Age, prints and postcards, found pages (with, in the secrets, where to look), and everything the window remembers.",
       ],
     },
   },
@@ -38,7 +40,7 @@ const NEWS = [
     v: "2.9.0",
     fr: {
       title: "Le monde se souvient",
-      letter: "On rapportait des mondes sans mémoire, qui oubliaient la pluie à peine tombée. L'encre a appris à garder une flaque, une trace de pas, l'ombre d'une pierre ; et un correspondant nous signale une étoile verte, qui ne l'est devenue qu'en mangeant ses mondes.",
+      letter: "On rapportait des mondes sans mémoire, qui oubliaient la pluie à peine tombée. L'encre a appris à garder une flaque, une trace de pas, l'ombre d'une pierre ; et un correspondant nous signale une étoile verte, qui ne l'est devenue qu'en brûlant ses mondes.",
       sign: "— pour la Guilde des Écrivains",
       items: [
         "**Le monde garde ses traces** : flaques et branches tombées après le temps, la glace sur l'eau douce l'hiver, les ombres qui tournent avec le soleil, la piste du troupeau sur le sable, la neige et la boue.",
@@ -49,7 +51,7 @@ const NEWS = [
     },
     en: {
       title: "The world remembers",
-      letter: "Worlds came back without memory, forgetting the rain as soon as it fell. The ink has learned to keep a puddle, a footprint, the shadow of a stone; and a correspondent tells us of a green star, which became so only by eating its worlds.",
+      letter: "Worlds came back without memory, forgetting the rain as soon as it fell. The ink has learned to keep a puddle, a footprint, the shadow of a stone; and a correspondent tells us of a green star, which became so only by burning its worlds.",
       sign: "— for the Guild of Writers",
       items: [
         "**The world keeps its traces**: puddles and fallen branches after the weather, ice on fresh water in winter, shadows that turn with the sun, the herd's trail on sand, snow and mud.",
