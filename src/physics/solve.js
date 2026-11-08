@@ -105,7 +105,7 @@ const logN = (r, mid, sigma, lo, hi) => M.clamp(mid * Math.exp(sigma * gauss(r))
 
 /** Ce que les blocs écrits fixent : nombre d'étoiles, couleurs, lune, géante, albédo… */
 function blockSettings(ids) {
-  const s = { sRange: null, ageRange: null, massRange: null, stars: null, hues: [], blackSun: false, moon: false, giantHost: false, locked: false, chaoticAxis: false, binary: null, veil: 1, albedoAdd: 0, coreAdd: 0, water: null };
+  const s = { sRange: null, ageRange: null, massRange: null, stars: null, hues: [], blackSun: false, whiteDwarf: false, moon: false, giantHost: false, locked: false, chaoticAxis: false, binary: null, veil: 1, albedoAdd: 0, coreAdd: 0, water: null };
   for (const id of ids) {
     const b = BLOCKS[id]; if (!b || !b.set) continue;
     const t = b.set;
@@ -113,6 +113,7 @@ function blockSettings(ids) {
     if (t.hue && s.hues.length < 2) s.hues.push(t.hue);
     if (t.moon) s.moon = true;
     if (t.blackSun) s.blackSun = true;
+    if (t.whiteDwarf) s.whiteDwarf = true;
     for (const k of ["sRange", "ageRange", "massRange"]) if (t[k]) s[k] = t[k];
     if (t.giantHost) s.giantHost = true;
     if (t.locked) s.locked = true;
@@ -137,7 +138,7 @@ function candidate(r, set, written) {
   const starMasses = [], starHues = [];
   for (let i = 0; i < Math.max(set.stars, 2); i++) {
     const hue = set.hues[i] || null; // chaque étoile sa couleur ; sans couleur, une étoile ordinaire
-    const range = hue ? HUE_MASS[hue] : [0.7, 1.3];
+    const range = i === 0 && set.whiteDwarf ? [0.5, 0.8] : hue ? HUE_MASS[hue] : [0.7, 1.3]; /* 2.9 : la naine blanche garde la masse d'un cœur d'étoile, quelle que soit sa couleur */
     const m = logU(r, range[0], range[1]);
     if (i < set.stars) { starMasses.push(i === 0 && written.starMass ? written.starMass : m); starHues.push(hue); }
   }
@@ -173,9 +174,10 @@ function derive(p, set, written, ids) {
   // L1 étoiles
   // le soleil noir (naine brune) est l'étoile qui porte la couleur black_sun
   const hues = p.starHues || [];
-  const props = p.starMasses.map((m, i) => (hues[i] === "black_sun" ? M.brownDwarf(m) : { T: M.starTemperature(m), L: M.starLuminosity(m), life: M.starLifetime(m) }));
+  const props = p.starMasses.map((m, i) => (i === 0 && set.whiteDwarf ? M.whiteDwarf(m) : hues[i] === "black_sun" ? M.brownDwarf(m) : { T: M.starTemperature(m), L: M.starLuminosity(m), life: M.starLifetime(m) }));
   const lums = props.map((x) => x.L);
   w.blackSun = hues.includes("black_sun");
+  w.whiteDwarf = !!set.whiteDwarf; w.debris = ["asteroid_belt", "asteroid_field", "planet_rings"].some((id) => ids.has(id)); /* 2.9 : la naine blanche, et ce qui reste de ses mondes */
   w.brownDwarfOnly = props.length > 0 && hues.every((h) => h === "black_sun");
   w.starMass = p.starMasses[0] || 0;
   w.starMasses = p.starMasses;

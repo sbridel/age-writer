@@ -57,6 +57,12 @@ function brownDwarf(mass) {
   return { T, L: R * R * Math.pow(T / T_SUN, 4), life: Infinity };
 }
 
+/** 2.9 : une naine blanche refroidie (le cœur d'une étoile morte, grand comme une planète) : de 4 000 à 8 000 K selon la masse tirée, un centième de rayon solaire ; elle ne s'éteindra pas. */
+function whiteDwarf(mass) {
+  const T = 4000 + clamp((mass - 0.5) / 0.3, 0, 1) * 4000, R = 0.0125;
+  return { T, L: R * R * Math.pow(T / T_SUN, 4), life: Infinity };
+}
+
 /** Part de la lumière d'un corps noir à T (K) entre deux longueurs d'onde (µm), par intégration numérique de Planck. */
 const PLANCK_CACHE = new Map();
 function planckFraction(T, a, b) {
@@ -283,7 +289,7 @@ function reliefOf(w) {
 }
 module.exports = { oxygenOf, reliefOf, seasonAmplitude, seasonKind,
   T_SUN, WATER_TRIPLE_BAR, HABITABLE, HEAT, clamp,
-  starLuminosity, starRadius, starTemperature, starLifetime, brownDwarf, planckFraction, visibleRatio, uvRatio,
+  starLuminosity, starRadius, starTemperature, starLifetime, brownDwarf, whiteDwarf, planckFraction, visibleRatio, uvRatio,
   insolation, distanceFor, orbitalPeriodDays, tidalLockTime,
   planetRadius, gravity, escapeVelocity, density,
   internalHeat, ageForHeatLevel, dynamo, coriolis, FIELD_SHIELD, airFreeze,

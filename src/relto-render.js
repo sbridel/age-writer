@@ -1,4 +1,5 @@
 "use strict";
+const TRK = require("./relto-trinkets"); /* 2.9 : les pages trouvées */
 /**
  * Rendu canvas 2D du Relto : une île flottante au-dessus d'une mer de nuages.
  * Tout est procédural et déterministe (graine = seed du Relto), animé par le temps.
@@ -262,6 +263,7 @@ class ReltoRenderer {
     const kp = has("koi"); if (kp) this.drawKoi(ctx, kp, sky, t); // après les arbres du fond : le bassin n'est jamais recouvert
     if (wf) this.drawWaterfall(ctx, t, "fall"); // éclaboussures sur le bassin et chute sous l'île : devant
     this.drawStructures(ctx, sky, t);
+    this._trinketTaken = []; for (const a of sc.additions.filter((x) => x.type === "trinket")) TRK.draw(ctx, this, a.asset, sky, t); /* 2.9 : les pages trouvées dans les Âges */
     const bn = has("bench"); if (bn) SC.bench(ctx, this, sky, this.lay.bench ? this.lay.bench.x0 : 289);
     const ct = has("cat"); if (ct && !this.catAsleep()) this.drawCat(ctx, ct, sky, t); // endormi : il est dans la cabane, près du feu
     const sk = has("stalktree"); if (sk) this.drawStalk(ctx, sk, sky, t);

@@ -256,6 +256,7 @@ const FAUNA_AXIS = "ecological";
 const FAUNA_BLOCKS = [
   { id: "moth", descriptors: ["pale", "soft", "drawn"], weight: 0.03, axis: FAUNA_AXIS, writable: !0 },
   { id: "grazer", descriptors: ["slow", "patient", "wary"], weight: 0.03, axis: FAUNA_AXIS, writable: !0 },
+  { id: "birds", descriptors: ["calling", "restless", "far-flying"], weight: 0.02, axis: FAUNA_AXIS, writable: !0, presence: "birds cross the sky at evening, going somewhere they know" }, /* 2.9 : les oiseaux (claude/DESIGN-pistes-8-nov.md, § 21) */
   { id: "burrower", descriptors: ["blind", "tireless", "low"], weight: 0.03, axis: FAUNA_AXIS, writable: !0 },
   { id: "hunter", descriptors: ["lean", "silent", "watchful"], weight: 0.05, axis: FAUNA_AXIS, writable: !0 },
   {

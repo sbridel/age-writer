@@ -89,6 +89,7 @@ for (const [state, re] of [["clear", /oasis|palms/], ["salt", /salt|brackish/], 
   const t = describeAge(A("single_sun\nsand\noasis"), { seed: "Oasis", place: { kind: "plain", ground: "sand", oasis: state } });
   assert.ok(re.test(t), "l'oasis (" + state + ") : " + t);
 }
+{ const t = describeAge(A("single_sun\nwater\npier"), { seed: "Ponton", place: { kind: "pier", ground: "sand" } }); assert.ok(/pier|landing/.test(t.split(". ")[0]), "l'arrivée par l'eau : " + t); }
 for (const [state, re] of [["rains", /rain/], ["dry", /dry months|rains are far/], ["rains_land", /rain/], ["still", /no season|never keeps/]]) {
   const t = describeAge(A("single_sun\nriver\nmonsoon"), { seed: "Mousson", place: { kind: "plain", ground: "grass", monsoon: state } });
   assert.ok(re.test(t), "la mousson (" + state + ") : " + t);

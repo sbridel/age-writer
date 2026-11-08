@@ -388,6 +388,48 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
   const S = { seed: 3, cycle: "steady", moon: true }, lv = Array.from({ length: 24 }, (_, i) => G.tideOf(S, i / 24).level);
   ok(Math.min(...lv) < -0.8 && Math.max(...lv) > 0.8, "avec une lune : la mer monte et descend dans la journée");
   ok(G.tideOf({ ...S, cycle: "frozen" }, 0.1).level === G.tideOf({ ...S, cycle: "frozen" }, 0.6).level, "un cycle figé fige la marée"); }
+{ /* 2.9 : l'arrivée par l'eau, seulement pour les Âges nés après la 2.9 */
+  const ids = ["single_sun", "water", "water", "beach", "pier", "tower"]; let fresh = 0, old = 0, built = 0;
+  for (let i = 0; i < 60; i++) { const a = an(ids), S = G.sceneOf({ ...a, fresh29: true }, "Ponton" + i); if (S.view.kind === "pier") { fresh++; if (!built++) { const m = G.build(S, 640, 360); ok(!!m.pierV && m.pierV.y1 < 360 && m.shore.mode === "far", "au bout du ponton, la terre est devant"); } } if (G.sceneOf(a, "Ponton" + i).view.kind === "pier") old++; }
+  ok(fresh > 10 && old === 0, "le ponton est un point d'arrivée des Âges nouveaux, jamais des anciens (" + fresh + "/" + old + ")"); }
+{ /* 2.9 : le gel de l'eau douce, la débâcle ; la mémoire courte du temps */
+  const w = { seasonAmp: 20, Ts: 278, locked: false, stars: 1, water: "liquid", P: 1 }, se = (u, T) => ({ u, T, snow: 1 });
+  ok(G.freezeOf({ river: true, season: se(0, 264) }, w).ice === 1, "l'hiver dur prend la rivière");
+  ok(G.freezeOf({ river: true, season: se(0, 272) }, w).ice < 0.5, "un gel léger : un filet d'eau reste");
+  ok(G.freezeOf({ river: true, season: se(0.2, 275) }, w).thaw > 0, "au printemps, la débâcle");
+  ok(G.freezeOf({ river: true, season: se(0.7, 275) }, w) === null, "à l'automne, pas de débâcle");
+  ok(G.freezeOf({ river: true, season: null, ice: true }, w).ice === 1 && G.freezeOf({ river: true, season: null }, w) === null, "sans saisons : gelée sur un monde de glace seulement");
+  ok(G.freezeOf({ river: true, mon: { wet: 1 }, season: se(0, 264) }, w) === null && G.freezeOf({ season: se(0, 264) }, w) === null, "ni sous la mousson, ni sans eau douce");
+  const M = (S) => G.weatherMemory({ S }, 0.5, {}, { rain: S.rain ? 1 : 0, drizzle: 0, storm: S.storm ? 1 : 0 }, 0);
+  ok(M({ rain: true }).wet === 1 && M({}).wet === 0 && M({ storm: true }).storm === 1, "la pluie laisse des flaques, l'orage des branches");
+  ok(G.weatherMemory({ S: { rain: true } }, 0.5, {}, { rain: 1, drizzle: 0, storm: 0 }, 1).wet === 0, "la pluie tombée en neige ne fait pas de flaques"); }
+{ /* 2.9 : les heures des bêtes */
+  const S = G.sceneOf(an(["single_sun", "grass", "lake", "grazer"]), "Bêtes"), m = G.build(S, 640, 360), e = { id: "grazer" }, P = [{ x: 100, y: 300, k: 1, it: { pts: [1] } }, { x: 160, y: 310, k: 1, it: { pts: [1] } }];
+  const at = (td, dl, x = {}) => { m._td = td; m._dayL = dl; m.lv = x; return G.beastsAtHour(m, e, P); };
+  ok(at(0.4, 1).mode === "graze" && at(0.5, 0.9).mode !== "rest", "le jour, elles paissent ; à midi, à l'ombre s'il y en a");
+  ok(at(0.95, 0) === null, "par nuit noire, on ne les voit pas");
+  ok(at(0.5, 1, { storm: 1 }) === null, "sous l'orage, à l'abri");
+  const w = at(0.58, 0.3); ok(w.mode === "water" ? w.pts.every((p) => Math.abs(p.y - (m.pond.cy + m.pond.ry * 1.25)) < 40) : w.mode === "graze", "au crépuscule, à l'eau"); }
+{ /* 2.9 : les oiseaux, écrits ou tirés par le monde (Âges nés après la 2.9) */
+  ok(!!G.sceneOf(an(["single_sun", "grass", "birds"]), "Oiseaux").birds, "écrits, ils sont là");
+  let world = 0, old = 0; for (let i = 0; i < 40; i++) { const a = an(["single_sun", "grass", "grove"]); if (G.sceneOf({ ...a, fresh29: true }, "Ois" + i).birds) world++; if (G.sceneOf(a, "Ois" + i).birds) old++; }
+  ok(world > 5 && old === 0, "tirés par le monde pour les Âges nouveaux seulement (" + world + "/" + old + ")");
+  ok(!G.sceneOf(an(["single_sun", "lava_world", "birds"]), "Oiseaux").birds, "pas sur un monde de lave"); }
+{ /* 2.9 : la bête de la mer */
+  let fresh = 0, old = 0, red = 0, fin = 0, hunters = 0; for (let i = 0; i < 60; i++) { const a = an(["single_sun", "water", "water", "beach", "shoal"]), h = an(["single_sun", "water", "water", "beach", "deep_hunter"]);
+    if (G.sceneOf({ ...a, fresh29: true }, "Mer" + i).seaBeast) fresh++; if (G.sceneOf(a, "Mer" + i).seaBeast) old++; if (G.sceneOf({ ...an(["single_sun", "water", "water", "red_water", "shoal"]), fresh29: true }, "Mer" + i).seaBeast) red++;
+    const H = G.sceneOf({ ...h, fresh29: true }, "Mer" + i).seaBeast; if (H) { hunters++; if (H.form === "fin") fin++; } }
+  ok(fresh > 8 && old === 0 && red === 0, "rare, pour les Âges nouveaux, jamais sur l'eau rouge (" + fresh + "/" + old + "/" + red + ")");
+  ok(hunters > fresh && fin === hunters, "le chasseur des eaux : plus souvent, et c'est l'aileron"); }
+{ /* 2.9 : la carte de l'Âge se dessine sans valeur impossible, avec ou sans eau */
+  const AMAP = require("../src/agemap"); for (const ids of [["single_sun", "water", "water", "beach", "tower", "tides", "companion_moon"], ["single_sun", "grass", "river", "mill"], ["single_sun", "desert_world", "oasis"], ["single_sun", "mountains", "fissure", "lake"]]) {
+    const m = G.build(G.sceneOf({ ...an(ids), fresh29: true }, "Carte" + ids.length), 640, 360), log = [], c = fakeCtx(log); AMAP.paintMap(c, m, { name: "Carte", stability: 60 }); ok(log.length > 100, "la carte dessine (" + ids[1] + ")"); } }
+{ /* 2.9 : les pages trouvées : un Âge sur trois, tirée selon son monde ; verrouillée dans l'histoire tant qu'on ne l'a pas trouvée */
+  let n = 0, sea = 0; const TRK = require("../src/relto-trinkets"), M = require("../src/relto-model");
+  for (let i = 0; i < 300; i++) { const S = G.sceneOf(an(["single_sun", "water", "water", "beach", "grass"]), "Page" + i); if (S.page) { n++; if (TRK.BY_WORLD.sea.includes(S.page.id) || TRK.BY_WORLD.wood.includes(S.page.id)) sea++; } }
+  ok(n > 70 && n < 130 && sea === n, "un Âge sur trois, une page de son monde (" + n + ")");
+  const pg = M.builtinPages({ story: true }).find((p) => p.id === "page_found_shells");
+  ok(!!pg && !M.checkUnlock(pg, [], new Set(), { mode: "story", pagesFound: [] }).ok && M.checkUnlock(pg, [], new Set(), { mode: "story", pagesFound: ["shells"] }).ok && M.checkUnlock(pg, [], new Set(), { mode: "sandbox" }).ok, "histoire : trouvée seulement ; bac à sable : libre"); }
 { /* 2.8 : la mousson suit l'année ; rien sans saisons, ni sur un monde froid */
   const se = (u) => ({ u, snow: 0 }), M = (u, x = {}) => G.monsoonOf({ monsoon: true, season: se(u), ...x });
   ok(M(0.5).name === "rains" && M(0).name === "dry" && M(0.25).name === "between", "les pluies l'été, le sec l'hiver, l'entre-deux");
@@ -396,4 +438,28 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
   const { solve } = require("../src/physics/solve"), T = (src) => solve({ ids: ["single_sun", "water", "monsoon"], src, seed: "m" }).tensions.map((t) => t.id);
   ok(T("tilt: 0").includes("monsoonSeasons"), "un axe droit : les pluies n'ont pas de saison (contradiction)");
   ok(!T("tilt: 28").includes("monsoonSeasons"), "un axe incliné : la mousson a son année"); }
+// 2.9 : l'ombre des œuvres, les traces, la carte postale du Relto, la naine blanche (claude/DESIGN-pistes-8-nov.md, § 24, 25, 31, 32)
+{ const m = G.build(G.sceneOf(an(["single_sun", "grass", "grove", "tower"]), "Ombres"), 640, 360), sn = [{ i: 0, x: 600, y: 180, e: 0.6, r: 20 }], fills = (lv) => { const log = []; m.lv = lv; G.shadowPassForTest(fakeCtx(log), m, sn, 1, 0); return log.filter((l) => l === "fill:").length; };
+  ok(m.trees.length + m.ruins.length > 0, "il y a de quoi porter une ombre");
+  ok(fills({}) > 0, "au soleil, les œuvres et les arbres portent une ombre");
+  ok(fills({ rain: 1 }) === 0 && fills({ fog: 1 }) === 0, "la pluie et la brume effacent les ombres");
+  const log = []; m.lv = {}; G.shadowPassForTest(fakeCtx(log), m, [], 0, 1); ok(!log.includes("fill:"), "la nuit sans lune : pas d'ombre");
+  m._moonOff = [{ x: 600, y: 150, e: 0.5, lit: 1 }]; const l2 = []; G.shadowPassForTest(fakeCtx(l2), m, [], 0, 1); ok(l2.includes("fill:"), "la pleine lune porte une ombre pâle");
+  m._moonOff = [{ x: 600, y: 150, e: 0.5, lit: 0.4 }]; const l3 = []; G.shadowPassForTest(fakeCtx(l3), m, [], 0, 1); ok(!l3.includes("fill:"), "un croissant : pas d'ombre"); }
+{ const S = G.sceneOf(an(["single_sun", "grass", "herd"]), "Traces"), m = G.build(S, 640, 360), go = (lv, mem) => { const log = []; m.lv = lv; m.mem = mem; m._td = 0.3; m._dayL = 1; G.trackPassForTest(fakeCtx(log), m, 0.3, 1, 0, lv); return log.filter((l) => l === "fill:").length; };
+  if ((m.extras || []).some((e) => e.id === "herd")) {
+    ok(go({ snow: 1 }, { wet: 0 }) > 0, "sur la neige, le troupeau laisse sa piste");
+    ok(go({}, { wet: 0.8 }) > 0, "dans la boue après la pluie aussi");
+    ok(go({}, { wet: 0.1 }) === 0, "sur l'herbe sèche, rien");
+    ok(go({ storm: 1 }, { wet: 1 }) === 0, "sous l'orage, les bêtes sont à l'abri : pas de piste neuve"); } }
+{ const E = require("../src/estampe"), z = E.reltoSize({ width: 1280, height: 720 }); ok(z.w === 1200 && z.h > 700, "la carte postale du Relto : 1200 de large, l'île et deux lignes");
+  const log = [], g = fakeCtx(log); ok((() => { try { E.composeRelto(new Proxy(g, { get: (t, k) => (k === "canvas" ? { width: z.w, height: z.h } : t[k]) }), { img: { width: 1280, height: 720 }, name: "Haverlund", when: "15:26" }); return true; } catch (e) { return false; } })(), "la carte postale du Relto se compose");
+  ok(log.some((l) => l.startsWith("fillText:Haverlund")) && log.some((l) => l.startsWith("fillText:15:26")), "son nom et l'heure là-bas"); }
+{ const { solve } = require("../src/physics/solve"), T = (ids) => solve({ ids, src: "", seed: "nb" }), wd = T(["white_dwarf", "grass"]).w;
+  ok(wd.whiteDwarf && wd.starMasses.length === 1 && wd.L < 0.01 && wd.periodDays < 2, "la naine blanche : une étoile, peu de lumière, le monde tout près");
+  ok(!T(["white_dwarf", "green_sun", "asteroid_belt"]).tensions.some((t) => t.id === "realStar"), "verte et nourrie de ses mondes : pas de coût d'Art");
+  ok(T(["white_dwarf", "green_sun"]).tensions.some((t) => t.id === "realStar"), "verte sans débris : l'Art");
+  ok(T(["green_sun", "asteroid_belt"]).tensions.some((t) => t.id === "realStar"), "un soleil vert ordinaire, même avec une ceinture : l'Art");
+  ok(T(["white_dwarf", "violet_sun", "asteroid_belt"]).tensions.some((t) => t.id === "realStar"), "le violet ne change pas");
+  ok(G.sceneOf(an(["white_dwarf", "grass"]), "Nb").suns === 1, "la naine blanche est le soleil de l'Âge"); }
 console.log(`gen.test.js : ${n} vérifications OK`);

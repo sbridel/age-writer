@@ -23,8 +23,8 @@ function windowScene(age, salt = "") {
       seed: hashString(salt + "|" + [...ids].sort().join(",")),
       verdict: age.verdict,
       unrest: Math.max(0, Math.min(1, 1 - age.stability / 100)),
-      suns: has("twin_suns") ? 2 : has("single_sun") ? 1 : 0,
-      skyStated: has("twin_suns", "single_sun", "starless"),
+      suns: has("twin_suns") ? 2 : has("single_sun") || has("white_dwarf") ? 1 : 0, /* 2.9 : la naine blanche est un soleil */
+      skyStated: has("twin_suns", "single_sun", "starless", "white_dwarf"),
       moon: has("companion_moon"),
       cycle: has("frozen_cycle") ? "frozen" : has("erratic_cycle") ? "erratic" : "steady",
       chaos: has("chaotic_orbit"),

@@ -14,8 +14,12 @@ const { solitudeFactor, COVER_RE, parseCover, KEY_RE, FX_RE, STYLE_RE, TRAP_RE, 
 const { Soundscape, staticBurst, openSequence, linkSound, pageTurn } = require("./sound");
 const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
-const { sceneOf, millOf, HOOKS: GEN_HOOKS } = require("./genscene");
-const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, SKYC_RE, parseSky } = require("./sky");
+const { sceneOf, millOf, build: genBuild, HOOKS: GEN_HOOKS } = require("./genscene");
+const AMAP = require("./agemap"); /* 2.9 : la carte de l'Âge */
+const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, SKYC_RE, parseSky, clockPhases } = require("./sky");
+const ESTAMPE = require("./estampe"); /* 2.9 : l'estampe */
+const { ReltoRenderer } = require("./relto-render"); /* 2.9 : la carte postale du Relto */
+const DCLK = require("./dniclock"), DTM = require("./dnitime");
 const { AMOUNT_RE, parseAmounts, applyAmounts, factorOf } = require("./amounts");
 const HV = require("./harvest"); /* la récolte pour la machine du Relto, et les granulés cuits (étape 4a′) */
 const { rollLink } = fx;
@@ -138,6 +142,7 @@ module.exports = function build(Base, core, AGEX) {
         const key = o && o.seed ? guard("graine", () => this.ageNameOfSeed(o.seed)) || o.seed : null;
         let out = guard("adjust", () => (this.ext.law && key ? adjustAnalysis(r, this.law.effective(key)) : r)) || r;
         // livre-piège déclaré : ni livre de retour, ni fissure
+        if (this._old29 && o && o.seed != null && !this._old29.has(o.seed)) out = { ...out, fresh29: true }; /* 2.9 : né après la 2.9 (l'arrivée par l'eau) */
         if (srcText && parseTrap(srcText)) out = { ...out, returnTo: null, stranded: true, fissure: null, trapped: true, home: "none" };
         if (srcText) out = guard("quantités", () => applyAmounts(out, parseAmounts(srcText), this.core && this.core.blocks, { weights: RG.weightsOf(this.ext), size: DOSE.worldSize(srcText), seed: o && o.seed })) || out;
         if (o && o.seed && !o.probe) out = guard("observation", () => this.observeFaults(o.seed, out)) || out; // loi 4 : la phrase des fautes légères mûrit (src/observe.js)
@@ -194,7 +199,9 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.closedSlots = (o) => (o && o.carry ? CARRY.closedSlots(o.carry) : null); /* sous une terre renversée, le livre ne tire pas de ciel */
       AGEX.signature = (o) => !!(this.ext.signature !== false && this._sigOld && o && o.seed != null && !this._sigOld.has(o.seed)); /* ESSAI 2.6 : seuls les Âges nés après la 2.6 tirent une signature */
       AGEX.carryNote = (c) => guard("portage", () => this.carryLine(c)) || "";
-      AGEX.place = (a, seed) => guard("lieu", () => { const S = sceneOf(a, seed, core.blocks); if (!S || !S.view || S.world === "cavern" || S.torus) return null; const V = S.view; const mo = S.ruins && S.ruins.includes("mill") ? millOf(S) : null; const oa = S.oasis && !S.lake ? (S.heat ? "heat" : ["salt", "brine"].some((id) => (S.writtenIds || []).includes(id)) || S.brine ? "salt" : "clear") : null; const td = S.tides ? (!(S.moon || S.moons || S.giant) ? "still" : S.brine || (S.writtenIds || []).includes("salt") ? "salt" : "moon") : null; const ms = S.monsoon ? (S.mon ? S.mon.name + (S.river ? "" : "_land") : "still") : null; return { mill: mo ? mo.kind : null, oasis: oa, tides: td, monsoon: ms, kind: V.kind, frame: V.frame, ground: S.ice || S.world === "frozen" ? "ice" : S.sand || S.world === "desert" ? "sand" : S.lava ? "lava" : S.alive || S.trees ? "grass" : "rock" }; }) /* le sol comme la fenêtre peint la pente */ || null; /* la description dit d'abord où la fenêtre pose (claude/DESIGN-grammaire-de-la-description.md) */
+      AGEX.mapLabel = this.t("tab.map");
+      AGEX.mapPage = (el, a, file) => { const S = sceneOf(a, core.seed(String(file.path)), core.blocks); if (S) this.drawAgeMap(el, { S, name: file.basename, stability: a.stability }); }; /* 2.9 : la planche de la carte, dans le livre */
+      AGEX.place = (a, seed) => guard("lieu", () => { const S = sceneOf(a, seed, core.blocks); if (!S || !S.view || S.world === "cavern" || S.torus) return null; const V = S.view; const mo = S.ruins && S.ruins.includes("mill") ? millOf(S) : null; const oa = S.oasis && !S.lake ? (S.heat ? "heat" : ["salt", "brine"].some((id) => (S.writtenIds || []).includes(id)) || S.brine ? "salt" : "clear") : null; const td = S.tides ? (!(S.moon || S.moons || S.giant) ? "still" : S.brine || (S.writtenIds || []).includes("salt") ? "salt" : "moon") : null; const sb = S.seaBeast && this.ext.seaSeen && this.ext.seaSeen[String(S.seed)] ? S.seaBeast.form : null, ms = S.monsoon ? (S.mon ? S.mon.name + (S.river ? "" : "_land") : "still") : null, fz = S.freeze ? (S.freeze.ice > 0.5 ? "ice" : S.freeze.thaw > 0.2 ? "thaw" : null) : null, fzs = fz ? fz + (S.river ? "_river" : "_pond") : null; return { greenStar: !!(S.phys && S.phys.greenStar), mill: mo ? (mo.frozen ? "frozen" : mo.kind) : null, oasis: oa, tides: td, monsoon: ms, freeze: fzs, seaBeast: sb, kind: V.kind, frame: V.frame, ground: S.ice || S.world === "frozen" ? "ice" : S.sand || S.world === "desert" ? "sand" : S.lava ? "lava" : S.alive || S.trees ? "grass" : "rock" }; }) /* le sol comme la fenêtre peint la pente */ || null; /* la description dit d'abord où la fenêtre pose (claude/DESIGN-grammaire-de-la-description.md) */
       this.depthCache = new Map();
       // la profondeur de l'équilibre : le test par retrait, à l'affichage du panneau (jamais à chaque frappe), mis en cache par texte, graine et rigueur
       AGEX.depthNote = (text, seed) => guard("profondeur", () => {
@@ -781,12 +788,30 @@ module.exports = function build(Base, core, AGEX) {
       return { mode, a, seed: cx.seed, style: cx.style || this.ext.windowStyle, sky: cx.sky || {} };
     }
 
+    /** 2.9 : un clic sur la page posée dans la fenêtre la ramasse : elle rejoint le livre des pages du Relto (src/relto-trinkets.js). */
+    pickPage(e, win) {
+      const lfx = win._ageFx, m = lfx && lfx.model, P = m && m.pageAt; if (!P || !m.S || m.S.pageFound) return;
+      const rc = win.getBoundingClientRect(); if (!rc.width || !rc.height) return; const x = ((e.clientX - rc.left) / rc.width) * m.W, y = ((e.clientY - rc.top) / rc.height) * m.H, pad = m.W * 0.02;
+      if (x < P.x - pad || x > P.x + P.w + pad || y < P.y - pad || y > P.y + P.h + pad) return;
+      const found = Array.isArray(this.ext.pagesFound) ? this.ext.pagesFound : (this.ext.pagesFound = []), taken = this.ext.pagesTaken || (this.ext.pagesTaken = {}), K = require("./relto-trinkets").KINDS[P.id];
+      if (!found.includes(P.id)) found.push(P.id); taken[String(m.S.seed)] = true; m.S.pageFound = true; this.saveExt();
+      new Notice(this.t("pages.found", { name: K ? (this.lang && this.lang() === "fr" ? K.fr : K.label) : P.id }));
+    }
+
+    /** 2.9 : dessine la carte de l'Âge (src/agemap.js) dans `el` : { S (sceneOf), name, stability }. */
+    drawAgeMap(el, info) {
+      const cv = el.createEl("canvas"); cv.width = 560; cv.height = 560;
+      const m = genBuild(JSON.parse(JSON.stringify(info.S)), 640, 360);
+      AMAP.paintMap(cv.getContext("2d"), m, { name: info.name, stability: info.stability });
+    }
+
     applyFx(parent, analysis, key) {
       guard("fx", () => {
         if (!this.ext) return;
         const r = this.resolveFx(analysis);
         const gen = r.style === "gen" ? sceneOf(r.a, core.seed(String(r.seed || key)), core.blocks) : null; // fenêtre génératrice (si l'analyse est connue)
         if (gen) Object.assign(gen, r.sky); // durée du jour et de l'année (lignes day_length / year_length)
+        if (gen && key !== "window") { const info = { S: gen, name: core.base(String(r.seed || key)), stability: r.a && r.a.stability }, pn = parent.closest ? parent.closest(".age-panel") || parent : parent; parent._ageMap = info; pn._ageMap = info; } /* 2.9 : de quoi dessiner la carte (onglet Carte) */
         const size = r.sky.size || this.ext.windowSize || "large"; // la ligne window_size / window_width du bloc passe avant le réglage ; les livres et le Relto gardent leur taille
         if (key !== "window") {
           parent.classList.remove("age-ext-vis-large", "age-ext-vis-xl", "age-ext-vis-custom"); parent.style.removeProperty("--age-win-w");
@@ -796,11 +821,14 @@ module.exports = function build(Base, core, AGEX) {
         if (r.mode === "off" && !gen) return;
         const win = parent.lastElementChild; if (!win || !win.classList.contains("age-panel__window")) return;
         const source = win.querySelector("img") || win.querySelector("canvas"); if (!source) return;
-        fx.attach(win, source, {
+        if (gen && gen.page) gen.pageFound = !!(this.ext.pagesTaken || {})[String(gen.seed)]; /* 2.9 : la page de cet Âge, déjà ramassée */
+        const lfx = fx.attach(win, source, {
           unrest: fx.unrestOf(r.a), triggered: (r.a.resolved && r.a.resolved.triggered) || [], seed: r.seed || String(key),
           mode: r.mode, gen, dmg: r.a.damage || null, strength: this.ext.fxStrength, uncertain: this.ext.uncertainLinks !== false,
           reduced: typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches,
+          onSeen: (what) => { if (what !== "sea") return; const k = String(gen && gen.seed), seen = this.ext.seaSeen || (this.ext.seaSeen = {}); if (!seen[k]) { seen[k] = true; this.saveExt(); } }, /* 2.9 : on a vu la bête de la mer ; la description la dira */
         });
+        win._ageFx = lfx; if (gen && gen.page && !win._agePageClick) { win._agePageClick = true; win.addEventListener("click", (e) => this.pickPage(e, win)); } /* 2.9 : la page posée dans la fenêtre se ramasse d'un clic */
       });
     }
 
@@ -988,6 +1016,36 @@ module.exports = function build(Base, core, AGEX) {
       L.addEventListener("click", (e) => { if (!inert(e)) show(view.leafPage - 1, true); });
     }
 
+    /** 2.9 : l'estampe (src/estampe.js) : la planche (« plate ») ou la carte postale (« postcard »), un PNG à côté de la note, à l'heure courante de l'Âge. */
+    async saveEstampe(file, kind = "plate") {
+      const src = core.extract(await this.app.vault.read(file)); if (src === null) return new Notice(this.t("cover.noage"));
+      const seed = core.seed(file.path), a = core.analyse(src, { seed }), S = sceneOf(a, core.seed(String(file.path)), core.blocks); if (!S) return new Notice(this.t("cover.noage"));
+      Object.assign(S, parseSky(src)); const m = genBuild(S, 1280, 720), cp = clockPhases(S), now = Date.now();
+      const glyphs = [...new Set([...(a.resolved.lines || []).map((l) => l.entry && l.entry.id).filter(Boolean), ...((a.resolved.matter && a.resolved.matter.written) || [])])];
+      const args = { m, name: file.basename, prose: core.prose(a.resolved, { seed, analysis: a }), glyphs, stability: a.stability, t: (now % 60000) / 60000, paintOpts: { day: cp ? cp.day : undefined, season: cp ? cp.season : 0, clock: now / 1000 } };
+      const cv = document.createElement("canvas"), tmp = cv.getContext("2d"); tmp.font = "20px Georgia, serif"; const z = ESTAMPE.sizeOf(kind, args, (t, w) => ESTAMPE.wrap(tmp, t, w).length); cv.width = z.w; cv.height = z.h;
+      ESTAMPE.compose(cv.getContext("2d"), kind, args);
+      const blob = await new Promise((res) => cv.toBlob(res, "image/png")); if (!blob) return; const buf = await blob.arrayBuffer();
+      const dir = file.parent && file.parent.path !== "/" ? file.parent.path + "/" : "", path = `${dir}${file.basename} — ${this.t(kind === "postcard" ? "estampe.postcard" : "estampe.plate")}.png`, ex = this.app.vault.getAbstractFileByPath(path);
+      if (ex instanceof TFile) await this.app.vault.modifyBinary(ex, buf); else await this.app.vault.createBinary(path, buf);
+      new Notice(this.t("estampe.saved", { path }));
+    }
+
+    /** 2.9 : la carte postale du Relto (claude/DESIGN-pistes-8-nov.md, § 31) : l'île à l'heure du moment, son nom, l'heure là-bas ; à côté de la note du Relto. */
+    async saveReltoPostcard(file) {
+      const { scene } = await R.buildScene(this, file), cv = document.createElement("canvas");
+      const rr = new ReltoRenderer(cv, this.dni, { reducedMotion: false, seasons: () => this.ext.reltoSeasons !== false, hemisphere: () => this.ext.reltoHemisphere, t: this.t, instrumentsMode: () => this.ext.instrumentsMode || "easy" });
+      rr.scale = 2; cv.width = 1280; cv.height = 720; /* plus fin qu'à l'écran : la carte fait 1200 de large */
+      try { rr.setScene(scene); rr.setHour(null); rr.draw((typeof performance !== "undefined" ? performance.now() : Date.now()) / 1000); } finally { rr.stop(); }
+      const hm = ((h) => { const n = Math.round(Number(h) * 60) % 1440; return `${String(Math.floor(n / 60)).padStart(2, "0")}:${String(n % 60).padStart(2, "0")}`; })(rr.hour());
+      let when = hm; try { const d = DCLK.reltoDate(scene); when += " · " + (d.synced ? DTM.format(d) : `${d.hahr} · ${d.name} ${d.yahr}`); } catch (e) { /* l'heure seule */ }
+      const out = document.createElement("canvas"), z = ESTAMPE.reltoSize(cv); out.width = z.w; out.height = z.h; ESTAMPE.composeRelto(out.getContext("2d"), { img: cv, name: scene.name || file.basename, when });
+      const blob = await new Promise((res) => out.toBlob(res, "image/png")); if (!blob) return; const buf = await blob.arrayBuffer();
+      const dir = file.parent && file.parent.path !== "/" ? file.parent.path + "/" : "", path = `${dir}${file.basename} — ${this.t("estampe.postcard")}.png`, ex = this.app.vault.getAbstractFileByPath(path);
+      if (ex instanceof TFile) await this.app.vault.modifyBinary(ex, buf); else await this.app.vault.createBinary(path, buf);
+      new Notice(this.t("estampe.saved", { path }));
+    }
+
     async saveCover(file) {
       const src = core.extract(await this.app.vault.read(file)); if (src === null) return new Notice(this.t("cover.noage"));
       const analysis = core.analyse(src, { seed: core.seed(file.path) }), svg = this.coverFor(src, analysis, file, true);
@@ -1059,6 +1117,12 @@ module.exports = function build(Base, core, AGEX) {
         id: "save-age-cover", name: "Save this Age's book cover (SVG)",
         checkCallback: (check) => { const f = this.app.workspace.getActiveFile(); if (!f || f.extension !== "md") return false; if (!check) this.saveCover(f); return true; },
       });
+      const estampe = (kind) => (check) => { const f = this.app.workspace.getActiveFile(); if (!f || f.extension !== "md") return false; if (!check) this.saveEstampe(f, kind); return true; }; /* 2.9 : l'estampe */
+      this.addCommand({ id: "save-age-estampe", name: "Save this Age's print (PNG: window, map, description, glyphs)", checkCallback: estampe("plate") });
+      this.addCommand({ id: "save-age-postcard", name: "Save this Age's postcard (PNG: window, name, one sentence)", checkCallback: estampe("postcard") });
+      this.addCommand({ id: "save-relto-postcard", name: "Save this Relto's postcard (PNG: the island, its name, the time there)", checkCallback: (check) => { /* 2.9 : la carte postale du Relto */
+        const ws = this.app.workspace, act = ws.getActiveFile && ws.getActiveFile(), lv = ws.getActiveViewOfType ? ws.getActiveViewOfType(R.ReltoView) : null, vf = lv && this.reltoViewFile ? this.app.vault.getAbstractFileByPath(this.reltoViewFile) : null;
+        const f = act && act.extension === "md" && R.isHubFile(this.app, act) ? act : vf instanceof TFile ? vf : null; if (!f) return false; if (!check) this.saveReltoPostcard(f).catch((e) => console.warn("[Age Writer ext] carte postale du Relto", e)); return true; } });
       this.addCommand({ id: "random-age", name: "Generate a random Age", callback: () => this.randomAge() });
       this.addCommand({ id: "stop-soundscape", name: "Stop the soundscape", callback: () => this.stopSound() });
       // refaire la synchro du télescope : oublie le Great Zero trouvé (et la visée) de tous les Reltos ; l'heure D'ni se tait de nouveau
@@ -1262,18 +1326,21 @@ module.exports = function build(Base, core, AGEX) {
     }
 
     async initialScan() {
-      let n = 0; const sigOld = Array.isArray(this.ext.sigOld) ? null : []; /* ESSAI 2.6 : au premier passage, la liste des Âges d'avant (ils ne changent pas) */
+      let n = 0; const sigOld = Array.isArray(this.ext.sigOld) ? null : [], old29 = Array.isArray(this.ext.old29) ? null : []; /* 2.9 : de même, la liste des Âges nés avant la 2.9 (ils gardent leur point d'arrivée) */ /* ESSAI 2.6 : au premier passage, la liste des Âges d'avant (ils ne changent pas) */
       for (const f of this.app.vault.getMarkdownFiles()) {
         const c = this.app.metadataCache.getFileCache(f);
         if (c && !(c.sections || []).some((s) => s.type === "code")) continue;
         const src = core.extract(await this.app.vault.cachedRead(f)); if (src === null) continue;
         (this.lastAgeSrc || (this.lastAgeSrc = new Map())).set(f.path, src); // l'Âge tel qu'il est : sa profondeur comptera à la prochaine retouche
         if (sigOld) sigOld.push(core.seed(f.path));
+        if (old29) old29.push(core.seed(f.path));
         if (!this.law.get(f.basename)) this.law.observe(f.basename, core.analyse(src, { seed: core.seed(f.path), physics: false }), f.stat.mtime);
         if (++n % 25 === 0) await new Promise((r) => setTimeout(r, 0));
       }
       if (sigOld) this.ext.sigOld = sigOld;
       this._sigOld = new Set(this.ext.sigOld);
+      if (old29) this.ext.old29 = old29;
+      this._old29 = new Set(this.ext.old29);
       this.saveExt();
     }
 

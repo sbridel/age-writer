@@ -1,4 +1,5 @@
 "use strict";
+const TRK = require("./relto-trinkets"); /* 2.9 : les pages trouvées */
 /**
  * Relto : un Âge-refuge évolutif. Modèle de données (pur, sans DOM) :
  *  - le livre du Relto (frontmatter d'une note, age_type: personal_hub) ;
@@ -156,6 +157,8 @@ const PAGE_PRESETS = {
   page_castle: { label: "Castle", effects: { canvas_additions: [{ type: "castle" }] }, sandbox: true }, // le Château : gothique romantique (claude/DESIGN-chateau-gothique.md)
   page_fire_colour: { label: "Fire colour", effects: { canvas_additions: [{ type: "firecolour" }] } }, // 2.5 (I) : un clic sur le feu passe à la couleur suivante (src/relto-fire.js)
   page_mist: { label: "Mist", effects: { canvas_additions: [{ type: "mist", density: 0.6 }], ambiance_audio: "wind" } },
+  /* 2.9 : les pages trouvées dans les Âges (src/relto-trinkets.js) ; dans l'histoire, seulement trouvées (vues dans une fenêtre) ; en bac à sable, libres aussi */
+  ...Object.fromEntries(TRK.IDS.map((id) => ["page_found_" + id, { label: TRK.KINDS[id].label, effects: { canvas_additions: [{ type: "trinket", asset: id }] }, unlock: { found: id } }])),
 };
 
 const stripLink = (v) => {
@@ -254,14 +257,14 @@ function libraryPage(lp) {
  * Pages toujours présentes dans le livre des pages, même sans note : elles se découvrent (verrouillées, puis disponibles).
  * Une note ou une ligne de bibliothèque de même id l'emporte. Aujourd'hui : le télescope, débloqué par le premier Âge.
  */
-const BUILTIN_PAGES = ["page_telescope", "page_dni_clock", "page_marcel", "page_glasshouse", "page_castle"];
+const BUILTIN_PAGES = ["page_telescope", "page_dni_clock", "page_marcel", "page_glasshouse", "page_castle", ...TRK.IDS.map((id) => "page_found_" + id)];
 /** Les déguisements du Relto : un seul à la fois. */
 const DISGUISES = ["page_glasshouse", "page_castle"];
 /** Attacher une page à la liste `list` (ids) : un déguisement détache l'autre. Renvoie une nouvelle liste. */
 function attachPage(list, id) { const l = (list || []).filter((x) => x !== id && !(DISGUISES.includes(id) && DISGUISES.includes(x))); l.push(id); return l; }
 /** `o.story` : un Relto histoire ne reçoit pas les pages du bac à sable seul (la Verrière). */
 function builtinPages(o = {}) {
-  return BUILTIN_PAGES.filter((id) => !(o.story && PAGE_PRESETS[id].sandbox)).map((id) => { const p = PAGE_PRESETS[id], u = p.unlock || {}; return { ...libraryPage({ id, label: p.label, effects: p.effects, unlock: null }), library: false, builtin: true, secret: !!p.secret, unlock: { age: null, minStability: 40, agesCount: u.agesCount != null ? u.agesCount : null, page: u.page || null, zero: !!u.zero, marcel: !!u.marcel } }; });
+  return BUILTIN_PAGES.filter((id) => !(o.story && PAGE_PRESETS[id].sandbox)).map((id) => { const p = PAGE_PRESETS[id], u = p.unlock || {}; return { ...libraryPage({ id, label: p.label, effects: p.effects, unlock: null }), library: false, builtin: true, secret: !!p.secret, unlock: { age: null, minStability: 40, agesCount: u.agesCount != null ? u.agesCount : null, page: u.page || null, zero: !!u.zero, marcel: !!u.marcel, found: u.found || null } }; });
 }
 
 /** @returns {{ok:boolean, reason:string}} */
@@ -269,6 +272,7 @@ function checkUnlock(page, ages, active, relto) {
   const u = page.unlock;
   if (!u) return { ok: true, reason: "" };
   if (u.marcel && !(relto && relto.marcelOk)) return { ok: false, reason: "" }; // pas de raison dite : cette page ne se montre pas avant
+  if (u.found && !(relto && relto.mode !== "story") && !(relto && Array.isArray(relto.pagesFound) && relto.pagesFound.includes(u.found))) return { ok: false, reason: "lies somewhere in an Age: find it in a window" }; /* 2.9 : une page trouvée ; libre en bac à sable */
   if (u.zero && !(relto && relto.zeroFound)) return { ok: false, reason: "needs the Great Zero (find it with the telescope)" };
   if (u.story && !(relto && Array.isArray(relto.storyDone) && relto.storyDone.includes(u.story))) return { ok: false, reason: `needs the chapter “${u.storyTitle || u.story}”` }; // une récompense de chapitre (Relto histoire)
   if (u.page && active && !active.has(u.page)) { const want = PAGE_PRESETS[u.page]; return { ok: false, reason: `needs the page “${want ? want.label : u.page}”` }; } // une page qui en demande une autre (l'observatoire et le mont)

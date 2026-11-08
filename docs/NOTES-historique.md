@@ -699,6 +699,17 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.9.0 — le monde se souvient (8 nov. 2026)
+
+Fiche du projet : `claude/DESIGN-pistes-8-nov.md` (pistes 1, 8, 10, 11, 12, 15, 18, 20, 21, 24, 25, 31, 32).
+- **Âges nés après la 2.9** : `ext.old29` (comme `sigOld`), `fresh29` posé par `AGEX.adjust` ; réservés à eux : l'arrivée par l'eau, les oiseaux, la bête de la mer.
+- **Arrivée par l'eau** (`pierArrive`, `pierUnderfoot`, `pierEnd` au périscope) ; **gel** (`freezeOf`, `pondIce`, `riverIce`, moulin pris) ; **mémoire courte** (`weatherMemory`, `afterWeather`) ; **heures des bêtes** (`beastsAtHour`, `beastRim`) ; **oiseaux** (`birdsOf`, `birdsPass`) ; **bête de la mer** (`seaBeastOf`, `seaBeastPass`, `ext.seaSeen`).
+- **Périscope** (`src/genviews.js`) : une seule côte, celle de la vue de face.
+- **Carte** (`src/agemap.js` : `survey`, `paintMap`) ; **estampe** (`src/estampe.js` : `compose`, `composeRelto`) ; **pages trouvées** (`pageOf`, `pagePass`, `src/relto-trinkets.js`, presets `page_found_<id>`).
+- **Ombres** (`shadowPass`, une couche par lumière) ; **traces** (`trackPass`).
+- **Naine blanche** (`white_dwarf`, `model.whiteDwarf`, `w.debris`, règle `realStar` assouplie, `GREEN_STAR_PROSE`, `phys.greenStar` par le hook `place`) ; elle répond à la case des étoiles (`answeredBy`).
+- Vérification : recherches de plantages (sweep3) propres ; tests de chaque piste dans `gen.test.js` et `prose.test.js`.
+
 ## 2.8.0 — le monde a ses heures (7 nov. 2026)
 
 Fiches du projet : `claude/DESIGN-grammaire-de-la-description.md`, `claude/DESIGN-quatre-blocs.md`, `claude/AVANCEMENT-2.8.md`.

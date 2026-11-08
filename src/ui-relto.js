@@ -83,7 +83,7 @@ async function libraryPages(plugin) {
 async function buildScene(plugin, file, opt = {}) {
   const { app } = plugin;
   const relto = { ...M.parseRelto(fmOf(app, file)), name: file.basename };
-  { const g = (plugin.ext.telescope || {})[TEL.keyOf(relto.name, relto.seed)]; relto.zeroFound = !!(g && g.found); } // débloque l'horloge D'ni
+  { const g = (plugin.ext.telescope || {})[TEL.keyOf(relto.name, relto.seed)]; relto.zeroFound = !!(g && g.found); } relto.pagesFound = Array.isArray(plugin.ext.pagesFound) ? plugin.ext.pagesFound : []; /* 2.9 : les pages trouvées dans les Âges */ // débloque l'horloge D'ni
   // Relto histoire : son dossier, ses Âges, ses pages (récompenses) ; les autres Reltos ne voient rien de ce dossier
   const story = relto.mode === "story", mine = story ? ST.dirOf(file.path) : "", scope = { story, mine, storyDirs: storyDirsOf(app) };
   const pages = [];

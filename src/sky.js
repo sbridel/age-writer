@@ -44,6 +44,9 @@ const SKY_BLOCKS = [
   // perturbateurs (télescope, étape 3 : src/perturbers.js) : ils existent dans la région de l'étoile, écrits ou non ; les écrire DÉCRIT
   // un monde qui en a un près de lui (son étoile est choisie en conséquence), jamais tirés au sort
   { id: "pulsar", category: "remnant", label: "A pulsar", axis: "cosmological", weight: 0.06, proseTag: "#pulsar#" },
+  /* 2.9 : la naine blanche (claude/DESIGN-pistes-8-nov.md, § 32) : le reste d'une étoile qui a vécu, et le soleil de ce monde */
+  { id: "white_dwarf", category: "remnant", label: "A white dwarf", axis: "cosmological", weight: 0.04, proseTag: "#white_dwarf#",
+    contradictions: [{ with: "starless", severity: "strong" }, { with: "black_sun", severity: "medium", condition: "stars<2" }] },
   { id: "neutron_star", category: "remnant", label: "A neutron star", axis: "cosmological", weight: 0.05, proseTag: "#neutron_star#" },
   { id: "black_hole", category: "remnant", label: "A black hole", axis: "cosmological", weight: 0.08, proseTag: "#black_hole#",
     contradictions: [{ with: "stable_orbit", severity: "light" }] },
@@ -115,6 +118,7 @@ const SKY_PROSE = {
   ocean_world: ["the world is water to the horizon, and the horizon is the only land", "an ocean world, deep and without a single shore", "everything here floats, or sinks, or waits beneath the surface"],
   jungle_world: ["the world is a single green hunger, dense and loud", "a jungle world, where every surface is alive with something", "leaf over leaf, to the edge of the sky, and nothing lies still beneath it"],
   cavern_world: ["the world is a hollow in the rock, and the dark is its only sky", "a world under stone, where the roof is the horizon", "everything here lives beneath a lid of rock, and learns to make its own light"],
+  white_dwarf: ["the sun is the small white ember of a star that has already lived, close and fierce and patient", "a white dwarf keeps this sky: a star burnt down to its heart, and the world huddles near it", "the sun here is old beyond counting, a hard white point that has outlasted its own fire"],
   black_sun: ["a black sun hangs overhead, a dark coin rimmed with dull fire, and the day comes as warmth more than light", "the sun is black, and the world beneath it is drawn in greys", "under a black sun, colours drain away and every shadow is soft and red at the edges"],
   violet_sun: ["a violet sun burns at the edge of what the eye can hold", "the sun is violet, and the day has the colour of a bruise at dusk", "a violet star, strangely bright, tints the sky with dusk"],
 };

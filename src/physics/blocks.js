@@ -38,6 +38,7 @@ def("close_binary_orbit", { set: { binary: "S" } });
 def("wide_binary_orbit", { set: { binary: "P" } });
 for (const [hue, range] of Object.entries(HUE_MASS)) def(hue, { set: { hue, starMassRange: range } });
 def("black_sun", { set: { blackSun: true } });
+def("white_dwarf", { set: { whiteDwarf: true } }); /* 2.9 : le reste d'une étoile (model.whiteDwarf) ; sa couleur écrite, s'il y en a une, reste la sienne */
 def(["green_sun", "violet_sun"], { needs: [["realStar"]] });
 
 // ---- mondes-types ------------------------------------------------------------------------------
@@ -110,6 +111,7 @@ def("microbial_mat", { needs: [["liquidWater", "light"], ["oldEnoughSimple", "li
 def(["mycelium", "mushroom", "soil_bacteria"], { needs: [["oldEnoughSimple", "light"], ["hardyLife", "light"]] });
 def("aeroplankton", { needs: [["oldEnoughSimple", "light"], ["moistAir", "light"]] });
 def("shoal", { needs: [["liquidWater", "medium"], ["oldEnoughComplex", "light"]] });
+def("birds", { needs: [["animalAir", "light"], ["temperateLife", "light"]] }); /* 2.9 : les oiseaux veulent de l'air et un monde tempéré */
 def("raptor", { needs: [["prey", "light"], ["oldEnoughComplex", "light"], ["animalAir", "light"], ["temperateLife", "light"]] });
 def("cave_stalker", { needs: [["prey", "light"], ["oldEnoughComplex", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] }); /* 2.5 (D) : le rôdeur des grottes est dispensé d'oxygène, comme les fouisseurs */
 def("deep_hunter", { needs: [["liquidWater", "medium"], ["prey", "light"], ["oldEnoughComplex", "light"]] });

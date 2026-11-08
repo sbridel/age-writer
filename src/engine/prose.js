@@ -251,7 +251,9 @@ const LONE_ORBIT = {
   shifting_orbit: ["the world's path about its sun drifts, slow and noticeable", "its round about the sun shifts with time"],
   chaotic_orbit: ["the world swings about its sun by no rule at all", "its path about the sun defies any prediction"],
 };
-function skySentences(resolved, grammar, teller) {
+/* 2.9 : le soleil vert d'une naine blanche nourrie de ses mondes : sa phrase remplace celle du soleil vert de l'Art */
+const GREEN_STAR_PROSE = ["a small green star, fed on its own worlds, keeps a cold and patient light", "the sun is green because of what it has eaten: a white dwarf wearing the dust of its planets", "a green star holds the sky, the colour of a world digested long ago"];
+function skySentences(resolved, grammar, teller, place) {
   const lines = resolved.lines.map((line, index) => ({ line, index }));
   const familyOf = (line) => (line.unknown ? "unknown" : line.entry.category in SKY_ORDER ? line.entry.category : "phenomenon");
   const rank = (line) => (line.unknown ? 9 : SKY_ORDER[line.entry.category] ?? 7);
@@ -276,7 +278,7 @@ function skySentences(resolved, grammar, teller) {
     } else if (line.autoFilled) {
       if (hasHue && entry.category === "stars") continue;
       items.push({ family: familyOf(line), text: grammar.flatten(`#${entry.category === "stars" ? "default_stars" : "default_cycle"}#`) });
-    } else items.push({ family: familyOf(line), text: dark && DARK_ORBIT[entry.id] ? teller.pick(DARK_ORBIT[entry.id]) : lone && LONE_ORBIT[entry.id] ? teller.pick(LONE_ORBIT[entry.id]) : grammar.flatten(entry.proseTag) });
+    } else items.push({ family: familyOf(line), text: entry.id === "green_sun" && place && place.greenStar ? teller.pick(GREEN_STAR_PROSE) : dark && DARK_ORBIT[entry.id] ? teller.pick(DARK_ORBIT[entry.id]) : lone && LONE_ORBIT[entry.id] ? teller.pick(LONE_ORBIT[entry.id]) : grammar.flatten(entry.proseTag) });
   }
   const out = [];
   let glued = false, links = 0;
@@ -411,6 +413,7 @@ const PLACE_PROSE = {
   high: ["you arrive on {height}, the land spread out below", "the link sets you on {height}, with the whole place at your feet"],
   slope: ["you arrive {slope}, the ground falling away to one side", "you come through {slope}, where the land leans and you lean with it"],
   cover: ["you arrive {cover}, looking out from the shade", "the link sets you {cover}, half hidden, the place bright beyond"],
+  pier: ["you arrive at the end of a pier, the water moving under the boards", "the link sets you on the planks of a landing, the shore a short walk ahead"],
   cave: ["you arrive at the mouth of {cave}, the light ahead", "the link leaves you just inside {cave}, the dark at your back"],
 };
 const GROUND_WORDS = {
@@ -432,6 +435,7 @@ function placeSentence(place, teller) {
 const MILL_PROSE = {
   water: ["a mill stands on the river, and its wheel turns with the water", "a water mill leans over the current, its wheel patient and loud"],
   wind: ["a windmill turns on the high ground when the wind remembers to come", "a windmill keeps its sails to the wind, and creaks as they go round"],
+  frozen: ["a mill stands on the frozen river, its wheel held fast in the ice", "the mill's wheel has stopped, ice hanging from its paddles"],
   broken: ["a mill stands still, one sail fallen at its foot, built for a wind that has gone", "a windmill with broken sails waits for a wind that no longer comes"],
 };
 /** 2.8 : les marées : avec une lune, sans lune (étale), avec le sel (les marais). */
@@ -456,6 +460,20 @@ const OASIS_PROSE = {
   salt: ["an oasis lies in the sand, its water brackish and its bank white with salt", "palms stand around a pool too salt to drink, and the bank shines white"],
   heat: ["an oasis shrinks under the heat, its old bank left in cracked mud", "the oasis has drawn back from its shore, and the palms stand a little further from the water"],
 };
+/** 2.9 : le gel de l'eau douce (src/genscene.js, freezeOf), au lointain : la rivière ou l'étang pris, ou la débâcle. */
+const FREEZE_PROSE = {
+  ice_river: ["a river lies held under its ice, grey and still", "a river has stopped in its bed, and lies there like a road of ice"], /* la phrase du ciel qui la fait couler se tait (describeAge) : la rivière est nommée ici */
+  ice_pond: ["the pond is a plate of ice under the snow", "the water has closed over itself, white and hard"],
+  thaw_river: ["the ice is breaking up, and its plates come down the dark river", "the river has woken, and carries its broken ice away"],
+  thaw_pond: ["the ice is breaking up, and its plates drift on the dark water", "the last of the ice floats in pieces on the pond"],
+};
+/** 2.9 : la bête de la mer, dite seulement une fois qu'on l'a vue dans la fenêtre (src/entry.js, ext.seaSeen). */
+const SEA_BEAST_PROSE = {
+  spout: ["something large breathes out at sea, once, and is gone", "far out, a plume of breath rises from the water and drifts away"],
+  serpent: ["far out, a long back rolls through the water, and rolls again", "something long moves offshore, in slow coils, and sinks"],
+  ray: ["now and then, broad wingtips break the sea and slip back under", "out on the water, two dark tips rise like hands and fold away"],
+  fin: ["a fin cuts the water offshore, unhurried", "a dark fin passes along the sea, and does not come closer"],
+};
 function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at = null) {
   const sentences = [],
     used = new Set(),
@@ -468,6 +486,8 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at
       name.seen.add(id);
       used.add(id);
     }
+  if (at && at.seaBeast && SEA_BEAST_PROSE[at.seaBeast]) { sentences.push(capitalize(teller.pick(SEA_BEAST_PROSE[at.seaBeast])) + "."); at.push("far"); } /* 2.9 */
+  if (at && at.freeze && FREEZE_PROSE[at.freeze]) { sentences.push(capitalize(teller.pick(FREEZE_PROSE[at.freeze])) + "."); at.push("far"); } /* 2.9 */
   const stOf = (r) => STATIONS.indexOf(blockById.has(r.shown) ? stationOf(r.shown) : stationOf(r.a));
   const reactions = at ? resolved.matter.reactions.map((r, i) => [r, i]).sort((x, y) => stOf(x[0]) - stOf(y[0]) || x[1] - y[1]).map((x) => x[0]) : resolved.matter.reactions; // dans l'ordre du parcours : la première mention garde ses adjectifs, les suivantes disent « the … »
   for (const reaction of reactions) {
@@ -600,13 +620,15 @@ function describeAge(resolved, options = {}) {
     const grammar = tracery.createGrammar(PROSE_GRAMMAR);
     grammar.addModifiers(tracery.baseEngModifiers);
     const teller = makeTeller(random);
-    const sky = skySentences(resolved, grammar, teller);
+    const sky0 = skySentences(resolved, grammar, teller, place), sky = place && place.freeze === "ice_river" ? sky0.filter((s) => !/\briver\b/i.test(s)) : sky0; /* 2.9 : la rivière prise ne coule plus dans le ciel du texte */
     const at = [];
     at.skyText = sky.join(" ").toLowerCase();
     at.mill = place && typeof place === "object" ? place.mill : null;
     at.oasis = place && typeof place === "object" ? place.oasis : null;
     at.tides = place && typeof place === "object" ? place.tides : null;
     at.monsoon = place && typeof place === "object" ? place.monsoon : null;
+    at.freeze = place && typeof place === "object" ? place.freeze : null;
+    at.seaBeast = place && typeof place === "object" ? place.seaBeast : null;
     const matterLines = matterSentences(resolved, grammar, teller, at);
     if (sky.length === 0 && !matterLines.length) return "The page holds no readable symbol yet.";
     // deux phrases qui commencent pareil (« The book… The book… ») : on prend une autre tournure quand il y en a une

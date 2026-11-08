@@ -115,6 +115,7 @@ class LinkFx {
       const cp = clockPhases(this.o.gen); // jour réel (day_length) et saison (year_length) ; sinon le jour boucle sur l'animation
       G.paint(this.gctx, this.model, this.still != null ? this.still : (ms % G.PERIOD) / G.PERIOD, { day: cp ? cp.day : undefined, season: cp ? cp.season : 0, clock: Date.now() / 1000 });
       s = this.genCanvas;
+      if (this.model.seaSeen && !this._seaSeen && this.o.onSeen) { this._seaSeen = true; try { this.o.onSeen("sea"); } catch (e) { /* rien */ } } /* 2.9 : la bête de la mer a paru */
     }
     const sw = s.width || s.naturalWidth, sh = s.height || s.naturalHeight;
     this.frame++;
