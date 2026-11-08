@@ -6,7 +6,7 @@
  */
 const NEWS = [
   {
-    v: "2.10.5",
+    v: "2.10.6",
     fr: {
       title: "Étoiles mortes",
       letter: "Un correspondant nous l'avait dit : une étoile peut être verte d'avoir avalé ses mondes. Nous avons regardé de plus près. Elle peut aussi être bleue de jeunesse ou de sel, rouge de charbon, ocre d'âge ; et ce qui tourne autour d'elle est fait de ce qu'elle a brisé. Une pierre taillée, au télescope, déplie sa lumière ; la plaque la grave ; la carte des étoiles la garde. Et la liaison a retrouvé son souffle d'autrefois.",
@@ -15,7 +15,7 @@ const NEWS = [
         "**La naine blanche a une couleur, et elle veut dire quelque chose** : sans débris, son âge (`blue_sun` jeune, `orange_sun` très vieille) ; avec ce qui reste de ses mondes, son repas (`green_sun` le sel, `blue_sun` le sel à l'extrême, `red_sun` le carbone). Aucune ne coûte d'Art. **Un monde né des débris est jeune** : vie simple, peu d'oxygène.",
         "**Le soleil est dessiné comme un soleil** : un cœur blanc, une couronne qui respire, l'orangé du soir.",
         "**Une pierre taillée au télescope**, au bout d'un bras de laiton : pivotée devant le verre, si l'étoile du livre est située et visée, sa lumière se déplie en bande, avec ses ombres, et la Guilde la lit : sa chaleur, ce qu'elle contient, ce que cela veut dire. Un soleil vert seulement écrit montre une lumière entière.",
-        "**La plaque grave la lumière, la carte des étoiles la garde** : la pierre devant le verre, un clic sur la plaque de l'étoile ; sur la carte, trois touches de couleur sous l'étoile, et un clic épingle le relevé : la courbe à la plume, la bande peinte, la lecture.",
+        "**La plaque grave la lumière, la carte des étoiles la garde** : la pierre devant le verre, un clic sur la plaque de l'étoile ; sur la carte, trois touches de couleur sous l'étoile, et un clic épingle le relevé : la courbe à la plume, puis la craie qui colorie dessous, et la lecture.",
         "**Trois voies pour le son de liaison** (Réglages → Son) : classique ; à l'ancienne, une synthèse nouvelle qui suit l'Âge où l'on va et ne se répète jamais ; les deux ; ou votre propre enregistrement, qui peut contenir plusieurs liaisons à la suite.",
         "**La carte de l'Âge dans le livre du Relto**, après la description ; un seul étang sur la carte, et des blancs seulement quand l'Âge vacille. La carte postale du Relto en chiffres D'ni ; la sortie du plein écran par le bouton ne bloque plus les clics.",
       ],
@@ -28,7 +28,7 @@ const NEWS = [
         "**The white dwarf has a colour, and it means something**: without debris, its age (`blue_sun` young, `orange_sun` very old); with what is left of its worlds, its meal (`green_sun` the salt, `blue_sun` the salt to the extreme, `red_sun` the carbon). None costs Art. **A world born of debris is young**: simple life, little oxygen.",
         "**The sun is drawn as a sun**: a white core, a breathing corona, the orange of evening.",
         "**A cut stone at the telescope**, at the end of a brass arm: swung in front of the glass, if the book's star is charted and aimed, its light unfolds into a band, with its shadows, and the Guild reads it: its heat, what it holds, what that means. A green sun that is merely written shows a whole light.",
-        "**The plate engraves the light, the star map keeps it**: with the stone in front of the glass, a click on the star's plate; on the map, three touches of colour under the star, and a click pins the record: the curve in ink, the painted band, the reading.",
+        "**The plate engraves the light, the star map keeps it**: with the stone in front of the glass, a click on the star's plate; on the map, three touches of colour under the star, and a click pins the record: the curve in ink, then a chalk colouring under it, and the reading.",
         "**Three ways to sound the link** (Settings → Sound): classic; in the old manner, a new synthesis that follows the Age you go to and never repeats; both; or your own recording, which may hold several linking sounds in a row.",
         "**The map of the Age in the Relto's book**, after the description; one pond on the map, and blanks only when the Age wavers. The Relto postcard in D'ni numerals; leaving fullscreen with the button no longer blocks clicks.",
       ],
