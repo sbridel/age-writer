@@ -6,6 +6,29 @@
  */
 const NEWS = [
   {
+    v: "2.10.5",
+    fr: {
+      title: "La pierre, la plaque, la carte",
+      letter: "Une aiguille trace, elle ne peint pas ; et il n'y a pas d'aiguille dans une lunette. La Guilde a donc remis chaque chose à sa place : la pierre déplie la lumière, la plaque la grave, la carte des étoiles la garde. La courbe n'est plus dans l'oculaire : elle est à la plume, épinglée au parchemin.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**La pierre a deux états** : repliée, ou devant le verre ; là, si l'étoile du livre est située et visée, sa lumière se déplie en bande, avec sa lecture.",
+        "**La plaque grave la lumière** : la pierre devant le verre, un clic sur la plaque de l'étoile grave ce qu'elle montre ; un petit signe reste gravé.",
+        "**La carte des étoiles garde le relevé** : trois touches de couleur sous l'étoile ; un clic épingle la fiche : la courbe à la plume, la bande peinte, la lecture de la Guilde.",
+      ],
+    },
+    en: {
+      title: "The stone, the plate, the map",
+      letter: "A needle traces, it does not paint; and there is no needle in a telescope. So the Guild has put each thing back in its place: the stone unfolds the light, the plate engraves it, the star map keeps it. The curve is no longer in the eyepiece: it is drawn in ink, pinned to the parchment.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**The stone has two states**: folded, or in front of the glass; there, if the book's star is charted and aimed, its light unfolds into a band, with its reading.",
+        "**The plate engraves the light**: with the stone in front of the glass, a click on the star's plate engraves what it shows; a small sign stays engraved.",
+        "**The star map keeps the record**: three touches of colour under the star; a click pins the record: the curve in ink, the painted band, the Guild's reading.",
+      ],
+    },
+  },
+  {
     v: "2.10.4",
     fr: {
       title: "Le cristal attend",

@@ -10,6 +10,7 @@ const T = require("./telescope");
 const MAP = require("./starmap");
 const TL = require("./relto-telescope");
 const BEAM = require("./beam");
+const SPEC = require("./spectrum");
 const { makeT } = require("./i18n");
 
 const W = 640, H = 360, SHEET = { x: 70, y: 18, w: 500, h: 300 }, BACK = { x: 0, y: 314, w: W, h: 46 };
@@ -166,7 +167,9 @@ function drawStarMap(r, ctx, sc, sky, tm) {
     if (label && shown) labels.push({ x: sx, y: sy, text: label, font: "italic 9.5px serif", hot: !r.mapNames && !focus });
     const tip = (s.ages.length ? s.ages.join(", ") : t("map.star.unnamed")) + (s.pert.length ? " — " + s.pert.map((p) => pertName(t, p.kind)).join(", ") : "") + (bad ? " — " + t("map.star.miss") : "") + " — " + t(elevBand(s.z));
     const rf = BEAM.rahnfeeOf(s.distance), far = rf >= 1 ? t("beam.far.beyond") : t("beam.far.line", { far: String(t("beam.far")).split("|")[BEAM.fracBand(rf)] }); // mondes lointains : au-delà d'un rahnfee // la distance le long du faisceau : en mots, puis en rahnfee (chiffres D'ni)
-    r.hot.push({ x: sx - 9, y: sy - 9, w: 18, h: 18, tip: tip + " — " + far, frac: BEAM.digitsOf(s.distance), starKey: s.key });
+    const lit = !!(view[s.key] && view[s.key].light); /* 2.10.5 : la lumière gravée à la plaque : trois touches de couleur sous l'étoile, et le cartouche au clic */
+    if (lit) { for (let k = 0; k < 3; k++) { const [cr, cg, cb] = TL.wl([450, 540, 640][k]); ctx.fillStyle = `rgba(${Math.round(255 * cr * 0.8)},${Math.round(255 * cg * 0.8)},${Math.round(255 * cb * 0.8)},0.8)`; ctx.fillRect(sx - 4 + k * 3, sy + 8, 2.4, 1.6); } }
+    r.hot.push({ x: sx - 9, y: sy - 9, w: 18, h: 18, tip: tip + " — " + far + (lit ? " — " + t(r.mapPick === s.key ? "map.light.close" : "map.light.open") : ""), frac: BEAM.digitsOf(s.distance), starKey: s.key, ...(lit ? { mapAct: { pick: s.key } } : {}) });
   }
   // les noms, en dernier : liseré de papier pour rester lisibles par-dessus les traits ; un nom écarté est relié à son point
   ctx.lineJoin = "round";
@@ -179,9 +182,10 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   }
   mapControls(r, ctx, map, P0, S);
   // l'échelle des hauteurs, gravée dans un coin : les fils ne sont pas à l'échelle des distances
-  { const lx = S.x + 26, ly = S.y + S.h - 40, h = 50 * P.hz; ctx.strokeStyle = INK2; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx, ly - h); ctx.moveTo(lx - 3, ly); ctx.lineTo(lx + 3, ly); ctx.moveTo(lx - 3, ly - h); ctx.lineTo(lx + 3, ly - h); ctx.stroke();
+  if (!(r.mapPick && view[r.mapPick] && view[r.mapPick].light)) { const lx = S.x + 26, ly = S.y + S.h - 40, h = 50 * P.hz; /* 2.10.5 : effacée pendant que le relevé de la lumière occupe le coin */ ctx.strokeStyle = INK2; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx, ly - h); ctx.moveTo(lx - 3, ly); ctx.lineTo(lx + 3, ly); ctx.moveTo(lx - 3, ly - h); ctx.lineTo(lx + 3, ly - h); ctx.stroke();
     ctx.font = "italic 8.5px serif"; ctx.fillStyle = INK2; ctx.fillText(t("map.hscale"), lx + 6, ly - h / 2 + 3, 150); r.hot.push({ x: lx - 6, y: ly - h - 4, w: 150, h: h + 8, tip: t("map.hscale.tip") }); }
   ctx.restore();
+  if (r.mapPick && view[r.mapPick] && view[r.mapPick].light) lightCard(r, ctx, t, S, r.mapPick, view[r.mapPick], tm); else r.mapPick = null; /* 2.10.5 : le relevé de la lumière, épinglé au coin du parchemin */
   // le titre, la légende et, si besoin, l'avertissement de l'arpenteur
   ctx.font = "italic 13px serif"; ctx.fillStyle = INK; ctx.textAlign = "center"; ctx.fillText(focus ? t("map.moved.title", { name: focus }) : t("map.title"), S.x + S.w / 2, S.y + 29, S.w - 80); ctx.textAlign = "left";
   if (pages > 1) { // feuilleter les cartes : la carte d'aujourd'hui, puis celle de chaque Âge qui a bougé
@@ -197,6 +201,39 @@ function drawStarMap(r, ctx, sc, sky, tm) {
   ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 29); ctx.textAlign = "left";
   r.hot.push({ ...BACK, tip: t(r.mapFrom === "desk" ? "map.back.desk" : "map.back"), go: r.mapFrom === "desk" ? "desk" : "telescope" }); // on revient là d'où l'on vient
   void tm; void sky; void clamp;
+}
+
+/**
+ * 2.10.5 : le relevé de la lumière d'une étoile, tel que la plaque l'a gravé : une fiche de papier épinglée au coin du parchemin,
+ * la courbe à la plume (elle se trace sous nos yeux la première fois), la bande des couleurs à la gouache, mate, en touches, et la
+ * lecture de la Guilde en deux lignes. L'étoile elle-même vient du livre de l'Âge (`onImagerAge`), lue une fois et gardée.
+ */
+function lightCard(r, ctx, t, S, key, rec, tm) {
+  const C = { x: S.x + 18, y: S.y + S.h - 152, w: 232, h: 118 }; /* le coin bas gauche, où rien ne se dessine que l'échelle des hauteurs */
+  if (!r.mapLight || r.mapLight.key !== key) { /* l'étoile du relevé : par le premier Âge de ce système */
+    const ml = (r.mapLight = { key, star: null, t0: tm || 0, pending: true }), name = (rec.ages || [])[0], age = ((r.scene && r.scene.ages) || []).find((a) => a && a.name === name);
+    if (age && r.opts.onImagerAge) Promise.resolve(r.opts.onImagerAge(age)).then((d) => { if (r.mapLight !== ml) return; ml.star = d && d.star ? d.star : null; ml.pending = false; ml.t0 = null; if (!r.running) r.draw(0); }, () => { ml.pending = false; });
+    else ml.pending = false;
+  }
+  const ml = r.mapLight, star = ml.star; if (ml.t0 == null) ml.t0 = tm || 0; /* la plume part quand l'étoile est lue */
+  ctx.save(); ctx.fillStyle = "rgba(0,0,0,0.25)"; ctx.fillRect(C.x + 3, C.y + 4, C.w, C.h);
+  const pg = ctx.createLinearGradient(C.x, C.y, C.x + C.w, C.y + C.h); pg.addColorStop(0, "#f7efdc"); pg.addColorStop(1, "#e9dbb8"); ctx.fillStyle = pg; ctx.fillRect(C.x, C.y, C.w, C.h);
+  ctx.strokeStyle = rgba(59, 42, 27, 0.45); ctx.lineWidth = 0.8; ctx.strokeRect(C.x + 0.5, C.y + 0.5, C.w - 1, C.h - 1);
+  ctx.fillStyle = "#8a2a22"; ctx.beginPath(); ctx.arc(C.x + C.w / 2, C.y + 5, 2.6, 0, 6.283); ctx.fill(); /* l'épingle */
+  ctx.font = "italic 10px serif"; ctx.fillStyle = INK; ctx.textAlign = "center"; ctx.fillText((rec.ages || []).join(", ") || t("map.star.unnamed"), C.x + C.w / 2, C.y + 17, C.w - 30); ctx.textAlign = "left";
+  r.hot.push({ x: C.x + C.w - 16, y: C.y + 2, w: 14, h: 14, tip: t("map.light.close"), mapAct: { pick: key } });
+  ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(C.x + C.w - 12, C.y + 5); ctx.lineTo(C.x + C.w - 6, C.y + 11); ctx.moveTo(C.x + C.w - 6, C.y + 5); ctx.lineTo(C.x + C.w - 12, C.y + 11); ctx.stroke();
+  if (!star) { ctx.font = "italic 9px serif"; ctx.fillStyle = INK2; ctx.textAlign = "center"; ctx.fillText(t(ml.pending ? "map.light.reading" : "map.light.lost"), C.x + C.w / 2, C.y + 60, C.w - 20); ctx.textAlign = "left"; ctx.restore(); return; }
+  const spec = SPEC.spectrumOf(star, 160), x0 = C.x + 14, BW = C.w - 28, base = C.y + 62, H0 = 36, dt = r.opts.reducedMotion ? 9 : Math.max(0, (tm || 0) - (ml.t0 || 0)), prog = Math.min(1, dt / 2.2), n = Math.max(2, Math.floor(BW * prog));
+  { const gb = ctx.createLinearGradient(x0, 0, x0 + BW, 0); for (let k = 0; k <= 24; k++) { const [cr, cg, cb] = TL.wl(385 + k * 14.6); gb.addColorStop(k / 24, `rgb(${Math.round(255 * (0.18 + 0.7 * cr))},${Math.round(255 * (0.18 + 0.7 * cg))},${Math.round(255 * (0.18 + 0.7 * cb))})`); } ctx.fillStyle = gb; ctx.fillRect(x0, base + 5, BW, 6); ctx.fillStyle = "rgba(244,234,210,0.22)"; ctx.fillRect(x0, base + 5, BW, 2); } /* la gouache : une bande droite, mate, posée d'un geste, un peu plus claire au bord */
+  ctx.strokeStyle = rgba(59, 42, 27, 0.25); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(x0, base + 0.5); ctx.lineTo(x0 + BW, base + 0.5); ctx.stroke(); /* la ligne de base, au crayon */
+  ctx.strokeStyle = INK; ctx.lineWidth = 1.1; ctx.lineJoin = "round"; ctx.beginPath();
+  for (let k = 0; k < n; k++) { const v = spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))], yy = base - H0 * v * 0.95; k ? ctx.lineTo(x0 + k, yy) : ctx.moveTo(x0 + k, yy); } ctx.stroke(); /* la plume */
+  if (prog < 1) { const k = n - 1, v = spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))]; ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x0 + k, base - H0 * v * 0.95, 1.4, 0, 6.283); ctx.fill(); } /* la goutte d'encre, au bout du trait */
+  const rd = SPEC.readingOf(star), words = (t(rd.heat) + " " + t(rd.holds) + (rd.means ? " " + t(rd.means) : "")).split(/\s+/), lines = []; ctx.font = "italic 8.5px serif";
+  for (const w of words) { const cand = lines.length ? lines[lines.length - 1] + " " + w : w; if (lines.length && ctx.measureText(cand).width <= C.w - 18) lines[lines.length - 1] = cand; else lines.push(w); } /* la lecture, à la main, sur trois lignes au plus */
+  ctx.fillStyle = INK2; ctx.textAlign = "center"; lines.slice(0, 3).forEach((ln, i) => ctx.fillText(ln, C.x + C.w / 2, C.y + 84 + i * 10.5, C.w - 16)); ctx.textAlign = "left";
+  ctx.restore();
 }
 
 /**
@@ -262,6 +299,7 @@ function angleAt(r, x, y) { const mb = r.mapBox, [zx, zy] = (mb && mb.zero) || [
 function act(r, a, x, y, e) {
   const mb = r.mapBox; if (!mb) return;
   if (a.names) { r.mapNames = !r.mapNames; return; }
+  if (a.pick) { r.mapPick = r.mapPick === a.pick ? null : a.pick; return; } /* 2.10.5 : le relevé de la lumière, ouvert ou refermé */
   if (a.all) { r.mapZoom = null; r.mapTurn = 0; return; }
   if (a.turn) { const d = e && e.shiftKey ? -a.turn : a.turn; turnTo(r, (Math.round((r.mapTurn || 0) / TURN_STEP) + d) * TURN_STEP); return; } // la rose : un cran, calé sur les seize crans
   if (a.region != null) { // le quart du ciel : la loupe sur le centre de ses étoiles (ou, s'il est vide, sur le milieu de ce quart)

@@ -154,7 +154,8 @@ function act(r, a) {
   if (a.book) { bookLoad(r, (st.book ? st.book.idx : -1) + a.book); st.note = null; st.trend = 0; sfx("turn", 0.5); keepAim(r, st); return; }
   if (a.go) { r.setView(a.go); return; }
   if (a.eyeZoom) { r.eyeZoom = !r.eyeZoom; r.held = null; r.hover = null; return; } // mode tactile : l'oculaire agrandi (rien n'y reste tenu)
-  if (a.spectro) { st.spectro = ((st.spectro || 0) + 1) % 3; st.spectroT0 = r.telescopeT || 0; sfx("turn", 0.4); return; } /* 2.10 : le cristal : sur l'oculaire, puis dans l'appareil (la courbe se grave), puis rangé */
+  if (a.spectro) { st.spectro = st.spectro ? 0 : 1; st.spectroT0 = r.telescopeT || 0; sfx("turn", 0.4); return; } /* 2.10 / 2.10.5 : la pierre, devant le verre ou repliée ; la courbe n'est plus ici : la plaque grave la lumière, la carte la garde */
+  if (a.engraveLight) { const L = lightOf(st); if (!L.star || !st.spectro) return; st.systems = { ...st.systems, [L.sys.key]: { ...st.systems[L.sys.key], light: true } }; st.note = "spec.engraved"; sfx("found", 0.6); if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st)); return; } /* 2.10.5 : la plaque grave ce que la pierre montre ; la carte des étoiles en fait un cartouche */
   if (a.lens) { if (!guildOf(r)) return; st.lens = LENSES[(LENSES.indexOf(lensOf(st)) + 1) % LENSES.length]; sfx("turn", 0.5); if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st)); return; }
   if (a.axis || a.setZero || a.setSystem) { st.note = null; st.trend = 0; } // la phrase d'un geste précédent s'efface au geste suivant
   if (measuring(st)) return actSystem(r, st, a, sfx);
@@ -478,10 +479,16 @@ function lectern(r, ctx, c, st) {
  * la monture ; pivoté, il porte la pierre devant le verre et la lumière de l'étoile du livre se déplie en dessous ; glissé dans
  * l'appareil, la bague reste vide et l'aiguille grave la courbe. La lecture, en mots, prend la ligne du bas. Sans livre, le bras dort.
  */
-const ARM = { hinge: Math.PI * 0.22, off: { ang: -Math.PI * 0.28, len: 0.62, rr: 13 }, on: { ang: Math.PI * 1.24, len: 0.98, rr: 18 } };
+/** 2.10.5 : la lumière que la pierre peut déplier : l'étoile du livre, située (gravée) et visée (les molettes sur ses indices). */
+function lightOf(st) {
+  const bookStar = st.book && st.book.data && st.book.data.star ? st.book.data.star : null, sys = bookSystem(st);
+  const charted = !!(bookStar && st.found && sys && st.systems[sys.key]), aimed = charted && !!SS.measure(st.dial, sys.clue).located;
+  return { bookStar, sys, charted, aimed, star: aimed ? bookStar : null };
+}
+const ARM = { hinge: Math.PI * 0.22, off: { ang: -Math.PI * 0.28, len: 0.62, rr: 13 }, on: { ang: -Math.PI * 0.76, len: 0.98, rr: 18 } };
 function armPose(st, tm, reduced) {
-  const want = st.spectro === 1 ? 1 : 0, dt = reduced ? 9 : Math.max(0, (tm || 0) - (st.spectroT0 || 0)), k = Math.min(1, dt / 0.55), e = k * k * (3 - 2 * k);
-  const from = st.spectro === 1 ? 0 : st.spectro === 2 ? 1 : 1, p = from + (want - from) * e; /* 0 : replié, 1 : devant le verre ; vers l'appareil, le bras se replie */
+  const want = st.spectro ? 1 : 0, dt = reduced ? 9 : Math.max(0, (tm || 0) - (st.spectroT0 || 0)), k = Math.min(1, dt / 0.55), e = k * k * (3 - 2 * k);
+  const from = 1 - want, p = from + (want - from) * e; /* 0 : replié, 1 : devant le verre */
   return { ang: ARM.off.ang + (ARM.on.ang - ARM.off.ang) * p, len: ARM.off.len + (ARM.on.len - ARM.off.len) * p, rr: ARM.off.rr + (ARM.on.rr - ARM.off.rr) * p, p };
 }
 /** La pierre taillée : deux rangs de facettes, ses feux, sa frange de couleurs, son reflet. `lit` : 0,3 endormie, 1 au travail. */
@@ -500,10 +507,9 @@ function cutStone(ctx, x, y, r, lit) {
   ctx.restore();
 }
 function spectroscope(r, ctx, c, st, tm) {
-  const t = tOf(r), { x: cx, y: cy, r: R } = EYE, TAU = Math.PI * 2, bookStar = st.book && st.book.data && st.book.data.star ? st.book.data.star : null, sys = bookSystem(st);
-  const charted = !!(bookStar && st.found && sys && st.systems[sys.key]), star = charted ? bookStar : null, on = !!(st.spectro && star), inReader = on && st.spectro === 2; /* 2.10.4 : il faut que l'étoile du livre soit située : le cristal ne déplie pas une lumière qu'on n'a pas encore trouvée */
+  const t = tOf(r), { x: cx, y: cy, r: R } = EYE, TAU = Math.PI * 2, { bookStar, charted, star } = lightOf(st), on = !!(st.spectro && star); /* 2.10.4/2.10.5 : il faut que l'étoile du livre soit située, et visée : le cristal ne déplie qu'une lumière qui entre dans la lunette */
   const pose = armPose(on ? st : { spectro: 0 }, tm, !!r.opts.reducedMotion), lit = star ? (on ? 1 : 0.75) : 0.35;
-  const hx = cx + Math.cos(ARM.hinge) * (R + 14), hy = cy + Math.sin(ARM.hinge) * (R + 14), ex = hx + Math.cos(pose.ang) * R * pose.len, ey = hy + Math.sin(pose.ang) * R * pose.len, rr = pose.rr;
+  const drawArm = () => {
   const brass = (x0, y0, x1, y1) => { const gr = ctx.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, c("#c9a24e")); gr.addColorStop(0.5, c("#6b5126")); gr.addColorStop(1, c("#b8913f")); return gr; };
   ctx.save();
   ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 7; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(hx + 2, hy + 3); ctx.lineTo(ex + 2, ey + 3); ctx.stroke(); /* l'ombre du bras */
@@ -511,13 +517,14 @@ function spectroscope(r, ctx, c, st, tm) {
   ctx.strokeStyle = c("#3b2a1b"); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke(); /* l'arête */
   ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.beginPath(); ctx.arc(ex + 2, ey + 3, rr + 4, 0, TAU); ctx.fill();
   ctx.strokeStyle = brass(ex - rr, ey - rr, ex + rr, ey + rr); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(ex, ey, rr, 0, TAU); ctx.stroke(); /* la bague */
-  if (inReader) { ctx.fillStyle = "rgba(6,8,14,0.9)"; ctx.beginPath(); ctx.arc(ex, ey, rr - 2, 0, TAU); ctx.fill(); } /* la bague vide : la pierre est dans l'appareil */
-  else cutStone(ctx, ex, ey, rr - 2, lit);
+  cutStone(ctx, ex, ey, rr - 2, lit);
   ctx.fillStyle = c("#3b2a1b"); ctx.beginPath(); ctx.arc(hx, hy, 6, 0, TAU); ctx.fill(); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(hx, hy, 6, 0, TAU); ctx.stroke(); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(hx, hy, 1.6, 0, TAU); ctx.fill(); /* la charnière, par-dessus */
   ctx.restore();
-  r.hot.push({ x: ex - rr - 4, y: ey - rr - 4, w: 2 * rr + 8, h: 2 * rr + 8, tip: star ? (st.spectro === 1 ? t("spec.tab.reader") : st.spectro === 2 ? t("spec.tab.off") : t("spec.tab.on")) : bookStar ? t("spec.tab.unfound") : t("spec.tab.none"), ...(star ? { tel: { spectro: true } } : {}) });
-  if (!on) return;
-  if (inReader) { readerPlate(r, ctx, c, st, star, tm); readingLine(r, ctx, t, star); return; }
+  };
+  const hx = cx + Math.cos(ARM.hinge) * (R + 14), hy = cy + Math.sin(ARM.hinge) * (R + 14), ex = hx + Math.cos(pose.ang) * R * pose.len, ey = hy + Math.sin(pose.ang) * R * pose.len, rr = pose.rr;
+  const tip = star ? (st.spectro ? t("spec.tab.off") : t("spec.tab.on")) : charted ? t("spec.tab.unaimed") : bookStar ? t("spec.tab.unfound") : t("spec.tab.none");
+  const hot = () => r.hot.push({ x: ex - rr - 4, y: ey - rr - 4, w: 2 * rr + 8, h: 2 * rr + 8, tip, ...(star ? { tel: { spectro: true } } : {}) });
+  if (!on) { drawArm(); hot(); return; }
   const spec = SPEC.spectrumOf(star, 200), x0 = cx - R + 12, BW = 2 * R - 24, bt = cy + 40, BH = 46, bb = bt + BH;
   ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.283); ctx.clip(); ctx.globalAlpha = pose.p;
   { const fan = ctx.createLinearGradient(0, ey, 0, bt); fan.addColorStop(0, "rgba(200,230,255,0.28)"); fan.addColorStop(1, "rgba(200,230,255,0)"); ctx.fillStyle = fan; ctx.beginPath(); ctx.moveTo(ex - rr * 0.5, ey + rr * 0.6); ctx.lineTo(ex + rr * 0.5, ey + rr * 0.6); ctx.lineTo(x0 + BW, bt); ctx.lineTo(x0, bt); ctx.closePath(); ctx.fill(); } /* la lumière tombe de la pierre sur le verre, en éventail */
@@ -528,24 +535,8 @@ function spectroscope(r, ctx, c, st, tm) {
   ctx.strokeStyle = c("#b8913f"); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(cx - R, bt - 8); ctx.lineTo(cx + R, bt - 8); ctx.moveTo(cx - R, bb + 8); ctx.lineTo(cx + R, bb + 8); ctx.stroke(); /* la monture du cristal */
   ctx.strokeStyle = "#9b875a"; ctx.lineWidth = 0.8; for (const l of [400, 450, 500, 550, 600, 650, 700]) { const x = x0 + ((l - 380) / 360) * BW; ctx.beginPath(); ctx.moveTo(x, bb + 2); ctx.lineTo(x, bb + 6); ctx.stroke(); } /* des repères sans chiffres */
   ctx.restore();
+  drawArm(); hot();
   readingLine(r, ctx, t, star);
-}
-/**
- * 2.10 : l'appareil. Le cristal glissé dans le fût : derrière l'oculaire, une platine de laiton reçoit la lumière, et une aiguille
- * grave sa courbe, du violet au rouge, sous la bande de couleurs. La courbe est jolie ; c'est l'aiguille qui la rend vraie.
- */
-function readerPlate(r, ctx, c, st, star, tm) {
-  const { x: cx, y: cy, r: R } = EYE, spec = SPEC.spectrumOf(star, 200), dt = r.opts.reducedMotion ? 9 : Math.max(0, (tm || 0) - (st.spectroT0 || 0)), prog = Math.min(1, dt / 2.6);
-  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.283); ctx.clip();
-  const pl = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R); pl.addColorStop(0, c("#8a6a2e")); pl.addColorStop(0.5, c("#5a4420")); pl.addColorStop(1, c("#7a5c28")); ctx.fillStyle = pl; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R); /* la platine de laiton */
-  const x0 = cx - R + 22, BW = 2 * R - 44, top = cy - R * 0.55, H0 = R * 0.95, base = top + H0; /* le champ de la courbe */
-  ctx.fillStyle = c("#e8dcc0"); ctx.fillRect(x0 - 8, top - 14, BW + 16, H0 + 44); ctx.strokeStyle = c("#7a5c28"); ctx.lineWidth = 0.8; ctx.strokeRect(x0 - 8.5, top - 14.5, BW + 17, H0 + 45); /* la feuille serrée sur la platine */
-  ctx.strokeStyle = "rgba(122,92,40,0.25)"; ctx.lineWidth = 0.6; for (let k = 1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(x0, top + (H0 * k) / 4); ctx.lineTo(x0 + BW, top + (H0 * k) / 4); ctx.stroke(); } /* des lignes de guidage, pâles */
-  const n = Math.max(2, Math.floor(BW * prog));
-  for (let k = 0; k < n; k++) { const l = 380 + (360 * k) / BW, v = spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))], [rr, gg, bb] = wl(l), h = H0 * v * 0.92; ctx.fillStyle = `rgba(${Math.round(255 * rr)},${Math.round(255 * gg)},${Math.round(255 * bb)},0.85)`; ctx.fillRect(x0 + k, base - h, 1.1, h); } /* sous la courbe, la lumière elle-même, couleur par couleur, à mesure que l'aiguille avance */ ctx.strokeStyle = c("#2a1d13"); ctx.lineWidth = 1.3; ctx.lineJoin = "round"; ctx.beginPath();
-  for (let k = 0; k < n; k++) { const v = spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))], yy = base - H0 * v * 0.92; k ? ctx.lineTo(x0 + k, yy) : ctx.moveTo(x0 + k, yy); } ctx.stroke(); /* la courbe gravée, qui avance */
-  if (prog < 1) { const k = n - 1, v = spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))], px = x0 + k, py = base - H0 * v * 0.92; ctx.strokeStyle = c("#3b2a1b"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + 10, py - 26); ctx.lineTo(px + 14, py - 40); ctx.stroke(); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(px + 14, py - 42, 3, 0, 6.283); ctx.fill(); } /* l'aiguille et son bras, tant qu'elle grave */
-  ctx.restore();
 }
 /** La lecture : la chaleur, ce qu'elle contient, ce que cela veut dire ; elle prend la ligne du bas, le lutrin laissé libre. */
 function readingLine(r, ctx, t, star) {
@@ -704,7 +695,9 @@ function systemPlate(r, ctx, c, st, sys) {
     engravedRow(r, ctx, [got.torahn, T.kiElev(got.elevation)], P.x, P.w, P.y + 20, 12, ink); // la direction (comme au KI)
     engravedRow(r, ctx, [{ frac: BEAM.digitsOf(got.distance) }], P.x, P.w, P.y + 36, 11, ink); // la distance, en rahnfee de faisceau
     if (got.pert && got.pert.length) { ctx.fillStyle = ink; ctx.font = "9px serif"; ctx.textAlign = "center"; ctx.fillText(got.pert.map((p) => PSYM[p.kind] || "").join(" "), P.x + P.w / 2, P.y + P.h - 5); ctx.textAlign = "left"; } // ses perturbateurs, en signes
-    r.hot.push({ ...P, tip: t("sys.plate.found"), tel: { setSystem: true } });
+    if (got.light) { const gx = P.x + 12, gy = P.y + P.h - 7; ctx.strokeStyle = rgba(27, 19, 13, 0.75); ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(gx, gy + 3); ctx.lineTo(gx + 4, gy - 4); ctx.lineTo(gx + 8, gy + 3); ctx.closePath(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(gx + 10, gy + 2); ctx.lineTo(gx + 20, gy + 2); ctx.moveTo(gx + 10, gy); ctx.lineTo(gx + 17, gy); ctx.moveTo(gx + 10, gy - 2); ctx.lineTo(gx + 14, gy - 2); ctx.stroke(); } /* 2.10.5 : la lumière gravée : un petit signe à la pointe sèche, la pierre et ses trois rais */
+    const lit = st.spectro && lightOf(st).star; /* la pierre devant le verre : la plaque grave la lumière */
+    r.hot.push({ ...P, tip: lit ? (got.light ? t("sys.plate.light.done") : t("sys.plate.light")) : t("sys.plate.found"), tel: lit ? { engraveLight: true } : { setSystem: true } });
     // un coin à gratter : effacer l'étoile (la dégraver) pour la situer à nouveau
     const kx = P.x + P.w - 14, ky = P.y + 4; ctx.strokeStyle = rgba(43, 29, 19, 0.8); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(kx + 2, ky + 2); ctx.lineTo(kx + 8, ky + 8); ctx.moveTo(kx + 8, ky + 2); ctx.lineTo(kx + 2, ky + 8); ctx.stroke();
     r.hot.push({ x: kx - 2, y: ky - 2, w: 14, h: 14, tip: t("sys.unchart"), tel: { unchart: true } });
@@ -849,4 +842,4 @@ function aimedOf(r) {
   return GI.aimedOf(r.opts && r.opts.telescopeGet ? r.opts.telescopeGet(key) : null);
 }
 
-module.exports = { HOLD_BEATS, coarseBand, drawTelescopeRoom, drawOnIsland, state, act, systemsOf, aimedOf, aimedKey, bookLoad, EYE, WHEELS, PLATE, SPLATE, DELAY, LECTERN, FIELD, PULSE_MS };
+module.exports = { wl, lightOf, HOLD_BEATS, coarseBand, drawTelescopeRoom, drawOnIsland, state, act, systemsOf, aimedOf, aimedKey, bookLoad, EYE, WHEELS, PLATE, SPLATE, DELAY, LECTERN, FIELD, PULSE_MS };

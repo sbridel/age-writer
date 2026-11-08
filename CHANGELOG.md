@@ -2,6 +2,13 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.10.5 — The stone, the plate, the map (2026-11-08)
+
+### Changed
+- **The stone has two states only**: folded along the mount, or in front of the glass, where the light of a charted *and aimed* star unfolds into its band of colours and its reading. The reader and its needle are gone from the eyepiece: a needle traces, it does not paint.
+- **The plate engraves the light**: with the stone in front of the glass, a click on the star's plate engraves what the stone shows (a small dry-point sign stays on the plate). It is kept with your Relto.
+- **The star map keeps the record**: a star whose light is engraved carries three touches of colour; a click pins a record in the corner of the parchment: the Age's name, the curve drawn in ink before your eyes the first time, a straight matte band of colour, and the Guild's reading.
+
 ## 2.10.4 — The crystal waits (2026-11-08)
 
 ### Fixed
