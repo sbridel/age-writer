@@ -2,6 +2,18 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.9.1 — Dead stars (2026-11-08)
+
+### Added
+- **The white dwarf has a colour, and it means something.** Without debris, the colour is its age: `blue_sun` young and burning, nothing written white, `orange_sun` very old and ochre. With what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), the colour is what it ate: `green_sun` the salt (chartreuse), `blue_sun` the salt to the extreme (pale blue, and cold), `red_sun` the carbon (pink when warm, red when cooled). None costs Art; any other colour written on a white dwarf costs a little. The tints are the real ones, pale.
+- **A world born of debris is young.** With a white dwarf and debris, the world's age is drawn between 0.1 and 1 Gyr; a greater written age is a light contradiction. Its life is simple, its air poor in oxygen, its trees young.
+- **The sun is drawn as a sun**: a core burnt to white, a corona that melts the edge and breathes slowly, a warmer glow at noon, orange when low, a hard point in thin air, a smear in thick air; the second sun smaller and cooler.
+- **The Relto postcard** shows the time there in D'ni numerals, as the island's plate does.
+
+### Fixed
+- Leaving fullscreen with the button could leave the interface deaf to clicks until Escape.
+- Thick fog now washes out shadows, as rain does.
+
 ## 2.9.0 — The world remembers (2026-11-08)
 
 ### Added

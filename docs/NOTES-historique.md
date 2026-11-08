@@ -699,6 +699,14 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.9.1 — étoiles mortes (8 nov. 2026, soir)
+
+Fiche du projet : `claude/DESIGN-pistes-8-nov.md` (§ 32 bis), `claude/SYNTHESE-2.8-a-2.9.md`.
+- **Naine blanche** (`model.whiteDwarf(mass, kind)`, `whiteDwarfKind(hue, debris)`, `WD_TINT`, `wdTintOf`) : le genre d'après la couleur écrite et les débris (`w.wdKind`, `w.debris`, `w.reborn`) ; règles `deadStarColour` et `rebornWorld` ; `realStar` reformulée ; `S.phys.wdTint` remplace la teinte écrite ; prose `WD_PROSE`, `WD_REMNANT_PROSE`, `WD_REBORN_PROSE` par le hook `place` (`wdKind`, `reborn`).
+- **Le soleil** (`drawSuns` dans `paint`) : lueur large, couronne (`bloomR`, `pulse`), cœur blanc, bord teinté, air mince et épais, second soleil (`rad` 0,048).
+- **Carte postale du Relto** : `composeRelto` prend `parts` et `dni` (chiffres D'ni). **Plein écran** : sortie différée hors du clic, bouton sans focus ni glisser, infobulles retirées à la sortie.
+- Tests : couleurs, teintes, monde jeune, phrases (`gen.test.js`).
+
 ## 2.9.0 — le monde se souvient (8 nov. 2026)
 
 Fiche du projet : `claude/DESIGN-pistes-8-nov.md` (pistes 1, 8, 10, 11, 12, 15, 18, 20, 21, 24, 25, 31, 32).

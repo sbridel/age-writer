@@ -105,7 +105,7 @@ const logN = (r, mid, sigma, lo, hi) => M.clamp(mid * Math.exp(sigma * gauss(r))
 
 /** Ce que les blocs écrits fixent : nombre d'étoiles, couleurs, lune, géante, albédo… */
 function blockSettings(ids) {
-  const s = { sRange: null, ageRange: null, massRange: null, stars: null, hues: [], blackSun: false, whiteDwarf: false, moon: false, giantHost: false, locked: false, chaoticAxis: false, binary: null, veil: 1, albedoAdd: 0, coreAdd: 0, water: null };
+  const s = { ids: new Set(ids), sRange: null, ageRange: null, massRange: null, stars: null, hues: [], blackSun: false, whiteDwarf: false, moon: false, giantHost: false, locked: false, chaoticAxis: false, binary: null, veil: 1, albedoAdd: 0, coreAdd: 0, water: null };
   for (const id of ids) {
     const b = BLOCKS[id]; if (!b || !b.set) continue;
     const t = b.set;
@@ -158,7 +158,7 @@ function candidate(r, set, written) {
     M: written.mass != null ? written.mass : roll.M,
     cmf: written.core != null ? written.core : roll.cmf,
     ageRoll: roll.ageRoll,
-    age: written.age != null ? written.age : set.ageRange ? inRange(roll.uAge, set.ageRange) : undefined,
+    age: written.age != null ? written.age : set.ageRange ? inRange(roll.uAge, set.ageRange) : set.whiteDwarf && ["asteroid_belt", "asteroid_field", "planet_rings"].some((id) => set.ids && set.ids.has(id)) ? inRange(roll.uAge, [0.1, 1]) : undefined, /* 2.9 : un monde né des débris d'une étoile morte est jeune */
     rotation: written.rotation != null ? written.rotation : roll.rotation,
     giantDays: roll.giantDays,
     giantTides: roll.giantTides,
@@ -174,10 +174,11 @@ function derive(p, set, written, ids) {
   // L1 étoiles
   // le soleil noir (naine brune) est l'étoile qui porte la couleur black_sun
   const hues = p.starHues || [];
-  const props = p.starMasses.map((m, i) => (i === 0 && set.whiteDwarf ? M.whiteDwarf(m) : hues[i] === "black_sun" ? M.brownDwarf(m) : { T: M.starTemperature(m), L: M.starLuminosity(m), life: M.starLifetime(m) }));
+  const debris = ["asteroid_belt", "asteroid_field", "planet_rings"].some((id) => ids.has(id)), wdKind = set.whiteDwarf ? M.whiteDwarfKind(hues[0], debris) : null;
+  const props = p.starMasses.map((m, i) => (i === 0 && set.whiteDwarf ? M.whiteDwarf(m, wdKind || "white") : hues[i] === "black_sun" ? M.brownDwarf(m) : { T: M.starTemperature(m), L: M.starLuminosity(m), life: M.starLifetime(m) }));
   const lums = props.map((x) => x.L);
   w.blackSun = hues.includes("black_sun");
-  w.whiteDwarf = !!set.whiteDwarf; w.debris = ["asteroid_belt", "asteroid_field", "planet_rings"].some((id) => ids.has(id)); /* 2.9 : la naine blanche, et ce qui reste de ses mondes */
+  w.whiteDwarf = !!set.whiteDwarf; w.debris = debris; w.wdKind = wdKind; w.reborn = !!(set.whiteDwarf && debris); /* 2.9 : un monde rassemblé après la mort de son étoile */ /* 2.9 : la naine blanche, ce qui reste de ses mondes, et ce que sa couleur veut dire (null : l'Art) */
   w.brownDwarfOnly = props.length > 0 && hues.every((h) => h === "black_sun");
   w.starMass = p.starMasses[0] || 0;
   w.starMasses = p.starMasses;

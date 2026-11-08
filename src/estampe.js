@@ -78,7 +78,14 @@ function composeRelto(g, a) {
   paper(g, W, g.canvas.height); g.textBaseline = "alphabetic";
   g.drawImage(a.img, 50, 50, ww, wh); g.strokeStyle = INK; g.lineWidth = 1.5; g.strokeRect(49.5, 49.5, ww + 1, wh + 1);
   g.fillStyle = INK; g.textAlign = "center"; g.font = `34px ${serif}`; g.fillText(a.name, W / 2, 50 + wh + 58);
-  if (a.when) { g.font = `italic 19px ${serif}`; g.fillStyle = FAINT; g.fillText(a.when, W / 2, 50 + wh + 96); }
+  const y = 50 + wh + 96; g.font = `italic 19px ${serif}`; g.fillStyle = FAINT;
+  if (a.parts && a.dni) { /* l'heure là-bas en chiffres D'ni, comme au Relto : du texte et des nombres ({ n }) */
+    const fs = 19, ds = fs * 1.15, wOf = (p) => (typeof p === "string" ? g.measureText(p).width : a.dni.widthOf(p.n, ds) + 2), total = a.parts.reduce((s, p) => s + wOf(p), 0);
+    let cx = W / 2 - total / 2; g.textAlign = "left"; g.textBaseline = "alphabetic";
+    for (const p of a.parts) { if (typeof p === "string") { g.fillStyle = FAINT; g.fillText(p, cx, y); cx += g.measureText(p).width; } else { cx += a.dni.drawNumber(g, p.n, cx + 1, y - ds * 0.8, ds, FAINT) + 2; } }
+    g.textAlign = "center"; return;
+  }
+  if (a.when) g.fillText(a.when, W / 2, y);
 }
 const reltoSize = (img) => ({ w: 1200, h: Math.round(50 + (1100 * img.height) / img.width) + 150 });
 
