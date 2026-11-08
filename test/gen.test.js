@@ -403,6 +403,13 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
   const M = (S) => G.weatherMemory({ S }, 0.5, {}, { rain: S.rain ? 1 : 0, drizzle: 0, storm: S.storm ? 1 : 0 }, 0);
   ok(M({ rain: true }).wet === 1 && M({}).wet === 0 && M({ storm: true }).storm === 1, "la pluie laisse des flaques, l'orage des branches");
   ok(G.weatherMemory({ S: { rain: true } }, 0.5, {}, { rain: 1, drizzle: 0, storm: 0 }, 1).wet === 0, "la pluie tombée en neige ne fait pas de flaques"); }
+{ /* 2.9 : les heures des bêtes */
+  const S = G.sceneOf(an(["single_sun", "grass", "lake", "grazer"]), "Bêtes"), m = G.build(S, 640, 360), e = { id: "grazer" }, P = [{ x: 100, y: 300, k: 1, it: { pts: [1] } }, { x: 160, y: 310, k: 1, it: { pts: [1] } }];
+  const at = (td, dl, x = {}) => { m._td = td; m._dayL = dl; m.lv = x; return G.beastsAtHour(m, e, P); };
+  ok(at(0.4, 1).mode === "graze" && at(0.5, 0.9).mode !== "rest", "le jour, elles paissent ; à midi, à l'ombre s'il y en a");
+  ok(at(0.95, 0) === null, "par nuit noire, on ne les voit pas");
+  ok(at(0.5, 1, { storm: 1 }) === null, "sous l'orage, à l'abri");
+  const w = at(0.58, 0.3); ok(w.mode === "water" ? w.pts.every((p) => Math.abs(p.y - (m.pond.cy + m.pond.ry * 1.25)) < 40) : w.mode === "graze", "au crépuscule, à l'eau"); }
 { /* 2.8 : la mousson suit l'année ; rien sans saisons, ni sur un monde froid */
   const se = (u) => ({ u, snow: 0 }), M = (u, x = {}) => G.monsoonOf({ monsoon: true, season: se(u), ...x });
   ok(M(0.5).name === "rains" && M(0).name === "dry" && M(0.25).name === "between", "les pluies l'été, le sec l'hiver, l'entre-deux");
