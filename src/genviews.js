@@ -26,7 +26,14 @@ function heading(m0, k) {
   const FACES = ["eq", "west", "pole", "east"], V0 = S0.view, turn = V0 && V0.face && S0.cycle !== "frozen" && S0.cycle !== "erratic";
   if (V0) S.view = { ...V0, kind: V0.kind === "high" || V0.kind === "low" ? V0.kind : "plain", near: null, face: V0.face ? FACES[(FACES.indexOf(V0.face) + k) % 4] : V0.face };
   if (V0 && V0.kind === "pier") { S.pier = false; if (k === 2) { S.shore = null; S.sand = false; S.ruins = []; S.view.kind = "pierEnd"; } else S.shoreForce = { mode: "side", side: k === 1 ? -1 : 1 }; } /* 2.9 : au bout du ponton, derrière soi la mer seule ; sur les côtés, la rive d'un côté (un seul ponton : celui de face) */
+  let open = false; /* 2.9 : le périscope suit la rive de face (la carte de l'Âge les met bout à bout) : une seule côte, pas une par direction */
+  if (V0 && V0.kind !== "pier" && m0.shore && S0.shore) { const sh = m0.shore, sd = sh.mode === "side" ? sh.side : 0, ahead = k === 1 ? 1 : k === 3 ? -1 : 0; /* le côté de face qu'on regarde maintenant (droite +1, gauche −1) ; derrière : 0 */
+    const land = () => { S.shore = null; S.water = false; S.river = false; S.waterGround = false; S.lake = false; }, sea = () => { S.shore = null; S.sand = false; S.ruins = []; open = true; };
+    if (sh.mode === "side") { if (k === 2) S.shoreForce = { mode: "side", side: -sd }; else if (ahead === sd) land(); else sea(); } /* l'eau d'un côté : de ce côté la mer ouverte, de l'autre la terre, derrière la rive revient à l'envers */
+    else if (k === 2) land(); /* la terre devant ou la mer devant : derrière soi, la terre d'où l'on vient */
+    else S.shoreForce = { mode: "side", side: ahead }; } /* sur les côtés, la rive file ; l'eau vers ce qui était devant */
   const m = G.build(S, m0.W, m0.H);
+  if (open) { m.ridges = []; m.trees = []; } /* la mer ouverte, jusqu'à l'horizon */
   if (!S0.storm && m0.front && m0.front.mode === "shower") { if (!m.front) m.front = { ...m0.front, cells: [] }; } else if (!S0.storm) m.front = null; /* ESSAI : s'il pleut ici, il pleut de tous côtés ; si l'averse est au loin, on n'est pas mouillé en se retournant (d'autres averses, peut-être) */
   if (V0 && V0.kind === "pier" && k === 2) { m.ridges = []; m.trees = []; } /* 2.9 : derrière le ponton, la mer seule jusqu'à l'horizon */
   m.pal = m0.pal; m.ringsP = null; m.cometP = null; m.det = null; // les anneaux, la comète, la structure « habitée » : de face seulement
