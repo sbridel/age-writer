@@ -60,10 +60,12 @@ const BOWLS = [[320, 152, 1], [540, 112], [118, 84], [452, 80], [206, 66]]; /* l
 const PIT_X0 = 44, PIT_X1 = 596, U = (x) => (x - 320) / 360;
 /** Un bord qui ne se répète pas : quelques ondulations de longueurs différentes et un grain de roche (déterministe). */
 const nz = (x, k) => Math.sin(x * 0.021 + k * 1.7) * 3.5 + Math.sin(x * 0.057 + k * 3.1) * 2.5 + Math.sin(x * 0.13 + k * 5.3) * 1.5 + (q("pz" + k + "_" + Math.round(x / 12)) - 0.5) * 6;
-const pitTop = (x) => 300 - 86 * Math.sqrt(Math.max(0, 1 - U(x) ** 2)) + 12 + nz(x, 1) + 5 * Math.sin(x * 0.012 + 0.8);
+/** Les piliers du fond (x) : le bord du fond avance un peu sous chacun, pour qu'il se tienne sur la roche et non au-dessus du vide (2.10.11). */
+const BACK = [95, 355, 566];
+const pitTop = (x) => 300 - 86 * Math.sqrt(Math.max(0, 1 - U(x) ** 2)) + 12 + nz(x, 1) + 5 * Math.sin(x * 0.012 + 0.8) + BACK.reduce((m, bx) => m + 20 * Math.exp(-(((x - bx) / 34) ** 2)), 0);
 /** La lèvre de devant contourne les deux piliers de devant : elle recule derrière eux, en deux anses, pour qu'ils se tiennent sur le sol même. */
 const FRONT = [146, 437];
-const pitFront = (x) => 322 + 14 * U(x) ** 2 + nz(x, 2) * 1.3 + 8 * Math.sin(x * 0.014 + 2.2) + (x > 300 && x < 400 ? 5 : 0) - FRONT.reduce((m, fx) => m + 46 * Math.exp(-(((x - fx) / 44) ** 2)), 0);
+const pitFront = (x) => 322 + 14 * U(x) ** 2 + nz(x, 2) * 1.3 + 8 * Math.sin(x * 0.014 + 2.2) + (x > 300 && x < 400 ? 5 : 0) - FRONT.reduce((m, fx) => m + 52 * Math.exp(-(((x - fx) / 50) ** 2)), 0);
 const pitPath = (ctx, fresh = true) => { if (fresh) ctx.beginPath(); for (let x = PIT_X0; x <= PIT_X1; x += 12) (x === PIT_X0 ? ctx.moveTo(x, pitTop(x)) : ctx.lineTo(x, pitTop(x)));
   const mR = (pitTop(PIT_X1) + pitFront(PIT_X1)) / 2, mL = (pitTop(PIT_X0) + pitFront(PIT_X0)) / 2; /* aux deux bouts, des éclats et non un arrondi */
   for (const [dx, dy] of [[10, 12], [24, -6], [16, 16], [3, -2]]) ctx.lineTo(PIT_X1 + dx, dy < 0 ? mR + dy : dy > 14 ? mR + dy : pitTop(PIT_X1) + dy); ctx.lineTo(PIT_X1, pitFront(PIT_X1));
@@ -187,11 +189,9 @@ function pillarFalling(r, ctx, p, on, hov, t, signs, e) {
   const s = p.s, hgt = 82 * s, full = hgt + 16 * s, w = 14 * s, top = p.y - full, sink = sinkOf(p);
   const jag = (cut, k) => { ctx.beginPath(); ctx.moveTo(p.x - 60 * s, H); for (let x = -40; x <= 40; x += 3) ctx.lineTo(p.x + x * s, cut + (q("jg" + p.i + x) - 0.5) * 9 * s * k + Math.sin(x * 0.4 + t * 2) * 1.2 * s * k); ctx.lineTo(p.x + 60 * s, H); ctx.closePath(); };
   const clipDraw = (cut, glowK, rag = 1) => { ctx.save(); jag(cut, rag); ctx.clip(); pillar(ctx, p, on, hov, t, signs); if (glowK > 0) { ctx.globalAlpha = glowK; pillar(ctx, p, true, hov, t, signs); } ctx.restore(); };
-  const plinth = () => { const g = ctx.createLinearGradient(0, p.y - 10 * s, 0, p.y + 6 * s); g.addColorStop(0, PAL.floor[1]); g.addColorStop(1, PAL.floor[0]); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(p.x, p.y - 2 * s, w * 2.7, 9 * s, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = rgba(PAL.edge[0], PAL.edge[1], PAL.edge[2], 0.3); ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(p.x, p.y - 2 * s, w * 2.7, 9 * s, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke(); };
-  plinth();
   const foot = (al) => { ctx.fillStyle = rgba(4, 6, 14, al); ctx.beginPath(); ctx.ellipse(p.x, p.y + 1, w * 1.5, 3.4 * s, 0, 0, TAU); ctx.fill(); };
   const dot = (x, y, g, a, sz) => { const C = dustColour(g), tw = 0.55 + 0.45 * Math.abs(Math.sin(t * 3 + g.tw)), al = Math.max(0, Math.min(1, a * tw)); sz *= 1.35; if (g.c < 0.12 && al > 0.3) { const h = ctx.createRadialGradient(x, y, 0, x, y, sz * 3); h.addColorStop(0, rgba(C[0], C[1], C[2], al * 0.35)); h.addColorStop(1, rgba(C[0], C[1], C[2], 0)); ctx.fillStyle = h; ctx.fillRect(x - sz * 3, y - sz * 3, sz * 6, sz * 6); } ctx.fillStyle = rgba(C[0], C[1], C[2], al); ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz); };
-  const ringPos = (g, k) => { const R = (8 + 20 * k) * s * g.rad; return [p.x + Math.cos(g.a) * R, p.y + 2 * s + Math.sin(g.a) * R * 0.3]; };
+  const ringPos = (g, k) => { const R = (8 + 16 * k) * s * g.rad; return [p.x + Math.cos(g.a) * R, p.y + 1 * s + Math.sin(g.a) * R * 0.26]; };
   if (e < PF.t1) { /* il se défait du haut vers le bas */
     const k = ease(e / PF.t1), cut = top + full * k; clipDraw(cut, 0);
     for (let x = -18; x <= 18; x += 2) { const yy = cut + (q("jg" + p.i + Math.round(x / 3) * 3) - 0.5) * 9 * s, g = ctx.createRadialGradient(p.x + x * s, yy, 0, p.x + x * s, yy, 5 * s); g.addColorStop(0, rgba(210, 228, 255, 0.35)); g.addColorStop(1, rgba(210, 228, 255, 0)); ctx.fillStyle = g; ctx.fillRect(p.x + x * s - 5 * s, yy - 5 * s, 10 * s, 10 * s); } /* le bord qui s'effrite luit, grain à grain */
@@ -445,4 +445,4 @@ function topple(r, i) {
   return true;
 }
 
-module.exports = { gate, drawStars, drawFissure, GATE, PILLARS, bahroShadow, topple, PF };
+module.exports = { gate, drawStars, drawFissure, GATE, PILLARS, bahroShadow, topple, PF, pitTop, pitFront };

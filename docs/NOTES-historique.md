@@ -699,6 +699,11 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.10.11 — les piliers sur la roche (9 nov. 2026, nuit)
+
+⚠ Spoilers de la caverne : rien de ceci dans README, CHANGELOG ni nouveautés.
+- Retour de l'auteur sur la 2.10.10 : les gros disques sous un pilier absent flottaient (surtout devant), et certaines bases mordaient sur le vide. Disque retiré (il ne reste que l'ombre du pied) ; l'anneau de poussière est plus plat. Le bord de la fosse bouge, pas les piliers : la lèvre de devant recule plus large derrière les deux grands piliers (`FRONT`, 52 px sur 50), le bord du fond avance sous les trois du fond (`BACK`, 20 px sur 34). Chaque pied a au moins 6 px de roche avant le vide. Un socle de roche sous chaque pilier a été essayé puis abandonné (des souches). `pitTop` et `pitFront` exportés.
+
 ## 2.10.10 — la poussière des piliers (9 nov. 2026, nuit)
 
 ⚠ Spoilers de la caverne : rien de ceci dans README, CHANGELOG ni nouveautés ; une phrase dans la rubrique secrète du guide.
