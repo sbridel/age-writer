@@ -465,6 +465,13 @@ const FREEZE_PROSE = {
   thaw_river: ["the ice is breaking up, and its plates come down the dark river", "the river has woken, and carries its broken ice away"],
   thaw_pond: ["the ice is breaking up, and its plates drift on the dark water", "the last of the ice floats in pieces on the pond"],
 };
+/** 2.9 : la bête de la mer, dite seulement une fois qu'on l'a vue dans la fenêtre (src/entry.js, ext.seaSeen). */
+const SEA_BEAST_PROSE = {
+  spout: ["something large breathes out at sea, once, and is gone", "far out, a plume of breath rises from the water and drifts away"],
+  serpent: ["far out, a long back rolls through the water, and rolls again", "something long moves offshore, in slow coils, and sinks"],
+  ray: ["now and then, broad wingtips break the sea and slip back under", "out on the water, two dark tips rise like hands and fold away"],
+  fin: ["a fin cuts the water offshore, unhurried", "a dark fin passes along the sea, and does not come closer"],
+};
 function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at = null) {
   const sentences = [],
     used = new Set(),
@@ -477,6 +484,7 @@ function matterSentences(resolved, grammar, teller = makeTeller(Math.random), at
       name.seen.add(id);
       used.add(id);
     }
+  if (at && at.seaBeast && SEA_BEAST_PROSE[at.seaBeast]) { sentences.push(capitalize(teller.pick(SEA_BEAST_PROSE[at.seaBeast])) + "."); at.push("far"); } /* 2.9 */
   if (at && at.freeze && FREEZE_PROSE[at.freeze]) { sentences.push(capitalize(teller.pick(FREEZE_PROSE[at.freeze])) + "."); at.push("far"); } /* 2.9 */
   const stOf = (r) => STATIONS.indexOf(blockById.has(r.shown) ? stationOf(r.shown) : stationOf(r.a));
   const reactions = at ? resolved.matter.reactions.map((r, i) => [r, i]).sort((x, y) => stOf(x[0]) - stOf(y[0]) || x[1] - y[1]).map((x) => x[0]) : resolved.matter.reactions; // dans l'ordre du parcours : la première mention garde ses adjectifs, les suivantes disent « the … »
@@ -618,6 +626,7 @@ function describeAge(resolved, options = {}) {
     at.tides = place && typeof place === "object" ? place.tides : null;
     at.monsoon = place && typeof place === "object" ? place.monsoon : null;
     at.freeze = place && typeof place === "object" ? place.freeze : null;
+    at.seaBeast = place && typeof place === "object" ? place.seaBeast : null;
     const matterLines = matterSentences(resolved, grammar, teller, at);
     if (sky.length === 0 && !matterLines.length) return "The page holds no readable symbol yet.";
     // deux phrases qui commencent pareil (« The book… The book… ») : on prend une autre tournure quand il y en a une

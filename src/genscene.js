@@ -161,6 +161,7 @@ function sceneOf(a, name = "", blocks = null) {
   S.loop = !!(a.carry && a.carry.loop); /* la boucle de Torus : deux Âges qui se portent l'un l'autre forment un monde en anneau (src/torus.js) */
   if (S.loop) { S.loopFam = lp && lp.what !== "sky" ? lp.what : "stone"; S.loopKey = String(name) + "|" + String((lp && lp.from) || ""); S.torus = TOR.formOf(S.loopKey); }
   S.fresh29 = !!a.fresh29; /* 2.9 : l'Âge est né après la 2.9 (src/entry.js, ext.old29) */
+  S.seaBeast = seaBeastOf(S, ids); /* 2.9 : la bête de la mer */
   S.birds = birdsOf(S, r("birds")); /* 2.9 : les oiseaux, écrits ou tirés par le monde (claude/DESIGN-pistes-8-nov.md, § 21) */
   S.view = viewOf(S, ids, wd); /* ESSAI : le point de liaison, d'où l'on regarde */
   { const fq = rng((S.seed ^ 0xface5) >>> 0), x = fq(); S.view.face = x < 0.45 ? "eq" : x < 0.65 ? "pole" : x < 0.83 ? "east" : "west"; S.view.lat = fq(); S.view.fx = fq(); } /* ESSAI : vers où regarde le point de liaison (l'équateur, le pôle, le levant, le couchant), et à quelle latitude */
@@ -411,6 +412,47 @@ function monsoonOf(S) {
   if (!S.monsoon || !S.season || S.lava || S.ice || S.world === "frozen" || S.world === "lava" || S.world === "cavern" || S.season.snow > 0.05) return null;
   const lvl = -Math.cos(TAU * S.season.u), wet = clamp((lvl - 0.15) / 0.6), dry = clamp((-lvl - 0.15) / 0.6);
   return { lvl, wet, dry, name: wet > 0.5 ? "rains" : dry > 0.5 ? "dry" : "between" };
+}
+/**
+ * 2.9 : ce qui vit dans la mer. Une seule grande bête par Âge, tirée par le monde (jamais écrite), pour les Âges nés après la 2.9 : une mer qui fait le sol,
+ * de la vie (le monde vivant, un banc, un chasseur des eaux), de l'oxygène ; pas sur l'eau rouge, noire ou acide, ni la glace, ni la lave. Rare : deux mers sur cinq.
+ * Sa forme vient de la graine : le souffle (un dos et sa colonne de brume), le serpent (des anneaux), la raie (deux pointes d'ailes), l'aileron. Le chasseur des eaux écrit : l'aileron.
+ */
+function seaBeastOf(S, ids) {
+  const P = S.phys, q = rng((S.seed ^ 0x5eab) >>> 0), x = q(), k = q(), at = q(), hunter = ids.has("deep_hunter");
+  if (!S.fresh29 || !S.water || S.waterGround !== true || S.ice || S.lava || S.acid || S.tintW === "red_water" || S.tintW === "black_water") return null;
+  if (!(S.alive || hunter || ids.has("shoal")) || (P && P.oxygen < 0.4)) return null;
+  if (x > (hunter ? 0.8 : 0.4)) return null;
+  return { form: hunter ? "fin" : ["spout", "serpent", "ray", "fin"][Math.floor(k * 4)], at, side: q(), depth: q() };
+}
+/** 2.9 : la bête de la mer paraît une dizaine de secondes toutes les quatre minutes (l'heure réelle), au large, jamais au premier plan ; le souffle seulement à marée haute. */
+function seaBeastPass(g, m, clock, day, night, hzc) {
+  const { S, W, H, hz } = m, B = S.seaBeast, D = H - hz, P = 240, SH = 10, ph = ((clock + B.at * P) % P) / SH; if (ph > 1) return;
+  if (B.form === "spout" && m._tide && m._tide.amp && m._tide.level < 0) return;
+  let x = W * (0.15 + 0.7 * B.side) + (ph - 0.5) * W * 0.06, y = hz + D * (0.05 + 0.15 * B.depth);
+  for (let k = 0; k < 8 && solEn(m, x, y + 1).k !== "sea"; k++) { x = W * (0.12 + 0.76 * frac(B.side + 0.13 * (k + 1))); }
+  if (solEn(m, x, y + 1).k !== "sea") return;
+  const k = (2.4 * (y - hz)) / D, s = W * 0.1 * Math.max(0.4, k * 1.6), up = Math.sin(Math.PI * ph), amb = 1 - 0.7 * night, dark = css(mixc([4, 5, 8], [26, 30, 36], amb)), foam = css(mixc([10, 12, 16], [236, 242, 246], amb), 0.7);
+  g.save(); g.beginPath(); g.rect(0, 0, W, y + 0.5); g.clip(); /* ce qui est sous la surface ne se voit pas */
+  if (B.form === "spout") { g.fillStyle = dark; g.beginPath(); g.ellipse(x, y, s * 0.9, s * 0.22 * up, 0, Math.PI, TAU); g.fill(); }
+  else if (B.form === "serpent") { /* un corps en tube qui sort et rentre dans l'eau en arches, de plus en plus fines vers la queue, une crête de pointes ; devant, le cou en crosse et la tête */
+    const dir = B.side < 0.5 ? 1 : -1, rim = css(mixc(hzc, [255, 255, 255], 0.35), 0.6 * amb), u0 = clamp(up * 1.5), head = x + dir * s * 0.9 + dir * ph * s * 0.4;
+    g.lineCap = "round";
+    for (let j = 0; j < 3; j++) { const r = s * (0.24 - 0.05 * j) * u0, cx = head - dir * s * (0.5 + 0.55 * j), th = s * (0.11 - 0.025 * j); if (r < 1) continue;
+      g.strokeStyle = dark; g.lineWidth = Math.max(1, th); g.beginPath(); g.arc(cx, y + th * 0.3, r, Math.PI, TAU); g.stroke();
+      g.strokeStyle = rim; g.lineWidth = Math.max(0.5, th * 0.22); g.beginPath(); g.arc(cx, y + th * 0.3, r + th * 0.32, Math.PI * 1.25, Math.PI * 1.6); g.stroke();
+      g.fillStyle = dark; for (let k = 0; k < 3; k++) { const a = Math.PI * (1.3 + 0.2 * k), px = cx + Math.cos(a) * (r + th * 0.45), py = y + th * 0.3 + Math.sin(a) * (r + th * 0.45); g.beginPath(); g.moveTo(px - th * 0.25, py); g.lineTo(px, py - th * 0.7); g.lineTo(px + th * 0.25, py); g.fill(); } } /* la crête */
+    const nh = s * 0.85 * u0, th0 = s * 0.12; g.strokeStyle = dark; g.lineWidth = Math.max(1, th0); g.beginPath(); g.moveTo(head - dir * s * 0.12, y + 1); g.bezierCurveTo(head + dir * s * 0.05, y - nh * 0.5, head - dir * s * 0.12, y - nh * 0.85, head + dir * s * 0.02, y - nh); g.stroke(); g.strokeStyle = rim; g.lineWidth = Math.max(0.5, th0 * 0.22); g.beginPath(); g.moveTo(head - dir * s * 0.05, y - nh * 0.2); g.bezierCurveTo(head + dir * s * 0.1, y - nh * 0.5, head - dir * s * 0.07, y - nh * 0.85, head + dir * s * 0.06, y - nh - th0 * 0.4); g.stroke(); /* le cou en crosse, un trait de ciel le long */
+    g.fillStyle = dark; g.beginPath(); g.ellipse(head + dir * s * 0.1, y - nh, s * 0.15, s * 0.065, dir * 0.15, 0, TAU); g.fill(); g.beginPath(); g.moveTo(head - dir * s * 0.02, y - nh - s * 0.03); g.lineTo(head - dir * s * 0.08, y - nh - s * 0.14); g.lineTo(head + dir * s * 0.05, y - nh - s * 0.05); g.fill(); /* la tête, le museau long, une corne de crête */
+    g.fillStyle = css(mixc([10, 10, 12], [230, 220, 160], amb), 0.9); g.beginPath(); g.arc(head + dir * s * 0.13, y - nh - s * 0.015, Math.max(0.6, s * 0.018), 0, TAU); g.fill(); /* l'œil */
+    g.lineCap = "butt"; }
+  else if (B.form === "ray") { g.fillStyle = dark; for (const sd of [-1, 1]) { g.beginPath(); g.moveTo(x + sd * s * 0.7, y); g.quadraticCurveTo(x + sd * s * 0.85, y - s * 0.35 * up, x + sd * s * (0.95 + 0.1 * up), y - s * 0.4 * up); g.lineTo(x + sd * s * 0.95, y); g.fill(); } }
+  else { const fx = x + (ph - 0.5) * W * 0.1, fh = s * 0.4 * Math.min(1, up * 2); g.fillStyle = dark; g.beginPath(); g.moveTo(fx - s * 0.12, y); g.quadraticCurveTo(fx - s * 0.05, y - fh * 0.6, fx + s * 0.06, y - fh); g.quadraticCurveTo(fx + s * 0.05, y - fh * 0.4, fx + s * 0.16, y); g.closePath(); g.fill(); }
+  if (B.form === "spout") { g.strokeStyle = css(mixc(hzc, [255, 255, 255], 0.35), 0.6 * amb); g.lineWidth = Math.max(0.6, s * 0.035); g.beginPath(); g.ellipse(x, y, s * 0.88, s * 0.21 * up, 0, Math.PI * 1.15, Math.PI * 1.75); g.stroke(); } /* le dos mouillé tient un trait de ciel */
+  g.restore();
+  g.strokeStyle = foam; g.lineWidth = Math.max(0.6, s * 0.03); g.beginPath(); g.ellipse(x, y + 0.5, s * (0.6 + 0.5 * ph), s * 0.05, 0, 0, TAU); g.stroke(); /* l'eau qui s'ouvre autour */
+  if (B.form === "spout" && ph > 0.15 && ph < 0.7) { const u = (ph - 0.15) / 0.55, hgt = s * 1.4 * Math.sin(Math.PI * Math.min(1, u * 1.6)); g.fillStyle = css(mixc([10, 12, 16], [238, 242, 246], amb), 0.55 * (1 - u)); for (let j = 0; j < 5; j++) { g.beginPath(); g.ellipse(x - s * 0.3 + (j - 2) * s * 0.05 * u, y - hgt * (0.4 + 0.15 * j), s * (0.06 + 0.08 * u), s * (0.1 + 0.1 * u), 0, 0, TAU); g.fill(); } } /* le souffle : une colonne de brume qui monte et se défait */
+  m._seaAt = { x, y, s }; if (up > 0.2) m.seaSeen = true; /* on l'a vue : la description pourra la dire (src/entry.js, ext.seaSeen) */
 }
 /**
  * 2.9 : les oiseaux. Écrits, ou tirés par le monde pour les Âges nés après la 2.9 (vie, air, oxygène ; des arbres, une mer ou des hauteurs ; une graine sur deux).
@@ -1453,7 +1495,8 @@ function paint(g, m, t, o = {}) {
   if (m.garden) gardenGround(g, m, t, day, night, hzc, "hedge"); /* ESSAI : la haie devant les arbres et les ruines de l'horizon : leur pied est derrière elle */
   if (S.glow || S.moths) for (let p = 0, np = Math.round(clamp(12 * (S.amt ? (S.moths ? (S.amt.moths != null ? S.amt.moths : 1) : (S.amt.glow != null ? S.amt.glow : 1)) : 1), 3, 40)); p < np; p++) { const q = rng(S.seed + p * 13), x = q() * W, y = hz - q() * H * 0.12, a = 0.35 + 0.5 * Math.sin(TAU * (t * (S.moths ? 2 : 1) + q())); g.fillStyle = css(S.glow ? [140, 255, 190] : [255, 230, 160], Math.max(0, a) * 0.8); g.beginPath(); g.arc(x + (S.moths ? 5 * Math.sin(TAU * (t * 2 + q())) : 0), y + (S.moths ? 3 * Math.cos(TAU * (t * 3 + q())) : 0), 1.4, 0, TAU); g.fill(); }
   for (const e of m.eyes) { const o = Math.sin(TAU * (t * 1 + e.p)); if (o > -0.7) { g.fillStyle = css([255, 200, 90], 0.8); g.fillRect(e.x - 3, e.y, 1.6, 1.6); g.fillRect(e.x + 2, e.y, 1.6, 1.6); } }
-  if (m.shore) { g.save(); shorePath(g, m.shore.wet); g.clip(); reflect(g, m, t, 0.5 * (m.tintK || 1)); g.restore(); shoreEdge(g, m, t, night); if (S.tides) tidePass(g, m, k0.td, t, day, night, hzc); } else if (S.tides) m._tide = tideOf(S, k0.td); /* la mer sans rive : le ponton lit quand même la marée */ // le reflet ne couvre que l'eau ; l'écume par-dessus
+  if (!m.shore && S.tides) m._tide = tideOf(S, k0.td); /* la mer sans rive : le ponton lit quand même la marée */
+  if (m.shore) { g.save(); shorePath(g, m.shore.wet); g.clip(); reflect(g, m, t, 0.5 * (m.tintK || 1)); g.restore(); shoreEdge(g, m, t, night); if (S.tides) tidePass(g, m, k0.td, t, day, night, hzc); } // le reflet ne couvre que l'eau ; l'écume par-dessus
   else if (S.ice) reflect(g, m, t, 0.34); else if (S.water && S.waterGround !== false) reflect(g, m, t, (m.mirror ? 0.78 : 0.5) * (m.tintK || 1)); else if (S.soil === "salt" && !S.sand) reflect(g, m, t, 0.18); /* le sel luit comme un miroir terne */
   if (S.forms && S.forms.lagoon) lagoonReef(g, m, t, day, night, hzc); /* ESSAI 2.6 : le récif par-dessus le reflet */
   if (S.primeval && wetScene) primeval(g, m, t, day, night);
@@ -1462,6 +1505,7 @@ function paint(g, m, t, o = {}) {
   extraAt(g, m, t, "air");
   WON.wonderPass(g, m, t, "air", k0);
   scarPass(g, m, () => { scarAir(g, m, t); scarHeld(g, m, t); });
+  if (S.seaBeast && o.clock > 1e6) seaBeastPass(g, m, o.clock, day, night, hzc); /* 2.9 : la bête de la mer, rare (claude/DESIGN-pistes-8-nov.md, § 20) */
   if (S.birds) birdsPass(g, m, t, day, night, hzc); /* 2.9 : les oiseaux */
   weather(g, m, t);
   sunSignGround(g, m, sn, day, night, hzc); /* 2.5 : l'ombre de ce qui cadre, quand le soleil est dans le dos */
@@ -3721,4 +3765,4 @@ Object.assign(ART, {
   aeroplankton: { layer: "air", draw(g, m, t, e) { const { W, H, hz } = m; for (const it of e.items) for (let k = 0; k < 6; k++) { const x = (it.x + k * 41) % W, y = hz - H * (0.05 + 0.3 * frac(it.y + k * 0.17)); g.fillStyle = css([220, 240, 255], 0.2 + 0.4 * Math.max(0, Math.sin(TAU * t * 2 + k + it.p))); g.fillRect(x, y, 1, 1); } } },
 });
 
-module.exports = { tideOf, millOf, monsoonOf, freezeOf, weatherMemory, beastsAtHour, buildPondForTest: buildPond, solEn, supportOf, carried, SUPPORT, SUPPORT_OF, byDepthForTest: (m, e, a, b) => byDepth(m, e, a, b), sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
+module.exports = { tideOf, millOf, monsoonOf, freezeOf, weatherMemory, beastsAtHour, seaBeastOf, buildPondForTest: buildPond, solEn, supportOf, carried, SUPPORT, SUPPORT_OF, byDepthForTest: (m, e, a, b) => byDepth(m, e, a, b), sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };

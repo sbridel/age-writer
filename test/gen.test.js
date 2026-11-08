@@ -415,6 +415,12 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
   let world = 0, old = 0; for (let i = 0; i < 40; i++) { const a = an(["single_sun", "grass", "grove"]); if (G.sceneOf({ ...a, fresh29: true }, "Ois" + i).birds) world++; if (G.sceneOf(a, "Ois" + i).birds) old++; }
   ok(world > 5 && old === 0, "tirés par le monde pour les Âges nouveaux seulement (" + world + "/" + old + ")");
   ok(!G.sceneOf(an(["single_sun", "lava_world", "birds"]), "Oiseaux").birds, "pas sur un monde de lave"); }
+{ /* 2.9 : la bête de la mer */
+  let fresh = 0, old = 0, red = 0, fin = 0, hunters = 0; for (let i = 0; i < 60; i++) { const a = an(["single_sun", "water", "water", "beach", "shoal"]), h = an(["single_sun", "water", "water", "beach", "deep_hunter"]);
+    if (G.sceneOf({ ...a, fresh29: true }, "Mer" + i).seaBeast) fresh++; if (G.sceneOf(a, "Mer" + i).seaBeast) old++; if (G.sceneOf({ ...an(["single_sun", "water", "water", "red_water", "shoal"]), fresh29: true }, "Mer" + i).seaBeast) red++;
+    const H = G.sceneOf({ ...h, fresh29: true }, "Mer" + i).seaBeast; if (H) { hunters++; if (H.form === "fin") fin++; } }
+  ok(fresh > 8 && old === 0 && red === 0, "rare, pour les Âges nouveaux, jamais sur l'eau rouge (" + fresh + "/" + old + "/" + red + ")");
+  ok(hunters > fresh && fin === hunters, "le chasseur des eaux : plus souvent, et c'est l'aileron"); }
 { /* 2.8 : la mousson suit l'année ; rien sans saisons, ni sur un monde froid */
   const se = (u) => ({ u, snow: 0 }), M = (u, x = {}) => G.monsoonOf({ monsoon: true, season: se(u), ...x });
   ok(M(0.5).name === "rains" && M(0).name === "dry" && M(0.25).name === "between", "les pluies l'été, le sec l'hiver, l'entre-deux");
