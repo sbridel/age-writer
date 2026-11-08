@@ -462,4 +462,25 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
   ok(T(["green_sun", "asteroid_belt"]).tensions.some((t) => t.id === "realStar"), "un soleil vert ordinaire, même avec une ceinture : l'Art");
   ok(T(["white_dwarf", "violet_sun", "asteroid_belt"]).tensions.some((t) => t.id === "realStar"), "le violet ne change pas");
   ok(G.sceneOf(an(["white_dwarf", "grass"]), "Nb").suns === 1, "la naine blanche est le soleil de l'Âge"); }
+// 2.9 : les couleurs de la naine blanche, et le monde né des débris (claude/DESIGN-pistes-8-nov.md, § 32 bis)
+{ const { solve } = require("../src/physics/solve"), PM = require("../src/physics/model"), T = (ids, src = "") => solve({ ids, src, seed: "nb2" }), ten = (r) => r.tensions.map((t) => t.id);
+  ok(T(["white_dwarf", "blue_sun"]).w.wdKind === "young" && T(["white_dwarf", "blue_sun"]).w.starTemp > 15000, "sans débris, le bleu est la jeunesse : brûlante");
+  ok(T(["white_dwarf", "orange_sun"]).w.wdKind === "old" && T(["white_dwarf", "orange_sun"]).w.starTemp < 4300, "sans débris, l'orange est la vieillesse : froide");
+  ok(T(["white_dwarf", "blue_sun", "asteroid_belt"]).w.wdKind === "brine" && T(["white_dwarf", "blue_sun", "asteroid_belt"]).w.starTemp < 4300, "avec débris, le bleu est le sel à l'extrême : froide");
+  ok(T(["white_dwarf", "red_sun", "asteroid_field"]).w.wdKind === "carbon", "avec débris, le rouge est le carbone");
+  ok(T(["white_dwarf", "green_sun", "planet_rings"]).w.wdKind === "salt", "avec débris, le vert est le sel");
+  for (const ids of [["white_dwarf", "blue_sun"], ["white_dwarf", "orange_sun"], ["white_dwarf", "blue_sun", "asteroid_belt"], ["white_dwarf", "red_sun", "asteroid_field"], ["white_dwarf", "green_sun", "planet_rings"]]) ok(!ten(T(ids)).some((id) => id === "realStar" || id === "deadStarColour"), "aucune de ces couleurs ne coûte d'Art : " + ids.join(" "));
+  ok(ten(T(["white_dwarf", "red_sun"])).includes("deadStarColour"), "le rouge sans débris est de l'Art");
+  ok(ten(T(["white_dwarf", "violet_sun", "asteroid_belt"])).includes("realStar") && !T(["white_dwarf", "violet_sun", "asteroid_belt"]).w.wdKind, "le violet reste de l'Art");
+  const pink = PM.wdTintOf("carbon", 5500), red = PM.wdTintOf("carbon", 4300); ok(red[0] > red[1] + 100 && pink[1] > red[1] && pink[2] > red[2], "le carbone glisse du rose au rouge en refroidissant");
+  ok(PM.wdTintOf("salt", 4200).join() === "221,255,184", "la chartreuse est la vraie");
+  const rb = T(["white_dwarf", "green_sun", "asteroid_belt"]).w; ok(rb.reborn && rb.age <= 1 && rb.age >= 0.1, "né des débris : un monde jeune");
+  ok(!T(["white_dwarf"]).w.reborn, "sans débris : un survivant, pas de contrainte");
+  ok(ten(T(["white_dwarf", "green_sun", "asteroid_belt"], "age: 4")).includes("rebornWorld"), "un âge écrit trop grand : la contradiction");
+  ok(!ten(T(["white_dwarf", "green_sun", "asteroid_belt"], "age: 0.6")).includes("rebornWorld"), "un âge écrit jeune : rien à redire"); }
+{ const { analyseAgeBase } = require("../src/engine/analysis"), P = require("../src/engine/prose");
+  const txt = (ids, place) => P.describeAge(analyseAgeBase(ids.join("\n"), { seed: "x" }).resolved, { seed: "x", place });
+  ok(/salt|eaten|digested/.test(txt(["white_dwarf", "green_sun"], { wdKind: "salt", reborn: false })), "la phrase du sel");
+  ok(/rubble|wreck|formed again/.test(txt(["white_dwarf", "green_sun"], { wdKind: "salt", reborn: true })), "la phrase du monde né des débris");
+  ok(!/white point|white ember/.test(txt(["white_dwarf", "red_sun"], { wdKind: "carbon", reborn: false })), "la naine blanche ne se dit plus blanche quand elle est rouge"); }
 console.log(`gen.test.js : ${n} vérifications OK`);
