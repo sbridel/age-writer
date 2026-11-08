@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.10.4 — The crystal waits (2026-11-08)
+
+### Fixed
+- **The crystal unfolded the light of a star not yet found.** It now answers only once the book's star is charted (the Great Zero found and its system recorded); until then the stone stays dark, and says so.
+
 ## 2.10.3 — The crystal on its arm (2026-11-08)
 
 ### Added
