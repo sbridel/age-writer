@@ -49,10 +49,11 @@ function viewOf(S, ids, wd) {
   const r2 = q(), r3 = q(), r4 = q(), r5 = q(), r6 = q(); /* toujours tirés, dans le même ordre : le reste du lieu ne bouge pas */
   const NEXT = { high: ["slope", "low"], slope: ["high", "plain"], cover: ["plain"], cave: ["cover", "plain"], plain: [], low: [] };
   let kind = ok[want] ? want : (NEXT[want].find((k) => ok[k]) || "plain");
-  if (has("cave_fissure") && cave && r6 < 0.3) kind = "cave"; /* la fissure du retour est au fond d'une caverne : on y arrive (une fois sur trois : 2.5, la grotte pesait 16 % des fenêtres, 11 % maintenant) */
-  const span = { low: [0.76, 0.12], high: [0.42, 0.16], cave: [0.55, 0.17], cover: [0.62, 0.14], slope: [0.52, 0.2], plain: [0.6, 0.16] }[kind], hz = span[0] + span[1] * r2; /* des plages larges : deux vues du même genre se ressemblent moins */
+  if (has("cave_fissure") && cave && r6 < 0.3) kind = "cave";
+  if (S.fresh29 && S.pier && S.water && S.waterGround === true && S.shore && !S.ice && !S.lava && r4 < 0.5) kind = "pier"; /* 2.9 : l'arrivée par l'eau, au bout du ponton (claude/DESIGN-pistes-8-nov.md, § 18) ; les Âges nés avant la 2.9 n'en changent pas */ /* la fissure du retour est au fond d'une caverne : on y arrive (une fois sur trois : 2.5, la grotte pesait 16 % des fenêtres, 11 % maintenant) */
+  const span = { low: [0.76, 0.12], high: [0.42, 0.16], cave: [0.55, 0.17], cover: [0.62, 0.14], slope: [0.52, 0.2], plain: [0.6, 0.16], pier: [0.5, 0.1] }[kind], hz = span[0] + span[1] * r2; /* des plages larges : deux vues du même genre se ressemblent moins */
   const near = kind === "plain" && !sea && r3 < 0.35 ? (S.trees > 0 ? "trunk" : S.ruins.length ? "column" : "boulder") : null; /* de plain-pied, parfois un élément du monde tout proche */
-  void r4; void r5;
+  void r5;
   const mat = S.ice || S.world === "frozen" ? "ice" : S.lava ? "lava" : has("basalt", "basalt_columns") ? "basalt" : has("chalk", "karst") ? "chalk" : "rock";
   return { kind, hz, near, side: q() < 0.5 ? -1 : 1, mat, frame: S.trees > 0 || S.soil === "forest" ? "trees" : "arch", pts: Array.from({ length: 24 }, () => q()) };
 }
@@ -158,6 +159,7 @@ function sceneOf(a, name = "", blocks = null) {
     if ((S.sand || wd === "desert") && S.mon.wet > 0.25) S.bloom = S.mon.wet; } /* le désert verdit */
   S.loop = !!(a.carry && a.carry.loop); /* la boucle de Torus : deux Âges qui se portent l'un l'autre forment un monde en anneau (src/torus.js) */
   if (S.loop) { S.loopFam = lp && lp.what !== "sky" ? lp.what : "stone"; S.loopKey = String(name) + "|" + String((lp && lp.from) || ""); S.torus = TOR.formOf(S.loopKey); }
+  S.fresh29 = !!a.fresh29; /* 2.9 : l'Âge est né après la 2.9 (src/entry.js, ext.old29) */
   S.view = viewOf(S, ids, wd); /* ESSAI : le point de liaison, d'où l'on regarde */
   { const fq = rng((S.seed ^ 0xface5) >>> 0), x = fq(); S.view.face = x < 0.45 ? "eq" : x < 0.65 ? "pole" : x < 0.83 ? "east" : "west"; S.view.lat = fq(); S.view.fx = fq(); } /* ESSAI : vers où regarde le point de liaison (l'équateur, le pôle, le levant, le couchant), et à quelle latitude */
   return S;
@@ -356,8 +358,9 @@ function build(S, W, H) {
   const qf = rng((S.seed ^ 0xa16ae) >>> 0), fedGlow = S.fed ? Array.from({ length: 16 }, () => ({ x: W * qf(), y: hz + (H - hz) * (0.08 + 0.8 * qf()), r: H * (0.02 + 0.04 * qf()), p: qf() })) : null; /* graine propre */
   const won = WON.buildWonders(S, W, H, hz); /* les merveilles : graine propre, un Âge sans merveille ne bouge pas */
   const keep = placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave, fis);
-  const path = buildPath({ S, W, H, hz, shore, pond, cones, cave, riverGeo: riverGeo(S), ruins, det, extras }); /* ESSAI (6 nov.) : le chemin (claude/DESIGN-le-chemin.md) */
-  return { keep, path, riverGeo: riverGeo(S), craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, giantP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
+  const pierV = S.view && S.view.kind === "pier" && shore ? pierArrive(S, W, H, hz, shore) : null; /* 2.9 : le ponton sous nos pieds */
+  const path = buildPath({ S, W, H, hz, shore, pond, cones, cave, riverGeo: riverGeo(S), ruins, det, extras, pierV }); /* ESSAI (6 nov.) : le chemin (claude/DESIGN-le-chemin.md) */
+  return { keep, path, pierV, riverGeo: riverGeo(S), craters, wind, wallLumps, S, cave, won, fedGlow, ...(won && won.orphan ? { noSun: true } : {}), rich, scar, extras, fg, det, belt, field, ringsP, giantP, cometP, remn, W, H, hz, pal, ridges, cones, stars, clouds, drops, motes, treeKind, trees, ruins, eyes, water, fis, lava, shore, night, sea, wx, meadow, front, pond, garden };
 }
 
 /**
@@ -582,8 +585,9 @@ function buildPath(m, via) {
      de la grotte, des marches montent vers l'ouverture et le chemin reprend dehors (les mêmes tirages que viewFrame) */
   if (V.kind === "slope") { const footX = W * (0.4 + 0.4 * (PV[1] || 0.5)); xs = side < 0 ? Math.min(W * 0.9, footX + W * 0.03) : Math.max(W * 0.1, W - footX - W * 0.03); }
   if (hi) { const y0 = H * (0.84 + 0.05 * (PV[0] || 0.5)), u = clamp(xs / W), xl = xs; ys = y0 - (side < 0 ? 1 - u : u) * H * 0.06 + 2; lip = { x0: xl, y0: H + 2, x1: xl + (q() - 0.5) * W * 0.04, y1: ys }; }
+  if (V.kind === "pier" && m.pierV) { xs = m.pierV.x1; ys = m.pierV.y1 - 2; } /* 2.9 : le chemin part du bout du ponton, sur la rive */
   if (cv) { const cx = W * (0.5 + 0.08 * side * (PV[0] || 0.5)), yb = H * (0.86 + 0.06 * (PV[4] || 0.5)); xs = cx + (q() - 0.5) * W * 0.12; ys = yb - 1; lip = { x0: cx + (xs - cx) * 0.3, y0: H + 2, x1: xs, y1: yb + 1 }; }
-  { const y0 = Math.min(H - 4, ys), lim = cv ? W * 0.32 : W / 2; if (!hi && !dryAt(m, xs, y0)) for (let d = W / 64; d < lim; d += W / 64) { const x = [xs - d, xs + d].find((x) => x > W * 0.05 && x < W * 0.95 && dryAt(m, x, y0) && dryAt(m, x, y0 - (cv ? D * 0.05 : D * 0.15))); if (x != null) { xs = x; if (cv) lip.x1 = x; break; } } if (cv) lip.x0 = lip.x1 + (W / 2 - lip.x1) * 0.25; } /* on part du sec, jamais de l'eau (de la grotte : on sort sur la rive) */
+  if (V.kind !== "pier") { const y0 = Math.min(H - 4, ys), lim = cv ? W * 0.32 : W / 2; if (!hi && !dryAt(m, xs, y0)) for (let d = W / 64; d < lim; d += W / 64) { const x = [xs - d, xs + d].find((x) => x > W * 0.05 && x < W * 0.95 && dryAt(m, x, y0) && dryAt(m, x, y0 - (cv ? D * 0.05 : D * 0.15))); if (x != null) { xs = x; if (cv) lip.x1 = x; break; } } if (cv) lip.x0 = lip.x1 + (W / 2 - lip.x1) * 0.25; } /* on part du sec, jamais de l'eau (de la grotte : on sort sur la rive) */
   let kind = works.length || detOn || ruins.length ? "built" : "trail", xe, ye, fade = false;
   const BUILTK = new Set(["tower", "lighthouse", "stairs", "mill"]), target = via || works.find((rn) => BUILTK.has(rn.k)) || works.find((rn) => rn.k !== "bridge") || works[0] || ruins[0];
   if (target) { const half = W * 0.03 * (target.k3 || 1); xe = target.x + (xs < target.x ? -half : half) * 0.6; ye = (target.by || hz) + 2 + D * 0.01; if (target.k === "bridge") { xe = target.x - W * 0.19 * (target.k3 || 1) * (xs < target.x ? 1 : -1) * 0.8; ye = (target.by || hz) + 2; } }
@@ -860,14 +864,16 @@ function buildMeadow(S, W, H, hz) {
  */
 function buildShore(S, W, H, hz) {
   const q = rng((S.seed ^ 0x5407e) >>> 0), n = valueNoise((q() * 4294967296) >>> 0), D = H - hz, N = 48;
-  const pick = q(), mode = S.tides ? (pick < 0.65 ? "side" : pick < 0.9 ? "near" : "far") : pick < 0.55 ? "side" : pick < 0.8 ? "far" : "near", /* 2.8 : la marée écrite attire la rive près de soi, là où elle se voit */ freq = 1.6 + q() * 2.6, wob = 0.6 + q() * 0.8;
+  const pick = q(), mode = S.shoreForce ? S.shoreForce.mode : S.view && S.view.kind === "pier" ? "far" : S.tides ? (pick < 0.65 ? "side" : pick < 0.9 ? "near" : "far") : pick < 0.55 ? "side" : pick < 0.8 ? "far" : "near", /* 2.8 : la marée écrite attire la rive près de soi, là où elle se voit */ freq = 1.6 + q() * 2.6, wob = 0.6 + q() * 0.8;
   const out = { kind: S.shore, mode, line: [], land: [], wet: [], side: q() < 0.5 ? -1 : 1, x0: W * (0.28 + 0.44 * q()), x1: W * (0.08 + 0.84 * q()), f0: 0 };
+  if (S.shoreForce && S.shoreForce.side) out.side = S.shoreForce.side; /* 2.9 : le périscope du ponton : la rive du côté de la terre */
   if (mode === "side") {
     for (let k = 0; k <= N; k++) { const u = k / N, w = (fbm(n, u * freq) - 0.5) * W * 0.3 * wob * (0.12 + u); out.line.push([lerp(out.x0, out.x1, Math.pow(u, 0.85)) + w, hz + D * u]); }
     const e = out.side < 0 ? -2 : W + 2, f = out.side < 0 ? W + 2 : -2;
     out.land = [[e, hz], ...out.line, [e, H + 2]]; out.wet = [[f, hz], ...out.line, [f, H + 2]];
   } else {
     out.f0 = mode === "far" ? 0.1 + 0.16 * q() : 0.38 + 0.26 * q();
+    if (S.view && S.view.kind === "pier") out.f0 = 0.22 + 0.5 * (out.f0 - 0.1); /* 2.9 : au bout du ponton, la terre devant, à quelques pas */
     for (let k = 0; k <= N; k++) { const u = k / N, v = out.f0 + (fbm(n, u * freq * 1.5) - 0.5) * 0.16 * wob; out.line.push([-2 + (W + 4) * u, hz + D * clamp(v, 0.04, 0.9)]); }
     const top = [[W + 2, hz], [-2, hz]], bottom = [[W + 2, H + 2], [-2, H + 2]];
     if (mode === "far") { out.land = [...out.line, ...top]; out.wet = [...out.line, ...bottom]; } else { out.land = [...out.line, ...bottom]; out.wet = [...out.line, ...top]; }
@@ -1396,14 +1402,14 @@ function paint(g, m, t, o = {}) {
   else if (S.ice) reflect(g, m, t, 0.34); else if (S.water && S.waterGround !== false) reflect(g, m, t, (m.mirror ? 0.78 : 0.5) * (m.tintK || 1)); else if (S.soil === "salt" && !S.sand) reflect(g, m, t, 0.18); /* le sel luit comme un miroir terne */
   if (S.forms && S.forms.lagoon) lagoonReef(g, m, t, day, night, hzc); /* ESSAI 2.6 : le récif par-dessus le reflet */
   if (S.primeval && wetScene) primeval(g, m, t, day, night);
-  if (S.pier) pierOnWater(g, m, t, day, night, hzc); /* 2.6 : le ponton, par-dessus le reflet */
+  if (S.pier && !m.pierV) pierOnWater(g, m, t, day, night, hzc); /* 2.9 : au bout du ponton, il est sous nos pieds (viewFrame) */ /* 2.6 : le ponton, par-dessus le reflet */
   if (m.fedGlow && (m.shore || (S.water && !S.ice)) && night > 0.05) fedAlgae(g, m, t, night);
   extraAt(g, m, t, "air");
   WON.wonderPass(g, m, t, "air", k0);
   scarPass(g, m, () => { scarAir(g, m, t); scarHeld(g, m, t); });
   weather(g, m, t);
   sunSignGround(g, m, sn, day, night, hzc); /* 2.5 : l'ombre de ce qui cadre, quand le soleil est dans le dos */
-  const framed = S.view && ((S.view.kind !== "plain" && S.view.kind !== "low") || S.view.near);
+  const framed = S.view && ((S.view.kind !== "plain" && S.view.kind !== "low") || S.view.near); /* 2.9 : le ponton (pier) passe par viewFrame */
   if (framed) { if (S.ice) frost(g, m, t, night); viewFrame(g, m, t, hzc, day, night); } /* ESSAI : le point de liaison cadre la vue (le givre est dehors, pas sur la roche) */
   else { const lf = ['leaves', 'vines', 'tallgrass', 'branches'].includes(m.fg.kind) && (metalFilter(S) || (m.fg.kind !== 'branches' && leafFilter(S))); if (lf) { g.save(); g.filter = lf; } foreground(g, m, t, hzc); if (lf) g.restore(); if (S.ice) frost(g, m, t, night); }
   if (S.phys && S.phys.light < 0.35 && !S.blackSun) { g.fillStyle = css([4, 5, 12], 0.45 * (1 - S.phys.light / 0.35) * (0.4 + 0.6 * day)); g.fillRect(0, 0, W, H); } // peu de lumière visible au sol : un jour terne
@@ -1671,7 +1677,7 @@ function lowFlora(g, m, t, day, night) {
   const { W, H, hz, S } = m, kind = floraKindOf(S), q = rng((S.seed ^ 0xf10a) >>> 0), amb = 0.3 + 0.7 * day, C = (c, a) => css(mixc([5, 6, 12], leafC(S, c), amb), a), n = 10 + Math.floor(q() * 10);
   const pts = Array.from({ length: n }, () => { const z = 1.15 + q() * 4, y = hz + (H - hz) / z; return { x: q() * W, y, k: 3.4 / z, z, r: q() }; }).sort((a, b) => b.z - a.z);
   if (S.shore || (S.water && S.waterGround === false)) for (let k = 0; k < 6; k++) { const x = W * q(), y = hz + (H - hz) * (0.2 + 0.2 * q()); g.strokeStyle = C([60, 80, 40]); g.lineWidth = 0.9; for (let j = 0; j < 5; j++) { g.beginPath(); g.moveTo(x + j * 2, y); g.quadraticCurveTo(x + j * 2 + 1, y - 6, x + j * 2 + (j - 2), y - 10 - q() * 5); g.stroke(); } } /* des roseaux sur la rive */
-  for (const P of pts) { const k = P.k;
+  for (const P of pts) { const k = P.k; if (kind !== "seagrass" && !dryAt(m, P.x, P.y)) continue; /* 2.9 : la flore basse ne pousse pas sur l'eau */
     if (kind === "pale") { for (let j = 0; j < 3; j++) { const x = P.x + (j - 1) * 3 * k, h = (2 + (j % 2) * 2) * k; g.strokeStyle = C([196, 192, 180], 0.8); g.lineWidth = Math.max(0.5, 0.6 * k); g.beginPath(); g.moveTo(x, P.y); g.lineTo(x, P.y - h); g.stroke(); g.fillStyle = C([226, 222, 210], 0.85); g.beginPath(); g.ellipse(x, P.y - h, 1.6 * k, 0.8 * k, 0, Math.PI, TAU); g.fill(); } continue; } /* sans lumière, des champignons pâles, pas de verdure */
     if (kind === "cactus") { if (P.r < 0.5) { const h = 18 * k; g.fillStyle = C([70, 110, 60]); g.fillRect(P.x - 2 * k, P.y - h, 4 * k, h); g.fillRect(P.x - 7 * k, P.y - h * 0.65, 3 * k, h * 0.3); g.fillRect(P.x - 7 * k, P.y - h * 0.85, 3 * k, h * 0.25); g.fillRect(P.x + 4 * k, P.y - h * 0.5, 3 * k, h * 0.25); g.fillRect(P.x + 4 * k, P.y - h * 0.75, 3 * k, h * 0.3); } else { g.fillStyle = C([120, 110, 60]); g.beginPath(); g.ellipse(P.x, P.y - 3 * k, 5 * k, 3.5 * k, 0, 0, TAU); g.fill(); g.strokeStyle = C([170, 150, 90]); g.lineWidth = 0.6; for (let j = -2; j <= 2; j++) { g.beginPath(); g.moveTo(P.x + j * 2 * k, P.y); g.lineTo(P.x + j * 3 * k, P.y - 7 * k); g.stroke(); } } } /* saguaros et touffes sèches */
     else if (kind === "lichen") { g.fillStyle = C(P.r < 0.5 ? [150, 160, 90] : [190, 140, 70], 0.8); for (let j = 0; j < 5; j++) { g.beginPath(); g.ellipse(P.x + (j - 2) * 3 * k, P.y - 0.5, 3 * k * (0.6 + 0.4 * ((j * 7) % 3) / 3), 1.2 * k, 0, 0, TAU); g.fill(); } if (P.r > 0.7) { g.fillStyle = C([70, 110, 50]); g.beginPath(); g.ellipse(P.x, P.y - 1.5 * k, 5 * k, 3 * k, 0, Math.PI, TAU); g.fill(); g.fillStyle = C([230, 220, 140]); for (let j = 0; j < 4; j++) g.fillRect(P.x + (j - 1.5) * 2 * k, P.y - 3.5 * k, 1, 1); } } /* lichens jaunes et orangés, coussins de mousse fleuris */
@@ -1785,6 +1791,40 @@ function cliffWall(g, m, t, day, night, hzc) {
 }
 /** 2.6 : le ponton. Des planches sur des pieux qui s'avancent dans l'eau, en perspective, depuis le rivage (ou depuis nos pieds, sur une mer
  *  sans rive) ; un poteau d'amarrage au bout, une lanterne la nuit, les pieux qui se reflètent. */
+/** 2.9 : l'arrivée par l'eau. Le ponton part de sous nos pieds (en bas du cadre) vers la rive, devant ; une barque amarrée, parfois. Graine propre. */
+function pierArrive(S, W, H, hz, sh) {
+  const q = rng((S.seed ^ 0xd0c4) >>> 0), x0 = W * (0.5 + (q() - 0.5) * 0.14), x1 = x0 + (q() - 0.5) * W * 0.18, L = sh.line;
+  let y1 = hz + (H - hz) * 0.3; for (let k = 1; k < L.length; k++) if (L[k][0] >= x1) { const a = L[k - 1], b = L[k], u = (x1 - a[0]) / Math.max(1e-6, b[0] - a[0]); y1 = lerp(a[1], b[1], u); break; }
+  const boat = q() < 0.45 ? { side: q() < 0.5 ? -1 : 1, u: 0.12 + 0.25 * q(), tint: q() } : null; /* la barque : parfois (choix de l'auteur) */
+  return { x0, y0: H + 2, x1, y1: y1 + 1, boat, lamp: q() < 0.5 ? -1 : 1 };
+}
+/** 2.9 : le ponton sous nos pieds, en perspective : les planches, les longerons, les pieux dans l'eau (à nu à marée basse), le poteau et sa lanterne, la barque. */
+function pierUnderfoot(g, m, t, day, night, hzc) {
+  const { W, H, hz, pierV: P } = m, D = H - hz, wood = mixc(mixc([118, 88, 60], hzc, 0.12), [6, 6, 10], 0.12 + 0.68 * night), dark = mixc(wood, [0, 0, 0], 0.45), lite = mixc(wood, [255, 244, 222], 0.18 * day);
+  const z0 = D / Math.max(1, P.y0 - hz), z1 = D / Math.max(1, P.y1 - hz), wb = W * 0.3; /* la demi-largeur sous nos pieds */
+  const at = (s) => { const z = lerp(z0, z1, s), y = hz + D / z, u = (P.y0 - y) / Math.max(1, P.y0 - P.y1); return { x: lerp(P.x0, P.x1, u), y, w: (wb * z0) / z }; }, N = 40;
+  const ebb = m._tide && m._tide.amp ? Math.max(0, -m._tide.level) * m._tide.amp : 0, flow = m._tide && m._tide.amp ? Math.max(0, m._tide.level) * m._tide.amp : 0;
+  for (let k = 0; k <= 10; k++) { const s = Math.pow(k / 10, 1.4), p = at(s), ph = p.w * (0.28 + 0.5 * ebb - 0.12 * flow), pw = Math.max(1.5, p.w * 0.05); /* les pieux, et leur reflet */
+    for (const sd of [-1, 1]) { const x = p.x + sd * p.w * 0.94 - pw / 2; g.fillStyle = css(dark); g.fillRect(x, p.y, pw, ph); g.fillStyle = css(dark, 0.28); g.fillRect(x, p.y + ph, pw, ph * 0.9); g.strokeStyle = css([255, 255, 255], 0.18 * (1 - night)); g.lineWidth = Math.max(0.6, pw * 0.15); g.beginPath(); g.moveTo(x - pw * 0.4, p.y + ph); g.lineTo(x + pw * 1.4, p.y + ph); g.stroke(); } }
+  if (P.boat) { const b = at(P.boat.u), sd = P.boat.side, bob = Math.sin(t * TAU * 2 + P.boat.u * 9) * b.w * 0.02, bw = b.w * 0.95, bh = bw * 0.22, bx = b.x + sd * (b.w * 1.08 + bw * 0.66), by = b.y + b.w * 0.08 + bob; /* la barque, amarrée, qui danse un peu */
+    const hull = mixc(mixc(P.boat.tint < 0.5 ? [92, 60, 40] : [70, 82, 92], hzc, 0.1), [6, 6, 10], 0.15 + 0.65 * night);
+    g.fillStyle = css([0, 0, 0], 0.18); g.beginPath(); g.ellipse(bx, by + bh * 0.9, bw * 0.62, bh * 0.35, 0, 0, TAU); g.fill();
+    g.fillStyle = css(hull); g.beginPath(); g.moveTo(bx - bw * 0.62, by - bh * 0.25); g.quadraticCurveTo(bx - bw * 0.5, by + bh * 0.7, bx, by + bh * 0.75); g.quadraticCurveTo(bx + bw * 0.5, by + bh * 0.7, bx + bw * 0.62, by - bh * 0.35); g.closePath(); g.fill();
+    g.fillStyle = css(mixc(hull, [0, 0, 0], 0.5)); g.beginPath(); g.ellipse(bx, by - bh * 0.28, bw * 0.6, bh * 0.28, 0, 0, TAU); g.fill(); g.fillStyle = css(mixc(hull, [255, 240, 220], 0.15 * day)); for (const u of [-0.25, 0.2]) g.fillRect(bx + u * bw, by - bh * 0.45, bw * 0.08, bh * 0.35); /* le dedans, deux bancs */
+    g.strokeStyle = css(mixc([150, 128, 92], [6, 6, 10], 0.7 * night)); g.lineWidth = Math.max(0.8, W / 700); g.beginPath(); g.moveTo(bx - sd * bw * 0.55, by - bh * 0.3); g.quadraticCurveTo((bx + b.x + sd * b.w) / 2, by + bh * 0.2, b.x + sd * b.w * 0.94, b.y + 1); g.stroke(); } /* l'amarre */
+  const Lp = [], Rp = []; for (let k = 0; k <= N; k++) { const p = at(k / N); Lp.push([p.x - p.w, p.y]); Rp.push([p.x + p.w, p.y]); }
+  const deck = (pts) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); };
+  deck([...Lp, ...Rp.slice().reverse()]); const dg = g.createLinearGradient(0, P.y1, 0, H); dg.addColorStop(0, css(mixc(wood, hzc, 0.25))); dg.addColorStop(1, css(lite)); g.fillStyle = dg; g.fill(); /* le plancher */
+  const qs = rng((m.S.seed ^ 0xb0a4d) >>> 0); for (let k = 1; k < 60; k++) { const s = k / 60, p = at(s), w = p.w * (0.97 + 0.03 * qs()); g.strokeStyle = css(dark, 0.55); g.lineWidth = Math.max(0.5, p.w * 0.012); g.beginPath(); g.moveTo(p.x - w, p.y); g.lineTo(p.x + w, p.y); g.stroke();
+    if (qs() < 0.12 && p.w > W * 0.02) { g.fillStyle = css(dark, 0.6); g.fillRect(p.x + (qs() - 0.5) * p.w * 1.6, p.y - Math.max(1, p.w * 0.02), Math.max(1, p.w * 0.015), Math.max(1, p.w * 0.015)); } } /* les planches, quelques clous */
+  for (const sd of [-1, 1]) { g.strokeStyle = css(dark, 0.85); g.lineWidth = Math.max(1, W / 220); g.beginPath(); (sd < 0 ? Lp : Rp).forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke(); } /* les longerons */
+  const near = at(0.04), px = near.x + P.lamp * near.w * 0.9, pw = Math.max(3, W * 0.016), top = H - D * 0.62; /* le poteau d'amarrage, sa lanterne */
+  g.fillStyle = css(dark); g.fillRect(px - pw / 2, top, pw, H - top); g.fillStyle = css(lite, 0.5); g.fillRect(px - pw / 2, top, pw * 0.3, H - top);
+  g.strokeStyle = css(mixc([150, 128, 92], [6, 6, 10], 0.7 * night)); g.lineWidth = Math.max(1, W / 500); g.beginPath(); g.moveTo(px, top + D * 0.12); for (let k = 0; k < 4; k++) g.arc(px, top + D * 0.14 + k * 3, pw * 0.62, 0, Math.PI); g.stroke(); /* la corde enroulée */
+  const lx = px - P.lamp * pw * 1.2, ly = top - pw * 0.4; g.strokeStyle = css(dark); g.lineWidth = Math.max(1, pw * 0.2); g.beginPath(); g.moveTo(px, top + 2); g.lineTo(px, top - pw * 0.6); g.lineTo(lx, top - pw * 0.6); g.lineTo(lx, ly); g.stroke();
+  g.fillStyle = css(night > 0.25 ? [255, 206, 128] : mixc(dark, [200, 190, 160], 0.4), 0.95); g.fillRect(lx - pw * 0.55, ly, pw * 1.1, pw * 1.4); g.strokeStyle = css(dark); g.strokeRect(lx - pw * 0.55, ly, pw * 1.1, pw * 1.4);
+  if (night > 0.25) { const R = D * 0.5, lg = g.createRadialGradient(lx, ly, 1, lx, ly, R); lg.addColorStop(0, css([255, 200, 120], 0.38 * night)); lg.addColorStop(1, css([255, 200, 120], 0)); g.fillStyle = lg; g.fillRect(lx - R, ly - R, 2 * R, 2 * R); }
+}
 function pierOnWater(g, m, t, day, night, hzc) {
   const { W, H, hz, S } = m, D = H - hz, q = rng((S.seed ^ 0x9e7) >>> 0), sh = m.shore;
   if (!S.water || S.ice || S.lava || (S.waterGround !== true && !sh)) return;
@@ -3167,6 +3207,14 @@ function carvedSteps(g, m, L, rock, hzc, day) {
 }
 function viewFrame(g, m, t, hzc, day, night) {
   const { W, H, hz, S, pal } = m, V = S.view, P = V.pts, sd = V.side, X = (x) => (sd < 0 ? x : W - x), lit = 0.2 + 0.8 * day * (1 - 0.7 * night);
+  if (V.kind === "pier") { if (m.pierV) pierUnderfoot(g, m, t, day, night, hzc); return; }
+  if (V.kind === "pierEnd") { /* 2.9 : le périscope, derrière soi au bout du ponton : les dernières planches, le bout, l'eau au-delà */
+    const wood = mixc(mixc([118, 88, 60], hzc, 0.12), [6, 6, 10], 0.12 + 0.68 * night), dark = mixc(wood, [0, 0, 0], 0.45), y1 = H - (H - hz) * 0.16, xl = W * 0.12, xr = W * 0.88;
+    g.fillStyle = css(dark, 0.3); g.fillRect(W * 0.16, y1 + 3, W * 0.68, (H - hz) * 0.05); /* l'ombre du bout sur l'eau */
+    g.fillStyle = css(mixc(wood, [255, 244, 222], 0.15 * day)); g.beginPath(); g.moveTo(-W * 0.3, H + 2); g.lineTo(xl, y1); g.lineTo(xr, y1); g.lineTo(W * 1.3, H + 2); g.closePath(); g.fill();
+    g.strokeStyle = css(dark, 0.55); g.lineWidth = Math.max(0.6, W / 700); for (let k = 1; k < 7; k++) { const u = Math.pow(k / 7, 1.6), y = lerp(y1, H, u), x0 = lerp(xl, -W * 0.3, u), x1 = lerp(xr, W * 1.3, u); g.beginPath(); g.moveTo(x0, y); g.lineTo(x1, y); g.stroke(); }
+    g.fillStyle = css(dark); g.fillRect(xl, y1 - 1, xr - xl, Math.max(2, (H - hz) * 0.02)); for (const x of [xl, xr - Math.max(3, W * 0.012)]) g.fillRect(x, y1 - (H - hz) * 0.08, Math.max(3, W * 0.012), (H - hz) * 0.08); /* la poutre du bout, deux bittes */
+    return; }
   const dk = (c, k = 1) => mixc([4, 5, 9], c, lit * k), path = (pts) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); };
   if (V.kind === "high") { /* on se tient au bord : une lèvre de roche en bas, la vue plonge */
     const base = dk(mixc(pal.rock, [70, 64, 58], 0.5), 0.55), y0 = H * (0.84 + 0.05 * P[0]), pts = [[0, H]];

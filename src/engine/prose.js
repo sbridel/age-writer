@@ -411,6 +411,7 @@ const PLACE_PROSE = {
   high: ["you arrive on {height}, the land spread out below", "the link sets you on {height}, with the whole place at your feet"],
   slope: ["you arrive {slope}, the ground falling away to one side", "you come through {slope}, where the land leans and you lean with it"],
   cover: ["you arrive {cover}, looking out from the shade", "the link sets you {cover}, half hidden, the place bright beyond"],
+  pier: ["you arrive at the end of a pier, the water moving under the boards", "the link sets you on the planks of a landing, the shore a short walk ahead"],
   cave: ["you arrive at the mouth of {cave}, the light ahead", "the link leaves you just inside {cave}, the dark at your back"],
 };
 const GROUND_WORDS = {

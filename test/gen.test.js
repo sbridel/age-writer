@@ -388,6 +388,10 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
   const S = { seed: 3, cycle: "steady", moon: true }, lv = Array.from({ length: 24 }, (_, i) => G.tideOf(S, i / 24).level);
   ok(Math.min(...lv) < -0.8 && Math.max(...lv) > 0.8, "avec une lune : la mer monte et descend dans la journée");
   ok(G.tideOf({ ...S, cycle: "frozen" }, 0.1).level === G.tideOf({ ...S, cycle: "frozen" }, 0.6).level, "un cycle figé fige la marée"); }
+{ /* 2.9 : l'arrivée par l'eau, seulement pour les Âges nés après la 2.9 */
+  const ids = ["single_sun", "water", "water", "beach", "pier", "tower"]; let fresh = 0, old = 0, built = 0;
+  for (let i = 0; i < 60; i++) { const a = an(ids), S = G.sceneOf({ ...a, fresh29: true }, "Ponton" + i); if (S.view.kind === "pier") { fresh++; if (!built++) { const m = G.build(S, 640, 360); ok(!!m.pierV && m.pierV.y1 < 360 && m.shore.mode === "far", "au bout du ponton, la terre est devant"); } } if (G.sceneOf(a, "Ponton" + i).view.kind === "pier") old++; }
+  ok(fresh > 10 && old === 0, "le ponton est un point d'arrivée des Âges nouveaux, jamais des anciens (" + fresh + "/" + old + ")"); }
 { /* 2.8 : la mousson suit l'année ; rien sans saisons, ni sur un monde froid */
   const se = (u) => ({ u, snow: 0 }), M = (u, x = {}) => G.monsoonOf({ monsoon: true, season: se(u), ...x });
   ok(M(0.5).name === "rains" && M(0).name === "dry" && M(0.25).name === "between", "les pluies l'été, le sec l'hiver, l'entre-deux");

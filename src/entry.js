@@ -138,6 +138,7 @@ module.exports = function build(Base, core, AGEX) {
         const key = o && o.seed ? guard("graine", () => this.ageNameOfSeed(o.seed)) || o.seed : null;
         let out = guard("adjust", () => (this.ext.law && key ? adjustAnalysis(r, this.law.effective(key)) : r)) || r;
         // livre-piège déclaré : ni livre de retour, ni fissure
+        if (this._old29 && o && o.seed != null && !this._old29.has(o.seed)) out = { ...out, fresh29: true }; /* 2.9 : né après la 2.9 (l'arrivée par l'eau) */
         if (srcText && parseTrap(srcText)) out = { ...out, returnTo: null, stranded: true, fissure: null, trapped: true, home: "none" };
         if (srcText) out = guard("quantités", () => applyAmounts(out, parseAmounts(srcText), this.core && this.core.blocks, { weights: RG.weightsOf(this.ext), size: DOSE.worldSize(srcText), seed: o && o.seed })) || out;
         if (o && o.seed && !o.probe) out = guard("observation", () => this.observeFaults(o.seed, out)) || out; // loi 4 : la phrase des fautes légères mûrit (src/observe.js)
@@ -1262,18 +1263,21 @@ module.exports = function build(Base, core, AGEX) {
     }
 
     async initialScan() {
-      let n = 0; const sigOld = Array.isArray(this.ext.sigOld) ? null : []; /* ESSAI 2.6 : au premier passage, la liste des Âges d'avant (ils ne changent pas) */
+      let n = 0; const sigOld = Array.isArray(this.ext.sigOld) ? null : [], old29 = Array.isArray(this.ext.old29) ? null : []; /* 2.9 : de même, la liste des Âges nés avant la 2.9 (ils gardent leur point d'arrivée) */ /* ESSAI 2.6 : au premier passage, la liste des Âges d'avant (ils ne changent pas) */
       for (const f of this.app.vault.getMarkdownFiles()) {
         const c = this.app.metadataCache.getFileCache(f);
         if (c && !(c.sections || []).some((s) => s.type === "code")) continue;
         const src = core.extract(await this.app.vault.cachedRead(f)); if (src === null) continue;
         (this.lastAgeSrc || (this.lastAgeSrc = new Map())).set(f.path, src); // l'Âge tel qu'il est : sa profondeur comptera à la prochaine retouche
         if (sigOld) sigOld.push(core.seed(f.path));
+        if (old29) old29.push(core.seed(f.path));
         if (!this.law.get(f.basename)) this.law.observe(f.basename, core.analyse(src, { seed: core.seed(f.path), physics: false }), f.stat.mtime);
         if (++n % 25 === 0) await new Promise((r) => setTimeout(r, 0));
       }
       if (sigOld) this.ext.sigOld = sigOld;
       this._sigOld = new Set(this.ext.sigOld);
+      if (old29) this.ext.old29 = old29;
+      this._old29 = new Set(this.ext.old29);
       this.saveExt();
     }
 
