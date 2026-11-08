@@ -2,7 +2,7 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.10 — Dead stars (2.10.0 to 2.10.6, 2026-11-08)
+## 2.10 — Dead stars (2.10.0 to 2.10.7, 2026-11-08)
 
 ### Added
 - **The white dwarf has a colour, and it means something.** Without debris, the colour is its age: `blue_sun` young and burning, nothing written white, `orange_sun` very old and ochre. With what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), the colour is what it ate: `green_sun` the salt (chartreuse), `blue_sun` the salt to the extreme (pale blue, and cold), `red_sun` the carbon (pink when warm, red when cooled). None costs Art; any other colour written on a white dwarf costs a little. The tints are the real ones, pale.
@@ -10,7 +10,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **The sun is drawn as a sun**: a core burnt to white, a corona that melts the edge and breathes slowly, a warmer glow at noon, orange when low, a hard point in thin air, a smear in thick air; the second sun smaller and cooler.
 - **The stone, at the telescope.** A cut stone in a ring, at the end of a brass arm hinged on the eyepiece mount. With a book on the lectern whose star is charted and aimed, swing the stone in front of the glass: the star's light unfolds into its band of colours, with its shadows, and the Guild reads it in words: its heat, what it holds, what that means. A green or violet sun that is merely written shows a whole light: "that green is written".
 - **The plate engraves the light.** With the stone in front of the glass, a click on the star's plate engraves what the stone shows (a small dry-point sign stays on the plate), kept with your Relto.
-- **The star map keeps the record.** A star whose light is engraved carries three touches of colour; a click pins a record in the corner of the parchment: the Age's name, the curve drawn in ink before your eyes the first time, then coloured in under the line with a chalk, and the Guild's reading.
+- **The star map keeps the record.** A star whose light is engraved takes its colour on the map (the written one, or the one born of its meal, its age or its heat), edged in ink; a click pins a record in the corner of the parchment: the Age's name, the curve drawn in ink before your eyes the first time, then coloured in under the line with a chalk, and the Guild's reading.
 - **Three ways to sound the link** (Settings → Sound → Linking sound): *Classic*, the synthesized sounds of earlier versions; *In the old manner*, a new synthesis learnt from the shape of the linking sounds of the old games (never their recordings: three small models, 68 KB in all), varied by the Age you go to and never twice the same; *Both*; *My own file*, an audio file from your vault (mp3, ogg, wav, m4a, flac), which may hold several linking sounds one after another (cut at its silences, one drawn each time), played at a slightly varying pitch with the same echo and muffling.
 - **The map of the Age in the Relto's book**, after the description, before the free page.
 - **The Relto postcard** shows the time there in D'ni numerals, as the island's plate does.

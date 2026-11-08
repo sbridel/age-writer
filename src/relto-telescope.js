@@ -155,7 +155,7 @@ function act(r, a) {
   if (a.go) { r.setView(a.go); return; }
   if (a.eyeZoom) { r.eyeZoom = !r.eyeZoom; r.held = null; r.hover = null; return; } // mode tactile : l'oculaire agrandi (rien n'y reste tenu)
   if (a.spectro) { st.spectro = st.spectro ? 0 : 1; st.spectroT0 = r.telescopeT || 0; sfx("turn", 0.4); return; } /* 2.10 / 2.10.5 : la pierre, devant le verre ou repliée ; la courbe n'est plus ici : la plaque grave la lumière, la carte la garde */
-  if (a.engraveLight) { const L = lightOf(st); if (!L.star || !st.spectro) return; st.systems = { ...st.systems, [L.sys.key]: { ...st.systems[L.sys.key], light: true } }; st.note = "spec.engraved"; sfx("found", 0.6); if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st)); return; } /* 2.10.5 : la plaque grave ce que la pierre montre ; la carte des étoiles en fait un cartouche */
+  if (a.engraveLight) { const L = lightOf(st); if (!L.star || !st.spectro) return; st.systems = { ...st.systems, [L.sys.key]: { ...st.systems[L.sys.key], light: lightTint(L.star) } }; st.note = "spec.engraved"; sfx("found", 0.6); if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st)); return; } /* 2.10.5 : la plaque grave ce que la pierre montre ; la carte des étoiles en fait un cartouche */
   if (a.lens) { if (!guildOf(r)) return; st.lens = LENSES[(LENSES.indexOf(lensOf(st)) + 1) % LENSES.length]; sfx("turn", 0.5); if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st)); return; }
   if (a.axis || a.setZero || a.setSystem) { st.note = null; st.trend = 0; } // la phrase d'un geste précédent s'efface au geste suivant
   if (measuring(st)) return actSystem(r, st, a, sfx);
@@ -479,6 +479,12 @@ function lectern(r, ctx, c, st) {
  * la monture ; pivoté, il porte la pierre devant le verre et la lumière de l'étoile du livre se déplie en dessous ; glissé dans
  * l'appareil, la bague reste vide et l'aiguille grave la courbe. La lecture, en mots, prend la ligne du bas. Sans livre, le bras dort.
  */
+/** 2.10.7 : la couleur de la lumière dépliée, en un mot d'encre (`#rrggbb`) : la teinte de l'étoile telle qu'on la voit (écrite par l'Art, ou née : la naine par son repas ou son âge, les autres par leur chaleur) ; c'est elle que la carte donne à l'étoile. */
+function lightTint(star) {
+  const PM = require("./physics/model"), { blackbody } = require("./genscene"), { HUES } = require("./sky");
+  const rgb = star.art && star.hue && HUES[star.hue] ? HUES[star.hue] : star.whiteDwarf && star.kind ? PM.wdTintOf(star.kind, star.T) : blackbody(star.blackSun ? 1500 : star.T || 5772); /* un soleil dont la couleur est écrite est peint de cette couleur : le cartographe peint ce qu'il voit ; la lecture, elle, dit que ce vert est écrit */
+  return "#" + (rgb || [154, 154, 154]).map((c) => Math.round(Math.max(0, Math.min(255, c))).toString(16).padStart(2, "0")).join("");
+}
 /** 2.10.5 : la lumière que la pierre peut déplier : l'étoile du livre, située (gravée) et visée (les molettes sur ses indices). */
 function lightOf(st) {
   const bookStar = st.book && st.book.data && st.book.data.star ? st.book.data.star : null, sys = bookSystem(st);
@@ -842,4 +848,4 @@ function aimedOf(r) {
   return GI.aimedOf(r.opts && r.opts.telescopeGet ? r.opts.telescopeGet(key) : null);
 }
 
-module.exports = { wl, lightOf, HOLD_BEATS, coarseBand, drawTelescopeRoom, drawOnIsland, state, act, systemsOf, aimedOf, aimedKey, bookLoad, EYE, WHEELS, PLATE, SPLATE, DELAY, LECTERN, FIELD, PULSE_MS };
+module.exports = { wl, lightOf, lightTintForTest: lightTint, HOLD_BEATS, coarseBand, drawTelescopeRoom, drawOnIsland, state, act, systemsOf, aimedOf, aimedKey, bookLoad, EYE, WHEELS, PLATE, SPLATE, DELAY, LECTERN, FIELD, PULSE_MS };
