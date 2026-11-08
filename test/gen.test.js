@@ -392,6 +392,17 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
   const ids = ["single_sun", "water", "water", "beach", "pier", "tower"]; let fresh = 0, old = 0, built = 0;
   for (let i = 0; i < 60; i++) { const a = an(ids), S = G.sceneOf({ ...a, fresh29: true }, "Ponton" + i); if (S.view.kind === "pier") { fresh++; if (!built++) { const m = G.build(S, 640, 360); ok(!!m.pierV && m.pierV.y1 < 360 && m.shore.mode === "far", "au bout du ponton, la terre est devant"); } } if (G.sceneOf(a, "Ponton" + i).view.kind === "pier") old++; }
   ok(fresh > 10 && old === 0, "le ponton est un point d'arrivée des Âges nouveaux, jamais des anciens (" + fresh + "/" + old + ")"); }
+{ /* 2.9 : le gel de l'eau douce, la débâcle ; la mémoire courte du temps */
+  const w = { seasonAmp: 20, Ts: 278, locked: false, stars: 1, water: "liquid", P: 1 }, se = (u, T) => ({ u, T, snow: 1 });
+  ok(G.freezeOf({ river: true, season: se(0, 264) }, w).ice === 1, "l'hiver dur prend la rivière");
+  ok(G.freezeOf({ river: true, season: se(0, 272) }, w).ice < 0.5, "un gel léger : un filet d'eau reste");
+  ok(G.freezeOf({ river: true, season: se(0.2, 275) }, w).thaw > 0, "au printemps, la débâcle");
+  ok(G.freezeOf({ river: true, season: se(0.7, 275) }, w) === null, "à l'automne, pas de débâcle");
+  ok(G.freezeOf({ river: true, season: null, ice: true }, w).ice === 1 && G.freezeOf({ river: true, season: null }, w) === null, "sans saisons : gelée sur un monde de glace seulement");
+  ok(G.freezeOf({ river: true, mon: { wet: 1 }, season: se(0, 264) }, w) === null && G.freezeOf({ season: se(0, 264) }, w) === null, "ni sous la mousson, ni sans eau douce");
+  const M = (S) => G.weatherMemory({ S }, 0.5, {}, { rain: S.rain ? 1 : 0, drizzle: 0, storm: S.storm ? 1 : 0 }, 0);
+  ok(M({ rain: true }).wet === 1 && M({}).wet === 0 && M({ storm: true }).storm === 1, "la pluie laisse des flaques, l'orage des branches");
+  ok(G.weatherMemory({ S: { rain: true } }, 0.5, {}, { rain: 1, drizzle: 0, storm: 0 }, 1).wet === 0, "la pluie tombée en neige ne fait pas de flaques"); }
 { /* 2.8 : la mousson suit l'année ; rien sans saisons, ni sur un monde froid */
   const se = (u) => ({ u, snow: 0 }), M = (u, x = {}) => G.monsoonOf({ monsoon: true, season: se(u), ...x });
   ok(M(0.5).name === "rains" && M(0).name === "dry" && M(0.25).name === "between", "les pluies l'été, le sec l'hiver, l'entre-deux");

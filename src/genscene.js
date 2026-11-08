@@ -157,6 +157,7 @@ function sceneOf(a, name = "", blocks = null) {
     if (S.mon.wet > 0.5) { S.rain = always("rain", true); S.dust = false; } /* les pluies : le ciel est toujours pluvieux */
     if (S.mon.dry > 0.5) { S.rain = false; S.drizzle = false; S.storm = false; } /* les mois secs : il ne pleut pas */
     if ((S.sand || wd === "desert") && S.mon.wet > 0.25) S.bloom = S.mon.wet; } /* le désert verdit */
+  S.freeze = freezeOf(S, a.physics && a.physics.w); /* 2.9 : l'eau douce gèle (claude/DESIGN-pistes-8-nov.md, § 10) */
   S.loop = !!(a.carry && a.carry.loop); /* la boucle de Torus : deux Âges qui se portent l'un l'autre forment un monde en anneau (src/torus.js) */
   if (S.loop) { S.loopFam = lp && lp.what !== "sky" ? lp.what : "stone"; S.loopKey = String(name) + "|" + String((lp && lp.from) || ""); S.torus = TOR.formOf(S.loopKey); }
   S.fresh29 = !!a.fresh29; /* 2.9 : l'Âge est né après la 2.9 (src/entry.js, ext.old29) */
@@ -192,6 +193,33 @@ function weatherLevels(m, td, o = {}) {
   return out;
 }
 
+/**
+ * 2.9 : la mémoire courte du temps. Les six dernières heures de l'Âge (le même tirage que la météo vivante, à l'heure d'avant) laissent une trace qui
+ * s'efface : `wet` (la pluie, la bruine, l'orage : des flaques), `storm` (des branches à terre, une tuile tombée). L'heure courante compte pleinement.
+ * La pluie tombée en neige ne fait pas de flaques.
+ */
+function weatherMemory(m, td, o, L, rs) {
+  const S = m.S; if (o && o.mem) return o.mem; /* une mémoire imposée (planches, tests) */ if (S.world === "cavern" || S.lava) return { wet: 0, storm: 0 };
+  const lv = (x) => ({ wet: Math.max(x.rain, x.drizzle * 0.6, x.storm), storm: x.storm });
+  let { wet, storm } = lv(L);
+  if (S.weather) for (let k = 1; k <= 6; k++) { const x = lv(weatherLevels(m, frac(td - k / 24), o)), f = 1 - (k - 1) / 6; wet = Math.max(wet, x.wet * f); storm = Math.max(storm, x.storm * f); }
+  return { wet: wet * (1 - (rs || 0)), storm };
+}
+/** 2.9 : les traces du temps d'avant : des flaques qui tiennent le ciel (sur le chemin et dans les creux), des branches sous les arbres, une tuile tombée au pied d'une œuvre. */
+function afterWeather(g, m, t, day, night, hzc, part = "wet") {
+  const M = m.mem; if (!M || (M.wet < 0.15 && M.storm < 0.15)) return; const { S, W, H, hz } = m, D = H - hz, amb = 1 - 0.7 * night, q = rng((S.seed ^ 0xf1a5) >>> 0);
+  const frozen = S.season && S.season.T < 273.15, sky = mixc(mixc(mixc([10, 12, 18], hzc, amb), m.pal.ground, 0.3), frozen ? [210, 226, 236] : [0, 0, 0], frozen ? 0.4 : 0.15);
+  const puddle = (x, y, w) => { g.fillStyle = css(mixc(m.pal.ground, [0, 0, 0], 0.45), 0.45); g.beginPath(); g.ellipse(x, y + w * 0.04, w * 1.08, w * 0.22, 0, 0, TAU); g.fill(); g.fillStyle = css(sky, 0.85); g.beginPath(); g.ellipse(x, y, w, w * 0.17, 0, 0, TAU); g.fill(); g.fillStyle = css(mixc(hzc, [255, 255, 255], 0.3), 0.35 * amb); g.fillRect(x - w * 0.55, y - w * 0.03, w * 0.5, Math.max(0.5, w * 0.025)); }; /* une flaque : de l'eau sombre qui tient un peu de ciel, un trait de lumière */
+  if (part === "wet" && M.wet >= 0.15) { const n = Math.round(6 + 22 * M.wet);
+    if (m.path) for (const seg of m.path.segs) for (let i = 2; i < seg.length - 1; i += 3) { const p = seg[i]; if (p.wet || p.ice || q() > 0.35 + 0.4 * M.wet) continue; puddle(p.x + (q() - 0.5) * p.w * 0.5, p.y, p.w * (0.14 + 0.2 * q())); } /* dans les creux du chemin */
+    for (let k = 0; k < n; k++) { const v = Math.pow(q(), 1.6), y = hz + 3 + D * (0.15 + 0.85 * v), x = W * q(), w = (2 + 16 * v) * (0.6 + 0.6 * q()) * (W / 640); if (dryAt(m, x, y) && dryAt(m, x - w, y) && dryAt(m, x + w, y)) puddle(x, y, w); } } /* dans les creux du sol */
+  if (part === "storm" && M.storm >= 0.15) { const wood = css(mixc([8, 8, 10], [86, 64, 44], amb)), lw = Math.max(0.8, W / 600);
+    for (const tr of (m.trees || []).slice(0, 4)) { const y = (tr.by || hz + 2) + 2 + D * 0.02 * q(), L0 = W * 0.02 * (tr.k3 || 1) * (0.6 + 0.6 * q()), x = tr.x + (q() - 0.5) * W * 0.03, a = (q() - 0.5) * 0.5; if (!dryAt(m, x, y)) continue; /* une branche à terre, et ses rameaux */
+      g.strokeStyle = wood; g.lineWidth = lw * (tr.k3 || 1); g.beginPath(); g.moveTo(x - L0, y + Math.sin(a) * L0); g.lineTo(x + L0, y - Math.sin(a) * L0); g.stroke(); g.lineWidth = lw * 0.6; for (let j = 0; j < 3; j++) { const u = -0.6 + 0.6 * j, bx = x + u * L0, by = y - Math.sin(a) * u * L0; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + L0 * 0.3, by - L0 * 0.25 * (j % 2 ? 1 : -0.6)); g.stroke(); } }
+    const rs0 = (m.ruins || []).filter((r) => !r.lava && r.k !== "bridge"), rn = rs0.find((r) => BUILT.has(r.k)) || rs0[0]; if (rn) { const k3 = rn.k3 || 1, by = (rn.by || hz) + 3 * k3, x = rn.x + W * 0.035 * k3 * (q() < 0.5 ? -1 : 1), tw = W * 0.018 * k3; /* une tuile tombée au pied de l'œuvre */
+      if (dryAt(m, x, by)) { g.save(); g.translate(x, by); g.rotate((q() - 0.5) * 0.8); g.fillStyle = css(mixc([8, 8, 10], [150, 82, 58], amb)); g.fillRect(-tw / 2, -tw * 0.18, tw, tw * 0.36); g.fillStyle = css(mixc([8, 8, 10], [100, 54, 40], amb)); g.fillRect(-tw / 2, tw * 0.05, tw, tw * 0.13); g.restore();
+        g.fillStyle = css(mixc([8, 8, 10], [150, 82, 58], amb), 0.8); for (let j = 0; j < 3; j++) g.fillRect(x + (q() - 0.5) * tw * 3, by + (q() - 0.3) * tw * 0.6, tw * 0.25, tw * 0.12); } } } /* et ses éclats */
+}
 /** Couleur d'un corps noir (approximation de Tanner Helland), en RGB 0..255. */
 function blackbody(T) {
   const t = clamp(T, 1000, 40000) / 100;
@@ -383,6 +411,17 @@ function monsoonOf(S) {
   const lvl = -Math.cos(TAU * S.season.u), wet = clamp((lvl - 0.15) / 0.6), dry = clamp((-lvl - 0.15) / 0.6);
   return { lvl, wet, dry, name: wet > 0.5 ? "rains" : dry > 0.5 ? "dry" : "between" };
 }
+/**
+ * 2.9 : le gel de l'eau douce (rivière, étang, oasis ; jamais la mer). Avec les saisons : l'eau prend après la neige, quand le jour reste sous −2 °C
+ * (pleinement à −5 °C) ; au printemps, si l'hiver a gelé, la débâcle : des plaques qui dérivent jusqu'à +5 °C. Sans saisons : gelée si le monde est de glace.
+ * La mousson (un monde chaud) et la lave l'excluent. { ice : 0…1, thaw : 0…1 } ou null.
+ */
+function freezeOf(S, w) {
+  if (!(S.river || S.lake || S.oasis) || S.lava || S.mon) return null;
+  if (S.season && Number.isFinite(S.season.T)) { const T = S.season.T, w0 = SSN.lookOf(w, 0), Tmin = w0 ? w0.T : T, ice = clamp((271.15 - T) / 3), warming = frac(S.season.u) < 0.5;
+    const thaw = ice === 0 && warming && Tmin < 271.15 && T < 278.15 ? clamp((278.15 - T) / 10) : 0; return ice > 0 || thaw > 0 ? { ice, thaw } : null; }
+  return S.ice || S.world === "frozen" ? { ice: 1, thaw: 0 } : null;
+}
 function riverGeo(S) { if (!S.river) return null; const q = rng((S.seed ^ 0x51a7e) >>> 0), mo = S.mon, wid0 = 0.16 + q() * 0.1, G0 = { ph: q() * 6.28, amp: 0.5 + q() * 0.6, wid: wid0, u0: (q() - 0.5) * 0.6, wid0 }; if (mo) G0.wid = wid0 * (1 + 0.7 * mo.wet - 0.68 * mo.dry); return G0; } /* le même tirage que riverRibbon ; la mousson élargit (la crue) ou rétrécit (l'étiage) l'eau, le lit reste (wid0) */
 function riverBand(m, y, bed) { const R = m.riverGeo; if (!R) return null; const { W, H, hz } = m, D = H - hz, z = clamp(D / Math.max(1, y - hz), 1.02, 30), u = R.u0 + R.amp * Math.sin(R.ph + z * 0.55) * Math.min(1, z * 0.3), k = (W * 0.55) / z, w = bed ? Math.max(R.wid, R.wid0 || R.wid) : R.wid; return { x0: W / 2 + (u - w) * k, x1: W / 2 + (u + w) * k }; }
 function dryAt(m, x, y) {
@@ -519,6 +558,7 @@ function placeGrammar(S, W, H, hz, ruins, trees, shore, det, pond, cones, cave, 
  */
 function millOf(S) {
   const V = S.view || {};
+  if (S.river && !S.lava && S.freeze && S.freeze.ice > 0.5) return { kind: "water", speed: 0, frozen: true }; /* 2.9 : la roue prise dans la glace */
   if (S.river && !S.lava) return { kind: "water", speed: S.mon ? Math.max(0.15, 1 + 1.3 * S.mon.wet - 0.8 * S.mon.dry) : 1 }; /* la mousson : vite à la crue, lente à l'étiage */ /* la rivière de la fenêtre coule toujours (elle n'est jamais dessinée gelée) : la roue tourne */
   const wind = S.wind || S.storm || S.dust, height = V.kind === "high" || V.kind === "slope" || S.terrain === "hills" || S.terrain === "mountains" || S.terrain === "plains";
   if (wind || height) return { kind: "wind", speed: S.storm ? 2.2 : wind ? 1 : 0.45 };
@@ -611,12 +651,14 @@ function buildPath(m, via) {
   if (S.lava && S.lavaKind === "mafic") { const i = pts.findIndex((p) => { const fb = flowAt(m, p.y); return p.y > hz + 1 && fb && p.x > fb.x0 && p.x < fb.x1; }); if (i >= 0) pts.length = i; } /* la coulée ne se franchit pas : le chemin s'arrête au bord */
   const span0 = !via && ruins.find((rn) => rn.k === "bridge" && (rn.spans === "river" || rn.spans === "pond"));
   if (S.mon && S.mon.wet > 0.5 && !via) { if (span0 && pts.some((p) => p.wet && p.y > hz + 2)) return buildPath(m, span0); const i = pts.findIndex((p) => p.wet && p.y > hz + 2); if (i >= 0) pts.length = i; } /* 2.8 : la crue noie le gué ; le pont tient */
+  const iced = S.freeze && S.freeze.ice > 0.5; /* 2.9 : sur la glace, le chemin continue (des traces) */
+  if (iced) for (const p of pts) if (p.wet && solEn(m, p.x, Math.min(H - 1, p.y)).k !== "sea") { p.wet = false; p.ice = true; }
   let run = 0; for (let i = 0; i < pts.length; i++) { if (pts[i].wet) run++; else run = 0; if (run > N / 3) { pts.length = Math.max(0, i - run + 1); break; } }
   while (pts.length && pts[pts.length - 1].wet) pts.pop();
   const span = !via && ruins.find((rn) => rn.k === "bridge" && (rn.spans === "river" || rn.spans === "pond")); /* un pont enjambe déjà cette eau : le chemin va au pont plutôt que de poser sa passerelle à côté */
   if (span && pts.some((p) => p.wet && p.y > hz + 2)) return buildPath(m, span);
   const segs = []; let cur = [];
-  for (const p of pts) { if (p.hid || (cur.length && cur[cur.length - 1].wet !== p.wet)) { if (cur.length > 1) segs.push(cur); cur = p.hid ? [] : [cur[cur.length - 1], p].filter(Boolean); if (!p.hid && cur.length === 2) cur = [{ ...cur[0], wet: p.wet }, p]; continue; } cur.push(p); }
+  for (const p of pts) { if (p.hid || (cur.length && (cur[cur.length - 1].wet !== p.wet || !!cur[cur.length - 1].ice !== !!p.ice))) { if (cur.length > 1) segs.push(cur); cur = p.hid ? [] : [cur[cur.length - 1], p].filter(Boolean); if (!p.hid && cur.length === 2) cur = [{ ...cur[0], wet: p.wet }, p]; continue; } cur.push(p); }
   if (cur.length > 1) segs.push(cur); if (!segs.length) return null;
   const soil = solEn(m, xs, Math.min(H - 4, ys)).k, mat = kind === "trail" ? "trail" : V.kind === "low" || hi ? (soil === "ice" ? "icesteps" : "steps") : soil === "earth" || soil === "forest" || soil === "lava" ? "slabs" : soil === "sand" ? "posts" : soil === "ice" ? "icesteps" : soil === "salt" || soil === "chalk" ? "bollards" : "steps";
   return { kind, mat, segs, soil, lip, view: V.kind, seed: (S.seed ^ 0x9a7e) >>> 0 }; /* en contrebas, il monte : des marches ; du surplomb aussi, il descend par des marches */
@@ -631,6 +673,7 @@ function pathPass(g, m, t, day, night) {
   const every = (seg, k, fn) => { let acc = 0; for (let i = 1; i < seg.length; i++) { const a = seg[i - 1], b = seg[i]; acc += Math.hypot(b.x - a.x, b.y - a.y); if (acc >= b.w * k) { acc = 0; fn(b, i); } } }; /* un pas à l'échelle de la profondeur */
   g.save();
   for (const seg of P.segs) { const al = seg.reduce((a, p) => Math.min(a, p.a), 1), wet = seg[seg.length - 1].wet && seg[0].wet !== undefined && seg.slice(1).every((p) => p.wet);
+    if (seg.length > 1 && seg.slice(1).every((p) => p.ice)) { every(seg, 0.35, (p, i) => { const r = Math.max(0.5, p.w * 0.07), sx = (i % 2 ? 1 : -1) * p.w * 0.12; g.fillStyle = css(stoneD, 0.55 * al); g.beginPath(); g.ellipse(p.x + sx, p.y, r * 1.3, r * 0.5, 0, 0, TAU); g.fill(); }); continue; } /* 2.9 : sur la glace, des traces de pas */
     if (wet) { /* franchir l'eau */
       if (P.kind === "trail") every(seg, 0.55, (p) => { const r = p.w * 0.22; g.fillStyle = css(stoneD, 0.9 * al); g.beginPath(); g.ellipse(p.x + (q() - 0.5) * p.w * 0.3, p.y + 1, r * 1.2, r * 0.45, 0, 0, TAU); g.fill(); g.fillStyle = css(stoneL, 0.8 * al); g.beginPath(); g.ellipse(p.x + (q() - 0.5) * p.w * 0.3, p.y, r, r * 0.32, 0, 0, TAU); g.fill(); }); /* le gué : des pierres qui affleurent */
       else { g.fillStyle = css(woodD, 0.9 * al); ribbon(seg, 0.3); g.fill(); every(seg, 0.22, (p) => { g.fillStyle = css(wood, 0.95 * al); g.fillRect(p.x - p.w * 0.3, p.y - Math.max(0.6, p.w * 0.04), p.w * 0.6, Math.max(0.8, p.w * 0.07)); }); /* la passerelle : des planches */
@@ -1258,6 +1301,7 @@ function paint(g, m, t, o = {}) {
   if (dm > 0.1 && dm < 0.9) { const a = (dm - 0.1) * 3.2, T = Date.now() / 1000; g.translate(Math.sin(T * 61) * a, Math.cos(T * 47) * a * 0.7); } // la terre tremble
   if (m.cave) { paintCavern(g, m, t); g.restore(); return; } // monde-caverne : une voûte fermée, éclairée par ce qui luit
   const L = m.lv = weatherLevels(m, k0.td, o), sw = S.season ? S.season.snow : 0, rs = S.season ? S.season.rainToSnow : 0; if (rs > 0) { L.snow = Math.max(L.snow, L.rain * rs, L.drizzle * rs); L.rain *= 1 - rs; L.drizzle *= 1 - rs; } if (sw > 0.3) L.snow = Math.max(L.snow, 0.5 * (sw - 0.3)); if (S.season && S.season.T > 318) L.heat = Math.max(L.heat, clamp((S.season.T - 318) / 15)); /* l'hiver : la pluie écrite tombe en neige ; l'été brûlant : l'air tremble */ // météo vivante : présence de chaque temps à cette heure (1 partout sans ligne programmée)
+  m.mem = weatherMemory(m, k0.td, o, L, rs); /* 2.9 : ce que les six dernières heures ont laissé (claude/DESIGN-pistes-8-nov.md, § 11) */
   if (L.fog > 0.005 && !fogWritten(S)) L.fog *= fogHour(k0.td); /* 2.5 (B) : le brouillard est un état du matin, sauf si une ligne écrite dit autrement */
   const sky = g.createLinearGradient(0, 0, 0, hz); sky.addColorStop(0, css(top)); sky.addColorStop(1, css(hzc)); g.fillStyle = sky; g.fillRect(0, 0, W, H);
   m.frontF = m.front ? (m.front.reach || 0.5) * (0.45 + 0.55 * L.storm) : 0; /* ESSAI : le front s'avance avec l'orage */
@@ -1371,7 +1415,7 @@ function paint(g, m, t, o = {}) {
   m._moonlight = 0; /* ESSAI : un monde sans soleil montre ce qui l'éclaire */
   if (m.airK && m.airK.thick > 0.05) { const D = H - hz, hg = g.createLinearGradient(0, hz, 0, hz + D * 0.45); hg.addColorStop(0, css(mixc(hzc, [240, 235, 220], 0.3), 0.55 * m.airK.thick)); hg.addColorStop(1, css(hzc, 0)); g.fillStyle = hg; g.fillRect(0, hz, W, D * 0.45); } /* ESSAI : un air épais écrase la profondeur : le lointain se noie */
   WON.wonderPass(g, m, t, "relief", k0); /* ESSAI : ce qui se dessine par-dessus le relief du milieu (l'Inachevé) */
-  pathPass(g, m, t, day, night); /* ESSAI (6 nov.) : le chemin, dans le sol, sous la flore ; avant la découpe de l'eau, pour que gués et passerelles la franchissent */
+  pathPass(g, m, t, day, night); afterWeather(g, m, t, day, night, hzc); /* 2.9 : les flaques, les branches, la tuile tombée */ /* ESSAI (6 nov.) : le chemin, dans le sol, sous la flore ; avant la découpe de l'eau, pour que gués et passerelles la franchissent */
   const offW = offWater(g, m); /* ESSAI : rien ne pousse sur la rivière ni sur l'étang */
   const wetScene = !!(m.shore || (S.water && S.waterGround !== false && !S.ice)); /* ESSAI (6 nov.) : sur une scène d'eau, les Prototaxites (debout sur la rive) se peignent après le reflet, sinon le reflet les efface */
   if (S.primeval && !wetScene) primeval(g, m, t, day, night); /* un monde trop jeune pour les arbres : des Prototaxites */
@@ -1393,7 +1437,7 @@ function paint(g, m, t, o = {}) {
   // arbres
   m.dayK = day; m.nightK = night; if (S.trees) { const mf = metalFilter(S); if (mf && S.wonderMetal && metalLayer(g, m, t, mf, day)) { /* dessinés en métal poli */ } else { if (mf) { g.save(); g.filter = mf; } trees(g, m, t); if (mf) g.restore(); } } /* ESSAI : l'arbre fait du métal qu'il a bu, ou terni */
   // ruines
-  ruinsPass(g, m, t);
+  ruinsPass(g, m, t); afterWeather(g, m, t, day, night, hzc, "storm"); /* 2.9 : les branches, la tuile tombée, devant le pied des œuvres */
   detail(g, m, t, night);
   if (m.garden) gardenGround(g, m, t, day, night, hzc, "hedge"); /* ESSAI : la haie devant les arbres et les ruines de l'horizon : leur pied est derrière elle */
   if (S.glow || S.moths) for (let p = 0, np = Math.round(clamp(12 * (S.amt ? (S.moths ? (S.amt.moths != null ? S.amt.moths : 1) : (S.amt.glow != null ? S.amt.glow : 1)) : 1), 3, 40)); p < np; p++) { const q = rng(S.seed + p * 13), x = q() * W, y = hz - q() * H * 0.12, a = 0.35 + 0.5 * Math.sin(TAU * (t * (S.moths ? 2 : 1) + q())); g.fillStyle = css(S.glow ? [140, 255, 190] : [255, 230, 160], Math.max(0, a) * 0.8); g.beginPath(); g.arc(x + (S.moths ? 5 * Math.sin(TAU * (t * 2 + q())) : 0), y + (S.moths ? 3 * Math.cos(TAU * (t * 3 + q())) : 0), 1.4, 0, TAU); g.fill(); }
@@ -1552,6 +1596,32 @@ function pondWater(g, m, t, day, night, hzc, top) {
     g.strokeStyle = css([120, 160, 90], 0.3 * lit); g.lineWidth = 0.6; g.beginPath(); g.ellipse(x, y, s, s * 0.42, 0, p.r, p.r + TAU * 0.9); g.stroke(); }
   if (lf) g.restore();
   for (const p of P.pads) if (p.bloom) { const x = cx + p.u * rx * 0.92, y = cy + p.v * ry * 0.92, s = rx * 0.065 * p.s; bloom(g, x + s * 0.2, y - s * 0.25, s * 0.7, mixc(hsl(p.hue, 0.6, 0.78), [10, 12, 20], 0.5 * night), 0.95, p.r); }
+  if (m.S.freeze) pondIce(g, m, t, night, hzc); /* 2.9 : le gel, la débâcle */
+}
+/** 2.9 : la glace d'un étang : une plaque blanche et mate, des fentes, la neige au bord ; à la débâcle, des plaques qui dérivent. */
+function pondIce(g, m, t, night, hzc) {
+  const P = m.pond, F = m.S.freeze, { cx, cy, rx, ry } = P, amb = 1 - 0.7 * night, q = rng((m.S.seed ^ 0x1ce5) >>> 0), ice = mixc([8, 10, 16], mixc([200, 218, 230], hzc, 0.15), amb), snow = mixc([8, 10, 16], [240, 244, 248], amb);
+  g.save(); g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, TAU); g.clip();
+  if (F.ice > 0) { g.fillStyle = css(ice, 0.55 + 0.4 * F.ice); g.fillRect(cx - rx, cy - ry, rx * 2, ry * 2);
+    g.fillStyle = css(snow, 0.7 * F.ice); for (let k = 0; k < 9; k++) { const a = q() * TAU; g.beginPath(); g.ellipse(cx + Math.cos(a) * rx * 0.9, cy + Math.sin(a) * ry * 0.9, rx * (0.12 + 0.15 * q()), ry * (0.08 + 0.1 * q()), 0, 0, TAU); g.fill(); } /* la neige poussée au bord */
+    g.strokeStyle = css(mixc(ice, [40, 60, 80], 0.5), 0.6 * F.ice); g.lineWidth = Math.max(0.5, m.W / 1000); for (let k = 0; k < 6; k++) { let x = cx + (q() - 0.5) * rx, y = cy + (q() - 0.5) * ry; g.beginPath(); g.moveTo(x, y); for (let j = 0; j < 4; j++) { x += (q() - 0.5) * rx * 0.4; y += (q() - 0.5) * ry * 0.3; g.lineTo(x, y); } g.stroke(); } /* les fentes */
+    g.fillStyle = css([255, 255, 255], 0.2 * amb); g.fillRect(cx - rx * 0.5, cy - ry * 0.3, rx, Math.max(1, ry * 0.04)); }
+  else for (let k = 0; k < Math.round(4 + 8 * F.thaw); k++) { const a = q() * TAU + t * 0.05 * (q() - 0.5), d = 0.2 + 0.7 * q(), x = cx + Math.cos(a) * rx * d, y = cy + Math.sin(a) * ry * d, w = rx * (0.06 + 0.12 * q()) * (0.4 + F.thaw); /* la débâcle : des plaques qui dérivent */
+    g.fillStyle = css(ice, 0.9); g.beginPath(); for (let j = 0; j < 6; j++) { const b = (j / 6) * TAU, rr = w * (0.7 + 0.5 * q()); g.lineTo(x + Math.cos(b) * rr, y + Math.sin(b) * rr * 0.4); } g.closePath(); g.fill(); g.fillStyle = css(snow, 0.6); g.fillRect(x - w * 0.4, y - w * 0.12, w * 0.8, Math.max(0.6, w * 0.08)); }
+  g.restore();
+}
+/** 2.9 : la glace d'une rivière : un ruban gris-bleu immobile, un filet d'eau noire au milieu tant que le gel est léger ; à la débâcle, des plaques qui descendent. */
+function riverIce(g, m, t, L, R, night, hzc) {
+  const F = m.S.freeze, amb = 1 - 0.7 * night, q = rng((m.S.seed ^ 0x51ce) >>> 0), ice = mixc([8, 10, 16], mixc([196, 214, 226], hzc, 0.15), amb), snow = mixc([8, 10, 16], [240, 244, 248], amb), n = L.length;
+  const at = (i, f) => { const a = L[Math.max(0, Math.min(n - 1, i))], b = R[Math.max(0, Math.min(n - 1, i))]; return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, b[0] - a[0]]; };
+  g.save(); g.beginPath(); L.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y))); for (let k = n - 1; k >= 0; k--) g.lineTo(R[k][0], R[k][1]); g.closePath(); g.clip();
+  if (F.ice > 0) { g.fillStyle = css(ice, 0.55 + 0.42 * F.ice); g.fillRect(0, m.hz, m.W, m.H - m.hz);
+    if (F.ice < 0.8) { const k = 0.5 - 0.6 * (F.ice - 0.3); g.fillStyle = css(mixc([4, 8, 12], hzc, 0.2), 0.85); g.beginPath(); for (let i = 0; i < n; i++) { const [x, y, w] = at(i, 0.5); g.lineTo(x - w * k * 0.25, y); } for (let i = n - 1; i >= 0; i--) { const [x, y, w] = at(i, 0.5); g.lineTo(x + w * k * 0.25, y); } g.closePath(); g.fill(); } /* le filet d'eau noire */
+    g.fillStyle = css(snow, 0.75 * F.ice); for (const f of [0.02, 0.98]) { g.beginPath(); for (let i = 0; i < n; i++) { const [x, y, w] = at(i, f); g.lineTo(x, y - Math.max(0.5, w * 0.02)); } for (let i = n - 1; i >= 0; i--) { const [x, y] = at(i, f + (f < 0.5 ? 0.08 : -0.08)); g.lineTo(x, y); } g.closePath(); g.fill(); } /* la neige sur les bords */
+    g.strokeStyle = css(mixc(ice, [40, 60, 80], 0.5), 0.5 * F.ice); g.lineWidth = Math.max(0.5, m.W / 1000); for (let k = 0; k < 10; k++) { const i = Math.floor(q() * n), [x, y, w] = at(i, 0.15 + 0.7 * q()); g.beginPath(); g.moveTo(x, y); g.lineTo(x + w * (q() - 0.5) * 0.5, y + w * 0.04); g.lineTo(x + w * (q() - 0.5) * 0.7, y + w * 0.02); g.stroke(); } }
+  else for (let k = 0; k < Math.round(6 + 14 * F.thaw); k++) { const i0 = q() * n, i = Math.floor((i0 + t * n * 0.12) % n), [x, y, w] = at(i, 0.15 + 0.7 * q()), s = w * (0.06 + 0.1 * q()) * (0.4 + F.thaw); /* la débâcle : les plaques descendent vers nous */
+    g.fillStyle = css(ice, 0.92); g.beginPath(); for (let j = 0; j < 6; j++) { const b = (j / 6) * TAU, rr = s * (0.7 + 0.5 * q()); g.lineTo(x + Math.cos(b) * rr, y + Math.sin(b) * rr * 0.35); } g.closePath(); g.fill(); g.fillStyle = css(snow, 0.6); g.fillRect(x - s * 0.4, y - s * 0.1, s * 0.8, Math.max(0.6, s * 0.08)); }
+  g.restore();
 }
 /** ESSAI : le jardin : la haie taillée et ses entrées, les allées de haie, les massifs de fleurs. */
 function gardenGround(g, m, t, day, night, hzc, part = "ground") { /* part : "ground" (les allées, sous les arbres) ou "hedge" (la haie et les massifs, devant les arbres, les ruines et l'étrangeté de l'horizon) */
@@ -1946,6 +2016,7 @@ function riverRibbon(g, m, t, sn, day, night, hzc, top) {
   g.strokeStyle = css([0, 0, 0], 0.35); g.lineWidth = 1; g.stroke();
   if (fl > 0.2) { g.strokeStyle = css(mixc(water, [236, 226, 206], 0.55), 0.55 * fl); g.lineWidth = Math.max(1, m.W / 600); for (const E of [L, R]) { g.beginPath(); E.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke(); } } /* la crue : l'écume brune contre les rives */
   for (let k = 0; k < 14 + Math.round(30 * fl); k++) { const i = Math.floor(q() * (pts.length - 2)), a = L[i], b = R[i], f = q(), x = a[0] + (b[0] - a[0]) * f, y = a[1] + (b[1] - a[1]) * f, len = Math.max(1, (b[0] - a[0]) * 0.25); g.fillStyle = css([230, 240, 245], (0.18 + 0.2 * day) * (0.5 + 0.5 * Math.sin(TAU * (t + q())))); g.fillRect(x - len / 2, y, len, 0.9); } /* le courant */
+  if (S.freeze) riverIce(g, m, t, L, R, night, hzc); /* 2.9 : le gel, la débâcle */
 }
 /** Surface de l'eau : dégradé, rides qui glissent, reflet du soleil. */
 function waterSurface(g, m, t, sn, hzc) {
@@ -2632,6 +2703,7 @@ function millDraw(g, m, rn, t, fx, q, win, RS) {
       c.lineWidth = lw; for (let k = 0; k < 8; k++) { const a = spin + (k * TAU) / 8, ca = Math.cos(a), sa = Math.sin(a); c.beginPath(); c.moveTo(cx + ca * R * 0.22, cy + sa * R * 0.22); c.lineTo(cx + ca * R, cy + sa * R); c.stroke();
         c.fillStyle = woodD; c.save(); c.translate(cx + ca * R, cy + sa * R); c.rotate(a); c.fillRect(-lw, -R * 0.15, lw * 2.4, R * 0.3); c.restore(); } /* les rayons, les aubes */
       c.fillStyle = woodD; c.fillRect(cx + sd * R * 0.1 - lw, cy - lw, sd * (w * 0.2 + R * 0.45), lw * 2); /* l'arbre qui entre dans le mur */
+      if (mo.frozen) { c.fillStyle = css(mixc([8, 10, 16], [214, 230, 240], amb)); c.beginPath(); c.ellipse(cx, hz + 1, R * 1.15, R * 0.22, 0, Math.PI, TAU); c.fill(); c.fillStyle = css(mixc([8, 10, 16], [232, 242, 250], amb), 0.9); for (let k = 0; k < 7; k++) { const a = spin + (k * TAU) / 7, x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R; if (y > cy - R * 0.3) { c.beginPath(); c.moveTo(x - lw * 1.5, y); c.lineTo(x + lw * 1.5, y); c.lineTo(x, y + R * 0.18); c.closePath(); c.fill(); } } } /* 2.9 : la glace autour du bas de la roue, des glaçons aux aubes */
       if (mo.speed > 0) { c.strokeStyle = css([235, 244, 248], 0.5 * amb + 0.2); c.lineWidth = lw; for (let k = 0; k < 5; k++) { const ph = frac(t * 0.9 * mo.speed + k * 0.21), x = cx - R * 0.9 + k * R * 0.45, y = hz + 1 + ph * 3; c.globalAlpha = 1 - ph; c.beginPath(); c.moveTo(x - R * 0.2, y); c.quadraticCurveTo(x, y - 2, x + R * 0.2, y); c.stroke(); } c.globalAlpha = 1; } /* l'écume au pied de la roue */
     });
     return; }
@@ -3586,4 +3658,4 @@ Object.assign(ART, {
   aeroplankton: { layer: "air", draw(g, m, t, e) { const { W, H, hz } = m; for (const it of e.items) for (let k = 0; k < 6; k++) { const x = (it.x + k * 41) % W, y = hz - H * (0.05 + 0.3 * frac(it.y + k * 0.17)); g.fillStyle = css([220, 240, 255], 0.2 + 0.4 * Math.max(0, Math.sin(TAU * t * 2 + k + it.p))); g.fillRect(x, y, 1, 1); } } },
 });
 
-module.exports = { tideOf, millOf, monsoonOf, buildPondForTest: buildPond, solEn, supportOf, carried, SUPPORT, SUPPORT_OF, byDepthForTest: (m, e, a, b) => byDepth(m, e, a, b), sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
+module.exports = { tideOf, millOf, monsoonOf, freezeOf, weatherMemory, buildPondForTest: buildPond, solEn, supportOf, carried, SUPPORT, SUPPORT_OF, byDepthForTest: (m, e, a, b) => byDepth(m, e, a, b), sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
