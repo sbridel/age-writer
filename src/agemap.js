@@ -26,7 +26,7 @@ function survey(m, k) {
     if (S.tides && m._tide !== null) { const sh = m.shore, off = sh.mode === "side" ? [(sh.side < 0 ? 1 : -1) * W * 0.11 * 0.7, 0] : [0, (sh.mode === "far" ? 1 : -1) * D * 0.09 * 0.7]; out.tideLines.push(poly(sh.line.map(([x, y]) => [x + off[0], y + off[1]]))); } }
   else if (S.water && S.waterGround !== false && !S.ice) out.sea = true;
   if (m.riverGeo && S.river && !k) { /* la rivière de face seulement : le périscope en tire une par direction, la carte n'en garde qu'une */ const R = m.riverGeo, pts = []; for (let z = 1.02; z <= 30; z *= 1.08) pts.push({ z, u: R.u0 + R.amp * Math.sin(R.ph + z * 0.55) * Math.min(1, z * 0.3) }); out.rivers.push({ pts, wid: R.wid, wid0: R.wid0 || R.wid, frozen: !!(S.freeze && S.freeze.ice > 0.5) }); }
-  if (m.pond) { const P = m.pond, c = ground(m, P.cx, P.cy), rz = ground(m, P.cx, P.cy - P.ry), ru = ground(m, P.cx + P.rx, P.cy); out.ponds.push({ u: c.u, z: c.z, ru: Math.abs(ru.u - c.u), rz: Math.abs(rz.z - c.z) * 0.6, oasis: !!P.oasis, bed: P.bed ? 1 / Math.max(0.2, P.rx / P.bed.rx) : 1, frozen: !!(S.freeze && S.freeze.ice > 0.5) }); }
+  if (m.pond && !k) { /* 2.10.3 : l'étang de face seulement, comme la rivière : un seul étang, pas quatre ovales autour du centre */ const P = m.pond, c = ground(m, P.cx, P.cy), rz = ground(m, P.cx, P.cy - P.ry), ru = ground(m, P.cx + P.rx, P.cy); out.ponds.push({ u: c.u, z: c.z, ru: Math.abs(ru.u - c.u), rz: Math.abs(rz.z - c.z) * 0.6, oasis: !!P.oasis, bed: P.bed ? 1 / Math.max(0.2, P.rx / P.bed.rx) : 1, frozen: !!(S.freeze && S.freeze.ice > 0.5) }); }
   for (const rn of m.ruins || []) if (rn.by != null) { const p = ground(m, rn.x, rn.by); out.works.push({ ...p, k: rn.k }); }
   for (const tr of m.trees || []) if (tr.by != null) out.trees.push(ground(m, tr.x, tr.by));
   if (m.path) for (const seg of m.path.segs) out.path.push(seg.map((p) => ({ ...ground(m, p.x, p.y), wet: p.wet })));
@@ -84,9 +84,10 @@ function paintMap(g, m0, o = {}) {
   /* le bord du relevé */
   g.strokeStyle = inkC(); g.lineWidth = 1.6; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.stroke(); g.lineWidth = 0.6; g.beginPath(); g.arc(cx, cy, R + 4, 0, TAU); g.stroke();
   /* les blancs non relevés : un Âge instable ou qui se dégrade */
-  const nb = Math.round(clamp((100 - stab) / 20) * 3 + doom * 4);
-  for (let j = 0; j < nb; j++) { const a = q() * TAU, d = R * (0.3 + 0.6 * q()), x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d, rx = R * (0.1 + 0.12 * q()), ry = rx * (0.5 + 0.4 * q());
-    g.fillStyle = css(paper); g.beginPath(); g.ellipse(x, y, rx, ry, q() * 3, 0, TAU); g.fill(); g.setLineDash([2, 3]); g.strokeStyle = inkC(0.5); g.lineWidth = 0.7; g.stroke(); g.setLineDash([]); }
+  /* 2.10.2 : seulement sous 70 de stabilité (ou si l'Âge se dégrade), jamais sur l'eau, et en tache de papier qui s'estompe, sans contour */
+  const nb = Math.round((stab < 70 ? (70 - stab) / 15 : 0) + doom * 4), onWater = (x, y) => { try { const d = g.getImageData(Math.round(x), Math.round(y), 1, 1).data; return d[2] > d[0] + 12; } catch (e) { return false; } };
+  for (let j = 0, tries = 0; j < nb && tries < 30; tries++) { const a = q() * TAU, d = R * (0.25 + 0.55 * q()), x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d, rx = R * (0.09 + 0.1 * q()), ry = rx * (0.55 + 0.4 * q()); if (onWater(x, y)) continue; j++;
+    g.save(); g.translate(x, y); g.rotate(q() * 3); g.scale(1, ry / rx); const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, css(paper, 1)); gr.addColorStop(0.6, css(paper, 0.9)); gr.addColorStop(1, css(paper, 0)); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rx, 0, TAU); g.fill(); g.restore(); }
   /* le point d'arrivée : un petit cercle, rien d'écrit */
   g.strokeStyle = inkC(); g.lineWidth = 1.2; g.beginPath(); g.arc(cx, cy, 3.5, 0, TAU); g.stroke(); g.fillStyle = inkC(); g.beginPath(); g.arc(cx, cy, 1.2, 0, TAU); g.fill();
   rose(g, m0, W * 0.86, H * 0.14, Math.min(W, H) * 0.08, inkC, paper);

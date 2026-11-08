@@ -6,6 +6,29 @@
  */
 const NEWS = [
   {
+    v: "2.10.3",
+    fr: {
+      title: "Le cristal sur son bras",
+      letter: "Le cristal n'est plus posé à côté de l'oculaire : la Guilde l'a taillé en pierre et monté dans une bague, au bout d'un bras de laiton articulé sur la monture. Et la carte de l'Âge, qui manquait au livre, y est maintenant à sa page.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**Une pierre taillée au bout d'un bras** : repliée le long de la monture ; pivotée devant le verre, la lumière de l'étoile se déplie sous elle ; glissée dans l'appareil, la bague reste vide pendant que l'aiguille grave.",
+        "**La carte dans le livre du Relto**, après la description.",
+        "**La carte, corrigée** : un seul étang (il y en avait quatre autour du centre), et des blancs seulement quand l'Âge vacille, jamais sur l'eau.",
+      ],
+    },
+    en: {
+      title: "The crystal on its arm",
+      letter: "The crystal no longer sits beside the eyepiece: the Guild has cut it as a stone and set it in a ring, at the end of a brass arm hinged on the mount. And the map of the Age, which the book lacked, is now at its page.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**A cut stone at the end of an arm**: folded along the mount; swung in front of the glass, the star's light fans out beneath it; slid into the reader, the ring stays empty while the needle engraves.",
+        "**The map in the Relto's book**, after the description.",
+        "**The map, corrected**: one pond (there were four around the centre), and blanks only when the Age wavers, never on water.",
+      ],
+    },
+  },
+  {
     v: "2.10.2",
     fr: {
       title: "Le son de liaison",

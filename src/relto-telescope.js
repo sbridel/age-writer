@@ -473,27 +473,54 @@ function lectern(r, ctx, c, st) {
 /** La vue du télescope : le sommet la nuit, l'oculaire, les deux molettes, la plaque, la ligne de mots. */
 
 /**
- * 2.10 : le spectroscope (claude/DESIGN-pistes-8-nov.md, § 33). Une tranche de cristal, tenue par un onglet au bord de l'oculaire :
- * glissée, elle couvre la moitié basse du champ et décompose la lumière de l'étoile du livre sur le lutrin ; l'étoile reste visible
- * au-dessus. La lecture, en mots, prend la ligne du bas. Sans livre sur le lutrin, l'onglet est éteint.
+ * 2.10 : le spectroscope (claude/DESIGN-pistes-8-nov.md, § 33). 2.10.3 : plus un onglet posé à côté, mais un bras de laiton
+ * articulé sur la monture de l'oculaire, en bas à droite, qui porte au bout, dans sa bague, une pierre taillée. Replié, il longe
+ * la monture ; pivoté, il porte la pierre devant le verre et la lumière de l'étoile du livre se déplie en dessous ; glissé dans
+ * l'appareil, la bague reste vide et l'aiguille grave la courbe. La lecture, en mots, prend la ligne du bas. Sans livre, le bras dort.
  */
-function spectroscope(r, ctx, c, st, tm) {
-  const t = tOf(r), { x: cx, y: cy, r: R } = EYE, star = st.book && st.book.data && st.book.data.star ? st.book.data.star : null, on = !!(st.spectro && star), inReader = on && st.spectro === 2;
-  /* l'onglet : un petit prisme de cristal sur la monture, à droite, qui prend la lumière quand il sert */
-  const tx = cx + R + 20, ty = cy + 28, lit = star ? (on ? 1 : 0.7) : 0.3;
-  ctx.save(); ctx.globalAlpha = lit; const pg = ctx.createLinearGradient(tx - 10, ty - 14, tx + 10, ty + 14); pg.addColorStop(0, c("#dff4ff")); pg.addColorStop(0.5, c("#8fb8d8")); pg.addColorStop(1, c("#4a6f94"));
-  ctx.fillStyle = pg; ctx.beginPath(); ctx.moveTo(tx - 9, ty + 14); ctx.lineTo(tx + 9, ty + 14); ctx.lineTo(tx + 4, ty - 14); ctx.lineTo(tx - 6, ty - 12); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c("#e9f6ff"); ctx.lineWidth = 0.8; ctx.stroke();
-  if (on) { const gl = ctx.createRadialGradient(tx, ty, 0, tx, ty, 26); gl.addColorStop(0, "rgba(180,220,255,0.35)"); gl.addColorStop(1, "rgba(180,220,255,0)"); ctx.fillStyle = gl; ctx.fillRect(tx - 26, ty - 26, 52, 52); }
+const ARM = { hinge: Math.PI * 0.22, off: { ang: -Math.PI * 0.28, len: 0.62, rr: 13 }, on: { ang: Math.PI * 1.24, len: 0.98, rr: 18 } };
+function armPose(st, tm, reduced) {
+  const want = st.spectro === 1 ? 1 : 0, dt = reduced ? 9 : Math.max(0, (tm || 0) - (st.spectroT0 || 0)), k = Math.min(1, dt / 0.55), e = k * k * (3 - 2 * k);
+  const from = st.spectro === 1 ? 0 : st.spectro === 2 ? 1 : 1, p = from + (want - from) * e; /* 0 : replié, 1 : devant le verre ; vers l'appareil, le bras se replie */
+  return { ang: ARM.off.ang + (ARM.on.ang - ARM.off.ang) * p, len: ARM.off.len + (ARM.on.len - ARM.off.len) * p, rr: ARM.off.rr + (ARM.on.rr - ARM.off.rr) * p, p };
+}
+/** La pierre taillée : deux rangs de facettes, ses feux, sa frange de couleurs, son reflet. `lit` : 0,3 endormie, 1 au travail. */
+function cutStone(ctx, x, y, r, lit) {
+  const TAU = Math.PI * 2, n = 8, L = -1.1, tl = 0.2; ctx.save(); ctx.translate(x, y); ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.clip();
+  const base = ctx.createRadialGradient(0, 0, 0, 0, 0, r); base.addColorStop(0, "#1b3550"); base.addColorStop(1, "#0b1a2c"); ctx.fillStyle = base; ctx.fillRect(-r, -r, 2 * r, 2 * r);
+  const col = (k, al) => `rgba(${Math.round(30 + 200 * k)},${Math.round(70 + 170 * k)},${Math.round(120 + 135 * k)},${al})`;
+  for (let i = 0; i < n; i++) { const a0 = (i / n) * TAU + tl, a1 = ((i + 1) / n) * TAU + tl, am = (a0 + a1) / 2, li = Math.pow(0.5 + 0.5 * Math.cos(am - L), 1.6) * lit;
+    ctx.fillStyle = col(li, 0.95); ctx.beginPath(); ctx.moveTo(Math.cos(a0) * r * 0.52, Math.sin(a0) * r * 0.52); ctx.lineTo(Math.cos(a0) * r, Math.sin(a0) * r); ctx.lineTo(Math.cos(a1) * r, Math.sin(a1) * r); ctx.lineTo(Math.cos(a1) * r * 0.52, Math.sin(a1) * r * 0.52); ctx.closePath(); ctx.fill();
+    const b0 = a0 + TAU / (2 * n), b1 = a1 + TAU / (2 * n), bm = (b0 + b1) / 2, li2 = Math.pow(0.5 + 0.5 * Math.cos(bm - L + 0.6), 1.4) * lit; ctx.fillStyle = col(li2 * 0.9 + 0.1, 0.9); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(b0) * r * 0.52, Math.sin(b0) * r * 0.52); ctx.lineTo(Math.cos(b1) * r * 0.52, Math.sin(b1) * r * 0.52); ctx.closePath(); ctx.fill(); }
+  ctx.strokeStyle = `rgba(255,255,255,${0.28 * lit})`; ctx.lineWidth = 0.7; for (let i = 0; i < n; i++) { const a = (i / n) * TAU + tl, b = a + TAU / (2 * n); ctx.beginPath(); ctx.moveTo(Math.cos(a) * r * 0.52, Math.sin(a) * r * 0.52); ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(b) * r * 0.52, Math.sin(b) * r * 0.52); ctx.stroke(); }
+  ctx.strokeStyle = `rgba(255,255,255,${0.4 * lit})`; ctx.beginPath(); for (let i = 0; i < n; i++) { const a = (i / n) * TAU + tl + TAU / (2 * n); if (i) ctx.lineTo(Math.cos(a) * r * 0.52, Math.sin(a) * r * 0.52); else ctx.moveTo(Math.cos(a) * r * 0.52, Math.sin(a) * r * 0.52); } ctx.closePath(); ctx.stroke(); /* la table */
+  if (r >= 10) for (let k = 0; k < 4; k++) { const i = (k * 3 + 1) % n, a0 = (i / n) * TAU + tl, a1 = a0 + TAU / n, [cr, cg, cb] = wl(430 + k * 80); ctx.fillStyle = `rgba(${Math.round(255 * cr)},${Math.round(255 * cg)},${Math.round(255 * cb)},${0.45 * lit})`; ctx.beginPath(); ctx.moveTo(Math.cos(a0) * r * 0.6, Math.sin(a0) * r * 0.6); ctx.lineTo(Math.cos(a0 * 0.4 + a1 * 0.6) * r * 0.98, Math.sin(a0 * 0.4 + a1 * 0.6) * r * 0.98); ctx.lineTo(Math.cos(a0 * 0.6 + a1 * 0.4) * r * 0.98, Math.sin(a0 * 0.6 + a1 * 0.4) * r * 0.98); ctx.closePath(); ctx.fill(); } /* les feux */
+  for (let i = 0; i < 10; i++) { const [cr, cg, cb] = wl(400 + i * 34), rr = r - i * 0.45; if (rr <= 0) break; ctx.strokeStyle = `rgba(${Math.round(255 * cr)},${Math.round(255 * cg)},${Math.round(255 * cb)},${0.18 * lit})`; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.arc(0, 0, rr, L + Math.PI - 0.9, L + Math.PI + 0.9); ctx.stroke(); } /* la frange */
+  ctx.fillStyle = `rgba(255,255,255,${0.85 * lit})`; ctx.beginPath(); ctx.ellipse(Math.cos(L) * r * 0.5, Math.sin(L) * r * 0.5, r * 0.16, r * 0.07, L + Math.PI / 2, 0, TAU); ctx.fill(); /* le reflet */
   ctx.restore();
-  r.hot.push({ x: tx - 14, y: ty - 18, w: 28, h: 36, tip: star ? (st.spectro === 1 ? t("spec.tab.reader") : st.spectro === 2 ? t("spec.tab.off") : t("spec.tab.on")) : t("spec.tab.none"), ...(star ? { tel: { spectro: true } } : {}) });
+}
+function spectroscope(r, ctx, c, st, tm) {
+  const t = tOf(r), { x: cx, y: cy, r: R } = EYE, TAU = Math.PI * 2, star = st.book && st.book.data && st.book.data.star ? st.book.data.star : null, on = !!(st.spectro && star), inReader = on && st.spectro === 2;
+  const pose = armPose(on ? st : { spectro: 0 }, tm, !!r.opts.reducedMotion), lit = star ? (on ? 1 : 0.75) : 0.35;
+  const hx = cx + Math.cos(ARM.hinge) * (R + 14), hy = cy + Math.sin(ARM.hinge) * (R + 14), ex = hx + Math.cos(pose.ang) * R * pose.len, ey = hy + Math.sin(pose.ang) * R * pose.len, rr = pose.rr;
+  const brass = (x0, y0, x1, y1) => { const gr = ctx.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, c("#c9a24e")); gr.addColorStop(0.5, c("#6b5126")); gr.addColorStop(1, c("#b8913f")); return gr; };
+  ctx.save();
+  ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 7; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(hx + 2, hy + 3); ctx.lineTo(ex + 2, ey + 3); ctx.stroke(); /* l'ombre du bras */
+  ctx.strokeStyle = brass(hx, hy, ex, ey); ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke();
+  ctx.strokeStyle = c("#3b2a1b"); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(ex, ey); ctx.stroke(); /* l'arête */
+  ctx.fillStyle = "rgba(0,0,0,0.45)"; ctx.beginPath(); ctx.arc(ex + 2, ey + 3, rr + 4, 0, TAU); ctx.fill();
+  ctx.strokeStyle = brass(ex - rr, ey - rr, ex + rr, ey + rr); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(ex, ey, rr, 0, TAU); ctx.stroke(); /* la bague */
+  if (inReader) { ctx.fillStyle = "rgba(6,8,14,0.9)"; ctx.beginPath(); ctx.arc(ex, ey, rr - 2, 0, TAU); ctx.fill(); } /* la bague vide : la pierre est dans l'appareil */
+  else cutStone(ctx, ex, ey, rr - 2, lit);
+  ctx.fillStyle = c("#3b2a1b"); ctx.beginPath(); ctx.arc(hx, hy, 6, 0, TAU); ctx.fill(); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(hx, hy, 6, 0, TAU); ctx.stroke(); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(hx, hy, 1.6, 0, TAU); ctx.fill(); /* la charnière, par-dessus */
+  ctx.restore();
+  r.hot.push({ x: ex - rr - 4, y: ey - rr - 4, w: 2 * rr + 8, h: 2 * rr + 8, tip: star ? (st.spectro === 1 ? t("spec.tab.reader") : st.spectro === 2 ? t("spec.tab.off") : t("spec.tab.on")) : t("spec.tab.none"), ...(star ? { tel: { spectro: true } } : {}) });
   if (!on) return;
   if (inReader) { readerPlate(r, ctx, c, st, star, tm); readingLine(r, ctx, t, star); return; }
-  const spec = SPEC.spectrumOf(star, 200), tint = star.whiteDwarf && star.kind ? null : null; void tint;
-  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.283); ctx.clip();
-  /* la tranche : un cristal fumé, un peu bleu, avec ses facettes ; elle monte d'en bas et s'arrête sous le réticule */
-  const top = cy + 6; ctx.fillStyle = "rgba(10,14,24,0.86)"; ctx.fillRect(cx - R, top, 2 * R, R);
-  ctx.strokeStyle = "rgba(190,220,255,0.18)"; ctx.lineWidth = 0.8; for (let k = -3; k <= 3; k++) { ctx.beginPath(); ctx.moveTo(cx + k * 34 - 40, top); ctx.lineTo(cx + k * 34 + 10, cy + R); ctx.stroke(); } /* les facettes */
-  const x0 = cx - R + 12, BW = 2 * R - 24, bt = top + 22, BH = 58, bb = bt + BH;
+  const spec = SPEC.spectrumOf(star, 200), x0 = cx - R + 12, BW = 2 * R - 24, bt = cy + 40, BH = 46, bb = bt + BH;
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.283); ctx.clip(); ctx.globalAlpha = pose.p;
+  { const fan = ctx.createLinearGradient(0, ey, 0, bt); fan.addColorStop(0, "rgba(200,230,255,0.28)"); fan.addColorStop(1, "rgba(200,230,255,0)"); ctx.fillStyle = fan; ctx.beginPath(); ctx.moveTo(ex - rr * 0.5, ey + rr * 0.6); ctx.lineTo(ex + rr * 0.5, ey + rr * 0.6); ctx.lineTo(x0 + BW, bt); ctx.lineTo(x0, bt); ctx.closePath(); ctx.fill(); } /* la lumière tombe de la pierre sur le verre, en éventail */
+  ctx.fillStyle = "rgba(10,14,24,0.78)"; ctx.fillRect(cx - R, bt - 12, 2 * R, BH + 24);
   ctx.fillStyle = "#020306"; ctx.fillRect(x0, bt, BW, BH);
   for (let k = 0; k < BW; k++) { const l = 380 + (360 * k) / BW, v = spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))], [rr, gg, bb2] = wl(l), br = 0.25 + 0.75 * v; const a = 0.08 + 0.92 * Math.pow(v, 0.8); ctx.fillStyle = `rgba(${Math.round(255 * rr * br)},${Math.round(255 * gg * br)},${Math.round(255 * bb2 * br)},${a.toFixed(3)})`; ctx.fillRect(x0 + k, bt, 1.1, BH); }
   { const sh = ctx.createLinearGradient(0, bt, 0, bb); sh.addColorStop(0, "rgba(255,255,255,0.14)"); sh.addColorStop(0.5, "rgba(255,255,255,0)"); sh.addColorStop(1, "rgba(0,0,0,0.25)"); ctx.fillStyle = sh; ctx.fillRect(x0, bt, BW, BH); } /* le reflet du cristal sur la lumière : pas de courbe, une bande vivante avec ses ombres */

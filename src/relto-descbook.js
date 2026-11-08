@@ -151,6 +151,7 @@ function mount(plugin, root, o) {
     if (state.file) plan.push({ k: "glass", label: L.link }); // la vitre de liaison ouvre le livre
     for (let i = 0; i < gCount; i++) plan.push({ k: "glyphs", i, label: `${i * PER_SPREAD + 1}–${Math.min(pages.length, (i + 1) * PER_SPREAD)}`.replace(/^1–0$/, L.glyphs) });
     if (state.file) plan.push({ k: "desc", label: L.desc });
+    if (state.file && hooks.mapPage) plan.push({ k: "map", label: hooks.mapLabel || "Map" }); /* 2.10.3 : la carte de l'Âge, après la description (elle manquait au livre du Relto) */
     plan.push({ k: "free", label: L.free });
     if (state.file) plan.push({ k: "links", label: L.link }); // les livres de liaison (et la fissure) : seuls, en toute dernière page
     this.spread = Math.max(0, Math.min(this.spread, plan.length - 1)); const cur = plan[this.spread];
@@ -188,6 +189,7 @@ function mount(plugin, root, o) {
     }
     else if (cur.k === "links") await this.linking(left, analysis, file);
     else if (cur.k === "glyphs") { glyphSpread(left, right, pages, cur.i, seen, file); for (const p of pages) seen.add(p.id); }
+    else if (cur.k === "map") { try { hooks.mapPage(left.createDiv({ cls: "age-book__map" }), analysis, file); } catch (e) { /* une carte qui échoue reste blanche */ } }
     else if (cur.k === "desc") {
       const sentences = this.proseFor(file.path, ageSource, analysis).split(/(?<=[.!?])\s+/).filter(Boolean), lp = left.createDiv({ cls: "age-book__prose", text: sentences.join(" ") }), rp = right.createDiv({ cls: "age-book__prose" });
       let moved = []; // le texte coule d'une page à l'autre : ce qui ne tient pas sur la page de gauche passe sur celle de droite

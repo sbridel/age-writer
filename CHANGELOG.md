@@ -2,6 +2,16 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.10.3 — The crystal on its arm (2026-11-08)
+
+### Added
+- **The crystal is a cut stone on a brass arm**, hinged on the eyepiece mount: folded along the mount, swung in front of the glass (the star's light fans down onto the band of colours), or slid into the reader, the ring left empty while the needle engraves the curve.
+
+### Fixed
+- **The map was missing from the Relto's book**: it now comes after the description, before the free page.
+- **Four ovals around the centre of the map**: the surveyor kept one pond per periscope direction; like the river, only the one seen from the front is kept.
+- **Unsurveyed blanks** on the map appear only under 70 stability (or when the Age is failing), never on water, as fading patches of paper.
+
 ## 2.10.2 — Several links in one file (2026-11-08)
 
 ### Added
