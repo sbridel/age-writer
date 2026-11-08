@@ -69,6 +69,19 @@ function compose(g, kind, a) {
   ids.forEach((id, i) => drawGlyph(g, id, 50 + (i % per) * (gs + 8), y + Math.floor(i / per) * (gs + 10), gs, INK));
 }
 
+/**
+ * 2.9 : la carte postale du Relto (claude/DESIGN-pistes-8-nov.md, § 31) : l'île à l'heure du moment, son nom, l'heure là-bas.
+ * a : { img (la toile du Relto, déjà dessinée), name, when }. Taille : reltoSize(img).
+ */
+function composeRelto(g, a) {
+  const W = g.canvas.width, serif = "Georgia, 'Times New Roman', serif", ww = W - 100, wh = Math.round((ww * a.img.height) / a.img.width);
+  paper(g, W, g.canvas.height); g.textBaseline = "alphabetic";
+  g.drawImage(a.img, 50, 50, ww, wh); g.strokeStyle = INK; g.lineWidth = 1.5; g.strokeRect(49.5, 49.5, ww + 1, wh + 1);
+  g.fillStyle = INK; g.textAlign = "center"; g.font = `34px ${serif}`; g.fillText(a.name, W / 2, 50 + wh + 58);
+  if (a.when) { g.font = `italic 19px ${serif}`; g.fillStyle = FAINT; g.fillText(a.when, W / 2, 50 + wh + 96); }
+}
+const reltoSize = (img) => ({ w: 1200, h: Math.round(50 + (1100 * img.height) / img.width) + 150 });
+
 /** La taille de la toile pour un format et une description (la planche s'allonge avec le texte). */
 function sizeOf(kind, a, measure) {
   if (kind === "postcard") return { w: 1200, h: Math.round(50 + ((1100 * a.m.H) / a.m.W)) + 190 };
@@ -77,4 +90,4 @@ function sizeOf(kind, a, measure) {
   return { w: W, h: 110 + Math.max(wh, 520) + 40 + lines * 29 + 34 + gl * 48 + 50 };
 }
 
-module.exports = { compose, sizeOf, wrap, drawGlyph };
+module.exports = { compose, sizeOf, composeRelto, reltoSize, wrap, drawGlyph };

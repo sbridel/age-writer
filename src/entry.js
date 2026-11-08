@@ -18,6 +18,8 @@ const { sceneOf, millOf, build: genBuild, HOOKS: GEN_HOOKS } = require("./gensce
 const AMAP = require("./agemap"); /* 2.9 : la carte de l'Âge */
 const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, SKYC_RE, parseSky, clockPhases } = require("./sky");
 const ESTAMPE = require("./estampe"); /* 2.9 : l'estampe */
+const { ReltoRenderer } = require("./relto-render"); /* 2.9 : la carte postale du Relto */
+const DCLK = require("./dniclock"), DTM = require("./dnitime");
 const { AMOUNT_RE, parseAmounts, applyAmounts, factorOf } = require("./amounts");
 const HV = require("./harvest"); /* la récolte pour la machine du Relto, et les granulés cuits (étape 4a′) */
 const { rollLink } = fx;
@@ -1029,6 +1031,21 @@ module.exports = function build(Base, core, AGEX) {
       new Notice(this.t("estampe.saved", { path }));
     }
 
+    /** 2.9 : la carte postale du Relto (claude/DESIGN-pistes-8-nov.md, § 31) : l'île à l'heure du moment, son nom, l'heure là-bas ; à côté de la note du Relto. */
+    async saveReltoPostcard(file) {
+      const { scene } = await R.buildScene(this, file), cv = document.createElement("canvas");
+      const rr = new ReltoRenderer(cv, this.dni, { reducedMotion: false, seasons: () => this.ext.reltoSeasons !== false, hemisphere: () => this.ext.reltoHemisphere, t: this.t, instrumentsMode: () => this.ext.instrumentsMode || "easy" });
+      rr.scale = 2; cv.width = 1280; cv.height = 720; /* plus fin qu'à l'écran : la carte fait 1200 de large */
+      try { rr.setScene(scene); rr.setHour(null); rr.draw((typeof performance !== "undefined" ? performance.now() : Date.now()) / 1000); } finally { rr.stop(); }
+      const hm = ((h) => { const n = Math.round(Number(h) * 60) % 1440; return `${String(Math.floor(n / 60)).padStart(2, "0")}:${String(n % 60).padStart(2, "0")}`; })(rr.hour());
+      let when = hm; try { const d = DCLK.reltoDate(scene); when += " · " + (d.synced ? DTM.format(d) : `${d.hahr} · ${d.name} ${d.yahr}`); } catch (e) { /* l'heure seule */ }
+      const out = document.createElement("canvas"), z = ESTAMPE.reltoSize(cv); out.width = z.w; out.height = z.h; ESTAMPE.composeRelto(out.getContext("2d"), { img: cv, name: scene.name || file.basename, when });
+      const blob = await new Promise((res) => out.toBlob(res, "image/png")); if (!blob) return; const buf = await blob.arrayBuffer();
+      const dir = file.parent && file.parent.path !== "/" ? file.parent.path + "/" : "", path = `${dir}${file.basename} — ${this.t("estampe.postcard")}.png`, ex = this.app.vault.getAbstractFileByPath(path);
+      if (ex instanceof TFile) await this.app.vault.modifyBinary(ex, buf); else await this.app.vault.createBinary(path, buf);
+      new Notice(this.t("estampe.saved", { path }));
+    }
+
     async saveCover(file) {
       const src = core.extract(await this.app.vault.read(file)); if (src === null) return new Notice(this.t("cover.noage"));
       const analysis = core.analyse(src, { seed: core.seed(file.path) }), svg = this.coverFor(src, analysis, file, true);
@@ -1103,6 +1120,9 @@ module.exports = function build(Base, core, AGEX) {
       const estampe = (kind) => (check) => { const f = this.app.workspace.getActiveFile(); if (!f || f.extension !== "md") return false; if (!check) this.saveEstampe(f, kind); return true; }; /* 2.9 : l'estampe */
       this.addCommand({ id: "save-age-estampe", name: "Save this Age's print (PNG: window, map, description, glyphs)", checkCallback: estampe("plate") });
       this.addCommand({ id: "save-age-postcard", name: "Save this Age's postcard (PNG: window, name, one sentence)", checkCallback: estampe("postcard") });
+      this.addCommand({ id: "save-relto-postcard", name: "Save this Relto's postcard (PNG: the island, its name, the time there)", checkCallback: (check) => { /* 2.9 : la carte postale du Relto */
+        const ws = this.app.workspace, act = ws.getActiveFile && ws.getActiveFile(), lv = ws.getActiveViewOfType ? ws.getActiveViewOfType(R.ReltoView) : null, vf = lv && this.reltoViewFile ? this.app.vault.getAbstractFileByPath(this.reltoViewFile) : null;
+        const f = act && act.extension === "md" && R.isHubFile(this.app, act) ? act : vf instanceof TFile ? vf : null; if (!f) return false; if (!check) this.saveReltoPostcard(f).catch((e) => console.warn("[Age Writer ext] carte postale du Relto", e)); return true; } });
       this.addCommand({ id: "random-age", name: "Generate a random Age", callback: () => this.randomAge() });
       this.addCommand({ id: "stop-soundscape", name: "Stop the soundscape", callback: () => this.stopSound() });
       // refaire la synchro du télescope : oublie le Great Zero trouvé (et la visée) de tous les Reltos ; l'heure D'ni se tait de nouveau
