@@ -492,6 +492,48 @@ function linkBuild(c, out, noise, V = LINK_VARIANTS[0]) {
   if (V.chord || R() < 0.3) { const ratio = V.chord || [1.5, 1.25, 2][Math.floor(R() * 3)]; tone(f0 * ratio, f1 * ratio, tn.v * 0.55, ts + 0.15 + R() * 0.4); }
 }
 let lastLink = null;
+
+/* ---- 2.10.1 : trois voies pour le son de liaison : classique (ci-dessus), « à la manière de » (src/linksynth.js), ou un fichier à soi ---- */
+const LS = require("./linksynth"), LMODELS = require("./link-models");
+const linkCache = new Map(); let linkBusy = false;
+/** Prépare une liaison synthétisée pour un Âge (calcul ~1 s, en tâche de fond, hors du fil audio) ; `age` : { cold, lava, water, cavern, dead }. */
+function prepareLink(age = {}) {
+  const v = LS.variantFor(age), key = v.model + "|" + Math.round(v.pitch * 50) + "|" + Math.round(v.stretch * 50) + "|" + Math.round((v.breath || 1) * 10);
+  if (linkCache.has(key) || linkBusy) return key;
+  linkBusy = true;
+  const run = () => { try { const r = LS.synth(LMODELS[v.model], { ...v, seed: Math.floor(Math.random() * 1e9), iters: 16 }); linkCache.set(key, r); if (linkCache.size > 6) linkCache.delete(linkCache.keys().next().value); } catch (e) { console.warn("[Age Writer ext] liaison", e); } linkBusy = false; };
+  if (typeof requestIdleCallback === "function") requestIdleCallback(run, { timeout: 1500 }); else setTimeout(run, 0);
+  return key;
+}
+function playSamples(c, out, r, rate = 1, age = {}) {
+  const b = c.createBuffer(1, r.samples.length, r.sr); b.getChannelData(0).set(r.samples); const s = c.createBufferSource(); s.buffer = b; s.playbackRate.value = rate;
+  let tail = out;
+  if (age.cavern || age.cold) { /* un espace : la caverne résonne, le froid porte loin */
+    const secs = age.cavern ? 3.2 : 1.8, len = Math.floor(c.sampleRate * secs), ir = c.createBuffer(2, len, c.sampleRate); for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); let y = 0; for (let i = 0; i < len; i++) { const q = i / len; y = 0.9 * y + (Math.random() * 2 - 1) * 0.45; d[i] = y * Math.pow(1 - q, 2.2); } }
+    const cv = c.createConvolver(); cv.buffer = ir; const w = c.createGain(); w.gain.value = age.cavern ? 0.6 : 0.35; s.connect(cv); cv.connect(w); w.connect(out); }
+  if (age.water) { const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 2; lp.frequency.setValueAtTime(1400, c.currentTime); lp.frequency.exponentialRampToValueAtTime(260, c.currentTime + (r.samples.length / r.sr) / rate); s.connect(lp); tail = lp; }
+  if (tail === out) s.connect(out); else tail.connect(out);
+  s.start(c.currentTime);
+}
+/** La liaison « à la manière de » : si une variante est prête, on la joue ; sinon on la prépare et on joue la classique cette fois-ci. */
+function linkSoundNew(volume = 0.3, age = {}) {
+  const key = prepareLink(age), r = linkCache.get(key) || [...linkCache.values()][0];
+  if (!r) return linkSound(volume);
+  const rate = 1 + (Math.random() * 2 - 1) * 0.03;
+  return oneShot(r.samples.length / r.sr / rate + 4, (c, out) => { out.gain.value = volume * 1.1; playSamples(c, out, r, rate, age); });
+}
+/** La liaison par un fichier de l'utilisateur (déjà décodé en AudioBuffer) : hauteur à ±4 %, l'espace selon l'Âge. */
+function linkSoundFile(volume = 0.3, buf, age = {}) {
+  if (!buf) return linkSound(volume);
+  const rate = 1 + (Math.random() * 2 - 1) * 0.04, r = { samples: buf.getChannelData(0), sr: buf.sampleRate };
+  return oneShot(buf.duration / rate + 4, (c, out) => { out.gain.value = volume * bufferGain(buf) * 0.9; playSamples(c, out, r, rate, age); });
+}
+/** Le choix selon le réglage : "classic" | "new" | "both" | "file". `getFile()` : l'AudioBuffer du fichier, ou null. */
+function linkSoundBy(mode, volume, age = {}, fileBuf = null) {
+  if (mode === "file" && fileBuf) return linkSoundFile(volume, fileBuf, age);
+  if (mode === "new" || (mode === "both" && Math.random() < 0.5) || (mode === "file" && !fileBuf)) return linkSoundNew(volume, age);
+  return linkSound(volume);
+}
 function linkSound(volume = 0.3) {
   const V = pickLinkVariant(Math.random(), lastLink); lastLink = V.id;
   return oneShot(V.end + 0.6, (c, out, noise) => { out.gain.value = volume * 0.8; linkBuild(c, out, noise, V); });
@@ -894,4 +936,4 @@ function ovenSfx(kind, volume = 0.3) {
   });
 }
 
-module.exports = { ovenSfx, slabSfx, openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, roomLevel, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { linkSoundBy, linkSoundNew, linkSoundFile, prepareLink, ovenSfx, slabSfx, openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, roomLevel, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };

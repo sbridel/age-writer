@@ -75,7 +75,7 @@ async function mountGlass(plugin, host, file) {
 
 /** Passer de l'autre côté : le son de liaison, puis le Relto (le livre laisse sa place). */
 async function linkTo(plugin, f, leaf) {
-  if (plugin.ext.sound && plugin.ext.soundLink !== false) { try { sound.linkSound(plugin.ext.volume); } catch (e) { /* ignore */ } }
+  try { plugin.playLink(null); } catch (e) { /* ignore */ }
   await R.openHubFile(plugin, f, leaf);
 }
 
@@ -251,7 +251,7 @@ function openInRelto(plugin, host, hereFile, { onHere } = {}) {
   const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); e.preventDefault(); close(); return; } if (book && book.key(e)) e.stopPropagation(); };
   const fit = () => { const r = host.getBoundingClientRect(), k = Math.min((r.width * 0.84) / 1040, (r.height * 0.86) / (book && book.cover ? 640 : 600)); /* de la marge autour du livre : on clique à côté pour le reposer */ stage.style.transform = `translate(-50%, -50%) scale(${Math.max(0.2, k).toFixed(3)})`; };
   book = new ReltoBook(plugin, stage, { cover: true, keepCover: true, idx: here >= 0 ? here : null, onLink: (f) => {
-    if (plugin.ext.sound && plugin.ext.soundLink !== false) { try { sound.linkSound(plugin.ext.volume); } catch (e) { /* ignore */ } }
+    try { plugin.playLink(null); } catch (e) { /* ignore */ }
     ov.addClass("is-linking");
     window.setTimeout(() => { close(); if (hereFile && f.path === hereFile.path) { if (onHere) onHere(); } else R.openHubFile(plugin, f); }, 900);
   } });

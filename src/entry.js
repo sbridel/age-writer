@@ -11,7 +11,7 @@ const { Dni } = require("./dni");
 const { setMarkup, fitModalToFullscreen, rescueModals } = require("./util");
 const { Law, adjustAnalysis, fissureStrain, strainable, forceAlteration, describeChange, worldIds, retouchFactor } = require("./law");
 const { solitudeFactor, COVER_RE, parseCover, KEY_RE, FX_RE, STYLE_RE, TRAP_RE, DMG_RE, parseFx, parseStyle, parseTrap, parseDamage, applyDamage } = require("./mech");
-const { Soundscape, staticBurst, openSequence, linkSound, pageTurn } = require("./sound");
+const { Soundscape, staticBurst, openSequence, pageTurn, linkSoundBy, prepareLink } = require("./sound");
 const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
 const { sceneOf, millOf, build: genBuild, HOOKS: GEN_HOOKS } = require("./genscene");
@@ -224,6 +224,7 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.w = (slot, opt) => { const f = guard("solitude", () => solitudeFactor(this.ext.solitude, slot, opt.id)); return opt.weight * (f == null ? 1 : f); };
 
       guard("fonts", () => this.dni.init().then(() => this.redrawEverything()));
+      guard("liaison", () => { const m = this.ext.linkSoundMode || "classic"; if (m === "new" || m === "both") setTimeout(() => prepareLink({}), 2500); if (m === "file") this.loadLinkFile(); }); /* 2.10.1 : une liaison prête d'avance, ou le fichier chargé */
       guard("book", () => this.patchBook());
       guard("settings", () => this.patchSettings());
       this.registerProcessors();
@@ -864,7 +865,7 @@ module.exports = function build(Base, core, AGEX) {
           const win = t.createDiv({ cls: "age-book__window age-rbook__inbook is-clickable" }); win.setAttr("title", plugin.t("link.touch"));
           RBK.mountGlass(plugin, win, i.file).catch((e) => console.warn("[Age Writer ext] vitre du Relto", e));
           t.createDiv({ cls: "age-book__caption", text: plugin.t("rbook.homeglass", { name: i.file.basename }) });
-          win.addEventListener("click", () => { view.__quietUntil = Date.now() + 4000; if (plugin.ext.sound && plugin.ext.soundLink !== false) linkSound(plugin.ext.volume); R.openHubFile(plugin, i.file); });
+          win.addEventListener("click", () => { view.__quietUntil = Date.now() + 4000; plugin.playLink(plugin.currentAgeFile); R.openHubFile(plugin, i.file); });
           return;
         }
         plugin.fxCtx = i && i.analysis ? { mode: parseFx(i.source), style: parseStyle(i.source), sky: parseSky(i.source), analysis: i.analysis, seed: i.file && i.file.path, glimpse: true } : null;
@@ -876,7 +877,7 @@ module.exports = function build(Base, core, AGEX) {
             view.__quietUntil = Date.now() + 4000;
             const rows = [...view.contentEl.querySelectorAll(".age-book__book")], row = rows.find((r) => r.__item === i) || rows.find((r) => r.__item && r.__item.name === i.name);
             const a = row && row.querySelector(".age-book__open");
-            if (a) a.click(); else { if (plugin.ext.sound && plugin.ext.soundLink !== false) linkSound(plugin.ext.volume); plugin.app.workspace.openLinkText(i.name, plugin.currentAgeFile ? plugin.currentAgeFile.path : "", false); }
+            if (a) a.click(); else { plugin.playLink(plugin.currentAgeFile); plugin.app.workspace.openLinkText(i.name, plugin.currentAgeFile ? plugin.currentAgeFile.path : "", false); }
           });
         });
         guard("trap ui", () => {
@@ -896,7 +897,7 @@ module.exports = function build(Base, core, AGEX) {
           row.addEventListener("click", (e) => {
             const a = e.target && e.target.closest ? e.target.closest(".age-book__open") : null; if (!a) return;
             e.stopImmediatePropagation(); e.preventDefault(); view.__quietUntil = Date.now() + 4000;
-            if (plugin.ext.sound && plugin.ext.soundLink !== false) linkSound(plugin.ext.volume);
+            plugin.playLink(plugin.currentAgeFile);
             R.openHubFile(plugin, i.file);
           }, true);
         });
@@ -909,10 +910,10 @@ module.exports = function build(Base, core, AGEX) {
             if (plugin.law.destroyed(i.name)) { e.stopImmediatePropagation(); e.preventDefault(); row.addClass("is-flicker"); window.setTimeout(() => row.removeClass("is-flicker"), 700); new Notice(plugin.t("doom.gone")); return; } // le livre est brûlé : rien ne s'ouvre plus
             view.__quietUntil = Date.now() + 4000; // déjà dans le livre : pas de bruit d'ouverture
             guard("fire colour", () => { FIRE.rememberAge(plugin.ext, i.analysis); plugin.saveExt(); }); /* 2.5 (I) : le feu du Relto prend la couleur du dernier Âge visité */
-            if (plugin.ext.uncertainLinks === false) { if (plugin.ext.sound && plugin.ext.soundLink !== false) linkSound(plugin.ext.volume); return; }
+            if (plugin.ext.uncertainLinks === false) { plugin.playLink(plugin.currentAgeFile); return; }
             const others = [...view.contentEl.querySelectorAll(".age-book__book")].map((r) => r.__item).filter((x) => x && x.file && x.file !== i.file);
             const res = rollLink(fx.unrestOf(i.analysis), Math.random(), others.length, i.analysis.damage);
-            if (res.kind === "ok") { if (plugin.ext.sound && plugin.ext.soundLink !== false) linkSound(plugin.ext.volume); return; }
+            if (res.kind === "ok") { plugin.playLink(plugin.currentAgeFile); return; }
             e.stopImmediatePropagation(); e.preventDefault();
             row.addClass("is-flicker"); window.setTimeout(() => row.removeClass("is-flicker"), 700);
             if (plugin.ext.sound) staticBurst(plugin.ext.volume * 0.8);
@@ -1032,6 +1033,20 @@ module.exports = function build(Base, core, AGEX) {
     }
 
     /** 2.9 : la carte postale du Relto (claude/DESIGN-pistes-8-nov.md, § 31) : l'île à l'heure du moment, son nom, l'heure là-bas ; à côté de la note du Relto. */
+    /** 2.10.1 : le son de liaison selon le réglage (classique, à l'ancienne, les deux, fichier), teinté par l'Âge où l'on va. */
+    linkTraitsOf(S) { if (!S) return {}; return { cold: !!(S.ice || S.world === "frozen"), lava: !!(S.lava || S.world === "lava"), water: !!(S.water && S.waterGround !== false && !S.ice), cavern: S.world === "cavern", dead: !!(S.phys && S.phys.whiteDwarf) }; }
+    async playLink(file) {
+      const e = this.ext; if (!e.sound || e.soundLink === false) return; const mode = e.linkSoundMode || "classic";
+      let age = {}; try { if (file && mode !== "classic") { const src = core.extract(await this.app.vault.cachedRead(file)); if (src != null) { const seed = core.seed(file.path), a = core.analyse(src, { seed }); age = this.linkTraitsOf(sceneOf(a, seed, core.blocks)); } } } catch (err) { age = {}; }
+      try { linkSoundBy(mode, e.volume, age, mode === "file" ? this._linkBuf || null : null); if (mode !== "classic" && mode !== "file") prepareLink(age); } catch (err) { console.warn("[Age Writer ext] liaison", err); }
+    }
+    /** Charge (ou recharge) le fichier du son de liaison choisi dans les réglages. */
+    async loadLinkFile() {
+      this._linkBuf = null; const n = String(this.ext.linkSoundFile || "").trim().replace(/^\[\[|\]\]$/g, ""); if (!n || (this.ext.linkSoundMode || "classic") !== "file") return;
+      try { const f = this.app.metadataCache.getFirstLinkpathDest(n, "") || this.app.vault.getAbstractFileByPath(n); if (!(f instanceof TFile) || !["mp3", "ogg", "wav", "m4a", "flac"].includes(String(f.extension).toLowerCase())) return;
+        const c = require("./sound").audioContext(); if (!c) return; this._linkBuf = await c.decodeAudioData((await this.app.vault.readBinary(f)).slice(0)); } catch (err) { console.warn("[Age Writer ext] fichier du son de liaison", err); }
+    }
+
     async saveReltoPostcard(file) {
       const { scene } = await R.buildScene(this, file), cv = document.createElement("canvas");
       const rr = new ReltoRenderer(cv, this.dni, { reducedMotion: false, seasons: () => this.ext.reltoSeasons !== false, hemisphere: () => this.ext.reltoHemisphere, t: this.t, instrumentsMode: () => this.ext.instrumentsMode || "easy" });
