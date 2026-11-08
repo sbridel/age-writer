@@ -204,7 +204,7 @@ const relDone = (async () => {
   click((a) => a.spectro, "la pierre devant le verre"); r.draw(5.7);
   ok(st.spectro === 1 && r.hot.some((h) => h.tel && h.tel.engraveLight && /engrave the star's light/.test(h.tip)), "2.10.5 : la pierre devant le verre : la plaque propose de graver la lumière");
   click((a) => a.engraveLight, "graver la lumière"); r.draw(5.8);
-  ok(st.systems[sysB.key].light === true && store[st.key].systems[sysB.key].light === true && st.note === "spec.engraved", "la lumière gravée, gardée avec le système");
+  ok(/^#[0-9a-f]{6}$/.test(st.systems[sysB.key].light) && store[st.key].systems[sysB.key].light === st.systems[sysB.key].light && st.note === "spec.engraved", "la lumière gravée, gardée avec le système");
   click((a) => a.spectro, "la pierre repliée"); ok(st.spectro === 0, "deux états seulement : repliée à nouveau");
   { const r2 = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts()); r2.setScene(sc); r2.nowOverride = t0 + POSE; r2.setView("starmap"); r2.draw(6); await tick(); r2.draw(6.1);
     const h = r2.hot.find((x) => x.mapAct && x.mapAct.pick); ok(h && /light is engraved/.test(h.tip), "sur la carte des étoiles : l'étoile porte la marque de sa lumière, et s'ouvre");

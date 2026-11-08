@@ -5,7 +5,7 @@
 // étoile un court trait de plomb vers l'endroit où son Âge voit vraiment le Zéro : sur la bonne ligne, il vise la rose ; sur
 // la ligne de Me'erta, il la manque. Encre brune sur papier clair : lisible en thème clair comme sombre (le papier reste papier).
 // Modèle : src/starmap.js. On y vient par le rouleau au mur de l'observatoire ; ︾ y ramène.
-const { rng, clamp, rgba } = require("./util");
+const { rng, clamp, rgba, mix, hex2rgb } = require("./util");
 const T = require("./telescope");
 const MAP = require("./starmap");
 const TL = require("./relto-telescope");
@@ -167,8 +167,8 @@ function drawStarMap(r, ctx, sc, sky, tm) {
     if (label && shown) labels.push({ x: sx, y: sy, text: label, font: "italic 9.5px serif", hot: !r.mapNames && !focus });
     const tip = (s.ages.length ? s.ages.join(", ") : t("map.star.unnamed")) + (s.pert.length ? " — " + s.pert.map((p) => pertName(t, p.kind)).join(", ") : "") + (bad ? " — " + t("map.star.miss") : "") + " — " + t(elevBand(s.z));
     const rf = BEAM.rahnfeeOf(s.distance), far = rf >= 1 ? t("beam.far.beyond") : t("beam.far.line", { far: String(t("beam.far")).split("|")[BEAM.fracBand(rf)] }); // mondes lointains : au-delà d'un rahnfee // la distance le long du faisceau : en mots, puis en rahnfee (chiffres D'ni)
-    const lit = !!(view[s.key] && view[s.key].light); /* 2.10.5 : la lumière gravée à la plaque : trois touches de couleur sous l'étoile, et le cartouche au clic */
-    if (lit) { for (let k = 0; k < 3; k++) { const [cr, cg, cb] = TL.wl([450, 540, 640][k]); ctx.fillStyle = `rgba(${Math.round(255 * cr * 0.8)},${Math.round(255 * cg * 0.8)},${Math.round(255 * cb * 0.8)},0.8)`; ctx.fillRect(sx - 4 + k * 3, sy + 8, 2.4, 1.6); } }
+    const lit = !!(view[s.key] && view[s.key].light); /* 2.10.5/2.10.7 : la lumière gravée à la plaque : l'étoile prend sa couleur sur la carte, et le cartouche s'ouvre au clic */
+    if (lit && !former && !s.offLine) { const tint = typeof view[s.key].light === "string" ? view[s.key].light : null; if (tint) { const hz = ctx.createRadialGradient(sx, sy, 1, sx, sy, 11); hz.addColorStop(0, rgba(...hex2rgb(tint), 0.42)); hz.addColorStop(1, rgba(...hex2rgb(tint), 0)); ctx.fillStyle = hz; ctx.fillRect(sx - 11, sy - 11, 22, 22); inkStar(ctx, sx, sy, s.ages.length > 1 ? 6.5 : 5, mix(INK, tint, 0.78)); ctx.strokeStyle = rgba(59, 42, 27, 0.6); ctx.lineWidth = 0.5; ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, rr = i % 2 ? (s.ages.length > 1 ? 6.5 : 5) * 0.32 : s.ages.length > 1 ? 6.5 : 5; ctx.lineTo(sx + Math.sin(a) * rr, sy - Math.cos(a) * rr); } ctx.closePath(); ctx.stroke(); } } /* l'encre teintée de la couleur de l'étoile, cernée d'un trait pour rester lisible sur le papier */
     r.hot.push({ x: sx - 9, y: sy - 9, w: 18, h: 18, tip: tip + " — " + far + (lit ? " — " + t(r.mapPick === s.key ? "map.light.close" : "map.light.open") : ""), frac: BEAM.digitsOf(s.distance), starKey: s.key, ...(lit ? { mapAct: { pick: s.key } } : {}) });
   }
   // les noms, en dernier : liseré de papier pour rester lisibles par-dessus les traits ; un nom écarté est relié à son point
