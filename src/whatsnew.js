@@ -12,7 +12,9 @@ const NEWS = [
       letter: "On nous a reproché, à raison, que la liaison ne sonnait pas comme dans les vieux livres. Nous avons écouté les anciens, relevé la forme de leur souffle, et appris à l'encre à la refaire sans la copier. Vous choisissez : l'ancienne manière, la nôtre, les deux, ou votre propre enregistrement.",
       sign: "— pour la Guilde des Écrivains",
       items: [
-        "**Trois voies pour le son de liaison** (Réglages → Son) : classique ; à l'ancienne, une synthèse nouvelle qui suit l'Âge où l'on va et ne se répète jamais ; les deux au hasard ; ou votre fichier, joué avec l'écho des cavernes et l'étouffement de l'eau.",
+        "**Trois voies pour le son de liaison** (Réglages → Son) : classique ; à l'ancienne, une synthèse nouvelle qui suit l'Âge où l'on va et ne se répète jamais ; les deux au hasard.",
+        "**Votre propre enregistrement** : un fichier audio du coffre, joué à une hauteur légèrement variable, avec l'écho des cavernes et l'étouffement de l'eau.",
+        "**Le cristal du télescope** parle maintenant comme la Guilde : plus de mots de laboratoire, et sa lecture laisse le lutrin libre.",
       ],
     },
     en: {
@@ -20,7 +22,9 @@ const NEWS = [
       letter: "We were told, rightly, that the link did not sound as it did in the old books. We listened to the old ones, took down the shape of their breath, and taught the ink to make it again without copying it. You choose: the old manner, ours, both, or your own recording.",
       sign: "— for the Guild of Writers",
       items: [
-        "**Three ways to sound the link** (Settings → Sound): classic; in the old manner, a new synthesis that follows the Age you go to and never repeats; both at random; or your own file, played with the echo of caves and the muffling of water.",
+        "**Three ways to sound the link** (Settings → Sound): classic; in the old manner, a new synthesis that follows the Age you go to and never repeats; both at random.",
+        "**Your own recording**: an audio file from the vault, played at a slightly varying pitch, with the echo of caves and the muffling of water.",
+        "**The telescope's crystal** now speaks as the Guild does: no laboratory words, and its reading leaves the lectern free.",
       ],
     },
   },
