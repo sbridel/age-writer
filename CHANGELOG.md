@@ -2,7 +2,7 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.9.1 — Dead stars (2026-11-08)
+## 2.10.0 — Dead stars (2026-11-08)
 
 ### Added
 - **The white dwarf has a colour, and it means something.** Without debris, the colour is its age: `blue_sun` young and burning, nothing written white, `orange_sun` very old and ochre. With what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), the colour is what it ate: `green_sun` the salt (chartreuse), `blue_sun` the salt to the extreme (pale blue, and cold), `red_sun` the carbon (pink when warm, red when cooled). None costs Art; any other colour written on a white dwarf costs a little. The tints are the real ones, pale.
