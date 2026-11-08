@@ -699,6 +699,10 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.10.6 — la craie sous la courbe (8 nov. 2026, nuit)
+
+- `lightCard` : en deux temps, la plume (2,2 s) puis la craie sous la courbe (1,8 s, grain du papier, bout de craie visible), la bande séparée retirée. CHANGELOG, README et lettre de la Guilde : les six entrées 2.10.x condensées en une.
+
 ## 2.10.5 — la pierre montre, la plaque grave, la carte garde (8 nov. 2026, soir)
 
 - Objection de l'auteur : « la courbe trace un tracé et les couleurs en même temps » et « il n'y a pas d'aiguille sur le télescope ». Décision : la pierre à deux états (`spectro` 0/1, `lightOf(st)` : située et visée via `SS.measure(...).located`) ; `readerPlate` retirée ; la plaque du système (`systemPlate`) grave la lumière quand la pierre est devant (`tel.engraveLight` → `systems[key].light = true`, note `spec.engraved`, signe gravé) ; `relto-starmap.js` : `lightCard` (fiche en bas à gauche, l'échelle des hauteurs effacée pendant, courbe à la plume en 2,2 s, bande droite mate, lecture sur trois lignes), marque de trois touches sous l'étoile, `mapAct.pick`. Tests dans `starsystem.test.js`.

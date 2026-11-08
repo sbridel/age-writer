@@ -224,15 +224,19 @@ function lightCard(r, ctx, t, S, key, rec, tm) {
   r.hot.push({ x: C.x + C.w - 16, y: C.y + 2, w: 14, h: 14, tip: t("map.light.close"), mapAct: { pick: key } });
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(C.x + C.w - 12, C.y + 5); ctx.lineTo(C.x + C.w - 6, C.y + 11); ctx.moveTo(C.x + C.w - 6, C.y + 5); ctx.lineTo(C.x + C.w - 12, C.y + 11); ctx.stroke();
   if (!star) { ctx.font = "italic 9px serif"; ctx.fillStyle = INK2; ctx.textAlign = "center"; ctx.fillText(t(ml.pending ? "map.light.reading" : "map.light.lost"), C.x + C.w / 2, C.y + 60, C.w - 20); ctx.textAlign = "left"; ctx.restore(); return; }
-  const spec = SPEC.spectrumOf(star, 160), x0 = C.x + 14, BW = C.w - 28, base = C.y + 62, H0 = 36, dt = r.opts.reducedMotion ? 9 : Math.max(0, (tm || 0) - (ml.t0 || 0)), prog = Math.min(1, dt / 2.2), n = Math.max(2, Math.floor(BW * prog));
-  { const gb = ctx.createLinearGradient(x0, 0, x0 + BW, 0); for (let k = 0; k <= 24; k++) { const [cr, cg, cb] = TL.wl(385 + k * 14.6); gb.addColorStop(k / 24, `rgb(${Math.round(255 * (0.18 + 0.7 * cr))},${Math.round(255 * (0.18 + 0.7 * cg))},${Math.round(255 * (0.18 + 0.7 * cb))})`); } ctx.fillStyle = gb; ctx.fillRect(x0, base + 5, BW, 6); ctx.fillStyle = "rgba(244,234,210,0.22)"; ctx.fillRect(x0, base + 5, BW, 2); } /* la gouache : une bande droite, mate, posée d'un geste, un peu plus claire au bord */
+  const spec = SPEC.spectrumOf(star, 160), x0 = C.x + 14, BW = C.w - 28, base = C.y + 66, H0 = 42, dt = r.opts.reducedMotion ? 9 : Math.max(0, (tm || 0) - (ml.t0 || 0)), prog = Math.min(1, dt / 2.2), n = Math.max(2, Math.floor(BW * prog));
+  const vAt = (k) => spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))];
+  /* en deux temps : la plume trace la courbe ; puis la craie colorie dessous, de gauche à droite, mate, avec son grain */
+  const fill = Math.min(1, Math.max(0, (dt - 2.4) / 1.8)), nf = Math.floor(BW * fill), q = rng(((key.length * 7919) ^ 0x51) >>> 0);
+  for (let k = 0; k < nf; k++) { const [cr, cg, cb] = TL.wl(380 + (360 * k) / BW), h = H0 * vAt(k) * 0.95, g1 = 0.62 + 0.18 * q(); ctx.fillStyle = `rgba(${Math.round(255 * (0.18 + 0.7 * cr))},${Math.round(255 * (0.18 + 0.7 * cg))},${Math.round(255 * (0.18 + 0.7 * cb))},${g1.toFixed(2)})`; ctx.fillRect(x0 + k, base - h + 1, 1.1, Math.max(0, h - 1)); if (q() < 0.3) { ctx.fillStyle = "rgba(244,234,210,0.35)"; ctx.fillRect(x0 + k, base - h + 1 + q() * h, 1.1, 1.5); } } /* la craie : le grain du papier passe au travers */
   ctx.strokeStyle = rgba(59, 42, 27, 0.25); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(x0, base + 0.5); ctx.lineTo(x0 + BW, base + 0.5); ctx.stroke(); /* la ligne de base, au crayon */
   ctx.strokeStyle = INK; ctx.lineWidth = 1.1; ctx.lineJoin = "round"; ctx.beginPath();
-  for (let k = 0; k < n; k++) { const v = spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))], yy = base - H0 * v * 0.95; k ? ctx.lineTo(x0 + k, yy) : ctx.moveTo(x0 + k, yy); } ctx.stroke(); /* la plume */
-  if (prog < 1) { const k = n - 1, v = spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))]; ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x0 + k, base - H0 * v * 0.95, 1.4, 0, 6.283); ctx.fill(); } /* la goutte d'encre, au bout du trait */
+  for (let k = 0; k < n; k++) { const yy = base - H0 * vAt(k) * 0.95; k ? ctx.lineTo(x0 + k, yy) : ctx.moveTo(x0 + k, yy); } ctx.stroke(); /* la plume */
+  if (prog < 1) { const k = n - 1; ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x0 + k, base - H0 * vAt(k) * 0.95, 1.4, 0, 6.283); ctx.fill(); } /* la goutte d'encre, au bout du trait */
+  else if (fill < 1) { const k = Math.max(0, nf - 1), [cr, cg, cb] = TL.wl(380 + (360 * k) / BW); ctx.fillStyle = `rgb(${Math.round(255 * (0.18 + 0.7 * cr))},${Math.round(255 * (0.18 + 0.7 * cg))},${Math.round(255 * (0.18 + 0.7 * cb))})`; ctx.fillRect(x0 + k - 1, base - H0 * vAt(k) * 0.95 + 2, 3, 6); } /* le bout de la craie */
   const rd = SPEC.readingOf(star), words = (t(rd.heat) + " " + t(rd.holds) + (rd.means ? " " + t(rd.means) : "")).split(/\s+/), lines = []; ctx.font = "italic 8.5px serif";
   for (const w of words) { const cand = lines.length ? lines[lines.length - 1] + " " + w : w; if (lines.length && ctx.measureText(cand).width <= C.w - 18) lines[lines.length - 1] = cand; else lines.push(w); } /* la lecture, à la main, sur trois lignes au plus */
-  ctx.fillStyle = INK2; ctx.textAlign = "center"; lines.slice(0, 3).forEach((ln, i) => ctx.fillText(ln, C.x + C.w / 2, C.y + 84 + i * 10.5, C.w - 16)); ctx.textAlign = "left";
+  ctx.fillStyle = INK2; ctx.textAlign = "center"; lines.slice(0, 3).forEach((ln, i) => ctx.fillText(ln, C.x + C.w / 2, C.y + 86 + i * 10.5, C.w - 16)); ctx.textAlign = "left";
   ctx.restore();
 }
 

@@ -2,54 +2,23 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.10.5 — The stone, the plate, the map (2026-11-08)
-
-### Changed
-- **The stone has two states only**: folded along the mount, or in front of the glass, where the light of a charted *and aimed* star unfolds into its band of colours and its reading. The reader and its needle are gone from the eyepiece: a needle traces, it does not paint.
-- **The plate engraves the light**: with the stone in front of the glass, a click on the star's plate engraves what the stone shows (a small dry-point sign stays on the plate). It is kept with your Relto.
-- **The star map keeps the record**: a star whose light is engraved carries three touches of colour; a click pins a record in the corner of the parchment: the Age's name, the curve drawn in ink before your eyes the first time, a straight matte band of colour, and the Guild's reading.
-
-## 2.10.4 — The crystal waits (2026-11-08)
-
-### Fixed
-- **The crystal unfolded the light of a star not yet found.** It now answers only once the book's star is charted (the Great Zero found and its system recorded); until then the stone stays dark, and says so.
-
-## 2.10.3 — The crystal on its arm (2026-11-08)
-
-### Added
-- **The crystal is a cut stone on a brass arm**, hinged on the eyepiece mount: folded along the mount, swung in front of the glass (the star's light fans down onto the band of colours), or slid into the reader, the ring left empty while the needle engraves the curve.
-
-### Fixed
-- **The map was missing from the Relto's book**: it now comes after the description, before the free page.
-- **Four ovals around the centre of the map**: the surveyor kept one pond per periscope direction; like the river, only the one seen from the front is kept.
-- **Unsurveyed blanks** on the map appear only under 70 stability (or when the Age is failing), never on water, as fading patches of paper.
-
-## 2.10.2 — Several links in one file (2026-11-08)
-
-### Added
-- **My own file** may hold several linking sounds one after another: the file is cut at its silences and one of them is drawn each time, never twice in a row.
-
-## 2.10.1 — The linking sound (2026-11-08)
-
-### Added
-- **Three ways to sound the link** (Settings → Sound → Linking sound): *Classic*, the synthesized sounds of earlier versions; *In the old manner*, a new synthesis learnt from the shape of the linking sounds of the old games (never their recordings: three small models, 68 KB in all), varied by the Age you go to (colder and brighter for frozen worlds and dead stars, deeper and slower for lava, muffled under water, echoing in caves), and never twice the same; *Both*, one or the other; *My own file*, an audio file from your vault (mp3, ogg, wav, m4a, flac), played at a slightly varying pitch with the same echo and muffling.
-- **The crystal, in the telescope room**: its light, its apparatus and its readings, as introduced in 2.10.0, now with the laboratory words gone from the Guild's voice.
-
-### Fixed
-- The crystal's reading no longer covers the lectern's label.
-
-## 2.10.0 — Dead stars (2026-11-08)
+## 2.10 — Dead stars (2.10.0 to 2.10.6, 2026-11-08)
 
 ### Added
 - **The white dwarf has a colour, and it means something.** Without debris, the colour is its age: `blue_sun` young and burning, nothing written white, `orange_sun` very old and ochre. With what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), the colour is what it ate: `green_sun` the salt (chartreuse), `blue_sun` the salt to the extreme (pale blue, and cold), `red_sun` the carbon (pink when warm, red when cooled). None costs Art; any other colour written on a white dwarf costs a little. The tints are the real ones, pale.
 - **A world born of debris is young.** With a white dwarf and debris, the world's age is drawn between 0.1 and 1 Gyr; a greater written age is a light contradiction. Its life is simple, its air poor in oxygen, its trees young.
 - **The sun is drawn as a sun**: a core burnt to white, a corona that melts the edge and breathes slowly, a warmer glow at noon, orange when low, a hard point in thin air, a smear in thick air; the second sun smaller and cooler.
-- **The crystal, at the telescope.** With a book on the lectern, a crystal tab on the eyepiece's rim: slide the crystal over the eyepiece and the star's light breaks into its colours, with its shadows; set it in the apparatus and a needle traces the curve, the light itself beneath it. A reading in the Guild's words tells the star's heat, what it holds, and what that means. A green or violet sun that is merely written shows a whole light: "that green is written".
+- **The stone, at the telescope.** A cut stone in a ring, at the end of a brass arm hinged on the eyepiece mount. With a book on the lectern whose star is charted and aimed, swing the stone in front of the glass: the star's light unfolds into its band of colours, with its shadows, and the Guild reads it in words: its heat, what it holds, what that means. A green or violet sun that is merely written shows a whole light: "that green is written".
+- **The plate engraves the light.** With the stone in front of the glass, a click on the star's plate engraves what the stone shows (a small dry-point sign stays on the plate), kept with your Relto.
+- **The star map keeps the record.** A star whose light is engraved carries three touches of colour; a click pins a record in the corner of the parchment: the Age's name, the curve drawn in ink before your eyes the first time, then coloured in under the line with a chalk, and the Guild's reading.
+- **Three ways to sound the link** (Settings → Sound → Linking sound): *Classic*, the synthesized sounds of earlier versions; *In the old manner*, a new synthesis learnt from the shape of the linking sounds of the old games (never their recordings: three small models, 68 KB in all), varied by the Age you go to and never twice the same; *Both*; *My own file*, an audio file from your vault (mp3, ogg, wav, m4a, flac), which may hold several linking sounds one after another (cut at its silences, one drawn each time), played at a slightly varying pitch with the same echo and muffling.
+- **The map of the Age in the Relto's book**, after the description, before the free page.
 - **The Relto postcard** shows the time there in D'ni numerals, as the island's plate does.
 
 ### Fixed
 - Leaving fullscreen with the button could leave the interface deaf to clicks until Escape.
 - Thick fog now washes out shadows, as rain does.
+- The map kept one pond per periscope direction (four ovals around the centre); like the river, only the one seen from the front is kept. Unsurveyed blanks appear only under 70 stability (or when the Age is failing), never on water, as fading patches of paper.
 
 ## 2.9.0 — The world remembers (2026-11-08)
 

@@ -6,121 +6,31 @@
  */
 const NEWS = [
   {
-    v: "2.10.5",
-    fr: {
-      title: "La pierre, la plaque, la carte",
-      letter: "Une aiguille trace, elle ne peint pas ; et il n'y a pas d'aiguille dans une lunette. La Guilde a donc remis chaque chose à sa place : la pierre déplie la lumière, la plaque la grave, la carte des étoiles la garde. La courbe n'est plus dans l'oculaire : elle est à la plume, épinglée au parchemin.",
-      sign: "— pour la Guilde des Écrivains",
-      items: [
-        "**La pierre a deux états** : repliée, ou devant le verre ; là, si l'étoile du livre est située et visée, sa lumière se déplie en bande, avec sa lecture.",
-        "**La plaque grave la lumière** : la pierre devant le verre, un clic sur la plaque de l'étoile grave ce qu'elle montre ; un petit signe reste gravé.",
-        "**La carte des étoiles garde le relevé** : trois touches de couleur sous l'étoile ; un clic épingle la fiche : la courbe à la plume, la bande peinte, la lecture de la Guilde.",
-      ],
-    },
-    en: {
-      title: "The stone, the plate, the map",
-      letter: "A needle traces, it does not paint; and there is no needle in a telescope. So the Guild has put each thing back in its place: the stone unfolds the light, the plate engraves it, the star map keeps it. The curve is no longer in the eyepiece: it is drawn in ink, pinned to the parchment.",
-      sign: "— for the Guild of Writers",
-      items: [
-        "**The stone has two states**: folded, or in front of the glass; there, if the book's star is charted and aimed, its light unfolds into a band, with its reading.",
-        "**The plate engraves the light**: with the stone in front of the glass, a click on the star's plate engraves what it shows; a small sign stays engraved.",
-        "**The star map keeps the record**: three touches of colour under the star; a click pins the record: the curve in ink, the painted band, the Guild's reading.",
-      ],
-    },
-  },
-  {
-    v: "2.10.4",
-    fr: {
-      title: "Le cristal attend",
-      letter: "Une pierre ne déplie pas une lumière qu'on n'a pas encore trouvée. Le cristal attend que l'étoile du livre soit située sur la carte ; jusque-là, il dort dans sa bague.",
-      sign: "— pour la Guilde des Écrivains",
-      items: [
-        "**Le cristal ne répond qu'à une étoile située** : le Zéro trouvé, son système gravé.",
-        "**Avant cela, la pierre reste sombre**, et le dit quand on l'approche.",
-        "**Une pierre taillée au bout d'un bras**, la carte dans le livre du Relto, un seul étang sur la carte (2.10.3).",
-      ],
-    },
-    en: {
-      title: "The crystal waits",
-      letter: "A stone does not unfold a light that has not yet been found. The crystal waits for the book's star to be charted; until then it sleeps in its ring.",
-      sign: "— for the Guild of Writers",
-      items: [
-        "**The crystal answers only a charted star**: the Zero found, its system recorded.",
-        "**Until then the stone stays dark**, and says so when you reach for it.",
-        "**A cut stone at the end of an arm**, the map in the Relto's book, one pond on the map (2.10.3).",
-      ],
-    },
-  },
-  {
-    v: "2.10.3",
-    fr: {
-      title: "Le cristal sur son bras",
-      letter: "Le cristal n'est plus posé à côté de l'oculaire : la Guilde l'a taillé en pierre et monté dans une bague, au bout d'un bras de laiton articulé sur la monture. Et la carte de l'Âge, qui manquait au livre, y est maintenant à sa page.",
-      sign: "— pour la Guilde des Écrivains",
-      items: [
-        "**Une pierre taillée au bout d'un bras** : repliée le long de la monture ; pivotée devant le verre, la lumière de l'étoile se déplie sous elle ; glissée dans l'appareil, la bague reste vide pendant que l'aiguille grave.",
-        "**La carte dans le livre du Relto**, après la description.",
-        "**La carte, corrigée** : un seul étang (il y en avait quatre autour du centre), et des blancs seulement quand l'Âge vacille, jamais sur l'eau.",
-      ],
-    },
-    en: {
-      title: "The crystal on its arm",
-      letter: "The crystal no longer sits beside the eyepiece: the Guild has cut it as a stone and set it in a ring, at the end of a brass arm hinged on the mount. And the map of the Age, which the book lacked, is now at its page.",
-      sign: "— for the Guild of Writers",
-      items: [
-        "**A cut stone at the end of an arm**: folded along the mount; swung in front of the glass, the star's light fans out beneath it; slid into the reader, the ring stays empty while the needle engraves.",
-        "**The map in the Relto's book**, after the description.",
-        "**The map, corrected**: one pond (there were four around the centre), and blanks only when the Age wavers, never on water.",
-      ],
-    },
-  },
-  {
-    v: "2.10.2",
-    fr: {
-      title: "Le son de liaison",
-      letter: "On nous a reproché, à raison, que la liaison ne sonnait pas comme dans les vieux livres. Nous avons écouté les anciens, relevé la forme de leur souffle, et appris à l'encre à la refaire sans la copier. Vous choisissez : l'ancienne manière, la nôtre, les deux, ou votre propre enregistrement.",
-      sign: "— pour la Guilde des Écrivains",
-      items: [
-        "**Trois voies pour le son de liaison** (Réglages → Son) : classique ; à l'ancienne, une synthèse nouvelle qui suit l'Âge où l'on va et ne se répète jamais ; les deux au hasard.",
-        "**Votre propre enregistrement** : un fichier audio du coffre, qui peut contenir plusieurs liaisons à la suite (une tirée à chaque fois), joué à une hauteur légèrement variable, avec l'écho des cavernes et l'étouffement de l'eau.",
-        "**Le cristal du télescope** parle maintenant comme la Guilde : plus de mots de laboratoire, et sa lecture laisse le lutrin libre.",
-      ],
-    },
-    en: {
-      title: "The linking sound",
-      letter: "We were told, rightly, that the link did not sound as it did in the old books. We listened to the old ones, took down the shape of their breath, and taught the ink to make it again without copying it. You choose: the old manner, ours, both, or your own recording.",
-      sign: "— for the Guild of Writers",
-      items: [
-        "**Three ways to sound the link** (Settings → Sound): classic; in the old manner, a new synthesis that follows the Age you go to and never repeats; both at random.",
-        "**Your own recording**: an audio file from the vault, which may hold several linking sounds in a row (one drawn each time), played at a slightly varying pitch, with the echo of caves and the muffling of water.",
-        "**The telescope's crystal** now speaks as the Guild does: no laboratory words, and its reading leaves the lectern free.",
-      ],
-    },
-  },
-  {
-    v: "2.10.0",
+    v: "2.10.6",
     fr: {
       title: "Étoiles mortes",
-      letter: "Un correspondant nous l'avait dit : une étoile peut être verte d'avoir mangé ses mondes. Nous avons regardé de plus près. Elle peut aussi être bleue de jeunesse ou de sel, rouge de charbon, ocre d'âge ; et ce qui tourne autour d'elle est fait de ce qu'elle a brisé. Un cristal, au télescope, le montre à qui regarde.",
+      letter: "Un correspondant nous l'avait dit : une étoile peut être verte d'avoir avalé ses mondes. Nous avons regardé de plus près. Elle peut aussi être bleue de jeunesse ou de sel, rouge de charbon, ocre d'âge ; et ce qui tourne autour d'elle est fait de ce qu'elle a brisé. Une pierre taillée, au télescope, déplie sa lumière ; la plaque la grave ; la carte des étoiles la garde. Et la liaison a retrouvé son souffle d'autrefois.",
       sign: "— pour la Guilde des Écrivains",
       items: [
-        "**La naine blanche a une couleur, et elle veut dire quelque chose** : sans débris, son âge (`blue_sun` jeune, `orange_sun` très vieille) ; avec ce qui reste de ses mondes, son repas (`green_sun` le sel, `blue_sun` le sel à l'extrême, `red_sun` le carbone). Aucune ne coûte d'Art.",
-        "**Un monde né des débris est jeune** : moins d'un milliard d'années, une vie simple, peu d'oxygène.",
+        "**La naine blanche a une couleur, et elle veut dire quelque chose** : sans débris, son âge (`blue_sun` jeune, `orange_sun` très vieille) ; avec ce qui reste de ses mondes, son repas (`green_sun` le sel, `blue_sun` le sel à l'extrême, `red_sun` le carbone). Aucune ne coûte d'Art. **Un monde né des débris est jeune** : vie simple, peu d'oxygène.",
         "**Le soleil est dessiné comme un soleil** : un cœur blanc, une couronne qui respire, l'orangé du soir.",
-        "**Un cristal au télescope** : glissé sur l'oculaire, il déplie la lumière de l'étoile du livre sur le lutrin, avec ses ombres ; posé dans l'appareil, une aiguille grave sa courbe. La Guilde lit : sa chaleur, ce qu'elle contient, ce que cela veut dire. Un soleil vert seulement écrit montre une lumière entière.",
-        "La carte postale du Relto en chiffres D'ni ; la sortie du plein écran par le bouton ne bloque plus les clics.",
+        "**Une pierre taillée au télescope**, au bout d'un bras de laiton : pivotée devant le verre, si l'étoile du livre est située et visée, sa lumière se déplie en bande, avec ses ombres, et la Guilde la lit : sa chaleur, ce qu'elle contient, ce que cela veut dire. Un soleil vert seulement écrit montre une lumière entière.",
+        "**La plaque grave la lumière, la carte des étoiles la garde** : la pierre devant le verre, un clic sur la plaque de l'étoile ; sur la carte, trois touches de couleur sous l'étoile, et un clic épingle le relevé : la courbe à la plume, puis la craie qui colorie dessous, et la lecture.",
+        "**Trois voies pour le son de liaison** (Réglages → Son) : classique ; à l'ancienne, une synthèse nouvelle qui suit l'Âge où l'on va et ne se répète jamais ; les deux ; ou votre propre enregistrement, qui peut contenir plusieurs liaisons à la suite.",
+        "**La carte de l'Âge dans le livre du Relto**, après la description ; un seul étang sur la carte, et des blancs seulement quand l'Âge vacille. La carte postale du Relto en chiffres D'ni ; la sortie du plein écran par le bouton ne bloque plus les clics.",
       ],
     },
     en: {
       title: "Dead stars",
-      letter: "A correspondent had told us: a star can be green from eating its worlds. We looked closer. It can also be blue with youth or with salt, red with carbon, ochre with age; and what turns around it is made of what it broke. A crystal at the telescope shows it to whoever looks.",
+      letter: "A correspondent had told us: a star can be green from swallowing its worlds. We looked closer. It can also be blue with youth or with salt, red with carbon, ochre with age; and what turns around it is made of what it broke. A cut stone at the telescope unfolds its light; the plate engraves it; the star map keeps it. And the link has found its old breath again.",
       sign: "— for the Guild of Writers",
       items: [
-        "**The white dwarf has a colour, and it means something**: without debris, its age (`blue_sun` young, `orange_sun` very old); with what is left of its worlds, its meal (`green_sun` the salt, `blue_sun` the salt to the extreme, `red_sun` the carbon). None costs Art.",
-        "**A world born of debris is young**: under a thousand million years, simple life, little oxygen.",
+        "**The white dwarf has a colour, and it means something**: without debris, its age (`blue_sun` young, `orange_sun` very old); with what is left of its worlds, its meal (`green_sun` the salt, `blue_sun` the salt to the extreme, `red_sun` the carbon). None costs Art. **A world born of debris is young**: simple life, little oxygen.",
         "**The sun is drawn as a sun**: a white core, a breathing corona, the orange of evening.",
-        "**A crystal at the telescope**: slid over the eyepiece, it breaks the light of the star on the lectern into its colours, with their shadows; set in the apparatus, a needle traces its curve. The Guild reads: its heat, what it holds, what that means. A green sun that is merely written shows a whole light.",
-        "The Relto postcard in D'ni numerals; leaving fullscreen with the button no longer blocks clicks.",
+        "**A cut stone at the telescope**, at the end of a brass arm: swung in front of the glass, if the book's star is charted and aimed, its light unfolds into a band, with its shadows, and the Guild reads it: its heat, what it holds, what that means. A green sun that is merely written shows a whole light.",
+        "**The plate engraves the light, the star map keeps it**: with the stone in front of the glass, a click on the star's plate; on the map, three touches of colour under the star, and a click pins the record: the curve in ink, then a chalk colouring under it, and the reading.",
+        "**Three ways to sound the link** (Settings → Sound): classic; in the old manner, a new synthesis that follows the Age you go to and never repeats; both; or your own recording, which may hold several linking sounds in a row.",
+        "**The map of the Age in the Relto's book**, after the description; one pond on the map, and blanks only when the Age wavers. The Relto postcard in D'ni numerals; leaving fullscreen with the button no longer blocks clicks.",
       ],
     },
   },
