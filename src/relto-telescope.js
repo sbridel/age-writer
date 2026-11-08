@@ -500,7 +500,8 @@ function cutStone(ctx, x, y, r, lit) {
   ctx.restore();
 }
 function spectroscope(r, ctx, c, st, tm) {
-  const t = tOf(r), { x: cx, y: cy, r: R } = EYE, TAU = Math.PI * 2, star = st.book && st.book.data && st.book.data.star ? st.book.data.star : null, on = !!(st.spectro && star), inReader = on && st.spectro === 2;
+  const t = tOf(r), { x: cx, y: cy, r: R } = EYE, TAU = Math.PI * 2, bookStar = st.book && st.book.data && st.book.data.star ? st.book.data.star : null, sys = bookSystem(st);
+  const charted = !!(bookStar && st.found && sys && st.systems[sys.key]), star = charted ? bookStar : null, on = !!(st.spectro && star), inReader = on && st.spectro === 2; /* 2.10.4 : il faut que l'étoile du livre soit située : le cristal ne déplie pas une lumière qu'on n'a pas encore trouvée */
   const pose = armPose(on ? st : { spectro: 0 }, tm, !!r.opts.reducedMotion), lit = star ? (on ? 1 : 0.75) : 0.35;
   const hx = cx + Math.cos(ARM.hinge) * (R + 14), hy = cy + Math.sin(ARM.hinge) * (R + 14), ex = hx + Math.cos(pose.ang) * R * pose.len, ey = hy + Math.sin(pose.ang) * R * pose.len, rr = pose.rr;
   const brass = (x0, y0, x1, y1) => { const gr = ctx.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, c("#c9a24e")); gr.addColorStop(0.5, c("#6b5126")); gr.addColorStop(1, c("#b8913f")); return gr; };
@@ -514,7 +515,7 @@ function spectroscope(r, ctx, c, st, tm) {
   else cutStone(ctx, ex, ey, rr - 2, lit);
   ctx.fillStyle = c("#3b2a1b"); ctx.beginPath(); ctx.arc(hx, hy, 6, 0, TAU); ctx.fill(); ctx.strokeStyle = c("#c9a24e"); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(hx, hy, 6, 0, TAU); ctx.stroke(); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(hx, hy, 1.6, 0, TAU); ctx.fill(); /* la charnière, par-dessus */
   ctx.restore();
-  r.hot.push({ x: ex - rr - 4, y: ey - rr - 4, w: 2 * rr + 8, h: 2 * rr + 8, tip: star ? (st.spectro === 1 ? t("spec.tab.reader") : st.spectro === 2 ? t("spec.tab.off") : t("spec.tab.on")) : t("spec.tab.none"), ...(star ? { tel: { spectro: true } } : {}) });
+  r.hot.push({ x: ex - rr - 4, y: ey - rr - 4, w: 2 * rr + 8, h: 2 * rr + 8, tip: star ? (st.spectro === 1 ? t("spec.tab.reader") : st.spectro === 2 ? t("spec.tab.off") : t("spec.tab.on")) : bookStar ? t("spec.tab.unfound") : t("spec.tab.none"), ...(star ? { tel: { spectro: true } } : {}) });
   if (!on) return;
   if (inReader) { readerPlate(r, ctx, c, st, star, tm); readingLine(r, ctx, t, star); return; }
   const spec = SPEC.spectrumOf(star, 200), x0 = cx - R + 12, BW = 2 * R - 24, bt = cy + 40, BH = 46, bb = bt + BH;
