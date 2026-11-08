@@ -522,11 +522,20 @@ function linkSoundNew(volume = 0.3, age = {}) {
   const rate = 1 + (Math.random() * 2 - 1) * 0.03;
   return oneShot(r.samples.length / r.sr / rate + 4, (c, out) => { out.gain.value = volume * 1.1; playSamples(c, out, r, rate, age); });
 }
-/** La liaison par un fichier de l'utilisateur (déjà décodé en AudioBuffer) : hauteur à ±4 %, l'espace selon l'Âge. */
+let lastLinkSeg = -1;
+/**
+ * La liaison par un fichier de l'utilisateur (déjà décodé en AudioBuffer). Le fichier peut contenir plusieurs liaisons à la suite :
+ * il est découpé aux silences (comme les miaulements), une est tirée à chaque fois, jamais deux fois de suite la même ; hauteur à ±4 %,
+ * l'espace selon l'Âge. Une liaison plus longue qu'une quinzaine de secondes est coupée en fondu.
+ */
 function linkSoundFile(volume = 0.3, buf, age = {}) {
   if (!buf) return linkSound(volume);
-  const rate = 1 + (Math.random() * 2 - 1) * 0.04, r = { samples: buf.getChannelData(0), sr: buf.sampleRate };
-  return oneShot(buf.duration / rate + 4, (c, out) => { out.gain.value = volume * bufferGain(buf) * 0.9; playSamples(c, out, r, rate, age); });
+  if (!buf.__segs) { try { buf.__segs = segmentsOf(buf.getChannelData(0), buf.sampleRate).filter((s) => s.dur >= 0.6); } catch (e) { buf.__segs = []; } if (!buf.__segs.length) buf.__segs = [{ start: 0, dur: buf.duration, peak: 1 }]; }
+  const segs = buf.__segs; let k = Math.floor(Math.random() * segs.length); if (segs.length > 1 && k === lastLinkSeg) k = (k + 1 + Math.floor(Math.random() * (segs.length - 1))) % segs.length; lastLinkSeg = k;
+  const sg = segs[k], rate = 1 + (Math.random() * 2 - 1) * 0.04, sr = buf.sampleRate, i0 = Math.max(0, Math.floor((sg.start - 0.05) * sr)), i1 = Math.min(buf.length, Math.ceil((sg.start + Math.min(sg.dur, 15) + 0.25) * sr));
+  const samples = buf.getChannelData(0).slice(i0, i1), n = samples.length, fo = Math.min(n, Math.floor(sr * 0.2)); for (let i = 0; i < fo; i++) { samples[n - 1 - i] *= i / fo; samples[i] *= Math.min(1, i / (sr * 0.01)); } /* un fondu aux deux bouts */
+  const r = { samples, sr };
+  return oneShot(n / sr / rate + 4, (c, out) => { out.gain.value = volume * bufferGain(buf) * 0.9; playSamples(c, out, r, rate, age); });
 }
 /** Le choix selon le réglage : "classic" | "new" | "both" | "file". `getFile()` : l'AudioBuffer du fichier, ou null. */
 function linkSoundBy(mode, volume, age = {}, fileBuf = null) {

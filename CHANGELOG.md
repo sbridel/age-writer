@@ -2,6 +2,11 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.10.2 — Several links in one file (2026-11-08)
+
+### Added
+- **My own file** may hold several linking sounds one after another: the file is cut at its silences and one of them is drawn each time, never twice in a row.
+
 ## 2.10.1 — The linking sound (2026-11-08)
 
 ### Added
