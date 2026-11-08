@@ -6,6 +6,7 @@ function isTouch() { try { if (obsidian.Platform && obsidian.Platform.isMobile) 
 const M = require("./relto-model");
 const FIRE = require("./relto-fire");
 const { ReltoRenderer } = require("./relto-render");
+const SPEC = require("./spectrum"); /* 2.10 : le spectroscope */
 const sound = require("./sound");
 const MAIL = require("./story-mail");
 const { setMarkup, esc, leaveFullscreen, leaveFullscreenAsync } = require("./util");
@@ -834,7 +835,8 @@ async function renderRelto(plugin, source, el, ctx) {
       const S = G.sceneOf(a, name, plugin.core.blocks), sky = SKY.parseSky(src); if (S) Object.assign(S, sky);
       // étape 2 : le système d'étoile (télescope) et l'orbite de la planète (micromètre de l'Imageur)
       const system = SS.systemOf(a, src, name); // étape 3 : ses perturbateurs font dériver plus vite la calibration
-      return { target: IM.targetsOf(a, name), model: S ? G.build(S, 300, 176) : null, system, orbit: CAL.orbitOf(a, name, sky, system.near) };
+      const star = SPEC.starOf(a.physics && a.physics.w, (a.physics && a.physics.tensions) || [], (a.resolved && a.resolved.lines || []).map((l) => l.entry && l.entry.id).filter(Boolean)); /* 2.10 : ce que le spectroscope lit */
+      return { target: IM.targetsOf(a, name), model: S ? G.build(S, 300, 176) : null, system, orbit: CAL.orbitOf(a, name, sky, system.near), star };
     } catch (e) { console.warn("[Age Writer ext] imageur", e); return null; }
   };
   // le Rêve (étape 4d) : l'Âge verrouillé sur l'Imageur, son tirage et deux tirages voisins (graine, Great Zero, jour), et ce qu'ils montrent

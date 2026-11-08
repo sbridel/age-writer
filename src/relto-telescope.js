@@ -31,6 +31,7 @@ const INS = require("./instruments");
 const MET = require("./metronome");
 const GI = require("./imager-guild");
 const BEAM = require("./beam");
+const SPEC = require("./spectrum"); /* 2.10 : le spectroscope, une tranche de cristal sur l'oculaire */
 const VR = require("./relto-glass");
 const CS = require("./relto-castle");
 
@@ -153,6 +154,7 @@ function act(r, a) {
   if (a.book) { bookLoad(r, (st.book ? st.book.idx : -1) + a.book); st.note = null; st.trend = 0; sfx("turn", 0.5); keepAim(r, st); return; }
   if (a.go) { r.setView(a.go); return; }
   if (a.eyeZoom) { r.eyeZoom = !r.eyeZoom; r.held = null; r.hover = null; return; } // mode tactile : l'oculaire agrandi (rien n'y reste tenu)
+  if (a.spectro) { st.spectro = ((st.spectro || 0) + 1) % 3; st.spectroT0 = r.telescopeT || 0; sfx("turn", 0.4); return; } /* 2.10 : le cristal : sur l'oculaire, puis dans l'appareil (la courbe se grave), puis rangé */
   if (a.lens) { if (!guildOf(r)) return; st.lens = LENSES[(LENSES.indexOf(lensOf(st)) + 1) % LENSES.length]; sfx("turn", 0.5); if (r.opts.telescopeSet) r.opts.telescopeSet(st.key, saveOf(st)); return; }
   if (a.axis || a.setZero || a.setSystem) { st.note = null; st.trend = 0; } // la phrase d'un geste précédent s'efface au geste suivant
   if (measuring(st)) return actSystem(r, st, a, sfx);
@@ -469,6 +471,64 @@ function lectern(r, ctx, c, st) {
 }
 
 /** La vue du télescope : le sommet la nuit, l'oculaire, les deux molettes, la plaque, la ligne de mots. */
+
+/**
+ * 2.10 : le spectroscope (claude/DESIGN-pistes-8-nov.md, § 33). Une tranche de cristal, tenue par un onglet au bord de l'oculaire :
+ * glissée, elle couvre la moitié basse du champ et décompose la lumière de l'étoile du livre sur le lutrin ; l'étoile reste visible
+ * au-dessus. La lecture, en mots, prend la ligne du bas. Sans livre sur le lutrin, l'onglet est éteint.
+ */
+function spectroscope(r, ctx, c, st, tm) {
+  const t = tOf(r), { x: cx, y: cy, r: R } = EYE, star = st.book && st.book.data && st.book.data.star ? st.book.data.star : null, on = !!(st.spectro && star), inReader = on && st.spectro === 2;
+  /* l'onglet : un petit prisme de cristal sur la monture, à droite, qui prend la lumière quand il sert */
+  const tx = cx + R + 20, ty = cy + 28, lit = star ? (on ? 1 : 0.7) : 0.3;
+  ctx.save(); ctx.globalAlpha = lit; const pg = ctx.createLinearGradient(tx - 10, ty - 14, tx + 10, ty + 14); pg.addColorStop(0, c("#dff4ff")); pg.addColorStop(0.5, c("#8fb8d8")); pg.addColorStop(1, c("#4a6f94"));
+  ctx.fillStyle = pg; ctx.beginPath(); ctx.moveTo(tx - 9, ty + 14); ctx.lineTo(tx + 9, ty + 14); ctx.lineTo(tx + 4, ty - 14); ctx.lineTo(tx - 6, ty - 12); ctx.closePath(); ctx.fill(); ctx.strokeStyle = c("#e9f6ff"); ctx.lineWidth = 0.8; ctx.stroke();
+  if (on) { const gl = ctx.createRadialGradient(tx, ty, 0, tx, ty, 26); gl.addColorStop(0, "rgba(180,220,255,0.35)"); gl.addColorStop(1, "rgba(180,220,255,0)"); ctx.fillStyle = gl; ctx.fillRect(tx - 26, ty - 26, 52, 52); }
+  ctx.restore();
+  r.hot.push({ x: tx - 14, y: ty - 18, w: 28, h: 36, tip: star ? (st.spectro === 1 ? t("spec.tab.reader") : st.spectro === 2 ? t("spec.tab.off") : t("spec.tab.on")) : t("spec.tab.none"), ...(star ? { tel: { spectro: true } } : {}) });
+  if (!on) return;
+  if (inReader) { readerPlate(r, ctx, c, st, star, tm); readingLine(r, ctx, t, star); return; }
+  const spec = SPEC.spectrumOf(star, 200), tint = star.whiteDwarf && star.kind ? null : null; void tint;
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.283); ctx.clip();
+  /* la tranche : un cristal fumé, un peu bleu, avec ses facettes ; elle monte d'en bas et s'arrête sous le réticule */
+  const top = cy + 6; ctx.fillStyle = "rgba(10,14,24,0.86)"; ctx.fillRect(cx - R, top, 2 * R, R);
+  ctx.strokeStyle = "rgba(190,220,255,0.18)"; ctx.lineWidth = 0.8; for (let k = -3; k <= 3; k++) { ctx.beginPath(); ctx.moveTo(cx + k * 34 - 40, top); ctx.lineTo(cx + k * 34 + 10, cy + R); ctx.stroke(); } /* les facettes */
+  const x0 = cx - R + 12, BW = 2 * R - 24, bt = top + 22, BH = 58, bb = bt + BH;
+  ctx.fillStyle = "#020306"; ctx.fillRect(x0, bt, BW, BH);
+  for (let k = 0; k < BW; k++) { const l = 380 + (360 * k) / BW, v = spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))], [rr, gg, bb2] = wl(l), br = 0.25 + 0.75 * v; const a = 0.08 + 0.92 * Math.pow(v, 0.8); ctx.fillStyle = `rgba(${Math.round(255 * rr * br)},${Math.round(255 * gg * br)},${Math.round(255 * bb2 * br)},${a.toFixed(3)})`; ctx.fillRect(x0 + k, bt, 1.1, BH); }
+  { const sh = ctx.createLinearGradient(0, bt, 0, bb); sh.addColorStop(0, "rgba(255,255,255,0.14)"); sh.addColorStop(0.5, "rgba(255,255,255,0)"); sh.addColorStop(1, "rgba(0,0,0,0.25)"); ctx.fillStyle = sh; ctx.fillRect(x0, bt, BW, BH); } /* le reflet du cristal sur la lumière : pas de courbe, une bande vivante avec ses ombres */
+  ctx.strokeStyle = c("#b8913f"); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(cx - R, bt - 8); ctx.lineTo(cx + R, bt - 8); ctx.moveTo(cx - R, bb + 8); ctx.lineTo(cx + R, bb + 8); ctx.stroke(); /* la monture du cristal */
+  ctx.strokeStyle = "#9b875a"; ctx.lineWidth = 0.8; for (const l of [400, 450, 500, 550, 600, 650, 700]) { const x = x0 + ((l - 380) / 360) * BW; ctx.beginPath(); ctx.moveTo(x, bb + 2); ctx.lineTo(x, bb + 6); ctx.stroke(); } /* des repères sans chiffres */
+  ctx.restore();
+  readingLine(r, ctx, t, star);
+}
+/**
+ * 2.10 : l'appareil. Le cristal glissé dans le fût : derrière l'oculaire, une platine de laiton reçoit la lumière, et une aiguille
+ * grave sa courbe, du violet au rouge, sous la bande de couleurs. La courbe est jolie ; c'est l'aiguille qui la rend vraie.
+ */
+function readerPlate(r, ctx, c, st, star, tm) {
+  const { x: cx, y: cy, r: R } = EYE, spec = SPEC.spectrumOf(star, 200), dt = r.opts.reducedMotion ? 9 : Math.max(0, (tm || 0) - (st.spectroT0 || 0)), prog = Math.min(1, dt / 2.6);
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.283); ctx.clip();
+  const pl = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R); pl.addColorStop(0, c("#8a6a2e")); pl.addColorStop(0.5, c("#5a4420")); pl.addColorStop(1, c("#7a5c28")); ctx.fillStyle = pl; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R); /* la platine de laiton */
+  const x0 = cx - R + 22, BW = 2 * R - 44, top = cy - R * 0.55, H0 = R * 0.95, base = top + H0; /* le champ de la courbe */
+  ctx.fillStyle = c("#e8dcc0"); ctx.fillRect(x0 - 8, top - 14, BW + 16, H0 + 44); ctx.strokeStyle = c("#7a5c28"); ctx.lineWidth = 0.8; ctx.strokeRect(x0 - 8.5, top - 14.5, BW + 17, H0 + 45); /* la feuille serrée sur la platine */
+  ctx.strokeStyle = "rgba(122,92,40,0.25)"; ctx.lineWidth = 0.6; for (let k = 1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(x0, top + (H0 * k) / 4); ctx.lineTo(x0 + BW, top + (H0 * k) / 4); ctx.stroke(); } /* des lignes de guidage, pâles */
+  const n = Math.max(2, Math.floor(BW * prog));
+  for (let k = 0; k < n; k++) { const l = 380 + (360 * k) / BW, v = spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))], [rr, gg, bb] = wl(l), h = H0 * v * 0.92; ctx.fillStyle = `rgba(${Math.round(255 * rr)},${Math.round(255 * gg)},${Math.round(255 * bb)},0.85)`; ctx.fillRect(x0 + k, base - h, 1.1, h); } /* sous la courbe, la lumière elle-même, couleur par couleur, à mesure que l'aiguille avance */ ctx.strokeStyle = c("#2a1d13"); ctx.lineWidth = 1.3; ctx.lineJoin = "round"; ctx.beginPath();
+  for (let k = 0; k < n; k++) { const v = spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))], yy = base - H0 * v * 0.92; k ? ctx.lineTo(x0 + k, yy) : ctx.moveTo(x0 + k, yy); } ctx.stroke(); /* la courbe gravée, qui avance */
+  if (prog < 1) { const k = n - 1, v = spec[Math.min(spec.length - 1, Math.floor((k / BW) * spec.length))], px = x0 + k, py = base - H0 * v * 0.92; ctx.strokeStyle = c("#3b2a1b"); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + 10, py - 26); ctx.lineTo(px + 14, py - 40); ctx.stroke(); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(px + 14, py - 42, 3, 0, 6.283); ctx.fill(); } /* l'aiguille et son bras, tant qu'elle grave */
+  ctx.restore();
+}
+/** La lecture : la chaleur, ce qu'elle contient, ce que cela veut dire ; elle prend la ligne du bas, le lutrin laissé libre. */
+function readingLine(r, ctx, t, star) {
+  const rd = SPEC.readingOf(star), line1 = t(rd.heat) + " " + t(rd.holds), line2 = rd.means ? t(rd.means) : "";
+  const bx = 128, bw = W - bx, mx = bx + bw / 2; ctx.fillStyle = "rgba(5,6,12,0.92)"; ctx.fillRect(bx, 294, bw, 40); /* la ligne du bas, le lutrin laissé libre */
+  ctx.font = "italic 13px serif"; ctx.textAlign = "center"; ctx.fillStyle = "#e0c27a"; ctx.fillText("« " + line1 + (line2 ? "" : " »"), mx, 309, bw - 24);
+  if (line2) { ctx.font = "italic 12px serif"; ctx.fillStyle = rd.means.startsWith("spec.means.art") ? "#f0b8a0" : "rgba(233,220,184,0.85)"; ctx.fillText(line2 + " »", mx, 326, bw - 24); }
+  ctx.textAlign = "left";
+}
+/** La couleur d'une longueur d'onde (nm), de 0 à 1. */
+function wl(l) { let r = 0, g = 0, b = 0; if (l < 440) { r = -(l - 440) / 60; b = 1; } else if (l < 490) { g = (l - 440) / 50; b = 1; } else if (l < 510) { g = 1; b = -(l - 510) / 20; } else if (l < 580) { r = (l - 510) / 70; g = 1; } else if (l < 645) { r = 1; g = -(l - 645) / 65; } else r = 1; let f = 1; if (l < 420) f = 0.3 + (0.7 * (l - 380)) / 40; else if (l > 700) f = 0.3 + (0.7 * (740 - l)) / 40; return [r * f, g * f, b * f]; }
 function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   const t = tOf(r), st = state(r), ms = now(r), amb = 0.6 + 0.4 * sky.ambient, c = (h) => mix("#05060c", h, amb);
   const guild = guildOf(r), sys0 = bookSystem(st), lines = linesOf(r, st), sc0 = st.found && sys0 ? scopeOf(r, st, sys0) : null;
@@ -583,6 +643,7 @@ function drawTelescopeRoom(r, ctx, sc, sky, tm) {
   // redescendre
   ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(BACK.x, BACK.y, BACK.w, BACK.h);
   ctx.fillStyle = rgba(224, 194, 122, 0.85); ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.fillText("︾", W / 2, BACK.y + 29); ctx.textAlign = "left";
+  if (!r.eyeZoom) spectroscope(r, ctx, c, st, tm); /* 2.10 : la tranche de cristal, par-dessus l'oculaire et la ligne du bas */
   r.hot.push({ ...BACK, tip: t("tel.back"), go: "island" });
 }
 
