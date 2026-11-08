@@ -10,7 +10,7 @@
  *   l'ocre ; au degré 3, deux ombres de dos au bord de la fissure. Pas d'échelle visible : une bouche sombre dans un angle.
  * - **Regarder le sol** (vue `fissure`) : penché au bord, la roche en silhouette, le vide étoilé, une nébuleuse, les
  *   poussières qui montent vers nous, nos deux bottes. C'est la scène du dernier chapitre.
- * Aucune action pour l'instant : on regarde.
+ * Un pilier touché tombe en poussière dans la fissure, puis revient (`topple`).
  */
 const { rgba, fnv, mix } = require("./util");
 const F = require("./fresco");
@@ -168,6 +168,67 @@ function pillar(ctx, p, on, hov, t, signs) {
   return { top: ty - 9 * s, w };
 }
 
+
+/**
+ * 2.10.10 — le pilier qui tombe en poussière (l'auteur, d'après Uru ; planches du 9 nov. 2026) : un clic, il se défait du haut vers le
+ * bas en grains de la couleur du jour ; la poussière se pose à son pied en un anneau qui s'étale (comme dans Uru), puis glisse
+ * vers la fissure et s'y enfonce parmi les étoiles. Plus tard elle remonte, le pilier se refait par le pied, ses gravures en dernier.
+ */
+const PF = { crumble: 2.8, pool: 2.2, slide: 3.5, away: 19.5, gather: 2.4, build: 3.6, glow: 1.5 };
+PF.t1 = PF.crumble; PF.t2 = PF.t1 + PF.pool; PF.t3 = PF.t2 + PF.slide; PF.t4 = PF.t3 + PF.away; PF.t5 = PF.t4 + PF.gather; PF.t6 = PF.t5 + PF.build; PF.end = PF.t6 + PF.glow;
+const fallOf = (r, i) => { const f = r.pillarFall && r.pillarFall[i]; if (f == null) return null; const e = (nowOf(r) - f) / 1000; if (e < 0 || e >= PF.end) return null; return e; };
+const ease = (k) => (k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k));
+/** Où la poussière entre dans la fosse, pour ce pilier : le bord le plus proche, un peu vers le centre. */
+function sinkOf(p) { const x = p.x + (320 - p.x) * 0.22, top = pitTop(x), fr = pitFront(x); return { x, y: p.y > fr ? fr - 6 : top + 8, deep: { x: x + (320 - x) * 0.25, y: (top + fr) / 2 + 6 } }; }
+const GR = 340; /* les grains d'un pilier */
+function grain(p, j) { return { v: q("gv" + p.i + "_" + j), a: q("ga" + p.i + "_" + j) * TAU, rad: 0.45 + 0.55 * Math.sqrt(q("gr" + p.i + "_" + j)), dx: (q("gx" + p.i + "_" + j) - 0.5), sp: 0.6 + 0.8 * q("gs" + p.i + "_" + j), c: q("gc" + p.i + "_" + j), tw: q("gt" + p.i + "_" + j) * 9 }; }
+function dustColour(g) { const D = PAL.dust || [190, 210, 255], D2 = PAL.dust2 || D; return g.c < 0.3 ? [235, 242, 255] : g.c < 0.3 + (PAL.d2 || 0.3) ? D2 : D; }
+function pillarFalling(r, ctx, p, on, hov, t, signs, e) {
+  const s = p.s, hgt = 82 * s, full = hgt + 16 * s, w = 14 * s, top = p.y - full, sink = sinkOf(p);
+  const jag = (cut, k) => { ctx.beginPath(); ctx.moveTo(p.x - 60 * s, H); for (let x = -40; x <= 40; x += 3) ctx.lineTo(p.x + x * s, cut + (q("jg" + p.i + x) - 0.5) * 9 * s * k + Math.sin(x * 0.4 + t * 2) * 1.2 * s * k); ctx.lineTo(p.x + 60 * s, H); ctx.closePath(); };
+  const clipDraw = (cut, glowK, rag = 1) => { ctx.save(); jag(cut, rag); ctx.clip(); pillar(ctx, p, on, hov, t, signs); if (glowK > 0) { ctx.globalAlpha = glowK; pillar(ctx, p, true, hov, t, signs); } ctx.restore(); };
+  const plinth = () => { const g = ctx.createLinearGradient(0, p.y - 10 * s, 0, p.y + 6 * s); g.addColorStop(0, PAL.floor[1]); g.addColorStop(1, PAL.floor[0]); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(p.x, p.y - 2 * s, w * 2.7, 9 * s, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = rgba(PAL.edge[0], PAL.edge[1], PAL.edge[2], 0.3); ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(p.x, p.y - 2 * s, w * 2.7, 9 * s, 0, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke(); };
+  plinth();
+  const foot = (al) => { ctx.fillStyle = rgba(4, 6, 14, al); ctx.beginPath(); ctx.ellipse(p.x, p.y + 1, w * 1.5, 3.4 * s, 0, 0, TAU); ctx.fill(); };
+  const dot = (x, y, g, a, sz) => { const C = dustColour(g), tw = 0.55 + 0.45 * Math.abs(Math.sin(t * 3 + g.tw)), al = Math.max(0, Math.min(1, a * tw)); sz *= 1.35; if (g.c < 0.12 && al > 0.3) { const h = ctx.createRadialGradient(x, y, 0, x, y, sz * 3); h.addColorStop(0, rgba(C[0], C[1], C[2], al * 0.35)); h.addColorStop(1, rgba(C[0], C[1], C[2], 0)); ctx.fillStyle = h; ctx.fillRect(x - sz * 3, y - sz * 3, sz * 6, sz * 6); } ctx.fillStyle = rgba(C[0], C[1], C[2], al); ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz); };
+  const ringPos = (g, k) => { const R = (8 + 20 * k) * s * g.rad; return [p.x + Math.cos(g.a) * R, p.y + 2 * s + Math.sin(g.a) * R * 0.3]; };
+  if (e < PF.t1) { /* il se défait du haut vers le bas */
+    const k = ease(e / PF.t1), cut = top + full * k; clipDraw(cut, 0);
+    for (let x = -18; x <= 18; x += 2) { const yy = cut + (q("jg" + p.i + Math.round(x / 3) * 3) - 0.5) * 9 * s, g = ctx.createRadialGradient(p.x + x * s, yy, 0, p.x + x * s, yy, 5 * s); g.addColorStop(0, rgba(210, 228, 255, 0.35)); g.addColorStop(1, rgba(210, 228, 255, 0)); ctx.fillStyle = g; ctx.fillRect(p.x + x * s - 5 * s, yy - 5 * s, 10 * s, 10 * s); } /* le bord qui s'effrite luit, grain à grain */
+    for (let j = 0; j < GR; j++) { const g = grain(p, j), born = PF.t1 * (1 - g.v) * 0.95; if (e < born) continue; const a = e - born, y0 = top + full * (1 - g.v), fall = 0.5 * 55 * s * a * a * g.sp, y = Math.min(p.y + 2 * s, y0 + fall), landed = y >= p.y + 2 * s;
+      if (landed) { const k2 = Math.min(1, (a - Math.sqrt((p.y - y0) / (27 * s * g.sp))) * 0.8); const [x2, y2] = ringPos(g, Math.max(0, k2) * 0.4); dot(x2, y2, g, 0.9, 1.4); }
+      else dot(p.x + g.dx * w * 2.2 + Math.sin(a * 3 + g.tw) * 2 * s, y, g, 1, 1.6); }
+    foot(0.25 * k);
+    return { top, w };
+  }
+  if (e < PF.t2) { /* l'anneau de poussière s'étale à son pied, un creux sombre au milieu */
+    const k = ease((e - PF.t1) / PF.pool); foot(0.35 + 0.2 * k);
+    for (let j = 0; j < GR; j++) { const g = grain(p, j), [x, y] = ringPos(g, 0.4 + 0.6 * k); dot(x, y, g, 0.95, 1.5); }
+    return { top, w };
+  }
+  if (e < PF.t3) { /* la poussière glisse vers la fissure, et s'y enfonce en rapetissant */
+    const k = (e - PF.t2) / PF.slide; foot(0.55 - 0.25 * k);
+    for (let j = 0; j < GR; j++) { const g = grain(p, j), st = g.v * 0.45, u = ease((k - st) / 0.55); const [x0, y0] = ringPos(g, 1);
+      if (u <= 0) { dot(x0, y0, g, 0.95, 1.5); continue; }
+      const half = Math.min(1, u * 1.6), dive = Math.max(0, (u - 0.6) / 0.4), x1 = x0 + (sink.x + g.dx * 26 * s - x0) * half, y1 = y0 + (sink.y - y0) * half, x = x1 + (sink.deep.x - x1) * dive, y = y1 + (sink.deep.y - y1) * dive;
+      dot(x, y, g, 1 - dive * 0.9, 1.5 * (1 - dive * 0.7)); }
+    return { top, w };
+  }
+  if (e < PF.t4) { foot(0.3); return { top, w }; } /* il n'y a plus rien : le pied, une ombre sur la roche */
+  if (e < PF.t5) { /* elle remonte de la fissure et se rassemble au pied */
+    const k = (e - PF.t4) / PF.gather; foot(0.3);
+    for (let j = 0; j < GR; j++) { const g = grain(p, j), u = ease((k - g.v * 0.4) / 0.6); if (u <= 0) continue; const [xr, yr] = ringPos(g, 0.35), x = sink.deep.x + (xr - sink.deep.x) * u, y = sink.deep.y + (yr - sink.deep.y) * u - Math.sin(u * Math.PI) * 14 * s; dot(x, y, g, Math.min(1, u * 2), 1.2 + 0.4 * u); }
+    return { top, w };
+  }
+  if (e < PF.t6) { /* il se refait par le pied ; les grains montent le long du fût et s'y fondent */
+    const k = ease((e - PF.t5) / PF.build), cut = p.y + 4 * s - (full + 4 * s) * k; clipDraw(cut, 0);
+    for (let j = 0; j < GR; j++) { const g = grain(p, j), yy = p.y - full * g.v; if (yy < cut - 2) { const [xr, yr] = ringPos(g, 0.35), u = Math.min(1, k / Math.max(0.05, g.v)); dot(xr + (p.x + g.dx * w * 1.6 - xr) * u, yr + (yy - yr) * u, g, 0.95, 1.4); } else if (yy < cut + 8 * s) dot(p.x + g.dx * w * 1.6, yy, g, 0.7, 1.2); }
+    return { top, w };
+  }
+  const k = (e - PF.t6) / PF.glow; clipDraw(0, Math.sin(k * Math.PI) * 0.9); /* ses gravures s'allument une fois, puis s'apaisent */
+  return { top, w };
+}
+
 /**
  * Le lustre (l'auteur l'aime, dans ses images ; rien de copié) : sous la voûte, au-dessus de la fissure, une couronne de pointes
  * recourbées, pâles comme de l'os, autour d'un globe de lumière bleue, pendue à une chaîne. Il s'allume quand quelqu'un vient
@@ -262,7 +323,8 @@ function drawStars(r, ctx, sc, sky, t) {
   const pg = ctx.createRadialGradient(320, 292, 8, 320, 292, 320); pg.addColorStop(0, "#2a5cc8"); pg.addColorStop(0.3, "#12307a"); pg.addColorStop(0.7, "#071240"); pg.addColorStop(1, "#03051a"); ctx.fillStyle = pg; pitPath(ctx); ctx.fill();
   ctx.save(); pitPath(ctx); ctx.clip();
   for (const [x, y, rr, col] of [[410, 278, 110, [120, 80, 200]], [240, 298, 90, [70, 130, 230]], [330, 288, 54, [220, 170, 255]]]) { const g = ctx.createRadialGradient(x, y, 2, x, y, rr); g.addColorStop(0, rgba(col[0], col[1], col[2], 0.24)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0)); ctx.fillStyle = g; ctx.fillRect(x - rr, y - rr, rr * 2, rr * 2); } /* la nébuleuse, au fond */
-  for (let i = 0; i < 150; i++) { const x = PIT_X0 + q("ps" + i) * (PIT_X1 - PIT_X0), y = pitTop(x) + q("pt" + i) * (pitFront(x) - pitTop(x)), sz = q("pz" + i), tw = 0.5 + 0.5 * Math.sin(t * (0.7 + sz * 2) + i); ctx.fillStyle = rgba(225, 235, 255, (0.25 + 0.6 * sz) * tw); ctx.fillRect(x, y, sz > 0.9 ? 1.6 : 1, sz > 0.9 ? 1.6 : 1); } /* des étoiles, en bas */
+  { const bg2 = ctx.createLinearGradient(PIT_X0, 0, PIT_X1, 0); bg2.addColorStop(0, rgba(170, 190, 255, 0)); bg2.addColorStop(0.5, rgba(170, 190, 255, 0.12)); bg2.addColorStop(1, rgba(170, 190, 255, 0)); ctx.fillStyle = bg2; ctx.beginPath(); for (let x = PIT_X0; x <= PIT_X1; x += 12) { const m = pitTop(x) + 0.5 * (pitFront(x) - pitTop(x)) + (x - 320) * 0.05; x === PIT_X0 ? ctx.moveTo(x, m - 12) : ctx.lineTo(x, m - 12); } for (let x = PIT_X1; x >= PIT_X0; x -= 12) ctx.lineTo(x, pitTop(x) + 0.5 * (pitFront(x) - pitTop(x)) + (x - 320) * 0.05 + 12); ctx.fill(); } /* une voie lactée, très pâle */
+  for (let i = 0; i < 950; i++) { const band = i >= 150 && i < 420, x = PIT_X0 + q("ps" + i) * (PIT_X1 - PIT_X0), mid = pitTop(x) + 0.5 * (pitFront(x) - pitTop(x)) + (x - 320) * 0.05, y = band ? mid + (q("pt" + i) + q("pu" + i) - 1) * 14 : pitTop(x) + q("pt" + i) * (pitFront(x) - pitTop(x)), sz = q("pz" + i), tw = 0.5 + 0.5 * Math.sin(t * (0.7 + sz * 2) + i), tint = q("ph" + i); ctx.fillStyle = tint < 0.06 ? rgba(255, 220, 170, (0.3 + 0.6 * sz) * tw) : tint < 0.12 ? rgba(200, 170, 255, (0.3 + 0.6 * sz) * tw) : rgba(225, 235, 255, (0.45 + 0.55 * sz) * tw); const ss = sz > 0.93 ? 2.2 : sz > 0.7 ? 1.5 : 1; ctx.fillRect(x, y, ss, ss); } /* des étoiles, en bas */
   { const edgeLine = () => { ctx.beginPath(); for (let x = PIT_X0 - 30; x <= PIT_X1 + 30; x += 12) (x === PIT_X0 - 30 ? ctx.moveTo(x, pitTop(x)) : ctx.lineTo(x, pitTop(x))); };
     ctx.lineJoin = "round"; for (const [lw, al] of [[44, 0.18], [26, 0.3], [12, 0.45]]) { ctx.strokeStyle = rgba(3, 4, 12, al); ctx.lineWidth = lw; edgeLine(); ctx.stroke(); } } /* la paroi du fond, qui plonge dans le vide : une ombre douce le long du bord (plus de traits) */
   ctx.restore();
@@ -279,9 +341,9 @@ function drawStars(r, ctx, sc, sky, t) {
   /* les cinq piliers, du fond vers nous : un fût droit gravé de haut en bas, une coupe à deux cornes courtes ; les vasques au-dessus */
   const signs = F.itemsOf((r.scene && r.scene.ages) || [], {}).filter((it) => it.kind === "age").slice(-15).flatMap((it) => it.parts.slice(0, 1));
   for (const p of PILLARS.slice().sort((a, b) => a.y - b.y)) {
-    const on = lit.includes(p.i), hov = r.hover && r.hover.pillar === p.i + 1, T = pillar(ctx, p, on, hov, t, signs);
+    const on = lit.includes(p.i), hov = r.hover && r.hover.pillar === p.i + 1, fe = fallOf(r, p.i), T = fe == null ? pillar(ctx, p, on, hov, t, signs) : pillarFalling(r, ctx, p, on, hov, t, signs, fe);
     const cyy = T.top;
-    r.hot.push({ x: p.x - T.w * 2.4, y: cyy - 22 * p.s, w: T.w * 4.8, h: p.y - cyy + 22 * p.s, tip: on ? tr("stars.pillar.lit") : tr("stars.pillar"), pillar: p.i + 1 });
+    r.hot.push({ x: p.x - T.w * 2.4, y: cyy - 22 * p.s, w: T.w * 4.8, h: p.y - cyy + 22 * p.s, tip: fe != null && fe >= PF.t1 && fe < PF.t5 ? tr("stars.pillar.gone") : on ? tr("stars.pillar.lit") : tr("stars.pillar"), pillar: p.i + 1 });
     /* la vasque, pendue à trois cordes sous la voûte, au-dessus du pilier : flamme bleu-violet */
     const vr = 7 + 5 * p.s, [vx, vy, fromLamp] = BOWLS[p.i], fk = flicker(p.i, t); /* fk : le vacillement de sa flamme */ /* elles pendent où elles veulent : ni au-dessus de leur pilier ni à la même hauteur */
     ctx.strokeStyle = rgba(120, 110, 95, 0.5); ctx.lineWidth = 0.8; for (const dx of [-vr * 0.9, 0, vr * 0.9]) { ctx.beginPath(); ctx.moveTo(fromLamp ? 320 + dx * 0.1 : vx + dx * 0.15, fromLamp ? 92 : 20); ctx.lineTo(vx + dx, vy - 2); ctx.stroke(); }
@@ -339,13 +401,17 @@ function stoneFall(r, ctx, cx, cy) {
 
 /** Regarder le sol : penché au bord de la fissure. */
 function drawFissure(r, ctx, sc, sky, t) {
+  PAL = paletteOf(r);
   const tr = TR(r), cx = 330, cy = 140;
   const bg = ctx.createRadialGradient(cx, cy, 10, cx, cy, 420); bg.addColorStop(0, "#0c1638"); bg.addColorStop(0.5, "#050a1e"); bg.addColorStop(1, "#010208"); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
   for (const [x, y, rr, col] of [[392, 128, 120, [120, 80, 200]], [300, 176, 90, [70, 130, 230]], [356, 150, 50, [220, 170, 255]]]) { const g = ctx.createRadialGradient(x, y, 2, x, y, rr); g.addColorStop(0, rgba(col[0], col[1], col[2], 0.22)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0)); ctx.fillStyle = g; ctx.fillRect(x - rr, y - rr, rr * 2, rr * 2); } /* la nébuleuse, loin */
-  for (let i = 0; i < 260; i++) { const x = q("fx" + i) * W, y = q("fy" + i) * H, s = q("fs" + i), tw = 0.5 + 0.5 * Math.sin(t * (0.6 + s * 2) + i); ctx.fillStyle = rgba(225, 235, 255, (0.25 + 0.6 * s) * tw); ctx.fillRect(x, y, s > 0.92 ? 1.6 : 1, s > 0.92 ? 1.6 : 1); }
+  { ctx.save(); ctx.translate(320, 145); ctx.rotate(-0.32); const mg = ctx.createLinearGradient(0, -60, 0, 60); mg.addColorStop(0, rgba(170, 190, 255, 0)); mg.addColorStop(0.5, rgba(170, 190, 255, 0.14)); mg.addColorStop(1, rgba(170, 190, 255, 0)); ctx.fillStyle = mg; ctx.fillRect(-340, -60, 680, 120); ctx.restore(); } /* une voie lactée, très pâle */
+  for (let i = 0; i < 1500; i++) { const band = i >= 260 && i < 720, u = q("fx" + i), x = band ? 60 + u * 520 : u * W, y = band ? 230 - u * 170 + (q("fy" + i) + q("fv" + i) + q("fq" + i) - 1.5) * 40 : q("fy" + i) * H, s = q("fs" + i), tw = 0.5 + 0.5 * Math.sin(t * (0.6 + s * 2) + i), tint = q("fh" + i); ctx.fillStyle = tint < 0.05 ? rgba(255, 220, 170, (0.3 + 0.6 * s) * tw) : tint < 0.1 ? rgba(200, 170, 255, (0.3 + 0.6 * s) * tw) : rgba(225, 235, 255, (0.45 + 0.55 * s) * tw); const ss = s > 0.95 ? 2.4 : s > 0.75 ? 1.6 : 1.1; ctx.fillRect(x, y, ss, ss); }
   /* les poussières tombent : elles naissent près de nous, au bord, et s'éloignent vers le fond en rapetissant, jusqu'à s'éteindre */
   for (let i = 0; i < 90; i++) { const a = q("pa" + i) * TAU, p = (t * (0.04 + q("pv" + i) * 0.05) + q("pw" + i)) % 1, near = 1 - p, d = near * near * 420, x = cx + Math.cos(a) * d * (0.6 + q("pr" + i) * 0.5), y = cy + Math.sin(a) * d * 0.62, s = 0.4 + near * 2.6;
     ctx.fillStyle = rgba(215, 230, 255, Math.min(1, p * 8) * Math.min(1, near * 2.2) * 0.9); ctx.beginPath(); ctx.arc(x, y, s, 0, TAU); ctx.fill(); }
+  for (let i = 0; i < 5; i++) { const e = fallOf(r, i); if (e == null || e < PF.t2 + PF.slide * 0.35 || e > PF.t3 + 2.5) continue; const k = (e - (PF.t2 + PF.slide * 0.35)) / (PF.slide * 0.65 + 2.5), sx = [330, 560, 60, 520, 120][i], sy = -10;
+    for (let j = 0; j < 150; j++) { const g = { c: q("fg" + i + j), tw: q("ft" + i + j) * 9 }, u = Math.max(0, Math.min(1, (k - q("fd" + i + j) * 0.5) / 0.5)); if (u <= 0 || u >= 1) continue; const d = Math.pow(u, 0.7), x = sx + (cx - sx) * d + (q("fo" + i + j) - 0.5) * 70 * (1 - d), y = sy + (cy - sy) * d + (q("fp" + i + j) - 0.5) * 40 * (1 - d), C = dustColour(g), a = (1 - u) * (0.6 + 0.4 * Math.abs(Math.sin(t * 3 + g.tw))); ctx.fillStyle = rgba(C[0], C[1], C[2], a); const sz = 2.6 * (1 - d) + 0.6; ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz); } }
   r.hot.push({ x: 240, y: 30, w: 180, h: 260, tip: tr(r.stoneHeld ? "fissure.give" : "fissure.void"), fissureVoid: !!r.stoneHeld }); /* la pierre en main : un clic la lâche */
   stoneFall(r, ctx, cx, cy);
   /* les bords de roche, en silhouette tout autour ; la lumière bleue d'en bas sur leurs arêtes */
@@ -371,4 +437,12 @@ function drawFissure(r, ctx, sc, sky, t) {
   void sc; void sky;
 }
 
-module.exports = { gate, drawStars, drawFissure, GATE, PILLARS, bahroShadow };
+/** Un clic sur un pilier : il tombe en poussière, s'il est debout. Renvoie vrai (le clic est pris). */
+function topple(r, i) {
+  r.pillarFall = r.pillarFall || {};
+  if (fallOf(r, i) == null) { r.pillarFall[i] = nowOf(r); if (r.opts && r.opts.onPillarFall) r.opts.onPillarFall(i); }
+  if (!r.running && r.start) r.start();
+  return true;
+}
+
+module.exports = { gate, drawStars, drawFissure, GATE, PILLARS, bahroShadow, topple, PF };
