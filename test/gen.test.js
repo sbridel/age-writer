@@ -424,6 +424,12 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
 { /* 2.9 : la carte de l'Âge se dessine sans valeur impossible, avec ou sans eau */
   const AMAP = require("../src/agemap"); for (const ids of [["single_sun", "water", "water", "beach", "tower", "tides", "companion_moon"], ["single_sun", "grass", "river", "mill"], ["single_sun", "desert_world", "oasis"], ["single_sun", "mountains", "fissure", "lake"]]) {
     const m = G.build(G.sceneOf({ ...an(ids), fresh29: true }, "Carte" + ids.length), 640, 360), log = [], c = fakeCtx(log); AMAP.paintMap(c, m, { name: "Carte", stability: 60 }); ok(log.length > 100, "la carte dessine (" + ids[1] + ")"); } }
+{ /* 2.9 : les pages trouvées : un Âge sur trois, tirée selon son monde ; verrouillée dans l'histoire tant qu'on ne l'a pas trouvée */
+  let n = 0, sea = 0; const TRK = require("../src/relto-trinkets"), M = require("../src/relto-model");
+  for (let i = 0; i < 300; i++) { const S = G.sceneOf(an(["single_sun", "water", "water", "beach", "grass"]), "Page" + i); if (S.page) { n++; if (TRK.BY_WORLD.sea.includes(S.page.id) || TRK.BY_WORLD.wood.includes(S.page.id)) sea++; } }
+  ok(n > 70 && n < 130 && sea === n, "un Âge sur trois, une page de son monde (" + n + ")");
+  const pg = M.builtinPages({ story: true }).find((p) => p.id === "page_found_shells");
+  ok(!!pg && !M.checkUnlock(pg, [], new Set(), { mode: "story", pagesFound: [] }).ok && M.checkUnlock(pg, [], new Set(), { mode: "story", pagesFound: ["shells"] }).ok && M.checkUnlock(pg, [], new Set(), { mode: "sandbox" }).ok, "histoire : trouvée seulement ; bac à sable : libre"); }
 { /* 2.8 : la mousson suit l'année ; rien sans saisons, ni sur un monde froid */
   const se = (u) => ({ u, snow: 0 }), M = (u, x = {}) => G.monsoonOf({ monsoon: true, season: se(u), ...x });
   ok(M(0.5).name === "rains" && M(0).name === "dry" && M(0.25).name === "between", "les pluies l'été, le sec l'hiver, l'entre-deux");

@@ -21,6 +21,7 @@ function vignette(ctx, add, x, y, w, h, t, on) {
   const tri = (px, py, tw, th) => { ctx.beginPath(); ctx.moveTo(px - tw / 2, py); ctx.lineTo(px, py - th); ctx.lineTo(px + tw / 2, py); ctx.closePath(); ctx.stroke(); };
   const cloud = (px, py, s) => { ctx.beginPath(); ctx.arc(px - 8 * s, py, 7 * s, Math.PI * 0.5, Math.PI * 1.5); ctx.arc(px, py - 6 * s, 9 * s, Math.PI, 0); ctx.arc(px + 9 * s, py, 7 * s, Math.PI * 1.5, Math.PI * 0.5); ctx.closePath(); ctx.stroke(); };
   switch (type) {
+    case "trinket": { ground(); require("./relto-trinkets").icon(ctx, asset, cx, gy, Math.min(w, h) / 30, on ? null : () => ink, { ambient: 1, night: 0 }, 0); break; } /* 2.9 : une page trouvée dans un Âge */
     case "vegetation": {
       ground();
       if (asset === "birch") { for (const [bx, bh] of [[cx - 14, 38], [cx, 46], [cx + 14, 34]]) { line([bx, gy], [bx, gy - bh]); for (let k = 1; k < 5; k++) line([bx - 2, gy - bh * k / 5], [bx + 2, gy - bh * k / 5]); dot(bx, gy - bh - 2, 6, acc("rgba(150,170,70,0.55)")); } }

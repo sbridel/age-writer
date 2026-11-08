@@ -786,6 +786,16 @@ module.exports = function build(Base, core, AGEX) {
       return { mode, a, seed: cx.seed, style: cx.style || this.ext.windowStyle, sky: cx.sky || {} };
     }
 
+    /** 2.9 : un clic sur la page posée dans la fenêtre la ramasse : elle rejoint le livre des pages du Relto (src/relto-trinkets.js). */
+    pickPage(e, win) {
+      const lfx = win._ageFx, m = lfx && lfx.model, P = m && m.pageAt; if (!P || !m.S || m.S.pageFound) return;
+      const rc = win.getBoundingClientRect(); if (!rc.width || !rc.height) return; const x = ((e.clientX - rc.left) / rc.width) * m.W, y = ((e.clientY - rc.top) / rc.height) * m.H, pad = m.W * 0.02;
+      if (x < P.x - pad || x > P.x + P.w + pad || y < P.y - pad || y > P.y + P.h + pad) return;
+      const found = Array.isArray(this.ext.pagesFound) ? this.ext.pagesFound : (this.ext.pagesFound = []), taken = this.ext.pagesTaken || (this.ext.pagesTaken = {}), K = require("./relto-trinkets").KINDS[P.id];
+      if (!found.includes(P.id)) found.push(P.id); taken[String(m.S.seed)] = true; m.S.pageFound = true; this.saveExt();
+      new Notice(this.t("pages.found", { name: K ? (this.lang && this.lang() === "fr" ? K.fr : K.label) : P.id }));
+    }
+
     /** 2.9 : dessine la carte de l'Âge (src/agemap.js) dans `el` : { S (sceneOf), name, stability }. */
     drawAgeMap(el, info) {
       const cv = el.createEl("canvas"); cv.width = 560; cv.height = 560;
@@ -809,12 +819,14 @@ module.exports = function build(Base, core, AGEX) {
         if (r.mode === "off" && !gen) return;
         const win = parent.lastElementChild; if (!win || !win.classList.contains("age-panel__window")) return;
         const source = win.querySelector("img") || win.querySelector("canvas"); if (!source) return;
-        fx.attach(win, source, {
+        if (gen && gen.page) gen.pageFound = !!(this.ext.pagesTaken || {})[String(gen.seed)]; /* 2.9 : la page de cet Âge, déjà ramassée */
+        const lfx = fx.attach(win, source, {
           unrest: fx.unrestOf(r.a), triggered: (r.a.resolved && r.a.resolved.triggered) || [], seed: r.seed || String(key),
           mode: r.mode, gen, dmg: r.a.damage || null, strength: this.ext.fxStrength, uncertain: this.ext.uncertainLinks !== false,
           reduced: typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches,
           onSeen: (what) => { if (what !== "sea") return; const k = String(gen && gen.seed), seen = this.ext.seaSeen || (this.ext.seaSeen = {}); if (!seen[k]) { seen[k] = true; this.saveExt(); } }, /* 2.9 : on a vu la bête de la mer ; la description la dira */
         });
+        win._ageFx = lfx; if (gen && gen.page && !win._agePageClick) { win._agePageClick = true; win.addEventListener("click", (e) => this.pickPage(e, win)); } /* 2.9 : la page posée dans la fenêtre se ramasse d'un clic */
       });
     }
 

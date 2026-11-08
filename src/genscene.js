@@ -162,6 +162,7 @@ function sceneOf(a, name = "", blocks = null) {
   if (S.loop) { S.loopFam = lp && lp.what !== "sky" ? lp.what : "stone"; S.loopKey = String(name) + "|" + String((lp && lp.from) || ""); S.torus = TOR.formOf(S.loopKey); }
   S.fresh29 = !!a.fresh29; /* 2.9 : l'Âge est né après la 2.9 (src/entry.js, ext.old29) */
   S.seaBeast = seaBeastOf(S, ids); /* 2.9 : la bête de la mer */
+  S.page = pageOf(S); /* 2.9 : une page posée quelque part, à trouver (claude/DESIGN-pistes-8-nov.md, § 8) */
   S.birds = birdsOf(S, r("birds")); /* 2.9 : les oiseaux, écrits ou tirés par le monde (claude/DESIGN-pistes-8-nov.md, § 21) */
   S.view = viewOf(S, ids, wd); /* ESSAI : le point de liaison, d'où l'on regarde */
   { const fq = rng((S.seed ^ 0xface5) >>> 0), x = fq(); S.view.face = x < 0.45 ? "eq" : x < 0.65 ? "pole" : x < 0.83 ? "east" : "west"; S.view.lat = fq(); S.view.fx = fq(); } /* ESSAI : vers où regarde le point de liaison (l'équateur, le pôle, le levant, le couchant), et à quelle latitude */
@@ -206,6 +207,19 @@ function weatherMemory(m, td, o, L, rs) {
   let { wet, storm } = lv(L);
   if (S.weather) for (let k = 1; k <= 6; k++) { const x = lv(weatherLevels(m, frac(td - k / 24), o)), f = 1 - (k - 1) / 6; wet = Math.max(wet, x.wet * f); storm = Math.max(storm, x.storm * f); }
   return { wet: wet * (1 - (rs || 0)), storm };
+}
+/** 2.9 : la page posée par terre, une pierre dessus, un coin qui se soulève au vent ; `m.pageAt` : sa boîte (le clic de la fenêtre la ramasse). */
+function pagePass(g, m, t, day, night) {
+  const { S, W, H, hz } = m, P = S.page, D = H - hz; let x = null, y = null;
+  for (let k = 0; k < 24 && x == null; k++) { const u = (P.u + k * 0.137) % 1, v = (P.v + k * 0.291) % 1, px = W * (0.18 + 0.64 * u), py = hz + D * (0.42 + 0.36 * v); if (dryAt(m, px, py) && dryAt(m, px - W * 0.02, py) && dryAt(m, px + W * 0.02, py)) { x = px; y = py; } }
+  if (x == null) { m.pageAt = null; return; }
+  const k = (2.4 * (y - hz)) / D, w = W * 0.034 * k, h = w * 0.7, amb = 0.35 + 0.65 * day * (1 - 0.6 * night), lift = 0.5 + 0.5 * Math.sin(t * TAU * 1.3 + P.u * 9);
+  g.save(); g.translate(x, y); g.rotate(-0.12 + 0.3 * (P.v - 0.5));
+  g.fillStyle = css([0, 0, 0], 0.22); g.beginPath(); g.ellipse(w * 0.05, h * 0.12, w * 0.6, h * 0.25, 0, 0, TAU); g.fill();
+  g.fillStyle = css(mixc([10, 10, 14], [236, 224, 192], amb)); g.beginPath(); g.moveTo(-w / 2, -h * 0.15); g.lineTo(w / 2 - w * 0.12, -h * 0.25); g.lineTo(w / 2 - w * 0.02, -h * 0.25 - h * 0.35 * lift); g.lineTo(w / 2, h * 0.12); g.lineTo(-w / 2 + w * 0.04, h * 0.2); g.closePath(); g.fill(); /* la feuille, un coin soulevé */
+  g.strokeStyle = css(mixc([10, 10, 14], [120, 96, 70], amb), 0.7); g.lineWidth = Math.max(0.4, w * 0.02); for (let j = 0; j < 3; j++) { const yy = -h * 0.1 + j * h * 0.09; g.beginPath(); g.moveTo(-w * 0.38, yy); g.lineTo(w * 0.22, yy - h * 0.03); g.stroke(); } /* quelques lignes d'écriture */
+  g.fillStyle = css(mixc([10, 10, 14], [120, 114, 104], amb)); g.beginPath(); g.ellipse(-w * 0.18, -h * 0.05, w * 0.13, h * 0.1, 0.2, 0, TAU); g.fill(); /* la pierre qui la tient */
+  g.restore(); m.pageAt = { x: x - w * 0.6, y: y - h, w: w * 1.2, h: h * 1.4, id: P.id };
 }
 /** 2.9 : les traces du temps d'avant : des flaques qui tiennent le ciel (sur le chemin et dans les creux), des branches sous les arbres, une tuile tombée au pied d'une œuvre. */
 function afterWeather(g, m, t, day, night, hzc, part = "wet") {
@@ -412,6 +426,17 @@ function monsoonOf(S) {
   if (!S.monsoon || !S.season || S.lava || S.ice || S.world === "frozen" || S.world === "lava" || S.world === "cavern" || S.season.snow > 0.05) return null;
   const lvl = -Math.cos(TAU * S.season.u), wet = clamp((lvl - 0.15) / 0.6), dry = clamp((-lvl - 0.15) / 0.6);
   return { lvl, wet, dry, name: wet > 0.5 ? "rains" : dry > 0.5 ? "dry" : "between" };
+}
+/**
+ * 2.9 : les pages trouvées. Un Âge sur trois porte une page, tirée de sa graine parmi celles que son monde peut donner
+ * (src/relto-trinkets.js, BY_WORLD) ; les Âges d'avant la 2.9 aussi. `S.pageFound` (posé par src/entry.js) la retire de la fenêtre une fois trouvée.
+ */
+function pageOf(S) {
+  const q = rng((S.seed ^ 0x9a6e) >>> 0), x = q(), k = q(), BW = require("./relto-trinkets").BY_WORLD; if (x > 1 / 3 || S.world === "cavern" || S.torus) return null;
+  const pool = [], add = (w) => pool.push(...(BW[w] || []));
+  if (S.water && S.waterGround !== false && S.shore) add("sea"); if (S.sand || S.world === "desert") add("desert"); if (S.river || (S.ruins || []).includes("mill")) add("river");
+  if (S.terrain === "mountains" || S.terrain === "canyon" || S.terrain === "hills" || S.soil === "stone") add("rock"); if (S.trees > 0 || S.grass || S.alive) add("wood"); if (S.ice || S.world === "frozen") add("ice"); if (doomOf(S) > 0.5) add("dying");
+  return pool.length ? { id: pool[Math.floor(k * pool.length)], u: q(), v: q() } : null;
 }
 /**
  * 2.9 : ce qui vit dans la mer. Une seule grande bête par Âge, tirée par le monde (jamais écrite), pour les Âges nés après la 2.9 : une mer qui fait le sol,
@@ -1490,7 +1515,7 @@ function paint(g, m, t, o = {}) {
   // arbres
   m.dayK = day; m.nightK = night; if (S.trees) { const mf = metalFilter(S); if (mf && S.wonderMetal && metalLayer(g, m, t, mf, day)) { /* dessinés en métal poli */ } else { if (mf) { g.save(); g.filter = mf; } trees(g, m, t); if (mf) g.restore(); } } /* ESSAI : l'arbre fait du métal qu'il a bu, ou terni */
   // ruines
-  ruinsPass(g, m, t); afterWeather(g, m, t, day, night, hzc, "storm"); /* 2.9 : les branches, la tuile tombée, devant le pied des œuvres */
+  ruinsPass(g, m, t); afterWeather(g, m, t, day, night, hzc, "storm"); if (S.page && !S.pageFound) pagePass(g, m, t, day, night); /* 2.9 : la page à trouver */ /* 2.9 : les branches, la tuile tombée, devant le pied des œuvres */
   detail(g, m, t, night);
   if (m.garden) gardenGround(g, m, t, day, night, hzc, "hedge"); /* ESSAI : la haie devant les arbres et les ruines de l'horizon : leur pied est derrière elle */
   if (S.glow || S.moths) for (let p = 0, np = Math.round(clamp(12 * (S.amt ? (S.moths ? (S.amt.moths != null ? S.amt.moths : 1) : (S.amt.glow != null ? S.amt.glow : 1)) : 1), 3, 40)); p < np; p++) { const q = rng(S.seed + p * 13), x = q() * W, y = hz - q() * H * 0.12, a = 0.35 + 0.5 * Math.sin(TAU * (t * (S.moths ? 2 : 1) + q())); g.fillStyle = css(S.glow ? [140, 255, 190] : [255, 230, 160], Math.max(0, a) * 0.8); g.beginPath(); g.arc(x + (S.moths ? 5 * Math.sin(TAU * (t * 2 + q())) : 0), y + (S.moths ? 3 * Math.cos(TAU * (t * 3 + q())) : 0), 1.4, 0, TAU); g.fill(); }
@@ -3765,4 +3790,4 @@ Object.assign(ART, {
   aeroplankton: { layer: "air", draw(g, m, t, e) { const { W, H, hz } = m; for (const it of e.items) for (let k = 0; k < 6; k++) { const x = (it.x + k * 41) % W, y = hz - H * (0.05 + 0.3 * frac(it.y + k * 0.17)); g.fillStyle = css([220, 240, 255], 0.2 + 0.4 * Math.max(0, Math.sin(TAU * t * 2 + k + it.p))); g.fillRect(x, y, 1, 1); } } },
 });
 
-module.exports = { tideOf, millOf, monsoonOf, freezeOf, weatherMemory, beastsAtHour, seaBeastOf, buildPondForTest: buildPond, solEn, supportOf, carried, SUPPORT, SUPPORT_OF, byDepthForTest: (m, e, a, b) => byDepth(m, e, a, b), sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
+module.exports = { tideOf, millOf, monsoonOf, freezeOf, weatherMemory, beastsAtHour, seaBeastOf, pageOf, buildPondForTest: buildPond, solEn, supportOf, carried, SUPPORT, SUPPORT_OF, byDepthForTest: (m, e, a, b) => byDepth(m, e, a, b), sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
