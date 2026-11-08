@@ -482,7 +482,7 @@ function lectern(r, ctx, c, st) {
 /** 2.10.7 : la couleur de la lumière dépliée, en un mot d'encre (`#rrggbb`) : la teinte de l'étoile telle qu'on la voit (écrite par l'Art, ou née : la naine par son repas ou son âge, les autres par leur chaleur) ; c'est elle que la carte donne à l'étoile. */
 function lightTint(star) {
   const PM = require("./physics/model"), { blackbody } = require("./genscene"), { HUES } = require("./sky");
-  const rgb = star.art && star.hue && HUES[star.hue] ? HUES[star.hue] : star.whiteDwarf && star.kind ? PM.wdTintOf(star.kind, star.T) : blackbody(star.blackSun ? 1500 : star.T || 5772); /* un soleil dont la couleur est écrite est peint de cette couleur : le cartographe peint ce qu'il voit ; la lecture, elle, dit que ce vert est écrit */
+  const rgb = star.blackSun ? HUES.black_sun : star.art && star.hue && HUES[star.hue] ? HUES[star.hue] : star.whiteDwarf && star.kind ? PM.wdTintOf(star.kind, star.T) : blackbody(star.T || 5772); /* le soleil noir : le bordeaux presque noir de la fenêtre, pas la braise */ /* un soleil dont la couleur est écrite est peint de cette couleur : le cartographe peint ce qu'il voit ; la lecture, elle, dit que ce vert est écrit */
   return "#" + (rgb || [154, 154, 154]).map((c) => Math.round(Math.max(0, Math.min(255, c))).toString(16).padStart(2, "0")).join("");
 }
 /** 2.10.5 : la lumière que la pierre peut déplier : l'étoile du livre, située (gravée) et visée (les molettes sur ses indices). */
