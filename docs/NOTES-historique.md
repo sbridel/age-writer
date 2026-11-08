@@ -699,6 +699,11 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.10.3 — le cristal sur son bras (8 nov. 2026, soir)
+
+- `relto-telescope.js` : `ARM`, `armPose` (replié / devant le verre, pivot en 0,55 s, instantané en mouvement réduit), `cutStone` (deux rangs de facettes, feux, frange, reflet) ; la bague vide quand la pierre est dans l'appareil ; la zone cliquable suit la bague. Référence `plain/telescope` régénérée.
+- `relto-descbook.js` : la planche de la carte (`hooks.mapPage`) après la description ; elle n'était que dans la vue de la fenêtre (`engine/book-view.js`). `agemap.js` : l'étang de face seulement (`!k`, comme la rivière) ; les blancs sous 70 de stabilité ou en déclin, jamais sur l'eau (`getImageData`), en tache de papier sans contour.
+
 ## 2.10.2 — plusieurs liaisons dans un fichier (8 nov. 2026, soir)
 
 - `linkSoundFile` découpe le fichier aux silences (`segmentsOf`), une liaison tirée à chaque fois (jamais deux fois de suite la même), fondu aux bouts, 15 s au plus.
