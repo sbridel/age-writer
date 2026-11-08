@@ -6,6 +6,29 @@
  */
 const NEWS = [
   {
+    v: "2.10.4",
+    fr: {
+      title: "Le cristal attend",
+      letter: "Une pierre ne déplie pas une lumière qu'on n'a pas encore trouvée. Le cristal attend que l'étoile du livre soit située sur la carte ; jusque-là, il dort dans sa bague.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**Le cristal ne répond qu'à une étoile située** : le Zéro trouvé, son système gravé.",
+        "**Avant cela, la pierre reste sombre**, et le dit quand on l'approche.",
+        "**Une pierre taillée au bout d'un bras**, la carte dans le livre du Relto, un seul étang sur la carte (2.10.3).",
+      ],
+    },
+    en: {
+      title: "The crystal waits",
+      letter: "A stone does not unfold a light that has not yet been found. The crystal waits for the book's star to be charted; until then it sleeps in its ring.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**The crystal answers only a charted star**: the Zero found, its system recorded.",
+        "**Until then the stone stays dark**, and says so when you reach for it.",
+        "**A cut stone at the end of an arm**, the map in the Relto's book, one pond on the map (2.10.3).",
+      ],
+    },
+  },
+  {
     v: "2.10.3",
     fr: {
       title: "Le cristal sur son bras",

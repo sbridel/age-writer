@@ -163,7 +163,7 @@ const DAY = 86400000, H = 3600000, t0 = 1.8e12;
 const relDone = (async () => {
   const srcs = { "Ages/Brume.md": ["single_sun\norange_sun\nwater\nrotation: 24\nsystem: Kerath", "Brume"], "Ages/Cendre.md": ["single_sun\norange_sun\nstone\nsystem: Kerath", "Cendre"], "Ages/Seul.md": ["single_sun\nred_sun\nwater", "Seul"] };
   const ages = Object.keys(srcs).map((p) => ({ name: srcs[p][1], path: p, verdict: "stable", stability: 90 }));
-  const ageData = (age) => { const [src, name] = srcs[age.path], a = A(src, name); return { target: IM.targetsOf(a, name), model: null, system: SS.systemOf(a, src, name), orbit: CAL.orbitOf(a, name, SKY.parseSky(src)) }; };
+  const ageData = (age) => { const [src, name] = srcs[age.path], a = A(src, name); return { target: IM.targetsOf(a, name), model: null, system: SS.systemOf(a, src, name), orbit: CAL.orbitOf(a, name, SKY.parseSky(src)), star: require("../src/spectrum").starOf(a.physics && a.physics.w, [], []) }; };
   const pages = ["page_telescope", "page_mountain", "page_imager"];
   const relto = M.parseRelto({ seed: 4242, structures: ["hut"], relto_pages_active: pages });
   const sc = M.buildScene(relto, [...pages.filter((id) => id !== "page_telescope").map((id) => M.parsePage(M.pageFrontmatter(id, M.PAGE_PRESETS[id]), id + ".md")), ...M.builtinPages()], ages);
@@ -192,12 +192,14 @@ const relDone = (async () => {
   reach("torahn", Math.round(clue.torahn / 100) * 100 % T.TURN, () => st.dial.torahn);
   reach("elev", clue.elevation, () => st.dial.elev);
   ok(!st.systems[sysB.key], "direction et hauteur justes, retard faux : pas encore situé");
+  r.draw(4.5); ok(st.book.data.star && !r.hot.some((h) => h.tel && h.tel.spectro) && r.hot.some((h) => /not yet charted/.test(h.tip)), "2.10.4 : l'étoile pas encore située : le cristal ne répond pas, et le dit");
   r.draw(5); ok(r.hot.length > 0, "dessin pendant la mesure"); // la ligne de l'écho
   reach("delay", clue.delay, () => st.dial.delay);
   ok(!st.systems[sysB.key] && st.hold, "Art de la Guilde : le bon réglage ne grave rien tout de suite, la pose commence");
   const POSE = require("../src/relto-telescope").HOLD_BEATS * require("../src/relto-telescope").PULSE_MS + 1;
   r.nowOverride = t0 + POSE; r.draw(5.5); /* trois battements immobiles */
   ok(st.systems[sysB.key] && store[st.key].systems[sysB.key] && sounds.includes("found"), "les trois indices reportés, la pose tenue : le système est situé, gardé, avec la quinte");
+  r.draw(5.6); ok(r.hot.some((h) => h.tel && h.tel.spectro), "l'étoile située : le cristal répond");
   const rec = st.systems[sysB.key]; ok(rec.torahn === sysB.pos.torahn && rec.distance === sysB.pos.distance && rec.at === Math.round(t0 + POSE), "la plaque grave la position GZCS de l'étoile");
   r.nowOverride = t0;
   r.draw(6); ok(r.hot.some((h) => h.tel && h.tel.setSystem), "la plaque de l'étoile est cliquable");
