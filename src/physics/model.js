@@ -58,9 +58,28 @@ function brownDwarf(mass) {
 }
 
 /** 2.9 : une naine blanche refroidie (le cœur d'une étoile morte, grand comme une planète) : de 4 000 à 8 000 K selon la masse tirée, un centième de rayon solaire ; elle ne s'éteindra pas. */
-function whiteDwarf(mass) {
-  const T = 4000 + clamp((mass - 0.5) / 0.3, 0, 1) * 4000, R = 0.0125;
-  return { T, L: R * R * Math.pow(T / T_SUN, 4), life: Infinity };
+function whiteDwarf(mass, kind) {
+  const u = clamp((mass - 0.5) / 0.3, 0, 1), R = 0.0125;
+  const T = kind === "young" ? 20000 + 10000 * u : kind === "old" ? 3600 + 600 * u : kind === "salt" ? 4000 + 500 * u : kind === "brine" ? 3900 + 300 * u : kind === "carbon" ? 4200 + 1300 * u : 5500 + 3000 * u;
+  return { T, L: R * R * Math.pow(T / T_SUN, 4), life: Infinity, kind: kind || "white" };
+}
+/**
+ * 2.9 : ce qu'est une naine blanche d'après sa couleur écrite et ses débris (claude/DESIGN-pistes-8-nov.md, § 32 bis).
+ * Sans débris, la couleur est l'âge : bleue jeune, blanche, orange très vieille. Avec débris, la couleur est le repas :
+ * verte le sel (chartreuse), bleue le sel à l'extrême (froide), rouge le carbone. Le violet, et les autres couleurs, restent l'Art (null).
+ */
+function whiteDwarfKind(hue, debris) {
+  if (!hue) return "white";
+  if (!debris) return hue === "blue_sun" ? "young" : hue === "orange_sun" ? "old" : hue === "white_sun" ? "white" : null;
+  return hue === "green_sun" ? "salt" : hue === "blue_sun" ? "brine" : hue === "red_sun" ? "carbon" : hue === "white_sun" ? "white" : null;
+}
+/** Les vraies teintes, pâles : la chartreuse, le bleu pâle, le rose-rouge, l'ocre. */
+const WD_TINT = { young: [196, 208, 255], white: [245, 246, 255], old: [228, 190, 140], salt: [221, 255, 184], brine: [120, 160, 240], carbon: [236, 160, 170] };
+/** La teinte d'une naine blanche : fixe, sauf le carbone, rose quand elle est encore tiède (5 500 K), rouge franc quand elle a refroidi (4 300 K). */
+function wdTintOf(kind, T) {
+  if (kind !== "carbon") return WD_TINT[kind] || null;
+  const k = clamp((5500 - (T || 5000)) / 1200, 0, 1), pink = WD_TINT.carbon, red = [232, 104, 72];
+  return pink.map((c, i) => Math.round(c + (red[i] - c) * k));
 }
 
 /** Part de la lumière d'un corps noir à T (K) entre deux longueurs d'onde (µm), par intégration numérique de Planck. */
@@ -289,7 +308,7 @@ function reliefOf(w) {
 }
 module.exports = { oxygenOf, reliefOf, seasonAmplitude, seasonKind,
   T_SUN, WATER_TRIPLE_BAR, HABITABLE, HEAT, clamp,
-  starLuminosity, starRadius, starTemperature, starLifetime, brownDwarf, whiteDwarf, planckFraction, visibleRatio, uvRatio,
+  starLuminosity, starRadius, starTemperature, starLifetime, brownDwarf, whiteDwarf, whiteDwarfKind, WD_TINT, wdTintOf, planckFraction, visibleRatio, uvRatio,
   insolation, distanceFor, orbitalPeriodDays, tidalLockTime,
   planetRadius, gravity, escapeVelocity, density,
   internalHeat, ageForHeatLevel, dynamo, coriolis, FIELD_SHIELD, airFreeze,

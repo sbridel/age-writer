@@ -132,6 +132,7 @@ function sceneOf(a, name = "", blocks = null) {
   const cycleWritten = res.lines.some((l) => l.entry && l.entry.category === "cycle" && !l.autoFilled);
   S.phys = physLook(a.physics && a.physics.w, cycleWritten);
   if (S.phys) {
+    if (S.phys.wdTint) S.sunHues = [S.phys.wdTint, ...S.sunHues.slice(1)]; /* 2.9 : la naine blanche naturelle prend sa vraie teinte, pâle ; la couleur écrite dit laquelle */
     if (!S.sunHues.length && S.phys.sunRGB.length) S.sunHues = S.phys.sunRGB; // couleur du soleil : celle de son étoile (une couleur écrite passe avant)
     if (S.phys.locked && !cycleWritten && S.cycle !== "erratic") S.cycle = "frozen"; // face figée par la marée : le soleil ne bouge plus
     if (S.phys.Ts > 318) { S.heat = true; always("heat", true); } // chaleur qui fait trembler l'air
@@ -253,7 +254,7 @@ function physLook(w, cycleWritten) {
   const T0 = temps[0] || 5772, L = Number.isFinite(w.L) ? w.L : 1, a = Number.isFinite(w.a) && w.a > 0 ? w.a : 1;
   const disc = clamp((Math.sqrt(Math.max(1e-6, L)) / Math.pow(T0 / 5772, 2)) / a, 0.45, 3); // rayon angulaire relatif au Soleil vu de la Terre
   return {
-    sunRGB: brown ? [] : temps.slice(0, 2).map(blackbody), disc, whiteDwarf: !!w.whiteDwarf, greenStar: !!(w.whiteDwarf && w.debris && (w.hues || []).includes("green_sun")), /* 2.9 : la naine blanche verte */ P: Math.max(0, w.P), g: Number.isFinite(w.g) ? w.g : 1,
+    sunRGB: brown ? [] : temps.slice(0, 2).map(blackbody), disc, whiteDwarf: !!w.whiteDwarf, wdKind: w.wdKind || null, wdTint: w.wdKind ? PM.wdTintOf(w.wdKind, w.starTemp) : null, reborn: !!w.reborn, /* 2.9 : la naine blanche, et ce que sa couleur veut dire */ P: Math.max(0, w.P), g: Number.isFinite(w.g) ? w.g : 1,
     coriolis: Number.isFinite(w.coriolis) ? w.coriolis : 1, /* ESSAI : Coriolis */ oxygen: Number.isFinite(w.oxygen) ? w.oxygen : 1, /* 2.5 (D) */ relief: PM.reliefOf(w), carve: w.water === "liquid" && w.P >= 0.05 && w.age >= 1.5, /* 2.5 (C) : la forme du relief ; les plaques gardent aussi leurs vallées quand l'eau a eu le temps */ locked: !!w.locked, light: Number.isFinite(w.light) ? w.light : 1, Ts: Number.isFinite(w.Ts) ? w.Ts : 288, cycleWritten: !!cycleWritten, T: brown ? 0 : T0, T2: brown ? 0 : temps[1] || 0,
   };
 }
@@ -1197,7 +1198,7 @@ function leafC(S, c) {
 function suns(m, t, season = 0) {
   const { S, W, H, hz } = m, top = H * (0.14 + 0.08 * (0.5 - 0.5 * season)), out = [], erratic = (i) => { const q = Math.floor(t * 6), g = rng(S.seed + q * 31 + i); return { x: W * (0.2 + 0.6 * g()), y: H * (0.2 + 0.34 * g()) }; };
   for (let i = 0; i < S.suns; i++) {
-    const rad = H * (i === 0 ? 0.085 : 0.055) * (S.phys ? clamp(Math.sqrt(S.phys.disc), 0.6, 1.7) : 1); let b = null;
+    const rad = H * (i === 0 ? 0.085 : 0.048) * (S.phys ? clamp(Math.sqrt(S.phys.disc), 0.6, 1.7) : 1); let b = null;
     if (S.cycle === "frozen") { const fz = rng((S.seed ^ 0x10c4) >>> 0), el = 0.32 + 0.4 * fz(), fx = 0.25 + 0.5 * fz(); b = { x: W * (fx - 0.22 * i), y: hz - (hz - top) * el, e: el }; } // soleil immobile : sa hauteur et sa place dépendent de l'endroit du monde (graine)
     else if (S.cycle === "erratic") { const p = erratic(i); b = { x: p.x, y: p.y, e: clamp((hz - p.y) / (hz * 0.8)) }; }
     else b = skyPath(m, frac(t - i * 0.1), top);
@@ -1414,14 +1415,23 @@ function paint(g, m, t, o = {}) {
   }
   const drawSuns = () => {
   for (const s of sn) {
-    const gl = g.createRadialGradient(s.x, s.y, s.r * 0.5, s.x, s.y, s.r * 5), b = 0.5 * Math.max(Math.pow(Math.max(0, s.e), 0.6), S.cycle === "frozen" ? 0.7 : 0);
+    const b = 0.5 * Math.max(Math.pow(Math.max(0, s.e), 0.6), S.cycle === "frozen" ? 0.7 : 0), second = s.i > 0 && S.suns > 1; /* le second soleil : plus petit, plus froid, moins de lueur */
     const hc = hues[s.i] || hues[0] && S.suns < 2 && s.i === 0 && hues[0] || null; // 1er soleil : 1re couleur ; 2e soleil : 2e couleur
-    gl.addColorStop(0, hc ? css(hc, b) : s.i === 0 ? css([255, 214, 150], b) : css([190, 215, 255], b * 0.8)); gl.addColorStop(1, css(hc || [255, 214, 150], 0)); g.fillStyle = gl; g.fillRect(0, 0, W, H);
+    const base = hc || (s.i === 0 ? [255, 214, 150] : [190, 215, 255]), low = clamp(1 - s.e * 2.5); /* bas sur l'horizon : plus chaud, la lueur s'étale */
+    const tint = low > 0 && !hc ? mixc(base, [255, 150, 90], 0.5 * low) : base, pulse = 1 + 0.06 * Math.sin(TAU * (t * 0.7 + s.i * 0.4)); /* la couronne respire, très lentement */
+    const thin = air.thin || 0, thick = air.thick || 0, kk = second ? 0.55 : 1;
+    /* la lueur large : le ciel s'éclaire autour de lui, plus chaud et plus serré en plein jour */
+    const gl = g.createRadialGradient(s.x, s.y, s.r * 0.5, s.x, s.y, s.r * (5 + 3 * low)); gl.addColorStop(0, css(mixc(tint, [255, 255, 255], 0.3), b * kk * (1 - 0.7 * thin))); gl.addColorStop(0.3, css(tint, b * kk * 0.45 * (1 - 0.7 * thin))); gl.addColorStop(1, css(tint, 0)); g.fillStyle = gl; g.fillRect(0, 0, W, H);
     if ((S.blackSun || S.blackDisc) && s.i === 0) { // soleil noir : disque sombre et couronne rouge éteinte
       g.strokeStyle = css([150, 52, 40], 0.5 + 0.4 * b); g.lineWidth = Math.max(1.2, s.r * 0.22); g.beginPath(); g.arc(s.x, s.y, s.r * 1.08, 0, TAU); g.stroke();
       g.fillStyle = "#07050a"; g.beginPath(); g.arc(s.x, s.y, s.r, 0, TAU); g.fill(); continue;
     }
-    g.fillStyle = hc ? css(mixc(hc, [255, 255, 255], 0.35)) : s.i === 0 ? "#f6e0a8" : "#cfe0f4"; g.beginPath(); g.arc(s.x, s.y, s.r, 0, TAU); g.fill();
+    /* 2.9 : un soleil, pas une planète : une couronne serrée qui fond le bord, un disque brûlé au blanc vers le cœur, teinté au bord ; dans un air mince, un point dur sans couronne ; dans un air épais, une tache */
+    const bloomR = s.r * (2.1 + 1.6 * thick + 0.8 * low) * (1 - 0.7 * thin) * pulse, ba = (0.7 + 0.2 * low) * kk * (1 - 0.8 * thin) * (0.45 + 0.55 * Math.max(b * 2, S.cycle === "frozen" ? 0.6 : 0));
+    if (ba > 0.01) { g.save(); g.translate(s.x, s.y); g.scale(1 + 0.6 * low, 1); const bl = g.createRadialGradient(0, 0, s.r * 0.6, 0, 0, bloomR); bl.addColorStop(0, css(mixc(tint, [255, 255, 255], 0.6), ba)); bl.addColorStop(0.3, css(mixc(tint, [255, 255, 255], 0.2), ba * 0.5)); bl.addColorStop(0.65, css(tint, ba * 0.18)); bl.addColorStop(1, css(tint, 0)); g.fillStyle = bl; g.beginPath(); g.arc(0, 0, bloomR, 0, TAU); g.fill(); g.restore(); }
+    const core = mixc(tint, [255, 255, 255], thick > 0.3 ? 0.55 : second ? 0.7 : 0.88), rim = mixc(tint, [255, 255, 255], 0.15), dg = g.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 1.08);
+    dg.addColorStop(0, css(core)); dg.addColorStop(0.6, css(mixc(core, rim, 0.45))); dg.addColorStop(0.9, css(rim)); dg.addColorStop(1, css(rim, 0)); g.fillStyle = dg; g.beginPath(); g.arc(s.x, s.y, s.r * 1.08, 0, TAU); g.fill();
+    if (thin > 0.3) { g.fillStyle = css(mixc(tint, [255, 255, 255], 0.9)); g.beginPath(); g.arc(s.x, s.y, s.r * 0.96, 0, TAU); g.fill(); } /* presque pas d'air : le bord est net */
   }
   };
   if (S.loop) drawSuns(); /* le soleil est plus loin que l'autre côté de l'anneau : il passe derrière, et ne se montre que dans le trou (26 oct. 2026) */
