@@ -410,6 +410,11 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
   ok(at(0.95, 0) === null, "par nuit noire, on ne les voit pas");
   ok(at(0.5, 1, { storm: 1 }) === null, "sous l'orage, à l'abri");
   const w = at(0.58, 0.3); ok(w.mode === "water" ? w.pts.every((p) => Math.abs(p.y - (m.pond.cy + m.pond.ry * 1.25)) < 40) : w.mode === "graze", "au crépuscule, à l'eau"); }
+{ /* 2.9 : les oiseaux, écrits ou tirés par le monde (Âges nés après la 2.9) */
+  ok(!!G.sceneOf(an(["single_sun", "grass", "birds"]), "Oiseaux").birds, "écrits, ils sont là");
+  let world = 0, old = 0; for (let i = 0; i < 40; i++) { const a = an(["single_sun", "grass", "grove"]); if (G.sceneOf({ ...a, fresh29: true }, "Ois" + i).birds) world++; if (G.sceneOf(a, "Ois" + i).birds) old++; }
+  ok(world > 5 && old === 0, "tirés par le monde pour les Âges nouveaux seulement (" + world + "/" + old + ")");
+  ok(!G.sceneOf(an(["single_sun", "lava_world", "birds"]), "Oiseaux").birds, "pas sur un monde de lave"); }
 { /* 2.8 : la mousson suit l'année ; rien sans saisons, ni sur un monde froid */
   const se = (u) => ({ u, snow: 0 }), M = (u, x = {}) => G.monsoonOf({ monsoon: true, season: se(u), ...x });
   ok(M(0.5).name === "rains" && M(0).name === "dry" && M(0.25).name === "between", "les pluies l'été, le sec l'hiver, l'entre-deux");

@@ -110,6 +110,7 @@ def("microbial_mat", { needs: [["liquidWater", "light"], ["oldEnoughSimple", "li
 def(["mycelium", "mushroom", "soil_bacteria"], { needs: [["oldEnoughSimple", "light"], ["hardyLife", "light"]] });
 def("aeroplankton", { needs: [["oldEnoughSimple", "light"], ["moistAir", "light"]] });
 def("shoal", { needs: [["liquidWater", "medium"], ["oldEnoughComplex", "light"]] });
+def("birds", { needs: [["animalAir", "light"], ["temperateLife", "light"]] }); /* 2.9 : les oiseaux veulent de l'air et un monde tempéré */
 def("raptor", { needs: [["prey", "light"], ["oldEnoughComplex", "light"], ["animalAir", "light"], ["temperateLife", "light"]] });
 def("cave_stalker", { needs: [["prey", "light"], ["oldEnoughComplex", "light"], ["breathableAir", "light"], ["temperateLife", "light"]] }); /* 2.5 (D) : le rôdeur des grottes est dispensé d'oxygène, comme les fouisseurs */
 def("deep_hunter", { needs: [["liquidWater", "medium"], ["prey", "light"], ["oldEnoughComplex", "light"]] });

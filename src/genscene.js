@@ -22,7 +22,7 @@ const SSN = require("./seasons"); /* la saison du jour */
 const TAU = Math.PI * 2, PERIOD = 16000; /* ESSAI (28 oct. soir) : la boucle de la fenêtre deux fois plus lente (8 s avant) */
 
 /** Identifiants que le peintre connaît (tout le reste passe par le peintre générique, d'après l'axe et les adjectifs du bloc). */
-const KNOWN = new Set((CAT.COMPOSITES.map((c) => c.id).join(" ") + " scorched_moths tarnished_growth " + "tower lighthouse pier stairs mill oasis tides monsoon door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon steady_cycle frozen_cycle erratic_cycle chaotic_orbit stable_orbit shifting_orbit " +
+const KNOWN = new Set((CAT.COMPOSITES.map((c) => c.id).join(" ") + " scorched_moths tarnished_growth " + "tower lighthouse pier stairs mill oasis tides monsoon birds door sealed_door bridge fallen_bridge tablet worn_tablet speaking_tablet lamp lit_lamp twin_suns single_sun starless companion_moon steady_cycle frozen_cycle erratic_cycle chaotic_orbit stable_orbit shifting_orbit " +
   "permanent_veil auroras recurring_eclipses starfall rain storm thunderstorm whispering_storm waiting_thunder wind dust_storm ash_cloud spore_cloud fog marsh_mist rime watching_mist lightning heat " +
   "hail black_hail steam lava obsidian whispering_obsidian water brine meltwater crying_obsidian ice black_ice deep_cold sand glass singing_glass fulgurite grove great_tree ironwood charred_grove " +
   "wildfire moth lantern_moths whispering_moths glowvine wrong_glowvine hunter stalking_pack no_fissure cave_fissure submarine_fissure fissure " +
@@ -161,6 +161,7 @@ function sceneOf(a, name = "", blocks = null) {
   S.loop = !!(a.carry && a.carry.loop); /* la boucle de Torus : deux Âges qui se portent l'un l'autre forment un monde en anneau (src/torus.js) */
   if (S.loop) { S.loopFam = lp && lp.what !== "sky" ? lp.what : "stone"; S.loopKey = String(name) + "|" + String((lp && lp.from) || ""); S.torus = TOR.formOf(S.loopKey); }
   S.fresh29 = !!a.fresh29; /* 2.9 : l'Âge est né après la 2.9 (src/entry.js, ext.old29) */
+  S.birds = birdsOf(S, r("birds")); /* 2.9 : les oiseaux, écrits ou tirés par le monde (claude/DESIGN-pistes-8-nov.md, § 21) */
   S.view = viewOf(S, ids, wd); /* ESSAI : le point de liaison, d'où l'on regarde */
   { const fq = rng((S.seed ^ 0xface5) >>> 0), x = fq(); S.view.face = x < 0.45 ? "eq" : x < 0.65 ? "pole" : x < 0.83 ? "east" : "west"; S.view.lat = fq(); S.view.fx = fq(); } /* ESSAI : vers où regarde le point de liaison (l'équateur, le pôle, le levant, le couchant), et à quelle latitude */
   return S;
@@ -410,6 +411,16 @@ function monsoonOf(S) {
   if (!S.monsoon || !S.season || S.lava || S.ice || S.world === "frozen" || S.world === "lava" || S.world === "cavern" || S.season.snow > 0.05) return null;
   const lvl = -Math.cos(TAU * S.season.u), wet = clamp((lvl - 0.15) / 0.6), dry = clamp((-lvl - 0.15) / 0.6);
   return { lvl, wet, dry, name: wet > 0.5 ? "rains" : dry > 0.5 ? "dry" : "between" };
+}
+/**
+ * 2.9 : les oiseaux. Écrits, ou tirés par le monde pour les Âges nés après la 2.9 (vie, air, oxygène ; des arbres, une mer ou des hauteurs ; une graine sur deux).
+ * Une forme par Âge : petits et vifs (des bandes), long cou (des vols lents), ailes larges (un seul qui plane). Graine propre. { form, n, dir } ou null.
+ */
+function birdsOf(S, written) {
+  const P = S.phys, air = !P || (P.P >= 0.2 && P.oxygen >= 0.4), q = rng((S.seed ^ 0xb1d5) >>> 0), x = q(), form = ["small", "long", "broad"][Math.floor(q() * 3)], n = 5 + Math.floor(q() * 8), dir = q() < 0.5 ? -1 : 1;
+  if (S.world === "cavern" || S.torus || S.lava || S.world === "lava" || !air) return null;
+  const world = S.fresh29 && (S.alive || S.trees > 0 || S.grass) && (S.trees > 0 || (S.water && S.waterGround !== false) || S.terrain === "mountains" || S.terrain === "hills" || (S.forms && S.forms.cliff)) && x < 0.5;
+  return written || world ? { form, n, dir, written: !!written } : null;
 }
 /**
  * 2.9 : le gel de l'eau douce (rivière, étang, oasis ; jamais la mer). Avec les saisons : l'eau prend après la neige, quand le jour reste sous −2 °C
@@ -1451,6 +1462,7 @@ function paint(g, m, t, o = {}) {
   extraAt(g, m, t, "air");
   WON.wonderPass(g, m, t, "air", k0);
   scarPass(g, m, () => { scarAir(g, m, t); scarHeld(g, m, t); });
+  if (S.birds) birdsPass(g, m, t, day, night, hzc); /* 2.9 : les oiseaux */
   weather(g, m, t);
   sunSignGround(g, m, sn, day, night, hzc); /* 2.5 : l'ombre de ce qui cadre, quand le soleil est dans le dos */
   const framed = S.view && ((S.view.kind !== "plain" && S.view.kind !== "low") || S.view.near); /* 2.9 : le ponton (pier) passe par viewFrame */
@@ -3578,6 +3590,28 @@ function beastsAtHour(m, e, pts) {
   const tight = (m.extras || []).some((x) => x.id === "raptor") && mode === "water" && h > 0.5 ? 0.6 : 1, n = pts.length;
   const out = pts.map((P, i) => { const y = goal.y + (((i * 7) % 5) - 2) * D * 0.008, k = Math.max(0.05, kAt(y)), x = goal.x + (i - (n - 1) / 2) * 30 * k * (mode === "rest" ? 0.7 : 1) * tight, Q = { ...P, x, y, k, z: D / Math.max(1, y - hz) }; return onLand(m, Q) ? Q : null; }).filter(Boolean);
   return out.length ? { mode, pts: out.sort((a, b) => a.y - b.y), face } : { mode: mode === "rest" ? "rest" : "graze", pts };
+}
+/**
+ * 2.9 : les oiseaux selon l'heure, la saison et le temps. Le matin et le soir, des bandes qui passent ; à midi, un seul qui plane sur les hauteurs
+ * (les ailes larges) ou une bande haute ; absents la nuit, sous l'orage, au cœur de l'hiver et pendant les pluies de la mousson ; à l'automne, des vols
+ * en V qui partent (d'un côté), au printemps, qui reviennent (de l'autre) ; à marée basse, posés sur le sable mouillé.
+ */
+function birdsPass(g, m, t, day, night, hzc) {
+  const { S, W, H, hz } = m, B = S.birds, L = m.lv || {}, dl = m._dayL == null ? 1 : m._dayL, h = m._td == null ? 0.45 : frac(m._td), se = S.season, D = H - hz;
+  if (dl < 0.08 || (L.storm || 0) > 0.5 || (se && se.cold > 0.75 && se.snow > 0.3) || (S.mon && S.mon.wet > 0.5)) return;
+  const ink = css(mixc(mixc([18, 16, 20], hzc, 0.15), [255, 250, 240], 0.08 * day), 0.85), q = rng((S.seed ^ 0xb1d6) >>> 0), lw = Math.max(0.8, W / 640);
+  const wing = (x, y, s, ph, form) => { const f = form === "broad" ? 0.12 * Math.sin(ph) : form === "long" ? 0.35 * Math.sin(ph) : 0.6 * Math.sin(ph); g.strokeStyle = ink; g.lineWidth = lw * (form === "broad" ? 1.3 : 1);
+    g.beginPath(); g.moveTo(x - s, y - s * (0.2 + f)); g.quadraticCurveTo(x - s * 0.45, y - s * (0.35 + f * 0.6), x, y); g.quadraticCurveTo(x + s * 0.45, y - s * (0.35 + f * 0.6), x + s, y - s * (0.2 + f)); g.stroke();
+    if (form === "long") { g.beginPath(); g.moveTo(x - s * 0.5 * B.dir * -1, y + s * 0.05); g.lineTo(x + s * 0.6 * B.dir, y + s * 0.02); g.stroke(); } }; /* le long cou tendu devant */
+  const tide = m._tide && m._tide.amp ? m._tide.level : 0, shoreLn = m.shore && m.shore.line ? m.shore.line.filter(([, y]) => y > hz + D * 0.18 && y < H - D * 0.05) : [];
+  if (tide < -0.3 && shoreLn.length && dl > 0.3) { const n = Math.min(9, B.n); for (let k = 0; k < n; k++) { const [x0, y0] = shoreLn[Math.floor(q() * shoreLn.length)], y = y0 + D * 0.02 * (0.3 + q()), s = Math.max(1.5, (2.4 * (y - hz)) / D) * 4.2, x = x0 + (q() - 0.5) * W * 0.05, peck = Math.sin(TAU * (t * 0.4 + q())) > 0.6;
+      g.fillStyle = css(mixc([12, 12, 16], [236, 232, 224], 0.3 + 0.7 * day)); g.beginPath(); g.ellipse(x, y - s * 1.1, s * 0.75, s * 0.42, 0, 0, TAU); g.fill(); g.fillStyle = ink; g.beginPath(); g.ellipse(x - B.dir * s * 0.2, y - s * 1.2, s * 0.5, s * 0.22, 0, 0, TAU); g.fill(); /* des oiseaux de rivage : le ventre clair, l'aile sombre */ g.strokeStyle = ink; g.lineWidth = Math.max(0.5, s * 0.15); g.beginPath(); g.moveTo(x - s * 0.15, y - s * 0.75); g.lineTo(x - s * 0.15, y); g.moveTo(x + s * 0.15, y - s * 0.75); g.lineTo(x + s * 0.2, y);
+      g.moveTo(x + B.dir * s * 0.55, y - s * 1.25); g.lineTo(x + B.dir * s * 0.9, peck ? y - s * 0.4 : y - s * 1.9); g.stroke(); } return; } /* posés sur l'estran, et qui piquent le sable */
+  const migr = se && se.fall > 0.55 ? -B.dir : se && se.bloom > 0.55 ? B.dir : 0, noon = Math.abs(h - 0.5) < 0.08 && dl > 0.6;
+  if (noon && B.form === "broad" && !migr) { const cx = W * (0.3 + 0.4 * q()), cy = hz * (0.35 + 0.2 * q()), a = TAU * t * 0.06, s = W * 0.018; wing(cx + Math.cos(a) * W * 0.08, cy + Math.sin(a) * hz * 0.05, s, 0, "broad"); return; } /* un seul qui plane */
+  const flocks = noon ? 1 : 2; for (let f = 0; f < flocks; f++) { const dir = migr || (f % 2 ? -B.dir : B.dir), alt = hz * (noon ? 0.2 + 0.15 * q() : 0.3 + 0.35 * q()), sp = 0.035 + 0.02 * q(), x0 = frac(q() + t * sp * dir), s0 = W * (B.form === "small" ? 0.006 : 0.011) * (0.7 + 0.6 * (alt / hz)), n = migr ? B.n + 4 : B.n;
+    for (let k = 0; k < n; k++) { let dx, dy; if (migr) { const side = k % 2 ? 1 : -1, rank = Math.ceil(k / 2); dx = -dir * rank * s0 * 2.6; dy = side * rank * s0 * 1.4; } else { dx = (q() - 0.5) * W * 0.12; dy = (q() - 0.5) * hz * 0.08; } /* en V quand ils partent ou reviennent, en bande sinon */
+      const x = frac(x0 + dx / W) * (W + 40) - 20, y = alt + dy + Math.sin(TAU * (t * 0.3 + k * 0.17)) * 2; wing(x, y, s0 * (0.85 + 0.3 * q()), TAU * (t * (B.form === "small" ? 3.2 : 1.4) + k * 0.37), B.form); } }
 }
 /** 2.9 : au crépuscule et sous la lune, le dos d'une bête prend un trait de la lumière du ciel : on la devine. */
 function beastRim(g, m, x, y, rx, ry) { g.strokeStyle = css(mixc(mixc(m.lastHzc || [200, 200, 210], [255, 255, 255], 0.25), [196, 206, 228], 0.6 * (m.lastNight || 0)), 0.55); g.lineWidth = Math.max(0.6, ry * 0.25); g.beginPath(); g.ellipse(x, y, rx * 0.96, ry * 0.9, 0, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); }
