@@ -55,3 +55,6 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const r2 = LS.synth(M.myst, { seed: 3, iters: 2, stretch: 1.2 }), r1 = LS.synth(M.myst, { seed: 3, iters: 2 }); assert(r2.samples.length > r1.samples.length * 1.15, "plus lent : plus long");
   const rnd = () => 0.5; assert(LS.variantFor({ lava: 1 }, rnd).model === "riven" && LS.variantFor({ cold: 1 }, rnd).model === "uru" && LS.variantFor({}, rnd).model === "myst", "le modèle suit l'Âge");
   console.log("sound.test.js : la liaison à la manière de OK"); }
+{ // 2.10.1 : un fichier de liaisons à la suite se découpe aux silences (segmentsOf) : trois sons séparés par du silence donnent trois segments
+  const sr = 8000, d = new Float32Array(sr * 10); for (const [a, b] of [[1, 3], [4.5, 6], [7, 9]]) for (let i = Math.floor(a * sr); i < b * sr; i++) d[i] = Math.sin(i * 0.05) * 0.5 * (1 - Math.abs((i / sr - (a + b) / 2) / ((b - a) / 2)));
+  const segs = require("../src/sound").segmentsOf(d, sr); assert(segs.length === 3 && segs.every((s) => s.dur > 0.8), "trois liaisons dans un fichier : trois segments (" + segs.length + ")"); console.log("sound.test.js : le fichier de liaisons OK"); }
