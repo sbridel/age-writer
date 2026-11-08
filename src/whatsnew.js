@@ -9,23 +9,25 @@ const NEWS = [
     v: "2.10.0",
     fr: {
       title: "Étoiles mortes",
-      letter: "Un correspondant nous l'avait dit : une étoile peut être verte d'avoir mangé ses mondes. Nous avons regardé de plus près. Elle peut aussi être bleue de jeunesse ou de sel, rouge de charbon, ocre d'âge ; et ce qui tourne autour d'elle est fait de ce qu'elle a brisé.",
+      letter: "Un correspondant nous l'avait dit : une étoile peut être verte d'avoir mangé ses mondes. Nous avons regardé de plus près. Elle peut aussi être bleue de jeunesse ou de sel, rouge de charbon, ocre d'âge ; et ce qui tourne autour d'elle est fait de ce qu'elle a brisé. Un cristal, au télescope, le montre à qui regarde.",
       sign: "— pour la Guilde des Écrivains",
       items: [
         "**La naine blanche a une couleur, et elle veut dire quelque chose** : sans débris, son âge (`blue_sun` jeune, `orange_sun` très vieille) ; avec ce qui reste de ses mondes, son repas (`green_sun` le sel, `blue_sun` le sel à l'extrême, `red_sun` le carbone). Aucune ne coûte d'Art.",
         "**Un monde né des débris est jeune** : moins d'un milliard d'années, une vie simple, peu d'oxygène.",
         "**Le soleil est dessiné comme un soleil** : un cœur blanc, une couronne qui respire, l'orangé du soir.",
+        "**Un cristal au télescope** : glissé sur l'oculaire, il déplie la lumière de l'étoile du livre sur le lutrin, avec ses ombres ; posé dans l'appareil, une aiguille grave sa courbe. La Guilde lit : sa chaleur, ce qu'elle contient, ce que cela veut dire. Un soleil vert seulement écrit montre une lumière entière.",
         "La carte postale du Relto en chiffres D'ni ; la sortie du plein écran par le bouton ne bloque plus les clics.",
       ],
     },
     en: {
       title: "Dead stars",
-      letter: "A correspondent had told us: a star can be green from eating its worlds. We looked closer. It can also be blue with youth or with salt, red with carbon, ochre with age; and what turns around it is made of what it broke.",
+      letter: "A correspondent had told us: a star can be green from eating its worlds. We looked closer. It can also be blue with youth or with salt, red with carbon, ochre with age; and what turns around it is made of what it broke. A crystal at the telescope shows it to whoever looks.",
       sign: "— for the Guild of Writers",
       items: [
         "**The white dwarf has a colour, and it means something**: without debris, its age (`blue_sun` young, `orange_sun` very old); with what is left of its worlds, its meal (`green_sun` the salt, `blue_sun` the salt to the extreme, `red_sun` the carbon). None costs Art.",
         "**A world born of debris is young**: under a thousand million years, simple life, little oxygen.",
         "**The sun is drawn as a sun**: a white core, a breathing corona, the orange of evening.",
+        "**A crystal at the telescope**: slid over the eyepiece, it breaks the light of the star on the lectern into its colours, with their shadows; set in the apparatus, a needle traces its curve. The Guild reads: its heat, what it holds, what that means. A green sun that is merely written shows a whole light.",
         "The Relto postcard in D'ni numerals; leaving fullscreen with the button no longer blocks clicks.",
       ],
     },

@@ -705,7 +705,8 @@ Fiche du projet : `claude/DESIGN-pistes-8-nov.md` (§ 32 bis), `claude/SYNTHESE-
 - **Naine blanche** (`model.whiteDwarf(mass, kind)`, `whiteDwarfKind(hue, debris)`, `WD_TINT`, `wdTintOf`) : le genre d'après la couleur écrite et les débris (`w.wdKind`, `w.debris`, `w.reborn`) ; règles `deadStarColour` et `rebornWorld` ; `realStar` reformulée ; `S.phys.wdTint` remplace la teinte écrite ; prose `WD_PROSE`, `WD_REMNANT_PROSE`, `WD_REBORN_PROSE` par le hook `place` (`wdKind`, `reborn`).
 - **Le soleil** (`drawSuns` dans `paint`) : lueur large, couronne (`bloomR`, `pulse`), cœur blanc, bord teinté, air mince et épais, second soleil (`rad` 0,048).
 - **Carte postale du Relto** : `composeRelto` prend `parts` et `dni` (chiffres D'ni). **Plein écran** : sortie différée hors du clic, bouton sans focus ni glisser, infobulles retirées à la sortie.
-- Tests : couleurs, teintes, monde jeune, phrases (`gen.test.js`).
+- **Le cristal** (`src/spectrum.js` : `starOf`, `spectrumOf`, `readingOf` ; `relto-telescope.js` : `spectroscope`, `readerPlate`, `readingLine`, geste `spectro`, états 0/1/2) : l'étoile du livre sur le lutrin (`imagerAge` renvoie `star`) ; textes `spec.*`. Décisions : pas de courbe sur le cristal (diégèse), la courbe gravée par l'aiguille de l'appareil ; lectures qui décrivent avant de nommer (« le souffle de l'étoile », « la chaux », « des vapeurs »).
+- Tests : couleurs, teintes, monde jeune, phrases (`gen.test.js`) ; empreinte du rendu régénérée.
 
 ## 2.9.0 — le monde se souvient (8 nov. 2026)
 
