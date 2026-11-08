@@ -699,7 +699,7 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
-## 2.9.1 — étoiles mortes (8 nov. 2026, soir)
+## 2.10.0 — étoiles mortes (8 nov. 2026, soir ; publiée d'abord comme 2.9.1, retirée)
 
 Fiche du projet : `claude/DESIGN-pistes-8-nov.md` (§ 32 bis), `claude/SYNTHESE-2.8-a-2.9.md`.
 - **Naine blanche** (`model.whiteDwarf(mass, kind)`, `whiteDwarfKind(hue, debris)`, `WD_TINT`, `wdTintOf`) : le genre d'après la couleur écrite et les débris (`w.wdKind`, `w.debris`, `w.reborn`) ; règles `deadStarColour` et `rebornWorld` ; `realStar` reformulée ; `S.phys.wdTint` remplace la teinte écrite ; prose `WD_PROSE`, `WD_REMNANT_PROSE`, `WD_REBORN_PROSE` par le hook `place` (`wdKind`, `reborn`).

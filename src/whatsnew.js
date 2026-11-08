@@ -6,7 +6,7 @@
  */
 const NEWS = [
   {
-    v: "2.9.1",
+    v: "2.10.0",
     fr: {
       title: "Étoiles mortes",
       letter: "Un correspondant nous l'avait dit : une étoile peut être verte d'avoir mangé ses mondes. Nous avons regardé de plus près. Elle peut aussi être bleue de jeunesse ou de sel, rouge de charbon, ocre d'âge ; et ce qui tourne autour d'elle est fait de ce qu'elle a brisé.",
