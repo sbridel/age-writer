@@ -16,7 +16,8 @@ const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
 const { sceneOf, millOf, build: genBuild, HOOKS: GEN_HOOKS } = require("./genscene");
 const AMAP = require("./agemap"); /* 2.9 : la carte de l'Âge */
-const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, SKYC_RE, parseSky } = require("./sky");
+const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, SKYC_RE, parseSky, clockPhases } = require("./sky");
+const ESTAMPE = require("./estampe"); /* 2.9 : l'estampe */
 const { AMOUNT_RE, parseAmounts, applyAmounts, factorOf } = require("./amounts");
 const HV = require("./harvest"); /* la récolte pour la machine du Relto, et les granulés cuits (étape 4a′) */
 const { rollLink } = fx;
@@ -1001,6 +1002,21 @@ module.exports = function build(Base, core, AGEX) {
       L.addEventListener("click", (e) => { if (!inert(e)) show(view.leafPage - 1, true); });
     }
 
+    /** 2.9 : l'estampe (src/estampe.js) : la planche (« plate ») ou la carte postale (« postcard »), un PNG à côté de la note, à l'heure courante de l'Âge. */
+    async saveEstampe(file, kind = "plate") {
+      const src = core.extract(await this.app.vault.read(file)); if (src === null) return new Notice(this.t("cover.noage"));
+      const seed = core.seed(file.path), a = core.analyse(src, { seed }), S = sceneOf(a, core.seed(String(file.path)), core.blocks); if (!S) return new Notice(this.t("cover.noage"));
+      Object.assign(S, parseSky(src)); const m = genBuild(S, 1280, 720), cp = clockPhases(S), now = Date.now();
+      const glyphs = [...new Set([...(a.resolved.lines || []).map((l) => l.entry && l.entry.id).filter(Boolean), ...((a.resolved.matter && a.resolved.matter.written) || [])])];
+      const args = { m, name: file.basename, prose: core.prose(a.resolved, { seed, analysis: a }), glyphs, stability: a.stability, t: (now % 60000) / 60000, paintOpts: { day: cp ? cp.day : undefined, season: cp ? cp.season : 0, clock: now / 1000 } };
+      const cv = document.createElement("canvas"), tmp = cv.getContext("2d"); tmp.font = "20px Georgia, serif"; const z = ESTAMPE.sizeOf(kind, args, (t, w) => ESTAMPE.wrap(tmp, t, w).length); cv.width = z.w; cv.height = z.h;
+      ESTAMPE.compose(cv.getContext("2d"), kind, args);
+      const blob = await new Promise((res) => cv.toBlob(res, "image/png")); if (!blob) return; const buf = await blob.arrayBuffer();
+      const dir = file.parent && file.parent.path !== "/" ? file.parent.path + "/" : "", path = `${dir}${file.basename} — ${this.t(kind === "postcard" ? "estampe.postcard" : "estampe.plate")}.png`, ex = this.app.vault.getAbstractFileByPath(path);
+      if (ex instanceof TFile) await this.app.vault.modifyBinary(ex, buf); else await this.app.vault.createBinary(path, buf);
+      new Notice(this.t("estampe.saved", { path }));
+    }
+
     async saveCover(file) {
       const src = core.extract(await this.app.vault.read(file)); if (src === null) return new Notice(this.t("cover.noage"));
       const analysis = core.analyse(src, { seed: core.seed(file.path) }), svg = this.coverFor(src, analysis, file, true);
@@ -1072,6 +1088,9 @@ module.exports = function build(Base, core, AGEX) {
         id: "save-age-cover", name: "Save this Age's book cover (SVG)",
         checkCallback: (check) => { const f = this.app.workspace.getActiveFile(); if (!f || f.extension !== "md") return false; if (!check) this.saveCover(f); return true; },
       });
+      const estampe = (kind) => (check) => { const f = this.app.workspace.getActiveFile(); if (!f || f.extension !== "md") return false; if (!check) this.saveEstampe(f, kind); return true; }; /* 2.9 : l'estampe */
+      this.addCommand({ id: "save-age-estampe", name: "Save this Age's print (PNG: window, map, description, glyphs)", checkCallback: estampe("plate") });
+      this.addCommand({ id: "save-age-postcard", name: "Save this Age's postcard (PNG: window, name, one sentence)", checkCallback: estampe("postcard") });
       this.addCommand({ id: "random-age", name: "Generate a random Age", callback: () => this.randomAge() });
       this.addCommand({ id: "stop-soundscape", name: "Stop the soundscape", callback: () => this.stopSound() });
       // refaire la synchro du télescope : oublie le Great Zero trouvé (et la visée) de tous les Reltos ; l'heure D'ni se tait de nouveau
