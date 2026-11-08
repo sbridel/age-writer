@@ -129,7 +129,7 @@ module.exports = function build(Base, core, AGEX) {
         const mp = obsidian.Modal && obsidian.Modal.prototype, orig = mp && mp.open; if (!orig) return;
         const self = this; mp.open = function (...a) { const r = orig.apply(this, a); fitModalToFullscreen(this); return r; };
         self.register(() => { mp.open = orig; });
-        self.registerDomEvent(document, "fullscreenchange", () => rescueModals(document)); // sortie du plein écran : aucune fenêtre ne doit rester coincée (elle bloquerait les clics)
+        self.registerDomEvent(document, "fullscreenchange", () => { rescueModals(document); if (!document.fullscreenElement) { try { const ae = document.activeElement; if (ae && ae !== document.body && ae.closest && ae.closest(".age-reltoview, .age-relto") && typeof ae.blur === "function") ae.blur(); for (const el of Array.from(document.querySelectorAll(".tooltip"))) el.remove(); } catch (e) { /* ignore */ } } }); // sortie du plein écran : aucune fenêtre ne doit rester coincée (elle bloquerait les clics)
       });
       GEN_HOOKS.doom = (name) => this.law.doom(name);
       GEN_HOOKS.opening = (name) => this.law.opening(name, this.ext.fissureDays); // les fissures s'ouvrent avec le temps
@@ -1038,8 +1038,9 @@ module.exports = function build(Base, core, AGEX) {
       rr.scale = 2; cv.width = 1280; cv.height = 720; /* plus fin qu'à l'écran : la carte fait 1200 de large */
       try { rr.setScene(scene); rr.setHour(null); rr.draw((typeof performance !== "undefined" ? performance.now() : Date.now()) / 1000); } finally { rr.stop(); }
       const hm = ((h) => { const n = Math.round(Number(h) * 60) % 1440; return `${String(Math.floor(n / 60)).padStart(2, "0")}:${String(n % 60).padStart(2, "0")}`; })(rr.hour());
-      let when = hm; try { const d = DCLK.reltoDate(scene); when += " · " + (d.synced ? DTM.format(d) : `${d.hahr} · ${d.name} ${d.yahr}`); } catch (e) { /* l'heure seule */ }
-      const out = document.createElement("canvas"), z = ESTAMPE.reltoSize(cv); out.width = z.w; out.height = z.h; ESTAMPE.composeRelto(out.getContext("2d"), { img: cv, name: scene.name || file.basename, when });
+      const hh = Math.floor((Math.round(Number(rr.hour()) * 60) % 1440) / 60), mm = Math.round(Number(rr.hour()) * 60) % 60; let when = hm, parts = [{ n: hh }, ":", { n: mm }]; /* l'heure et la date en chiffres D'ni, comme au Relto */
+      try { const d = DCLK.reltoDate(scene); when += " · " + (d.synced ? DTM.format(d) : `${d.hahr} · ${d.name} ${d.yahr}`); parts.push(" · ", { n: d.hahr }, " · " + d.name + " ", { n: d.yahr }); if (d.synced) parts.push(" · ", { n: d.gahrtahvo }, ":", { n: d.tahvo }, ":", { n: d.gorahn }); } catch (e) { parts = null; }
+      const out = document.createElement("canvas"), z = ESTAMPE.reltoSize(cv); out.width = z.w; out.height = z.h; ESTAMPE.composeRelto(out.getContext("2d"), { img: cv, name: scene.name || file.basename, when, parts, dni: this.dni });
       const blob = await new Promise((res) => out.toBlob(res, "image/png")); if (!blob) return; const buf = await blob.arrayBuffer();
       const dir = file.parent && file.parent.path !== "/" ? file.parent.path + "/" : "", path = `${dir}${file.basename} — ${this.t("estampe.postcard")}.png`, ex = this.app.vault.getAbstractFileByPath(path);
       if (ex instanceof TFile) await this.app.vault.modifyBinary(ex, buf); else await this.app.vault.createBinary(path, buf);

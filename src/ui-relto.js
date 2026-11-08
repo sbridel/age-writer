@@ -649,7 +649,7 @@ async function renderRelto(plugin, source, el, ctx) {
     const big = root.closest(".age-reltoview"), host = big || root.parentElement || root, d = host.ownerDocument;
     try {
       if (isTouch()) { mobileFull(!root.hasClass("is-mobilefull")); return; } // mobile : le navigateur refuse le plein écran ; le Relto se fixe sur tout l'écran (styles.ext.css), et se couche de lui-même en portrait
-      if (d.fullscreenElement) { d.exitFullscreen(); return; }
+      if (d.fullscreenElement) { const ae = d.activeElement; if (ae && ae !== d.body && typeof ae.blur === "function") ae.blur(); if (renderer) { renderer.drag = null; renderer.slide = null; renderer.held = null; } window.setTimeout(() => { try { const p = d.exitFullscreen(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* ignore */ } }, 0); return; } /* 2.9.1 : sortir par le bouton laissait l'interface sourde aux clics jusqu'à Échap : on quitte hors du clic, sans élément actif ni geste en cours */
       if (!big) { host.addClass("age-reltoview", "age-reltoview--inline"); const off = () => { if (!d.fullscreenElement) { host.removeClass("age-reltoview", "age-reltoview--inline"); d.removeEventListener("fullscreenchange", off); } }; d.addEventListener("fullscreenchange", off); }
       const p = host.requestFullscreen(); if (p && p.catch) p.catch(() => { if (!big) host.removeClass("age-reltoview", "age-reltoview--inline"); });
     } catch (e) { /* ignore */ }
@@ -743,7 +743,7 @@ async function renderRelto(plugin, source, el, ctx) {
     if (!ctx.big) { const x = tabBar.createEl("button", { cls: "age-relto__tab age-relto__tab--expand" }); try { obsidian.setIcon(x.createSpan({ cls: "age-relto__tabicon" }), "maximize-2"); } catch (e) { /* ignore */ } x.setAttr("aria-label", t("tab.expand")); x.addEventListener("click", () => openReltoView(plugin, file)); } // la grande vue s'ouvre sur ce Relto-ci (celui de l'histoire, le cas échéant)
     { // le plein écran, dans la grande vue comme dans la note : dans la note, son conteneur prend le temps du plein écran l'habit de la grande vue
       const fs = tabBar.createEl("button", { cls: "age-relto__tab age-relto__tab--full" }); try { obsidian.setIcon(fs.createSpan({ cls: "age-relto__tabicon" }), "expand"); } catch (e) { /* ignore */ }
-      fs.setAttr("aria-label", t("tab.fullscreen"));
+      fs.setAttr("aria-label", t("tab.fullscreen")); fs.draggable = false; fs.addEventListener("mousedown", (e) => e.preventDefault()); /* pas de focus ni de glisser natif sur le bouton */
       fs.addEventListener("click", () => toggleFull());
     }
     { // le guide, ouvert sur la rubrique de ce qu'on regarde (télescope, Imageur, chat : leur rubrique ; ailleurs : le refuge)
