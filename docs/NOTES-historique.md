@@ -699,6 +699,10 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.10.8 — le soleil noir (8 nov. 2026, nuit)
+
+- `lightTint` : le soleil noir prend `HUES.black_sun` (bordeaux presque noir) au lieu de `blackbody(1500)` (la braise).
+
 ## 2.10.7 — l'étoile prend sa couleur (8 nov. 2026, nuit)
 
 - `lightTint(star)` (relto-telescope.js) : la teinte gravée avec la lumière (`systems[clé].light = "#rrggbb"`) : `HUES[hue]` si la couleur est écrite (le cartographe peint ce qu'il voit ; la lecture dit « ce vert est écrit »), sinon `wdTintOf` ou `blackbody(T)`. `relto-starmap.js` : l'étoile à l'encre teintée (mix 0,78), cernée d'un trait, halo lavé ; les touches de couleur retirées. Un `light: true` ancien reste à l'encre.
