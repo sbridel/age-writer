@@ -6,7 +6,7 @@
  */
 const NEWS = [
   {
-    v: "2.10.8",
+    v: "2.10.9",
     fr: {
       title: "Étoiles mortes",
       letter: "Un correspondant nous l'avait dit : une étoile peut être verte d'avoir brûlé ses mondes. Nous avons regardé de plus près. Elle peut aussi être bleue de jeunesse ou de sel, rouge de charbon, ocre d'âge ; et ce qui tourne autour d'elle est fait de ce qu'elle a brisé. Une pierre taillée, au télescope, déplie sa lumière ; la plaque la grave ; la carte des étoiles la garde. Et la liaison a retrouvé son souffle d'autrefois.",
@@ -18,11 +18,12 @@ const NEWS = [
         "**La plaque grave la lumière, la carte des étoiles la garde** : la pierre devant le verre, un clic sur la plaque de l'étoile ; sur la carte, l'étoile prend sa couleur, et un clic épingle le relevé : la courbe à la plume, puis la craie qui colorie dessous, et la lecture.",
         "**Trois voies pour le son de liaison** (Réglages → Son) : classique ; à l'ancienne, une synthèse nouvelle qui suit l'Âge où l'on va et ne se répète jamais ; les deux ; ou votre propre enregistrement, qui peut contenir plusieurs liaisons à la suite.",
         "**La carte de l'Âge dans le livre du Relto**, après la description ; un seul étang sur la carte, et des blancs seulement quand l'Âge vacille. La carte postale du Relto en chiffres D'ni ; la sortie du plein écran par le bouton ne bloque plus les clics.",
+        "**La référence complète rattrape la 2.9 et la 2.10** : la pierre, la plaque et la carte des étoiles, les quatre sons de liaison, la carte de l'Âge, les estampes et cartes postales, les pages trouvées (avec, dans les secrets, où les chercher), et tout ce que la fenêtre garde.",
       ],
     },
     en: {
       title: "Dead stars",
-      letter: "A correspondent had told us: a star can be green from swallowing its worlds. We looked closer. It can also be blue with youth or with salt, red with carbon, ochre with age; and what turns around it is made of what it broke. A cut stone at the telescope unfolds its light; the plate engraves it; the star map keeps it. And the link has found its old breath again.",
+      letter: "A correspondent had told us: a star can be green from burning its worlds. We looked closer. It can also be blue with youth or with salt, red with carbon, ochre with age; and what turns around it is made of what it broke. A cut stone at the telescope unfolds its light; the plate engraves it; the star map keeps it. And the link has found its old breath again.",
       sign: "— for the Guild of Writers",
       items: [
         "**The white dwarf has a colour, and it means something**: without debris, its age (`blue_sun` young, `orange_sun` very old); with what is left of its worlds, its debris (`green_sun` the salt, `blue_sun` the salt to the extreme, `red_sun` the carbon). None costs Art. **A world born of debris is young**: simple life, little oxygen.",
@@ -31,6 +32,7 @@ const NEWS = [
         "**The plate engraves the light, the star map keeps it**: with the stone in front of the glass, a click on the star's plate; on the map, the star takes its colour, and a click pins the record: the curve in ink, then a chalk colouring under it, and the reading.",
         "**Three ways to sound the link** (Settings → Sound): classic; in the old manner, a new synthesis that follows the Age you go to and never repeats; both; or your own recording, which may hold several linking sounds in a row.",
         "**The map of the Age in the Relto's book**, after the description; one pond on the map, and blanks only when the Age wavers. The Relto postcard in D'ni numerals; leaving fullscreen with the button no longer blocks clicks.",
+        "**The full reference catches up with 2.9 and 2.10**: the stone, the plate and the star chart, the four linking sounds, the map of the Age, prints and postcards, found pages (with, in the secrets, where to look), and everything the window remembers.",
       ],
     },
   },

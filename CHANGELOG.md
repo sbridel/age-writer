@@ -2,7 +2,7 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.10 — Dead stars (2.10.0 to 2.10.8, 2026-11-08)
+## 2.10 — Dead stars (2.10.0 to 2.10.9, 2026-11-08 and 09)
 
 ### Added
 - **The white dwarf has a colour, and it means something.** Without debris, the colour is its age: `blue_sun` young and burning, nothing written white, `orange_sun` very old and ochre. With what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), the colour is what is left of them: `green_sun` the salt (chartreuse), `blue_sun` the salt to the extreme (pale blue, and cold), `red_sun` the carbon (pink when warm, red when cooled). None costs Art; any other colour written on a white dwarf costs a little. The tints are the real ones, pale.
@@ -14,6 +14,10 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **Three ways to sound the link** (Settings → Sound → Linking sound): *Classic*, the synthesized sounds of earlier versions; *In the old manner*, a new synthesis learnt from the shape of the linking sounds of the old games (never their recordings: three small models, 68 KB in all), varied by the Age you go to and never twice the same; *Both*; *My own file*, an audio file from your vault (mp3, ogg, wav, m4a, flac), which may hold several linking sounds one after another (cut at its silences, one drawn each time), played at a slightly varying pitch with the same echo and muffling.
 - **The map of the Age in the Relto's book**, after the description, before the free page.
 - **The Relto postcard** shows the time there in D'ni numerals, as the island's plate does.
+
+### Changed
+- The full reference now covers 2.9 and 2.10: the stone, the plate and the star chart's record, the linking sound modes, the map of the Age, prints and postcards, found pages (where to find them is in the secrets), and what the window remembers (2.10.9).
+- A white dwarf's colour comes from what is left of the worlds it broke; nothing in the text says it ate them any more (2.10.9).
 
 ### Fixed
 - Leaving fullscreen with the button could leave the interface deaf to clicks until Escape.
