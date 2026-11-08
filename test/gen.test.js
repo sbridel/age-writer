@@ -421,6 +421,9 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
     const H = G.sceneOf({ ...h, fresh29: true }, "Mer" + i).seaBeast; if (H) { hunters++; if (H.form === "fin") fin++; } }
   ok(fresh > 8 && old === 0 && red === 0, "rare, pour les Âges nouveaux, jamais sur l'eau rouge (" + fresh + "/" + old + "/" + red + ")");
   ok(hunters > fresh && fin === hunters, "le chasseur des eaux : plus souvent, et c'est l'aileron"); }
+{ /* 2.9 : la carte de l'Âge se dessine sans valeur impossible, avec ou sans eau */
+  const AMAP = require("../src/agemap"); for (const ids of [["single_sun", "water", "water", "beach", "tower", "tides", "companion_moon"], ["single_sun", "grass", "river", "mill"], ["single_sun", "desert_world", "oasis"], ["single_sun", "mountains", "fissure", "lake"]]) {
+    const m = G.build(G.sceneOf({ ...an(ids), fresh29: true }, "Carte" + ids.length), 640, 360), log = [], c = fakeCtx(log); AMAP.paintMap(c, m, { name: "Carte", stability: 60 }); ok(log.length > 100, "la carte dessine (" + ids[1] + ")"); } }
 { /* 2.8 : la mousson suit l'année ; rien sans saisons, ni sur un monde froid */
   const se = (u) => ({ u, snow: 0 }), M = (u, x = {}) => G.monsoonOf({ monsoon: true, season: se(u), ...x });
   ok(M(0.5).name === "rains" && M(0).name === "dry" && M(0.25).name === "between", "les pluies l'été, le sec l'hiver, l'entre-deux");

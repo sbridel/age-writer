@@ -14,7 +14,8 @@ const { solitudeFactor, COVER_RE, parseCover, KEY_RE, FX_RE, STYLE_RE, TRAP_RE, 
 const { Soundscape, staticBurst, openSequence, linkSound, pageTurn } = require("./sound");
 const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
-const { sceneOf, millOf, HOOKS: GEN_HOOKS } = require("./genscene");
+const { sceneOf, millOf, build: genBuild, HOOKS: GEN_HOOKS } = require("./genscene");
+const AMAP = require("./agemap"); /* 2.9 : la carte de l'Âge */
 const { DAY_RE, YEAR_RE, SIZE_RE, MOONS_RE, MOON_RE, SKYC_RE, parseSky } = require("./sky");
 const { AMOUNT_RE, parseAmounts, applyAmounts, factorOf } = require("./amounts");
 const HV = require("./harvest"); /* la récolte pour la machine du Relto, et les granulés cuits (étape 4a′) */
@@ -195,6 +196,8 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.closedSlots = (o) => (o && o.carry ? CARRY.closedSlots(o.carry) : null); /* sous une terre renversée, le livre ne tire pas de ciel */
       AGEX.signature = (o) => !!(this.ext.signature !== false && this._sigOld && o && o.seed != null && !this._sigOld.has(o.seed)); /* ESSAI 2.6 : seuls les Âges nés après la 2.6 tirent une signature */
       AGEX.carryNote = (c) => guard("portage", () => this.carryLine(c)) || "";
+      AGEX.mapLabel = this.t("tab.map");
+      AGEX.mapPage = (el, a, file) => { const S = sceneOf(a, core.seed(String(file.path)), core.blocks); if (S) this.drawAgeMap(el, { S, name: file.basename, stability: a.stability }); }; /* 2.9 : la planche de la carte, dans le livre */
       AGEX.place = (a, seed) => guard("lieu", () => { const S = sceneOf(a, seed, core.blocks); if (!S || !S.view || S.world === "cavern" || S.torus) return null; const V = S.view; const mo = S.ruins && S.ruins.includes("mill") ? millOf(S) : null; const oa = S.oasis && !S.lake ? (S.heat ? "heat" : ["salt", "brine"].some((id) => (S.writtenIds || []).includes(id)) || S.brine ? "salt" : "clear") : null; const td = S.tides ? (!(S.moon || S.moons || S.giant) ? "still" : S.brine || (S.writtenIds || []).includes("salt") ? "salt" : "moon") : null; const sb = S.seaBeast && this.ext.seaSeen && this.ext.seaSeen[String(S.seed)] ? S.seaBeast.form : null, ms = S.monsoon ? (S.mon ? S.mon.name + (S.river ? "" : "_land") : "still") : null, fz = S.freeze ? (S.freeze.ice > 0.5 ? "ice" : S.freeze.thaw > 0.2 ? "thaw" : null) : null, fzs = fz ? fz + (S.river ? "_river" : "_pond") : null; return { mill: mo ? (mo.frozen ? "frozen" : mo.kind) : null, oasis: oa, tides: td, monsoon: ms, freeze: fzs, seaBeast: sb, kind: V.kind, frame: V.frame, ground: S.ice || S.world === "frozen" ? "ice" : S.sand || S.world === "desert" ? "sand" : S.lava ? "lava" : S.alive || S.trees ? "grass" : "rock" }; }) /* le sol comme la fenêtre peint la pente */ || null; /* la description dit d'abord où la fenêtre pose (claude/DESIGN-grammaire-de-la-description.md) */
       this.depthCache = new Map();
       // la profondeur de l'équilibre : le test par retrait, à l'affichage du panneau (jamais à chaque frappe), mis en cache par texte, graine et rigueur
@@ -782,12 +785,20 @@ module.exports = function build(Base, core, AGEX) {
       return { mode, a, seed: cx.seed, style: cx.style || this.ext.windowStyle, sky: cx.sky || {} };
     }
 
+    /** 2.9 : dessine la carte de l'Âge (src/agemap.js) dans `el` : { S (sceneOf), name, stability }. */
+    drawAgeMap(el, info) {
+      const cv = el.createEl("canvas"); cv.width = 560; cv.height = 560;
+      const m = genBuild(JSON.parse(JSON.stringify(info.S)), 640, 360);
+      AMAP.paintMap(cv.getContext("2d"), m, { name: info.name, stability: info.stability });
+    }
+
     applyFx(parent, analysis, key) {
       guard("fx", () => {
         if (!this.ext) return;
         const r = this.resolveFx(analysis);
         const gen = r.style === "gen" ? sceneOf(r.a, core.seed(String(r.seed || key)), core.blocks) : null; // fenêtre génératrice (si l'analyse est connue)
         if (gen) Object.assign(gen, r.sky); // durée du jour et de l'année (lignes day_length / year_length)
+        if (gen && key !== "window") { const info = { S: gen, name: core.base(String(r.seed || key)), stability: r.a && r.a.stability }, pn = parent.closest ? parent.closest(".age-panel") || parent : parent; parent._ageMap = info; pn._ageMap = info; } /* 2.9 : de quoi dessiner la carte (onglet Carte) */
         const size = r.sky.size || this.ext.windowSize || "large"; // la ligne window_size / window_width du bloc passe avant le réglage ; les livres et le Relto gardent leur taille
         if (key !== "window") {
           parent.classList.remove("age-ext-vis-large", "age-ext-vis-xl", "age-ext-vis-custom"); parent.style.removeProperty("--age-win-w");

@@ -356,8 +356,9 @@ function renderExtras(plugin, container, { src, analysis, name, compact, path })
 function tabifyPanel(plugin, panel) {
   const t = plugin.t, bar = panel.createDiv({ cls: "age-tabs" });
   panel.insertBefore(bar, panel.firstChild);
-  const tabs = [["text", t("tab.text")], ["link", t("tab.link")], ["details", t("tab.details")]], btns = {};
-  const show = (id) => { panel.dataset.tab = id; for (const k in btns) btns[k].toggleClass("is-active", k === id); };
+  const tabs = [["text", t("tab.text")], ["link", t("tab.link")], ["map", t("tab.map")], ["details", t("tab.details")]], btns = {};
+  const mapBox = panel.createDiv({ cls: "age-tabs__map" }); /* 2.9 : la carte de l'Âge (src/agemap.js), dessinée à la première ouverture */
+  const show = (id) => { panel.dataset.tab = id; for (const k in btns) btns[k].toggleClass("is-active", k === id); if (id === "map" && !mapBox.childElementCount && panel._ageMap) { try { plugin.drawAgeMap(mapBox, panel._ageMap); } catch (e) { mapBox.setText(""); } } };
   for (const [id, label] of tabs) {
     const b = bar.createEl("button", { cls: "age-tabs__btn", text: label, attr: { type: "button", role: "tab" } });
     b.addEventListener("click", () => show(id)); btns[id] = b;
@@ -368,7 +369,7 @@ function tabifyPanel(plugin, panel) {
   const win = panel.querySelector(".age-panel__window");
   if (win) {
     const box = panel.createDiv({ cls: "age-tabs__win" });
-    panel.insertBefore(box, bar.nextSibling); box.appendChild(win);
+    panel.insertBefore(box, bar.nextSibling); box.appendChild(win); panel.insertBefore(mapBox, box.nextSibling);
     win.addClass("is-touch"); win.setAttr("title", t("link.touch"));
     let timer = 0;
     win.addEventListener("click", () => {
