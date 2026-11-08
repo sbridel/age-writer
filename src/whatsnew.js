@@ -6,6 +6,31 @@
  */
 const NEWS = [
   {
+    v: "2.9.0",
+    fr: {
+      title: "Le monde se souvient",
+      letter: "On rapportait des mondes sans mémoire, qui oubliaient la pluie à peine tombée. L'encre a appris à garder une flaque, une trace de pas, l'ombre d'une pierre ; et un correspondant nous signale une étoile verte, qui ne l'est devenue qu'en mangeant ses mondes.",
+      sign: "— pour la Guilde des Écrivains",
+      items: [
+        "**Le monde garde ses traces** : flaques et branches tombées après le temps, la glace sur l'eau douce l'hiver, les ombres qui tournent avec le soleil, la piste du troupeau sur le sable, la neige et la boue.",
+        "**Ce qui vit** : un troupeau qui suit les heures, des oiseaux, et quelque chose de rare dans la mer, que la description n'oublie plus une fois vu.",
+        "**À rapporter** : la carte de chaque Âge (un onglet), l'estampe et la carte postale d'un Âge ou de votre Relto, et des pages posées dans un Âge sur trois, à ramasser pour le Relto.",
+        "**Un bloc à écrire** : `white_dwarf`, le cœur d'une étoile morte ; avec `green_sun` et ce qui reste de ses mondes, son vert est naturel.",
+      ],
+    },
+    en: {
+      title: "The world remembers",
+      letter: "Worlds came back without memory, forgetting the rain as soon as it fell. The ink has learned to keep a puddle, a footprint, the shadow of a stone; and a correspondent tells us of a green star, which became so only by eating its worlds.",
+      sign: "— for the Guild of Writers",
+      items: [
+        "**The world keeps its traces**: puddles and fallen branches after the weather, ice on fresh water in winter, shadows that turn with the sun, the herd's trail on sand, snow and mud.",
+        "**What lives**: a herd that keeps the hours, birds, and something rare in the sea, which the description remembers once you have seen it.",
+        "**To bring back**: a map of each Age (a new tab), prints and postcards of an Age or of your Relto, and pages left in one Age in three, to pick up for your Relto.",
+        "**A block to write**: `white_dwarf`, the heart of a dead star; with `green_sun` and what is left of its worlds, its green is natural.",
+      ],
+    },
+  },
+  {
     v: "2.8.0",
     fr: {
       title: "Le monde a ses heures",

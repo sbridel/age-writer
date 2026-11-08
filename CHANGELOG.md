@@ -2,6 +2,30 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.9.0 — The world remembers (2026-11-08)
+
+### Added
+- **Arriving by water**: in a new Age with a pier on the shore, you may arrive at the end of the pier, water all around; sometimes a small boat is moored there. Looking back through the periscope shows the pier running to land.
+- **Ice on fresh water**: in a cold season the pond and the river freeze, the mill stops with icicles on its wheel, and footprints cross the frozen path. In early spring the ice breaks up.
+- **The weather remembers**: the last six hours of an Age leave their marks: puddles holding the sky after rain, fallen branches and a slipped tile after a storm.
+- **The herd keeps the hours**: grazing in the morning, in the shade at noon, at the water at dawn and dusk, lying together at night when there is light to see them by.
+- **Birds** (new Ages): flocks passing in the morning and evening, a single one gliding at noon, V-shaped flights leaving in autumn and returning in spring, birds resting on the wet sand at low tide.
+- **Something lives in the sea**: very rarely, a spout, a serpent, a ray or a fin breaks the surface. Once you have seen it, the description remembers it.
+- **The map of the Age**: a new tab draws the Age as a surveyor's map from what the periscope saw, with blanks where nobody looked; the paper ages with the Age.
+- **Prints**: save an Age as a print (window, map, full description, glyphs) or as a postcard (window, name, one sentence); and a **postcard of your Relto** (the island at this hour, its name, the time there).
+- **Pages to find**: one Age in three hides a page on the ground, held down by a stone. Picking it up adds a keepsake to your Relto (a weather vane, a glass globe, a millstone…). In sandbox mode the command still works.
+- **Shadows**: works and trees cast a shadow for each sun, long in the morning and evening, short at noon; a pale one under a full moon. Rain, fog and snow wash them out.
+- **Tracks**: the herd leaves its trail on sand, on snow, and in mud after rain.
+- **A new block, `white_dwarf`**: the sun is the cooled heart of a dead star, small, white and hard, and the world keeps very close to it. With `green_sun` and what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), its green is natural and costs no Art: like WD J1330+6435, the first green star ever seen, it is green because of the planets it swallowed.
+
+### Changed
+- The periscope follows the shore you face: one coastline, not an hourglass of water.
+- The rule against green and violet suns now says "by its heat alone", and points to the white dwarf.
+
+### Fixed
+- The sea's reflection could vanish when there was no shore.
+- Small plants no longer grow on the water at the pier.
+
 ## 2.8.0 — The world keeps time (2026-11-07)
 
 ### Added
