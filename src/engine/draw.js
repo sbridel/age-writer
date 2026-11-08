@@ -12,6 +12,7 @@ const DRAW_SLOTS = [
     name: "stars",
     pick: "one",
     options: [slot("single_sun", 60), slot("twin_suns", 25), slot("starless", 15)],
+    answeredBy: ["white_dwarf"] /* 2.9 : la naine blanche écrite est le soleil de ce monde */,
   },
   {
     name: "cycle",

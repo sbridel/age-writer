@@ -202,6 +202,8 @@ const EXTRA_GLYPHS = {
     line([50, 74], [30, 62], 2.5),
     fill(diamond(50, 22, 7, 11)), fill(diamond(34, 38, 11, 7)), fill(diamond(66, 38, 11, 7)), fill(diamond(50, 38, 4)),
   ],
+  // 2.9 : la naine blanche : un très petit disque plein, et le contour pâle de l'étoile qu'elle a été
+  white_dwarf: [fill(hexagon(50, 50, 7)), outline(hexagon(50, 50, 36), 1.2), fill(diamond(50, 50, 3))],
   // soleil noir : un disque plein dans un anneau brisé (sa couronne)
   black_sun: [
     fill(hexagon(50, 50, 17)),

@@ -251,7 +251,9 @@ const LONE_ORBIT = {
   shifting_orbit: ["the world's path about its sun drifts, slow and noticeable", "its round about the sun shifts with time"],
   chaotic_orbit: ["the world swings about its sun by no rule at all", "its path about the sun defies any prediction"],
 };
-function skySentences(resolved, grammar, teller) {
+/* 2.9 : le soleil vert d'une naine blanche nourrie de ses mondes : sa phrase remplace celle du soleil vert de l'Art */
+const GREEN_STAR_PROSE = ["a small green star, fed on its own worlds, keeps a cold and patient light", "the sun is green because of what it has eaten: a white dwarf wearing the dust of its planets", "a green star holds the sky, the colour of a world digested long ago"];
+function skySentences(resolved, grammar, teller, place) {
   const lines = resolved.lines.map((line, index) => ({ line, index }));
   const familyOf = (line) => (line.unknown ? "unknown" : line.entry.category in SKY_ORDER ? line.entry.category : "phenomenon");
   const rank = (line) => (line.unknown ? 9 : SKY_ORDER[line.entry.category] ?? 7);
@@ -276,7 +278,7 @@ function skySentences(resolved, grammar, teller) {
     } else if (line.autoFilled) {
       if (hasHue && entry.category === "stars") continue;
       items.push({ family: familyOf(line), text: grammar.flatten(`#${entry.category === "stars" ? "default_stars" : "default_cycle"}#`) });
-    } else items.push({ family: familyOf(line), text: dark && DARK_ORBIT[entry.id] ? teller.pick(DARK_ORBIT[entry.id]) : lone && LONE_ORBIT[entry.id] ? teller.pick(LONE_ORBIT[entry.id]) : grammar.flatten(entry.proseTag) });
+    } else items.push({ family: familyOf(line), text: entry.id === "green_sun" && place && place.greenStar ? teller.pick(GREEN_STAR_PROSE) : dark && DARK_ORBIT[entry.id] ? teller.pick(DARK_ORBIT[entry.id]) : lone && LONE_ORBIT[entry.id] ? teller.pick(LONE_ORBIT[entry.id]) : grammar.flatten(entry.proseTag) });
   }
   const out = [];
   let glued = false, links = 0;
@@ -618,7 +620,7 @@ function describeAge(resolved, options = {}) {
     const grammar = tracery.createGrammar(PROSE_GRAMMAR);
     grammar.addModifiers(tracery.baseEngModifiers);
     const teller = makeTeller(random);
-    const sky0 = skySentences(resolved, grammar, teller), sky = place && place.freeze === "ice_river" ? sky0.filter((s) => !/\briver\b/i.test(s)) : sky0; /* 2.9 : la rivière prise ne coule plus dans le ciel du texte */
+    const sky0 = skySentences(resolved, grammar, teller, place), sky = place && place.freeze === "ice_river" ? sky0.filter((s) => !/\briver\b/i.test(s)) : sky0; /* 2.9 : la rivière prise ne coule plus dans le ciel du texte */
     const at = [];
     at.skyText = sky.join(" ").toLowerCase();
     at.mill = place && typeof place === "object" ? place.mill : null;

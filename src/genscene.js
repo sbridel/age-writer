@@ -76,7 +76,7 @@ function sceneOf(a, name = "", blocks = null) {
   for (const id of ["tower", "lighthouse", "stairs", "mill"]) if (r(id)) ruins.push(id); /* 2.6 : le bâti (le ponton se dessine à part, sur l'eau) */
   const S = {
     name, seed: fnv(name + "|" + (res.seed != null ? String(res.seed) : "")), cseed: fnv(name + "|" + [...ids].sort().join(",")), /* ESSAI (les Livres descriptifs, loi 17) : le lieu vient du nom (et de la ligne `seed:`), pas de ce qui est écrit ; une ligne ajoutée ne redessine pas le monde */ verdict: a.verdict, unrest: clamp(1 - (a.stability == null ? 100 : a.stability) / 100),
-    suns: wd === "cavern" ? 0 : r("twin_suns") ? 2 : r("single_sun") ? 1 : 0, skyStated: r("twin_suns", "single_sun", "starless"), moon: r("companion_moon"),
+    suns: wd === "cavern" ? 0 : r("twin_suns") ? 2 : r("single_sun") || r("white_dwarf") ? 1 : 0, skyStated: r("twin_suns", "single_sun", "starless", "white_dwarf"), /* 2.9 : la naine blanche est un soleil */ moon: r("companion_moon"),
     cycle: r("frozen_cycle") ? "frozen" : r("erratic_cycle") ? "erratic" : "steady", chaos: r("chaotic_orbit"), veil: r("permanent_veil"),
     auroras: r("auroras"), eclipses: r("recurring_eclipses"), starfall: r("starfall"),
     rain: or2(rw("rain", "rain", "storm", "thunderstorm", "whispering_storm", "waiting_thunder"), always("rain", wd === "jungle")), storm: rw("storm", "storm", "thunderstorm", "whispering_storm", "waiting_thunder"),
@@ -253,7 +253,7 @@ function physLook(w, cycleWritten) {
   const T0 = temps[0] || 5772, L = Number.isFinite(w.L) ? w.L : 1, a = Number.isFinite(w.a) && w.a > 0 ? w.a : 1;
   const disc = clamp((Math.sqrt(Math.max(1e-6, L)) / Math.pow(T0 / 5772, 2)) / a, 0.45, 3); // rayon angulaire relatif au Soleil vu de la Terre
   return {
-    sunRGB: brown ? [] : temps.slice(0, 2).map(blackbody), disc, P: Math.max(0, w.P), g: Number.isFinite(w.g) ? w.g : 1,
+    sunRGB: brown ? [] : temps.slice(0, 2).map(blackbody), disc, whiteDwarf: !!w.whiteDwarf, greenStar: !!(w.whiteDwarf && w.debris && (w.hues || []).includes("green_sun")), /* 2.9 : la naine blanche verte */ P: Math.max(0, w.P), g: Number.isFinite(w.g) ? w.g : 1,
     coriolis: Number.isFinite(w.coriolis) ? w.coriolis : 1, /* ESSAI : Coriolis */ oxygen: Number.isFinite(w.oxygen) ? w.oxygen : 1, /* 2.5 (D) */ relief: PM.reliefOf(w), carve: w.water === "liquid" && w.P >= 0.05 && w.age >= 1.5, /* 2.5 (C) : la forme du relief ; les plaques gardent aussi leurs vallées quand l'eau a eu le temps */ locked: !!w.locked, light: Number.isFinite(w.light) ? w.light : 1, Ts: Number.isFinite(w.Ts) ? w.Ts : 288, cycleWritten: !!cycleWritten, T: brown ? 0 : T0, T2: brown ? 0 : temps[1] || 0,
   };
 }

@@ -15,7 +15,7 @@ const LETS_IN = {
   weak: { small: 1 / 2, medium: 3 / 4, large: 0.9 },
 };
 /** Ce que la voûte laisse passer en partie : le froid, la chaleur, la roche en fusion, les soleils. */
-const SEEPS = ["deep_cold", "heat", "lava", "geysers", "single_sun", "twin_suns", "green_sun", "red_sun", "white_sun", "blue_sun", "orange_sun", "violet_sun", "black_sun"];
+const SEEPS = ["deep_cold", "heat", "lava", "geysers", "single_sun", "twin_suns", "green_sun", "red_sun", "white_sun", "blue_sun", "orange_sun", "violet_sun", "black_sun", "white_dwarf"];
 /** Ce qu'elle ne laisse jamais passer : le ciel ouvert. */
 const SHUT_OUT = ["rain", "drizzle", "storm", "thunderstorm", "lightning", "whispering_storm", "waiting_thunder", "wind", "hail", "black_hail", "snow", "dust_storm", "ash_cloud"];
 

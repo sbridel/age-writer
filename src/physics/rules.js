@@ -95,9 +95,9 @@ const REQUIREMENTS = {
   // ---- L1 : étoiles ---------------------------------------------------------------------------------
   realStar: {
     law: "L1", axis: "metaphysical", sev: "light",
-    test: () => false,
-    why: { fr: () => "Aucune étoile ne brille vert ou violet : une étoile qui émet surtout du vert nous paraît blanche. Ce ciel tient de l'Art, pas de la nature.", en: () => "No star shines green or violet: a star peaking in green looks white to us. This sky comes from the Art, not from nature." },
-    fix: () => [tip("garder ce soleil, en connaissance de cause : il coûte un peu d'Art", "keep this sun knowingly: it costs a little Art")],
+    test: (w) => !!w.whiteDwarf && !!w.debris && !(w.hues || []).includes("violet_sun"), /* 2.9 : une naine blanche nourrie de ses mondes peut être verte (WD J1330+6435) */
+    why: { fr: () => "Aucune étoile ne brille vert ou violet par sa chaleur seule : une étoile qui émet surtout du vert nous paraît blanche. Une naine blanche qui a avalé ses planètes, elle, peut être verte : ce qu'elle a mangé lui ôte le jaune et le rouge. Sans cela, ce ciel tient de l'Art, pas de la nature.", en: () => "No star shines green or violet by its heat alone: a star peaking in green looks white to us. A white dwarf that has swallowed its planets can be green, though: what it ate takes the yellow and the red from its light. Short of that, this sky comes from the Art, not from nature." },
+    fix: () => [tip("garder ce soleil, en connaissance de cause : il coûte un peu d'Art", "keep this sun knowingly: it costs a little Art"), tip("pour un soleil vert : écrire une naine blanche et ce qui reste de ses mondes (white_dwarf, et asteroid_belt, asteroid_field ou planet_rings)", "for a green sun: write a white dwarf and what is left of its worlds (white_dwarf, plus asteroid_belt, asteroid_field or planet_rings)")],
   },
 
   // ---- L5/L6 : température, eau, air -------------------------------------------------------------------
