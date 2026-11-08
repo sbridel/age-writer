@@ -438,4 +438,28 @@ ok(G.millOf({ river: true, lava: true }).kind !== "water", "pas de moulin à eau
   const { solve } = require("../src/physics/solve"), T = (src) => solve({ ids: ["single_sun", "water", "monsoon"], src, seed: "m" }).tensions.map((t) => t.id);
   ok(T("tilt: 0").includes("monsoonSeasons"), "un axe droit : les pluies n'ont pas de saison (contradiction)");
   ok(!T("tilt: 28").includes("monsoonSeasons"), "un axe incliné : la mousson a son année"); }
+// 2.9 : l'ombre des œuvres, les traces, la carte postale du Relto, la naine blanche (claude/DESIGN-pistes-8-nov.md, § 24, 25, 31, 32)
+{ const m = G.build(G.sceneOf(an(["single_sun", "grass", "grove", "tower"]), "Ombres"), 640, 360), sn = [{ i: 0, x: 600, y: 180, e: 0.6, r: 20 }], fills = (lv) => { const log = []; m.lv = lv; G.shadowPassForTest(fakeCtx(log), m, sn, 1, 0); return log.filter((l) => l === "fill:").length; };
+  ok(m.trees.length + m.ruins.length > 0, "il y a de quoi porter une ombre");
+  ok(fills({}) > 0, "au soleil, les œuvres et les arbres portent une ombre");
+  ok(fills({ rain: 1 }) === 0 && fills({ fog: 1 }) === 0, "la pluie et la brume effacent les ombres");
+  const log = []; m.lv = {}; G.shadowPassForTest(fakeCtx(log), m, [], 0, 1); ok(!log.includes("fill:"), "la nuit sans lune : pas d'ombre");
+  m._moonOff = [{ x: 600, y: 150, e: 0.5, lit: 1 }]; const l2 = []; G.shadowPassForTest(fakeCtx(l2), m, [], 0, 1); ok(l2.includes("fill:"), "la pleine lune porte une ombre pâle");
+  m._moonOff = [{ x: 600, y: 150, e: 0.5, lit: 0.4 }]; const l3 = []; G.shadowPassForTest(fakeCtx(l3), m, [], 0, 1); ok(!l3.includes("fill:"), "un croissant : pas d'ombre"); }
+{ const S = G.sceneOf(an(["single_sun", "grass", "herd"]), "Traces"), m = G.build(S, 640, 360), go = (lv, mem) => { const log = []; m.lv = lv; m.mem = mem; m._td = 0.3; m._dayL = 1; G.trackPassForTest(fakeCtx(log), m, 0.3, 1, 0, lv); return log.filter((l) => l === "fill:").length; };
+  if ((m.extras || []).some((e) => e.id === "herd")) {
+    ok(go({ snow: 1 }, { wet: 0 }) > 0, "sur la neige, le troupeau laisse sa piste");
+    ok(go({}, { wet: 0.8 }) > 0, "dans la boue après la pluie aussi");
+    ok(go({}, { wet: 0.1 }) === 0, "sur l'herbe sèche, rien");
+    ok(go({ storm: 1 }, { wet: 1 }) === 0, "sous l'orage, les bêtes sont à l'abri : pas de piste neuve"); } }
+{ const E = require("../src/estampe"), z = E.reltoSize({ width: 1280, height: 720 }); ok(z.w === 1200 && z.h > 700, "la carte postale du Relto : 1200 de large, l'île et deux lignes");
+  const log = [], g = fakeCtx(log); ok((() => { try { E.composeRelto(new Proxy(g, { get: (t, k) => (k === "canvas" ? { width: z.w, height: z.h } : t[k]) }), { img: { width: 1280, height: 720 }, name: "Haverlund", when: "15:26" }); return true; } catch (e) { return false; } })(), "la carte postale du Relto se compose");
+  ok(log.some((l) => l.startsWith("fillText:Haverlund")) && log.some((l) => l.startsWith("fillText:15:26")), "son nom et l'heure là-bas"); }
+{ const { solve } = require("../src/physics/solve"), T = (ids) => solve({ ids, src: "", seed: "nb" }), wd = T(["white_dwarf", "grass"]).w;
+  ok(wd.whiteDwarf && wd.starMasses.length === 1 && wd.L < 0.01 && wd.periodDays < 2, "la naine blanche : une étoile, peu de lumière, le monde tout près");
+  ok(!T(["white_dwarf", "green_sun", "asteroid_belt"]).tensions.some((t) => t.id === "realStar"), "verte et nourrie de ses mondes : pas de coût d'Art");
+  ok(T(["white_dwarf", "green_sun"]).tensions.some((t) => t.id === "realStar"), "verte sans débris : l'Art");
+  ok(T(["green_sun", "asteroid_belt"]).tensions.some((t) => t.id === "realStar"), "un soleil vert ordinaire, même avec une ceinture : l'Art");
+  ok(T(["white_dwarf", "violet_sun", "asteroid_belt"]).tensions.some((t) => t.id === "realStar"), "le violet ne change pas");
+  ok(G.sceneOf(an(["white_dwarf", "grass"]), "Nb").suns === 1, "la naine blanche est le soleil de l'Âge"); }
 console.log(`gen.test.js : ${n} vérifications OK`);

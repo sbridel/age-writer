@@ -2692,7 +2692,7 @@ function stoneOf(m) {
  */
 function shadowPass(g, m, sn, day, night) {
   const { W, H, hz } = m, L = m.lv || {}, D = Math.max(1, H - hz);
-  const veil = clamp(1 - Math.max(L.rain || 0, L.storm || 0, L.snow || 0, 0.85 * (L.fog || 0), 0.6 * (L.drizzle || 0), 0.7 * (L.dust || 0), L.ash || 0, L.ashRain || 0)); if (veil < 0.05) return;
+  const veil = clamp(1 - Math.max(L.rain || 0, L.storm || 0, L.snow || 0, L.fog || 0, 0.6 * (L.drizzle || 0), 0.7 * (L.dust || 0), L.ash || 0, L.ashRain || 0)); if (veil < 0.05) return;
   const lights = []; /* { az, el, a } : l'azimut (0 devant, π dans le dos), la hauteur, la force */
   const azOf = (s) => (s.x <= -W * 0.5 || s.y <= -H * 0.6 ? Math.PI - 0.5 * clamp((s.x + W) / W, -1, 1) : Math.atan(((s.x - W / 2) / (W / 2)) * 1.1));
   for (const s of sn) { if (s.e <= 0.05) continue; const a = 0.42 * (s.i === 0 ? 1 : 0.7) * clamp((s.e - 0.05) * 4) * (0.6 + 0.4 * day) * (1 - 0.8 * night); if (a > 0.01) lights.push({ az: azOf(s), el: Math.max(0.07, s.e * 1.15), a }); } /* le soleil bas du matin porte déjà ses ombres longues */
@@ -3854,4 +3854,4 @@ Object.assign(ART, {
   aeroplankton: { layer: "air", draw(g, m, t, e) { const { W, H, hz } = m; for (const it of e.items) for (let k = 0; k < 6; k++) { const x = (it.x + k * 41) % W, y = hz - H * (0.05 + 0.3 * frac(it.y + k * 0.17)); g.fillStyle = css([220, 240, 255], 0.2 + 0.4 * Math.max(0, Math.sin(TAU * t * 2 + k + it.p))); g.fillRect(x, y, 1, 1); } } },
 });
 
-module.exports = { tideOf, millOf, monsoonOf, freezeOf, weatherMemory, beastsAtHour, seaBeastOf, pageOf, buildPondForTest: buildPond, solEn, supportOf, carried, SUPPORT, SUPPORT_OF, byDepthForTest: (m, e, a, b) => byDepth(m, e, a, b), sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
+module.exports = { shadowPassForTest: shadowPass, trackPassForTest: trackPass, tideOf, millOf, monsoonOf, freezeOf, weatherMemory, beastsAtHour, seaBeastOf, pageOf, buildPondForTest: buildPond, solEn, supportOf, carried, SUPPORT, SUPPORT_OF, byDepthForTest: (m, e, a, b) => byDepth(m, e, a, b), sunWhere, viewOfForTest: viewOf, windMode, fogHour, buildFront, HOOKS, openingOf, doomOf, doomVeil, sceneOf, traits, KNOWN, WX_FLAGS, weatherLevels, build, paint, suns, PERIOD, hsl, seaSpot, blackbody, skyState, mixc, css, valueNoise, fbm };
