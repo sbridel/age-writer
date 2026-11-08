@@ -479,7 +479,7 @@ function lectern(r, ctx, c, st) {
  * la monture ; pivoté, il porte la pierre devant le verre et la lumière de l'étoile du livre se déplie en dessous ; glissé dans
  * l'appareil, la bague reste vide et l'aiguille grave la courbe. La lecture, en mots, prend la ligne du bas. Sans livre, le bras dort.
  */
-/** 2.10.7 : la couleur de la lumière dépliée, en un mot d'encre (`#rrggbb`) : la teinte de l'étoile telle qu'on la voit (écrite par l'Art, ou née : la naine par son repas ou son âge, les autres par leur chaleur) ; c'est elle que la carte donne à l'étoile. */
+/** 2.10.7 : la couleur de la lumière dépliée, en un mot d'encre (`#rrggbb`) : la teinte de l'étoile telle qu'on la voit (écrite par l'Art, ou née : la naine par ses débris ou son âge, les autres par leur chaleur) ; c'est elle que la carte donne à l'étoile. */
 function lightTint(star) {
   const PM = require("./physics/model"), { blackbody } = require("./genscene"), { HUES } = require("./sky");
   const rgb = star.blackSun ? HUES.black_sun : star.art && star.hue && HUES[star.hue] ? HUES[star.hue] : star.whiteDwarf && star.kind ? PM.wdTintOf(star.kind, star.T) : blackbody(star.T || 5772); /* le soleil noir : le bordeaux presque noir de la fenêtre, pas la braise */ /* un soleil dont la couleur est écrite est peint de cette couleur : le cartographe peint ce qu'il voit ; la lecture, elle, dit que ce vert est écrit */

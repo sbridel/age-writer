@@ -253,15 +253,15 @@ const LONE_ORBIT = {
 };
 /* 2.9 : le soleil vert d'une naine blanche nourrie de ses mondes : sa phrase remplace celle du soleil vert de l'Art */
 const WD_PROSE = {
-  salt: ["a small green star, fed on its own worlds, keeps a cold and patient light", "the sun is green because of what it has eaten: a white dwarf wearing the salt of its planets", "a green star holds the sky, the colour of a world digested long ago"],
-  brine: ["a blue star, blue with the salt of its worlds, and cold for all that", "the sun looks hot and is not: a white dwarf so salted by its planets that only the blue gets out", "a cold blue sun, wearing the sea of a world it swallowed"],
+  salt: ["a small green star, salted by the worlds it broke, keeps a cold and patient light", "the sun is green with what is left of its worlds: a white dwarf wearing the salt of its planets", "a green star holds the sky, the colour of a world burnt long ago"],
+  brine: ["a blue star, blue with the salt of its worlds, and cold for all that", "the sun looks hot and is not: a white dwarf so salted by its planets that only the blue gets out", "a cold blue sun, wearing the sea of a world it took"],
   carbon: ["the sun is the colour of burnt worlds, a white dwarf red with their carbon", "a red star, small and close, dyed by the ash of its own planets", "the sun burns a dull red, the soot of worlds in its light"],
   young: ["the sun is blue with the heat of its own death, hard and new", "a young dead star, still blue from dying; its light is sharp and full of fire", "a blue point of a sun, fierce, the ember of a star that has only just gone out"],
   old: ["an old white dwarf, cooled to ochre, nearly out", "the sun is a dying ember, orange and small, older than most of the sky", "a dull orange star keeps this world, and has for longer than anything here"],
 };
 const WD_HUES = { green_sun: ["salt"], blue_sun: ["young", "brine"], red_sun: ["carbon"], orange_sun: ["old"] };
 /* la phrase de la naine blanche elle-même, quand sa couleur n'est pas le blanc : elle ne dit plus « white » */
-const WD_REBORN_PROSE = ["the dead star keeps a new world, gathered from the rubble of older ones it remembers", "the sun is a burnt-out star, and the ground under it is young: the wreck of the worlds it has eaten, put back together", "a white dwarf lights a world it broke and that formed again from the pieces, raw and young"];
+const WD_REBORN_PROSE = ["the dead star keeps a new world, gathered from the rubble of older ones it remembers", "the sun is a burnt-out star, and the ground under it is young: the wreck of the worlds it burnt, put back together", "a white dwarf lights a world it broke and that formed again from the pieces, raw and young"];
 const WD_REMNANT_PROSE = ["it is a white dwarf, the heart of a star that has already lived, and the world huddles near it", "the sun is a dead star's core, planet-sized and patient, that has outlasted its own fire", "this world keeps close to a burnt-out star, old beyond counting"];
 function skySentences(resolved, grammar, teller, place) {
   const lines = resolved.lines.map((line, index) => ({ line, index }));

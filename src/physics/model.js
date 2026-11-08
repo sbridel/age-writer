@@ -65,7 +65,7 @@ function whiteDwarf(mass, kind) {
 }
 /**
  * 2.9 : ce qu'est une naine blanche d'après sa couleur écrite et ses débris (claude/DESIGN-pistes-8-nov.md, § 32 bis).
- * Sans débris, la couleur est l'âge : bleue jeune, blanche, orange très vieille. Avec débris, la couleur est le repas :
+ * Sans débris, la couleur est l'âge : bleue jeune, blanche, orange très vieille. Avec débris, la couleur est ce qui reste de ses mondes :
  * verte le sel (chartreuse), bleue le sel à l'extrême (froide), rouge le carbone. Le violet, et les autres couleurs, restent l'Art (null).
  */
 function whiteDwarfKind(hue, debris) {
