@@ -2,6 +2,15 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.10.1 — The linking sound (2026-11-08)
+
+### Added
+- **Three ways to sound the link** (Settings → Sound → Linking sound): *Classic*, the synthesized sounds of earlier versions; *In the old manner*, a new synthesis learnt from the shape of the linking sounds of the old games (never their recordings: three small models, 68 KB in all), varied by the Age you go to (colder and brighter for frozen worlds and dead stars, deeper and slower for lava, muffled under water, echoing in caves), and never twice the same; *Both*, one or the other; *My own file*, an audio file from your vault (mp3, ogg, wav, m4a, flac), played at a slightly varying pitch with the same echo and muffling.
+- **The crystal, in the telescope room**: its light, its apparatus and its readings, as introduced in 2.10.0, now with the laboratory words gone from the Guild's voice.
+
+### Fixed
+- The crystal's reading no longer covers the lectern's label.
+
 ## 2.10.0 — Dead stars (2026-11-08)
 
 ### Added

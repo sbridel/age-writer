@@ -699,6 +699,11 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.10.1 — le son de liaison (8 nov. 2026, soir)
+
+- `src/linksynth.js` (pur : FFT radix-2, Griffin-Lim, source harmonique, enveloppe cepstrale) et `src/link-models.js` (trois modèles : cepstre tronqué 36 coefficients par trame de 11,6 ms, int8 + échelle, hauteur, voisement, niveau ; appris sur l'enveloppe de sons de référence, jamais leurs échantillons). `sound.js` : `prepareLink` (tâche de fond, cache de six variantes), `linkSoundNew`, `linkSoundFile`, `linkSoundBy`. `entry.js` : `playLink(file)` (traits de l'Âge : froid, lave, eau, caverne, naine blanche), `loadLinkFile`. Réglages `linkSoundMode`, `linkSoundFile`.
+- Chemin de conception : planches de son (HTML + MP3), analyse des enregistrements de référence fournis par l'auteur (bandes, pouls, tremblement de la voyelle), modèles à impulsions, vocodeur LPC (haché), puis enveloppe cepstrale + phases reconstruites (retenu : « proche »). Les anciens sons restent.
+
 ## 2.10.0 — étoiles mortes (8 nov. 2026, soir ; publiée d'abord comme 2.9.1, retirée)
 
 Fiche du projet : `claude/DESIGN-pistes-8-nov.md` (§ 32 bis), `claude/SYNTHESE-2.8-a-2.9.md`.
