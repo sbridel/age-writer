@@ -2,7 +2,7 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.10 — Dead stars (2.10.0 to 2.10.7, 2026-11-08)
+## 2.10 — Dead stars (2.10.0 to 2.10.8, 2026-11-08)
 
 ### Added
 - **The white dwarf has a colour, and it means something.** Without debris, the colour is its age: `blue_sun` young and burning, nothing written white, `orange_sun` very old and ochre. With what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), the colour is what it ate: `green_sun` the salt (chartreuse), `blue_sun` the salt to the extreme (pale blue, and cold), `red_sun` the carbon (pink when warm, red when cooled). None costs Art; any other colour written on a white dwarf costs a little. The tints are the real ones, pale.
@@ -18,6 +18,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 ### Fixed
 - Leaving fullscreen with the button could leave the interface deaf to clicks until Escape.
 - Thick fog now washes out shadows, as rain does.
+- On the star map a black sun was engraved in the red of an ember; it is now its own near-black (2.10.8).
 - The map kept one pond per periscope direction (four ovals around the centre); like the river, only the one seen from the front is kept. Unsurveyed blanks appear only under 70 stability (or when the Age is failing), never on water, as fading patches of paper.
 
 ## 2.9.0 — The world remembers (2026-11-08)
