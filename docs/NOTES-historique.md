@@ -699,6 +699,12 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.10.10 — la poussière des piliers (9 nov. 2026, nuit)
+
+⚠ Spoilers de la caverne : rien de ceci dans README, CHANGELOG ni nouveautés ; une phrase dans la rubrique secrète du guide.
+- Idée de l'auteur, d'après Uru (planches du 9 nov.) : dans la chambre aux étoiles (`src/relto-stars.js`), un clic sur un pilier (`topple`, branché dans `onClick` de `relto-render.js`) le fait tomber en poussière : il se défait du haut vers le bas en bord déchiqueté, la poussière (couleurs de la palette du jour) se pose à son pied en anneau autour d'un creux sombre, glisse vers la fissure et s'y enfonce ; ~20 s d'absence (infobulle `stars.pillar.gone`, une petite plateforme et son ombre), puis la poussière remonte, le pilier se refait par le pied, ses gravures s'allument une fois. Tous les piliers, plusieurs à la fois ; ça ne veut rien dire pour l'instant. Rythme dans `PF` (35,5 s en tout).
+- Plus d'étoiles : la fosse passe de 150 à 950 (dont une bande et une voie lactée pâle, quelques teintées or ou violet), la vue penchée de 260 à 1 500 (voie lactée en diagonale) ; dans cette vue, la poussière d'un pilier qui tombe passe devant nous et s'enfonce.
+
 ## 2.10.9 — la référence rattrape (9 nov. 2026, nuit)
 
 - Référence complète (FR et EN, en miroir) : le choix du son de liaison (réglages, sons), les trois commandes d'estampe et de carte postale, la carte de l'Âge (onglet Carte et livre du Relto ; l'ancienne « Carte » devient « Carte des liaisons »), la fenêtre qui se souvient (arrivée par l'eau, gel, mémoire du temps, ombres, heures des bêtes et oiseaux, bête de la mer, soleil), « Pages trouvées » dans Pages du Relto (les treize `page_found_*`, un clic ramasse), « La pierre » au télescope avec la plaque qui grave, le relevé sur la carte des étoiles ; dans les secrets, « Où sont les pages », en indices.

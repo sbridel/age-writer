@@ -6,7 +6,7 @@
  */
 const NEWS = [
   {
-    v: "2.10.9",
+    v: "2.10.10",
     fr: {
       title: "Étoiles mortes",
       letter: "Un correspondant nous l'avait dit : une étoile peut être verte d'avoir brûlé ses mondes. Nous avons regardé de plus près. Elle peut aussi être bleue de jeunesse ou de sel, rouge de charbon, ocre d'âge ; et ce qui tourne autour d'elle est fait de ce qu'elle a brisé. Une pierre taillée, au télescope, déplie sa lumière ; la plaque la grave ; la carte des étoiles la garde. Et la liaison a retrouvé son souffle d'autrefois.",
