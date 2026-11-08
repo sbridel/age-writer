@@ -199,7 +199,17 @@ const relDone = (async () => {
   const POSE = require("../src/relto-telescope").HOLD_BEATS * require("../src/relto-telescope").PULSE_MS + 1;
   r.nowOverride = t0 + POSE; r.draw(5.5); /* trois battements immobiles */
   ok(st.systems[sysB.key] && store[st.key].systems[sysB.key] && sounds.includes("found"), "les trois indices reportés, la pose tenue : le système est situé, gardé, avec la quinte");
-  r.draw(5.6); ok(r.hot.some((h) => h.tel && h.tel.spectro), "l'étoile située : le cristal répond");
+  r.draw(5.6); ok(r.hot.some((h) => h.tel && h.tel.spectro), "l'étoile située et visée : la pierre répond");
+  ok(!r.hot.some((h) => h.tel && h.tel.engraveLight), "pierre repliée : la plaque ne grave que la position");
+  click((a) => a.spectro, "la pierre devant le verre"); r.draw(5.7);
+  ok(st.spectro === 1 && r.hot.some((h) => h.tel && h.tel.engraveLight && /engrave the star's light/.test(h.tip)), "2.10.5 : la pierre devant le verre : la plaque propose de graver la lumière");
+  click((a) => a.engraveLight, "graver la lumière"); r.draw(5.8);
+  ok(st.systems[sysB.key].light === true && store[st.key].systems[sysB.key].light === true && st.note === "spec.engraved", "la lumière gravée, gardée avec le système");
+  click((a) => a.spectro, "la pierre repliée"); ok(st.spectro === 0, "deux états seulement : repliée à nouveau");
+  { const r2 = new ReltoRenderer(dom.window.document.createElement("canvas"), dni, opts()); r2.setScene(sc); r2.nowOverride = t0 + POSE; r2.setView("starmap"); r2.draw(6); await tick(); r2.draw(6.1);
+    const h = r2.hot.find((x) => x.mapAct && x.mapAct.pick); ok(h && /light is engraved/.test(h.tip), "sur la carte des étoiles : l'étoile porte la marque de sa lumière, et s'ouvre");
+    r2.toLogical = () => [h.x + 1, h.y + 1]; r2.onClick({}); r2.draw(6.2); await tick(); r2.draw(8.6);
+    ok(r2.mapPick === sysB.key && r2.mapLight && r2.mapLight.star && r2.hot.some((x) => /put the record away/.test(x.tip)), "le relevé épinglé : l'étoile relue dans le livre, la fiche ouverte, qui se range"); }
   const rec = st.systems[sysB.key]; ok(rec.torahn === sysB.pos.torahn && rec.distance === sysB.pos.distance && rec.at === Math.round(t0 + POSE), "la plaque grave la position GZCS de l'étoile");
   r.nowOverride = t0;
   r.draw(6); ok(r.hot.some((h) => h.tel && h.tel.setSystem), "la plaque de l'étoile est cliquable");
