@@ -373,7 +373,7 @@ function tabifyPanel(plugin, panel) {
     win.addClass("is-touch"); win.setAttr("title", t("link.touch"));
     let timer = 0;
     win.addEventListener("click", () => {
-      if (plugin.ext.sound && plugin.ext.soundLink !== false) sound.linkSound(plugin.ext.volume);
+      if (plugin.ext.sound && plugin.ext.soundLink !== false) { if (plugin.playLink) plugin.playLink(plugin.currentAgeFile); else sound.linkSound(plugin.ext.volume); } /* 2.10.12 : selon le réglage (avant : toujours le classique) */
       win.removeClass("is-linking"); void win.offsetWidth; win.addClass("is-linking");
       clearTimeout(timer); timer = window.setTimeout(() => win.removeClass("is-linking"), 800);
     });

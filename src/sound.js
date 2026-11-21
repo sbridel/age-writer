@@ -537,10 +537,21 @@ function linkSoundFile(volume = 0.3, buf, age = {}) {
   const r = { samples, sr };
   return oneShot(n / sr / rate + 4, (c, out) => { out.gain.value = volume * bufferGain(buf) * 0.9; playSamples(c, out, r, rate, age); });
 }
-/** Le choix selon le réglage : "classic" | "new" | "both" | "file". `getFile()` : l'AudioBuffer du fichier, ou null. */
+/**
+ * Quelle liaison jouer, selon le réglage : "classic" | "new" | "both" (classique ou à l'ancienne) | "file" | "all" (2.10.12 : les trois, au hasard ;
+ * sans fichier chargé, les deux synthèses). `hasFile` : le fichier est décodé. `rnd` : un tirage entre 0 et 1. Renvoie "classic", "new" ou "file".
+ */
+function linkPick(mode, hasFile, rnd = Math.random()) {
+  if (mode === "file") return hasFile ? "file" : "new";
+  if (mode === "new") return "new";
+  if (mode === "both") return rnd < 0.5 ? "classic" : "new";
+  if (mode === "all") return hasFile ? (rnd < 1 / 3 ? "classic" : rnd < 2 / 3 ? "new" : "file") : rnd < 0.5 ? "classic" : "new";
+  return "classic";
+}
 function linkSoundBy(mode, volume, age = {}, fileBuf = null) {
-  if (mode === "file" && fileBuf) return linkSoundFile(volume, fileBuf, age);
-  if (mode === "new" || (mode === "both" && Math.random() < 0.5) || (mode === "file" && !fileBuf)) return linkSoundNew(volume, age);
+  const k = linkPick(mode, !!fileBuf);
+  if (k === "file") return linkSoundFile(volume, fileBuf, age);
+  if (k === "new") return linkSoundNew(volume, age);
   return linkSound(volume);
 }
 function linkSound(volume = 0.3) {
@@ -945,4 +956,4 @@ function ovenSfx(kind, volume = 0.3) {
   });
 }
 
-module.exports = { linkSoundBy, linkSoundNew, linkSoundFile, prepareLink, ovenSfx, slabSfx, openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, roomLevel, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { linkSoundBy, linkPick, linkSoundNew, linkSoundFile, prepareLink, ovenSfx, slabSfx, openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, roomLevel, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
