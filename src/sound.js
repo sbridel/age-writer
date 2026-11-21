@@ -538,14 +538,14 @@ function linkSoundFile(volume = 0.3, buf, age = {}) {
   return oneShot(n / sr / rate + 4, (c, out) => { out.gain.value = volume * bufferGain(buf) * 0.9; playSamples(c, out, r, rate, age); });
 }
 /**
- * Quelle liaison jouer, selon le réglage : "classic" | "new" | "both" (classique ou à l'ancienne) | "file" | "all" (2.10.12 : les trois, au hasard ;
- * sans fichier chargé, les deux synthèses). `hasFile` : le fichier est décodé. `rnd` : un tirage entre 0 et 1. Renvoie "classic", "new" ou "file".
+ * Quelle liaison jouer, selon le réglage : "classic" | "new" | "both" (classique ou à l'ancienne) | "file" | "mix" (2.10.12 : classique ou mon fichier, au hasard ;
+ * sans fichier chargé, le classique). `hasFile` : le fichier est décodé. `rnd` : un tirage entre 0 et 1. Renvoie "classic", "new" ou "file".
  */
 function linkPick(mode, hasFile, rnd = Math.random()) {
   if (mode === "file") return hasFile ? "file" : "new";
   if (mode === "new") return "new";
   if (mode === "both") return rnd < 0.5 ? "classic" : "new";
-  if (mode === "all") return hasFile ? (rnd < 1 / 3 ? "classic" : rnd < 2 / 3 ? "new" : "file") : rnd < 0.5 ? "classic" : "new";
+  if (mode === "mix") return hasFile && rnd >= 0.5 ? "file" : "classic";
   return "classic";
 }
 function linkSoundBy(mode, volume, age = {}, fileBuf = null) {

@@ -240,7 +240,7 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.w = (slot, opt) => { const f = guard("solitude", () => solitudeFactor(this.ext.solitude, slot, opt.id)); return opt.weight * (f == null ? 1 : f); };
 
       guard("fonts", () => this.dni.init().then(() => this.redrawEverything()));
-      guard("liaison", () => { const m = this.ext.linkSoundMode || "classic"; if (m === "new" || m === "both") setTimeout(() => prepareLink({}), 2500); if (m === "file" || m === "all") this.app.workspace.onLayoutReady(() => this.loadLinkFile()); }); /* 2.10.12 : le fichier, une fois le coffre indexé (avant, il n'était pas encore trouvé) */ /* 2.10.1 : une liaison prête d'avance, ou le fichier chargé */
+      guard("liaison", () => { const m = this.ext.linkSoundMode || "classic"; if (m === "new" || m === "both") setTimeout(() => prepareLink({}), 2500); if (m === "file" || m === "mix") this.app.workspace.onLayoutReady(() => this.loadLinkFile()); }); /* 2.10.12 : le fichier, une fois le coffre indexé (avant, il n'était pas encore trouvé) */ /* 2.10.1 : une liaison prête d'avance, ou le fichier chargé */
       guard("book", () => this.patchBook());
       guard("settings", () => this.patchSettings());
       this.registerProcessors();
@@ -1054,12 +1054,12 @@ module.exports = function build(Base, core, AGEX) {
     async playLink(file) {
       const e = this.ext; if (!e.sound || e.soundLink === false) return; const mode = e.linkSoundMode || "classic";
       let age = {}; try { if (file && mode !== "classic") { const src = core.extract(await this.app.vault.cachedRead(file)); if (src != null) { const seed = core.seed(file.path), a = core.analyse(src, { seed }); age = this.linkTraitsOf(sceneOf(a, seed, core.blocks)); } } } catch (err) { age = {}; }
-      if ((mode === "file" || mode === "all") && !this._linkBuf) { await this.loadLinkFile(); if (!this._linkBuf && mode === "file" && !this._linkWarned) { this._linkWarned = true; new Notice(this.t("link.fileMissing", { name: this._linkName || "—" })); } } /* 2.10.12 : pas encore chargé ? on le charge maintenant, plutôt que jouer autre chose en silence */
-      try { linkSoundBy(mode, e.volume, age, mode === "file" || mode === "all" ? this._linkBuf || null : null); if (mode !== "classic" && mode !== "file") prepareLink(age); } catch (err) { console.warn("[Age Writer ext] liaison", err); }
+      if ((mode === "file" || mode === "mix") && !this._linkBuf) { await this.loadLinkFile(); if (!this._linkBuf && mode === "file" && !this._linkWarned) { this._linkWarned = true; new Notice(this.t("link.fileMissing", { name: this._linkName || "—" })); } } /* 2.10.12 : pas encore chargé ? on le charge maintenant, plutôt que jouer autre chose en silence */
+      try { linkSoundBy(mode, e.volume, age, mode === "file" || mode === "mix" ? this._linkBuf || null : null); if (mode !== "classic" && mode !== "file") prepareLink(age); } catch (err) { console.warn("[Age Writer ext] liaison", err); }
     }
     /** Charge (ou recharge) le fichier du son de liaison choisi dans les réglages. */
     async loadLinkFile() {
-      this._linkBuf = null; this._linkName = null; const n = linkFileName(this.ext.linkSoundFile), m = this.ext.linkSoundMode || "classic"; if (!n || (m !== "file" && m !== "all")) return;
+      this._linkBuf = null; this._linkName = null; const n = linkFileName(this.ext.linkSoundFile), m = this.ext.linkSoundMode || "classic"; if (!n || (m !== "file" && m !== "mix")) return;
       this._linkName = n;
       try { const f = findAudioFile(this.app, n); if (!f) { console.warn("[Age Writer ext] fichier du son de liaison introuvable :", n); return; }
         const c = require("./sound").audioContext(); if (!c) return; this._linkBuf = await c.decodeAudioData((await this.app.vault.readBinary(f)).slice(0)); } catch (err) { console.warn("[Age Writer ext] fichier du son de liaison", err); }

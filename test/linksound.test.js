@@ -10,8 +10,8 @@ ok([...draws("new", true)].join() === "new", "à l'ancienne : toujours la nouvel
 ok(draws("both", true).size === 2 && !draws("both", true).has("file"), "les deux : classique ou à l'ancienne, jamais le fichier");
 ok([...draws("file", true)].join() === "file", "mon fichier : le fichier quand il est chargé");
 ok([...draws("file", false)].join() === "new", "mon fichier, pas chargé : la nouvelle synthèse");
-const all = draws("all", true); ok(all.has("classic") && all.has("new") && all.has("file"), "les trois : les trois sortent");
-ok(!draws("all", false).has("file") && draws("all", false).size === 2, "les trois sans fichier : les deux synthèses");
+const mix = draws("mix", true); ok(mix.size === 2 && mix.has("classic") && mix.has("file"), "classique ou mon fichier : les deux sortent, jamais la nouvelle synthèse");
+ok([...draws("mix", false)].join() === "classic", "classique ou mon fichier, sans fichier : le classique");
 // le nom du fichier : la même expression que dans src/entry.js
 const src = fs.readFileSync(path.join(__dirname, "../src/entry.js"), "utf8"), m = src.match(/const linkFileName = (\(v\) => [^\n]+);/);
 ok(m, "linkFileName est défini dans entry.js"); const linkFileName = eval(m[1]);
