@@ -699,6 +699,14 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.10.12 — la salle de l'œuf, Ahyoheek (22 nov. 2026)
+
+⚠ Ahyoheek et l'encrier tiennent aux fins de l'histoire : rien de ceci dans README ni nouveautés ; une ligne vague au CHANGELOG ; la rubrique secrète du guide les décrit.
+- **Son de liaison** : le fichier se charge une fois le coffre prêt (`onLayoutReady`) ; `findAudioFile` le trouve par lien, chemin, nom avec ou sans extension, sans casse ; « Les deux » remplacé par « Classique ou mon fichier, au hasard » (`linkPick`, mode `mix`). Test `linksound.test.js`.
+- **Ahyoheek** (`src/ahyoheek.js`, modèle pur ; `src/relto-ahyoheek.js`, dessin) : scarabée > plume > livre > scarabée, 1 à 4 adversaires à caractère (fidèle, imitateur, malin, collectionneur, méfiant), niveaux facile/moyen/difficile ou selon le rang. Table dans la serre (accord), sur le bureau (commandement), raccourci en hologramme miniature sur le manteau. La manche comme à Uru : compte à rebours de 10 s en chiffres D'ni, chevrons blancs, le signe gagnant s'illumine sur l'anneau ; hologrammes sales (calque criblé de grain, flou + net), qui vacillent et glitchent. Sièges à toucher, bouton de bronze, cadran : plus de texte. Glyphe du centre en lettres D'ni si une police D'ni est là (la ligne de l'auteur), centré sur son encre mesurée. Sons `ahySfx`. Test `ahyoheek.test.js`.
+- **La salle de l'œuf** (`src/relto-egg.js`, vue `egg`) : porte dans le couloir ; l'œuf, volume de révolution aux sculptures en (u, v), flotte et tourne ; mur marbré qui glisse vers le haut ; vu depuis un rebord de fenêtre, la pointe du cristal loin dessous. Ambiance `roomStart("egg")`. Golden du couloir régénéré.
+- **L'encrier** (accord) : `serreHum` remplace le frémissement de 7 s toutes les 90 s : un épisode toutes les 10 à 20 min et au retour de la serre, fort puis qui retombe en 90 s, avec la voix grave. Test `serrehum.test.js`.
+
 ## 2.10.11 — les piliers sur la roche (9 nov. 2026, nuit)
 
 ⚠ Spoilers de la caverne : rien de ceci dans README, CHANGELOG ni nouveautés.

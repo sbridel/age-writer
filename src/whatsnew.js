@@ -6,7 +6,7 @@
  */
 const NEWS = [
   {
-    v: "2.10.11",
+    v: "2.10.12",
     fr: {
       title: "Étoiles mortes",
       letter: "Un correspondant nous l'avait dit : une étoile peut être verte d'avoir brûlé ses mondes. Nous avons regardé de plus près. Elle peut aussi être bleue de jeunesse ou de sel, rouge de charbon, ocre d'âge ; et ce qui tourne autour d'elle est fait de ce qu'elle a brisé. Une pierre taillée, au télescope, déplie sa lumière ; la plaque la grave ; la carte des étoiles la garde. Et la liaison a retrouvé son souffle d'autrefois.",
@@ -16,7 +16,8 @@ const NEWS = [
         "**Le soleil est dessiné comme un soleil** : un cœur blanc, une couronne qui respire, l'orangé du soir.",
         "**Une pierre taillée au télescope**, au bout d'un bras de laiton : pivotée devant le verre, si l'étoile du livre est située et visée, sa lumière se déplie en bande, avec ses ombres, et la Guilde la lit : sa chaleur, ce qu'elle contient, ce que cela veut dire. Un soleil vert seulement écrit montre une lumière entière.",
         "**La plaque grave la lumière, la carte des étoiles la garde** : la pierre devant le verre, un clic sur la plaque de l'étoile ; sur la carte, l'étoile prend sa couleur, et un clic épingle le relevé : la courbe à la plume, puis la craie qui colorie dessous, et la lecture.",
-        "**Trois voies pour le son de liaison** (Réglages → Son) : classique ; à l'ancienne, une synthèse nouvelle qui suit l'Âge où l'on va et ne se répète jamais ; les deux ; ou votre propre enregistrement, qui peut contenir plusieurs liaisons à la suite.",
+        "**Trois voies pour le son de liaison** (Réglages → Son) : classique ; à l'ancienne, une synthèse nouvelle qui suit l'Âge où l'on va et ne se répète jamais ; votre propre enregistrement, qui peut contenir plusieurs liaisons à la suite (trouvé par son lien, son chemin ou son simple nom) ; ou classique et votre fichier, au hasard.",
+        "**Une porte étroite dans le couloir**, une lueur bleue dessous : la salle de l'œuf, où un grand œuf de pierre flotte et tourne lentement, dans une lumière d'eau.",
         "**La carte de l'Âge dans le livre du Relto**, après la description ; un seul étang sur la carte, et des blancs seulement quand l'Âge vacille. La carte postale du Relto en chiffres D'ni ; la sortie du plein écran par le bouton ne bloque plus les clics.",
         "**La référence complète rattrape la 2.9 et la 2.10** : la pierre, la plaque et la carte des étoiles, les quatre sons de liaison, la carte de l'Âge, les estampes et cartes postales, les pages trouvées (avec, dans les secrets, où les chercher), et tout ce que la fenêtre garde.",
       ],
@@ -30,7 +31,8 @@ const NEWS = [
         "**The sun is drawn as a sun**: a white core, a breathing corona, the orange of evening.",
         "**A cut stone at the telescope**, at the end of a brass arm: swung in front of the glass, if the book's star is charted and aimed, its light unfolds into a band, with its shadows, and the Guild reads it: its heat, what it holds, what that means. A green sun that is merely written shows a whole light.",
         "**The plate engraves the light, the star map keeps it**: with the stone in front of the glass, a click on the star's plate; on the map, the star takes its colour, and a click pins the record: the curve in ink, then a chalk colouring under it, and the reading.",
-        "**Three ways to sound the link** (Settings → Sound): classic; in the old manner, a new synthesis that follows the Age you go to and never repeats; both; or your own recording, which may hold several linking sounds in a row.",
+        "**Three ways to sound the link** (Settings → Sound): classic; in the old manner, a new synthesis that follows the Age you go to and never repeats; your own recording, which may hold several linking sounds in a row (found by its link, its path or its bare name); or classic and your file, at random.",
+        "**A narrow door in the hallway**, a blue light under it: the egg room, where a great stone egg floats and turns slowly in a watery light.",
         "**The map of the Age in the Relto's book**, after the description; one pond on the map, and blanks only when the Age wavers. The Relto postcard in D'ni numerals; leaving fullscreen with the button no longer blocks clicks.",
         "**The full reference catches up with 2.9 and 2.10**: the stone, the plate and the star chart, the four linking sounds, the map of the Age, prints and postcards, found pages (with, in the secrets, where to look), and everything the window remembers.",
       ],
