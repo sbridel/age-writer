@@ -6,19 +6,20 @@ let ctx = null; /* le contexte du dessin en cours (posé par drawEggRoom) */
 const q = (k) => { let h = 2166136261; for (const ch of String(k)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 10000) / 10000; };
 const { rgba } = require("./util");
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
-const layer = (draw) => { const c = document.createElement("canvas"); c.width = 1280; c.height = 720; const b = c.getContext("2d"); b.scale(2, 2); draw(b); return c; };
+const layer = (draw) => draw; /* les fenêtres, le rebord, les piliers : dessinés à chaque image (des toiles cachées pleine taille peuvent rester vides sur certaines machines) */
 
 /* ---- le mur : une pierre marbrée sombre, bleu-vert, à grandes taches claires et sombres (raccordable de haut en bas) ---- */
 const TW = 460, TH = 300;
-function makeMarble() { const c = document.createElement("canvas"); c.width = TW * 2; c.height = TH * 2; const b = c.getContext("2d"); b.scale(2, 2);
+function makeMarble() { const c = document.createElement("canvas"); c.width = TW; c.height = TH; const b = c.getContext("2d"); /* petite, peinte une fois, sans filtre */
   b.fillStyle = "#132529"; b.fillRect(0, 0, TW, TH);
-  const blob = (seed, n, col, a, sz, blur) => { b.filter = `blur(${blur}px)`; for (let i = 0; i < n; i++) { const x = q(seed + "x" + i) * TW, y = q(seed + "y" + i) * TH, r = sz * (0.4 + q(seed + "r" + i)), k = 3 + Math.floor(q(seed + "k" + i) * 6);
-      for (let j = 0; j < k; j++) { const xx = x + (q(seed + i + "dx" + j) - 0.5) * r * 2.2, yy = y + (q(seed + i + "dy" + j) - 0.5) * r * 1.2, rr = r * (0.35 + q(seed + i + "rr" + j) * 0.6);
-        for (const dy of [-TH, 0, TH]) { b.fillStyle = rgba(col[0], col[1], col[2], a * (0.6 + 0.4 * q(seed + i + "a" + j))); b.beginPath(); b.ellipse(xx, yy + dy, rr * 1.5, rr, (q(seed + i + "t" + j) - 0.5) * 0.8, 0, TAU); b.fill(); } } } b.filter = "none"; };
-  blob("d", 60, [4, 10, 12], 0.75, 16, 3); /* les veines sombres */
-  blob("m", 70, [38, 78, 82], 0.6, 12, 2.5); /* le bleu-vert */
-  blob("l", 45, [90, 150, 150], 0.55, 9, 2); /* les taches claires */
-  blob("h", 30, [150, 205, 200], 0.4, 5, 1.5); /* les éclats */
+  const blob = (seed, n, col, a, sz) => { for (let i = 0; i < n; i++) { const x = q(seed + "x" + i) * TW, y = q(seed + "y" + i) * TH, r = sz * (0.4 + q(seed + "r" + i)), k = 3 + Math.floor(q(seed + "k" + i) * 6);
+      for (let j = 0; j < k; j++) { const xx = x + (q(seed + i + "dx" + j) - 0.5) * r * 2.2, yy = y + (q(seed + i + "dy" + j) - 0.5) * r * 1.2, rr = r * (0.45 + q(seed + i + "rr" + j) * 0.7), aa = a * (0.6 + 0.4 * q(seed + i + "a" + j)), ang = (q(seed + i + "t" + j) - 0.5) * 0.8;
+        for (const dy of [-TH, 0, TH]) { b.save(); b.translate(xx, yy + dy); b.rotate(ang); b.scale(1.5, 1); const g = b.createRadialGradient(0, 0, 0, 0, 0, rr); g.addColorStop(0, rgba(col[0], col[1], col[2], aa)); g.addColorStop(0.6, rgba(col[0], col[1], col[2], aa * 0.7)); g.addColorStop(1, rgba(col[0], col[1], col[2], 0)); b.fillStyle = g; b.fillRect(-rr, -rr, rr * 2, rr * 2); b.restore(); } } } };
+  blob("d", 60, [4, 10, 12], 0.8, 18); /* les veines sombres */
+  blob("m", 70, [38, 78, 82], 0.65, 14); /* le bleu-vert */
+  blob("l", 45, [90, 150, 150], 0.6, 10); /* les taches claires */
+  blob("h", 30, [150, 205, 200], 0.45, 6); /* les éclats */
+  try { if (!b.getImageData(2, 2, 1, 1).data[3]) return null; } catch (e) { /* lecture refusée : on la garde */ } /* une toile restée vide : on s'en passera */
   return c; }
 /* ---- les fenêtres (hautes, en arc, un appui ; elles ne descendent pas jusqu'au sol), la corniche courbe au pied de l'œuf ---- */
 function makeMid() { return layer((b) => {
@@ -54,7 +55,7 @@ function makeFg() { return layer((b) => {
   pillar(0, 96); pillar(544, 640);
 }); }
 let CACHE = null; /* les fonds peints une fois (au premier passage dans la salle) */
-const cache = () => CACHE || (CACHE = { marble: makeMarble(), mid: makeMid(), fg: makeFg() });
+const cache = () => CACHE || (CACHE = { marble: (() => { try { return makeMarble(); } catch (e) { return null; } })(), mid: makeMid(), fg: makeFg() });
 
 /* ---- l'œuf ---- un volume de révolution, les sculptures posées en (u, v) : u l'angle autour, v de 0 (sommet) à 1 (bas) */
 const E = { cx: 320, cy: 142, rx: 69, ry: 106 };
@@ -103,8 +104,10 @@ function drawEgg(t) {
   const vol = ctx.createLinearGradient(E.cx - E.rx, 0, E.cx + E.rx, 0); vol.addColorStop(0, "rgba(0,0,0,0.45)"); vol.addColorStop(0.32, "rgba(0,0,0,0)"); vol.addColorStop(0.75, "rgba(0,0,0,0.12)"); vol.addColorStop(1, "rgba(0,0,0,0.6)"); ctx.fillStyle = vol; ctx.fillRect(E.cx - E.rx, cy - E.ry, E.rx * 2, E.ry * 2); /* le volume : la lumière vient d'en haut, un peu à gauche */
   const low = ctx.createLinearGradient(0, cy - E.ry * 0.2, 0, cy + E.ry); low.addColorStop(0, "rgba(0,0,0,0)"); low.addColorStop(1, "rgba(5,10,20,0.45)"); ctx.fillStyle = low; ctx.fillRect(E.cx - E.rx, cy - E.ry, E.rx * 2, E.ry * 2);
   ctx.restore();
-  for (const u0 of [0, Math.PI]) { const N = 16; for (let k = 0; k < N; k++) { const v0 = (k / N) * 0.16, v1 = ((k + 1) / N) * 0.16, a = proj(u0, v0, rot, cy), b = proj(u0, v1, rot, cy), z = (a.z + b.z) / 2; if (z < -0.15) continue;
-      ctx.strokeStyle = rgba(6, 12, 18, Math.min(1, (z + 0.15) / 0.4)); ctx.lineCap = "round"; ctx.lineWidth = 4.4 * (1 - k / N) + 0.5; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); } } /* la fente, au sommet : elle suit la nervure */
+  ctx.save(); eggPath(cy); ctx.clip(); /* la fente reste dans l'œuf : rien ne dépasse au sommet */
+  for (const u0 of [0, Math.PI]) { const N = 16; for (let k = 0; k < N; k++) { const v0 = 0.012 + (k / N) * 0.15, v1 = 0.012 + ((k + 1) / N) * 0.15, a = proj(u0, v0, rot, cy), b = proj(u0, v1, rot, cy), z = (a.z + b.z) / 2; if (z < 0.08) continue;
+      ctx.strokeStyle = rgba(8, 14, 22, 0.85 * Math.min(1, (z - 0.08) / 0.4)); ctx.lineCap = "butt"; ctx.lineWidth = (2.6 * (1 - k / N) + 0.4) * z; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); } } /* la fente, au sommet : elle suit la nervure, s'amincit vers le bord */
+  ctx.restore();
 }
 /* le cristal, au pied : une pyramide de glace bleue, posée sur la corniche */
 function crystal(t) { const x = 320, y = 330, h = 40, w = 14, /* sa base est cachée par le rebord : on n'en voit que la pointe */ g = ctx.createRadialGradient(x, y - 8, 0, x, y - 8, 26); g.addColorStop(0, rgba(140, 200, 255, 0.25 + 0.05 * Math.sin(t * 1.3))); g.addColorStop(1, rgba(140, 200, 255, 0)); ctx.fillStyle = g; ctx.fillRect(x - 26, y - 34, 52, 52);
@@ -116,14 +119,14 @@ function drawEggRoom(r, c, sc, sky, t) {
   ctx = c; const C = cache(), T = TR(r); if (r.opts && r.opts.reducedMotion) t = 0;
   ctx.fillStyle = "#030608"; ctx.fillRect(0, 0, W, H);
   /* le mur marbré : la lumière glisse lentement vers le haut */
-  { const off = (t * 7) % TH; ctx.save(); ctx.beginPath(); ctx.rect(96, 20, 448, 314); ctx.clip(); for (const k of [0, 1]) ctx.drawImage(C.marble, 0, 0, TW * 2, TH * 2, 90, 20 - off + k * TH, TW, TH); if (20 - off + 2 * TH < 334) ctx.drawImage(C.marble, 0, 0, TW * 2, TH * 2, 90, 20 - off + 2 * TH, TW, TH);
+  { const off = (t * 7) % TH; ctx.save(); ctx.beginPath(); ctx.rect(96, 20, 448, 314); ctx.clip(); if (C.marble) for (const k of [0, 1, 2]) ctx.drawImage(C.marble, 0, 0, TW, TH, 90, 20 - off + k * TH, TW, TH); else { const g = ctx.createLinearGradient(0, 100, 0, 334); g.addColorStop(0, "#0c1a1d"); g.addColorStop(1, "#1d3a3e"); ctx.fillStyle = g; ctx.fillRect(96, 20, 448, 314); }
     const fade = ctx.createLinearGradient(0, 20, 0, 260); fade.addColorStop(0, "rgba(3,6,8,1)"); fade.addColorStop(0.5, "rgba(3,6,8,0.6)"); fade.addColorStop(1, "rgba(3,6,8,0.05)"); ctx.fillStyle = fade; ctx.fillRect(96, 20, 448, 314); ctx.restore(); } /* en haut, le noir */
-  ctx.drawImage(C.mid, 0, 0, W, H);
+  ctx.save(); C.mid(ctx); ctx.restore();
   const beam = ctx.createLinearGradient(0, 0, 0, 290); beam.addColorStop(0, rgba(170, 200, 215, 0.2)); beam.addColorStop(1, rgba(150, 190, 210, 0)); ctx.fillStyle = beam; ctx.beginPath(); ctx.moveTo(298, 0); ctx.lineTo(342, 0); ctx.lineTo(410, 290); ctx.lineTo(230, 290); ctx.closePath(); ctx.fill(); /* le rai de lumière d'en haut */
   const st = ctx.createRadialGradient(325, 6, 0, 325, 6, 7); st.addColorStop(0, "rgba(255,255,255,0.95)"); st.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = st; ctx.fillRect(315, -4, 20, 20);
   drawEgg(t); crystal(t);
   for (let i = 0; i < 50; i++) { const x = 250 + q("d" + i) * 150 + Math.sin(t * 0.3 + i) * 3, y = (q("dy" + i) * 280 + t * (2 + q("dv" + i) * 3)) % 280; ctx.fillStyle = rgba(220, 235, 245, 0.1 + q("da" + i) * 0.25); ctx.beginPath(); ctx.arc(x, y, 0.5 + q("ds" + i) * 0.7, 0, TAU); ctx.fill(); } /* la poussière dans le rai */
-  ctx.drawImage(C.fg, 0, 0, W, H);
+  ctx.save(); C.fg(ctx); ctx.restore();
   r.hot.push({ x: E.cx - E.rx, y: E.cy - E.ry, w: E.rx * 2, h: E.ry * 2, tip: T("egg.egg") }); r.hot.push({ x: 300, y: 290, w: 40, h: 28, tip: T("egg.crystal") });
   require("./relto-atelier").backButton(r, ctx, T("egg.back"), "hall");
   void sc; void sky;
