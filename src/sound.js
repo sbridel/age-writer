@@ -930,7 +930,7 @@ function caveSfx(kind, volume = 0.3) {
 /**
  * Ahyoheek, la table des trois signes : des sons de lumière (verre et bronze), brefs et doux. "start" la manche s'allume ; "tick" une seconde
  * du compte (et l'anneau qui tourne d'un cran) ; "set" un adversaire pose son signe ; "mine" je pose le mien ; "reveal" les hologrammes se lèvent ;
- * "win" / "lose" la manche est à moi / à un autre ; "game" / "gameLost" la partie ; "button" un réglage.
+ * "win" / "lose" la manche est à moi / à un autre ; "game" / "gameLost" la partie ; "join" / "leave" un joueur s'assied, se lève ; "button" le bouton, le cadran.
  */
 function ahySfx(kind, volume = 0.3) {
   return oneShot(kind === "game" || kind === "gameLost" ? 2.2 : 1.4, (c, out, noise) => {
@@ -948,6 +948,8 @@ function ahySfx(kind, volume = 0.3) {
     else if (kind === "lose") { bell(t + 0.45, 330, 0.12, 0.8, "triangle"); bell(t + 0.6, 294, 0.1, 0.9, "triangle"); }
     else if (kind === "game") { for (const [i, f] of [523, 659, 784, 1047, 1319, 1568].entries()) bell(t + 0.5 + i * 0.11, f, 0.14, 1.4); hum(t + 0.5, 262, 1.6, 0.12); }
     else if (kind === "gameLost") { for (const [i, f] of [440, 392, 330, 262].entries()) bell(t + 0.5 + i * 0.16, f, 0.12, 1.1, "triangle"); }
+    else if (kind === "join") { bell(t, 659, 0.12, 0.5); bell(t + 0.09, 988, 0.1, 0.6); } /* un joueur s'assied */
+    else if (kind === "leave") { bell(t, 988, 0.1, 0.45); bell(t + 0.09, 659, 0.1, 0.55, "triangle"); } /* il se lève */
     else tick(t, 1500, 0.4, 0.03); /* un réglage : un cran de bronze */
   });
 }
