@@ -78,6 +78,15 @@ function holo(ctx, kind, x, y, s, a, t, seed) {
   const off = (t * 18 + seed * 5) % 3; for (let yy = cy - s * 1.1 + off; yy < cy + s * 1.1; yy += 3) { ctx.beginPath(); ctx.moveTo(x - s * 1.05, yy); ctx.lineTo(x + s * 1.05, yy); ctx.stroke(); } /* le balayage */
   ctx.restore();
 }
+/** La place qui gagne la manche : une flaque de lumière d'or sous elle, et deux anneaux d'or qui battent autour du projecteur. */
+function winMark(ctx, x, y, r, t) {
+  const p = 0.5 + 0.5 * Math.sin(t * 4);
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  const g = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 3.4); g.addColorStop(0, rgba(255, 200, 110, 0.5)); g.addColorStop(1, rgba(255, 170, 80, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, r * 3.4, r * 1.5, 0, 0, TAU); ctx.fill();
+  ctx.strokeStyle = rgba(255, 210, 130, 0.85); ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x, y, r * 1.55, r * 0.66, 0, 0, TAU); ctx.stroke();
+  ctx.strokeStyle = rgba(255, 210, 130, 0.5 * (1 - p)); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(x, y, r * (1.6 + p * 0.9), r * (0.68 + p * 0.38), 0, 0, TAU); ctx.stroke(); /* l'onde qui s'éloigne */
+  ctx.restore();
+}
 /** Ce qu'une place a gagné : les trois signes, chacun suivi de son compte en chiffre D'ni. */
 function tally(ctx, x, y, s, won) {
   AH.SIGNS.forEach((k, i) => { const yy = y + (i - 1) * s * 2.5; anySign(ctx, k, x - s * 1.5, yy, s, HC[k], 0.9, false); const n = won[k] || 0; numeral(ctx, n, x + s * 0.9, yy, s * 2, n >= 3 ? "#ffcf7a" : n ? "#e0b46c" : rgba(200, 170, 120, 0.6)); });
@@ -155,7 +164,7 @@ function drawGame(r, ctx, sc, sky, t) {
   /* les places : un chiffre D'ni gravé au bord, éteint si personne n'y joue */
   for (let k = 0; k < 5; k++) { const a = Math.PI / 2 + k * TAU / 5; numeral(ctx, k + 1, C.x + Math.cos(a) * RX * 0.9, C.y + Math.sin(a) * RY * 0.9, 12, seats.includes(k) ? "#c99a52" : rgba(169, 119, 58, 0.35)); }
   G.opp.forEach((o, i) => { const [x, y] = seatAt(seats[i + 1]);
-    emitter(ctx, x, y, 18, reveal && o.play ? HC[o.play] : null, reveal); if (reveal && o.play) holo(ctx, o.play, x, y, 22, isWin(i + 1) ? 1 : anyWin ? 0.45 : 0.8, t, i + 1);
+    if (isWin(i + 1)) winMark(ctx, x, y, 18, t); emitter(ctx, x, y, 18, reveal && o.play ? HC[o.play] : null, reveal); if (reveal && o.play) holo(ctx, o.play, x, y, isWin(i + 1) ? 28 : 22, isWin(i + 1) ? 1 : anyWin ? 0.28 : 0.8, t, i + 1);
     tally(ctx, x + (x < C.x - 5 ? -84 : x > C.x + 5 ? 84 : 96), y - 6, 9, o.won);
     if (reveal && o.pts != null) numeral(ctx, o.pts, x, y + 32, 16, o.pts > 0 ? "#ffcf7a" : o.pts < 0 ? "#b0846a" : "#c99a52", o.pts < 0);
     r.hot.push({ x: x - 24, y: y - 40, w: 48, h: 54, tip: T("ahy.player", { n: i + 1 }), ahy: reveal ? { next: true } : {} }); });
@@ -175,7 +184,7 @@ function drawGame(r, ctx, sc, sky, t) {
   AH.SIGNS.forEach((k, i) => { const [x, y] = MINE(i), picked = G.me.play === k;
     emitter(ctx, x, y, 13, HC[k], !reveal ? hov === k : picked);
     if (!reveal) { if (hov === k) holo(ctx, k, x, y, 18, 0.8, t, 9); else { ctx.save(); ctx.translate(x, y); ctx.scale(1, k === "beetle" ? 0.5 : 0.45); anySign(ctx, k, 0, 0, k === "beetle" ? 8.5 : 10, HC[k], 0.8, false); ctx.restore(); } r.hot.push({ x: x - 17, y: y - 30, w: 34, h: 42, tip: T("ahy.sign." + k), ahy: { sign: k } }); }
-    else if (picked) holo(ctx, k, x, y, 22, isWin(0) ? 1 : anyWin ? 0.45 : 0.8, t, 0); });
+    else if (picked) { if (isWin(0)) winMark(ctx, x, y, 13, t); holo(ctx, k, x, y, isWin(0) ? 28 : 22, isWin(0) ? 1 : anyWin ? 0.28 : 0.8, t, 0); } });
   tally(ctx, 480, 292, 9, G.me.won);
   if (reveal && G.me.pts != null) numeral(ctx, G.me.pts, 238, 256, 16, G.me.pts > 0 ? "#ffcf7a" : G.me.pts < 0 ? "#b0846a" : "#c99a52", G.me.pts < 0);
   /* en bas, ce que la table annonce ; en haut à droite, les réglages */
@@ -184,6 +193,7 @@ function drawGame(r, ctx, sc, sky, t) {
   const btn = (label, y, a, tip) => { ctx.font = "13px Georgia, serif"; ctx.textAlign = "right"; const w = ctx.measureText(label).width; ctx.fillStyle = rgba(20, 14, 8, 0.6); ctx.fillRect(W - 22 - w, y - 14, w + 14, 20); ctx.strokeStyle = rgba(201, 162, 78, 0.6); ctx.lineWidth = 1; ctx.strokeRect(W - 22 - w + 0.5, y - 13.5, w + 13, 19); ctx.fillStyle = "#e9dcb8"; ctx.fillText(label, W - 15, y); r.hot.push({ x: W - 22 - w, y: y - 14, w: w + 14, h: 20, tip, ahy: a }); };
   btn(T("ahy.opp", { n: s.n }), 28, { opp: true }, T("ahy.opp.tip")); btn(T("ahy.level", { l: lv }), 54, { level: true }, T("ahy.level.tip")); btn(T("ahy.new"), 80, { fresh: true }, T("ahy.new.tip"));
   require("./relto-atelier").backButton(r, ctx, T(st.from === "desk" ? "ahy.back.desk" : "ahy.back.serre"), st.from === "desk" ? "desk" : "serre");
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; /* remis comme ailleurs : l'infobulle s'écrit à gauche */
   void sc; void sky;
 }
 
