@@ -65,15 +65,29 @@ function emitter(ctx, x, y, r, col, lit) {
   const g = ctx.createRadialGradient(x, y, 1, x, y, r); g.addColorStop(0, col ? rgba(col[0], col[1], col[2], lit ? 0.9 : 0.35) : "#2a2018"); g.addColorStop(1, col ? rgba(col[0], col[1], col[2], 0) : "#1a140e");
   ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.4, 0, 0, TAU); ctx.fill();
 }
+/** Les hologrammes vacillent, et de temps en temps « glitchent » : un instant (un cinquième de seconde, toutes les quatre ou cinq secondes,
+ *  jamais tous ensemble), la figure se découpe en bandes qui glissent de côté et sa lumière hoquette. Renvoie { on, a } : glitch en cours, et la lumière (0 à 1). */
+function glitchOf(t, seed) {
+  if (!t) return { on: false, a: 1 }; /* mouvement réduit : rien ne bouge */
+  const ph = (t * (0.21 + (seed % 5) * 0.013) + seed * 0.37) % 1, on = ph < 0.045, tick = Math.floor(t * 30);
+  const wob = 0.9 + 0.1 * Math.sin(t * 2.3 + seed * 1.7); /* le vacillement lent */
+  return { on, tick, a: on ? wob * (0.35 + 0.65 * q("gl" + seed + "_" + tick)) : wob };
+}
+/** Dessine `paint` (une figure centrée en x, cy, de demi-taille s) avec son glitch : en bandes décalées s'il est en cours. */
+function glitchy(ctx, x, cy, s, gl, seed, paint) {
+  if (!gl.on) { paint(0); return; }
+  const band = s * 0.28; for (let y0 = cy - s * 1.3, b = 0; y0 < cy + s * 1.3; y0 += band, b++) { const dx = (q("gx" + seed + "_" + gl.tick + "_" + b) - 0.5) * s * 0.5;
+    ctx.save(); ctx.beginPath(); ctx.rect(x - s * 2, y0, s * 4, band + 0.5); ctx.clip(); paint(dx); ctx.restore(); }
+}
 /** L'hologramme d'un signe, debout au-dessus de son projecteur : le cône de lumière, la figure, les lignes de balayage. a : 0 à 1. */
 function holo(ctx, kind, x, y, s, a, t, seed) {
-  const c = HC[kind], fl = 0.85 + 0.15 * Math.sin(t * 23 + seed * 7) * Math.sin(t * 7.3 + seed), A = a * fl, cy = y - s * 1.55;
+  const c = HC[kind], gl = glitchOf(t, seed), fl = (0.85 + 0.15 * Math.sin(t * 23 + seed * 7) * Math.sin(t * 7.3 + seed)) * gl.a, A = a * fl, cy = y - s * 1.55;
   ctx.save(); ctx.globalCompositeOperation = "lighter";
   const cone = ctx.createLinearGradient(0, y, 0, cy - s); cone.addColorStop(0, rgba(c[0], c[1], c[2], 0.32 * A)); cone.addColorStop(1, rgba(c[0], c[1], c[2], 0));
   ctx.fillStyle = cone; ctx.beginPath(); ctx.moveTo(x - s * 0.35, y); ctx.lineTo(x - s * 1.25, cy - s); ctx.lineTo(x + s * 1.25, cy - s); ctx.lineTo(x + s * 0.35, y); ctx.closePath(); ctx.fill();
   const halo = ctx.createRadialGradient(x, cy, s * 0.2, x, cy, s * 1.6); halo.addColorStop(0, rgba(c[0], c[1], c[2], 0.28 * A)); halo.addColorStop(1, rgba(c[0], c[1], c[2], 0)); ctx.fillStyle = halo; ctx.fillRect(x - s * 1.6, cy - s * 1.6, s * 3.2, s * 3.2);
   ctx.shadowColor = rgba(c[0], c[1], c[2], A); ctx.shadowBlur = kind === "beetle" ? 0 : s * 0.5;
-  anySign(ctx, kind, x, cy, s, kind === "beetle" ? c : up(c, 70), kind === "beetle" ? 0.9 * A : 0.95 * A, true);
+  glitchy(ctx, x, cy, s, gl, seed, (dx) => anySign(ctx, kind, x + dx, cy, s, kind === "beetle" ? c : up(c, 70), kind === "beetle" ? 0.9 * A : 0.95 * A, true));
   ctx.shadowBlur = 0; ctx.strokeStyle = rgba(c[0], c[1], c[2], 0.18 * A); ctx.lineWidth = 1;
   const off = (t * 18 + seed * 5) % 3; for (let yy = cy - s * 1.1 + off; yy < cy + s * 1.1; yy += 3) { ctx.beginPath(); ctx.moveTo(x - s * 1.05, yy); ctx.lineTo(x + s * 1.05, yy); ctx.stroke(); } /* le balayage */
   ctx.restore();
@@ -113,19 +127,42 @@ function state(r) { if (!r.ahy || !r.ahy.G) { const s = cur(r); r.ahy = { ...(r.
 /** Un clic dans la vue : un signe, la table (la suite), un réglage. */
 function act(r, a) {
   const st = state(r), G = st.G;
-  if (a.sign) { if (AH.play(G, a.sign)) settle(r); }
-  else if (a.next) { if (G.phase === "won") st.G = AH.newGame(cur(r)); else if (AH.next(G)) settle(r); }
-  else if (a.opp) { const s = save(r, { n: (cur(r).n % 4) + 1 }); st.G = AH.newGame(s); }
-  else if (a.level) { const L = ["easy", "mid", "hard", "rank"], s = save(r, { level: L[(L.indexOf(cur(r).level) + 1) % 4] }); st.G = AH.newGame(s); }
-  else if (a.fresh) st.G = AH.newGame(cur(r));
+  if (a.sign) { if (G.phase === "choose") { if (!st.clock) arm(r); if (!st.clock.mine) pickMine(r, a.sign, false); } }
+  else if (a.next) { if (G.phase === "won") { st.G = AH.newGame(cur(r)); st.clock = null; } else if (G.phase === "reveal") { if (AH.next(G)) { settle(r); if (G.phase === "choose") arm(r); } } else if (!st.clock) arm(r); }
+  else if (a.opp) { const s = save(r, { n: (cur(r).n % 4) + 1 }); st.G = AH.newGame(s); st.clock = null; }
+  else if (a.level) { const L = ["easy", "mid", "hard", "rank"], s = save(r, { level: L[(L.indexOf(cur(r).level) + 1) % 4] }); st.G = AH.newGame(s); st.clock = null; }
+  else if (a.fresh) { st.G = AH.newGame(cur(r)); st.clock = null; }
   if (r.opts && r.opts.onImagerSound) r.opts.onImagerSound("click"); /* un petit bruit de bronze */
+}
+/* ---- la manche, comme à la table d'Uru : un compte à rebours de dix secondes au cœur de l'anneau ; chacun pose son signe quand il veut
+ * (un chevron blanc s'allume devant lui sur la vasque) ; quand tout le monde a posé, on dévoile ; à zéro, un signe est joué au hasard pour qui n'a pas choisi. */
+const COUNT = 10000, now = () => Date.now();
+/** La manche commence : le compte part, chaque adversaire posera son signe à un moment à lui (entre 1,5 et 8 secondes). */
+function arm(r) { const st = r.ahy, n = now(); st.clock = { end: n + COUNT, vt: st.G.opp.map(() => n + 1500 + Math.random() * 6500), seen: n, mine: null, revealAt: 0, late: false }; }
+/** Je pose mon signe : ceux qui n'ont pas encore choisi se décident vite, puis on dévoile. */
+function pickMine(r, sign, late) {
+  const c = r.ahy.clock, n = now(); c.mine = sign; c.late = late;
+  c.vt = c.vt.map((v) => (v > n ? n + 150 + Math.random() * 450 : v)); c.revealAt = Math.max(n + 500, ...c.vt) + 350;
+}
+/** À chaque image : le temps passe (une pause de l'affichage, l'onglet caché, ne compte pas) ; à zéro, le hasard joue pour moi ; puis le dévoilement. */
+function tick(r) {
+  const st = r.ahy, c = st.clock, G = st.G; if (!c || G.phase !== "choose") return;
+  const n = now(); if (n - c.seen > 1500) { const d = n - c.seen; c.end += d; c.vt = c.vt.map((v) => v + d); if (c.revealAt) c.revealAt += d; } c.seen = n;
+  if (!c.mine && n >= c.end) pickMine(r, AH.SIGNS[Math.floor(Math.random() * 3)], true);
+  if (c.mine && n >= c.revealAt) { st.clock = null; if (AH.play(G, c.mine)) { settle(r); st.late = c.late ? G.round : null; if (r.opts && r.opts.onImagerSound) r.opts.onImagerSound("click"); } }
 }
 /** Une partie qui vient de finir : le rang bouge (une fois), si on joue « selon le rang ». */
 function settle(r) { const G = r.ahy.G; if (G.phase === "won" && !G.ranked) { G.ranked = true; if (cur(r).level === "rank") save(r, { rank: AH.rankAfter(G, cur(r).rank) }); } }
 
 /** Ce que la table annonce, en mots. */
 function sayOf(r, G) {
-  const T = TR(r), who = (i) => (i === 0 ? T("ahy.you") : T("ahy.player", { n: i })), s = G.said || {};
+  const T = TR(r), who = (i) => (i === 0 ? T("ahy.you") : T("ahy.player", { n: i })), s = G.said || {}, c = r.ahy.clock;
+  if (G.phase === "choose") { if (!c) return T("ahy.start"); if (c.mine) return T("ahy.wait"); }
+  const late = G.phase !== "choose" && r.ahy.late === G.round ? T("ahy.late") + " " : "";
+  return late + sayRound(r, G, s, who);
+}
+function sayRound(r, G, s, who) {
+  const T = TR(r);
   if (s.k === "won") return s.who.map((w) => T(w.i === 0 ? "ahy.youwin." + w.sign : "ahy.theywin." + w.sign, { n: w.i })).join(" · ") + " " + T("ahy.tap");
   if (s.k === "nobody") return T("ahy.nobody") + " " + T("ahy.tap");
   if (s.k === "suddenAgain") return T("ahy.sudden.again") + " " + T("ahy.tap");
@@ -139,9 +176,10 @@ const C = { x: 320, y: 182 }, RX = 250, RY = 132, SEATS = [0, 2, 3, 1, 4];
 const seatAt = (k) => { const a = Math.PI / 2 + k * TAU / 5; return [C.x + Math.cos(a) * RX * 0.66, C.y + Math.sin(a) * RY * 0.66]; };
 const MINE = (i) => [286 + i * 34, 250];
 function drawGame(r, ctx, sc, sky, t) {
-  const st = state(r), G = st.G, T = TR(r), hov = r.hover && r.hover.ahy && r.hover.ahy.sign, reveal = G.phase !== "choose", seats = SEATS.slice(0, G.opp.length + 1);
+  state(r); tick(r);
+  const st = r.ahy, G = st.G, T = TR(r), hov = r.hover && r.hover.ahy && r.hover.ahy.sign, reveal = G.phase !== "choose", seats = SEATS.slice(0, G.opp.length + 1), clk = st.clock, nowMs = now();
   const isWin = (i) => !!(G.winners && G.winners.includes(i)), anyWin = !!(G.winners && G.winners.length);
-  if (G.phase !== "choose") r.hot.push({ x: 60, y: 40, w: 520, h: 300, ahy: { next: true } }); /* la table : toucher pour la suite (ou une autre partie) */
+  if (G.phase !== "choose" || !clk) r.hot.push({ x: 60, y: 40, w: 520, h: 300, ahy: { next: true } }); /* la table : toucher pour lancer la manche, pour la suite, ou pour une autre partie */
   /* la salle : un sol de briques chaudes, la roche sombre au fond, une lumière chaude sur la table */
   const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#140d08"); bg.addColorStop(0.35, "#22160d"); bg.addColorStop(1, "#3a2414"); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
   for (let k = 0; k < 14; k++) { const y0 = 70 + k * k * 1.75, h = 3 + k * 1.3, w = 22 + k * 5.5, off = (k % 2) * w / 2; for (let x = -w + off; x < W + w; x += w) { const v = q("b" + k + "_" + Math.round(x)); ctx.fillStyle = rgba(96 + v * 50, 54 + v * 26, 30 + v * 12, 0.12 + k * 0.022); ctx.fillRect(x + 1, y0 + 1, w - 2, h - 1); } } /* les briques, en perspective */
@@ -161,6 +199,10 @@ function drawGame(r, ctx, sc, sky, t) {
   /* au centre : la vasque de lumière, d'où monte l'anneau */
   const bx = C.x, by = C.y - 4; ctx.fillStyle = "#1a120c"; ctx.beginPath(); ctx.ellipse(bx, by, 62, 24, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = "#b07c3c"; ctx.lineWidth = 2.5; ctx.stroke();
   const pool = ctx.createRadialGradient(bx, by, 4, bx, by, 58); pool.addColorStop(0, rgba(170, 205, 235, 0.55)); pool.addColorStop(0.6, rgba(100, 150, 200, 0.35)); pool.addColorStop(1, rgba(60, 100, 150, 0.12)); ctx.fillStyle = pool; ctx.beginPath(); ctx.ellipse(bx, by, 56, 20, 0, 0, TAU); ctx.fill();
+  /* les chevrons, sur la vasque, un devant chaque joueur : éteint, il n'a pas encore choisi ; blanc, il a posé son signe ; au dévoilement, celui qui gagne prend la couleur de son signe */
+  seats.forEach((k, i) => { const a = Math.PI / 2 + k * TAU / 5, hw = TAU / 10 - 0.07, done = reveal || (clk && (i === 0 ? !!clk.mine : nowMs >= clk.vt[i - 1])), p = i === 0 ? G.me : G.opp[i - 1];
+    const col = reveal && isWin(i) && p.play ? rgba(...up(HC[p.play], 30), 0.92) : done ? rgba(235, 240, 250, reveal && anyWin ? 0.32 : 0.72) : rgba(255, 255, 255, 0.06);
+    ctx.fillStyle = col; ctx.beginPath(); for (let j = 0; j <= 12; j++) { const th = a - hw + (2 * hw * j) / 12; ctx.lineTo(bx + Math.cos(th) * 54, by + Math.sin(th) * 19.5); } for (let j = 12; j >= 0; j--) { const th = a - hw + (2 * hw * j) / 12; ctx.lineTo(bx + Math.cos(th) * 40, by + Math.sin(th) * 13.5); } ctx.closePath(); ctx.fill(); });
   /* les places : un chiffre D'ni gravé au bord, éteint si personne n'y joue */
   for (let k = 0; k < 5; k++) { const a = Math.PI / 2 + k * TAU / 5; numeral(ctx, k + 1, C.x + Math.cos(a) * RX * 0.9, C.y + Math.sin(a) * RY * 0.9, 12, seats.includes(k) ? "#c99a52" : rgba(169, 119, 58, 0.35)); }
   G.opp.forEach((o, i) => { const [x, y] = seatAt(seats[i + 1]);
@@ -176,14 +218,18 @@ function drawGame(r, ctx, sc, sky, t) {
     ctx.shadowColor = rgba(160, 200, 240, 0.6 * fl); ctx.shadowBlur = 5; ctx.strokeStyle = rgba(150, 185, 225, 0.38 * fl);
     const gap = 0.36, ang = Object.values(pos).sort((a, b) => a - b); for (let i = 0; i < 3; i++) { const a0 = ang[i] + gap, a1 = (i < 2 ? ang[i + 1] : ang[0] + TAU) - gap; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(cx, cy, R, a0, a1); ctx.stroke(); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, R - 7, a0 + 0.06, a1 - 0.06); ctx.stroke(); } /* trois arcs, ouverts là où sont les signes */
     const fam = r.dni && r.dni.fontFamily && r.dni.fontFamily();
-    if (fam && typeof document !== "undefined") { const m = inkMid(r, fam); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = rgba(190, 215, 245, 0.85 * fl); paintGlyph(ctx, fam, cx - m.mx, cy - m.my); } /* le glyphe, en lettres D'ni ; sans police D'ni, l'anneau reste vide en son cœur */
+    const wonSign = reveal && anyWin ? [G.me, ...G.opp][G.winners[0]].play : null;
+    if (clk && !reveal) { const left = Math.max(0, Math.ceil((clk.end - nowMs) / 1000)); ctx.shadowColor = rgba(170, 210, 255, 0.8 * fl); ctx.shadowBlur = 8; const gl = glitchOf(t, 21); glitchy(ctx, cx, cy, 23, gl, 21, (dx) => numeral(ctx, left, cx + dx, cy, 46, rgba(200, 225, 250, 0.85 * fl * gl.a))); ctx.shadowBlur = 5; } /* le compte à rebours, en chiffre D'ni */
+    else if (wonSign) { const c = HC[wonSign]; ctx.shadowColor = rgba(c[0], c[1], c[2], fl); ctx.shadowBlur = wonSign === "beetle" ? 0 : 10; const gl = glitchOf(t, 22); glitchy(ctx, cx, cy, 30, gl, 22, (dx) => anySign(ctx, wonSign, cx + dx, cy, 30, wonSign === "beetle" ? c : up(c, 60), 0.95 * fl * gl.a, true)); ctx.shadowBlur = 5; } /* le signe qui gagne la manche */
+    else if (fam && typeof document !== "undefined") { const m = inkMid(r, fam); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = rgba(190, 215, 245, 0.85 * fl); paintGlyph(ctx, fam, cx - m.mx, cy - m.my); } /* le glyphe, en lettres D'ni ; sans police D'ni, l'anneau reste vide en son cœur */
     for (const k of AH.SIGNS) { const a = pos[k], x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R, c = HC[k]; ctx.shadowColor = rgba(c[0], c[1], c[2], 0.8 * fl); ctx.shadowBlur = k === "beetle" ? 0 : 6; anySign(ctx, k, x, y, k === "beetle" ? 16.5 : 17, k === "beetle" ? c : up(c, 40), 0.9 * fl, true); }
     ctx.restore();
     r.hot.push({ x: cx - R - 12, y: cy - R - 12, w: 2 * R + 24, h: 2 * R + 24, tip: T("ahy.rules"), ...(reveal ? { ahy: { next: true } } : {}) }); }
   /* ma place, devant : mes trois projecteurs ; au survol, le signe se lève ; joué, il reste levé */
-  AH.SIGNS.forEach((k, i) => { const [x, y] = MINE(i), picked = G.me.play === k;
-    emitter(ctx, x, y, 13, HC[k], !reveal ? hov === k : picked);
-    if (!reveal) { if (hov === k) holo(ctx, k, x, y, 18, 0.8, t, 9); else { ctx.save(); ctx.translate(x, y); ctx.scale(1, k === "beetle" ? 0.5 : 0.45); anySign(ctx, k, 0, 0, k === "beetle" ? 8.5 : 10, HC[k], 0.8, false); ctx.restore(); } r.hot.push({ x: x - 17, y: y - 30, w: 34, h: 42, tip: T("ahy.sign." + k), ahy: { sign: k } }); }
+  AH.SIGNS.forEach((k, i) => { const [x, y] = MINE(i), picked = G.me.play === k, posed = clk && clk.mine === k;
+    emitter(ctx, x, y, 13, HC[k], !reveal ? hov === k || posed : picked);
+    if (!reveal && clk && clk.mine) { if (posed) holo(ctx, k, x, y, 18, 0.6, t, 9); else { ctx.save(); ctx.translate(x, y); ctx.scale(1, k === "beetle" ? 0.5 : 0.45); anySign(ctx, k, 0, 0, k === "beetle" ? 8.5 : 10, HC[k], 0.3, false); ctx.restore(); } }
+    else if (!reveal) { if (hov === k) holo(ctx, k, x, y, 18, 0.8, t, 9); else { ctx.save(); ctx.translate(x, y); ctx.scale(1, k === "beetle" ? 0.5 : 0.45); anySign(ctx, k, 0, 0, k === "beetle" ? 8.5 : 10, HC[k], 0.8, false); ctx.restore(); } r.hot.push({ x: x - 17, y: y - 30, w: 34, h: 42, tip: T("ahy.sign." + k), ahy: { sign: k } }); }
     else if (picked) { if (isWin(0)) winMark(ctx, x, y, 13, t); holo(ctx, k, x, y, isWin(0) ? 28 : 22, isWin(0) ? 1 : anyWin ? 0.28 : 0.8, t, 0); } });
   tally(ctx, 480, 292, 9, G.me.won);
   if (reveal && G.me.pts != null) numeral(ctx, G.me.pts, 238, 256, 16, G.me.pts > 0 ? "#ffcf7a" : G.me.pts < 0 ? "#b0846a" : "#c99a52", G.me.pts < 0);
