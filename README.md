@@ -41,7 +41,7 @@ Two places step outside the fiction on purpose: the **Details** tab (stability p
 
 The full list is in [`CHANGELOG.md`](CHANGELOG.md); in short:
 
-- **2.10, dead stars.** The white dwarf's colours (its age, or what is left of its worlds), worlds born of debris, the sun drawn as a sun; a cut stone at the telescope that unfolds a star's light, a plate that engraves it, a star map that keeps the record; the linking sound in the old manner, or your own; the map of each Age in the Relto's book.
+- **2.10, dead stars.** The white dwarf's colours (its age, or what is left of its worlds), worlds born of debris, the sun drawn as a sun; a cut stone at the telescope that unfolds a star's light, a plate that engraves it, a star map that keeps the record; the linking sound in the old manner, or your own file (found by its link, path or bare name), or classic and your file at random; the map of each Age in the Relto's book; the egg room, behind a narrow door in the hallway (2.10.12).
 - **2.9, the world remembers.** Arriving at the end of a pier; ice on ponds and rivers; puddles and fallen branches after the weather; a herd that keeps the hours, birds, and something rare in the sea; shadows and tracks; a map of each Age; prints and postcards; pages to find for your Relto.
 - **2.8, the world keeps time.** Four blocks you can write: a mill that the world turns (water, wind, or standing still), an oasis in the sand, tides that rise and fall with the moon, a monsoon that floods and dries the land with the year; a description that reads as a walk; a Castle that dims with the fire.
 - **2.7, a place you go.** A path from your feet to what hands have built, made of what the ground gives (slabs, cut steps, stakes, footbridges, fords), or a beasts' trail to the water, following the place you arrive at; everything stands on what carries it; a fissure that opens into a chasm as the Age degrades.
@@ -183,6 +183,7 @@ A **wheel of views** sits at the top left of the band above the picture: its but
 - **Island layout**: cabin, pond, pillars, cat, stalk tree, bench and standing stones are placed by a deterministic layout so that big elements never overlap. If not everything fits, the least important ones stay in their sub-views.
 - **Cabin interior**: fireplace (lit when the *chimney* page is active, otherwise "Cold hearth"), a 3×10 shelf of your Ages (each book clickable), a table with the glyph book and the library book (real books: see below), a door back to the island.
 - **Linking pillars**: the linking window lights up when Ages lead back to this Relto.
+- **The egg room**: in the hallway, on the right past the mirror, a narrow stone door with a blue light under it. Behind it, from a window ledge, a great carved stone egg floats and turns slowly in a shaft; the marbled light of the wall drifts upwards; the tip of a crystal glows far below. The arrow at the top left leads back to the hallway.
 - **Grove, pond, cat, pond ++**: close-up views. *Pond ++* (page *page_pond_decor*) shows the pond almost full frame with lilies, a stone lantern, a bamboo spout, reeds, pebbles and seaweed, dragonflies by day and fireflies at dusk. Cat toys (page *page_cat_toys*): rolling yarn ball, squeaking mouse, jingle ball, feather wand, cardboard box; click a toy.
 
 ### The Imager
@@ -489,12 +490,12 @@ Everything is synthesized (Web Audio). Three gestures, three sounds, each adjust
 | Gesture | Sound | Setting |
 |---|---|---|
 | Handling the book (the book view opens) | thud, leather, pages; then 2 to 5 clasp clicks | *Book sound*, *Clasp clicks* |
-| Moving into the Age (the note opens) or touching a window | linking sound, eleven variants drawn at random | *Linking sound* |
+| Moving into the Age (the note opens) or touching a window | linking sound: *Classic* (eleven variants drawn at random), *In the old manner*, *My own file*, or *Classic or my own file, at random* | *Linking sound* |
 | Turning a linking-book page | paper rustle | *Turned pages* |
 
 When the book is already open, clicking a window only replays the linking sound. Ambiences (Relto, Age) start with the ♪ button; levels minimal / zen / full.
 
-**Close-up views** have their own sounds (setting *Close-up view sounds*): a very light trickle at the pond, a purr and meow at the cat (click the cat to make it meow), a crackling fire in the cabin when the chimney page is active. They can come from **real recordings** in your vault: *Settings > Sound > Relto*, "Pond / Purr / Meow / Fireplace sound file" (ogg, mp3 or wav; empty = synthesized). A file with several meows is split at the silences. Files are not provided with the plugin.
+**Close-up views** have their own sounds (setting *Close-up view sounds*): a very light trickle at the pond, a purr and meow at the cat (click the cat to make it meow), a crackling fire in the cabin when the chimney page is active, a crystalline ambience in the egg room. They can come from **real recordings** in your vault: *Settings > Sound > Relto*, "Pond / Purr / Meow / Fireplace sound file" (ogg, mp3 or wav; empty = synthesized). A file with several meows is split at the silences. Files are not provided with the plugin.
 
 ---
 
