@@ -110,6 +110,15 @@ function tally(ctx, x, y, s, won) {
 function glyphParts(spec) { return String(spec || "").trim().split(/\s+/).filter(Boolean).map((tok) => { const m = tok.match(/^(.+?)@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:,(\d+(?:\.\d+)?))?(?:,(-?\d+(?:\.\d+)?))?$/); return m ? { ch: m[1], dx: +m[2], dy: +m[3], k: m[4] ? +m[4] : 1, r: m[5] ? +m[5] : 0 } : { ch: tok, dx: 0, dy: 0, k: 1, r: 0 }; }); }
 const PARTS = glyphParts(GLYPH);
 function paintGlyph(g, fam, x0, y0) { const z = GLYPH_SIZE / 30; for (const p of PARTS) { g.font = `${Math.round(GLYPH_SIZE * p.k)}px ${fam}`; g.save(); g.translate(x0 + p.dx * z, y0 + p.dy * z); g.rotate(p.r * Math.PI / 180); g.fillText(p.ch, 0, 0); g.restore(); } }
+/** Le glyphe en hologramme (mis en cache par police) : bleu, plus clair en haut, plus profond en bas, strié de lignes de balayage. */
+function glyphImg(r, fam) {
+  if (r._ahyGlyph && r._ahyGlyph.fam === fam) return r._ahyGlyph.cv;
+  const N = 180, cv = document.createElement("canvas"); cv.width = cv.height = N; const g = cv.getContext("2d"), m = inkMid(r, fam);
+  const grad = g.createLinearGradient(0, N * 0.2, 0, N * 0.8); grad.addColorStop(0, "rgb(140,195,255)"); grad.addColorStop(0.5, "rgb(80,140,240)"); grad.addColorStop(1, "rgb(50,95,210)");
+  g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = grad; paintGlyph(g, fam, N / 2 - m.mx, N / 2 - m.my);
+  g.globalCompositeOperation = "destination-out"; g.fillStyle = "rgba(0,0,0,0.55)"; for (let y = 0; y < N; y += 3) g.fillRect(0, y, N, 1); /* les lignes de balayage */
+  r._ahyGlyph = { fam, cv }; return cv;
+}
 /** Le milieu de l'encre du glyphe, mesuré une fois par police (les lettres n'ont pas toutes la même chasse : on le centre sur ce qu'on voit). */
 function inkMid(r, fam) {
   if (r._ahyInk && r._ahyInk.fam === fam) return r._ahyInk;
@@ -220,7 +229,8 @@ function drawGame(r, ctx, sc, sky, t) {
     const wonSign = reveal && anyWin ? [G.me, ...G.opp][G.winners[0]].play : null;
     if (clk && !reveal) { const left = Math.max(0, Math.ceil((clk.end - nowMs) / 1000)); ctx.shadowColor = rgba(170, 210, 255, 0.8 * fl); ctx.shadowBlur = 8; const gl = glitchOf(t, 21); glitchy(ctx, cx, cy, 23, gl, 21, (dx) => numeral(ctx, left, cx + dx, cy, 46, rgba(200, 225, 250, 0.85 * fl * gl.a))); ctx.shadowBlur = 5; } /* le compte à rebours, en chiffre D'ni */
     else if (wonSign) { const c = HC[wonSign]; ctx.shadowColor = rgba(c[0], c[1], c[2], fl); ctx.shadowBlur = wonSign === "beetle" ? 0 : 10; const gl = glitchOf(t, 22); glitchy(ctx, cx, cy, 30, gl, 22, (dx) => anySign(ctx, wonSign, cx + dx, cy, 30, wonSign === "beetle" ? c : up(c, 60), 0.95 * fl * gl.a, true)); ctx.shadowBlur = 5; } /* le signe qui gagne la manche */
-    else if (fam && typeof document !== "undefined") { const m = inkMid(r, fam); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = rgba(190, 215, 245, 0.85 * fl); paintGlyph(ctx, fam, cx - m.mx, cy - m.my); } /* le glyphe, en lettres D'ni ; sans police D'ni, l'anneau reste vide en son cœur */
+    else if (fam && typeof document !== "undefined") { const im = glyphImg(r, fam), gl = glitchOf(t, 23); ctx.shadowColor = rgba(90, 150, 240, 0.9 * fl); ctx.shadowBlur = 12;
+      glitchy(ctx, cx, cy, 40, gl, 23, (dx) => { ctx.globalAlpha = 0.75 * fl * gl.a; ctx.drawImage(im, cx + dx - im.width / 2, cy - im.height / 2); ctx.globalAlpha = 1; }); ctx.shadowBlur = 5; } /* le glyphe, en lettres D'ni ; sans police D'ni, l'anneau reste vide en son cœur */
     for (const k of AH.SIGNS) { const a = pos[k], x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R, c = HC[k]; ctx.shadowColor = rgba(c[0], c[1], c[2], 0.8 * fl); ctx.shadowBlur = k === "beetle" ? 0 : 6; anySign(ctx, k, x, y, k === "beetle" ? 16.5 : 17, k === "beetle" ? c : up(c, 40), 0.9 * fl, true); }
     ctx.restore();
     r.hot.push({ x: cx - R - 16, y: cy - R - 16, w: 2 * R + 32, h: 2 * R + 32, tip: T("ahy.rules"), ...(reveal ? { ahy: { next: true } } : {}) }); }
