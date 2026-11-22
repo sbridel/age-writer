@@ -2,7 +2,7 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.10 — Dead stars (2.10.0 to 2.10.11, 2026-11-08 and 09)
+## 2.10 — Dead stars (2.10.0 to 2.10.12, 2026-11-08 to 22)
 
 ### Added
 - **The white dwarf has a colour, and it means something.** Without debris, the colour is its age: `blue_sun` young and burning, nothing written white, `orange_sun` very old and ochre. With what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), the colour is what is left of them: `green_sun` the salt (chartreuse), `blue_sun` the salt to the extreme (pale blue, and cold), `red_sun` the carbon (pink when warm, red when cooled). None costs Art; any other colour written on a white dwarf costs a little. The tints are the real ones, pale.
@@ -13,6 +13,8 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **The star map keeps the record.** A star whose light is engraved takes its colour on the map (the written one, or the one born of its debris, its age or its heat), edged in ink; a click pins a record in the corner of the parchment: the Age's name, the curve drawn in ink before your eyes the first time, then coloured in under the line with a chalk, and the Guild's reading.
 - **Three ways to sound the link** (Settings → Sound → Linking sound): *Classic*, the synthesized sounds of earlier versions; *In the old manner*, a new synthesis learnt from the shape of the linking sounds of the old games (never their recordings: three small models, 68 KB in all), varied by the Age you go to and never twice the same; *Both*; *My own file*, an audio file from your vault (mp3, ogg, wav, m4a, flac), which may hold several linking sounds one after another (cut at its silences, one drawn each time), played at a slightly varying pitch with the same echo and muffling.
 - **The map of the Age in the Relto's book**, after the description, before the free page.
+- **The egg room** (2.10.12): a narrow stone door in the hallway opens onto a shaft where a great carved stone egg floats and turns slowly; the marbled light of the wall drifts upwards; a crystalline ambience goes with it.
+- After the story, something to play with, and something that answers; the guide's secrets say what (2.10.12).
 - **The Relto postcard** shows the time there in D'ni numerals, as the island's plate does.
 
 ### Changed
@@ -23,6 +25,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 ### Fixed
 - Leaving fullscreen with the button could leave the interface deaf to clicks until Escape.
 - Thick fog now washes out shadows, as rain does.
+- The linking sound file now loads once the vault is ready, and is found by its link, its path or its bare name, with or without extension; *Both* gives way to *Classic or my own file, at random* (2.10.12).
 - On the star map a black sun was engraved in the red of an ember; it is now its own near-black (2.10.8).
 - The map kept one pond per periscope direction (four ovals around the centre); like the river, only the one seen from the front is kept. Unsurveyed blanks appear only under 70 stability (or when the Age is failing), never on water, as fading patches of paper.
 

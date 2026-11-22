@@ -427,6 +427,7 @@ function drawSerre(r, ctx, sc, sky, t) {
     if (SUN) { const tinted = ST.stained || ST === STYLES.castle, cols = ST.stained ? [[255, 190, 90], [235, 120, 160], [120, 210, 140], [150, 130, 230], [255, 225, 110]] : ST === STYLES.castle ? [[200, 50, 70], [150, 70, 190], [230, 180, 100], [170, 40, 90], [240, 220, 230]] : [[255, 240, 200]], L = 1 + (1 - SUN.el) * 1.6, sh = SUN.az * 60;
       ctx.save(); ctx.globalCompositeOperation = "lighter"; for (let i2 = 0; i2 < (tinted ? 40 : 22); i2++) { const x = 60 + q("lx" + i2) * 520 + sh * (0.5 + q("ly" + i2)), y = 248 + q("ly" + i2) * 100, rr = (tinted ? 5 : 8) + q("lr" + i2) * (tinted ? 12 : 22), c = cols[i2 % cols.length], a = (tinted ? 0.3 : 0.16) * SUN.day;
         const lg = ctx.createRadialGradient(x, y, 1, x, y, rr * L); lg.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},${a})`); lg.addColorStop(0.7, `rgba(${c[0]},${c[1]},${c[2]},${a * 0.6})`); lg.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0)`); ctx.fillStyle = lg; ctx.beginPath(); ctx.ellipse(x, y, rr * L, rr * 0.32, SUN.az * 0.12, 0, TAU); ctx.fill(); } ctx.restore(); } }
+  if (r && r.hot) require("./relto-ahyoheek").inSerre(r, ctx, t, night); /* au fond de l'allée, la table d'Ahyoheek */
   /* les scarabées : sept qui marchent, s'arrêtent et repartent ; un huitième sur le banc ; un neuvième qui grimpe une fronde */
   const spots = [[150, 330, 40, 8], [340, 338, 40, 8], [350, 290, 30, 5], [420, 352, 34, 4], [600, 336, 20, 5], [70, 334, 26, 5], [520, 282, 26, 4]];
   const pos = spots.map(([cx, cy, rx, ry], i) => pathOf(i, t, cx, cy, rx, ry));

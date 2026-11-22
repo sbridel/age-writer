@@ -292,6 +292,7 @@ function drawDesk(r, ctx, sc, sky, t) {
     HR.scarab(ctx, c, 462, 286, 30, t, { skin: castle ? "castle" : glass ? "glass" : "plain", hum, open: op });
     r.hot.push({ x: 432, y: 250, w: 62, h: 64, tip: TRr(ui0.wing ? "atelier.scarab.close" : "atelier.scarab.tip"), desk: "wings" }); }
   if (HS.stone) { HR.linkStone(ctx, c, 440, 318, 17, t); r.hot.push({ x: 420, y: 304, w: 40, h: 28, tip: TRr("atelier.link.tip"), desk: "link" }); } /* la pierre de liaison, posée la nuit à côté de l'encrier */
+  if (((r.opts.stoneState && r.opts.stoneState()) || {}).scarabs === "command") require("./relto-ahyoheek").onDesk(r, ctx, c, t); /* le commandement : la table d'Ahyoheek, en réduction, à gauche */
   { const SK = (r.opts.stoneState && r.opts.stoneState()) || {}; if (SK.place === "desk") { stone(ctx, c, 530, 326, 8, t); r.hot.push({ x: 516, y: 308, w: 28, h: 30, tip: TRr("atelier.stone.kept") }); } } /* le commandement : la pierre est restée, posée à côté de la pierre de liaison */
   require("./relto-slate").onDesk(r, ctx, c, TRr, t); /* l'ardoise (étape F), devant le livre noir */
   { const SS = (r.opts.sealState && r.opts.sealState()) || {}; /* le cachet (étape D, src/ward.js) : petit, discret, à droite de l'encrier ; un clic le prend */

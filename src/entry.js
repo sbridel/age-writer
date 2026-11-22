@@ -12,6 +12,22 @@ const { setMarkup, fitModalToFullscreen, rescueModals } = require("./util");
 const { Law, adjustAnalysis, fissureStrain, strainable, forceAlteration, describeChange, worldIds, retouchFactor } = require("./law");
 const { solitudeFactor, COVER_RE, parseCover, KEY_RE, FX_RE, STYLE_RE, TRAP_RE, DMG_RE, parseFx, parseStyle, parseTrap, parseDamage, applyDamage } = require("./mech");
 const { Soundscape, staticBurst, openSequence, pageTurn, linkSoundBy, prepareLink } = require("./sound");
+const AUDIO_EXTS = ["mp3", "ogg", "wav", "m4a", "flac", "webm", "aac", "opus"];
+/**
+ * Retrouver un fichier audio du coffre d'après ce qu'on a écrit (2.10.12) : un lien (`Sons/liaison`), un chemin, ou un nom seul,
+ * avec ou sans extension, sans souci des majuscules ni d'un « / » en tête. Obsidian ne résout un lien sans extension que vers une note :
+ * pour un son, on cherche aussi parmi tous les fichiers audio du coffre.
+ */
+function findAudioFile(app, n) {
+  const isAudio = (f) => f && f instanceof obsidian.TFile && AUDIO_EXTS.includes(String(f.extension).toLowerCase());
+  const name = String(n || "").trim().replace(/^\/+/, ""); if (!name) return null;
+  let f = app.metadataCache.getFirstLinkpathDest(name, ""); if (isAudio(f)) return f;
+  f = app.vault.getAbstractFileByPath(name); if (isAudio(f)) return f;
+  const low = name.toLowerCase(), files = app.vault.getFiles().filter(isAudio);
+  return files.find((x) => x.path.toLowerCase() === low) || files.find((x) => x.name.toLowerCase() === low) || files.find((x) => x.path.toLowerCase().replace(/\.[^./]+$/, "") === low) || files.find((x) => x.basename.toLowerCase() === low.split("/").pop().replace(/\.[^./]+$/, "")) || null;
+}
+/** Le nom du fichier du son de liaison tel qu'écrit dans les réglages : `son.mp3`, `[[son.mp3]]`, `[[Sons/son.mp3|ma liaison]]`, `![[son.mp3]]` (2.10.12). */
+const linkFileName = (v) => String(v || "").trim().replace(/^!?\[\[/, "").replace(/\]\]$/, "").split("|")[0].split("#")[0].trim();
 const { coverSvg } = require("./cover");
 const fx = require("./linkfx");
 const { sceneOf, millOf, build: genBuild, HOOKS: GEN_HOOKS } = require("./genscene");
@@ -224,7 +240,7 @@ module.exports = function build(Base, core, AGEX) {
       AGEX.w = (slot, opt) => { const f = guard("solitude", () => solitudeFactor(this.ext.solitude, slot, opt.id)); return opt.weight * (f == null ? 1 : f); };
 
       guard("fonts", () => this.dni.init().then(() => this.redrawEverything()));
-      guard("liaison", () => { const m = this.ext.linkSoundMode || "classic"; if (m === "new" || m === "both") setTimeout(() => prepareLink({}), 2500); if (m === "file") this.loadLinkFile(); }); /* 2.10.1 : une liaison prête d'avance, ou le fichier chargé */
+      guard("liaison", () => { const m = this.ext.linkSoundMode || "classic"; if (m === "new" || m === "both") setTimeout(() => prepareLink({}), 2500); if (m === "file" || m === "mix") this.app.workspace.onLayoutReady(() => this.loadLinkFile()); }); /* 2.10.12 : le fichier, une fois le coffre indexé (avant, il n'était pas encore trouvé) */ /* 2.10.1 : une liaison prête d'avance, ou le fichier chargé */
       guard("book", () => this.patchBook());
       guard("settings", () => this.patchSettings());
       this.registerProcessors();
@@ -1038,12 +1054,14 @@ module.exports = function build(Base, core, AGEX) {
     async playLink(file) {
       const e = this.ext; if (!e.sound || e.soundLink === false) return; const mode = e.linkSoundMode || "classic";
       let age = {}; try { if (file && mode !== "classic") { const src = core.extract(await this.app.vault.cachedRead(file)); if (src != null) { const seed = core.seed(file.path), a = core.analyse(src, { seed }); age = this.linkTraitsOf(sceneOf(a, seed, core.blocks)); } } } catch (err) { age = {}; }
-      try { linkSoundBy(mode, e.volume, age, mode === "file" ? this._linkBuf || null : null); if (mode !== "classic" && mode !== "file") prepareLink(age); } catch (err) { console.warn("[Age Writer ext] liaison", err); }
+      if ((mode === "file" || mode === "mix") && !this._linkBuf) { await this.loadLinkFile(); if (!this._linkBuf && mode === "file" && !this._linkWarned) { this._linkWarned = true; new Notice(this.t("link.fileMissing", { name: this._linkName || "—" })); } } /* 2.10.12 : pas encore chargé ? on le charge maintenant, plutôt que jouer autre chose en silence */
+      try { linkSoundBy(mode, e.volume, age, mode === "file" || mode === "mix" ? this._linkBuf || null : null); if (mode !== "classic" && mode !== "file") prepareLink(age); } catch (err) { console.warn("[Age Writer ext] liaison", err); }
     }
     /** Charge (ou recharge) le fichier du son de liaison choisi dans les réglages. */
     async loadLinkFile() {
-      this._linkBuf = null; const n = String(this.ext.linkSoundFile || "").trim().replace(/^\[\[|\]\]$/g, ""); if (!n || (this.ext.linkSoundMode || "classic") !== "file") return;
-      try { const f = this.app.metadataCache.getFirstLinkpathDest(n, "") || this.app.vault.getAbstractFileByPath(n); if (!(f instanceof TFile) || !["mp3", "ogg", "wav", "m4a", "flac"].includes(String(f.extension).toLowerCase())) return;
+      this._linkBuf = null; this._linkName = null; const n = linkFileName(this.ext.linkSoundFile), m = this.ext.linkSoundMode || "classic"; if (!n || (m !== "file" && m !== "mix")) return;
+      this._linkName = n;
+      try { const f = findAudioFile(this.app, n); if (!f) { console.warn("[Age Writer ext] fichier du son de liaison introuvable :", n); return; }
         const c = require("./sound").audioContext(); if (!c) return; this._linkBuf = await c.decodeAudioData((await this.app.vault.readBinary(f)).slice(0)); } catch (err) { console.warn("[Age Writer ext] fichier du son de liaison", err); }
     }
 

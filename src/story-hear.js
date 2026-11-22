@@ -77,6 +77,18 @@ function humOf(st, now) {
   return dt < HUM_MS ? 1 - (1 - HUM_LOW) * (dt / HUM_MS) : HUM_LOW;
 }
 
+/** L'accord : le frémissement de l'encrier qui répond aux scarabées de la serre (0 à 1). Un épisode par tranche de quinze minutes, placé au hasard
+ *  dans ses cinq premières minutes (d'un épisode au suivant : dix à vingt minutes), et un juste après le retour de la serre (`back`) ; chacun part fort
+ *  et retombe en une minute et demie, comme au chapitre 14. */
+const SERRE_SLOT = 15 * 60000, SERRE_JIT = 5 * 60000, SERRE_EP = 90000;
+const slotRnd = (k) => { let h = 2166136261 ^ k; h = Math.imul(h ^ (h >>> 13), 16777619); h = Math.imul(h ^ (h >>> 15), 2246822519); return ((h >>> 0) % 100000) / 100000; };
+function serreHum(now, back = 0) {
+  const ep = (dt) => (dt < 0 || dt >= SERRE_EP ? 0 : dt < SERRE_EP - 10000 ? 1 - (1 - HUM_LOW) * (dt / (SERRE_EP - 10000)) : HUM_LOW * (SERRE_EP - dt) / 10000);
+  let v = back > 0 ? ep(now - back) : 0;
+  for (const k of [Math.floor(now / SERRE_SLOT), Math.floor(now / SERRE_SLOT) - 1]) v = Math.max(v, ep(now - (k * SERRE_SLOT + slotRnd(k) * SERRE_JIT)));
+  return v;
+}
+
 /** Le premier matin après `at` (heure locale) : la date où ce qui est venu la nuit est là. Avant MORNING h, c'est ce matin même. */
 function morningAfter(at) {
   const d = new Date(at), m = new Date(d.getFullYear(), d.getMonth(), d.getDate(), MORNING, 0, 0, 0);
@@ -100,4 +112,4 @@ function cryNow(st, now) {
 /** L'encre ne sèche plus sur le monde étrange dès que le 14 est ouvert (sans explication). Le nom de sa note, ou null. */
 const wetName = (st) => (open(st) && strangeOf(st) ? base(strangeOf(st)) : null);
 
-module.exports = { DAY, HUM_MS, HUM_LOW, MORNING, NIGHT_FROM, AGREE, stateOf, strangeOf, open, same, heard, struck, isStrange, answered, humOf, morningAfter, nightBefore, visitFrom, stoneHere, cryNow, wetName };
+module.exports = { serreHum, DAY, HUM_MS, HUM_LOW, MORNING, NIGHT_FROM, AGREE, stateOf, strangeOf, open, same, heard, struck, isStrange, answered, humOf, morningAfter, nightBefore, visitFrom, stoneHere, cryNow, wetName };

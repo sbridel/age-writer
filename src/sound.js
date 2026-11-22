@@ -537,10 +537,21 @@ function linkSoundFile(volume = 0.3, buf, age = {}) {
   const r = { samples, sr };
   return oneShot(n / sr / rate + 4, (c, out) => { out.gain.value = volume * bufferGain(buf) * 0.9; playSamples(c, out, r, rate, age); });
 }
-/** Le choix selon le réglage : "classic" | "new" | "both" | "file". `getFile()` : l'AudioBuffer du fichier, ou null. */
+/**
+ * Quelle liaison jouer, selon le réglage : "classic" | "new" | "both" (classique ou à l'ancienne) | "file" | "mix" (2.10.12 : classique ou mon fichier, au hasard ;
+ * sans fichier chargé, le classique). `hasFile` : le fichier est décodé. `rnd` : un tirage entre 0 et 1. Renvoie "classic", "new" ou "file".
+ */
+function linkPick(mode, hasFile, rnd = Math.random()) {
+  if (mode === "file") return hasFile ? "file" : "new";
+  if (mode === "new") return "new";
+  if (mode === "both") return rnd < 0.5 ? "classic" : "new";
+  if (mode === "mix") return hasFile && rnd >= 0.5 ? "file" : "classic";
+  return "classic";
+}
 function linkSoundBy(mode, volume, age = {}, fileBuf = null) {
-  if (mode === "file" && fileBuf) return linkSoundFile(volume, fileBuf, age);
-  if (mode === "new" || (mode === "both" && Math.random() < 0.5) || (mode === "file" && !fileBuf)) return linkSoundNew(volume, age);
+  const k = linkPick(mode, !!fileBuf);
+  if (k === "file") return linkSoundFile(volume, fileBuf, age);
+  if (k === "new") return linkSoundNew(volume, age);
   return linkSound(volume);
 }
 function linkSound(volume = 0.3) {
@@ -838,6 +849,19 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
     const keep = (n) => { room.nodes.push(n); return n; };
     const fileLoop = (buf) => { const s = keep(c.createBufferSource()), g = keep(c.createGain()); s.buffer = buf; s.loop = true; g.gain.value = bufferGain(buf); s.connect(g); g.connect(out); s.start(0, Math.random() * buf.duration * 0.5); };
     const loop = (f) => { const s = keep(c.createBufferSource()); s.buffer = noiseBuf(c, 3); s.loop = true; f(s); s.start(); return s; };
+    if (kind === "egg") {
+      /* la salle de l'œuf : cristallin ; une nappe grave très douce qui respire, un souffle d'air, et de temps en temps des notes de verre, longues, dans une grande salle de pierre */
+      const len = c.sampleRate * 5, ir = c.createBuffer(2, len, c.sampleRate); for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+      const rev = keep(c.createConvolver()), wet = keep(c.createGain()); rev.buffer = ir; wet.gain.value = 0.8; rev.connect(wet); wet.connect(out);
+      for (const [f, g] of [[110, 0.05], [110.4, 0.05], [164.8, 0.03], [220.3, 0.015]]) { const o = keep(c.createOscillator()), e = keep(c.createGain()), lfo = keep(c.createOscillator()), ld = keep(c.createGain()); o.type = "sine"; o.frequency.value = f; e.gain.value = g; lfo.frequency.value = 0.05 + Math.random() * 0.08; ld.gain.value = g * 0.6; lfo.connect(ld); ld.connect(e.gain); o.connect(e); e.connect(out); e.connect(rev); o.start(); lfo.start(); }
+      loop((src) => { const bp = keep(c.createBiquadFilter()), e = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 900; bp.Q.value = 0.7; e.gain.value = 0.012; src.connect(bp); bp.connect(e); e.connect(out); e.connect(rev); });
+      const NOTES = [1318.5, 1568, 1760, 1975.5, 2349.3, 2637, 3136], me = out;
+      const glass = (t0, f, g) => { for (const [m, gg, dur] of [[1, 1, 4.5], [2.76, 0.25, 2.2], [5.4, 0.08, 1.2]]) { const o = c.createOscillator(), e = c.createGain(), pan = c.createStereoPanner ? c.createStereoPanner() : null; o.type = "sine"; o.frequency.value = f * m; e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g * gg, t0 + 0.01); e.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.connect(e); const to = pan || e; if (pan) { pan.pan.value = Math.random() * 1.4 - 0.7; e.connect(pan); } to.connect(rev); to.connect(out); o.start(t0); o.stop(t0 + dur + 0.1); } };
+      const next = () => { if (room.out !== me) return; const t0 = c.currentTime + 0.05; glass(t0, NOTES[Math.floor(Math.random() * NOTES.length)], 0.03 + Math.random() * 0.03); if (Math.random() < 0.35) glass(t0 + 0.18 + Math.random() * 0.3, NOTES[Math.floor(Math.random() * NOTES.length)], 0.025);
+        room.timers.push(setTimeout(next, 2500 + Math.random() * 5000)); };
+      room.timers.push(setTimeout(next, 1500));
+      return true;
+    }
     if (kind === "imager") {
       // l'Imageur : deux bourdons graves ; le second s'écarte du premier selon le désaccord, d'où des battements
       // qui ralentissent à mesure que l'on s'accorde, puis se fondent ; une quinte cristalline s'ajoute quand l'image tient
@@ -917,6 +941,32 @@ function caveSfx(kind, volume = 0.3) {
   });
 }
 /**
+ * Ahyoheek, la table des trois signes : des sons de lumière (verre et bronze), brefs et doux. "start" la manche s'allume ; "tick" une seconde
+ * du compte (et l'anneau qui tourne d'un cran) ; "set" un adversaire pose son signe ; "mine" je pose le mien ; "reveal" les hologrammes se lèvent ;
+ * "win" / "lose" la manche est à moi / à un autre ; "game" / "gameLost" la partie ; "join" / "leave" un joueur s'assied, se lève ; "button" le bouton, le cadran.
+ */
+function ahySfx(kind, volume = 0.3) {
+  return oneShot(kind === "game" || kind === "gameLost" ? 2.2 : 1.4, (c, out, noise) => {
+    const t = c.currentTime; out.gain.value = volume * 0.45;
+    const bell = (t0, f, g = 0.2, dur = 0.8, type = "sine") => { const o = c.createOscillator(), e = c.createGain(); o.type = type; o.frequency.value = f; e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + 0.006); e.gain.exponentialRampToValueAtTime(0.0008, t0 + dur); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + dur + 0.05); };
+    const tick = (t0, f, g = 0.4, dur = 0.03) => { const n = noise(dur + 0.02), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 7; e.gain.setValueAtTime(g, t0); e.gain.exponentialRampToValueAtTime(0.001, t0 + dur); n.connect(bp); bp.connect(e); e.connect(out); n.start(t0); n.stop(t0 + dur + 0.02); };
+    const sweep = (t0, f0, f1, dur, g) => { const n = noise(dur), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = "bandpass"; bp.Q.value = 3; bp.frequency.setValueAtTime(f0, t0); bp.frequency.exponentialRampToValueAtTime(f1, t0 + dur); e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + dur * 0.4); e.gain.linearRampToValueAtTime(0, t0 + dur); n.connect(bp); bp.connect(e); e.connect(out); n.start(t0); n.stop(t0 + dur); };
+    const hum = (t0, f, dur, g) => { const o = c.createOscillator(), o2 = c.createOscillator(), e = c.createGain(); o.type = "sine"; o2.type = "sine"; o.frequency.setValueAtTime(f * 0.7, t0); o.frequency.exponentialRampToValueAtTime(f, t0 + dur * 0.5); o2.frequency.setValueAtTime(f * 0.7 * 1.006, t0); o2.frequency.exponentialRampToValueAtTime(f * 1.006, t0 + dur * 0.5); e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + dur * 0.3); e.gain.exponentialRampToValueAtTime(0.0008, t0 + dur); o.connect(e); o2.connect(e); e.connect(out); o.start(t0); o2.start(t0); o.stop(t0 + dur + 0.05); o2.stop(t0 + dur + 0.05); };
+    if (kind === "start") { hum(t, 220, 0.9, 0.18); sweep(t, 600, 3000, 0.5, 0.12); bell(t + 0.35, 880, 0.1, 0.7); }
+    else if (kind === "tick") { tick(t, 2600, 0.35, 0.025); bell(t, 1760, 0.05, 0.18); }
+    else if (kind === "set") { bell(t, 1175, 0.14, 0.4); bell(t + 0.04, 1760, 0.06, 0.35); }
+    else if (kind === "mine") { tick(t, 1800, 0.4, 0.03); bell(t + 0.01, 988, 0.18, 0.5); bell(t + 0.05, 1480, 0.1, 0.45); }
+    else if (kind === "reveal") { sweep(t, 400, 2400, 0.45, 0.2); for (const [i, f] of [523, 659, 784].entries()) bell(t + 0.18 + i * 0.03, f, 0.09, 0.9, "triangle"); }
+    else if (kind === "win") { for (const [i, f] of [784, 988, 1175, 1568].entries()) bell(t + 0.45 + i * 0.09, f, 0.12, 0.9); }
+    else if (kind === "lose") { bell(t + 0.45, 330, 0.12, 0.8, "triangle"); bell(t + 0.6, 294, 0.1, 0.9, "triangle"); }
+    else if (kind === "game") { for (const [i, f] of [523, 659, 784, 1047, 1319, 1568].entries()) bell(t + 0.5 + i * 0.11, f, 0.14, 1.4); hum(t + 0.5, 262, 1.6, 0.12); }
+    else if (kind === "gameLost") { for (const [i, f] of [440, 392, 330, 262].entries()) bell(t + 0.5 + i * 0.16, f, 0.12, 1.1, "triangle"); }
+    else if (kind === "join") { bell(t, 659, 0.12, 0.5); bell(t + 0.09, 988, 0.1, 0.6); } /* un joueur s'assied */
+    else if (kind === "leave") { bell(t, 988, 0.1, 0.45); bell(t + 0.09, 659, 0.1, 0.55, "triangle"); } /* il se lève */
+    else tick(t, 1500, 0.4, 0.03); /* un réglage : un cran de bronze */
+  });
+}
+/**
  * La dalle de la chambre des souvenirs : "notch", une pierre qu'on tourne d'un cran (un raclement de pierre bref et sourd,
  * moins d'un tiers de seconde) ; "open", les six justes (le grondement d'une pierre qui bascule, une fois). Discret : pas
  * d'accord tenu, pas de cri (l'auteur, 25 oct. : c'était trop long et trop fort).
@@ -945,4 +995,4 @@ function ovenSfx(kind, volume = 0.3) {
   });
 }
 
-module.exports = { linkSoundBy, linkSoundNew, linkSoundFile, prepareLink, ovenSfx, slabSfx, openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, roomLevel, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { ahySfx, linkSoundBy, linkPick, linkSoundNew, linkSoundFile, prepareLink, ovenSfx, slabSfx, openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, roomLevel, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
