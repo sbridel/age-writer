@@ -276,7 +276,7 @@ function drawGame(r, ctx, sc, sky, t) {
     ctx.fillStyle = "#c99a52"; ctx.beginPath(); ctx.ellipse(x, y, 3, 1.4, 0, 0, TAU); ctx.fill();
     r.hot.push({ x: x - 18, y: y - 10, w: 36, h: 20, tip: T("ahy.dial", { l: lv }), ahy: { level: true } }); }
   if (hx !== ctx) holoComposite(ctx, hx, t);
-  require("./relto-atelier").backButton(r, ctx, T(st.from === "desk" ? "ahy.back.desk" : "ahy.back.serre"), st.from === "desk" ? "desk" : "serre");
+  require("./relto-atelier").backButton(r, ctx, T("ahy.back." + (["desk", "cabin"].includes(st.from) ? st.from : "serre")), ["desk", "cabin"].includes(st.from) ? st.from : "serre");
   ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; /* remis comme ailleurs : l'infobulle s'écrit à gauche */
   void sc; void sky;
 }
@@ -313,4 +313,22 @@ function onDesk(r, ctx, c, t) {
   r.hot.push({ x: x - 40, y: y - 30, w: 80, h: 46, tip: T("ahy.table"), go: "ahyoheek" }); r.ahy = { ...(r.ahy || {}), from: "desk" };
 }
 
-module.exports = { drawGame, inSerre, onDesk, act, state, GLYPH, HC };
+/** Sur le manteau de la cheminée : un petit projecteur de bronze, et au-dessus l'anneau des trois signes en miniature, qui tourne d'un cran et vacille. */
+function onMantel(r, ctx, x, y, t) {
+  const T = TR(r), gl = glitchOf(t, 31), fl = (0.85 + 0.15 * Math.sin(t * 19) * Math.sin(t * 6.1)) * gl.a, cy = y - 22, R = 11;
+  ctx.save();
+  ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.beginPath(); ctx.ellipse(x + 1.5, y - 0.5, 11, 2.5, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = "#4a3418"; ctx.fillRect(x - 9, y - 5, 18, 5); ctx.fillStyle = "#a8783a"; ctx.beginPath(); ctx.ellipse(x, y - 5, 9, 2.4, 0, 0, TAU); ctx.fill(); /* le socle */
+  ctx.fillStyle = rgba(150, 190, 240, 0.7 * fl); ctx.beginPath(); ctx.ellipse(x, y - 5, 5, 1.3, 0, 0, TAU); ctx.fill(); /* la lentille */
+  ctx.globalCompositeOperation = "lighter";
+  const beam = ctx.createLinearGradient(0, y - 5, 0, cy - R); beam.addColorStop(0, rgba(140, 180, 230, 0.22 * fl)); beam.addColorStop(1, rgba(140, 180, 230, 0)); ctx.fillStyle = beam; ctx.beginPath(); ctx.moveTo(x - 4, y - 5); ctx.lineTo(x - R - 3, cy - R); ctx.lineTo(x + R + 3, cy - R); ctx.lineTo(x + 4, y - 5); ctx.closePath(); ctx.fill();
+  const el = r.opts && r.opts.reducedMotion ? 0 : t / 3, kk = Math.floor(el), fe = Math.min(1, (el - kk) / 0.07), rot = ((kk % 3) + 1 - (1 - fe) ** 3) * TAU / 3, dx = gl.on ? (q("mg" + gl.tick) - 0.5) * 4 : 0;
+  const pos = { beetle: -Math.PI / 2 + rot, pen: Math.PI / 6 + rot, page: Math.PI * 5 / 6 + rot };
+  ctx.strokeStyle = rgba(150, 185, 225, 0.5 * fl); ctx.lineWidth = 0.9; const ang = [pos.beetle, pos.pen, pos.page]; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(x + dx, cy, R, ang[i] + 0.45, (i < 2 ? ang[i + 1] : ang[0] + TAU) - 0.45); ctx.stroke(); }
+  for (const k of AH.SIGNS) { const c = HC[k]; anySign(ctx, k, x + dx + Math.cos(pos[k]) * R, cy + Math.sin(pos[k]) * R, k === "beetle" ? 3.6 : 3.4, k === "beetle" ? c : up(c, 40), 0.85 * fl, true); }
+  const g = ctx.createRadialGradient(x, cy, 0, x, cy, 6); g.addColorStop(0, rgba(170, 205, 245, 0.5 * fl)); g.addColorStop(1, rgba(170, 205, 245, 0)); ctx.fillStyle = g; ctx.fillRect(x - 6, cy - 6, 12, 12); /* le cœur, où serait le glyphe */
+  ctx.restore();
+  r.hot.push({ x: x - 18, y: cy - R - 8, w: 36, h: y - cy + R + 8, tip: T("ahy.mantel"), go: "ahyoheek" }); r.ahy = { ...(r.ahy || {}), from: "cabin" };
+}
+
+module.exports = { onMantel, drawGame, inSerre, onDesk, act, state, GLYPH, HC };
