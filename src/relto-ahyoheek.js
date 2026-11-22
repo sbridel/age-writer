@@ -237,7 +237,7 @@ function drawGame(r, ctx, sc, sky, t) {
   G.opp.forEach((o, i) => { const k = seats[i + 1], [x, y] = seatAt(k), dim = out(i + 1);
     if (dim) ctx.globalAlpha = 0.35;
     if (isWin(i + 1)) winMark(ctx, x, y, 18, t); emitter(ctx, x, y, 18, reveal && o.play ? HC[o.play] : null, reveal); if (reveal && o.play) holo(hx, o.play, x, y, isWin(i + 1) ? 28 : 22, isWin(i + 1) ? 1 : anyWin ? 0.28 : 0.8, t, i + 1);
-    tally(ctx, x + (x < C.x - 5 ? -84 : x > C.x + 5 ? 84 : 96), y - 6, 9, o.won);
+    { const side = Math.abs(x - C.x) > 100; tally(ctx, x + (x < C.x - 5 ? -1 : 1) * (side ? 102 : 84), y - (side ? 18 : 6), 9, o.won); } /* sur les côtés, un peu plus loin et plus haut : le chiffre gravé de la place reste visible */
     if (reveal && o.pts != null) numeral(ctx, o.pts, x, y + 32, 16, o.pts > 0 ? "#ffcf7a" : o.pts < 0 ? "#b0846a" : "#c99a52", o.pts < 0);
     ctx.globalAlpha = 1;
     r.hot.push({ x: x - 24, y: y - 40, w: 48, h: 54, tip: T(between ? "ahy.seat.taken" : "ahy.player", { n: k + 1 }), ahy: G.phase === "reveal" ? { next: true } : between ? { seat: k } : {} }); });
