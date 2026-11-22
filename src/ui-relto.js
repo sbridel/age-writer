@@ -815,10 +815,11 @@ async function renderRelto(plugin, source, el, ctx) {
   const roomAudio = async (v) => {
     const my = ++roomSeq;
     try {
-      if (!(roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat" || (v === "lounge" && (renderer.tapOn || hearthK("lounge") > 0)) || ((v === "cabin" || v === "atelier" || v === "atelierback") && fireLit() && hearthK(hearthOfView(v)) > 0) || (v === "imager" && plugin.ext.soundImagerHum !== false)) && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages")) { sound.roomStop(); return; }
+      if (!(roomSoundOn() && (v === "pond" || v === "pondplus" || v === "cat" || (v === "lounge" && (renderer.tapOn || hearthK("lounge") > 0)) || ((v === "cabin" || v === "atelier" || v === "atelierback") && fireLit() && hearthK(hearthOfView(v)) > 0) || (v === "imager" && plugin.ext.soundImagerHum !== false) || v === "egg") && root.getAttribute("data-tab") !== "settings" && root.getAttribute("data-tab") !== "pages")) { sound.roomStop(); return; }
       const tap = v === "lounge" && !!renderer.tapOn, stove = v === "lounge" && !tap; // le salon : le poêle crépite ; le robinet ouvert, l'eau coule
       const bufs = stove ? { main: await roomBuf("roomFireFile"), d: 0.45 } : v === "imager" ? { k: renderer.imagerClarity().atmo, total: renderer.imagerClarity().total, locked: !!(renderer.imager && renderer.imager.settings && renderer.imager.settings.lock) } : v === "cat" ? { main: await roomBuf("roomPurrFile"), meow: await roomBuf("roomMeowFile") } : (v === "cabin" || v === "atelier" || v === "atelierback") ? { main: await roomBuf("roomFireFile"), d: fireLit().density } : tap ? {} : { main: await roomBuf("roomWaterFile") }; // le robinet a son propre son (synthétisé), pas celui du bassin
       if (my !== roomSeq) return; // on a changé de vue pendant le chargement
+      if (v === "egg") { sound.roomStart("egg", roomVol()); return; } /* la salle de l'œuf : une ambiance cristalline */
       sound.roomStart(v === "imager" ? "imager" : v === "cat" ? "cat" : tap ? "tap" : (stove || v === "cabin" || v === "atelier" || v === "atelierback") ? "fire" : "water", roomVol() * (v === "imager" ? humVol() : hearthOfView(v) ? hearthK(hearthOfView(v)) : 1), bufs); /* le robinet : ses gains sont déjà bas (un petit filet, pas un geyser) */
     } catch (e) { /* ignore */ }
   };

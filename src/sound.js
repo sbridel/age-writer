@@ -849,6 +849,19 @@ function roomStart(kind, volume = 0.3, bufs = {}) {
     const keep = (n) => { room.nodes.push(n); return n; };
     const fileLoop = (buf) => { const s = keep(c.createBufferSource()), g = keep(c.createGain()); s.buffer = buf; s.loop = true; g.gain.value = bufferGain(buf); s.connect(g); g.connect(out); s.start(0, Math.random() * buf.duration * 0.5); };
     const loop = (f) => { const s = keep(c.createBufferSource()); s.buffer = noiseBuf(c, 3); s.loop = true; f(s); s.start(); return s; };
+    if (kind === "egg") {
+      /* la salle de l'œuf : cristallin ; une nappe grave très douce qui respire, un souffle d'air, et de temps en temps des notes de verre, longues, dans une grande salle de pierre */
+      const len = c.sampleRate * 5, ir = c.createBuffer(2, len, c.sampleRate); for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+      const rev = keep(c.createConvolver()), wet = keep(c.createGain()); rev.buffer = ir; wet.gain.value = 0.8; rev.connect(wet); wet.connect(out);
+      for (const [f, g] of [[110, 0.05], [110.4, 0.05], [164.8, 0.03], [220.3, 0.015]]) { const o = keep(c.createOscillator()), e = keep(c.createGain()), lfo = keep(c.createOscillator()), ld = keep(c.createGain()); o.type = "sine"; o.frequency.value = f; e.gain.value = g; lfo.frequency.value = 0.05 + Math.random() * 0.08; ld.gain.value = g * 0.6; lfo.connect(ld); ld.connect(e.gain); o.connect(e); e.connect(out); e.connect(rev); o.start(); lfo.start(); }
+      loop((src) => { const bp = keep(c.createBiquadFilter()), e = keep(c.createGain()); bp.type = "bandpass"; bp.frequency.value = 900; bp.Q.value = 0.7; e.gain.value = 0.012; src.connect(bp); bp.connect(e); e.connect(out); e.connect(rev); });
+      const NOTES = [1318.5, 1568, 1760, 1975.5, 2349.3, 2637, 3136], me = out;
+      const glass = (t0, f, g) => { for (const [m, gg, dur] of [[1, 1, 4.5], [2.76, 0.25, 2.2], [5.4, 0.08, 1.2]]) { const o = c.createOscillator(), e = c.createGain(), pan = c.createStereoPanner ? c.createStereoPanner() : null; o.type = "sine"; o.frequency.value = f * m; e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g * gg, t0 + 0.01); e.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.connect(e); const to = pan || e; if (pan) { pan.pan.value = Math.random() * 1.4 - 0.7; e.connect(pan); } to.connect(rev); to.connect(out); o.start(t0); o.stop(t0 + dur + 0.1); } };
+      const next = () => { if (room.out !== me) return; const t0 = c.currentTime + 0.05; glass(t0, NOTES[Math.floor(Math.random() * NOTES.length)], 0.03 + Math.random() * 0.03); if (Math.random() < 0.35) glass(t0 + 0.18 + Math.random() * 0.3, NOTES[Math.floor(Math.random() * NOTES.length)], 0.025);
+        room.timers.push(setTimeout(next, 2500 + Math.random() * 5000)); };
+      room.timers.push(setTimeout(next, 1500));
+      return true;
+    }
     if (kind === "imager") {
       // l'Imageur : deux bourdons graves ; le second s'écarte du premier selon le désaccord, d'où des battements
       // qui ralentissent à mesure que l'on s'accorde, puis se fondent ; une quinte cristalline s'ajoute quand l'image tient

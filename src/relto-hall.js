@@ -146,6 +146,14 @@ function drawHall(r, ctx, sc, sky, t) {
       if (cooking) { ctx.fillStyle = rgba(255, 150, 60, 0.25 * fl); const [ox, oy] = onQuad(mq, 0.3, 0.75); ctx.beginPath(); ctx.ellipse(ox, oy, 4, 6, 0, 0, TAU); ctx.fill(); } /* la porte du fond, dans le miroir */
       ctx.restore(); } }
   r.hot.push({ ...bbox(oval(1)), tip: castle ? tr("hall.mirror.castle") : tr("hall.mirror") });
+  { /* à droite, plus loin : une porte étroite, de pierre sombre, une lueur bleue dessous — la salle de l'œuf */
+    const dq = [Rr(0.6, 0.3), Rr(0.78, 0.33), Rr(0.78, 1), Rr(0.6, 1)], fr = [Rr(0.58, 0.27), Rr(0.8, 0.3), Rr(0.8, 1), Rr(0.58, 1)];
+    ctx.fillStyle = c(castle ? "#4a4650" : glass ? "#6a5440" : "#3a3a3a"); poly(ctx, fr); ctx.fill(); /* le chambranle */
+    const g = ctx.createLinearGradient(dq[0][0], 0, dq[1][0], 0); g.addColorStop(0, c("#1c2428")); g.addColorStop(1, c("#121a1e")); ctx.fillStyle = g; poly(ctx, dq); ctx.fill();
+    ctx.strokeStyle = rgba(120, 170, 190, 0.25); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(...onQuad(dq, 0.5, 0.08)); ctx.lineTo(...onQuad(dq, 0.5, 0.95)); ctx.stroke(); /* la jointure des deux battants */
+    const fl2 = 0.75 + 0.25 * Math.sin(t * 0.8), [ax, ay] = dq[3], [bx, by] = dq[2]; ctx.strokeStyle = rgba(120, 200, 230, 0.55 * fl2); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ax, ay - 1); ctx.lineTo(bx, by - 1); ctx.stroke();
+    const lg = ctx.createLinearGradient(0, ay, 0, ay + 16); lg.addColorStop(0, rgba(120, 200, 230, 0.22 * fl2)); lg.addColorStop(1, rgba(120, 200, 230, 0)); ctx.fillStyle = lg; poly(ctx, [[ax, ay], [bx, by], [bx - 30, by + 14], [ax - 40, ay + 16]]); ctx.fill(); /* la lueur bleue, sous la porte */
+    r.hot.push({ ...bbox(fr), tip: tr("hall.egg"), go: "egg" }); }
   { /* le banc, contre le mur : une assise épaisse qui avance dans le couloir, deux pieds courts */
     const k0 = 0.22, k1 = 0.5, sv = 0.8, out = (k) => 44 * (1 - f(k)) + 8, s0 = Rr(k0, sv), s1 = Rr(k1, sv), o0 = [s0[0] - out(k0), s0[1] + 4 * (1 - f(k0))], o1 = [s1[0] - out(k1), s1[1] + 4 * (1 - f(k1))];
     const wood = castle ? "#3a2a1e" : glass ? "#3a2418" : "#5a4028", th = (k) => 7 * (1 - f(k)) + 3, leg = (k) => Rr(k, 1)[1] - Rr(k, sv)[1];
