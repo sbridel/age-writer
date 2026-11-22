@@ -928,6 +928,30 @@ function caveSfx(kind, volume = 0.3) {
   });
 }
 /**
+ * Ahyoheek, la table des trois signes : des sons de lumière (verre et bronze), brefs et doux. "start" la manche s'allume ; "tick" une seconde
+ * du compte (et l'anneau qui tourne d'un cran) ; "set" un adversaire pose son signe ; "mine" je pose le mien ; "reveal" les hologrammes se lèvent ;
+ * "win" / "lose" la manche est à moi / à un autre ; "game" / "gameLost" la partie ; "button" un réglage.
+ */
+function ahySfx(kind, volume = 0.3) {
+  return oneShot(kind === "game" || kind === "gameLost" ? 2.2 : 1.4, (c, out, noise) => {
+    const t = c.currentTime; out.gain.value = volume * 0.45;
+    const bell = (t0, f, g = 0.2, dur = 0.8, type = "sine") => { const o = c.createOscillator(), e = c.createGain(); o.type = type; o.frequency.value = f; e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + 0.006); e.gain.exponentialRampToValueAtTime(0.0008, t0 + dur); o.connect(e); e.connect(out); o.start(t0); o.stop(t0 + dur + 0.05); };
+    const tick = (t0, f, g = 0.4, dur = 0.03) => { const n = noise(dur + 0.02), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 7; e.gain.setValueAtTime(g, t0); e.gain.exponentialRampToValueAtTime(0.001, t0 + dur); n.connect(bp); bp.connect(e); e.connect(out); n.start(t0); n.stop(t0 + dur + 0.02); };
+    const sweep = (t0, f0, f1, dur, g) => { const n = noise(dur), bp = c.createBiquadFilter(), e = c.createGain(); bp.type = "bandpass"; bp.Q.value = 3; bp.frequency.setValueAtTime(f0, t0); bp.frequency.exponentialRampToValueAtTime(f1, t0 + dur); e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + dur * 0.4); e.gain.linearRampToValueAtTime(0, t0 + dur); n.connect(bp); bp.connect(e); e.connect(out); n.start(t0); n.stop(t0 + dur); };
+    const hum = (t0, f, dur, g) => { const o = c.createOscillator(), o2 = c.createOscillator(), e = c.createGain(); o.type = "sine"; o2.type = "sine"; o.frequency.setValueAtTime(f * 0.7, t0); o.frequency.exponentialRampToValueAtTime(f, t0 + dur * 0.5); o2.frequency.setValueAtTime(f * 0.7 * 1.006, t0); o2.frequency.exponentialRampToValueAtTime(f * 1.006, t0 + dur * 0.5); e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(g, t0 + dur * 0.3); e.gain.exponentialRampToValueAtTime(0.0008, t0 + dur); o.connect(e); o2.connect(e); e.connect(out); o.start(t0); o2.start(t0); o.stop(t0 + dur + 0.05); o2.stop(t0 + dur + 0.05); };
+    if (kind === "start") { hum(t, 220, 0.9, 0.18); sweep(t, 600, 3000, 0.5, 0.12); bell(t + 0.35, 880, 0.1, 0.7); }
+    else if (kind === "tick") { tick(t, 2600, 0.35, 0.025); bell(t, 1760, 0.05, 0.18); }
+    else if (kind === "set") { bell(t, 1175, 0.14, 0.4); bell(t + 0.04, 1760, 0.06, 0.35); }
+    else if (kind === "mine") { tick(t, 1800, 0.4, 0.03); bell(t + 0.01, 988, 0.18, 0.5); bell(t + 0.05, 1480, 0.1, 0.45); }
+    else if (kind === "reveal") { sweep(t, 400, 2400, 0.45, 0.2); for (const [i, f] of [523, 659, 784].entries()) bell(t + 0.18 + i * 0.03, f, 0.09, 0.9, "triangle"); }
+    else if (kind === "win") { for (const [i, f] of [784, 988, 1175, 1568].entries()) bell(t + 0.45 + i * 0.09, f, 0.12, 0.9); }
+    else if (kind === "lose") { bell(t + 0.45, 330, 0.12, 0.8, "triangle"); bell(t + 0.6, 294, 0.1, 0.9, "triangle"); }
+    else if (kind === "game") { for (const [i, f] of [523, 659, 784, 1047, 1319, 1568].entries()) bell(t + 0.5 + i * 0.11, f, 0.14, 1.4); hum(t + 0.5, 262, 1.6, 0.12); }
+    else if (kind === "gameLost") { for (const [i, f] of [440, 392, 330, 262].entries()) bell(t + 0.5 + i * 0.16, f, 0.12, 1.1, "triangle"); }
+    else tick(t, 1500, 0.4, 0.03); /* un réglage : un cran de bronze */
+  });
+}
+/**
  * La dalle de la chambre des souvenirs : "notch", une pierre qu'on tourne d'un cran (un raclement de pierre bref et sourd,
  * moins d'un tiers de seconde) ; "open", les six justes (le grondement d'une pierre qui bascule, une fois). Discret : pas
  * d'accord tenu, pas de cri (l'auteur, 25 oct. : c'était trop long et trop fort).
@@ -956,4 +980,4 @@ function ovenSfx(kind, volume = 0.3) {
   });
 }
 
-module.exports = { linkSoundBy, linkPick, linkSoundNew, linkSoundFile, prepareLink, ovenSfx, slabSfx, openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, roomLevel, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
+module.exports = { ahySfx, linkSoundBy, linkPick, linkSoundNew, linkSoundFile, prepareLink, ovenSfx, slabSfx, openEndMs: () => (bookOpen.endMs > 0 ? bookOpen.endMs : 0), caveSfx, knock, creak, slideStone, slideWood, crystalChord, twoVoices, segmentsOf, audioContext: sfxCtx, roomStart, roomStop, roomLevel, imagerTune, imagerSfx, telescopeSfx, meow, purr, jingle, squeak, LINK_VARIANTS, pickLinkVariant, linkBuild, bookOpen, pageTurn, openSequence, linkSound, zenify, staticBurst, PRESETS, MODES, layersForWorld, layersForMechs, layersForNames, mergeLayers, Soundscape };
