@@ -164,7 +164,7 @@ function tick(r) {
   const sec = Math.max(0, Math.ceil((c.end - n) / 1000)); if (c.sec == null) c.sec = sec; if (sec < c.sec) { c.sec = sec; if (!c.mine && sec > 0) snd(r, "tick"); } /* chaque seconde : un tic, et l'anneau tourne d'un cran */
   c.heard = c.heard || []; c.vt.forEach((v, i) => { if (!c.heard[i] && n >= v) { c.heard[i] = true; if (!c.mine) snd(r, "set"); } }); /* un adversaire pose son signe (après le mien, ils se décident ensemble : on ne les entend pas un à un) */
   if (!c.mine && n >= c.end) pickMine(r, AH.SIGNS[Math.floor(Math.random() * 3)], true);
-  if (c.mine && n >= c.revealAt) { st.clock = null; if (AH.play(G, c.mine)) { settle(r); st.late = c.late ? G.round : null; st.revealT = now(); snd(r, "reveal");
+  if (c.mine && n >= c.revealAt) { st.clock = null; if (AH.play(G, c.mine)) { settle(r); st.late = c.late ? G.round : null; snd(r, "reveal");
     if (G.phase === "won") snd(r, G.end.i === 0 ? "game" : "gameLost"); else if (G.winners && G.winners.length) snd(r, G.winners.includes(0) ? "win" : "lose"); } }
 }
 /** Une partie qui vient de finir : le rang bouge (une fois), si on joue « selon le rang ». */
@@ -185,15 +185,6 @@ function holoComposite(ctx, h, t) {
   ctx.filter = `blur(${(2.2 * sc).toFixed(1)}px)`; ctx.globalAlpha = 0.75; ctx.drawImage(L, 0, 0); ctx.filter = "none"; /* le halo trouble */
   ctx.globalAlpha = 0.8; ctx.drawImage(L, 0, 0); ctx.restore();
 }
-/** Entre deux manches : le signe gagnant, en géant, se lève de la table et dérive dans la salle, granuleux, avec sa traînée ; puis il s'efface. */
-function bigHolo(h, kind, since, t, seed) {
-  const c = HC[kind], D = 5.5, path = (e) => { const u = Math.min(1, e / D); return [320 + (seed % 2 ? 1 : -1) * (40 + 170 * u) + Math.sin(u * 4 + seed) * 14, 100 - u * 40 + Math.sin(u * 5 + seed) * 10]; }; /* il monte de la table et s'en va de côté, au-dessus de la salle */
-  const env = (e) => Math.max(0, Math.min(1, e / 0.7, (D - e) / 1.6));
-  for (let j = 6; j >= 0; j--) { const e = since - j * 0.14; if (e <= 0) continue; const [x, y] = path(e), a = env(e) * (j ? 0.18 * Math.pow(0.7, j) : 0.42), s = 58 + Math.min(1, e / D) * 30;
-    anySign(h, kind, x, y, s, kind === "beetle" ? c : up(c, 50), a, true); }
-  void t;
-}
-
 /* ---- la vue rapprochée ---- */
 const C = { x: 320, y: 182 }, RX = 250, RY = 132;
 const seatAt = (k) => { const a = Math.PI / 2 + k * TAU / 5; return [C.x + Math.cos(a) * RX * 0.66, C.y + Math.sin(a) * RY * 0.66]; };
@@ -244,7 +235,6 @@ function drawGame(r, ctx, sc, sky, t) {
   /* l'anneau : un cercle de lumière debout au-dessus de la vasque, les trois signes dessus, le glyphe du jeu au cœur */
   { const cx = C.x, cy = C.y - 86, R = 62, fl = 0.9 + 0.1 * Math.sin(t * 17) * Math.sin(t * 5.1);
     hx.save(); hx.globalCompositeOperation = "lighter";
-    if (G.phase !== "choose" && anyWin && st.revealT) { const k0 = [G.me, ...G.opp][G.winners[0]].play; if (k0) bigHolo(hx, k0, (nowMs - st.revealT) / 1000, t, G.round); } /* entre deux manches, le signe gagnant en géant */
     const beam = hx.createLinearGradient(0, C.y - 4, 0, cy - R); beam.addColorStop(0, rgba(140, 180, 230, 0.12)); beam.addColorStop(1, rgba(170, 210, 255, 0)); hx.fillStyle = beam; hx.beginPath(); hx.moveTo(cx - 50, C.y - 4); hx.lineTo(cx - R - 10, cy - R); hx.lineTo(cx + R + 10, cy - R); hx.lineTo(cx + 50, C.y - 4); hx.closePath(); hx.fill();
     /* l'anneau tourne d'un cran (un tiers de tour : chaque signe prend la place du suivant), d'un coup sec : à chaque seconde pendant le compte, plus lentement sinon */
     const per = clk && !reveal ? 1 : 3, el = r.opts && r.opts.reducedMotion ? 0 : clk && !reveal ? (COUNT - (clk.end - nowMs)) / 1000 : nowMs / 1000 / per, kk = Math.floor(el), fe = Math.min(1, (el - kk) / (0.22 / per)), rot = ((kk % 3) + 1 - (1 - fe) ** 3) * TAU / 3; /* modulo 3 : le canvas compte ses angles en petite précision, un angle énorme y perd l'arc */
@@ -254,10 +244,11 @@ function drawGame(r, ctx, sc, sky, t) {
     const fam = r.dni && r.dni.fontFamily && r.dni.fontFamily();
     const wonSign = reveal && anyWin ? [G.me, ...G.opp][G.winners[0]].play : null;
     if (clk && !reveal) { const left = Math.max(0, Math.ceil((clk.end - nowMs) / 1000)); hx.shadowColor = rgba(170, 210, 255, 0.8 * fl); hx.shadowBlur = 8; const gl = glitchOf(t, 21); glitchy(hx, cx, cy, 23, gl, 21, (dx) => numeral(hx, left, cx + dx, cy, 46, rgba(170, 210, 250, 0.7 * fl * gl.a))); hx.shadowBlur = 5; } /* le compte à rebours, en chiffre D'ni */
-    else if (wonSign) { const c = HC[wonSign]; hx.shadowColor = rgba(c[0], c[1], c[2], fl); hx.shadowBlur = wonSign === "beetle" ? 0 : 10; const gl = glitchOf(t, 22); glitchy(hx, cx, cy, 30, gl, 22, (dx) => anySign(hx, wonSign, cx + dx, cy, 30, wonSign === "beetle" ? c : up(c, 60), 0.95 * fl * gl.a, true)); hx.shadowBlur = 5; } /* le signe qui gagne la manche */
     else if (fam && typeof document !== "undefined") { const im = glyphImg(r, fam), gl = glitchOf(t, 23); hx.shadowColor = rgba(90, 150, 240, 0.9 * fl); hx.shadowBlur = 12;
       glitchy(hx, cx, cy, 40, gl, 23, (dx) => { hx.globalAlpha = 0.75 * fl * gl.a; hx.drawImage(im, cx + dx - im.width / 2, cy - im.height / 2); hx.globalAlpha = 1; }); hx.shadowBlur = 5; } /* le glyphe, en lettres D'ni ; sans police D'ni, l'anneau reste vide en son cœur */
-    for (const k of AH.SIGNS) { const a = pos[k], x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R, c = HC[k]; hx.shadowColor = rgba(c[0], c[1], c[2], 0.8 * fl); hx.shadowBlur = k === "beetle" ? 0 : 6; anySign(hx, k, x, y, k === "beetle" ? 16.5 : 17, k === "beetle" ? c : up(c, 40), 0.9 * fl, true); }
+    for (const k of AH.SIGNS) { const a = pos[k], x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R, c = HC[k], lit = wonSign === k, dim = wonSign && !lit, z = lit ? 1.35 + 0.08 * Math.sin(t * 5) : 1; /* le signe qui gagne la manche s'illumine sur l'anneau ; les deux autres s'éteignent un peu */
+      if (lit) { const g = hx.createRadialGradient(x, y, 2, x, y, 34); g.addColorStop(0, rgba(c[0], c[1], c[2], 0.55 * fl)); g.addColorStop(1, rgba(c[0], c[1], c[2], 0)); hx.fillStyle = g; hx.fillRect(x - 34, y - 34, 68, 68); }
+      hx.shadowColor = rgba(c[0], c[1], c[2], (lit ? 1 : 0.8) * fl); hx.shadowBlur = k === "beetle" ? 0 : lit ? 14 : 6; anySign(hx, k, x, y, (k === "beetle" ? 16.5 : 17) * z, k === "beetle" ? (lit ? up(c, 60) : c) : up(c, lit ? 90 : 40), (dim ? 0.35 : lit ? 1 : 0.9) * fl, true); }
     hx.restore();
     r.hot.push({ x: cx - R - 16, y: cy - R - 16, w: 2 * R + 32, h: 2 * R + 32, tip: T("ahy.rules"), ...(reveal ? { ahy: { next: true } } : {}) }); }
   /* ma place, devant : mes trois projecteurs ; au survol, le signe se lève ; joué, il reste levé */
