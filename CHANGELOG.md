@@ -2,6 +2,21 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## 2.11 — A lived-in Relto (2.11.0, 2026-11-25)
+
+### Added
+- **Baykh, the game of roads**, on the low table in the lounge, always there (click the board). Rules after *Tak*, by James Ernest and Patrick Rothfuss. Join two opposite edges with a road of your pieces: a **Way** lies flat and counts for the road, a **Lock** stands and blocks without counting, your **Keystone** counts and can flatten a Lock by arriving on it alone; or move a stack whose top you hold, sowing at least one piece per square in a straight line. Board full or reserve empty: the Ways on top count.
+  - Against the house: easy, medium, hard (it thinks within a set time), or by rank; boards from 3×3 to 8×8, set on a dial in D'ni numerals; touching a reserve at the start picks your colour (light begins).
+  - Played without text: touch a square to lay a Way, your reserve first for a Lock; a move of a stack is confirmed with the amber button or put back with the bronze one.
+  - The pieces follow the lounge's disguise: stone by default, glass and copper in the Glasshouse (amber against water green), octagons in the Castle (bordeaux against midnight blue, a gold fillet).
+  - A **box of Keystones** at the edge of the table: eight models in nine colours; the house draws its own at random.
+  - A top view; the game is kept from one visit to the next; a notebook keeps the games played.
+- **The five guilds have their signs**, drawn by the author: archivists, writers, messengers, cartographers, maintainers.
+  - Five banners in the hallway, two of them on the far wall either side of the forge door: cloth on planks, fringed velvet in the Castle, leaded stained glass in the Glasshouse.
+  - The wax seal of an unread letter carries the writers' sign; the house's side of the Baykh table has a brass plaque with its guild.
+  - The secret mini game's figurines wear them too (embroidered, or engraved), and so does its projector.
+- **A bedside lamp** at the head of the bed in the writing room: the bee's glass or the hand's (a click changes it), glowing more at night.
+
 ## 2.10 — Dead stars (2.10.0 to 2.10.13, 2026-11-08 to 25)
 
 ### Added
