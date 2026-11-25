@@ -280,7 +280,7 @@ function act(r, a) {
     else if (G.phase === "reveal") act(r, { next: true });
     else if (!st.clock) arm(r); }
   else if (a.wait) { st.press = ["wait", now()]; st.G = AH.newGame(cur(r)); st.clock = null; snd(r, "button"); } /* le bouton de bronze : la table se remet en attente, l'anneau revient au glyphe */
-  else if (a.figs) { save(r, { figs: (cur(r).figs + 1) % FIGS }); snd(r, "button"); } /* toucher une figurine : tout le jeu change */
+  else if (a.figs != null && a.figs !== false) { save(r, { figs: typeof a.figs === "number" ? Math.max(0, Math.min(FIGS - 1, a.figs | 0)) : (cur(r).figs + 1) % FIGS }); snd(r, "button"); } /* toucher une figurine : tout le jeu change */
   else if (a.panel) { st.panel = a.panel; snd(r, "button"); } /* la plaque des règles, le registre */
   else if (a.close) st.panel = null;
 }
@@ -332,8 +332,8 @@ function holoComposite(ctx, h, t) {
 function room(ctx, from, t) {
   const serre = !["desk", "cabin"].includes(from), WALL = 104;
   /* le sol */
-  const fl = ctx.createLinearGradient(0, WALL - 10, 0, H); fl.addColorStop(0, serre ? "#1c140c" : "#1e130a"); fl.addColorStop(1, serre ? "#3a2414" : "#3c2614"); ctx.fillStyle = fl; ctx.fillRect(0, 0, W, H);
-  if (serre) for (let k = 0; k < 14; k++) { const y0 = 70 + k * k * 1.75, h = 3 + k * 1.3, w = 22 + k * 5.5, off = (k % 2) * w / 2; for (let x = -w + off; x < W + w; x += w) { const v = q("b" + k + "_" + Math.round(x)); ctx.fillStyle = rgba(96 + v * 50, 54 + v * 26, 30 + v * 12, 0.12 + k * 0.022); ctx.fillRect(x + 1, y0 + 1, w - 2, h - 1); } } /* les tomettes */
+  const fl = ctx.createLinearGradient(0, WALL - 10, 0, H); fl.addColorStop(0, serre ? "#141412" : "#1e130a"); fl.addColorStop(1, serre ? "#2e2c28" : "#3c2614"); ctx.fillStyle = fl; ctx.fillRect(0, 0, W, H);
+  if (serre) { ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(0, 0, W, H); for (let k = 0; k < 14; k++) { const y0 = 70 + k * k * 1.75, h = 3 + k * 1.3, w = 34 + k * 9, off = q("so" + k) * w; for (let x = -w + off; x < W + w; x += w * (0.7 + q("sw" + k + "_" + Math.round(x)) * 0.6)) { const v = q("s" + k + "_" + Math.round(x)), ww = w * (0.7 + q("sw" + k + "_" + Math.round(x)) * 0.6); ctx.fillStyle = rgba(104 + v * 30, 102 + v * 28, 96 + v * 24, 0.16 + k * 0.03); ctx.fillRect(x + 1, y0 + 1, ww - 2, h - 1.2); } } } /* les dalles de pierre, de longueurs inégales */
   else { for (let k = 0; k < 14; k++) { const y0 = 70 + k * k * 1.75, h = 3 + k * 1.3; ctx.fillStyle = rgba(150, 96, 52, 0.08 + k * 0.016); ctx.fillRect(0, y0, W, h - 0.8); ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(0, y0 + h - 0.8, W, 0.8); /* les lames du parquet */
       const L = 60 + k * 14; for (let x = (q("p" + k) * L) - L; x < W; x += L) { ctx.fillRect(x, y0, 0.8, h - 0.8); } } }
   /* le mur du fond */
@@ -346,7 +346,7 @@ function room(ctx, from, t) {
       ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x + bay / 2, 2); ctx.lineTo(x + bay / 2, WALL); ctx.moveTo(x, 54); ctx.lineTo(x + bay, 54); ctx.stroke(); ctx.lineWidth = 3; /* les meneaux */
       ctx.fillStyle = rgba(190, 230, 210, 0.04 + 0.02 * Math.sin(t * 0.3 + x)); ctx.fillRect(x + 4, 30, bay / 2 - 8, 20); } /* un reflet sur le verre */
     for (let i = 0; i < 26; i++) { const x = q("fx" + i) * W, h = 14 + q("fh" + i) * 26; ctx.fillStyle = rgba(18, 38, 22, 0.9); ctx.beginPath(); ctx.ellipse(x, WALL - h * 0.4, 6 + q("fw" + i) * 10, h * 0.5, (q("fr" + i) - 0.5) * 0.8, 0, TAU); ctx.fill(); } /* les plantes, devant, au pied de la verrière */
-    ctx.fillStyle = "#2a1e14"; ctx.fillRect(0, WALL - 6, W, 6); } /* le muret */
+    ctx.fillStyle = "#34322c"; ctx.fillRect(0, WALL - 6, W, 6); ctx.fillStyle = rgba(200, 196, 180, 0.15); ctx.fillRect(0, WALL - 6, W, 1); } /* le muret, de pierre */
   else { /* l'atelier : des boiseries, deux rayonnages de livres et de bocaux, la lueur d'une lampe */
     ctx.fillStyle = "#1e1309"; ctx.fillRect(0, 0, W, WALL);
     for (let x = 0; x < W; x += 34) { ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.fillRect(x, 0, 1.2, WALL); ctx.fillStyle = rgba(120, 76, 40, 0.08 + q("pn" + x) * 0.06); ctx.fillRect(x + 1.2, 0, 32.8, WALL); } /* les panneaux */
