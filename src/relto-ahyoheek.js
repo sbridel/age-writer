@@ -114,21 +114,39 @@ function tokens(h, x, y, won, t, dir = -1, s = 4.4) {
 }
 /** Les figurines posées aux places occupées, en trois jeux (on change de jeu en touchant l'une d'elles). Toutes ont le même socle : un plot
  *  rond de pierre, avec sur sa face avant un cartouche de laiton où le chiffre D'ni de la place est gravé. Dessus :
- *  0, une statuette en robe à capuchon, les mains jointes dans les manches, un médaillon émaillé sur la poitrine (un emblème par caractère) ;
+ *  0, une statuette en robe de guilde à capuchon, les mains jointes dans les manches, l'emblème de sa guilde sur un médaillon d'or émaillé ;
  *  1, une stèle, la lettre D'ni du caractère gravée et teintée ; 2, une lampe de rue en petit, sur son pilier, le verre teinté par caractère
  *  (un médaillon ovale à côtes, un verre haut où monte un éventail de feuilles, ou une lanterne carrée à rayons).
  *  Les couleurs (ambre, violet, ivoire, rose, jais) ne sont aucune de celles du jeu. */
-const FIG_COL = { faithful: [235, 175, 60], mimic: [160, 100, 215], sly: [235, 225, 200], collector: [225, 110, 170], wary: [40, 36, 44] };
+/* chaque caractère porte la couleur d'une guilde D'ni (aucune n'est celle d'un signe du jeu) : le fidèle, les archivistes (or) ;
+ * l'imitateur, les linguistes (blanc) ; le malin, les analystes (orange) ; le collectionneur, les fabricants d'encre (pourpre) ;
+ * le méfiant, les guérisseurs (rose saumon). Les emblèmes sont inventés, d'après ce que fait chaque guilde. */
+const FIG_COL = { faithful: [214, 168, 64], mimic: [236, 232, 222], sly: [232, 128, 44], collector: [128, 72, 170], wary: [236, 140, 120] };
 const FIG_LETTER = { faithful: "b", mimic: "d", sly: "g", collector: "k", wary: "t" };
 const FIGS = 3;
 const STONE = (ctx, x0, x1) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, "#4a4032"); g.addColorStop(0.38, "#b4a384"); g.addColorStop(0.6, "#9a8a6c"); g.addColorStop(1, "#3a3226"); return g; };
-function emblem(ctx, char, x, y, s) { /* un emblème inventé, gravé en or sur l'émail */
-  ctx.strokeStyle = "#ffe6a8"; ctx.fillStyle = "#ffe6a8"; ctx.lineWidth = s * 0.22; ctx.beginPath();
-  if (char === "faithful") { ctx.arc(x, y, s * 0.5, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, s * 0.16, 0, TAU); ctx.fill(); } /* un cercle et son centre */
-  else if (char === "mimic") { ctx.arc(x - s * 0.22, y, s * 0.42, -1.2, 1.2); ctx.stroke(); ctx.beginPath(); ctx.arc(x + s * 0.22, y, s * 0.42, Math.PI - 1.2, Math.PI + 1.2); ctx.stroke(); } /* deux arcs qui se répondent */
-  else if (char === "sly") { ctx.moveTo(x - s * 0.5, y + s * 0.35); ctx.lineTo(x - s * 0.15, y - s * 0.35); ctx.lineTo(x + s * 0.15, y + s * 0.35); ctx.lineTo(x + s * 0.5, y - s * 0.35); ctx.stroke(); } /* un zigzag */
-  else if (char === "collector") { ctx.moveTo(x - s * 0.5, y - s * 0.4); ctx.quadraticCurveTo(x, y + s * 0.7, x + s * 0.5, y - s * 0.4); ctx.stroke(); } /* une coupe */
-  else { ctx.ellipse(x, y, s * 0.55, s * 0.3, 0, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, s * 0.14, 0, TAU); ctx.fill(); } /* un œil */
+const ROBE = (ctx, x0, x1, c) => { const m = (k) => rgba(Math.round(c[0] * k), Math.round(c[1] * k), Math.round(c[2] * k), 1), g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, m(0.32)); g.addColorStop(0.38, m(0.78)); g.addColorStop(0.6, m(0.6)); g.addColorStop(1, m(0.26)); return g; }; /* la robe, de la couleur de la guilde */
+/** L'emblème, en trait d'or sur l'émail : inventé d'après le métier de la guilde. */
+function emblem(ctx, char, x, y, s, col = "#ffe6a8") {
+  ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = s * 0.13; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath();
+  if (char === "faithful") { /* les archivistes : trois tablettes empilées, un anneau au-dessus (ce qu'on garde) */
+    for (let k = 0; k < 3; k++) { const yy = y + s * (0.05 + k * 0.22), w = s * (0.36 + k * 0.08); ctx.strokeRect(x - w, yy, 2 * w, s * 0.14); }
+    ctx.beginPath(); ctx.arc(x, y - s * 0.3, s * 0.18, 0, TAU); ctx.stroke(); }
+  else if (char === "mimic") { /* les linguistes : deux paroles qui se font face, de part et d'autre d'un trait */
+    ctx.moveTo(x, y - s * 0.55); ctx.lineTo(x, y + s * 0.55); ctx.stroke();
+    for (const d of [-1, 1]) { ctx.beginPath(); ctx.arc(x + d * s * 0.62, y, s * 0.42, d < 0 ? -0.95 : Math.PI - 0.95, d < 0 ? 0.95 : Math.PI + 0.95); ctx.stroke(); ctx.beginPath(); ctx.arc(x + d * s * 0.66, y, s * 0.2, d < 0 ? -1.1 : Math.PI - 1.1, d < 0 ? 1.1 : Math.PI + 1.1); ctx.stroke(); } }
+  else if (char === "sly") { /* les analystes : une lentille, un trait de mesure qui la traverse, trois points */
+    ctx.arc(x - s * 0.08, y - s * 0.06, s * 0.34, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x - s * 0.6, y + s * 0.5); ctx.lineTo(x + s * 0.55, y - s * 0.6); ctx.stroke();
+    for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(x + s * (0.2 + k * 0.17), y + s * (0.32 + k * 0.08), s * 0.06, 0, TAU); ctx.fill(); } }
+  else if (char === "collector") { /* les fabricants d'encre : une goutte au-dessus d'une coupe, trois rides */
+    ctx.moveTo(x, y - s * 0.62); ctx.quadraticCurveTo(x + s * 0.3, y - s * 0.18, x, y - s * 0.06); ctx.quadraticCurveTo(x - s * 0.3, y - s * 0.18, x, y - s * 0.62); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x - s * 0.55, y + s * 0.1); ctx.quadraticCurveTo(x, y + s * 0.75, x + s * 0.55, y + s * 0.1); ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - s * 0.3, y + s * 0.22); ctx.lineTo(x + s * 0.3, y + s * 0.22); ctx.stroke(); }
+  else { /* les guérisseurs : une tige, deux paires de feuilles, un bourgeon */
+    ctx.moveTo(x, y + s * 0.6); ctx.lineTo(x, y - s * 0.4); ctx.stroke();
+    for (const [yy, w] of [[0.25, 0.42], [-0.08, 0.32]]) for (const d of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x, y + s * yy); ctx.quadraticCurveTo(x + d * s * w, y + s * (yy - 0.28), x + d * s * w * 1.05, y + s * (yy - 0.05)); ctx.quadraticCurveTo(x + d * s * w * 0.5, y + s * (yy + 0.05), x, y + s * yy); ctx.fill(); }
+    ctx.beginPath(); ctx.arc(x, y - s * 0.48, s * 0.11, 0, TAU); ctx.fill(); }
+  ctx.restore();
 }
 function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
   const c = FIG_COL[char] || FIG_COL.wary, top = -6;
@@ -146,7 +164,7 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
     ctx.strokeStyle = rgba(40, 30, 18, 0.5); ctx.lineWidth = 0.5; ctx.stroke();
     ctx.strokeStyle = rgba(255, 240, 210, 0.25); ctx.beginPath(); ctx.moveTo(-3.3, top - 2); ctx.lineTo(-3, top - 14); ctx.quadraticCurveTo(0, top - 18.5, 3, top - 14); ctx.lineTo(3.3, top - 2); ctx.stroke(); /* le cadre gravé */
     if (fam) { ctx.font = `9px ${fam}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = rgba(c[0], c[1], c[2], 0.95); ctx.fillText(FIG_LETTER[char] || "b", 0, top - 9); }
-    else emblem(ctx, char, 0, top - 9, 4.5); }
+    else emblem(ctx, char, 0, top - 9, 4.5, rgba(c[0], c[1], c[2], 0.95)); }
   else if (set === 2) { /* la lampe de rue D'ni, en petit : un pilier de pierre carré à chapiteau, et dessus un verre serti de plomb,
      * aux reflets changeants autour de la teinte du caractère ; trois formes : le médaillon ovale à côtes, le verre haut en éventail, la lanterne à rayons */
     const kind = { faithful: "oval", mimic: "fan", sly: "rays", collector: "oval", wary: "fan" }[char] || "oval", P = top - 4.5;
@@ -178,16 +196,18 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
       ctx.save(); ctx.beginPath(); ctx.rect(x0 + 0.9, y0 + 0.9, w - 1.8, h - 1.8); ctx.clip(); ctx.strokeStyle = lead; ctx.lineWidth = 0.45; const ry = y0 + h * 0.56;
       ctx.beginPath(); ctx.arc(0, ry, 1.5, 0, TAU); ctx.stroke(); for (let k = 0; k < 10; k++) { const a = Math.PI + k * Math.PI / 9; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 1.5, ry + Math.sin(a) * 1.5); ctx.lineTo(Math.cos(a) * 6, ry + Math.sin(a) * 6); ctx.stroke(); }
       ctx.beginPath(); ctx.moveTo(x0, ry); ctx.lineTo(x0 + w, ry); ctx.stroke(); ctx.beginPath(); ctx.arc(0, ry, 3.3, Math.PI, TAU); ctx.stroke(); ctx.restore(); } }
-  else { /* la statuette : la robe évasée, les manches jointes, le capuchon, le médaillon */
-    const g = STONE(ctx, -6, 6);
+  else { /* la statuette : la robe de la guilde, évasée, les manches jointes, le capuchon, le médaillon */
+    const g = ROBE(ctx, -6, 6, c);
     ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.beginPath(); ctx.ellipse(0, top, 6, 1.8, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-6, top + 0.4); ctx.quadraticCurveTo(-4.6, top - 8, -3.4, top - 13); ctx.lineTo(3.4, top - 13); ctx.quadraticCurveTo(4.6, top - 8, 6, top + 0.4); ctx.quadraticCurveTo(0, top + 1.8, -6, top + 0.4); ctx.fill(); /* la robe, l'ourlet bombé */
     ctx.strokeStyle = rgba(40, 32, 20, 0.45); ctx.lineWidth = 0.45; for (const dx of [-2.2, 0.4, 2.8]) { ctx.beginPath(); ctx.moveTo(dx * 0.6, top - 7); ctx.quadraticCurveTo(dx, top - 3, dx * 1.2, top + 0.6); ctx.stroke(); } /* les plis */
-    ctx.fillStyle = "#8a7a5e"; ctx.beginPath(); ctx.ellipse(0, top - 8.6, 3.9, 1.6, 0, 0, TAU); ctx.fill(); /* les manches jointes */
+    ctx.fillStyle = rgba(Math.round(c[0] * 0.5), Math.round(c[1] * 0.5), Math.round(c[2] * 0.5), 1); ctx.beginPath(); ctx.ellipse(0, top - 7.4, 3.9, 1.6, 0, 0, TAU); ctx.fill(); /* les manches jointes */
     ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-3.6, top - 12.6); ctx.quadraticCurveTo(-4.2, top - 19.5, 0, top - 20.2); ctx.quadraticCurveTo(4.2, top - 19.5, 3.6, top - 12.6); ctx.quadraticCurveTo(0, top - 11.4, -3.6, top - 12.6); ctx.fill(); /* le capuchon */
     ctx.fillStyle = "#1a160f"; ctx.beginPath(); ctx.ellipse(0, top - 15.4, 1.9, 2.4, 0, 0, TAU); ctx.fill(); /* le visage, dans l'ombre */
-    ctx.fillStyle = "#c99a52"; ctx.beginPath(); ctx.arc(0, top - 11.3, 2.5, 0, TAU); ctx.fill(); ctx.fillStyle = rgba(c[0], c[1], c[2], 1); ctx.beginPath(); ctx.arc(0, top - 11.3, 1.9, 0, TAU); ctx.fill(); /* le médaillon émaillé */
-    emblem(ctx, char, 0, top - 11.3, 2.4); }
+    const my = top - 10.6, e = rgba(Math.round(c[0] * 0.55), Math.round(c[1] * 0.55), Math.round(c[2] * 0.55), 1);
+    ctx.fillStyle = "#8a6428"; ctx.beginPath(); ctx.arc(0, my, 3.4, 0, TAU); ctx.fill(); ctx.fillStyle = "#e0b462"; ctx.beginPath(); ctx.arc(0, my, 3.05, 0, TAU); ctx.fill(); /* la bague d'or */
+    ctx.fillStyle = e; ctx.beginPath(); ctx.arc(0, my, 2.6, 0, TAU); ctx.fill(); /* l'émail */
+    emblem(ctx, char, 0, my, 2.6); }
   ctx.restore();
 }
 /** La lumière d'un objet qu'on survole (au lieu d'une infobulle) : un halo chaud, doux. */
