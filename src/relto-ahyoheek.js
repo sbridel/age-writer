@@ -330,32 +330,32 @@ function holoComposite(ctx, h, t) {
 /** Le fond de la salle, selon d'où l'on vient : la serre (le jeu dans la serre), ou l'atelier (le bureau, la cheminée de la cabane).
  *  Au fond un mur, devant un sol en perspective ; tout reste sombre pour que les hologrammes se lisent. */
 function room(ctx, from, t) {
-  const serre = !["desk", "cabin"].includes(from), WALL = 104;
+  const serre = !["desk", "cabin"].includes(from), WALL = 40, FY = (k) => WALL + 2 + k * k * 1.9; /* le mur s'arrête haut : la table et les sièges du fond sont posés sur le sol */
   /* le sol */
-  const fl = ctx.createLinearGradient(0, WALL - 10, 0, H); fl.addColorStop(0, serre ? "#141412" : "#1e130a"); fl.addColorStop(1, serre ? "#2e2c28" : "#3c2614"); ctx.fillStyle = fl; ctx.fillRect(0, 0, W, H);
-  if (serre) { ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(0, 0, W, H); for (let k = 0; k < 14; k++) { const y0 = 70 + k * k * 1.75, h = 3 + k * 1.3, w = 34 + k * 9, off = q("so" + k) * w; for (let x = -w + off; x < W + w; x += w * (0.7 + q("sw" + k + "_" + Math.round(x)) * 0.6)) { const v = q("s" + k + "_" + Math.round(x)), ww = w * (0.7 + q("sw" + k + "_" + Math.round(x)) * 0.6); ctx.fillStyle = rgba(104 + v * 30, 102 + v * 28, 96 + v * 24, 0.16 + k * 0.03); ctx.fillRect(x + 1, y0 + 1, ww - 2, h - 1.2); } } } /* les dalles de pierre, de longueurs inégales */
-  else { for (let k = 0; k < 14; k++) { const y0 = 70 + k * k * 1.75, h = 3 + k * 1.3; ctx.fillStyle = rgba(150, 96, 52, 0.08 + k * 0.016); ctx.fillRect(0, y0, W, h - 0.8); ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(0, y0 + h - 0.8, W, 0.8); /* les lames du parquet */
+  const fl = ctx.createLinearGradient(0, WALL, 0, H); fl.addColorStop(0, serre ? "#141412" : "#1e130a"); fl.addColorStop(1, serre ? "#2e2c28" : "#3c2614"); ctx.fillStyle = fl; ctx.fillRect(0, 0, W, H);
+  if (serre) { ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(0, 0, W, H); for (let k = 0; k < 15; k++) { const y0 = FY(k), h = FY(k + 1) - FY(k), w = 34 + k * 9, off = q("so" + k) * w; for (let x = -w + off; x < W + w; x += w * (0.7 + q("sw" + k + "_" + Math.round(x)) * 0.6)) { const v = q("s" + k + "_" + Math.round(x)), ww = w * (0.7 + q("sw" + k + "_" + Math.round(x)) * 0.6); ctx.fillStyle = rgba(104 + v * 30, 102 + v * 28, 96 + v * 24, 0.16 + k * 0.03); ctx.fillRect(x + 1, y0 + 1, ww - 2, h - 1.2); } } } /* les dalles de pierre, de longueurs inégales */
+  else { for (let k = 0; k < 15; k++) { const y0 = FY(k), h = FY(k + 1) - FY(k); ctx.fillStyle = rgba(150, 96, 52, 0.08 + k * 0.016); ctx.fillRect(0, y0, W, h - 0.8); ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.fillRect(0, y0 + h - 0.8, W, 0.8); /* les lames du parquet */
       const L = 60 + k * 14; for (let x = (q("p" + k) * L) - L; x < W; x += L) { ctx.fillRect(x, y0, 0.8, h - 0.8); } } }
   /* le mur du fond */
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, WALL); ctx.clip();
-  if (serre) { /* la verrière : des baies en arc, des meneaux de fer, le vert des plantes derrière le verre et devant */
-    const sky = ctx.createLinearGradient(0, 0, 0, WALL); sky.addColorStop(0, "#14241f"); sky.addColorStop(1, "#0c1510"); ctx.fillStyle = sky; ctx.fillRect(0, 0, W, WALL);
+  if (serre) { ctx.save(); ctx.translate(0, WALL - 104); /* la verrière, vue par le bas : seul son pied tient sous le plafond */ { /* la verrière : des baies en arc, des meneaux de fer, le vert des plantes derrière le verre et devant */
+    const sky = ctx.createLinearGradient(0, 0, 0, 104); sky.addColorStop(0, "#14241f"); sky.addColorStop(1, "#0c1510"); ctx.fillStyle = sky; ctx.fillRect(0, 0, W, 104);
     for (let i = 0; i < 40; i++) { ctx.fillStyle = rgba(30, 60, 36, 0.35 + q("lf" + i) * 0.3); ctx.beginPath(); ctx.ellipse(q("lx" + i) * W, 40 + q("ly" + i) * 60, 10 + q("lw" + i) * 22, 4 + q("lh" + i) * 8, q("lr" + i) * 3, 0, TAU); ctx.fill(); } /* les feuillages, derrière le verre */
     const bay = 58; ctx.strokeStyle = "#0a0f0c"; ctx.lineWidth = 3;
-    for (let x = -bay / 2 + ((W / 2) % bay); x < W + bay; x += bay) { ctx.beginPath(); ctx.moveTo(x, WALL); ctx.lineTo(x, 26); ctx.quadraticCurveTo(x, 4, x + bay / 2, -2); ctx.quadraticCurveTo(x + bay, 4, x + bay, 26); ctx.stroke(); /* la baie */
-      ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x + bay / 2, 2); ctx.lineTo(x + bay / 2, WALL); ctx.moveTo(x, 54); ctx.lineTo(x + bay, 54); ctx.stroke(); ctx.lineWidth = 3; /* les meneaux */
+    for (let x = -bay / 2 + ((W / 2) % bay); x < W + bay; x += bay) { ctx.beginPath(); ctx.moveTo(x, 104); ctx.lineTo(x, 26); ctx.quadraticCurveTo(x, 4, x + bay / 2, -2); ctx.quadraticCurveTo(x + bay, 4, x + bay, 26); ctx.stroke(); /* la baie */
+      ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x + bay / 2, 2); ctx.lineTo(x + bay / 2, 104); ctx.moveTo(x, 54); ctx.lineTo(x + bay, 54); ctx.stroke(); ctx.lineWidth = 3; /* les meneaux */
       ctx.fillStyle = rgba(190, 230, 210, 0.04 + 0.02 * Math.sin(t * 0.3 + x)); ctx.fillRect(x + 4, 30, bay / 2 - 8, 20); } /* un reflet sur le verre */
-    for (let i = 0; i < 26; i++) { const x = q("fx" + i) * W, h = 14 + q("fh" + i) * 26; ctx.fillStyle = rgba(18, 38, 22, 0.9); ctx.beginPath(); ctx.ellipse(x, WALL - h * 0.4, 6 + q("fw" + i) * 10, h * 0.5, (q("fr" + i) - 0.5) * 0.8, 0, TAU); ctx.fill(); } /* les plantes, devant, au pied de la verrière */
-    ctx.fillStyle = "#34322c"; ctx.fillRect(0, WALL - 6, W, 6); ctx.fillStyle = rgba(200, 196, 180, 0.15); ctx.fillRect(0, WALL - 6, W, 1); } /* le muret, de pierre */
+    for (let i = 0; i < 26; i++) { const x = q("fx" + i) * W, h = 14 + q("fh" + i) * 26; ctx.fillStyle = rgba(18, 38, 22, 0.9); ctx.beginPath(); ctx.ellipse(x, 104 - h * 0.4, 6 + q("fw" + i) * 10, h * 0.5, (q("fr" + i) - 0.5) * 0.8, 0, TAU); ctx.fill(); } /* les plantes, devant, au pied de la verrière */
+    ctx.fillStyle = "#34322c"; ctx.fillRect(0, 98, W, 6); ctx.fillStyle = rgba(200, 196, 180, 0.15); ctx.fillRect(0, 98, W, 1); } ctx.restore(); } /* le muret, de pierre */
   else { /* l'atelier : des boiseries, deux rayonnages de livres et de bocaux, la lueur d'une lampe */
     ctx.fillStyle = "#1e1309"; ctx.fillRect(0, 0, W, WALL);
     for (let x = 0; x < W; x += 34) { ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.fillRect(x, 0, 1.2, WALL); ctx.fillStyle = rgba(120, 76, 40, 0.08 + q("pn" + x) * 0.06); ctx.fillRect(x + 1.2, 0, 32.8, WALL); } /* les panneaux */
-    for (const sy of [34, 70]) { ctx.fillStyle = "#3a2410"; ctx.fillRect(0, sy, W, 3.5); ctx.fillStyle = rgba(0, 0, 0, 0.4); ctx.fillRect(0, sy + 3.5, W, 3); /* la planche */
+    for (const sy of [WALL - 9]) { ctx.fillStyle = "#3a2410"; ctx.fillRect(0, sy, W, 3.5); ctx.fillStyle = rgba(0, 0, 0, 0.4); ctx.fillRect(0, sy + 3.5, W, 3); /* la planche */
       let x = 4; while (x < W) { const v = q("bk" + sy + "_" + x), w = 4 + v * 5, h = 14 + q("bh" + sy + "_" + x) * 12; if (v < 0.12) { x += 14; continue; }
         if (v > 0.86) { ctx.fillStyle = rgba(150, 170, 150, 0.22); ctx.fillRect(x, sy - 12, 10, 12); ctx.fillStyle = rgba(200, 170, 90, 0.3); ctx.fillRect(x, sy - 13, 10, 1.6); x += 13; continue; } /* un bocal */
         const tone = [[96, 52, 30], [70, 50, 36], [110, 84, 46], [60, 40, 52], [88, 70, 40]][Math.floor(q("bc" + x + sy) * 5)]; ctx.fillStyle = rgba(tone[0], tone[1], tone[2], 0.9); ctx.fillRect(x, sy - h, w, h); ctx.fillStyle = rgba(210, 170, 100, 0.25); ctx.fillRect(x, sy - h + 3, w, 0.8); x += w + 0.8; } }
-    const lamp = ctx.createRadialGradient(110, 18, 2, 110, 18, 120); lamp.addColorStop(0, rgba(255, 190, 110, 0.28)); lamp.addColorStop(1, rgba(255, 170, 90, 0)); ctx.fillStyle = lamp; ctx.fillRect(0, 0, W, WALL);
-    ctx.fillStyle = "#2a1a0c"; ctx.fillRect(0, WALL - 8, W, 8); ctx.fillStyle = rgba(200, 150, 80, 0.2); ctx.fillRect(0, WALL - 8, W, 1); } /* la plinthe */
+    const lamp = ctx.createRadialGradient(110, 6, 2, 110, 6, 120); lamp.addColorStop(0, rgba(255, 190, 110, 0.28)); lamp.addColorStop(1, rgba(255, 170, 90, 0)); ctx.fillStyle = lamp; ctx.fillRect(0, 0, W, WALL);
+    ctx.fillStyle = "#2a1a0c"; ctx.fillRect(0, WALL - 3, W, 3); ctx.fillStyle = rgba(200, 150, 80, 0.2); ctx.fillRect(0, WALL - 3, W, 0.8); } /* la plinthe */
   ctx.restore();
   const shade = ctx.createLinearGradient(0, WALL - 14, 0, WALL + 20); shade.addColorStop(0, rgba(0, 0, 0, 0)); shade.addColorStop(0.4, rgba(0, 0, 0, 0.35)); shade.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = shade; ctx.fillRect(0, WALL - 14, W, 34); /* l'ombre au pied du mur */
 }
@@ -378,7 +378,7 @@ function drawGame(r, ctx, sc, sky, t) {
   const poly = (rx, ry, dy = 0) => { ctx.beginPath(); for (let k = 0; k < 5; k++) { const a = Math.PI / 2 + k * TAU / 5, b = a + TAU / 10, a2 = a + TAU / 5, Q = (ang, f) => [C.x + Math.cos(ang) * rx * f, C.y + dy + Math.sin(ang) * ry * f];
       const tip = Q(a, 1), v = Q(b, 0.5), tip2 = Q(a2, 1), c1 = Q(a + TAU / 20, 0.66), c2 = Q(b + TAU / 20, 0.66); if (!k) ctx.moveTo(...tip); ctx.quadraticCurveTo(...c1, ...v); ctx.quadraticCurveTo(...c2, ...tip2); } ctx.closePath(); };
   const stool = (x, y, s) => { ctx.fillStyle = rgba(0, 0, 0, 0.4); ctx.beginPath(); ctx.ellipse(x + 2, y + s * 0.9, s * 1.1, s * 0.3, 0, 0, TAU); ctx.fill(); ctx.fillStyle = "#3a2c20"; ctx.fillRect(x - s * 0.22, y, s * 0.44, s * 0.9); const g = ctx.createLinearGradient(0, y - s * 0.3, 0, y + s * 0.3); g.addColorStop(0, "#9a8a72"); g.addColorStop(1, "#5a4c3c"); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, s, s * 0.32, 0, 0, TAU); ctx.fill(); ctx.fillStyle = "#4a3e30"; ctx.beginPath(); ctx.ellipse(x, y + s * 0.12, s, s * 0.32, 0, 0, Math.PI); ctx.fill(); };
-  for (let k = 1; k < 5; k++) { if (!seats.includes(k)) continue; const a = Math.PI / 2 + k * TAU / 5; if (Math.sin(a) > 0.2) continue; stool(C.x + Math.cos(a) * RX * 1.12, C.y + Math.sin(a) * RY * 1.2 - 6, 15); } /* les tabourets des places occupées, au fond */
+  for (let k = 1; k < 5; k++) { if (!seats.includes(k)) continue; const a = Math.PI / 2 + k * TAU / 5; if (Math.sin(a) > 0.2) continue; stool(C.x + Math.cos(a) * RX * 1.08, C.y + Math.sin(a) * RY * 1.02 - 4, 15); } /* les tabourets des places occupées, au fond */
   ctx.fillStyle = rgba(0, 0, 0, 0.5); poly(RX * 1.02, RY * 1.04, 24); ctx.fill();
   ctx.fillStyle = "#1c150f"; ctx.beginPath(); ctx.ellipse(C.x, C.y + 40, 70, 26, 0, 0, TAU); ctx.fill(); /* le pied */
   ctx.fillStyle = "#2c2118"; poly(RX, RY, 13); ctx.fill(); ctx.strokeStyle = "#6e4c24"; ctx.lineWidth = 1; poly(RX, RY, 13); ctx.stroke(); /* la tranche */
