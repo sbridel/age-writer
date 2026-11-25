@@ -5,12 +5,12 @@
  * chaque autre joueur, +1 s'il le bat et −1 s'il est battu. Le meilleur total, s'il est positif, gagne la manche et emporte un objet du
  * signe qu'il a joué (plusieurs gagnants à égalité : chacun le sien). Le premier qui a trois objets d'un même signe gagne la partie ;
  * si plusieurs y arrivent dans la même manche, le plus d'objets en tout ; encore à égalité, des manches décisives entre eux seuls.
- * Les adversaires ont chacun un caractère (le fidèle, l'imitateur, le malin, le collectionneur, le méfiant), plus ou moins suivi selon le niveau ;
+ * Les adversaires ont chacun un caractère (le fidèle, l'imitateur, le malin, le collectionneur, le méfiant, le mesureur), plus ou moins suivi selon le niveau ;
  * au niveau difficile, ils lisent tes habitudes. Le rang monte d'un cran à chaque partie gagnée et descend d'un à chaque partie perdue.
  * Rien ne se gagne d'autre que le rang (pour l'instant).
  */
 const SIGNS = ["beetle", "pen", "page"];
-const CHARS = ["faithful", "mimic", "sly", "collector", "wary"];
+const CHARS = ["faithful", "mimic", "sly", "collector", "wary", "measurer"];
 const LEVELS = ["easy", "mid", "hard"];
 const beats = (a, b) => (a === "beetle" && b === "pen") || (a === "pen" && b === "page") || (a === "page" && b === "beetle");
 const beaterOf = (s) => SIGNS.find((x) => beats(x, s));
@@ -18,11 +18,11 @@ const pick = (rnd) => SIGNS[Math.min(2, Math.floor(rnd() * 3))];
 /** Le niveau joué : fixé, ou d'après le rang (0–2 facile, 3–5 moyen, 6 et plus difficile). */
 const levelOf = (level, rank) => (LEVELS.includes(level) ? level : (rank || 0) < 3 ? "easy" : (rank || 0) < 6 ? "mid" : "hard");
 
-/** Une partie neuve. o : { n (adversaires, 1 à 4), level ("easy" | "mid" | "hard" | "rank"), rank, rnd } */
+/** Une partie neuve. o : { n (adversaires, 1 à 4), level ("easy" | "mid" | "hard" | "rank"), rank, rnd, exclude (des caractères qu'on ne tire pas : celui de ma guilde) } */
 function newGame(o = {}) {
-  const rnd = o.rnd || Math.random, n = Math.max(1, Math.min(4, o.n | 0 || 2)), pool = CHARS.slice();
+  const rnd = o.rnd || Math.random, n = Math.max(1, Math.min(4, o.n | 0 || 2)), ex = Array.isArray(o.exclude) ? o.exclude : [], pool = CHARS.filter((c) => !ex.includes(c));
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-  const G = { level: levelOf(o.level, o.rank), phase: "choose", me: { won: {}, pts: null, play: null }, opp: [], hist: [], round: 0, sudden: null, winners: null, pending: null, end: null, said: { k: "choose" } };
+  const G = { level: levelOf(o.level, o.rank), phase: "choose", me: { won: {}, pts: null, play: null }, opp: [], hist: [], tally: {}, round: 0, sudden: null, winners: null, pending: null, end: null, said: { k: "choose" } };
   for (let i = 0; i < n; i++) G.opp.push({ char: pool[i % pool.length], fav: pick(rnd), won: {}, pts: null, play: null });
   return G;
 }
@@ -51,6 +51,7 @@ function oppPlay(G, o, rnd = Math.random) {
     if (o.char === "sly") return last ? beaterOf(last) : o.fav;
     if (o.char === "collector") return mine || o.fav;
     if (o.char === "wary") { const p = predictMe(G, false); return p ? beaterOf(p) : o.fav; }
+    if (o.char === "measurer") { const t = G.tally || {}, most = SIGNS.slice().sort((a, b) => (t[b] || 0) - (t[a] || 0))[0]; return t[most] ? beaterOf(most) : o.fav; } /* il mesure : ce qui bat le signe le plus sorti depuis le début */
   }
   return pick(rnd);
 }
@@ -59,7 +60,7 @@ function oppPlay(G, o, rnd = Math.random) {
 function play(G, sign, rnd = Math.random) {
   if (!G || G.phase !== "choose" || !SIGNS.includes(sign)) return false;
   G.round++; G.me.play = sign; G.opp.forEach((o) => (o.play = oppPlay(G, o, rnd)));
-  const A = all(G);
+  const A = all(G); G.tally = G.tally || {}; A.forEach((p) => (G.tally[p.play] = (G.tally[p.play] || 0) + 1)); /* le compte de tous les signes sortis */
   A.forEach((p) => { p.pts = 0; A.forEach((q) => { if (p !== q) { if (beats(p.play, q.play)) p.pts++; else if (beats(q.play, p.play)) p.pts--; } }); });
   const eligible = G.sudden ? A.filter((p, i) => G.sudden.includes(i)) : A, best = Math.max(...eligible.map((p) => p.pts));
   const win = best > 0 ? eligible.filter((p) => p.pts === best) : [];

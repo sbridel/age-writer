@@ -79,6 +79,7 @@ function drawLounge(r, ctx, sc, sky, t) {
   // ---- se retourner : les bords de la vue ramènent à la cabane ----
   turnEdges(r, ctx, "cabin", tr("relto.lounge.turn"));
   require("./relto-hall").backEdge(r, ctx, "hall", tr("hall.go")); /* reculer : le couloir */
+  require("./relto-baykh").loungeTable(r, ctx, c, tr); /* la table basse et son plateau : Baykh, le jeu des routes */
   const v = ctx.createRadialGradient(W / 2, H / 2, 150, W / 2, H / 2, 420); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, rgba(0, 0, 0, 0.38)); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
 }
 

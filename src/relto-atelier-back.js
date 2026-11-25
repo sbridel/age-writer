@@ -93,6 +93,12 @@ function drawBackroom(r, ctx, sc, sky, t) {
     }
     ctx.fillStyle = c("#ece6d4"); ctx.beginPath(); ctx.ellipse(bx + 40, 196, 22, 8, 0, 0, 6.283); ctx.fill(); ctx.fillStyle = rgba(0, 0, 0, 0.12); ctx.beginPath(); ctx.ellipse(bx + 43, 197, 10, 4, 0, 0, 6.283); ctx.fill(); // l'oreiller, et le creux d'une tête
     item(bx, 60, bw, 192, "back.bed.tip", "back.bed.flash");
+    { const tx = 0, tw = 36, ty = 214; /* la table de chevet, à la tête du lit, et sa lampe : l'abeille ou la main (un clic change) */
+      ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.fillRect(tx + 3, ty + 3, tw, FLOOR - ty);
+      ctx.fillStyle = c(castle ? CS.WALNUT_LO : "#3d2a1c"); ctx.fillRect(tx + 3, ty + 4, 4, FLOOR - ty - 4); ctx.fillRect(tx + tw - 7, ty + 4, 4, FLOOR - ty - 4); ctx.fillRect(tx + 2, ty + 4, tw - 4, 14); /* les pieds, le tiroir */
+      ctx.fillStyle = c(castle ? CS.WALNUT : "#4b3626"); ctx.fillRect(tx, ty, tw, 5); ctx.fillStyle = c("#c9a24e"); ctx.beginPath(); ctx.arc(tx + tw / 2, ty + 11, 1.6, 0, 6.283); ctx.fill(); /* le plateau, le bouton du tiroir */
+      require("./relto-ahyoheek").bedLamp(r, ctx, tx + tw / 2, ty, sky.night || 0);
+      item(tx + 6, ty - 50, tw - 12, 54, "back.lamp.tip", null, { ahy: { lamp: true } }); }
     const cat = sc.additions.find((a) => a.type === "cat");
     if (cat && r.catSpotFor() === 2) r.drawSleepingCat(ctx, cat, { x: bx + 128, y: 206, S: 1.9, shade: c, tip: TRr("atelier.cat.bed") }, t); // le chat dort sur l'édredon
   }
