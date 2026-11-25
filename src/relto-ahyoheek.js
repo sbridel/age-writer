@@ -114,7 +114,7 @@ function tokens(h, x, y, won, t, dir = -1, s = 4.4) {
 }
 /** Les figurines posées aux places occupées, en trois jeux (on change de jeu en touchant l'une d'elles). Toutes ont le même socle : un plot
  *  rond de pierre, avec sur sa face avant un cartouche de laiton où le chiffre D'ni de la place est gravé. Dessus :
- *  0, une statuette en robe de guilde à capuchon, les mains jointes dans les manches, l'emblème de sa guilde brodé au fil d'or sur la poitrine, un liseré au capuchon et à l'ourlet ;
+ *  0, une statuette en robe de guilde à capuchon, les mains jointes dans les manches, sans emblème : la couleur de la guilde, un liseré au capuchon et à l'ourlet ;
  *  1, une stèle, la lettre D'ni du caractère gravée et teintée ; 2, une lampe de rue en petit, sur son pilier, le verre teinté par caractère
  *  (un médaillon ovale à côtes, un verre haut où monte un éventail de feuilles, ou une lanterne carrée à rayons).
  *  Les couleurs (ambre, violet, ivoire, rose, jais) ne sont aucune de celles du jeu. */
@@ -148,16 +148,6 @@ function emblem(ctx, char, x, y, s, col = "#ffe6a8") {
     ctx.lineTo(x + s * 0.55, y - s * 0.55); ctx.lineTo(x + s * 0.55, y + s * 0.5); ctx.closePath(); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(x - s * 0.17, y + s * 0.5); ctx.lineTo(x - s * 0.17, y + s * 0.08); ctx.arc(x, y + s * 0.08, s * 0.17, Math.PI, TAU); ctx.lineTo(x + s * 0.17, y + s * 0.5); ctx.stroke(); }
   ctx.restore();
-}
-/** L'emblème brodé sur la poitrine de la robe : un signe minimal, en deux ou trois points de fil, par guilde. */
-function stitch(ctx, char, x, y, s, col) {
-  ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = Math.max(0.35, s * 0.2); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath();
-  if (char === "faithful") for (const k of [-0.45, 0, 0.45]) { ctx.moveTo(x - s * 0.5, y + s * k); ctx.lineTo(x + s * 0.5, y + s * k); } /* les archivistes : trois traits, les tablettes */
-  else if (char === "mimic") { ctx.moveTo(x - s * 0.6, y + s * 0.15); ctx.bezierCurveTo(x - s * 0.2, y - s * 0.6, x + s * 0.2, y + s * 0.6, x + s * 0.6, y - s * 0.15); } /* les écrivains : une vague d'encre */
-  else if (char === "sly") { ctx.moveTo(x - s * 0.4, y - s * 0.5); ctx.lineTo(x + s * 0.3, y); ctx.lineTo(x - s * 0.4, y + s * 0.5); } /* les messagers : un chevron, vers l'avant */
-  else if (char === "collector") { ctx.arc(x, y, s * 0.5, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, s * 0.12, 0, TAU); ctx.fill(); ctx.beginPath(); } /* les cartographes : un cercle et son point */
-  else { ctx.moveTo(x - s * 0.45, y + s * 0.5); ctx.lineTo(x - s * 0.45, y - s * 0.05); ctx.arc(x, y - s * 0.05, s * 0.45, Math.PI, TAU); ctx.lineTo(x + s * 0.45, y + s * 0.5); } /* les mainteneurs : une porte en arc */
-  ctx.stroke(); ctx.restore();
 }
 function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
   const robe = FIG_COL[char] || FIG_COL.wary, c = FIG_LIT[char] || robe, top = -6;
@@ -241,8 +231,7 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
     const thread = char === "mimic" ? "rgba(200,60,70,0.95)" : "rgba(255,222,140,0.92)"; /* le fil : d'or, rouge sombre pour les écrivains (leur liseré) */
     ctx.strokeStyle = thread; ctx.lineWidth = 0.42; ctx.lineCap = "round";
     ctx.beginPath(); ctx.moveTo(-5.7, top - 0.2); ctx.quadraticCurveTo(0, top + 1.3, 5.7, top - 0.2); ctx.stroke(); /* le liseré de l'ourlet */
-    ctx.beginPath(); ctx.moveTo(-3.5, top - 12.8); ctx.quadraticCurveTo(-3.9, top - 19.1, 0, top - 19.7); ctx.quadraticCurveTo(3.9, top - 19.1, 3.5, top - 12.8); ctx.stroke(); /* le liseré du capuchon */
-    stitch(ctx, char, 0, top - 4.6, 2.2, thread); }
+    ctx.beginPath(); ctx.moveTo(-3.5, top - 12.8); ctx.quadraticCurveTo(-3.9, top - 19.1, 0, top - 19.7); ctx.quadraticCurveTo(3.9, top - 19.1, 3.5, top - 12.8); ctx.stroke(); /* le liseré du capuchon */ }
   ctx.restore();
 }
 /** La lumière d'un objet qu'on survole (au lieu d'une infobulle) : un halo chaud, doux. */
