@@ -403,7 +403,7 @@ function drawGame(r, ctx, sc, sky, t) {
     if (dim) ctx.globalAlpha = 0.35;
     if (isWin(i + 1)) winMark(ctx, x, y, 18, t); emitter(ctx, x, y, 18, reveal && o.play ? HC[o.play] : null, reveal); if (reveal && o.play) holo(hx, o.play, x, y, isWin(i + 1) ? 28 : 22, isWin(i + 1) ? 1 : anyWin ? 0.28 : 0.8, t, i + 1);
     { const a = Math.PI / 2 + k * TAU / 5; const fx = C.x + Math.cos(a) * RX * 0.86, fy = C.y + Math.sin(a) * RY * 0.86; if (hv("fig" + k)) hoverGlow(ctx, fx, fy - 10, 22); figurine(ctx, fx, fy, o.char, k + 1, cur(r).figs, r.dni && r.dni.fontFamily && r.dni.fontFamily()); if (!clk || reveal) figHot.push({ x: fx - 14, y: fy - 36, w: 28, h: 40, ahy: { figs: true, id: "fig" + k } }); } /* la figurine, au bout de sa branche ; la toucher change de jeu */
-    { const side = Math.abs(x - C.x) > 100; tokens(hx, x + (x < C.x - 5 ? -1 : 1) * (side ? 66 : 62), y + (side ? 2 : 10), o.won, t, -1, 5.4); } /* ses jetons, à côté */
+    { const a = Math.PI / 2 + k * TAU / 5, f = 0.43; tokens(hx, C.x + Math.cos(a) * RX * f, C.y + Math.sin(a) * RY * f + 6, o.won, t, -1, 3.8); } /* ses jetons, sur sa branche, entre son projecteur et la vasque */
     ctx.globalAlpha = 1;
     r.hot.push({ x: x - 24, y: y - 40, w: 48, h: 54, ahy: G.phase === "reveal" ? { next: true } : between ? { seat: k, id: "seat" + k } : {} }); });
   r.hot.push(...figHot);
