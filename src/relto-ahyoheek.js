@@ -461,7 +461,7 @@ function drawGame(r, ctx, sc, sky, t) {
  *  manche). Sur le rebord avant, quatre plots à fleur pour le niveau (1, 2, 3, puis le rang). Table en attente : la projection montre les
  *  dernières parties du registre (un clic l'ouvre en entier). */
 function screen(r, ctx, hx, G, seats, reveal, between, t, hv) {
-  const bx = 596, by = 276, A = [G.me, ...G.opp], c0 = cur(r), fl = 0.9 + 0.1 * Math.sin(t * 13) * Math.sin(t * 3.7);
+  const bx = 598, by = 318, A = [G.me, ...G.opp], c0 = cur(r), fl = 0.9 + 0.1 * Math.sin(t * 13) * Math.sin(t * 3.7);
   const brass = (x0, x1) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, "#5a3c14"); g.addColorStop(0.45, "#d0a050"); g.addColorStop(1, "#5a3c14"); return g; };
   /* la vasque : l'ombre, la tranche, trois anneaux de laiton, le verre gravé au centre */
   ctx.fillStyle = rgba(0, 0, 0, 0.45); ctx.beginPath(); ctx.ellipse(bx + 3, by + 9, 44, 13, 0, 0, TAU); ctx.fill();
@@ -474,7 +474,7 @@ function screen(r, ctx, hx, G, seats, reveal, between, t, hv) {
   for (let i = 0; i < 8; i++) { const a = i * TAU / 8; ctx.beginPath(); ctx.ellipse(bx + Math.cos(a) * 16, by + Math.sin(a) * 4.8, 2.4, 0.9, 0, 0, TAU); ctx.stroke(); } /* les petits cercles gravés */
   ctx.fillStyle = rgba(255, 255, 255, 0.1); ctx.beginPath(); ctx.ellipse(bx - 8, by - 3, 12, 2.4, -0.1, 0, TAU); ctx.fill(); /* le reflet sur le verre */
   /* la projection : un faisceau qui monte du verre, puis le tableau qui flotte, sans cadre */
-  const py0 = 122, py1 = 236, pcx = bx + 2, ink = (a) => rgba(170, 210, 245, a * fl);
+  const py0 = 160, py1 = 276, pcx = bx + 2, ink = (a) => rgba(170, 210, 245, a * fl);
   hx.save(); hx.globalCompositeOperation = "lighter";
   const glass = hx.createRadialGradient(bx, by, 1, bx, by, 26); glass.addColorStop(0, rgba(150, 200, 255, 0.45 * fl)); glass.addColorStop(1, rgba(80, 140, 220, 0)); hx.fillStyle = glass; hx.beginPath(); hx.ellipse(bx, by, 27, 8, 0, 0, TAU); hx.fill();
   const beam = hx.createLinearGradient(0, by, 0, py0); beam.addColorStop(0, rgba(140, 185, 240, 0.16 * fl)); beam.addColorStop(0.5, rgba(140, 185, 240, 0.07 * fl)); beam.addColorStop(1, rgba(140, 185, 240, 0)); hx.fillStyle = beam;
