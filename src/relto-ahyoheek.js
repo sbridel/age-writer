@@ -273,7 +273,11 @@ function act(r, a) {
   if (a.sign) { if (G.phase === "choose") { if (!st.clock) arm(r); if (!st.clock.mine) pickMine(r, a.sign, false); } }
   else if (a.next) { if (G.phase === "reveal") { if (AH.next(G)) { settle(r); if (G.phase === "choose") arm(r); else if (G.phase === "won") snd(r, G.end.i === 0 ? "game" : "gameLost"); } } }
   else if (a.seat != null) { const seats = cur(r).seats, k = a.seat, has = seats.includes(k); if (has && seats.length === 1) return; /* il faut au moins un adversaire */
-    const s = save(r, { seats: has ? seats.filter((x) => x !== k) : [...seats, k] }); st.G = AH.newGame(s); st.clock = null; snd(r, has ? "leave" : "join"); }
+    const before = new Map(seats.map((x, i) => [x, st.G && st.G.opp[i]]).filter(([, o]) => o)); /* qui était assis où : chacun garde sa figurine */
+    const s = save(r, { seats: has ? seats.filter((x) => x !== k) : [...seats, k] }); st.G = AH.newGame(s);
+    const kept = new Set(); s.seats.forEach((x, i) => { const o = before.get(x), g = st.G.opp[i]; if (o && g) { g.char = o.char; g.fav = o.fav; kept.add(o.char); } });
+    s.seats.forEach((x, i) => { const g = st.G.opp[i]; if (g && !before.has(x) && kept.has(g.char)) { const free = AH.CHARS ? AH.CHARS.find((c) => !kept.has(c)) : null; if (free) g.char = free; } if (g) kept.add(g.char); }); /* le nouveau venu prend un caractère encore libre */
+    st.clock = null; snd(r, has ? "leave" : "join"); }
   else if (a.level) { const L = ["easy", "mid", "hard", "rank"], lv = a.lv != null ? L[a.lv] : L[(L.indexOf(cur(r).level) + 1) % 4]; if (lv === cur(r).level) return; const s = save(r, { level: lv }); st.G = AH.newGame(s); st.clock = null; snd(r, "button"); }
   else if (a.start) { st.press = ["start", now()]; snd(r, "button"); /* le bouton d'ambre : lancer (la partie, ou la manche suivante) */
     if (G.phase === "won") { st.G = AH.newGame(cur(r)); st.clock = null; arm(r); }
