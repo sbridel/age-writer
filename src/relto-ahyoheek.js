@@ -497,7 +497,7 @@ function screen(r, ctx, hx, G, seats, reveal, between, t, hv) {
   else seats.forEach((k, i) => { const p = A[i], y = yA + i * gap, win = !!(G.winners && G.winners.includes(i)); void rows; /* les scores, une ligne par place */
     if (win) { const g = hx.createLinearGradient(pcx - 34, 0, pcx + 34, 0); g.addColorStop(0, rgba(255, 200, 110, 0)); g.addColorStop(0.5, rgba(255, 200, 110, 0.22 * fl)); g.addColorStop(1, rgba(255, 200, 110, 0)); hx.fillStyle = g; hx.fillRect(pcx - 34, y - 8, 68, 16); }
     numeral(hx, k + 1, pcx - 26, y, 7, ink(i === 0 ? 0.95 : 0.6));
-    GS.draw(hx, i === 0 ? "geometres" : GS.OF[p.char] || "mainteneurs", pcx - 40, y, 5.2, ink(0.8), 0.13); /* devant chaque adversaire, le symbole de sa guilde ; devant moi, celui des géomètres */
+    if (i === 0) { hx.strokeStyle = ink(0.7); hx.lineWidth = 0.8; hx.beginPath(); hx.arc(pcx - 40, y, 4.6, 0, TAU); hx.stroke(); } else GS.draw(hx, GS.OF[p.char] || "mainteneurs", pcx - 40, y, 5.2, ink(0.8), 0.13); /* devant chaque adversaire, le symbole de sa guilde ; devant moi, un simple cercle */
     AH.SIGNS.forEach((sg, j) => { const n = p.won[sg] || 0, xx = pcx - 12 + j * 12; anySign(hx, sg, xx, y - 3, 2.9, HC[sg], (n ? 0.85 : 0.28) * fl, true); numeral(hx, n, xx, y + 4.5, 4.5, n >= 3 ? rgba(255, 210, 120, fl) : ink(n ? 0.75 : 0.28)); });
     if (reveal && p.pts != null) numeral(hx, p.pts, pcx + 27, y, 6.5, p.pts > 0 ? rgba(255, 210, 120, fl) : ink(0.45), p.pts < 0); });
   /* les quatre plots du niveau, à fleur sur le rebord avant */
