@@ -12,7 +12,7 @@ const W = 640, H = 360, TAU = Math.PI * 2;
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 const q = (k) => { let h = 2166136261; for (const ch of String(k)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 10000) / 10000; };
 /** Le glyphe du centre : les lettres d'« ahyoheek » posées l'une sur l'autre (lettre@x,y,taille,rotation ; x, y en points pour une taille 30). */
-const GLYPH = "E@8,14.7,0.92 o@-6.3,13.1,0.93,-13 a@-2.5,-2.6,0.92,10 h@-4.8,5.7,0.93,-20 y@-8.9,16.4,0.76,-2", GLYPH_SIZE = 50;
+const GLYPH = "E@8.7,14.9,0.84,-1 o@-6.3,11.6,1.04,-16 a@0.7,-3.2,0.88,12 h@-5.1,5.3,1.00,-19 y@-6.5,12.3,0.79,-5" /* calé sur le contour dessiné à la main par l'auteur (25 nov.) */, GLYPH_SIZE = 50;
 
 /* les chiffres D'ni, le tracé simple du plugin (src/dni.js, simplePaths : repère 0..100, cadre 4..96) */
 const P = (u, v) => [4 + 92 * u, 4 + 92 * v];
@@ -201,8 +201,8 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
       for (const a of [-0.95, -0.5, 0, 0.5, 0.95]) { const tx = Math.sin(a) * 3.6, ty = by - Math.cos(a) * 7.6; ctx.beginPath(); ctx.moveTo(0, by); ctx.quadraticCurveTo(tx * 0.3 - 1, (by + ty) / 2, tx, ty); ctx.quadraticCurveTo(tx * 0.3 + 1, (by + ty) / 2, 0, by); ctx.fill(); ctx.stroke(); } /* les feuilles */
       ctx.beginPath(); ctx.moveTo(-3.2, y1 + 4.4); ctx.quadraticCurveTo(0, y1 + 3, 3.2, y1 + 4.4); ctx.stroke(); ctx.restore();
       ctx.fillStyle = "#5c6862"; ctx.beginPath(); ctx.moveTo(-1.6, y1 + 0.6); ctx.quadraticCurveTo(0, y1 - 1.6, 1.6, y1 + 0.6); ctx.fill(); } /* le petit fleuron */
-    else { /* la lanterne, d'après le croquis de l'auteur mis au propre : un panneau haut, bordé de pierre ; en haut une fleur-soleil à cinq pans
-       * et ses rayons, reliée aux bords par une traverse ; sa tige descend jusqu'au pied, entre deux collines en arc qui se croisent */
+    else { /* la lanterne, d'après le croquis de l'auteur mis au propre : un panneau haut, bordé de pierre ; en haut une main ouverte (une paume à cinq pans,
+       * quatre doigts, un court pouce) ; sa tige descend jusqu'au pied, entre deux collines en arc qui se croisent et des courbes qui montent des bords */
       const u = 0.78, base = P - 1.2 - 15 * u, T = (x, y) => [x * u, base + y * u];
       const path = (cmds) => { ctx.beginPath(); for (const [op, ...v] of cmds) { const pts = []; for (let i = 0; i < v.length; i += 2) pts.push(...T(v[i], v[i + 1])); if (op === "M") ctx.moveTo(...pts); else if (op === "L") ctx.lineTo(...pts); else ctx.quadraticCurveTo(...pts); } };
       const frame = [["M", -5.4, 15], ["L", -5.4, 1.4], ["Q", -5.4, 0, -4, 0], ["L", 4, 0], ["Q", 5.4, 0, 5.4, 1.4], ["L", 5.4, 15]];
@@ -214,10 +214,11 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
       const pent = []; for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + k * TAU / 5; pent.push([Math.cos(a) * 1.9, 6.4 + Math.sin(a) * 1.9]); }
       ctx.beginPath(); pent.forEach(([x, y], i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, ...T(x, y))); ctx.closePath(); ctx.fillStyle = "#f6d060"; ctx.fill(); /* la fleur-soleil */
       ctx.strokeStyle = lead; ctx.lineWidth = 0.45; ctx.stroke();
-      for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + (k - 2) * 0.42, r0 = 2.5, r1 = 5.6; path([["M", Math.cos(a) * r0, 6.4 + Math.sin(a) * r0], ["L", Math.cos(a) * r1, 6.4 + Math.sin(a) * r1]]); ctx.stroke(); } /* ses rayons */
-      for (const d of [-1, 1]) { path([["M", d * 1.8, 6.95], ["L", d * 5.4, 6.95]]); ctx.stroke(); } /* la traverse */
+      for (let k = 0; k < 4; k++) { const a = -Math.PI / 2 + (k - 1.5) * 0.4, r0 = 2.2, r1 = 5.4; path([["M", Math.cos(a) * r0, 6.4 + Math.sin(a) * r0], ["L", Math.cos(a) * r1, 6.4 + Math.sin(a) * r1]]); ctx.stroke(); } /* les quatre doigts */
+      path([["M", 1.75, 6.9], ["Q", 2.7, 6.9, 3.4, 6.1]]); ctx.stroke(); /* le pouce, un court segment */
       path([["M", 0, 8.0], ["L", 0, 15]]); ctx.stroke(); /* la tige */
       for (const [x0, x1] of [[-6.2, 1.2], [-1.2, 6.2]]) { path(hill(x0, x1, 4.4)); ctx.stroke(); } /* les collines qui se croisent */
+      for (const d of [-1, 1]) { path([["M", d * 5.4, 10.6], ["Q", d * 2.6, 12.2, d * 0.5, 15]]); ctx.stroke(); path([["M", d * 5.4, 13.0], ["Q", d * 4.6, 12.0, d * 3.6, 12.4]]); ctx.stroke(); } /* les racines qui descendent des bords, et deux petites courbes au pied */
       ctx.restore(); path(frame); ctx.closePath(); ctx.strokeStyle = lead; ctx.lineWidth = 0.4; ctx.stroke(); } }
   else { /* la statuette : la robe de la guilde, évasée, les manches jointes, le capuchon, le médaillon */
     const g = ROBE(ctx, -6, 6, robe);
