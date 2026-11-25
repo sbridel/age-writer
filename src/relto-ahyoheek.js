@@ -176,17 +176,20 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
     const glassG = (y0, y1) => { const g = ctx.createLinearGradient(0, y0, 0, y1), a1 = shift([90, 60, 70]), a2 = shift([30, -10, 60]), a3 = shift([-40, 40, 30]); g.addColorStop(0, rgba(...a1, 1)); g.addColorStop(0.45, rgba(...a2, 1)); g.addColorStop(1, rgba(...a3, 1)); return g; }; /* le verre irisé */
     const lead = "#1c2220";
     const gy = kind === "oval" ? P - 8 : P - 7.5, glow = ctx.createRadialGradient(0, gy, 1, 0, gy, 16); glow.addColorStop(0, rgba(c[0], c[1], c[2], 0.32)); glow.addColorStop(1, rgba(c[0], c[1], c[2], 0)); ctx.fillStyle = glow; ctx.fillRect(-16, gy - 16, 32, 32);
-    if (kind === "oval") { /* le médaillon à l'abeille, en vitrail géométrique : un fond d'alvéoles hexagonales, une abeille faite de formes simples
-       * (sans tête : des chevrons pour le corps, deux triangles par aile), tout serti de plomb */
-      ctx.fillStyle = "#3e4844"; ctx.beginPath(); ctx.ellipse(0, gy, 5.6, 6.8, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = "#7a8680"; ctx.lineWidth = 0.4; ctx.stroke();
-      ctx.fillStyle = glassG(gy - 5.8, gy + 5.8); ctx.beginPath(); ctx.ellipse(0, gy, 4.5, 5.8, 0, 0, TAU); ctx.fill();
-      ctx.save(); ctx.beginPath(); ctx.ellipse(0, gy, 4.5, 5.8, 0, 0, TAU); ctx.clip(); ctx.strokeStyle = lead; ctx.lineWidth = 0.3;
-      ctx.strokeStyle = rgba(28, 34, 32, 0.45); const hr = 1.9; for (let row = -3; row <= 3; row++) for (let col = -2; col <= 2; col++) { const hx0 = col * hr * 1.73 + (row % 2 ? hr * 0.865 : 0), hy0 = gy + row * hr * 1.5; ctx.beginPath(); for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; ctx.lineTo(hx0 + Math.cos(a) * hr, hy0 + Math.sin(a) * hr); } ctx.closePath(); ctx.stroke(); } /* les alvéoles, en plomb fin */
-      ctx.strokeStyle = lead; ctx.lineWidth = 0.45;
-      for (const d of [-1, 1]) for (const [y0, y1, w] of [[-1.6, 0.2, 4.1], [0.4, 1.8, 3.2]]) { ctx.fillStyle = rgba(240, 244, 250, 0.9); ctx.beginPath(); ctx.moveTo(d * 0.95, gy + y0 + 0.5); ctx.lineTo(d * w, gy + y0 - 1.4); ctx.lineTo(d * (w - 0.3), gy + y1); ctx.closePath(); ctx.fill(); ctx.stroke(); } /* les ailes, en triangles */
-      const band = ["#f0c040", "#3a2810", "#f0c040", "#3a2810", "#f0c040"]; for (let k = 0; k < 5; k++) { const y = gy - 2.2 + k * 1.3, w = 1.7 - k * 0.25; ctx.fillStyle = band[k]; ctx.beginPath(); ctx.moveTo(-w, y); ctx.lineTo(0, y + 0.45); ctx.lineTo(w, y); ctx.lineTo(w, y + 1.3); ctx.lineTo(0, y + 1.75); ctx.lineTo(-w, y + 1.3); ctx.closePath(); ctx.fill(); } /* le corps, en chevrons */
-      ctx.fillStyle = "#3a2810"; ctx.beginPath(); ctx.moveTo(-0.4, gy + 4.1); ctx.lineTo(0, gy + 5.1); ctx.lineTo(0.4, gy + 4.1); ctx.fill(); /* le dard */
-      ctx.restore(); }
+    if (kind === "oval") { /* la lampe à l'abeille, d'après le croquis de l'auteur : une masse d'ailes arrondie, un éventail en haut, un corps en
+       * goutte qui descend jusqu'à sa pointe, un œil, des bandes ; le tout en verre serti de plomb, bordé de pierre */
+      const k = 0.0168, T = (px, py) => [(px - 350) * k, gy + 3.4 + (py - 430) * k];
+      const path = (cmds) => { ctx.beginPath(); for (const [op, ...v] of cmds) { const pts = []; for (let i = 0; i < v.length; i += 2) pts.push(...T(v[i], v[i + 1])); if (op === "M") ctx.moveTo(...pts); else if (op === "L") ctx.lineTo(...pts); else ctx.quadraticCurveTo(...pts); } };
+      const wings = [["M", 230, 185], ["Q", 150, 300, 40, 560], ["Q", 40, 632, 130, 632], ["L", 560, 610], ["Q", 665, 620, 665, 520], ["Q", 665, 400, 600, 320], ["Q", 540, 240, 520, 205], ["Q", 470, 120, 350, 140], ["Q", 260, 140, 230, 185]];
+      path(wings); ctx.closePath(); ctx.strokeStyle = "#3e4844"; ctx.lineWidth = 1.6; ctx.stroke(); ctx.fillStyle = glassG(gy - 1.6, gy + 7.6); ctx.fill(); /* le bord de pierre, le verre des ailes */
+      ctx.strokeStyle = lead; ctx.lineWidth = 0.4; ctx.stroke();
+      ctx.lineWidth = 0.3; for (const v of [[160, 295, 245, 325], [100, 410, 225, 460], [80, 438, 195, 482], [450, 320, 535, 280], [470, 365, 545, 330], [455, 485, 595, 445], [430, 530, 570, 518]]) { path([["M", v[0], v[1]], ["L", v[2], v[3]]]); ctx.stroke(); } /* les nervures */
+      path([["M", 222, 200], ["Q", 270, 140, 350, 145], ["Q", 470, 130, 510, 178], ["Q", 500, 238, 440, 246], ["L", 280, 242], ["Q", 240, 232, 222, 200]]); ctx.closePath(); ctx.fillStyle = rgba(...shift([60, 50, -20]), 1); ctx.fill(); ctx.lineWidth = 0.4; ctx.stroke(); /* l'éventail */
+      ctx.lineWidth = 0.3; for (const v of [[338, 244, 322, 152], [372, 242, 420, 152], [410, 242, 464, 186], [292, 218, 262, 178]]) { path([["M", v[0], v[1]], ["L", v[2], v[3]]]); ctx.stroke(); }
+      path([["M", 360, 250], ["Q", 290, 270, 255, 400], ["Q", 262, 500, 300, 600], ["Q", 330, 690, 343, 730], ["Q", 380, 660, 420, 560], ["Q", 470, 430, 445, 320], ["Q", 420, 262, 360, 250]]); ctx.closePath();
+      ctx.fillStyle = "#e8b440"; ctx.fill(); ctx.lineWidth = 0.45; ctx.stroke(); /* le corps */
+      ctx.save(); ctx.clip(); ctx.lineWidth = 0.4; for (const v of [[245, 446, 340, 392, 452, 512], [262, 500, 330, 452, 432, 522], [280, 546, 340, 516, 412, 542], [274, 586, 330, 574, 402, 582]]) { path([["M", v[0], v[1]], ["Q", v[2], v[3], v[4], v[5]]]); ctx.stroke(); } ctx.restore(); /* les bandes */
+      { const [ex, ey] = T(355, 335); ctx.fillStyle = "#3a2810"; ctx.beginPath(); ctx.arc(ex, ey, 28 * k, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.arc(ex, ey, 10 * k, 0, TAU); ctx.fill(); } } /* l'œil */
     else if (kind === "fan") { /* le verre haut, à dôme, où monte un éventail de feuilles comme une main ouverte */
       const y0 = P - 1.4, y1 = P - 14; ctx.fillStyle = "#3e4844"; ctx.fillRect(-3.8, y0 - 1.2, 7.6, 1.3); ctx.fillRect(-3.8, y1 + 0.6, 7.6, 1); /* bague du bas, bague du haut */
       ctx.fillStyle = glassG(y1, y0); ctx.beginPath(); ctx.moveTo(-3.2, y0 - 1.2); ctx.lineTo(-3.2, y1 + 5); ctx.quadraticCurveTo(-3.2, y1 + 0.6, 0, y1 + 0.6); ctx.quadraticCurveTo(3.2, y1 + 0.6, 3.2, y1 + 5); ctx.lineTo(3.2, y0 - 1.2); ctx.closePath(); ctx.fill();
