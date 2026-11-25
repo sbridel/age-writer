@@ -12,7 +12,7 @@ const W = 640, H = 360, TAU = Math.PI * 2;
 const TR = (r) => (r.imagerTr ? r.imagerTr() : (k) => k);
 const q = (k) => { let h = 2166136261; for (const ch of String(k)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return ((h >>> 0) % 10000) / 10000; };
 /** Le glyphe du centre : les lettres d'« ahyoheek » posées l'une sur l'autre (lettre@x,y,taille,rotation ; x, y en points pour une taille 30). */
-const GLYPH = "E@8.7,14.9,0.84,-1 o@-6.3,11.6,1.04,-16 a@0.7,-3.2,0.88,12 h@-5.1,5.3,1.00,-19 y@-6.5,12.3,0.79,-5" /* calé sur le contour dessiné à la main par l'auteur (25 nov.) */, GLYPH_SIZE = 50;
+const GLYPH = "E@8,14.7,0.92 o@-6.3,13.1,0.93,-13 a@-2.5,-2.6,0.92,10 h@-4.8,5.7,0.93,-20 y@-8.9,16.4,0.76,-2", GLYPH_SIZE = 50;
 
 /* les chiffres D'ni, le tracé simple du plugin (src/dni.js, simplePaths : repère 0..100, cadre 4..96) */
 const P = (u, v) => [4 + 92 * u, 4 + 92 * v];
