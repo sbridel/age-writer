@@ -169,7 +169,7 @@ function act(r, a) {
   else if (a.next) { if (G.phase === "reveal") { if (AH.next(G)) { settle(r); if (G.phase === "choose") arm(r); else if (G.phase === "won") snd(r, G.end.i === 0 ? "game" : "gameLost"); } } }
   else if (a.seat != null) { const seats = cur(r).seats, k = a.seat, has = seats.includes(k); if (has && seats.length === 1) return; /* il faut au moins un adversaire */
     const s = save(r, { seats: has ? seats.filter((x) => x !== k) : [...seats, k] }); st.G = AH.newGame(s); st.clock = null; snd(r, has ? "leave" : "join"); }
-  else if (a.level) { const L = ["easy", "mid", "hard", "rank"], s = save(r, { level: L[(L.indexOf(cur(r).level) + 1) % 4] }); st.G = AH.newGame(s); st.clock = null; snd(r, "button"); }
+  else if (a.level) { const L = ["easy", "mid", "hard", "rank"], lv = a.lv != null ? L[a.lv] : L[(L.indexOf(cur(r).level) + 1) % 4]; if (lv === cur(r).level) return; const s = save(r, { level: lv }); st.G = AH.newGame(s); st.clock = null; snd(r, "button"); }
   else if (a.start) { st.press = ["start", now()]; snd(r, "button"); /* le bouton d'ambre : lancer (la partie, ou la manche suivante) */
     if (G.phase === "won") { st.G = AH.newGame(cur(r)); st.clock = null; arm(r); }
     else if (G.phase === "reveal") act(r, { next: true });
@@ -231,7 +231,7 @@ function drawGame(r, ctx, sc, sky, t) {
   const out = (i) => !!(G.sudden && !G.sudden.includes(i)); /* manche décisive : ceux qui n'y sont pas restent dans l'ombre */
   const isWin = (i) => !!(G.winners && G.winners.includes(i)), anyWin = !!(G.winners && G.winners.length);
   const hv = (id) => !!(r.hover && r.hover.ahy && r.hover.ahy.id === id); /* ce qu'on survole s'éclaire (plus d'infobulle) */
-  const LV = [247, 235], RV = [393, 235], TIP = [320, 314], onEdge = (A, f) => [A[0] + (TIP[0] - A[0]) * f, A[1] + (TIP[1] - A[1]) * f]; /* les deux bords de ma branche */
+  const TIP = [320, 314]; /* la pointe de ma branche */
   if (G.phase === "reveal") r.hot.push({ x: 60, y: 40, w: 520, h: 300, ahy: { next: true } }); /* la manche montrée : toucher la table pour la suite */
   /* la salle : un sol de briques chaudes, la roche sombre au fond, une lumière chaude sur la table */
   const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#140d08"); bg.addColorStop(0.35, "#22160d"); bg.addColorStop(1, "#3a2414"); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
@@ -257,7 +257,7 @@ function drawGame(r, ctx, sc, sky, t) {
     const col = reveal && isWin(i) && p.play ? rgba(...up(HC[p.play], 30), 0.92) : done ? rgba(235, 240, 250, reveal && anyWin ? 0.32 : 0.72) : rgba(255, 255, 255, 0.06);
     ctx.fillStyle = col; ctx.beginPath(); for (let j = 0; j <= 12; j++) { const th = a - hw + (2 * hw * j) / 12; ctx.lineTo(bx + Math.cos(th) * 54, by + Math.sin(th) * 19.5); } for (let j = 12; j >= 0; j--) { const th = a - hw + (2 * hw * j) / 12; ctx.lineTo(bx + Math.cos(th) * 40, by + Math.sin(th) * 13.5); } ctx.closePath(); ctx.fill(); });
   /* les places : un chiffre D'ni gravé au bord, éteint si personne n'y joue */
-  for (let k = 0; k < 5; k++) { if (k && seats.includes(k)) continue; const a = Math.PI / 2 + k * TAU / 5; numeral(ctx, k + 1, C.x + Math.cos(a) * RX * 0.9, C.y + Math.sin(a) * RY * 0.9, 12, k === 0 ? "#c99a52" : rgba(169, 119, 58, 0.35)); } /* gravés au bord : ma place, et les sièges libres */
+  for (let k = 1; k < 5; k++) { if (seats.includes(k)) continue; const a = Math.PI / 2 + k * TAU / 5; numeral(ctx, k + 1, C.x + Math.cos(a) * RX * 0.9, C.y + Math.sin(a) * RY * 0.9, 12, k === 0 ? "#c99a52" : rgba(169, 119, 58, 0.35)); } /* gravés au bord : les sièges libres (les occupés ont leur figurine ; ma pointe, la plaque des règles) */
   for (let k = 1; k < 5; k++) { if (seats.includes(k)) continue; const [x, y] = seatAt(k); /* un siège libre : le projecteur éteint, couvert ; entre deux parties, on y invite un joueur */
     emitter(ctx, x, y, 18, null, false); ctx.strokeStyle = rgba(169, 119, 58, 0.35); ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.ellipse(x, y, 26, 11, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
     if (between) { if (hv("seat" + k)) hoverGlow(ctx, x, y, 30); r.hot.push({ x: x - 28, y: y - 18, w: 56, h: 32, ahy: { seat: k, id: "seat" + k } }); } }
@@ -266,7 +266,6 @@ function drawGame(r, ctx, sc, sky, t) {
     if (isWin(i + 1)) winMark(ctx, x, y, 18, t); emitter(ctx, x, y, 18, reveal && o.play ? HC[o.play] : null, reveal); if (reveal && o.play) holo(hx, o.play, x, y, isWin(i + 1) ? 28 : 22, isWin(i + 1) ? 1 : anyWin ? 0.28 : 0.8, t, i + 1);
     { const a = Math.PI / 2 + k * TAU / 5; if (between && hv("seat" + k)) hoverGlow(ctx, C.x + Math.cos(a) * RX * 0.86, C.y + Math.sin(a) * RY * 0.86 - 10, 22); figurine(ctx, C.x + Math.cos(a) * RX * 0.86, C.y + Math.sin(a) * RY * 0.86, o.char, k + 1); } /* la figurine, au bout de sa branche */
     { const side = Math.abs(x - C.x) > 100; tokens(hx, x + (x < C.x - 5 ? -1 : 1) * (side ? 66 : 62), y + (side ? 2 : 10), o.won, t, -1, 5.4); } /* ses jetons, à côté */
-    if (reveal && o.pts != null) numeral(ctx, o.pts, x, y + 32, 16, o.pts > 0 ? "#ffcf7a" : o.pts < 0 ? "#b0846a" : "#c99a52", o.pts < 0);
     ctx.globalAlpha = 1;
     r.hot.push({ x: x - 24, y: y - 40, w: 48, h: 54, ahy: G.phase === "reveal" ? { next: true } : between ? { seat: k, id: "seat" + k } : {} }); });
   /* l'anneau : un cercle de lumière debout au-dessus de la vasque, les trois signes dessus, le glyphe du jeu au cœur */
@@ -294,51 +293,58 @@ function drawGame(r, ctx, sc, sky, t) {
     if (!reveal && clk && clk.mine) { if (posed) holo(hx, k, x, y, 18, 0.6, t, 9); else { ctx.save(); ctx.translate(x, y); ctx.scale(1, k === "beetle" ? 0.5 : 0.45); anySign(ctx, k, 0, 0, k === "beetle" ? 8.5 : 10, HC[k], 0.3, false); ctx.restore(); } }
     else if (!reveal) { if (hov === k) holo(hx, k, x, y, 18, 0.8, t, 9); else { ctx.save(); ctx.translate(x, y); ctx.scale(1, k === "beetle" ? 0.5 : 0.45); anySign(ctx, k, 0, 0, k === "beetle" ? 8.5 : 10, HC[k], 0.8, false); ctx.restore(); } r.hot.push({ x: x - 17, y: y - 30, w: 34, h: 42, ahy: { sign: k } }); }
     else if (picked) { if (isWin(0)) winMark(ctx, x, y, 13, t); holo(hx, k, x, y, isWin(0) ? 28 : 22, isWin(0) ? 1 : anyWin ? 0.28 : 0.8, t, 0); } });
-  tokens(hx, 320, 270, G.me.won, t, 1, 3.8); /* mes jetons, sur ma branche, vers la pointe */
-  if (reveal && G.me.pts != null) numeral(ctx, G.me.pts, 238, 256, 16, G.me.pts > 0 ? "#ffcf7a" : G.me.pts < 0 ? "#b0846a" : "#c99a52", G.me.pts < 0);
-  /* encastrés dans la tranche de ma branche, face à moi : à gauche le levier du niveau et les encoches du rang ; à droite le bouton d'ambre
-   * (lancer) et le bouton de bronze (remettre la table en attente) ; à la pointe, la plaque des règles. Sur la table, à droite du centre, le registre. */
-  const onTranche = (A, f) => { const [x, y] = onEdge(A, f); return [x, y + 6.5]; };
-  { const s0 = cur(r), L = ["easy", "mid", "hard", "rank"], li = L.indexOf(s0.level), [x, y] = onTranche(LV, 0.28); /* le levier, quatre crans */
-    if (hv("level")) hoverGlow(ctx, x, y - 4, 22);
-    ctx.fillStyle = "#3a2a14"; ctx.fillRect(x - 12, y - 4, 24, 8); ctx.strokeStyle = "#c99a52"; ctx.lineWidth = 0.8; ctx.strokeRect(x - 12, y - 4, 24, 8);
-    for (let i = 0; i < 4; i++) { const xx = x - 9 + i * 6; ctx.fillStyle = i === li ? "#ffd890" : "#1a1208"; ctx.fillRect(xx - 0.8, y - 2.5, 1.6, 5); } /* les crans, gravés */
-    const hx0 = x - 9 + li * 6; ctx.strokeStyle = "#d8b070"; ctx.lineWidth = 2.2; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(hx0, y); ctx.lineTo(hx0 - 2, y + 9); ctx.stroke(); ctx.fillStyle = "#e9c27a"; ctx.beginPath(); ctx.arc(hx0 - 2, y + 10, 2.4, 0, TAU); ctx.fill(); ctx.lineCap = "butt"; /* la poignée */
-    r.hot.push({ x: x - 15, y: y - 8, w: 30, h: 22, ahy: { level: true, id: "level" } }); }
-  { const n = Math.min(25, cur(r).rank); ctx.lineCap = "round"; /* le rang : des encoches, par cinq barrées, gravées dans la tranche */
-    for (let i = 0; i < n; i++) { const g = Math.floor(i / 5), m = i % 5, [x, y] = onTranche(LV, 0.48 + g * 0.1 + m * 0.016);
-      if (m === 4) { const [x0, y0] = onTranche(LV, 0.48 + g * 0.1); ctx.strokeStyle = "#1a1208"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x0 - 1.5, y0 + 1); ctx.lineTo(x + 1.5, y - 3); ctx.stroke(); }
-      else { ctx.strokeStyle = "#1a1208"; ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(x, y - 3); ctx.lineTo(x, y + 3); ctx.stroke(); ctx.strokeStyle = rgba(230, 190, 120, 0.35); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(x + 0.9, y - 3); ctx.lineTo(x + 0.9, y + 3); ctx.stroke(); } }
-    ctx.lineCap = "butt"; }
-  const pressed = (k) => st.press && st.press[0] === k && nowMs - st.press[1] < 180 ? 1.5 : 0;
-  { const [x, y] = onTranche(RV, 0.3), pr = pressed("start"), call = (idle && G.round === 0) || G.phase === "won" ? 0.5 + 0.5 * Math.sin(t * 3) : 0; /* lancer : un bouton d'ambre */
-    if (hv("start")) hoverGlow(ctx, x, y, 22); if (call) hoverGlow(ctx, x, y, 18 + 4 * call, [255, 180, 80]);
-    ctx.fillStyle = "#3a2a14"; ctx.beginPath(); ctx.ellipse(x, y, 7.5, 6.5, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = "#c99a52"; ctx.lineWidth = 0.9; ctx.stroke();
-    const g = ctx.createRadialGradient(x - 1.5, y - 1.5 + pr, 0.5, x, y + pr, 5); g.addColorStop(0, "#fff0b0"); g.addColorStop(0.5, "#f0a840"); g.addColorStop(1, "#8a4a10"); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y + pr * 0.5, 4.6, 4, 0, 0, TAU); ctx.fill();
-    r.hot.push({ x: x - 11, y: y - 10, w: 22, h: 20, ahy: { start: true, id: "start" } }); }
-  { const [x, y] = onTranche(RV, 0.6), pr = pressed("wait"); /* en attente : un bouton de bronze, l'anneau gravé dessus */
-    if (hv("wait")) hoverGlow(ctx, x, y, 20);
-    ctx.fillStyle = "#3a2a14"; ctx.beginPath(); ctx.ellipse(x, y, 7, 6, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = "#c99a52"; ctx.lineWidth = 0.9; ctx.stroke();
-    const g = ctx.createRadialGradient(x - 1.5, y - 1.5 + pr, 0.5, x, y + pr, 5); g.addColorStop(0, "#e9c27a"); g.addColorStop(0.6, "#a8783a"); g.addColorStop(1, "#5a3c1a"); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y + pr * 0.5, 4.4, 3.8, 0, 0, TAU); ctx.fill();
-    ctx.strokeStyle = "#3a2410"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.arc(x, y + pr * 0.5, 2.4, 0, TAU); ctx.stroke(); for (const a of [-Math.PI / 2, Math.PI / 6, Math.PI * 5 / 6]) { ctx.fillStyle = "#3a2410"; ctx.beginPath(); ctx.arc(x + Math.cos(a) * 2.4, y + pr * 0.5 + Math.sin(a) * 2.4, 0.7, 0, TAU); ctx.fill(); } /* l'anneau et ses trois signes */
-    r.hot.push({ x: x - 10, y: y - 9, w: 20, h: 18, ahy: { wait: true, id: "wait" } }); }
-  { const [x, y] = [TIP[0], TIP[1] + 6.5]; /* la plaque des règles, à la pointe */
-    if (hv("rules")) hoverGlow(ctx, x, y, 22);
-    ctx.fillStyle = "#8a6a32"; ctx.fillRect(x - 13, y - 4, 26, 8); ctx.strokeStyle = "#d8b070"; ctx.lineWidth = 0.7; ctx.strokeRect(x - 13, y - 4, 26, 8);
-    AH.SIGNS.forEach((k, i) => anySign(ctx, k, x - 8 + i * 8, y, 2.4, [50, 34, 14], 0.9, false));
-    r.hot.push({ x: x - 15, y: y - 7, w: 30, h: 15, ahy: { panel: "rules", id: "rules" } }); }
-  { const x = 384, y = 222; /* le registre, posé sur la table */
-    if (hv("ledger")) hoverGlow(ctx, x, y, 26);
-    ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.beginPath(); ctx.ellipse(x + 2, y + 4, 16, 5, 0, 0, TAU); ctx.fill();
-    ctx.fillStyle = "#3a1e12"; ctx.beginPath(); ctx.moveTo(x - 15, y - 1); ctx.lineTo(x + 11, y - 5); ctx.lineTo(x + 16, y + 2); ctx.lineTo(x - 10, y + 6); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "#e4d6b4"; ctx.beginPath(); ctx.moveTo(x - 14, y - 2); ctx.lineTo(x + 11, y - 6); ctx.lineTo(x + 15, y + 0.5); ctx.lineTo(x - 10, y + 4.5); ctx.closePath(); ctx.fill(); /* les pages */
-    ctx.fillStyle = "#5a2a18"; ctx.beginPath(); ctx.moveTo(x - 15, y - 3); ctx.lineTo(x + 11, y - 7); ctx.lineTo(x + 15.5, y - 1); ctx.lineTo(x - 10.5, y + 3); ctx.closePath(); ctx.fill(); ctx.strokeStyle = "#c99a52"; ctx.lineWidth = 0.6; ctx.stroke(); /* la couverture */
-    r.hot.push({ x: x - 18, y: y - 10, w: 36, h: 18, ahy: { panel: "ledger", id: "ledger" } }); }
+  tokens(hx, 266, 238, G.me.won, t, -1, 3.8); /* mes jetons, à gauche de mes projecteurs, au creux de la table */
+  /* encastrés à fleur de pierre sur ma branche, sous mes projecteurs : à gauche le bouton d'ambre (lancer), à droite le bouton de bronze
+   * (remettre la table en attente) ; à la pointe, la plaque des règles. À droite de la table, l'écran des scores. */
+  const pressed = (k) => st.press && st.press[0] === k && nowMs - st.press[1] < 180;
+  const inlay = (x, y, rx, ry, glass, id, act, glyph) => { const pr = pressed(id); if (hv(id)) hoverGlow(ctx, x, y, rx * 3);
+    ctx.fillStyle = "#c99a52"; ctx.beginPath(); ctx.ellipse(x, y, rx + 1.6, ry + 1, 0, 0, TAU); ctx.fill(); /* la bague de bronze, au ras de la pierre */
+    ctx.fillStyle = "#2a1c0e"; ctx.beginPath(); ctx.ellipse(x, y, rx + 0.4, ry + 0.3, 0, 0, TAU); ctx.fill();
+    const g = ctx.createRadialGradient(x - rx * 0.3, y - ry * 0.3, 0.5, x, y, rx); for (const [o, c] of glass) g.addColorStop(o, c); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, rx * (pr ? 0.86 : 1), ry * (pr ? 0.86 : 1), 0, 0, TAU); ctx.fill();
+    if (glyph) glyph(x, y); r.hot.push({ x: x - rx - 5, y: y - ry - 6, w: 2 * rx + 10, h: 2 * ry + 12, ahy: { ...act, id } }); };
+  { const call = (idle && G.round === 0) || G.phase === "won" ? 0.5 + 0.5 * Math.sin(t * 3) : 0; if (call) hoverGlow(ctx, 301, 283, 14 + 4 * call, [255, 180, 80]);
+    inlay(301, 283, 6.2, 3.4, [[0, "#fff0b0"], [0.5, "#f0a840"], [1, "#8a4a10"]], "start", { start: true }); }
+  inlay(339, 283, 6.2, 3.4, [[0, "#e9c27a"], [0.6, "#a8783a"], [1, "#5a3c1a"]], "wait", { wait: true }, (x, y) => { ctx.strokeStyle = "#3a2410"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.ellipse(x, y, 3.4, 1.8, 0, 0, TAU); ctx.stroke(); }); /* l'anneau, gravé */
+  { const x = TIP[0], y = 301; if (hv("rules")) hoverGlow(ctx, x, y, 18); /* la plaque des règles, à fleur, à la pointe */
+    ctx.fillStyle = "#9a7838"; ctx.beginPath(); ctx.moveTo(x - 9, y - 2.6); ctx.lineTo(x + 9, y - 2.6); ctx.lineTo(x + 7, y + 2.6); ctx.lineTo(x - 7, y + 2.6); ctx.closePath(); ctx.fill(); ctx.strokeStyle = "#d8b070"; ctx.lineWidth = 0.6; ctx.stroke();
+    AH.SIGNS.forEach((k, i) => { ctx.save(); ctx.translate(x - 5 + i * 5, y); ctx.scale(1, 0.55); anySign(ctx, k, 0, 0, 1.8, [50, 34, 14], 0.9, false); ctx.restore(); });
+    r.hot.push({ x: x - 12, y: y - 6, w: 24, h: 12, ahy: { panel: "rules", id: "rules" } }); }
+  screen(r, ctx, hx, G, seats, reveal, between, t, hv);
   if (hx !== ctx) holoComposite(ctx, hx, t);
   require("./relto-atelier").backButton(r, ctx, T("ahy.back." + (["desk", "cabin"].includes(st.from) ? st.from : "serre")), ["desk", "cabin"].includes(st.from) ? st.from : "serre");
   if (st.panel) panel(r, ctx, st.panel, t);
   ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; /* remis comme ailleurs : l'infobulle s'écrit à gauche */
   void sc; void sky;
+}
+
+/** L'écran des scores, un petit imageur debout à droite de la table : pour chaque place, son chiffre, ses signes gagnés, ses points de la
+ *  manche ; en bas, le rang et quatre touches pour le niveau (1, 2, 3 : facile, moyen, difficile ; la quatrième, le rang). Table en attente :
+ *  les dernières parties du registre (un clic l'ouvre en entier). Rien que des chiffres D'ni et des signes. */
+function screen(r, ctx, hx, G, seats, reveal, between, t, hv) {
+  const x0 = 548, y0 = 34, w = 84, h = 156, A = [G.me, ...G.opp], c0 = cur(r), fl = 0.92 + 0.08 * Math.sin(t * 13) * Math.sin(t * 3.7);
+  ctx.fillStyle = "#2a1e12"; ctx.fillRect(x0 + w / 2 - 3, y0 + h, 6, 120); ctx.fillStyle = "#4a3418"; ctx.beginPath(); ctx.ellipse(x0 + w / 2, y0 + h + 120, 18, 5, 0, 0, TAU); ctx.fill(); /* le pied */
+  const fr = ctx.createLinearGradient(x0, 0, x0 + w, 0); fr.addColorStop(0, "#6a4a20"); fr.addColorStop(0.4, "#c99a52"); fr.addColorStop(1, "#5a3c18"); ctx.fillStyle = fr; ctx.fillRect(x0 - 5, y0 - 5, w + 10, h + 10); /* le cadre de laiton */
+  ctx.fillStyle = "#06101a"; ctx.fillRect(x0, y0, w, h);
+  const ink = (a) => rgba(150, 200, 245, a * fl);
+  hx.save(); hx.globalCompositeOperation = "lighter"; hx.fillStyle = rgba(60, 110, 170, 0.12 * fl); hx.fillRect(x0, y0, w, h);
+  if (G.round === 0 && !r.ahy.clock && (c0.log || []).length) { /* en attente : le registre */
+    (c0.log || []).slice(0, 6).forEach((e, i) => { const y = y0 + 16 + i * 19; anySign(hx, e.by || "pen", x0 + 14, y, 5, HC[e.by || "pen"], 0.85 * fl, true); numeral(hx, e.n, x0 + 38, y, 9, ink(0.8));
+      hx.fillStyle = e.won ? rgba(255, 210, 120, 0.9 * fl) : ink(0.25); hx.beginPath(); hx.arc(x0 + 62, y, 3.4, 0, TAU); hx.fill(); });
+    r.hot.push({ x: x0, y: y0, w, h: h - 30, ahy: { panel: "ledger", id: "screen" } }); if (hv("screen")) hoverGlow(ctx, x0 + w / 2, y0 + h / 2 - 15, 50, [150, 200, 245]); }
+  else seats.forEach((k, i) => { const p = A[i], y = y0 + 16 + i * 22, win = !!(G.winners && G.winners.includes(i)); /* les scores, une ligne par place */
+    if (win) { hx.fillStyle = rgba(255, 200, 110, 0.16 * fl); hx.fillRect(x0 + 2, y - 9, w - 4, 18); }
+    numeral(hx, k + 1, x0 + 9, y, 8, ink(i === 0 ? 0.95 : 0.65));
+    AH.SIGNS.forEach((sg, j) => { const n = p.won[sg] || 0, xx = x0 + 24 + j * 17; anySign(hx, sg, xx, y - 3, 3.2, HC[sg], (n ? 0.9 : 0.3) * fl, true); numeral(hx, n, xx, y + 5, 5, n >= 3 ? rgba(255, 210, 120, fl) : ink(n ? 0.8 : 0.3)); });
+    if (reveal && p.pts != null) numeral(hx, p.pts, x0 + w - 8, y, 7, p.pts > 0 ? rgba(255, 210, 120, fl) : ink(0.5), p.pts < 0); });
+  /* en bas : le rang, et les quatre touches du niveau */
+  hx.strokeStyle = ink(0.25); hx.lineWidth = 0.6; hx.beginPath(); hx.moveTo(x0 + 4, y0 + h - 26); hx.lineTo(x0 + w - 4, y0 + h - 26); hx.stroke();
+  const L = ["easy", "mid", "hard", "rank"], li = L.indexOf(c0.level);
+  for (let i = 0; i < 4; i++) { const kx = x0 + 12 + i * 20, ky = y0 + h - 13, on = i === li, id = "lv" + i;
+    hx.strokeStyle = on ? rgba(255, 210, 120, fl) : ink(0.45); hx.lineWidth = on ? 1.2 : 0.8; hx.strokeRect(kx - 7, ky - 7, 14, 14); if (on) { hx.fillStyle = rgba(255, 200, 110, 0.18 * fl); hx.fillRect(kx - 7, ky - 7, 14, 14); }
+    numeral(hx, i < 3 ? i + 1 : c0.rank, kx, ky, 8, on ? rgba(255, 220, 140, fl) : ink(0.7)); /* 1, 2, 3 ; puis le rang lui-même */
+    if (hv(id)) hoverGlow(ctx, kx, ky, 14, [150, 200, 245]);
+    if (between) r.hot.push({ x: kx - 9, y: ky - 9, w: 18, h: 18, ahy: { level: true, lv: i, id } }); }
+  hx.restore();
 }
 
 /** La plaque des règles (en signes, sans un mot) ou le registre des parties, ouverts devant soi ; un clic les referme. */
