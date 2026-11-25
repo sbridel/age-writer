@@ -48,5 +48,16 @@ for (let s = 0; s < 60; s++) { const r = mul(100 + s), g = AH.newGame({ n: 1 + (
   r.ahy.G = AH.newGame({ n: 2, rnd: mul(7) }); const [c1, c2] = r.ahy.G.opp.map((o) => o.char);
   Y.act(r, { seat: 3 }); const after = r.ahy.G.opp.map((o) => o.char);
   ok(after[0] === c1 && after[1] === c2 && new Set(after).size === 3, "un joueur qui arrive ne change pas les autres");
-  Y.act(r, { seat: 1 }); ok(r.ahy.G.opp[0].char === c2 && r.ahy.G.opp[1].char === after[2], "un joueur qui part ne change pas les autres"); }
+  /* toucher un siège pris : sa guilde passe à la suivante libre ; après la dernière, il se vide ; les autres ne bougent pas */
+  const seen = [c1]; let n = 0; while (mem.seats.includes(1) && n++ < 10) { Y.act(r, { seat: 1 }); if (mem.seats.includes(1)) { const o = r.ahy.G.opp, i = mem.seats.indexOf(1); seen.push(o[i].char); ok(o.filter((x, j) => j !== i).every((x) => x.char !== o[i].char), "une guilde libre"); } }
+  ok(!mem.seats.includes(1) && new Set(seen).size === seen.length, "le siège a fait le tour des guildes libres, puis s'est vidé");
+  ok(r.ahy.G.opp[0].char === c2 && r.ahy.G.opp[1].char === after[2], "un joueur qui part ne change pas les autres");
+  /* ma guilde : jamais tirée pour un adversaire ; celui qui la portait en prend une autre */
+  const theirs = r.ahy.G.opp[0].char, guild = require("../src/guild-symbols").OF[theirs]; let k2 = 0; while (mem.me !== guild && k2++ < 8) Y.act(r, { me: true });
+  ok(mem.me === guild && r.ahy.G.opp.every((o) => o.char !== theirs), "ma guilde n'est plus à un adversaire");
+  Y.act(r, { wait: true }); ok(r.ahy.G.opp.every((o) => o.char !== theirs) && r.ahy.G.opp[1].char === after[2], "une partie neuve garde les places et ma guilde"); }
+/* le mesureur : il joue ce qui bat le signe le plus sorti */
+{ const G = AH.newGame({ n: 1, level: "easy", rnd: mul(3) }); G.opp[0].char = "measurer"; G.tally = { pen: 5, page: 1 };
+  ok(AH.oppPlay(G, G.opp[0], seq([0.9, 0.1])) === "beetle", "le mesureur bat la plume, la plus sortie"); }
+ok(AH.newGame({ n: 4, exclude: ["wary"], rnd: mul(5) }).opp.every((o) => o.char !== "wary"), "un caractère exclu n'est pas tiré");
 console.log("ahyoheek : " + n + " OK");

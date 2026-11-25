@@ -14,7 +14,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **The six guilds have their signs**, drawn by the author: archivists, writers, messengers, cartographers, maintainers, and the geometers, whose name stands behind their instrument in large D'ni letters (when a D'ni font is installed).
   - Six banners in the hallway, two of them on the far wall either side of the forge door: cloth on planks, fringed velvet in the Castle, leaded stained glass in the Glasshouse.
   - The wax seal of an unread letter carries the writers' sign; the house's side of the Baykh table has a brass plaque with its guild.
-  - The secret mini game's figurines wear them too (embroidered, or engraved), and so does its projector.
+  - The secret mini game's figurines wear them too (embroidered, or engraved), and so does its projector; there you now choose your own guild, and your opponents come from the others (the guide's secrets say how).
 - **A bedside lamp** at the head of the bed in the writing room: the bee's glass or the hand's (a click changes it), glowing more at night.
 
 ## 2.10 — Dead stars (2.10.0 to 2.10.13, 2026-11-08 to 25)

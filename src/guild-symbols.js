@@ -6,7 +6,9 @@
  * `hole` la couleur du vide (le fond). Les caractères des adversaires d'Ahyoheek portent chacun une guilde (`OF`).
  */
 const TAU = Math.PI * 2;
-const OF = { faithful: "archivistes", mimic: "ecrivains", sly: "messagers", collector: "cartographes", wary: "mainteneurs" };
+const OF = { faithful: "archivistes", mimic: "ecrivains", sly: "messagers", collector: "cartographes", wary: "mainteneurs", measurer: "geometres" };
+/** Le caractère qui porte une guilde (l'inverse de `OF`). */
+const CHAR_OF = Object.fromEntries(Object.entries(OF).map(([k, v]) => [v, k]));
 const GUILDS = ["archivistes", "ecrivains", "messagers", "cartographes", "mainteneurs", "geometres"];
 /* la couleur de chaque guilde (la robe, la bannière) et celle de son fil (le galon, la broderie) */
 const COL = { archivistes: [190, 140, 52], ecrivains: [34, 30, 34], messagers: [238, 206, 70], cartographes: [64, 196, 200], mainteneurs: [122, 30, 46], geometres: [42, 96, 220] };
@@ -83,4 +85,4 @@ function draw(c2, guild, x, y, R, col, w = 0.07, hole = "rgba(0,0,0,0)") {
   if (!SYM[guild] && guild !== "geometres") return; ctx = c2; ctx.save(); ctx.translate(x, y); ctx.scale(R, R); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = w;
   if (guild === "geometres") geometres(col); else SYM[guild](col, hole); ctx.restore(); ctx = null;
 }
-module.exports = { draw, setFont, OF, GUILDS, COL, THREAD };
+module.exports = { draw, setFont, OF, CHAR_OF, GUILDS, COL, THREAD };

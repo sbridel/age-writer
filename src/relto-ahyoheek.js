@@ -122,7 +122,7 @@ function tokens(h, x, y, won, t, dir = -1, s = 4.4) {
 /* chaque caractère porte la couleur d'une guilde D'ni : le fidèle, les archivistes (or) ; l'imitateur, les écrivains (noir, liseré rouge
  * sombre) ; le malin, les messagers (jaune) ; le collectionneur, les cartographes (turquoise) ; le méfiant, les mainteneurs (bordeaux).
  * FIG_COL : la robe ; FIG_LIT : ce qui luit (émail, verre, lettre), quand ce n'est pas la même. Les emblèmes sont inventés, d'après le métier. */
-const FIG_COL = { faithful: [190, 140, 52], mimic: [34, 30, 34], sly: [238, 206, 70], collector: [64, 196, 200], wary: [122, 30, 46] };
+const FIG_COL = { faithful: [190, 140, 52], mimic: [34, 30, 34], sly: [238, 206, 70], collector: [64, 196, 200], wary: [122, 30, 46], measurer: [42, 96, 220] };
 const FIG_LIT = { mimic: [168, 40, 52], wary: [176, 52, 72] };
 const FIGS = 3;
 const STONE = (ctx, x0, x1) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, "#4a4032"); g.addColorStop(0.38, "#b4a384"); g.addColorStop(0.6, "#9a8a6c"); g.addColorStop(1, "#3a3226"); return g; };
@@ -209,6 +209,7 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
   ctx.strokeStyle = rgba(60, 48, 30, 0.6); ctx.lineWidth = 0.4; ctx.beginPath(); ctx.ellipse(0, top, 7.2, 2.4, 0, 0, TAU); ctx.stroke(); /* le liseré du dessus */
   ctx.fillStyle = "#6a4a1c"; ctx.fillRect(-2.9, top + 2.1, 5.8, 4.6); ctx.fillStyle = "#c99a52"; ctx.fillRect(-2.5, top + 2.5, 5, 3.8); /* le cartouche */
   numeral(ctx, num, 0, top + 4.4, 3.2, "#3a240c");
+  if (!char) { ctx.restore(); return; } /* ma place sans guilde : le socle seul, qui attend */
   if (set === 1) { /* la stèle */
     ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.beginPath(); ctx.ellipse(0, top, 5.2, 1.6, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = STONE(ctx, -5, 5); ctx.beginPath(); ctx.moveTo(-5, top); ctx.lineTo(-4.4, top - 15); ctx.quadraticCurveTo(0, top - 21, 4.4, top - 15); ctx.lineTo(5, top); ctx.closePath(); ctx.fill();
@@ -265,28 +266,46 @@ function inkMid(r, fam) {
 /* les places occupées autour de la table (1 à 4, la 0 est la mienne) : on invite un joueur en touchant un siège libre, on le renvoie en touchant le sien */
 const SEAT_ORDER = [2, 3, 1, 4];
 function seatsOf(s) { const ok = Array.isArray(s.seats) ? [...new Set(s.seats.filter((k) => [1, 2, 3, 4].includes(k)))] : []; return ok.length ? ok : SEAT_ORDER.slice(0, Math.max(1, Math.min(4, s.n | 0 || 2))); }
-function saved(r) { const s = (r.opts && r.opts.ahyState && r.opts.ahyState()) || {}, seats = seatsOf(s); return { seats, n: seats.length, level: ["easy", "mid", "hard", "rank"].includes(s.level) ? s.level : "rank", rank: Math.max(0, s.rank | 0), log: Array.isArray(s.log) ? s.log.slice(0, 40) : [], figs: [0, 1, 2].includes(s.figs) ? s.figs : 0, lamp: s.lamp === "rays" ? "rays" : "oval" }; }
+function saved(r) { const s = (r.opts && r.opts.ahyState && r.opts.ahyState()) || {}, seats = seatsOf(s); return { seats, n: seats.length, level: ["easy", "mid", "hard", "rank"].includes(s.level) ? s.level : "rank", rank: Math.max(0, s.rank | 0), log: Array.isArray(s.log) ? s.log.slice(0, 40) : [], figs: [0, 1, 2].includes(s.figs) ? s.figs : 0, lamp: s.lamp === "rays" ? "rays" : "oval", me: GS.GUILDS.includes(s.me) ? s.me : null, chars: charsOf(s.chars) }; }
+/** Les caractères gardés, place par place (« 2 » : "mimic"…) : on retrouve ses adversaires d'une partie à l'autre. */
+function charsOf(c) { const o = {}; if (c && typeof c === "object") for (const [k, v] of Object.entries(c)) if ([1, 2, 3, 4].includes(+k) && AH.CHARS.includes(v)) o[k] = v; return o; }
+const myChar = (s) => (s.me ? GS.CHAR_OF[s.me] || null : null);
+/** Une partie neuve à la table : ma guilde n'est jamais tirée ; chaque place garde son caractère s'il est libre, sinon en prend un libre. */
+function newG(s) {
+  const mine = myChar(s), G = AH.newGame({ n: s.n, level: s.level, rank: s.rank, exclude: mine ? [mine] : [] }), used = new Set(mine ? [mine] : []), want = s.chars || {};
+  s.seats.forEach((k, i) => { const w = want[k], g = G.opp[i]; if (g && w && !used.has(w)) { g.char = w; used.add(w); g.kept = true; } });
+  G.opp.forEach((g) => { if (g.kept) { delete g.kept; return; } if (used.has(g.char)) g.char = AH.CHARS.find((c) => !used.has(c)) || g.char; used.add(g.char); });
+  return G;
+}
+const charsNow = (r) => { const s = cur(r), G = r.ahy && r.ahy.G, o = {}; s.seats.forEach((k, i) => { const g = G && G.opp[i]; if (g) o[k] = g.char; }); return o; };
 function save(r, patch) { const s = { ...saved(r), ...patch }; s.seats = seatsOf(s); s.n = s.seats.length; if (r.opts && r.opts.onAhyoheek) r.opts.onAhyoheek(s); r._ahySaved = s; return s; }
 function cur(r) { return r._ahySaved || saved(r); }
-function state(r) { if (!r.ahy || !r.ahy.G) { const s = cur(r); r.ahy = { ...(r.ahy || {}), G: AH.newGame({ n: s.n, level: s.level, rank: s.rank }) }; } return r.ahy; }
+function state(r) { if (!r.ahy || !r.ahy.G) { const s = cur(r); r.ahy = { ...(r.ahy || {}), G: newG(s) }; } return r.ahy; }
 
 /** Un clic dans la vue : un signe, la table (la suite), un réglage. */
 function act(r, a) {
   const st = state(r), G = st.G;
   if (a.sign) { if (G.phase === "choose") { if (!st.clock) arm(r); if (!st.clock.mine) pickMine(r, a.sign, false); } }
   else if (a.next) { if (G.phase === "reveal") { if (AH.next(G)) { settle(r); if (G.phase === "choose") arm(r); else if (G.phase === "won") snd(r, G.end.i === 0 ? "game" : "gameLost"); } } }
-  else if (a.seat != null) { const seats = cur(r).seats, k = a.seat, has = seats.includes(k); if (has && seats.length === 1) return; /* il faut au moins un adversaire */
-    const before = new Map(seats.map((x, i) => [x, st.G && st.G.opp[i]]).filter(([, o]) => o)); /* qui était assis où : chacun garde sa figurine */
-    const s = save(r, { seats: has ? seats.filter((x) => x !== k) : [...seats, k] }); st.G = AH.newGame(s);
-    const kept = new Set(); s.seats.forEach((x, i) => { const o = before.get(x), g = st.G.opp[i]; if (o && g) { g.char = o.char; g.fav = o.fav; kept.add(o.char); } });
-    s.seats.forEach((x, i) => { const g = st.G.opp[i]; if (g && !before.has(x) && kept.has(g.char)) { const free = AH.CHARS ? AH.CHARS.find((c) => !kept.has(c)) : null; if (free) g.char = free; } if (g) kept.add(g.char); }); /* le nouveau venu prend un caractère encore libre */
-    st.clock = null; snd(r, has ? "leave" : "join"); }
-  else if (a.level) { const L = ["easy", "mid", "hard", "rank"], lv = a.lv != null ? L[a.lv] : L[(L.indexOf(cur(r).level) + 1) % 4]; if (lv === cur(r).level) return; const s = save(r, { level: lv }); st.G = AH.newGame(s); st.clock = null; snd(r, "button"); }
+  else if (a.seat != null) { /* un siège libre : on y invite la première guilde libre ; un siège pris : sa guilde passe à la suivante encore libre, et après la dernière il se vide */
+    const s0 = cur(r), seats = s0.seats, k = a.seat, has = seats.includes(k), mine = myChar(s0), chars = charsNow(r);
+    const taken = (x) => new Set([...Object.entries(chars).filter(([q]) => +q !== x).map(([, c]) => c), ...(mine ? [mine] : [])]);
+    let patch, sound = "join";
+    if (!has) { const t = taken(k); chars[k] = AH.CHARS.find((c) => !t.has(c)); patch = { seats: [...seats, k], chars }; }
+    else { const t = taken(k), after = AH.CHARS.slice(AH.CHARS.indexOf(chars[k]) + 1).find((c) => !t.has(c));
+      if (after) chars[k] = after; else if (seats.length > 1) { delete chars[k]; sound = "leave"; } else chars[k] = AH.CHARS.find((c) => !t.has(c)) || chars[k]; /* il faut au moins un adversaire */
+      patch = { seats: chars[k] ? seats : seats.filter((x) => x !== k), chars }; }
+    const s = save(r, patch); st.G = newG(s); st.clock = null; snd(r, sound); }
+  else if (a.me) { /* ma guilde (ma figurine, ou ma ligne au projecteur) : aucune, puis les six tour à tour ; un adversaire qui la portait en prend une autre */
+    const s0 = cur(r), order = [null, ...GS.GUILDS], me = order[(order.indexOf(s0.me) + 1) % order.length], c = me ? GS.CHAR_OF[me] : null, chars = charsNow(r);
+    if (c) for (const [q, v] of Object.entries(chars)) if (v === c) { const t = new Set([...Object.values(chars), c]); chars[q] = AH.CHARS.find((x) => !t.has(x)) || v; }
+    const s = save(r, { me, chars }); st.G = newG(s); st.clock = null; snd(r, "button"); }
+  else if (a.level) { const L = ["easy", "mid", "hard", "rank"], lv = a.lv != null ? L[a.lv] : L[(L.indexOf(cur(r).level) + 1) % 4]; if (lv === cur(r).level) return; const s = save(r, { level: lv }); st.G = newG(s); st.clock = null; snd(r, "button"); }
   else if (a.start) { st.press = ["start", now()]; snd(r, "button"); /* le bouton d'ambre : lancer (la partie, ou la manche suivante) */
-    if (G.phase === "won") { st.G = AH.newGame(cur(r)); st.clock = null; arm(r); }
+    if (G.phase === "won") { st.G = newG(cur(r)); st.clock = null; arm(r); }
     else if (G.phase === "reveal") act(r, { next: true });
     else if (!st.clock) arm(r); }
-  else if (a.wait) { st.press = ["wait", now()]; st.G = AH.newGame(cur(r)); st.clock = null; snd(r, "button"); } /* le bouton de bronze : la table se remet en attente, l'anneau revient au glyphe */
+  else if (a.wait) { st.press = ["wait", now()]; st.G = newG(cur(r)); st.clock = null; snd(r, "button"); } /* le bouton de bronze : la table se remet en attente, l'anneau revient au glyphe */
   else if (a.lamp) { save(r, { lamp: cur(r).lamp === "rays" ? "oval" : "rays" }); snd(r, "button"); } /* la lampe de chevet : l'abeille ou la main */
   else if (a.figs != null && a.figs !== false) { save(r, { figs: typeof a.figs === "number" ? Math.max(0, Math.min(FIGS - 1, a.figs | 0)) : (cur(r).figs + 1) % FIGS }); snd(r, "button"); } /* toucher une figurine : tout le jeu change */
   else if (a.panel) { st.panel = a.panel; snd(r, "button"); } /* la plaque des règles, le registre */
@@ -368,6 +387,8 @@ function room(ctx, from, t) {
   const shade = ctx.createLinearGradient(0, WALL - 14, 0, WALL + 20); shade.addColorStop(0, rgba(0, 0, 0, 0)); shade.addColorStop(0.4, rgba(0, 0, 0, 0.35)); shade.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = shade; ctx.fillRect(0, WALL - 14, W, 34); /* l'ombre au pied du mur */
 }
 const C = { x: 320, y: 182 }, RX = 250, RY = 132;
+/** Ma figurine : sur ma branche, entre les deux boutons. */
+const MYFIG = [320, 291];
 const seatAt = (k) => { const a = Math.PI / 2 + k * TAU / 5; return [C.x + Math.cos(a) * RX * 0.66, C.y + Math.sin(a) * RY * 0.66]; };
 const MINE = (i) => [286 + i * 34, 250];
 function drawGame(r, ctx, sc, sky, t) {
@@ -414,6 +435,9 @@ function drawGame(r, ctx, sc, sky, t) {
     { const a = Math.PI / 2 + k * TAU / 5, back = Math.sin(a) < 0, f = back ? 0.5 : 0.43, px = C.x + Math.cos(a) * RX * f + (back ? Math.sign(Math.cos(a)) * 26 : 0); tokens(hx, px, C.y + Math.sin(a) * RY * f + (back ? 20 : 6), o.won, t, -1, 3.8); } /* au fond, un peu en dehors et plus bas : loin de l'anneau */ /* ses jetons, sur sa branche, entre son projecteur et la vasque */
     ctx.globalAlpha = 1;
     r.hot.push({ x: x - 24, y: y - 40, w: 48, h: 54, ahy: G.phase === "reveal" ? { next: true } : between ? { seat: k, id: "seat" + k } : {} }); });
+  { const [fx, fy] = MYFIG, mc = myChar(cur(r)); if (hv("myFig")) hoverGlow(ctx, fx, fy - 10, 22); /* ma figurine, sur ma branche : ma guilde (la toucher en change, entre deux parties) */
+    ctx.save(); ctx.translate(fx, fy); ctx.scale(0.66, 0.66); figurine(ctx, 0, 0, mc, 1, cur(r).figs, r.dni && r.dni.fontFamily && r.dni.fontFamily(), mc ? 1 : 0.8); ctx.restore();
+    if (between) figHot.push({ x: fx - 9, y: fy - 24, w: 18, h: 27, ahy: { me: true, id: "myFig" } }); }
   r.hot.push(...figHot);
   /* l'anneau : un cercle de lumière debout au-dessus de la vasque, les trois signes dessus, le glyphe du jeu au cœur */
   { const cx = C.x, cy = C.y - 86, R = 62, fl = 0.9 + 0.1 * Math.sin(t * 17) * Math.sin(t * 5.1);
@@ -497,7 +521,8 @@ function screen(r, ctx, hx, G, seats, reveal, between, t, hv) {
   else seats.forEach((k, i) => { const p = A[i], y = yA + i * gap, win = !!(G.winners && G.winners.includes(i)); void rows; /* les scores, une ligne par place */
     if (win) { const g = hx.createLinearGradient(pcx - 34, 0, pcx + 34, 0); g.addColorStop(0, rgba(255, 200, 110, 0)); g.addColorStop(0.5, rgba(255, 200, 110, 0.22 * fl)); g.addColorStop(1, rgba(255, 200, 110, 0)); hx.fillStyle = g; hx.fillRect(pcx - 34, y - 8, 68, 16); }
     numeral(hx, k + 1, pcx - 26, y, 7, ink(i === 0 ? 0.95 : 0.6));
-    if (i === 0) { hx.strokeStyle = ink(0.7); hx.lineWidth = 0.8; hx.beginPath(); hx.arc(pcx - 40, y, 4.6, 0, TAU); hx.stroke(); } else GS.draw(hx, GS.OF[p.char] || "mainteneurs", pcx - 40, y, 5.2, ink(0.8), 0.13); /* devant chaque adversaire, le symbole de sa guilde ; devant moi, un simple cercle */
+    const gk = i === 0 ? cur(r).me : GS.OF[p.char] || "mainteneurs"; if (gk) GS.draw(hx, gk, pcx - 40, y, 5.2, ink(0.8), 0.13); else { hx.strokeStyle = ink(0.7); hx.lineWidth = 0.8; hx.beginPath(); hx.arc(pcx - 40, y, 4.6, 0, TAU); hx.stroke(); } /* devant chacun, le symbole de sa guilde ; devant moi, un simple cercle tant que je n'en ai pas choisi */
+    if (i === 0 && between) { r.hot.push({ x: pcx - 48, y: y - 8, w: 16, h: 16, ahy: { me: true, id: "meRow" } }); if (hv("meRow")) hoverGlow(hx, pcx - 40, y, 10, [150, 200, 245]); }
     AH.SIGNS.forEach((sg, j) => { const n = p.won[sg] || 0, xx = pcx - 12 + j * 12; anySign(hx, sg, xx, y - 3, 2.9, HC[sg], (n ? 0.85 : 0.28) * fl, true); numeral(hx, n, xx, y + 4.5, 4.5, n >= 3 ? rgba(255, 210, 120, fl) : ink(n ? 0.75 : 0.28)); });
     if (reveal && p.pts != null) numeral(hx, p.pts, pcx + 27, y, 6.5, p.pts > 0 ? rgba(255, 210, 120, fl) : ink(0.45), p.pts < 0); });
   /* les quatre plots du niveau, à fleur sur le rebord avant */
