@@ -177,18 +177,15 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
     const lead = "#1c2220";
     const gy = kind === "oval" ? P - 8 : P - 7.5, glow = ctx.createRadialGradient(0, gy, 1, 0, gy, 16); glow.addColorStop(0, rgba(c[0], c[1], c[2], 0.32)); glow.addColorStop(1, rgba(c[0], c[1], c[2], 0)); ctx.fillStyle = glow; ctx.fillRect(-16, gy - 16, 32, 32);
     if (kind === "oval") { /* le médaillon à l'abeille, en vitrail géométrique : un fond d'alvéoles hexagonales, une abeille faite de formes simples
-       * (un losange pour la tête, des chevrons pour le corps, deux triangles par aile), tout serti de plomb */
+       * (sans tête : des chevrons pour le corps, deux triangles par aile), tout serti de plomb */
       ctx.fillStyle = "#3e4844"; ctx.beginPath(); ctx.ellipse(0, gy, 5.6, 6.8, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = "#7a8680"; ctx.lineWidth = 0.4; ctx.stroke();
       ctx.fillStyle = glassG(gy - 5.8, gy + 5.8); ctx.beginPath(); ctx.ellipse(0, gy, 4.5, 5.8, 0, 0, TAU); ctx.fill();
       ctx.save(); ctx.beginPath(); ctx.ellipse(0, gy, 4.5, 5.8, 0, 0, TAU); ctx.clip(); ctx.strokeStyle = lead; ctx.lineWidth = 0.3;
       ctx.strokeStyle = rgba(28, 34, 32, 0.45); const hr = 1.9; for (let row = -3; row <= 3; row++) for (let col = -2; col <= 2; col++) { const hx0 = col * hr * 1.73 + (row % 2 ? hr * 0.865 : 0), hy0 = gy + row * hr * 1.5; ctx.beginPath(); for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; ctx.lineTo(hx0 + Math.cos(a) * hr, hy0 + Math.sin(a) * hr); } ctx.closePath(); ctx.stroke(); } /* les alvéoles, en plomb fin */
       ctx.strokeStyle = lead; ctx.lineWidth = 0.45;
       for (const d of [-1, 1]) for (const [y0, y1, w] of [[-1.6, 0.2, 4.1], [0.4, 1.8, 3.2]]) { ctx.fillStyle = rgba(240, 244, 250, 0.9); ctx.beginPath(); ctx.moveTo(d * 0.95, gy + y0 + 0.5); ctx.lineTo(d * w, gy + y0 - 1.4); ctx.lineTo(d * (w - 0.3), gy + y1); ctx.closePath(); ctx.fill(); ctx.stroke(); } /* les ailes, en triangles */
-      ctx.fillStyle = "#3a2810"; ctx.beginPath(); ctx.moveTo(0, gy - 3.9); ctx.lineTo(0.8, gy - 3.1); ctx.lineTo(0, gy - 2.3); ctx.lineTo(-0.8, gy - 3.1); ctx.closePath(); ctx.fill(); /* la tête, en losange */
-      ctx.fillRect(-0.9, gy - 2.2, 1.8, 1.6); /* le thorax */
-      const band = ["#f0c040", "#3a2810", "#f0c040", "#3a2810", "#f0c040"]; for (let k = 0; k < 5; k++) { const y = gy - 0.4 + k * 0.95, w = 1.5 - k * 0.22; ctx.fillStyle = band[k]; ctx.beginPath(); ctx.moveTo(-w, y); ctx.lineTo(0, y + 0.45); ctx.lineTo(w, y); ctx.lineTo(w, y + 0.95); ctx.lineTo(0, y + 1.4); ctx.lineTo(-w, y + 0.95); ctx.closePath(); ctx.fill(); } /* le corps, en chevrons */
-      ctx.fillStyle = "#3a2810"; ctx.beginPath(); ctx.moveTo(-0.4, gy + 4.4); ctx.lineTo(0, gy + 5.3); ctx.lineTo(0.4, gy + 4.4); ctx.fill(); /* le dard */
-      ctx.beginPath(); ctx.moveTo(-0.3, gy - 3.8); ctx.lineTo(-1.3, gy - 5); ctx.moveTo(0.3, gy - 3.8); ctx.lineTo(1.3, gy - 5); ctx.stroke(); /* les antennes, droites */
+      const band = ["#f0c040", "#3a2810", "#f0c040", "#3a2810", "#f0c040"]; for (let k = 0; k < 5; k++) { const y = gy - 2.2 + k * 1.3, w = 1.7 - k * 0.25; ctx.fillStyle = band[k]; ctx.beginPath(); ctx.moveTo(-w, y); ctx.lineTo(0, y + 0.45); ctx.lineTo(w, y); ctx.lineTo(w, y + 1.3); ctx.lineTo(0, y + 1.75); ctx.lineTo(-w, y + 1.3); ctx.closePath(); ctx.fill(); } /* le corps, en chevrons */
+      ctx.fillStyle = "#3a2810"; ctx.beginPath(); ctx.moveTo(-0.4, gy + 4.1); ctx.lineTo(0, gy + 5.1); ctx.lineTo(0.4, gy + 4.1); ctx.fill(); /* le dard */
       ctx.restore(); }
     else if (kind === "fan") { /* le verre haut, à dôme, où monte un éventail de feuilles comme une main ouverte */
       const y0 = P - 1.4, y1 = P - 14; ctx.fillStyle = "#3e4844"; ctx.fillRect(-3.8, y0 - 1.2, 7.6, 1.3); ctx.fillRect(-3.8, y1 + 0.6, 7.6, 1); /* bague du bas, bague du haut */
