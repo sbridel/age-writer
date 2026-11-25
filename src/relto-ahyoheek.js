@@ -116,7 +116,7 @@ function tokens(h, x, y, won, t, dir = -1, s = 4.4) {
  *  rond de pierre, avec sur sa face avant un cartouche de laiton où le chiffre D'ni de la place est gravé. Dessus :
  *  0, une statuette en robe à capuchon, les mains jointes dans les manches, un médaillon émaillé sur la poitrine (un emblème par caractère) ;
  *  1, une stèle, la lettre D'ni du caractère gravée et teintée ; 2, une lampe de rue en petit, sur son pilier, le verre teinté par caractère
- *  (un disque à côtes, un verre haut où monte un éventail de feuilles, ou une lanterne carrée à rayons).
+ *  (un médaillon ovale à côtes, un verre haut où monte un éventail de feuilles, ou une lanterne carrée à rayons).
  *  Les couleurs (ambre, violet, ivoire, rose, jais) ne sont aucune de celles du jeu. */
 const FIG_COL = { faithful: [235, 175, 60], mimic: [160, 100, 215], sly: [235, 225, 200], collector: [225, 110, 170], wary: [40, 36, 44] };
 const FIG_LETTER = { faithful: "b", mimic: "d", sly: "g", collector: "k", wary: "t" };
@@ -147,24 +147,37 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
     ctx.strokeStyle = rgba(255, 240, 210, 0.25); ctx.beginPath(); ctx.moveTo(-3.3, top - 2); ctx.lineTo(-3, top - 14); ctx.quadraticCurveTo(0, top - 18.5, 3, top - 14); ctx.lineTo(3.3, top - 2); ctx.stroke(); /* le cadre gravé */
     if (fam) { ctx.font = `9px ${fam}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = rgba(c[0], c[1], c[2], 0.95); ctx.fillText(FIG_LETTER[char] || "b", 0, top - 9); }
     else emblem(ctx, char, 0, top - 9, 4.5); }
-  else if (set === 2) { /* la lampe de rue, en petit : un pilier carré, puis un verre teinté serti de plomb, de trois formes selon le caractère */
-    const kind = { faithful: "disc", mimic: "fan", sly: "rays", collector: "disc", wary: "fan" }[char] || "disc", P = top - 5;
-    ctx.fillStyle = "#3e352a"; ctx.fillRect(-3.4, P, 6.8, 5.4); ctx.fillStyle = "#6a5c48"; ctx.fillRect(-3.4, P, 2.2, 5.4); ctx.fillStyle = "#857560"; ctx.fillRect(-4, P - 1.2, 8, 1.4); /* le pilier */
-    const lit = (x0, x1) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, rgba(c[0] * 0.5, c[1] * 0.5, c[2] * 0.5, 1)); g.addColorStop(0.5, rgba(Math.min(255, c[0] + 80), Math.min(255, c[1] + 80), Math.min(255, c[2] + 80), 1)); g.addColorStop(1, rgba(c[0] * 0.45, c[1] * 0.45, c[2] * 0.45, 1)); return g; };
-    const cy = kind === "disc" ? P - 6.5 : P - 6.8, glow = ctx.createRadialGradient(0, cy, 1, 0, cy, 15); glow.addColorStop(0, rgba(c[0], c[1], c[2], 0.35)); glow.addColorStop(1, rgba(c[0], c[1], c[2], 0)); ctx.fillStyle = glow; ctx.fillRect(-15, cy - 15, 30, 30);
-    ctx.strokeStyle = "#2a1e10"; ctx.lineWidth = 0.5;
-    if (kind === "disc") { /* un disque de verre dans son anneau, à côtes */
-      ctx.fillStyle = "#4a4034"; ctx.beginPath(); ctx.arc(0, cy, 5.6, 0, TAU); ctx.fill(); ctx.fillStyle = lit(-4.6, 4.6); ctx.beginPath(); ctx.arc(0, cy, 4.6, 0, TAU); ctx.fill();
-      for (let k = -3; k <= 3; k++) { const yy = cy + k * 1.25, hw = Math.sqrt(Math.max(0, 4.6 * 4.6 - (k * 1.25) ** 2)) * (0.85 - Math.abs(k) * 0.06); ctx.beginPath(); ctx.moveTo(-hw, yy); ctx.quadraticCurveTo(0, yy + 0.5, hw, yy); ctx.stroke(); }
-      ctx.beginPath(); ctx.moveTo(0, cy - 4.6); ctx.lineTo(0, cy + 4.6); ctx.stroke(); }
-    else if (kind === "fan") { /* un verre haut, arrondi, où monte un éventail de feuilles */
-      ctx.fillStyle = "#3a3026"; ctx.fillRect(-3.6, P - 1.6, 7.2, 1.2);
-      ctx.fillStyle = lit(-3.2, 3.2); ctx.beginPath(); ctx.moveTo(-3.2, P - 1.6); ctx.lineTo(-3.2, P - 9); ctx.quadraticCurveTo(-3.2, P - 13, 0, P - 13); ctx.quadraticCurveTo(3.2, P - 13, 3.2, P - 9); ctx.lineTo(3.2, P - 1.6); ctx.closePath(); ctx.fill(); ctx.stroke();
-      for (const a of [-0.9, -0.45, 0, 0.45, 0.9]) { ctx.beginPath(); ctx.moveTo(0, P - 2.4); ctx.quadraticCurveTo(Math.sin(a) * 2.4, P - 6, Math.sin(a) * 2.9, P - 6 - Math.cos(a) * 5.2); ctx.stroke(); } }
-    else { /* une lanterne carrée, le verre partagé en rayons autour d'un rond */
-      ctx.fillStyle = "#3a3026"; ctx.fillRect(-4.4, P - 12.4, 8.8, 11.2); ctx.fillStyle = lit(-3.6, 3.6); ctx.fillRect(-3.6, P - 11.6, 7.2, 9.6);
-      const ry = P - 6.8; for (let k = 0; k < 8; k++) { const a = k * TAU / 8; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 1.4, ry + Math.sin(a) * 1.4); ctx.lineTo(Math.cos(a) * 5.5, ry + Math.sin(a) * 5.5); ctx.stroke(); }
-      ctx.beginPath(); ctx.arc(0, ry, 1.4, 0, TAU); ctx.stroke(); ctx.fillStyle = "#857560"; ctx.fillRect(-5, P - 13.4, 10, 1.4); } }
+  else if (set === 2) { /* la lampe de rue D'ni, en petit : un pilier de pierre carré à chapiteau, et dessus un verre serti de plomb,
+     * aux reflets changeants autour de la teinte du caractère ; trois formes : le médaillon ovale à côtes, le verre haut en éventail, la lanterne à rayons */
+    const kind = { faithful: "oval", mimic: "fan", sly: "rays", collector: "oval", wary: "fan" }[char] || "oval", P = top - 4.5;
+    ctx.fillStyle = "#2e3532"; ctx.fillRect(-3, P, 6, 4.8); ctx.fillStyle = "#4c5753"; ctx.fillRect(-3, P, 1.8, 4.8); /* le fût */
+    ctx.fillStyle = "#5c6862"; ctx.fillRect(-4, P - 1.4, 8, 1.6); ctx.fillStyle = "#3a4440"; ctx.fillRect(-4, P + 0.2, 8, 0.5); /* le chapiteau */
+    const shift = (d) => [Math.min(255, Math.max(0, c[0] + d[0])), Math.min(255, Math.max(0, c[1] + d[1])), Math.min(255, Math.max(0, c[2] + d[2]))];
+    const glassG = (y0, y1) => { const g = ctx.createLinearGradient(0, y0, 0, y1), a1 = shift([90, 60, 70]), a2 = shift([30, -10, 60]), a3 = shift([-40, 40, 30]); g.addColorStop(0, rgba(...a1, 1)); g.addColorStop(0.45, rgba(...a2, 1)); g.addColorStop(1, rgba(...a3, 1)); return g; }; /* le verre irisé */
+    const lead = "#1c2220";
+    const gy = kind === "oval" ? P - 8 : P - 7.5, glow = ctx.createRadialGradient(0, gy, 1, 0, gy, 16); glow.addColorStop(0, rgba(c[0], c[1], c[2], 0.32)); glow.addColorStop(1, rgba(c[0], c[1], c[2], 0)); ctx.fillStyle = glow; ctx.fillRect(-16, gy - 16, 32, 32);
+    if (kind === "oval") { /* le médaillon : un anneau de pierre ovale, le verre à côtes courbes, une arête au milieu, une calotte en haut */
+      ctx.fillStyle = "#3e4844"; ctx.beginPath(); ctx.ellipse(0, gy, 5.4, 6.6, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = "#7a8680"; ctx.lineWidth = 0.4; ctx.stroke();
+      ctx.fillStyle = glassG(gy - 5.6, gy + 5.6); ctx.beginPath(); ctx.ellipse(0, gy, 4.3, 5.6, 0, 0, TAU); ctx.fill();
+      ctx.save(); ctx.beginPath(); ctx.ellipse(0, gy, 4.3, 5.6, 0, 0, TAU); ctx.clip(); ctx.strokeStyle = lead; ctx.lineWidth = 0.45;
+      ctx.beginPath(); ctx.moveTo(-4.3, gy - 3.2); ctx.quadraticCurveTo(0, gy - 5.4, 4.3, gy - 3.2); ctx.stroke(); /* la calotte */
+      for (let k = 0; k < 5; k++) { const yy = gy - 1.8 + k * 1.55, w = 3.4 - k * 0.42; ctx.beginPath(); ctx.moveTo(-w, yy - 0.5); ctx.quadraticCurveTo(0, yy + 0.7, w, yy - 0.5); ctx.stroke(); } /* les côtes, qui se resserrent vers le bas */
+      ctx.beginPath(); ctx.moveTo(0, gy - 3.9); ctx.lineTo(0, gy + 5.6); ctx.stroke(); for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * 4.2, gy - 1); ctx.quadraticCurveTo(s * 2.4, gy + 2.5, s * 0.6, gy + 5.4); ctx.stroke(); }
+      ctx.restore(); }
+    else if (kind === "fan") { /* le verre haut, à dôme, où monte un éventail de feuilles comme une main ouverte */
+      const y0 = P - 1.4, y1 = P - 14; ctx.fillStyle = "#3e4844"; ctx.fillRect(-3.8, y0 - 1.2, 7.6, 1.3); ctx.fillRect(-3.8, y1 + 0.6, 7.6, 1); /* bague du bas, bague du haut */
+      ctx.fillStyle = glassG(y1, y0); ctx.beginPath(); ctx.moveTo(-3.2, y0 - 1.2); ctx.lineTo(-3.2, y1 + 5); ctx.quadraticCurveTo(-3.2, y1 + 0.6, 0, y1 + 0.6); ctx.quadraticCurveTo(3.2, y1 + 0.6, 3.2, y1 + 5); ctx.lineTo(3.2, y0 - 1.2); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = lead; ctx.lineWidth = 0.4; ctx.stroke();
+      ctx.save(); ctx.clip(); const by = y0 - 1.6; ctx.fillStyle = rgba(...shift([-60, 30, -10]), 0.9);
+      for (const a of [-0.95, -0.5, 0, 0.5, 0.95]) { const tx = Math.sin(a) * 3.6, ty = by - Math.cos(a) * 7.6; ctx.beginPath(); ctx.moveTo(0, by); ctx.quadraticCurveTo(tx * 0.3 - 1, (by + ty) / 2, tx, ty); ctx.quadraticCurveTo(tx * 0.3 + 1, (by + ty) / 2, 0, by); ctx.fill(); ctx.stroke(); } /* les feuilles */
+      ctx.beginPath(); ctx.moveTo(-3.2, y1 + 4.4); ctx.quadraticCurveTo(0, y1 + 3, 3.2, y1 + 4.4); ctx.stroke(); ctx.restore();
+      ctx.fillStyle = "#5c6862"; ctx.beginPath(); ctx.moveTo(-1.6, y1 + 0.6); ctx.quadraticCurveTo(0, y1 - 1.6, 1.6, y1 + 0.6); ctx.fill(); } /* le petit fleuron */
+    else { /* la lanterne : une caisse de pierre, le verre partagé en rayons autour d'un rond, un arc en haut */
+      const x0 = -4.6, y0 = P - 13.4, w = 9.2, h = 12; ctx.fillStyle = "#3e4844"; ctx.fillRect(x0, y0, w, h); ctx.fillStyle = "#5c6862"; ctx.fillRect(x0 - 0.6, y0 - 1, w + 1.2, 1.2);
+      ctx.fillStyle = glassG(y0 + 1, y0 + h - 1); ctx.fillRect(x0 + 0.9, y0 + 0.9, w - 1.8, h - 1.8);
+      ctx.save(); ctx.beginPath(); ctx.rect(x0 + 0.9, y0 + 0.9, w - 1.8, h - 1.8); ctx.clip(); ctx.strokeStyle = lead; ctx.lineWidth = 0.45; const ry = y0 + h * 0.56;
+      ctx.beginPath(); ctx.arc(0, ry, 1.5, 0, TAU); ctx.stroke(); for (let k = 0; k < 10; k++) { const a = Math.PI + k * Math.PI / 9; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 1.5, ry + Math.sin(a) * 1.5); ctx.lineTo(Math.cos(a) * 6, ry + Math.sin(a) * 6); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(x0, ry); ctx.lineTo(x0 + w, ry); ctx.stroke(); ctx.beginPath(); ctx.arc(0, ry, 3.3, Math.PI, TAU); ctx.stroke(); ctx.restore(); } }
   else { /* la statuette : la robe évasée, les manches jointes, le capuchon, le médaillon */
     const g = STONE(ctx, -6, 6);
     ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.beginPath(); ctx.ellipse(0, top, 6, 1.8, 0, 0, TAU); ctx.fill();
