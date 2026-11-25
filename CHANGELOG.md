@@ -2,7 +2,7 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.11 — A lived-in Relto (2.11.0, 2026-11-25)
+## 2.11 — A lived-in Relto (2.11.0 to 2.11.1, 2026-11-25 to 26)
 
 ### Added
 - **Baykh, the game of roads**, on the low table in the lounge, always there (click the board). Rules after *Tak*, by James Ernest and Patrick Rothfuss. Join two opposite edges with a road of your pieces: a **Way** lies flat and counts for the road, a **Lock** stands and blocks without counting, your **Keystone** counts and can flatten a Lock by arriving on it alone; or move a stack whose top you hold, sowing at least one piece per square in a straight line. Board full or reserve empty: the Ways on top count.
@@ -16,6 +16,9 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
   - The wax seal of an unread letter carries the writers' sign; the house's side of the Baykh table has a brass plaque with its guild.
   - The secret mini game's figurines wear them too (embroidered, or engraved), and so does its projector; there you now choose your own guild, and your opponents come from the others (the guide's secrets say how).
 - **A bedside lamp** at the head of the bed in the writing room: the bee's glass or the hand's (a click changes it), glowing more at night.
+
+### Fixed
+- In Baykh's top view, the table sat so low that the controls on its front edge, the view button among them, went under the Relto bar and could not be touched; the table now sits higher (2.11.1).
 
 ## 2.10 — Dead stars (2.10.0 to 2.10.13, 2026-11-08 to 25)
 

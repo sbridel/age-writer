@@ -699,6 +699,10 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.11.1 — Baykh, la vue de dessus (26 nov. 2026)
+
+- En vue de dessus, la table descendait jusqu'à y ≈ 312 ; les commandes du bord (coffret, plots, carnet, cadran, bronze, bouton de la vue) tombaient vers y ≈ 352, sous la barre du Relto : on ne pouvait plus revenir à la vue normale (retour de l'auteur : « ça fonctionne pas »). Le cadre de la vue de dessus remonte et rétrécit (`top: 8, bot: 284, w: 276`) ; les commandes passent vers y ≈ 321.
+
 ## 2.11.0 — Un Relto habité (25 nov. 2026)
 
 Titre de l'auteur (« A lived-in Relto ») ; Baykh se dit ouvertement (README, CHANGELOG, nouveautés), avec le crédit de Tak. Notes : `claude/DESIGN-jeu-des-routes.md`, `claude/DESIGN-symboles-des-guildes.md` (projet).

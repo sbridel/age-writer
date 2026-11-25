@@ -242,7 +242,7 @@ function numeral(ctx, v, x, y, s, col) { try { return require("./relto-ahyoheek"
 
 /* ---------------------------------------------------------------- la vue ---------------------------------------------------------------- */
 function drawBaykh(r, ctx, sc, sky, t) {
-  const st = state(r), s = cur(r), G = st.G, n = G.n, Hb = habit(r), F = frame(n, s.top ? { top: 14, bot: 312, wT: 298, wB: 298, zk: 0.32 } : {}), /* la vue de dessus, ou la table en perspective */ me = s.side, bot = 1 - me, now = Date.now(), tr = T(r);
+  const st = state(r), s = cur(r), G = st.G, n = G.n, Hb = habit(r), F = frame(n, s.top ? { top: 8, bot: 284, wT: 276, wB: 276, zk: 0.32 } : {}), /* la vue de dessus, ou la table en perspective */ me = s.side, bot = 1 - me, now = Date.now(), tr = T(r);
   const hv = (id) => r.hover && r.hover.baykh && r.hover.baykh.id === id;
   /* le fond : le salon, sombre, la table basse vue de près */
   const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, Hb.bg[0]); bg.addColorStop(1, Hb.bg[1]); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);

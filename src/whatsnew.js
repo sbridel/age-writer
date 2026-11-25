@@ -6,7 +6,7 @@
  */
 const NEWS = [
   {
-    v: "2.11.0",
+    v: "2.11.1",
     fr: {
       title: "Un Relto habité",
       letter: "On nous demandait si quelqu'un vivait là. Quelqu'un y vit : il y a un plateau sur la table basse du salon, une partie en cours, des pièces couchées et debout ; une lampe à la tête du lit ; et dans le couloir, les couleurs des six guildes. Asseyez-vous, la maison joue.",
@@ -16,6 +16,7 @@ const NEWS = [
         "**Les pièces suivent l'habit** (la pierre, le verre et le cuivre de la Verrière, les octogones du Château), **un coffret de Clefs de voûte** : huit modèles, neuf couleurs, une vue de dessus, un coup à confirmer ou à annuler, la partie gardée d'une visite à l'autre, et un carnet des parties.",
         "**Les six guildes ont leurs signes** : six bannières dans le couloir (du drap, du velours au Château, un vitrail à la Verrière), un sceau de cire sur les lettres, une plaque de guilde devant la maison quand elle joue.",
         "**Une lampe de chevet**, à la tête du lit : le verre de l'abeille ou de la main, un clic en change, et elle luit davantage la nuit.",
+        "**Baykh, vue de dessus** (2.11.1) : le bouton qui ramène à la vue normale ne passe plus sous la barre du Relto.",
       ],
     },
     en: {
@@ -27,6 +28,7 @@ const NEWS = [
         "**The pieces follow the disguise** (stone, the Glasshouse's glass and copper, the Castle's octagons), **a box of Keystones**: eight models, nine colours, a top view, a move to confirm or cancel, the game kept from one visit to the next, and a notebook of games.",
         "**The six guilds have their signs**: six banners in the hallway (cloth, velvet in the Castle, stained glass in the Glasshouse), a wax seal on letters, a guild plaque before the house when it plays.",
         "**A bedside lamp**, at the head of the bed: the bee's glass or the hand's, a click changes it, and it glows more at night.",
+        "**Baykh, top view** (2.11.1): the button back to the normal view no longer hides under the Relto bar.",
       ],
     },
   },
