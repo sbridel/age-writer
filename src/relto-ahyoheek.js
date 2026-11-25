@@ -115,7 +115,7 @@ function tokens(h, x, y, won, t, dir = -1, s = 4.4) {
 /** Les figurines posées aux places occupées, en trois jeux (on change de jeu en touchant l'une d'elles) :
  *  0, des statuettes en robe de guilde, une écharpe de couleur par caractère ; 1, des stèles gravées, une lettre D'ni par caractère ;
  *  2, des lampes-tambours miniatures, le verre teinté par caractère. Sur le socle, le chiffre D'ni de la place. */
-const FIG_COL = { faithful: [90, 140, 220], mimic: [90, 190, 120], sly: [210, 80, 60], collector: [225, 170, 60], wary: [150, 100, 200] };
+const FIG_COL = { faithful: [235, 175, 60], mimic: [160, 100, 215], sly: [235, 225, 200], collector: [225, 110, 170], wary: [40, 36, 44] }; /* ambre, violet, ivoire, rose, jais : aucune des couleurs du jeu (rouge, bleu, vert) */
 const FIG_LETTER = { faithful: "b", mimic: "d", sly: "g", collector: "k", wary: "t" };
 const FIGS = 3;
 function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
@@ -338,56 +338,50 @@ function drawGame(r, ctx, sc, sky, t) {
   void sc; void sky;
 }
 
-/** L'écran des scores, à la manière de l'Imageur mural : une dalle de pierre sombre contre le mur, à droite de la table, entre deux montants
- *  de laiton ; en haut un médaillon en étoile ; au centre un grand médaillon ovale, gravé d'un motif D'ni, où les lignes s'allument en lumière
- *  pâle (une par place : son chiffre, ses signes gagnés, ses points de la manche) ; en bas l'œilleton rond, et autour quatre pastilles pour le
- *  niveau (1, 2, 3, puis le rang). Table en attente : le médaillon montre les dernières parties du registre (un clic l'ouvre en entier). */
+/** L'écran des scores : un projecteur rond posé au sol, à droite de la table (une vasque de laiton à anneaux, couverte d'un verre gravé),
+ *  qui projette au-dessus de lui un tableau de lumière, sans cadre : une ligne par place (son chiffre, ses signes gagnés, ses points de la
+ *  manche). Sur le rebord avant, quatre plots à fleur pour le niveau (1, 2, 3, puis le rang). Table en attente : la projection montre les
+ *  dernières parties du registre (un clic l'ouvre en entier). */
 function screen(r, ctx, hx, G, seats, reveal, between, t, hv) {
-  const cx = 595, cy = 102, ox = 38, oy = 54, A = [G.me, ...G.opp], c0 = cur(r), fl = 0.9 + 0.1 * Math.sin(t * 13) * Math.sin(t * 3.7);
-  const sx0 = 553, sx1 = 637, sy0 = 14, sy1 = 200; /* la dalle */
-  const sl = ctx.createLinearGradient(sx0, 0, sx1, 0); sl.addColorStop(0, "#15120f"); sl.addColorStop(0.5, "#24201b"); sl.addColorStop(1, "#13100d"); ctx.fillStyle = sl; ctx.fillRect(sx0, sy0, sx1 - sx0, sy1 - sy0);
-  for (let i = 0; i < 70; i++) { ctx.fillStyle = rgba(0, 0, 0, 0.12 + q("sg" + i) * 0.12); ctx.fillRect(sx0 + q("sx" + i) * (sx1 - sx0), sy0 + q("sy" + i) * (sy1 - sy0), 1 + q("sw" + i) * 2, 1 + q("sh" + i) * 2); } /* le grain */
-  ctx.strokeStyle = rgba(0, 0, 0, 0.6); ctx.lineWidth = 1; ctx.strokeRect(sx0 + 0.5, sy0 + 0.5, sx1 - sx0 - 1, sy1 - sy0 - 1);
-  const brass = (x0, x1) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, "#4a3214"); g.addColorStop(0.45, "#b88c48"); g.addColorStop(1, "#4a3214"); return g; };
-  for (const mx of [sx0 + 4, sx1 - 9]) { ctx.fillStyle = brass(mx, mx + 5); ctx.fillRect(mx, sy0 + 14, 5, sy1 - sy0 - 28); /* les montants */
-    for (const yy of [cy - 30, cy + 30]) { ctx.fillRect(mx + (mx < cx ? 5 : -7), yy - 2, 7, 4); ctx.fillStyle = "#2a1c0c"; ctx.beginPath(); ctx.arc(mx + 2.5, yy, 1.2, 0, TAU); ctx.fill(); ctx.fillStyle = brass(mx, mx + 5); } } /* leurs pattes, qui tiennent le médaillon */
-  /* l'ovale : une bague de laiton, l'attache en haut, la queue en bas jusqu'à l'œilleton */
-  ctx.fillStyle = brass(cx - 6, cx + 6); ctx.beginPath(); ctx.moveTo(cx - 5, cy - oy - 12); ctx.lineTo(cx + 5, cy - oy - 12); ctx.lineTo(cx + 3, cy - oy); ctx.lineTo(cx - 3, cy - oy); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(cx - 14, cy + oy - 4); ctx.lineTo(cx + 14, cy + oy - 4); ctx.lineTo(cx + 8, cy + oy + 18); ctx.lineTo(cx - 8, cy + oy + 18); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = brass(cx - ox - 4, cx + ox + 4); ctx.beginPath(); ctx.ellipse(cx, cy, ox + 4, oy + 4, 0, 0, TAU); ctx.fill();
-  ctx.fillStyle = "#0b0c0d"; ctx.beginPath(); ctx.ellipse(cx, cy, ox, oy, 0, 0, TAU); ctx.fill();
-  ctx.save(); ctx.beginPath(); ctx.ellipse(cx, cy, ox, oy, 0, 0, TAU); ctx.clip(); /* le motif gravé : un treillis fin, deux cercles, quatre petites boucles */
-  ctx.strokeStyle = rgba(150, 150, 140, 0.13); ctx.lineWidth = 0.6; for (let k = -12; k <= 12; k++) { ctx.beginPath(); ctx.moveTo(cx + k * 7 - 70, cy - 70); ctx.lineTo(cx + k * 7 + 70, cy + 70); ctx.stroke(); ctx.beginPath(); ctx.moveTo(cx + k * 7 + 70, cy - 70); ctx.lineTo(cx + k * 7 - 70, cy + 70); ctx.stroke(); }
-  ctx.strokeStyle = rgba(170, 170, 160, 0.2); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.ellipse(cx, cy, ox - 6, oy - 8, 0, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.ellipse(cx, cy, 9, 13, 0, 0, TAU); ctx.stroke();
-  for (const [dx, dy] of [[0, -28], [0, 28], [-19, 0], [19, 0]]) { ctx.beginPath(); ctx.ellipse(cx + dx, cy + dy, 4, 5, 0, 0, TAU); ctx.stroke(); }
-  ctx.restore();
-  /* l'étoile, en haut de la dalle */
-  { const x = cx, y = sy0 + 12; ctx.fillStyle = brass(x - 9, x + 9); ctx.beginPath(); for (let k = 0; k < 16; k++) { const a = -Math.PI / 2 + k * Math.PI / 8, rr = k % 2 ? 4.5 : 9; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); ctx.fillStyle = "#2a1c0c"; ctx.beginPath(); ctx.arc(x, y, 2.4, 0, TAU); ctx.fill(); }
-  /* l'œilleton, sous la queue */
-  const ey = cy + oy + 26; ctx.fillStyle = brass(cx - 10, cx + 10); ctx.beginPath(); ctx.arc(cx, ey, 9, 0, TAU); ctx.fill(); ctx.fillStyle = "#0a0d12"; ctx.beginPath(); ctx.arc(cx, ey, 6, 0, TAU); ctx.fill();
-  const ink = (a) => rgba(170, 205, 235, a * fl);
+  const bx = 596, by = 276, A = [G.me, ...G.opp], c0 = cur(r), fl = 0.9 + 0.1 * Math.sin(t * 13) * Math.sin(t * 3.7);
+  const brass = (x0, x1) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, "#5a3c14"); g.addColorStop(0.45, "#d0a050"); g.addColorStop(1, "#5a3c14"); return g; };
+  /* la vasque : l'ombre, la tranche, trois anneaux de laiton, le verre gravé au centre */
+  ctx.fillStyle = rgba(0, 0, 0, 0.45); ctx.beginPath(); ctx.ellipse(bx + 3, by + 9, 44, 13, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = "#3a2810"; ctx.beginPath(); ctx.ellipse(bx, by + 5, 40, 12, 0, 0, TAU); ctx.fill(); ctx.fillRect(bx - 40, by, 80, 5);
+  ctx.fillStyle = brass(bx - 40, bx + 40); ctx.beginPath(); ctx.ellipse(bx, by, 40, 12, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = "#4a3418"; ctx.beginPath(); ctx.ellipse(bx, by, 34, 10, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = brass(bx - 31, bx + 31); ctx.beginPath(); ctx.ellipse(bx, by, 31, 9.2, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = "#16201c"; ctx.beginPath(); ctx.ellipse(bx, by, 27, 8, 0, 0, TAU); ctx.fill(); /* le verre */
+  ctx.strokeStyle = rgba(200, 220, 200, 0.18); ctx.lineWidth = 0.6; for (const k of [0.75, 0.45]) { ctx.beginPath(); ctx.ellipse(bx, by, 27 * k, 8 * k, 0, 0, TAU); ctx.stroke(); }
+  for (let i = 0; i < 8; i++) { const a = i * TAU / 8; ctx.beginPath(); ctx.ellipse(bx + Math.cos(a) * 16, by + Math.sin(a) * 4.8, 2.4, 0.9, 0, 0, TAU); ctx.stroke(); } /* les petits cercles gravés */
+  ctx.fillStyle = rgba(255, 255, 255, 0.1); ctx.beginPath(); ctx.ellipse(bx - 8, by - 3, 12, 2.4, -0.1, 0, TAU); ctx.fill(); /* le reflet sur le verre */
+  /* la projection : un faisceau qui monte du verre, puis le tableau qui flotte, sans cadre */
+  const py0 = 122, py1 = 236, pcx = bx + 2, ink = (a) => rgba(170, 210, 245, a * fl);
   hx.save(); hx.globalCompositeOperation = "lighter";
-  const lens = hx.createRadialGradient(cx - 2, ey - 2, 0.5, cx, ey, 6); lens.addColorStop(0, rgba(150, 200, 255, 0.6 * fl)); lens.addColorStop(1, rgba(40, 80, 140, 0.1)); hx.fillStyle = lens; hx.beginPath(); hx.arc(cx, ey, 6, 0, TAU); hx.fill();
-  hx.fillStyle = rgba(70, 110, 160, 0.07 * fl); hx.beginPath(); hx.ellipse(cx, cy, ox, oy, 0, 0, TAU); hx.fill(); /* la lueur du médaillon allumé */
-  const rows = Math.max(seats.length, 1), gap = Math.min(18, 76 / rows), yA = cy - (gap * (rows - 1)) / 2;
+  const glass = hx.createRadialGradient(bx, by, 1, bx, by, 26); glass.addColorStop(0, rgba(150, 200, 255, 0.45 * fl)); glass.addColorStop(1, rgba(80, 140, 220, 0)); hx.fillStyle = glass; hx.beginPath(); hx.ellipse(bx, by, 27, 8, 0, 0, TAU); hx.fill();
+  const beam = hx.createLinearGradient(0, by, 0, py0); beam.addColorStop(0, rgba(140, 185, 240, 0.16 * fl)); beam.addColorStop(0.5, rgba(140, 185, 240, 0.07 * fl)); beam.addColorStop(1, rgba(140, 185, 240, 0)); hx.fillStyle = beam;
+  hx.beginPath(); hx.moveTo(bx - 24, by); hx.lineTo(pcx - 36, py0); hx.lineTo(pcx + 36, py0); hx.lineTo(bx + 24, by); hx.closePath(); hx.fill();
+  const back = hx.createRadialGradient(pcx, (py0 + py1) / 2 - 10, 4, pcx, (py0 + py1) / 2 - 10, 60); back.addColorStop(0, rgba(90, 140, 210, 0.12 * fl)); back.addColorStop(1, rgba(90, 140, 210, 0)); hx.fillStyle = back; hx.fillRect(pcx - 60, py0 - 20, 120, py1 - py0); /* une lueur, pas un cadre */
+  const rows = Math.max(seats.length, 1), gap = 20, yA = py0 + 18;
   if (G.round === 0 && !r.ahy.clock && (c0.log || []).length) { /* en attente : le registre */
-    const L5 = (c0.log || []).slice(0, 5), gp = 17, yb = cy - (gp * (L5.length - 1)) / 2;
-    L5.forEach((e, i) => { const y = yb + i * gp; anySign(hx, e.by || "pen", cx - 18, y, 5, HC[e.by || "pen"], 0.8 * fl, true); numeral(hx, e.n, cx + 2, y, 9, ink(0.75));
-      hx.fillStyle = e.won ? rgba(255, 210, 120, 0.85 * fl) : ink(0.22); hx.beginPath(); hx.arc(cx + 20, y, 3, 0, TAU); hx.fill(); });
-    r.hot.push({ x: cx - ox, y: cy - oy, w: 2 * ox, h: 2 * oy, ahy: { panel: "ledger", id: "screen" } }); if (hv("screen")) hoverGlow(ctx, cx, cy, 52, [150, 200, 245]); }
-  else seats.forEach((k, i) => { const p = A[i], y = yA + i * gap, win = !!(G.winners && G.winners.includes(i)); /* les scores, une ligne par place */
-    if (win) { const g = hx.createLinearGradient(cx - 34, 0, cx + 34, 0); g.addColorStop(0, rgba(255, 200, 110, 0)); g.addColorStop(0.5, rgba(255, 200, 110, 0.2 * fl)); g.addColorStop(1, rgba(255, 200, 110, 0)); hx.fillStyle = g; hx.fillRect(cx - 34, y - 8, 68, 16); }
-    numeral(hx, k + 1, cx - 26, y, 7, ink(i === 0 ? 0.95 : 0.6));
-    AH.SIGNS.forEach((sg, j) => { const n = p.won[sg] || 0, xx = cx - 12 + j * 12; anySign(hx, sg, xx, y - 3, 2.9, HC[sg], (n ? 0.85 : 0.28) * fl, true); numeral(hx, n, xx, y + 4.5, 4.5, n >= 3 ? rgba(255, 210, 120, fl) : ink(n ? 0.75 : 0.28)); });
-    if (reveal && p.pts != null) numeral(hx, p.pts, cx + 27, y, 6.5, p.pts > 0 ? rgba(255, 210, 120, fl) : ink(0.45), p.pts < 0); });
-  /* les quatre pastilles du niveau, en arc autour de l'œilleton */
+    const L5 = (c0.log || []).slice(0, 5);
+    L5.forEach((e, i) => { const y = yA + i * gap; anySign(hx, e.by || "pen", pcx - 18, y, 5, HC[e.by || "pen"], 0.8 * fl, true); numeral(hx, e.n, pcx + 2, y, 9, ink(0.75));
+      hx.fillStyle = e.won ? rgba(255, 210, 120, 0.85 * fl) : ink(0.22); hx.beginPath(); hx.arc(pcx + 20, y, 3, 0, TAU); hx.fill(); });
+    r.hot.push({ x: pcx - 34, y: py0, w: 68, h: L5.length * gap + 10, ahy: { panel: "ledger", id: "screen" } }); if (hv("screen")) hoverGlow(ctx, pcx, py0 + 50, 50, [150, 200, 245]); }
+  else seats.forEach((k, i) => { const p = A[i], y = yA + i * gap, win = !!(G.winners && G.winners.includes(i)); void rows; /* les scores, une ligne par place */
+    if (win) { const g = hx.createLinearGradient(pcx - 34, 0, pcx + 34, 0); g.addColorStop(0, rgba(255, 200, 110, 0)); g.addColorStop(0.5, rgba(255, 200, 110, 0.22 * fl)); g.addColorStop(1, rgba(255, 200, 110, 0)); hx.fillStyle = g; hx.fillRect(pcx - 34, y - 8, 68, 16); }
+    numeral(hx, k + 1, pcx - 26, y, 7, ink(i === 0 ? 0.95 : 0.6));
+    AH.SIGNS.forEach((sg, j) => { const n = p.won[sg] || 0, xx = pcx - 12 + j * 12; anySign(hx, sg, xx, y - 3, 2.9, HC[sg], (n ? 0.85 : 0.28) * fl, true); numeral(hx, n, xx, y + 4.5, 4.5, n >= 3 ? rgba(255, 210, 120, fl) : ink(n ? 0.75 : 0.28)); });
+    if (reveal && p.pts != null) numeral(hx, p.pts, pcx + 27, y, 6.5, p.pts > 0 ? rgba(255, 210, 120, fl) : ink(0.45), p.pts < 0); });
+  /* les quatre plots du niveau, à fleur sur le rebord avant */
   const LV = ["easy", "mid", "hard", "rank"], li = LV.indexOf(c0.level);
-  for (let i = 0; i < 4; i++) { const a = Math.PI * (0.95 - i * 0.3), kx = cx + Math.cos(a) * 25, ky = ey + Math.sin(a) * 6 + 5, on = i === li, id = "lv" + i;
-    ctx.fillStyle = "#6a4a20"; ctx.beginPath(); ctx.arc(kx, ky, 6, 0, TAU); ctx.fill(); ctx.fillStyle = "#14100c"; ctx.beginPath(); ctx.arc(kx, ky, 4.8, 0, TAU); ctx.fill();
-    if (on) { const g = hx.createRadialGradient(kx, ky, 0.5, kx, ky, 9); g.addColorStop(0, rgba(255, 200, 110, 0.45 * fl)); g.addColorStop(1, rgba(255, 200, 110, 0)); hx.fillStyle = g; hx.fillRect(kx - 9, ky - 9, 18, 18); }
-    numeral(hx, i < 3 ? i + 1 : c0.rank, kx, ky, 5.5, on ? rgba(255, 220, 140, fl) : ink(0.5)); /* 1, 2, 3 ; puis le rang lui-même */
-    if (hv(id)) hoverGlow(ctx, kx, ky, 12, [150, 200, 245]);
-    if (between) r.hot.push({ x: kx - 7, y: ky - 7, w: 14, h: 14, ahy: { level: true, lv: i, id } }); }
+  for (let i = 0; i < 4; i++) { const a = Math.PI * (0.8 - i * 0.2), kx = bx + Math.cos(a) * 37, ky = by + Math.sin(a) * 11, on = i === li, id = "lv" + i;
+    ctx.fillStyle = "#2a1c0c"; ctx.beginPath(); ctx.ellipse(kx, ky, 3.6, 2.1, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = on ? "#ffd890" : "#8a6a38"; ctx.beginPath(); ctx.ellipse(kx, ky, 2.8, 1.5, 0, 0, TAU); ctx.fill();
+    if (on) { const g = hx.createRadialGradient(kx, ky, 0.5, kx, ky, 8); g.addColorStop(0, rgba(255, 200, 110, 0.55 * fl)); g.addColorStop(1, rgba(255, 200, 110, 0)); hx.fillStyle = g; hx.fillRect(kx - 8, ky - 8, 16, 16); }
+    numeral(hx, i < 3 ? i + 1 : c0.rank, kx, ky + 8, 5, on ? rgba(255, 220, 140, fl) : ink(0.4)); /* sous chaque plot, son chiffre en lumière : 1, 2, 3 ; puis le rang */
+    if (hv(id)) hoverGlow(ctx, kx, ky, 10, [255, 205, 120]);
+    if (between) r.hot.push({ x: kx - 6, y: ky - 5, w: 12, h: 16, ahy: { level: true, lv: i, id } }); }
   hx.restore();
 }
 
