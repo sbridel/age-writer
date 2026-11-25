@@ -15,7 +15,7 @@ const B = require("./baykh");
 const { rgba, mix } = require("./util");
 const hex = (h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16));
 const W = 640, H = 360, TAU = Math.PI * 2;
-const CAPS = ["robe", "bee", "hand", "needle"];
+const CAPS = ["robe", "bee", "hand", "needle", "rayonnant", "flamboyant", "tower"]; /* la statuette, les deux lampes, et les quatre pistes gothiques de l'auteur (l'aiguille D'ni, le rayonnant, le flamboyant, la tour) */
 /* les couleurs d'une Clef de voûte (une pièce à soi, pas forcément assortie) : celle du joueur, ou un émail, un métal, une pierre */
 const CAP_COLS = { mine: null, gold: ["#f0cc6a", "#c8983a", "#7a5a1a"], silver: ["#e6eaee", "#aab0b8", "#6a7078"], copper: ["#e8956a", "#b8643a", "#6a3a1c"],
   lapis: ["#4a6cc0", "#2a4890", "#142458"], jade: ["#6ac0a0", "#3a8e70", "#1c5440"], ruby: ["#c83848", "#8e2030", "#4e0c18"], obsidian: ["#44464e", "#1e2026", "#08080a"], ivory: ["#f6eedb", "#e0d4b8", "#b8aa88"] };
@@ -156,6 +156,7 @@ function capstone(ctx, F, Hb, i, j, p, kind, lvl = 0, hi = 0, colKey = "mine") {
   const lin = (x0, x1, st) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); st.forEach((k, q) => g.addColorStop(q / (st.length - 1), k)); return g; };
   ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.ellipse(x + 3, y + 3, 9 * s, 3.2 * s, 0, 0, TAU); ctx.fill();
   if (hi) { const g = ctx.createRadialGradient(x, y - 14 * s, 1, x, y - 14 * s, 20 * s); g.addColorStop(0, rgba(255, 214, 130, 0.4 * hi)); g.addColorStop(1, rgba(255, 214, 130, 0)); ctx.fillStyle = g; ctx.fillRect(x - 20 * s, y - 34 * s, 40 * s, 40 * s); }
+  const gold = lin(-10, 10, ["#6a4a10", "#ffd870", "#f0cc6a", "#5a3a08"]);
   ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
   if (kind === "robe") { /* la statuette en robe à capuchon, liseré d'or, sur un socle carré */
     ctx.fillStyle = col[1]; ctx.fillRect(-7, -3, 14, 3); ctx.fillStyle = col[0]; ctx.fillRect(-7, -4.5, 14, 1.6);
@@ -168,6 +169,29 @@ function capstone(ctx, F, Hb, i, j, p, kind, lvl = 0, hi = 0, colKey = "mine") {
     ctx.fillStyle = "#3e4844"; ctx.fillRect(-3, -5, 6, 5); ctx.fillStyle = "#5c6862"; ctx.fillRect(-4, -6.4, 8, 1.6);
     const tint = CAP_COLS[colKey] ? hex(CAP_COLS[colKey][0]) : Hb.kind === "glass" ? (p ? [96, 176, 160] : [236, 178, 84]) : p ? [110, 120, 150] : [244, 200, 140];
     require("./relto-ahyoheek").lampGlass(ctx, kind === "bee" ? "oval" : "rays", tint, -5.2, 1); }
+else if (kind === "rayonnant") { const x = 0, y = 0, s = 1, G = gold, body = lin(-8, 8, [col[2], col[0], col[1], col[2]]); /* un petit baldaquin : socle, quatre colonnettes, arcs brisés, gâbles, une flèche à crochets et son fleuron */
+  ctx.fillStyle=col[1];ctx.fillRect(x-9*s,y-2.5*s,18*s,2.5*s);ctx.fillStyle=col[0];ctx.fillRect(x-9*s,y-4*s,18*s,1.6*s);
+  ctx.fillStyle=body;for(const dx of [-7,-2.4,2.4,7])ctx.fillRect(x+(dx-0.9)*s,y-16*s,1.8*s,12*s); /* colonnettes */
+  ctx.fillStyle=col[0];for(const [x0,x1] of [[-7.9,-1.5],[1.5,7.9]]){ctx.beginPath();ctx.moveTo(x+x0*s,y-16*s);ctx.quadraticCurveTo(x+x0*s,y-22*s,x+(x0+x1)/2*s,y-24*s);ctx.quadraticCurveTo(x+x1*s,y-22*s,x+x1*s,y-16*s);ctx.closePath();ctx.fill();} /* gâbles */
+  ctx.fillStyle='rgba(0,0,0,.45)';for(const [x0,x1] of [[-6,-3.3],[3.3,6]]){ctx.beginPath();ctx.moveTo(x+x0*s,y-4*s);ctx.lineTo(x+x0*s,y-14*s);ctx.quadraticCurveTo(x+(x0+x1)/2*s,y-18*s,x+x1*s,y-14*s);ctx.lineTo(x+x1*s,y-4*s);ctx.fill();} /* les jours des arcs */
+  ctx.fillStyle=body;ctx.beginPath();ctx.moveTo(x-3.5*s,y-20*s);ctx.lineTo(x,y-40*s);ctx.lineTo(x+3.5*s,y-20*s);ctx.closePath();ctx.fill(); /* la flèche */
+  ctx.fillStyle=G;for(let k=0;k<3;k++){const yy=y-25*s-k*5*s,w=(2.6-k*.7)*s;for(const d of [-1,1]){ctx.beginPath();ctx.moveTo(x+d*w,yy);ctx.quadraticCurveTo(x+d*(w+3*s),yy-1*s,x+d*(w+1.8*s),yy-3.5*s);ctx.lineTo(x+d*w*0.6,yy-2*s);ctx.fill();}}
+  for(const dx of [-7.9,7.9]){ctx.beginPath();ctx.moveTo(x+dx*s-1*s,y-16*s);ctx.lineTo(x+dx*s,y-22*s);ctx.lineTo(x+dx*s+1*s,y-16*s);ctx.fill();} /* pinacles des angles */
+  ctx.beginPath();ctx.moveTo(x,y-46*s);ctx.quadraticCurveTo(x+2.4*s,y-42*s,x,y-39.5*s);ctx.quadraticCurveTo(x-2.4*s,y-42*s,x,y-46*s);ctx.fill();ctx.fillRect(x-2*s,y-41*s,4*s,0.9*s);} /* fleuron */
+ 
+else if (kind === "flamboyant") { const x = 0, y = 0, s = 1, G = gold; /* une dentelle de nervures en flammes autour d'une âme */
+  ctx.fillStyle=col[1];ctx.fillRect(x-8*s,y-2.5*s,16*s,2.5*s);
+  ctx.strokeStyle=col[0];ctx.lineCap='round';
+  for(const d of [-1,1])for(let k=0;k<3;k++){ctx.lineWidth=(2.2-k*.4)*s;ctx.beginPath();ctx.moveTo(x+d*(7-k*2)*s,y-2.5*s);ctx.bezierCurveTo(x+d*(9-k*2)*s,y-14*s,x-d*(2+k)*s,y-20*s,x+d*(1.5)*s,y-(30+k*3)*s);ctx.stroke();} /* les flammes qui s'enlacent */
+  ctx.strokeStyle=col[2];ctx.lineWidth=1*s;for(const d of [-1,1]){ctx.beginPath();ctx.moveTo(x+d*5*s,y-8*s);ctx.quadraticCurveTo(x,y-13*s,x-d*3*s,y-18*s);ctx.stroke();}
+  ctx.fillStyle=G;ctx.beginPath();ctx.moveTo(x,y-44*s);ctx.quadraticCurveTo(x+2.4*s,y-40*s,x,y-37*s);ctx.quadraticCurveTo(x-2.4*s,y-40*s,x,y-44*s);ctx.fill();ctx.fillRect(x-0.6*s,y-37*s,1.2*s,4*s);}
+ 
+else if (kind === "tower") { const x = 0, y = 0, s = 1, body = lin(-8, 8, [col[2], col[0], col[1], col[2]]); /* la tour : massive, à créneaux, une croix d'or en façade, un toit en pointe */
+  ctx.fillStyle=body;ctx.beginPath();ctx.moveTo(x-9*s,y);ctx.lineTo(x-7.5*s,y-22*s);ctx.lineTo(x+7.5*s,y-22*s);ctx.lineTo(x+9*s,y);ctx.closePath();ctx.fill();
+  ctx.fillStyle=col[0];ctx.fillRect(x-8.5*s,y-25*s,17*s,3*s);for(const dx of [-8.5,-4.5,-0.5,3.5,7.5]){ctx.fillRect(x+(dx)*s,y-28*s,1.8*s,3*s);} /* les créneaux */
+  ctx.fillStyle=col[1];ctx.beginPath();ctx.moveTo(x-6*s,y-28*s);ctx.lineTo(x,y-38*s);ctx.lineTo(x+6*s,y-28*s);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=0.5*s;for(let k=1;k<6;k++){ctx.beginPath();ctx.moveTo(x-8*s,y-k*4*s);ctx.lineTo(x+8*s,y-k*4*s);ctx.stroke();}
+  ctx.fillStyle=gold;ctx.beginPath();ctx.moveTo(x,y-19*s);ctx.quadraticCurveTo(x+2.2*s,y-15*s,x,y-12*s);ctx.quadraticCurveTo(x-2.2*s,y-15*s,x,y-19*s);ctx.fill();for(const d of [-1,1]){ctx.beginPath();ctx.moveTo(x,y-13*s);ctx.quadraticCurveTo(x+d*4.5*s,y-16*s,x+d*3.8*s,y-11.5*s);ctx.quadraticCurveTo(x+d*2*s,y-13*s,x,y-12*s);ctx.fill();}ctx.fillRect(x-2.6*s,y-12.6*s,5.2*s,1.1*s); /* un lys d'or en façade */}
   else { /* l'aiguille D'ni gothique : une ogive, deux filets de laiton, un cœur poli, un petit glyphe à la base */
     ctx.fillStyle = lin(-9, 9, [col[2], col[0], col[1], col[2]]); /* la couleur du joueur (obsidienne ou pierre claire par défaut) */
     ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-8, -7); ctx.quadraticCurveTo(-7, -21, 0, -35); ctx.quadraticCurveTo(7, -21, 8, -7); ctx.lineTo(8, 0); ctx.closePath(); ctx.fill();
@@ -239,8 +263,8 @@ function drawBaykh(r, ctx, sc, sky, t) {
   }
   /* au bord avant de la table : le coffret des Clefs, le cadran de la taille, le bouton de bronze, les plots du niveau */
   const fx = F.P(0.5, 1.12)[1], between = !st.started || G.end || G.ply === 0;
-  { const x = 170, y = fx + 2; ctx.fillStyle = "#3a2410"; ctx.fillRect(x - 30, y - 6, 60, 14); ctx.fillStyle = "#c99a52"; ctx.fillRect(x - 30, y - 6, 60, 1.4); /* le coffret, ouvert */
-    CAPS.forEach((k, q) => { const CF = frame(1, { cx: x - 21 + q * 14, top: y - 2, bot: y + 4, wT: 14, wB: 15 }); capstone(ctx, CF, Hb, 0, 0, me, k, 0, k === s.cap ? 0.9 : 0, s.capCol); });
+  { const x = 170, y = fx + 2; ctx.fillStyle = "#3a2410"; ctx.fillRect(x - 33, y - 6, 66, 14); ctx.fillStyle = "#c99a52"; ctx.fillRect(x - 33, y - 6, 66, 1.4); /* le coffret, ouvert */
+    CAPS.forEach((k, q) => { const CF = frame(1, { cx: x - 27 + q * 9, top: y - 2, bot: y + 4, wT: 11, wB: 12 }); capstone(ctx, CF, Hb, 0, 0, me, k, 0, k === s.cap ? 0.9 : 0, s.capCol); });
     if (between) r.hot.push({ x: x - 32, y: y - 26, w: 64, h: 36, baykh: { box: true, id: "box" } }); if (hv("box")) { ctx.strokeStyle = "rgba(255,220,150,.4)"; ctx.strokeRect(x - 31, y - 7, 62, 16); } }
   { const x = 470, y = fx + 4; ctx.fillStyle = "#5a3c14"; ctx.beginPath(); ctx.ellipse(x, y + 1, 17, 6.5, 0, 0, TAU); ctx.fill(); ctx.fillStyle = "#c99a52"; ctx.beginPath(); ctx.ellipse(x, y, 15, 5.6, 0, 0, TAU); ctx.fill(); /* le cadran */
     for (let k = 3; k <= 8; k++) { const a = Math.PI * (1.08 + (k - 3) / 5 * 0.84), on = k === n; numeral(ctx, k, x + Math.cos(a) * 11, y + Math.sin(a) * 4.2, 3.6, on ? "#2a1000" : "rgba(60,40,16,.55)"); }
@@ -273,12 +297,12 @@ function capBox(r, ctx, Hb, s, me, t, hv) {
   r.hot.push({ x: x0, y: y0, w, h, baykh: { id: "boxIn" } }); /* l'intérieur ne referme pas */
   /* sa Clef, en grand, dans le grand logement */
   vel(x0 + 14, y0 + 14, 150, h - 28);
-  { const F = frame(1, { cx: x0 + 89, top: y0 + 170, bot: y0 + 206, wT: 120, wB: 130 }); capstone(ctx, F, Hb, 0, 0, me, s.cap, 0, 0.5 + 0.2 * Math.sin(t * 2), s.capCol); }
+  { const F = frame(1, { cx: x0 + 89, top: y0 + 200, bot: y0 + 222, wT: 84, wB: 88 }); capstone(ctx, F, Hb, 0, 0, me, s.cap, 0, 0.5 + 0.2 * Math.sin(t * 2), s.capCol); }
   /* les quatre modèles */
-  CAPS.forEach((k, q) => { const x = x0 + 180 + q * 58, y = y0 + 14, on = k === s.cap; vel(x, y, 50, 120);
-    if (on || hv("m" + k)) { ctx.strokeStyle = on ? "#f0cc6a" : "rgba(240,204,106,.45)"; ctx.lineWidth = on ? 1.6 : 1; ctx.strokeRect(x + 0.5, y + 0.5, 49, 119); }
-    const F = frame(1, { cx: x + 25, top: y + 82, bot: y + 104, wT: 44, wB: 48 }); capstone(ctx, F, Hb, 0, 0, me, k, 0, 0, s.capCol);
-    r.hot.push({ x, y, w: 50, h: 120, baykh: { pickCap: k, id: "m" + k } }); });
+  CAPS.forEach((k, q) => { const x = x0 + 180 + q * 32.5, y = y0 + 14, on = k === s.cap; vel(x, y, 29, 120);
+    if (on || hv("m" + k)) { ctx.strokeStyle = on ? "#f0cc6a" : "rgba(240,204,106,.45)"; ctx.lineWidth = on ? 1.6 : 1; ctx.strokeRect(x + 0.5, y + 0.5, 28, 119); }
+    const F = frame(1, { cx: x + 14.5, top: y + 88, bot: y + 104, wT: 30, wB: 32 }); capstone(ctx, F, Hb, 0, 0, me, k, 0, 0, s.capCol);
+    r.hot.push({ x, y, w: 29, h: 120, baykh: { pickCap: k, id: "m" + k } }); });
   /* les couleurs : des pastilles d'émail, de métal ou de pierre ; la première, la couleur du joueur */
   vel(x0 + 180, y0 + 146, 224, h - 160);
   COL_KEYS.forEach((k, q) => { const cx = x0 + 198 + (q % 5) * 47, cy = y0 + 170 + Math.floor(q / 5) * 40, on = k === s.capCol, c = CAP_COLS[k] || Hb.C[me];
