@@ -6,6 +6,7 @@
  * (rouge la plume, bleu le scarabée, vert le Livre de liaison) ; au centre, une vasque de lumière d'où monte l'anneau des trois signes,
  * le glyphe du jeu en son cœur (en lettres D'ni, si une police D'ni est là ; sinon l'anneau seul). Nos trois projecteurs, devant nous.
  */
+const GS = require("./guild-symbols");
 const { rgba } = require("./util");
 const AH = require("./ahyoheek");
 const W = 640, H = 360, TAU = Math.PI * 2;
@@ -123,32 +124,9 @@ function tokens(h, x, y, won, t, dir = -1, s = 4.4) {
  * FIG_COL : la robe ; FIG_LIT : ce qui luit (émail, verre, lettre), quand ce n'est pas la même. Les emblèmes sont inventés, d'après le métier. */
 const FIG_COL = { faithful: [190, 140, 52], mimic: [34, 30, 34], sly: [238, 206, 70], collector: [64, 196, 200], wary: [122, 30, 46] };
 const FIG_LIT = { mimic: [168, 40, 52], wary: [176, 52, 72] };
-const FIG_LETTER = { faithful: "b", mimic: "d", sly: "g", collector: "k", wary: "t" };
 const FIGS = 3;
 const STONE = (ctx, x0, x1) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, "#4a4032"); g.addColorStop(0.38, "#b4a384"); g.addColorStop(0.6, "#9a8a6c"); g.addColorStop(1, "#3a3226"); return g; };
 const ROBE = (ctx, x0, x1, c) => { const m = (k) => rgba(Math.round(c[0] * k), Math.round(c[1] * k), Math.round(c[2] * k), 1), g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, m(0.32)); g.addColorStop(0.38, m(0.78)); g.addColorStop(0.6, m(0.6)); g.addColorStop(1, m(0.26)); return g; }; /* la robe, de la couleur de la guilde */
-/** L'emblème, en trait d'or sur l'émail : inventé d'après le métier de la guilde. */
-function emblem(ctx, char, x, y, s, col = "#ffe6a8") {
-  ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = s * 0.13; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath();
-  if (char === "faithful") { /* les archivistes : trois tablettes empilées, un anneau au-dessus (ce qu'on garde) */
-    for (let k = 0; k < 3; k++) { const yy = y + s * (0.05 + k * 0.22), w = s * (0.36 + k * 0.08); ctx.strokeRect(x - w, yy, 2 * w, s * 0.14); }
-    ctx.beginPath(); ctx.arc(x, y - s * 0.3, s * 0.18, 0, TAU); ctx.stroke(); }
-  else if (char === "mimic") { /* les écrivains : un trait d'encre qui boucle sur lui-même, posé sur une ligne (le geste d'écrire) */
-    ctx.moveTo(x - s * 0.6, y + s * 0.2); ctx.bezierCurveTo(x - s * 0.1, y + s * 0.3, x + s * 0.35, y - s * 0.7, x, y - s * 0.45); ctx.bezierCurveTo(x - s * 0.35, y - s * 0.2, x + s * 0.2, y + s * 0.3, x + s * 0.6, y - s * 0.1); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x - s * 0.6, y + s * 0.5); ctx.lineTo(x + s * 0.6, y + s * 0.5); ctx.stroke(); }
-  else if (char === "sly") { /* les messagers : un pli scellé, deux traits de vitesse derrière lui */
-    ctx.strokeRect(x - s * 0.3, y - s * 0.32, s * 0.85, s * 0.6); ctx.beginPath(); ctx.moveTo(x - s * 0.3, y - s * 0.32); ctx.lineTo(x + s * 0.125, y + s * 0.05); ctx.lineTo(x + s * 0.55, y - s * 0.32); ctx.stroke();
-    ctx.beginPath(); ctx.arc(x + s * 0.125, y + s * 0.08, s * 0.1, 0, TAU); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(x - s * 0.7, y - s * 0.12); ctx.lineTo(x - s * 0.42, y - s * 0.12); ctx.moveTo(x - s * 0.62, y + s * 0.12); ctx.lineTo(x - s * 0.42, y + s * 0.12); ctx.stroke(); }
-  else if (char === "collector") { /* les cartographes : des lignes de niveau autour d'un sommet, une petite croix à côté */
-    for (const [rx, ry, dx] of [[0.6, 0.42, 0], [0.4, 0.27, 0.05], [0.18, 0.12, 0.08]]) { ctx.beginPath(); ctx.ellipse(x + s * dx - s * 0.1, y + s * 0.05, s * rx, s * ry, -0.3, 0, TAU); ctx.stroke(); }
-    ctx.beginPath(); ctx.moveTo(x + s * 0.45, y - s * 0.62); ctx.lineTo(x + s * 0.45, y - s * 0.34); ctx.moveTo(x + s * 0.31, y - s * 0.48); ctx.lineTo(x + s * 0.59, y - s * 0.48); ctx.stroke(); }
-  else { /* les mainteneurs : un rempart à créneaux, une porte en arc (ce qu'on garde en état, et sûr) */
-    ctx.moveTo(x - s * 0.55, y + s * 0.5); ctx.lineTo(x - s * 0.55, y - s * 0.35); for (let k = 0; k < 4; k++) { const x0 = x - s * 0.55 + k * s * 0.275; ctx.lineTo(x0, y - s * 0.55); ctx.lineTo(x0 + s * 0.14, y - s * 0.55); ctx.lineTo(x0 + s * 0.14, y - s * 0.35); ctx.lineTo(x0 + s * 0.275, y - s * 0.35); }
-    ctx.lineTo(x + s * 0.55, y - s * 0.55); ctx.lineTo(x + s * 0.55, y + s * 0.5); ctx.closePath(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x - s * 0.17, y + s * 0.5); ctx.lineTo(x - s * 0.17, y + s * 0.08); ctx.arc(x, y + s * 0.08, s * 0.17, Math.PI, TAU); ctx.lineTo(x + s * 0.17, y + s * 0.5); ctx.stroke(); }
-  ctx.restore();
-}
 /** Le verre d'une lampe de rue D'ni, posé en (0, P) (P : le haut de ce qui le porte), teinté de `c` ; `kind` : "oval" l'abeille, "fan" l'éventail,
  *  "rays" la main (les deux d'après les croquis de l'auteur). Sert aux figurines de la table et à la lampe de chevet. `lit` : sa lueur (0 à 1). */
 function lampGlass(ctx, kind, c, P, lit = 1) {
@@ -236,9 +214,8 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
     ctx.fillStyle = STONE(ctx, -5, 5); ctx.beginPath(); ctx.moveTo(-5, top); ctx.lineTo(-4.4, top - 15); ctx.quadraticCurveTo(0, top - 21, 4.4, top - 15); ctx.lineTo(5, top); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = rgba(40, 30, 18, 0.5); ctx.lineWidth = 0.5; ctx.stroke();
     ctx.strokeStyle = rgba(255, 240, 210, 0.25); ctx.beginPath(); ctx.moveTo(-3.3, top - 2); ctx.lineTo(-3, top - 14); ctx.quadraticCurveTo(0, top - 18.5, 3, top - 14); ctx.lineTo(3.3, top - 2); ctx.stroke(); /* le cadre gravé */
-    if (fam) { ctx.font = `9px ${fam}`; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; const ch = FIG_LETTER[char] || "b", m = ctx.measureText(ch), wd = Math.max(1, (m.actualBoundingBoxLeft || 0) + (m.actualBoundingBoxRight || m.width)), ht = Math.max(1, (m.actualBoundingBoxAscent || 6) + (m.actualBoundingBoxDescent || 0)), k = Math.min(1, 5.2 / wd, 8.5 / ht);
-      ctx.save(); ctx.translate(0, top - 9); ctx.scale(k, k); ctx.translate(((m.actualBoundingBoxLeft || 0) - (m.actualBoundingBoxRight || 0)) / 2, ((m.actualBoundingBoxAscent || 0) - (m.actualBoundingBoxDescent || 0)) / 2); ctx.fillStyle = rgba(c[0], c[1], c[2], 0.95); ctx.fillText(ch, 0, 0); ctx.restore(); } /* la lettre, ramenée dans le cadre gravé et centrée sur son encre */
-    else emblem(ctx, char, 0, top - 9, 4.5, rgba(c[0], c[1], c[2], 0.95)); }
+    { const gk = GS.OF[char] || "mainteneurs", ink = rgba(c[0] * (c[0] < 60 ? 3 : 1), c[1] * (c[0] < 60 ? 3 : 1), c[2] * (c[0] < 60 ? 3 : 1), 0.95);
+      GS.draw(ctx, gk, 0.35, top - 8.65, 3.7, "rgba(40,28,14,.5)", 0.1); GS.draw(ctx, gk, 0, top - 9, 3.7, ink, 0.1); } } /* le symbole de la guilde, gravé (son ombre, puis le trait teinté) */
   else if (set === 2) { /* la lampe de rue D'ni, en petit : un pilier de pierre carré à chapiteau, et dessus un verre serti de plomb,
      * aux reflets changeants autour de la teinte du caractère ; trois formes : le médaillon ovale à côtes, le verre haut en éventail, la lanterne à rayons */
     const kind = { faithful: "oval", mimic: "fan", sly: "rays", collector: "oval", wary: "fan" }[char] || "oval", P = top - 4.5;
@@ -256,7 +233,8 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
     const thread = char === "mimic" ? "rgba(200,60,70,0.95)" : "rgba(255,222,140,0.92)"; /* le fil : d'or, rouge sombre pour les écrivains (leur liseré) */
     ctx.strokeStyle = thread; ctx.lineWidth = 0.42; ctx.lineCap = "round";
     ctx.beginPath(); ctx.moveTo(-5.7, top - 0.2); ctx.quadraticCurveTo(0, top + 1.3, 5.7, top - 0.2); ctx.stroke(); /* le liseré de l'ourlet */
-    ctx.beginPath(); ctx.moveTo(-3.5, top - 12.8); ctx.quadraticCurveTo(-3.9, top - 19.1, 0, top - 19.7); ctx.quadraticCurveTo(3.9, top - 19.1, 3.5, top - 12.8); ctx.stroke(); /* le liseré du capuchon */ }
+    ctx.beginPath(); ctx.moveTo(-3.5, top - 12.8); ctx.quadraticCurveTo(-3.9, top - 19.1, 0, top - 19.7); ctx.quadraticCurveTo(3.9, top - 19.1, 3.5, top - 12.8); ctx.stroke(); /* le liseré du capuchon */
+    { const gk = GS.OF[char] || "mainteneurs"; GS.draw(ctx, gk, 0, top - 3.9, 2.1, gk === "messagers" ? "#5a3a10" : thread, 0.12); } /* l'emblème de la guilde, brodé sur la robe, sous les mains */ }
   ctx.restore();
 }
 /** La lumière d'un objet qu'on survole (au lieu d'une infobulle) : un halo chaud, doux. */
@@ -519,6 +497,7 @@ function screen(r, ctx, hx, G, seats, reveal, between, t, hv) {
   else seats.forEach((k, i) => { const p = A[i], y = yA + i * gap, win = !!(G.winners && G.winners.includes(i)); void rows; /* les scores, une ligne par place */
     if (win) { const g = hx.createLinearGradient(pcx - 34, 0, pcx + 34, 0); g.addColorStop(0, rgba(255, 200, 110, 0)); g.addColorStop(0.5, rgba(255, 200, 110, 0.22 * fl)); g.addColorStop(1, rgba(255, 200, 110, 0)); hx.fillStyle = g; hx.fillRect(pcx - 34, y - 8, 68, 16); }
     numeral(hx, k + 1, pcx - 26, y, 7, ink(i === 0 ? 0.95 : 0.6));
+    if (i === 0) { hx.strokeStyle = ink(0.7); hx.lineWidth = 0.8; hx.beginPath(); hx.arc(pcx - 40, y, 4.6, 0, TAU); hx.stroke(); } else GS.draw(hx, GS.OF[p.char] || "mainteneurs", pcx - 40, y, 5.2, ink(0.8), 0.13); /* devant chaque adversaire, le symbole de sa guilde ; devant moi, un simple cercle */
     AH.SIGNS.forEach((sg, j) => { const n = p.won[sg] || 0, xx = pcx - 12 + j * 12; anySign(hx, sg, xx, y - 3, 2.9, HC[sg], (n ? 0.85 : 0.28) * fl, true); numeral(hx, n, xx, y + 4.5, 4.5, n >= 3 ? rgba(255, 210, 120, fl) : ink(n ? 0.75 : 0.28)); });
     if (reveal && p.pts != null) numeral(hx, p.pts, pcx + 27, y, 6.5, p.pts > 0 ? rgba(255, 210, 120, fl) : ink(0.45), p.pts < 0); });
   /* les quatre plots du niveau, à fleur sur le rebord avant */

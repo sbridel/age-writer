@@ -12,6 +12,7 @@
  * l'ivoire, l'ébène et l'or en octogones (le Château). Règles d'après le Tak de James Ernest et Patrick Rothfuss.
  */
 const B = require("./baykh");
+const GS = require("./guild-symbols"); /* la machine joue pour une guilde, tirée à chaque partie */
 const { rgba, mix } = require("./util");
 const hex = (h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16));
 const W = 640, H = 360, TAU = Math.PI * 2;
@@ -35,19 +36,19 @@ function save(r, patch) { const s = { ...cur(r), ...patch }; r._bkSaved = s; if 
 function snd(r, k) { if (r.opts && r.opts.onAhySound) try { r.opts.onAhySound(k); } catch (e) { /* rien */ } }
 function state(r) {
   if (!r.bk || !r.bk.G) { const s = cur(r), G = restore(s.game), b = s.bot || {};
-    r.bk = { ...(r.bk || {}), G: G || B.newGame(s.n), sel: null, hand: null, botCap: b.cap || CAPS[Math.floor(Math.random() * CAPS.length)], botCol: COL_KEYS.includes(b.col) ? b.col : COL_KEYS[Math.floor(Math.random() * COL_KEYS.length)], started: !!(G && G.ply > 0), done: !!(G && G.end) };
+    r.bk = { ...(r.bk || {}), G: G || B.newGame(s.n), sel: null, hand: null, botCap: b.cap || CAPS[Math.floor(Math.random() * CAPS.length)], botCol: COL_KEYS.includes(b.col) ? b.col : COL_KEYS[Math.floor(Math.random() * COL_KEYS.length)], botGuild: GS.GUILDS.includes(b.guild) ? b.guild : GS.GUILDS[Math.floor(Math.random() * 5)], started: !!(G && G.ply > 0), done: !!(G && G.end) };
     if (G && !G.end) botTurn(r); } /* la partie laissée sur la table reprend là où on l'a quittée ; si c'était à la machine, elle joue */
   return r.bk;
 }
 /** La partie gardée (dans l'état du plugin) : sa taille, ses piles, ses réserves, à qui le tour. Vérifiée avant d'être reprise. */
-function keep(r) { const st = r.bk, G = st && st.G; if (!G) return; save(r, { game: G.ply ? { n: G.n, board: G.board, res: G.res, turn: G.turn, ply: G.ply } : null, bot: { cap: st.botCap, col: st.botCol } }); }
+function keep(r) { const st = r.bk, G = st && st.G; if (!G) return; save(r, { game: G.ply ? { n: G.n, board: G.board, res: G.res, turn: G.turn, ply: G.ply } : null, bot: { cap: st.botCap, col: st.botCol, guild: st.botGuild } }); }
 function restore(g) {
   try { if (!g || ![3, 4, 5, 6, 7, 8].includes(g.n) || !Array.isArray(g.board) || g.board.length !== g.n * g.n) return null;
     const ok = (pc) => pc && (pc.p === 0 || pc.p === 1) && ["f", "w", "c"].includes(pc.k);
     if (!g.board.every((st) => Array.isArray(st) && st.every(ok))) return null;
     const G = B.newGame(g.n); G.board = g.board.map((st) => st.map((pc) => ({ p: pc.p, k: pc.k }))); G.res = [0, 1].map((p) => ({ s: Math.max(0, g.res[p].s | 0), c: Math.max(0, g.res[p].c | 0) }));
     G.turn = g.turn === 1 ? 1 : 0; G.ply = Math.max(0, g.ply | 0); G.end = B.verdict(G, 1 - G.turn); return G; } catch (e) { return null; } }
-function fresh(r) { const s = cur(r), st = state(r); st.G = B.newGame(s.n); st.sel = null; st.hand = null; st.started = false; st.botCap = CAPS[Math.floor(Math.random() * CAPS.length)]; st.botCol = COL_KEYS[Math.floor(Math.random() * COL_KEYS.length)]; st.done = false; keep(r); }
+function fresh(r) { const s = cur(r), st = state(r); st.G = B.newGame(s.n); st.sel = null; st.hand = null; st.started = false; st.botCap = CAPS[Math.floor(Math.random() * CAPS.length)]; st.botCol = COL_KEYS[Math.floor(Math.random() * COL_KEYS.length)]; st.botGuild = GS.GUILDS[Math.floor(Math.random() * 5)]; st.done = false; keep(r); }
 /** Après mon coup, ou au départ si je joue les sombres : la machine réfléchit un instant, puis joue. */
 function botTurn(r) {
   const st = state(r), s = cur(r); if (st.G.end || st.G.turn === s.side || st.thinking) return;
@@ -284,6 +285,8 @@ function drawBaykh(r, ctx, sc, sky, t) {
       ctx.strokeStyle = kind === "confirm" ? "rgba(60,30,0,.7)" : "rgba(40,20,4,.8)"; ctx.lineWidth = 1.1; ctx.beginPath();
       if (kind === "confirm") { ctx.moveTo(bx - 3.5, fy - 0.5); ctx.lineTo(bx - 1, fy + 1.2); ctx.lineTo(bx + 4, fy - 2); } else { ctx.moveTo(bx - 3, fy - 2); ctx.lineTo(bx + 3, fy + 1); ctx.moveTo(bx + 3, fy - 2); ctx.lineTo(bx - 3, fy + 1); } ctx.stroke(); /* deux signes gravés : le trait qui valide, la croix qui repose */
       if (on) r.hot.push({ x: bx - 19, y: fy - 13, w: 38, h: 26, baykh: { [kind]: true, id: kind } }); } }
+  { const bx = bot === 0 ? 62 : 578, y = 318; ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fillRect(bx - 19, y - 7, 40, 18); ctx.fillStyle = "#5a3c14"; ctx.fillRect(bx - 21, y - 9, 42, 18); ctx.fillStyle = "#c99a52"; ctx.fillRect(bx - 19, y - 7, 38, 14); /* la plaque de laiton, devant la réserve de la machine */
+    GS.draw(ctx, st.botGuild || "mainteneurs", bx, y - 0.2, 5.6, "#3a240c", 0.13); } /* le symbole de sa guilde, gravé */
   /* les réserves : les claires à gauche, les sombres à droite ; une pile de tuiles, et la Clef à côté */
   for (const p of [0, 1]) {
     const left = p === 0, bx = left ? 62 : 578, by = 292, R = G.res[p], sel = p === me && st.sel, mineTurn = G.turn === me && !G.end && p === me;
