@@ -116,7 +116,7 @@ function tokens(h, x, y, won, t, dir = -1, s = 4.4) {
  *  rond de pierre, avec sur sa face avant un cartouche de laiton où le chiffre D'ni de la place est gravé. Dessus :
  *  0, une statuette en robe de guilde à capuchon, les mains jointes dans les manches, sans emblème : la couleur de la guilde, un liseré au capuchon et à l'ourlet ;
  *  1, une stèle, la lettre D'ni du caractère gravée et teintée ; 2, une lampe de rue en petit, sur son pilier, le verre teinté par caractère
- *  (un médaillon ovale à côtes, un verre haut où monte un éventail de feuilles, ou une lanterne carrée à rayons).
+ *  (l'abeille, la main, et la lampe aux courbes : trois croquis de l'auteur).
  *  Les couleurs (ambre, violet, ivoire, rose, jais) ne sont aucune de celles du jeu. */
 /* chaque caractère porte la couleur d'une guilde D'ni : le fidèle, les archivistes (or) ; l'imitateur, les écrivains (noir, liseré rouge
  * sombre) ; le malin, les messagers (jaune) ; le collectionneur, les cartographes (turquoise) ; le méfiant, les mainteneurs (bordeaux).
@@ -173,14 +173,21 @@ function lampGlass(ctx, kind, c, P, lit = 1) {
     ctx.save(); path(body); ctx.closePath(); ctx.clip(); ctx.lineWidth = 0.4; for (const y of [4.4, 5.7, 7.0, 8.3]) { path([["M", -2.6, y], ["Q", 0, y + 0.75, 2.6, y]]); ctx.stroke(); } ctx.restore(); /* ses bandes */
     for (const d of [-1, 1]) { path([["M", d * 2.35, 5.2], ["Q", d * 3.8, 5.3, d * 5.6, 4.6]]); ctx.stroke(); } /* la traverse de chaque aile */
     ctx.restore(); path(dome); ctx.closePath(); ctx.strokeStyle = lead; ctx.lineWidth = 0.4; ctx.stroke(); }
-  else if (kind === "fan") { /* le verre haut, à dôme, où monte un éventail de feuilles comme une main ouverte */
-    const y0 = P - 1.4, y1 = P - 14; ctx.fillStyle = "#3e4844"; ctx.fillRect(-3.8, y0 - 1.2, 7.6, 1.3); ctx.fillRect(-3.8, y1 + 0.6, 7.6, 1); /* bague du bas, bague du haut */
-    ctx.fillStyle = glassG(y1, y0); ctx.beginPath(); ctx.moveTo(-3.2, y0 - 1.2); ctx.lineTo(-3.2, y1 + 5); ctx.quadraticCurveTo(-3.2, y1 + 0.6, 0, y1 + 0.6); ctx.quadraticCurveTo(3.2, y1 + 0.6, 3.2, y1 + 5); ctx.lineTo(3.2, y0 - 1.2); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = lead; ctx.lineWidth = 0.4; ctx.stroke();
-    ctx.save(); ctx.clip(); const by = y0 - 1.6; ctx.fillStyle = rgba(...shift([-60, 30, -10]), 0.9);
-    for (const a of [-0.95, -0.5, 0, 0.5, 0.95]) { const tx = Math.sin(a) * 3.6, ty = by - Math.cos(a) * 7.6; ctx.beginPath(); ctx.moveTo(0, by); ctx.quadraticCurveTo(tx * 0.3 - 1, (by + ty) / 2, tx, ty); ctx.quadraticCurveTo(tx * 0.3 + 1, (by + ty) / 2, 0, by); ctx.fill(); ctx.stroke(); } /* les feuilles */
-    ctx.beginPath(); ctx.moveTo(-3.2, y1 + 4.4); ctx.quadraticCurveTo(0, y1 + 3, 3.2, y1 + 4.4); ctx.stroke(); ctx.restore();
-    ctx.fillStyle = "#5c6862"; ctx.beginPath(); ctx.moveTo(-1.6, y1 + 0.6); ctx.quadraticCurveTo(0, y1 - 1.6, 1.6, y1 + 0.6); ctx.fill(); } /* le petit fleuron */
+  else if (kind === "fan") { /* la lampe aux courbes, d'après le croquis de l'auteur mis au propre : un panneau de pierre qui s'évase vers le bas, sur une dalle ;
+     * dans le verre à sommet arrondi, un bouton (une goutte renversée), deux feuilles qui montent de sa pointe et deux qui descendent de ses flancs vers le pied */
+    const u = 0.8, base = P - 1.2 - 16.4 * u, T = (x, y) => [x * u, base + y * u];
+    const path = (cmds) => { ctx.beginPath(); for (const [op, ...v] of cmds) { const pts = []; for (let i = 0; i < v.length; i += 2) pts.push(...T(v[i], v[i + 1])); if (op === "M") ctx.moveTo(...pts); else if (op === "L") ctx.lineTo(...pts); else ctx.quadraticCurveTo(...pts); } };
+    const mirror = (f) => { for (const d of [-1, 1]) f(d); };
+    ctx.fillStyle = "#3e4844"; path([["M", -6.3, 16.4], ["L", -6.3, 15], ["L", 6.3, 15], ["L", 6.3, 16.4]]); ctx.closePath(); ctx.fill(); /* la dalle */
+    path([["M", -5.6, 15], ["L", -4.7, 1.2], ["Q", -4.6, 0, -3.4, 0], ["L", 3.4, 0], ["Q", 4.6, 0, 4.7, 1.2], ["L", 5.6, 15]]); ctx.closePath(); ctx.fill(); ctx.strokeStyle = "#7a8680"; ctx.lineWidth = 0.4; ctx.stroke(); /* le panneau de pierre */
+    const win = [["M", -4.2, 14.4], ["L", -3.6, 4.2], ["Q", -3.4, 1.2, 0, 1.1], ["Q", 3.4, 1.2, 3.6, 4.2], ["L", 4.2, 14.4]];
+    path(win); ctx.closePath(); ctx.fillStyle = glassG(base, base + 15 * u); ctx.fill(); /* le verre, à sommet arrondi */
+    ctx.save(); path(win); ctx.closePath(); ctx.clip(); ctx.strokeStyle = lead; ctx.lineWidth = 0.3; const leaf = rgba(...shift([10, 70, -10]), 1);
+    mirror((d) => { path([["M", 0, 7.6], ["Q", d * 0.4, 4.4, d * 3.7, 4.2], ["Q", d * 3, 6.8, 0, 7.6]]); ctx.closePath(); ctx.fillStyle = leaf; ctx.fill(); ctx.stroke(); }); /* les feuilles du haut, qui montent de la pointe */
+    mirror((d) => { path([["M", d * 0.1, 13.9], ["Q", d * 0.9, 10.6, d * 4.1, 9.9], ["Q", d * 3.8, 12.6, d * 0.4, 14.3]]); ctx.closePath(); ctx.fillStyle = leaf; ctx.fill(); ctx.stroke(); }); /* celles du bas, vers le pied */
+    path([["M", 0, 7.6], ["Q", -3, 7.9, -3.6, 10.4], ["Q", -1.3, 11.3, 0, 13.9], ["Q", 1.3, 11.3, 3.6, 10.4], ["Q", 3, 7.9, 0, 7.6]]); ctx.closePath(); ctx.fillStyle = rgba(...shift([80, 70, 10]), 1); ctx.fill(); ctx.lineWidth = 0.4; ctx.stroke(); /* le bouton */
+    ctx.lineWidth = 0.22; path([["M", 0, 8.1], ["L", 0, 13.2]]); ctx.stroke(); /* sa nervure */
+    ctx.restore(); path(win); ctx.closePath(); ctx.strokeStyle = lead; ctx.lineWidth = 0.45; ctx.stroke(); }
   else { /* la lanterne, d'après le croquis de l'auteur mis au propre : un panneau haut, bordé de pierre ; en haut une main ouverte (une paume à cinq pans,
      * quatre doigts, un court pouce) ; sa tige descend jusqu'au pied, entre deux collines en arc qui se croisent et des courbes qui montent des bords */
     const u = 0.78, base = P - 1.2 - 15 * u, T = (x, y) => [x * u, base + y * u];
