@@ -112,20 +112,38 @@ function tokens(h, x, y, won, t, dir = -1, s = 4.4) {
       anySign(h, k, cx, cy, s * 0.62, k === "beetle" ? c : up(c, 50), 0.95 * f, true); }
     if (!n) { h.strokeStyle = rgba(c[0], c[1], c[2], 0.12); h.lineWidth = 0.8; h.beginPath(); h.ellipse(cx, y, s * 1.25, s * 0.95, 0, 0, TAU); h.stroke(); } }); /* la place du premier jeton, à peine marquée */
 }
-/** Une figurine de pierre, posée à une place occupée : sa forme dit son caractère ; sur son socle, le chiffre D'ni de la place, gravé. */
-function figurine(ctx, x, y, char, num, a = 1) {
-  ctx.save(); ctx.globalAlpha = a;
+/** Les figurines posées aux places occupées, en trois jeux (on change de jeu en touchant l'une d'elles) :
+ *  0, des statuettes en robe de guilde, une écharpe de couleur par caractère ; 1, des stèles gravées, une lettre D'ni par caractère ;
+ *  2, des lampes-tambours miniatures, le verre teinté par caractère. Sur le socle, le chiffre D'ni de la place. */
+const FIG_COL = { faithful: [90, 140, 220], mimic: [90, 190, 120], sly: [210, 80, 60], collector: [225, 170, 60], wary: [150, 100, 200] };
+const FIG_LETTER = { faithful: "b", mimic: "d", sly: "g", collector: "k", wary: "t" };
+const FIGS = 3;
+function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
+  const c = FIG_COL[char] || FIG_COL.wary;
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); ctx.scale(1.3, 1.3); x = 0; y = 0;
   ctx.fillStyle = rgba(0, 0, 0, 0.35); ctx.beginPath(); ctx.ellipse(x + 1.5, y + 1.5, 9, 3, 0, 0, TAU); ctx.fill();
-  const g = ctx.createLinearGradient(x - 8, 0, x + 8, 0); g.addColorStop(0, "#4e4436"); g.addColorStop(0.4, "#a8977a"); g.addColorStop(1, "#3e362a"); ctx.fillStyle = g;
-  ctx.beginPath(); ctx.ellipse(x, y, 8, 2.8, 0, 0, TAU); ctx.fill(); ctx.fillRect(x - 8, y - 4, 16, 4); ctx.fillStyle = "#b8a888"; ctx.beginPath(); ctx.ellipse(x, y - 4, 8, 2.8, 0, 0, TAU); ctx.fill(); /* le socle */
-  ctx.fillStyle = g; ctx.beginPath();
-  if (char === "faithful") { ctx.moveTo(x - 4.5, y - 5); ctx.quadraticCurveTo(x - 2, y - 11, x - 2.2, y - 15); ctx.lineTo(x + 2.2, y - 15); ctx.quadraticCurveTo(x + 2, y - 11, x + 4.5, y - 5); ctx.fill(); ctx.beginPath(); ctx.arc(x, y - 18.5, 4.2, 0, TAU); } /* le fidèle : un pion rond, posé */
-  else if (char === "mimic") { ctx.moveTo(x - 5, y - 5); ctx.lineTo(x - 3, y - 14); ctx.lineTo(x + 3, y - 14); ctx.lineTo(x + 5, y - 5); ctx.fill(); ctx.beginPath(); ctx.arc(x - 2.6, y - 17.5, 3.2, 0, TAU); ctx.arc(x + 2.6, y - 17.5, 3.2, 0, TAU); } /* l'imitateur : deux têtes, l'une le reflet de l'autre */
-  else if (char === "sly") { ctx.moveTo(x - 4, y - 5); ctx.quadraticCurveTo(x - 1.5, y - 14, x, y - 25); ctx.quadraticCurveTo(x + 1.5, y - 14, x + 4, y - 5); } /* le malin : une flèche fine */
-  else if (char === "collector") { ctx.moveTo(x - 2, y - 5); ctx.lineTo(x - 1.5, y - 11); ctx.quadraticCurveTo(x - 7, y - 13, x - 6, y - 20); ctx.lineTo(x + 6, y - 20); ctx.quadraticCurveTo(x + 7, y - 13, x + 1.5, y - 11); ctx.lineTo(x + 2, y - 5); } /* le collectionneur : une coupe */
-  else { ctx.moveTo(x - 5.5, y - 5); ctx.quadraticCurveTo(x - 5, y - 18, x, y - 22); ctx.quadraticCurveTo(x + 5, y - 18, x + 5.5, y - 5); } /* le méfiant : une forme encapuchonnée */
-  ctx.closePath(); ctx.fill();
-  if (char === "wary") { ctx.fillStyle = "#1c1810"; ctx.fillRect(x - 2.6, y - 15, 5.2, 1.4); } /* sa fente, pour voir sans être vu */
+  const g = ctx.createLinearGradient(x - 8, 0, x + 8, 0); g.addColorStop(0, "#4e4436"); g.addColorStop(0.4, "#a8977a"); g.addColorStop(1, "#3e362a");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, 8, 2.8, 0, 0, TAU); ctx.fill(); ctx.fillRect(x - 8, y - 4, 16, 4); ctx.fillStyle = "#b8a888"; ctx.beginPath(); ctx.ellipse(x, y - 4, 8, 2.8, 0, 0, TAU); ctx.fill(); /* le socle */
+  if (set === 1) { /* la stèle : une dalle à sommet arrondi, la lettre du caractère gravée et un peu dorée */
+    const sg = ctx.createLinearGradient(x - 6, 0, x + 6, 0); sg.addColorStop(0, "#5a5040"); sg.addColorStop(0.45, "#b0a080"); sg.addColorStop(1, "#4a4232"); ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.moveTo(x - 5.5, y - 4); ctx.lineTo(x - 5, y - 18); ctx.quadraticCurveTo(x, y - 25, x + 5, y - 18); ctx.lineTo(x + 5.5, y - 4); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = rgba(40, 30, 18, 0.6); ctx.lineWidth = 0.6; ctx.stroke();
+    if (fam) { ctx.font = `11px ${fam}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = rgba(c[0], c[1], c[2], 0.95); ctx.fillText(FIG_LETTER[char] || "b", x, y - 13); }
+    else { ctx.fillStyle = rgba(c[0], c[1], c[2], 0.95); ctx.beginPath(); ctx.arc(x, y - 13, 2.2, 0, TAU); ctx.fill(); } }
+  else if (set === 2) { /* la lampe-tambour : un tambour de verre teinté entre deux bagues de laiton, qui luit doucement */
+    const glow = ctx.createRadialGradient(x, y - 13, 1, x, y - 13, 16); glow.addColorStop(0, rgba(c[0], c[1], c[2], 0.35)); glow.addColorStop(1, rgba(c[0], c[1], c[2], 0)); ctx.fillStyle = glow; ctx.fillRect(x - 16, y - 29, 32, 32);
+    ctx.fillStyle = "#3a2a16"; ctx.fillRect(x - 0.8, y - 7, 1.6, 3); /* la tige */
+    const gl = ctx.createLinearGradient(x - 5, 0, x + 5, 0); gl.addColorStop(0, rgba(c[0] * 0.5, c[1] * 0.5, c[2] * 0.5, 1)); gl.addColorStop(0.45, rgba(Math.min(255, c[0] + 70), Math.min(255, c[1] + 70), Math.min(255, c[2] + 70), 1)); gl.addColorStop(1, rgba(c[0] * 0.45, c[1] * 0.45, c[2] * 0.45, 1));
+    ctx.fillStyle = gl; ctx.fillRect(x - 5, y - 18, 10, 11);
+    ctx.strokeStyle = rgba(40, 26, 10, 0.55); ctx.lineWidth = 0.6; for (const dx of [-2.5, 0, 2.5]) { ctx.beginPath(); ctx.moveTo(x + dx, y - 18); ctx.lineTo(x + dx, y - 7); ctx.stroke(); } /* les plombs */
+    ctx.fillStyle = "#c99a52"; ctx.beginPath(); ctx.ellipse(x, y - 7, 6, 1.8, 0, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.ellipse(x, y - 18, 6, 1.8, 0, 0, TAU); ctx.fill(); /* les bagues */
+    ctx.fillStyle = "#8a6430"; ctx.beginPath(); ctx.moveTo(x - 4, y - 19); ctx.quadraticCurveTo(x, y - 25, x + 4, y - 19); ctx.closePath(); ctx.fill(); /* le petit dôme */ }
+  else { /* la statuette en robe de guilde : une robe longue et évasée, un capuchon, une écharpe de couleur en travers */
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - 6, y - 4); ctx.quadraticCurveTo(x - 4.5, y - 13, x - 3, y - 17); ctx.lineTo(x + 3, y - 17); ctx.quadraticCurveTo(x + 4.5, y - 13, x + 6, y - 4); ctx.closePath(); ctx.fill(); /* la robe */
+    ctx.beginPath(); ctx.arc(x, y - 19.5, 3.3, 0, TAU); ctx.fill(); /* la tête */
+    ctx.fillStyle = "#6a5c46"; ctx.beginPath(); ctx.moveTo(x - 4, y - 17); ctx.quadraticCurveTo(x - 4.2, y - 24.5, x, y - 24.5); ctx.quadraticCurveTo(x + 4.2, y - 24.5, x + 4, y - 17); ctx.quadraticCurveTo(x, y - 19, x - 4, y - 17); ctx.fill(); /* le capuchon */
+    ctx.fillStyle = "#1c1810"; ctx.beginPath(); ctx.ellipse(x, y - 19.5, 2, 2.2, 0, 0, TAU); ctx.fill(); /* le visage, dans l'ombre */
+    ctx.fillStyle = rgba(c[0], c[1], c[2], 1); ctx.beginPath(); ctx.moveTo(x - 3.4, y - 16.5); ctx.lineTo(x - 1.6, y - 16.5); ctx.lineTo(x + 5.2, y - 6); ctx.lineTo(x + 3.2, y - 5.6); ctx.closePath(); ctx.fill(); /* l'écharpe, de l'épaule à la hanche */ }
   numeral(ctx, num, x, y - 2, 4.4, "#2a2216"); /* le chiffre de la place, gravé sur le socle */
   ctx.restore();
 }
@@ -157,7 +175,7 @@ function inkMid(r, fam) {
 /* les places occupées autour de la table (1 à 4, la 0 est la mienne) : on invite un joueur en touchant un siège libre, on le renvoie en touchant le sien */
 const SEAT_ORDER = [2, 3, 1, 4];
 function seatsOf(s) { const ok = Array.isArray(s.seats) ? [...new Set(s.seats.filter((k) => [1, 2, 3, 4].includes(k)))] : []; return ok.length ? ok : SEAT_ORDER.slice(0, Math.max(1, Math.min(4, s.n | 0 || 2))); }
-function saved(r) { const s = (r.opts && r.opts.ahyState && r.opts.ahyState()) || {}, seats = seatsOf(s); return { seats, n: seats.length, level: ["easy", "mid", "hard", "rank"].includes(s.level) ? s.level : "rank", rank: Math.max(0, s.rank | 0), log: Array.isArray(s.log) ? s.log.slice(0, 40) : [] }; }
+function saved(r) { const s = (r.opts && r.opts.ahyState && r.opts.ahyState()) || {}, seats = seatsOf(s); return { seats, n: seats.length, level: ["easy", "mid", "hard", "rank"].includes(s.level) ? s.level : "rank", rank: Math.max(0, s.rank | 0), log: Array.isArray(s.log) ? s.log.slice(0, 40) : [], figs: [0, 1, 2].includes(s.figs) ? s.figs : 0 }; }
 function save(r, patch) { const s = { ...saved(r), ...patch }; s.seats = seatsOf(s); s.n = s.seats.length; if (r.opts && r.opts.onAhyoheek) r.opts.onAhyoheek(s); r._ahySaved = s; return s; }
 function cur(r) { return r._ahySaved || saved(r); }
 function state(r) { if (!r.ahy || !r.ahy.G) { const s = cur(r); r.ahy = { ...(r.ahy || {}), G: AH.newGame({ n: s.n, level: s.level, rank: s.rank }) }; } return r.ahy; }
@@ -175,6 +193,7 @@ function act(r, a) {
     else if (G.phase === "reveal") act(r, { next: true });
     else if (!st.clock) arm(r); }
   else if (a.wait) { st.press = ["wait", now()]; st.G = AH.newGame(cur(r)); st.clock = null; snd(r, "button"); } /* le bouton de bronze : la table se remet en attente, l'anneau revient au glyphe */
+  else if (a.figs) { save(r, { figs: (cur(r).figs + 1) % FIGS }); snd(r, "button"); } /* toucher une figurine : tout le jeu change */
   else if (a.panel) { st.panel = a.panel; snd(r, "button"); } /* la plaque des règles, le registre */
   else if (a.close) st.panel = null;
 }
@@ -261,13 +280,15 @@ function drawGame(r, ctx, sc, sky, t) {
   for (let k = 1; k < 5; k++) { if (seats.includes(k)) continue; const [x, y] = seatAt(k); /* un siège libre : le projecteur éteint, couvert ; entre deux parties, on y invite un joueur */
     emitter(ctx, x, y, 18, null, false); ctx.strokeStyle = rgba(169, 119, 58, 0.35); ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.ellipse(x, y, 26, 11, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
     if (between) { if (hv("seat" + k)) hoverGlow(ctx, x, y, 30); r.hot.push({ x: x - 28, y: y - 18, w: 56, h: 32, ahy: { seat: k, id: "seat" + k } }); } }
+  const figHot = []; /* posées après les places : la figurine l'emporte sur son siège */
   G.opp.forEach((o, i) => { const k = seats[i + 1], [x, y] = seatAt(k), dim = out(i + 1);
     if (dim) ctx.globalAlpha = 0.35;
     if (isWin(i + 1)) winMark(ctx, x, y, 18, t); emitter(ctx, x, y, 18, reveal && o.play ? HC[o.play] : null, reveal); if (reveal && o.play) holo(hx, o.play, x, y, isWin(i + 1) ? 28 : 22, isWin(i + 1) ? 1 : anyWin ? 0.28 : 0.8, t, i + 1);
-    { const a = Math.PI / 2 + k * TAU / 5; if (between && hv("seat" + k)) hoverGlow(ctx, C.x + Math.cos(a) * RX * 0.86, C.y + Math.sin(a) * RY * 0.86 - 10, 22); figurine(ctx, C.x + Math.cos(a) * RX * 0.86, C.y + Math.sin(a) * RY * 0.86, o.char, k + 1); } /* la figurine, au bout de sa branche */
+    { const a = Math.PI / 2 + k * TAU / 5; const fx = C.x + Math.cos(a) * RX * 0.86, fy = C.y + Math.sin(a) * RY * 0.86; if (hv("fig" + k)) hoverGlow(ctx, fx, fy - 10, 22); figurine(ctx, fx, fy, o.char, k + 1, cur(r).figs, r.dni && r.dni.fontFamily && r.dni.fontFamily()); if (!clk || reveal) figHot.push({ x: fx - 14, y: fy - 36, w: 28, h: 40, ahy: { figs: true, id: "fig" + k } }); } /* la figurine, au bout de sa branche ; la toucher change de jeu */
     { const side = Math.abs(x - C.x) > 100; tokens(hx, x + (x < C.x - 5 ? -1 : 1) * (side ? 66 : 62), y + (side ? 2 : 10), o.won, t, -1, 5.4); } /* ses jetons, à côté */
     ctx.globalAlpha = 1;
     r.hot.push({ x: x - 24, y: y - 40, w: 48, h: 54, ahy: G.phase === "reveal" ? { next: true } : between ? { seat: k, id: "seat" + k } : {} }); });
+  r.hot.push(...figHot);
   /* l'anneau : un cercle de lumière debout au-dessus de la vasque, les trois signes dessus, le glyphe du jeu au cœur */
   { const cx = C.x, cy = C.y - 86, R = 62, fl = 0.9 + 0.1 * Math.sin(t * 17) * Math.sin(t * 5.1);
     hx.save(); hx.globalCompositeOperation = "lighter";
@@ -317,33 +338,56 @@ function drawGame(r, ctx, sc, sky, t) {
   void sc; void sky;
 }
 
-/** L'écran des scores, un petit imageur debout à droite de la table : pour chaque place, son chiffre, ses signes gagnés, ses points de la
- *  manche ; en bas, le rang et quatre touches pour le niveau (1, 2, 3 : facile, moyen, difficile ; la quatrième, le rang). Table en attente :
- *  les dernières parties du registre (un clic l'ouvre en entier). Rien que des chiffres D'ni et des signes. */
+/** L'écran des scores, à la manière de l'Imageur mural : une dalle de pierre sombre contre le mur, à droite de la table, entre deux montants
+ *  de laiton ; en haut un médaillon en étoile ; au centre un grand médaillon ovale, gravé d'un motif D'ni, où les lignes s'allument en lumière
+ *  pâle (une par place : son chiffre, ses signes gagnés, ses points de la manche) ; en bas l'œilleton rond, et autour quatre pastilles pour le
+ *  niveau (1, 2, 3, puis le rang). Table en attente : le médaillon montre les dernières parties du registre (un clic l'ouvre en entier). */
 function screen(r, ctx, hx, G, seats, reveal, between, t, hv) {
-  const x0 = 548, y0 = 34, w = 84, h = 156, A = [G.me, ...G.opp], c0 = cur(r), fl = 0.92 + 0.08 * Math.sin(t * 13) * Math.sin(t * 3.7);
-  ctx.fillStyle = "#2a1e12"; ctx.fillRect(x0 + w / 2 - 3, y0 + h, 6, 120); ctx.fillStyle = "#4a3418"; ctx.beginPath(); ctx.ellipse(x0 + w / 2, y0 + h + 120, 18, 5, 0, 0, TAU); ctx.fill(); /* le pied */
-  const fr = ctx.createLinearGradient(x0, 0, x0 + w, 0); fr.addColorStop(0, "#6a4a20"); fr.addColorStop(0.4, "#c99a52"); fr.addColorStop(1, "#5a3c18"); ctx.fillStyle = fr; ctx.fillRect(x0 - 5, y0 - 5, w + 10, h + 10); /* le cadre de laiton */
-  ctx.fillStyle = "#06101a"; ctx.fillRect(x0, y0, w, h);
-  const ink = (a) => rgba(150, 200, 245, a * fl);
-  hx.save(); hx.globalCompositeOperation = "lighter"; hx.fillStyle = rgba(60, 110, 170, 0.12 * fl); hx.fillRect(x0, y0, w, h);
+  const cx = 595, cy = 102, ox = 38, oy = 54, A = [G.me, ...G.opp], c0 = cur(r), fl = 0.9 + 0.1 * Math.sin(t * 13) * Math.sin(t * 3.7);
+  const sx0 = 553, sx1 = 637, sy0 = 14, sy1 = 200; /* la dalle */
+  const sl = ctx.createLinearGradient(sx0, 0, sx1, 0); sl.addColorStop(0, "#15120f"); sl.addColorStop(0.5, "#24201b"); sl.addColorStop(1, "#13100d"); ctx.fillStyle = sl; ctx.fillRect(sx0, sy0, sx1 - sx0, sy1 - sy0);
+  for (let i = 0; i < 70; i++) { ctx.fillStyle = rgba(0, 0, 0, 0.12 + q("sg" + i) * 0.12); ctx.fillRect(sx0 + q("sx" + i) * (sx1 - sx0), sy0 + q("sy" + i) * (sy1 - sy0), 1 + q("sw" + i) * 2, 1 + q("sh" + i) * 2); } /* le grain */
+  ctx.strokeStyle = rgba(0, 0, 0, 0.6); ctx.lineWidth = 1; ctx.strokeRect(sx0 + 0.5, sy0 + 0.5, sx1 - sx0 - 1, sy1 - sy0 - 1);
+  const brass = (x0, x1) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, "#4a3214"); g.addColorStop(0.45, "#b88c48"); g.addColorStop(1, "#4a3214"); return g; };
+  for (const mx of [sx0 + 4, sx1 - 9]) { ctx.fillStyle = brass(mx, mx + 5); ctx.fillRect(mx, sy0 + 14, 5, sy1 - sy0 - 28); /* les montants */
+    for (const yy of [cy - 30, cy + 30]) { ctx.fillRect(mx + (mx < cx ? 5 : -7), yy - 2, 7, 4); ctx.fillStyle = "#2a1c0c"; ctx.beginPath(); ctx.arc(mx + 2.5, yy, 1.2, 0, TAU); ctx.fill(); ctx.fillStyle = brass(mx, mx + 5); } } /* leurs pattes, qui tiennent le médaillon */
+  /* l'ovale : une bague de laiton, l'attache en haut, la queue en bas jusqu'à l'œilleton */
+  ctx.fillStyle = brass(cx - 6, cx + 6); ctx.beginPath(); ctx.moveTo(cx - 5, cy - oy - 12); ctx.lineTo(cx + 5, cy - oy - 12); ctx.lineTo(cx + 3, cy - oy); ctx.lineTo(cx - 3, cy - oy); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx - 14, cy + oy - 4); ctx.lineTo(cx + 14, cy + oy - 4); ctx.lineTo(cx + 8, cy + oy + 18); ctx.lineTo(cx - 8, cy + oy + 18); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = brass(cx - ox - 4, cx + ox + 4); ctx.beginPath(); ctx.ellipse(cx, cy, ox + 4, oy + 4, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = "#0b0c0d"; ctx.beginPath(); ctx.ellipse(cx, cy, ox, oy, 0, 0, TAU); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.ellipse(cx, cy, ox, oy, 0, 0, TAU); ctx.clip(); /* le motif gravé : un treillis fin, deux cercles, quatre petites boucles */
+  ctx.strokeStyle = rgba(150, 150, 140, 0.13); ctx.lineWidth = 0.6; for (let k = -12; k <= 12; k++) { ctx.beginPath(); ctx.moveTo(cx + k * 7 - 70, cy - 70); ctx.lineTo(cx + k * 7 + 70, cy + 70); ctx.stroke(); ctx.beginPath(); ctx.moveTo(cx + k * 7 + 70, cy - 70); ctx.lineTo(cx + k * 7 - 70, cy + 70); ctx.stroke(); }
+  ctx.strokeStyle = rgba(170, 170, 160, 0.2); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.ellipse(cx, cy, ox - 6, oy - 8, 0, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.ellipse(cx, cy, 9, 13, 0, 0, TAU); ctx.stroke();
+  for (const [dx, dy] of [[0, -28], [0, 28], [-19, 0], [19, 0]]) { ctx.beginPath(); ctx.ellipse(cx + dx, cy + dy, 4, 5, 0, 0, TAU); ctx.stroke(); }
+  ctx.restore();
+  /* l'étoile, en haut de la dalle */
+  { const x = cx, y = sy0 + 12; ctx.fillStyle = brass(x - 9, x + 9); ctx.beginPath(); for (let k = 0; k < 16; k++) { const a = -Math.PI / 2 + k * Math.PI / 8, rr = k % 2 ? 4.5 : 9; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); ctx.fillStyle = "#2a1c0c"; ctx.beginPath(); ctx.arc(x, y, 2.4, 0, TAU); ctx.fill(); }
+  /* l'œilleton, sous la queue */
+  const ey = cy + oy + 26; ctx.fillStyle = brass(cx - 10, cx + 10); ctx.beginPath(); ctx.arc(cx, ey, 9, 0, TAU); ctx.fill(); ctx.fillStyle = "#0a0d12"; ctx.beginPath(); ctx.arc(cx, ey, 6, 0, TAU); ctx.fill();
+  const ink = (a) => rgba(170, 205, 235, a * fl);
+  hx.save(); hx.globalCompositeOperation = "lighter";
+  const lens = hx.createRadialGradient(cx - 2, ey - 2, 0.5, cx, ey, 6); lens.addColorStop(0, rgba(150, 200, 255, 0.6 * fl)); lens.addColorStop(1, rgba(40, 80, 140, 0.1)); hx.fillStyle = lens; hx.beginPath(); hx.arc(cx, ey, 6, 0, TAU); hx.fill();
+  hx.fillStyle = rgba(70, 110, 160, 0.07 * fl); hx.beginPath(); hx.ellipse(cx, cy, ox, oy, 0, 0, TAU); hx.fill(); /* la lueur du médaillon allumé */
+  const rows = Math.max(seats.length, 1), gap = Math.min(18, 76 / rows), yA = cy - (gap * (rows - 1)) / 2;
   if (G.round === 0 && !r.ahy.clock && (c0.log || []).length) { /* en attente : le registre */
-    (c0.log || []).slice(0, 6).forEach((e, i) => { const y = y0 + 16 + i * 19; anySign(hx, e.by || "pen", x0 + 14, y, 5, HC[e.by || "pen"], 0.85 * fl, true); numeral(hx, e.n, x0 + 38, y, 9, ink(0.8));
-      hx.fillStyle = e.won ? rgba(255, 210, 120, 0.9 * fl) : ink(0.25); hx.beginPath(); hx.arc(x0 + 62, y, 3.4, 0, TAU); hx.fill(); });
-    r.hot.push({ x: x0, y: y0, w, h: h - 30, ahy: { panel: "ledger", id: "screen" } }); if (hv("screen")) hoverGlow(ctx, x0 + w / 2, y0 + h / 2 - 15, 50, [150, 200, 245]); }
-  else seats.forEach((k, i) => { const p = A[i], y = y0 + 16 + i * 22, win = !!(G.winners && G.winners.includes(i)); /* les scores, une ligne par place */
-    if (win) { hx.fillStyle = rgba(255, 200, 110, 0.16 * fl); hx.fillRect(x0 + 2, y - 9, w - 4, 18); }
-    numeral(hx, k + 1, x0 + 9, y, 8, ink(i === 0 ? 0.95 : 0.65));
-    AH.SIGNS.forEach((sg, j) => { const n = p.won[sg] || 0, xx = x0 + 24 + j * 17; anySign(hx, sg, xx, y - 3, 3.2, HC[sg], (n ? 0.9 : 0.3) * fl, true); numeral(hx, n, xx, y + 5, 5, n >= 3 ? rgba(255, 210, 120, fl) : ink(n ? 0.8 : 0.3)); });
-    if (reveal && p.pts != null) numeral(hx, p.pts, x0 + w - 8, y, 7, p.pts > 0 ? rgba(255, 210, 120, fl) : ink(0.5), p.pts < 0); });
-  /* en bas : le rang, et les quatre touches du niveau */
-  hx.strokeStyle = ink(0.25); hx.lineWidth = 0.6; hx.beginPath(); hx.moveTo(x0 + 4, y0 + h - 26); hx.lineTo(x0 + w - 4, y0 + h - 26); hx.stroke();
-  const L = ["easy", "mid", "hard", "rank"], li = L.indexOf(c0.level);
-  for (let i = 0; i < 4; i++) { const kx = x0 + 12 + i * 20, ky = y0 + h - 13, on = i === li, id = "lv" + i;
-    hx.strokeStyle = on ? rgba(255, 210, 120, fl) : ink(0.45); hx.lineWidth = on ? 1.2 : 0.8; hx.strokeRect(kx - 7, ky - 7, 14, 14); if (on) { hx.fillStyle = rgba(255, 200, 110, 0.18 * fl); hx.fillRect(kx - 7, ky - 7, 14, 14); }
-    numeral(hx, i < 3 ? i + 1 : c0.rank, kx, ky, 8, on ? rgba(255, 220, 140, fl) : ink(0.7)); /* 1, 2, 3 ; puis le rang lui-même */
-    if (hv(id)) hoverGlow(ctx, kx, ky, 14, [150, 200, 245]);
-    if (between) r.hot.push({ x: kx - 9, y: ky - 9, w: 18, h: 18, ahy: { level: true, lv: i, id } }); }
+    const L5 = (c0.log || []).slice(0, 5), gp = 17, yb = cy - (gp * (L5.length - 1)) / 2;
+    L5.forEach((e, i) => { const y = yb + i * gp; anySign(hx, e.by || "pen", cx - 18, y, 5, HC[e.by || "pen"], 0.8 * fl, true); numeral(hx, e.n, cx + 2, y, 9, ink(0.75));
+      hx.fillStyle = e.won ? rgba(255, 210, 120, 0.85 * fl) : ink(0.22); hx.beginPath(); hx.arc(cx + 20, y, 3, 0, TAU); hx.fill(); });
+    r.hot.push({ x: cx - ox, y: cy - oy, w: 2 * ox, h: 2 * oy, ahy: { panel: "ledger", id: "screen" } }); if (hv("screen")) hoverGlow(ctx, cx, cy, 52, [150, 200, 245]); }
+  else seats.forEach((k, i) => { const p = A[i], y = yA + i * gap, win = !!(G.winners && G.winners.includes(i)); /* les scores, une ligne par place */
+    if (win) { const g = hx.createLinearGradient(cx - 34, 0, cx + 34, 0); g.addColorStop(0, rgba(255, 200, 110, 0)); g.addColorStop(0.5, rgba(255, 200, 110, 0.2 * fl)); g.addColorStop(1, rgba(255, 200, 110, 0)); hx.fillStyle = g; hx.fillRect(cx - 34, y - 8, 68, 16); }
+    numeral(hx, k + 1, cx - 26, y, 7, ink(i === 0 ? 0.95 : 0.6));
+    AH.SIGNS.forEach((sg, j) => { const n = p.won[sg] || 0, xx = cx - 12 + j * 12; anySign(hx, sg, xx, y - 3, 2.9, HC[sg], (n ? 0.85 : 0.28) * fl, true); numeral(hx, n, xx, y + 4.5, 4.5, n >= 3 ? rgba(255, 210, 120, fl) : ink(n ? 0.75 : 0.28)); });
+    if (reveal && p.pts != null) numeral(hx, p.pts, cx + 27, y, 6.5, p.pts > 0 ? rgba(255, 210, 120, fl) : ink(0.45), p.pts < 0); });
+  /* les quatre pastilles du niveau, en arc autour de l'œilleton */
+  const LV = ["easy", "mid", "hard", "rank"], li = LV.indexOf(c0.level);
+  for (let i = 0; i < 4; i++) { const a = Math.PI * (0.95 - i * 0.3), kx = cx + Math.cos(a) * 25, ky = ey + Math.sin(a) * 6 + 5, on = i === li, id = "lv" + i;
+    ctx.fillStyle = "#6a4a20"; ctx.beginPath(); ctx.arc(kx, ky, 6, 0, TAU); ctx.fill(); ctx.fillStyle = "#14100c"; ctx.beginPath(); ctx.arc(kx, ky, 4.8, 0, TAU); ctx.fill();
+    if (on) { const g = hx.createRadialGradient(kx, ky, 0.5, kx, ky, 9); g.addColorStop(0, rgba(255, 200, 110, 0.45 * fl)); g.addColorStop(1, rgba(255, 200, 110, 0)); hx.fillStyle = g; hx.fillRect(kx - 9, ky - 9, 18, 18); }
+    numeral(hx, i < 3 ? i + 1 : c0.rank, kx, ky, 5.5, on ? rgba(255, 220, 140, fl) : ink(0.5)); /* 1, 2, 3 ; puis le rang lui-même */
+    if (hv(id)) hoverGlow(ctx, kx, ky, 12, [150, 200, 245]);
+    if (between) r.hot.push({ x: kx - 7, y: ky - 7, w: 14, h: 14, ahy: { level: true, lv: i, id } }); }
   hx.restore();
 }
 
