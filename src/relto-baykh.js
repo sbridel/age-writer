@@ -98,7 +98,7 @@ function act(r, a) {
 
 /* ---------------------------------------------------------------- les habits ---------------------------------------------------------------- */
 /* les couleurs du Château (choix de l'auteur) : le bordeaux des tentures contre le bleu nuit, le filet d'or */
-const CASTLE_C = [["#8a2838", "#661a28", "#40101a"], ["#2a3f7a", "#1c2c5a", "#101a3a"]];
+const CASTLE_C = [["#6e1e2c", "#521624", "#300a12"], ["#2a3f7a", "#1c2c5a", "#101a3a"]];
 function habit(r) {
   if (r.castleOn && r.castleOn()) return { kind: "castle", bg: ["#2a0e1c", "#12060c"], rim: ["#7a5a1a", "#f0cc6a", "#6a4a10"], sq: ["#d8d2c6", "#b9b2a4"], line: "rgba(80,60,40,.5)",
     C: CASTLE_C, table: "#3a2414", shape: "oct", fil: "#e8c060" };
@@ -137,7 +137,6 @@ function piece(ctx, F, Hb, i, j, p, { stand = false, lvl = 0, hi = 0 } = {}) {
     if (Math.sign(area(face)) !== sgn) continue; poly(ctx, face); ctx.fillStyle = fill; ctx.fill();
     if (Hb.kind === "glass") { ctx.strokeStyle = Hb.fil; ctx.lineWidth = 1.1; ctx.stroke(); ctx.fillStyle = "rgba(255,255,255,.3)"; ctx.beginPath(); ctx.arc(face[0][0] * 0.78 + face[2][0] * 0.22, face[0][1] * 0.78 + face[2][1] * 0.22, 1.6, 0, TAU); ctx.fill(); }
     if (Hb.kind === "castle") { const m = face.reduce((s, q) => [s[0] + q[0] / face.length, s[1] + q[1] / face.length], [0, 0]); poly(ctx, face.map(([x, y]) => [m[0] + (x - m[0]) * 0.72, m[1] + (y - m[1]) * 0.72])); ctx.strokeStyle = Hb.fil; ctx.lineWidth = 0.9; ctx.stroke(); }
-    if (Hb.kind === "stone") { ctx.strokeStyle = p ? "rgba(255,255,255,.07)" : "rgba(120,100,70,.28)"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(...face[0]); ctx.lineTo(...face[Math.floor(face.length / 2)]); ctx.stroke(); }
   }
   if (hi) { const face = Bf.map(pr); poly(ctx, face); ctx.fillStyle = rgba(255, 214, 130, 0.35 * hi); ctx.fill(); }
 }
