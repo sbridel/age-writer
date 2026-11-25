@@ -52,11 +52,11 @@ const SYM={
 };
 
 /* les géomètres (croquis de l'auteur) : un outil sur pied. Le chapeau crénelé dessous, une bague, la molette moletée, l'entonnoir et son repère,
- * le tronc à bagues jusqu'au cul de l'outil (deux traits) ; dans l'anneau ouvert, la vis d'où partent les deux pieds en pointe, comme celle d'un compas. Derrière, « telUK » en grand.
+ * le tronc à bagues qui descend, derrière la vis, jusqu'au cul de l'outil (trois traits) ; la vis d'où partent deux pieds en pointe, comme celle d'un compas ; l'anneau qui passe sur le pied droit et touche le gauche. Derrière, « telUK » en grand.
  * Dessiné dans le repère du croquis (centre en 290,575 ; le cercle de rayon 590). */
 const GEO_LETTERS = [["t", -66, 518, 600], ["e", 30, 801, 600], ["l", 308, 575, 600], ["U", 548, 937, 455], ["K", 645, 575, 580]];
 function geometres(ink) {
-  const u = ctx.lineWidth * 590, P = (a) => a.map(([x, y]) => [x, y]), Mx = (a) => a.map(([x, y]) => [580 - x, y]);
+  const u = ctx.lineWidth * 590, P = (a) => a.map(([x, y]) => [x, y]);
   ctx.save(); ctx.scale(1 / 590, 1 / 590); ctx.translate(-290, -575);
   if (FONT) { ctx.save(); ctx.beginPath(); ctx.arc(290, 575, 590, 0, TAU); ctx.clip(); ctx.globalAlpha *= 0.42; ctx.textAlign = "center"; ctx.textBaseline = "middle"; for (const [ch, x, y, s] of GEO_LETTERS) { ctx.font = `${s}px ${FONT}`; ctx.fillText(ch, x, y); } ctx.restore(); }
   ctx.lineWidth = u * 0.62; ctx.beginPath(); ctx.arc(290, 575, 590, 0, TAU); ctx.stroke(); /* le cercle */
@@ -68,12 +68,14 @@ function geometres(ink) {
   ctx.lineWidth = u * 0.42; L([[110, 322], [470, 322], [388, 470], [192, 470]]); ctx.closePath(); ctx.stroke(); /* l'entonnoir */
   ctx.lineWidth = u * 0.3; L([[225, 345], [355, 345], [290, 430]]); ctx.closePath(); ctx.stroke(); /* le repère */
   ctx.lineWidth = u * 0.42; for (const y of [490, 514]) { L([[176, y], [404, y]]); ctx.stroke(); } L([[192, 540], [388, 540]]); ctx.stroke(); /* les bagues du tronc */
-  ctx.lineWidth = u * 0.9; ctx.beginPath(); ctx.arc(290, 750, 205, Math.PI * 0.88, Math.PI * 2.62); ctx.stroke(); /* l'anneau ouvert */
-  ctx.lineWidth = u * 0.32; L([[192, 470], [192, 770], [228, 940]]); ctx.stroke(); L([[388, 470], [388, 770], [352, 940]]); ctx.stroke(); /* le tronc, qui se resserre sous la vis jusqu'au cul de l'outil */
-  L([[228, 940], [352, 940]]); ctx.stroke(); ctx.beginPath(); ctx.moveTo(228, 940); ctx.quadraticCurveTo(232, 1062, 290, 1062); ctx.quadraticCurveTo(348, 1062, 352, 940); ctx.stroke();
-  L([[234, 980], [346, 980]]); ctx.stroke(); L([[250, 1018], [330, 1018]]); ctx.stroke(); /* le cul, ses deux traits */
-  for (const Q of [P, Mx]) { L(Q([[290, 827], [60, 1040], [218, 788]])); ctx.stroke(); } /* les pieds en pointe, qui partent de la vis */
-  ctx.lineWidth = u * 0.3; ctx.beginPath(); ctx.arc(290, 742, 85, 0, TAU); ctx.stroke(); /* la vis des pieds */
+  ctx.lineWidth = u * 0.32; ctx.save(); ctx.beginPath(); ctx.rect(-400, -100, 1400, 1400); ctx.arc(290, 742, 74, 0, TAU, true); ctx.clip(); /* le tronc passe derrière la vis */
+  L([[192, 470], [192, 740], [233, 872]]); ctx.stroke(); L([[388, 470], [388, 740], [348, 877]]); ctx.stroke(); ctx.restore(); /* le tronc, qui descend jusqu'au cul de l'outil */
+  L([[167, 797], [13, 1024], [282, 830]]); ctx.stroke(); /* le pied gauche */
+  L([[363, 640], [387, 775], [541, 998], [321, 826]]); ctx.stroke(); /* le pied droit, qui longe la vis */
+  ctx.lineWidth = u * 1.1; ctx.beginPath(); ctx.arc(299, 751, 151, Math.PI * 0.9, Math.PI * 2.65); ctx.stroke(); /* l'anneau, qui passe sur le pied droit et touche le gauche */
+  ctx.lineWidth = u * 0.32; ctx.beginPath(); ctx.moveTo(233, 872); ctx.lineTo(348, 877); ctx.bezierCurveTo(356, 940, 350, 995, 290, 1039); ctx.bezierCurveTo(232, 995, 220, 940, 233, 872); ctx.stroke(); /* le cul de l'outil */
+  for (const [y, x0, x1] of [[914, 229, 351], [956, 228, 350], [990, 244, 334]]) { L([[x0, y], [x1, y]]); ctx.stroke(); } /* ses trois traits */
+  ctx.lineWidth = u * 0.3; ctx.beginPath(); ctx.arc(290, 742, 74, 0, TAU); ctx.stroke(); /* la vis */
   ctx.restore();
 }
 
