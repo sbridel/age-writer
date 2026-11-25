@@ -23,7 +23,7 @@ const levelOf = (s) => (s.level === "rank" ? (s.rank >= 6 ? "hard" : s.rank >= 3
 function saved(r) {
   const s = (r.opts && r.opts.baykhState && r.opts.baykhState()) || {};
   return { n: [3, 4, 5, 6, 7, 8].includes(s.n) ? s.n : 5, side: s.side === 1 ? 1 : 0, cap: CAPS.includes(s.cap) ? s.cap : "robe", level: LEVELS.includes(s.level) ? s.level : "mid",
-    rank: Math.max(0, s.rank | 0), pal: ["blason", "vin", "metal", "ivoire"].includes(s.pal) ? s.pal : "blason", log: Array.isArray(s.log) ? s.log.slice(0, 40) : [] };
+    rank: Math.max(0, s.rank | 0), log: Array.isArray(s.log) ? s.log.slice(0, 40) : [] };
 }
 function cur(r) { return r._bkSaved || saved(r); }
 function save(r, patch) { const s = { ...cur(r), ...patch }; r._bkSaved = s; if (r.opts && r.opts.onBaykh) r.opts.onBaykh(s); return s; }
@@ -97,16 +97,11 @@ function act(r, a) {
 }
 
 /* ---------------------------------------------------------------- les habits ---------------------------------------------------------------- */
-/* les couleurs du Château : les émaux du blason (grenat contre bleu nuit), le vin et la pierre (pierre blonde contre bordeaux), l'argent et l'or ; le filet d'or (gravé de noir sur l'or) */
-const CASTLE_PAL = {
-  blason: { C: [["#b8323e", "#8e2230", "#5e1420"], ["#2a3f7a", "#1c2c5a", "#101a3a"]], fil: "#e8c060" },
-  vin: { C: [["#e6d6b0", "#c8b690", "#a49270"], ["#6e1e2c", "#4e1420", "#300a12"]], fil: "#d8b050" },
-  metal: { C: [["#d6dade", "#aab0b8", "#7a828c"], ["#f0c860", "#c8983a", "#8a6420"]], fil: "#2a2420" },
-  ivoire: { C: [["#f6eedb", "#e0d4b8", "#c4b696"], ["#2a2220", "#16110f", "#0a0807"]], fil: "#d8b050" },
-};
+/* les couleurs du Château (choix de l'auteur) : le bordeaux des tentures contre le bleu nuit, le filet d'or */
+const CASTLE_C = [["#8a2838", "#661a28", "#40101a"], ["#2a3f7a", "#1c2c5a", "#101a3a"]];
 function habit(r) {
-  if (r.castleOn && r.castleOn()) { const pal = CASTLE_PAL[cur(r).pal] || CASTLE_PAL.blason; return { kind: "castle", bg: ["#2a0e1c", "#12060c"], rim: ["#7a5a1a", "#f0cc6a", "#6a4a10"], sq: ["#d8d2c6", "#b9b2a4"], line: "rgba(80,60,40,.5)",
-    C: pal.C, table: "#3a2414", shape: "oct", fil: pal.fil }; }
+  if (r.castleOn && r.castleOn()) return { kind: "castle", bg: ["#2a0e1c", "#12060c"], rim: ["#7a5a1a", "#f0cc6a", "#6a4a10"], sq: ["#d8d2c6", "#b9b2a4"], line: "rgba(80,60,40,.5)",
+    C: CASTLE_C, table: "#3a2414", shape: "oct", fil: "#e8c060" };
   if (r.glassOn && r.glassOn()) return { kind: "glass", bg: ["#14221c", "#0a120e"], rim: ["#5a2e12", "#c87a3a", "#4a2410"], sq: ["rgba(190,215,205,.62)", "rgba(160,190,180,.56)"], line: "rgba(120,70,30,.75)",
     C: [["rgba(236,178,84,.95)", "rgba(204,144,56,.96)", "rgba(160,104,30,.96)"], ["rgba(96,176,160,.95)", "rgba(62,138,124,.96)", "rgba(36,96,86,.96)"]], table: "#3a2416", shape: "square", fil: "#c87a3a" };
   return { kind: "stone", bg: ["#2a1c12", "#140d08"], rim: ["#6a4a1c", "#c99a52", "#5a3c14"], sq: ["#8a8272", "#7c7466"], line: "rgba(30,22,14,.55)",
@@ -166,11 +161,11 @@ function capstone(ctx, F, Hb, i, j, p, kind, lvl = 0, hi = 0) {
     const tint = Hb.kind === "glass" ? (p ? [96, 176, 160] : [236, 178, 84]) : p ? [110, 120, 150] : [244, 200, 140];
     require("./relto-ahyoheek").lampGlass(ctx, kind === "bee" ? "oval" : "rays", tint, -5.2, 1); }
   else { /* l'aiguille D'ni gothique : une ogive, deux filets de laiton, un cœur poli, un petit glyphe à la base */
-    ctx.fillStyle = lin(-9, 9, p ? ["#0a0a0c", "#3a3c44", "#14151a", "#050506"] : ["#c8c2b0", "#fffbf0", "#e6dfcc", "#a8a08a"]);
+    ctx.fillStyle = lin(-9, 9, [col[2], col[0], col[1], col[2]]); /* la couleur du joueur (obsidienne ou pierre claire par défaut) */
     ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-8, -7); ctx.quadraticCurveTo(-7, -21, 0, -35); ctx.quadraticCurveTo(7, -21, 8, -7); ctx.lineTo(8, 0); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = "#d8b050"; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(-8, -7); ctx.lineTo(8, -7); ctx.stroke();
     for (const d of [-1, 1]) { ctx.beginPath(); ctx.moveTo(d * 5.3, -7); ctx.quadraticCurveTo(d * 4.8, -18, 0, -30); ctx.stroke(); }
-    ctx.fillStyle = p ? "rgba(60,70,90,.9)" : "rgba(255,255,255,.9)"; ctx.beginPath(); ctx.moveTo(-2.6, -8); ctx.quadraticCurveTo(-2.6, -18, 0, -24); ctx.quadraticCurveTo(2.6, -18, 2.6, -8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = col[0]; ctx.beginPath(); ctx.moveTo(-2.6, -8); ctx.quadraticCurveTo(-2.6, -18, 0, -24); ctx.quadraticCurveTo(2.6, -18, 2.6, -8); ctx.closePath(); ctx.fill(); ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.fill(); /* le cœur poli : la couleur, éclaircie */
     ctx.lineWidth = 0.7; ctx.beginPath(); ctx.arc(0, -3.6, 2.1, Math.PI * 0.15, Math.PI * 1.85); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-2.6, -1.3); ctx.lineTo(2.6, -1.3); ctx.stroke(); }
   ctx.restore();
 }
