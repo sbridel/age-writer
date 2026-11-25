@@ -387,10 +387,10 @@ function room(ctx, from, t) {
   const shade = ctx.createLinearGradient(0, WALL - 14, 0, WALL + 20); shade.addColorStop(0, rgba(0, 0, 0, 0)); shade.addColorStop(0.4, rgba(0, 0, 0, 0.35)); shade.addColorStop(1, rgba(0, 0, 0, 0)); ctx.fillStyle = shade; ctx.fillRect(0, WALL - 14, W, 34); /* l'ombre au pied du mur */
 }
 const C = { x: 320, y: 182 }, RX = 250, RY = 132;
-/** Ma figurine : sur ma branche, entre les deux boutons. */
-const MYFIG = [320, 295];
+/** Ma figurine : à la pointe de ma branche, comme les autres au bout de la leur ; la plaque des règles passe sur la tranche, dessous. */
+const MYFIG = [320, 300];
 const seatAt = (k) => { const a = Math.PI / 2 + k * TAU / 5; return [C.x + Math.cos(a) * RX * 0.66, C.y + Math.sin(a) * RY * 0.66]; };
-const MINE = (i) => [286 + i * 34, 250];
+const MINE = (i) => [286 + i * 34, 244];
 function drawGame(r, ctx, sc, sky, t) {
   state(r); tick(r);
   const hx = typeof document !== "undefined" && ctx.canvas && ctx.getTransform ? holoLayer(r, ctx) : ctx; /* le calque des hologrammes */
@@ -436,8 +436,8 @@ function drawGame(r, ctx, sc, sky, t) {
     ctx.globalAlpha = 1;
     r.hot.push({ x: x - 24, y: y - 40, w: 48, h: 54, ahy: G.phase === "reveal" ? { next: true } : between ? { seat: k, id: "seat" + k } : {} }); });
   { const [fx, fy] = MYFIG, mc = myChar(cur(r)); if (hv("myFig")) hoverGlow(ctx, fx, fy - 10, 22); /* ma figurine, sur ma branche : ma guilde (la toucher en change, entre deux parties) */
-    ctx.save(); ctx.translate(fx, fy); ctx.scale(0.58, 0.58); figurine(ctx, 0, 0, mc, 1, cur(r).figs, r.dni && r.dni.fontFamily && r.dni.fontFamily(), mc ? 1 : 0.8); ctx.restore();
-    if (between) figHot.push({ x: fx - 8, y: fy - 20, w: 16, h: 22, ahy: { me: true, id: "myFig" } }); }
+    figurine(ctx, fx, fy, mc, 1, cur(r).figs, r.dni && r.dni.fontFamily && r.dni.fontFamily(), mc ? 1 : 0.8);
+    if (between) figHot.push({ x: fx - 12, y: fy - 32, w: 24, h: 34, ahy: { me: true, id: "myFig" } }); }
   r.hot.push(...figHot);
   /* l'anneau : un cercle de lumière debout au-dessus de la vasque, les trois signes dessus, le glyphe du jeu au cœur */
   { const cx = C.x, cy = C.y - 86, R = 62, fl = 0.9 + 0.1 * Math.sin(t * 17) * Math.sin(t * 5.1);
@@ -464,7 +464,7 @@ function drawGame(r, ctx, sc, sky, t) {
     if (!reveal && clk && clk.mine) { if (posed) holo(hx, k, x, y, 18, 0.6, t, 9); else { ctx.save(); ctx.translate(x, y); ctx.scale(1, k === "beetle" ? 0.5 : 0.45); anySign(ctx, k, 0, 0, k === "beetle" ? 8.5 : 10, HC[k], 0.3, false); ctx.restore(); } }
     else if (!reveal) { if (hov === k) holo(hx, k, x, y, 18, 0.8, t, 9); else { ctx.save(); ctx.translate(x, y); ctx.scale(1, k === "beetle" ? 0.5 : 0.45); anySign(ctx, k, 0, 0, k === "beetle" ? 8.5 : 10, HC[k], 0.8, false); ctx.restore(); } r.hot.push({ x: x - 17, y: y - 30, w: 34, h: 42, ahy: { sign: k } }); }
     else if (picked) { if (isWin(0)) winMark(ctx, x, y, 13, t); holo(hx, k, x, y, isWin(0) ? 28 : 22, isWin(0) ? 1 : anyWin ? 0.28 : 0.8, t, 0); } });
-  tokens(hx, 320, 270, G.me.won, t, -1, 2.9); /* mes jetons, sous mes trois signes, entre eux et ma figurine */
+  tokens(hx, 320, 263, G.me.won, t, -1, 2.7); /* mes jetons, sous mes trois signes, entre eux et ma figurine */
   /* encastrés à fleur de pierre sur ma branche, sous mes projecteurs : à gauche le bouton d'ambre (lancer), à droite le bouton de bronze
    * (remettre la table en attente) ; à la pointe, la plaque des règles. À droite de la table, l'écran des scores. */
   const pressed = (k) => st.press && st.press[0] === k && nowMs - st.press[1] < 180;
@@ -476,7 +476,7 @@ function drawGame(r, ctx, sc, sky, t) {
   { const call = (idle && G.round === 0) || G.phase === "won" ? 0.5 + 0.5 * Math.sin(t * 3) : 0; if (call) hoverGlow(ctx, 301, 283, 14 + 4 * call, [255, 180, 80]);
     inlay(301, 283, 6.2, 3.4, [[0, "#fff0b0"], [0.5, "#f0a840"], [1, "#8a4a10"]], "start", { start: true }); }
   inlay(339, 283, 6.2, 3.4, [[0, "#e9c27a"], [0.6, "#a8783a"], [1, "#5a3c1a"]], "wait", { wait: true }, (x, y) => { ctx.strokeStyle = "#3a2410"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.ellipse(x, y, 3.4, 1.8, 0, 0, TAU); ctx.stroke(); }); /* l'anneau, gravé */
-  { const x = TIP[0], y = 304; if (hv("rules")) hoverGlow(ctx, x, y, 18); /* la plaque des règles, à fleur, à la pointe */
+  { const x = TIP[0], y = 321; if (hv("rules")) hoverGlow(ctx, x, y, 18); /* la plaque des règles, sur la tranche de la table, sous la pointe */
     ctx.fillStyle = "#9a7838"; ctx.beginPath(); ctx.moveTo(x - 9, y - 2.6); ctx.lineTo(x + 9, y - 2.6); ctx.lineTo(x + 7, y + 2.6); ctx.lineTo(x - 7, y + 2.6); ctx.closePath(); ctx.fill(); ctx.strokeStyle = "#d8b070"; ctx.lineWidth = 0.6; ctx.stroke();
     AH.SIGNS.forEach((k, i) => { ctx.save(); ctx.translate(x - 5 + i * 5, y); ctx.scale(1, 0.55); anySign(ctx, k, 0, 0, 1.8, [50, 34, 14], 0.9, false); ctx.restore(); });
     r.hot.push({ x: x - 12, y: y - 6, w: 24, h: 12, ahy: { panel: "rules", id: "rules" } }); }
