@@ -9,23 +9,23 @@ const NEWS = [
     v: "2.11.0",
     fr: {
       title: "Un Relto habité",
-      letter: "On nous demandait si quelqu'un vivait là. Quelqu'un y vit : il y a un plateau sur la table basse du salon, une partie en cours, des pièces couchées et debout ; une lampe à la tête du lit ; et dans le couloir, les couleurs des cinq guildes. Asseyez-vous, la maison joue.",
+      letter: "On nous demandait si quelqu'un vivait là. Quelqu'un y vit : il y a un plateau sur la table basse du salon, une partie en cours, des pièces couchées et debout ; une lampe à la tête du lit ; et dans le couloir, les couleurs des six guildes. Asseyez-vous, la maison joue.",
       sign: "— pour la Guilde des Écrivains",
       items: [
         "**Baykh, le jeu des routes**, sur la table basse du salon (règles d'après Tak, de James Ernest et Patrick Rothfuss) : relier deux bords opposés par une route de vos pièces, couchées pour la route (les Voies), debout pour barrer (les Verrous), et une Clef de voûte qui écrase ce qui se dresse. Contre la maison, en trois niveaux (ou selon votre rang), sur un plateau de 3×3 à 8×8 ; la pierre claire ou la sombre.",
         "**Les pièces suivent l'habit** (la pierre, le verre et le cuivre de la Verrière, les octogones du Château), **un coffret de Clefs de voûte** : huit modèles, neuf couleurs, une vue de dessus, un coup à confirmer ou à annuler, la partie gardée d'une visite à l'autre, et un carnet des parties.",
-        "**Les cinq guildes ont leurs signes** : cinq bannières dans le couloir (du drap, du velours au Château, un vitrail à la Verrière), un sceau de cire sur les lettres, une plaque de guilde devant la maison quand elle joue.",
+        "**Les six guildes ont leurs signes** : six bannières dans le couloir (du drap, du velours au Château, un vitrail à la Verrière), un sceau de cire sur les lettres, une plaque de guilde devant la maison quand elle joue.",
         "**Une lampe de chevet**, à la tête du lit : le verre de l'abeille ou de la main, un clic en change, et elle luit davantage la nuit.",
       ],
     },
     en: {
       title: "A lived-in Relto",
-      letter: "We were asked whether anyone lived there. Someone does: there is a board on the low table in the lounge, a game under way, pieces lying and standing; a lamp at the head of the bed; and in the hallway, the colours of the five guilds. Sit down, the house plays.",
+      letter: "We were asked whether anyone lived there. Someone does: there is a board on the low table in the lounge, a game under way, pieces lying and standing; a lamp at the head of the bed; and in the hallway, the colours of the six guilds. Sit down, the house plays.",
       sign: "— for the Guild of Writers",
       items: [
         "**Baykh, the game of roads**, on the low table in the lounge (rules after Tak, by James Ernest and Patrick Rothfuss): join two opposite edges with a road of your pieces, lying flat for the road (Ways), standing to block (Locks), and a Keystone that flattens what stands. Against the house, at three levels (or by your rank), on a board from 3×3 to 8×8; light stone or dark.",
         "**The pieces follow the disguise** (stone, the Glasshouse's glass and copper, the Castle's octagons), **a box of Keystones**: eight models, nine colours, a top view, a move to confirm or cancel, the game kept from one visit to the next, and a notebook of games.",
-        "**The five guilds have their signs**: five banners in the hallway (cloth, velvet in the Castle, stained glass in the Glasshouse), a wax seal on letters, a guild plaque before the house when it plays.",
+        "**The six guilds have their signs**: six banners in the hallway (cloth, velvet in the Castle, stained glass in the Glasshouse), a wax seal on letters, a guild plaque before the house when it plays.",
         "**A bedside lamp**, at the head of the bed: the bee's glass or the hand's, a click changes it, and it glows more at night.",
       ],
     },

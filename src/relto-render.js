@@ -235,6 +235,7 @@ class ReltoRenderer {
     CO.setWinTint(this.castleOn() ? FIRE.hutLight(this) : null); /* 2.5 (I) : toutes les fenêtres */
     const has = (type) => sc.additions.find((a) => a.type === type);
     this.hot = [];
+    require("./guild-symbols").setFont(this.dni && this.dni.fontFamily ? this.dni.fontFamily() : null); /* le nom des géomètres, dans la police D'ni du lecteur */
     if (this.view && this.view !== "island" && this.view !== "global" && !this.available()[this.view]) this.view = "island"; // la page de cette vue a été retirée
     if (this.view === "cat" && this.catAsleep()) { this.view = "cabin"; if (this.opts.onView) this.opts.onView("cabin"); } // l'heure a tourné : il est rentré dormir
     if (this.view === "global") return this.drawFullView(ctx, sky, () => GL.drawGlobal(this, ctx, sc, sky, t, has));

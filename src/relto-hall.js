@@ -30,7 +30,7 @@ function backEdge(r, ctx, go, tip) {
 }
 
 /** Les bannières : [mur (0 gauche, 1 droite), k du bord proche, k du bord lointain, guilde]. Elles évitent la fenêtre, les patères, le miroir et la porte de l'œuf. */
-const BANNERS = [[0, 0.05, 0.135, "mainteneurs"], [0, 0.44, 0.535, "cartographes"], [1, 0.07, 0.155, "ecrivains"], [2, FX0 + 4, FX0 + 23, "archivistes"], [2, FX1 - 23, FX1 - 4, "messagers"]];
+const BANNERS = [[0, 0.05, 0.135, "mainteneurs"], [0, 0.44, 0.535, "cartographes"], [1, 0.07, 0.155, "ecrivains"], [1, 0.485, 0.565, "geometres"], [2, FX0 + 4, FX0 + 23, "archivistes"], [2, FX1 - 23, FX1 - 4, "messagers"]];
 /** Le mur du fond, de face : k y est l'abscisse même (les deux bannières encadrent la porte de la forge, et se lisent de loin). */
 const BACK = (x, v) => [x, FY0 + (FY1 - FY0) * v];
 const hex = ([r, g, b]) => "#" + [r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("");

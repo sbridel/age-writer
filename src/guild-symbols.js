@@ -1,16 +1,19 @@
 "use strict";
 /**
- * Les symboles des cinq guildes, dessinés par l'auteur (croquis du 25 nov. 2026, mis au propre ; voir claude/DESIGN-symboles-des-guildes.md).
+ * Les symboles des six guildes, dessinés par l'auteur (croquis du 25 nov. 2026, mis au propre ; voir claude/DESIGN-symboles-des-guildes.md).
+ * Les géomètres portent leur nom, « telUK », en grandes lettres D'ni derrière l'instrument : seulement si une police D'ni est là (`setFont`).
  * Chacun tient dans un cercle de rayon 1. `draw(ctx, guild, x, y, R, col, w, hole)` : `col` le trait, `w` son épaisseur (en unités du cercle),
  * `hole` la couleur du vide (le fond). Les caractères des adversaires d'Ahyoheek portent chacun une guilde (`OF`).
  */
 const TAU = Math.PI * 2;
 const OF = { faithful: "archivistes", mimic: "ecrivains", sly: "messagers", collector: "cartographes", wary: "mainteneurs" };
-const GUILDS = ["archivistes", "ecrivains", "messagers", "cartographes", "mainteneurs"];
+const GUILDS = ["archivistes", "ecrivains", "messagers", "cartographes", "mainteneurs", "geometres"];
 /* la couleur de chaque guilde (la robe, la bannière) et celle de son fil (le galon, la broderie) */
-const COL = { archivistes: [190, 140, 52], ecrivains: [34, 30, 34], messagers: [238, 206, 70], cartographes: [64, 196, 200], mainteneurs: [122, 30, 46] };
-const THREAD = { archivistes: "#ffde8c", ecrivains: "#c23a48", messagers: "#5a3a10", cartographes: "#ffde8c", mainteneurs: "#ffde8c" };
-let ctx = null;
+const COL = { archivistes: [190, 140, 52], ecrivains: [34, 30, 34], messagers: [238, 206, 70], cartographes: [64, 196, 200], mainteneurs: [122, 30, 46], geometres: [42, 96, 220] };
+const THREAD = { archivistes: "#ffde8c", ecrivains: "#c23a48", messagers: "#5a3a10", cartographes: "#ffde8c", mainteneurs: "#ffde8c", geometres: "#eef2fa" };
+let ctx = null, FONT = null;
+/** La police D'ni du moment (celle du lecteur), pour le nom des géomètres ; sans elle, l'instrument seul. */
+function setFont(fam) { FONT = fam || null; }
 const L = (pts) => { ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(...p) : ctx.moveTo(...p))); };
 const M = (f) => { for (const d of [-1, 1]) f(d); };
 const SYM={
@@ -48,8 +51,34 @@ const SYM={
   L([[-0.06,0.52],[0,0.68],[0.06,0.52]]);ctx.stroke();}, /* la pointe */
 };
 
-function draw(c2, guild, x, y, R, col, w = 0.07, hole = "rgba(0,0,0,0)") {
-  if (!SYM[guild]) return; ctx = c2; ctx.save(); ctx.translate(x, y); ctx.scale(R, R); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = w;
-  SYM[guild](col, hole); ctx.restore(); ctx = null;
+/* les géomètres (croquis de l'auteur) : un outil sur pied. Le chapeau crénelé dessous, une bague, la molette moletée, l'entonnoir et son repère,
+ * le tronc à bagues jusqu'au cul de l'outil (deux traits) ; dans l'anneau ouvert, la vis d'où partent les deux pieds en pointe, comme celle d'un compas. Derrière, « telUK » en grand.
+ * Dessiné dans le repère du croquis (centre en 290,575 ; le cercle de rayon 590). */
+const GEO_LETTERS = [["t", -66, 518, 600], ["e", 30, 801, 600], ["l", 308, 575, 600], ["U", 548, 937, 455], ["K", 645, 575, 580]];
+function geometres(ink) {
+  const u = ctx.lineWidth * 590, P = (a) => a.map(([x, y]) => [x, y]), Mx = (a) => a.map(([x, y]) => [580 - x, y]);
+  ctx.save(); ctx.scale(1 / 590, 1 / 590); ctx.translate(-290, -575);
+  if (FONT) { ctx.save(); ctx.beginPath(); ctx.arc(290, 575, 590, 0, TAU); ctx.clip(); ctx.globalAlpha *= 0.42; ctx.textAlign = "center"; ctx.textBaseline = "middle"; for (const [ch, x, y, s] of GEO_LETTERS) { ctx.font = `${s}px ${FONT}`; ctx.fillText(ch, x, y); } ctx.restore(); }
+  ctx.lineWidth = u * 0.62; ctx.beginPath(); ctx.arc(290, 575, 590, 0, TAU); ctx.stroke(); /* le cercle */
+  ctx.lineWidth = u * 0.42;
+  L(P([[105, 95], [475, 95], [475, 180], [440, 180], [440, 155], [395, 155], [395, 180], [320, 180], [320, 155], [260, 155], [260, 180], [185, 180], [185, 155], [140, 155], [140, 180], [105, 180]])); ctx.closePath(); ctx.stroke(); /* le chapeau */
+  ctx.lineWidth = u * 0.3; L([[128, 190], [452, 190], [452, 206], [128, 206]]); ctx.closePath(); ctx.stroke(); /* la bague */
+  ctx.lineWidth = u * 0.42; ctx.beginPath(); ctx.moveTo(122, 215); ctx.lineTo(458, 215); ctx.quadraticCurveTo(482, 260, 458, 305); ctx.lineTo(122, 305); ctx.quadraticCurveTo(98, 260, 122, 215); ctx.closePath(); ctx.stroke(); /* la molette */
+  ctx.lineWidth = u * 0.3; for (let i = -6; i <= 6; i++) { const x = 290 + 168 * Math.sin(i / 6.6 * Math.PI / 2); L([[x, 228], [x, 292]]); ctx.stroke(); } /* le moletage */
+  ctx.lineWidth = u * 0.42; L([[110, 322], [470, 322], [388, 470], [192, 470]]); ctx.closePath(); ctx.stroke(); /* l'entonnoir */
+  ctx.lineWidth = u * 0.3; L([[225, 345], [355, 345], [290, 430]]); ctx.closePath(); ctx.stroke(); /* le repère */
+  ctx.lineWidth = u * 0.42; for (const y of [490, 514]) { L([[176, y], [404, y]]); ctx.stroke(); } L([[192, 540], [388, 540]]); ctx.stroke(); /* les bagues du tronc */
+  ctx.lineWidth = u * 0.9; ctx.beginPath(); ctx.arc(290, 750, 205, Math.PI * 0.88, Math.PI * 2.62); ctx.stroke(); /* l'anneau ouvert */
+  ctx.lineWidth = u * 0.32; L([[192, 470], [192, 770], [228, 940]]); ctx.stroke(); L([[388, 470], [388, 770], [352, 940]]); ctx.stroke(); /* le tronc, qui se resserre sous la vis jusqu'au cul de l'outil */
+  L([[228, 940], [352, 940]]); ctx.stroke(); ctx.beginPath(); ctx.moveTo(228, 940); ctx.quadraticCurveTo(232, 1062, 290, 1062); ctx.quadraticCurveTo(348, 1062, 352, 940); ctx.stroke();
+  L([[234, 980], [346, 980]]); ctx.stroke(); L([[250, 1018], [330, 1018]]); ctx.stroke(); /* le cul, ses deux traits */
+  for (const Q of [P, Mx]) { L(Q([[290, 827], [60, 1040], [218, 788]])); ctx.stroke(); } /* les pieds en pointe, qui partent de la vis */
+  ctx.lineWidth = u * 0.3; ctx.beginPath(); ctx.arc(290, 742, 85, 0, TAU); ctx.stroke(); /* la vis des pieds */
+  ctx.restore();
 }
-module.exports = { draw, OF, GUILDS, COL, THREAD };
+
+function draw(c2, guild, x, y, R, col, w = 0.07, hole = "rgba(0,0,0,0)") {
+  if (!SYM[guild] && guild !== "geometres") return; ctx = c2; ctx.save(); ctx.translate(x, y); ctx.scale(R, R); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = w;
+  if (guild === "geometres") geometres(col); else SYM[guild](col, hole); ctx.restore(); ctx = null;
+}
+module.exports = { draw, setFont, OF, GUILDS, COL, THREAD };
