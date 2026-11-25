@@ -30,11 +30,13 @@ function backEdge(r, ctx, go, tip) {
 }
 
 /** Les bannières : [mur (0 gauche, 1 droite), k du bord proche, k du bord lointain, guilde]. Elles évitent la fenêtre, les patères, le miroir et la porte de l'œuf. */
-const BANNERS = [[0, 0.05, 0.135, "mainteneurs"], [0, 0.45, 0.525, "archivistes"], [0, 0.75, 0.84, "ecrivains"], [1, 0.07, 0.155, "cartographes"], [1, 0.85, 0.94, "messagers"]];
+const BANNERS = [[0, 0.05, 0.135, "mainteneurs"], [0, 0.44, 0.535, "archivistes"], [1, 0.07, 0.155, "cartographes"], [2, FX0 + 4, FX0 + 23, "ecrivains"], [2, FX1 - 23, FX1 - 4, "messagers"]];
+/** Le mur du fond, de face : k y est l'abscisse même (les deux bannières encadrent la porte de la forge, et se lisent de loin). */
+const BACK = (x, v) => [x, FY0 + (FY1 - FY0) * v];
 const hex = ([r, g, b]) => "#" + [r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("");
 /** Une bannière dans le plan du mur : du drap (planches), du velours frangé d'or à queue d'aronde (Château), un vitrail serti de cuivre (Verrière). */
 function banner(ctx, P, side, k0, k1, g, { castle, glass, c, amb }) {
-  const v0 = 0.05, v1 = 0.5, a = side ? k1 : k0, b = side ? k0 : k1; /* (u, v) : u de gauche à droite tel qu'on le voit */
+  const v0 = 0.05, v1 = 0.5, a = side === 1 ? k1 : k0, b = side === 1 ? k0 : k1; /* (u, v) : u de gauche à droite tel qu'on le voit */
   const Q = [P(a, v0), P(b, v0), P(b, v1), P(a, v1)], at = (u, v) => onQuad(Q, u, v);
   const col = hex(GS.COL[g]), thread = GS.THREAD[g];
   const cloth = castle ? [[0, 0.03], [1, 0.03], [1, 1], [0.5, 0.84], [0, 1]] : glass ? null : [[0, 0.03], [1, 0.03], [1, 0.86], [0.5, 1], [0, 0.86]];
@@ -42,11 +44,12 @@ function banner(ctx, P, side, k0, k1, g, { castle, glass, c, amb }) {
   const sym = (cy, s, ink, w) => { const [cx, cyy] = at(0.5, cy), [ux, uy] = at(0.6, cy), [vx, vy] = at(0.5, cy + 0.04);
     const X = [(ux - cx) / 0.1 * s, (uy - cyy) / 0.1 * s], Y = [(vx - cx) / 0.04 * s * 0.42, (vy - cyy) / 0.04 * s * 0.42]; /* le drap est 2,4 fois plus haut que large */
     ctx.save(); ctx.transform(X[0], X[1], Y[0], Y[1], cx, cyy); GS.draw(ctx, g, 0, 0, 1, ink, w); ctx.restore(); };
-  const rodL = P(a + (side ? 0.008 : -0.008), v0 - 0.006), rodR = P(b + (side ? -0.008 : 0.008), v0 - 0.006), thick = 3.2 * (1 - f((k0 + k1) / 2)) + 1;
+  const back = side === 2, o = back ? 2 : 0.008, rodL = P(a + (side === 1 ? o : -o), v0 - 0.006), rodR = P(b + (side === 1 ? -o : o), v0 - 0.006), thick = back ? 1.5 : 3.2 * (1 - f((k0 + k1) / 2)) + 1;
   if (glass) { /* un vitrail : un cadre de cuivre cintré, le verre de la couleur de la guilde, le symbole en plomb ; deux chaînettes au plafond */
     const arch = []; for (let i = 0; i <= 12; i++) { const t = Math.PI * (1 - i / 12); arch.push(at(0.5 + 0.5 * Math.cos(t), 0.16 - 0.14 * Math.sin(t))); }
+    const GC = g === "ecrivains" ? [120, 112, 128] : GS.COL[g]; /* le noir des écrivains, en verre fumé : un verre noir ne laisserait pas lire le plomb */
     const pane = [...arch, at(1, 0.92), at(0, 0.92)], [tx, ty] = at(0.5, 0.02), [bx2, by2] = at(0.5, 0.92), gg = ctx.createLinearGradient(tx, ty, bx2, by2);
-    gg.addColorStop(0, rgba(...GS.COL[g], 0.55 + 0.25 * amb)); gg.addColorStop(0.5, rgba(...GS.COL[g].map((x) => Math.min(255, x + 60)), 0.5 + 0.3 * amb)); gg.addColorStop(1, rgba(...GS.COL[g].map((x) => x * 0.6), 0.6 + 0.2 * amb));
+    gg.addColorStop(0, rgba(...GC, 0.55 + 0.25 * amb)); gg.addColorStop(0.5, rgba(...GC.map((x) => Math.min(255, x + 60)), 0.5 + 0.3 * amb)); gg.addColorStop(1, rgba(...GC.map((x) => x * 0.6), 0.6 + 0.2 * amb));
     ctx.strokeStyle = c("#7a4a24"); ctx.lineWidth = 0.8; for (const u of [0.2, 0.8]) { const [x, y] = at(u, 0.04); ctx.beginPath(); ctx.moveTo(x, P(u < 0.5 ? a : b, 0)[1]); ctx.lineTo(x, y); ctx.stroke(); }
     ctx.fillStyle = c(mix(col, "#000000", 0.55)); poly(ctx, pane); ctx.fill(); ctx.fillStyle = gg; poly(ctx, pane); ctx.fill(); /* un fond opaque : le pilastre de cuivre passe derrière, pas à travers */
     ctx.strokeStyle = c("#2a1a10"); ctx.lineWidth = 1.1; for (const [p, q] of [[[0.5, 0.02], [0.5, 0.26]], [[0.5, 0.6], [0.5, 0.92]], [[0, 0.42], [0.14, 0.42]], [[0.86, 0.42], [1, 0.42]], [[0, 0.74], [0.3, 0.6]], [[1, 0.74], [0.7, 0.6]]]) { ctx.beginPath(); ctx.moveTo(...at(...p)); ctx.lineTo(...at(...q)); ctx.stroke(); } /* les plombs entre les verres */
@@ -161,7 +164,7 @@ function drawHall(r, ctx, sc, sky, t) {
   if (night < 0.5) { ctx.fillStyle = rgba(255, 240, 200, 0.08 * (1 - night) * amb); const [a] = [L(0.22, 1)], [b] = [L(0.44, 1)]; poly(ctx, [a, b, [b[0] + 120, b[1] + 6], [a[0] + 150, a[1] + 10]]); ctx.fill(); } /* le jour sur le plancher */
   r.hot.push({ ...bbox(win), tip: tr("hall.window") });
   // ---- les cinq bannières des guildes, pendues aux murs (le décor seul : aucune zone) ----
-  for (const [side, k0, k1, g] of BANNERS) banner(ctx, side ? Rr : L, side, k0, k1, g, { castle, glass, c, amb });
+  for (const [side, k0, k1, g] of BANNERS) banner(ctx, side === 2 ? BACK : side ? Rr : L, side, k0, k1, g, { castle, glass, c, amb });
   // ---- à gauche, plus loin : les patères, le manteau, l'écharpe ; les bottes au pied du mur ----
   const [p0x, p0y] = L(0.55, 0.3), [p1x, p1y] = L(0.68, 0.32);
   ctx.strokeStyle = c(castle ? "#2a1e14" : glass ? "#b5652a" : "#2a1e14"); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(p0x, p0y); ctx.lineTo(p1x, p1y); ctx.stroke();
