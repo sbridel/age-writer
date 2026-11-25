@@ -28,21 +28,31 @@ const levelOf = (s) => (s.level === "rank" ? (s.rank >= 6 ? "hard" : s.rank >= 3
 function saved(r) {
   const s = (r.opts && r.opts.baykhState && r.opts.baykhState()) || {};
   return { n: [3, 4, 5, 6, 7, 8].includes(s.n) ? s.n : 5, side: s.side === 1 ? 1 : 0, cap: CAPS.includes(s.cap) ? s.cap : "robe", capCol: COL_KEYS.includes(s.capCol) ? s.capCol : "mine", level: LEVELS.includes(s.level) ? s.level : "mid",
-    rank: Math.max(0, s.rank | 0), top: !!s.top, log: Array.isArray(s.log) ? s.log.slice(0, 40) : [] };
+    rank: Math.max(0, s.rank | 0), top: !!s.top, game: s.game && typeof s.game === "object" ? s.game : null, bot: s.bot && CAPS.includes(s.bot.cap) ? s.bot : null, log: Array.isArray(s.log) ? s.log.slice(0, 40) : [] };
 }
 function cur(r) { return r._bkSaved || saved(r); }
 function save(r, patch) { const s = { ...cur(r), ...patch }; r._bkSaved = s; if (r.opts && r.opts.onBaykh) r.opts.onBaykh(s); return s; }
 function snd(r, k) { if (r.opts && r.opts.onAhySound) try { r.opts.onAhySound(k); } catch (e) { /* rien */ } }
 function state(r) {
-  if (!r.bk || !r.bk.G) { const s = cur(r); r.bk = { ...(r.bk || {}), G: B.newGame(s.n), sel: null, hand: null, botCap: CAPS[Math.floor(Math.random() * CAPS.length)], botCol: COL_KEYS[Math.floor(Math.random() * COL_KEYS.length)], started: false }; }
+  if (!r.bk || !r.bk.G) { const s = cur(r), G = restore(s.game), b = s.bot || {};
+    r.bk = { ...(r.bk || {}), G: G || B.newGame(s.n), sel: null, hand: null, botCap: b.cap || CAPS[Math.floor(Math.random() * CAPS.length)], botCol: COL_KEYS.includes(b.col) ? b.col : COL_KEYS[Math.floor(Math.random() * COL_KEYS.length)], started: !!(G && G.ply > 0), done: !!(G && G.end) };
+    if (G && !G.end) botTurn(r); } /* la partie laissée sur la table reprend là où on l'a quittée ; si c'était à la machine, elle joue */
   return r.bk;
 }
-function fresh(r) { const s = cur(r), st = state(r); st.G = B.newGame(s.n); st.sel = null; st.hand = null; st.started = false; st.botCap = CAPS[Math.floor(Math.random() * CAPS.length)]; st.botCol = COL_KEYS[Math.floor(Math.random() * COL_KEYS.length)]; st.done = false; }
+/** La partie gardée (dans l'état du plugin) : sa taille, ses piles, ses réserves, à qui le tour. Vérifiée avant d'être reprise. */
+function keep(r) { const st = r.bk, G = st && st.G; if (!G) return; save(r, { game: G.ply ? { n: G.n, board: G.board, res: G.res, turn: G.turn, ply: G.ply } : null, bot: { cap: st.botCap, col: st.botCol } }); }
+function restore(g) {
+  try { if (!g || ![3, 4, 5, 6, 7, 8].includes(g.n) || !Array.isArray(g.board) || g.board.length !== g.n * g.n) return null;
+    const ok = (pc) => pc && (pc.p === 0 || pc.p === 1) && ["f", "w", "c"].includes(pc.k);
+    if (!g.board.every((st) => Array.isArray(st) && st.every(ok))) return null;
+    const G = B.newGame(g.n); G.board = g.board.map((st) => st.map((pc) => ({ p: pc.p, k: pc.k }))); G.res = [0, 1].map((p) => ({ s: Math.max(0, g.res[p].s | 0), c: Math.max(0, g.res[p].c | 0) }));
+    G.turn = g.turn === 1 ? 1 : 0; G.ply = Math.max(0, g.ply | 0); G.end = B.verdict(G, 1 - G.turn); return G; } catch (e) { return null; } }
+function fresh(r) { const s = cur(r), st = state(r); st.G = B.newGame(s.n); st.sel = null; st.hand = null; st.started = false; st.botCap = CAPS[Math.floor(Math.random() * CAPS.length)]; st.botCol = COL_KEYS[Math.floor(Math.random() * COL_KEYS.length)]; st.done = false; keep(r); }
 /** Après mon coup, ou au départ si je joue les sombres : la machine réfléchit un instant, puis joue. */
 function botTurn(r) {
   const st = state(r), s = cur(r); if (st.G.end || st.G.turn === s.side || st.thinking) return;
   st.thinking = true; const G0 = st.G;
-  setTimeout(() => { st.thinking = false; if (st.G !== G0 || st.G.end) return; const m = B.think(st.G, levelOf(s)); if (!m) return; st.G = B.apply(st.G, m); st.lastBot = { m, at: Date.now() }; snd(r, "set"); settle(r); if (r.draw && !r.running) r.draw(0); }, 520);
+  setTimeout(() => { st.thinking = false; if (st.G !== G0 || st.G.end) return; const m = B.think(st.G, levelOf(s)); if (!m) return; st.prev = st.G; st.G = B.apply(st.G, m); st.lastBot = { m, at: Date.now() }; snd(r, "set"); settle(r); keep(r); if (r.draw && !r.running) r.draw(0); }, 520);
 }
 /** La fin : le registre, le rang. */
 function settle(r) {
@@ -53,7 +63,7 @@ function settle(r) {
 }
 function play(r, mv) {
   const st = state(r); if (!B.legal(st.G, mv)) { snd(r, "lose"); return false; }
-  st.G = B.apply(st.G, mv); st.sel = null; st.hand = null; st.started = true; snd(r, "set"); settle(r); botTurn(r); return true;
+  st.G = B.apply(st.G, mv); st.sel = null; st.hand = null; st.started = true; snd(r, "set"); settle(r); keep(r); botTurn(r); return true;
 }
 
 /** Où peut aller la prochaine pièce de la main : la case où l'on est (on y en laisse une de plus), ou la suivante en ligne (libre, ou un Verrou
@@ -230,7 +240,7 @@ function numeral(ctx, v, x, y, s, col) { try { return require("./relto-ahyoheek"
 
 /* ---------------------------------------------------------------- la vue ---------------------------------------------------------------- */
 function drawBaykh(r, ctx, sc, sky, t) {
-  const st = state(r), s = cur(r), G = st.G, n = G.n, Hb = habit(r), F = frame(n, s.top ? { top: 26, bot: 300, wT: 274, wB: 274, zk: 0.32 } : {}), /* la vue de dessus, ou la table en perspective */ me = s.side, bot = 1 - me, now = Date.now(), tr = T(r);
+  const st = state(r), s = cur(r), G = st.G, n = G.n, Hb = habit(r), F = frame(n, s.top ? { top: 14, bot: 312, wT: 298, wB: 298, zk: 0.32 } : {}), /* la vue de dessus, ou la table en perspective */ me = s.side, bot = 1 - me, now = Date.now(), tr = T(r);
   const hv = (id) => r.hover && r.hover.baykh && r.hover.baykh.id === id;
   /* le fond : le salon, sombre, la table basse vue de près */
   const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, Hb.bg[0]); bg.addColorStop(1, Hb.bg[1]); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
@@ -251,13 +261,15 @@ function drawBaykh(r, ctx, sc, sky, t) {
   /* les pièces, du fond vers l'avant ; la pile prise en main est soulevée */
   const hand = st.hand, pv = hand ? preview(G, hand) : null, board = pv ? pv.board : G.board, nx = hand ? new Set(nextCells(G, hand)) : null;
   if (nx) for (const k of nx) { const i = k % n, j = (k / n) | 0, pulse = 0.55 + 0.45 * Math.sin(t * 5); quad(F.P(i / n, j / n), F.P((i + 1) / n, j / n), F.P((i + 1) / n, (j + 1) / n), F.P(i / n, (j + 1) / n)); ctx.fillStyle = rgba(255, 214, 130, 0.22 * pulse); ctx.fill(); ctx.strokeStyle = rgba(255, 214, 130, 0.6 * pulse); ctx.lineWidth = 1.4; ctx.stroke(); } /* où la pièce suivante peut aller */
-  const towers = [];
+  const towers = [], fall = new Map(), lb = st.lastBot, el = lb && !r.opts.reducedMotion ? now - lb.at : Infinity; /* le coup de la machine : ses pièces descendent en place, case après case */
+  if (el < 1200) { const m = lb.m; if (m.t === "p") fall.set(m.i, { c: 1, d: 0 }); else { let x = m.i % n, y = (m.i / n) | 0; const [dx, dy] = B.DIRS[m.d]; m.drops.forEach((c, q) => { x += dx; y += dy; fall.set(y * n + x, { c, d: q * 140 }); }); } }
+  if (el < 1200 && r.draw && !r.running) setTimeout(() => { if (!r.running) r.draw(0); }, 30);
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
-    const k = j * n + i, stack = board[k];
+    const k = j * n + i, stack = board[k], fl = fall.get(k);
     stack.forEach((pc, l) => {
-      const hi = road && road.has(k) && l === stack.length - 1 ? glow : 0;
-      if (pc.k === "c") capstone(ctx, F, Hb, i, j, pc.p, pc.p === me ? s.cap : st.botCap, l, hi, pc.p === me ? s.capCol : st.botCol);
-      else piece(ctx, F, Hb, i, j, pc.p, { stand: pc.k === "w", lvl: l, hi });
+      const hi = road && road.has(k) && l === stack.length - 1 ? glow : 0, p = fl && l >= stack.length - fl.c ? Math.max(0, Math.min(1, (el - fl.d) / 320)) : 1, up = (1 - p) * (1 - p) * 7;
+      if (pc.k === "c") capstone(ctx, F, Hb, i, j, pc.p, pc.p === me ? s.cap : st.botCap, l + up, hi, pc.p === me ? s.capCol : st.botCol);
+      else piece(ctx, F, Hb, i, j, pc.p, { stand: pc.k === "w", lvl: l + up, hi });
     });
     if (pv && pv.at === k) pv.floating.forEach((pc, l) => { const lv = stack.length + 1.6 + l; if (pc.k === "c") capstone(ctx, F, Hb, i, j, pc.p, pc.p === me ? s.cap : st.botCap, lv, 0.8, pc.p === me ? s.capCol : st.botCol); else piece(ctx, F, Hb, i, j, pc.p, { stand: pc.k === "w", lvl: lv, hi: 0.8 }); }); /* ce qui reste en main, soulevé */
     if (stack.length > 1) { const [x0, y0] = F.P(i / n, j / n), [x1, y1] = F.P((i + 1) / n, (j + 1) / n), up = stack.length * 0.13 * F.cellW((j + 0.5) / n); towers.push({ x: x0, y: y0 - up, w: x1 - x0, h: y1 - y0 + up, baykh: { cell: k, id: "c" + k } }); }
@@ -270,7 +282,7 @@ function drawBaykh(r, ctx, sc, sky, t) {
       ctx.fillStyle = kind === "confirm" ? (on ? rgba(255, 196, 96, pulse) : "#6a5030") : (hv("cancel") ? "#c08a50" : "#8a5a2a"); ctx.beginPath(); ctx.ellipse(bx, fy - 0.5, 9, 3.6, 0, 0, TAU); ctx.fill();
       ctx.strokeStyle = kind === "confirm" ? "rgba(60,30,0,.7)" : "rgba(40,20,4,.8)"; ctx.lineWidth = 1.1; ctx.beginPath();
       if (kind === "confirm") { ctx.moveTo(bx - 3.5, fy - 0.5); ctx.lineTo(bx - 1, fy + 1.2); ctx.lineTo(bx + 4, fy - 2); } else { ctx.moveTo(bx - 3, fy - 2); ctx.lineTo(bx + 3, fy + 1); ctx.moveTo(bx + 3, fy - 2); ctx.lineTo(bx - 3, fy + 1); } ctx.stroke(); /* deux signes gravés : le trait qui valide, la croix qui repose */
-      if (on) r.hot.push({ x: bx - 14, y: fy - 9, w: 28, h: 18, baykh: { [kind]: true, id: kind } }); } }
+      if (on) r.hot.push({ x: bx - 19, y: fy - 13, w: 38, h: 26, baykh: { [kind]: true, id: kind } }); } }
   /* les réserves : les claires à gauche, les sombres à droite ; une pile de tuiles, et la Clef à côté */
   for (const p of [0, 1]) {
     const left = p === 0, bx = left ? 62 : 578, by = 292, R = G.res[p], sel = p === me && st.sel, mineTurn = G.turn === me && !G.end && p === me;
@@ -292,15 +304,15 @@ function drawBaykh(r, ctx, sc, sky, t) {
   { const x = 470, y = fx + 4; ctx.fillStyle = "#5a3c14"; ctx.beginPath(); ctx.ellipse(x, y + 1, 17, 6.5, 0, 0, TAU); ctx.fill(); ctx.fillStyle = "#c99a52"; ctx.beginPath(); ctx.ellipse(x, y, 15, 5.6, 0, 0, TAU); ctx.fill(); /* le cadran */
     for (let k = 3; k <= 8; k++) { const a = Math.PI * (1.08 + (k - 3) / 5 * 0.84), on = k === n; numeral(ctx, k, x + Math.cos(a) * 11, y + Math.sin(a) * 4.2, 3.6, on ? "#2a1000" : "rgba(60,40,16,.55)"); }
     const a = Math.PI * (1.08 + (n - 3) / 5 * 0.84); ctx.strokeStyle = "#2a1c0c"; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * 8, y + Math.sin(a) * 3); ctx.stroke();
-    if (between) r.hot.push({ x: x - 18, y: y - 8, w: 36, h: 16, baykh: { dial: true, id: "dial" } }); if (hv("dial")) { ctx.strokeStyle = "rgba(255,220,150,.5)"; ctx.beginPath(); ctx.ellipse(x, y, 17, 6.5, 0, 0, TAU); ctx.stroke(); } }
+    if (between) r.hot.push({ x: x - 20, y: y - 12, w: 38, h: 24, baykh: { dial: true, id: "dial" } }); if (hv("dial")) { ctx.strokeStyle = "rgba(255,220,150,.5)"; ctx.beginPath(); ctx.ellipse(x, y, 17, 6.5, 0, 0, TAU); ctx.stroke(); } }
   { const x = 510, y = fx + 4; ctx.fillStyle = "#3a2410"; ctx.beginPath(); ctx.ellipse(x, y, 7, 2.8, 0, 0, TAU); ctx.fill(); ctx.fillStyle = hv("fresh") ? "#e0a868" : "#a8743a"; ctx.beginPath(); ctx.ellipse(x, y - 0.4, 5.6, 2.2, 0, 0, TAU); ctx.fill(); /* le bouton de bronze, à fleur */
-    r.hot.push({ x: x - 9, y: y - 6, w: 18, h: 12, baykh: { fresh: true, id: "fresh" } }); }
+    r.hot.push({ x: x - 18, y: y - 12, w: 36, h: 24, baykh: { fresh: true, id: "fresh" } }); }
   { const x = 548, y = fx + 4; ctx.fillStyle = "#3a2410"; ctx.beginPath(); ctx.ellipse(x, y, 8, 3.2, 0, 0, TAU); ctx.fill(); ctx.fillStyle = hv("top") ? "#e0b462" : "#b08440"; ctx.beginPath(); ctx.ellipse(x, y - 0.4, 6.6, 2.6, 0, 0, TAU); ctx.fill(); /* le bouton de la vue : un œil gravé (de dessus) ou un trapèze (en perspective) */
     ctx.strokeStyle = "rgba(40,20,4,.85)"; ctx.lineWidth = 0.8; ctx.beginPath(); if (s.top) { ctx.moveTo(x - 3, y + 1); ctx.lineTo(x + 3, y + 1); ctx.lineTo(x + 2, y - 1.6); ctx.lineTo(x - 2, y - 1.6); ctx.closePath(); } else { ctx.rect(x - 2.2, y - 1.8, 4.4, 3); } ctx.stroke();
-    r.hot.push({ x: x - 10, y: y - 6, w: 20, h: 12, baykh: { topView: true, id: "top" } }); }
-  { const li = LEVELS.indexOf(s.level); for (let q = 0; q < 4; q++) { const x = 230 + q * 14, y = fx + 5, on = q === li; ctx.fillStyle = "#3a2410"; ctx.beginPath(); ctx.ellipse(x, y, 4, 1.8, 0, 0, TAU); ctx.fill(); ctx.fillStyle = on ? "#ffd890" : "#8a6a38"; ctx.beginPath(); ctx.ellipse(x, y - 0.3, 3, 1.2, 0, 0, TAU); ctx.fill();
+    r.hot.push({ x: x - 18, y: y - 12, w: 36, h: 24, baykh: { topView: true, id: "top" } }); }
+  { const li = LEVELS.indexOf(s.level); for (let q = 0; q < 4; q++) { const x = 222 + q * 19, y = fx + 5, on = q === li; ctx.fillStyle = "#3a2410"; ctx.beginPath(); ctx.ellipse(x, y, 4, 1.8, 0, 0, TAU); ctx.fill(); ctx.fillStyle = on ? "#ffd890" : "#8a6a38"; ctx.beginPath(); ctx.ellipse(x, y - 0.3, 3, 1.2, 0, 0, TAU); ctx.fill();
     numeral(ctx, q < 3 ? q + 1 : s.rank, x, y + 6, 3.4, on ? "#ffd890" : "rgba(200,170,110,.5)");
-    if (between) r.hot.push({ x: x - 6, y: y - 5, w: 12, h: 14, baykh: { level: q, id: "lv" + q } }); } }
+    if (between) r.hot.push({ x: x - 9.5, y: y - 11, w: 19, h: 24, baykh: { level: q, id: "lv" + q } }); } }
   /* la fin : une lueur sur la réserve du vainqueur */
   if (G.end && G.end.win >= 0) { const bx = G.end.win === 0 ? 62 : 578, g = ctx.createRadialGradient(bx, 270, 4, bx, 270, 70); g.addColorStop(0, rgba(255, 210, 120, 0.35 * glow)); g.addColorStop(1, "rgba(255,210,120,0)"); ctx.fillStyle = g; ctx.fillRect(bx - 70, 200, 140, 140); }
   if (st.thinking) { const x = bot === 0 ? 62 : 578; ctx.fillStyle = rgba(150, 200, 255, 0.25 + 0.2 * Math.sin(t * 6)); ctx.beginPath(); ctx.arc(x, 330, 2.5, 0, TAU); ctx.fill(); } /* la machine réfléchit */

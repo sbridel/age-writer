@@ -141,10 +141,11 @@ function think(G, level = "mid", rnd = Math.random) {
   const ranked = all.map((m) => { const H = apply(G, m); return { m, H, v: score(H, me) + rnd() * 3 }; }).sort((a, b) => b.v - a.v);
   if (level === "mid") { for (const r of ranked.slice(0, 12)) if (!loseNext(r.H)) return r.m; return ranked[0].m; }
   /* difficile : pour chacun des meilleurs coups, la meilleure réponse de l'autre (parmi les siennes les plus prometteuses) */
-  let best = null, bv = -Infinity;
-  for (const r of ranked.slice(0, 14)) {
+  let best = null, bv = -Infinity; const t0 = Date.now(), wide = G.n >= 7 ? 8 : G.n >= 6 ? 10 : 14, budget = 220; /* sur les grands plateaux, moins de coups regardés, et jamais plus d'un quart de seconde */
+  for (const r of ranked.slice(0, wide)) {
+    if (best && Date.now() - t0 > budget) break;
     if (r.H.end) { const v = r.H.end.win === me ? 1e6 : -1e6; if (v > bv) { bv = v; best = r.m; } continue; }
-    const rep = moves(r.H).map((m) => apply(r.H, m)).sort((a, b) => score(a, me) - score(b, me)).slice(0, 10);
+    const rep = moves(r.H).map((m) => apply(r.H, m)).sort((a, b) => score(a, me) - score(b, me)).slice(0, G.n >= 7 ? 6 : 10);
     let worst = Infinity; for (const K of rep) worst = Math.min(worst, score(K, me)); if (worst === Infinity) worst = r.v;
     if (worst > bv) { bv = worst; best = r.m; }
   }
