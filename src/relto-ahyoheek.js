@@ -201,12 +201,24 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
       for (const a of [-0.95, -0.5, 0, 0.5, 0.95]) { const tx = Math.sin(a) * 3.6, ty = by - Math.cos(a) * 7.6; ctx.beginPath(); ctx.moveTo(0, by); ctx.quadraticCurveTo(tx * 0.3 - 1, (by + ty) / 2, tx, ty); ctx.quadraticCurveTo(tx * 0.3 + 1, (by + ty) / 2, 0, by); ctx.fill(); ctx.stroke(); } /* les feuilles */
       ctx.beginPath(); ctx.moveTo(-3.2, y1 + 4.4); ctx.quadraticCurveTo(0, y1 + 3, 3.2, y1 + 4.4); ctx.stroke(); ctx.restore();
       ctx.fillStyle = "#5c6862"; ctx.beginPath(); ctx.moveTo(-1.6, y1 + 0.6); ctx.quadraticCurveTo(0, y1 - 1.6, 1.6, y1 + 0.6); ctx.fill(); } /* le petit fleuron */
-    else { /* la lanterne : une caisse de pierre, le verre partagé en rayons autour d'un rond, un arc en haut */
-      const x0 = -4.6, y0 = P - 13.4, w = 9.2, h = 12; ctx.fillStyle = "#3e4844"; ctx.fillRect(x0, y0, w, h); ctx.fillStyle = "#5c6862"; ctx.fillRect(x0 - 0.6, y0 - 1, w + 1.2, 1.2);
-      ctx.fillStyle = glassG(y0 + 1, y0 + h - 1); ctx.fillRect(x0 + 0.9, y0 + 0.9, w - 1.8, h - 1.8);
-      ctx.save(); ctx.beginPath(); ctx.rect(x0 + 0.9, y0 + 0.9, w - 1.8, h - 1.8); ctx.clip(); ctx.strokeStyle = lead; ctx.lineWidth = 0.45; const ry = y0 + h * 0.56;
-      ctx.beginPath(); ctx.arc(0, ry, 1.5, 0, TAU); ctx.stroke(); for (let k = 0; k < 10; k++) { const a = Math.PI + k * Math.PI / 9; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 1.5, ry + Math.sin(a) * 1.5); ctx.lineTo(Math.cos(a) * 6, ry + Math.sin(a) * 6); ctx.stroke(); }
-      ctx.beginPath(); ctx.moveTo(x0, ry); ctx.lineTo(x0 + w, ry); ctx.stroke(); ctx.beginPath(); ctx.arc(0, ry, 3.3, Math.PI, TAU); ctx.stroke(); ctx.restore(); } }
+    else { /* la lanterne, d'après le croquis de l'auteur mis au propre : un panneau haut, bordé de pierre ; en haut une fleur-soleil à cinq pans
+       * et ses rayons, reliée aux bords par une traverse ; sa tige descend jusqu'au pied, entre deux collines en arc qui se croisent */
+      const u = 0.78, base = P - 1.2 - 15 * u, T = (x, y) => [x * u, base + y * u];
+      const path = (cmds) => { ctx.beginPath(); for (const [op, ...v] of cmds) { const pts = []; for (let i = 0; i < v.length; i += 2) pts.push(...T(v[i], v[i + 1])); if (op === "M") ctx.moveTo(...pts); else if (op === "L") ctx.lineTo(...pts); else ctx.quadraticCurveTo(...pts); } };
+      const frame = [["M", -5.4, 15], ["L", -5.4, 1.4], ["Q", -5.4, 0, -4, 0], ["L", 4, 0], ["Q", 5.4, 0, 5.4, 1.4], ["L", 5.4, 15]];
+      path(frame); ctx.closePath(); ctx.strokeStyle = "#3e4844"; ctx.lineWidth = 1.6; ctx.stroke(); ctx.fillStyle = glassG(base, base + 15 * u); ctx.fill(); /* le bord de pierre, le verre */
+      ctx.save(); path(frame); ctx.closePath(); ctx.clip();
+      const hill = (x0, x1, h) => [["M", x0, 15], ["Q", (x0 + x1) / 2, 15 - h * 2, x1, 15]];
+      ctx.fillStyle = rgba(...shift([-50, -10, -30]), 1); for (const [x0, x1] of [[-6.2, 1.2], [-1.2, 6.2]]) { path(hill(x0, x1, 4.4)); ctx.closePath(); ctx.fill(); } /* les collines, d'un verre plus sombre */
+      ctx.fillStyle = rgba(...shift([70, 60, 0]), 0.55); ctx.beginPath(); { const [cx, cy] = T(0, 6.2); ctx.moveTo(cx, cy); for (let k = 0; k <= 8; k++) { const a = -Math.PI * (0.1 + 0.8 * k / 8); ctx.lineTo(cx + Math.cos(a) * 10 * u, cy + Math.sin(a) * 10 * u); } ctx.closePath(); ctx.fill(); } /* la lueur derrière la fleur */
+      const pent = []; for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + k * TAU / 5; pent.push([Math.cos(a) * 1.9, 6.4 + Math.sin(a) * 1.9]); }
+      ctx.beginPath(); pent.forEach(([x, y], i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, ...T(x, y))); ctx.closePath(); ctx.fillStyle = "#f6d060"; ctx.fill(); /* la fleur-soleil */
+      ctx.strokeStyle = lead; ctx.lineWidth = 0.45; ctx.stroke();
+      for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + (k - 2) * 0.42, r0 = 2.5, r1 = 5.6; path([["M", Math.cos(a) * r0, 6.4 + Math.sin(a) * r0], ["L", Math.cos(a) * r1, 6.4 + Math.sin(a) * r1]]); ctx.stroke(); } /* ses rayons */
+      for (const d of [-1, 1]) { path([["M", d * 1.8, 6.95], ["L", d * 5.4, 6.95]]); ctx.stroke(); } /* la traverse */
+      path([["M", 0, 8.0], ["L", 0, 15]]); ctx.stroke(); /* la tige */
+      for (const [x0, x1] of [[-6.2, 1.2], [-1.2, 6.2]]) { path(hill(x0, x1, 4.4)); ctx.stroke(); } /* les collines qui se croisent */
+      ctx.restore(); path(frame); ctx.closePath(); ctx.strokeStyle = lead; ctx.lineWidth = 0.4; ctx.stroke(); } }
   else { /* la statuette : la robe de la guilde, évasée, les manches jointes, le capuchon, le médaillon */
     const g = ROBE(ctx, -6, 6, robe);
     ctx.fillStyle = rgba(0, 0, 0, 0.25); ctx.beginPath(); ctx.ellipse(0, top, 6, 1.8, 0, 0, TAU); ctx.fill();
