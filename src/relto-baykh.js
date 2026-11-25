@@ -23,7 +23,7 @@ const levelOf = (s) => (s.level === "rank" ? (s.rank >= 6 ? "hard" : s.rank >= 3
 function saved(r) {
   const s = (r.opts && r.opts.baykhState && r.opts.baykhState()) || {};
   return { n: [3, 4, 5, 6, 7, 8].includes(s.n) ? s.n : 5, side: s.side === 1 ? 1 : 0, cap: CAPS.includes(s.cap) ? s.cap : "robe", level: LEVELS.includes(s.level) ? s.level : "mid",
-    rank: Math.max(0, s.rank | 0), log: Array.isArray(s.log) ? s.log.slice(0, 40) : [] };
+    rank: Math.max(0, s.rank | 0), pal: ["blason", "vin", "metal", "ivoire"].includes(s.pal) ? s.pal : "blason", log: Array.isArray(s.log) ? s.log.slice(0, 40) : [] };
 }
 function cur(r) { return r._bkSaved || saved(r); }
 function save(r, patch) { const s = { ...cur(r), ...patch }; r._bkSaved = s; if (r.opts && r.opts.onBaykh) r.opts.onBaykh(s); return s; }
@@ -51,6 +51,24 @@ function play(r, mv) {
   st.G = B.apply(st.G, mv); st.sel = null; st.hand = null; st.started = true; snd(r, "set"); settle(r); botTurn(r); return true;
 }
 
+/** Où peut aller la prochaine pièce de la main : la case où l'on est (on y en laisse une de plus), ou la suivante en ligne (libre, ou un Verrou
+ *  si l'on ne porte plus que sa Clef). Au premier pas, les quatre voisines. */
+function nextCells(G, h) {
+  const n = G.n, left = h.take - h.drops.reduce((p, q) => p + q, 0); if (left <= 0) return [];
+  const src = G.board[h.from], hand = src.slice(src.length - h.take), carried = hand.slice(hand.length - left), capOnly = left === 1 && carried[0].k === "c";
+  const out = []; if (h.drops.length) out.push(h.pos);
+  const px = h.pos % n, py = (h.pos / n) | 0;
+  for (let d = 0; d < 4; d++) { if (h.d != null && d !== h.d) continue; const [dx, dy] = B.DIRS[d], X = px + dx, Y = py + dy; if (X < 0 || Y < 0 || X >= n || Y >= n) continue;
+    const j = Y * n + X, tp = B.top(G, j); if (!tp || tp.k === "f" || (tp.k === "w" && capOnly)) out.push(j); }
+  return out;
+}
+/** La partie telle qu'elle serait avec la main en cours : les piles semées, et ce qui reste en main (au-dessus de la case où l'on est). */
+function preview(G, h) {
+  const board = G.board.map((s2) => s2.slice()), src = board[h.from], hand = src.splice(src.length - h.take, h.take), n = G.n;
+  let x = h.from % n, y = (h.from / n) | 0;
+  h.drops.forEach((k) => { const [dx, dy] = B.DIRS[h.d]; x += dx; y += dy; const pos = y * n + x, dst = board[pos], tp = dst[dst.length - 1]; if (tp && tp.k === "w") dst[dst.length - 1] = { ...tp, k: "f" }; dst.push(...hand.splice(0, k)); });
+  return { board, floating: hand, at: h.drops.length ? h.pos : h.from };
+}
 /** Ce que fait un clic sur la vue (la zone porte `baykh: {...}`). */
 function act(r, a) {
   const st = state(r), s = cur(r), G = st.G, n = G.n, mine = G.turn === s.side && !G.end && !st.thinking;
@@ -60,30 +78,35 @@ function act(r, a) {
   if (a.box) { if (!st.started || G.end || G.ply === 0) { save(r, { cap: CAPS[(CAPS.indexOf(s.cap) + 1) % CAPS.length] }); snd(r, "tick"); } return; }
   if (a.dial) { if (!st.started || G.end || G.ply === 0) { save(r, { n: s.n >= 8 ? 3 : s.n + 1 }); fresh(r); snd(r, "tick"); } return; }
   if (a.fresh) { fresh(r); snd(r, "leave"); return; }
+  if (a.confirm) { const h = st.hand; if (h && h.drops.length && h.take === h.drops.reduce((p, q) => p + q, 0)) { if (!play(r, { t: "m", i: h.from, d: h.d, drops: h.drops.slice() })) st.hand = null; } return; }
+  if (a.cancel) { st.hand = null; snd(r, "leave"); return; }
   if (a.level != null) { if (!st.started || G.end || G.ply === 0) { save(r, { level: LEVELS[a.level] }); snd(r, "tick"); } return; }
   if (a.cell == null || !mine) return;
   if (!st.started) { st.started = true; } /* toucher le plateau, c'est jouer les claires : on commence */
   const i = a.cell, x = i % n, y = (i / n) | 0, stack = G.board[i], top = stack[stack.length - 1];
-  if (st.hand) { /* on sème la pile prise */
-    const h = st.hand, px = h.pos % n, py = (h.pos / n) | 0;
-    if (i === h.from && h.drops.length === 0) { h.take = h.take > 1 ? h.take - 1 : Math.min(n, stack.length); snd(r, "tick"); return; } /* une pièce de moins */
-    let d = h.d, step = false;
-    if (i === h.pos && h.drops.length) step = false;
-    else { const dx = x - px, dy = y - py; if (Math.abs(dx) + Math.abs(dy) !== 1) { st.hand = null; return; } const dd = B.DIRS.findIndex(([a2, b2]) => a2 === dx && b2 === dy); if (d != null && dd !== d) { st.hand = null; return; } d = dd; step = true; }
-    if (step) { h.d = d; h.pos = i; h.drops.push(1); } else h.drops[h.drops.length - 1]++;
-    const left = h.take - h.drops.reduce((p, q) => p + q, 0);
-    snd(r, "tick");
-    if (left === 0) { const mv = { t: "m", i: h.from, d: h.d, drops: h.drops.slice() }; if (!play(r, mv)) st.hand = null; }
-    return;
+  if (st.hand) { /* on sème la pile prise : chaque toucher pose une pièce ; rien n'est joué avant la confirmation */
+    const h = st.hand, left = h.take - h.drops.reduce((p, q) => p + q, 0);
+    if (i === h.from && h.drops.length === 0) { h.take = h.take > 1 ? h.take - 1 : Math.min(n, stack.length); snd(r, "tick"); return; } /* toucher encore la pile : une pièce de moins */
+    if (i === h.from) { st.hand = null; snd(r, "leave"); return; } /* revenir à la pile : on repose tout */
+    const nx = nextCells(G, h); if (left <= 0 || !nx.includes(i)) { snd(r, "lose"); return; }
+    if (i === h.pos) h.drops[h.drops.length - 1]++; else { h.d = B.DIRS.findIndex(([a2, b2]) => a2 === x - (h.pos % n) && b2 === y - ((h.pos / n) | 0)); h.pos = i; h.drops.push(1); }
+    snd(r, "tick"); return;
   }
   if (!stack.length) { if (G.ply < 2) { play(r, { t: "p", i, k: "f" }); return; } play(r, { t: "p", i, k: st.sel || "f" }); return; } /* une case vide : une Voie, sauf si l'on a redressé un Verrou ou pris sa Clef */
   if (top.p === s.side && G.ply >= 2) { st.hand = { from: i, pos: i, take: Math.min(n, stack.length), d: null, drops: [] }; st.sel = null; snd(r, "tick"); }
 }
 
 /* ---------------------------------------------------------------- les habits ---------------------------------------------------------------- */
+/* les couleurs du Château : les émaux du blason (grenat contre bleu nuit), le vin et la pierre (pierre blonde contre bordeaux), l'argent et l'or ; le filet d'or (gravé de noir sur l'or) */
+const CASTLE_PAL = {
+  blason: { C: [["#b8323e", "#8e2230", "#5e1420"], ["#2a3f7a", "#1c2c5a", "#101a3a"]], fil: "#e8c060" },
+  vin: { C: [["#e6d6b0", "#c8b690", "#a49270"], ["#6e1e2c", "#4e1420", "#300a12"]], fil: "#d8b050" },
+  metal: { C: [["#d6dade", "#aab0b8", "#7a828c"], ["#f0c860", "#c8983a", "#8a6420"]], fil: "#2a2420" },
+  ivoire: { C: [["#f6eedb", "#e0d4b8", "#c4b696"], ["#2a2220", "#16110f", "#0a0807"]], fil: "#d8b050" },
+};
 function habit(r) {
-  if (r.castleOn && r.castleOn()) return { kind: "castle", bg: ["#2a0e1c", "#12060c"], rim: ["#7a5a1a", "#f0cc6a", "#6a4a10"], sq: ["#d8d2c6", "#b9b2a4"], line: "rgba(80,60,40,.5)",
-    C: [["#f6eedb", "#e0d4b8", "#c4b696"], ["#2a2220", "#16110f", "#0a0807"]], table: "#3a2414", shape: "oct", fil: "#d8b050" };
+  if (r.castleOn && r.castleOn()) { const pal = CASTLE_PAL[cur(r).pal] || CASTLE_PAL.blason; return { kind: "castle", bg: ["#2a0e1c", "#12060c"], rim: ["#7a5a1a", "#f0cc6a", "#6a4a10"], sq: ["#d8d2c6", "#b9b2a4"], line: "rgba(80,60,40,.5)",
+    C: pal.C, table: "#3a2414", shape: "oct", fil: pal.fil }; }
   if (r.glassOn && r.glassOn()) return { kind: "glass", bg: ["#14221c", "#0a120e"], rim: ["#5a2e12", "#c87a3a", "#4a2410"], sq: ["rgba(190,215,205,.62)", "rgba(160,190,180,.56)"], line: "rgba(120,70,30,.75)",
     C: [["rgba(236,178,84,.95)", "rgba(204,144,56,.96)", "rgba(160,104,30,.96)"], ["rgba(96,176,160,.95)", "rgba(62,138,124,.96)", "rgba(36,96,86,.96)"]], table: "#3a2416", shape: "square", fil: "#c87a3a" };
   return { kind: "stone", bg: ["#2a1c12", "#140d08"], rim: ["#6a4a1c", "#c99a52", "#5a3c14"], sq: ["#8a8272", "#7c7466"], line: "rgba(30,22,14,.55)",
@@ -176,17 +199,28 @@ function drawBaykh(r, ctx, sc, sky, t) {
     const a = F.P(i / n, j / n), b2 = F.P((i + 1) / n, (j + 1) / n); r.hot.push({ x: a[0], y: a[1], w: b2[0] - a[0], h: b2[1] - a[1], baykh: { cell: k, id: "c" + k } });
   }
   /* les pièces, du fond vers l'avant ; la pile prise en main est soulevée */
-  const hand = st.hand;
+  const hand = st.hand, pv = hand ? preview(G, hand) : null, board = pv ? pv.board : G.board, nx = hand ? new Set(nextCells(G, hand)) : null;
+  if (nx) for (const k of nx) { const i = k % n, j = (k / n) | 0, pulse = 0.55 + 0.45 * Math.sin(t * 5); quad(F.P(i / n, j / n), F.P((i + 1) / n, j / n), F.P((i + 1) / n, (j + 1) / n), F.P(i / n, (j + 1) / n)); ctx.fillStyle = rgba(255, 214, 130, 0.22 * pulse); ctx.fill(); ctx.strokeStyle = rgba(255, 214, 130, 0.6 * pulse); ctx.lineWidth = 1.4; ctx.stroke(); } /* où la pièce suivante peut aller */
+  const towers = [];
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
-    const k = j * n + i, stack = G.board[k], lift = hand && hand.from === k ? stack.length - hand.take : stack.length;
+    const k = j * n + i, stack = board[k];
     stack.forEach((pc, l) => {
-      const up = l >= lift ? 0.5 : 0, hi = road && road.has(k) && l === stack.length - 1 ? glow : 0;
-      if (pc.k === "c") capstone(ctx, F, Hb, i, j, pc.p, pc.p === me ? s.cap : st.botCap, l + up * 4, hi);
-      else piece(ctx, F, Hb, i, j, pc.p, { stand: pc.k === "w", lvl: l + up * 3, hi });
+      const hi = road && road.has(k) && l === stack.length - 1 ? glow : 0;
+      if (pc.k === "c") capstone(ctx, F, Hb, i, j, pc.p, pc.p === me ? s.cap : st.botCap, l, hi);
+      else piece(ctx, F, Hb, i, j, pc.p, { stand: pc.k === "w", lvl: l, hi });
     });
+    if (pv && pv.at === k) pv.floating.forEach((pc, l) => { const lv = stack.length + 1.6 + l; if (pc.k === "c") capstone(ctx, F, Hb, i, j, pc.p, pc.p === me ? s.cap : st.botCap, lv, 0.8); else piece(ctx, F, Hb, i, j, pc.p, { stand: pc.k === "w", lvl: lv, hi: 0.8 }); }); /* ce qui reste en main, soulevé */
+    if (stack.length > 1) { const [x0, y0] = F.P(i / n, j / n), [x1, y1] = F.P((i + 1) / n, (j + 1) / n), up = stack.length * 0.13 * F.cellW((j + 0.5) / n); towers.push({ x: x0, y: y0 - up, w: x1 - x0, h: y1 - y0 + up, baykh: { cell: k, id: "c" + k } }); }
   }
-  /* la main qui sème : là où l'on en est, une lueur */
-  if (hand && hand.drops.length) { const [x, y] = F.P((hand.pos % n + 0.5) / n, (((hand.pos / n) | 0) + 0.5) / n); ctx.strokeStyle = rgba(255, 220, 150, 0.7); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(x, y, F.cellW(0.5) * 0.45, F.cellW(0.5) * 0.2, 0, 0, TAU); ctx.stroke(); }
+  r.hot.push(...towers); /* une tour se touche sur toute sa hauteur, pas seulement à son pied */
+  /* pendant qu'on sème : deux boutons à fleur, au bord avant — l'ambre joue le coup (quand la main est vide), le bronze repose tout */
+  if (hand) { const fy = F.P(0.5, 1.12)[1] + 4, done = hand.drops.length && hand.take === hand.drops.reduce((p, q) => p + q, 0);
+    for (const [bx, kind] of [[300, "confirm"], [340, "cancel"]]) { const on = kind === "cancel" || done, pulse = kind === "confirm" && done ? 0.7 + 0.3 * Math.sin(t * 5) : 1;
+      ctx.fillStyle = "#2a1a0c"; ctx.beginPath(); ctx.ellipse(bx, fy, 11, 4.6, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = kind === "confirm" ? (on ? rgba(255, 196, 96, pulse) : "#6a5030") : (hv("cancel") ? "#c08a50" : "#8a5a2a"); ctx.beginPath(); ctx.ellipse(bx, fy - 0.5, 9, 3.6, 0, 0, TAU); ctx.fill();
+      ctx.strokeStyle = kind === "confirm" ? "rgba(60,30,0,.7)" : "rgba(40,20,4,.8)"; ctx.lineWidth = 1.1; ctx.beginPath();
+      if (kind === "confirm") { ctx.moveTo(bx - 3.5, fy - 0.5); ctx.lineTo(bx - 1, fy + 1.2); ctx.lineTo(bx + 4, fy - 2); } else { ctx.moveTo(bx - 3, fy - 2); ctx.lineTo(bx + 3, fy + 1); ctx.moveTo(bx + 3, fy - 2); ctx.lineTo(bx - 3, fy + 1); } ctx.stroke(); /* deux signes gravés : le trait qui valide, la croix qui repose */
+      if (on) r.hot.push({ x: bx - 14, y: fy - 9, w: 28, h: 18, baykh: { [kind]: true, id: kind } }); } }
   /* les réserves : les claires à gauche, les sombres à droite ; une pile de tuiles, et la Clef à côté */
   for (const p of [0, 1]) {
     const left = p === 0, bx = left ? 62 : 578, by = 292, R = G.res[p], sel = p === me && st.sel, mineTurn = G.turn === me && !G.end && p === me;
