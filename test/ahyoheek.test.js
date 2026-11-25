@@ -43,4 +43,10 @@ ok(AH.oppPlay(G, G.opp[0], seq([0.6])) === "page", "difficile : il voit mes deux
 for (let s = 0; s < 60; s++) { const r = mul(100 + s), g = AH.newGame({ n: 1 + (s % 4), level: ["easy", "mid", "hard"][s % 3], rnd: r }); let k = 0;
   while (g.phase !== "won" && k++ < 400) { if (g.phase === "choose") AH.play(g, AH.SIGNS[Math.floor(r() * 3)], r); else AH.next(g); }
   ok(g.phase === "won" && g.end.i >= 0 && g.end.i <= g.opp.length, "une partie au hasard finit (graine " + s + ")"); }
+/* inviter ou renvoyer un joueur ne change pas la figurine des autres */
+{ const Y = require("../src/relto-ahyoheek"); let mem = { seats: [1, 2] }; const r = { opts: { ahyState: () => mem, onAhyoheek: (v) => { mem = v; } }, ahy: {} };
+  r.ahy.G = AH.newGame({ n: 2, rnd: mul(7) }); const [c1, c2] = r.ahy.G.opp.map((o) => o.char);
+  Y.act(r, { seat: 3 }); const after = r.ahy.G.opp.map((o) => o.char);
+  ok(after[0] === c1 && after[1] === c2 && new Set(after).size === 3, "un joueur qui arrive ne change pas les autres");
+  Y.act(r, { seat: 1 }); ok(r.ahy.G.opp[0].char === c2 && r.ahy.G.opp[1].char === after[2], "un joueur qui part ne change pas les autres"); }
 console.log("ahyoheek : " + n + " OK");

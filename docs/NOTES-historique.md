@@ -699,6 +699,20 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.10.13 — Ahyoheek diégétique (25 nov. 2026)
+
+⚠ Comme en 2.10.12 : rien dans le README ; au CHANGELOG et aux nouveautés, la ligne « un petit jeu secret, qui vous rappellera peut-être quelque chose » (formulation de l'auteur) ; la rubrique secrète du guide décrit la table.
+Note : `claude/DESIGN-ahyoheek-diegetique.md` (projet).
+- **Sans texte** (`src/relto-ahyoheek.js`) : plus d'infobulles ni de compteurs en chiffres ; au survol, l'objet s'éclaire (`hoverGlow`) ; le cadre de survol du rendu est sauté pour les zones `ahy` (`relto-render.js`).
+- **Les jetons** (`tokens`) : chaque manche gagnée pose un disque de lumière dans la colonne de son signe ; or à trois. Les miens sur ma branche ; ceux des adversaires sur leur branche, entre leur projecteur et la vasque (au fond, écartés de l'anneau).
+- **Les figurines** (`figurine`) : sur un socle de pierre à cartouche de laiton (le chiffre D'ni de la place) ; trois jeux (`figs` dans l'état gardé, `act({ figs })` : `true` fait tourner, un nombre choisit) : statuettes en robe de guilde à liseré, stèles à lettre D'ni ajustée à son cadre, lampes de rue (l'abeille et la main, d'après les croquis de l'auteur ; le verre en éventail). Couleurs des guildes (archivistes, écrivains, messagers, cartographes, mainteneurs : `FIG_COL`, `FIG_LIT`), une par caractère, seulement dans le code.
+- **Inviter ou renvoyer un joueur** garde le caractère (la figurine) des autres ; le nouveau venu prend un caractère libre. Test dans `ahyoheek.test.js`.
+- **Deux boutons encastrés** : l'ambre lance (`start`), le bronze remet en attente (`wait` : partie neuve, l'anneau montre le glyphe). Plus de levier ni de cadran.
+- **Le projecteur des scores** (`screen`) : une vasque de laiton au sol, devant à droite ; le tableau en lumière, sans cadre (chiffre, signes, points ; gagnant éclairé) ; table en attente : le registre (`log`, 40 parties au plus, `settle` l'alimente), un clic l'ouvre (`panel("ledger")`) ; quatre plots du niveau sur le rebord.
+- **La plaque des règles** à la pointe (`panel("rules")`) : le cycle des trois signes et « trois d'un signe ».
+- **Le fond** (`room`) suit d'où l'on vient : la serre (pied de la verrière, plantes, dalles de pierre) ou l'atelier (rayonnage, parquet) ; le mur s'arrête haut, la table et les tabourets posent sur le sol.
+- i18n : `ahy.ledger`, `ahy.ledger.empty`, `ahy.ledger.vs`. Guide (référence, secrets) mis à jour.
+
 ## 2.10.12 — la salle de l'œuf, Ahyoheek (22 nov. 2026)
 
 ⚠ Ahyoheek et l'encrier tiennent aux fins de l'histoire : rien de ceci dans README ni nouveautés ; une ligne vague au CHANGELOG ; la rubrique secrète du guide les décrit.

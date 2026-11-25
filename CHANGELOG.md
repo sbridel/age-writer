@@ -2,7 +2,7 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.10 — Dead stars (2.10.0 to 2.10.12, 2026-11-08 to 22)
+## 2.10 — Dead stars (2.10.0 to 2.10.13, 2026-11-08 to 25)
 
 ### Added
 - **The white dwarf has a colour, and it means something.** Without debris, the colour is its age: `blue_sun` young and burning, nothing written white, `orange_sun` very old and ochre. With what is left of its worlds (`asteroid_belt`, `asteroid_field` or `planet_rings`), the colour is what is left of them: `green_sun` the salt (chartreuse), `blue_sun` the salt to the extreme (pale blue, and cold), `red_sun` the carbon (pink when warm, red when cooled). None costs Art; any other colour written on a white dwarf costs a little. The tints are the real ones, pale.
@@ -15,6 +15,7 @@ All notable changes to Age Writer, newest first. Each version is also on the [Re
 - **The map of the Age in the Relto's book**, after the description, before the free page.
 - **The egg room** (2.10.12): a narrow stone door in the hallway, a blue light seeping under it, opens onto a window ledge over a shaft where a great carved stone egg floats and turns slowly; the marbled light of the wall drifts upwards, the tip of a crystal glows far below, and a crystalline ambience goes with it (with the room sounds). It is there from the start, in every Relto.
 - After the story, something to play with, and something that answers; the guide's secrets say what (2.10.12).
+- **A secret mini game that might feel familiar** is now played entirely in its room, without a line of text: figurines on the occupied seats (three sets to choose from), tokens of light on the table, a projector on the floor for the scores and the register, two buttons set in the stone (start, and set the table waiting), a backdrop that follows where you came from; the guide's secrets say more (2.10.13).
 - **The Relto postcard** shows the time there in D'ni numerals, as the island's plate does.
 
 ### Changed

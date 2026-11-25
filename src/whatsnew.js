@@ -6,7 +6,7 @@
  */
 const NEWS = [
   {
-    v: "2.10.12",
+    v: "2.10.13",
     fr: {
       title: "Étoiles mortes",
       letter: "Un correspondant nous l'avait dit : une étoile peut être verte d'avoir brûlé ses mondes. Nous avons regardé de plus près. Elle peut aussi être bleue de jeunesse ou de sel, rouge de charbon, ocre d'âge ; et ce qui tourne autour d'elle est fait de ce qu'elle a brisé. Une pierre taillée, au télescope, déplie sa lumière ; la plaque la grave ; la carte des étoiles la garde. Et la liaison a retrouvé son souffle d'autrefois.",
@@ -19,6 +19,7 @@ const NEWS = [
         "**Trois voies pour le son de liaison** (Réglages → Son) : classique ; à l'ancienne, une synthèse nouvelle qui suit l'Âge où l'on va et ne se répète jamais ; votre propre enregistrement, qui peut contenir plusieurs liaisons à la suite (trouvé par son lien, son chemin ou son simple nom) ; ou classique et votre fichier, au hasard.",
         "**Une porte étroite dans le couloir**, une lueur bleue dessous : la salle de l'œuf, où un grand œuf de pierre flotte et tourne lentement, dans une lumière d'eau.",
         "**La carte de l'Âge dans le livre du Relto**, après la description ; un seul étang sur la carte, et des blancs seulement quand l'Âge vacille. La carte postale du Relto en chiffres D'ni ; la sortie du plein écran par le bouton ne bloque plus les clics.",
+        "**Un petit jeu secret, qui vous rappellera peut-être quelque chose**, se joue maintenant tout entier dans sa salle : des figurines sur les sièges, des jetons de lumière sur la table, un projecteur pour les scores.",
         "**La référence complète rattrape la 2.9 et la 2.10** : la pierre, la plaque et la carte des étoiles, les quatre sons de liaison, la carte de l'Âge, les estampes et cartes postales, les pages trouvées (avec, dans les secrets, où les chercher), et tout ce que la fenêtre garde.",
       ],
     },
@@ -34,6 +35,7 @@ const NEWS = [
         "**Three ways to sound the link** (Settings → Sound): classic; in the old manner, a new synthesis that follows the Age you go to and never repeats; your own recording, which may hold several linking sounds in a row (found by its link, its path or its bare name); or classic and your file, at random.",
         "**A narrow door in the hallway**, a blue light under it: the egg room, where a great stone egg floats and turns slowly in a watery light.",
         "**The map of the Age in the Relto's book**, after the description; one pond on the map, and blanks only when the Age wavers. The Relto postcard in D'ni numerals; leaving fullscreen with the button no longer blocks clicks.",
+        "**A secret mini game that might feel familiar** is now played entirely in its room: figurines on the seats, tokens of light on the table, a projector for the scores.",
         "**The full reference catches up with 2.9 and 2.10**: the stone, the plate and the star chart, the four linking sounds, the map of the Age, prints and postcards, found pages (with, in the secrets, where to look), and everything the window remembers.",
       ],
     },
