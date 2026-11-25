@@ -595,4 +595,4 @@ function onMantel(r, ctx, x, y, t) {
   r.hot.push({ x: x - 18, y: cy - R - 8, w: 36, h: y - cy + R + 8, tip: T("ahy.mantel"), go: "ahyoheek" }); r.ahy = { ...(r.ahy || {}), from: "cabin" };
 }
 
-module.exports = { onMantel, drawGame, inSerre, onDesk, act, state, bedLamp, GLYPH, HC };
+module.exports = { onMantel, drawGame, inSerre, onDesk, act, state, bedLamp, figurine, lampGlass, numeral, GLYPH, HC };
