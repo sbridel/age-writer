@@ -177,18 +177,21 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
     const lead = "#1c2220";
     const gy = kind === "oval" ? P - 6.5 : P - 7.5, glow = ctx.createRadialGradient(0, gy, 1, 0, gy, 16); glow.addColorStop(0, rgba(c[0], c[1], c[2], 0.32)); glow.addColorStop(1, rgba(c[0], c[1], c[2], 0)); ctx.fillStyle = glow; ctx.fillRect(-16, gy - 16, 32, 32);
     if (kind === "oval") { /* la lampe à l'abeille, d'après le second croquis de l'auteur : un dôme de verre aux ailes arrondies, la tête séparée en haut,
-       * le corps en bande au milieu entre deux plombs, qui descend en pointe ; une traverse dans chaque aile ; bordé de pierre */
+       * le corps en goutte arrondie au milieu, rayé de quelques bandes, qui descend en pointe ; une traverse dans chaque aile ; bordé de pierre */
       const u = 0.9, base = P - 1.1 - 11 * u, T = (x, y) => [x * u, base + y * u];
       const path = (cmds) => { ctx.beginPath(); for (const [op, ...v] of cmds) { const pts = []; for (let i = 0; i < v.length; i += 2) pts.push(...T(v[i], v[i + 1])); if (op === "M") ctx.moveTo(...pts); else if (op === "L") ctx.lineTo(...pts); else if (op === "C") ctx.bezierCurveTo(...pts); else ctx.quadraticCurveTo(...pts); } };
       const dome = [["M", -1.6, 9.2], ["C", -4.2, 9.6, -5.6, 9.2, -5.4, 7.6], ["C", -5.4, 4.2, -4.6, 1.6, -2.4, 0.6], ["C", -1, 0, 1, 0, 2.4, 0.6], ["C", 4.6, 1.6, 5.4, 4.2, 5.4, 7.6], ["C", 5.6, 9.2, 4.2, 9.6, 1.6, 9.2], ["Q", 0.6, 10, 0, 11], ["Q", -0.6, 10, -1.6, 9.2]];
       path(dome); ctx.closePath(); ctx.strokeStyle = "#3e4844"; ctx.lineWidth = 1.5; ctx.stroke(); ctx.fillStyle = glassG(base, base + 9.5 * u); ctx.fill(); /* le bord de pierre, le verre */
       ctx.save(); path(dome); ctx.clip();
-      ctx.beginPath(); { /* le corps : une bande dorée au milieu */ const p0 = T(-1.6, 2.4), p1 = T(1.6, 2.4); ctx.moveTo(...p0); ctx.lineTo(...T(-1.6, 9.4)); ctx.quadraticCurveTo(...T(-0.6, 10), ...T(0, 11)); ctx.quadraticCurveTo(...T(0.6, 10), ...T(1.6, 9.4)); ctx.lineTo(...p1); ctx.closePath(); }
-      const bodyG = ctx.createLinearGradient(-1.6 * u, 0, 1.6 * u, 0); bodyG.addColorStop(0, "#b07c20"); bodyG.addColorStop(0.45, "#f6cc58"); bodyG.addColorStop(1, "#a87418"); ctx.fillStyle = bodyG; ctx.fill();
+      const body = [["M", -1.5, 2.45], ["C", -2.5, 3.6, -2.6, 6.6, -1.9, 8.4], ["Q", -1.1, 10, 0, 11], ["Q", 1.1, 10, 1.9, 8.4], ["C", 2.6, 6.6, 2.5, 3.6, 1.5, 2.45]]; /* le corps : une goutte arrondie */
+      path(body); ctx.closePath();
+      const bodyG = ctx.createLinearGradient(-2.4 * u, 0, 2.4 * u, 0); bodyG.addColorStop(0, "#b07c20"); bodyG.addColorStop(0.45, "#f6cc58"); bodyG.addColorStop(1, "#a87418"); ctx.fillStyle = bodyG; ctx.fill();
       path([["M", -4.4, 2.1], ["Q", 0, 3.0, 4.4, 2.1], ["L", 4.4, -1], ["L", -4.4, -1]]); ctx.closePath(); ctx.fillStyle = rgba(...shift([70, 60, -10]), 1); ctx.fill(); /* la tête : la calotte, en haut, d'un verre plus clair */
       ctx.strokeStyle = lead; ctx.lineWidth = 0.45;
       path([["M", -4.5, 2.05], ["Q", 0, 3.0, 4.5, 2.05]]); ctx.stroke(); /* la séparation de la tête */
-      for (const d of [-1, 1]) { path([["M", d * 1.6, 2.52], ["L", d * 1.6, 9.4]]); ctx.stroke(); path([["M", d * 1.6, 5.4], ["Q", d * 3.4, 5.5, d * 5.6, 4.6]]); ctx.stroke(); } /* les deux plombs du corps, la traverse de chaque aile */
+      path(body); ctx.closePath(); ctx.stroke(); /* le plomb autour du corps */
+      ctx.save(); path(body); ctx.closePath(); ctx.clip(); ctx.lineWidth = 0.4; for (const y of [4.4, 5.7, 7.0, 8.3]) { path([["M", -2.6, y], ["Q", 0, y + 0.75, 2.6, y]]); ctx.stroke(); } ctx.restore(); /* ses bandes */
+      for (const d of [-1, 1]) { path([["M", d * 2.35, 5.2], ["Q", d * 3.8, 5.3, d * 5.6, 4.6]]); ctx.stroke(); } /* la traverse de chaque aile */
       ctx.restore(); path(dome); ctx.closePath(); ctx.strokeStyle = lead; ctx.lineWidth = 0.4; ctx.stroke(); }
     else if (kind === "fan") { /* le verre haut, à dôme, où monte un éventail de feuilles comme une main ouverte */
       const y0 = P - 1.4, y1 = P - 14; ctx.fillStyle = "#3e4844"; ctx.fillRect(-3.8, y0 - 1.2, 7.6, 1.3); ctx.fillRect(-3.8, y1 + 0.6, 7.6, 1); /* bague du bas, bague du haut */
