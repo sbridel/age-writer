@@ -6,6 +6,7 @@
  * (rouge la plume, bleu le scarabée, vert le Livre de liaison) ; au centre, une vasque de lumière d'où monte l'anneau des trois signes,
  * le glyphe du jeu en son cœur (en lettres D'ni, si une police D'ni est là ; sinon l'anneau seul). Nos trois projecteurs, devant nous.
  */
+const GS = require("./guild-symbols");
 const { rgba } = require("./util");
 const AH = require("./ahyoheek");
 const W = 640, H = 360, TAU = Math.PI * 2;
@@ -116,39 +117,16 @@ function tokens(h, x, y, won, t, dir = -1, s = 4.4) {
  *  rond de pierre, avec sur sa face avant un cartouche de laiton où le chiffre D'ni de la place est gravé. Dessus :
  *  0, une statuette en robe de guilde à capuchon, les mains jointes dans les manches, sans emblème : la couleur de la guilde, un liseré au capuchon et à l'ourlet ;
  *  1, une stèle, la lettre D'ni du caractère gravée et teintée ; 2, une lampe de rue en petit, sur son pilier, le verre teinté par caractère
- *  (un médaillon ovale à côtes, un verre haut où monte un éventail de feuilles, ou une lanterne carrée à rayons).
+ *  (l'abeille, la main, et la lampe aux courbes : trois croquis de l'auteur).
  *  Les couleurs (ambre, violet, ivoire, rose, jais) ne sont aucune de celles du jeu. */
 /* chaque caractère porte la couleur d'une guilde D'ni : le fidèle, les archivistes (or) ; l'imitateur, les écrivains (noir, liseré rouge
  * sombre) ; le malin, les messagers (jaune) ; le collectionneur, les cartographes (turquoise) ; le méfiant, les mainteneurs (bordeaux).
  * FIG_COL : la robe ; FIG_LIT : ce qui luit (émail, verre, lettre), quand ce n'est pas la même. Les emblèmes sont inventés, d'après le métier. */
 const FIG_COL = { faithful: [190, 140, 52], mimic: [34, 30, 34], sly: [238, 206, 70], collector: [64, 196, 200], wary: [122, 30, 46] };
 const FIG_LIT = { mimic: [168, 40, 52], wary: [176, 52, 72] };
-const FIG_LETTER = { faithful: "b", mimic: "d", sly: "g", collector: "k", wary: "t" };
 const FIGS = 3;
 const STONE = (ctx, x0, x1) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, "#4a4032"); g.addColorStop(0.38, "#b4a384"); g.addColorStop(0.6, "#9a8a6c"); g.addColorStop(1, "#3a3226"); return g; };
 const ROBE = (ctx, x0, x1, c) => { const m = (k) => rgba(Math.round(c[0] * k), Math.round(c[1] * k), Math.round(c[2] * k), 1), g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, m(0.32)); g.addColorStop(0.38, m(0.78)); g.addColorStop(0.6, m(0.6)); g.addColorStop(1, m(0.26)); return g; }; /* la robe, de la couleur de la guilde */
-/** L'emblème, en trait d'or sur l'émail : inventé d'après le métier de la guilde. */
-function emblem(ctx, char, x, y, s, col = "#ffe6a8") {
-  ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = s * 0.13; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath();
-  if (char === "faithful") { /* les archivistes : trois tablettes empilées, un anneau au-dessus (ce qu'on garde) */
-    for (let k = 0; k < 3; k++) { const yy = y + s * (0.05 + k * 0.22), w = s * (0.36 + k * 0.08); ctx.strokeRect(x - w, yy, 2 * w, s * 0.14); }
-    ctx.beginPath(); ctx.arc(x, y - s * 0.3, s * 0.18, 0, TAU); ctx.stroke(); }
-  else if (char === "mimic") { /* les écrivains : un trait d'encre qui boucle sur lui-même, posé sur une ligne (le geste d'écrire) */
-    ctx.moveTo(x - s * 0.6, y + s * 0.2); ctx.bezierCurveTo(x - s * 0.1, y + s * 0.3, x + s * 0.35, y - s * 0.7, x, y - s * 0.45); ctx.bezierCurveTo(x - s * 0.35, y - s * 0.2, x + s * 0.2, y + s * 0.3, x + s * 0.6, y - s * 0.1); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x - s * 0.6, y + s * 0.5); ctx.lineTo(x + s * 0.6, y + s * 0.5); ctx.stroke(); }
-  else if (char === "sly") { /* les messagers : un pli scellé, deux traits de vitesse derrière lui */
-    ctx.strokeRect(x - s * 0.3, y - s * 0.32, s * 0.85, s * 0.6); ctx.beginPath(); ctx.moveTo(x - s * 0.3, y - s * 0.32); ctx.lineTo(x + s * 0.125, y + s * 0.05); ctx.lineTo(x + s * 0.55, y - s * 0.32); ctx.stroke();
-    ctx.beginPath(); ctx.arc(x + s * 0.125, y + s * 0.08, s * 0.1, 0, TAU); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(x - s * 0.7, y - s * 0.12); ctx.lineTo(x - s * 0.42, y - s * 0.12); ctx.moveTo(x - s * 0.62, y + s * 0.12); ctx.lineTo(x - s * 0.42, y + s * 0.12); ctx.stroke(); }
-  else if (char === "collector") { /* les cartographes : des lignes de niveau autour d'un sommet, une petite croix à côté */
-    for (const [rx, ry, dx] of [[0.6, 0.42, 0], [0.4, 0.27, 0.05], [0.18, 0.12, 0.08]]) { ctx.beginPath(); ctx.ellipse(x + s * dx - s * 0.1, y + s * 0.05, s * rx, s * ry, -0.3, 0, TAU); ctx.stroke(); }
-    ctx.beginPath(); ctx.moveTo(x + s * 0.45, y - s * 0.62); ctx.lineTo(x + s * 0.45, y - s * 0.34); ctx.moveTo(x + s * 0.31, y - s * 0.48); ctx.lineTo(x + s * 0.59, y - s * 0.48); ctx.stroke(); }
-  else { /* les mainteneurs : un rempart à créneaux, une porte en arc (ce qu'on garde en état, et sûr) */
-    ctx.moveTo(x - s * 0.55, y + s * 0.5); ctx.lineTo(x - s * 0.55, y - s * 0.35); for (let k = 0; k < 4; k++) { const x0 = x - s * 0.55 + k * s * 0.275; ctx.lineTo(x0, y - s * 0.55); ctx.lineTo(x0 + s * 0.14, y - s * 0.55); ctx.lineTo(x0 + s * 0.14, y - s * 0.35); ctx.lineTo(x0 + s * 0.275, y - s * 0.35); }
-    ctx.lineTo(x + s * 0.55, y - s * 0.55); ctx.lineTo(x + s * 0.55, y + s * 0.5); ctx.closePath(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x - s * 0.17, y + s * 0.5); ctx.lineTo(x - s * 0.17, y + s * 0.08); ctx.arc(x, y + s * 0.08, s * 0.17, Math.PI, TAU); ctx.lineTo(x + s * 0.17, y + s * 0.5); ctx.stroke(); }
-  ctx.restore();
-}
 /** Le verre d'une lampe de rue D'ni, posé en (0, P) (P : le haut de ce qui le porte), teinté de `c` ; `kind` : "oval" l'abeille, "fan" l'éventail,
  *  "rays" la main (les deux d'après les croquis de l'auteur). Sert aux figurines de la table et à la lampe de chevet. `lit` : sa lueur (0 à 1). */
 function lampGlass(ctx, kind, c, P, lit = 1) {
@@ -173,14 +151,23 @@ function lampGlass(ctx, kind, c, P, lit = 1) {
     ctx.save(); path(body); ctx.closePath(); ctx.clip(); ctx.lineWidth = 0.4; for (const y of [4.4, 5.7, 7.0, 8.3]) { path([["M", -2.6, y], ["Q", 0, y + 0.75, 2.6, y]]); ctx.stroke(); } ctx.restore(); /* ses bandes */
     for (const d of [-1, 1]) { path([["M", d * 2.35, 5.2], ["Q", d * 3.8, 5.3, d * 5.6, 4.6]]); ctx.stroke(); } /* la traverse de chaque aile */
     ctx.restore(); path(dome); ctx.closePath(); ctx.strokeStyle = lead; ctx.lineWidth = 0.4; ctx.stroke(); }
-  else if (kind === "fan") { /* le verre haut, à dôme, où monte un éventail de feuilles comme une main ouverte */
-    const y0 = P - 1.4, y1 = P - 14; ctx.fillStyle = "#3e4844"; ctx.fillRect(-3.8, y0 - 1.2, 7.6, 1.3); ctx.fillRect(-3.8, y1 + 0.6, 7.6, 1); /* bague du bas, bague du haut */
-    ctx.fillStyle = glassG(y1, y0); ctx.beginPath(); ctx.moveTo(-3.2, y0 - 1.2); ctx.lineTo(-3.2, y1 + 5); ctx.quadraticCurveTo(-3.2, y1 + 0.6, 0, y1 + 0.6); ctx.quadraticCurveTo(3.2, y1 + 0.6, 3.2, y1 + 5); ctx.lineTo(3.2, y0 - 1.2); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = lead; ctx.lineWidth = 0.4; ctx.stroke();
-    ctx.save(); ctx.clip(); const by = y0 - 1.6; ctx.fillStyle = rgba(...shift([-60, 30, -10]), 0.9);
-    for (const a of [-0.95, -0.5, 0, 0.5, 0.95]) { const tx = Math.sin(a) * 3.6, ty = by - Math.cos(a) * 7.6; ctx.beginPath(); ctx.moveTo(0, by); ctx.quadraticCurveTo(tx * 0.3 - 1, (by + ty) / 2, tx, ty); ctx.quadraticCurveTo(tx * 0.3 + 1, (by + ty) / 2, 0, by); ctx.fill(); ctx.stroke(); } /* les feuilles */
-    ctx.beginPath(); ctx.moveTo(-3.2, y1 + 4.4); ctx.quadraticCurveTo(0, y1 + 3, 3.2, y1 + 4.4); ctx.stroke(); ctx.restore();
-    ctx.fillStyle = "#5c6862"; ctx.beginPath(); ctx.moveTo(-1.6, y1 + 0.6); ctx.quadraticCurveTo(0, y1 - 1.6, 1.6, y1 + 0.6); ctx.fill(); } /* le petit fleuron */
+  else if (kind === "fan") { /* la lampe aux courbes, d'après le croquis de l'auteur mis au propre : un panneau de pierre qui s'évase vers le bas, sur une dalle ;
+     * dans le verre à sommet arrondi, en plomb : deux courbes qui montent du pied vers les bords, un arc par-dessus, et deux arcs qui partent de son sommet */
+    const u = 0.8, base = P - 1.2 - 16.4 * u, T = (x, y) => [x * u, base + y * u];
+    const path = (cmds) => { ctx.beginPath(); for (const [op, ...v] of cmds) { const pts = []; for (let i = 0; i < v.length; i += 2) pts.push(...T(v[i], v[i + 1])); if (op === "M") ctx.moveTo(...pts); else if (op === "L") ctx.lineTo(...pts); else ctx.quadraticCurveTo(...pts); } };
+    ctx.fillStyle = "#3e4844"; path([["M", -6.3, 16.4], ["L", -6.3, 15], ["L", 6.3, 15], ["L", 6.3, 16.4]]); ctx.closePath(); ctx.fill(); /* la dalle */
+    path([["M", -5.6, 15], ["L", -4.7, 1.2], ["Q", -4.6, 0, -3.4, 0], ["L", 3.4, 0], ["Q", 4.6, 0, 4.7, 1.2], ["L", 5.6, 15]]); ctx.closePath(); ctx.fill(); ctx.strokeStyle = "#7a8680"; ctx.lineWidth = 0.4; ctx.stroke(); /* le panneau de pierre */
+    const win = [["M", -4.2, 14.4], ["L", -3.6, 4.2], ["Q", -3.4, 1.2, 0, 1.1], ["Q", 3.4, 1.2, 3.6, 4.2], ["L", 4.2, 14.4]];
+    path(win); ctx.closePath(); ctx.fillStyle = glassG(base, base + 15 * u); ctx.fill(); /* le verre, à sommet arrondi */
+    ctx.save(); path(win); ctx.closePath(); ctx.clip(); ctx.strokeStyle = lead; ctx.lineCap = "round";
+    const P2 = (cmds) => { ctx.beginPath(); for (const [op, ...v] of cmds) { const q = []; for (let i = 0; i < v.length; i += 2) q.push(...T(v[i], v[i + 1])); if (op === "M") ctx.moveTo(...q); else if (op === "C") ctx.bezierCurveTo(...q); else if (op === "L") ctx.lineTo(...q); else ctx.quadraticCurveTo(...q); } };
+    P2([["M", -4, 10.9], ["C", -3.7, 7, 3.7, 7, 4, 10.9], ["Q", 1.2, 11.4, 0, 14.4], ["Q", -1.2, 11.4, -4, 10.9]]); ctx.closePath(); ctx.fillStyle = rgba(...shift([80, 70, 10]), 1); ctx.fill(); /* le verre clair, sous l'arc et entre les deux courbes */
+    ctx.lineWidth = 0.5;
+    for (const d of [-1, 1]) { P2([["M", 0, 14.4], ["Q", d * 1.2, 11.4, d * 4.3, 10.8]]); ctx.stroke(); } /* les deux courbes du bas, qui montent du pied vers les bords */
+    P2([["M", -4.1, 11], ["C", -3.7, 7, 3.7, 7, 4.1, 11]]); ctx.stroke(); /* l'arc par-dessus */
+    for (const d of [-1, 1]) { P2([["M", 0, 8], ["Q", d * 0.5, 5, d * 3.8, 4.4]]); ctx.stroke(); } /* les deux arcs du haut, qui partent du sommet de l'arc */
+    ctx.lineCap = "butt";
+    ctx.restore(); path(win); ctx.closePath(); ctx.strokeStyle = lead; ctx.lineWidth = 0.45; ctx.stroke(); }
   else { /* la lanterne, d'après le croquis de l'auteur mis au propre : un panneau haut, bordé de pierre ; en haut une main ouverte (une paume à cinq pans,
      * quatre doigts, un court pouce) ; sa tige descend jusqu'au pied, entre deux collines en arc qui se croisent et des courbes qui montent des bords */
     const u = 0.78, base = P - 1.2 - 15 * u, T = (x, y) => [x * u, base + y * u];
@@ -227,9 +214,8 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
     ctx.fillStyle = STONE(ctx, -5, 5); ctx.beginPath(); ctx.moveTo(-5, top); ctx.lineTo(-4.4, top - 15); ctx.quadraticCurveTo(0, top - 21, 4.4, top - 15); ctx.lineTo(5, top); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = rgba(40, 30, 18, 0.5); ctx.lineWidth = 0.5; ctx.stroke();
     ctx.strokeStyle = rgba(255, 240, 210, 0.25); ctx.beginPath(); ctx.moveTo(-3.3, top - 2); ctx.lineTo(-3, top - 14); ctx.quadraticCurveTo(0, top - 18.5, 3, top - 14); ctx.lineTo(3.3, top - 2); ctx.stroke(); /* le cadre gravé */
-    if (fam) { ctx.font = `9px ${fam}`; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; const ch = FIG_LETTER[char] || "b", m = ctx.measureText(ch), wd = Math.max(1, (m.actualBoundingBoxLeft || 0) + (m.actualBoundingBoxRight || m.width)), ht = Math.max(1, (m.actualBoundingBoxAscent || 6) + (m.actualBoundingBoxDescent || 0)), k = Math.min(1, 5.2 / wd, 8.5 / ht);
-      ctx.save(); ctx.translate(0, top - 9); ctx.scale(k, k); ctx.translate(((m.actualBoundingBoxLeft || 0) - (m.actualBoundingBoxRight || 0)) / 2, ((m.actualBoundingBoxAscent || 0) - (m.actualBoundingBoxDescent || 0)) / 2); ctx.fillStyle = rgba(c[0], c[1], c[2], 0.95); ctx.fillText(ch, 0, 0); ctx.restore(); } /* la lettre, ramenée dans le cadre gravé et centrée sur son encre */
-    else emblem(ctx, char, 0, top - 9, 4.5, rgba(c[0], c[1], c[2], 0.95)); }
+    { const gk = GS.OF[char] || "mainteneurs", ink = rgba(c[0] * (c[0] < 60 ? 3 : 1), c[1] * (c[0] < 60 ? 3 : 1), c[2] * (c[0] < 60 ? 3 : 1), 0.95);
+      GS.draw(ctx, gk, 0.35, top - 8.65, 3.7, "rgba(40,28,14,.5)", 0.1); GS.draw(ctx, gk, 0, top - 9, 3.7, ink, 0.1); } } /* le symbole de la guilde, gravé (son ombre, puis le trait teinté) */
   else if (set === 2) { /* la lampe de rue D'ni, en petit : un pilier de pierre carré à chapiteau, et dessus un verre serti de plomb,
      * aux reflets changeants autour de la teinte du caractère ; trois formes : le médaillon ovale à côtes, le verre haut en éventail, la lanterne à rayons */
     const kind = { faithful: "oval", mimic: "fan", sly: "rays", collector: "oval", wary: "fan" }[char] || "oval", P = top - 4.5;
@@ -247,7 +233,8 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
     const thread = char === "mimic" ? "rgba(200,60,70,0.95)" : "rgba(255,222,140,0.92)"; /* le fil : d'or, rouge sombre pour les écrivains (leur liseré) */
     ctx.strokeStyle = thread; ctx.lineWidth = 0.42; ctx.lineCap = "round";
     ctx.beginPath(); ctx.moveTo(-5.7, top - 0.2); ctx.quadraticCurveTo(0, top + 1.3, 5.7, top - 0.2); ctx.stroke(); /* le liseré de l'ourlet */
-    ctx.beginPath(); ctx.moveTo(-3.5, top - 12.8); ctx.quadraticCurveTo(-3.9, top - 19.1, 0, top - 19.7); ctx.quadraticCurveTo(3.9, top - 19.1, 3.5, top - 12.8); ctx.stroke(); /* le liseré du capuchon */ }
+    ctx.beginPath(); ctx.moveTo(-3.5, top - 12.8); ctx.quadraticCurveTo(-3.9, top - 19.1, 0, top - 19.7); ctx.quadraticCurveTo(3.9, top - 19.1, 3.5, top - 12.8); ctx.stroke(); /* le liseré du capuchon */
+    { const gk = GS.OF[char] || "mainteneurs"; GS.draw(ctx, gk, 0, top - 3.9, 2.1, gk === "messagers" ? "#5a3a10" : thread, 0.12); } /* l'emblème de la guilde, brodé sur la robe, sous les mains */ }
   ctx.restore();
 }
 /** La lumière d'un objet qu'on survole (au lieu d'une infobulle) : un halo chaud, doux. */
@@ -510,6 +497,7 @@ function screen(r, ctx, hx, G, seats, reveal, between, t, hv) {
   else seats.forEach((k, i) => { const p = A[i], y = yA + i * gap, win = !!(G.winners && G.winners.includes(i)); void rows; /* les scores, une ligne par place */
     if (win) { const g = hx.createLinearGradient(pcx - 34, 0, pcx + 34, 0); g.addColorStop(0, rgba(255, 200, 110, 0)); g.addColorStop(0.5, rgba(255, 200, 110, 0.22 * fl)); g.addColorStop(1, rgba(255, 200, 110, 0)); hx.fillStyle = g; hx.fillRect(pcx - 34, y - 8, 68, 16); }
     numeral(hx, k + 1, pcx - 26, y, 7, ink(i === 0 ? 0.95 : 0.6));
+    if (i === 0) { hx.strokeStyle = ink(0.7); hx.lineWidth = 0.8; hx.beginPath(); hx.arc(pcx - 40, y, 4.6, 0, TAU); hx.stroke(); } else GS.draw(hx, GS.OF[p.char] || "mainteneurs", pcx - 40, y, 5.2, ink(0.8), 0.13); /* devant chaque adversaire, le symbole de sa guilde ; devant moi, un simple cercle */
     AH.SIGNS.forEach((sg, j) => { const n = p.won[sg] || 0, xx = pcx - 12 + j * 12; anySign(hx, sg, xx, y - 3, 2.9, HC[sg], (n ? 0.85 : 0.28) * fl, true); numeral(hx, n, xx, y + 4.5, 4.5, n >= 3 ? rgba(255, 210, 120, fl) : ink(n ? 0.75 : 0.28)); });
     if (reveal && p.pts != null) numeral(hx, p.pts, pcx + 27, y, 6.5, p.pts > 0 ? rgba(255, 210, 120, fl) : ink(0.45), p.pts < 0); });
   /* les quatre plots du niveau, à fleur sur le rebord avant */
@@ -595,4 +583,4 @@ function onMantel(r, ctx, x, y, t) {
   r.hot.push({ x: x - 18, y: cy - R - 8, w: 36, h: y - cy + R + 8, tip: T("ahy.mantel"), go: "ahyoheek" }); r.ahy = { ...(r.ahy || {}), from: "cabin" };
 }
 
-module.exports = { onMantel, drawGame, inSerre, onDesk, act, state, bedLamp, GLYPH, HC };
+module.exports = { onMantel, drawGame, inSerre, onDesk, act, state, bedLamp, figurine, lampGlass, numeral, GLYPH, HC };
