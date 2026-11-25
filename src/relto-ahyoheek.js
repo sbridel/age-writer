@@ -176,13 +176,20 @@ function figurine(ctx, x, y, char, num, set = 0, fam = null, a = 1) {
     const glassG = (y0, y1) => { const g = ctx.createLinearGradient(0, y0, 0, y1), a1 = shift([90, 60, 70]), a2 = shift([30, -10, 60]), a3 = shift([-40, 40, 30]); g.addColorStop(0, rgba(...a1, 1)); g.addColorStop(0.45, rgba(...a2, 1)); g.addColorStop(1, rgba(...a3, 1)); return g; }; /* le verre irisé */
     const lead = "#1c2220";
     const gy = kind === "oval" ? P - 8 : P - 7.5, glow = ctx.createRadialGradient(0, gy, 1, 0, gy, 16); glow.addColorStop(0, rgba(c[0], c[1], c[2], 0.32)); glow.addColorStop(1, rgba(c[0], c[1], c[2], 0)); ctx.fillStyle = glow; ctx.fillRect(-16, gy - 16, 32, 32);
-    if (kind === "oval") { /* le médaillon : un anneau de pierre ovale, le verre à côtes courbes, une arête au milieu, une calotte en haut */
-      ctx.fillStyle = "#3e4844"; ctx.beginPath(); ctx.ellipse(0, gy, 5.4, 6.6, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = "#7a8680"; ctx.lineWidth = 0.4; ctx.stroke();
-      ctx.fillStyle = glassG(gy - 5.6, gy + 5.6); ctx.beginPath(); ctx.ellipse(0, gy, 4.3, 5.6, 0, 0, TAU); ctx.fill();
-      ctx.save(); ctx.beginPath(); ctx.ellipse(0, gy, 4.3, 5.6, 0, 0, TAU); ctx.clip(); ctx.strokeStyle = lead; ctx.lineWidth = 0.45;
-      ctx.beginPath(); ctx.moveTo(-4.3, gy - 3.2); ctx.quadraticCurveTo(0, gy - 5.4, 4.3, gy - 3.2); ctx.stroke(); /* la calotte */
-      for (let k = 0; k < 5; k++) { const yy = gy - 1.8 + k * 1.55, w = 3.4 - k * 0.42; ctx.beginPath(); ctx.moveTo(-w, yy - 0.5); ctx.quadraticCurveTo(0, yy + 0.7, w, yy - 0.5); ctx.stroke(); } /* les côtes, qui se resserrent vers le bas */
-      ctx.beginPath(); ctx.moveTo(0, gy - 3.9); ctx.lineTo(0, gy + 5.6); ctx.stroke(); for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * 4.2, gy - 1); ctx.quadraticCurveTo(s * 2.4, gy + 2.5, s * 0.6, gy + 5.4); ctx.stroke(); }
+    if (kind === "oval") { /* le médaillon à l'abeille : un anneau de pierre ovale ; dans le verre, une abeille vue de dessus, ailes ouvertes,
+       * l'abdomen rayé de plomb, sur un fond de la teinte du caractère */
+      ctx.fillStyle = "#3e4844"; ctx.beginPath(); ctx.ellipse(0, gy, 5.6, 6.8, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = "#7a8680"; ctx.lineWidth = 0.4; ctx.stroke();
+      ctx.fillStyle = glassG(gy - 5.8, gy + 5.8); ctx.beginPath(); ctx.ellipse(0, gy, 4.5, 5.8, 0, 0, TAU); ctx.fill();
+      ctx.save(); ctx.beginPath(); ctx.ellipse(0, gy, 4.5, 5.8, 0, 0, TAU); ctx.clip(); ctx.strokeStyle = lead; ctx.lineWidth = 0.35;
+      for (const d of [-1, 1]) { /* les ailes : une grande et une petite de chaque côté, verre pâle, une nervure */
+        ctx.fillStyle = rgba(235, 240, 245, 0.75); ctx.beginPath(); ctx.moveTo(d * 0.6, gy - 1.6); ctx.quadraticCurveTo(d * 4.6, gy - 5.2, d * 4.2, gy - 1.4); ctx.quadraticCurveTo(d * 2.6, gy - 0.4, d * 0.6, gy - 1.2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(d * 0.8, gy - 1.4); ctx.lineTo(d * 3.4, gy - 2.6); ctx.stroke();
+        ctx.fillStyle = rgba(225, 232, 240, 0.65); ctx.beginPath(); ctx.moveTo(d * 0.6, gy - 0.9); ctx.quadraticCurveTo(d * 3.6, gy - 0.6, d * 3.2, gy + 1.2); ctx.quadraticCurveTo(d * 1.8, gy + 1.1, d * 0.6, gy - 0.5); ctx.fill(); ctx.stroke(); }
+      ctx.fillStyle = "#e8b440"; ctx.beginPath(); ctx.ellipse(0, gy + 1.9, 1.6, 2.7, 0, 0, TAU); ctx.fill(); ctx.stroke(); /* l'abdomen */
+      for (const yy of [0.9, 1.9, 2.9]) { ctx.beginPath(); ctx.moveTo(-1.45, gy + yy); ctx.quadraticCurveTo(0, gy + yy + 0.5, 1.45, gy + yy); ctx.stroke(); } /* ses bandes */
+      ctx.fillStyle = "#5a3a18"; ctx.beginPath(); ctx.ellipse(0, gy - 1.1, 1.2, 1.1, 0, 0, TAU); ctx.fill(); /* le thorax */
+      ctx.beginPath(); ctx.arc(0, gy - 2.7, 0.75, 0, TAU); ctx.fill(); /* la tête */
+      ctx.beginPath(); ctx.moveTo(-0.3, gy - 3.3); ctx.quadraticCurveTo(-0.9, gy - 4.4, -1.6, gy - 4.5); ctx.moveTo(0.3, gy - 3.3); ctx.quadraticCurveTo(0.9, gy - 4.4, 1.6, gy - 4.5); ctx.stroke(); /* les antennes */
       ctx.restore(); }
     else if (kind === "fan") { /* le verre haut, à dôme, où monte un éventail de feuilles comme une main ouverte */
       const y0 = P - 1.4, y1 = P - 14; ctx.fillStyle = "#3e4844"; ctx.fillRect(-3.8, y0 - 1.2, 7.6, 1.3); ctx.fillRect(-3.8, y1 + 0.6, 7.6, 1); /* bague du bas, bague du haut */
