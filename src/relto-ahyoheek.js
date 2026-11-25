@@ -476,10 +476,13 @@ function drawGame(r, ctx, sc, sky, t) {
   { const call = (idle && G.round === 0) || G.phase === "won" ? 0.5 + 0.5 * Math.sin(t * 3) : 0; if (call) hoverGlow(ctx, 301, 283, 14 + 4 * call, [255, 180, 80]);
     inlay(301, 283, 6.2, 3.4, [[0, "#fff0b0"], [0.5, "#f0a840"], [1, "#8a4a10"]], "start", { start: true }); }
   inlay(339, 283, 6.2, 3.4, [[0, "#e9c27a"], [0.6, "#a8783a"], [1, "#5a3c1a"]], "wait", { wait: true }, (x, y) => { ctx.strokeStyle = "#3a2410"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.ellipse(x, y, 3.4, 1.8, 0, 0, TAU); ctx.stroke(); }); /* l'anneau, gravé */
-  { const x = TIP[0], y = 228; if (hv("rules")) hoverGlow(ctx, x, y, 18); /* la plaque des règles, à fleur, au-dessus de mes trois signes */
-    ctx.fillStyle = "#9a7838"; ctx.beginPath(); ctx.moveTo(x - 9, y - 2.6); ctx.lineTo(x + 9, y - 2.6); ctx.lineTo(x + 7, y + 2.6); ctx.lineTo(x - 7, y + 2.6); ctx.closePath(); ctx.fill(); ctx.strokeStyle = "#d8b070"; ctx.lineWidth = 0.6; ctx.stroke();
-    AH.SIGNS.forEach((k, i) => { ctx.save(); ctx.translate(x - 5 + i * 5, y); ctx.scale(1, 0.55); anySign(ctx, k, 0, 0, 1.8, [50, 34, 14], 0.9, false); ctx.restore(); });
-    r.hot.push({ x: x - 12, y: y - 6, w: 24, h: 12, ahy: { panel: "rules", id: "rules" } }); }
+  { const x = TIP[0], y = 226; if (hv("rules")) hoverGlow(ctx, x, y, 24); /* la plaque des règles, à fleur, au-dessus de mes trois signes */
+    ctx.fillStyle = rgba(0, 0, 0, 0.3); ctx.beginPath(); ctx.moveTo(x - 15, y - 3.6); ctx.lineTo(x + 15, y - 3.6); ctx.lineTo(x + 18, y + 4.4); ctx.lineTo(x - 18, y + 4.4); ctx.closePath(); ctx.fill(); /* son creux dans la pierre */
+    const pl = ctx.createLinearGradient(0, y - 4, 0, y + 4); pl.addColorStop(0, "#b08a44"); pl.addColorStop(1, "#8a6a30");
+    ctx.fillStyle = pl; ctx.beginPath(); ctx.moveTo(x - 15, y - 4); ctx.lineTo(x + 15, y - 4); ctx.lineTo(x + 17.5, y + 4); ctx.lineTo(x - 17.5, y + 4); ctx.closePath(); ctx.fill(); ctx.strokeStyle = "#e0bc78"; ctx.lineWidth = 0.7; ctx.stroke(); /* couchée à plat : plus large devant qu'au fond */
+    ctx.strokeStyle = rgba(60, 40, 14, 0.5); ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(x - 13.4, y - 2.8); ctx.lineTo(x + 13.4, y - 2.8); ctx.lineTo(x + 15.6, y + 2.9); ctx.lineTo(x - 15.6, y + 2.9); ctx.closePath(); ctx.stroke(); /* le filet gravé */
+    AH.SIGNS.forEach((k, i) => { ctx.save(); ctx.translate(x - 10 + i * 10, y + 0.2); ctx.scale(1, 0.5); anySign(ctx, k, 0, 0, 3.4, [50, 34, 14], 0.9, false); ctx.restore(); }); /* le cycle des trois signes, gravé */
+    r.hot.push({ x: x - 19, y: y - 7, w: 38, h: 14, ahy: { panel: "rules", id: "rules" } }); }
   screen(r, ctx, hx, G, seats, reveal, between, t, hv);
   if (hx !== ctx) holoComposite(ctx, hx, t);
   require("./relto-atelier").backButton(r, ctx, T("ahy.back." + (["desk", "cabin"].includes(st.from) ? st.from : "serre")), ["desk", "cabin"].includes(st.from) ? st.from : "serre");
