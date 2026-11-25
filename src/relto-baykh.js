@@ -91,7 +91,8 @@ function act(r, a) {
     if (a.side === s.side && mine) { if (G.ply < 2) { st.sel = "f"; return; } if (G.res[s.side].s <= 0) return; st.sel = st.sel === "w" ? null : "w"; st.hand = null; snd(r, "tick"); } return; } /* la réserve : la prochaine pièce posée sera un Verrou (ou de nouveau une Voie) */
   if (a.capPick) { if (mine && G.ply >= 2 && G.res[s.side].c > 0) { st.sel = st.sel === "c" ? null : "c"; st.hand = null; snd(r, "tick"); } return; }
   if (a.box) { if (!st.started || G.end || G.ply === 0) { st.box = true; snd(r, "open"); } return; } /* le coffret s'ouvre */
-  if (a.boxClose) { st.box = false; snd(r, "tick"); return; }
+  if (a.boxClose) { st.box = false; st.ledger = false; snd(r, "tick"); return; }
+  if (a.ledger) { st.ledger = true; snd(r, "open"); return; }
   if (a.pickCap) { save(r, { cap: a.pickCap }); snd(r, "tick"); return; }
   if (a.pickCol) { save(r, { capCol: a.pickCol }); snd(r, "tick"); return; }
   if (a.dial) { if (!st.started || G.end || G.ply === 0) { save(r, { n: s.n >= 8 ? 3 : s.n + 1 }); fresh(r); snd(r, "tick"); } return; }
@@ -316,9 +317,28 @@ function drawBaykh(r, ctx, sc, sky, t) {
   /* la fin : une lueur sur la réserve du vainqueur */
   if (G.end && G.end.win >= 0) { const bx = G.end.win === 0 ? 62 : 578, g = ctx.createRadialGradient(bx, 270, 4, bx, 270, 70); g.addColorStop(0, rgba(255, 210, 120, 0.35 * glow)); g.addColorStop(1, "rgba(255,210,120,0)"); ctx.fillStyle = g; ctx.fillRect(bx - 70, 200, 140, 140); }
   if (st.thinking) { const x = bot === 0 ? 62 : 578; ctx.fillStyle = rgba(150, 200, 255, 0.25 + 0.2 * Math.sin(t * 6)); ctx.beginPath(); ctx.arc(x, 330, 2.5, 0, TAU); ctx.fill(); } /* la machine réfléchit */
-  if (st.box) capBox(r, ctx, Hb, s, me, t, hv); else require("./relto-atelier").backButton(r, ctx, tr("baykh.back"), "lounge");
+  { const x = 410, y = fx + 2, op = hv("ledger"); /* le carnet des parties, posé au bord de la table */
+    ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fillRect(x - 13, y - 2, 28, 10); ctx.fillStyle = "#5a2a1a"; ctx.fillRect(x - 14, y - 4, 28, 10); ctx.fillStyle = "#e8dcc0"; ctx.fillRect(x - 12.5, y - 5.4, 25, 2); ctx.fillStyle = op ? "#e0b462" : "#a8743a"; ctx.fillRect(x - 1, y - 4, 2, 10); /* la couverture, la tranche des pages, le signet */
+    r.hot.push({ x: x - 18, y: y - 12, w: 36, h: 24, baykh: { ledger: true, id: "ledger" } }); }
+  if (st.ledger) ledger(r, ctx, Hb, s, hv); else if (st.box) capBox(r, ctx, Hb, s, me, t, hv); else require("./relto-atelier").backButton(r, ctx, tr("baykh.back"), "lounge");
 }
 
+/** Le carnet ouvert : les dernières parties, une ligne chacune, sans texte : la taille (en chiffre D'ni), le niveau (de un à trois plots),
+ *  comment elle a fini (une route, ou les Voies comptées) et qui l'a gagnée (un sceau d'or, éteint si perdue, à moitié si nulle). */
+function ledger(r, ctx, Hb, s, hv) {
+  ctx.fillStyle = "rgba(4,3,2,.62)"; ctx.fillRect(0, 0, W, H); r.hot.push({ x: 0, y: 0, w: W, h: H, baykh: { boxClose: true, id: "boxClose" } });
+  const x0 = 150, y0 = 40, w = 340, h = 280; ctx.fillStyle = "rgba(0,0,0,.5)"; ctx.fillRect(x0 + 6, y0 + 8, w, h); ctx.fillStyle = "#5a2a1a"; ctx.fillRect(x0 - 6, y0 - 6, w + 12, h + 12); /* la couverture */
+  for (const [px, ww] of [[x0, w / 2 - 2], [x0 + w / 2 + 2, w / 2 - 2]]) { const g = ctx.createLinearGradient(px, 0, px + ww, 0); g.addColorStop(0, "#efe4c8"); g.addColorStop(1, "#e2d4b2"); ctx.fillStyle = g; ctx.fillRect(px, y0, ww, h); }
+  ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.fillRect(x0 + w / 2 - 3, y0, 6, h); r.hot.push({ x: x0, y: y0, w, h, baykh: { id: "ledgerIn" } });
+  const ink = "rgba(60,36,16,.85)", L = s.log.slice(0, 24);
+  if (!L.length) { ctx.strokeStyle = "rgba(60,36,16,.3)"; ctx.lineWidth = 1; for (let k = 0; k < 6; k++) { ctx.beginPath(); ctx.moveTo(x0 + 20, y0 + 40 + k * 32); ctx.lineTo(x0 + w / 2 - 20, y0 + 40 + k * 32); ctx.stroke(); } return; } /* rien encore : des lignes vides */
+  L.forEach((e, q) => { const col = q < 12 ? 0 : 1, row = q % 12, x = x0 + 18 + col * (w / 2 + 2), y = y0 + 22 + row * 21.5;
+    numeral(ctx, e.n, x + 8, y, 7, ink); /* la taille */
+    const lv = { easy: 1, mid: 2, hard: 3, rank: 3 }[e.level] || 2; for (let k = 0; k < 3; k++) { ctx.fillStyle = k < lv ? ink : "rgba(60,36,16,.2)"; ctx.beginPath(); ctx.arc(x + 30 + k * 6, y, 1.8, 0, TAU); ctx.fill(); } /* le niveau */
+    ctx.strokeStyle = ink; ctx.lineWidth = 1.1; ctx.beginPath(); if (e.by === "road") { ctx.moveTo(x + 58, y + 3); ctx.bezierCurveTo(x + 64, y - 5, x + 70, y + 5, x + 78, y - 3); } else { for (let k = 0; k < 3; k++) ctx.rect(x + 58 + k * 7, y - 2.5, 5, 5); } ctx.stroke(); /* une route, ou les Voies comptées */
+    const sx = x + 120; ctx.fillStyle = e.won ? "#c8963a" : e.draw ? "rgba(200,150,58,.5)" : "rgba(60,36,16,.25)"; ctx.beginPath(); ctx.arc(sx, y, 5, 0, TAU); ctx.fill(); /* le sceau */
+    if (e.won) { ctx.strokeStyle = "#7a4a10"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(sx, y, 3, 0, TAU); ctx.stroke(); } });
+}
 /** Le coffret des Clefs de voûte, ouvert : un écrin de bois doublé de velours ; à gauche, sa Clef en grand ; à droite, les quatre modèles
  *  dans leurs logements, et dessous les pastilles des couleurs (la sienne, puis l'or, l'argent, le cuivre, le lapis, le jade, le rubis,
  *  l'obsidienne, l'ivoire). Toucher hors de l'écrin le referme. */
