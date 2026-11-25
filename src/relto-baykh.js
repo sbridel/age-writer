@@ -15,7 +15,7 @@ const B = require("./baykh");
 const { rgba, mix } = require("./util");
 const hex = (h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16));
 const W = 640, H = 360, TAU = Math.PI * 2;
-const CAPS = ["robe", "bee", "hand", "needle", "rayonnant", "flamboyant", "tower"]; /* la statuette, les deux lampes, et les quatre pistes gothiques de l'auteur (l'aiguille D'ni, le rayonnant, le flamboyant, la tour) */
+const CAPS = ["robe", "bee", "hand", "needle", "rayonnant", "flamboyant", "tower", "clock"]; /* la statuette, les deux lampes, et les quatre pistes gothiques de l'auteur (l'aiguille D'ni, le rayonnant, le flamboyant, la tour) */
 /* les couleurs d'une Clef de voûte (une pièce à soi, pas forcément assortie) : celle du joueur, ou un émail, un métal, une pierre */
 const CAP_COLS = { mine: null, gold: ["#f0cc6a", "#c8983a", "#7a5a1a"], silver: ["#e6eaee", "#aab0b8", "#6a7078"], copper: ["#e8956a", "#b8643a", "#6a3a1c"],
   lapis: ["#4a6cc0", "#2a4890", "#142458"], jade: ["#6ac0a0", "#3a8e70", "#1c5440"], ruby: ["#c83848", "#8e2030", "#4e0c18"], obsidian: ["#44464e", "#1e2026", "#08080a"], ivory: ["#f6eedb", "#e0d4b8", "#b8aa88"] };
@@ -169,26 +169,49 @@ function capstone(ctx, F, Hb, i, j, p, kind, lvl = 0, hi = 0, colKey = "mine") {
     ctx.fillStyle = "#3e4844"; ctx.fillRect(-3, -5, 6, 5); ctx.fillStyle = "#5c6862"; ctx.fillRect(-4, -6.4, 8, 1.6);
     const tint = CAP_COLS[colKey] ? hex(CAP_COLS[colKey][0]) : Hb.kind === "glass" ? (p ? [96, 176, 160] : [236, 178, 84]) : p ? [110, 120, 150] : [244, 200, 140];
     require("./relto-ahyoheek").lampGlass(ctx, kind === "bee" ? "oval" : "rays", tint, -5.2, 1); }
-else if (kind === "rayonnant") { const x = 0, y = 0, s = 1, G = gold, body = lin(-8, 8, [col[2], col[0], col[1], col[2]]); /* un petit baldaquin : socle, quatre colonnettes, arcs brisés, gâbles, une flèche à crochets et son fleuron */
-  ctx.fillStyle=col[1];ctx.fillRect(x-9*s,y-2.5*s,18*s,2.5*s);ctx.fillStyle=col[0];ctx.fillRect(x-9*s,y-4*s,18*s,1.6*s);
-  ctx.fillStyle=body;for(const dx of [-7,-2.4,2.4,7])ctx.fillRect(x+(dx-0.9)*s,y-16*s,1.8*s,12*s); /* colonnettes */
-  ctx.fillStyle=col[0];for(const [x0,x1] of [[-7.9,-1.5],[1.5,7.9]]){ctx.beginPath();ctx.moveTo(x+x0*s,y-16*s);ctx.quadraticCurveTo(x+x0*s,y-22*s,x+(x0+x1)/2*s,y-24*s);ctx.quadraticCurveTo(x+x1*s,y-22*s,x+x1*s,y-16*s);ctx.closePath();ctx.fill();} /* gâbles */
-  ctx.fillStyle='rgba(0,0,0,.45)';for(const [x0,x1] of [[-6,-3.3],[3.3,6]]){ctx.beginPath();ctx.moveTo(x+x0*s,y-4*s);ctx.lineTo(x+x0*s,y-14*s);ctx.quadraticCurveTo(x+(x0+x1)/2*s,y-18*s,x+x1*s,y-14*s);ctx.lineTo(x+x1*s,y-4*s);ctx.fill();} /* les jours des arcs */
-  ctx.fillStyle=body;ctx.beginPath();ctx.moveTo(x-3.5*s,y-20*s);ctx.lineTo(x,y-40*s);ctx.lineTo(x+3.5*s,y-20*s);ctx.closePath();ctx.fill(); /* la flèche */
-  ctx.fillStyle=G;for(let k=0;k<3;k++){const yy=y-25*s-k*5*s,w=(2.6-k*.7)*s;for(const d of [-1,1]){ctx.beginPath();ctx.moveTo(x+d*w,yy);ctx.quadraticCurveTo(x+d*(w+3*s),yy-1*s,x+d*(w+1.8*s),yy-3.5*s);ctx.lineTo(x+d*w*0.6,yy-2*s);ctx.fill();}}
-  for(const dx of [-7.9,7.9]){ctx.beginPath();ctx.moveTo(x+dx*s-1*s,y-16*s);ctx.lineTo(x+dx*s,y-22*s);ctx.lineTo(x+dx*s+1*s,y-16*s);ctx.fill();} /* pinacles des angles */
-  ctx.beginPath();ctx.moveTo(x,y-46*s);ctx.quadraticCurveTo(x+2.4*s,y-42*s,x,y-39.5*s);ctx.quadraticCurveTo(x-2.4*s,y-42*s,x,y-46*s);ctx.fill();ctx.fillRect(x-2*s,y-41*s,4*s,0.9*s);} /* fleuron */
- 
-else if (kind === "flamboyant") { const x = 0, y = 0, s = 1, G = gold; /* une dentelle de nervures en flammes autour d'une âme */
-  ctx.fillStyle=col[1];ctx.fillRect(x-8*s,y-2.5*s,16*s,2.5*s);
-  ctx.strokeStyle=col[0];ctx.lineCap='round';
-  for(const d of [-1,1])for(let k=0;k<3;k++){ctx.lineWidth=(2.2-k*.4)*s;ctx.beginPath();ctx.moveTo(x+d*(7-k*2)*s,y-2.5*s);ctx.bezierCurveTo(x+d*(9-k*2)*s,y-14*s,x-d*(2+k)*s,y-20*s,x+d*(1.5)*s,y-(30+k*3)*s);ctx.stroke();} /* les flammes qui s'enlacent */
-  ctx.strokeStyle=col[2];ctx.lineWidth=1*s;for(const d of [-1,1]){ctx.beginPath();ctx.moveTo(x+d*5*s,y-8*s);ctx.quadraticCurveTo(x,y-13*s,x-d*3*s,y-18*s);ctx.stroke();}
-  ctx.fillStyle=G;ctx.beginPath();ctx.moveTo(x,y-44*s);ctx.quadraticCurveTo(x+2.4*s,y-40*s,x,y-37*s);ctx.quadraticCurveTo(x-2.4*s,y-40*s,x,y-44*s);ctx.fill();ctx.fillRect(x-0.6*s,y-37*s,1.2*s,4*s);}
- 
-else if (kind === "tower") { const x = 0, y = 0, s = 1, body = lin(-8, 8, [col[2], col[0], col[1], col[2]]); /* la tour : massive, à créneaux, une croix d'or en façade, un toit en pointe */
+else if (kind === "rayonnant" || kind === "flamboyant") {
+    const st = lin(-9, 9, [col[2], col[0], col[1], col[2]]), dark = "rgba(0,0,0,.58)";
+    const fleuron = (y) => { ctx.fillStyle = gold; ctx.beginPath(); ctx.moveTo(0, y - 4.6); ctx.quadraticCurveTo(1.2, y - 2.2, 0, y - 0.2); ctx.quadraticCurveTo(-1.2, y - 2.2, 0, y - 4.6); ctx.fill();
+      for (const d of [-1, 1]) { ctx.beginPath(); ctx.moveTo(0, y - 1); ctx.quadraticCurveTo(d * 2.4, y - 2.6, d * 2.2, y - 0.4); ctx.quadraticCurveTo(d * 1, y - 0.6, 0, y - 0.2); ctx.fill(); } ctx.fillRect(-1.3, y - 0.3, 2.6, 0.8); };
+    const pinnacle = (x, y0, h) => { ctx.fillStyle = st; ctx.beginPath(); ctx.moveTo(x - 1.4, y0); ctx.lineTo(x, y0 - h); ctx.lineTo(x + 1.4, y0); ctx.closePath(); ctx.fill(); ctx.fillStyle = gold; ctx.beginPath(); ctx.arc(x, y0 - h - 0.6, 0.8, 0, TAU); ctx.fill(); };
+    ctx.fillStyle = col[1]; ctx.fillRect(-10, -3, 20, 3); ctx.fillStyle = col[0]; ctx.fillRect(-9, -5, 18, 2.2); /* le socle à deux degrés */
+    if (kind === "rayonnant") { /* le rayonnant : un baldaquin à deux arcs brisés sous leurs gâbles, des pinacles aux angles, une flèche élancée à crochets, un fleuron */
+      ctx.fillStyle = st; for (const dx of [-8, -3, 3, 8]) ctx.fillRect(dx - 1, -19.5, 2, 14.5); /* les colonnettes */
+      for (const cx of [-5.5, 5.5]) {
+        ctx.fillStyle = dark; ctx.beginPath(); ctx.moveTo(cx - 2, -5); ctx.lineTo(cx - 2, -14); ctx.quadraticCurveTo(cx - 2, -17.6, cx, -19.6); ctx.quadraticCurveTo(cx + 2, -17.6, cx + 2, -14); ctx.lineTo(cx + 2, -5); ctx.closePath(); ctx.fill(); /* l'arc brisé, ajouré */
+        ctx.fillStyle = st; ctx.beginPath(); ctx.moveTo(cx - 3.8, -19); ctx.lineTo(cx, -28); ctx.lineTo(cx + 3.8, -19); ctx.closePath(); ctx.fill(); /* le gâble */
+        ctx.strokeStyle = gold; ctx.lineWidth = 0.45; ctx.beginPath(); ctx.arc(cx, -22.4, 1.2, 0, TAU); ctx.stroke(); } /* un oculus doré dans le gâble */
+      for (const dx of [-9, 9]) pinnacle(dx, -19, 13);
+      ctx.fillStyle = st; ctx.fillRect(-3, -28, 6, 9.5); ctx.fillStyle = dark; ctx.beginPath(); ctx.moveTo(-1, -19.5); ctx.lineTo(-1, -24.5); ctx.lineTo(0, -26); ctx.lineTo(1, -24.5); ctx.lineTo(1, -19.5); ctx.closePath(); ctx.fill(); /* le tambour, sa lancette */
+      ctx.fillStyle = st; ctx.beginPath(); ctx.moveTo(-3.4, -28); ctx.lineTo(0, -54); ctx.lineTo(3.4, -28); ctx.closePath(); ctx.fill(); /* la flèche */
+      ctx.fillStyle = gold; for (let k = 0; k < 5; k++) { const yy = -31 - k * 4.8, w = 3.4 * (1 - (-yy - 28) / 26); for (const d of [-1, 1]) { ctx.beginPath(); ctx.moveTo(d * w, yy); ctx.quadraticCurveTo(d * (w + 1.9), yy - 0.6, d * (w + 1.3), yy - 2.3); ctx.lineTo(d * w * 0.7, yy - 1.4); ctx.closePath(); ctx.fill(); } } /* les crochets */
+      fleuron(-54); }
+    else { /* le flamboyant : un arc en accolade sur deux piliers, ajouré d'un remplage en flammes (soufflets, mouchettes), des pinacles, des crochets, un fleuron */
+      ctx.fillStyle = st; ctx.beginPath(); ctx.moveTo(-9, -5); ctx.lineTo(-9, -20); ctx.bezierCurveTo(-9, -30, -2, -30, -1.2, -40); ctx.lineTo(0, -47); ctx.lineTo(1.2, -40); ctx.bezierCurveTo(2, -30, 9, -30, 9, -20); ctx.lineTo(9, -5); ctx.closePath(); ctx.fill(); /* l'accolade */
+      ctx.fillStyle = dark; ctx.beginPath(); ctx.moveTo(-6.4, -5); ctx.lineTo(-6.4, -17); ctx.bezierCurveTo(-6.4, -24, -2, -27, 0, -32); ctx.bezierCurveTo(2, -27, 6.4, -24, 6.4, -17); ctx.lineTo(6.4, -5); ctx.closePath(); ctx.fill(); /* le vide de l'arc */
+      ctx.strokeStyle = st; ctx.lineCap = "round"; ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(0, -5); ctx.lineTo(0, -16); ctx.stroke(); /* le meneau */
+      for (const d of [-1, 1]) {
+        ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(0, -16); ctx.bezierCurveTo(d * 1, -20, d * 6.4, -18, d * 6.3, -13.5); ctx.stroke(); /* l'arc des lancettes */
+        ctx.beginPath(); ctx.moveTo(d * 0.3, -16.4); ctx.bezierCurveTo(d * 5, -19, d * 5.6, -24.5, d * 0.8, -29.5); ctx.stroke(); /* la nervure qui monte en flamme */
+        ctx.lineWidth = 0.75; ctx.beginPath(); ctx.moveTo(d * 1, -19); ctx.bezierCurveTo(d * 4.4, -20, d * 4, -24.5, d * 1.2, -26.5); ctx.bezierCurveTo(d * 2.6, -23.5, d * 2.4, -21, d * 1, -19); ctx.stroke(); } /* la mouchette */
+      ctx.lineCap = "butt";
+      for (const d of [-1, 1]) pinnacle(d * 9, -20, 15);
+      ctx.fillStyle = gold; for (const [px, py] of [[-6.6, -27], [-3.3, -32.5], [-1.5, -38.5]]) for (const sg of [1, -1]) { const x = px * sg; ctx.beginPath(); ctx.moveTo(x, py); ctx.quadraticCurveTo(x - sg * 1.9, py - 1, x - sg * 1.3, py - 2.7); ctx.lineTo(x + sg * 0.3, py - 1.4); ctx.closePath(); ctx.fill(); } /* les crochets le long de l'accolade */
+      fleuron(-47); }
+  }
+else if (kind === "clock") { /* l'horloge D'ni, en petit : la sphère armillaire sur son pilier ; ses quatre anneaux tournent à l'heure D'ni réelle */
+    const st = lin(-6, 6, [col[2], col[0], col[1], col[2]]), R = require("./dniclock").rings(Date.now());
+    ctx.fillStyle = col[1]; ctx.fillRect(-7, -3, 14, 3); ctx.fillStyle = col[0]; ctx.fillRect(-6, -4.6, 12, 1.8); /* le socle */
+    ctx.fillStyle = st; ctx.beginPath(); ctx.moveTo(-2.4, -4.6); ctx.lineTo(-1.6, -16); ctx.lineTo(1.6, -16); ctx.lineTo(2.4, -4.6); ctx.closePath(); ctx.fill(); /* le pilier */
+    ctx.fillStyle = gold; ctx.fillRect(-3.2, -17, 6.4, 1.4); /* le chapiteau */
+    const cy = -25.5, ring = (rx, ry, rot, w, c2) => { ctx.strokeStyle = c2; ctx.lineWidth = w; ctx.beginPath(); ctx.ellipse(0, cy, rx, ry, rot, 0, TAU); ctx.stroke(); };
+    ctx.fillStyle = "rgba(255,220,150,.12)"; ctx.beginPath(); ctx.arc(0, cy, 9, 0, TAU); ctx.fill();
+    R.forEach((u, q) => { const rr = 9.4 - q * 2.1, a = u.angle; ring(rr, rr * Math.abs(Math.cos(a * 0.5 + q)) * 0.9 + 0.6, q * 0.5, q ? 0.9 : 1.2, q % 2 ? gold : st);
+      const px = Math.cos(a - Math.PI / 2) * rr, py = Math.sin(a - Math.PI / 2) * rr * 0.6; ctx.fillStyle = gold; ctx.beginPath(); ctx.arc(px, cy + py, 0.7, 0, TAU); ctx.fill(); }); /* les anneaux, et la perle qui marque chacun */
+    ctx.fillStyle = col[0]; ctx.beginPath(); ctx.arc(0, cy, 1.6, 0, TAU); ctx.fill(); ctx.fillStyle = gold; ctx.beginPath(); ctx.moveTo(0, cy - 11); ctx.lineTo(1, cy - 9.6); ctx.lineTo(-1, cy - 9.6); ctx.closePath(); ctx.fill(); } /* le cœur, l'index en haut */
+else if (kind === "tower") { const x = 0, y = 0, s = 1, body = lin(-8, 8, [col[2], col[0], col[1], col[2]]); /* la tour : massive, à créneaux, un lys d'or en façade, un toit en pointe */
   ctx.fillStyle=body;ctx.beginPath();ctx.moveTo(x-9*s,y);ctx.lineTo(x-7.5*s,y-22*s);ctx.lineTo(x+7.5*s,y-22*s);ctx.lineTo(x+9*s,y);ctx.closePath();ctx.fill();
-  ctx.fillStyle=col[0];ctx.fillRect(x-8.5*s,y-25*s,17*s,3*s);for(const dx of [-8.5,-4.5,-0.5,3.5,7.5]){ctx.fillRect(x+(dx)*s,y-28*s,1.8*s,3*s);} /* les créneaux */
+  ctx.fillStyle=col[0];ctx.fillRect(x-8.5*s,y-25*s,17*s,3*s);for(const dx of [-8.5,-4.7,-0.9,2.9,6.7]){ctx.fillRect(x+(dx)*s,y-28*s,1.8*s,3*s);} /* les créneaux */
   ctx.fillStyle=col[1];ctx.beginPath();ctx.moveTo(x-6*s,y-28*s);ctx.lineTo(x,y-38*s);ctx.lineTo(x+6*s,y-28*s);ctx.closePath();ctx.fill();
   ctx.strokeStyle='rgba(0,0,0,.25)';ctx.lineWidth=0.5*s;for(let k=1;k<6;k++){ctx.beginPath();ctx.moveTo(x-8*s,y-k*4*s);ctx.lineTo(x+8*s,y-k*4*s);ctx.stroke();}
   ctx.fillStyle=gold;ctx.beginPath();ctx.moveTo(x,y-19*s);ctx.quadraticCurveTo(x+2.2*s,y-15*s,x,y-12*s);ctx.quadraticCurveTo(x-2.2*s,y-15*s,x,y-19*s);ctx.fill();for(const d of [-1,1]){ctx.beginPath();ctx.moveTo(x,y-13*s);ctx.quadraticCurveTo(x+d*4.5*s,y-16*s,x+d*3.8*s,y-11.5*s);ctx.quadraticCurveTo(x+d*2*s,y-13*s,x,y-12*s);ctx.fill();}ctx.fillRect(x-2.6*s,y-12.6*s,5.2*s,1.1*s); /* un lys d'or en façade */}
@@ -264,7 +287,7 @@ function drawBaykh(r, ctx, sc, sky, t) {
   /* au bord avant de la table : le coffret des Clefs, le cadran de la taille, le bouton de bronze, les plots du niveau */
   const fx = F.P(0.5, 1.12)[1], between = !st.started || G.end || G.ply === 0;
   { const x = 170, y = fx + 2; ctx.fillStyle = "#3a2410"; ctx.fillRect(x - 33, y - 6, 66, 14); ctx.fillStyle = "#c99a52"; ctx.fillRect(x - 33, y - 6, 66, 1.4); /* le coffret, ouvert */
-    CAPS.forEach((k, q) => { const CF = frame(1, { cx: x - 27 + q * 9, top: y - 2, bot: y + 4, wT: 11, wB: 12 }); capstone(ctx, CF, Hb, 0, 0, me, k, 0, k === s.cap ? 0.9 : 0, s.capCol); });
+    CAPS.forEach((k, q) => { const CF = frame(1, { cx: x - 28 + q * 8, top: y - 2, bot: y + 4, wT: 9.5, wB: 10 }); capstone(ctx, CF, Hb, 0, 0, me, k, 0, k === s.cap ? 0.9 : 0, s.capCol); });
     if (between) r.hot.push({ x: x - 32, y: y - 26, w: 64, h: 36, baykh: { box: true, id: "box" } }); if (hv("box")) { ctx.strokeStyle = "rgba(255,220,150,.4)"; ctx.strokeRect(x - 31, y - 7, 62, 16); } }
   { const x = 470, y = fx + 4; ctx.fillStyle = "#5a3c14"; ctx.beginPath(); ctx.ellipse(x, y + 1, 17, 6.5, 0, 0, TAU); ctx.fill(); ctx.fillStyle = "#c99a52"; ctx.beginPath(); ctx.ellipse(x, y, 15, 5.6, 0, 0, TAU); ctx.fill(); /* le cadran */
     for (let k = 3; k <= 8; k++) { const a = Math.PI * (1.08 + (k - 3) / 5 * 0.84), on = k === n; numeral(ctx, k, x + Math.cos(a) * 11, y + Math.sin(a) * 4.2, 3.6, on ? "#2a1000" : "rgba(60,40,16,.55)"); }
@@ -299,10 +322,10 @@ function capBox(r, ctx, Hb, s, me, t, hv) {
   vel(x0 + 14, y0 + 14, 150, h - 28);
   { const F = frame(1, { cx: x0 + 89, top: y0 + 200, bot: y0 + 222, wT: 84, wB: 88 }); capstone(ctx, F, Hb, 0, 0, me, s.cap, 0, 0.5 + 0.2 * Math.sin(t * 2), s.capCol); }
   /* les quatre modèles */
-  CAPS.forEach((k, q) => { const x = x0 + 180 + q * 32.5, y = y0 + 14, on = k === s.cap; vel(x, y, 29, 120);
-    if (on || hv("m" + k)) { ctx.strokeStyle = on ? "#f0cc6a" : "rgba(240,204,106,.45)"; ctx.lineWidth = on ? 1.6 : 1; ctx.strokeRect(x + 0.5, y + 0.5, 28, 119); }
-    const F = frame(1, { cx: x + 14.5, top: y + 88, bot: y + 104, wT: 30, wB: 32 }); capstone(ctx, F, Hb, 0, 0, me, k, 0, 0, s.capCol);
-    r.hot.push({ x, y, w: 29, h: 120, baykh: { pickCap: k, id: "m" + k } }); });
+  CAPS.forEach((k, q) => { const x = x0 + 180 + q * 28, y = y0 + 14, on = k === s.cap; vel(x, y, 25, 120);
+    if (on || hv("m" + k)) { ctx.strokeStyle = on ? "#f0cc6a" : "rgba(240,204,106,.45)"; ctx.lineWidth = on ? 1.6 : 1; ctx.strokeRect(x + 0.5, y + 0.5, 24, 119); }
+    const F = frame(1, { cx: x + 12.5, top: y + 90, bot: y + 104, wT: 26, wB: 28 }); capstone(ctx, F, Hb, 0, 0, me, k, 0, 0, s.capCol);
+    r.hot.push({ x, y, w: 25, h: 120, baykh: { pickCap: k, id: "m" + k } }); });
   /* les couleurs : des pastilles d'émail, de métal ou de pierre ; la première, la couleur du joueur */
   vel(x0 + 180, y0 + 146, 224, h - 160);
   COL_KEYS.forEach((k, q) => { const cx = x0 + 198 + (q % 5) * 47, cy = y0 + 170 + Math.floor(q / 5) * 40, on = k === s.capCol, c = CAP_COLS[k] || Hb.C[me];
