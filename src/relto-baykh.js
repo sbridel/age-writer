@@ -301,8 +301,8 @@ function book(ctx, x, y, hi) {
 /** La stèle de la maison : une petite stèle de laiton dressée face au joueur, derrière la réserve de la machine. Au milieu, un émail aux couleurs
  *  de sa guilde, comme ses bannières du couloir : le fond dans sa couleur, le symbole dans celle de son fil (demande de l'auteur). */
 function stele(ctx, Hb, x, y, guild) {
-  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(x + 4, y + 4, 30, 6, 0, 0, TAU); ctx.fill();
-  ctx.fillStyle = mix(Hb.table, "#000000", 0.3); ctx.fillRect(x - 28, y - 4, 56, 8);
+  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(x + 2, y + 3, 26, 5, 0, 0, TAU); ctx.fill(); /* l'ombre reste sur la table */
+  ctx.fillStyle = mix(Hb.table, "#000000", 0.3); ctx.fillRect(x - 26, y - 4, 52, 8);
   const arch = (k) => { ctx.beginPath(); ctx.moveTo(x - 22 + k, y - 4 - k); ctx.lineTo(x - 22 + k, y - 46); ctx.quadraticCurveTo(x, y - 60 + k * 1.3, x + 22 - k, y - 46); ctx.lineTo(x + 22 - k, y - 4 - k); ctx.closePath(); };
   const g = ctx.createLinearGradient(x - 24, 0, x + 24, 0); g.addColorStop(0, "#8a6428"); g.addColorStop(0.45, "#e8c070"); g.addColorStop(1, "#7a5420"); ctx.fillStyle = g; arch(0); ctx.fill(); ctx.strokeStyle = "#5a3c14"; ctx.lineWidth = 1.2; ctx.stroke();
   const c = GS.COL[guild] || [122, 30, 46], e = ctx.createLinearGradient(0, y - 54, 0, y - 6); e.addColorStop(0, `rgb(${c.map((v) => Math.round(v + (255 - v) * 0.16)).join(",")})`); e.addColorStop(1, `rgb(${c.map((v) => Math.round(v * 0.72)).join(",")})`);
@@ -332,7 +332,7 @@ function drawBaykh(r, ctx, sc, sky, t) {
     ctx.fillStyle = mix(Hb.table, "#000000", 0.35); ctx.fillRect(8, 292, 624, 10); ctx.fillStyle = Hb.trim; ctx.fillRect(8, 292, 624, 1.2); /* le chant, fin */
     ctx.fillStyle = mix(Hb.table, "#000000", 0.25); ctx.fillRect(270, 293, 100, 9); ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.lineWidth = 1; ctx.strokeRect(270.5, 293.5, 99, 8);
     ctx.fillStyle = hv("drawer") ? "#f4cc80" : "#d8aa5e"; ctx.fillRect(306, 296, 28, 3); r.hot.push({ ...DRAWER, baykh: { drawer: true, id: "drawer" } }); /* le tiroir des réglages, sa poignée */
-    stele(ctx, Hb, bot === 0 ? RES_X[0] + 4 : RES_X[1] - 4, 62, st.botGuild || "mainteneurs");
+    stele(ctx, Hb, bot === 0 ? RES_X[0] + 10 : RES_X[1] - 12, 62, st.botGuild || "mainteneurs");
   }
   /* le plateau, posé sur la table : son ombre, son épaisseur, son bord */
   ctx.fillStyle = "rgba(0,0,0,.45)"; quad(...[[-0.06, 1.06], [1.06, 1.06], [1.06, -0.06], [-0.06, -0.06]].map(([u, v]) => { const [x, y] = F.P(u, v); return [x + 6, y + 8]; })); ctx.fill();
