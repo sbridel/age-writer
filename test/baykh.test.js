@@ -77,7 +77,7 @@ console.log("baykh : " + n + " OK");
   mem = {}; const R4 = make(null), s4 = BK.state(R4); let g = B.newGame(3); g.ply = 2; g.board[0] = [{ p: 0, k: "f" }]; g.board[1] = [{ p: 0, k: "f" }]; s4.G = g; s4.started = true;
   BK.act(R4, { cell: 2 }); ok(mem.log && mem.log.length === 1 && mem.log[0].won && mem.log[0].by === "road" && mem.rank === 1, "une route gagnée : le carnet l'écrit, le rang monte");
   BK.act(R4, { ledger: true }); R4.hot = []; R4.draw(4); ok(R4.hot.some((h) => h.baykh && h.baykh.id === "ledgerIn"), "le carnet s'ouvre");
-  /* la table de 2.12 : plus d'ambre ni de bronze ; la réserve d'en face passe la main ; le tiroir ; le bois de la vue de dessus */
+  /* la table de 2.11.2 : plus d'ambre ni de bronze ; la réserve d'en face passe la main ; le tiroir ; le bois de la vue de dessus */
   mem = {}; const R5 = make(null), s5 = BK.state(R5); let g5 = B.newGame(5); g5.ply = 2; g5.board[12] = [{ p: 0, k: "f" }]; s5.G = g5; s5.started = true;
   ok(!R5.hot.some((h) => h.baykh && (h.baykh.confirm || h.baykh.cancel)), "plus de boutons d'ambre ni de bronze");
   BK.act(R5, { cell: 12 }); BK.act(R5, { cell: 13 }); ok(s5.hand && s5.hand.drops.join() === "1", "on sème la pile");

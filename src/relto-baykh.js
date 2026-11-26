@@ -245,7 +245,7 @@ else if (kind === "tower") { const x = 0, y = 0, s = 1, body = lin(-8, 8, [col[2
 function numeral(ctx, v, x, y, s, col) { try { return require("./relto-ahyoheek").numeral ? require("./relto-ahyoheek").numeral(ctx, v, x, y, s, col) : null; } catch (e) { return null; } }
 
 /* ---------------------------------------------------------------- la vue ---------------------------------------------------------------- */
-/* ---------------------------------------------------------------- la table basse (2.12) ---------------------------------------------------------------- */
+/* ---------------------------------------------------------------- la table basse (2.11.2) ---------------------------------------------------------------- */
 /* Une vraie table : un dessus de bois veiné au chant fin, quatre pieds tournés, une tablette basse entre les pieds. Le plateau de jeu est posé
  * par-dessus ; le dessus n'a plus que lui, les deux réserves, les Clefs et la stèle de la maison. Sur la tablette : le coffret, le bouton de la vue,
  * le carnet. Les réglages (niveau, taille, partie neuve) sont rangés dans le tiroir du chant. Choix de l'auteur, 26 nov. 2026. */

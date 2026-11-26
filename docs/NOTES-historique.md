@@ -699,7 +699,7 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
-## En attente (assembly) — la table de Baykh (26 nov. 2026)
+## 2.11.2 — la table de Baykh (26 nov. 2026)
 
 Conception de l'auteur, le 26 au matin (`claude/DESIGN-table-de-baykh.md`, planches A à K). `src/relto-baykh.js` :
 - `drawBaykh` refait : une vraie table basse (`grain`, quatre pieds `leg`, chant fin, tablette basse), le plateau posé dessus (ombre, épaisseur, cadre `PERSP`), les réserves de part et d'autre (`RES_X`, au plus douze pièces dessinées), les Clefs devant ; la stèle de la guilde adverse (`stele`, symbole gravé en creux, ×3) derrière sa réserve, en perspective seulement. Sur la tablette : `casket` (le coffret couché, ouvert entre deux parties, fermé pendant), le bouton de la vue (`knob`), le carnet (`book`). Dans le chant : le tiroir (`DRAWER`) ; ouvert, `drawer()` montre trois cases de velours (niveau, cadran de la taille, partie neuve) ; niveau et taille grisés pendant une partie.
@@ -707,7 +707,7 @@ Conception de l'auteur, le 26 au matin (`claude/DESIGN-table-de-baykh.md`, planc
 - Vue de dessus (`ABOVE`) : la table remplit le cadre, aucun bouton ; trois zones de bois (`wood`) autour du plateau font se rasseoir.
 - Les habits : `trim` (laiton, cuivre de la Verrière, or du Château) et `velvet` dans `habit()` ; `capBox` prend `Hb.velvet`.
 - `capstone` : l'abeille et la main ×1,3.
-- Aussi en attente : la bande de l'heure en plein écran laisse passer les clics (`styles.ext.css`).
+- Aussi : la bande de l'heure en plein écran laisse passer les clics (`styles.ext.css`).
 
 ## 2.11.1 — Baykh, la vue de dessus (26 nov. 2026)
 
