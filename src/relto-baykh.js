@@ -298,22 +298,19 @@ function book(ctx, x, y, hi) {
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + 3, sy); ctx.quadraticCurveTo(sx + 3.6, y + th + 2, ex + 3, ey); ctx.lineTo(ex + 1.5, ey - 1.6); ctx.lineTo(ex, ey); ctx.quadraticCurveTo(sx + 0.6, y + th + 2.5, sx, sy); ctx.closePath(); ctx.fill();
     ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.fillRect(sx, sy, 3, 0.8); } /* l'ombre des pages sur le ruban */
 }
-/** La stèle de la maison : une petite stèle de laiton dressée face au joueur, derrière la réserve de la machine ; le symbole de sa guilde gravé en creux. */
+/** La stèle de la maison : une petite stèle de laiton dressée face au joueur, derrière la réserve de la machine. Au milieu, un émail aux couleurs
+ *  de sa guilde, comme ses bannières du couloir : le fond dans sa couleur, le symbole dans celle de son fil (demande de l'auteur). */
 function stele(ctx, Hb, x, y, guild) {
   ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(x + 4, y + 4, 30, 6, 0, 0, TAU); ctx.fill();
   ctx.fillStyle = mix(Hb.table, "#000000", 0.3); ctx.fillRect(x - 28, y - 4, 56, 8);
-  const g = ctx.createLinearGradient(x - 24, 0, x + 24, 0); g.addColorStop(0, "#8a6428"); g.addColorStop(0.45, "#e8c070"); g.addColorStop(1, "#7a5420"); ctx.fillStyle = g;
-  ctx.beginPath(); ctx.moveTo(x - 22, y - 4); ctx.lineTo(x - 22, y - 46); ctx.quadraticCurveTo(x, y - 60, x + 22, y - 46); ctx.lineTo(x + 22, y - 4); ctx.closePath(); ctx.fill(); ctx.strokeStyle = "#5a3c14"; ctx.lineWidth = 1.2; ctx.stroke();
-  GS.draw(ctx, guild, x + 0.6, y - 27.4, 15, "rgba(255,236,190,.55)", 0.1); GS.draw(ctx, guild, x, y - 28, 15, "#2a1604", 0.1); }
-/** Les pièces de la maison prennent la couleur de sa guilde (demande de l'auteur) : le dessus éclairci, le flanc, l'ombre ; la matière reste celle de l'habit
- *  (le verre reste translucide à la Verrière, le filet d'or reste au Château). Les miennes gardent la couleur de l'habit. */
-function guildHabit(Hb, bot, guild) {
-  const c = guild && GS.COL[guild]; if (!c) return Hb;
-  const a = Hb.kind === "glass" ? 0.95 : 1, sh = (k, t) => c.map((v) => Math.round(v + (k - v) * t)), css = (v) => (a < 1 ? `rgba(${v.join(",")},${a})` : `rgb(${v.join(",")})`);
-  const C = Hb.C.slice(); C[bot] = [css(sh(255, 0.2)), css(c), css(sh(0, 0.45))]; return { ...Hb, C };
-}
+  const arch = (k) => { ctx.beginPath(); ctx.moveTo(x - 22 + k, y - 4 - k); ctx.lineTo(x - 22 + k, y - 46); ctx.quadraticCurveTo(x, y - 60 + k * 1.3, x + 22 - k, y - 46); ctx.lineTo(x + 22 - k, y - 4 - k); ctx.closePath(); };
+  const g = ctx.createLinearGradient(x - 24, 0, x + 24, 0); g.addColorStop(0, "#8a6428"); g.addColorStop(0.45, "#e8c070"); g.addColorStop(1, "#7a5420"); ctx.fillStyle = g; arch(0); ctx.fill(); ctx.strokeStyle = "#5a3c14"; ctx.lineWidth = 1.2; ctx.stroke();
+  const c = GS.COL[guild] || [122, 30, 46], e = ctx.createLinearGradient(0, y - 54, 0, y - 6); e.addColorStop(0, `rgb(${c.map((v) => Math.round(v + (255 - v) * 0.16)).join(",")})`); e.addColorStop(1, `rgb(${c.map((v) => Math.round(v * 0.72)).join(",")})`);
+  ctx.fillStyle = e; arch(4); ctx.fill(); ctx.strokeStyle = "rgba(60,36,10,.7)"; ctx.lineWidth = 1; ctx.stroke(); /* l'émail, serti dans le laiton */
+  ctx.fillStyle = "rgba(255,255,255,.12)"; ctx.beginPath(); ctx.ellipse(x - 8, y - 40, 5, 9, -0.3, 0, TAU); ctx.fill(); /* un reflet sur l'émail */
+  GS.draw(ctx, guild, x, y - 28, 15, GS.THREAD[guild] || "#ffde8c", 0.1); }
 function drawBaykh(r, ctx, sc, sky, t) {
-  const st = state(r), s = cur(r), G = st.G, n = G.n, Hb = guildHabit(habit(r), 1 - s.side, st.botGuild), top = s.top, F = frame(n, top ? ABOVE : PERSP), me = s.side, bot = 1 - me, now = Date.now(), tr = T(r);
+  const st = state(r), s = cur(r), G = st.G, n = G.n, Hb = habit(r), top = s.top, F = frame(n, top ? ABOVE : PERSP), me = s.side, bot = 1 - me, now = Date.now(), tr = T(r);
   const hv = (id) => r.hover && r.hover.baykh && r.hover.baykh.id === id, between = !st.started || G.end || G.ply === 0;
   const hand = st.hand, ready = !!(hand && hand.drops.length && hand.take === hand.drops.reduce((p, q) => p + q, 0)); /* toute la pile est semée : le coup attend qu'on passe la main */
   const quad = (a, b2, c2, d2) => poly(ctx, [a, b2, c2, d2]);
