@@ -32,7 +32,7 @@ const levelOf = (s) => (s.level === "rank" ? (s.rank >= 6 ? "hard" : s.rank >= 3
 function saved(r) {
   const s = (r.opts && r.opts.baykhState && r.opts.baykhState()) || {};
   return { n: [3, 4, 5, 6, 7, 8].includes(s.n) ? s.n : 5, side: s.side === 1 ? 1 : 0, cap: CAPS.includes(s.cap) ? s.cap : "robe", capCol: COL_KEYS.includes(s.capCol) ? s.capCol : "mine", level: LEVELS.includes(s.level) ? s.level : "mid",
-    rank: Math.max(0, s.rank | 0), top: !!s.top, game: s.game && typeof s.game === "object" ? s.game : null, bot: s.bot && CAPS.includes(s.bot.cap) ? s.bot : null, log: Array.isArray(s.log) ? s.log.slice(0, 40) : [] };
+    rank: Math.max(0, s.rank | 0), top: !!s.top, shut: !!s.shut, game: s.game && typeof s.game === "object" ? s.game : null, bot: s.bot && CAPS.includes(s.bot.cap) ? s.bot : null, log: Array.isArray(s.log) ? s.log.slice(0, 40) : [] };
 }
 function cur(r) { return r._bkSaved || saved(r); }
 function save(r, patch) { const s = { ...cur(r), ...patch }; r._bkSaved = s; if (r.opts && r.opts.onBaykh) r.opts.onBaykh(s); return s; }
@@ -95,7 +95,8 @@ function act(r, a) {
     if (a.side !== s.side && mine && st.hand) { const h = st.hand; if (h.drops.length && h.take === h.drops.reduce((p, q) => p + q, 0) && !play(r, { t: "m", i: h.from, d: h.d, drops: h.drops.slice() })) st.hand = null; return; } /* toucher la réserve d'en face quand toute la pile est semée : on passe la main, le coup est joué */
     if (a.side === s.side && mine) { if (G.ply < 2) { st.sel = "f"; return; } if (G.res[s.side].s <= 0) return; st.sel = st.sel === "w" ? null : "w"; st.hand = null; snd(r, "tick"); } return; } /* la réserve : la prochaine pièce posée sera un Verrou (ou de nouveau une Voie) */
   if (a.capPick) { if (mine && G.ply >= 2 && G.res[s.side].c > 0) { st.sel = st.sel === "c" ? null : "c"; st.hand = null; snd(r, "tick"); } return; }
-  if (a.box) { if (!st.started || G.end || G.ply === 0) { st.box = true; snd(r, "open"); } return; } /* le coffret s'ouvre */
+  if (a.boxTop) { const now = Date.now(); if (st.topTap && now - st.topTap < 450) { st.topTap = 0; save(r, { shut: !s.shut }); snd(r, s.shut ? "open" : "tick"); } else st.topTap = now; return; } /* deux taps sur le dessus du coffret : il se ferme, ou se rouvre */
+  if (a.box) { if (!s.shut && (!st.started || G.end || G.ply === 0)) { st.box = true; snd(r, "open"); } return; } /* le coffret ouvert : l'écrin */
   if (a.boxClose) { st.box = false; st.ledger = false; st.drawer = false; snd(r, "tick"); return; }
   if (a.drawer) { st.drawer = true; st.hand = null; snd(r, "open"); return; } /* le tiroir des réglages s'ouvre */
   if (a.wood) { if (s.top) { save(r, { top: false }); snd(r, "tick"); } return; } /* vu d'en haut : toucher le bois de la table, c'est se rasseoir */
@@ -325,7 +326,8 @@ function drawBaykh(r, ctx, sc, sky, t) {
     leg(ctx, Hb, 70, 298, 318); leg(ctx, Hb, 570, 298, 318); /* les pieds arrière */
     grain(ctx, [[22, 346], [618, 346], [596, 306], [44, 306]], mix(Hb.table, "#000000", 0.12)); ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.fillRect(44, 306, 552, 8); /* la tablette basse, juste sous le dessus */
     ctx.fillStyle = mix(Hb.table, "#000000", 0.4); ctx.fillRect(22, 346, 596, 8); ctx.fillStyle = Hb.trim; ctx.fillRect(22, 346, 596, 1.2);
-    casket(ctx, Hb, 150, 342, between, me, s, hv("box")); if (between) r.hot.push({ x: 108, y: 300, w: 84, h: 54, baykh: { box: true, id: "box" } });
+    casket(ctx, Hb, 150, 342, between && !s.shut, me, s, hv("box") || hv("boxTop")); /* fermé pendant une partie ; entre deux, ouvert sauf si on l'a fermé */
+    if (between) { if (!s.shut) r.hot.push({ x: 108, y: 315, w: 84, h: 39, baykh: { box: true, id: "box" } }); r.hot.push({ x: 108, y: 298, w: 84, h: 17, baykh: { boxTop: true, id: "boxTop" } }); }
     knob(ctx, 320, 326, 18, 7.6, hv("top") ? BRASS_HI : BRASS, (x, y) => ctx.rect(x - 5, y - 3, 10, 5.6)); r.hot.push({ x: 292, y: 306, w: 56, h: 40, baykh: { topView: true, id: "top" } }); /* le seul bouton : la vue de dessus */
     book(ctx, 490, 334, hv("ledger")); r.hot.push({ x: 456, y: 308, w: 68, h: 44, baykh: { ledger: true, id: "ledger" } });
     leg(ctx, Hb, 26, 296, 360); leg(ctx, Hb, 614, 296, 360); /* les pieds avant */
