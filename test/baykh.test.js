@@ -90,6 +90,11 @@ console.log("baykh : " + n + " OK");
   BK.act(R6, { drawer: true }); R6.hot = []; R6.draw(4); ok(R6.hot.some((h) => h.baykh && h.baykh.id === "drawerIn") && R6.hot.some((h) => h.baykh && h.baykh.fresh), "le tiroir s'ouvre : une partie neuve");
   ok(!R6.hot.some((h) => h.baykh && (h.baykh.dial || h.baykh.level != null)), "pendant une partie, ni la taille ni le niveau ne se touchent");
   BK.act(R6, { boxClose: true }); ok(!s6.drawer, "toucher hors du tiroir le referme");
+  mem = {}; const R8 = make(null), s8 = BK.state(R8); BK.act(R8, { boxTop: true }); ok(!mem.shut, "un seul tap sur le dessus : rien");
+  BK.act(R8, { boxTop: true }); ok(mem.shut === true, "deux taps sur le dessus : le coffret se ferme");
+  BK.act(R8, { box: true }); ok(!s8.box, "fermé, il n'ouvre pas l'écrin");
+  BK.act(R8, { boxTop: true }); BK.act(R8, { boxTop: true }); ok(mem.shut === false, "deux taps encore : il se rouvre");
+  BK.act(R8, { box: true }); ok(s8.box, "ouvert, il ouvre l'écrin");
   mem = { top: true }; const R7 = make(null); ok(R7.hot.some((h) => h.baykh && h.baykh.wood) && !R7.hot.some((h) => h.baykh && (h.baykh.topView || h.baykh.box || h.baykh.ledger || h.baykh.drawer)), "vue de dessus : aucun bouton, le bois");
   BK.act(R7, { wood: true }); ok(mem.top === false, "toucher le bois : on se rassoit");
 }
