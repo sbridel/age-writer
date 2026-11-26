@@ -699,6 +699,14 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## En attente (assembly) — Baykh, retouches du soir (26 nov. 2026)
+
+Retours de l'auteur sur la 2.11.2, le 26 au soir :
+- « Agrandir au plus le plateau » : `PERSP` (top 14, bot 262, 330 → 410) et `ABOVE` (6 → 330) ; `RES_X` [56, 584], `RES_Y` ; les Clefs côte à côte devant leur réserve ; la tablette remonte juste sous le dessus (plus de grand vide).
+- La stèle : un émail aux couleurs de la guilde (fond `GS.COL`, symbole `GS.THREAD`, comme les bannières). Un premier essai teignait les pièces de la maison : malentendu, retiré (l'auteur parlait de l'emblème). Son ombre ne déborde plus de la table.
+- Le carnet (`book`) : un livre fermé, dos arrondi, tranche des pages, coins de laiton, signet qui sort d'entre les pages.
+- Le coffret : plus de cadre dessiné au survol (le cadre de survol est un réglage, `hoverFrame`) ; dans l'écrin, le cadre de survol d'un modèle suit ce réglage. Deux taps sur le dessus (`boxTop`, 450 ms) le ferment ou le rouvrent (`shut`, gardé) ; fermé d'office pendant une partie.
+
 ## 2.11.2 — la table de Baykh (26 nov. 2026)
 
 Conception de l'auteur, le 26 au matin (`claude/DESIGN-table-de-baykh.md`, planches A à K). `src/relto-baykh.js` :

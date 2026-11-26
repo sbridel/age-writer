@@ -2,6 +2,14 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## Unreleased (on `assembly`)
+
+### Changed
+- **Baykh**: the board is larger still and the shelf sits right under the table top. The house's stele is enamelled in its guild's colours, like the hallway banners. The game book is a proper closed book, with a ribbon. Two taps on the casket's lid close or reopen it (it stays closed during a game).
+
+### Fixed
+- Baykh: no hover frame around the casket or the Keystone models when hover frames are turned off in the settings; the stele's shadow no longer spills off the table.
+
 ## 2.11 — A lived-in Relto (2.11.0 to 2.11.2, 2026-11-25 to 26)
 
 ### 2.11.2 — A real table for Baykh
