@@ -77,5 +77,20 @@ console.log("baykh : " + n + " OK");
   mem = {}; const R4 = make(null), s4 = BK.state(R4); let g = B.newGame(3); g.ply = 2; g.board[0] = [{ p: 0, k: "f" }]; g.board[1] = [{ p: 0, k: "f" }]; s4.G = g; s4.started = true;
   BK.act(R4, { cell: 2 }); ok(mem.log && mem.log.length === 1 && mem.log[0].won && mem.log[0].by === "road" && mem.rank === 1, "une route gagnée : le carnet l'écrit, le rang monte");
   BK.act(R4, { ledger: true }); R4.hot = []; R4.draw(4); ok(R4.hot.some((h) => h.baykh && h.baykh.id === "ledgerIn"), "le carnet s'ouvre");
+  /* la table de 2.11.2 : plus d'ambre ni de bronze ; la réserve d'en face passe la main ; le tiroir ; le bois de la vue de dessus */
+  mem = {}; const R5 = make(null), s5 = BK.state(R5); let g5 = B.newGame(5); g5.ply = 2; g5.board[12] = [{ p: 0, k: "f" }]; s5.G = g5; s5.started = true;
+  ok(!R5.hot.some((h) => h.baykh && (h.baykh.confirm || h.baykh.cancel)), "plus de boutons d'ambre ni de bronze");
+  BK.act(R5, { cell: 12 }); BK.act(R5, { cell: 13 }); ok(s5.hand && s5.hand.drops.join() === "1", "on sème la pile");
+  BK.act(R5, { side: 0 }); ok(s5.G.ply === 2, "sa propre réserve ne joue pas le coup"); s5.sel = null; BK.act(R5, { cell: 12 }); BK.act(R5, { cell: 13 });
+  BK.act(R5, { side: 1 }); ok(!s5.hand && s5.G.ply === 3 && s5.G.board[13].length === 1 && !s5.G.board[12].length, "la réserve d'en face : on passe la main, le coup est joué");
+  mem = {}; const R6 = make(null), s6 = BK.state(R6); let g6 = B.newGame(5); g6.ply = 2; g6.board[12] = [{ p: 0, k: "f" }, { p: 0, k: "f" }]; s6.G = g6; s6.started = true;
+  BK.act(R6, { cell: 12 }); BK.act(R6, { cell: 13 }); BK.act(R6, { side: 1 }); ok(s6.hand && s6.G.ply === 2, "pile pas toute semée : la réserve d'en face ne joue rien");
+  BK.act(R6, { cell: 12 }); ok(!s6.hand && s6.G.ply === 2, "revenir à la pile de départ repose tout");
+  R6.hot = []; R6.draw(4); ok(R6.hot.some((h) => h.baykh && h.baykh.drawer), "le tiroir se touche");
+  BK.act(R6, { drawer: true }); R6.hot = []; R6.draw(4); ok(R6.hot.some((h) => h.baykh && h.baykh.id === "drawerIn") && R6.hot.some((h) => h.baykh && h.baykh.fresh), "le tiroir s'ouvre : une partie neuve");
+  ok(!R6.hot.some((h) => h.baykh && (h.baykh.dial || h.baykh.level != null)), "pendant une partie, ni la taille ni le niveau ne se touchent");
+  BK.act(R6, { boxClose: true }); ok(!s6.drawer, "toucher hors du tiroir le referme");
+  mem = { top: true }; const R7 = make(null); ok(R7.hot.some((h) => h.baykh && h.baykh.wood) && !R7.hot.some((h) => h.baykh && (h.baykh.topView || h.baykh.box || h.baykh.ledger || h.baykh.drawer)), "vue de dessus : aucun bouton, le bois");
+  BK.act(R7, { wood: true }); ok(mem.top === false, "toucher le bois : on se rassoit");
 }
 console.log("baykh (vue) : " + n + " OK");

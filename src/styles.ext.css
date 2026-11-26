@@ -407,6 +407,9 @@
 .age-reltoview:fullscreen .age-relto__stage { width: min(100vw, calc(100vh * 1.7778)); }
 .age-reltoview:fullscreen .age-relto__canvas { width: 100%; border: none; }
 .age-reltoview:fullscreen .age-relto__tabs { position: absolute; top: 0; left: 0; right: 0; z-index: 5; margin: 0; padding: 6px 14px; min-height: 34px; background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0)); }
+.age-reltoview:fullscreen .age-relto__when { pointer-events: none; } /* la bande de l'heure flotte sur le bas de l'image : seule l'heure se touche, le reste laisse passer les clics vers l'image */
+.age-reltoview:fullscreen .age-relto__when > * { pointer-events: auto; }
+.age-reltoview:fullscreen .age-relto__when.is-faded > * { pointer-events: none; }
 .age-reltoview:fullscreen .age-relto__inscription { display: none; } /* en plein écran, rien que l'image : la devise se tait */
 .age-reltoview:fullscreen .age-relto__when { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; margin: 0; padding: 22px 0 12px; background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.6)); }
 .age-reltoview:fullscreen .age-relto[data-tab="pages"] .age-relto__pane--pages, .age-reltoview:fullscreen .age-relto[data-tab="settings"] .age-relto__pane--settings { display: block; width: min(900px, 94vw); max-height: 88vh; overflow: auto; padding-top: 46px; }

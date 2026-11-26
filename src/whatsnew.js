@@ -6,17 +6,18 @@
  */
 const NEWS = [
   {
-    v: "2.11.1",
+    v: "2.11.2",
     fr: {
       title: "Un Relto habité",
       letter: "On nous demandait si quelqu'un vivait là. Quelqu'un y vit : il y a un plateau sur la table basse du salon, une partie en cours, des pièces couchées et debout ; une lampe à la tête du lit ; et dans le couloir, les couleurs des six guildes. Asseyez-vous, la maison joue.",
       sign: "— pour la Guilde des Écrivains",
       items: [
         "**Baykh, le jeu des routes**, sur la table basse du salon (règles d'après Tak, de James Ernest et Patrick Rothfuss) : relier deux bords opposés par une route de vos pièces, couchées pour la route (les Voies), debout pour barrer (les Verrous), et une Clef de voûte qui écrase ce qui se dresse. Contre la maison, en trois niveaux (ou selon votre rang), sur un plateau de 3×3 à 8×8 ; la pierre claire ou la sombre.",
-        "**Les pièces suivent l'habit** (la pierre, le verre et le cuivre de la Verrière, les octogones du Château), **un coffret de Clefs de voûte** : huit modèles, neuf couleurs, une vue de dessus, un coup à confirmer ou à annuler, la partie gardée d'une visite à l'autre, et un carnet des parties.",
-        "**Les six guildes ont leurs signes** : six bannières dans le couloir (du drap, du velours au Château, un vitrail à la Verrière), un sceau de cire sur les lettres, une plaque de guilde devant la maison quand elle joue.",
+        "**Les pièces suivent l'habit** (la pierre, le verre et le cuivre de la Verrière, les octogones du Château), **un coffret de Clefs de voûte** : huit modèles, neuf couleurs, une vue de dessus, la partie gardée d'une visite à l'autre, et un carnet des parties.",
+        "**Les six guildes ont leurs signes** : six bannières dans le couloir (du drap, du velours au Château, un vitrail à la Verrière), un sceau de cire sur les lettres, une stèle de guilde derrière la réserve de la maison quand elle joue.",
         "**Une lampe de chevet**, à la tête du lit : le verre de l'abeille ou de la main, un clic en change, et elle luit davantage la nuit.",
-        "**Baykh, vue de dessus** (2.11.1) : le bouton qui ramène à la vue normale ne passe plus sous la barre du Relto.",
+        "**Baykh, une vraie table** (2.11.2) : une table basse à tablette, le plateau posé dessus et plus grand, les réglages dans le tiroir ; on joue un coup en touchant la réserve d'en face, et la vue de dessus n'a plus de bouton (toucher le bois pour se rasseoir).",
+        "**Plein écran** (2.11.2) : la bande de l'heure ne prend plus le premier toucher en bas de l'image.",
       ],
     },
     en: {
@@ -25,10 +26,11 @@ const NEWS = [
       sign: "— for the Guild of Writers",
       items: [
         "**Baykh, the game of roads**, on the low table in the lounge (rules after Tak, by James Ernest and Patrick Rothfuss): join two opposite edges with a road of your pieces, lying flat for the road (Ways), standing to block (Locks), and a Keystone that flattens what stands. Against the house, at three levels (or by your rank), on a board from 3×3 to 8×8; light stone or dark.",
-        "**The pieces follow the disguise** (stone, the Glasshouse's glass and copper, the Castle's octagons), **a box of Keystones**: eight models, nine colours, a top view, a move to confirm or cancel, the game kept from one visit to the next, and a notebook of games.",
-        "**The six guilds have their signs**: six banners in the hallway (cloth, velvet in the Castle, stained glass in the Glasshouse), a wax seal on letters, a guild plaque before the house when it plays.",
+        "**The pieces follow the disguise** (stone, the Glasshouse's glass and copper, the Castle's octagons), **a box of Keystones**: eight models, nine colours, a top view, the game kept from one visit to the next, and a notebook of games.",
+        "**The six guilds have their signs**: six banners in the hallway (cloth, velvet in the Castle, stained glass in the Glasshouse), a wax seal on letters, a guild stele behind the house's reserve when it plays.",
         "**A bedside lamp**, at the head of the bed: the bee's glass or the hand's, a click changes it, and it glows more at night.",
-        "**Baykh, top view** (2.11.1): the button back to the normal view no longer hides under the Relto bar.",
+        "**Baykh, a real table** (2.11.2): a low table with a shelf, the board lying on top and larger, the settings in the drawer; a move is played by touching the opposite reserve, and the top view has no buttons left (touch the wood to sit back).",
+        "**Full screen** (2.11.2): the hour band no longer takes the first touch at the bottom of the picture.",
       ],
     },
   },
