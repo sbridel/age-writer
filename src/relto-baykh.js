@@ -293,7 +293,9 @@ function book(ctx, x, y, hi) {
   ctx.strokeStyle = "rgba(220,170,100,.35)"; ctx.lineWidth = 0.8; poly(ctx, [[bl[0] + 9, y - 3], [br[0] - 4, y - 3], [tr[0] - 4, y - d + 3], [tl[0] + 8, y - d + 3]]); ctx.stroke(); /* un filet doré, à froid */
   ctx.fillStyle = "#3a160e"; poly(ctx, [bl, [bl[0] + 6, y], [tl[0] + 5, y - d], tl]); ctx.fill(); /* le cuir du dos, sur le plat */
   ctx.fillStyle = "#d8aa5e"; for (const [cx, cy, sx] of [[br[0], y, -1], [tr[0], y - d, -1]]) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + sx * 6, cy); ctx.lineTo(cx, cy + (cy === y ? -5 : 5)); ctx.closePath(); ctx.fill(); } /* les coins de laiton */
-  ctx.fillStyle = hi ? "#e0b462" : "#b0483a"; ctx.beginPath(); ctx.moveTo(x + 8, y + th - 1); ctx.lineTo(x + 12, y + th - 1); ctx.lineTo(x + 11.5, y + th + 7); ctx.lineTo(x + 10, y + th + 5.5); ctx.lineTo(x + 8.5, y + th + 7); ctx.closePath(); ctx.fill(); /* le signet */
+  { const sx = x + 10, sy = y + th * 0.45, ex = sx + 8, ey = y + th + 4.5; ctx.fillStyle = hi ? "#e0b462" : "#b0483a"; /* le signet : il sort d'entre les pages, au milieu de la tranche, et retombe sur la tablette */
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + 3, sy); ctx.quadraticCurveTo(sx + 3.6, y + th + 2, ex + 3, ey); ctx.lineTo(ex + 1.5, ey - 1.6); ctx.lineTo(ex, ey); ctx.quadraticCurveTo(sx + 0.6, y + th + 2.5, sx, sy); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.fillRect(sx, sy, 3, 0.8); } /* l'ombre des pages sur le ruban */
 }
 /** La stèle de la maison : une petite stèle de laiton dressée face au joueur, derrière la réserve de la machine ; le symbole de sa guilde gravé en creux. */
 function stele(ctx, Hb, x, y, guild) {
