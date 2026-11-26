@@ -2,6 +2,17 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## Unreleased (on `assembly`)
+
+### Changed
+- **A real table for Baykh.** A low wooden table with turned legs and a shelf beneath; the board now lies on top of it, larger, with the two reserves either side. The house's guild is engraved large on a brass stele behind its reserve.
+  - A move is played by touching the opposite reserve once the whole stack is sown (it lights up); going back to the starting stack still puts it all back. No more amber and bronze buttons.
+  - The settings (level, size, a new game) are kept in the table's drawer; the casket, the top-view button and the game book stand on the shelf. The casket is open between games, closed during one.
+  - The top view has no buttons left: touch the wood of the table to sit back. The lamp Keystones are a little larger.
+
+### Fixed
+- Full screen: the hour band along the bottom of the picture no longer takes the first touch there; only the hour itself is touchable.
+
 ## 2.11 — A lived-in Relto (2.11.0 to 2.11.1, 2026-11-25 to 26)
 
 ### Added

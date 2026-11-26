@@ -2,12 +2,15 @@
 /**
  * Baykh, le jeu des routes du salon : la table basse devant le canapé (dans le salon), et la vue de la partie (vue `baykh`).
  * Les règles et l'adversaire sont dans `src/baykh.js`. Tout se joue sans texte :
- *  - le cadran au bord de la table : la taille (3 à 8, en chiffres D'ni) ; le bouton de bronze : une partie neuve ;
+ *  - une vraie table basse : le plateau posé dessus, les réserves de part et d'autre, la stèle de la guilde adverse ; sous le dessus, une tablette
+ *    (le coffret, le bouton de la vue, le carnet) ; dans le chant, le tiroir des réglages : la taille (3 à 8, en chiffres D'ni), le niveau, une partie neuve ;
  *  - au début, toucher une réserve choisit sa couleur (les claires commencent toujours) ;
  *  - toucher une case vide y pose une Voie ; toucher d'abord sa réserve redresse la pièce en Verrou ; toucher sa Clef de voûte la prend ;
- *  - toucher une pile qu'on tient la prend (toucher encore : une pièce de moins), puis toucher les cases en ligne pour semer ;
+ *  - toucher une pile qu'on tient la prend (toucher encore : une pièce de moins), puis toucher les cases en ligne pour semer ; toute la pile semée,
+ *    toucher la réserve d'en face joue le coup (on passe la main), revenir à la pile de départ repose tout ;
+ *  - vu de dessus : aucun bouton ; toucher le bois de la table, c'est se rasseoir ;
  *  - le coffret : sa Clef de voûte (la statuette, l'abeille, la main, l'aiguille D'ni gothique) ; la machine prend la sienne au hasard ;
- *  - quatre plots : le niveau (facile, moyen, difficile, ou selon le rang).
+ *  - dans le tiroir, quatre plots : le niveau (facile, moyen, difficile, ou selon le rang).
  * Les pièces suivent l'habit du salon : la pierre (par défaut), le verre et le cuivre (la Verrière : ambre contre vert d'eau),
  * l'ivoire, l'ébène et l'or en octogones (le Château). Règles d'après le Tak de James Ernest et Patrick Rothfuss.
  */
@@ -89,18 +92,19 @@ function preview(G, h) {
 function act(r, a) {
   const st = state(r), s = cur(r), G = st.G, n = G.n, mine = G.turn === s.side && !G.end && !st.thinking;
   if (a.side != null) { if (!st.started && G.ply === 0) { if (a.side !== s.side) { save(r, { side: a.side }); snd(r, "join"); } st.started = true; botTurn(r); return; }
+    if (a.side !== s.side && mine && st.hand) { const h = st.hand; if (h.drops.length && h.take === h.drops.reduce((p, q) => p + q, 0) && !play(r, { t: "m", i: h.from, d: h.d, drops: h.drops.slice() })) st.hand = null; return; } /* toucher la réserve d'en face quand toute la pile est semée : on passe la main, le coup est joué */
     if (a.side === s.side && mine) { if (G.ply < 2) { st.sel = "f"; return; } if (G.res[s.side].s <= 0) return; st.sel = st.sel === "w" ? null : "w"; st.hand = null; snd(r, "tick"); } return; } /* la réserve : la prochaine pièce posée sera un Verrou (ou de nouveau une Voie) */
   if (a.capPick) { if (mine && G.ply >= 2 && G.res[s.side].c > 0) { st.sel = st.sel === "c" ? null : "c"; st.hand = null; snd(r, "tick"); } return; }
   if (a.box) { if (!st.started || G.end || G.ply === 0) { st.box = true; snd(r, "open"); } return; } /* le coffret s'ouvre */
-  if (a.boxClose) { st.box = false; st.ledger = false; snd(r, "tick"); return; }
+  if (a.boxClose) { st.box = false; st.ledger = false; st.drawer = false; snd(r, "tick"); return; }
+  if (a.drawer) { st.drawer = true; st.hand = null; snd(r, "open"); return; } /* le tiroir des réglages s'ouvre */
+  if (a.wood) { if (s.top) { save(r, { top: false }); snd(r, "tick"); } return; } /* vu d'en haut : toucher le bois de la table, c'est se rasseoir */
   if (a.ledger) { st.ledger = true; snd(r, "open"); return; }
   if (a.pickCap) { save(r, { cap: a.pickCap }); snd(r, "tick"); return; }
   if (a.pickCol) { save(r, { capCol: a.pickCol }); snd(r, "tick"); return; }
   if (a.dial) { if (!st.started || G.end || G.ply === 0) { save(r, { n: s.n >= 8 ? 3 : s.n + 1 }); fresh(r); snd(r, "tick"); } return; }
-  if (a.fresh) { fresh(r); snd(r, "leave"); return; }
+  if (a.fresh) { fresh(r); st.drawer = false; snd(r, "leave"); return; }
   if (a.topView) { save(r, { top: !s.top }); snd(r, "tick"); return; } /* se pencher au-dessus de la table, ou se rasseoir */
-  if (a.confirm) { const h = st.hand; if (h && h.drops.length && h.take === h.drops.reduce((p, q) => p + q, 0)) { if (!play(r, { t: "m", i: h.from, d: h.d, drops: h.drops.slice() })) st.hand = null; } return; }
-  if (a.cancel) { st.hand = null; snd(r, "leave"); return; }
   if (a.level != null) { if (!st.started || G.end || G.ply === 0) { save(r, { level: LEVELS[a.level] }); snd(r, "tick"); } return; }
   if (a.cell == null || !mine) return;
   if (!st.started) { st.started = true; } /* toucher le plateau, c'est jouer les claires : on commence */
@@ -122,11 +126,11 @@ function act(r, a) {
 const CASTLE_C = [["#6e1e2c", "#521624", "#300a12"], ["#2a3f7a", "#1c2c5a", "#101a3a"]];
 function habit(r) {
   if (r.castleOn && r.castleOn()) return { kind: "castle", bg: ["#2a0e1c", "#12060c"], rim: ["#7a5a1a", "#f0cc6a", "#6a4a10"], sq: ["#d8d2c6", "#b9b2a4"], line: "rgba(80,60,40,.5)",
-    C: CASTLE_C, table: "#3a2414", shape: "oct", fil: "#e8c060" };
+    C: CASTLE_C, table: "#3a2414", shape: "oct", fil: "#e8c060", trim: "#e8c060", velvet: "#3a0e1a" };
   if (r.glassOn && r.glassOn()) return { kind: "glass", bg: ["#14221c", "#0a120e"], rim: ["#5a2e12", "#c87a3a", "#4a2410"], sq: ["rgba(190,215,205,.62)", "rgba(160,190,180,.56)"], line: "rgba(120,70,30,.75)",
-    C: [["rgba(236,178,84,.95)", "rgba(204,144,56,.96)", "rgba(160,104,30,.96)"], ["rgba(96,176,160,.95)", "rgba(62,138,124,.96)", "rgba(36,96,86,.96)"]], table: "#3a2416", shape: "square", fil: "#c87a3a" };
+    C: [["rgba(236,178,84,.95)", "rgba(204,144,56,.96)", "rgba(160,104,30,.96)"], ["rgba(96,176,160,.95)", "rgba(62,138,124,.96)", "rgba(36,96,86,.96)"]], table: "#3a2416", shape: "square", fil: "#c87a3a", trim: "#c87a3a", velvet: "#143a32" };
   return { kind: "stone", bg: ["#2a1c12", "#140d08"], rim: ["#6a4a1c", "#c99a52", "#5a3c14"], sq: ["#8a8272", "#7c7466"], line: "rgba(30,22,14,.55)",
-    C: [["#e6e0cf", "#c8c0aa", "#a8a08a"], ["#3a3e44", "#26292e", "#16181b"]], table: "#4b3220", shape: "square", fil: null };
+    C: [["#e6e0cf", "#c8c0aa", "#a8a08a"], ["#3a3e44", "#26292e", "#16181b"]], table: "#4b3220", shape: "square", fil: null, trim: "#c99a52", velvet: "#4a1a22" };
 }
 
 /* ---------------------------------------------------------------- la géométrie ---------------------------------------------------------------- */
@@ -164,7 +168,7 @@ function piece(ctx, F, Hb, i, j, p, { stand = false, lvl = 0, hi = 0 } = {}) {
 
 /** La Clef de voûte : quatre modèles, de la couleur du joueur. */
 function capstone(ctx, F, Hb, i, j, p, kind, lvl = 0, hi = 0, colKey = "mine") {
-  const { n } = F, cu = (i + 0.5) / n, cv = (j + 0.55) / n, [x, y0] = F.P(cu, cv), y = y0 - lvl * 0.13 * F.cellW(cv), s = F.cellW(cv) / 26, col = CAP_COLS[colKey] || Hb.C[p];
+  const { n } = F, cu = (i + 0.5) / n, cv = (j + 0.55) / n, [x, y0] = F.P(cu, cv), y = y0 - lvl * 0.13 * F.cellW(cv), s = F.cellW(cv) / 26 * (kind === "bee" || kind === "hand" ? 1.3 : 1), /* les Clefs-lampes, un peu plus grandes (choix de l'auteur) */ col = CAP_COLS[colKey] || Hb.C[p];
   const lin = (x0, x1, st) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); st.forEach((k, q) => g.addColorStop(q / (st.length - 1), k)); return g; };
   ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.ellipse(x + 3, y + 3, 9 * s, 3.2 * s, 0, 0, TAU); ctx.fill();
   if (hi) { const g = ctx.createRadialGradient(x, y - 14 * s, 1, x, y - 14 * s, 20 * s); g.addColorStop(0, rgba(255, 214, 130, 0.4 * hi)); g.addColorStop(1, rgba(255, 214, 130, 0)); ctx.fillStyle = g; ctx.fillRect(x - 20 * s, y - 34 * s, 40 * s, 40 * s); }
@@ -241,27 +245,88 @@ else if (kind === "tower") { const x = 0, y = 0, s = 1, body = lin(-8, 8, [col[2
 function numeral(ctx, v, x, y, s, col) { try { return require("./relto-ahyoheek").numeral ? require("./relto-ahyoheek").numeral(ctx, v, x, y, s, col) : null; } catch (e) { return null; } }
 
 /* ---------------------------------------------------------------- la vue ---------------------------------------------------------------- */
+/* ---------------------------------------------------------------- la table basse (2.12) ---------------------------------------------------------------- */
+/* Une vraie table : un dessus de bois veiné au chant fin, quatre pieds tournés, une tablette basse entre les pieds. Le plateau de jeu est posé
+ * par-dessus ; le dessus n'a plus que lui, les deux réserves, les Clefs et la stèle de la maison. Sur la tablette : le coffret, le bouton de la vue,
+ * le carnet. Les réglages (niveau, taille, partie neuve) sont rangés dans le tiroir du chant. Choix de l'auteur, 26 nov. 2026. */
+const PERSP = { cx: 320, top: 20, bot: 210, wT: 292, wB: 368 }, ABOVE = { cx: 320, top: 14, bot: 300, wT: 286, wB: 286, zk: 0.32 };
+const RES_X = [84, 556], DRAWER = { x: 262, y: 224, w: 116, h: 26 };
+function grain(ctx, pts, base) { /* le bois : un dégradé et quelques veines */
+  const ys = pts.map((p) => p[1]), y0 = Math.min(...ys), y1 = Math.max(...ys), g = ctx.createLinearGradient(0, y0, 0, y1);
+  g.addColorStop(0, mix(base, "#000000", 0.08)); g.addColorStop(1, mix(base, "#ffffff", 0.1)); poly(ctx, pts); ctx.fillStyle = g; ctx.fill();
+  ctx.save(); poly(ctx, pts); ctx.clip(); ctx.strokeStyle = "rgba(0,0,0,.08)"; ctx.lineWidth = 1;
+  for (let y = y0 + 4; y < y1; y += 9) { const k = y * 0.37; ctx.beginPath(); ctx.moveTo(0, y); ctx.bezierCurveTo(200, y + 3 * Math.sin(k), 440, y - 3 * Math.cos(k), W, y + 2); ctx.stroke(); } ctx.restore(); }
+function leg(ctx, Hb, x, y0, y1) { const g = ctx.createLinearGradient(x - 9, 0, x + 9, 0); g.addColorStop(0, mix(Hb.table, "#000000", 0.4)); g.addColorStop(0.5, mix(Hb.table, "#ffffff", 0.08)); g.addColorStop(1, mix(Hb.table, "#000000", 0.5));
+  ctx.fillStyle = g; poly(ctx, [[x - 9, y0], [x + 9, y0], [x + 6, y1], [x - 6, y1]]); ctx.fill(); ctx.fillStyle = Hb.trim; ctx.fillRect(x - 8, y0 + 18, 16, 1.6); }
+/** Un bouton encastré, assez grand pour le doigt ; `sign` grave son signe. */
+function knob(ctx, x, y, rx, ry, face, sign, lit) {
+  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(x, y + 1.5, rx + 2.5, ry + 1.6, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = "#2a1a0c"; ctx.beginPath(); ctx.ellipse(x, y, rx + 2, ry + 1.2, 0, 0, TAU); ctx.fill();
+  if (lit) { const g = ctx.createRadialGradient(x, y, 1, x, y, rx * 2.2); g.addColorStop(0, rgba(255, 200, 110, 0.45 * lit)); g.addColorStop(1, "rgba(255,200,110,0)"); ctx.fillStyle = g; ctx.fillRect(x - rx * 2.5, y - rx * 2.5, rx * 5, rx * 5); }
+  const g = ctx.createLinearGradient(0, y - ry, 0, y + ry); g.addColorStop(0, face[0]); g.addColorStop(1, face[1]); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y - 0.6, rx, ry, 0, 0, TAU); ctx.fill();
+  if (sign) { ctx.strokeStyle = "rgba(40,20,4,.85)"; ctx.lineWidth = 1.4; ctx.beginPath(); sign(x, y - 0.6); ctx.stroke(); } }
+const BRASS = ["#e0b462", "#a8783a"], BRASS_HI = ["#f4cc80", "#c08a48"], BRONZE = ["#c8925a", "#8a5a2a"], BRONZE_HI = ["#e0a868", "#a0703a"];
+/** Le coffret des Clefs, couché sur la tablette : ouvert sur le côté qui nous fait face (les Clefs debout sur le velours, le couvercle rabattu devant)
+ *  entre deux parties ; fermé pendant une partie (on ne change pas de Clef en jouant). */
+function casket(ctx, Hb, x, y, open, me, s, hi) {
+  const w = 68, h = 27, d = 11;
+  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.fillRect(x - w / 2 + 4, y + 3, w, 6);
+  poly(ctx, [[x - w / 2, y - h], [x + w / 2, y - h], [x + w / 2 - d * 0.6, y - h - d], [x - w / 2 + d * 0.6, y - h - d]]); ctx.fillStyle = "#6a4426"; ctx.fill();
+  ctx.fillStyle = "#4a2e16"; ctx.fillRect(x - w / 2, y - h, w, h);
+  if (open) { ctx.fillStyle = Hb.velvet; ctx.fillRect(x - w / 2 + 3, y - h + 3, w - 6, h - 6);
+    CAPS.forEach((k, q) => { const F = frame(1, { cx: x - w / 2 + 8 + q * 7.4, top: y - 8, bot: y - 4.5, wT: 6.3, wB: 6.7 }); capstone(ctx, F, Hb, 0, 0, me, k, 0, k === s.cap ? 0.9 : 0, s.capCol); });
+    poly(ctx, [[x - w / 2, y], [x + w / 2, y], [x + w / 2 + 2, y + 8], [x - w / 2 - 2, y + 8]]); ctx.fillStyle = "#5a3a1e"; ctx.fill(); ctx.fillStyle = Hb.trim; ctx.fillRect(x - w / 2 - 2, y + 7, w + 4, 1.4); }
+  else { ctx.fillStyle = "#5a3a1e"; ctx.fillRect(x - w / 2 + 1, y - h + 1, w - 2, h - 2); ctx.fillStyle = Hb.trim; ctx.fillRect(x - w / 2, y - h, w, 1.4); ctx.fillRect(x - w / 2, y - 1.4, w, 1.4);
+    ctx.fillRect(x - 4, y - h / 2 - 4, 8, 8); ctx.fillStyle = "#5a3a1e"; ctx.fillRect(x - 1.2, y - h / 2 - 1.5, 2.4, 4); }
+  if (hi) { ctx.strokeStyle = "rgba(255,220,150,.45)"; ctx.lineWidth = 1; ctx.strokeRect(x - w / 2 - 1.5, y - h - d - 1.5, w + 3, h + d + 3); } }
+/** Le carnet des parties, posé sur la tablette. */
+function book(ctx, x, y, hi) { const s = 1.2; ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.fillRect(x - 22 * s + 3, y - 4 * s + 4, 44 * s, 16 * s); ctx.fillStyle = "#5a2a1a"; ctx.fillRect(x - 22 * s, y - 6 * s, 44 * s, 16 * s);
+  ctx.fillStyle = "#e8dcc0"; ctx.fillRect(x - 20 * s, y - 8 * s, 40 * s, 3 * s); ctx.fillStyle = hi ? "#e0b462" : "#c08a50"; ctx.fillRect(x - 1.5 * s, y - 6 * s, 3 * s, 18 * s); }
+/** La stèle de la maison : une petite stèle de laiton dressée face au joueur, derrière la réserve de la machine ; le symbole de sa guilde gravé en creux. */
+function stele(ctx, Hb, x, y, guild) {
+  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.beginPath(); ctx.ellipse(x + 4, y + 4, 30, 6, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = mix(Hb.table, "#000000", 0.3); ctx.fillRect(x - 28, y - 4, 56, 8);
+  const g = ctx.createLinearGradient(x - 24, 0, x + 24, 0); g.addColorStop(0, "#8a6428"); g.addColorStop(0.45, "#e8c070"); g.addColorStop(1, "#7a5420"); ctx.fillStyle = g;
+  ctx.beginPath(); ctx.moveTo(x - 22, y - 4); ctx.lineTo(x - 22, y - 46); ctx.quadraticCurveTo(x, y - 60, x + 22, y - 46); ctx.lineTo(x + 22, y - 4); ctx.closePath(); ctx.fill(); ctx.strokeStyle = "#5a3c14"; ctx.lineWidth = 1.2; ctx.stroke();
+  GS.draw(ctx, guild, x + 0.6, y - 27.4, 15, "rgba(255,236,190,.55)", 0.1); GS.draw(ctx, guild, x, y - 28, 15, "#2a1604", 0.1); }
 function drawBaykh(r, ctx, sc, sky, t) {
-  const st = state(r), s = cur(r), G = st.G, n = G.n, Hb = habit(r), F = frame(n, s.top ? { top: 8, bot: 284, wT: 276, wB: 276, zk: 0.32 } : {}), /* la vue de dessus, ou la table en perspective */ me = s.side, bot = 1 - me, now = Date.now(), tr = T(r);
-  const hv = (id) => r.hover && r.hover.baykh && r.hover.baykh.id === id;
-  /* le fond : le salon, sombre, la table basse vue de près */
-  const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, Hb.bg[0]); bg.addColorStop(1, Hb.bg[1]); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-  const lamp = ctx.createRadialGradient(320, 40, 10, 320, 40, 360); lamp.addColorStop(0, "rgba(255,200,130,.16)"); lamp.addColorStop(1, "rgba(255,200,130,0)"); ctx.fillStyle = lamp; ctx.fillRect(0, 0, W, H);
-  const quad = (a, b2, c2, d2) => { ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b2); ctx.lineTo(...c2); ctx.lineTo(...d2); ctx.closePath(); };
-  ctx.fillStyle = Hb.table; quad(F.P(-0.2, 1.2), F.P(1.2, 1.2), F.P(1.18, -0.14), F.P(-0.18, -0.14)); ctx.fill(); /* le plateau de la table */
-  ctx.fillStyle = "rgba(0,0,0,.35)"; quad(F.P(-0.2, 1.2), F.P(1.2, 1.2), [F.P(1.2, 1.2)[0], F.P(1.2, 1.2)[1] + 10], [F.P(-0.2, 1.2)[0], F.P(-0.2, 1.2)[1] + 10]); ctx.fill();
-  /* la grille et son bord */
-  const rg = ctx.createLinearGradient(F.P(-0.05, 0)[0], 0, F.P(1.05, 0)[0], 0); Hb.rim.forEach((k, q) => rg.addColorStop(q / 2, k)); ctx.fillStyle = rg; quad(F.P(-0.05, 1.05), F.P(1.05, 1.05), F.P(1.05, -0.05), F.P(-0.05, -0.05)); ctx.fill();
+  const st = state(r), s = cur(r), G = st.G, n = G.n, Hb = habit(r), top = s.top, F = frame(n, top ? ABOVE : PERSP), me = s.side, bot = 1 - me, now = Date.now(), tr = T(r);
+  const hv = (id) => r.hover && r.hover.baykh && r.hover.baykh.id === id, between = !st.started || G.end || G.ply === 0;
+  const hand = st.hand, ready = !!(hand && hand.drops.length && hand.take === hand.drops.reduce((p, q) => p + q, 0)); /* toute la pile est semée : le coup attend qu'on passe la main */
+  const quad = (a, b2, c2, d2) => poly(ctx, [a, b2, c2, d2]);
+  if (top) { grain(ctx, [[0, H], [W, H], [W, 0], [0, 0]], Hb.table); /* vu d'en haut, la table remplit tout : on en sort en touchant le bois */
+    for (const z of [{ x: 0, y: 0, w: 148, h: H }, { x: 492, y: 0, w: 148, h: H }, { x: 148, y: 326, w: 344, h: H - 326 }]) r.hot.push({ ...z, baykh: { wood: true, id: "wood" } }); }
+  else {
+    const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, Hb.bg[0]); bg.addColorStop(1, Hb.bg[1]); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    const lamp = ctx.createRadialGradient(320, 30, 10, 320, 30, 380); lamp.addColorStop(0, "rgba(255,200,130,.16)"); lamp.addColorStop(1, "rgba(255,200,130,0)"); ctx.fillStyle = lamp; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.beginPath(); ctx.ellipse(320, 358, 330, 10, 0, 0, TAU); ctx.fill();
+    leg(ctx, Hb, 70, 240, 300); leg(ctx, Hb, 570, 240, 300); /* les pieds arrière */
+    grain(ctx, [[22, 340], [618, 340], [588, 288], [52, 288]], mix(Hb.table, "#000000", 0.12)); ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.fillRect(52, 288, 536, 10); /* la tablette basse, à l'ombre du dessus */
+    ctx.fillStyle = mix(Hb.table, "#000000", 0.4); ctx.fillRect(22, 340, 596, 8); ctx.fillStyle = Hb.trim; ctx.fillRect(22, 340, 596, 1.2);
+    casket(ctx, Hb, 150, 334, between, me, s, hv("box")); if (between) r.hot.push({ x: 108, y: 290, w: 84, h: 56, baykh: { box: true, id: "box" } });
+    knob(ctx, 320, 318, 18, 7.6, hv("top") ? BRASS_HI : BRASS, (x, y) => ctx.rect(x - 5, y - 3, 10, 5.6)); r.hot.push({ x: 292, y: 300, w: 56, h: 36, baykh: { topView: true, id: "top" } }); /* le seul bouton : la vue de dessus */
+    book(ctx, 490, 326, hv("ledger")); r.hot.push({ x: 456, y: 300, w: 68, h: 44, baykh: { ledger: true, id: "ledger" } });
+    leg(ctx, Hb, 30, 236, 360); leg(ctx, Hb, 610, 236, 360); /* les pieds avant */
+    grain(ctx, [[12, 230], [628, 230], [580, 6], [60, 6]], Hb.table);
+    ctx.fillStyle = mix(Hb.table, "#000000", 0.35); ctx.fillRect(12, 230, 616, 11); ctx.fillStyle = Hb.trim; ctx.fillRect(12, 230, 616, 1.2); /* le chant, fin */
+    ctx.fillStyle = mix(Hb.table, "#000000", 0.25); ctx.fillRect(270, 231, 100, 10); ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.lineWidth = 1; ctx.strokeRect(270.5, 231.5, 99, 9);
+    ctx.fillStyle = hv("drawer") ? "#f4cc80" : "#d8aa5e"; ctx.fillRect(306, 234.5, 28, 3); r.hot.push({ ...DRAWER, baykh: { drawer: true, id: "drawer" } }); /* le tiroir des réglages, sa poignée */
+    stele(ctx, Hb, bot === 0 ? RES_X[0] + 4 : RES_X[1] + 4, 58, st.botGuild || "mainteneurs");
+  }
+  /* le plateau, posé sur la table : son ombre, son épaisseur, son bord */
+  ctx.fillStyle = "rgba(0,0,0,.45)"; quad(...[[-0.06, 1.06], [1.06, 1.06], [1.06, -0.06], [-0.06, -0.06]].map(([u, v]) => { const [x, y] = F.P(u, v); return [x + 6, y + 8]; })); ctx.fill();
+  if (!top) { const a = F.P(-0.06, 1.06), b2 = F.P(1.06, 1.06); quad(a, b2, [b2[0], b2[1] + 9], [a[0], a[1] + 9]); ctx.fillStyle = mix(Hb.table, "#000000", 0.3); ctx.fill(); ctx.fillStyle = Hb.trim; ctx.fillRect(a[0], a[1] + 8, b2[0] - a[0], 1.2); }
+  const rg = ctx.createLinearGradient(F.P(-0.06, 0)[0], 0, F.P(1.06, 0)[0], 0); Hb.rim.forEach((k, q) => rg.addColorStop(q / 2, k)); ctx.fillStyle = rg; quad(F.P(-0.06, 1.06), F.P(1.06, 1.06), F.P(1.06, -0.06), F.P(-0.06, -0.06)); ctx.fill();
   const road = G.end && G.end.by === "road" ? new Set(G.end.path) : null, glow = 0.6 + 0.4 * Math.sin(t * 3);
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
     const k = j * n + i; quad(F.P(i / n, j / n), F.P((i + 1) / n, j / n), F.P((i + 1) / n, (j + 1) / n), F.P(i / n, (j + 1) / n)); ctx.fillStyle = Hb.sq[(i + j) % 2]; ctx.fill(); ctx.strokeStyle = Hb.line; ctx.lineWidth = Hb.kind === "glass" ? 1.4 : 0.9; ctx.stroke();
-    if (hv("c" + k) || (st.hand && st.hand.from === k)) { ctx.fillStyle = "rgba(255,220,150,.18)"; ctx.fill(); }
+    if (hv("c" + k) || (hand && hand.from === k)) { ctx.fillStyle = "rgba(255,220,150,.18)"; ctx.fill(); }
     if (road && road.has(k)) { ctx.fillStyle = rgba(255, 210, 120, 0.28 * glow); ctx.fill(); }
     if (st.lastBot && now - st.lastBot.at < 1600 && (st.lastBot.m.i === k)) { ctx.fillStyle = rgba(150, 200, 255, 0.22 * (1 - (now - st.lastBot.at) / 1600)); ctx.fill(); } /* là où la machine vient de jouer */
     const a = F.P(i / n, j / n), b2 = F.P((i + 1) / n, (j + 1) / n); r.hot.push({ x: a[0], y: a[1], w: b2[0] - a[0], h: b2[1] - a[1], baykh: { cell: k, id: "c" + k } });
   }
   /* les pièces, du fond vers l'avant ; la pile prise en main est soulevée */
-  const hand = st.hand, pv = hand ? preview(G, hand) : null, board = pv ? pv.board : G.board, nx = hand ? new Set(nextCells(G, hand)) : null;
+  const pv = hand ? preview(G, hand) : null, board = pv ? pv.board : G.board, nx = hand ? new Set(nextCells(G, hand)) : null;
   if (nx) for (const k of nx) { const i = k % n, j = (k / n) | 0, pulse = 0.55 + 0.45 * Math.sin(t * 5); quad(F.P(i / n, j / n), F.P((i + 1) / n, j / n), F.P((i + 1) / n, (j + 1) / n), F.P(i / n, (j + 1) / n)); ctx.fillStyle = rgba(255, 214, 130, 0.22 * pulse); ctx.fill(); ctx.strokeStyle = rgba(255, 214, 130, 0.6 * pulse); ctx.lineWidth = 1.4; ctx.stroke(); } /* où la pièce suivante peut aller */
   const towers = [], fall = new Map(), lb = st.lastBot, el = lb && !r.opts.reducedMotion ? now - lb.at : Infinity; /* le coup de la machine : ses pièces descendent en place, case après case */
   if (el < 1200) { const m = lb.m; if (m.t === "p") fall.set(m.i, { c: 1, d: 0 }); else { let x = m.i % n, y = (m.i / n) | 0; const [dx, dy] = B.DIRS[m.d]; m.drops.forEach((c, q) => { x += dx; y += dy; fall.set(y * n + x, { c, d: q * 140 }); }); } }
@@ -274,56 +339,50 @@ function drawBaykh(r, ctx, sc, sky, t) {
       else piece(ctx, F, Hb, i, j, pc.p, { stand: pc.k === "w", lvl: l + up, hi });
     });
     if (pv && pv.at === k) pv.floating.forEach((pc, l) => { const lv = stack.length + 1.6 + l; if (pc.k === "c") capstone(ctx, F, Hb, i, j, pc.p, pc.p === me ? s.cap : st.botCap, lv, 0.8, pc.p === me ? s.capCol : st.botCol); else piece(ctx, F, Hb, i, j, pc.p, { stand: pc.k === "w", lvl: lv, hi: 0.8 }); }); /* ce qui reste en main, soulevé */
-    if (stack.length > 1) { const [x0, y0] = F.P(i / n, j / n), [x1, y1] = F.P((i + 1) / n, (j + 1) / n), up = stack.length * 0.13 * F.cellW((j + 0.5) / n); towers.push({ x: x0, y: y0 - up, w: x1 - x0, h: y1 - y0 + up, baykh: { cell: k, id: "c" + k } }); }
+    if (stack.length > 1) { const [x0, y0] = F.P(i / n, j / n), [x1, y1] = F.P((i + 1) / n, (j + 1) / n), up = stack.length * 0.13 * F.cellW((j + 0.5) / n) * (top ? ABOVE.zk : 1); towers.push({ x: x0, y: y0 - up, w: x1 - x0, h: y1 - y0 + up, baykh: { cell: k, id: "c" + k } }); }
   }
   r.hot.push(...towers); /* une tour se touche sur toute sa hauteur, pas seulement à son pied */
-  /* pendant qu'on sème : deux boutons à fleur, au bord avant — l'ambre joue le coup (quand la main est vide), le bronze repose tout */
-  if (hand) { const fy = F.P(0.5, 1.12)[1] + 4, done = hand.drops.length && hand.take === hand.drops.reduce((p, q) => p + q, 0);
-    for (const [bx, kind] of [[300, "confirm"], [340, "cancel"]]) { const on = kind === "cancel" || done, pulse = kind === "confirm" && done ? 0.7 + 0.3 * Math.sin(t * 5) : 1;
-      ctx.fillStyle = "#2a1a0c"; ctx.beginPath(); ctx.ellipse(bx, fy, 11, 4.6, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = kind === "confirm" ? (on ? rgba(255, 196, 96, pulse) : "#6a5030") : (hv("cancel") ? "#c08a50" : "#8a5a2a"); ctx.beginPath(); ctx.ellipse(bx, fy - 0.5, 9, 3.6, 0, 0, TAU); ctx.fill();
-      ctx.strokeStyle = kind === "confirm" ? "rgba(60,30,0,.7)" : "rgba(40,20,4,.8)"; ctx.lineWidth = 1.1; ctx.beginPath();
-      if (kind === "confirm") { ctx.moveTo(bx - 3.5, fy - 0.5); ctx.lineTo(bx - 1, fy + 1.2); ctx.lineTo(bx + 4, fy - 2); } else { ctx.moveTo(bx - 3, fy - 2); ctx.lineTo(bx + 3, fy + 1); ctx.moveTo(bx + 3, fy - 2); ctx.lineTo(bx - 3, fy + 1); } ctx.stroke(); /* deux signes gravés : le trait qui valide, la croix qui repose */
-      if (on) r.hot.push({ x: bx - 19, y: fy - 13, w: 38, h: 26, baykh: { [kind]: true, id: kind } }); } }
-  { const bx = bot === 0 ? 62 : 578, y = 318; ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fillRect(bx - 19, y - 7, 40, 18); ctx.fillStyle = "#5a3c14"; ctx.fillRect(bx - 21, y - 9, 42, 18); ctx.fillStyle = "#c99a52"; ctx.fillRect(bx - 19, y - 7, 38, 14); /* la plaque de laiton, devant la réserve de la machine */
-    GS.draw(ctx, st.botGuild || "mainteneurs", bx, y - 0.2, 5.6, "#3a240c", 0.13); } /* le symbole de sa guilde, gravé */
-  /* les réserves : les claires à gauche, les sombres à droite ; une pile de tuiles, et la Clef à côté */
+  /* les réserves, sur la table, de part et d'autre du plateau : les claires à gauche, les sombres à droite ; les Clefs devant */
   for (const p of [0, 1]) {
-    const left = p === 0, bx = left ? 62 : 578, by = 292, R = G.res[p], sel = p === me && st.sel, mineTurn = G.turn === me && !G.end && p === me;
-    const RF = frame(1, { cx: bx, top: by - 22, bot: by + 8, wT: 50, wB: 56 }), hcount = Math.min(18, Math.ceil(R.s / (n >= 7 ? 3 : 2)));
+    const left = p === 0, bx = RES_X[p], by = top ? 140 : 176, R = G.res[p], sel = p === me && st.sel, mineTurn = G.turn === me && !G.end && p === me;
+    const RF = frame(1, top ? { cx: bx, top: by - 26, bot: by + 6, wT: 56, wB: 56, zk: ABOVE.zk } : { cx: bx, top: by - 24, bot: by + 6, wT: 54, wB: 60 }), hcount = Math.min(12, Math.ceil(R.s / (n >= 7 ? 4 : 3)));
+    const lit = (!st.started && G.ply === 0) ? (hv("side" + p) ? 0.3 : 0.12) * (0.7 + 0.3 * Math.sin(t * 2 + p)) /* au début : on choisit sa couleur */
+      : (ready && p === bot) ? (hv("side" + p) ? 0.55 : 0.36) * (0.75 + 0.25 * Math.sin(t * 4)) /* le coup est prêt : la réserve d'en face s'éclaire ; la toucher passe la main */
+        : (mineTurn && hv("side" + p)) ? 0.2 : 0;
+    if (lit) { const g = ctx.createRadialGradient(bx, by - 26, 4, bx, by - 26, 72); g.addColorStop(0, rgba(255, 214, 130, lit)); g.addColorStop(1, "rgba(255,214,130,0)"); ctx.fillStyle = g; ctx.fillRect(bx - 74, by - 100, 148, 150); }
     for (let l = 0; l < hcount; l++) piece(ctx, RF, Hb, 0, 0, p, { lvl: l * 0.9 });
     if (sel === "w") piece(ctx, RF, Hb, 0, 0, p, { stand: true, lvl: hcount * 0.9 + 0.2, hi: 1 }); /* la pièce redressée en Verrou */
-    const zone = { x: bx - 34, y: by - 30 - hcount * 4, w: 68, h: 46 + hcount * 4 };
-    if (!st.started && G.ply === 0) { const g = ctx.createRadialGradient(bx, by - 18, 2, bx, by - 18, 46); g.addColorStop(0, rgba(255, 220, 150, (hv("side" + p) ? 0.3 : 0.12) * (0.7 + 0.3 * Math.sin(t * 2 + p)))); g.addColorStop(1, "rgba(255,220,150,0)"); ctx.fillStyle = g; ctx.fillRect(bx - 50, by - 70, 100, 100); } /* au début : on choisit sa couleur */
-    else if (mineTurn && hv("side" + p)) { const g = ctx.createRadialGradient(bx, by - 18, 2, bx, by - 18, 40); g.addColorStop(0, "rgba(255,220,150,.2)"); g.addColorStop(1, "rgba(255,220,150,0)"); ctx.fillStyle = g; ctx.fillRect(bx - 45, by - 60, 90, 90); }
-    r.hot.push({ ...zone, baykh: { side: p, id: "side" + p } });
-    for (let c = 0; c < R.c; c++) { const CF = frame(1, { cx: bx + (left ? 40 : -40) + (c ? (left ? 16 : -16) : 0), top: by - 4, bot: by + 18, wT: 34, wB: 38 }); capstone(ctx, CF, Hb, 0, 0, p, p === me ? s.cap : st.botCap, 0, p === me && sel === "c" ? 1 : 0, p === me ? s.capCol : st.botCol);
-      if (p === me) r.hot.push({ x: CF.cx - 16, y: by - 40, w: 32, h: 60, baykh: { capPick: true, id: "cap" + c } }); }
+    const tall = hcount * (top ? 2.2 : 6.4); r.hot.push({ x: bx - 36, y: by - 34 - tall, w: 72, h: 48 + tall, baykh: { side: p, id: "side" + p } });
+    for (let c = 0; c < R.c; c++) { const cx = top ? bx : bx + (left ? 1 : -1) * (c ? -32 : 34), cy = top ? 196 + c * 44 : 214;
+      const CF = frame(1, { cx, top: cy - 8, bot: cy + 12, wT: top ? 30 : 36, wB: top ? 30 : 40 }); capstone(ctx, CF, Hb, 0, 0, p, p === me ? s.cap : st.botCap, 0, p === me && sel === "c" ? 1 : 0, p === me ? s.capCol : st.botCol);
+      if (p === me) r.hot.push({ x: cx - 18, y: cy - 34, w: 36, h: 50, baykh: { capPick: true, id: "cap" + c } }); }
   }
-  /* au bord avant de la table : le coffret des Clefs, le cadran de la taille, le bouton de bronze, les plots du niveau */
-  const fx = F.P(0.5, 1.12)[1], between = !st.started || G.end || G.ply === 0;
-  { const x = 170, y = fx + 2; ctx.fillStyle = "#3a2410"; ctx.fillRect(x - 33, y - 6, 66, 14); ctx.fillStyle = "#c99a52"; ctx.fillRect(x - 33, y - 6, 66, 1.4); /* le coffret, ouvert */
-    CAPS.forEach((k, q) => { const CF = frame(1, { cx: x - 28 + q * 8, top: y - 2, bot: y + 4, wT: 9.5, wB: 10 }); capstone(ctx, CF, Hb, 0, 0, me, k, 0, k === s.cap ? 0.9 : 0, s.capCol); });
-    if (between) r.hot.push({ x: x - 32, y: y - 26, w: 64, h: 36, baykh: { box: true, id: "box" } }); if (hv("box")) { ctx.strokeStyle = "rgba(255,220,150,.4)"; ctx.strokeRect(x - 31, y - 7, 62, 16); } }
-  { const x = 470, y = fx + 4; ctx.fillStyle = "#5a3c14"; ctx.beginPath(); ctx.ellipse(x, y + 1, 17, 6.5, 0, 0, TAU); ctx.fill(); ctx.fillStyle = "#c99a52"; ctx.beginPath(); ctx.ellipse(x, y, 15, 5.6, 0, 0, TAU); ctx.fill(); /* le cadran */
-    for (let k = 3; k <= 8; k++) { const a = Math.PI * (1.08 + (k - 3) / 5 * 0.84), on = k === n; numeral(ctx, k, x + Math.cos(a) * 11, y + Math.sin(a) * 4.2, 3.6, on ? "#2a1000" : "rgba(60,40,16,.55)"); }
-    const a = Math.PI * (1.08 + (n - 3) / 5 * 0.84); ctx.strokeStyle = "#2a1c0c"; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * 8, y + Math.sin(a) * 3); ctx.stroke();
-    if (between) r.hot.push({ x: x - 20, y: y - 12, w: 38, h: 24, baykh: { dial: true, id: "dial" } }); if (hv("dial")) { ctx.strokeStyle = "rgba(255,220,150,.5)"; ctx.beginPath(); ctx.ellipse(x, y, 17, 6.5, 0, 0, TAU); ctx.stroke(); } }
-  { const x = 510, y = fx + 4; ctx.fillStyle = "#3a2410"; ctx.beginPath(); ctx.ellipse(x, y, 7, 2.8, 0, 0, TAU); ctx.fill(); ctx.fillStyle = hv("fresh") ? "#e0a868" : "#a8743a"; ctx.beginPath(); ctx.ellipse(x, y - 0.4, 5.6, 2.2, 0, 0, TAU); ctx.fill(); /* le bouton de bronze, à fleur */
-    r.hot.push({ x: x - 18, y: y - 12, w: 36, h: 24, baykh: { fresh: true, id: "fresh" } }); }
-  { const x = 548, y = fx + 4; ctx.fillStyle = "#3a2410"; ctx.beginPath(); ctx.ellipse(x, y, 8, 3.2, 0, 0, TAU); ctx.fill(); ctx.fillStyle = hv("top") ? "#e0b462" : "#b08440"; ctx.beginPath(); ctx.ellipse(x, y - 0.4, 6.6, 2.6, 0, 0, TAU); ctx.fill(); /* le bouton de la vue : un œil gravé (de dessus) ou un trapèze (en perspective) */
-    ctx.strokeStyle = "rgba(40,20,4,.85)"; ctx.lineWidth = 0.8; ctx.beginPath(); if (s.top) { ctx.moveTo(x - 3, y + 1); ctx.lineTo(x + 3, y + 1); ctx.lineTo(x + 2, y - 1.6); ctx.lineTo(x - 2, y - 1.6); ctx.closePath(); } else { ctx.rect(x - 2.2, y - 1.8, 4.4, 3); } ctx.stroke();
-    r.hot.push({ x: x - 18, y: y - 12, w: 36, h: 24, baykh: { topView: true, id: "top" } }); }
-  { const li = LEVELS.indexOf(s.level); for (let q = 0; q < 4; q++) { const x = 222 + q * 19, y = fx + 5, on = q === li; ctx.fillStyle = "#3a2410"; ctx.beginPath(); ctx.ellipse(x, y, 4, 1.8, 0, 0, TAU); ctx.fill(); ctx.fillStyle = on ? "#ffd890" : "#8a6a38"; ctx.beginPath(); ctx.ellipse(x, y - 0.3, 3, 1.2, 0, 0, TAU); ctx.fill();
-    numeral(ctx, q < 3 ? q + 1 : s.rank, x, y + 6, 3.4, on ? "#ffd890" : "rgba(200,170,110,.5)");
-    if (between) r.hot.push({ x: x - 9.5, y: y - 11, w: 19, h: 24, baykh: { level: q, id: "lv" + q } }); } }
-  /* la fin : une lueur sur la réserve du vainqueur */
-  if (G.end && G.end.win >= 0) { const bx = G.end.win === 0 ? 62 : 578, g = ctx.createRadialGradient(bx, 270, 4, bx, 270, 70); g.addColorStop(0, rgba(255, 210, 120, 0.35 * glow)); g.addColorStop(1, "rgba(255,210,120,0)"); ctx.fillStyle = g; ctx.fillRect(bx - 70, 200, 140, 140); }
-  if (st.thinking) { const x = bot === 0 ? 62 : 578; ctx.fillStyle = rgba(150, 200, 255, 0.25 + 0.2 * Math.sin(t * 6)); ctx.beginPath(); ctx.arc(x, 330, 2.5, 0, TAU); ctx.fill(); } /* la machine réfléchit */
-  { const x = 410, y = fx + 2, op = hv("ledger"); /* le carnet des parties, posé au bord de la table */
-    ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fillRect(x - 13, y - 2, 28, 10); ctx.fillStyle = "#5a2a1a"; ctx.fillRect(x - 14, y - 4, 28, 10); ctx.fillStyle = "#e8dcc0"; ctx.fillRect(x - 12.5, y - 5.4, 25, 2); ctx.fillStyle = op ? "#e0b462" : "#a8743a"; ctx.fillRect(x - 1, y - 4, 2, 10); /* la couverture, la tranche des pages, le signet */
-    r.hot.push({ x: x - 18, y: y - 12, w: 36, h: 24, baykh: { ledger: true, id: "ledger" } }); }
-  if (st.ledger) ledger(r, ctx, Hb, s, hv); else if (st.box) capBox(r, ctx, Hb, s, me, t, hv); else require("./relto-atelier").backButton(r, ctx, tr("baykh.back"), "lounge");
+  /* la fin : une lueur sur la réserve du vainqueur ; la machine qui réfléchit : une petite lueur bleue au pied de sa réserve */
+  if (G.end && G.end.win >= 0) { const bx = RES_X[G.end.win], by = top ? 140 : 176, g = ctx.createRadialGradient(bx, by - 20, 4, bx, by - 20, 70); g.addColorStop(0, rgba(255, 210, 120, 0.35 * glow)); g.addColorStop(1, "rgba(255,210,120,0)"); ctx.fillStyle = g; ctx.fillRect(bx - 70, by - 90, 140, 140); }
+  if (st.thinking) { ctx.fillStyle = rgba(150, 200, 255, 0.25 + 0.2 * Math.sin(t * 6)); ctx.beginPath(); ctx.arc(RES_X[bot], (top ? 140 : 176) + 16, 2.5, 0, TAU); ctx.fill(); }
+  if (st.ledger) ledger(r, ctx, Hb, s, hv); else if (st.box) capBox(r, ctx, Hb, s, me, t, hv); else if (st.drawer) drawer(r, ctx, Hb, s, between, hv); else require("./relto-atelier").backButton(r, ctx, tr("baykh.back"), "lounge");
+}
+/** Le tiroir des réglages, tiré, vu d'en haut : trois cases de velours — le niveau (quatre plots, leurs chiffres dessous), la taille (le cadran),
+ *  une partie neuve (le bouton de bronze). Le niveau et la taille ne se changent qu'entre deux parties. Toucher hors du tiroir le referme. */
+function drawer(r, ctx, Hb, s, between, hv) {
+  ctx.fillStyle = "rgba(4,3,2,.62)"; ctx.fillRect(0, 0, W, H); r.hot.push({ x: 0, y: 0, w: W, h: H, baykh: { boxClose: true, id: "boxClose" } });
+  const x0 = 130, y0 = 70, w = 380, h = 210, dim = between ? 1 : 0.45; ctx.fillStyle = "rgba(0,0,0,.5)"; ctx.fillRect(x0 + 6, y0 + 8, w, h);
+  const g = ctx.createLinearGradient(0, y0, 0, y0 + h); g.addColorStop(0, mix(Hb.table, "#ffffff", 0.08)); g.addColorStop(1, mix(Hb.table, "#000000", 0.25)); ctx.fillStyle = g; ctx.fillRect(x0, y0, w, h);
+  ctx.fillStyle = mix(Hb.table, "#000000", 0.5); ctx.fillRect(x0 + 10, y0 + 10, w - 20, h - 20); ctx.fillStyle = Hb.trim; ctx.fillRect(x0, y0 + h - 3, w, 3); ctx.fillRect(x0 + w / 2 - 22, y0 + h + 1, 44, 5);
+  r.hot.push({ x: x0, y: y0, w, h, baykh: { id: "drawerIn" } });
+  const comp = (x, y, ww, hh) => { const v = ctx.createLinearGradient(0, y, 0, y + hh); v.addColorStop(0, "rgba(0,0,0,.5)"); v.addColorStop(0.3, Hb.velvet); v.addColorStop(1, mix(Hb.velvet, "#000000", 0.25)); ctx.fillStyle = v; ctx.fillRect(x, y, ww, hh); };
+  comp(x0 + 18, y0 + 18, 150, h - 36); comp(x0 + 176, y0 + 18, 110, h - 36); comp(x0 + 294, y0 + 18, 68, h - 36);
+  ctx.save(); ctx.globalAlpha = dim;
+  const li = LEVELS.indexOf(s.level);
+  for (let q = 0; q < 4; q++) { const x = x0 + 40 + q * 35, y = y0 + 92, on = q === li; knob(ctx, x, y, 12, 11, on ? ["#fff0b0", "#ffc860"] : hv("lv" + q) ? ["#b89a60", "#8a6a38"] : ["#9a7a48", "#6a4e28"], null, on ? 1 : 0);
+    numeral(ctx, q < 3 ? q + 1 : s.rank, x, y + 28, 9, on ? "#ffd890" : "rgba(220,190,130,.6)");
+    if (between) r.hot.push({ x: x - 17, y: y - 16, w: 34, h: 54, baykh: { level: q, id: "lv" + q } }); }
+  { const x = x0 + 231, y = y0 + 96; knob(ctx, x, y, 40, 38, hv("dial") ? BRASS_HI : BRASS);
+    for (let k = 3; k <= 8; k++) { const a = Math.PI * (1.12 + (k - 3) / 5 * 0.76); numeral(ctx, k, x + Math.cos(a) * 27, y + Math.sin(a) * 26, 7.5, k === s.n ? "#2a1000" : "rgba(60,40,16,.55)"); }
+    const a = Math.PI * (1.12 + (s.n - 3) / 5 * 0.76); ctx.strokeStyle = "#2a1c0c"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, y + 4); ctx.lineTo(x + Math.cos(a) * 22, y + 4 + Math.sin(a) * 22); ctx.stroke(); ctx.fillStyle = "#2a1c0c"; ctx.beginPath(); ctx.arc(x, y + 4, 3, 0, TAU); ctx.fill();
+    if (between) r.hot.push({ x: x - 46, y: y - 44, w: 92, h: 92, baykh: { dial: true, id: "dial" } }); }
+  ctx.restore();
+  knob(ctx, x0 + 328, y0 + 96, 20, 19, hv("fresh") ? BRONZE_HI : BRONZE, (x, y) => ctx.arc(x, y, 8, 0.5, TAU - 0.3)); r.hot.push({ x: x0 + 302, y: y0 + 70, w: 52, h: 52, baykh: { fresh: true, id: "fresh" } }); /* une partie neuve */
 }
 
 /** Le carnet ouvert : les dernières parties, une ligne chacune, sans texte : la taille (en chiffre D'ni), le niveau (de un à trois plots),
@@ -347,7 +406,7 @@ function ledger(r, ctx, Hb, s, hv) {
  *  l'obsidienne, l'ivoire). Toucher hors de l'écrin le referme. */
 function capBox(r, ctx, Hb, s, me, t, hv) {
   ctx.fillStyle = "rgba(4,3,2,.62)"; ctx.fillRect(0, 0, W, H); r.hot.push({ x: 0, y: 0, w: W, h: H, baykh: { boxClose: true, id: "boxClose" } });
-  const x0 = 110, y0 = 52, w = 420, h = 250, velvet = Hb.kind === "castle" ? "#3a0e1a" : Hb.kind === "glass" ? "#143a32" : "#4a1a22";
+  const x0 = 110, y0 = 52, w = 420, h = 250, velvet = Hb.velvet;
   ctx.fillStyle = "rgba(0,0,0,.5)"; ctx.fillRect(x0 + 6, y0 + 8, w, h);
   const wood = ctx.createLinearGradient(0, y0, 0, y0 + h); wood.addColorStop(0, "#5a3a1e"); wood.addColorStop(1, "#3a2410"); ctx.fillStyle = wood; ctx.fillRect(x0, y0, w, h);
   ctx.fillStyle = "#c99a52"; ctx.fillRect(x0, y0, w, 2); ctx.fillRect(x0, y0 + h - 2, w, 2); /* les filets de laiton */
