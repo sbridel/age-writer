@@ -107,6 +107,7 @@ function act(r, a) {
   if (a.fresh) { fresh(r); st.drawer = false; snd(r, "leave"); return; }
   if (a.topView) { save(r, { top: !s.top }); snd(r, "tick"); return; } /* se pencher au-dessus de la table, ou se rasseoir */
   if (a.level != null) { if (!st.started || G.end || G.ply === 0) { save(r, { level: LEVELS[a.level] }); snd(r, "tick"); } return; }
+  if (a.cell != null && G.end) { const now = Date.now(); if (st.boardTap && now - st.boardTap < 450) { st.boardTap = 0; fresh(r); snd(r, "leave"); } else st.boardTap = now; return; } /* la partie finie : deux taps sur le plateau en relancent une (demande de l'auteur) */
   if (a.cell == null || !mine) return;
   if (!st.started) { st.started = true; } /* toucher le plateau, c'est jouer les claires : on commence */
   const i = a.cell, x = i % n, y = (i / n) | 0, stack = G.board[i], top = stack[stack.length - 1];
