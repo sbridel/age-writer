@@ -187,8 +187,10 @@ function capstone(ctx, F, Hb, i, j, p, kind, lvl = 0, hi = 0, colKey = "mine") {
     ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-3.6, -16.6); ctx.quadraticCurveTo(-4.2, -23.5, 0, -24.2); ctx.quadraticCurveTo(4.2, -23.5, 3.6, -16.6); ctx.quadraticCurveTo(0, -15.4, -3.6, -16.6); ctx.fill();
     ctx.fillStyle = "#1a160f"; ctx.beginPath(); ctx.ellipse(0, -19.4, 1.9, 2.4, 0, 0, TAU); ctx.fill();
     ctx.strokeStyle = "#e8c06a"; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(-5.7, -4.2); ctx.quadraticCurveTo(0, -2.7, 5.7, -4.2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-3.5, -16.8); ctx.quadraticCurveTo(-3.9, -23.1, 0, -23.7); ctx.quadraticCurveTo(3.9, -23.1, 3.5, -16.8); ctx.stroke(); }
-  else if (kind === "bee" || kind === "hand") { /* les lampes de l'auteur, sur leur pilier ; le verre de la couleur du joueur */
-    ctx.fillStyle = "#3e4844"; ctx.fillRect(-3, -5, 6, 5); ctx.fillStyle = "#5c6862"; ctx.fillRect(-4, -6.4, 8, 1.6);
+  else if (kind === "bee" || kind === "hand") { /* les lampes de l'auteur, sur un pied doré comme les autres Clefs (l'auteur n'aimait pas le pilier de pierre) ; le verre de la couleur du joueur */
+    ctx.fillStyle = gold; ctx.beginPath(); ctx.ellipse(0, -0.8, 5.2, 1.4, 0, 0, TAU); ctx.fill(); ctx.fillRect(-5.2, -1.8, 10.4, 1); /* la base */
+    ctx.beginPath(); ctx.moveTo(-3.2, -1.8); ctx.quadraticCurveTo(-1.2, -2.6, -1.3, -4.4); ctx.lineTo(1.3, -4.4); ctx.quadraticCurveTo(1.2, -2.6, 3.2, -1.8); ctx.closePath(); ctx.fill(); /* le fût, galbé */
+    ctx.fillRect(-3.8, -6.4, 7.6, 2); ctx.fillStyle = "rgba(255,240,190,.55)"; ctx.fillRect(-3.8, -6.4, 7.6, 0.5); ctx.fillStyle = "rgba(60,36,6,.45)"; ctx.fillRect(-3.8, -4.7, 7.6, 0.3); /* la bague qui tient le verre */
     const tint = CAP_COLS[colKey] ? hex(CAP_COLS[colKey][0]) : Hb.kind === "glass" ? (p ? [96, 176, 160] : [236, 178, 84]) : p ? [110, 120, 150] : [244, 200, 140];
     require("./relto-ahyoheek").lampGlass(ctx, kind === "bee" ? "oval" : "rays", tint, -5.2, 1); }
 else if (kind === "rayonnant" || kind === "flamboyant") {
