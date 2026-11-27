@@ -699,6 +699,12 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.11.9 — Des Clefs à la bonne taille (27 nov. 2026)
+
+Remarques de l'auteur : « il y a des capstones un peu grosses », puis « j'aime pas le socle des lampes ». Mesure des huit Clefs en 5×5 (case de 80 px) : statuette 88, abeille 97, main 101, aiguille 121, horloge 126, tour 130, flamboyante 172, rayonnante 194 (un Verrou : 87). `src/relto-baykh.js` :
+- `KEY_SCALE` : l'échelle de chaque modèle (lampes 1,3 ; rayonnante 0,67 ; flamboyante 0,76 → 131 px, la hauteur de la tour). Vaut partout (plateau, réserves, coffret, écrin).
+- Les lampes : un pied doré (base ronde, fût galbé, bague qui tient le verre) au lieu du pilier de pierre gris-vert ; l'auteur a choisi le pied doré.
+
 ## 2.11.8 — La Clef de la maison (27 nov. 2026)
 
 Demande de l'auteur : « il faut éviter que le bot prenne le même capstone que moi ». `src/relto-baykh.js` : `otherCap(mine)` tire parmi les sept autres modèles ; utilisé au tirage (`fresh`), à la reprise (`state` : une Clef gardée identique à la mienne est retirée) et quand je prends la sienne dans l'écrin (`pickCap` : elle en change, `keep`). La couleur peut rester la même (signalé à l'auteur). Tests dans `test/baykh.test.js` ; guide FR/EN.
