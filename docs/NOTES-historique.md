@@ -699,7 +699,7 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
-## En attente (assembly) — Baykh, un difficile plus fort (27 nov. 2026)
+## 2.11.4 — Baykh, un difficile plus fort (27 nov. 2026)
 
 Demande de l'auteur : « j'ai essayé le niveau max et c'est facile » → un difficile plus fort (pas un quatrième niveau). Mesure : `claude/MESURE-baykh-difficile.md`. `src/baykh.js` :
 - `think(…, "hard")` → `search` : alpha-bêta (négamax) en approfondissement progressif, budget 250 ms vérifié à chaque nœud ; tri par `judge` ; près des feuilles 24 coups au plus ; à la racine, 30 coups en 6×6, 18 en 7×7 et 8×8.
