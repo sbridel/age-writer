@@ -699,6 +699,10 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.11.8 — La Clef de la maison (27 nov. 2026)
+
+Demande de l'auteur : « il faut éviter que le bot prenne le même capstone que moi ». `src/relto-baykh.js` : `otherCap(mine)` tire parmi les sept autres modèles ; utilisé au tirage (`fresh`), à la reprise (`state` : une Clef gardée identique à la mienne est retirée) et quand je prends la sienne dans l'écrin (`pickCap` : elle en change, `keep`). La couleur peut rester la même (signalé à l'auteur). Tests dans `test/baykh.test.js` ; guide FR/EN.
+
 ## 2.11.7 — La fenêtre de la Verrière (27 nov. 2026)
 
 Remarques de l'auteur (capture) : la traverse de la fenêtre du salon devrait séparer le verre clair du vitrail, sous le soleil ; le montant devrait atteindre le sommet ; des éléments semblaient passer derrière le haut de la fenêtre (« ce n'est pas possible »). `windowAndSky` (`src/relto-lounge.js`), Verrière seulement :
