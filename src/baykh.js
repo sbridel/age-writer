@@ -113,7 +113,7 @@ function gap(G, p) {
     while (dq.length) { const i = dq.shift(), x = i % n, y = (i / n) | 0;
       for (const [dx, dy] of DIRS) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= n || Y >= n) continue; const j = Y * n + X, c = cost(j); if (c === Infinity) continue;
         const nd = dist[i] + c; if (nd < dist[j]) { dist[j] = nd; c ? dq.push(j) : dq.unshift(j); } } }
-    for (let k = 0; k < n; k++) { const i = axis ? k * n + n - 1 : (n - 1) * n + k; best = Math.min(best, dist[i]); }
+    for (let k = 0; k < n; k++) { const i = axis ? (n - 1) * n + k : k * n + n - 1; best = Math.min(best, dist[i]); } /* on arrive au bord opposé à celui d'où l'on part (avant 2.11.4, les deux axes étaient mélangés) */
   }
   return best;
 }
@@ -127,7 +127,7 @@ function score(G, p) {
   return s;
 }
 /** Le coup de la machine. Niveaux : "easy" (prend une route offerte, sinon presque au hasard), "mid" (le meilleur coup à un pas,
- *  et ne laisse pas une route à un coup), "hard" (deux pas, en ne regardant que les meilleurs coups). `rnd` : un hasard, pour varier. */
+ *  et ne laisse pas une route à un coup), "hard" (une recherche de plusieurs coups dans un quart de seconde, `search`). `rnd` : un hasard, pour varier. */
 function think(G, level = "mid", rnd = Math.random) {
   const me = G.turn, all = moves(G); if (!all.length) return null;
   const wins = all.filter((m) => { const H = apply(G, m); return H.end && H.end.win === me; }); if (wins.length) return wins[Math.floor(rnd() * wins.length)];
@@ -138,18 +138,70 @@ function think(G, level = "mid", rnd = Math.random) {
     if (rnd() < 0.5) { const safe = pool.filter((m) => !loseNext(apply(G, m))); if (safe.length) return safe[Math.floor(rnd() * safe.length)]; }
     return (pool.length ? pool : all)[Math.floor(rnd() * (pool.length || all.length))];
   }
+  if (level === "hard") return search(G, rnd);
   const ranked = all.map((m) => { const H = apply(G, m); return { m, H, v: score(H, me) + rnd() * 3 }; }).sort((a, b) => b.v - a.v);
-  if (level === "mid") { for (const r of ranked.slice(0, 12)) if (!loseNext(r.H)) return r.m; return ranked[0].m; }
-  /* difficile : pour chacun des meilleurs coups, la meilleure réponse de l'autre (parmi les siennes les plus prometteuses) */
-  let best = null, bv = -Infinity; const t0 = Date.now(), wide = G.n >= 7 ? 8 : G.n >= 6 ? 10 : 14, budget = 220; /* sur les grands plateaux, moins de coups regardés, et jamais plus d'un quart de seconde */
-  for (const r of ranked.slice(0, wide)) {
-    if (best && Date.now() - t0 > budget) break;
-    if (r.H.end) { const v = r.H.end.win === me ? 1e6 : -1e6; if (v > bv) { bv = v; best = r.m; } continue; }
-    const rep = moves(r.H).map((m) => apply(r.H, m)).sort((a, b) => score(a, me) - score(b, me)).slice(0, G.n >= 7 ? 6 : 10);
-    let worst = Infinity; for (const K of rep) worst = Math.min(worst, score(K, me)); if (worst === Infinity) worst = r.v;
-    if (worst > bv) { bv = worst; best = r.m; }
-  }
-  return best || ranked[0].m;
+  for (const r of ranked.slice(0, 12)) if (!loseNext(r.H)) return r.m; return ranked[0].m;
 }
 
-module.exports = { RESERVE, DIRS, newGame, moves, apply, legal, road, flats, verdict, gap, score, think, top };
+/* ---------------------------------------------------------------- le difficile (2.11.4) ---------------------------------------------------------------- */
+/* Une recherche alpha-bêta en approfondissement progressif, dans un quart de seconde, et un jugement plus fin des positions.
+ * Mesurée contre l'ancien difficile : 20-0 en 5×5, 7-1 en 6×6, 6-0 en 7×7 et 8×8, 12-8 en 4×4 (claude/MESURE-baykh-difficile.md). */
+const BIG = 1e9;
+/** L'écart de route, en coût (Dijkstra à seaux) : ma Voie ou ma Clef 0, case vide 1, Voie adverse 2 (on la prend en montant dessus),
+ *  mon Verrou 2, Verrou adverse 4 (seule ma Clef l'écrase), Clef adverse : barrage. */
+function gapCost(G, p) {
+  const { n } = G, N = n * n, cost = new Int32Array(N);
+  for (let i = 0; i < N; i++) { const t = top(G, i); cost[i] = !t ? 1 : t.p === p ? (t.k === "w" ? 2 : 0) : t.k === "f" ? 2 : t.k === "w" ? 4 : 999; }
+  let best = BIG; const dist = new Int32Array(N), maxD = 4 * N + 1;
+  for (let axis = 0; axis < 2; axis++) {
+    dist.fill(1e8); const buckets = Array.from({ length: maxD + 1 }, () => []); let found = BIG;
+    for (let k = 0; k < n; k++) { const i = axis ? k : k * n; if (cost[i] < 999) { dist[i] = cost[i]; buckets[cost[i]].push(i); } }
+    const relax = (j, d) => { const c = cost[j]; if (c >= 999) return; const nd = d + c; if (nd < dist[j] && nd <= maxD) { dist[j] = nd; buckets[nd].push(j); } };
+    for (let d = 0; d <= maxD && d < found; d++) { const bk = buckets[d];
+      for (let q = 0; q < bk.length; q++) { const u = bk[q]; if (dist[u] !== d) continue; const x = u % n, y = (u / n) | 0;
+        if ((axis === 0 && x === n - 1) || (axis === 1 && y === n - 1)) { found = d; break; }
+        if (x > 0) relax(u - 1, d); if (x < n - 1) relax(u + 1, d); if (y > 0) relax(u - n, d); if (y < n - 1) relax(u + n, d); } }
+    best = Math.min(best, found);
+  }
+  return best;
+}
+/** La valeur d'une position pour `p`, au niveau difficile. */
+function judge(G, p) {
+  if (G.end) return G.end.win === p ? 1e6 - G.ply : G.end.win === -1 ? 0 : -1e6 + G.ply;
+  const q = 1 - p, big = G.n * 3, gm = Math.min(gapCost(G, p), big), go = Math.min(gapCost(G, q), big);
+  let s = (go - gm) * 40 + (flats(G, p) - flats(G, q)) * 10;
+  for (const st of G.board) { const h = st.length; if (!h) continue; const t = st[h - 1], w = t.p === p ? 1 : -1;
+    let own = 0; for (const pc of st) if (pc.p === t.p) own++; s += w * (own * 3 + (h - own)); /* tenir une pile, et ce qu'elle a pris */
+    if (t.k === "c") s += w * 15; if (t.k === "w") s += w * 4; }
+  s += (G.res[p].s - G.res[q].s) * 1.5;
+  if (G.turn === p) s += 10; /* l'initiative */
+  return s;
+}
+function search(G, rnd, budget = 250) {
+  const me = G.turn, t0 = Date.now(), all = moves(G);
+  const wins = all.filter((m) => { const H = apply(G, m); return H.end && H.end.win === me; }); if (wins.length) return wins[0];
+  let timeout = false;
+  const late = () => Date.now() - t0 > budget;
+  function nega(H, depth, a, b) {
+    if (late()) { timeout = true; return 0; }
+    if (H.end || depth === 0) return judge(H, H.turn);
+    if (depth === 1) { let best = -BIG, k = 0; for (const m of moves(H)) { const K = apply(H, m), v = -judge(K, K.turn); if (v > best) best = v; if (best >= b) break; if ((++k & 31) === 0 && late()) { timeout = true; return 0; } } return best; }
+    let ms = moves(H).map((m) => { const K = apply(H, m); return { K, o: -judge(K, K.turn) }; }); if (late()) { timeout = true; return 0; }
+    ms.sort((x, y) => y.o - x.o); if (depth <= 2 && ms.length > 24) ms = ms.slice(0, 24); /* près des feuilles, seuls les coups prometteurs */
+    let best = -BIG;
+    for (const { K } of ms) { const v = -nega(K, depth - 1, -b, -a); if (timeout) return 0; if (v > best) best = v; if (v > a) a = v; if (a >= b) break; }
+    return best;
+  }
+  let root = all.map((m) => { const K = apply(G, m); return { m, K, v: -judge(K, K.turn) + rnd() * 2 }; }).sort((x, y) => y.v - x.v), bestM = root[0].m;
+  const W = G.n <= 5 ? root.length : G.n === 6 ? 30 : 18; /* sur les grands plateaux, seuls les coups les plus prometteurs sont vus à fond */
+  for (let depth = 2; depth <= 8; depth++) {
+    let a = -BIG, bm = null; const scored = [];
+    for (const r of root.slice(0, W)) { const v = -nega(r.K, depth - 1, -BIG, -a); if (timeout) break; r.s = v + rnd() * 2; scored.push(r); if (r.s > a) { a = r.s; bm = r.m; } }
+    if (timeout) { if (bm && scored.length > Math.min(W, root.length) / 3) bestM = bm; break; } /* une profondeur à moitié vue : on ne garde son meilleur que si elle a vu assez de coups */
+    bestM = bm; root = scored.sort((x, y) => y.s - x.s).concat(root.slice(W));
+    if (Math.abs(a) > 5e5) break; /* une fin vue : inutile de chercher plus loin */
+  }
+  return bestM;
+}
+
+module.exports = { RESERVE, DIRS, newGame, moves, apply, legal, road, flats, verdict, gap, gapCost, score, judge, think, top };

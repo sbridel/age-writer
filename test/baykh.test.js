@@ -44,6 +44,7 @@ ok(B.verdict(G, 1).win === 1 && B.verdict(G, 0).win === 0, "deux routes : celle 
 G = B.newGame(5); G.ply = 2; G.turn = 1; for (const i of [10, 11, 12, 13]) G.board[i] = [{ p: 1, k: "f" }];
 let m = B.think(G, "easy", mul(1)); ok(B.apply(G, m).end.win === 1, "même facile, il prend la route offerte");
 G = B.newGame(5); G.ply = 2; G.turn = 1; for (const i of [10, 11, 12, 13]) G.board[i] = [{ p: 0, k: "f" }]; G.board[0] = [{ p: 1, k: "f" }];
+{ const g3 = B.newGame(5); for (const i of [5, 6, 7]) g3.board[i] = [{ p: 0, k: "f" }]; ok(B.gap(g3, 0) === 2 && B.gapCost(g3, 0) === 2, "l'écart de route : deux cases manquent sur la rangée"); } /* avant 2.11.4, gap mélangeait les deux axes */
 for (const lv of ["mid", "hard"]) { m = B.think(G, lv, mul(2)); const H = B.apply(G, m); ok(!B.moves(H).some((x) => { const K = B.apply(H, x); return K.end && K.end.win === 0; }), lv + " : il barre la route à un coup"); }
 /* des parties entières, machine contre machine, finissent proprement */
 for (let s = 0; s < 12; s++) { const r = mul(50 + s); let g = B.newGame(3 + (s % 4)), guard = 0;
@@ -95,6 +96,9 @@ console.log("baykh : " + n + " OK");
   BK.act(R8, { box: true }); ok(!s8.box, "fermé, il n'ouvre pas l'écrin");
   BK.act(R8, { boxTop: true }); BK.act(R8, { boxTop: true }); ok(mem.shut === false, "deux taps encore : il se rouvre");
   BK.act(R8, { box: true }); ok(s8.box, "ouvert, il ouvre l'écrin");
+  mem = {}; const R9 = make(null), s9 = BK.state(R9); let g9 = B.newGame(3); for (const i of [0, 1, 2]) g9.board[i] = [{ p: 0, k: "f" }]; g9.end = { win: 0, by: "road", path: [0, 1, 2] }; g9.ply = 6; s9.G = g9; s9.started = true;
+  BK.act(R9, { cell: 4 }); ok(s9.G.end, "partie finie : un seul tap sur le plateau ne relance rien");
+  BK.act(R9, { cell: 4 }); ok(!s9.G.end && s9.G.ply === 0, "partie finie : deux taps sur le plateau en relancent une");
   mem = { top: true }; const R7 = make(null); ok(R7.hot.some((h) => h.baykh && h.baykh.wood) && !R7.hot.some((h) => h.baykh && (h.baykh.topView || h.baykh.box || h.baykh.ledger || h.baykh.drawer)), "vue de dessus : aucun bouton, le bois");
   BK.act(R7, { wood: true }); ok(mem.top === false, "toucher le bois : on se rassoit");
 }
