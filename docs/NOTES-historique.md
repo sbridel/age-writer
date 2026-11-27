@@ -699,6 +699,10 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.11.5 — Baykh au salon (27 nov. 2026)
+
+Remarque de l'auteur (capture du salon) : « on voit pas trop la partie actuelle de loin ». `loungeTable` (`src/relto-baykh.js`) : la partie de `r.bk.G`, sinon `restore(cur(r).game)` (plus de pièces factices, pas de `state()` pour ne pas réveiller la machine) ; `frame(n)` à la vraie taille ; le plateau sur tout le dessus (124 → 140) ; chaque pile en relief (1,3 px par pièce, jusqu'à 5), dessus et flanc aux couleurs `Hb.C`, **forme de l'habit** (carrée, octogonale au Château : l'auteur a relevé des pièces rondes dans le premier essai) ; Verrou debout, Clef avec un petit fût.
+
 ## 2.11.4 — Baykh, un difficile plus fort (27 nov. 2026)
 
 Demande de l'auteur : « j'ai essayé le niveau max et c'est facile » → un difficile plus fort (pas un quatrième niveau). Mesure : `claude/MESURE-baykh-difficile.md`. `src/baykh.js` :

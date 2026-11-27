@@ -459,15 +459,25 @@ function loungeTable(r, ctx, c, tr) {
   ctx.fillStyle = c(Hb.table); for (const dx of [-74, 74]) ctx.fillRect(x + dx - 4, y + 4, 8, 26);
   ctx.beginPath(); ctx.moveTo(x - 88, y + 8); ctx.lineTo(x + 88, y + 8); ctx.lineTo(x + 80, y - 6); ctx.lineTo(x - 80, y - 6); ctx.closePath(); ctx.fillStyle = c(mix(Hb.table, "#000000", 0.2)); ctx.fill();
   ctx.beginPath(); ctx.moveTo(x - 80, y - 6); ctx.lineTo(x + 80, y - 6); ctx.lineTo(x + 70, y - 18); ctx.lineTo(x - 70, y - 18); ctx.closePath(); ctx.fillStyle = c(mix(Hb.table, "#ffffff", 0.08)); ctx.fill();
-  const F = frame(5, { cx: x, top: y - 17, bot: y - 7, wT: 62, wB: 78 }), quad = (a, b2, c2, d2) => { ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b2); ctx.lineTo(...c2); ctx.lineTo(...d2); ctx.closePath(); };
-  ctx.fillStyle = c(Hb.rim[1]); quad(F.P(-0.05, 1.05), F.P(1.05, 1.05), F.P(1.05, -0.05), F.P(-0.05, -0.05)); ctx.fill();
-  ctx.fillStyle = c(Hb.sq[0]); quad(F.P(0, 1), F.P(1, 1), F.P(1, 0), F.P(0, 0)); ctx.fill();
-  ctx.strokeStyle = "rgba(30,22,14,.45)"; ctx.lineWidth = 0.4; for (let k = 1; k < 5; k++) { ctx.beginPath(); ctx.moveTo(...F.P(k / 5, 0)); ctx.lineTo(...F.P(k / 5, 1)); ctx.stroke(); ctx.beginPath(); ctx.moveTo(...F.P(0, k / 5)); ctx.lineTo(...F.P(1, k / 5)); ctx.stroke(); }
-  /* quelques pièces de la dernière partie, en petit */
-  const st = r.bk && r.bk.G, G = st && st.n === 5 ? st : null;
-  for (const [i, p] of G ? G.board.map((s2, k) => [k, s2.length ? s2[s2.length - 1].p : -1]).filter(([, p]) => p >= 0) : [[11, 0], [12, 0], [13, 1], [7, 1], [17, 0]]) {
-    const [px, py] = F.P(((i % 5) + 0.5) / 5, (((i / 5) | 0) + 0.5) / 5); ctx.fillStyle = c(Hb.C[p][0]); ctx.fillRect(px - 2.6, py - 1.6, 5.2, 2.6); }
-  r.hot.push({ x: x - 90, y: y - 22, w: 180, h: 54, tip: tr("baykh.table"), go: "baykh" });
+  /* la partie en cours, lisible de loin : celle de la table si on y est passé, sinon celle qui est gardée ; le plateau prend tout le dessus */
+  const G = (r.bk && r.bk.G) || restore(cur(r).game), n = G ? G.n : cur(r).n;
+  const F = frame(n, { cx: x, top: y - 18, bot: y - 7, wT: 124, wB: 140 }), quad = (a, b2, c2, d2) => { ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b2); ctx.lineTo(...c2); ctx.lineTo(...d2); ctx.closePath(); };
+  ctx.fillStyle = c(Hb.rim[1]); quad(F.P(-0.04, 1.06), F.P(1.04, 1.06), F.P(1.04, -0.06), F.P(-0.04, -0.06)); ctx.fill();
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { quad(F.P(i / n, (j + 1) / n), F.P((i + 1) / n, (j + 1) / n), F.P((i + 1) / n, j / n), F.P(i / n, j / n)); ctx.fillStyle = c(Hb.sq[(i + j) % 2]); ctx.fill(); }
+  if (G) for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { /* du fond vers l'avant : chaque pile, en petit relief, sa couleur au sommet */
+    const st2 = G.board[j * n + i]; if (!st2.length) continue; const t = st2[st2.length - 1], [px, py] = F.P((i + 0.5) / n, (j + 0.72) / n), w = F.cellW((j + 0.5) / n) * 0.54, h = 1.3 * Math.min(st2.length, 5);
+    const [top0, side] = Hb.C[t.p];
+    if (t.k === "w") { ctx.fillStyle = c(side); ctx.fillRect(px - w * 0.18, py - h - 5, w * 0.36, h + 5); ctx.fillStyle = c(top0); ctx.fillRect(px - w * 0.18, py - h - 5, w * 0.36, 1.4); continue; } /* un Verrou, debout */
+    const ry = w * 0.2, face = (cy) => { ctx.beginPath(); /* la forme de l'habit, comme à la table : carrée, ou octogonale au Château */
+      if (Hb.shape === "oct") for (let q = 0; q < 8; q++) { const a = (q + 0.5) * TAU / 8; ctx[q ? "lineTo" : "moveTo"](px + Math.cos(a) * w / 2, cy + Math.sin(a) * ry); }
+      else { ctx.moveTo(px - w / 2, cy + ry); ctx.lineTo(px + w / 2, cy + ry); ctx.lineTo(px + w / 2 - 1, cy - ry); ctx.lineTo(px - w / 2 + 1, cy - ry); }
+      ctx.closePath(); };
+    const half = Hb.shape === "oct" ? (w / 2) * Math.cos(TAU / 16) : w / 2;
+    ctx.fillStyle = c(side); ctx.fillRect(px - half, py - h + (Hb.shape === "oct" ? 0 : ry), half * 2, h + (Hb.shape === "oct" ? ry : 0) + 0.6); face(py); ctx.fill(); /* le flanc */
+    ctx.fillStyle = c(top0); face(py - h); ctx.fill(); /* le dessus */
+    if (t.k === "c") { ctx.fillRect(px - w * 0.16, py - h - 3.6, w * 0.32, 3.6); } /* une Clef : un petit fût */
+  }
+  r.hot.push({ x: x - 90, y: y - 26, w: 180, h: 58, tip: tr("baykh.table"), go: "baykh" });
 }
 
 module.exports = { drawBaykh, loungeTable, act, state, cur, habit, frame, piece, capstone, CAPS, LEVELS };

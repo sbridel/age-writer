@@ -6,7 +6,7 @@
  */
 const NEWS = [
   {
-    v: "2.11.4",
+    v: "2.11.5",
     fr: {
       title: "Un Relto habité",
       letter: "On nous demandait si quelqu'un vivait là. Quelqu'un y vit : il y a un plateau sur la table basse du salon, une partie en cours, des pièces couchées et debout ; une lampe à la tête du lit ; et dans le couloir, les couleurs des six guildes. Asseyez-vous, la maison joue.",
@@ -18,6 +18,7 @@ const NEWS = [
         "**Une lampe de chevet**, à la tête du lit : le verre de l'abeille ou de la main, un clic en change, et elle luit davantage la nuit.",
         "**Baykh, une vraie table** (2.11.2 et 2.11.3) : une table basse à tablette, le plateau posé dessus, aussi grand que possible, les réglages dans le tiroir, un vrai carnet et un coffret qui se ferme (deux taps sur son dessus) ; on joue un coup en touchant la réserve d'en face, et la vue de dessus n'a plus de bouton (toucher le bois pour se rasseoir).",
         "**Baykh, un difficile plus fort** (2.11.4) : la machine voit plusieurs coups à l'avance, et le moyen juge mieux les routes ; une partie finie, deux taps sur le plateau en relancent une.",
+        "**Baykh au salon** (2.11.5) : la partie en cours se lit de loin sur la table basse, à sa taille, les piles en relief, de la forme de l'habit.",
         "**Plein écran** (2.11.2) : la bande de l'heure ne prend plus le premier toucher en bas de l'image.",
       ],
     },
@@ -32,6 +33,7 @@ const NEWS = [
         "**A bedside lamp**, at the head of the bed: the bee's glass or the hand's, a click changes it, and it glows more at night.",
         "**Baykh, a real table** (2.11.2 and 2.11.3): a low table with a shelf, the board lying on top, as large as it can be, the settings in the drawer, a proper game book and a casket that closes (two taps on its lid); a move is played by touching the opposite reserve, and the top view has no buttons left (touch the wood to sit back).",
         "**Baykh, a stronger hard level** (2.11.4): the machine sees several moves ahead, and the medium level judges roads better; once a game is over, two taps on the board start another.",
+        "**Baykh in the lounge** (2.11.5): the game in progress can be read from afar on the low table, at its size, the stacks in relief, in the habit's shape.",
         "**Full screen** (2.11.2): the hour band no longer takes the first touch at the bottom of the picture.",
       ],
     },
