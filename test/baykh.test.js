@@ -99,6 +99,9 @@ console.log("baykh : " + n + " OK");
   mem = {}; const R9 = make(null), s9 = BK.state(R9); let g9 = B.newGame(3); for (const i of [0, 1, 2]) g9.board[i] = [{ p: 0, k: "f" }]; g9.end = { win: 0, by: "road", path: [0, 1, 2] }; g9.ply = 6; s9.G = g9; s9.started = true;
   BK.act(R9, { cell: 4 }); ok(s9.G.end, "partie finie : un seul tap sur le plateau ne relance rien");
   BK.act(R9, { cell: 4 }); ok(!s9.G.end && s9.G.ply === 0, "partie finie : deux taps sur le plateau en relancent une");
+  { let same = 0; for (let k = 0; k < 40; k++) { mem = { cap: "bee" }; const Rc = make(null), sc = BK.state(Rc); BK.act(Rc, { fresh: true }); if (sc.botCap === "bee") same++; } ok(same === 0, "la maison ne tire jamais ma Clef"); }
+  { mem = {}; const Rc = make(null), sc = BK.state(Rc); const his = sc.botCap; BK.act(Rc, { pickCap: his }); ok(mem.cap === his && sc.botCap !== his, "je prends la Clef de la maison : elle en change"); }
+  { mem = { cap: "bee", bot: { cap: "bee", col: "gold", guild: "ecrivains" } }; const Rc = make(null); ok(BK.state(Rc).botCap !== "bee", "une Clef gardée identique à la mienne est retirée"); }
   mem = { top: true }; const R7 = make(null); ok(R7.hot.some((h) => h.baykh && h.baykh.wood) && !R7.hot.some((h) => h.baykh && (h.baykh.topView || h.baykh.box || h.baykh.ledger || h.baykh.drawer)), "vue de dessus : aucun bouton, le bois");
   BK.act(R7, { wood: true }); ok(mem.top === false, "toucher le bois : on se rassoit");
 }
