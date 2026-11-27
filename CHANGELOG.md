@@ -2,7 +2,13 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.11 — A lived-in Relto (2.11.0 to 2.11.8, 2026-11-25 to 27)
+## 2.11 — A lived-in Relto (2.11.0 to 2.11.9, 2026-11-25 to 27)
+
+### 2.11.9 — Keystones in proportion
+
+#### Changed
+- Baykh: the two Gothic spire Keystones (rayonnant and flamboyant) are brought down to the height of the tower; they stood more than twice a square tall.
+- Baykh: the two lamp Keystones stand on a gilded foot, like the other Keystones, instead of a stone pillar.
 
 ### 2.11.8 — The house's Keystone
 
