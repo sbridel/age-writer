@@ -154,7 +154,7 @@ function kitchen(r, ctx, c, R, sky, t, fl, night, castle, glass, tr) {
 }
 
 function windowAndSky(r, ctx, c, R, sky, t, castle, glass) {
-  const { x: wx, y: wy, w: ww, h: wh } = WIN;
+  const { x: wx, w: ww } = WIN, drop = glass ? 14 : 0, wy = WIN.y + drop, wh = WIN.h - drop; /* la Verrière : le cintre s'arrête sous les arcs de cuivre du plafond (rien ne passe derrière la fenêtre) ; le bas ne bouge pas */
   ctx.fillStyle = c(castle ? CASTLE.STONE_LO : glass ? GLASS.COPPER_LO : "#3a2a1e"); arch(ctx, castle, wx - 10, wy - 10, ww + 20, wh + 16); ctx.fill();
   ctx.save(); arch(ctx, castle, wx, wy, ww, wh); ctx.clip();
   const sg = ctx.createLinearGradient(0, wy - 30, 0, wy + wh); sg.addColorStop(0, sky.top); sg.addColorStop(1, sky.bottom); ctx.fillStyle = sg; ctx.fillRect(wx, wy - 30, ww, wh + 30);
