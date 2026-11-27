@@ -2,7 +2,12 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.11 — A lived-in Relto (2.11.0 to 2.11.4, 2026-11-25 to 27)
+## 2.11 — A lived-in Relto (2.11.0 to 2.11.5, 2026-11-25 to 27)
+
+### 2.11.5 — Baykh in the lounge
+
+#### Fixed
+- The low table in the lounge now shows the game in progress, legible from afar: the saved game even before visiting the table, at its real size (3×3 to 8×8), on a board covering the whole table top, each stack a small piece in relief, square or octagonal like the habit's pieces, walls standing and Keystones raised. It used to show only 5×5 games, as tiny marks, and placeholder pieces until the table had been visited.
 
 ### 2.11.4 — A stronger hard level
 
