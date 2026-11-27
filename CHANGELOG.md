@@ -2,7 +2,12 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.11 — A lived-in Relto (2.11.0 to 2.11.5, 2026-11-25 to 27)
+## 2.11 — A lived-in Relto (2.11.0 to 2.11.6, 2026-11-25 to 27)
+
+### 2.11.6 — Baykh in the lounge, glasshouse colours
+
+#### Fixed
+- With the Glasshouse habit, the low table in the lounge drew the board and every piece in one single colour: the lounge's time-of-day shading could not read the translucent glass colours. They are now made opaque before shading.
 
 ### 2.11.5 — Baykh in the lounge
 
