@@ -19,6 +19,8 @@ const GS = require("./guild-symbols"); /* la machine joue pour une guilde, tiré
 const { rgba, mix } = require("./util");
 const hex = (h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16));
 const W = 640, H = 360, TAU = Math.PI * 2;
+/** L'échelle de chaque Clef : les lampes un peu plus grandes ; les deux gothiques à flèche ramenées à la hauteur de la tour (l'auteur les trouvait trop grosses : 194 et 172 px contre 130 en 5×5). */
+const KEY_SCALE = { bee: 1.3, hand: 1.3, rayonnant: 0.67, flamboyant: 0.76 };
 const CAPS = ["robe", "bee", "hand", "needle", "rayonnant", "flamboyant", "tower", "clock"]; /* la statuette, les deux lampes, et les quatre pistes gothiques de l'auteur (l'aiguille D'ni, le rayonnant, le flamboyant, la tour) */
 /* les couleurs d'une Clef de voûte (une pièce à soi, pas forcément assortie) : celle du joueur, ou un émail, un métal, une pierre */
 const CAP_COLS = { mine: null, gold: ["#f0cc6a", "#c8983a", "#7a5a1a"], silver: ["#e6eaee", "#aab0b8", "#6a7078"], copper: ["#e8956a", "#b8643a", "#6a3a1c"],
@@ -172,7 +174,7 @@ function piece(ctx, F, Hb, i, j, p, { stand = false, lvl = 0, hi = 0 } = {}) {
 
 /** La Clef de voûte : quatre modèles, de la couleur du joueur. */
 function capstone(ctx, F, Hb, i, j, p, kind, lvl = 0, hi = 0, colKey = "mine") {
-  const { n } = F, cu = (i + 0.5) / n, cv = (j + 0.55) / n, [x, y0] = F.P(cu, cv), y = y0 - lvl * 0.13 * F.cellW(cv), s = F.cellW(cv) / 26 * (kind === "bee" || kind === "hand" ? 1.3 : 1), /* les Clefs-lampes, un peu plus grandes (choix de l'auteur) */ col = CAP_COLS[colKey] || Hb.C[p];
+  const { n } = F, cu = (i + 0.5) / n, cv = (j + 0.55) / n, [x, y0] = F.P(cu, cv), y = y0 - lvl * 0.13 * F.cellW(cv), s = F.cellW(cv) / 26 * (KEY_SCALE[kind] || 1), /* l'échelle de chaque modèle (choix de l'auteur) */ col = CAP_COLS[colKey] || Hb.C[p];
   const lin = (x0, x1, st) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); st.forEach((k, q) => g.addColorStop(q / (st.length - 1), k)); return g; };
   ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.ellipse(x + 3, y + 3, 9 * s, 3.2 * s, 0, 0, TAU); ctx.fill();
   if (hi) { const g = ctx.createRadialGradient(x, y - 14 * s, 1, x, y - 14 * s, 20 * s); g.addColorStop(0, rgba(255, 214, 130, 0.4 * hi)); g.addColorStop(1, rgba(255, 214, 130, 0)); ctx.fillStyle = g; ctx.fillRect(x - 20 * s, y - 34 * s, 40 * s, 40 * s); }
