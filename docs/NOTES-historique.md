@@ -699,6 +699,10 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.11.6 — Baykh au salon, les couleurs de la Verrière (27 nov. 2026)
+
+Capture de l'auteur (Verrière) : plateau et pièces d'une seule teinte orange. La teinte du salon (`c = (h) => mix("#05060c", h, amb)`, `relto-lounge.js`) ne lit que l'hexadécimal ; les couleurs de la Verrière (`Hb.sq`, `Hb.C`) sont en `rgba`. `loungeTable` passe maintenant chaque couleur par un `hex()` qui l'opacifie avant la teinte. Les essais précédents ne l'avaient pas vu : la page d'essai prenait une teinte neutre ; elle prend maintenant `mix` comme le salon. L'auteur a demandé pourquoi des pièces « grosses » et « toutes petites » : ce sont les Voies couchées et les Verrous debout, il a gardé la différence.
+
 ## 2.11.5 — Baykh au salon (27 nov. 2026)
 
 Remarque de l'auteur (capture du salon) : « on voit pas trop la partie actuelle de loin ». `loungeTable` (`src/relto-baykh.js`) : la partie de `r.bk.G`, sinon `restore(cur(r).game)` (plus de pièces factices, pas de `state()` pour ne pas réveiller la machine) ; `frame(n)` à la vraie taille ; le plateau sur tout le dessus (124 → 140) ; chaque pile en relief (1,3 px par pièce, jusqu'à 5), dessus et flanc aux couleurs `Hb.C`, **forme de l'habit** (carrée, octogonale au Château : l'auteur a relevé des pièces rondes dans le premier essai) ; Verrou debout, Clef avec un petit fût.
