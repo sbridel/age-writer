@@ -2,6 +2,15 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
+## Unreleased (on `assembly`)
+
+### Changed
+- **Baykh, a stronger hard level**: the machine now searches several moves ahead within a quarter of a second and judges positions more finely (stacks it can capture, walls only its Keystone can flatten). Against the former hard level: 15–4 on 5×5, 9–1 on 6×6, 6–0 on 8×8.
+- Baykh: once a game is over, two taps on the board start another, without opening the drawer.
+
+### Fixed
+- Baykh: the machine misjudged how far a road was from completion (it mixed the two directions). The medium level is stronger for it.
+
 ## 2.11 — A lived-in Relto (2.11.0 to 2.11.3, 2026-11-25 to 26)
 
 ### 2.11.3 — Baykh, evening touches
