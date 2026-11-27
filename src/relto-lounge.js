@@ -176,7 +176,8 @@ function windowAndSky(r, ctx, c, R, sky, t, castle, glass) {
   ctx.restore();
   // les meneaux, le cintre intérieur ; le remplage (Château), le cadre de cuivre (Verrière)
   ctx.strokeStyle = c(castle ? CASTLE.STONE : glass ? GLASS.COPPER : "#3a2a1e"); ctx.lineWidth = 5;
-  ctx.beginPath(); ctx.moveTo(wx + ww / 2, wy + (castle ? -18 : 4)); ctx.lineTo(wx + ww / 2, wy + wh); ctx.moveTo(wx, wy + wh * 0.55); ctx.lineTo(wx + ww, wy + wh * 0.55); ctx.stroke();
+  const ty = glass ? wy + ww / 2 : wy + wh * 0.55; /* la Verrière : la traverse sépare le verre clair du vitrail, juste sous le soleil ; le montant monte jusqu'au sommet du cintre */
+  ctx.beginPath(); ctx.moveTo(wx + ww / 2, wy + (castle ? -18 : glass ? 0 : 4)); ctx.lineTo(wx + ww / 2, wy + wh); ctx.moveTo(wx, ty); ctx.lineTo(wx + ww, ty); ctx.stroke();
   ctx.lineWidth = 2;
   if (castle) { ctx.strokeStyle = c(CASTLE.STONE_HI); ctx.lineWidth = 3; arch(ctx, true, wx, wy, ww, wh); ctx.stroke(); ctx.lineWidth = 2; for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(wx + ww / 2 + s * 36, wy + 30, 22, 0, 6.283); ctx.stroke(); } ctx.beginPath(); ctx.arc(wx + ww / 2, wy - 2, 13, 0, 6.283); ctx.stroke(); }
   else if (glass) { ctx.strokeStyle = c(GLASS.COPPER); ctx.lineWidth = 4; arch(ctx, false, wx, wy, ww, wh); ctx.stroke(); }
