@@ -452,8 +452,10 @@ function capBox(r, ctx, Hb, s, me, t, hv) {
 }
 
 /** La table basse du salon, devant le canapé : le plateau posé dessus, deux poufs. Un clic : la partie. */
-function loungeTable(r, ctx, c, tr) {
-  const Hb = habit(r), x = 320, y = 286;
+function loungeTable(r, ctx, c0, tr) {
+  /* la teinte du salon (c0) ne lit que l'hexadécimal : les verres de la Verrière, en rgba, sont d'abord rendus opaques (sinon tout sortait d'une seule couleur) */
+  const hex = (col) => { const m = /^rgba?\(([^)]+)\)/.exec(col); if (!m) return col; const [R, G2, B2] = m[1].split(",").map((v) => Math.max(0, Math.min(255, Math.round(parseFloat(v))))); return "#" + [R, G2, B2].map((v) => v.toString(16).padStart(2, "0")).join(""); };
+  const c = (col) => c0(hex(col)), Hb = habit(r), x = 320, y = 286;
   ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.ellipse(x + 4, y + 30, 92, 11, 0, 0, TAU); ctx.fill();
   for (const dx of [-120, 120]) { ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(x + dx + 3, y + 32, 21, 5.5, 0, 0, TAU); ctx.fill(); ctx.fillStyle = c(Hb.kind === "castle" ? "#1f3a30" : "#5b2b3a"); ctx.beginPath(); ctx.ellipse(x + dx, y + 14, 19, 6.5, 0, 0, TAU); ctx.fill(); ctx.fillRect(x + dx - 19, y + 14, 38, 13); ctx.fillStyle = c(Hb.kind === "castle" ? "#12241d" : "#44202c"); ctx.beginPath(); ctx.ellipse(x + dx, y + 27, 19, 5.5, 0, 0, Math.PI); ctx.fill(); } /* les poufs */
   ctx.fillStyle = c(Hb.table); for (const dx of [-74, 74]) ctx.fillRect(x + dx - 4, y + 4, 8, 26);
