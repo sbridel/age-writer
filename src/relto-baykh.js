@@ -39,7 +39,7 @@ function save(r, patch) { const s = { ...cur(r), ...patch }; r._bkSaved = s; if 
 function snd(r, k) { if (r.opts && r.opts.onAhySound) try { r.opts.onAhySound(k); } catch (e) { /* rien */ } }
 function state(r) {
   if (!r.bk || !r.bk.G) { const s = cur(r), G = restore(s.game), b = s.bot || {};
-    r.bk = { ...(r.bk || {}), G: G || B.newGame(s.n), sel: null, hand: null, botCap: b.cap || CAPS[Math.floor(Math.random() * CAPS.length)], botCol: COL_KEYS.includes(b.col) ? b.col : COL_KEYS[Math.floor(Math.random() * COL_KEYS.length)], botGuild: GS.GUILDS.includes(b.guild) ? b.guild : GS.GUILDS[Math.floor(Math.random() * 5)], started: !!(G && G.ply > 0), done: !!(G && G.end) };
+    r.bk = { ...(r.bk || {}), G: G || B.newGame(s.n), sel: null, hand: null, botCap: b.cap && b.cap !== s.cap ? b.cap : otherCap(s.cap), botCol: COL_KEYS.includes(b.col) ? b.col : COL_KEYS[Math.floor(Math.random() * COL_KEYS.length)], botGuild: GS.GUILDS.includes(b.guild) ? b.guild : GS.GUILDS[Math.floor(Math.random() * 5)], started: !!(G && G.ply > 0), done: !!(G && G.end) };
     if (G && !G.end) botTurn(r); } /* la partie laissée sur la table reprend là où on l'a quittée ; si c'était à la machine, elle joue */
   return r.bk;
 }
@@ -51,7 +51,9 @@ function restore(g) {
     if (!g.board.every((st) => Array.isArray(st) && st.every(ok))) return null;
     const G = B.newGame(g.n); G.board = g.board.map((st) => st.map((pc) => ({ p: pc.p, k: pc.k }))); G.res = [0, 1].map((p) => ({ s: Math.max(0, g.res[p].s | 0), c: Math.max(0, g.res[p].c | 0) }));
     G.turn = g.turn === 1 ? 1 : 0; G.ply = Math.max(0, g.ply | 0); G.end = B.verdict(G, 1 - G.turn); return G; } catch (e) { return null; } }
-function fresh(r) { const s = cur(r), st = state(r); st.G = B.newGame(s.n); st.sel = null; st.hand = null; st.started = false; st.botCap = CAPS[Math.floor(Math.random() * CAPS.length)]; st.botCol = COL_KEYS[Math.floor(Math.random() * COL_KEYS.length)]; st.botGuild = GS.GUILDS[Math.floor(Math.random() * 5)]; st.done = false; keep(r); }
+/** La Clef de la maison : jamais le même modèle que la mienne (demande de l'auteur). */
+function otherCap(mine) { const pool = CAPS.filter((k) => k !== mine); return pool[Math.floor(Math.random() * pool.length)]; }
+function fresh(r) { const s = cur(r), st = state(r); st.G = B.newGame(s.n); st.sel = null; st.hand = null; st.started = false; st.botCap = otherCap(s.cap); st.botCol = COL_KEYS[Math.floor(Math.random() * COL_KEYS.length)]; st.botGuild = GS.GUILDS[Math.floor(Math.random() * 5)]; st.done = false; keep(r); }
 /** Après mon coup, ou au départ si je joue les sombres : la machine réfléchit un instant, puis joue. */
 function botTurn(r) {
   const st = state(r), s = cur(r); if (st.G.end || st.G.turn === s.side || st.thinking) return;
@@ -101,7 +103,7 @@ function act(r, a) {
   if (a.drawer) { st.drawer = true; st.hand = null; snd(r, "open"); return; } /* le tiroir des réglages s'ouvre */
   if (a.wood) { if (s.top) { save(r, { top: false }); snd(r, "tick"); } return; } /* vu d'en haut : toucher le bois de la table, c'est se rasseoir */
   if (a.ledger) { st.ledger = true; snd(r, "open"); return; }
-  if (a.pickCap) { save(r, { cap: a.pickCap }); snd(r, "tick"); return; }
+  if (a.pickCap) { save(r, { cap: a.pickCap }); if (st.botCap === a.pickCap) { st.botCap = otherCap(a.pickCap); keep(r); } snd(r, "tick"); return; } /* je prends la Clef de la maison : elle en change */
   if (a.pickCol) { save(r, { capCol: a.pickCol }); snd(r, "tick"); return; }
   if (a.dial) { if (!st.started || G.end || G.ply === 0) { save(r, { n: s.n >= 8 ? 3 : s.n + 1 }); fresh(r); snd(r, "tick"); } return; }
   if (a.fresh) { fresh(r); st.drawer = false; snd(r, "leave"); return; }
