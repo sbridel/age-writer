@@ -6,7 +6,7 @@
  */
 const NEWS = [
   {
-    v: "2.11.7",
+    v: "2.11.8",
     fr: {
       title: "Un Relto habité",
       letter: "On nous demandait si quelqu'un vivait là. Quelqu'un y vit : il y a un plateau sur la table basse du salon, une partie en cours, des pièces couchées et debout ; une lampe à la tête du lit ; et dans le couloir, les couleurs des six guildes. Asseyez-vous, la maison joue.",

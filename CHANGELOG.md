@@ -2,7 +2,12 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.11 — A lived-in Relto (2.11.0 to 2.11.7, 2026-11-25 to 27)
+## 2.11 — A lived-in Relto (2.11.0 to 2.11.8, 2026-11-25 to 27)
+
+### 2.11.8 — The house's Keystone
+
+#### Changed
+- Baykh: the house never takes the same Keystone model as yours — not when it draws one for a new game, not when a saved game resumes, and if you pick its model in the casket, it changes its own.
 
 ### 2.11.7 — The Glasshouse window
 
