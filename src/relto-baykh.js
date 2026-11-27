@@ -468,8 +468,14 @@ function loungeTable(r, ctx, c, tr) {
     const st2 = G.board[j * n + i]; if (!st2.length) continue; const t = st2[st2.length - 1], [px, py] = F.P((i + 0.5) / n, (j + 0.72) / n), w = F.cellW((j + 0.5) / n) * 0.54, h = 1.3 * Math.min(st2.length, 5);
     const [top0, side] = Hb.C[t.p];
     if (t.k === "w") { ctx.fillStyle = c(side); ctx.fillRect(px - w * 0.18, py - h - 5, w * 0.36, h + 5); ctx.fillStyle = c(top0); ctx.fillRect(px - w * 0.18, py - h - 5, w * 0.36, 1.4); continue; } /* un Verrou, debout */
-    ctx.fillStyle = c(side); ctx.fillRect(px - w / 2, py - h, w, h + 1.2); ctx.fillStyle = c(top0); ctx.beginPath(); ctx.ellipse(px, py - h, w / 2, w * 0.2, 0, 0, TAU); ctx.fill();
-    if (t.k === "c") { ctx.beginPath(); ctx.ellipse(px, py - h - 1.6, w * 0.22, 2, 0, 0, TAU); ctx.fill(); } /* une Clef : un petit dôme */
+    const ry = w * 0.2, face = (cy) => { ctx.beginPath(); /* la forme de l'habit, comme à la table : carrée, ou octogonale au Château */
+      if (Hb.shape === "oct") for (let q = 0; q < 8; q++) { const a = (q + 0.5) * TAU / 8; ctx[q ? "lineTo" : "moveTo"](px + Math.cos(a) * w / 2, cy + Math.sin(a) * ry); }
+      else { ctx.moveTo(px - w / 2, cy + ry); ctx.lineTo(px + w / 2, cy + ry); ctx.lineTo(px + w / 2 - 1, cy - ry); ctx.lineTo(px - w / 2 + 1, cy - ry); }
+      ctx.closePath(); };
+    const half = Hb.shape === "oct" ? (w / 2) * Math.cos(TAU / 16) : w / 2;
+    ctx.fillStyle = c(side); ctx.fillRect(px - half, py - h + (Hb.shape === "oct" ? 0 : ry), half * 2, h + (Hb.shape === "oct" ? ry : 0) + 0.6); face(py); ctx.fill(); /* le flanc */
+    ctx.fillStyle = c(top0); face(py - h); ctx.fill(); /* le dessus */
+    if (t.k === "c") { ctx.fillRect(px - w * 0.16, py - h - 3.6, w * 0.32, 3.6); } /* une Clef : un petit fût */
   }
   r.hot.push({ x: x - 90, y: y - 26, w: 180, h: 58, tip: tr("baykh.table"), go: "baykh" });
 }
