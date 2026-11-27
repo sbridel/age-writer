@@ -2,7 +2,12 @@
 
 All notable changes to Age Writer, newest first. Each version is also on the [Releases](https://github.com/sbridel/age-writer/releases) page. A more detailed developer log, in French, is kept in [`docs/NOTES-historique.md`](docs/NOTES-historique.md).
 
-## 2.11 — A lived-in Relto (2.11.0 to 2.11.6, 2026-11-25 to 27)
+## 2.11 — A lived-in Relto (2.11.0 to 2.11.7, 2026-11-25 to 27)
+
+### 2.11.7 — The Glasshouse window
+
+#### Fixed
+- Glasshouse habit, lounge window: the copper transom now sits between the clear glass and the stained-glass fan, just beneath the sun, instead of cutting across the fan; the central mullion reaches the top of the arch; the arch starts a little lower, so the copper ribs of the ceiling no longer seem to pass behind it.
 
 ### 2.11.6 — Baykh in the lounge, glasshouse colours
 

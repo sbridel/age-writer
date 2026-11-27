@@ -699,6 +699,14 @@ Note : `claude/CATALOGUE-merveilles.md` (projet, revue validée le 22 oct.), ét
 
 Demande de l'auteur (comme les plugins qui rangent leurs commandes sous une icône) : `src/ribbon-menu.js` (`MAIN`, `DEV`, `entriesOf`, `install`) : deux icônes du ruban (montagne, clé) ouvrent un `Menu` d'Obsidian ; chaque entrée est une commande enregistrée (nom de la palette sans préfixe, grisée si son `checkCallback` refuse), lancée par `executeCommandById` ; la première entrée du menu principal garde l'ancien geste (`RBK.ribbon`). L'icône « livre » du moteur (`src/engine/plugin.js`) est retirée (la commande reste). Test : `test/ribbon.test.js` (chaque commande rangée une fois, aucun menu ne cite une commande absente). Guide : la phrase du ruban.
 
+## 2.11.7 — La fenêtre de la Verrière (27 nov. 2026)
+
+Remarques de l'auteur (capture) : la traverse de la fenêtre du salon devrait séparer le verre clair du vitrail, sous le soleil ; le montant devrait atteindre le sommet ; des éléments semblaient passer derrière le haut de la fenêtre (« ce n'est pas possible »). `windowAndSky` (`src/relto-lounge.js`), Verrière seulement :
+- la traverse passe de `wy + wh * 0.55` à `wy + ww / 2` (la base de l'éventail, où est le soleil) ; le montant part de `wy` ;
+- le cintre descend de 14 px (`drop`, le bas ne bouge pas) : le haut du cadre (36 → 50) passe sous les arcs de cuivre du plafond (`cabinWalls`, `relto-glass.js`, jusqu'à 46) et sous la colonne centrale (jusqu'à 40).
+- Reste vu et laissé : la colonne du plafond (x 320) n'est pas dans l'axe de la fenêtre (x 350).
+La pierre et le Château sont inchangés.
+
 ## 2.11.6 — Baykh au salon, les couleurs de la Verrière (27 nov. 2026)
 
 Capture de l'auteur (Verrière) : plateau et pièces d'une seule teinte orange. La teinte du salon (`c = (h) => mix("#05060c", h, amb)`, `relto-lounge.js`) ne lit que l'hexadécimal ; les couleurs de la Verrière (`Hb.sq`, `Hb.C`) sont en `rgba`. `loungeTable` passe maintenant chaque couleur par un `hex()` qui l'opacifie avant la teinte. Les essais précédents ne l'avaient pas vu : la page d'essai prenait une teinte neutre ; elle prend maintenant `mix` comme le salon. L'auteur a demandé pourquoi des pièces « grosses » et « toutes petites » : ce sont les Voies couchées et les Verrous debout, il a gardé la différence.
